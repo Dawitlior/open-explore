@@ -241,7 +241,8 @@ function _computeAnalyticsInternal(trades: Trade[]): TradingStats {
   const monthMap: Record<string, Trade[]> = {};
   trades.forEach(tr => {
     try {
-      const d = new Date(tr.date);
+      const dateStr = tr.date ? tr.date.replace(' ', 'T') : '';
+      const d = new Date(dateStr);
       if (isNaN(d.getTime())) return;
       const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2, '0')}`;
       if (!monthMap[key]) monthMap[key] = [];

@@ -35,8 +35,8 @@ const Index = () => {
 
   const [page, setPage] = useState('dashboard');
   const [sbOpen, setSbOpen] = useState(true);
-  const [calMonth, setCalMonth] = useState(1);
-  const [calYear, setCalYear] = useState(2026);
+  const [calMonth, setCalMonth] = useState(() => new Date().getMonth());
+  const [calYear, setCalYear] = useState(() => new Date().getFullYear());
   const [selTrade, setSelTrade] = useState<Trade | null>(null);
   const [showTradeForm, setShowTradeForm] = useState(false);
   const [editingTrade, setEditingTrade] = useState<Trade | null>(null);
@@ -73,7 +73,21 @@ const Index = () => {
   // Calendar data
   const calDayPnl = useMemo(() => {
     const m: Record<number, { pnl: number; trades: number; wins: number; details: Trade[] }> = {};
-    trades.forEach(tr => { const d = new Date(tr.date); if (d.getMonth() === calMonth && d.getFullYear() === calYear) { const day = d.getDate(); if (!m[day]) m[day] = { pnl: 0, trades: 0, wins: 0, details: [] }; m[day].pnl += tr.pnl; m[day].trades++; if (tr.winLoss === 'Win') m[day].wins++; m[day].details.push(tr); } });
+    trades.forEach(tr => {
+      if (!tr.date) return;
+      // Parse date string safely — handle "YYYY-MM-DD HH:mm" format
+      const dateStr = tr.date.replace(' ', 'T');
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return;
+      if (d.getMonth() === calMonth && d.getFullYear() === calYear) {
+        const day = d.getDate();
+        if (!m[day]) m[day] = { pnl: 0, trades: 0, wins: 0, details: [] };
+        m[day].pnl += tr.pnl;
+        m[day].trades++;
+        if (tr.winLoss === 'Win') m[day].wins++;
+        m[day].details.push(tr);
+      }
+    });
     return m;
   }, [calMonth, calYear, trades]);
   const calDays = useMemo(() => getCalDays(calYear, calMonth), [calYear, calMonth]);
@@ -93,7 +107,11 @@ const Index = () => {
     { m: isRTL ? 'עקביות' : 'Consistency', v: Math.min(100, 100 - riskData.riskDrift * 10) },
   ];
 
-  const dailyPnlToday = trades.filter(tr => new Date(tr.date).toDateString() === new Date().toDateString()).reduce((s, tr) => s + tr.pnl, 0);
+  const dailyPnlToday = trades.filter(tr => {
+    if (!tr.date) return false;
+    const d = new Date(tr.date.replace(' ', 'T'));
+    return !isNaN(d.getTime()) && d.toDateString() === new Date().toDateString();
+  }).reduce((s, tr) => s + tr.pnl, 0);
   const riskLevel = stats.maxConsecLosses >= 4 ? 'critical' : stats.maxConsecLosses >= 3 ? 'warning' : 'safe';
   const riskPct = Math.min(100, (stats.maxDrawdown / 10) * 100);
 

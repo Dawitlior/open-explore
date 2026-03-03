@@ -94,6 +94,8 @@ export function useTrades() {
   const importTrades = useCallback(async (newTrades: Trade[]) => {
     const sanitized = sanitizeTrades(newTrades);
     const rebalanced = recalcBalances(sanitized.map((t, i) => ({ ...t, id: i + 1 })));
+    // Clear old data first for deterministic state
+    await clearAllData();
     await saveTrades(rebalanced);
     setTrades(rebalanced);
   }, [recalcBalances]);
