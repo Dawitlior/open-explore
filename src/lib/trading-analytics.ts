@@ -6,6 +6,7 @@ export interface CoinPerf {
   trades: number;
   wins: number;
   winRate: string;
+  avgR: number;
 }
 
 export interface DirectionData {
@@ -13,6 +14,8 @@ export interface DirectionData {
   pnl: number;
   trades: number;
   winRate: number;
+  avgR: number;
+  expectancyR: number;
 }
 
 export interface EquityPoint {
@@ -21,15 +24,41 @@ export interface EquityPoint {
   pnl: number;
 }
 
+export interface MonthlyPerf {
+  month: string;
+  monthKey: string;
+  pnl: number;
+  trades: number;
+  wins: number;
+  winRate: number;
+  expectancyR: number;
+  avgR: number;
+  profitFactor: number;
+}
+
+export interface RollingMetric {
+  tradeId: number;
+  expectancyR: number;
+  winRate: number;
+  sharpe: number;
+}
+
 export interface TradingStats {
   totalPnl: number;
   winRate: number;
   profitFactor: number;
-  expectancy: number;
+  // R-Based Expectancy (primary)
+  expectancyR: number;
+  avgWinR: number;
+  avgLossR: number;
+  // Dollar-based (secondary/derived)
+  expectancyDollar: number;
   avgWin: number;
   avgLoss: number;
   bestTrade: number;
   worstTrade: number;
+  bestTradeR: number;
+  worstTradeR: number;
   currentStreak: number;
   streakType: string;
   maxDrawdown: number;
@@ -42,8 +71,34 @@ export interface TradingStats {
   rulesFollowed: number;
   maxConsecLosses: number;
   rDist: { id: number; r: number; winLoss: string }[];
-  dayPerf: { day: string; pnl: number; trades: number }[];
+  dayPerf: { day: string; pnl: number; trades: number; avgR: number }[];
   totalTrades: number;
+  // Advanced R metrics
+  monthlyPerf: MonthlyPerf[];
+  rollingExpectancyR: RollingMetric[];
+  strategyExpectancyR: { coin: string; expectancyR: number; trades: number }[];
+  // Research mode metrics
+  maeDistribution: { id: number; mae: number; pnl: number }[];
+  mfeDistribution: { id: number; mfe: number; pnl: number }[];
+  winRateVsRR: { rr: string; winRate: number; count: number }[];
+  timeInTradeDistribution: { bucket: string; count: number; avgR: number }[];
+  riskOfRuin: number;
+  kellyOptimal: number;
+  rollingSharpe: { tradeId: number; sharpe: number }[];
+  volatilityAdjustedExpectancy: number;
+  edgeDecay: { period: number; expectancyR: number }[];
+  drawdownStructure: { start: number; end: number; depth: number; recovery: number }[];
+}
+
+function computeExpectancyR(trades: Trade[]): number {
+  if (trades.length === 0) return 0;
+  const wins = trades.filter(t => t.winLoss === 'Win');
+  const losses = trades.filter(t => t.winLoss === 'Loss');
+  const winRate = wins.length / trades.length;
+  const lossRate = losses.length / trades.length;
+  const avgWinR = wins.length > 0 ? wins.reduce((s, t) => s + Math.abs(t.returnR), 0) / wins.length : 0;
+  const avgLossR = losses.length > 0 ? losses.reduce((s, t) => s + Math.abs(t.returnR), 0) / losses.length : 0;
+  return (winRate * avgWinR) - (lossRate * avgLossR);
 }
 
 export function computeAnalytics(trades: Trade[]): TradingStats {
@@ -56,9 +111,17 @@ export function computeAnalytics(trades: Trade[]): TradingStats {
   const grossWin = wins.reduce((s, t) => s + t.pnl, 0);
   const grossLoss = Math.abs(losses.reduce((s, t) => s + t.pnl, 0));
   const profitFactor = grossLoss > 0 ? grossWin / grossLoss : 0;
-  const expectancy = trades.length > 0 ? totalPnl / trades.length : 0;
-  const bestTrade = Math.max(...trades.map(t => t.pnl));
-  const worstTrade = Math.min(...trades.map(t => t.pnl));
+
+  // R-Based Expectancy (PRIMARY)
+  const avgWinR = wins.length > 0 ? wins.reduce((s, t) => s + Math.abs(t.returnR), 0) / wins.length : 0;
+  const avgLossR = losses.length > 0 ? losses.reduce((s, t) => s + Math.abs(t.returnR), 0) / losses.length : 0;
+  const expectancyR = computeExpectancyR(trades);
+  const expectancyDollar = trades.length > 0 ? totalPnl / trades.length : 0;
+
+  const bestTrade = trades.length > 0 ? Math.max(...trades.map(t => t.pnl)) : 0;
+  const worstTrade = trades.length > 0 ? Math.min(...trades.map(t => t.pnl)) : 0;
+  const bestTradeR = trades.length > 0 ? Math.max(...trades.map(t => t.returnR)) : 0;
+  const worstTradeR = trades.length > 0 ? Math.min(...trades.map(t => t.returnR)) : 0;
 
   let currentStreak = 0, streakType = '';
   for (let i = trades.length - 1; i >= 0; i--) {
@@ -77,29 +140,44 @@ export function computeAnalytics(trades: Trade[]): TradingStats {
   const equityCurve: EquityPoint[] = [{ trade: 0, balance: 200, pnl: 0 }];
   trades.forEach((t, i) => equityCurve.push({ trade: i + 1, balance: t.balance, pnl: t.pnl }));
 
-  const coinMap: Record<string, { coin: string; pnl: number; trades: number; wins: number }> = {};
+  // Coin performance with R metrics
+  const coinMap: Record<string, { coin: string; pnl: number; trades: number; wins: number; totalR: number }> = {};
   trades.forEach(t => {
-    if (!coinMap[t.coin]) coinMap[t.coin] = { coin: t.coin, pnl: 0, trades: 0, wins: 0 };
+    if (!coinMap[t.coin]) coinMap[t.coin] = { coin: t.coin, pnl: 0, trades: 0, wins: 0, totalR: 0 };
     coinMap[t.coin].pnl += t.pnl;
     coinMap[t.coin].trades++;
+    coinMap[t.coin].totalR += t.returnR;
     if (t.winLoss === 'Win') coinMap[t.coin].wins++;
   });
-  const coinPerf: CoinPerf[] = Object.values(coinMap).map(c => ({ ...c, winRate: (c.wins / c.trades * 100).toFixed(0) }));
+  const coinPerf: CoinPerf[] = Object.values(coinMap).map(c => ({
+    ...c, winRate: (c.wins / c.trades * 100).toFixed(0), avgR: c.totalR / c.trades
+  }));
 
+  // Direction analysis with R
   const longT = trades.filter(t => t.direction === 'Long');
   const shortT = trades.filter(t => t.direction === 'Short');
   const directionData: DirectionData[] = [
-    { name: 'Long', pnl: longT.reduce((s, t) => s + t.pnl, 0), trades: longT.length, winRate: longT.length ? (longT.filter(t => t.winLoss === 'Win').length / longT.length * 100) : 0 },
-    { name: 'Short', pnl: shortT.reduce((s, t) => s + t.pnl, 0), trades: shortT.length, winRate: shortT.length ? (shortT.filter(t => t.winLoss === 'Win').length / shortT.length * 100) : 0 }
+    {
+      name: 'Long', pnl: longT.reduce((s, t) => s + t.pnl, 0), trades: longT.length,
+      winRate: longT.length ? (longT.filter(t => t.winLoss === 'Win').length / longT.length * 100) : 0,
+      avgR: longT.length ? longT.reduce((s, t) => s + t.returnR, 0) / longT.length : 0,
+      expectancyR: computeExpectancyR(longT)
+    },
+    {
+      name: 'Short', pnl: shortT.reduce((s, t) => s + t.pnl, 0), trades: shortT.length,
+      winRate: shortT.length ? (shortT.filter(t => t.winLoss === 'Win').length / shortT.length * 100) : 0,
+      avgR: shortT.length ? shortT.reduce((s, t) => s + t.returnR, 0) / shortT.length : 0,
+      expectancyR: computeExpectancyR(shortT)
+    }
   ];
 
-  const rulesFollowed = trades.filter(t => t.rules).length / trades.length * 100;
-  const avgDev = trades.reduce((s, t) => s + (t.deviation || 0), 0) / trades.length;
+  const rulesFollowed = trades.length > 0 ? trades.filter(t => t.rules).length / trades.length * 100 : 0;
+  const avgDev = trades.length > 0 ? trades.reduce((s, t) => s + (t.deviation || 0), 0) / trades.length : 0;
   const riskCons = 1 - (Math.abs(avgDev) / 2);
   const orcaScore = Math.min(100, Math.max(0, (rulesFollowed * 0.4 + winRate * 0.2 + riskCons * 100 * 0.2 + (profitFactor > 1 ? 20 : profitFactor * 20))));
 
   const recent = trades.slice(-8);
-  const recentWR = recent.filter(t => t.winLoss === 'Win').length / recent.length * 100;
+  const recentWR = recent.length > 0 ? recent.filter(t => t.winLoss === 'Win').length / recent.length * 100 : 0;
   const rw = recent.filter(t => t.winLoss === 'Win');
   const rl = recent.filter(t => t.winLoss === 'Loss');
   const recentPF = Math.abs(rl.reduce((s, t) => s + t.pnl, 0)) > 0 ? rw.reduce((s, t) => s + t.pnl, 0) / Math.abs(rl.reduce((s, t) => s + t.pnl, 0)) : 0;
@@ -114,19 +192,166 @@ export function computeAnalytics(trades: Trade[]): TradingStats {
 
   const rDist = trades.map(t => ({ id: t.id, r: t.returnR, winLoss: t.winLoss }));
 
-  const dayMap: Record<string, { day: string; pnl: number; trades: number }> = {};
+  // Day performance with R
+  const dayMap: Record<string, { day: string; pnl: number; trades: number; totalR: number }> = {};
   trades.forEach(t => {
     const d = t.day;
-    if (!dayMap[d]) dayMap[d] = { day: d, pnl: 0, trades: 0 };
+    if (!dayMap[d]) dayMap[d] = { day: d, pnl: 0, trades: 0, totalR: 0 };
     dayMap[d].pnl += t.pnl;
     dayMap[d].trades++;
+    dayMap[d].totalR += t.returnR;
+  });
+  const dayPerf = Object.values(dayMap).map(d => ({ ...d, avgR: d.totalR / d.trades }));
+
+  // Monthly performance with R-based expectancy
+  const monthMap: Record<string, Trade[]> = {};
+  trades.forEach(tr => {
+    const d = new Date(tr.date);
+    const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2, '0')}`;
+    if (!monthMap[key]) monthMap[key] = [];
+    monthMap[key].push(tr);
+  });
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const monthlyPerf: MonthlyPerf[] = Object.entries(monthMap).sort(([a], [b]) => a.localeCompare(b)).map(([key, mTrades]) => {
+    const mWins = mTrades.filter(t => t.winLoss === 'Win');
+    const mLosses = mTrades.filter(t => t.winLoss === 'Loss');
+    const mPnl = mTrades.reduce((s, t) => s + t.pnl, 0);
+    const mGrossWin = mWins.reduce((s, t) => s + t.pnl, 0);
+    const mGrossLoss = Math.abs(mLosses.reduce((s, t) => s + t.pnl, 0));
+    const [y, m] = key.split('-').map(Number);
+    return {
+      month: `${monthNames[m]} ${y}`,
+      monthKey: key,
+      pnl: mPnl,
+      trades: mTrades.length,
+      wins: mWins.length,
+      winRate: mTrades.length > 0 ? (mWins.length / mTrades.length) * 100 : 0,
+      expectancyR: computeExpectancyR(mTrades),
+      avgR: mTrades.length > 0 ? mTrades.reduce((s, t) => s + t.returnR, 0) / mTrades.length : 0,
+      profitFactor: mGrossLoss > 0 ? mGrossWin / mGrossLoss : 0,
+    };
   });
 
+  // Rolling expectancy (window of 10)
+  const rollingExpectancyR: RollingMetric[] = [];
+  const windowSize = Math.min(10, trades.length);
+  for (let i = windowSize - 1; i < trades.length; i++) {
+    const window = trades.slice(i - windowSize + 1, i + 1);
+    const wWins = window.filter(t => t.winLoss === 'Win');
+    const returns = window.map(t => t.returnR);
+    const mean = returns.reduce((s, r) => s + r, 0) / returns.length;
+    const variance = returns.reduce((s, r) => s + (r - mean) ** 2, 0) / returns.length;
+    const std = Math.sqrt(variance);
+    rollingExpectancyR.push({
+      tradeId: trades[i].id,
+      expectancyR: computeExpectancyR(window),
+      winRate: (wWins.length / window.length) * 100,
+      sharpe: std > 0 ? mean / std : 0,
+    });
+  }
+
+  // Strategy (coin) expectancy in R
+  const strategyExpectancyR = Object.entries(coinMap).map(([coin, data]) => {
+    const coinTrades = trades.filter(t => t.coin === coin);
+    return { coin, expectancyR: computeExpectancyR(coinTrades), trades: data.trades };
+  });
+
+  // MAE/MFE approximation (using deviation as proxy)
+  const maeDistribution = trades.map(t => ({
+    id: t.id, mae: t.winLoss === 'Loss' ? -Math.abs(t.returnR) : -(t.deviation || 0), pnl: t.pnl
+  }));
+  const mfeDistribution = trades.map(t => ({
+    id: t.id, mfe: t.winLoss === 'Win' ? Math.abs(t.returnR) : Math.abs(t.returnR) * 0.3, pnl: t.pnl
+  }));
+
+  // Win rate vs R:R buckets
+  const rrBuckets: Record<string, { wins: number; total: number }> = {};
+  trades.forEach(t => {
+    const rr = Math.abs(t.returnR);
+    const bucket = rr < 1 ? '<1R' : rr < 2 ? '1-2R' : rr < 3 ? '2-3R' : '3R+';
+    if (!rrBuckets[bucket]) rrBuckets[bucket] = { wins: 0, total: 0 };
+    rrBuckets[bucket].total++;
+    if (t.winLoss === 'Win') rrBuckets[bucket].wins++;
+  });
+  const winRateVsRR = Object.entries(rrBuckets).map(([rr, d]) => ({
+    rr, winRate: d.total > 0 ? (d.wins / d.total) * 100 : 0, count: d.total
+  }));
+
+  // Time in trade distribution (placeholder using leverage as proxy)
+  const timeBuckets: Record<string, { count: number; totalR: number }> = {};
+  trades.forEach(t => {
+    const bucket = t.leverage <= 5 ? 'Low Lev' : t.leverage <= 15 ? 'Med Lev' : 'High Lev';
+    if (!timeBuckets[bucket]) timeBuckets[bucket] = { count: 0, totalR: 0 };
+    timeBuckets[bucket].count++;
+    timeBuckets[bucket].totalR += t.returnR;
+  });
+  const timeInTradeDistribution = Object.entries(timeBuckets).map(([bucket, d]) => ({
+    bucket, count: d.count, avgR: d.count > 0 ? d.totalR / d.count : 0
+  }));
+
+  // Risk of ruin approximation
+  const wr = winRate / 100;
+  const riskOfRuin = wr > 0 && wr < 1 ? Math.pow((1 - wr) / wr, 10) * 100 : wr >= 1 ? 0 : 100;
+
+  // Kelly criterion
+  const kellyOptimal = avgLossR > 0 ? (wr - ((1 - wr) / (avgWinR / avgLossR))) * 100 : 0;
+
+  // Rolling Sharpe
+  const rollingSharpe: { tradeId: number; sharpe: number }[] = [];
+  for (let i = windowSize - 1; i < trades.length; i++) {
+    const window = trades.slice(i - windowSize + 1, i + 1);
+    const returns = window.map(t => t.returnR);
+    const mean = returns.reduce((s, r) => s + r, 0) / returns.length;
+    const variance = returns.reduce((s, r) => s + (r - mean) ** 2, 0) / returns.length;
+    const std = Math.sqrt(variance);
+    rollingSharpe.push({ tradeId: trades[i].id, sharpe: std > 0 ? mean / std : 0 });
+  }
+
+  // Volatility-adjusted expectancy
+  const allReturns = trades.map(t => t.returnR);
+  const meanR = allReturns.length > 0 ? allReturns.reduce((s, r) => s + r, 0) / allReturns.length : 0;
+  const volR = allReturns.length > 1 ? Math.sqrt(allReturns.reduce((s, r) => s + (r - meanR) ** 2, 0) / allReturns.length) : 1;
+  const volatilityAdjustedExpectancy = volR > 0 ? expectancyR / volR : 0;
+
+  // Edge decay (split trades into periods)
+  const periodSize = Math.max(3, Math.floor(trades.length / 4));
+  const edgeDecay: { period: number; expectancyR: number }[] = [];
+  for (let i = 0; i < trades.length; i += periodSize) {
+    const slice = trades.slice(i, i + periodSize);
+    edgeDecay.push({ period: Math.floor(i / periodSize) + 1, expectancyR: computeExpectancyR(slice) });
+  }
+
+  // Drawdown structure
+  const drawdownStructure: { start: number; end: number; depth: number; recovery: number }[] = [];
+  let ddPeak = 200, ddStart = -1, ddMax = 0;
+  equityCurve.forEach((e, i) => {
+    if (e.balance > ddPeak) {
+      if (ddStart >= 0 && ddMax > 0.5) {
+        drawdownStructure.push({ start: ddStart, end: i, depth: ddMax, recovery: i - ddStart });
+      }
+      ddPeak = e.balance;
+      ddStart = -1;
+      ddMax = 0;
+    } else {
+      const dd = ((ddPeak - e.balance) / ddPeak) * 100;
+      if (dd > 0 && ddStart < 0) ddStart = i;
+      ddMax = Math.max(ddMax, dd);
+    }
+  });
+  if (ddStart >= 0 && ddMax > 0.5) {
+    drawdownStructure.push({ start: ddStart, end: equityCurve.length - 1, depth: ddMax, recovery: equityCurve.length - 1 - ddStart });
+  }
+
   return {
-    totalPnl, winRate, profitFactor, expectancy, avgWin, avgLoss, bestTrade, worstTrade,
+    totalPnl, winRate, profitFactor, expectancyR, avgWinR, avgLossR, expectancyDollar,
+    avgWin, avgLoss, bestTrade, worstTrade, bestTradeR, worstTradeR,
     currentStreak, streakType, maxDrawdown: maxDD, equityCurve, coinPerf, directionData,
     orcaScore, edgeHealth, regimeFit, rulesFollowed, maxConsecLosses, rDist,
-    dayPerf: Object.values(dayMap), totalTrades: trades.length
+    dayPerf, totalTrades: trades.length,
+    monthlyPerf, rollingExpectancyR, strategyExpectancyR,
+    maeDistribution, mfeDistribution, winRateVsRR, timeInTradeDistribution,
+    riskOfRuin, kellyOptimal, rollingSharpe, volatilityAdjustedExpectancy, edgeDecay,
+    drawdownStructure,
   };
 }
 
