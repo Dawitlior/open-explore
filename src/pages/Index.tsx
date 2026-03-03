@@ -1080,7 +1080,7 @@ const Index = () => {
     <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden', background: T.bg.primary, color: T.text.primary, fontFamily: "'Inter', system-ui, -apple-system, sans-serif", fontSize: 14, transition: 'background 0.5s ease, color 0.5s ease' }}>
       {/* SIDEBAR */}
       <aside style={{ width: sbOpen ? 216 : 62, minWidth: sbOpen ? 216 : 62, background: `linear-gradient(180deg, ${T.bg.secondary} 0%, ${T.bg.primary} 100%)`, borderInlineEnd: `1px solid ${T.border.subtle}`, display: 'flex', flexDirection: 'column', transition: 'all 0.3s ease', overflow: 'hidden', zIndex: 10 }}>
-        <div style={{ padding: '18px 14px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => setSbOpen(!sbOpen)}>
+        <div style={{ padding: '18px 14px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => setShowFeatureModal(true)}>
           {Ico.orca}
           {sbOpen && <div><div style={{ fontSize: 16, fontWeight: 700, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>ORCA</div><div style={{ fontSize: 8, color: T.text.dim, letterSpacing: '0.15em', textTransform: 'uppercase' }}>Investment</div></div>}
         </div>
@@ -1091,6 +1091,11 @@ const Index = () => {
               {item.icon}{sbOpen && <span>{item.label}</span>}
             </button>
           ))}
+          {/* Info / About button */}
+          <button onClick={() => setShowFeatureModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: sbOpen ? '9px 10px' : '9px 0', justifyContent: sbOpen ? 'flex-start' : 'center', background: 'transparent', color: T.text.dim, border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: 400, transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: '2px solid transparent', marginTop: 4 }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            {sbOpen && <span>{isRTL ? 'אודות המערכת' : 'About System'}</span>}
+          </button>
         </nav>
         <div style={{ padding: 10, borderTop: `1px solid ${T.border.subtle}`, display: 'flex', flexDirection: 'column', gap: 4 }}>
           {sbOpen && <div style={{ position: 'relative' }}>
