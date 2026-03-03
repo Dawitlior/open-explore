@@ -148,8 +148,9 @@ const Index = () => {
   // Command palette commands
   const commands = useMemo(() => [
     { id: 'add-trade', label: isRTL ? 'הוסף עסקה' : 'Add New Trade', icon: '➕', category: isRTL ? 'עסקאות' : 'Trades', shortcut: '', action: () => { setEditingTrade(null); setShowTradeForm(true); } },
-    { id: 'export', label: isRTL ? 'ייצוא נתונים' : 'Export Data', icon: '📤', category: isRTL ? 'נתונים' : 'Data', action: handleExport },
-    { id: 'import', label: isRTL ? 'ייבוא נתונים' : 'Import Data', icon: '📥', category: isRTL ? 'נתונים' : 'Data', action: handleImport },
+    { id: 'export-xlsx', label: isRTL ? 'ייצוא XLSX' : 'Export XLSX', icon: '📊', category: isRTL ? 'נתונים' : 'Data', action: handleExport },
+    { id: 'export-json', label: isRTL ? 'ייצוא JSON' : 'Export JSON', icon: '📤', category: isRTL ? 'נתונים' : 'Data', action: handleExportJson },
+    { id: 'import', label: isRTL ? 'ייבוא נתונים' : 'Import Data (XLSX/JSON)', icon: '📥', category: isRTL ? 'נתונים' : 'Data', action: handleImport },
     { id: 'reset', label: isRTL ? 'איפוס הכל' : 'Reset All Data', icon: '🗑️', category: isRTL ? 'נתונים' : 'Data', action: () => setShowReset(true) },
     { id: 'privacy', label: isRTL ? 'מצב פרטיות' : 'Toggle Privacy Mode', icon: '🔒', category: isRTL ? 'מערכת' : 'System', shortcut: '⌘⇧P', action: () => settings.setPrivacyMode(!settings.privacyMode) },
     { id: 'ai', label: isRTL ? 'צור תובנות AI' : 'Generate AI Insights', icon: '🧠', category: 'AI', action: () => { setPage('ai'); handleGenerateInsights(); } },
