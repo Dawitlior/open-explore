@@ -211,8 +211,8 @@ const Index = () => {
           <MetricCard T={T} label={t.netPnl} value={stats.totalPnl} color={stats.totalPnl >= 0 ? T.accent.cyan : T.accent.red} />
           <MetricCard T={T} label={t.winRate} value={stats.winRate} suffix="%" color={T.accent.green} />
           <MetricCard T={T} label={t.totalTrades} value={String(stats.totalTrades)} color={T.text.primary} />
-          <MetricCard T={T} label={t.avgWin} value={avgWin} suffix="$" color={T.accent.green} />
-          <MetricCard T={T} label={t.avgLoss} value={avgLoss} suffix="$" color={T.accent.red} />
+          <MetricCard T={T} label={t.avgWin} value={stats.avgWin} suffix="$" color={T.accent.green} />
+          <MetricCard T={T} label={t.avgLoss} value={stats.avgLoss} suffix="$" color={T.accent.red} />
           <MetricCard T={T} label={t.currentStreak} value={`${stats.currentStreak} ${stats.streakType === 'Win' ? '🟢' : stats.streakType === 'Loss' ? '🔴' : '⚪'}`} color={T.text.primary} />
         </div>
         {/* Simple Equity Curve */}
