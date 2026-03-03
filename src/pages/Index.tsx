@@ -26,11 +26,6 @@ const Index = () => {
   const settings = useSettings();
   const { trades, stats, loading, initialized, addTrade, updateTrade, removeTrade, resetAll, importTrades, riskAlert, dismissRiskAlert } = useTrades();
   const [entered, setEntered] = useState(() => sessionStorage.getItem('orca-entered') === '1');
-
-  // Entry gate: show before anything
-  if (!entered) {
-    return <EntryGate onEnter={() => setEntered(true)} />;
-  }
   const T = getTheme(settings.theme);
   const t = i18n[settings.lang];
   const isRTL = settings.isRTL;
