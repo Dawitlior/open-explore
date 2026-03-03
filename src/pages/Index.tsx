@@ -1053,28 +1053,6 @@ const Index = () => {
     );
   };
 
-  const renderFeatures = () => (
-    <>
-      <div style={{ display: 'grid', gridTemplateColumns: isAlpha ? 'repeat(4, 1fr)' : 'repeat(3, 1fr)', gap: 12 }}>
-        {FEATURES.map((f, i) => (
-          <GlassCard T={T} key={i}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: T.accent.cyan, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{f.cat}</div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>{f.n}</div>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              {f.items.map((item, j) => (
-                <div key={j} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, color: T.text.secondary, padding: '2px 0' }}>
-                  <div style={{ width: 5, height: 5, borderRadius: '50%', background: T.accent.cyan, flexShrink: 0 }} />
-                  <span>{item}</span>
-                </div>
-              ))}
-            </div>
-          </GlassCard>
-        ))}
-      </div>
-    </>
-  );
 
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden', background: T.bg.primary, color: T.text.primary, fontFamily: "'Inter', system-ui, -apple-system, sans-serif", fontSize: 14, transition: 'background 0.5s ease, color 0.5s ease' }}>
