@@ -28,7 +28,8 @@ export function useTrades() {
 
   const stats = useMemo<TradingStats>(() => {
     try {
-      const filtered = trades.filter(t => t && (t.winLoss === 'Win' || t.winLoss === 'Loss' || t.winLoss === 'Break Even'));
+      if (!trades || trades.length === 0) return computeAnalytics([]);
+      const filtered = trades.filter(t => t && typeof t === 'object' && typeof t.id === 'number' && (t.winLoss === 'Win' || t.winLoss === 'Loss' || t.winLoss === 'Break Even'));
       return computeAnalytics(filtered);
     } catch (err) {
       console.error('Stats computation error:', err);
@@ -94,8 +95,18 @@ export function useTrades() {
   const importTrades = useCallback(async (newTrades: Trade[]) => {
     const sanitized = sanitizeTrades(newTrades);
     const rebalanced = recalcBalances(sanitized.map((t, i) => ({ ...t, id: i + 1 })));
-    // Clear old data first for deterministic state
-    await clearAllData();
+    // Clear only trades (not settings) for deterministic state
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const req = indexedDB.open('orca-trading-os', 2);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction('trades', 'readwrite');
+      tx.objectStore('trades').clear();
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
     await saveTrades(rebalanced);
     setTrades(rebalanced);
   }, [recalcBalances]);
