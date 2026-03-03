@@ -196,7 +196,6 @@ const Index = () => {
     { id: 'risk', icon: Ico.shield, label: t.risk },
     { id: 'psychology', icon: Ico.brain, label: t.psychology },
     { id: 'ai', icon: Ico.star, label: t.ai },
-    { id: 'features', icon: Ico.doc, label: t.features },
   ];
 
   // Entry gate check (after all hooks)
