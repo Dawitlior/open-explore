@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import orcaLogo from '@/assets/orca-logo.png';
+
 const INIT_MESSAGES = [
   { en: 'Initializing Environment...', he: 'מאתחל סביבה...' },
   { en: 'Loading Portfolio Engine...', he: 'טוען מנוע תיקים...' },
@@ -53,22 +53,13 @@ export const EntryGate = ({ onEnter }: EntryGateProps) => {
         backgroundSize: '60px 60px',
       }} />
 
-      {/* Orca logo */}
       <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-        <img
-          src={orcaLogo}
-          alt="Orca Investment"
-          style={{
-            width: 180, height: 180, marginBottom: 24, objectFit: 'contain',
-            filter: 'drop-shadow(0 0 40px rgba(6,214,160,0.25))',
-          }}
-        />
-
         <h1 style={{
-          fontSize: 36, fontWeight: 700, color: '#f1f5f9',
-          letterSpacing: '-0.03em', margin: 0, lineHeight: 1.1,
+          fontSize: 42, margin: 0, lineHeight: 1.1, letterSpacing: '-0.03em',
+          color: '#f1f5f9',
         }}>
-          Orca Investment
+          <span style={{ fontWeight: 800 }}>Orca</span>
+          <span style={{ fontWeight: 300, marginLeft: 10, color: '#94a3b8' }}>Investment</span>
         </h1>
         <p style={{
           fontSize: 12, color: '#64748b', letterSpacing: '0.2em',
@@ -118,7 +109,7 @@ export const EntryGate = ({ onEnter }: EntryGateProps) => {
               >
                 <span style={{
                   width: 6, height: 6, borderRadius: '50%',
-                  background: i < msgIdx ? '#06d6a0' : i === msgIdx ? '#06d6a0' : '#475569',
+                  background: i <= msgIdx ? '#06d6a0' : '#475569',
                   display: 'inline-block',
                   boxShadow: i === msgIdx ? '0 0 8px rgba(6,214,160,0.5)' : 'none',
                 }} />

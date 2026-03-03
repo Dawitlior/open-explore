@@ -1,6 +1,5 @@
 import { ReactNode, CSSProperties } from 'react';
 import type { TradingTheme } from '@/lib/trading-theme';
-import orcaLogo from '@/assets/orca-logo.png';
 
 interface GlassCardProps {
   children: ReactNode;
