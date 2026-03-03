@@ -33,7 +33,10 @@ export const CalendarModal = ({ T, t, isRTL, day, month, year, trades, onClose }
   const [showAI, setShowAI] = useState(false);
 
   const dayTrades = trades.filter(tr => {
-    const d = new Date(tr.date);
+    if (!tr.date) return false;
+    const dateStr = tr.date.replace(' ', 'T');
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return false;
     return d.getDate() === day && d.getMonth() === month && d.getFullYear() === year;
   });
 
