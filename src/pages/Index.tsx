@@ -107,7 +107,11 @@ const Index = () => {
     { m: isRTL ? 'עקביות' : 'Consistency', v: Math.min(100, 100 - riskData.riskDrift * 10) },
   ];
 
-  const dailyPnlToday = trades.filter(tr => new Date(tr.date).toDateString() === new Date().toDateString()).reduce((s, tr) => s + tr.pnl, 0);
+  const dailyPnlToday = trades.filter(tr => {
+    if (!tr.date) return false;
+    const d = new Date(tr.date.replace(' ', 'T'));
+    return !isNaN(d.getTime()) && d.toDateString() === new Date().toDateString();
+  }).reduce((s, tr) => s + tr.pnl, 0);
   const riskLevel = stats.maxConsecLosses >= 4 ? 'critical' : stats.maxConsecLosses >= 3 ? 'warning' : 'safe';
   const riskPct = Math.min(100, (stats.maxDrawdown / 10) * 100);
 
