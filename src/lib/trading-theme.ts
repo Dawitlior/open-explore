@@ -46,7 +46,7 @@ export function ttStyle(T: TradingTheme) {
   return { background: T.bg.card, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.primary, fontSize: 12 };
 }
 
-export const modeColors: Record<string, string> = { live: '#10b981', review: '#3b82f6', research: '#8b5cf6', recovery: '#f59e0b' };
+export const modeColors: Record<string, string> = { live: '#10b981', review: '#3b82f6', research: '#8b5cf6', recovery: '#f59e0b', beginner: '#22d3ee' };
 
 // Legacy export for backward compatibility
 export const T = midnight;

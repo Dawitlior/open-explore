@@ -31,6 +31,7 @@ export const ModeSwitch = ({ T, isRTL, operatingMode, systemMode, onOperatingMod
   };
 
   const operatingModes: { id: OperatingMode; label: string; labelHe: string; color: string; desc: string; descHe: string }[] = [
+    { id: 'beginner', label: 'BEGINNER', labelHe: 'מתחיל', color: modeColors.beginner || '#22d3ee', desc: 'Simplified dashboard for new traders', descHe: 'לוח פשוט לסוחרים מתחילים' },
     { id: 'live', label: 'LIVE', labelHe: 'חי', color: modeColors.live, desc: 'Real-time execution focus', descHe: 'מיקוד ביצוע בזמן אמת' },
     { id: 'review', label: 'REVIEW', labelHe: 'סקירה', color: modeColors.review, desc: 'Statistical intelligence', descHe: 'מודיעין סטטיסטי' },
     { id: 'research', label: 'RESEARCH', labelHe: 'מחקר', color: modeColors.research, desc: 'Advanced analytics lab', descHe: 'מעבדת אנליטיקה מתקדמת' },
@@ -48,7 +49,7 @@ export const ModeSwitch = ({ T, isRTL, operatingMode, systemMode, onOperatingMod
                 if (m.id !== operatingMode) setPendingMode({ type: 'operating', value: m.id });
               }}
               style={{
-                flex: 1, padding: '5px 2px', fontSize: 9, fontWeight: 600, letterSpacing: '0.04em',
+                flex: 1, padding: '5px 2px', fontSize: 8, fontWeight: 600, letterSpacing: '0.04em',
                 textTransform: 'uppercase', border: 'none', borderRadius: T.radius.sm, cursor: 'pointer',
                 background: operatingMode === m.id ? `${m.color}20` : 'transparent',
                 color: operatingMode === m.id ? m.color : T.text.dim,
@@ -105,12 +106,15 @@ export const ModeSwitch = ({ T, isRTL, operatingMode, systemMode, onOperatingMod
             ) : (
               <>
                 <div style={{ fontSize: 36, marginBottom: 12 }}>
-                  {pendingMode.type === 'depth' && pendingMode.value === 'alpha' ? '🔓' : '🔄'}
+                  {pendingMode.type === 'depth' && pendingMode.value === 'alpha' ? '🔓' : 
+                   pendingMode.type === 'operating' && pendingMode.value === 'beginner' ? '🎓' : '🔄'}
                 </div>
                 <div style={{ fontSize: 16, fontWeight: 700, color: T.text.primary, marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>
                   {pendingMode.type === 'depth' && pendingMode.value === 'alpha'
                     ? (isRTL ? 'הפעלת מצב Alpha' : 'Activate Alpha Mode')
-                    : (isRTL ? 'החלפת מצב' : 'Switch Mode')}
+                    : pendingMode.type === 'operating' && pendingMode.value === 'beginner'
+                      ? (isRTL ? 'מעבר למצב מתחיל' : 'Switch to Beginner Mode')
+                      : (isRTL ? 'החלפת מצב' : 'Switch Mode')}
                 </div>
                 <div style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.6, marginBottom: 6 }}>
                   {pendingMode.type === 'operating'
@@ -132,7 +136,9 @@ export const ModeSwitch = ({ T, isRTL, operatingMode, systemMode, onOperatingMod
                     cursor: 'pointer', fontSize: 12, fontWeight: 700,
                     background: pendingMode.value === 'alpha'
                       ? `linear-gradient(135deg, ${T.accent.purple}, ${T.accent.blue})`
-                      : `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`
+                      : pendingMode.value === 'beginner'
+                        ? `linear-gradient(135deg, #22d3ee, #06b6d4)`
+                        : `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`
                   }}>{isRTL ? 'אשר' : 'Confirm'}</button>
                 </div>
               </>
