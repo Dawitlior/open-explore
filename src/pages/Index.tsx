@@ -13,14 +13,19 @@ import { ModeSwitch } from '@/components/trading/ModeSwitch';
 import { PrivacyMask, usePrivacyShortcut } from '@/components/trading/PrivacyMask';
 import { TradeForm } from '@/components/trading/TradeForm';
 import { ResetModal } from '@/components/trading/ResetModal';
+import { EntryGate } from '@/components/trading/EntryGate';
+import { RiskLimitAlert } from '@/components/trading/RiskLimitAlert';
 import { useTrades } from '@/hooks/use-trades';
 import { useSettings, type ThemeId } from '@/hooks/use-settings';
 import { assessRisk } from '@/lib/risk-engine';
 import { generateInsights, generateSummary } from '@/lib/ai-engine';
+import { exportToXlsx, importFromXlsx } from '@/lib/xlsx-engine';
+import { getDayRiskColor, checkRiskLimits, DEFAULT_RISK_LIMITS } from '@/lib/risk-limits';
 
 const Index = () => {
   const settings = useSettings();
-  const { trades, stats, loading, initialized, addTrade, updateTrade, removeTrade, resetAll, importTrades } = useTrades();
+  const { trades, stats, loading, initialized, addTrade, updateTrade, removeTrade, resetAll, importTrades, riskAlert, dismissRiskAlert } = useTrades();
+  const [entered, setEntered] = useState(() => sessionStorage.getItem('orca-entered') === '1');
   const T = getTheme(settings.theme);
   const t = i18n[settings.lang];
   const isRTL = settings.isRTL;
@@ -106,31 +111,46 @@ const Index = () => {
   const handleDeleteTrade = useCallback(async (id: number) => { await removeTrade(id); setSelTrade(null); }, [removeTrade]);
   const handleReset = useCallback(async () => { await resetAll(); setShowReset(false); setPage('dashboard'); }, [resetAll]);
   const handleExport = useCallback(() => {
+    exportToXlsx(trades);
+  }, [trades]);
+  const handleExportJson = useCallback(() => {
     const data = JSON.stringify({ version: 2, trades, exportedAt: new Date().toISOString() }, null, 2);
     const blob = new Blob([data], { type: 'application/json' }); const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = `orca-trades-${new Date().toISOString().slice(0,10)}.json`; a.click();
   }, [trades]);
   const handleImport = useCallback(() => {
-    const input = document.createElement('input'); input.type = 'file'; input.accept = '.json';
+    const input = document.createElement('input'); input.type = 'file'; input.accept = '.xlsx,.xls,.json';
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]; if (!file) return;
       try {
-        const text = await file.text(); const data = JSON.parse(text);
-        const importedTrades = data.trades || data;
-        if (!Array.isArray(importedTrades)) throw new Error('Invalid format');
-        await importTrades(importedTrades);
+        if (file.name.endsWith('.json')) {
+          const text = await file.text(); const data = JSON.parse(text);
+          const importedTrades = data.trades || data;
+          if (!Array.isArray(importedTrades)) throw new Error('Invalid format');
+          await importTrades(importedTrades);
+        } else {
+          const result = await importFromXlsx(file);
+          if (result.errors.length > 0) console.warn('Import warnings:', result.errors);
+          if (result.trades.length > 0) await importTrades(result.trades);
+          else throw new Error('No valid trades found');
+        }
       } catch (err) { console.error('Import failed:', err); }
     };
     input.click();
   }, [importTrades]);
+  const handleLogout = useCallback(() => {
+    sessionStorage.removeItem('orca-entered');
+    setEntered(false);
+  }, []);
 
   const tt = ttStyle(T);
 
   // Command palette commands
   const commands = useMemo(() => [
     { id: 'add-trade', label: isRTL ? 'הוסף עסקה' : 'Add New Trade', icon: '➕', category: isRTL ? 'עסקאות' : 'Trades', shortcut: '', action: () => { setEditingTrade(null); setShowTradeForm(true); } },
-    { id: 'export', label: isRTL ? 'ייצוא נתונים' : 'Export Data', icon: '📤', category: isRTL ? 'נתונים' : 'Data', action: handleExport },
-    { id: 'import', label: isRTL ? 'ייבוא נתונים' : 'Import Data', icon: '📥', category: isRTL ? 'נתונים' : 'Data', action: handleImport },
+    { id: 'export-xlsx', label: isRTL ? 'ייצוא XLSX' : 'Export XLSX', icon: '📊', category: isRTL ? 'נתונים' : 'Data', action: handleExport },
+    { id: 'export-json', label: isRTL ? 'ייצוא JSON' : 'Export JSON', icon: '📤', category: isRTL ? 'נתונים' : 'Data', action: handleExportJson },
+    { id: 'import', label: isRTL ? 'ייבוא נתונים' : 'Import Data (XLSX/JSON)', icon: '📥', category: isRTL ? 'נתונים' : 'Data', action: handleImport },
     { id: 'reset', label: isRTL ? 'איפוס הכל' : 'Reset All Data', icon: '🗑️', category: isRTL ? 'נתונים' : 'Data', action: () => setShowReset(true) },
     { id: 'privacy', label: isRTL ? 'מצב פרטיות' : 'Toggle Privacy Mode', icon: '🔒', category: isRTL ? 'מערכת' : 'System', shortcut: '⌘⇧P', action: () => settings.setPrivacyMode(!settings.privacyMode) },
     { id: 'ai', label: isRTL ? 'צור תובנות AI' : 'Generate AI Insights', icon: '🧠', category: 'AI', action: () => { setPage('ai'); handleGenerateInsights(); } },
@@ -153,6 +173,11 @@ const Index = () => {
     { id: 'ai', icon: Ico.star, label: t.ai },
     { id: 'features', icon: Ico.doc, label: t.features },
   ];
+
+  // Entry gate check (after all hooks)
+  if (!entered) {
+    return <EntryGate onEnter={() => setEntered(true)} />;
+  }
 
   if (loading) {
     return (
@@ -524,8 +549,9 @@ const Index = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div style={{ fontSize: 13, color: T.text.muted }}>{stats.totalTrades} {isRTL ? 'עסקאות' : 'trades'}</div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={handleImport} style={{ padding: '7px 14px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, fontSize: 11, cursor: 'pointer' }}>{t.importData}</button>
-            <button onClick={handleExport} style={{ padding: '7px 14px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, fontSize: 11, cursor: 'pointer' }}>{t.exportData}</button>
+            <button onClick={handleImport} style={{ padding: '7px 14px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, fontSize: 11, cursor: 'pointer' }}>📥 {t.importData}</button>
+            <button onClick={handleExport} style={{ padding: '7px 14px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, fontSize: 11, cursor: 'pointer' }}>📊 XLSX</button>
+            <button onClick={handleExportJson} style={{ padding: '7px 14px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, fontSize: 11, cursor: 'pointer' }}>📤 JSON</button>
             <button onClick={() => { setEditingTrade(null); setShowTradeForm(true); }} style={{ padding: '7px 18px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>+ {t.addTrade}</button>
           </div>
         </div>
@@ -596,8 +622,25 @@ const Index = () => {
 
   const renderCalendar = () => {
     if (trades.length === 0) return null;
+    const calRiskStatus = checkRiskLimits(trades);
     return (
       <>
+        {/* Monthly risk warning banner */}
+        {calRiskStatus.monthlyBreached && (
+          <div style={{ padding: '10px 16px', background: `${T.accent.red}15`, border: `2px solid ${T.accent.red}40`, borderRadius: T.radius.md, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 20 }}>🚨</span>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: T.accent.red }}>{isRTL ? 'מגבלת הפסד חודשית הושגה' : 'Monthly Loss Limit Reached'}</div>
+              <div style={{ fontSize: 10, color: T.text.muted }}>{isRTL ? `הפסד חודשי: ${calRiskStatus.monthlyNegR.toFixed(1)}R (מגבלה: ${DEFAULT_RISK_LIMITS.month}R)` : `Monthly loss: ${calRiskStatus.monthlyNegR.toFixed(1)}R (limit: ${DEFAULT_RISK_LIMITS.month}R)`}</div>
+            </div>
+          </div>
+        )}
+        {calRiskStatus.weeklyBreached && !calRiskStatus.monthlyBreached && (
+          <div style={{ padding: '8px 14px', background: `${T.accent.orange}12`, border: `1px solid ${T.accent.orange}30`, borderRadius: T.radius.md, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 16 }}>⚠️</span>
+            <div style={{ fontSize: 11, color: T.accent.orange }}>{isRTL ? `מגבלת הפסד שבועית הושגה: ${calRiskStatus.weeklyNegR.toFixed(1)}R` : `Weekly loss limit reached: ${calRiskStatus.weeklyNegR.toFixed(1)}R`}</div>
+          </div>
+        )}
         <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
           <div style={{ flex: 3, minWidth: 460 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
@@ -619,13 +662,15 @@ const Index = () => {
                   const dd = d ? calDayPnl[d] : null;
                   const isHovered = d === calHoverDay;
                   const intensity = dd ? Math.min(1, Math.abs(dd.pnl) / 10) : 0;
+                  const riskColor = d ? getDayRiskColor(trades, d, calMonth, calYear) : 'neutral';
+                  const isDarkRed = riskColor === 'darkred';
                   return (
                     <div key={i}
                       onMouseEnter={() => d && setCalHoverDay(d)}
                       onMouseLeave={() => setCalHoverDay(null)}
                       onClick={() => dd && d && setCalModalDay(d)}
-                      style={{ minHeight: isHovered && dd ? 95 : 68, borderRadius: T.radius.md, border: `1px solid ${dd ? (dd.pnl > 0 ? `${T.accent.green}${Math.round(40 + intensity * 40).toString(16)}` : dd.pnl < 0 ? `${T.accent.red}${Math.round(35 + intensity * 40).toString(16)}` : `${T.accent.orange}25`) : T.border.subtle}`, background: dd ? (dd.pnl > 0 ? `${T.accent.green}${Math.round(10 + intensity * 20).toString(16).padStart(2, '0')}` : dd.pnl < 0 ? `${T.accent.red}${Math.round(10 + intensity * 15).toString(16).padStart(2, '0')}` : `${T.accent.orange}10`) : 'transparent', padding: '5px 6px', transition: 'all 0.2s ease', cursor: dd ? 'pointer' : 'default', position: 'relative' }}>
-                      {d && <><div style={{ fontSize: 10, color: T.text.dim }}>{d}</div>{dd && <><PV><div style={{ fontSize: 13, fontWeight: 700, color: dd.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace", marginTop: 3 }}>${Math.abs(dd.pnl).toFixed(0)}</div></PV><div style={{ fontSize: 8, color: T.text.dim, marginTop: 1 }}>{dd.trades} {isRTL ? 'עס׳' : 'tr'} • {dd.wins}/{dd.trades}</div>
+                      style={{ minHeight: isHovered && dd ? 95 : 68, borderRadius: T.radius.md, border: `1px solid ${isDarkRed ? `${T.accent.red}60` : dd ? (dd.pnl > 0 ? `${T.accent.green}${Math.round(40 + intensity * 40).toString(16)}` : dd.pnl < 0 ? `${T.accent.red}${Math.round(35 + intensity * 40).toString(16)}` : `${T.accent.orange}25`) : T.border.subtle}`, background: isDarkRed ? `${T.accent.red}20` : dd ? (dd.pnl > 0 ? `${T.accent.green}${Math.round(10 + intensity * 20).toString(16).padStart(2, '0')}` : dd.pnl < 0 ? `${T.accent.red}${Math.round(10 + intensity * 15).toString(16).padStart(2, '0')}` : `${T.accent.orange}10`) : 'transparent', padding: '5px 6px', transition: 'all 0.2s ease', cursor: dd ? 'pointer' : 'default', position: 'relative' }}>
+                      {d && <><div style={{ fontSize: 10, color: T.text.dim, display: 'flex', alignItems: 'center', gap: 3 }}>{d}{isDarkRed && <span title="Risk limit exceeded">⚠️</span>}</div>{dd && <><PV><div style={{ fontSize: 13, fontWeight: 700, color: isDarkRed ? T.accent.red : dd.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace", marginTop: 3 }}>${Math.abs(dd.pnl).toFixed(0)}</div></PV><div style={{ fontSize: 8, color: T.text.dim, marginTop: 1 }}>{dd.trades} {isRTL ? 'עס׳' : 'tr'} • {dd.wins}/{dd.trades}</div>
                         {isHovered && <div style={{ fontSize: 8, color: T.text.muted, marginTop: 2 }}>{dd.details.map(det => det.coin).join(', ')}</div>}
                       </>}</>}
                     </div>
@@ -978,6 +1023,9 @@ const Index = () => {
           {sbOpen && <button onClick={() => setShowReset(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: `${T.accent.red}08`, border: `1px solid ${T.accent.red}20`, borderRadius: T.radius.md, color: T.accent.red, cursor: 'pointer', fontSize: 11, fontWeight: 500 }}>
             {Ico.reset}<span>{t.resetAll}</span>
           </button>}
+          {sbOpen && <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: `${T.accent.orange}08`, border: `1px solid ${T.accent.orange}20`, borderRadius: T.radius.md, color: T.accent.orange, cursor: 'pointer', fontSize: 11, fontWeight: 500 }}>
+            <span>🚪</span><span>{isRTL ? 'יציאה' : 'Logout'}</span>
+          </button>}
         </div>
       </aside>
 
@@ -1020,6 +1068,7 @@ const Index = () => {
       {/* OVERLAYS */}
       {showTradeForm && <TradeForm T={T} t={t} isRTL={isRTL} trade={editingTrade} currentBalance={currentBalance} onSave={handleSaveTrade} onClose={() => { setShowTradeForm(false); setEditingTrade(null); }} />}
       {showReset && <ResetModal T={T} t={t} isRTL={isRTL} onConfirm={handleReset} onClose={() => setShowReset(false)} />}
+      {riskAlert && <RiskLimitAlert T={T} isRTL={isRTL} status={riskAlert} onClose={dismissRiskAlert} />}
       <CommandPalette T={T} commands={commands} isOpen={showCmdPalette} onClose={() => setShowCmdPalette(false)} />
     </div>
   );
