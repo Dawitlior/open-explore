@@ -173,6 +173,11 @@ const Index = () => {
     { id: 'features', icon: Ico.doc, label: t.features },
   ];
 
+  // Entry gate check (after all hooks)
+  if (!entered) {
+    return <EntryGate onEnter={() => setEntered(true)} />;
+  }
+
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: T.bg.primary, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace", fontSize: 16 }}>
