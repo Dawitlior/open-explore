@@ -12,7 +12,7 @@ export interface RiskAssessment {
 }
 
 export function assessRisk(trades: Trade[], startBalance: number = 200): RiskAssessment {
-  if (trades.length === 0) {
+  if (!trades || trades.length === 0 || !trades[0]) {
     return { riskConsistencyScore: 100, avgRiskPct: 0, riskDrift: 0, riskGrowthEvolution: [], warnings: [], isScalingUp: false, dollarRiskTrend: 'stable', riskAllocation: [] };
   }
 
