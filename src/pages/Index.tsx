@@ -111,23 +111,37 @@ const Index = () => {
   const handleDeleteTrade = useCallback(async (id: number) => { await removeTrade(id); setSelTrade(null); }, [removeTrade]);
   const handleReset = useCallback(async () => { await resetAll(); setShowReset(false); setPage('dashboard'); }, [resetAll]);
   const handleExport = useCallback(() => {
+    exportToXlsx(trades);
+  }, [trades]);
+  const handleExportJson = useCallback(() => {
     const data = JSON.stringify({ version: 2, trades, exportedAt: new Date().toISOString() }, null, 2);
     const blob = new Blob([data], { type: 'application/json' }); const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = `orca-trades-${new Date().toISOString().slice(0,10)}.json`; a.click();
   }, [trades]);
   const handleImport = useCallback(() => {
-    const input = document.createElement('input'); input.type = 'file'; input.accept = '.json';
+    const input = document.createElement('input'); input.type = 'file'; input.accept = '.xlsx,.xls,.json';
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]; if (!file) return;
       try {
-        const text = await file.text(); const data = JSON.parse(text);
-        const importedTrades = data.trades || data;
-        if (!Array.isArray(importedTrades)) throw new Error('Invalid format');
-        await importTrades(importedTrades);
+        if (file.name.endsWith('.json')) {
+          const text = await file.text(); const data = JSON.parse(text);
+          const importedTrades = data.trades || data;
+          if (!Array.isArray(importedTrades)) throw new Error('Invalid format');
+          await importTrades(importedTrades);
+        } else {
+          const result = await importFromXlsx(file);
+          if (result.errors.length > 0) console.warn('Import warnings:', result.errors);
+          if (result.trades.length > 0) await importTrades(result.trades);
+          else throw new Error('No valid trades found');
+        }
       } catch (err) { console.error('Import failed:', err); }
     };
     input.click();
   }, [importTrades]);
+  const handleLogout = useCallback(() => {
+    sessionStorage.removeItem('orca-entered');
+    setEntered(false);
+  }, []);
 
   const tt = ttStyle(T);
 
