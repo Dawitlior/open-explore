@@ -157,6 +157,7 @@ const Index = () => {
     ...(['dashboard', 'journal', 'calendar', 'analytics', 'risk', 'psychology', 'ai', 'features'] as const).map(p => ({
       id: `nav-${p}`, label: `Go to ${p.charAt(0).toUpperCase() + p.slice(1)}`, icon: '📄', category: isRTL ? 'ניווט' : 'Navigation', action: () => setPage(p)
     })),
+    { id: 'beginner', label: isRTL ? 'מצב מתחיל' : 'Switch to Beginner Mode', icon: '🎓', category: isRTL ? 'מצבים' : 'Modes', action: () => settings.setOperatingMode('beginner') },
     { id: 'live', label: isRTL ? 'מצב חי' : 'Switch to Live Mode', icon: '🔴', category: isRTL ? 'מצבים' : 'Modes', action: () => settings.setOperatingMode('live') },
     { id: 'review', label: isRTL ? 'מצב סקירה' : 'Switch to Review Mode', icon: '🔵', category: isRTL ? 'מצבים' : 'Modes', action: () => settings.setOperatingMode('review') },
     { id: 'research', label: isRTL ? 'מצב מחקר' : 'Switch to Research Mode', icon: '🟣', category: isRTL ? 'מצבים' : 'Modes', action: () => settings.setOperatingMode('research') },
@@ -198,6 +199,75 @@ const Index = () => {
 
   const renderDashboard = () => {
     if (trades.length === 0) return null;
+
+    // BEGINNER MODE: simplified, friendly
+    if (opMode === 'beginner') return (
+      <>
+        <h2 style={{ fontSize: 22, fontWeight: 300, color: T.text.secondary, margin: '0 0 20px', fontFamily: "'JetBrains Mono', monospace" }}>
+          {isRTL ? '🎓 מצב מתחיל — ברוך הבא!' : '🎓 Beginner Mode — Welcome!'}
+        </h2>
+        {/* Core metrics only */}
+        <div style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
+          <MetricCard T={T} label={t.netPnl} value={stats.totalPnl} color={stats.totalPnl >= 0 ? T.accent.cyan : T.accent.red} />
+          <MetricCard T={T} label={t.winRate} value={stats.winRate} suffix="%" color={T.accent.green} />
+          <MetricCard T={T} label={t.totalTrades} value={String(stats.totalTrades)} color={T.text.primary} />
+          <MetricCard T={T} label={t.avgWin} value={avgWin} suffix="$" color={T.accent.green} />
+          <MetricCard T={T} label={t.avgLoss} value={avgLoss} suffix="$" color={T.accent.red} />
+          <MetricCard T={T} label={t.currentStreak} value={`${stats.currentStreak} ${stats.streakType === 'Win' ? '🟢' : stats.streakType === 'Loss' ? '🔴' : '⚪'}`} color={T.text.primary} />
+        </div>
+        {/* Simple Equity Curve */}
+        <ChartWrapper T={T} title={t.equityCurve} explanation={EXPLANATIONS.equityCurve} unit="$" style={{ marginBottom: 18 }}>
+          <ResponsiveContainer width="100%" height={220}>
+            <AreaChart data={stats.equityCurve}>
+              <defs><linearGradient id="eqBeg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.3}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0}/></linearGradient></defs>
+              <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
+              <XAxis dataKey="trade" tick={{ fill: T.text.dim, fontSize: 10 }} />
+              <YAxis tick={{ fill: T.text.dim, fontSize: 10 }} domain={['dataMin - 5', 'dataMax + 5']} />
+              <Tooltip contentStyle={tt} />
+              <Area type="monotone" dataKey="balance" stroke={T.accent.cyan} fill="url(#eqBeg)" strokeWidth={2.5} dot={{ fill: T.accent.cyan, r: 3 }} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </ChartWrapper>
+        {/* Simple P&L bars */}
+        <ChartWrapper T={T} title={t.pnlDistribution} explanation={EXPLANATIONS.pnlDistribution} unit="$" style={{ marginBottom: 18 }}>
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={trades.map(tr => ({ id: tr.id, pnl: tr.pnl }))}>
+              <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
+              <XAxis dataKey="id" tick={{ fill: T.text.dim, fontSize: 10 }} />
+              <YAxis tick={{ fill: T.text.dim, fontSize: 10 }} />
+              <Tooltip contentStyle={tt} />
+              <Bar dataKey="pnl" radius={[4,4,0,0]}>{trades.map((tr, i) => <Cell key={i} fill={tr.pnl >= 0 ? T.accent.green : T.accent.red} />)}</Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartWrapper>
+        {/* Discipline indicator */}
+        <GlassCard T={T} style={{ marginBottom: 18, textAlign: 'center', padding: 24 }}>
+          <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>{t.disciplineScore}</div>
+          <div style={{ fontSize: 48, fontWeight: 700, color: stats.rulesFollowed >= 80 ? T.accent.green : stats.rulesFollowed >= 50 ? T.accent.orange : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>
+            {stats.rulesFollowed.toFixed(0)}%
+          </div>
+          <div style={{ fontSize: 12, color: T.text.secondary, marginTop: 8 }}>
+            {stats.rulesFollowed >= 80 ? (isRTL ? 'משמעת מצוינת! 👏' : 'Excellent discipline! 👏') :
+             stats.rulesFollowed >= 50 ? (isRTL ? 'יש מקום לשיפור' : 'Room for improvement') :
+             (isRTL ? 'צריך לעבוד על משמעת' : 'Work on discipline')}
+          </div>
+        </GlassCard>
+        {/* Tip card */}
+        <GlassCard T={T} glow={`${T.accent.blue}12`}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+            <span style={{ fontSize: 24 }}>💡</span>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: T.accent.blue, marginBottom: 4 }}>{isRTL ? 'טיפ למתחיל' : 'Beginner Tip'}</div>
+              <div style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.6 }}>
+                {isRTL
+                  ? 'התמקד באחוז ההצלחה ובמשמעת. עקוב אחרי הכללים שלך, ושמור על סיכון קבוע לעסקה. השאר הוא רעש.'
+                  : 'Focus on win rate and discipline. Follow your rules, keep consistent risk per trade. Everything else is noise.'}
+              </div>
+            </div>
+          </div>
+        </GlassCard>
+      </>
+    );
 
     // LIVE MODE: execution-focused, minimal, real-time
     if (opMode === 'live') return (
