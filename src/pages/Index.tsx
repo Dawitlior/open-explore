@@ -1145,7 +1145,7 @@ const Index = () => {
         </header>
 
         <div style={{ padding: '20px 24px', maxWidth: 1400, margin: '0 auto' }}>
-          {trades.length === 0 && page !== 'features' && (
+          {trades.length === 0 && (
             <div style={{ textAlign: 'center', padding: 60 }}>
               <div style={{ fontSize: 48, marginBottom: 16 }}>🐋</div>
               <div style={{ fontSize: 16, color: T.text.secondary, marginBottom: 20 }}>{t.noTrades}</div>
@@ -1159,7 +1159,6 @@ const Index = () => {
           {page === 'risk' && renderRisk()}
           {page === 'psychology' && renderPsychology()}
           {page === 'ai' && renderAI()}
-          {page === 'features' && renderFeatures()}
         </div>
       </main>
 
@@ -1167,6 +1166,7 @@ const Index = () => {
       {showTradeForm && <TradeForm T={T} t={t} isRTL={isRTL} trade={editingTrade} currentBalance={currentBalance} onSave={handleSaveTrade} onClose={() => { setShowTradeForm(false); setEditingTrade(null); }} />}
       {showReset && <ResetModal T={T} t={t} isRTL={isRTL} onConfirm={handleReset} onClose={() => setShowReset(false)} />}
       {riskAlert && <RiskLimitAlert T={T} isRTL={isRTL} status={riskAlert} onClose={dismissRiskAlert} />}
+      {showFeatureModal && <FeatureManifestModal T={T} isRTL={isRTL} onClose={() => setShowFeatureModal(false)} />}
       <CommandPalette T={T} commands={commands} isOpen={showCmdPalette} onClose={() => setShowCmdPalette(false)} />
     </div>
   );
