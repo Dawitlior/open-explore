@@ -65,10 +65,12 @@ const Index = () => {
 
   // Seed data on first load
   const [seeded, setSeeded] = useState(false);
-  if (initialized && trades.length === 0 && !seeded && !loading) {
-    setSeeded(true);
-    importTrades(RAW_TRADES);
-  }
+  useEffect(() => {
+    if (initialized && trades.length === 0 && !seeded && !loading) {
+      setSeeded(true);
+      importTrades(RAW_TRADES);
+    }
+  }, [initialized, trades.length, seeded, loading, importTrades]);
 
   // Calendar data
   const calDayPnl = useMemo(() => {
