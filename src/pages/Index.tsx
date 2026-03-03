@@ -13,14 +13,24 @@ import { ModeSwitch } from '@/components/trading/ModeSwitch';
 import { PrivacyMask, usePrivacyShortcut } from '@/components/trading/PrivacyMask';
 import { TradeForm } from '@/components/trading/TradeForm';
 import { ResetModal } from '@/components/trading/ResetModal';
+import { EntryGate } from '@/components/trading/EntryGate';
+import { RiskLimitAlert } from '@/components/trading/RiskLimitAlert';
 import { useTrades } from '@/hooks/use-trades';
 import { useSettings, type ThemeId } from '@/hooks/use-settings';
 import { assessRisk } from '@/lib/risk-engine';
 import { generateInsights, generateSummary } from '@/lib/ai-engine';
+import { exportToXlsx, importFromXlsx } from '@/lib/xlsx-engine';
+import { getDayRiskColor, checkRiskLimits, DEFAULT_RISK_LIMITS } from '@/lib/risk-limits';
 
 const Index = () => {
   const settings = useSettings();
-  const { trades, stats, loading, initialized, addTrade, updateTrade, removeTrade, resetAll, importTrades } = useTrades();
+  const { trades, stats, loading, initialized, addTrade, updateTrade, removeTrade, resetAll, importTrades, riskAlert, dismissRiskAlert } = useTrades();
+  const [entered, setEntered] = useState(() => sessionStorage.getItem('orca-entered') === '1');
+
+  // Entry gate: show before anything
+  if (!entered) {
+    return <EntryGate onEnter={() => setEntered(true)} />;
+  }
   const T = getTheme(settings.theme);
   const t = i18n[settings.lang];
   const isRTL = settings.isRTL;
