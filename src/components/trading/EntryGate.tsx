@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-
+import orcaLogo from '@/assets/orca-logo.png';
 const INIT_MESSAGES = [
   { en: 'Initializing Environment...', he: 'מאתחל סביבה...' },
   { en: 'Loading Portfolio Engine...', he: 'טוען מנוע תיקים...' },
@@ -55,13 +55,14 @@ export const EntryGate = ({ onEnter }: EntryGateProps) => {
 
       {/* Orca logo */}
       <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-        <svg width="72" height="72" viewBox="0 0 32 32" fill="none" style={{ marginBottom: 24, filter: 'drop-shadow(0 0 30px rgba(6,214,160,0.3))' }}>
-          <ellipse cx="16" cy="16" rx="14" ry="12" fill="#06d6a0" opacity="0.08" />
-          <path d="M8 20c2-6 6-10 8-10s6 4 8 10" stroke="#06d6a0" strokeWidth="2.5" strokeLinecap="round" />
-          <circle cx="12" cy="16" r="1.5" fill="#06d6a0" />
-          <circle cx="20" cy="16" r="1.5" fill="#06d6a0" />
-          <path d="M10 22c2 2 4 3 6 3s4-1 6-3" stroke="#06d6a0" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
+        <img
+          src={orcaLogo}
+          alt="Orca Investment"
+          style={{
+            width: 180, height: 180, marginBottom: 24, objectFit: 'contain',
+            filter: 'drop-shadow(0 0 40px rgba(6,214,160,0.25))',
+          }}
+        />
 
         <h1 style={{
           fontSize: 36, fontWeight: 700, color: '#f1f5f9',
