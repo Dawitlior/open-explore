@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell, ComposedChart, ScatterChart, Scatter, ZAxis } from 'recharts';
 import type { Trade } from '@/data/trades';
 import { RAW_TRADES } from '@/data/trades';
+import orcaLogoImg from '@/assets/orca-logo.png';
 import { computeAnalytics, getCalDays } from '@/lib/trading-analytics';
 import { i18n, FEATURES } from '@/lib/trading-i18n';
 import { getTheme, ttStyle, modeColors, type TradingTheme } from '@/lib/trading-theme';
@@ -1112,7 +1113,7 @@ const Index = () => {
             <button onClick={() => setShowCmdPalette(true)} style={{ padding: '4px 10px', background: T.bg.tertiary, border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.sm, color: T.text.dim, cursor: 'pointer', fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>⌘K</button>
             <div style={{ fontSize: 11, color: T.text.dim }}>{new Date().toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</div>
             <PV><div style={{ fontSize: 11, color: T.accent.cyan, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace" }}>${currentBalance.toFixed(2)}</div></PV>
-            <div style={{ width: 30, height: 30, borderRadius: '50%', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: T.bg.primary }}>O</div>
+            <img src={orcaLogoImg} alt="Orca" style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover' }} />
           </div>
         </header>
 
