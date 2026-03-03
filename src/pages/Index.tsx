@@ -9,6 +9,7 @@ import { getTheme, ttStyle, modeColors, type TradingTheme } from '@/lib/trading-
 import { GlassCard, MetricCard, ScoreGauge, TradingBadge, Ico } from '@/components/trading/TradingUI';
 import { ChartWrapper, EXPLANATIONS } from '@/components/trading/ChartWrapper';
 import { CalendarModal } from '@/components/trading/CalendarModal';
+import { FeatureManifestModal } from '@/components/trading/FeatureManifestModal';
 import { CommandPalette } from '@/components/trading/CommandPalette';
 import { ModeSwitch } from '@/components/trading/ModeSwitch';
 import { PrivacyMask, usePrivacyShortcut } from '@/components/trading/PrivacyMask';
@@ -47,6 +48,7 @@ const Index = () => {
   const [calHoverDay, setCalHoverDay] = useState<number | null>(null);
   const [calModalDay, setCalModalDay] = useState<number | null>(null);
   const [showCmdPalette, setShowCmdPalette] = useState(false);
+  const [showFeatureModal, setShowFeatureModal] = useState(false);
 
   const riskData = useMemo(() => assessRisk(trades), [trades]);
   const currentBalance = trades.length > 0 ? trades[trades.length - 1].balance : 200;
