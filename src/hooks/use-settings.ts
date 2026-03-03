@@ -3,7 +3,7 @@ import { getSetting, setSetting } from '@/lib/storage';
 
 export type ThemeId = 'midnight' | 'arctic' | 'ember';
 export type SystemMode = 'standard' | 'alpha';
-export type OperatingMode = 'live' | 'review' | 'research';
+export type OperatingMode = 'live' | 'review' | 'research' | 'beginner';
 export type Lang = 'he' | 'en';
 
 export interface ModeCombo {
