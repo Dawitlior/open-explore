@@ -89,6 +89,115 @@ function mapHeaderToField(header: string): keyof Trade | '_ignore' | null {
 }
 
 // ═══════════════════════════════════════════════════
+// DATE PARSING
+// ═══════════════════════════════════════════════════
+
+/** Convert Excel serial date number to JS Date */
+function excelSerialToDate(serial: number): Date {
+  // Excel epoch: Jan 0, 1900 (with the Lotus 1-2-3 leap year bug)
+  const epoch = new Date(1899, 11, 30);
+  const days = Math.floor(serial);
+  const fraction = serial - days;
+  const ms = days * 86400000 + Math.round(fraction * 86400000);
+  return new Date(epoch.getTime() + ms);
+}
+
+/** Parse date string in DD/MM/YYYY HH:MM or MM/DD/YYYY HH:MM format */
+function parseFlexibleDate(value: unknown): string | null {
+  if (value === null || value === undefined || value === '') return null;
+
+  // Excel serial number
+  if (typeof value === 'number' && value > 25000 && value < 100000) {
+    const d = excelSerialToDate(value);
+    if (!isNaN(d.getTime())) {
+      return formatDate(d);
+    }
+    return null;
+  }
+
+  if (typeof value !== 'string') {
+    const s = String(value).trim();
+    if (!s) return null;
+    return parseFlexibleDate(s);
+  }
+
+  const str = value.trim();
+  if (!str) return null;
+
+  // Already in YYYY-MM-DD format
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) return formatDate(d);
+    return null;
+  }
+
+  // DD/MM/YYYY HH:MM or MM/DD/YYYY HH:MM
+  const match = str.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
+  if (match) {
+    const a = parseInt(match[1], 10);
+    const b = parseInt(match[2], 10);
+    const year = parseInt(match[3], 10);
+    const hour = match[4] ? parseInt(match[4], 10) : 0;
+    const min = match[5] ? parseInt(match[5], 10) : 0;
+
+    let day: number, month: number;
+
+    // If first number > 12, it must be DD/MM/YYYY
+    if (a > 12) {
+      day = a; month = b;
+    }
+    // If second number > 12, it must be MM/DD/YYYY
+    else if (b > 12) {
+      month = a; day = b;
+    }
+    // Ambiguous — default to DD/MM/YYYY (more common in trading journals)
+    else {
+      day = a; month = b;
+    }
+
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      const d = new Date(year, month - 1, day, hour, min);
+      if (!isNaN(d.getTime())) return formatDate(d);
+    }
+  }
+
+  // Fallback: try native parsing
+  const d = new Date(str);
+  if (!isNaN(d.getTime())) return formatDate(d);
+
+  return null;
+}
+
+function formatDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const h = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  return `${y}-${m}-${day} ${h}:${min}`;
+}
+
+// ═══════════════════════════════════════════════════
+// ROW VALIDATION
+// ═══════════════════════════════════════════════════
+
+function isEmptyRow(mapped: Record<string, unknown>): boolean {
+  const entry = toNum(mapped.entry);
+  const stopLoss = toNum(mapped.stopLoss);
+  const exit = toNum(mapped.exit);
+  const positionSize = toNum(mapped.positionSize);
+
+  // All critical fields are missing/zero → empty row
+  return entry === 0 && stopLoss === 0 && exit === 0 && positionSize === 0;
+}
+
+function toNum(v: unknown): number {
+  if (typeof v === 'number' && isFinite(v)) return v;
+  if (typeof v === 'string') { const n = parseFloat(v); if (isFinite(n)) return n; }
+  return 0;
+}
+
+// ═══════════════════════════════════════════════════
 // EXPORT
 // ═══════════════════════════════════════════════════
 
@@ -108,8 +217,6 @@ export function exportToXlsx(trades: Trade[]): void {
   ]);
 
   const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
-  
-  // Set column widths
   ws['!cols'] = headers.map(() => ({ wch: 16 }));
 
   const wb = XLSX.utils.book_new();
@@ -164,6 +271,25 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
                 mapped[field] = v;
               }
             });
+
+            // Skip empty / all-zero rows
+            if (isEmptyRow(mapped)) {
+              skipped++;
+              return;
+            }
+
+            // Parse date
+            if (mapped.date !== undefined) {
+              const parsed = parseFlexibleDate(mapped.date);
+              if (parsed) {
+                mapped.date = parsed;
+              } else {
+                // Invalid date — skip row
+                skipped++;
+                errors.push(`Row ${idx + 2}: Invalid date`);
+                return;
+              }
+            }
 
             // Direction normalization
             if (typeof mapped.direction === 'string') {
