@@ -188,10 +188,8 @@ const Index = () => {
     setEntered(false);
   }, []);
 
-  const tt = ttStyle(T);
-  const cc = cursorStyle(T);
-  // Themed tooltip props used across all Recharts charts
-  const tooltipProps = { contentStyle: tt, itemStyle: { color: T.text.secondary, fontSize: 11 }, labelStyle: { color: T.text.muted, fontSize: 10, marginBottom: 2 }, cursor: cc };
+  const tt = { ...ttStyle(T), itemStyle: { color: T.text.secondary, fontSize: 11 }, labelStyle: { color: T.text.muted, fontSize: 10 } };
+  const chartCursor = { fill: `${T.accent.cyan}06`, stroke: T.border.medium, strokeWidth: 1 };
 
   // Command palette commands
   const commands = useMemo(() => [
