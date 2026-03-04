@@ -160,6 +160,10 @@ const Index = () => {
     const a = document.createElement('a'); a.href = url; a.download = `orca-trades-${new Date().toISOString().slice(0,10)}.json`; a.click();
   }, [trades]);
   const handleImport = useCallback(() => {
+    setShowImportWarning(true);
+  }, []);
+  const handleImportConfirmed = useCallback(() => {
+    setShowImportWarning(false);
     const input = document.createElement('input'); input.type = 'file'; input.accept = '.xlsx,.xls,.json';
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]; if (!file) return;
