@@ -37,6 +37,7 @@ const Index = () => {
 
   const [page, setPage] = useState('dashboard');
   const [sbOpen, setSbOpen] = useState(true);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [calMonth, setCalMonth] = useState(() => new Date().getMonth());
   const [calYear, setCalYear] = useState(() => new Date().getFullYear());
   const [selTrade, setSelTrade] = useState<Trade | null>(null);
