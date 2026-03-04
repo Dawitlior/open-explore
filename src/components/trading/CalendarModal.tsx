@@ -3,9 +3,7 @@ import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { I18nStrings } from '@/lib/trading-i18n';
 import { TradingBadge } from './TradingUI';
-import { generateInsights, generateSummary } from '@/lib/ai-engine';
-import { computeAnalytics } from '@/lib/trading-analytics';
-import { assessRisk } from '@/lib/risk-engine';
+import { generateDayInsights, generateDaySummary } from '@/lib/ai-engine';
 
 interface CalendarModalProps {
   T: TradingTheme;
@@ -57,9 +55,8 @@ export const CalendarModal = ({ T, t, isRTL, day, month, year, trades, onClose }
     setShowAI(true);
     setTimeout(() => {
       try {
-        const dayStats = computeAnalytics(dayTrades);
-        const dayRisk = assessRisk(dayTrades);
-        const insights = generateInsights(dayStats, dayTrades, dayRisk, isRTL);
+        // Use day-specific AI analysis that works directly from the day's trades
+        const insights = generateDayInsights(dayTrades, isRTL);
         setDayInsights(insights);
       } catch {
         setDayInsights([{
@@ -202,8 +199,13 @@ export const CalendarModal = ({ T, t, isRTL, day, month, year, trades, onClose }
                 border: `1px solid ${T.accent.purple}20`, borderRadius: T.radius.md,
                 padding: 16, animation: 'fadeIn 0.3s ease'
               }}>
-                <div style={{ fontSize: 10, color: T.accent.purple, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+                <div style={{ fontSize: 10, color: T.accent.purple, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
                   🧠 {isRTL ? 'ניתוח AI' : 'AI Day Analysis'}
+                </div>
+                <div style={{ fontSize: 9, color: T.text.dim, marginBottom: 12 }}>
+                  {isRTL
+                    ? `ניתוח דינמי מבוסס ${dayTrades.length} עסקאות ביום זה • ${totalR >= 0 ? '+' : ''}${totalR.toFixed(2)}R`
+                    : `Dynamic analysis based on ${dayTrades.length} trades this day • ${totalR >= 0 ? '+' : ''}${totalR.toFixed(2)}R`}
                 </div>
                 {aiLoading ? (
                   <div style={{ textAlign: 'center', padding: 20 }}>
@@ -234,7 +236,7 @@ export const CalendarModal = ({ T, t, isRTL, day, month, year, trades, onClose }
                     })}
                     {/* Day summary */}
                     <div style={{ marginTop: 4, padding: 10, background: T.bg.tertiary, borderRadius: T.radius.md, fontSize: 11, color: T.text.muted, lineHeight: 1.6 }}>
-                      {generateSummary(computeAnalytics(dayTrades), dayTrades, isRTL)}
+                      {generateDaySummary(dayTrades, isRTL)}
                     </div>
                   </div>
                 )}

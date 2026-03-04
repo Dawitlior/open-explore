@@ -17,15 +17,17 @@ interface ChartWrapperProps {
   children: ReactNode;
   style?: React.CSSProperties;
   unit?: string;
+  chartId?: string;
+  onRemove?: (chartId: string) => void;
 }
 
-export const ChartWrapper = ({ T, title, explanation, children, style, unit }: ChartWrapperProps) => {
+export const ChartWrapper = ({ T, title, explanation, children, style, unit, chartId, onRemove }: ChartWrapperProps) => {
   const [showInfo, setShowInfo] = useState(false);
 
   return (
     <GlassCard T={T} style={{ position: 'relative', ...style }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }} onClick={() => setShowInfo(!showInfo)}>
           <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{title}</div>
           {unit && <span style={{ fontSize: 8, padding: '1px 5px', borderRadius: 4, background: `${T.accent.purple}15`, color: T.accent.purple, fontWeight: 600 }}>{unit}</span>}
         </div>
@@ -60,10 +62,18 @@ export const ChartWrapper = ({ T, title, explanation, children, style, unit }: C
               <div style={{ fontSize: 11, color: T.text.secondary, lineHeight: 1.5 }}>{item.text}</div>
             </div>
           ))}
-          <button onClick={() => setShowInfo(false)} style={{
-            marginTop: 4, padding: '4px 12px', fontSize: 10, background: T.bg.tertiary, border: `1px solid ${T.border.subtle}`,
-            borderRadius: T.radius.sm, color: T.text.muted, cursor: 'pointer'
-          }}>Close</button>
+          <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+            <button onClick={() => setShowInfo(false)} style={{
+              padding: '4px 12px', fontSize: 10, background: T.bg.tertiary, border: `1px solid ${T.border.subtle}`,
+              borderRadius: T.radius.sm, color: T.text.muted, cursor: 'pointer'
+            }}>Close</button>
+            {chartId && onRemove && (
+              <button onClick={() => { onRemove(chartId); setShowInfo(false); }} style={{
+                padding: '4px 12px', fontSize: 10, background: `${T.accent.red}10`, border: `1px solid ${T.accent.red}25`,
+                borderRadius: T.radius.sm, color: T.accent.red, cursor: 'pointer', fontWeight: 600
+              }}>Remove from Dashboard</button>
+            )}
+          </div>
         </div>
       )}
       {children}
