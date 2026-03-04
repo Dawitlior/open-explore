@@ -1267,6 +1267,28 @@ const Index = () => {
           </div>
         </div>
       )}
+      {/* Import Loading Overlay */}
+      {importLoading && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 250, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 40, marginBottom: 16, animation: 'pulse 1.5s infinite' }}>📊</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: T.text.primary, marginBottom: 8 }}>{isRTL ? 'מעבד נתונים...' : 'Processing data...'}</div>
+            <div style={{ fontSize: 12, color: T.text.muted }}>{isRTL ? 'אנא המתן, המערכת מייבאת את העסקאות שלך' : 'Please wait while the system imports your trades'}</div>
+          </div>
+        </div>
+      )}
+      {/* Chart Explanation Modal */}
+      {explainModal && (
+        <ChartExplanationModal
+          T={T}
+          isRTL={isRTL}
+          title={explainModal.title}
+          explanation={explainModal.explanation}
+          chartId={explainModal.chartId}
+          onRemove={handleHideChart}
+          onClose={() => setExplainModal(null)}
+        />
+      )}
     </div>
   );
 };
