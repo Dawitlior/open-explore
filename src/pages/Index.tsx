@@ -7,7 +7,8 @@ import { computeAnalytics, getCalDays } from '@/lib/trading-analytics';
 import { i18n } from '@/lib/trading-i18n';
 import { getTheme, ttStyle, modeColors, type TradingTheme } from '@/lib/trading-theme';
 import { GlassCard, MetricCard, ScoreGauge, TradingBadge, Ico } from '@/components/trading/TradingUI';
-import { ChartWrapper, EXPLANATIONS } from '@/components/trading/ChartWrapper';
+import { ChartWrapper, EXPLANATIONS, type ChartExplanation } from '@/components/trading/ChartWrapper';
+import { ChartExplanationModal } from '@/components/trading/ChartExplanationModal';
 import { CalendarModal } from '@/components/trading/CalendarModal';
 import { FeatureManifestModal } from '@/components/trading/FeatureManifestModal';
 import { CommandPalette } from '@/components/trading/CommandPalette';
@@ -53,7 +54,12 @@ const Index = () => {
     try { return JSON.parse(localStorage.getItem('orca-hidden-charts') || '[]'); } catch { return []; }
   });
   const [showImportWarning, setShowImportWarning] = useState(false);
+  const [importLoading, setImportLoading] = useState(false);
+  const [explainModal, setExplainModal] = useState<{ title: string; explanation: ChartExplanation; chartId?: string } | null>(null);
 
+  const handleExplainClick = useCallback((title: string, explanation: ChartExplanation, chartId?: string) => {
+    setExplainModal({ title, explanation, chartId });
+  }, []);
   const handleHideChart = useCallback((chartId: string) => {
     setHiddenCharts(prev => {
       const next = [...prev, chartId];
@@ -83,10 +89,11 @@ const Index = () => {
   }, []);
 
   // Seed data on first load
-  const [seeded, setSeeded] = useState(false);
+  const [seeded, setSeeded] = useState(() => sessionStorage.getItem('orca-seeded') === '1');
   useEffect(() => {
     if (initialized && trades.length === 0 && !seeded && !loading) {
       setSeeded(true);
+      sessionStorage.setItem('orca-seeded', '1');
       importTrades(RAW_TRADES);
     }
   }, [initialized, trades.length, seeded, loading, importTrades]);
@@ -149,7 +156,7 @@ const Index = () => {
   }, [editingTrade, addTrade, updateTrade]);
 
   const handleDeleteTrade = useCallback(async (id: number) => { await removeTrade(id); setSelTrade(null); }, [removeTrade]);
-  const handleReset = useCallback(async () => { await resetAll(); setShowReset(false); setPage('dashboard'); }, [resetAll]);
+  const handleReset = useCallback(async () => { await resetAll(); sessionStorage.setItem('orca-seeded', '1'); setShowReset(false); setPage('dashboard'); }, [resetAll]);
   const handleExport = useCallback(() => {
     exportToXlsx(trades);
   }, [trades]);
@@ -166,6 +173,7 @@ const Index = () => {
     const input = document.createElement('input'); input.type = 'file'; input.accept = '.xlsx,.xls,.json';
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]; if (!file) return;
+      setImportLoading(true);
       try {
         if (file.name.endsWith('.json')) {
           const text = await file.text(); const data = JSON.parse(text);
@@ -178,7 +186,9 @@ const Index = () => {
           if (result.trades.length > 0) await importTrades(result.trades);
           else throw new Error('No valid trades found');
         }
+        sessionStorage.setItem('orca-seeded', '1');
       } catch (err) { console.error('Import failed:', err); }
+      finally { setImportLoading(false); }
     };
     input.click();
   }, [importTrades]);
