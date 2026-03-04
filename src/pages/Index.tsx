@@ -35,7 +35,7 @@ const Index = () => {
   const isAlpha = settings.isAlpha;
   const opMode = settings.operatingMode;
 
-  const [page, setPage] = useState('dashboard');
+  const [page, setPage] = useState('calendar');
   const [sbOpen, setSbOpen] = useState(true);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [calMonth, setCalMonth] = useState(() => new Date().getMonth());
@@ -1052,40 +1052,122 @@ const Index = () => {
 
   const renderPsychology = () => {
     if (trades.length === 0) return null;
+
+    // === PSYCHOLOGY SIGNALS ENGINE ===
+    // Overtrading detection
+    const tradeDays: Record<string, Trade[]> = {};
+    trades.forEach(tr => { const d = new Date(tr.date.replace(' ', 'T')).toDateString(); if (!tradeDays[d]) tradeDays[d] = []; tradeDays[d].push(tr); });
+    const overtradingDays = Object.entries(tradeDays).filter(([, trs]) => trs.length >= 3);
+
+    // Revenge trading: loss followed by increased risk same day
+    let revengeTrades = 0;
+    Object.values(tradeDays).forEach(dayTrades => {
+      for (let i = 1; i < dayTrades.length; i++) {
+        if (dayTrades[i-1].winLoss === 'Loss' && dayTrades[i].risk > dayTrades[i-1].risk * 1.2) revengeTrades++;
+      }
+    });
+
+    // Risk consistency (CV)
+    const risks = trades.map(tr => tr.risk);
+    const avgRisk = risks.reduce((a,b) => a+b, 0) / risks.length;
+    const riskStd = Math.sqrt(risks.reduce((s, r) => s + (r - avgRisk) ** 2, 0) / risks.length);
+    const riskCV = avgRisk > 0 ? (riskStd / avgRisk) * 100 : 0;
+
+    // Rule compliance
+    const rulesPct = (trades.filter(tr => tr.rules).length / trades.length) * 100;
+    const rulesBreached = trades.filter(tr => !tr.rules);
+
+    // Loss streaks
+    let maxStreak = 0, curStreak = 0;
+    trades.forEach(tr => { if (tr.winLoss === 'Loss') { curStreak++; maxStreak = Math.max(maxStreak, curStreak); } else curStreak = 0; });
+
+    // High deviation trades
+    const highDevTrades = trades.filter(tr => tr.deviation > 0.1);
+
+    type Signal = { icon: string; title: string; detail: string; severity: 'good' | 'warning' | 'danger' };
+    const signals: Signal[] = [];
+
+    // Overtrading signal
+    if (overtradingDays.length > 0) {
+      signals.push({ icon: '⚡', title: isRTL ? 'מסחר יתר' : 'Overtrading Detected', detail: isRTL ? `${overtradingDays.length} ימים עם 3+ עסקאות. מסחר יתר פוגע בקבלת החלטות ומגדיל טעויות רגשיות.` : `${overtradingDays.length} days with 3+ trades. Overtrading impairs decision-making and increases emotional errors.`, severity: 'warning' });
+    } else {
+      signals.push({ icon: '✅', title: isRTL ? 'תדירות מסחר תקינה' : 'Healthy Trade Frequency', detail: isRTL ? 'לא זוהה מסחר יתר. אתה שומר על תדירות מסחר מבוקרת.' : 'No overtrading detected. You maintain controlled trade frequency.', severity: 'good' });
+    }
+
+    // Revenge trading signal
+    if (revengeTrades > 0) {
+      signals.push({ icon: '🔥', title: isRTL ? 'מסחר נקמה' : 'Revenge Trading Detected', detail: isRTL ? `${revengeTrades} עסקאות שבהן הגדלת סיכון לאחר הפסד באותו יום. זהו דפוס מסוכן — עצור, נשום, חכה.` : `${revengeTrades} trades where risk was increased after a same-day loss. This is a dangerous pattern — stop, breathe, wait.`, severity: 'danger' });
+    } else {
+      signals.push({ icon: '✅', title: isRTL ? 'אין מסחר נקמה' : 'No Revenge Trading', detail: isRTL ? 'לא זוהה הגדלת סיכון לאחר הפסד באותו יום.' : 'No risk increase detected after same-day losses.', severity: 'good' });
+    }
+
+    // Risk consistency signal
+    if (riskCV > 50) {
+      signals.push({ icon: '📊', title: isRTL ? 'חוסר עקביות בסיכון' : 'Risk Size Inconsistency', detail: isRTL ? `מקדם השונות של הסיכון שלך הוא ${riskCV.toFixed(0)}%. סיכון לא עקבי מעיד על קבלת החלטות רגשית.` : `Your risk coefficient of variation is ${riskCV.toFixed(0)}%. Inconsistent risk sizing indicates emotional decision-making.`, severity: 'warning' });
+    } else {
+      signals.push({ icon: '✅', title: isRTL ? 'עקביות סיכון טובה' : 'Good Risk Consistency', detail: isRTL ? `מקדם שונות: ${riskCV.toFixed(0)}%. אתה שומר על גודל סיכון עקבי.` : `CV: ${riskCV.toFixed(0)}%. You maintain consistent risk sizing.`, severity: 'good' });
+    }
+
+    // Rules compliance signal
+    if (rulesPct < 80) {
+      signals.push({ icon: '⚠️', title: isRTL ? 'סטייה מכללי מסחר' : 'Trading Rules Deviation', detail: isRTL ? `רק ${rulesPct.toFixed(0)}% מהעסקאות בוצעו לפי הכללים. ${rulesBreached.length} עסקאות חרגו מהתוכנית.` : `Only ${rulesPct.toFixed(0)}% of trades followed rules. ${rulesBreached.length} trades deviated from the plan.`, severity: 'danger' });
+    } else {
+      signals.push({ icon: '✅', title: isRTL ? 'משמעת כללים גבוהה' : 'High Rule Compliance', detail: isRTL ? `${rulesPct.toFixed(0)}% מהעסקאות לפי הכללים. משמעת מצוינת.` : `${rulesPct.toFixed(0)}% rule compliance. Excellent discipline.`, severity: 'good' });
+    }
+
+    // Loss streak signal
+    if (maxStreak >= 3) {
+      signals.push({ icon: '🔴', title: isRTL ? 'רצף הפסדים' : 'Loss Streak Analysis', detail: isRTL ? `הרצף הגרוע ביותר: ${maxStreak} הפסדים רצופים. אחרי 3 הפסדים רצופים, מומלץ לעצור ולהעריך מחדש.` : `Worst streak: ${maxStreak} consecutive losses. After 3 consecutive losses, recommended to stop and reassess.`, severity: maxStreak >= 4 ? 'danger' : 'warning' });
+    }
+
+    // Deviation signal
+    if (highDevTrades.length > 0) {
+      signals.push({ icon: '📐', title: isRTL ? 'סטייה גבוהה מתוכנית' : 'High Plan Deviation', detail: isRTL ? `${highDevTrades.length} עסקאות עם סטייה > 0.1R. סטייה מהתוכנית מעידה על חוסר משמעת ביציאה.` : `${highDevTrades.length} trades with deviation > 0.1R. Plan deviation indicates exit discipline issues.`, severity: 'warning' });
+    }
+
+    const severityColor = (s: Signal['severity']) => s === 'good' ? T.accent.green : s === 'warning' ? T.accent.orange : T.accent.red;
+
     return (
       <>
-        <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-          <ScoreGauge T={T} score={stats.rulesFollowed} label={t.disciplineScore} color={T.accent.green} />
-          <ScoreGauge T={T} score={stats.orcaScore} label={t.orcaScore} color={T.accent.cyan} />
-          {isAlpha && <ScoreGauge T={T} score={riskData.riskConsistencyScore} label={t.riskConsistency} color={T.accent.orange} />}
-          <GlassCard T={T} style={{ flex: 2, minWidth: 280 }}>
-            <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>{isRTL ? 'מדדים התנהגותיים' : 'Behavioral Indicators'}</div>
-            {[
-              { l: t.overtrading, v: trades.filter(tr => { const d = new Date(tr.date).toDateString(); return trades.filter(tr2 => new Date(tr2.date).toDateString() === d).length >= 3; }).length > 0, d: isRTL ? '3+ עסקאות ביום אחד' : '3+ trades in single day' },
-              { l: t.revengeTrading, v: false, d: isRTL ? 'לא זוהה' : 'Not detected' },
-              { l: t.fearGreed, v: 'neutral' as string | boolean, d: isRTL ? 'ניטרלי — 100% כללים' : 'Neutral — 100% rules' },
-              { l: isRTL ? 'סטייה מתוכנית' : 'Plan Deviation', v: trades.filter(tr => tr.deviation > 0.1).length > 0, d: `${trades.filter(tr => tr.deviation > 0.1).length} ${isRTL ? 'עסקאות > 0.1R' : 'trades > 0.1R'}` },
-            ].map((item, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: i < 3 ? `1px solid ${T.border.subtle}` : 'none' }}>
-                <div><div style={{ fontSize: 12, fontWeight: 500 }}>{item.l}</div><div style={{ fontSize: 9, color: T.text.dim, marginTop: 1 }}>{item.d}</div></div>
-                <TradingBadge color={item.v === true ? T.accent.red : item.v === false ? T.accent.green : T.accent.orange}>{item.v === true ? (isRTL ? 'זוהה' : 'Detected') : item.v === false ? (isRTL ? 'תקין' : 'Clear') : (isRTL ? 'ניטרלי' : 'Neutral')}</TradingBadge>
-              </div>
-            ))}
-          </GlassCard>
+        <h2 style={{ fontSize: 18, fontWeight: 300, color: T.text.secondary, margin: '0 0 6px', fontFamily: "'JetBrains Mono', monospace" }}>
+          {isRTL ? '🧠 אבחון פסיכולוגי' : '🧠 Psychology Diagnosis'}
+        </h2>
+        <div style={{ fontSize: 11, color: T.text.dim, marginBottom: 20 }}>
+          {isRTL ? `ניתוח ${trades.length} עסקאות לזיהוי דפוסים התנהגותיים` : `Analyzing ${trades.length} trades for behavioral patterns`}
         </div>
-        <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'סטייה לפי עסקה' : 'Deviation per Trade'} explanation={EXPLANATIONS.rDistribution} unit="R">
-          <ResponsiveContainer width="100%" height={190}><BarChart data={trades.map(tr => ({ id: `#${tr.id}`, dev: tr.deviation || 0 }))}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="id" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 10 }} /><Tooltip contentStyle={tt} formatter={(v: number) => `${v.toFixed(4)}R`} /><Bar dataKey="dev" radius={[4,4,0,0]}>{trades.map((tr, i) => <Cell key={i} fill={tr.deviation > 0.1 ? T.accent.red : tr.deviation > 0 ? T.accent.orange : T.accent.green} />)}</Bar></BarChart></ResponsiveContainer>
-        </ChartWrapper>
-        <GlassCard T={T} style={{ marginTop: 12 }}>
-          <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>{isRTL ? 'מעקב שכנוע ובטחון' : 'Conviction & Confidence Tracker'}</div>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            {trades.map(tr => (
-              <div key={tr.id} style={{ width: 42, height: 42, borderRadius: T.radius.md, background: tr.winLoss === 'Win' ? `${T.accent.green}15` : tr.winLoss === 'Loss' ? `${T.accent.red}12` : `${T.accent.orange}10`, border: `1px solid ${tr.winLoss === 'Win' ? T.accent.green : tr.winLoss === 'Loss' ? T.accent.red : T.accent.orange}30`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 600, color: tr.winLoss === 'Win' ? T.accent.green : tr.winLoss === 'Loss' ? T.accent.red : T.accent.orange }}>
-                <div>#{tr.id}</div><div style={{ fontSize: 7 }}>{tr.rules ? '✓' : '✗'}</div>
+
+        {/* Score gauges */}
+        <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+          <ScoreGauge T={T} score={stats.rulesFollowed} label={t.disciplineScore} color={T.accent.green}
+            description={isRTL ? 'אחוז העסקאות לפי הכללים' : 'Percentage of rule-following trades'} />
+          <ScoreGauge T={T} score={Math.max(0, 100 - riskCV)} label={isRTL ? 'עקביות סיכון' : 'Risk Consistency'} color={T.accent.orange}
+            description={isRTL ? 'עד כמה הסיכון שלך אחיד' : 'How uniform your risk sizing is'} />
+          <ScoreGauge T={T} score={stats.orcaScore} label={t.orcaScore} color={T.accent.cyan}
+            description={isRTL ? 'ציון משולב' : 'Combined score'} />
+        </div>
+
+        {/* Textual signals */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+          {signals.map((sig, i) => (
+            <GlassCard T={T} key={i} style={{ borderInlineStart: `3px solid ${severityColor(sig.severity)}`, padding: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <span style={{ fontSize: 18 }}>{sig.icon}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: severityColor(sig.severity) }}>{sig.title}</span>
+                <TradingBadge color={severityColor(sig.severity)}>
+                  {sig.severity === 'good' ? (isRTL ? 'תקין' : 'OK') : sig.severity === 'warning' ? (isRTL ? 'אזהרה' : 'Warning') : (isRTL ? 'קריטי' : 'Critical')}
+                </TradingBadge>
               </div>
-            ))}
-          </div>
-        </GlassCard>
+              <div style={{ fontSize: 13, color: T.text.secondary, lineHeight: 1.7 }}>{sig.detail}</div>
+            </GlassCard>
+          ))}
+        </div>
+
+        {/* Deviation chart (kept but simplified) */}
+        {isAlpha && (
+          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'סטייה לפי עסקה' : 'Deviation per Trade'} explanation={EXPLANATIONS.rDistribution} unit="R">
+            <ResponsiveContainer width="100%" height={160}><BarChart data={trades.map(tr => ({ id: `#${tr.id}`, dev: tr.deviation || 0 }))}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="id" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 10 }} /><Tooltip contentStyle={tt} formatter={(v: number) => `${v.toFixed(4)}R`} /><Bar dataKey="dev" radius={[4,4,0,0]}>{trades.map((tr, i) => <Cell key={i} fill={tr.deviation > 0.1 ? T.accent.red : tr.deviation > 0 ? T.accent.orange : T.accent.green} />)}</Bar></BarChart></ResponsiveContainer>
+          </ChartWrapper>
+        )}
       </>
     );
   };
@@ -1204,6 +1286,10 @@ const Index = () => {
             {settings.privacyMode && <TradingBadge color={T.accent.orange}>🔒</TradingBadge>}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {/* Prominent Add Trade button */}
+            <button onClick={() => { setEditingTrade(null); setShowTradeForm(true); }} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 16px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 700, cursor: 'pointer', fontSize: 12, transition: 'all 0.2s', boxShadow: `0 0 12px ${T.accent.cyan}30` }}>
+              + {t.addTrade}
+            </button>
             {hiddenCharts.length > 0 && (
               <button onClick={handleRestoreCharts} style={{ padding: '4px 10px', background: `${T.accent.orange}15`, border: `1px solid ${T.accent.orange}30`, borderRadius: T.radius.sm, color: T.accent.orange, cursor: 'pointer', fontSize: 10, fontWeight: 600, transition: 'all 0.2s' }}>
                 ↩ {isRTL ? 'שחזר גרפים' : 'Restore Charts'} ({hiddenCharts.length})
