@@ -5,7 +5,7 @@ import { RAW_TRADES } from '@/data/trades';
 
 import { computeAnalytics, getCalDays } from '@/lib/trading-analytics';
 import { i18n } from '@/lib/trading-i18n';
-import { getTheme, ttStyle, cursorStyle, modeColors, type TradingTheme } from '@/lib/trading-theme';
+import { getTheme, ttStyle, modeColors, type TradingTheme } from '@/lib/trading-theme';
 import { GlassCard, MetricCard, ScoreGauge, TradingBadge, Ico } from '@/components/trading/TradingUI';
 import { ChartWrapper, EXPLANATIONS } from '@/components/trading/ChartWrapper';
 import { CalendarModal } from '@/components/trading/CalendarModal';
