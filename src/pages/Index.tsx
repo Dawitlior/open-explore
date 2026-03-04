@@ -1141,7 +1141,31 @@ const Index = () => {
             {settings.privacyMode && <TradingBadge color={T.accent.orange}>🔒</TradingBadge>}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button onClick={() => setShowCmdPalette(true)} style={{ padding: '4px 10px', background: T.bg.tertiary, border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.sm, color: T.text.dim, cursor: 'pointer', fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>⌘K</button>
+            {hiddenCharts.length > 0 && (
+              <button onClick={handleRestoreCharts} style={{ padding: '4px 10px', background: `${T.accent.orange}15`, border: `1px solid ${T.accent.orange}30`, borderRadius: T.radius.sm, color: T.accent.orange, cursor: 'pointer', fontSize: 10, fontWeight: 600, transition: 'all 0.2s' }}>
+                ↩ {isRTL ? 'שחזר גרפים' : 'Restore Charts'} ({hiddenCharts.length})
+              </button>
+            )}
+            <div style={{ position: 'relative' }}
+              onMouseEnter={() => setCmdTooltipVisible(true)}
+              onMouseLeave={() => setCmdTooltipVisible(false)}
+            >
+              <button onClick={() => setShowCmdPalette(true)} style={{ padding: '4px 10px', background: T.bg.tertiary, border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.sm, color: T.text.dim, cursor: 'pointer', fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>⌘K</button>
+              {cmdTooltipVisible && (
+                <div style={{
+                  position: 'absolute', top: '100%', right: 0, marginTop: 6, padding: '8px 12px',
+                  background: T.bg.card, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md,
+                  boxShadow: T.shadow.elevated, zIndex: 50, whiteSpace: 'nowrap', animation: 'fadeIn 0.15s ease'
+                }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: T.text.primary, marginBottom: 3 }}>
+                    {isRTL ? 'פעולות מהירות' : 'Quick Actions'}
+                  </div>
+                  <div style={{ fontSize: 9, color: T.text.dim }}>
+                    {isRTL ? 'הוסף עסקה • ייבוא נתונים • פקודות מערכת' : 'Add Trade • Import Data • System Commands'}
+                  </div>
+                </div>
+              )}
+            </div>
             <div style={{ fontSize: 11, color: T.text.dim }}>{new Date().toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</div>
             <PV><div style={{ fontSize: 11, color: T.accent.cyan, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace" }}>${currentBalance.toFixed(2)}</div></PV>
             <span onClick={() => setShowFeatureModal(true)} style={{ fontSize: 13, fontWeight: 800, letterSpacing: '-0.02em', color: T.text.primary, fontFamily: "'JetBrains Mono', monospace", cursor: 'pointer', transition: 'opacity 0.2s' }}>Orca<span style={{ fontWeight: 300, color: T.text.muted, marginLeft: 4 }}>Investment</span></span>
