@@ -49,6 +49,24 @@ const Index = () => {
   const [calModalDay, setCalModalDay] = useState<number | null>(null);
   const [showCmdPalette, setShowCmdPalette] = useState(false);
   const [showFeatureModal, setShowFeatureModal] = useState(false);
+  const [hiddenCharts, setHiddenCharts] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem('orca-hidden-charts') || '[]'); } catch { return []; }
+  });
+  const [showImportWarning, setShowImportWarning] = useState(false);
+  const [cmdTooltipVisible, setCmdTooltipVisible] = useState(false);
+
+  const handleHideChart = useCallback((chartId: string) => {
+    setHiddenCharts(prev => {
+      const next = [...prev, chartId];
+      localStorage.setItem('orca-hidden-charts', JSON.stringify(next));
+      return next;
+    });
+  }, []);
+  const handleRestoreCharts = useCallback(() => {
+    setHiddenCharts([]);
+    localStorage.removeItem('orca-hidden-charts');
+  }, []);
+  const isChartVisible = useCallback((chartId: string) => !hiddenCharts.includes(chartId), [hiddenCharts]);
 
   const riskData = useMemo(() => assessRisk(trades), [trades]);
   const currentBalance = trades.length > 0 ? trades[trades.length - 1].balance : 200;
