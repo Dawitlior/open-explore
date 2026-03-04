@@ -189,6 +189,9 @@ const Index = () => {
   }, []);
 
   const tt = ttStyle(T);
+  const cc = cursorStyle(T);
+  // Themed tooltip props used across all Recharts charts
+  const tooltipProps = { contentStyle: tt, itemStyle: { color: T.text.secondary, fontSize: 11 }, labelStyle: { color: T.text.muted, fontSize: 10, marginBottom: 2 }, cursor: cc };
 
   // Command palette commands
   const commands = useMemo(() => [
