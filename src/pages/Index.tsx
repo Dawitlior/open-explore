@@ -7,7 +7,8 @@ import { computeAnalytics, getCalDays } from '@/lib/trading-analytics';
 import { i18n } from '@/lib/trading-i18n';
 import { getTheme, ttStyle, modeColors, type TradingTheme } from '@/lib/trading-theme';
 import { GlassCard, MetricCard, ScoreGauge, TradingBadge, Ico } from '@/components/trading/TradingUI';
-import { ChartWrapper, EXPLANATIONS } from '@/components/trading/ChartWrapper';
+import { ChartWrapper, EXPLANATIONS, type ChartExplanation } from '@/components/trading/ChartWrapper';
+import { ChartExplanationModal } from '@/components/trading/ChartExplanationModal';
 import { CalendarModal } from '@/components/trading/CalendarModal';
 import { FeatureManifestModal } from '@/components/trading/FeatureManifestModal';
 import { CommandPalette } from '@/components/trading/CommandPalette';
@@ -53,7 +54,12 @@ const Index = () => {
     try { return JSON.parse(localStorage.getItem('orca-hidden-charts') || '[]'); } catch { return []; }
   });
   const [showImportWarning, setShowImportWarning] = useState(false);
+  const [importLoading, setImportLoading] = useState(false);
+  const [explainModal, setExplainModal] = useState<{ title: string; explanation: ChartExplanation; chartId?: string } | null>(null);
 
+  const handleExplainClick = useCallback((title: string, explanation: ChartExplanation, chartId?: string) => {
+    setExplainModal({ title, explanation, chartId });
+  }, []);
   const handleHideChart = useCallback((chartId: string) => {
     setHiddenCharts(prev => {
       const next = [...prev, chartId];
@@ -83,10 +89,11 @@ const Index = () => {
   }, []);
 
   // Seed data on first load
-  const [seeded, setSeeded] = useState(false);
+  const [seeded, setSeeded] = useState(() => sessionStorage.getItem('orca-seeded') === '1');
   useEffect(() => {
     if (initialized && trades.length === 0 && !seeded && !loading) {
       setSeeded(true);
+      sessionStorage.setItem('orca-seeded', '1');
       importTrades(RAW_TRADES);
     }
   }, [initialized, trades.length, seeded, loading, importTrades]);
@@ -149,7 +156,7 @@ const Index = () => {
   }, [editingTrade, addTrade, updateTrade]);
 
   const handleDeleteTrade = useCallback(async (id: number) => { await removeTrade(id); setSelTrade(null); }, [removeTrade]);
-  const handleReset = useCallback(async () => { await resetAll(); setShowReset(false); setPage('dashboard'); }, [resetAll]);
+  const handleReset = useCallback(async () => { await resetAll(); sessionStorage.setItem('orca-seeded', '1'); setShowReset(false); setPage('dashboard'); }, [resetAll]);
   const handleExport = useCallback(() => {
     exportToXlsx(trades);
   }, [trades]);
@@ -166,6 +173,7 @@ const Index = () => {
     const input = document.createElement('input'); input.type = 'file'; input.accept = '.xlsx,.xls,.json';
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]; if (!file) return;
+      setImportLoading(true);
       try {
         if (file.name.endsWith('.json')) {
           const text = await file.text(); const data = JSON.parse(text);
@@ -178,7 +186,9 @@ const Index = () => {
           if (result.trades.length > 0) await importTrades(result.trades);
           else throw new Error('No valid trades found');
         }
+        sessionStorage.setItem('orca-seeded', '1');
       } catch (err) { console.error('Import failed:', err); }
+      finally { setImportLoading(false); }
     };
     input.click();
   }, [importTrades]);
@@ -262,7 +272,7 @@ const Index = () => {
           <MetricCard T={T} label={t.currentStreak} value={`${stats.currentStreak} ${stats.streakType === 'Win' ? '🟢' : stats.streakType === 'Loss' ? '🔴' : '⚪'}`} color={T.text.primary} />
         </div>
         {/* Simple Equity Curve */}
-        <ChartWrapper T={T} title={t.equityCurve} explanation={EXPLANATIONS.equityCurve} unit="$" style={{ marginBottom: 18 }}>
+        <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.equityCurve} explanation={EXPLANATIONS.equityCurve} unit="$" style={{ marginBottom: 18 }}>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={stats.equityCurve}>
               <defs><linearGradient id="eqBeg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.3}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0}/></linearGradient></defs>
@@ -275,7 +285,7 @@ const Index = () => {
           </ResponsiveContainer>
         </ChartWrapper>
         {/* Simple P&L bars */}
-        <ChartWrapper T={T} title={t.pnlDistribution} explanation={EXPLANATIONS.pnlDistribution} unit="$" style={{ marginBottom: 18 }}>
+        <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.pnlDistribution} explanation={EXPLANATIONS.pnlDistribution} unit="$" style={{ marginBottom: 18 }}>
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={trades.map(tr => ({ id: tr.id, pnl: tr.pnl }))}>
               <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
@@ -429,7 +439,7 @@ const Index = () => {
           <ScoreGauge T={T} score={stats.edgeHealth} label={t.edgeHealth} color={T.accent.blue} />
           <ScoreGauge T={T} score={stats.regimeFit} label={t.regimeFit} color={T.accent.purple} />
           {isAlpha && <ScoreGauge T={T} score={riskData.riskConsistencyScore} label={t.riskConsistency} color={T.accent.orange} />}
-          {isChartVisible('radarScore') && <ChartWrapper T={T} title={isRTL ? 'ציון Orca — פירוט' : 'Orca Score — Breakdown'} explanation={EXPLANATIONS.radarScore} chartId="radarScore" onRemove={handleHideChart} style={{ flex: 2, minWidth: 260 }}>
+          {isChartVisible('radarScore') && <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ציון Orca — פירוט' : 'Orca Score — Breakdown'} explanation={EXPLANATIONS.radarScore} chartId="radarScore" onRemove={handleHideChart} style={{ flex: 2, minWidth: 260 }}>
             <ResponsiveContainer width="100%" height={170}>
               <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="68%">
                 <PolarGrid stroke={T.border.medium} /><PolarAngleAxis dataKey="m" tick={{ fill: T.text.muted, fontSize: 9 }} /><PolarRadiusAxis tick={false} domain={[0, 100]} axisLine={false} />
@@ -440,7 +450,7 @@ const Index = () => {
         </div>
         {/* Equity + P&L */}
         <div style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
-          {isChartVisible('equityCurve') && <ChartWrapper T={T} title={t.equityCurve} explanation={EXPLANATIONS.equityCurve} unit="$" chartId="equityCurve" onRemove={handleHideChart} style={{ flex: 2, minWidth: 380 }}>
+          {isChartVisible('equityCurve') && <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.equityCurve} explanation={EXPLANATIONS.equityCurve} unit="$" chartId="equityCurve" onRemove={handleHideChart} style={{ flex: 2, minWidth: 380 }}>
             <ResponsiveContainer width="100%" height={190}>
               <AreaChart data={stats.equityCurve}>
                 <defs><linearGradient id="eqG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.3}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0}/></linearGradient></defs>
@@ -449,7 +459,7 @@ const Index = () => {
               </AreaChart>
             </ResponsiveContainer>
           </ChartWrapper>}
-          {isChartVisible('pnlDistribution') && <ChartWrapper T={T} title={t.pnlDistribution} explanation={EXPLANATIONS.pnlDistribution} unit="$" chartId="pnlDistribution" onRemove={handleHideChart} style={{ flex: 1, minWidth: 260 }}>
+          {isChartVisible('pnlDistribution') && <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.pnlDistribution} explanation={EXPLANATIONS.pnlDistribution} unit="$" chartId="pnlDistribution" onRemove={handleHideChart} style={{ flex: 1, minWidth: 260 }}>
             <ResponsiveContainer width="100%" height={190}>
               <BarChart data={trades.map(tr => ({ id: tr.id, pnl: tr.pnl }))}>
                 <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="id" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 10 }} />
@@ -460,7 +470,7 @@ const Index = () => {
         </div>
         {/* Direction + Quick Stats */}
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          {isChartVisible('coinPerformance') && <ChartWrapper T={T} title={t.coinPerformance} explanation={EXPLANATIONS.coinPerformance} unit="$" chartId="coinPerformance" onRemove={handleHideChart} style={{ flex: 1, minWidth: 280 }}>
+          {isChartVisible('coinPerformance') && <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.coinPerformance} explanation={EXPLANATIONS.coinPerformance} unit="$" chartId="coinPerformance" onRemove={handleHideChart} style={{ flex: 1, minWidth: 280 }}>
             <ResponsiveContainer width="100%" height={190}>
               <BarChart data={stats.coinPerf} layout="vertical"><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis type="number" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis dataKey="coin" type="category" tick={{ fill: T.text.secondary, fontSize: 11 }} width={45} />
                 <Tooltip contentStyle={tt} /><Bar dataKey="pnl" radius={[0,4,4,0]}>{stats.coinPerf.map((c, i) => <Cell key={i} fill={c.pnl >= 0 ? T.accent.green : T.accent.red} />)}</Bar>
@@ -483,7 +493,7 @@ const Index = () => {
               </div>
             ))}
           </GlassCard>
-          <ChartWrapper T={T} title={t.directionAnalysis} explanation={EXPLANATIONS.directionAnalysis} style={{ flex: 1, minWidth: 240 }}>
+          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.directionAnalysis} explanation={EXPLANATIONS.directionAnalysis} style={{ flex: 1, minWidth: 240 }}>
             <ResponsiveContainer width="100%" height={140}>
               <PieChart><Pie data={stats.directionData} dataKey="trades" nameKey="name" cx="50%" cy="50%" innerRadius={38} outerRadius={60} paddingAngle={4}><Cell fill={T.accent.green} /><Cell fill={T.accent.red} /></Pie><Tooltip contentStyle={tt} /></PieChart>
             </ResponsiveContainer>
@@ -494,7 +504,7 @@ const Index = () => {
         </div>
         {/* Alpha additions */}
         {isAlpha && <div style={{ display: 'flex', gap: 12, marginTop: 18, flexWrap: 'wrap' }}>
-          <ChartWrapper T={T} title={t.riskEvolution} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ flex: 1, minWidth: 300 }}>
+          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.riskEvolution} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ flex: 1, minWidth: 300 }}>
             <ResponsiveContainer width="100%" height={160}>
               <LineChart data={riskData.riskGrowthEvolution}>
                 <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="tradeId" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 10 }} />
@@ -502,7 +512,7 @@ const Index = () => {
               </LineChart>
             </ResponsiveContainer>
           </ChartWrapper>
-          <ChartWrapper T={T} title={isRTL ? 'ביצועים חודשיים (R)' : 'Monthly Performance (R)'} explanation={EXPLANATIONS.monthlyPerformance} unit="R" style={{ flex: 1, minWidth: 250 }}>
+          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ביצועים חודשיים (R)' : 'Monthly Performance (R)'} explanation={EXPLANATIONS.monthlyPerformance} unit="R" style={{ flex: 1, minWidth: 250 }}>
             {stats.monthlyPerf.map((mp, i) => (
               <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px solid ${T.border.subtle}` }}>
                 <span style={{ fontSize: 12, color: T.text.secondary }}>{mp.month}</span>
@@ -548,31 +558,31 @@ const Index = () => {
 
         {/* Research charts grid */}
         <div style={{ display: 'grid', gridTemplateColumns: isAlpha ? '1fr 1fr' : '1fr 1fr', gap: 12, marginBottom: 16 }}>
-          <ChartWrapper T={T} title={isRTL ? 'התפלגות R-Multiple' : 'R-Multiple Distribution'} explanation={EXPLANATIONS.rDistribution} unit="R">
+          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'התפלגות R-Multiple' : 'R-Multiple Distribution'} explanation={EXPLANATIONS.rDistribution} unit="R">
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={stats.rDist}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="id" tick={{ fill: T.text.dim, fontSize: 9 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 9 }} /><Tooltip contentStyle={tt} /><Bar dataKey="r" radius={[3,3,0,0]}>{stats.rDist.map((d, i) => <Cell key={i} fill={d.r >= 0 ? T.accent.cyan : T.accent.red} />)}</Bar></BarChart>
             </ResponsiveContainer>
           </ChartWrapper>
 
-          <ChartWrapper T={T} title={isRTL ? 'שארפ מתגלגל' : 'Rolling Sharpe Ratio'} explanation={EXPLANATIONS.rollingSharpe} unit="R/σ">
+          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'שארפ מתגלגל' : 'Rolling Sharpe Ratio'} explanation={EXPLANATIONS.rollingSharpe} unit="R/σ">
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={stats.rollingSharpe}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="tradeId" tick={{ fill: T.text.dim, fontSize: 9 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 9 }} /><Tooltip contentStyle={tt} /><Line type="monotone" dataKey="sharpe" stroke={T.accent.blue} strokeWidth={2} dot={{ fill: T.accent.blue, r: 2 }} /><Line type="monotone" dataKey="sharpe" stroke="transparent" />{/* zero line */}</LineChart>
             </ResponsiveContainer>
           </ChartWrapper>
 
-          <ChartWrapper T={T} title={isRTL ? 'דעיכת יתרון' : 'Edge Decay Timeline'} explanation={EXPLANATIONS.edgeDecay} unit="R">
+          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'דעיכת יתרון' : 'Edge Decay Timeline'} explanation={EXPLANATIONS.edgeDecay} unit="R">
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={stats.edgeDecay}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="period" tick={{ fill: T.text.dim, fontSize: 9 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 9 }} /><Tooltip contentStyle={tt} /><Bar dataKey="expectancyR" radius={[4,4,0,0]}>{stats.edgeDecay.map((d, i) => <Cell key={i} fill={d.expectancyR >= 0 ? T.accent.cyan : T.accent.red} />)}</Bar></BarChart>
             </ResponsiveContainer>
           </ChartWrapper>
 
-          <ChartWrapper T={T} title={isRTL ? 'אחוז הצלחה vs R:R' : 'Win Rate vs R:R Bucket'} explanation={EXPLANATIONS.winRateVsRR} unit="%">
+          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'אחוז הצלחה vs R:R' : 'Win Rate vs R:R Bucket'} explanation={EXPLANATIONS.winRateVsRR} unit="%">
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={stats.winRateVsRR}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="rr" tick={{ fill: T.text.dim, fontSize: 9 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 9 }} domain={[0, 100]} /><Tooltip contentStyle={tt} /><Bar dataKey="winRate" fill={T.accent.blue} radius={[4,4,0,0]} /><Bar dataKey="count" fill={`${T.accent.cyan}40`} radius={[4,4,0,0]} /></BarChart>
             </ResponsiveContainer>
           </ChartWrapper>
 
-          <ChartWrapper T={T} title={isRTL ? 'תוחלת מתגלגלת (R)' : 'Rolling Expectancy (R)'} explanation={EXPLANATIONS.expectancy} unit="R">
+          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'תוחלת מתגלגלת (R)' : 'Rolling Expectancy (R)'} explanation={EXPLANATIONS.expectancy} unit="R">
             <ResponsiveContainer width="100%" height={200}>
               <AreaChart data={stats.rollingExpectancyR}>
                 <defs><linearGradient id="reG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.2}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0}/></linearGradient></defs>
@@ -582,13 +592,13 @@ const Index = () => {
             </ResponsiveContainer>
           </ChartWrapper>
 
-          <ChartWrapper T={T} title={isRTL ? 'תוחלת לפי מטבע (R)' : 'Strategy Expectancy (R)'} explanation={EXPLANATIONS.coinPerformance} unit="R">
+          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'תוחלת לפי מטבע (R)' : 'Strategy Expectancy (R)'} explanation={EXPLANATIONS.coinPerformance} unit="R">
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={stats.strategyExpectancyR} layout="vertical"><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis type="number" tick={{ fill: T.text.dim, fontSize: 9 }} /><YAxis dataKey="coin" type="category" tick={{ fill: T.text.secondary, fontSize: 10 }} width={40} /><Tooltip contentStyle={tt} /><Bar dataKey="expectancyR" radius={[0,4,4,0]}>{stats.strategyExpectancyR.map((d, i) => <Cell key={i} fill={d.expectancyR >= 0 ? T.accent.green : T.accent.red} />)}</Bar></BarChart>
             </ResponsiveContainer>
           </ChartWrapper>
 
-          <ChartWrapper T={T} title={isRTL ? 'מפת נסיגה' : 'Drawdown Depth Map'} explanation={EXPLANATIONS.drawdown} unit="%">
+          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'מפת נסיגה' : 'Drawdown Depth Map'} explanation={EXPLANATIONS.drawdown} unit="%">
             <ResponsiveContainer width="100%" height={200}>
               <AreaChart data={(() => { let p = 200; return stats.equityCurve.map(e => { if (e.balance > p) p = e.balance; return { trade: e.trade, dd: -((p - e.balance) / p * 100) }; }); })()}>
                 <defs><linearGradient id="ddGR" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.red} stopOpacity={0}/><stop offset="100%" stopColor={T.accent.red} stopOpacity={0.4}/></linearGradient></defs>
@@ -598,7 +608,7 @@ const Index = () => {
             </ResponsiveContainer>
           </ChartWrapper>
 
-          <ChartWrapper T={T} title={isRTL ? 'ביצועים לפי יום (R)' : 'Performance by Day (R)'} explanation={EXPLANATIONS.coinPerformance} unit="R">
+          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ביצועים לפי יום (R)' : 'Performance by Day (R)'} explanation={EXPLANATIONS.coinPerformance} unit="R">
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={stats.dayPerf}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="day" tick={{ fill: T.text.dim, fontSize: 9 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 9 }} /><Tooltip contentStyle={tt} /><Bar dataKey="avgR" radius={[4,4,0,0]}>{stats.dayPerf.map((d, i) => <Cell key={i} fill={d.avgR >= 0 ? T.accent.green : T.accent.red} />)}</Bar></BarChart>
             </ResponsiveContainer>
@@ -608,19 +618,19 @@ const Index = () => {
         {/* Alpha: additional research panels */}
         {isAlpha && <>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
-            <ChartWrapper T={T} title={isRTL ? 'סיכון/רוויה' : 'Risk of Ruin Curve'} explanation={EXPLANATIONS.riskOfRuin} unit="%">
+            <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'סיכון/רוויה' : 'Risk of Ruin Curve'} explanation={EXPLANATIONS.riskOfRuin} unit="%">
               <div style={{ textAlign: 'center', padding: 20 }}>
                 <div style={{ fontSize: 42, fontWeight: 700, color: stats.riskOfRuin < 10 ? T.accent.green : stats.riskOfRuin < 30 ? T.accent.orange : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{Math.min(99.9, stats.riskOfRuin).toFixed(1)}%</div>
                 <div style={{ fontSize: 10, color: T.text.dim, marginTop: 4 }}>{stats.riskOfRuin < 10 ? '🟢 Low Risk' : stats.riskOfRuin < 30 ? '🟡 Moderate' : '🔴 High Risk'}</div>
               </div>
             </ChartWrapper>
-            <ChartWrapper T={T} title={isRTL ? 'אופטימום קלי' : 'Kelly Optimal Sizing'} explanation={EXPLANATIONS.kellyOptimal} unit="%">
+            <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'אופטימום קלי' : 'Kelly Optimal Sizing'} explanation={EXPLANATIONS.kellyOptimal} unit="%">
               <div style={{ textAlign: 'center', padding: 20 }}>
                 <div style={{ fontSize: 42, fontWeight: 700, color: stats.kellyOptimal > 0 ? T.accent.cyan : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{stats.kellyOptimal.toFixed(1)}%</div>
                 <div style={{ fontSize: 10, color: T.text.dim, marginTop: 4 }}>Half-Kelly: {(stats.kellyOptimal / 2).toFixed(1)}%</div>
               </div>
             </ChartWrapper>
-            <ChartWrapper T={T} title={isRTL ? 'יעילות הון' : 'Capital Efficiency'} explanation={EXPLANATIONS.volatilityAdjusted} unit="R/σ">
+            <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'יעילות הון' : 'Capital Efficiency'} explanation={EXPLANATIONS.volatilityAdjusted} unit="R/σ">
               <div style={{ textAlign: 'center', padding: 20 }}>
                 <div style={{ fontSize: 42, fontWeight: 700, color: stats.volatilityAdjustedExpectancy > 0.5 ? T.accent.cyan : T.accent.orange, fontFamily: "'JetBrains Mono', monospace" }}>{stats.volatilityAdjustedExpectancy.toFixed(2)}</div>
                 <div style={{ fontSize: 10, color: T.text.dim, marginTop: 4 }}>{stats.volatilityAdjustedExpectancy > 0.5 ? '🟢 Efficient' : '🟡 Suboptimal'}</div>
@@ -629,7 +639,7 @@ const Index = () => {
           </div>
 
           {/* Drawdown structure table */}
-          <ChartWrapper T={T} title={isRTL ? 'מבנה נסיגות' : 'Drawdown Structure Map'} explanation={EXPLANATIONS.drawdownStructure} unit="%">
+          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'מבנה נסיגות' : 'Drawdown Structure Map'} explanation={EXPLANATIONS.drawdownStructure} unit="%">
             {stats.drawdownStructure.length === 0 ? (
               <div style={{ textAlign: 'center', padding: 20, color: T.text.dim, fontSize: 12 }}>{isRTL ? 'אין נסיגות משמעותיות' : 'No significant drawdowns'}</div>
             ) : (
@@ -645,7 +655,7 @@ const Index = () => {
           </ChartWrapper>
 
           {/* Confidence vs Outcome scatter */}
-          <ChartWrapper T={T} title={isRTL ? 'ביטחון מול תוצאה' : 'Confidence vs Outcome Scatter'} explanation={EXPLANATIONS.rDistribution} unit="R" style={{ marginTop: 12 }}>
+          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ביטחון מול תוצאה' : 'Confidence vs Outcome Scatter'} explanation={EXPLANATIONS.rDistribution} unit="R" style={{ marginTop: 12 }}>
             <ResponsiveContainer width="100%" height={200}>
               <ScatterChart><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
                 <XAxis dataKey="deviation" name="Deviation" tick={{ fill: T.text.dim, fontSize: 9 }} /><YAxis dataKey="returnR" name="R-Multiple" tick={{ fill: T.text.dim, fontSize: 9 }} /><ZAxis dataKey="risk" range={[20, 60]} />
@@ -852,14 +862,14 @@ const Index = () => {
           <MetricCard T={T} label={t.maxDrawdown} value={`${stats.maxDrawdown.toFixed(1)}%`} color={T.accent.orange} small />
         </div>
         <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-          <ChartWrapper T={T} title={isRTL ? 'התפלגות R' : 'R-Multiple Distribution'} explanation={EXPLANATIONS.rDistribution} unit="R" style={{ flex: 1, minWidth: 360 }}>
+          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'התפלגות R' : 'R-Multiple Distribution'} explanation={EXPLANATIONS.rDistribution} unit="R" style={{ flex: 1, minWidth: 360 }}>
             <ResponsiveContainer width="100%" height={210}><BarChart data={stats.rDist}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="id" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 10 }} /><Tooltip contentStyle={tt} /><Bar dataKey="r" radius={[4,4,0,0]}>{stats.rDist.map((d, i) => <Cell key={i} fill={d.r >= 0 ? T.accent.cyan : T.accent.red} />)}</Bar></BarChart></ResponsiveContainer>
           </ChartWrapper>
-          <ChartWrapper T={T} title={isRTL ? 'ביצועים לפי יום' : 'Performance by Day'} explanation={EXPLANATIONS.coinPerformance} unit="$" style={{ flex: 1, minWidth: 280 }}>
+          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ביצועים לפי יום' : 'Performance by Day'} explanation={EXPLANATIONS.coinPerformance} unit="$" style={{ flex: 1, minWidth: 280 }}>
             <ResponsiveContainer width="100%" height={210}><BarChart data={stats.dayPerf}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="day" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 10 }} /><Tooltip contentStyle={tt} /><Bar dataKey="pnl" radius={[4,4,0,0]}>{stats.dayPerf.map((d, i) => <Cell key={i} fill={d.pnl >= 0 ? T.accent.green : T.accent.red} />)}</Bar></BarChart></ResponsiveContainer>
           </ChartWrapper>
         </div>
-        <ChartWrapper T={T} title={isRTL ? 'רווח/הפסד מצטבר' : 'Cumulative P&L'} explanation={EXPLANATIONS.equityCurve} unit="$">
+        <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'רווח/הפסד מצטבר' : 'Cumulative P&L'} explanation={EXPLANATIONS.equityCurve} unit="$">
           <ResponsiveContainer width="100%" height={210}>
             <ComposedChart data={(() => { let c = 0; return trades.map(tr => ({ id: tr.id, cum: (c += tr.pnl), pnl: tr.pnl })); })()}>
               <defs><linearGradient id="cG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.2}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0}/></linearGradient></defs>
@@ -870,7 +880,7 @@ const Index = () => {
           </ResponsiveContainer>
         </ChartWrapper>
         {/* Monthly performance (always show in analytics) */}
-        <ChartWrapper T={T} title={isRTL ? 'ביצועים חודשיים' : 'Monthly Performance'} explanation={EXPLANATIONS.monthlyPerformance} unit="R" style={{ marginTop: 16 }}>
+        <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ביצועים חודשיים' : 'Monthly Performance'} explanation={EXPLANATIONS.monthlyPerformance} unit="R" style={{ marginTop: 16 }}>
           {stats.monthlyPerf.map((mp, i) => (
             <div key={i} style={{ padding: '10px 12px', borderRadius: T.radius.md, background: mp.pnl >= 0 ? `${T.accent.green}08` : `${T.accent.red}08`, border: `1px solid ${mp.pnl >= 0 ? T.accent.green : T.accent.red}15`, marginBottom: 6 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -886,7 +896,7 @@ const Index = () => {
         </ChartWrapper>
         {isAlpha && <>
           <div style={{ display: 'flex', gap: 12, marginTop: 16, flexWrap: 'wrap' }}>
-            <ChartWrapper T={T} title={isRTL ? 'מפת נסיגה' : 'Drawdown Depth Map'} explanation={EXPLANATIONS.drawdown} unit="%" style={{ flex: 1, minWidth: 300 }}>
+            <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'מפת נסיגה' : 'Drawdown Depth Map'} explanation={EXPLANATIONS.drawdown} unit="%" style={{ flex: 1, minWidth: 300 }}>
               <ResponsiveContainer width="100%" height={180}>
                 <AreaChart data={(() => { let p = 200; return stats.equityCurve.map(e => { if (e.balance > p) p = e.balance; return { trade: e.trade, dd: -((p - e.balance) / p * 100) }; }); })()}>
                   <defs><linearGradient id="ddGA" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.red} stopOpacity={0}/><stop offset="100%" stopColor={T.accent.red} stopOpacity={0.4}/></linearGradient></defs>
@@ -895,7 +905,7 @@ const Index = () => {
                 </AreaChart>
               </ResponsiveContainer>
             </ChartWrapper>
-            <ChartWrapper T={T} title={isRTL ? 'תוחלת מתגלגלת (R)' : 'Rolling Expectancy (R)'} explanation={EXPLANATIONS.expectancy} unit="R" style={{ flex: 1, minWidth: 300 }}>
+            <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'תוחלת מתגלגלת (R)' : 'Rolling Expectancy (R)'} explanation={EXPLANATIONS.expectancy} unit="R" style={{ flex: 1, minWidth: 300 }}>
               <ResponsiveContainer width="100%" height={180}>
                 <LineChart data={stats.rollingExpectancyR}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="tradeId" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 10 }} /><Tooltip contentStyle={tt} /><Line type="monotone" dataKey="expectancyR" stroke={T.accent.cyan} strokeWidth={2} dot={{ fill: T.accent.cyan, r: 2 }} /></LineChart>
               </ResponsiveContainer>
@@ -957,12 +967,12 @@ const Index = () => {
           </GlassCard>
         )}
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <ChartWrapper T={T} title={t.riskAllocation} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ flex: 1, minWidth: 300 }}>
+          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.riskAllocation} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ flex: 1, minWidth: 300 }}>
             <ResponsiveContainer width="100%" height={190}>
               <BarChart data={riskData.riskAllocation} layout="vertical"><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis type="number" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis dataKey="coin" type="category" tick={{ fill: T.text.secondary, fontSize: 11 }} width={45} /><Tooltip contentStyle={tt} /><Bar dataKey="pct" radius={[0,4,4,0]} fill={T.accent.blue} /></BarChart>
             </ResponsiveContainer>
           </ChartWrapper>
-          <ChartWrapper T={T} title={isRTL ? 'ניתוח נסיגה' : 'Drawdown Analysis'} explanation={EXPLANATIONS.drawdown} unit="%" style={{ flex: 1, minWidth: 300 }}>
+          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ניתוח נסיגה' : 'Drawdown Analysis'} explanation={EXPLANATIONS.drawdown} unit="%" style={{ flex: 1, minWidth: 300 }}>
             <ResponsiveContainer width="100%" height={190}>
               <AreaChart data={(() => { let p = 200; return stats.equityCurve.map(e => { if (e.balance > p) p = e.balance; return { trade: e.trade, dd: -((p - e.balance) / p * 100) }; }); })()}>
                 <defs><linearGradient id="dG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.red} stopOpacity={0}/><stop offset="100%" stopColor={T.accent.red} stopOpacity={0.3}/></linearGradient></defs>
@@ -973,7 +983,7 @@ const Index = () => {
           </ChartWrapper>
         </div>
         {isAlpha && (
-          <ChartWrapper T={T} title={t.riskEvolution} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ marginTop: 16 }}>
+          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.riskEvolution} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ marginTop: 16 }}>
             <ResponsiveContainer width="100%" height={180}>
               <ComposedChart data={riskData.riskGrowthEvolution}>
                 <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="tradeId" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 10 }} />
@@ -1011,7 +1021,7 @@ const Index = () => {
             ))}
           </GlassCard>
         </div>
-        <ChartWrapper T={T} title={isRTL ? 'סטייה לפי עסקה' : 'Deviation per Trade'} explanation={EXPLANATIONS.rDistribution} unit="R">
+        <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'סטייה לפי עסקה' : 'Deviation per Trade'} explanation={EXPLANATIONS.rDistribution} unit="R">
           <ResponsiveContainer width="100%" height={190}><BarChart data={trades.map(tr => ({ id: `#${tr.id}`, dev: tr.deviation || 0 }))}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="id" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 10 }} /><Tooltip contentStyle={tt} formatter={(v: number) => `${v.toFixed(4)}R`} /><Bar dataKey="dev" radius={[4,4,0,0]}>{trades.map((tr, i) => <Cell key={i} fill={tr.deviation > 0.1 ? T.accent.red : tr.deviation > 0 ? T.accent.orange : T.accent.green} />)}</Bar></BarChart></ResponsiveContainer>
         </ChartWrapper>
         <GlassCard T={T} style={{ marginTop: 12 }}>
@@ -1256,6 +1266,28 @@ const Index = () => {
             </div>
           </div>
         </div>
+      )}
+      {/* Import Loading Overlay */}
+      {importLoading && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 250, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 40, marginBottom: 16, animation: 'pulse 1.5s infinite' }}>📊</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: T.text.primary, marginBottom: 8 }}>{isRTL ? 'מעבד נתונים...' : 'Processing data...'}</div>
+            <div style={{ fontSize: 12, color: T.text.muted }}>{isRTL ? 'אנא המתן, המערכת מייבאת את העסקאות שלך' : 'Please wait while the system imports your trades'}</div>
+          </div>
+        </div>
+      )}
+      {/* Chart Explanation Modal */}
+      {explainModal && (
+        <ChartExplanationModal
+          T={T}
+          isRTL={isRTL}
+          title={explainModal.title}
+          explanation={explainModal.explanation}
+          chartId={explainModal.chartId}
+          onRemove={handleHideChart}
+          onClose={() => setExplainModal(null)}
+        />
       )}
     </div>
   );
