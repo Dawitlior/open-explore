@@ -1196,6 +1196,45 @@ const Index = () => {
       {riskAlert && <RiskLimitAlert T={T} isRTL={isRTL} status={riskAlert} onClose={dismissRiskAlert} />}
       {showFeatureModal && <FeatureManifestModal T={T} isRTL={isRTL} onClose={() => setShowFeatureModal(false)} />}
       <CommandPalette T={T} commands={commands} isOpen={showCmdPalette} onClose={() => setShowCmdPalette(false)} />
+      {/* Import Warning Modal */}
+      {showImportWarning && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(6px)', animation: 'fadeIn 0.2s ease' }} onClick={() => setShowImportWarning(false)}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: `linear-gradient(165deg, ${T.bg.card} 0%, ${T.bg.secondary} 100%)`,
+            border: `1px solid ${T.border.medium}`, borderRadius: T.radius.xl,
+            padding: 28, maxWidth: 460, width: '90%',
+            boxShadow: T.shadow.elevated, animation: 'scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
+          }}>
+            <div style={{ fontSize: 28, textAlign: 'center', marginBottom: 12 }}>📥</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: T.text.primary, textAlign: 'center', marginBottom: 12 }}>
+              {isRTL ? 'ייבוא נתונים' : 'Import Trading Data'}
+            </div>
+            <div style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.7, marginBottom: 8, textAlign: isRTL ? 'right' : 'left' }}>
+              {isRTL
+                ? 'ייבוא נתוני מסחר חיצוניים עלול לגרום לאי-עקביות זמנית בתצוגה בזמן שהמערכת מעבדת את הקובץ.'
+                : 'Importing external trading data may occasionally cause temporary display inconsistencies while the system processes the file.'}
+            </div>
+            <div style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.7, marginBottom: 8, textAlign: isRTL ? 'right' : 'left' }}>
+              {isRTL
+                ? 'במקרים מסוימים, גרפים או נתונים סטטיסטיים עשויים להתעדכן תוך מספר שניות.'
+                : 'In some cases, charts or statistics may take a few seconds to update.'}
+            </div>
+            <div style={{ fontSize: 11, color: T.text.muted, lineHeight: 1.6, marginBottom: 20, textAlign: isRTL ? 'right' : 'left' }}>
+              {isRTL
+                ? 'אנו מתנצלים על כל אי-נוחות זמנית. אנא המתן לסיום הסנכרון.'
+                : 'We apologize for any temporary inconvenience. Please wait for synchronization to complete.'}
+            </div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+              <button onClick={() => setShowImportWarning(false)} style={{ padding: '8px 20px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, cursor: 'pointer', fontSize: 12 }}>
+                {isRTL ? 'ביטול' : 'Cancel'}
+              </button>
+              <button onClick={handleImportConfirmed} style={{ padding: '8px 20px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 700, cursor: 'pointer', fontSize: 12 }}>
+                {isRTL ? 'המשך בייבוא' : 'Continue Import'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
