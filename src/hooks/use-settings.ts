@@ -14,7 +14,7 @@ export interface ModeCombo {
 export function useSettings() {
   const [theme, setThemeState] = useState<ThemeId>('midnight');
   const [systemMode, setSystemModeState] = useState<SystemMode>('standard');
-  const [operatingMode, setOperatingModeState] = useState<OperatingMode>('review');
+  const [operatingMode, setOperatingModeState] = useState<OperatingMode>('beginner');
   const [lang, setLangState] = useState<Lang>('he');
   const [privacyMode, setPrivacyModeState] = useState(false);
   const [loaded, setLoaded] = useState(false);
