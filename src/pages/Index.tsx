@@ -35,7 +35,7 @@ const Index = () => {
   const isAlpha = settings.isAlpha;
   const opMode = settings.operatingMode;
 
-  const [page, setPage] = useState('dashboard');
+  const [page, setPage] = useState('calendar');
   const [sbOpen, setSbOpen] = useState(true);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [calMonth, setCalMonth] = useState(() => new Date().getMonth());
