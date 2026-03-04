@@ -1,42 +1,71 @@
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: left;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* Recharts global tooltip & hover consistency */
+.recharts-tooltip-wrapper {
+  outline: none !important;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.recharts-default-tooltip {
+  border-radius: 10px !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4), 0 8px 32px rgba(0,0,0,0.2) !important;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+/* Consistent cursor for bar/area/line charts */
+.recharts-cursor {
+  fill: rgba(6,214,160,0.04) !important;
+  stroke: rgba(148,163,184,0.12) !important;
+  stroke-width: 1 !important;
 }
 
-.card {
-  padding: 2em;
+/* Bar hover — prevent bright color flash */
+.recharts-bar-rectangle:hover {
+  filter: brightness(1.15) !important;
+  transition: filter 0.15s ease !important;
 }
 
-.read-the-docs {
-  color: #888;
+/* Area/Line active dot — match theme */
+.recharts-active-dot circle {
+  stroke-width: 2 !important;
+  filter: drop-shadow(0 0 4px currentColor) !important;
+}
+
+/* Pie hover — subtle scale instead of color change */
+.recharts-pie-sector:hover {
+  filter: brightness(1.1) !important;
+  transition: filter 0.15s ease !important;
+}
+
+/* Radar hover consistency */
+.recharts-radar-polygon:hover {
+  fill-opacity: 0.2 !important;
+}
+
+/* Scatter dot hover */
+.recharts-scatter-symbol:hover {
+  filter: brightness(1.2) drop-shadow(0 0 4px currentColor) !important;
+}
+
+/* Reference line consistency */
+.recharts-reference-line line {
+  stroke-dasharray: 3 3;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
