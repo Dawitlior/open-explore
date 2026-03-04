@@ -459,13 +459,13 @@ const Index = () => {
         </div>
         {/* Direction + Quick Stats */}
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <ChartWrapper T={T} title={t.coinPerformance} explanation={EXPLANATIONS.coinPerformance} unit="$" style={{ flex: 1, minWidth: 280 }}>
+          {isChartVisible('coinPerformance') && <ChartWrapper T={T} title={t.coinPerformance} explanation={EXPLANATIONS.coinPerformance} unit="$" chartId="coinPerformance" onRemove={handleHideChart} style={{ flex: 1, minWidth: 280 }}>
             <ResponsiveContainer width="100%" height={190}>
               <BarChart data={stats.coinPerf} layout="vertical"><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis type="number" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis dataKey="coin" type="category" tick={{ fill: T.text.secondary, fontSize: 11 }} width={45} />
                 <Tooltip contentStyle={tt} /><Bar dataKey="pnl" radius={[0,4,4,0]}>{stats.coinPerf.map((c, i) => <Cell key={i} fill={c.pnl >= 0 ? T.accent.green : T.accent.red} />)}</Bar>
               </BarChart>
             </ResponsiveContainer>
-          </ChartWrapper>
+          </ChartWrapper>}
           <GlassCard T={T} style={{ flex: 1, minWidth: 240 }}>
             <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>{isRTL ? 'סטטיסטיקות מהירות' : 'Quick Stats'}</div>
             {[
