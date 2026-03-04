@@ -1286,6 +1286,10 @@ const Index = () => {
             {settings.privacyMode && <TradingBadge color={T.accent.orange}>🔒</TradingBadge>}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {/* Prominent Add Trade button */}
+            <button onClick={() => { setEditingTrade(null); setShowTradeForm(true); }} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 16px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 700, cursor: 'pointer', fontSize: 12, transition: 'all 0.2s', boxShadow: `0 0 12px ${T.accent.cyan}30` }}>
+              + {t.addTrade}
+            </button>
             {hiddenCharts.length > 0 && (
               <button onClick={handleRestoreCharts} style={{ padding: '4px 10px', background: `${T.accent.orange}15`, border: `1px solid ${T.accent.orange}30`, borderRadius: T.radius.sm, color: T.accent.orange, cursor: 'pointer', fontSize: 10, fontWeight: 600, transition: 'all 0.2s' }}>
                 ↩ {isRTL ? 'שחזר גרפים' : 'Restore Charts'} ({hiddenCharts.length})
