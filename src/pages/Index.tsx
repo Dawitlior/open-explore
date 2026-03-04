@@ -53,7 +53,6 @@ const Index = () => {
     try { return JSON.parse(localStorage.getItem('orca-hidden-charts') || '[]'); } catch { return []; }
   });
   const [showImportWarning, setShowImportWarning] = useState(false);
-  const [cmdTooltipVisible, setCmdTooltipVisible] = useState(false);
 
   const handleHideChart = useCallback((chartId: string) => {
     setHiddenCharts(prev => {
@@ -189,6 +188,8 @@ const Index = () => {
   }, []);
 
   const tt = ttStyle(T);
+  const ttItem = { color: T.text.secondary, fontSize: 11 };
+  const ttLabel = { color: T.text.muted, fontSize: 10 };
 
   // Command palette commands
   const commands = useMemo(() => [
@@ -1146,26 +1147,47 @@ const Index = () => {
                 ↩ {isRTL ? 'שחזר גרפים' : 'Restore Charts'} ({hiddenCharts.length})
               </button>
             )}
-            <div style={{ position: 'relative' }}
-              onMouseEnter={() => setCmdTooltipVisible(true)}
-              onMouseLeave={() => setCmdTooltipVisible(false)}
+            <button
+              onClick={() => setShowCmdPalette(true)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '6px 14px',
+                background: `linear-gradient(135deg, ${T.bg.tertiary}, ${T.bg.card})`,
+                border: `1px solid ${T.border.medium}`,
+                borderRadius: T.radius.md,
+                color: T.text.secondary,
+                cursor: 'pointer',
+                fontSize: 12,
+                fontWeight: 500,
+                transition: 'all 0.2s ease',
+                boxShadow: T.shadow.card,
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.borderColor = T.accent.cyan + '50';
+                e.currentTarget.style.background = `linear-gradient(135deg, ${T.accent.cyan}08, ${T.bg.card})`;
+                e.currentTarget.style.color = T.text.primary;
+                e.currentTarget.style.boxShadow = `${T.shadow.card}, 0 0 12px ${T.accent.cyan}15`;
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.borderColor = T.border.medium;
+                e.currentTarget.style.background = `linear-gradient(135deg, ${T.bg.tertiary}, ${T.bg.card})`;
+                e.currentTarget.style.color = T.text.secondary;
+                e.currentTarget.style.boxShadow = T.shadow.card;
+              }}
             >
-              <button onClick={() => setShowCmdPalette(true)} style={{ padding: '4px 10px', background: T.bg.tertiary, border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.sm, color: T.text.dim, cursor: 'pointer', fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>⌘K</button>
-              {cmdTooltipVisible && (
-                <div style={{
-                  position: 'absolute', top: '100%', right: 0, marginTop: 6, padding: '8px 12px',
-                  background: T.bg.card, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md,
-                  boxShadow: T.shadow.elevated, zIndex: 50, whiteSpace: 'nowrap', animation: 'fadeIn 0.15s ease'
-                }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: T.text.primary, marginBottom: 3 }}>
-                    {isRTL ? 'פעולות מהירות' : 'Quick Actions'}
-                  </div>
-                  <div style={{ fontSize: 9, color: T.text.dim }}>
-                    {isRTL ? 'הוסף עסקה • ייבוא נתונים • פקודות מערכת' : 'Add Trade • Import Data • System Commands'}
-                  </div>
-                </div>
-              )}
-            </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+              <span style={{ fontFamily: "'Inter', sans-serif" }}>
+                {isRTL ? 'פעולות מהירות' : 'Quick Actions'}
+              </span>
+              <span style={{
+                fontSize: 9, padding: '2px 5px',
+                background: `${T.accent.cyan}12`, border: `1px solid ${T.accent.cyan}20`,
+                borderRadius: 4, color: T.accent.cyan,
+                fontFamily: "'JetBrains Mono', monospace", fontWeight: 700
+              }}>⌘K</span>
+            </button>
             <div style={{ fontSize: 11, color: T.text.dim }}>{new Date().toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</div>
             <PV><div style={{ fontSize: 11, color: T.accent.cyan, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace" }}>${currentBalance.toFixed(2)}</div></PV>
             <span onClick={() => setShowFeatureModal(true)} style={{ fontSize: 13, fontWeight: 800, letterSpacing: '-0.02em', color: T.text.primary, fontFamily: "'JetBrains Mono', monospace", cursor: 'pointer', transition: 'opacity 0.2s' }}>Orca<span style={{ fontWeight: 300, color: T.text.muted, marginLeft: 4 }}>Investment</span></span>

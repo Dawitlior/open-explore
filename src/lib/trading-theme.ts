@@ -43,7 +43,20 @@ export function getTheme(id: ThemeId): TradingTheme {
 }
 
 export function ttStyle(T: TradingTheme) {
-  return { background: T.bg.card, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.primary, fontSize: 12 };
+  return {
+    background: T.bg.card,
+    border: `1px solid ${T.border.medium}`,
+    borderRadius: T.radius.md,
+    color: T.text.primary,
+    fontSize: 12,
+    boxShadow: T.shadow.elevated,
+    padding: '8px 12px',
+  };
+}
+
+// Recharts cursor style for consistent hover
+export function cursorStyle(T: TradingTheme) {
+  return { fill: `${T.accent.cyan}08`, stroke: T.border.medium, strokeWidth: 1 };
 }
 
 export const modeColors: Record<string, string> = { live: '#10b981', review: '#3b82f6', research: '#8b5cf6', recovery: '#f59e0b', beginner: '#22d3ee' };
