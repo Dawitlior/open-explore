@@ -53,7 +53,6 @@ const Index = () => {
     try { return JSON.parse(localStorage.getItem('orca-hidden-charts') || '[]'); } catch { return []; }
   });
   const [showImportWarning, setShowImportWarning] = useState(false);
-  const [cmdTooltipVisible, setCmdTooltipVisible] = useState(false);
 
   const handleHideChart = useCallback((chartId: string) => {
     setHiddenCharts(prev => {
