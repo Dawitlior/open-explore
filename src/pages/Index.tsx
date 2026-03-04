@@ -49,6 +49,24 @@ const Index = () => {
   const [calModalDay, setCalModalDay] = useState<number | null>(null);
   const [showCmdPalette, setShowCmdPalette] = useState(false);
   const [showFeatureModal, setShowFeatureModal] = useState(false);
+  const [hiddenCharts, setHiddenCharts] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem('orca-hidden-charts') || '[]'); } catch { return []; }
+  });
+  const [showImportWarning, setShowImportWarning] = useState(false);
+  const [cmdTooltipVisible, setCmdTooltipVisible] = useState(false);
+
+  const handleHideChart = useCallback((chartId: string) => {
+    setHiddenCharts(prev => {
+      const next = [...prev, chartId];
+      localStorage.setItem('orca-hidden-charts', JSON.stringify(next));
+      return next;
+    });
+  }, []);
+  const handleRestoreCharts = useCallback(() => {
+    setHiddenCharts([]);
+    localStorage.removeItem('orca-hidden-charts');
+  }, []);
+  const isChartVisible = useCallback((chartId: string) => !hiddenCharts.includes(chartId), [hiddenCharts]);
 
   const riskData = useMemo(() => assessRisk(trades), [trades]);
   const currentBalance = trades.length > 0 ? trades[trades.length - 1].balance : 200;
@@ -142,6 +160,10 @@ const Index = () => {
     const a = document.createElement('a'); a.href = url; a.download = `orca-trades-${new Date().toISOString().slice(0,10)}.json`; a.click();
   }, [trades]);
   const handleImport = useCallback(() => {
+    setShowImportWarning(true);
+  }, []);
+  const handleImportConfirmed = useCallback(() => {
+    setShowImportWarning(false);
     const input = document.createElement('input'); input.type = 'file'; input.accept = '.xlsx,.xls,.json';
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]; if (!file) return;
@@ -406,18 +428,18 @@ const Index = () => {
           <ScoreGauge T={T} score={stats.edgeHealth} label={t.edgeHealth} color={T.accent.blue} />
           <ScoreGauge T={T} score={stats.regimeFit} label={t.regimeFit} color={T.accent.purple} />
           {isAlpha && <ScoreGauge T={T} score={riskData.riskConsistencyScore} label={t.riskConsistency} color={T.accent.orange} />}
-          <ChartWrapper T={T} title={isRTL ? 'ציון Orca — פירוט' : 'Orca Score — Breakdown'} explanation={EXPLANATIONS.radarScore} style={{ flex: 2, minWidth: 260 }}>
+          {isChartVisible('radarScore') && <ChartWrapper T={T} title={isRTL ? 'ציון Orca — פירוט' : 'Orca Score — Breakdown'} explanation={EXPLANATIONS.radarScore} chartId="radarScore" onRemove={handleHideChart} style={{ flex: 2, minWidth: 260 }}>
             <ResponsiveContainer width="100%" height={170}>
               <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="68%">
                 <PolarGrid stroke={T.border.medium} /><PolarAngleAxis dataKey="m" tick={{ fill: T.text.muted, fontSize: 9 }} /><PolarRadiusAxis tick={false} domain={[0, 100]} axisLine={false} />
                 <Radar dataKey="v" stroke={T.accent.cyan} fill={T.accent.cyan} fillOpacity={0.15} strokeWidth={2} />
               </RadarChart>
             </ResponsiveContainer>
-          </ChartWrapper>
+          </ChartWrapper>}
         </div>
         {/* Equity + P&L */}
         <div style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
-          <ChartWrapper T={T} title={t.equityCurve} explanation={EXPLANATIONS.equityCurve} unit="$" style={{ flex: 2, minWidth: 380 }}>
+          {isChartVisible('equityCurve') && <ChartWrapper T={T} title={t.equityCurve} explanation={EXPLANATIONS.equityCurve} unit="$" chartId="equityCurve" onRemove={handleHideChart} style={{ flex: 2, minWidth: 380 }}>
             <ResponsiveContainer width="100%" height={190}>
               <AreaChart data={stats.equityCurve}>
                 <defs><linearGradient id="eqG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.3}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0}/></linearGradient></defs>
@@ -425,25 +447,25 @@ const Index = () => {
                 <Tooltip contentStyle={tt} /><Area type="monotone" dataKey="balance" stroke={T.accent.cyan} fill="url(#eqG)" strokeWidth={2.5} dot={{ fill: T.accent.cyan, r: 3 }} />
               </AreaChart>
             </ResponsiveContainer>
-          </ChartWrapper>
-          <ChartWrapper T={T} title={t.pnlDistribution} explanation={EXPLANATIONS.pnlDistribution} unit="$" style={{ flex: 1, minWidth: 260 }}>
+          </ChartWrapper>}
+          {isChartVisible('pnlDistribution') && <ChartWrapper T={T} title={t.pnlDistribution} explanation={EXPLANATIONS.pnlDistribution} unit="$" chartId="pnlDistribution" onRemove={handleHideChart} style={{ flex: 1, minWidth: 260 }}>
             <ResponsiveContainer width="100%" height={190}>
               <BarChart data={trades.map(tr => ({ id: tr.id, pnl: tr.pnl }))}>
                 <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="id" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 10 }} />
                 <Tooltip contentStyle={tt} /><Bar dataKey="pnl" radius={[4,4,0,0]}>{trades.map((tr, i) => <Cell key={i} fill={tr.pnl >= 0 ? T.accent.green : T.accent.red} />)}</Bar>
               </BarChart>
             </ResponsiveContainer>
-          </ChartWrapper>
+          </ChartWrapper>}
         </div>
         {/* Direction + Quick Stats */}
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <ChartWrapper T={T} title={t.coinPerformance} explanation={EXPLANATIONS.coinPerformance} unit="$" style={{ flex: 1, minWidth: 280 }}>
+          {isChartVisible('coinPerformance') && <ChartWrapper T={T} title={t.coinPerformance} explanation={EXPLANATIONS.coinPerformance} unit="$" chartId="coinPerformance" onRemove={handleHideChart} style={{ flex: 1, minWidth: 280 }}>
             <ResponsiveContainer width="100%" height={190}>
               <BarChart data={stats.coinPerf} layout="vertical"><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis type="number" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis dataKey="coin" type="category" tick={{ fill: T.text.secondary, fontSize: 11 }} width={45} />
                 <Tooltip contentStyle={tt} /><Bar dataKey="pnl" radius={[0,4,4,0]}>{stats.coinPerf.map((c, i) => <Cell key={i} fill={c.pnl >= 0 ? T.accent.green : T.accent.red} />)}</Bar>
               </BarChart>
             </ResponsiveContainer>
-          </ChartWrapper>
+          </ChartWrapper>}
           <GlassCard T={T} style={{ flex: 1, minWidth: 240 }}>
             <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>{isRTL ? 'סטטיסטיקות מהירות' : 'Quick Stats'}</div>
             {[
@@ -1119,7 +1141,31 @@ const Index = () => {
             {settings.privacyMode && <TradingBadge color={T.accent.orange}>🔒</TradingBadge>}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button onClick={() => setShowCmdPalette(true)} style={{ padding: '4px 10px', background: T.bg.tertiary, border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.sm, color: T.text.dim, cursor: 'pointer', fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>⌘K</button>
+            {hiddenCharts.length > 0 && (
+              <button onClick={handleRestoreCharts} style={{ padding: '4px 10px', background: `${T.accent.orange}15`, border: `1px solid ${T.accent.orange}30`, borderRadius: T.radius.sm, color: T.accent.orange, cursor: 'pointer', fontSize: 10, fontWeight: 600, transition: 'all 0.2s' }}>
+                ↩ {isRTL ? 'שחזר גרפים' : 'Restore Charts'} ({hiddenCharts.length})
+              </button>
+            )}
+            <div style={{ position: 'relative' }}
+              onMouseEnter={() => setCmdTooltipVisible(true)}
+              onMouseLeave={() => setCmdTooltipVisible(false)}
+            >
+              <button onClick={() => setShowCmdPalette(true)} style={{ padding: '4px 10px', background: T.bg.tertiary, border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.sm, color: T.text.dim, cursor: 'pointer', fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>⌘K</button>
+              {cmdTooltipVisible && (
+                <div style={{
+                  position: 'absolute', top: '100%', right: 0, marginTop: 6, padding: '8px 12px',
+                  background: T.bg.card, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md,
+                  boxShadow: T.shadow.elevated, zIndex: 50, whiteSpace: 'nowrap', animation: 'fadeIn 0.15s ease'
+                }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: T.text.primary, marginBottom: 3 }}>
+                    {isRTL ? 'פעולות מהירות' : 'Quick Actions'}
+                  </div>
+                  <div style={{ fontSize: 9, color: T.text.dim }}>
+                    {isRTL ? 'הוסף עסקה • ייבוא נתונים • פקודות מערכת' : 'Add Trade • Import Data • System Commands'}
+                  </div>
+                </div>
+              )}
+            </div>
             <div style={{ fontSize: 11, color: T.text.dim }}>{new Date().toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</div>
             <PV><div style={{ fontSize: 11, color: T.accent.cyan, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace" }}>${currentBalance.toFixed(2)}</div></PV>
             <span onClick={() => setShowFeatureModal(true)} style={{ fontSize: 13, fontWeight: 800, letterSpacing: '-0.02em', color: T.text.primary, fontFamily: "'JetBrains Mono', monospace", cursor: 'pointer', transition: 'opacity 0.2s' }}>Orca<span style={{ fontWeight: 300, color: T.text.muted, marginLeft: 4 }}>Investment</span></span>
@@ -1150,6 +1196,45 @@ const Index = () => {
       {riskAlert && <RiskLimitAlert T={T} isRTL={isRTL} status={riskAlert} onClose={dismissRiskAlert} />}
       {showFeatureModal && <FeatureManifestModal T={T} isRTL={isRTL} onClose={() => setShowFeatureModal(false)} />}
       <CommandPalette T={T} commands={commands} isOpen={showCmdPalette} onClose={() => setShowCmdPalette(false)} />
+      {/* Import Warning Modal */}
+      {showImportWarning && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(6px)', animation: 'fadeIn 0.2s ease' }} onClick={() => setShowImportWarning(false)}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: `linear-gradient(165deg, ${T.bg.card} 0%, ${T.bg.secondary} 100%)`,
+            border: `1px solid ${T.border.medium}`, borderRadius: T.radius.xl,
+            padding: 28, maxWidth: 460, width: '90%',
+            boxShadow: T.shadow.elevated, animation: 'scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
+          }}>
+            <div style={{ fontSize: 28, textAlign: 'center', marginBottom: 12 }}>📥</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: T.text.primary, textAlign: 'center', marginBottom: 12 }}>
+              {isRTL ? 'ייבוא נתונים' : 'Import Trading Data'}
+            </div>
+            <div style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.7, marginBottom: 8, textAlign: isRTL ? 'right' : 'left' }}>
+              {isRTL
+                ? 'ייבוא נתוני מסחר חיצוניים עלול לגרום לאי-עקביות זמנית בתצוגה בזמן שהמערכת מעבדת את הקובץ.'
+                : 'Importing external trading data may occasionally cause temporary display inconsistencies while the system processes the file.'}
+            </div>
+            <div style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.7, marginBottom: 8, textAlign: isRTL ? 'right' : 'left' }}>
+              {isRTL
+                ? 'במקרים מסוימים, גרפים או נתונים סטטיסטיים עשויים להתעדכן תוך מספר שניות.'
+                : 'In some cases, charts or statistics may take a few seconds to update.'}
+            </div>
+            <div style={{ fontSize: 11, color: T.text.muted, lineHeight: 1.6, marginBottom: 20, textAlign: isRTL ? 'right' : 'left' }}>
+              {isRTL
+                ? 'אנו מתנצלים על כל אי-נוחות זמנית. אנא המתן לסיום הסנכרון.'
+                : 'We apologize for any temporary inconvenience. Please wait for synchronization to complete.'}
+            </div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+              <button onClick={() => setShowImportWarning(false)} style={{ padding: '8px 20px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, cursor: 'pointer', fontSize: 12 }}>
+                {isRTL ? 'ביטול' : 'Cancel'}
+              </button>
+              <button onClick={handleImportConfirmed} style={{ padding: '8px 20px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 700, cursor: 'pointer', fontSize: 12 }}>
+                {isRTL ? 'המשך בייבוא' : 'Continue Import'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

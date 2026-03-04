@@ -180,7 +180,7 @@ export function generateInsights(stats: TradingStats, trades: Trade[], risk: Ris
     insights.push({ type: 'weakness', icon: '⚠️', severity: 'high', title: isRTL ? 'פקטור רווח שלילי' : 'Negative Profit Factor', text: isRTL ? `פקטור רווח ${stats.profitFactor.toFixed(2)} — אין יתרון סטטיסטי` : `Profit factor ${stats.profitFactor.toFixed(2)} — you're losing more than you gain. Review your system.` });
   }
 
-  // Best day of week (bonus insight with variety)
+  // Best day of week
   if (stats.dayPerf.length > 0) {
     const bestDay = [...stats.dayPerf].sort((a, b) => b.pnl - a.pnl)[0];
     const worstDay = [...stats.dayPerf].sort((a, b) => a.pnl - b.pnl)[0];
@@ -196,6 +196,201 @@ export function generateInsights(stats: TradingStats, trades: Trade[], risk: Ris
   }
 
   return insights;
+}
+
+// ════════════════════════════════════════════════════════
+// DAY-SPECIFIC AI ANALYSIS — fully dynamic per calendar day
+// ════════════════════════════════════════════════════════
+export function generateDayInsights(dayTrades: Trade[], isRTL: boolean): AIInsight[] {
+  if (dayTrades.length === 0) return [];
+  const insights: AIInsight[] = [];
+
+  const totalPnl = dayTrades.reduce((s, t) => s + t.pnl, 0);
+  const totalR = dayTrades.reduce((s, t) => s + t.returnR, 0);
+  const wins = dayTrades.filter(t => t.winLoss === 'Win');
+  const losses = dayTrades.filter(t => t.winLoss === 'Loss');
+  const winRate = dayTrades.length > 0 ? (wins.length / dayTrades.length) * 100 : 0;
+  const rulesFollowed = dayTrades.filter(t => t.rules).length;
+  const rulesPct = dayTrades.length > 0 ? (rulesFollowed / dayTrades.length) * 100 : 0;
+  const highDev = dayTrades.filter(t => t.deviation > 0.1);
+  const coins = [...new Set(dayTrades.map(t => t.coin))];
+  const directions = dayTrades.map(t => t.direction);
+  const longCount = directions.filter(d => d === 'Long').length;
+  const shortCount = directions.filter(d => d === 'Short').length;
+
+  // 1. Overall day assessment
+  if (losses.length === dayTrades.length) {
+    const allLossTexts = isRTL ? [
+      `כל ${dayTrades.length} העסקאות ביום זה הסתיימו בהפסד. סה"כ ${totalR.toFixed(2)}R. יום קשה שדורש הפקת לקחים.`,
+      `יום של הפסד מלא: ${dayTrades.length} עסקאות, ${totalR.toFixed(2)}R. בדוק אם נכנסת למצב Tilt.`,
+    ] : [
+      `All ${dayTrades.length} trades ended in loss. Total: ${totalR.toFixed(2)}R. A tough day requiring review.`,
+      `Complete loss day: ${dayTrades.length} trades, ${totalR.toFixed(2)}R. Check if you entered Tilt mode.`,
+      `${dayTrades.length}/${dayTrades.length} losses for ${totalR.toFixed(2)}R. This pattern suggests regime mismatch or emotional trading.`,
+    ];
+    insights.push({ type: 'alert', icon: '🔴', severity: 'high', title: isRTL ? 'יום הפסד מלא' : 'Full Loss Day', text: pick(allLossTexts) });
+  } else if (wins.length === dayTrades.length) {
+    const allWinTexts = isRTL ? [
+      `יום מושלם: ${dayTrades.length} עסקאות, כולן ניצחונות! +${totalR.toFixed(2)}R. שמור על הגישה הזו.`,
+    ] : [
+      `Perfect day: ${dayTrades.length}/${dayTrades.length} wins for +${totalR.toFixed(2)}R. Your execution was flawless.`,
+      `Clean sweep: all ${dayTrades.length} trades won, netting +${totalR.toFixed(2)}R. Don't let this breed overconfidence.`,
+    ];
+    insights.push({ type: 'strength', icon: '🏆', severity: 'low', title: isRTL ? 'יום מושלם' : 'Perfect Day', text: pick(allWinTexts) });
+  } else {
+    const mixedTexts = isRTL ? [
+      `${wins.length}/${dayTrades.length} ניצחונות (${winRate.toFixed(0)}%). סה"כ ${totalR >= 0 ? '+' : ''}${totalR.toFixed(2)}R.`,
+    ] : [
+      `${wins.length}/${dayTrades.length} wins (${winRate.toFixed(0)}% WR). Net result: ${totalR >= 0 ? '+' : ''}${totalR.toFixed(2)}R.`,
+      `Mixed day: ${winRate.toFixed(0)}% win rate across ${dayTrades.length} trades. ${totalR >= 0 ? 'Positive outcome.' : 'Negative outcome — review losing setups.'}`,
+    ];
+    insights.push({ type: totalPnl >= 0 ? 'strength' : 'weakness', icon: totalPnl >= 0 ? '📊' : '📉', severity: totalPnl >= 0 ? 'low' : 'medium', title: isRTL ? 'סיכום יום' : 'Day Summary', text: pick(mixedTexts) });
+  }
+
+  // 2. Overtrading check
+  if (dayTrades.length >= 4) {
+    const otTexts = isRTL ? [
+      `${dayTrades.length} עסקאות ביום אחד — סימן למסחר יתר. האם כל עסקה הייתה A+ setup?`,
+      `${dayTrades.length} עסקאות. כמות גבוהה מעידה על חוסר סבלנות או רדיפה אחרי הפסדים.`,
+    ] : [
+      `${dayTrades.length} trades in one day — classic overtrading signal. Were all of these A+ setups?`,
+      `${dayTrades.length} trades executed. High frequency often correlates with lower quality decisions.`,
+    ];
+    insights.push({ type: 'alert', icon: '⚡', severity: 'high', title: isRTL ? 'מסחר יתר' : 'Overtrading', text: pick(otTexts) });
+  } else if (dayTrades.length === 3) {
+    insights.push({ type: 'alert', icon: '⚡', severity: 'medium', title: isRTL ? 'מסחר יתר אפשרי' : 'Possible Overtrading', text: isRTL ? '3 עסקאות ביום — על הגבול. ודא שכל אחת התבססה על תוכנית.' : '3 trades in a single day — borderline. Ensure each was plan-based, not reactive.' });
+  }
+
+  // 3. Risk sizing analysis
+  const risks = dayTrades.map(t => t.risk);
+  const avgRisk = risks.reduce((s, r) => s + r, 0) / risks.length;
+  const maxRisk = Math.max(...risks);
+  const minRisk = Math.min(...risks);
+  if (maxRisk > avgRisk * 2 && dayTrades.length > 1) {
+    insights.push({
+      type: 'alert', icon: '⚠️', severity: 'high',
+      title: isRTL ? 'סיכון לא עקבי' : 'Inconsistent Risk Sizing',
+      text: isRTL
+        ? `טווח סיכון: $${minRisk.toFixed(2)} — $${maxRisk.toFixed(2)}. סטייה גדולה בגודל הפוזיציה.`
+        : `Risk range: $${minRisk.toFixed(2)} to $${maxRisk.toFixed(2)}. Large variance in position sizing suggests emotional adjustments.`,
+    });
+  }
+
+  // 4. Direction bias
+  if (dayTrades.length >= 2) {
+    if (longCount > 0 && shortCount === 0) {
+      const longPnl = dayTrades.filter(t => t.direction === 'Long').reduce((s, t) => s + t.returnR, 0);
+      insights.push({ type: 'recommendation', icon: '↑', severity: 'low', title: isRTL ? 'הטיה כיוונית' : 'Directional Bias', text: isRTL ? `כל העסקאות לונג (${longCount}). תוצאה: ${longPnl >= 0 ? '+' : ''}${longPnl.toFixed(2)}R.` : `All ${longCount} trades were Long. Result: ${longPnl >= 0 ? '+' : ''}${longPnl.toFixed(2)}R. ${longPnl < 0 ? 'Consider if market was actually bearish.' : ''}` });
+    } else if (shortCount > 0 && longCount === 0) {
+      const shortPnl = dayTrades.filter(t => t.direction === 'Short').reduce((s, t) => s + t.returnR, 0);
+      insights.push({ type: 'recommendation', icon: '↓', severity: 'low', title: isRTL ? 'הטיה כיוונית' : 'Directional Bias', text: isRTL ? `כל העסקאות שורט (${shortCount}). תוצאה: ${shortPnl >= 0 ? '+' : ''}${shortPnl.toFixed(2)}R.` : `All ${shortCount} trades were Short. Result: ${shortPnl >= 0 ? '+' : ''}${shortPnl.toFixed(2)}R.` });
+    }
+  }
+
+  // 5. Discipline check
+  if (rulesPct < 100 && dayTrades.length > 0) {
+    const brokenCount = dayTrades.length - rulesFollowed;
+    insights.push({
+      type: 'weakness', icon: '📋', severity: rulesPct < 50 ? 'high' : 'medium',
+      title: isRTL ? 'הפרת כללים' : 'Rule Violations',
+      text: isRTL
+        ? `${brokenCount} מתוך ${dayTrades.length} עסקאות לא עמדו בכללים (${rulesPct.toFixed(0)}%). ${losses.filter(t => !t.rules).length > 0 ? 'ההפסדים שלא עמדו בכללים הם הכי יקרים.' : ''}`
+        : `${brokenCount} of ${dayTrades.length} trades broke rules (${rulesPct.toFixed(0)}%). ${losses.filter(t => !t.rules).length > 0 ? 'Rule-breaking losses are your most expensive.' : ''}`,
+    });
+  } else if (rulesPct === 100 && dayTrades.length > 0) {
+    insights.push({ type: 'strength', icon: '✅', severity: 'low', title: isRTL ? 'משמעת מלאה' : 'Full Discipline', text: isRTL ? 'כל העסקאות היום עמדו בכללים. ביצוע מקצועי.' : `All ${dayTrades.length} trades followed rules. Professional execution regardless of outcome.` });
+  }
+
+  // 6. Deviation analysis
+  if (highDev.length > 0) {
+    const avgDev = highDev.reduce((s, t) => s + t.deviation, 0) / highDev.length;
+    insights.push({
+      type: 'alert', icon: '🎯', severity: 'medium',
+      title: isRTL ? 'סטייה מתוכנית' : 'Plan Deviation',
+      text: isRTL
+        ? `${highDev.length} עסקאות עם סטייה > 0.1R. סטייה ממוצעת: ${avgDev.toFixed(3)}R. ביצוע לא מדויק.`
+        : `${highDev.length} trade${highDev.length > 1 ? 's' : ''} deviated > 0.1R from plan. Avg deviation: ${avgDev.toFixed(3)}R. Tighten your execution.`,
+    });
+  }
+
+  // 7. Revenge trading detection (losses followed by more trades)
+  if (losses.length >= 2 && dayTrades.length >= 3) {
+    let consecutiveLosses = 0;
+    let maxConsec = 0;
+    for (const t of dayTrades) {
+      if (t.winLoss === 'Loss') { consecutiveLosses++; maxConsec = Math.max(maxConsec, consecutiveLosses); }
+      else consecutiveLosses = 0;
+    }
+    if (maxConsec >= 2 && dayTrades.indexOf(dayTrades[dayTrades.length - 1]) > dayTrades.indexOf(losses[losses.length - 1])) {
+      insights.push({
+        type: 'alert', icon: '🔥', severity: 'high',
+        title: isRTL ? 'חשד ל-Revenge Trading' : 'Revenge Trading Suspected',
+        text: isRTL
+          ? `${maxConsec} הפסדים רצופים ואז המשכת לסחור. דפוס קלאסי של Revenge Trading.`
+          : `${maxConsec} consecutive losses followed by more trading. Classic revenge trading pattern.`,
+      });
+    }
+  }
+
+  // 8. Asset diversification for the day
+  if (coins.length === 1 && dayTrades.length >= 3) {
+    insights.push({
+      type: 'recommendation', icon: '🎰', severity: 'medium',
+      title: isRTL ? 'ריכוז במטבע אחד' : 'Single Asset Concentration',
+      text: isRTL
+        ? `כל ${dayTrades.length} העסקאות ב-${coins[0]}. ריכוז גבוה מגביר סיכון. שקול פיזור.`
+        : `All ${dayTrades.length} trades in ${coins[0]}. High concentration increases correlated risk.`,
+    });
+  }
+
+  // 9. R-quality assessment
+  const avgR = totalR / dayTrades.length;
+  if (wins.length > 0) {
+    const avgWinR = wins.reduce((s, t) => s + t.returnR, 0) / wins.length;
+    const avgLossR = losses.length > 0 ? losses.reduce((s, t) => s + Math.abs(t.returnR), 0) / losses.length : 0;
+    if (avgWinR < 1 && wins.length > 0) {
+      insights.push({
+        type: 'weakness', icon: '📐', severity: 'medium',
+        title: isRTL ? 'ניצחונות קטנים' : 'Small Wins',
+        text: isRTL
+          ? `ממוצע ניצחון: ${avgWinR.toFixed(2)}R. הניצחונות שלך קטנים מדי — צריך לפחות 1.5R כדי לפצות על הפסדים.`
+          : `Avg win: ${avgWinR.toFixed(2)}R. Your wins are too small. Aim for 1.5R+ to compensate for losses (avg loss: ${avgLossR.toFixed(2)}R).`,
+      });
+    } else if (avgWinR >= 2) {
+      insights.push({
+        type: 'strength', icon: '💎', severity: 'low',
+        title: isRTL ? 'ניצחונות איכותיים' : 'Quality Wins',
+        text: isRTL
+          ? `ממוצע ניצחון: ${avgWinR.toFixed(2)}R. ניצחונות גדולים ואיכותיים.`
+          : `Avg win: ${avgWinR.toFixed(2)}R. High-quality wins that build your account efficiently.`,
+      });
+    }
+  }
+
+  return insights;
+}
+
+export function generateDaySummary(dayTrades: Trade[], isRTL: boolean): string {
+  if (dayTrades.length === 0) return isRTL ? 'אין עסקאות ביום זה.' : 'No trades on this day.';
+
+  const totalPnl = dayTrades.reduce((s, t) => s + t.pnl, 0);
+  const totalR = dayTrades.reduce((s, t) => s + t.returnR, 0);
+  const wins = dayTrades.filter(t => t.winLoss === 'Win').length;
+  const rulesPct = (dayTrades.filter(t => t.rules).length / dayTrades.length * 100).toFixed(0);
+  const coins = [...new Set(dayTrades.map(t => t.coin))].join(', ');
+
+  if (isRTL) {
+    return `ניתוח ${dayTrades.length} עסקאות ביום זה: ${wins} ניצחונות, ` +
+      `${totalR >= 0 ? '+' : ''}${totalR.toFixed(2)}R ($${totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(2)}). ` +
+      `משמעת: ${rulesPct}%. מטבעות: ${coins}.`;
+  }
+
+  const variants = [
+    () => `Day analysis: ${dayTrades.length} trades on ${coins}. ${wins} wins for ${totalR >= 0 ? '+' : ''}${totalR.toFixed(2)}R ($${totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(2)}). Discipline: ${rulesPct}%.`,
+    () => `${dayTrades.length} executions across ${coins}. Win rate: ${(wins/dayTrades.length*100).toFixed(0)}%. R-result: ${totalR >= 0 ? '+' : ''}${totalR.toFixed(2)}R. Rule adherence: ${rulesPct}%.`,
+    () => `Session report: ${wins}/${dayTrades.length} winning trades. Net: ${totalR >= 0 ? '+' : ''}${totalR.toFixed(2)}R. ${Number(rulesPct) >= 80 ? 'Disciplined execution.' : 'Discipline needs attention.'}`,
+  ];
+  return pick(variants)();
 }
 
 export function generateSummary(stats: TradingStats, trades: Trade[], isRTL: boolean): string {

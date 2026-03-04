@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 const INIT_MESSAGES = [
   { en: 'Initializing Environment...', he: 'מאתחל סביבה...' },
@@ -11,15 +11,54 @@ interface EntryGateProps {
   onEnter: () => void;
 }
 
+// Premium notification sound using Web Audio API
+function playEntrySound() {
+  try {
+    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    // First tone — soft high chime
+    const osc1 = audioCtx.createOscillator();
+    const gain1 = audioCtx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(880, audioCtx.currentTime);
+    osc1.frequency.exponentialRampToValueAtTime(1320, audioCtx.currentTime + 0.08);
+    gain1.gain.setValueAtTime(0.06, audioCtx.currentTime);
+    gain1.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+    osc1.connect(gain1);
+    gain1.connect(audioCtx.destination);
+    osc1.start(audioCtx.currentTime);
+    osc1.stop(audioCtx.currentTime + 0.4);
+
+    // Second tone — resolution note
+    const osc2 = audioCtx.createOscillator();
+    const gain2 = audioCtx.createGain();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(1320, audioCtx.currentTime + 0.12);
+    osc2.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.2);
+    gain2.gain.setValueAtTime(0, audioCtx.currentTime);
+    gain2.gain.linearRampToValueAtTime(0.04, audioCtx.currentTime + 0.14);
+    gain2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+    osc2.connect(gain2);
+    gain2.connect(audioCtx.destination);
+    osc2.start(audioCtx.currentTime + 0.12);
+    osc2.stop(audioCtx.currentTime + 0.6);
+
+    // Cleanup
+    setTimeout(() => audioCtx.close(), 1000);
+  } catch {
+    // Audio not available — silently fail
+  }
+}
+
 export const EntryGate = ({ onEnter }: EntryGateProps) => {
   const [phase, setPhase] = useState<'idle' | 'loading' | 'done'>('idle');
   const [msgIdx, setMsgIdx] = useState(0);
   const [opacity, setOpacity] = useState(1);
 
-  const handleAccess = () => {
+  const handleAccess = useCallback(() => {
     setPhase('loading');
     setMsgIdx(0);
-  };
+  }, []);
 
   useEffect(() => {
     if (phase !== 'loading') return;
@@ -28,6 +67,8 @@ export const EntryGate = ({ onEnter }: EntryGateProps) => {
       return () => clearTimeout(timer);
     } else {
       const timer = setTimeout(() => {
+        // Play premium entry sound
+        playEntrySound();
         setOpacity(0);
         setTimeout(() => {
           sessionStorage.setItem('orca-entered', '1');
