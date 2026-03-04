@@ -439,7 +439,7 @@ const Index = () => {
         </div>
         {/* Equity + P&L */}
         <div style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
-          <ChartWrapper T={T} title={t.equityCurve} explanation={EXPLANATIONS.equityCurve} unit="$" style={{ flex: 2, minWidth: 380 }}>
+          {isChartVisible('equityCurve') && <ChartWrapper T={T} title={t.equityCurve} explanation={EXPLANATIONS.equityCurve} unit="$" chartId="equityCurve" onRemove={handleHideChart} style={{ flex: 2, minWidth: 380 }}>
             <ResponsiveContainer width="100%" height={190}>
               <AreaChart data={stats.equityCurve}>
                 <defs><linearGradient id="eqG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.3}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0}/></linearGradient></defs>
@@ -447,15 +447,15 @@ const Index = () => {
                 <Tooltip contentStyle={tt} /><Area type="monotone" dataKey="balance" stroke={T.accent.cyan} fill="url(#eqG)" strokeWidth={2.5} dot={{ fill: T.accent.cyan, r: 3 }} />
               </AreaChart>
             </ResponsiveContainer>
-          </ChartWrapper>
-          <ChartWrapper T={T} title={t.pnlDistribution} explanation={EXPLANATIONS.pnlDistribution} unit="$" style={{ flex: 1, minWidth: 260 }}>
+          </ChartWrapper>}
+          {isChartVisible('pnlDistribution') && <ChartWrapper T={T} title={t.pnlDistribution} explanation={EXPLANATIONS.pnlDistribution} unit="$" chartId="pnlDistribution" onRemove={handleHideChart} style={{ flex: 1, minWidth: 260 }}>
             <ResponsiveContainer width="100%" height={190}>
               <BarChart data={trades.map(tr => ({ id: tr.id, pnl: tr.pnl }))}>
                 <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="id" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 10 }} />
                 <Tooltip contentStyle={tt} /><Bar dataKey="pnl" radius={[4,4,0,0]}>{trades.map((tr, i) => <Cell key={i} fill={tr.pnl >= 0 ? T.accent.green : T.accent.red} />)}</Bar>
               </BarChart>
             </ResponsiveContainer>
-          </ChartWrapper>
+          </ChartWrapper>}
         </div>
         {/* Direction + Quick Stats */}
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
