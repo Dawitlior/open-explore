@@ -873,7 +873,7 @@ const Index = () => {
               </GlassCard>
             </div>
           </div>
-          <div style={{ flex: 1, minWidth: 190 }}>
+          <div style={{ flex: 1, minWidth: isMobile ? 0 : 190 }}>
             <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>{t.weeklySummary}</div>
             {weekStats.map((w, i) => (
               <GlassCard T={T} key={i} style={{ marginBottom: 7, padding: 12 }}>
