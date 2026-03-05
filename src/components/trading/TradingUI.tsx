@@ -24,7 +24,7 @@ interface MetricCardProps {
 }
 
 export const MetricCard = ({ label, value, suffix, color, small, T, onInfoClick }: MetricCardProps) => (
-  <GlassCard T={T} glow={color === T.accent.cyan ? T.accent.cyanGlow : color === T.accent.red ? T.accent.redGlow : color === T.accent.green ? T.accent.greenGlow : null} style={{ minWidth: small ? 130 : 150, flex: 1 }}>
+  <GlassCard T={T} glow={color === T.accent.cyan ? T.accent.cyanGlow : color === T.accent.red ? T.accent.redGlow : color === T.accent.green ? T.accent.greenGlow : null} style={{ minWidth: small ? 100 : 120, flex: 1 }}>
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
       <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</div>
       {onInfoClick && (
@@ -50,7 +50,7 @@ export const ScoreGauge = ({ score, label, color, T, description, onInfoClick }:
   const c = 2 * Math.PI * 40;
   const off = c - (score / 100) * c;
   return (
-    <GlassCard T={T} glow={color === T.accent.cyan ? T.accent.cyanGlow : null} style={{ textAlign: 'center', minWidth: 170, flex: 1 }}>
+    <GlassCard T={T} glow={color === T.accent.cyan ? T.accent.cyanGlow : null} style={{ textAlign: 'center', minWidth: 140, flex: 1 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: description ? 4 : 10 }}>
         <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</div>
         {onInfoClick && (

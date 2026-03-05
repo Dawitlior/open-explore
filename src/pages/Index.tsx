@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell, ComposedChart, ScatterChart, Scatter, ZAxis } from 'recharts';
 import type { Trade } from '@/data/trades';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { RAW_TRADES } from '@/data/trades';
 
 import { computeAnalytics, getCalDays } from '@/lib/trading-analytics';
@@ -26,6 +27,7 @@ import { exportToXlsx, importFromXlsx } from '@/lib/xlsx-engine';
 import { getDayRiskColor, checkRiskLimits, DEFAULT_RISK_LIMITS } from '@/lib/risk-limits';
 
 const Index = () => {
+  const isMobile = useIsMobile();
   const settings = useSettings();
   const { trades, stats, loading, initialized, addTrade, updateTrade, removeTrade, resetAll, importTrades, riskAlert, dismissRiskAlert } = useTrades();
   const [entered, setEntered] = useState(() => sessionStorage.getItem('orca-entered') === '1');
@@ -36,7 +38,7 @@ const Index = () => {
   const opMode = settings.operatingMode;
 
   const [page, setPage] = useState('calendar');
-  const [sbOpen, setSbOpen] = useState(true);
+  const [sbOpen, setSbOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth > 768);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [calMonth, setCalMonth] = useState(() => new Date().getMonth());
   const [calYear, setCalYear] = useState(() => new Date().getFullYear());
@@ -724,12 +726,12 @@ const Index = () => {
     if (trades.length === 0) return null;
     return (
       <>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
           <div style={{ fontSize: 13, color: T.text.muted }}>{stats.totalTrades} {isRTL ? 'עסקאות' : 'trades'}</div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={handleImport} style={{ padding: '7px 14px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, fontSize: 11, cursor: 'pointer' }}>📥 {t.importData}</button>
-            <button onClick={handleExport} style={{ padding: '7px 14px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, fontSize: 11, cursor: 'pointer' }}>📊 XLSX</button>
-            <button onClick={handleExportJson} style={{ padding: '7px 14px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, fontSize: 11, cursor: 'pointer' }}>📤 JSON</button>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {!isMobile && <button onClick={handleImport} style={{ padding: '7px 14px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, fontSize: 11, cursor: 'pointer' }}>📥 {t.importData}</button>}
+            {!isMobile && <button onClick={handleExport} style={{ padding: '7px 14px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, fontSize: 11, cursor: 'pointer' }}>📊 XLSX</button>}
+            {!isMobile && <button onClick={handleExportJson} style={{ padding: '7px 14px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, fontSize: 11, cursor: 'pointer' }}>📤 JSON</button>}
             <button onClick={() => { setEditingTrade(null); setShowTradeForm(true); }} style={{ padding: '7px 18px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>+ {t.addTrade}</button>
           </div>
         </div>
@@ -819,8 +821,8 @@ const Index = () => {
             <div style={{ fontSize: 11, color: T.accent.orange }}>{isRTL ? `מגבלת הפסד שבועית הושגה: ${calRiskStatus.weeklyNegR.toFixed(1)}R` : `Weekly loss limit reached: ${calRiskStatus.weeklyNegR.toFixed(1)}R`}</div>
           </div>
         )}
-        <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
-          <div style={{ flex: 3, minWidth: 460 }}>
+        <div style={{ display: 'flex', gap: isMobile ? 12 : 18, flexWrap: 'wrap', flexDirection: isMobile ? 'column' : 'row' }}>
+          <div style={{ flex: 3, minWidth: isMobile ? 0 : 460 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <button onClick={() => { if (calMonth === 0) { setCalMonth(11); setCalYear(calYear - 1); } else setCalMonth(calMonth - 1); }} style={{ background: T.bg.card, border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.md, padding: '5px 10px', color: T.text.secondary, cursor: 'pointer', fontSize: 16 }}>‹</button>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -847,7 +849,7 @@ const Index = () => {
                       onMouseEnter={() => d && setCalHoverDay(d)}
                       onMouseLeave={() => setCalHoverDay(null)}
                       onClick={() => dd && d && setCalModalDay(d)}
-                      style={{ minHeight: isHovered && dd ? 95 : 68, borderRadius: T.radius.md, border: `1px solid ${isDarkRed ? `${T.accent.red}60` : dd ? (dd.pnl > 0 ? `${T.accent.green}${Math.round(40 + intensity * 40).toString(16)}` : dd.pnl < 0 ? `${T.accent.red}${Math.round(35 + intensity * 40).toString(16)}` : `${T.accent.orange}25`) : T.border.subtle}`, background: isDarkRed ? `${T.accent.red}20` : dd ? (dd.pnl > 0 ? `${T.accent.green}${Math.round(10 + intensity * 20).toString(16).padStart(2, '0')}` : dd.pnl < 0 ? `${T.accent.red}${Math.round(10 + intensity * 15).toString(16).padStart(2, '0')}` : `${T.accent.orange}10`) : 'transparent', padding: '5px 6px', transition: 'all 0.2s ease', cursor: dd ? 'pointer' : 'default', position: 'relative' }}>
+                      style={{ minHeight: isMobile ? 48 : (isHovered && dd ? 95 : 68), borderRadius: T.radius.md, border: `1px solid ${isDarkRed ? `${T.accent.red}60` : dd ? (dd.pnl > 0 ? `${T.accent.green}${Math.round(40 + intensity * 40).toString(16)}` : dd.pnl < 0 ? `${T.accent.red}${Math.round(35 + intensity * 40).toString(16)}` : `${T.accent.orange}25`) : T.border.subtle}`, background: isDarkRed ? `${T.accent.red}20` : dd ? (dd.pnl > 0 ? `${T.accent.green}${Math.round(10 + intensity * 20).toString(16).padStart(2, '0')}` : dd.pnl < 0 ? `${T.accent.red}${Math.round(10 + intensity * 15).toString(16).padStart(2, '0')}` : `${T.accent.orange}10`) : 'transparent', padding: isMobile ? '3px 3px' : '5px 6px', transition: 'all 0.2s ease', cursor: dd ? 'pointer' : 'default', position: 'relative' }}>
                       {d && <><div style={{ fontSize: 10, color: T.text.dim, display: 'flex', alignItems: 'center', gap: 3 }}>{d}{isDarkRed && <span title="Risk limit exceeded">⚠️</span>}</div>{dd && <><PV><div style={{ fontSize: 13, fontWeight: 700, color: isDarkRed ? T.accent.red : dd.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace", marginTop: 3 }}>${Math.abs(dd.pnl).toFixed(0)}</div></PV><div style={{ fontSize: 8, color: T.text.dim, marginTop: 1 }}>{dd.trades} {isRTL ? 'עס׳' : 'tr'} • {dd.wins}/{dd.trades}</div>
                         {isHovered && <div style={{ fontSize: 8, color: T.text.muted, marginTop: 2 }}>{dd.details.map(det => det.coin).join(', ')}</div>}
                       </>}</>}
@@ -871,7 +873,7 @@ const Index = () => {
               </GlassCard>
             </div>
           </div>
-          <div style={{ flex: 1, minWidth: 190 }}>
+          <div style={{ flex: 1, minWidth: isMobile ? 0 : 190 }}>
             <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>{t.weeklySummary}</div>
             {weekStats.map((w, i) => (
               <GlassCard T={T} key={i} style={{ marginBottom: 7, padding: 12 }}>
@@ -1223,31 +1225,47 @@ const Index = () => {
 
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden', background: T.bg.primary, color: T.text.primary, fontFamily: "'Inter', system-ui, -apple-system, sans-serif", fontSize: 14, transition: 'background 0.5s ease, color 0.5s ease' }}>
+      {/* MOBILE SIDEBAR OVERLAY */}
+      {isMobile && sbOpen && (
+        <div onClick={() => setSbOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 40, backdropFilter: 'blur(2px)' }} />
+      )}
       {/* SIDEBAR */}
-      <aside style={{ width: sbOpen ? 216 : 62, minWidth: sbOpen ? 216 : 62, background: `linear-gradient(180deg, ${T.bg.secondary} 0%, ${T.bg.primary} 100%)`, borderInlineEnd: `1px solid ${T.border.subtle}`, display: 'flex', flexDirection: 'column', transition: 'all 0.3s ease', overflow: 'hidden', zIndex: 10 }}>
+      <aside style={{
+        width: isMobile ? 260 : (sbOpen ? 216 : 62),
+        minWidth: isMobile ? 260 : (sbOpen ? 216 : 62),
+        background: `linear-gradient(180deg, ${T.bg.secondary} 0%, ${T.bg.primary} 100%)`,
+        borderInlineEnd: `1px solid ${T.border.subtle}`,
+        display: 'flex', flexDirection: 'column',
+        transition: 'all 0.3s ease', overflow: 'hidden', zIndex: 50,
+        ...(isMobile ? {
+          position: 'fixed' as const, top: 0, bottom: 0,
+          [isRTL ? 'right' : 'left']: sbOpen ? 0 : -270,
+          boxShadow: sbOpen ? '4px 0 24px rgba(0,0,0,0.4)' : 'none',
+        } : {})
+      }}>
         <div style={{ padding: '18px 14px 6px', display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }} onClick={() => setShowFeatureModal(true)}>
             {Ico.orca}
-            {sbOpen && <div><div style={{ fontSize: 16, fontWeight: 700, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>ORCA</div><div style={{ fontSize: 8, color: T.text.dim, letterSpacing: '0.15em', textTransform: 'uppercase' }}>Investment</div></div>}
+            {(sbOpen || isMobile) && <div><div style={{ fontSize: 16, fontWeight: 700, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>ORCA</div><div style={{ fontSize: 8, color: T.text.dim, letterSpacing: '0.15em', textTransform: 'uppercase' }}>Investment</div></div>}
           </div>
-          {sbOpen && <button onClick={() => setSbOpen(false)} style={{ marginInlineStart: 'auto', background: 'none', border: 'none', color: T.text.dim, cursor: 'pointer', fontSize: 14, padding: 4, lineHeight: 1, transition: 'color 0.2s' }}>‹</button>}
+          {(sbOpen || isMobile) && <button onClick={() => setSbOpen(false)} style={{ marginInlineStart: 'auto', background: 'none', border: 'none', color: T.text.dim, cursor: 'pointer', fontSize: 14, padding: 4, lineHeight: 1, transition: 'color 0.2s' }}>‹</button>}
         </div>
-        {!sbOpen && <button onClick={() => setSbOpen(true)} style={{ background: 'none', border: 'none', color: T.text.dim, cursor: 'pointer', fontSize: 14, padding: '6px 0', lineHeight: 1, transition: 'color 0.2s' }}>›</button>}
-        {sbOpen && <ModeSwitch T={T} isRTL={isRTL} operatingMode={settings.operatingMode} systemMode={settings.systemMode} onOperatingModeChange={settings.setOperatingMode} onSystemModeChange={settings.setSystemMode} />}
+        {!sbOpen && !isMobile && <button onClick={() => setSbOpen(true)} style={{ background: 'none', border: 'none', color: T.text.dim, cursor: 'pointer', fontSize: 14, padding: '6px 0', lineHeight: 1, transition: 'color 0.2s' }}>›</button>}
+        {(sbOpen || isMobile) && <ModeSwitch T={T} isRTL={isRTL} operatingMode={settings.operatingMode} systemMode={settings.systemMode} onOperatingModeChange={settings.setOperatingMode} onSystemModeChange={settings.setSystemMode} />}
         <nav style={{ flex: 1, padding: '0 6px', display: 'flex', flexDirection: 'column', gap: 2 }}>
           {nav.map(item => (
-            <button key={item.id} onClick={() => setPage(item.id)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: sbOpen ? '9px 10px' : '9px 0', justifyContent: sbOpen ? 'flex-start' : 'center', background: page === item.id ? `${T.accent.cyan}10` : 'transparent', color: page === item.id ? T.accent.cyan : T.text.secondary, border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: page === item.id ? 600 : 400, transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: page === item.id ? `2px solid ${T.accent.cyan}` : '2px solid transparent' }}>
-              {item.icon}{sbOpen && <span>{item.label}</span>}
+            <button key={item.id} onClick={() => { setPage(item.id); if (isMobile) setSbOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: (sbOpen || isMobile) ? '9px 10px' : '9px 0', justifyContent: (sbOpen || isMobile) ? 'flex-start' : 'center', background: page === item.id ? `${T.accent.cyan}10` : 'transparent', color: page === item.id ? T.accent.cyan : T.text.secondary, border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: page === item.id ? 600 : 400, transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: page === item.id ? `2px solid ${T.accent.cyan}` : '2px solid transparent' }}>
+              {item.icon}{(sbOpen || isMobile) && <span>{item.label}</span>}
             </button>
           ))}
           {/* Info / About button */}
-          <button onClick={() => setShowFeatureModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: sbOpen ? '9px 10px' : '9px 0', justifyContent: sbOpen ? 'flex-start' : 'center', background: 'transparent', color: T.text.dim, border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: 400, transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: '2px solid transparent', marginTop: 4 }}>
+          <button onClick={() => setShowFeatureModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: (sbOpen || isMobile) ? '9px 10px' : '9px 0', justifyContent: (sbOpen || isMobile) ? 'flex-start' : 'center', background: 'transparent', color: T.text.dim, border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: 400, transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: '2px solid transparent', marginTop: 4 }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            {sbOpen && <span>{isRTL ? 'אודות המערכת' : 'About System'}</span>}
+            {(sbOpen || isMobile) && <span>{isRTL ? 'אודות המערכת' : 'About System'}</span>}
           </button>
         </nav>
         <div style={{ padding: 10, borderTop: `1px solid ${T.border.subtle}`, display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {sbOpen && <div style={{ position: 'relative' }}>
+          {(sbOpen || isMobile) && <div style={{ position: 'relative' }}>
             <button onClick={() => setShowThemeMenu(!showThemeMenu)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: `${T.accent.purple}10`, border: `1px solid ${T.accent.purple}25`, borderRadius: T.radius.md, color: T.accent.purple, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
               {Ico.settings}<span>{t.theme}</span>
             </button>
@@ -1261,16 +1279,16 @@ const Index = () => {
               </div>
             )}
           </div>}
-          {sbOpen && <button onClick={() => settings.setPrivacyMode(!settings.privacyMode)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: settings.privacyMode ? `${T.accent.orange}15` : `${T.accent.blue}08`, border: `1px solid ${settings.privacyMode ? T.accent.orange : T.accent.blue}25`, borderRadius: T.radius.md, color: settings.privacyMode ? T.accent.orange : T.accent.blue, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+          {(sbOpen || isMobile) && <button onClick={() => settings.setPrivacyMode(!settings.privacyMode)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: settings.privacyMode ? `${T.accent.orange}15` : `${T.accent.blue}08`, border: `1px solid ${settings.privacyMode ? T.accent.orange : T.accent.blue}25`, borderRadius: T.radius.md, color: settings.privacyMode ? T.accent.orange : T.accent.blue, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
             {settings.privacyMode ? '🔒' : '👁️'}<span>{settings.privacyMode ? (isRTL ? 'מוסתר' : 'Hidden') : (isRTL ? 'גלוי' : 'Visible')}</span>
           </button>}
-          <button onClick={() => settings.setLang(settings.lang === 'he' ? 'en' : 'he')} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: `${T.accent.blue}10`, border: `1px solid ${T.accent.blue}25`, borderRadius: T.radius.md, color: T.accent.blue, cursor: 'pointer', fontSize: 12, fontWeight: 600, justifyContent: sbOpen ? 'flex-start' : 'center' }}>
-            {Ico.globe}{sbOpen && <span>{settings.lang === 'he' ? 'English' : 'עברית'}</span>}
+          <button onClick={() => settings.setLang(settings.lang === 'he' ? 'en' : 'he')} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: `${T.accent.blue}10`, border: `1px solid ${T.accent.blue}25`, borderRadius: T.radius.md, color: T.accent.blue, cursor: 'pointer', fontSize: 12, fontWeight: 600, justifyContent: (sbOpen || isMobile) ? 'flex-start' : 'center' }}>
+            {Ico.globe}{(sbOpen || isMobile) && <span>{settings.lang === 'he' ? 'English' : 'עברית'}</span>}
           </button>
-          {sbOpen && <button onClick={() => setShowReset(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: `${T.accent.red}08`, border: `1px solid ${T.accent.red}20`, borderRadius: T.radius.md, color: T.accent.red, cursor: 'pointer', fontSize: 11, fontWeight: 500 }}>
+          {(sbOpen || isMobile) && <button onClick={() => setShowReset(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: `${T.accent.red}08`, border: `1px solid ${T.accent.red}20`, borderRadius: T.radius.md, color: T.accent.red, cursor: 'pointer', fontSize: 11, fontWeight: 500 }}>
             {Ico.reset}<span>{t.resetAll}</span>
           </button>}
-          {sbOpen && <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: `${T.accent.orange}08`, border: `1px solid ${T.accent.orange}20`, borderRadius: T.radius.md, color: T.accent.orange, cursor: 'pointer', fontSize: 11, fontWeight: 500 }}>
+          {(sbOpen || isMobile) && <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: `${T.accent.orange}08`, border: `1px solid ${T.accent.orange}20`, borderRadius: T.radius.md, color: T.accent.orange, cursor: 'pointer', fontSize: 11, fontWeight: 500 }}>
             <span>🚪</span><span>{isRTL ? 'יציאה' : 'Logout'}</span>
           </button>}
         </div>
@@ -1278,73 +1296,81 @@ const Index = () => {
 
       {/* MAIN */}
       <main style={{ flex: 1, overflow: 'auto', transition: 'background 0.5s ease' }}>
-        <header style={{ padding: '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${T.border.subtle}`, background: `${T.bg.secondary}cc`, backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 5 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <h1 style={{ fontSize: 17, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", margin: 0 }}>{nav.find(n => n.id === page)?.label}</h1>
-            <TradingBadge color={modeColors[opMode]}>{opMode === 'beginner' ? (isRTL ? '🎓 מתחיל' : '🎓 BEGINNER') : opMode === 'live' ? (isRTL ? '🔴 חי' : '🔴 LIVE') : opMode === 'review' ? (isRTL ? '🔵 סקירה' : '🔵 REVIEW') : (isRTL ? '🟣 מחקר' : '🟣 RESEARCH')}</TradingBadge>
-            {isAlpha && <TradingBadge color={T.accent.purple}>⚡ ALPHA</TradingBadge>}
-            {settings.privacyMode && <TradingBadge color={T.accent.orange}>🔒</TradingBadge>}
+        <header style={{ padding: isMobile ? '10px 12px' : '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${T.border.subtle}`, background: `${T.bg.secondary}cc`, backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 5, gap: 8, flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 14 }}>
+            {/* Mobile hamburger */}
+            {isMobile && (
+              <button onClick={() => setSbOpen(true)} style={{ background: 'none', border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.sm, color: T.text.secondary, cursor: 'pointer', padding: '5px 7px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+              </button>
+            )}
+            <h1 style={{ fontSize: isMobile ? 14 : 17, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", margin: 0 }}>{nav.find(n => n.id === page)?.label}</h1>
+            {!isMobile && <TradingBadge color={modeColors[opMode]}>{opMode === 'beginner' ? (isRTL ? '🎓 מתחיל' : '🎓 BEGINNER') : opMode === 'live' ? (isRTL ? '🔴 חי' : '🔴 LIVE') : opMode === 'review' ? (isRTL ? '🔵 סקירה' : '🔵 REVIEW') : (isRTL ? '🟣 מחקר' : '🟣 RESEARCH')}</TradingBadge>}
+            {!isMobile && isAlpha && <TradingBadge color={T.accent.purple}>⚡ ALPHA</TradingBadge>}
+            {!isMobile && settings.privacyMode && <TradingBadge color={T.accent.orange}>🔒</TradingBadge>}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 10, flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
             {/* Prominent Add Trade button */}
-            <button onClick={() => { setEditingTrade(null); setShowTradeForm(true); }} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 16px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 700, cursor: 'pointer', fontSize: 12, transition: 'all 0.2s', boxShadow: `0 0 12px ${T.accent.cyan}30` }}>
-              + {t.addTrade}
+            <button onClick={() => { setEditingTrade(null); setShowTradeForm(true); }} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: isMobile ? '5px 10px' : '6px 16px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 700, cursor: 'pointer', fontSize: isMobile ? 11 : 12, transition: 'all 0.2s', boxShadow: `0 0 12px ${T.accent.cyan}30` }}>
+              + {isMobile ? '' : t.addTrade}
             </button>
-            {hiddenCharts.length > 0 && (
+            {!isMobile && hiddenCharts.length > 0 && (
               <button onClick={handleRestoreCharts} style={{ padding: '4px 10px', background: `${T.accent.orange}15`, border: `1px solid ${T.accent.orange}30`, borderRadius: T.radius.sm, color: T.accent.orange, cursor: 'pointer', fontSize: 10, fontWeight: 600, transition: 'all 0.2s' }}>
                 ↩ {isRTL ? 'שחזר גרפים' : 'Restore Charts'} ({hiddenCharts.length})
               </button>
             )}
-            <button
-              onClick={() => setShowCmdPalette(true)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                padding: '6px 14px',
-                background: `linear-gradient(135deg, ${T.bg.tertiary}, ${T.bg.card})`,
-                border: `1px solid ${T.border.medium}`,
-                borderRadius: T.radius.md,
-                color: T.text.secondary,
-                cursor: 'pointer',
-                fontSize: 12,
-                fontWeight: 500,
-                transition: 'all 0.2s ease',
-                boxShadow: T.shadow.card,
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.borderColor = T.accent.cyan + '50';
-                e.currentTarget.style.background = `linear-gradient(135deg, ${T.accent.cyan}08, ${T.bg.card})`;
-                e.currentTarget.style.color = T.text.primary;
-                e.currentTarget.style.boxShadow = `${T.shadow.card}, 0 0 12px ${T.accent.cyan}15`;
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.borderColor = T.border.medium;
-                e.currentTarget.style.background = `linear-gradient(135deg, ${T.bg.tertiary}, ${T.bg.card})`;
-                e.currentTarget.style.color = T.text.secondary;
-                e.currentTarget.style.boxShadow = T.shadow.card;
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-              </svg>
-              <span style={{ fontFamily: "'Inter', sans-serif" }}>
-                {isRTL ? 'פעולות מהירות' : 'Quick Actions'}
-              </span>
-              <span style={{
-                fontSize: 9, padding: '2px 5px',
-                background: `${T.accent.cyan}12`, border: `1px solid ${T.accent.cyan}20`,
-                borderRadius: 4, color: T.accent.cyan,
-                fontFamily: "'JetBrains Mono', monospace", fontWeight: 700
-              }}>⌘K</span>
-            </button>
-            <div style={{ fontSize: 11, color: T.text.dim }}>{new Date().toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</div>
+            {!isMobile && (
+              <button
+                onClick={() => setShowCmdPalette(true)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '6px 14px',
+                  background: `linear-gradient(135deg, ${T.bg.tertiary}, ${T.bg.card})`,
+                  border: `1px solid ${T.border.medium}`,
+                  borderRadius: T.radius.md,
+                  color: T.text.secondary,
+                  cursor: 'pointer',
+                  fontSize: 12,
+                  fontWeight: 500,
+                  transition: 'all 0.2s ease',
+                  boxShadow: T.shadow.card,
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = T.accent.cyan + '50';
+                  e.currentTarget.style.background = `linear-gradient(135deg, ${T.accent.cyan}08, ${T.bg.card})`;
+                  e.currentTarget.style.color = T.text.primary;
+                  e.currentTarget.style.boxShadow = `${T.shadow.card}, 0 0 12px ${T.accent.cyan}15`;
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = T.border.medium;
+                  e.currentTarget.style.background = `linear-gradient(135deg, ${T.bg.tertiary}, ${T.bg.card})`;
+                  e.currentTarget.style.color = T.text.secondary;
+                  e.currentTarget.style.boxShadow = T.shadow.card;
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                <span style={{ fontFamily: "'Inter', sans-serif" }}>
+                  {isRTL ? 'פעולות מהירות' : 'Quick Actions'}
+                </span>
+                <span style={{
+                  fontSize: 9, padding: '2px 5px',
+                  background: `${T.accent.cyan}12`, border: `1px solid ${T.accent.cyan}20`,
+                  borderRadius: 4, color: T.accent.cyan,
+                  fontFamily: "'JetBrains Mono', monospace", fontWeight: 700
+                }}>⌘K</span>
+              </button>
+            )}
+            {!isMobile && <div style={{ fontSize: 11, color: T.text.dim }}>{new Date().toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</div>}
             <PV><div style={{ fontSize: 11, color: T.accent.cyan, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace" }}>${currentBalance.toFixed(2)}</div></PV>
-            <span onClick={() => setShowFeatureModal(true)} style={{ fontSize: 13, fontWeight: 800, letterSpacing: '-0.02em', color: T.text.primary, fontFamily: "'JetBrains Mono', monospace", cursor: 'pointer', transition: 'opacity 0.2s' }}>Orca<span style={{ fontWeight: 300, color: T.text.muted, marginLeft: 4 }}>Investment</span></span>
+            {!isMobile && <span onClick={() => setShowFeatureModal(true)} style={{ fontSize: 13, fontWeight: 800, letterSpacing: '-0.02em', color: T.text.primary, fontFamily: "'JetBrains Mono', monospace", cursor: 'pointer', transition: 'opacity 0.2s' }}>Orca<span style={{ fontWeight: 300, color: T.text.muted, marginLeft: 4 }}>Investment</span></span>}
           </div>
         </header>
 
-        <div style={{ padding: '20px 24px', maxWidth: 1400, margin: '0 auto' }}>
+        <div style={{ padding: isMobile ? '12px 10px' : '20px 24px', maxWidth: 1400, margin: '0 auto' }}>
           {trades.length === 0 && (
-            <div style={{ textAlign: 'center', padding: 60 }}>
+            <div style={{ textAlign: 'center', padding: isMobile ? 30 : 60 }}>
               <div style={{ fontSize: 48, marginBottom: 16 }}>🐋</div>
               <div style={{ fontSize: 16, color: T.text.secondary, marginBottom: 20 }}>{t.noTrades}</div>
               <button onClick={() => setShowTradeForm(true)} style={{ padding: '10px 24px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 700, cursor: 'pointer', fontSize: 14 }}>+ {t.addTrade}</button>
