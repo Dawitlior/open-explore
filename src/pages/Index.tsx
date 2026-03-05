@@ -1296,73 +1296,81 @@ const Index = () => {
 
       {/* MAIN */}
       <main style={{ flex: 1, overflow: 'auto', transition: 'background 0.5s ease' }}>
-        <header style={{ padding: '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${T.border.subtle}`, background: `${T.bg.secondary}cc`, backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 5 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <h1 style={{ fontSize: 17, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", margin: 0 }}>{nav.find(n => n.id === page)?.label}</h1>
-            <TradingBadge color={modeColors[opMode]}>{opMode === 'beginner' ? (isRTL ? '🎓 מתחיל' : '🎓 BEGINNER') : opMode === 'live' ? (isRTL ? '🔴 חי' : '🔴 LIVE') : opMode === 'review' ? (isRTL ? '🔵 סקירה' : '🔵 REVIEW') : (isRTL ? '🟣 מחקר' : '🟣 RESEARCH')}</TradingBadge>
-            {isAlpha && <TradingBadge color={T.accent.purple}>⚡ ALPHA</TradingBadge>}
-            {settings.privacyMode && <TradingBadge color={T.accent.orange}>🔒</TradingBadge>}
+        <header style={{ padding: isMobile ? '10px 12px' : '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${T.border.subtle}`, background: `${T.bg.secondary}cc`, backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 5, gap: 8, flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 14 }}>
+            {/* Mobile hamburger */}
+            {isMobile && (
+              <button onClick={() => setSbOpen(true)} style={{ background: 'none', border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.sm, color: T.text.secondary, cursor: 'pointer', padding: '5px 7px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+              </button>
+            )}
+            <h1 style={{ fontSize: isMobile ? 14 : 17, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", margin: 0 }}>{nav.find(n => n.id === page)?.label}</h1>
+            {!isMobile && <TradingBadge color={modeColors[opMode]}>{opMode === 'beginner' ? (isRTL ? '🎓 מתחיל' : '🎓 BEGINNER') : opMode === 'live' ? (isRTL ? '🔴 חי' : '🔴 LIVE') : opMode === 'review' ? (isRTL ? '🔵 סקירה' : '🔵 REVIEW') : (isRTL ? '🟣 מחקר' : '🟣 RESEARCH')}</TradingBadge>}
+            {!isMobile && isAlpha && <TradingBadge color={T.accent.purple}>⚡ ALPHA</TradingBadge>}
+            {!isMobile && settings.privacyMode && <TradingBadge color={T.accent.orange}>🔒</TradingBadge>}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 10, flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
             {/* Prominent Add Trade button */}
-            <button onClick={() => { setEditingTrade(null); setShowTradeForm(true); }} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 16px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 700, cursor: 'pointer', fontSize: 12, transition: 'all 0.2s', boxShadow: `0 0 12px ${T.accent.cyan}30` }}>
-              + {t.addTrade}
+            <button onClick={() => { setEditingTrade(null); setShowTradeForm(true); }} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: isMobile ? '5px 10px' : '6px 16px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 700, cursor: 'pointer', fontSize: isMobile ? 11 : 12, transition: 'all 0.2s', boxShadow: `0 0 12px ${T.accent.cyan}30` }}>
+              + {isMobile ? '' : t.addTrade}
             </button>
-            {hiddenCharts.length > 0 && (
+            {!isMobile && hiddenCharts.length > 0 && (
               <button onClick={handleRestoreCharts} style={{ padding: '4px 10px', background: `${T.accent.orange}15`, border: `1px solid ${T.accent.orange}30`, borderRadius: T.radius.sm, color: T.accent.orange, cursor: 'pointer', fontSize: 10, fontWeight: 600, transition: 'all 0.2s' }}>
                 ↩ {isRTL ? 'שחזר גרפים' : 'Restore Charts'} ({hiddenCharts.length})
               </button>
             )}
-            <button
-              onClick={() => setShowCmdPalette(true)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                padding: '6px 14px',
-                background: `linear-gradient(135deg, ${T.bg.tertiary}, ${T.bg.card})`,
-                border: `1px solid ${T.border.medium}`,
-                borderRadius: T.radius.md,
-                color: T.text.secondary,
-                cursor: 'pointer',
-                fontSize: 12,
-                fontWeight: 500,
-                transition: 'all 0.2s ease',
-                boxShadow: T.shadow.card,
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.borderColor = T.accent.cyan + '50';
-                e.currentTarget.style.background = `linear-gradient(135deg, ${T.accent.cyan}08, ${T.bg.card})`;
-                e.currentTarget.style.color = T.text.primary;
-                e.currentTarget.style.boxShadow = `${T.shadow.card}, 0 0 12px ${T.accent.cyan}15`;
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.borderColor = T.border.medium;
-                e.currentTarget.style.background = `linear-gradient(135deg, ${T.bg.tertiary}, ${T.bg.card})`;
-                e.currentTarget.style.color = T.text.secondary;
-                e.currentTarget.style.boxShadow = T.shadow.card;
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-              </svg>
-              <span style={{ fontFamily: "'Inter', sans-serif" }}>
-                {isRTL ? 'פעולות מהירות' : 'Quick Actions'}
-              </span>
-              <span style={{
-                fontSize: 9, padding: '2px 5px',
-                background: `${T.accent.cyan}12`, border: `1px solid ${T.accent.cyan}20`,
-                borderRadius: 4, color: T.accent.cyan,
-                fontFamily: "'JetBrains Mono', monospace", fontWeight: 700
-              }}>⌘K</span>
-            </button>
-            <div style={{ fontSize: 11, color: T.text.dim }}>{new Date().toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</div>
+            {!isMobile && (
+              <button
+                onClick={() => setShowCmdPalette(true)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '6px 14px',
+                  background: `linear-gradient(135deg, ${T.bg.tertiary}, ${T.bg.card})`,
+                  border: `1px solid ${T.border.medium}`,
+                  borderRadius: T.radius.md,
+                  color: T.text.secondary,
+                  cursor: 'pointer',
+                  fontSize: 12,
+                  fontWeight: 500,
+                  transition: 'all 0.2s ease',
+                  boxShadow: T.shadow.card,
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = T.accent.cyan + '50';
+                  e.currentTarget.style.background = `linear-gradient(135deg, ${T.accent.cyan}08, ${T.bg.card})`;
+                  e.currentTarget.style.color = T.text.primary;
+                  e.currentTarget.style.boxShadow = `${T.shadow.card}, 0 0 12px ${T.accent.cyan}15`;
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = T.border.medium;
+                  e.currentTarget.style.background = `linear-gradient(135deg, ${T.bg.tertiary}, ${T.bg.card})`;
+                  e.currentTarget.style.color = T.text.secondary;
+                  e.currentTarget.style.boxShadow = T.shadow.card;
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                <span style={{ fontFamily: "'Inter', sans-serif" }}>
+                  {isRTL ? 'פעולות מהירות' : 'Quick Actions'}
+                </span>
+                <span style={{
+                  fontSize: 9, padding: '2px 5px',
+                  background: `${T.accent.cyan}12`, border: `1px solid ${T.accent.cyan}20`,
+                  borderRadius: 4, color: T.accent.cyan,
+                  fontFamily: "'JetBrains Mono', monospace", fontWeight: 700
+                }}>⌘K</span>
+              </button>
+            )}
+            {!isMobile && <div style={{ fontSize: 11, color: T.text.dim }}>{new Date().toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</div>}
             <PV><div style={{ fontSize: 11, color: T.accent.cyan, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace" }}>${currentBalance.toFixed(2)}</div></PV>
-            <span onClick={() => setShowFeatureModal(true)} style={{ fontSize: 13, fontWeight: 800, letterSpacing: '-0.02em', color: T.text.primary, fontFamily: "'JetBrains Mono', monospace", cursor: 'pointer', transition: 'opacity 0.2s' }}>Orca<span style={{ fontWeight: 300, color: T.text.muted, marginLeft: 4 }}>Investment</span></span>
+            {!isMobile && <span onClick={() => setShowFeatureModal(true)} style={{ fontSize: 13, fontWeight: 800, letterSpacing: '-0.02em', color: T.text.primary, fontFamily: "'JetBrains Mono', monospace", cursor: 'pointer', transition: 'opacity 0.2s' }}>Orca<span style={{ fontWeight: 300, color: T.text.muted, marginLeft: 4 }}>Investment</span></span>}
           </div>
         </header>
 
-        <div style={{ padding: '20px 24px', maxWidth: 1400, margin: '0 auto' }}>
+        <div style={{ padding: isMobile ? '12px 10px' : '20px 24px', maxWidth: 1400, margin: '0 auto' }}>
           {trades.length === 0 && (
-            <div style={{ textAlign: 'center', padding: 60 }}>
+            <div style={{ textAlign: 'center', padding: isMobile ? 30 : 60 }}>
               <div style={{ fontSize: 48, marginBottom: 16 }}>🐋</div>
               <div style={{ fontSize: 16, color: T.text.secondary, marginBottom: 20 }}>{t.noTrades}</div>
               <button onClick={() => setShowTradeForm(true)} style={{ padding: '10px 24px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 700, cursor: 'pointer', fontSize: 14 }}>+ {t.addTrade}</button>
