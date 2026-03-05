@@ -50,7 +50,7 @@ export const ScoreGauge = ({ score, label, color, T, description, onInfoClick }:
   const c = 2 * Math.PI * 40;
   const off = c - (score / 100) * c;
   return (
-    <GlassCard T={T} glow={color === T.accent.cyan ? T.accent.cyanGlow : null} style={{ textAlign: 'center', minWidth: 170, flex: 1 }}>
+    <GlassCard T={T} glow={color === T.accent.cyan ? T.accent.cyanGlow : null} style={{ textAlign: 'center', minWidth: 140, flex: 1 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: description ? 4 : 10 }}>
         <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</div>
         {onInfoClick && (
