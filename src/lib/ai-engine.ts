@@ -86,7 +86,7 @@ function pick<T>(arr: T[]): T {
 
 export function generateInsights(stats: TradingStats, trades: Trade[], risk: RiskAssessment, isRTL: boolean): AIInsight[] {
   if (trades.length === 0) return [];
-  const insights: AIInsight[] = [];
+  const allInsights: AIInsight[] = [];
   const lang = isRTL ? 'he' : 'en';
 
   // Direction edge
@@ -94,7 +94,7 @@ export function generateInsights(stats: TradingStats, trades: Trade[], risk: Ris
   const shortW = stats.directionData.find(d => d.name === 'Short');
   if (longW && shortW && (longW.pnl !== 0 || shortW.pnl !== 0)) {
     const best = longW.pnl > shortW.pnl ? longW : shortW;
-    insights.push({
+    allInsights.push({
       type: 'strength', icon: '💪', severity: 'low',
       title: isRTL ? 'יתרון כיווני' : 'Directional Edge',
       text: pick(PHRASES.dirEdge[lang])(best.name, best.winRate.toFixed(0), best.pnl.toFixed(2))
@@ -104,9 +104,9 @@ export function generateInsights(stats: TradingStats, trades: Trade[], risk: Ris
   // Discipline
   const rulesRate = stats.rulesFollowed;
   if (rulesRate >= 90) {
-    insights.push({ type: 'strength', icon: '✅', severity: 'low', title: isRTL ? 'משמעת גבוהה' : 'High Discipline', text: pick(PHRASES.highDisc[lang])(rulesRate.toFixed(0)) });
+    allInsights.push({ type: 'strength', icon: '✅', severity: 'low', title: isRTL ? 'משמעת גבוהה' : 'High Discipline', text: pick(PHRASES.highDisc[lang])(rulesRate.toFixed(0)) });
   } else if (rulesRate < 70) {
-    insights.push({ type: 'weakness', icon: '⚠️', severity: 'high', title: isRTL ? 'משמעת נמוכה' : 'Low Discipline', text: pick(PHRASES.lowDisc[lang])(rulesRate.toFixed(0)) });
+    allInsights.push({ type: 'weakness', icon: '⚠️', severity: 'high', title: isRTL ? 'משמעת נמוכה' : 'Low Discipline', text: pick(PHRASES.lowDisc[lang])(rulesRate.toFixed(0)) });
   }
 
   // Worst performing coin
@@ -117,12 +117,18 @@ export function generateInsights(stats: TradingStats, trades: Trade[], risk: Ris
       `${worstCoin.coin} is bleeding your account: -$${Math.abs(worstCoin.pnl).toFixed(2)} across ${worstCoin.trades} trades`,
       `Remove ${worstCoin.coin} from your watchlist? ${worstCoin.wins}/${worstCoin.trades} WR with -$${Math.abs(worstCoin.pnl).toFixed(2)} P&L`,
     ];
-    insights.push({ type: 'weakness', icon: '🔴', severity: 'medium', title: isRTL ? 'מטבע בעייתי' : 'Problematic Coin', text: isRTL ? `${worstCoin.coin}: ${worstCoin.wins}/${worstCoin.trades} ניצחונות, הפסד $${Math.abs(worstCoin.pnl).toFixed(2)}` : pick(coinTexts) });
+    allInsights.push({ type: 'weakness', icon: '🔴', severity: 'medium', title: isRTL ? 'מטבע בעייתי' : 'Problematic Coin', text: isRTL ? `${worstCoin.coin}: ${worstCoin.wins}/${worstCoin.trades} ניצחונות, הפסד $${Math.abs(worstCoin.pnl).toFixed(2)}` : pick(coinTexts) });
+  }
+
+  // Best performing coin
+  const bestCoin = [...stats.coinPerf].sort((a, b) => b.pnl - a.pnl)[0];
+  if (bestCoin && bestCoin.pnl > 0) {
+    allInsights.push({ type: 'strength', icon: '🏆', severity: 'low', title: isRTL ? 'נכס מוביל' : 'Top Performer', text: isRTL ? `${bestCoin.coin}: ${bestCoin.wins}/${bestCoin.trades} ניצחונות, רווח $${bestCoin.pnl.toFixed(2)}. המשך להתמקד בו.` : `${bestCoin.coin}: ${bestCoin.wins}/${bestCoin.trades} wins, +$${bestCoin.pnl.toFixed(2)} profit. Keep focusing here.` });
   }
 
   // Consecutive losses
   if (stats.maxConsecLosses >= 3) {
-    insights.push({ type: 'alert', icon: '🔥', severity: 'high', title: isRTL ? 'רצף הפסדים' : 'Loss Streak', text: pick(PHRASES.lossStreak[lang])(String(stats.maxConsecLosses)) });
+    allInsights.push({ type: 'alert', icon: '🔥', severity: 'high', title: isRTL ? 'רצף הפסדים' : 'Loss Streak', text: pick(PHRASES.lossStreak[lang])(String(stats.maxConsecLosses)) });
   }
 
   // Deviation analysis
@@ -135,12 +141,12 @@ export function generateInsights(stats: TradingStats, trades: Trade[], risk: Ris
       `Your losing trades deviate ${avgDevLoss.toFixed(3)}R from plan. Winners: ${avgDevWin.toFixed(3)}R. Tighten execution.`,
       `Execution slip: losses deviate ${avgDevLoss.toFixed(3)}R, wins ${avgDevWin.toFixed(3)}R. The gap reveals your discipline leak.`,
     ];
-    insights.push({ type: 'alert', icon: '📊', severity: 'medium', title: isRTL ? 'סטייה בביצוע' : 'Execution Deviation', text: isRTL ? `סטייה ממוצעת: ${avgDevLoss.toFixed(3)}R בהפסדים vs ${avgDevWin.toFixed(3)}R בניצחונות` : pick(devTexts) });
+    allInsights.push({ type: 'alert', icon: '📊', severity: 'medium', title: isRTL ? 'סטייה בביצוע' : 'Execution Deviation', text: isRTL ? `סטייה ממוצעת: ${avgDevLoss.toFixed(3)}R בהפסדים vs ${avgDevWin.toFixed(3)}R בניצחונות` : pick(devTexts) });
   }
 
   // Risk warnings
   risk.warnings.forEach(w => {
-    insights.push({ type: 'alert', icon: '⚡', severity: 'medium', title: isRTL ? 'אזהרת סיכון' : 'Risk Warning', text: w });
+    allInsights.push({ type: 'alert', icon: '⚡', severity: 'medium', title: isRTL ? 'אזהרת סיכון' : 'Risk Warning', text: w });
   });
 
   // Momentum
@@ -149,9 +155,9 @@ export function generateInsights(stats: TradingStats, trades: Trade[], risk: Ris
   const older = trades.slice(0, -5);
   const olderAvgPnL = older.length > 0 ? older.reduce((s, t) => s + t.pnl, 0) / older.length * 5 : 0;
   if (recent5PnL > olderAvgPnL * 1.5 && recent5PnL > 0) {
-    insights.push({ type: 'momentum', icon: '🚀', severity: 'low', title: isRTL ? 'מומנטום חיובי' : 'Positive Momentum', text: pick(PHRASES.posMom[lang])(recent5PnL.toFixed(2)) });
+    allInsights.push({ type: 'momentum', icon: '🚀', severity: 'low', title: isRTL ? 'מומנטום חיובי' : 'Positive Momentum', text: pick(PHRASES.posMom[lang])(recent5PnL.toFixed(2)) });
   } else if (recent5PnL < 0 && Math.abs(recent5PnL) > Math.abs(olderAvgPnL)) {
-    insights.push({ type: 'momentum', icon: '📉', severity: 'high', title: isRTL ? 'מומנטום שלילי' : 'Negative Momentum', text: pick(PHRASES.negMom[lang])(recent5PnL.toFixed(2)) });
+    allInsights.push({ type: 'momentum', icon: '📉', severity: 'high', title: isRTL ? 'מומנטום שלילי' : 'Negative Momentum', text: pick(PHRASES.negMom[lang])(recent5PnL.toFixed(2)) });
   }
 
   // Leverage recommendation
@@ -164,7 +170,7 @@ export function generateInsights(stats: TradingStats, trades: Trade[], risk: Ris
         `High leverage is costing you: ${highLevLosses.length} of ${highLevTrades.length} high-lev trades lost. Scale down.`,
         `${((highLevLosses.length/highLevTrades.length)*100).toFixed(0)}% loss rate on 25x+ trades. Your edge doesn't support this leverage.`,
       ];
-      insights.push({ type: 'recommendation', icon: '🎯', severity: 'medium', title: isRTL ? 'המלצת מינוף' : 'Leverage Recommendation', text: isRTL ? `מינוף 25x+: ${highLevLosses.length}/${highLevTrades.length} הפסדים — הפחת מינוף` : pick(levTexts) });
+      allInsights.push({ type: 'recommendation', icon: '🎯', severity: 'medium', title: isRTL ? 'המלצת מינוף' : 'Leverage Recommendation', text: isRTL ? `מינוף 25x+: ${highLevLosses.length}/${highLevTrades.length} הפסדים — הפחת מינוף` : pick(levTexts) });
     }
   }
 
@@ -175,9 +181,9 @@ export function generateInsights(stats: TradingStats, trades: Trade[], risk: Ris
       `Your PF of ${stats.profitFactor.toFixed(2)} means you earn $${stats.profitFactor.toFixed(2)} for every $1 lost. Strong.`,
       `At ${stats.profitFactor.toFixed(2)} profit factor, your system has a quantifiable edge. Protect it.`,
     ];
-    insights.push({ type: 'strength', icon: '📈', severity: 'low', title: isRTL ? 'פקטור רווח חזק' : 'Strong Profit Factor', text: isRTL ? `פקטור רווח ${stats.profitFactor.toFixed(2)} — יתרון סטטיסטי ברור` : pick(pfTexts) });
+    allInsights.push({ type: 'strength', icon: '📈', severity: 'low', title: isRTL ? 'פקטור רווח חזק' : 'Strong Profit Factor', text: isRTL ? `פקטור רווח ${stats.profitFactor.toFixed(2)} — יתרון סטטיסטי ברור` : pick(pfTexts) });
   } else if (stats.profitFactor < 1 && stats.profitFactor > 0) {
-    insights.push({ type: 'weakness', icon: '⚠️', severity: 'high', title: isRTL ? 'פקטור רווח שלילי' : 'Negative Profit Factor', text: isRTL ? `פקטור רווח ${stats.profitFactor.toFixed(2)} — אין יתרון סטטיסטי` : `Profit factor ${stats.profitFactor.toFixed(2)} — you're losing more than you gain. Review your system.` });
+    allInsights.push({ type: 'weakness', icon: '⚠️', severity: 'high', title: isRTL ? 'פקטור רווח שלילי' : 'Negative Profit Factor', text: isRTL ? `פקטור רווח ${stats.profitFactor.toFixed(2)} — אין יתרון סטטיסטי` : `Profit factor ${stats.profitFactor.toFixed(2)} — you're losing more than you gain. Review your system.` });
   }
 
   // Best day of week
@@ -185,7 +191,7 @@ export function generateInsights(stats: TradingStats, trades: Trade[], risk: Ris
     const bestDay = [...stats.dayPerf].sort((a, b) => b.pnl - a.pnl)[0];
     const worstDay = [...stats.dayPerf].sort((a, b) => a.pnl - b.pnl)[0];
     if (bestDay.pnl > 0 && worstDay.pnl < 0) {
-      insights.push({
+      allInsights.push({
         type: 'recommendation', icon: '📅', severity: 'low',
         title: isRTL ? 'תובנת ימים' : 'Day Pattern',
         text: isRTL
@@ -195,7 +201,98 @@ export function generateInsights(stats: TradingStats, trades: Trade[], risk: Ris
     }
   }
 
-  return insights;
+  // ═══ NEW DYNAMIC INSIGHT TYPES ═══
+
+  // Overtrading detection
+  const tradeDays: Record<string, Trade[]> = {};
+  trades.forEach(tr => { const d = new Date(tr.date.replace(' ', 'T')).toDateString(); if (!tradeDays[d]) tradeDays[d] = []; tradeDays[d].push(tr); });
+  const overtradingDays = Object.entries(tradeDays).filter(([, trs]) => trs.length >= 4);
+  if (overtradingDays.length > 0) {
+    const otTexts = isRTL ? [
+      `${overtradingDays.length} ימים עם 4+ עסקאות. מסחר יתר מוביל להחלטות נמוכות. שקול להגביל ל-2-3 עסקאות ביום.`,
+      `זוהו ${overtradingDays.length} ימי מסחר יתר. תדירות גבוהה לא מעידה על רווחיות — היא מעידה על חוסר סבלנות.`,
+    ] : [
+      `${overtradingDays.length} days with 4+ trades. Overtrading leads to lower-quality decisions. Consider limiting to 2-3 trades/day.`,
+      `Detected ${overtradingDays.length} overtrading days. High frequency doesn't mean profitability — it signals impatience.`,
+      `You traded 4+ times on ${overtradingDays.length} days. Correlate these with P&L — most overtrading days are losing days.`,
+    ];
+    allInsights.push({ type: 'alert', icon: '⚡', severity: 'high', title: isRTL ? 'זיהוי מסחר יתר' : 'Overtrading Pattern', text: pick(otTexts) });
+  }
+
+  // Revenge trading detection
+  let revengeTrades = 0;
+  Object.values(tradeDays).forEach(dayTrades => {
+    for (let i = 1; i < dayTrades.length; i++) {
+      if (dayTrades[i-1].winLoss === 'Loss' && dayTrades[i].risk > dayTrades[i-1].risk * 1.2) revengeTrades++;
+    }
+  });
+  if (revengeTrades > 0) {
+    const revTexts = isRTL ? [
+      `${revengeTrades} מקרי מסחר נקמה — הגדלת סיכון אחרי הפסד. דפוס רגשי מסוכן שחייב להיעצר.`,
+      `זוהו ${revengeTrades} עסקאות נקמה. אחרי הפסד, הסיכון צריך להישאר זהה או להקטין — לא להגדיל.`,
+    ] : [
+      `${revengeTrades} revenge trades detected — risk increased after losses. This emotional pattern must stop.`,
+      `${revengeTrades} instances of post-loss risk escalation. Your subconscious is trying to "win it back" — this never works.`,
+      `Revenge trading alert: ${revengeTrades} times you increased risk after a loss. This is your biggest behavioral leak.`,
+    ];
+    allInsights.push({ type: 'alert', icon: '🔥', severity: 'high', title: isRTL ? 'מסחר נקמה' : 'Revenge Trading', text: pick(revTexts) });
+  }
+
+  // Emotional trading detection (high deviation on losses)
+  const emotionalLosses = trades.filter(t => t.winLoss === 'Loss' && t.deviation > 0.15);
+  if (emotionalLosses.length > 2) {
+    allInsights.push({ type: 'weakness', icon: '😤', severity: 'medium', title: isRTL ? 'מסחר רגשי' : 'Emotional Trading', text: isRTL ? `${emotionalLosses.length} הפסדים עם סטייה גבוהה (>0.15R). כשאתה סוטה מהתוכנית בהפסד — הרגש שולט.` : `${emotionalLosses.length} losses with high deviation (>0.15R). When you deviate from plan on losses — emotion is driving.` });
+  }
+
+  // Win streak opportunity
+  if (stats.currentStreak >= 3 && stats.streakType === 'Win') {
+    const streakTexts = isRTL ? [
+      `רצף של ${stats.currentStreak} ניצחונות! אתה באזור — שמור על גודל עקבי, אל תגדיל מתוך ביטחון יתר.`,
+      `${stats.currentStreak} ניצחונות רצופים. ביצועים מצוינים — אבל רצפים לא נמשכים לנצח. שמור על משמעת.`,
+    ] : [
+      `${stats.currentStreak}-trade win streak! You're in the zone — maintain consistent sizing, don't let confidence inflate risk.`,
+      `${stats.currentStreak} consecutive wins. Great performance — but streaks don't last forever. Stay disciplined.`,
+    ];
+    allInsights.push({ type: 'strength', icon: '🏆', severity: 'low', title: isRTL ? 'רצף ניצחונות' : 'Win Streak', text: pick(streakTexts) });
+  }
+
+  // Risk sizing analysis
+  const risks = trades.map(t => t.risk);
+  const avgRisk = risks.reduce((a,b) => a+b, 0) / risks.length;
+  const riskStd = Math.sqrt(risks.reduce((s, r) => s + (r - avgRisk) ** 2, 0) / risks.length);
+  const riskCV = avgRisk > 0 ? (riskStd / avgRisk) * 100 : 0;
+  if (riskCV > 60) {
+    allInsights.push({ type: 'weakness', icon: '📐', severity: 'high', title: isRTL ? 'חוסר עקביות בגודל סיכון' : 'Risk Size Chaos', text: isRTL ? `מקדם השונות של הסיכון: ${riskCV.toFixed(0)}%. סיכון שמשתנה באופן דרמטי מעיד על קבלת החלטות רגשית.` : `Risk CV at ${riskCV.toFixed(0)}%. Dramatically varying risk sizes indicate emotional decision-making rather than systematic trading.` });
+  }
+
+  // Session time analysis
+  const morningTrades = trades.filter(t => { const h = new Date(t.date.replace(' ', 'T')).getHours(); return h >= 6 && h < 12; });
+  const eveningTrades = trades.filter(t => { const h = new Date(t.date.replace(' ', 'T')).getHours(); return h >= 18 || h < 6; });
+  if (morningTrades.length > 3 && eveningTrades.length > 3) {
+    const morningPnl = morningTrades.reduce((s, t) => s + t.pnl, 0);
+    const eveningPnl = eveningTrades.reduce((s, t) => s + t.pnl, 0);
+    if (Math.abs(morningPnl - eveningPnl) > 5) {
+      const better = morningPnl > eveningPnl ? (isRTL ? 'בוקר' : 'morning') : (isRTL ? 'ערב' : 'evening');
+      allInsights.push({ type: 'recommendation', icon: '🕐', severity: 'low', title: isRTL ? 'תובנת זמנים' : 'Session Timing', text: isRTL ? `הביצועים שלך טובים יותר ב${better}. שקול להתמקד בשעות אלו.` : `You perform better in the ${better}. Consider focusing your trading during these hours.` });
+    }
+  }
+
+  // Shuffle and return a varied subset each time
+  const shuffled = allInsights.sort(() => Math.random() - 0.5);
+  // Always include at least one of each type if available
+  const types = ['strength', 'weakness', 'alert', 'recommendation', 'momentum'] as const;
+  const result: AIInsight[] = [];
+  for (const type of types) {
+    const ofType = shuffled.find(i => i.type === type && !result.includes(i));
+    if (ofType) result.push(ofType);
+  }
+  // Fill remaining slots with random insights
+  for (const ins of shuffled) {
+    if (result.length >= 7) break;
+    if (!result.includes(ins)) result.push(ins);
+  }
+
+  return result.sort(() => Math.random() - 0.5);
 }
 
 // ════════════════════════════════════════════════════════
