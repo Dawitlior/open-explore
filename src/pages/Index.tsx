@@ -195,9 +195,14 @@ const Index = () => {
     };
     input.click();
   }, [importTrades]);
+  const [exiting, setExiting] = useState(false);
   const handleLogout = useCallback(() => {
-    sessionStorage.removeItem('orca-entered');
-    setEntered(false);
+    setExiting(true);
+    setTimeout(() => {
+      sessionStorage.removeItem('orca-entered');
+      setExiting(false);
+      setEntered(false);
+    }, 1000);
   }, []);
 
   const tt = ttStyle(T);
@@ -236,7 +241,7 @@ const Index = () => {
 
   // Entry gate check (after all hooks)
   if (!entered) {
-    return <EntryGate onEnter={() => setEntered(true)} />;
+    return <EntryGate onEnter={() => setEntered(true)} lang={settings.lang} />;
   }
 
   if (loading) {
@@ -1224,7 +1229,16 @@ const Index = () => {
 
 
   return (
-    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden', background: T.bg.primary, color: T.text.primary, fontFamily: "'Inter', system-ui, -apple-system, sans-serif", fontSize: 14, transition: 'background 0.5s ease, color 0.5s ease' }}>
+    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden', background: T.bg.primary, color: T.text.primary, fontFamily: "'Inter', system-ui, -apple-system, sans-serif", fontSize: 14, transition: 'background 0.5s ease, color 0.5s ease, filter 0.5s ease, opacity 0.5s ease', opacity: exiting ? 0 : 1, filter: exiting ? 'blur(8px)' : 'none' }}>
+      {/* Exit animation overlay */}
+      {exiting && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9998, background: 'rgba(3,5,8,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'fadeIn 0.3s ease' }}>
+          <div style={{ textAlign: 'center', animation: 'fadeIn 0.5s ease' }}>
+            <div style={{ fontSize: 24, fontWeight: 800, color: '#06d6a0', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '-0.02em', opacity: 0.6 }}>ORCA</div>
+            <div style={{ fontSize: 10, color: '#475569', marginTop: 6, letterSpacing: '0.2em', textTransform: 'uppercase' }}>{isRTL ? 'מתנתק...' : 'Disconnecting...'}</div>
+          </div>
+        </div>
+      )}
       {/* MOBILE SIDEBAR OVERLAY */}
       {isMobile && sbOpen && (
         <div onClick={() => setSbOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 40, backdropFilter: 'blur(2px)' }} />
@@ -1263,6 +1277,14 @@ const Index = () => {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
             {(sbOpen || isMobile) && <span>{isRTL ? 'אודות המערכת' : 'About System'}</span>}
           </button>
+          {/* Discord Community */}
+          <a href="https://discord.gg/VA9X5tGR" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: (sbOpen || isMobile) ? '9px 10px' : '9px 0', justifyContent: (sbOpen || isMobile) ? 'flex-start' : 'center', background: 'transparent', color: '#5865F2', border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: 500, transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: '2px solid transparent', textDecoration: 'none' }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#5865F215'; e.currentTarget.style.boxShadow = '0 0 12px #5865F220'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.boxShadow = 'none'; }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+            {(sbOpen || isMobile) && <span>{isRTL ? 'קהילת Discord' : 'Discord Community'}</span>}
+          </a>
         </nav>
         <div style={{ padding: 10, borderTop: `1px solid ${T.border.subtle}`, display: 'flex', flexDirection: 'column', gap: 4 }}>
           {(sbOpen || isMobile) && <div style={{ position: 'relative' }}>
