@@ -195,9 +195,14 @@ const Index = () => {
     };
     input.click();
   }, [importTrades]);
+  const [exiting, setExiting] = useState(false);
   const handleLogout = useCallback(() => {
-    sessionStorage.removeItem('orca-entered');
-    setEntered(false);
+    setExiting(true);
+    setTimeout(() => {
+      sessionStorage.removeItem('orca-entered');
+      setExiting(false);
+      setEntered(false);
+    }, 1000);
   }, []);
 
   const tt = ttStyle(T);
@@ -236,7 +241,7 @@ const Index = () => {
 
   // Entry gate check (after all hooks)
   if (!entered) {
-    return <EntryGate onEnter={() => setEntered(true)} />;
+    return <EntryGate onEnter={() => setEntered(true)} lang={settings.lang} />;
   }
 
   if (loading) {
@@ -1224,7 +1229,16 @@ const Index = () => {
 
 
   return (
-    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden', background: T.bg.primary, color: T.text.primary, fontFamily: "'Inter', system-ui, -apple-system, sans-serif", fontSize: 14, transition: 'background 0.5s ease, color 0.5s ease' }}>
+    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden', background: T.bg.primary, color: T.text.primary, fontFamily: "'Inter', system-ui, -apple-system, sans-serif", fontSize: 14, transition: 'background 0.5s ease, color 0.5s ease, filter 0.5s ease, opacity 0.5s ease', opacity: exiting ? 0 : 1, filter: exiting ? 'blur(8px)' : 'none' }}>
+      {/* Exit animation overlay */}
+      {exiting && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9998, background: 'rgba(3,5,8,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'fadeIn 0.3s ease' }}>
+          <div style={{ textAlign: 'center', animation: 'fadeIn 0.5s ease' }}>
+            <div style={{ fontSize: 24, fontWeight: 800, color: '#06d6a0', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '-0.02em', opacity: 0.6 }}>ORCA</div>
+            <div style={{ fontSize: 10, color: '#475569', marginTop: 6, letterSpacing: '0.2em', textTransform: 'uppercase' }}>{isRTL ? 'מתנתק...' : 'Disconnecting...'}</div>
+          </div>
+        </div>
+      )}
       {/* MOBILE SIDEBAR OVERLAY */}
       {isMobile && sbOpen && (
         <div onClick={() => setSbOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 40, backdropFilter: 'blur(2px)' }} />
