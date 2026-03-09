@@ -42,7 +42,7 @@ export function useTrades() {
   }, [trades]);
 
   const recalcBalances = useCallback((tradeList: Trade[]): Trade[] => {
-    const startBalance = 200;
+    const startBalance = 0;
     let balance = startBalance;
     return tradeList.map(t => {
       balance += (typeof t.pnl === 'number' && isFinite(t.pnl) ? t.pnl : 0);
