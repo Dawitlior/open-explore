@@ -91,15 +91,7 @@ const Index = () => {
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
-  // Seed data on first load
-  const [seeded, setSeeded] = useState(() => sessionStorage.getItem('orca-seeded') === '1');
-  useEffect(() => {
-    if (initialized && trades.length === 0 && !seeded && !loading) {
-      setSeeded(true);
-      sessionStorage.setItem('orca-seeded', '1');
-      importTrades(RAW_TRADES);
-    }
-  }, [initialized, trades.length, seeded, loading, importTrades]);
+  // No demo seed — dashboard starts empty, user adds their own trades
 
   // Calendar data
   const calDayPnl = useMemo(() => {
