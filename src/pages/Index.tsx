@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell, ComposedChart, ScatterChart, Scatter, ZAxis } from 'recharts';
 import type { Trade } from '@/data/trades';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { RAW_TRADES } from '@/data/trades';
+
 
 import { computeAnalytics, getCalDays } from '@/lib/trading-analytics';
 import { i18n } from '@/lib/trading-i18n';
@@ -91,15 +91,7 @@ const Index = () => {
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
-  // Seed data on first load
-  const [seeded, setSeeded] = useState(() => sessionStorage.getItem('orca-seeded') === '1');
-  useEffect(() => {
-    if (initialized && trades.length === 0 && !seeded && !loading) {
-      setSeeded(true);
-      sessionStorage.setItem('orca-seeded', '1');
-      importTrades(RAW_TRADES);
-    }
-  }, [initialized, trades.length, seeded, loading, importTrades]);
+  // No demo seed — dashboard starts empty, user adds their own trades
 
   // Calendar data
   const calDayPnl = useMemo(() => {
