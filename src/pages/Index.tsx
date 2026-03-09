@@ -77,7 +77,7 @@ const Index = () => {
   const isChartVisible = useCallback((chartId: string) => !hiddenCharts.includes(chartId), [hiddenCharts]);
 
   const riskData = useMemo(() => assessRisk(trades), [trades]);
-  const currentBalance = trades.length > 0 ? trades[trades.length - 1].balance : 200;
+  const currentBalance = trades.length > 0 ? trades[trades.length - 1].balance : 0;
 
   // Privacy mode shortcut
   usePrivacyShortcut(() => settings.setPrivacyMode(!settings.privacyMode));
