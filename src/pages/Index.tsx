@@ -19,6 +19,10 @@ import { TradeForm } from '@/components/trading/TradeForm';
 import { ResetModal } from '@/components/trading/ResetModal';
 import { EntryGate } from '@/components/trading/EntryGate';
 import { RiskLimitAlert } from '@/components/trading/RiskLimitAlert';
+import { RiskExplanationModal, type RiskExplanation } from '@/components/trading/RiskExplanationModal';
+import { AdvancedRiskPage } from '@/components/trading/AdvancedRiskPage';
+import { AdvancedAnalyticsPage } from '@/components/trading/AdvancedAnalyticsPage';
+import { AdvancedPsychologyPage } from '@/components/trading/AdvancedPsychologyPage';
 import { useTrades } from '@/hooks/use-trades';
 import { useSettings, type ThemeId } from '@/hooks/use-settings';
 import { assessRisk } from '@/lib/risk-engine';
@@ -59,6 +63,11 @@ const Index = () => {
   const [showImportWarning, setShowImportWarning] = useState(false);
   const [importLoading, setImportLoading] = useState(false);
   const [explainModal, setExplainModal] = useState<{ title: string; explanation: ChartExplanation; chartId?: string } | null>(null);
+  const [riskExplanations, setRiskExplanations] = useState<RiskExplanation[]>(() => {
+    try { return JSON.parse(localStorage.getItem('orca-risk-explanations') || '[]'); } catch { return []; }
+  });
+  const [showRiskExplanation, setShowRiskExplanation] = useState<{ tradeId: number; riskChange: string } | null>(null);
+
 
   const handleExplainClick = useCallback((title: string, explanation: ChartExplanation, chartId?: string) => {
     setExplainModal({ title, explanation, chartId });
@@ -145,10 +154,20 @@ const Index = () => {
 
   const handleSaveTrade = useCallback(async (trade: Omit<Trade, 'id' | 'balance'>) => {
     if (editingTrade) { await updateTrade({ ...editingTrade, ...trade, id: editingTrade.id }); }
-    else { await addTrade(trade); }
+    else {
+      const result = await addTrade(trade);
+      // Check for significant risk change
+      if (trades.length > 0 && result) {
+        const lastRisk = trades[trades.length - 1].risk;
+        if (lastRisk > 0 && trade.risk > lastRisk * 1.5) {
+          const changePct = ((trade.risk - lastRisk) / lastRisk * 100).toFixed(0);
+          setShowRiskExplanation({ tradeId: result.id, riskChange: `$${lastRisk.toFixed(2)} → $${trade.risk.toFixed(2)} (+${changePct}%)` });
+        }
+      }
+    }
     setShowTradeForm(false);
     setEditingTrade(null);
-  }, [editingTrade, addTrade, updateTrade]);
+  }, [editingTrade, addTrade, updateTrade, trades]);
 
   const handleDeleteTrade = useCallback(async (id: number) => { await removeTrade(id); setSelTrade(null); }, [removeTrade]);
   const handleReset = useCallback(async () => { await resetAll(); sessionStorage.setItem('orca-seeded', '1'); setShowReset(false); setPage('dashboard'); }, [resetAll]);
@@ -897,277 +916,52 @@ const Index = () => {
   const renderAnalytics = () => {
     if (trades.length === 0) return null;
     return (
-      <>
-        {/* R-based metrics row */}
-        <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-          <GlassCard T={T} style={{ flex: 1, minWidth: 140, padding: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}>
-              <div style={{ fontSize: 9, color: T.text.dim, textTransform: 'uppercase' }}>{t.expectancy}</div>
-              <span style={{ fontSize: 7, padding: '1px 3px', borderRadius: 3, background: `${T.accent.purple}15`, color: T.accent.purple, fontWeight: 700 }}>R</span>
-            </div>
-            <PV><div style={{ fontSize: 20, fontWeight: 700, color: stats.expectancyR >= 0 ? T.accent.cyan : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{stats.expectancyR >= 0 ? '+' : ''}{stats.expectancyR.toFixed(3)}R</div></PV>
-          </GlassCard>
-          <MetricCard T={T} label={t.profitFactor} value={stats.profitFactor} suffix="x" color={T.accent.blue} small />
-          <MetricCard T={T} label={`${t.avgWin} (R)`} value={`+${stats.avgWinR.toFixed(2)}R`} color={T.accent.green} small />
-          <MetricCard T={T} label={`${t.avgLoss} (R)`} value={`-${stats.avgLossR.toFixed(2)}R`} color={T.accent.red} small />
-          <MetricCard T={T} label={t.maxDrawdown} value={`${stats.maxDrawdown.toFixed(1)}%`} color={T.accent.orange} small />
-        </div>
-        <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'התפלגות R' : 'R-Multiple Distribution'} explanation={EXPLANATIONS.rDistribution} unit="R" style={{ flex: 1, minWidth: 360 }}>
-            <ResponsiveContainer width="100%" height={210}><BarChart data={stats.rDist}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="id" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 10 }} /><Tooltip contentStyle={tt} /><Bar dataKey="r" radius={[4,4,0,0]}>{stats.rDist.map((d, i) => <Cell key={i} fill={d.r >= 0 ? T.accent.cyan : T.accent.red} />)}</Bar></BarChart></ResponsiveContainer>
-          </ChartWrapper>
-          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ביצועים לפי יום' : 'Performance by Day'} explanation={EXPLANATIONS.coinPerformance} unit="$" style={{ flex: 1, minWidth: 280 }}>
-            <ResponsiveContainer width="100%" height={210}><BarChart data={stats.dayPerf}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="day" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 10 }} /><Tooltip contentStyle={tt} /><Bar dataKey="pnl" radius={[4,4,0,0]}>{stats.dayPerf.map((d, i) => <Cell key={i} fill={d.pnl >= 0 ? T.accent.green : T.accent.red} />)}</Bar></BarChart></ResponsiveContainer>
-          </ChartWrapper>
-        </div>
-        <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'רווח/הפסד מצטבר' : 'Cumulative P&L'} explanation={EXPLANATIONS.equityCurve} unit="$">
-          <ResponsiveContainer width="100%" height={210}>
-            <ComposedChart data={(() => { let c = 0; return trades.map(tr => ({ id: tr.id, cum: (c += tr.pnl), pnl: tr.pnl })); })()}>
-              <defs><linearGradient id="cG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.2}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0}/></linearGradient></defs>
-              <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="id" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 10 }} /><Tooltip contentStyle={tt} />
-              <Area type="monotone" dataKey="cum" fill="url(#cG)" stroke={T.accent.cyan} strokeWidth={2} />
-              <Bar dataKey="pnl" barSize={18} radius={[3,3,0,0]}>{trades.map((tr, i) => <Cell key={i} fill={tr.pnl >= 0 ? `${T.accent.green}60` : `${T.accent.red}60`} />)}</Bar>
-            </ComposedChart>
-          </ResponsiveContainer>
-        </ChartWrapper>
-        {/* Monthly performance (always show in analytics) */}
-        <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ביצועים חודשיים' : 'Monthly Performance'} explanation={EXPLANATIONS.monthlyPerformance} unit="R" style={{ marginTop: 16 }}>
-          {stats.monthlyPerf.map((mp, i) => (
-            <div key={i} style={{ padding: '10px 12px', borderRadius: T.radius.md, background: mp.pnl >= 0 ? `${T.accent.green}08` : `${T.accent.red}08`, border: `1px solid ${mp.pnl >= 0 ? T.accent.green : T.accent.red}15`, marginBottom: 6 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 12, color: T.text.secondary }}>{mp.month}</span>
-                <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                  <PV><span style={{ fontSize: 13, fontWeight: 700, color: mp.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{mp.pnl >= 0 ? '+' : ''}${mp.pnl.toFixed(2)}</span></PV>
-                  <span style={{ fontSize: 11, color: T.accent.purple, fontFamily: "'JetBrains Mono', monospace", fontWeight: 600 }}>EV: {mp.expectancyR >= 0 ? '+' : ''}{mp.expectancyR.toFixed(2)}R</span>
-                </div>
-              </div>
-              <div style={{ fontSize: 9, color: T.text.dim, marginTop: 2 }}>{mp.trades} trades • WR: {mp.winRate.toFixed(0)}% • PF: {mp.profitFactor.toFixed(2)}x</div>
-            </div>
-          ))}
-        </ChartWrapper>
-        {isAlpha && <>
-          <div style={{ display: 'flex', gap: 12, marginTop: 16, flexWrap: 'wrap' }}>
-            <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'מפת נסיגה' : 'Drawdown Depth Map'} explanation={EXPLANATIONS.drawdown} unit="%" style={{ flex: 1, minWidth: 300 }}>
-              <ResponsiveContainer width="100%" height={180}>
-                <AreaChart data={(() => { let p = 200; return stats.equityCurve.map(e => { if (e.balance > p) p = e.balance; return { trade: e.trade, dd: -((p - e.balance) / p * 100) }; }); })()}>
-                  <defs><linearGradient id="ddGA" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.red} stopOpacity={0}/><stop offset="100%" stopColor={T.accent.red} stopOpacity={0.4}/></linearGradient></defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="trade" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 10 }} domain={['dataMin', 0]} />
-                  <Tooltip contentStyle={tt} formatter={(v: number) => `${v.toFixed(2)}%`} /><Area type="monotone" dataKey="dd" stroke={T.accent.red} fill="url(#ddGA)" strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </ChartWrapper>
-            <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'תוחלת מתגלגלת (R)' : 'Rolling Expectancy (R)'} explanation={EXPLANATIONS.expectancy} unit="R" style={{ flex: 1, minWidth: 300 }}>
-              <ResponsiveContainer width="100%" height={180}>
-                <LineChart data={stats.rollingExpectancyR}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="tradeId" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 10 }} /><Tooltip contentStyle={tt} /><Line type="monotone" dataKey="expectancyR" stroke={T.accent.cyan} strokeWidth={2} dot={{ fill: T.accent.cyan, r: 2 }} /></LineChart>
-              </ResponsiveContainer>
-            </ChartWrapper>
-          </div>
-        </>}
-      </>
+      <AdvancedAnalyticsPage
+        T={T}
+        isRTL={isRTL}
+        isAlpha={isAlpha}
+        trades={trades}
+        stats={stats}
+        privacyMode={settings.privacyMode}
+        onExplainClick={handleExplainClick}
+      />
     );
   };
+
+  const handleSaveRiskExplanation = useCallback((explanation: RiskExplanation) => {
+    const updated = [...riskExplanations, explanation];
+    setRiskExplanations(updated);
+    localStorage.setItem('orca-risk-explanations', JSON.stringify(updated));
+    setShowRiskExplanation(null);
+  }, [riskExplanations]);
 
   const renderRisk = () => {
     if (trades.length === 0) return null;
     return (
-      <>
-        <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-          <GlassCard T={T} glow={riskLevel === 'warning' ? 'rgba(245,158,11,0.12)' : T.accent.greenGlow} style={{ flex: 1, minWidth: 260, textAlign: 'center' }}>
-            <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>{t.riskMeter}</div>
-            <svg width="190" height="105" viewBox="0 0 200 110" style={{ margin: '0 auto', display: 'block' }}>
-              <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke={T.border.subtle} strokeWidth="12" strokeLinecap="round"/>
-              <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="url(#rG)" strokeWidth="12" strokeLinecap="round" strokeDasharray={`${riskPct * 2.51} 251`} style={{ transition: 'stroke-dasharray 1s ease' }}/>
-              <defs><linearGradient id="rG" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor={T.accent.green}/><stop offset="50%" stopColor={T.accent.orange}/><stop offset="100%" stopColor={T.accent.red}/></linearGradient></defs>
-              <text x="100" y="82" textAnchor="middle" fill={riskLevel === 'critical' ? T.accent.red : riskLevel === 'warning' ? T.accent.orange : T.accent.green} fontSize="26" fontWeight="700" fontFamily="'JetBrains Mono', monospace">{riskPct.toFixed(0)}%</text>
-              <text x="100" y="102" textAnchor="middle" fill={T.text.dim} fontSize="10">{riskLevel === 'critical' ? 'CRITICAL' : riskLevel === 'warning' ? 'WARNING' : 'SAFE'}</text>
-            </svg>
-          </GlassCard>
-          <GlassCard T={T} style={{ flex: 1, minWidth: 240 }}>
-            <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>{isRTL ? 'גבולות סיכון' : 'Risk Guardrails'}</div>
-            {[
-              { l: t.dailyMaxLoss, val: '$8.00', cur: `$${Math.abs(dailyPnlToday).toFixed(2)}`, ok: Math.abs(dailyPnlToday) < 8 },
-              { l: t.maxDrawdown, val: '5%', cur: `${stats.maxDrawdown.toFixed(1)}%`, ok: stats.maxDrawdown < 5 },
-              { l: t.consecutiveLosses, val: '4', cur: String(stats.maxConsecLosses), ok: stats.maxConsecLosses < 4 },
-              { l: t.riskConsistency, val: '70+', cur: `${riskData.riskConsistencyScore.toFixed(0)}`, ok: riskData.riskConsistencyScore >= 70 },
-            ].map((r, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: i < 3 ? `1px solid ${T.border.subtle}` : 'none' }}>
-                <span style={{ color: T.text.muted, fontSize: 12 }}>{r.l}</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 11, color: T.text.dim }}>{r.cur}/{r.val}</span>
-                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: r.ok ? T.accent.green : T.accent.red }} />
-                </div>
-              </div>
-            ))}
-          </GlassCard>
-          <GlassCard T={T} style={{ flex: 1, minWidth: 240 }}>
-            <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>{t.coolOff}</div>
-            <div style={{ padding: 14, borderRadius: T.radius.md, textAlign: 'center', background: stats.maxConsecLosses >= 3 ? `${T.accent.orange}10` : `${T.accent.green}10`, border: `1px solid ${stats.maxConsecLosses >= 3 ? T.accent.orange : T.accent.green}25` }}>
-              <div style={{ fontSize: 28, marginBottom: 6 }}>{stats.maxConsecLosses >= 3 ? '⚠️' : '✅'}</div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: stats.maxConsecLosses >= 3 ? T.accent.orange : T.accent.green }}>{stats.maxConsecLosses >= 3 ? (isRTL ? 'מומלץ: צינון' : 'Recommended: Cool Off') : (isRTL ? 'מותר לסחור' : 'Clear to Trade')}</div>
-            </div>
-          </GlassCard>
-        </div>
-        {riskData.warnings.length > 0 && (
-          <GlassCard T={T} style={{ marginBottom: 16, borderInlineStart: `3px solid ${T.accent.orange}` }}>
-            <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>{isRTL ? 'אזהרות סיכון' : 'Risk Warnings'}</div>
-            {riskData.warnings.map((w, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: i < riskData.warnings.length - 1 ? `1px solid ${T.border.subtle}` : 'none' }}>
-                <span style={{ color: T.accent.orange }}>⚠️</span><span style={{ fontSize: 12, color: T.text.secondary }}>{w}</span>
-              </div>
-            ))}
-          </GlassCard>
-        )}
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.riskAllocation} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ flex: 1, minWidth: 300 }}>
-            <ResponsiveContainer width="100%" height={190}>
-              <BarChart data={riskData.riskAllocation} layout="vertical"><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis type="number" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis dataKey="coin" type="category" tick={{ fill: T.text.secondary, fontSize: 11 }} width={45} /><Tooltip contentStyle={tt} /><Bar dataKey="pct" radius={[0,4,4,0]} fill={T.accent.blue} /></BarChart>
-            </ResponsiveContainer>
-          </ChartWrapper>
-          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ניתוח נסיגה' : 'Drawdown Analysis'} explanation={EXPLANATIONS.drawdown} unit="%" style={{ flex: 1, minWidth: 300 }}>
-            <ResponsiveContainer width="100%" height={190}>
-              <AreaChart data={(() => { let p = 200; return stats.equityCurve.map(e => { if (e.balance > p) p = e.balance; return { trade: e.trade, dd: -((p - e.balance) / p * 100) }; }); })()}>
-                <defs><linearGradient id="dG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.red} stopOpacity={0}/><stop offset="100%" stopColor={T.accent.red} stopOpacity={0.3}/></linearGradient></defs>
-                <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="trade" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 10 }} domain={['dataMin', 0]} />
-                <Tooltip contentStyle={tt} formatter={(v: number) => `${v.toFixed(2)}%`} /><Area type="monotone" dataKey="dd" stroke={T.accent.red} fill="url(#dG)" strokeWidth={2} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </ChartWrapper>
-        </div>
-        {isAlpha && (
-          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.riskEvolution} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ marginTop: 16 }}>
-            <ResponsiveContainer width="100%" height={180}>
-              <ComposedChart data={riskData.riskGrowthEvolution}>
-                <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="tradeId" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 10 }} />
-                <Tooltip contentStyle={tt} />
-                <Bar dataKey="risk" fill={`${T.accent.blue}40`} radius={[3,3,0,0]} />
-                <Line type="monotone" dataKey="pctOfAccount" stroke={T.accent.orange} strokeWidth={2} dot={{ fill: T.accent.orange, r: 3 }} />
-              </ComposedChart>
-            </ResponsiveContainer>
-          </ChartWrapper>
-        )}
-      </>
+      <AdvancedRiskPage
+        T={T}
+        isRTL={isRTL}
+        isAlpha={isAlpha}
+        trades={trades}
+        stats={stats}
+        riskData={riskData}
+        onExplainClick={handleExplainClick}
+        riskExplanations={riskExplanations}
+      />
     );
   };
 
   const renderPsychology = () => {
     if (trades.length === 0) return null;
-
-    // === PSYCHOLOGY SIGNALS ENGINE ===
-    // Overtrading detection
-    const tradeDays: Record<string, Trade[]> = {};
-    trades.forEach(tr => { const d = new Date(tr.date.replace(' ', 'T')).toDateString(); if (!tradeDays[d]) tradeDays[d] = []; tradeDays[d].push(tr); });
-    const overtradingDays = Object.entries(tradeDays).filter(([, trs]) => trs.length >= 3);
-
-    // Revenge trading: loss followed by increased risk same day
-    let revengeTrades = 0;
-    Object.values(tradeDays).forEach(dayTrades => {
-      for (let i = 1; i < dayTrades.length; i++) {
-        if (dayTrades[i-1].winLoss === 'Loss' && dayTrades[i].risk > dayTrades[i-1].risk * 1.2) revengeTrades++;
-      }
-    });
-
-    // Risk consistency (CV)
-    const risks = trades.map(tr => tr.risk);
-    const avgRisk = risks.reduce((a,b) => a+b, 0) / risks.length;
-    const riskStd = Math.sqrt(risks.reduce((s, r) => s + (r - avgRisk) ** 2, 0) / risks.length);
-    const riskCV = avgRisk > 0 ? (riskStd / avgRisk) * 100 : 0;
-
-    // Rule compliance
-    const rulesPct = (trades.filter(tr => tr.rules).length / trades.length) * 100;
-    const rulesBreached = trades.filter(tr => !tr.rules);
-
-    // Loss streaks
-    let maxStreak = 0, curStreak = 0;
-    trades.forEach(tr => { if (tr.winLoss === 'Loss') { curStreak++; maxStreak = Math.max(maxStreak, curStreak); } else curStreak = 0; });
-
-    // High deviation trades
-    const highDevTrades = trades.filter(tr => tr.deviation > 0.1);
-
-    type Signal = { icon: string; title: string; detail: string; severity: 'good' | 'warning' | 'danger' };
-    const signals: Signal[] = [];
-
-    // Overtrading signal
-    if (overtradingDays.length > 0) {
-      signals.push({ icon: '⚡', title: isRTL ? 'מסחר יתר' : 'Overtrading Detected', detail: isRTL ? `${overtradingDays.length} ימים עם 3+ עסקאות. מסחר יתר פוגע בקבלת החלטות ומגדיל טעויות רגשיות.` : `${overtradingDays.length} days with 3+ trades. Overtrading impairs decision-making and increases emotional errors.`, severity: 'warning' });
-    } else {
-      signals.push({ icon: '✅', title: isRTL ? 'תדירות מסחר תקינה' : 'Healthy Trade Frequency', detail: isRTL ? 'לא זוהה מסחר יתר. אתה שומר על תדירות מסחר מבוקרת.' : 'No overtrading detected. You maintain controlled trade frequency.', severity: 'good' });
-    }
-
-    // Revenge trading signal
-    if (revengeTrades > 0) {
-      signals.push({ icon: '🔥', title: isRTL ? 'מסחר נקמה' : 'Revenge Trading Detected', detail: isRTL ? `${revengeTrades} עסקאות שבהן הגדלת סיכון לאחר הפסד באותו יום. זהו דפוס מסוכן — עצור, נשום, חכה.` : `${revengeTrades} trades where risk was increased after a same-day loss. This is a dangerous pattern — stop, breathe, wait.`, severity: 'danger' });
-    } else {
-      signals.push({ icon: '✅', title: isRTL ? 'אין מסחר נקמה' : 'No Revenge Trading', detail: isRTL ? 'לא זוהה הגדלת סיכון לאחר הפסד באותו יום.' : 'No risk increase detected after same-day losses.', severity: 'good' });
-    }
-
-    // Risk consistency signal
-    if (riskCV > 50) {
-      signals.push({ icon: '📊', title: isRTL ? 'חוסר עקביות בסיכון' : 'Risk Size Inconsistency', detail: isRTL ? `מקדם השונות של הסיכון שלך הוא ${riskCV.toFixed(0)}%. סיכון לא עקבי מעיד על קבלת החלטות רגשית.` : `Your risk coefficient of variation is ${riskCV.toFixed(0)}%. Inconsistent risk sizing indicates emotional decision-making.`, severity: 'warning' });
-    } else {
-      signals.push({ icon: '✅', title: isRTL ? 'עקביות סיכון טובה' : 'Good Risk Consistency', detail: isRTL ? `מקדם שונות: ${riskCV.toFixed(0)}%. אתה שומר על גודל סיכון עקבי.` : `CV: ${riskCV.toFixed(0)}%. You maintain consistent risk sizing.`, severity: 'good' });
-    }
-
-    // Rules compliance signal
-    if (rulesPct < 80) {
-      signals.push({ icon: '⚠️', title: isRTL ? 'סטייה מכללי מסחר' : 'Trading Rules Deviation', detail: isRTL ? `רק ${rulesPct.toFixed(0)}% מהעסקאות בוצעו לפי הכללים. ${rulesBreached.length} עסקאות חרגו מהתוכנית.` : `Only ${rulesPct.toFixed(0)}% of trades followed rules. ${rulesBreached.length} trades deviated from the plan.`, severity: 'danger' });
-    } else {
-      signals.push({ icon: '✅', title: isRTL ? 'משמעת כללים גבוהה' : 'High Rule Compliance', detail: isRTL ? `${rulesPct.toFixed(0)}% מהעסקאות לפי הכללים. משמעת מצוינת.` : `${rulesPct.toFixed(0)}% rule compliance. Excellent discipline.`, severity: 'good' });
-    }
-
-    // Loss streak signal
-    if (maxStreak >= 3) {
-      signals.push({ icon: '🔴', title: isRTL ? 'רצף הפסדים' : 'Loss Streak Analysis', detail: isRTL ? `הרצף הגרוע ביותר: ${maxStreak} הפסדים רצופים. אחרי 3 הפסדים רצופים, מומלץ לעצור ולהעריך מחדש.` : `Worst streak: ${maxStreak} consecutive losses. After 3 consecutive losses, recommended to stop and reassess.`, severity: maxStreak >= 4 ? 'danger' : 'warning' });
-    }
-
-    // Deviation signal
-    if (highDevTrades.length > 0) {
-      signals.push({ icon: '📐', title: isRTL ? 'סטייה גבוהה מתוכנית' : 'High Plan Deviation', detail: isRTL ? `${highDevTrades.length} עסקאות עם סטייה > 0.1R. סטייה מהתוכנית מעידה על חוסר משמעת ביציאה.` : `${highDevTrades.length} trades with deviation > 0.1R. Plan deviation indicates exit discipline issues.`, severity: 'warning' });
-    }
-
-    const severityColor = (s: Signal['severity']) => s === 'good' ? T.accent.green : s === 'warning' ? T.accent.orange : T.accent.red;
-
     return (
-      <>
-        <h2 style={{ fontSize: 18, fontWeight: 300, color: T.text.secondary, margin: '0 0 6px', fontFamily: "'JetBrains Mono', monospace" }}>
-          {isRTL ? '🧠 אבחון פסיכולוגי' : '🧠 Psychology Diagnosis'}
-        </h2>
-        <div style={{ fontSize: 11, color: T.text.dim, marginBottom: 20 }}>
-          {isRTL ? `ניתוח ${trades.length} עסקאות לזיהוי דפוסים התנהגותיים` : `Analyzing ${trades.length} trades for behavioral patterns`}
-        </div>
-
-        {/* Score gauges */}
-        <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-          <ScoreGauge T={T} score={stats.rulesFollowed} label={t.disciplineScore} color={T.accent.green}
-            description={isRTL ? 'אחוז העסקאות לפי הכללים' : 'Percentage of rule-following trades'} />
-          <ScoreGauge T={T} score={Math.max(0, 100 - riskCV)} label={isRTL ? 'עקביות סיכון' : 'Risk Consistency'} color={T.accent.orange}
-            description={isRTL ? 'עד כמה הסיכון שלך אחיד' : 'How uniform your risk sizing is'} />
-          <ScoreGauge T={T} score={stats.orcaScore} label={t.orcaScore} color={T.accent.cyan}
-            description={isRTL ? 'ציון משולב' : 'Combined score'} />
-        </div>
-
-        {/* Textual signals */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
-          {signals.map((sig, i) => (
-            <GlassCard T={T} key={i} style={{ borderInlineStart: `3px solid ${severityColor(sig.severity)}`, padding: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                <span style={{ fontSize: 18 }}>{sig.icon}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: severityColor(sig.severity) }}>{sig.title}</span>
-                <TradingBadge color={severityColor(sig.severity)}>
-                  {sig.severity === 'good' ? (isRTL ? 'תקין' : 'OK') : sig.severity === 'warning' ? (isRTL ? 'אזהרה' : 'Warning') : (isRTL ? 'קריטי' : 'Critical')}
-                </TradingBadge>
-              </div>
-              <div style={{ fontSize: 13, color: T.text.secondary, lineHeight: 1.7 }}>{sig.detail}</div>
-            </GlassCard>
-          ))}
-        </div>
-
-        {/* Deviation chart (kept but simplified) */}
-        {isAlpha && (
-          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'סטייה לפי עסקה' : 'Deviation per Trade'} explanation={EXPLANATIONS.rDistribution} unit="R">
-            <ResponsiveContainer width="100%" height={160}><BarChart data={trades.map(tr => ({ id: `#${tr.id}`, dev: tr.deviation || 0 }))}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="id" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 10 }} /><Tooltip contentStyle={tt} formatter={(v: number) => `${v.toFixed(4)}R`} /><Bar dataKey="dev" radius={[4,4,0,0]}>{trades.map((tr, i) => <Cell key={i} fill={tr.deviation > 0.1 ? T.accent.red : tr.deviation > 0 ? T.accent.orange : T.accent.green} />)}</Bar></BarChart></ResponsiveContainer>
-          </ChartWrapper>
-        )}
-      </>
+      <AdvancedPsychologyPage
+        T={T}
+        isRTL={isRTL}
+        isAlpha={isAlpha}
+        trades={trades}
+        stats={stats}
+        onExplainClick={handleExplainClick}
+      />
     );
   };
 
@@ -1404,6 +1198,7 @@ const Index = () => {
       {showTradeForm && <TradeForm T={T} t={t} isRTL={isRTL} trade={editingTrade} currentBalance={currentBalance} onSave={handleSaveTrade} onClose={() => { setShowTradeForm(false); setEditingTrade(null); }} />}
       {showReset && <ResetModal T={T} t={t} isRTL={isRTL} onConfirm={handleReset} onClose={() => setShowReset(false)} />}
       {riskAlert && <RiskLimitAlert T={T} isRTL={isRTL} status={riskAlert} onClose={dismissRiskAlert} />}
+      {showRiskExplanation && <RiskExplanationModal T={T} isRTL={isRTL} tradeId={showRiskExplanation.tradeId} riskChange={showRiskExplanation.riskChange} onSave={handleSaveRiskExplanation} onClose={() => setShowRiskExplanation(null)} />}
       {showFeatureModal && <FeatureManifestModal T={T} isRTL={isRTL} onClose={() => setShowFeatureModal(false)} />}
       <CommandPalette T={T} commands={commands} isOpen={showCmdPalette} onClose={() => setShowCmdPalette(false)} />
       {/* Import Warning Modal */}

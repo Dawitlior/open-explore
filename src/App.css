@@ -5,56 +5,89 @@
   text-align: left;
 }
 
-/* Recharts global tooltip & hover consistency */
+/* ═══ RECHARTS GLOBAL DARK THEME HOVER FIX ═══ */
+
+/* Tooltip wrapper — remove default outlines */
 .recharts-tooltip-wrapper {
   outline: none !important;
 }
 
+/* Tooltip background — match dark theme */
 .recharts-default-tooltip {
+  background: hsl(222 39% 9%) !important;
+  border: 1px solid rgba(148,163,184,0.15) !important;
   border-radius: 10px !important;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.4), 0 8px 32px rgba(0,0,0,0.2) !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.5), 0 8px 32px rgba(0,0,0,0.3) !important;
+  color: #f1f5f9 !important;
 }
 
-/* Consistent cursor for bar/area/line charts */
+.recharts-default-tooltip .recharts-tooltip-label {
+  color: #94a3b8 !important;
+}
+
+.recharts-default-tooltip .recharts-tooltip-item {
+  color: #e2e8f0 !important;
+}
+
+/* Cursor/crosshair — subtle dark overlay */
 .recharts-cursor {
   fill: rgba(6,214,160,0.04) !important;
-  stroke: rgba(148,163,184,0.12) !important;
+  stroke: rgba(148,163,184,0.10) !important;
   stroke-width: 1 !important;
 }
 
-/* Bar hover — prevent bright color flash */
+/* Cartesian grid cursor — match dark theme */
+.recharts-rectangle.recharts-tooltip-cursor {
+  fill: rgba(148,163,184,0.06) !important;
+}
+
+/* Bar hover — subtle glow, no bright flash */
 .recharts-bar-rectangle:hover {
-  filter: brightness(1.15) !important;
+  filter: brightness(1.12) !important;
   transition: filter 0.15s ease !important;
 }
 
 /* Area/Line active dot — match theme */
 .recharts-active-dot circle {
   stroke-width: 2 !important;
+  stroke: hsl(222 39% 9%) !important;
   filter: drop-shadow(0 0 4px currentColor) !important;
 }
 
-/* Pie hover — subtle scale instead of color change */
+/* Pie hover — subtle scale */
 .recharts-pie-sector:hover {
-  filter: brightness(1.1) !important;
+  filter: brightness(1.08) !important;
   transition: filter 0.15s ease !important;
 }
 
 /* Radar hover consistency */
 .recharts-radar-polygon:hover {
-  fill-opacity: 0.2 !important;
+  fill-opacity: 0.15 !important;
 }
 
 /* Scatter dot hover */
 .recharts-scatter-symbol:hover {
-  filter: brightness(1.2) drop-shadow(0 0 4px currentColor) !important;
+  filter: brightness(1.15) drop-shadow(0 0 4px currentColor) !important;
 }
 
 /* Reference line consistency */
 .recharts-reference-line line {
   stroke-dasharray: 3 3;
+  stroke: rgba(148,163,184,0.15) !important;
 }
 
+/* XAxis/YAxis lines — subtle */
+.recharts-cartesian-axis-line,
+.recharts-cartesian-axis-tick-line {
+  stroke: rgba(148,163,184,0.10) !important;
+}
+
+/* Grid lines — very subtle in dark mode */
+.recharts-cartesian-grid line {
+  stroke: rgba(148,163,184,0.06) !important;
+}
+
+/* ═══ ANIMATIONS ═══ */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -68,4 +101,41 @@
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ═══ MOBILE RESPONSIVE OVERRIDES ═══ */
+@media (max-width: 768px) {
+  .orca-grid-2col {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Force chart containers to be responsive */
+  .recharts-responsive-container {
+    min-width: 0 !important;
+  }
+
+  /* Reduce chart padding on mobile */
+  .recharts-wrapper {
+    font-size: 10px !important;
+  }
+
+  /* Tooltip: smaller on mobile */
+  .recharts-default-tooltip {
+    font-size: 10px !important;
+    padding: 6px 8px !important;
+    max-width: 200px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .recharts-default-tooltip {
+    font-size: 9px !important;
+    padding: 4px 6px !important;
+    max-width: 160px !important;
+  }
 }
