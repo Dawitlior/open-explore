@@ -906,73 +906,15 @@ const Index = () => {
   const renderAnalytics = () => {
     if (trades.length === 0) return null;
     return (
-      <>
-        {/* R-based metrics row */}
-        <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-          <GlassCard T={T} style={{ flex: 1, minWidth: 140, padding: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}>
-              <div style={{ fontSize: 9, color: T.text.dim, textTransform: 'uppercase' }}>{t.expectancy}</div>
-              <span style={{ fontSize: 7, padding: '1px 3px', borderRadius: 3, background: `${T.accent.purple}15`, color: T.accent.purple, fontWeight: 700 }}>R</span>
-            </div>
-            <PV><div style={{ fontSize: 20, fontWeight: 700, color: stats.expectancyR >= 0 ? T.accent.cyan : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{stats.expectancyR >= 0 ? '+' : ''}{stats.expectancyR.toFixed(3)}R</div></PV>
-          </GlassCard>
-          <MetricCard T={T} label={t.profitFactor} value={stats.profitFactor} suffix="x" color={T.accent.blue} small />
-          <MetricCard T={T} label={`${t.avgWin} (R)`} value={`+${stats.avgWinR.toFixed(2)}R`} color={T.accent.green} small />
-          <MetricCard T={T} label={`${t.avgLoss} (R)`} value={`-${stats.avgLossR.toFixed(2)}R`} color={T.accent.red} small />
-          <MetricCard T={T} label={t.maxDrawdown} value={`${stats.maxDrawdown.toFixed(1)}%`} color={T.accent.orange} small />
-        </div>
-        <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'התפלגות R' : 'R-Multiple Distribution'} explanation={EXPLANATIONS.rDistribution} unit="R" style={{ flex: 1, minWidth: 360 }}>
-            <ResponsiveContainer width="100%" height={210}><BarChart data={stats.rDist}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="id" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 10 }} /><Tooltip contentStyle={tt} /><Bar dataKey="r" radius={[4,4,0,0]}>{stats.rDist.map((d, i) => <Cell key={i} fill={d.r >= 0 ? T.accent.cyan : T.accent.red} />)}</Bar></BarChart></ResponsiveContainer>
-          </ChartWrapper>
-          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ביצועים לפי יום' : 'Performance by Day'} explanation={EXPLANATIONS.coinPerformance} unit="$" style={{ flex: 1, minWidth: 280 }}>
-            <ResponsiveContainer width="100%" height={210}><BarChart data={stats.dayPerf}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="day" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 10 }} /><Tooltip contentStyle={tt} /><Bar dataKey="pnl" radius={[4,4,0,0]}>{stats.dayPerf.map((d, i) => <Cell key={i} fill={d.pnl >= 0 ? T.accent.green : T.accent.red} />)}</Bar></BarChart></ResponsiveContainer>
-          </ChartWrapper>
-        </div>
-        <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'רווח/הפסד מצטבר' : 'Cumulative P&L'} explanation={EXPLANATIONS.equityCurve} unit="$">
-          <ResponsiveContainer width="100%" height={210}>
-            <ComposedChart data={(() => { let c = 0; return trades.map(tr => ({ id: tr.id, cum: (c += tr.pnl), pnl: tr.pnl })); })()}>
-              <defs><linearGradient id="cG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.2}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0}/></linearGradient></defs>
-              <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="id" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 10 }} /><Tooltip contentStyle={tt} />
-              <Area type="monotone" dataKey="cum" fill="url(#cG)" stroke={T.accent.cyan} strokeWidth={2} />
-              <Bar dataKey="pnl" barSize={18} radius={[3,3,0,0]}>{trades.map((tr, i) => <Cell key={i} fill={tr.pnl >= 0 ? `${T.accent.green}60` : `${T.accent.red}60`} />)}</Bar>
-            </ComposedChart>
-          </ResponsiveContainer>
-        </ChartWrapper>
-        {/* Monthly performance (always show in analytics) */}
-        <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ביצועים חודשיים' : 'Monthly Performance'} explanation={EXPLANATIONS.monthlyPerformance} unit="R" style={{ marginTop: 16 }}>
-          {stats.monthlyPerf.map((mp, i) => (
-            <div key={i} style={{ padding: '10px 12px', borderRadius: T.radius.md, background: mp.pnl >= 0 ? `${T.accent.green}08` : `${T.accent.red}08`, border: `1px solid ${mp.pnl >= 0 ? T.accent.green : T.accent.red}15`, marginBottom: 6 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 12, color: T.text.secondary }}>{mp.month}</span>
-                <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                  <PV><span style={{ fontSize: 13, fontWeight: 700, color: mp.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{mp.pnl >= 0 ? '+' : ''}${mp.pnl.toFixed(2)}</span></PV>
-                  <span style={{ fontSize: 11, color: T.accent.purple, fontFamily: "'JetBrains Mono', monospace", fontWeight: 600 }}>EV: {mp.expectancyR >= 0 ? '+' : ''}{mp.expectancyR.toFixed(2)}R</span>
-                </div>
-              </div>
-              <div style={{ fontSize: 9, color: T.text.dim, marginTop: 2 }}>{mp.trades} trades • WR: {mp.winRate.toFixed(0)}% • PF: {mp.profitFactor.toFixed(2)}x</div>
-            </div>
-          ))}
-        </ChartWrapper>
-        {isAlpha && <>
-          <div style={{ display: 'flex', gap: 12, marginTop: 16, flexWrap: 'wrap' }}>
-            <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'מפת נסיגה' : 'Drawdown Depth Map'} explanation={EXPLANATIONS.drawdown} unit="%" style={{ flex: 1, minWidth: 300 }}>
-              <ResponsiveContainer width="100%" height={180}>
-                <AreaChart data={(() => { let p = 200; return stats.equityCurve.map(e => { if (e.balance > p) p = e.balance; return { trade: e.trade, dd: -((p - e.balance) / p * 100) }; }); })()}>
-                  <defs><linearGradient id="ddGA" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.red} stopOpacity={0}/><stop offset="100%" stopColor={T.accent.red} stopOpacity={0.4}/></linearGradient></defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="trade" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 10 }} domain={['dataMin', 0]} />
-                  <Tooltip contentStyle={tt} formatter={(v: number) => `${v.toFixed(2)}%`} /><Area type="monotone" dataKey="dd" stroke={T.accent.red} fill="url(#ddGA)" strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </ChartWrapper>
-            <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'תוחלת מתגלגלת (R)' : 'Rolling Expectancy (R)'} explanation={EXPLANATIONS.expectancy} unit="R" style={{ flex: 1, minWidth: 300 }}>
-              <ResponsiveContainer width="100%" height={180}>
-                <LineChart data={stats.rollingExpectancyR}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="tradeId" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 10 }} /><Tooltip contentStyle={tt} /><Line type="monotone" dataKey="expectancyR" stroke={T.accent.cyan} strokeWidth={2} dot={{ fill: T.accent.cyan, r: 2 }} /></LineChart>
-              </ResponsiveContainer>
-            </ChartWrapper>
-          </div>
-        </>}
-      </>
+      <AdvancedAnalyticsPage
+        T={T}
+        isRTL={isRTL}
+        isAlpha={isAlpha}
+        trades={trades}
+        stats={stats}
+        privacyMode={settings.privacyMode}
+        onExplainClick={handleExplainClick}
+      />
     );
   };
 
