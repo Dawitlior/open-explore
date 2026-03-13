@@ -976,85 +976,26 @@ const Index = () => {
     );
   };
 
+  const handleSaveRiskExplanation = useCallback((explanation: RiskExplanation) => {
+    const updated = [...riskExplanations, explanation];
+    setRiskExplanations(updated);
+    localStorage.setItem('orca-risk-explanations', JSON.stringify(updated));
+    setShowRiskExplanation(null);
+  }, [riskExplanations]);
+
   const renderRisk = () => {
     if (trades.length === 0) return null;
     return (
-      <>
-        <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-          <GlassCard T={T} glow={riskLevel === 'warning' ? 'rgba(245,158,11,0.12)' : T.accent.greenGlow} style={{ flex: 1, minWidth: 260, textAlign: 'center' }}>
-            <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>{t.riskMeter}</div>
-            <svg width="190" height="105" viewBox="0 0 200 110" style={{ margin: '0 auto', display: 'block' }}>
-              <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke={T.border.subtle} strokeWidth="12" strokeLinecap="round"/>
-              <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="url(#rG)" strokeWidth="12" strokeLinecap="round" strokeDasharray={`${riskPct * 2.51} 251`} style={{ transition: 'stroke-dasharray 1s ease' }}/>
-              <defs><linearGradient id="rG" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor={T.accent.green}/><stop offset="50%" stopColor={T.accent.orange}/><stop offset="100%" stopColor={T.accent.red}/></linearGradient></defs>
-              <text x="100" y="82" textAnchor="middle" fill={riskLevel === 'critical' ? T.accent.red : riskLevel === 'warning' ? T.accent.orange : T.accent.green} fontSize="26" fontWeight="700" fontFamily="'JetBrains Mono', monospace">{riskPct.toFixed(0)}%</text>
-              <text x="100" y="102" textAnchor="middle" fill={T.text.dim} fontSize="10">{riskLevel === 'critical' ? 'CRITICAL' : riskLevel === 'warning' ? 'WARNING' : 'SAFE'}</text>
-            </svg>
-          </GlassCard>
-          <GlassCard T={T} style={{ flex: 1, minWidth: 240 }}>
-            <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>{isRTL ? 'גבולות סיכון' : 'Risk Guardrails'}</div>
-            {[
-              { l: t.dailyMaxLoss, val: '$8.00', cur: `$${Math.abs(dailyPnlToday).toFixed(2)}`, ok: Math.abs(dailyPnlToday) < 8 },
-              { l: t.maxDrawdown, val: '5%', cur: `${stats.maxDrawdown.toFixed(1)}%`, ok: stats.maxDrawdown < 5 },
-              { l: t.consecutiveLosses, val: '4', cur: String(stats.maxConsecLosses), ok: stats.maxConsecLosses < 4 },
-              { l: t.riskConsistency, val: '70+', cur: `${riskData.riskConsistencyScore.toFixed(0)}`, ok: riskData.riskConsistencyScore >= 70 },
-            ].map((r, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: i < 3 ? `1px solid ${T.border.subtle}` : 'none' }}>
-                <span style={{ color: T.text.muted, fontSize: 12 }}>{r.l}</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 11, color: T.text.dim }}>{r.cur}/{r.val}</span>
-                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: r.ok ? T.accent.green : T.accent.red }} />
-                </div>
-              </div>
-            ))}
-          </GlassCard>
-          <GlassCard T={T} style={{ flex: 1, minWidth: 240 }}>
-            <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>{t.coolOff}</div>
-            <div style={{ padding: 14, borderRadius: T.radius.md, textAlign: 'center', background: stats.maxConsecLosses >= 3 ? `${T.accent.orange}10` : `${T.accent.green}10`, border: `1px solid ${stats.maxConsecLosses >= 3 ? T.accent.orange : T.accent.green}25` }}>
-              <div style={{ fontSize: 28, marginBottom: 6 }}>{stats.maxConsecLosses >= 3 ? '⚠️' : '✅'}</div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: stats.maxConsecLosses >= 3 ? T.accent.orange : T.accent.green }}>{stats.maxConsecLosses >= 3 ? (isRTL ? 'מומלץ: צינון' : 'Recommended: Cool Off') : (isRTL ? 'מותר לסחור' : 'Clear to Trade')}</div>
-            </div>
-          </GlassCard>
-        </div>
-        {riskData.warnings.length > 0 && (
-          <GlassCard T={T} style={{ marginBottom: 16, borderInlineStart: `3px solid ${T.accent.orange}` }}>
-            <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>{isRTL ? 'אזהרות סיכון' : 'Risk Warnings'}</div>
-            {riskData.warnings.map((w, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: i < riskData.warnings.length - 1 ? `1px solid ${T.border.subtle}` : 'none' }}>
-                <span style={{ color: T.accent.orange }}>⚠️</span><span style={{ fontSize: 12, color: T.text.secondary }}>{w}</span>
-              </div>
-            ))}
-          </GlassCard>
-        )}
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.riskAllocation} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ flex: 1, minWidth: 300 }}>
-            <ResponsiveContainer width="100%" height={190}>
-              <BarChart data={riskData.riskAllocation} layout="vertical"><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis type="number" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis dataKey="coin" type="category" tick={{ fill: T.text.secondary, fontSize: 11 }} width={45} /><Tooltip contentStyle={tt} /><Bar dataKey="pct" radius={[0,4,4,0]} fill={T.accent.blue} /></BarChart>
-            </ResponsiveContainer>
-          </ChartWrapper>
-          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ניתוח נסיגה' : 'Drawdown Analysis'} explanation={EXPLANATIONS.drawdown} unit="%" style={{ flex: 1, minWidth: 300 }}>
-            <ResponsiveContainer width="100%" height={190}>
-              <AreaChart data={(() => { let p = 200; return stats.equityCurve.map(e => { if (e.balance > p) p = e.balance; return { trade: e.trade, dd: -((p - e.balance) / p * 100) }; }); })()}>
-                <defs><linearGradient id="dG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.red} stopOpacity={0}/><stop offset="100%" stopColor={T.accent.red} stopOpacity={0.3}/></linearGradient></defs>
-                <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="trade" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 10 }} domain={['dataMin', 0]} />
-                <Tooltip contentStyle={tt} formatter={(v: number) => `${v.toFixed(2)}%`} /><Area type="monotone" dataKey="dd" stroke={T.accent.red} fill="url(#dG)" strokeWidth={2} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </ChartWrapper>
-        </div>
-        {isAlpha && (
-          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.riskEvolution} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ marginTop: 16 }}>
-            <ResponsiveContainer width="100%" height={180}>
-              <ComposedChart data={riskData.riskGrowthEvolution}>
-                <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="tradeId" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 10 }} />
-                <Tooltip contentStyle={tt} />
-                <Bar dataKey="risk" fill={`${T.accent.blue}40`} radius={[3,3,0,0]} />
-                <Line type="monotone" dataKey="pctOfAccount" stroke={T.accent.orange} strokeWidth={2} dot={{ fill: T.accent.orange, r: 3 }} />
-              </ComposedChart>
-            </ResponsiveContainer>
-          </ChartWrapper>
-        )}
-      </>
+      <AdvancedRiskPage
+        T={T}
+        isRTL={isRTL}
+        isAlpha={isAlpha}
+        trades={trades}
+        stats={stats}
+        riskData={riskData}
+        onExplainClick={handleExplainClick}
+        riskExplanations={riskExplanations}
+      />
     );
   };
 
