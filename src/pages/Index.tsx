@@ -62,6 +62,7 @@ const Index = () => {
   });
   const [showImportWarning, setShowImportWarning] = useState(false);
   const [importLoading, setImportLoading] = useState(false);
+  const [explainModal, setExplainModal] = useState<{ title: string; explanation: ChartExplanation; chartId?: string } | null>(null);
   const [riskExplanations, setRiskExplanations] = useState<RiskExplanation[]>(() => {
     try { return JSON.parse(localStorage.getItem('orca-risk-explanations') || '[]'); } catch { return []; }
   });
