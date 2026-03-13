@@ -154,10 +154,20 @@ const Index = () => {
 
   const handleSaveTrade = useCallback(async (trade: Omit<Trade, 'id' | 'balance'>) => {
     if (editingTrade) { await updateTrade({ ...editingTrade, ...trade, id: editingTrade.id }); }
-    else { await addTrade(trade); }
+    else {
+      const result = await addTrade(trade);
+      // Check for significant risk change
+      if (trades.length > 0 && result) {
+        const lastRisk = trades[trades.length - 1].risk;
+        if (lastRisk > 0 && trade.risk > lastRisk * 1.5) {
+          const changePct = ((trade.risk - lastRisk) / lastRisk * 100).toFixed(0);
+          setShowRiskExplanation({ tradeId: result.id, riskChange: `$${lastRisk.toFixed(2)} → $${trade.risk.toFixed(2)} (+${changePct}%)` });
+        }
+      }
+    }
     setShowTradeForm(false);
     setEditingTrade(null);
-  }, [editingTrade, addTrade, updateTrade]);
+  }, [editingTrade, addTrade, updateTrade, trades]);
 
   const handleDeleteTrade = useCallback(async (id: number) => { await removeTrade(id); setSelTrade(null); }, [removeTrade]);
   const handleReset = useCallback(async () => { await resetAll(); sessionStorage.setItem('orca-seeded', '1'); setShowReset(false); setPage('dashboard'); }, [resetAll]);
