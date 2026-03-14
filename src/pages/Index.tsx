@@ -1193,6 +1193,9 @@ const Index = () => {
           {page === 'risk' && renderRisk()}
           {page === 'psychology' && renderPsychology()}
           {page === 'ai' && renderAI()}
+          {page === 'weekly-review' && (
+            <WeeklyReviewPage T={T} isRTL={isRTL} trades={trades} stats={stats} riskData={riskData} />
+          )}
         </div>
       </main>
 
