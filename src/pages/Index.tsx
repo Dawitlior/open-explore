@@ -249,6 +249,7 @@ const Index = () => {
     { id: 'risk', icon: Ico.shield, label: t.risk },
     { id: 'psychology', icon: Ico.brain, label: t.psychology },
     { id: 'ai', icon: Ico.star, label: t.ai },
+    { id: 'weekly-review', icon: '📋', label: isRTL ? 'סקירה שבועית' : 'Weekly Review', color: '#FFD700' },
   ];
 
   // Entry gate check (after all hooks)
