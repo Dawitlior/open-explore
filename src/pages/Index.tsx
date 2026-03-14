@@ -928,12 +928,12 @@ const Index = () => {
     );
   };
 
-  const handleSaveRiskExplanation = useCallback((explanation: RiskExplanation) => {
+  const handleSaveRiskExplanation = (explanation: RiskExplanation) => {
     const updated = [...riskExplanations, explanation];
     setRiskExplanations(updated);
     localStorage.setItem('orca-risk-explanations', JSON.stringify(updated));
     setShowRiskExplanation(null);
-  }, [riskExplanations]);
+  };
 
   const renderRisk = () => {
     if (trades.length === 0) return null;
