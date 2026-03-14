@@ -23,6 +23,7 @@ import { RiskExplanationModal, type RiskExplanation } from '@/components/trading
 import { AdvancedRiskPage } from '@/components/trading/AdvancedRiskPage';
 import { AdvancedAnalyticsPage } from '@/components/trading/AdvancedAnalyticsPage';
 import { AdvancedPsychologyPage } from '@/components/trading/AdvancedPsychologyPage';
+import { WeeklyReviewPage } from '@/components/trading/WeeklyReviewPage';
 import { useTrades } from '@/hooks/use-trades';
 import { useSettings, type ThemeId } from '@/hooks/use-settings';
 import { assessRisk } from '@/lib/risk-engine';
@@ -248,6 +249,7 @@ const Index = () => {
     { id: 'risk', icon: Ico.shield, label: t.risk },
     { id: 'psychology', icon: Ico.brain, label: t.psychology },
     { id: 'ai', icon: Ico.star, label: t.ai },
+    { id: 'weekly-review', icon: '📋', label: isRTL ? 'סקירה שבועית' : 'Weekly Review', color: '#FFD700' },
   ];
 
   // Entry gate check (after all hooks)
@@ -1053,11 +1055,15 @@ const Index = () => {
         {!sbOpen && !isMobile && <button onClick={() => setSbOpen(true)} style={{ background: 'none', border: 'none', color: T.text.dim, cursor: 'pointer', fontSize: 14, padding: '6px 0', lineHeight: 1, transition: 'color 0.2s' }}>›</button>}
         {(sbOpen || isMobile) && <ModeSwitch T={T} isRTL={isRTL} operatingMode={settings.operatingMode} systemMode={settings.systemMode} onOperatingModeChange={settings.setOperatingMode} onSystemModeChange={settings.setSystemMode} />}
         <nav style={{ flex: 1, padding: '0 6px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {nav.map(item => (
-            <button key={item.id} onClick={() => { setPage(item.id); if (isMobile) setSbOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: (sbOpen || isMobile) ? '9px 10px' : '9px 0', justifyContent: (sbOpen || isMobile) ? 'flex-start' : 'center', background: page === item.id ? `${T.accent.cyan}10` : 'transparent', color: page === item.id ? T.accent.cyan : T.text.secondary, border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: page === item.id ? 600 : 400, transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: page === item.id ? `2px solid ${T.accent.cyan}` : '2px solid transparent' }}>
-              {item.icon}{(sbOpen || isMobile) && <span>{item.label}</span>}
+          {nav.map(item => {
+            const isWeekly = item.id === 'weekly-review';
+            const activeColor = isWeekly ? '#FFD700' : T.accent.cyan;
+            return (
+            <button key={item.id} onClick={() => { setPage(item.id); if (isMobile) setSbOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: (sbOpen || isMobile) ? '9px 10px' : '9px 0', justifyContent: (sbOpen || isMobile) ? 'flex-start' : 'center', background: page === item.id ? `${activeColor}10` : 'transparent', color: page === item.id ? activeColor : (isWeekly ? '#FFD700' : T.text.secondary), border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: page === item.id ? 600 : (isWeekly ? 600 : 400), transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: page === item.id ? `2px solid ${activeColor}` : '2px solid transparent' }}>
+              {typeof item.icon === 'string' ? <span style={{ fontSize: 18 }}>{item.icon}</span> : item.icon}{(sbOpen || isMobile) && <span>{item.label}</span>}
             </button>
-          ))}
+            );
+          })}
           {/* Info / About button */}
           <button onClick={() => setShowFeatureModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: (sbOpen || isMobile) ? '9px 10px' : '9px 0', justifyContent: (sbOpen || isMobile) ? 'flex-start' : 'center', background: 'transparent', color: T.text.dim, border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: 400, transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: '2px solid transparent', marginTop: 4 }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
@@ -1191,6 +1197,9 @@ const Index = () => {
           {page === 'risk' && renderRisk()}
           {page === 'psychology' && renderPsychology()}
           {page === 'ai' && renderAI()}
+          {page === 'weekly-review' && (
+            <WeeklyReviewPage T={T} isRTL={isRTL} trades={trades} stats={stats} riskData={riskData} />
+          )}
         </div>
       </main>
 

@@ -44,12 +44,12 @@ export function getTheme(id: ThemeId): TradingTheme {
 
 export function ttStyle(T: TradingTheme) {
   return {
-    background: T.bg.card,
-    border: `1px solid ${T.border.medium}`,
+    background: '#0E1E3A',
+    border: `1px solid rgba(90,169,255,0.20)`,
     borderRadius: T.radius.md,
-    color: T.text.primary,
+    color: '#FFFFFF',
     fontSize: 12,
-    boxShadow: T.shadow.elevated,
+    boxShadow: '0 8px 25px rgba(0,0,0,0.35), 0 0 10px rgba(90,169,255,0.15)',
     padding: '8px 12px',
   };
 }
