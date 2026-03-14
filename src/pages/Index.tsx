@@ -23,6 +23,7 @@ import { RiskExplanationModal, type RiskExplanation } from '@/components/trading
 import { AdvancedRiskPage } from '@/components/trading/AdvancedRiskPage';
 import { AdvancedAnalyticsPage } from '@/components/trading/AdvancedAnalyticsPage';
 import { AdvancedPsychologyPage } from '@/components/trading/AdvancedPsychologyPage';
+import { WeeklyReviewPage } from '@/components/trading/WeeklyReviewPage';
 import { useTrades } from '@/hooks/use-trades';
 import { useSettings, type ThemeId } from '@/hooks/use-settings';
 import { assessRisk } from '@/lib/risk-engine';
