@@ -344,6 +344,424 @@ function generateWeeklyInsights(perf: WeeklyPerformance, weekTrades: Trade[], re
 }
 
 // ═══════════════════════════════════════════════════
+// AI WEEKLY ANALYSIS ENGINE
+// ═══════════════════════════════════════════════════
+
+interface AIWeeklyAnalysis {
+  profile: string;
+  narrative: string;
+  strengths: string[];
+  weaknesses: string[];
+  patterns: string[];
+  takeaways: { label: string; text: string }[];
+}
+
+function generateAIAnalysis(
+  perf: WeeklyPerformance,
+  weekTrades: Trade[],
+  review: WeeklyReviewData,
+  stats: TradingStats,
+  riskData: RiskAssessment,
+  isRTL: boolean
+): AIWeeklyAnalysis {
+  const profile = review.weekProfile || getWeekProfile(perf, review.checklist);
+
+  // Checklist analysis
+  const checklistTrue = Object.values(review.checklist).filter(Boolean).length;
+  const checklistTotal = Object.keys(review.checklist).length;
+  const checklistPct = checklistTotal > 0 ? Math.round((checklistTrue / checklistTotal) * 100) : 0;
+
+  // Risk behavior
+  let riskEscalated = false;
+  let postLossRiskUp = 0;
+  if (weekTrades.length >= 3) {
+    const firstHalf = weekTrades.slice(0, Math.floor(weekTrades.length / 2));
+    const secondHalf = weekTrades.slice(Math.floor(weekTrades.length / 2));
+    const avgFirst = firstHalf.reduce((s, t) => s + t.risk, 0) / firstHalf.length;
+    const avgSecond = secondHalf.reduce((s, t) => s + t.risk, 0) / secondHalf.length;
+    riskEscalated = avgSecond > avgFirst * 1.25;
+  }
+  const lossIdx = weekTrades.map((t, i) => t.winLoss === 'Loss' ? i : -1).filter(i => i >= 0);
+  postLossRiskUp = lossIdx.filter(i => i < weekTrades.length - 1 && weekTrades[i + 1].risk > weekTrades[i].risk * 1.2).length;
+
+  // Consecutive losses
+  let maxConsec = 0, consec = 0;
+  weekTrades.forEach(t => { if (t.winLoss === 'Loss') { consec++; maxConsec = Math.max(maxConsec, consec); } else consec = 0; });
+
+  // Build narrative
+  const parts: string[] = [];
+
+  if (perf.totalTrades === 0) {
+    parts.push(isRTL
+      ? 'שבוע ללא עסקאות. החלטה שלא לסחור יכולה להיות תבונה — או סימפטום של חוסר ביטחון. העובדה שמילאת את הסקירה מעידה על רצינות.'
+      : 'A week with no trades. Choosing not to trade can be wisdom — or a symptom of hesitation. Completing this review shows commitment to the process.'
+    );
+    const ntResponses = Object.entries(review.responses).filter(([k]) => k.startsWith('nt_'));
+    if (ntResponses.some(([, v]) => v && v.length > 10)) {
+      parts.push(isRTL
+        ? 'התשובות שלך מצביעות על מודעות עצמית לגבי חוסר הפעילות. חשוב לוודא שההימנעות מתואמת עם תוכנית המסחר.'
+        : 'Your responses indicate self-awareness about the inactivity. Ensure the decision to stay out aligns with your trading plan rather than emotional avoidance.'
+      );
+    }
+  } else {
+    // Opening
+    if (perf.totalR > 0 && perf.rulesFollowed >= 70) {
+      parts.push(isRTL
+        ? `שבוע חיובי עם ${perf.totalR.toFixed(1)}R ומשמעת של ${perf.rulesFollowed.toFixed(0)}%. הביצועים משקפים תהליך איכותי.`
+        : `A positive week at ${perf.totalR.toFixed(1)}R with ${perf.rulesFollowed.toFixed(0)}% discipline. Performance reflects quality process.`
+      );
+    } else if (perf.totalR > 0 && perf.rulesFollowed < 60) {
+      parts.push(isRTL
+        ? `שבוע רווחי (${perf.totalR.toFixed(1)}R) אך עם משמעת נמוכה (${perf.rulesFollowed.toFixed(0)}%). רווחיות שנבנית על ביצוע לקוי אינה בת-קיימא.`
+        : `Profitable week (${perf.totalR.toFixed(1)}R) but with low discipline (${perf.rulesFollowed.toFixed(0)}%). Profitability built on poor execution is not sustainable.`
+      );
+    } else if (perf.totalR < 0 && perf.rulesFollowed >= 70) {
+      parts.push(isRTL
+        ? `שבוע מפסיד (${perf.totalR.toFixed(1)}R) למרות משמעת גבוהה (${perf.rulesFollowed.toFixed(0)}%). התהליך היה נכון — התוצאות יתהפכו.`
+        : `Losing week (${perf.totalR.toFixed(1)}R) despite high discipline (${perf.rulesFollowed.toFixed(0)}%). Process was sound — results will revert.`
+      );
+    } else {
+      parts.push(isRTL
+        ? `שבוע מאתגר עם ${perf.totalR.toFixed(1)}R ומשמעת של ${perf.rulesFollowed.toFixed(0)}%. נדרש תיקון בתהליך ובביצוע.`
+        : `Challenging week at ${perf.totalR.toFixed(1)}R with ${perf.rulesFollowed.toFixed(0)}% discipline. Both process and execution need correction.`
+      );
+    }
+
+    // Win rate context
+    if (perf.winRate > 65) {
+      parts.push(isRTL
+        ? `אחוז הצלחה של ${perf.winRate.toFixed(0)}% גבוה מהרגיל — ודא שזה לא על חשבון יחס סיכון/תגמול.`
+        : `Win rate of ${perf.winRate.toFixed(0)}% is above average — verify this isn't at the expense of risk/reward ratio.`
+      );
+    } else if (perf.winRate < 35 && perf.totalTrades >= 5) {
+      parts.push(isRTL
+        ? `אחוז הצלחה של ${perf.winRate.toFixed(0)}% מצביע על בעיה בבחירת סטאפים או בתזמון כניסה.`
+        : `Win rate of ${perf.winRate.toFixed(0)}% suggests setup selection or entry timing needs review.`
+      );
+    }
+
+    // Risk behavior
+    if (riskEscalated) {
+      parts.push(isRTL
+        ? 'הסיכון עלה משמעותית מהחצי הראשון לשני של השבוע. זהו דפוס שמעיד על מסחר רגשי או ביטחון יתר.'
+        : 'Risk escalated significantly from the first half to the second half of the week. This pattern indicates emotional trading or overconfidence.'
+      );
+    }
+    if (postLossRiskUp > 0) {
+      parts.push(isRTL
+        ? `זוהו ${postLossRiskUp} מקרים של הגדלת סיכון אחרי הפסד. זהו דפוס מסחר נקמה שפוגע בביצועים לאורך זמן.`
+        : `${postLossRiskUp} instances of risk increase after losses detected. This revenge trading pattern damages long-term performance.`
+      );
+    }
+
+    // Deviation
+    if (perf.avgDeviation > 0.12) {
+      parts.push(isRTL
+        ? `סטייה ממוצעת של ${perf.avgDeviation.toFixed(3)}R מעידה על פער בין תכנון לביצוע. הביצוע לא עקבי.`
+        : `Average deviation of ${perf.avgDeviation.toFixed(3)}R reveals a gap between planning and execution. Consistency needs work.`
+      );
+    }
+
+    // Drawdown
+    if (perf.maxDrawdown > perf.avgRisk * 4) {
+      parts.push(isRTL
+        ? `נסיגה מקסימלית של $${perf.maxDrawdown.toFixed(2)} (מעל 4 פעמים הסיכון הממוצע) יצרה לחץ פסיכולוגי משמעותי.`
+        : `Max drawdown of $${perf.maxDrawdown.toFixed(2)} (over 4x average risk) created significant psychological pressure.`
+      );
+    }
+
+    // Checklist reflection
+    if (checklistPct < 50) {
+      parts.push(isRTL
+        ? `רק ${checklistPct}% מהצ\'קליסט סומן — מעיד על חוסר עקביות בתהליכים.`
+        : `Only ${checklistPct}% of the self-audit checklist was marked — indicating inconsistency in process adherence.`
+      );
+    } else if (checklistPct >= 80) {
+      parts.push(isRTL
+        ? `${checklistPct}% עמידה בצ\'קליסט — רמת מודעות עצמית גבוהה.`
+        : `${checklistPct}% checklist adherence — high level of self-awareness and process discipline.`
+      );
+    }
+  }
+
+  // Strengths
+  const strengths: string[] = [];
+  if (perf.rulesFollowed >= 70) strengths.push(isRTL ? 'משמעת ועמידה בכללים' : 'Discipline and rule adherence');
+  if (perf.winRate >= 50 && perf.totalTrades >= 3) strengths.push(isRTL ? 'בחירת סטאפים איכותית' : 'Quality setup selection');
+  if (perf.avgDeviation < 0.08 && perf.totalTrades > 0) strengths.push(isRTL ? 'ביצוע מדויק ועקבי' : 'Precise and consistent execution');
+  if (perf.totalR > 0) strengths.push(isRTL ? 'שבוע רווחי' : 'Profitable week');
+  if (checklistPct >= 75) strengths.push(isRTL ? 'מודעות עצמית גבוהה' : 'High self-awareness');
+  if (review.lessons && Object.values(review.lessons).filter(v => v && v.length > 5).length >= 4) strengths.push(isRTL ? 'הפקת לקחים עמוקה' : 'Deep lesson extraction');
+
+  // Weaknesses
+  const weaknesses: string[] = [];
+  if (perf.rulesFollowed < 60 && perf.totalTrades > 0) weaknesses.push(isRTL ? 'עמידה נמוכה בכללים' : 'Low rule adherence');
+  if (postLossRiskUp > 0) weaknesses.push(isRTL ? 'מסחר נקמה אחרי הפסדים' : 'Revenge trading after losses');
+  if (riskEscalated) weaknesses.push(isRTL ? 'הסלמת סיכון לא מתוכננת' : 'Unplanned risk escalation');
+  if (perf.avgDeviation > 0.12 && perf.totalTrades > 0) weaknesses.push(isRTL ? 'סטייה גבוהה מתכנון' : 'High deviation from plan');
+  if (perf.totalTrades > 15) weaknesses.push(isRTL ? 'מסחר יתר' : 'Overtrading');
+  if (maxConsec >= 3) weaknesses.push(isRTL ? `${maxConsec} הפסדים רצופים ללא הפסקה` : `${maxConsec} consecutive losses without pause`);
+
+  // Patterns
+  const patterns: string[] = [];
+  if (postLossRiskUp > 1) patterns.push(isRTL ? 'הגדלת סיכון חוזרת אחרי הפסדים' : 'Recurring risk increase after losses');
+  if (riskEscalated) patterns.push(isRTL ? 'העלאת סיכון לקראת סוף השבוע' : 'Risk increase toward end of week');
+  if (perf.totalTrades > 0) {
+    const rulesBroken = weekTrades.filter(t => !t.rules);
+    const rulesBrokenLosses = rulesBroken.filter(t => t.winLoss === 'Loss');
+    if (rulesBroken.length > 0 && rulesBrokenLosses.length > rulesBroken.length * 0.6) {
+      patterns.push(isRTL ? 'רוב העסקאות ללא כללים הסתיימו בהפסד' : 'Most rule-breaking trades ended in losses');
+    }
+  }
+  if (perf.winRate > 60 && perf.avgR < 0.5 && perf.totalTrades >= 5) {
+    patterns.push(isRTL ? 'אחוז הצלחה גבוה אך R ממוצע נמוך — יציאות מוקדמות' : 'High win rate but low avg R — cutting winners short');
+  }
+
+  // Takeaways
+  const takeaways: { label: string; text: string }[] = [];
+
+  // Behavioral
+  if (postLossRiskUp > 0) {
+    takeaways.push({ label: isRTL ? '🧠 התנהגות' : '🧠 Behavioral', text: isRTL ? 'הטמע כלל ברזל: אחרי הפסד, הסיכון נשאר זהה או יורד. אף פעם לא עולה.' : 'Implement an iron rule: after a loss, risk stays the same or decreases. Never increases.' });
+  } else if (perf.rulesFollowed < 70 && perf.totalTrades > 0) {
+    takeaways.push({ label: isRTL ? '🧠 התנהגות' : '🧠 Behavioral', text: isRTL ? 'לפני כל עסקה, עבור על הצ\'קליסט. אל תיכנס לעסקה בלי לוודא שהיא עומדת בכללים.' : 'Before every trade, run through your checklist. Do not enter a trade without confirming it meets your rules.' });
+  } else {
+    takeaways.push({ label: isRTL ? '🧠 התנהגות' : '🧠 Behavioral', text: isRTL ? 'המשך לשמור על המשמעת הנוכחית. עקביות היא הנכס החשוב ביותר.' : 'Maintain your current discipline. Consistency is the most valuable asset.' });
+  }
+
+  // Execution
+  if (perf.avgDeviation > 0.1 && perf.totalTrades > 0) {
+    takeaways.push({ label: isRTL ? '🎯 ביצוע' : '🎯 Execution', text: isRTL ? 'צמצם את הפער בין תכנון לביצוע. תרגל כניסות ויציאות מדויקות יותר.' : 'Close the gap between planning and execution. Practice more precise entries and exits.' });
+  } else {
+    takeaways.push({ label: isRTL ? '🎯 ביצוע' : '🎯 Execution', text: isRTL ? 'איכות הביצוע סבירה. התמקד בשיפור תזמון יציאות לשבוע הבא.' : 'Execution quality is reasonable. Focus on improving exit timing next week.' });
+  }
+
+  // Risk
+  if (riskEscalated || postLossRiskUp > 0) {
+    takeaways.push({ label: isRTL ? '🛡️ סיכון' : '🛡️ Risk', text: isRTL ? 'נעל את גודל הפוזיציה. שום דבר לא צריך להשתנות מעסקה לעסקה מלבד הסטאפ.' : 'Lock your position size. Nothing should change from trade to trade except the setup quality.' });
+  } else {
+    takeaways.push({ label: isRTL ? '🛡️ סיכון' : '🛡️ Risk', text: isRTL ? 'ניהול הסיכונים היה עקבי. שמור על הקצב הזה.' : 'Risk management was consistent. Maintain this rhythm.' });
+  }
+
+  // Strategy
+  if (perf.totalTrades > 0) {
+    const bestSetup = weekTrades.filter(t => t.winLoss === 'Win').length > 0 ? 'winning' : 'losing';
+    takeaways.push({ label: isRTL ? '📐 אסטרטגיה' : '📐 Strategy', text: isRTL
+      ? `סקור את הסטאפים שעבדו השבוע והתמקד בהם. הפחת חשיפה לסטאפים שגרמו להפסדים.`
+      : `Review which setups worked this week and double down on them. Reduce exposure to setups that caused losses.`
+    });
+  }
+
+  return { profile, narrative: parts.join(' '), strengths, weaknesses, patterns, takeaways };
+}
+
+// ═══════════════════════════════════════════════════
+// COMPLETED VIEW COMPONENT
+// ═══════════════════════════════════════════════════
+
+interface CompletedViewProps {
+  T: TradingTheme;
+  isRTL: boolean;
+  displayReview: WeeklyReviewData;
+  perf: WeeklyPerformance;
+  weekTrades: Trade[];
+  stats: TradingStats;
+  riskData: RiskAssessment;
+  weekKey: string;
+  viewingArchive: string | null;
+  setViewingArchive: (v: string | null) => void;
+  archivedWeeks: string[];
+  allChecklist: ChecklistItem[];
+}
+
+const CompletedView = ({ T, isRTL, displayReview, perf, weekTrades, stats, riskData, weekKey, viewingArchive, setViewingArchive, archivedWeeks, allChecklist }: CompletedViewProps) => {
+  const [analysis, setAnalysis] = useState<AIWeeklyAnalysis | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+
+  const dp = displayReview.performance || perf;
+
+  const handleAnalyze = useCallback(() => {
+    setAnalyzing(true);
+    // Simulate a brief processing delay for premium feel
+    setTimeout(() => {
+      const result = generateAIAnalysis(dp, weekTrades, displayReview, stats, riskData, isRTL);
+      setAnalysis(result);
+      setAnalyzing(false);
+    }, 1800);
+  }, [dp, weekTrades, displayReview, stats, riskData, isRTL]);
+
+  return (
+    <div>
+      {viewingArchive && (
+        <button onClick={() => { setViewingArchive(null); setAnalysis(null); }} style={{ marginBottom: 16, padding: '6px 16px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, cursor: 'pointer', fontSize: 11 }}>
+          ← {isRTL ? 'חזרה' : 'Back'}
+        </button>
+      )}
+
+      {/* Header */}
+      <div style={{ textAlign: 'center', marginBottom: 30 }}>
+        <div style={{ fontSize: 36, marginBottom: 8 }}>✅</div>
+        <div style={{ fontSize: 20, fontWeight: 700, color: T.text.primary, fontFamily: "'JetBrains Mono', monospace", marginBottom: 6 }}>
+          {isRTL ? 'הסקירה השבועית הושלמה' : 'Weekly Review Completed'} — {displayReview.weekKey}
+        </div>
+        {displayReview.completedAt && (
+          <div style={{ fontSize: 10, color: T.text.dim }}>
+            {isRTL ? 'הושלם:' : 'Completed:'} {new Date(displayReview.completedAt).toLocaleDateString()}
+          </div>
+        )}
+      </div>
+
+      {/* ANALYZE BUTTON — shown when no analysis yet */}
+      {!analysis && !analyzing && (
+        <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+          <div style={{ fontSize: 13, color: T.text.secondary, marginBottom: 24, maxWidth: 440, margin: '0 auto 24px' }}>
+            {isRTL
+              ? 'הסקירה השבועית נשמרה. לחץ למטה כדי לקבל ניתוח אינטליגנטי של השבוע שלך.'
+              : 'Your weekly review has been saved. Click below to generate an intelligent analysis of your trading week.'}
+          </div>
+          <button
+            onClick={handleAnalyze}
+            style={{
+              padding: '16px 48px',
+              background: `linear-gradient(135deg, #FFD700, #FFA500)`,
+              border: 'none',
+              borderRadius: T.radius.lg,
+              color: '#000',
+              fontWeight: 800,
+              fontSize: 15,
+              cursor: 'pointer',
+              boxShadow: '0 0 30px rgba(255,215,0,0.25), 0 4px 15px rgba(0,0,0,0.3)',
+              transition: 'all 0.3s',
+              fontFamily: "'JetBrains Mono', monospace",
+              letterSpacing: '0.02em',
+            }}
+          >
+            {isRTL ? '🔍 נתח את השבוע שלי' : '🔍 Analyze My Week'}
+          </button>
+        </div>
+      )}
+
+      {/* ANALYZING STATE */}
+      {analyzing && (
+        <div style={{ textAlign: 'center', padding: '50px 20px' }}>
+          <div style={{ fontSize: 32, marginBottom: 16, animation: 'pulse 1.5s infinite' }}>🧠</div>
+          <div style={{ fontSize: 14, color: T.text.secondary, fontFamily: "'JetBrains Mono', monospace" }}>
+            {isRTL ? 'מנתח את השבוע שלך...' : 'Analyzing your week...'}
+          </div>
+          <div style={{ fontSize: 11, color: T.text.dim, marginTop: 8 }}>
+            {isRTL ? 'סורק ביצועים, סיכונים, התנהגות ותגובות' : 'Scanning performance, risk, behavior & responses'}
+          </div>
+        </div>
+      )}
+
+      {/* AI ANALYSIS RESULT */}
+      {analysis && (
+        <div>
+          {/* Week Profile Badge */}
+          <div style={{ textAlign: 'center', marginBottom: 24 }}>
+            <TradingBadge color="#FFD700">{analysis.profile}</TradingBadge>
+          </div>
+
+          {/* Narrative */}
+          <GlassCard T={T} style={{ marginBottom: 20, borderInlineStart: `3px solid #FFD700` }} glow="rgba(255,215,0,0.08)">
+            <div style={{ fontSize: 10, color: '#FFD700', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10, fontWeight: 700 }}>
+              {isRTL ? 'ניתוח שבועי' : 'Weekly Analysis'}
+            </div>
+            <div style={{ fontSize: 13, color: T.text.primary, lineHeight: 1.9, fontFamily: "'Inter', sans-serif" }}>
+              {analysis.narrative}
+            </div>
+          </GlassCard>
+
+          {/* Strengths & Weaknesses side by side */}
+          <div style={{ display: 'grid', gridTemplateColumns: analysis.strengths.length > 0 && analysis.weaknesses.length > 0 ? '1fr 1fr' : '1fr', gap: 14, marginBottom: 20 }}>
+            {analysis.strengths.length > 0 && (
+              <GlassCard T={T} glow="rgba(0,255,163,0.06)">
+                <div style={{ fontSize: 10, color: '#00FFA3', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, fontWeight: 700 }}>
+                  {isRTL ? 'חוזקות' : 'Strengths'}
+                </div>
+                {analysis.strengths.map((s, i) => (
+                  <div key={i} style={{ fontSize: 12, color: T.text.secondary, marginBottom: 6, paddingInlineStart: 10, borderInlineStart: '2px solid #00FFA330', lineHeight: 1.6 }}>
+                    {s}
+                  </div>
+                ))}
+              </GlassCard>
+            )}
+            {analysis.weaknesses.length > 0 && (
+              <GlassCard T={T} glow="rgba(255,77,77,0.06)">
+                <div style={{ fontSize: 10, color: '#FF4D4D', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, fontWeight: 700 }}>
+                  {isRTL ? 'חולשות' : 'Weaknesses'}
+                </div>
+                {analysis.weaknesses.map((w, i) => (
+                  <div key={i} style={{ fontSize: 12, color: T.text.secondary, marginBottom: 6, paddingInlineStart: 10, borderInlineStart: '2px solid #FF4D4D30', lineHeight: 1.6 }}>
+                    {w}
+                  </div>
+                ))}
+              </GlassCard>
+            )}
+          </div>
+
+          {/* Patterns */}
+          {analysis.patterns.length > 0 && (
+            <GlassCard T={T} style={{ marginBottom: 20 }} glow="rgba(90,169,255,0.06)">
+              <div style={{ fontSize: 10, color: '#5AA9FF', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, fontWeight: 700 }}>
+                {isRTL ? 'דפוסים שזוהו' : 'Identified Patterns'}
+              </div>
+              {analysis.patterns.map((p, i) => (
+                <div key={i} style={{ fontSize: 12, color: T.text.secondary, marginBottom: 6, paddingInlineStart: 10, borderInlineStart: '2px solid #5AA9FF30', lineHeight: 1.6 }}>
+                  ⚡ {p}
+                </div>
+              ))}
+            </GlassCard>
+          )}
+
+          {/* Takeaways */}
+          <GlassCard T={T} style={{ marginBottom: 20, borderInlineStart: `3px solid #FFD700` }} glow="rgba(255,215,0,0.06)">
+            <div style={{ fontSize: 10, color: '#FFD700', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 14, fontWeight: 700 }}>
+              {isRTL ? 'מסקנות לשבוע הבא' : 'Actionable Takeaways'}
+            </div>
+            {analysis.takeaways.map((t, i) => (
+              <div key={i} style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: T.text.primary, marginBottom: 4 }}>{t.label}</div>
+                <div style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.7 }}>{t.text}</div>
+              </div>
+            ))}
+          </GlassCard>
+
+          {/* Quick metrics strip */}
+          {dp.totalTrades > 0 && (
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 20, opacity: 0.7 }}>
+              <div style={{ fontSize: 10, color: T.text.dim }}>{dp.totalTrades} {isRTL ? 'עסקאות' : 'trades'}</div>
+              <div style={{ fontSize: 10, color: T.text.dim }}>•</div>
+              <div style={{ fontSize: 10, color: dp.winRate >= 50 ? '#00FFA3' : '#FF4D4D' }}>{dp.winRate.toFixed(0)}% WR</div>
+              <div style={{ fontSize: 10, color: T.text.dim }}>•</div>
+              <div style={{ fontSize: 10, color: dp.totalR >= 0 ? '#00FFA3' : '#FF4D4D' }}>{dp.totalR.toFixed(1)}R</div>
+              <div style={{ fontSize: 10, color: T.text.dim }}>•</div>
+              <div style={{ fontSize: 10, color: T.text.dim }}>{dp.rulesFollowed.toFixed(0)}% {isRTL ? 'משמעת' : 'discipline'}</div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Archives */}
+      {!viewingArchive && archivedWeeks.filter(w => w !== weekKey).length > 0 && (
+        <div style={{ marginTop: 30 }}>
+          <div style={{ fontSize: 10, color: T.text.dim, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+            {isRTL ? 'ארכיון סקירות' : 'Review Archive'}
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {archivedWeeks.filter(w => w !== weekKey).map(wk => (
+              <button key={wk} onClick={() => { setViewingArchive(wk); setAnalysis(null); }} style={{ padding: '6px 14px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, cursor: 'pointer', fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>
+                {wk}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════
 
@@ -544,150 +962,21 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, stats, riskData }: Props) =
   // ═══════════════════════════════════════════════════
 
   if (isCompleted) {
-    const dp = displayReview.performance || perf;
-    const di = generateWeeklyInsights(dp, weekTrades, displayReview, isRTL);
     return (
-      <div>
-        {viewingArchive && (
-          <button onClick={() => setViewingArchive(null)} style={{ marginBottom: 16, padding: '6px 16px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, cursor: 'pointer', fontSize: 11 }}>
-            ← {isRTL ? 'חזרה' : 'Back'}
-          </button>
-        )}
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div style={{ fontSize: 36, marginBottom: 8 }}>📋</div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: T.text.primary, fontFamily: "'JetBrains Mono', monospace" }}>
-            {isRTL ? 'סיכום שבועי' : 'Weekly Summary'} — {displayReview.weekKey}
-          </div>
-          {displayReview.weekProfile && (
-            <TradingBadge color={T.accent.cyan}>{displayReview.weekProfile}</TradingBadge>
-          )}
-          {displayReview.completedAt && (
-            <div style={{ fontSize: 10, color: T.text.dim, marginTop: 6 }}>
-              {isRTL ? 'הושלם:' : 'Completed:'} {new Date(displayReview.completedAt).toLocaleDateString()}
-            </div>
-          )}
-        </div>
-
-        {/* Performance metrics */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 10, marginBottom: 20 }}>
-          <MetricCard T={T} label={isRTL ? 'עסקאות' : 'Trades'} value={String(dp.totalTrades)} color={T.text.primary} />
-          <MetricCard T={T} label="Win Rate" value={dp.winRate.toFixed(0)} suffix="%" color={dp.winRate >= 50 ? T.accent.green : T.accent.red} />
-          <MetricCard T={T} label={isRTL ? 'סה"כ R' : 'Total R'} value={dp.totalR.toFixed(1)} suffix="R" color={dp.totalR >= 0 ? T.accent.green : T.accent.red} />
-          <MetricCard T={T} label={isRTL ? 'ממוצע R' : 'Avg R'} value={dp.avgR.toFixed(2)} suffix="R" color={dp.avgR >= 0 ? T.accent.green : T.accent.red} />
-          <MetricCard T={T} label={isRTL ? 'משמעת' : 'Discipline'} value={dp.rulesFollowed.toFixed(0)} suffix="%" color={dp.rulesFollowed >= 70 ? T.accent.green : T.accent.orange} />
-        </div>
-
-        {/* Insights */}
-        {di.length > 0 && (
-          <GlassCard T={T} style={{ marginBottom: 20 }} glow={`${T.accent.cyan}10`}>
-            <div style={{ fontSize: 10, color: T.text.dim, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-              {isRTL ? 'תובנות שבועיות' : 'Weekly Insights'}
-            </div>
-            {di.map((ins, i) => (
-              <div key={i} style={{ fontSize: 12, color: T.text.secondary, marginBottom: 8, lineHeight: 1.7, paddingInlineStart: 8, borderInlineStart: `2px solid ${T.accent.cyan}30` }}>
-                {ins}
-              </div>
-            ))}
-          </GlassCard>
-        )}
-
-        {/* Checklist summary */}
-        <GlassCard T={T} style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 10, color: T.text.dim, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-            {isRTL ? 'צ\'קליסט' : 'Checklist'} — {Object.values(displayReview.checklist).filter(Boolean).length}/{allChecklist.length}
-          </div>
-          <div style={{ height: 6, background: T.bg.tertiary, borderRadius: 3, overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${(Object.values(displayReview.checklist).filter(Boolean).length / allChecklist.length) * 100}%`, background: `linear-gradient(90deg, ${T.accent.cyan}, ${T.accent.teal})`, borderRadius: 3, transition: 'width 0.3s' }} />
-          </div>
-        </GlassCard>
-
-        {/* Lessons */}
-        {Object.keys(displayReview.lessons).length > 0 && (
-          <GlassCard T={T} style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 10, color: T.text.dim, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-              {isRTL ? 'לקחים שהופקו' : 'Extracted Lessons'}
-            </div>
-            {LESSON_FIELDS.filter(f => displayReview.lessons[f.id]).map(f => (
-              <div key={f.id} style={{ marginBottom: 10 }}>
-                <div style={{ fontSize: 10, color: T.accent.cyan, fontWeight: 600, marginBottom: 3 }}>{isRTL ? f.he : f.en}</div>
-                <div style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.6 }}>{displayReview.lessons[f.id]}</div>
-              </div>
-            ))}
-          </GlassCard>
-        )}
-
-        {/* Next week plan */}
-        {Object.keys(displayReview.nextWeekPlan).length > 0 && (
-          <GlassCard T={T} style={{ marginBottom: 20 }} glow={`${T.accent.green}10`}>
-            <div style={{ fontSize: 10, color: T.text.dim, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-              {isRTL ? 'תוכנית שבוע הבא' : 'Next Week Plan'}
-            </div>
-            {NEXT_WEEK_FIELDS.filter(f => displayReview.nextWeekPlan[f.id]).map(f => (
-              <div key={f.id} style={{ marginBottom: 10 }}>
-                <div style={{ fontSize: 10, color: T.accent.green, fontWeight: 600, marginBottom: 3 }}>{isRTL ? f.he : f.en}</div>
-                <div style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.6 }}>{displayReview.nextWeekPlan[f.id]}</div>
-              </div>
-            ))}
-          </GlassCard>
-        )}
-
-        {/* Responses summary */}
-        {Object.keys(displayReview.responses).length > 0 && (
-          <GlassCard T={T} style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 10, color: T.text.dim, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-              {isRTL ? 'תשובות מפורטות' : 'Detailed Responses'}
-            </div>
-            {RESPONSE_SECTIONS.map(sec => {
-              const answered = sec.questions.filter(q => displayReview.responses[q.id]);
-              if (answered.length === 0) return null;
-              return (
-                <div key={sec.id} style={{ marginBottom: 14 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: T.text.primary, marginBottom: 6 }}>{sec.icon} {isRTL ? sec.titleHe : sec.titleEn}</div>
-                  {answered.map(q => (
-                    <div key={q.id} style={{ marginBottom: 8, paddingInlineStart: 12 }}>
-                      <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 2 }}>{isRTL ? q.he : q.en}</div>
-                      <div style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.6 }}>{displayReview.responses[q.id]}</div>
-                    </div>
-                  ))}
-                </div>
-              );
-            })}
-          </GlassCard>
-        )}
-
-        {/* Trade images */}
-        {displayReview.tradeImages.length > 0 && (
-          <GlassCard T={T} style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 10, color: T.text.dim, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-              {isRTL ? 'תמונות עסקאות' : 'Trade Images'}
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
-              {displayReview.tradeImages.map((img, i) => (
-                <div key={i}>
-                  <div style={{ fontSize: 10, color: T.accent.cyan, marginBottom: 4 }}>{img.label}</div>
-                  <img src={img.url} alt={img.label} style={{ width: '100%', borderRadius: T.radius.md, border: `1px solid ${T.border.medium}` }} />
-                </div>
-              ))}
-            </div>
-          </GlassCard>
-        )}
-
-        {/* Archives */}
-        {!viewingArchive && archivedWeeks.filter(w => w !== weekKey).length > 0 && (
-          <div style={{ marginTop: 20 }}>
-            <div style={{ fontSize: 10, color: T.text.dim, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-              {isRTL ? 'ארכיון סקירות' : 'Review Archive'}
-            </div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {archivedWeeks.filter(w => w !== weekKey).map(wk => (
-                <button key={wk} onClick={() => setViewingArchive(wk)} style={{ padding: '6px 14px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, cursor: 'pointer', fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>
-                  {wk}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+      <CompletedView
+        T={T}
+        isRTL={isRTL}
+        displayReview={displayReview}
+        perf={perf}
+        weekTrades={weekTrades}
+        stats={stats}
+        riskData={riskData}
+        weekKey={weekKey}
+        viewingArchive={viewingArchive}
+        setViewingArchive={setViewingArchive}
+        archivedWeeks={archivedWeeks}
+        allChecklist={allChecklist}
+      />
     );
   }
 
