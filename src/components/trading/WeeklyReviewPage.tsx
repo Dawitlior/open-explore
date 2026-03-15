@@ -544,150 +544,21 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, stats, riskData }: Props) =
   // ═══════════════════════════════════════════════════
 
   if (isCompleted) {
-    const dp = displayReview.performance || perf;
-    const di = generateWeeklyInsights(dp, weekTrades, displayReview, isRTL);
     return (
-      <div>
-        {viewingArchive && (
-          <button onClick={() => setViewingArchive(null)} style={{ marginBottom: 16, padding: '6px 16px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, cursor: 'pointer', fontSize: 11 }}>
-            ← {isRTL ? 'חזרה' : 'Back'}
-          </button>
-        )}
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div style={{ fontSize: 36, marginBottom: 8 }}>📋</div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: T.text.primary, fontFamily: "'JetBrains Mono', monospace" }}>
-            {isRTL ? 'סיכום שבועי' : 'Weekly Summary'} — {displayReview.weekKey}
-          </div>
-          {displayReview.weekProfile && (
-            <TradingBadge color={T.accent.cyan}>{displayReview.weekProfile}</TradingBadge>
-          )}
-          {displayReview.completedAt && (
-            <div style={{ fontSize: 10, color: T.text.dim, marginTop: 6 }}>
-              {isRTL ? 'הושלם:' : 'Completed:'} {new Date(displayReview.completedAt).toLocaleDateString()}
-            </div>
-          )}
-        </div>
-
-        {/* Performance metrics */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 10, marginBottom: 20 }}>
-          <MetricCard T={T} label={isRTL ? 'עסקאות' : 'Trades'} value={String(dp.totalTrades)} color={T.text.primary} />
-          <MetricCard T={T} label="Win Rate" value={dp.winRate.toFixed(0)} suffix="%" color={dp.winRate >= 50 ? T.accent.green : T.accent.red} />
-          <MetricCard T={T} label={isRTL ? 'סה"כ R' : 'Total R'} value={dp.totalR.toFixed(1)} suffix="R" color={dp.totalR >= 0 ? T.accent.green : T.accent.red} />
-          <MetricCard T={T} label={isRTL ? 'ממוצע R' : 'Avg R'} value={dp.avgR.toFixed(2)} suffix="R" color={dp.avgR >= 0 ? T.accent.green : T.accent.red} />
-          <MetricCard T={T} label={isRTL ? 'משמעת' : 'Discipline'} value={dp.rulesFollowed.toFixed(0)} suffix="%" color={dp.rulesFollowed >= 70 ? T.accent.green : T.accent.orange} />
-        </div>
-
-        {/* Insights */}
-        {di.length > 0 && (
-          <GlassCard T={T} style={{ marginBottom: 20 }} glow={`${T.accent.cyan}10`}>
-            <div style={{ fontSize: 10, color: T.text.dim, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-              {isRTL ? 'תובנות שבועיות' : 'Weekly Insights'}
-            </div>
-            {di.map((ins, i) => (
-              <div key={i} style={{ fontSize: 12, color: T.text.secondary, marginBottom: 8, lineHeight: 1.7, paddingInlineStart: 8, borderInlineStart: `2px solid ${T.accent.cyan}30` }}>
-                {ins}
-              </div>
-            ))}
-          </GlassCard>
-        )}
-
-        {/* Checklist summary */}
-        <GlassCard T={T} style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 10, color: T.text.dim, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-            {isRTL ? 'צ\'קליסט' : 'Checklist'} — {Object.values(displayReview.checklist).filter(Boolean).length}/{allChecklist.length}
-          </div>
-          <div style={{ height: 6, background: T.bg.tertiary, borderRadius: 3, overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${(Object.values(displayReview.checklist).filter(Boolean).length / allChecklist.length) * 100}%`, background: `linear-gradient(90deg, ${T.accent.cyan}, ${T.accent.teal})`, borderRadius: 3, transition: 'width 0.3s' }} />
-          </div>
-        </GlassCard>
-
-        {/* Lessons */}
-        {Object.keys(displayReview.lessons).length > 0 && (
-          <GlassCard T={T} style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 10, color: T.text.dim, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-              {isRTL ? 'לקחים שהופקו' : 'Extracted Lessons'}
-            </div>
-            {LESSON_FIELDS.filter(f => displayReview.lessons[f.id]).map(f => (
-              <div key={f.id} style={{ marginBottom: 10 }}>
-                <div style={{ fontSize: 10, color: T.accent.cyan, fontWeight: 600, marginBottom: 3 }}>{isRTL ? f.he : f.en}</div>
-                <div style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.6 }}>{displayReview.lessons[f.id]}</div>
-              </div>
-            ))}
-          </GlassCard>
-        )}
-
-        {/* Next week plan */}
-        {Object.keys(displayReview.nextWeekPlan).length > 0 && (
-          <GlassCard T={T} style={{ marginBottom: 20 }} glow={`${T.accent.green}10`}>
-            <div style={{ fontSize: 10, color: T.text.dim, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-              {isRTL ? 'תוכנית שבוע הבא' : 'Next Week Plan'}
-            </div>
-            {NEXT_WEEK_FIELDS.filter(f => displayReview.nextWeekPlan[f.id]).map(f => (
-              <div key={f.id} style={{ marginBottom: 10 }}>
-                <div style={{ fontSize: 10, color: T.accent.green, fontWeight: 600, marginBottom: 3 }}>{isRTL ? f.he : f.en}</div>
-                <div style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.6 }}>{displayReview.nextWeekPlan[f.id]}</div>
-              </div>
-            ))}
-          </GlassCard>
-        )}
-
-        {/* Responses summary */}
-        {Object.keys(displayReview.responses).length > 0 && (
-          <GlassCard T={T} style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 10, color: T.text.dim, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-              {isRTL ? 'תשובות מפורטות' : 'Detailed Responses'}
-            </div>
-            {RESPONSE_SECTIONS.map(sec => {
-              const answered = sec.questions.filter(q => displayReview.responses[q.id]);
-              if (answered.length === 0) return null;
-              return (
-                <div key={sec.id} style={{ marginBottom: 14 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: T.text.primary, marginBottom: 6 }}>{sec.icon} {isRTL ? sec.titleHe : sec.titleEn}</div>
-                  {answered.map(q => (
-                    <div key={q.id} style={{ marginBottom: 8, paddingInlineStart: 12 }}>
-                      <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 2 }}>{isRTL ? q.he : q.en}</div>
-                      <div style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.6 }}>{displayReview.responses[q.id]}</div>
-                    </div>
-                  ))}
-                </div>
-              );
-            })}
-          </GlassCard>
-        )}
-
-        {/* Trade images */}
-        {displayReview.tradeImages.length > 0 && (
-          <GlassCard T={T} style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 10, color: T.text.dim, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-              {isRTL ? 'תמונות עסקאות' : 'Trade Images'}
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
-              {displayReview.tradeImages.map((img, i) => (
-                <div key={i}>
-                  <div style={{ fontSize: 10, color: T.accent.cyan, marginBottom: 4 }}>{img.label}</div>
-                  <img src={img.url} alt={img.label} style={{ width: '100%', borderRadius: T.radius.md, border: `1px solid ${T.border.medium}` }} />
-                </div>
-              ))}
-            </div>
-          </GlassCard>
-        )}
-
-        {/* Archives */}
-        {!viewingArchive && archivedWeeks.filter(w => w !== weekKey).length > 0 && (
-          <div style={{ marginTop: 20 }}>
-            <div style={{ fontSize: 10, color: T.text.dim, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-              {isRTL ? 'ארכיון סקירות' : 'Review Archive'}
-            </div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {archivedWeeks.filter(w => w !== weekKey).map(wk => (
-                <button key={wk} onClick={() => setViewingArchive(wk)} style={{ padding: '6px 14px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, cursor: 'pointer', fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>
-                  {wk}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+      <CompletedView
+        T={T}
+        isRTL={isRTL}
+        displayReview={displayReview}
+        perf={perf}
+        weekTrades={weekTrades}
+        stats={stats}
+        riskData={riskData}
+        weekKey={weekKey}
+        viewingArchive={viewingArchive}
+        setViewingArchive={setViewingArchive}
+        archivedWeeks={archivedWeeks}
+        allChecklist={allChecklist}
+      />
     );
   }
 
