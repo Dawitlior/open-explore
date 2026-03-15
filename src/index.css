@@ -94,6 +94,41 @@
   .orca-grid-2col {
     grid-template-columns: 1fr !important;
   }
+
+  /* Make tables horizontally scrollable */
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent text overflow in cards */
+  .orca-metric-value {
+    font-size: 18px !important;
+  }
+}
+
+/* Tablet breakpoint */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .orca-grid-2col {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* Chart responsiveness */
+.recharts-wrapper {
+  max-width: 100%;
+}
+
+/* Touch-friendly targets */
+@media (pointer: coarse) {
+  button, a, label {
+    min-height: 36px;
+  }
+
+  input, select, textarea {
+    font-size: 16px !important;
+  }
 }
 
 @keyframes fadeIn {
@@ -102,11 +137,16 @@
 }
 
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
