@@ -1241,7 +1241,7 @@ const Index = () => {
       </aside>
 
       {/* MAIN */}
-      <main style={{ flex: 1, overflow: 'auto', transition: 'background 0.5s ease' }}>
+      <main style={{ flex: 1, overflow: 'auto', transition: 'background 0.4s ease' }}>
         <header style={{ padding: isMobile ? '10px 12px' : '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${T.border.subtle}`, background: `${T.bg.secondary}cc`, backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 5, gap: 8, flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 14 }}>
             {/* Mobile hamburger */}
