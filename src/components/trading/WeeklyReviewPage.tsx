@@ -59,9 +59,31 @@ function getWeekKey(d: Date): string {
   return `${d.getFullYear()}-W${String(week).padStart(2, '0')}`;
 }
 
-function isFridayOrWeekend(): boolean {
-  const day = new Date().getDay();
-  return day === 5 || day === 6 || day === 0;
+/** Determine the review status based on day and completion */
+function getReviewAvailability(weekKey: string): 'locked' | 'available' {
+  const now = new Date();
+  const day = now.getDay(); // 0=Sun, 5=Fri, 6=Sat
+
+  // Check if this week's review was already completed
+  const saved = loadReviewRaw(weekKey);
+  if (saved?.completedAt) {
+    // Lock until next Friday: completed reviews stay locked
+    // The review is for THIS week, so once done it's locked until a new weekKey
+    return 'locked';
+  }
+
+  // Available on Friday (5), Saturday (6), Sunday (0)
+  return (day === 5 || day === 6 || day === 0) ? 'available' : 'locked';
+}
+
+function getNextFridayDate(): Date {
+  const now = new Date();
+  const day = now.getDay();
+  const daysUntil = (5 - day + 7) % 7 || 7;
+  const next = new Date(now);
+  next.setDate(now.getDate() + daysUntil);
+  next.setHours(0, 0, 0, 0);
+  return next;
 }
 
 function getWeekTrades(trades: Trade[]): Trade[] {
@@ -240,11 +262,17 @@ const TRADE_IMAGE_LABELS = [
 // STORAGE
 // ═══════════════════════════════════════════════════
 
-function loadReview(weekKey: string): WeeklyReviewData {
+function loadReviewRaw(weekKey: string): WeeklyReviewData | null {
   try {
     const raw = localStorage.getItem(`orca-weekly-${weekKey}`);
     if (raw) return JSON.parse(raw);
   } catch { /* ignore */ }
+  return null;
+}
+
+function loadReview(weekKey: string): WeeklyReviewData {
+  const raw = loadReviewRaw(weekKey);
+  if (raw) return raw;
   return { weekKey, status: 'available', checklist: {}, responses: {}, lessons: {}, nextWeekPlan: {}, tradeImages: [], riskExplanations: [] };
 }
 
@@ -284,10 +312,8 @@ function generateAIAnalysis(
   const profile = getWeekProfile(perf, review.checklist);
   const parts: string[] = [];
 
-  // Compute analytics
   let riskEscalated = false;
   let postLossRiskUp = 0;
-  let maxConsec = 0;
 
   if (weekTrades.length >= 3) {
     const firstHalf = weekTrades.slice(0, Math.floor(weekTrades.length / 2));
@@ -300,66 +326,31 @@ function generateAIAnalysis(
   const lossIndices = weekTrades.map((t, i) => t.winLoss === 'Loss' ? i : -1).filter(i => i >= 0);
   postLossRiskUp = lossIndices.filter(i => i < weekTrades.length - 1 && weekTrades[i + 1].risk > weekTrades[i].risk * 1.2).length;
 
-  let consec = 0;
-  weekTrades.forEach(t => { if (t.winLoss === 'Loss') { consec++; maxConsec = Math.max(maxConsec, consec); } else consec = 0; });
-
   const checklistEntries = Object.entries(review.checklist);
   const checklistPct = checklistEntries.length > 0 ? Math.round((checklistEntries.filter(([, v]) => v).length / checklistEntries.length) * 100) : 0;
 
-  // Build narrative
   if (perf.totalTrades === 0) {
     parts.push(isRTL
       ? 'שבוע ללא פעילות מסחרית. חשוב לנתח אם הימנעות ממסחר הייתה החלטה מושכלת או הימנעות רגשית.'
       : 'A week with no trading activity. Important to analyze whether staying out was a deliberate decision or emotional avoidance.'
     );
-    const ntResponses = Object.entries(review.responses).filter(([k]) => k.startsWith('nt_'));
-    if (ntResponses.some(([, v]) => v && v.length > 10)) {
-      parts.push(isRTL
-        ? 'התשובות שלך מצביעות על מודעות עצמית לגבי חוסר הפעילות.'
-        : 'Your responses indicate self-awareness about the inactivity.'
-      );
-    }
   } else {
     if (perf.totalR > 0 && perf.rulesFollowed >= 70) {
-      parts.push(isRTL
-        ? `שבוע חיובי עם ${perf.totalR.toFixed(1)}R ומשמעת של ${perf.rulesFollowed.toFixed(0)}%.`
-        : `A positive week at ${perf.totalR.toFixed(1)}R with ${perf.rulesFollowed.toFixed(0)}% discipline.`
-      );
+      parts.push(isRTL ? `שבוע חיובי עם ${perf.totalR.toFixed(1)}R ומשמעת של ${perf.rulesFollowed.toFixed(0)}%.` : `A positive week at ${perf.totalR.toFixed(1)}R with ${perf.rulesFollowed.toFixed(0)}% discipline.`);
     } else if (perf.totalR > 0 && perf.rulesFollowed < 60) {
-      parts.push(isRTL
-        ? `שבוע רווחי (${perf.totalR.toFixed(1)}R) אך עם משמעת נמוכה (${perf.rulesFollowed.toFixed(0)}%).`
-        : `Profitable week (${perf.totalR.toFixed(1)}R) but with low discipline (${perf.rulesFollowed.toFixed(0)}%).`
-      );
+      parts.push(isRTL ? `שבוע רווחי (${perf.totalR.toFixed(1)}R) אך עם משמעת נמוכה (${perf.rulesFollowed.toFixed(0)}%).` : `Profitable week (${perf.totalR.toFixed(1)}R) but with low discipline (${perf.rulesFollowed.toFixed(0)}%).`);
     } else if (perf.totalR < 0 && perf.rulesFollowed >= 70) {
-      parts.push(isRTL
-        ? `שבוע מפסיד (${perf.totalR.toFixed(1)}R) למרות משמעת גבוהה. התהליך היה נכון.`
-        : `Losing week (${perf.totalR.toFixed(1)}R) despite high discipline. Process was sound.`
-      );
+      parts.push(isRTL ? `שבוע מפסיד (${perf.totalR.toFixed(1)}R) למרות משמעת גבוהה. התהליך היה נכון.` : `Losing week (${perf.totalR.toFixed(1)}R) despite high discipline. Process was sound.`);
     } else {
-      parts.push(isRTL
-        ? `שבוע מאתגר עם ${perf.totalR.toFixed(1)}R ומשמעת של ${perf.rulesFollowed.toFixed(0)}%.`
-        : `Challenging week at ${perf.totalR.toFixed(1)}R with ${perf.rulesFollowed.toFixed(0)}% discipline.`
-      );
+      parts.push(isRTL ? `שבוע מאתגר עם ${perf.totalR.toFixed(1)}R ומשמעת של ${perf.rulesFollowed.toFixed(0)}%.` : `Challenging week at ${perf.totalR.toFixed(1)}R with ${perf.rulesFollowed.toFixed(0)}% discipline.`);
     }
 
-    if (riskEscalated) {
-      parts.push(isRTL ? 'הסיכון עלה משמעותית מהחצי הראשון לשני של השבוע.' : 'Risk escalated from first to second half of the week.');
-    }
-    if (postLossRiskUp > 0) {
-      parts.push(isRTL
-        ? `זוהו ${postLossRiskUp} מקרים של הגדלת סיכון אחרי הפסד.`
-        : `${postLossRiskUp} instances of risk increase after losses detected.`
-      );
-    }
-    if (perf.avgDeviation > 0.12) {
-      parts.push(isRTL ? 'סטייה ממוצעת גבוהה — פער בין תכנון לביצוע.' : 'High average deviation — gap between planning and execution.');
-    }
-    if (perf.maxDrawdown > perf.avgRisk * 4) {
-      parts.push(isRTL ? `נסיגה גדולה של $${perf.maxDrawdown.toFixed(2)} יצרה לחץ.` : `Significant drawdown of $${perf.maxDrawdown.toFixed(2)} created pressure.`);
-    }
+    if (riskEscalated) parts.push(isRTL ? 'הסיכון עלה משמעותית מהחצי הראשון לשני של השבוע.' : 'Risk escalated from first to second half of the week.');
+    if (postLossRiskUp > 0) parts.push(isRTL ? `זוהו ${postLossRiskUp} מקרים של הגדלת סיכון אחרי הפסד.` : `${postLossRiskUp} instances of risk increase after losses detected.`);
+    if (perf.avgDeviation > 0.12) parts.push(isRTL ? 'סטייה ממוצעת גבוהה — פער בין תכנון לביצוע.' : 'High average deviation — gap between planning and execution.');
+    if (perf.maxDrawdown > perf.avgRisk * 4) parts.push(isRTL ? `נסיגה גדולה של $${perf.maxDrawdown.toFixed(2)} יצרה לחץ.` : `Significant drawdown of $${perf.maxDrawdown.toFixed(2)} created pressure.`);
   }
 
-  // Strengths
   const strengths: string[] = [];
   if (perf.rulesFollowed >= 70) strengths.push(isRTL ? 'משמעת ועמידה בכללים' : 'Discipline and rule adherence');
   if (perf.winRate >= 50 && perf.totalTrades >= 3) strengths.push(isRTL ? 'בחירת סטאפים איכותית' : 'Quality setup selection');
@@ -367,7 +358,6 @@ function generateAIAnalysis(
   if (perf.totalR > 0) strengths.push(isRTL ? 'שבוע רווחי' : 'Profitable week');
   if (checklistPct >= 75) strengths.push(isRTL ? 'מודעות עצמית גבוהה' : 'High self-awareness');
 
-  // Weaknesses
   const weaknesses: string[] = [];
   if (perf.rulesFollowed < 60 && perf.totalTrades > 0) weaknesses.push(isRTL ? 'עמידה נמוכה בכללים' : 'Low rule adherence');
   if (postLossRiskUp > 0) weaknesses.push(isRTL ? 'מסחר נקמה אחרי הפסדים' : 'Revenge trading after losses');
@@ -375,7 +365,6 @@ function generateAIAnalysis(
   if (perf.avgDeviation > 0.12 && perf.totalTrades > 0) weaknesses.push(isRTL ? 'סטייה גבוהה מתכנון' : 'High deviation from plan');
   if (perf.totalTrades > 15) weaknesses.push(isRTL ? 'מסחר יתר' : 'Overtrading');
 
-  // Patterns
   const patterns: string[] = [];
   if (postLossRiskUp > 1) patterns.push(isRTL ? 'הגדלת סיכון חוזרת אחרי הפסדים' : 'Recurring risk increase after losses');
   if (riskEscalated) patterns.push(isRTL ? 'העלאת סיכון לקראת סוף השבוע' : 'Risk increase toward end of week');
@@ -383,7 +372,6 @@ function generateAIAnalysis(
     patterns.push(isRTL ? 'אחוז הצלחה גבוה אך R ממוצע נמוך — יציאות מוקדמות' : 'High win rate but low avg R — cutting winners short');
   }
 
-  // Takeaways
   const takeaways: { label: string; text: string }[] = [];
   if (postLossRiskUp > 0) {
     takeaways.push({ label: isRTL ? '🧠 התנהגות' : '🧠 Behavioral', text: isRTL ? 'אחרי הפסד, הסיכון נשאר זהה או יורד. אף פעם לא עולה.' : 'After a loss, risk stays the same or decreases. Never increases.' });
@@ -424,9 +412,10 @@ interface CompletedViewProps {
   viewingArchive: string | null;
   setViewingArchive: (v: string | null) => void;
   archivedWeeks: string[];
+  onStartNewCycle: () => void;
 }
 
-const CompletedView = ({ T, isRTL, isMobile, displayReview, perf, weekTrades, stats, riskData, weekKey, viewingArchive, setViewingArchive, archivedWeeks }: CompletedViewProps) => {
+const CompletedView = ({ T, isRTL, isMobile, displayReview, perf, weekTrades, stats, riskData, weekKey, viewingArchive, setViewingArchive, archivedWeeks, onStartNewCycle }: CompletedViewProps) => {
   const [analysis, setAnalysis] = useState<AIWeeklyAnalysis | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
 
@@ -441,23 +430,37 @@ const CompletedView = ({ T, isRTL, isMobile, displayReview, perf, weekTrades, st
     }, 1800);
   }, [dp, weekTrades, displayReview, stats, riskData, isRTL]);
 
+  // Calculate time until next review
+  const nextFriday = getNextFridayDate();
+  const now = new Date();
+  const daysUntilNext = Math.ceil((nextFriday.getTime() - now.getTime()) / 86400000);
+  const isCurrentWeek = displayReview.weekKey === weekKey;
+
   return (
     <div>
       {viewingArchive && (
-        <button onClick={() => { setViewingArchive(null); setAnalysis(null); }} style={{ marginBottom: 16, padding: '8px 20px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, cursor: 'pointer', fontSize: 12 }}>
+        <button onClick={() => { setViewingArchive(null); setAnalysis(null); }} style={{ marginBottom: 16, padding: '8px 20px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, cursor: 'pointer', fontSize: 12, transition: 'all 0.2s' }}>
           ← {isRTL ? 'חזרה' : 'Back'}
         </button>
       )}
 
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: 30 }}>
-        <div style={{ fontSize: 36, marginBottom: 8 }}>✅</div>
+        <div style={{ fontSize: 36, marginBottom: 8, filter: 'drop-shadow(0 0 8px rgba(0,255,163,0.3))' }}>✅</div>
         <div style={{ fontSize: isMobile ? 16 : 20, fontWeight: 700, color: T.text.primary, fontFamily: "'JetBrains Mono', monospace", marginBottom: 6 }}>
           {isRTL ? 'הסקירה השבועית הושלמה' : 'Weekly Review Completed'} — {displayReview.weekKey}
         </div>
         {displayReview.completedAt && (
           <div style={{ fontSize: 10, color: T.text.dim }}>
             {isRTL ? 'הושלם:' : 'Completed:'} {new Date(displayReview.completedAt).toLocaleDateString()}
+          </div>
+        )}
+        {/* Next cycle indicator */}
+        {isCurrentWeek && daysUntilNext > 0 && (
+          <div style={{ marginTop: 12, padding: '8px 20px', background: `${T.accent.blue}08`, border: `1px solid ${T.accent.blue}15`, borderRadius: T.radius.lg, display: 'inline-block' }}>
+            <div style={{ fontSize: 11, color: T.accent.blue, fontWeight: 600 }}>
+              {isRTL ? `הסקירה הבאה תיפתח בעוד ${daysUntilNext} ימים` : `Next review unlocks in ${daysUntilNext} days`}
+            </div>
           </div>
         )}
       </div>
@@ -481,7 +484,7 @@ const CompletedView = ({ T, isRTL, isMobile, displayReview, perf, weekTrades, st
               fontWeight: 800,
               fontSize: isMobile ? 14 : 15,
               cursor: 'pointer',
-              boxShadow: '0 0 30px rgba(255,215,0,0.25), 0 4px 15px rgba(0,0,0,0.3)',
+              boxShadow: '0 0 30px rgba(255,215,0,0.2), 0 4px 15px rgba(0,0,0,0.3)',
               transition: 'all 0.3s',
               fontFamily: "'JetBrains Mono', monospace",
               width: isMobile ? '100%' : 'auto',
@@ -499,17 +502,20 @@ const CompletedView = ({ T, isRTL, isMobile, displayReview, perf, weekTrades, st
           <div style={{ fontSize: 14, color: T.text.secondary, fontFamily: "'JetBrains Mono', monospace" }}>
             {isRTL ? 'מנתח את השבוע שלך...' : 'Analyzing your week...'}
           </div>
+          <div style={{ marginTop: 12, width: 200, height: 3, background: T.bg.tertiary, borderRadius: 2, margin: '12px auto 0', overflow: 'hidden' }}>
+            <div style={{ height: '100%', background: `linear-gradient(90deg, #FFD700, #FFA500)`, borderRadius: 2, animation: 'pulse 1s infinite', width: '60%' }} />
+          </div>
         </div>
       )}
 
       {/* AI ANALYSIS RESULT */}
       {analysis && (
-        <div>
+        <div style={{ animation: 'fadeIn 0.5s ease' }}>
           <div style={{ textAlign: 'center', marginBottom: 24 }}>
             <TradingBadge color="#FFD700">{analysis.profile}</TradingBadge>
           </div>
 
-          <GlassCard T={T} style={{ marginBottom: 20, borderInlineStart: `3px solid #FFD700` }} glow="rgba(255,215,0,0.08)">
+          <GlassCard T={T} style={{ marginBottom: 20, borderInlineStart: `3px solid #FFD700` }} glow="rgba(255,215,0,0.06)">
             <div style={{ fontSize: 10, color: '#FFD700', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10, fontWeight: 700 }}>
               {isRTL ? 'ניתוח שבועי' : 'Weekly Analysis'}
             </div>
@@ -520,24 +526,24 @@ const CompletedView = ({ T, isRTL, isMobile, displayReview, perf, weekTrades, st
 
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : (analysis.strengths.length > 0 && analysis.weaknesses.length > 0 ? '1fr 1fr' : '1fr'), gap: 14, marginBottom: 20 }}>
             {analysis.strengths.length > 0 && (
-              <GlassCard T={T} glow="rgba(0,255,163,0.06)">
+              <GlassCard T={T} glow="rgba(0,255,163,0.04)">
                 <div style={{ fontSize: 10, color: '#00FFA3', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, fontWeight: 700 }}>
                   {isRTL ? 'חוזקות' : 'Strengths'}
                 </div>
                 {analysis.strengths.map((s, i) => (
-                  <div key={i} style={{ fontSize: 12, color: T.text.secondary, marginBottom: 6, paddingInlineStart: 10, borderInlineStart: '2px solid #00FFA330', lineHeight: 1.6 }}>
+                  <div key={i} style={{ fontSize: 12, color: T.text.secondary, marginBottom: 6, paddingInlineStart: 10, borderInlineStart: '2px solid #00FFA320', lineHeight: 1.6 }}>
                     {s}
                   </div>
                 ))}
               </GlassCard>
             )}
             {analysis.weaknesses.length > 0 && (
-              <GlassCard T={T} glow="rgba(255,77,77,0.06)">
+              <GlassCard T={T} glow="rgba(255,77,77,0.04)">
                 <div style={{ fontSize: 10, color: '#FF4D4D', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, fontWeight: 700 }}>
                   {isRTL ? 'חולשות' : 'Weaknesses'}
                 </div>
                 {analysis.weaknesses.map((w, i) => (
-                  <div key={i} style={{ fontSize: 12, color: T.text.secondary, marginBottom: 6, paddingInlineStart: 10, borderInlineStart: '2px solid #FF4D4D30', lineHeight: 1.6 }}>
+                  <div key={i} style={{ fontSize: 12, color: T.text.secondary, marginBottom: 6, paddingInlineStart: 10, borderInlineStart: '2px solid #FF4D4D20', lineHeight: 1.6 }}>
                     {w}
                   </div>
                 ))}
@@ -546,19 +552,19 @@ const CompletedView = ({ T, isRTL, isMobile, displayReview, perf, weekTrades, st
           </div>
 
           {analysis.patterns.length > 0 && (
-            <GlassCard T={T} style={{ marginBottom: 20 }} glow="rgba(90,169,255,0.06)">
+            <GlassCard T={T} style={{ marginBottom: 20 }} glow="rgba(90,169,255,0.04)">
               <div style={{ fontSize: 10, color: '#5AA9FF', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, fontWeight: 700 }}>
                 {isRTL ? 'דפוסים שזוהו' : 'Identified Patterns'}
               </div>
               {analysis.patterns.map((p, i) => (
-                <div key={i} style={{ fontSize: 12, color: T.text.secondary, marginBottom: 6, paddingInlineStart: 10, borderInlineStart: '2px solid #5AA9FF30', lineHeight: 1.6 }}>
+                <div key={i} style={{ fontSize: 12, color: T.text.secondary, marginBottom: 6, paddingInlineStart: 10, borderInlineStart: '2px solid #5AA9FF20', lineHeight: 1.6 }}>
                   ⚡ {p}
                 </div>
               ))}
             </GlassCard>
           )}
 
-          <GlassCard T={T} style={{ marginBottom: 20, borderInlineStart: `3px solid #FFD700` }} glow="rgba(255,215,0,0.06)">
+          <GlassCard T={T} style={{ marginBottom: 20, borderInlineStart: `3px solid #FFD700` }} glow="rgba(255,215,0,0.04)">
             <div style={{ fontSize: 10, color: '#FFD700', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 14, fontWeight: 700 }}>
               {isRTL ? 'מסקנות לשבוע הבא' : 'Actionable Takeaways'}
             </div>
@@ -571,7 +577,7 @@ const CompletedView = ({ T, isRTL, isMobile, displayReview, perf, weekTrades, st
           </GlassCard>
 
           {dp.totalTrades > 0 && (
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 20, opacity: 0.7 }}>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 20, opacity: 0.6 }}>
               <div style={{ fontSize: 10, color: T.text.dim }}>{dp.totalTrades} {isRTL ? 'עסקאות' : 'trades'}</div>
               <div style={{ fontSize: 10, color: T.text.dim }}>•</div>
               <div style={{ fontSize: 10, color: dp.winRate >= 50 ? '#00FFA3' : '#FF4D4D' }}>{dp.winRate.toFixed(0)}% WR</div>
@@ -586,13 +592,13 @@ const CompletedView = ({ T, isRTL, isMobile, displayReview, perf, weekTrades, st
 
       {/* Archives */}
       {!viewingArchive && archivedWeeks.filter(w => w !== weekKey).length > 0 && (
-        <div style={{ marginTop: 30 }}>
+        <div style={{ marginTop: 30, paddingTop: 20, borderTop: `1px solid ${T.border.subtle}` }}>
           <div style={{ fontSize: 10, color: T.text.dim, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
             {isRTL ? 'ארכיון סקירות' : 'Review Archive'}
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {archivedWeeks.filter(w => w !== weekKey).map(wk => (
-              <button key={wk} onClick={() => { setViewingArchive(wk); setAnalysis(null); }} style={{ padding: '6px 14px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, cursor: 'pointer', fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>
+              <button key={wk} onClick={() => { setViewingArchive(wk); setAnalysis(null); }} style={{ padding: '6px 14px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, cursor: 'pointer', fontSize: 11, fontFamily: "'JetBrains Mono', monospace", transition: 'all 0.2s' }}>
                 {wk}
               </button>
             ))}
@@ -610,15 +616,15 @@ const CompletedView = ({ T, isRTL, isMobile, displayReview, perf, weekTrades, st
 export const WeeklyReviewPage = ({ T, isRTL, trades, stats, riskData }: Props) => {
   const isMobile = useIsMobile();
   const weekKey = getWeekKey(new Date());
-  const fridayActive = isFridayOrWeekend();
   const weekTrades = useMemo(() => getWeekTrades(trades), [trades]);
   const perf = useMemo(() => computeWeeklyPerf(weekTrades), [weekTrades]);
 
   const [review, setReview] = useState<WeeklyReviewData>(() => {
     const loaded = loadReview(weekKey);
+    const availability = getReviewAvailability(weekKey);
     if (loaded.completedAt) return { ...loaded, status: 'completed' };
-    if (!fridayActive) return { ...loaded, status: 'locked' };
-    return { ...loaded, status: loaded.status === 'completed' ? 'completed' : 'in_progress' };
+    if (availability === 'locked') return { ...loaded, status: 'locked' };
+    return { ...loaded, status: 'in_progress' };
   });
 
   const [activeSection, setActiveSection] = useState(0);
@@ -628,7 +634,12 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, stats, riskData }: Props) =
   const archiveReview = viewingArchive ? loadReview(viewingArchive) : null;
   const displayReview = archiveReview || review;
   const isCompleted = displayReview.status === 'completed';
-  const isLocked = displayReview.status === 'locked' && !viewingArchive;
+  const isLocked = review.status === 'locked' && !viewingArchive && !review.completedAt;
+
+  // Smart "start new cycle" — reset for current week if user wants fresh start
+  const handleStartNewCycle = useCallback(() => {
+    // This is a no-op since the cycle auto-resets with the new weekKey
+  }, []);
 
   // Dynamic checklist items
   const dynamicChecklist = useMemo(() => {
@@ -714,11 +725,12 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, stats, riskData }: Props) =
     borderRadius: T.radius.md, color: T.text.primary,
     fontSize: isMobile ? 14 : 12, fontFamily: "'Inter', sans-serif",
     outline: 'none', minHeight: isMobile ? 80 : 60, resize: 'vertical' as const,
+    transition: 'border-color 0.2s',
   };
   const labelStyle = {
-    fontSize: isMobile ? 11 : 9, color: T.text.dim,
-    textTransform: 'uppercase' as const, letterSpacing: '0.08em',
-    marginBottom: 6, display: 'block',
+    fontSize: isMobile ? 11 : 10, color: T.text.secondary,
+    textTransform: 'uppercase' as const, letterSpacing: '0.06em',
+    marginBottom: 6, display: 'block', fontWeight: 600 as const,
   };
 
   const sections = perf.totalTrades === 0
@@ -738,46 +750,78 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, stats, riskData }: Props) =
       ];
 
   // ═══════════════════════════════════════════════════
-  // LOCKED STATE
+  // LOCKED STATE — Smart lifecycle
   // ═══════════════════════════════════════════════════
 
   if (isLocked && !viewingArchive) {
     const now = new Date();
-    const daysUntilFriday = (5 - now.getDay() + 7) % 7 || 7;
+    const nextFriday = getNextFridayDate();
+    const daysUntilFriday = Math.ceil((nextFriday.getTime() - now.getTime()) / 86400000);
+    const hoursUntil = Math.ceil((nextFriday.getTime() - now.getTime()) / 3600000);
+
     return (
-      <div style={{ textAlign: 'center', padding: isMobile ? 30 : 60 }}>
-        <div style={{ fontSize: 64, marginBottom: 20 }}>🔒</div>
-        <div style={{ fontSize: isMobile ? 18 : 22, fontWeight: 700, color: T.text.primary, fontFamily: "'JetBrains Mono', monospace", marginBottom: 12 }}>
-          {isRTL ? 'הסקירה השבועית ננעלה' : 'Weekly Review Locked'}
+      <div style={{ padding: isMobile ? 20 : 40 }}>
+        <div style={{ textAlign: 'center', marginBottom: 30 }}>
+          <div style={{ fontSize: 56, marginBottom: 16, filter: 'drop-shadow(0 0 12px rgba(90,169,255,0.2))' }}>🔒</div>
+          <div style={{ fontSize: isMobile ? 18 : 24, fontWeight: 700, color: T.text.primary, fontFamily: "'JetBrains Mono', monospace", marginBottom: 8 }}>
+            {isRTL ? 'הסקירה השבועית ננעלה' : 'Weekly Review Locked'}
+          </div>
+          <div style={{ fontSize: isMobile ? 13 : 14, color: T.text.secondary, marginBottom: 20, lineHeight: 1.8, maxWidth: 480, margin: '0 auto 20px' }}>
+            {isRTL
+              ? `הסקירה השבועית זמינה ביום שישי. נותרו ${daysUntilFriday} ימים.`
+              : `The Weekly Review becomes available on Friday. ${daysUntilFriday} day${daysUntilFriday !== 1 ? 's' : ''} remaining.`}
+          </div>
+
+          {/* Countdown visual */}
+          <div style={{ display: 'inline-flex', gap: 12, padding: '16px 28px', background: T.bg.card, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.xl, marginBottom: 24 }}>
+            {['M', 'T', 'W', 'T', 'F'].map((d, i) => {
+              const dayIndex = i + 1; // Mon=1, Fri=5
+              const currentDay = now.getDay() === 0 ? 7 : now.getDay(); // Adjust Sun=7
+              const isPast = dayIndex < currentDay;
+              const isCurrent = dayIndex === currentDay;
+              const isFriday = dayIndex === 5;
+              return (
+                <div key={d} style={{
+                  width: 36, height: 36, borderRadius: '50%',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 11, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace",
+                  background: isFriday ? '#FFD70015' : isPast ? `${T.accent.cyan}10` : isCurrent ? `${T.accent.blue}15` : T.bg.tertiary,
+                  color: isFriday ? '#FFD700' : isPast ? T.accent.cyan : isCurrent ? T.accent.blue : T.text.dim,
+                  border: `1px solid ${isFriday ? '#FFD70030' : isCurrent ? `${T.accent.blue}30` : 'transparent'}`,
+                  transition: 'all 0.2s',
+                }}>
+                  {d}
+                </div>
+              );
+            })}
+          </div>
         </div>
-        <div style={{ fontSize: isMobile ? 13 : 14, color: T.text.secondary, marginBottom: 24, lineHeight: 1.8 }}>
-          {isRTL
-            ? `הסקירה השבועית זמינה ביום שישי. נותרו ${daysUntilFriday} ימים.`
-            : `The Weekly Review becomes available on Friday. ${daysUntilFriday} days remaining.`}
-        </div>
-        <div style={{ fontSize: 12, color: T.text.muted, marginBottom: 30 }}>
+
+        <div style={{ fontSize: 12, color: T.text.muted, textAlign: 'center', marginBottom: 30 }}>
           {isRTL ? 'המשך לסחור ולתעד — הסקירה תחכה לך ביום שישי.' : 'Keep trading and documenting — the review awaits on Friday.'}
         </div>
+
         {weekTrades.length > 0 && (
-          <GlassCard T={T} style={{ maxWidth: 400, margin: '0 auto', textAlign: isRTL ? 'right' : 'left' }}>
-            <div style={{ fontSize: 10, color: T.text.dim, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+          <GlassCard T={T} style={{ maxWidth: 420, margin: '0 auto', textAlign: isRTL ? 'right' : 'left' }}>
+            <div style={{ fontSize: 10, color: T.text.dim, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
               {isRTL ? 'עדכון ביניים' : 'Mid-Week Snapshot'}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-              <div><div style={{ fontSize: 18, fontWeight: 700, color: T.accent.cyan }}>{perf.totalTrades}</div><div style={{ fontSize: 9, color: T.text.muted }}>{isRTL ? 'עסקאות' : 'Trades'}</div></div>
-              <div><div style={{ fontSize: 18, fontWeight: 700, color: perf.winRate >= 50 ? T.accent.green : T.accent.red }}>{perf.winRate.toFixed(0)}%</div><div style={{ fontSize: 9, color: T.text.muted }}>WR</div></div>
-              <div><div style={{ fontSize: 18, fontWeight: 700, color: perf.totalR >= 0 ? T.accent.green : T.accent.red }}>{perf.totalR.toFixed(1)}R</div><div style={{ fontSize: 9, color: T.text.muted }}>{isRTL ? 'סה"כ R' : 'Total R'}</div></div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+              <div><div style={{ fontSize: 20, fontWeight: 700, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>{perf.totalTrades}</div><div style={{ fontSize: 9, color: T.text.muted, marginTop: 2 }}>{isRTL ? 'עסקאות' : 'Trades'}</div></div>
+              <div><div style={{ fontSize: 20, fontWeight: 700, color: perf.winRate >= 50 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{perf.winRate.toFixed(0)}%</div><div style={{ fontSize: 9, color: T.text.muted, marginTop: 2 }}>WR</div></div>
+              <div><div style={{ fontSize: 20, fontWeight: 700, color: perf.totalR >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{perf.totalR.toFixed(1)}R</div><div style={{ fontSize: 9, color: T.text.muted, marginTop: 2 }}>{isRTL ? 'סה"כ R' : 'Total R'}</div></div>
             </div>
           </GlassCard>
         )}
+
         {archivedWeeks.length > 0 && (
-          <div style={{ marginTop: 30 }}>
+          <div style={{ marginTop: 30, textAlign: 'center' }}>
             <div style={{ fontSize: 10, color: T.text.dim, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
               {isRTL ? 'סקירות שהושלמו' : 'Completed Reviews'}
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
               {archivedWeeks.map(wk => (
-                <button key={wk} onClick={() => setViewingArchive(wk)} style={{ padding: '6px 14px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, cursor: 'pointer', fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>
+                <button key={wk} onClick={() => setViewingArchive(wk)} style={{ padding: '6px 14px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, cursor: 'pointer', fontSize: 11, fontFamily: "'JetBrains Mono', monospace", transition: 'all 0.2s' }}>
                   {wk}
                 </button>
               ))}
@@ -799,7 +843,7 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, stats, riskData }: Props) =
         displayReview={displayReview} perf={perf} weekTrades={weekTrades}
         stats={stats} riskData={riskData} weekKey={weekKey}
         viewingArchive={viewingArchive} setViewingArchive={setViewingArchive}
-        archivedWeeks={archivedWeeks}
+        archivedWeeks={archivedWeeks} onStartNewCycle={handleStartNewCycle}
       />
     );
   }
@@ -815,7 +859,7 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, stats, riskData }: Props) =
     <div>
       {/* Header */}
       <div style={{ marginBottom: isMobile ? 14 : 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
           <div style={{ fontSize: isMobile ? 22 : 28 }}>📋</div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: isMobile ? 15 : 18, fontWeight: 700, color: T.text.primary, fontFamily: "'JetBrains Mono', monospace" }}>
@@ -826,13 +870,13 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, stats, riskData }: Props) =
         </div>
 
         {/* Progress bar */}
-        <div style={{ marginBottom: 12 }}>
+        <div style={{ marginBottom: 14 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
             <span style={{ fontSize: 10, color: T.text.muted }}>{isRTL ? 'התקדמות' : 'Progress'}</span>
             <span style={{ fontSize: 10, color: T.accent.cyan, fontWeight: 700 }}>{progressPct}%</span>
           </div>
           <div style={{ height: 4, background: T.bg.tertiary, borderRadius: 2, overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${progressPct}%`, background: `linear-gradient(90deg, ${T.accent.cyan}, ${T.accent.teal})`, borderRadius: 2, transition: 'width 0.3s' }} />
+            <div style={{ height: '100%', width: `${progressPct}%`, background: `linear-gradient(90deg, ${T.accent.cyan}, ${T.accent.teal})`, borderRadius: 2, transition: 'width 0.4s ease' }} />
           </div>
         </div>
 
@@ -845,17 +889,17 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, stats, riskData }: Props) =
         </div>
       </div>
 
-      {/* Section tabs — scrollable on mobile */}
+      {/* Section tabs */}
       <div style={{ display: 'flex', gap: isMobile ? 6 : 4, marginBottom: 20, overflowX: 'auto', paddingBottom: 6, WebkitOverflowScrolling: 'touch' }}>
         {sections.map((sec, i) => (
           <button key={sec.id} onClick={() => setActiveSection(i)} style={{
             padding: isMobile ? '10px 14px' : '8px 14px',
-            background: activeSection === i ? `${T.accent.cyan}15` : T.bg.tertiary,
-            border: `1px solid ${activeSection === i ? T.accent.cyan : T.border.subtle}`,
+            background: activeSection === i ? `${T.accent.cyan}12` : T.bg.tertiary,
+            border: `1px solid ${activeSection === i ? `${T.accent.cyan}40` : T.border.subtle}`,
             borderRadius: T.radius.md,
             color: activeSection === i ? T.accent.cyan : T.text.secondary,
             cursor: 'pointer', fontSize: isMobile ? 12 : 11, fontWeight: activeSection === i ? 700 : 400,
-            whiteSpace: 'nowrap', transition: 'all 0.15s',
+            whiteSpace: 'nowrap', transition: 'all 0.2s',
             display: 'flex', alignItems: 'center', gap: 6,
             flexShrink: 0,
           }}>
@@ -866,7 +910,7 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, stats, riskData }: Props) =
 
       {/* ═══ SECTION: OVERVIEW ═══ */}
       {sections[activeSection]?.id === 'overview' && (
-        <div>
+        <div style={{ animation: 'fadeIn 0.3s ease' }}>
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fit, minmax(120px, 1fr))', gap: 10, marginBottom: 20 }}>
             <MetricCard T={T} label={isRTL ? 'עסקאות' : 'Trades'} value={String(perf.totalTrades)} color={T.text.primary} />
             <MetricCard T={T} label="Win Rate" value={perf.winRate.toFixed(0)} suffix="%" color={perf.winRate >= 50 ? T.accent.green : T.accent.red} />
@@ -878,7 +922,7 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, stats, riskData }: Props) =
             <MetricCard T={T} label={isRTL ? 'נסיגה' : 'Max DD'} value={`$${perf.maxDrawdown.toFixed(2)}`} color={T.accent.red} />
           </div>
 
-          <GlassCard T={T} glow={`${T.accent.purple}10`} style={{ marginBottom: 20 }}>
+          <GlassCard T={T} glow={`${T.accent.purple}08`} style={{ marginBottom: 20 }}>
             <div style={{ fontSize: 10, color: T.text.dim, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
               {isRTL ? 'פרופיל שבועי' : 'Weekly Profile'}
             </div>
@@ -887,9 +931,8 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, stats, riskData }: Props) =
             </div>
           </GlassCard>
 
-          {/* Navigation buttons */}
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <button onClick={() => setActiveSection(1)} style={{ padding: '8px 20px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 700, cursor: 'pointer', fontSize: 12 }}>
+            <button onClick={() => setActiveSection(1)} style={{ padding: '8px 20px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 700, cursor: 'pointer', fontSize: 12, transition: 'all 0.2s' }}>
               {isRTL ? 'המשך →' : 'Continue →'}
             </button>
           </div>
@@ -898,7 +941,7 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, stats, riskData }: Props) =
 
       {/* ═══ SECTION: NO TRADES ═══ */}
       {sections[activeSection]?.id === 'no-trades' && (
-        <div>
+        <div style={{ animation: 'fadeIn 0.3s ease' }}>
           <GlassCard T={T} style={{ marginBottom: 16, textAlign: 'center' }}>
             <div style={{ fontSize: 28, marginBottom: 12 }}>⏸️</div>
             <div style={{ fontSize: 13, color: T.text.secondary }}>
@@ -921,14 +964,14 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, stats, riskData }: Props) =
 
       {/* ═══ SECTION: CHECKLIST ═══ */}
       {sections[activeSection]?.id === 'checklist' && (
-        <div>
+        <div style={{ animation: 'fadeIn 0.3s ease' }}>
           <div style={{ marginBottom: 16 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
               <span style={{ fontSize: 10, color: T.text.muted }}>{checklistDone}/{checklistTotal}</span>
               <span style={{ fontSize: 10, color: T.accent.cyan, fontWeight: 700 }}>{checklistPct}%</span>
             </div>
             <div style={{ height: 6, background: T.bg.tertiary, borderRadius: 3, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${checklistPct}%`, background: `linear-gradient(90deg, ${T.accent.cyan}, ${T.accent.teal})`, borderRadius: 3, transition: 'width 0.3s' }} />
+              <div style={{ height: '100%', width: `${checklistPct}%`, background: `linear-gradient(90deg, ${T.accent.cyan}, ${T.accent.teal})`, borderRadius: 3, transition: 'width 0.4s ease' }} />
             </div>
           </div>
 
@@ -938,7 +981,7 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, stats, riskData }: Props) =
                 {cat}
               </div>
               {allChecklist.filter(c => c.category === cat).map(item => (
-                <label key={item.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: isMobile ? '10px 10px' : '8px 10px', background: review.checklist[item.id] ? `${T.accent.cyan}08` : 'transparent', borderRadius: T.radius.sm, cursor: 'pointer', marginBottom: 2, transition: 'background 0.15s' }}>
+                <label key={item.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: isMobile ? '10px 10px' : '8px 10px', background: review.checklist[item.id] ? `${T.accent.cyan}06` : 'transparent', borderRadius: T.radius.sm, cursor: 'pointer', marginBottom: 2, transition: 'background 0.2s' }}>
                   <input
                     type="checkbox"
                     checked={!!review.checklist[item.id]}
@@ -957,7 +1000,7 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, stats, riskData }: Props) =
 
       {/* ═══ SECTION: REVIEWS ═══ */}
       {sections[activeSection]?.id === 'review' && (
-        <div>
+        <div style={{ animation: 'fadeIn 0.3s ease' }}>
           {RESPONSE_SECTIONS.map(sec => (
             <GlassCard T={T} key={sec.id} style={{ marginBottom: 16 }}>
               <div style={{ fontSize: isMobile ? 14 : 13, fontWeight: 700, color: T.text.primary, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -982,7 +1025,7 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, stats, riskData }: Props) =
 
       {/* ═══ SECTION: TRADE IMAGES ═══ */}
       {sections[activeSection]?.id === 'images' && (
-        <div>
+        <div style={{ animation: 'fadeIn 0.3s ease' }}>
           <div style={{ fontSize: 12, color: T.text.secondary, marginBottom: 16 }}>
             {isRTL ? 'צרף צילומי מסך של עסקאות מפתח מהשבוע' : 'Attach screenshots of key trades from the week'}
           </div>
@@ -999,7 +1042,7 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, stats, riskData }: Props) =
                       <span style={{ fontSize: 24, opacity: 0.3 }}>📸</span>
                     </div>
                   )}
-                  <button onClick={() => handleImageUpload(isRTL ? img.he : img.en)} style={{ padding: '6px 14px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.sm, color: T.text.secondary, cursor: 'pointer', fontSize: isMobile ? 11 : 10, width: '100%' }}>
+                  <button onClick={() => handleImageUpload(isRTL ? img.he : img.en)} style={{ padding: '6px 14px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.sm, color: T.text.secondary, cursor: 'pointer', fontSize: isMobile ? 11 : 10, width: '100%', transition: 'all 0.2s' }}>
                     {existing ? (isRTL ? 'החלף' : 'Replace') : (isRTL ? 'העלה' : 'Upload')}
                   </button>
                 </GlassCard>
@@ -1011,7 +1054,7 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, stats, riskData }: Props) =
 
       {/* ═══ SECTION: LESSONS ═══ */}
       {sections[activeSection]?.id === 'lessons' && (
-        <div>
+        <div style={{ animation: 'fadeIn 0.3s ease' }}>
           <div style={{ fontSize: 12, color: T.text.secondary, marginBottom: 16, lineHeight: 1.6 }}>
             {isRTL ? 'הפק לקחים אמיתיים מהשבוע — לא רק נתונים.' : 'Extract real lessons from the week — not just data.'}
           </div>
@@ -1031,7 +1074,7 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, stats, riskData }: Props) =
 
       {/* ═══ SECTION: NEXT WEEK ═══ */}
       {sections[activeSection]?.id === 'next-week' && (
-        <div>
+        <div style={{ animation: 'fadeIn 0.3s ease' }}>
           <div style={{ fontSize: 12, color: T.text.secondary, marginBottom: 16, lineHeight: 1.6 }}>
             {isRTL ? 'תכנן את השבוע הבא בכוונה ברורה.' : 'Plan next week with clear intention.'}
           </div>
@@ -1059,15 +1102,16 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, stats, riskData }: Props) =
                 fontWeight: 800,
                 fontSize: 14,
                 cursor: 'pointer',
-                boxShadow: `0 0 20px ${T.accent.cyan}30`,
+                boxShadow: `0 0 20px ${T.accent.cyan}25`,
                 fontFamily: "'JetBrains Mono', monospace",
                 width: isMobile ? '100%' : 'auto',
+                transition: 'all 0.3s',
               }}
             >
               {isRTL ? '📋 שלח סקירה שבועית' : '📋 Submit Weekly Review'}
             </button>
             <div style={{ fontSize: 10, color: T.text.dim, marginTop: 8 }}>
-              {isRTL ? 'לאחר השליחה, הסקירה תיסגר ותישמר לארכיון.' : 'Once submitted, this review will be closed and archived.'}
+              {isRTL ? 'לאחר השליחה, הסקירה תיסגר ותישמר לארכיון עד יום שישי הבא.' : 'Once submitted, this review will be locked and archived until next Friday.'}
             </div>
           </div>
         </div>
@@ -1076,12 +1120,12 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, stats, riskData }: Props) =
       {/* Section navigation */}
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
         {activeSection > 0 ? (
-          <button onClick={() => setActiveSection(activeSection - 1)} style={{ padding: '8px 18px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, cursor: 'pointer', fontSize: 12 }}>
+          <button onClick={() => setActiveSection(activeSection - 1)} style={{ padding: '8px 18px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, cursor: 'pointer', fontSize: 12, transition: 'all 0.2s' }}>
             ← {isRTL ? 'הקודם' : 'Previous'}
           </button>
         ) : <div />}
         {activeSection < sections.length - 1 && (
-          <button onClick={() => setActiveSection(activeSection + 1)} style={{ padding: '8px 18px', background: `${T.accent.cyan}15`, border: `1px solid ${T.accent.cyan}40`, borderRadius: T.radius.md, color: T.accent.cyan, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+          <button onClick={() => setActiveSection(activeSection + 1)} style={{ padding: '8px 18px', background: `${T.accent.cyan}10`, border: `1px solid ${T.accent.cyan}30`, borderRadius: T.radius.md, color: T.accent.cyan, cursor: 'pointer', fontSize: 12, fontWeight: 600, transition: 'all 0.2s' }}>
             {isRTL ? 'הבא' : 'Next'} →
           </button>
         )}

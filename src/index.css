@@ -7,32 +7,32 @@
 @layer base {
   :root {
     --background: 222 47% 6%;
-    --foreground: 210 40% 96%;
+    --foreground: 215 25% 88%;
 
     --card: 222 39% 9%;
-    --card-foreground: 210 40% 96%;
+    --card-foreground: 215 25% 88%;
 
     --popover: 222 39% 9%;
-    --popover-foreground: 210 40% 96%;
+    --popover-foreground: 215 25% 88%;
 
-    --primary: 160 95% 43%;
+    --primary: 160 84% 39%;
     --primary-foreground: 222 47% 6%;
 
     --secondary: 222 30% 14%;
-    --secondary-foreground: 210 40% 96%;
+    --secondary-foreground: 215 25% 88%;
 
     --muted: 222 20% 18%;
-    --muted-foreground: 215 17% 47%;
+    --muted-foreground: 215 17% 50%;
 
-    --accent: 217 91% 60%;
-    --accent-foreground: 210 40% 96%;
+    --accent: 217 80% 58%;
+    --accent-foreground: 215 25% 88%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 55%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 215 20% 20%;
-    --input: 215 20% 20%;
-    --ring: 160 95% 43%;
+    --border: 215 18% 18%;
+    --input: 215 18% 18%;
+    --ring: 160 84% 39%;
 
     --radius: 0.625rem;
 
@@ -40,25 +40,25 @@
     --trading-bg-primary: 225 47% 7%;
     --trading-bg-secondary: 226 42% 10%;
     --trading-bg-tertiary: 224 35% 13%;
-    --trading-bg-surface: 215 25% 18%;
+    --trading-bg-surface: 215 22% 17%;
 
-    --trading-cyan: 160 95% 43%;
-    --trading-cyan-glow: 160 95% 43%;
-    --trading-teal: 168 82% 31%;
-    --trading-blue: 217 91% 60%;
-    --trading-purple: 258 90% 66%;
-    --trading-orange: 38 92% 50%;
-    --trading-red: 0 84% 60%;
-    --trading-green: 160 84% 39%;
+    --trading-cyan: 160 84% 39%;
+    --trading-cyan-glow: 160 84% 39%;
+    --trading-teal: 168 72% 30%;
+    --trading-blue: 217 80% 58%;
+    --trading-purple: 258 78% 62%;
+    --trading-orange: 38 85% 50%;
+    --trading-red: 0 72% 55%;
+    --trading-green: 160 72% 38%;
 
     --sidebar-background: 226 42% 10%;
-    --sidebar-foreground: 215 17% 47%;
-    --sidebar-primary: 160 95% 43%;
+    --sidebar-foreground: 215 17% 50%;
+    --sidebar-primary: 160 84% 39%;
     --sidebar-primary-foreground: 222 47% 6%;
     --sidebar-accent: 222 20% 18%;
-    --sidebar-accent-foreground: 210 40% 96%;
-    --sidebar-border: 215 20% 15%;
-    --sidebar-ring: 160 95% 43%;
+    --sidebar-accent-foreground: 215 25% 88%;
+    --sidebar-border: 215 18% 15%;
+    --sidebar-ring: 160 84% 39%;
   }
 }
 

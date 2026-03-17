@@ -24,6 +24,7 @@ import { AdvancedRiskPage } from '@/components/trading/AdvancedRiskPage';
 import { AdvancedAnalyticsPage } from '@/components/trading/AdvancedAnalyticsPage';
 import { AdvancedPsychologyPage } from '@/components/trading/AdvancedPsychologyPage';
 import { WeeklyReviewPage } from '@/components/trading/WeeklyReviewPage';
+import { InstallPrompt } from '@/components/trading/InstallPrompt';
 import { useTrades } from '@/hooks/use-trades';
 import { useSettings, type ThemeId } from '@/hooks/use-settings';
 import { assessRisk } from '@/lib/risk-engine';
@@ -736,6 +737,135 @@ const Index = () => {
             </ResponsiveContainer>
           </ChartWrapper>
         </>}
+
+        {/* ═══ ALPHA+REVIEW: Structured Performance Tables ═══ */}
+        {isAlpha && (
+          <div style={{ marginTop: 18, animation: 'fadeIn 0.3s ease' }}>
+            <div style={{ fontSize: 9, color: T.accent.orange, textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 700, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ width: 18, height: 1, background: T.accent.orange, display: 'inline-block' }} />
+              {isRTL ? 'ניתוח מעמיק' : 'DEEP ANALYTICS'}
+            </div>
+
+            {/* Setup Performance Table */}
+            <GlassCard T={T} style={{ marginBottom: 14, padding: 0, overflow: 'hidden' }}>
+              <div style={{ padding: '12px 16px', borderBottom: `1px solid ${T.border.subtle}` }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: T.text.primary }}>{isRTL ? 'ביצועים לפי סטאפ' : 'Performance by Setup'}</div>
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+                  <thead><tr style={{ background: T.bg.tertiary }}>
+                    {['Setup', 'Trades', 'Win %', 'Avg R', 'Total R', 'Best', 'Worst'].map(h => (
+                      <th key={h} style={{ padding: '8px 12px', textAlign: 'left', color: T.text.muted, fontWeight: 600, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: `1px solid ${T.border.subtle}` }}>{h}</th>
+                    ))}
+                  </tr></thead>
+                  <tbody>
+                    {(() => {
+                      const setupMap: Record<string, { trades: number; wins: number; totalR: number; best: number; worst: number }> = {};
+                      trades.forEach(tr => {
+                        const s = tr.coin;
+                        if (!setupMap[s]) setupMap[s] = { trades: 0, wins: 0, totalR: 0, best: -Infinity, worst: Infinity };
+                        setupMap[s].trades++;
+                        if (tr.winLoss === 'Win') setupMap[s].wins++;
+                        setupMap[s].totalR += tr.returnR;
+                        setupMap[s].best = Math.max(setupMap[s].best, tr.returnR);
+                        setupMap[s].worst = Math.min(setupMap[s].worst, tr.returnR);
+                      });
+                      return Object.entries(setupMap).sort((a, b) => b[1].totalR - a[1].totalR).slice(0, 8).map(([name, d]) => (
+                        <tr key={name} style={{ borderBottom: `1px solid ${T.border.subtle}` }}>
+                          <td style={{ padding: '8px 12px', fontWeight: 600, color: T.accent.cyan }}>{name}</td>
+                          <td style={{ padding: '8px 12px', color: T.text.secondary }}>{d.trades}</td>
+                          <td style={{ padding: '8px 12px', color: (d.wins / d.trades * 100) >= 50 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{(d.wins / d.trades * 100).toFixed(0)}%</td>
+                          <td style={{ padding: '8px 12px', color: (d.totalR / d.trades) >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{(d.totalR / d.trades).toFixed(2)}R</td>
+                          <td style={{ padding: '8px 12px', color: d.totalR >= 0 ? T.accent.green : T.accent.red, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>{d.totalR.toFixed(1)}R</td>
+                          <td style={{ padding: '8px 12px', color: T.accent.green, fontFamily: "'JetBrains Mono', monospace" }}>{d.best.toFixed(2)}R</td>
+                          <td style={{ padding: '8px 12px', color: T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{d.worst.toFixed(2)}R</td>
+                        </tr>
+                      ));
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+            </GlassCard>
+
+            {/* Day-of-Week Performance */}
+            <GlassCard T={T} style={{ marginBottom: 14, padding: 0, overflow: 'hidden' }}>
+              <div style={{ padding: '12px 16px', borderBottom: `1px solid ${T.border.subtle}` }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: T.text.primary }}>{isRTL ? 'ביצועים לפי יום בשבוע' : 'Performance by Day of Week'}</div>
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+                  <thead><tr style={{ background: T.bg.tertiary }}>
+                    {['Day', 'Trades', 'Win %', 'Avg R', 'Total P&L'].map(h => (
+                      <th key={h} style={{ padding: '8px 12px', textAlign: 'left', color: T.text.muted, fontWeight: 600, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: `1px solid ${T.border.subtle}` }}>{h}</th>
+                    ))}
+                  </tr></thead>
+                  <tbody>
+                    {(() => {
+                      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                      const dayMap: Record<number, { trades: number; wins: number; totalR: number; totalPnl: number }> = {};
+                      trades.forEach(tr => {
+                        const d = new Date(tr.date.replace(' ', 'T'));
+                        if (isNaN(d.getTime())) return;
+                        const day = d.getDay();
+                        if (!dayMap[day]) dayMap[day] = { trades: 0, wins: 0, totalR: 0, totalPnl: 0 };
+                        dayMap[day].trades++;
+                        if (tr.winLoss === 'Win') dayMap[day].wins++;
+                        dayMap[day].totalR += tr.returnR;
+                        dayMap[day].totalPnl += tr.pnl;
+                      });
+                      return [1, 2, 3, 4, 5].filter(d => dayMap[d]).map(d => (
+                        <tr key={d} style={{ borderBottom: `1px solid ${T.border.subtle}` }}>
+                          <td style={{ padding: '8px 12px', fontWeight: 600, color: T.text.primary }}>{dayNames[d]}</td>
+                          <td style={{ padding: '8px 12px', color: T.text.secondary }}>{dayMap[d].trades}</td>
+                          <td style={{ padding: '8px 12px', color: (dayMap[d].wins / dayMap[d].trades * 100) >= 50 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{(dayMap[d].wins / dayMap[d].trades * 100).toFixed(0)}%</td>
+                          <td style={{ padding: '8px 12px', color: (dayMap[d].totalR / dayMap[d].trades) >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{(dayMap[d].totalR / dayMap[d].trades).toFixed(2)}R</td>
+                          <td style={{ padding: '8px 12px', color: dayMap[d].totalPnl >= 0 ? T.accent.green : T.accent.red, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}><PV>${dayMap[d].totalPnl.toFixed(2)}</PV></td>
+                        </tr>
+                      ));
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+            </GlassCard>
+
+            {/* Risk Consistency Matrix */}
+            <GlassCard T={T} style={{ marginBottom: 14, padding: 0, overflow: 'hidden' }}>
+              <div style={{ padding: '12px 16px', borderBottom: `1px solid ${T.border.subtle}` }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: T.text.primary }}>{isRTL ? 'מטריצת עקביות סיכון' : 'Risk Consistency Matrix'}</div>
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+                  <thead><tr style={{ background: T.bg.tertiary }}>
+                    {['Metric', 'Value', 'Target', 'Status'].map(h => (
+                      <th key={h} style={{ padding: '8px 12px', textAlign: 'left', color: T.text.muted, fontWeight: 600, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: `1px solid ${T.border.subtle}` }}>{h}</th>
+                    ))}
+                  </tr></thead>
+                  <tbody>
+                    {[
+                      { metric: 'Risk Consistency', value: `${riskData.riskConsistencyScore.toFixed(0)}%`, target: '≥ 80%', ok: riskData.riskConsistencyScore >= 80 },
+                      { metric: 'Avg Risk/Trade', value: `$${(trades.reduce((s, t) => s + t.risk, 0) / Math.max(1, trades.length)).toFixed(2)}`, target: '≤ 2% balance', ok: true },
+                      { metric: 'Risk Drift', value: `${riskData.riskDrift.toFixed(2)}σ`, target: '< 1.0σ', ok: riskData.riskDrift < 1 },
+                      { metric: 'Max Consec Losses', value: String(stats.maxConsecLosses), target: '< 5', ok: stats.maxConsecLosses < 5 },
+                      { metric: 'Rules Adherence', value: `${stats.rulesFollowed.toFixed(0)}%`, target: '≥ 75%', ok: stats.rulesFollowed >= 75 },
+                      { metric: 'Avg Deviation', value: `${(trades.reduce((s, t) => s + t.deviation, 0) / Math.max(1, trades.length)).toFixed(3)}R`, target: '< 0.1R', ok: (trades.reduce((s, t) => s + t.deviation, 0) / Math.max(1, trades.length)) < 0.1 },
+                    ].map((row, i) => (
+                      <tr key={i} style={{ borderBottom: `1px solid ${T.border.subtle}` }}>
+                        <td style={{ padding: '8px 12px', color: T.text.secondary }}>{row.metric}</td>
+                        <td style={{ padding: '8px 12px', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: T.text.primary }}>{row.value}</td>
+                        <td style={{ padding: '8px 12px', color: T.text.dim, fontFamily: "'JetBrains Mono', monospace" }}>{row.target}</td>
+                        <td style={{ padding: '8px 12px' }}>
+                          <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 700, background: row.ok ? `${T.accent.green}15` : `${T.accent.red}15`, color: row.ok ? T.accent.green : T.accent.red }}>
+                            {row.ok ? '✓ On Track' : '⚠ Off Target'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </GlassCard>
+          </div>
+        )}
       </>
     );
   };
@@ -1078,6 +1208,8 @@ const Index = () => {
             {(sbOpen || isMobile) && <span>{isRTL ? 'קהילת Discord' : 'Discord Community'}</span>}
           </a>
         </nav>
+        {/* Install to Desktop */}
+        {(sbOpen || isMobile) && <div style={{ padding: '4px 6px' }}><InstallPrompt T={T} isRTL={isRTL} compact /></div>}
         <div style={{ padding: 10, borderTop: `1px solid ${T.border.subtle}`, display: 'flex', flexDirection: 'column', gap: 4 }}>
           {(sbOpen || isMobile) && <div style={{ position: 'relative' }}>
             <button onClick={() => setShowThemeMenu(!showThemeMenu)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: `${T.accent.purple}10`, border: `1px solid ${T.accent.purple}25`, borderRadius: T.radius.md, color: T.accent.purple, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
@@ -1109,7 +1241,7 @@ const Index = () => {
       </aside>
 
       {/* MAIN */}
-      <main style={{ flex: 1, overflow: 'auto', transition: 'background 0.5s ease' }}>
+      <main style={{ flex: 1, overflow: 'auto', transition: 'background 0.4s ease' }}>
         <header style={{ padding: isMobile ? '10px 12px' : '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${T.border.subtle}`, background: `${T.bg.secondary}cc`, backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 5, gap: 8, flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 14 }}>
             {/* Mobile hamburger */}
