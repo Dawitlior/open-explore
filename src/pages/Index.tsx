@@ -762,7 +762,7 @@ const Index = () => {
                     {(() => {
                       const setupMap: Record<string, { trades: number; wins: number; totalR: number; best: number; worst: number }> = {};
                       trades.forEach(tr => {
-                        const s = tr.setup || tr.coin;
+                        const s = tr.coin;
                         if (!setupMap[s]) setupMap[s] = { trades: 0, wins: 0, totalR: 0, best: -Infinity, worst: Infinity };
                         setupMap[s].trades++;
                         if (tr.winLoss === 'Win') setupMap[s].wins++;
