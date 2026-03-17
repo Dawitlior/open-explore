@@ -15,9 +15,9 @@
 /* Tooltip background — elevated surface with glow */
 .recharts-default-tooltip {
   background: #0E1E3A !important;
-  border: 1px solid rgba(90,169,255,0.20) !important;
+  border: 1px solid rgba(90,169,255,0.18) !important;
   border-radius: 10px !important;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.35), 0 0 10px rgba(90,169,255,0.15) !important;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.35), 0 0 10px rgba(90,169,255,0.12) !important;
   color: #FFFFFF !important;
 }
 
@@ -27,65 +27,80 @@
 }
 
 .recharts-default-tooltip .recharts-tooltip-item {
-  color: #FFFFFF !important;
+  color: #e2e8f0 !important;
 }
 
-/* Cursor/crosshair — subtle dark overlay */
+/* Cursor/crosshair — very subtle overlay */
 .recharts-cursor {
-  fill: rgba(6,214,160,0.04) !important;
-  stroke: rgba(148,163,184,0.10) !important;
+  fill: rgba(6,214,160,0.03) !important;
+  stroke: rgba(148,163,184,0.08) !important;
   stroke-width: 1 !important;
 }
 
-/* Cartesian grid cursor — match dark theme */
+/* Cartesian grid cursor — soft hover band */
 .recharts-rectangle.recharts-tooltip-cursor {
-  fill: rgba(148,163,184,0.06) !important;
+  fill: rgba(148,163,184,0.04) !important;
 }
 
-/* Bar hover — subtle glow, no bright flash */
+/* Bar hover — gentle brightness lift */
 .recharts-bar-rectangle:hover {
-  filter: brightness(1.12) !important;
-  transition: filter 0.15s ease !important;
+  filter: brightness(1.08) !important;
+  transition: filter 0.2s ease !important;
 }
 
-/* Area/Line active dot — match theme */
+/* Area/Line active dot — theme-matched */
 .recharts-active-dot circle {
   stroke-width: 2 !important;
   stroke: hsl(222 39% 9%) !important;
-  filter: drop-shadow(0 0 4px currentColor) !important;
+  filter: drop-shadow(0 0 3px currentColor) !important;
 }
 
 /* Pie hover — subtle scale */
 .recharts-pie-sector:hover {
-  filter: brightness(1.08) !important;
-  transition: filter 0.15s ease !important;
+  filter: brightness(1.06) !important;
+  transition: filter 0.2s ease !important;
 }
 
 /* Radar hover consistency */
 .recharts-radar-polygon:hover {
-  fill-opacity: 0.15 !important;
+  fill-opacity: 0.12 !important;
 }
 
 /* Scatter dot hover */
 .recharts-scatter-symbol:hover {
-  filter: brightness(1.15) drop-shadow(0 0 4px currentColor) !important;
+  filter: brightness(1.1) drop-shadow(0 0 3px currentColor) !important;
 }
 
 /* Reference line consistency */
 .recharts-reference-line line {
   stroke-dasharray: 3 3;
-  stroke: rgba(148,163,184,0.15) !important;
+  stroke: rgba(148,163,184,0.12) !important;
 }
 
-/* XAxis/YAxis lines — subtle */
+/* XAxis/YAxis lines — very subtle */
 .recharts-cartesian-axis-line,
 .recharts-cartesian-axis-tick-line {
-  stroke: rgba(148,163,184,0.10) !important;
+  stroke: rgba(148,163,184,0.08) !important;
 }
 
-/* Grid lines — very subtle in dark mode */
+/* XAxis/YAxis tick text — comfortable readability */
+.recharts-cartesian-axis-tick text {
+  fill: rgba(148,163,184,0.65) !important;
+}
+
+/* Grid lines — barely visible in dark mode */
 .recharts-cartesian-grid line {
-  stroke: rgba(148,163,184,0.06) !important;
+  stroke: rgba(148,163,184,0.05) !important;
+}
+
+/* Legend text readability */
+.recharts-legend-item-text {
+  color: rgba(148,163,184,0.8) !important;
+}
+
+/* ═══ SMOOTH TRANSITIONS ═══ */
+* {
+  scroll-behavior: smooth;
 }
 
 /* ═══ ANIMATIONS ═══ */
@@ -95,7 +110,7 @@
 }
 
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.95); }
+  from { opacity: 0; transform: scale(0.96); }
   to { opacity: 1; transform: scale(1); }
 }
 
@@ -107,6 +122,11 @@
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ═══ MOBILE RESPONSIVE OVERRIDES ═══ */
