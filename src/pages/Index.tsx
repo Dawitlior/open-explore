@@ -1388,6 +1388,31 @@ const Index = () => {
           {page === 'weekly-review' && (
             <WeeklyReviewPage T={T} isRTL={isRTL} trades={trades} stats={stats} riskData={riskData} />
           )}
+          {/* Journal Dimension Pages */}
+          {page === 'journal-home' && (
+            <JournalDashboard
+              T={T} isRTL={isRTL} trades={trades}
+              morningRituals={journal.morningRituals}
+              eodReviews={journal.eodReviews}
+              onNavigate={setPage}
+            />
+          )}
+          {page === 'morning-ritual' && (
+            <MorningRitualPage
+              T={T} isRTL={isRTL}
+              todayCompleted={!!journal.todayMorning}
+              onSave={journal.saveMorningRitual}
+            />
+          )}
+          {page === 'eod-vault' && (
+            <EODVaultPage
+              T={T} isRTL={isRTL}
+              todayCompleted={!!journal.todayEOD}
+              todayTradeCount={todayTrades.length}
+              todayPnl={todayPnlTotal}
+              onSave={journal.saveEODReview}
+            />
+          )}
         </div>
       </main>
 
