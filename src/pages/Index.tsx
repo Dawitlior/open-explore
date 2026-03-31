@@ -43,8 +43,12 @@ const Index = () => {
   const isMobile = useIsMobile();
   const settings = useSettings();
   const { trades, stats, loading, initialized, addTrade, updateTrade, removeTrade, resetAll, importTrades, riskAlert, dismissRiskAlert } = useTrades();
+  const journal = useJournalMode();
   const [entered, setEntered] = useState(() => sessionStorage.getItem('orca-entered') === '1');
-  const T = getTheme(settings.theme);
+
+  // Dimension-aware theme: use Orca theme overrides when in orca dimension, journal theme when in journal
+  const T = journal.isJournalMode ? getDimensionTheme('journal') : getDimensionTheme('orca');
+  const dimensionFont = getDimensionFont(journal.dimension);
   const t = i18n[settings.lang];
   const isRTL = settings.isRTL;
   const isAlpha = settings.isAlpha;
