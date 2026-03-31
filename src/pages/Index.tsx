@@ -1222,6 +1222,24 @@ const Index = () => {
         </div>
         {!sbOpen && !isMobile && <button onClick={() => setSbOpen(true)} style={{ background: 'none', border: 'none', color: T.text.dim, cursor: 'pointer', fontSize: 14, padding: '6px 0', lineHeight: 1, transition: 'color 0.2s' }}>›</button>}
         {(sbOpen || isMobile) && <ModeSwitch T={T} isRTL={isRTL} operatingMode={settings.operatingMode} systemMode={settings.systemMode} onOperatingModeChange={settings.setOperatingMode} onSystemModeChange={settings.setSystemMode} />}
+        {/* Portal Toggle — Dimension Switch */}
+        {(sbOpen || isMobile) && (
+          <div style={{ padding: '4px 6px', marginBottom: 4 }}>
+            <PortalToggle
+              T={T} isRTL={isRTL}
+              dimension={journal.dimension}
+              nudgeType={journal.nudgeType}
+              compact={false}
+              onClick={() => {
+                journal.switchDimension();
+                // When switching to journal, navigate to journal home
+                setTimeout(() => {
+                  setPage(journal.isJournalMode ? 'dashboard' : 'journal-home');
+                }, 700);
+              }}
+            />
+          </div>
+        )}
         <nav style={{ flex: 1, padding: '0 6px', display: 'flex', flexDirection: 'column', gap: 2 }}>
           {nav.map(item => {
             const isWeekly = item.id === 'weekly-review';
