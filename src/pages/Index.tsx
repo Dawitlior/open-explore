@@ -7,6 +7,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { computeAnalytics, getCalDays } from '@/lib/trading-analytics';
 import { i18n } from '@/lib/trading-i18n';
 import { getTheme, ttStyle, modeColors, type TradingTheme } from '@/lib/trading-theme';
+import { getDimensionTheme, getDimensionFont } from '@/lib/journal-theme';
 import { GlassCard, MetricCard, ScoreGauge, TradingBadge, Ico } from '@/components/trading/TradingUI';
 import { ChartWrapper, EXPLANATIONS, type ChartExplanation } from '@/components/trading/ChartWrapper';
 import { ChartExplanationModal } from '@/components/trading/ChartExplanationModal';
@@ -25,8 +26,14 @@ import { AdvancedAnalyticsPage } from '@/components/trading/AdvancedAnalyticsPag
 import { AdvancedPsychologyPage } from '@/components/trading/AdvancedPsychologyPage';
 import { WeeklyReviewPage } from '@/components/trading/WeeklyReviewPage';
 import { InstallPrompt } from '@/components/trading/InstallPrompt';
+import { PortalTransition } from '@/components/trading/PortalTransition';
+import { PortalToggle } from '@/components/trading/PortalToggle';
+import { MorningRitualPage } from '@/components/journal/MorningRitualPage';
+import { EODVaultPage } from '@/components/journal/EODVaultPage';
+import { JournalDashboard } from '@/components/journal/JournalDashboard';
 import { useTrades } from '@/hooks/use-trades';
 import { useSettings, type ThemeId } from '@/hooks/use-settings';
+import { useJournalMode } from '@/hooks/use-journal-mode';
 import { assessRisk } from '@/lib/risk-engine';
 import { generateInsights, generateSummary } from '@/lib/ai-engine';
 import { exportToXlsx, importFromXlsx } from '@/lib/xlsx-engine';
@@ -36,8 +43,12 @@ const Index = () => {
   const isMobile = useIsMobile();
   const settings = useSettings();
   const { trades, stats, loading, initialized, addTrade, updateTrade, removeTrade, resetAll, importTrades, riskAlert, dismissRiskAlert } = useTrades();
+  const journal = useJournalMode();
   const [entered, setEntered] = useState(() => sessionStorage.getItem('orca-entered') === '1');
-  const T = getTheme(settings.theme);
+
+  // Dimension-aware theme: use Orca theme overrides when in orca dimension, journal theme when in journal
+  const T = journal.isJournalMode ? getDimensionTheme('journal') : getDimensionTheme('orca');
+  const dimensionFont = getDimensionFont(journal.dimension);
   const t = i18n[settings.lang];
   const isRTL = settings.isRTL;
   const isAlpha = settings.isAlpha;
@@ -89,6 +100,14 @@ const Index = () => {
 
   const riskData = useMemo(() => assessRisk(trades), [trades]);
   const currentBalance = trades.length > 0 ? trades[trades.length - 1].balance : 0;
+
+  // Compute today's trades for EOD page (must be before early returns)
+  const todayTrades = useMemo(() => trades.filter(tr => {
+    if (!tr.date) return false;
+    const d = new Date(tr.date.replace(' ', 'T'));
+    return !isNaN(d.getTime()) && d.toDateString() === new Date().toDateString();
+  }), [trades]);
+  const todayPnlTotal = todayTrades.reduce((s, tr) => s + tr.pnl, 0);
 
   // Privacy mode shortcut
   usePrivacyShortcut(() => settings.setPrivacyMode(!settings.privacyMode));
@@ -242,7 +261,8 @@ const Index = () => {
     { id: 'alpha', label: isRTL ? 'הפעל Alpha' : 'Toggle Alpha Mode', icon: '⚡', category: isRTL ? 'מצבים' : 'Modes', action: () => settings.setSystemMode(isAlpha ? 'standard' : 'alpha') },
   ], [isRTL, handleExport, handleImport, handleGenerateInsights, isAlpha, settings]);
 
-  const nav = [
+  // Navigation items — dynamically switch based on dimension
+  const orcaNav = [
     { id: 'dashboard', icon: Ico.dash, label: t.dashboard },
     { id: 'journal', icon: Ico.book, label: t.journal },
     { id: 'calendar', icon: Ico.cal, label: t.calendar },
@@ -252,6 +272,17 @@ const Index = () => {
     { id: 'ai', icon: Ico.star, label: t.ai },
     { id: 'weekly-review', icon: '📋', label: isRTL ? 'סקירה שבועית' : 'Weekly Review', color: '#FFD700' },
   ];
+
+  const journalNav = [
+    { id: 'journal-home', icon: '🧘', label: isRTL ? 'יומן ראשי' : 'Journal Home' },
+    { id: 'morning-ritual', icon: '🌅', label: isRTL ? 'טקס בוקר' : 'Morning Ritual' },
+    { id: 'eod-vault', icon: '🌙', label: isRTL ? 'סגירת יום' : 'EOD Vault' },
+    { id: 'journal', icon: Ico.book, label: isRTL ? 'יומן עסקאות' : 'Trade Journal' },
+    { id: 'psychology', icon: Ico.brain, label: isRTL ? 'פסיכולוגיה' : 'Psychology' },
+    { id: 'weekly-review', icon: '📋', label: isRTL ? 'סקירה שבועית' : 'Weekly Review', color: '#FFD700' },
+  ];
+
+  const nav = journal.isJournalMode ? journalNav : orcaNav;
 
   // Entry gate check (after all hooks)
   if (!entered) {
@@ -1146,8 +1177,15 @@ const Index = () => {
   };
 
 
+
+
+
   return (
-    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden', background: T.bg.primary, color: T.text.primary, fontFamily: "'Inter', system-ui, -apple-system, sans-serif", fontSize: 14, transition: 'background 0.5s ease, color 0.5s ease, filter 0.5s ease, opacity 0.5s ease', opacity: exiting ? 0 : 1, filter: exiting ? 'blur(8px)' : 'none' }}>
+    <>
+    {/* Portal Transition Overlay */}
+    <PortalTransition active={journal.transitioning} targetDimension={journal.dimension} />
+
+    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden', background: T.bg.primary, color: T.text.primary, fontFamily: dimensionFont, fontSize: 14, transition: 'background 0.5s ease, color 0.5s ease, filter 0.5s ease, opacity 0.5s ease', opacity: exiting ? 0 : 1, filter: exiting ? 'blur(8px)' : 'none' }}>
       {/* Exit animation overlay */}
       {exiting && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9998, background: 'rgba(3,5,8,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'fadeIn 0.3s ease' }}>
@@ -1177,13 +1215,37 @@ const Index = () => {
       }}>
         <div style={{ padding: '18px 14px 6px', display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }} onClick={() => setShowFeatureModal(true)}>
-            {Ico.orca}
-            {(sbOpen || isMobile) && <div><div style={{ fontSize: 16, fontWeight: 700, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>ORCA</div><div style={{ fontSize: 8, color: T.text.dim, letterSpacing: '0.15em', textTransform: 'uppercase' }}>Investment</div></div>}
+            {journal.isJournalMode
+              ? <span style={{ fontSize: 18 }}>🧘</span>
+              : Ico.orca}
+            {(sbOpen || isMobile) && (
+              journal.isJournalMode
+                ? <div><div style={{ fontSize: 16, fontWeight: 400, color: T.accent.cyan, fontFamily: "'Playfair Display', serif" }}>Dawit</div><div style={{ fontSize: 8, color: T.text.dim, letterSpacing: '0.15em', fontFamily: "'Playfair Display', serif" }}>Journal</div></div>
+                : <div><div style={{ fontSize: 16, fontWeight: 700, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>ORCA</div><div style={{ fontSize: 8, color: T.text.dim, letterSpacing: '0.15em', textTransform: 'uppercase' }}>Investment</div></div>
+            )}
           </div>
           {(sbOpen || isMobile) && <button onClick={() => setSbOpen(false)} style={{ marginInlineStart: 'auto', background: 'none', border: 'none', color: T.text.dim, cursor: 'pointer', fontSize: 14, padding: 4, lineHeight: 1, transition: 'color 0.2s' }}>‹</button>}
         </div>
         {!sbOpen && !isMobile && <button onClick={() => setSbOpen(true)} style={{ background: 'none', border: 'none', color: T.text.dim, cursor: 'pointer', fontSize: 14, padding: '6px 0', lineHeight: 1, transition: 'color 0.2s' }}>›</button>}
         {(sbOpen || isMobile) && <ModeSwitch T={T} isRTL={isRTL} operatingMode={settings.operatingMode} systemMode={settings.systemMode} onOperatingModeChange={settings.setOperatingMode} onSystemModeChange={settings.setSystemMode} />}
+        {/* Portal Toggle — Dimension Switch */}
+        {(sbOpen || isMobile) && (
+          <div style={{ padding: '4px 6px', marginBottom: 4 }}>
+            <PortalToggle
+              T={T} isRTL={isRTL}
+              dimension={journal.dimension}
+              nudgeType={journal.nudgeType}
+              compact={false}
+              onClick={() => {
+                journal.switchDimension();
+                // When switching to journal, navigate to journal home
+                setTimeout(() => {
+                  setPage(journal.isJournalMode ? 'dashboard' : 'journal-home');
+                }, 700);
+              }}
+            />
+          </div>
+        )}
         <nav style={{ flex: 1, padding: '0 6px', display: 'flex', flexDirection: 'column', gap: 2 }}>
           {nav.map(item => {
             const isWeekly = item.id === 'weekly-review';
@@ -1332,6 +1394,31 @@ const Index = () => {
           {page === 'weekly-review' && (
             <WeeklyReviewPage T={T} isRTL={isRTL} trades={trades} stats={stats} riskData={riskData} />
           )}
+          {/* Journal Dimension Pages */}
+          {page === 'journal-home' && (
+            <JournalDashboard
+              T={T} isRTL={isRTL} trades={trades}
+              morningRituals={journal.morningRituals}
+              eodReviews={journal.eodReviews}
+              onNavigate={setPage}
+            />
+          )}
+          {page === 'morning-ritual' && (
+            <MorningRitualPage
+              T={T} isRTL={isRTL}
+              todayCompleted={!!journal.todayMorning}
+              onSave={journal.saveMorningRitual}
+            />
+          )}
+          {page === 'eod-vault' && (
+            <EODVaultPage
+              T={T} isRTL={isRTL}
+              todayCompleted={!!journal.todayEOD}
+              todayTradeCount={todayTrades.length}
+              todayPnl={todayPnlTotal}
+              onSave={journal.saveEODReview}
+            />
+          )}
         </div>
       </main>
 
@@ -1404,6 +1491,7 @@ const Index = () => {
         />
       )}
     </div>
+    </>
   );
 };
 

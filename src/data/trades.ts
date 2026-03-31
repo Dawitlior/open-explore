@@ -1,3 +1,8 @@
+export type TradeMethod = 'MSB+BOS' | 'Daily Open' | 'Breakout' | 'Pullback' | 'Reversal' | 'Scalp' | 'Swing' | 'Other';
+export type ExecutionQuality = 'Clean' | 'OK' | 'Weak';
+export type ExitQuality = 'Planned' | 'Early' | 'Forced';
+export type PlanDeviation = 'None' | 'Minor' | 'Major';
+
 export interface Trade {
   id: number;
   date: string;
@@ -20,6 +25,13 @@ export interface Trade {
   riskPct: number;
   rules: boolean;
   comments: string;
+  // Intelligence fields (Mission 6)
+  method?: TradeMethod;
+  executionQuality?: ExecutionQuality;
+  exitQuality?: ExitQuality;
+  planDeviation?: PlanDeviation;
+  scaleUp?: boolean;
+  intentionalRisk?: 'Planned' | 'FOMO';
 }
 
 export const RAW_TRADES: Trade[] = [];
