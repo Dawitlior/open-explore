@@ -253,7 +253,8 @@ const Index = () => {
     { id: 'alpha', label: isRTL ? 'הפעל Alpha' : 'Toggle Alpha Mode', icon: '⚡', category: isRTL ? 'מצבים' : 'Modes', action: () => settings.setSystemMode(isAlpha ? 'standard' : 'alpha') },
   ], [isRTL, handleExport, handleImport, handleGenerateInsights, isAlpha, settings]);
 
-  const nav = [
+  // Navigation items — dynamically switch based on dimension
+  const orcaNav = [
     { id: 'dashboard', icon: Ico.dash, label: t.dashboard },
     { id: 'journal', icon: Ico.book, label: t.journal },
     { id: 'calendar', icon: Ico.cal, label: t.calendar },
@@ -263,6 +264,17 @@ const Index = () => {
     { id: 'ai', icon: Ico.star, label: t.ai },
     { id: 'weekly-review', icon: '📋', label: isRTL ? 'סקירה שבועית' : 'Weekly Review', color: '#FFD700' },
   ];
+
+  const journalNav = [
+    { id: 'journal-home', icon: '🧘', label: isRTL ? 'יומן ראשי' : 'Journal Home' },
+    { id: 'morning-ritual', icon: '🌅', label: isRTL ? 'טקס בוקר' : 'Morning Ritual' },
+    { id: 'eod-vault', icon: '🌙', label: isRTL ? 'סגירת יום' : 'EOD Vault' },
+    { id: 'journal', icon: Ico.book, label: isRTL ? 'יומן עסקאות' : 'Trade Journal' },
+    { id: 'psychology', icon: Ico.brain, label: isRTL ? 'פסיכולוגיה' : 'Psychology' },
+    { id: 'weekly-review', icon: '📋', label: isRTL ? 'סקירה שבועית' : 'Weekly Review', color: '#FFD700' },
+  ];
+
+  const nav = journal.isJournalMode ? journalNav : orcaNav;
 
   // Entry gate check (after all hooks)
   if (!entered) {
