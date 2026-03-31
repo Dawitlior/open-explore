@@ -101,6 +101,14 @@ const Index = () => {
   const riskData = useMemo(() => assessRisk(trades), [trades]);
   const currentBalance = trades.length > 0 ? trades[trades.length - 1].balance : 0;
 
+  // Compute today's trades for EOD page (must be before early returns)
+  const todayTrades = useMemo(() => trades.filter(tr => {
+    if (!tr.date) return false;
+    const d = new Date(tr.date.replace(' ', 'T'));
+    return !isNaN(d.getTime()) && d.toDateString() === new Date().toDateString();
+  }), [trades]);
+  const todayPnlTotal = todayTrades.reduce((s, tr) => s + tr.pnl, 0);
+
   // Privacy mode shortcut
   usePrivacyShortcut(() => settings.setPrivacyMode(!settings.privacyMode));
 
