@@ -1215,8 +1215,14 @@ const Index = () => {
       }}>
         <div style={{ padding: '18px 14px 6px', display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }} onClick={() => setShowFeatureModal(true)}>
-            {Ico.orca}
-            {(sbOpen || isMobile) && <div><div style={{ fontSize: 16, fontWeight: 700, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>ORCA</div><div style={{ fontSize: 8, color: T.text.dim, letterSpacing: '0.15em', textTransform: 'uppercase' }}>Investment</div></div>}
+            {journal.isJournalMode
+              ? <span style={{ fontSize: 18 }}>🧘</span>
+              : Ico.orca}
+            {(sbOpen || isMobile) && (
+              journal.isJournalMode
+                ? <div><div style={{ fontSize: 16, fontWeight: 400, color: T.accent.cyan, fontFamily: "'Playfair Display', serif" }}>Dawit</div><div style={{ fontSize: 8, color: T.text.dim, letterSpacing: '0.15em', fontFamily: "'Playfair Display', serif" }}>Journal</div></div>
+                : <div><div style={{ fontSize: 16, fontWeight: 700, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>ORCA</div><div style={{ fontSize: 8, color: T.text.dim, letterSpacing: '0.15em', textTransform: 'uppercase' }}>Investment</div></div>
+            )}
           </div>
           {(sbOpen || isMobile) && <button onClick={() => setSbOpen(false)} style={{ marginInlineStart: 'auto', background: 'none', border: 'none', color: T.text.dim, cursor: 'pointer', fontSize: 14, padding: 4, lineHeight: 1, transition: 'color 0.2s' }}>‹</button>}
         </div>
