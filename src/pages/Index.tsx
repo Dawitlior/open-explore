@@ -1182,6 +1182,26 @@ const Index = () => {
 
 
 
+  // ═══ JOURNAL DIMENSION — FULL VIEWPORT TAKEOVER ═══
+  if (journal.isJournalMode && !journal.transitioning) {
+    const journalPage = page.startsWith('journal') || page === 'morning-ritual' || page === 'eod-vault' || page === 'psychology' || page === 'weekly-review' ? page : 'journal-home';
+    return (
+      <>
+        <PortalTransition active={false} targetDimension={journal.dimension} />
+        <JournalShell T={T} isRTL={isRTL} dimension={journal.dimension} activePage={journalPage} onNavigate={setPage}
+          onSwitchDimension={() => { journal.switchDimension(); setTimeout(() => setPage('dashboard'), 700); }}
+          todayMorning={journal.todayMorning} todayEOD={journal.todayEOD} nudgeType={journal.nudgeType}>
+          {journalPage === 'journal-home' && <JournalDashboard T={T} isRTL={isRTL} trades={trades} morningRituals={journal.morningRituals} eodReviews={journal.eodReviews} onNavigate={setPage} />}
+          {journalPage === 'morning-ritual' && <MorningRitualPage T={T} isRTL={isRTL} todayCompleted={!!journal.todayMorning} onSave={journal.saveMorningRitual} />}
+          {journalPage === 'eod-vault' && <EODVaultPage T={T} isRTL={isRTL} todayCompleted={!!journal.todayEOD} todayTrades={todayTrades} todayPnl={todayPnlTotal} onSave={journal.saveEODReview} />}
+          {journalPage === 'journal-archive' && <JournalArchive T={T} isRTL={isRTL} trades={trades} morningRituals={journal.morningRituals} eodReviews={journal.eodReviews} />}
+          {journalPage === 'psychology' && renderPsychology()}
+          {journalPage === 'weekly-review' && <WeeklyReviewPage T={T} isRTL={isRTL} trades={trades} stats={stats} riskData={riskData} />}
+        </JournalShell>
+      </>
+    );
+  }
+
   return (
     <>
     {/* Portal Transition Overlay */}
