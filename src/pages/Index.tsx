@@ -31,6 +31,8 @@ import { PortalToggle } from '@/components/trading/PortalToggle';
 import { MorningRitualPage } from '@/components/journal/MorningRitualPage';
 import { EODVaultPage } from '@/components/journal/EODVaultPage';
 import { JournalDashboard } from '@/components/journal/JournalDashboard';
+import { JournalShell } from '@/components/journal/JournalShell';
+import { JournalArchive } from '@/components/journal/JournalArchive';
 import { useTrades } from '@/hooks/use-trades';
 import { useSettings, type ThemeId } from '@/hooks/use-settings';
 import { useJournalMode } from '@/hooks/use-journal-mode';
