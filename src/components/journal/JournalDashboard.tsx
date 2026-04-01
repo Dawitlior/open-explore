@@ -1,10 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { Trade } from '@/data/trades';
 import type { MorningRitual, EODReview } from '@/hooks/use-journal-mode';
-import { GlassCard } from '@/components/trading/TradingUI';
-import { calculateCorrelations } from '@/lib/correlation-engine';
 
 interface Props {
   T: TradingTheme;
@@ -15,192 +13,124 @@ interface Props {
   onNavigate: (page: string) => void;
 }
 
+const GLASS = {
+  background: 'rgba(16,13,40,0.6)',
+  backdropFilter: 'blur(25px)',
+  WebkitBackdropFilter: 'blur(25px)',
+  border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: 14,
+} as const;
+
 export const JournalDashboard = ({ T, isRTL, trades, morningRituals, eodReviews, onNavigate }: Props) => {
-  const font = "'Playfair Display', Georgia, serif";
-  const mono = "'JetBrains Mono', monospace";
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const todayMorning = morningRituals.find(r => r.date === todayKey);
+  const todayEOD = eodReviews.find(r => r.date === todayKey);
 
-  const correlations = useMemo(
-    () => calculateCorrelations(trades, morningRituals, eodReviews),
-    [trades, morningRituals, eodReviews]
-  );
+  const todayTrades = useMemo(() => trades.filter(tr => {
+    if (!tr.date) return false;
+    const d = new Date(tr.date.replace(' ', 'T'));
+    return !isNaN(d.getTime()) && d.toDateString() === new Date().toDateString();
+  }), [trades]);
 
-  const today = new Date().toISOString().slice(0, 10);
-  const todayMorning = morningRituals.find(r => r.date === today);
-  const todayEOD = eodReviews.find(r => r.date === today);
-  const recentRituals = morningRituals.slice(-7);
-  const recentEODs = eodReviews.slice(-7);
+  const todayPnl = todayTrades.reduce((s, tr) => s + tr.pnl, 0);
+
+  const ritualStreak = useMemo(() => {
+    let streak = 0;
+    const sorted = [...morningRituals].sort((a, b) => b.date.localeCompare(a.date));
+    const today = new Date();
+    for (let i = 0; i < 30; i++) {
+      const d = new Date(today); d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      if (sorted.find(r => r.date === key)) streak++;
+      else if (i > 0) break;
+    }
+    return streak;
+  }, [morningRituals]);
+
+  const avgMood = morningRituals.length > 0
+    ? (morningRituals.slice(-7).reduce((s, r) => s + r.mood, 0) / Math.min(7, morningRituals.length))
+    : 0;
 
   return (
-    <div style={{ maxWidth: 900, margin: '0 auto' }}>
-      <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ fontSize: 32, fontWeight: 300, fontFamily: font, color: T.text.primary, marginBottom: 6 }}>
-            {isRTL ? 'יומן פסיכולוגי' : 'Psychological Journal'}
-          </div>
-          <div style={{ fontSize: 14, color: T.text.muted, fontFamily: font }}>
-            {isRTL ? 'תודעה, משמעת, אבולוציה' : 'Awareness, Discipline, Evolution'}
-          </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div style={{ textAlign: 'center', padding: '20px 0' }}>
+        <div style={{ fontSize: 36, fontWeight: 400, color: '#ede9fe', fontFamily: "'Playfair Display', serif", marginBottom: 8 }}>
+          {isRTL ? '🧘 ברוך הבא ליומן' : '🧘 Welcome to Your Journal'}
         </div>
+        <div style={{ fontSize: 13, color: '#7c75a8', fontFamily: "'IBM Plex Mono', monospace" }}>
+          {isRTL ? 'מרחב הרפלקציה הפסיכולוגי שלך' : 'Your psychological reflection space'}
+        </div>
+      </div>
 
-        {/* Today's Status */}
-        <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
-          <GlassCard T={T} onClick={() => !todayMorning && onNavigate('morning-ritual')} style={{ flex: 1, minWidth: 200, padding: 18, cursor: todayMorning ? 'default' : 'pointer' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ fontSize: 28 }}>{todayMorning ? '✅' : '🌅'}</div>
+      {/* Stats */}
+      <div style={{ ...GLASS, padding: 24, display: 'flex', gap: 20, flexWrap: 'wrap', justifyContent: 'center' }}>
+        {[
+          { label: isRTL ? 'רווח/הפסד היום' : "Today's P&L", value: `${todayPnl >= 0 ? '+' : ''}$${todayPnl.toFixed(2)}`, color: todayPnl >= 0 ? '#86efac' : '#fb7185' },
+          { label: isRTL ? 'עסקאות' : 'Trades', value: String(todayTrades.length), color: '#c4b5fd' },
+          { label: isRTL ? 'רצף טקסים' : 'Ritual Streak', value: `${ritualStreak} 🔥`, color: '#a78bfa' },
+          { label: isRTL ? 'מצב רוח (7 ימים)' : 'Mood (7d avg)', value: avgMood > 0 ? avgMood.toFixed(1) : '—', color: '#818cf8' },
+        ].map((s, i) => (
+          <div key={i} style={{ textAlign: 'center', minWidth: 100 }}>
+            <div style={{ fontSize: 9, color: '#7c75a8', textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: "'IBM Plex Mono', monospace", marginBottom: 4 }}>{s.label}</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: s.color, fontFamily: "'IBM Plex Mono', monospace" }}>{s.value}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Quick Action Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+        {[
+          { id: 'morning-ritual', icon: '🌅', title: isRTL ? 'טקס בוקר' : 'Morning Ritual', sub: isRTL ? 'מוד, אנרגיה, הטיה' : 'Mood, energy, bias', done: !!todayMorning, doneLabel: '✓ Completed', pendingLabel: '⏳ Start Ritual →', doneColor: '#86efac', pendingColor: '#fbbf24' },
+          { id: 'eod-vault', icon: '🌙', title: isRTL ? 'כספת סוף יום' : 'EOD Vault', sub: isRTL ? 'ניתוח, טילט, שיעורים' : 'Debrief, tilt, lessons', done: !!todayEOD, doneLabel: '✓ Sealed', pendingLabel: '⏳ Open Vault →', doneColor: '#c4b5fd', pendingColor: '#fbbf24' },
+          { id: 'journal-archive', icon: '📚', title: isRTL ? 'ארכיון' : 'Archive', sub: isRTL ? 'היסטוריה + רגש' : 'History + emotion', done: false, doneLabel: '', pendingLabel: `${trades.length} trades • ${morningRituals.length} rituals`, doneColor: '', pendingColor: '#818cf8' },
+        ].map(card => (
+          <motion.div key={card.id} whileHover={{ scale: 1.01 }} onClick={() => onNavigate(card.id)}
+            style={{ ...GLASS, padding: 24, cursor: 'pointer', transition: 'all 0.3s' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+              <span style={{ fontSize: 28 }}>{card.icon}</span>
               <div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: T.text.primary, fontFamily: font }}>
-                  {isRTL ? 'טקס בוקר' : 'Morning Ritual'}
-                </div>
-                <div style={{ fontSize: 10, color: todayMorning ? T.accent.green : T.accent.orange }}>
-                  {todayMorning ? (isRTL ? 'הושלם ✓' : 'Completed ✓') : (isRTL ? 'טרם הושלם' : 'Not completed')}
-                </div>
-                {todayMorning && (
-                  <div style={{ fontSize: 9, color: T.text.dim, marginTop: 2 }}>
-                    Energy: {todayMorning.energy}/10 • Mood: {todayMorning.mood}/5
-                  </div>
-                )}
+                <div style={{ fontSize: 16, fontWeight: 500, color: '#ede9fe', fontFamily: "'Playfair Display', serif" }}>{card.title}</div>
+                <div style={{ fontSize: 10, color: '#7c75a8', fontFamily: "'IBM Plex Mono', monospace" }}>{card.sub}</div>
               </div>
             </div>
-          </GlassCard>
-
-          <GlassCard T={T} onClick={() => !todayEOD && onNavigate('eod-vault')} style={{ flex: 1, minWidth: 200, padding: 18, cursor: todayEOD ? 'default' : 'pointer' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ fontSize: 28 }}>{todayEOD ? '🔒' : '🌙'}</div>
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: T.text.primary, fontFamily: font }}>
-                  {isRTL ? 'סגירת יום' : 'EOD Review'}
-                </div>
-                <div style={{ fontSize: 10, color: todayEOD ? T.accent.green : T.accent.orange }}>
-                  {todayEOD ? (isRTL ? 'הושלם ✓' : 'Completed ✓') : (isRTL ? 'טרם הושלם' : 'Not completed')}
-                </div>
-              </div>
+            <div style={{
+              padding: '8px 14px', borderRadius: 10, textAlign: 'center',
+              background: card.done ? `${card.doneColor}0F` : `${card.pendingColor}0F`,
+              border: `1px solid ${card.done ? card.doneColor : card.pendingColor}25`,
+            }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: card.done ? card.doneColor : card.pendingColor, fontFamily: "'IBM Plex Mono', monospace" }}>
+                {card.done ? card.doneLabel : card.pendingLabel}
+              </span>
             </div>
-          </GlassCard>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Today's Trades */}
+      {todayTrades.length > 0 && (
+        <div style={{ ...GLASS, padding: 24 }}>
+          <div style={{ fontSize: 10, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.15em', fontWeight: 700, marginBottom: 16, fontFamily: "'IBM Plex Mono', monospace" }}>
+            {isRTL ? 'עסקאות היום' : "TODAY'S TRADES"}
+          </div>
+          {todayTrades.map(tr => (
+            <div key={tr.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{
+                  fontSize: 10, padding: '2px 8px', borderRadius: 6,
+                  background: tr.winLoss === 'Win' ? 'rgba(134,239,172,0.1)' : 'rgba(251,113,133,0.1)',
+                  color: tr.winLoss === 'Win' ? '#86efac' : '#fb7185',
+                  fontFamily: "'IBM Plex Mono', monospace", fontWeight: 700,
+                }}>{tr.winLoss}</span>
+                <span style={{ fontSize: 14, color: '#ede9fe', fontFamily: "'Playfair Display', serif" }}>{tr.coin}</span>
+                <span style={{ fontSize: 11, color: '#7c75a8', fontFamily: "'IBM Plex Mono', monospace" }}>{tr.direction}</span>
+              </div>
+              <span style={{ fontSize: 14, fontWeight: 700, fontFamily: "'IBM Plex Mono', monospace", color: tr.pnl >= 0 ? '#86efac' : '#fb7185' }}>
+                {tr.pnl >= 0 ? '+' : ''}${tr.pnl.toFixed(2)}
+              </span>
+            </div>
+          ))}
         </div>
-
-        {/* Correlation Intelligence */}
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ fontSize: 10, color: T.accent.cyan, textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 700, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ width: 18, height: 1, background: T.accent.cyan, display: 'inline-block' }} />
-            {isRTL ? 'מנוע קורלציות' : 'CORRELATION ENGINE'}
-          </div>
-
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            {/* Emotional Alpha */}
-            <GlassCard T={T} style={{ flex: 1, minWidth: 250, padding: 18 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: T.accent.purple, marginBottom: 10, fontFamily: font }}>
-                {isRTL ? 'אלפא רגשי' : 'Emotional Alpha'}
-              </div>
-              <div style={{ display: 'flex', gap: 16, marginBottom: 10 }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 9, color: T.text.dim }}>😴 Tired</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: correlations.emotionalAlpha.tiredLossR < 0 ? T.accent.red : T.accent.green, fontFamily: mono }}>
-                    {correlations.emotionalAlpha.tiredLossR.toFixed(2)}R
-                  </div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 9, color: T.text.dim }}>😰 Stressed</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: correlations.emotionalAlpha.stressedLossR < 0 ? T.accent.red : T.accent.green, fontFamily: mono }}>
-                    {correlations.emotionalAlpha.stressedLossR.toFixed(2)}R
-                  </div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 9, color: T.text.dim }}>😌 Calm</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: correlations.emotionalAlpha.calmGainR >= 0 ? T.accent.green : T.accent.red, fontFamily: mono }}>
-                    {correlations.emotionalAlpha.calmGainR.toFixed(2)}R
-                  </div>
-                </div>
-              </div>
-              <div style={{ fontSize: 10, color: T.text.muted, lineHeight: 1.5 }}>{correlations.emotionalAlpha.description}</div>
-            </GlassCard>
-
-            {/* Discipline Correlation */}
-            <GlassCard T={T} style={{ flex: 1, minWidth: 250, padding: 18 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: T.accent.cyan, marginBottom: 10, fontFamily: font }}>
-                {isRTL ? 'קורלציית משמעת' : 'Discipline Correlation'}
-              </div>
-              <div style={{ display: 'flex', gap: 16, marginBottom: 10 }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 9, color: T.text.dim }}>With Ritual</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: T.accent.green, fontFamily: mono }}>
-                    {correlations.disciplineCorrelation.withRitualAvgR.toFixed(2)}R
-                  </div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 9, color: T.text.dim }}>Without</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: T.accent.red, fontFamily: mono }}>
-                    {correlations.disciplineCorrelation.withoutRitualAvgR.toFixed(2)}R
-                  </div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 9, color: T.text.dim }}>Impact</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: correlations.disciplineCorrelation.ritualImpact >= 0 ? T.accent.green : T.accent.red, fontFamily: mono }}>
-                    {correlations.disciplineCorrelation.ritualImpact > 0 ? '+' : ''}{correlations.disciplineCorrelation.ritualImpact.toFixed(0)}%
-                  </div>
-                </div>
-              </div>
-              <div style={{ fontSize: 10, color: T.text.muted, lineHeight: 1.5 }}>{correlations.disciplineCorrelation.description}</div>
-            </GlassCard>
-
-            {/* Leak Detection */}
-            <GlassCard T={T} style={{ flex: 1, minWidth: 250, padding: 18 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: T.accent.orange, marginBottom: 10, fontFamily: font }}>
-                {isRTL ? 'זיהוי דליפות' : 'Leak Detection'}
-              </div>
-              <div style={{ display: 'flex', gap: 16, marginBottom: 10 }}>
-                <div>
-                  <div style={{ fontSize: 9, color: T.text.dim }}>Worst Asset</div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: T.accent.red, fontFamily: mono }}>
-                    {correlations.leakDetection.worstAsset.name}
-                  </div>
-                  <div style={{ fontSize: 9, color: T.text.dim }}>{correlations.leakDetection.worstAsset.lossR.toFixed(1)}R</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 9, color: T.text.dim }}>Worst Day</div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: T.accent.red, fontFamily: mono }}>
-                    {correlations.leakDetection.worstDay.name}
-                  </div>
-                  <div style={{ fontSize: 9, color: T.text.dim }}>{correlations.leakDetection.worstDay.avgR.toFixed(2)}R avg</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 9, color: T.text.dim }}>High Dev</div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: T.accent.orange, fontFamily: mono }}>
-                    {correlations.leakDetection.highDeviationTrades}
-                  </div>
-                  <div style={{ fontSize: 9, color: T.text.dim }}>trades</div>
-                </div>
-              </div>
-              <div style={{ fontSize: 10, color: T.text.muted, lineHeight: 1.5 }}>{correlations.leakDetection.description}</div>
-            </GlassCard>
-          </div>
-        </div>
-
-        {/* Recent Rituals Timeline */}
-        <GlassCard T={T} style={{ marginBottom: 18, padding: 18 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: T.text.primary, marginBottom: 12, fontFamily: font }}>
-            {isRTL ? 'היסטוריית טקסים' : 'Ritual History'}
-          </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {Array.from({ length: 7 }).map((_, i) => {
-              const d = new Date();
-              d.setDate(d.getDate() - (6 - i));
-              const key = d.toISOString().slice(0, 10);
-              const hasMorning = morningRituals.some(r => r.date === key && r.completed);
-              const hasEOD = eodReviews.some(r => r.date === key && r.completed);
-              const dayLabel = d.toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { weekday: 'short' });
-              return (
-                <div key={i} style={{ flex: 1, minWidth: 60, textAlign: 'center', padding: 8, borderRadius: T.radius.md, background: (hasMorning && hasEOD) ? `${T.accent.green}10` : hasMorning || hasEOD ? `${T.accent.orange}10` : `${T.accent.red}08`, border: `1px solid ${(hasMorning && hasEOD) ? T.accent.green : hasMorning || hasEOD ? T.accent.orange : T.accent.red}20` }}>
-                  <div style={{ fontSize: 9, color: T.text.dim }}>{dayLabel}</div>
-                  <div style={{ fontSize: 14, marginTop: 4 }}>
-                    {hasMorning ? '🌅' : '○'} {hasEOD ? '🌙' : '○'}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </GlassCard>
-      </motion.div>
+      )}
     </div>
   );
 };
