@@ -1414,7 +1414,7 @@ const Index = () => {
             <EODVaultPage
               T={T} isRTL={isRTL}
               todayCompleted={!!journal.todayEOD}
-              todayTradeCount={todayTrades.length}
+              todayTrades={todayTrades}
               todayPnl={todayPnlTotal}
               onSave={journal.saveEODReview}
             />
