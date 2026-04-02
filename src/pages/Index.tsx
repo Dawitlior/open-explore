@@ -1183,7 +1183,7 @@ const Index = () => {
 
 
   // ═══ JOURNAL DIMENSION — FULL VIEWPORT TAKEOVER ═══
-  const [archiveOpen, setArchiveOpen] = useState(false);
+
 
   if (journal.isJournalMode && !journal.transitioning) {
     const journalPage = page.startsWith('journal') || page === 'morning-ritual' || page === 'eod-vault' || page === 'psychology' || page === 'weekly-review' ? page : 'journal-home';
