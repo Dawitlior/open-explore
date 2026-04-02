@@ -1,43 +1,46 @@
 import type { TradingTheme } from './trading-theme';
 
-// Journal dimension theme — Zen, editorial, deep purple/slate
+// ═══ WHITE-GOLD JOURNAL DIMENSION ═══
+// Cream/Ivory background, Brushed Gold + Deep Slate accents
+// Complete departure from Orca's black/cyan DNA
+
 export const journalTheme: TradingTheme = {
   bg: {
-    primary: '#0d0b1a',
-    secondary: '#12102a',
-    tertiary: '#1a1735',
-    card: '#16133a',
-    surface: '#211d4a',
+    primary: '#FAF8F5',       // Warm ivory
+    secondary: '#F5F1EC',     // Cream
+    tertiary: '#EDE8E0',      // Light parchment
+    card: '#FFFFFF',          // Pure white cards
+    surface: '#F0EBE3',      // Soft surface
   },
   accent: {
-    cyan: '#c4b5fd',      // Soft violet as primary accent
-    cyanGlow: 'rgba(196,181,253,0.12)',
-    teal: '#a78bfa',
-    blue: '#818cf8',
-    blueGlow: 'rgba(129,140,248,0.10)',
-    purple: '#e879f9',
-    purpleGlow: 'rgba(232,121,249,0.10)',
-    orange: '#fbbf24',
-    red: '#fb7185',
-    redGlow: 'rgba(251,113,133,0.08)',
-    green: '#86efac',
-    greenGlow: 'rgba(134,239,172,0.08)',
+    cyan: '#D4AF37',          // Brushed Gold (primary accent)
+    cyanGlow: 'rgba(212,175,55,0.12)',
+    teal: '#B8962E',          // Dark gold
+    blue: '#8B7355',          // Warm bronze
+    blueGlow: 'rgba(139,115,85,0.10)',
+    purple: '#C9A96E',        // Light gold
+    purpleGlow: 'rgba(201,169,110,0.10)',
+    orange: '#D4AF37',        // Gold accent
+    red: '#C44536',           // Muted red
+    redGlow: 'rgba(196,69,54,0.08)',
+    green: '#2D6A4F',         // Deep forest green
+    greenGlow: 'rgba(45,106,79,0.08)',
   },
   text: {
-    primary: '#ede9fe',
-    secondary: '#a5a0d0',
-    muted: '#7c75a8',
-    dim: '#5b5580',
+    primary: '#1A1A2E',       // Deep slate (almost black)
+    secondary: '#4A4A5A',     // Medium slate
+    muted: '#8A8A9A',         // Muted gray
+    dim: '#B0B0BE',           // Light gray
   },
   border: {
-    subtle: 'rgba(196,181,253,0.06)',
-    medium: 'rgba(196,181,253,0.12)',
-    active: 'rgba(196,181,253,0.25)',
+    subtle: 'rgba(212,175,55,0.12)',
+    medium: 'rgba(212,175,55,0.20)',
+    active: 'rgba(212,175,55,0.35)',
   },
   radius: { sm: 8, md: 12, lg: 16, xl: 20 },
   shadow: {
-    card: '0 2px 8px rgba(0,0,0,0.3), 0 8px 24px rgba(13,11,26,0.4)',
-    elevated: '0 8px 32px rgba(0,0,0,0.5), 0 16px 48px rgba(13,11,26,0.3)',
+    card: '0 2px 12px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.03)',
+    elevated: '0 8px 32px rgba(0,0,0,0.08), 0 16px 48px rgba(0,0,0,0.04)',
     glow: (c: string) => `0 0 24px ${c}, 0 0 48px ${c}`,
   },
 };
@@ -96,6 +99,6 @@ export function getDimensionFont(dimension: 'orca' | 'journal'): string {
 
 export function getDimensionMonoFont(dimension: 'orca' | 'journal'): string {
   return dimension === 'journal'
-    ? "'Georgia', serif"
+    ? "'Inter', system-ui, sans-serif"
     : "'JetBrains Mono', monospace";
 }

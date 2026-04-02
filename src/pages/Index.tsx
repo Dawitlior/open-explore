@@ -82,6 +82,7 @@ const Index = () => {
     try { return JSON.parse(localStorage.getItem('orca-risk-explanations') || '[]'); } catch { return []; }
   });
   const [showRiskExplanation, setShowRiskExplanation] = useState<{ tradeId: number; riskChange: string } | null>(null);
+  const [archiveOpen, setArchiveOpen] = useState(false);
 
 
   const handleExplainClick = useCallback((title: string, explanation: ChartExplanation, chartId?: string) => {
@@ -1183,21 +1184,24 @@ const Index = () => {
 
 
   // ═══ JOURNAL DIMENSION — FULL VIEWPORT TAKEOVER ═══
+
+
   if (journal.isJournalMode && !journal.transitioning) {
     const journalPage = page.startsWith('journal') || page === 'morning-ritual' || page === 'eod-vault' || page === 'psychology' || page === 'weekly-review' ? page : 'journal-home';
     return (
       <>
         <PortalTransition active={false} targetDimension={journal.dimension} />
-        <JournalShell T={T} isRTL={isRTL} dimension={journal.dimension} activePage={journalPage} onNavigate={setPage}
+        <JournalShell isRTL={isRTL} dimension={journal.dimension} activePage={journalPage} onNavigate={setPage}
           onSwitchDimension={() => { journal.switchDimension(); setTimeout(() => setPage('dashboard'), 700); }}
-          todayMorning={journal.todayMorning} todayEOD={journal.todayEOD} nudgeType={journal.nudgeType}>
-          {journalPage === 'journal-home' && <JournalDashboard T={T} isRTL={isRTL} trades={trades} morningRituals={journal.morningRituals} eodReviews={journal.eodReviews} onNavigate={setPage} />}
-          {journalPage === 'morning-ritual' && <MorningRitualPage T={T} isRTL={isRTL} todayCompleted={!!journal.todayMorning} onSave={journal.saveMorningRitual} />}
-          {journalPage === 'eod-vault' && <EODVaultPage T={T} isRTL={isRTL} todayCompleted={!!journal.todayEOD} todayTrades={todayTrades} todayPnl={todayPnlTotal} onSave={journal.saveEODReview} />}
-          {journalPage === 'journal-archive' && <JournalArchive T={T} isRTL={isRTL} trades={trades} morningRituals={journal.morningRituals} eodReviews={journal.eodReviews} />}
+          todayMorning={journal.todayMorning} todayEOD={journal.todayEOD} nudgeType={journal.nudgeType}
+          archiveOpen={archiveOpen} onToggleArchive={() => setArchiveOpen(p => !p)}>
+          {journalPage === 'journal-home' && <JournalDashboard isRTL={isRTL} trades={trades} morningRituals={journal.morningRituals} eodReviews={journal.eodReviews} onNavigate={setPage} />}
+          {journalPage === 'morning-ritual' && <MorningRitualPage isRTL={isRTL} todayCompleted={!!journal.todayMorning} onSave={journal.saveMorningRitual} />}
+          {journalPage === 'eod-vault' && <EODVaultPage isRTL={isRTL} todayCompleted={!!journal.todayEOD} todayTrades={todayTrades} todayPnl={todayPnlTotal} todayMorning={journal.todayMorning} onSave={journal.saveEODReview} />}
           {journalPage === 'psychology' && renderPsychology()}
           {journalPage === 'weekly-review' && <WeeklyReviewPage T={T} isRTL={isRTL} trades={trades} stats={stats} riskData={riskData} />}
         </JournalShell>
+        <JournalArchive isRTL={isRTL} trades={trades} morningRituals={journal.morningRituals} eodReviews={journal.eodReviews} open={archiveOpen} onClose={() => setArchiveOpen(false)} />
       </>
     );
   }
@@ -1419,7 +1423,7 @@ const Index = () => {
           {/* Journal Dimension Pages */}
           {page === 'journal-home' && (
             <JournalDashboard
-              T={T} isRTL={isRTL} trades={trades}
+              isRTL={isRTL} trades={trades}
               morningRituals={journal.morningRituals}
               eodReviews={journal.eodReviews}
               onNavigate={setPage}
@@ -1427,17 +1431,18 @@ const Index = () => {
           )}
           {page === 'morning-ritual' && (
             <MorningRitualPage
-              T={T} isRTL={isRTL}
+              isRTL={isRTL}
               todayCompleted={!!journal.todayMorning}
               onSave={journal.saveMorningRitual}
             />
           )}
           {page === 'eod-vault' && (
             <EODVaultPage
-              T={T} isRTL={isRTL}
+              isRTL={isRTL}
               todayCompleted={!!journal.todayEOD}
               todayTrades={todayTrades}
               todayPnl={todayPnlTotal}
+              todayMorning={journal.todayMorning}
               onSave={journal.saveEODReview}
             />
           )}
