@@ -1423,7 +1423,7 @@ const Index = () => {
           {/* Journal Dimension Pages */}
           {page === 'journal-home' && (
             <JournalDashboard
-              T={T} isRTL={isRTL} trades={trades}
+              isRTL={isRTL} trades={trades}
               morningRituals={journal.morningRituals}
               eodReviews={journal.eodReviews}
               onNavigate={setPage}
@@ -1431,17 +1431,18 @@ const Index = () => {
           )}
           {page === 'morning-ritual' && (
             <MorningRitualPage
-              T={T} isRTL={isRTL}
+              isRTL={isRTL}
               todayCompleted={!!journal.todayMorning}
               onSave={journal.saveMorningRitual}
             />
           )}
           {page === 'eod-vault' && (
             <EODVaultPage
-              T={T} isRTL={isRTL}
+              isRTL={isRTL}
               todayCompleted={!!journal.todayEOD}
               todayTrades={todayTrades}
               todayPnl={todayPnlTotal}
+              todayMorning={journal.todayMorning}
               onSave={journal.saveEODReview}
             />
           )}
