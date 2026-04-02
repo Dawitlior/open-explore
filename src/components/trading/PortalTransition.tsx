@@ -8,8 +8,6 @@ interface Props {
 
 export const PortalTransition = ({ active, targetDimension }: Props) => {
   const isJournal = targetDimension === 'journal';
-  const color = isJournal ? '#c4b5fd' : '#00F2FF';
-  const bgColor = isJournal ? '#0d0b1a' : '#000000';
 
   return (
     <AnimatePresence>
@@ -25,35 +23,33 @@ export const PortalTransition = ({ active, targetDimension }: Props) => {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
         >
-          {/* Imploding current screen */}
+          {/* White flash for journal, dark for orca */}
           <motion.div
             style={{
-              position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.9)',
+              position: 'absolute', inset: 0,
+              background: isJournal ? '#FAF8F5' : 'rgba(0,0,0,0.95)',
               backdropFilter: 'blur(20px)',
             }}
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
+            animate={{ opacity: [0, 1, 1] }}
+            transition={{ duration: 0.8, times: [0, 0.3, 1] }}
           />
 
-          {/* Black hole / portal expansion */}
+          {/* Center expansion */}
           <motion.div
             style={{
               width: 10, height: 10, borderRadius: '50%',
-              background: `radial-gradient(circle, ${color} 0%, ${bgColor} 70%, transparent 100%)`,
-              boxShadow: `0 0 60px ${color}, 0 0 120px ${color}40, 0 0 200px ${color}20`,
+              background: isJournal
+                ? `radial-gradient(circle, #D4AF37 0%, #FAF8F5 60%, transparent 100%)`
+                : `radial-gradient(circle, #00F2FF 0%, #000000 70%, transparent 100%)`,
+              boxShadow: isJournal
+                ? '0 0 60px rgba(212,175,55,0.4), 0 0 120px rgba(212,175,55,0.2)'
+                : '0 0 60px #00F2FF, 0 0 120px rgba(0,242,255,0.2)',
               position: 'relative', zIndex: 2,
             }}
             initial={{ scale: 0, opacity: 0 }}
-            animate={{ 
-              scale: [0, 2, 80],
-              opacity: [0, 1, 1],
-            }}
-            transition={{ 
-              duration: 1.2, 
-              times: [0, 0.3, 1],
-              ease: [0.16, 1, 0.3, 1],
-            }}
+            animate={{ scale: [0, 2, 80], opacity: [0, 1, 1] }}
+            transition={{ duration: 1.2, times: [0, 0.3, 1], ease: [0.16, 1, 0.3, 1] }}
           />
 
           {/* Reticle rings */}
@@ -64,7 +60,7 @@ export const PortalTransition = ({ active, targetDimension }: Props) => {
                 position: 'absolute',
                 width: 100 * i, height: 100 * i,
                 borderRadius: '50%',
-                border: `1px solid ${color}30`,
+                border: `1px solid ${isJournal ? 'rgba(212,175,55,0.2)' : 'rgba(0,242,255,0.2)'}`,
                 zIndex: 1,
               }}
               initial={{ scale: 0, opacity: 0 }}
@@ -79,11 +75,12 @@ export const PortalTransition = ({ active, targetDimension }: Props) => {
               position: 'absolute', zIndex: 3,
               fontFamily: isJournal ? "'Playfair Display', serif" : "'JetBrains Mono', monospace",
               fontSize: isJournal ? 28 : 24,
-              fontWeight: isJournal ? 400 : 800,
-              color: color,
-              letterSpacing: isJournal ? '0.1em' : '-0.02em',
-              textTransform: isJournal ? 'none' : 'uppercase',
-              textShadow: `0 0 30px ${color}`,
+              fontWeight: 700,
+              color: isJournal ? '#D4AF37' : '#00F2FF',
+              letterSpacing: isJournal ? '0.12em' : '-0.02em',
+              textShadow: isJournal
+                ? '0 0 30px rgba(212,175,55,0.4)'
+                : '0 0 30px #00F2FF',
             }}
             initial={{ opacity: 0, scale: 0.5, y: 20 }}
             animate={{ opacity: [0, 1, 1, 0], scale: [0.5, 1, 1, 1.1], y: [20, 0, 0, -10] }}
