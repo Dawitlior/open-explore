@@ -82,6 +82,7 @@ const Index = () => {
     try { return JSON.parse(localStorage.getItem('orca-risk-explanations') || '[]'); } catch { return []; }
   });
   const [showRiskExplanation, setShowRiskExplanation] = useState<{ tradeId: number; riskChange: string } | null>(null);
+  const [archiveOpen, setArchiveOpen] = useState(false);
 
 
   const handleExplainClick = useCallback((title: string, explanation: ChartExplanation, chartId?: string) => {
