@@ -222,7 +222,23 @@ const Index = () => {
     }, 1000);
   }, []);
 
-  const tt = ttStyle(T);
+  const handleEnterJournal = useCallback(() => {
+    setJournalTransition(true);
+    setTimeout(() => {
+      setIsJournalMode(true);
+      setJournalTransition(false);
+    }, 600);
+  }, []);
+
+  const handleExitJournal = useCallback(() => {
+    setJournalTransition(true);
+    setTimeout(() => {
+      setIsJournalMode(false);
+      setJournalTransition(false);
+    }, 600);
+  }, []);
+
+
   const ttItem = { color: T.text.secondary, fontSize: 11 };
   const ttLabel = { color: T.text.muted, fontSize: 10 };
 
