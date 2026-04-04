@@ -238,7 +238,7 @@ const Index = () => {
     }, 600);
   }, []);
 
-
+  const tt = ttStyle(T);
   const ttItem = { color: T.text.secondary, fontSize: 11 };
   const ttLabel = { color: T.text.muted, fontSize: 10 };
 
