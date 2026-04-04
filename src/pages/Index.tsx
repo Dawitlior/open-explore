@@ -211,6 +211,8 @@ const Index = () => {
     input.click();
   }, [importTrades]);
   const [exiting, setExiting] = useState(false);
+  const [isJournalMode, setIsJournalMode] = useState(false);
+  const [journalTransition, setJournalTransition] = useState(false);
   const handleLogout = useCallback(() => {
     setExiting(true);
     setTimeout(() => {
