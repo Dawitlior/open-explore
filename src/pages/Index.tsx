@@ -1232,6 +1232,33 @@ const Index = () => {
             </button>
             );
           })}
+          {/* ─── Journal Portal ─── */}
+          <button
+            onClick={() => { handleEnterJournal(); if (isMobile) setSbOpen(false); }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: (sbOpen || isMobile) ? '10px 10px' : '10px 0',
+              justifyContent: (sbOpen || isMobile) ? 'flex-start' : 'center',
+              background: 'linear-gradient(135deg, rgba(0, 255, 198, 0.06), rgba(123, 97, 255, 0.04))',
+              border: '1px solid rgba(0, 255, 198, 0.15)',
+              borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13,
+              fontWeight: 600, color: '#00FFC6', width: '100%',
+              textAlign: isRTL ? 'right' : 'left',
+              transition: 'all 0.3s ease', marginTop: 8,
+              boxShadow: '0 0 12px rgba(0, 255, 198, 0.08)',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 255, 198, 0.12), rgba(123, 97, 255, 0.08))';
+              e.currentTarget.style.boxShadow = '0 0 20px rgba(0, 255, 198, 0.15)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 255, 198, 0.06), rgba(123, 97, 255, 0.04))';
+              e.currentTarget.style.boxShadow = '0 0 12px rgba(0, 255, 198, 0.08)';
+            }}
+          >
+            <span style={{ fontSize: 18 }}>🧠</span>
+            {(sbOpen || isMobile) && <span>{isRTL ? 'יומן מסחר' : 'Trading Journal'}</span>}
+          </button>
           {/* Info / About button */}
           <button onClick={() => setShowFeatureModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: (sbOpen || isMobile) ? '9px 10px' : '9px 0', justifyContent: (sbOpen || isMobile) ? 'flex-start' : 'center', background: 'transparent', color: T.text.dim, border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: 400, transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: '2px solid transparent', marginTop: 4 }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
