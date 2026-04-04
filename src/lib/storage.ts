@@ -1,7 +1,7 @@
 import type { Trade } from '@/data/trades';
 
 const DB_NAME = 'orca-trading-os';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -10,6 +10,7 @@ function openDB(): Promise<IDBDatabase> {
       const db = req.result;
       if (!db.objectStoreNames.contains('trades')) db.createObjectStore('trades', { keyPath: 'id' });
       if (!db.objectStoreNames.contains('settings')) db.createObjectStore('settings', { keyPath: 'key' });
+      if (!db.objectStoreNames.contains('journal')) db.createObjectStore('journal', { keyPath: 'date' });
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
