@@ -286,7 +286,25 @@ const Index = () => {
     );
   }
 
-  // Privacy wrapper
+  // ═══ JOURNAL DIMENSION ═══
+  if (isJournalMode) {
+    return (
+      <>
+        <AnimatePresence>
+          {journalTransition && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{ position: 'fixed', inset: 0, zIndex: 9999, background: '#fff', mixBlendMode: 'overlay' }}
+            />
+          )}
+        </AnimatePresence>
+        <JournalShell onExit={handleExitJournal} trades={trades} isRTL={isRTL} />
+      </>
+    );
+  }
+
   const PV = ({ children, type = 'dollar' }: { children: React.ReactNode; type?: 'dollar' | 'percent' | 'number' }) => (
     <PrivacyMask enabled={settings.privacyMode} type={type}>{children}</PrivacyMask>
   );
