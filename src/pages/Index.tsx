@@ -25,6 +25,8 @@ import { AdvancedAnalyticsPage } from '@/components/trading/AdvancedAnalyticsPag
 import { AdvancedPsychologyPage } from '@/components/trading/AdvancedPsychologyPage';
 import { WeeklyReviewPage } from '@/components/trading/WeeklyReviewPage';
 import { InstallPrompt } from '@/components/trading/InstallPrompt';
+import { JournalShell } from '@/components/journal/JournalShell';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useTrades } from '@/hooks/use-trades';
 import { useSettings, type ThemeId } from '@/hooks/use-settings';
 import { assessRisk } from '@/lib/risk-engine';
