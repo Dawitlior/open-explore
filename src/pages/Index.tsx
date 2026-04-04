@@ -1195,6 +1195,32 @@ const Index = () => {
           </div>
         </div>
       )}
+      {/* Warp Transition Overlay */}
+      <AnimatePresence>
+        {journalTransition && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 9999,
+              background: 'radial-gradient(circle at center, rgba(0,255,198,0.15) 0%, rgba(5,7,13,0.95) 70%)',
+              backdropFilter: 'blur(20px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: [0.8, 1.1, 1], opacity: [0, 1, 0.8] }}
+              transition={{ duration: 0.5 }}
+              style={{ fontSize: 14, color: '#00FFC6', letterSpacing: '0.3em', textTransform: 'uppercase', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              {isJournalMode ? 'RETURNING TO ORCA' : 'ENTERING JOURNAL'}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* MOBILE SIDEBAR OVERLAY */}
       {isMobile && sbOpen && (
         <div onClick={() => setSbOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 40, backdropFilter: 'blur(2px)' }} />
