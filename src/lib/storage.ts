@@ -1,7 +1,7 @@
 import type { Trade } from '@/data/trades';
 
 const DB_NAME = 'orca-trading-os';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
