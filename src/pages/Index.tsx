@@ -25,8 +25,6 @@ import { AdvancedAnalyticsPage } from '@/components/trading/AdvancedAnalyticsPag
 import { AdvancedPsychologyPage } from '@/components/trading/AdvancedPsychologyPage';
 import { WeeklyReviewPage } from '@/components/trading/WeeklyReviewPage';
 import { InstallPrompt } from '@/components/trading/InstallPrompt';
-import { JournalShell } from '@/components/journal/JournalShell';
-import { AnimatePresence, motion } from 'framer-motion';
 import { useTrades } from '@/hooks/use-trades';
 import { useSettings, type ThemeId } from '@/hooks/use-settings';
 import { assessRisk } from '@/lib/risk-engine';
@@ -211,8 +209,6 @@ const Index = () => {
     input.click();
   }, [importTrades]);
   const [exiting, setExiting] = useState(false);
-  const [isJournalMode, setIsJournalMode] = useState(false);
-  const [journalTransition, setJournalTransition] = useState(false);
   const handleLogout = useCallback(() => {
     setExiting(true);
     setTimeout(() => {
@@ -220,22 +216,6 @@ const Index = () => {
       setExiting(false);
       setEntered(false);
     }, 1000);
-  }, []);
-
-  const handleEnterJournal = useCallback(() => {
-    setJournalTransition(true);
-    setTimeout(() => {
-      setIsJournalMode(true);
-      setJournalTransition(false);
-    }, 600);
-  }, []);
-
-  const handleExitJournal = useCallback(() => {
-    setJournalTransition(true);
-    setTimeout(() => {
-      setIsJournalMode(false);
-      setJournalTransition(false);
-    }, 600);
   }, []);
 
   const tt = ttStyle(T);
@@ -286,25 +266,7 @@ const Index = () => {
     );
   }
 
-  // ═══ JOURNAL DIMENSION ═══
-  if (isJournalMode) {
-    return (
-      <>
-        <AnimatePresence>
-          {journalTransition && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              style={{ position: 'fixed', inset: 0, zIndex: 9999, background: '#fff', mixBlendMode: 'overlay' }}
-            />
-          )}
-        </AnimatePresence>
-        <JournalShell onExit={handleExitJournal} trades={trades} isRTL={isRTL} />
-      </>
-    );
-  }
-
+  // Privacy wrapper
   const PV = ({ children, type = 'dollar' }: { children: React.ReactNode; type?: 'dollar' | 'percent' | 'number' }) => (
     <PrivacyMask enabled={settings.privacyMode} type={type}>{children}</PrivacyMask>
   );
@@ -1195,32 +1157,6 @@ const Index = () => {
           </div>
         </div>
       )}
-      {/* Warp Transition Overlay */}
-      <AnimatePresence>
-        {journalTransition && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4 }}
-            style={{
-              position: 'fixed', inset: 0, zIndex: 9999,
-              background: 'radial-gradient(circle at center, rgba(0,255,198,0.15) 0%, rgba(5,7,13,0.95) 70%)',
-              backdropFilter: 'blur(20px)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
-          >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: [0.8, 1.1, 1], opacity: [0, 1, 0.8] }}
-              transition={{ duration: 0.5 }}
-              style={{ fontSize: 14, color: '#00FFC6', letterSpacing: '0.3em', textTransform: 'uppercase', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}
-            >
-              {isJournalMode ? 'RETURNING TO ORCA' : 'ENTERING JOURNAL'}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
       {/* MOBILE SIDEBAR OVERLAY */}
       {isMobile && sbOpen && (
         <div onClick={() => setSbOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 40, backdropFilter: 'blur(2px)' }} />
@@ -1258,33 +1194,6 @@ const Index = () => {
             </button>
             );
           })}
-          {/* ─── Journal Portal ─── */}
-          <button
-            onClick={() => { handleEnterJournal(); if (isMobile) setSbOpen(false); }}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 10,
-              padding: (sbOpen || isMobile) ? '10px 10px' : '10px 0',
-              justifyContent: (sbOpen || isMobile) ? 'flex-start' : 'center',
-              background: 'linear-gradient(135deg, rgba(0, 255, 198, 0.06), rgba(123, 97, 255, 0.04))',
-              border: '1px solid rgba(0, 255, 198, 0.15)',
-              borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13,
-              fontWeight: 600, color: '#00FFC6', width: '100%',
-              textAlign: isRTL ? 'right' : 'left',
-              transition: 'all 0.3s ease', marginTop: 8,
-              boxShadow: '0 0 12px rgba(0, 255, 198, 0.08)',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 255, 198, 0.12), rgba(123, 97, 255, 0.08))';
-              e.currentTarget.style.boxShadow = '0 0 20px rgba(0, 255, 198, 0.15)';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 255, 198, 0.06), rgba(123, 97, 255, 0.04))';
-              e.currentTarget.style.boxShadow = '0 0 12px rgba(0, 255, 198, 0.08)';
-            }}
-          >
-            <span style={{ fontSize: 18 }}>🧠</span>
-            {(sbOpen || isMobile) && <span>{isRTL ? 'יומן מסחר' : 'Trading Journal'}</span>}
-          </button>
           {/* Info / About button */}
           <button onClick={() => setShowFeatureModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: (sbOpen || isMobile) ? '9px 10px' : '9px 0', justifyContent: (sbOpen || isMobile) ? 'flex-start' : 'center', background: 'transparent', color: T.text.dim, border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: 400, transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: '2px solid transparent', marginTop: 4 }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
