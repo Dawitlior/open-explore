@@ -3,7 +3,6 @@ import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, Cartesia
 import type { Trade } from '@/data/trades';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-
 import { computeAnalytics, getCalDays } from '@/lib/trading-analytics';
 import { i18n } from '@/lib/trading-i18n';
 import { getTheme, ttStyle, modeColors, type TradingTheme } from '@/lib/trading-theme';
@@ -25,6 +24,8 @@ import { AdvancedAnalyticsPage } from '@/components/trading/AdvancedAnalyticsPag
 import { AdvancedPsychologyPage } from '@/components/trading/AdvancedPsychologyPage';
 import { WeeklyReviewPage } from '@/components/trading/WeeklyReviewPage';
 import { InstallPrompt } from '@/components/trading/InstallPrompt';
+import { DimensionController, PortalButton } from '@/components/trading/DimensionController';
+import { JournalDimension } from '@/components/trading/JournalDimension';
 import { useTrades } from '@/hooks/use-trades';
 import { useSettings, type ThemeId } from '@/hooks/use-settings';
 import { assessRisk } from '@/lib/risk-engine';
@@ -37,6 +38,7 @@ const Index = () => {
   const settings = useSettings();
   const { trades, stats, loading, initialized, addTrade, updateTrade, removeTrade, resetAll, importTrades, riskAlert, dismissRiskAlert } = useTrades();
   const [entered, setEntered] = useState(() => sessionStorage.getItem('orca-entered') === '1');
+  const [activeDimension, setActiveDimension] = useState<'orca' | 'journal'>('orca');
   const T = getTheme(settings.theme);
   const t = i18n[settings.lang];
   const isRTL = settings.isRTL;
@@ -240,6 +242,7 @@ const Index = () => {
     { id: 'review', label: isRTL ? 'מצב סקירה' : 'Switch to Review Mode', icon: '🔵', category: isRTL ? 'מצבים' : 'Modes', action: () => settings.setOperatingMode('review') },
     { id: 'research', label: isRTL ? 'מצב מחקר' : 'Switch to Research Mode', icon: '🟣', category: isRTL ? 'מצבים' : 'Modes', action: () => settings.setOperatingMode('research') },
     { id: 'alpha', label: isRTL ? 'הפעל Alpha' : 'Toggle Alpha Mode', icon: '⚡', category: isRTL ? 'מצבים' : 'Modes', action: () => settings.setSystemMode(isAlpha ? 'standard' : 'alpha') },
+    { id: 'journal-sanctuary', label: isRTL ? 'כניסה למקדש' : 'Enter Journal Sanctuary', icon: '🏛️', category: isRTL ? 'ממדים' : 'Dimensions', action: () => setActiveDimension('journal') },
   ], [isRTL, handleExport, handleImport, handleGenerateInsights, isAlpha, settings]);
 
   const nav = [
@@ -1146,8 +1149,22 @@ const Index = () => {
   };
 
 
+  // Portal pulse animation
+  const portalCSS = `@keyframes portalPulse { 0%,100% { opacity: 0.3; } 50% { opacity: 0.8; } }`;
+
+  if (activeDimension === 'journal') {
+    return (
+      <DimensionController
+        activeDimension="journal"
+        orcaUI={<div />}
+        journalUI={<JournalDimension onReturn={() => setActiveDimension('orca')} isRTL={isRTL} orcaTrades={trades} />}
+      />
+    );
+  }
+
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden', background: T.bg.primary, color: T.text.primary, fontFamily: "'Inter', system-ui, -apple-system, sans-serif", fontSize: 14, transition: 'background 0.5s ease, color 0.5s ease, filter 0.5s ease, opacity 0.5s ease', opacity: exiting ? 0 : 1, filter: exiting ? 'blur(8px)' : 'none' }}>
+      <style>{portalCSS}</style>
       {/* Exit animation overlay */}
       {exiting && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9998, background: 'rgba(3,5,8,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'fadeIn 0.3s ease' }}>
@@ -1208,6 +1225,8 @@ const Index = () => {
             {(sbOpen || isMobile) && <span>{isRTL ? 'קהילת Discord' : 'Discord Community'}</span>}
           </a>
         </nav>
+        {/* Journal Portal Button */}
+        {(sbOpen || isMobile) && <div style={{ padding: '4px 6px' }}><PortalButton onClick={() => setActiveDimension('journal')} isRTL={isRTL} expanded={true} /></div>}
         {/* Install to Desktop */}
         {(sbOpen || isMobile) && <div style={{ padding: '4px 6px' }}><InstallPrompt T={T} isRTL={isRTL} compact /></div>}
         <div style={{ padding: 10, borderTop: `1px solid ${T.border.subtle}`, display: 'flex', flexDirection: 'column', gap: 4 }}>
