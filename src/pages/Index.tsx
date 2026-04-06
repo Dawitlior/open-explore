@@ -3,7 +3,6 @@ import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, Cartesia
 import type { Trade } from '@/data/trades';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-
 import { computeAnalytics, getCalDays } from '@/lib/trading-analytics';
 import { i18n } from '@/lib/trading-i18n';
 import { getTheme, ttStyle, modeColors, type TradingTheme } from '@/lib/trading-theme';
@@ -25,6 +24,8 @@ import { AdvancedAnalyticsPage } from '@/components/trading/AdvancedAnalyticsPag
 import { AdvancedPsychologyPage } from '@/components/trading/AdvancedPsychologyPage';
 import { WeeklyReviewPage } from '@/components/trading/WeeklyReviewPage';
 import { InstallPrompt } from '@/components/trading/InstallPrompt';
+import { DimensionController, PortalButton } from '@/components/trading/DimensionController';
+import { JournalDimension } from '@/components/trading/JournalDimension';
 import { useTrades } from '@/hooks/use-trades';
 import { useSettings, type ThemeId } from '@/hooks/use-settings';
 import { assessRisk } from '@/lib/risk-engine';
