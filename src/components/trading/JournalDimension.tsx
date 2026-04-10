@@ -240,6 +240,7 @@ const EmoSlider = ({ val, set, label, dir, disabled }: any) => {
   );
 };
 
+
 const Scores = ({ val, set, disabled }: any) => (
   <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' as const }}>
     {Array.from({ length: 10 }, (_, i) => i + 1).map(n => {
