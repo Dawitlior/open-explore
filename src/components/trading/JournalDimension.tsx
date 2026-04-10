@@ -196,7 +196,7 @@ const MarketStrip = ({ day, dir }: { day: JournalDay; dir: string }) => {
   ];
 
   return (
-    <div style={{ display: 'flex', gap: 8, padding: '10px 0', overflowX: 'auto', direction: dir }}>
+    <div style={{ display: 'flex', gap: 8, padding: '10px 0', overflowX: 'auto' as const, direction: dir as 'ltr' | 'rtl' }}>
       {badges.map(b => (
         <div key={b.label} style={{
           display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px',
