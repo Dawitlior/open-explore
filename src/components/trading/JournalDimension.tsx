@@ -4,7 +4,7 @@ import { readJournalState, writeJournalState, type JournalDay, type JournalTrade
 import { ReturnButton } from './DimensionController';
 
 // ═══════════════════════════════════════════════════════════════
-// TRANSLATIONS
+// TRANSLATIONS (UNCHANGED)
 // ═══════════════════════════════════════════════════════════════
 const TR: Record<string, any> = {
   en: {
@@ -90,7 +90,7 @@ const TR: Record<string, any> = {
 };
 
 // ═══════════════════════════════════════════════════════════════
-// HELPERS
+// HELPERS (UNCHANGED)
 // ═══════════════════════════════════════════════════════════════
 const makeDay = (lang = 'he'): JournalDay => {
   const t = TR[lang];
@@ -125,75 +125,114 @@ const fmtShort = (iso: string, locale: string) => {
 const MORNING_KEYS = new Set(['mood','plan','tasks','goals','bias','mktStruct','mentalTags','btcNote','t3Note','domNote','macroNote','levels','setups','emotionScore','fearGreed','dayNum','weekNum','date']);
 
 // ═══════════════════════════════════════════════════════════════
-// MICRO ATOMS
+// MICRO ATOMS — DARK INSTITUTIONAL THEME
 // ═══════════════════════════════════════════════════════════════
 const Lbl = ({ c, dir }: { c: string; dir: string }) => (
-  <span style={{ fontFamily: 'var(--j-mono)', fontSize: '9.5px', fontWeight: 600, letterSpacing: '1.8px', textTransform: 'uppercase' as const, color: 'var(--j-tx3)', marginBottom: 5, display: 'block', textAlign: dir === 'rtl' ? 'right' : 'left' }}>{c}</span>
+  <span style={{ fontFamily: 'var(--j-mono)', fontSize: '9.5px', fontWeight: 600, letterSpacing: '2px', textTransform: 'uppercase' as const, color: 'var(--j-tx3)', marginBottom: 6, display: 'block', textAlign: dir === 'rtl' ? 'right' : 'left' }}>{c}</span>
 );
 
 const TA = ({ val, set, ph, rows = 4, dir, disabled }: any) => (
   <textarea value={val} rows={rows} disabled={disabled}
     onChange={e => set?.(e.target.value)} placeholder={ph}
-    style={{ width: '100%', background: 'rgba(255,255,255,0.9)', border: '1.5px solid var(--j-br)', borderRadius: '6px', color: 'var(--j-tx)', fontFamily: 'var(--j-sans)', fontSize: 13, outline: 'none', padding: '9px 11px', lineHeight: 1.75, resize: 'vertical' as const, direction: dir, textAlign: dir === 'rtl' ? 'right' : 'left', transition: 'border-color .18s,box-shadow .18s' }} />
+    style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'var(--j-tx)', fontFamily: 'var(--j-sans)', fontSize: 13, outline: 'none', padding: '10px 12px', lineHeight: 1.75, resize: 'vertical' as const, direction: dir, textAlign: dir === 'rtl' ? 'right' : 'left', transition: 'border-color .2s, box-shadow .2s, background .2s', backdropFilter: 'blur(8px)' }} />
 );
 
 const IN = ({ val, set, ph, dir, disabled, style = {} }: any) => (
   <input value={val} disabled={disabled}
     onChange={e => set?.(e.target.value)} placeholder={ph}
-    style={{ width: '100%', background: 'rgba(255,255,255,0.9)', border: '1.5px solid var(--j-br)', borderRadius: '6px', color: 'var(--j-tx)', fontFamily: 'var(--j-sans)', fontSize: 13, outline: 'none', padding: '8px 11px', direction: dir, textAlign: dir === 'rtl' ? 'right' : 'left', transition: 'border-color .18s,box-shadow .18s', ...style }} />
+    style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'var(--j-tx)', fontFamily: 'var(--j-sans)', fontSize: 13, outline: 'none', padding: '9px 12px', direction: dir, textAlign: dir === 'rtl' ? 'right' : 'left', transition: 'border-color .2s, box-shadow .2s, background .2s', backdropFilter: 'blur(8px)', ...style }} />
 );
 
 const Sec = ({ title, icon, accent = 'var(--j-b)', children, open: initOpen = true }: any) => {
   const [open, setOpen] = useState(initOpen);
   return (
-    <div style={{ background: 'var(--j-bg1)', border: '1px solid var(--j-br)', borderRadius: 10, marginBottom: 9, overflow: 'hidden' }}>
+    <div style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, marginBottom: 10, overflow: 'hidden', backdropFilter: 'blur(12px)', transition: 'box-shadow .25s', boxShadow: open ? `0 0 20px ${accent}08` : 'none' }}>
       <div onClick={() => setOpen((o: boolean) => !o)}
-        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 15px', cursor: 'pointer', userSelect: 'none' as const, transition: 'background .15s', background: open ? `linear-gradient(90deg,${accent}18,transparent 55%)` : '' }}>
+        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', cursor: 'pointer', userSelect: 'none' as const, transition: 'background .2s', background: open ? `linear-gradient(90deg,${accent}12,transparent 60%)` : 'transparent' }}>
         <span style={{ fontSize: 14 }}>{icon}</span>
-        <span style={{ fontFamily: 'var(--j-mono)', fontSize: '9.8px', fontWeight: 600, letterSpacing: '1.8px', textTransform: 'uppercase' as const, color: '#5a6888', flex: 1 }}>{title}</span>
-        <span style={{ color: accent, fontSize: 11, transition: 'transform .2s', transform: open ? 'none' : 'rotate(-90deg)' }}>▾</span>
+        <span style={{ fontFamily: 'var(--j-mono)', fontSize: '10px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase' as const, color: 'rgba(255,255,255,0.45)', flex: 1 }}>{title}</span>
+        <span style={{ color: accent, fontSize: 11, transition: 'transform .25s ease', transform: open ? 'none' : 'rotate(-90deg)' }}>▾</span>
       </div>
-      {open && <div style={{ padding: 14 }}>{children}</div>}
+      <div style={{ maxHeight: open ? '2000px' : '0', overflow: 'hidden', transition: 'max-height .4s ease, opacity .3s ease', opacity: open ? 1 : 0 }}>
+        <div style={{ padding: 15 }}>{children}</div>
+      </div>
     </div>
   );
 };
 
 const Chk = ({ item, toggle, color, dir, disabled }: any) => (
   <div onClick={() => !disabled && toggle?.()}
-    style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '6px 0', borderBottom: '1px solid rgba(15,23,42,.06)', cursor: disabled ? 'default' : 'pointer', direction: dir }}>
-    <div style={{ width: 16, height: 16, borderRadius: 5, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all .15s', border: `2px solid ${item.done ? color : 'var(--j-tx3)'}`, background: item.done ? `${color}22` : 'none' }}>
+    style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 0', borderBottom: '1px solid rgba(255,255,255,0.04)', cursor: disabled ? 'default' : 'pointer', direction: dir, transition: 'background .15s' }}>
+    <div style={{ width: 17, height: 17, borderRadius: 5, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all .2s', border: `2px solid ${item.done ? color : 'rgba(255,255,255,0.2)'}`, background: item.done ? `${color}20` : 'transparent', boxShadow: item.done ? `0 0 8px ${color}30` : 'none' }}>
       {item.done && <span style={{ fontSize: 9, color, fontWeight: 700 }}>✓</span>}
     </div>
-    <span style={{ fontSize: 12.5, color: item.done ? `${color}99` : 'var(--j-tx2)', textDecoration: item.done ? 'line-through' : 'none', transition: 'all .15s' }}>{item.label}</span>
+    <span style={{ fontSize: 12.5, color: item.done ? `${color}88` : 'rgba(255,255,255,0.65)', textDecoration: item.done ? 'line-through' : 'none', transition: 'all .15s' }}>{item.label}</span>
   </div>
 );
 
 const PDiv = ({ label, color, icon }: any) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: 11, margin: '18px 0 14px' }}>
-    <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg,transparent,${color}40)` }} />
-    <div style={{ fontFamily: 'var(--j-mono)', fontSize: 9, fontWeight: 700, letterSpacing: '2.2px', textTransform: 'uppercase' as const, padding: '5px 13px', borderRadius: 18, color, border: `1px solid ${color}30`, background: `${color}0d` }}>{icon} {label}</div>
-    <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg,${color}40,transparent)` }} />
+  <div style={{ display: 'flex', alignItems: 'center', gap: 11, margin: '22px 0 16px' }}>
+    <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg,transparent,${color}35)` }} />
+    <div style={{ fontFamily: 'var(--j-mono)', fontSize: 9, fontWeight: 700, letterSpacing: '2.5px', textTransform: 'uppercase' as const, padding: '6px 16px', borderRadius: 20, color, border: `1px solid ${color}25`, background: `${color}0a`, boxShadow: `0 0 15px ${color}15` }}>{icon} {label}</div>
+    <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg,${color}35,transparent)` }} />
   </div>
 );
+
+// ═══════════════════════════════════════════════════════════════
+// MARKET OVERVIEW STRIP
+// ═══════════════════════════════════════════════════════════════
+const MarketStrip = ({ day, dir }: { day: JournalDay; dir: string }) => {
+  const emo = day.emotionScore;
+  const emoColor = emo >= 8 ? '#00FFA3' : emo >= 5 ? '#FFC857' : '#FF4D4D';
+  const fg = parseInt(day.fearGreed) || 0;
+  const fgColor = fg <= 30 ? '#FF4D4D' : fg <= 60 ? '#FFC857' : '#00FFA3';
+  const fgLabel = fg <= 20 ? 'Extreme Fear' : fg <= 40 ? 'Fear' : fg <= 60 ? 'Neutral' : fg <= 80 ? 'Greed' : 'Extreme Greed';
+
+  const badges = [
+    { label: dir === 'rtl' ? 'כיוון' : 'BIAS', value: day.bias || '—', color: day.bias?.includes('ull') || day.bias?.includes('שורי') ? '#00FFA3' : day.bias?.includes('ear') || day.bias?.includes('דובי') ? '#FF4D4D' : '#FFC857' },
+    { label: dir === 'rtl' ? 'מבנה' : 'STRUCTURE', value: day.mktStruct || '—', color: '#5AA9FF' },
+    { label: dir === 'rtl' ? 'רגש' : 'EMOTION', value: `${emo}/10`, color: emoColor },
+    { label: dir === 'rtl' ? 'פחד/תאוות בצע' : 'F&G', value: day.fearGreed ? `${fg} · ${fgLabel}` : '—', color: fgColor },
+  ];
+
+  return (
+    <div style={{ display: 'flex', gap: 8, padding: '10px 0', overflowX: 'auto' as const, direction: dir as 'ltr' | 'rtl' }}>
+      {badges.map(b => (
+        <div key={b.label} style={{
+          display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px',
+          background: `${b.color}08`, border: `1px solid ${b.color}20`,
+          borderRadius: 10, flexShrink: 0, backdropFilter: 'blur(8px)',
+          transition: 'all .2s',
+        }}>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: b.color, boxShadow: `0 0 8px ${b.color}60`, animation: 'j-pulse 2.5s ease-in-out infinite' }} />
+          <div>
+            <div style={{ fontFamily: 'var(--j-mono)', fontSize: 8, fontWeight: 700, letterSpacing: '1.8px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' as const }}>{b.label}</div>
+            <div style={{ fontFamily: 'var(--j-mono)', fontSize: 12, fontWeight: 700, color: b.color, marginTop: 1 }}>{b.value}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 // ═══════════════════════════════════════════════════════════════
 // EMOTION SLIDER
 // ═══════════════════════════════════════════════════════════════
 const EmoSlider = ({ val, set, label, dir, disabled }: any) => {
-  const c = val >= 8 ? 'var(--j-g)' : val >= 5 ? 'var(--j-a)' : 'var(--j-r)';
+  const c = val >= 8 ? '#00FFA3' : val >= 5 ? '#FFC857' : '#FF4D4D';
   const e = val >= 9 ? '🔥' : val >= 7 ? '💪' : val >= 5 ? '😐' : val >= 3 ? '😔' : '💀';
   return (
     <div style={{ direction: dir }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
         <Lbl c={label} dir={dir} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <span style={{ fontSize: 16 }}>{e}</span>
-          <span style={{ fontFamily: 'var(--j-mono)', fontSize: 21, fontWeight: 700, color: c, lineHeight: 1 }}>{val}</span>
-          <span style={{ fontFamily: 'var(--j-mono)', fontSize: 10, color: 'var(--j-tx3)' }}>/10</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 18 }}>{e}</span>
+          <span style={{ fontFamily: 'var(--j-mono)', fontSize: 24, fontWeight: 800, color: c, lineHeight: 1, textShadow: `0 0 20px ${c}50` }}>{val}</span>
+          <span style={{ fontFamily: 'var(--j-mono)', fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>/10</span>
         </div>
       </div>
-      <div style={{ height: 3, background: 'var(--j-bg3)', borderRadius: 2, overflow: 'hidden', marginBottom: 6 }}>
-        <div style={{ height: '100%', width: `${((val - 1) / 9) * 100}%`, background: 'linear-gradient(90deg,var(--j-r),var(--j-a),var(--j-g))', transition: 'width .2s', borderRadius: 2 }} />
+      <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden', marginBottom: 8 }}>
+        <div style={{ height: '100%', width: `${((val - 1) / 9) * 100}%`, background: `linear-gradient(90deg,#FF4D4D,#FFC857,#00FFA3)`, transition: 'width .3s ease', borderRadius: 2, boxShadow: `0 0 10px ${c}40` }} />
       </div>
       <input type="range" min={1} max={10} value={val} disabled={disabled}
         onChange={e => set?.(+e.target.value)} style={{ width: '100%', accentColor: c, cursor: disabled ? 'not-allowed' : 'pointer' }} />
@@ -201,17 +240,18 @@ const EmoSlider = ({ val, set, label, dir, disabled }: any) => {
   );
 };
 
+
 const Scores = ({ val, set, disabled }: any) => (
-  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' as const }}>
+  <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' as const }}>
     {Array.from({ length: 10 }, (_, i) => i + 1).map(n => {
       const on = val >= n, h = (n / 10) * 120;
       return (
         <button key={n} onClick={() => !disabled && set?.(n)} style={{
-          width: 29, height: 29, borderRadius: 6, border: 'none', fontFamily: 'var(--j-mono)',
-          cursor: disabled ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: 11,
-          background: on ? `hsla(${h},70%,46%,.9)` : 'rgba(15,23,42,.05)',
-          color: on ? '#fff' : 'var(--j-tx3)', transition: 'all .12s',
-          boxShadow: on ? `0 2px 8px hsla(${h},70%,44%,.4)` : 'none',
+          width: 32, height: 32, borderRadius: 8, border: 'none', fontFamily: 'var(--j-mono)',
+          cursor: disabled ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: 12,
+          background: on ? `hsla(${h},70%,46%,.85)` : 'rgba(255,255,255,0.04)',
+          color: on ? '#fff' : 'rgba(255,255,255,0.25)', transition: 'all .15s',
+          boxShadow: on ? `0 0 12px hsla(${h},70%,44%,.5)` : 'none',
         }}>{n}</button>
       );
     })}
@@ -223,13 +263,13 @@ const Scores = ({ val, set, disabled }: any) => (
 // ═══════════════════════════════════════════════════════════════
 const FGGauge = ({ value }: { value: number }) => {
   const v = Math.min(100, Math.max(0, value || 0));
-  const color = v <= 20 ? '#ef4444' : v <= 40 ? '#f97316' : v <= 60 ? '#eab308' : v <= 80 ? '#84cc16' : '#22c55e';
+  const color = v <= 20 ? '#FF4D4D' : v <= 40 ? '#f97316' : v <= 60 ? '#FFC857' : v <= 80 ? '#84cc16' : '#00FFA3';
   const label = v <= 20 ? 'Extreme Fear' : v <= 40 ? 'Fear' : v <= 60 ? 'Neutral' : v <= 80 ? 'Greed' : 'Extreme Greed';
   const rad = (d: number) => d * Math.PI / 180;
   const cx = 75, cy = 72, R = 54, ri = 38;
   const segs = [
-    { s: -180, e: -144, c: '#ef4444' }, { s: -144, e: -108, c: '#f97316' },
-    { s: -108, e: -72, c: '#eab308' }, { s: -72, e: -36, c: '#84cc16' }, { s: -36, e: 0, c: '#22c55e' }
+    { s: -180, e: -144, c: '#FF4D4D' }, { s: -144, e: -108, c: '#f97316' },
+    { s: -108, e: -72, c: '#FFC857' }, { s: -72, e: -36, c: '#84cc16' }, { s: -36, e: 0, c: '#00FFA3' }
   ];
   const arc = (s: number, e: number) => {
     const sr = rad(s), er = rad(e), lf = e - s > 180 ? 1 : 0;
@@ -240,13 +280,13 @@ const FGGauge = ({ value }: { value: number }) => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <svg width="150" height="82" viewBox="0 0 150 82">
-        {segs.map((s, i) => <path key={i} d={arc(s.s, s.e)} fill={s.c} opacity={0.9} />)}
-        <line x1={cx} y1={cy} x2={cx + 46 * Math.cos(nr)} y2={cy + 46 * Math.sin(nr)} stroke="var(--j-tx)" strokeWidth={2.5} strokeLinecap="round" />
-        <circle cx={cx} cy={cy} r={5} fill="var(--j-tx)" />
+        {segs.map((s, i) => <path key={i} d={arc(s.s, s.e)} fill={s.c} opacity={0.85} />)}
+        <line x1={cx} y1={cy} x2={cx + 46 * Math.cos(nr)} y2={cy + 46 * Math.sin(nr)} stroke="rgba(255,255,255,0.9)" strokeWidth={2.5} strokeLinecap="round" style={{ filter: `drop-shadow(0 0 4px ${color})` }} />
+        <circle cx={cx} cy={cy} r={5} fill="rgba(255,255,255,0.9)" />
       </svg>
       <div style={{ textAlign: 'center', marginTop: -6 }}>
-        <div style={{ fontFamily: 'var(--j-mono)', fontSize: 19, fontWeight: 700, color, lineHeight: 1 }}>{v}</div>
-        <div style={{ fontFamily: 'var(--j-mono)', fontSize: '8.5px', color, letterSpacing: 1, textTransform: 'uppercase' as const, marginTop: 2 }}>{label}</div>
+        <div style={{ fontFamily: 'var(--j-mono)', fontSize: 20, fontWeight: 800, color, lineHeight: 1, textShadow: `0 0 15px ${color}50` }}>{v}</div>
+        <div style={{ fontFamily: 'var(--j-mono)', fontSize: '8.5px', color, letterSpacing: 1, textTransform: 'uppercase' as const, marginTop: 3, opacity: 0.8 }}>{label}</div>
       </div>
     </div>
   );
@@ -257,26 +297,33 @@ const FGGauge = ({ value }: { value: number }) => {
 // ═══════════════════════════════════════════════════════════════
 const TCard = ({ trade, idx, onChange, onDel, f, dir, disabled }: any) => {
   const p = parseFloat(trade.pnl) || 0;
-  const sc = trade.side === 'LONG' ? 'var(--j-g)' : trade.side === 'SHORT' ? 'var(--j-r)' : 'var(--j-b)';
+  const sc = trade.side === 'LONG' ? '#00FFA3' : trade.side === 'SHORT' ? '#FF4D4D' : '#5AA9FF';
   return (
-    <div style={{ background: 'rgba(15,23,42,.025)', border: '1px solid var(--j-br)', borderRadius: 10, padding: 13, marginBottom: 9, borderInlineStart: `3px solid ${sc}` }}>
+    <div style={{
+      background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: 14, marginBottom: 10,
+      borderInlineStart: `3px solid ${sc}`, backdropFilter: 'blur(8px)',
+      transition: 'all .25s ease', boxShadow: `0 0 0 0 ${sc}00`,
+    }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 20px ${sc}15`; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = `0 0 0 0 ${sc}00`; (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}
+    >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, direction: dir }}>
-        <span style={{ fontFamily: 'var(--j-mono)', fontSize: 9, color: 'var(--j-tx3)', letterSpacing: 1 }}>{f.tradeN} #{idx + 1}</span>
+        <span style={{ fontFamily: 'var(--j-mono)', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1.2 }}>{f.tradeN} #{idx + 1}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {p !== 0 && <span style={{ fontFamily: 'var(--j-mono)', fontSize: 13, fontWeight: 700, color: p > 0 ? 'var(--j-g)' : 'var(--j-r)' }}>{p > 0 ? '+' : ''}{p.toFixed(2)}$</span>}
-          {!disabled && <button onClick={onDel} style={{ background: 'rgba(220,38,38,.1)', border: '1px solid rgba(240,64,90,.2)', color: 'var(--j-r)', padding: '5px 10px', fontSize: 11, borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}>✕ {f.del}</button>}
+          {p !== 0 && <span style={{ fontFamily: 'var(--j-mono)', fontSize: 14, fontWeight: 800, color: p > 0 ? '#00FFA3' : '#FF4D4D', textShadow: p > 0 ? '0 0 12px rgba(0,255,163,0.4)' : '0 0 12px rgba(255,77,77,0.4)' }}>{p > 0 ? '+' : ''}{p.toFixed(2)}$</span>}
+          {!disabled && <button onClick={onDel} style={{ background: 'rgba(255,77,77,.1)', border: '1px solid rgba(255,77,77,.2)', color: '#FF4D4D', padding: '5px 10px', fontSize: 11, borderRadius: 6, cursor: 'pointer', fontWeight: 600, transition: 'all .15s' }}>✕ {f.del}</button>}
         </div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 7, marginBottom: 9 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginBottom: 10 }}>
         {[['ins','pair','BTC/USDT'],['en','entry','95000'],['ex','exit','97000'],['sz','size','0.1'],['pnl','pnl','+200'],['rr','rr','1:3']].map(([lKey, k, ph]: any) => (
           <div key={k}><Lbl c={f[lKey]} dir={dir} /><IN val={trade[k] || ''} set={(v: string) => onChange?.({ ...trade, [k]: v })} ph={ph} dir={dir} disabled={disabled} /></div>
         ))}
       </div>
       {!disabled && (
-        <div style={{ display: 'flex', gap: 5, marginBottom: 8 }}>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 9 }}>
           {['LONG', 'SHORT', 'MISSED'].map(s => (
             <button key={s} onClick={() => onChange?.({ ...trade, side: s })}
-              style={{ fontFamily: 'var(--j-mono)', fontSize: '9.5px', fontWeight: 600, letterSpacing: '.9px', textTransform: 'uppercase' as const, borderRadius: 20, padding: '4px 13px', cursor: 'pointer', transition: 'all .15s', ...(trade.side === s ? { background: s === 'LONG' ? 'var(--j-g)' : s === 'SHORT' ? 'var(--j-r)' : 'var(--j-b)', color: '#fff', border: 'none' } : { background: 'rgba(15,23,42,.04)', border: '1.5px solid var(--j-br)', color: 'var(--j-tx3)' }) }}>
+              style={{ fontFamily: 'var(--j-mono)', fontSize: '9.5px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' as const, borderRadius: 20, padding: '5px 14px', cursor: 'pointer', transition: 'all .2s', ...(trade.side === s ? { background: s === 'LONG' ? '#00FFA3' : s === 'SHORT' ? '#FF4D4D' : '#5AA9FF', color: '#0a0e1a', border: 'none', boxShadow: `0 0 12px ${s === 'LONG' ? 'rgba(0,255,163,0.3)' : s === 'SHORT' ? 'rgba(255,77,77,0.3)' : 'rgba(90,169,255,0.3)'}` } : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)' }) }}>
               {s}
             </button>
           ))}
@@ -289,64 +336,65 @@ const TCard = ({ trade, idx, onChange, onDel, f, dir, disabled }: any) => {
 };
 
 // ═══════════════════════════════════════════════════════════════
-// MORNING FORM
+// MORNING FORM — "PRE-MARKET BRIEFING"
 // ═══════════════════════════════════════════════════════════════
 const MorningForm = ({ day, upd, t, dir, onSave, dirty }: any) => {
   const f = t.f;
   const U = (k: string) => (v: any) => upd({ [k]: v });
   const taskArr = day.tasks || [];
   const done = taskArr.filter((x: any) => x.done).length;
-  const BC = ['linear-gradient(135deg,var(--j-g),#0a9e76)', 'linear-gradient(135deg,var(--j-r),#c02040)', 'linear-gradient(135deg,var(--j-b),#2a6fd4)', 'linear-gradient(135deg,var(--j-a),#c48010)', 'linear-gradient(135deg,var(--j-p),#5820b8)'];
+  const BC = ['linear-gradient(135deg,#00FFA3,#0a9e76)', 'linear-gradient(135deg,#FF4D4D,#c02040)', 'linear-gradient(135deg,#5AA9FF,#2a6fd4)', 'linear-gradient(135deg,#FFC857,#c48010)', 'linear-gradient(135deg,#9968f8,#5820b8)'];
 
   return (
     <div>
-      <PDiv label={t.m.phase} color="var(--j-g)" icon="🌅" />
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 11 }}>
+      <PDiv label={dir === 'rtl' ? 'תדריך טרום-שוק' : 'PRE-MARKET BRIEFING'} color="#00FFA3" icon="🌅" />
+      <MarketStrip day={day} dir={dir} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 12 }}>
         <div>
-          <Sec title={f.moodTitle} icon="💭" accent="var(--j-a)">
+          <Sec title={f.moodTitle} icon="💭" accent="#FFC857">
             <TA val={day.mood} set={U('mood')} ph={f.moodPh} rows={5} dir={dir} />
           </Sec>
-          <Sec title={f.planTitle} icon="🎯" accent="var(--j-b)">
+          <Sec title={f.planTitle} icon="🎯" accent="#5AA9FF">
             <TA val={day.plan} set={U('plan')} ph={f.planPh} rows={5} dir={dir} />
           </Sec>
-          <Sec title={f.checklist} icon="✅" accent="var(--j-g)">
+          <Sec title={f.checklist} icon="✅" accent="#00FFA3">
             {(day.tasks || []).map((tk: any, i: number) => (
-              <Chk key={i} item={tk} color="var(--j-g)" dir={dir}
+              <Chk key={i} item={tk} color="#00FFA3" dir={dir}
                 toggle={() => upd({ tasks: (day.tasks || []).map((x: any, j: number) => j === i ? { ...x, done: !x.done } : x) })} />
             ))}
-            <div style={{ marginTop: 9, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ flex: 1, height: 3, background: 'var(--j-bg3)', borderRadius: 2, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${taskArr.length ? (done / taskArr.length) * 100 : 0}%`, background: 'var(--j-g)', transition: 'width .4s', borderRadius: 2 }} />
+            <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${taskArr.length ? (done / taskArr.length) * 100 : 0}%`, background: 'linear-gradient(90deg,#00FFA3,#06d6a0)', transition: 'width .5s ease', borderRadius: 2, boxShadow: '0 0 8px rgba(0,255,163,0.3)' }} />
               </div>
-              <span style={{ fontFamily: 'var(--j-mono)', fontSize: '9.5px', color: 'var(--j-tx3)', fontWeight: 600 }}>{done}/{taskArr.length}</span>
+              <span style={{ fontFamily: 'var(--j-mono)', fontSize: '10px', color: '#00FFA3', fontWeight: 700 }}>{done}/{taskArr.length}</span>
             </div>
           </Sec>
-          <Sec title={f.goals} icon="🏆" accent="var(--j-a)" open={false}>
+          <Sec title={f.goals} icon="🏆" accent="#FFC857" open={false}>
             {(day.goals || []).map((g: any, i: number) => (
-              <Chk key={i} item={g} color="var(--j-a)" dir={dir}
+              <Chk key={i} item={g} color="#FFC857" dir={dir}
                 toggle={() => upd({ goals: (day.goals || []).map((x: any, j: number) => j === i ? { ...x, done: !x.done } : x) })} />
             ))}
           </Sec>
         </div>
         <div>
-          <Sec title={`${f.biasTitle} & ${f.phaseTitle}`} icon="📊" accent="var(--j-g)">
-            <div style={{ marginBottom: 13 }}>
+          <Sec title={`${f.biasTitle} & ${f.phaseTitle}`} icon="📊" accent="#00FFA3">
+            <div style={{ marginBottom: 14 }}>
               <Lbl c={f.biasTitle} dir={dir} />
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' as const }}>
                 {t.bias.map((o: string, i: number) => (
                   <button key={o} onClick={() => upd({ bias: o })}
-                    style={{ fontFamily: 'var(--j-mono)', fontSize: '9.5px', fontWeight: 600, borderRadius: 20, padding: '4px 13px', cursor: 'pointer', transition: 'all .15s', ...(day.bias === o ? { background: BC[i], color: '#fff', border: 'none' } : { background: 'rgba(15,23,42,.04)', border: '1.5px solid var(--j-br)', color: 'var(--j-tx3)' }) }}>
+                    style={{ fontFamily: 'var(--j-mono)', fontSize: '9.5px', fontWeight: 700, borderRadius: 20, padding: '5px 14px', cursor: 'pointer', transition: 'all .2s', ...(day.bias === o ? { background: BC[i], color: '#0a0e1a', border: 'none', boxShadow: '0 2px 10px rgba(0,0,0,0.3)' } : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)' }) }}>
                     {o}
                   </button>
                 ))}
               </div>
             </div>
-            <div style={{ marginBottom: 13 }}>
+            <div style={{ marginBottom: 14 }}>
               <Lbl c={f.phaseTitle} dir={dir} />
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' as const }}>
                 {t.struct.map((o: string, i: number) => (
                   <button key={o} onClick={() => upd({ mktStruct: o })}
-                    style={{ fontFamily: 'var(--j-mono)', fontSize: '9.5px', fontWeight: 600, borderRadius: 20, padding: '4px 13px', cursor: 'pointer', transition: 'all .15s', ...(day.mktStruct === o ? { background: BC[i], color: '#fff', border: 'none' } : { background: 'rgba(15,23,42,.04)', border: '1.5px solid var(--j-br)', color: 'var(--j-tx3)' }) }}>
+                    style={{ fontFamily: 'var(--j-mono)', fontSize: '9.5px', fontWeight: 700, borderRadius: 20, padding: '5px 14px', cursor: 'pointer', transition: 'all .2s', ...(day.mktStruct === o ? { background: BC[i], color: '#0a0e1a', border: 'none', boxShadow: '0 2px 10px rgba(0,0,0,0.3)' } : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)' }) }}>
                     {o}
                   </button>
                 ))}
@@ -354,14 +402,14 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty }: any) => {
             </div>
             <div>
               <Lbl c={f.stateTitle} dir={dir} />
-              <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' as const }}>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' as const }}>
                 {t.states.map((s: string) => {
                   const on = (day.mentalTags || []).includes(s);
                   return (
                     <button key={s} onClick={() => {
                       const cur = day.mentalTags || [];
                       upd({ mentalTags: on ? cur.filter((x: string) => x !== s) : [...cur, s] });
-                    }} style={{ fontFamily: 'var(--j-sans)', fontSize: 11, fontWeight: 500, borderRadius: 8, padding: '5px 12px', cursor: 'pointer', transition: 'all .15s', ...(on ? { background: 'rgba(124,58,237,.1)', borderColor: 'rgba(153,104,248,.4)', color: '#6d28d9', border: '1.5px solid rgba(153,104,248,.4)' } : { background: 'rgba(15,23,42,.04)', border: '1.5px solid var(--j-br)', color: 'var(--j-tx3)' }) }}>
+                    }} style={{ fontFamily: 'var(--j-sans)', fontSize: 11, fontWeight: 600, borderRadius: 8, padding: '5px 13px', cursor: 'pointer', transition: 'all .2s', ...(on ? { background: 'rgba(153,104,248,.15)', border: '1px solid rgba(153,104,248,.35)', color: '#b794f6', boxShadow: '0 0 10px rgba(153,104,248,0.2)' } : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)' }) }}>
                       {s}
                     </button>
                   );
@@ -369,31 +417,31 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty }: any) => {
               </div>
             </div>
           </Sec>
-          <Sec title="Asset Analysis" icon="🪙" accent="var(--j-a)">
+          <Sec title="Asset Intelligence" icon="🪙" accent="#FFC857">
             {[
               { key: 'btcNote', lbl: f.btc, ph: f.btcPh, badge: '₿', c: '#f5a020' },
-              { key: 't3Note', lbl: f.t3, ph: f.t3Ph, badge: 'T3', c: '#9968f8' },
-              { key: 'domNote', lbl: f.dom, ph: f.domPh, badge: 'DOM', c: '#4a8ff4' },
-              { key: 'macroNote', lbl: f.macro, ph: f.macroPh, badge: 'M', c: '#00c896' },
+              { key: 't3Note', lbl: f.t3, ph: f.t3Ph, badge: 'T3', c: '#b794f6' },
+              { key: 'domNote', lbl: f.dom, ph: f.domPh, badge: 'DOM', c: '#5AA9FF' },
+              { key: 'macroNote', lbl: f.macro, ph: f.macroPh, badge: 'M', c: '#00FFA3' },
             ].map(({ key, lbl, ph, badge, c }) => (
-              <div key={key} style={{ marginBottom: 12, paddingInlineStart: 10, borderInlineStart: `2px solid ${c}28` }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5 }}>
-                  <span style={{ fontFamily: 'var(--j-mono)', fontSize: 8, fontWeight: 700, color: c, background: `${c}20`, padding: '2px 7px', borderRadius: 4 }}>{badge}</span>
+              <div key={key} style={{ marginBottom: 13, paddingInlineStart: 12, borderInlineStart: `2px solid ${c}25` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
+                  <span style={{ fontFamily: 'var(--j-mono)', fontSize: 8.5, fontWeight: 700, color: c, background: `${c}15`, padding: '3px 8px', borderRadius: 5, boxShadow: `0 0 8px ${c}15` }}>{badge}</span>
                   <Lbl c={lbl} dir={dir} />
                 </div>
                 <TA val={day[key] || ''} set={(v: string) => upd({ [key]: v })} ph={ph} rows={2} dir={dir} />
               </div>
             ))}
           </Sec>
-          <Sec title={f.levels} icon="🗺" accent="var(--j-b)">
+          <Sec title={f.levels} icon="🗺" accent="#5AA9FF">
             <TA val={day.levels} set={U('levels')} ph={f.levelsPh} rows={5} dir={dir} />
           </Sec>
-          <Sec title={f.setups} icon="🔍" accent="var(--j-b)">
+          <Sec title={f.setups} icon="🔍" accent="#5AA9FF">
             <TA val={day.setups} set={U('setups')} ph={f.setupsPh} rows={4} dir={dir} />
           </Sec>
-          <Sec title={`${f.emotion} & ${f.fg}`} icon="🧠" accent="var(--j-p)">
+          <Sec title={`${f.emotion} & ${f.fg}`} icon="🧠" accent="#b794f6">
             <EmoSlider val={day.emotionScore} set={U('emotionScore')} label={f.emotion} dir={dir} />
-            <div style={{ height: 1, background: 'var(--j-br)', margin: '13px 0' }} />
+            <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '14px 0' }} />
             <Lbl c={f.fg} dir={dir} />
             <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' as const }}>
               <IN val={day.fearGreed || ''} set={(v: string) => { const n = v.replace(/\D/g, '').slice(0, 3); if (n === '' || parseInt(n) <= 100) upd({ fearGreed: n }); }} ph={f.fgPh} dir={dir} style={{ width: 90 }} />
@@ -402,16 +450,22 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty }: any) => {
           </Sec>
         </div>
       </div>
-      <div style={{ margin: '20px 0 6px', background: 'rgba(245,160,32,.06)', border: '1px solid rgba(245,160,32,.16)', borderRadius: 12, padding: '17px 22px', textAlign: 'center' }}>
-        <p style={{ fontFamily: 'var(--j-sans)', fontSize: '11.5px', color: '#92400e', marginBottom: 12 }}>{t.m.lockSub}</p>
-        <button onClick={onSave} disabled={!dirty} style={{ background: 'linear-gradient(135deg,#f5a020,#d48010)', color: '#fff', padding: '11px 24px', fontSize: '12.5px', fontWeight: 700, letterSpacing: '.3px', boxShadow: '0 4px 18px rgba(245,160,32,.3)', borderRadius: 10, border: 'none', cursor: dirty ? 'pointer' : 'not-allowed', opacity: dirty ? 1 : 0.3, fontFamily: 'var(--j-sans)' }}>🔒 {t.m.lock}</button>
+      {/* Lock Button */}
+      <div style={{ margin: '22px 0 8px', background: 'rgba(255,200,87,0.06)', border: '1px solid rgba(255,200,87,0.15)', borderRadius: 14, padding: '18px 24px', textAlign: 'center', backdropFilter: 'blur(8px)' }}>
+        <p style={{ fontFamily: 'var(--j-sans)', fontSize: '11.5px', color: '#FFC857', marginBottom: 12, opacity: 0.8 }}>{t.m.lockSub}</p>
+        <button onClick={onSave} disabled={!dirty} style={{
+          background: 'linear-gradient(135deg,#FFC857,#f5a020)', color: '#0a0e1a', padding: '12px 28px', fontSize: '12.5px', fontWeight: 800, letterSpacing: '.5px',
+          boxShadow: dirty ? '0 4px 24px rgba(255,200,87,.35)' : 'none', borderRadius: 12, border: 'none',
+          cursor: dirty ? 'pointer' : 'not-allowed', opacity: dirty ? 1 : 0.3, fontFamily: 'var(--j-mono)',
+          transition: 'all .25s', textTransform: 'uppercase' as const,
+        }}>🔒 {t.m.lock}</button>
       </div>
     </div>
   );
 };
 
 // ═══════════════════════════════════════════════════════════════
-// EOD FORM
+// EOD FORM — "POST-MARKET DEBRIEF"
 // ═══════════════════════════════════════════════════════════════
 const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades }: any) => {
   const f = t.f;
@@ -422,44 +476,54 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades }: any) => {
   return (
     <div>
       {/* Morning Locked Recap */}
-      <div style={{ background: 'linear-gradient(135deg,rgba(5,150,105,.08),rgba(5,150,105,.03))', border: '1px solid rgba(5,150,105,.22)', borderRadius: 11, padding: '11px 15px', marginBottom: 16 }}>
+      <div style={{
+        background: 'linear-gradient(135deg,rgba(0,255,163,0.06),rgba(0,255,163,0.02))', border: '1px solid rgba(0,255,163,0.15)',
+        borderRadius: 12, padding: '12px 16px', marginBottom: 16, backdropFilter: 'blur(8px)',
+      }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' as const, gap: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap' as const }}>
-            <span style={{ fontFamily: 'var(--j-mono)', fontSize: '8.5px', color: 'var(--j-g)', letterSpacing: '1.5px', textTransform: 'uppercase' as const, background: 'rgba(0,200,150,.15)', padding: '2px 8px', borderRadius: 4, fontWeight: 700 }}>🔒 {t.m.locked}</span>
-            <span style={{ fontFamily: 'var(--j-sans)', fontSize: 12, color: '#065f46' }}>{day.bias} · {day.mktStruct}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' as const }}>
+            <span style={{ fontFamily: 'var(--j-mono)', fontSize: '8.5px', color: '#00FFA3', letterSpacing: '1.8px', textTransform: 'uppercase' as const, background: 'rgba(0,255,163,.12)', padding: '3px 10px', borderRadius: 5, fontWeight: 700, boxShadow: '0 0 10px rgba(0,255,163,0.15)' }}>🔒 {t.m.locked}</span>
+            <span style={{ fontFamily: 'var(--j-mono)', fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>{day.bias} · {day.mktStruct}</span>
           </div>
-          <span style={{ fontFamily: 'var(--j-mono)', fontSize: 13, fontWeight: 700, color: day.emotionScore >= 7 ? 'var(--j-g)' : day.emotionScore >= 5 ? 'var(--j-a)' : 'var(--j-r)' }}>{day.emotionScore}/10</span>
+          <span style={{ fontFamily: 'var(--j-mono)', fontSize: 14, fontWeight: 800, color: day.emotionScore >= 7 ? '#00FFA3' : day.emotionScore >= 5 ? '#FFC857' : '#FF4D4D', textShadow: `0 0 10px ${day.emotionScore >= 7 ? 'rgba(0,255,163,0.3)' : day.emotionScore >= 5 ? 'rgba(255,200,87,0.3)' : 'rgba(255,77,77,0.3)'}` }}>{day.emotionScore}/10</span>
         </div>
       </div>
 
+      {/* Market Overview Strip (EOD state) */}
+      <MarketStrip day={day} dir={dir} />
+
       {/* Orca Trade Bridge */}
       {orcaTrades && orcaTrades.length > 0 && (
-        <div style={{ background: 'linear-gradient(135deg,rgba(0,242,255,.04),rgba(6,214,160,.04))', border: '1px solid rgba(0,242,255,.15)', borderRadius: 10, padding: '12px 15px', marginBottom: 14 }}>
-          <div style={{ fontFamily: 'var(--j-mono)', fontSize: 9, fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase' as const, color: '#06d6a0', marginBottom: 8 }}>
+        <div style={{ background: 'linear-gradient(135deg,rgba(0,255,163,0.04),rgba(90,169,255,0.04))', border: '1px solid rgba(0,255,163,0.12)', borderRadius: 12, padding: '13px 16px', marginBottom: 14, marginTop: 8, backdropFilter: 'blur(8px)' }}>
+          <div style={{ fontFamily: 'var(--j-mono)', fontSize: 9, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase' as const, color: '#00FFA3', marginBottom: 9 }}>
             ⚡ {dir === 'rtl' ? 'עסקאות מ-Orca' : 'Orca Trade Bridge'} — {orcaTrades.length} {dir === 'rtl' ? 'עסקאות' : 'trades'}
           </div>
           <div style={{ display: 'flex', gap: 8, overflowX: 'auto' as const, paddingBottom: 4 }}>
             {orcaTrades.slice(0, 6).map((tr: Trade) => (
-              <div key={tr.id} style={{ flexShrink: 0, padding: '8px 12px', background: 'rgba(255,255,255,.6)', borderRadius: 8, border: `1px solid ${tr.pnl >= 0 ? 'rgba(5,150,105,.2)' : 'rgba(220,38,38,.2)'}`, minWidth: 100 }}>
-                <div style={{ fontFamily: 'var(--j-mono)', fontSize: 11, fontWeight: 700, color: 'var(--j-tx)' }}>{tr.coin}</div>
-                <div style={{ fontFamily: 'var(--j-mono)', fontSize: 12, fontWeight: 700, color: tr.pnl >= 0 ? 'var(--j-g)' : 'var(--j-r)', marginTop: 2 }}>{tr.pnl >= 0 ? '+' : ''}{tr.pnl.toFixed(2)}$</div>
+              <div key={tr.id} style={{
+                flexShrink: 0, padding: '9px 13px', background: 'rgba(255,255,255,0.03)', borderRadius: 10,
+                border: `1px solid ${tr.pnl >= 0 ? 'rgba(0,255,163,.15)' : 'rgba(255,77,77,.15)'}`, minWidth: 110,
+                backdropFilter: 'blur(6px)', transition: 'all .2s',
+              }}>
+                <div style={{ fontFamily: 'var(--j-mono)', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.8)' }}>{tr.coin}</div>
+                <div style={{ fontFamily: 'var(--j-mono)', fontSize: 13, fontWeight: 800, color: tr.pnl >= 0 ? '#00FFA3' : '#FF4D4D', marginTop: 3, textShadow: `0 0 10px ${tr.pnl >= 0 ? 'rgba(0,255,163,0.3)' : 'rgba(255,77,77,0.3)'}` }}>{tr.pnl >= 0 ? '+' : ''}{tr.pnl.toFixed(2)}$</div>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      <PDiv label={t.e.phase} color="var(--j-p)" icon="🌙" />
+      <PDiv label={dir === 'rtl' ? 'תחקיר אחרי-שוק' : 'POST-MARKET DEBRIEF'} color="#b794f6" icon="🌙" />
 
       {/* Trade Log */}
-      <Sec title={f.tlog} icon="💹" accent="var(--j-b)">
+      <Sec title={f.tlog} icon="💹" accent="#5AA9FF">
         {day.hasOpen === null ? (
-          <div style={{ borderRadius: 10, padding: 20, textAlign: 'center', border: '1.5px dashed var(--j-br2)', background: 'rgba(15,23,42,.025)' }}>
-            <div style={{ fontSize: 22, marginBottom: 8 }}>📂</div>
-            <div style={{ fontFamily: 'var(--j-sans)', fontSize: 13, fontWeight: 600, color: 'var(--j-tx2)', marginBottom: 16 }}>{f.openQ}</div>
-            <div style={{ display: 'flex', gap: 9, justifyContent: 'center', flexWrap: 'wrap' as const }}>
-              <button onClick={() => upd({ hasOpen: true })} style={{ background: 'linear-gradient(135deg,var(--j-a),#c48010)', color: '#fff', padding: '9px 20px', fontSize: 12, borderRadius: 8, fontFamily: 'var(--j-sans)', fontWeight: 600, border: 'none', cursor: 'pointer' }}>📈 {f.openY}</button>
-              <button onClick={() => upd({ hasOpen: false })} style={{ background: 'rgba(15,23,42,.04)', border: '1px solid var(--j-br2)', color: 'var(--j-tx2)', padding: '6px 13px', fontSize: '11.5px', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}>✖ {f.openN}</button>
+          <div style={{ borderRadius: 12, padding: 22, textAlign: 'center', border: '1px dashed rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.02)' }}>
+            <div style={{ fontSize: 24, marginBottom: 10 }}>📂</div>
+            <div style={{ fontFamily: 'var(--j-sans)', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.6)', marginBottom: 16 }}>{f.openQ}</div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' as const }}>
+              <button onClick={() => upd({ hasOpen: true })} style={{ background: 'linear-gradient(135deg,#FFC857,#f5a020)', color: '#0a0e1a', padding: '10px 22px', fontSize: 12, borderRadius: 10, fontFamily: 'var(--j-mono)', fontWeight: 700, border: 'none', cursor: 'pointer', boxShadow: '0 4px 15px rgba(255,200,87,0.25)', transition: 'all .2s' }}>📈 {f.openY}</button>
+              <button onClick={() => upd({ hasOpen: false })} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.5)', padding: '7px 15px', fontSize: '11.5px', borderRadius: 8, cursor: 'pointer', fontWeight: 600, transition: 'all .2s' }}>✖ {f.openN}</button>
             </div>
           </div>
         ) : (
@@ -469,11 +533,23 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades }: any) => {
                 onChange={(nt: JournalTrade) => upd({ trades: (day.trades || []).map((x: any, j: number) => j === i ? nt : x) })}
                 onDel={() => upd({ trades: day.trades.filter((_: any, j: number) => j !== i) })} />
             ))}
-            <button onClick={addTrade} style={{ width: '100%', padding: 9, borderRadius: 8, borderStyle: 'dashed', color: 'var(--j-b)', borderColor: 'rgba(74,143,244,.3)', marginTop: 4, background: 'rgba(15,23,42,.04)', border: '1px dashed var(--j-br2)', cursor: 'pointer', fontWeight: 600, fontSize: 12 }}>{f.addTrade}</button>
+            <button onClick={addTrade} style={{
+              width: '100%', padding: 10, borderRadius: 10, color: '#5AA9FF',
+              marginTop: 5, background: 'rgba(90,169,255,0.04)', border: '1px dashed rgba(90,169,255,0.2)',
+              cursor: 'pointer', fontWeight: 700, fontSize: 12, fontFamily: 'var(--j-mono)',
+              transition: 'all .2s', letterSpacing: '.5px',
+            }}>{f.addTrade}</button>
             {(day.trades || []).length > 0 && (
-              <div style={{ display: 'flex', gap: 18, marginTop: 11, padding: '10px 14px', background: 'rgba(15,23,42,.03)', borderRadius: 9 }}>
-                {[{ l: f.pnl, v: `${dp >= 0 ? '+' : ''}${dp.toFixed(2)}$`, c: dp >= 0 ? 'var(--j-g)' : 'var(--j-r)' }, { l: f.tlog, v: String(day.trades.length), c: 'var(--j-tx2)' }, { l: 'Win %', v: `${((dw / Math.max(day.trades.length, 1)) * 100).toFixed(0)}%`, c: 'var(--j-a)' }].map(s => (
-                  <div key={s.l}><Lbl c={s.l} dir={dir} /><div style={{ fontFamily: 'var(--j-mono)', fontSize: 17, fontWeight: 700, color: s.c }}>{s.v}</div></div>
+              <div style={{ display: 'flex', gap: 20, marginTop: 12, padding: '12px 16px', background: 'rgba(255,255,255,0.025)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)' }}>
+                {[
+                  { l: 'P&L', v: `${dp >= 0 ? '+' : ''}${dp.toFixed(2)}$`, c: dp >= 0 ? '#00FFA3' : '#FF4D4D', glow: dp >= 0 ? 'rgba(0,255,163,0.3)' : 'rgba(255,77,77,0.3)' },
+                  { l: 'TRADES', v: String(day.trades.length), c: 'rgba(255,255,255,0.7)', glow: 'none' },
+                  { l: 'WIN %', v: `${((dw / Math.max(day.trades.length, 1)) * 100).toFixed(0)}%`, c: '#FFC857', glow: 'rgba(255,200,87,0.2)' },
+                ].map(s => (
+                  <div key={s.l}>
+                    <div style={{ fontFamily: 'var(--j-mono)', fontSize: 8, fontWeight: 700, letterSpacing: '2px', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase' as const }}>{s.l}</div>
+                    <div style={{ fontFamily: 'var(--j-mono)', fontSize: 20, fontWeight: 800, color: s.c, textShadow: `0 0 15px ${s.glow}`, marginTop: 2 }}>{s.v}</div>
+                  </div>
                 ))}
               </div>
             )}
@@ -482,12 +558,17 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades }: any) => {
       </Sec>
 
       {/* EOD Review */}
-      <Sec title={t.e.phase} icon="🌙" accent="var(--j-p)">
-        <div style={{ marginBottom: 13 }}><Lbl c={f.actualMove} dir={dir} /><TA val={day.actualMove} set={U('actualMove')} ph={f.actualPh} rows={3} dir={dir} /></div>
-        <div style={{ marginBottom: 15 }}><Lbl c={f.score} dir={dir} /><Scores val={day.dayScore} set={U('dayScore')} /></div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 13 }}>
-          {[{ k: 'wins', l: f.wins, ph: f.winsPh, c: 'var(--j-g)' }, { k: 'lessons', l: f.lessons, ph: f.lessonsPh, c: 'var(--j-b)' }, { k: 'mistakes', l: f.mistakes, ph: f.mistakesPh, c: 'var(--j-r)' }, { k: 'solutions', l: f.solutions, ph: f.solutionsPh, c: 'var(--j-a)' }].map(item => (
-            <div key={item.k} style={{ borderInlineStart: `2px solid ${item.c}22`, paddingInlineStart: 10 }}>
+      <Sec title={dir === 'rtl' ? 'תחקיר ביצוע' : 'EXECUTION REVIEW'} icon="🌙" accent="#b794f6">
+        <div style={{ marginBottom: 14 }}><Lbl c={f.actualMove} dir={dir} /><TA val={day.actualMove} set={U('actualMove')} ph={f.actualPh} rows={3} dir={dir} /></div>
+        <div style={{ marginBottom: 16 }}><Lbl c={f.score} dir={dir} /><Scores val={day.dayScore} set={U('dayScore')} /></div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+          {[
+            { k: 'wins', l: f.wins, ph: f.winsPh, c: '#00FFA3' },
+            { k: 'lessons', l: f.lessons, ph: f.lessonsPh, c: '#5AA9FF' },
+            { k: 'mistakes', l: f.mistakes, ph: f.mistakesPh, c: '#FF4D4D' },
+            { k: 'solutions', l: f.solutions, ph: f.solutionsPh, c: '#FFC857' },
+          ].map(item => (
+            <div key={item.k} style={{ borderInlineStart: `2px solid ${item.c}20`, paddingInlineStart: 11 }}>
               <Lbl c={item.l} dir={dir} />
               <TA val={day[item.k]} set={U(item.k)} ph={item.ph} rows={4} dir={dir} />
             </div>
@@ -497,16 +578,22 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades }: any) => {
         <TA val={day.closing} set={U('closing')} ph={f.closingPh} rows={3} dir={dir} />
       </Sec>
 
-      <div style={{ margin: '20px 0 6px', background: 'rgba(153,104,248,.06)', border: '1px solid rgba(153,104,248,.16)', borderRadius: 12, padding: '17px 22px', textAlign: 'center' }}>
-        <p style={{ fontFamily: 'var(--j-sans)', fontSize: '11.5px', color: '#6d28d9', marginBottom: 12 }}>{t.e.lockSub}</p>
-        <button onClick={onSave} disabled={!dirty} style={{ background: 'linear-gradient(135deg,#9968f8,#6830d4)', color: '#fff', padding: '11px 24px', fontSize: '12.5px', fontWeight: 700, letterSpacing: '.3px', boxShadow: '0 4px 18px rgba(153,104,248,.3)', borderRadius: 10, border: 'none', cursor: dirty ? 'pointer' : 'not-allowed', opacity: dirty ? 1 : 0.3, fontFamily: 'var(--j-sans)' }}>✓ {t.e.lock}</button>
+      {/* Seal Day */}
+      <div style={{ margin: '22px 0 8px', background: 'rgba(183,148,246,0.06)', border: '1px solid rgba(183,148,246,0.15)', borderRadius: 14, padding: '18px 24px', textAlign: 'center', backdropFilter: 'blur(8px)' }}>
+        <p style={{ fontFamily: 'var(--j-sans)', fontSize: '11.5px', color: '#b794f6', marginBottom: 12, opacity: 0.8 }}>{t.e.lockSub}</p>
+        <button onClick={onSave} disabled={!dirty} style={{
+          background: 'linear-gradient(135deg,#b794f6,#7c3aed)', color: '#fff', padding: '12px 28px', fontSize: '12.5px', fontWeight: 800, letterSpacing: '.5px',
+          boxShadow: dirty ? '0 4px 24px rgba(153,104,248,.35)' : 'none', borderRadius: 12, border: 'none',
+          cursor: dirty ? 'pointer' : 'not-allowed', opacity: dirty ? 1 : 0.3, fontFamily: 'var(--j-mono)',
+          transition: 'all .25s', textTransform: 'uppercase' as const,
+        }}>✓ {t.e.lock}</button>
       </div>
     </div>
   );
 };
 
 // ═══════════════════════════════════════════════════════════════
-// MAIN JOURNAL DIMENSION
+// MAIN JOURNAL DIMENSION (LOGIC UNCHANGED)
 // ═══════════════════════════════════════════════════════════════
 interface JournalDimensionProps {
   onReturn: () => void;
@@ -621,103 +708,155 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
       .reverse();
   }, [days, sbQ]);
 
-  // Today's orca trades for the trade bridge
   const todayOrcaTrades = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
     return orcaTrades.filter(tr => tr.date?.startsWith(today));
   }, [orcaTrades]);
 
   if (!loaded) return (
-    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#eef2f7' }}>
-      <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, color: '#2563eb', letterSpacing: 2 }}>LOADING...</div>
+    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#080c18' }}>
+      <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, color: '#00FFA3', letterSpacing: 3, animation: 'j-pulse 1.5s ease-in-out infinite' }}>INITIALIZING...</div>
     </div>
   );
 
   const TOAST_STYLES: Record<string, React.CSSProperties> = {
-    a: { background: 'rgba(245,160,32,.14)', border: '1px solid rgba(245,160,32,.28)', color: '#d97706' },
-    p: { background: 'rgba(153,104,248,.14)', border: '1px solid rgba(153,104,248,.28)', color: '#7c3aed' },
-    g: { background: 'rgba(0,200,150,.14)', border: '1px solid rgba(0,200,150,.28)', color: '#059669' },
+    a: { background: 'rgba(255,200,87,.12)', border: '1px solid rgba(255,200,87,.25)', color: '#FFC857', boxShadow: '0 4px 20px rgba(255,200,87,0.15)' },
+    p: { background: 'rgba(183,148,246,.12)', border: '1px solid rgba(183,148,246,.25)', color: '#b794f6', boxShadow: '0 4px 20px rgba(183,148,246,0.15)' },
+    g: { background: 'rgba(0,255,163,.12)', border: '1px solid rgba(0,255,163,.25)', color: '#00FFA3', boxShadow: '0 4px 20px rgba(0,255,163,0.15)' },
   };
 
   return (
     <div className="journal-dimension" style={{
       height: '100%', display: 'flex', flexDirection: 'column',
       fontFamily: "'IBM Plex Sans', sans-serif", direction: dir,
-      background: '#eef2f7',
-      backgroundImage: 'radial-gradient(circle at 20% 50%,rgba(219,234,254,.6) 0%,transparent 50%),radial-gradient(circle at 80% 20%,rgba(237,233,254,.5) 0%,transparent 40%)',
+      background: '#080c18',
     }}>
-      {/* SCOPED CSS VARS */}
+      {/* SCOPED CSS — DARK INSTITUTIONAL */}
       <style>{`
         .journal-dimension {
-          --j-bg: #eef2f7; --j-bg1: #ffffff; --j-bg2: #f5f8fc; --j-bg3: #e4eaf4;
-          --j-br: rgba(15,23,42,.09); --j-br2: rgba(15,23,42,.15);
-          --j-tx: #0f172a; --j-tx2: #3d4d72; --j-tx3: #94a3c0;
-          --j-g: #059669; --j-r: #dc2626; --j-a: #d97706; --j-b: #2563eb; --j-p: #7c3aed;
+          --j-bg: #080c18; --j-bg1: #0d1220; --j-bg2: #111827; --j-bg3: rgba(255,255,255,0.06);
+          --j-br: rgba(255,255,255,0.06); --j-br2: rgba(255,255,255,0.1);
+          --j-tx: rgba(255,255,255,0.92); --j-tx2: rgba(255,255,255,0.6); --j-tx3: rgba(255,255,255,0.3);
+          --j-g: #00FFA3; --j-r: #FF4D4D; --j-a: #FFC857; --j-b: #5AA9FF; --j-p: #b794f6;
           --j-mono: 'IBM Plex Mono', 'JetBrains Mono', monospace;
           --j-sans: 'IBM Plex Sans', 'Inter', sans-serif;
           --j-head: 'Syne', 'Inter', sans-serif;
         }
-        .journal-dimension ::-webkit-scrollbar { width: 3px; height: 3px; }
+        .journal-dimension ::-webkit-scrollbar { width: 4px; height: 4px; }
         .journal-dimension ::-webkit-scrollbar-track { background: transparent; }
-        .journal-dimension ::-webkit-scrollbar-thumb { background: rgba(15,23,42,.15); border-radius: 2px; }
+        .journal-dimension ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+        .journal-dimension ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
         .journal-dimension textarea:focus, .journal-dimension input:focus {
-          border-color: rgba(37,99,235,.5) !important;
-          box-shadow: 0 0 0 3px rgba(37,99,235,.1) !important;
+          border-color: rgba(90,169,255,.4) !important;
+          box-shadow: 0 0 0 3px rgba(90,169,255,.08), 0 0 15px rgba(90,169,255,.1) !important;
+          background: rgba(255,255,255,0.06) !important;
         }
+        .journal-dimension textarea::placeholder, .journal-dimension input::placeholder {
+          color: rgba(255,255,255,0.18) !important;
+        }
+        @keyframes j-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+        @keyframes j-gradient-shift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        @keyframes j-glow-breathe {
+          0%,100% { box-shadow: 0 0 15px rgba(0,255,163,0.05); }
+          50% { box-shadow: 0 0 25px rgba(0,255,163,0.12); }
+        }
+        .j-card-hover { transition: all .25s ease !important; }
+        .j-card-hover:hover { transform: translateY(-2px) !important; box-shadow: 0 8px 25px rgba(0,0,0,0.4) !important; }
       `}</style>
 
+      {/* ANIMATED BG GRADIENTS */}
+      <div style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden',
+      }}>
+        <div style={{
+          position: 'absolute', width: '600px', height: '600px', top: '-100px', left: '-100px',
+          background: 'radial-gradient(circle, rgba(0,255,163,0.04) 0%, transparent 70%)',
+          animation: 'j-gradient-shift 15s ease-in-out infinite',
+          backgroundSize: '200% 200%',
+        }} />
+        <div style={{
+          position: 'absolute', width: '500px', height: '500px', bottom: '-50px', right: '-50px',
+          background: 'radial-gradient(circle, rgba(183,148,246,0.04) 0%, transparent 70%)',
+          animation: 'j-gradient-shift 20s ease-in-out infinite reverse',
+          backgroundSize: '200% 200%',
+        }} />
+        <div style={{
+          position: 'absolute', width: '400px', height: '400px', top: '40%', left: '50%',
+          background: 'radial-gradient(circle, rgba(90,169,255,0.03) 0%, transparent 70%)',
+          animation: 'j-gradient-shift 18s ease-in-out infinite 3s',
+          backgroundSize: '200% 200%',
+        }} />
+      </div>
+
       {/* TOPBAR */}
-      <nav style={{ height: 50, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', background: 'var(--j-bg1)', borderBottom: '1px solid var(--j-br)', zIndex: 100 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button onClick={() => setSidebar(o => !o)} style={{ background: 'rgba(15,23,42,.04)', border: '1px solid var(--j-br2)', color: 'var(--j-tx2)', padding: '5px 9px', fontSize: 13, borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}>☰</button>
+      <nav style={{
+        height: 52, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 18px',
+        background: 'rgba(13,18,32,0.85)', borderBottom: '1px solid rgba(255,255,255,0.06)', zIndex: 100,
+        backdropFilter: 'blur(20px)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button onClick={() => setSidebar(o => !o)} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)', padding: '6px 10px', fontSize: 13, borderRadius: 8, cursor: 'pointer', fontWeight: 600, transition: 'all .2s' }}>☰</button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 24, height: 24, background: 'linear-gradient(135deg,var(--j-b),var(--j-p))', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, boxShadow: '0 2px 10px rgba(74,143,244,.45)' }}>⚡</div>
-            <span style={{ fontFamily: 'var(--j-head)', fontSize: 14, fontWeight: 800, background: 'linear-gradient(90deg,var(--j-b),var(--j-p))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>APEX OS</span>
-            <span style={{ fontFamily: 'var(--j-mono)', fontSize: 8, color: 'var(--j-tx3)', letterSpacing: '1.5px' }}>{t.sub}</span>
+            <div style={{ width: 26, height: 26, background: 'linear-gradient(135deg,#5AA9FF,#b794f6)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, boxShadow: '0 0 15px rgba(90,169,255,.35)' }}>⚡</div>
+            <span style={{ fontFamily: 'var(--j-head)', fontSize: 15, fontWeight: 800, background: 'linear-gradient(90deg,#5AA9FF,#b794f6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>APEX OS</span>
+            <span style={{ fontFamily: 'var(--j-mono)', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: '1.8px' }}>{t.sub}</span>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
           {([['journal', t.nav.journal], ['archive', t.nav.archive]] as const).map(([v, l]) => (
             <button key={v} onClick={() => setView(v as string)}
-              style={{ fontFamily: 'var(--j-mono)', fontSize: 10, fontWeight: 600, letterSpacing: '1.2px', textTransform: 'uppercase' as const, border: 'none', cursor: 'pointer', borderRadius: 6, padding: '6px 14px', transition: 'all .18s', ...(view === v ? { background: 'rgba(37,99,235,.1)', color: '#1d4ed8' } : { background: 'none', color: 'var(--j-tx3)' }) }}>
+              style={{ fontFamily: 'var(--j-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase' as const, border: 'none', cursor: 'pointer', borderRadius: 8, padding: '7px 16px', transition: 'all .2s', ...(view === v ? { background: 'rgba(90,169,255,.12)', color: '#5AA9FF', boxShadow: '0 0 10px rgba(90,169,255,0.1)' } : { background: 'none', color: 'rgba(255,255,255,0.3)' }) }}>
               {l}
             </button>
           ))}
-          <div style={{ width: 1, height: 16, background: 'var(--j-br)', margin: '0 4px' }} />
+          <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.08)', margin: '0 6px' }} />
           <ReturnButton onClick={onReturn} isRTL={isRTL} />
         </div>
       </nav>
 
       {/* LAYOUT */}
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative', zIndex: 1 }}>
         {/* SIDEBAR */}
-        <aside style={{ width: sidebar ? 248 : 0, minWidth: sidebar ? 248 : 0, overflow: 'hidden', transition: 'all .28s ease', background: 'var(--j-bg1)', borderInlineEnd: '1px solid var(--j-br)', display: 'flex', flexDirection: 'column', order: dir === 'rtl' ? 2 : 0 }}>
-          <div style={{ padding: '9px 9px 7px', borderBottom: '1px solid var(--j-br)' }}>
+        <aside style={{
+          width: sidebar ? 258 : 0, minWidth: sidebar ? 258 : 0, overflow: 'hidden', transition: 'all .3s ease',
+          background: 'rgba(13,18,32,0.7)', borderInlineEnd: '1px solid rgba(255,255,255,0.06)',
+          display: 'flex', flexDirection: 'column', order: dir === 'rtl' ? 2 : 0, backdropFilter: 'blur(16px)',
+        }}>
+          <div style={{ padding: '10px 10px 8px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
             <input value={sbQ} onChange={e => setSbQ(e.target.value)} placeholder={t.arch.search}
-              style={{ width: '100%', background: 'rgba(255,255,255,.9)', border: '1.5px solid var(--j-br)', borderRadius: 6, color: 'var(--j-tx)', fontSize: '11.5px', outline: 'none', padding: '8px 11px', direction: dir }} />
+              style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: 'rgba(255,255,255,0.85)', fontSize: '11.5px', outline: 'none', padding: '9px 12px', direction: dir, fontFamily: 'var(--j-mono)', transition: 'all .2s' }} />
           </div>
-          <div style={{ flex: 1, overflowY: 'auto', padding: 5 }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: 6 }}>
             {sbDays.map(d => {
               const dp = sumPnl(d);
-              const ec = d.emotionScore >= 8 ? 'var(--j-g)' : d.emotionScore >= 5 ? 'var(--j-a)' : 'var(--j-r)';
-              const phase = d.morningSaved && d.eodSaved ? 'var(--j-g)' : d.morningSaved ? 'var(--j-p)' : 'var(--j-tx3)';
+              const ec = d.emotionScore >= 8 ? '#00FFA3' : d.emotionScore >= 5 ? '#FFC857' : '#FF4D4D';
+              const phase = d.morningSaved && d.eodSaved ? '#00FFA3' : d.morningSaved ? '#b794f6' : 'rgba(255,255,255,0.2)';
               const sel = d.id === activeId;
               return (
                 <div key={d.id} onClick={() => { setActiveId(d.id); setView('journal'); }}
-                  style={{ padding: '9px 11px', borderRadius: 9, cursor: 'pointer', transition: 'background .12s', marginBottom: 2, border: '1px solid transparent', ...(sel ? { background: 'rgba(37,99,235,.1)', borderColor: 'rgba(37,99,235,.25)' } : {}) }}>
+                  className="j-card-hover"
+                  style={{
+                    padding: '10px 12px', borderRadius: 10, cursor: 'pointer', marginBottom: 3,
+                    border: '1px solid transparent', transition: 'all .2s',
+                    ...(sel ? { background: 'rgba(90,169,255,.08)', borderColor: 'rgba(90,169,255,.2)', boxShadow: '0 0 15px rgba(90,169,255,0.05)' } : { background: 'transparent' }),
+                  }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                        <span style={{ fontFamily: 'var(--j-mono)', fontSize: '10.5px', fontWeight: 600, color: sel ? 'var(--j-tx)' : 'var(--j-tx2)' }}>{fmtShort(d.date, t.locale)}</span>
-                        <span style={{ fontSize: 6, color: phase }}>●</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontFamily: 'var(--j-mono)', fontSize: '10.5px', fontWeight: 700, color: sel ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.55)' }}>{fmtShort(d.date, t.locale)}</span>
+                        <span style={{ fontSize: 6, color: phase, filter: `drop-shadow(0 0 3px ${phase})` }}>●</span>
                       </div>
-                      <div style={{ fontFamily: 'var(--j-mono)', fontSize: 9, color: 'var(--j-tx3)', marginTop: 1 }}>
+                      <div style={{ fontFamily: 'var(--j-mono)', fontSize: 9, color: 'rgba(255,255,255,0.25)', marginTop: 2 }}>
                         {dir === 'rtl' ? 'יום' : 'Day'} {d.dayNum || '?'} · {dir === 'rtl' ? 'שבוע' : 'Wk'} {d.weekNum || '?'}
                       </div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, marginInlineStart: 6, flexShrink: 0 }}>
-                      <span style={{ fontFamily: 'var(--j-mono)', fontSize: '10.5px', fontWeight: 700, color: ec }}>{d.emotionScore}</span>
-                      {dp !== 0 && <span style={{ fontFamily: 'var(--j-mono)', fontSize: '9.5px', fontWeight: 600, color: dp > 0 ? 'var(--j-g)' : 'var(--j-r)' }}>{dp > 0 ? '+' : ''}{dp.toFixed(0)}$</span>}
+                      <span style={{ fontFamily: 'var(--j-mono)', fontSize: '10.5px', fontWeight: 800, color: ec, textShadow: `0 0 8px ${ec}30` }}>{d.emotionScore}</span>
+                      {dp !== 0 && <span style={{ fontFamily: 'var(--j-mono)', fontSize: '9.5px', fontWeight: 700, color: dp > 0 ? '#00FFA3' : '#FF4D4D' }}>{dp > 0 ? '+' : ''}{dp.toFixed(0)}$</span>}
                     </div>
                   </div>
                 </div>
@@ -727,30 +866,35 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
         </aside>
 
         {/* MAIN */}
-        <main style={{ flex: 1, overflowY: 'auto', background: 'var(--j-bg)', order: 1 }}>
+        <main style={{ flex: 1, overflowY: 'auto', background: 'transparent', order: 1 }}>
           {view === 'journal' && activeDay && (
-            <div style={{ maxWidth: 1060, margin: '0 auto', padding: '20px 20px 40px', direction: dir }}>
+            <div style={{ maxWidth: 1080, margin: '0 auto', padding: '22px 22px 50px', direction: dir }}>
               {/* Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap' as const, gap: 11, marginBottom: 18 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap' as const, gap: 12, marginBottom: 20 }}>
                 <div>
-                  <div style={{ fontFamily: 'var(--j-head)', fontSize: 19, fontWeight: 800, color: 'var(--j-tx)', letterSpacing: '-.3px' }}>
+                  <div style={{ fontFamily: 'var(--j-head)', fontSize: 22, fontWeight: 800, color: 'rgba(255,255,255,0.95)', letterSpacing: '-.3px' }}>
                     {fmtFull(activeDay.date, t.locale)}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginTop: 8, flexWrap: 'wrap' as const }}>
-                    {[['dayNum', dir === 'rtl' ? 'יום #' : 'Day #', '50px'], ['weekNum', dir === 'rtl' ? 'שבוע #' : 'Week #', '52px']].map(([k, l, w]: any) => (
-                      <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                        <span style={{ fontFamily: 'var(--j-mono)', fontSize: '9.5px', fontWeight: 600, letterSpacing: '1.8px', textTransform: 'uppercase' as const, color: 'var(--j-tx3)', marginBottom: 0 }}>{l}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 9, flexWrap: 'wrap' as const }}>
+                    {[['dayNum', dir === 'rtl' ? 'יום #' : 'Day #', '52px'], ['weekNum', dir === 'rtl' ? 'שבוע #' : 'Week #', '55px']].map(([k, l, w]: any) => (
+                      <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontFamily: 'var(--j-mono)', fontSize: '9.5px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase' as const, color: 'rgba(255,255,255,0.25)' }}>{l}</span>
                         <input value={(activeDay as any)[k] || ''} onChange={e => upd({ [k]: e.target.value } as any)} placeholder="—"
-                          style={{ width: w, background: 'rgba(15,23,42,.04)', border: '1px solid var(--j-br)', borderRadius: 6, color: '#334080', padding: '4px 6px', fontSize: 13, fontWeight: 700, fontFamily: 'var(--j-mono)', outline: 'none', textAlign: 'center' }} />
+                          style={{ width: w, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 7, color: 'rgba(255,255,255,0.85)', padding: '5px 7px', fontSize: 14, fontWeight: 800, fontFamily: 'var(--j-mono)', outline: 'none', textAlign: 'center', transition: 'all .2s' }} />
                       </div>
                     ))}
                   </div>
                 </div>
+                {/* P&L Card with Glow */}
                 <div style={{ display: 'flex', gap: 8 }}>
-                  {(() => { const dp = sumPnl(activeDay); return (
-                    <div style={{ background: 'rgba(15,23,42,.04)', border: '1px solid var(--j-br)', borderRadius: 9, padding: '7px 13px', textAlign: 'center' }}>
-                      <div style={{ fontFamily: 'var(--j-mono)', fontSize: 14, fontWeight: 700, color: dp >= 0 ? 'var(--j-g)' : 'var(--j-r)' }}>{dp >= 0 ? '+' : ''}{dp.toFixed(0)}$</div>
-                      <span style={{ fontFamily: 'var(--j-mono)', fontSize: '9.5px', fontWeight: 600, letterSpacing: '1.8px', textTransform: 'uppercase' as const, color: 'var(--j-tx3)' }}>P&L</span>
+                  {(() => { const dp = sumPnl(activeDay); const glowC = dp >= 0 ? 'rgba(0,255,163,0.15)' : 'rgba(255,77,77,0.15)'; return (
+                    <div style={{
+                      background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '10px 18px', textAlign: 'center',
+                      backdropFilter: 'blur(8px)', boxShadow: `0 0 25px ${glowC}`, transition: 'all .3s',
+                      animation: 'j-glow-breathe 4s ease-in-out infinite',
+                    }}>
+                      <div style={{ fontFamily: 'var(--j-mono)', fontSize: 18, fontWeight: 800, color: dp >= 0 ? '#00FFA3' : '#FF4D4D', textShadow: `0 0 18px ${dp >= 0 ? 'rgba(0,255,163,0.4)' : 'rgba(255,77,77,0.4)'}` }}>{dp >= 0 ? '+' : ''}{dp.toFixed(0)}$</div>
+                      <span style={{ fontFamily: 'var(--j-mono)', fontSize: '9px', fontWeight: 700, letterSpacing: '2.5px', textTransform: 'uppercase' as const, color: 'rgba(255,255,255,0.3)' }}>SESSION P&L</span>
                     </div>
                   ); })()}
                 </div>
@@ -762,28 +906,32 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
             </div>
           )}
           {view === 'archive' && (
-            <div style={{ maxWidth: 920, margin: '0 auto', padding: '20px 20px 40px', direction: dir }}>
-              <div style={{ fontFamily: 'var(--j-head)', fontSize: 20, fontWeight: 800, color: 'var(--j-tx)', marginBottom: 5 }}>{t.arch.title}</div>
-              <div style={{ display: 'grid', gap: 10 }}>
+            <div style={{ maxWidth: 940, margin: '0 auto', padding: '22px 22px 50px', direction: dir }}>
+              <div style={{ fontFamily: 'var(--j-head)', fontSize: 22, fontWeight: 800, color: 'rgba(255,255,255,0.95)', marginBottom: 6 }}>{t.arch.title}</div>
+              <div style={{ display: 'grid', gap: 10, marginTop: 12 }}>
                 {days.filter(d => d.morningSaved).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(day => {
                   const dp = sumPnl(day);
                   const complete = day.morningSaved && day.eodSaved;
                   return (
                     <div key={day.id} onClick={() => { setActiveId(day.id); setView('journal'); }}
-                      style={{ background: 'var(--j-bg1)', border: '1px solid var(--j-br)', borderRadius: 10, overflow: 'hidden', cursor: 'pointer', transition: 'all .17s' }}>
-                      <div style={{ background: 'rgba(5,150,105,.05)', borderBottom: '1px solid var(--j-br)', padding: '12px 15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span style={{ fontFamily: 'var(--j-mono)', fontSize: 9, color: 'var(--j-g)', letterSpacing: '1.5px', fontWeight: 700 }}>🌅 {t.arch.morning}</span>
-                          <span style={{ fontFamily: 'var(--j-head)', fontSize: '13.5px', fontWeight: 800, color: 'var(--j-tx)' }}>{fmtFull(day.date, t.locale)}</span>
-                          <span style={{ fontFamily: 'var(--j-mono)', fontSize: '8.5px', fontWeight: 700, color: complete ? 'var(--j-g)' : 'var(--j-a)', background: complete ? 'rgba(5,150,105,.1)' : 'rgba(217,119,6,.1)', padding: '2px 8px', borderRadius: 5 }}>{complete ? '✓ COMPLETE' : 'MORNING ONLY'}</span>
+                      className="j-card-hover"
+                      style={{
+                        background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12,
+                        overflow: 'hidden', cursor: 'pointer', transition: 'all .25s', backdropFilter: 'blur(8px)',
+                      }}>
+                      <div style={{ background: 'rgba(0,255,163,0.03)', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '13px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                          <span style={{ fontFamily: 'var(--j-mono)', fontSize: 9, color: '#00FFA3', letterSpacing: '1.8px', fontWeight: 700 }}>🌅 {t.arch.morning}</span>
+                          <span style={{ fontFamily: 'var(--j-head)', fontSize: '14px', fontWeight: 800, color: 'rgba(255,255,255,0.9)' }}>{fmtFull(day.date, t.locale)}</span>
+                          <span style={{ fontFamily: 'var(--j-mono)', fontSize: '8.5px', fontWeight: 700, color: complete ? '#00FFA3' : '#FFC857', background: complete ? 'rgba(0,255,163,.1)' : 'rgba(255,200,87,.1)', padding: '3px 9px', borderRadius: 6 }}>{complete ? '✓ COMPLETE' : 'MORNING ONLY'}</span>
                         </div>
-                        <div style={{ fontFamily: 'var(--j-mono)', fontSize: 13, fontWeight: 700, color: dp >= 0 ? 'var(--j-g)' : 'var(--j-r)' }}>{dp >= 0 ? '+' : ''}{dp.toFixed(0)}$</div>
+                        <div style={{ fontFamily: 'var(--j-mono)', fontSize: 14, fontWeight: 800, color: dp >= 0 ? '#00FFA3' : '#FF4D4D', textShadow: `0 0 10px ${dp >= 0 ? 'rgba(0,255,163,0.3)' : 'rgba(255,77,77,0.3)'}` }}>{dp >= 0 ? '+' : ''}{dp.toFixed(0)}$</div>
                       </div>
                     </div>
                   );
                 })}
                 {days.filter(d => d.morningSaved).length === 0 && (
-                  <div style={{ textAlign: 'center', padding: 60, color: 'var(--j-tx3)', fontFamily: 'var(--j-sans)' }}>{t.arch.none}</div>
+                  <div style={{ textAlign: 'center', padding: 70, color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--j-sans)', fontSize: 14 }}>{t.arch.none}</div>
                 )}
               </div>
             </div>
@@ -792,7 +940,11 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
       </div>
 
       {/* TOAST */}
-      {toast && <div style={{ position: 'fixed', bottom: 20, right: 20, borderRadius: 10, padding: '10px 17px', fontFamily: 'var(--j-mono)', fontSize: 11, fontWeight: 600, zIndex: 9999, pointerEvents: 'none', letterSpacing: '.5px', ...TOAST_STYLES[toast.type] }}>{toast.msg}</div>}
+      {toast && <div style={{
+        position: 'fixed', bottom: 22, right: 22, borderRadius: 12, padding: '11px 18px',
+        fontFamily: 'var(--j-mono)', fontSize: 11, fontWeight: 700, zIndex: 9999, pointerEvents: 'none',
+        letterSpacing: '.8px', backdropFilter: 'blur(12px)', ...TOAST_STYLES[toast.type],
+      }}>{toast.msg}</div>}
     </div>
   );
 };
