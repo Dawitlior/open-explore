@@ -2748,7 +2748,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
                       <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: 'rgba(255,200,87,0.6)', letterSpacing: '0.5px' }}>
                         {displayDay?.date ? fmtShort(displayDay.date, t.locale) : ''}
                       </span>
-                      </span>
+                    </div>
                     </div>
                   </div>
                   <button onClick={() => { setViewingArchiveId(null); setView('journal'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
