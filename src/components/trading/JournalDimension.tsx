@@ -1771,7 +1771,6 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
   const [activeId, setActiveId] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [view, setView] = useState('journal');
-  const [sidebar, setSidebar] = useState(true);
   const [mDirty, setMD] = useState(false);
   const [eDirty, setED] = useState(false);
   const [toast, setToast] = useState<{ msg: string; type: string } | null>(null);
@@ -1941,17 +1940,12 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
         .j-card-hover:hover { transform: translateY(-1px) !important; box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important; }
         @media (max-width: 768px) {
           .j-grid-2col { grid-template-columns: 1fr !important; }
-          .j-sidebar { display: none !important; }
           .j-nav-labels { display: none !important; }
           .j-topbar { padding: 0 10px !important; gap: 6px !important; }
           .j-topbar-right { gap: 3px !important; }
           .j-lock-btn-text { display: none !important; }
           .j-return-desktop { display: none !important; }
-          .j-mobile-menu-btn { display: flex !important; }
           .j-main-content { padding: 14px 12px 40px !important; }
-        }
-        @media (min-width: 769px) {
-          .j-mobile-menu-btn { display: none !important; }
         }
       `}</style>
 
@@ -1964,34 +1958,40 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
       {lockAnim === 'morning' && <MorningLockOverlay onDone={() => setLockAnim(null)} />}
       {lockAnim === 'eod' && <EODLockOverlay onDone={() => setLockAnim(null)} />}
 
-      {/* MOBILE MENU POPUP */}
+      {/* CENTERED MENU POPUP */}
       {mobileMenu && (
-        <div onClick={() => setMobileMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)', animation: 'j-fade-in .2s ease-out' }}>
+        <div onClick={() => setMobileMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'j-fade-in .2s ease-out' }}>
           <div onClick={e => e.stopPropagation()} style={{
-            position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '75vh',
-            background: th.bg1, borderTop: `1px solid ${th.br}`, borderRadius: '20px 20px 0 0',
-            padding: '16px 12px 28px', overflowY: 'auto', animation: 'j-slide-up .3s ease-out',
+            width: 'min(480px, 90vw)', maxHeight: '80vh',
+            background: th.bg1, border: `1px solid ${th.br2}`, borderRadius: 18,
+            padding: '24px 20px', overflowY: 'auto', animation: 'j-scale-in .25s ease-out',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
           }}>
+            {/* Close button */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+              <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 14, fontWeight: 800, color: th.tx, letterSpacing: '-.3px' }}>⚡ APEX OS</span>
+              <button onClick={() => setMobileMenu(false)} style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', color: th.tx3, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+            </div>
             {/* Nav buttons */}
-            <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginBottom: 16 }}>
               {([['journal', t.nav.journal, '📝'], ['calendar', t.nav.calendar, '📅'], ['archive', t.nav.archive, '📂'], ['analytics', t.f.analytics, '📊']] as const).map(([v, l, ic]) => (
                 <button key={v} onClick={() => { setView(v as string); setMobileMenu(false); }}
-                  style={{ flex: 1, fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 700, border: 'none', cursor: 'pointer', borderRadius: 10, padding: '12px 10px', transition: 'all .2s', ...(view === v ? { background: th.selBg, color: '#5AA9FF' } : { background: th.inputBg, color: th.tx3 }) }}>
-                  {ic} {l}
+                  style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer', borderRadius: 12, padding: '14px 10px', transition: 'all .2s', ...(view === v ? { background: th.selBg, color: '#5AA9FF', border: `1px solid ${th.selBr}` } : { background: th.inputBg, color: th.tx3, border: `1px solid ${th.inputBr}` }) }}>
+                  <span style={{ fontSize: 18, display: 'block', marginBottom: 4 }}>{ic}</span> {l}
                 </button>
               ))}
             </div>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
               <button onClick={() => { setTheme(p => p === 'dark' ? 'light' : 'dark'); setMobileMenu(false); }}
-                style={{ flex: 1, padding: '10px', borderRadius: 10, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', color: th.tx2, fontSize: 12, fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>
+                style={{ flex: 1, padding: '12px', borderRadius: 10, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', color: th.tx2, fontSize: 13, fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>
                 {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
               </button>
               <button onClick={() => { setShowEntry(true); setMobileMenu(false); }}
-                style={{ flex: 1, padding: '10px', borderRadius: 10, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', color: '#FFC857', fontSize: 12, fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>
-                🔒 Lock
+                style={{ flex: 1, padding: '12px', borderRadius: 10, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', color: '#FFC857', fontSize: 13, fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>
+                🔒 Lock System
               </button>
               <button onClick={() => { onReturn(); setMobileMenu(false); }}
-                style={{ flex: 1, padding: '10px', borderRadius: 10, border: '1px solid rgba(212,175,55,0.3)', background: 'rgba(212,175,55,0.06)', cursor: 'pointer', color: '#D4AF37', fontSize: 12, fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>
+                style={{ flex: 1, padding: '12px', borderRadius: 10, border: '1px solid rgba(212,175,55,0.3)', background: 'rgba(212,175,55,0.06)', cursor: 'pointer', color: '#D4AF37', fontSize: 13, fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>
                 ⚔️ {isRTL ? 'חמ"ל' : 'Orca'}
               </button>
             </div>
@@ -1999,7 +1999,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
             <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, color: th.tx3, letterSpacing: '1.5px', marginBottom: 8, textTransform: 'uppercase' }}>{dir === 'rtl' ? 'ימי יומן' : 'JOURNAL DAYS'}</div>
             <input value={sbQ} onChange={e => setSbQ(e.target.value)} placeholder={t.arch.search}
               style={{ width: '100%', background: th.inputBg, border: `1px solid ${th.inputBr}`, borderRadius: 10, color: th.tx, fontSize: 13, outline: 'none', padding: '10px 14px', direction: dir, fontFamily: "'Poppins',sans-serif", marginBottom: 10 }} />
-            <div style={{ maxHeight: 300, overflowY: 'auto' }}>
+            <div style={{ maxHeight: 280, overflowY: 'auto' }}>
               {sbDays.map(d => {
                 const dp = sumPnl(d);
                 const sel = d.id === activeId;
@@ -2031,8 +2031,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
         backdropFilter: 'blur(20px)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {/* Desktop sidebar toggle */}
-          <button onClick={() => setSidebar(o => !o)} className="j-sidebar-toggle" style={{ background: th.inputBg, border: `1px solid ${th.inputBr}`, color: th.tx2, padding: '6px 10px', fontSize: 13, borderRadius: 8, cursor: 'pointer', fontWeight: 600, transition: 'all .2s' }}>☰</button>
+          <button onClick={() => setMobileMenu(true)} style={{ background: th.inputBg, border: `1px solid ${th.inputBr}`, color: th.tx2, padding: '6px 10px', fontSize: 13, borderRadius: 8, cursor: 'pointer', fontWeight: 600, transition: 'all .2s' }}>☰</button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ width: 26, height: 26, background: 'linear-gradient(135deg,#5AA9FF,#b794f6)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>⚡</div>
             <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 15, fontWeight: 800, background: 'linear-gradient(90deg,#5AA9FF,#b794f6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>APEX OS</span>
@@ -2048,11 +2047,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
               </button>
             ))}
           </div>
-          {/* Mobile menu button */}
-          <button className="j-mobile-menu-btn" onClick={() => setMobileMenu(true)}
-            style={{ display: 'none', background: th.inputBg, border: `1px solid ${th.inputBr}`, color: '#5AA9FF', padding: '6px 12px', fontSize: 12, borderRadius: 8, cursor: 'pointer', fontWeight: 700, fontFamily: "'Poppins',sans-serif", alignItems: 'center', gap: 4 }}>
-            ☰ {dir === 'rtl' ? 'תפריט' : 'Menu'}
-          </button>
+          {/* Spacer */}
           <div style={{ width: 1, height: 18, background: th.br, margin: '0 4px' }} />
           <button onClick={() => setTheme(p => p === 'dark' ? 'light' : 'dark')}
             style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, transition: 'all .2s' }}>
@@ -2072,58 +2067,8 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
 
       {/* LAYOUT */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative', zIndex: 1 }}>
-        {/* SIDEBAR — desktop only */}
-        <aside className="j-sidebar" style={{
-          width: sidebar ? 250 : 0, minWidth: sidebar ? 250 : 0, overflow: 'hidden', transition: 'all .3s ease',
-          background: th.sidebarBg, borderInlineEnd: `1px solid ${th.br}`,
-          display: 'flex', flexDirection: 'column', order: dir === 'rtl' ? 2 : 0,
-        }}>
-          <div style={{ padding: '10px 10px 8px', borderBottom: `1px solid ${th.br}` }}>
-            <input value={sbQ} onChange={e => setSbQ(e.target.value)} placeholder={t.arch.search}
-              style={{ width: '100%', background: th.inputBg, border: `1px solid ${th.inputBr}`, borderRadius: 8, color: th.tx, fontSize: 11.5, outline: 'none', padding: '9px 12px', direction: dir, fontFamily: "'Poppins',sans-serif", transition: 'all .2s' }} />
-          </div>
-          <div style={{ flex: 1, overflowY: 'auto', padding: 6 }}>
-            {sbDays.map(d => {
-              const dp = sumPnl(d);
-              const ec = d.emotionScore >= 8 ? '#00FFA3' : d.emotionScore >= 5 ? '#FFC857' : '#FF4D4D';
-              const phase = d.morningSaved && d.eodSaved ? '#00FFA3' : d.morningSaved ? '#b794f6' : th.tx3;
-              const sel = d.id === activeId;
-              const locked = isDayFullyLocked(d);
-              const dayRisk = getDayColor(d);
-              return (
-                <div key={d.id} onClick={() => { setActiveId(d.id); setView('journal'); }}
-                  className="j-card-hover"
-                  style={{
-                    padding: '10px 12px', borderRadius: 10, cursor: 'pointer', marginBottom: 3,
-                    border: '1px solid transparent', transition: 'all .2s',
-                    ...(sel ? { background: th.selBg, borderColor: th.selBr } : { background: 'transparent' }),
-                    ...(dayRisk === 'darkred' ? { borderColor: 'rgba(255,77,77,0.3)' } : {}),
-                  }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10.5, fontWeight: 700, color: sel ? th.tx : th.tx2 }}>{fmtShort(d.date, t.locale)}</span>
-                        <span style={{ fontSize: 6, color: phase }}>●</span>
-                        {locked && <span style={{ fontSize: 8 }}>🔒</span>}
-                        {dayRisk === 'darkred' && <span style={{ fontSize: 8, animation: 'j-pulse 1s ease-in-out infinite' }}>⚠️</span>}
-                      </div>
-                      <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, color: th.tx3, marginTop: 2 }}>
-                        {dir === 'rtl' ? 'יום' : 'Day'} {d.dayNum || '?'} · {dir === 'rtl' ? 'שבוע' : 'Wk'} {d.weekNum || '?'}
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, marginInlineStart: 6, flexShrink: 0 }}>
-                      <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10.5, fontWeight: 800, color: ec }}>{d.emotionScore}</span>
-                      {dp !== 0 && <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9.5, fontWeight: 700, color: dp > 0 ? '#00FFA3' : '#FF4D4D' }}>{dp > 0 ? '+' : ''}{dp.toFixed(0)}$</span>}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </aside>
-
         {/* MAIN */}
-        <main style={{ flex: 1, overflowY: 'auto', background: 'transparent', order: 1 }}>
+        <main style={{ flex: 1, overflowY: 'auto', background: 'transparent' }}>
           {view === 'journal' && activeDay && (
             <div className="j-main-content" style={{ maxWidth: 1080, margin: '0 auto', padding: '22px 22px 50px', direction: dir, animation: 'j-fade-in .3s ease-out' }}>
               {/* Header */}
