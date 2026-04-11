@@ -10,7 +10,7 @@ const TR: Record<string, any> = {
   en: {
     dir: 'ltr', locale: 'en-US',
     app: 'APEX OS', sub: 'Private Trading Operating System',
-    nav: { journal: 'Journal', archive: 'Archive', dashboard: 'Dashboard' },
+    nav: { journal: 'Journal', archive: 'Archive', dashboard: 'Dashboard', calendar: 'Calendar' },
     m: { phase: 'Morning Analysis', lock: 'Lock Morning Analysis', lockSub: 'Morning analysis will be permanently sealed.', locked: 'MORNING LOCKED' },
     e: { phase: 'End of Day', lock: 'Close Day & Open New', lockSub: 'Seals today\'s journal and opens a fresh new day automatically.', locked: 'DAY COMPLETE' },
     f: {
@@ -44,7 +44,7 @@ const TR: Record<string, any> = {
       psych: 'Psychology Check', discipline: 'Daily Commitment',
       disciplineQ: 'What do I commit to today?', disciplineConfirm: 'I commit to this.',
       disciplineMin: 'Select at least 2 commitments',
-      analytics: 'Behavioral Analytics',
+      analytics: 'Analytics',
     },
     bias: ['Bullish', 'Bearish', 'Neutral', 'Expansion', 'Contraction'],
     struct: ['Markup', 'Markdown', 'Accumulation', 'Distribution', 'Range'],
@@ -54,11 +54,19 @@ const TR: Record<string, any> = {
     psychQ: { sleepWell: 'Did I sleep well?', feelingPressure: 'Am I feeling pressure?', seekingExcitement: 'Am I seeking excitement?', recoveringLosses: 'Am I trying to recover losses?' },
     commitments: ['Follow the plan', 'Max 3 trades', 'No revenge trading', 'Accept losses gracefully', 'Wait for confirmation', 'Stick to risk limits', 'No FOMO entries', 'Review before acting'],
     arch: { title: 'Journal Archive', search: 'Search...', all: 'All', bull: 'Bullish', bear: 'Bearish', newest: 'Newest', oldest: 'Oldest', best: 'Best P&L', readonly: 'READ ONLY — SEALED DAY', notice: 'This day is permanently locked.', close: 'Close', open: 'Open Day', morning: 'Morning Analysis', eod: 'End of Day', none: 'No archived entries yet.' },
+    risk: {
+      daily: 'You have reached your daily loss limit (-2R). It is recommended to stop trading for today.',
+      weekly: 'You have reached your weekly loss limit (-5R). Consider stopping trading and reviewing your strategy.',
+      monthly: 'You have reached your monthly loss limit (-10R). A deeper performance review is recommended.',
+      title: 'Risk Limit Breached', understand: 'I Understand',
+      dailyLabel: 'Daily', weeklyLabel: 'Weekly', monthlyLabel: 'Monthly',
+      banner: 'MONTHLY LOSS LIMIT REACHED',
+    },
   },
   he: {
     dir: 'rtl', locale: 'he-IL',
     app: 'APEX OS', sub: 'מערכת הפעלה פרטית למסחר',
-    nav: { journal: 'יומן', archive: 'ארכיון', dashboard: 'דשבורד' },
+    nav: { journal: 'יומן', archive: 'ארכיון', dashboard: 'דשבורד', calendar: 'לוח שנה' },
     m: { phase: 'ניתוח בוקר', lock: 'נעל ניתוח בוקר', lockSub: 'ניתוח הבוקר יינעל לצמיתות.', locked: 'בוקר נעול' },
     e: { phase: 'סקירת סוף יום', lock: 'סגור יום ופתח חדש', lockSub: 'יסגור את היומן של היום ויפתח יום חדש אוטומטית.', locked: 'יום הושלם' },
     f: {
@@ -92,7 +100,7 @@ const TR: Record<string, any> = {
       psych: 'בדיקה פסיכולוגית', discipline: 'מחויבות יומית',
       disciplineQ: 'למה אני מתחייב היום?', disciplineConfirm: 'אני מתחייב לזה.',
       disciplineMin: 'בחר לפחות 2 מחויבויות',
-      analytics: 'אנליטיקה התנהגותית',
+      analytics: 'אנליטיקה',
     },
     bias: ['שורי', 'דובי', 'ניטרלי', 'התרחבות', 'התכווצות'],
     struct: ['עלייה', 'ירידה', 'צבירה', 'חלוקה', 'טווח'],
@@ -102,6 +110,14 @@ const TR: Record<string, any> = {
     psychQ: { sleepWell: 'ישנתי טוב?', feelingPressure: 'אני מרגיש לחץ?', seekingExcitement: 'אני מחפש ריגושים?', recoveringLosses: 'אני מנסה לשחזר הפסדים?' },
     commitments: ['לעקוב אחרי התוכנית', 'מקסימום 3 עסקאות', 'בלי מסחר נקמה', 'לקבל הפסדים', 'לחכות לאישור', 'להישאר בגבולות סיכון', 'בלי FOMO', 'לבדוק לפני פעולה'],
     arch: { title: 'ארכיון יומן', search: 'חיפוש...', all: 'הכל', bull: 'שורי', bear: 'דובי', newest: 'חדש ראשון', oldest: 'ישן ראשון', best: 'הכי טוב', readonly: 'קריאה בלבד — יום נעול', notice: 'יום זה נעול לצמיתות.', close: 'סגור', open: 'פתח יום', morning: 'ניתוח בוקר', eod: 'סוף יום', none: 'אין רשומות בארכיון עדיין.' },
+    risk: {
+      daily: 'הגעת למגבלת ההפסד היומית (-2R). מומלץ להפסיק לסחור היום.',
+      weekly: 'הגעת למגבלת ההפסד השבועית (-5R). שקול להפסיק לסחור ולבדוק את האסטרטגיה שלך.',
+      monthly: 'הגעת למגבלת ההפסד החודשית (-10R). מומלץ לבצע סקירת ביצועים מעמיקה.',
+      title: 'חריגת מגבלת סיכון', understand: 'הבנתי',
+      dailyLabel: 'יומי', weeklyLabel: 'שבועי', monthlyLabel: 'חודשי',
+      banner: 'הגעת למגבלת ההפסד החודשית',
+    },
   },
 };
 
@@ -147,6 +163,105 @@ const fmtShort = (iso: string, locale: string) => {
 const MORNING_KEYS = new Set(['mood','plan','tasks','goals','bias','mktStruct','mentalTags','btcNote','t3Note','domNote','macroNote','levels','setups','emotionScore','fearGreed','dayNum','weekNum','date','morningImages','btcThoughts','psychAnswers','disciplineCommitments','disciplineConfirmed','sectionLocks']);
 
 const isDayFullyLocked = (d: JournalDay) => d.morningSaved && d.eodSaved;
+
+// ═══════════════════════════════════════════════════════════════
+// JOURNAL RISK ENGINE
+// ═══════════════════════════════════════════════════════════════
+const RISK_LIMITS = { trade: -1, day: -2, week: -5, month: -10 };
+
+function parseRR(rr: string): number {
+  // Try to parse R:R values like "1:3", "-1", "+2R", "2R" etc.
+  const s = (rr || '').trim().replace(/r$/i, '');
+  // Check for ratio like 1:3
+  if (s.includes(':')) {
+    const parts = s.split(':');
+    const risk = parseFloat(parts[0]) || 0;
+    const reward = parseFloat(parts[1]) || 0;
+    if (risk === 0) return 0;
+    return reward / risk;
+  }
+  return parseFloat(s) || 0;
+}
+
+function getTradeR(t: JournalTrade): number {
+  // Use RR field first, fallback to PnL sign
+  const rr = parseRR(t.rr);
+  if (rr !== 0) {
+    const pnl = parseFloat(t.pnl) || 0;
+    return pnl < 0 ? -Math.abs(rr) : pnl > 0 ? Math.abs(rr) : 0;
+  }
+  // Fallback: use pnl sign as 1R
+  const pnl = parseFloat(t.pnl) || 0;
+  if (pnl < 0) return -1;
+  if (pnl > 0) return 1;
+  return 0;
+}
+
+function sumNegR(trades: JournalTrade[]): number {
+  return trades.reduce((s, t) => {
+    const r = getTradeR(t);
+    return r < -0.001 ? s + r : s;
+  }, 0);
+}
+
+interface JRiskStatus {
+  dailyR: number;
+  weeklyR: number;
+  monthlyR: number;
+  dailyBreached: boolean;
+  weeklyBreached: boolean;
+  monthlyBreached: boolean;
+  breachedLevel: 'none' | 'daily' | 'weekly' | 'monthly';
+}
+
+function checkJournalRisk(days: JournalDay[], refDate: Date = new Date()): JRiskStatus {
+  const refStr = refDate.toISOString().split('T')[0];
+  const refD = new Date(refStr + 'T12:00');
+
+  // Daily
+  const dailyDays = days.filter(d => d.date === refStr);
+  const dailyTrades = dailyDays.flatMap(d => d.trades || []);
+  const dailyR = sumNegR(dailyTrades);
+
+  // Weekly (Sunday-based)
+  const dayOfWeek = refD.getDay();
+  const weekStart = new Date(refD);
+  weekStart.setDate(refD.getDate() - dayOfWeek);
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 7);
+  const weeklyDays = days.filter(d => {
+    const dd = new Date(d.date + 'T12:00');
+    return dd >= weekStart && dd < weekEnd;
+  });
+  const weeklyR = sumNegR(weeklyDays.flatMap(d => d.trades || []));
+
+  // Monthly
+  const monthlyDays = days.filter(d => {
+    const dd = new Date(d.date + 'T12:00');
+    return dd.getMonth() === refD.getMonth() && dd.getFullYear() === refD.getFullYear();
+  });
+  const monthlyR = sumNegR(monthlyDays.flatMap(d => d.trades || []));
+
+  const dailyBreached = dailyR <= RISK_LIMITS.day;
+  const weeklyBreached = weeklyR <= RISK_LIMITS.week;
+  const monthlyBreached = monthlyR <= RISK_LIMITS.month;
+
+  let breachedLevel: JRiskStatus['breachedLevel'] = 'none';
+  if (monthlyBreached) breachedLevel = 'monthly';
+  else if (weeklyBreached) breachedLevel = 'weekly';
+  else if (dailyBreached) breachedLevel = 'daily';
+
+  return { dailyR, weeklyR, monthlyR, dailyBreached, weeklyBreached, monthlyBreached, breachedLevel };
+}
+
+function getDayColor(day: JournalDay): 'green' | 'red' | 'darkred' | 'neutral' {
+  if (!day.trades || day.trades.length === 0) return 'neutral';
+  const pnl = sumPnl(day);
+  const negR = sumNegR(day.trades);
+  if (negR <= RISK_LIMITS.day) return 'darkred';
+  if (pnl < 0) return 'red';
+  return 'green';
+}
 
 // ═══════════════════════════════════════════════════════════════
 // THEME SYSTEM
@@ -206,27 +321,31 @@ const IN = ({ val, set, ph, dir, disabled, style = {}, th }: any) => (
     style={{ width: '100%', background: th.inputBg, border: `1px solid ${th.inputBr}`, borderRadius: 10, color: th.tx, fontFamily: "'Poppins',sans-serif", fontSize: 13, outline: 'none', padding: '9px 14px', direction: dir, textAlign: dir === 'rtl' ? 'right' : 'left', transition: 'border-color .2s, box-shadow .2s, background .2s', ...style }} />
 );
 
-// Section with lock/unlock
+// Section with lock/unlock + animation
 const Sec = ({ title, icon, accent = '#5AA9FF', children, open: initOpen = true, locked, onLock, onUnlock, th, fullLocked }: any) => {
   const [open, setOpen] = useState(initOpen);
   const isLocked = locked || fullLocked;
   return (
-    <div style={{ background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 14, marginBottom: 12, overflow: 'hidden', transition: 'box-shadow .25s', boxShadow: open ? `0 0 20px ${accent}08` : 'none' }}>
+    <div style={{ background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 14, marginBottom: 12, overflow: 'hidden', transition: 'box-shadow .25s, transform .2s', boxShadow: open ? `0 0 20px ${accent}08` : 'none' }}
+      onMouseEnter={e => { if (!open) (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}>
       <div onClick={() => setOpen((o: boolean) => !o)}
         style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '13px 18px', cursor: 'pointer', userSelect: 'none' as const, transition: 'background .2s', background: open ? `linear-gradient(90deg,${accent}08,transparent 60%)` : 'transparent' }}>
-        <span style={{ fontSize: 14 }}>{icon}</span>
+        <span style={{ fontSize: 14, transition: 'transform .3s', transform: open ? 'scale(1.1)' : 'scale(1)' }}>{icon}</span>
         <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase' as const, color: th.tx3, flex: 1 }}>{title}</span>
-        {isLocked && <span style={{ fontSize: 10, color: accent, opacity: 0.7 }}>🔒</span>}
+        {isLocked && <span style={{ fontSize: 10, color: accent, opacity: 0.7, animation: 'j-pulse 3s ease-in-out infinite' }}>🔒</span>}
         {!fullLocked && onLock && !locked && (
-          <button onClick={e => { e.stopPropagation(); onLock(); }} style={{ fontSize: 9, padding: '3px 8px', borderRadius: 6, border: `1px solid ${accent}30`, background: `${accent}10`, color: accent, cursor: 'pointer', fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>Lock</button>
+          <button onClick={e => { e.stopPropagation(); onLock(); }} style={{ fontSize: 9, padding: '3px 8px', borderRadius: 6, border: `1px solid ${accent}30`, background: `${accent}10`, color: accent, cursor: 'pointer', fontWeight: 600, fontFamily: "'Poppins',sans-serif", transition: 'all .2s' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = `${accent}20`; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = `${accent}10`; }}>Lock</button>
         )}
         {!fullLocked && onUnlock && locked && (
           <button onClick={e => { e.stopPropagation(); onUnlock(); }} style={{ fontSize: 9, padding: '3px 8px', borderRadius: 6, border: `1px solid ${accent}30`, background: `${accent}10`, color: accent, cursor: 'pointer', fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>Unlock</button>
         )}
         <span style={{ color: accent, fontSize: 11, transition: 'transform .25s ease', transform: open ? 'none' : 'rotate(-90deg)' }}>▾</span>
       </div>
-      <div style={{ maxHeight: open ? '3000px' : '0', overflow: 'hidden', transition: 'max-height .4s ease, opacity .3s ease', opacity: open ? 1 : 0 }}>
-        <div style={{ padding: '4px 18px 18px', pointerEvents: isLocked ? 'none' : 'auto', opacity: isLocked ? 0.6 : 1 }}>{children}</div>
+      <div style={{ maxHeight: open ? '5000px' : '0', overflow: 'hidden', transition: 'max-height .4s ease, opacity .3s ease', opacity: open ? 1 : 0 }}>
+        <div style={{ padding: '4px 18px 18px', pointerEvents: isLocked ? 'none' : 'auto', opacity: isLocked ? 0.6 : 1, transition: 'opacity .3s' }}>{children}</div>
       </div>
     </div>
   );
@@ -276,14 +395,14 @@ const ImageUpload = ({ images, onUpdate, label, uploadLabel, dir, disabled, th }
       <Lbl c={label} dir={dir} th={th} />
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' as const }}>
         {(images || []).map((img: string, i: number) => (
-          <div key={i} style={{ position: 'relative', width: 140, height: 100, borderRadius: 10, overflow: 'hidden', border: `1px solid ${th.cardBr}`, cursor: 'pointer' }}
+          <div key={i} style={{ position: 'relative', width: 140, height: 100, borderRadius: 10, overflow: 'hidden', border: `1px solid ${th.cardBr}`, cursor: 'pointer', transition: 'all .3s' }}
             onClick={() => setZoomIdx(i)}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1.03)'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; }}>
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1.03)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.3)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}>
             <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform .3s' }} />
             {!disabled && (
               <button onClick={e => { e.stopPropagation(); onUpdate((images || []).filter((_: any, j: number) => j !== i)); }}
-                style={{ position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: '50%', background: 'rgba(255,77,77,0.9)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>✕</button>
+                style={{ position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: '50%', background: 'rgba(255,77,77,0.9)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, transition: 'all .2s' }}>✕</button>
             )}
           </div>
         ))}
@@ -300,9 +419,8 @@ const ImageUpload = ({ images, onUpdate, label, uploadLabel, dir, disabled, th }
         )}
       </div>
       <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => handleFiles(e.target.files)} />
-      {/* Zoom overlay */}
       {zoomIdx !== null && images?.[zoomIdx] && (
-        <div onClick={() => setZoomIdx(null)} style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out' }}>
+        <div onClick={() => setZoomIdx(null)} style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out', backdropFilter: 'blur(8px)' }}>
           <img src={images[zoomIdx]} alt="" style={{ maxWidth: '90vw', maxHeight: '85vh', borderRadius: 12, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }} />
         </div>
       )}
@@ -319,8 +437,6 @@ const PsychSection = ({ answers, onUpdate, questions, dir, disabled, th }: any) 
     <div style={{ display: 'grid', gap: 10 }}>
       {keys.map(k => {
         const val = answers?.[k];
-        const isGood = k === 'sleepWell' ? val === true : val === false;
-        const isBad = k === 'sleepWell' ? val === false : val === true;
         return (
           <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 10, direction: dir }}>
             <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12.5, color: th.tx2, flex: 1 }}>{questions[k]}</span>
@@ -331,7 +447,7 @@ const PsychSection = ({ answers, onUpdate, questions, dir, disabled, th }: any) 
                 const c = (v && k === 'sleepWell') || (!v && k !== 'sleepWell') ? '#00FFA3' : '#FF4D4D';
                 return (
                   <button key={String(v)} disabled={disabled} onClick={() => onUpdate({ ...answers, [k]: active ? null : v })}
-                    style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 600, padding: '5px 14px', borderRadius: 20, border: active ? `1px solid ${c}50` : `1px solid ${th.inputBr}`, background: active ? `${c}15` : th.inputBg, color: active ? c : th.tx3, cursor: disabled ? 'not-allowed' : 'pointer', transition: 'all .2s' }}>
+                    style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 600, padding: '5px 14px', borderRadius: 20, border: active ? `1px solid ${c}50` : `1px solid ${th.inputBr}`, background: active ? `${c}15` : th.inputBg, color: active ? c : th.tx3, cursor: disabled ? 'not-allowed' : 'pointer', transition: 'all .2s', boxShadow: active ? `0 0 12px ${c}20` : 'none' }}>
                     {label}
                   </button>
                 );
@@ -359,7 +475,7 @@ const DisciplineSection = ({ commitments, confirmed, onUpdate, onConfirm, option
           return (
             <button key={opt} disabled={disabled || confirmed}
               onClick={() => onUpdate(on ? selected.filter((x: string) => x !== opt) : [...selected, opt])}
-              style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 600, padding: '6px 16px', borderRadius: 20, transition: 'all .2s', cursor: disabled || confirmed ? 'not-allowed' : 'pointer', ...(on ? { background: 'rgba(0,255,163,0.12)', border: '1px solid rgba(0,255,163,0.3)', color: '#00FFA3' } : { background: th.tagUnsel, border: `1px solid ${th.tagUnselBr}`, color: th.tagUnselTx }) }}>
+              style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 600, padding: '6px 16px', borderRadius: 20, transition: 'all .2s', cursor: disabled || confirmed ? 'not-allowed' : 'pointer', ...(on ? { background: 'rgba(0,255,163,0.12)', border: '1px solid rgba(0,255,163,0.3)', color: '#00FFA3', boxShadow: '0 0 12px rgba(0,255,163,0.15)' } : { background: th.tagUnsel, border: `1px solid ${th.tagUnselBr}`, color: th.tagUnselTx }) }}>
               {on ? '✓ ' : ''}{opt}
             </button>
           );
@@ -369,13 +485,13 @@ const DisciplineSection = ({ commitments, confirmed, onUpdate, onConfirm, option
         <p style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, color: '#FFC857', opacity: 0.8 }}>⚠ {f.disciplineMin}</p>
       )}
       {!confirmed && canConfirm && (
-        <button onClick={onConfirm} style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 700, padding: '10px 24px', borderRadius: 10, background: 'linear-gradient(135deg,#00FFA3,#0a9e76)', color: '#0a0e1a', border: 'none', cursor: 'pointer', transition: 'all .2s', marginTop: 4 }}>
+        <button onClick={onConfirm} style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 700, padding: '10px 24px', borderRadius: 10, background: 'linear-gradient(135deg,#00FFA3,#0a9e76)', color: '#0a0e1a', border: 'none', cursor: 'pointer', transition: 'all .2s', marginTop: 4, boxShadow: '0 4px 20px rgba(0,255,163,0.25)' }}>
           ✓ {f.disciplineConfirm}
         </button>
       )}
       {confirmed && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-          <span style={{ fontSize: 14 }}>🔒</span>
+          <span style={{ fontSize: 14, animation: 'j-pulse 3s ease-in-out infinite' }}>🔒</span>
           <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 700, color: '#00FFA3', letterSpacing: '1px' }}>COMMITTED</span>
         </div>
       )}
@@ -406,8 +522,10 @@ const MarketStrip = ({ day, dir, th }: { day: JournalDay; dir: string; th: typeo
         <div key={b.label} style={{
           display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px',
           background: `${b.color}08`, border: `1px solid ${b.color}15`,
-          borderRadius: 10, flexShrink: 0, transition: 'all .2s',
-        }}>
+          borderRadius: 10, flexShrink: 0, transition: 'all .25s',
+        }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = `0 0 16px ${b.color}20`; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}>
           <div style={{ width: 6, height: 6, borderRadius: '50%', background: b.color, boxShadow: `0 0 8px ${b.color}60`, animation: 'j-pulse 2.5s ease-in-out infinite' }} />
           <div>
             <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 700, letterSpacing: '1.8px', color: th.tx3, textTransform: 'uppercase' as const }}>{b.label}</div>
@@ -415,6 +533,91 @@ const MarketStrip = ({ day, dir, th }: { day: JournalDay; dir: string; th: typeo
           </div>
         </div>
       ))}
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════
+// RISK STATUS STRIP
+// ═══════════════════════════════════════════════════════════════
+const RiskStrip = ({ risk, dir, th }: { risk: JRiskStatus; dir: string; th: typeof THEMES.dark }) => {
+  const items = [
+    { label: dir === 'rtl' ? 'יומי' : 'DAILY', value: `${risk.dailyR.toFixed(1)}R`, limit: `${RISK_LIMITS.day}R`, breached: risk.dailyBreached, color: risk.dailyBreached ? '#FF4D4D' : '#00FFA3' },
+    { label: dir === 'rtl' ? 'שבועי' : 'WEEKLY', value: `${risk.weeklyR.toFixed(1)}R`, limit: `${RISK_LIMITS.week}R`, breached: risk.weeklyBreached, color: risk.weeklyBreached ? '#FF4D4D' : '#FFC857' },
+    { label: dir === 'rtl' ? 'חודשי' : 'MONTHLY', value: `${risk.monthlyR.toFixed(1)}R`, limit: `${RISK_LIMITS.month}R`, breached: risk.monthlyBreached, color: risk.monthlyBreached ? '#FF4D4D' : '#5AA9FF' },
+  ];
+  return (
+    <div style={{ display: 'flex', gap: 8, padding: '6px 0', overflowX: 'auto' as const }}>
+      {items.map(it => (
+        <div key={it.label} style={{
+          display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px',
+          background: it.breached ? 'rgba(255,77,77,0.08)' : th.cardBg,
+          border: `1px solid ${it.breached ? 'rgba(255,77,77,0.25)' : th.cardBr}`,
+          borderRadius: 8, flexShrink: 0, transition: 'all .3s',
+          animation: it.breached ? 'j-glow-red 2s ease-in-out infinite' : 'none',
+        }}>
+          {it.breached && <span style={{ fontSize: 12, animation: 'j-pulse 1s ease-in-out infinite' }}>⚠️</span>}
+          <div>
+            <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 700, letterSpacing: '1.5px', color: th.tx3, textTransform: 'uppercase' as const }}>{it.label}</div>
+            <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 13, fontWeight: 800, color: it.color }}>{it.value} <span style={{ fontSize: 9, color: th.tx3, fontWeight: 400 }}>/ {it.limit}</span></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════
+// RISK ALERT MODAL
+// ═══════════════════════════════════════════════════════════════
+const RiskAlertModal = ({ risk, t, dir, onClose, th }: { risk: JRiskStatus; t: any; dir: string; onClose: () => void; th: typeof THEMES.dark }) => {
+  const level = risk.breachedLevel;
+  if (level === 'none') return null;
+  const cfg = {
+    daily: { icon: '⚠️', color: '#f97316', msg: t.risk.daily },
+    weekly: { icon: '🔴', color: '#FF4D4D', msg: t.risk.weekly },
+    monthly: { icon: '🚨', color: '#991b1b', msg: t.risk.monthly },
+  }[level]!;
+
+  // Sound alert
+  try {
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = 600; gain.gain.value = 0.15;
+    osc.start();
+    setTimeout(() => { osc.frequency.value = 400; }, 150);
+    setTimeout(() => { osc.stop(); ctx.close(); }, 350);
+  } catch { /* ignore */ }
+
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 9990, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)', animation: 'j-fade-in .3s ease-out' }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        background: th.bg1, border: `2px solid ${cfg.color}`, borderRadius: 20, padding: 32, maxWidth: 460, width: '90%',
+        textAlign: 'center', boxShadow: `0 0 80px ${cfg.color}30`, animation: 'j-scale-in .3s ease-out',
+      }}>
+        <div style={{ fontSize: 56, marginBottom: 16, animation: 'j-pulse 1.5s ease-in-out infinite' }}>{cfg.icon}</div>
+        <div style={{ fontSize: 18, fontWeight: 800, color: cfg.color, fontFamily: "'Poppins',sans-serif", marginBottom: 14, letterSpacing: '.5px' }}>{t.risk.title}</div>
+        <div style={{ fontSize: 13, color: th.tx2, lineHeight: 1.8, marginBottom: 20, fontFamily: "'Poppins',sans-serif", direction: dir as 'ltr' | 'rtl' }}>{cfg.msg}</div>
+        <div style={{ display: 'flex', gap: 14, justifyContent: 'center', marginBottom: 22 }}>
+          {[
+            { l: t.risk.dailyLabel, v: risk.dailyR.toFixed(1), b: risk.dailyBreached },
+            { l: t.risk.weeklyLabel, v: risk.weeklyR.toFixed(1), b: risk.weeklyBreached },
+            { l: t.risk.monthlyLabel, v: risk.monthlyR.toFixed(1), b: risk.monthlyBreached },
+          ].map(s => (
+            <div key={s.l} style={{ padding: '10px 16px', background: th.inputBg, borderRadius: 10, border: `1px solid ${s.b ? 'rgba(255,77,77,0.3)' : th.inputBr}` }}>
+              <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, color: th.tx3, letterSpacing: '1.5px', textTransform: 'uppercase' as const }}>{s.l}</div>
+              <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 18, fontWeight: 800, color: s.b ? '#FF4D4D' : th.tx, marginTop: 3 }}>{s.v}R</div>
+            </div>
+          ))}
+        </div>
+        <button onClick={onClose} style={{
+          padding: '12px 36px', background: `${cfg.color}20`, border: `1px solid ${cfg.color}`, borderRadius: 12,
+          color: cfg.color, cursor: 'pointer', fontSize: 13, fontWeight: 700, fontFamily: "'Poppins',sans-serif",
+          transition: 'all .2s', letterSpacing: '.5px',
+        }}>{t.risk.understand}</button>
+      </div>
     </div>
   );
 };
@@ -431,7 +634,7 @@ const EmoSlider = ({ val, set, label, dir, disabled, th }: any) => {
         <Lbl c={label} dir={dir} th={th} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ fontSize: 18 }}>{e}</span>
-          <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 24, fontWeight: 800, color: c, lineHeight: 1 }}>{val}</span>
+          <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 24, fontWeight: 800, color: c, lineHeight: 1, textShadow: `0 0 20px ${c}40` }}>{val}</span>
           <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, color: th.tx3 }}>/10</span>
         </div>
       </div>
@@ -454,6 +657,7 @@ const Scores = ({ val, set, disabled, th }: any) => (
           cursor: disabled ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: 12,
           background: on ? `hsla(${h},70%,46%,.85)` : th.inputBg,
           color: on ? '#fff' : th.tx3, transition: 'all .15s',
+          boxShadow: on ? `0 0 10px hsla(${h},70%,46%,.3)` : 'none',
         }}>{n}</button>
       );
     })}
@@ -483,11 +687,11 @@ const FGGauge = ({ value }: { value: number }) => {
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <svg width="150" height="82" viewBox="0 0 150 82">
         {segs.map((s, i) => <path key={i} d={arc(s.s, s.e)} fill={s.c} opacity={0.85} />)}
-        <line x1={cx} y1={cy} x2={cx + 46 * Math.cos(nr)} y2={cy + 46 * Math.sin(nr)} stroke="rgba(255,255,255,0.9)" strokeWidth={2.5} strokeLinecap="round" style={{ filter: `drop-shadow(0 0 4px ${color})` }} />
+        <line x1={cx} y1={cy} x2={cx + 46 * Math.cos(nr)} y2={cy + 46 * Math.sin(nr)} stroke="rgba(255,255,255,0.9)" strokeWidth={2.5} strokeLinecap="round" style={{ filter: `drop-shadow(0 0 4px ${color})`, transition: 'all .5s ease' }} />
         <circle cx={cx} cy={cy} r={5} fill="rgba(255,255,255,0.9)" />
       </svg>
       <div style={{ textAlign: 'center', marginTop: -6 }}>
-        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 20, fontWeight: 800, color, lineHeight: 1 }}>{v}</div>
+        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 20, fontWeight: 800, color, lineHeight: 1, textShadow: `0 0 15px ${color}40` }}>{v}</div>
         <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: '8.5px', color, letterSpacing: 1, textTransform: 'uppercase' as const, marginTop: 3, opacity: 0.8 }}>{label}</div>
       </div>
     </div>
@@ -511,7 +715,7 @@ const TCard = ({ trade, idx, onChange, onDel, f, dir, disabled, th }: any) => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, direction: dir }}>
         <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, color: th.tx3, letterSpacing: 1.2 }}>{f.tradeN} #{idx + 1}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {p !== 0 && <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 14, fontWeight: 800, color: p > 0 ? '#00FFA3' : '#FF4D4D' }}>{p > 0 ? '+' : ''}{p.toFixed(2)}$</span>}
+          {p !== 0 && <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 14, fontWeight: 800, color: p > 0 ? '#00FFA3' : '#FF4D4D', textShadow: `0 0 12px ${p > 0 ? 'rgba(0,255,163,0.3)' : 'rgba(255,77,77,0.3)'}` }}>{p > 0 ? '+' : ''}{p.toFixed(2)}$</span>}
           {!disabled && <button onClick={onDel} style={{ background: 'rgba(255,77,77,.1)', border: '1px solid rgba(255,77,77,.2)', color: '#FF4D4D', padding: '5px 10px', fontSize: 11, borderRadius: 6, cursor: 'pointer', fontWeight: 600, transition: 'all .15s' }}>✕ {f.del}</button>}
         </div>
       </div>
@@ -524,7 +728,7 @@ const TCard = ({ trade, idx, onChange, onDel, f, dir, disabled, th }: any) => {
         <div style={{ display: 'flex', gap: 6, marginBottom: 9 }}>
           {['LONG', 'SHORT', 'MISSED'].map(s => (
             <button key={s} onClick={() => onChange?.({ ...trade, side: s })}
-              style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' as const, borderRadius: 20, padding: '5px 14px', cursor: 'pointer', transition: 'all .2s', ...(trade.side === s ? { background: s === 'LONG' ? '#00FFA3' : s === 'SHORT' ? '#FF4D4D' : '#5AA9FF', color: '#0a0e1a', border: 'none' } : { background: th.unselBg, border: `1px solid ${th.unselBr}`, color: th.unselTx }) }}>
+              style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' as const, borderRadius: 20, padding: '5px 14px', cursor: 'pointer', transition: 'all .2s', ...(trade.side === s ? { background: s === 'LONG' ? '#00FFA3' : s === 'SHORT' ? '#FF4D4D' : '#5AA9FF', color: '#0a0e1a', border: 'none', boxShadow: `0 0 12px ${s === 'LONG' ? 'rgba(0,255,163,0.3)' : s === 'SHORT' ? 'rgba(255,77,77,0.3)' : 'rgba(90,169,255,0.3)'}` } : { background: th.unselBg, border: `1px solid ${th.unselBr}`, color: th.unselTx }) }}>
               {s}
             </button>
           ))}
@@ -612,27 +816,55 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
     insights.push({ text: dir === 'rtl' ? `ימים עם 4+ עסקאות: ממוצע ${avg.toFixed(0)}$. ${avg < 0 ? 'שקול לצמצם.' : ''}` : `Days with 4+ trades: avg ${avg.toFixed(0)}$. ${avg < 0 ? 'Consider trading less.' : ''}`, type: avg < 0 ? 'warning' : 'info' });
   }
 
-  // General stats
+  // Streak detection
+  let currentStreak = 0;
+  let bestStreak = 0;
+  const sorted = [...completeDays].sort((a, b) => a.date.localeCompare(b.date));
+  sorted.forEach(d => {
+    if (sumPnl(d) >= 0) { currentStreak++; bestStreak = Math.max(bestStreak, currentStreak); }
+    else { currentStreak = 0; }
+  });
+  if (bestStreak >= 2) {
+    insights.push({ text: dir === 'rtl' ? `שיא רצף ימים חיוביים: ${bestStreak} ימים!` : `Best winning streak: ${bestStreak} days!`, type: 'success' });
+  }
+
+  // Discipline correlation
+  const withDiscipline = completeDays.filter(d => d.disciplineConfirmed);
+  const noDiscipline = completeDays.filter(d => !d.disciplineConfirmed);
+  if (withDiscipline.length >= 1 && noDiscipline.length >= 1) {
+    const discAvg = withDiscipline.reduce((s, d) => s + sumPnl(d), 0) / withDiscipline.length;
+    const noDiscAvg = noDiscipline.reduce((s, d) => s + sumPnl(d), 0) / noDiscipline.length;
+    insights.push({ text: dir === 'rtl' ? `עם מחויבות: ממוצע ${discAvg.toFixed(0)}$. בלי: ${noDiscAvg.toFixed(0)}$` : `With discipline commitment: avg ${discAvg.toFixed(0)}$. Without: avg ${noDiscAvg.toFixed(0)}$`, type: discAvg > noDiscAvg ? 'success' : 'warning' });
+  }
+
   const totalPnl = completeDays.reduce((s, d) => s + sumPnl(d), 0);
   const totalTrades = completeDays.reduce((s, d) => s + d.trades.length, 0);
   const totalWins = completeDays.reduce((s, d) => s + numWins(d), 0);
   const avgScore = completeDays.reduce((s, d) => s + d.dayScore, 0) / completeDays.length;
+  const profitFactor = (() => {
+    let gains = 0, losses = 0;
+    completeDays.forEach(d => d.trades.forEach(t => { const p = parseFloat(t.pnl) || 0; if (p > 0) gains += p; else losses += Math.abs(p); }));
+    return losses > 0 ? gains / losses : gains > 0 ? Infinity : 0;
+  })();
 
   const IC = { warning: '#FF4D4D', success: '#00FFA3', info: '#5AA9FF' };
 
   return (
     <div>
       {/* Stats row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 10, marginBottom: 20 }} className="j-grid-2col">
         {[
           { l: dir === 'rtl' ? 'סה"כ P&L' : 'Total P&L', v: `${totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(0)}$`, c: totalPnl >= 0 ? '#00FFA3' : '#FF4D4D' },
           { l: dir === 'rtl' ? 'עסקאות' : 'Trades', v: String(totalTrades), c: '#5AA9FF' },
           { l: dir === 'rtl' ? 'אחוז הצלחה' : 'Win Rate', v: `${totalTrades ? ((totalWins / totalTrades) * 100).toFixed(0) : 0}%`, c: '#FFC857' },
           { l: dir === 'rtl' ? 'ציון ממוצע' : 'Avg Score', v: avgScore.toFixed(1), c: '#b794f6' },
+          { l: 'Profit Factor', v: profitFactor === Infinity ? '∞' : profitFactor.toFixed(2), c: profitFactor >= 1.5 ? '#00FFA3' : profitFactor >= 1 ? '#FFC857' : '#FF4D4D' },
         ].map(s => (
-          <div key={s.l} style={{ background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 12, padding: '14px 16px', textAlign: 'center' }}>
+          <div key={s.l} style={{ background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 12, padding: '14px 16px', textAlign: 'center', transition: 'all .25s' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = `0 0 20px ${s.c}15`; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}>
             <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 700, letterSpacing: '2px', color: th.tx3, textTransform: 'uppercase' as const, marginBottom: 6 }}>{s.l}</div>
-            <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 22, fontWeight: 800, color: s.c }}>{s.v}</div>
+            <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 22, fontWeight: 800, color: s.c, textShadow: `0 0 15px ${s.c}30` }}>{s.v}</div>
           </div>
         ))}
       </div>
@@ -642,10 +874,10 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
           <div key={i} style={{
             background: `${IC[ins.type]}08`, border: `1px solid ${IC[ins.type]}20`, borderRadius: 10,
             padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10, direction: dir as 'rtl' | 'ltr',
-            transition: 'all .2s',
+            transition: 'all .25s', cursor: 'default',
           }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateX(4px)'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateX(0)'; }}>
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateX(4px)'; (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 16px ${IC[ins.type]}15`; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateX(0)'; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}>
             <span style={{ fontSize: 16 }}>{ins.type === 'warning' ? '⚠️' : ins.type === 'success' ? '✅' : '💡'}</span>
             <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12.5, color: th.tx, lineHeight: 1.5 }}>{ins.text}</span>
           </div>
@@ -661,41 +893,190 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
 };
 
 // ═══════════════════════════════════════════════════════════════
+// CALENDAR VIEW
+// ═══════════════════════════════════════════════════════════════
+const CalendarView = ({ days, dir, th, t, risk, onSelectDay }: { days: JournalDay[]; dir: string; th: typeof THEMES.dark; t: any; risk: JRiskStatus; onSelectDay: (id: string) => void }) => {
+  const [month, setMonth] = useState(() => new Date().getMonth());
+  const [year, setYear] = useState(() => new Date().getFullYear());
+  const today = new Date();
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const monthName = new Date(year, month).toLocaleDateString(t.locale, { month: 'long', year: 'numeric' });
+
+  // Map dates to journal days
+  const dayMap = useMemo(() => {
+    const m: Record<number, JournalDay[]> = {};
+    days.forEach(d => {
+      const dd = new Date(d.date + 'T12:00');
+      if (dd.getMonth() === month && dd.getFullYear() === year) {
+        const day = dd.getDate();
+        if (!m[day]) m[day] = [];
+        m[day].push(d);
+      }
+    });
+    return m;
+  }, [days, month, year]);
+
+  // Weekly risk check
+  const weeklyBreachedWeeks = useMemo(() => {
+    const breached = new Set<number>();
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dt = new Date(year, month, d);
+      if (dt.getDay() === 0) { // Sunday = week start
+        const weekEnd = new Date(dt);
+        weekEnd.setDate(dt.getDate() + 7);
+        const weekDays = days.filter(jd => {
+          const jdd = new Date(jd.date + 'T12:00');
+          return jdd >= dt && jdd < weekEnd;
+        });
+        const weekR = sumNegR(weekDays.flatMap(jd => jd.trades || []));
+        if (weekR <= RISK_LIMITS.week) breached.add(d);
+      }
+    }
+    return breached;
+  }, [days, month, year, daysInMonth]);
+
+  const monthlyR = useMemo(() => {
+    const mDays = days.filter(d => {
+      const dd = new Date(d.date + 'T12:00');
+      return dd.getMonth() === month && dd.getFullYear() === year;
+    });
+    return sumNegR(mDays.flatMap(d => d.trades || []));
+  }, [days, month, year]);
+
+  const prevMonth = () => { if (month === 0) { setMonth(11); setYear(y => y - 1); } else setMonth(m => m - 1); };
+  const nextMonth = () => { if (month === 11) { setMonth(0); setYear(y => y + 1); } else setMonth(m => m + 1); };
+
+  const dayNames = dir === 'rtl'
+    ? ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש']
+    : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  const monthlyBreached = monthlyR <= RISK_LIMITS.month;
+
+  return (
+    <div style={{ maxWidth: 800, margin: '0 auto', padding: '22px 22px 50px', direction: dir as 'ltr' | 'rtl' }}>
+      {/* Monthly banner */}
+      {monthlyBreached && (
+        <div style={{
+          background: 'rgba(255,77,77,0.08)', border: '1px solid rgba(255,77,77,0.25)',
+          borderRadius: 12, padding: '14px 20px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12,
+          animation: 'j-glow-red 2s ease-in-out infinite',
+        }}>
+          <span style={{ fontSize: 20, animation: 'j-pulse 1s ease-in-out infinite' }}>🚨</span>
+          <div>
+            <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 800, color: '#FF4D4D', letterSpacing: '1px' }}>{t.risk.banner}</div>
+            <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, color: th.tx3, marginTop: 2 }}>{monthlyR.toFixed(1)}R / {RISK_LIMITS.month}R</div>
+          </div>
+        </div>
+      )}
+
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <button onClick={prevMonth} style={{ background: th.inputBg, border: `1px solid ${th.inputBr}`, borderRadius: 8, padding: '8px 14px', cursor: 'pointer', color: th.tx2, fontSize: 14, transition: 'all .2s' }}>◀</button>
+        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 20, fontWeight: 800, color: th.tx }}>{monthName}</div>
+        <button onClick={nextMonth} style={{ background: th.inputBg, border: `1px solid ${th.inputBr}`, borderRadius: 8, padding: '8px 14px', cursor: 'pointer', color: th.tx2, fontSize: 14, transition: 'all .2s' }}>▶</button>
+      </div>
+
+      {/* Risk summary for month */}
+      <RiskStrip risk={checkJournalRisk(days, new Date(year, month, 15))} dir={dir} th={th} />
+
+      {/* Day names */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 4, marginTop: 16, marginBottom: 8 }}>
+        {dayNames.map(d => (
+          <div key={d} style={{ textAlign: 'center', fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, color: th.tx3, letterSpacing: '1px', padding: '6px 0' }}>{d}</div>
+        ))}
+      </div>
+
+      {/* Calendar grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 4 }}>
+        {/* Empty cells */}
+        {Array.from({ length: firstDay }).map((_, i) => <div key={`e${i}`} />)}
+        {/* Day cells */}
+        {Array.from({ length: daysInMonth }, (_, i) => {
+          const dayNum = i + 1;
+          const jDays = dayMap[dayNum] || [];
+          const hasTrades = jDays.some(d => d.trades && d.trades.length > 0);
+          const hasMorning = jDays.some(d => d.morningSaved);
+          const pnl = jDays.reduce((s, d) => s + sumPnl(d), 0);
+          const negR = sumNegR(jDays.flatMap(d => d.trades || []));
+          const dayBreached = negR <= RISK_LIMITS.day;
+          const isToday = dayNum === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+          const color = !hasTrades ? 'transparent' : dayBreached ? 'rgba(153,27,27,0.4)' : pnl < 0 ? 'rgba(255,77,77,0.15)' : 'rgba(0,255,163,0.12)';
+          const borderColor = isToday ? '#5AA9FF' : dayBreached ? 'rgba(255,77,77,0.4)' : hasMorning ? th.cardBr : 'transparent';
+          const jDay = jDays[0];
+
+          return (
+            <div key={dayNum}
+              onClick={() => jDay && onSelectDay(jDay.id)}
+              style={{
+                aspectRatio: '1', borderRadius: 10, background: color, border: `1.5px solid ${borderColor}`,
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                cursor: jDay ? 'pointer' : 'default', transition: 'all .25s', position: 'relative',
+                boxShadow: isToday ? '0 0 12px rgba(90,169,255,0.3)' : dayBreached ? '0 0 10px rgba(255,77,77,0.2)' : 'none',
+              }}
+              onMouseEnter={e => { if (jDay) { (e.currentTarget as HTMLElement).style.transform = 'scale(1.08)'; (e.currentTarget as HTMLElement).style.zIndex = '10'; } }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; (e.currentTarget as HTMLElement).style.zIndex = '1'; }}>
+              <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 13, fontWeight: isToday ? 800 : 600, color: isToday ? '#5AA9FF' : hasTrades ? th.tx : th.tx3 }}>{dayNum}</span>
+              {hasTrades && (
+                <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8.5, fontWeight: 700, color: pnl >= 0 ? '#00FFA3' : '#FF4D4D', marginTop: 1 }}>
+                  {pnl >= 0 ? '+' : ''}{pnl.toFixed(0)}$
+                </span>
+              )}
+              {dayBreached && <span style={{ position: 'absolute', top: 2, right: 2, fontSize: 8, animation: 'j-pulse 1s ease-in-out infinite' }}>⚠️</span>}
+              {hasMorning && !hasTrades && <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#b794f6', marginTop: 3 }} />}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Weekly warnings */}
+      {weeklyBreachedWeeks.size > 0 && (
+        <div style={{ marginTop: 16, padding: '12px 16px', background: 'rgba(255,77,77,0.06)', border: '1px solid rgba(255,77,77,0.15)', borderRadius: 10 }}>
+          <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, color: '#FF4D4D', letterSpacing: '1.5px' }}>
+            ⚠️ {dir === 'rtl' ? 'שבועות שחרגו ממגבלת סיכון' : 'WEEKS WITH RISK LIMIT BREACH'}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════
 // MORNING FORM
 // ═══════════════════════════════════════════════════════════════
 const MorningForm = ({ day, upd, t, dir, onSave, dirty, th }: any) => {
   const f = t.f;
   const U = (k: string) => (v: any) => upd({ [k]: v });
   const taskArr = day.tasks || [];
-  const done = taskArr.filter((x: any) => x.done).length;
-  const BC = ['linear-gradient(135deg,#00FFA3,#0a9e76)', 'linear-gradient(135deg,#FF4D4D,#c02040)', 'linear-gradient(135deg,#5AA9FF,#2a6fd4)', 'linear-gradient(135deg,#FFC857,#c48010)', 'linear-gradient(135deg,#9968f8,#5820b8)'];
+  const done = taskArr.filter((t: any) => t.done).length;
   const sLocks = day.sectionLocks || {};
   const lockSec = (k: string) => upd({ sectionLocks: { ...sLocks, [k]: true } });
   const unlockSec = (k: string) => upd({ sectionLocks: { ...sLocks, [k]: false } });
+  const BC = ['#00FFA3', '#FF4D4D', '#FFC857', '#5AA9FF', '#b794f6'];
 
   return (
     <div>
-      <PDiv label={dir === 'rtl' ? 'תדריך טרום-שוק' : 'PRE-MARKET BRIEFING'} color="#00FFA3" icon="🌅" th={th} />
       <MarketStrip day={day} dir={dir} th={th} />
+      <PDiv label={dir === 'rtl' ? 'תדריך טרום-שוק' : 'PRE-MARKET BRIEFING'} color="#5AA9FF" icon="☀️" th={th} />
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }} className="j-grid-2col">
         <div>
-          {/* Image Upload */}
-          <Sec title={f.images} icon="📸" accent="#5AA9FF" th={th} locked={sLocks['images']} onLock={() => lockSec('images')} onUnlock={() => unlockSec('images')}>
-            <ImageUpload images={day.morningImages} onUpdate={(imgs: string[]) => upd({ morningImages: imgs })} label={f.images} uploadLabel={f.imageUpload} dir={dir} disabled={sLocks['images']} th={th} />
+          <Sec title={f.moodTitle} icon="🧠" accent="#5AA9FF" th={th} locked={sLocks['mood']} onLock={() => lockSec('mood')} onUnlock={() => unlockSec('mood')}>
+            <TA val={day.mood} set={U('mood')} ph={f.moodPh} rows={3} dir={dir} disabled={sLocks['mood']} th={th} />
           </Sec>
-
-          <Sec title={f.moodTitle} icon="💭" accent="#FFC857" th={th} locked={sLocks['mood']} onLock={() => lockSec('mood')} onUnlock={() => unlockSec('mood')}>
-            <TA val={day.mood} set={U('mood')} ph={f.moodPh} rows={5} dir={dir} disabled={sLocks['mood']} th={th} />
+          <Sec title={f.planTitle} icon="📋" accent="#FFC857" th={th} locked={sLocks['plan']} onLock={() => lockSec('plan')} onUnlock={() => unlockSec('plan')}>
+            <TA val={day.plan} set={U('plan')} ph={f.planPh} rows={3} dir={dir} disabled={sLocks['plan']} th={th} />
           </Sec>
 
           {/* Bitcoin Thoughts */}
           <Sec title={f.btcThoughts} icon="₿" accent="#f5a020" th={th} locked={sLocks['btcThoughts']} onLock={() => lockSec('btcThoughts')} onUnlock={() => unlockSec('btcThoughts')}>
-            <TA val={day.btcThoughts || ''} set={U('btcThoughts')} ph={f.btcThoughtsPh} rows={4} dir={dir} disabled={sLocks['btcThoughts']} th={th} />
+            <TA val={day.btcThoughts} set={U('btcThoughts')} ph={f.btcThoughtsPh} rows={3} dir={dir} disabled={sLocks['btcThoughts']} th={th} />
           </Sec>
 
-          <Sec title={f.planTitle} icon="🎯" accent="#5AA9FF" th={th} locked={sLocks['plan']} onLock={() => lockSec('plan')} onUnlock={() => unlockSec('plan')}>
-            <TA val={day.plan} set={U('plan')} ph={f.planPh} rows={5} dir={dir} disabled={sLocks['plan']} th={th} />
+          {/* Image Upload */}
+          <Sec title={f.images} icon="📷" accent="#5AA9FF" th={th} locked={sLocks['images']} onLock={() => lockSec('images')} onUnlock={() => unlockSec('images')}>
+            <ImageUpload images={day.morningImages} onUpdate={(imgs: string[]) => upd({ morningImages: imgs })} label={f.images} uploadLabel={f.imageUpload} dir={dir} disabled={sLocks['images']} th={th} />
           </Sec>
 
           <Sec title={f.checklist} icon="✅" accent="#00FFA3" th={th} locked={sLocks['checklist']} onLock={() => lockSec('checklist')} onUnlock={() => unlockSec('checklist')}>
@@ -705,9 +1086,9 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th }: any) => {
             ))}
             <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{ flex: 1, height: 4, background: th.inputBg, borderRadius: 2, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${taskArr.length ? (done / taskArr.length) * 100 : 0}%`, background: 'linear-gradient(90deg,#00FFA3,#06d6a0)', transition: 'width .5s ease', borderRadius: 2 }} />
+                <div style={{ height: '100%', width: `${taskArr.length ? (done / taskArr.length) * 100 : 0}%`, background: 'linear-gradient(90deg,#00FFA3,#06d6a0)', transition: 'width .5s ease', borderRadius: 2, boxShadow: done === taskArr.length ? '0 0 8px rgba(0,255,163,0.4)' : 'none' }} />
               </div>
-              <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, color: '#00FFA3', fontWeight: 700 }}>{done}/{taskArr.length}</span>
+              <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, color: done === taskArr.length ? '#00FFA3' : th.tx3, fontWeight: 700 }}>{done}/{taskArr.length}</span>
             </div>
           </Sec>
 
@@ -736,7 +1117,7 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th }: any) => {
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' as const }}>
                 {t.bias.map((o: string, i: number) => (
                   <button key={o} onClick={() => upd({ bias: o })} disabled={sLocks['bias']}
-                    style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: '5px 14px', cursor: sLocks['bias'] ? 'not-allowed' : 'pointer', transition: 'all .2s', ...(day.bias === o ? { background: BC[i], color: '#0a0e1a', border: 'none' } : { background: th.unselBg, border: `1px solid ${th.unselBr}`, color: th.unselTx }) }}>
+                    style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: '5px 14px', cursor: sLocks['bias'] ? 'not-allowed' : 'pointer', transition: 'all .2s', ...(day.bias === o ? { background: BC[i], color: '#0a0e1a', border: 'none', boxShadow: `0 0 10px ${BC[i]}30` } : { background: th.unselBg, border: `1px solid ${th.unselBr}`, color: th.unselTx }) }}>
                     {o}
                   </button>
                 ))}
@@ -747,7 +1128,7 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th }: any) => {
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' as const }}>
                 {t.struct.map((o: string, i: number) => (
                   <button key={o} onClick={() => upd({ mktStruct: o })} disabled={sLocks['bias']}
-                    style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: '5px 14px', cursor: sLocks['bias'] ? 'not-allowed' : 'pointer', transition: 'all .2s', ...(day.mktStruct === o ? { background: BC[i], color: '#0a0e1a', border: 'none' } : { background: th.unselBg, border: `1px solid ${th.unselBr}`, color: th.unselTx }) }}>
+                    style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: '5px 14px', cursor: sLocks['bias'] ? 'not-allowed' : 'pointer', transition: 'all .2s', ...(day.mktStruct === o ? { background: BC[i], color: '#0a0e1a', border: 'none', boxShadow: `0 0 10px ${BC[i]}30` } : { background: th.unselBg, border: `1px solid ${th.unselBr}`, color: th.unselTx }) }}>
                     {o}
                   </button>
                 ))}
@@ -762,7 +1143,7 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th }: any) => {
                     <button key={s} onClick={() => {
                       const cur = day.mentalTags || [];
                       upd({ mentalTags: on ? cur.filter((x: string) => x !== s) : [...cur, s] });
-                    }} disabled={sLocks['bias']} style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 600, borderRadius: 8, padding: '5px 13px', cursor: sLocks['bias'] ? 'not-allowed' : 'pointer', transition: 'all .2s', ...(on ? { background: 'rgba(153,104,248,.15)', border: '1px solid rgba(153,104,248,.35)', color: '#b794f6' } : { background: th.tagUnsel, border: `1px solid ${th.tagUnselBr}`, color: th.tagUnselTx }) }}>
+                    }} disabled={sLocks['bias']} style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 600, borderRadius: 8, padding: '5px 13px', cursor: sLocks['bias'] ? 'not-allowed' : 'pointer', transition: 'all .2s', ...(on ? { background: 'rgba(153,104,248,.15)', border: '1px solid rgba(153,104,248,.35)', color: '#b794f6', boxShadow: '0 0 10px rgba(153,104,248,0.15)' } : { background: th.tagUnsel, border: `1px solid ${th.tagUnselBr}`, color: th.tagUnselTx }) }}>
                       {s}
                     </button>
                   );
@@ -823,7 +1204,7 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th }: any) => {
 // ═══════════════════════════════════════════════════════════════
 // EOD FORM
 // ═══════════════════════════════════════════════════════════════
-const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th }: any) => {
+const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk }: any) => {
   const f = t.f;
   const U = (k: string) => (v: any) => upd({ [k]: v });
   const dp = sumPnl(day), dw = numWins(day);
@@ -845,7 +1226,6 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th }: any) => {
             <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8.5, color: '#00FFA3', letterSpacing: '1.8px', textTransform: 'uppercase' as const, background: 'rgba(0,255,163,.1)', padding: '3px 10px', borderRadius: 5, fontWeight: 700 }}>🔒 {t.m.locked}</span>
             <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, color: th.tx2, fontWeight: 600 }}>{day.bias} · {day.mktStruct}</span>
           </div>
-          {/* Morning images in recap */}
           {(day.morningImages || []).length > 0 && (
             <div style={{ display: 'flex', gap: 6 }}>
               {day.morningImages.map((img: string, i: number) => (
@@ -855,6 +1235,20 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th }: any) => {
           )}
         </div>
       </div>
+
+      {/* Risk Status */}
+      {risk && risk.breachedLevel !== 'none' && (
+        <div style={{
+          background: 'rgba(255,77,77,0.06)', border: '1px solid rgba(255,77,77,0.2)',
+          borderRadius: 10, padding: '10px 14px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8,
+          animation: 'j-glow-red 2s ease-in-out infinite',
+        }}>
+          <span style={{ fontSize: 14, animation: 'j-pulse 1s ease-in-out infinite' }}>⚠️</span>
+          <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 700, color: '#FF4D4D' }}>
+            {risk.breachedLevel === 'daily' ? t.risk.daily : risk.breachedLevel === 'weekly' ? t.risk.weekly : t.risk.monthly}
+          </span>
+        </div>
+      )}
 
       {/* Orca Trade Bridge */}
       {orcaTrades?.length > 0 && (
@@ -869,9 +1263,11 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th }: any) => {
                 flexShrink: 0, padding: '9px 13px', background: th.inputBg, borderRadius: 10,
                 border: `1px solid ${tr.pnl >= 0 ? 'rgba(0,255,163,.15)' : 'rgba(255,77,77,.15)'}`, minWidth: 110,
                 transition: 'all .2s',
-              }}>
+              }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}>
                 <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 700, color: th.tx2 }}>{tr.coin}</div>
-                <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 13, fontWeight: 800, color: tr.pnl >= 0 ? '#00FFA3' : '#FF4D4D', marginTop: 3 }}>{tr.pnl >= 0 ? '+' : ''}{tr.pnl.toFixed(2)}$</div>
+                <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 13, fontWeight: 800, color: tr.pnl >= 0 ? '#00FFA3' : '#FF4D4D', marginTop: 3, textShadow: `0 0 10px ${tr.pnl >= 0 ? 'rgba(0,255,163,0.25)' : 'rgba(255,77,77,0.25)'}` }}>{tr.pnl >= 0 ? '+' : ''}{tr.pnl.toFixed(2)}$</div>
               </div>
             ))}
           </div>
@@ -887,7 +1283,7 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th }: any) => {
             <div style={{ fontSize: 24, marginBottom: 10 }}>📂</div>
             <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 13, fontWeight: 600, color: th.tx2, marginBottom: 16 }}>{f.openQ}</div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' as const }}>
-              <button onClick={() => upd({ hasOpen: true })} style={{ background: 'linear-gradient(135deg,#FFC857,#f5a020)', color: '#0a0e1a', padding: '10px 22px', fontSize: 12, borderRadius: 10, fontFamily: "'Poppins',sans-serif", fontWeight: 700, border: 'none', cursor: 'pointer', transition: 'all .2s' }}>📈 {f.openY}</button>
+              <button onClick={() => upd({ hasOpen: true })} style={{ background: 'linear-gradient(135deg,#FFC857,#f5a020)', color: '#0a0e1a', padding: '10px 22px', fontSize: 12, borderRadius: 10, fontFamily: "'Poppins',sans-serif", fontWeight: 700, border: 'none', cursor: 'pointer', transition: 'all .2s', boxShadow: '0 4px 16px rgba(255,200,87,0.25)' }}>📈 {f.openY}</button>
               <button onClick={() => upd({ hasOpen: false })} style={{ background: th.inputBg, border: `1px solid ${th.inputBr}`, color: th.tx2, padding: '7px 15px', fontSize: 11.5, borderRadius: 8, cursor: 'pointer', fontWeight: 600, transition: 'all .2s' }}>✖ {f.openN}</button>
             </div>
           </div>
@@ -915,7 +1311,7 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th }: any) => {
                 ].map(s => (
                   <div key={s.l}>
                     <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 700, letterSpacing: '2px', color: th.tx3, textTransform: 'uppercase' as const }}>{s.l}</div>
-                    <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 20, fontWeight: 800, color: s.c, marginTop: 2 }}>{s.v}</div>
+                    <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 20, fontWeight: 800, color: s.c, marginTop: 2, textShadow: `0 0 12px ${s.c}25` }}>{s.v}</div>
                   </div>
                 ))}
               </div>
@@ -928,7 +1324,7 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th }: any) => {
       <Sec title={dir === 'rtl' ? 'תחקיר ביצוע' : 'EXECUTION REVIEW'} icon="🌙" accent="#b794f6" th={th} fullLocked={fullLocked} locked={sLocks['review']} onLock={() => lockSec('review')} onUnlock={() => unlockSec('review')}>
         <div style={{ marginBottom: 14 }}><Lbl c={f.actualMove} dir={dir} th={th} /><TA val={day.actualMove} set={U('actualMove')} ph={f.actualPh} rows={3} dir={dir} disabled={fullLocked || sLocks['review']} th={th} /></div>
         <div style={{ marginBottom: 16 }}><Lbl c={f.score} dir={dir} th={th} /><Scores val={day.dayScore} set={U('dayScore')} disabled={fullLocked || sLocks['review']} th={th} /></div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }} className="j-grid-2col">
           {[
             { k: 'wins', l: f.wins, ph: f.winsPh, c: '#00FFA3' },
             { k: 'lessons', l: f.lessons, ph: f.lessonsPh, c: '#5AA9FF' },
@@ -990,6 +1386,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
   const [toast, setToast] = useState<{ msg: string; type: string } | null>(null);
   const [sbQ, setSbQ] = useState('');
   const [theme, setTheme] = useState<JTheme>('dark');
+  const [riskAlertShown, setRiskAlertShown] = useState(false);
   const tRef = useRef<any>(null);
 
   const daysRef = useRef(days);
@@ -1002,6 +1399,9 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
   const t = TR[lang];
   const dir = t.dir;
   const th = THEMES[theme];
+
+  // Risk status
+  const riskStatus = useMemo(() => checkJournalRisk(days), [days]);
 
   // Load from IndexedDB
   useEffect(() => {
@@ -1035,6 +1435,15 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
       if (day && isDayFullyLocked(day)) return prev; // Hard lock
       const next = prev.map(d => d.id === curId ? { ...d, ...patch } : d);
       writeJournalState({ days: next, activeDayId: curId, lang: langRef.current });
+
+      // Check risk after trade updates
+      if ('trades' in patch) {
+        const newRisk = checkJournalRisk(next);
+        if (newRisk.breachedLevel !== 'none') {
+          setRiskAlertShown(true);
+        }
+      }
+
       return next;
     });
     if (Object.keys(patch).some(k => MORNING_KEYS.has(k))) setMD(true);
@@ -1123,6 +1532,10 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
           color: ${th.phColor} !important;
         }
         @keyframes j-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+        @keyframes j-fade-in { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes j-scale-in { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        @keyframes j-glow-red { 0%,100% { box-shadow: 0 0 5px rgba(255,77,77,0.1); } 50% { box-shadow: 0 0 20px rgba(255,77,77,0.2); } }
+        @keyframes j-slide-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .j-card-hover { transition: all .25s ease !important; }
         .j-card-hover:hover { transform: translateY(-1px) !important; box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important; }
         @media (max-width: 768px) {
@@ -1130,6 +1543,11 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
           .j-sidebar { width: 0 !important; min-width: 0 !important; }
         }
       `}</style>
+
+      {/* RISK ALERT MODAL */}
+      {riskAlertShown && riskStatus.breachedLevel !== 'none' && (
+        <RiskAlertModal risk={riskStatus} t={t} dir={dir} onClose={() => setRiskAlertShown(false)} th={th} />
+      )}
 
       {/* TOPBAR */}
       <nav style={{
@@ -1145,7 +1563,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          {([['journal', t.nav.journal], ['archive', t.nav.archive], ['analytics', t.f.analytics]] as const).map(([v, l]) => (
+          {([['journal', t.nav.journal], ['calendar', t.nav.calendar], ['archive', t.nav.archive], ['analytics', t.f.analytics]] as const).map(([v, l]) => (
             <button key={v} onClick={() => setView(v as string)}
               style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' as const, border: 'none', cursor: 'pointer', borderRadius: 8, padding: '7px 14px', transition: 'all .2s', ...(view === v ? { background: th.selBg, color: '#5AA9FF' } : { background: 'none', color: th.tx3 }) }}>
               {l}
@@ -1181,6 +1599,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
               const phase = d.morningSaved && d.eodSaved ? '#00FFA3' : d.morningSaved ? '#b794f6' : th.tx3;
               const sel = d.id === activeId;
               const locked = isDayFullyLocked(d);
+              const dayRisk = getDayColor(d);
               return (
                 <div key={d.id} onClick={() => { setActiveId(d.id); setView('journal'); }}
                   className="j-card-hover"
@@ -1188,6 +1607,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
                     padding: '10px 12px', borderRadius: 10, cursor: 'pointer', marginBottom: 3,
                     border: '1px solid transparent', transition: 'all .2s',
                     ...(sel ? { background: th.selBg, borderColor: th.selBr } : { background: 'transparent' }),
+                    ...(dayRisk === 'darkred' ? { borderColor: 'rgba(255,77,77,0.3)' } : {}),
                   }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ flex: 1 }}>
@@ -1195,6 +1615,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
                         <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10.5, fontWeight: 700, color: sel ? th.tx : th.tx2 }}>{fmtShort(d.date, t.locale)}</span>
                         <span style={{ fontSize: 6, color: phase }}>●</span>
                         {locked && <span style={{ fontSize: 8 }}>🔒</span>}
+                        {dayRisk === 'darkred' && <span style={{ fontSize: 8, animation: 'j-pulse 1s ease-in-out infinite' }}>⚠️</span>}
                       </div>
                       <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, color: th.tx3, marginTop: 2 }}>
                         {dir === 'rtl' ? 'יום' : 'Day'} {d.dayNum || '?'} · {dir === 'rtl' ? 'שבוע' : 'Wk'} {d.weekNum || '?'}
@@ -1214,7 +1635,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
         {/* MAIN */}
         <main style={{ flex: 1, overflowY: 'auto', background: 'transparent', order: 1 }}>
           {view === 'journal' && activeDay && (
-            <div style={{ maxWidth: 1080, margin: '0 auto', padding: '22px 22px 50px', direction: dir }}>
+            <div style={{ maxWidth: 1080, margin: '0 auto', padding: '22px 22px 50px', direction: dir, animation: 'j-fade-in .3s ease-out' }}>
               {/* Header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap' as const, gap: 12, marginBottom: 20 }}>
                 <div>
@@ -1237,39 +1658,50 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
                     <div style={{
                       background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 12, padding: '10px 18px', textAlign: 'center',
                       transition: 'all .3s',
-                    }}>
-                      <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 18, fontWeight: 800, color: dp >= 0 ? '#00FFA3' : '#FF4D4D' }}>{dp >= 0 ? '+' : ''}{dp.toFixed(0)}$</div>
+                    }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = `0 0 20px ${dp >= 0 ? 'rgba(0,255,163,0.15)' : 'rgba(255,77,77,0.15)'}`;}}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}>
+                      <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 18, fontWeight: 800, color: dp >= 0 ? '#00FFA3' : '#FF4D4D', textShadow: `0 0 15px ${dp >= 0 ? 'rgba(0,255,163,0.3)' : 'rgba(255,77,77,0.3)'}` }}>{dp >= 0 ? '+' : ''}{dp.toFixed(0)}$</div>
                       <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase' as const, color: th.tx3 }}>SESSION P&L</span>
                     </div>
                   ); })()}
                 </div>
               </div>
+
+              {/* Risk strip in journal view */}
+              <RiskStrip risk={riskStatus} dir={dir} th={th} />
+
               {!activeDay.morningSaved
                 ? <MorningForm day={activeDay} upd={upd} t={t} dir={dir} onSave={saveMorning} dirty={mDirty} th={th} />
-                : <EodForm day={activeDay} upd={upd} t={t} dir={dir} onSave={saveEOD} dirty={eDirty} orcaTrades={todayOrcaTrades} th={th} />
+                : <EodForm day={activeDay} upd={upd} t={t} dir={dir} onSave={saveEOD} dirty={eDirty} orcaTrades={todayOrcaTrades} th={th} risk={riskStatus} />
               }
             </div>
           )}
 
+          {view === 'calendar' && (
+            <CalendarView days={days} dir={dir} th={th} t={t} risk={riskStatus} onSelectDay={(id) => { setActiveId(id); setView('journal'); }} />
+          )}
+
           {view === 'archive' && (
-            <div style={{ maxWidth: 940, margin: '0 auto', padding: '22px 22px 50px', direction: dir }}>
+            <div style={{ maxWidth: 940, margin: '0 auto', padding: '22px 22px 50px', direction: dir, animation: 'j-fade-in .3s ease-out' }}>
               <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 22, fontWeight: 800, color: th.tx, marginBottom: 6 }}>{t.arch.title}</div>
               <div style={{ display: 'grid', gap: 10, marginTop: 12 }}>
                 {days.filter(d => d.morningSaved).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(day => {
                   const dp = sumPnl(day);
                   const complete = isDayFullyLocked(day);
+                  const dayRisk = getDayColor(day);
                   return (
                     <div key={day.id} onClick={() => { setActiveId(day.id); setView('journal'); }}
                       className="j-card-hover"
                       style={{
-                        background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 12,
+                        background: th.cardBg, border: `1px solid ${dayRisk === 'darkred' ? 'rgba(255,77,77,0.3)' : th.cardBr}`, borderRadius: 12,
                         overflow: 'hidden', cursor: 'pointer', transition: 'all .25s',
                       }}>
-                      <div style={{ background: 'rgba(0,255,163,0.03)', borderBottom: `1px solid ${th.br}`, padding: '13px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' as const, gap: 8 }}>
+                      <div style={{ background: dayRisk === 'darkred' ? 'rgba(255,77,77,0.04)' : 'rgba(0,255,163,0.03)', borderBottom: `1px solid ${th.br}`, padding: '13px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' as const, gap: 8 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap' as const }}>
                           <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 14, fontWeight: 800, color: th.tx }}>{fmtFull(day.date, t.locale)}</span>
                           <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8.5, fontWeight: 700, color: complete ? '#00FFA3' : '#FFC857', background: complete ? 'rgba(0,255,163,.08)' : 'rgba(255,200,87,.08)', padding: '3px 9px', borderRadius: 6 }}>{complete ? '🔒 COMPLETE' : 'MORNING ONLY'}</span>
-                          {/* Archive images */}
+                          {dayRisk === 'darkred' && <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8.5, fontWeight: 700, color: '#FF4D4D', background: 'rgba(255,77,77,.08)', padding: '3px 9px', borderRadius: 6 }}>⚠️ RISK LIMIT</span>}
                           {(day.morningImages || []).length > 0 && (
                             <div style={{ display: 'flex', gap: 4 }}>
                               {day.morningImages.map((img: string, i: number) => (
@@ -1278,7 +1710,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
                             </div>
                           )}
                         </div>
-                        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 14, fontWeight: 800, color: dp >= 0 ? '#00FFA3' : '#FF4D4D' }}>{dp >= 0 ? '+' : ''}{dp.toFixed(0)}$</div>
+                        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 14, fontWeight: 800, color: dp >= 0 ? '#00FFA3' : '#FF4D4D', textShadow: `0 0 10px ${dp >= 0 ? 'rgba(0,255,163,0.2)' : 'rgba(255,77,77,0.2)'}` }}>{dp >= 0 ? '+' : ''}{dp.toFixed(0)}$</div>
                       </div>
                     </div>
                   );
@@ -1291,23 +1723,25 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
           )}
 
           {view === 'analytics' && (
-            <div style={{ maxWidth: 940, margin: '0 auto', padding: '22px 22px 50px', direction: dir }}>
+            <div style={{ maxWidth: 940, margin: '0 auto', padding: '22px 22px 50px', direction: dir, animation: 'j-fade-in .3s ease-out' }}>
               <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 22, fontWeight: 800, color: th.tx, marginBottom: 6 }}>{t.f.analytics}</div>
-              <p style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, color: th.tx3, marginBottom: 20 }}>
-                {dir === 'rtl' ? 'תובנות אוטומטיות מהנתונים שלך' : 'Automatic insights from your data'}
-              </p>
+              <p style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, color: th.tx3, marginBottom: 20 }}>{dir === 'rtl' ? 'תובנות אוטומטיות מניתוח התנהגותי של המסחר שלך' : 'Automatic insights from behavioral analysis of your trading'}</p>
               <AnalyticsPanel days={days} dir={dir} th={th} />
             </div>
           )}
         </main>
       </div>
 
-      {/* TOAST */}
-      {toast && <div style={{
-        position: 'fixed', bottom: 22, right: 22, borderRadius: 12, padding: '11px 18px',
-        fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 700, zIndex: 9999, pointerEvents: 'none',
-        letterSpacing: '.8px', backdropFilter: 'blur(12px)', ...TOAST_STYLES[toast.type],
-      }}>{toast.msg}</div>}
+      {/* Toast */}
+      {toast && (
+        <div style={{
+          position: 'fixed', bottom: 28, left: '50%', transform: 'translateX(-50%)', zIndex: 200,
+          padding: '10px 22px', borderRadius: 10, fontSize: 13, fontWeight: 600, fontFamily: "'Poppins',sans-serif",
+          ...TOAST_STYLES[toast.type],
+          animation: 'j-slide-up .3s ease-out',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+        }}>{toast.msg}</div>
+      )}
     </div>
   );
 };
