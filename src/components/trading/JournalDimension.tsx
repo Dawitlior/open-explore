@@ -2066,9 +2066,10 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
         </div>
       </nav>
 
-
+      {/* LAYOUT */}
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative', zIndex: 1 }}>
         {/* MAIN */}
-        <main style={{ flex: 1, overflowY: 'auto', background: 'transparent', order: 1 }}>
+        <main style={{ flex: 1, overflowY: 'auto', background: 'transparent' }}>
           {view === 'journal' && activeDay && (
             <div className="j-main-content" style={{ maxWidth: 1080, margin: '0 auto', padding: '22px 22px 50px', direction: dir, animation: 'j-fade-in .3s ease-out' }}>
               {/* Header */}
