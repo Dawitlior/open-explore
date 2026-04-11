@@ -2434,12 +2434,12 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
               {isViewingArchive ? (
                 /* Read-only view for archived day */
                 displayDay.morningSaved
-                  ? <EodForm day={displayDay} upd={() => {}} t={t} dir={dir} onSave={() => {}} dirty={false} orcaTrades={[]} th={th} risk={riskStatus} />
-                  : <MorningForm day={displayDay} upd={() => {}} t={t} dir={dir} onSave={() => {}} dirty={false} th={th} />
+                 ? <EodForm day={displayDay} upd={() => {}} t={t} dir={dir} onSave={() => {}} dirty={false} orcaTrades={[]} th={th} risk={riskStatus} onInfoClick={() => setKnowledgePanel('eod')} />
+                 : <MorningForm day={displayDay} upd={() => {}} t={t} dir={dir} onSave={() => {}} dirty={false} th={th} onInfoClick={() => setKnowledgePanel('morning')} />
               ) : (
                 !displayDay.morningSaved
-                  ? <MorningForm day={displayDay} upd={upd} t={t} dir={dir} onSave={saveMorning} dirty={mDirty} th={th} />
-                  : <EodForm day={displayDay} upd={upd} t={t} dir={dir} onSave={saveEOD} dirty={eDirty} orcaTrades={todayOrcaTrades} th={th} risk={riskStatus} />
+                  ? <MorningForm day={displayDay} upd={upd} t={t} dir={dir} onSave={saveMorning} dirty={mDirty} th={th} onInfoClick={() => setKnowledgePanel('morning')} />
+                  : <EodForm day={displayDay} upd={upd} t={t} dir={dir} onSave={saveEOD} dirty={eDirty} orcaTrades={todayOrcaTrades} th={th} risk={riskStatus} onInfoClick={() => setKnowledgePanel('eod')} />
               )}
             </div>
           )}
