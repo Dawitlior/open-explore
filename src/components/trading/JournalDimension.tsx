@@ -1740,6 +1740,13 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
     });
   }, [completeDays]);
 
+  if (completeDays.length < 1) return (
+    <div style={{ textAlign: 'center', padding: 60, color: th.tx3, fontFamily: "'Poppins',sans-serif" }}>
+      <div style={{ fontSize: 48, marginBottom: 16, opacity: 0.3 }}>📊</div>
+      <div style={{ fontSize: 14, fontWeight: 600 }}>{isRTL ? 'צריך לפחות יום אחד שלם עם עסקאות' : 'Need at least 1 complete day with trades'}</div>
+    </div>
+  );
+
   return (
     <div style={{ display: 'grid', gap: 20 }}>
       {/* ═══ HERO STATS ═══ */}
