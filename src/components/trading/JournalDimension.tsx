@@ -841,16 +841,7 @@ const RiskAlertModal = ({ risk, t, dir, onClose, th }: { risk: JRiskStatus; t: a
   }[level]!;
 
   // Sound alert
-  try {
-    const ctx = new AudioContext();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.frequency.value = 600; gain.gain.value = 0.15;
-    osc.start();
-    setTimeout(() => { osc.frequency.value = 400; }, 150);
-    setTimeout(() => { osc.stop(); ctx.close(); }, 350);
-  } catch { /* ignore */ }
+  playRiskAlert();
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 9990, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)', animation: 'j-fade-in .3s ease-out' }}>
