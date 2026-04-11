@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { Trade } from '@/data/trades';
-import { readJournalState, writeJournalState, type JournalDay, type JournalTrade, type JournalState } from '@/lib/journal-storage';
+import { readJournalState, writeJournalState, type JournalDay, type JournalTrade, type JournalState, type PsychAnswers } from '@/lib/journal-storage';
 import { ReturnButton } from './DimensionController';
 
 // ═══════════════════════════════════════════════════════════════
-// TRANSLATIONS (UNCHANGED)
+// TRANSLATIONS
 // ═══════════════════════════════════════════════════════════════
 const TR: Record<string, any> = {
   en: {
@@ -39,12 +39,20 @@ const TR: Record<string, any> = {
       mistakes: 'Mistakes', mistakesPh: 'Brutal honesty. What failed?',
       solutions: 'Solutions', solutionsPh: 'Corrective action for next time.',
       closing: 'Closing Statement', closingPh: 'One sentence that defines this session.',
+      btcThoughts: 'Bitcoin Thoughts', btcThoughtsPh: 'What thoughts are coming up about Bitcoin this morning?',
+      images: 'Chart Screenshots', imageUpload: 'Drop images here or click to upload',
+      psych: 'Psychology Check', discipline: 'Daily Commitment',
+      disciplineQ: 'What do I commit to today?', disciplineConfirm: 'I commit to this.',
+      disciplineMin: 'Select at least 2 commitments',
+      analytics: 'Behavioral Analytics',
     },
     bias: ['Bullish', 'Bearish', 'Neutral', 'Expansion', 'Contraction'],
     struct: ['Markup', 'Markdown', 'Accumulation', 'Distribution', 'Range'],
     states: ['Focused', 'Calm', 'Confident', 'Impulsive', 'Hesitant', 'Tired', 'Sharp'],
     tasks: ['Pre-market structure review ☕','HTF bias confirmed 📊','Key levels mapped 🗺','Setups identified 🔍','Risk defined 🛡','No-trade zones set ❌','Execution rules confirmed ✅','Mindset calibrated 🧘'],
     goals: ['Physical training 💪','Nutrition discipline 🥗','Sleep 7h+ 😴','Hydration goal 💧','Integrity — zero lies 🤝'],
+    psychQ: { sleepWell: 'Did I sleep well?', feelingPressure: 'Am I feeling pressure?', seekingExcitement: 'Am I seeking excitement?', recoveringLosses: 'Am I trying to recover losses?' },
+    commitments: ['Follow the plan', 'Max 3 trades', 'No revenge trading', 'Accept losses gracefully', 'Wait for confirmation', 'Stick to risk limits', 'No FOMO entries', 'Review before acting'],
     arch: { title: 'Journal Archive', search: 'Search...', all: 'All', bull: 'Bullish', bear: 'Bearish', newest: 'Newest', oldest: 'Oldest', best: 'Best P&L', readonly: 'READ ONLY — SEALED DAY', notice: 'This day is permanently locked.', close: 'Close', open: 'Open Day', morning: 'Morning Analysis', eod: 'End of Day', none: 'No archived entries yet.' },
   },
   he: {
@@ -79,18 +87,26 @@ const TR: Record<string, any> = {
       mistakes: 'טעויות', mistakesPh: 'כנות מוחלטת. מה נכשל?',
       solutions: 'פתרונות', solutionsPh: 'פעולת תיקון מדויקת.',
       closing: 'הצהרת סיכום', closingPh: 'משפט אחד שמגדיר את הסשן הזה.',
+      btcThoughts: 'מחשבות על ביטקוין', btcThoughtsPh: 'מה עולה לך בראש על ביטקוין הבוקר?',
+      images: 'צילומי מסך גרפים', imageUpload: 'גרור תמונות לכאן או לחץ להעלאה',
+      psych: 'בדיקה פסיכולוגית', discipline: 'מחויבות יומית',
+      disciplineQ: 'למה אני מתחייב היום?', disciplineConfirm: 'אני מתחייב לזה.',
+      disciplineMin: 'בחר לפחות 2 מחויבויות',
+      analytics: 'אנליטיקה התנהגותית',
     },
     bias: ['שורי', 'דובי', 'ניטרלי', 'התרחבות', 'התכווצות'],
     struct: ['עלייה', 'ירידה', 'צבירה', 'חלוקה', 'טווח'],
     states: ['ממוקד', 'רגוע', 'בטוח', 'אימפולסיבי', 'מהסס', 'עייף', 'חד'],
     tasks: ['סקירת מבנה לפני שוק ☕','אישור כיוון HTF 📊','מיפוי רמות מפתח 🗺','זיהוי סטאפים 🔍','הגדרת סיכון 🛡','סימון אזורי ללא מסחר ❌','אישור כללי ביצוע ✅','כיול מיינדסט 🧘'],
     goals: ['אימון גופני 💪','משמעת תזונה 🥗','שינה 7+ שעות 😴','יעד שתייה 💧','יושרה — אפס שקרים 🤝'],
+    psychQ: { sleepWell: 'ישנתי טוב?', feelingPressure: 'אני מרגיש לחץ?', seekingExcitement: 'אני מחפש ריגושים?', recoveringLosses: 'אני מנסה לשחזר הפסדים?' },
+    commitments: ['לעקוב אחרי התוכנית', 'מקסימום 3 עסקאות', 'בלי מסחר נקמה', 'לקבל הפסדים', 'לחכות לאישור', 'להישאר בגבולות סיכון', 'בלי FOMO', 'לבדוק לפני פעולה'],
     arch: { title: 'ארכיון יומן', search: 'חיפוש...', all: 'הכל', bull: 'שורי', bear: 'דובי', newest: 'חדש ראשון', oldest: 'ישן ראשון', best: 'הכי טוב', readonly: 'קריאה בלבד — יום נעול', notice: 'יום זה נעול לצמיתות.', close: 'סגור', open: 'פתח יום', morning: 'ניתוח בוקר', eod: 'סוף יום', none: 'אין רשומות בארכיון עדיין.' },
   },
 };
 
 // ═══════════════════════════════════════════════════════════════
-// HELPERS (UNCHANGED)
+// HELPERS
 // ═══════════════════════════════════════════════════════════════
 const makeDay = (lang = 'he'): JournalDay => {
   const t = TR[lang];
@@ -110,6 +126,12 @@ const makeDay = (lang = 'he'): JournalDay => {
     hasOpen: null, posNote: '', trades: [],
     actualMove: '', dayScore: 0,
     wins: '', lessons: '', mistakes: '', solutions: '', closing: '',
+    morningImages: [],
+    btcThoughts: '',
+    psychAnswers: { sleepWell: null, feelingPressure: null, seekingExcitement: null, recoveringLosses: null },
+    disciplineCommitments: [],
+    disciplineConfirmed: false,
+    sectionLocks: {},
   };
 };
 
@@ -122,66 +144,249 @@ const fmtShort = (iso: string, locale: string) => {
   try { return new Date(iso + 'T12:00').toLocaleDateString(locale, { day: 'numeric', month: 'short' }); } catch { return iso; }
 };
 
-const MORNING_KEYS = new Set(['mood','plan','tasks','goals','bias','mktStruct','mentalTags','btcNote','t3Note','domNote','macroNote','levels','setups','emotionScore','fearGreed','dayNum','weekNum','date']);
+const MORNING_KEYS = new Set(['mood','plan','tasks','goals','bias','mktStruct','mentalTags','btcNote','t3Note','domNote','macroNote','levels','setups','emotionScore','fearGreed','dayNum','weekNum','date','morningImages','btcThoughts','psychAnswers','disciplineCommitments','disciplineConfirmed','sectionLocks']);
+
+const isDayFullyLocked = (d: JournalDay) => d.morningSaved && d.eodSaved;
 
 // ═══════════════════════════════════════════════════════════════
-// MICRO ATOMS — DARK INSTITUTIONAL THEME
+// THEME SYSTEM
 // ═══════════════════════════════════════════════════════════════
-const Lbl = ({ c, dir }: { c: string; dir: string }) => (
-  <span style={{ fontFamily: 'var(--j-mono)', fontSize: '9.5px', fontWeight: 600, letterSpacing: '2px', textTransform: 'uppercase' as const, color: 'var(--j-tx3)', marginBottom: 6, display: 'block', textAlign: dir === 'rtl' ? 'right' : 'left' }}>{c}</span>
+type JTheme = 'dark' | 'light';
+const THEMES = {
+  dark: {
+    bg: '#080c18', bg1: '#0d1220', bg2: '#111827', bg3: 'rgba(255,255,255,0.06)',
+    br: 'rgba(255,255,255,0.06)', br2: 'rgba(255,255,255,0.1)',
+    tx: 'rgba(255,255,255,0.92)', tx2: 'rgba(255,255,255,0.6)', tx3: 'rgba(255,255,255,0.3)',
+    inputBg: 'rgba(255,255,255,0.04)', inputBr: 'rgba(255,255,255,0.08)',
+    cardBg: 'rgba(255,255,255,0.025)', cardBr: 'rgba(255,255,255,0.06)',
+    navBg: 'rgba(13,18,32,0.85)', sidebarBg: 'rgba(13,18,32,0.7)',
+    scrollThumb: 'rgba(255,255,255,0.08)', scrollHover: 'rgba(255,255,255,0.15)',
+    focusBr: 'rgba(90,169,255,.4)', focusShadow: 'rgba(90,169,255,.08)',
+    phColor: 'rgba(255,255,255,0.18)',
+    checkBr: 'rgba(255,255,255,0.2)', checkTx: 'rgba(255,255,255,0.65)',
+    divider: 'rgba(255,255,255,0.04)',
+    selBg: 'rgba(90,169,255,.08)', selBr: 'rgba(90,169,255,.2)',
+    unselBg: 'rgba(255,255,255,0.04)', unselBr: 'rgba(255,255,255,0.1)', unselTx: 'rgba(255,255,255,0.4)',
+    tagUnsel: 'rgba(255,255,255,0.04)', tagUnselBr: 'rgba(255,255,255,0.08)', tagUnselTx: 'rgba(255,255,255,0.4)',
+  },
+  light: {
+    bg: '#f5f7fa', bg1: '#edf0f5', bg2: '#e4e8ee', bg3: 'rgba(0,0,0,0.03)',
+    br: 'rgba(0,0,0,0.08)', br2: 'rgba(0,0,0,0.12)',
+    tx: 'rgba(15,23,42,0.92)', tx2: 'rgba(15,23,42,0.6)', tx3: 'rgba(15,23,42,0.35)',
+    inputBg: 'rgba(0,0,0,0.03)', inputBr: 'rgba(0,0,0,0.1)',
+    cardBg: 'rgba(255,255,255,0.8)', cardBr: 'rgba(0,0,0,0.08)',
+    navBg: 'rgba(255,255,255,0.9)', sidebarBg: 'rgba(248,250,252,0.95)',
+    scrollThumb: 'rgba(0,0,0,0.12)', scrollHover: 'rgba(0,0,0,0.2)',
+    focusBr: 'rgba(59,130,246,.5)', focusShadow: 'rgba(59,130,246,.1)',
+    phColor: 'rgba(0,0,0,0.3)',
+    checkBr: 'rgba(0,0,0,0.2)', checkTx: 'rgba(15,23,42,0.65)',
+    divider: 'rgba(0,0,0,0.06)',
+    selBg: 'rgba(59,130,246,.08)', selBr: 'rgba(59,130,246,.25)',
+    unselBg: 'rgba(0,0,0,0.03)', unselBr: 'rgba(0,0,0,0.1)', unselTx: 'rgba(15,23,42,0.5)',
+    tagUnsel: 'rgba(0,0,0,0.03)', tagUnselBr: 'rgba(0,0,0,0.08)', tagUnselTx: 'rgba(15,23,42,0.45)',
+  },
+};
+
+// ═══════════════════════════════════════════════════════════════
+// MICRO ATOMS
+// ═══════════════════════════════════════════════════════════════
+const Lbl = ({ c, dir, th }: { c: string; dir: string; th: typeof THEMES.dark }) => (
+  <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: '1.5px', textTransform: 'uppercase' as const, color: th.tx3, marginBottom: 6, display: 'block', textAlign: dir === 'rtl' ? 'right' : 'left' }}>{c}</span>
 );
 
-const TA = ({ val, set, ph, rows = 4, dir, disabled }: any) => (
+const TA = ({ val, set, ph, rows = 4, dir, disabled, th }: any) => (
   <textarea value={val} rows={rows} disabled={disabled}
     onChange={e => set?.(e.target.value)} placeholder={ph}
-    style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'var(--j-tx)', fontFamily: 'var(--j-sans)', fontSize: 13, outline: 'none', padding: '10px 12px', lineHeight: 1.75, resize: 'vertical' as const, direction: dir, textAlign: dir === 'rtl' ? 'right' : 'left', transition: 'border-color .2s, box-shadow .2s, background .2s', backdropFilter: 'blur(8px)' }} />
+    style={{ width: '100%', background: th.inputBg, border: `1px solid ${th.inputBr}`, borderRadius: 10, color: th.tx, fontFamily: "'Poppins',sans-serif", fontSize: 13, outline: 'none', padding: '10px 14px', lineHeight: 1.75, resize: 'vertical' as const, direction: dir, textAlign: dir === 'rtl' ? 'right' : 'left', transition: 'border-color .2s, box-shadow .2s, background .2s' }} />
 );
 
-const IN = ({ val, set, ph, dir, disabled, style = {} }: any) => (
+const IN = ({ val, set, ph, dir, disabled, style = {}, th }: any) => (
   <input value={val} disabled={disabled}
     onChange={e => set?.(e.target.value)} placeholder={ph}
-    style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'var(--j-tx)', fontFamily: 'var(--j-sans)', fontSize: 13, outline: 'none', padding: '9px 12px', direction: dir, textAlign: dir === 'rtl' ? 'right' : 'left', transition: 'border-color .2s, box-shadow .2s, background .2s', backdropFilter: 'blur(8px)', ...style }} />
+    style={{ width: '100%', background: th.inputBg, border: `1px solid ${th.inputBr}`, borderRadius: 10, color: th.tx, fontFamily: "'Poppins',sans-serif", fontSize: 13, outline: 'none', padding: '9px 14px', direction: dir, textAlign: dir === 'rtl' ? 'right' : 'left', transition: 'border-color .2s, box-shadow .2s, background .2s', ...style }} />
 );
 
-const Sec = ({ title, icon, accent = 'var(--j-b)', children, open: initOpen = true }: any) => {
+// Section with lock/unlock
+const Sec = ({ title, icon, accent = '#5AA9FF', children, open: initOpen = true, locked, onLock, onUnlock, th, fullLocked }: any) => {
   const [open, setOpen] = useState(initOpen);
+  const isLocked = locked || fullLocked;
   return (
-    <div style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, marginBottom: 10, overflow: 'hidden', backdropFilter: 'blur(12px)', transition: 'box-shadow .25s', boxShadow: open ? `0 0 20px ${accent}08` : 'none' }}>
+    <div style={{ background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 14, marginBottom: 12, overflow: 'hidden', transition: 'box-shadow .25s', boxShadow: open ? `0 0 20px ${accent}08` : 'none' }}>
       <div onClick={() => setOpen((o: boolean) => !o)}
-        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', cursor: 'pointer', userSelect: 'none' as const, transition: 'background .2s', background: open ? `linear-gradient(90deg,${accent}12,transparent 60%)` : 'transparent' }}>
+        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '13px 18px', cursor: 'pointer', userSelect: 'none' as const, transition: 'background .2s', background: open ? `linear-gradient(90deg,${accent}08,transparent 60%)` : 'transparent' }}>
         <span style={{ fontSize: 14 }}>{icon}</span>
-        <span style={{ fontFamily: 'var(--j-mono)', fontSize: '10px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase' as const, color: 'rgba(255,255,255,0.45)', flex: 1 }}>{title}</span>
+        <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase' as const, color: th.tx3, flex: 1 }}>{title}</span>
+        {isLocked && <span style={{ fontSize: 10, color: accent, opacity: 0.7 }}>🔒</span>}
+        {!fullLocked && onLock && !locked && (
+          <button onClick={e => { e.stopPropagation(); onLock(); }} style={{ fontSize: 9, padding: '3px 8px', borderRadius: 6, border: `1px solid ${accent}30`, background: `${accent}10`, color: accent, cursor: 'pointer', fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>Lock</button>
+        )}
+        {!fullLocked && onUnlock && locked && (
+          <button onClick={e => { e.stopPropagation(); onUnlock(); }} style={{ fontSize: 9, padding: '3px 8px', borderRadius: 6, border: `1px solid ${accent}30`, background: `${accent}10`, color: accent, cursor: 'pointer', fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>Unlock</button>
+        )}
         <span style={{ color: accent, fontSize: 11, transition: 'transform .25s ease', transform: open ? 'none' : 'rotate(-90deg)' }}>▾</span>
       </div>
-      <div style={{ maxHeight: open ? '2000px' : '0', overflow: 'hidden', transition: 'max-height .4s ease, opacity .3s ease', opacity: open ? 1 : 0 }}>
-        <div style={{ padding: 15 }}>{children}</div>
+      <div style={{ maxHeight: open ? '3000px' : '0', overflow: 'hidden', transition: 'max-height .4s ease, opacity .3s ease', opacity: open ? 1 : 0 }}>
+        <div style={{ padding: '4px 18px 18px', pointerEvents: isLocked ? 'none' : 'auto', opacity: isLocked ? 0.6 : 1 }}>{children}</div>
       </div>
     </div>
   );
 };
 
-const Chk = ({ item, toggle, color, dir, disabled }: any) => (
+const Chk = ({ item, toggle, color, dir, disabled, th }: any) => (
   <div onClick={() => !disabled && toggle?.()}
-    style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 0', borderBottom: '1px solid rgba(255,255,255,0.04)', cursor: disabled ? 'default' : 'pointer', direction: dir, transition: 'background .15s' }}>
-    <div style={{ width: 17, height: 17, borderRadius: 5, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all .2s', border: `2px solid ${item.done ? color : 'rgba(255,255,255,0.2)'}`, background: item.done ? `${color}20` : 'transparent', boxShadow: item.done ? `0 0 8px ${color}30` : 'none' }}>
+    style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 0', borderBottom: `1px solid ${th.divider}`, cursor: disabled ? 'default' : 'pointer', direction: dir, transition: 'background .15s' }}>
+    <div style={{ width: 17, height: 17, borderRadius: 5, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all .2s', border: `2px solid ${item.done ? color : th.checkBr}`, background: item.done ? `${color}20` : 'transparent', boxShadow: item.done ? `0 0 8px ${color}30` : 'none' }}>
       {item.done && <span style={{ fontSize: 9, color, fontWeight: 700 }}>✓</span>}
     </div>
-    <span style={{ fontSize: 12.5, color: item.done ? `${color}88` : 'rgba(255,255,255,0.65)', textDecoration: item.done ? 'line-through' : 'none', transition: 'all .15s' }}>{item.label}</span>
+    <span style={{ fontSize: 12.5, fontFamily: "'Poppins',sans-serif", color: item.done ? `${color}88` : th.checkTx, textDecoration: item.done ? 'line-through' : 'none', transition: 'all .15s' }}>{item.label}</span>
   </div>
 );
 
-const PDiv = ({ label, color, icon }: any) => (
+const PDiv = ({ label, color, icon, th }: any) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: 11, margin: '22px 0 16px' }}>
-    <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg,transparent,${color}35)` }} />
-    <div style={{ fontFamily: 'var(--j-mono)', fontSize: 9, fontWeight: 700, letterSpacing: '2.5px', textTransform: 'uppercase' as const, padding: '6px 16px', borderRadius: 20, color, border: `1px solid ${color}25`, background: `${color}0a`, boxShadow: `0 0 15px ${color}15` }}>{icon} {label}</div>
-    <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg,${color}35,transparent)` }} />
+    <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg,transparent,${color}25)` }} />
+    <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: '2.5px', textTransform: 'uppercase' as const, padding: '6px 16px', borderRadius: 20, color, border: `1px solid ${color}20`, background: `${color}08` }}>{icon} {label}</div>
+    <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg,${color}25,transparent)` }} />
   </div>
 );
+
+// ═══════════════════════════════════════════════════════════════
+// IMAGE UPLOAD COMPONENT
+// ═══════════════════════════════════════════════════════════════
+const ImageUpload = ({ images, onUpdate, label, uploadLabel, dir, disabled, th }: any) => {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [zoomIdx, setZoomIdx] = useState<number | null>(null);
+
+  const handleFiles = (files: FileList | null) => {
+    if (!files || disabled) return;
+    Array.from(files).slice(0, 2 - (images || []).length).forEach(file => {
+      if (!file.type.startsWith('image/')) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = reader.result as string;
+        onUpdate([...(images || []), base64].slice(0, 2));
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  return (
+    <div>
+      <Lbl c={label} dir={dir} th={th} />
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' as const }}>
+        {(images || []).map((img: string, i: number) => (
+          <div key={i} style={{ position: 'relative', width: 140, height: 100, borderRadius: 10, overflow: 'hidden', border: `1px solid ${th.cardBr}`, cursor: 'pointer' }}
+            onClick={() => setZoomIdx(i)}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1.03)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; }}>
+            <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform .3s' }} />
+            {!disabled && (
+              <button onClick={e => { e.stopPropagation(); onUpdate((images || []).filter((_: any, j: number) => j !== i)); }}
+                style={{ position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: '50%', background: 'rgba(255,77,77,0.9)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>✕</button>
+            )}
+          </div>
+        ))}
+        {(images || []).length < 2 && !disabled && (
+          <div
+            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={e => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
+            onClick={() => fileRef.current?.click()}
+            style={{ width: 140, height: 100, borderRadius: 10, border: `2px dashed ${dragOver ? '#5AA9FF' : th.inputBr}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: dragOver ? 'rgba(90,169,255,0.05)' : th.inputBg, transition: 'all .2s' }}>
+            <span style={{ fontSize: 22, marginBottom: 4 }}>📷</span>
+            <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, color: th.tx3, textAlign: 'center', padding: '0 8px' }}>{uploadLabel}</span>
+          </div>
+        )}
+      </div>
+      <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => handleFiles(e.target.files)} />
+      {/* Zoom overlay */}
+      {zoomIdx !== null && images?.[zoomIdx] && (
+        <div onClick={() => setZoomIdx(null)} style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out' }}>
+          <img src={images[zoomIdx]} alt="" style={{ maxWidth: '90vw', maxHeight: '85vh', borderRadius: 12, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }} />
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════
+// PSYCHOLOGY QUESTIONS
+// ═══════════════════════════════════════════════════════════════
+const PsychSection = ({ answers, onUpdate, questions, dir, disabled, th }: any) => {
+  const keys = ['sleepWell', 'feelingPressure', 'seekingExcitement', 'recoveringLosses'] as const;
+  return (
+    <div style={{ display: 'grid', gap: 10 }}>
+      {keys.map(k => {
+        const val = answers?.[k];
+        const isGood = k === 'sleepWell' ? val === true : val === false;
+        const isBad = k === 'sleepWell' ? val === false : val === true;
+        return (
+          <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 10, direction: dir }}>
+            <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12.5, color: th.tx2, flex: 1 }}>{questions[k]}</span>
+            <div style={{ display: 'flex', gap: 5 }}>
+              {[true, false].map(v => {
+                const active = val === v;
+                const label = v ? (dir === 'rtl' ? 'כן' : 'Yes') : (dir === 'rtl' ? 'לא' : 'No');
+                const c = (v && k === 'sleepWell') || (!v && k !== 'sleepWell') ? '#00FFA3' : '#FF4D4D';
+                return (
+                  <button key={String(v)} disabled={disabled} onClick={() => onUpdate({ ...answers, [k]: active ? null : v })}
+                    style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 600, padding: '5px 14px', borderRadius: 20, border: active ? `1px solid ${c}50` : `1px solid ${th.inputBr}`, background: active ? `${c}15` : th.inputBg, color: active ? c : th.tx3, cursor: disabled ? 'not-allowed' : 'pointer', transition: 'all .2s' }}>
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════
+// DISCIPLINE COMMITMENT
+// ═══════════════════════════════════════════════════════════════
+const DisciplineSection = ({ commitments, confirmed, onUpdate, onConfirm, options, f, dir, disabled, th }: any) => {
+  const selected = commitments || [];
+  const canConfirm = selected.length >= 2 && !confirmed;
+  return (
+    <div>
+      <Lbl c={f.disciplineQ} dir={dir} th={th} />
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' as const, marginBottom: 14 }}>
+        {options.map((opt: string) => {
+          const on = selected.includes(opt);
+          return (
+            <button key={opt} disabled={disabled || confirmed}
+              onClick={() => onUpdate(on ? selected.filter((x: string) => x !== opt) : [...selected, opt])}
+              style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 600, padding: '6px 16px', borderRadius: 20, transition: 'all .2s', cursor: disabled || confirmed ? 'not-allowed' : 'pointer', ...(on ? { background: 'rgba(0,255,163,0.12)', border: '1px solid rgba(0,255,163,0.3)', color: '#00FFA3' } : { background: th.tagUnsel, border: `1px solid ${th.tagUnselBr}`, color: th.tagUnselTx }) }}>
+              {on ? '✓ ' : ''}{opt}
+            </button>
+          );
+        })}
+      </div>
+      {selected.length < 2 && !confirmed && (
+        <p style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, color: '#FFC857', opacity: 0.8 }}>⚠ {f.disciplineMin}</p>
+      )}
+      {!confirmed && canConfirm && (
+        <button onClick={onConfirm} style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 700, padding: '10px 24px', borderRadius: 10, background: 'linear-gradient(135deg,#00FFA3,#0a9e76)', color: '#0a0e1a', border: 'none', cursor: 'pointer', transition: 'all .2s', marginTop: 4 }}>
+          ✓ {f.disciplineConfirm}
+        </button>
+      )}
+      {confirmed && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+          <span style={{ fontSize: 14 }}>🔒</span>
+          <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 700, color: '#00FFA3', letterSpacing: '1px' }}>COMMITTED</span>
+        </div>
+      )}
+    </div>
+  );
+};
 
 // ═══════════════════════════════════════════════════════════════
 // MARKET OVERVIEW STRIP
 // ═══════════════════════════════════════════════════════════════
-const MarketStrip = ({ day, dir }: { day: JournalDay; dir: string }) => {
+const MarketStrip = ({ day, dir, th }: { day: JournalDay; dir: string; th: typeof THEMES.dark }) => {
   const emo = day.emotionScore;
   const emoColor = emo >= 8 ? '#00FFA3' : emo >= 5 ? '#FFC857' : '#FF4D4D';
   const fg = parseInt(day.fearGreed) || 0;
@@ -200,14 +405,13 @@ const MarketStrip = ({ day, dir }: { day: JournalDay; dir: string }) => {
       {badges.map(b => (
         <div key={b.label} style={{
           display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px',
-          background: `${b.color}08`, border: `1px solid ${b.color}20`,
-          borderRadius: 10, flexShrink: 0, backdropFilter: 'blur(8px)',
-          transition: 'all .2s',
+          background: `${b.color}08`, border: `1px solid ${b.color}15`,
+          borderRadius: 10, flexShrink: 0, transition: 'all .2s',
         }}>
           <div style={{ width: 6, height: 6, borderRadius: '50%', background: b.color, boxShadow: `0 0 8px ${b.color}60`, animation: 'j-pulse 2.5s ease-in-out infinite' }} />
           <div>
-            <div style={{ fontFamily: 'var(--j-mono)', fontSize: 8, fontWeight: 700, letterSpacing: '1.8px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' as const }}>{b.label}</div>
-            <div style={{ fontFamily: 'var(--j-mono)', fontSize: 12, fontWeight: 700, color: b.color, marginTop: 1 }}>{b.value}</div>
+            <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 700, letterSpacing: '1.8px', color: th.tx3, textTransform: 'uppercase' as const }}>{b.label}</div>
+            <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 700, color: b.color, marginTop: 1 }}>{b.value}</div>
           </div>
         </div>
       ))}
@@ -218,21 +422,21 @@ const MarketStrip = ({ day, dir }: { day: JournalDay; dir: string }) => {
 // ═══════════════════════════════════════════════════════════════
 // EMOTION SLIDER
 // ═══════════════════════════════════════════════════════════════
-const EmoSlider = ({ val, set, label, dir, disabled }: any) => {
+const EmoSlider = ({ val, set, label, dir, disabled, th }: any) => {
   const c = val >= 8 ? '#00FFA3' : val >= 5 ? '#FFC857' : '#FF4D4D';
   const e = val >= 9 ? '🔥' : val >= 7 ? '💪' : val >= 5 ? '😐' : val >= 3 ? '😔' : '💀';
   return (
     <div style={{ direction: dir }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-        <Lbl c={label} dir={dir} />
+        <Lbl c={label} dir={dir} th={th} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ fontSize: 18 }}>{e}</span>
-          <span style={{ fontFamily: 'var(--j-mono)', fontSize: 24, fontWeight: 800, color: c, lineHeight: 1, textShadow: `0 0 20px ${c}50` }}>{val}</span>
-          <span style={{ fontFamily: 'var(--j-mono)', fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>/10</span>
+          <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 24, fontWeight: 800, color: c, lineHeight: 1 }}>{val}</span>
+          <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, color: th.tx3 }}>/10</span>
         </div>
       </div>
-      <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden', marginBottom: 8 }}>
-        <div style={{ height: '100%', width: `${((val - 1) / 9) * 100}%`, background: `linear-gradient(90deg,#FF4D4D,#FFC857,#00FFA3)`, transition: 'width .3s ease', borderRadius: 2, boxShadow: `0 0 10px ${c}40` }} />
+      <div style={{ height: 4, background: th.inputBg, borderRadius: 2, overflow: 'hidden', marginBottom: 8 }}>
+        <div style={{ height: '100%', width: `${((val - 1) / 9) * 100}%`, background: `linear-gradient(90deg,#FF4D4D,#FFC857,#00FFA3)`, transition: 'width .3s ease', borderRadius: 2 }} />
       </div>
       <input type="range" min={1} max={10} value={val} disabled={disabled}
         onChange={e => set?.(+e.target.value)} style={{ width: '100%', accentColor: c, cursor: disabled ? 'not-allowed' : 'pointer' }} />
@@ -240,18 +444,16 @@ const EmoSlider = ({ val, set, label, dir, disabled }: any) => {
   );
 };
 
-
-const Scores = ({ val, set, disabled }: any) => (
+const Scores = ({ val, set, disabled, th }: any) => (
   <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' as const }}>
     {Array.from({ length: 10 }, (_, i) => i + 1).map(n => {
       const on = val >= n, h = (n / 10) * 120;
       return (
         <button key={n} onClick={() => !disabled && set?.(n)} style={{
-          width: 32, height: 32, borderRadius: 8, border: 'none', fontFamily: 'var(--j-mono)',
+          width: 32, height: 32, borderRadius: 8, border: 'none', fontFamily: "'Poppins',sans-serif",
           cursor: disabled ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: 12,
-          background: on ? `hsla(${h},70%,46%,.85)` : 'rgba(255,255,255,0.04)',
-          color: on ? '#fff' : 'rgba(255,255,255,0.25)', transition: 'all .15s',
-          boxShadow: on ? `0 0 12px hsla(${h},70%,44%,.5)` : 'none',
+          background: on ? `hsla(${h},70%,46%,.85)` : th.inputBg,
+          color: on ? '#fff' : th.tx3, transition: 'all .15s',
         }}>{n}</button>
       );
     })}
@@ -285,8 +487,8 @@ const FGGauge = ({ value }: { value: number }) => {
         <circle cx={cx} cy={cy} r={5} fill="rgba(255,255,255,0.9)" />
       </svg>
       <div style={{ textAlign: 'center', marginTop: -6 }}>
-        <div style={{ fontFamily: 'var(--j-mono)', fontSize: 20, fontWeight: 800, color, lineHeight: 1, textShadow: `0 0 15px ${color}50` }}>{v}</div>
-        <div style={{ fontFamily: 'var(--j-mono)', fontSize: '8.5px', color, letterSpacing: 1, textTransform: 'uppercase' as const, marginTop: 3, opacity: 0.8 }}>{label}</div>
+        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 20, fontWeight: 800, color, lineHeight: 1 }}>{v}</div>
+        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: '8.5px', color, letterSpacing: 1, textTransform: 'uppercase' as const, marginTop: 3, opacity: 0.8 }}>{label}</div>
       </div>
     </div>
   );
@@ -295,113 +497,264 @@ const FGGauge = ({ value }: { value: number }) => {
 // ═══════════════════════════════════════════════════════════════
 // TRADE CARD
 // ═══════════════════════════════════════════════════════════════
-const TCard = ({ trade, idx, onChange, onDel, f, dir, disabled }: any) => {
+const TCard = ({ trade, idx, onChange, onDel, f, dir, disabled, th }: any) => {
   const p = parseFloat(trade.pnl) || 0;
   const sc = trade.side === 'LONG' ? '#00FFA3' : trade.side === 'SHORT' ? '#FF4D4D' : '#5AA9FF';
   return (
     <div style={{
-      background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: 14, marginBottom: 10,
-      borderInlineStart: `3px solid ${sc}`, backdropFilter: 'blur(8px)',
-      transition: 'all .25s ease', boxShadow: `0 0 0 0 ${sc}00`,
+      background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 12, padding: 14, marginBottom: 10,
+      borderInlineStart: `3px solid ${sc}`, transition: 'all .25s ease',
     }}
       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 20px ${sc}15`; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
-      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = `0 0 0 0 ${sc}00`; (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, direction: dir }}>
-        <span style={{ fontFamily: 'var(--j-mono)', fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: 1.2 }}>{f.tradeN} #{idx + 1}</span>
+        <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, color: th.tx3, letterSpacing: 1.2 }}>{f.tradeN} #{idx + 1}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {p !== 0 && <span style={{ fontFamily: 'var(--j-mono)', fontSize: 14, fontWeight: 800, color: p > 0 ? '#00FFA3' : '#FF4D4D', textShadow: p > 0 ? '0 0 12px rgba(0,255,163,0.4)' : '0 0 12px rgba(255,77,77,0.4)' }}>{p > 0 ? '+' : ''}{p.toFixed(2)}$</span>}
+          {p !== 0 && <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 14, fontWeight: 800, color: p > 0 ? '#00FFA3' : '#FF4D4D' }}>{p > 0 ? '+' : ''}{p.toFixed(2)}$</span>}
           {!disabled && <button onClick={onDel} style={{ background: 'rgba(255,77,77,.1)', border: '1px solid rgba(255,77,77,.2)', color: '#FF4D4D', padding: '5px 10px', fontSize: 11, borderRadius: 6, cursor: 'pointer', fontWeight: 600, transition: 'all .15s' }}>✕ {f.del}</button>}
         </div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginBottom: 10 }}>
         {[['ins','pair','BTC/USDT'],['en','entry','95000'],['ex','exit','97000'],['sz','size','0.1'],['pnl','pnl','+200'],['rr','rr','1:3']].map(([lKey, k, ph]: any) => (
-          <div key={k}><Lbl c={f[lKey]} dir={dir} /><IN val={trade[k] || ''} set={(v: string) => onChange?.({ ...trade, [k]: v })} ph={ph} dir={dir} disabled={disabled} /></div>
+          <div key={k}><Lbl c={f[lKey]} dir={dir} th={th} /><IN val={trade[k] || ''} set={(v: string) => onChange?.({ ...trade, [k]: v })} ph={ph} dir={dir} disabled={disabled} th={th} /></div>
         ))}
       </div>
       {!disabled && (
         <div style={{ display: 'flex', gap: 6, marginBottom: 9 }}>
           {['LONG', 'SHORT', 'MISSED'].map(s => (
             <button key={s} onClick={() => onChange?.({ ...trade, side: s })}
-              style={{ fontFamily: 'var(--j-mono)', fontSize: '9.5px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' as const, borderRadius: 20, padding: '5px 14px', cursor: 'pointer', transition: 'all .2s', ...(trade.side === s ? { background: s === 'LONG' ? '#00FFA3' : s === 'SHORT' ? '#FF4D4D' : '#5AA9FF', color: '#0a0e1a', border: 'none', boxShadow: `0 0 12px ${s === 'LONG' ? 'rgba(0,255,163,0.3)' : s === 'SHORT' ? 'rgba(255,77,77,0.3)' : 'rgba(90,169,255,0.3)'}` } : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)' }) }}>
+              style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' as const, borderRadius: 20, padding: '5px 14px', cursor: 'pointer', transition: 'all .2s', ...(trade.side === s ? { background: s === 'LONG' ? '#00FFA3' : s === 'SHORT' ? '#FF4D4D' : '#5AA9FF', color: '#0a0e1a', border: 'none' } : { background: th.unselBg, border: `1px solid ${th.unselBr}`, color: th.unselTx }) }}>
               {s}
             </button>
           ))}
         </div>
       )}
-      <Lbl c={f.tNotes} dir={dir} />
-      <TA val={trade.notes || ''} set={(v: string) => onChange?.({ ...trade, notes: v })} ph={f.tNotesPh} rows={2} dir={dir} disabled={disabled} />
+      <Lbl c={f.tNotes} dir={dir} th={th} />
+      <TA val={trade.notes || ''} set={(v: string) => onChange?.({ ...trade, notes: v })} ph={f.tNotesPh} rows={2} dir={dir} disabled={disabled} th={th} />
     </div>
   );
 };
 
 // ═══════════════════════════════════════════════════════════════
-// MORNING FORM — "PRE-MARKET BRIEFING"
+// BEHAVIORAL ANALYTICS ENGINE
 // ═══════════════════════════════════════════════════════════════
-const MorningForm = ({ day, upd, t, dir, onSave, dirty }: any) => {
+const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th: typeof THEMES.dark }) => {
+  const completeDays = days.filter(d => d.eodSaved && d.trades?.length > 0);
+  if (completeDays.length < 2) return (
+    <div style={{ textAlign: 'center', padding: 40, color: th.tx3, fontFamily: "'Poppins',sans-serif", fontSize: 13 }}>
+      {dir === 'rtl' ? 'צריך לפחות 2 ימים שלמים עם עסקאות כדי לייצר תובנות' : 'Need at least 2 complete days with trades to generate insights'}
+    </div>
+  );
+
+  const insights: { text: string; type: 'warning' | 'success' | 'info' }[] = [];
+
+  // Emotion vs PnL correlation
+  const highEmo = completeDays.filter(d => d.emotionScore >= 8);
+  const lowEmo = completeDays.filter(d => d.emotionScore < 5);
+  const highEmoPnl = highEmo.length ? highEmo.reduce((s, d) => s + sumPnl(d), 0) / highEmo.length : 0;
+  const lowEmoPnl = lowEmo.length ? lowEmo.reduce((s, d) => s + sumPnl(d), 0) / lowEmo.length : 0;
+  if (highEmo.length >= 1 && lowEmo.length >= 1) {
+    if (highEmoPnl > lowEmoPnl) insights.push({ text: dir === 'rtl' ? `כשהרגש גבוה (8+), הממוצע שלך ${highEmoPnl.toFixed(0)}$. כשנמוך (<5), ${lowEmoPnl.toFixed(0)}$` : `When emotion ≥8, avg P&L is ${highEmoPnl.toFixed(0)}$. When <5, it's ${lowEmoPnl.toFixed(0)}$`, type: 'info' });
+    else insights.push({ text: dir === 'rtl' ? `אתה מפסיד יותר כשהרגש גבוה (8+): ממוצע ${highEmoPnl.toFixed(0)}$` : `You lose more when emotion ≥8: avg ${highEmoPnl.toFixed(0)}$`, type: 'warning' });
+  }
+
+  // Fear & Greed correlation
+  const highFG = completeDays.filter(d => parseInt(d.fearGreed) > 70);
+  const lowFG = completeDays.filter(d => parseInt(d.fearGreed) < 30 && d.fearGreed !== '');
+  if (highFG.length >= 1) {
+    const avgPnl = highFG.reduce((s, d) => s + sumPnl(d), 0) / highFG.length;
+    const avgWr = highFG.reduce((s, d) => s + (numWins(d) / Math.max(d.trades.length, 1)), 0) / highFG.length;
+    insights.push({ text: dir === 'rtl' ? `F&G גבוה (>70): win rate ממוצע ${(avgWr * 100).toFixed(0)}%, P&L ממוצע ${avgPnl.toFixed(0)}$` : `High F&G (>70): avg win rate ${(avgWr * 100).toFixed(0)}%, avg P&L ${avgPnl.toFixed(0)}$`, type: avgPnl < 0 ? 'warning' : 'success' });
+  }
+  if (lowFG.length >= 1) {
+    const avgPnl = lowFG.reduce((s, d) => s + sumPnl(d), 0) / lowFG.length;
+    insights.push({ text: dir === 'rtl' ? `F&G נמוך (<30): P&L ממוצע ${avgPnl.toFixed(0)}$` : `Low F&G (<30): avg P&L ${avgPnl.toFixed(0)}$`, type: avgPnl >= 0 ? 'success' : 'warning' });
+  }
+
+  // Mental tags patterns
+  const tagPnl: Record<string, { total: number; count: number }> = {};
+  completeDays.forEach(d => {
+    (d.mentalTags || []).forEach(tag => {
+      if (!tagPnl[tag]) tagPnl[tag] = { total: 0, count: 0 };
+      tagPnl[tag].total += sumPnl(d);
+      tagPnl[tag].count++;
+    });
+  });
+  Object.entries(tagPnl).forEach(([tag, data]) => {
+    if (data.count >= 2) {
+      const avg = data.total / data.count;
+      insights.push({ text: dir === 'rtl' ? `כשאתה "${tag}": ממוצע ${avg.toFixed(0)}$ על פני ${data.count} ימים` : `When "${tag}": avg ${avg.toFixed(0)}$ across ${data.count} days`, type: avg >= 0 ? 'success' : 'warning' });
+    }
+  });
+
+  // Psychology answers correlation
+  const withPsych = completeDays.filter(d => d.psychAnswers && Object.values(d.psychAnswers).some(v => v !== null));
+  if (withPsych.length >= 2) {
+    const sleptWell = withPsych.filter(d => d.psychAnswers?.sleepWell === true);
+    const sleptBad = withPsych.filter(d => d.psychAnswers?.sleepWell === false);
+    if (sleptWell.length >= 1 && sleptBad.length >= 1) {
+      const goodAvg = sleptWell.reduce((s, d) => s + sumPnl(d), 0) / sleptWell.length;
+      const badAvg = sleptBad.reduce((s, d) => s + sumPnl(d), 0) / sleptBad.length;
+      insights.push({ text: dir === 'rtl' ? `שינה טובה: ממוצע ${goodAvg.toFixed(0)}$. שינה גרועה: ${badAvg.toFixed(0)}$` : `Good sleep: avg ${goodAvg.toFixed(0)}$. Bad sleep: avg ${badAvg.toFixed(0)}$`, type: goodAvg > badAvg ? 'success' : 'warning' });
+    }
+    const underPressure = withPsych.filter(d => d.psychAnswers?.feelingPressure === true);
+    if (underPressure.length >= 1) {
+      const avg = underPressure.reduce((s, d) => s + sumPnl(d), 0) / underPressure.length;
+      insights.push({ text: dir === 'rtl' ? `תחת לחץ: ממוצע ${avg.toFixed(0)}$ על פני ${underPressure.length} ימים` : `Under pressure: avg ${avg.toFixed(0)}$ across ${underPressure.length} days`, type: avg >= 0 ? 'info' : 'warning' });
+    }
+  }
+
+  // Overtrading detection
+  const overTrade = completeDays.filter(d => d.trades.length >= 4);
+  if (overTrade.length >= 1) {
+    const avg = overTrade.reduce((s, d) => s + sumPnl(d), 0) / overTrade.length;
+    insights.push({ text: dir === 'rtl' ? `ימים עם 4+ עסקאות: ממוצע ${avg.toFixed(0)}$. ${avg < 0 ? 'שקול לצמצם.' : ''}` : `Days with 4+ trades: avg ${avg.toFixed(0)}$. ${avg < 0 ? 'Consider trading less.' : ''}`, type: avg < 0 ? 'warning' : 'info' });
+  }
+
+  // General stats
+  const totalPnl = completeDays.reduce((s, d) => s + sumPnl(d), 0);
+  const totalTrades = completeDays.reduce((s, d) => s + d.trades.length, 0);
+  const totalWins = completeDays.reduce((s, d) => s + numWins(d), 0);
+  const avgScore = completeDays.reduce((s, d) => s + d.dayScore, 0) / completeDays.length;
+
+  const IC = { warning: '#FF4D4D', success: '#00FFA3', info: '#5AA9FF' };
+
+  return (
+    <div>
+      {/* Stats row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: 20 }}>
+        {[
+          { l: dir === 'rtl' ? 'סה"כ P&L' : 'Total P&L', v: `${totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(0)}$`, c: totalPnl >= 0 ? '#00FFA3' : '#FF4D4D' },
+          { l: dir === 'rtl' ? 'עסקאות' : 'Trades', v: String(totalTrades), c: '#5AA9FF' },
+          { l: dir === 'rtl' ? 'אחוז הצלחה' : 'Win Rate', v: `${totalTrades ? ((totalWins / totalTrades) * 100).toFixed(0) : 0}%`, c: '#FFC857' },
+          { l: dir === 'rtl' ? 'ציון ממוצע' : 'Avg Score', v: avgScore.toFixed(1), c: '#b794f6' },
+        ].map(s => (
+          <div key={s.l} style={{ background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 12, padding: '14px 16px', textAlign: 'center' }}>
+            <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 700, letterSpacing: '2px', color: th.tx3, textTransform: 'uppercase' as const, marginBottom: 6 }}>{s.l}</div>
+            <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 22, fontWeight: 800, color: s.c }}>{s.v}</div>
+          </div>
+        ))}
+      </div>
+      {/* Insights */}
+      <div style={{ display: 'grid', gap: 8 }}>
+        {insights.map((ins, i) => (
+          <div key={i} style={{
+            background: `${IC[ins.type]}08`, border: `1px solid ${IC[ins.type]}20`, borderRadius: 10,
+            padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10, direction: dir as 'rtl' | 'ltr',
+            transition: 'all .2s',
+          }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateX(4px)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateX(0)'; }}>
+            <span style={{ fontSize: 16 }}>{ins.type === 'warning' ? '⚠️' : ins.type === 'success' ? '✅' : '💡'}</span>
+            <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12.5, color: th.tx, lineHeight: 1.5 }}>{ins.text}</span>
+          </div>
+        ))}
+        {insights.length === 0 && (
+          <div style={{ textAlign: 'center', padding: 30, color: th.tx3, fontFamily: "'Poppins',sans-serif", fontSize: 13 }}>
+            {dir === 'rtl' ? 'ממשיך לאסוף נתונים...' : 'Collecting data...'}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════
+// MORNING FORM
+// ═══════════════════════════════════════════════════════════════
+const MorningForm = ({ day, upd, t, dir, onSave, dirty, th }: any) => {
   const f = t.f;
   const U = (k: string) => (v: any) => upd({ [k]: v });
   const taskArr = day.tasks || [];
   const done = taskArr.filter((x: any) => x.done).length;
   const BC = ['linear-gradient(135deg,#00FFA3,#0a9e76)', 'linear-gradient(135deg,#FF4D4D,#c02040)', 'linear-gradient(135deg,#5AA9FF,#2a6fd4)', 'linear-gradient(135deg,#FFC857,#c48010)', 'linear-gradient(135deg,#9968f8,#5820b8)'];
+  const sLocks = day.sectionLocks || {};
+  const lockSec = (k: string) => upd({ sectionLocks: { ...sLocks, [k]: true } });
+  const unlockSec = (k: string) => upd({ sectionLocks: { ...sLocks, [k]: false } });
 
   return (
     <div>
-      <PDiv label={dir === 'rtl' ? 'תדריך טרום-שוק' : 'PRE-MARKET BRIEFING'} color="#00FFA3" icon="🌅" />
-      <MarketStrip day={day} dir={dir} />
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 12 }}>
+      <PDiv label={dir === 'rtl' ? 'תדריך טרום-שוק' : 'PRE-MARKET BRIEFING'} color="#00FFA3" icon="🌅" th={th} />
+      <MarketStrip day={day} dir={dir} th={th} />
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 14 }}>
         <div>
-          <Sec title={f.moodTitle} icon="💭" accent="#FFC857">
-            <TA val={day.mood} set={U('mood')} ph={f.moodPh} rows={5} dir={dir} />
+          {/* Image Upload */}
+          <Sec title={f.images} icon="📸" accent="#5AA9FF" th={th} locked={sLocks['images']} onLock={() => lockSec('images')} onUnlock={() => unlockSec('images')}>
+            <ImageUpload images={day.morningImages} onUpdate={(imgs: string[]) => upd({ morningImages: imgs })} label={f.images} uploadLabel={f.imageUpload} dir={dir} disabled={sLocks['images']} th={th} />
           </Sec>
-          <Sec title={f.planTitle} icon="🎯" accent="#5AA9FF">
-            <TA val={day.plan} set={U('plan')} ph={f.planPh} rows={5} dir={dir} />
+
+          <Sec title={f.moodTitle} icon="💭" accent="#FFC857" th={th} locked={sLocks['mood']} onLock={() => lockSec('mood')} onUnlock={() => unlockSec('mood')}>
+            <TA val={day.mood} set={U('mood')} ph={f.moodPh} rows={5} dir={dir} disabled={sLocks['mood']} th={th} />
           </Sec>
-          <Sec title={f.checklist} icon="✅" accent="#00FFA3">
+
+          {/* Bitcoin Thoughts */}
+          <Sec title={f.btcThoughts} icon="₿" accent="#f5a020" th={th} locked={sLocks['btcThoughts']} onLock={() => lockSec('btcThoughts')} onUnlock={() => unlockSec('btcThoughts')}>
+            <TA val={day.btcThoughts || ''} set={U('btcThoughts')} ph={f.btcThoughtsPh} rows={4} dir={dir} disabled={sLocks['btcThoughts']} th={th} />
+          </Sec>
+
+          <Sec title={f.planTitle} icon="🎯" accent="#5AA9FF" th={th} locked={sLocks['plan']} onLock={() => lockSec('plan')} onUnlock={() => unlockSec('plan')}>
+            <TA val={day.plan} set={U('plan')} ph={f.planPh} rows={5} dir={dir} disabled={sLocks['plan']} th={th} />
+          </Sec>
+
+          <Sec title={f.checklist} icon="✅" accent="#00FFA3" th={th} locked={sLocks['checklist']} onLock={() => lockSec('checklist')} onUnlock={() => unlockSec('checklist')}>
             {(day.tasks || []).map((tk: any, i: number) => (
-              <Chk key={i} item={tk} color="#00FFA3" dir={dir}
+              <Chk key={i} item={tk} color="#00FFA3" dir={dir} disabled={sLocks['checklist']} th={th}
                 toggle={() => upd({ tasks: (day.tasks || []).map((x: any, j: number) => j === i ? { ...x, done: !x.done } : x) })} />
             ))}
             <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${taskArr.length ? (done / taskArr.length) * 100 : 0}%`, background: 'linear-gradient(90deg,#00FFA3,#06d6a0)', transition: 'width .5s ease', borderRadius: 2, boxShadow: '0 0 8px rgba(0,255,163,0.3)' }} />
+              <div style={{ flex: 1, height: 4, background: th.inputBg, borderRadius: 2, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${taskArr.length ? (done / taskArr.length) * 100 : 0}%`, background: 'linear-gradient(90deg,#00FFA3,#06d6a0)', transition: 'width .5s ease', borderRadius: 2 }} />
               </div>
-              <span style={{ fontFamily: 'var(--j-mono)', fontSize: '10px', color: '#00FFA3', fontWeight: 700 }}>{done}/{taskArr.length}</span>
+              <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, color: '#00FFA3', fontWeight: 700 }}>{done}/{taskArr.length}</span>
             </div>
           </Sec>
-          <Sec title={f.goals} icon="🏆" accent="#FFC857" open={false}>
+
+          <Sec title={f.goals} icon="🏆" accent="#FFC857" open={false} th={th} locked={sLocks['goals']} onLock={() => lockSec('goals')} onUnlock={() => unlockSec('goals')}>
             {(day.goals || []).map((g: any, i: number) => (
-              <Chk key={i} item={g} color="#FFC857" dir={dir}
+              <Chk key={i} item={g} color="#FFC857" dir={dir} disabled={sLocks['goals']} th={th}
                 toggle={() => upd({ goals: (day.goals || []).map((x: any, j: number) => j === i ? { ...x, done: !x.done } : x) })} />
             ))}
           </Sec>
         </div>
+
         <div>
-          <Sec title={`${f.biasTitle} & ${f.phaseTitle}`} icon="📊" accent="#00FFA3">
+          {/* Psychology Check */}
+          <Sec title={f.psych} icon="🧠" accent="#b794f6" th={th} locked={sLocks['psych']} onLock={() => lockSec('psych')} onUnlock={() => unlockSec('psych')}>
+            <PsychSection answers={day.psychAnswers} onUpdate={(a: PsychAnswers) => upd({ psychAnswers: a })} questions={t.psychQ} dir={dir} disabled={sLocks['psych']} th={th} />
+          </Sec>
+
+          {/* Discipline Commitment */}
+          <Sec title={f.discipline} icon="⚔️" accent="#00FFA3" th={th} locked={day.disciplineConfirmed} fullLocked={day.disciplineConfirmed}>
+            <DisciplineSection commitments={day.disciplineCommitments} confirmed={day.disciplineConfirmed} onUpdate={(c: string[]) => upd({ disciplineCommitments: c })} onConfirm={() => upd({ disciplineConfirmed: true, sectionLocks: { ...sLocks, discipline: true } })} options={t.commitments} f={f} dir={dir} disabled={day.disciplineConfirmed} th={th} />
+          </Sec>
+
+          <Sec title={`${f.biasTitle} & ${f.phaseTitle}`} icon="📊" accent="#00FFA3" th={th} locked={sLocks['bias']} onLock={() => lockSec('bias')} onUnlock={() => unlockSec('bias')}>
             <div style={{ marginBottom: 14 }}>
-              <Lbl c={f.biasTitle} dir={dir} />
+              <Lbl c={f.biasTitle} dir={dir} th={th} />
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' as const }}>
                 {t.bias.map((o: string, i: number) => (
-                  <button key={o} onClick={() => upd({ bias: o })}
-                    style={{ fontFamily: 'var(--j-mono)', fontSize: '9.5px', fontWeight: 700, borderRadius: 20, padding: '5px 14px', cursor: 'pointer', transition: 'all .2s', ...(day.bias === o ? { background: BC[i], color: '#0a0e1a', border: 'none', boxShadow: '0 2px 10px rgba(0,0,0,0.3)' } : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)' }) }}>
+                  <button key={o} onClick={() => upd({ bias: o })} disabled={sLocks['bias']}
+                    style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: '5px 14px', cursor: sLocks['bias'] ? 'not-allowed' : 'pointer', transition: 'all .2s', ...(day.bias === o ? { background: BC[i], color: '#0a0e1a', border: 'none' } : { background: th.unselBg, border: `1px solid ${th.unselBr}`, color: th.unselTx }) }}>
                     {o}
                   </button>
                 ))}
               </div>
             </div>
             <div style={{ marginBottom: 14 }}>
-              <Lbl c={f.phaseTitle} dir={dir} />
+              <Lbl c={f.phaseTitle} dir={dir} th={th} />
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' as const }}>
                 {t.struct.map((o: string, i: number) => (
-                  <button key={o} onClick={() => upd({ mktStruct: o })}
-                    style={{ fontFamily: 'var(--j-mono)', fontSize: '9.5px', fontWeight: 700, borderRadius: 20, padding: '5px 14px', cursor: 'pointer', transition: 'all .2s', ...(day.mktStruct === o ? { background: BC[i], color: '#0a0e1a', border: 'none', boxShadow: '0 2px 10px rgba(0,0,0,0.3)' } : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)' }) }}>
+                  <button key={o} onClick={() => upd({ mktStruct: o })} disabled={sLocks['bias']}
+                    style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: '5px 14px', cursor: sLocks['bias'] ? 'not-allowed' : 'pointer', transition: 'all .2s', ...(day.mktStruct === o ? { background: BC[i], color: '#0a0e1a', border: 'none' } : { background: th.unselBg, border: `1px solid ${th.unselBr}`, color: th.unselTx }) }}>
                     {o}
                   </button>
                 ))}
               </div>
             </div>
             <div>
-              <Lbl c={f.stateTitle} dir={dir} />
+              <Lbl c={f.stateTitle} dir={dir} th={th} />
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' as const }}>
                 {t.states.map((s: string) => {
                   const on = (day.mentalTags || []).includes(s);
@@ -409,7 +762,7 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty }: any) => {
                     <button key={s} onClick={() => {
                       const cur = day.mentalTags || [];
                       upd({ mentalTags: on ? cur.filter((x: string) => x !== s) : [...cur, s] });
-                    }} style={{ fontFamily: 'var(--j-sans)', fontSize: 11, fontWeight: 600, borderRadius: 8, padding: '5px 13px', cursor: 'pointer', transition: 'all .2s', ...(on ? { background: 'rgba(153,104,248,.15)', border: '1px solid rgba(153,104,248,.35)', color: '#b794f6', boxShadow: '0 0 10px rgba(153,104,248,0.2)' } : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)' }) }}>
+                    }} disabled={sLocks['bias']} style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 600, borderRadius: 8, padding: '5px 13px', cursor: sLocks['bias'] ? 'not-allowed' : 'pointer', transition: 'all .2s', ...(on ? { background: 'rgba(153,104,248,.15)', border: '1px solid rgba(153,104,248,.35)', color: '#b794f6' } : { background: th.tagUnsel, border: `1px solid ${th.tagUnselBr}`, color: th.tagUnselTx }) }}>
                       {s}
                     </button>
                   );
@@ -417,7 +770,8 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty }: any) => {
               </div>
             </div>
           </Sec>
-          <Sec title="Asset Intelligence" icon="🪙" accent="#FFC857">
+
+          <Sec title="Asset Intelligence" icon="🪙" accent="#FFC857" th={th} locked={sLocks['assets']} onLock={() => lockSec('assets')} onUnlock={() => unlockSec('assets')}>
             {[
               { key: 'btcNote', lbl: f.btc, ph: f.btcPh, badge: '₿', c: '#f5a020' },
               { key: 't3Note', lbl: f.t3, ph: f.t3Ph, badge: 'T3', c: '#b794f6' },
@@ -426,37 +780,39 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty }: any) => {
             ].map(({ key, lbl, ph, badge, c }) => (
               <div key={key} style={{ marginBottom: 13, paddingInlineStart: 12, borderInlineStart: `2px solid ${c}25` }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
-                  <span style={{ fontFamily: 'var(--j-mono)', fontSize: 8.5, fontWeight: 700, color: c, background: `${c}15`, padding: '3px 8px', borderRadius: 5, boxShadow: `0 0 8px ${c}15` }}>{badge}</span>
-                  <Lbl c={lbl} dir={dir} />
+                  <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8.5, fontWeight: 700, color: c, background: `${c}15`, padding: '3px 8px', borderRadius: 5 }}>{badge}</span>
+                  <Lbl c={lbl} dir={dir} th={th} />
                 </div>
-                <TA val={day[key] || ''} set={(v: string) => upd({ [key]: v })} ph={ph} rows={2} dir={dir} />
+                <TA val={day[key] || ''} set={(v: string) => upd({ [key]: v })} ph={ph} rows={2} dir={dir} disabled={sLocks['assets']} th={th} />
               </div>
             ))}
           </Sec>
-          <Sec title={f.levels} icon="🗺" accent="#5AA9FF">
-            <TA val={day.levels} set={U('levels')} ph={f.levelsPh} rows={5} dir={dir} />
+
+          <Sec title={f.levels} icon="🗺" accent="#5AA9FF" th={th} locked={sLocks['levels']} onLock={() => lockSec('levels')} onUnlock={() => unlockSec('levels')}>
+            <TA val={day.levels} set={U('levels')} ph={f.levelsPh} rows={5} dir={dir} disabled={sLocks['levels']} th={th} />
           </Sec>
-          <Sec title={f.setups} icon="🔍" accent="#5AA9FF">
-            <TA val={day.setups} set={U('setups')} ph={f.setupsPh} rows={4} dir={dir} />
+          <Sec title={f.setups} icon="🔍" accent="#5AA9FF" th={th} locked={sLocks['setups']} onLock={() => lockSec('setups')} onUnlock={() => unlockSec('setups')}>
+            <TA val={day.setups} set={U('setups')} ph={f.setupsPh} rows={4} dir={dir} disabled={sLocks['setups']} th={th} />
           </Sec>
-          <Sec title={`${f.emotion} & ${f.fg}`} icon="🧠" accent="#b794f6">
-            <EmoSlider val={day.emotionScore} set={U('emotionScore')} label={f.emotion} dir={dir} />
-            <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '14px 0' }} />
-            <Lbl c={f.fg} dir={dir} />
+          <Sec title={`${f.emotion} & ${f.fg}`} icon="🧠" accent="#b794f6" th={th} locked={sLocks['emotion']} onLock={() => lockSec('emotion')} onUnlock={() => unlockSec('emotion')}>
+            <EmoSlider val={day.emotionScore} set={U('emotionScore')} label={f.emotion} dir={dir} disabled={sLocks['emotion']} th={th} />
+            <div style={{ height: 1, background: th.divider, margin: '14px 0' }} />
+            <Lbl c={f.fg} dir={dir} th={th} />
             <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' as const }}>
-              <IN val={day.fearGreed || ''} set={(v: string) => { const n = v.replace(/\D/g, '').slice(0, 3); if (n === '' || parseInt(n) <= 100) upd({ fearGreed: n }); }} ph={f.fgPh} dir={dir} style={{ width: 90 }} />
+              <IN val={day.fearGreed || ''} set={(v: string) => { const n = v.replace(/\D/g, '').slice(0, 3); if (n === '' || parseInt(n) <= 100) upd({ fearGreed: n }); }} ph={f.fgPh} dir={dir} disabled={sLocks['emotion']} th={th} style={{ width: 90 }} />
               {day.fearGreed !== '' && day.fearGreed !== undefined && <FGGauge value={parseInt(day.fearGreed) || 0} />}
             </div>
           </Sec>
         </div>
       </div>
+
       {/* Lock Button */}
-      <div style={{ margin: '22px 0 8px', background: 'rgba(255,200,87,0.06)', border: '1px solid rgba(255,200,87,0.15)', borderRadius: 14, padding: '18px 24px', textAlign: 'center', backdropFilter: 'blur(8px)' }}>
-        <p style={{ fontFamily: 'var(--j-sans)', fontSize: '11.5px', color: '#FFC857', marginBottom: 12, opacity: 0.8 }}>{t.m.lockSub}</p>
+      <div style={{ margin: '22px 0 8px', background: 'rgba(255,200,87,0.06)', border: '1px solid rgba(255,200,87,0.12)', borderRadius: 14, padding: '18px 24px', textAlign: 'center' }}>
+        <p style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11.5, color: '#FFC857', marginBottom: 12, opacity: 0.8 }}>{t.m.lockSub}</p>
         <button onClick={onSave} disabled={!dirty} style={{
-          background: 'linear-gradient(135deg,#FFC857,#f5a020)', color: '#0a0e1a', padding: '12px 28px', fontSize: '12.5px', fontWeight: 800, letterSpacing: '.5px',
+          background: 'linear-gradient(135deg,#FFC857,#f5a020)', color: '#0a0e1a', padding: '12px 28px', fontSize: 12.5, fontWeight: 800, letterSpacing: '.5px',
           boxShadow: dirty ? '0 4px 24px rgba(255,200,87,.35)' : 'none', borderRadius: 12, border: 'none',
-          cursor: dirty ? 'pointer' : 'not-allowed', opacity: dirty ? 1 : 0.3, fontFamily: 'var(--j-mono)',
+          cursor: dirty ? 'pointer' : 'not-allowed', opacity: dirty ? 1 : 0.3, fontFamily: "'Poppins',sans-serif",
           transition: 'all .25s', textTransform: 'uppercase' as const,
         }}>🔒 {t.m.lock}</button>
       </div>
@@ -465,90 +821,101 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty }: any) => {
 };
 
 // ═══════════════════════════════════════════════════════════════
-// EOD FORM — "POST-MARKET DEBRIEF"
+// EOD FORM
 // ═══════════════════════════════════════════════════════════════
-const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades }: any) => {
+const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th }: any) => {
   const f = t.f;
   const U = (k: string) => (v: any) => upd({ [k]: v });
   const dp = sumPnl(day), dw = numWins(day);
   const addTrade = () => upd({ trades: [...(day.trades || []), { id: Date.now(), pair: '', side: 'LONG', entry: '', exit: '', size: '', pnl: '', rr: '', notes: '' }] });
+  const fullLocked = isDayFullyLocked(day);
+  const sLocks = day.sectionLocks || {};
+  const lockSec = (k: string) => upd({ sectionLocks: { ...sLocks, [k]: true } });
+  const unlockSec = (k: string) => upd({ sectionLocks: { ...sLocks, [k]: false } });
 
   return (
     <div>
       {/* Morning Locked Recap */}
       <div style={{
-        background: 'linear-gradient(135deg,rgba(0,255,163,0.06),rgba(0,255,163,0.02))', border: '1px solid rgba(0,255,163,0.15)',
-        borderRadius: 12, padding: '12px 16px', marginBottom: 16, backdropFilter: 'blur(8px)',
+        background: 'rgba(0,255,163,0.04)', border: '1px solid rgba(0,255,163,0.12)',
+        borderRadius: 12, padding: '12px 16px', marginBottom: 16,
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' as const, gap: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' as const }}>
-            <span style={{ fontFamily: 'var(--j-mono)', fontSize: '8.5px', color: '#00FFA3', letterSpacing: '1.8px', textTransform: 'uppercase' as const, background: 'rgba(0,255,163,.12)', padding: '3px 10px', borderRadius: 5, fontWeight: 700, boxShadow: '0 0 10px rgba(0,255,163,0.15)' }}>🔒 {t.m.locked}</span>
-            <span style={{ fontFamily: 'var(--j-mono)', fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>{day.bias} · {day.mktStruct}</span>
+            <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8.5, color: '#00FFA3', letterSpacing: '1.8px', textTransform: 'uppercase' as const, background: 'rgba(0,255,163,.1)', padding: '3px 10px', borderRadius: 5, fontWeight: 700 }}>🔒 {t.m.locked}</span>
+            <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, color: th.tx2, fontWeight: 600 }}>{day.bias} · {day.mktStruct}</span>
           </div>
-          <span style={{ fontFamily: 'var(--j-mono)', fontSize: 14, fontWeight: 800, color: day.emotionScore >= 7 ? '#00FFA3' : day.emotionScore >= 5 ? '#FFC857' : '#FF4D4D', textShadow: `0 0 10px ${day.emotionScore >= 7 ? 'rgba(0,255,163,0.3)' : day.emotionScore >= 5 ? 'rgba(255,200,87,0.3)' : 'rgba(255,77,77,0.3)'}` }}>{day.emotionScore}/10</span>
+          {/* Morning images in recap */}
+          {(day.morningImages || []).length > 0 && (
+            <div style={{ display: 'flex', gap: 6 }}>
+              {day.morningImages.map((img: string, i: number) => (
+                <img key={i} src={img} alt="" style={{ width: 40, height: 30, objectFit: 'cover', borderRadius: 6, border: `1px solid ${th.cardBr}` }} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Market Overview Strip (EOD state) */}
-      <MarketStrip day={day} dir={dir} />
-
       {/* Orca Trade Bridge */}
-      {orcaTrades && orcaTrades.length > 0 && (
-        <div style={{ background: 'linear-gradient(135deg,rgba(0,255,163,0.04),rgba(90,169,255,0.04))', border: '1px solid rgba(0,255,163,0.12)', borderRadius: 12, padding: '13px 16px', marginBottom: 14, marginTop: 8, backdropFilter: 'blur(8px)' }}>
-          <div style={{ fontFamily: 'var(--j-mono)', fontSize: 9, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase' as const, color: '#00FFA3', marginBottom: 9 }}>
-            ⚡ {dir === 'rtl' ? 'עסקאות מ-Orca' : 'Orca Trade Bridge'} — {orcaTrades.length} {dir === 'rtl' ? 'עסקאות' : 'trades'}
+      {orcaTrades?.length > 0 && (
+        <div style={{ background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 12, padding: '12px 16px', marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+            <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8.5, color: '#5AA9FF', letterSpacing: '1.8px', fontWeight: 700, textTransform: 'uppercase' as const }}>⚡ ORCA BRIDGE</span>
+            <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, color: th.tx3 }}>{orcaTrades.length} trades</span>
           </div>
           <div style={{ display: 'flex', gap: 8, overflowX: 'auto' as const, paddingBottom: 4 }}>
             {orcaTrades.slice(0, 6).map((tr: Trade) => (
               <div key={tr.id} style={{
-                flexShrink: 0, padding: '9px 13px', background: 'rgba(255,255,255,0.03)', borderRadius: 10,
+                flexShrink: 0, padding: '9px 13px', background: th.inputBg, borderRadius: 10,
                 border: `1px solid ${tr.pnl >= 0 ? 'rgba(0,255,163,.15)' : 'rgba(255,77,77,.15)'}`, minWidth: 110,
-                backdropFilter: 'blur(6px)', transition: 'all .2s',
+                transition: 'all .2s',
               }}>
-                <div style={{ fontFamily: 'var(--j-mono)', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.8)' }}>{tr.coin}</div>
-                <div style={{ fontFamily: 'var(--j-mono)', fontSize: 13, fontWeight: 800, color: tr.pnl >= 0 ? '#00FFA3' : '#FF4D4D', marginTop: 3, textShadow: `0 0 10px ${tr.pnl >= 0 ? 'rgba(0,255,163,0.3)' : 'rgba(255,77,77,0.3)'}` }}>{tr.pnl >= 0 ? '+' : ''}{tr.pnl.toFixed(2)}$</div>
+                <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 700, color: th.tx2 }}>{tr.coin}</div>
+                <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 13, fontWeight: 800, color: tr.pnl >= 0 ? '#00FFA3' : '#FF4D4D', marginTop: 3 }}>{tr.pnl >= 0 ? '+' : ''}{tr.pnl.toFixed(2)}$</div>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      <PDiv label={dir === 'rtl' ? 'תחקיר אחרי-שוק' : 'POST-MARKET DEBRIEF'} color="#b794f6" icon="🌙" />
+      <PDiv label={dir === 'rtl' ? 'תחקיר אחרי-שוק' : 'POST-MARKET DEBRIEF'} color="#b794f6" icon="🌙" th={th} />
 
       {/* Trade Log */}
-      <Sec title={f.tlog} icon="💹" accent="#5AA9FF">
-        {day.hasOpen === null ? (
-          <div style={{ borderRadius: 12, padding: 22, textAlign: 'center', border: '1px dashed rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.02)' }}>
+      <Sec title={f.tlog} icon="💹" accent="#5AA9FF" th={th} fullLocked={fullLocked} locked={sLocks['trades']} onLock={() => lockSec('trades')} onUnlock={() => unlockSec('trades')}>
+        {day.hasOpen === null && !fullLocked ? (
+          <div style={{ borderRadius: 12, padding: 22, textAlign: 'center', border: `1px dashed ${th.inputBr}`, background: th.inputBg }}>
             <div style={{ fontSize: 24, marginBottom: 10 }}>📂</div>
-            <div style={{ fontFamily: 'var(--j-sans)', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.6)', marginBottom: 16 }}>{f.openQ}</div>
+            <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 13, fontWeight: 600, color: th.tx2, marginBottom: 16 }}>{f.openQ}</div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' as const }}>
-              <button onClick={() => upd({ hasOpen: true })} style={{ background: 'linear-gradient(135deg,#FFC857,#f5a020)', color: '#0a0e1a', padding: '10px 22px', fontSize: 12, borderRadius: 10, fontFamily: 'var(--j-mono)', fontWeight: 700, border: 'none', cursor: 'pointer', boxShadow: '0 4px 15px rgba(255,200,87,0.25)', transition: 'all .2s' }}>📈 {f.openY}</button>
-              <button onClick={() => upd({ hasOpen: false })} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.5)', padding: '7px 15px', fontSize: '11.5px', borderRadius: 8, cursor: 'pointer', fontWeight: 600, transition: 'all .2s' }}>✖ {f.openN}</button>
+              <button onClick={() => upd({ hasOpen: true })} style={{ background: 'linear-gradient(135deg,#FFC857,#f5a020)', color: '#0a0e1a', padding: '10px 22px', fontSize: 12, borderRadius: 10, fontFamily: "'Poppins',sans-serif", fontWeight: 700, border: 'none', cursor: 'pointer', transition: 'all .2s' }}>📈 {f.openY}</button>
+              <button onClick={() => upd({ hasOpen: false })} style={{ background: th.inputBg, border: `1px solid ${th.inputBr}`, color: th.tx2, padding: '7px 15px', fontSize: 11.5, borderRadius: 8, cursor: 'pointer', fontWeight: 600, transition: 'all .2s' }}>✖ {f.openN}</button>
             </div>
           </div>
         ) : (
           <>
             {(day.trades || []).map((tr: JournalTrade, i: number) => (
-              <TCard key={tr.id} trade={tr} idx={i} f={f} dir={dir}
+              <TCard key={tr.id} trade={tr} idx={i} f={f} dir={dir} disabled={fullLocked || sLocks['trades']} th={th}
                 onChange={(nt: JournalTrade) => upd({ trades: (day.trades || []).map((x: any, j: number) => j === i ? nt : x) })}
                 onDel={() => upd({ trades: day.trades.filter((_: any, j: number) => j !== i) })} />
             ))}
-            <button onClick={addTrade} style={{
-              width: '100%', padding: 10, borderRadius: 10, color: '#5AA9FF',
-              marginTop: 5, background: 'rgba(90,169,255,0.04)', border: '1px dashed rgba(90,169,255,0.2)',
-              cursor: 'pointer', fontWeight: 700, fontSize: 12, fontFamily: 'var(--j-mono)',
-              transition: 'all .2s', letterSpacing: '.5px',
-            }}>{f.addTrade}</button>
+            {!fullLocked && !sLocks['trades'] && (
+              <button onClick={addTrade} style={{
+                width: '100%', padding: 10, borderRadius: 10, color: '#5AA9FF',
+                marginTop: 5, background: 'rgba(90,169,255,0.04)', border: '1px dashed rgba(90,169,255,0.2)',
+                cursor: 'pointer', fontWeight: 700, fontSize: 12, fontFamily: "'Poppins',sans-serif",
+                transition: 'all .2s', letterSpacing: '.5px',
+              }}>{f.addTrade}</button>
+            )}
             {(day.trades || []).length > 0 && (
-              <div style={{ display: 'flex', gap: 20, marginTop: 12, padding: '12px 16px', background: 'rgba(255,255,255,0.025)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={{ display: 'flex', gap: 20, marginTop: 12, padding: '12px 16px', background: th.cardBg, borderRadius: 10, border: `1px solid ${th.cardBr}` }}>
                 {[
-                  { l: 'P&L', v: `${dp >= 0 ? '+' : ''}${dp.toFixed(2)}$`, c: dp >= 0 ? '#00FFA3' : '#FF4D4D', glow: dp >= 0 ? 'rgba(0,255,163,0.3)' : 'rgba(255,77,77,0.3)' },
-                  { l: 'TRADES', v: String(day.trades.length), c: 'rgba(255,255,255,0.7)', glow: 'none' },
-                  { l: 'WIN %', v: `${((dw / Math.max(day.trades.length, 1)) * 100).toFixed(0)}%`, c: '#FFC857', glow: 'rgba(255,200,87,0.2)' },
+                  { l: 'P&L', v: `${dp >= 0 ? '+' : ''}${dp.toFixed(2)}$`, c: dp >= 0 ? '#00FFA3' : '#FF4D4D' },
+                  { l: 'TRADES', v: String(day.trades.length), c: th.tx2 },
+                  { l: 'WIN %', v: `${((dw / Math.max(day.trades.length, 1)) * 100).toFixed(0)}%`, c: '#FFC857' },
                 ].map(s => (
                   <div key={s.l}>
-                    <div style={{ fontFamily: 'var(--j-mono)', fontSize: 8, fontWeight: 700, letterSpacing: '2px', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase' as const }}>{s.l}</div>
-                    <div style={{ fontFamily: 'var(--j-mono)', fontSize: 20, fontWeight: 800, color: s.c, textShadow: `0 0 15px ${s.glow}`, marginTop: 2 }}>{s.v}</div>
+                    <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 700, letterSpacing: '2px', color: th.tx3, textTransform: 'uppercase' as const }}>{s.l}</div>
+                    <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 20, fontWeight: 800, color: s.c, marginTop: 2 }}>{s.v}</div>
                   </div>
                 ))}
               </div>
@@ -558,9 +925,9 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades }: any) => {
       </Sec>
 
       {/* EOD Review */}
-      <Sec title={dir === 'rtl' ? 'תחקיר ביצוע' : 'EXECUTION REVIEW'} icon="🌙" accent="#b794f6">
-        <div style={{ marginBottom: 14 }}><Lbl c={f.actualMove} dir={dir} /><TA val={day.actualMove} set={U('actualMove')} ph={f.actualPh} rows={3} dir={dir} /></div>
-        <div style={{ marginBottom: 16 }}><Lbl c={f.score} dir={dir} /><Scores val={day.dayScore} set={U('dayScore')} /></div>
+      <Sec title={dir === 'rtl' ? 'תחקיר ביצוע' : 'EXECUTION REVIEW'} icon="🌙" accent="#b794f6" th={th} fullLocked={fullLocked} locked={sLocks['review']} onLock={() => lockSec('review')} onUnlock={() => unlockSec('review')}>
+        <div style={{ marginBottom: 14 }}><Lbl c={f.actualMove} dir={dir} th={th} /><TA val={day.actualMove} set={U('actualMove')} ph={f.actualPh} rows={3} dir={dir} disabled={fullLocked || sLocks['review']} th={th} /></div>
+        <div style={{ marginBottom: 16 }}><Lbl c={f.score} dir={dir} th={th} /><Scores val={day.dayScore} set={U('dayScore')} disabled={fullLocked || sLocks['review']} th={th} /></div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
           {[
             { k: 'wins', l: f.wins, ph: f.winsPh, c: '#00FFA3' },
@@ -569,31 +936,38 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades }: any) => {
             { k: 'solutions', l: f.solutions, ph: f.solutionsPh, c: '#FFC857' },
           ].map(item => (
             <div key={item.k} style={{ borderInlineStart: `2px solid ${item.c}20`, paddingInlineStart: 11 }}>
-              <Lbl c={item.l} dir={dir} />
-              <TA val={day[item.k]} set={U(item.k)} ph={item.ph} rows={4} dir={dir} />
+              <Lbl c={item.l} dir={dir} th={th} />
+              <TA val={day[item.k]} set={U(item.k)} ph={item.ph} rows={4} dir={dir} disabled={fullLocked || sLocks['review']} th={th} />
             </div>
           ))}
         </div>
-        <Lbl c={f.closing} dir={dir} />
-        <TA val={day.closing} set={U('closing')} ph={f.closingPh} rows={3} dir={dir} />
+        <Lbl c={f.closing} dir={dir} th={th} />
+        <TA val={day.closing} set={U('closing')} ph={f.closingPh} rows={3} dir={dir} disabled={fullLocked || sLocks['review']} th={th} />
       </Sec>
 
       {/* Seal Day */}
-      <div style={{ margin: '22px 0 8px', background: 'rgba(183,148,246,0.06)', border: '1px solid rgba(183,148,246,0.15)', borderRadius: 14, padding: '18px 24px', textAlign: 'center', backdropFilter: 'blur(8px)' }}>
-        <p style={{ fontFamily: 'var(--j-sans)', fontSize: '11.5px', color: '#b794f6', marginBottom: 12, opacity: 0.8 }}>{t.e.lockSub}</p>
-        <button onClick={onSave} disabled={!dirty} style={{
-          background: 'linear-gradient(135deg,#b794f6,#7c3aed)', color: '#fff', padding: '12px 28px', fontSize: '12.5px', fontWeight: 800, letterSpacing: '.5px',
-          boxShadow: dirty ? '0 4px 24px rgba(153,104,248,.35)' : 'none', borderRadius: 12, border: 'none',
-          cursor: dirty ? 'pointer' : 'not-allowed', opacity: dirty ? 1 : 0.3, fontFamily: 'var(--j-mono)',
-          transition: 'all .25s', textTransform: 'uppercase' as const,
-        }}>✓ {t.e.lock}</button>
-      </div>
+      {!fullLocked && (
+        <div style={{ margin: '22px 0 8px', background: 'rgba(183,148,246,0.06)', border: '1px solid rgba(183,148,246,0.12)', borderRadius: 14, padding: '18px 24px', textAlign: 'center' }}>
+          <p style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11.5, color: '#b794f6', marginBottom: 12, opacity: 0.8 }}>{t.e.lockSub}</p>
+          <button onClick={onSave} disabled={!dirty} style={{
+            background: 'linear-gradient(135deg,#b794f6,#7c3aed)', color: '#fff', padding: '12px 28px', fontSize: 12.5, fontWeight: 800, letterSpacing: '.5px',
+            boxShadow: dirty ? '0 4px 24px rgba(153,104,248,.35)' : 'none', borderRadius: 12, border: 'none',
+            cursor: dirty ? 'pointer' : 'not-allowed', opacity: dirty ? 1 : 0.3, fontFamily: "'Poppins',sans-serif",
+            transition: 'all .25s', textTransform: 'uppercase' as const,
+          }}>✓ {t.e.lock}</button>
+        </div>
+      )}
+      {fullLocked && (
+        <div style={{ margin: '22px 0', padding: '16px 24px', borderRadius: 14, background: 'rgba(0,255,163,0.06)', border: '1px solid rgba(0,255,163,0.15)', textAlign: 'center' }}>
+          <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 700, color: '#00FFA3', letterSpacing: '2px' }}>🔒 {dir === 'rtl' ? 'יום זה נעול לצמיתות' : 'THIS DAY IS PERMANENTLY LOCKED'}</span>
+        </div>
+      )}
     </div>
   );
 };
 
 // ═══════════════════════════════════════════════════════════════
-// MAIN JOURNAL DIMENSION (LOGIC UNCHANGED)
+// MAIN JOURNAL DIMENSION
 // ═══════════════════════════════════════════════════════════════
 interface JournalDimensionProps {
   onReturn: () => void;
@@ -615,6 +989,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
   const [eDirty, setED] = useState(false);
   const [toast, setToast] = useState<{ msg: string; type: string } | null>(null);
   const [sbQ, setSbQ] = useState('');
+  const [theme, setTheme] = useState<JTheme>('dark');
   const tRef = useRef<any>(null);
 
   const daysRef = useRef(days);
@@ -626,6 +1001,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
 
   const t = TR[lang];
   const dir = t.dir;
+  const th = THEMES[theme];
 
   // Load from IndexedDB
   useEffect(() => {
@@ -655,6 +1031,8 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
   const upd = useCallback((patch: Partial<JournalDay>) => {
     const curId = activeIdRef.current;
     setDays(prev => {
+      const day = prev.find(d => d.id === curId);
+      if (day && isDayFullyLocked(day)) return prev; // Hard lock
       const next = prev.map(d => d.id === curId ? { ...d, ...patch } : d);
       writeJournalState({ days: next, activeDayId: curId, lang: langRef.current });
       return next;
@@ -714,106 +1092,72 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
   }, [orcaTrades]);
 
   if (!loaded) return (
-    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#080c18' }}>
-      <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, color: '#00FFA3', letterSpacing: 3, animation: 'j-pulse 1.5s ease-in-out infinite' }}>INITIALIZING...</div>
+    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: th.bg }}>
+      <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, color: '#00FFA3', letterSpacing: 3, animation: 'j-pulse 1.5s ease-in-out infinite' }}>INITIALIZING...</div>
     </div>
   );
 
   const TOAST_STYLES: Record<string, React.CSSProperties> = {
-    a: { background: 'rgba(255,200,87,.12)', border: '1px solid rgba(255,200,87,.25)', color: '#FFC857', boxShadow: '0 4px 20px rgba(255,200,87,0.15)' },
-    p: { background: 'rgba(183,148,246,.12)', border: '1px solid rgba(183,148,246,.25)', color: '#b794f6', boxShadow: '0 4px 20px rgba(183,148,246,0.15)' },
-    g: { background: 'rgba(0,255,163,.12)', border: '1px solid rgba(0,255,163,.25)', color: '#00FFA3', boxShadow: '0 4px 20px rgba(0,255,163,0.15)' },
+    a: { background: 'rgba(255,200,87,.12)', border: '1px solid rgba(255,200,87,.25)', color: '#FFC857' },
+    p: { background: 'rgba(183,148,246,.12)', border: '1px solid rgba(183,148,246,.25)', color: '#b794f6' },
+    g: { background: 'rgba(0,255,163,.12)', border: '1px solid rgba(0,255,163,.25)', color: '#00FFA3' },
   };
 
   return (
     <div className="journal-dimension" style={{
       height: '100%', display: 'flex', flexDirection: 'column',
-      fontFamily: "'IBM Plex Sans', sans-serif", direction: dir,
-      background: '#080c18',
+      fontFamily: "'Poppins', sans-serif", direction: dir,
+      background: th.bg, color: th.tx,
     }}>
-      {/* SCOPED CSS — DARK INSTITUTIONAL */}
+      {/* SCOPED CSS */}
       <style>{`
-        .journal-dimension {
-          --j-bg: #080c18; --j-bg1: #0d1220; --j-bg2: #111827; --j-bg3: rgba(255,255,255,0.06);
-          --j-br: rgba(255,255,255,0.06); --j-br2: rgba(255,255,255,0.1);
-          --j-tx: rgba(255,255,255,0.92); --j-tx2: rgba(255,255,255,0.6); --j-tx3: rgba(255,255,255,0.3);
-          --j-g: #00FFA3; --j-r: #FF4D4D; --j-a: #FFC857; --j-b: #5AA9FF; --j-p: #b794f6;
-          --j-mono: 'IBM Plex Mono', 'JetBrains Mono', monospace;
-          --j-sans: 'IBM Plex Sans', 'Inter', sans-serif;
-          --j-head: 'Syne', 'Inter', sans-serif;
-        }
         .journal-dimension ::-webkit-scrollbar { width: 4px; height: 4px; }
         .journal-dimension ::-webkit-scrollbar-track { background: transparent; }
-        .journal-dimension ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
-        .journal-dimension ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+        .journal-dimension ::-webkit-scrollbar-thumb { background: ${th.scrollThumb}; border-radius: 2px; }
+        .journal-dimension ::-webkit-scrollbar-thumb:hover { background: ${th.scrollHover}; }
         .journal-dimension textarea:focus, .journal-dimension input:focus {
-          border-color: rgba(90,169,255,.4) !important;
-          box-shadow: 0 0 0 3px rgba(90,169,255,.08), 0 0 15px rgba(90,169,255,.1) !important;
-          background: rgba(255,255,255,0.06) !important;
+          border-color: ${th.focusBr} !important;
+          box-shadow: 0 0 0 3px ${th.focusShadow} !important;
         }
         .journal-dimension textarea::placeholder, .journal-dimension input::placeholder {
-          color: rgba(255,255,255,0.18) !important;
+          color: ${th.phColor} !important;
         }
         @keyframes j-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
-        @keyframes j-gradient-shift {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-        @keyframes j-glow-breathe {
-          0%,100% { box-shadow: 0 0 15px rgba(0,255,163,0.05); }
-          50% { box-shadow: 0 0 25px rgba(0,255,163,0.12); }
-        }
         .j-card-hover { transition: all .25s ease !important; }
-        .j-card-hover:hover { transform: translateY(-2px) !important; box-shadow: 0 8px 25px rgba(0,0,0,0.4) !important; }
+        .j-card-hover:hover { transform: translateY(-1px) !important; box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important; }
+        @media (max-width: 768px) {
+          .j-grid-2col { grid-template-columns: 1fr !important; }
+          .j-sidebar { width: 0 !important; min-width: 0 !important; }
+        }
       `}</style>
-
-      {/* ANIMATED BG GRADIENTS */}
-      <div style={{
-        position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden',
-      }}>
-        <div style={{
-          position: 'absolute', width: '600px', height: '600px', top: '-100px', left: '-100px',
-          background: 'radial-gradient(circle, rgba(0,255,163,0.04) 0%, transparent 70%)',
-          animation: 'j-gradient-shift 15s ease-in-out infinite',
-          backgroundSize: '200% 200%',
-        }} />
-        <div style={{
-          position: 'absolute', width: '500px', height: '500px', bottom: '-50px', right: '-50px',
-          background: 'radial-gradient(circle, rgba(183,148,246,0.04) 0%, transparent 70%)',
-          animation: 'j-gradient-shift 20s ease-in-out infinite reverse',
-          backgroundSize: '200% 200%',
-        }} />
-        <div style={{
-          position: 'absolute', width: '400px', height: '400px', top: '40%', left: '50%',
-          background: 'radial-gradient(circle, rgba(90,169,255,0.03) 0%, transparent 70%)',
-          animation: 'j-gradient-shift 18s ease-in-out infinite 3s',
-          backgroundSize: '200% 200%',
-        }} />
-      </div>
 
       {/* TOPBAR */}
       <nav style={{
-        height: 52, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 18px',
-        background: 'rgba(13,18,32,0.85)', borderBottom: '1px solid rgba(255,255,255,0.06)', zIndex: 100,
+        height: 54, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px',
+        background: th.navBg, borderBottom: `1px solid ${th.br}`, zIndex: 100,
         backdropFilter: 'blur(20px)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button onClick={() => setSidebar(o => !o)} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)', padding: '6px 10px', fontSize: 13, borderRadius: 8, cursor: 'pointer', fontWeight: 600, transition: 'all .2s' }}>☰</button>
+          <button onClick={() => setSidebar(o => !o)} style={{ background: th.inputBg, border: `1px solid ${th.inputBr}`, color: th.tx2, padding: '6px 10px', fontSize: 13, borderRadius: 8, cursor: 'pointer', fontWeight: 600, transition: 'all .2s' }}>☰</button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 26, height: 26, background: 'linear-gradient(135deg,#5AA9FF,#b794f6)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, boxShadow: '0 0 15px rgba(90,169,255,.35)' }}>⚡</div>
-            <span style={{ fontFamily: 'var(--j-head)', fontSize: 15, fontWeight: 800, background: 'linear-gradient(90deg,#5AA9FF,#b794f6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>APEX OS</span>
-            <span style={{ fontFamily: 'var(--j-mono)', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: '1.8px' }}>{t.sub}</span>
+            <div style={{ width: 26, height: 26, background: 'linear-gradient(135deg,#5AA9FF,#b794f6)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>⚡</div>
+            <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 15, fontWeight: 800, background: 'linear-gradient(90deg,#5AA9FF,#b794f6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>APEX OS</span>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          {([['journal', t.nav.journal], ['archive', t.nav.archive]] as const).map(([v, l]) => (
+          {([['journal', t.nav.journal], ['archive', t.nav.archive], ['analytics', t.f.analytics]] as const).map(([v, l]) => (
             <button key={v} onClick={() => setView(v as string)}
-              style={{ fontFamily: 'var(--j-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase' as const, border: 'none', cursor: 'pointer', borderRadius: 8, padding: '7px 16px', transition: 'all .2s', ...(view === v ? { background: 'rgba(90,169,255,.12)', color: '#5AA9FF', boxShadow: '0 0 10px rgba(90,169,255,0.1)' } : { background: 'none', color: 'rgba(255,255,255,0.3)' }) }}>
+              style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' as const, border: 'none', cursor: 'pointer', borderRadius: 8, padding: '7px 14px', transition: 'all .2s', ...(view === v ? { background: th.selBg, color: '#5AA9FF' } : { background: 'none', color: th.tx3 }) }}>
               {l}
             </button>
           ))}
-          <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.08)', margin: '0 6px' }} />
+          <div style={{ width: 1, height: 18, background: th.br, margin: '0 6px' }} />
+          {/* Theme Toggle */}
+          <button onClick={() => setTheme(p => p === 'dark' ? 'light' : 'dark')}
+            style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, transition: 'all .2s' }}>
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
+          <div style={{ width: 1, height: 18, background: th.br, margin: '0 3px' }} />
           <ReturnButton onClick={onReturn} isRTL={isRTL} />
         </div>
       </nav>
@@ -821,42 +1165,44 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
       {/* LAYOUT */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative', zIndex: 1 }}>
         {/* SIDEBAR */}
-        <aside style={{
-          width: sidebar ? 258 : 0, minWidth: sidebar ? 258 : 0, overflow: 'hidden', transition: 'all .3s ease',
-          background: 'rgba(13,18,32,0.7)', borderInlineEnd: '1px solid rgba(255,255,255,0.06)',
-          display: 'flex', flexDirection: 'column', order: dir === 'rtl' ? 2 : 0, backdropFilter: 'blur(16px)',
+        <aside className="j-sidebar" style={{
+          width: sidebar ? 250 : 0, minWidth: sidebar ? 250 : 0, overflow: 'hidden', transition: 'all .3s ease',
+          background: th.sidebarBg, borderInlineEnd: `1px solid ${th.br}`,
+          display: 'flex', flexDirection: 'column', order: dir === 'rtl' ? 2 : 0,
         }}>
-          <div style={{ padding: '10px 10px 8px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ padding: '10px 10px 8px', borderBottom: `1px solid ${th.br}` }}>
             <input value={sbQ} onChange={e => setSbQ(e.target.value)} placeholder={t.arch.search}
-              style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: 'rgba(255,255,255,0.85)', fontSize: '11.5px', outline: 'none', padding: '9px 12px', direction: dir, fontFamily: 'var(--j-mono)', transition: 'all .2s' }} />
+              style={{ width: '100%', background: th.inputBg, border: `1px solid ${th.inputBr}`, borderRadius: 8, color: th.tx, fontSize: 11.5, outline: 'none', padding: '9px 12px', direction: dir, fontFamily: "'Poppins',sans-serif", transition: 'all .2s' }} />
           </div>
           <div style={{ flex: 1, overflowY: 'auto', padding: 6 }}>
             {sbDays.map(d => {
               const dp = sumPnl(d);
               const ec = d.emotionScore >= 8 ? '#00FFA3' : d.emotionScore >= 5 ? '#FFC857' : '#FF4D4D';
-              const phase = d.morningSaved && d.eodSaved ? '#00FFA3' : d.morningSaved ? '#b794f6' : 'rgba(255,255,255,0.2)';
+              const phase = d.morningSaved && d.eodSaved ? '#00FFA3' : d.morningSaved ? '#b794f6' : th.tx3;
               const sel = d.id === activeId;
+              const locked = isDayFullyLocked(d);
               return (
                 <div key={d.id} onClick={() => { setActiveId(d.id); setView('journal'); }}
                   className="j-card-hover"
                   style={{
                     padding: '10px 12px', borderRadius: 10, cursor: 'pointer', marginBottom: 3,
                     border: '1px solid transparent', transition: 'all .2s',
-                    ...(sel ? { background: 'rgba(90,169,255,.08)', borderColor: 'rgba(90,169,255,.2)', boxShadow: '0 0 15px rgba(90,169,255,0.05)' } : { background: 'transparent' }),
+                    ...(sel ? { background: th.selBg, borderColor: th.selBr } : { background: 'transparent' }),
                   }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontFamily: 'var(--j-mono)', fontSize: '10.5px', fontWeight: 700, color: sel ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.55)' }}>{fmtShort(d.date, t.locale)}</span>
-                        <span style={{ fontSize: 6, color: phase, filter: `drop-shadow(0 0 3px ${phase})` }}>●</span>
+                        <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10.5, fontWeight: 700, color: sel ? th.tx : th.tx2 }}>{fmtShort(d.date, t.locale)}</span>
+                        <span style={{ fontSize: 6, color: phase }}>●</span>
+                        {locked && <span style={{ fontSize: 8 }}>🔒</span>}
                       </div>
-                      <div style={{ fontFamily: 'var(--j-mono)', fontSize: 9, color: 'rgba(255,255,255,0.25)', marginTop: 2 }}>
+                      <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, color: th.tx3, marginTop: 2 }}>
                         {dir === 'rtl' ? 'יום' : 'Day'} {d.dayNum || '?'} · {dir === 'rtl' ? 'שבוע' : 'Wk'} {d.weekNum || '?'}
                       </div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, marginInlineStart: 6, flexShrink: 0 }}>
-                      <span style={{ fontFamily: 'var(--j-mono)', fontSize: '10.5px', fontWeight: 800, color: ec, textShadow: `0 0 8px ${ec}30` }}>{d.emotionScore}</span>
-                      {dp !== 0 && <span style={{ fontFamily: 'var(--j-mono)', fontSize: '9.5px', fontWeight: 700, color: dp > 0 ? '#00FFA3' : '#FF4D4D' }}>{dp > 0 ? '+' : ''}{dp.toFixed(0)}$</span>}
+                      <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10.5, fontWeight: 800, color: ec }}>{d.emotionScore}</span>
+                      {dp !== 0 && <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9.5, fontWeight: 700, color: dp > 0 ? '#00FFA3' : '#FF4D4D' }}>{dp > 0 ? '+' : ''}{dp.toFixed(0)}$</span>}
                     </div>
                   </div>
                 </div>
@@ -872,68 +1218,85 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
               {/* Header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap' as const, gap: 12, marginBottom: 20 }}>
                 <div>
-                  <div style={{ fontFamily: 'var(--j-head)', fontSize: 22, fontWeight: 800, color: 'rgba(255,255,255,0.95)', letterSpacing: '-.3px' }}>
+                  <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 22, fontWeight: 800, color: th.tx, letterSpacing: '-.3px' }}>
                     {fmtFull(activeDay.date, t.locale)}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 9, flexWrap: 'wrap' as const }}>
                     {[['dayNum', dir === 'rtl' ? 'יום #' : 'Day #', '52px'], ['weekNum', dir === 'rtl' ? 'שבוע #' : 'Week #', '55px']].map(([k, l, w]: any) => (
                       <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontFamily: 'var(--j-mono)', fontSize: '9.5px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase' as const, color: 'rgba(255,255,255,0.25)' }}>{l}</span>
-                        <input value={(activeDay as any)[k] || ''} onChange={e => upd({ [k]: e.target.value } as any)} placeholder="—"
-                          style={{ width: w, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 7, color: 'rgba(255,255,255,0.85)', padding: '5px 7px', fontSize: 14, fontWeight: 800, fontFamily: 'var(--j-mono)', outline: 'none', textAlign: 'center', transition: 'all .2s' }} />
+                        <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9.5, fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase' as const, color: th.tx3 }}>{l}</span>
+                        <input value={(activeDay as any)[k] || ''} onChange={e => upd({ [k]: e.target.value } as any)} placeholder="—" disabled={isDayFullyLocked(activeDay)}
+                          style={{ width: w, background: th.inputBg, border: `1px solid ${th.inputBr}`, borderRadius: 7, color: th.tx, padding: '5px 7px', fontSize: 14, fontWeight: 800, fontFamily: "'Poppins',sans-serif", outline: 'none', textAlign: 'center', transition: 'all .2s' }} />
                       </div>
                     ))}
+                    {isDayFullyLocked(activeDay) && <span style={{ fontSize: 10, fontFamily: "'Poppins',sans-serif", color: '#00FFA3', fontWeight: 700, letterSpacing: '1.5px', background: 'rgba(0,255,163,0.08)', padding: '4px 12px', borderRadius: 6 }}>🔒 SEALED</span>}
                   </div>
                 </div>
-                {/* P&L Card with Glow */}
                 <div style={{ display: 'flex', gap: 8 }}>
-                  {(() => { const dp = sumPnl(activeDay); const glowC = dp >= 0 ? 'rgba(0,255,163,0.15)' : 'rgba(255,77,77,0.15)'; return (
+                  {(() => { const dp = sumPnl(activeDay); return (
                     <div style={{
-                      background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '10px 18px', textAlign: 'center',
-                      backdropFilter: 'blur(8px)', boxShadow: `0 0 25px ${glowC}`, transition: 'all .3s',
-                      animation: 'j-glow-breathe 4s ease-in-out infinite',
+                      background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 12, padding: '10px 18px', textAlign: 'center',
+                      transition: 'all .3s',
                     }}>
-                      <div style={{ fontFamily: 'var(--j-mono)', fontSize: 18, fontWeight: 800, color: dp >= 0 ? '#00FFA3' : '#FF4D4D', textShadow: `0 0 18px ${dp >= 0 ? 'rgba(0,255,163,0.4)' : 'rgba(255,77,77,0.4)'}` }}>{dp >= 0 ? '+' : ''}{dp.toFixed(0)}$</div>
-                      <span style={{ fontFamily: 'var(--j-mono)', fontSize: '9px', fontWeight: 700, letterSpacing: '2.5px', textTransform: 'uppercase' as const, color: 'rgba(255,255,255,0.3)' }}>SESSION P&L</span>
+                      <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 18, fontWeight: 800, color: dp >= 0 ? '#00FFA3' : '#FF4D4D' }}>{dp >= 0 ? '+' : ''}{dp.toFixed(0)}$</div>
+                      <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase' as const, color: th.tx3 }}>SESSION P&L</span>
                     </div>
                   ); })()}
                 </div>
               </div>
               {!activeDay.morningSaved
-                ? <MorningForm day={activeDay} upd={upd} t={t} dir={dir} onSave={saveMorning} dirty={mDirty} />
-                : <EodForm day={activeDay} upd={upd} t={t} dir={dir} onSave={saveEOD} dirty={eDirty} orcaTrades={todayOrcaTrades} />
+                ? <MorningForm day={activeDay} upd={upd} t={t} dir={dir} onSave={saveMorning} dirty={mDirty} th={th} />
+                : <EodForm day={activeDay} upd={upd} t={t} dir={dir} onSave={saveEOD} dirty={eDirty} orcaTrades={todayOrcaTrades} th={th} />
               }
             </div>
           )}
+
           {view === 'archive' && (
             <div style={{ maxWidth: 940, margin: '0 auto', padding: '22px 22px 50px', direction: dir }}>
-              <div style={{ fontFamily: 'var(--j-head)', fontSize: 22, fontWeight: 800, color: 'rgba(255,255,255,0.95)', marginBottom: 6 }}>{t.arch.title}</div>
+              <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 22, fontWeight: 800, color: th.tx, marginBottom: 6 }}>{t.arch.title}</div>
               <div style={{ display: 'grid', gap: 10, marginTop: 12 }}>
                 {days.filter(d => d.morningSaved).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(day => {
                   const dp = sumPnl(day);
-                  const complete = day.morningSaved && day.eodSaved;
+                  const complete = isDayFullyLocked(day);
                   return (
                     <div key={day.id} onClick={() => { setActiveId(day.id); setView('journal'); }}
                       className="j-card-hover"
                       style={{
-                        background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12,
-                        overflow: 'hidden', cursor: 'pointer', transition: 'all .25s', backdropFilter: 'blur(8px)',
+                        background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 12,
+                        overflow: 'hidden', cursor: 'pointer', transition: 'all .25s',
                       }}>
-                      <div style={{ background: 'rgba(0,255,163,0.03)', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '13px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                          <span style={{ fontFamily: 'var(--j-mono)', fontSize: 9, color: '#00FFA3', letterSpacing: '1.8px', fontWeight: 700 }}>🌅 {t.arch.morning}</span>
-                          <span style={{ fontFamily: 'var(--j-head)', fontSize: '14px', fontWeight: 800, color: 'rgba(255,255,255,0.9)' }}>{fmtFull(day.date, t.locale)}</span>
-                          <span style={{ fontFamily: 'var(--j-mono)', fontSize: '8.5px', fontWeight: 700, color: complete ? '#00FFA3' : '#FFC857', background: complete ? 'rgba(0,255,163,.1)' : 'rgba(255,200,87,.1)', padding: '3px 9px', borderRadius: 6 }}>{complete ? '✓ COMPLETE' : 'MORNING ONLY'}</span>
+                      <div style={{ background: 'rgba(0,255,163,0.03)', borderBottom: `1px solid ${th.br}`, padding: '13px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' as const, gap: 8 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap' as const }}>
+                          <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 14, fontWeight: 800, color: th.tx }}>{fmtFull(day.date, t.locale)}</span>
+                          <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8.5, fontWeight: 700, color: complete ? '#00FFA3' : '#FFC857', background: complete ? 'rgba(0,255,163,.08)' : 'rgba(255,200,87,.08)', padding: '3px 9px', borderRadius: 6 }}>{complete ? '🔒 COMPLETE' : 'MORNING ONLY'}</span>
+                          {/* Archive images */}
+                          {(day.morningImages || []).length > 0 && (
+                            <div style={{ display: 'flex', gap: 4 }}>
+                              {day.morningImages.map((img: string, i: number) => (
+                                <img key={i} src={img} alt="" style={{ width: 30, height: 22, objectFit: 'cover', borderRadius: 4, border: `1px solid ${th.cardBr}` }} />
+                              ))}
+                            </div>
+                          )}
                         </div>
-                        <div style={{ fontFamily: 'var(--j-mono)', fontSize: 14, fontWeight: 800, color: dp >= 0 ? '#00FFA3' : '#FF4D4D', textShadow: `0 0 10px ${dp >= 0 ? 'rgba(0,255,163,0.3)' : 'rgba(255,77,77,0.3)'}` }}>{dp >= 0 ? '+' : ''}{dp.toFixed(0)}$</div>
+                        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 14, fontWeight: 800, color: dp >= 0 ? '#00FFA3' : '#FF4D4D' }}>{dp >= 0 ? '+' : ''}{dp.toFixed(0)}$</div>
                       </div>
                     </div>
                   );
                 })}
                 {days.filter(d => d.morningSaved).length === 0 && (
-                  <div style={{ textAlign: 'center', padding: 70, color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--j-sans)', fontSize: 14 }}>{t.arch.none}</div>
+                  <div style={{ textAlign: 'center', padding: 70, color: th.tx3, fontFamily: "'Poppins',sans-serif", fontSize: 14 }}>{t.arch.none}</div>
                 )}
               </div>
+            </div>
+          )}
+
+          {view === 'analytics' && (
+            <div style={{ maxWidth: 940, margin: '0 auto', padding: '22px 22px 50px', direction: dir }}>
+              <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 22, fontWeight: 800, color: th.tx, marginBottom: 6 }}>{t.f.analytics}</div>
+              <p style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, color: th.tx3, marginBottom: 20 }}>
+                {dir === 'rtl' ? 'תובנות אוטומטיות מהנתונים שלך' : 'Automatic insights from your data'}
+              </p>
+              <AnalyticsPanel days={days} dir={dir} th={th} />
             </div>
           )}
         </main>
@@ -942,7 +1305,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
       {/* TOAST */}
       {toast && <div style={{
         position: 'fixed', bottom: 22, right: 22, borderRadius: 12, padding: '11px 18px',
-        fontFamily: 'var(--j-mono)', fontSize: 11, fontWeight: 700, zIndex: 9999, pointerEvents: 'none',
+        fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 700, zIndex: 9999, pointerEvents: 'none',
         letterSpacing: '.8px', backdropFilter: 'blur(12px)', ...TOAST_STYLES[toast.type],
       }}>{toast.msg}</div>}
     </div>
