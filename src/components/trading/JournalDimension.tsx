@@ -2167,7 +2167,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
                   const complete = isDayFullyLocked(day);
                   const dayRisk = getDayColor(day);
                   return (
-                    <div key={day.id} onClick={() => { setActiveId(day.id); setView('journal'); }}
+                    <div key={day.id} onClick={() => { setViewingArchiveId(day.id); setView('journal'); }}
                       className="j-card-hover"
                       style={{
                         background: th.cardBg, border: `1px solid ${dayRisk === 'darkred' ? 'rgba(255,77,77,0.3)' : th.cardBr}`, borderRadius: 12,
