@@ -636,7 +636,7 @@ const PDiv = ({ label, color, icon, th }: any) => (
 const ImageUpload = ({ images, onUpdate, label, uploadLabel, dir, disabled, th }: any) => {
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
-  const [zoomIdx, setZoomIdx] = useState<number | null>(null);
+  const [lightbox, setLightbox] = useState<{ src: string; zoom: number; x: number; y: number; dragging: boolean; sx: number; sy: number } | null>(null);
 
   const handleFiles = (files: FileList | null) => {
     if (!files || disabled) return;
@@ -651,16 +651,25 @@ const ImageUpload = ({ images, onUpdate, label, uploadLabel, dir, disabled, th }
     });
   };
 
+  // ESC to close lightbox
+  useEffect(() => {
+    if (!lightbox) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setLightbox(null); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [lightbox]);
+
   return (
     <div>
       <Lbl c={label} dir={dir} th={th} />
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' as const }}>
         {(images || []).map((img: string, i: number) => (
           <div key={i} style={{ position: 'relative', width: 140, height: 100, borderRadius: 10, overflow: 'hidden', border: `1px solid ${th.cardBr}`, cursor: 'pointer', transition: 'all .3s' }}
-            onClick={() => setZoomIdx(i)}
+            onClick={() => setLightbox({ src: img, zoom: 1, x: 0, y: 0, dragging: false, sx: 0, sy: 0 })}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1.03)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.3)'; }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}>
             <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform .3s' }} />
+            <div style={{ position: 'absolute', bottom: 4, right: 4, background: 'rgba(0,0,0,0.6)', borderRadius: 4, padding: '2px 5px', fontSize: 9, color: '#fff' }}>🔍</div>
             {!disabled && (
               <button onClick={e => { e.stopPropagation(); onUpdate((images || []).filter((_: any, j: number) => j !== i)); }}
                 style={{ position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: '50%', background: 'rgba(255,77,77,0.9)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, transition: 'all .2s' }}>✕</button>
@@ -680,9 +689,58 @@ const ImageUpload = ({ images, onUpdate, label, uploadLabel, dir, disabled, th }
         )}
       </div>
       <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => handleFiles(e.target.files)} />
-      {zoomIdx !== null && images?.[zoomIdx] && (
-        <div onClick={() => setZoomIdx(null)} style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out', backdropFilter: 'blur(8px)' }}>
-          <img src={images[zoomIdx]} alt="" style={{ maxWidth: '90vw', maxHeight: '85vh', borderRadius: 12, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }} />
+      {/* PREMIUM LIGHTBOX */}
+      {lightbox && (
+        <div onClick={() => setLightbox(null)} style={{
+          position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(0,0,0,0.92)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          backdropFilter: 'blur(12px)', animation: 'j-fade-in .25s ease-out', cursor: 'zoom-out',
+        }}>
+          {/* Controls */}
+          <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 6, zIndex: 10 }}>
+            <button onClick={() => setLightbox(lb => lb ? { ...lb, zoom: Math.min(lb.zoom + 0.5, 5) } : null)}
+              style={{ width: 36, height: 36, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.08)', color: '#fff', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s', backdropFilter: 'blur(8px)' }}>+</button>
+            <button onClick={() => setLightbox(lb => lb ? { ...lb, zoom: Math.max(lb.zoom - 0.5, 0.5), x: 0, y: 0 } : null)}
+              style={{ width: 36, height: 36, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.08)', color: '#fff', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s', backdropFilter: 'blur(8px)' }}>−</button>
+            <button onClick={() => setLightbox(lb => lb ? { ...lb, zoom: 1, x: 0, y: 0 } : null)}
+              style={{ width: 36, height: 36, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.08)', color: '#fff', cursor: 'pointer', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s', backdropFilter: 'blur(8px)' }}>1:1</button>
+            <button onClick={() => setLightbox(null)}
+              style={{ width: 36, height: 36, borderRadius: 10, border: '1px solid rgba(255,77,77,0.3)', background: 'rgba(255,77,77,0.12)', color: '#FF4D4D', cursor: 'pointer', fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s', backdropFilter: 'blur(8px)' }}>✕</button>
+          </div>
+          {/* Zoom indicator */}
+          <div style={{ position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)', fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', background: 'rgba(0,0,0,0.5)', padding: '4px 14px', borderRadius: 20, backdropFilter: 'blur(8px)' }}>
+            {Math.round(lightbox.zoom * 100)}%
+          </div>
+          {/* Image */}
+          <img src={lightbox.src} alt="" onClick={e => e.stopPropagation()}
+            draggable={false}
+            onMouseDown={e => {
+              if (lightbox.zoom <= 1) return;
+              e.stopPropagation();
+              setLightbox(lb => lb ? { ...lb, dragging: true, sx: e.clientX - lb.x, sy: e.clientY - lb.y } : null);
+            }}
+            onMouseMove={e => {
+              if (!lightbox.dragging) return;
+              setLightbox(lb => lb ? { ...lb, x: e.clientX - lb.sx, y: e.clientY - lb.sy } : null);
+            }}
+            onMouseUp={() => setLightbox(lb => lb ? { ...lb, dragging: false } : null)}
+            onMouseLeave={() => setLightbox(lb => lb ? { ...lb, dragging: false } : null)}
+            onWheel={e => {
+              e.stopPropagation();
+              setLightbox(lb => {
+                if (!lb) return null;
+                const newZoom = Math.max(0.5, Math.min(5, lb.zoom + (e.deltaY > 0 ? -0.2 : 0.2)));
+                return { ...lb, zoom: newZoom, x: newZoom <= 1 ? 0 : lb.x, y: newZoom <= 1 ? 0 : lb.y };
+              });
+            }}
+            style={{
+              maxWidth: '92vw', maxHeight: '88vh', borderRadius: 8,
+              boxShadow: '0 20px 80px rgba(0,0,0,0.6)',
+              transform: `scale(${lightbox.zoom}) translate(${lightbox.x / lightbox.zoom}px, ${lightbox.y / lightbox.zoom}px)`,
+              transition: lightbox.dragging ? 'none' : 'transform .2s ease-out',
+              cursor: lightbox.zoom > 1 ? (lightbox.dragging ? 'grabbing' : 'grab') : 'zoom-out',
+              animation: 'j-scale-in .25s ease-out',
+            }} />
         </div>
       )}
     </div>
