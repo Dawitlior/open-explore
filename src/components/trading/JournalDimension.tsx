@@ -2251,7 +2251,9 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
       {lockAnim === 'morning' && <MorningLockOverlay onDone={() => setLockAnim(null)} />}
       {lockAnim === 'eod' && <EODLockOverlay onDone={() => setLockAnim(null)} />}
 
-      {/* CENTERED MENU POPUP */}
+      {/* KNOWLEDGE PANEL */}
+      {knowledgePanel && <KnowledgePanel type={knowledgePanel} days={days} dir={dir} th={th} onClose={() => setKnowledgePanel(null)} onOpenDay={(id) => { setViewingArchiveId(id); setView('journal'); }} />}
+
       {mobileMenu && (
         <div onClick={() => setMobileMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'j-fade-in .2s ease-out' }}>
           <div onClick={e => e.stopPropagation()} style={{
