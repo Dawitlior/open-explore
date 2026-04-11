@@ -2347,7 +2347,7 @@ const MorningLockOverlay = ({ onDone, isRTL }: { onDone: () => void; isRTL: bool
   );
 };
 
-const EODLockOverlay = ({ onDone }: { onDone: () => void }) => {
+const EODLockOverlay = ({ onDone, isRTL }: { onDone: () => void; isRTL: boolean }) => {
   const [step, setStep] = useState(0);
   useEffect(() => {
     const t = [
