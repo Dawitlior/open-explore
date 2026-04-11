@@ -3438,7 +3438,8 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
   const [sbQ, setSbQ] = useState('');
   const [theme, setTheme] = useState<JTheme>('dark');
   const [riskAlertShown, setRiskAlertShown] = useState(false);
-  const [showEntry, setShowEntry] = useState(() => sessionStorage.getItem(ENTRY_SESSION_KEY) !== '1');
+  const [showEntry, setShowEntry] = useState(true); // Always show entry animation when mounting
+  const [exitingToOrca, setExitingToOrca] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [lockAnim, setLockAnim] = useState<'morning' | 'eod' | null>(null);
   const [viewingArchiveId, setViewingArchiveId] = useState<string | null>(null);
