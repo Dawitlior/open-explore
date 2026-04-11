@@ -1268,14 +1268,20 @@ const Scores = ({ val, set, disabled, th }: any) => (
 );
 
 // ═══════════════════════════════════════════════════════════════
-// FEAR & GREED GAUGE
+// MARKET SENTIMENT GAUGE — Premium standalone widget
 // ═══════════════════════════════════════════════════════════════
-const FGGauge = ({ value }: { value: number }) => {
-  const v = Math.min(100, Math.max(0, value || 0));
+const MarketSentimentGauge = ({ value, dir, th, onChangeValue, disabled }: { value: string; dir: string; th: typeof THEMES.dark; onChangeValue?: (v: string) => void; disabled?: boolean }) => {
+  const v = Math.min(100, Math.max(0, parseInt(value) || 0));
+  const hasValue = value !== '' && value !== undefined;
   const color = v <= 20 ? '#FF4D4D' : v <= 40 ? '#f97316' : v <= 60 ? '#FFC857' : v <= 80 ? '#84cc16' : '#00FFA3';
-  const label = v <= 20 ? 'Extreme Fear' : v <= 40 ? 'Fear' : v <= 60 ? 'Neutral' : v <= 80 ? 'Greed' : 'Extreme Greed';
+  const labelEN = v <= 20 ? 'Extreme Fear' : v <= 40 ? 'Fear' : v <= 60 ? 'Neutral' : v <= 80 ? 'Greed' : 'Extreme Greed';
+  const labelHE = v <= 20 ? 'פחד קיצוני' : v <= 40 ? 'פחד' : v <= 60 ? 'ניטרלי' : v <= 80 ? 'תאוות בצע' : 'תאוות בצע קיצונית';
+  const label = dir === 'rtl' ? labelHE : labelEN;
+  const isRTL = dir === 'rtl';
+  const glowIntensity = hasValue ? Math.max(0.05, v / 200) : 0;
+
   const rad = (d: number) => d * Math.PI / 180;
-  const cx = 75, cy = 72, R = 54, ri = 38;
+  const cx = 100, cy = 92, R = 72, ri = 50;
   const segs = [
     { s: -180, e: -144, c: '#FF4D4D' }, { s: -144, e: -108, c: '#f97316' },
     { s: -108, e: -72, c: '#FFC857' }, { s: -72, e: -36, c: '#84cc16' }, { s: -36, e: 0, c: '#00FFA3' }
@@ -1286,16 +1292,126 @@ const FGGauge = ({ value }: { value: number }) => {
   };
   const needleA = -180 + (v / 100) * 180;
   const nr = rad(needleA);
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <svg width="150" height="82" viewBox="0 0 150 82">
-        {segs.map((s, i) => <path key={i} d={arc(s.s, s.e)} fill={s.c} opacity={0.85} />)}
-        <line x1={cx} y1={cy} x2={cx + 46 * Math.cos(nr)} y2={cy + 46 * Math.sin(nr)} stroke="rgba(255,255,255,0.9)" strokeWidth={2.5} strokeLinecap="round" style={{ filter: `drop-shadow(0 0 4px ${color})`, transition: 'all .5s ease' }} />
-        <circle cx={cx} cy={cy} r={5} fill="rgba(255,255,255,0.9)" />
-      </svg>
-      <div style={{ textAlign: 'center', marginTop: -6 }}>
-        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 20, fontWeight: 800, color, lineHeight: 1, textShadow: `0 0 15px ${color}40` }}>{v}</div>
-        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: '8.5px', color, letterSpacing: 1, textTransform: 'uppercase' as const, marginTop: 3, opacity: 0.8 }}>{label}</div>
+    <div style={{
+      background: `linear-gradient(165deg, ${th.cardBg}, rgba(0,0,0,0.3))`,
+      border: `1px solid ${hasValue ? `${color}25` : th.cardBr}`,
+      borderRadius: 18, padding: '22px 20px 18px', marginBottom: 12,
+      position: 'relative', overflow: 'hidden',
+      boxShadow: hasValue ? `0 0 ${30 + glowIntensity * 40}px ${color}${Math.round(glowIntensity * 25).toString(16).padStart(2, '0')}` : 'none',
+      transition: 'all .5s ease',
+    }}>
+      {/* Subtle background glow */}
+      {hasValue && <div style={{
+        position: 'absolute', top: '-50%', left: '50%', transform: 'translateX(-50%)',
+        width: 200, height: 200, borderRadius: '50%',
+        background: `radial-gradient(circle, ${color}08 0%, transparent 70%)`,
+        pointerEvents: 'none',
+      }} />}
+
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, position: 'relative', zIndex: 1 }}>
+        <div style={{
+          width: 32, height: 32, borderRadius: 10,
+          background: `linear-gradient(135deg, ${color}20, ${color}08)`,
+          border: `1px solid ${color}25`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15,
+        }}>₿</div>
+        <div>
+          <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 800, letterSpacing: '2px', textTransform: 'uppercase' as const, color: th.tx3 }}>
+            {isRTL ? 'סנטימנט שוק הקריפטו' : 'CRYPTO MARKET SENTIMENT'}
+          </div>
+          <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, color: th.tx3, opacity: 0.6, marginTop: 2 }}>
+            {isRTL ? 'מדד פחד ותאוות בצע — פסיכולוגיית שוק חיצונית' : 'Fear & Greed Index — external market psychology'}
+          </div>
+        </div>
+      </div>
+
+      {/* Gauge + Input */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24, flexWrap: 'wrap' as const, position: 'relative', zIndex: 1 }}>
+        {/* SVG Gauge */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <svg width="200" height="110" viewBox="0 0 200 110">
+            {/* Track */}
+            {segs.map((s, i) => (
+              <path key={i} d={arc(s.s, s.e)} fill={s.c} opacity={hasValue ? 0.85 : 0.2} style={{ transition: 'opacity .5s ease' }} />
+            ))}
+            {/* Tick marks */}
+            {[0, 25, 50, 75, 100].map(tick => {
+              const a = rad(-180 + (tick / 100) * 180);
+              const x1 = cx + (R + 4) * Math.cos(a), y1 = cy + (R + 4) * Math.sin(a);
+              const x2 = cx + (R + 10) * Math.cos(a), y2 = cy + (R + 10) * Math.sin(a);
+              return <line key={tick} x1={x1} y1={y1} x2={x2} y2={y2} stroke={th.tx3} strokeWidth={1.5} opacity={0.4} />;
+            })}
+            {/* Needle */}
+            {hasValue && (
+              <>
+                <line x1={cx} y1={cy} x2={cx + 60 * Math.cos(nr)} y2={cy + 60 * Math.sin(nr)}
+                  stroke="rgba(255,255,255,0.95)" strokeWidth={3} strokeLinecap="round"
+                  style={{ filter: `drop-shadow(0 0 6px ${color})`, transition: 'all .6s cubic-bezier(0.34,1.56,0.64,1)' }} />
+                <circle cx={cx} cy={cy} r={6} fill="rgba(255,255,255,0.95)" style={{ filter: `drop-shadow(0 0 4px ${color})` }} />
+                <circle cx={cx} cy={cy} r={3} fill={color} />
+              </>
+            )}
+          </svg>
+          {/* Value display */}
+          <div style={{ textAlign: 'center', marginTop: -8 }}>
+            <div style={{
+              fontFamily: "'JetBrains Mono',monospace", fontSize: 32, fontWeight: 800,
+              color: hasValue ? color : th.tx3, lineHeight: 1,
+              textShadow: hasValue ? `0 0 25px ${color}50` : 'none',
+              transition: 'all .5s ease',
+            }}>{hasValue ? v : '—'}</div>
+            {hasValue && (
+              <div style={{
+                fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700,
+                color, letterSpacing: '1.5px', textTransform: 'uppercase' as const,
+                marginTop: 4, opacity: 0.9,
+              }}>{label}</div>
+            )}
+          </div>
+        </div>
+
+        {/* Input */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+          <input
+            value={value || ''}
+            onChange={e => {
+              if (disabled) return;
+              const n = e.target.value.replace(/\D/g, '').slice(0, 3);
+              if (n === '' || parseInt(n) <= 100) onChangeValue?.(n);
+            }}
+            placeholder="0 – 100"
+            disabled={disabled}
+            style={{
+              width: 90, textAlign: 'center',
+              background: th.inputBg, border: `1px solid ${hasValue ? `${color}30` : th.inputBr}`,
+              borderRadius: 10, color: th.tx, padding: '10px 12px',
+              fontSize: 18, fontWeight: 800, fontFamily: "'JetBrains Mono',monospace",
+              outline: 'none', transition: 'all .3s',
+            }}
+          />
+          <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, color: th.tx3, textAlign: 'center', opacity: 0.5 }}>
+            {isRTL ? 'הזן ערך מ-0 עד 100' : 'Enter value 0–100'}
+          </div>
+        </div>
+      </div>
+
+      {/* Scale labels */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12, padding: '0 10px', position: 'relative', zIndex: 1 }}>
+        {[
+          { l: isRTL ? 'פחד קיצוני' : 'Extreme Fear', c: '#FF4D4D' },
+          { l: isRTL ? 'פחד' : 'Fear', c: '#f97316' },
+          { l: isRTL ? 'ניטרלי' : 'Neutral', c: '#FFC857' },
+          { l: isRTL ? 'תאוות בצע' : 'Greed', c: '#84cc16' },
+          { l: isRTL ? 'קיצוני' : 'Extreme', c: '#00FFA3' },
+        ].map((s, i) => (
+          <div key={i} style={{ textAlign: 'center' }}>
+            <div style={{ width: 4, height: 4, borderRadius: '50%', background: s.c, margin: '0 auto 3px', opacity: 0.6 }} />
+            <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 7, color: s.c, opacity: 0.6, letterSpacing: '0.5px' }}>{s.l}</div>
+          </div>
+        ))}
       </div>
     </div>
   );
