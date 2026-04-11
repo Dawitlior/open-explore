@@ -1513,10 +1513,83 @@ const InsightRow = ({ icon, text, type, th, delay = 0 }: { icon: string; text: s
   );
 };
 
+// ═══════════════════════════════════════════════════════════════
+// FULLSCREEN INTELLIGENCE MODAL
+// ═══════════════════════════════════════════════════════════════
+const IntelModal = ({ title, icon, accent, children, onClose, th }: { title: string; icon: string; accent: string; children: React.ReactNode; onClose: () => void; th: typeof THEMES.dark }) => {
+  const [phase, setPhase] = useState<'enter' | 'open' | 'exit'>('enter');
+  useEffect(() => { const t = setTimeout(() => setPhase('open'), 30); return () => clearTimeout(t); }, []);
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
+    window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h);
+  }, []);
+  const close = () => { setPhase('exit'); setTimeout(onClose, 350); };
+  return (
+    <div onClick={close} style={{
+      position: 'fixed', inset: 0, zIndex: 9500,
+      background: phase === 'open' ? 'rgba(0,0,0,0.82)' : 'rgba(0,0,0,0)',
+      backdropFilter: phase === 'open' ? 'blur(16px)' : 'blur(0)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      transition: 'all .35s cubic-bezier(0.16,1,0.3,1)',
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        width: '94%', maxWidth: 800, maxHeight: '92vh', overflowY: 'auto',
+        background: `linear-gradient(170deg, ${th.bg1}, ${th.bg})`,
+        border: `1px solid ${accent}20`,
+        borderRadius: 22, padding: '30px 28px',
+        boxShadow: `0 40px 100px rgba(0,0,0,0.6), 0 0 60px ${accent}08`,
+        transform: phase === 'open' ? 'scale(1) rotateY(0deg)' : phase === 'exit' ? 'scale(0.92) rotateY(-3deg)' : 'scale(0.88) rotateY(5deg)',
+        opacity: phase === 'open' ? 1 : 0,
+        transition: 'all .4s cubic-bezier(0.16,1,0.3,1)',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22, paddingBottom: 16, borderBottom: `1px solid ${accent}12` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 12, background: `${accent}12`, border: `1px solid ${accent}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>{icon}</div>
+            <div>
+              <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 18, fontWeight: 800, color: th.tx }}>{title}</div>
+              <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: '2px', color: accent, textTransform: 'uppercase' as const }}>DEEP INTELLIGENCE</div>
+            </div>
+          </div>
+          <button onClick={close} style={{ width: 38, height: 38, borderRadius: 12, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', color: th.tx3, fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s' }}>✕</button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+};
+
+// Clickable intelligence card wrapper
+const IntelCard = ({ children, delay = 0, accent = 'transparent', th, style = {}, modalTitle, modalIcon, modalContent }: { children: React.ReactNode; delay?: number; accent?: string; th: typeof THEMES.dark; style?: React.CSSProperties; modalTitle?: string; modalIcon?: string; modalContent?: React.ReactNode }) => {
+  const [visible, setVisible] = useState(false);
+  const [modal, setModal] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setVisible(true), delay); return () => clearTimeout(t); }, [delay]);
+  const hasModal = modalTitle && modalContent;
+  return (
+    <>
+      <div style={{
+        background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 16,
+        padding: '20px 22px', transition: 'all .6s cubic-bezier(0.16,1,0.3,1)',
+        opacity: visible ? 1 : 0, transform: visible ? 'translateY(0) scale(1)' : 'translateY(24px) scale(0.97)',
+        borderTop: accent !== 'transparent' ? `2px solid ${accent}` : undefined,
+        cursor: hasModal ? 'pointer' : 'default',
+        ...style,
+      }}
+        onClick={() => hasModal && setModal(true)}
+        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = `0 8px 32px rgba(0,0,0,0.2), 0 0 0 1px ${accent}20`; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }}
+        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}>
+        {hasModal && <div style={{ position: 'absolute', top: 12, right: 14, fontSize: 8, color: th.tx3, fontWeight: 700, letterSpacing: '1px', opacity: 0.5 }}>CLICK TO EXPAND ↗</div>}
+        {children}
+      </div>
+      {modal && hasModal && <IntelModal title={modalTitle!} icon={modalIcon || '📊'} accent={accent || '#5AA9FF'} onClose={() => setModal(false)} th={th}>{modalContent}</IntelModal>}
+    </>
+  );
+};
+
 const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th: typeof THEMES.dark }) => {
   const isRTL = dir === 'rtl';
   const completeDays = useMemo(() => days.filter(d => d.eodSaved && d.trades?.length > 0).sort((a, b) => a.date.localeCompare(b.date)), [days]);
   const allTrades = useMemo(() => completeDays.flatMap(d => (d.trades || []).map(t => ({ ...t, dayDate: d.date, dayScore: d.dayScore, emotionScore: d.emotionScore, plan: d.plan, disciplineConfirmed: d.disciplineConfirmed }))), [completeDays]);
+  const [heatMonth, setHeatMonth] = useState(() => { const n = new Date(); return { y: n.getFullYear(), m: n.getMonth() }; });
 
   // ─── Core Metrics ───
   const totalPnl = completeDays.reduce((s, d) => s + sumPnl(d), 0);
@@ -1532,7 +1605,7 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
   const totalR = allTrades.reduce((s, t) => s + getTradeR(t as any), 0);
   const profitFactor = totalLossR > 0 ? totalWinR / totalLossR : totalWinR > 0 ? Infinity : 0;
   const expectancy = totalTrades > 0 ? totalR / totalTrades : 0;
-  const avgScore = completeDays.reduce((s, d) => s + d.dayScore, 0) / completeDays.length;
+  const avgScore = completeDays.length > 0 ? completeDays.reduce((s, d) => s + d.dayScore, 0) / completeDays.length : 0;
 
   // ─── Weekday Analysis ───
   const byWeekday = useMemo(() => {
@@ -1567,7 +1640,7 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
     return Object.entries(map).map(([k, v]) => ({ asset: k, ...v, wr: v.count > 0 ? (v.wins / v.count) * 100 : 0, avgR: v.count > 0 ? v.r / v.count : 0 })).sort((a, b) => b.r - a.r);
   }, [allTrades]);
 
-  // ─── Strategy Analysis (setup field) ───
+  // ─── Strategy Analysis ───
   const byStrategy = useMemo(() => {
     const strategies = ['MSB + BOS', 'MSB+BOS', 'BOS', 'Daily Open', 'DAILY OPEN'];
     const normalize = (s: string) => {
@@ -1581,13 +1654,9 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
     allTrades.forEach(t => {
       const notes = (t.notes || '').trim();
       const pair = (t.pair || '').trim();
-      // Check notes for strategy mentions
       let strat = '';
       for (const s of strategies) {
-        if (notes.toUpperCase().includes(s.toUpperCase()) || pair.toUpperCase().includes(s.toUpperCase())) {
-          strat = normalize(s);
-          break;
-        }
+        if (notes.toUpperCase().includes(s.toUpperCase()) || pair.toUpperCase().includes(s.toUpperCase())) { strat = normalize(s); break; }
       }
       if (!strat) strat = isRTL ? 'אחר' : 'Other';
       if (!map[strat]) map[strat] = { r: 0, wins: 0, count: 0, pnl: 0 };
@@ -1599,16 +1668,15 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
     return Object.entries(map).filter(([_, v]) => v.count >= 1).map(([k, v]) => ({ name: k, ...v, wr: v.count > 0 ? (v.wins / v.count) * 100 : 0, avgR: v.count > 0 ? v.r / v.count : 0 })).sort((a, b) => b.r - a.r);
   }, [allTrades, isRTL]);
 
-  // ─── Streak Analysis ───
+  // ─── Streak Analysis (Enhanced) ───
   const streaks = useMemo(() => {
-    let curWin = 0, curLoss = 0, bestWin = 0, bestLoss = 0;
+    let curWin = 0, curLoss = 0, bestWin = 0, bestLoss = 0, currentStreak = 0, currentStreakType = '';
     const sorted = [...completeDays];
     sorted.forEach(d => {
       const p = sumPnl(d);
-      if (p >= 0) { curWin++; curLoss = 0; bestWin = Math.max(bestWin, curWin); }
-      else { curLoss++; curWin = 0; bestLoss = Math.max(bestLoss, curLoss); }
+      if (p >= 0) { curWin++; curLoss = 0; bestWin = Math.max(bestWin, curWin); currentStreak = curWin; currentStreakType = 'win'; }
+      else { curLoss++; curWin = 0; bestLoss = Math.max(bestLoss, curLoss); currentStreak = curLoss; currentStreakType = 'loss'; }
     });
-    // Post-win / post-loss performance
     let postWinR = 0, postWinCount = 0, postLossR = 0, postLossCount = 0;
     for (let i = 1; i < sorted.length; i++) {
       const prevP = sumPnl(sorted[i - 1]);
@@ -1616,13 +1684,109 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
       if (prevP > 0) { postWinR += curR; postWinCount++; }
       else if (prevP < 0) { postLossR += curR; postLossCount++; }
     }
-    return { bestWin, bestLoss, postWinAvg: postWinCount > 0 ? postWinR / postWinCount : 0, postLossAvg: postLossCount > 0 ? postLossR / postLossCount : 0, postWinCount, postLossCount };
+    return { bestWin, bestLoss, currentStreak, currentStreakType, postWinAvg: postWinCount > 0 ? postWinR / postWinCount : 0, postLossAvg: postLossCount > 0 ? postLossR / postLossCount : 0, postWinCount, postLossCount };
   }, [completeDays]);
+
+  // ─── Drawdown Tracker ───
+  const drawdown = useMemo(() => {
+    let peak = 0, maxDD = 0, currentDD = 0;
+    const equity: number[] = [];
+    let running = 0;
+    completeDays.forEach(d => {
+      running += (d.trades || []).reduce((s, t) => s + getTradeR(t), 0);
+      equity.push(running);
+      if (running > peak) peak = running;
+      const dd = peak - running;
+      if (dd > maxDD) maxDD = dd;
+      currentDD = dd;
+    });
+    const recoveryFactor = maxDD > 0 ? running / maxDD : running > 0 ? Infinity : 0;
+    return { maxDD, currentDD, recoveryFactor, equity, peak };
+  }, [completeDays]);
+
+  // ─── Consistency Metrics ───
+  const consistency = useMemo(() => {
+    const greenDays = completeDays.filter(d => sumPnl(d) >= 0).length;
+    const greenRatio = completeDays.length > 0 ? (greenDays / completeDays.length) * 100 : 0;
+    const dailyR = completeDays.map(d => (d.trades || []).reduce((s, t) => s + getTradeR(t), 0));
+    const meanR = dailyR.length > 0 ? dailyR.reduce((s, r) => s + r, 0) / dailyR.length : 0;
+    const variance = dailyR.length > 1 ? dailyR.reduce((s, r) => s + (r - meanR) ** 2, 0) / (dailyR.length - 1) : 0;
+    const stdDev = Math.sqrt(variance);
+    const sharpe = stdDev > 0 ? meanR / stdDev : 0;
+    // Profit concentration — what % of profit comes from best day
+    const sortedPnl = [...dailyR].sort((a, b) => b - a);
+    const topDayR = sortedPnl[0] || 0;
+    const totalPos = dailyR.filter(r => r > 0).reduce((s, r) => s + r, 0);
+    const concentration = totalPos > 0 ? (topDayR / totalPos) * 100 : 0;
+    return { greenDays, greenRatio, sharpe, stdDev, concentration, meanR };
+  }, [completeDays]);
+
+  // ─── R-Distribution ───
+  const rDistribution = useMemo(() => {
+    const rValues = allTrades.map(t => getTradeR(t as any));
+    if (rValues.length === 0) return { buckets: [], median: 0, skew: 0, mode: 0 };
+    const sorted = [...rValues].sort((a, b) => a - b);
+    const median = sorted[Math.floor(sorted.length / 2)];
+    const mean = rValues.reduce((s, r) => s + r, 0) / rValues.length;
+    const std = Math.sqrt(rValues.reduce((s, r) => s + (r - mean) ** 2, 0) / rValues.length);
+    const skew = std > 0 ? rValues.reduce((s, r) => s + ((r - mean) / std) ** 3, 0) / rValues.length : 0;
+    // Buckets
+    const bucketDef = [
+      { label: '<-3R', min: -Infinity, max: -3 },
+      { label: '-3 to -2R', min: -3, max: -2 },
+      { label: '-2 to -1R', min: -2, max: -1 },
+      { label: '-1 to 0R', min: -1, max: 0 },
+      { label: '0 to 1R', min: 0, max: 1 },
+      { label: '1 to 2R', min: 1, max: 2 },
+      { label: '2 to 3R', min: 2, max: 3 },
+      { label: '3R+', min: 3, max: Infinity },
+    ];
+    const buckets = bucketDef.map(b => ({ ...b, count: rValues.filter(r => r >= b.min && r < b.max).length }));
+    // Mode bucket
+    const maxCount = Math.max(...buckets.map(b => b.count));
+    const modeBucket = buckets.find(b => b.count === maxCount);
+    return { buckets, median, skew, mode: modeBucket ? modeBucket.label : '—' };
+  }, [allTrades]);
+
+  // ─── Trade Frequency Analysis ───
+  const frequency = useMemo(() => {
+    const byCount: Record<number, { r: number; pnl: number; count: number }> = {};
+    completeDays.forEach(d => {
+      const tc = (d.trades || []).length;
+      if (!byCount[tc]) byCount[tc] = { r: 0, pnl: 0, count: 0 };
+      byCount[tc].r += (d.trades || []).reduce((s, t) => s + getTradeR(t), 0);
+      byCount[tc].pnl += sumPnl(d);
+      byCount[tc].count++;
+    });
+    const entries = Object.entries(byCount).map(([k, v]) => ({ trades: +k, avgR: v.count > 0 ? v.r / v.count : 0, days: v.count }));
+    const optimal = entries.length > 0 ? [...entries].sort((a, b) => b.avgR - a.avgR)[0] : null;
+    const avgTradesPerDay = completeDays.length > 0 ? totalTrades / completeDays.length : 0;
+    const overtrading = completeDays.filter(d => (d.trades || []).length >= 4);
+    const overtradingAvgR = overtrading.length > 0 ? overtrading.reduce((s, d) => s + (d.trades || []).reduce((ss, t) => ss + getTradeR(t), 0), 0) / overtrading.length : 0;
+    return { entries, optimal, avgTradesPerDay, overtradingDays: overtrading.length, overtradingAvgR };
+  }, [completeDays, totalTrades]);
+
+  // ─── Monthly Heatmap Data ───
+  const heatmapData = useMemo(() => {
+    const { y, m } = heatMonth;
+    const firstDay = new Date(y, m, 1).getDay();
+    const daysInMonth = new Date(y, m + 1, 0).getDate();
+    const cells: { day: number | null; r: number | null; hasTrades: boolean }[] = [];
+    for (let i = 0; i < firstDay; i++) cells.push({ day: null, r: null, hasTrades: false });
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const dayData = completeDays.filter(dd => dd.date === dateStr);
+      const dayR = dayData.length > 0 ? dayData.flatMap(dd => dd.trades || []).reduce((s, t) => s + getTradeR(t), 0) : null;
+      cells.push({ day: d, r: dayR, hasTrades: dayData.length > 0 });
+    }
+    const monthR = cells.filter(c => c.r !== null).reduce((s, c) => s + (c.r || 0), 0);
+    const tradeDays = cells.filter(c => c.hasTrades).length;
+    return { cells, monthR, tradeDays };
+  }, [completeDays, heatMonth]);
 
   // ─── Emotion/Behavior Correlation ───
   const emotionInsights = useMemo(() => {
     const ins: { text: string; type: 'warning' | 'success' | 'info' | 'neutral'; icon: string }[] = [];
-    // High vs Low emotion
     const highEmo = completeDays.filter(d => d.emotionScore >= 8);
     const lowEmo = completeDays.filter(d => d.emotionScore <= 4);
     if (highEmo.length >= 1 && lowEmo.length >= 1) {
@@ -1630,15 +1794,13 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
       const lAvg = lowEmo.reduce((s, d) => s + sumPnl(d), 0) / lowEmo.length;
       ins.push({ text: isRTL ? `ציון רגשי גבוה (8+): ממוצע ${hAvg.toFixed(0)}$. ציון נמוך (≤4): ממוצע ${lAvg.toFixed(0)}$. ${hAvg > lAvg ? 'מצב רוח טוב = ביצוע טוב יותר.' : 'ביצוע לא תלוי במצב רוח — סימן חיובי למשמעת.'}` : `High emotion (8+): avg ${hAvg.toFixed(0)}$. Low emotion (≤4): avg ${lAvg.toFixed(0)}$. ${hAvg > lAvg ? 'Good mood = better execution.' : 'Performance not mood-dependent — sign of discipline.'}`, type: hAvg > lAvg ? 'success' : 'info', icon: '🧠' });
     }
-    // Discipline correlation
     const withDisc = completeDays.filter(d => d.disciplineConfirmed);
     const noDisc = completeDays.filter(d => !d.disciplineConfirmed);
     if (withDisc.length >= 1 && noDisc.length >= 1) {
       const dAvg = withDisc.reduce((s, d) => s + sumPnl(d), 0) / withDisc.length;
       const ndAvg = noDisc.reduce((s, d) => s + sumPnl(d), 0) / noDisc.length;
-      ins.push({ text: isRTL ? `עם מחויבות יומית: ממוצע ${dAvg.toFixed(0)}$. בלי: ${ndAvg.toFixed(0)}$. ${dAvg > ndAvg ? 'מחויבות = תוצאות.' : 'המחויבות לא משפיעה עדיין — בדוק את איכות ההתחייבויות.'}` : `With commitment: avg ${dAvg.toFixed(0)}$. Without: ${ndAvg.toFixed(0)}$. ${dAvg > ndAvg ? 'Commitment = results.' : 'Commitment not impacting yet — review quality.'}`, type: dAvg > ndAvg ? 'success' : 'neutral', icon: '⚔️' });
+      ins.push({ text: isRTL ? `עם מחויבות יומית: ממוצע ${dAvg.toFixed(0)}$. בלי: ${ndAvg.toFixed(0)}$. ${dAvg > ndAvg ? 'מחויבות = תוצאות.' : 'המחויבות לא משפיעה עדיין.'}` : `With commitment: avg ${dAvg.toFixed(0)}$. Without: ${ndAvg.toFixed(0)}$. ${dAvg > ndAvg ? 'Commitment = results.' : 'Commitment not impacting yet.'}`, type: dAvg > ndAvg ? 'success' : 'neutral', icon: '⚔️' });
     }
-    // Sleep correlation
     const sleptWell = completeDays.filter(d => d.psychAnswers?.sleepWell === true);
     const sleptBad = completeDays.filter(d => d.psychAnswers?.sleepWell === false);
     if (sleptWell.length >= 1 && sleptBad.length >= 1) {
@@ -1646,13 +1808,11 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
       const bAvg = sleptBad.reduce((s, d) => s + sumPnl(d), 0) / sleptBad.length;
       ins.push({ text: isRTL ? `שינה טובה: ממוצע ${gAvg.toFixed(0)}$. שינה גרועה: ${bAvg.toFixed(0)}$.` : `Good sleep: avg ${gAvg.toFixed(0)}$. Bad sleep: avg ${bAvg.toFixed(0)}$.`, type: gAvg > bAvg ? 'success' : 'warning', icon: '😴' });
     }
-    // Overtrading
     const overDays = completeDays.filter(d => (d.trades || []).length >= 4);
     if (overDays.length >= 1) {
       const avg = overDays.reduce((s, d) => s + sumPnl(d), 0) / overDays.length;
-      ins.push({ text: isRTL ? `ימים עם 4+ עסקאות (${overDays.length}): ממוצע ${avg.toFixed(0)}$. ${avg < 0 ? 'מסחר-יתר פוגע בביצוע — שקול לצמצם.' : ''}` : `Days with 4+ trades (${overDays.length}): avg ${avg.toFixed(0)}$. ${avg < 0 ? 'Overtrading hurts performance — consider trading less.' : ''}`, type: avg < 0 ? 'warning' : 'info', icon: '⚡' });
+      ins.push({ text: isRTL ? `ימים עם 4+ עסקאות (${overDays.length}): ממוצע ${avg.toFixed(0)}$. ${avg < 0 ? 'מסחר-יתר פוגע בביצוע.' : ''}` : `Days with 4+ trades (${overDays.length}): avg ${avg.toFixed(0)}$. ${avg < 0 ? 'Overtrading hurts performance.' : ''}`, type: avg < 0 ? 'warning' : 'info', icon: '⚡' });
     }
-    // Plan vs no plan
     const withPlan = completeDays.filter(d => d.plan && d.plan.trim().length > 20);
     const noPlan = completeDays.filter(d => !d.plan || d.plan.trim().length < 5);
     if (withPlan.length >= 1 && noPlan.length >= 1) {
@@ -1660,43 +1820,41 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
       const npAvg = noPlan.reduce((s, d) => s + sumPnl(d), 0) / noPlan.length;
       ins.push({ text: isRTL ? `תוכנית מפורטת → ממוצע ${pAvg.toFixed(0)}$. בלי תוכנית → ${npAvg.toFixed(0)}$. ${pAvg > npAvg ? 'תכנון = יתרון.' : ''}` : `Detailed plan → avg ${pAvg.toFixed(0)}$. No plan → ${npAvg.toFixed(0)}$. ${pAvg > npAvg ? 'Planning = edge.' : ''}`, type: pAvg > npAvg ? 'success' : 'neutral', icon: '📋' });
     }
-    // Pressure detection
     const underPressure = completeDays.filter(d => d.psychAnswers?.feelingPressure === true);
     if (underPressure.length >= 1) {
       const avg = underPressure.reduce((s, d) => s + sumPnl(d), 0) / underPressure.length;
-      ins.push({ text: isRTL ? `תחת לחץ (${underPressure.length} ימים): ממוצע ${avg.toFixed(0)}$. ${avg < 0 ? 'לחץ = הפסדים. הימנע ממסחר תחת לחץ.' : 'ביצוע תחת לחץ יציב — משמעת חזקה.'}` : `Under pressure (${underPressure.length} days): avg ${avg.toFixed(0)}$. ${avg < 0 ? 'Pressure = losses. Avoid trading under pressure.' : 'Stable under pressure — strong discipline.'}`, type: avg < 0 ? 'warning' : 'success', icon: '💀' });
+      ins.push({ text: isRTL ? `תחת לחץ (${underPressure.length} ימים): ממוצע ${avg.toFixed(0)}$. ${avg < 0 ? 'לחץ = הפסדים.' : 'יציב תחת לחץ — משמעת חזקה.'}` : `Under pressure (${underPressure.length} days): avg ${avg.toFixed(0)}$. ${avg < 0 ? 'Pressure = losses.' : 'Stable under pressure — strong discipline.'}`, type: avg < 0 ? 'warning' : 'success', icon: '💀' });
     }
-    // Streak impact
     if (streaks.postWinCount >= 2) {
-      ins.push({ text: isRTL ? `אחרי יום מנצח: ממוצע ${streaks.postWinAvg.toFixed(2)}R. ${streaks.postWinAvg < 0 ? 'הביצוע יורד אחרי ניצחונות — היזהר מביטחון-יתר.' : 'עקביות אחרי ניצחונות — סימן מצוין.'}` : `After winning day: avg ${streaks.postWinAvg.toFixed(2)}R. ${streaks.postWinAvg < 0 ? 'Performance drops after wins — beware overconfidence.' : 'Consistent after wins — excellent sign.'}`, type: streaks.postWinAvg < 0 ? 'warning' : 'success', icon: '🔥' });
+      ins.push({ text: isRTL ? `אחרי יום מנצח: ממוצע ${streaks.postWinAvg.toFixed(2)}R. ${streaks.postWinAvg < 0 ? 'הביצוע יורד אחרי ניצחונות — ביטחון-יתר.' : 'עקביות אחרי ניצחונות.'}` : `After winning day: avg ${streaks.postWinAvg.toFixed(2)}R. ${streaks.postWinAvg < 0 ? 'Performance drops after wins — overconfidence.' : 'Consistent after wins.'}`, type: streaks.postWinAvg < 0 ? 'warning' : 'success', icon: '🔥' });
     }
     if (streaks.postLossCount >= 2) {
-      ins.push({ text: isRTL ? `אחרי יום מפסיד: ממוצע ${streaks.postLossAvg.toFixed(2)}R. ${streaks.postLossAvg < -0.5 ? 'יש דפוס של מסחר נקמה — עצור אחרי הפסד.' : 'התאוששות אחרי הפסד — עמידות חזקה.'}` : `After losing day: avg ${streaks.postLossAvg.toFixed(2)}R. ${streaks.postLossAvg < -0.5 ? 'Revenge trading pattern detected — stop after a loss.' : 'Recovery after loss — strong resilience.'}`, type: streaks.postLossAvg < -0.5 ? 'warning' : 'success', icon: '📉' });
+      ins.push({ text: isRTL ? `אחרי יום מפסיד: ממוצע ${streaks.postLossAvg.toFixed(2)}R. ${streaks.postLossAvg < -0.5 ? 'דפוס מסחר נקמה — עצור אחרי הפסד.' : 'התאוששות חזקה.'}` : `After losing day: avg ${streaks.postLossAvg.toFixed(2)}R. ${streaks.postLossAvg < -0.5 ? 'Revenge trading pattern — stop after loss.' : 'Strong recovery.'}`, type: streaks.postLossAvg < -0.5 ? 'warning' : 'success', icon: '📉' });
     }
-    // Mental tags
     const tagPnl: Record<string, { total: number; count: number }> = {};
-    completeDays.forEach(d => {
-      (d.mentalTags || []).forEach(tag => {
-        if (!tagPnl[tag]) tagPnl[tag] = { total: 0, count: 0 };
-        tagPnl[tag].total += sumPnl(d);
-        tagPnl[tag].count++;
-      });
-    });
+    completeDays.forEach(d => { (d.mentalTags || []).forEach(tag => { if (!tagPnl[tag]) tagPnl[tag] = { total: 0, count: 0 }; tagPnl[tag].total += sumPnl(d); tagPnl[tag].count++; }); });
     Object.entries(tagPnl).filter(([_, v]) => v.count >= 2).forEach(([tag, data]) => {
       const avg = data.total / data.count;
-      ins.push({ text: isRTL ? `כשאתה "${tag}": ממוצע ${avg.toFixed(0)}$ (${data.count} ימים). ${avg < 0 ? 'מצב זה מזיק לביצוע.' : 'מצב זה תומך בביצוע.'}` : `When "${tag}": avg ${avg.toFixed(0)}$ (${data.count} days). ${avg < 0 ? 'This state hurts performance.' : 'This state supports performance.'}`, type: avg < 0 ? 'warning' : 'success', icon: '🏷️' });
+      ins.push({ text: isRTL ? `כשאתה "${tag}": ממוצע ${avg.toFixed(0)}$ (${data.count} ימים). ${avg < 0 ? 'מצב זה מזיק.' : 'מצב זה תומך.'}` : `When "${tag}": avg ${avg.toFixed(0)}$ (${data.count} days). ${avg < 0 ? 'This state hurts.' : 'This state supports.'}`, type: avg < 0 ? 'warning' : 'success', icon: '🏷️' });
     });
     return ins;
   }, [completeDays, isRTL, streaks]);
 
-  // ─── Monthly Recap ───
+  // ─── Decision Quality ───
+  const decisionQuality = useMemo(() => {
+    const withPlan = completeDays.filter(d => d.plan && d.plan.trim().length > 15);
+    const goodDecGoodOut = withPlan.filter(d => d.disciplineConfirmed && sumPnl(d) > 0).length;
+    const goodDecBadOut = withPlan.filter(d => d.disciplineConfirmed && sumPnl(d) < 0).length;
+    const badDecGoodOut = completeDays.filter(d => !d.disciplineConfirmed && sumPnl(d) > 0).length;
+    const badDecBadOut = completeDays.filter(d => !d.disciplineConfirmed && sumPnl(d) < 0).length;
+    const total = goodDecGoodOut + goodDecBadOut + badDecGoodOut + badDecBadOut;
+    return { goodDecGoodOut, goodDecBadOut, badDecGoodOut, badDecBadOut, total };
+  }, [completeDays]);
+
+  // ─── Monthly Recap (compact) ───
   const monthlyRecap = useMemo(() => {
     const map: Record<string, JournalDay[]> = {};
-    completeDays.forEach(d => {
-      const ym = d.date.slice(0, 7);
-      if (!map[ym]) map[ym] = [];
-      map[ym].push(d);
-    });
+    completeDays.forEach(d => { const ym = d.date.slice(0, 7); if (!map[ym]) map[ym] = []; map[ym].push(d); });
     return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0])).map(([ym, mDays]) => {
       const trades = mDays.flatMap(d => d.trades || []);
       const wins = trades.filter(t => (parseFloat(t.pnl) || 0) > 0).length;
@@ -1708,12 +1866,11 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
       const pnl = mDays.reduce((s, d) => s + sumPnl(d), 0);
       const ev = trades.length > 0 ? tR / trades.length : 0;
       const [y, m] = ym.split('-');
-      const label = new Date(+y, +m - 1).toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { month: 'long', year: 'numeric' });
+      const label = new Date(+y, +m - 1).toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { month: 'short', year: 'numeric' });
       return { ym, label, days: mDays.length, trades: trades.length, wins, losses, be, totalR: tR, totalWinR: wR, totalLossR: lR, avgWinR: wins > 0 ? wR / wins : 0, avgLossR: losses > 0 ? lR / losses : 0, pnl, ev, wr: trades.length > 0 ? (wins / trades.length) * 100 : 0 };
     });
   }, [completeDays, isRTL]);
 
-  // ─── Running Total by Month ───
   const runningR = useMemo(() => {
     let acc = 0;
     return [...monthlyRecap].reverse().map(m => { acc += m.totalR; return { ...m, runningR: acc }; }).reverse();
@@ -1722,11 +1879,7 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
   // ─── Yearly Recap ───
   const yearlyRecap = useMemo(() => {
     const map: Record<string, JournalDay[]> = {};
-    completeDays.forEach(d => {
-      const yr = d.date.slice(0, 4);
-      if (!map[yr]) map[yr] = [];
-      map[yr].push(d);
-    });
+    completeDays.forEach(d => { const yr = d.date.slice(0, 4); if (!map[yr]) map[yr] = []; map[yr].push(d); });
     return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0])).map(([yr, yDays]) => {
       const trades = yDays.flatMap(d => d.trades || []);
       const wins = trades.filter(t => (parseFloat(t.pnl) || 0) > 0).length;
@@ -1747,219 +1900,408 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
     </div>
   );
 
+  const heatColor = (r: number | null) => {
+    if (r === null) return th.inputBg;
+    if (r >= 3) return '#00FFA3';
+    if (r >= 1) return 'rgba(0,255,163,0.6)';
+    if (r >= 0) return 'rgba(0,255,163,0.25)';
+    if (r >= -1) return 'rgba(255,77,77,0.3)';
+    if (r >= -2) return 'rgba(255,77,77,0.55)';
+    return '#FF4D4D';
+  };
+
+  const monthLabel = new Date(heatMonth.y, heatMonth.m).toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { month: 'long', year: 'numeric' });
+
   return (
-    <div style={{ display: 'grid', gap: 20 }}>
+    <div style={{ display: 'grid', gap: 16 }}>
       {/* ═══ HERO STATS ═══ */}
-      <AnimCard delay={0} th={th} style={{ background: `linear-gradient(165deg, ${th.cardBg}, rgba(0,255,163,0.02))`, borderTop: '2px solid #00FFA3' }}>
-        <SectionLabel icon="⚡" text={isRTL ? 'סיכום ביצוע כללי' : 'PERFORMANCE OVERVIEW'} accent="#00FFA3" th={th} />
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 10, marginBottom: 18 }} className="j-grid-2col">
+      <IntelCard delay={0} th={th} accent="#00FFA3" style={{ background: `linear-gradient(165deg, ${th.cardBg}, rgba(0,255,163,0.02))` }}>
+        <SectionLabel icon="⚡" text={isRTL ? 'סיכום ביצוע' : 'PERFORMANCE OVERVIEW'} accent="#00FFA3" th={th} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 8 }} className="j-grid-2col">
           <MiniStat label={isRTL ? 'סה"כ R' : 'Total R'} value={`${totalR >= 0 ? '+' : ''}${totalR.toFixed(2)}R`} color={totalR >= 0 ? '#00FFA3' : '#FF4D4D'} th={th} />
-          <MiniStat label={isRTL ? 'סה"כ P&L' : 'Total P&L'} value={`${totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(0)}$`} color={totalPnl >= 0 ? '#00FFA3' : '#FF4D4D'} th={th} />
-          <MiniStat label={isRTL ? 'אחוז הצלחה' : 'Win Rate'} value={`${winRate.toFixed(0)}%`} color={winRate >= 50 ? '#00FFA3' : '#FF4D4D'} sub={`${totalWins}W / ${totalLosses}L / ${totalBE}BE`} th={th} />
-          <MiniStat label="Profit Factor" value={profitFactor === Infinity ? '∞' : profitFactor.toFixed(2)} color={profitFactor >= 1.5 ? '#00FFA3' : profitFactor >= 1 ? '#FFC857' : '#FF4D4D'} th={th} />
-          <MiniStat label={isRTL ? 'ערך צפוי' : 'Expectancy'} value={`${expectancy >= 0 ? '+' : ''}${expectancy.toFixed(2)}R`} color={expectancy >= 0 ? '#00FFA3' : '#FF4D4D'} th={th} />
+          <MiniStat label="P&L" value={`${totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(0)}$`} color={totalPnl >= 0 ? '#00FFA3' : '#FF4D4D'} th={th} />
+          <MiniStat label={isRTL ? 'הצלחה' : 'Win Rate'} value={`${winRate.toFixed(0)}%`} color={winRate >= 50 ? '#00FFA3' : '#FF4D4D'} sub={`${totalWins}W/${totalLosses}L/${totalBE}BE`} th={th} />
+          <MiniStat label="PF" value={profitFactor === Infinity ? '∞' : profitFactor.toFixed(2)} color={profitFactor >= 1.5 ? '#00FFA3' : profitFactor >= 1 ? '#FFC857' : '#FF4D4D'} th={th} />
+          <MiniStat label="EV" value={`${expectancy >= 0 ? '+' : ''}${expectancy.toFixed(2)}R`} color={expectancy >= 0 ? '#00FFA3' : '#FF4D4D'} th={th} />
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 10 }} className="j-grid-2col">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 8, marginTop: 8 }} className="j-grid-2col">
           <MiniStat label={isRTL ? 'עסקאות' : 'Trades'} value={String(totalTrades)} color="#5AA9FF" th={th} />
-          <MiniStat label={isRTL ? 'ממוצע נצחון' : 'Avg Win'} value={`+${avgWinR.toFixed(2)}R`} color="#00FFA3" th={th} />
-          <MiniStat label={isRTL ? 'ממוצע הפסד' : 'Avg Loss'} value={`-${avgLossR.toFixed(2)}R`} color="#FF4D4D" th={th} />
-          <MiniStat label={isRTL ? 'ציון ממוצע' : 'Avg Score'} value={avgScore.toFixed(1)} color="#b794f6" sub="/10" th={th} />
-          <MiniStat label={isRTL ? 'ימי מסחר' : 'Trading Days'} value={String(completeDays.length)} color="#FFC857" th={th} />
+          <MiniStat label={isRTL ? 'ממ. נצחון' : 'Avg Win'} value={`+${avgWinR.toFixed(2)}R`} color="#00FFA3" th={th} />
+          <MiniStat label={isRTL ? 'ממ. הפסד' : 'Avg Loss'} value={`-${avgLossR.toFixed(2)}R`} color="#FF4D4D" th={th} />
+          <MiniStat label={isRTL ? 'ציון' : 'Score'} value={avgScore.toFixed(1)} color="#b794f6" sub="/10" th={th} />
+          <MiniStat label={isRTL ? 'ימים' : 'Days'} value={String(completeDays.length)} color="#FFC857" th={th} />
         </div>
-      </AnimCard>
+      </IntelCard>
+
+      {/* ═══ ROW: STREAK + DRAWDOWN + CONSISTENCY ═══ */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16 }} className="j-grid-2col">
+        {/* Streak Analysis */}
+        <IntelCard delay={80} accent="#FFC857" th={th}>
+          <SectionLabel icon="🔥" text={isRTL ? 'רצפים' : 'STREAKS'} accent="#FFC857" th={th} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <div style={{ textAlign: 'center', padding: '12px 8px', background: 'rgba(0,255,163,0.04)', borderRadius: 10 }}>
+              <div style={{ fontSize: 7, fontWeight: 700, color: th.tx3, letterSpacing: '1.5px', marginBottom: 4 }}>{isRTL ? 'שיא נצחונות' : 'BEST WIN'}</div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: '#00FFA3', fontFamily: "'JetBrains Mono',monospace" }}>{streaks.bestWin}</div>
+            </div>
+            <div style={{ textAlign: 'center', padding: '12px 8px', background: 'rgba(255,77,77,0.04)', borderRadius: 10 }}>
+              <div style={{ fontSize: 7, fontWeight: 700, color: th.tx3, letterSpacing: '1.5px', marginBottom: 4 }}>{isRTL ? 'שיא הפסדים' : 'MAX LOSS'}</div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: '#FF4D4D', fontFamily: "'JetBrains Mono',monospace" }}>{streaks.bestLoss}</div>
+            </div>
+          </div>
+          <div style={{ marginTop: 10, padding: '10px 12px', background: th.inputBg, borderRadius: 8, textAlign: 'center' }}>
+            <div style={{ fontSize: 7, fontWeight: 700, color: th.tx3, letterSpacing: '1.5px', marginBottom: 4 }}>{isRTL ? 'רצף נוכחי' : 'CURRENT'}</div>
+            <span style={{ fontSize: 18, fontWeight: 800, color: streaks.currentStreakType === 'win' ? '#00FFA3' : '#FF4D4D', fontFamily: "'JetBrains Mono',monospace" }}>
+              {streaks.currentStreak} {streaks.currentStreakType === 'win' ? '🟢' : '🔴'}
+            </span>
+          </div>
+          {streaks.postWinCount >= 1 && (
+            <div style={{ marginTop: 8, fontSize: 10, color: th.tx3, lineHeight: 1.6 }}>
+              {isRTL ? `אחרי נצחון: ${streaks.postWinAvg.toFixed(2)}R` : `Post-win: ${streaks.postWinAvg.toFixed(2)}R`} · {isRTL ? `אחרי הפסד: ${streaks.postLossAvg.toFixed(2)}R` : `Post-loss: ${streaks.postLossAvg.toFixed(2)}R`}
+            </div>
+          )}
+        </IntelCard>
+
+        {/* Drawdown Tracker */}
+        <IntelCard delay={160} accent="#FF4D4D" th={th}>
+          <SectionLabel icon="📉" text={isRTL ? 'מעקב ירידות' : 'DRAWDOWN'} accent="#FF4D4D" th={th} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
+            <div style={{ textAlign: 'center', padding: '12px 8px', background: 'rgba(255,77,77,0.04)', borderRadius: 10 }}>
+              <div style={{ fontSize: 7, fontWeight: 700, color: th.tx3, letterSpacing: '1.5px', marginBottom: 4 }}>MAX DD</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: '#FF4D4D', fontFamily: "'JetBrains Mono',monospace" }}>{drawdown.maxDD.toFixed(2)}R</div>
+            </div>
+            <div style={{ textAlign: 'center', padding: '12px 8px', background: drawdown.currentDD > 0 ? 'rgba(255,200,87,0.04)' : 'rgba(0,255,163,0.04)', borderRadius: 10 }}>
+              <div style={{ fontSize: 7, fontWeight: 700, color: th.tx3, letterSpacing: '1.5px', marginBottom: 4 }}>{isRTL ? 'נוכחי' : 'CURRENT'}</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: drawdown.currentDD > 0 ? '#FFC857' : '#00FFA3', fontFamily: "'JetBrains Mono',monospace" }}>{drawdown.currentDD.toFixed(2)}R</div>
+            </div>
+          </div>
+          <div style={{ padding: '8px 12px', background: th.inputBg, borderRadius: 8, textAlign: 'center', marginBottom: 8 }}>
+            <div style={{ fontSize: 7, fontWeight: 700, color: th.tx3, letterSpacing: '1.5px', marginBottom: 2 }}>{isRTL ? 'מקדם התאוששות' : 'RECOVERY FACTOR'}</div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: drawdown.recoveryFactor >= 2 ? '#00FFA3' : '#FFC857', fontFamily: "'JetBrains Mono',monospace" }}>{drawdown.recoveryFactor === Infinity ? '∞' : drawdown.recoveryFactor.toFixed(2)}</div>
+          </div>
+          {/* Mini sparkline */}
+          {drawdown.equity.length > 2 && (
+            <svg width="100%" height="32" viewBox={`0 0 ${drawdown.equity.length} 32`} preserveAspectRatio="none" style={{ borderRadius: 4, overflow: 'hidden' }}>
+              {(() => {
+                const eq = drawdown.equity;
+                const min = Math.min(...eq), max = Math.max(...eq);
+                const range = max - min || 1;
+                const pts = eq.map((v, i) => `${i},${30 - ((v - min) / range) * 28}`).join(' ');
+                return <polyline points={pts} fill="none" stroke={totalR >= 0 ? '#00FFA3' : '#FF4D4D'} strokeWidth="1.5" opacity="0.7" />;
+              })()}
+            </svg>
+          )}
+        </IntelCard>
+
+        {/* Consistency Metrics */}
+        <IntelCard delay={240} accent="#5AA9FF" th={th}>
+          <SectionLabel icon="📊" text={isRTL ? 'עקביות' : 'CONSISTENCY'} accent="#5AA9FF" th={th} />
+          <div style={{ display: 'grid', gap: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: th.inputBg, borderRadius: 8 }}>
+              <span style={{ fontSize: 10, color: th.tx3, fontWeight: 700 }}>{isRTL ? 'ימים ירוקים' : 'Green Days'}</span>
+              <span style={{ fontSize: 14, fontWeight: 800, color: consistency.greenRatio >= 55 ? '#00FFA3' : '#FFC857', fontFamily: "'JetBrains Mono',monospace" }}>{consistency.greenRatio.toFixed(0)}%</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: th.inputBg, borderRadius: 8 }}>
+              <span style={{ fontSize: 10, color: th.tx3, fontWeight: 700 }}>Sharpe</span>
+              <span style={{ fontSize: 14, fontWeight: 800, color: consistency.sharpe >= 1 ? '#00FFA3' : consistency.sharpe >= 0.5 ? '#FFC857' : '#FF4D4D', fontFamily: "'JetBrains Mono',monospace" }}>{consistency.sharpe.toFixed(2)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: th.inputBg, borderRadius: 8 }}>
+              <span style={{ fontSize: 10, color: th.tx3, fontWeight: 700 }}>{isRTL ? 'סטיית תקן' : 'Std Dev'}</span>
+              <span style={{ fontSize: 14, fontWeight: 800, color: th.tx2, fontFamily: "'JetBrains Mono',monospace" }}>{consistency.stdDev.toFixed(2)}R</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: th.inputBg, borderRadius: 8 }}>
+              <span style={{ fontSize: 10, color: th.tx3, fontWeight: 700 }}>{isRTL ? 'ריכוז רווח' : 'Profit Conc.'}</span>
+              <span style={{ fontSize: 14, fontWeight: 800, color: consistency.concentration > 50 ? '#FFC857' : '#00FFA3', fontFamily: "'JetBrains Mono',monospace" }}>{consistency.concentration.toFixed(0)}%</span>
+            </div>
+          </div>
+        </IntelCard>
+      </div>
+
+      {/* ═══ R-DISTRIBUTION HISTOGRAM ═══ */}
+      {rDistribution.buckets.length > 0 && (
+        <IntelCard delay={320} accent="#b794f6" th={th}>
+          <SectionLabel icon="📐" text={isRTL ? 'התפלגות R' : 'R-DISTRIBUTION'} accent="#b794f6" th={th} />
+          <div style={{ display: 'flex', gap: 3, alignItems: 'flex-end', height: 100, marginBottom: 8 }}>
+            {rDistribution.buckets.map((b, i) => {
+              const maxC = Math.max(...rDistribution.buckets.map(x => x.count), 1);
+              const barH = Math.max(4, (b.count / maxC) * 90);
+              const isNeg = b.min < 0;
+              return (
+                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', gap: 2 }}>
+                  {b.count > 0 && <span style={{ fontSize: 8, fontWeight: 700, color: th.tx3 }}>{b.count}</span>}
+                  <div style={{ width: '80%', height: barH, borderRadius: 4, background: isNeg ? `linear-gradient(180deg, #FF4D4D, rgba(255,77,77,0.4))` : `linear-gradient(180deg, #00FFA3, rgba(0,255,163,0.4))`, transition: 'height .6s cubic-bezier(0.16,1,0.3,1)' }} />
+                </div>
+              );
+            })}
+          </div>
+          <div style={{ display: 'flex', gap: 3 }}>
+            {rDistribution.buckets.map((b, i) => (
+              <div key={i} style={{ flex: 1, textAlign: 'center', fontSize: 7, color: th.tx3, fontWeight: 600 }}>{b.label}</div>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 16, marginTop: 12, justifyContent: 'center' }}>
+            {[
+              { l: isRTL ? 'חציון' : 'Median', v: `${rDistribution.median.toFixed(2)}R` },
+              { l: isRTL ? 'הטיה' : 'Skew', v: rDistribution.skew.toFixed(2) },
+              { l: isRTL ? 'מוד' : 'Mode', v: rDistribution.mode },
+            ].map(s => (
+              <div key={s.l} style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 8, fontWeight: 700, color: th.tx3, letterSpacing: '1px' }}>{s.l}</div>
+                <div style={{ fontSize: 12, fontWeight: 800, color: '#b794f6', fontFamily: "'JetBrains Mono',monospace" }}>{s.v}</div>
+              </div>
+            ))}
+          </div>
+        </IntelCard>
+      )}
+
+      {/* ═══ ROW: TRADE FREQUENCY + MONTHLY HEATMAP ═══ */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: 16 }} className="j-grid-2col">
+        {/* Trade Frequency */}
+        <IntelCard delay={400} accent="#FFC857" th={th}>
+          <SectionLabel icon="⚡" text={isRTL ? 'תדירות מסחר' : 'TRADE FREQUENCY'} accent="#FFC857" th={th} />
+          <div style={{ display: 'grid', gap: 6, marginBottom: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: th.inputBg, borderRadius: 8 }}>
+              <span style={{ fontSize: 10, color: th.tx3, fontWeight: 700 }}>{isRTL ? 'ממוצע/יום' : 'Avg/Day'}</span>
+              <span style={{ fontSize: 14, fontWeight: 800, color: '#5AA9FF', fontFamily: "'JetBrains Mono',monospace" }}>{frequency.avgTradesPerDay.toFixed(1)}</span>
+            </div>
+            {frequency.optimal && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(0,255,163,0.04)', borderRadius: 8, border: '1px solid rgba(0,255,163,0.1)' }}>
+                <span style={{ fontSize: 10, color: '#00FFA3', fontWeight: 700 }}>{isRTL ? 'אופטימלי' : 'Optimal'}</span>
+                <span style={{ fontSize: 14, fontWeight: 800, color: '#00FFA3', fontFamily: "'JetBrains Mono',monospace" }}>{frequency.optimal.trades} {isRTL ? 'עסקאות' : 'trades'}</span>
+              </div>
+            )}
+          </div>
+          {frequency.overtradingDays > 0 && (
+            <div style={{ padding: '8px 12px', background: frequency.overtradingAvgR < 0 ? 'rgba(255,77,77,0.05)' : 'rgba(255,200,87,0.05)', borderRadius: 8, border: `1px solid ${frequency.overtradingAvgR < 0 ? 'rgba(255,77,77,0.12)' : 'rgba(255,200,87,0.12)'}` }}>
+              <div style={{ fontSize: 9, color: frequency.overtradingAvgR < 0 ? '#FF4D4D' : '#FFC857', fontWeight: 700, marginBottom: 4 }}>{isRTL ? `${frequency.overtradingDays} ימי מסחר-יתר (4+)` : `${frequency.overtradingDays} overtrading days (4+)`}</div>
+              <div style={{ fontSize: 11, fontWeight: 800, color: frequency.overtradingAvgR < 0 ? '#FF4D4D' : '#FFC857', fontFamily: "'JetBrains Mono',monospace" }}>{isRTL ? 'ממוצע' : 'Avg'}: {frequency.overtradingAvgR.toFixed(2)}R</div>
+            </div>
+          )}
+          {/* Frequency bars */}
+          {frequency.entries.length > 0 && (
+            <div style={{ marginTop: 10, display: 'flex', gap: 4, alignItems: 'flex-end', height: 50 }}>
+              {frequency.entries.sort((a, b) => a.trades - b.trades).map(e => {
+                const maxD = Math.max(...frequency.entries.map(x => x.days), 1);
+                const h = Math.max(6, (e.days / maxD) * 45);
+                const c = e.avgR >= 0 ? '#00FFA3' : '#FF4D4D';
+                return (
+                  <div key={e.trades} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', gap: 2 }}>
+                    <span style={{ fontSize: 7, fontWeight: 700, color: c }}>{e.avgR.toFixed(1)}R</span>
+                    <div style={{ width: '70%', height: h, borderRadius: 3, background: c, opacity: 0.6 }} />
+                    <span style={{ fontSize: 8, color: th.tx3, fontWeight: 700 }}>{e.trades}t</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </IntelCard>
+
+        {/* Monthly Heatmap */}
+        <IntelCard delay={480} accent="#00FFA3" th={th}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <SectionLabel icon="🗓" text={isRTL ? 'מפת חום חודשית' : 'MONTHLY HEATMAP'} accent="#00FFA3" th={th} />
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <button onClick={() => setHeatMonth(p => p.m === 0 ? { y: p.y - 1, m: 11 } : { ...p, m: p.m - 1 })} style={{ width: 24, height: 24, borderRadius: 6, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', color: th.tx3, fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>‹</button>
+              <span style={{ fontSize: 11, fontWeight: 700, color: th.tx2, fontFamily: "'Poppins',sans-serif", minWidth: 90, textAlign: 'center' }}>{monthLabel}</span>
+              <button onClick={() => setHeatMonth(p => p.m === 11 ? { y: p.y + 1, m: 0 } : { ...p, m: p.m + 1 })} style={{ width: 24, height: 24, borderRadius: 6, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', color: th.tx3, fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>›</button>
+            </div>
+          </div>
+          {/* Day headers */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 3, marginBottom: 4 }}>
+            {(isRTL ? ['א','ב','ג','ד','ה','ו','ש'] : ['S','M','T','W','T','F','S']).map((d, i) => (
+              <div key={i} style={{ textAlign: 'center', fontSize: 8, fontWeight: 700, color: th.tx3, padding: 2 }}>{d}</div>
+            ))}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 3 }}>
+            {heatmapData.cells.map((cell, i) => (
+              <div key={i} style={{
+                aspectRatio: '1', borderRadius: 5,
+                background: cell.day === null ? 'transparent' : heatColor(cell.r),
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                transition: 'all .3s', position: 'relative',
+                border: cell.day !== null && cell.hasTrades ? `1px solid ${cell.r !== null && cell.r >= 0 ? 'rgba(0,255,163,0.2)' : 'rgba(255,77,77,0.2)'}` : '1px solid transparent',
+              }}>
+                {cell.day !== null && (
+                  <>
+                    <span style={{ fontSize: 9, fontWeight: 700, color: cell.hasTrades ? '#fff' : th.tx3, opacity: cell.hasTrades ? 0.9 : 0.4 }}>{cell.day}</span>
+                    {cell.r !== null && <span style={{ fontSize: 6, fontWeight: 800, color: '#fff', opacity: 0.8 }}>{cell.r >= 0 ? '+' : ''}{cell.r.toFixed(1)}</span>}
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, padding: '6px 0' }}>
+            <span style={{ fontSize: 9, color: th.tx3 }}>{isRTL ? `${heatmapData.tradeDays} ימי מסחר` : `${heatmapData.tradeDays} trade days`}</span>
+            <span style={{ fontSize: 11, fontWeight: 800, color: heatmapData.monthR >= 0 ? '#00FFA3' : '#FF4D4D', fontFamily: "'JetBrains Mono',monospace" }}>{heatmapData.monthR >= 0 ? '+' : ''}{heatmapData.monthR.toFixed(2)}R</span>
+          </div>
+        </IntelCard>
+      </div>
+
+      {/* ═══ DECISION QUALITY MATRIX ═══ */}
+      {decisionQuality.total > 0 && (
+        <IntelCard delay={540} accent="#b794f6" th={th}>
+          <SectionLabel icon="🎯" text={isRTL ? 'איכות החלטות' : 'DECISION QUALITY'} accent="#b794f6" th={th} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 8 }}>
+            {[
+              { l: isRTL ? 'החלטה טובה + תוצאה טובה' : 'Good Decision + Good Outcome', v: decisionQuality.goodDecGoodOut, c: '#00FFA3', icon: '✅' },
+              { l: isRTL ? 'החלטה טובה + תוצאה רעה' : 'Good Decision + Bad Outcome', v: decisionQuality.goodDecBadOut, c: '#5AA9FF', icon: '🔵' },
+              { l: isRTL ? 'החלטה רעה + תוצאה טובה' : 'Bad Decision + Good Outcome', v: decisionQuality.badDecGoodOut, c: '#FFC857', icon: '⚠️' },
+              { l: isRTL ? 'החלטה רעה + תוצאה רעה' : 'Bad Decision + Bad Outcome', v: decisionQuality.badDecBadOut, c: '#FF4D4D', icon: '❌' },
+            ].map(q => (
+              <div key={q.l} style={{ padding: '14px 12px', background: `${q.c}06`, border: `1px solid ${q.c}12`, borderRadius: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ fontSize: 20 }}>{q.icon}</span>
+                <div>
+                  <div style={{ fontSize: 9, color: th.tx3, fontWeight: 700, marginBottom: 4, lineHeight: 1.4 }}>{q.l}</div>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: q.c, fontFamily: "'JetBrains Mono',monospace" }}>{q.v}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: 10, padding: '8px 14px', background: 'rgba(183,148,246,0.05)', borderRadius: 8, fontSize: 10, color: th.tx3, lineHeight: 1.6 }}>
+            💡 {isRTL ? 'מבוסס על מחויבות יומית (החלטה) ותוצאת P&L (תוצאה). אל תשפוט ביצוע רק לפי תוצאות.' : 'Based on daily commitment (decision) and P&L outcome. Don\'t judge execution by outcomes alone.'}
+          </div>
+        </IntelCard>
+      )}
 
       {/* ═══ PATTERN RECOGNITION ═══ */}
-      <AnimCard delay={120} accent="#b794f6" th={th}>
-        <SectionLabel icon="🧠" text={isRTL ? 'זיהוי דפוסים — תובנות חכמות' : 'PATTERN RECOGNITION — SMART INSIGHTS'} accent="#b794f6" th={th} />
-        <div style={{ display: 'grid', gap: 10 }}>
-          {/* Weekday insights */}
-          {bestDay && bestDay.avgR > 0 && (
-            <InsightRow icon="📅" text={isRTL ? `היום הכי טוב שלך: ${bestDay.name} (ממוצע ${bestDay.avgR.toFixed(2)}R, ${bestDay.wr.toFixed(0)}% הצלחה, ${bestDay.count} ימים).` : `Your best day: ${bestDay.name} (avg ${bestDay.avgR.toFixed(2)}R, ${bestDay.wr.toFixed(0)}% WR, ${bestDay.count} days).`} type="success" th={th} delay={200} />
-          )}
-          {worstDay && worstDay.avgR < 0 && (
-            <InsightRow icon="🚫" text={isRTL ? `היום הכי גרוע שלך: ${worstDay.name} (ממוצע ${worstDay.avgR.toFixed(2)}R). שקול להקטין סיכון ביום זה.` : `Your worst day: ${worstDay.name} (avg ${worstDay.avgR.toFixed(2)}R). Consider reducing risk on this day.`} type="warning" th={th} delay={280} />
-          )}
-          {/* Asset insights */}
-          {byAsset.length >= 2 && byAsset[0].r > 0 && (
-            <InsightRow icon="🪙" text={isRTL ? `הנכס הכי רווחי: ${byAsset[0].asset} (+${byAsset[0].r.toFixed(2)}R, ${byAsset[0].count} עסקאות). ${byAsset[byAsset.length - 1].r < 0 ? `הנכס המפסיד: ${byAsset[byAsset.length - 1].asset} (${byAsset[byAsset.length - 1].r.toFixed(2)}R). שקול להפסיק לסחור בו.` : ''}` : `Most profitable asset: ${byAsset[0].asset} (+${byAsset[0].r.toFixed(2)}R, ${byAsset[0].count} trades). ${byAsset[byAsset.length - 1].r < 0 ? `Worst: ${byAsset[byAsset.length - 1].asset} (${byAsset[byAsset.length - 1].r.toFixed(2)}R). Consider stopping.` : ''}`} type="success" th={th} delay={360} />
-          )}
-          {/* Streak insights */}
-          {streaks.bestWin >= 2 && (
-            <InsightRow icon="🔥" text={isRTL ? `שיא רצף ימים חיוביים: ${streaks.bestWin} ימים!` : `Best winning streak: ${streaks.bestWin} days!`} type="success" th={th} delay={440} />
-          )}
-          {/* Behavioral insights */}
-          {emotionInsights.map((ins, i) => (
-            <InsightRow key={i} icon={ins.icon} text={ins.text} type={ins.type} th={th} delay={500 + i * 80} />
-          ))}
+      <IntelCard delay={620} accent="#b794f6" th={th}>
+        <SectionLabel icon="🧠" text={isRTL ? 'זיהוי דפוסים' : 'PATTERN RECOGNITION'} accent="#b794f6" th={th} />
+        <div style={{ display: 'grid', gap: 8 }}>
+          {bestDay && bestDay.avgR > 0 && <InsightRow icon="📅" text={isRTL ? `יום טוב: ${bestDay.name} (${bestDay.avgR.toFixed(2)}R, ${bestDay.wr.toFixed(0)}%, ${bestDay.count}d)` : `Best: ${bestDay.name} (${bestDay.avgR.toFixed(2)}R, ${bestDay.wr.toFixed(0)}%, ${bestDay.count}d)`} type="success" th={th} delay={0} />}
+          {worstDay && worstDay.avgR < 0 && <InsightRow icon="🚫" text={isRTL ? `יום גרוע: ${worstDay.name} (${worstDay.avgR.toFixed(2)}R). הקטן סיכון.` : `Worst: ${worstDay.name} (${worstDay.avgR.toFixed(2)}R). Reduce risk.`} type="warning" th={th} delay={80} />}
+          {byAsset.length >= 2 && byAsset[0].r > 0 && <InsightRow icon="🪙" text={isRTL ? `נכס מוביל: ${byAsset[0].asset} (+${byAsset[0].r.toFixed(2)}R). ${byAsset[byAsset.length - 1].r < 0 ? `מפסיד: ${byAsset[byAsset.length - 1].asset} (${byAsset[byAsset.length - 1].r.toFixed(2)}R).` : ''}` : `Top asset: ${byAsset[0].asset} (+${byAsset[0].r.toFixed(2)}R). ${byAsset[byAsset.length - 1].r < 0 ? `Worst: ${byAsset[byAsset.length - 1].asset} (${byAsset[byAsset.length - 1].r.toFixed(2)}R).` : ''}`} type="success" th={th} delay={160} />}
+          {emotionInsights.map((ins, i) => <InsightRow key={i} icon={ins.icon} text={ins.text} type={ins.type} th={th} delay={240 + i * 60} />)}
         </div>
-      </AnimCard>
+      </IntelCard>
 
-      {/* ═══ WEEKDAY PERFORMANCE ═══ */}
-      {byWeekday.length > 0 && (
-        <AnimCard delay={240} accent="#5AA9FF" th={th}>
-          <SectionLabel icon="📅" text={isRTL ? 'ביצוע לפי יום בשבוע' : 'WEEKDAY PERFORMANCE'} accent="#5AA9FF" th={th} />
-          <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', height: 120, marginBottom: 12 }}>
-            {byWeekday.map(wd => {
-              const maxR = Math.max(...byWeekday.map(w => Math.abs(w.avgR)), 0.5);
-              const barH = Math.max(8, (Math.abs(wd.avgR) / maxR) * 90);
-              const c = wd.avgR >= 0 ? '#00FFA3' : '#FF4D4D';
-              return (
-                <div key={wd.dow} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
-                  <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, fontWeight: 700, color: c }}>
-                    {wd.avgR >= 0 ? '+' : ''}{wd.avgR.toFixed(1)}R
-                  </span>
-                  <div style={{ width: '70%', height: barH, borderRadius: 6, background: `linear-gradient(180deg, ${c}, ${c}60)`, transition: 'height .6s cubic-bezier(0.16,1,0.3,1)', boxShadow: `0 0 12px ${c}20` }} />
-                  <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, fontWeight: 700, color: th.tx3 }}>{wd.name}</span>
-                  <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, color: th.tx3, opacity: 0.6 }}>{wd.trades}t</span>
-                </div>
-              );
-            })}
-          </div>
-        </AnimCard>
-      )}
-
-      {/* ═══ ASSET PERFORMANCE ═══ */}
-      {byAsset.length > 0 && (
-        <AnimCard delay={360} accent="#FFC857" th={th}>
-          <SectionLabel icon="🪙" text={isRTL ? 'ביצוע לפי נכס' : 'ASSET PERFORMANCE'} accent="#FFC857" th={th} />
-          <div style={{ display: 'grid', gap: 6 }}>
-            {byAsset.slice(0, 8).map((a, i) => {
-              const c = a.r >= 0 ? '#00FFA3' : '#FF4D4D';
-              const maxR = Math.max(...byAsset.map(x => Math.abs(x.r)), 1);
-              const barW = Math.max(8, (Math.abs(a.r) / maxR) * 100);
-              return (
-                <div key={a.asset} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: `${c}04`, borderRadius: 10, border: `1px solid ${c}10` }}>
-                  <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, fontWeight: 800, color: th.tx, minWidth: 80 }}>{a.asset}</span>
-                  <div style={{ flex: 1, height: 6, background: th.inputBg, borderRadius: 3, overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${barW}%`, background: c, borderRadius: 3, transition: 'width .8s ease' }} />
+      {/* ═══ WEEKDAY + ASSET ROW ═══ */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }} className="j-grid-2col">
+        {byWeekday.length > 0 && (
+          <IntelCard delay={700} accent="#5AA9FF" th={th}>
+            <SectionLabel icon="📅" text={isRTL ? 'ימים בשבוע' : 'WEEKDAY'} accent="#5AA9FF" th={th} />
+            <div style={{ display: 'flex', gap: 4, alignItems: 'flex-end', height: 90 }}>
+              {byWeekday.map(wd => {
+                const maxR = Math.max(...byWeekday.map(w => Math.abs(w.avgR)), 0.5);
+                const barH = Math.max(6, (Math.abs(wd.avgR) / maxR) * 75);
+                const c = wd.avgR >= 0 ? '#00FFA3' : '#FF4D4D';
+                return (
+                  <div key={wd.dow} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', gap: 2 }}>
+                    <span style={{ fontSize: 8, fontWeight: 700, color: c, fontFamily: "'JetBrains Mono',monospace" }}>{wd.avgR >= 0 ? '+' : ''}{wd.avgR.toFixed(1)}</span>
+                    <div style={{ width: '65%', height: barH, borderRadius: 4, background: `linear-gradient(180deg, ${c}, ${c}50)`, transition: 'height .6s ease' }} />
+                    <span style={{ fontSize: 8, fontWeight: 700, color: th.tx3 }}>{wd.name}</span>
                   </div>
-                  <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, fontWeight: 800, color: c, minWidth: 55, textAlign: 'right' }}>{a.r >= 0 ? '+' : ''}{a.r.toFixed(2)}R</span>
-                  <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, color: th.tx3, minWidth: 30 }}>{a.count}t</span>
-                  <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, color: a.wr >= 50 ? '#00FFA3' : '#FF4D4D', minWidth: 35 }}>{a.wr.toFixed(0)}%</span>
-                </div>
-              );
-            })}
-          </div>
-        </AnimCard>
-      )}
+                );
+              })}
+            </div>
+          </IntelCard>
+        )}
+
+        {byAsset.length > 0 && (
+          <IntelCard delay={780} accent="#FFC857" th={th}>
+            <SectionLabel icon="🪙" text={isRTL ? 'נכסים' : 'ASSETS'} accent="#FFC857" th={th} />
+            <div style={{ display: 'grid', gap: 4 }}>
+              {byAsset.slice(0, 6).map(a => {
+                const c = a.r >= 0 ? '#00FFA3' : '#FF4D4D';
+                const maxR = Math.max(...byAsset.map(x => Math.abs(x.r)), 1);
+                const barW = Math.max(8, (Math.abs(a.r) / maxR) * 100);
+                return (
+                  <div key={a.asset} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', background: `${c}04`, borderRadius: 8 }}>
+                    <span style={{ fontSize: 10, fontWeight: 800, color: th.tx, minWidth: 60, fontFamily: "'JetBrains Mono',monospace" }}>{a.asset}</span>
+                    <div style={{ flex: 1, height: 4, background: th.inputBg, borderRadius: 2, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${barW}%`, background: c, borderRadius: 2 }} />
+                    </div>
+                    <span style={{ fontSize: 10, fontWeight: 800, color: c, minWidth: 45, textAlign: 'right', fontFamily: "'JetBrains Mono',monospace" }}>{a.r >= 0 ? '+' : ''}{a.r.toFixed(1)}R</span>
+                  </div>
+                );
+              })}
+            </div>
+          </IntelCard>
+        )}
+      </div>
 
       {/* ═══ STRATEGY ANALYSIS ═══ */}
       {byStrategy.length > 0 && (
-        <AnimCard delay={480} accent="#b794f6" th={th}>
-          <SectionLabel icon="⚔️" text={isRTL ? 'ניתוח אסטרטגיה' : 'STRATEGY ANALYSIS'} accent="#b794f6" th={th} />
-          <div style={{ display: 'grid', gridTemplateColumns: byStrategy.length > 2 ? 'repeat(3,1fr)' : `repeat(${byStrategy.length},1fr)`, gap: 10 }} className="j-grid-2col">
+        <IntelCard delay={860} accent="#b794f6" th={th}>
+          <SectionLabel icon="⚔️" text={isRTL ? 'אסטרטגיה' : 'STRATEGY'} accent="#b794f6" th={th} />
+          <div style={{ display: 'grid', gridTemplateColumns: byStrategy.length > 2 ? 'repeat(3,1fr)' : `repeat(${byStrategy.length},1fr)`, gap: 8 }} className="j-grid-2col">
             {byStrategy.map(s => {
               const c = s.r >= 0 ? '#00FFA3' : '#FF4D4D';
               return (
-                <div key={s.name} style={{ background: `${c}06`, border: `1px solid ${c}15`, borderRadius: 14, padding: '16px 14px', textAlign: 'center' }}>
-                  <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 800, color: th.tx, marginBottom: 8 }}>{s.name}</div>
-                  <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 24, fontWeight: 800, color: c, lineHeight: 1, marginBottom: 6 }}>{s.r >= 0 ? '+' : ''}{s.r.toFixed(2)}R</div>
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginTop: 8 }}>
-                    <div><div style={{ fontSize: 8, color: th.tx3, letterSpacing: '1px' }}>TRADES</div><div style={{ fontSize: 13, fontWeight: 800, color: th.tx2 }}>{s.count}</div></div>
-                    <div><div style={{ fontSize: 8, color: th.tx3, letterSpacing: '1px' }}>WIN%</div><div style={{ fontSize: 13, fontWeight: 800, color: s.wr >= 50 ? '#00FFA3' : '#FF4D4D' }}>{s.wr.toFixed(0)}%</div></div>
-                    <div><div style={{ fontSize: 8, color: th.tx3, letterSpacing: '1px' }}>AVG R</div><div style={{ fontSize: 13, fontWeight: 800, color: s.avgR >= 0 ? '#00FFA3' : '#FF4D4D' }}>{s.avgR.toFixed(2)}</div></div>
+                <div key={s.name} style={{ background: `${c}06`, border: `1px solid ${c}12`, borderRadius: 12, padding: '14px 12px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 11, fontWeight: 800, color: th.tx, marginBottom: 6 }}>{s.name}</div>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: c, fontFamily: "'JetBrains Mono',monospace", lineHeight: 1 }}>{s.r >= 0 ? '+' : ''}{s.r.toFixed(2)}R</div>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginTop: 8, fontSize: 9 }}>
+                    <span style={{ color: th.tx3 }}>{s.count}t</span>
+                    <span style={{ color: s.wr >= 50 ? '#00FFA3' : '#FF4D4D' }}>{s.wr.toFixed(0)}%</span>
+                    <span style={{ color: s.avgR >= 0 ? '#00FFA3' : '#FF4D4D' }}>{s.avgR.toFixed(2)}R</span>
                   </div>
                 </div>
               );
             })}
           </div>
-          <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(183,148,246,0.05)', borderRadius: 10, border: '1px solid rgba(183,148,246,0.1)' }}>
-            <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, color: th.tx3, lineHeight: 1.6 }}>
-              💡 {isRTL ? 'הזן את שם האסטרטגיה (MSB + BOS, BOS, Daily Open) בהערות הביצוע של כל עסקה לזיהוי אוטומטי.' : 'Enter strategy name (MSB + BOS, BOS, Daily Open) in trade execution notes for automatic detection.'}
-            </span>
+          <div style={{ marginTop: 8, padding: '8px 12px', background: 'rgba(183,148,246,0.04)', borderRadius: 8, fontSize: 9, color: th.tx3 }}>
+            💡 {isRTL ? 'הזן MSB + BOS, BOS, או Daily Open בהערות הביצוע.' : 'Enter MSB + BOS, BOS, or Daily Open in trade notes.'}
           </div>
-        </AnimCard>
+        </IntelCard>
       )}
 
-      {/* ═══ MONTHLY RECAP ═══ */}
+      {/* ═══ MONTHLY RECAP (compact) ═══ */}
       {monthlyRecap.length > 0 && (
-        <AnimCard delay={600} accent="#FFC857" th={th}>
+        <IntelCard delay={940} accent="#FFC857" th={th}>
           <SectionLabel icon="📅" text={isRTL ? 'סיכום חודשי' : 'MONTHLY RECAP'} accent="#FFC857" th={th} />
-          <div style={{ display: 'grid', gap: 10 }}>
-            {runningR.map((m, mi) => {
+          <div style={{ display: 'grid', gap: 6 }}>
+            {runningR.map(m => {
               const c = m.totalR >= 0 ? '#00FFA3' : '#FF4D4D';
               return (
-                <div key={m.ym} style={{
-                  background: `${c}04`, border: `1px solid ${c}12`, borderRadius: 14,
-                  padding: '18px 20px', transition: 'all .3s',
-                }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 24px ${c}15`; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                    <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 15, fontWeight: 800, color: th.tx }}>{m.label}</div>
-                    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 20, fontWeight: 800, color: c }}>{m.totalR >= 0 ? '+' : ''}{m.totalR.toFixed(2)}R</div>
+                <div key={m.ym} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: `${c}04`, borderRadius: 10, border: `1px solid ${c}10`, gap: 8, flexWrap: 'wrap' as const }}>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: th.tx, minWidth: 80 }}>{m.label}</span>
+                  <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' as const }}>
+                    <span style={{ fontSize: 8, color: th.tx3, fontWeight: 700 }}>{m.trades}t</span>
+                    <span style={{ fontSize: 8, color: m.wr >= 50 ? '#00FFA3' : '#FF4D4D', fontWeight: 700 }}>{m.wr.toFixed(0)}%</span>
+                    <span style={{ fontSize: 8, color: th.tx3, fontWeight: 700 }}>EV {m.ev >= 0 ? '+' : ''}{m.ev.toFixed(2)}R</span>
+                    <span style={{ fontSize: 8, color: m.runningR >= 0 ? '#00FFA3' : '#FF4D4D', fontWeight: 700 }}>{isRTL ? 'מצטבר' : 'Run'} {m.runningR >= 0 ? '+' : ''}{m.runningR.toFixed(1)}R</span>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 8, marginBottom: 10 }} className="j-grid-2col">
-                    {[
-                      { l: isRTL ? 'עסקאות' : 'Trades', v: String(m.trades) },
-                      { l: isRTL ? 'ניצחונות' : 'Wins', v: `${m.wins}W / ${m.losses}L / ${m.be}BE` },
-                      { l: isRTL ? 'הצלחה' : 'Win%', v: `${m.wr.toFixed(0)}%` },
-                      { l: isRTL ? 'ממוצע נצחון' : 'Avg Win', v: `+${m.avgWinR.toFixed(2)}R` },
-                      { l: isRTL ? 'ממוצע הפסד' : 'Avg Loss', v: `-${m.avgLossR.toFixed(2)}R` },
-                    ].map(s => (
-                      <div key={s.l} style={{ textAlign: 'center' }}>
-                        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 700, letterSpacing: '1.5px', color: th.tx3, textTransform: 'uppercase' as const }}>{s.l}</div>
-                        <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, fontWeight: 700, color: th.tx2, marginTop: 3 }}>{s.v}</div>
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: th.inputBg, borderRadius: 8 }}>
-                    <div>
-                      <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 700, color: th.tx3, letterSpacing: '1.5px' }}>EV</span>
-                      <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, fontWeight: 700, color: m.ev >= 0 ? '#00FFA3' : '#FF4D4D', marginInlineStart: 8 }}>{m.ev >= 0 ? '+' : ''}{m.ev.toFixed(3)}R</span>
-                    </div>
-                    <div>
-                      <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 700, color: th.tx3, letterSpacing: '1.5px' }}>{isRTL ? 'סה"כ מצטבר' : 'RUNNING'}</span>
-                      <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, fontWeight: 700, color: m.runningR >= 0 ? '#00FFA3' : '#FF4D4D', marginInlineStart: 8 }}>{m.runningR >= 0 ? '+' : ''}{m.runningR.toFixed(2)}R</span>
-                    </div>
-                    <div>
-                      <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 700, color: th.tx3, letterSpacing: '1.5px' }}>P&L</span>
-                      <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, fontWeight: 700, color: m.pnl >= 0 ? '#00FFA3' : '#FF4D4D', marginInlineStart: 8 }}>{m.pnl >= 0 ? '+' : ''}{m.pnl.toFixed(0)}$</span>
-                    </div>
-                  </div>
+                  <span style={{ fontSize: 15, fontWeight: 800, color: c, fontFamily: "'JetBrains Mono',monospace" }}>{m.totalR >= 0 ? '+' : ''}{m.totalR.toFixed(2)}R</span>
                 </div>
               );
             })}
           </div>
-        </AnimCard>
+        </IntelCard>
       )}
 
       {/* ═══ YEARLY RECAP ═══ */}
       {yearlyRecap.length > 0 && (
-        <AnimCard delay={720} accent="#D4AF37" th={th}>
-          <SectionLabel icon="🏆" text={isRTL ? 'סיכום שנתי' : 'YEARLY RECAP'} accent="#D4AF37" th={th} />
-          <div style={{ display: 'grid', gap: 12 }}>
-            {yearlyRecap.map(yr => {
-              const c = yr.totalR >= 0 ? '#00FFA3' : '#FF4D4D';
-              return (
-                <div key={yr.year} style={{ background: 'rgba(212,175,55,0.03)', border: '1px solid rgba(212,175,55,0.12)', borderRadius: 16, padding: '22px 24px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-                    <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 24, fontWeight: 800, color: '#D4AF37' }}>{yr.year}</div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 28, fontWeight: 800, color: c, lineHeight: 1 }}>{yr.totalR >= 0 ? '+' : ''}{yr.totalR.toFixed(2)}R</div>
-                      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, color: c, opacity: 0.7, marginTop: 2 }}>{yr.pnl >= 0 ? '+' : ''}{yr.pnl.toFixed(0)}$</div>
-                    </div>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 8 }} className="j-grid-2col">
-                    {[
-                      { l: isRTL ? 'עסקאות' : 'Trades', v: String(yr.trades), c: '#5AA9FF' },
-                      { l: isRTL ? 'ניצחונות' : 'W/L/BE', v: `${yr.wins}/${yr.losses}/${yr.be}`, c: th.tx2 },
-                      { l: isRTL ? 'הצלחה' : 'Win%', v: `${yr.wr.toFixed(0)}%`, c: yr.wr >= 50 ? '#00FFA3' : '#FF4D4D' },
-                      { l: isRTL ? 'ימי מסחר' : 'Days', v: String(yr.days), c: '#FFC857' },
-                      { l: 'EV', v: `${yr.ev >= 0 ? '+' : ''}${yr.ev.toFixed(3)}R`, c: yr.ev >= 0 ? '#00FFA3' : '#FF4D4D' },
-                      { l: isRTL ? 'ממוצע נצחון' : 'Avg Win', v: `+${yr.avgWinR.toFixed(2)}R`, c: '#00FFA3' },
-                    ].map(s => (
-                      <div key={s.l} style={{ textAlign: 'center', padding: '8px 4px', background: `${s.c}06`, borderRadius: 8 }}>
-                        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 7, fontWeight: 700, letterSpacing: '1.5px', color: th.tx3, textTransform: 'uppercase' as const }}>{s.l}</div>
-                        <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 800, color: s.c, marginTop: 3 }}>{s.v}</div>
-                      </div>
-                    ))}
+        <IntelCard delay={1020} accent="#D4AF37" th={th}>
+          <SectionLabel icon="🏆" text={isRTL ? 'שנתי' : 'YEARLY'} accent="#D4AF37" th={th} />
+          {yearlyRecap.map(yr => {
+            const c = yr.totalR >= 0 ? '#00FFA3' : '#FF4D4D';
+            return (
+              <div key={yr.year} style={{ background: 'rgba(212,175,55,0.03)', border: '1px solid rgba(212,175,55,0.12)', borderRadius: 14, padding: '16px 18px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <span style={{ fontSize: 20, fontWeight: 800, color: '#D4AF37', fontFamily: "'Poppins',sans-serif" }}>{yr.year}</span>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: c, fontFamily: "'JetBrains Mono',monospace" }}>{yr.totalR >= 0 ? '+' : ''}{yr.totalR.toFixed(2)}R</div>
+                    <div style={{ fontSize: 11, color: c, opacity: 0.7 }}>{yr.pnl >= 0 ? '+' : ''}{yr.pnl.toFixed(0)}$</div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </AnimCard>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 6 }} className="j-grid-2col">
+                  {[
+                    { l: isRTL ? 'עסקאות' : 'Trades', v: String(yr.trades), c: '#5AA9FF' },
+                    { l: 'W/L/BE', v: `${yr.wins}/${yr.losses}/${yr.be}`, c: th.tx2 },
+                    { l: isRTL ? 'הצלחה' : 'Win%', v: `${yr.wr.toFixed(0)}%`, c: yr.wr >= 50 ? '#00FFA3' : '#FF4D4D' },
+                    { l: isRTL ? 'ימים' : 'Days', v: String(yr.days), c: '#FFC857' },
+                    { l: 'EV', v: `${yr.ev >= 0 ? '+' : ''}${yr.ev.toFixed(3)}R`, c: yr.ev >= 0 ? '#00FFA3' : '#FF4D4D' },
+                    { l: isRTL ? 'ממ. נצחון' : 'Avg Win', v: `+${yr.avgWinR.toFixed(2)}R`, c: '#00FFA3' },
+                  ].map(s => (
+                    <div key={s.l} style={{ textAlign: 'center', padding: '6px 4px', background: `${s.c}06`, borderRadius: 6 }}>
+                      <div style={{ fontSize: 7, fontWeight: 700, letterSpacing: '1px', color: th.tx3, textTransform: 'uppercase' as const }}>{s.l}</div>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: s.c, marginTop: 2, fontFamily: "'JetBrains Mono',monospace" }}>{s.v}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </IntelCard>
       )}
     </div>
   );
