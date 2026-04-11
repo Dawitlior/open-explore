@@ -3438,7 +3438,8 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
   const [sbQ, setSbQ] = useState('');
   const [theme, setTheme] = useState<JTheme>('dark');
   const [riskAlertShown, setRiskAlertShown] = useState(false);
-  const [showEntry, setShowEntry] = useState(() => sessionStorage.getItem(ENTRY_SESSION_KEY) !== '1');
+  const [showEntry, setShowEntry] = useState(true); // Always show entry animation when mounting
+  const [exitingToOrca, setExitingToOrca] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [lockAnim, setLockAnim] = useState<'morning' | 'eod' | null>(null);
   const [viewingArchiveId, setViewingArchiveId] = useState<string | null>(null);
@@ -3568,6 +3569,12 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
     return orcaTrades.filter(tr => tr.date?.startsWith(today));
   }, [orcaTrades]);
 
+  // Exit animation handler (must be before early returns)
+  const handleReturn = useCallback(() => {
+    setExitingToOrca(true);
+    setTimeout(() => onReturn(), 1200);
+  }, [onReturn]);
+
   if (!loaded) return (
     <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: th.bg }}>
       <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, color: '#00FFA3', letterSpacing: 3, animation: 'j-pulse 1.5s ease-in-out infinite' }}>INITIALIZING...</div>
@@ -3590,7 +3597,34 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
       height: '100%', display: 'flex', flexDirection: 'column',
       fontFamily: "'Poppins', sans-serif", direction: dir,
       background: th.bg, color: th.tx,
+      opacity: exitingToOrca ? 0 : 1,
+      transform: exitingToOrca ? 'scale(0.92)' : 'scale(1)',
+      filter: exitingToOrca ? 'blur(12px)' : 'none',
+      transition: 'opacity 0.8s ease, transform 0.8s cubic-bezier(0.4,0,0.2,1), filter 0.8s ease',
     }}>
+      {/* Exit overlay */}
+      {exitingToOrca && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 10000,
+          background: 'radial-gradient(ellipse at 50% 50%, rgba(212,175,55,0.08) 0%, rgba(3,6,16,0.95) 60%)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          animation: 'j-exit-overlay 0.8s ease-out',
+        }}>
+          <div style={{
+            fontSize: 28, fontWeight: 800, color: '#D4AF37', fontFamily: "'Poppins',sans-serif",
+            letterSpacing: '-0.5px', animation: 'j-exit-text 0.6s ease-out 0.3s both',
+          }}>
+            ⚔️
+          </div>
+          <div style={{
+            fontSize: 10, fontWeight: 700, color: 'rgba(212,175,55,0.5)', letterSpacing: 4,
+            fontFamily: "'JetBrains Mono', monospace", marginTop: 12,
+            animation: 'j-exit-text 0.6s ease-out 0.5s both',
+          }}>
+            RETURNING TO COMMAND
+          </div>
+        </div>
+      )}
       {/* SCOPED CSS */}
       <style>{`
         .journal-dimension ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -3611,6 +3645,8 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
         @keyframes j-risk-ring { 0%,100% { transform: scale(1); opacity: 0.3; } 50% { transform: scale(1.1); opacity: 0.6; } }
         @keyframes j-risk-icon-shake { 0%,100% { transform: translateX(0); } 10% { transform: translateX(-8px); } 20% { transform: translateX(8px); } 30% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 50% { transform: translateX(-4px); } 60% { transform: translateX(4px); } 70% { transform: translateX(-2px); } 80% { transform: translateX(2px); } }
         @keyframes j-slide-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes j-exit-overlay { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes j-exit-text { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .j-card-hover { transition: all .25s ease !important; }
         .j-card-hover:hover { transform: translateY(-1px) !important; box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important; }
         @media (max-width: 768px) {
@@ -3667,7 +3703,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
                 style={{ flex: 1, padding: '12px', borderRadius: 10, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', color: '#FFC857', fontSize: 13, fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>
                 🔒 Lock System
               </button>
-              <button onClick={() => { onReturn(); setMobileMenu(false); }}
+              <button onClick={() => { handleReturn(); setMobileMenu(false); }}
                 style={{ flex: 1, padding: '12px', borderRadius: 10, border: '1px solid rgba(212,175,55,0.3)', background: 'rgba(212,175,55,0.06)', cursor: 'pointer', color: '#D4AF37', fontSize: 13, fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>
                 ⚔️ {isRTL ? 'חמ"ל' : 'Orca'}
               </button>
@@ -3737,7 +3773,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
             🔒 <span className="j-lock-btn-text">Lock</span>
           </button>
           <div className="j-return-desktop">
-            <ReturnButton onClick={onReturn} isRTL={isRTL} />
+            <ReturnButton onClick={handleReturn} isRTL={isRTL} />
           </div>
         </div>
       </nav>
