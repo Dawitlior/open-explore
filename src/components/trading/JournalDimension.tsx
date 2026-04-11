@@ -1780,6 +1780,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
   const [showEntry, setShowEntry] = useState(() => sessionStorage.getItem(ENTRY_SESSION_KEY) !== '1');
   const [mobileMenu, setMobileMenu] = useState(false);
   const [lockAnim, setLockAnim] = useState<'morning' | 'eod' | null>(null);
+  const [viewingArchiveId, setViewingArchiveId] = useState<string | null>(null);
   const tRef = useRef<any>(null);
 
   const daysRef = useRef(days);
@@ -1816,6 +1817,14 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
     if (!activeId) return days[days.length - 1] || null;
     return days.find(d => d.id === activeId) || days[days.length - 1] || null;
   }, [days, activeId]);
+
+  const archiveViewDay = useMemo(() => {
+    if (!viewingArchiveId) return null;
+    return days.find(d => d.id === viewingArchiveId) || null;
+  }, [days, viewingArchiveId]);
+
+  const displayDay = archiveViewDay || activeDay;
+  const isViewingArchive = !!viewingArchiveId;
 
   const commit = useCallback((nextDays: JournalDay[], nextId: string | null, nextLang?: string) => {
     writeJournalState({ days: nextDays, activeDayId: nextId, lang: nextLang || langRef.current });
