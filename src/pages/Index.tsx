@@ -24,8 +24,9 @@ import { AdvancedAnalyticsPage } from '@/components/trading/AdvancedAnalyticsPag
 import { AdvancedPsychologyPage } from '@/components/trading/AdvancedPsychologyPage';
 import { WeeklyReviewPage } from '@/components/trading/WeeklyReviewPage';
 import { InstallPrompt } from '@/components/trading/InstallPrompt';
-import { DimensionController, PortalButton } from '@/components/trading/DimensionController';
+import { DimensionController, PortalButton, BacktestPortalButton } from '@/components/trading/DimensionController';
 import { JournalDimension } from '@/components/trading/JournalDimension';
+import { BacktestDimension } from '@/components/trading/BacktestDimension';
 import { useTrades } from '@/hooks/use-trades';
 import { useSettings, type ThemeId } from '@/hooks/use-settings';
 import { assessRisk } from '@/lib/risk-engine';
@@ -38,7 +39,7 @@ const Index = () => {
   const settings = useSettings();
   const { trades, stats, loading, initialized, addTrade, updateTrade, removeTrade, resetAll, importTrades, riskAlert, dismissRiskAlert } = useTrades();
   const [entered, setEntered] = useState(() => sessionStorage.getItem('orca-entered') === '1');
-  const [activeDimension, setActiveDimension] = useState<'orca' | 'journal'>('orca');
+  const [activeDimension, setActiveDimension] = useState<'orca' | 'journal' | 'backtest'>('orca');
   const T = getTheme(settings.theme);
   const t = i18n[settings.lang];
   const isRTL = settings.isRTL;
@@ -242,7 +243,8 @@ const Index = () => {
     { id: 'review', label: isRTL ? 'מצב סקירה' : 'Switch to Review Mode', icon: '🔵', category: isRTL ? 'מצבים' : 'Modes', action: () => settings.setOperatingMode('review') },
     { id: 'research', label: isRTL ? 'מצב מחקר' : 'Switch to Research Mode', icon: '🟣', category: isRTL ? 'מצבים' : 'Modes', action: () => settings.setOperatingMode('research') },
     { id: 'alpha', label: isRTL ? 'הפעל Alpha' : 'Toggle Alpha Mode', icon: '⚡', category: isRTL ? 'מצבים' : 'Modes', action: () => settings.setSystemMode(isAlpha ? 'standard' : 'alpha') },
-    { id: 'journal-sanctuary', label: isRTL ? 'כניסה למקדש' : 'Enter Journal Sanctuary', icon: '🏛️', category: isRTL ? 'ממדים' : 'Dimensions', action: () => setActiveDimension('journal') },
+    { id: 'journal-sanctuary', label: isRTL ? 'יומן מסע לסוחר' : 'Trader Journey', icon: '🏛️', category: isRTL ? 'ממדים' : 'Dimensions', action: () => setActiveDimension('journal') },
+    { id: 'backtest-journal', label: isRTL ? 'יומן באק-טסט' : 'Backtest Journal', icon: '📊', category: isRTL ? 'ממדים' : 'Dimensions', action: () => setActiveDimension('backtest') },
   ], [isRTL, handleExport, handleImport, handleGenerateInsights, isAlpha, settings]);
 
   const nav = [
@@ -1162,6 +1164,17 @@ const Index = () => {
     );
   }
 
+  if (activeDimension === 'backtest') {
+    return (
+      <DimensionController
+        activeDimension="backtest"
+        orcaUI={<div />}
+        journalUI={<div />}
+        backtestUI={<BacktestDimension onReturn={() => setActiveDimension('orca')} />}
+      />
+    );
+  }
+
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden', background: T.bg.primary, color: T.text.primary, fontFamily: "'Inter', system-ui, -apple-system, sans-serif", fontSize: 14, transition: 'background 0.5s ease, color 0.5s ease, filter 0.5s ease, opacity 0.5s ease', opacity: exiting ? 0 : 1, filter: exiting ? 'blur(8px)' : 'none' }}>
       <style>{portalCSS}</style>
@@ -1174,63 +1187,127 @@ const Index = () => {
           </div>
         </div>
       )}
-      {/* MOBILE SIDEBAR OVERLAY */}
+      {/* MOBILE MENU POPUP */}
       {isMobile && sbOpen && (
-        <div onClick={() => setSbOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 40, backdropFilter: 'blur(2px)' }} />
+        <div onClick={() => setSbOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 100, backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 'max(20px, env(safe-area-inset-top, 20px))' }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            width: 'min(400px, 92vw)', maxHeight: 'calc(100vh - 40px)', overflowY: 'auto',
+            background: `linear-gradient(180deg, ${T.bg.secondary} 0%, ${T.bg.primary} 100%)`,
+            border: `1px solid ${T.border.medium}`, borderRadius: T.radius.xl,
+            boxShadow: T.shadow.elevated, animation: 'scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+            padding: 12, display: 'flex', flexDirection: 'column', gap: 4,
+          }}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 6px 12px', borderBottom: `1px solid ${T.border.subtle}`, marginBottom: 4 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {Ico.orca}
+                <div><div style={{ fontSize: 15, fontWeight: 700, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>ORCA</div><div style={{ fontSize: 8, color: T.text.dim, letterSpacing: '0.15em', textTransform: 'uppercase' }}>Investment</div></div>
+              </div>
+              <button onClick={() => setSbOpen(false)} style={{ background: 'none', border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.sm, color: T.text.dim, cursor: 'pointer', padding: '4px 8px', fontSize: 16 }}>✕</button>
+            </div>
+            <ModeSwitch T={T} isRTL={isRTL} operatingMode={settings.operatingMode} systemMode={settings.systemMode} onOperatingModeChange={settings.setOperatingMode} onSystemModeChange={settings.setSystemMode} />
+            {/* Nav items */}
+            {nav.map(item => {
+              const isWeekly = item.id === 'weekly-review';
+              const activeColor = isWeekly ? '#FFD700' : T.accent.cyan;
+              return (
+                <button key={item.id} onClick={() => { setPage(item.id); setSbOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: page === item.id ? `${activeColor}10` : 'transparent', color: page === item.id ? activeColor : (isWeekly ? '#FFD700' : T.text.secondary), border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: page === item.id ? 600 : 400, width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: page === item.id ? `2px solid ${activeColor}` : '2px solid transparent' }}>
+                  {typeof item.icon === 'string' ? <span style={{ fontSize: 18 }}>{item.icon}</span> : item.icon}<span>{item.label}</span>
+                </button>
+              );
+            })}
+            {/* Dimensions */}
+            <div style={{ padding: '4px 0', borderTop: `1px solid ${T.border.subtle}`, marginTop: 4 }}>
+              <PortalButton onClick={() => { setSbOpen(false); setActiveDimension('journal'); }} isRTL={isRTL} expanded={true} />
+              <BacktestPortalButton onClick={() => { setSbOpen(false); setActiveDimension('backtest'); }} isRTL={isRTL} expanded={true} />
+            </div>
+            {/* Bottom actions */}
+            <div style={{ padding: '4px 0', borderTop: `1px solid ${T.border.subtle}`, marginTop: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <button onClick={() => { setSbOpen(false); setShowFeatureModal(true); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: 'transparent', color: T.text.dim, border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 12 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                <span>{isRTL ? 'אודות המערכת' : 'About System'}</span>
+              </button>
+              <a href="https://discord.gg/VA9X5tGR" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', color: '#5865F2', borderRadius: T.radius.md, fontSize: 12, fontWeight: 500, textDecoration: 'none' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+                <span>{isRTL ? 'קהילת Discord' : 'Discord Community'}</span>
+              </a>
+              <button onClick={() => settings.setLang(settings.lang === 'he' ? 'en' : 'he')} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: `${T.accent.blue}10`, border: `1px solid ${T.accent.blue}25`, borderRadius: T.radius.md, color: T.accent.blue, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+                {Ico.globe}<span>{settings.lang === 'he' ? 'English' : 'עברית'}</span>
+              </button>
+              <button onClick={() => { setSbOpen(false); settings.setPrivacyMode(!settings.privacyMode); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: settings.privacyMode ? `${T.accent.orange}15` : `${T.accent.blue}08`, border: `1px solid ${settings.privacyMode ? T.accent.orange : T.accent.blue}25`, borderRadius: T.radius.md, color: settings.privacyMode ? T.accent.orange : T.accent.blue, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+                {settings.privacyMode ? '🔒' : '👁️'}<span>{settings.privacyMode ? (isRTL ? 'מוסתר' : 'Hidden') : (isRTL ? 'גלוי' : 'Visible')}</span>
+              </button>
+              <div style={{ position: 'relative' }}>
+                <button onClick={() => setShowThemeMenu(!showThemeMenu)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: `${T.accent.purple}10`, border: `1px solid ${T.accent.purple}25`, borderRadius: T.radius.md, color: T.accent.purple, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+                  {Ico.settings}<span>{t.theme}</span>
+                </button>
+                {showThemeMenu && (
+                  <div style={{ position: 'absolute', bottom: '100%', left: 0, right: 0, background: T.bg.card, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, padding: 6, marginBottom: 4, zIndex: 20, boxShadow: T.shadow.elevated }}>
+                    {(['midnight','arctic','ember'] as ThemeId[]).map(th => (
+                      <button key={th} onClick={() => { settings.setTheme(th); setShowThemeMenu(false); }} style={{ display: 'block', width: '100%', padding: '6px 10px', fontSize: 11, fontWeight: settings.theme === th ? 700 : 400, color: settings.theme === th ? T.accent.cyan : T.text.secondary, background: settings.theme === th ? `${T.accent.cyan}10` : 'transparent', border: 'none', borderRadius: T.radius.sm, cursor: 'pointer', textAlign: isRTL ? 'right' : 'left' }}>
+                        {th === 'midnight' ? t.midnight : th === 'arctic' ? t.arctic : t.ember}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <button onClick={() => { setSbOpen(false); setShowReset(true); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: `${T.accent.red}08`, border: `1px solid ${T.accent.red}20`, borderRadius: T.radius.md, color: T.accent.red, cursor: 'pointer', fontSize: 11, fontWeight: 500 }}>
+                {Ico.reset}<span>{t.resetAll}</span>
+              </button>
+              <button onClick={() => { setSbOpen(false); handleLogout(); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: `${T.accent.orange}08`, border: `1px solid ${T.accent.orange}20`, borderRadius: T.radius.md, color: T.accent.orange, cursor: 'pointer', fontSize: 11, fontWeight: 500 }}>
+                <span>🚪</span><span>{isRTL ? 'יציאה' : 'Logout'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
-      {/* SIDEBAR */}
+      {/* DESKTOP SIDEBAR */}
+      {!isMobile && (
       <aside style={{
-        width: isMobile ? 260 : (sbOpen ? 216 : 62),
-        minWidth: isMobile ? 260 : (sbOpen ? 216 : 62),
+        width: sbOpen ? 216 : 62,
+        minWidth: sbOpen ? 216 : 62,
         background: `linear-gradient(180deg, ${T.bg.secondary} 0%, ${T.bg.primary} 100%)`,
         borderInlineEnd: `1px solid ${T.border.subtle}`,
         display: 'flex', flexDirection: 'column',
         transition: 'all 0.3s ease', overflow: 'hidden', zIndex: 50,
-        ...(isMobile ? {
-          position: 'fixed' as const, top: 0, bottom: 0,
-          [isRTL ? 'right' : 'left']: sbOpen ? 0 : -270,
-          boxShadow: sbOpen ? '4px 0 24px rgba(0,0,0,0.4)' : 'none',
-        } : {})
       }}>
         <div style={{ padding: '18px 14px 6px', display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }} onClick={() => setShowFeatureModal(true)}>
             {Ico.orca}
-            {(sbOpen || isMobile) && <div><div style={{ fontSize: 16, fontWeight: 700, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>ORCA</div><div style={{ fontSize: 8, color: T.text.dim, letterSpacing: '0.15em', textTransform: 'uppercase' }}>Investment</div></div>}
+            {sbOpen && <div><div style={{ fontSize: 16, fontWeight: 700, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>ORCA</div><div style={{ fontSize: 8, color: T.text.dim, letterSpacing: '0.15em', textTransform: 'uppercase' }}>Investment</div></div>}
           </div>
-          {(sbOpen || isMobile) && <button onClick={() => setSbOpen(false)} style={{ marginInlineStart: 'auto', background: 'none', border: 'none', color: T.text.dim, cursor: 'pointer', fontSize: 14, padding: 4, lineHeight: 1, transition: 'color 0.2s' }}>‹</button>}
+          {sbOpen && <button onClick={() => setSbOpen(false)} style={{ marginInlineStart: 'auto', background: 'none', border: 'none', color: T.text.dim, cursor: 'pointer', fontSize: 14, padding: 4, lineHeight: 1, transition: 'color 0.2s' }}>‹</button>}
         </div>
-        {!sbOpen && !isMobile && <button onClick={() => setSbOpen(true)} style={{ background: 'none', border: 'none', color: T.text.dim, cursor: 'pointer', fontSize: 14, padding: '6px 0', lineHeight: 1, transition: 'color 0.2s' }}>›</button>}
-        {(sbOpen || isMobile) && <ModeSwitch T={T} isRTL={isRTL} operatingMode={settings.operatingMode} systemMode={settings.systemMode} onOperatingModeChange={settings.setOperatingMode} onSystemModeChange={settings.setSystemMode} />}
-        <nav style={{ flex: 1, padding: '0 6px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {!sbOpen && <button onClick={() => setSbOpen(true)} style={{ background: 'none', border: 'none', color: T.text.dim, cursor: 'pointer', fontSize: 14, padding: '6px 0', lineHeight: 1, transition: 'color 0.2s' }}>›</button>}
+        {sbOpen && <ModeSwitch T={T} isRTL={isRTL} operatingMode={settings.operatingMode} systemMode={settings.systemMode} onOperatingModeChange={settings.setOperatingMode} onSystemModeChange={settings.setSystemMode} />}
+        <nav style={{ flex: 1, padding: '0 6px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
           {nav.map(item => {
             const isWeekly = item.id === 'weekly-review';
             const activeColor = isWeekly ? '#FFD700' : T.accent.cyan;
             return (
-            <button key={item.id} onClick={() => { setPage(item.id); if (isMobile) setSbOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: (sbOpen || isMobile) ? '9px 10px' : '9px 0', justifyContent: (sbOpen || isMobile) ? 'flex-start' : 'center', background: page === item.id ? `${activeColor}10` : 'transparent', color: page === item.id ? activeColor : (isWeekly ? '#FFD700' : T.text.secondary), border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: page === item.id ? 600 : (isWeekly ? 600 : 400), transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: page === item.id ? `2px solid ${activeColor}` : '2px solid transparent' }}>
-              {typeof item.icon === 'string' ? <span style={{ fontSize: 18 }}>{item.icon}</span> : item.icon}{(sbOpen || isMobile) && <span>{item.label}</span>}
+            <button key={item.id} onClick={() => { setPage(item.id); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: sbOpen ? '9px 10px' : '9px 0', justifyContent: sbOpen ? 'flex-start' : 'center', background: page === item.id ? `${activeColor}10` : 'transparent', color: page === item.id ? activeColor : (isWeekly ? '#FFD700' : T.text.secondary), border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: page === item.id ? 600 : (isWeekly ? 600 : 400), transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: page === item.id ? `2px solid ${activeColor}` : '2px solid transparent' }}>
+              {typeof item.icon === 'string' ? <span style={{ fontSize: 18 }}>{item.icon}</span> : item.icon}{sbOpen && <span>{item.label}</span>}
             </button>
             );
           })}
-          {/* Info / About button */}
-          <button onClick={() => setShowFeatureModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: (sbOpen || isMobile) ? '9px 10px' : '9px 0', justifyContent: (sbOpen || isMobile) ? 'flex-start' : 'center', background: 'transparent', color: T.text.dim, border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: 400, transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: '2px solid transparent', marginTop: 4 }}>
+          <button onClick={() => setShowFeatureModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: sbOpen ? '9px 10px' : '9px 0', justifyContent: sbOpen ? 'flex-start' : 'center', background: 'transparent', color: T.text.dim, border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: 400, transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: '2px solid transparent', marginTop: 4 }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            {(sbOpen || isMobile) && <span>{isRTL ? 'אודות המערכת' : 'About System'}</span>}
+            {sbOpen && <span>{isRTL ? 'אודות המערכת' : 'About System'}</span>}
           </button>
-          {/* Discord Community */}
-          <a href="https://discord.gg/VA9X5tGR" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: (sbOpen || isMobile) ? '9px 10px' : '9px 0', justifyContent: (sbOpen || isMobile) ? 'flex-start' : 'center', background: 'transparent', color: '#5865F2', border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: 500, transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: '2px solid transparent', textDecoration: 'none' }}
+          <a href="https://discord.gg/VA9X5tGR" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: sbOpen ? '9px 10px' : '9px 0', justifyContent: sbOpen ? 'flex-start' : 'center', background: 'transparent', color: '#5865F2', border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: 500, transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: '2px solid transparent', textDecoration: 'none' }}
             onMouseEnter={e => { e.currentTarget.style.background = '#5865F215'; e.currentTarget.style.boxShadow = '0 0 12px #5865F220'; }}
             onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.boxShadow = 'none'; }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
-            {(sbOpen || isMobile) && <span>{isRTL ? 'קהילת Discord' : 'Discord Community'}</span>}
+            {sbOpen && <span>{isRTL ? 'קהילת Discord' : 'Discord Community'}</span>}
           </a>
         </nav>
-        {/* Journal Portal Button */}
-        {(sbOpen || isMobile) && <div style={{ padding: '4px 6px' }}><PortalButton onClick={() => setActiveDimension('journal')} isRTL={isRTL} expanded={true} /></div>}
-        {/* Install to Desktop */}
-        {(sbOpen || isMobile) && <div style={{ padding: '4px 6px' }}><InstallPrompt T={T} isRTL={isRTL} compact /></div>}
+        {/* Dimension Portal Buttons */}
+        {sbOpen && <div style={{ padding: '4px 6px' }}><PortalButton onClick={() => setActiveDimension('journal')} isRTL={isRTL} expanded={true} /></div>}
+        {sbOpen && <div style={{ padding: '4px 6px' }}><BacktestPortalButton onClick={() => setActiveDimension('backtest')} isRTL={isRTL} expanded={true} /></div>}
+        {sbOpen && <div style={{ padding: '4px 6px' }}><InstallPrompt T={T} isRTL={isRTL} compact /></div>}
         <div style={{ padding: 10, borderTop: `1px solid ${T.border.subtle}`, display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {(sbOpen || isMobile) && <div style={{ position: 'relative' }}>
+          {sbOpen && <div style={{ position: 'relative' }}>
             <button onClick={() => setShowThemeMenu(!showThemeMenu)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: `${T.accent.purple}10`, border: `1px solid ${T.accent.purple}25`, borderRadius: T.radius.md, color: T.accent.purple, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
               {Ico.settings}<span>{t.theme}</span>
             </button>
@@ -1244,20 +1321,21 @@ const Index = () => {
               </div>
             )}
           </div>}
-          {(sbOpen || isMobile) && <button onClick={() => settings.setPrivacyMode(!settings.privacyMode)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: settings.privacyMode ? `${T.accent.orange}15` : `${T.accent.blue}08`, border: `1px solid ${settings.privacyMode ? T.accent.orange : T.accent.blue}25`, borderRadius: T.radius.md, color: settings.privacyMode ? T.accent.orange : T.accent.blue, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+          {sbOpen && <button onClick={() => settings.setPrivacyMode(!settings.privacyMode)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: settings.privacyMode ? `${T.accent.orange}15` : `${T.accent.blue}08`, border: `1px solid ${settings.privacyMode ? T.accent.orange : T.accent.blue}25`, borderRadius: T.radius.md, color: settings.privacyMode ? T.accent.orange : T.accent.blue, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
             {settings.privacyMode ? '🔒' : '👁️'}<span>{settings.privacyMode ? (isRTL ? 'מוסתר' : 'Hidden') : (isRTL ? 'גלוי' : 'Visible')}</span>
           </button>}
-          <button onClick={() => settings.setLang(settings.lang === 'he' ? 'en' : 'he')} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: `${T.accent.blue}10`, border: `1px solid ${T.accent.blue}25`, borderRadius: T.radius.md, color: T.accent.blue, cursor: 'pointer', fontSize: 12, fontWeight: 600, justifyContent: (sbOpen || isMobile) ? 'flex-start' : 'center' }}>
-            {Ico.globe}{(sbOpen || isMobile) && <span>{settings.lang === 'he' ? 'English' : 'עברית'}</span>}
+          <button onClick={() => settings.setLang(settings.lang === 'he' ? 'en' : 'he')} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: `${T.accent.blue}10`, border: `1px solid ${T.accent.blue}25`, borderRadius: T.radius.md, color: T.accent.blue, cursor: 'pointer', fontSize: 12, fontWeight: 600, justifyContent: sbOpen ? 'flex-start' : 'center' }}>
+            {Ico.globe}{sbOpen && <span>{settings.lang === 'he' ? 'English' : 'עברית'}</span>}
           </button>
-          {(sbOpen || isMobile) && <button onClick={() => setShowReset(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: `${T.accent.red}08`, border: `1px solid ${T.accent.red}20`, borderRadius: T.radius.md, color: T.accent.red, cursor: 'pointer', fontSize: 11, fontWeight: 500 }}>
+          {sbOpen && <button onClick={() => setShowReset(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: `${T.accent.red}08`, border: `1px solid ${T.accent.red}20`, borderRadius: T.radius.md, color: T.accent.red, cursor: 'pointer', fontSize: 11, fontWeight: 500 }}>
             {Ico.reset}<span>{t.resetAll}</span>
           </button>}
-          {(sbOpen || isMobile) && <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: `${T.accent.orange}08`, border: `1px solid ${T.accent.orange}20`, borderRadius: T.radius.md, color: T.accent.orange, cursor: 'pointer', fontSize: 11, fontWeight: 500 }}>
+          {sbOpen && <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: `${T.accent.orange}08`, border: `1px solid ${T.accent.orange}20`, borderRadius: T.radius.md, color: T.accent.orange, cursor: 'pointer', fontSize: 11, fontWeight: 500 }}>
             <span>🚪</span><span>{isRTL ? 'יציאה' : 'Logout'}</span>
           </button>}
         </div>
       </aside>
+      )}
 
       {/* MAIN */}
       <main style={{ flex: 1, overflow: 'auto', transition: 'background 0.4s ease' }}>
