@@ -429,6 +429,7 @@ const makeDay = (lang = 'he'): JournalDay => {
     actualMove: '', dayScore: 0,
     wins: '', lessons: '', mistakes: '', solutions: '', closing: '',
     morningImages: [],
+    eodImages: [],
     btcThoughts: '',
     psychAnswers: { sleepWell: null, feelingPressure: null, seekingExcitement: null, recoveringLosses: null },
     disciplineCommitments: [],
