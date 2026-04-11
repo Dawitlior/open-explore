@@ -2048,11 +2048,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
               </button>
             ))}
           </div>
-          {/* Mobile menu button */}
-          <button className="j-mobile-menu-btn" onClick={() => setMobileMenu(true)}
-            style={{ display: 'none', background: th.inputBg, border: `1px solid ${th.inputBr}`, color: '#5AA9FF', padding: '6px 12px', fontSize: 12, borderRadius: 8, cursor: 'pointer', fontWeight: 700, fontFamily: "'Poppins',sans-serif", alignItems: 'center', gap: 4 }}>
-            ☰ {dir === 'rtl' ? 'תפריט' : 'Menu'}
-          </button>
+          {/* Spacer */}
           <div style={{ width: 1, height: 18, background: th.br, margin: '0 4px' }} />
           <button onClick={() => setTheme(p => p === 'dark' ? 'light' : 'dark')}
             style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, transition: 'all .2s' }}>
