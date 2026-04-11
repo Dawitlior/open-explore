@@ -2306,7 +2306,7 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk, onInfo
 // ═══════════════════════════════════════════════════════════════
 // CINEMATIC LOCK OVERLAYS
 // ═══════════════════════════════════════════════════════════════
-const MorningLockOverlay = ({ onDone }: { onDone: () => void }) => {
+const MorningLockOverlay = ({ onDone, isRTL }: { onDone: () => void; isRTL: boolean }) => {
   const [step, setStep] = useState(0);
   useEffect(() => {
     const t = [
@@ -2337,8 +2337,8 @@ const MorningLockOverlay = ({ onDone }: { onDone: () => void }) => {
       {/* Center text */}
       <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', opacity: step >= 3 ? 1 : 0, transform: step >= 3 ? 'scale(1)' : 'scale(0.9)', transition: 'all 0.4s ease' }}>
         <div style={{ fontSize: 36, marginBottom: 12 }}>✓</div>
-        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 'clamp(16px, 4vw, 22px)', fontWeight: 800, color: '#5AA9FF', letterSpacing: 1, textShadow: '0 0 30px rgba(90,169,255,0.5)' }}>
-          Morning Analysis Locked
+        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 'clamp(16px, 4vw, 22px)', fontWeight: 800, color: '#5AA9FF', letterSpacing: 1, textShadow: '0 0 30px rgba(90,169,255,0.5)', direction: isRTL ? 'rtl' : 'ltr' }}>
+          {isRTL ? 'ניתוח הבוקר ננעל' : 'Morning Analysis Locked'}
         </div>
         <div style={{ width: 60, height: 2, background: '#5AA9FF', margin: '12px auto', borderRadius: 1, boxShadow: '0 0 15px rgba(90,169,255,0.5)',
           opacity: step >= 4 ? 1 : 0, transform: step >= 4 ? 'scaleX(1)' : 'scaleX(0)', transition: 'all 0.3s ease' }} />
