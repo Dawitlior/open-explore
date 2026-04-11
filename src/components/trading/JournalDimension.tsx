@@ -1297,9 +1297,10 @@ const RiskStrip = ({ risk, dir, th }: { risk: JRiskStatus; dir: string; th: type
 // ═══════════════════════════════════════════════════════════════
 const RiskAlertModal = ({ risk, t, dir, onClose, th }: { risk: JRiskStatus; t: any; dir: string; onClose: () => void; th: typeof THEMES.dark }) => {
   const level = risk.breachedLevel;
-  if (level === 'none') return null;
   const [step, setStep] = useState(0);
   const [scanLine, setScanLine] = useState(0);
+
+  if (level === 'none') return null;
 
   const cfg = {
     daily: { icon: '⚠️', color: '#f97316', glow: 'rgba(249,115,22,', severity: 'DAILY LIMIT', msg: t.risk.daily },
