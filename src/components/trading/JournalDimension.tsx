@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, forwardRef } from 'react';
 import type { Trade } from '@/data/trades';
 import { readJournalState, writeJournalState, type JournalDay, type JournalTrade, type JournalState, type PsychAnswers } from '@/lib/journal-storage';
 import { ReturnButton } from './DimensionController';
@@ -383,13 +383,38 @@ const TR: Record<string, any> = {
 };
 
 // ═══════════════════════════════════════════════════════════════
-// HELPERS
+// HELPERS — SAFE DATE HANDLING
 // ═══════════════════════════════════════════════════════════════
+function safeDateStr(input: string | Date | undefined | null): string {
+  if (!input) return new Date().toISOString().split('T')[0];
+  if (input instanceof Date) {
+    if (isNaN(input.getTime())) return new Date().toISOString().split('T')[0];
+    return input.toISOString().split('T')[0];
+  }
+  // Try ISO YYYY-MM-DD
+  const iso = input.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) {
+    const d = new Date(Date.UTC(+iso[1], +iso[2] - 1, +iso[3]));
+    if (!isNaN(d.getTime()) && d.getUTCDate() === +iso[3] && d.getUTCMonth() === +iso[2] - 1) return input;
+  }
+  // Try DD/MM/YYYY
+  const dmy = input.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if (dmy) {
+    let yr = parseInt(dmy[3]); if (yr < 100) yr += 2000;
+    const d = new Date(Date.UTC(yr, parseInt(dmy[2]) - 1, parseInt(dmy[1])));
+    if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+  }
+  // Fallback
+  const fallback = new Date(input);
+  if (!isNaN(fallback.getTime())) return fallback.toISOString().split('T')[0];
+  return new Date().toISOString().split('T')[0];
+}
+
 const makeDay = (lang = 'he'): JournalDay => {
   const t = TR[lang];
   return {
     id: `d_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-    date: new Date().toISOString().split('T')[0],
+    date: safeDateStr(new Date()),
     dayNum: '', weekNum: '', lang,
     morningSaved: false,
     mood: '', plan: '',
@@ -415,10 +440,12 @@ const makeDay = (lang = 'he'): JournalDay => {
 const sumPnl = (d: JournalDay) => (d.trades || []).reduce((s, t) => s + (parseFloat(t.pnl) || 0), 0);
 const numWins = (d: JournalDay) => (d.trades || []).filter(t => parseFloat(t.pnl) > 0).length;
 const fmtFull = (iso: string, locale: string) => {
-  try { return new Date(iso + 'T12:00').toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); } catch { return iso; }
+  const safe = safeDateStr(iso);
+  try { return new Date(safe + 'T12:00').toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); } catch { return safe; }
 };
 const fmtShort = (iso: string, locale: string) => {
-  try { return new Date(iso + 'T12:00').toLocaleDateString(locale, { day: 'numeric', month: 'short' }); } catch { return iso; }
+  const safe = safeDateStr(iso);
+  try { return new Date(safe + 'T12:00').toLocaleDateString(locale, { day: 'numeric', month: 'short' }); } catch { return safe; }
 };
 
 const MORNING_KEYS = new Set(['mood','plan','tasks','goals','bias','mktStruct','mentalTags','btcNote','t3Note','domNote','macroNote','levels','setups','emotionScore','fearGreed','dayNum','weekNum','date','morningImages','btcThoughts','psychAnswers','disciplineCommitments','disciplineConfirmed','sectionLocks']);
