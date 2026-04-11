@@ -3294,6 +3294,11 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk, onInfo
         <TA val={day.closing} set={U('closing')} ph={f.closingPh} rows={3} dir={dir} disabled={fullLocked || sLocks['review']} th={th} />
       </Sec>
 
+      {/* EOD Chart Screenshots */}
+      <Sec title={dir === 'rtl' ? 'צילומי מסך - סוף יום' : 'EOD CHART SCREENSHOTS'} icon="📸" accent="#5AA9FF" th={th} fullLocked={fullLocked} locked={sLocks['eodImages']} onLock={() => lockSec('eodImages')} onUnlock={() => unlockSec('eodImages')}>
+        <ImageUpload images={day.eodImages || []} onUpdate={(imgs: string[]) => upd({ eodImages: imgs })} label={dir === 'rtl' ? 'צילומי גרפים מסוף היום' : 'End of day chart captures'} uploadLabel={f.imageUpload} dir={dir} disabled={fullLocked || sLocks['eodImages']} th={th} />
+      </Sec>
+
       {/* Seal Day */}
       {!fullLocked && (
         <div style={{ margin: '22px 0 8px', background: 'rgba(183,148,246,0.06)', border: '1px solid rgba(183,148,246,0.12)', borderRadius: 14, padding: '18px 24px', textAlign: 'center' }}>
