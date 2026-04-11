@@ -1959,34 +1959,40 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
       {lockAnim === 'morning' && <MorningLockOverlay onDone={() => setLockAnim(null)} />}
       {lockAnim === 'eod' && <EODLockOverlay onDone={() => setLockAnim(null)} />}
 
-      {/* MOBILE MENU POPUP */}
+      {/* CENTERED MENU POPUP */}
       {mobileMenu && (
-        <div onClick={() => setMobileMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)', animation: 'j-fade-in .2s ease-out' }}>
+        <div onClick={() => setMobileMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'j-fade-in .2s ease-out' }}>
           <div onClick={e => e.stopPropagation()} style={{
-            position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '75vh',
-            background: th.bg1, borderTop: `1px solid ${th.br}`, borderRadius: '20px 20px 0 0',
-            padding: '16px 12px 28px', overflowY: 'auto', animation: 'j-slide-up .3s ease-out',
+            width: 'min(480px, 90vw)', maxHeight: '80vh',
+            background: th.bg1, border: `1px solid ${th.br2}`, borderRadius: 18,
+            padding: '24px 20px', overflowY: 'auto', animation: 'j-scale-in .25s ease-out',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
           }}>
+            {/* Close button */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+              <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 14, fontWeight: 800, color: th.tx, letterSpacing: '-.3px' }}>⚡ APEX OS</span>
+              <button onClick={() => setMobileMenu(false)} style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', color: th.tx3, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+            </div>
             {/* Nav buttons */}
-            <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginBottom: 16 }}>
               {([['journal', t.nav.journal, '📝'], ['calendar', t.nav.calendar, '📅'], ['archive', t.nav.archive, '📂'], ['analytics', t.f.analytics, '📊']] as const).map(([v, l, ic]) => (
                 <button key={v} onClick={() => { setView(v as string); setMobileMenu(false); }}
-                  style={{ flex: 1, fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 700, border: 'none', cursor: 'pointer', borderRadius: 10, padding: '12px 10px', transition: 'all .2s', ...(view === v ? { background: th.selBg, color: '#5AA9FF' } : { background: th.inputBg, color: th.tx3 }) }}>
-                  {ic} {l}
+                  style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer', borderRadius: 12, padding: '14px 10px', transition: 'all .2s', ...(view === v ? { background: th.selBg, color: '#5AA9FF', border: `1px solid ${th.selBr}` } : { background: th.inputBg, color: th.tx3, border: `1px solid ${th.inputBr}` }) }}>
+                  <span style={{ fontSize: 18, display: 'block', marginBottom: 4 }}>{ic}</span> {l}
                 </button>
               ))}
             </div>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
               <button onClick={() => { setTheme(p => p === 'dark' ? 'light' : 'dark'); setMobileMenu(false); }}
-                style={{ flex: 1, padding: '10px', borderRadius: 10, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', color: th.tx2, fontSize: 12, fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>
+                style={{ flex: 1, padding: '12px', borderRadius: 10, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', color: th.tx2, fontSize: 13, fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>
                 {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
               </button>
               <button onClick={() => { setShowEntry(true); setMobileMenu(false); }}
-                style={{ flex: 1, padding: '10px', borderRadius: 10, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', color: '#FFC857', fontSize: 12, fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>
-                🔒 Lock
+                style={{ flex: 1, padding: '12px', borderRadius: 10, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', color: '#FFC857', fontSize: 13, fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>
+                🔒 Lock System
               </button>
               <button onClick={() => { onReturn(); setMobileMenu(false); }}
-                style={{ flex: 1, padding: '10px', borderRadius: 10, border: '1px solid rgba(212,175,55,0.3)', background: 'rgba(212,175,55,0.06)', cursor: 'pointer', color: '#D4AF37', fontSize: 12, fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>
+                style={{ flex: 1, padding: '12px', borderRadius: 10, border: '1px solid rgba(212,175,55,0.3)', background: 'rgba(212,175,55,0.06)', cursor: 'pointer', color: '#D4AF37', fontSize: 13, fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>
                 ⚔️ {isRTL ? 'חמ"ל' : 'Orca'}
               </button>
             </div>
@@ -1994,7 +2000,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
             <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, color: th.tx3, letterSpacing: '1.5px', marginBottom: 8, textTransform: 'uppercase' }}>{dir === 'rtl' ? 'ימי יומן' : 'JOURNAL DAYS'}</div>
             <input value={sbQ} onChange={e => setSbQ(e.target.value)} placeholder={t.arch.search}
               style={{ width: '100%', background: th.inputBg, border: `1px solid ${th.inputBr}`, borderRadius: 10, color: th.tx, fontSize: 13, outline: 'none', padding: '10px 14px', direction: dir, fontFamily: "'Poppins',sans-serif", marginBottom: 10 }} />
-            <div style={{ maxHeight: 300, overflowY: 'auto' }}>
+            <div style={{ maxHeight: 280, overflowY: 'auto' }}>
               {sbDays.map(d => {
                 const dp = sumPnl(d);
                 const sel = d.id === activeId;
