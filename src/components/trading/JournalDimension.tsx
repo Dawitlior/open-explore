@@ -2588,8 +2588,10 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
   useEffect(() => {
     readJournalState().then(s => {
       if (s?.days?.length) {
-        setDays(s.days);
-        setActiveId(s.activeDayId || s.days[s.days.length - 1].id);
+        // Validate all dates on load
+        const sanitized = s.days.map(d => ({ ...d, date: safeDateStr(d.date) }));
+        setDays(sanitized);
+        setActiveId(s.activeDayId || sanitized[sanitized.length - 1].id);
         if (s.lang) setLang(s.lang);
       } else {
         const d = makeDay(isRTL ? 'he' : 'en'); d.dayNum = '1'; d.weekNum = '1';
