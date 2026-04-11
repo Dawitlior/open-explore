@@ -1473,6 +1473,351 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
 };
 
 // ═══════════════════════════════════════════════════════════════
+// DAILY INTELLIGENCE PANEL (Calendar Overlay)
+// ═══════════════════════════════════════════════════════════════
+const DailyIntelligencePanel = ({ day, dir, th, onClose, onOpenJournal }: {
+  day: JournalDay; dir: string; th: typeof THEMES.dark; onClose: () => void; onOpenJournal: (id: string) => void;
+}) => {
+  const [aiResult, setAiResult] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const isRTL = dir === 'rtl';
+  const trades = day.trades || [];
+  const pnl = sumPnl(day);
+  const wins = numWins(day);
+  const totalR = trades.reduce((s, t) => s + (parseFloat(t.rr) || 0), 0);
+  const winRate = trades.length > 0 ? ((wins / trades.length) * 100).toFixed(0) : '0';
+  const negR = sumNegR(trades);
+  const dateFmt = fmtFull(day.date, isRTL ? 'he-IL' : 'en-US');
+
+  const runAI = () => {
+    if (trades.length === 0 && !day.morningSaved) return;
+    setAiLoading(true);
+    setTimeout(() => {
+      const lines: string[] = [];
+      // Plan adherence
+      if (day.plan && trades.length > 0) {
+        lines.push(isRTL ? '📋 תוכנית המסחר הוגדרה בבוקר — ' : '📋 A trading plan was set in the morning — ');
+        const planLen = day.plan.length;
+        lines[0] += planLen > 80
+          ? (isRTL ? 'תוכנית מפורטת, סימן חיובי למשמעת.' : 'detailed plan, a positive sign for discipline.')
+          : (isRTL ? 'תוכנית קצרה, שקול להרחיב בימים הבאים.' : 'brief plan — consider expanding in future days.');
+      } else if (!day.plan && trades.length > 0) {
+        lines.push(isRTL ? '⚠️ לא הוגדרה תוכנית בוקר — עסקאות בוצעו ללא הכנה ברורה.' : '⚠️ No morning plan was set — trades were taken without clear preparation.');
+      }
+      // Mistakes
+      if (day.mistakes) {
+        lines.push(isRTL ? `🔴 טעויות שצוינו: "${day.mistakes.slice(0, 80)}${day.mistakes.length > 80 ? '...' : ''}"` : `🔴 Noted mistakes: "${day.mistakes.slice(0, 80)}${day.mistakes.length > 80 ? '...' : ''}"`);
+      }
+      // Strong decisions
+      if (day.wins) {
+        lines.push(isRTL ? `🟢 החלטות טובות: "${day.wins.slice(0, 80)}${day.wins.length > 80 ? '...' : ''}"` : `🟢 Strong decisions: "${day.wins.slice(0, 80)}${day.wins.length > 80 ? '...' : ''}"`);
+      }
+      // Emotional patterns
+      if (day.emotionScore <= 3) {
+        lines.push(isRTL ? '😟 ציון רגשי נמוך — יום מאתגר מבחינה פסיכולוגית.' : '😟 Low emotional score — psychologically challenging day.');
+      } else if (day.emotionScore >= 8) {
+        lines.push(isRTL ? '😊 ציון רגשי גבוה — מצב מנטלי מצוין.' : '😊 High emotional score — excellent mental state.');
+      }
+      // R performance
+      if (totalR > 0) {
+        lines.push(isRTL ? `✅ יום חיובי ב-R: +${totalR.toFixed(2)}R — ביצוע איכותי.` : `✅ Positive R day: +${totalR.toFixed(2)}R — quality execution.`);
+      } else if (totalR < 0 && trades.length > 0) {
+        lines.push(isRTL ? `📉 יום שלילי ב-R: ${totalR.toFixed(2)}R — נדרשת סקירה.` : `📉 Negative R day: ${totalR.toFixed(2)}R — review needed.`);
+      }
+      // Overtrading
+      if (trades.length >= 4) {
+        lines.push(isRTL ? `⚡ ${trades.length} עסקאות — שקול האם מדובר במסחר-יתר.` : `⚡ ${trades.length} trades — consider if overtrading occurred.`);
+      }
+      // Improvement
+      if (day.lessons) {
+        lines.push(isRTL ? `💡 לקחים: "${day.lessons.slice(0, 80)}${day.lessons.length > 80 ? '...' : ''}"` : `💡 Lessons: "${day.lessons.slice(0, 80)}${day.lessons.length > 80 ? '...' : ''}"`);
+      }
+      if (lines.length === 0) {
+        lines.push(isRTL ? 'אין מספיק נתונים לניתוח מעמיק.' : 'Not enough data for deep analysis.');
+      }
+      setAiResult(lines.join('\n\n'));
+      setAiLoading(false);
+    }, 800);
+  };
+
+  useEffect(() => {
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', esc);
+    return () => window.removeEventListener('keydown', esc);
+  }, [onClose]);
+
+  const S = {
+    stat: { padding: '14px 10px', background: th.inputBg, borderRadius: 12, textAlign: 'center' as const, border: `1px solid ${th.cardBr}` },
+    label: { fontSize: 9, color: th.tx3, textTransform: 'uppercase' as const, letterSpacing: '1.2px', fontFamily: "'Poppins',sans-serif", fontWeight: 700 },
+    value: { fontSize: 22, fontWeight: 800, fontFamily: "'JetBrains Mono',monospace", marginTop: 4 },
+    section: { marginBottom: 20 },
+    secTitle: { fontSize: 10, fontWeight: 800, letterSpacing: '1.5px', textTransform: 'uppercase' as const, fontFamily: "'Poppins',sans-serif", marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 },
+  };
+
+  return (
+    <div onClick={onClose} style={{
+      position: 'fixed', inset: 0, zIndex: 200,
+      background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      animation: 'j-fade-in .25s ease-out',
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        width: '94%', maxWidth: 760, maxHeight: '90vh', overflow: 'hidden',
+        background: 'linear-gradient(165deg, #0d1117 0%, #0a0e1a 50%, #0d1117 100%)',
+        border: '1px solid rgba(90,169,255,0.15)',
+        borderRadius: 18,
+        boxShadow: '0 25px 80px rgba(0,0,0,0.6), 0 0 40px rgba(90,169,255,0.08)',
+        animation: 'j-scale-in .3s cubic-bezier(0.16,1,0.3,1)',
+        display: 'flex', flexDirection: 'column',
+      }}>
+        {/* Header */}
+        <div style={{
+          padding: '22px 28px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)',
+          background: `linear-gradient(135deg, ${pnl >= 0 ? 'rgba(0,255,163,0.04)' : 'rgba(255,77,77,0.04)'}, transparent)`,
+          flexShrink: 0,
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <div style={{ fontSize: 9, color: th.tx3, fontFamily: "'Poppins',sans-serif", fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 4 }}>
+                {isRTL ? '📊 דוח יומי מקיף' : '📊 DAILY INTELLIGENCE REPORT'}
+              </div>
+              <div style={{ fontSize: 20, fontWeight: 800, fontFamily: "'Poppins',sans-serif", color: th.tx }}>{dateFmt}</div>
+              <div style={{ fontSize: 11, color: th.tx3, marginTop: 4, fontFamily: "'JetBrains Mono',monospace" }}>
+                {isRTL ? `יום ${day.dayNum || '—'} • שבוע ${day.weekNum || '—'}` : `Day ${day.dayNum || '—'} • Week ${day.weekNum || '—'}`}
+              </div>
+            </div>
+            <button onClick={onClose} style={{
+              width: 36, height: 36, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.1)',
+              background: 'rgba(255,255,255,0.04)', color: th.tx3, fontSize: 18, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s',
+            }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}>×</button>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div style={{ overflowY: 'auto', padding: '22px 28px 30px', flex: 1, direction: dir as any }}>
+          {/* SECTION 1 — Stats */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10, marginBottom: 24 }} className="j-grid-2col">
+            {[
+              { l: isRTL ? 'סה"כ עסקאות' : 'Trades', v: String(trades.length), c: '#5AA9FF' },
+              { l: isRTL ? 'תוצאה נטו' : 'Net R', v: `${totalR >= 0 ? '+' : ''}${totalR.toFixed(2)}R`, c: totalR >= 0 ? '#00FFA3' : '#FF4D4D' },
+              { l: isRTL ? 'אחוז הצלחה' : 'Win Rate', v: `${winRate}%`, c: parseInt(winRate) >= 50 ? '#00FFA3' : '#FF4D4D' },
+              { l: isRTL ? 'ממוצע R' : 'Avg R', v: trades.length > 0 ? `${(totalR / trades.length).toFixed(2)}R` : '—', c: totalR >= 0 ? '#00FFA3' : '#FF4D4D' },
+              { l: isRTL ? 'סיכון יומי' : 'Risk Used', v: `${negR.toFixed(1)}R`, c: negR <= -3 ? '#FF4D4D' : negR <= -2 ? '#FFC857' : '#00FFA3' },
+            ].map((s, i) => (
+              <div key={i} style={{ ...S.stat, animation: `j-fade-in ${0.2 + i * 0.06}s ease-out` }}>
+                <div style={S.label}>{s.l}</div>
+                <div style={{ ...S.value, color: s.c }}>{s.v}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* SECTION 2 — Morning Analysis */}
+          {day.morningSaved && (
+            <div style={S.section}>
+              <div style={{ ...S.secTitle, color: '#5AA9FF' }}>
+                <span>☀️</span> {isRTL ? 'ניתוח בוקר' : 'Morning Analysis'}
+              </div>
+              <div style={{ background: 'rgba(90,169,255,0.04)', border: '1px solid rgba(90,169,255,0.12)', borderRadius: 12, padding: 16 }}>
+                {day.mood && (
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ fontSize: 9, color: '#5AA9FF', fontWeight: 700, letterSpacing: '1px', marginBottom: 4 }}>{isRTL ? 'מצב רוח' : 'MOOD'}</div>
+                    <div style={{ fontSize: 13, color: th.tx2, lineHeight: 1.7 }}>{day.mood}</div>
+                  </div>
+                )}
+                {day.plan && (
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ fontSize: 9, color: '#FFC857', fontWeight: 700, letterSpacing: '1px', marginBottom: 4 }}>{isRTL ? 'תוכנית מסחר' : 'TRADING PLAN'}</div>
+                    <div style={{ fontSize: 13, color: th.tx2, lineHeight: 1.7 }}>{day.plan}</div>
+                  </div>
+                )}
+                {day.setups && (
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ fontSize: 9, color: '#b794f6', fontWeight: 700, letterSpacing: '1px', marginBottom: 4 }}>{isRTL ? 'סט-אפים מתוכננים' : 'PLANNED SETUPS'}</div>
+                    <div style={{ fontSize: 13, color: th.tx2, lineHeight: 1.7 }}>{day.setups}</div>
+                  </div>
+                )}
+                {day.levels && (
+                  <div>
+                    <div style={{ fontSize: 9, color: '#00FFA3', fontWeight: 700, letterSpacing: '1px', marginBottom: 4 }}>{isRTL ? 'רמות מפתח' : 'KEY LEVELS'}</div>
+                    <div style={{ fontSize: 13, color: th.tx2, lineHeight: 1.7 }}>{day.levels}</div>
+                  </div>
+                )}
+                {day.emotionScore > 0 && (
+                  <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ fontSize: 9, color: th.tx3, fontWeight: 700 }}>{isRTL ? 'ציון רגשי' : 'EMOTION'}</div>
+                    <div style={{ fontSize: 16, fontWeight: 800, color: day.emotionScore >= 7 ? '#00FFA3' : day.emotionScore >= 4 ? '#FFC857' : '#FF4D4D', fontFamily: "'JetBrains Mono',monospace" }}>{day.emotionScore}/10</div>
+                  </div>
+                )}
+                {!day.mood && !day.plan && !day.setups && !day.levels && (
+                  <div style={{ fontSize: 12, color: th.tx3, textAlign: 'center', padding: 10 }}>{isRTL ? 'נעול ללא תוכן מפורט' : 'Locked without detailed content'}</div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* SECTION 3 — Trade List */}
+          {trades.length > 0 && (
+            <div style={S.section}>
+              <div style={{ ...S.secTitle, color: '#FFC857' }}>
+                <span>📈</span> {isRTL ? `עסקאות (${trades.length})` : `Trades (${trades.length})`}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {trades.map((tr, i) => {
+                  const trPnl = parseFloat(tr.pnl) || 0;
+                  const trR = parseFloat(tr.rr) || 0;
+                  const isWin = trPnl > 0;
+                  return (
+                    <div key={i} style={{
+                      background: `${isWin ? 'rgba(0,255,163,0.03)' : 'rgba(255,77,77,0.03)'}`,
+                      border: `1px solid ${isWin ? 'rgba(0,255,163,0.12)' : 'rgba(255,77,77,0.12)'}`,
+                      borderRadius: 10, padding: '12px 16px',
+                      animation: `j-fade-in ${0.2 + i * 0.05}s ease-out`,
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span style={{ fontSize: 14, fontWeight: 800, color: '#5AA9FF', fontFamily: "'JetBrains Mono',monospace" }}>{tr.pair || '—'}</span>
+                          <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 6, fontWeight: 700, background: tr.side === 'Long' ? 'rgba(0,255,163,0.1)' : 'rgba(255,77,77,0.1)', color: tr.side === 'Long' ? '#00FFA3' : '#FF4D4D' }}>{tr.side || '—'}</span>
+                        </div>
+                        <span style={{ fontSize: 16, fontWeight: 800, color: isWin ? '#00FFA3' : '#FF4D4D', fontFamily: "'JetBrains Mono',monospace" }}>
+                          {trPnl >= 0 ? '+' : ''}{trPnl.toFixed(2)}$
+                        </span>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, fontSize: 10 }}>
+                        {[
+                          { l: 'Entry', v: tr.entry || '—' },
+                          { l: 'Exit', v: tr.exit || '—' },
+                          { l: 'Size', v: tr.size || '—' },
+                          { l: 'R', v: `${trR >= 0 ? '+' : ''}${trR.toFixed(2)}R`, c: trR >= 0 ? '#00FFA3' : '#FF4D4D' },
+                        ].map((f, fi) => (
+                          <div key={fi}>
+                            <span style={{ color: th.tx3, fontSize: 8, fontWeight: 700 }}>{f.l} </span>
+                            <span style={{ color: (f as any).c || th.tx2, fontFamily: "'JetBrains Mono',monospace" }}>{f.v}</span>
+                          </div>
+                        ))}
+                      </div>
+                      {tr.notes && <div style={{ fontSize: 11, color: th.tx3, marginTop: 6, fontStyle: 'italic' }}>"{tr.notes}"</div>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* SECTION 4 — End of Day Review */}
+          {day.eodSaved && (
+            <div style={S.section}>
+              <div style={{ ...S.secTitle, color: '#b794f6' }}>
+                <span>🌙</span> {isRTL ? 'סקירת סוף יום' : 'End-of-Day Review'}
+              </div>
+              <div style={{ background: 'rgba(183,148,246,0.04)', border: '1px solid rgba(183,148,246,0.12)', borderRadius: 12, padding: 16 }}>
+                {day.dayScore > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                    <div style={{ fontSize: 9, color: '#b794f6', fontWeight: 700, letterSpacing: '1px' }}>{isRTL ? 'ציון יום' : 'DAY SCORE'}</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: day.dayScore >= 7 ? '#00FFA3' : day.dayScore >= 4 ? '#FFC857' : '#FF4D4D', fontFamily: "'JetBrains Mono',monospace" }}>{day.dayScore}/10</div>
+                  </div>
+                )}
+                {day.wins && (
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ fontSize: 9, color: '#00FFA3', fontWeight: 700, letterSpacing: '1px', marginBottom: 4 }}>{isRTL ? 'הצלחות' : 'WINS'}</div>
+                    <div style={{ fontSize: 13, color: th.tx2, lineHeight: 1.7 }}>{day.wins}</div>
+                  </div>
+                )}
+                {day.mistakes && (
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ fontSize: 9, color: '#FF4D4D', fontWeight: 700, letterSpacing: '1px', marginBottom: 4 }}>{isRTL ? 'טעויות' : 'MISTAKES'}</div>
+                    <div style={{ fontSize: 13, color: th.tx2, lineHeight: 1.7 }}>{day.mistakes}</div>
+                  </div>
+                )}
+                {day.lessons && (
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ fontSize: 9, color: '#FFC857', fontWeight: 700, letterSpacing: '1px', marginBottom: 4 }}>{isRTL ? 'לקחים' : 'LESSONS'}</div>
+                    <div style={{ fontSize: 13, color: th.tx2, lineHeight: 1.7 }}>{day.lessons}</div>
+                  </div>
+                )}
+                {day.solutions && (
+                  <div>
+                    <div style={{ fontSize: 9, color: '#5AA9FF', fontWeight: 700, letterSpacing: '1px', marginBottom: 4 }}>{isRTL ? 'פתרונות' : 'SOLUTIONS'}</div>
+                    <div style={{ fontSize: 13, color: th.tx2, lineHeight: 1.7 }}>{day.solutions}</div>
+                  </div>
+                )}
+                {!day.wins && !day.mistakes && !day.lessons && !day.solutions && (
+                  <div style={{ fontSize: 12, color: th.tx3, textAlign: 'center', padding: 10 }}>{isRTL ? 'נעול ללא תוכן מפורט' : 'Locked without detailed content'}</div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* SECTION 5 — AI Day Analysis */}
+          <div style={S.section}>
+            <div style={{ ...S.secTitle, color: '#b794f6' }}>
+              <span>🧠</span> {isRTL ? 'ניתוח AI יומי' : 'AI Day Analysis'}
+            </div>
+            {!aiResult && !aiLoading ? (
+              <button onClick={runAI} style={{
+                width: '100%', padding: '14px 20px', borderRadius: 12, cursor: 'pointer',
+                background: 'linear-gradient(135deg, rgba(183,148,246,0.08), rgba(90,169,255,0.08))',
+                border: '1px solid rgba(183,148,246,0.2)',
+                color: '#b794f6', fontSize: 13, fontWeight: 700, fontFamily: "'Poppins',sans-serif",
+                transition: 'all .25s', letterSpacing: '0.3px',
+              }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'linear-gradient(135deg, rgba(183,148,246,0.15), rgba(90,169,255,0.15))'; e.currentTarget.style.transform = 'scale(1.01)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'linear-gradient(135deg, rgba(183,148,246,0.08), rgba(90,169,255,0.08))'; e.currentTarget.style.transform = 'scale(1)'; }}>
+                🧠 {isRTL ? 'נתח את היום הזה' : 'Analyze This Day'}
+              </button>
+            ) : aiLoading ? (
+              <div style={{ textAlign: 'center', padding: 24, background: 'rgba(183,148,246,0.04)', borderRadius: 12, border: '1px solid rgba(183,148,246,0.1)' }}>
+                <div style={{ fontSize: 30, marginBottom: 8, animation: 'j-pulse 1.2s ease-in-out infinite' }}>🧠</div>
+                <div style={{ fontSize: 12, color: th.tx3 }}>{isRTL ? 'מנתח ביצועים...' : 'Analyzing performance...'}</div>
+              </div>
+            ) : (
+              <div style={{
+                background: 'rgba(183,148,246,0.04)', border: '1px solid rgba(183,148,246,0.12)',
+                borderRadius: 12, padding: 18, animation: 'j-fade-in .4s ease-out',
+              }}>
+                {aiResult!.split('\n\n').map((line, i) => (
+                  <div key={i} style={{
+                    fontSize: 13, color: th.tx2, lineHeight: 1.8, marginBottom: i < aiResult!.split('\n\n').length - 1 ? 12 : 0,
+                    paddingBottom: i < aiResult!.split('\n\n').length - 1 ? 12 : 0,
+                    borderBottom: i < aiResult!.split('\n\n').length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                  }}>{line}</div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* SECTION 6 — Quick Actions */}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <button onClick={() => { onClose(); onOpenJournal(day.id); }} style={{
+              flex: 1, minWidth: 160, padding: '12px 18px', borderRadius: 10, cursor: 'pointer',
+              background: 'rgba(90,169,255,0.08)', border: '1px solid rgba(90,169,255,0.2)',
+              color: '#5AA9FF', fontSize: 12, fontWeight: 700, fontFamily: "'Poppins',sans-serif", transition: 'all .2s',
+            }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(90,169,255,0.15)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(90,169,255,0.08)'; }}>
+              📝 {isRTL ? 'פתח יומן מלא ליום זה' : 'Open Full Journal'}
+            </button>
+            {(day.morningImages?.length > 0) && (
+              <button onClick={() => { /* scroll to images in journal */ onClose(); onOpenJournal(day.id); }} style={{
+                flex: 1, minWidth: 160, padding: '12px 18px', borderRadius: 10, cursor: 'pointer',
+                background: 'rgba(0,255,163,0.06)', border: '1px solid rgba(0,255,163,0.15)',
+                color: '#00FFA3', fontSize: 12, fontWeight: 700, fontFamily: "'Poppins',sans-serif", transition: 'all .2s',
+              }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,255,163,0.12)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,255,163,0.06)'; }}>
+                📷 {isRTL ? 'צפה בצילומי מסך' : 'View Screenshots'}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════
 // CALENDAR VIEW
 // ═══════════════════════════════════════════════════════════════
 const CalendarView = ({ days, dir, th, t, risk, onSelectDay }: { days: JournalDay[]; dir: string; th: typeof THEMES.dark; t: any; risk: JRiskStatus; onSelectDay: (id: string) => void }) => {
