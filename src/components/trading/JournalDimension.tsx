@@ -1934,7 +1934,7 @@ const CalendarView = ({ days, dir, th, t, risk, onSelectDay }: { days: JournalDa
 
           return (
             <div key={dayNum}
-              onClick={() => jDay && onSelectDay(jDay.id)}
+              onClick={() => jDay && setIntelDay(jDay)}
               style={{
                 aspectRatio: '1', borderRadius: 10, background: color, border: `1.5px solid ${borderColor}`,
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
