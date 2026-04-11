@@ -2273,36 +2273,35 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
         <IntelCard delay={1020} accent="#D4AF37" th={th}>
           <SectionLabel icon="🏆" text={isRTL ? 'שנתי' : 'YEARLY'} accent="#D4AF37" th={th} />
           {yearlyRecap.map(yr => {
-              const c = yr.totalR >= 0 ? '#00FFA3' : '#FF4D4D';
-              return (
-                <div key={yr.year} style={{ background: 'rgba(212,175,55,0.03)', border: '1px solid rgba(212,175,55,0.12)', borderRadius: 16, padding: '22px 24px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-                    <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 24, fontWeight: 800, color: '#D4AF37' }}>{yr.year}</div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 28, fontWeight: 800, color: c, lineHeight: 1 }}>{yr.totalR >= 0 ? '+' : ''}{yr.totalR.toFixed(2)}R</div>
-                      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, color: c, opacity: 0.7, marginTop: 2 }}>{yr.pnl >= 0 ? '+' : ''}{yr.pnl.toFixed(0)}$</div>
-                    </div>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 8 }} className="j-grid-2col">
-                    {[
-                      { l: isRTL ? 'עסקאות' : 'Trades', v: String(yr.trades), c: '#5AA9FF' },
-                      { l: isRTL ? 'ניצחונות' : 'W/L/BE', v: `${yr.wins}/${yr.losses}/${yr.be}`, c: th.tx2 },
-                      { l: isRTL ? 'הצלחה' : 'Win%', v: `${yr.wr.toFixed(0)}%`, c: yr.wr >= 50 ? '#00FFA3' : '#FF4D4D' },
-                      { l: isRTL ? 'ימי מסחר' : 'Days', v: String(yr.days), c: '#FFC857' },
-                      { l: 'EV', v: `${yr.ev >= 0 ? '+' : ''}${yr.ev.toFixed(3)}R`, c: yr.ev >= 0 ? '#00FFA3' : '#FF4D4D' },
-                      { l: isRTL ? 'ממוצע נצחון' : 'Avg Win', v: `+${yr.avgWinR.toFixed(2)}R`, c: '#00FFA3' },
-                    ].map(s => (
-                      <div key={s.l} style={{ textAlign: 'center', padding: '8px 4px', background: `${s.c}06`, borderRadius: 8 }}>
-                        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 7, fontWeight: 700, letterSpacing: '1.5px', color: th.tx3, textTransform: 'uppercase' as const }}>{s.l}</div>
-                        <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 800, color: s.c, marginTop: 3 }}>{s.v}</div>
-                      </div>
-                    ))}
+            const c = yr.totalR >= 0 ? '#00FFA3' : '#FF4D4D';
+            return (
+              <div key={yr.year} style={{ background: 'rgba(212,175,55,0.03)', border: '1px solid rgba(212,175,55,0.12)', borderRadius: 14, padding: '16px 18px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <span style={{ fontSize: 20, fontWeight: 800, color: '#D4AF37', fontFamily: "'Poppins',sans-serif" }}>{yr.year}</span>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: c, fontFamily: "'JetBrains Mono',monospace" }}>{yr.totalR >= 0 ? '+' : ''}{yr.totalR.toFixed(2)}R</div>
+                    <div style={{ fontSize: 11, color: c, opacity: 0.7 }}>{yr.pnl >= 0 ? '+' : ''}{yr.pnl.toFixed(0)}$</div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </AnimCard>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 6 }} className="j-grid-2col">
+                  {[
+                    { l: isRTL ? 'עסקאות' : 'Trades', v: String(yr.trades), c: '#5AA9FF' },
+                    { l: 'W/L/BE', v: `${yr.wins}/${yr.losses}/${yr.be}`, c: th.tx2 },
+                    { l: isRTL ? 'הצלחה' : 'Win%', v: `${yr.wr.toFixed(0)}%`, c: yr.wr >= 50 ? '#00FFA3' : '#FF4D4D' },
+                    { l: isRTL ? 'ימים' : 'Days', v: String(yr.days), c: '#FFC857' },
+                    { l: 'EV', v: `${yr.ev >= 0 ? '+' : ''}${yr.ev.toFixed(3)}R`, c: yr.ev >= 0 ? '#00FFA3' : '#FF4D4D' },
+                    { l: isRTL ? 'ממ. נצחון' : 'Avg Win', v: `+${yr.avgWinR.toFixed(2)}R`, c: '#00FFA3' },
+                  ].map(s => (
+                    <div key={s.l} style={{ textAlign: 'center', padding: '6px 4px', background: `${s.c}06`, borderRadius: 6 }}>
+                      <div style={{ fontSize: 7, fontWeight: 700, letterSpacing: '1px', color: th.tx3, textTransform: 'uppercase' as const }}>{s.l}</div>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: s.c, marginTop: 2, fontFamily: "'JetBrains Mono',monospace" }}>{s.v}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </IntelCard>
       )}
     </div>
   );
