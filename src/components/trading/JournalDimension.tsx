@@ -1637,6 +1637,123 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk }: any)
 };
 
 // ═══════════════════════════════════════════════════════════════
+// CINEMATIC LOCK OVERLAYS
+// ═══════════════════════════════════════════════════════════════
+const MorningLockOverlay = ({ onDone }: { onDone: () => void }) => {
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const t = [
+      setTimeout(() => setStep(1), 100),
+      setTimeout(() => setStep(2), 500),
+      setTimeout(() => setStep(3), 1200),
+      setTimeout(() => setStep(4), 1700),
+      setTimeout(() => { setStep(5); onDone(); }, 2200),
+    ];
+    // Sound
+    try {
+      const ctx = new AudioContext(); const now = ctx.currentTime;
+      const o = ctx.createOscillator(); const g = ctx.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(1200, now); o.frequency.exponentialRampToValueAtTime(1800, now + 0.12);
+      g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(0.05, now + 0.04); g.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+      o.connect(g); g.connect(ctx.destination); o.start(now); o.stop(now + 0.4);
+      setTimeout(() => ctx.close(), 500);
+    } catch {}
+    return () => t.forEach(clearTimeout);
+  }, [onDone]);
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9998, pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {/* Dim overlay */}
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(5,10,30,0.75)', opacity: step >= 1 ? 1 : 0, transition: 'opacity 0.4s ease', backdropFilter: 'blur(4px)' }} />
+      {/* Grid lines */}
+      <div style={{ position: 'absolute', inset: 0, opacity: step >= 1 ? 0.08 : 0, transition: 'opacity 0.6s ease',
+        backgroundImage: 'linear-gradient(rgba(90,169,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(90,169,255,0.4) 1px, transparent 1px)', backgroundSize: '80px 60px' }} />
+      {/* Chart line */}
+      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: step >= 2 ? 0.3 : 0, transition: 'opacity 0.5s ease' }} viewBox="0 0 1000 400" preserveAspectRatio="none">
+        <polyline points="0,300 100,290 200,295 300,270 400,260 500,240 600,200 700,180 750,100 800,60 850,40 900,30"
+          fill="none" stroke="#5AA9FF" strokeWidth="2.5"
+          style={{ strokeDasharray: 2000, strokeDashoffset: step >= 2 ? 0 : 2000, transition: 'stroke-dashoffset 1s ease-out',
+            filter: 'drop-shadow(0 0 6px rgba(90,169,255,0.6))' }} />
+      </svg>
+      {/* Center text */}
+      <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', opacity: step >= 3 ? 1 : 0, transform: step >= 3 ? 'scale(1)' : 'scale(0.9)', transition: 'all 0.4s ease' }}>
+        <div style={{ fontSize: 36, marginBottom: 12 }}>✓</div>
+        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 'clamp(16px, 4vw, 22px)', fontWeight: 800, color: '#5AA9FF', letterSpacing: 1, textShadow: '0 0 30px rgba(90,169,255,0.5)' }}>
+          Morning Analysis Locked
+        </div>
+        <div style={{ width: 60, height: 2, background: '#5AA9FF', margin: '12px auto', borderRadius: 1, boxShadow: '0 0 15px rgba(90,169,255,0.5)',
+          opacity: step >= 4 ? 1 : 0, transform: step >= 4 ? 'scaleX(1)' : 'scaleX(0)', transition: 'all 0.3s ease' }} />
+      </div>
+    </div>
+  );
+};
+
+const EODLockOverlay = ({ onDone }: { onDone: () => void }) => {
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const t = [
+      setTimeout(() => setStep(1), 100),
+      setTimeout(() => setStep(2), 600),
+      setTimeout(() => setStep(3), 1400),
+      setTimeout(() => setStep(4), 2000),
+      setTimeout(() => { setStep(5); onDone(); }, 2600),
+    ];
+    // Lock click sound
+    try {
+      const ctx = new AudioContext(); const now = ctx.currentTime;
+      // Metallic click at step 3
+      setTimeout(() => {
+        const o = ctx.createOscillator(); const g = ctx.createGain();
+        o.type = 'square'; o.frequency.value = 2000;
+        g.gain.setValueAtTime(0.08, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+        o.connect(g); g.connect(ctx.destination); o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.08);
+        // Confirmation tone
+        const o2 = ctx.createOscillator(); const g2 = ctx.createGain();
+        o2.type = 'sine'; o2.frequency.setValueAtTime(800, ctx.currentTime + 0.1); o2.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.25);
+        g2.gain.setValueAtTime(0, ctx.currentTime + 0.1); g2.gain.linearRampToValueAtTime(0.04, ctx.currentTime + 0.15); g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+        o2.connect(g2); g2.connect(ctx.destination); o2.start(ctx.currentTime + 0.1); o2.stop(ctx.currentTime + 0.5);
+      }, 1400);
+      setTimeout(() => ctx.close(), 2500);
+    } catch {}
+    return () => t.forEach(clearTimeout);
+  }, [onDone]);
+
+  const candles = useMemo(() => Array.from({ length: 30 }, (_, i) => {
+    const base = 200 + Math.sin(i * 0.4) * 60 + Math.cos(i * 0.15) * 30;
+    const body = (Math.random() - 0.45) * 40;
+    return { x: (i + 0.5) / 30, o: base, c: base + body, green: body > 0 };
+  }), []);
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9998, pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(5,8,20,0.8)', opacity: step >= 1 ? 1 : 0, transition: 'opacity 0.5s ease', backdropFilter: 'blur(6px)' }} />
+      {/* Candlestick replay */}
+      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: step >= 2 && step < 4 ? 0.25 : 0, transition: 'opacity 0.6s ease' }} viewBox="0 0 1000 400" preserveAspectRatio="none">
+        {candles.map((c, i) => {
+          const cx = c.x * 1000; const top = Math.min(c.o, c.c); const bot = Math.max(c.o, c.c); const h = Math.max(4, bot - top);
+          const show = step >= 2;
+          return <rect key={i} x={cx - 8} y={top} width={16} height={h}
+            fill={c.green ? '#00FFA3' : '#FF4D4D'} rx={2}
+            style={{ opacity: show ? 1 : 0, transform: show ? 'scaleY(1)' : 'scaleY(0)', transformOrigin: 'center', transition: `all 0.15s ease ${i * 0.025}s` }} />;
+        })}
+        {/* Golden close line */}
+        <line x1="970" y1="0" x2="970" y2="400" stroke="#D4AF37" strokeWidth="2"
+          style={{ opacity: step >= 3 ? 0.6 : 0, transition: 'opacity 0.3s ease', filter: 'drop-shadow(0 0 8px rgba(212,175,55,0.5))' }} />
+      </svg>
+      {/* Center content */}
+      <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', opacity: step >= 3 ? 1 : 0, transform: step >= 3 ? 'scale(1)' : 'scale(0.9)', transition: 'all 0.5s ease' }}>
+        <div style={{ fontSize: 44, marginBottom: 10, transition: 'transform 0.3s ease', transform: step >= 4 ? 'rotateY(180deg)' : 'rotateY(0)' }}>🔒</div>
+        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 'clamp(16px, 4vw, 22px)', fontWeight: 800, color: '#D4AF37', letterSpacing: 1, textShadow: '0 0 30px rgba(212,175,55,0.4)', direction: 'rtl' }}>
+          יום המסחר ננעל
+        </div>
+        <div style={{ width: 80, height: 2, background: 'linear-gradient(90deg, transparent, #D4AF37, transparent)', margin: '14px auto', borderRadius: 1,
+          opacity: step >= 4 ? 1 : 0, transition: 'opacity 0.4s ease' }} />
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════
 // MAIN JOURNAL DIMENSION
 // ═══════════════════════════════════════════════════════════════
 interface JournalDimensionProps {
