@@ -2609,8 +2609,8 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
       )}
 
       {/* LOCK ANIMATIONS */}
-      {lockAnim === 'morning' && <MorningLockOverlay onDone={() => setLockAnim(null)} />}
-      {lockAnim === 'eod' && <EODLockOverlay onDone={() => setLockAnim(null)} />}
+      {lockAnim === 'morning' && <MorningLockOverlay onDone={() => setLockAnim(null)} isRTL={dir === 'rtl'} />}
+      {lockAnim === 'eod' && <EODLockOverlay onDone={() => setLockAnim(null)} isRTL={dir === 'rtl'} />}
 
       {/* KNOWLEDGE PANEL */}
       {knowledgePanel && <KnowledgePanel type={knowledgePanel} days={days} dir={dir} th={th} onClose={() => setKnowledgePanel(null)} onOpenDay={(id) => { setViewingArchiveId(id); setView('journal'); }} />}
