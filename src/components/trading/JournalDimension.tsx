@@ -503,7 +503,7 @@ interface JRiskStatus {
 }
 
 function checkJournalRisk(days: JournalDay[], refDate: Date = new Date()): JRiskStatus {
-  const refStr = refDate.toISOString().split('T')[0];
+  const refStr = safeDateStr(refDate);
   const refD = new Date(refStr + 'T12:00');
 
   // Daily
