@@ -1625,7 +1625,7 @@ const CalendarView = ({ days, dir, th, t, risk, onSelectDay }: { days: JournalDa
 // ═══════════════════════════════════════════════════════════════
 // MORNING FORM
 // ═══════════════════════════════════════════════════════════════
-const MorningForm = ({ day, upd, t, dir, onSave, dirty, th }: any) => {
+const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) => {
   const f = t.f;
   const U = (k: string) => (v: any) => upd({ [k]: v });
   const taskArr = day.tasks || [];
@@ -1638,7 +1638,9 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th }: any) => {
   return (
     <div>
       <MarketStrip day={day} dir={dir} th={th} />
-      <PDiv label={dir === 'rtl' ? 'תדריך טרום-שוק' : 'PRE-MARKET BRIEFING'} color="#5AA9FF" icon="☀️" th={th} />
+      <div onClick={onInfoClick} style={{ cursor: 'pointer' }}>
+        <PDiv label={dir === 'rtl' ? 'תדריך טרום-שוק' : 'PRE-MARKET BRIEFING'} color="#5AA9FF" icon="☀️" th={th} />
+      </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }} className="j-grid-2col">
         <div>
