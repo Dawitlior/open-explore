@@ -1460,153 +1460,507 @@ const TCard = ({ trade, idx, onChange, onDel, f, dir, disabled, th }: any) => {
 };
 
 // ═══════════════════════════════════════════════════════════════
-// BEHAVIORAL ANALYTICS ENGINE
+// BEHAVIORAL ANALYTICS ENGINE — INTELLIGENCE DASHBOARD
 // ═══════════════════════════════════════════════════════════════
+
+const AnimCard = ({ children, delay = 0, accent = 'transparent', th, style = {} }: { children: React.ReactNode; delay?: number; accent?: string; th: typeof THEMES.dark; style?: React.CSSProperties }) => {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setVisible(true), delay); return () => clearTimeout(t); }, [delay]);
+  return (
+    <div style={{
+      background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 16,
+      padding: '20px 22px', transition: 'all .6s cubic-bezier(0.16,1,0.3,1)',
+      opacity: visible ? 1 : 0, transform: visible ? 'translateY(0) scale(1)' : 'translateY(24px) scale(0.97)',
+      borderTop: accent !== 'transparent' ? `2px solid ${accent}` : undefined,
+      ...style,
+    }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = `0 8px 32px rgba(0,0,0,0.2), 0 0 0 1px ${accent}20`; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}>
+      {children}
+    </div>
+  );
+};
+
+const SectionLabel = ({ icon, text, accent, th }: { icon: string; text: string; accent: string; th: typeof THEMES.dark }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+    <div style={{ width: 30, height: 30, borderRadius: 8, background: `${accent}12`, border: `1px solid ${accent}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>{icon}</div>
+    <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 800, letterSpacing: '2.5px', textTransform: 'uppercase' as const, color: accent }}>{text}</span>
+  </div>
+);
+
+const MiniStat = ({ label, value, color, sub, th }: { label: string; value: string; color: string; sub?: string; th: typeof THEMES.dark }) => (
+  <div style={{ background: `${color}06`, border: `1px solid ${color}12`, borderRadius: 12, padding: '14px 12px', textAlign: 'center', transition: 'all .3s' }}>
+    <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 700, letterSpacing: '2px', color: th.tx3, textTransform: 'uppercase' as const, marginBottom: 6 }}>{label}</div>
+    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 22, fontWeight: 800, color, lineHeight: 1 }}>{value}</div>
+    {sub && <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, color: th.tx3, marginTop: 4 }}>{sub}</div>}
+  </div>
+);
+
+const InsightRow = ({ icon, text, type, th, delay = 0 }: { icon: string; text: string; type: 'warning' | 'success' | 'info' | 'neutral'; th: typeof THEMES.dark; delay?: number }) => {
+  const c = { warning: '#FF4D4D', success: '#00FFA3', info: '#5AA9FF', neutral: '#FFC857' }[type];
+  const [vis, setVis] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setVis(true), delay); return () => clearTimeout(t); }, [delay]);
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 16px',
+      background: `${c}06`, border: `1px solid ${c}15`, borderRadius: 12,
+      opacity: vis ? 1 : 0, transform: vis ? 'translateX(0)' : 'translateX(-16px)',
+      transition: 'all .5s cubic-bezier(0.16,1,0.3,1)',
+    }}>
+      <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>{icon}</span>
+      <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 13, color: th.tx, lineHeight: 1.7 }}>{text}</span>
+    </div>
+  );
+};
+
 const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th: typeof THEMES.dark }) => {
-  const completeDays = days.filter(d => d.eodSaved && d.trades?.length > 0);
-  if (completeDays.length < 2) return (
-    <div style={{ textAlign: 'center', padding: 40, color: th.tx3, fontFamily: "'Poppins',sans-serif", fontSize: 13 }}>
-      {dir === 'rtl' ? 'צריך לפחות 2 ימים שלמים עם עסקאות כדי לייצר תובנות' : 'Need at least 2 complete days with trades to generate insights'}
+  const isRTL = dir === 'rtl';
+  const completeDays = useMemo(() => days.filter(d => d.eodSaved && d.trades?.length > 0).sort((a, b) => a.date.localeCompare(b.date)), [days]);
+  const allTrades = useMemo(() => completeDays.flatMap(d => (d.trades || []).map(t => ({ ...t, dayDate: d.date, dayScore: d.dayScore, emotionScore: d.emotionScore, plan: d.plan, disciplineConfirmed: d.disciplineConfirmed }))), [completeDays]);
+
+  // ─── Core Metrics ───
+  const totalPnl = completeDays.reduce((s, d) => s + sumPnl(d), 0);
+  const totalTrades = allTrades.length;
+  const totalWins = allTrades.filter(t => (parseFloat(t.pnl) || 0) > 0).length;
+  const totalLosses = allTrades.filter(t => (parseFloat(t.pnl) || 0) < 0).length;
+  const totalBE = totalTrades - totalWins - totalLosses;
+  const winRate = totalTrades > 0 ? (totalWins / totalTrades) * 100 : 0;
+  const totalWinR = allTrades.reduce((s, t) => { const r = getTradeR(t as any); return r > 0 ? s + r : s; }, 0);
+  const totalLossR = allTrades.reduce((s, t) => { const r = getTradeR(t as any); return r < 0 ? s + Math.abs(r) : s; }, 0);
+  const avgWinR = totalWins > 0 ? totalWinR / totalWins : 0;
+  const avgLossR = totalLosses > 0 ? totalLossR / totalLosses : 0;
+  const totalR = allTrades.reduce((s, t) => s + getTradeR(t as any), 0);
+  const profitFactor = totalLossR > 0 ? totalWinR / totalLossR : totalWinR > 0 ? Infinity : 0;
+  const expectancy = totalTrades > 0 ? totalR / totalTrades : 0;
+  const avgScore = completeDays.reduce((s, d) => s + d.dayScore, 0) / completeDays.length;
+
+  // ─── Weekday Analysis ───
+  const byWeekday = useMemo(() => {
+    const dayNames = isRTL ? ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'] : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const map: Record<number, { pnl: number; r: number; count: number; wins: number; trades: number }> = {};
+    completeDays.forEach(d => {
+      const dow = new Date(d.date + 'T12:00').getDay();
+      if (!map[dow]) map[dow] = { pnl: 0, r: 0, count: 0, wins: 0, trades: 0 };
+      map[dow].pnl += sumPnl(d);
+      map[dow].r += (d.trades || []).reduce((s, t) => s + getTradeR(t), 0);
+      map[dow].count++;
+      map[dow].wins += numWins(d);
+      map[dow].trades += (d.trades || []).length;
+    });
+    return Object.entries(map).map(([k, v]) => ({ dow: +k, name: dayNames[+k], ...v, avgR: v.count > 0 ? v.r / v.count : 0, wr: v.trades > 0 ? (v.wins / v.trades) * 100 : 0 })).sort((a, b) => a.dow - b.dow);
+  }, [completeDays, isRTL]);
+
+  const bestDay = byWeekday.length > 0 ? [...byWeekday].sort((a, b) => b.avgR - a.avgR)[0] : null;
+  const worstDay = byWeekday.length > 0 ? [...byWeekday].sort((a, b) => a.avgR - b.avgR)[0] : null;
+
+  // ─── Asset Analysis ───
+  const byAsset = useMemo(() => {
+    const map: Record<string, { pnl: number; r: number; wins: number; count: number }> = {};
+    allTrades.forEach(t => {
+      const pair = (t.pair || 'Unknown').toUpperCase().trim();
+      if (!map[pair]) map[pair] = { pnl: 0, r: 0, wins: 0, count: 0 };
+      map[pair].pnl += parseFloat(t.pnl) || 0;
+      map[pair].r += getTradeR(t as any);
+      if ((parseFloat(t.pnl) || 0) > 0) map[pair].wins++;
+      map[pair].count++;
+    });
+    return Object.entries(map).map(([k, v]) => ({ asset: k, ...v, wr: v.count > 0 ? (v.wins / v.count) * 100 : 0, avgR: v.count > 0 ? v.r / v.count : 0 })).sort((a, b) => b.r - a.r);
+  }, [allTrades]);
+
+  // ─── Strategy Analysis (setup field) ───
+  const byStrategy = useMemo(() => {
+    const strategies = ['MSB + BOS', 'MSB+BOS', 'BOS', 'Daily Open', 'DAILY OPEN'];
+    const normalize = (s: string) => {
+      const up = s.toUpperCase().trim();
+      if (up.includes('MSB') && up.includes('BOS')) return 'MSB + BOS';
+      if (up === 'BOS') return 'BOS';
+      if (up.includes('DAILY') && up.includes('OPEN')) return 'Daily Open';
+      return s.trim();
+    };
+    const map: Record<string, { r: number; wins: number; count: number; pnl: number }> = {};
+    allTrades.forEach(t => {
+      const notes = (t.notes || '').trim();
+      const pair = (t.pair || '').trim();
+      // Check notes for strategy mentions
+      let strat = '';
+      for (const s of strategies) {
+        if (notes.toUpperCase().includes(s.toUpperCase()) || pair.toUpperCase().includes(s.toUpperCase())) {
+          strat = normalize(s);
+          break;
+        }
+      }
+      if (!strat) strat = isRTL ? 'אחר' : 'Other';
+      if (!map[strat]) map[strat] = { r: 0, wins: 0, count: 0, pnl: 0 };
+      map[strat].r += getTradeR(t as any);
+      map[strat].pnl += parseFloat(t.pnl) || 0;
+      if ((parseFloat(t.pnl) || 0) > 0) map[strat].wins++;
+      map[strat].count++;
+    });
+    return Object.entries(map).filter(([_, v]) => v.count >= 1).map(([k, v]) => ({ name: k, ...v, wr: v.count > 0 ? (v.wins / v.count) * 100 : 0, avgR: v.count > 0 ? v.r / v.count : 0 })).sort((a, b) => b.r - a.r);
+  }, [allTrades, isRTL]);
+
+  // ─── Streak Analysis ───
+  const streaks = useMemo(() => {
+    let curWin = 0, curLoss = 0, bestWin = 0, bestLoss = 0;
+    const sorted = [...completeDays];
+    sorted.forEach(d => {
+      const p = sumPnl(d);
+      if (p >= 0) { curWin++; curLoss = 0; bestWin = Math.max(bestWin, curWin); }
+      else { curLoss++; curWin = 0; bestLoss = Math.max(bestLoss, curLoss); }
+    });
+    // Post-win / post-loss performance
+    let postWinR = 0, postWinCount = 0, postLossR = 0, postLossCount = 0;
+    for (let i = 1; i < sorted.length; i++) {
+      const prevP = sumPnl(sorted[i - 1]);
+      const curR = (sorted[i].trades || []).reduce((s, t) => s + getTradeR(t), 0);
+      if (prevP > 0) { postWinR += curR; postWinCount++; }
+      else if (prevP < 0) { postLossR += curR; postLossCount++; }
+    }
+    return { bestWin, bestLoss, postWinAvg: postWinCount > 0 ? postWinR / postWinCount : 0, postLossAvg: postLossCount > 0 ? postLossR / postLossCount : 0, postWinCount, postLossCount };
+  }, [completeDays]);
+
+  // ─── Emotion/Behavior Correlation ───
+  const emotionInsights = useMemo(() => {
+    const ins: { text: string; type: 'warning' | 'success' | 'info' | 'neutral'; icon: string }[] = [];
+    // High vs Low emotion
+    const highEmo = completeDays.filter(d => d.emotionScore >= 8);
+    const lowEmo = completeDays.filter(d => d.emotionScore <= 4);
+    if (highEmo.length >= 1 && lowEmo.length >= 1) {
+      const hAvg = highEmo.reduce((s, d) => s + sumPnl(d), 0) / highEmo.length;
+      const lAvg = lowEmo.reduce((s, d) => s + sumPnl(d), 0) / lowEmo.length;
+      ins.push({ text: isRTL ? `ציון רגשי גבוה (8+): ממוצע ${hAvg.toFixed(0)}$. ציון נמוך (≤4): ממוצע ${lAvg.toFixed(0)}$. ${hAvg > lAvg ? 'מצב רוח טוב = ביצוע טוב יותר.' : 'ביצוע לא תלוי במצב רוח — סימן חיובי למשמעת.'}` : `High emotion (8+): avg ${hAvg.toFixed(0)}$. Low emotion (≤4): avg ${lAvg.toFixed(0)}$. ${hAvg > lAvg ? 'Good mood = better execution.' : 'Performance not mood-dependent — sign of discipline.'}`, type: hAvg > lAvg ? 'success' : 'info', icon: '🧠' });
+    }
+    // Discipline correlation
+    const withDisc = completeDays.filter(d => d.disciplineConfirmed);
+    const noDisc = completeDays.filter(d => !d.disciplineConfirmed);
+    if (withDisc.length >= 1 && noDisc.length >= 1) {
+      const dAvg = withDisc.reduce((s, d) => s + sumPnl(d), 0) / withDisc.length;
+      const ndAvg = noDisc.reduce((s, d) => s + sumPnl(d), 0) / noDisc.length;
+      ins.push({ text: isRTL ? `עם מחויבות יומית: ממוצע ${dAvg.toFixed(0)}$. בלי: ${ndAvg.toFixed(0)}$. ${dAvg > ndAvg ? 'מחויבות = תוצאות.' : 'המחויבות לא משפיעה עדיין — בדוק את איכות ההתחייבויות.'}` : `With commitment: avg ${dAvg.toFixed(0)}$. Without: ${ndAvg.toFixed(0)}$. ${dAvg > ndAvg ? 'Commitment = results.' : 'Commitment not impacting yet — review quality.'}`, type: dAvg > ndAvg ? 'success' : 'neutral', icon: '⚔️' });
+    }
+    // Sleep correlation
+    const sleptWell = completeDays.filter(d => d.psychAnswers?.sleepWell === true);
+    const sleptBad = completeDays.filter(d => d.psychAnswers?.sleepWell === false);
+    if (sleptWell.length >= 1 && sleptBad.length >= 1) {
+      const gAvg = sleptWell.reduce((s, d) => s + sumPnl(d), 0) / sleptWell.length;
+      const bAvg = sleptBad.reduce((s, d) => s + sumPnl(d), 0) / sleptBad.length;
+      ins.push({ text: isRTL ? `שינה טובה: ממוצע ${gAvg.toFixed(0)}$. שינה גרועה: ${bAvg.toFixed(0)}$.` : `Good sleep: avg ${gAvg.toFixed(0)}$. Bad sleep: avg ${bAvg.toFixed(0)}$.`, type: gAvg > bAvg ? 'success' : 'warning', icon: '😴' });
+    }
+    // Overtrading
+    const overDays = completeDays.filter(d => (d.trades || []).length >= 4);
+    if (overDays.length >= 1) {
+      const avg = overDays.reduce((s, d) => s + sumPnl(d), 0) / overDays.length;
+      ins.push({ text: isRTL ? `ימים עם 4+ עסקאות (${overDays.length}): ממוצע ${avg.toFixed(0)}$. ${avg < 0 ? 'מסחר-יתר פוגע בביצוע — שקול לצמצם.' : ''}` : `Days with 4+ trades (${overDays.length}): avg ${avg.toFixed(0)}$. ${avg < 0 ? 'Overtrading hurts performance — consider trading less.' : ''}`, type: avg < 0 ? 'warning' : 'info', icon: '⚡' });
+    }
+    // Plan vs no plan
+    const withPlan = completeDays.filter(d => d.plan && d.plan.trim().length > 20);
+    const noPlan = completeDays.filter(d => !d.plan || d.plan.trim().length < 5);
+    if (withPlan.length >= 1 && noPlan.length >= 1) {
+      const pAvg = withPlan.reduce((s, d) => s + sumPnl(d), 0) / withPlan.length;
+      const npAvg = noPlan.reduce((s, d) => s + sumPnl(d), 0) / noPlan.length;
+      ins.push({ text: isRTL ? `תוכנית מפורטת → ממוצע ${pAvg.toFixed(0)}$. בלי תוכנית → ${npAvg.toFixed(0)}$. ${pAvg > npAvg ? 'תכנון = יתרון.' : ''}` : `Detailed plan → avg ${pAvg.toFixed(0)}$. No plan → ${npAvg.toFixed(0)}$. ${pAvg > npAvg ? 'Planning = edge.' : ''}`, type: pAvg > npAvg ? 'success' : 'neutral', icon: '📋' });
+    }
+    // Pressure detection
+    const underPressure = completeDays.filter(d => d.psychAnswers?.feelingPressure === true);
+    if (underPressure.length >= 1) {
+      const avg = underPressure.reduce((s, d) => s + sumPnl(d), 0) / underPressure.length;
+      ins.push({ text: isRTL ? `תחת לחץ (${underPressure.length} ימים): ממוצע ${avg.toFixed(0)}$. ${avg < 0 ? 'לחץ = הפסדים. הימנע ממסחר תחת לחץ.' : 'ביצוע תחת לחץ יציב — משמעת חזקה.'}` : `Under pressure (${underPressure.length} days): avg ${avg.toFixed(0)}$. ${avg < 0 ? 'Pressure = losses. Avoid trading under pressure.' : 'Stable under pressure — strong discipline.'}`, type: avg < 0 ? 'warning' : 'success', icon: '💀' });
+    }
+    // Streak impact
+    if (streaks.postWinCount >= 2) {
+      ins.push({ text: isRTL ? `אחרי יום מנצח: ממוצע ${streaks.postWinAvg.toFixed(2)}R. ${streaks.postWinAvg < 0 ? 'הביצוע יורד אחרי ניצחונות — היזהר מביטחון-יתר.' : 'עקביות אחרי ניצחונות — סימן מצוין.'}` : `After winning day: avg ${streaks.postWinAvg.toFixed(2)}R. ${streaks.postWinAvg < 0 ? 'Performance drops after wins — beware overconfidence.' : 'Consistent after wins — excellent sign.'}`, type: streaks.postWinAvg < 0 ? 'warning' : 'success', icon: '🔥' });
+    }
+    if (streaks.postLossCount >= 2) {
+      ins.push({ text: isRTL ? `אחרי יום מפסיד: ממוצע ${streaks.postLossAvg.toFixed(2)}R. ${streaks.postLossAvg < -0.5 ? 'יש דפוס של מסחר נקמה — עצור אחרי הפסד.' : 'התאוששות אחרי הפסד — עמידות חזקה.'}` : `After losing day: avg ${streaks.postLossAvg.toFixed(2)}R. ${streaks.postLossAvg < -0.5 ? 'Revenge trading pattern detected — stop after a loss.' : 'Recovery after loss — strong resilience.'}`, type: streaks.postLossAvg < -0.5 ? 'warning' : 'success', icon: '📉' });
+    }
+    // Mental tags
+    const tagPnl: Record<string, { total: number; count: number }> = {};
+    completeDays.forEach(d => {
+      (d.mentalTags || []).forEach(tag => {
+        if (!tagPnl[tag]) tagPnl[tag] = { total: 0, count: 0 };
+        tagPnl[tag].total += sumPnl(d);
+        tagPnl[tag].count++;
+      });
+    });
+    Object.entries(tagPnl).filter(([_, v]) => v.count >= 2).forEach(([tag, data]) => {
+      const avg = data.total / data.count;
+      ins.push({ text: isRTL ? `כשאתה "${tag}": ממוצע ${avg.toFixed(0)}$ (${data.count} ימים). ${avg < 0 ? 'מצב זה מזיק לביצוע.' : 'מצב זה תומך בביצוע.'}` : `When "${tag}": avg ${avg.toFixed(0)}$ (${data.count} days). ${avg < 0 ? 'This state hurts performance.' : 'This state supports performance.'}`, type: avg < 0 ? 'warning' : 'success', icon: '🏷️' });
+    });
+    return ins;
+  }, [completeDays, isRTL, streaks]);
+
+  // ─── Monthly Recap ───
+  const monthlyRecap = useMemo(() => {
+    const map: Record<string, JournalDay[]> = {};
+    completeDays.forEach(d => {
+      const ym = d.date.slice(0, 7);
+      if (!map[ym]) map[ym] = [];
+      map[ym].push(d);
+    });
+    return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0])).map(([ym, mDays]) => {
+      const trades = mDays.flatMap(d => d.trades || []);
+      const wins = trades.filter(t => (parseFloat(t.pnl) || 0) > 0).length;
+      const losses = trades.filter(t => (parseFloat(t.pnl) || 0) < 0).length;
+      const be = trades.length - wins - losses;
+      const wR = trades.reduce((s, t) => { const r = getTradeR(t); return r > 0 ? s + r : s; }, 0);
+      const lR = trades.reduce((s, t) => { const r = getTradeR(t); return r < 0 ? s + Math.abs(r) : s; }, 0);
+      const tR = trades.reduce((s, t) => s + getTradeR(t), 0);
+      const pnl = mDays.reduce((s, d) => s + sumPnl(d), 0);
+      const ev = trades.length > 0 ? tR / trades.length : 0;
+      const [y, m] = ym.split('-');
+      const label = new Date(+y, +m - 1).toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { month: 'long', year: 'numeric' });
+      return { ym, label, days: mDays.length, trades: trades.length, wins, losses, be, totalR: tR, totalWinR: wR, totalLossR: lR, avgWinR: wins > 0 ? wR / wins : 0, avgLossR: losses > 0 ? lR / losses : 0, pnl, ev, wr: trades.length > 0 ? (wins / trades.length) * 100 : 0 };
+    });
+  }, [completeDays, isRTL]);
+
+  // ─── Running Total by Month ───
+  const runningR = useMemo(() => {
+    let acc = 0;
+    return [...monthlyRecap].reverse().map(m => { acc += m.totalR; return { ...m, runningR: acc }; }).reverse();
+  }, [monthlyRecap]);
+
+  // ─── Yearly Recap ───
+  const yearlyRecap = useMemo(() => {
+    const map: Record<string, JournalDay[]> = {};
+    completeDays.forEach(d => {
+      const yr = d.date.slice(0, 4);
+      if (!map[yr]) map[yr] = [];
+      map[yr].push(d);
+    });
+    return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0])).map(([yr, yDays]) => {
+      const trades = yDays.flatMap(d => d.trades || []);
+      const wins = trades.filter(t => (parseFloat(t.pnl) || 0) > 0).length;
+      const losses = trades.filter(t => (parseFloat(t.pnl) || 0) < 0).length;
+      const be = trades.length - wins - losses;
+      const wR = trades.reduce((s, t) => { const r = getTradeR(t); return r > 0 ? s + r : s; }, 0);
+      const lR = trades.reduce((s, t) => { const r = getTradeR(t); return r < 0 ? s + Math.abs(r) : s; }, 0);
+      const tR = trades.reduce((s, t) => s + getTradeR(t), 0);
+      const pnl = yDays.reduce((s, d) => s + sumPnl(d), 0);
+      return { year: yr, days: yDays.length, trades: trades.length, wins, losses, be, totalR: tR, totalWinR: wR, totalLossR: lR, avgWinR: wins > 0 ? wR / wins : 0, avgLossR: losses > 0 ? lR / losses : 0, pnl, ev: trades.length > 0 ? tR / trades.length : 0, wr: trades.length > 0 ? (wins / trades.length) * 100 : 0 };
+    });
+  }, [completeDays]);
+
+  if (completeDays.length < 1) return (
+    <div style={{ textAlign: 'center', padding: 60, color: th.tx3, fontFamily: "'Poppins',sans-serif" }}>
+      <div style={{ fontSize: 48, marginBottom: 16, opacity: 0.3 }}>📊</div>
+      <div style={{ fontSize: 14, fontWeight: 600 }}>{isRTL ? 'צריך לפחות יום אחד שלם עם עסקאות' : 'Need at least 1 complete day with trades'}</div>
     </div>
   );
 
-  const insights: { text: string; type: 'warning' | 'success' | 'info' }[] = [];
-
-  // Emotion vs PnL correlation
-  const highEmo = completeDays.filter(d => d.emotionScore >= 8);
-  const lowEmo = completeDays.filter(d => d.emotionScore < 5);
-  const highEmoPnl = highEmo.length ? highEmo.reduce((s, d) => s + sumPnl(d), 0) / highEmo.length : 0;
-  const lowEmoPnl = lowEmo.length ? lowEmo.reduce((s, d) => s + sumPnl(d), 0) / lowEmo.length : 0;
-  if (highEmo.length >= 1 && lowEmo.length >= 1) {
-    if (highEmoPnl > lowEmoPnl) insights.push({ text: dir === 'rtl' ? `כשהרגש גבוה (8+), הממוצע שלך ${highEmoPnl.toFixed(0)}$. כשנמוך (<5), ${lowEmoPnl.toFixed(0)}$` : `When emotion ≥8, avg P&L is ${highEmoPnl.toFixed(0)}$. When <5, it's ${lowEmoPnl.toFixed(0)}$`, type: 'info' });
-    else insights.push({ text: dir === 'rtl' ? `אתה מפסיד יותר כשהרגש גבוה (8+): ממוצע ${highEmoPnl.toFixed(0)}$` : `You lose more when emotion ≥8: avg ${highEmoPnl.toFixed(0)}$`, type: 'warning' });
-  }
-
-  // Fear & Greed correlation
-  const highFG = completeDays.filter(d => parseInt(d.fearGreed) > 70);
-  const lowFG = completeDays.filter(d => parseInt(d.fearGreed) < 30 && d.fearGreed !== '');
-  if (highFG.length >= 1) {
-    const avgPnl = highFG.reduce((s, d) => s + sumPnl(d), 0) / highFG.length;
-    const avgWr = highFG.reduce((s, d) => s + (numWins(d) / Math.max(d.trades.length, 1)), 0) / highFG.length;
-    insights.push({ text: dir === 'rtl' ? `F&G גבוה (>70): win rate ממוצע ${(avgWr * 100).toFixed(0)}%, P&L ממוצע ${avgPnl.toFixed(0)}$` : `High F&G (>70): avg win rate ${(avgWr * 100).toFixed(0)}%, avg P&L ${avgPnl.toFixed(0)}$`, type: avgPnl < 0 ? 'warning' : 'success' });
-  }
-  if (lowFG.length >= 1) {
-    const avgPnl = lowFG.reduce((s, d) => s + sumPnl(d), 0) / lowFG.length;
-    insights.push({ text: dir === 'rtl' ? `F&G נמוך (<30): P&L ממוצע ${avgPnl.toFixed(0)}$` : `Low F&G (<30): avg P&L ${avgPnl.toFixed(0)}$`, type: avgPnl >= 0 ? 'success' : 'warning' });
-  }
-
-  // Mental tags patterns
-  const tagPnl: Record<string, { total: number; count: number }> = {};
-  completeDays.forEach(d => {
-    (d.mentalTags || []).forEach(tag => {
-      if (!tagPnl[tag]) tagPnl[tag] = { total: 0, count: 0 };
-      tagPnl[tag].total += sumPnl(d);
-      tagPnl[tag].count++;
-    });
-  });
-  Object.entries(tagPnl).forEach(([tag, data]) => {
-    if (data.count >= 2) {
-      const avg = data.total / data.count;
-      insights.push({ text: dir === 'rtl' ? `כשאתה "${tag}": ממוצע ${avg.toFixed(0)}$ על פני ${data.count} ימים` : `When "${tag}": avg ${avg.toFixed(0)}$ across ${data.count} days`, type: avg >= 0 ? 'success' : 'warning' });
-    }
-  });
-
-  // Psychology answers correlation
-  const withPsych = completeDays.filter(d => d.psychAnswers && Object.values(d.psychAnswers).some(v => v !== null));
-  if (withPsych.length >= 2) {
-    const sleptWell = withPsych.filter(d => d.psychAnswers?.sleepWell === true);
-    const sleptBad = withPsych.filter(d => d.psychAnswers?.sleepWell === false);
-    if (sleptWell.length >= 1 && sleptBad.length >= 1) {
-      const goodAvg = sleptWell.reduce((s, d) => s + sumPnl(d), 0) / sleptWell.length;
-      const badAvg = sleptBad.reduce((s, d) => s + sumPnl(d), 0) / sleptBad.length;
-      insights.push({ text: dir === 'rtl' ? `שינה טובה: ממוצע ${goodAvg.toFixed(0)}$. שינה גרועה: ${badAvg.toFixed(0)}$` : `Good sleep: avg ${goodAvg.toFixed(0)}$. Bad sleep: avg ${badAvg.toFixed(0)}$`, type: goodAvg > badAvg ? 'success' : 'warning' });
-    }
-    const underPressure = withPsych.filter(d => d.psychAnswers?.feelingPressure === true);
-    if (underPressure.length >= 1) {
-      const avg = underPressure.reduce((s, d) => s + sumPnl(d), 0) / underPressure.length;
-      insights.push({ text: dir === 'rtl' ? `תחת לחץ: ממוצע ${avg.toFixed(0)}$ על פני ${underPressure.length} ימים` : `Under pressure: avg ${avg.toFixed(0)}$ across ${underPressure.length} days`, type: avg >= 0 ? 'info' : 'warning' });
-    }
-  }
-
-  // Overtrading detection
-  const overTrade = completeDays.filter(d => d.trades.length >= 4);
-  if (overTrade.length >= 1) {
-    const avg = overTrade.reduce((s, d) => s + sumPnl(d), 0) / overTrade.length;
-    insights.push({ text: dir === 'rtl' ? `ימים עם 4+ עסקאות: ממוצע ${avg.toFixed(0)}$. ${avg < 0 ? 'שקול לצמצם.' : ''}` : `Days with 4+ trades: avg ${avg.toFixed(0)}$. ${avg < 0 ? 'Consider trading less.' : ''}`, type: avg < 0 ? 'warning' : 'info' });
-  }
-
-  // Streak detection
-  let currentStreak = 0;
-  let bestStreak = 0;
-  const sorted = [...completeDays].sort((a, b) => a.date.localeCompare(b.date));
-  sorted.forEach(d => {
-    if (sumPnl(d) >= 0) { currentStreak++; bestStreak = Math.max(bestStreak, currentStreak); }
-    else { currentStreak = 0; }
-  });
-  if (bestStreak >= 2) {
-    insights.push({ text: dir === 'rtl' ? `שיא רצף ימים חיוביים: ${bestStreak} ימים!` : `Best winning streak: ${bestStreak} days!`, type: 'success' });
-  }
-
-  // Discipline correlation
-  const withDiscipline = completeDays.filter(d => d.disciplineConfirmed);
-  const noDiscipline = completeDays.filter(d => !d.disciplineConfirmed);
-  if (withDiscipline.length >= 1 && noDiscipline.length >= 1) {
-    const discAvg = withDiscipline.reduce((s, d) => s + sumPnl(d), 0) / withDiscipline.length;
-    const noDiscAvg = noDiscipline.reduce((s, d) => s + sumPnl(d), 0) / noDiscipline.length;
-    insights.push({ text: dir === 'rtl' ? `עם מחויבות: ממוצע ${discAvg.toFixed(0)}$. בלי: ${noDiscAvg.toFixed(0)}$` : `With discipline commitment: avg ${discAvg.toFixed(0)}$. Without: avg ${noDiscAvg.toFixed(0)}$`, type: discAvg > noDiscAvg ? 'success' : 'warning' });
-  }
-
-  const totalPnl = completeDays.reduce((s, d) => s + sumPnl(d), 0);
-  const totalTrades = completeDays.reduce((s, d) => s + d.trades.length, 0);
-  const totalWins = completeDays.reduce((s, d) => s + numWins(d), 0);
-  const avgScore = completeDays.reduce((s, d) => s + d.dayScore, 0) / completeDays.length;
-  const profitFactor = (() => {
-    let gains = 0, losses = 0;
-    completeDays.forEach(d => d.trades.forEach(t => { const p = parseFloat(t.pnl) || 0; if (p > 0) gains += p; else losses += Math.abs(p); }));
-    return losses > 0 ? gains / losses : gains > 0 ? Infinity : 0;
-  })();
-
-  const IC = { warning: '#FF4D4D', success: '#00FFA3', info: '#5AA9FF' };
-
   return (
-    <div>
-      {/* Stats row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 10, marginBottom: 20 }} className="j-grid-2col">
-        {[
-          { l: dir === 'rtl' ? 'סה"כ P&L' : 'Total P&L', v: `${totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(0)}$`, c: totalPnl >= 0 ? '#00FFA3' : '#FF4D4D' },
-          { l: dir === 'rtl' ? 'עסקאות' : 'Trades', v: String(totalTrades), c: '#5AA9FF' },
-          { l: dir === 'rtl' ? 'אחוז הצלחה' : 'Win Rate', v: `${totalTrades ? ((totalWins / totalTrades) * 100).toFixed(0) : 0}%`, c: '#FFC857' },
-          { l: dir === 'rtl' ? 'ציון ממוצע' : 'Avg Score', v: avgScore.toFixed(1), c: '#b794f6' },
-          { l: 'Profit Factor', v: profitFactor === Infinity ? '∞' : profitFactor.toFixed(2), c: profitFactor >= 1.5 ? '#00FFA3' : profitFactor >= 1 ? '#FFC857' : '#FF4D4D' },
-        ].map(s => (
-          <div key={s.l} style={{ background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 12, padding: '14px 16px', textAlign: 'center', transition: 'all .25s' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = `0 0 20px ${s.c}15`; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}>
-            <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 700, letterSpacing: '2px', color: th.tx3, textTransform: 'uppercase' as const, marginBottom: 6 }}>{s.l}</div>
-            <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 22, fontWeight: 800, color: s.c, textShadow: `0 0 15px ${s.c}30` }}>{s.v}</div>
+    <div style={{ display: 'grid', gap: 20 }}>
+      {/* ═══ HERO STATS ═══ */}
+      <AnimCard delay={0} th={th} style={{ background: `linear-gradient(165deg, ${th.cardBg}, rgba(0,255,163,0.02))`, borderTop: '2px solid #00FFA3' }}>
+        <SectionLabel icon="⚡" text={isRTL ? 'סיכום ביצוע כללי' : 'PERFORMANCE OVERVIEW'} accent="#00FFA3" th={th} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 10, marginBottom: 18 }} className="j-grid-2col">
+          <MiniStat label={isRTL ? 'סה"כ R' : 'Total R'} value={`${totalR >= 0 ? '+' : ''}${totalR.toFixed(2)}R`} color={totalR >= 0 ? '#00FFA3' : '#FF4D4D'} th={th} />
+          <MiniStat label={isRTL ? 'סה"כ P&L' : 'Total P&L'} value={`${totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(0)}$`} color={totalPnl >= 0 ? '#00FFA3' : '#FF4D4D'} th={th} />
+          <MiniStat label={isRTL ? 'אחוז הצלחה' : 'Win Rate'} value={`${winRate.toFixed(0)}%`} color={winRate >= 50 ? '#00FFA3' : '#FF4D4D'} sub={`${totalWins}W / ${totalLosses}L / ${totalBE}BE`} th={th} />
+          <MiniStat label="Profit Factor" value={profitFactor === Infinity ? '∞' : profitFactor.toFixed(2)} color={profitFactor >= 1.5 ? '#00FFA3' : profitFactor >= 1 ? '#FFC857' : '#FF4D4D'} th={th} />
+          <MiniStat label={isRTL ? 'ערך צפוי' : 'Expectancy'} value={`${expectancy >= 0 ? '+' : ''}${expectancy.toFixed(2)}R`} color={expectancy >= 0 ? '#00FFA3' : '#FF4D4D'} th={th} />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 10 }} className="j-grid-2col">
+          <MiniStat label={isRTL ? 'עסקאות' : 'Trades'} value={String(totalTrades)} color="#5AA9FF" th={th} />
+          <MiniStat label={isRTL ? 'ממוצע נצחון' : 'Avg Win'} value={`+${avgWinR.toFixed(2)}R`} color="#00FFA3" th={th} />
+          <MiniStat label={isRTL ? 'ממוצע הפסד' : 'Avg Loss'} value={`-${avgLossR.toFixed(2)}R`} color="#FF4D4D" th={th} />
+          <MiniStat label={isRTL ? 'ציון ממוצע' : 'Avg Score'} value={avgScore.toFixed(1)} color="#b794f6" sub="/10" th={th} />
+          <MiniStat label={isRTL ? 'ימי מסחר' : 'Trading Days'} value={String(completeDays.length)} color="#FFC857" th={th} />
+        </div>
+      </AnimCard>
+
+      {/* ═══ PATTERN RECOGNITION ═══ */}
+      <AnimCard delay={120} accent="#b794f6" th={th}>
+        <SectionLabel icon="🧠" text={isRTL ? 'זיהוי דפוסים — תובנות חכמות' : 'PATTERN RECOGNITION — SMART INSIGHTS'} accent="#b794f6" th={th} />
+        <div style={{ display: 'grid', gap: 10 }}>
+          {/* Weekday insights */}
+          {bestDay && bestDay.avgR > 0 && (
+            <InsightRow icon="📅" text={isRTL ? `היום הכי טוב שלך: ${bestDay.name} (ממוצע ${bestDay.avgR.toFixed(2)}R, ${bestDay.wr.toFixed(0)}% הצלחה, ${bestDay.count} ימים).` : `Your best day: ${bestDay.name} (avg ${bestDay.avgR.toFixed(2)}R, ${bestDay.wr.toFixed(0)}% WR, ${bestDay.count} days).`} type="success" th={th} delay={200} />
+          )}
+          {worstDay && worstDay.avgR < 0 && (
+            <InsightRow icon="🚫" text={isRTL ? `היום הכי גרוע שלך: ${worstDay.name} (ממוצע ${worstDay.avgR.toFixed(2)}R). שקול להקטין סיכון ביום זה.` : `Your worst day: ${worstDay.name} (avg ${worstDay.avgR.toFixed(2)}R). Consider reducing risk on this day.`} type="warning" th={th} delay={280} />
+          )}
+          {/* Asset insights */}
+          {byAsset.length >= 2 && byAsset[0].r > 0 && (
+            <InsightRow icon="🪙" text={isRTL ? `הנכס הכי רווחי: ${byAsset[0].asset} (+${byAsset[0].r.toFixed(2)}R, ${byAsset[0].count} עסקאות). ${byAsset[byAsset.length - 1].r < 0 ? `הנכס המפסיד: ${byAsset[byAsset.length - 1].asset} (${byAsset[byAsset.length - 1].r.toFixed(2)}R). שקול להפסיק לסחור בו.` : ''}` : `Most profitable asset: ${byAsset[0].asset} (+${byAsset[0].r.toFixed(2)}R, ${byAsset[0].count} trades). ${byAsset[byAsset.length - 1].r < 0 ? `Worst: ${byAsset[byAsset.length - 1].asset} (${byAsset[byAsset.length - 1].r.toFixed(2)}R). Consider stopping.` : ''}`} type="success" th={th} delay={360} />
+          )}
+          {/* Streak insights */}
+          {streaks.bestWin >= 2 && (
+            <InsightRow icon="🔥" text={isRTL ? `שיא רצף ימים חיוביים: ${streaks.bestWin} ימים!` : `Best winning streak: ${streaks.bestWin} days!`} type="success" th={th} delay={440} />
+          )}
+          {/* Behavioral insights */}
+          {emotionInsights.map((ins, i) => (
+            <InsightRow key={i} icon={ins.icon} text={ins.text} type={ins.type} th={th} delay={500 + i * 80} />
+          ))}
+        </div>
+      </AnimCard>
+
+      {/* ═══ WEEKDAY PERFORMANCE ═══ */}
+      {byWeekday.length > 0 && (
+        <AnimCard delay={240} accent="#5AA9FF" th={th}>
+          <SectionLabel icon="📅" text={isRTL ? 'ביצוע לפי יום בשבוע' : 'WEEKDAY PERFORMANCE'} accent="#5AA9FF" th={th} />
+          <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', height: 120, marginBottom: 12 }}>
+            {byWeekday.map(wd => {
+              const maxR = Math.max(...byWeekday.map(w => Math.abs(w.avgR)), 0.5);
+              const barH = Math.max(8, (Math.abs(wd.avgR) / maxR) * 90);
+              const c = wd.avgR >= 0 ? '#00FFA3' : '#FF4D4D';
+              return (
+                <div key={wd.dow} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
+                  <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, fontWeight: 700, color: c }}>
+                    {wd.avgR >= 0 ? '+' : ''}{wd.avgR.toFixed(1)}R
+                  </span>
+                  <div style={{ width: '70%', height: barH, borderRadius: 6, background: `linear-gradient(180deg, ${c}, ${c}60)`, transition: 'height .6s cubic-bezier(0.16,1,0.3,1)', boxShadow: `0 0 12px ${c}20` }} />
+                  <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, fontWeight: 700, color: th.tx3 }}>{wd.name}</span>
+                  <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, color: th.tx3, opacity: 0.6 }}>{wd.trades}t</span>
+                </div>
+              );
+            })}
           </div>
-        ))}
-      </div>
-      {/* Insights */}
-      <div style={{ display: 'grid', gap: 8 }}>
-        {insights.map((ins, i) => (
-          <div key={i} style={{
-            background: `${IC[ins.type]}08`, border: `1px solid ${IC[ins.type]}20`, borderRadius: 10,
-            padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10, direction: dir as 'rtl' | 'ltr',
-            transition: 'all .25s', cursor: 'default',
-          }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateX(4px)'; (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 16px ${IC[ins.type]}15`; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateX(0)'; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}>
-            <span style={{ fontSize: 16 }}>{ins.type === 'warning' ? '⚠️' : ins.type === 'success' ? '✅' : '💡'}</span>
-            <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12.5, color: th.tx, lineHeight: 1.5 }}>{ins.text}</span>
+        </AnimCard>
+      )}
+
+      {/* ═══ ASSET PERFORMANCE ═══ */}
+      {byAsset.length > 0 && (
+        <AnimCard delay={360} accent="#FFC857" th={th}>
+          <SectionLabel icon="🪙" text={isRTL ? 'ביצוע לפי נכס' : 'ASSET PERFORMANCE'} accent="#FFC857" th={th} />
+          <div style={{ display: 'grid', gap: 6 }}>
+            {byAsset.slice(0, 8).map((a, i) => {
+              const c = a.r >= 0 ? '#00FFA3' : '#FF4D4D';
+              const maxR = Math.max(...byAsset.map(x => Math.abs(x.r)), 1);
+              const barW = Math.max(8, (Math.abs(a.r) / maxR) * 100);
+              return (
+                <div key={a.asset} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: `${c}04`, borderRadius: 10, border: `1px solid ${c}10` }}>
+                  <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, fontWeight: 800, color: th.tx, minWidth: 80 }}>{a.asset}</span>
+                  <div style={{ flex: 1, height: 6, background: th.inputBg, borderRadius: 3, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${barW}%`, background: c, borderRadius: 3, transition: 'width .8s ease' }} />
+                  </div>
+                  <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, fontWeight: 800, color: c, minWidth: 55, textAlign: 'right' }}>{a.r >= 0 ? '+' : ''}{a.r.toFixed(2)}R</span>
+                  <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, color: th.tx3, minWidth: 30 }}>{a.count}t</span>
+                  <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, color: a.wr >= 50 ? '#00FFA3' : '#FF4D4D', minWidth: 35 }}>{a.wr.toFixed(0)}%</span>
+                </div>
+              );
+            })}
           </div>
-        ))}
-        {insights.length === 0 && (
-          <div style={{ textAlign: 'center', padding: 30, color: th.tx3, fontFamily: "'Poppins',sans-serif", fontSize: 13 }}>
-            {dir === 'rtl' ? 'ממשיך לאסוף נתונים...' : 'Collecting data...'}
+        </AnimCard>
+      )}
+
+      {/* ═══ STRATEGY ANALYSIS ═══ */}
+      {byStrategy.length > 0 && (
+        <AnimCard delay={480} accent="#b794f6" th={th}>
+          <SectionLabel icon="⚔️" text={isRTL ? 'ניתוח אסטרטגיה' : 'STRATEGY ANALYSIS'} accent="#b794f6" th={th} />
+          <div style={{ display: 'grid', gridTemplateColumns: byStrategy.length > 2 ? 'repeat(3,1fr)' : `repeat(${byStrategy.length},1fr)`, gap: 10 }} className="j-grid-2col">
+            {byStrategy.map(s => {
+              const c = s.r >= 0 ? '#00FFA3' : '#FF4D4D';
+              return (
+                <div key={s.name} style={{ background: `${c}06`, border: `1px solid ${c}15`, borderRadius: 14, padding: '16px 14px', textAlign: 'center' }}>
+                  <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 800, color: th.tx, marginBottom: 8 }}>{s.name}</div>
+                  <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 24, fontWeight: 800, color: c, lineHeight: 1, marginBottom: 6 }}>{s.r >= 0 ? '+' : ''}{s.r.toFixed(2)}R</div>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginTop: 8 }}>
+                    <div><div style={{ fontSize: 8, color: th.tx3, letterSpacing: '1px' }}>TRADES</div><div style={{ fontSize: 13, fontWeight: 800, color: th.tx2 }}>{s.count}</div></div>
+                    <div><div style={{ fontSize: 8, color: th.tx3, letterSpacing: '1px' }}>WIN%</div><div style={{ fontSize: 13, fontWeight: 800, color: s.wr >= 50 ? '#00FFA3' : '#FF4D4D' }}>{s.wr.toFixed(0)}%</div></div>
+                    <div><div style={{ fontSize: 8, color: th.tx3, letterSpacing: '1px' }}>AVG R</div><div style={{ fontSize: 13, fontWeight: 800, color: s.avgR >= 0 ? '#00FFA3' : '#FF4D4D' }}>{s.avgR.toFixed(2)}</div></div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        )}
-      </div>
+          <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(183,148,246,0.05)', borderRadius: 10, border: '1px solid rgba(183,148,246,0.1)' }}>
+            <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, color: th.tx3, lineHeight: 1.6 }}>
+              💡 {isRTL ? 'הזן את שם האסטרטגיה (MSB + BOS, BOS, Daily Open) בהערות הביצוע של כל עסקה לזיהוי אוטומטי.' : 'Enter strategy name (MSB + BOS, BOS, Daily Open) in trade execution notes for automatic detection.'}
+            </span>
+          </div>
+        </AnimCard>
+      )}
+
+      {/* ═══ MONTHLY RECAP ═══ */}
+      {monthlyRecap.length > 0 && (
+        <AnimCard delay={600} accent="#FFC857" th={th}>
+          <SectionLabel icon="📅" text={isRTL ? 'סיכום חודשי' : 'MONTHLY RECAP'} accent="#FFC857" th={th} />
+          <div style={{ display: 'grid', gap: 10 }}>
+            {runningR.map((m, mi) => {
+              const c = m.totalR >= 0 ? '#00FFA3' : '#FF4D4D';
+              return (
+                <div key={m.ym} style={{
+                  background: `${c}04`, border: `1px solid ${c}12`, borderRadius: 14,
+                  padding: '18px 20px', transition: 'all .3s',
+                }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 24px ${c}15`; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                    <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 15, fontWeight: 800, color: th.tx }}>{m.label}</div>
+                    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 20, fontWeight: 800, color: c }}>{m.totalR >= 0 ? '+' : ''}{m.totalR.toFixed(2)}R</div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 8, marginBottom: 10 }} className="j-grid-2col">
+                    {[
+                      { l: isRTL ? 'עסקאות' : 'Trades', v: String(m.trades) },
+                      { l: isRTL ? 'ניצחונות' : 'Wins', v: `${m.wins}W / ${m.losses}L / ${m.be}BE` },
+                      { l: isRTL ? 'הצלחה' : 'Win%', v: `${m.wr.toFixed(0)}%` },
+                      { l: isRTL ? 'ממוצע נצחון' : 'Avg Win', v: `+${m.avgWinR.toFixed(2)}R` },
+                      { l: isRTL ? 'ממוצע הפסד' : 'Avg Loss', v: `-${m.avgLossR.toFixed(2)}R` },
+                    ].map(s => (
+                      <div key={s.l} style={{ textAlign: 'center' }}>
+                        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 700, letterSpacing: '1.5px', color: th.tx3, textTransform: 'uppercase' as const }}>{s.l}</div>
+                        <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, fontWeight: 700, color: th.tx2, marginTop: 3 }}>{s.v}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: th.inputBg, borderRadius: 8 }}>
+                    <div>
+                      <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 700, color: th.tx3, letterSpacing: '1.5px' }}>EV</span>
+                      <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, fontWeight: 700, color: m.ev >= 0 ? '#00FFA3' : '#FF4D4D', marginInlineStart: 8 }}>{m.ev >= 0 ? '+' : ''}{m.ev.toFixed(3)}R</span>
+                    </div>
+                    <div>
+                      <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 700, color: th.tx3, letterSpacing: '1.5px' }}>{isRTL ? 'סה"כ מצטבר' : 'RUNNING'}</span>
+                      <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, fontWeight: 700, color: m.runningR >= 0 ? '#00FFA3' : '#FF4D4D', marginInlineStart: 8 }}>{m.runningR >= 0 ? '+' : ''}{m.runningR.toFixed(2)}R</span>
+                    </div>
+                    <div>
+                      <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 700, color: th.tx3, letterSpacing: '1.5px' }}>P&L</span>
+                      <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, fontWeight: 700, color: m.pnl >= 0 ? '#00FFA3' : '#FF4D4D', marginInlineStart: 8 }}>{m.pnl >= 0 ? '+' : ''}{m.pnl.toFixed(0)}$</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </AnimCard>
+      )}
+
+      {/* ═══ YEARLY RECAP ═══ */}
+      {yearlyRecap.length > 0 && (
+        <AnimCard delay={720} accent="#D4AF37" th={th}>
+          <SectionLabel icon="🏆" text={isRTL ? 'סיכום שנתי' : 'YEARLY RECAP'} accent="#D4AF37" th={th} />
+          <div style={{ display: 'grid', gap: 12 }}>
+            {yearlyRecap.map(yr => {
+              const c = yr.totalR >= 0 ? '#00FFA3' : '#FF4D4D';
+              return (
+                <div key={yr.year} style={{ background: 'rgba(212,175,55,0.03)', border: '1px solid rgba(212,175,55,0.12)', borderRadius: 16, padding: '22px 24px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+                    <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 24, fontWeight: 800, color: '#D4AF37' }}>{yr.year}</div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 28, fontWeight: 800, color: c, lineHeight: 1 }}>{yr.totalR >= 0 ? '+' : ''}{yr.totalR.toFixed(2)}R</div>
+                      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, color: c, opacity: 0.7, marginTop: 2 }}>{yr.pnl >= 0 ? '+' : ''}{yr.pnl.toFixed(0)}$</div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 8 }} className="j-grid-2col">
+                    {[
+                      { l: isRTL ? 'עסקאות' : 'Trades', v: String(yr.trades), c: '#5AA9FF' },
+                      { l: isRTL ? 'ניצחונות' : 'W/L/BE', v: `${yr.wins}/${yr.losses}/${yr.be}`, c: th.tx2 },
+                      { l: isRTL ? 'הצלחה' : 'Win%', v: `${yr.wr.toFixed(0)}%`, c: yr.wr >= 50 ? '#00FFA3' : '#FF4D4D' },
+                      { l: isRTL ? 'ימי מסחר' : 'Days', v: String(yr.days), c: '#FFC857' },
+                      { l: 'EV', v: `${yr.ev >= 0 ? '+' : ''}${yr.ev.toFixed(3)}R`, c: yr.ev >= 0 ? '#00FFA3' : '#FF4D4D' },
+                      { l: isRTL ? 'ממוצע נצחון' : 'Avg Win', v: `+${yr.avgWinR.toFixed(2)}R`, c: '#00FFA3' },
+                    ].map(s => (
+                      <div key={s.l} style={{ textAlign: 'center', padding: '8px 4px', background: `${s.c}06`, borderRadius: 8 }}>
+                        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 7, fontWeight: 700, letterSpacing: '1.5px', color: th.tx3, textTransform: 'uppercase' as const }}>{s.l}</div>
+                        <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 800, color: s.c, marginTop: 3 }}>{s.v}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </AnimCard>
+      )}
     </div>
   );
 };
@@ -2961,49 +3315,124 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
           )}
 
           {view === 'archive' && (
-            <div style={{ maxWidth: 940, margin: '0 auto', padding: '22px 22px 50px', direction: dir, animation: 'j-fade-in .3s ease-out' }}>
-              <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 22, fontWeight: 800, color: th.tx, marginBottom: 6 }}>{t.arch.title}</div>
-              <div style={{ display: 'grid', gap: 10, marginTop: 12 }}>
-                {days.filter(d => d.morningSaved).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(day => {
+            <div style={{ maxWidth: 940, margin: '0 auto', padding: '22px 22px 50px', direction: dir }}>
+              {/* Archive Header */}
+              <div style={{ marginBottom: 24, animation: 'j-fade-in .4s ease-out' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                  <div style={{ width: 38, height: 38, borderRadius: 12, background: 'linear-gradient(135deg, rgba(255,200,87,0.12), rgba(255,160,40,0.06))', border: '1px solid rgba(255,200,87,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>📂</div>
+                  <div>
+                    <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 22, fontWeight: 800, color: th.tx }}>{t.arch.title}</div>
+                    <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, color: th.tx3, marginTop: 2 }}>
+                      {dir === 'rtl' ? `${days.filter(d => d.morningSaved).length} ימים מתועדים` : `${days.filter(d => d.morningSaved).length} documented days`}
+                    </div>
+                  </div>
+                </div>
+                {/* Archive stats summary */}
+                {(() => {
+                  const archived = days.filter(d => d.morningSaved);
+                  const totalPnl = archived.reduce((s, d) => s + sumPnl(d), 0);
+                  const totalR = archived.flatMap(d => d.trades || []).reduce((s, t) => s + getTradeR(t), 0);
+                  const complete = archived.filter(d => isDayFullyLocked(d)).length;
+                  return archived.length > 0 ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, marginTop: 16, animation: 'j-fade-in .5s ease-out' }} className="j-grid-2col">
+                      {[
+                        { l: dir === 'rtl' ? 'סה"כ ימים' : 'Total Days', v: String(archived.length), c: '#5AA9FF' },
+                        { l: dir === 'rtl' ? 'הושלמו' : 'Completed', v: String(complete), c: '#00FFA3' },
+                        { l: dir === 'rtl' ? 'סה"כ R' : 'Total R', v: `${totalR >= 0 ? '+' : ''}${totalR.toFixed(1)}R`, c: totalR >= 0 ? '#00FFA3' : '#FF4D4D' },
+                        { l: dir === 'rtl' ? 'סה"כ P&L' : 'Total P&L', v: `${totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(0)}$`, c: totalPnl >= 0 ? '#00FFA3' : '#FF4D4D' },
+                      ].map(s => (
+                        <div key={s.l} style={{ background: `${s.c}06`, border: `1px solid ${s.c}12`, borderRadius: 12, padding: '12px 10px', textAlign: 'center' }}>
+                          <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 700, letterSpacing: '1.5px', color: th.tx3, textTransform: 'uppercase' as const, marginBottom: 4 }}>{s.l}</div>
+                          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 18, fontWeight: 800, color: s.c }}>{s.v}</div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null;
+                })()}
+              </div>
+              {/* Archive List */}
+              <div style={{ display: 'grid', gap: 8 }}>
+                {days.filter(d => d.morningSaved).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((day, idx) => {
                   const dp = sumPnl(day);
                   const complete = isDayFullyLocked(day);
                   const dayRisk = getDayColor(day);
+                  const totalR = (day.trades || []).reduce((s, t) => s + getTradeR(t), 0);
+                  const tradeCount = (day.trades || []).length;
+                  const winCount = numWins(day);
+                  const wr = tradeCount > 0 ? ((winCount / tradeCount) * 100).toFixed(0) : '—';
+                  const c = dp >= 0 ? '#00FFA3' : '#FF4D4D';
                   return (
                     <div key={day.id} onClick={() => { setViewingArchiveId(day.id); setView('journal'); }}
-                      className="j-card-hover"
                       style={{
-                        background: th.cardBg, border: `1px solid ${dayRisk === 'darkred' ? 'rgba(255,77,77,0.3)' : th.cardBr}`, borderRadius: 12,
-                        overflow: 'hidden', cursor: 'pointer', transition: 'all .25s',
-                      }}>
-                      <div style={{ background: dayRisk === 'darkred' ? 'rgba(255,77,77,0.04)' : 'rgba(0,255,163,0.03)', borderBottom: `1px solid ${th.br}`, padding: '13px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' as const, gap: 8 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap' as const }}>
-                          <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 14, fontWeight: 800, color: th.tx }}>{fmtFull(day.date, t.locale)}</span>
-                          <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8.5, fontWeight: 700, color: complete ? '#00FFA3' : '#FFC857', background: complete ? 'rgba(0,255,163,.08)' : 'rgba(255,200,87,.08)', padding: '3px 9px', borderRadius: 6 }}>{complete ? '🔒 COMPLETE' : 'MORNING ONLY'}</span>
-                          {dayRisk === 'darkred' && <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8.5, fontWeight: 700, color: '#FF4D4D', background: 'rgba(255,77,77,.08)', padding: '3px 9px', borderRadius: 6 }}>⚠️ RISK LIMIT</span>}
-                          {(day.morningImages || []).length > 0 && (
-                            <div style={{ display: 'flex', gap: 4 }}>
-                              {day.morningImages.map((img: string, i: number) => (
-                                <img key={i} src={img} alt="" style={{ width: 30, height: 22, objectFit: 'cover', borderRadius: 4, border: `1px solid ${th.cardBr}` }} />
-                              ))}
+                        background: th.cardBg, border: `1px solid ${dayRisk === 'darkred' ? 'rgba(255,77,77,0.3)' : th.cardBr}`, borderRadius: 14,
+                        overflow: 'hidden', cursor: 'pointer', transition: 'all .4s cubic-bezier(0.16,1,0.3,1)',
+                        opacity: 0, animation: `j-slide-up .4s ease-out ${idx * 0.04}s forwards`,
+                        borderInlineStart: `3px solid ${c}`,
+                      }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = `0 8px 28px rgba(0,0,0,0.2), 0 0 0 1px ${c}15`; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}>
+                      <div style={{ padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0, flexWrap: 'wrap' as const }}>
+                          {/* Date */}
+                          <div style={{ minWidth: 100 }}>
+                            <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 14, fontWeight: 800, color: th.tx }}>{fmtShort(day.date, t.locale)}</div>
+                            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: th.tx3, marginTop: 2 }}>{day.dayNum ? `${dir === 'rtl' ? 'יום' : 'Day'} ${day.dayNum}` : ''}</div>
+                          </div>
+                          {/* Tags */}
+                          <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' as const }}>
+                            <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 700, color: complete ? '#00FFA3' : '#FFC857', background: complete ? 'rgba(0,255,163,.08)' : 'rgba(255,200,87,.08)', padding: '3px 8px', borderRadius: 6, letterSpacing: '0.5px' }}>{complete ? '🔒' : '☀️'}</span>
+                            {dayRisk === 'darkred' && <span style={{ fontSize: 8, fontWeight: 700, color: '#FF4D4D', background: 'rgba(255,77,77,.08)', padding: '3px 8px', borderRadius: 6 }}>⚠️</span>}
+                            {day.bias && <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 600, color: th.tx3, background: th.inputBg, padding: '3px 8px', borderRadius: 6 }}>{day.bias}</span>}
+                          </div>
+                          {/* Mini metrics */}
+                          {tradeCount > 0 && (
+                            <div style={{ display: 'flex', gap: 12, marginInlineStart: 'auto' }}>
+                              <div style={{ textAlign: 'center' }}>
+                                <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 7, fontWeight: 700, color: th.tx3, letterSpacing: '1px' }}>TRADES</div>
+                                <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, fontWeight: 800, color: th.tx2 }}>{tradeCount}</div>
+                              </div>
+                              <div style={{ textAlign: 'center' }}>
+                                <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 7, fontWeight: 700, color: th.tx3, letterSpacing: '1px' }}>WIN%</div>
+                                <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, fontWeight: 800, color: parseInt(wr) >= 50 ? '#00FFA3' : '#FF4D4D' }}>{wr}%</div>
+                              </div>
+                              <div style={{ textAlign: 'center' }}>
+                                <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 7, fontWeight: 700, color: th.tx3, letterSpacing: '1px' }}>R</div>
+                                <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, fontWeight: 800, color: totalR >= 0 ? '#00FFA3' : '#FF4D4D' }}>{totalR >= 0 ? '+' : ''}{totalR.toFixed(1)}</div>
+                              </div>
                             </div>
                           )}
                         </div>
-                        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 14, fontWeight: 800, color: dp >= 0 ? '#00FFA3' : '#FF4D4D', textShadow: `0 0 10px ${dp >= 0 ? 'rgba(0,255,163,0.2)' : 'rgba(255,77,77,0.2)'}` }}>{dp >= 0 ? '+' : ''}{dp.toFixed(0)}$</div>
+                        {/* P&L */}
+                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 16, fontWeight: 800, color: c, textShadow: `0 0 12px ${c}25` }}>{dp >= 0 ? '+' : ''}{dp.toFixed(0)}$</div>
+                          {day.emotionScore && <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, color: day.emotionScore >= 7 ? '#00FFA3' : day.emotionScore >= 4 ? '#FFC857' : '#FF4D4D', marginTop: 2 }}>😊 {day.emotionScore}/10</div>}
+                        </div>
                       </div>
                     </div>
                   );
                 })}
                 {days.filter(d => d.morningSaved).length === 0 && (
-                  <div style={{ textAlign: 'center', padding: 70, color: th.tx3, fontFamily: "'Poppins',sans-serif", fontSize: 14 }}>{t.arch.none}</div>
+                  <div style={{ textAlign: 'center', padding: 70, color: th.tx3, fontFamily: "'Poppins',sans-serif", fontSize: 14 }}>
+                    <div style={{ fontSize: 48, marginBottom: 12, opacity: 0.3 }}>📂</div>
+                    {t.arch.none}
+                  </div>
                 )}
               </div>
             </div>
           )}
 
           {view === 'analytics' && (
-            <div style={{ maxWidth: 940, margin: '0 auto', padding: '22px 22px 50px', direction: dir, animation: 'j-fade-in .3s ease-out' }}>
-              <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 22, fontWeight: 800, color: th.tx, marginBottom: 6 }}>{t.f.analytics}</div>
-              <p style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, color: th.tx3, marginBottom: 20 }}>{dir === 'rtl' ? 'תובנות אוטומטיות מניתוח התנהגותי של המסחר שלך' : 'Automatic insights from behavioral analysis of your trading'}</p>
+            <div style={{ maxWidth: 1000, margin: '0 auto', padding: '22px 22px 50px', direction: dir }}>
+              {/* Dashboard Header */}
+              <div style={{ marginBottom: 24, animation: 'j-fade-in .3s ease-out' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 38, height: 38, borderRadius: 12, background: 'linear-gradient(135deg, rgba(90,169,255,0.12), rgba(183,148,246,0.08))', border: '1px solid rgba(90,169,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>📊</div>
+                  <div>
+                    <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 22, fontWeight: 800, color: th.tx }}>{dir === 'rtl' ? 'מערכת מודיעין למסחר' : 'Trading Intelligence System'}</div>
+                    <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, color: th.tx3 }}>{dir === 'rtl' ? 'תובנות אוטומטיות · זיהוי דפוסים · ניתוח אסטרטגי' : 'Auto insights · Pattern recognition · Strategy analysis'}</div>
+                  </div>
+                </div>
+              </div>
               <AnalyticsPanel days={days} dir={dir} th={th} />
             </div>
           )}
