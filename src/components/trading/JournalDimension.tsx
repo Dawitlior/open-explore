@@ -636,7 +636,7 @@ const PDiv = ({ label, color, icon, th }: any) => (
 const ImageUpload = ({ images, onUpdate, label, uploadLabel, dir, disabled, th }: any) => {
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
-  const [zoomIdx, setZoomIdx] = useState<number | null>(null);
+  const [lightbox, setLightbox] = useState<{ src: string; zoom: number; x: number; y: number; dragging: boolean; sx: number; sy: number } | null>(null);
 
   const handleFiles = (files: FileList | null) => {
     if (!files || disabled) return;
@@ -651,16 +651,25 @@ const ImageUpload = ({ images, onUpdate, label, uploadLabel, dir, disabled, th }
     });
   };
 
+  // ESC to close lightbox
+  useEffect(() => {
+    if (!lightbox) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setLightbox(null); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [lightbox]);
+
   return (
     <div>
       <Lbl c={label} dir={dir} th={th} />
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' as const }}>
         {(images || []).map((img: string, i: number) => (
           <div key={i} style={{ position: 'relative', width: 140, height: 100, borderRadius: 10, overflow: 'hidden', border: `1px solid ${th.cardBr}`, cursor: 'pointer', transition: 'all .3s' }}
-            onClick={() => setZoomIdx(i)}
+            onClick={() => setLightbox({ src: img, zoom: 1, x: 0, y: 0, dragging: false, sx: 0, sy: 0 })}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1.03)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.3)'; }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}>
             <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform .3s' }} />
+            <div style={{ position: 'absolute', bottom: 4, right: 4, background: 'rgba(0,0,0,0.6)', borderRadius: 4, padding: '2px 5px', fontSize: 9, color: '#fff' }}>🔍</div>
             {!disabled && (
               <button onClick={e => { e.stopPropagation(); onUpdate((images || []).filter((_: any, j: number) => j !== i)); }}
                 style={{ position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: '50%', background: 'rgba(255,77,77,0.9)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, transition: 'all .2s' }}>✕</button>
@@ -680,9 +689,58 @@ const ImageUpload = ({ images, onUpdate, label, uploadLabel, dir, disabled, th }
         )}
       </div>
       <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => handleFiles(e.target.files)} />
-      {zoomIdx !== null && images?.[zoomIdx] && (
-        <div onClick={() => setZoomIdx(null)} style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out', backdropFilter: 'blur(8px)' }}>
-          <img src={images[zoomIdx]} alt="" style={{ maxWidth: '90vw', maxHeight: '85vh', borderRadius: 12, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }} />
+      {/* PREMIUM LIGHTBOX */}
+      {lightbox && (
+        <div onClick={() => setLightbox(null)} style={{
+          position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(0,0,0,0.92)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          backdropFilter: 'blur(12px)', animation: 'j-fade-in .25s ease-out', cursor: 'zoom-out',
+        }}>
+          {/* Controls */}
+          <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 6, zIndex: 10 }}>
+            <button onClick={() => setLightbox(lb => lb ? { ...lb, zoom: Math.min(lb.zoom + 0.5, 5) } : null)}
+              style={{ width: 36, height: 36, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.08)', color: '#fff', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s', backdropFilter: 'blur(8px)' }}>+</button>
+            <button onClick={() => setLightbox(lb => lb ? { ...lb, zoom: Math.max(lb.zoom - 0.5, 0.5), x: 0, y: 0 } : null)}
+              style={{ width: 36, height: 36, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.08)', color: '#fff', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s', backdropFilter: 'blur(8px)' }}>−</button>
+            <button onClick={() => setLightbox(lb => lb ? { ...lb, zoom: 1, x: 0, y: 0 } : null)}
+              style={{ width: 36, height: 36, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.08)', color: '#fff', cursor: 'pointer', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s', backdropFilter: 'blur(8px)' }}>1:1</button>
+            <button onClick={() => setLightbox(null)}
+              style={{ width: 36, height: 36, borderRadius: 10, border: '1px solid rgba(255,77,77,0.3)', background: 'rgba(255,77,77,0.12)', color: '#FF4D4D', cursor: 'pointer', fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s', backdropFilter: 'blur(8px)' }}>✕</button>
+          </div>
+          {/* Zoom indicator */}
+          <div style={{ position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)', fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', background: 'rgba(0,0,0,0.5)', padding: '4px 14px', borderRadius: 20, backdropFilter: 'blur(8px)' }}>
+            {Math.round(lightbox.zoom * 100)}%
+          </div>
+          {/* Image */}
+          <img src={lightbox.src} alt="" onClick={e => e.stopPropagation()}
+            draggable={false}
+            onMouseDown={e => {
+              if (lightbox.zoom <= 1) return;
+              e.stopPropagation();
+              setLightbox(lb => lb ? { ...lb, dragging: true, sx: e.clientX - lb.x, sy: e.clientY - lb.y } : null);
+            }}
+            onMouseMove={e => {
+              if (!lightbox.dragging) return;
+              setLightbox(lb => lb ? { ...lb, x: e.clientX - lb.sx, y: e.clientY - lb.sy } : null);
+            }}
+            onMouseUp={() => setLightbox(lb => lb ? { ...lb, dragging: false } : null)}
+            onMouseLeave={() => setLightbox(lb => lb ? { ...lb, dragging: false } : null)}
+            onWheel={e => {
+              e.stopPropagation();
+              setLightbox(lb => {
+                if (!lb) return null;
+                const newZoom = Math.max(0.5, Math.min(5, lb.zoom + (e.deltaY > 0 ? -0.2 : 0.2)));
+                return { ...lb, zoom: newZoom, x: newZoom <= 1 ? 0 : lb.x, y: newZoom <= 1 ? 0 : lb.y };
+              });
+            }}
+            style={{
+              maxWidth: '92vw', maxHeight: '88vh', borderRadius: 8,
+              boxShadow: '0 20px 80px rgba(0,0,0,0.6)',
+              transform: `scale(${lightbox.zoom}) translate(${lightbox.x / lightbox.zoom}px, ${lightbox.y / lightbox.zoom}px)`,
+              transition: lightbox.dragging ? 'none' : 'transform .2s ease-out',
+              cursor: lightbox.zoom > 1 ? (lightbox.dragging ? 'grabbing' : 'grab') : 'zoom-out',
+              animation: 'j-scale-in .25s ease-out',
+            }} />
         </div>
       )}
     </div>
@@ -799,7 +857,277 @@ const MarketStrip = ({ day, dir, th }: { day: JournalDay; dir: string; th: typeo
 };
 
 // ═══════════════════════════════════════════════════════════════
-// RISK STATUS STRIP
+// CIRCULAR RISK METER
+// ═══════════════════════════════════════════════════════════════
+const CircularMeter = ({ used, limit, label, color, th }: { used: number; limit: number; label: string; color: string; th: typeof THEMES.dark }) => {
+  const pct = Math.min(Math.abs(used / limit) * 100, 100);
+  const meterColor = pct >= 80 ? '#FF4D4D' : pct >= 50 ? '#FFC857' : color;
+  const R = 42, C = 2 * Math.PI * R;
+  const offset = C - (pct / 100) * C;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+      <div style={{ position: 'relative', width: 100, height: 100 }}>
+        <svg width="100" height="100" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r={R} fill="none" stroke={th.inputBg} strokeWidth="6" />
+          <circle cx="50" cy="50" r={R} fill="none" stroke={meterColor} strokeWidth="6" strokeLinecap="round"
+            strokeDasharray={C} strokeDashoffset={offset}
+            transform="rotate(-90 50 50)"
+            style={{ transition: 'stroke-dashoffset 1s ease-out, stroke .5s ease', filter: `drop-shadow(0 0 6px ${meterColor}60)` }} />
+        </svg>
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 18, fontWeight: 800, color: meterColor, lineHeight: 1, textShadow: `0 0 12px ${meterColor}30` }}>{pct.toFixed(0)}%</span>
+        </div>
+      </div>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: '2px', color: th.tx3, textTransform: 'uppercase' as const }}>{label}</div>
+        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 13, fontWeight: 800, color: meterColor, marginTop: 2 }}>
+          {used.toFixed(1)}R <span style={{ fontSize: 10, color: th.tx3, fontWeight: 400 }}>/ {limit}R</span>
+        </div>
+      </div>
+      {pct >= 80 && <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, fontWeight: 700, color: '#FF4D4D', background: 'rgba(255,77,77,0.1)', padding: '3px 10px', borderRadius: 12, animation: 'j-pulse 1.5s ease-in-out infinite' }}>⚠ {pct >= 100 ? 'BREACHED' : 'APPROACHING'}</div>}
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════
+// RISK COMMAND CENTER
+// ═══════════════════════════════════════════════════════════════
+const RiskCommandCenter = ({ risk, days, dir, th }: { risk: JRiskStatus; days: JournalDay[]; dir: string; th: typeof THEMES.dark }) => {
+  const recentDays = days.filter(d => d.eodSaved).slice(-14);
+  const disciplineScore = useMemo(() => {
+    if (recentDays.length < 1) return 100;
+    let score = 100;
+    recentDays.forEach(d => {
+      const negR = sumNegR(d.trades || []);
+      if (negR <= RISK_LIMITS.day) score -= 15;
+      else if (negR <= RISK_LIMITS.day * 0.8) score -= 5;
+      if (!d.disciplineConfirmed) score -= 3;
+      if ((d.trades || []).length > 4) score -= 3;
+    });
+    return Math.max(0, Math.min(100, Math.round(score)));
+  }, [recentDays]);
+
+  const discColor = disciplineScore >= 80 ? '#00FFA3' : disciplineScore >= 50 ? '#FFC857' : '#FF4D4D';
+
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - dayOfWeek);
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    const dateStr = d.toISOString().split('T')[0];
+    const matchDays = days.filter(jd => jd.date === dateStr);
+    const trades = matchDays.flatMap(jd => jd.trades || []);
+    const totalR = trades.reduce((s, t) => s + getTradeR(t), 0);
+    const dayName = d.toLocaleDateString(dir === 'rtl' ? 'he-IL' : 'en-US', { weekday: 'short' });
+    const isToday = dateStr === today.toISOString().split('T')[0];
+    return { dayName, totalR, isToday, hasTrades: trades.length > 0 };
+  });
+
+  return (
+    <div style={{ background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 16, padding: '20px 18px', marginBottom: 16, transition: 'all .3s' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
+        <span style={{ fontSize: 15 }}>🛡</span>
+        <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 800, letterSpacing: '2.5px', color: th.tx3, textTransform: 'uppercase' as const }}>RISK CONTROL</span>
+        {risk.breachedLevel !== 'none' && <span style={{ marginInlineStart: 'auto', background: 'rgba(255,77,77,0.1)', padding: '3px 10px', borderRadius: 12, color: '#FF4D4D', fontFamily: "'Poppins',sans-serif", fontWeight: 700, fontSize: 9, animation: 'j-pulse 1s ease-in-out infinite' }}>⚠ ALERT</span>}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginBottom: 20 }} className="j-grid-2col">
+        <CircularMeter used={risk.dailyR} limit={RISK_LIMITS.day} label={dir === 'rtl' ? 'יומי' : 'Daily'} color="#00FFA3" th={th} />
+        <CircularMeter used={risk.weeklyR} limit={RISK_LIMITS.week} label={dir === 'rtl' ? 'שבועי' : 'Weekly'} color="#FFC857" th={th} />
+        <CircularMeter used={risk.monthlyR} limit={RISK_LIMITS.month} label={dir === 'rtl' ? 'חודשי' : 'Monthly'} color="#5AA9FF" th={th} />
+      </div>
+      <div style={{ marginBottom: 18 }}>
+        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: '2px', color: th.tx3, marginBottom: 10, textTransform: 'uppercase' as const }}>{dir === 'rtl' ? 'ציר סיכון שבועי' : 'WEEKLY RISK TIMELINE'}</div>
+        <div style={{ display: 'flex', gap: 4, alignItems: 'flex-end' }}>
+          {weekDays.map((wd, i) => {
+            const barH = Math.max(4, Math.min(40, Math.abs(wd.totalR) * 15));
+            const c = wd.totalR > 0 ? '#00FFA3' : wd.totalR < 0 ? '#FF4D4D' : th.inputBg;
+            return (
+              <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, fontWeight: 700, color: wd.hasTrades ? c : th.tx3 }}>
+                  {wd.hasTrades ? `${wd.totalR > 0 ? '+' : ''}${wd.totalR.toFixed(1)}R` : '—'}
+                </span>
+                <div style={{ width: '100%', height: barH, borderRadius: 4, background: c, transition: 'all .5s ease', boxShadow: wd.hasTrades ? `0 0 8px ${c}30` : 'none', opacity: wd.hasTrades ? 1 : 0.3 }} />
+                <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: wd.isToday ? 800 : 600, color: wd.isToday ? '#5AA9FF' : th.tx3 }}>{wd.dayName}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: `${discColor}06`, border: `1px solid ${discColor}15`, borderRadius: 12 }}>
+        <div>
+          <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: '2px', color: th.tx3, textTransform: 'uppercase' as const }}>{dir === 'rtl' ? 'ציון משמעת סיכון' : 'RISK DISCIPLINE'}</div>
+          <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, color: th.tx3, marginTop: 3 }}>
+            {disciplineScore >= 80 ? (dir === 'rtl' ? 'עקביות מצוינת' : 'Excellent') : disciplineScore >= 50 ? (dir === 'rtl' ? 'יש מקום לשיפור' : 'Needs work') : (dir === 'rtl' ? 'דורש תשומת לב' : 'Critical')}
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+          <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 32, fontWeight: 800, color: discColor, textShadow: `0 0 20px ${discColor}30`, lineHeight: 1 }}>{disciplineScore}</span>
+          <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, color: th.tx3, fontWeight: 600 }}>/ 100</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════
+// TRADING KNOWLEDGE PANEL
+// ═══════════════════════════════════════════════════════════════
+const KnowledgePanel = ({ type, days, dir, th, onClose, onOpenDay }: { type: 'morning' | 'eod'; days: JournalDay[]; dir: string; th: typeof THEMES.dark; onClose: () => void; onOpenDay: (id: string) => void }) => {
+  const isMorning = type === 'morning';
+  const accent = isMorning ? '#5AA9FF' : '#b794f6';
+
+  const purposes = isMorning
+    ? [
+        { icon: '🌍', text: dir === 'rtl' ? 'הגדרת הקשר שוק — הבנה מאיפה מגיעים ולאן הולכים' : 'Define market context — understand where we are' },
+        { icon: '📋', text: dir === 'rtl' ? 'יצירת תוכנית מסחר — הימנעות ממסחר רגשי' : 'Create a trading plan — avoid emotional trading' },
+        { icon: '🎯', text: dir === 'rtl' ? 'זיהוי סטאפים בהסתברות גבוהה' : 'Identify high-probability setups' },
+        { icon: '🧘', text: dir === 'rtl' ? 'כיול מיינדסט — כניסה למצב ריכוז' : 'Calibrate mindset — enter focus mode' },
+      ]
+    : [
+        { icon: '🔍', text: dir === 'rtl' ? 'זיהוי טעויות — למידה מכישלונות' : 'Detect mistakes — learn from failures' },
+        { icon: '⚔️', text: dir === 'rtl' ? 'חיזוק משמעת — מדידת עקביות' : 'Reinforce discipline — measure consistency' },
+        { icon: '📊', text: dir === 'rtl' ? 'ניתוח ביצוע — איכות כניסה ויציאה' : 'Analyze execution quality' },
+        { icon: '🧠', text: dir === 'rtl' ? 'שיפור קבלת החלטות לאורך זמן' : 'Improve decision quality over time' },
+      ];
+
+  const relevant = days.filter(d => isMorning ? d.morningSaved : d.eodSaved).slice(-8).reverse();
+
+  const patterns: string[] = [];
+  const completeDays = days.filter(d => d.eodSaved && d.trades?.length);
+  if (completeDays.length >= 3) {
+    const mistakeDays = completeDays.filter(d => d.mistakes?.trim());
+    if (mistakeDays.length >= 2) {
+      const words = mistakeDays.flatMap(d => (d.mistakes || '').toLowerCase().split(/\s+/).filter(w => w.length > 3));
+      const freq: Record<string, number> = {};
+      words.forEach(w => { freq[w] = (freq[w] || 0) + 1; });
+      const top = Object.entries(freq).sort((a, b) => b[1] - a[1])[0];
+      if (top && top[1] >= 2) patterns.push(dir === 'rtl' ? `מילה חוזרת בטעויות: "${top[0]}" (${top[1]}x)` : `Recurring in mistakes: "${top[0]}" (${top[1]}x)`);
+    }
+    const byDay: Record<number, number[]> = {};
+    completeDays.forEach(d => {
+      const dow = new Date(d.date + 'T12:00').getDay();
+      if (!byDay[dow]) byDay[dow] = [];
+      byDay[dow].push(sumPnl(d));
+    });
+    const bestDow = Object.entries(byDay).filter(([_, v]) => v.length >= 2).sort((a, b) => {
+      const avgA = a[1].reduce((s, x) => s + x, 0) / a[1].length;
+      const avgB = b[1].reduce((s, x) => s + x, 0) / b[1].length;
+      return avgB - avgA;
+    })[0];
+    if (bestDow) {
+      const dayNames = dir === 'rtl' ? ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'] : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      const avg = bestDow[1].reduce((s, x) => s + x, 0) / bestDow[1].length;
+      patterns.push(dir === 'rtl' ? `יום טוב: ${dayNames[+bestDow[0]]} (ממוצע ${avg.toFixed(0)}$)` : `Best day: ${dayNames[+bestDow[0]]} (avg ${avg.toFixed(0)}$)`);
+    }
+    const withPlan = completeDays.filter(d => d.plan?.trim()?.length > 20);
+    const noPlan = completeDays.filter(d => !d.plan?.trim() || d.plan.trim().length < 5);
+    if (withPlan.length >= 2 && noPlan.length >= 1) {
+      const planAvg = withPlan.reduce((s, d) => s + sumPnl(d), 0) / withPlan.length;
+      const noPlanAvg = noPlan.reduce((s, d) => s + sumPnl(d), 0) / noPlan.length;
+      if (planAvg > noPlanAvg) patterns.push(dir === 'rtl' ? `תוכנית מפורטת → ביצוע טוב יותר` : `Detailed plan → better performance`);
+    }
+  }
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [onClose]);
+
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 9000, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'j-fade-in .25s ease-out' }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        width: 'min(720px, 94vw)', maxHeight: '88vh', overflowY: 'auto',
+        background: th.bg1, border: `1px solid ${accent}25`, borderRadius: 20,
+        padding: '28px 24px', animation: 'j-scale-in .3s ease-out',
+        boxShadow: `0 30px 80px rgba(0,0,0,0.5), 0 0 40px ${accent}10`,
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: `${accent}15`, border: `1px solid ${accent}25`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>{isMorning ? '☀️' : '🌙'}</div>
+            <div>
+              <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 16, fontWeight: 800, color: th.tx }}>{isMorning ? (dir === 'rtl' ? 'ניתוח בוקר' : 'Morning Analysis') : (dir === 'rtl' ? 'סקירת סוף יום' : 'End of Day Review')}</div>
+              <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, color: accent, fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase' as const }}>TRADING INTELLIGENCE</div>
+            </div>
+          </div>
+          <button onClick={onClose} style={{ width: 34, height: 34, borderRadius: 10, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', color: th.tx3, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+        </div>
+
+        <div style={{ background: `${accent}06`, border: `1px solid ${accent}12`, borderRadius: 14, padding: '16px 18px', marginBottom: 16 }}>
+          <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: '2.5px', color: accent, marginBottom: 12, textTransform: 'uppercase' as const }}>💡 {dir === 'rtl' ? 'מטרה ותפקיד' : 'PURPOSE & ROLE'}</div>
+          <div style={{ display: 'grid', gap: 8 }}>
+            {purposes.map((p, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: th.cardBg, borderRadius: 10, border: `1px solid ${th.cardBr}`, direction: dir as 'ltr' | 'rtl' }}>
+                <span style={{ fontSize: 16, flexShrink: 0 }}>{p.icon}</span>
+                <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, color: th.tx2, lineHeight: 1.5 }}>{p.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: '2.5px', color: th.tx3, marginBottom: 10, textTransform: 'uppercase' as const }}>📂 {dir === 'rtl' ? 'היסטוריה אחרונה' : 'RECENT HISTORY'}</div>
+          {relevant.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 20, color: th.tx3, fontFamily: "'Poppins',sans-serif", fontSize: 12 }}>{dir === 'rtl' ? 'אין רשומות עדיין' : 'No entries yet'}</div>
+          ) : (
+            <div style={{ display: 'grid', gap: 6, maxHeight: 240, overflowY: 'auto' }}>
+              {relevant.map(d => {
+                const dp = sumPnl(d);
+                const emo = d.emotionScore;
+                const tag = emo >= 8 ? (dir === 'rtl' ? 'ממוקד' : 'Focused') : emo >= 5 ? (dir === 'rtl' ? 'סביר' : 'OK') : (dir === 'rtl' ? 'מאתגר' : 'Hard');
+                const tagC = emo >= 8 ? '#00FFA3' : emo >= 5 ? '#FFC857' : '#FF4D4D';
+                return (
+                  <div key={d.id} onClick={() => { onOpenDay(d.id); onClose(); }}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 10, cursor: 'pointer', transition: 'all .2s', direction: dir as 'ltr' | 'rtl' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = `${accent}30`; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = th.cardBr; }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 700, color: th.tx }}>{fmtShort(d.date, dir === 'rtl' ? 'he-IL' : 'en-US')}</span>
+                      <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, fontWeight: 700, color: tagC, background: `${tagC}12`, padding: '2px 8px', borderRadius: 8 }}>{tag}</span>
+                    </div>
+                    <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 800, color: dp >= 0 ? '#00FFA3' : '#FF4D4D' }}>{dp >= 0 ? '+' : ''}{dp.toFixed(0)}$</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {patterns.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: '2.5px', color: th.tx3, marginBottom: 10, textTransform: 'uppercase' as const }}>🤖 {dir === 'rtl' ? 'תובנות' : 'INSIGHTS'}</div>
+            <div style={{ display: 'grid', gap: 6 }}>
+              {patterns.map((p, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: `${accent}06`, border: `1px solid ${accent}12`, borderRadius: 10, direction: dir as 'ltr' | 'rtl' }}>
+                  <span style={{ fontSize: 14 }}>💡</span>
+                  <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, color: th.tx, lineHeight: 1.5 }}>{p}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
+          {relevant[0] && (
+            <button onClick={() => { onOpenDay(relevant[0].id); onClose(); }}
+              style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 700, padding: '10px 18px', borderRadius: 10, border: `1px solid ${accent}25`, background: `${accent}08`, color: accent, cursor: 'pointer', transition: 'all .2s' }}>
+              📄 {dir === 'rtl' ? 'פתח אחרון' : 'Open Latest'}
+            </button>
+          )}
+          <button onClick={onClose}
+            style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 700, padding: '10px 18px', borderRadius: 10, border: `1px solid ${th.inputBr}`, background: th.inputBg, color: th.tx2, cursor: 'pointer', transition: 'all .2s' }}>
+            ✏️ {dir === 'rtl' ? 'המשך' : 'Continue'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════
+// RISK STATUS STRIP (legacy, used in calendar)
 // ═══════════════════════════════════════════════════════════════
 const RiskStrip = ({ risk, dir, th }: { risk: JRiskStatus; dir: string; th: typeof THEMES.dark }) => {
   const items = [
@@ -1297,7 +1625,7 @@ const CalendarView = ({ days, dir, th, t, risk, onSelectDay }: { days: JournalDa
 // ═══════════════════════════════════════════════════════════════
 // MORNING FORM
 // ═══════════════════════════════════════════════════════════════
-const MorningForm = ({ day, upd, t, dir, onSave, dirty, th }: any) => {
+const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) => {
   const f = t.f;
   const U = (k: string) => (v: any) => upd({ [k]: v });
   const taskArr = day.tasks || [];
@@ -1310,7 +1638,9 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th }: any) => {
   return (
     <div>
       <MarketStrip day={day} dir={dir} th={th} />
-      <PDiv label={dir === 'rtl' ? 'תדריך טרום-שוק' : 'PRE-MARKET BRIEFING'} color="#5AA9FF" icon="☀️" th={th} />
+      <div onClick={onInfoClick} style={{ cursor: 'pointer' }}>
+        <PDiv label={dir === 'rtl' ? 'תדריך טרום-שוק' : 'PRE-MARKET BRIEFING'} color="#5AA9FF" icon="☀️" th={th} />
+      </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }} className="j-grid-2col">
         <div>
@@ -1456,7 +1786,7 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th }: any) => {
 // ═══════════════════════════════════════════════════════════════
 // EOD FORM
 // ═══════════════════════════════════════════════════════════════
-const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk }: any) => {
+const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk, onInfoClick }: any) => {
   const f = t.f;
   const U = (k: string) => (v: any) => upd({ [k]: v });
   const dp = sumPnl(day), dw = numWins(day);
@@ -1526,7 +1856,9 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk }: any)
         </div>
       )}
 
-      <PDiv label={dir === 'rtl' ? 'תחקיר אחרי-שוק' : 'POST-MARKET DEBRIEF'} color="#b794f6" icon="🌙" th={th} />
+      <div onClick={onInfoClick} style={{ cursor: 'pointer' }}>
+        <PDiv label={dir === 'rtl' ? 'תחקיר אחרי-שוק' : 'POST-MARKET DEBRIEF'} color="#b794f6" icon="🌙" th={th} />
+      </div>
 
       {/* Trade Log */}
       <Sec title={f.tlog} icon="💹" accent="#5AA9FF" th={th} fullLocked={fullLocked} locked={sLocks['trades']} onLock={() => lockSec('trades')} onUnlock={() => unlockSec('trades')}>
@@ -1736,6 +2068,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
   const [mobileMenu, setMobileMenu] = useState(false);
   const [lockAnim, setLockAnim] = useState<'morning' | 'eod' | null>(null);
   const [viewingArchiveId, setViewingArchiveId] = useState<string | null>(null);
+  const [knowledgePanel, setKnowledgePanel] = useState<'morning' | 'eod' | null>(null);
   const tRef = useRef<any>(null);
 
   const daysRef = useRef(days);
@@ -1922,7 +2255,9 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
       {lockAnim === 'morning' && <MorningLockOverlay onDone={() => setLockAnim(null)} />}
       {lockAnim === 'eod' && <EODLockOverlay onDone={() => setLockAnim(null)} />}
 
-      {/* CENTERED MENU POPUP */}
+      {/* KNOWLEDGE PANEL */}
+      {knowledgePanel && <KnowledgePanel type={knowledgePanel} days={days} dir={dir} th={th} onClose={() => setKnowledgePanel(null)} onOpenDay={(id) => { setViewingArchiveId(id); setView('journal'); }} />}
+
       {mobileMenu && (
         <div onClick={() => setMobileMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'j-fade-in .2s ease-out' }}>
           <div onClick={e => e.stopPropagation()} style={{
@@ -2093,18 +2428,18 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
                 </div>
               </div>
 
-              {/* Risk strip in journal view */}
-              {!isViewingArchive && <RiskStrip risk={riskStatus} dir={dir} th={th} />}
+              {/* Risk Command Center in journal view */}
+              {!isViewingArchive && <RiskCommandCenter risk={riskStatus} days={days} dir={dir} th={th} />}
 
               {isViewingArchive ? (
                 /* Read-only view for archived day */
                 displayDay.morningSaved
-                  ? <EodForm day={displayDay} upd={() => {}} t={t} dir={dir} onSave={() => {}} dirty={false} orcaTrades={[]} th={th} risk={riskStatus} />
-                  : <MorningForm day={displayDay} upd={() => {}} t={t} dir={dir} onSave={() => {}} dirty={false} th={th} />
+                 ? <EodForm day={displayDay} upd={() => {}} t={t} dir={dir} onSave={() => {}} dirty={false} orcaTrades={[]} th={th} risk={riskStatus} onInfoClick={() => setKnowledgePanel('eod')} />
+                 : <MorningForm day={displayDay} upd={() => {}} t={t} dir={dir} onSave={() => {}} dirty={false} th={th} onInfoClick={() => setKnowledgePanel('morning')} />
               ) : (
                 !displayDay.morningSaved
-                  ? <MorningForm day={displayDay} upd={upd} t={t} dir={dir} onSave={saveMorning} dirty={mDirty} th={th} />
-                  : <EodForm day={displayDay} upd={upd} t={t} dir={dir} onSave={saveEOD} dirty={eDirty} orcaTrades={todayOrcaTrades} th={th} risk={riskStatus} />
+                  ? <MorningForm day={displayDay} upd={upd} t={t} dir={dir} onSave={saveMorning} dirty={mDirty} th={th} onInfoClick={() => setKnowledgePanel('morning')} />
+                  : <EodForm day={displayDay} upd={upd} t={t} dir={dir} onSave={saveEOD} dirty={eDirty} orcaTrades={todayOrcaTrades} th={th} risk={riskStatus} onInfoClick={() => setKnowledgePanel('eod')} />
               )}
             </div>
           )}
