@@ -1863,6 +1863,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
   }, [showToast]);
 
   const saveEOD = useCallback(() => {
+    setLockAnim('eod');
     const curId = activeIdRef.current;
     const curLang = langRef.current;
     setDays(prev => {
