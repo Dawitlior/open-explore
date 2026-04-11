@@ -3201,6 +3201,11 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk, onInfo
         </div>
       )}
 
+      {/* EOD Chart Screenshots — FIRST in EOD */}
+      <Sec title={dir === 'rtl' ? 'צילומי מסך - סוף יום' : 'EOD CHART SCREENSHOTS'} icon="📸" accent="#5AA9FF" th={th} fullLocked={fullLocked} locked={sLocks['eodImages']} onLock={() => lockSec('eodImages')} onUnlock={() => unlockSec('eodImages')}>
+        <ImageUpload images={day.eodImages || []} onUpdate={(imgs: string[]) => upd({ eodImages: imgs })} label={dir === 'rtl' ? 'צילומי גרפים מסוף היום' : 'End of day chart captures'} uploadLabel={f.imageUpload} dir={dir} disabled={fullLocked || sLocks['eodImages']} th={th} />
+      </Sec>
+
       {/* Orca Trade Bridge */}
       {orcaTrades?.length > 0 && (
         <div style={{ background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 12, padding: '12px 16px', marginBottom: 16 }}>
@@ -3294,10 +3299,8 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk, onInfo
         <TA val={day.closing} set={U('closing')} ph={f.closingPh} rows={3} dir={dir} disabled={fullLocked || sLocks['review']} th={th} />
       </Sec>
 
-      {/* EOD Chart Screenshots */}
-      <Sec title={dir === 'rtl' ? 'צילומי מסך - סוף יום' : 'EOD CHART SCREENSHOTS'} icon="📸" accent="#5AA9FF" th={th} fullLocked={fullLocked} locked={sLocks['eodImages']} onLock={() => lockSec('eodImages')} onUnlock={() => unlockSec('eodImages')}>
-        <ImageUpload images={day.eodImages || []} onUpdate={(imgs: string[]) => upd({ eodImages: imgs })} label={dir === 'rtl' ? 'צילומי גרפים מסוף היום' : 'End of day chart captures'} uploadLabel={f.imageUpload} dir={dir} disabled={fullLocked || sLocks['eodImages']} th={th} />
-      </Sec>
+      {/* Compact Risk Control — EOD only */}
+      <CompactRiskControl risk={risk} dir={dir} th={th} />
 
       {/* Seal Day */}
       {!fullLocked && (
@@ -3856,8 +3859,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
                 </div>
               </div>
 
-              {/* Risk Command Center in journal view */}
-              {!isViewingArchive && <RiskCommandCenter risk={riskStatus} days={days} dir={dir} th={th} />}
+              {/* Risk Command Center removed from main view - now compact in EOD only */}
 
               {isViewingArchive ? (
                 /* Read-only view for archived day */
