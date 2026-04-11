@@ -35,21 +35,7 @@ const JournalEntryScreen = ({ onEnter }: { onEnter: () => void }) => {
   useEffect(() => {
     if (phase !== 'ready' || soundPlayed.current) return;
     soundPlayed.current = true;
-    try {
-      const ctx = new AudioContext();
-      const now = ctx.currentTime;
-      const osc = ctx.createOscillator();
-      const g = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(880, now);
-      osc.frequency.exponentialRampToValueAtTime(1320, now + 0.15);
-      g.gain.setValueAtTime(0, now);
-      g.gain.linearRampToValueAtTime(0.06, now + 0.05);
-      g.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-      osc.connect(g); g.connect(ctx.destination);
-      osc.start(now); osc.stop(now + 0.5);
-      setTimeout(() => ctx.close(), 600);
-    } catch { /* silent */ }
+    playSystemOpen();
   }, [phase]);
 
   const handleEnter = () => {
