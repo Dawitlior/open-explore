@@ -3608,6 +3608,8 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
         @keyframes j-fade-in { from { opacity: 0; } to { opacity: 1; } }
         @keyframes j-scale-in { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
         @keyframes j-glow-red { 0%,100% { box-shadow: 0 0 5px rgba(255,77,77,0.1); } 50% { box-shadow: 0 0 20px rgba(255,77,77,0.2); } }
+        @keyframes j-risk-ring { 0%,100% { transform: scale(1); opacity: 0.3; } 50% { transform: scale(1.1); opacity: 0.6; } }
+        @keyframes j-risk-icon-shake { 0%,100% { transform: translateX(0); } 10% { transform: translateX(-8px); } 20% { transform: translateX(8px); } 30% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 50% { transform: translateX(-4px); } 60% { transform: translateX(4px); } 70% { transform: translateX(-2px); } 80% { transform: translateX(2px); } }
         @keyframes j-slide-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .j-card-hover { transition: all .25s ease !important; }
         .j-card-hover:hover { transform: translateY(-1px) !important; box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important; }
