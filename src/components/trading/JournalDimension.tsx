@@ -2370,29 +2370,40 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
         <main style={{ flex: 1, overflowY: 'auto', background: 'transparent' }}>
           {view === 'journal' && displayDay && (
             <div className="j-main-content" style={{ maxWidth: 1080, margin: '0 auto', padding: '22px 22px 50px', direction: dir, animation: 'j-fade-in .3s ease-out' }}>
-              {/* Archive viewing banner */}
+              {/* Archive viewing banner — sticky top bar */}
               {isViewingArchive && (
                 <div style={{
+                  position: 'sticky', top: 0, zIndex: 90,
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' as const, gap: 10,
-                  padding: '10px 16px', marginBottom: 16, borderRadius: 10,
-                  background: 'rgba(255,200,87,0.06)', border: '1px solid rgba(255,200,87,0.2)',
+                  padding: '12px 20px', marginBottom: 18, borderRadius: 12,
+                  background: 'linear-gradient(135deg, rgba(255,200,87,0.1) 0%, rgba(255,160,40,0.08) 100%)',
+                  border: '1px solid rgba(255,200,87,0.25)',
+                  backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+                  boxShadow: '0 4px 24px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,200,87,0.1) inset',
                   animation: 'j-fade-in .3s ease-out',
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 16 }}>📂</span>
-                    <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 700, color: '#FFC857', letterSpacing: '0.5px' }}>
-                      {dir === 'rtl' ? 'צפייה בארכיון — קריאה בלבד' : 'VIEWING ARCHIVE — READ ONLY'}
-                    </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: 18 }}>📂</span>
+                    <div>
+                      <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 13, fontWeight: 800, color: '#FFC857', letterSpacing: '0.5px', display: 'block' }}>
+                        {dir === 'rtl' ? 'צפייה בארכיון — קריאה בלבד' : 'VIEWING ARCHIVE — READ ONLY'}
+                      </span>
+                      <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: 'rgba(255,200,87,0.6)', letterSpacing: '0.5px' }}>
+                        {displayDay?.id || ''}
+                      </span>
+                    </div>
                   </div>
-                  <button onClick={() => { setViewingArchiveId(null); setView('journal'); }}
+                  <button onClick={() => { setViewingArchiveId(null); setView('journal'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                     style={{
-                      fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                      padding: '6px 16px', borderRadius: 8, border: '1px solid rgba(0,255,163,0.3)',
-                      background: 'rgba(0,255,163,0.08)', color: '#00FFA3', transition: 'all .2s',
+                      fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 800, cursor: 'pointer',
+                      padding: '8px 22px', borderRadius: 10, border: '1px solid rgba(0,255,163,0.4)',
+                      background: 'linear-gradient(135deg, rgba(0,255,163,0.12) 0%, rgba(0,255,163,0.06) 100%)',
+                      color: '#00FFA3', transition: 'all .25s', letterSpacing: '0.3px',
+                      boxShadow: '0 0 12px rgba(0,255,163,0.1)',
                     }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(0,255,163,0.15)'; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(0,255,163,0.08)'; }}>
-                    {dir === 'rtl' ? '← חזרה ליום הנוכחי' : '← Back to Today'}
+                    onMouseEnter={e => { const s = e.currentTarget.style; s.background = 'rgba(0,255,163,0.22)'; s.boxShadow = '0 0 20px rgba(0,255,163,0.2)'; s.transform = 'scale(1.03)'; }}
+                    onMouseLeave={e => { const s = e.currentTarget.style; s.background = 'linear-gradient(135deg, rgba(0,255,163,0.12) 0%, rgba(0,255,163,0.06) 100%)'; s.boxShadow = '0 0 12px rgba(0,255,163,0.1)'; s.transform = 'scale(1)'; }}>
+                    ↩ {dir === 'rtl' ? 'חזור ליום הנוכחי' : 'Back to Today'}
                   </button>
                 </div>
               )}
