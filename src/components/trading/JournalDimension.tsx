@@ -2064,6 +2064,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
   const [mobileMenu, setMobileMenu] = useState(false);
   const [lockAnim, setLockAnim] = useState<'morning' | 'eod' | null>(null);
   const [viewingArchiveId, setViewingArchiveId] = useState<string | null>(null);
+  const [knowledgePanel, setKnowledgePanel] = useState<'morning' | 'eod' | null>(null);
   const tRef = useRef<any>(null);
 
   const daysRef = useRef(days);
