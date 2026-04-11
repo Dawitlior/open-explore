@@ -1941,7 +1941,17 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
         .j-card-hover:hover { transform: translateY(-1px) !important; box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important; }
         @media (max-width: 768px) {
           .j-grid-2col { grid-template-columns: 1fr !important; }
-          .j-sidebar { width: 0 !important; min-width: 0 !important; }
+          .j-sidebar { display: none !important; }
+          .j-nav-labels { display: none !important; }
+          .j-topbar { padding: 0 10px !important; gap: 6px !important; }
+          .j-topbar-right { gap: 3px !important; }
+          .j-lock-btn-text { display: none !important; }
+          .j-return-desktop { display: none !important; }
+          .j-mobile-menu-btn { display: flex !important; }
+          .j-main-content { padding: 14px 12px 40px !important; }
+        }
+        @media (min-width: 769px) {
+          .j-mobile-menu-btn { display: none !important; }
         }
       `}</style>
 
