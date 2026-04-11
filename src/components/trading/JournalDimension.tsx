@@ -3581,6 +3581,12 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
     g: { background: 'rgba(0,255,163,.12)', border: '1px solid rgba(0,255,163,.25)', color: '#00FFA3' },
   };
 
+  // Exit animation handler
+  const handleReturn = useCallback(() => {
+    setExitingToOrca(true);
+    setTimeout(() => onReturn(), 1200);
+  }, [onReturn]);
+
   // Entry screen
   if (showEntry) {
     return <JournalEntryScreen onEnter={() => setShowEntry(false)} />;
@@ -3591,7 +3597,34 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
       height: '100%', display: 'flex', flexDirection: 'column',
       fontFamily: "'Poppins', sans-serif", direction: dir,
       background: th.bg, color: th.tx,
+      opacity: exitingToOrca ? 0 : 1,
+      transform: exitingToOrca ? 'scale(0.92)' : 'scale(1)',
+      filter: exitingToOrca ? 'blur(12px)' : 'none',
+      transition: 'opacity 0.8s ease, transform 0.8s cubic-bezier(0.4,0,0.2,1), filter 0.8s ease',
     }}>
+      {/* Exit overlay */}
+      {exitingToOrca && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 10000,
+          background: 'radial-gradient(ellipse at 50% 50%, rgba(212,175,55,0.08) 0%, rgba(3,6,16,0.95) 60%)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          animation: 'j-exit-overlay 0.8s ease-out',
+        }}>
+          <div style={{
+            fontSize: 28, fontWeight: 800, color: '#D4AF37', fontFamily: "'Poppins',sans-serif",
+            letterSpacing: '-0.5px', animation: 'j-exit-text 0.6s ease-out 0.3s both',
+          }}>
+            ⚔️
+          </div>
+          <div style={{
+            fontSize: 10, fontWeight: 700, color: 'rgba(212,175,55,0.5)', letterSpacing: 4,
+            fontFamily: "'JetBrains Mono', monospace", marginTop: 12,
+            animation: 'j-exit-text 0.6s ease-out 0.5s both',
+          }}>
+            RETURNING TO COMMAND
+          </div>
+        </div>
+      )}
       {/* SCOPED CSS */}
       <style>{`
         .journal-dimension ::-webkit-scrollbar { width: 4px; height: 4px; }
