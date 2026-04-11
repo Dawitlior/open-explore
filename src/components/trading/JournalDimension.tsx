@@ -3701,7 +3701,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
                 style={{ flex: 1, padding: '12px', borderRadius: 10, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', color: '#FFC857', fontSize: 13, fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>
                 🔒 Lock System
               </button>
-              <button onClick={() => { onReturn(); setMobileMenu(false); }}
+              <button onClick={() => { handleReturn(); setMobileMenu(false); }}
                 style={{ flex: 1, padding: '12px', borderRadius: 10, border: '1px solid rgba(212,175,55,0.3)', background: 'rgba(212,175,55,0.06)', cursor: 'pointer', color: '#D4AF37', fontSize: 13, fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>
                 ⚔️ {isRTL ? 'חמ"ל' : 'Orca'}
               </button>
