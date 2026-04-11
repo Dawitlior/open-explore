@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, forwardRef } from 'react';
 import type { Trade } from '@/data/trades';
 import { readJournalState, writeJournalState, type JournalDay, type JournalTrade, type JournalState, type PsychAnswers } from '@/lib/journal-storage';
 import { ReturnButton } from './DimensionController';
@@ -383,13 +383,38 @@ const TR: Record<string, any> = {
 };
 
 // ═══════════════════════════════════════════════════════════════
-// HELPERS
+// HELPERS — SAFE DATE HANDLING
 // ═══════════════════════════════════════════════════════════════
+function safeDateStr(input: string | Date | undefined | null): string {
+  if (!input) return new Date().toISOString().split('T')[0];
+  if (input instanceof Date) {
+    if (isNaN(input.getTime())) return new Date().toISOString().split('T')[0];
+    return input.toISOString().split('T')[0];
+  }
+  // Try ISO YYYY-MM-DD
+  const iso = input.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) {
+    const d = new Date(Date.UTC(+iso[1], +iso[2] - 1, +iso[3]));
+    if (!isNaN(d.getTime()) && d.getUTCDate() === +iso[3] && d.getUTCMonth() === +iso[2] - 1) return input;
+  }
+  // Try DD/MM/YYYY
+  const dmy = input.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if (dmy) {
+    let yr = parseInt(dmy[3]); if (yr < 100) yr += 2000;
+    const d = new Date(Date.UTC(yr, parseInt(dmy[2]) - 1, parseInt(dmy[1])));
+    if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+  }
+  // Fallback
+  const fallback = new Date(input);
+  if (!isNaN(fallback.getTime())) return fallback.toISOString().split('T')[0];
+  return new Date().toISOString().split('T')[0];
+}
+
 const makeDay = (lang = 'he'): JournalDay => {
   const t = TR[lang];
   return {
     id: `d_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-    date: new Date().toISOString().split('T')[0],
+    date: safeDateStr(new Date()),
     dayNum: '', weekNum: '', lang,
     morningSaved: false,
     mood: '', plan: '',
@@ -415,10 +440,12 @@ const makeDay = (lang = 'he'): JournalDay => {
 const sumPnl = (d: JournalDay) => (d.trades || []).reduce((s, t) => s + (parseFloat(t.pnl) || 0), 0);
 const numWins = (d: JournalDay) => (d.trades || []).filter(t => parseFloat(t.pnl) > 0).length;
 const fmtFull = (iso: string, locale: string) => {
-  try { return new Date(iso + 'T12:00').toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); } catch { return iso; }
+  const safe = safeDateStr(iso);
+  try { return new Date(safe + 'T12:00').toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); } catch { return safe; }
 };
 const fmtShort = (iso: string, locale: string) => {
-  try { return new Date(iso + 'T12:00').toLocaleDateString(locale, { day: 'numeric', month: 'short' }); } catch { return iso; }
+  const safe = safeDateStr(iso);
+  try { return new Date(safe + 'T12:00').toLocaleDateString(locale, { day: 'numeric', month: 'short' }); } catch { return safe; }
 };
 
 const MORNING_KEYS = new Set(['mood','plan','tasks','goals','bias','mktStruct','mentalTags','btcNote','t3Note','domNote','macroNote','levels','setups','emotionScore','fearGreed','dayNum','weekNum','date','morningImages','btcThoughts','psychAnswers','disciplineCommitments','disciplineConfirmed','sectionLocks']);
@@ -476,7 +503,7 @@ interface JRiskStatus {
 }
 
 function checkJournalRisk(days: JournalDay[], refDate: Date = new Date()): JRiskStatus {
-  const refStr = refDate.toISOString().split('T')[0];
+  const refStr = safeDateStr(refDate);
   const refD = new Date(refStr + 'T12:00');
 
   // Daily
@@ -819,20 +846,16 @@ const DisciplineSection = ({ commitments, confirmed, onUpdate, onConfirm, option
 };
 
 // ═══════════════════════════════════════════════════════════════
-// MARKET OVERVIEW STRIP
+// MARKET OVERVIEW STRIP (F&G removed — it's now in standalone widget)
 // ═══════════════════════════════════════════════════════════════
 const MarketStrip = ({ day, dir, th }: { day: JournalDay; dir: string; th: typeof THEMES.dark }) => {
   const emo = day.emotionScore;
   const emoColor = emo >= 8 ? '#00FFA3' : emo >= 5 ? '#FFC857' : '#FF4D4D';
-  const fg = parseInt(day.fearGreed) || 0;
-  const fgColor = fg <= 30 ? '#FF4D4D' : fg <= 60 ? '#FFC857' : '#00FFA3';
-  const fgLabel = fg <= 20 ? 'Extreme Fear' : fg <= 40 ? 'Fear' : fg <= 60 ? 'Neutral' : fg <= 80 ? 'Greed' : 'Extreme Greed';
 
   const badges = [
     { label: dir === 'rtl' ? 'כיוון' : 'BIAS', value: day.bias || '—', color: day.bias?.includes('ull') || day.bias?.includes('שורי') ? '#00FFA3' : day.bias?.includes('ear') || day.bias?.includes('דובי') ? '#FF4D4D' : '#FFC857' },
     { label: dir === 'rtl' ? 'מבנה' : 'STRUCTURE', value: day.mktStruct || '—', color: '#5AA9FF' },
     { label: dir === 'rtl' ? 'רגש' : 'EMOTION', value: `${emo}/10`, color: emoColor },
-    { label: dir === 'rtl' ? 'פחד/תאוות בצע' : 'F&G', value: day.fearGreed ? `${fg} · ${fgLabel}` : '—', color: fgColor },
   ];
 
   return (
@@ -1245,14 +1268,20 @@ const Scores = ({ val, set, disabled, th }: any) => (
 );
 
 // ═══════════════════════════════════════════════════════════════
-// FEAR & GREED GAUGE
+// MARKET SENTIMENT GAUGE — Premium standalone widget
 // ═══════════════════════════════════════════════════════════════
-const FGGauge = ({ value }: { value: number }) => {
-  const v = Math.min(100, Math.max(0, value || 0));
+const MarketSentimentGauge = ({ value, dir, th, onChangeValue, disabled }: { value: string; dir: string; th: typeof THEMES.dark; onChangeValue?: (v: string) => void; disabled?: boolean }) => {
+  const v = Math.min(100, Math.max(0, parseInt(value) || 0));
+  const hasValue = value !== '' && value !== undefined;
   const color = v <= 20 ? '#FF4D4D' : v <= 40 ? '#f97316' : v <= 60 ? '#FFC857' : v <= 80 ? '#84cc16' : '#00FFA3';
-  const label = v <= 20 ? 'Extreme Fear' : v <= 40 ? 'Fear' : v <= 60 ? 'Neutral' : v <= 80 ? 'Greed' : 'Extreme Greed';
+  const labelEN = v <= 20 ? 'Extreme Fear' : v <= 40 ? 'Fear' : v <= 60 ? 'Neutral' : v <= 80 ? 'Greed' : 'Extreme Greed';
+  const labelHE = v <= 20 ? 'פחד קיצוני' : v <= 40 ? 'פחד' : v <= 60 ? 'ניטרלי' : v <= 80 ? 'תאוות בצע' : 'תאוות בצע קיצונית';
+  const label = dir === 'rtl' ? labelHE : labelEN;
+  const isRTL = dir === 'rtl';
+  const glowIntensity = hasValue ? Math.max(0.05, v / 200) : 0;
+
   const rad = (d: number) => d * Math.PI / 180;
-  const cx = 75, cy = 72, R = 54, ri = 38;
+  const cx = 100, cy = 92, R = 72, ri = 50;
   const segs = [
     { s: -180, e: -144, c: '#FF4D4D' }, { s: -144, e: -108, c: '#f97316' },
     { s: -108, e: -72, c: '#FFC857' }, { s: -72, e: -36, c: '#84cc16' }, { s: -36, e: 0, c: '#00FFA3' }
@@ -1263,16 +1292,126 @@ const FGGauge = ({ value }: { value: number }) => {
   };
   const needleA = -180 + (v / 100) * 180;
   const nr = rad(needleA);
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <svg width="150" height="82" viewBox="0 0 150 82">
-        {segs.map((s, i) => <path key={i} d={arc(s.s, s.e)} fill={s.c} opacity={0.85} />)}
-        <line x1={cx} y1={cy} x2={cx + 46 * Math.cos(nr)} y2={cy + 46 * Math.sin(nr)} stroke="rgba(255,255,255,0.9)" strokeWidth={2.5} strokeLinecap="round" style={{ filter: `drop-shadow(0 0 4px ${color})`, transition: 'all .5s ease' }} />
-        <circle cx={cx} cy={cy} r={5} fill="rgba(255,255,255,0.9)" />
-      </svg>
-      <div style={{ textAlign: 'center', marginTop: -6 }}>
-        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 20, fontWeight: 800, color, lineHeight: 1, textShadow: `0 0 15px ${color}40` }}>{v}</div>
-        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: '8.5px', color, letterSpacing: 1, textTransform: 'uppercase' as const, marginTop: 3, opacity: 0.8 }}>{label}</div>
+    <div style={{
+      background: `linear-gradient(165deg, ${th.cardBg}, rgba(0,0,0,0.3))`,
+      border: `1px solid ${hasValue ? `${color}25` : th.cardBr}`,
+      borderRadius: 18, padding: '22px 20px 18px', marginBottom: 12,
+      position: 'relative', overflow: 'hidden',
+      boxShadow: hasValue ? `0 0 ${30 + glowIntensity * 40}px ${color}${Math.round(glowIntensity * 25).toString(16).padStart(2, '0')}` : 'none',
+      transition: 'all .5s ease',
+    }}>
+      {/* Subtle background glow */}
+      {hasValue && <div style={{
+        position: 'absolute', top: '-50%', left: '50%', transform: 'translateX(-50%)',
+        width: 200, height: 200, borderRadius: '50%',
+        background: `radial-gradient(circle, ${color}08 0%, transparent 70%)`,
+        pointerEvents: 'none',
+      }} />}
+
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, position: 'relative', zIndex: 1 }}>
+        <div style={{
+          width: 32, height: 32, borderRadius: 10,
+          background: `linear-gradient(135deg, ${color}20, ${color}08)`,
+          border: `1px solid ${color}25`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15,
+        }}>₿</div>
+        <div>
+          <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 800, letterSpacing: '2px', textTransform: 'uppercase' as const, color: th.tx3 }}>
+            {isRTL ? 'סנטימנט שוק הקריפטו' : 'CRYPTO MARKET SENTIMENT'}
+          </div>
+          <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, color: th.tx3, opacity: 0.6, marginTop: 2 }}>
+            {isRTL ? 'מדד פחד ותאוות בצע — פסיכולוגיית שוק חיצונית' : 'Fear & Greed Index — external market psychology'}
+          </div>
+        </div>
+      </div>
+
+      {/* Gauge + Input */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24, flexWrap: 'wrap' as const, position: 'relative', zIndex: 1 }}>
+        {/* SVG Gauge */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <svg width="200" height="110" viewBox="0 0 200 110">
+            {/* Track */}
+            {segs.map((s, i) => (
+              <path key={i} d={arc(s.s, s.e)} fill={s.c} opacity={hasValue ? 0.85 : 0.2} style={{ transition: 'opacity .5s ease' }} />
+            ))}
+            {/* Tick marks */}
+            {[0, 25, 50, 75, 100].map(tick => {
+              const a = rad(-180 + (tick / 100) * 180);
+              const x1 = cx + (R + 4) * Math.cos(a), y1 = cy + (R + 4) * Math.sin(a);
+              const x2 = cx + (R + 10) * Math.cos(a), y2 = cy + (R + 10) * Math.sin(a);
+              return <line key={tick} x1={x1} y1={y1} x2={x2} y2={y2} stroke={th.tx3} strokeWidth={1.5} opacity={0.4} />;
+            })}
+            {/* Needle */}
+            {hasValue && (
+              <>
+                <line x1={cx} y1={cy} x2={cx + 60 * Math.cos(nr)} y2={cy + 60 * Math.sin(nr)}
+                  stroke="rgba(255,255,255,0.95)" strokeWidth={3} strokeLinecap="round"
+                  style={{ filter: `drop-shadow(0 0 6px ${color})`, transition: 'all .6s cubic-bezier(0.34,1.56,0.64,1)' }} />
+                <circle cx={cx} cy={cy} r={6} fill="rgba(255,255,255,0.95)" style={{ filter: `drop-shadow(0 0 4px ${color})` }} />
+                <circle cx={cx} cy={cy} r={3} fill={color} />
+              </>
+            )}
+          </svg>
+          {/* Value display */}
+          <div style={{ textAlign: 'center', marginTop: -8 }}>
+            <div style={{
+              fontFamily: "'JetBrains Mono',monospace", fontSize: 32, fontWeight: 800,
+              color: hasValue ? color : th.tx3, lineHeight: 1,
+              textShadow: hasValue ? `0 0 25px ${color}50` : 'none',
+              transition: 'all .5s ease',
+            }}>{hasValue ? v : '—'}</div>
+            {hasValue && (
+              <div style={{
+                fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700,
+                color, letterSpacing: '1.5px', textTransform: 'uppercase' as const,
+                marginTop: 4, opacity: 0.9,
+              }}>{label}</div>
+            )}
+          </div>
+        </div>
+
+        {/* Input */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+          <input
+            value={value || ''}
+            onChange={e => {
+              if (disabled) return;
+              const n = e.target.value.replace(/\D/g, '').slice(0, 3);
+              if (n === '' || parseInt(n) <= 100) onChangeValue?.(n);
+            }}
+            placeholder="0 – 100"
+            disabled={disabled}
+            style={{
+              width: 90, textAlign: 'center',
+              background: th.inputBg, border: `1px solid ${hasValue ? `${color}30` : th.inputBr}`,
+              borderRadius: 10, color: th.tx, padding: '10px 12px',
+              fontSize: 18, fontWeight: 800, fontFamily: "'JetBrains Mono',monospace",
+              outline: 'none', transition: 'all .3s',
+            }}
+          />
+          <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, color: th.tx3, textAlign: 'center', opacity: 0.5 }}>
+            {isRTL ? 'הזן ערך מ-0 עד 100' : 'Enter value 0–100'}
+          </div>
+        </div>
+      </div>
+
+      {/* Scale labels */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12, padding: '0 10px', position: 'relative', zIndex: 1 }}>
+        {[
+          { l: isRTL ? 'פחד קיצוני' : 'Extreme Fear', c: '#FF4D4D' },
+          { l: isRTL ? 'פחד' : 'Fear', c: '#f97316' },
+          { l: isRTL ? 'ניטרלי' : 'Neutral', c: '#FFC857' },
+          { l: isRTL ? 'תאוות בצע' : 'Greed', c: '#84cc16' },
+          { l: isRTL ? 'קיצוני' : 'Extreme', c: '#00FFA3' },
+        ].map((s, i) => (
+          <div key={i} style={{ textAlign: 'center' }}>
+            <div style={{ width: 4, height: 4, borderRadius: '50%', background: s.c, margin: '0 auto 3px', opacity: 0.6 }} />
+            <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 7, color: s.c, opacity: 0.6, letterSpacing: '0.5px' }}>{s.l}</div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -2114,15 +2253,18 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
           <Sec title={f.setups} icon="🔍" accent="#5AA9FF" th={th} locked={sLocks['setups']} onLock={() => lockSec('setups')} onUnlock={() => unlockSec('setups')}>
             <TA val={day.setups} set={U('setups')} ph={f.setupsPh} rows={4} dir={dir} disabled={sLocks['setups']} th={th} />
           </Sec>
-          <Sec title={`${f.emotion} & ${f.fg}`} icon="🧠" accent="#b794f6" th={th} locked={sLocks['emotion']} onLock={() => lockSec('emotion')} onUnlock={() => unlockSec('emotion')}>
+          <Sec title={f.emotion} icon="🧠" accent="#b794f6" th={th} locked={sLocks['emotion']} onLock={() => lockSec('emotion')} onUnlock={() => unlockSec('emotion')}>
             <EmoSlider val={day.emotionScore} set={U('emotionScore')} label={f.emotion} dir={dir} disabled={sLocks['emotion']} th={th} />
-            <div style={{ height: 1, background: th.divider, margin: '14px 0' }} />
-            <Lbl c={f.fg} dir={dir} th={th} />
-            <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' as const }}>
-              <IN val={day.fearGreed || ''} set={(v: string) => { const n = v.replace(/\D/g, '').slice(0, 3); if (n === '' || parseInt(n) <= 100) upd({ fearGreed: n }); }} ph={f.fgPh} dir={dir} disabled={sLocks['emotion']} th={th} style={{ width: 90 }} />
-              {day.fearGreed !== '' && day.fearGreed !== undefined && <FGGauge value={parseInt(day.fearGreed) || 0} />}
-            </div>
           </Sec>
+
+          {/* Market Sentiment — separate from trader psychology */}
+          <MarketSentimentGauge
+            value={day.fearGreed || ''}
+            dir={dir}
+            th={th}
+            onChangeValue={(v: string) => upd({ fearGreed: v })}
+            disabled={sLocks['emotion']}
+          />
         </div>
       </div>
 
@@ -2446,8 +2588,10 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
   useEffect(() => {
     readJournalState().then(s => {
       if (s?.days?.length) {
-        setDays(s.days);
-        setActiveId(s.activeDayId || s.days[s.days.length - 1].id);
+        // Validate all dates on load
+        const sanitized = s.days.map(d => ({ ...d, date: safeDateStr(d.date) }));
+        setDays(sanitized);
+        setActiveId(s.activeDayId || sanitized[sanitized.length - 1].id);
         if (s.lang) setLang(s.lang);
       } else {
         const d = makeDay(isRTL ? 'he' : 'en'); d.dayNum = '1'; d.weekNum = '1';
