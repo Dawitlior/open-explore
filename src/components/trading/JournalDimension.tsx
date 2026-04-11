@@ -1771,7 +1771,6 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
   const [activeId, setActiveId] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [view, setView] = useState('journal');
-  const [view, setView] = useState('journal');
   const [mDirty, setMD] = useState(false);
   const [eDirty, setED] = useState(false);
   const [toast, setToast] = useState<{ msg: string; type: string } | null>(null);
