@@ -3375,26 +3375,20 @@ const MorningLockOverlay = ({ onDone, isRTL }: { onDone: () => void; isRTL: bool
   }, [onDone]);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 9998, pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      {/* Dim overlay */}
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(5,10,30,0.75)', opacity: step >= 1 ? 1 : 0, transition: 'opacity 0.4s ease', backdropFilter: 'blur(4px)' }} />
-      {/* Grid lines */}
-      <div style={{ position: 'absolute', inset: 0, opacity: step >= 1 ? 0.08 : 0, transition: 'opacity 0.6s ease',
-        backgroundImage: 'linear-gradient(rgba(90,169,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(90,169,255,0.4) 1px, transparent 1px)', backgroundSize: '80px 60px' }} />
-      {/* Chart line */}
-      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: step >= 2 ? 0.3 : 0, transition: 'opacity 0.5s ease' }} viewBox="0 0 1000 400" preserveAspectRatio="none">
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9998, pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'clamp(16px, 4vw, 40px)' }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(5,10,30,0.85)', opacity: step >= 1 ? 1 : 0, transition: 'opacity 0.4s ease', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }} />
+      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: step >= 2 ? 0.2 : 0, transition: 'opacity 0.5s ease' }} viewBox="0 0 1000 400" preserveAspectRatio="none">
         <polyline points="0,300 100,290 200,295 300,270 400,260 500,240 600,200 700,180 750,100 800,60 850,40 900,30"
           fill="none" stroke="#5AA9FF" strokeWidth="2.5"
-          style={{ strokeDasharray: 2000, strokeDashoffset: step >= 2 ? 0 : 2000, transition: 'stroke-dashoffset 1s ease-out',
-            filter: 'drop-shadow(0 0 6px rgba(90,169,255,0.6))' }} />
+          style={{ strokeDasharray: 2000, strokeDashoffset: step >= 2 ? 0 : 2000, transition: 'stroke-dashoffset 1s ease-out', filter: 'drop-shadow(0 0 6px rgba(90,169,255,0.6))' }} />
       </svg>
-      {/* Center text */}
-      <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', opacity: step >= 3 ? 1 : 0, transform: step >= 3 ? 'scale(1)' : 'scale(0.9)', transition: 'all 0.4s ease' }}>
-        <div style={{ fontSize: 36, marginBottom: 12 }}>✓</div>
-        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 'clamp(16px, 4vw, 22px)', fontWeight: 800, color: '#5AA9FF', letterSpacing: 1, textShadow: '0 0 30px rgba(90,169,255,0.5)', direction: isRTL ? 'rtl' : 'ltr' }}>
+      <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', width: '100%', maxWidth: 400, opacity: step >= 3 ? 1 : 0, transform: step >= 3 ? 'scale(1) translateY(0)' : 'scale(0.85) translateY(20px)', transition: 'all 0.5s cubic-bezier(0.16,1,0.3,1)' }}>
+        <div style={{ width: 'clamp(48px, 10vw, 64px)', height: 'clamp(48px, 10vw, 64px)', borderRadius: '50%', background: 'rgba(90,169,255,0.1)', border: '2px solid rgba(90,169,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto clamp(12px, 3vw, 20px)', fontSize: 'clamp(22px, 5vw, 32px)', boxShadow: '0 0 40px rgba(90,169,255,0.2)' }}>✓</div>
+        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 'clamp(14px, 4vw, 20px)', fontWeight: 800, color: '#5AA9FF', letterSpacing: 1, textShadow: '0 0 30px rgba(90,169,255,0.5)', direction: isRTL ? 'rtl' : 'ltr' }}>
           {isRTL ? 'ניתוח הבוקר ננעל' : 'Morning Analysis Locked'}
         </div>
-        <div style={{ width: 60, height: 2, background: '#5AA9FF', margin: '12px auto', borderRadius: 1, boxShadow: '0 0 15px rgba(90,169,255,0.5)',
+        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 'clamp(9px, 2vw, 11px)', color: 'rgba(90,169,255,0.4)', letterSpacing: 3, marginTop: 8, textTransform: 'uppercase' as const }}>SEALED & PROTECTED</div>
+        <div style={{ width: 'clamp(40px, 12vw, 60px)', height: 2, background: '#5AA9FF', margin: 'clamp(10px, 2vw, 14px) auto 0', borderRadius: 1, boxShadow: '0 0 15px rgba(90,169,255,0.5)',
           opacity: step >= 4 ? 1 : 0, transform: step >= 4 ? 'scaleX(1)' : 'scaleX(0)', transition: 'all 0.3s ease' }} />
       </div>
     </div>
@@ -3411,7 +3405,6 @@ const EODLockOverlay = ({ onDone, isRTL }: { onDone: () => void; isRTL: boolean 
       setTimeout(() => setStep(4), 2000),
       setTimeout(() => { setStep(5); onDone(); }, 2600),
     ];
-    // Lock click sound at step 3 timing
     setTimeout(() => playEODLock(), 1400);
     return () => t.forEach(clearTimeout);
   }, [onDone]);
@@ -3423,10 +3416,9 @@ const EODLockOverlay = ({ onDone, isRTL }: { onDone: () => void; isRTL: boolean 
   }), []);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 9998, pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(5,8,20,0.8)', opacity: step >= 1 ? 1 : 0, transition: 'opacity 0.5s ease', backdropFilter: 'blur(6px)' }} />
-      {/* Candlestick replay */}
-      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: step >= 2 && step < 4 ? 0.25 : 0, transition: 'opacity 0.6s ease' }} viewBox="0 0 1000 400" preserveAspectRatio="none">
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9998, pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'clamp(16px, 4vw, 40px)' }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(5,8,20,0.88)', opacity: step >= 1 ? 1 : 0, transition: 'opacity 0.5s ease', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }} />
+      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: step >= 2 && step < 4 ? 0.2 : 0, transition: 'opacity 0.6s ease' }} viewBox="0 0 1000 400" preserveAspectRatio="none">
         {candles.map((c, i) => {
           const cx = c.x * 1000; const top = Math.min(c.o, c.c); const bot = Math.max(c.o, c.c); const h = Math.max(4, bot - top);
           const show = step >= 2;
@@ -3434,17 +3426,16 @@ const EODLockOverlay = ({ onDone, isRTL }: { onDone: () => void; isRTL: boolean 
             fill={c.green ? '#00FFA3' : '#FF4D4D'} rx={2}
             style={{ opacity: show ? 1 : 0, transform: show ? 'scaleY(1)' : 'scaleY(0)', transformOrigin: 'center', transition: `all 0.15s ease ${i * 0.025}s` }} />;
         })}
-        {/* Golden close line */}
         <line x1="970" y1="0" x2="970" y2="400" stroke="#D4AF37" strokeWidth="2"
           style={{ opacity: step >= 3 ? 0.6 : 0, transition: 'opacity 0.3s ease', filter: 'drop-shadow(0 0 8px rgba(212,175,55,0.5))' }} />
       </svg>
-      {/* Center content */}
-      <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', opacity: step >= 3 ? 1 : 0, transform: step >= 3 ? 'scale(1)' : 'scale(0.9)', transition: 'all 0.5s ease' }}>
-        <div style={{ fontSize: 44, marginBottom: 10, transition: 'transform 0.3s ease', transform: step >= 4 ? 'rotateY(180deg)' : 'rotateY(0)' }}>🔒</div>
-        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 'clamp(16px, 4vw, 22px)', fontWeight: 800, color: '#D4AF37', letterSpacing: 1, textShadow: '0 0 30px rgba(212,175,55,0.4)', direction: isRTL ? 'rtl' : 'ltr' }}>
+      <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', width: '100%', maxWidth: 400, opacity: step >= 3 ? 1 : 0, transform: step >= 3 ? 'scale(1) translateY(0)' : 'scale(0.85) translateY(20px)', transition: 'all 0.5s cubic-bezier(0.16,1,0.3,1)' }}>
+        <div style={{ width: 'clamp(52px, 12vw, 72px)', height: 'clamp(52px, 12vw, 72px)', borderRadius: '50%', background: 'rgba(212,175,55,0.08)', border: '2px solid rgba(212,175,55,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto clamp(12px, 3vw, 16px)', fontSize: 'clamp(24px, 6vw, 36px)', boxShadow: '0 0 40px rgba(212,175,55,0.15)', transition: 'transform 0.3s ease', transform: step >= 4 ? 'rotateY(180deg)' : 'rotateY(0)' }}>🔒</div>
+        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 'clamp(14px, 4vw, 20px)', fontWeight: 800, color: '#D4AF37', letterSpacing: 1, textShadow: '0 0 30px rgba(212,175,55,0.4)', direction: isRTL ? 'rtl' : 'ltr' }}>
           {isRTL ? 'יום המסחר ננעל' : 'Trading Day Sealed'}
         </div>
-        <div style={{ width: 80, height: 2, background: 'linear-gradient(90deg, transparent, #D4AF37, transparent)', margin: '14px auto', borderRadius: 1,
+        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 'clamp(9px, 2vw, 11px)', color: 'rgba(212,175,55,0.35)', letterSpacing: 3, marginTop: 8, textTransform: 'uppercase' as const }}>PERMANENTLY LOCKED</div>
+        <div style={{ width: 'clamp(50px, 15vw, 80px)', height: 2, background: 'linear-gradient(90deg, transparent, #D4AF37, transparent)', margin: 'clamp(10px, 2vw, 14px) auto 0', borderRadius: 1,
           opacity: step >= 4 ? 1 : 0, transition: 'opacity 0.4s ease' }} />
       </div>
     </div>
