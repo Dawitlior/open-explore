@@ -1823,6 +1823,7 @@ const DailyIntelligencePanel = ({ day, dir, th, onClose, onOpenJournal }: {
 const CalendarView = ({ days, dir, th, t, risk, onSelectDay }: { days: JournalDay[]; dir: string; th: typeof THEMES.dark; t: any; risk: JRiskStatus; onSelectDay: (id: string) => void }) => {
   const [month, setMonth] = useState(() => new Date().getMonth());
   const [year, setYear] = useState(() => new Date().getFullYear());
+  const [intelDay, setIntelDay] = useState<JournalDay | null>(null);
   const today = new Date();
 
   const firstDay = new Date(year, month, 1).getDay();
