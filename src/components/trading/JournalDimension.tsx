@@ -4,6 +4,330 @@ import { readJournalState, writeJournalState, type JournalDay, type JournalTrade
 import { ReturnButton } from './DimensionController';
 
 // ═══════════════════════════════════════════════════════════════
+// CINEMATIC ENTRY SCREEN
+// ═══════════════════════════════════════════════════════════════
+const ENTRY_SESSION_KEY = 'journal-entry-seen';
+
+const JournalEntryScreen = ({ onEnter }: { onEnter: () => void }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [phase, setPhase] = useState<'animating' | 'ready' | 'exiting'>('animating');
+  const [opacity, setOpacity] = useState(1);
+  const soundPlayed = useRef(false);
+  const startTime = useRef(Date.now());
+  const rafRef = useRef<number>(0);
+
+  // Play premium notification sound
+  const playSound = useCallback(() => {
+    if (soundPlayed.current) return;
+    soundPlayed.current = true;
+    try {
+      const ctx = new AudioContext();
+      const now = ctx.currentTime;
+      // Layer 1: soft bell
+      const osc1 = ctx.createOscillator();
+      const g1 = ctx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(880, now);
+      osc1.frequency.exponentialRampToValueAtTime(1320, now + 0.15);
+      g1.gain.setValueAtTime(0, now);
+      g1.gain.linearRampToValueAtTime(0.08, now + 0.05);
+      g1.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+      osc1.connect(g1); g1.connect(ctx.destination);
+      osc1.start(now); osc1.stop(now + 0.6);
+      // Layer 2: shimmer
+      const osc2 = ctx.createOscillator();
+      const g2 = ctx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(1760, now + 0.08);
+      g2.gain.setValueAtTime(0, now);
+      g2.gain.linearRampToValueAtTime(0.04, now + 0.12);
+      g2.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+      osc2.connect(g2); g2.connect(ctx.destination);
+      osc2.start(now + 0.08); osc2.stop(now + 0.5);
+      setTimeout(() => ctx.close(), 800);
+    } catch { /* silent fail */ }
+  }, []);
+
+  // Canvas animation
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    ctx.scale(dpr, dpr);
+
+    // Generate equity curve data
+    const points: { x: number; y: number }[] = [];
+    const numPts = 120;
+    let val = h * 0.55;
+    for (let i = 0; i <= numPts; i++) {
+      const x = (i / numPts) * w;
+      // Simulate equity curve with trend up
+      val += (Math.random() - 0.42) * (h * 0.025);
+      val = Math.max(h * 0.2, Math.min(h * 0.8, val));
+      if (i > numPts * 0.6) val -= (h * 0.003); // slight pullback
+      if (i > numPts * 0.75) val -= (h * 0.005); // recovery
+      points.push({ x, y: val });
+    }
+
+    // Particles
+    const particles: { x: number; y: number; r: number; speed: number; opacity: number; hue: number }[] = [];
+    for (let i = 0; i < 40; i++) {
+      particles.push({
+        x: Math.random() * w, y: Math.random() * h,
+        r: Math.random() * 1.5 + 0.5,
+        speed: Math.random() * 0.3 + 0.1,
+        opacity: Math.random() * 0.4 + 0.1,
+        hue: Math.random() > 0.5 ? 160 : 220,
+      });
+    }
+
+    const ANIM_DURATION = 3500;
+    let soundTriggered = false;
+
+    const draw = () => {
+      const elapsed = Date.now() - startTime.current;
+      const progress = Math.min(elapsed / ANIM_DURATION, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+
+      ctx.clearRect(0, 0, w, h);
+
+      // Grid lines
+      const gridOpacity = Math.min(eased * 1.5, 0.08);
+      ctx.strokeStyle = `rgba(90,169,255,${gridOpacity})`;
+      ctx.lineWidth = 0.5;
+      const gridSpacing = 40;
+      for (let x = 0; x < w; x += gridSpacing) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+      }
+      for (let y = 0; y < h; y += gridSpacing) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+      }
+
+      // Particles
+      particles.forEach(p => {
+        p.y -= p.speed;
+        if (p.y < -5) { p.y = h + 5; p.x = Math.random() * w; }
+        const pOp = p.opacity * Math.min(eased * 2, 1);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${p.hue},70%,65%,${pOp})`;
+        ctx.fill();
+      });
+
+      // Equity curve
+      const drawCount = Math.floor(eased * points.length);
+      if (drawCount > 1) {
+        // Gradient fill under curve
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, `rgba(0,255,163,${0.06 * eased})`);
+        grad.addColorStop(1, 'rgba(0,255,163,0)');
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, h);
+        for (let i = 0; i < drawCount; i++) {
+          if (i === 0) ctx.lineTo(points[i].x, points[i].y);
+          else {
+            const prev = points[i - 1];
+            const cpx = (prev.x + points[i].x) / 2;
+            ctx.quadraticCurveTo(prev.x, prev.y, cpx, (prev.y + points[i].y) / 2);
+          }
+        }
+        const lastPt = points[drawCount - 1];
+        ctx.lineTo(lastPt.x, lastPt.y);
+        ctx.lineTo(lastPt.x, h);
+        ctx.closePath();
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        // Line
+        ctx.beginPath();
+        for (let i = 0; i < drawCount; i++) {
+          if (i === 0) ctx.moveTo(points[i].x, points[i].y);
+          else {
+            const prev = points[i - 1];
+            const cpx = (prev.x + points[i].x) / 2;
+            ctx.quadraticCurveTo(prev.x, prev.y, cpx, (prev.y + points[i].y) / 2);
+          }
+        }
+        ctx.strokeStyle = `rgba(0,255,163,${0.7 * eased})`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Glow on tip
+        if (drawCount > 0) {
+          const tip = points[drawCount - 1];
+          const glowR = 8 + Math.sin(elapsed / 300) * 3;
+          const grd = ctx.createRadialGradient(tip.x, tip.y, 0, tip.x, tip.y, glowR);
+          grd.addColorStop(0, `rgba(0,255,163,${0.5 * eased})`);
+          grd.addColorStop(1, 'rgba(0,255,163,0)');
+          ctx.beginPath();
+          ctx.arc(tip.x, tip.y, glowR, 0, Math.PI * 2);
+          ctx.fillStyle = grd;
+          ctx.fill();
+        }
+      }
+
+      // Candlesticks (sparse, decorative)
+      if (eased > 0.3) {
+        const candleOp = Math.min((eased - 0.3) * 2, 0.35);
+        const candleW = 4;
+        for (let i = 0; i < drawCount; i += 8) {
+          const p = points[i];
+          const isGreen = i > 0 ? p.y < points[i - 1].y : true;
+          const bodyH = 6 + Math.random() * 10;
+          const wickH = bodyH * 0.6;
+          ctx.fillStyle = isGreen ? `rgba(0,255,163,${candleOp})` : `rgba(255,77,77,${candleOp})`;
+          ctx.fillRect(p.x - candleW / 2, p.y - bodyH / 2, candleW, bodyH);
+          ctx.strokeStyle = isGreen ? `rgba(0,255,163,${candleOp * 0.6})` : `rgba(255,77,77,${candleOp * 0.6})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y - bodyH / 2 - wickH);
+          ctx.lineTo(p.x, p.y - bodyH / 2);
+          ctx.moveTo(p.x, p.y + bodyH / 2);
+          ctx.lineTo(p.x, p.y + bodyH / 2 + wickH);
+          ctx.stroke();
+        }
+      }
+
+      if (progress < 1) {
+        rafRef.current = requestAnimationFrame(draw);
+      } else {
+        if (!soundTriggered) {
+          soundTriggered = true;
+          playSound();
+        }
+        setPhase('ready');
+      }
+    };
+
+    rafRef.current = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [playSound]);
+
+  const handleEnter = () => {
+    setPhase('exiting');
+    setOpacity(0);
+    sessionStorage.setItem(ENTRY_SESSION_KEY, '1');
+    setTimeout(onEnter, 800);
+  };
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 9999,
+      background: 'linear-gradient(135deg, #040810 0%, #0a1628 40%, #0d1f3c 70%, #060e1c 100%)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      opacity, transition: 'opacity 0.8s cubic-bezier(0.4,0,0.2,1), filter 0.8s cubic-bezier(0.4,0,0.2,1)',
+      filter: phase === 'exiting' ? 'blur(12px)' : 'blur(0px)',
+      fontFamily: "'Poppins', sans-serif",
+    }}>
+      {/* Ambient glow */}
+      <div style={{ position: 'absolute', top: '20%', left: '30%', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,255,163,0.04) 0%, transparent 70%)', pointerEvents: 'none', animation: 'j-entry-glow 6s ease-in-out infinite' }} />
+      <div style={{ position: 'absolute', bottom: '15%', right: '25%', width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle, rgba(90,169,255,0.03) 0%, transparent 70%)', pointerEvents: 'none', animation: 'j-entry-glow 8s ease-in-out infinite reverse' }} />
+
+      {/* Canvas */}
+      <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.6 }} />
+
+      {/* Content */}
+      <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', animation: phase === 'animating' ? 'j-entry-content 2s ease-out forwards' : undefined, opacity: phase === 'animating' ? 0 : 1 }}>
+        {/* Logo mark */}
+        <div style={{
+          width: 64, height: 64, margin: '0 auto 24px', borderRadius: 16,
+          background: 'linear-gradient(135deg, rgba(0,255,163,0.15), rgba(90,169,255,0.15))',
+          border: '1px solid rgba(0,255,163,0.2)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 0 40px rgba(0,255,163,0.1)',
+        }}>
+          <span style={{ fontSize: 28 }}>📊</span>
+        </div>
+
+        {/* Title */}
+        <h1 style={{
+          fontSize: 36, fontWeight: 800, letterSpacing: '-0.5px', marginBottom: 8,
+          background: 'linear-gradient(135deg, #e0e7ff, #ffffff, #c7d9f7)',
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+        }}>OrcaInvestment</h1>
+
+        {/* Hebrew subtitle */}
+        <p style={{
+          fontSize: 16, fontWeight: 600, color: 'rgba(255,255,255,0.5)',
+          letterSpacing: '2px', marginBottom: 6, direction: 'rtl',
+        }}>יומן מסחר מתקדם</p>
+
+        {/* Tagline */}
+        <p style={{
+          fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,0.25)',
+          letterSpacing: '4px', marginBottom: 48, direction: 'rtl',
+        }}>מקצועיות. תהליך. הצלחה.</p>
+
+        {/* Enter button */}
+        {phase === 'ready' && (
+          <button onClick={handleEnter}
+            style={{
+              padding: '14px 48px', fontSize: 13, fontWeight: 700, letterSpacing: '2px',
+              textTransform: 'uppercase' as const,
+              color: 'rgba(255,255,255,0.9)',
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(0,255,163,0.25)',
+              borderRadius: 12, cursor: 'pointer',
+              backdropFilter: 'blur(10px)',
+              boxShadow: '0 0 30px rgba(0,255,163,0.08), inset 0 1px 0 rgba(255,255,255,0.06)',
+              transition: 'all 0.3s ease',
+              animation: 'j-entry-btn 0.6s ease-out',
+            }}
+            onMouseEnter={e => {
+              const el = e.currentTarget;
+              el.style.transform = 'scale(1.04)';
+              el.style.boxShadow = '0 0 50px rgba(0,255,163,0.15), inset 0 1px 0 rgba(255,255,255,0.1)';
+              el.style.borderColor = 'rgba(0,255,163,0.45)';
+            }}
+            onMouseLeave={e => {
+              const el = e.currentTarget;
+              el.style.transform = 'scale(1)';
+              el.style.boxShadow = '0 0 30px rgba(0,255,163,0.08), inset 0 1px 0 rgba(255,255,255,0.06)';
+              el.style.borderColor = 'rgba(0,255,163,0.25)';
+            }}
+          >Enter System</button>
+        )}
+
+        {phase === 'animating' && (
+          <div style={{ marginTop: 20 }}>
+            <div style={{ width: 120, height: 2, background: 'rgba(255,255,255,0.06)', borderRadius: 1, margin: '0 auto', overflow: 'hidden' }}>
+              <div style={{ height: '100%', background: 'linear-gradient(90deg, #00FFA3, #5AA9FF)', borderRadius: 1, animation: 'j-entry-loading 3.5s ease-out forwards' }} />
+            </div>
+          </div>
+        )}
+      </div>
+
+      <style>{`
+        @keyframes j-entry-glow {
+          0%, 100% { transform: scale(1); opacity: 0.5; }
+          50% { transform: scale(1.15); opacity: 1; }
+        }
+        @keyframes j-entry-content {
+          0% { opacity: 0; transform: translateY(20px); }
+          60% { opacity: 0; transform: translateY(15px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes j-entry-btn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes j-entry-loading {
+          from { width: 0%; }
+          to { width: 100%; }
+        }
+      `}</style>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════
 // TRANSLATIONS
 // ═══════════════════════════════════════════════════════════════
 const TR: Record<string, any> = {
