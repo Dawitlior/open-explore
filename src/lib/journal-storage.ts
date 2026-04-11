@@ -15,6 +15,13 @@ function openJournalDB(): Promise<IDBDatabase> {
   });
 }
 
+export interface PsychAnswers {
+  sleepWell: boolean | null;
+  feelingPressure: boolean | null;
+  seekingExcitement: boolean | null;
+  recoveringLosses: boolean | null;
+}
+
 export interface JournalDay {
   id: string;
   date: string;
@@ -48,6 +55,13 @@ export interface JournalDay {
   mistakes: string;
   solutions: string;
   closing: string;
+  // New fields
+  morningImages: string[];
+  btcThoughts: string;
+  psychAnswers: PsychAnswers;
+  disciplineCommitments: string[];
+  disciplineConfirmed: boolean;
+  sectionLocks: Record<string, boolean>;
 }
 
 export interface JournalTrade {
