@@ -2422,8 +2422,8 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
                 </div>
               </div>
 
-              {/* Risk strip in journal view */}
-              {!isViewingArchive && <RiskStrip risk={riskStatus} dir={dir} th={th} />}
+              {/* Risk Command Center in journal view */}
+              {!isViewingArchive && <RiskCommandCenter risk={riskStatus} days={days} dir={dir} th={th} />}
 
               {isViewingArchive ? (
                 /* Read-only view for archived day */
