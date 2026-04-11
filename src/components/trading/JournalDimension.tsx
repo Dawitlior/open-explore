@@ -3673,12 +3673,14 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
       {knowledgePanel && <KnowledgePanel type={knowledgePanel} days={days} dir={dir} th={th} onClose={() => setKnowledgePanel(null)} onOpenDay={(id) => { setViewingArchiveId(id); setView('journal'); }} />}
 
       {mobileMenu && (
-        <div onClick={() => setMobileMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'j-fade-in .2s ease-out' }}>
+        <div onClick={() => setMobileMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 'max(16px, env(safe-area-inset-top, 16px))', animation: 'j-fade-in .2s ease-out', overflowY: 'auto' }}>
           <div onClick={e => e.stopPropagation()} style={{
-            width: 'min(480px, 90vw)', maxHeight: '80vh',
+            width: 'min(480px, 92vw)', maxHeight: 'calc(100vh - 32px)',
             background: th.bg1, border: `1px solid ${th.br2}`, borderRadius: 18,
-            padding: '24px 20px', overflowY: 'auto', animation: 'j-scale-in .25s ease-out',
+            padding: '20px 18px', overflowY: 'auto',
+            animation: 'j-menu-slide .3s cubic-bezier(0.16,1,0.3,1)',
             boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+            margin: '0 0 16px',
           }}>
             {/* Close button */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
