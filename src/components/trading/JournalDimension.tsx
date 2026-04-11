@@ -12,40 +12,54 @@ const JournalEntryScreen = ({ onEnter }: { onEnter: () => void }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [phase, setPhase] = useState<'animating' | 'ready' | 'exiting'>('animating');
   const [opacity, setOpacity] = useState(1);
+  const [tickerData] = useState(() => {
+    const pairs = ['BTC/USD','ETH/USD','SOL/USD','BNB/USD','XRP/USD','DOGE/USD','ADA/USD','AVAX/USD'];
+    return pairs.map(p => ({
+      pair: p,
+      price: (Math.random() * 60000 + 100).toFixed(2),
+      change: (Math.random() * 12 - 6).toFixed(2),
+    }));
+  });
+  const [clock, setClock] = useState('');
   const soundPlayed = useRef(false);
   const startTime = useRef(Date.now());
   const rafRef = useRef<number>(0);
 
-  // Play premium notification sound
+  // Live clock
+  useEffect(() => {
+    const tick = () => setClock(new Date().toLocaleTimeString('en-US', { hour12: false }));
+    tick();
+    const iv = setInterval(tick, 1000);
+    return () => clearInterval(iv);
+  }, []);
+
   const playSound = useCallback(() => {
     if (soundPlayed.current) return;
     soundPlayed.current = true;
     try {
       const ctx = new AudioContext();
       const now = ctx.currentTime;
-      // Layer 1: soft bell
       const osc1 = ctx.createOscillator();
       const g1 = ctx.createGain();
       osc1.type = 'sine';
       osc1.frequency.setValueAtTime(880, now);
       osc1.frequency.exponentialRampToValueAtTime(1320, now + 0.15);
       g1.gain.setValueAtTime(0, now);
-      g1.gain.linearRampToValueAtTime(0.08, now + 0.05);
-      g1.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+      g1.gain.linearRampToValueAtTime(0.06, now + 0.05);
+      g1.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
       osc1.connect(g1); g1.connect(ctx.destination);
-      osc1.start(now); osc1.stop(now + 0.6);
-      // Layer 2: shimmer
+      osc1.start(now); osc1.stop(now + 0.5);
       const osc2 = ctx.createOscillator();
       const g2 = ctx.createGain();
       osc2.type = 'sine';
-      osc2.frequency.setValueAtTime(1760, now + 0.08);
+      osc2.frequency.setValueAtTime(1760, now + 0.06);
       g2.gain.setValueAtTime(0, now);
-      g2.gain.linearRampToValueAtTime(0.04, now + 0.12);
-      g2.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+      g2.gain.linearRampToValueAtTime(0.03, now + 0.1);
+      g2.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
       osc2.connect(g2); g2.connect(ctx.destination);
-      osc2.start(now + 0.08); osc2.stop(now + 0.5);
-      setTimeout(() => ctx.close(), 800);
-    } catch { /* silent fail */ }
+      osc2.start(now + 0.06); osc2.stop(now + 0.4);
+      setTimeout(() => ctx.close(), 600);
+    } catch { /* silent */ }
   }, []);
 
   // Canvas animation
@@ -55,159 +69,208 @@ const JournalEntryScreen = ({ onEnter }: { onEnter: () => void }) => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const dpr = window.devicePixelRatio || 1;
-    const w = canvas.clientWidth;
-    const h = canvas.clientHeight;
-    canvas.width = w * dpr;
-    canvas.height = h * dpr;
-    ctx.scale(dpr, dpr);
+    const resize = () => {
+      const dpr = window.devicePixelRatio || 1;
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    resize();
+    window.addEventListener('resize', resize);
 
-    // Generate equity curve data
-    const points: { x: number; y: number }[] = [];
-    const numPts = 120;
-    let val = h * 0.55;
-    for (let i = 0; i <= numPts; i++) {
-      const x = (i / numPts) * w;
-      // Simulate equity curve with trend up
-      val += (Math.random() - 0.42) * (h * 0.025);
-      val = Math.max(h * 0.2, Math.min(h * 0.8, val));
-      if (i > numPts * 0.6) val -= (h * 0.003); // slight pullback
-      if (i > numPts * 0.75) val -= (h * 0.005); // recovery
-      points.push({ x, y: val });
+    const w = () => canvas.clientWidth;
+    const h = () => canvas.clientHeight;
+
+    // Generate multiple equity curves
+    const makeCurve = (seed: number, trend: number) => {
+      const pts: { x: number; y: number }[] = [];
+      const n = 150;
+      let v = 0.55;
+      for (let i = 0; i <= n; i++) {
+        const x = i / n;
+        v += (Math.sin(seed + i * 0.15) * 0.008 + (Math.random() - 0.5 + trend) * 0.012);
+        v = Math.max(0.15, Math.min(0.85, v));
+        pts.push({ x, y: v });
+      }
+      return pts;
+    };
+    const curve1 = makeCurve(42, 0.02);
+    const curve2 = makeCurve(17, -0.01);
+    const curve3 = makeCurve(99, 0.005);
+
+    // Candles
+    const candles: { x: number; o: number; c: number; h: number; l: number }[] = [];
+    for (let i = 0; i < 60; i++) {
+      const x = (i + 0.5) / 60;
+      const base = 0.3 + Math.sin(i * 0.2) * 0.15 + Math.cos(i * 0.08) * 0.1;
+      const body = (Math.random() - 0.45) * 0.04;
+      const o = base;
+      const c = base + body;
+      const wick = Math.abs(body) * (0.5 + Math.random());
+      candles.push({ x, o, c, h: Math.max(o, c) + wick, l: Math.min(o, c) - wick });
     }
 
-    // Particles
-    const particles: { x: number; y: number; r: number; speed: number; opacity: number; hue: number }[] = [];
-    for (let i = 0; i < 40; i++) {
+    const particles: { x: number; y: number; vx: number; vy: number; life: number; maxLife: number; size: number }[] = [];
+    for (let i = 0; i < 50; i++) {
       particles.push({
-        x: Math.random() * w, y: Math.random() * h,
-        r: Math.random() * 1.5 + 0.5,
-        speed: Math.random() * 0.3 + 0.1,
-        opacity: Math.random() * 0.4 + 0.1,
-        hue: Math.random() > 0.5 ? 160 : 220,
+        x: Math.random(), y: Math.random(),
+        vx: (Math.random() - 0.5) * 0.0003,
+        vy: -Math.random() * 0.0004 - 0.0001,
+        life: Math.random() * 200, maxLife: 200 + Math.random() * 200,
+        size: Math.random() * 1.5 + 0.3,
       });
     }
 
-    const ANIM_DURATION = 3500;
-    let soundTriggered = false;
+    const DURATION = 3500;
+    let triggered = false;
 
     const draw = () => {
+      const W = w();
+      const H = h();
       const elapsed = Date.now() - startTime.current;
-      const progress = Math.min(elapsed / ANIM_DURATION, 1);
-      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      const p = Math.min(elapsed / DURATION, 1);
+      const ease = 1 - Math.pow(1 - p, 3);
 
-      ctx.clearRect(0, 0, w, h);
+      ctx.clearRect(0, 0, W, H);
 
-      // Grid lines
-      const gridOpacity = Math.min(eased * 1.5, 0.08);
-      ctx.strokeStyle = `rgba(90,169,255,${gridOpacity})`;
+      // Deep gradient background overlay
+      const bg = ctx.createRadialGradient(W * 0.5, H * 0.4, 0, W * 0.5, H * 0.4, W * 0.7);
+      bg.addColorStop(0, `rgba(10,30,60,${0.3 * ease})`);
+      bg.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, W, H);
+
+      // Grid
+      const gOp = Math.min(ease * 1.2, 0.06);
+      ctx.strokeStyle = `rgba(0,255,163,${gOp})`;
       ctx.lineWidth = 0.5;
-      const gridSpacing = 40;
-      for (let x = 0; x < w; x += gridSpacing) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+      const gs = Math.max(30, Math.min(60, W / 25));
+      for (let x = 0; x < W; x += gs) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
       }
-      for (let y = 0; y < h; y += gridSpacing) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+      for (let y = 0; y < H; y += gs) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
       }
 
-      // Particles
-      particles.forEach(p => {
-        p.y -= p.speed;
-        if (p.y < -5) { p.y = h + 5; p.x = Math.random() * w; }
-        const pOp = p.opacity * Math.min(eased * 2, 1);
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `hsla(${p.hue},70%,65%,${pOp})`;
-        ctx.fill();
-      });
+      // Candles (background, subtle)
+      if (ease > 0.15) {
+        const cOp = Math.min((ease - 0.15) * 0.8, 0.25);
+        const cw = Math.max(2, W / 120);
+        const drawN = Math.floor(ease * candles.length);
+        for (let i = 0; i < drawN; i++) {
+          const c = candles[i];
+          const cx = c.x * W;
+          const isGreen = c.c > c.o;
+          const color = isGreen ? `rgba(0,255,163,${cOp})` : `rgba(255,60,60,${cOp})`;
+          // wick
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 0.8;
+          ctx.beginPath();
+          ctx.moveTo(cx, c.h * H);
+          ctx.lineTo(cx, c.l * H);
+          ctx.stroke();
+          // body
+          const top = Math.min(c.o, c.c) * H;
+          const bot = Math.max(c.o, c.c) * H;
+          ctx.fillStyle = color;
+          ctx.fillRect(cx - cw / 2, top, cw, Math.max(1, bot - top));
+        }
+      }
 
-      // Equity curve
-      const drawCount = Math.floor(eased * points.length);
-      if (drawCount > 1) {
-        // Gradient fill under curve
-        const grad = ctx.createLinearGradient(0, 0, 0, h);
-        grad.addColorStop(0, `rgba(0,255,163,${0.06 * eased})`);
-        grad.addColorStop(1, 'rgba(0,255,163,0)');
+      // Equity curves
+      const drawCurve = (pts: typeof curve1, color: string, width: number, alpha: number) => {
+        const n = Math.floor(ease * pts.length);
+        if (n < 2) return;
         ctx.beginPath();
-        ctx.moveTo(points[0].x, h);
-        for (let i = 0; i < drawCount; i++) {
-          if (i === 0) ctx.lineTo(points[i].x, points[i].y);
+        for (let i = 0; i < n; i++) {
+          const px = pts[i].x * W;
+          const py = pts[i].y * H;
+          if (i === 0) ctx.moveTo(px, py);
           else {
-            const prev = points[i - 1];
-            const cpx = (prev.x + points[i].x) / 2;
-            ctx.quadraticCurveTo(prev.x, prev.y, cpx, (prev.y + points[i].y) / 2);
+            const prev = pts[i - 1];
+            const cpx = (prev.x * W + px) / 2;
+            const cpy = (prev.y * H + py) / 2;
+            ctx.quadraticCurveTo(prev.x * W, prev.y * H, cpx, cpy);
           }
         }
-        const lastPt = points[drawCount - 1];
-        ctx.lineTo(lastPt.x, lastPt.y);
-        ctx.lineTo(lastPt.x, h);
-        ctx.closePath();
-        ctx.fillStyle = grad;
-        ctx.fill();
-
-        // Line
-        ctx.beginPath();
-        for (let i = 0; i < drawCount; i++) {
-          if (i === 0) ctx.moveTo(points[i].x, points[i].y);
-          else {
-            const prev = points[i - 1];
-            const cpx = (prev.x + points[i].x) / 2;
-            ctx.quadraticCurveTo(prev.x, prev.y, cpx, (prev.y + points[i].y) / 2);
-          }
-        }
-        ctx.strokeStyle = `rgba(0,255,163,${0.7 * eased})`;
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = color.replace('A)', `${alpha * ease})`);
+        ctx.lineWidth = width;
         ctx.stroke();
 
-        // Glow on tip
-        if (drawCount > 0) {
-          const tip = points[drawCount - 1];
-          const glowR = 8 + Math.sin(elapsed / 300) * 3;
-          const grd = ctx.createRadialGradient(tip.x, tip.y, 0, tip.x, tip.y, glowR);
-          grd.addColorStop(0, `rgba(0,255,163,${0.5 * eased})`);
-          grd.addColorStop(1, 'rgba(0,255,163,0)');
+        // Glow at tip
+        if (n > 0) {
+          const tip = pts[n - 1];
+          const gr = ctx.createRadialGradient(tip.x * W, tip.y * H, 0, tip.x * W, tip.y * H, 12);
+          gr.addColorStop(0, color.replace('A)', `${0.4 * ease})`));
+          gr.addColorStop(1, color.replace('A)', '0)'));
           ctx.beginPath();
-          ctx.arc(tip.x, tip.y, glowR, 0, Math.PI * 2);
-          ctx.fillStyle = grd;
+          ctx.arc(tip.x * W, tip.y * H, 12, 0, Math.PI * 2);
+          ctx.fillStyle = gr;
+          ctx.fill();
+        }
+      };
+      drawCurve(curve1, 'rgba(0,255,163,A)', 2, 0.7);
+      drawCurve(curve2, 'rgba(90,169,255,A)', 1.2, 0.35);
+      drawCurve(curve3, 'rgba(255,200,50,A)', 1, 0.2);
+
+      // Fill under primary curve
+      if (ease > 0.1) {
+        const n = Math.floor(ease * curve1.length);
+        if (n > 2) {
+          ctx.beginPath();
+          ctx.moveTo(curve1[0].x * W, H);
+          for (let i = 0; i < n; i++) {
+            ctx.lineTo(curve1[i].x * W, curve1[i].y * H);
+          }
+          ctx.lineTo(curve1[n - 1].x * W, H);
+          ctx.closePath();
+          const fg = ctx.createLinearGradient(0, 0, 0, H);
+          fg.addColorStop(0, `rgba(0,255,163,${0.05 * ease})`);
+          fg.addColorStop(1, 'rgba(0,255,163,0)');
+          ctx.fillStyle = fg;
           ctx.fill();
         }
       }
 
-      // Candlesticks (sparse, decorative)
-      if (eased > 0.3) {
-        const candleOp = Math.min((eased - 0.3) * 2, 0.35);
-        const candleW = 4;
-        for (let i = 0; i < drawCount; i += 8) {
-          const p = points[i];
-          const isGreen = i > 0 ? p.y < points[i - 1].y : true;
-          const bodyH = 6 + Math.random() * 10;
-          const wickH = bodyH * 0.6;
-          ctx.fillStyle = isGreen ? `rgba(0,255,163,${candleOp})` : `rgba(255,77,77,${candleOp})`;
-          ctx.fillRect(p.x - candleW / 2, p.y - bodyH / 2, candleW, bodyH);
-          ctx.strokeStyle = isGreen ? `rgba(0,255,163,${candleOp * 0.6})` : `rgba(255,77,77,${candleOp * 0.6})`;
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(p.x, p.y - bodyH / 2 - wickH);
-          ctx.lineTo(p.x, p.y - bodyH / 2);
-          ctx.moveTo(p.x, p.y + bodyH / 2);
-          ctx.lineTo(p.x, p.y + bodyH / 2 + wickH);
-          ctx.stroke();
+      // Particles
+      particles.forEach(pt => {
+        pt.x += pt.vx;
+        pt.y += pt.vy;
+        pt.life++;
+        if (pt.life > pt.maxLife || pt.y < -0.05) {
+          pt.x = Math.random();
+          pt.y = 1.05;
+          pt.life = 0;
         }
+        const a = Math.sin((pt.life / pt.maxLife) * Math.PI) * 0.4 * ease;
+        ctx.beginPath();
+        ctx.arc(pt.x * W, pt.y * H, pt.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(0,255,163,${a})`;
+        ctx.fill();
+      });
+
+      // Scanning line
+      if (ease > 0.2) {
+        const scanY = ((elapsed * 0.05) % H);
+        const sg = ctx.createLinearGradient(0, scanY - 2, 0, scanY + 2);
+        sg.addColorStop(0, 'rgba(0,255,163,0)');
+        sg.addColorStop(0.5, `rgba(0,255,163,${0.08 * ease})`);
+        sg.addColorStop(1, 'rgba(0,255,163,0)');
+        ctx.fillStyle = sg;
+        ctx.fillRect(0, scanY - 2, W, 4);
       }
 
-      if (progress < 1) {
+      if (p < 1) {
         rafRef.current = requestAnimationFrame(draw);
       } else {
-        if (!soundTriggered) {
-          soundTriggered = true;
-          playSound();
-        }
+        if (!triggered) { triggered = true; playSound(); }
         setPhase('ready');
       }
     };
-
     rafRef.current = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(rafRef.current);
+    return () => { cancelAnimationFrame(rafRef.current); window.removeEventListener('resize', resize); };
   }, [playSound]);
 
   const handleEnter = () => {
@@ -220,107 +283,209 @@ const JournalEntryScreen = ({ onEnter }: { onEnter: () => void }) => {
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 9999,
-      background: 'linear-gradient(135deg, #040810 0%, #0a1628 40%, #0d1f3c 70%, #060e1c 100%)',
-      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      background: 'linear-gradient(160deg, #020810 0%, #071225 35%, #0a1a3a 65%, #040c1a 100%)',
+      display: 'flex', flexDirection: 'column',
       opacity, transition: 'opacity 0.8s cubic-bezier(0.4,0,0.2,1), filter 0.8s cubic-bezier(0.4,0,0.2,1)',
-      filter: phase === 'exiting' ? 'blur(12px)' : 'blur(0px)',
-      fontFamily: "'Poppins', sans-serif",
+      filter: phase === 'exiting' ? 'blur(16px) brightness(1.3)' : 'blur(0px)',
+      fontFamily: "'Poppins', 'Inter', sans-serif",
+      overflow: 'hidden',
     }}>
-      {/* Ambient glow */}
-      <div style={{ position: 'absolute', top: '20%', left: '30%', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,255,163,0.04) 0%, transparent 70%)', pointerEvents: 'none', animation: 'j-entry-glow 6s ease-in-out infinite' }} />
-      <div style={{ position: 'absolute', bottom: '15%', right: '25%', width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle, rgba(90,169,255,0.03) 0%, transparent 70%)', pointerEvents: 'none', animation: 'j-entry-glow 8s ease-in-out infinite reverse' }} />
-
       {/* Canvas */}
-      <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.6 }} />
+      <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
 
-      {/* Content */}
-      <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', animation: phase === 'animating' ? 'j-entry-content 2s ease-out forwards' : undefined, opacity: phase === 'animating' ? 0 : 1 }}>
-        {/* Logo mark */}
-        <div style={{
-          width: 64, height: 64, margin: '0 auto 24px', borderRadius: 16,
-          background: 'linear-gradient(135deg, rgba(0,255,163,0.15), rgba(90,169,255,0.15))',
-          border: '1px solid rgba(0,255,163,0.2)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 0 40px rgba(0,255,163,0.1)',
-        }}>
-          <span style={{ fontSize: 28 }}>📊</span>
+      {/* Top bar - market ticker */}
+      <div style={{
+        position: 'relative', zIndex: 3,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '10px 16px',
+        borderBottom: '1px solid rgba(0,255,163,0.06)',
+        background: 'rgba(0,0,0,0.3)',
+        backdropFilter: 'blur(10px)',
+        fontSize: 11, fontFamily: "'JetBrains Mono', monospace",
+        overflow: 'hidden',
+        animation: 'j-entry-slide-down 0.8s ease-out',
+      }}>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00FFA3', boxShadow: '0 0 8px #00FFA3', animation: 'j-pulse-dot 2s infinite' }} />
+          <span style={{ color: 'rgba(255,255,255,0.4)', letterSpacing: 1 }}>LIVE</span>
         </div>
+        <div style={{
+          display: 'flex', gap: 20, overflow: 'hidden', flex: 1, justifyContent: 'center',
+          maskImage: 'linear-gradient(90deg, transparent, black 10%, black 90%, transparent)',
+          WebkitMaskImage: 'linear-gradient(90deg, transparent, black 10%, black 90%, transparent)',
+        }}>
+          {tickerData.map((t, i) => (
+            <span key={i} style={{ color: 'rgba(255,255,255,0.35)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+              <span style={{ color: 'rgba(255,255,255,0.55)' }}>{t.pair}</span>{' '}
+              <span style={{ color: Number(t.change) >= 0 ? '#00FFA3' : '#FF4040', fontWeight: 600 }}>
+                {Number(t.change) >= 0 ? '+' : ''}{t.change}%
+              </span>
+            </span>
+          ))}
+        </div>
+        <span style={{ color: 'rgba(0,255,163,0.6)', fontWeight: 600, flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>{clock}</span>
+      </div>
 
-        {/* Title */}
-        <h1 style={{
-          fontSize: 36, fontWeight: 800, letterSpacing: '-0.5px', marginBottom: 8,
-          background: 'linear-gradient(135deg, #e0e7ff, #ffffff, #c7d9f7)',
-          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-        }}>OrcaInvestment</h1>
-
-        {/* Hebrew subtitle */}
-        <p style={{
-          fontSize: 16, fontWeight: 600, color: 'rgba(255,255,255,0.5)',
-          letterSpacing: '2px', marginBottom: 6, direction: 'rtl',
-        }}>יומן מסחר מתקדם</p>
-
-        {/* Tagline */}
-        <p style={{
-          fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,0.25)',
-          letterSpacing: '4px', marginBottom: 48, direction: 'rtl',
-        }}>מקצועיות. תהליך. הצלחה.</p>
-
-        {/* Enter button */}
-        {phase === 'ready' && (
-          <button onClick={handleEnter}
-            style={{
-              padding: '14px 48px', fontSize: 13, fontWeight: 700, letterSpacing: '2px',
-              textTransform: 'uppercase' as const,
-              color: 'rgba(255,255,255,0.9)',
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(0,255,163,0.25)',
-              borderRadius: 12, cursor: 'pointer',
-              backdropFilter: 'blur(10px)',
-              boxShadow: '0 0 30px rgba(0,255,163,0.08), inset 0 1px 0 rgba(255,255,255,0.06)',
-              transition: 'all 0.3s ease',
-              animation: 'j-entry-btn 0.6s ease-out',
-            }}
-            onMouseEnter={e => {
-              const el = e.currentTarget;
-              el.style.transform = 'scale(1.04)';
-              el.style.boxShadow = '0 0 50px rgba(0,255,163,0.15), inset 0 1px 0 rgba(255,255,255,0.1)';
-              el.style.borderColor = 'rgba(0,255,163,0.45)';
-            }}
-            onMouseLeave={e => {
-              const el = e.currentTarget;
-              el.style.transform = 'scale(1)';
-              el.style.boxShadow = '0 0 30px rgba(0,255,163,0.08), inset 0 1px 0 rgba(255,255,255,0.06)';
-              el.style.borderColor = 'rgba(0,255,163,0.25)';
-            }}
-          >Enter System</button>
-        )}
-
-        {phase === 'animating' && (
-          <div style={{ marginTop: 20 }}>
-            <div style={{ width: 120, height: 2, background: 'rgba(255,255,255,0.06)', borderRadius: 1, margin: '0 auto', overflow: 'hidden' }}>
-              <div style={{ height: '100%', background: 'linear-gradient(90deg, #00FFA3, #5AA9FF)', borderRadius: 1, animation: 'j-entry-loading 3.5s ease-out forwards' }} />
-            </div>
+      {/* Center content */}
+      <div style={{
+        flex: 1, display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        position: 'relative', zIndex: 2,
+        padding: '20px 16px',
+      }}>
+        <div style={{
+          textAlign: 'center',
+          animation: phase === 'animating' ? 'j-entry-content 2.2s ease-out forwards' : undefined,
+          opacity: phase === 'animating' ? 0 : 1,
+          maxWidth: 500, width: '100%',
+        }}>
+          {/* Orca icon */}
+          <div style={{
+            width: 56, height: 56, margin: '0 auto 20px', borderRadius: 14,
+            background: 'linear-gradient(135deg, rgba(0,255,163,0.12), rgba(90,169,255,0.12))',
+            border: '1px solid rgba(0,255,163,0.15)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 0 50px rgba(0,255,163,0.08), 0 0 100px rgba(0,255,163,0.03)',
+            animation: 'j-icon-breathe 3s ease-in-out infinite',
+          }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(0,255,163,0.8)" strokeWidth="1.5" strokeLinecap="round">
+              <path d="M3 17l3-3 4 4 6-8 5 5" />
+              <path d="M14 7l7 0 0 7" />
+            </svg>
           </div>
-        )}
+
+          {/* Title */}
+          <h1 style={{
+            fontSize: 'clamp(28px, 6vw, 42px)', fontWeight: 800,
+            letterSpacing: '-1px', marginBottom: 6, lineHeight: 1.1,
+            background: 'linear-gradient(135deg, #d0e0ff 0%, #ffffff 40%, #a0c4ff 100%)',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+          }}>
+            <span style={{ fontWeight: 300, opacity: 0.7 }}>Orca</span>Investment
+          </h1>
+
+          <p style={{
+            fontSize: 'clamp(13px, 3vw, 16px)', fontWeight: 500,
+            color: 'rgba(255,255,255,0.4)', letterSpacing: 3,
+            marginBottom: 4, direction: 'rtl',
+          }}>יומן מסחר מתקדם</p>
+          <p style={{
+            fontSize: 'clamp(9px, 2vw, 11px)', fontWeight: 400,
+            color: 'rgba(255,255,255,0.2)', letterSpacing: 5,
+            marginBottom: 40, direction: 'rtl',
+          }}>מקצועיות · תהליך · הצלחה</p>
+
+          {/* Status indicators */}
+          {phase === 'animating' && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+              <div style={{ display: 'flex', gap: 16, fontSize: 10, color: 'rgba(255,255,255,0.25)', fontFamily: "'JetBrains Mono', monospace" }}>
+                {['SYSTEM', 'DATA', 'ENGINE'].map((label, i) => (
+                  <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, animation: `j-entry-status 0.4s ease-out ${0.8 + i * 0.4}s both` }}>
+                    <span style={{ width: 4, height: 4, borderRadius: '50%', background: '#00FFA3', display: 'inline-block' }} />
+                    {label}
+                  </span>
+                ))}
+              </div>
+              <div style={{
+                width: 'min(200px, 60vw)', height: 2,
+                background: 'rgba(255,255,255,0.04)', borderRadius: 1,
+                overflow: 'hidden',
+              }}>
+                <div style={{
+                  height: '100%',
+                  background: 'linear-gradient(90deg, #00FFA3, #5AA9FF)',
+                  borderRadius: 1,
+                  animation: 'j-entry-loading 3.5s ease-out forwards',
+                  boxShadow: '0 0 10px rgba(0,255,163,0.4)',
+                }} />
+              </div>
+            </div>
+          )}
+
+          {/* Enter button */}
+          {phase === 'ready' && (
+            <div style={{ animation: 'j-entry-btn 0.5s ease-out' }}>
+              <button onClick={handleEnter} style={{
+                padding: 'clamp(12px, 2vw, 16px) clamp(32px, 8vw, 56px)',
+                fontSize: 'clamp(11px, 2vw, 13px)', fontWeight: 700,
+                letterSpacing: 3, textTransform: 'uppercase' as const,
+                color: '#020810',
+                background: 'linear-gradient(135deg, #00FFA3, #00CC82)',
+                border: 'none', borderRadius: 10, cursor: 'pointer',
+                boxShadow: '0 0 40px rgba(0,255,163,0.2), 0 4px 20px rgba(0,0,0,0.4)',
+                transition: 'all 0.25s ease',
+                fontFamily: "'Poppins', sans-serif",
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'translateY(-2px) scale(1.03)';
+                e.currentTarget.style.boxShadow = '0 0 60px rgba(0,255,163,0.3), 0 8px 30px rgba(0,0,0,0.5)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                e.currentTarget.style.boxShadow = '0 0 40px rgba(0,255,163,0.2), 0 4px 20px rgba(0,0,0,0.4)';
+              }}
+              >כניסה למערכת</button>
+              <p style={{
+                fontSize: 10, color: 'rgba(255,255,255,0.15)', marginTop: 16,
+                letterSpacing: 2, fontFamily: "'JetBrains Mono', monospace",
+              }}>ENTER TRADING SYSTEM</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Bottom bar */}
+      <div style={{
+        position: 'relative', zIndex: 3,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24,
+        padding: '10px 16px',
+        borderTop: '1px solid rgba(0,255,163,0.04)',
+        background: 'rgba(0,0,0,0.2)',
+        fontSize: 9, fontFamily: "'JetBrains Mono', monospace",
+        color: 'rgba(255,255,255,0.15)', letterSpacing: 1,
+        animation: 'j-entry-slide-up 0.8s ease-out',
+        flexWrap: 'wrap',
+      }}>
+        <span>ORCA TERMINAL v3.0</span>
+        <span style={{ color: 'rgba(0,255,163,0.25)' }}>●</span>
+        <span>ENCRYPTED</span>
+        <span style={{ color: 'rgba(0,255,163,0.25)' }}>●</span>
+        <span>LOCAL STORAGE</span>
       </div>
 
       <style>{`
-        @keyframes j-entry-glow {
-          0%, 100% { transform: scale(1); opacity: 0.5; }
-          50% { transform: scale(1.15); opacity: 1; }
-        }
         @keyframes j-entry-content {
-          0% { opacity: 0; transform: translateY(20px); }
-          60% { opacity: 0; transform: translateY(15px); }
-          100% { opacity: 1; transform: translateY(0); }
+          0% { opacity: 0; transform: translateY(30px) scale(0.97); }
+          55% { opacity: 0; transform: translateY(20px) scale(0.98); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
         }
         @keyframes j-entry-btn {
-          from { opacity: 0; transform: translateY(8px); }
+          from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
         }
         @keyframes j-entry-loading {
           from { width: 0%; }
           to { width: 100%; }
+        }
+        @keyframes j-entry-slide-down {
+          from { opacity: 0; transform: translateY(-100%); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes j-entry-slide-up {
+          from { opacity: 0; transform: translateY(100%); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes j-entry-status {
+          from { opacity: 0; transform: translateX(-8px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes j-icon-breathe {
+          0%, 100% { box-shadow: 0 0 50px rgba(0,255,163,0.08), 0 0 100px rgba(0,255,163,0.03); }
+          50% { box-shadow: 0 0 60px rgba(0,255,163,0.15), 0 0 120px rgba(0,255,163,0.06); }
+        }
+        @keyframes j-pulse-dot {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.3; }
         }
       `}</style>
     </div>
