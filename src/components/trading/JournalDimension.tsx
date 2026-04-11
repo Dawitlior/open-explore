@@ -1837,6 +1837,11 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
     g: { background: 'rgba(0,255,163,.12)', border: '1px solid rgba(0,255,163,.25)', color: '#00FFA3' },
   };
 
+  // Entry screen
+  if (showEntry) {
+    return <JournalEntryScreen onEnter={() => setShowEntry(false)} />;
+  }
+
   return (
     <div className="journal-dimension" style={{
       height: '100%', display: 'flex', flexDirection: 'column',
@@ -1899,6 +1904,13 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
           <button onClick={() => setTheme(p => p === 'dark' ? 'light' : 'dark')}
             style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, transition: 'all .2s' }}>
             {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
+          {/* Lock System */}
+          <button onClick={() => setShowEntry(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 8, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', color: th.tx3, fontSize: 11, fontWeight: 600, fontFamily: "'Poppins',sans-serif", transition: 'all .2s' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,200,87,0.3)'; (e.currentTarget as HTMLElement).style.color = '#FFC857'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = th.inputBr; (e.currentTarget as HTMLElement).style.color = th.tx3; }}>
+            🔒 Lock
           </button>
           <div style={{ width: 1, height: 18, background: th.br, margin: '0 3px' }} />
           <ReturnButton onClick={onReturn} isRTL={isRTL} />
