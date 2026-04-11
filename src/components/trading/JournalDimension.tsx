@@ -1851,6 +1851,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
   }, []);
 
   const saveMorning = useCallback(() => {
+    setLockAnim('morning');
     const curId = activeIdRef.current;
     setDays(prev => {
       const next = prev.map(d => d.id === curId ? { ...d, morningSaved: true } : d);
