@@ -2253,15 +2253,18 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
           <Sec title={f.setups} icon="🔍" accent="#5AA9FF" th={th} locked={sLocks['setups']} onLock={() => lockSec('setups')} onUnlock={() => unlockSec('setups')}>
             <TA val={day.setups} set={U('setups')} ph={f.setupsPh} rows={4} dir={dir} disabled={sLocks['setups']} th={th} />
           </Sec>
-          <Sec title={`${f.emotion} & ${f.fg}`} icon="🧠" accent="#b794f6" th={th} locked={sLocks['emotion']} onLock={() => lockSec('emotion')} onUnlock={() => unlockSec('emotion')}>
+          <Sec title={f.emotion} icon="🧠" accent="#b794f6" th={th} locked={sLocks['emotion']} onLock={() => lockSec('emotion')} onUnlock={() => unlockSec('emotion')}>
             <EmoSlider val={day.emotionScore} set={U('emotionScore')} label={f.emotion} dir={dir} disabled={sLocks['emotion']} th={th} />
-            <div style={{ height: 1, background: th.divider, margin: '14px 0' }} />
-            <Lbl c={f.fg} dir={dir} th={th} />
-            <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' as const }}>
-              <IN val={day.fearGreed || ''} set={(v: string) => { const n = v.replace(/\D/g, '').slice(0, 3); if (n === '' || parseInt(n) <= 100) upd({ fearGreed: n }); }} ph={f.fgPh} dir={dir} disabled={sLocks['emotion']} th={th} style={{ width: 90 }} />
-              {day.fearGreed !== '' && day.fearGreed !== undefined && <FGGauge value={parseInt(day.fearGreed) || 0} />}
-            </div>
           </Sec>
+
+          {/* Market Sentiment — separate from trader psychology */}
+          <MarketSentimentGauge
+            value={day.fearGreed || ''}
+            dir={dir}
+            th={th}
+            onChangeValue={(v: string) => upd({ fearGreed: v })}
+            disabled={sLocks['emotion']}
+          />
         </div>
       </div>
 
