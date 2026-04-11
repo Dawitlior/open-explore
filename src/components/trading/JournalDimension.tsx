@@ -1668,23 +1668,8 @@ const EODLockOverlay = ({ onDone }: { onDone: () => void }) => {
       setTimeout(() => setStep(4), 2000),
       setTimeout(() => { setStep(5); onDone(); }, 2600),
     ];
-    // Lock click sound
-    try {
-      const ctx = new AudioContext(); const now = ctx.currentTime;
-      // Metallic click at step 3
-      setTimeout(() => {
-        const o = ctx.createOscillator(); const g = ctx.createGain();
-        o.type = 'square'; o.frequency.value = 2000;
-        g.gain.setValueAtTime(0.08, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
-        o.connect(g); g.connect(ctx.destination); o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.08);
-        // Confirmation tone
-        const o2 = ctx.createOscillator(); const g2 = ctx.createGain();
-        o2.type = 'sine'; o2.frequency.setValueAtTime(800, ctx.currentTime + 0.1); o2.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.25);
-        g2.gain.setValueAtTime(0, ctx.currentTime + 0.1); g2.gain.linearRampToValueAtTime(0.04, ctx.currentTime + 0.15); g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-        o2.connect(g2); g2.connect(ctx.destination); o2.start(ctx.currentTime + 0.1); o2.stop(ctx.currentTime + 0.5);
-      }, 1400);
-      setTimeout(() => ctx.close(), 2500);
-    } catch {}
+    // Lock click sound at step 3 timing
+    setTimeout(() => playEODLock(), 1400);
     return () => t.forEach(clearTimeout);
   }, [onDone]);
 
