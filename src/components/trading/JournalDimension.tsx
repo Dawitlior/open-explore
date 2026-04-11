@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { Trade } from '@/data/trades';
 import { readJournalState, writeJournalState, type JournalDay, type JournalTrade, type JournalState, type PsychAnswers } from '@/lib/journal-storage';
 import { ReturnButton } from './DimensionController';
+import { playSystemOpen, playMorningLock, playEODLock, playRiskAlert } from '@/lib/apex-sounds';
 
 // ═══════════════════════════════════════════════════════════════
 // CINEMATIC ENTRY SCREEN
@@ -34,21 +35,7 @@ const JournalEntryScreen = ({ onEnter }: { onEnter: () => void }) => {
   useEffect(() => {
     if (phase !== 'ready' || soundPlayed.current) return;
     soundPlayed.current = true;
-    try {
-      const ctx = new AudioContext();
-      const now = ctx.currentTime;
-      const osc = ctx.createOscillator();
-      const g = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(880, now);
-      osc.frequency.exponentialRampToValueAtTime(1320, now + 0.15);
-      g.gain.setValueAtTime(0, now);
-      g.gain.linearRampToValueAtTime(0.06, now + 0.05);
-      g.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-      osc.connect(g); g.connect(ctx.destination);
-      osc.start(now); osc.stop(now + 0.5);
-      setTimeout(() => ctx.close(), 600);
-    } catch { /* silent */ }
+    playSystemOpen();
   }, [phase]);
 
   const handleEnter = () => {
@@ -854,16 +841,7 @@ const RiskAlertModal = ({ risk, t, dir, onClose, th }: { risk: JRiskStatus; t: a
   }[level]!;
 
   // Sound alert
-  try {
-    const ctx = new AudioContext();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.frequency.value = 600; gain.gain.value = 0.15;
-    osc.start();
-    setTimeout(() => { osc.frequency.value = 400; }, 150);
-    setTimeout(() => { osc.stop(); ctx.close(); }, 350);
-  } catch { /* ignore */ }
+  playRiskAlert();
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 9990, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)', animation: 'j-fade-in .3s ease-out' }}>
@@ -1649,15 +1627,7 @@ const MorningLockOverlay = ({ onDone }: { onDone: () => void }) => {
       setTimeout(() => setStep(4), 1700),
       setTimeout(() => { setStep(5); onDone(); }, 2200),
     ];
-    // Sound
-    try {
-      const ctx = new AudioContext(); const now = ctx.currentTime;
-      const o = ctx.createOscillator(); const g = ctx.createGain();
-      o.type = 'sine'; o.frequency.setValueAtTime(1200, now); o.frequency.exponentialRampToValueAtTime(1800, now + 0.12);
-      g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(0.05, now + 0.04); g.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-      o.connect(g); g.connect(ctx.destination); o.start(now); o.stop(now + 0.4);
-      setTimeout(() => ctx.close(), 500);
-    } catch {}
+    playMorningLock();
     return () => t.forEach(clearTimeout);
   }, [onDone]);
 
@@ -1698,23 +1668,8 @@ const EODLockOverlay = ({ onDone }: { onDone: () => void }) => {
       setTimeout(() => setStep(4), 2000),
       setTimeout(() => { setStep(5); onDone(); }, 2600),
     ];
-    // Lock click sound
-    try {
-      const ctx = new AudioContext(); const now = ctx.currentTime;
-      // Metallic click at step 3
-      setTimeout(() => {
-        const o = ctx.createOscillator(); const g = ctx.createGain();
-        o.type = 'square'; o.frequency.value = 2000;
-        g.gain.setValueAtTime(0.08, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
-        o.connect(g); g.connect(ctx.destination); o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.08);
-        // Confirmation tone
-        const o2 = ctx.createOscillator(); const g2 = ctx.createGain();
-        o2.type = 'sine'; o2.frequency.setValueAtTime(800, ctx.currentTime + 0.1); o2.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.25);
-        g2.gain.setValueAtTime(0, ctx.currentTime + 0.1); g2.gain.linearRampToValueAtTime(0.04, ctx.currentTime + 0.15); g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-        o2.connect(g2); g2.connect(ctx.destination); o2.start(ctx.currentTime + 0.1); o2.stop(ctx.currentTime + 0.5);
-      }, 1400);
-      setTimeout(() => ctx.close(), 2500);
-    } catch {}
+    // Lock click sound at step 3 timing
+    setTimeout(() => playEODLock(), 1400);
     return () => t.forEach(clearTimeout);
   }, [onDone]);
 
