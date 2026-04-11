@@ -129,6 +129,10 @@ const JournalEntryScreen = ({ onEnter }: { onEnter: () => void }) => {
     const draw = () => {
       const W = w();
       const H = h();
+      if (!W || !H || !isFinite(W) || !isFinite(H)) {
+        rafRef.current = requestAnimationFrame(draw);
+        return;
+      }
       const elapsed = Date.now() - startTime.current;
       const p = Math.min(elapsed / DURATION, 1);
       const ease = 1 - Math.pow(1 - p, 3);
