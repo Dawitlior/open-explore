@@ -4,10 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface DimensionControllerProps {
   orcaUI: React.ReactNode;
   journalUI: React.ReactNode;
-  activeDimension: 'orca' | 'journal';
+  backtestUI?: React.ReactNode;
+  activeDimension: 'orca' | 'journal' | 'backtest';
 }
 
-export const DimensionController = ({ orcaUI, journalUI, activeDimension }: DimensionControllerProps) => {
+export const DimensionController = ({ orcaUI, journalUI, backtestUI, activeDimension }: DimensionControllerProps) => {
   return (
     <AnimatePresence mode="wait">
       {activeDimension === 'orca' ? (
@@ -21,7 +22,7 @@ export const DimensionController = ({ orcaUI, journalUI, activeDimension }: Dime
         >
           {orcaUI}
         </motion.div>
-      ) : (
+      ) : activeDimension === 'journal' ? (
         <motion.div
           key="journal"
           initial={{ opacity: 0 }}
@@ -31,6 +32,17 @@ export const DimensionController = ({ orcaUI, journalUI, activeDimension }: Dime
           style={{ width: '100%', height: '100%' }}
         >
           {journalUI}
+        </motion.div>
+      ) : (
+        <motion.div
+          key="backtest"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          style={{ width: '100%', height: '100%' }}
+        >
+          {backtestUI}
         </motion.div>
       )}
     </AnimatePresence>
@@ -85,7 +97,7 @@ export const PortalButton = ({ onClick, isRTL, expanded }: { onClick: () => void
       <span style={{ fontSize: 18, position: 'relative', zIndex: 1 }}>🏛️</span>
       {expanded && (
         <span style={{ position: 'relative', zIndex: 1, letterSpacing: '0.02em' }}>
-          {isRTL ? 'כניסה למקדש' : 'Enter Sanctuary'}
+          {isRTL ? 'יומן מסע לסוחר' : 'Trader Journey'}
         </span>
       )}
     </button>
