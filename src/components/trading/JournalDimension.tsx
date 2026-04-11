@@ -1964,6 +1964,17 @@ const CalendarView = ({ days, dir, th, t, risk, onSelectDay }: { days: JournalDa
           </div>
         </div>
       )}
+
+      {/* Daily Intelligence Panel */}
+      {intelDay && (
+        <DailyIntelligencePanel
+          day={intelDay}
+          dir={dir}
+          th={th}
+          onClose={() => setIntelDay(null)}
+          onOpenJournal={(id) => { setIntelDay(null); onSelectDay(id); }}
+        />
+      )}
     </div>
   );
 };
