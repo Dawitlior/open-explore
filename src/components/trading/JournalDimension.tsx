@@ -1025,6 +1025,40 @@ const CircularMeter = ({ used, limit, label, color, th }: { used: number; limit:
   );
 };
 
+// Compact Risk Control for EOD section
+const CompactRiskControl = ({ risk, dir, th }: { risk: JRiskStatus; dir: string; th: typeof THEMES.dark }) => {
+  if (!risk) return null;
+  const items = [
+    { label: dir === 'rtl' ? 'יומי' : 'Daily', used: risk.dailyR, limit: RISK_LIMITS.day, c: '#00FFA3' },
+    { label: dir === 'rtl' ? 'שבועי' : 'Weekly', used: risk.weeklyR, limit: RISK_LIMITS.week, c: '#FFC857' },
+    { label: dir === 'rtl' ? 'חודשי' : 'Monthly', used: risk.monthlyR, limit: RISK_LIMITS.month, c: '#5AA9FF' },
+  ];
+  return (
+    <div style={{ background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 12, padding: '12px 16px', marginBottom: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+        <span style={{ fontSize: 11 }}>🛡</span>
+        <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 800, letterSpacing: '2px', color: th.tx3, textTransform: 'uppercase' as const }}>RISK CONTROL</span>
+        {risk.breachedLevel !== 'none' && <span style={{ fontSize: 8, color: '#FF4D4D', fontWeight: 700, animation: 'j-pulse 1s infinite' }}>⚠</span>}
+      </div>
+      <div style={{ display: 'flex', gap: 10 }}>
+        {items.map(item => {
+          const pct = Math.min(100, (Math.abs(item.used) / Math.abs(item.limit)) * 100);
+          const mc = pct >= 80 ? '#FF4D4D' : pct >= 50 ? '#FFC857' : item.c;
+          return (
+            <div key={item.label} style={{ flex: 1, textAlign: 'center' }}>
+              <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 7, fontWeight: 700, color: th.tx3, letterSpacing: '1px', marginBottom: 4 }}>{item.label}</div>
+              <div style={{ height: 3, background: th.inputBg, borderRadius: 2, overflow: 'hidden', marginBottom: 4 }}>
+                <div style={{ height: '100%', width: `${pct}%`, background: mc, borderRadius: 2, transition: 'width .5s ease' }} />
+              </div>
+              <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, fontWeight: 800, color: mc }}>{item.used.toFixed(1)}R <span style={{ fontSize: 8, color: th.tx3, fontWeight: 400 }}>/ {item.limit}R</span></div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 // ═══════════════════════════════════════════════════════════════
 // RISK COMMAND CENTER
 // ═══════════════════════════════════════════════════════════════
