@@ -3569,6 +3569,12 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
     return orcaTrades.filter(tr => tr.date?.startsWith(today));
   }, [orcaTrades]);
 
+  // Exit animation handler (must be before early returns)
+  const handleReturn = useCallback(() => {
+    setExitingToOrca(true);
+    setTimeout(() => onReturn(), 1200);
+  }, [onReturn]);
+
   if (!loaded) return (
     <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: th.bg }}>
       <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, color: '#00FFA3', letterSpacing: 3, animation: 'j-pulse 1.5s ease-in-out infinite' }}>INITIALIZING...</div>
@@ -3580,12 +3586,6 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
     p: { background: 'rgba(183,148,246,.12)', border: '1px solid rgba(183,148,246,.25)', color: '#b794f6' },
     g: { background: 'rgba(0,255,163,.12)', border: '1px solid rgba(0,255,163,.25)', color: '#00FFA3' },
   };
-
-  // Exit animation handler
-  const handleReturn = useCallback(() => {
-    setExitingToOrca(true);
-    setTimeout(() => onReturn(), 1200);
-  }, [onReturn]);
 
   // Entry screen
   if (showEntry) {
