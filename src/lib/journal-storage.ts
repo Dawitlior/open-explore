@@ -57,6 +57,7 @@ export interface JournalDay {
   closing: string;
   // New fields
   morningImages: string[];
+  eodImages: string[];
   btcThoughts: string;
   psychAnswers: PsychAnswers;
   disciplineCommitments: string[];

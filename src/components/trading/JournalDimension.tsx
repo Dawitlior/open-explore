@@ -10,10 +10,14 @@ import { playSystemOpen, playMorningLock, playEODLock, playRiskAlert } from '@/l
 const ENTRY_SESSION_KEY = 'journal-entry-seen';
 
 const JournalEntryScreen = ({ onEnter }: { onEnter: () => void }) => {
-  const [phase, setPhase] = useState<'boot' | 'ready' | 'exiting'>('boot');
+  const [phase, setPhase] = useState<'ambient' | 'boot' | 'ready' | 'portal' | 'consumed'>('ambient');
   const [bootStep, setBootStep] = useState(0);
   const [clock, setClock] = useState('');
+  const [portalScale, setPortalScale] = useState(0);
+  const [particles, setParticles] = useState<{id:number;x:number;y:number;s:number;d:number;o:number}[]>([]);
   const soundPlayed = useRef(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rafRef = useRef<number>(0);
 
   useEffect(() => {
     const tick = () => setClock(new Date().toLocaleTimeString('en-US', { hour12: false }));
@@ -22,15 +26,62 @@ const JournalEntryScreen = ({ onEnter }: { onEnter: () => void }) => {
     return () => clearInterval(iv);
   }, []);
 
+  // Ambient particle field
   useEffect(() => {
+    const pts = Array.from({ length: 60 }, (_, i) => ({
+      id: i, x: Math.random() * 100, y: Math.random() * 100,
+      s: 0.5 + Math.random() * 2, d: Math.random() * 360, o: 0.1 + Math.random() * 0.4,
+    }));
+    setParticles(pts);
+  }, []);
+
+  // Canvas waveform animation
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    let t = 0;
+    const animate = () => {
+      t += 0.008;
+      canvas.width = canvas.offsetWidth * 2;
+      canvas.height = canvas.offsetHeight * 2;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Draw 3 waves
+      [{ c: '#00FFA3', a: 30, f: 0.008, o: 0.15 }, { c: '#5AA9FF', a: 20, f: 0.012, o: 0.1 }, { c: '#b794f6', a: 15, f: 0.006, o: 0.08 }].forEach(wave => {
+        ctx.beginPath();
+        ctx.strokeStyle = wave.c;
+        ctx.globalAlpha = wave.o;
+        ctx.lineWidth = 2;
+        for (let x = 0; x < canvas.width; x += 2) {
+          const y = canvas.height / 2 + Math.sin(x * wave.f + t * 3) * wave.a * 2 + Math.sin(x * wave.f * 0.5 + t * 1.5) * wave.a;
+          x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      });
+      ctx.globalAlpha = 1;
+      rafRef.current = requestAnimationFrame(animate);
+    };
+    animate();
+    return () => cancelAnimationFrame(rafRef.current);
+  }, []);
+
+  // Boot sequence
+  useEffect(() => {
+    const t1 = setTimeout(() => setPhase('boot'), 800);
+    return () => clearTimeout(t1);
+  }, []);
+
+  useEffect(() => {
+    if (phase !== 'boot') return;
     const timers = [
-      setTimeout(() => setBootStep(1), 400),
-      setTimeout(() => setBootStep(2), 900),
-      setTimeout(() => setBootStep(3), 1400),
-      setTimeout(() => { setBootStep(4); setPhase('ready'); }, 2200),
+      setTimeout(() => setBootStep(1), 300),
+      setTimeout(() => setBootStep(2), 700),
+      setTimeout(() => setBootStep(3), 1100),
+      setTimeout(() => { setBootStep(4); setPhase('ready'); }, 1800),
     ];
     return () => timers.forEach(clearTimeout);
-  }, []);
+  }, [phase]);
 
   useEffect(() => {
     if (phase !== 'ready' || soundPlayed.current) return;
@@ -39,149 +90,189 @@ const JournalEntryScreen = ({ onEnter }: { onEnter: () => void }) => {
   }, [phase]);
 
   const handleEnter = () => {
-    setPhase('exiting');
-    sessionStorage.setItem(ENTRY_SESSION_KEY, '1');
-    setTimeout(onEnter, 700);
+    setPhase('portal');
+    setPortalScale(0);
+    // Animate portal expansion
+    let scale = 0;
+    const step = () => {
+      scale += 0.025;
+      if (scale >= 1) {
+        setPortalScale(1);
+        setPhase('consumed');
+        sessionStorage.setItem(ENTRY_SESSION_KEY, '1');
+        setTimeout(onEnter, 400);
+        return;
+      }
+      // Easing: cubic ease-in
+      const eased = scale * scale * scale;
+      setPortalScale(eased);
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
   };
 
-  const BOOT_LABELS = ['SYSTEM', 'DATA', 'ENGINE', 'READY'];
+  const handleSkip = () => {
+    sessionStorage.setItem(ENTRY_SESSION_KEY, '1');
+    onEnter();
+  };
+
+  const BOOT_LABELS = ['CORE', 'DATA', 'ENGINE', 'ONLINE'];
   const TICKER = [
-    { pair: 'BTC/USD', change: '+1.21' },
-    { pair: 'ETH/USD', change: '+4.30' },
-    { pair: 'SOL/USD', change: '-2.85' },
-    { pair: 'BNB/USD', change: '-0.41' },
-    { pair: 'XRP/USD', change: '+3.12' },
+    { pair: 'BTC/USD', change: '+1.21' }, { pair: 'ETH/USD', change: '+4.30' },
+    { pair: 'SOL/USD', change: '-2.85' }, { pair: 'BNB/USD', change: '-0.41' },
   ];
+
+  const portalRadius = portalScale * Math.max(window.innerWidth, window.innerHeight) * 1.5;
 
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 9999,
-      background: '#050a18',
+      background: '#030610',
       display: 'flex', flexDirection: 'column',
-      opacity: phase === 'exiting' ? 0 : 1,
-      filter: phase === 'exiting' ? 'blur(12px)' : 'none',
-      transition: 'opacity 0.7s ease, filter 0.7s ease',
       fontFamily: "'Poppins', 'Inter', sans-serif",
       overflow: 'hidden',
+      opacity: phase === 'consumed' ? 0 : 1,
+      transition: phase === 'consumed' ? 'opacity 0.4s ease' : 'none',
     }}>
-      {/* Grid background */}
+      {/* Floating particles */}
+      {particles.map(p => (
+        <div key={p.id} style={{
+          position: 'absolute', left: `${p.x}%`, top: `${p.y}%`,
+          width: p.s, height: p.s, borderRadius: '50%',
+          background: p.id % 3 === 0 ? '#00FFA3' : p.id % 3 === 1 ? '#5AA9FF' : '#b794f6',
+          opacity: phase === 'portal' ? 0 : p.o,
+          transition: 'opacity 0.5s ease',
+          animation: `j-float-particle ${8 + p.id % 5}s ease-in-out infinite alternate`,
+          animationDelay: `${p.id * 0.1}s`,
+        }} />
+      ))}
+
+      {/* Canvas waveform */}
+      <canvas ref={canvasRef} style={{
+        position: 'absolute', bottom: 0, left: 0, width: '100%', height: '35%',
+        opacity: phase === 'portal' ? 0 : 0.6,
+        transition: 'opacity 0.6s ease',
+      }} />
+
+      {/* Radial vignette */}
       <div style={{
         position: 'absolute', inset: 0,
-        backgroundImage: 'linear-gradient(rgba(0,255,163,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,163,0.04) 1px, transparent 1px)',
-        backgroundSize: '50px 50px',
-        opacity: bootStep >= 1 ? 0.6 : 0,
+        background: 'radial-gradient(ellipse at 50% 45%, transparent 30%, #030610 75%)',
+      }} />
+
+      {/* Grid */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        backgroundImage: 'linear-gradient(rgba(0,255,163,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,163,0.025) 1px, transparent 1px)',
+        backgroundSize: '80px 80px',
+        opacity: bootStep >= 1 ? 0.5 : 0,
         transition: 'opacity 1.5s ease',
+        transform: `perspective(800px) rotateX(${phase === 'portal' ? 25 : 0}deg)`,
+        transformOrigin: 'bottom center',
       }} />
-      {/* Radial glow */}
-      <div style={{
-        position: 'absolute', inset: 0,
-        background: 'radial-gradient(ellipse at 50% 40%, rgba(0,255,163,0.06) 0%, transparent 60%)',
-        opacity: bootStep >= 2 ? 1 : 0,
-        transition: 'opacity 1.2s ease',
-      }} />
-      {/* SVG equity lines */}
-      <svg style={{
-        position: 'absolute', inset: 0, width: '100%', height: '100%',
-        opacity: bootStep >= 2 ? 0.12 : 0,
-        transition: 'opacity 1s ease',
-      }} viewBox="0 0 1000 500" preserveAspectRatio="none">
-        <polyline points="0,350 80,330 160,340 240,280 320,300 400,240 480,260 560,200 640,220 720,180 800,190 880,160 960,170 1000,150"
-          fill="none" stroke="#00FFA3" strokeWidth="2"
-          style={{ strokeDasharray: 2200, strokeDashoffset: bootStep >= 2 ? 0 : 2200, transition: 'stroke-dashoffset 2s ease' }}
-        />
-        <polyline points="0,380 80,370 160,385 240,350 320,365 400,320 480,340 560,310 640,320 720,290 800,300 880,270 960,280 1000,260"
-          fill="none" stroke="#5AA9FF" strokeWidth="1.5" opacity="0.5"
-          style={{ strokeDasharray: 2200, strokeDashoffset: bootStep >= 2 ? 0 : 2200, transition: 'stroke-dashoffset 2.5s ease' }}
-        />
-      </svg>
+
+      {/* Skip button */}
+      <button onClick={handleSkip} style={{
+        position: 'absolute', top: 16, right: 20, zIndex: 20,
+        fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 600,
+        color: 'rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.04)',
+        border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8,
+        padding: '6px 16px', cursor: 'pointer', letterSpacing: '1px',
+        transition: 'all 0.2s ease',
+        opacity: phase === 'portal' || phase === 'consumed' ? 0 : 1,
+      }}
+      onMouseEnter={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; }}
+      onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.3)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
+      >SKIP →</button>
 
       {/* Top ticker */}
       <div style={{
         position: 'relative', zIndex: 3,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '12px 20px',
-        borderBottom: '1px solid rgba(0,255,163,0.1)',
-        background: 'rgba(0,0,0,0.4)',
-        fontSize: 12, fontFamily: "'JetBrains Mono', monospace",
-        opacity: bootStep >= 1 ? 1 : 0,
-        transform: bootStep >= 1 ? 'translateY(0)' : 'translateY(-20px)',
+        padding: '10px 20px', borderBottom: '1px solid rgba(0,255,163,0.06)',
+        background: 'rgba(0,0,0,0.3)', fontSize: 11,
+        fontFamily: "'JetBrains Mono', monospace",
+        opacity: bootStep >= 1 ? 1 : 0, transform: bootStep >= 1 ? 'translateY(0)' : 'translateY(-20px)',
         transition: 'all 0.6s ease',
       }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#00FFA3', boxShadow: '0 0 10px #00FFA3', animation: 'j-pulse-dot 2s infinite' }} />
-          <span style={{ color: '#00FFA3', fontWeight: 700, letterSpacing: 2 }}>LIVE</span>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00FFA3', boxShadow: '0 0 12px #00FFA3', animation: 'j-pulse-dot 2s infinite' }} />
+          <span style={{ color: '#00FFA3', fontWeight: 700, letterSpacing: 2, fontSize: 10 }}>LIVE</span>
         </div>
-        <div style={{ display: 'flex', gap: 24, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', gap: 20, overflow: 'hidden' }}>
           {TICKER.map((t, i) => (
-            <span key={i} style={{ color: '#94a3b8', whiteSpace: 'nowrap' }}>
+            <span key={i} style={{ color: '#94a3b8', whiteSpace: 'nowrap', fontSize: 10 }}>
               <span style={{ color: '#e2e8f0', fontWeight: 600 }}>{t.pair}</span>{' '}
               <span style={{ color: t.change.startsWith('+') ? '#00FFA3' : '#FF4040', fontWeight: 700 }}>{t.change}%</span>
             </span>
           ))}
         </div>
-        <span style={{ color: '#00FFA3', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{clock}</span>
+        <span style={{ color: '#00FFA3', fontWeight: 700, fontVariantNumeric: 'tabular-nums', fontSize: 10 }}>{clock}</span>
       </div>
 
-      {/* Center */}
+      {/* Center content */}
       <div style={{
         flex: 1, display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
-        position: 'relative', zIndex: 2, padding: '20px 16px',
+        position: 'relative', zIndex: 2,
+        opacity: phase === 'portal' || phase === 'consumed' ? 0 : 1,
+        transform: phase === 'portal' ? 'scale(0.8)' : 'scale(1)',
+        transition: 'all 0.6s cubic-bezier(0.4,0,0.2,1)',
       }}>
+        {/* Logo hexagon */}
         <div style={{
-          width: 64, height: 64, marginBottom: 24, borderRadius: 16,
-          background: 'linear-gradient(135deg, rgba(0,255,163,0.15), rgba(90,169,255,0.15))',
-          border: '1px solid rgba(0,255,163,0.2)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 0 60px rgba(0,255,163,0.1)',
+          width: 80, height: 80, marginBottom: 28, position: 'relative',
           opacity: bootStep >= 1 ? 1 : 0,
-          transform: bootStep >= 1 ? 'scale(1)' : 'scale(0.8)',
-          transition: 'all 0.6s ease',
+          transform: bootStep >= 1 ? 'scale(1) rotateY(0deg)' : 'scale(0.5) rotateY(90deg)',
+          transition: 'all 0.8s cubic-bezier(0.16,1,0.3,1)',
         }}>
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#00FFA3" strokeWidth="1.8" strokeLinecap="round">
-            <path d="M3 17l3-3 4 4 6-8 5 5" />
-            <path d="M14 7l7 0 0 7" />
+          <svg viewBox="0 0 80 80" style={{ width: '100%', height: '100%' }}>
+            <defs>
+              <linearGradient id="hex-grad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#00FFA3" stopOpacity="0.2" />
+                <stop offset="100%" stopColor="#5AA9FF" stopOpacity="0.1" />
+              </linearGradient>
+              <filter id="hex-glow"><feGaussianBlur stdDeviation="3" /><feComposite in="SourceGraphic" /></filter>
+            </defs>
+            <polygon points="40,4 72,22 72,58 40,76 8,58 8,22" fill="url(#hex-grad)" stroke="#00FFA3" strokeWidth="1" opacity="0.6" filter="url(#hex-glow)" />
+            <polygon points="40,4 72,22 72,58 40,76 8,58 8,22" fill="none" stroke="#00FFA3" strokeWidth="0.5" opacity="0.3" />
           </svg>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00FFA3" strokeWidth="1.5" strokeLinecap="round">
+              <path d="M3 17l3-3 4 4 6-8 5 5" /><path d="M14 7l7 0 0 7" />
+            </svg>
+          </div>
         </div>
 
         <h1 style={{
-          fontSize: 'clamp(32px, 7vw, 48px)', fontWeight: 800,
-          letterSpacing: '-1px', marginBottom: 8, lineHeight: 1.1,
-          color: '#ffffff',
+          fontSize: 'clamp(36px, 8vw, 56px)', fontWeight: 800,
+          letterSpacing: '-2px', marginBottom: 6, lineHeight: 1,
           opacity: bootStep >= 1 ? 1 : 0,
-          transform: bootStep >= 1 ? 'translateY(0)' : 'translateY(20px)',
-          transition: 'all 0.8s ease',
+          transform: bootStep >= 1 ? 'translateY(0)' : 'translateY(30px)',
+          transition: 'all 0.9s cubic-bezier(0.16,1,0.3,1)',
         }}>
-          <span style={{ fontWeight: 300, color: '#94a3b8' }}>Orca</span>Investment
+          <span style={{ color: '#ffffff' }}>APEX</span>
+          <span style={{ fontWeight: 300, color: '#475569', marginLeft: 8 }}>OS</span>
         </h1>
-
         <p style={{
-          fontSize: 'clamp(14px, 3vw, 17px)', fontWeight: 500,
-          color: '#94a3b8', letterSpacing: 4,
-          marginBottom: 6, direction: 'rtl',
-          opacity: bootStep >= 2 ? 1 : 0,
-          transition: 'opacity 0.8s ease',
-        }}>יומן מסחר מתקדם</p>
-        <p style={{
-          fontSize: 'clamp(10px, 2vw, 12px)', fontWeight: 400,
-          color: '#64748b', letterSpacing: 6,
-          marginBottom: 48, direction: 'rtl',
-          opacity: bootStep >= 2 ? 1 : 0,
-          transition: 'opacity 0.8s ease 0.2s',
-        }}>מקצועיות · תהליך · הצלחה</p>
+          fontSize: 'clamp(10px, 2vw, 12px)', fontWeight: 600,
+          color: '#475569', letterSpacing: 6, textTransform: 'uppercase' as const,
+          marginBottom: 48,
+          opacity: bootStep >= 2 ? 1 : 0, transition: 'opacity 1s ease 0.2s',
+        }}>TRADING INTELLIGENCE SYSTEM</p>
 
         {/* Boot indicators */}
-        <div style={{ display: 'flex', gap: 20, marginBottom: 32, fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>
+        <div style={{ display: 'flex', gap: 16, marginBottom: 28, fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>
           {BOOT_LABELS.map((label, i) => (
             <span key={i} style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              color: bootStep > i ? '#00FFA3' : '#334155',
+              display: 'flex', alignItems: 'center', gap: 5,
+              color: bootStep > i ? '#00FFA3' : '#1e293b',
               transition: 'color 0.4s ease',
             }}>
               <span style={{
-                width: 5, height: 5, borderRadius: '50%',
-                background: bootStep > i ? '#00FFA3' : '#334155',
-                boxShadow: bootStep > i ? '0 0 8px #00FFA3' : 'none',
+                width: 4, height: 4, borderRadius: '50%',
+                background: bootStep > i ? '#00FFA3' : '#1e293b',
+                boxShadow: bootStep > i ? '0 0 10px #00FFA3' : 'none',
                 transition: 'all 0.4s ease',
               }} />
               {label}
@@ -191,73 +282,94 @@ const JournalEntryScreen = ({ onEnter }: { onEnter: () => void }) => {
 
         {/* Progress bar */}
         <div style={{
-          width: 'min(240px, 70vw)', height: 3,
-          background: 'rgba(255,255,255,0.06)', borderRadius: 2,
-          overflow: 'hidden', marginBottom: 36,
-          opacity: phase === 'ready' ? 0 : 1,
-          transition: 'opacity 0.5s ease',
+          width: 'min(200px, 60vw)', height: 2,
+          background: 'rgba(255,255,255,0.04)', borderRadius: 1,
+          overflow: 'hidden', marginBottom: 32,
+          opacity: phase === 'ready' ? 0 : 1, transition: 'opacity 0.5s ease',
         }}>
           <div style={{
             height: '100%', width: `${(bootStep / 4) * 100}%`,
             background: 'linear-gradient(90deg, #00FFA3, #5AA9FF)',
-            borderRadius: 2, transition: 'width 0.6s ease',
-            boxShadow: '0 0 12px rgba(0,255,163,0.5)',
+            borderRadius: 1, transition: 'width 0.5s ease',
+            boxShadow: '0 0 10px rgba(0,255,163,0.5)',
           }} />
         </div>
 
         {/* Enter button */}
         {phase === 'ready' && (
-          <button onClick={handleEnter} style={{
-            padding: 'clamp(14px, 2.5vw, 18px) clamp(40px, 10vw, 64px)',
-            fontSize: 'clamp(13px, 2.5vw, 15px)', fontWeight: 700,
-            letterSpacing: 3, textTransform: 'uppercase' as const,
-            color: '#050a18', background: 'linear-gradient(135deg, #00FFA3, #00CC82)',
-            border: 'none', borderRadius: 12, cursor: 'pointer',
-            boxShadow: '0 0 50px rgba(0,255,163,0.25), 0 4px 24px rgba(0,0,0,0.5)',
-            transition: 'all 0.25s ease', fontFamily: "'Poppins', sans-serif",
-            animation: 'j-entry-btn 0.5s ease-out',
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.transform = 'translateY(-3px) scale(1.04)';
-            e.currentTarget.style.boxShadow = '0 0 70px rgba(0,255,163,0.35), 0 8px 32px rgba(0,0,0,0.6)';
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.transform = 'translateY(0) scale(1)';
-            e.currentTarget.style.boxShadow = '0 0 50px rgba(0,255,163,0.25), 0 4px 24px rgba(0,0,0,0.5)';
-          }}
-          >כניסה למערכת</button>
+          <div style={{ animation: 'j-entry-btn 0.6s cubic-bezier(0.16,1,0.3,1)' }}>
+            <button onClick={handleEnter} style={{
+              padding: 'clamp(16px, 3vw, 20px) clamp(48px, 12vw, 72px)',
+              fontSize: 'clamp(12px, 2.5vw, 14px)', fontWeight: 800,
+              letterSpacing: 4, textTransform: 'uppercase' as const,
+              color: '#030610', background: 'linear-gradient(135deg, #00FFA3, #00CC82)',
+              border: 'none', borderRadius: 14, cursor: 'pointer',
+              boxShadow: '0 0 60px rgba(0,255,163,0.2), 0 4px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2)',
+              transition: 'all 0.3s cubic-bezier(0.16,1,0.3,1)',
+              fontFamily: "'Poppins', sans-serif", position: 'relative',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = 'translateY(-4px) scale(1.05)';
+              e.currentTarget.style.boxShadow = '0 0 100px rgba(0,255,163,0.3), 0 12px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.2)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = 'translateY(0) scale(1)';
+              e.currentTarget.style.boxShadow = '0 0 60px rgba(0,255,163,0.2), 0 4px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2)';
+            }}
+            >ENTER SYSTEM</button>
+            <div style={{
+              textAlign: 'center', marginTop: 12, fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 9, color: '#334155', letterSpacing: 2,
+            }}>PRESS ENTER OR CLICK</div>
+          </div>
         )}
       </div>
+
+      {/* Portal overlay */}
+      {(phase === 'portal' || phase === 'consumed') && (
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 100,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          pointerEvents: 'none',
+        }}>
+          <div style={{
+            width: portalRadius * 2, height: portalRadius * 2,
+            borderRadius: '50%', background: '#030610',
+            boxShadow: `0 0 ${80 + portalScale * 120}px ${40 + portalScale * 60}px rgba(0,255,163,${0.15 * (1 - portalScale)}), inset 0 0 ${60 + portalScale * 100}px rgba(0,255,163,${0.1 * (1 - portalScale)})`,
+            border: `2px solid rgba(0,255,163,${0.3 * (1 - portalScale)})`,
+            transition: 'none',
+          }} />
+        </div>
+      )}
 
       {/* Bottom bar */}
       <div style={{
         position: 'relative', zIndex: 3,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24,
-        padding: '12px 16px',
-        borderTop: '1px solid rgba(0,255,163,0.08)',
-        background: 'rgba(0,0,0,0.3)',
-        fontSize: 10, fontFamily: "'JetBrains Mono', monospace",
-        color: '#475569', letterSpacing: 2,
-        opacity: bootStep >= 1 ? 1 : 0,
-        transform: bootStep >= 1 ? 'translateY(0)' : 'translateY(20px)',
-        transition: 'all 0.6s ease',
-        flexWrap: 'wrap',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20,
+        padding: '10px 16px', borderTop: '1px solid rgba(0,255,163,0.05)',
+        background: 'rgba(0,0,0,0.2)', fontSize: 9,
+        fontFamily: "'JetBrains Mono', monospace", color: '#334155', letterSpacing: 2,
+        opacity: phase === 'portal' || phase === 'consumed' ? 0 : 1,
+        transition: 'opacity 0.4s ease',
       }}>
-        <span>ORCA TERMINAL v3.0</span>
-        <span style={{ color: '#00FFA3' }}>●</span>
+        <span>APEX OS v4.0</span>
+        <span style={{ color: '#00FFA340' }}>●</span>
         <span>ENCRYPTED</span>
-        <span style={{ color: '#00FFA3' }}>●</span>
+        <span style={{ color: '#00FFA340' }}>●</span>
         <span>LOCAL STORAGE</span>
       </div>
 
       <style>{`
         @keyframes j-entry-btn {
-          from { opacity: 0; transform: translateY(12px) scale(0.95); }
+          from { opacity: 0; transform: translateY(20px) scale(0.9); }
           to { opacity: 1; transform: translateY(0) scale(1); }
         }
         @keyframes j-pulse-dot {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.3; }
+          0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
+        }
+        @keyframes j-float-particle {
+          0% { transform: translate(0, 0); }
+          100% { transform: translate(${Math.random() * 20 - 10}px, ${Math.random() * 20 - 10}px); }
         }
       `}</style>
     </div>
@@ -429,6 +541,7 @@ const makeDay = (lang = 'he'): JournalDay => {
     actualMove: '', dayScore: 0,
     wins: '', lessons: '', mistakes: '', solutions: '', closing: '',
     morningImages: [],
+    eodImages: [],
     btcThoughts: '',
     psychAnswers: { sleepWell: null, feelingPressure: null, seekingExcitement: null, recoveringLosses: null },
     disciplineCommitments: [],
@@ -1180,46 +1293,107 @@ const RiskStrip = ({ risk, dir, th }: { risk: JRiskStatus; dir: string; th: type
 };
 
 // ═══════════════════════════════════════════════════════════════
-// RISK ALERT MODAL
+// RISK ALERT MODAL — Cinematic fullscreen warning
 // ═══════════════════════════════════════════════════════════════
 const RiskAlertModal = ({ risk, t, dir, onClose, th }: { risk: JRiskStatus; t: any; dir: string; onClose: () => void; th: typeof THEMES.dark }) => {
   const level = risk.breachedLevel;
-  if (level === 'none') return null;
-  const cfg = {
-    daily: { icon: '⚠️', color: '#f97316', msg: t.risk.daily },
-    weekly: { icon: '🔴', color: '#FF4D4D', msg: t.risk.weekly },
-    monthly: { icon: '🚨', color: '#991b1b', msg: t.risk.monthly },
-  }[level]!;
+  const [step, setStep] = useState(0);
+  const [scanLine, setScanLine] = useState(0);
 
-  // Sound alert
-  playRiskAlert();
+  const cfgMap = {
+    daily: { icon: '⚠️', color: '#f97316', glow: 'rgba(249,115,22,', severity: 'DAILY LIMIT', msg: t.risk.daily },
+    weekly: { icon: '🔴', color: '#FF4D4D', glow: 'rgba(255,77,77,', severity: 'WEEKLY LIMIT', msg: t.risk.weekly },
+    monthly: { icon: '🚨', color: '#FF0040', glow: 'rgba(255,0,64,', severity: 'MONTHLY LIMIT', msg: t.risk.monthly },
+    none: { icon: '', color: '', glow: '', severity: '', msg: '' },
+  };
+  const cfg = cfgMap[level];
+
+  useEffect(() => {
+    if (level === 'none') return;
+    playRiskAlert();
+    const t1 = setTimeout(() => setStep(1), 100);
+    const t2 = setTimeout(() => setStep(2), 500);
+    const t3 = setTimeout(() => setStep(3), 1000);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, [level]);
+
+  useEffect(() => {
+    if (step < 2) return;
+    let y = 0;
+    const iv = setInterval(() => { y = (y + 1.5) % 100; setScanLine(y); }, 30);
+    return () => clearInterval(iv);
+  }, [step]);
+
+  if (level === 'none') return null;
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 9990, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)', animation: 'j-fade-in .3s ease-out' }}>
+    <div onClick={onClose} style={{
+      position: 'fixed', inset: 0, zIndex: 9990,
+      background: `radial-gradient(ellipse at 50% 50%, ${cfg.glow}0.15) 0%, rgba(0,0,0,0.94) 60%)`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      backdropFilter: 'blur(16px)',
+      opacity: step >= 1 ? 1 : 0, transition: 'opacity 0.5s ease',
+    }}>
+      {/* Scan line */}
+      <div style={{ position: 'absolute', left: 0, right: 0, height: 2, top: `${scanLine}%`, background: `linear-gradient(90deg, transparent, ${cfg.color}40, transparent)`, opacity: step >= 2 ? 0.5 : 0, pointerEvents: 'none' }} />
+
+      {/* Pulsing rings */}
+      {step >= 2 && [1, 2, 3].map(i => (
+        <div key={i} style={{
+          position: 'absolute', width: 200 + i * 100, height: 200 + i * 100,
+          borderRadius: '50%', border: `1px solid ${cfg.glow}${(0.12 / i).toFixed(2)})`,
+          animation: `j-risk-ring ${2 + i * 0.5}s ease-in-out infinite`,
+          animationDelay: `${i * 0.3}s`,
+        }} />
+      ))}
+
       <div onClick={e => e.stopPropagation()} style={{
-        background: th.bg1, border: `2px solid ${cfg.color}`, borderRadius: 20, padding: 32, maxWidth: 460, width: '90%',
-        textAlign: 'center', boxShadow: `0 0 80px ${cfg.color}30`, animation: 'j-scale-in .3s ease-out',
+        position: 'relative', zIndex: 2,
+        background: 'linear-gradient(180deg, rgba(15,20,35,0.98), rgba(8,12,24,0.98))',
+        border: `1px solid ${cfg.glow}0.3)`, borderRadius: 24,
+        padding: '40px 36px', maxWidth: 500, width: '92%', textAlign: 'center',
+        boxShadow: `0 0 100px ${cfg.glow}0.15), 0 0 200px ${cfg.glow}0.06), inset 0 1px 0 rgba(255,255,255,0.05)`,
+        transform: step >= 2 ? 'scale(1) translateY(0)' : 'scale(0.7) translateY(40px)',
+        opacity: step >= 2 ? 1 : 0,
+        transition: 'all 0.6s cubic-bezier(0.16,1,0.3,1)',
       }}>
-        <div style={{ fontSize: 56, marginBottom: 16, animation: 'j-pulse 1.5s ease-in-out infinite' }}>{cfg.icon}</div>
-        <div style={{ fontSize: 18, fontWeight: 800, color: cfg.color, fontFamily: "'Poppins',sans-serif", marginBottom: 14, letterSpacing: '.5px' }}>{t.risk.title}</div>
-        <div style={{ fontSize: 13, color: th.tx2, lineHeight: 1.8, marginBottom: 20, fontFamily: "'Poppins',sans-serif", direction: dir as 'ltr' | 'rtl' }}>{cfg.msg}</div>
-        <div style={{ display: 'flex', gap: 14, justifyContent: 'center', marginBottom: 22 }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, transparent, ${cfg.color}, transparent)`, borderRadius: '24px 24px 0 0', animation: 'j-pulse 1.5s ease-in-out infinite' }} />
+
+        <div style={{ fontSize: 64, marginBottom: 20, lineHeight: 1, filter: `drop-shadow(0 0 20px ${cfg.glow}0.5))`, animation: step >= 3 ? 'j-risk-icon-shake 0.5s ease-in-out' : 'none' }}>{cfg.icon}</div>
+
+        <div style={{ display: 'inline-block', padding: '6px 20px', borderRadius: 20, background: `${cfg.glow}0.12)`, border: `1px solid ${cfg.glow}0.3)`, fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 800, letterSpacing: 3, color: cfg.color, marginBottom: 16, animation: 'j-pulse 1.5s ease-in-out infinite' }}>⚡ {cfg.severity} BREACHED</div>
+
+        <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', fontFamily: "'Poppins',sans-serif", marginBottom: 14 }}>{t.risk.title}</div>
+        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.8, marginBottom: 24, fontFamily: "'Poppins',sans-serif", direction: dir as 'ltr' | 'rtl', maxWidth: 380, margin: '0 auto 24px' }}>{cfg.msg}</div>
+
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginBottom: 28 }}>
           {[
-            { l: t.risk.dailyLabel, v: risk.dailyR.toFixed(1), b: risk.dailyBreached },
-            { l: t.risk.weeklyLabel, v: risk.weeklyR.toFixed(1), b: risk.weeklyBreached },
-            { l: t.risk.monthlyLabel, v: risk.monthlyR.toFixed(1), b: risk.monthlyBreached },
+            { l: t.risk.dailyLabel, v: risk.dailyR, b: risk.dailyBreached, limit: '-2R' },
+            { l: t.risk.weeklyLabel, v: risk.weeklyR, b: risk.weeklyBreached, limit: '-5R' },
+            { l: t.risk.monthlyLabel, v: risk.monthlyR, b: risk.monthlyBreached, limit: '-10R' },
           ].map(s => (
-            <div key={s.l} style={{ padding: '10px 16px', background: th.inputBg, borderRadius: 10, border: `1px solid ${s.b ? 'rgba(255,77,77,0.3)' : th.inputBr}` }}>
-              <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, color: th.tx3, letterSpacing: '1.5px', textTransform: 'uppercase' as const }}>{s.l}</div>
-              <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 18, fontWeight: 800, color: s.b ? '#FF4D4D' : th.tx, marginTop: 3 }}>{s.v}R</div>
+            <div key={s.l} style={{
+              flex: 1, padding: '14px 12px', borderRadius: 14,
+              background: s.b ? `${cfg.glow}0.08)` : 'rgba(255,255,255,0.03)',
+              border: `1px solid ${s.b ? `${cfg.glow}0.25)` : 'rgba(255,255,255,0.06)'}`,
+            }}>
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 7, color: 'rgba(255,255,255,0.35)', letterSpacing: 2, textTransform: 'uppercase' as const, marginBottom: 6 }}>{s.l}</div>
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 22, fontWeight: 800, color: s.b ? cfg.color : 'rgba(255,255,255,0.8)', lineHeight: 1, textShadow: s.b ? `0 0 20px ${cfg.glow}0.4)` : 'none' }}>{s.v.toFixed(1)}R</div>
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.2)', marginTop: 4 }}>limit {s.limit}</div>
             </div>
           ))}
         </div>
+
         <button onClick={onClose} style={{
-          padding: '12px 36px', background: `${cfg.color}20`, border: `1px solid ${cfg.color}`, borderRadius: 12,
-          color: cfg.color, cursor: 'pointer', fontSize: 13, fontWeight: 700, fontFamily: "'Poppins',sans-serif",
-          transition: 'all .2s', letterSpacing: '.5px',
-        }}>{t.risk.understand}</button>
+          padding: '14px 44px', borderRadius: 14, cursor: 'pointer', fontSize: 13, fontWeight: 800,
+          fontFamily: "'Poppins',sans-serif", letterSpacing: 1, textTransform: 'uppercase' as const,
+          color: '#fff', background: `linear-gradient(135deg, ${cfg.glow}0.3), ${cfg.glow}0.15))`,
+          border: `1px solid ${cfg.glow}0.4)`, boxShadow: `0 4px 20px ${cfg.glow}0.2)`,
+          transition: 'all 0.25s ease',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.05)'; }}
+        onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+        >{t.risk.understand}</button>
       </div>
     </div>
   );
@@ -3120,6 +3294,11 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk, onInfo
         <TA val={day.closing} set={U('closing')} ph={f.closingPh} rows={3} dir={dir} disabled={fullLocked || sLocks['review']} th={th} />
       </Sec>
 
+      {/* EOD Chart Screenshots */}
+      <Sec title={dir === 'rtl' ? 'צילומי מסך - סוף יום' : 'EOD CHART SCREENSHOTS'} icon="📸" accent="#5AA9FF" th={th} fullLocked={fullLocked} locked={sLocks['eodImages']} onLock={() => lockSec('eodImages')} onUnlock={() => unlockSec('eodImages')}>
+        <ImageUpload images={day.eodImages || []} onUpdate={(imgs: string[]) => upd({ eodImages: imgs })} label={dir === 'rtl' ? 'צילומי גרפים מסוף היום' : 'End of day chart captures'} uploadLabel={f.imageUpload} dir={dir} disabled={fullLocked || sLocks['eodImages']} th={th} />
+      </Sec>
+
       {/* Seal Day */}
       {!fullLocked && (
         <div style={{ margin: '22px 0 8px', background: 'rgba(183,148,246,0.06)', border: '1px solid rgba(183,148,246,0.12)', borderRadius: 14, padding: '18px 24px', textAlign: 'center' }}>
@@ -3429,6 +3608,8 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
         @keyframes j-fade-in { from { opacity: 0; } to { opacity: 1; } }
         @keyframes j-scale-in { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
         @keyframes j-glow-red { 0%,100% { box-shadow: 0 0 5px rgba(255,77,77,0.1); } 50% { box-shadow: 0 0 20px rgba(255,77,77,0.2); } }
+        @keyframes j-risk-ring { 0%,100% { transform: scale(1); opacity: 0.3; } 50% { transform: scale(1.1); opacity: 0.6; } }
+        @keyframes j-risk-icon-shake { 0%,100% { transform: translateX(0); } 10% { transform: translateX(-8px); } 20% { transform: translateX(8px); } 30% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 50% { transform: translateX(-4px); } 60% { transform: translateX(4px); } 70% { transform: translateX(-2px); } 80% { transform: translateX(2px); } }
         @keyframes j-slide-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .j-card-hover { transition: all .25s ease !important; }
         .j-card-hover:hover { transform: translateY(-1px) !important; box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important; }
