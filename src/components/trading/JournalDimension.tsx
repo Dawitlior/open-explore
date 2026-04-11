@@ -1984,7 +1984,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
             {/* Nav buttons */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginBottom: 16 }}>
               {([['journal', t.nav.journal, '📝'], ['calendar', t.nav.calendar, '📅'], ['archive', t.nav.archive, '📂'], ['analytics', t.f.analytics, '📊']] as const).map(([v, l, ic]) => (
-                <button key={v} onClick={() => { setView(v as string); setMobileMenu(false); }}
+                <button key={v} onClick={() => { if (v === 'journal') setViewingArchiveId(null); setView(v as string); setMobileMenu(false); }}
                   style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer', borderRadius: 12, padding: '14px 10px', transition: 'all .2s', ...(view === v ? { background: th.selBg, color: '#5AA9FF', border: `1px solid ${th.selBr}` } : { background: th.inputBg, color: th.tx3, border: `1px solid ${th.inputBr}` }) }}>
                   <span style={{ fontSize: 18, display: 'block', marginBottom: 4 }}>{ic}</span> {l}
                 </button>
@@ -2050,7 +2050,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
           {/* Desktop nav labels */}
           <div className="j-nav-labels" style={{ display: 'flex', gap: 3 }}>
             {([['journal', t.nav.journal], ['calendar', t.nav.calendar], ['archive', t.nav.archive], ['analytics', t.f.analytics]] as const).map(([v, l]) => (
-              <button key={v} onClick={() => setView(v as string)}
+              <button key={v} onClick={() => { if (v === 'journal') setViewingArchiveId(null); setView(v as string); }}
                 style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' as const, border: 'none', cursor: 'pointer', borderRadius: 8, padding: '7px 14px', transition: 'all .2s', ...(view === v ? { background: th.selBg, color: '#5AA9FF' } : { background: 'none', color: th.tx3 }) }}>
                 {l}
               </button>
