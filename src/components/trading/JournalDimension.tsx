@@ -1518,13 +1518,6 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
   const completeDays = useMemo(() => days.filter(d => d.eodSaved && d.trades?.length > 0).sort((a, b) => a.date.localeCompare(b.date)), [days]);
   const allTrades = useMemo(() => completeDays.flatMap(d => (d.trades || []).map(t => ({ ...t, dayDate: d.date, dayScore: d.dayScore, emotionScore: d.emotionScore, plan: d.plan, disciplineConfirmed: d.disciplineConfirmed }))), [completeDays]);
 
-  if (completeDays.length < 1) return (
-    <div style={{ textAlign: 'center', padding: 60, color: th.tx3, fontFamily: "'Poppins',sans-serif" }}>
-      <div style={{ fontSize: 48, marginBottom: 16, opacity: 0.3 }}>📊</div>
-      <div style={{ fontSize: 14, fontWeight: 600 }}>{isRTL ? 'צריך לפחות יום אחד שלם עם עסקאות' : 'Need at least 1 complete day with trades'}</div>
-    </div>
-  );
-
   // ─── Core Metrics ───
   const totalPnl = completeDays.reduce((s, d) => s + sumPnl(d), 0);
   const totalTrades = allTrades.length;
