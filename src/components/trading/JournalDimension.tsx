@@ -3771,7 +3771,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
             🔒 <span className="j-lock-btn-text">Lock</span>
           </button>
           <div className="j-return-desktop">
-            <ReturnButton onClick={onReturn} isRTL={isRTL} />
+            <ReturnButton onClick={handleReturn} isRTL={isRTL} />
           </div>
         </div>
       </nav>
