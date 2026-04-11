@@ -104,6 +104,60 @@ export const PortalButton = ({ onClick, isRTL, expanded }: { onClick: () => void
   );
 };
 
+// Backtest Portal Button for the sidebar
+export const BacktestPortalButton = ({ onClick, isRTL, expanded }: { onClick: () => void; isRTL: boolean; expanded: boolean }) => {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        width: '100%',
+        padding: expanded ? '10px 12px' : '10px 0',
+        justifyContent: expanded ? 'flex-start' : 'center',
+        background: 'linear-gradient(135deg, rgba(37,99,235,0.08), rgba(6,182,212,0.08))',
+        border: '1px solid rgba(37,99,235,0.2)',
+        borderRadius: 10,
+        cursor: 'pointer',
+        fontSize: 12,
+        fontWeight: 700,
+        color: '#3b82f6',
+        transition: 'all 0.3s ease',
+        position: 'relative',
+        overflow: 'hidden',
+        marginTop: 4,
+      }}
+      onMouseEnter={e => {
+        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(37,99,235,0.15), rgba(6,182,212,0.15))';
+        e.currentTarget.style.borderColor = 'rgba(37,99,235,0.4)';
+        e.currentTarget.style.boxShadow = '0 0 20px rgba(37,99,235,0.15)';
+        e.currentTarget.style.transform = 'scale(0.98)';
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(37,99,235,0.08), rgba(6,182,212,0.08))';
+        e.currentTarget.style.borderColor = 'rgba(37,99,235,0.2)';
+        e.currentTarget.style.boxShadow = 'none';
+        e.currentTarget.style.transform = 'scale(1)';
+      }}
+    >
+      <span style={{
+        position: 'absolute',
+        inset: 0,
+        background: 'linear-gradient(135deg, rgba(37,99,235,0.05), rgba(6,182,212,0.05))',
+        animation: 'portalPulse 3s ease-in-out infinite',
+        borderRadius: 10,
+      }} />
+      <span style={{ fontSize: 18, position: 'relative', zIndex: 1 }}>📊</span>
+      {expanded && (
+        <span style={{ position: 'relative', zIndex: 1, letterSpacing: '0.02em' }}>
+          {isRTL ? 'יומן באק-טסט' : 'Backtest Journal'}
+        </span>
+      )}
+    </button>
+  );
+};
+
 // Return button for inside the journal
 export const ReturnButton = ({ onClick, isRTL }: { onClick: () => void; isRTL: boolean }) => {
   return (
