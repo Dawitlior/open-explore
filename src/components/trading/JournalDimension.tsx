@@ -846,20 +846,16 @@ const DisciplineSection = ({ commitments, confirmed, onUpdate, onConfirm, option
 };
 
 // ═══════════════════════════════════════════════════════════════
-// MARKET OVERVIEW STRIP
+// MARKET OVERVIEW STRIP (F&G removed — it's now in standalone widget)
 // ═══════════════════════════════════════════════════════════════
 const MarketStrip = ({ day, dir, th }: { day: JournalDay; dir: string; th: typeof THEMES.dark }) => {
   const emo = day.emotionScore;
   const emoColor = emo >= 8 ? '#00FFA3' : emo >= 5 ? '#FFC857' : '#FF4D4D';
-  const fg = parseInt(day.fearGreed) || 0;
-  const fgColor = fg <= 30 ? '#FF4D4D' : fg <= 60 ? '#FFC857' : '#00FFA3';
-  const fgLabel = fg <= 20 ? 'Extreme Fear' : fg <= 40 ? 'Fear' : fg <= 60 ? 'Neutral' : fg <= 80 ? 'Greed' : 'Extreme Greed';
 
   const badges = [
     { label: dir === 'rtl' ? 'כיוון' : 'BIAS', value: day.bias || '—', color: day.bias?.includes('ull') || day.bias?.includes('שורי') ? '#00FFA3' : day.bias?.includes('ear') || day.bias?.includes('דובי') ? '#FF4D4D' : '#FFC857' },
     { label: dir === 'rtl' ? 'מבנה' : 'STRUCTURE', value: day.mktStruct || '—', color: '#5AA9FF' },
     { label: dir === 'rtl' ? 'רגש' : 'EMOTION', value: `${emo}/10`, color: emoColor },
-    { label: dir === 'rtl' ? 'פחד/תאוות בצע' : 'F&G', value: day.fearGreed ? `${fg} · ${fgLabel}` : '—', color: fgColor },
   ];
 
   return (
