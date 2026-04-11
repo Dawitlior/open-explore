@@ -340,7 +340,6 @@ const JournalEntryScreen = ({ onEnter }: { onEnter: () => void }) => {
         <div style={{
           textAlign: 'center',
           animation: phase === 'animating' ? 'j-entry-content 2.2s ease-out forwards' : undefined,
-          opacity: phase === 'animating' ? 0 : 1,
           maxWidth: 500, width: '100%',
         }}>
           {/* Orca icon */}
