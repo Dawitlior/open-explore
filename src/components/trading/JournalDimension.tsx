@@ -1300,21 +1300,22 @@ const RiskAlertModal = ({ risk, t, dir, onClose, th }: { risk: JRiskStatus; t: a
   const [step, setStep] = useState(0);
   const [scanLine, setScanLine] = useState(0);
 
-  if (level === 'none') return null;
-
-  const cfg = {
+  const cfgMap = {
     daily: { icon: '⚠️', color: '#f97316', glow: 'rgba(249,115,22,', severity: 'DAILY LIMIT', msg: t.risk.daily },
     weekly: { icon: '🔴', color: '#FF4D4D', glow: 'rgba(255,77,77,', severity: 'WEEKLY LIMIT', msg: t.risk.weekly },
     monthly: { icon: '🚨', color: '#FF0040', glow: 'rgba(255,0,64,', severity: 'MONTHLY LIMIT', msg: t.risk.monthly },
-  }[level]!;
+    none: { icon: '', color: '', glow: '', severity: '', msg: '' },
+  };
+  const cfg = cfgMap[level];
 
   useEffect(() => {
+    if (level === 'none') return;
     playRiskAlert();
     const t1 = setTimeout(() => setStep(1), 100);
     const t2 = setTimeout(() => setStep(2), 500);
     const t3 = setTimeout(() => setStep(3), 1000);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-  }, []);
+  }, [level]);
 
   useEffect(() => {
     if (step < 2) return;
@@ -1322,6 +1323,8 @@ const RiskAlertModal = ({ risk, t, dir, onClose, th }: { risk: JRiskStatus; t: a
     const iv = setInterval(() => { y = (y + 1.5) % 100; setScanLine(y); }, 30);
     return () => clearInterval(iv);
   }, [step]);
+
+  if (level === 'none') return null;
 
   return (
     <div onClick={onClose} style={{
