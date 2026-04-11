@@ -2078,27 +2078,53 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative', zIndex: 1 }}>
         {/* MAIN */}
         <main style={{ flex: 1, overflowY: 'auto', background: 'transparent' }}>
-          {view === 'journal' && activeDay && (
+          {view === 'journal' && displayDay && (
             <div className="j-main-content" style={{ maxWidth: 1080, margin: '0 auto', padding: '22px 22px 50px', direction: dir, animation: 'j-fade-in .3s ease-out' }}>
+              {/* Archive viewing banner */}
+              {isViewingArchive && (
+                <div style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' as const, gap: 10,
+                  padding: '10px 16px', marginBottom: 16, borderRadius: 10,
+                  background: 'rgba(255,200,87,0.06)', border: '1px solid rgba(255,200,87,0.2)',
+                  animation: 'j-fade-in .3s ease-out',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 16 }}>📂</span>
+                    <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 700, color: '#FFC857', letterSpacing: '0.5px' }}>
+                      {dir === 'rtl' ? 'צפייה בארכיון — קריאה בלבד' : 'VIEWING ARCHIVE — READ ONLY'}
+                    </span>
+                  </div>
+                  <button onClick={() => { setViewingArchiveId(null); setView('journal'); }}
+                    style={{
+                      fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                      padding: '6px 16px', borderRadius: 8, border: '1px solid rgba(0,255,163,0.3)',
+                      background: 'rgba(0,255,163,0.08)', color: '#00FFA3', transition: 'all .2s',
+                    }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(0,255,163,0.15)'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(0,255,163,0.08)'; }}>
+                    {dir === 'rtl' ? '← חזרה ליום הנוכחי' : '← Back to Today'}
+                  </button>
+                </div>
+              )}
               {/* Header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap' as const, gap: 12, marginBottom: 20 }}>
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 'clamp(16px, 4vw, 22px)', fontWeight: 800, color: th.tx, letterSpacing: '-.3px' }}>
-                    {fmtFull(activeDay.date, t.locale)}
+                    {fmtFull(displayDay.date, t.locale)}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 9, flexWrap: 'wrap' as const }}>
                     {[['dayNum', dir === 'rtl' ? 'יום #' : 'Day #', '52px'], ['weekNum', dir === 'rtl' ? 'שבוע #' : 'Week #', '55px']].map(([k, l, w]: any) => (
                       <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9.5, fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase' as const, color: th.tx3 }}>{l}</span>
-                        <input value={(activeDay as any)[k] || ''} onChange={e => upd({ [k]: e.target.value } as any)} placeholder="—" disabled={isDayFullyLocked(activeDay)}
+                        <input value={(displayDay as any)[k] || ''} onChange={e => !isViewingArchive && upd({ [k]: e.target.value } as any)} placeholder="—" disabled={isViewingArchive || isDayFullyLocked(displayDay)}
                           style={{ width: w, background: th.inputBg, border: `1px solid ${th.inputBr}`, borderRadius: 7, color: th.tx, padding: '5px 7px', fontSize: 14, fontWeight: 800, fontFamily: "'Poppins',sans-serif", outline: 'none', textAlign: 'center', transition: 'all .2s' }} />
                       </div>
                     ))}
-                    {isDayFullyLocked(activeDay) && <span style={{ fontSize: 10, fontFamily: "'Poppins',sans-serif", color: '#00FFA3', fontWeight: 700, letterSpacing: '1.5px', background: 'rgba(0,255,163,0.08)', padding: '4px 12px', borderRadius: 6 }}>🔒 SEALED</span>}
+                    {(isViewingArchive || isDayFullyLocked(displayDay)) && <span style={{ fontSize: 10, fontFamily: "'Poppins',sans-serif", color: '#00FFA3', fontWeight: 700, letterSpacing: '1.5px', background: 'rgba(0,255,163,0.08)', padding: '4px 12px', borderRadius: 6 }}>🔒 SEALED</span>}
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  {(() => { const dp = sumPnl(activeDay); return (
+                  {(() => { const dp = sumPnl(displayDay); return (
                     <div style={{
                       background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 12, padding: '10px 18px', textAlign: 'center',
                       transition: 'all .3s',
@@ -2113,12 +2139,18 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
               </div>
 
               {/* Risk strip in journal view */}
-              <RiskStrip risk={riskStatus} dir={dir} th={th} />
+              {!isViewingArchive && <RiskStrip risk={riskStatus} dir={dir} th={th} />}
 
-              {!activeDay.morningSaved
-                ? <MorningForm day={activeDay} upd={upd} t={t} dir={dir} onSave={saveMorning} dirty={mDirty} th={th} />
-                : <EodForm day={activeDay} upd={upd} t={t} dir={dir} onSave={saveEOD} dirty={eDirty} orcaTrades={todayOrcaTrades} th={th} risk={riskStatus} />
-              }
+              {isViewingArchive ? (
+                /* Read-only view for archived day */
+                displayDay.morningSaved
+                  ? <EodForm day={displayDay} upd={() => {}} t={t} dir={dir} onSave={() => {}} dirty={false} orcaTrades={[]} th={th} risk={riskStatus} />
+                  : <MorningForm day={displayDay} upd={() => {}} t={t} dir={dir} onSave={() => {}} dirty={false} th={th} />
+              ) : (
+                !displayDay.morningSaved
+                  ? <MorningForm day={displayDay} upd={upd} t={t} dir={dir} onSave={saveMorning} dirty={mDirty} th={th} />
+                  : <EodForm day={displayDay} upd={upd} t={t} dir={dir} onSave={saveEOD} dirty={eDirty} orcaTrades={todayOrcaTrades} th={th} risk={riskStatus} />
+              )}
             </div>
           )}
 
