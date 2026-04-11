@@ -1637,6 +1637,123 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk }: any)
 };
 
 // ═══════════════════════════════════════════════════════════════
+// CINEMATIC LOCK OVERLAYS
+// ═══════════════════════════════════════════════════════════════
+const MorningLockOverlay = ({ onDone }: { onDone: () => void }) => {
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const t = [
+      setTimeout(() => setStep(1), 100),
+      setTimeout(() => setStep(2), 500),
+      setTimeout(() => setStep(3), 1200),
+      setTimeout(() => setStep(4), 1700),
+      setTimeout(() => { setStep(5); onDone(); }, 2200),
+    ];
+    // Sound
+    try {
+      const ctx = new AudioContext(); const now = ctx.currentTime;
+      const o = ctx.createOscillator(); const g = ctx.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(1200, now); o.frequency.exponentialRampToValueAtTime(1800, now + 0.12);
+      g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(0.05, now + 0.04); g.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+      o.connect(g); g.connect(ctx.destination); o.start(now); o.stop(now + 0.4);
+      setTimeout(() => ctx.close(), 500);
+    } catch {}
+    return () => t.forEach(clearTimeout);
+  }, [onDone]);
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9998, pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {/* Dim overlay */}
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(5,10,30,0.75)', opacity: step >= 1 ? 1 : 0, transition: 'opacity 0.4s ease', backdropFilter: 'blur(4px)' }} />
+      {/* Grid lines */}
+      <div style={{ position: 'absolute', inset: 0, opacity: step >= 1 ? 0.08 : 0, transition: 'opacity 0.6s ease',
+        backgroundImage: 'linear-gradient(rgba(90,169,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(90,169,255,0.4) 1px, transparent 1px)', backgroundSize: '80px 60px' }} />
+      {/* Chart line */}
+      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: step >= 2 ? 0.3 : 0, transition: 'opacity 0.5s ease' }} viewBox="0 0 1000 400" preserveAspectRatio="none">
+        <polyline points="0,300 100,290 200,295 300,270 400,260 500,240 600,200 700,180 750,100 800,60 850,40 900,30"
+          fill="none" stroke="#5AA9FF" strokeWidth="2.5"
+          style={{ strokeDasharray: 2000, strokeDashoffset: step >= 2 ? 0 : 2000, transition: 'stroke-dashoffset 1s ease-out',
+            filter: 'drop-shadow(0 0 6px rgba(90,169,255,0.6))' }} />
+      </svg>
+      {/* Center text */}
+      <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', opacity: step >= 3 ? 1 : 0, transform: step >= 3 ? 'scale(1)' : 'scale(0.9)', transition: 'all 0.4s ease' }}>
+        <div style={{ fontSize: 36, marginBottom: 12 }}>✓</div>
+        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 'clamp(16px, 4vw, 22px)', fontWeight: 800, color: '#5AA9FF', letterSpacing: 1, textShadow: '0 0 30px rgba(90,169,255,0.5)' }}>
+          Morning Analysis Locked
+        </div>
+        <div style={{ width: 60, height: 2, background: '#5AA9FF', margin: '12px auto', borderRadius: 1, boxShadow: '0 0 15px rgba(90,169,255,0.5)',
+          opacity: step >= 4 ? 1 : 0, transform: step >= 4 ? 'scaleX(1)' : 'scaleX(0)', transition: 'all 0.3s ease' }} />
+      </div>
+    </div>
+  );
+};
+
+const EODLockOverlay = ({ onDone }: { onDone: () => void }) => {
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const t = [
+      setTimeout(() => setStep(1), 100),
+      setTimeout(() => setStep(2), 600),
+      setTimeout(() => setStep(3), 1400),
+      setTimeout(() => setStep(4), 2000),
+      setTimeout(() => { setStep(5); onDone(); }, 2600),
+    ];
+    // Lock click sound
+    try {
+      const ctx = new AudioContext(); const now = ctx.currentTime;
+      // Metallic click at step 3
+      setTimeout(() => {
+        const o = ctx.createOscillator(); const g = ctx.createGain();
+        o.type = 'square'; o.frequency.value = 2000;
+        g.gain.setValueAtTime(0.08, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+        o.connect(g); g.connect(ctx.destination); o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.08);
+        // Confirmation tone
+        const o2 = ctx.createOscillator(); const g2 = ctx.createGain();
+        o2.type = 'sine'; o2.frequency.setValueAtTime(800, ctx.currentTime + 0.1); o2.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.25);
+        g2.gain.setValueAtTime(0, ctx.currentTime + 0.1); g2.gain.linearRampToValueAtTime(0.04, ctx.currentTime + 0.15); g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+        o2.connect(g2); g2.connect(ctx.destination); o2.start(ctx.currentTime + 0.1); o2.stop(ctx.currentTime + 0.5);
+      }, 1400);
+      setTimeout(() => ctx.close(), 2500);
+    } catch {}
+    return () => t.forEach(clearTimeout);
+  }, [onDone]);
+
+  const candles = useMemo(() => Array.from({ length: 30 }, (_, i) => {
+    const base = 200 + Math.sin(i * 0.4) * 60 + Math.cos(i * 0.15) * 30;
+    const body = (Math.random() - 0.45) * 40;
+    return { x: (i + 0.5) / 30, o: base, c: base + body, green: body > 0 };
+  }), []);
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9998, pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(5,8,20,0.8)', opacity: step >= 1 ? 1 : 0, transition: 'opacity 0.5s ease', backdropFilter: 'blur(6px)' }} />
+      {/* Candlestick replay */}
+      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: step >= 2 && step < 4 ? 0.25 : 0, transition: 'opacity 0.6s ease' }} viewBox="0 0 1000 400" preserveAspectRatio="none">
+        {candles.map((c, i) => {
+          const cx = c.x * 1000; const top = Math.min(c.o, c.c); const bot = Math.max(c.o, c.c); const h = Math.max(4, bot - top);
+          const show = step >= 2;
+          return <rect key={i} x={cx - 8} y={top} width={16} height={h}
+            fill={c.green ? '#00FFA3' : '#FF4D4D'} rx={2}
+            style={{ opacity: show ? 1 : 0, transform: show ? 'scaleY(1)' : 'scaleY(0)', transformOrigin: 'center', transition: `all 0.15s ease ${i * 0.025}s` }} />;
+        })}
+        {/* Golden close line */}
+        <line x1="970" y1="0" x2="970" y2="400" stroke="#D4AF37" strokeWidth="2"
+          style={{ opacity: step >= 3 ? 0.6 : 0, transition: 'opacity 0.3s ease', filter: 'drop-shadow(0 0 8px rgba(212,175,55,0.5))' }} />
+      </svg>
+      {/* Center content */}
+      <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', opacity: step >= 3 ? 1 : 0, transform: step >= 3 ? 'scale(1)' : 'scale(0.9)', transition: 'all 0.5s ease' }}>
+        <div style={{ fontSize: 44, marginBottom: 10, transition: 'transform 0.3s ease', transform: step >= 4 ? 'rotateY(180deg)' : 'rotateY(0)' }}>🔒</div>
+        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 'clamp(16px, 4vw, 22px)', fontWeight: 800, color: '#D4AF37', letterSpacing: 1, textShadow: '0 0 30px rgba(212,175,55,0.4)', direction: 'rtl' }}>
+          יום המסחר ננעל
+        </div>
+        <div style={{ width: 80, height: 2, background: 'linear-gradient(90deg, transparent, #D4AF37, transparent)', margin: '14px auto', borderRadius: 1,
+          opacity: step >= 4 ? 1 : 0, transition: 'opacity 0.4s ease' }} />
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════
 // MAIN JOURNAL DIMENSION
 // ═══════════════════════════════════════════════════════════════
 interface JournalDimensionProps {
@@ -1662,6 +1779,8 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
   const [theme, setTheme] = useState<JTheme>('dark');
   const [riskAlertShown, setRiskAlertShown] = useState(false);
   const [showEntry, setShowEntry] = useState(() => sessionStorage.getItem(ENTRY_SESSION_KEY) !== '1');
+  const [mobileMenu, setMobileMenu] = useState(false);
+  const [lockAnim, setLockAnim] = useState<'morning' | 'eod' | null>(null);
   const tRef = useRef<any>(null);
 
   const daysRef = useRef(days);
@@ -1732,6 +1851,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
   }, []);
 
   const saveMorning = useCallback(() => {
+    setLockAnim('morning');
     const curId = activeIdRef.current;
     setDays(prev => {
       const next = prev.map(d => d.id === curId ? { ...d, morningSaved: true } : d);
@@ -1743,6 +1863,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
   }, [showToast]);
 
   const saveEOD = useCallback(() => {
+    setLockAnim('eod');
     const curId = activeIdRef.current;
     const curLang = langRef.current;
     setDays(prev => {
@@ -1820,7 +1941,17 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
         .j-card-hover:hover { transform: translateY(-1px) !important; box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important; }
         @media (max-width: 768px) {
           .j-grid-2col { grid-template-columns: 1fr !important; }
-          .j-sidebar { width: 0 !important; min-width: 0 !important; }
+          .j-sidebar { display: none !important; }
+          .j-nav-labels { display: none !important; }
+          .j-topbar { padding: 0 10px !important; gap: 6px !important; }
+          .j-topbar-right { gap: 3px !important; }
+          .j-lock-btn-text { display: none !important; }
+          .j-return-desktop { display: none !important; }
+          .j-mobile-menu-btn { display: flex !important; }
+          .j-main-content { padding: 14px 12px 40px !important; }
+        }
+        @media (min-width: 769px) {
+          .j-mobile-menu-btn { display: none !important; }
         }
       `}</style>
 
@@ -1829,47 +1960,119 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
         <RiskAlertModal risk={riskStatus} t={t} dir={dir} onClose={() => setRiskAlertShown(false)} th={th} />
       )}
 
+      {/* LOCK ANIMATIONS */}
+      {lockAnim === 'morning' && <MorningLockOverlay onDone={() => setLockAnim(null)} />}
+      {lockAnim === 'eod' && <EODLockOverlay onDone={() => setLockAnim(null)} />}
+
+      {/* MOBILE MENU POPUP */}
+      {mobileMenu && (
+        <div onClick={() => setMobileMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)', animation: 'j-fade-in .2s ease-out' }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '75vh',
+            background: th.bg1, borderTop: `1px solid ${th.br}`, borderRadius: '20px 20px 0 0',
+            padding: '16px 12px 28px', overflowY: 'auto', animation: 'j-slide-up .3s ease-out',
+          }}>
+            {/* Nav buttons */}
+            <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
+              {([['journal', t.nav.journal, '📝'], ['calendar', t.nav.calendar, '📅'], ['archive', t.nav.archive, '📂'], ['analytics', t.f.analytics, '📊']] as const).map(([v, l, ic]) => (
+                <button key={v} onClick={() => { setView(v as string); setMobileMenu(false); }}
+                  style={{ flex: 1, fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 700, border: 'none', cursor: 'pointer', borderRadius: 10, padding: '12px 10px', transition: 'all .2s', ...(view === v ? { background: th.selBg, color: '#5AA9FF' } : { background: th.inputBg, color: th.tx3 }) }}>
+                  {ic} {l}
+                </button>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+              <button onClick={() => { setTheme(p => p === 'dark' ? 'light' : 'dark'); setMobileMenu(false); }}
+                style={{ flex: 1, padding: '10px', borderRadius: 10, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', color: th.tx2, fontSize: 12, fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>
+                {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
+              </button>
+              <button onClick={() => { setShowEntry(true); setMobileMenu(false); }}
+                style={{ flex: 1, padding: '10px', borderRadius: 10, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', color: '#FFC857', fontSize: 12, fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>
+                🔒 Lock
+              </button>
+              <button onClick={() => { onReturn(); setMobileMenu(false); }}
+                style={{ flex: 1, padding: '10px', borderRadius: 10, border: '1px solid rgba(212,175,55,0.3)', background: 'rgba(212,175,55,0.06)', cursor: 'pointer', color: '#D4AF37', fontSize: 12, fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>
+                ⚔️ {isRTL ? 'חמ"ל' : 'Orca'}
+              </button>
+            </div>
+            {/* Day list */}
+            <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, color: th.tx3, letterSpacing: '1.5px', marginBottom: 8, textTransform: 'uppercase' }}>{dir === 'rtl' ? 'ימי יומן' : 'JOURNAL DAYS'}</div>
+            <input value={sbQ} onChange={e => setSbQ(e.target.value)} placeholder={t.arch.search}
+              style={{ width: '100%', background: th.inputBg, border: `1px solid ${th.inputBr}`, borderRadius: 10, color: th.tx, fontSize: 13, outline: 'none', padding: '10px 14px', direction: dir, fontFamily: "'Poppins',sans-serif", marginBottom: 10 }} />
+            <div style={{ maxHeight: 300, overflowY: 'auto' }}>
+              {sbDays.map(d => {
+                const dp = sumPnl(d);
+                const sel = d.id === activeId;
+                const ec = d.emotionScore >= 8 ? '#00FFA3' : d.emotionScore >= 5 ? '#FFC857' : '#FF4D4D';
+                return (
+                  <div key={d.id} onClick={() => { setActiveId(d.id); setView('journal'); setMobileMenu(false); }}
+                    style={{ padding: '12px 14px', borderRadius: 10, cursor: 'pointer', marginBottom: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      ...(sel ? { background: th.selBg, border: `1px solid ${th.selBr}` } : { background: 'transparent', border: '1px solid transparent' }) }}>
+                    <div>
+                      <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 700, color: th.tx }}>{fmtShort(d.date, t.locale)}</span>
+                      <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, color: th.tx3, marginInlineStart: 8 }}>{dir === 'rtl' ? 'יום' : 'Day'} {d.dayNum || '?'}</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 800, color: ec }}>{d.emotionScore}</span>
+                      {dp !== 0 && <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 700, color: dp > 0 ? '#00FFA3' : '#FF4D4D' }}>{dp > 0 ? '+' : ''}{dp.toFixed(0)}$</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* TOPBAR */}
-      <nav style={{
+      <nav className="j-topbar" style={{
         height: 54, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px',
         background: th.navBg, borderBottom: `1px solid ${th.br}`, zIndex: 100,
         backdropFilter: 'blur(20px)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button onClick={() => setSidebar(o => !o)} style={{ background: th.inputBg, border: `1px solid ${th.inputBr}`, color: th.tx2, padding: '6px 10px', fontSize: 13, borderRadius: 8, cursor: 'pointer', fontWeight: 600, transition: 'all .2s' }}>☰</button>
+          {/* Desktop sidebar toggle */}
+          <button onClick={() => setSidebar(o => !o)} className="j-sidebar-toggle" style={{ background: th.inputBg, border: `1px solid ${th.inputBr}`, color: th.tx2, padding: '6px 10px', fontSize: 13, borderRadius: 8, cursor: 'pointer', fontWeight: 600, transition: 'all .2s' }}>☰</button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ width: 26, height: 26, background: 'linear-gradient(135deg,#5AA9FF,#b794f6)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>⚡</div>
             <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 15, fontWeight: 800, background: 'linear-gradient(90deg,#5AA9FF,#b794f6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>APEX OS</span>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          {([['journal', t.nav.journal], ['calendar', t.nav.calendar], ['archive', t.nav.archive], ['analytics', t.f.analytics]] as const).map(([v, l]) => (
-            <button key={v} onClick={() => setView(v as string)}
-              style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' as const, border: 'none', cursor: 'pointer', borderRadius: 8, padding: '7px 14px', transition: 'all .2s', ...(view === v ? { background: th.selBg, color: '#5AA9FF' } : { background: 'none', color: th.tx3 }) }}>
-              {l}
-            </button>
-          ))}
-          <div style={{ width: 1, height: 18, background: th.br, margin: '0 6px' }} />
-          {/* Theme Toggle */}
+        <div className="j-topbar-right" style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          {/* Desktop nav labels */}
+          <div className="j-nav-labels" style={{ display: 'flex', gap: 3 }}>
+            {([['journal', t.nav.journal], ['calendar', t.nav.calendar], ['archive', t.nav.archive], ['analytics', t.f.analytics]] as const).map(([v, l]) => (
+              <button key={v} onClick={() => setView(v as string)}
+                style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' as const, border: 'none', cursor: 'pointer', borderRadius: 8, padding: '7px 14px', transition: 'all .2s', ...(view === v ? { background: th.selBg, color: '#5AA9FF' } : { background: 'none', color: th.tx3 }) }}>
+                {l}
+              </button>
+            ))}
+          </div>
+          {/* Mobile menu button */}
+          <button className="j-mobile-menu-btn" onClick={() => setMobileMenu(true)}
+            style={{ display: 'none', background: th.inputBg, border: `1px solid ${th.inputBr}`, color: '#5AA9FF', padding: '6px 12px', fontSize: 12, borderRadius: 8, cursor: 'pointer', fontWeight: 700, fontFamily: "'Poppins',sans-serif", alignItems: 'center', gap: 4 }}>
+            ☰ {dir === 'rtl' ? 'תפריט' : 'Menu'}
+          </button>
+          <div style={{ width: 1, height: 18, background: th.br, margin: '0 4px' }} />
           <button onClick={() => setTheme(p => p === 'dark' ? 'light' : 'dark')}
             style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, transition: 'all .2s' }}>
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
-          {/* Lock System */}
           <button onClick={() => setShowEntry(true)}
             style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 8, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', color: th.tx3, fontSize: 11, fontWeight: 600, fontFamily: "'Poppins',sans-serif", transition: 'all .2s' }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,200,87,0.3)'; (e.currentTarget as HTMLElement).style.color = '#FFC857'; }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = th.inputBr; (e.currentTarget as HTMLElement).style.color = th.tx3; }}>
-            🔒 Lock
+            🔒 <span className="j-lock-btn-text">Lock</span>
           </button>
-          <div style={{ width: 1, height: 18, background: th.br, margin: '0 3px' }} />
-          <ReturnButton onClick={onReturn} isRTL={isRTL} />
+          <div className="j-return-desktop">
+            <ReturnButton onClick={onReturn} isRTL={isRTL} />
+          </div>
         </div>
       </nav>
 
       {/* LAYOUT */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative', zIndex: 1 }}>
-        {/* SIDEBAR */}
+        {/* SIDEBAR — desktop only */}
         <aside className="j-sidebar" style={{
           width: sidebar ? 250 : 0, minWidth: sidebar ? 250 : 0, overflow: 'hidden', transition: 'all .3s ease',
           background: th.sidebarBg, borderInlineEnd: `1px solid ${th.br}`,
@@ -1922,11 +2125,11 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
         {/* MAIN */}
         <main style={{ flex: 1, overflowY: 'auto', background: 'transparent', order: 1 }}>
           {view === 'journal' && activeDay && (
-            <div style={{ maxWidth: 1080, margin: '0 auto', padding: '22px 22px 50px', direction: dir, animation: 'j-fade-in .3s ease-out' }}>
+            <div className="j-main-content" style={{ maxWidth: 1080, margin: '0 auto', padding: '22px 22px 50px', direction: dir, animation: 'j-fade-in .3s ease-out' }}>
               {/* Header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap' as const, gap: 12, marginBottom: 20 }}>
-                <div>
-                  <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 22, fontWeight: 800, color: th.tx, letterSpacing: '-.3px' }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 'clamp(16px, 4vw, 22px)', fontWeight: 800, color: th.tx, letterSpacing: '-.3px' }}>
                     {fmtFull(activeDay.date, t.locale)}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 9, flexWrap: 'wrap' as const }}>
