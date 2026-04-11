@@ -24,8 +24,9 @@ import { AdvancedAnalyticsPage } from '@/components/trading/AdvancedAnalyticsPag
 import { AdvancedPsychologyPage } from '@/components/trading/AdvancedPsychologyPage';
 import { WeeklyReviewPage } from '@/components/trading/WeeklyReviewPage';
 import { InstallPrompt } from '@/components/trading/InstallPrompt';
-import { DimensionController, PortalButton } from '@/components/trading/DimensionController';
+import { DimensionController, PortalButton, BacktestPortalButton } from '@/components/trading/DimensionController';
 import { JournalDimension } from '@/components/trading/JournalDimension';
+import { BacktestDimension } from '@/components/trading/BacktestDimension';
 import { useTrades } from '@/hooks/use-trades';
 import { useSettings, type ThemeId } from '@/hooks/use-settings';
 import { assessRisk } from '@/lib/risk-engine';
@@ -38,7 +39,7 @@ const Index = () => {
   const settings = useSettings();
   const { trades, stats, loading, initialized, addTrade, updateTrade, removeTrade, resetAll, importTrades, riskAlert, dismissRiskAlert } = useTrades();
   const [entered, setEntered] = useState(() => sessionStorage.getItem('orca-entered') === '1');
-  const [activeDimension, setActiveDimension] = useState<'orca' | 'journal'>('orca');
+  const [activeDimension, setActiveDimension] = useState<'orca' | 'journal' | 'backtest'>('orca');
   const T = getTheme(settings.theme);
   const t = i18n[settings.lang];
   const isRTL = settings.isRTL;
@@ -242,7 +243,8 @@ const Index = () => {
     { id: 'review', label: isRTL ? 'מצב סקירה' : 'Switch to Review Mode', icon: '🔵', category: isRTL ? 'מצבים' : 'Modes', action: () => settings.setOperatingMode('review') },
     { id: 'research', label: isRTL ? 'מצב מחקר' : 'Switch to Research Mode', icon: '🟣', category: isRTL ? 'מצבים' : 'Modes', action: () => settings.setOperatingMode('research') },
     { id: 'alpha', label: isRTL ? 'הפעל Alpha' : 'Toggle Alpha Mode', icon: '⚡', category: isRTL ? 'מצבים' : 'Modes', action: () => settings.setSystemMode(isAlpha ? 'standard' : 'alpha') },
-    { id: 'journal-sanctuary', label: isRTL ? 'כניסה למקדש' : 'Enter Journal Sanctuary', icon: '🏛️', category: isRTL ? 'ממדים' : 'Dimensions', action: () => setActiveDimension('journal') },
+    { id: 'journal-sanctuary', label: isRTL ? 'יומן מסע לסוחר' : 'Trader Journey', icon: '🏛️', category: isRTL ? 'ממדים' : 'Dimensions', action: () => setActiveDimension('journal') },
+    { id: 'backtest-journal', label: isRTL ? 'יומן באק-טסט' : 'Backtest Journal', icon: '📊', category: isRTL ? 'ממדים' : 'Dimensions', action: () => setActiveDimension('backtest') },
   ], [isRTL, handleExport, handleImport, handleGenerateInsights, isAlpha, settings]);
 
   const nav = [
