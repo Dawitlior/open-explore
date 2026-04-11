@@ -1711,6 +1711,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
   const [sbQ, setSbQ] = useState('');
   const [theme, setTheme] = useState<JTheme>('dark');
   const [riskAlertShown, setRiskAlertShown] = useState(false);
+  const [showEntry, setShowEntry] = useState(() => sessionStorage.getItem(ENTRY_SESSION_KEY) !== '1');
   const tRef = useRef<any>(null);
 
   const daysRef = useRef(days);
