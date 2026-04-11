@@ -1293,46 +1293,103 @@ const RiskStrip = ({ risk, dir, th }: { risk: JRiskStatus; dir: string; th: type
 };
 
 // ═══════════════════════════════════════════════════════════════
-// RISK ALERT MODAL
+// RISK ALERT MODAL — Cinematic fullscreen warning
 // ═══════════════════════════════════════════════════════════════
 const RiskAlertModal = ({ risk, t, dir, onClose, th }: { risk: JRiskStatus; t: any; dir: string; onClose: () => void; th: typeof THEMES.dark }) => {
   const level = risk.breachedLevel;
   if (level === 'none') return null;
+  const [step, setStep] = useState(0);
+  const [scanLine, setScanLine] = useState(0);
+
   const cfg = {
-    daily: { icon: '⚠️', color: '#f97316', msg: t.risk.daily },
-    weekly: { icon: '🔴', color: '#FF4D4D', msg: t.risk.weekly },
-    monthly: { icon: '🚨', color: '#991b1b', msg: t.risk.monthly },
+    daily: { icon: '⚠️', color: '#f97316', glow: 'rgba(249,115,22,', severity: 'DAILY LIMIT', msg: t.risk.daily },
+    weekly: { icon: '🔴', color: '#FF4D4D', glow: 'rgba(255,77,77,', severity: 'WEEKLY LIMIT', msg: t.risk.weekly },
+    monthly: { icon: '🚨', color: '#FF0040', glow: 'rgba(255,0,64,', severity: 'MONTHLY LIMIT', msg: t.risk.monthly },
   }[level]!;
 
-  // Sound alert
-  playRiskAlert();
+  useEffect(() => {
+    playRiskAlert();
+    const t1 = setTimeout(() => setStep(1), 100);
+    const t2 = setTimeout(() => setStep(2), 500);
+    const t3 = setTimeout(() => setStep(3), 1000);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, []);
+
+  useEffect(() => {
+    if (step < 2) return;
+    let y = 0;
+    const iv = setInterval(() => { y = (y + 1.5) % 100; setScanLine(y); }, 30);
+    return () => clearInterval(iv);
+  }, [step]);
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 9990, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)', animation: 'j-fade-in .3s ease-out' }}>
+    <div onClick={onClose} style={{
+      position: 'fixed', inset: 0, zIndex: 9990,
+      background: `radial-gradient(ellipse at 50% 50%, ${cfg.glow}0.15) 0%, rgba(0,0,0,0.94) 60%)`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      backdropFilter: 'blur(16px)',
+      opacity: step >= 1 ? 1 : 0, transition: 'opacity 0.5s ease',
+    }}>
+      {/* Scan line */}
+      <div style={{ position: 'absolute', left: 0, right: 0, height: 2, top: `${scanLine}%`, background: `linear-gradient(90deg, transparent, ${cfg.color}40, transparent)`, opacity: step >= 2 ? 0.5 : 0, pointerEvents: 'none' }} />
+
+      {/* Pulsing rings */}
+      {step >= 2 && [1, 2, 3].map(i => (
+        <div key={i} style={{
+          position: 'absolute', width: 200 + i * 100, height: 200 + i * 100,
+          borderRadius: '50%', border: `1px solid ${cfg.glow}${(0.12 / i).toFixed(2)})`,
+          animation: `j-risk-ring ${2 + i * 0.5}s ease-in-out infinite`,
+          animationDelay: `${i * 0.3}s`,
+        }} />
+      ))}
+
       <div onClick={e => e.stopPropagation()} style={{
-        background: th.bg1, border: `2px solid ${cfg.color}`, borderRadius: 20, padding: 32, maxWidth: 460, width: '90%',
-        textAlign: 'center', boxShadow: `0 0 80px ${cfg.color}30`, animation: 'j-scale-in .3s ease-out',
+        position: 'relative', zIndex: 2,
+        background: 'linear-gradient(180deg, rgba(15,20,35,0.98), rgba(8,12,24,0.98))',
+        border: `1px solid ${cfg.glow}0.3)`, borderRadius: 24,
+        padding: '40px 36px', maxWidth: 500, width: '92%', textAlign: 'center',
+        boxShadow: `0 0 100px ${cfg.glow}0.15), 0 0 200px ${cfg.glow}0.06), inset 0 1px 0 rgba(255,255,255,0.05)`,
+        transform: step >= 2 ? 'scale(1) translateY(0)' : 'scale(0.7) translateY(40px)',
+        opacity: step >= 2 ? 1 : 0,
+        transition: 'all 0.6s cubic-bezier(0.16,1,0.3,1)',
       }}>
-        <div style={{ fontSize: 56, marginBottom: 16, animation: 'j-pulse 1.5s ease-in-out infinite' }}>{cfg.icon}</div>
-        <div style={{ fontSize: 18, fontWeight: 800, color: cfg.color, fontFamily: "'Poppins',sans-serif", marginBottom: 14, letterSpacing: '.5px' }}>{t.risk.title}</div>
-        <div style={{ fontSize: 13, color: th.tx2, lineHeight: 1.8, marginBottom: 20, fontFamily: "'Poppins',sans-serif", direction: dir as 'ltr' | 'rtl' }}>{cfg.msg}</div>
-        <div style={{ display: 'flex', gap: 14, justifyContent: 'center', marginBottom: 22 }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, transparent, ${cfg.color}, transparent)`, borderRadius: '24px 24px 0 0', animation: 'j-pulse 1.5s ease-in-out infinite' }} />
+
+        <div style={{ fontSize: 64, marginBottom: 20, lineHeight: 1, filter: `drop-shadow(0 0 20px ${cfg.glow}0.5))`, animation: step >= 3 ? 'j-risk-icon-shake 0.5s ease-in-out' : 'none' }}>{cfg.icon}</div>
+
+        <div style={{ display: 'inline-block', padding: '6px 20px', borderRadius: 20, background: `${cfg.glow}0.12)`, border: `1px solid ${cfg.glow}0.3)`, fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 800, letterSpacing: 3, color: cfg.color, marginBottom: 16, animation: 'j-pulse 1.5s ease-in-out infinite' }}>⚡ {cfg.severity} BREACHED</div>
+
+        <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', fontFamily: "'Poppins',sans-serif", marginBottom: 14 }}>{t.risk.title}</div>
+        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.8, marginBottom: 24, fontFamily: "'Poppins',sans-serif", direction: dir as 'ltr' | 'rtl', maxWidth: 380, margin: '0 auto 24px' }}>{cfg.msg}</div>
+
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginBottom: 28 }}>
           {[
-            { l: t.risk.dailyLabel, v: risk.dailyR.toFixed(1), b: risk.dailyBreached },
-            { l: t.risk.weeklyLabel, v: risk.weeklyR.toFixed(1), b: risk.weeklyBreached },
-            { l: t.risk.monthlyLabel, v: risk.monthlyR.toFixed(1), b: risk.monthlyBreached },
+            { l: t.risk.dailyLabel, v: risk.dailyR, b: risk.dailyBreached, limit: '-2R' },
+            { l: t.risk.weeklyLabel, v: risk.weeklyR, b: risk.weeklyBreached, limit: '-5R' },
+            { l: t.risk.monthlyLabel, v: risk.monthlyR, b: risk.monthlyBreached, limit: '-10R' },
           ].map(s => (
-            <div key={s.l} style={{ padding: '10px 16px', background: th.inputBg, borderRadius: 10, border: `1px solid ${s.b ? 'rgba(255,77,77,0.3)' : th.inputBr}` }}>
-              <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, color: th.tx3, letterSpacing: '1.5px', textTransform: 'uppercase' as const }}>{s.l}</div>
-              <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 18, fontWeight: 800, color: s.b ? '#FF4D4D' : th.tx, marginTop: 3 }}>{s.v}R</div>
+            <div key={s.l} style={{
+              flex: 1, padding: '14px 12px', borderRadius: 14,
+              background: s.b ? `${cfg.glow}0.08)` : 'rgba(255,255,255,0.03)',
+              border: `1px solid ${s.b ? `${cfg.glow}0.25)` : 'rgba(255,255,255,0.06)'}`,
+            }}>
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 7, color: 'rgba(255,255,255,0.35)', letterSpacing: 2, textTransform: 'uppercase' as const, marginBottom: 6 }}>{s.l}</div>
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 22, fontWeight: 800, color: s.b ? cfg.color : 'rgba(255,255,255,0.8)', lineHeight: 1, textShadow: s.b ? `0 0 20px ${cfg.glow}0.4)` : 'none' }}>{s.v.toFixed(1)}R</div>
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.2)', marginTop: 4 }}>limit {s.limit}</div>
             </div>
           ))}
         </div>
+
         <button onClick={onClose} style={{
-          padding: '12px 36px', background: `${cfg.color}20`, border: `1px solid ${cfg.color}`, borderRadius: 12,
-          color: cfg.color, cursor: 'pointer', fontSize: 13, fontWeight: 700, fontFamily: "'Poppins',sans-serif",
-          transition: 'all .2s', letterSpacing: '.5px',
-        }}>{t.risk.understand}</button>
+          padding: '14px 44px', borderRadius: 14, cursor: 'pointer', fontSize: 13, fontWeight: 800,
+          fontFamily: "'Poppins',sans-serif", letterSpacing: 1, textTransform: 'uppercase' as const,
+          color: '#fff', background: `linear-gradient(135deg, ${cfg.glow}0.3), ${cfg.glow}0.15))`,
+          border: `1px solid ${cfg.glow}0.4)`, boxShadow: `0 4px 20px ${cfg.glow}0.2)`,
+          transition: 'all 0.25s ease',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.05)'; }}
+        onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+        >{t.risk.understand}</button>
       </div>
     </div>
   );
