@@ -3315,49 +3315,124 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
           )}
 
           {view === 'archive' && (
-            <div style={{ maxWidth: 940, margin: '0 auto', padding: '22px 22px 50px', direction: dir, animation: 'j-fade-in .3s ease-out' }}>
-              <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 22, fontWeight: 800, color: th.tx, marginBottom: 6 }}>{t.arch.title}</div>
-              <div style={{ display: 'grid', gap: 10, marginTop: 12 }}>
-                {days.filter(d => d.morningSaved).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(day => {
+            <div style={{ maxWidth: 940, margin: '0 auto', padding: '22px 22px 50px', direction: dir }}>
+              {/* Archive Header */}
+              <div style={{ marginBottom: 24, animation: 'j-fade-in .4s ease-out' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                  <div style={{ width: 38, height: 38, borderRadius: 12, background: 'linear-gradient(135deg, rgba(255,200,87,0.12), rgba(255,160,40,0.06))', border: '1px solid rgba(255,200,87,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>📂</div>
+                  <div>
+                    <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 22, fontWeight: 800, color: th.tx }}>{t.arch.title}</div>
+                    <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, color: th.tx3, marginTop: 2 }}>
+                      {dir === 'rtl' ? `${days.filter(d => d.morningSaved).length} ימים מתועדים` : `${days.filter(d => d.morningSaved).length} documented days`}
+                    </div>
+                  </div>
+                </div>
+                {/* Archive stats summary */}
+                {(() => {
+                  const archived = days.filter(d => d.morningSaved);
+                  const totalPnl = archived.reduce((s, d) => s + sumPnl(d), 0);
+                  const totalR = archived.flatMap(d => d.trades || []).reduce((s, t) => s + getTradeR(t), 0);
+                  const complete = archived.filter(d => isDayFullyLocked(d)).length;
+                  return archived.length > 0 ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, marginTop: 16, animation: 'j-fade-in .5s ease-out' }} className="j-grid-2col">
+                      {[
+                        { l: dir === 'rtl' ? 'סה"כ ימים' : 'Total Days', v: String(archived.length), c: '#5AA9FF' },
+                        { l: dir === 'rtl' ? 'הושלמו' : 'Completed', v: String(complete), c: '#00FFA3' },
+                        { l: dir === 'rtl' ? 'סה"כ R' : 'Total R', v: `${totalR >= 0 ? '+' : ''}${totalR.toFixed(1)}R`, c: totalR >= 0 ? '#00FFA3' : '#FF4D4D' },
+                        { l: dir === 'rtl' ? 'סה"כ P&L' : 'Total P&L', v: `${totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(0)}$`, c: totalPnl >= 0 ? '#00FFA3' : '#FF4D4D' },
+                      ].map(s => (
+                        <div key={s.l} style={{ background: `${s.c}06`, border: `1px solid ${s.c}12`, borderRadius: 12, padding: '12px 10px', textAlign: 'center' }}>
+                          <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 700, letterSpacing: '1.5px', color: th.tx3, textTransform: 'uppercase' as const, marginBottom: 4 }}>{s.l}</div>
+                          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 18, fontWeight: 800, color: s.c }}>{s.v}</div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null;
+                })()}
+              </div>
+              {/* Archive List */}
+              <div style={{ display: 'grid', gap: 8 }}>
+                {days.filter(d => d.morningSaved).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((day, idx) => {
                   const dp = sumPnl(day);
                   const complete = isDayFullyLocked(day);
                   const dayRisk = getDayColor(day);
+                  const totalR = (day.trades || []).reduce((s, t) => s + getTradeR(t), 0);
+                  const tradeCount = (day.trades || []).length;
+                  const winCount = numWins(day);
+                  const wr = tradeCount > 0 ? ((winCount / tradeCount) * 100).toFixed(0) : '—';
+                  const c = dp >= 0 ? '#00FFA3' : '#FF4D4D';
                   return (
                     <div key={day.id} onClick={() => { setViewingArchiveId(day.id); setView('journal'); }}
-                      className="j-card-hover"
                       style={{
-                        background: th.cardBg, border: `1px solid ${dayRisk === 'darkred' ? 'rgba(255,77,77,0.3)' : th.cardBr}`, borderRadius: 12,
-                        overflow: 'hidden', cursor: 'pointer', transition: 'all .25s',
-                      }}>
-                      <div style={{ background: dayRisk === 'darkred' ? 'rgba(255,77,77,0.04)' : 'rgba(0,255,163,0.03)', borderBottom: `1px solid ${th.br}`, padding: '13px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' as const, gap: 8 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap' as const }}>
-                          <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 14, fontWeight: 800, color: th.tx }}>{fmtFull(day.date, t.locale)}</span>
-                          <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8.5, fontWeight: 700, color: complete ? '#00FFA3' : '#FFC857', background: complete ? 'rgba(0,255,163,.08)' : 'rgba(255,200,87,.08)', padding: '3px 9px', borderRadius: 6 }}>{complete ? '🔒 COMPLETE' : 'MORNING ONLY'}</span>
-                          {dayRisk === 'darkred' && <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8.5, fontWeight: 700, color: '#FF4D4D', background: 'rgba(255,77,77,.08)', padding: '3px 9px', borderRadius: 6 }}>⚠️ RISK LIMIT</span>}
-                          {(day.morningImages || []).length > 0 && (
-                            <div style={{ display: 'flex', gap: 4 }}>
-                              {day.morningImages.map((img: string, i: number) => (
-                                <img key={i} src={img} alt="" style={{ width: 30, height: 22, objectFit: 'cover', borderRadius: 4, border: `1px solid ${th.cardBr}` }} />
-                              ))}
+                        background: th.cardBg, border: `1px solid ${dayRisk === 'darkred' ? 'rgba(255,77,77,0.3)' : th.cardBr}`, borderRadius: 14,
+                        overflow: 'hidden', cursor: 'pointer', transition: 'all .4s cubic-bezier(0.16,1,0.3,1)',
+                        opacity: 0, animation: `j-slide-up .4s ease-out ${idx * 0.04}s forwards`,
+                        borderInlineStart: `3px solid ${c}`,
+                      }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = `0 8px 28px rgba(0,0,0,0.2), 0 0 0 1px ${c}15`; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}>
+                      <div style={{ padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0, flexWrap: 'wrap' as const }}>
+                          {/* Date */}
+                          <div style={{ minWidth: 100 }}>
+                            <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 14, fontWeight: 800, color: th.tx }}>{fmtShort(day.date, t.locale)}</div>
+                            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: th.tx3, marginTop: 2 }}>{day.dayNum ? `${dir === 'rtl' ? 'יום' : 'Day'} ${day.dayNum}` : ''}</div>
+                          </div>
+                          {/* Tags */}
+                          <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' as const }}>
+                            <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 700, color: complete ? '#00FFA3' : '#FFC857', background: complete ? 'rgba(0,255,163,.08)' : 'rgba(255,200,87,.08)', padding: '3px 8px', borderRadius: 6, letterSpacing: '0.5px' }}>{complete ? '🔒' : '☀️'}</span>
+                            {dayRisk === 'darkred' && <span style={{ fontSize: 8, fontWeight: 700, color: '#FF4D4D', background: 'rgba(255,77,77,.08)', padding: '3px 8px', borderRadius: 6 }}>⚠️</span>}
+                            {day.bias && <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 600, color: th.tx3, background: th.inputBg, padding: '3px 8px', borderRadius: 6 }}>{day.bias}</span>}
+                          </div>
+                          {/* Mini metrics */}
+                          {tradeCount > 0 && (
+                            <div style={{ display: 'flex', gap: 12, marginInlineStart: 'auto' }}>
+                              <div style={{ textAlign: 'center' }}>
+                                <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 7, fontWeight: 700, color: th.tx3, letterSpacing: '1px' }}>TRADES</div>
+                                <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, fontWeight: 800, color: th.tx2 }}>{tradeCount}</div>
+                              </div>
+                              <div style={{ textAlign: 'center' }}>
+                                <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 7, fontWeight: 700, color: th.tx3, letterSpacing: '1px' }}>WIN%</div>
+                                <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, fontWeight: 800, color: parseInt(wr) >= 50 ? '#00FFA3' : '#FF4D4D' }}>{wr}%</div>
+                              </div>
+                              <div style={{ textAlign: 'center' }}>
+                                <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 7, fontWeight: 700, color: th.tx3, letterSpacing: '1px' }}>R</div>
+                                <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, fontWeight: 800, color: totalR >= 0 ? '#00FFA3' : '#FF4D4D' }}>{totalR >= 0 ? '+' : ''}{totalR.toFixed(1)}</div>
+                              </div>
                             </div>
                           )}
                         </div>
-                        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 14, fontWeight: 800, color: dp >= 0 ? '#00FFA3' : '#FF4D4D', textShadow: `0 0 10px ${dp >= 0 ? 'rgba(0,255,163,0.2)' : 'rgba(255,77,77,0.2)'}` }}>{dp >= 0 ? '+' : ''}{dp.toFixed(0)}$</div>
+                        {/* P&L */}
+                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 16, fontWeight: 800, color: c, textShadow: `0 0 12px ${c}25` }}>{dp >= 0 ? '+' : ''}{dp.toFixed(0)}$</div>
+                          {day.emotionScore && <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, color: day.emotionScore >= 7 ? '#00FFA3' : day.emotionScore >= 4 ? '#FFC857' : '#FF4D4D', marginTop: 2 }}>😊 {day.emotionScore}/10</div>}
+                        </div>
                       </div>
                     </div>
                   );
                 })}
                 {days.filter(d => d.morningSaved).length === 0 && (
-                  <div style={{ textAlign: 'center', padding: 70, color: th.tx3, fontFamily: "'Poppins',sans-serif", fontSize: 14 }}>{t.arch.none}</div>
+                  <div style={{ textAlign: 'center', padding: 70, color: th.tx3, fontFamily: "'Poppins',sans-serif", fontSize: 14 }}>
+                    <div style={{ fontSize: 48, marginBottom: 12, opacity: 0.3 }}>📂</div>
+                    {t.arch.none}
+                  </div>
                 )}
               </div>
             </div>
           )}
 
           {view === 'analytics' && (
-            <div style={{ maxWidth: 940, margin: '0 auto', padding: '22px 22px 50px', direction: dir, animation: 'j-fade-in .3s ease-out' }}>
-              <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 22, fontWeight: 800, color: th.tx, marginBottom: 6 }}>{t.f.analytics}</div>
-              <p style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, color: th.tx3, marginBottom: 20 }}>{dir === 'rtl' ? 'תובנות אוטומטיות מניתוח התנהגותי של המסחר שלך' : 'Automatic insights from behavioral analysis of your trading'}</p>
+            <div style={{ maxWidth: 1000, margin: '0 auto', padding: '22px 22px 50px', direction: dir }}>
+              {/* Dashboard Header */}
+              <div style={{ marginBottom: 24, animation: 'j-fade-in .3s ease-out' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 38, height: 38, borderRadius: 12, background: 'linear-gradient(135deg, rgba(90,169,255,0.12), rgba(183,148,246,0.08))', border: '1px solid rgba(90,169,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>📊</div>
+                  <div>
+                    <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 22, fontWeight: 800, color: th.tx }}>{dir === 'rtl' ? 'מערכת מודיעין למסחר' : 'Trading Intelligence System'}</div>
+                    <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, color: th.tx3 }}>{dir === 'rtl' ? 'תובנות אוטומטיות · זיהוי דפוסים · ניתוח אסטרטגי' : 'Auto insights · Pattern recognition · Strategy analysis'}</div>
+                  </div>
+                </div>
+              </div>
               <AnalyticsPanel days={days} dir={dir} th={th} />
             </div>
           )}
