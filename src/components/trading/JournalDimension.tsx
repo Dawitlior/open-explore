@@ -2066,57 +2066,6 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
         </div>
       </nav>
 
-      {/* LAYOUT */}
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative', zIndex: 1 }}>
-        {/* SIDEBAR — desktop only */}
-        <aside className="j-sidebar" style={{
-          width: sidebar ? 250 : 0, minWidth: sidebar ? 250 : 0, overflow: 'hidden', transition: 'all .3s ease',
-          background: th.sidebarBg, borderInlineEnd: `1px solid ${th.br}`,
-          display: 'flex', flexDirection: 'column', order: dir === 'rtl' ? 2 : 0,
-        }}>
-          <div style={{ padding: '10px 10px 8px', borderBottom: `1px solid ${th.br}` }}>
-            <input value={sbQ} onChange={e => setSbQ(e.target.value)} placeholder={t.arch.search}
-              style={{ width: '100%', background: th.inputBg, border: `1px solid ${th.inputBr}`, borderRadius: 8, color: th.tx, fontSize: 11.5, outline: 'none', padding: '9px 12px', direction: dir, fontFamily: "'Poppins',sans-serif", transition: 'all .2s' }} />
-          </div>
-          <div style={{ flex: 1, overflowY: 'auto', padding: 6 }}>
-            {sbDays.map(d => {
-              const dp = sumPnl(d);
-              const ec = d.emotionScore >= 8 ? '#00FFA3' : d.emotionScore >= 5 ? '#FFC857' : '#FF4D4D';
-              const phase = d.morningSaved && d.eodSaved ? '#00FFA3' : d.morningSaved ? '#b794f6' : th.tx3;
-              const sel = d.id === activeId;
-              const locked = isDayFullyLocked(d);
-              const dayRisk = getDayColor(d);
-              return (
-                <div key={d.id} onClick={() => { setActiveId(d.id); setView('journal'); }}
-                  className="j-card-hover"
-                  style={{
-                    padding: '10px 12px', borderRadius: 10, cursor: 'pointer', marginBottom: 3,
-                    border: '1px solid transparent', transition: 'all .2s',
-                    ...(sel ? { background: th.selBg, borderColor: th.selBr } : { background: 'transparent' }),
-                    ...(dayRisk === 'darkred' ? { borderColor: 'rgba(255,77,77,0.3)' } : {}),
-                  }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10.5, fontWeight: 700, color: sel ? th.tx : th.tx2 }}>{fmtShort(d.date, t.locale)}</span>
-                        <span style={{ fontSize: 6, color: phase }}>●</span>
-                        {locked && <span style={{ fontSize: 8 }}>🔒</span>}
-                        {dayRisk === 'darkred' && <span style={{ fontSize: 8, animation: 'j-pulse 1s ease-in-out infinite' }}>⚠️</span>}
-                      </div>
-                      <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, color: th.tx3, marginTop: 2 }}>
-                        {dir === 'rtl' ? 'יום' : 'Day'} {d.dayNum || '?'} · {dir === 'rtl' ? 'שבוע' : 'Wk'} {d.weekNum || '?'}
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, marginInlineStart: 6, flexShrink: 0 }}>
-                      <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10.5, fontWeight: 800, color: ec }}>{d.emotionScore}</span>
-                      {dp !== 0 && <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9.5, fontWeight: 700, color: dp > 0 ? '#00FFA3' : '#FF4D4D' }}>{dp > 0 ? '+' : ''}{dp.toFixed(0)}$</span>}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </aside>
 
         {/* MAIN */}
         <main style={{ flex: 1, overflowY: 'auto', background: 'transparent', order: 1 }}>
