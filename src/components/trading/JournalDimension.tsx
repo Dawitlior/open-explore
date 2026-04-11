@@ -2306,7 +2306,7 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk, onInfo
 // ═══════════════════════════════════════════════════════════════
 // CINEMATIC LOCK OVERLAYS
 // ═══════════════════════════════════════════════════════════════
-const MorningLockOverlay = ({ onDone }: { onDone: () => void }) => {
+const MorningLockOverlay = ({ onDone, isRTL }: { onDone: () => void; isRTL: boolean }) => {
   const [step, setStep] = useState(0);
   useEffect(() => {
     const t = [
@@ -2337,8 +2337,8 @@ const MorningLockOverlay = ({ onDone }: { onDone: () => void }) => {
       {/* Center text */}
       <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', opacity: step >= 3 ? 1 : 0, transform: step >= 3 ? 'scale(1)' : 'scale(0.9)', transition: 'all 0.4s ease' }}>
         <div style={{ fontSize: 36, marginBottom: 12 }}>✓</div>
-        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 'clamp(16px, 4vw, 22px)', fontWeight: 800, color: '#5AA9FF', letterSpacing: 1, textShadow: '0 0 30px rgba(90,169,255,0.5)' }}>
-          Morning Analysis Locked
+        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 'clamp(16px, 4vw, 22px)', fontWeight: 800, color: '#5AA9FF', letterSpacing: 1, textShadow: '0 0 30px rgba(90,169,255,0.5)', direction: isRTL ? 'rtl' : 'ltr' }}>
+          {isRTL ? 'ניתוח הבוקר ננעל' : 'Morning Analysis Locked'}
         </div>
         <div style={{ width: 60, height: 2, background: '#5AA9FF', margin: '12px auto', borderRadius: 1, boxShadow: '0 0 15px rgba(90,169,255,0.5)',
           opacity: step >= 4 ? 1 : 0, transform: step >= 4 ? 'scaleX(1)' : 'scaleX(0)', transition: 'all 0.3s ease' }} />
@@ -2347,7 +2347,7 @@ const MorningLockOverlay = ({ onDone }: { onDone: () => void }) => {
   );
 };
 
-const EODLockOverlay = ({ onDone }: { onDone: () => void }) => {
+const EODLockOverlay = ({ onDone, isRTL }: { onDone: () => void; isRTL: boolean }) => {
   const [step, setStep] = useState(0);
   useEffect(() => {
     const t = [
@@ -2387,8 +2387,8 @@ const EODLockOverlay = ({ onDone }: { onDone: () => void }) => {
       {/* Center content */}
       <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', opacity: step >= 3 ? 1 : 0, transform: step >= 3 ? 'scale(1)' : 'scale(0.9)', transition: 'all 0.5s ease' }}>
         <div style={{ fontSize: 44, marginBottom: 10, transition: 'transform 0.3s ease', transform: step >= 4 ? 'rotateY(180deg)' : 'rotateY(0)' }}>🔒</div>
-        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 'clamp(16px, 4vw, 22px)', fontWeight: 800, color: '#D4AF37', letterSpacing: 1, textShadow: '0 0 30px rgba(212,175,55,0.4)', direction: 'rtl' }}>
-          יום המסחר ננעל
+        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 'clamp(16px, 4vw, 22px)', fontWeight: 800, color: '#D4AF37', letterSpacing: 1, textShadow: '0 0 30px rgba(212,175,55,0.4)', direction: isRTL ? 'rtl' : 'ltr' }}>
+          {isRTL ? 'יום המסחר ננעל' : 'Trading Day Sealed'}
         </div>
         <div style={{ width: 80, height: 2, background: 'linear-gradient(90deg, transparent, #D4AF37, transparent)', margin: '14px auto', borderRadius: 1,
           opacity: step >= 4 ? 1 : 0, transition: 'opacity 0.4s ease' }} />
@@ -2609,8 +2609,8 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
       )}
 
       {/* LOCK ANIMATIONS */}
-      {lockAnim === 'morning' && <MorningLockOverlay onDone={() => setLockAnim(null)} />}
-      {lockAnim === 'eod' && <EODLockOverlay onDone={() => setLockAnim(null)} />}
+      {lockAnim === 'morning' && <MorningLockOverlay onDone={() => setLockAnim(null)} isRTL={dir === 'rtl'} />}
+      {lockAnim === 'eod' && <EODLockOverlay onDone={() => setLockAnim(null)} isRTL={dir === 'rtl'} />}
 
       {/* KNOWLEDGE PANEL */}
       {knowledgePanel && <KnowledgePanel type={knowledgePanel} days={days} dir={dir} th={th} onClose={() => setKnowledgePanel(null)} onOpenDay={(id) => { setViewingArchiveId(id); setView('journal'); }} />}
@@ -2746,7 +2746,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
                         {dir === 'rtl' ? 'צפייה בארכיון — קריאה בלבד' : 'VIEWING ARCHIVE — READ ONLY'}
                       </span>
                       <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: 'rgba(255,200,87,0.6)', letterSpacing: '0.5px' }}>
-                        {displayDay?.id || ''}
+                        {displayDay?.date ? fmtShort(displayDay.date, t.locale) : ''}
                       </span>
                     </div>
                   </div>
