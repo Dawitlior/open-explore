@@ -1627,15 +1627,7 @@ const MorningLockOverlay = ({ onDone }: { onDone: () => void }) => {
       setTimeout(() => setStep(4), 1700),
       setTimeout(() => { setStep(5); onDone(); }, 2200),
     ];
-    // Sound
-    try {
-      const ctx = new AudioContext(); const now = ctx.currentTime;
-      const o = ctx.createOscillator(); const g = ctx.createGain();
-      o.type = 'sine'; o.frequency.setValueAtTime(1200, now); o.frequency.exponentialRampToValueAtTime(1800, now + 0.12);
-      g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(0.05, now + 0.04); g.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-      o.connect(g); g.connect(ctx.destination); o.start(now); o.stop(now + 0.4);
-      setTimeout(() => ctx.close(), 500);
-    } catch {}
+    playMorningLock();
     return () => t.forEach(clearTimeout);
   }, [onDone]);
 
