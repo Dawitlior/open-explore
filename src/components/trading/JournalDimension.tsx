@@ -955,7 +955,7 @@ const CalendarView = ({ days, dir, th, t, risk, onSelectDay }: { days: JournalDa
   const monthlyBreached = monthlyR <= RISK_LIMITS.month;
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto', padding: '22px 22px 50px', direction: dir }}>
+    <div style={{ maxWidth: 800, margin: '0 auto', padding: '22px 22px 50px', direction: dir as 'ltr' | 'rtl' }}>
       {/* Monthly banner */}
       {monthlyBreached && (
         <div style={{
