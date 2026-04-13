@@ -3754,7 +3754,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
             fontFamily: "'JetBrains Mono', monospace", marginTop: 12,
             animation: 'j-exit-text 0.6s ease-out 0.5s both',
           }}>
-            RETURNING TO COMMAND
+            RETURNING TO ORCAINVESTMENT
           </div>
         </div>
       )}
