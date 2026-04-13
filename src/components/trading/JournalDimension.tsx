@@ -3841,7 +3841,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
               </button>
               <button onClick={() => { handleReturn(); setMobileMenu(false); }}
                 style={{ flex: 1, padding: '12px', borderRadius: 10, border: '1px solid rgba(212,175,55,0.3)', background: 'rgba(212,175,55,0.06)', cursor: 'pointer', color: '#D4AF37', fontSize: 13, fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>
-                ⚔️ {isRTL ? 'חמ"ל' : 'Orca'}
+                ⚔️ {isRTL ? 'חזרה ל-OrcaInvestment' : 'Return to OrcaInvestment'}
               </button>
             </div>
             {/* Day list */}
