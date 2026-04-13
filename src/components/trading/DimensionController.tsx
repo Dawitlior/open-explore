@@ -192,7 +192,7 @@ export const ReturnButton = ({ onClick, isRTL }: { onClick: () => void; isRTL: b
       }}
     >
       <span style={{ fontSize: 15 }}>⚔️</span>
-      <span>{isRTL ? 'חזרה לחמ"ל' : 'Return to Command'}</span>
+      <span>{isRTL ? 'חזרה ל-OrcaInvestment' : 'Return to OrcaInvestment'}</span>
     </button>
   );
 };

@@ -357,7 +357,7 @@ function BacktestApp({ onReturn }: { onReturn: () => void }) {
       }}>
         <div style={{ textAlign: 'center', animation: 'pop .3s cubic-bezier(.16,1,.3,1)' }}>
           <div style={{ fontSize: 32, marginBottom: 8 }}>⚔️</div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: BL, letterSpacing: 2 }}>RETURNING TO COMMAND</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: BL, letterSpacing: 2 }}>RETURNING TO ORCAINVESTMENT</div>
         </div>
       </div>
     )}
@@ -377,7 +377,7 @@ function BacktestApp({ onReturn }: { onReturn: () => void }) {
           onMouseEnter={(e:any)=>{e.currentTarget.style.borderColor=BL;e.currentTarget.style.boxShadow=`0 0 12px ${BL}20`;}}
           onMouseLeave={(e:any)=>{e.currentTarget.style.borderColor=T4;e.currentTarget.style.boxShadow='none';}}
         >
-          <span>⚔️</span> חזרה לחמ״ל
+          <span>⚔️</span> חזרה ל-OrcaInvestment
         </button>
         <span style={{fontSize:"clamp(14px,2.5vw,16px)",fontWeight:800,color:BL}}>יומן באק-טסט</span>
         {has&&<span style={{fontSize:10,color:rc(allStats.totR),fontWeight:700}}>{fm(allStats.totR)}R</span>}
