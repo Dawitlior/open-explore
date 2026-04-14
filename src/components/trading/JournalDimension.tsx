@@ -3480,13 +3480,108 @@ const MorningLockOverlay = ({ onDone, isRTL }: { onDone: () => void; isRTL: bool
   }, [onDone]);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 9998, pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9998, pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', width: '100vw', height: '100vh', maxWidth: '100vw' }}>
       <div style={{ position: 'absolute', inset: 0, background: 'rgba(5,10,30,0.88)', opacity: step >= 1 ? 1 : 0, transition: 'opacity 0.4s ease', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }} />
-      <svg style={{ position: 'absolute', width: '100%', height: '100%', opacity: step >= 2 ? 0.15 : 0, transition: 'opacity 0.5s ease' }} viewBox="0 0 1000 400" preserveAspectRatio="xMidYMid meet">
-        <polyline points="0,300 100,290 200,295 300,270 400,260 500,240 600,200 700,180 750,100 800,60 850,40 900,30"
-          fill="none" stroke="#5AA9FF" strokeWidth="2.5"
-          style={{ strokeDasharray: 2000, strokeDashoffset: step >= 2 ? 0 : 2000, transition: 'stroke-dashoffset 1s ease-out', filter: 'drop-shadow(0 0 6px rgba(90,169,255,0.6))' }} />
+      <svg style={{ position: 'absolute', width: '100%', height: '100%', opacity: step >= 2 ? 0.15 : 0, transition: 'opacity 0.5s ease' }} viewBox="0 0 100 40" preserveAspectRatio="xMidYMid slice">
+        <polyline points="0,30 10,29 20,29.5 30,27 40,26 50,24 60,20 70,18 75,10 80,6 85,4 90,3"
+          fill="none" stroke="#5AA9FF" strokeWidth="0.3"
+          style={{ strokeDasharray: 200, strokeDashoffset: step >= 2 ? 0 : 200, transition: 'stroke-dashoffset 1s ease-out', filter: 'drop-shadow(0 0 2px rgba(90,169,255,0.6))' }} />
       </svg>
+      <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', width: '85%', maxWidth: 360, opacity: step >= 3 ? 1 : 0, transform: step >= 3 ? 'scale(1)' : 'scale(0.85)', transition: 'all 0.5s cubic-bezier(0.16,1,0.3,1)' }}>
+        <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(90,169,255,0.1)', border: '2px solid rgba(90,169,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 26, boxShadow: '0 0 40px rgba(90,169,255,0.2)' }}>✓</div>
+        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 'clamp(16px, 4.5vw, 22px)', fontWeight: 800, color: '#5AA9FF', letterSpacing: 0.5, textShadow: '0 0 30px rgba(90,169,255,0.5)', direction: isRTL ? 'rtl' : 'ltr' }}>
+          {isRTL ? 'ניתוח הבוקר ננעל' : 'Morning Analysis Locked'}
+        </div>
+        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, color: 'rgba(90,169,255,0.4)', letterSpacing: 3, marginTop: 8, textTransform: 'uppercase' as const }}>SEALED & PROTECTED</div>
+        <div style={{ width: 50, height: 2, background: '#5AA9FF', margin: '14px auto 0', borderRadius: 1, boxShadow: '0 0 15px rgba(90,169,255,0.5)', opacity: step >= 4 ? 1 : 0, transform: step >= 4 ? 'scaleX(1)' : 'scaleX(0)', transition: 'all 0.3s ease' }} />
+      </div>
+    </div>
+  );
+};
+
+const EODLockOverlay = ({ onDone, isRTL }: { onDone: () => void; isRTL: boolean }) => {
+  const [step, setStep] = useState(0);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const t = [
+      setTimeout(() => setStep(1), 100),
+      setTimeout(() => setStep(2), 600),
+      setTimeout(() => setStep(3), 1800),
+      setTimeout(() => setStep(4), 2400),
+      setTimeout(() => { setStep(5); onDone(); }, 3000),
+    ];
+    return () => t.forEach(clearTimeout);
+  }, [onDone]);
+
+  useEffect(() => {
+    const c = canvasRef.current; if (!c) return;
+    const ctx = c.getContext('2d')!;
+    const dpr = window.devicePixelRatio || 1;
+    const w = c.clientWidth, h = c.clientHeight;
+    c.width = w * dpr; c.height = h * dpr;
+    ctx.scale(dpr, dpr);
+
+    const pts: number[] = [];
+    let price = h * 0.6;
+    for (let i = 0; i < 120; i++) {
+      price += (Math.random() - 0.42) * (h * 0.03);
+      price = Math.max(h * 0.15, Math.min(h * 0.85, price));
+      pts.push(price);
+    }
+
+    let frame = 0; let raf: number;
+    const draw = () => {
+      ctx.clearRect(0, 0, w, h);
+      ctx.strokeStyle = 'rgba(212,175,55,0.04)'; ctx.lineWidth = 0.5;
+      for (let y = 0; y < h; y += h / 6) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+
+      const visible = Math.min(pts.length, Math.floor(frame * 1.5));
+      if (visible > 1) {
+        const sp = w / (pts.length - 1);
+        ctx.beginPath(); ctx.moveTo(0, pts[0]);
+        for (let i = 1; i < visible; i++) ctx.lineTo(i * sp, pts[i]);
+        ctx.strokeStyle = 'rgba(0,255,163,0.15)'; ctx.lineWidth = 6; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, pts[0]);
+        for (let i = 1; i < visible; i++) ctx.lineTo(i * sp, pts[i]);
+        ctx.strokeStyle = '#00FFA3'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, pts[0]);
+        for (let i = 1; i < visible; i++) ctx.lineTo(i * sp, pts[i]);
+        ctx.lineTo((visible - 1) * sp, h); ctx.lineTo(0, h); ctx.closePath();
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, 'rgba(0,255,163,0.08)'); grad.addColorStop(1, 'rgba(0,255,163,0)');
+        ctx.fillStyle = grad; ctx.fill();
+        if (visible > 0) {
+          const tx = (visible - 1) * sp, ty = pts[visible - 1];
+          const pulse = 0.5 + Math.sin(frame * 0.1) * 0.5;
+          ctx.beginPath(); ctx.arc(tx, ty, 4 + pulse * 3, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(0,255,163,${0.2 + pulse * 0.3})`; ctx.fill();
+          ctx.beginPath(); ctx.arc(tx, ty, 3, 0, Math.PI * 2);
+          ctx.fillStyle = '#00FFA3'; ctx.fill();
+        }
+      }
+      frame++;
+      if (frame < 120) raf = requestAnimationFrame(draw);
+    };
+    draw();
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9998, pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', width: '100vw', height: '100vh', maxWidth: '100vw' }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(5,8,20,0.92)', opacity: step >= 1 ? 1 : 0, transition: 'opacity 0.5s ease', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }} />
+      <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: step >= 2 && step < 5 ? 0.25 : 0, transition: 'opacity 0.6s ease' }} />
+      <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', width: '85%', maxWidth: 360, opacity: step >= 3 ? 1 : 0, transform: step >= 3 ? 'scale(1)' : 'scale(0.85)', transition: 'all 0.5s cubic-bezier(0.16,1,0.3,1)' }}>
+        <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'rgba(212,175,55,0.08)', border: '2px solid rgba(212,175,55,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 28, boxShadow: '0 0 40px rgba(212,175,55,0.15)', transition: 'transform 0.3s ease', transform: step >= 4 ? 'rotateY(180deg)' : 'rotateY(0)' }}>🔒</div>
+        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 'clamp(16px, 4.5vw, 22px)', fontWeight: 800, color: '#D4AF37', letterSpacing: 0.5, textShadow: '0 0 30px rgba(212,175,55,0.4)', direction: isRTL ? 'rtl' : 'ltr' }}>
+          {isRTL ? 'יום המסחר ננעל' : 'Trading Day Sealed'}
+        </div>
+        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, color: 'rgba(212,175,55,0.35)', letterSpacing: 3, marginTop: 8, textTransform: 'uppercase' as const }}>PERMANENTLY LOCKED</div>
+        <div style={{ width: 60, height: 2, background: 'linear-gradient(90deg, transparent, #D4AF37, transparent)', margin: '14px auto 0', borderRadius: 1, opacity: step >= 4 ? 1 : 0, transition: 'opacity 0.4s ease' }} />
+      </div>
+    </div>
+  );
+};
       <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', width: '90%', maxWidth: 400, opacity: step >= 3 ? 1 : 0, transform: step >= 3 ? 'scale(1)' : 'scale(0.85)', transition: 'all 0.5s cubic-bezier(0.16,1,0.3,1)' }}>
         <div style={{ width: 'clamp(48px, 12vw, 64px)', height: 'clamp(48px, 12vw, 64px)', borderRadius: '50%', background: 'rgba(90,169,255,0.1)', border: '2px solid rgba(90,169,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 'clamp(22px, 6vw, 32px)', boxShadow: '0 0 40px rgba(90,169,255,0.2)' }}>✓</div>
         <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 'clamp(15px, 4vw, 22px)', fontWeight: 800, color: '#5AA9FF', letterSpacing: 0.5, textShadow: '0 0 30px rgba(90,169,255,0.5)', direction: isRTL ? 'rtl' : 'ltr' }}>
