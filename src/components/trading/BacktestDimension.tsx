@@ -165,79 +165,152 @@ function Seg({opts,v,s}:{opts:string[][];v:string;s:(v:string)=>void}){return <d
 
 
 // ═══════════════════════════════════════════
-// ENTRY ANIMATION — Chart wormhole
+// ENTRY ANIMATION — Discretionary Trading Portal
 // ═══════════════════════════════════════════
 function BacktestEntryScreen({ onEnter, onSkip }: { onEnter: () => void; onSkip: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [phase, setPhase] = useState<'draw' | 'ready' | 'portal' | 'done'>('draw');
+  const [phase, setPhase] = useState<'boot' | 'ready' | 'portal' | 'done'>('boot');
 
   useEffect(() => {
     const c = canvasRef.current; if (!c) return;
     const ctx = c.getContext('2d')!;
-    let W = c.width = window.innerWidth, H = c.height = window.innerHeight;
-    const cx = W / 2, cy = H / 2;
+    const dpr = window.devicePixelRatio || 1;
+    let W: number, H: number, w: number, h: number;
 
-    // Candlestick data
-    const candles: { o: number; h: number; l: number; c: number; drawn: number }[] = [];
-    for (let i = 0; i < 60; i++) {
-      const base = 50 + Math.sin(i * 0.15) * 20 + Math.random() * 10;
-      const oc = base + (Math.random() - 0.5) * 8;
-      const cl = base + (Math.random() - 0.5) * 8;
-      candles.push({ o: oc, h: Math.max(oc, cl) + Math.random() * 5, l: Math.min(oc, cl) - Math.random() * 5, c: cl, drawn: 0 });
+    const resize = () => {
+      w = c.clientWidth; h = c.clientHeight;
+      W = w * dpr; H = h * dpr;
+      c.width = W; c.height = H;
+      ctx.scale(dpr, dpr);
+    };
+    resize();
+
+    // Generate multi-timeframe candles
+    const candles: { o: number; h: number; l: number; c: number; vol: number }[] = [];
+    let price = h * 0.5;
+    for (let i = 0; i < 80; i++) {
+      const trend = Math.sin(i * 0.08) * h * 0.002;
+      const momentum = (Math.random() - 0.45) * h * 0.04;
+      const open = price;
+      const close = price + momentum + trend;
+      const high = Math.max(open, close) + Math.random() * h * 0.015;
+      const low = Math.min(open, close) - Math.random() * h * 0.015;
+      candles.push({ o: open, h: high, l: low, c: close, vol: 0.3 + Math.random() * 0.7 });
+      price = close;
     }
+
+    // Normalize to viewport
+    const allPrices = candles.flatMap(c => [c.h, c.l]);
+    const minP = Math.min(...allPrices), maxP = Math.max(...allPrices);
+    const range = maxP - minP || 1;
+    const mapY = (p: number) => h * 0.1 + ((maxP - p) / range) * h * 0.7;
+
+    // Order flow particles
+    const particles: { x: number; y: number; vx: number; vy: number; life: number; color: string }[] = [];
 
     let frame = 0;
     let raf: number;
     const draw = () => {
-      ctx.fillStyle = `rgba(12,15,20,0.15)`;
-      ctx.fillRect(0, 0, W, H);
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = BG;
+      ctx.fillRect(0, 0, w, h);
 
-      // Draw candlesticks progressively
-      const candleW = W / 65;
-      const scaleY = H * 0.6 / 60;
-      const baseY = H * 0.7;
+      // Ambient grid
+      const gridAlpha = Math.min(0.06, frame * 0.001);
+      ctx.strokeStyle = `rgba(37,99,235,${gridAlpha})`;
+      ctx.lineWidth = 0.5;
+      for (let y = 0; y < h; y += h / 10) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+      }
+      for (let x = 0; x < w; x += w / 12) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+      }
 
-      candles.forEach((cd, i) => {
-        const progress = Math.min(1, (frame - i * 2) / 20);
-        if (progress <= 0) return;
-        cd.drawn = progress;
+      // Draw candles progressively
+      const visibleCount = Math.min(candles.length, Math.floor(frame * 0.8));
+      const candleW = Math.max(2, (w * 0.85) / candles.length);
+      const startX = w * 0.08;
 
-        const x = 30 + i * candleW;
+      for (let i = 0; i < visibleCount; i++) {
+        const cd = candles[i];
+        const x = startX + i * candleW;
         const isGreen = cd.c > cd.o;
-        const color = isGreen ? G : RD;
-        const alpha = Math.floor(progress * 200).toString(16).padStart(2, '0');
+        const color = isGreen ? '#00FFA3' : '#FF4D4D';
+        const entryProgress = Math.min(1, (frame - i * 1.2) / 10);
+        if (entryProgress <= 0) continue;
+
+        ctx.globalAlpha = entryProgress;
 
         // Wick
         ctx.beginPath();
-        ctx.moveTo(x + candleW / 2, baseY - cd.h * scaleY * progress);
-        ctx.lineTo(x + candleW / 2, baseY - cd.l * scaleY * progress);
-        ctx.strokeStyle = color + alpha;
+        ctx.moveTo(x + candleW * 0.4, mapY(cd.h));
+        ctx.lineTo(x + candleW * 0.4, mapY(cd.l));
+        ctx.strokeStyle = color;
         ctx.lineWidth = 1;
         ctx.stroke();
 
         // Body
-        const bodyTop = baseY - Math.max(cd.o, cd.c) * scaleY * progress;
-        const bodyBot = baseY - Math.min(cd.o, cd.c) * scaleY * progress;
-        ctx.fillStyle = color + alpha;
-        ctx.fillRect(x + 2, bodyTop, candleW - 4, Math.max(1, bodyBot - bodyTop));
-      });
+        const bodyTop = mapY(Math.max(cd.o, cd.c));
+        const bodyBot = mapY(Math.min(cd.o, cd.c));
+        ctx.fillStyle = color;
+        ctx.fillRect(x + 1, bodyTop, candleW * 0.8 - 2, Math.max(1, bodyBot - bodyTop));
 
-      // Grid lines
-      if (frame > 30) {
-        const gridAlpha = Math.min(0.12, (frame - 30) * 0.002);
-        ctx.strokeStyle = `rgba(37,99,235,${gridAlpha})`;
-        ctx.lineWidth = 0.5;
-        for (let y = 0; y < H; y += H / 8) {
-          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+        // Volume bars at bottom
+        const volH = cd.vol * h * 0.08;
+        ctx.fillStyle = isGreen ? 'rgba(0,255,163,0.08)' : 'rgba(255,77,77,0.08)';
+        ctx.fillRect(x + 1, h - volH, candleW * 0.8 - 2, volH);
+
+        // Spawn order flow particles on recent candles
+        if (i === visibleCount - 1 && Math.random() > 0.6) {
+          particles.push({
+            x: x + candleW * 0.4,
+            y: mapY((cd.o + cd.c) / 2),
+            vx: (Math.random() - 0.5) * 2,
+            vy: (Math.random() - 0.5) * 1.5,
+            life: 1,
+            color: isGreen ? '0,255,163' : '255,77,77',
+          });
         }
       }
 
+      ctx.globalAlpha = 1;
+
+      // Draw & update particles
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx; p.y += p.vy; p.life -= 0.02;
+        if (p.life <= 0) { particles.splice(i, 1); continue; }
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${p.color},${p.life * 0.6})`;
+        ctx.fill();
+      }
+
+      // Moving average overlay
+      if (visibleCount > 10) {
+        ctx.beginPath();
+        for (let i = 5; i < visibleCount; i++) {
+          const avg = candles.slice(i - 5, i).reduce((s, c) => s + (c.o + c.c) / 2, 0) / 5;
+          const x = startX + i * candleW + candleW * 0.4;
+          if (i === 5) ctx.moveTo(x, mapY(avg));
+          else ctx.lineTo(x, mapY(avg));
+        }
+        ctx.strokeStyle = 'rgba(99,102,241,0.4)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+
+      // Scanline effect
+      const scanY = (frame * 2) % h;
+      ctx.fillStyle = 'rgba(0,255,163,0.015)';
+      ctx.fillRect(0, scanY, w, 2);
+
       frame++;
-      if (frame < 200) raf = requestAnimationFrame(draw);
+      if (frame < 160) raf = requestAnimationFrame(draw);
       else setPhase('ready');
     };
 
-    const t = setTimeout(() => draw(), 300);
+    const t = setTimeout(() => draw(), 200);
     return () => { clearTimeout(t); cancelAnimationFrame(raf); };
   }, []);
 
@@ -247,34 +320,41 @@ function BacktestEntryScreen({ onEnter, onSkip }: { onEnter: () => void; onSkip:
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: BG, overflow: 'hidden' }}>
-      <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, opacity: phase === 'portal' ? 0 : 0.8, transition: 'opacity 0.8s' }} />
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: BG, overflow: 'hidden', width: '100vw', height: '100vh', maxWidth: '100vw' }}>
+      <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: phase === 'portal' ? 0 : 0.9, transition: 'opacity 0.8s' }} />
+
+      {/* Overlay vignette */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: `radial-gradient(ellipse at 50% 50%, transparent 40%, ${BG} 100%)`,
+        pointerEvents: 'none', zIndex: 5,
+      }} />
 
       {/* Center content */}
       <div style={{
         position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center', zIndex: 10,
-        opacity: phase === 'ready' || phase === 'draw' ? 1 : 0,
-        transform: phase === 'portal' ? 'scale(3)' : 'scale(1)',
+        opacity: phase === 'ready' || phase === 'boot' ? 1 : 0,
+        transform: phase === 'portal' ? 'scale(2.5)' : 'scale(1)',
         transition: 'all 1s cubic-bezier(0.16,1,0.3,1)',
       }}>
-        <div style={{ fontSize: 'clamp(10px,2vw,13px)', color: T3, letterSpacing: 6, textTransform: 'uppercase', marginBottom: 12, opacity: phase === 'ready' ? 1 : 0, transition: 'opacity 0.5s 0.2s' }}>
+        <div style={{ fontSize: 'clamp(10px,2.5vw,13px)', color: T3, letterSpacing: 6, textTransform: 'uppercase', marginBottom: 12, opacity: phase === 'ready' ? 1 : 0, transition: 'opacity 0.5s 0.2s' }}>
           BACKTEST JOURNAL
         </div>
-        <div style={{ fontSize: 'clamp(28px,6vw,48px)', fontWeight: 900, color: BL, letterSpacing: -2, textShadow: `0 0 60px ${CY}44, 0 0 30px ${BL}33`, opacity: phase === 'ready' ? 1 : 0, transition: 'opacity 0.5s 0.4s' }}>
+        <div style={{ fontSize: 'clamp(24px,7vw,48px)', fontWeight: 900, color: BL, letterSpacing: -2, textShadow: `0 0 60px ${CY}44, 0 0 30px ${BL}33`, opacity: phase === 'ready' ? 1 : 0, transition: 'opacity 0.5s 0.4s' }}>
           יומן באק-טסט
         </div>
-        <div style={{ fontSize: 'clamp(11px,2vw,14px)', color: T2, marginTop: 8, letterSpacing: 3, opacity: phase === 'ready' ? 1 : 0, transition: 'opacity 0.5s 0.6s' }}>
+        <div style={{ fontSize: 'clamp(11px,2.5vw,14px)', color: T2, marginTop: 8, letterSpacing: 3, opacity: phase === 'ready' ? 1 : 0, transition: 'opacity 0.5s 0.6s' }}>
           OrcaInvestment
         </div>
 
         {/* Enter button */}
         {phase === 'ready' && (
           <button onClick={handleEnter} style={{
-            marginTop: 40, padding: '14px 48px', background: BL, border: 'none',
-            borderRadius: 14, color: '#fff', fontSize: 16, fontWeight: 700,
+            marginTop: 40, padding: '14px 48px', background: `linear-gradient(135deg, ${BL}, ${CY})`, border: 'none',
+            borderRadius: 14, color: '#fff', fontSize: 'clamp(14px, 3.5vw, 16px)', fontWeight: 700,
             cursor: 'pointer', animation: 'pop .4s cubic-bezier(.16,1,.3,1)',
-            boxShadow: `0 4px 30px ${BL}44`,
+            boxShadow: `0 4px 30px ${BL}44, 0 0 60px ${CY}15`,
             transition: 'all 0.3s',
           }}
             onMouseEnter={(e: any) => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = `0 8px 40px ${BL}66`; }}
@@ -289,14 +369,14 @@ function BacktestEntryScreen({ onEnter, onSkip }: { onEnter: () => void; onSkip:
       {phase === 'portal' && (
         <div style={{
           position: 'absolute', inset: 0, zIndex: 20,
-          background: `radial-gradient(circle at center, ${BG} 0%, transparent 60%)`,
+          background: `radial-gradient(circle at center, ${CY}30 0%, ${BG} 50%)`,
           animation: 'popBig 1s cubic-bezier(.16,1,.3,1)',
         }} />
       )}
 
       {/* Skip button */}
       <button onClick={onSkip} style={{
-        position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+        position: 'absolute', bottom: 'max(24px, env(safe-area-inset-bottom, 24px))', left: '50%', transform: 'translateX(-50%)',
         background: 'none', border: `1px solid ${T4}`, borderRadius: 6,
         padding: '6px 16px', color: T3, fontSize: 11, cursor: 'pointer', zIndex: 30,
       }}>דלג</button>

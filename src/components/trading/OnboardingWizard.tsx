@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import orcaQR from '@/assets/orca-qr-code.jpeg';
 
 const STORAGE_KEY = 'orca-onboarding-done';
 const NAME_KEY = 'orca-user-name';
@@ -7,15 +8,33 @@ const PROFILE_KEY = 'orca-user-profile';
 type Step = 1 | 2 | 3 | 4 | 5;
 type Profile = 'beginner' | 'intermediate' | 'advanced' | null;
 
+const VALUE_TITLES: Record<string, string> = {
+  beginner: 'הצעד הראשון שלך לעבר מקצוענות',
+  intermediate: 'הגיע הזמן לעבור למסחר סיסטמטי',
+  advanced: 'מצאת את \'הזהב\' של הסוחרים המקצועיים',
+};
+
 const VALUE_TEXTS: Record<string, string> = {
-  beginner: 'כדי להפוך לסוחר רווחי, הדבר החשוב ביותר הוא לא לנחש – אלא למדוד. הפלטפורמה של Orca תעניק לך את התשתית המקצועית ביותר: יומן בקטסט לבניית ביטחון באסטרטגיה, ויומן ג\'ורנל למעקב וניתוח טריידים בזמן אמת. רישום מדויק הוא ההבדל בין הימור לבין עסק רווחי, ואנחנו כאן כדי לוודא שאתה בונה את היסודות הנכונים מהיום הראשון.',
+  beginner: 'כדי להפוך לסוחר רווחי, הדבר החשוב ביותר הוא לא לנחש – אלא למדוד. הפלטפורמה של Orca תעניק לך את התשתית המקצועית ביותר: יומן בקטסט (Backtest) לבניית ביטחון באסטרטגיה, ויומן ג\'ורנל (Journal) למעקב וניתוח טריידים בזמן אמת. רישום מדויק הוא ההבדל בין הימור לבין עסק רווחי, ואנחנו כאן כדי לוודא שאתה בונה את היסודות הנכונים מהיום הראשון.',
   intermediate: 'אם כבר טעמת מהשוק, אתה בטח מבין שאיסוף ידע זה לא מספיק – צריך סדר. המערכת של Orca נועדה לקחת את הידע שכבר צברת ולהפוך אותו לשיטה עקבית. באמצעות תיעוד קפדני וניתוח נתונים ביומנים שלנו, תוכל לזהות את הטעויות החוזרות שלך ולהתחיל לייצר רווחים בצורה מבוקרת ומקצועית. זה השלב שבו אתה מפסיק \'לנסות\' ומתחיל לסחור.',
-  advanced: 'אם אתה כבר סוחר אז יש לך פה זהב! בתור סוחר פעיל, אתה יודע שהיתרון היחסי שלך נמצא בפרטים הקטנים. הפלטפורמה של Orca מספקת לך את כלי הניתוח המתקדמים ביותר בשוק: יומן בקטסט עמוק למקסום אסטרטגיות ויומן ג\'ורנל לניטור ביצועים ברמה הגבוהה ביותר. זהו הכלי שיאפשר לך לבצע אופטימיזציה מלאה ל-Edge שלך ולקחת את התיק שלך לשלב הבא. הנתונים שלך הם הכוח שלך – בוא נמנף אותם.',
+  advanced: 'בתור סוחר פעיל, אתה יודע שהיתרון היחסי שלך נמצא בפרטים הקטנים. הפלטפורמה של Orca מספקת לך את כלי הניתוח המתקדמים ביותר בשוק: יומן בקטסט עמוק למקסום אסטרטגיות ויומן ג\'ורנל לניטור ביצועים ברמה הגבוהה ביותר. זהו הכלי שיאפשר לך לבצע אופטימיזציה מלאה ל-Edge שלך ולקחת את התיק שלך לשלב הבא. הנתונים שלך הם הכוח שלך – בוא נמנף אותם.',
+};
+
+// Name validation: Hebrew/English letters, spaces, hyphens, apostrophes, min 2 chars, at least 2 words
+const isValidName = (n: string): boolean => {
+  const trimmed = n.trim();
+  if (trimmed.length < 2) return false;
+  // Only allow Hebrew, English letters, spaces, hyphens, apostrophes
+  if (!/^[\u0590-\u05FFa-zA-Z\s\-']+$/.test(trimmed)) return false;
+  // At least 2 "word" parts
+  const parts = trimmed.split(/\s+/).filter(p => p.length >= 1);
+  return parts.length >= 2;
 };
 
 export const OnboardingWizard = ({ onComplete }: { onComplete: () => void }) => {
   const [step, setStep] = useState<Step>(1);
   const [name, setName] = useState('');
+  const [nameError, setNameError] = useState('');
   const [isMember, setIsMember] = useState<boolean | null>(null);
   const [profile, setProfile] = useState<Profile>(null);
   const [fadeIn, setFadeIn] = useState(true);
@@ -27,9 +46,18 @@ export const OnboardingWizard = ({ onComplete }: { onComplete: () => void }) => 
 
   const finish = () => {
     localStorage.setItem(STORAGE_KEY, '1');
-    localStorage.setItem(NAME_KEY, name);
+    localStorage.setItem(NAME_KEY, name.trim());
     if (profile) localStorage.setItem(PROFILE_KEY, profile);
     onComplete();
+  };
+
+  const handleNameContinue = () => {
+    if (!isValidName(name)) {
+      setNameError('יש להזין שם מלא (שם פרטי ושם משפחה) באותיות בלבד');
+      return;
+    }
+    setNameError('');
+    transition(2);
   };
 
   const BG = '#030810';
@@ -45,19 +73,19 @@ export const OnboardingWizard = ({ onComplete }: { onComplete: () => void }) => 
       background: `radial-gradient(ellipse at 50% 30%, ${BLUE}40 0%, ${BG} 60%)`,
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       fontFamily: "'Poppins', 'Inter', sans-serif", direction: 'rtl',
-      overflow: 'hidden',
+      overflow: 'auto',
     }}>
       {/* Grid */}
       <div style={{
-        position: 'absolute', inset: 0, opacity: 0.02,
+        position: 'absolute', inset: 0, opacity: 0.02, pointerEvents: 'none',
         backgroundImage: 'linear-gradient(rgba(212,175,55,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(212,175,55,0.5) 1px, transparent 1px)',
         backgroundSize: '80px 80px',
       }} />
 
       {/* Progress bar */}
       <div style={{
-        position: 'absolute', top: 0, left: 0, right: 0, height: 3,
-        background: 'rgba(255,255,255,0.05)',
+        position: 'fixed', top: 0, left: 0, right: 0, height: 3,
+        background: 'rgba(255,255,255,0.05)', zIndex: 100000,
       }}>
         <div style={{
           height: '100%', width: `${progressPct}%`,
@@ -69,8 +97,8 @@ export const OnboardingWizard = ({ onComplete }: { onComplete: () => void }) => 
 
       {/* Step indicator */}
       <div style={{
-        position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)',
-        display: 'flex', gap: 8, alignItems: 'center',
+        position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)',
+        display: 'flex', gap: 8, alignItems: 'center', zIndex: 100000,
       }}>
         {[1,2,3,4,5].map(s => (
           <div key={s} style={{
@@ -90,6 +118,7 @@ export const OnboardingWizard = ({ onComplete }: { onComplete: () => void }) => 
         opacity: fadeIn ? 1 : 0,
         transform: fadeIn ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.97)',
         transition: 'all 0.4s cubic-bezier(0.16,1,0.3,1)',
+        padding: '40px 0',
       }}>
         {/* STEP 1 — Gateway */}
         {step === 1 && (
@@ -107,22 +136,26 @@ export const OnboardingWizard = ({ onComplete }: { onComplete: () => void }) => 
               </label>
               <input
                 value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="הכנס את שמך..."
+                onChange={e => { setName(e.target.value); if (nameError) setNameError(''); }}
+                placeholder="ישראל ישראלי"
                 style={{
                   width: '100%', padding: '14px 18px', borderRadius: 12,
-                  background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(212,175,55,0.2)',
+                  background: 'rgba(255,255,255,0.04)', border: `1px solid ${nameError ? '#FF4D4D' : 'rgba(212,175,55,0.2)'}`,
                   color: '#f1f5f9', fontSize: 15, fontWeight: 600,
                   outline: 'none', direction: 'rtl', textAlign: 'right',
                   fontFamily: "'Poppins', sans-serif",
                   transition: 'border-color 0.3s, box-shadow 0.3s',
                 }}
                 onFocus={e => { e.currentTarget.style.borderColor = `${GOLD}60`; e.currentTarget.style.boxShadow = `0 0 20px ${GOLD}15`; }}
-                onBlur={e => { e.currentTarget.style.borderColor = 'rgba(212,175,55,0.2)'; e.currentTarget.style.boxShadow = 'none'; }}
+                onBlur={e => { e.currentTarget.style.borderColor = nameError ? '#FF4D4D' : 'rgba(212,175,55,0.2)'; e.currentTarget.style.boxShadow = 'none'; }}
+                onKeyDown={e => { if (e.key === 'Enter') handleNameContinue(); }}
               />
+              {nameError && (
+                <div style={{ fontSize: 11, color: '#FF4D4D', marginTop: 8, textAlign: 'right' }}>{nameError}</div>
+              )}
             </div>
             <button
-              onClick={() => transition(2)}
+              onClick={handleNameContinue}
               disabled={!name.trim()}
               style={{
                 marginTop: 32, padding: '14px 48px', borderRadius: 12,
@@ -172,13 +205,16 @@ export const OnboardingWizard = ({ onComplete }: { onComplete: () => void }) => 
                   הכוח של Orca נמצא בקהילה. הצטרף עכשיו כדי לקבל עדכונים, ניתוחים וליווי מהשטח.
                 </p>
                 <div style={{
-                  width: 200, height: 200, margin: '0 auto 24px',
-                  background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexDirection: 'column', gap: 8,
+                  width: 'clamp(180px, 60vw, 280px)', margin: '0 auto 24px',
+                  borderRadius: 16, overflow: 'hidden',
+                  boxShadow: '0 0 40px rgba(212,175,55,0.1)',
                 }}>
-                  <div style={{ fontSize: 48 }}>📱</div>
-                  <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: 1 }}>QR CODE</span>
+                  <img src={orcaQR} alt="QR Code - Orca Investment Community" style={{
+                    width: '100%', height: 'auto', display: 'block',
+                  }} />
+                </div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginBottom: 20 }}>
+                  סרוק את הקוד כדי להצטרף ל-Orca Investment
                 </div>
                 <button onClick={() => transition(3)} style={{
                   padding: '14px 36px', borderRadius: 12, border: `1px solid ${CYAN}40`,
@@ -200,7 +236,7 @@ export const OnboardingWizard = ({ onComplete }: { onComplete: () => void }) => 
               הגדר את הפרופיל שלך כסוחר
             </h2>
             <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 28 }}>
-              זה יעזור לנו להתאים את החוויה עבורך
+              אנחנו נתאים את הכלים שלנו לידע ולניסיון שלך
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 400, margin: '0 auto' }}>
               {([
@@ -234,8 +270,8 @@ export const OnboardingWizard = ({ onComplete }: { onComplete: () => void }) => 
             <div style={{ fontSize: 36, marginBottom: 16 }}>
               {profile === 'beginner' ? '🌱' : profile === 'intermediate' ? '📈' : '⚡'}
             </div>
-            <h2 style={{ fontSize: 'clamp(16px, 3.5vw, 22px)', fontWeight: 800, color: '#f1f5f9', marginBottom: 20 }}>
-              {name}, הנה מה ש-Orca יכולה לעשות בשבילך
+            <h2 style={{ fontSize: 'clamp(16px, 3.5vw, 22px)', fontWeight: 800, color: GOLD, marginBottom: 20 }}>
+              {VALUE_TITLES[profile]}
             </h2>
             <div style={{
               background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(212,175,55,0.12)',
@@ -246,15 +282,25 @@ export const OnboardingWizard = ({ onComplete }: { onComplete: () => void }) => 
                 {VALUE_TEXTS[profile]}
               </p>
             </div>
-            <button onClick={() => transition(5)} style={{
-              marginTop: 28, padding: '14px 48px', borderRadius: 12,
-              background: `linear-gradient(135deg, ${GOLD}, #b8941e)`,
-              color: '#0a0e1a', border: 'none', fontSize: 14, fontWeight: 800,
-              cursor: 'pointer', transition: 'all 0.3s',
-              boxShadow: `0 4px 24px ${GOLD}30`,
-            }}>
-              מוכן — בוא נמשיך →
-            </button>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 28, flexWrap: 'wrap' }}>
+              <button onClick={() => transition(5)} style={{
+                padding: '14px 48px', borderRadius: 12,
+                background: `linear-gradient(135deg, ${GOLD}, #b8941e)`,
+                color: '#0a0e1a', border: 'none', fontSize: 14, fontWeight: 800,
+                cursor: 'pointer', transition: 'all 0.3s',
+                boxShadow: `0 4px 24px ${GOLD}30`,
+              }}>
+                מוכן — בוא נמשיך →
+              </button>
+              <button onClick={() => transition(3)} style={{
+                padding: '12px 24px', borderRadius: 12,
+                border: '1px solid rgba(255,255,255,0.1)',
+                background: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.4)',
+                fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              }}>
+                ← חזור אחורה
+              </button>
+            </div>
           </div>
         )}
 
