@@ -260,6 +260,11 @@ const Index = () => {
     { id: 'weekly-review', icon: '📋', label: isRTL ? 'סקירה שבועית' : 'Weekly Review', color: '#FFD700' },
   ];
 
+  // Onboarding wizard (first-time users only)
+  if (!onboardingDone) {
+    return <OnboardingWizard onComplete={() => setOnboardingDone(true)} />;
+  }
+
   // Entry gate check (after all hooks)
   if (!entered) {
     return <EntryGate onEnter={() => setEntered(true)} lang={settings.lang} />;
