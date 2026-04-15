@@ -3131,6 +3131,20 @@ const CalendarView = ({ days, dir, th, t, risk, onSelectDay }: { days: JournalDa
 // ═══════════════════════════════════════════════════════════════
 // MORNING FORM
 // ═══════════════════════════════════════════════════════════════
+const AutoFillButton = ({ onClick, dir, th, label }: { onClick: () => void; dir: string; th: typeof THEMES.dark; label: string }) => (
+  <button onClick={onClick} style={{
+    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 16px', borderRadius: 20,
+    background: 'linear-gradient(135deg, rgba(255,200,87,0.12), rgba(245,160,32,0.08))',
+    border: '1px solid rgba(255,200,87,0.25)', color: '#FFC857', cursor: 'pointer',
+    fontFamily: "'Poppins',sans-serif", fontSize: 10.5, fontWeight: 700, letterSpacing: '.3px',
+    transition: 'all .25s', direction: dir as 'ltr' | 'rtl',
+  }}
+    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, rgba(255,200,87,0.22), rgba(245,160,32,0.15))'; (e.currentTarget as HTMLElement).style.boxShadow = '0 0 16px rgba(255,200,87,0.2)'; }}
+    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, rgba(255,200,87,0.12), rgba(245,160,32,0.08))'; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}>
+    <span style={{ fontSize: 13 }}>✨</span> {label}
+  </button>
+);
+
 const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) => {
   const f = t.f;
   const U = (k: string) => (v: any) => upd({ [k]: v });
@@ -3140,12 +3154,28 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
   const lockSec = (k: string) => upd({ sectionLocks: { ...sLocks, [k]: true } });
   const unlockSec = (k: string) => upd({ sectionLocks: { ...sLocks, [k]: false } });
   const BC = ['#00FFA3', '#FF4D4D', '#FFC857', '#5AA9FF', '#b794f6'];
+  const morningIdxRef = useRef(Math.floor(Math.random() * MORNING_VARIATIONS.length));
+
+  const fillMorning = () => {
+    const v = MORNING_VARIATIONS[morningIdxRef.current % MORNING_VARIATIONS.length];
+    morningIdxRef.current++;
+    upd({
+      mood: v.mood, plan: v.plan, btcThoughts: v.btcThoughts,
+      bias: v.bias, mktStruct: v.mktStruct, mentalTags: v.mentalTags,
+      btcNote: v.btcNote, t3Note: v.t3Note, domNote: v.domNote, macroNote: v.macroNote,
+      levels: v.levels, setups: v.setups, emotionScore: v.emotionScore,
+      fearGreed: v.fearGreed, psychAnswers: v.psychAnswers,
+    });
+  };
 
   return (
     <div>
       <MarketStrip day={day} dir={dir} th={th} />
-      <div onClick={onInfoClick} style={{ cursor: 'pointer' }}>
-        <PDiv label={dir === 'rtl' ? 'תדריך טרום-שוק' : 'PRE-MARKET BRIEFING'} color="#5AA9FF" icon="☀️" th={th} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 4 }}>
+        <div onClick={onInfoClick} style={{ cursor: 'pointer', flex: 1 }}>
+          <PDiv label={dir === 'rtl' ? 'תדריך טרום-שוק' : 'PRE-MARKET BRIEFING'} color="#5AA9FF" icon="☀️" th={th} />
+        </div>
+        <AutoFillButton onClick={fillMorning} dir={dir} th={th} label={dir === 'rtl' ? 'מילוי דוגמה' : 'Demo Fill'} />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }} className="j-grid-2col">
