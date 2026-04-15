@@ -3334,6 +3334,19 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk, onInfo
   const sLocks = day.sectionLocks || {};
   const lockSec = (k: string) => upd({ sectionLocks: { ...sLocks, [k]: true } });
   const unlockSec = (k: string) => upd({ sectionLocks: { ...sLocks, [k]: false } });
+  const eodIdxRef = useRef(Math.floor(Math.random() * EOD_VARIATIONS.length));
+
+  const fillEod = () => {
+    const v = EOD_VARIATIONS[eodIdxRef.current % EOD_VARIATIONS.length];
+    eodIdxRef.current++;
+    upd({
+      hasOpen: v.hasOpen,
+      trades: v.trades.map(tr => ({ ...tr, id: Date.now() + Math.random() })),
+      actualMove: v.actualMove, dayScore: v.dayScore,
+      wins: v.wins, lessons: v.lessons, mistakes: v.mistakes,
+      solutions: v.solutions, closing: v.closing,
+    });
+  };
 
   return (
     <div>
@@ -3400,8 +3413,11 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk, onInfo
         </div>
       )}
 
-      <div onClick={onInfoClick} style={{ cursor: 'pointer' }}>
-        <PDiv label={dir === 'rtl' ? 'תחקיר אחרי-שוק' : 'POST-MARKET DEBRIEF'} color="#b794f6" icon="🌙" th={th} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 4 }}>
+        <div onClick={onInfoClick} style={{ cursor: 'pointer', flex: 1 }}>
+          <PDiv label={dir === 'rtl' ? 'תחקיר אחרי-שוק' : 'POST-MARKET DEBRIEF'} color="#b794f6" icon="🌙" th={th} />
+        </div>
+        {!fullLocked && <AutoFillButton onClick={fillEod} dir={dir} th={th} label={dir === 'rtl' ? 'מילוי דוגמה' : 'Demo Fill'} />}
       </div>
 
       {/* Trade Log */}
