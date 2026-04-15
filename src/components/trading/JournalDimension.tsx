@@ -3836,8 +3836,8 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
       )}
 
       {/* LOCK ANIMATIONS */}
-      {lockAnim === 'morning' && <MorningLockOverlay onDone={() => setLockAnim(null)} isRTL={dir === 'rtl'} />}
-      {lockAnim === 'eod' && <EODLockOverlay onDone={() => setLockAnim(null)} isRTL={dir === 'rtl'} />}
+      {lockAnim === 'morning' && <MorningLockOverlay onDone={() => { setLockAnim(null); setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100); }} isRTL={dir === 'rtl'} />}
+      {lockAnim === 'eod' && <EODLockOverlay onDone={() => { setLockAnim(null); setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100); }} isRTL={dir === 'rtl'} />}
 
       {/* KNOWLEDGE PANEL */}
       {knowledgePanel && <KnowledgePanel type={knowledgePanel} days={days} dir={dir} th={th} onClose={() => setKnowledgePanel(null)} onOpenDay={(id) => { setViewingArchiveId(id); setView('journal'); }} />}
@@ -3996,8 +3996,26 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
               {/* Header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap' as const, gap: 12, marginBottom: 20 }}>
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 'clamp(16px, 4vw, 22px)', fontWeight: 800, color: th.tx, letterSpacing: '-.3px' }}>
-                    {fmtFull(displayDay.date, t.locale)}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' as const }}>
+                    <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 'clamp(16px, 4vw, 22px)', fontWeight: 800, color: th.tx, letterSpacing: '-.3px' }}>
+                      {fmtFull(displayDay.date, t.locale)}
+                    </div>
+                    {!isViewingArchive && !isDayFullyLocked(displayDay) && (
+                      <input
+                        type="date"
+                        value={displayDay.date}
+                        onChange={e => {
+                          const v = e.target.value;
+                          if (v) upd({ date: v });
+                        }}
+                        style={{
+                          background: th.inputBg, border: `1px solid ${th.inputBr}`, borderRadius: 7,
+                          color: th.tx, padding: '4px 8px', fontSize: 11, fontFamily: "'Poppins',sans-serif",
+                          outline: 'none', cursor: 'pointer', transition: 'all .2s',
+                          colorScheme: 'dark',
+                        }}
+                      />
+                    )}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 9, flexWrap: 'wrap' as const }}>
                     {[['dayNum', dir === 'rtl' ? 'יום #' : 'Day #', '52px'], ['weekNum', dir === 'rtl' ? 'שבוע #' : 'Week #', '55px']].map(([k, l, w]: any) => (
