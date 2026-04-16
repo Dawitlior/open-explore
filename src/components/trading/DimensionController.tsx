@@ -50,6 +50,7 @@ export const DimensionController = ({ orcaUI, journalUI, backtestUI, activeDimen
         </motion.div>
       )}
     </AnimatePresence>
+    </>
   );
 };
 
