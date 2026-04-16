@@ -1,6 +1,8 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const shimmerCSS = `@keyframes orcaReturnShimmer { 0% { transform: translateX(-100%); } 50% { transform: translateX(100%); } 100% { transform: translateX(100%); } }`;
+
 interface DimensionControllerProps {
   orcaUI: React.ReactNode;
   journalUI: React.ReactNode;
