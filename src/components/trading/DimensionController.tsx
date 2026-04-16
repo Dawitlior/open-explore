@@ -166,33 +166,40 @@ export const ReturnButton = ({ onClick, isRTL }: { onClick: () => void; isRTL: b
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 8,
-        padding: '10px 20px',
-        background: 'transparent',
-        border: '1.5px solid rgba(212,175,55,0.35)',
-        borderRadius: 10,
+        gap: 10,
+        padding: '12px 24px',
+        background: 'linear-gradient(135deg, rgba(6,211,159,0.12), rgba(0,242,255,0.08))',
+        border: '1.5px solid rgba(6,211,159,0.4)',
+        borderRadius: 12,
         cursor: 'pointer',
-        fontSize: 12,
-        fontWeight: 700,
-        color: '#D4AF37',
-        transition: 'all 0.25s ease',
-        fontFamily: "'Inter', sans-serif",
+        fontSize: 13,
+        fontWeight: 800,
+        color: '#06d6a0',
+        transition: 'all 0.3s cubic-bezier(0.16,1,0.3,1)',
+        fontFamily: "'Poppins', sans-serif",
+        letterSpacing: '0.3px',
+        position: 'relative',
+        overflow: 'hidden',
+        boxShadow: '0 0 20px rgba(6,211,159,0.08), inset 0 1px 0 rgba(255,255,255,0.05)',
       }}
       onMouseEnter={e => {
-        e.currentTarget.style.background = 'rgba(212,175,55,0.08)';
-        e.currentTarget.style.borderColor = 'rgba(212,175,55,0.5)';
-        e.currentTarget.style.boxShadow = '0 0 16px rgba(212,175,55,0.12)';
-        e.currentTarget.style.transform = 'scale(0.97)';
+        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(6,211,159,0.22), rgba(0,242,255,0.15))';
+        e.currentTarget.style.borderColor = 'rgba(6,211,159,0.6)';
+        e.currentTarget.style.boxShadow = '0 0 30px rgba(6,211,159,0.2), 0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08)';
+        e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
       }}
       onMouseLeave={e => {
-        e.currentTarget.style.background = 'transparent';
-        e.currentTarget.style.borderColor = 'rgba(212,175,55,0.35)';
-        e.currentTarget.style.boxShadow = 'none';
-        e.currentTarget.style.transform = 'scale(1)';
+        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(6,211,159,0.12), rgba(0,242,255,0.08))';
+        e.currentTarget.style.borderColor = 'rgba(6,211,159,0.4)';
+        e.currentTarget.style.boxShadow = '0 0 20px rgba(6,211,159,0.08), inset 0 1px 0 rgba(255,255,255,0.05)';
+        e.currentTarget.style.transform = 'translateY(0) scale(1)';
       }}
     >
-      <span style={{ fontSize: 15 }}>⚔️</span>
-      <span>{isRTL ? 'חזרה ל-OrcaInvestment' : 'Return to OrcaInvestment'}</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#06d6a0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 0 4px rgba(6,211,159,0.4))' }}>
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+      <span style={{ textShadow: '0 0 12px rgba(6,211,159,0.3)' }}>{isRTL ? 'חזרה ל-OrcaInvestment' : 'Return to Orca'}</span>
+      <span style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, transparent, rgba(6,211,159,0.06), transparent)', animation: 'orcaReturnShimmer 3s ease-in-out infinite', borderRadius: 12, pointerEvents: 'none' }} />
     </button>
   );
 };

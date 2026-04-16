@@ -3159,12 +3159,21 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
   const fillMorning = () => {
     const v = MORNING_VARIATIONS[morningIdxRef.current % MORNING_VARIATIONS.length];
     morningIdxRef.current++;
+    // Mark random tasks and goals as done (simulate button clicks)
+    const filledTasks = (day.tasks || []).map((tk: any, i: number) => ({ ...tk, done: i < 6 || Math.random() > 0.3 }));
+    const filledGoals = (day.goals || []).map((g: any, i: number) => ({ ...g, done: i < 3 || Math.random() > 0.4 }));
+    // Pick random discipline commitments
+    const commitOpts = t.commitments || [];
+    const picked = commitOpts.filter((_: string, i: number) => i < 3 || Math.random() > 0.5).slice(0, 4);
     upd({
       mood: v.mood, plan: v.plan, btcThoughts: v.btcThoughts,
       bias: v.bias, mktStruct: v.mktStruct, mentalTags: v.mentalTags,
       btcNote: v.btcNote, t3Note: v.t3Note, domNote: v.domNote, macroNote: v.macroNote,
       levels: v.levels, setups: v.setups, emotionScore: v.emotionScore,
       fearGreed: v.fearGreed, psychAnswers: v.psychAnswers,
+      tasks: filledTasks, goals: filledGoals,
+      disciplineCommitments: picked, disciplineConfirmed: true,
+      sectionLocks: { ...day.sectionLocks, discipline: true },
     });
   };
 
@@ -3339,12 +3348,16 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk, onInfo
   const fillEod = () => {
     const v = EOD_VARIATIONS[eodIdxRef.current % EOD_VARIATIONS.length];
     eodIdxRef.current++;
+    // Set hasOpen explicitly (simulates clicking the Yes/No button)
+    // Then inject trades with unique IDs (simulates clicking "+ Log Trade" and filling)
     upd({
       hasOpen: v.hasOpen,
-      trades: v.trades.map(tr => ({ ...tr, id: Date.now() + Math.random() })),
+      trades: v.trades.map((tr, i) => ({ ...tr, id: Date.now() + i + Math.random() })),
       actualMove: v.actualMove, dayScore: v.dayScore,
       wins: v.wins, lessons: v.lessons, mistakes: v.mistakes,
       solutions: v.solutions, closing: v.closing,
+      // Also fill EOD images placeholder — empty since demo
+      eodImages: day.eodImages || [],
     });
   };
 

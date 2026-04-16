@@ -250,10 +250,9 @@ const Index = () => {
   ], [isRTL, handleExport, handleImport, handleGenerateInsights, isAlpha, settings]);
 
   const nav = [
-    { id: 'dashboard', icon: Ico.dash, label: t.dashboard },
+    { id: 'dashboard', icon: Ico.dash, label: isRTL ? 'דשבורד' : 'Dashboard' },
     { id: 'journal', icon: Ico.book, label: t.journal },
-    { id: 'calendar', icon: Ico.cal, label: t.calendar },
-    { id: 'analytics', icon: Ico.bar, label: t.analytics },
+    { id: 'analytics', icon: Ico.bar, label: isRTL ? 'אנליטיקה' : 'Analytics' },
     { id: 'risk', icon: Ico.shield, label: t.risk },
     { id: 'psychology', icon: Ico.brain, label: t.psychology },
     { id: 'ai', icon: Ico.star, label: t.ai },
