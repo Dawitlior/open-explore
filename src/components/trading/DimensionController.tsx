@@ -12,6 +12,8 @@ interface DimensionControllerProps {
 
 export const DimensionController = ({ orcaUI, journalUI, backtestUI, activeDimension }: DimensionControllerProps) => {
   return (
+    <>
+    <style>{shimmerCSS}</style>
     <AnimatePresence mode="wait">
       {activeDimension === 'orca' ? (
         <motion.div
