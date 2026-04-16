@@ -202,17 +202,28 @@ const Index = () => {
           if (!Array.isArray(importedTrades)) throw new Error('Invalid format');
           await importTrades(importedTrades);
         } else {
+          console.log('[XLSX Import] Starting import of file:', file.name, 'size:', file.size);
           const result = await importFromXlsx(file);
+          console.log('[XLSX Import] Result:', { imported: result.imported, skipped: result.skipped, errors: result.errors });
           if (result.errors.length > 0) console.warn('Import warnings:', result.errors);
-          if (result.trades.length > 0) await importTrades(result.trades);
-          else throw new Error('No valid trades found');
+          if (result.trades.length > 0) {
+            await importTrades(result.trades);
+            console.log('[XLSX Import] Successfully imported', result.trades.length, 'trades');
+          } else {
+            const errMsg = result.errors.length > 0 ? result.errors.join('; ') : 'No valid trades found in file';
+            console.error('[XLSX Import] No trades imported:', errMsg);
+            alert(isRTL ? `ייבוא נכשל: ${errMsg}` : `Import failed: ${errMsg}`);
+          }
         }
         sessionStorage.setItem('orca-seeded', '1');
-      } catch (err) { console.error('Import failed:', err); }
+      } catch (err) {
+        console.error('[XLSX Import] Error:', err);
+        alert(isRTL ? `שגיאת ייבוא: ${err instanceof Error ? err.message : 'Unknown error'}` : `Import error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      }
       finally { setImportLoading(false); }
     };
     input.click();
-  }, [importTrades]);
+  }, [importTrades, isRTL]);
   const [exiting, setExiting] = useState(false);
   const handleLogout = useCallback(() => {
     setExiting(true);
