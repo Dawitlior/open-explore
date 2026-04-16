@@ -48,7 +48,7 @@ const Index = () => {
   const isAlpha = settings.isAlpha;
   const opMode = settings.operatingMode;
 
-  const [page, setPage] = useState('calendar');
+  const [page, setPage] = useState('dashboard');
   const [sbOpen, setSbOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth > 768);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [calMonth, setCalMonth] = useState(() => new Date().getMonth());
@@ -202,17 +202,28 @@ const Index = () => {
           if (!Array.isArray(importedTrades)) throw new Error('Invalid format');
           await importTrades(importedTrades);
         } else {
+          console.log('[XLSX Import] Starting import of file:', file.name, 'size:', file.size);
           const result = await importFromXlsx(file);
+          console.log('[XLSX Import] Result:', { imported: result.imported, skipped: result.skipped, errors: result.errors });
           if (result.errors.length > 0) console.warn('Import warnings:', result.errors);
-          if (result.trades.length > 0) await importTrades(result.trades);
-          else throw new Error('No valid trades found');
+          if (result.trades.length > 0) {
+            await importTrades(result.trades);
+            console.log('[XLSX Import] Successfully imported', result.trades.length, 'trades');
+          } else {
+            const errMsg = result.errors.length > 0 ? result.errors.join('; ') : 'No valid trades found in file';
+            console.error('[XLSX Import] No trades imported:', errMsg);
+            alert(isRTL ? `ייבוא נכשל: ${errMsg}` : `Import failed: ${errMsg}`);
+          }
         }
         sessionStorage.setItem('orca-seeded', '1');
-      } catch (err) { console.error('Import failed:', err); }
+      } catch (err) {
+        console.error('[XLSX Import] Error:', err);
+        alert(isRTL ? `שגיאת ייבוא: ${err instanceof Error ? err.message : 'Unknown error'}` : `Import error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      }
       finally { setImportLoading(false); }
     };
     input.click();
-  }, [importTrades]);
+  }, [importTrades, isRTL]);
   const [exiting, setExiting] = useState(false);
   const handleLogout = useCallback(() => {
     setExiting(true);
@@ -236,7 +247,7 @@ const Index = () => {
     { id: 'reset', label: isRTL ? 'איפוס הכל' : 'Reset All Data', icon: '🗑️', category: isRTL ? 'נתונים' : 'Data', action: () => setShowReset(true) },
     { id: 'privacy', label: isRTL ? 'מצב פרטיות' : 'Toggle Privacy Mode', icon: '🔒', category: isRTL ? 'מערכת' : 'System', shortcut: '⌘⇧P', action: () => settings.setPrivacyMode(!settings.privacyMode) },
     { id: 'ai', label: isRTL ? 'צור תובנות AI' : 'Generate AI Insights', icon: '🧠', category: 'AI', action: () => { setPage('ai'); handleGenerateInsights(); } },
-    ...(['dashboard', 'journal', 'calendar', 'analytics', 'risk', 'psychology', 'ai'] as const).map(p => ({
+    ...(['dashboard', 'journal', 'analytics', 'risk', 'psychology', 'ai'] as const).map(p => ({
       id: `nav-${p}`, label: `Go to ${p.charAt(0).toUpperCase() + p.slice(1)}`, icon: '📄', category: isRTL ? 'ניווט' : 'Navigation', action: () => setPage(p)
     })),
     { id: 'feature-info', label: isRTL ? 'אודות המערכת' : 'About Orca System', icon: 'ℹ️', category: isRTL ? 'מערכת' : 'System', action: () => setShowFeatureModal(true) },
@@ -250,10 +261,9 @@ const Index = () => {
   ], [isRTL, handleExport, handleImport, handleGenerateInsights, isAlpha, settings]);
 
   const nav = [
-    { id: 'dashboard', icon: Ico.dash, label: t.dashboard },
+    { id: 'dashboard', icon: Ico.dash, label: isRTL ? 'דשבורד' : 'Dashboard' },
     { id: 'journal', icon: Ico.book, label: t.journal },
-    { id: 'calendar', icon: Ico.cal, label: t.calendar },
-    { id: 'analytics', icon: Ico.bar, label: t.analytics },
+    { id: 'analytics', icon: Ico.bar, label: isRTL ? 'אנליטיקה' : 'Analytics' },
     { id: 'risk', icon: Ico.shield, label: t.risk },
     { id: 'psychology', icon: Ico.brain, label: t.psychology },
     { id: 'ai', icon: Ico.star, label: t.ai },
@@ -1426,9 +1436,8 @@ const Index = () => {
               <button onClick={() => setShowTradeForm(true)} style={{ padding: '10px 24px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 700, cursor: 'pointer', fontSize: 14 }}>+ {t.addTrade}</button>
             </div>
           )}
-          {page === 'dashboard' && renderDashboard()}
+          {page === 'dashboard' && (<>{renderDashboard()}{renderCalendar()}</>)}
           {page === 'journal' && renderJournal()}
-          {page === 'calendar' && renderCalendar()}
           {page === 'analytics' && renderAnalytics()}
           {page === 'risk' && renderRisk()}
           {page === 'psychology' && renderPsychology()}
