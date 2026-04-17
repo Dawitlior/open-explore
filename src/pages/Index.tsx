@@ -592,7 +592,7 @@ const Index = () => {
                   <ResponsiveContainer width="100%" height={170}>
                     <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="68%">
                       <PolarGrid stroke={T.border.medium} /><PolarAngleAxis dataKey="m" tick={{ fill: T.text.muted, fontSize: 9 }} /><PolarRadiusAxis tick={false} domain={[0, 100]} axisLine={false} />
-                      <Radar dataKey="v" stroke={T.accent.cyan} fill={T.accent.cyan} fillOpacity={0.15} strokeWidth={2} />
+                      <Radar dataKey="v" stroke={T.accent.cyan} fill={T.accent.cyan} fillOpacity={0.35} strokeWidth={2} />
                     </RadarChart>
                   </ResponsiveContainer>
                 </ChartWrapper>}
