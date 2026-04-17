@@ -3835,9 +3835,16 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
 
   // Bridge: Orca trades filtered by the displayed journal day's date.
   // Recomputes whenever a new Orca trade is added — live sync.
+  // Robust date matching — normalizes ANY trade date format (ISO, datetime-local,
+  // DD/MM/YYYY from XLSX import, Date objects) to YYYY-MM-DD before comparing.
+  // Works for ALL asset classes: crypto, stocks, forex, indices.
   const tradesForDate = useCallback((dateStr?: string) => {
     if (!dateStr) return [];
-    return orcaTrades.filter(tr => tr.date?.startsWith(dateStr));
+    const target = safeDateStr(dateStr);
+    return orcaTrades.filter(tr => {
+      if (!tr?.date) return false;
+      try { return safeDateStr(tr.date as any) === target; } catch { return false; }
+    });
   }, [orcaTrades]);
 
   // Exit animation handler (must be before early returns)
