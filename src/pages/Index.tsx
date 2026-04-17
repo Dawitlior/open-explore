@@ -177,7 +177,44 @@ const Index = () => {
   }, [editingTrade, addTrade, updateTrade, trades]);
 
   const handleDeleteTrade = useCallback(async (id: number) => { await removeTrade(id); setSelTrade(null); }, [removeTrade]);
-  const handleReset = useCallback(async () => { await resetAll(); sessionStorage.setItem('orca-seeded', '1'); setShowReset(false); setPage('dashboard'); }, [resetAll]);
+  const handleReset = useCallback(async () => {
+    console.log('[Reset] Starting full system wipe…');
+    try {
+      // 1. Clear Orca trades + settings via hook
+      await resetAll();
+      console.log('[Reset] Orca DB cleared');
+
+      // 2. Wipe Journal IndexedDB (apex-journal-os)
+      await new Promise<void>((resolve) => {
+        const req = indexedDB.deleteDatabase('apex-journal-os');
+        req.onsuccess = () => { console.log('[Reset] Journal DB cleared'); resolve(); };
+        req.onerror = () => { console.warn('[Reset] Journal DB delete error (continuing)'); resolve(); };
+        req.onblocked = () => { console.warn('[Reset] Journal DB delete blocked (continuing)'); resolve(); };
+        // Safety timeout — never hang
+        setTimeout(() => resolve(), 1500);
+      });
+
+      // 3. Wipe relevant localStorage / sessionStorage keys
+      try {
+        const keysToWipe = [
+          'orca-hidden-charts', 'orca-risk-explanations', 'orca-onboarding-done',
+          'orca-onboarding-data', 'orca-user-name', 'orca-trader-level',
+        ];
+        keysToWipe.forEach(k => localStorage.removeItem(k));
+        sessionStorage.removeItem('orca-entered');
+      } catch { /* ignore */ }
+
+      // 4. Reset local UI state
+      setHiddenCharts([]);
+      setRiskExplanations([]);
+      sessionStorage.setItem('orca-seeded', '1');
+      setPage('dashboard');
+      console.log('[Reset] Complete');
+    } catch (err) {
+      console.error('[Reset] Failed:', err);
+      throw err;
+    }
+  }, [resetAll]);
   const handleExport = useCallback(() => {
     exportToXlsx(trades);
   }, [trades]);
