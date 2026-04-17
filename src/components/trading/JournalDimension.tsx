@@ -3159,18 +3159,28 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
   const fillMorning = () => {
     const v = MORNING_VARIATIONS[morningIdxRef.current % MORNING_VARIATIONS.length];
     morningIdxRef.current++;
-    // Mark random tasks and goals as done (simulate button clicks)
+    // Map English demo values → current language by index in EN reference arrays
+    const EN_BIAS = ['Bullish', 'Bearish', 'Neutral', 'Expansion', 'Contraction'];
+    const EN_STRUCT = ['Markup', 'Markdown', 'Accumulation', 'Distribution', 'Range'];
+    const EN_STATES = ['Focused', 'Calm', 'Confident', 'Impulsive', 'Hesitant', 'Tired', 'Sharp'];
+    const mapBias = (en: string) => { const i = EN_BIAS.indexOf(en); return i >= 0 ? t.bias[i] : t.bias[0]; };
+    const mapStruct = (en: string) => { const i = EN_STRUCT.indexOf(en); return i >= 0 ? t.struct[i] : t.struct[0]; };
+    const mapStates = (arr: string[]) => arr.map(en => { const i = EN_STATES.indexOf(en); return i >= 0 ? t.states[i] : en; });
+    // Map textual fearGreed → numeric 0-100 (gauge expects numeric string)
+    const FG_MAP: Record<string, number> = { 'Extreme Fear': 15, 'Fear': 30, 'Neutral': 50, 'Greed': 72, 'Extreme Greed': 88 };
+    const fgNum = FG_MAP[v.fearGreed] ?? 50;
+    // Mark tasks and goals as done (simulate human user filling checklists)
     const filledTasks = (day.tasks || []).map((tk: any, i: number) => ({ ...tk, done: i < 6 || Math.random() > 0.3 }));
     const filledGoals = (day.goals || []).map((g: any, i: number) => ({ ...g, done: i < 3 || Math.random() > 0.4 }));
-    // Pick random discipline commitments
+    // Pick discipline commitments
     const commitOpts = t.commitments || [];
     const picked = commitOpts.filter((_: string, i: number) => i < 3 || Math.random() > 0.5).slice(0, 4);
     upd({
       mood: v.mood, plan: v.plan, btcThoughts: v.btcThoughts,
-      bias: v.bias, mktStruct: v.mktStruct, mentalTags: v.mentalTags,
+      bias: mapBias(v.bias), mktStruct: mapStruct(v.mktStruct), mentalTags: mapStates(v.mentalTags),
       btcNote: v.btcNote, t3Note: v.t3Note, domNote: v.domNote, macroNote: v.macroNote,
       levels: v.levels, setups: v.setups, emotionScore: v.emotionScore,
-      fearGreed: v.fearGreed, psychAnswers: v.psychAnswers,
+      fearGreed: String(fgNum), psychAnswers: v.psychAnswers,
       tasks: filledTasks, goals: filledGoals,
       disciplineCommitments: picked, disciplineConfirmed: true,
       sectionLocks: { ...day.sectionLocks, discipline: true },
