@@ -3159,18 +3159,28 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
   const fillMorning = () => {
     const v = MORNING_VARIATIONS[morningIdxRef.current % MORNING_VARIATIONS.length];
     morningIdxRef.current++;
-    // Mark random tasks and goals as done (simulate button clicks)
+    // Map English demo values → current language by index in EN reference arrays
+    const EN_BIAS = ['Bullish', 'Bearish', 'Neutral', 'Expansion', 'Contraction'];
+    const EN_STRUCT = ['Markup', 'Markdown', 'Accumulation', 'Distribution', 'Range'];
+    const EN_STATES = ['Focused', 'Calm', 'Confident', 'Impulsive', 'Hesitant', 'Tired', 'Sharp'];
+    const mapBias = (en: string) => { const i = EN_BIAS.indexOf(en); return i >= 0 ? t.bias[i] : t.bias[0]; };
+    const mapStruct = (en: string) => { const i = EN_STRUCT.indexOf(en); return i >= 0 ? t.struct[i] : t.struct[0]; };
+    const mapStates = (arr: string[]) => arr.map(en => { const i = EN_STATES.indexOf(en); return i >= 0 ? t.states[i] : en; });
+    // Map textual fearGreed → numeric 0-100 (gauge expects numeric string)
+    const FG_MAP: Record<string, number> = { 'Extreme Fear': 15, 'Fear': 30, 'Neutral': 50, 'Greed': 72, 'Extreme Greed': 88 };
+    const fgNum = FG_MAP[v.fearGreed] ?? 50;
+    // Mark tasks and goals as done (simulate human user filling checklists)
     const filledTasks = (day.tasks || []).map((tk: any, i: number) => ({ ...tk, done: i < 6 || Math.random() > 0.3 }));
     const filledGoals = (day.goals || []).map((g: any, i: number) => ({ ...g, done: i < 3 || Math.random() > 0.4 }));
-    // Pick random discipline commitments
+    // Pick discipline commitments
     const commitOpts = t.commitments || [];
     const picked = commitOpts.filter((_: string, i: number) => i < 3 || Math.random() > 0.5).slice(0, 4);
     upd({
       mood: v.mood, plan: v.plan, btcThoughts: v.btcThoughts,
-      bias: v.bias, mktStruct: v.mktStruct, mentalTags: v.mentalTags,
+      bias: mapBias(v.bias), mktStruct: mapStruct(v.mktStruct), mentalTags: mapStates(v.mentalTags),
       btcNote: v.btcNote, t3Note: v.t3Note, domNote: v.domNote, macroNote: v.macroNote,
       levels: v.levels, setups: v.setups, emotionScore: v.emotionScore,
-      fearGreed: v.fearGreed, psychAnswers: v.psychAnswers,
+      fearGreed: String(fgNum), psychAnswers: v.psychAnswers,
       tasks: filledTasks, goals: filledGoals,
       disciplineCommitments: picked, disciplineConfirmed: true,
       sectionLocks: { ...day.sectionLocks, discipline: true },
@@ -3556,32 +3566,77 @@ const MorningLockOverlay = ({ onDone, isRTL }: { onDone: () => void; isRTL: bool
   const [step, setStep] = useState(0);
   useEffect(() => {
     const t = [
-      setTimeout(() => setStep(1), 100),
-      setTimeout(() => setStep(2), 500),
-      setTimeout(() => setStep(3), 1200),
-      setTimeout(() => setStep(4), 1700),
-      setTimeout(() => { setStep(5); onDone(); }, 2200),
+      setTimeout(() => setStep(1), 40),
+      setTimeout(() => setStep(2), 220),
+      setTimeout(() => setStep(3), 700),
+      setTimeout(() => { setStep(4); onDone(); }, 1500),
     ];
     playMorningLock();
     return () => t.forEach(clearTimeout);
   }, [onDone]);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 9998, pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', width: '100vw', height: '100vh', maxWidth: '100vw' }}>
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(5,10,30,0.88)', opacity: step >= 1 ? 1 : 0, transition: 'opacity 0.4s ease', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }} />
-      <svg style={{ position: 'absolute', width: '100%', height: '100%', opacity: step >= 2 ? 0.15 : 0, transition: 'opacity 0.5s ease' }} viewBox="0 0 100 40" preserveAspectRatio="xMidYMid slice">
-        <polyline points="0,30 10,29 20,29.5 30,27 40,26 50,24 60,20 70,18 75,10 80,6 85,4 90,3"
-          fill="none" stroke="#5AA9FF" strokeWidth="0.3"
-          style={{ strokeDasharray: 200, strokeDashoffset: step >= 2 ? 0 : 200, transition: 'stroke-dashoffset 1s ease-out', filter: 'drop-shadow(0 0 2px rgba(90,169,255,0.6))' }} />
-      </svg>
-      <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', width: '85%', maxWidth: 360, opacity: step >= 3 ? 1 : 0, transform: step >= 3 ? 'scale(1)' : 'scale(0.85)', transition: 'all 0.5s cubic-bezier(0.16,1,0.3,1)' }}>
-        <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(90,169,255,0.1)', border: '2px solid rgba(90,169,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 26, boxShadow: '0 0 40px rgba(90,169,255,0.2)' }}>✓</div>
-        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 'clamp(16px, 4.5vw, 22px)', fontWeight: 800, color: '#5AA9FF', letterSpacing: 0.5, textShadow: '0 0 30px rgba(90,169,255,0.5)', direction: isRTL ? 'rtl' : 'ltr' }}>
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 9998, pointerEvents: 'none',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      overflow: 'hidden', width: '100vw', height: '100vh',
+    }}>
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: 'radial-gradient(ellipse at center, rgba(10,20,50,0.92) 0%, rgba(3,6,16,0.96) 70%)',
+        opacity: step >= 1 ? 1 : 0, transition: 'opacity 0.3s ease',
+        backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
+      }} />
+      {[0, 1, 2].map(i => (
+        <div key={i} style={{
+          position: 'absolute', left: '50%', top: '50%',
+          width: 80, height: 80, marginLeft: -40, marginTop: -40,
+          borderRadius: '50%', border: '2px solid rgba(90,169,255,0.5)',
+          opacity: 0,
+          animation: step >= 2 ? `j-mlock-ring 1.2s cubic-bezier(0.16,1,0.3,1) ${i * 0.18}s forwards` : 'none',
+        }} />
+      ))}
+      <div style={{
+        position: 'relative', zIndex: 2, textAlign: 'center',
+        opacity: step >= 2 ? 1 : 0,
+        transform: step >= 2 ? 'scale(1)' : 'scale(0.6)',
+        transition: 'all 0.4s cubic-bezier(0.16,1,0.3,1)',
+      }}>
+        <div style={{
+          width: 'clamp(72px, 14vw, 96px)', height: 'clamp(72px, 14vw, 96px)',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle at 30% 30%, rgba(90,169,255,0.35), rgba(90,169,255,0.08))',
+          border: '2px solid rgba(90,169,255,0.55)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          margin: '0 auto 18px',
+          fontSize: 'clamp(30px, 6vw, 42px)', color: '#5AA9FF',
+          boxShadow: '0 0 60px rgba(90,169,255,0.45), inset 0 0 30px rgba(90,169,255,0.15)',
+          transform: step >= 3 ? 'rotate(0deg)' : 'rotate(-90deg)',
+          transition: 'transform 0.5s cubic-bezier(0.16,1,0.3,1)',
+        }}>✓</div>
+        <div style={{
+          fontFamily: "'Poppins',sans-serif", fontSize: 'clamp(16px, 4vw, 22px)',
+          fontWeight: 800, color: '#5AA9FF', letterSpacing: 0.5,
+          textShadow: '0 0 30px rgba(90,169,255,0.5)',
+          direction: isRTL ? 'rtl' : 'ltr',
+          opacity: step >= 3 ? 1 : 0, transform: step >= 3 ? 'translateY(0)' : 'translateY(8px)',
+          transition: 'all 0.35s ease',
+        }}>
           {isRTL ? 'ניתוח הבוקר ננעל' : 'Morning Analysis Locked'}
         </div>
-        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, color: 'rgba(90,169,255,0.4)', letterSpacing: 3, marginTop: 8, textTransform: 'uppercase' as const }}>SEALED & PROTECTED</div>
-        <div style={{ width: 50, height: 2, background: '#5AA9FF', margin: '14px auto 0', borderRadius: 1, boxShadow: '0 0 15px rgba(90,169,255,0.5)', opacity: step >= 4 ? 1 : 0, transform: step >= 4 ? 'scaleX(1)' : 'scaleX(0)', transition: 'all 0.3s ease' }} />
+        <div style={{
+          fontFamily: "'JetBrains Mono',monospace", fontSize: 10,
+          color: 'rgba(90,169,255,0.55)', letterSpacing: 4, marginTop: 8,
+          textTransform: 'uppercase' as const,
+          opacity: step >= 3 ? 1 : 0, transition: 'opacity 0.4s ease 0.1s',
+        }}>SEALED · PROTECTED</div>
       </div>
+      <style>{`
+        @keyframes j-mlock-ring {
+          0% { transform: scale(0.5); opacity: 0.9; border-width: 2px; }
+          100% { transform: scale(6); opacity: 0; border-width: 0.5px; }
+        }
+      `}</style>
     </div>
   );
 };
@@ -3780,6 +3835,8 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
   }, []);
 
   const saveMorning = useCallback(() => {
+    // Immediate scroll BEFORE animation — user lands at top instantly
+    window.scrollTo({ top: 0, behavior: 'auto' });
     setLockAnim('morning');
     const curId = activeIdRef.current;
     setDays(prev => {
@@ -3792,6 +3849,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
   }, [showToast]);
 
   const saveEOD = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: 'auto' });
     setLockAnim('eod');
     const curId = activeIdRef.current;
     const curLang = langRef.current;
@@ -3822,9 +3880,16 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
 
   // Bridge: Orca trades filtered by the displayed journal day's date.
   // Recomputes whenever a new Orca trade is added — live sync.
+  // Robust date matching — normalizes ANY trade date format (ISO, datetime-local,
+  // DD/MM/YYYY from XLSX import, Date objects) to YYYY-MM-DD before comparing.
+  // Works for ALL asset classes: crypto, stocks, forex, indices.
   const tradesForDate = useCallback((dateStr?: string) => {
     if (!dateStr) return [];
-    return orcaTrades.filter(tr => tr.date?.startsWith(dateStr));
+    const target = safeDateStr(dateStr);
+    return orcaTrades.filter(tr => {
+      if (!tr?.date) return false;
+      try { return safeDateStr(tr.date as any) === target; } catch { return false; }
+    });
   }, [orcaTrades]);
 
   // Exit animation handler (must be before early returns)
@@ -3925,8 +3990,8 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
       )}
 
       {/* LOCK ANIMATIONS */}
-      {lockAnim === 'morning' && <MorningLockOverlay onDone={() => { setLockAnim(null); setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100); }} isRTL={dir === 'rtl'} />}
-      {lockAnim === 'eod' && <EODLockOverlay onDone={() => { setLockAnim(null); setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100); }} isRTL={dir === 'rtl'} />}
+      {lockAnim === 'morning' && <MorningLockOverlay onDone={() => { setLockAnim(null); window.scrollTo({ top: 0, behavior: 'auto' }); }} isRTL={dir === 'rtl'} />}
+      {lockAnim === 'eod' && <EODLockOverlay onDone={() => { setLockAnim(null); window.scrollTo({ top: 0, behavior: 'auto' }); }} isRTL={dir === 'rtl'} />}
 
       {/* KNOWLEDGE PANEL */}
       {knowledgePanel && <KnowledgePanel type={knowledgePanel} days={days} dir={dir} th={th} onClose={() => setKnowledgePanel(null)} onOpenDay={(id) => { setViewingArchiveId(id); setView('journal'); }} />}
