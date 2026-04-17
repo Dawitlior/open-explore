@@ -3790,6 +3790,8 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
   }, []);
 
   const saveMorning = useCallback(() => {
+    // Immediate scroll BEFORE animation — user lands at top instantly
+    window.scrollTo({ top: 0, behavior: 'auto' });
     setLockAnim('morning');
     const curId = activeIdRef.current;
     setDays(prev => {
@@ -3802,6 +3804,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
   }, [showToast]);
 
   const saveEOD = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: 'auto' });
     setLockAnim('eod');
     const curId = activeIdRef.current;
     const curLang = langRef.current;
