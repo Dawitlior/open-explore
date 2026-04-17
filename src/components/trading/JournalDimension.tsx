@@ -3402,29 +3402,56 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk, onInfo
         <ImageUpload images={day.eodImages || []} onUpdate={(imgs: string[]) => upd({ eodImages: imgs })} label={dir === 'rtl' ? 'צילומי גרפים מסוף היום' : 'End of day chart captures'} uploadLabel={f.imageUpload} dir={dir} disabled={fullLocked || sLocks['eodImages']} th={th} />
       </Sec>
 
-      {/* Orca Trade Bridge */}
-      {orcaTrades?.length > 0 && (
-        <div style={{ background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 12, padding: '12px 16px', marginBottom: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-            <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8.5, color: '#5AA9FF', letterSpacing: '1.8px', fontWeight: 700, textTransform: 'uppercase' as const }}>⚡ ORCA BRIDGE</span>
-            <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, color: th.tx3 }}>{orcaTrades.length} trades</span>
-          </div>
-          <div style={{ display: 'flex', gap: 8, overflowX: 'auto' as const, paddingBottom: 4 }}>
-            {orcaTrades.slice(0, 6).map((tr: Trade) => (
-              <div key={tr.id} style={{
-                flexShrink: 0, padding: '9px 13px', background: th.inputBg, borderRadius: 10,
-                border: `1px solid ${tr.pnl >= 0 ? 'rgba(0,255,163,.15)' : 'rgba(255,77,77,.15)'}`, minWidth: 110,
-                transition: 'all .2s',
-              }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}>
-                <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 700, color: th.tx2 }}>{tr.coin}</div>
-                <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 13, fontWeight: 800, color: tr.pnl >= 0 ? '#00FFA3' : '#FF4D4D', marginTop: 3, textShadow: `0 0 10px ${tr.pnl >= 0 ? 'rgba(0,255,163,0.25)' : 'rgba(255,77,77,0.25)'}` }}>{tr.pnl >= 0 ? '+' : ''}{tr.pnl.toFixed(2)}$</div>
+      {/* Orca Trade Bridge — live sync from Orca Investment for THIS day */}
+      {orcaTrades?.length > 0 && (() => {
+        const totalPnl = orcaTrades.reduce((s, tr) => s + (tr.pnl || 0), 0);
+        const wins = orcaTrades.filter(tr => tr.pnl > 0).length;
+        const wr = (wins / orcaTrades.length) * 100;
+        return (
+          <div style={{
+            background: `linear-gradient(135deg, ${totalPnl >= 0 ? 'rgba(0,255,163,0.06)' : 'rgba(255,77,77,0.06)'}, ${th.cardBg})`,
+            border: `1px solid ${totalPnl >= 0 ? 'rgba(0,255,163,0.25)' : 'rgba(255,77,77,0.25)'}`,
+            borderRadius: 14, padding: '14px 16px', marginBottom: 16,
+            boxShadow: `0 0 24px ${totalPnl >= 0 ? 'rgba(0,255,163,0.08)' : 'rgba(255,77,77,0.08)'}`,
+            animation: 'j-fade-in .35s ease-out',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, flexWrap: 'wrap' as const }}>
+              <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, color: '#5AA9FF', letterSpacing: '2px', fontWeight: 800, textTransform: 'uppercase' as const, padding: '3px 8px', background: 'rgba(90,169,255,0.1)', borderRadius: 6, border: '1px solid rgba(90,169,255,0.2)' }}>⚡ ORCA LIVE BRIDGE</span>
+              <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, color: th.tx3, letterSpacing: '1px' }}>
+                {dir === 'rtl' ? `${orcaTrades.length} עסקאות סונכרנו ליום זה` : `${orcaTrades.length} trades synced for this day`}
+              </span>
+              <div style={{ marginInlineStart: 'auto', display: 'flex', gap: 14 }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 8, color: th.tx3, letterSpacing: '1.5px', fontWeight: 700 }}>P&L</div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: totalPnl >= 0 ? '#00FFA3' : '#FF4D4D', fontFamily: "'Poppins',sans-serif" }}>{totalPnl >= 0 ? '+' : ''}{totalPnl.toFixed(2)}$</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 8, color: th.tx3, letterSpacing: '1.5px', fontWeight: 700 }}>WR</div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: '#FFC857', fontFamily: "'Poppins',sans-serif" }}>{wr.toFixed(0)}%</div>
+                </div>
               </div>
-            ))}
+            </div>
+            <div style={{ display: 'flex', gap: 8, overflowX: 'auto' as const, paddingBottom: 4 }}>
+              {orcaTrades.map((tr: Trade) => (
+                <div key={tr.id} style={{
+                  flexShrink: 0, padding: '10px 14px', background: th.inputBg, borderRadius: 10,
+                  border: `1px solid ${tr.pnl >= 0 ? 'rgba(0,255,163,.2)' : 'rgba(255,77,77,.2)'}`, minWidth: 120,
+                  transition: 'all .2s',
+                }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = `0 6px 20px ${tr.pnl >= 0 ? 'rgba(0,255,163,0.15)' : 'rgba(255,77,77,0.15)'}`; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                    <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 700, color: th.tx2 }}>{tr.coin}</div>
+                    <div style={{ fontSize: 8, color: tr.direction === 'Long' ? '#00FFA3' : '#FF4D4D', fontWeight: 700, letterSpacing: '1px' }}>{tr.direction === 'Long' ? '▲' : '▼'}</div>
+                  </div>
+                  <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 13, fontWeight: 800, color: tr.pnl >= 0 ? '#00FFA3' : '#FF4D4D', marginTop: 2, textShadow: `0 0 10px ${tr.pnl >= 0 ? 'rgba(0,255,163,0.3)' : 'rgba(255,77,77,0.3)'}` }}>{tr.pnl >= 0 ? '+' : ''}{tr.pnl.toFixed(2)}$</div>
+                  <div style={{ fontSize: 9, color: th.tx3, marginTop: 2, fontFamily: "'Poppins',sans-serif" }}>{(tr.returnR ?? 0) >= 0 ? '+' : ''}{(tr.returnR ?? 0).toFixed(2)}R</div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 4 }}>
         <div onClick={onInfoClick} style={{ cursor: 'pointer', flex: 1 }}>
@@ -3793,9 +3820,11 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
       .reverse();
   }, [days, sbQ]);
 
-  const todayOrcaTrades = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
-    return orcaTrades.filter(tr => tr.date?.startsWith(today));
+  // Bridge: Orca trades filtered by the displayed journal day's date.
+  // Recomputes whenever a new Orca trade is added — live sync.
+  const tradesForDate = useCallback((dateStr?: string) => {
+    if (!dateStr) return [];
+    return orcaTrades.filter(tr => tr.date?.startsWith(dateStr));
   }, [orcaTrades]);
 
   // Exit animation handler (must be before early returns)
@@ -4108,12 +4137,12 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
               {isViewingArchive ? (
                 /* Read-only view for archived day */
                 displayDay.morningSaved
-                 ? <EodForm day={displayDay} upd={() => {}} t={t} dir={dir} onSave={() => {}} dirty={false} orcaTrades={[]} th={th} risk={riskStatus} onInfoClick={() => setKnowledgePanel('eod')} />
+                 ? <EodForm day={displayDay} upd={() => {}} t={t} dir={dir} onSave={() => {}} dirty={false} orcaTrades={tradesForDate(displayDay.date)} th={th} risk={riskStatus} onInfoClick={() => setKnowledgePanel('eod')} />
                  : <MorningForm day={displayDay} upd={() => {}} t={t} dir={dir} onSave={() => {}} dirty={false} th={th} onInfoClick={() => setKnowledgePanel('morning')} />
               ) : (
                 !displayDay.morningSaved
                   ? <MorningForm day={displayDay} upd={upd} t={t} dir={dir} onSave={saveMorning} dirty={mDirty} th={th} onInfoClick={() => setKnowledgePanel('morning')} />
-                  : <EodForm day={displayDay} upd={upd} t={t} dir={dir} onSave={saveEOD} dirty={eDirty} orcaTrades={todayOrcaTrades} th={th} risk={riskStatus} onInfoClick={() => setKnowledgePanel('eod')} />
+                  : <EodForm day={displayDay} upd={upd} t={t} dir={dir} onSave={saveEOD} dirty={eDirty} orcaTrades={tradesForDate(displayDay.date)} th={th} risk={riskStatus} onInfoClick={() => setKnowledgePanel('eod')} />
               )}
             </div>
           )}
