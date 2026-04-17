@@ -199,7 +199,7 @@ export const AdvancedAnalyticsPage = ({ T, isRTL, isAlpha, trades, stats, privac
         <LazyChart height={210}>
           <ResponsiveContainer width="100%" height={210}>
             <ComposedChart data={(() => { let c = 0; return trades.map(tr => ({ id: tr.id, cum: (c += tr.pnl), pnl: tr.pnl })); })()}>
-              <defs><linearGradient id="cGa" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.2} /><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0} /></linearGradient></defs>
+              <defs><linearGradient id="cGa" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.55} /><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.05} /></linearGradient></defs>
               <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
               <XAxis dataKey="id" tick={{ fill: T.text.dim, fontSize: 10 }} />
               <YAxis tick={{ fill: T.text.dim, fontSize: 10 }} />
@@ -317,7 +317,7 @@ export const AdvancedAnalyticsPage = ({ T, isRTL, isAlpha, trades, stats, privac
             <LazyChart height={180}>
               <ResponsiveContainer width="100%" height={180}>
                 <AreaChart data={(() => { let p = 0; return stats.equityCurve.map(e => { if (e.balance > p) p = e.balance; return { trade: e.trade, dd: p > 0 ? -((p - e.balance) / p * 100) : 0 }; }); })()}>
-                  <defs><linearGradient id="ddGAn" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.red} stopOpacity={0} /><stop offset="100%" stopColor={T.accent.red} stopOpacity={0.4} /></linearGradient></defs>
+                  <defs><linearGradient id="ddGAn" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.red} stopOpacity={0.05} /><stop offset="100%" stopColor={T.accent.red} stopOpacity={0.6} /></linearGradient></defs>
                   <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
                   <XAxis dataKey="trade" tick={{ fill: T.text.dim, fontSize: 10 }} />
                   <YAxis tick={{ fill: T.text.dim, fontSize: 10 }} domain={['dataMin', 0]} />
