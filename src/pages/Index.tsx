@@ -356,7 +356,7 @@ const Index = () => {
         <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.equityCurve} explanation={EXPLANATIONS.equityCurve} unit="$" style={{ marginBottom: 18 }}>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={stats.equityCurve}>
-              <defs><linearGradient id="eqBeg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.3}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0}/></linearGradient></defs>
+              <defs><linearGradient id="eqBeg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.6}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.05}/></linearGradient></defs>
               <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
               <XAxis dataKey="trade" tick={{ fill: T.text.dim, fontSize: 10 }} />
               <YAxis tick={{ fill: T.text.dim, fontSize: 10 }} domain={['dataMin - 5', 'dataMax + 5']} />
@@ -571,9 +571,9 @@ const Index = () => {
                 {isChartVisible('equityCurve') && <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.equityCurve} explanation={EXPLANATIONS.equityCurve} unit="$" chartId="equityCurve" onRemove={handleHideChart} style={{ flex: 2, minWidth: 380 }}>
                   <ResponsiveContainer width="100%" height={190}>
                     <AreaChart data={stats.equityCurve}>
-                      <defs><linearGradient id="eqG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.3}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0}/></linearGradient></defs>
+                      <defs><linearGradient id="eqGAdv" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.6}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.05}/></linearGradient></defs>
                       <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="trade" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 10 }} domain={['dataMin - 5', 'dataMax + 5']} />
-                      <Tooltip contentStyle={tt} /><Area type="monotone" dataKey="balance" stroke={T.accent.cyan} fill="url(#eqG)" strokeWidth={2.5} dot={{ fill: T.accent.cyan, r: 3 }} />
+                      <Tooltip contentStyle={tt} /><Area type="monotone" dataKey="balance" stroke={T.accent.cyan} fill="url(#eqGAdv)" strokeWidth={2.5} dot={{ fill: T.accent.cyan, r: 3 }} />
                     </AreaChart>
                   </ResponsiveContainer>
                 </ChartWrapper>}
@@ -717,9 +717,9 @@ const Index = () => {
           <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'תוחלת מתגלגלת (R)' : 'Rolling Expectancy (R)'} explanation={EXPLANATIONS.expectancy} unit="R">
             <ResponsiveContainer width="100%" height={200}>
               <AreaChart data={stats.rollingExpectancyR}>
-                <defs><linearGradient id="reG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.2}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0}/></linearGradient></defs>
+                <defs><linearGradient id="reGRes" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.55}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.05}/></linearGradient></defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="tradeId" tick={{ fill: T.text.dim, fontSize: 9 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 9 }} />
-                <Tooltip contentStyle={tt} /><Area type="monotone" dataKey="expectancyR" stroke={T.accent.cyan} fill="url(#reG)" strokeWidth={2} />
+                <Tooltip contentStyle={tt} /><Area type="monotone" dataKey="expectancyR" stroke={T.accent.cyan} fill="url(#reGRes)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
           </ChartWrapper>
@@ -733,9 +733,9 @@ const Index = () => {
           <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'מפת נסיגה' : 'Drawdown Depth Map'} explanation={EXPLANATIONS.drawdown} unit="%">
             <ResponsiveContainer width="100%" height={200}>
               <AreaChart data={(() => { let p = 200; return stats.equityCurve.map(e => { if (e.balance > p) p = e.balance; return { trade: e.trade, dd: -((p - e.balance) / p * 100) }; }); })()}>
-                <defs><linearGradient id="ddGR" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.red} stopOpacity={0}/><stop offset="100%" stopColor={T.accent.red} stopOpacity={0.4}/></linearGradient></defs>
+                <defs><linearGradient id="ddGRRes" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.red} stopOpacity={0.05}/><stop offset="100%" stopColor={T.accent.red} stopOpacity={0.6}/></linearGradient></defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="trade" tick={{ fill: T.text.dim, fontSize: 9 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 9 }} domain={['dataMin', 0]} />
-                <Tooltip contentStyle={tt} formatter={(v: number) => `${v.toFixed(2)}%`} /><Area type="monotone" dataKey="dd" stroke={T.accent.red} fill="url(#ddGR)" strokeWidth={2} />
+                <Tooltip contentStyle={tt} formatter={(v: number) => `${v.toFixed(2)}%`} /><Area type="monotone" dataKey="dd" stroke={T.accent.red} fill="url(#ddGRRes)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
           </ChartWrapper>
