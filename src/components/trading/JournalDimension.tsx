@@ -3566,32 +3566,77 @@ const MorningLockOverlay = ({ onDone, isRTL }: { onDone: () => void; isRTL: bool
   const [step, setStep] = useState(0);
   useEffect(() => {
     const t = [
-      setTimeout(() => setStep(1), 100),
-      setTimeout(() => setStep(2), 500),
-      setTimeout(() => setStep(3), 1200),
-      setTimeout(() => setStep(4), 1700),
-      setTimeout(() => { setStep(5); onDone(); }, 2200),
+      setTimeout(() => setStep(1), 40),
+      setTimeout(() => setStep(2), 220),
+      setTimeout(() => setStep(3), 700),
+      setTimeout(() => { setStep(4); onDone(); }, 1500),
     ];
     playMorningLock();
     return () => t.forEach(clearTimeout);
   }, [onDone]);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 9998, pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', width: '100vw', height: '100vh', maxWidth: '100vw' }}>
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(5,10,30,0.88)', opacity: step >= 1 ? 1 : 0, transition: 'opacity 0.4s ease', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }} />
-      <svg style={{ position: 'absolute', width: '100%', height: '100%', opacity: step >= 2 ? 0.15 : 0, transition: 'opacity 0.5s ease' }} viewBox="0 0 100 40" preserveAspectRatio="xMidYMid slice">
-        <polyline points="0,30 10,29 20,29.5 30,27 40,26 50,24 60,20 70,18 75,10 80,6 85,4 90,3"
-          fill="none" stroke="#5AA9FF" strokeWidth="0.3"
-          style={{ strokeDasharray: 200, strokeDashoffset: step >= 2 ? 0 : 200, transition: 'stroke-dashoffset 1s ease-out', filter: 'drop-shadow(0 0 2px rgba(90,169,255,0.6))' }} />
-      </svg>
-      <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', width: '85%', maxWidth: 360, opacity: step >= 3 ? 1 : 0, transform: step >= 3 ? 'scale(1)' : 'scale(0.85)', transition: 'all 0.5s cubic-bezier(0.16,1,0.3,1)' }}>
-        <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(90,169,255,0.1)', border: '2px solid rgba(90,169,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 26, boxShadow: '0 0 40px rgba(90,169,255,0.2)' }}>✓</div>
-        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 'clamp(16px, 4.5vw, 22px)', fontWeight: 800, color: '#5AA9FF', letterSpacing: 0.5, textShadow: '0 0 30px rgba(90,169,255,0.5)', direction: isRTL ? 'rtl' : 'ltr' }}>
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 9998, pointerEvents: 'none',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      overflow: 'hidden', width: '100vw', height: '100vh',
+    }}>
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: 'radial-gradient(ellipse at center, rgba(10,20,50,0.92) 0%, rgba(3,6,16,0.96) 70%)',
+        opacity: step >= 1 ? 1 : 0, transition: 'opacity 0.3s ease',
+        backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
+      }} />
+      {[0, 1, 2].map(i => (
+        <div key={i} style={{
+          position: 'absolute', left: '50%', top: '50%',
+          width: 80, height: 80, marginLeft: -40, marginTop: -40,
+          borderRadius: '50%', border: '2px solid rgba(90,169,255,0.5)',
+          opacity: 0,
+          animation: step >= 2 ? `j-mlock-ring 1.2s cubic-bezier(0.16,1,0.3,1) ${i * 0.18}s forwards` : 'none',
+        }} />
+      ))}
+      <div style={{
+        position: 'relative', zIndex: 2, textAlign: 'center',
+        opacity: step >= 2 ? 1 : 0,
+        transform: step >= 2 ? 'scale(1)' : 'scale(0.6)',
+        transition: 'all 0.4s cubic-bezier(0.16,1,0.3,1)',
+      }}>
+        <div style={{
+          width: 'clamp(72px, 14vw, 96px)', height: 'clamp(72px, 14vw, 96px)',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle at 30% 30%, rgba(90,169,255,0.35), rgba(90,169,255,0.08))',
+          border: '2px solid rgba(90,169,255,0.55)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          margin: '0 auto 18px',
+          fontSize: 'clamp(30px, 6vw, 42px)', color: '#5AA9FF',
+          boxShadow: '0 0 60px rgba(90,169,255,0.45), inset 0 0 30px rgba(90,169,255,0.15)',
+          transform: step >= 3 ? 'rotate(0deg)' : 'rotate(-90deg)',
+          transition: 'transform 0.5s cubic-bezier(0.16,1,0.3,1)',
+        }}>✓</div>
+        <div style={{
+          fontFamily: "'Poppins',sans-serif", fontSize: 'clamp(16px, 4vw, 22px)',
+          fontWeight: 800, color: '#5AA9FF', letterSpacing: 0.5,
+          textShadow: '0 0 30px rgba(90,169,255,0.5)',
+          direction: isRTL ? 'rtl' : 'ltr',
+          opacity: step >= 3 ? 1 : 0, transform: step >= 3 ? 'translateY(0)' : 'translateY(8px)',
+          transition: 'all 0.35s ease',
+        }}>
           {isRTL ? 'ניתוח הבוקר ננעל' : 'Morning Analysis Locked'}
         </div>
-        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, color: 'rgba(90,169,255,0.4)', letterSpacing: 3, marginTop: 8, textTransform: 'uppercase' as const }}>SEALED & PROTECTED</div>
-        <div style={{ width: 50, height: 2, background: '#5AA9FF', margin: '14px auto 0', borderRadius: 1, boxShadow: '0 0 15px rgba(90,169,255,0.5)', opacity: step >= 4 ? 1 : 0, transform: step >= 4 ? 'scaleX(1)' : 'scaleX(0)', transition: 'all 0.3s ease' }} />
+        <div style={{
+          fontFamily: "'JetBrains Mono',monospace", fontSize: 10,
+          color: 'rgba(90,169,255,0.55)', letterSpacing: 4, marginTop: 8,
+          textTransform: 'uppercase' as const,
+          opacity: step >= 3 ? 1 : 0, transition: 'opacity 0.4s ease 0.1s',
+        }}>SEALED · PROTECTED</div>
       </div>
+      <style>{`
+        @keyframes j-mlock-ring {
+          0% { transform: scale(0.5); opacity: 0.9; border-width: 2px; }
+          100% { transform: scale(6); opacity: 0; border-width: 0.5px; }
+        }
+      `}</style>
     </div>
   );
 };
