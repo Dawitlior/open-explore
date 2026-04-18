@@ -17,6 +17,7 @@ import { ModeSwitch } from '@/components/trading/ModeSwitch';
 import { PrivacyMask, usePrivacyShortcut } from '@/components/trading/PrivacyMask';
 import { TradeForm } from '@/components/trading/TradeForm';
 import { ResetModal } from '@/components/trading/ResetModal';
+import ImportLoadingOverlay from '@/components/trading/ImportLoadingOverlay';
 import { EntryGate } from '@/components/trading/EntryGate';
 import { RiskLimitAlert } from '@/components/trading/RiskLimitAlert';
 import { RiskExplanationModal, type RiskExplanation } from '@/components/trading/RiskExplanationModal';
