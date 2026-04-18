@@ -1,18 +1,32 @@
 import type { Trade } from '@/data/trades';
 
 const DB_NAME = 'orca-trading-os';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
+
+function ensureStores(db: IDBDatabase) {
+  if (!db.objectStoreNames.contains('trades')) db.createObjectStore('trades', { keyPath: 'id' });
+  if (!db.objectStoreNames.contains('settings')) db.createObjectStore('settings', { keyPath: 'key' });
+}
 
 function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains('trades')) db.createObjectStore('trades', { keyPath: 'id' });
-      if (!db.objectStoreNames.contains('settings')) db.createObjectStore('settings', { keyPath: 'key' });
+    // First try without version → adopt whatever exists in the browser
+    const probe = indexedDB.open(DB_NAME);
+    probe.onsuccess = () => {
+      const db = probe.result;
+      const currentVersion = db.version;
+      const missingStore = !db.objectStoreNames.contains('trades') || !db.objectStoreNames.contains('settings');
+      if (!missingStore) { resolve(db); return; }
+      // Need to upgrade to add stores
+      db.close();
+      const upgradeReq = indexedDB.open(DB_NAME, currentVersion + 1);
+      upgradeReq.onupgradeneeded = () => ensureStores(upgradeReq.result);
+      upgradeReq.onsuccess = () => resolve(upgradeReq.result);
+      upgradeReq.onerror = () => reject(upgradeReq.error);
     };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
+    probe.onupgradeneeded = () => ensureStores(probe.result);
+    probe.onerror = () => reject(probe.error);
+    probe.onblocked = () => reject(new Error('Database blocked'));
   });
 }
 

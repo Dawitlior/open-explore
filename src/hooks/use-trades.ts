@@ -102,6 +102,7 @@ export function useTrades() {
       const req = indexedDB.open('orca-trading-os');
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
+      req.onblocked = () => reject(new Error('Database blocked'));
     });
     await new Promise<void>((resolve, reject) => {
       if (!db.objectStoreNames.contains('trades')) { resolve(); return; }
