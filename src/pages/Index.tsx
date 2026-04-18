@@ -17,6 +17,7 @@ import { ModeSwitch } from '@/components/trading/ModeSwitch';
 import { PrivacyMask, usePrivacyShortcut } from '@/components/trading/PrivacyMask';
 import { TradeForm } from '@/components/trading/TradeForm';
 import { ResetModal } from '@/components/trading/ResetModal';
+import ImportLoadingOverlay from '@/components/trading/ImportLoadingOverlay';
 import { EntryGate } from '@/components/trading/EntryGate';
 import { RiskLimitAlert } from '@/components/trading/RiskLimitAlert';
 import { RiskExplanationModal, type RiskExplanation } from '@/components/trading/RiskExplanationModal';
@@ -69,6 +70,9 @@ const Index = () => {
   });
   const [showImportWarning, setShowImportWarning] = useState(false);
   const [importLoading, setImportLoading] = useState(false);
+  const [importFileName, setImportFileName] = useState<string>('');
+  const [importedCount, setImportedCount] = useState(0);
+  const [importPhase, setImportPhase] = useState<'reading' | 'parsing' | 'validating' | 'saving' | 'done'>('reading');
   const [explainModal, setExplainModal] = useState<{ title: string; explanation: ChartExplanation; chartId?: string } | null>(null);
   const [riskExplanations, setRiskExplanations] = useState<RiskExplanation[]>(() => {
     try { return JSON.parse(localStorage.getItem('orca-risk-explanations') || '[]'); } catch { return []; }
@@ -231,19 +235,34 @@ const Index = () => {
     const input = document.createElement('input'); input.type = 'file'; input.accept = '.xlsx,.xls,.json';
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]; if (!file) return;
+      setImportFileName(file.name);
+      setImportedCount(0);
+      setImportPhase('reading');
       setImportLoading(true);
       try {
+        // Small artificial pacing so the user actually sees the cinematic phases
+        await new Promise(r => setTimeout(r, 450));
         if (file.name.endsWith('.json')) {
+          setImportPhase('parsing');
           const text = await file.text(); const data = JSON.parse(text);
           const importedTrades = data.trades || data;
           if (!Array.isArray(importedTrades)) throw new Error('Invalid format');
+          setImportedCount(importedTrades.length);
+          setImportPhase('validating');
+          await new Promise(r => setTimeout(r, 350));
+          setImportPhase('saving');
           await importTrades(importedTrades);
         } else {
+          setImportPhase('parsing');
           console.log('[XLSX Import] Starting import of file:', file.name, 'size:', file.size);
           const result = await importFromXlsx(file);
           console.log('[XLSX Import] Result:', { imported: result.imported, skipped: result.skipped, errors: result.errors });
           if (result.errors.length > 0) console.warn('Import warnings:', result.errors);
+          setImportedCount(result.trades.length);
+          setImportPhase('validating');
+          await new Promise(r => setTimeout(r, 350));
           if (result.trades.length > 0) {
+            setImportPhase('saving');
             await importTrades(result.trades);
             console.log('[XLSX Import] Successfully imported', result.trades.length, 'trades');
           } else {
@@ -252,6 +271,8 @@ const Index = () => {
             alert(isRTL ? `ייבוא נכשל: ${errMsg}` : `Import failed: ${errMsg}`);
           }
         }
+        setImportPhase('done');
+        await new Promise(r => setTimeout(r, 700));
         sessionStorage.setItem('orca-seeded', '1');
       } catch (err) {
         console.error('[XLSX Import] Error:', err);
@@ -1531,15 +1552,14 @@ const Index = () => {
           </div>
         </div>
       )}
-      {/* Import Loading Overlay */}
+      {/* Import Loading Overlay — cinematic trading-floor animation */}
       {importLoading && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 250, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 40, marginBottom: 16, animation: 'pulse 1.5s infinite' }}>📊</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: T.text.primary, marginBottom: 8 }}>{isRTL ? 'מעבד נתונים...' : 'Processing data...'}</div>
-            <div style={{ fontSize: 12, color: T.text.muted }}>{isRTL ? 'אנא המתן, המערכת מייבאת את העסקאות שלך' : 'Please wait while the system imports your trades'}</div>
-          </div>
-        </div>
+        <ImportLoadingOverlay
+          isRTL={isRTL}
+          fileName={importFileName}
+          imported={importedCount}
+          phase={importPhase}
+        />
       )}
       {/* Chart Explanation Modal */}
       {explainModal && (
