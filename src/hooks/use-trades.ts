@@ -95,18 +95,22 @@ export function useTrades() {
   const importTrades = useCallback(async (newTrades: Trade[]) => {
     const sanitized = sanitizeTrades(newTrades);
     const rebalanced = recalcBalances(sanitized.map((t, i) => ({ ...t, id: i + 1 })));
-    // Clear only trades (not settings) for deterministic state
+    // Clear only trades (not settings) for deterministic state.
+    // Open without specifying a version to avoid VersionError when the DB
+    // has been upgraded to a higher version elsewhere.
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
-      const req = indexedDB.open('orca-trading-os', 2);
+      const req = indexedDB.open('orca-trading-os');
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
     });
     await new Promise<void>((resolve, reject) => {
+      if (!db.objectStoreNames.contains('trades')) { resolve(); return; }
       const tx = db.transaction('trades', 'readwrite');
       tx.objectStore('trades').clear();
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
     });
+    db.close();
     await saveTrades(rebalanced);
     setTrades(rebalanced);
   }, [recalcBalances]);
