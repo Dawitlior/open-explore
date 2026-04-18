@@ -1552,15 +1552,14 @@ const Index = () => {
           </div>
         </div>
       )}
-      {/* Import Loading Overlay */}
+      {/* Import Loading Overlay — cinematic trading-floor animation */}
       {importLoading && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 250, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 40, marginBottom: 16, animation: 'pulse 1.5s infinite' }}>📊</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: T.text.primary, marginBottom: 8 }}>{isRTL ? 'מעבד נתונים...' : 'Processing data...'}</div>
-            <div style={{ fontSize: 12, color: T.text.muted }}>{isRTL ? 'אנא המתן, המערכת מייבאת את העסקאות שלך' : 'Please wait while the system imports your trades'}</div>
-          </div>
-        </div>
+        <ImportLoadingOverlay
+          isRTL={isRTL}
+          fileName={importFileName}
+          imported={importedCount}
+          phase={importPhase}
+        />
       )}
       {/* Chart Explanation Modal */}
       {explainModal && (
