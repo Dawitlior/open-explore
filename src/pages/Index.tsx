@@ -235,19 +235,34 @@ const Index = () => {
     const input = document.createElement('input'); input.type = 'file'; input.accept = '.xlsx,.xls,.json';
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]; if (!file) return;
+      setImportFileName(file.name);
+      setImportedCount(0);
+      setImportPhase('reading');
       setImportLoading(true);
       try {
+        // Small artificial pacing so the user actually sees the cinematic phases
+        await new Promise(r => setTimeout(r, 450));
         if (file.name.endsWith('.json')) {
+          setImportPhase('parsing');
           const text = await file.text(); const data = JSON.parse(text);
           const importedTrades = data.trades || data;
           if (!Array.isArray(importedTrades)) throw new Error('Invalid format');
+          setImportedCount(importedTrades.length);
+          setImportPhase('validating');
+          await new Promise(r => setTimeout(r, 350));
+          setImportPhase('saving');
           await importTrades(importedTrades);
         } else {
+          setImportPhase('parsing');
           console.log('[XLSX Import] Starting import of file:', file.name, 'size:', file.size);
           const result = await importFromXlsx(file);
           console.log('[XLSX Import] Result:', { imported: result.imported, skipped: result.skipped, errors: result.errors });
           if (result.errors.length > 0) console.warn('Import warnings:', result.errors);
+          setImportedCount(result.trades.length);
+          setImportPhase('validating');
+          await new Promise(r => setTimeout(r, 350));
           if (result.trades.length > 0) {
+            setImportPhase('saving');
             await importTrades(result.trades);
             console.log('[XLSX Import] Successfully imported', result.trades.length, 'trades');
           } else {
@@ -256,6 +271,8 @@ const Index = () => {
             alert(isRTL ? `ייבוא נכשל: ${errMsg}` : `Import failed: ${errMsg}`);
           }
         }
+        setImportPhase('done');
+        await new Promise(r => setTimeout(r, 700));
         sessionStorage.setItem('orca-seeded', '1');
       } catch (err) {
         console.error('[XLSX Import] Error:', err);
