@@ -354,6 +354,7 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
         const trades: Trade[] = [];
         const errors: string[] = [];
         let skipped = 0;
+        let lastValidDate: string | null = null;
 
         jsonData.forEach((row, idx) => {
           try {
@@ -379,16 +380,21 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
               }
             }
 
-            // Parse date
-            if (mapped.date !== undefined) {
+            // Parse date — if missing/invalid, carry forward last valid date or use today
+            if (mapped.date !== undefined && mapped.date !== null && mapped.date !== '') {
               const parsed = parseFlexibleDate(mapped.date);
               if (parsed) {
                 mapped.date = parsed;
+                lastValidDate = parsed;
+              } else if (lastValidDate) {
+                mapped.date = lastValidDate;
               } else {
-                skipped++;
-                if (errors.length < 10) errors.push(`Row ${idx + 2}: Invalid date "${String(mapped.date).slice(0, 30)}"`);
-                return;
+                mapped.date = formatDate(new Date());
               }
+            } else if (lastValidDate) {
+              mapped.date = lastValidDate;
+            } else {
+              mapped.date = formatDate(new Date());
             }
 
             // Direction normalization
