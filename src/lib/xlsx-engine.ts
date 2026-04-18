@@ -354,6 +354,7 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
         const trades: Trade[] = [];
         const errors: string[] = [];
         let skipped = 0;
+        let lastValidDate: string | null = null;
 
         jsonData.forEach((row, idx) => {
           try {
