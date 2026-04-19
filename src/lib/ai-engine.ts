@@ -361,8 +361,8 @@ export function generateDayInsights(dayTrades: Trade[], isRTL: boolean): AIInsig
   // 3. Risk sizing analysis
   const risks = dayTrades.map(t => t.risk);
   const avgRisk = risks.reduce((s, r) => s + r, 0) / risks.length;
-  const maxRisk = Math.max(...risks);
-  const minRisk = Math.min(...risks);
+  let maxRisk = -Infinity, minRisk = Infinity;
+  for (const r of risks) { if (r > maxRisk) maxRisk = r; if (r < minRisk) minRisk = r; }
   if (maxRisk > avgRisk * 2 && dayTrades.length > 1) {
     insights.push({
       type: 'alert', icon: '⚠️', severity: 'high',

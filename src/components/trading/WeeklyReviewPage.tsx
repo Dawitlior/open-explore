@@ -112,7 +112,7 @@ function computeWeeklyPerf(weekTrades: Trade[]): WeeklyPerformance {
     totalTrades: weekTrades.length, wins, losses, breakEven: be,
     winRate: (wins / weekTrades.length) * 100,
     totalR, avgR: totalR / weekTrades.length,
-    bestTrade: Math.max(...pnls), worstTrade: Math.min(...pnls),
+    bestTrade: pnls.reduce((a, b) => b > a ? b : a, -Infinity), worstTrade: pnls.reduce((a, b) => b < a ? b : a, Infinity),
     avgRisk: weekTrades.reduce((s, t) => s + t.risk, 0) / weekTrades.length,
     maxDrawdown: dd,
     rulesFollowed: (rulesFollowed / weekTrades.length) * 100,

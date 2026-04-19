@@ -52,7 +52,7 @@ export function assessRisk(trades: Trade[], startBalance: number = 200): RiskAss
   if (isScalingUp) warnings.push('Dollar risk is increasing — ensure % remains constant');
   const highDevTrades = trades.filter(t => t.deviation > 0.1);
   if (highDevTrades.length > 2) warnings.push(`${highDevTrades.length} trades with >0.1R deviation — tighten execution`);
-  const maxRisk = Math.max(...trades.map(t => t.risk));
+  let maxRisk = 0; for (const t of trades) if (t.risk > maxRisk) maxRisk = t.risk;
   if (maxRisk > baselineRisk * 2) warnings.push(`Max risk ($${maxRisk}) is ${(maxRisk/baselineRisk).toFixed(1)}x baseline — review sizing`);
   const recentLosses = trades.slice(-5).filter(t => t.winLoss === 'Loss').length;
   if (recentLosses >= 3) warnings.push('3+ losses in last 5 trades — consider reducing size');
