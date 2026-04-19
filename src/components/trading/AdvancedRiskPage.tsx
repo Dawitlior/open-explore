@@ -221,10 +221,10 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, trades, stats, riskData, o
                 <Tooltip contentStyle={tt} />
                 <Bar dataKey="risk" radius={[3, 3, 0, 0]}>
                   {riskTimeline.map((d, i) => (
-                    <Cell key={i} fill={d.wasLoss ? `${T.accent.red}80` : d.change > 50 ? T.accent.orange : `${T.accent.blue}60`} />
+                    <Cell key={i} fill={d.wasLoss ? T.accent.red : d.change > 50 ? T.accent.orange : T.accent.blue} fillOpacity={d.wasLoss ? 0.85 : 0.7} />
                   ))}
                 </Bar>
-                <Line type="monotone" dataKey="riskPct" stroke={T.accent.cyan} strokeWidth={2} dot={{ fill: T.accent.cyan, r: 2 }} yAxisId={0} />
+                <Line type="monotone" dataKey="riskPct" stroke={T.accent.cyan} strokeWidth={2.5} dot={{ fill: T.accent.cyan, r: 2 }} yAxisId={0} />
               </ComposedChart>
             </ResponsiveContainer>
           </LazyChart>
@@ -320,7 +320,7 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, trades, stats, riskData, o
                 <XAxis dataKey="tradeId" tick={{ fill: T.text.muted, fontSize: 10 }} />
                 <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
                 <Tooltip contentStyle={tt} />
-                <Bar dataKey="risk" fill={`${T.accent.blue}40`} radius={[3, 3, 0, 0]} />
+                <Bar dataKey="risk" fill={T.accent.blue} fillOpacity={0.6} radius={[3, 3, 0, 0]} />
                 <Line type="monotone" dataKey="pctOfAccount" stroke={T.accent.orange} strokeWidth={2} dot={{ fill: T.accent.orange, r: 3 }} />
               </ComposedChart>
             </ResponsiveContainer>

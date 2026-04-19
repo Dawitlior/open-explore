@@ -237,7 +237,7 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, trades, stats, onExp
                 <YAxis tick={{ fill: T.text.muted, fontSize: 9 }} domain={[0, 100]} />
                 <Tooltip contentStyle={tt} />
                 <Bar dataKey="pressure" radius={[3, 3, 0, 0]}>
-                  {lossPressure.map((d, i) => <Cell key={i} fill={d.pressure >= 75 ? T.accent.red : d.pressure >= 50 ? T.accent.orange : d.pressure > 0 ? `${T.accent.orange}60` : `${T.accent.green}30`} />)}
+                  {lossPressure.map((d, i) => <Cell key={i} fill={d.pressure >= 75 ? T.accent.red : d.pressure >= 50 ? T.accent.orange : d.pressure > 0 ? T.accent.orange : T.accent.green} fillOpacity={d.pressure >= 50 ? 0.9 : d.pressure > 0 ? 0.55 : 0.4} />)}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
