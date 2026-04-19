@@ -199,13 +199,13 @@ export const AdvancedAnalyticsPage = ({ T, isRTL, isAlpha, trades, stats, privac
         <LazyChart height={210}>
           <ResponsiveContainer width="100%" height={210}>
             <ComposedChart data={(() => { let c = 0; return trades.map(tr => ({ id: tr.id, cum: (c += tr.pnl), pnl: tr.pnl })); })()}>
-              <defs><linearGradient id="cGa" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.55} /><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.05} /></linearGradient></defs>
+              <defs><linearGradient id="cGa" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.7} /><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.25} /></linearGradient></defs>
               <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-              <XAxis dataKey="id" tick={{ fill: T.text.dim, fontSize: 10 }} />
-              <YAxis tick={{ fill: T.text.dim, fontSize: 10 }} />
+              <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 10 }} />
+              <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
               <Tooltip contentStyle={tt} />
-              <Area type="monotone" dataKey="cum" fill="url(#cGa)" stroke={T.accent.cyan} strokeWidth={2} />
-              <Bar dataKey="pnl" barSize={18} radius={[3, 3, 0, 0]}>{trades.map((tr, i) => <Cell key={i} fill={tr.pnl >= 0 ? `${T.accent.green}60` : `${T.accent.red}60`} />)}</Bar>
+              <Area type="monotone" dataKey="cum" fill="url(#cGa)" stroke={T.accent.cyan} strokeWidth={2.5} />
+              <Bar dataKey="pnl" barSize={18} radius={[3, 3, 0, 0]}>{trades.map((tr, i) => <Cell key={i} fill={tr.pnl >= 0 ? T.accent.green : T.accent.red} fillOpacity={0.85} />)}</Bar>
             </ComposedChart>
           </ResponsiveContainer>
         </LazyChart>
