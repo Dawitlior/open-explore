@@ -148,12 +148,21 @@ function _computeAnalyticsInternal(trades: Trade[]): TradingStats {
   const expectancyR = computeExpectancyR(trades);
   const expectancyDollar = trades.length > 0 ? totalPnl / trades.length : 0;
 
-  const pnlValues = trades.map(t => safeNum(t.pnl));
-  const rValues = trades.map(t => safeNum(t.returnR));
-  const bestTrade = pnlValues.length > 0 ? Math.max(...pnlValues) : 0;
-  const worstTrade = pnlValues.length > 0 ? Math.min(...pnlValues) : 0;
-  const bestTradeR = rValues.length > 0 ? Math.max(...rValues) : 0;
-  const worstTradeR = rValues.length > 0 ? Math.min(...rValues) : 0;
+  let bestTrade = 0, worstTrade = 0, bestTradeR = 0, worstTradeR = 0;
+  if (trades.length > 0) {
+    bestTrade = -Infinity; worstTrade = Infinity; bestTradeR = -Infinity; worstTradeR = Infinity;
+    for (const t of trades) {
+      const p = safeNum(t.pnl), r = safeNum(t.returnR);
+      if (p > bestTrade) bestTrade = p;
+      if (p < worstTrade) worstTrade = p;
+      if (r > bestTradeR) bestTradeR = r;
+      if (r < worstTradeR) worstTradeR = r;
+    }
+    if (!isFinite(bestTrade)) bestTrade = 0;
+    if (!isFinite(worstTrade)) worstTrade = 0;
+    if (!isFinite(bestTradeR)) bestTradeR = 0;
+    if (!isFinite(worstTradeR)) worstTradeR = 0;
+  }
 
   let currentStreak = 0, streakType = '';
   for (let i = trades.length - 1; i >= 0; i--) {

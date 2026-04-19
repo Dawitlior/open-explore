@@ -154,7 +154,7 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, trades, stats, riskData, o
             <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="url(#rGadv)" strokeWidth="12" strokeLinecap="round" strokeDasharray={`${riskPct * 2.51} 251`} style={{ transition: 'stroke-dasharray 1s ease' }} />
             <defs><linearGradient id="rGadv" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor={T.accent.green} /><stop offset="50%" stopColor={T.accent.orange} /><stop offset="100%" stopColor={T.accent.red} /></linearGradient></defs>
             <text x="100" y="82" textAnchor="middle" fill={riskLevel === 'critical' ? T.accent.red : riskLevel === 'warning' ? T.accent.orange : T.accent.green} fontSize="26" fontWeight="700" fontFamily="'JetBrains Mono', monospace">{riskPct.toFixed(0)}%</text>
-            <text x="100" y="102" textAnchor="middle" fill={T.text.dim} fontSize="10">{riskLevel === 'critical' ? 'CRITICAL' : riskLevel === 'warning' ? 'WARNING' : 'SAFE'}</text>
+            <text x="100" y="102" textAnchor="middle" fill={T.text.muted} fontSize="10">{riskLevel === 'critical' ? 'CRITICAL' : riskLevel === 'warning' ? 'WARNING' : 'SAFE'}</text>
           </svg>
         </GlassCard>
         <ScoreGauge T={T} score={riskData.riskConsistencyScore} label={isRTL ? 'עקביות סיכון' : 'Risk Consistency'} color={T.accent.orange} description={isRTL ? 'עד כמה הסיכון שלך עקבי בין עסקאות' : 'How consistent your risk is across trades'} />
@@ -169,7 +169,7 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, trades, stats, riskData, o
             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: i < 3 ? `1px solid ${T.border.subtle}` : 'none' }}>
               <span style={{ color: T.text.muted, fontSize: 11 }}>{r.l}</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: 11, color: T.text.dim, fontFamily: "'JetBrains Mono', monospace" }}>{r.cur}/{r.val}</span>
+                <span style={{ fontSize: 11, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>{r.cur}/{r.val}</span>
                 <div style={{ width: 7, height: 7, borderRadius: '50%', background: r.ok ? T.accent.green : T.accent.red }} />
               </div>
             </div>
@@ -200,7 +200,7 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, trades, stats, riskData, o
                     {a.tradeIds.slice(0, 8).map(id => (
                       <span key={id} style={{ fontSize: 9, padding: '2px 6px', background: `${T.accent.red}12`, border: `1px solid ${T.accent.red}25`, borderRadius: 4, color: T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>#{id}</span>
                     ))}
-                    {a.tradeIds.length > 8 && <span style={{ fontSize: 9, color: T.text.dim }}>+{a.tradeIds.length - 8} more</span>}
+                    {a.tradeIds.length > 8 && <span style={{ fontSize: 9, color: T.text.muted }}>+{a.tradeIds.length - 8} more</span>}
                   </div>
                 )}
               </GlassCard>
@@ -216,15 +216,15 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, trades, stats, riskData, o
             <ResponsiveContainer width="100%" height={200}>
               <ComposedChart data={riskTimeline}>
                 <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                <XAxis dataKey="id" tick={{ fill: T.text.dim, fontSize: 9 }} />
-                <YAxis tick={{ fill: T.text.dim, fontSize: 9 }} />
+                <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 9 }} />
+                <YAxis tick={{ fill: T.text.muted, fontSize: 9 }} />
                 <Tooltip contentStyle={tt} />
                 <Bar dataKey="risk" radius={[3, 3, 0, 0]}>
                   {riskTimeline.map((d, i) => (
-                    <Cell key={i} fill={d.wasLoss ? `${T.accent.red}80` : d.change > 50 ? T.accent.orange : `${T.accent.blue}60`} />
+                    <Cell key={i} fill={d.wasLoss ? T.accent.red : d.change > 50 ? T.accent.orange : T.accent.blue} fillOpacity={d.wasLoss ? 0.85 : 0.7} />
                   ))}
                 </Bar>
-                <Line type="monotone" dataKey="riskPct" stroke={T.accent.cyan} strokeWidth={2} dot={{ fill: T.accent.cyan, r: 2 }} yAxisId={0} />
+                <Line type="monotone" dataKey="riskPct" stroke={T.accent.cyan} strokeWidth={2.5} dot={{ fill: T.accent.cyan, r: 2 }} yAxisId={0} />
               </ComposedChart>
             </ResponsiveContainer>
           </LazyChart>
@@ -235,8 +235,8 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, trades, stats, riskData, o
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={riskTimeline.slice(1)}>
                 <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                <XAxis dataKey="id" tick={{ fill: T.text.dim, fontSize: 9 }} />
-                <YAxis tick={{ fill: T.text.dim, fontSize: 9 }} />
+                <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 9 }} />
+                <YAxis tick={{ fill: T.text.muted, fontSize: 9 }} />
                 <Tooltip contentStyle={tt} formatter={(v: number) => `${v.toFixed(1)}%`} />
                 <Bar dataKey="change" radius={[3, 3, 0, 0]}>
                   {riskTimeline.slice(1).map((d, i) => (
@@ -286,7 +286,7 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, trades, stats, riskData, o
             <ResponsiveContainer width="100%" height={190}>
               <BarChart data={riskData.riskAllocation} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                <XAxis type="number" tick={{ fill: T.text.dim, fontSize: 10 }} />
+                <XAxis type="number" tick={{ fill: T.text.muted, fontSize: 10 }} />
                 <YAxis dataKey="coin" type="category" tick={{ fill: T.text.secondary, fontSize: 11 }} width={45} />
                 <Tooltip contentStyle={tt} />
                 <Bar dataKey="pct" radius={[0, 4, 4, 0]} fill={T.accent.blue} />
@@ -300,8 +300,8 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, trades, stats, riskData, o
               <AreaChart data={(() => { let p = 0; return stats.equityCurve.map(e => { if (e.balance > p) p = e.balance; return { trade: e.trade, dd: p > 0 ? -((p - e.balance) / p * 100) : 0 }; }); })()}>
                 <defs><linearGradient id="dGadv" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.red} stopOpacity={0.05} /><stop offset="100%" stopColor={T.accent.red} stopOpacity={0.5} /></linearGradient></defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                <XAxis dataKey="trade" tick={{ fill: T.text.dim, fontSize: 10 }} />
-                <YAxis tick={{ fill: T.text.dim, fontSize: 10 }} domain={['dataMin', 0]} />
+                <XAxis dataKey="trade" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} domain={['dataMin', 0]} />
                 <Tooltip contentStyle={tt} formatter={(v: number) => `${v.toFixed(2)}%`} />
                 <Area type="monotone" dataKey="dd" stroke={T.accent.red} fill="url(#dGadv)" strokeWidth={2} />
               </AreaChart>
@@ -317,10 +317,10 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, trades, stats, riskData, o
             <ResponsiveContainer width="100%" height={180}>
               <ComposedChart data={riskData.riskGrowthEvolution}>
                 <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                <XAxis dataKey="tradeId" tick={{ fill: T.text.dim, fontSize: 10 }} />
-                <YAxis tick={{ fill: T.text.dim, fontSize: 10 }} />
+                <XAxis dataKey="tradeId" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
                 <Tooltip contentStyle={tt} />
-                <Bar dataKey="risk" fill={`${T.accent.blue}40`} radius={[3, 3, 0, 0]} />
+                <Bar dataKey="risk" fill={T.accent.blue} fillOpacity={0.6} radius={[3, 3, 0, 0]} />
                 <Line type="monotone" dataKey="pctOfAccount" stroke={T.accent.orange} strokeWidth={2} dot={{ fill: T.accent.orange, r: 3 }} />
               </ComposedChart>
             </ResponsiveContainer>
@@ -364,7 +364,7 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, trades, stats, riskData, o
                 <span style={{ fontSize: 9, padding: '2px 6px', background: `${T.accent.cyan}12`, borderRadius: 4, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>#{exp.tradeId}</span>
                 <span style={{ fontSize: 12, color: T.text.secondary }}>{exp.reason}</span>
               </div>
-              {exp.customNote && <span style={{ fontSize: 10, color: T.text.dim, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{exp.customNote}</span>}
+              {exp.customNote && <span style={{ fontSize: 10, color: T.text.muted, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{exp.customNote}</span>}
             </div>
           ))}
         </GlassCard>

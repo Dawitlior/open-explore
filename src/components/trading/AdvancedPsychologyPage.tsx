@@ -157,7 +157,7 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, trades, stats, onExp
       <h2 style={{ fontSize: 18, fontWeight: 300, color: T.text.secondary, margin: '0 0 6px', fontFamily: "'JetBrains Mono', monospace" }}>
         {isRTL ? '🧠 אבחון פסיכולוגי מתקדם' : '🧠 Advanced Psychology Diagnosis'}
       </h2>
-      <div style={{ fontSize: 11, color: T.text.dim, marginBottom: 20 }}>
+      <div style={{ fontSize: 11, color: T.text.muted, marginBottom: 20 }}>
         {isRTL ? `ניתוח ${trades.length} עסקאות לזיהוי דפוסים התנהגותיים` : `Analyzing ${trades.length} trades for behavioral patterns`}
       </div>
 
@@ -201,7 +201,7 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, trades, stats, onExp
               <div key={i} style={{ flex: 1, minWidth: 130, padding: 12, background: `${item.c}08`, border: `1px solid ${item.c}20`, borderRadius: 10, textAlign: 'center' }}>
                 <div style={{ fontSize: 18, marginBottom: 4 }}>{item.icon}</div>
                 <div style={{ fontSize: 20, fontWeight: 700, color: item.c, fontFamily: "'JetBrains Mono', monospace" }}>{item.pct.toFixed(0)}%</div>
-                <div style={{ fontSize: 10, color: T.text.dim, marginTop: 2 }}>{item.l} ({item.v})</div>
+                <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>{item.l} ({item.v})</div>
               </div>
             ))}
           </div>
@@ -215,8 +215,8 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, trades, stats, onExp
             <ResponsiveContainer width="100%" height={180}>
               <LineChart data={disciplineTimeline}>
                 <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                <XAxis dataKey="id" tick={{ fill: T.text.dim, fontSize: 9 }} />
-                <YAxis tick={{ fill: T.text.dim, fontSize: 9 }} domain={[0, 100]} />
+                <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 9 }} />
+                <YAxis tick={{ fill: T.text.muted, fontSize: 9 }} domain={[0, 100]} />
                 <Tooltip contentStyle={tt} />
                 <Line type="monotone" dataKey="discipline" stroke={T.accent.green} strokeWidth={2} dot={{ fill: T.accent.green, r: 2 }} name={isRTL ? 'משמעת' : 'Discipline'} />
                 <Line type="monotone" dataKey="riskConsistency" stroke={T.accent.orange} strokeWidth={2} dot={{ fill: T.accent.orange, r: 2 }} name={isRTL ? 'עקביות סיכון' : 'Risk Consistency'} />
@@ -233,11 +233,11 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, trades, stats, onExp
             <ResponsiveContainer width="100%" height={160}>
               <BarChart data={lossPressure}>
                 <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                <XAxis dataKey="id" tick={{ fill: T.text.dim, fontSize: 9 }} />
-                <YAxis tick={{ fill: T.text.dim, fontSize: 9 }} domain={[0, 100]} />
+                <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 9 }} />
+                <YAxis tick={{ fill: T.text.muted, fontSize: 9 }} domain={[0, 100]} />
                 <Tooltip contentStyle={tt} />
                 <Bar dataKey="pressure" radius={[3, 3, 0, 0]}>
-                  {lossPressure.map((d, i) => <Cell key={i} fill={d.pressure >= 75 ? T.accent.red : d.pressure >= 50 ? T.accent.orange : d.pressure > 0 ? `${T.accent.orange}60` : `${T.accent.green}30`} />)}
+                  {lossPressure.map((d, i) => <Cell key={i} fill={d.pressure >= 75 ? T.accent.red : d.pressure >= 50 ? T.accent.orange : d.pressure > 0 ? T.accent.orange : T.accent.green} fillOpacity={d.pressure >= 50 ? 0.9 : d.pressure > 0 ? 0.55 : 0.4} />)}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -252,8 +252,8 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, trades, stats, onExp
             <ResponsiveContainer width="100%" height={160}>
               <BarChart data={trades.map(tr => ({ id: `#${tr.id}`, dev: tr.deviation || 0 }))}>
                 <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                <XAxis dataKey="id" tick={{ fill: T.text.dim, fontSize: 10 }} />
-                <YAxis tick={{ fill: T.text.dim, fontSize: 10 }} />
+                <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
                 <Tooltip contentStyle={tt} formatter={(v: number) => `${v.toFixed(4)}R`} />
                 <Bar dataKey="dev" radius={[4, 4, 0, 0]}>
                   {trades.map((tr, i) => <Cell key={i} fill={tr.deviation > 0.1 ? T.accent.red : tr.deviation > 0 ? T.accent.orange : T.accent.green} />)}

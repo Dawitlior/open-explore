@@ -127,7 +127,7 @@ export const AdvancedAnalyticsPage = ({ T, isRTL, isAlpha, trades, stats, privac
       {/* ═══ KEY METRICS ROW ═══ */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
         <GlassCard T={T} style={{ flex: 1, minWidth: 120, padding: 12 }}>
-          <div style={{ fontSize: 9, color: T.text.dim, textTransform: 'uppercase', marginBottom: 4 }}>{isRTL ? 'תוחלת' : 'Expectancy'} <span style={{ fontSize: 7, padding: '1px 3px', borderRadius: 3, background: `${T.accent.purple}15`, color: T.accent.purple, fontWeight: 700 }}>R</span></div>
+          <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', marginBottom: 4 }}>{isRTL ? 'תוחלת' : 'Expectancy'} <span style={{ fontSize: 7, padding: '1px 3px', borderRadius: 3, background: `${T.accent.purple}15`, color: T.accent.purple, fontWeight: 700 }}>R</span></div>
           <PV><div style={{ fontSize: 20, fontWeight: 700, color: stats.expectancyR >= 0 ? T.accent.cyan : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{stats.expectancyR >= 0 ? '+' : ''}{stats.expectancyR.toFixed(3)}R</div></PV>
         </GlassCard>
         <MetricCard T={T} label={isRTL ? 'פקטור רווח' : 'Profit Factor'} value={stats.profitFactor} suffix="x" color={T.accent.blue} small />
@@ -157,7 +157,7 @@ export const AdvancedAnalyticsPage = ({ T, isRTL, isAlpha, trades, stats, privac
             { l: isRTL ? 'קלי אופטימלי' : 'Kelly Optimal', v: `${stats.kellyOptimal.toFixed(1)}%`, c: T.accent.cyan },
           ].map((s, i) => (
             <div key={i} style={{ padding: '10px 14px', background: T.bg.tertiary, borderBottom: `1px solid ${T.border.subtle}` }}>
-              <div style={{ fontSize: 9, color: T.text.dim, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>{s.l}</div>
+              <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>{s.l}</div>
               <div style={{ fontSize: 16, fontWeight: 700, color: s.c, fontFamily: "'JetBrains Mono', monospace" }}>{s.v}</div>
             </div>
           ))}
@@ -171,8 +171,8 @@ export const AdvancedAnalyticsPage = ({ T, isRTL, isAlpha, trades, stats, privac
             <ResponsiveContainer width="100%" height={210}>
               <BarChart data={stats.rDist}>
                 <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                <XAxis dataKey="id" tick={{ fill: T.text.dim, fontSize: 10 }} />
-                <YAxis tick={{ fill: T.text.dim, fontSize: 10 }} />
+                <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
                 <Tooltip contentStyle={tt} />
                 <Bar dataKey="r" radius={[4, 4, 0, 0]}>{stats.rDist.map((d, i) => <Cell key={i} fill={d.r >= 0 ? T.accent.cyan : T.accent.red} />)}</Bar>
               </BarChart>
@@ -184,8 +184,8 @@ export const AdvancedAnalyticsPage = ({ T, isRTL, isAlpha, trades, stats, privac
             <ResponsiveContainer width="100%" height={210}>
               <BarChart data={stats.dayPerf}>
                 <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                <XAxis dataKey="day" tick={{ fill: T.text.dim, fontSize: 10 }} />
-                <YAxis tick={{ fill: T.text.dim, fontSize: 10 }} />
+                <XAxis dataKey="day" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
                 <Tooltip contentStyle={tt} />
                 <Bar dataKey="pnl" radius={[4, 4, 0, 0]}>{stats.dayPerf.map((d, i) => <Cell key={i} fill={d.pnl >= 0 ? T.accent.green : T.accent.red} />)}</Bar>
               </BarChart>
@@ -199,13 +199,13 @@ export const AdvancedAnalyticsPage = ({ T, isRTL, isAlpha, trades, stats, privac
         <LazyChart height={210}>
           <ResponsiveContainer width="100%" height={210}>
             <ComposedChart data={(() => { let c = 0; return trades.map(tr => ({ id: tr.id, cum: (c += tr.pnl), pnl: tr.pnl })); })()}>
-              <defs><linearGradient id="cGa" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.55} /><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.05} /></linearGradient></defs>
+              <defs><linearGradient id="cGa" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.7} /><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.25} /></linearGradient></defs>
               <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-              <XAxis dataKey="id" tick={{ fill: T.text.dim, fontSize: 10 }} />
-              <YAxis tick={{ fill: T.text.dim, fontSize: 10 }} />
+              <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 10 }} />
+              <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
               <Tooltip contentStyle={tt} />
-              <Area type="monotone" dataKey="cum" fill="url(#cGa)" stroke={T.accent.cyan} strokeWidth={2} />
-              <Bar dataKey="pnl" barSize={18} radius={[3, 3, 0, 0]}>{trades.map((tr, i) => <Cell key={i} fill={tr.pnl >= 0 ? `${T.accent.green}60` : `${T.accent.red}60`} />)}</Bar>
+              <Area type="monotone" dataKey="cum" fill="url(#cGa)" stroke={T.accent.cyan} strokeWidth={2.5} />
+              <Bar dataKey="pnl" barSize={18} radius={[3, 3, 0, 0]}>{trades.map((tr, i) => <Cell key={i} fill={tr.pnl >= 0 ? T.accent.green : T.accent.red} fillOpacity={0.85} />)}</Bar>
             </ComposedChart>
           </ResponsiveContainer>
         </LazyChart>
@@ -217,8 +217,8 @@ export const AdvancedAnalyticsPage = ({ T, isRTL, isAlpha, trades, stats, privac
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={rBuckets}>
               <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-              <XAxis dataKey="bucket" tick={{ fill: T.text.dim, fontSize: 9 }} />
-              <YAxis tick={{ fill: T.text.dim, fontSize: 9 }} />
+              <XAxis dataKey="bucket" tick={{ fill: T.text.muted, fontSize: 9 }} />
+              <YAxis tick={{ fill: T.text.muted, fontSize: 9 }} />
               <Tooltip contentStyle={tt} formatter={(v: number) => `${v.toFixed(0)} trades`} />
               <Bar dataKey="count" radius={[4, 4, 0, 0]}>
                 {rBuckets.map((b, i) => <Cell key={i} fill={b.bucket.startsWith('-') || b.bucket.startsWith('<') ? T.accent.red : T.accent.cyan} />)}
@@ -268,8 +268,8 @@ export const AdvancedAnalyticsPage = ({ T, isRTL, isAlpha, trades, stats, privac
             <ResponsiveContainer width="100%" height={180}>
               <BarChart data={hourPerf}>
                 <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                <XAxis dataKey="label" tick={{ fill: T.text.dim, fontSize: 9 }} />
-                <YAxis tick={{ fill: T.text.dim, fontSize: 9 }} />
+                <XAxis dataKey="label" tick={{ fill: T.text.muted, fontSize: 9 }} />
+                <YAxis tick={{ fill: T.text.muted, fontSize: 9 }} />
                 <Tooltip contentStyle={tt} />
                 <Bar dataKey="avgR" radius={[4, 4, 0, 0]}>{hourPerf.map((h, i) => <Cell key={i} fill={h.avgR >= 0 ? T.accent.green : T.accent.red} />)}</Bar>
               </BarChart>
@@ -287,7 +287,7 @@ export const AdvancedAnalyticsPage = ({ T, isRTL, isAlpha, trades, stats, privac
           {streaks.map((s, i) => (
             <div key={i} style={{ padding: '8px 12px', background: s.type === 'Win' ? `${T.accent.green}10` : `${T.accent.red}10`, border: `1px solid ${s.type === 'Win' ? T.accent.green : T.accent.red}20`, borderRadius: 8, minWidth: 80, textAlign: 'center' }}>
               <div style={{ fontSize: 16, fontWeight: 700, color: s.type === 'Win' ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{s.length}</div>
-              <div style={{ fontSize: 9, color: T.text.dim }}>{s.type === 'Win' ? '🟢' : '🔴'} #{s.startId}→{s.endId}</div>
+              <div style={{ fontSize: 9, color: T.text.muted }}>{s.type === 'Win' ? '🟢' : '🔴'} #{s.startId}→{s.endId}</div>
               <div style={{ fontSize: 10, color: T.text.secondary, fontFamily: "'JetBrains Mono', monospace", marginTop: 2 }}>{s.totalR >= 0 ? '+' : ''}{s.totalR.toFixed(2)}R</div>
             </div>
           ))}
@@ -305,7 +305,7 @@ export const AdvancedAnalyticsPage = ({ T, isRTL, isAlpha, trades, stats, privac
                 <span style={{ fontSize: 11, color: T.accent.purple, fontFamily: "'JetBrains Mono', monospace", fontWeight: 600 }}>EV: {mp.expectancyR >= 0 ? '+' : ''}{mp.expectancyR.toFixed(2)}R</span>
               </div>
             </div>
-            <div style={{ fontSize: 9, color: T.text.dim, marginTop: 2 }}>{mp.trades} trades • WR: {mp.winRate.toFixed(0)}% • PF: {mp.profitFactor.toFixed(2)}x</div>
+            <div style={{ fontSize: 9, color: T.text.muted, marginTop: 2 }}>{mp.trades} trades • WR: {mp.winRate.toFixed(0)}% • PF: {mp.profitFactor.toFixed(2)}x</div>
           </div>
         ))}
       </ChartWrapper>
@@ -319,8 +319,8 @@ export const AdvancedAnalyticsPage = ({ T, isRTL, isAlpha, trades, stats, privac
                 <AreaChart data={(() => { let p = 0; return stats.equityCurve.map(e => { if (e.balance > p) p = e.balance; return { trade: e.trade, dd: p > 0 ? -((p - e.balance) / p * 100) : 0 }; }); })()}>
                   <defs><linearGradient id="ddGAn" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.red} stopOpacity={0.05} /><stop offset="100%" stopColor={T.accent.red} stopOpacity={0.6} /></linearGradient></defs>
                   <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                  <XAxis dataKey="trade" tick={{ fill: T.text.dim, fontSize: 10 }} />
-                  <YAxis tick={{ fill: T.text.dim, fontSize: 10 }} domain={['dataMin', 0]} />
+                  <XAxis dataKey="trade" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                  <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} domain={['dataMin', 0]} />
                   <Tooltip contentStyle={tt} formatter={(v: number) => `${v.toFixed(2)}%`} />
                   <Area type="monotone" dataKey="dd" stroke={T.accent.red} fill="url(#ddGAn)" strokeWidth={2} />
                 </AreaChart>
@@ -332,8 +332,8 @@ export const AdvancedAnalyticsPage = ({ T, isRTL, isAlpha, trades, stats, privac
               <ResponsiveContainer width="100%" height={180}>
                 <LineChart data={stats.rollingExpectancyR}>
                   <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                  <XAxis dataKey="tradeId" tick={{ fill: T.text.dim, fontSize: 10 }} />
-                  <YAxis tick={{ fill: T.text.dim, fontSize: 10 }} />
+                  <XAxis dataKey="tradeId" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                  <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
                   <Tooltip contentStyle={tt} />
                   <Line type="monotone" dataKey="expectancyR" stroke={T.accent.cyan} strokeWidth={2} dot={{ fill: T.accent.cyan, r: 2 }} />
                 </LineChart>
