@@ -28,7 +28,7 @@ export const MetricCard = ({ label, value, suffix, color, small, T, onInfoClick 
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
       <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</div>
       {onInfoClick && (
-        <button onClick={onInfoClick} style={{ width: 16, height: 16, borderRadius: '50%', border: `1px solid ${T.border.medium}`, background: 'transparent', color: T.text.dim, cursor: 'pointer', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', padding: 0, lineHeight: 1 }}>i</button>
+        <button onClick={onInfoClick} style={{ width: 16, height: 16, borderRadius: '50%', border: `1px solid ${T.border.medium}`, background: 'transparent', color: T.text.muted, cursor: 'pointer', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', padding: 0, lineHeight: 1 }}>i</button>
       )}
     </div>
     <div style={{ fontSize: small ? 20 : 26, fontWeight: 700, color: color || T.text.primary, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '-0.02em', lineHeight: 1.1 }}>
@@ -54,10 +54,10 @@ export const ScoreGauge = ({ score, label, color, T, description, onInfoClick }:
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: description ? 4 : 10 }}>
         <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</div>
         {onInfoClick && (
-          <button onClick={onInfoClick} style={{ width: 16, height: 16, borderRadius: '50%', border: `1px solid ${T.border.medium}`, background: 'transparent', color: T.text.dim, cursor: 'pointer', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', padding: 0, lineHeight: 1 }}>i</button>
+          <button onClick={onInfoClick} style={{ width: 16, height: 16, borderRadius: '50%', border: `1px solid ${T.border.medium}`, background: 'transparent', color: T.text.muted, cursor: 'pointer', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', padding: 0, lineHeight: 1 }}>i</button>
         )}
       </div>
-      {description && <div style={{ fontSize: 9, color: T.text.dim, marginBottom: 8, lineHeight: 1.4, maxWidth: 180, margin: '0 auto 8px' }}>{description}</div>}
+      {description && <div style={{ fontSize: 9, color: T.text.muted, marginBottom: 8, lineHeight: 1.4, maxWidth: 180, margin: '0 auto 8px' }}>{description}</div>}
       <svg width="92" height="92" viewBox="0 0 96 96" style={{ margin: '0 auto', display: 'block' }}>
         <circle cx="48" cy="48" r="40" fill="none" stroke={T.border.subtle} strokeWidth="6"/>
         <circle cx="48" cy="48" r="40" fill="none" stroke={color} strokeWidth="6" strokeDasharray={c} strokeDashoffset={off} strokeLinecap="round" transform="rotate(-90 48 48)" style={{ transition: 'stroke-dashoffset 1.5s ease', filter: `drop-shadow(0 0 6px ${color})` }}/>

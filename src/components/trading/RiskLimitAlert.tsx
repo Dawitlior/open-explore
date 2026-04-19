@@ -48,15 +48,15 @@ export const RiskLimitAlert = ({ T, isRTL, status, onClose }: RiskLimitAlertProp
         </div>
         <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 8, marginBottom: 20 }}>
           <div style={{ padding: '8px 14px', background: T.bg.tertiary, borderRadius: T.radius.md }}>
-            <div style={{ fontSize: 8, color: T.text.dim, textTransform: 'uppercase' }}>{isRTL ? 'הפסד יומי' : 'Daily'}</div>
+            <div style={{ fontSize: 8, color: T.text.muted, textTransform: 'uppercase' }}>{isRTL ? 'הפסד יומי' : 'Daily'}</div>
             <div style={{ fontSize: 16, fontWeight: 700, color: status.dailyBreached ? T.accent.red : T.text.primary, fontFamily: "'JetBrains Mono', monospace" }}>{status.dailyNegR.toFixed(1)}R</div>
           </div>
           <div style={{ padding: '8px 14px', background: T.bg.tertiary, borderRadius: T.radius.md }}>
-            <div style={{ fontSize: 8, color: T.text.dim, textTransform: 'uppercase' }}>{isRTL ? 'הפסד שבועי' : 'Weekly'}</div>
+            <div style={{ fontSize: 8, color: T.text.muted, textTransform: 'uppercase' }}>{isRTL ? 'הפסד שבועי' : 'Weekly'}</div>
             <div style={{ fontSize: 16, fontWeight: 700, color: status.weeklyBreached ? T.accent.red : T.text.primary, fontFamily: "'JetBrains Mono', monospace" }}>{status.weeklyNegR.toFixed(1)}R</div>
           </div>
           <div style={{ padding: '8px 14px', background: T.bg.tertiary, borderRadius: T.radius.md }}>
-            <div style={{ fontSize: 8, color: T.text.dim, textTransform: 'uppercase' }}>{isRTL ? 'הפסד חודשי' : 'Monthly'}</div>
+            <div style={{ fontSize: 8, color: T.text.muted, textTransform: 'uppercase' }}>{isRTL ? 'הפסד חודשי' : 'Monthly'}</div>
             <div style={{ fontSize: 16, fontWeight: 700, color: status.monthlyBreached ? T.accent.red : T.text.primary, fontFamily: "'JetBrains Mono', monospace" }}>{status.monthlyNegR.toFixed(1)}R</div>
           </div>
         </div>

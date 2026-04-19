@@ -52,7 +52,7 @@ export const ModeSwitch = ({ T, isRTL, operatingMode, systemMode, onOperatingMod
                 flex: 1, padding: '5px 2px', fontSize: 8, fontWeight: 600, letterSpacing: '0.04em',
                 textTransform: 'uppercase', border: 'none', borderRadius: T.radius.sm, cursor: 'pointer',
                 background: operatingMode === m.id ? `${m.color}20` : 'transparent',
-                color: operatingMode === m.id ? m.color : T.text.dim,
+                color: operatingMode === m.id ? m.color : T.text.muted,
                 transition: 'all 0.2s', position: 'relative',
               }}
             >
@@ -76,7 +76,7 @@ export const ModeSwitch = ({ T, isRTL, operatingMode, systemMode, onOperatingMod
                 flex: 1, padding: '5px 2px', fontSize: 9, fontWeight: 600, letterSpacing: '0.04em',
                 textTransform: 'uppercase', border: 'none', borderRadius: T.radius.sm, cursor: 'pointer',
                 background: systemMode === m ? (m === 'alpha' ? `${T.accent.purple}20` : `${T.accent.blue}15`) : 'transparent',
-                color: systemMode === m ? (m === 'alpha' ? T.accent.purple : T.accent.blue) : T.text.dim,
+                color: systemMode === m ? (m === 'alpha' ? T.accent.purple : T.accent.blue) : T.text.muted,
                 transition: 'all 0.2s'
               }}
             >
@@ -123,7 +123,7 @@ export const ModeSwitch = ({ T, isRTL, operatingMode, systemMode, onOperatingMod
                       ? (isRTL ? 'מצב Alpha מפעיל מדדים מתקדמים, צפיפות נתונים גבוהה, ומודלים חזויים.' : 'Alpha mode activates advanced metrics, high data density, and predictive modeling.')
                       : (isRTL ? 'מצב Standard מציג ממשק נקי ומינימלי.' : 'Standard mode shows a clean, minimal interface.')}
                 </div>
-                <div style={{ fontSize: 11, color: T.text.dim, marginBottom: 20 }}>
+                <div style={{ fontSize: 11, color: T.text.muted, marginBottom: 20 }}>
                   {isRTL ? 'הלוח יתעדכן בהתאם למצב החדש.' : 'Dashboard will reconfigure for the new mode.'}
                 </div>
                 <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>

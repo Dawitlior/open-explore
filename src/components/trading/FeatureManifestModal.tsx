@@ -191,7 +191,7 @@ export const FeatureManifestModal = ({ T, isRTL, onClose }: FeatureManifestModal
                   <div style={{ fontSize: 18, fontWeight: 700, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>
                     ORCA<span style={{ fontWeight: 300, color: T.text.muted, marginInlineStart: 6 }}>Investment</span>
                   </div>
-                  <div style={{ fontSize: 9, color: T.text.dim, letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 2 }}>
+                  <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 2 }}>
                     Trading Intelligence System
                   </div>
                 </div>
@@ -287,7 +287,7 @@ export const FeatureManifestModal = ({ T, isRTL, onClose }: FeatureManifestModal
             background: T.bg.tertiary, borderRadius: T.radius.md,
             border: `1px solid ${T.border.subtle}`,
           }}>
-            <div style={{ fontSize: 10, color: T.text.dim, letterSpacing: '0.08em' }}>
+            <div style={{ fontSize: 10, color: T.text.muted, letterSpacing: '0.08em' }}>
               ORCA INVESTMENT — TRADING INTELLIGENCE SYSTEM
             </div>
           </div>

@@ -377,10 +377,10 @@ const Index = () => {
         <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.equityCurve} explanation={EXPLANATIONS.equityCurve} unit="$" style={{ marginBottom: 18 }}>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={stats.equityCurve}>
-              <defs><linearGradient id="eqBeg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.6}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.05}/></linearGradient></defs>
+              <defs><linearGradient id="eqBeg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.6}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.25}/></linearGradient></defs>
               <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-              <XAxis dataKey="trade" tick={{ fill: T.text.dim, fontSize: 10 }} />
-              <YAxis tick={{ fill: T.text.dim, fontSize: 10 }} domain={['dataMin - 5', 'dataMax + 5']} />
+              <XAxis dataKey="trade" tick={{ fill: T.text.muted, fontSize: 10 }} />
+              <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} domain={['dataMin - 5', 'dataMax + 5']} />
               <Tooltip contentStyle={tt} />
               <Area type="monotone" dataKey="balance" stroke={T.accent.cyan} fill="url(#eqBeg)" strokeWidth={2.5} dot={{ fill: T.accent.cyan, r: 3 }} />
             </AreaChart>
@@ -391,8 +391,8 @@ const Index = () => {
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={trades.map(tr => ({ id: tr.id, pnl: tr.pnl }))}>
               <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-              <XAxis dataKey="id" tick={{ fill: T.text.dim, fontSize: 10 }} />
-              <YAxis tick={{ fill: T.text.dim, fontSize: 10 }} />
+              <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 10 }} />
+              <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
               <Tooltip contentStyle={tt} />
               <Bar dataKey="pnl" radius={[4,4,0,0]}>{trades.map((tr, i) => <Cell key={i} fill={tr.pnl >= 0 ? T.accent.green : T.accent.red} />)}</Bar>
             </BarChart>
@@ -436,15 +436,15 @@ const Index = () => {
             <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>{isRTL ? '🔴 מצב חי — פוקוס ביצוע' : '🔴 LIVE — Execution Focus'}</div>
             <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
               <div>
-                <div style={{ fontSize: 9, color: T.text.dim }}>Session P&L</div>
+                <div style={{ fontSize: 9, color: T.text.muted }}>Session P&L</div>
                 <PV><div style={{ fontSize: 28, fontWeight: 700, color: dailyPnlToday >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{dailyPnlToday >= 0 ? '+' : ''}${dailyPnlToday.toFixed(2)}</div></PV>
               </div>
               <div>
-                <div style={{ fontSize: 9, color: T.text.dim }}>{isRTL ? 'רצף' : 'Streak'}</div>
+                <div style={{ fontSize: 9, color: T.text.muted }}>{isRTL ? 'רצף' : 'Streak'}</div>
                 <div style={{ fontSize: 22, fontWeight: 700, color: stats.streakType === 'Win' ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{stats.currentStreak} {stats.streakType === 'Win' ? '🟢' : '🔴'}</div>
               </div>
               <div>
-                <div style={{ fontSize: 9, color: T.text.dim }}>{isRTL ? 'משמעת חיה' : 'Live Discipline'}</div>
+                <div style={{ fontSize: 9, color: T.text.muted }}>{isRTL ? 'משמעת חיה' : 'Live Discipline'}</div>
                 <div style={{ fontSize: 22, fontWeight: 700, color: stats.rulesFollowed > 80 ? T.accent.green : T.accent.orange, fontFamily: "'JetBrains Mono', monospace" }}>{stats.rulesFollowed.toFixed(0)}%</div>
               </div>
             </div>
@@ -487,7 +487,7 @@ const Index = () => {
                 return <>
                   <div style={{ fontSize: 32, marginBottom: 4 }}>{isOvertrading ? '🚨' : todayTrades.length >= 2 ? '⚡' : '✅'}</div>
                   <div style={{ fontSize: 20, fontWeight: 700, color: isOvertrading ? T.accent.red : T.accent.green, fontFamily: "'JetBrains Mono', monospace" }}>{todayTrades.length}</div>
-                  <div style={{ fontSize: 9, color: T.text.dim }}>{isRTL ? 'עסקאות היום' : 'trades today'}</div>
+                  <div style={{ fontSize: 9, color: T.text.muted }}>{isRTL ? 'עסקאות היום' : 'trades today'}</div>
                 </>;
               })()}
             </div>
@@ -500,7 +500,7 @@ const Index = () => {
             {trades.slice(-6).map(tr => (
               <div key={tr.id} style={{ flex: '0 0 auto', padding: 10, background: T.bg.tertiary, borderRadius: T.radius.md, minWidth: 100, textAlign: 'center', border: `1px solid ${Math.abs(tr.riskPct - 1) > 0.5 ? T.accent.red : T.accent.green}20` }}>
                 <div style={{ fontSize: 11, fontWeight: 600, color: T.accent.cyan }}>{tr.coin}</div>
-                <div style={{ fontSize: 9, color: T.text.dim, marginTop: 2 }}>Plan: {tr.riskPct}% • Actual: {((tr.risk / (tr.balance - tr.pnl)) * 100).toFixed(1)}%</div>
+                <div style={{ fontSize: 9, color: T.text.muted, marginTop: 2 }}>Plan: {tr.riskPct}% • Actual: {((tr.risk / (tr.balance - tr.pnl)) * 100).toFixed(1)}%</div>
                 <div style={{ height: 3, background: T.bg.surface, borderRadius: 2, marginTop: 4 }}>
                   <div style={{ height: '100%', width: `${Math.min(100, (tr.risk / (tr.balance - tr.pnl)) * 100 * 50)}%`, background: Math.abs(tr.riskPct - 1) > 0.5 ? T.accent.red : T.accent.green, borderRadius: 2 }} />
                 </div>
@@ -534,10 +534,10 @@ const Index = () => {
                   <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{t.expectancy}</div>
                   <span style={{ fontSize: 7, padding: '1px 4px', borderRadius: 3, background: `${T.accent.purple}15`, color: T.accent.purple, fontWeight: 700 }}>R</span>
                 </div>
-                <button onClick={() => handleExplainClick(t.expectancy, EXPLANATIONS.expectancy)} style={{ width: 16, height: 16, borderRadius: '50%', border: `1px solid ${T.border.medium}`, background: 'transparent', color: T.text.dim, cursor: 'pointer', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1 }}>i</button>
+                <button onClick={() => handleExplainClick(t.expectancy, EXPLANATIONS.expectancy)} style={{ width: 16, height: 16, borderRadius: '50%', border: `1px solid ${T.border.medium}`, background: 'transparent', color: T.text.muted, cursor: 'pointer', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1 }}>i</button>
               </div>
               <PV><div style={{ fontSize: 26, fontWeight: 700, color: stats.expectancyR >= 0 ? T.accent.cyan : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{stats.expectancyR >= 0 ? '+' : ''}{stats.expectancyR.toFixed(3)}R</div></PV>
-              <div style={{ fontSize: 9, color: T.text.dim, marginTop: 4 }}>
+              <div style={{ fontSize: 9, color: T.text.muted, marginTop: 4 }}>
                 {isRTL ? 'תוחלת לעסקה ביחידות סיכון' : 'Expected return per trade in risk units'}
               </div>
             </GlassCard>
@@ -581,7 +581,7 @@ const Index = () => {
           >
             <span style={{ fontSize: 12, transition: 'transform 0.3s', transform: advancedOpen ? 'rotate(90deg)' : 'rotate(0deg)', display: 'inline-block' }}>▸</span>
             <span>{isRTL ? 'ניתוח מתקדם — גרפים, חלוקה והתפלגות' : 'Advanced Analysis — Charts, Breakdown & Distribution'}</span>
-            <span style={{ marginInlineStart: 'auto', fontSize: 9, color: T.text.dim, fontWeight: 400 }}>
+            <span style={{ marginInlineStart: 'auto', fontSize: 9, color: T.text.muted, fontWeight: 400 }}>
               {advancedOpen ? (isRTL ? 'הסתר' : 'Collapse') : (isRTL ? 'הרחב' : 'Expand')}
             </span>
           </button>
@@ -592,8 +592,8 @@ const Index = () => {
                 {isChartVisible('equityCurve') && <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.equityCurve} explanation={EXPLANATIONS.equityCurve} unit="$" chartId="equityCurve" onRemove={handleHideChart} style={{ flex: 2, minWidth: 380 }}>
                   <ResponsiveContainer width="100%" height={190}>
                     <AreaChart data={stats.equityCurve}>
-                      <defs><linearGradient id="eqGAdv" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.6}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.05}/></linearGradient></defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="trade" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 10 }} domain={['dataMin - 5', 'dataMax + 5']} />
+                      <defs><linearGradient id="eqGAdv" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.6}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.25}/></linearGradient></defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="trade" tick={{ fill: T.text.muted, fontSize: 10 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 10 }} domain={['dataMin - 5', 'dataMax + 5']} />
                       <Tooltip contentStyle={tt} /><Area type="monotone" dataKey="balance" stroke={T.accent.cyan} fill="url(#eqGAdv)" strokeWidth={2.5} dot={{ fill: T.accent.cyan, r: 3 }} />
                     </AreaChart>
                   </ResponsiveContainer>
@@ -601,7 +601,7 @@ const Index = () => {
                 {isChartVisible('pnlDistribution') && <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.pnlDistribution} explanation={EXPLANATIONS.pnlDistribution} unit="$" chartId="pnlDistribution" onRemove={handleHideChart} style={{ flex: 1, minWidth: 260 }}>
                   <ResponsiveContainer width="100%" height={190}>
                     <BarChart data={trades.map(tr => ({ id: tr.id, pnl: tr.pnl }))}>
-                      <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="id" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 10 }} />
+                      <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 10 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
                       <Tooltip contentStyle={tt} /><Bar dataKey="pnl" radius={[4,4,0,0]}>{trades.map((tr, i) => <Cell key={i} fill={tr.pnl >= 0 ? T.accent.green : T.accent.red} />)}</Bar>
                     </BarChart>
                   </ResponsiveContainer>
@@ -619,7 +619,7 @@ const Index = () => {
                 </ChartWrapper>}
                 {isChartVisible('coinPerformance') && <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.coinPerformance} explanation={EXPLANATIONS.coinPerformance} unit="$" chartId="coinPerformance" onRemove={handleHideChart} style={{ flex: 1, minWidth: 280 }}>
                   <ResponsiveContainer width="100%" height={190}>
-                    <BarChart data={stats.coinPerf} layout="vertical"><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis type="number" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis dataKey="coin" type="category" tick={{ fill: T.text.secondary, fontSize: 11 }} width={45} />
+                    <BarChart data={stats.coinPerf} layout="vertical"><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis type="number" tick={{ fill: T.text.muted, fontSize: 10 }} /><YAxis dataKey="coin" type="category" tick={{ fill: T.text.secondary, fontSize: 11 }} width={45} />
                       <Tooltip contentStyle={tt} /><Bar dataKey="pnl" radius={[0,4,4,0]}>{stats.coinPerf.map((c, i) => <Cell key={i} fill={c.pnl >= 0 ? T.accent.green : T.accent.red} />)}</Bar>
                     </BarChart>
                   </ResponsiveContainer>
@@ -629,7 +629,7 @@ const Index = () => {
                     <PieChart><Pie data={stats.directionData} dataKey="trades" nameKey="name" cx="50%" cy="50%" innerRadius={38} outerRadius={60} paddingAngle={4}><Cell fill={T.accent.green} /><Cell fill={T.accent.red} /></Pie><Tooltip contentStyle={tt} /></PieChart>
                   </ResponsiveContainer>
                   <div style={{ display: 'flex', justifyContent: 'center', gap: 20, marginTop: 2 }}>
-                    {stats.directionData.map((d, i) => (<div key={i} style={{ textAlign: 'center' }}><div style={{ fontSize: 10, color: T.text.dim }}>{d.name}</div><PV><div style={{ fontSize: 11, fontWeight: 600, color: d.expectancyR >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{d.expectancyR.toFixed(2)}R</div></PV><div style={{ fontSize: 9, color: T.text.dim }}>WR: {d.winRate.toFixed(0)}%</div></div>))}
+                    {stats.directionData.map((d, i) => (<div key={i} style={{ textAlign: 'center' }}><div style={{ fontSize: 10, color: T.text.muted }}>{d.name}</div><PV><div style={{ fontSize: 11, fontWeight: 600, color: d.expectancyR >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{d.expectancyR.toFixed(2)}R</div></PV><div style={{ fontSize: 9, color: T.text.muted }}>WR: {d.winRate.toFixed(0)}%</div></div>))}
                   </div>
                 </ChartWrapper>
               </div>
@@ -657,7 +657,7 @@ const Index = () => {
                 <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.riskEvolution} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ flex: 1, minWidth: 300 }}>
                   <ResponsiveContainer width="100%" height={160}>
                     <LineChart data={riskData.riskGrowthEvolution}>
-                      <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="tradeId" tick={{ fill: T.text.dim, fontSize: 10 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 10 }} />
+                      <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="tradeId" tick={{ fill: T.text.muted, fontSize: 10 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
                       <Tooltip contentStyle={tt} /><Line type="monotone" dataKey="pctOfAccount" stroke={T.accent.orange} strokeWidth={2} dot={{ fill: T.accent.orange, r: 3 }} />
                     </LineChart>
                   </ResponsiveContainer>
@@ -686,7 +686,7 @@ const Index = () => {
         <div style={{ padding: '6px 12px', background: `${T.accent.purple}10`, border: `1px solid ${T.accent.purple}25`, borderRadius: T.radius.md, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 14 }}>🔬</span>
           <span style={{ fontSize: 12, color: T.accent.purple, fontWeight: 600 }}>{isRTL ? 'מעבדת מחקר מתקדמת' : 'Advanced Research Lab'}</span>
-          <span style={{ fontSize: 10, color: T.text.dim, marginInlineStart: 'auto' }}>{stats.totalTrades} {isRTL ? 'עסקאות' : 'trades'} | {isRTL ? 'עומק אלפא' : 'Alpha Depth'}: {isAlpha ? 'ON' : 'OFF'}</span>
+          <span style={{ fontSize: 10, color: T.text.muted, marginInlineStart: 'auto' }}>{stats.totalTrades} {isRTL ? 'עסקאות' : 'trades'} | {isRTL ? 'עומק אלפא' : 'Alpha Depth'}: {isAlpha ? 'ON' : 'OFF'}</span>
         </div>
 
         {/* Key R-metrics row */}
@@ -701,7 +701,7 @@ const Index = () => {
           ].map((m, i) => (
             <GlassCard T={T} key={i} style={{ flex: 1, minWidth: 130, padding: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}>
-                <div style={{ fontSize: 9, color: T.text.dim, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{m.l}</div>
+                <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{m.l}</div>
                 <span style={{ fontSize: 7, padding: '1px 3px', borderRadius: 3, background: `${T.accent.purple}12`, color: T.accent.purple, fontWeight: 700 }}>{m.u}</span>
               </div>
               <PV><div style={{ fontSize: 18, fontWeight: 700, color: m.c, fontFamily: "'JetBrains Mono', monospace" }}>{m.v}</div></PV>
@@ -713,33 +713,33 @@ const Index = () => {
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12, marginBottom: 16 }}>
           <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'התפלגות R-Multiple' : 'R-Multiple Distribution'} explanation={EXPLANATIONS.rDistribution} unit="R">
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={stats.rDist}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="id" tick={{ fill: T.text.dim, fontSize: 9 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 9 }} /><Tooltip contentStyle={tt} /><Bar dataKey="r" radius={[3,3,0,0]}>{stats.rDist.map((d, i) => <Cell key={i} fill={d.r >= 0 ? T.accent.cyan : T.accent.red} />)}</Bar></BarChart>
+              <BarChart data={stats.rDist}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 9 }} /><Tooltip contentStyle={tt} /><Bar dataKey="r" radius={[3,3,0,0]}>{stats.rDist.map((d, i) => <Cell key={i} fill={d.r >= 0 ? T.accent.cyan : T.accent.red} />)}</Bar></BarChart>
             </ResponsiveContainer>
           </ChartWrapper>
 
           <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'שארפ מתגלגל' : 'Rolling Sharpe Ratio'} explanation={EXPLANATIONS.rollingSharpe} unit="R/σ">
             <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={stats.rollingSharpe}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="tradeId" tick={{ fill: T.text.dim, fontSize: 9 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 9 }} /><Tooltip contentStyle={tt} /><Line type="monotone" dataKey="sharpe" stroke={T.accent.blue} strokeWidth={2} dot={{ fill: T.accent.blue, r: 2 }} /><Line type="monotone" dataKey="sharpe" stroke="transparent" />{/* zero line */}</LineChart>
+              <LineChart data={stats.rollingSharpe}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="tradeId" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 9 }} /><Tooltip contentStyle={tt} /><Line type="monotone" dataKey="sharpe" stroke={T.accent.blue} strokeWidth={2} dot={{ fill: T.accent.blue, r: 2 }} /><Line type="monotone" dataKey="sharpe" stroke="transparent" />{/* zero line */}</LineChart>
             </ResponsiveContainer>
           </ChartWrapper>
 
           <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'דעיכת יתרון' : 'Edge Decay Timeline'} explanation={EXPLANATIONS.edgeDecay} unit="R">
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={stats.edgeDecay}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="period" tick={{ fill: T.text.dim, fontSize: 9 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 9 }} /><Tooltip contentStyle={tt} /><Bar dataKey="expectancyR" radius={[4,4,0,0]}>{stats.edgeDecay.map((d, i) => <Cell key={i} fill={d.expectancyR >= 0 ? T.accent.cyan : T.accent.red} />)}</Bar></BarChart>
+              <BarChart data={stats.edgeDecay}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="period" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 9 }} /><Tooltip contentStyle={tt} /><Bar dataKey="expectancyR" radius={[4,4,0,0]}>{stats.edgeDecay.map((d, i) => <Cell key={i} fill={d.expectancyR >= 0 ? T.accent.cyan : T.accent.red} />)}</Bar></BarChart>
             </ResponsiveContainer>
           </ChartWrapper>
 
           <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'אחוז הצלחה vs R:R' : 'Win Rate vs R:R Bucket'} explanation={EXPLANATIONS.winRateVsRR} unit="%">
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={stats.winRateVsRR}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="rr" tick={{ fill: T.text.dim, fontSize: 9 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 9 }} domain={[0, 100]} /><Tooltip contentStyle={tt} /><Bar dataKey="winRate" fill={T.accent.blue} radius={[4,4,0,0]} /><Bar dataKey="count" fill={`${T.accent.cyan}40`} radius={[4,4,0,0]} /></BarChart>
+              <BarChart data={stats.winRateVsRR}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="rr" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 9 }} domain={[0, 100]} /><Tooltip contentStyle={tt} /><Bar dataKey="winRate" fill={T.accent.blue} radius={[4,4,0,0]} /><Bar dataKey="count" fill={`${T.accent.cyan}40`} radius={[4,4,0,0]} /></BarChart>
             </ResponsiveContainer>
           </ChartWrapper>
 
           <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'תוחלת מתגלגלת (R)' : 'Rolling Expectancy (R)'} explanation={EXPLANATIONS.expectancy} unit="R">
             <ResponsiveContainer width="100%" height={200}>
               <AreaChart data={stats.rollingExpectancyR}>
-                <defs><linearGradient id="reGRes" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.55}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.05}/></linearGradient></defs>
-                <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="tradeId" tick={{ fill: T.text.dim, fontSize: 9 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 9 }} />
+                <defs><linearGradient id="reGRes" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.55}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.25}/></linearGradient></defs>
+                <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="tradeId" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 9 }} />
                 <Tooltip contentStyle={tt} /><Area type="monotone" dataKey="expectancyR" stroke={T.accent.cyan} fill="url(#reGRes)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
@@ -747,15 +747,15 @@ const Index = () => {
 
           <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'תוחלת לפי מטבע (R)' : 'Strategy Expectancy (R)'} explanation={EXPLANATIONS.coinPerformance} unit="R">
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={stats.strategyExpectancyR} layout="vertical"><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis type="number" tick={{ fill: T.text.dim, fontSize: 9 }} /><YAxis dataKey="coin" type="category" tick={{ fill: T.text.secondary, fontSize: 10 }} width={40} /><Tooltip contentStyle={tt} /><Bar dataKey="expectancyR" radius={[0,4,4,0]}>{stats.strategyExpectancyR.map((d, i) => <Cell key={i} fill={d.expectancyR >= 0 ? T.accent.green : T.accent.red} />)}</Bar></BarChart>
+              <BarChart data={stats.strategyExpectancyR} layout="vertical"><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis type="number" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis dataKey="coin" type="category" tick={{ fill: T.text.secondary, fontSize: 10 }} width={40} /><Tooltip contentStyle={tt} /><Bar dataKey="expectancyR" radius={[0,4,4,0]}>{stats.strategyExpectancyR.map((d, i) => <Cell key={i} fill={d.expectancyR >= 0 ? T.accent.green : T.accent.red} />)}</Bar></BarChart>
             </ResponsiveContainer>
           </ChartWrapper>
 
           <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'מפת נסיגה' : 'Drawdown Depth Map'} explanation={EXPLANATIONS.drawdown} unit="%">
             <ResponsiveContainer width="100%" height={200}>
               <AreaChart data={(() => { let p = 200; return stats.equityCurve.map(e => { if (e.balance > p) p = e.balance; return { trade: e.trade, dd: -((p - e.balance) / p * 100) }; }); })()}>
-                <defs><linearGradient id="ddGRRes" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.red} stopOpacity={0.05}/><stop offset="100%" stopColor={T.accent.red} stopOpacity={0.6}/></linearGradient></defs>
-                <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="trade" tick={{ fill: T.text.dim, fontSize: 9 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 9 }} domain={['dataMin', 0]} />
+                <defs><linearGradient id="ddGRRes" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.red} stopOpacity={0.25}/><stop offset="100%" stopColor={T.accent.red} stopOpacity={0.6}/></linearGradient></defs>
+                <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="trade" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 9 }} domain={['dataMin', 0]} />
                 <Tooltip contentStyle={tt} formatter={(v: number) => `${v.toFixed(2)}%`} /><Area type="monotone" dataKey="dd" stroke={T.accent.red} fill="url(#ddGRRes)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
@@ -763,7 +763,7 @@ const Index = () => {
 
           <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ביצועים לפי יום (R)' : 'Performance by Day (R)'} explanation={EXPLANATIONS.coinPerformance} unit="R">
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={stats.dayPerf}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="day" tick={{ fill: T.text.dim, fontSize: 9 }} /><YAxis tick={{ fill: T.text.dim, fontSize: 9 }} /><Tooltip contentStyle={tt} /><Bar dataKey="avgR" radius={[4,4,0,0]}>{stats.dayPerf.map((d, i) => <Cell key={i} fill={d.avgR >= 0 ? T.accent.green : T.accent.red} />)}</Bar></BarChart>
+              <BarChart data={stats.dayPerf}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="day" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 9 }} /><Tooltip contentStyle={tt} /><Bar dataKey="avgR" radius={[4,4,0,0]}>{stats.dayPerf.map((d, i) => <Cell key={i} fill={d.avgR >= 0 ? T.accent.green : T.accent.red} />)}</Bar></BarChart>
             </ResponsiveContainer>
           </ChartWrapper>
         </div>
@@ -774,19 +774,19 @@ const Index = () => {
             <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'סיכון/רוויה' : 'Risk of Ruin Curve'} explanation={EXPLANATIONS.riskOfRuin} unit="%">
               <div style={{ textAlign: 'center', padding: 20 }}>
                 <div style={{ fontSize: 42, fontWeight: 700, color: stats.riskOfRuin < 10 ? T.accent.green : stats.riskOfRuin < 30 ? T.accent.orange : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{Math.min(99.9, stats.riskOfRuin).toFixed(1)}%</div>
-                <div style={{ fontSize: 10, color: T.text.dim, marginTop: 4 }}>{stats.riskOfRuin < 10 ? '🟢 Low Risk' : stats.riskOfRuin < 30 ? '🟡 Moderate' : '🔴 High Risk'}</div>
+                <div style={{ fontSize: 10, color: T.text.muted, marginTop: 4 }}>{stats.riskOfRuin < 10 ? '🟢 Low Risk' : stats.riskOfRuin < 30 ? '🟡 Moderate' : '🔴 High Risk'}</div>
               </div>
             </ChartWrapper>
             <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'אופטימום קלי' : 'Kelly Optimal Sizing'} explanation={EXPLANATIONS.kellyOptimal} unit="%">
               <div style={{ textAlign: 'center', padding: 20 }}>
                 <div style={{ fontSize: 42, fontWeight: 700, color: stats.kellyOptimal > 0 ? T.accent.cyan : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{stats.kellyOptimal.toFixed(1)}%</div>
-                <div style={{ fontSize: 10, color: T.text.dim, marginTop: 4 }}>Half-Kelly: {(stats.kellyOptimal / 2).toFixed(1)}%</div>
+                <div style={{ fontSize: 10, color: T.text.muted, marginTop: 4 }}>Half-Kelly: {(stats.kellyOptimal / 2).toFixed(1)}%</div>
               </div>
             </ChartWrapper>
             <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'יעילות הון' : 'Capital Efficiency'} explanation={EXPLANATIONS.volatilityAdjusted} unit="R/σ">
               <div style={{ textAlign: 'center', padding: 20 }}>
                 <div style={{ fontSize: 42, fontWeight: 700, color: stats.volatilityAdjustedExpectancy > 0.5 ? T.accent.cyan : T.accent.orange, fontFamily: "'JetBrains Mono', monospace" }}>{stats.volatilityAdjustedExpectancy.toFixed(2)}</div>
-                <div style={{ fontSize: 10, color: T.text.dim, marginTop: 4 }}>{stats.volatilityAdjustedExpectancy > 0.5 ? '🟢 Efficient' : '🟡 Suboptimal'}</div>
+                <div style={{ fontSize: 10, color: T.text.muted, marginTop: 4 }}>{stats.volatilityAdjustedExpectancy > 0.5 ? '🟢 Efficient' : '🟡 Suboptimal'}</div>
               </div>
             </ChartWrapper>
           </div>
@@ -794,13 +794,13 @@ const Index = () => {
           {/* Drawdown structure table */}
           <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'מבנה נסיגות' : 'Drawdown Structure Map'} explanation={EXPLANATIONS.drawdownStructure} unit="%">
             {stats.drawdownStructure.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: 20, color: T.text.dim, fontSize: 12 }}>{isRTL ? 'אין נסיגות משמעותיות' : 'No significant drawdowns'}</div>
+              <div style={{ textAlign: 'center', padding: 20, color: T.text.muted, fontSize: 12 }}>{isRTL ? 'אין נסיגות משמעותיות' : 'No significant drawdowns'}</div>
             ) : (
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                 {stats.drawdownStructure.map((dd, i) => (
                   <div key={i} style={{ flex: '0 0 auto', padding: 10, background: `${T.accent.red}08`, border: `1px solid ${T.accent.red}20`, borderRadius: T.radius.md, minWidth: 120, textAlign: 'center' }}>
                     <div style={{ fontSize: 18, fontWeight: 700, color: T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>-{dd.depth.toFixed(1)}%</div>
-                    <div style={{ fontSize: 9, color: T.text.dim, marginTop: 3 }}>Trades {dd.start}→{dd.end} • {dd.recovery} to recover</div>
+                    <div style={{ fontSize: 9, color: T.text.muted, marginTop: 3 }}>Trades {dd.start}→{dd.end} • {dd.recovery} to recover</div>
                   </div>
                 ))}
               </div>
@@ -811,7 +811,7 @@ const Index = () => {
           <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ביטחון מול תוצאה' : 'Confidence vs Outcome Scatter'} explanation={EXPLANATIONS.rDistribution} unit="R" style={{ marginTop: 12 }}>
             <ResponsiveContainer width="100%" height={200}>
               <ScatterChart><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                <XAxis dataKey="deviation" name="Deviation" tick={{ fill: T.text.dim, fontSize: 9 }} /><YAxis dataKey="returnR" name="R-Multiple" tick={{ fill: T.text.dim, fontSize: 9 }} /><ZAxis dataKey="risk" range={[20, 60]} />
+                <XAxis dataKey="deviation" name="Deviation" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis dataKey="returnR" name="R-Multiple" tick={{ fill: T.text.muted, fontSize: 9 }} /><ZAxis dataKey="risk" range={[20, 60]} />
                 <Tooltip contentStyle={tt} /><Scatter data={trades.map(tr => ({ deviation: tr.deviation, returnR: tr.returnR, risk: tr.risk, coin: tr.coin }))} fill={T.accent.cyan} fillOpacity={0.6} />
               </ScatterChart>
             </ResponsiveContainer>
@@ -932,7 +932,7 @@ const Index = () => {
                       <tr key={i} style={{ borderBottom: `1px solid ${T.border.subtle}` }}>
                         <td style={{ padding: '8px 12px', color: T.text.secondary }}>{row.metric}</td>
                         <td style={{ padding: '8px 12px', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: T.text.primary }}>{row.value}</td>
-                        <td style={{ padding: '8px 12px', color: T.text.dim, fontFamily: "'JetBrains Mono', monospace" }}>{row.target}</td>
+                        <td style={{ padding: '8px 12px', color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>{row.target}</td>
                         <td style={{ padding: '8px 12px' }}>
                           <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 700, background: row.ok ? `${T.accent.green}15` : `${T.accent.red}15`, color: row.ok ? T.accent.green : T.accent.red }}>
                             {row.ok ? '✓ On Track' : '⚠ Off Target'}
@@ -976,7 +976,7 @@ const Index = () => {
               <tbody>
                 {(opMode === 'live' ? trades.slice(-8) : trades).map((tr, idx) => (
                   <tr key={tr.id} onClick={() => setSelTrade(tr)} style={{ cursor: 'pointer', background: idx % 2 ? `${T.bg.tertiary}40` : 'transparent' }}>
-                    <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, color: T.text.dim }}>{tr.id}</td>
+                    <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, color: T.text.muted }}>{tr.id}</td>
                     <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, whiteSpace: 'nowrap', fontSize: 11 }}>{new Date(tr.date).toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
                     <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontWeight: 600, color: T.accent.cyan }}>{tr.coin}</td>
                     <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}` }}><TradingBadge color={tr.direction === 'Long' ? T.accent.green : T.accent.red}>{tr.direction === 'Long' ? '↑' : '↓'} {tr.direction}</TradingBadge></td>
@@ -990,7 +990,7 @@ const Index = () => {
                       <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: tr.deviation > 0.1 ? T.accent.red : T.accent.green }}>{tr.deviation.toFixed(3)}R</td>
                       <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }}>{tr.leverage}x</td>
                     </>}
-                    <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, color: T.text.dim, fontSize: 11, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tr.comments || '—'}</td>
+                    <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, color: T.text.muted, fontSize: 11, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tr.comments || '—'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1014,9 +1014,9 @@ const Index = () => {
                   { l: t.exit, v: selTrade.exit }, { l: `${t.pnl} ($)`, v: `${selTrade.pnl >= 0 ? '+' : ''}$${selTrade.pnl.toFixed(4)}`, c: selTrade.pnl >= 0 ? T.accent.green : T.accent.red },
                   { l: `${t.riskR} (R)`, v: `${selTrade.returnR.toFixed(2)}R` }, { l: t.deviation, v: selTrade.deviation ? selTrade.deviation.toFixed(4) + 'R' : '0', c: selTrade.deviation > 0 ? T.accent.orange : T.accent.green },
                   { l: t.leverage, v: `${selTrade.leverage}x` }, { l: `${t.balance} ($)`, v: `$${selTrade.balance.toFixed(2)}` },
-                ].map((item, i) => (<div key={i}><div style={{ fontSize: 9, color: T.text.dim, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{item.l}</div><PV><div style={{ fontSize: 15, fontWeight: 600, color: item.c || T.text.primary, fontFamily: "'JetBrains Mono', monospace", marginTop: 2 }}>{item.v}</div></PV></div>))}
+                ].map((item, i) => (<div key={i}><div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{item.l}</div><PV><div style={{ fontSize: 15, fontWeight: 600, color: item.c || T.text.primary, fontFamily: "'JetBrains Mono', monospace", marginTop: 2 }}>{item.v}</div></PV></div>))}
               </div>
-              {selTrade.comments && <div style={{ marginTop: 16, padding: 12, background: T.bg.tertiary, borderRadius: T.radius.md, border: `1px solid ${T.border.subtle}` }}><div style={{ fontSize: 9, color: T.text.dim, textTransform: 'uppercase', marginBottom: 4 }}>{t.comments}</div><div style={{ fontSize: 13, color: T.text.secondary, lineHeight: 1.5 }}>{selTrade.comments}</div></div>}
+              {selTrade.comments && <div style={{ marginTop: 16, padding: 12, background: T.bg.tertiary, borderRadius: T.radius.md, border: `1px solid ${T.border.subtle}` }}><div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', marginBottom: 4 }}>{t.comments}</div><div style={{ fontSize: 13, color: T.text.secondary, lineHeight: 1.5 }}>{selTrade.comments}</div></div>}
               <div style={{ display: 'flex', gap: 8, marginTop: 18, justifyContent: 'flex-end' }}>
                 <button onClick={() => handleDeleteTrade(selTrade.id)} style={{ padding: '7px 16px', background: `${T.accent.red}15`, border: `1px solid ${T.accent.red}30`, borderRadius: T.radius.md, color: T.accent.red, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>{t.deleteTrade}</button>
                 <button onClick={() => { setEditingTrade(selTrade); setSelTrade(null); setShowTradeForm(true); }} style={{ padding: '7px 16px', background: `${T.accent.blue}15`, border: `1px solid ${T.accent.blue}30`, borderRadius: T.radius.md, color: T.accent.blue, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>{t.editTrade}</button>
@@ -1063,7 +1063,7 @@ const Index = () => {
             </div>
             <GlassCard T={T} style={{ padding: 14 }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: isMobile ? 2 : 3, marginBottom: 6 }}>
-                {dayNames.map((d, i) => <div key={i} style={{ textAlign: 'center', fontSize: isMobile ? 8 : 9, color: T.text.dim, fontWeight: 600, textTransform: 'uppercase', padding: '3px 0' }}>{d}</div>)}
+                {dayNames.map((d, i) => <div key={i} style={{ textAlign: 'center', fontSize: isMobile ? 8 : 9, color: T.text.muted, fontWeight: 600, textTransform: 'uppercase', padding: '3px 0' }}>{d}</div>)}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: isMobile ? 2 : 3 }}>
                 {calDays.map((d, i) => {
@@ -1078,7 +1078,7 @@ const Index = () => {
                       onMouseLeave={() => setCalHoverDay(null)}
                       onClick={() => dd && d && setCalModalDay(d)}
                       style={{ minHeight: isMobile ? 48 : (isHovered && dd ? 95 : 68), borderRadius: T.radius.md, border: `1px solid ${isDarkRed ? `${T.accent.red}60` : dd ? (dd.pnl > 0 ? `${T.accent.green}${Math.round(40 + intensity * 40).toString(16)}` : dd.pnl < 0 ? `${T.accent.red}${Math.round(35 + intensity * 40).toString(16)}` : `${T.accent.orange}25`) : T.border.subtle}`, background: isDarkRed ? `${T.accent.red}20` : dd ? (dd.pnl > 0 ? `${T.accent.green}${Math.round(10 + intensity * 20).toString(16).padStart(2, '0')}` : dd.pnl < 0 ? `${T.accent.red}${Math.round(10 + intensity * 15).toString(16).padStart(2, '0')}` : `${T.accent.orange}10`) : 'transparent', padding: isMobile ? '3px 3px' : '5px 6px', transition: 'all 0.2s ease', cursor: dd ? 'pointer' : 'default', position: 'relative' }}>
-                      {d && <><div style={{ fontSize: 10, color: T.text.dim, display: 'flex', alignItems: 'center', gap: 3 }}>{d}{isDarkRed && <span title="Risk limit exceeded">⚠️</span>}</div>{dd && <><PV><div style={{ fontSize: 13, fontWeight: 700, color: isDarkRed ? T.accent.red : dd.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace", marginTop: 3 }}>${Math.abs(dd.pnl).toFixed(0)}</div></PV><div style={{ fontSize: 8, color: T.text.dim, marginTop: 1 }}>{dd.trades} {isRTL ? 'עס׳' : 'tr'} • {dd.wins}/{dd.trades}</div>
+                      {d && <><div style={{ fontSize: 10, color: T.text.muted, display: 'flex', alignItems: 'center', gap: 3 }}>{d}{isDarkRed && <span title="Risk limit exceeded">⚠️</span>}</div>{dd && <><PV><div style={{ fontSize: 13, fontWeight: 700, color: isDarkRed ? T.accent.red : dd.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace", marginTop: 3 }}>${Math.abs(dd.pnl).toFixed(0)}</div></PV><div style={{ fontSize: 8, color: T.text.muted, marginTop: 1 }}>{dd.trades} {isRTL ? 'עס׳' : 'tr'} • {dd.wins}/{dd.trades}</div>
                         {isHovered && <div style={{ fontSize: 8, color: T.text.muted, marginTop: 2 }}>{dd.details.map(det => det.coin).join(', ')}</div>}
                       </>}</>}
                     </div>
@@ -1090,13 +1090,13 @@ const Index = () => {
             <div style={{ marginTop: 10, display: 'flex', gap: 10 }}>
               <GlassCard T={T} style={{ flex: 1, padding: 12, textAlign: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'center' }}>
-                  <div style={{ fontSize: 9, color: T.text.dim, textTransform: 'uppercase' }}>{t.monthlyEV}</div>
+                  <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase' }}>{t.monthlyEV}</div>
                   <span style={{ fontSize: 7, padding: '1px 3px', borderRadius: 3, background: `${T.accent.purple}15`, color: T.accent.purple, fontWeight: 700 }}>R</span>
                 </div>
                 <PV><div style={{ fontSize: 18, fontWeight: 700, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>{stats.expectancyR >= 0 ? '+' : ''}{stats.expectancyR.toFixed(3)}R</div></PV>
               </GlassCard>
               <GlassCard T={T} style={{ flex: 1, padding: 12, textAlign: 'center' }}>
-                <div style={{ fontSize: 9, color: T.text.dim, textTransform: 'uppercase' }}>{t.streak}</div>
+                <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase' }}>{t.streak}</div>
                 <div style={{ fontSize: 18, fontWeight: 700, color: stats.streakType === 'Win' ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>{stats.currentStreak} {stats.streakType === 'Win' ? '🟢' : '🔴'}</div>
               </GlassCard>
             </div>
@@ -1105,15 +1105,15 @@ const Index = () => {
             <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>{t.weeklySummary}</div>
             {weekStats.map((w, i) => (
               <GlassCard T={T} key={i} style={{ marginBottom: 7, padding: 12 }}>
-                <div style={{ fontSize: 9, color: T.text.dim, marginBottom: 4 }}>{isRTL ? `שבוע ${w.week}` : `Week ${w.week}`}</div>
-                <PV><div style={{ fontSize: 16, fontWeight: 700, color: w.pnl >= 0 ? T.accent.green : w.pnl < 0 ? T.accent.red : T.text.dim, fontFamily: "'JetBrains Mono', monospace" }}>{w.pnl !== 0 ? `${w.pnl >= 0 ? '+' : ''}$${w.pnl.toFixed(2)}` : '$0.00'}</div></PV>
-                <div style={{ fontSize: 9, color: T.text.dim, marginTop: 1 }}>{w.trades} {isRTL ? 'עסקאות' : 'trades'}</div>
+                <div style={{ fontSize: 9, color: T.text.muted, marginBottom: 4 }}>{isRTL ? `שבוע ${w.week}` : `Week ${w.week}`}</div>
+                <PV><div style={{ fontSize: 16, fontWeight: 700, color: w.pnl >= 0 ? T.accent.green : w.pnl < 0 ? T.accent.red : T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>{w.pnl !== 0 ? `${w.pnl >= 0 ? '+' : ''}$${w.pnl.toFixed(2)}` : '$0.00'}</div></PV>
+                <div style={{ fontSize: 9, color: T.text.muted, marginTop: 1 }}>{w.trades} {isRTL ? 'עסקאות' : 'trades'}</div>
               </GlassCard>
             ))}
             <div style={{ marginTop: 14, fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{t.monthlyTotal}</div>
             <GlassCard T={T} glow={T.accent.cyanGlow}>
               <PV><div style={{ fontSize: 22, fontWeight: 700, color: stats.totalPnl >= 0 ? T.accent.cyan : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>${stats.totalPnl.toFixed(2)}</div></PV>
-              <div style={{ fontSize: 9, color: T.text.dim, marginTop: 3 }}>{stats.totalTrades} {isRTL ? 'עסקאות' : 'trades'} • {stats.winRate.toFixed(0)}% WR</div>
+              <div style={{ fontSize: 9, color: T.text.muted, marginTop: 3 }}>{stats.totalTrades} {isRTL ? 'עסקאות' : 'trades'} • {stats.winRate.toFixed(0)}% WR</div>
             </GlassCard>
           </div>
         </div>
@@ -1183,7 +1183,7 @@ const Index = () => {
       <>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div style={{ fontSize: 12, color: T.text.secondary }}>{isRTL ? `ניתוח מבוסס ראיות של ${trades.length} עסקאות` : `Evidence-based analysis of ${trades.length} trades`}</div>
-          <button onClick={handleGenerateInsights} disabled={aiLoading} style={{ padding: '8px 20px', background: aiLoading ? T.bg.tertiary : `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: aiLoading ? T.text.dim : T.bg.primary, fontWeight: 700, cursor: aiLoading ? 'default' : 'pointer', fontSize: 12, transition: 'all 0.3s ease' }}>
+          <button onClick={handleGenerateInsights} disabled={aiLoading} style={{ padding: '8px 20px', background: aiLoading ? T.bg.tertiary : `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: aiLoading ? T.text.muted : T.bg.primary, fontWeight: 700, cursor: aiLoading ? 'default' : 'pointer', fontSize: 12, transition: 'all 0.3s ease' }}>
             {aiLoading ? (isRTL ? 'מחשב...' : 'Computing...') : t.generateInsights}
           </button>
         </div>
@@ -1276,9 +1276,9 @@ const Index = () => {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 6px 12px', borderBottom: `1px solid ${T.border.subtle}`, marginBottom: 4 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 {Ico.orca}
-                <div><div style={{ fontSize: 15, fontWeight: 700, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>ORCA</div><div style={{ fontSize: 8, color: T.text.dim, letterSpacing: '0.15em', textTransform: 'uppercase' }}>Investment</div></div>
+                <div><div style={{ fontSize: 15, fontWeight: 700, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>ORCA</div><div style={{ fontSize: 8, color: T.text.muted, letterSpacing: '0.15em', textTransform: 'uppercase' }}>Investment</div></div>
               </div>
-              <button onClick={() => setSbOpen(false)} style={{ background: 'none', border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.sm, color: T.text.dim, cursor: 'pointer', padding: '4px 8px', fontSize: 16 }}>✕</button>
+              <button onClick={() => setSbOpen(false)} style={{ background: 'none', border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.sm, color: T.text.muted, cursor: 'pointer', padding: '4px 8px', fontSize: 16 }}>✕</button>
             </div>
             <ModeSwitch T={T} isRTL={isRTL} operatingMode={settings.operatingMode} systemMode={settings.systemMode} onOperatingModeChange={settings.setOperatingMode} onSystemModeChange={settings.setSystemMode} />
             {/* Nav items */}
@@ -1298,7 +1298,7 @@ const Index = () => {
             </div>
             {/* Bottom actions */}
             <div style={{ padding: '4px 0', borderTop: `1px solid ${T.border.subtle}`, marginTop: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <button onClick={() => { setSbOpen(false); setShowFeatureModal(true); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: 'transparent', color: T.text.dim, border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 12 }}>
+              <button onClick={() => { setSbOpen(false); setShowFeatureModal(true); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: 'transparent', color: T.text.muted, border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 12 }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                 <span>{isRTL ? 'אודות המערכת' : 'About System'}</span>
               </button>
@@ -1349,11 +1349,11 @@ const Index = () => {
         <div style={{ padding: '18px 14px 6px', display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }} onClick={() => setShowFeatureModal(true)}>
             {Ico.orca}
-            {sbOpen && <div><div style={{ fontSize: 16, fontWeight: 700, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>ORCA</div><div style={{ fontSize: 8, color: T.text.dim, letterSpacing: '0.15em', textTransform: 'uppercase' }}>Investment</div></div>}
+            {sbOpen && <div><div style={{ fontSize: 16, fontWeight: 700, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>ORCA</div><div style={{ fontSize: 8, color: T.text.muted, letterSpacing: '0.15em', textTransform: 'uppercase' }}>Investment</div></div>}
           </div>
-          {sbOpen && <button onClick={() => setSbOpen(false)} style={{ marginInlineStart: 'auto', background: 'none', border: 'none', color: T.text.dim, cursor: 'pointer', fontSize: 14, padding: 4, lineHeight: 1, transition: 'color 0.2s' }}>‹</button>}
+          {sbOpen && <button onClick={() => setSbOpen(false)} style={{ marginInlineStart: 'auto', background: 'none', border: 'none', color: T.text.muted, cursor: 'pointer', fontSize: 14, padding: 4, lineHeight: 1, transition: 'color 0.2s' }}>‹</button>}
         </div>
-        {!sbOpen && <button onClick={() => setSbOpen(true)} style={{ background: 'none', border: 'none', color: T.text.dim, cursor: 'pointer', fontSize: 14, padding: '6px 0', lineHeight: 1, transition: 'color 0.2s' }}>›</button>}
+        {!sbOpen && <button onClick={() => setSbOpen(true)} style={{ background: 'none', border: 'none', color: T.text.muted, cursor: 'pointer', fontSize: 14, padding: '6px 0', lineHeight: 1, transition: 'color 0.2s' }}>›</button>}
         {sbOpen && <ModeSwitch T={T} isRTL={isRTL} operatingMode={settings.operatingMode} systemMode={settings.systemMode} onOperatingModeChange={settings.setOperatingMode} onSystemModeChange={settings.setSystemMode} />}
         <nav style={{ flex: 1, padding: '0 6px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
           {nav.map(item => {
@@ -1365,7 +1365,7 @@ const Index = () => {
             </button>
             );
           })}
-          <button onClick={() => setShowFeatureModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: sbOpen ? '9px 10px' : '9px 0', justifyContent: sbOpen ? 'flex-start' : 'center', background: 'transparent', color: T.text.dim, border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: 400, transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: '2px solid transparent', marginTop: 4 }}>
+          <button onClick={() => setShowFeatureModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: sbOpen ? '9px 10px' : '9px 0', justifyContent: sbOpen ? 'flex-start' : 'center', background: 'transparent', color: T.text.muted, border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: 400, transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: '2px solid transparent', marginTop: 4 }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
             {sbOpen && <span>{isRTL ? 'אודות המערכת' : 'About System'}</span>}
           </button>
@@ -1480,7 +1480,7 @@ const Index = () => {
                 }}>⌘K</span>
               </button>
             )}
-            {!isMobile && <div style={{ fontSize: 11, color: T.text.dim }}>{new Date().toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</div>}
+            {!isMobile && <div style={{ fontSize: 11, color: T.text.muted }}>{new Date().toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</div>}
             <PV><div style={{ fontSize: 11, color: T.accent.cyan, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace" }}>${currentBalance.toFixed(2)}</div></PV>
             {!isMobile && <span onClick={() => setShowFeatureModal(true)} style={{ fontSize: 13, fontWeight: 800, letterSpacing: '-0.02em', color: T.text.primary, fontFamily: "'JetBrains Mono', monospace", cursor: 'pointer', transition: 'opacity 0.2s' }}>Orca<span style={{ fontWeight: 300, color: T.text.muted, marginLeft: 4 }}>Investment</span></span>}
           </div>

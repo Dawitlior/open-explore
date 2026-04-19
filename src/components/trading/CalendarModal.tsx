@@ -118,9 +118,9 @@ export const CalendarModal = ({ T, t, isRTL, day, month, year, trades, onClose }
                 padding: 12, background: T.bg.tertiary, borderRadius: T.radius.md, textAlign: 'center',
                 border: `1px solid ${T.border.subtle}`, transition: 'all 0.2s'
               }}>
-                <div style={{ fontSize: 8, color: T.text.dim, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{s.l}</div>
+                <div style={{ fontSize: 8, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{s.l}</div>
                 <div style={{ fontSize: 18, fontWeight: 700, color: s.c, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>{s.v}</div>
-                {s.u && <div style={{ fontSize: 7, color: T.text.dim, marginTop: 1 }}>{s.u}</div>}
+                {s.u && <div style={{ fontSize: 7, color: T.text.muted, marginTop: 1 }}>{s.u}</div>}
               </div>
             ))}
           </div>
@@ -165,16 +165,16 @@ export const CalendarModal = ({ T, t, isRTL, day, month, year, trades, onClose }
                 </span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, fontSize: 10 }}>
-                <div><span style={{ color: T.text.dim }}>Entry: </span><span style={{ color: T.text.primary, fontFamily: "'JetBrains Mono', monospace" }}>{tr.entry}</span></div>
-                <div><span style={{ color: T.text.dim }}>SL: </span><span style={{ color: T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{tr.stopLoss}</span></div>
-                <div><span style={{ color: T.text.dim }}>Exit: </span><span style={{ color: T.text.primary, fontFamily: "'JetBrains Mono', monospace" }}>{tr.exit}</span></div>
-                <div><span style={{ color: T.text.dim }}>R: </span><span style={{ color: tr.returnR >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{tr.returnR.toFixed(2)}R</span></div>
+                <div><span style={{ color: T.text.muted }}>Entry: </span><span style={{ color: T.text.primary, fontFamily: "'JetBrains Mono', monospace" }}>{tr.entry}</span></div>
+                <div><span style={{ color: T.text.muted }}>SL: </span><span style={{ color: T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{tr.stopLoss}</span></div>
+                <div><span style={{ color: T.text.muted }}>Exit: </span><span style={{ color: T.text.primary, fontFamily: "'JetBrains Mono', monospace" }}>{tr.exit}</span></div>
+                <div><span style={{ color: T.text.muted }}>R: </span><span style={{ color: tr.returnR >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{tr.returnR.toFixed(2)}R</span></div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, fontSize: 10, marginTop: 4 }}>
-                <div><span style={{ color: T.text.dim }}>Risk: </span><span style={{ fontFamily: "'JetBrains Mono', monospace" }}>${tr.risk}</span></div>
-                <div><span style={{ color: T.text.dim }}>Lev: </span><span style={{ fontFamily: "'JetBrains Mono', monospace" }}>{tr.leverage}x</span></div>
-                <div><span style={{ color: T.text.dim }}>Rules: </span><span style={{ color: tr.rules ? T.accent.green : T.accent.red }}>{tr.rules ? '✓' : '✗'}</span></div>
-                <div><span style={{ color: T.text.dim }}>Dev: </span><span style={{ color: tr.deviation > 0.1 ? T.accent.red : T.accent.green, fontFamily: "'JetBrains Mono', monospace" }}>{tr.deviation.toFixed(3)}R</span></div>
+                <div><span style={{ color: T.text.muted }}>Risk: </span><span style={{ fontFamily: "'JetBrains Mono', monospace" }}>${tr.risk}</span></div>
+                <div><span style={{ color: T.text.muted }}>Lev: </span><span style={{ fontFamily: "'JetBrains Mono', monospace" }}>{tr.leverage}x</span></div>
+                <div><span style={{ color: T.text.muted }}>Rules: </span><span style={{ color: tr.rules ? T.accent.green : T.accent.red }}>{tr.rules ? '✓' : '✗'}</span></div>
+                <div><span style={{ color: T.text.muted }}>Dev: </span><span style={{ color: tr.deviation > 0.1 ? T.accent.red : T.accent.green, fontFamily: "'JetBrains Mono', monospace" }}>{tr.deviation.toFixed(3)}R</span></div>
               </div>
               {tr.comments && <div style={{ marginTop: 6, fontSize: 11, color: T.text.muted, fontStyle: 'italic' }}>"{tr.comments}"</div>}
             </div>
@@ -202,7 +202,7 @@ export const CalendarModal = ({ T, t, isRTL, day, month, year, trades, onClose }
                 <div style={{ fontSize: 10, color: T.accent.purple, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
                   🧠 {isRTL ? 'ניתוח AI' : 'AI Day Analysis'}
                 </div>
-                <div style={{ fontSize: 9, color: T.text.dim, marginBottom: 12 }}>
+                <div style={{ fontSize: 9, color: T.text.muted, marginBottom: 12 }}>
                   {isRTL
                     ? `ניתוח דינמי מבוסס ${dayTrades.length} עסקאות ביום זה • ${totalR >= 0 ? '+' : ''}${totalR.toFixed(2)}R`
                     : `Dynamic analysis based on ${dayTrades.length} trades this day • ${totalR >= 0 ? '+' : ''}${totalR.toFixed(2)}R`}
@@ -213,7 +213,7 @@ export const CalendarModal = ({ T, t, isRTL, day, month, year, trades, onClose }
                     <div style={{ fontSize: 12, color: T.text.muted }}>{isRTL ? 'מנתח את היום...' : 'Analyzing this day...'}</div>
                   </div>
                 ) : dayInsights.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: 16, color: T.text.dim, fontSize: 12 }}>
+                  <div style={{ textAlign: 'center', padding: 16, color: T.text.muted, fontSize: 12 }}>
                     {isRTL ? 'אין תובנות ליום זה' : 'No insights for this day'}
                   </div>
                 ) : (

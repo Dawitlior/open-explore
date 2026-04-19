@@ -221,7 +221,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
     borderRadius: T.radius.sm, color: T.text.primary,
     fontSize: isMobile ? 14 : 13, fontFamily: "'JetBrains Mono', monospace", outline: 'none',
   };
-  const labelStyle = { fontSize: isMobile ? 10 : 9, color: T.text.dim, textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 4, display: 'block' };
+  const labelStyle = { fontSize: isMobile ? 10 : 9, color: T.text.muted, textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 4, display: 'block' };
   const categoryColors: Record<AssetCategory, string> = { Crypto: T.accent.cyan, Stocks: T.accent.green, Forex: T.accent.purple, Futures: T.accent.orange, Options: T.accent.blue };
 
   const modeBtnStyle = (active: boolean, color: string) => ({
@@ -279,7 +279,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
           {ASSET_CATEGORIES[assetCategory].length > 0 && (
             <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', marginTop: 6 }}>
               {ASSET_CATEGORIES[assetCategory].map(s => (
-                <button key={s} onClick={() => handleSymbolSelect(s)} style={{ padding: isMobile ? '5px 10px' : '3px 8px', border: `1px solid ${form.coin === s ? categoryColors[assetCategory] : T.border.subtle}`, borderRadius: 4, background: form.coin === s ? `${categoryColors[assetCategory]}12` : 'transparent', color: form.coin === s ? categoryColors[assetCategory] : T.text.dim, cursor: 'pointer', fontSize: isMobile ? 11 : 10, fontFamily: "'JetBrains Mono', monospace", transition: 'all 0.15s' }}>{s}</button>
+                <button key={s} onClick={() => handleSymbolSelect(s)} style={{ padding: isMobile ? '5px 10px' : '3px 8px', border: `1px solid ${form.coin === s ? categoryColors[assetCategory] : T.border.subtle}`, borderRadius: 4, background: form.coin === s ? `${categoryColors[assetCategory]}12` : 'transparent', color: form.coin === s ? categoryColors[assetCategory] : T.text.muted, cursor: 'pointer', fontSize: isMobile ? 11 : 10, fontFamily: "'JetBrains Mono', monospace", transition: 'all 0.15s' }}>{s}</button>
               ))}
             </div>
           )}
@@ -325,7 +325,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
                   style={{ ...inputStyle, flex: 1 }}
                 />
                 {form.stopLoss > 0 && (
-                  <div style={{ fontSize: 10, color: T.text.dim, alignSelf: 'center', fontFamily: "'JetBrains Mono', monospace", whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: 10, color: T.text.muted, alignSelf: 'center', fontFamily: "'JetBrains Mono', monospace", whiteSpace: 'nowrap' }}>
                     → {form.stopLoss.toFixed(form.stopLoss < 1 ? 5 : 2)}
                   </div>
                 )}
@@ -350,7 +350,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
             ) : (
               <input type="number" step="0.1" value={form.riskPct || ''} onChange={e => handleRiskChange(+e.target.value)} placeholder="% Risk" style={inputStyle} />
             )}
-            <div style={{ fontSize: 9, color: T.text.dim, marginTop: 2, fontFamily: "'JetBrains Mono', monospace" }}>
+            <div style={{ fontSize: 9, color: T.text.muted, marginTop: 2, fontFamily: "'JetBrains Mono', monospace" }}>
               {riskMode === 'dollar'
                 ? `${form.riskPct.toFixed(1)}% of ${currentBalance > 0 ? '$' + currentBalance.toFixed(0) : 'balance'}`
                 : `$${form.risk.toFixed(2)}`
@@ -393,12 +393,12 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
 
         {/* Live preview */}
         <GlassCard T={T} style={{ marginBottom: 18, padding: isMobile ? 12 : 14 }}>
-          <div style={{ fontSize: 9, color: T.text.dim, textTransform: 'uppercase', marginBottom: 8 }}>{isRTL ? 'תצוגה מקדימה' : 'Preview'}</div>
+          <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', marginBottom: 8 }}>{isRTL ? 'תצוגה מקדימה' : 'Preview'}</div>
           <div style={{ display: 'flex', gap: isMobile ? 14 : 20, flexWrap: 'wrap' }}>
-            <div><div style={{ fontSize: 9, color: T.text.dim }}>R</div><div style={{ fontSize: isMobile ? 14 : 16, fontWeight: 700, color: returnR >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{returnR.toFixed(2)}R</div></div>
-            <div><div style={{ fontSize: 9, color: T.text.dim }}>P&L</div><div style={{ fontSize: isMobile ? 14 : 16, fontWeight: 700, color: pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}</div></div>
-            <div><div style={{ fontSize: 9, color: T.text.dim }}>{t.result}</div><div style={{ fontSize: isMobile ? 12 : 14, fontWeight: 600, color: winLoss === 'Win' ? T.accent.green : winLoss === 'Loss' ? T.accent.red : T.accent.orange }}>{winLoss}</div></div>
-            <div><div style={{ fontSize: 9, color: T.text.dim }}>{t.balance}</div><div style={{ fontSize: isMobile ? 12 : 14, fontWeight: 600, color: T.text.primary, fontFamily: "'JetBrains Mono', monospace" }}>${(currentBalance + pnl).toFixed(2)}</div></div>
+            <div><div style={{ fontSize: 9, color: T.text.muted }}>R</div><div style={{ fontSize: isMobile ? 14 : 16, fontWeight: 700, color: returnR >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{returnR.toFixed(2)}R</div></div>
+            <div><div style={{ fontSize: 9, color: T.text.muted }}>P&L</div><div style={{ fontSize: isMobile ? 14 : 16, fontWeight: 700, color: pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}</div></div>
+            <div><div style={{ fontSize: 9, color: T.text.muted }}>{t.result}</div><div style={{ fontSize: isMobile ? 12 : 14, fontWeight: 600, color: winLoss === 'Win' ? T.accent.green : winLoss === 'Loss' ? T.accent.red : T.accent.orange }}>{winLoss}</div></div>
+            <div><div style={{ fontSize: 9, color: T.text.muted }}>{t.balance}</div><div style={{ fontSize: isMobile ? 12 : 14, fontWeight: 600, color: T.text.primary, fontFamily: "'JetBrains Mono', monospace" }}>${(currentBalance + pnl).toFixed(2)}</div></div>
           </div>
         </GlassCard>
 

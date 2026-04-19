@@ -84,7 +84,7 @@ export const RiskExplanationModal = ({ T, isRTL, tradeId, riskChange, onSave, on
           ))}
         </div>
         <div style={{ marginBottom: 16 }}>
-          <label style={{ fontSize: 9, color: T.text.dim, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 4 }}>
+          <label style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 4 }}>
             {isRTL ? 'הערה נוספת (אופציונלי)' : 'Additional note (optional)'}
           </label>
           <textarea
@@ -106,7 +106,7 @@ export const RiskExplanationModal = ({ T, isRTL, tradeId, riskChange, onSave, on
               background: selected ? `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})` : T.bg.tertiary,
               border: 'none',
               borderRadius: 10,
-              color: selected ? T.bg.primary : T.text.dim,
+              color: selected ? T.bg.primary : T.text.muted,
               fontWeight: 700,
               cursor: selected ? 'pointer' : 'default',
               fontSize: 12,
