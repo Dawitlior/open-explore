@@ -38,7 +38,10 @@ export function useTrades() {
   }, [trades]);
 
   const nextId = useCallback(() => {
-    return trades.length > 0 ? Math.max(...trades.map(t => t.id)) + 1 : 1;
+    if (trades.length === 0) return 1;
+    let maxId = 0;
+    for (const t of trades) if (t.id > maxId) maxId = t.id;
+    return maxId + 1;
   }, [trades]);
 
   const recalcBalances = useCallback((tradeList: Trade[]): Trade[] => {
