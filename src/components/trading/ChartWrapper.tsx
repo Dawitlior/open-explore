@@ -1,6 +1,22 @@
-import { ReactNode } from 'react';
+import { ReactNode, Component, ErrorInfo } from 'react';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { GlassCard } from './TradingUI';
+
+class ChartErrorBoundary extends Component<{ children: ReactNode; T: TradingTheme }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch(error: Error, info: ErrorInfo) { console.error('Chart render failed:', error, info); }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: 24, textAlign: 'center', fontSize: 11, color: this.props.T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>
+          ⚠ Chart unavailable
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export interface ChartExplanation {
   what: string;
@@ -51,7 +67,7 @@ export const ChartWrapper = ({ T, title, explanation, children, style, unit, cha
           i
         </button>
       </div>
-      {children}
+      <ChartErrorBoundary T={T}>{children}</ChartErrorBoundary>
     </GlassCard>
   );
 };
