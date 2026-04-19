@@ -96,7 +96,7 @@ export const InstallPrompt = ({ T, isRTL, compact }: Props) => {
           {isRTL ? 'התקן' : 'Install'}
         </button>
         <button onClick={handleDismiss} style={{
-          background: 'none', border: 'none', color: T.text.dim, cursor: 'pointer', fontSize: 14, padding: 4,
+          background: 'none', border: 'none', color: T.text.muted, cursor: 'pointer', fontSize: 14, padding: 4,
         }}>×</button>
       </div>
     </GlassCard>

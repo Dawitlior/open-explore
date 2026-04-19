@@ -451,7 +451,7 @@ const CompletedView = ({ T, isRTL, isMobile, displayReview, perf, weekTrades, st
           {isRTL ? 'הסקירה השבועית הושלמה' : 'Weekly Review Completed'} — {displayReview.weekKey}
         </div>
         {displayReview.completedAt && (
-          <div style={{ fontSize: 10, color: T.text.dim }}>
+          <div style={{ fontSize: 10, color: T.text.muted }}>
             {isRTL ? 'הושלם:' : 'Completed:'} {new Date(displayReview.completedAt).toLocaleDateString()}
           </div>
         )}
@@ -578,13 +578,13 @@ const CompletedView = ({ T, isRTL, isMobile, displayReview, perf, weekTrades, st
 
           {dp.totalTrades > 0 && (
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 20, opacity: 0.6 }}>
-              <div style={{ fontSize: 10, color: T.text.dim }}>{dp.totalTrades} {isRTL ? 'עסקאות' : 'trades'}</div>
-              <div style={{ fontSize: 10, color: T.text.dim }}>•</div>
+              <div style={{ fontSize: 10, color: T.text.muted }}>{dp.totalTrades} {isRTL ? 'עסקאות' : 'trades'}</div>
+              <div style={{ fontSize: 10, color: T.text.muted }}>•</div>
               <div style={{ fontSize: 10, color: dp.winRate >= 50 ? '#00FFA3' : '#FF4D4D' }}>{dp.winRate.toFixed(0)}% WR</div>
-              <div style={{ fontSize: 10, color: T.text.dim }}>•</div>
+              <div style={{ fontSize: 10, color: T.text.muted }}>•</div>
               <div style={{ fontSize: 10, color: dp.totalR >= 0 ? '#00FFA3' : '#FF4D4D' }}>{dp.totalR.toFixed(1)}R</div>
-              <div style={{ fontSize: 10, color: T.text.dim }}>•</div>
-              <div style={{ fontSize: 10, color: T.text.dim }}>{dp.rulesFollowed.toFixed(0)}% {isRTL ? 'משמעת' : 'discipline'}</div>
+              <div style={{ fontSize: 10, color: T.text.muted }}>•</div>
+              <div style={{ fontSize: 10, color: T.text.muted }}>{dp.rulesFollowed.toFixed(0)}% {isRTL ? 'משמעת' : 'discipline'}</div>
             </div>
           )}
         </div>
@@ -593,7 +593,7 @@ const CompletedView = ({ T, isRTL, isMobile, displayReview, perf, weekTrades, st
       {/* Archives */}
       {!viewingArchive && archivedWeeks.filter(w => w !== weekKey).length > 0 && (
         <div style={{ marginTop: 30, paddingTop: 20, borderTop: `1px solid ${T.border.subtle}` }}>
-          <div style={{ fontSize: 10, color: T.text.dim, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+          <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
             {isRTL ? 'ארכיון סקירות' : 'Review Archive'}
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -786,7 +786,7 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, stats, riskData }: Props) =
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 11, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace",
                   background: isFriday ? '#FFD70015' : isPast ? `${T.accent.cyan}10` : isCurrent ? `${T.accent.blue}15` : T.bg.tertiary,
-                  color: isFriday ? '#FFD700' : isPast ? T.accent.cyan : isCurrent ? T.accent.blue : T.text.dim,
+                  color: isFriday ? '#FFD700' : isPast ? T.accent.cyan : isCurrent ? T.accent.blue : T.text.muted,
                   border: `1px solid ${isFriday ? '#FFD70030' : isCurrent ? `${T.accent.blue}30` : 'transparent'}`,
                   transition: 'all 0.2s',
                 }}>
@@ -803,7 +803,7 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, stats, riskData }: Props) =
 
         {weekTrades.length > 0 && (
           <GlassCard T={T} style={{ maxWidth: 420, margin: '0 auto', textAlign: isRTL ? 'right' : 'left' }}>
-            <div style={{ fontSize: 10, color: T.text.dim, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+            <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
               {isRTL ? 'עדכון ביניים' : 'Mid-Week Snapshot'}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
@@ -816,7 +816,7 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, stats, riskData }: Props) =
 
         {archivedWeeks.length > 0 && (
           <div style={{ marginTop: 30, textAlign: 'center' }}>
-            <div style={{ fontSize: 10, color: T.text.dim, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+            <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
               {isRTL ? 'סקירות שהושלמו' : 'Completed Reviews'}
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -923,7 +923,7 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, stats, riskData }: Props) =
           </div>
 
           <GlassCard T={T} glow={`${T.accent.purple}08`} style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 10, color: T.text.dim, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+            <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
               {isRTL ? 'פרופיל שבועי' : 'Weekly Profile'}
             </div>
             <div style={{ fontSize: isMobile ? 14 : 16, fontWeight: 700, color: T.accent.purple, fontFamily: "'JetBrains Mono', monospace" }}>
@@ -1110,7 +1110,7 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, stats, riskData }: Props) =
             >
               {isRTL ? '📋 שלח סקירה שבועית' : '📋 Submit Weekly Review'}
             </button>
-            <div style={{ fontSize: 10, color: T.text.dim, marginTop: 8 }}>
+            <div style={{ fontSize: 10, color: T.text.muted, marginTop: 8 }}>
               {isRTL ? 'לאחר השליחה, הסקירה תיסגר ותישמר לארכיון עד יום שישי הבא.' : 'Once submitted, this review will be locked and archived until next Friday.'}
             </div>
           </div>

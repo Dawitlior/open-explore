@@ -43,7 +43,7 @@ export const ChartWrapper = ({ T, title, explanation, children, style, unit, cha
           onClick={handleInfoClick}
           style={{
             width: 18, height: 18, borderRadius: '50%', border: `1px solid ${T.border.medium}`,
-            background: 'transparent', color: T.text.dim,
+            background: 'transparent', color: T.text.muted,
             cursor: 'pointer', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center',
             transition: 'all 0.2s'
           }}

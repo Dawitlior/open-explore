@@ -67,7 +67,7 @@ export const CommandPalette = ({ T, commands, isOpen, onClose }: CommandPaletteP
         animation: 'fadeIn 0.15s ease'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', borderBottom: `1px solid ${T.border.subtle}` }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.text.dim} strokeWidth="2" style={{ marginRight: 10, flexShrink: 0 }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.text.muted} strokeWidth="2" style={{ marginRight: 10, flexShrink: 0 }}>
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
           </svg>
           <input
@@ -80,12 +80,12 @@ export const CommandPalette = ({ T, commands, isOpen, onClose }: CommandPaletteP
               color: T.text.primary, fontSize: 14, fontFamily: "'Inter', sans-serif"
             }}
           />
-          <span style={{ fontSize: 10, color: T.text.dim, padding: '2px 6px', background: T.bg.tertiary, borderRadius: 4, fontFamily: "'JetBrains Mono', monospace" }}>ESC</span>
+          <span style={{ fontSize: 10, color: T.text.muted, padding: '2px 6px', background: T.bg.tertiary, borderRadius: 4, fontFamily: "'JetBrains Mono', monospace" }}>ESC</span>
         </div>
         <div style={{ maxHeight: 340, overflow: 'auto', padding: '6px 0' }}>
           {Object.entries(grouped).map(([category, cmds]) => (
             <div key={category}>
-              <div style={{ padding: '6px 16px', fontSize: 9, color: T.text.dim, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>{category}</div>
+              <div style={{ padding: '6px 16px', fontSize: 9, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>{category}</div>
               {cmds.map(cmd => (
                 <button
                   key={cmd.id}
@@ -101,13 +101,13 @@ export const CommandPalette = ({ T, commands, isOpen, onClose }: CommandPaletteP
                 >
                   <span style={{ fontSize: 15 }}>{cmd.icon}</span>
                   <span style={{ flex: 1 }}>{cmd.label}</span>
-                  {cmd.shortcut && <span style={{ fontSize: 10, color: T.text.dim, fontFamily: "'JetBrains Mono', monospace" }}>{cmd.shortcut}</span>}
+                  {cmd.shortcut && <span style={{ fontSize: 10, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>{cmd.shortcut}</span>}
                 </button>
               ))}
             </div>
           ))}
           {filtered.length === 0 && (
-            <div style={{ padding: '20px 16px', textAlign: 'center', color: T.text.dim, fontSize: 13 }}>No commands found</div>
+            <div style={{ padding: '20px 16px', textAlign: 'center', color: T.text.muted, fontSize: 13 }}>No commands found</div>
           )}
         </div>
       </div>
