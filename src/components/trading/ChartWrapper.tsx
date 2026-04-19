@@ -51,7 +51,7 @@ export const ChartWrapper = ({ T, title, explanation, children, style, unit, cha
           i
         </button>
       </div>
-      {children}
+      <ChartErrorBoundary T={T}>{children}</ChartErrorBoundary>
     </GlassCard>
   );
 };
