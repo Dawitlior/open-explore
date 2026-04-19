@@ -380,9 +380,10 @@ const Index = () => {
               <defs><linearGradient id="eqBeg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.6}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.25}/></linearGradient></defs>
               <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
               <XAxis dataKey="trade" tick={{ fill: T.text.muted, fontSize: 10 }} />
-              <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} domain={['dataMin - 5', 'dataMax + 5']} />
+              <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} domain={[(dataMin: number) => Math.floor(dataMin * 0.98), (dataMax: number) => Math.ceil(dataMax * 1.02)]} />
               <Tooltip contentStyle={tt} />
-              <Area type="monotone" dataKey="balance" stroke={T.accent.cyan} fill="url(#eqBeg)" strokeWidth={2.5} dot={{ fill: T.accent.cyan, r: 3 }} />
+              <ReferenceLine y={0} stroke={T.border.medium} strokeDasharray="2 2" />
+              <Area type="monotone" dataKey="balance" stroke={T.accent.cyan} fill="url(#eqBeg)" strokeWidth={2.5} dot={trades.length <= 50 ? { fill: T.accent.cyan, r: 3 } : false} activeDot={{ r: 5, fill: T.accent.cyan }} />
             </AreaChart>
           </ResponsiveContainer>
         </ChartWrapper>
@@ -394,6 +395,7 @@ const Index = () => {
               <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 10 }} />
               <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
               <Tooltip contentStyle={tt} />
+              <ReferenceLine y={0} stroke={T.border.medium} strokeWidth={1} />
               <Bar dataKey="pnl" radius={[4,4,0,0]}>{trades.map((tr, i) => <Cell key={i} fill={tr.pnl >= 0 ? T.accent.green : T.accent.red} />)}</Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -593,8 +595,8 @@ const Index = () => {
                   <ResponsiveContainer width="100%" height={190}>
                     <AreaChart data={stats.equityCurve}>
                       <defs><linearGradient id="eqGAdv" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.6}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.25}/></linearGradient></defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="trade" tick={{ fill: T.text.muted, fontSize: 10 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 10 }} domain={['dataMin - 5', 'dataMax + 5']} />
-                      <Tooltip contentStyle={tt} /><Area type="monotone" dataKey="balance" stroke={T.accent.cyan} fill="url(#eqGAdv)" strokeWidth={2.5} dot={{ fill: T.accent.cyan, r: 3 }} />
+                      <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="trade" tick={{ fill: T.text.muted, fontSize: 10 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 10 }} domain={[(d: number) => Math.floor(d * 0.98), (d: number) => Math.ceil(d * 1.02)]} />
+                      <Tooltip contentStyle={tt} /><ReferenceLine y={0} stroke={T.border.medium} strokeDasharray="2 2" /><Area type="monotone" dataKey="balance" stroke={T.accent.cyan} fill="url(#eqGAdv)" strokeWidth={2.5} dot={trades.length <= 50 ? { fill: T.accent.cyan, r: 3 } : false} activeDot={{ r: 5, fill: T.accent.cyan }} />
                     </AreaChart>
                   </ResponsiveContainer>
                 </ChartWrapper>}
@@ -613,7 +615,7 @@ const Index = () => {
                   <ResponsiveContainer width="100%" height={170}>
                     <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="68%">
                       <PolarGrid stroke={T.border.medium} /><PolarAngleAxis dataKey="m" tick={{ fill: T.text.muted, fontSize: 9 }} /><PolarRadiusAxis tick={false} domain={[0, 100]} axisLine={false} />
-                      <Radar dataKey="v" stroke={T.accent.cyan} fill={T.accent.cyan} fillOpacity={0.35} strokeWidth={2} />
+                      <Radar dataKey="v" stroke={T.accent.cyan} fill={T.accent.cyan} fillOpacity={0.55} strokeWidth={2.5} dot={{ r: 4, fill: T.accent.cyan, stroke: T.bg.card, strokeWidth: 1 }} />
                     </RadarChart>
                   </ResponsiveContainer>
                 </ChartWrapper>}
@@ -626,7 +628,7 @@ const Index = () => {
                 </ChartWrapper>}
                 <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.directionAnalysis} explanation={EXPLANATIONS.directionAnalysis} style={{ flex: 1, minWidth: 240 }}>
                   <ResponsiveContainer width="100%" height={140}>
-                    <PieChart><Pie data={stats.directionData} dataKey="trades" nameKey="name" cx="50%" cy="50%" innerRadius={38} outerRadius={60} paddingAngle={4}><Cell fill={T.accent.green} /><Cell fill={T.accent.red} /></Pie><Tooltip contentStyle={tt} /></PieChart>
+                    <PieChart><Pie data={stats.directionData} dataKey="trades" nameKey="name" cx="50%" cy="50%" innerRadius={38} outerRadius={60} paddingAngle={4} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}><Cell fill={T.accent.green} /><Cell fill={T.accent.red} /></Pie><Tooltip contentStyle={tt} /></PieChart>
                   </ResponsiveContainer>
                   <div style={{ display: 'flex', justifyContent: 'center', gap: 20, marginTop: 2 }}>
                     {stats.directionData.map((d, i) => (<div key={i} style={{ textAlign: 'center' }}><div style={{ fontSize: 10, color: T.text.muted }}>{d.name}</div><PV><div style={{ fontSize: 11, fontWeight: 600, color: d.expectancyR >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{d.expectancyR.toFixed(2)}R</div></PV><div style={{ fontSize: 9, color: T.text.muted }}>WR: {d.winRate.toFixed(0)}%</div></div>))}
@@ -811,8 +813,8 @@ const Index = () => {
           <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ביטחון מול תוצאה' : 'Confidence vs Outcome Scatter'} explanation={EXPLANATIONS.rDistribution} unit="R" style={{ marginTop: 12 }}>
             <ResponsiveContainer width="100%" height={200}>
               <ScatterChart><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                <XAxis dataKey="deviation" name="Deviation" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis dataKey="returnR" name="R-Multiple" tick={{ fill: T.text.muted, fontSize: 9 }} /><ZAxis dataKey="risk" range={[20, 60]} />
-                <Tooltip contentStyle={tt} /><Scatter data={trades.map(tr => ({ deviation: tr.deviation, returnR: tr.returnR, risk: tr.risk, coin: tr.coin }))} fill={T.accent.cyan} fillOpacity={0.6} />
+                <XAxis dataKey="deviation" name="Deviation" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis dataKey="returnR" name="R-Multiple" tick={{ fill: T.text.muted, fontSize: 9 }} /><ZAxis dataKey="risk" range={[40, 90]} />
+                <Tooltip contentStyle={tt} cursor={{ strokeDasharray: '3 3' }} /><ReferenceLine y={0} stroke={T.border.medium} strokeDasharray="2 2" /><Scatter data={trades.map(tr => ({ deviation: tr.deviation, returnR: tr.returnR, risk: tr.risk, coin: tr.coin }))} fill={T.accent.cyan} fillOpacity={0.85} stroke={T.bg.card} strokeWidth={1} />
               </ScatterChart>
             </ResponsiveContainer>
           </ChartWrapper>
