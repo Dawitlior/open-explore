@@ -305,6 +305,7 @@ const Index = () => {
     { id: 'export-json', label: isRTL ? 'ייצוא JSON' : 'Export JSON', icon: '📤', category: isRTL ? 'נתונים' : 'Data', action: handleExportJson },
     { id: 'import', label: isRTL ? 'ייבוא נתונים' : 'Import Data (XLSX/JSON)', icon: '📥', category: isRTL ? 'נתונים' : 'Data', action: handleImport },
     { id: 'reset', label: isRTL ? 'איפוס הכל' : 'Reset All Data', icon: '🗑️', category: isRTL ? 'נתונים' : 'Data', action: () => setShowReset(true) },
+    { id: 'settings', label: isRTL ? 'הגדרות' : 'Settings', icon: '⚙️', category: isRTL ? 'מערכת' : 'System', shortcut: '⌘,', action: () => setShowSettings(true) },
     { id: 'privacy', label: isRTL ? 'מצב פרטיות' : 'Toggle Privacy Mode', icon: '🔒', category: isRTL ? 'מערכת' : 'System', shortcut: '⌘⇧P', action: () => settings.setPrivacyMode(!settings.privacyMode) },
     { id: 'ai', label: isRTL ? 'צור תובנות AI' : 'Generate AI Insights', icon: '🧠', category: 'AI', action: () => { setPage('ai'); handleGenerateInsights(); } },
     ...(['dashboard', 'journal', 'analytics', 'risk', 'psychology', 'ai'] as const).map(p => ({
@@ -1513,6 +1514,7 @@ const Index = () => {
       {/* OVERLAYS */}
       {showTradeForm && <TradeForm T={T} t={t} isRTL={isRTL} trade={editingTrade} currentBalance={currentBalance} onSave={handleSaveTrade} onClose={() => { setShowTradeForm(false); setEditingTrade(null); }} />}
       {showReset && <ResetModal T={T} t={t} isRTL={isRTL} onConfirm={handleReset} onClose={() => setShowReset(false)} />}
+      {showSettings && <SettingsHub T={T} isRTL={isRTL} open={showSettings} onClose={() => setShowSettings(false)} theme={settings.theme} setTheme={settings.setTheme} stats={stats} />}
       {riskAlert && <RiskLimitAlert T={T} isRTL={isRTL} status={riskAlert} onClose={dismissRiskAlert} />}
       {showRiskExplanation && <RiskExplanationModal T={T} isRTL={isRTL} tradeId={showRiskExplanation.tradeId} riskChange={showRiskExplanation.riskChange} onSave={handleSaveRiskExplanation} onClose={() => setShowRiskExplanation(null)} />}
       {showFeatureModal && <FeatureManifestModal T={T} isRTL={isRTL} onClose={() => setShowFeatureModal(false)} />}
