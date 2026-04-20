@@ -4190,28 +4190,46 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
                   animation: 'j-fade-in .3s ease-out',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontSize: 18 }}>📂</span>
+                    <span style={{ fontSize: 18 }}>{displayDay?.autoSynced ? '⚡' : '📂'}</span>
                     <div>
-                      <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 13, fontWeight: 800, color: '#FFC857', letterSpacing: '0.5px', display: 'block' }}>
-                        {dir === 'rtl' ? 'צפייה בארכיון — קריאה בלבד' : 'VIEWING ARCHIVE — READ ONLY'}
+                      <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 13, fontWeight: 800, color: displayDay?.autoSynced ? '#5AA9FF' : '#FFC857', letterSpacing: '0.5px', display: 'block' }}>
+                        {displayDay?.autoSynced
+                          ? (dir === 'rtl' ? 'יום מסונכרן אוטומטית — ניתן לפתוח לעריכה' : 'AUTO-SYNCED FROM ORCA — UNLOCK TO EDIT')
+                          : (dir === 'rtl' ? 'צפייה בארכיון — קריאה בלבד' : 'VIEWING ARCHIVE — READ ONLY')}
                       </span>
-                      <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: 'rgba(255,200,87,0.6)', letterSpacing: '0.5px' }}>
+                      <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: displayDay?.autoSynced ? 'rgba(90,169,255,0.6)' : 'rgba(255,200,87,0.6)', letterSpacing: '0.5px' }}>
                         {displayDay?.date ? fmtShort(displayDay.date, t.locale) : ''}
                       </span>
                     </div>
                   </div>
-                  <button onClick={() => { setViewingArchiveId(null); setView('journal'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                    style={{
-                      fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 800, cursor: 'pointer',
-                      padding: '8px 22px', borderRadius: 10, border: '1px solid rgba(0,255,163,0.4)',
-                      background: 'linear-gradient(135deg, rgba(0,255,163,0.12) 0%, rgba(0,255,163,0.06) 100%)',
-                      color: '#00FFA3', transition: 'all .25s', letterSpacing: '0.3px',
-                      boxShadow: '0 0 12px rgba(0,255,163,0.1)',
-                    }}
-                    onMouseEnter={e => { const s = e.currentTarget.style; s.background = 'rgba(0,255,163,0.22)'; s.boxShadow = '0 0 20px rgba(0,255,163,0.2)'; s.transform = 'scale(1.03)'; }}
-                    onMouseLeave={e => { const s = e.currentTarget.style; s.background = 'linear-gradient(135deg, rgba(0,255,163,0.12) 0%, rgba(0,255,163,0.06) 100%)'; s.boxShadow = '0 0 12px rgba(0,255,163,0.1)'; s.transform = 'scale(1)'; }}>
-                    ↩ {dir === 'rtl' ? 'חזור ליום הנוכחי' : 'Back to Today'}
-                  </button>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
+                    {displayDay?.autoSynced && (
+                      <button onClick={() => unlockAutoSynced(displayDay.id)}
+                        style={{
+                          fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 800, cursor: 'pointer',
+                          padding: '8px 18px', borderRadius: 10, border: '1px solid rgba(90,169,255,0.4)',
+                          background: 'linear-gradient(135deg, rgba(90,169,255,0.18) 0%, rgba(183,148,246,0.12) 100%)',
+                          color: '#5AA9FF', transition: 'all .25s', letterSpacing: '0.3px',
+                          boxShadow: '0 0 12px rgba(90,169,255,0.15)',
+                        }}
+                        onMouseEnter={e => { const s = e.currentTarget.style; s.transform = 'scale(1.03)'; s.boxShadow = '0 0 20px rgba(90,169,255,0.3)'; }}
+                        onMouseLeave={e => { const s = e.currentTarget.style; s.transform = 'scale(1)'; s.boxShadow = '0 0 12px rgba(90,169,255,0.15)'; }}>
+                        🔓 {dir === 'rtl' ? 'פתח לעריכה' : 'Unlock & Edit'}
+                      </button>
+                    )}
+                    <button onClick={() => { setViewingArchiveId(null); setView('journal'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      style={{
+                        fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 800, cursor: 'pointer',
+                        padding: '8px 22px', borderRadius: 10, border: '1px solid rgba(0,255,163,0.4)',
+                        background: 'linear-gradient(135deg, rgba(0,255,163,0.12) 0%, rgba(0,255,163,0.06) 100%)',
+                        color: '#00FFA3', transition: 'all .25s', letterSpacing: '0.3px',
+                        boxShadow: '0 0 12px rgba(0,255,163,0.1)',
+                      }}
+                      onMouseEnter={e => { const s = e.currentTarget.style; s.background = 'rgba(0,255,163,0.22)'; s.boxShadow = '0 0 20px rgba(0,255,163,0.2)'; s.transform = 'scale(1.03)'; }}
+                      onMouseLeave={e => { const s = e.currentTarget.style; s.background = 'linear-gradient(135deg, rgba(0,255,163,0.12) 0%, rgba(0,255,163,0.06) 100%)'; s.boxShadow = '0 0 12px rgba(0,255,163,0.1)'; s.transform = 'scale(1)'; }}>
+                      ↩ {dir === 'rtl' ? 'חזור ליום הנוכחי' : 'Back to Today'}
+                    </button>
+                  </div>
                 </div>
               )}
               {/* Header */}
