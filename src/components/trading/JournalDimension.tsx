@@ -3932,6 +3932,25 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
     });
   }, [orcaTrades]);
 
+  // Unlock an auto-synced day for retroactive editing.
+  // Removes morning/EOD locks and clears autoSynced flag, then makes it active.
+  const unlockAutoSynced = useCallback((dayId: string) => {
+    const curLang = langRef.current;
+    setDays(prev => {
+      const next = prev.map(d => d.id === dayId
+        ? { ...d, morningSaved: false, eodSaved: false, autoSynced: false, sectionLocks: {} }
+        : d
+      );
+      writeJournalState({ days: next, activeDayId: dayId, lang: curLang });
+      return next;
+    });
+    setActiveId(dayId);
+    activeIdRef.current = dayId;
+    setViewingArchiveId(null);
+    setView('journal');
+    showToast(langRef.current === 'he' ? '🔓 יום נפתח לעריכה רטרואקטיבית' : '🔓 Day unlocked for retroactive editing', 'a');
+  }, [showToast]);
+
   // Exit animation handler (must be before early returns)
   const handleReturn = useCallback(() => {
     setExitingToOrca(true);
