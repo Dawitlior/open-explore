@@ -39,22 +39,26 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats }:
 
   const t = (he: string, en: string) => isRTL ? he : en;
 
+  const totalTrades = stats.totalTrades || 0;
+  const winRate = stats.winRate || 0;
+  const wins = Math.round((winRate / 100) * totalTrades);
+  const losses = Math.max(0, totalTrades - wins);
   const ctx: Record<string, number> = {
-    totalTrades: stats.totalTrades || 0,
-    wins: stats.wins || 0,
-    losses: stats.losses || 0,
-    breakEven: (stats as any).breakEven || 0,
-    winRate: stats.winRate || 0,
+    totalTrades,
+    wins,
+    losses,
+    breakEven: 0,
+    winRate,
     totalPnl: stats.totalPnl || 0,
     avgWin: stats.avgWin || 0,
     avgLoss: stats.avgLoss || 0,
-    expectancy: stats.expectancy || 0,
+    expectancy: stats.expectancyDollar || 0,
     profitFactor: stats.profitFactor || 0,
     maxDrawdown: stats.maxDrawdown || 0,
-    totalR: (stats as any).totalR || 0,
-    avgR: (stats as any).avgR || 0,
-    bestTrade: (stats as any).bestTrade || 0,
-    worstTrade: (stats as any).worstTrade || 0,
+    totalR: (stats.expectancyR || 0) * totalTrades,
+    avgR: stats.expectancyR || 0,
+    bestTrade: stats.bestTrade || 0,
+    worstTrade: stats.worstTrade || 0,
   };
 
   const addKpi = () => {
