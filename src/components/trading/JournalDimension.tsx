@@ -3878,6 +3878,45 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
       .reverse();
   }, [days, sbQ]);
 
+  // ═══════════════════════════════════════════════════════════════
+  // AUTO-SYNC: Orca → Journal
+  // For every unique date in orcaTrades that has no JournalDay yet,
+  // auto-create an archive day (no morning/EOD required) so imported
+  // trades show up in the Journal sidebar, calendar, and analytics.
+  // ═══════════════════════════════════════════════════════════════
+  useEffect(() => {
+    if (!loaded || !orcaTrades || orcaTrades.length === 0) return;
+    const existingDates = new Set(days.map(d => safeDateStr(d.date)));
+    const orcaDates = new Set<string>();
+    for (const tr of orcaTrades) {
+      if (!tr?.date) continue;
+      try { orcaDates.add(safeDateStr(tr.date as any)); } catch { /* skip */ }
+    }
+    const missing = Array.from(orcaDates).filter(d => !existingDates.has(d)).sort();
+    if (missing.length === 0) return;
+    const curLang = langRef.current;
+    setDays(prev => {
+      const newDays: JournalDay[] = missing.map(dateStr => {
+        const d = makeDay(curLang);
+        d.date = dateStr;
+        // Auto-mark as fully archived so it appears in archive list
+        // without requiring morning/EOD entry. User can still open & edit.
+        d.morningSaved = true;
+        d.eodSaved = true;
+        return d;
+      });
+      // Merge + sort chronologically by date
+      const merged = [...prev, ...newDays].sort((a, b) => safeDateStr(a.date).localeCompare(safeDateStr(b.date)));
+      // Renumber day/week sequentially
+      merged.forEach((d, i) => {
+        d.dayNum = String(i + 1);
+        d.weekNum = String(Math.floor(i / 5) + 1);
+      });
+      writeJournalState({ days: merged, activeDayId: activeIdRef.current, lang: curLang });
+      return merged;
+    });
+  }, [orcaTrades, loaded]);
+
   // Bridge: Orca trades filtered by the displayed journal day's date.
   // Recomputes whenever a new Orca trade is added — live sync.
   // Robust date matching — normalizes ANY trade date format (ISO, datetime-local,
