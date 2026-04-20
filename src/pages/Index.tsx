@@ -1407,6 +1407,9 @@ const Index = () => {
           <button onClick={() => settings.setLang(settings.lang === 'he' ? 'en' : 'he')} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: `${T.accent.blue}10`, border: `1px solid ${T.accent.blue}25`, borderRadius: T.radius.md, color: T.accent.blue, cursor: 'pointer', fontSize: 12, fontWeight: 600, justifyContent: sbOpen ? 'flex-start' : 'center' }}>
             {Ico.globe}{sbOpen && <span>{settings.lang === 'he' ? 'English' : 'עברית'}</span>}
           </button>
+          {sbOpen && <button onClick={() => setShowSettings(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: `${T.accent.cyan}08`, border: `1px solid ${T.accent.cyan}20`, borderRadius: T.radius.md, color: T.accent.cyan, cursor: 'pointer', fontSize: 11, fontWeight: 500, marginBottom: 6 }}>
+            <span style={{ fontSize: 13 }}>⚙️</span><span>{isRTL ? 'הגדרות' : 'Settings'}</span>
+          </button>}
           {sbOpen && <button onClick={() => setShowReset(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: `${T.accent.red}08`, border: `1px solid ${T.accent.red}20`, borderRadius: T.radius.md, color: T.accent.red, cursor: 'pointer', fontSize: 11, fontWeight: 500 }}>
             {Ico.reset}<span>{t.resetAll}</span>
           </button>}
