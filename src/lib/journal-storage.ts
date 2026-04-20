@@ -63,6 +63,10 @@ export interface JournalDay {
   disciplineCommitments: string[];
   disciplineConfirmed: boolean;
   sectionLocks: Record<string, boolean>;
+  // Auto-sync metadata: true if this day was created automatically from
+  // an Orca trade import rather than by the user filling morning/EOD.
+  // When true, user can click "Unlock" to retroactively edit it.
+  autoSynced?: boolean;
 }
 
 export interface JournalTrade {

@@ -3900,9 +3900,10 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
         const d = makeDay(curLang);
         d.date = dateStr;
         // Auto-mark as fully archived so it appears in archive list
-        // without requiring morning/EOD entry. User can still open & edit.
+        // without requiring morning/EOD entry. User can still unlock & edit.
         d.morningSaved = true;
         d.eodSaved = true;
+        d.autoSynced = true;
         return d;
       });
       // Merge + sort chronologically by date
