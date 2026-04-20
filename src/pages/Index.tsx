@@ -17,6 +17,7 @@ import { ModeSwitch } from '@/components/trading/ModeSwitch';
 import { PrivacyMask, usePrivacyShortcut } from '@/components/trading/PrivacyMask';
 import { TradeForm } from '@/components/trading/TradeForm';
 import { ResetModal } from '@/components/trading/ResetModal';
+import { SettingsHub } from '@/components/trading/SettingsHub';
 import ImportLoadingOverlay from '@/components/trading/ImportLoadingOverlay';
 import { EntryGate } from '@/components/trading/EntryGate';
 import { RiskLimitAlert } from '@/components/trading/RiskLimitAlert';
@@ -58,6 +59,7 @@ const Index = () => {
   const [showTradeForm, setShowTradeForm] = useState(false);
   const [editingTrade, setEditingTrade] = useState<Trade | null>(null);
   const [showReset, setShowReset] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [aiInsights, setAiInsights] = useState<ReturnType<typeof generateInsights>>([]);
   const [aiLoading, setAiLoading] = useState(false);
   const [showThemeMenu, setShowThemeMenu] = useState(false);
