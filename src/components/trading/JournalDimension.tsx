@@ -4087,9 +4087,17 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
                   <div key={d.id} onClick={() => { setActiveId(d.id); setView('journal'); setMobileMenu(false); }}
                     style={{ padding: '12px 14px', borderRadius: 10, cursor: 'pointer', marginBottom: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                       ...(sel ? { background: th.selBg, border: `1px solid ${th.selBr}` } : { background: 'transparent', border: '1px solid transparent' }) }}>
-                    <div>
-                      <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 700, color: th.tx }}>{fmtShort(d.date, t.locale)}</span>
-                      <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, color: th.tx3, marginInlineStart: 8 }}>{dir === 'rtl' ? 'יום' : 'Day'} {d.dayNum || '?'}</span>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' as const }}>
+                        <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 700, color: th.tx }}>{fmtShort(d.date, t.locale)}</span>
+                        <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, color: th.tx3 }}>{dir === 'rtl' ? 'יום' : 'Day'} {d.dayNum || '?'}</span>
+                        {d.autoSynced && (
+                          <span title={dir === 'rtl' ? 'סונכרן אוטומטית מ-Orca' : 'Auto-synced from Orca'}
+                            style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 800, letterSpacing: '0.5px', color: '#5AA9FF', background: 'rgba(90,169,255,0.12)', border: '1px solid rgba(90,169,255,0.3)', padding: '2px 5px', borderRadius: 4, textTransform: 'uppercase' as const }}>
+                            ⚡ AUTO
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                       <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 800, color: ec }}>{d.emotionScore}</span>
