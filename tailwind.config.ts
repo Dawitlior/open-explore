@@ -14,8 +14,14 @@ export default {
     },
     extend: {
       fontFamily: {
-        mono: ["JetBrains Mono", "monospace"],
+        mono: ["JetBrains Mono", "SF Mono", "Menlo", "monospace"],
         sans: ["Inter", "system-ui", "sans-serif"],
+        display: ["Inter", "system-ui", "sans-serif"],
+      },
+      backgroundImage: {
+        'orca-radial': 'radial-gradient(ellipse at top, hsl(184 100% 50% / 0.06), transparent 60%)',
+        'orca-cyan-gradient': 'linear-gradient(135deg, hsl(184 100% 50%), hsl(168 76% 42%))',
+        'orca-ruby-gradient': 'linear-gradient(135deg, hsl(0 100% 56%), hsl(340 90% 50%))',
       },
       colors: {
         border: "hsl(var(--border))",
