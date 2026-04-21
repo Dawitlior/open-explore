@@ -44,7 +44,7 @@ export const OrcaCard = React.forwardRef<HTMLDivElement, OrcaCardProps>(
         style={{ transformStyle: 'preserve-3d' }}
         {...props}
       >
-        <div className="relative z-10">{children}</div>
+        <div className="relative z-10">{children as React.ReactNode}</div>
       </motion.div>
     );
   },

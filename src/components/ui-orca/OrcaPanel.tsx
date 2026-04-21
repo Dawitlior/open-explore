@@ -20,7 +20,7 @@ export const OrcaChip: React.FC<React.HTMLAttributes<HTMLSpanElement> & { tone?:
     className={cn(
       'orca-chip inline-flex items-center gap-1.5 px-2.5 py-1 text-[10.5px] font-mono uppercase tracking-wider',
       tone === 'cyan' && 'text-primary border-primary/25 bg-primary/10',
-      tone === 'win'  && 'text-emerald-400 border-emerald-500/25 bg-emerald-500/10',
+      tone === 'win'  && 'text-[hsl(var(--trading-green))] border-[hsl(var(--trading-green)/0.25)] bg-[hsl(var(--trading-green)/0.1)]',
       tone === 'loss' && 'text-destructive border-destructive/25 bg-destructive/10',
       className,
     )}
