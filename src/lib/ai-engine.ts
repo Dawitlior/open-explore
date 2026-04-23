@@ -86,8 +86,35 @@ function pick<T>(arr: T[]): T {
 
 export function generateInsights(stats: TradingStats, trades: Trade[], risk: RiskAssessment, isRTL: boolean): AIInsight[] {
   if (trades.length === 0) return [];
+
+  // ═══ DATA-SUFFICIENCY GATE — no statistical claims with too few trades ═══
+  // With < 3 trades, only return data-onboarding insights (no edge/discipline/momentum claims)
+  if (trades.length < 3) {
+    const out: AIInsight[] = [];
+    const totalR = trades.reduce((s, t) => s + t.returnR, 0);
+    const wins = trades.filter(t => t.winLoss === 'Win').length;
+    out.push({
+      type: 'recommendation', icon: '📊', severity: 'low',
+      title: isRTL ? 'נתונים ראשוניים' : 'Initial Data',
+      text: isRTL
+        ? `${trades.length} עסק${trades.length === 1 ? 'ה' : 'אות'} בלבד — אין מספיק נתונים לזיהוי דפוסים סטטיסטיים. נדרשות 10+ עסקאות לתובנות אמינות.`
+        : `Only ${trades.length} trade${trades.length === 1 ? '' : 's'} so far — not enough data for statistical patterns. 10+ trades needed for reliable insights.`,
+    });
+    out.push({
+      type: 'recommendation', icon: '🎯', severity: 'low',
+      title: isRTL ? 'איכות לפני כמות' : 'Quality Over Quantity',
+      text: isRTL
+        ? `תיעדת ${wins}/${trades.length} ניצחונות, ${totalR >= 0 ? '+' : ''}${totalR.toFixed(2)}R. התמקד בעסקאות A+ בלבד עד שתצבור היסטוריה משמעותית.`
+        : `Logged ${wins}/${trades.length} wins for ${totalR >= 0 ? '+' : ''}${totalR.toFixed(2)}R. Focus on A+ setups only until you build a meaningful sample.`,
+    });
+    return out;
+  }
+
   const allInsights: AIInsight[] = [];
   const lang = isRTL ? 'he' : 'en';
+  const MIN_DIR = 4;     // need at least 4 trades per direction to claim a "directional edge"
+  const MIN_COIN = 3;    // need at least 3 trades on a coin before flagging it
+  const MIN_DAY = 5;     // need at least 5 trades to do day-of-week analysis
 
   // Direction edge
   const longW = stats.directionData.find(d => d.name === 'Long');
