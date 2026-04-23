@@ -80,7 +80,7 @@
     text-rendering: optimizeLegibility;
   }
 
-  /* Aurora ambient background — fixed, non-interactive */
+  /* Aurora ambient background — fixed, non-interactive, theme-aware via CSS vars */
   body::before {
     content: "";
     position: fixed;
@@ -88,9 +88,10 @@
     pointer-events: none;
     z-index: 0;
     background:
-      radial-gradient(900px 600px at 12% -10%, hsl(184 100% 50% / 0.06), transparent 60%),
-      radial-gradient(700px 500px at 100% 110%, hsl(258 90% 66% / 0.045), transparent 60%),
-      radial-gradient(500px 400px at 50% 50%, hsl(184 100% 50% / 0.018), transparent 70%);
+      radial-gradient(900px 600px at 12% -10%, hsl(var(--orca-aurora-a, 184 100% 50%) / 0.07), transparent 60%),
+      radial-gradient(700px 500px at 100% 110%, hsl(var(--orca-aurora-b, 258 90% 66%) / 0.05), transparent 60%),
+      radial-gradient(500px 400px at 50% 50%, hsl(var(--orca-aurora-a, 184 100% 50%) / 0.02), transparent 70%);
+    transition: background 600ms ease;
   }
 
   .font-mono,
@@ -325,6 +326,119 @@
 }
 
 .recharts-wrapper { max-width: 100%; }
+
+/* ═══ KILL the white hover rectangle on every Recharts chart ═══
+   Recharts renders a default <Rectangle> cursor (fill: rgba(206,206,206,...))
+   for Bar/Area/Line. We make the cursor invisible globally — Tooltip still shows. */
+.recharts-tooltip-cursor,
+.recharts-rectangle.recharts-tooltip-cursor,
+.recharts-curve.recharts-tooltip-cursor {
+  fill: transparent !important;
+  stroke: hsl(var(--orca-glow-spot, 184 100% 50%) / 0.18) !important;
+  stroke-dasharray: 3 3 !important;
+  stroke-width: 1 !important;
+}
+
+/* Tooltip wrapper — themed glass instead of white default */
+.recharts-default-tooltip {
+  background: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border, 0 0% 100% / 0.1)) !important;
+  border-radius: 10px !important;
+  color: hsl(var(--foreground)) !important;
+  box-shadow: 0 8px 24px hsl(0 0% 0% / 0.5), 0 0 0 1px hsl(var(--orca-glow-spot, 184 100% 50%) / 0.15) !important;
+  backdrop-filter: blur(12px);
+}
+.recharts-tooltip-item { color: hsl(var(--foreground)) !important; }
+.recharts-tooltip-label { color: hsl(var(--muted-foreground)) !important; font-size: 11px !important; }
+
+/* Active dot subtle ring */
+.recharts-active-dot circle { filter: drop-shadow(0 0 6px hsl(var(--orca-glow-spot, 184 100% 50%) / 0.6)); }
+
+/* ═══ LIQUID SWEEP — Mode-switch transition overlay ═══ */
+.orca-liquid-sweep {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  opacity: 0;
+}
+.orca-liquid-sweep[data-active="true"] {
+  animation: orca-liquid 1100ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+.orca-liquid-sweep::before,
+.orca-liquid-sweep::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg,
+    transparent 0%,
+    transparent 38%,
+    hsl(var(--orca-aurora-a, 184 100% 50%) / 0.55) 48%,
+    hsl(var(--orca-aurora-b, 258 90% 66%) / 0.65) 52%,
+    transparent 62%,
+    transparent 100%);
+  transform: translateX(-110%) skewX(-12deg);
+  filter: blur(40px) saturate(140%);
+}
+.orca-liquid-sweep::after {
+  background: linear-gradient(115deg,
+    transparent 0%,
+    transparent 42%,
+    hsl(var(--orca-glow-spot, 184 100% 50%) / 0.9) 50%,
+    transparent 58%,
+    transparent 100%);
+  filter: blur(2px) saturate(180%);
+  mix-blend-mode: screen;
+}
+.orca-liquid-sweep[data-active="true"]::before {
+  animation: orca-liquid-curtain 1100ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+.orca-liquid-sweep[data-active="true"]::after {
+  animation: orca-liquid-flash 1100ms cubic-bezier(0.65, 0, 0.35, 1) 80ms forwards;
+}
+@keyframes orca-liquid {
+  0%   { opacity: 0; }
+  15%  { opacity: 1; }
+  85%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes orca-liquid-curtain {
+  0%   { transform: translateX(-110%) skewX(-12deg); }
+  100% { transform: translateX(110%) skewX(-12deg); }
+}
+@keyframes orca-liquid-flash {
+  0%   { transform: translateX(-110%) skewX(-12deg); opacity: 0; }
+  20%  { opacity: 1; }
+  100% { transform: translateX(110%) skewX(-12deg); opacity: 0.6; }
+}
+.orca-liquid-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: hsl(var(--foreground));
+  text-shadow: 0 0 18px hsl(var(--orca-glow-spot, 184 100% 50%) / 0.7);
+  opacity: 0;
+}
+.orca-liquid-sweep[data-active="true"] .orca-liquid-label {
+  animation: orca-liquid-label 1100ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+@keyframes orca-liquid-label {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.8); filter: blur(8px); }
+  30%  { opacity: 1; transform: translate(-50%, -50%) scale(1);   filter: blur(0); }
+  70%  { opacity: 1; transform: translate(-50%, -50%) scale(1);   filter: blur(0); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.1); filter: blur(4px); }
+}
+
+/* Theme transition — smoothly morph everything when active theme switches */
+html, body, .orca-glass, .orca-panel, [class*="bg-"], [class*="text-"] {
+  transition: background-color 480ms ease, color 320ms ease, border-color 320ms ease;
+}
 
 @media (pointer: coarse) {
   button, a, label { min-height: 36px; }
