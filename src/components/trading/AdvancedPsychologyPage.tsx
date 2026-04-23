@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LineChart, Line, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { TradingStats } from '@/lib/trading-analytics';
@@ -16,6 +16,22 @@ interface AdvancedPsychologyPageProps {
   stats: TradingStats;
   onExplainClick: (title: string, explanation: ChartExplanation, chartId?: string) => void;
 }
+
+// ─── Section header (matches Risk page) ──────────────────────────
+const SectionHeader = ({ T, label, accent, isRTL }: { T: TradingTheme; label: string; accent?: string; isRTL: boolean }) => (
+  <div style={{
+    display: 'flex', alignItems: 'center', gap: 10,
+    fontSize: 9, color: accent || T.accent.cyan,
+    textTransform: 'uppercase', letterSpacing: '0.16em', fontWeight: 700,
+    fontFamily: "'JetBrains Mono', monospace",
+    margin: '20px 0 12px',
+  }}>
+    <span style={{ width: 6, height: 6, borderRadius: 1, background: accent || T.accent.cyan, boxShadow: `0 0 10px ${accent || T.accent.cyan}` }} />
+    <span style={{ width: 24, height: 1, background: `${accent || T.accent.cyan}50` }} />
+    {label}
+    <span style={{ flex: 1, height: 1, background: `linear-gradient(${isRTL ? '270deg' : '90deg'}, ${accent || T.accent.cyan}30, transparent)` }} />
+  </div>
+);
 
 export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, trades, stats, onExplainClick }: AdvancedPsychologyPageProps) => {
   const tt = { background: T.bg.card, border: `1px solid ${T.border.medium}`, borderRadius: 10, color: T.text.primary, fontSize: 12, boxShadow: T.shadow.elevated, padding: '8px 12px' };
@@ -35,17 +51,31 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, trades, stats, onExp
 
   // Risk consistency (CV)
   const risks = trades.map(tr => tr.risk);
-  const avgRisk = risks.reduce((a, b) => a + b, 0) / risks.length;
-  const riskStd = Math.sqrt(risks.reduce((s, r) => s + (r - avgRisk) ** 2, 0) / risks.length);
+  const avgRisk = risks.reduce((a, b) => a + b, 0) / (risks.length || 1);
+  const riskStd = Math.sqrt(risks.reduce((s, r) => s + (r - avgRisk) ** 2, 0) / (risks.length || 1));
   const riskCV = avgRisk > 0 ? (riskStd / avgRisk) * 100 : 0;
 
   // Rule compliance
-  const rulesPct = (trades.filter(tr => tr.rules).length / trades.length) * 100;
+  const rulesPct = trades.length ? (trades.filter(tr => tr.rules).length / trades.length) * 100 : 100;
   const rulesBreached = trades.filter(tr => !tr.rules);
 
   // Loss streaks
   let maxStreak = 0, curStreak = 0;
   trades.forEach(tr => { if (tr.winLoss === 'Loss') { curStreak++; maxStreak = Math.max(maxStreak, curStreak); } else curStreak = 0; });
+
+  // Current streak (live)
+  const currentStreak = useMemo(() => {
+    let count = 0;
+    let type: 'Win' | 'Loss' | null = null;
+    for (let i = trades.length - 1; i >= 0; i--) {
+      const t = trades[i].winLoss;
+      if (t === 'Break Even') break;
+      if (type === null) { type = t as 'Win' | 'Loss'; count = 1; }
+      else if (t === type) count++;
+      else break;
+    }
+    return { count, type };
+  }, [trades]);
 
   // High deviation trades
   const highDevTrades = trades.filter(tr => tr.deviation > 0.1);
@@ -81,12 +111,7 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, trades, stats, onExp
 
   // Post-loss behavior
   const postLossBehavior = useMemo(() => {
-    let riskIncAfterLoss = 0;
-    let riskDecAfterLoss = 0;
-    let sameAfterLoss = 0;
-    let rulesAfterLoss = 0;
-    let totalAfterLoss = 0;
-
+    let riskIncAfterLoss = 0, riskDecAfterLoss = 0, sameAfterLoss = 0, rulesAfterLoss = 0, totalAfterLoss = 0;
     for (let i = 1; i < trades.length; i++) {
       if (trades[i - 1].winLoss === 'Loss') {
         totalAfterLoss++;
@@ -100,142 +125,335 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, trades, stats, onExp
     return { riskIncAfterLoss, riskDecAfterLoss, sameAfterLoss, rulesAfterLoss, totalAfterLoss };
   }, [trades]);
 
+  // ─── Day-of-week performance heatmap ───────────────────────────
+  const dayOfWeekStats = useMemo(() => {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const daysHe = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'];
+    const buckets: Record<number, { trades: Trade[]; pnl: number; r: number }> = {};
+    trades.forEach(t => {
+      const d = new Date(t.date.replace(' ', 'T'));
+      if (isNaN(d.getTime())) return;
+      const dow = d.getDay();
+      if (!buckets[dow]) buckets[dow] = { trades: [], pnl: 0, r: 0 };
+      buckets[dow].trades.push(t);
+      buckets[dow].pnl += t.pnl;
+      buckets[dow].r += t.returnR;
+    });
+    return days.map((d, i) => ({
+      day: isRTL ? daysHe[i] : d,
+      count: buckets[i]?.trades.length || 0,
+      pnl: buckets[i]?.pnl || 0,
+      avgR: buckets[i] && buckets[i].trades.length ? buckets[i].r / buckets[i].trades.length : 0,
+      winRate: buckets[i] && buckets[i].trades.length ? (buckets[i].trades.filter(t => t.winLoss === 'Win').length / buckets[i].trades.length) * 100 : 0,
+    }));
+  }, [trades, isRTL]);
+
+  // ─── Tilt/Volatility detection (P&L variance per session) ──────
+  const tiltScore = useMemo(() => {
+    if (trades.length < 5) return { score: 0, status: 'insufficient', detail: '' };
+    const pnls = trades.map(t => t.pnl);
+    const mean = pnls.reduce((a, b) => a + b, 0) / pnls.length;
+    const variance = pnls.reduce((s, p) => s + (p - mean) ** 2, 0) / pnls.length;
+    const std = Math.sqrt(variance);
+    const cv = Math.abs(mean) > 0.01 ? Math.abs(std / mean) : std;
+    // tilt = high CV + recent loss streak + revenge signals
+    const recentLosses = trades.slice(-5).filter(t => t.winLoss === 'Loss').length;
+    const recentRevenge = revengeTrades > 0 ? Math.min(20, revengeTrades * 5) : 0;
+    const score = Math.min(100, cv * 8 + recentLosses * 10 + recentRevenge);
+    const status = score < 30 ? 'calm' : score < 60 ? 'elevated' : 'tilted';
+    return { score, status, detail: `CV ${cv.toFixed(1)} · ${recentLosses}L/5 · ${revengeTrades} revenge` };
+  }, [trades, revengeTrades]);
+
+  // ─── Mental Capital (momentum + recovery) ─────────────────────
+  const mentalCapital = useMemo(() => {
+    if (trades.length === 0) return 100;
+    const recent = trades.slice(-10);
+    const winPct = (recent.filter(t => t.winLoss === 'Win').length / recent.length) * 100;
+    const rulesAdherence = (recent.filter(t => t.rules).length / recent.length) * 100;
+    const streakBonus = currentStreak.type === 'Win' ? Math.min(20, currentStreak.count * 5) : -Math.min(30, currentStreak.count * 8);
+    return Math.max(0, Math.min(100, winPct * 0.5 + rulesAdherence * 0.5 + streakBonus));
+  }, [trades, currentStreak]);
+
+  // ─── Behavioral Health Index (composite) ──────────────────────
+  const behavioralHealth = useMemo(() => {
+    const discipline = stats.rulesFollowed;
+    const consistency = Math.max(0, 100 - riskCV);
+    const emotional = Math.max(0, 100 - (revengeTrades / Math.max(1, trades.length)) * 500);
+    const tiltInverse = 100 - tiltScore.score;
+    return (discipline * 0.3 + consistency * 0.25 + emotional * 0.25 + tiltInverse * 0.2);
+  }, [stats, riskCV, revengeTrades, trades, tiltScore]);
+
+  // ─── Radar chart data ─────────────────────────────────────────
+  const radarData = useMemo(() => [
+    { axis: isRTL ? 'משמעת' : 'Discipline', value: stats.rulesFollowed },
+    { axis: isRTL ? 'עקביות' : 'Consistency', value: Math.max(0, 100 - riskCV) },
+    { axis: isRTL ? 'רגשי' : 'Emotional', value: Math.max(0, 100 - (revengeTrades / Math.max(1, trades.length)) * 500) },
+    { axis: isRTL ? 'הון מנטלי' : 'Mental Cap', value: mentalCapital },
+    { axis: isRTL ? 'יציבות' : 'Stability', value: 100 - tiltScore.score },
+    { axis: isRTL ? 'Orca' : 'Orca', value: stats.orcaScore },
+  ], [stats, riskCV, revengeTrades, trades, mentalCapital, tiltScore, isRTL]);
+
   type Signal = { icon: string; title: string; detail: string; severity: 'good' | 'warning' | 'danger' };
   const signals: Signal[] = [];
 
-  // Overtrading signal
   if (overtradingDays.length > 0) {
     signals.push({ icon: '⚡', title: isRTL ? 'מסחר יתר' : 'Overtrading Detected', detail: isRTL ? `${overtradingDays.length} ימים עם 3+ עסקאות. מסחר יתר פוגע בקבלת החלטות.` : `${overtradingDays.length} days with 3+ trades. Overtrading impairs decision-making.`, severity: 'warning' });
   } else {
     signals.push({ icon: '✅', title: isRTL ? 'תדירות מסחר תקינה' : 'Healthy Trade Frequency', detail: isRTL ? 'לא זוהה מסחר יתר.' : 'No overtrading detected.', severity: 'good' });
   }
-
   if (revengeTrades > 0) {
     signals.push({ icon: '🔥', title: isRTL ? 'מסחר נקמה' : 'Revenge Trading Detected', detail: isRTL ? `${revengeTrades} עסקאות עם הגדלת סיכון לאחר הפסד באותו יום.` : `${revengeTrades} trades with risk increase after same-day loss.`, severity: 'danger' });
   } else {
     signals.push({ icon: '✅', title: isRTL ? 'אין מסחר נקמה' : 'No Revenge Trading', detail: isRTL ? 'לא זוהה הגדלת סיכון לאחר הפסד.' : 'No risk increase after same-day losses.', severity: 'good' });
   }
-
   if (riskCV > 50) {
     signals.push({ icon: '📊', title: isRTL ? 'חוסר עקביות בסיכון' : 'Risk Inconsistency', detail: isRTL ? `CV=${riskCV.toFixed(0)}%. סיכון לא עקבי.` : `CV=${riskCV.toFixed(0)}%. Inconsistent risk sizing.`, severity: 'warning' });
   } else {
     signals.push({ icon: '✅', title: isRTL ? 'עקביות סיכון טובה' : 'Good Risk Consistency', detail: isRTL ? `CV=${riskCV.toFixed(0)}%.` : `CV=${riskCV.toFixed(0)}%. Consistent sizing.`, severity: 'good' });
   }
-
   if (rulesPct < 80) {
     signals.push({ icon: '⚠️', title: isRTL ? 'סטייה מכללים' : 'Rules Deviation', detail: isRTL ? `${rulesPct.toFixed(0)}% עמידה בכללים. ${rulesBreached.length} חריגות.` : `${rulesPct.toFixed(0)}% compliance. ${rulesBreached.length} deviations.`, severity: 'danger' });
   } else {
     signals.push({ icon: '✅', title: isRTL ? 'משמעת כללים גבוהה' : 'High Rule Compliance', detail: isRTL ? `${rulesPct.toFixed(0)}% עמידה.` : `${rulesPct.toFixed(0)}% compliance.`, severity: 'good' });
   }
-
   if (maxStreak >= 3) {
     signals.push({ icon: '🔴', title: isRTL ? 'רצף הפסדים' : 'Loss Streak', detail: isRTL ? `${maxStreak} הפסדים רצופים. צינון מומלץ.` : `${maxStreak} consecutive losses. Cool-off recommended.`, severity: maxStreak >= 4 ? 'danger' : 'warning' });
   }
-
   if (highDevTrades.length > 0) {
     signals.push({ icon: '📐', title: isRTL ? 'סטייה גבוהה' : 'High Deviation', detail: isRTL ? `${highDevTrades.length} עסקאות עם סטייה > 0.1R.` : `${highDevTrades.length} trades with deviation > 0.1R.`, severity: 'warning' });
   }
-
-  // Post-loss pattern signal
   if (postLossBehavior.totalAfterLoss > 0) {
     const incPct = (postLossBehavior.riskIncAfterLoss / postLossBehavior.totalAfterLoss) * 100;
     if (incPct > 30) {
-      signals.push({
-        icon: '💢', severity: 'danger',
-        title: isRTL ? 'דפוס הסלמה לאחר הפסד' : 'Post-Loss Escalation Pattern',
-        detail: isRTL
-          ? `${incPct.toFixed(0)}% מהעסקאות לאחר הפסד כללו הגדלת סיכון. זהו דפוס רגשי מסוכן.`
-          : `${incPct.toFixed(0)}% of post-loss trades had increased risk. This is a dangerous emotional pattern.`,
-      });
+      signals.push({ icon: '💢', severity: 'danger', title: isRTL ? 'דפוס הסלמה לאחר הפסד' : 'Post-Loss Escalation Pattern', detail: isRTL ? `${incPct.toFixed(0)}% מהעסקאות לאחר הפסד כללו הגדלת סיכון. זהו דפוס רגשי מסוכן.` : `${incPct.toFixed(0)}% of post-loss trades had increased risk. This is a dangerous emotional pattern.` });
     }
   }
 
   const severityColor = (s: Signal['severity']) => s === 'good' ? T.accent.green : s === 'warning' ? T.accent.orange : T.accent.red;
+  const healthColor = behavioralHealth >= 75 ? T.accent.green : behavioralHealth >= 50 ? T.accent.orange : T.accent.red;
+  const tiltColor = tiltScore.status === 'calm' ? T.accent.green : tiltScore.status === 'elevated' ? T.accent.orange : T.accent.red;
+  const tiltLabel = tiltScore.status === 'calm' ? (isRTL ? 'רגוע' : 'CALM') : tiltScore.status === 'elevated' ? (isRTL ? 'מוגבר' : 'ELEVATED') : (isRTL ? 'מוטה' : 'TILTED');
+
+  // Heatmap color helper
+  const heatColor = (r: number) => {
+    if (r > 1) return T.accent.green;
+    if (r > 0) return `${T.accent.green}80`;
+    if (r === 0) return `${T.text.muted}40`;
+    if (r > -1) return `${T.accent.red}80`;
+    return T.accent.red;
+  };
 
   return (
     <>
-      <h2 style={{ fontSize: 18, fontWeight: 300, color: T.text.secondary, margin: '0 0 6px', fontFamily: "'JetBrains Mono', monospace" }}>
-        {isRTL ? '🧠 אבחון פסיכולוגי מתקדם' : '🧠 Advanced Psychology Diagnosis'}
-      </h2>
-      <div style={{ fontSize: 11, color: T.text.muted, marginBottom: 20 }}>
-        {isRTL ? `ניתוח ${trades.length} עסקאות לזיהוי דפוסים התנהגותיים` : `Analyzing ${trades.length} trades for behavioral patterns`}
+      {/* ═══════════════════════════════════════════════════════════
+          HERO — Behavioral Health Index
+          ═══════════════════════════════════════════════════════════ */}
+      <div style={{
+        position: 'relative',
+        background: `linear-gradient(135deg, ${T.bg.card}, ${T.bg.tertiary})`,
+        border: `1px solid ${T.border.medium}`,
+        borderRadius: 16,
+        padding: 20,
+        marginBottom: 4,
+        overflow: 'hidden',
+      }}>
+        <div style={{
+          position: 'absolute', top: -40, [isRTL ? 'left' : 'right']: -40,
+          width: 220, height: 220, borderRadius: '50%',
+          background: `radial-gradient(circle, ${healthColor}25, transparent 70%)`,
+          filter: 'blur(40px)', pointerEvents: 'none',
+        }} />
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, position: 'relative', flexWrap: 'wrap', gap: 16 }}>
+          <div>
+            <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.2em', fontFamily: "'JetBrains Mono', monospace", marginBottom: 4 }}>
+              {isRTL ? '◆ אינדקס בריאות התנהגותית' : '◆ BEHAVIORAL HEALTH INDEX'}
+            </div>
+            <div style={{ fontSize: 22, fontWeight: 200, color: T.text.primary, letterSpacing: '-0.02em' }}>
+              {isRTL ? `אבחון פסיכולוגי על ${trades.length} עסקאות` : `Psychology Diagnosis · ${trades.length} trades`}
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.16em', textTransform: 'uppercase', marginBottom: 4 }}>{isRTL ? 'הון מנטלי' : 'Mental Cap'}</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: mentalCapital >= 60 ? T.accent.green : T.accent.orange, fontFamily: "'JetBrains Mono', monospace", lineHeight: 1 }}>
+                {mentalCapital.toFixed(0)}
+              </div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.16em', textTransform: 'uppercase', marginBottom: 4 }}>Tilt</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: tiltColor, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.16em' }}>{tiltLabel}</div>
+              <div style={{ fontSize: 9, color: T.text.muted, marginTop: 2 }}>{tiltScore.detail}</div>
+            </div>
+            <div style={{ textAlign: isRTL ? 'left' : 'right' }}>
+              <div style={{ fontSize: 56, fontWeight: 700, color: healthColor, fontFamily: "'JetBrains Mono', monospace", lineHeight: 1, textShadow: `0 0 30px ${healthColor}60` }}>
+                {behavioralHealth.toFixed(0)}
+              </div>
+              <div style={{ fontSize: 10, color: healthColor, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.2em', marginTop: 2 }}>
+                {behavioralHealth >= 75 ? (isRTL ? 'בריא' : 'HEALTHY') : behavioralHealth >= 50 ? (isRTL ? 'מתון' : 'MODERATE') : (isRTL ? 'קריטי' : 'CRITICAL')}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Current streak indicator */}
+        {currentStreak.count > 0 && (
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            padding: '8px 14px',
+            background: currentStreak.type === 'Win' ? `${T.accent.green}15` : `${T.accent.red}15`,
+            border: `1px solid ${currentStreak.type === 'Win' ? T.accent.green : T.accent.red}30`,
+            borderRadius: 8,
+            position: 'relative',
+          }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: currentStreak.type === 'Win' ? T.accent.green : T.accent.red, boxShadow: `0 0 8px ${currentStreak.type === 'Win' ? T.accent.green : T.accent.red}`, animation: 'pulse 2s infinite' }} />
+            <span style={{ fontSize: 11, color: T.text.secondary, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.1em' }}>
+              {isRTL ? 'רצף נוכחי:' : 'CURRENT STREAK:'}{' '}
+              <span style={{ color: currentStreak.type === 'Win' ? T.accent.green : T.accent.red, fontWeight: 700 }}>
+                {currentStreak.count}{currentStreak.type === 'Win' ? (isRTL ? ' ניצחונות' : 'W') : (isRTL ? ' הפסדים' : 'L')}
+              </span>
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Score gauges */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-        <ScoreGauge T={T} score={stats.rulesFollowed} label={isRTL ? 'משמעת' : 'Discipline'} color={T.accent.green} description={isRTL ? 'אחוז עמידה בכללים' : 'Rule compliance %'} />
-        <ScoreGauge T={T} score={Math.max(0, 100 - riskCV)} label={isRTL ? 'עקביות סיכון' : 'Risk Consistency'} color={T.accent.orange} description={isRTL ? 'אחידות גודל סיכון' : 'How uniform risk sizing is'} />
-        <ScoreGauge T={T} score={stats.orcaScore} label={isRTL ? 'ציון Orca' : 'Orca Score'} color={T.accent.cyan} description={isRTL ? 'ציון משולב' : 'Combined score'} />
-        <ScoreGauge T={T} score={Math.max(0, 100 - (revengeTrades / Math.max(1, trades.length)) * 500)} label={isRTL ? 'שליטה רגשית' : 'Emotional Control'} color={T.accent.purple} description={isRTL ? 'היעדר מסחר נקמה ואימפולסיביות' : 'Absence of revenge & impulsive trading'} />
+      {/* ═══ RADAR + GAUGES ═══ */}
+      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'פרופיל התנהגותי' : 'BEHAVIORAL PROFILE'} />
+      <div style={{ display: 'flex', gap: 12, marginBottom: 4, flexWrap: 'wrap' }}>
+        <GlassCard T={T} style={{ flex: 1, minWidth: 280, padding: 12 }}>
+          <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
+            {isRTL ? 'מטריצת ביצוע' : 'Performance Matrix'}
+          </div>
+          <ResponsiveContainer width="100%" height={220}>
+            <RadarChart data={radarData}>
+              <PolarGrid stroke={T.border.subtle} />
+              <PolarAngleAxis dataKey="axis" tick={{ fill: T.text.secondary, fontSize: 10 }} />
+              <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fill: T.text.muted, fontSize: 8 }} />
+              <Radar dataKey="value" stroke={T.accent.cyan} fill={T.accent.cyan} fillOpacity={0.25} strokeWidth={2} />
+              <Tooltip contentStyle={tt} cursor={false} formatter={(v: number) => `${v.toFixed(0)}/100`} />
+            </RadarChart>
+          </ResponsiveContainer>
+        </GlassCard>
+        <div style={{ flex: 1, minWidth: 280, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <ScoreGauge T={T} score={stats.rulesFollowed} label={isRTL ? 'משמעת' : 'Discipline'} color={T.accent.green} description={isRTL ? 'אחוז עמידה בכללים' : 'Rule compliance %'} />
+            <ScoreGauge T={T} score={Math.max(0, 100 - riskCV)} label={isRTL ? 'עקביות' : 'Consistency'} color={T.accent.orange} description={isRTL ? 'אחידות גודל סיכון' : 'How uniform risk sizing is'} />
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <ScoreGauge T={T} score={stats.orcaScore} label={isRTL ? 'ציון Orca' : 'Orca Score'} color={T.accent.cyan} description={isRTL ? 'ציון משולב' : 'Combined score'} />
+            <ScoreGauge T={T} score={Math.max(0, 100 - (revengeTrades / Math.max(1, trades.length)) * 500)} label={isRTL ? 'רגשי' : 'Emotional'} color={T.accent.purple} description={isRTL ? 'היעדר אימפולסיביות' : 'Absence of impulsivity'} />
+          </div>
+        </div>
       </div>
 
-      {/* Behavioral signals */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+      {/* ═══ DAY-OF-WEEK PERFORMANCE HEATMAP ═══ */}
+      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'מפת חום שבועית' : 'WEEKLY HEATMAP'} />
+      <GlassCard T={T} style={{ marginBottom: 4 }}>
+        <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+          {isRTL ? 'ביצוע לפי יום בשבוע — מה הימים הטובים שלך?' : 'Performance by day of week — when are you sharpest?'}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8 }}>
+          {dayOfWeekStats.map((d, i) => {
+            const intensity = Math.min(1, Math.abs(d.avgR) / 1.5);
+            const bg = d.count === 0 ? T.bg.tertiary : heatColor(d.avgR);
+            return (
+              <div key={i} style={{
+                padding: 12, borderRadius: 10,
+                background: d.count > 0 ? `${bg}${Math.round(intensity * 60 + 15).toString(16).padStart(2, '0')}` : T.bg.tertiary,
+                border: `1px solid ${d.count > 0 ? bg : T.border.subtle}40`,
+                textAlign: 'center', position: 'relative',
+                transition: 'all 0.3s',
+              }}>
+                <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: "'JetBrains Mono', monospace", marginBottom: 6 }}>{d.day}</div>
+                {d.count > 0 ? (
+                  <>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: d.avgR >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace", lineHeight: 1 }}>
+                      {d.avgR >= 0 ? '+' : ''}{d.avgR.toFixed(2)}
+                    </div>
+                    <div style={{ fontSize: 8, color: T.text.muted, marginTop: 4, fontFamily: "'JetBrains Mono', monospace" }}>R · {d.count}T</div>
+                    <div style={{ fontSize: 8, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>{d.winRate.toFixed(0)}% WR</div>
+                  </>
+                ) : (
+                  <div style={{ fontSize: 16, color: T.text.muted, opacity: 0.4 }}>—</div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </GlassCard>
+
+      {/* ═══ BEHAVIORAL SIGNALS ═══ */}
+      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'אותות התנהגותיים' : 'BEHAVIORAL SIGNALS'} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 8, marginBottom: 4 }}>
         {signals.map((sig, i) => (
-          <GlassCard T={T} key={i} style={{ borderInlineStart: `3px solid ${severityColor(sig.severity)}`, padding: 16 }}>
+          <GlassCard T={T} key={i} style={{ borderInlineStart: `3px solid ${severityColor(sig.severity)}`, padding: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-              <span style={{ fontSize: 18 }}>{sig.icon}</span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: severityColor(sig.severity) }}>{sig.title}</span>
+              <span style={{ fontSize: 16 }}>{sig.icon}</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: severityColor(sig.severity), flex: 1 }}>{sig.title}</span>
               <TradingBadge color={severityColor(sig.severity)}>
                 {sig.severity === 'good' ? (isRTL ? 'תקין' : 'OK') : sig.severity === 'warning' ? (isRTL ? 'אזהרה' : 'Warning') : (isRTL ? 'קריטי' : 'Critical')}
               </TradingBadge>
             </div>
-            <div style={{ fontSize: 13, color: T.text.secondary, lineHeight: 1.7 }}>{sig.detail}</div>
+            <div style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.6 }}>{sig.detail}</div>
           </GlassCard>
         ))}
       </div>
 
-      {/* ═══ POST-LOSS BEHAVIOR BREAKDOWN ═══ */}
+      {/* ═══ POST-LOSS BEHAVIOR ═══ */}
       {postLossBehavior.totalAfterLoss > 0 && (
-        <GlassCard T={T} style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
-            {isRTL ? 'התנהגות לאחר הפסד' : 'Post-Loss Behavior Breakdown'}
-          </div>
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            {[
-              { l: isRTL ? 'הגדלת סיכון' : 'Risk Increase', v: postLossBehavior.riskIncAfterLoss, pct: (postLossBehavior.riskIncAfterLoss / postLossBehavior.totalAfterLoss * 100), c: T.accent.red, icon: '📈' },
-              { l: isRTL ? 'שמירה על סיכון' : 'Risk Maintained', v: postLossBehavior.sameAfterLoss, pct: (postLossBehavior.sameAfterLoss / postLossBehavior.totalAfterLoss * 100), c: T.accent.green, icon: '➡️' },
-              { l: isRTL ? 'הקטנת סיכון' : 'Risk Decrease', v: postLossBehavior.riskDecAfterLoss, pct: (postLossBehavior.riskDecAfterLoss / postLossBehavior.totalAfterLoss * 100), c: T.accent.blue, icon: '📉' },
-              { l: isRTL ? 'עמידה בכללים' : 'Rules Followed', v: postLossBehavior.rulesAfterLoss, pct: (postLossBehavior.rulesAfterLoss / postLossBehavior.totalAfterLoss * 100), c: T.accent.cyan, icon: '✅' },
-            ].map((item, i) => (
-              <div key={i} style={{ flex: 1, minWidth: 130, padding: 12, background: `${item.c}08`, border: `1px solid ${item.c}20`, borderRadius: 10, textAlign: 'center' }}>
-                <div style={{ fontSize: 18, marginBottom: 4 }}>{item.icon}</div>
-                <div style={{ fontSize: 20, fontWeight: 700, color: item.c, fontFamily: "'JetBrains Mono', monospace" }}>{item.pct.toFixed(0)}%</div>
-                <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>{item.l} ({item.v})</div>
-              </div>
-            ))}
-          </div>
-        </GlassCard>
+        <>
+          <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'התנהגות לאחר הפסד' : 'POST-LOSS BEHAVIOR'} />
+          <GlassCard T={T} style={{ marginBottom: 4 }}>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              {[
+                { l: isRTL ? 'הגדלת סיכון' : 'Risk Increase', v: postLossBehavior.riskIncAfterLoss, pct: (postLossBehavior.riskIncAfterLoss / postLossBehavior.totalAfterLoss * 100), c: T.accent.red, icon: '📈' },
+                { l: isRTL ? 'שמירה על סיכון' : 'Risk Maintained', v: postLossBehavior.sameAfterLoss, pct: (postLossBehavior.sameAfterLoss / postLossBehavior.totalAfterLoss * 100), c: T.accent.green, icon: '➡️' },
+                { l: isRTL ? 'הקטנת סיכון' : 'Risk Decrease', v: postLossBehavior.riskDecAfterLoss, pct: (postLossBehavior.riskDecAfterLoss / postLossBehavior.totalAfterLoss * 100), c: T.accent.blue, icon: '📉' },
+                { l: isRTL ? 'עמידה בכללים' : 'Rules Followed', v: postLossBehavior.rulesAfterLoss, pct: (postLossBehavior.rulesAfterLoss / postLossBehavior.totalAfterLoss * 100), c: T.accent.cyan, icon: '✅' },
+              ].map((item, i) => (
+                <div key={i} style={{ flex: 1, minWidth: 130, padding: 12, background: `${item.c}08`, border: `1px solid ${item.c}20`, borderRadius: 10, textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+                  <div style={{ position: 'absolute', bottom: 0, insetInlineStart: 0, height: 2, width: `${item.pct}%`, background: item.c, transition: 'width 0.6s ease' }} />
+                  <div style={{ fontSize: 18, marginBottom: 4 }}>{item.icon}</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: item.c, fontFamily: "'JetBrains Mono', monospace" }}>{item.pct.toFixed(0)}%</div>
+                  <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>{item.l} ({item.v})</div>
+                </div>
+              ))}
+            </div>
+          </GlassCard>
+        </>
       )}
 
       {/* ═══ DISCIPLINE TIMELINE ═══ */}
       {disciplineTimeline.length > 0 && (
-        <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'מגמת משמעת לאורך זמן' : 'Discipline Trend Over Time'} explanation={EXPLANATIONS.disciplineMetric} unit="%" style={{ marginBottom: 16 }}>
-          <LazyChart height={180}>
-            <ResponsiveContainer width="100%" height={180}>
-              <LineChart data={disciplineTimeline}>
-                <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 9 }} />
-                <YAxis tick={{ fill: T.text.muted, fontSize: 9 }} domain={[0, 100]} />
-                <Tooltip contentStyle={tt} />
-                <Line type="monotone" dataKey="discipline" stroke={T.accent.green} strokeWidth={2} dot={{ fill: T.accent.green, r: 2 }} name={isRTL ? 'משמעת' : 'Discipline'} />
-                <Line type="monotone" dataKey="riskConsistency" stroke={T.accent.orange} strokeWidth={2} dot={{ fill: T.accent.orange, r: 2 }} name={isRTL ? 'עקביות סיכון' : 'Risk Consistency'} />
-              </LineChart>
-            </ResponsiveContainer>
-          </LazyChart>
-        </ChartWrapper>
+        <>
+          <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'מגמות לאורך זמן' : 'TRENDS OVER TIME'} />
+          <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'מגמת משמעת לאורך זמן' : 'Discipline Trend Over Time'} explanation={EXPLANATIONS.disciplineMetric} unit="%" style={{ marginBottom: 4 }}>
+            <LazyChart height={180}>
+              <ResponsiveContainer width="100%" height={180}>
+                <LineChart data={disciplineTimeline}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
+                  <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 9 }} />
+                  <YAxis tick={{ fill: T.text.muted, fontSize: 9 }} domain={[0, 100]} />
+                  <Tooltip contentStyle={tt} cursor={false} />
+                  <Line type="monotone" dataKey="discipline" stroke={T.accent.green} strokeWidth={2} dot={{ fill: T.accent.green, r: 2 }} name={isRTL ? 'משמעת' : 'Discipline'} />
+                  <Line type="monotone" dataKey="riskConsistency" stroke={T.accent.orange} strokeWidth={2} dot={{ fill: T.accent.orange, r: 2 }} name={isRTL ? 'עקביות סיכון' : 'Risk Consistency'} />
+                </LineChart>
+              </ResponsiveContainer>
+            </LazyChart>
+          </ChartWrapper>
+        </>
       )}
 
       {/* ═══ LOSS PRESSURE TIMELINE ═══ */}
       {lossPressure.length > 0 && (
-        <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'לחץ רצף הפסדים' : 'Loss Streak Pressure'} explanation={EXPLANATIONS.rDistribution} unit="%" style={{ marginBottom: 16 }}>
+        <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'לחץ רצף הפסדים' : 'Loss Streak Pressure'} explanation={EXPLANATIONS.rDistribution} unit="%" style={{ marginBottom: 4 }}>
           <LazyChart height={160}>
             <ResponsiveContainer width="100%" height={160}>
               <BarChart data={lossPressure}>
                 <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
                 <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 9 }} />
                 <YAxis tick={{ fill: T.text.muted, fontSize: 9 }} domain={[0, 100]} />
-                <Tooltip contentStyle={tt} />
+                <Tooltip contentStyle={tt} cursor={false} />
                 <Bar dataKey="pressure" radius={[3, 3, 0, 0]}>
                   {lossPressure.map((d, i) => <Cell key={i} fill={d.pressure >= 75 ? T.accent.red : d.pressure >= 50 ? T.accent.orange : d.pressure > 0 ? T.accent.orange : T.accent.green} fillOpacity={d.pressure >= 50 ? 0.9 : d.pressure > 0 ? 0.55 : 0.4} />)}
                 </Bar>
@@ -247,21 +465,24 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, trades, stats, onExp
 
       {/* ═══ DEVIATION CHART (ALPHA) ═══ */}
       {isAlpha && (
-        <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'סטייה לפי עסקה' : 'Deviation per Trade'} explanation={EXPLANATIONS.rDistribution} unit="R">
-          <LazyChart height={160}>
-            <ResponsiveContainer width="100%" height={160}>
-              <BarChart data={trades.map(tr => ({ id: `#${tr.id}`, dev: tr.deviation || 0 }))}>
-                <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 10 }} />
-                <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
-                <Tooltip contentStyle={tt} formatter={(v: number) => `${v.toFixed(4)}R`} />
-                <Bar dataKey="dev" radius={[4, 4, 0, 0]}>
-                  {trades.map((tr, i) => <Cell key={i} fill={tr.deviation > 0.1 ? T.accent.red : tr.deviation > 0 ? T.accent.orange : T.accent.green} />)}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </LazyChart>
-        </ChartWrapper>
+        <>
+          <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'ביצוע מתקדם (ALPHA)' : 'EXECUTION (ALPHA)'} />
+          <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'סטייה לפי עסקה' : 'Deviation per Trade'} explanation={EXPLANATIONS.rDistribution} unit="R">
+            <LazyChart height={160}>
+              <ResponsiveContainer width="100%" height={160}>
+                <BarChart data={trades.map(tr => ({ id: `#${tr.id}`, dev: tr.deviation || 0 }))}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
+                  <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                  <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
+                  <Tooltip contentStyle={tt} cursor={false} formatter={(v: number) => `${v.toFixed(4)}R`} />
+                  <Bar dataKey="dev" radius={[4, 4, 0, 0]}>
+                    {trades.map((tr, i) => <Cell key={i} fill={tr.deviation > 0.1 ? T.accent.red : tr.deviation > 0 ? T.accent.orange : T.accent.green} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </LazyChart>
+          </ChartWrapper>
+        </>
       )}
     </>
   );
