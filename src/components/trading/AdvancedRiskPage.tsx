@@ -41,7 +41,7 @@ const SectionHeader = ({ T, label, accent, isRTL }: { T: TradingTheme; label: st
 const LimitBar = ({ T, label, current, limit, isRTL }: { T: TradingTheme; label: string; current: number; limit: number; isRTL: boolean }) => {
   // current is negative (e.g. -1.5R), limit is negative (e.g. -2R)
   const pct = Math.min(100, Math.max(0, (Math.abs(current) / Math.abs(limit)) * 100));
-  const color = pct >= 100 ? T.accent.red : pct >= 75 ? T.accent.orange : pct >= 50 ? T.accent.yellow || T.accent.orange : T.accent.green;
+  const color = pct >= 100 ? T.accent.red : pct >= 75 ? T.accent.orange : pct >= 50 ? T.accent.orange : T.accent.green;
   return (
     <div style={{ flex: 1, minWidth: 180 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 10 }}>
