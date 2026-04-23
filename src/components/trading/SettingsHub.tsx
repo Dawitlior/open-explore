@@ -17,9 +17,9 @@ interface SettingsHubProps {
 type TabId = 'theme' | 'dashboard' | 'kpis';
 
 const THEME_OPTIONS: { id: ThemeId; label: { he: string; en: string }; icon: string; preview: string[] }[] = [
-  { id: 'midnight', label: { he: 'חצות', en: 'Midnight' }, icon: '🌙', preview: ['#0a0e1a', '#06d6a0', '#3b82f6'] },
-  { id: 'arctic', label: { he: 'ארקטי', en: 'Arctic' }, icon: '❄️', preview: ['#f8fafc', '#0891b2', '#2563eb'] },
-  { id: 'ember', label: { he: 'גחלת', en: 'Ember' }, icon: '🔥', preview: ['#1a0f0a', '#fb923c', '#fbbf24'] },
+  { id: 'midnight', label: { he: 'חצות', en: 'Midnight' }, icon: '🌙', preview: ['#020202', '#00f2ff', '#3b82f6'] },
+  { id: 'indigo', label: { he: 'אינדיגו ליל', en: 'Indigo Noir' }, icon: '🌌', preview: ['#06030f', '#a78bfa', '#6366f1'] },
+  { id: 'crimson', label: { he: 'אוניקס ארגמן', en: 'Crimson Onyx' }, icon: '🩸', preview: ['#0a0303', '#ff5f70', '#fb923c'] },
 ];
 
 const TOKEN_LIST = [
