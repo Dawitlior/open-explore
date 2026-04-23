@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getSetting, setSetting } from '@/lib/storage';
+import { applyThemeToDOM } from '@/lib/trading-theme';
 
 export type ThemeId = 'midnight' | 'indigo' | 'crimson';
 export type SystemMode = 'standard' | 'alpha';
@@ -11,6 +12,17 @@ export interface ModeCombo {
   depth: SystemMode;
 }
 
+/**
+ * Mode-switch event bus — lets the global Liquid Sweep overlay react
+ * without coupling to React state across the tree.
+ */
+export const ModeSwitchEvents = {
+  emit(detail: { kind: 'theme' | 'operating' | 'depth'; from: string; to: string }) {
+    if (typeof window === 'undefined') return;
+    window.dispatchEvent(new CustomEvent('orca:mode-switch', { detail }));
+  },
+};
+
 export function useSettings() {
   const [theme, setThemeState] = useState<ThemeId>('midnight');
   const [systemMode, setSystemModeState] = useState<SystemMode>('standard');
@@ -18,6 +30,7 @@ export function useSettings() {
   const [lang, setLangState] = useState<Lang>('he');
   const [privacyMode, setPrivacyModeState] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const prev = useRef({ theme, systemMode, operatingMode });
 
   useEffect(() => {
     Promise.all([
@@ -27,18 +40,43 @@ export function useSettings() {
       getSetting<Lang>('lang'),
       getSetting<boolean>('privacyMode'),
     ]).then(([t, m, o, l, p]) => {
-      if (t) setThemeState(t);
+      // Migrate legacy themes (arctic/ember) to new ones
+      const migrated: ThemeId = (t === 'midnight' || t === 'indigo' || t === 'crimson') ? t : 'midnight';
+      setThemeState(migrated);
       if (m) setSystemModeState(m);
       if (o) setOperatingModeState(o);
       if (l) setLangState(l);
       if (p !== undefined) setPrivacyModeState(p);
+      applyThemeToDOM(migrated);
+      prev.current = { theme: migrated, systemMode: m || 'standard', operatingMode: o || 'beginner' };
       setLoaded(true);
     });
   }, []);
 
-  const setTheme = useCallback((t: ThemeId) => { setThemeState(t); setSetting('theme', t); }, []);
-  const setSystemMode = useCallback((m: SystemMode) => { setSystemModeState(m); setSetting('systemMode', m); }, []);
-  const setOperatingMode = useCallback((o: OperatingMode) => { setOperatingModeState(o); setSetting('operatingMode', o); }, []);
+  // Apply theme to DOM whenever it changes
+  useEffect(() => {
+    if (loaded) applyThemeToDOM(theme);
+  }, [theme, loaded]);
+
+  const setTheme = useCallback((t: ThemeId) => {
+    const from = prev.current.theme;
+    setThemeState(t);
+    setSetting('theme', t);
+    if (from !== t) ModeSwitchEvents.emit({ kind: 'theme', from, to: t });
+    prev.current.theme = t;
+  }, []);
+  const setSystemMode = useCallback((m: SystemMode) => {
+    const from = prev.current.systemMode;
+    setSystemModeState(m); setSetting('systemMode', m);
+    if (from !== m) ModeSwitchEvents.emit({ kind: 'depth', from, to: m });
+    prev.current.systemMode = m;
+  }, []);
+  const setOperatingMode = useCallback((o: OperatingMode) => {
+    const from = prev.current.operatingMode;
+    setOperatingModeState(o); setSetting('operatingMode', o);
+    if (from !== o) ModeSwitchEvents.emit({ kind: 'operating', from, to: o });
+    prev.current.operatingMode = o;
+  }, []);
   const setLang = useCallback((l: Lang) => { setLangState(l); setSetting('lang', l); }, []);
   const setPrivacyMode = useCallback((p: boolean) => { setPrivacyModeState(p); setSetting('privacyMode', p); }, []);
 
