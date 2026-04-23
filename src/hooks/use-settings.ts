@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getSetting, setSetting } from '@/lib/storage';
 
-export type ThemeId = 'midnight' | 'arctic' | 'ember';
+export type ThemeId = 'midnight' | 'indigo' | 'crimson';
 export type SystemMode = 'standard' | 'alpha';
 export type OperatingMode = 'live' | 'review' | 'research' | 'beginner';
 export type Lang = 'he' | 'en';
