@@ -142,7 +142,7 @@ const crimson: TradingTheme = {
   },
 };
 
-export const themes: Record<ThemeId, TradingTheme> = { midnight, indigo, crimson };
+export const themes: Record<ThemeId, TradingTheme> = { midnight, indigo, platinum };
 
 export function getTheme(id: ThemeId): TradingTheme {
   return themes[id] || midnight;
