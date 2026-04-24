@@ -218,6 +218,17 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, operatingMode = 'live', cu
   const healthColor = riskHealth >= 75 ? T.accent.green : riskHealth >= 50 ? T.accent.orange : T.accent.red;
   const healthLabel = riskHealth >= 75 ? (isRTL ? 'בריא' : 'HEALTHY') : riskHealth >= 50 ? (isRTL ? 'מתון' : 'MODERATE') : (isRTL ? 'קריטי' : 'CRITICAL');
 
+  // Mode banner content
+  const modeMeta = (() => {
+    const map: Record<OperatingMode, { he: string; en: string; sub: { he: string; en: string }; color: string }> = {
+      beginner: { he: 'מתחיל', en: 'Beginner', sub: { he: 'תצוגה מפושטת — מגבלות וסיכון בסיסי בלבד', en: 'Simplified — limits & basic risk only' }, color: T.accent.cyan },
+      live:     { he: 'חי',     en: 'Live',     sub: { he: 'מעקב חי אחרי מגבלות + התראות סטייה',     en: 'Live limit tracking + drift alerts' },    color: T.accent.green },
+      review:   { he: 'סקירה',  en: 'Review',   sub: { he: 'ניתוח רטרוספקטיבי + חיפוש אנומליות',     en: 'Retrospective + anomaly hunting' },        color: T.accent.blue },
+      research: { he: 'מחקר',   en: 'Research', sub: { he: 'שכבות מחקר עומק וטיימליין סיכון מלא',    en: 'Deep research & full risk timeline' },     color: T.accent.purple },
+    };
+    return map[operatingMode];
+  })();
+
   return (
     <>
       {/* ═══════════════════════════════════════════════════════════
