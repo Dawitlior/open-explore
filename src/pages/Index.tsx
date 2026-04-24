@@ -143,6 +143,31 @@ const Index = () => {
     return w;
   }, [calDays, calDayPnl]);
 
+  /* ── Per-displayed-month aggregates (follow calendar navigation) ── */
+  const monthStats = useMemo(() => {
+    const monthTrades = trades.filter(tr => {
+      if (!tr.date) return false;
+      const d = new Date(tr.date.replace(' ', 'T'));
+      return !isNaN(d.getTime()) && d.getMonth() === calMonth && d.getFullYear() === calYear;
+    });
+    const wins = monthTrades.filter(tr => tr.winLoss === 'Win').length;
+    const losses = monthTrades.filter(tr => tr.winLoss === 'Loss').length;
+    const totalPnl = monthTrades.reduce((s, tr) => s + tr.pnl, 0);
+    const totalR = monthTrades.reduce((s, tr) => s + tr.returnR, 0);
+    const winRate = monthTrades.length ? (wins / monthTrades.length) * 100 : 0;
+    const expectancyR = monthTrades.length ? totalR / monthTrades.length : 0;
+    // Streak within this month
+    let streak = 0; let streakType: 'Win' | 'Loss' | null = null;
+    for (let i = monthTrades.length - 1; i >= 0; i--) {
+      const t = monthTrades[i];
+      if (t.winLoss === 'Break Even') continue;
+      if (streakType === null) { streakType = t.winLoss; streak = 1; }
+      else if (t.winLoss === streakType) streak++;
+      else break;
+    }
+    return { count: monthTrades.length, wins, losses, totalPnl, totalR, winRate, expectancyR, streak, streakType };
+  }, [trades, calMonth, calYear]);
+
   const dayNames = [t.sun, t.mon, t.tue, t.wed, t.thu, t.fri, t.sat];
   const radarData = [
     { m: isRTL ? 'הצלחה' : 'Win %', v: stats.winRate },
