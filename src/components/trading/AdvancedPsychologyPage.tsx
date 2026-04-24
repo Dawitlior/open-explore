@@ -37,10 +37,33 @@ const SectionHeader = ({ T, label, accent, isRTL }: { T: TradingTheme; label: st
 );
 
 export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'live', trades, stats, onExplainClick }: AdvancedPsychologyPageProps) => {
-  // Mode gates — Beginner sees only the essentials, Alpha+Research/Live unlock deep panels
+  // ─── Composition matrix: Standard/Alpha × Beginner/Live/Review/Research ───
   const isBeginner = operatingMode === 'beginner';
-  const showDeep = isAlpha && operatingMode !== 'beginner';
-  const showResearch = isAlpha && operatingMode === 'research';
+  const isLive     = operatingMode === 'live';
+  const isReview   = operatingMode === 'review';
+  const isResearch = operatingMode === 'research';
+
+  // What sections each mode shows
+  const showRadar          = !isBeginner;
+  const showHeatmap        = !isBeginner;
+  const showSignals        = true; // everyone sees behavioral signals (truncated for beginner)
+  const maxSignals         = isBeginner ? 3 : isAlpha ? 99 : 6;
+  const showPostLoss       = !isBeginner && (isAlpha || isReview);
+  const showDisciplineTL   = !isBeginner && (isAlpha || isReview || isResearch);
+  const showLossPressure   = isAlpha || isReview || isResearch;
+  const showAlphaDeviation = isAlpha && (isLive || isReview || isResearch);
+
+  // Mode banner meta
+  const modeMeta = (() => {
+    const map: Record<OperatingMode, { he: string; en: string; sub: { he: string; en: string }; color: string }> = {
+      beginner: { he: 'מתחיל', en: 'Beginner', sub: { he: 'תצוגה מפושטת — אותות פסיכולוגיים בסיסיים בלבד', en: 'Simplified — core psychology signals only' }, color: T.accent.cyan },
+      live:     { he: 'חי',     en: 'Live',    sub: { he: 'מצב חי — אינדקס בריאות + Tilt בזמן אמת',         en: 'Live — health index + real-time tilt' }, color: T.accent.green },
+      review:   { he: 'סקירה',  en: 'Review',  sub: { he: 'סקירה רטרוספקטיבית של דפוסים והתנהגות לאחר הפסד', en: 'Retrospective of patterns & post-loss behavior' }, color: T.accent.blue },
+      research: { he: 'מחקר',   en: 'Research',sub: { he: 'מחקר עומק — מגמות, לחץ ושכבות אלפא',              en: 'Deep research — trends, pressure & alpha layers' }, color: T.accent.purple },
+    };
+    return map[operatingMode];
+  })();
+
   const tt = { background: T.bg.card, border: `1px solid ${T.border.medium}`, borderRadius: 10, color: T.text.primary, fontSize: 12, boxShadow: T.shadow.elevated, padding: '8px 12px' };
 
   // Overtrading detection
