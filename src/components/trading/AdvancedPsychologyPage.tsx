@@ -347,7 +347,23 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
         )}
       </div>
 
-      {/* ═══ RADAR + GAUGES ═══ */}
+      {/* ═══ MODE BANNER ═══ */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        padding: '10px 14px', marginTop: 8, marginBottom: 4,
+        background: `linear-gradient(${isRTL ? '270deg' : '90deg'}, ${modeMeta.color}14, transparent)`,
+        border: `1px solid ${modeMeta.color}30`,
+        borderInlineStart: `3px solid ${modeMeta.color}`,
+        borderRadius: 10,
+      }}>
+        <div style={{ fontSize: 9, padding: '3px 8px', background: `${modeMeta.color}25`, color: modeMeta.color, borderRadius: 4, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.16em', fontWeight: 700 }}>
+          {(isAlpha ? (isRTL ? 'אלפא · ' : 'ALPHA · ') : (isRTL ? 'סטנדרט · ' : 'STANDARD · ')) + (isRTL ? modeMeta.he : modeMeta.en).toUpperCase()}
+        </div>
+        <div style={{ fontSize: 11, color: T.text.secondary, flex: 1 }}>{isRTL ? modeMeta.sub.he : modeMeta.sub.en}</div>
+      </div>
+
+      {/* ═══ RADAR + GAUGES — hidden in Beginner ═══ */}
+      {showRadar && (<>
       <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'פרופיל התנהגותי' : 'BEHAVIORAL PROFILE'} />
       <div style={{ display: 'flex', gap: 12, marginBottom: 4, flexWrap: 'wrap' }}>
         <GlassCard T={T} style={{ flex: 1, minWidth: 280, padding: 12 }}>
@@ -375,8 +391,10 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
           </div>
         </div>
       </div>
+      </>)}
 
-      {/* ═══ DAY-OF-WEEK PERFORMANCE HEATMAP ═══ */}
+      {/* ═══ DAY-OF-WEEK PERFORMANCE HEATMAP — hidden in Beginner ═══ */}
+      {showHeatmap && (<>
       <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'מפת חום שבועית' : 'WEEKLY HEATMAP'} />
       <GlassCard T={T} style={{ marginBottom: 4 }}>
         <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
@@ -411,11 +429,12 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
           })}
         </div>
       </GlassCard>
+      </>)}
 
-      {/* ═══ BEHAVIORAL SIGNALS ═══ */}
+      {/* ═══ BEHAVIORAL SIGNALS — truncated for Beginner ═══ */}
       <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'אותות התנהגותיים' : 'BEHAVIORAL SIGNALS'} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 8, marginBottom: 4 }}>
-        {signals.map((sig, i) => (
+        {signals.slice(0, maxSignals).map((sig, i) => (
           <GlassCard T={T} key={i} style={{ borderInlineStart: `3px solid ${severityColor(sig.severity)}`, padding: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
               <span style={{ fontSize: 16 }}>{sig.icon}</span>
@@ -429,8 +448,8 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
         ))}
       </div>
 
-      {/* ═══ POST-LOSS BEHAVIOR ═══ */}
-      {postLossBehavior.totalAfterLoss > 0 && (
+      {/* ═══ POST-LOSS BEHAVIOR — Review/Alpha ═══ */}
+      {showPostLoss && postLossBehavior.totalAfterLoss > 0 && (
         <>
           <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'התנהגות לאחר הפסד' : 'POST-LOSS BEHAVIOR'} />
           <GlassCard T={T} style={{ marginBottom: 4 }}>
@@ -453,8 +472,8 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
         </>
       )}
 
-      {/* ═══ DISCIPLINE TIMELINE ═══ */}
-      {disciplineTimeline.length > 0 && (
+      {/* ═══ DISCIPLINE TIMELINE — Review/Research/Alpha ═══ */}
+      {showDisciplineTL && disciplineTimeline.length > 0 && (
         <>
           <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'מגמות לאורך זמן' : 'TRENDS OVER TIME'} />
           <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'מגמת משמעת לאורך זמן' : 'Discipline Trend Over Time'} explanation={EXPLANATIONS.disciplineMetric} unit="%" style={{ marginBottom: 4 }}>
@@ -474,8 +493,8 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
         </>
       )}
 
-      {/* ═══ LOSS PRESSURE TIMELINE ═══ */}
-      {lossPressure.length > 0 && (
+      {/* ═══ LOSS PRESSURE TIMELINE — non-Beginner ═══ */}
+      {showLossPressure && lossPressure.length > 0 && (
         <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'לחץ רצף הפסדים' : 'Loss Streak Pressure'} explanation={EXPLANATIONS.rDistribution} unit="%" style={{ marginBottom: 4 }}>
           <LazyChart height={160}>
             <ResponsiveContainer width="100%" height={160}>
@@ -493,8 +512,8 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
         </ChartWrapper>
       )}
 
-      {/* ═══ DEVIATION CHART (ALPHA) ═══ */}
-      {isAlpha && (
+      {/* ═══ DEVIATION CHART (ALPHA + Live/Review/Research) ═══ */}
+      {showAlphaDeviation && (
         <>
           <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'ביצוע מתקדם (ALPHA)' : 'EXECUTION (ALPHA)'} />
           <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'סטייה לפי עסקה' : 'Deviation per Trade'} explanation={EXPLANATIONS.rDistribution} unit="R">
