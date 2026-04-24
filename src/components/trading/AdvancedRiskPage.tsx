@@ -81,11 +81,25 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, operatingMode = 'live', cu
   // ─── Live risk-limit status ──────────────────────────────────────
   const limitStatus = useMemo(() => checkRiskLimits(trades, new Date(), LIMITS_USED), [trades, LIMITS_USED]);
 
-  // Mode-aware view config — Beginner sees a simplified surface; Alpha unlocks deep analytics
-  const showAdvanced = isAlpha;
-  const showAnomalies = isAlpha && (operatingMode === 'live' || operatingMode === 'review');
-  const showResearchPanels = operatingMode === 'research';
+  // ─── Composition matrix: Standard/Alpha × Beginner/Live/Review/Research ───
   const isBeginner = operatingMode === 'beginner';
+  const isLive     = operatingMode === 'live';
+  const isReview   = operatingMode === 'review';
+  const isResearch = operatingMode === 'research';
+
+  // What each mode shows on the Risk page
+  const showLimitBars      = !isBeginner || isAlpha; // Beginner Standard: hide live limit bars
+  const showKpiStrip       = true;
+  const showGaugesRow      = !isBeginner;
+  const showAnomalies      = !isBeginner && (isAlpha || isReview); // Standard+Live hides anomalies
+  const showRiskTimeline   = !isBeginner && (isAlpha || isReview || isResearch);
+  const showSetupTable     = !isBeginner;
+  const showAllocAndDD     = true; // everyone gets DD; beginner only DD
+  const showAllocChart     = !isBeginner;
+  const showAlphaEvolution = isAlpha && (isResearch || isReview || isLive);
+  const showStatusWarnings = true;
+  const showExplanationLog = isAlpha && (isReview || isResearch);
+  const showResearchDeepRisk = isAlpha && isResearch;
 
   // Risk behavior over time
   const riskTimeline = useMemo(() => {
@@ -270,12 +284,29 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, operatingMode = 'live', cu
           </div>
         </div>
 
-        {/* Live Risk Limit Bars */}
-        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', position: 'relative' }}>
-          <LimitBar T={T} isRTL={isRTL} label={isRTL ? 'יומי' : 'Daily'} current={limitStatus.dailyNegR} limit={DEFAULT_RISK_LIMITS.day} />
-          <LimitBar T={T} isRTL={isRTL} label={isRTL ? 'שבועי' : 'Weekly'} current={limitStatus.weeklyNegR} limit={DEFAULT_RISK_LIMITS.week} />
-          <LimitBar T={T} isRTL={isRTL} label={isRTL ? 'חודשי' : 'Monthly'} current={limitStatus.monthlyNegR} limit={DEFAULT_RISK_LIMITS.month} />
+        {/* Live Risk Limit Bars (hidden in Beginner-Standard) */}
+        {showLimitBars && (
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', position: 'relative' }}>
+            <LimitBar T={T} isRTL={isRTL} label={isRTL ? 'יומי' : 'Daily'} current={limitStatus.dailyNegR} limit={LIMITS_USED.day} />
+            <LimitBar T={T} isRTL={isRTL} label={isRTL ? 'שבועי' : 'Weekly'} current={limitStatus.weeklyNegR} limit={LIMITS_USED.week} />
+            <LimitBar T={T} isRTL={isRTL} label={isRTL ? 'חודשי' : 'Monthly'} current={limitStatus.monthlyNegR} limit={LIMITS_USED.month} />
+          </div>
+        )}
+      </div>
+
+      {/* ═══ MODE BANNER — shows current operating context ═══ */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        padding: '10px 14px', marginTop: 8, marginBottom: 4,
+        background: `linear-gradient(${isRTL ? '270deg' : '90deg'}, ${modeMeta.color}14, transparent)`,
+        border: `1px solid ${modeMeta.color}30`,
+        borderInlineStart: `3px solid ${modeMeta.color}`,
+        borderRadius: 10,
+      }}>
+        <div style={{ fontSize: 9, padding: '3px 8px', background: `${modeMeta.color}25`, color: modeMeta.color, borderRadius: 4, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.16em', fontWeight: 700 }}>
+          {(isAlpha ? (isRTL ? 'אלפא · ' : 'ALPHA · ') : (isRTL ? 'סטנדרט · ' : 'STANDARD · ')) + (isRTL ? modeMeta.he : modeMeta.en).toUpperCase()}
         </div>
+        <div style={{ fontSize: 11, color: T.text.secondary, flex: 1 }}>{isRTL ? modeMeta.sub.he : modeMeta.sub.en}</div>
       </div>
 
       {/* ═══════════════════════════════════════════════════════════
@@ -304,8 +335,9 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, operatingMode = 'live', cu
       </div>
 
       {/* ═══════════════════════════════════════════════════════════
-          GAUGES & GUARDRAILS
+          GAUGES & GUARDRAILS — hidden in Beginner
           ═══════════════════════════════════════════════════════════ */}
+      {showGaugesRow && (<>
       <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'מדים ומגבלות' : 'GAUGES & GUARDRAILS'} />
       <div style={{ display: 'flex', gap: 12, marginBottom: 4, flexWrap: 'wrap' }}>
         <GlassCard T={T} glow={riskLevel === 'warning' ? 'rgba(245,158,11,0.12)' : T.accent.greenGlow} style={{ flex: 1, minWidth: 220, textAlign: 'center' }}>
@@ -337,9 +369,10 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, operatingMode = 'live', cu
           ))}
         </GlassCard>
       </div>
+      </>)}
 
       {/* ═══ RISK ANOMALIES ═══ */}
-      {anomalies.length > 0 && (
+      {showAnomalies && anomalies.length > 0 && (
         <>
           <SectionHeader T={T} isRTL={isRTL} accent={T.accent.red} label={isRTL ? 'חריגות סיכון שזוהו' : 'RISK ANOMALIES DETECTED'} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 4 }}>
@@ -367,7 +400,8 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, operatingMode = 'live', cu
         </>
       )}
 
-      {/* ═══ RISK BEHAVIOR TIMELINE ═══ */}
+      {/* ═══ RISK BEHAVIOR TIMELINE — Review/Research/Alpha only ═══ */}
+      {showRiskTimeline && (<>
       <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'התפתחות סיכון' : 'RISK EVOLUTION'} />
       <div style={{ display: 'flex', gap: 12, marginBottom: 4, flexWrap: 'wrap' }}>
         <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'התפתחות סיכון לאורך זמן' : 'Risk Evolution Over Time'} explanation={EXPLANATIONS.riskAllocation} unit="$" style={{ flex: 2, minWidth: 340 }}>
@@ -407,8 +441,10 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, operatingMode = 'live', cu
           </LazyChart>
         </ChartWrapper>
       </div>
+      </>)}
 
-      {/* ═══ SETUP RISK COMPARISON TABLE ═══ */}
+      {/* ═══ SETUP RISK COMPARISON TABLE — hidden in Beginner ═══ */}
+      {showSetupTable && (<>
       <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'השוואת סטאפים' : 'SETUP COMPARISON'} />
       <GlassCard T={T} style={{ marginBottom: 4, padding: 0, overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
@@ -438,10 +474,12 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, operatingMode = 'live', cu
           </table>
         </div>
       </GlassCard>
+      </>)}
 
-      {/* ═══ RISK ALLOCATION + DRAWDOWN ═══ */}
-      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'הקצאה ונסיגה' : 'ALLOCATION & DRAWDOWN'} />
+      {/* ═══ RISK ALLOCATION + DRAWDOWN — Beginner sees DD only ═══ */}
+      <SectionHeader T={T} isRTL={isRTL} label={isBeginner ? (isRTL ? 'נסיגה' : 'DRAWDOWN') : (isRTL ? 'הקצאה ונסיגה' : 'ALLOCATION & DRAWDOWN')} />
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 4 }}>
+        {showAllocChart && (
         <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'הקצאת סיכון' : 'Risk Allocation'} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ flex: 1, minWidth: 280 }}>
           <LazyChart height={190}>
             <ResponsiveContainer width="100%" height={190}>
@@ -455,6 +493,7 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, operatingMode = 'live', cu
             </ResponsiveContainer>
           </LazyChart>
         </ChartWrapper>
+        )}
         <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'ניתוח נסיגה' : 'Drawdown Analysis'} explanation={EXPLANATIONS.drawdown} unit="%" style={{ flex: 1, minWidth: 280 }}>
           <LazyChart height={190}>
             <ResponsiveContainer width="100%" height={190}>
@@ -471,8 +510,8 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, operatingMode = 'live', cu
         </ChartWrapper>
       </div>
 
-      {/* ═══ RISK EVOLUTION CHART (ALPHA) ═══ */}
-      {isAlpha && (
+      {/* ═══ RISK EVOLUTION CHART (ALPHA, Live/Review/Research) ═══ */}
+      {showAlphaEvolution && (
         <>
           <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'אבולוציה (ALPHA)' : 'EVOLUTION (ALPHA)'} />
           <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'אבולוציית סיכון מלאה' : 'Full Risk Evolution'} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ marginBottom: 4 }}>
@@ -517,8 +556,8 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, operatingMode = 'live', cu
         )}
       </div>
 
-      {/* ═══ RISK EXPLANATIONS LOG ═══ */}
-      {riskExplanations.length > 0 && (
+      {/* ═══ RISK EXPLANATIONS LOG — Alpha + Review/Research ═══ */}
+      {showExplanationLog && riskExplanations.length > 0 && (
         <>
           <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'יומן הסברי סיכון' : 'RISK EXPLANATION LOG'} />
           <GlassCard T={T} style={{ marginTop: 0 }}>
