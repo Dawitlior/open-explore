@@ -3,6 +3,8 @@ import type { TradingTheme } from '@/lib/trading-theme';
 import type { ThemeId } from '@/hooks/use-settings';
 import { useDashboardConfig, WIDGET_LABELS, evalCustomKPI, type CustomKPI, type WidgetId } from '@/hooks/use-dashboard-config';
 import type { TradingStats } from '@/lib/trading-analytics';
+import { useRiskLimits } from '@/hooks/use-risk-limits';
+import { DEFAULT_RISK_LIMITS } from '@/lib/risk-limits';
 
 interface SettingsHubProps {
   T: TradingTheme;
@@ -14,7 +16,7 @@ interface SettingsHubProps {
   stats: TradingStats;
 }
 
-type TabId = 'theme' | 'dashboard' | 'kpis';
+type TabId = 'theme' | 'dashboard' | 'kpis' | 'risk';
 
 const THEME_OPTIONS: { id: ThemeId; label: { he: string; en: string }; icon: string; preview: string[] }[] = [
   { id: 'midnight', label: { he: 'חצות', en: 'Midnight' }, icon: '🌙', preview: ['#020202', '#00f2ff', '#3b82f6'] },
@@ -30,6 +32,8 @@ const TOKEN_LIST = [
 export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats }: SettingsHubProps) {
   const [tab, setTab] = useState<TabId>('theme');
   const dash = useDashboardConfig();
+  const riskCfg = useRiskLimits();
+  const [pendingLimits, setPendingLimits] = useState<{ trade: string; day: string; week: string; month: string } | null>(null);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
   const [newKpi, setNewKpi] = useState<Partial<CustomKPI>>({ label: '', formula: '', format: 'number' });
@@ -142,6 +146,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats }:
           <button style={tabBtn(tab === 'theme')} onClick={() => setTab('theme')}>🎨 {t('ערכת נושא', 'Theme')}</button>
           <button style={tabBtn(tab === 'dashboard')} onClick={() => setTab('dashboard')}>📊 {t('דאשבורד', 'Dashboard')}</button>
           <button style={tabBtn(tab === 'kpis')} onClick={() => setTab('kpis')}>🧮 {t('KPI מותאמים', 'Custom KPIs')}</button>
+          <button style={tabBtn(tab === 'risk')} onClick={() => setTab('risk')}>🛡️ {t('סיכון', 'Risk Limits')}</button>
         </div>
 
         <div style={body}>
