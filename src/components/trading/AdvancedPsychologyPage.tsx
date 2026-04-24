@@ -8,10 +8,13 @@ import { ChartWrapper, EXPLANATIONS } from './ChartWrapper';
 import { LazyChart } from './LazyChart';
 import type { ChartExplanation } from './ChartWrapper';
 
+type OperatingMode = 'live' | 'review' | 'research' | 'beginner';
+
 interface AdvancedPsychologyPageProps {
   T: TradingTheme;
   isRTL: boolean;
   isAlpha: boolean;
+  operatingMode?: OperatingMode;
   trades: Trade[];
   stats: TradingStats;
   onExplainClick: (title: string, explanation: ChartExplanation, chartId?: string) => void;
@@ -33,7 +36,11 @@ const SectionHeader = ({ T, label, accent, isRTL }: { T: TradingTheme; label: st
   </div>
 );
 
-export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, trades, stats, onExplainClick }: AdvancedPsychologyPageProps) => {
+export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'live', trades, stats, onExplainClick }: AdvancedPsychologyPageProps) => {
+  // Mode gates — Beginner sees only the essentials, Alpha+Research/Live unlock deep panels
+  const isBeginner = operatingMode === 'beginner';
+  const showDeep = isAlpha && operatingMode !== 'beginner';
+  const showResearch = isAlpha && operatingMode === 'research';
   const tt = { background: T.bg.card, border: `1px solid ${T.border.medium}`, borderRadius: 10, color: T.text.primary, fontSize: 12, boxShadow: T.shadow.elevated, padding: '8px 12px' };
 
   // Overtrading detection

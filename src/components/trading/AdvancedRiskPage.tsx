@@ -8,12 +8,16 @@ import { GlassCard, ScoreGauge, TradingBadge } from './TradingUI';
 import { ChartWrapper, EXPLANATIONS } from './ChartWrapper';
 import { LazyChart } from './LazyChart';
 import type { ChartExplanation } from './ChartWrapper';
-import { checkRiskLimits, DEFAULT_RISK_LIMITS } from '@/lib/risk-limits';
+import { checkRiskLimits, DEFAULT_RISK_LIMITS, type RiskLimits } from '@/lib/risk-limits';
+
+type OperatingMode = 'live' | 'review' | 'research' | 'beginner';
 
 interface AdvancedRiskPageProps {
   T: TradingTheme;
   isRTL: boolean;
   isAlpha: boolean;
+  operatingMode?: OperatingMode;
+  customLimits?: RiskLimits;
   trades: Trade[];
   stats: TradingStats;
   riskData: RiskAssessment;
@@ -70,11 +74,18 @@ const LimitBar = ({ T, label, current, limit, isRTL }: { T: TradingTheme; label:
   );
 };
 
-export const AdvancedRiskPage = ({ T, isRTL, isAlpha, trades, stats, riskData, onExplainClick, riskExplanations }: AdvancedRiskPageProps) => {
+export const AdvancedRiskPage = ({ T, isRTL, isAlpha, operatingMode = 'live', customLimits, trades, stats, riskData, onExplainClick, riskExplanations }: AdvancedRiskPageProps) => {
   const tt = { background: T.bg.card, border: `1px solid ${T.border.medium}`, borderRadius: 10, color: T.text.primary, fontSize: 12, boxShadow: T.shadow.elevated, padding: '8px 12px' };
+  const LIMITS_USED = customLimits || DEFAULT_RISK_LIMITS;
 
   // ─── Live risk-limit status ──────────────────────────────────────
-  const limitStatus = useMemo(() => checkRiskLimits(trades), [trades]);
+  const limitStatus = useMemo(() => checkRiskLimits(trades, new Date(), LIMITS_USED), [trades, LIMITS_USED]);
+
+  // Mode-aware view config — Beginner sees a simplified surface; Alpha unlocks deep analytics
+  const showAdvanced = isAlpha;
+  const showAnomalies = isAlpha && (operatingMode === 'live' || operatingMode === 'review');
+  const showResearchPanels = operatingMode === 'research';
+  const isBeginner = operatingMode === 'beginner';
 
   // Risk behavior over time
   const riskTimeline = useMemo(() => {
