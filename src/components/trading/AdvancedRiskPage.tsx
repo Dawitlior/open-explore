@@ -400,7 +400,8 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, operatingMode = 'live', cu
         </>
       )}
 
-      {/* ═══ RISK BEHAVIOR TIMELINE ═══ */}
+      {/* ═══ RISK BEHAVIOR TIMELINE — Review/Research/Alpha only ═══ */}
+      {showRiskTimeline && (<>
       <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'התפתחות סיכון' : 'RISK EVOLUTION'} />
       <div style={{ display: 'flex', gap: 12, marginBottom: 4, flexWrap: 'wrap' }}>
         <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'התפתחות סיכון לאורך זמן' : 'Risk Evolution Over Time'} explanation={EXPLANATIONS.riskAllocation} unit="$" style={{ flex: 2, minWidth: 340 }}>
@@ -440,8 +441,10 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, operatingMode = 'live', cu
           </LazyChart>
         </ChartWrapper>
       </div>
+      </>)}
 
-      {/* ═══ SETUP RISK COMPARISON TABLE ═══ */}
+      {/* ═══ SETUP RISK COMPARISON TABLE — hidden in Beginner ═══ */}
+      {showSetupTable && (<>
       <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'השוואת סטאפים' : 'SETUP COMPARISON'} />
       <GlassCard T={T} style={{ marginBottom: 4, padding: 0, overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
@@ -471,9 +474,10 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, operatingMode = 'live', cu
           </table>
         </div>
       </GlassCard>
+      </>)}
 
-      {/* ═══ RISK ALLOCATION + DRAWDOWN ═══ */}
-      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'הקצאה ונסיגה' : 'ALLOCATION & DRAWDOWN'} />
+      {/* ═══ RISK ALLOCATION + DRAWDOWN — Beginner sees DD only ═══ */}
+      <SectionHeader T={T} isRTL={isRTL} label={isBeginner ? (isRTL ? 'נסיגה' : 'DRAWDOWN') : (isRTL ? 'הקצאה ונסיגה' : 'ALLOCATION & DRAWDOWN')} />
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 4 }}>
         <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'הקצאת סיכון' : 'Risk Allocation'} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ flex: 1, minWidth: 280 }}>
           <LazyChart height={190}>
@@ -504,8 +508,8 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, operatingMode = 'live', cu
         </ChartWrapper>
       </div>
 
-      {/* ═══ RISK EVOLUTION CHART (ALPHA) ═══ */}
-      {isAlpha && (
+      {/* ═══ RISK EVOLUTION CHART (ALPHA, Live/Review/Research) ═══ */}
+      {showAlphaEvolution && (
         <>
           <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'אבולוציה (ALPHA)' : 'EVOLUTION (ALPHA)'} />
           <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'אבולוציית סיכון מלאה' : 'Full Risk Evolution'} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ marginBottom: 4 }}>
