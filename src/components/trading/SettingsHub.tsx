@@ -436,5 +436,8 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats }:
               </div>
             );
           })()}
+        </div>
+      </div>
+    </div>
   );
 }
