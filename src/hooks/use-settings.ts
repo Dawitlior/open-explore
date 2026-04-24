@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { getSetting, setSetting } from '@/lib/storage';
 import { applyThemeToDOM } from '@/lib/trading-theme';
 
-export type ThemeId = 'midnight' | 'indigo' | 'crimson';
+export type ThemeId = 'midnight' | 'indigo' | 'platinum';
 export type SystemMode = 'standard' | 'alpha';
 export type OperatingMode = 'live' | 'review' | 'research' | 'beginner';
 export type Lang = 'he' | 'en';
@@ -40,8 +40,8 @@ export function useSettings() {
       getSetting<Lang>('lang'),
       getSetting<boolean>('privacyMode'),
     ]).then(([t, m, o, l, p]) => {
-      // Migrate legacy themes (arctic/ember) to new ones
-      const migrated: ThemeId = (t === 'midnight' || t === 'indigo' || t === 'crimson') ? t : 'midnight';
+      // Migrate legacy themes (arctic/ember/crimson) to new ones
+      const migrated: ThemeId = (t === 'midnight' || t === 'indigo' || t === 'platinum') ? t : 'midnight';
       setThemeState(migrated);
       if (m) setSystemModeState(m);
       if (o) setOperatingModeState(o);

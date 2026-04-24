@@ -19,7 +19,7 @@ type TabId = 'theme' | 'dashboard' | 'kpis';
 const THEME_OPTIONS: { id: ThemeId; label: { he: string; en: string }; icon: string; preview: string[] }[] = [
   { id: 'midnight', label: { he: 'חצות', en: 'Midnight' }, icon: '🌙', preview: ['#020202', '#00f2ff', '#3b82f6'] },
   { id: 'indigo', label: { he: 'אינדיגו ליל', en: 'Indigo Noir' }, icon: '🌌', preview: ['#06030f', '#a78bfa', '#6366f1'] },
-  { id: 'crimson', label: { he: 'אוניקס ארגמן', en: 'Crimson Onyx' }, icon: '🩸', preview: ['#0a0303', '#ff5f70', '#fb923c'] },
+  { id: 'platinum', label: { he: 'לבן יוקרתי', en: 'Platinum White' }, icon: '🤍', preview: ['#ffffff', '#1d4ed8', '#b45309'] },
 ];
 
 const TOKEN_LIST = [
