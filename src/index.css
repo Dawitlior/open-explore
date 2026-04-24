@@ -136,15 +136,15 @@
   .orca-glass {
     background:
       linear-gradient(180deg, hsl(0 0% 100% / 0.025) 0%, hsl(0 0% 100% / 0.012) 100%),
-      hsl(0 0% 3.1%);
+      hsl(var(--card));
     backdrop-filter: blur(24px) saturate(140%);
     -webkit-backdrop-filter: blur(24px) saturate(140%);
-    border: 1px solid hsl(0 0% 100% / 0.05);
+    border: 1px solid hsl(var(--border, 0 0% 100% / 0.08));
     box-shadow:
       0 1px 0 0 hsl(0 0% 100% / 0.04) inset,
       0 0 0 1px hsl(0 0% 0% / 0.4),
       0 12px 40px -12px hsl(0 0% 0% / 0.6);
-    transition: border-color 280ms ease, box-shadow 280ms ease, transform 280ms ease;
+    transition: border-color 280ms ease, box-shadow 280ms ease, transform 280ms ease, background 480ms ease;
     position: relative;
   }
 
@@ -464,4 +464,61 @@ html, body, .orca-glass, .orca-panel, [class*="bg-"], [class*="text-"] {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   PLATINUM (light) theme — surgical overrides for legibility
+   ════════════════════════════════════════════════════════════════ */
+[data-theme="platinum"] .orca-glass {
+  background:
+    linear-gradient(180deg, hsl(0 0% 100% / 0.85) 0%, hsl(40 30% 99% / 0.75) 100%),
+    hsl(var(--card));
+  border: 1px solid hsl(222 47% 11% / 0.10);
+  box-shadow:
+    0 1px 0 0 hsl(0 0% 100% / 0.9) inset,
+    0 1px 2px hsl(222 47% 11% / 0.04),
+    0 8px 28px -10px hsl(222 47% 11% / 0.10);
+}
+[data-theme="platinum"] .orca-glass-hover:hover {
+  border-color: hsl(224 76% 48% / 0.45);
+  box-shadow:
+    0 1px 0 0 hsl(224 76% 60% / 0.18) inset,
+    0 1px 2px hsl(222 47% 11% / 0.06),
+    0 12px 36px -10px hsl(224 76% 48% / 0.18);
+}
+[data-theme="platinum"] .orca-grain { opacity: 0.018; mix-blend-mode: multiply; }
+[data-theme="platinum"] body::before {
+  background:
+    radial-gradient(900px 600px at 12% -10%, hsl(var(--orca-aurora-a) / 0.10), transparent 60%),
+    radial-gradient(700px 500px at 100% 110%, hsl(var(--orca-aurora-b) / 0.08), transparent 60%),
+    radial-gradient(500px 400px at 50% 50%, hsl(var(--orca-aurora-a) / 0.04), transparent 70%);
+}
+[data-theme="platinum"] .recharts-cartesian-axis-tick text,
+[data-theme="platinum"] .recharts-polar-angle-axis-tick text,
+[data-theme="platinum"] .recharts-polar-radius-axis-tick text { fill: hsl(215 20% 30%) !important; }
+[data-theme="platinum"] .recharts-cartesian-grid line,
+[data-theme="platinum"] .recharts-polar-grid line,
+[data-theme="platinum"] .recharts-polar-grid-concentric-circle { stroke: hsl(222 20% 60% / 0.25) !important; }
+[data-theme="platinum"] .recharts-default-tooltip {
+  background: #ffffff !important;
+  border: 1px solid hsl(222 47% 11% / 0.12) !important;
+  box-shadow: 0 6px 24px hsl(222 47% 11% / 0.12) !important;
+  color: hsl(222 47% 11%) !important;
+}
+[data-theme="platinum"] .recharts-tooltip-item { color: hsl(222 47% 11%) !important; }
+[data-theme="platinum"] .recharts-tooltip-label { color: hsl(215 20% 35%) !important; }
+[data-theme="platinum"] ::-webkit-scrollbar-thumb {
+  background: hsl(222 20% 60% / 0.4);
+  border-radius: 6px;
+}
+[data-theme="platinum"] ::-webkit-scrollbar-thumb:hover {
+  background: hsl(224 76% 48% / 0.5);
+}
+[data-theme="platinum"] ::selection {
+  background: hsl(224 76% 48% / 0.20);
+  color: hsl(222 47% 11%);
+}
+[data-theme="platinum"] #orca-cursor-halo {
+  background: radial-gradient(circle, hsl(224 76% 48% / 0.18), transparent 70%) !important;
+  mix-blend-mode: multiply !important;
 }

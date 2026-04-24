@@ -1,4 +1,5 @@
 import type { ThemeId } from '@/hooks/use-settings';
+// ThemeId now: 'midnight' | 'indigo' | 'platinum'
 
 export interface TradingTheme {
   id?: ThemeId;
@@ -99,49 +100,51 @@ const indigo: TradingTheme = {
 };
 
 /* ════════════════════════════════════════════════
-   3) CRIMSON ONYX — Bloomberg-style burgundy-onyx
+   3) PLATINUM — Luxurious white / soft cream
+   Pristine institutional-light, royal blue + warm gold accents.
+   Designed so all charts remain LEGIBLE on light surfaces.
    ════════════════════════════════════════════════ */
-const crimson: TradingTheme = {
-  id: 'crimson',
-  bg: { primary: '#0a0303', secondary: '#120606', tertiary: '#1a0a0a', card: '#150707', surface: '#1f0c0c' },
+const platinum: TradingTheme = {
+  id: 'platinum',
+  bg: { primary: '#f6f4ef', secondary: '#fbfaf6', tertiary: '#ffffff', card: '#ffffff', surface: '#f1ede4' },
   accent: {
-    cyan: '#ff5f70', cyanGlow: 'rgba(255,95,112,0.20)', // primary = crimson
-    teal: '#dc2626',
-    blue: '#fb923c', blueGlow: 'rgba(251,146,60,0.16)',
-    purple: '#f472b6', purpleGlow: 'rgba(244,114,182,0.16)',
-    orange: '#facc15',
-    red: '#ef4444', redGlow: 'rgba(239,68,68,0.18)',
-    green: '#22c55e', greenGlow: 'rgba(34,197,94,0.16)',
+    cyan: '#1d4ed8', cyanGlow: 'rgba(29,78,216,0.16)', // primary = royal blue
+    teal: '#0f766e',
+    blue: '#1e3a8a', blueGlow: 'rgba(30,58,138,0.14)',
+    purple: '#6d28d9', purpleGlow: 'rgba(109,40,217,0.12)',
+    orange: '#b45309',
+    red: '#b91c1c', redGlow: 'rgba(185,28,28,0.14)',
+    green: '#15803d', greenGlow: 'rgba(21,128,61,0.14)',
   },
-  text: { primary: '#fef2f2', secondary: '#d6a5a5', muted: '#9d7373', dim: '#6e4f4f' },
-  border: { subtle: 'rgba(255,95,112,0.06)', medium: 'rgba(255,95,112,0.14)', active: 'rgba(255,95,112,0.42)' },
+  text: { primary: '#0f172a', secondary: '#334155', muted: '#64748b', dim: '#94a3b8' },
+  border: { subtle: 'rgba(15,23,42,0.06)', medium: 'rgba(15,23,42,0.12)', active: 'rgba(29,78,216,0.40)' },
   radius: { sm: 6, md: 10, lg: 14, xl: 18 },
   shadow: {
-    card: '0 1px 3px rgba(0,0,0,0.55), 0 6px 22px rgba(160,40,40,0.18)',
-    elevated: '0 6px 30px rgba(0,0,0,0.6), 0 10px 40px rgba(180,40,40,0.22)',
-    glow: (c: string) => `0 0 22px ${c}, 0 0 44px ${c}`,
+    card: '0 1px 2px rgba(15,23,42,0.04), 0 4px 16px rgba(15,23,42,0.06)',
+    elevated: '0 4px 20px rgba(15,23,42,0.08), 0 12px 40px rgba(15,23,42,0.10)',
+    glow: (c: string) => `0 0 18px ${c}, 0 0 36px ${c}`,
   },
   cssVars: {
-    background: '0 60% 3%',
-    foreground: '0 90% 96%',
-    card: '0 50% 7%',
-    popover: '0 50% 7%',
-    primary: '352 100% 68%',
-    primaryFg: '0 60% 3%',
-    secondary: '0 40% 12%',
-    muted: '0 30% 14%',
-    mutedFg: '0 20% 65%',
-    accent: '352 100% 68%',
-    destructive: '0 90% 60%',
-    ring: '352 100% 68%',
-    sidebar: '0 60% 5%',
-    auroraA: '352 100% 60%',
-    auroraB: '20 100% 55%',
-    glowSpot: '352 100% 68%',
+    background: '40 30% 96%',
+    foreground: '222 47% 11%',
+    card: '0 0% 100%',
+    popover: '0 0% 100%',
+    primary: '224 76% 48%',
+    primaryFg: '0 0% 100%',
+    secondary: '40 25% 92%',
+    muted: '40 20% 90%',
+    mutedFg: '215 20% 35%',
+    accent: '224 76% 48%',
+    destructive: '0 75% 42%',
+    ring: '224 76% 48%',
+    sidebar: '40 30% 94%',
+    auroraA: '224 76% 60%',
+    auroraB: '38 80% 55%',
+    glowSpot: '224 76% 60%',
   },
 };
 
-export const themes: Record<ThemeId, TradingTheme> = { midnight, indigo, crimson };
+export const themes: Record<ThemeId, TradingTheme> = { midnight, indigo, platinum };
 
 export function getTheme(id: ThemeId): TradingTheme {
   return themes[id] || midnight;

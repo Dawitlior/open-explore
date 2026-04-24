@@ -303,12 +303,20 @@ export const OrcaUXLayer = () => {
         }}
       />
 
-      {/* 8. Live clock + market session */}
-      <div className="fixed top-2 right-3 z-[9990] hidden md:flex items-center gap-2 pointer-events-none">
-        <div className="orca-chip flex items-center gap-2 px-2.5 py-1 text-[10.5px] font-mono uppercase tracking-wider text-muted-foreground/80">
+      {/* 8. Live clock + market session — bottom-left, out of the way of header & sidebar */}
+      <div className="fixed bottom-3 left-3 z-[9985] hidden md:flex items-center gap-2 pointer-events-none print:hidden">
+        <div className="orca-chip flex items-center gap-2 px-2.5 py-1 rounded-full text-[10.5px] font-mono uppercase tracking-wider"
+             style={{
+               background: 'hsl(var(--card) / 0.7)',
+               backdropFilter: 'blur(10px)',
+               WebkitBackdropFilter: 'blur(10px)',
+               border: '1px solid hsl(var(--border, 0 0% 100% / 0.08))',
+               color: 'hsl(var(--muted-foreground))',
+               boxShadow: '0 4px 14px hsl(0 0% 0% / 0.18)',
+             }}>
           <span className="orca-live-dot" />
-          <span className="text-foreground/90">{now.toLocaleTimeString('en-GB', { hour12: false })}</span>
-          <span className="text-muted-foreground/50">·</span>
+          <span style={{ color: 'hsl(var(--foreground) / 0.9)' }}>{now.toLocaleTimeString('en-GB', { hour12: false })}</span>
+          <span className="opacity-50">·</span>
           <span style={{ color: session.color }}>{session.label}</span>
         </div>
       </div>

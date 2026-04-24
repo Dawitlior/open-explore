@@ -36,11 +36,13 @@ import { assessRisk } from '@/lib/risk-engine';
 import { generateInsights, generateSummary } from '@/lib/ai-engine';
 import { exportToXlsx, importFromXlsx } from '@/lib/xlsx-engine';
 import { getDayRiskColor, checkRiskLimits, DEFAULT_RISK_LIMITS } from '@/lib/risk-limits';
+import { useRiskLimits } from '@/hooks/use-risk-limits';
 
 const Index = () => {
   const isMobile = useIsMobile();
   const settings = useSettings();
   const { trades, stats, loading, initialized, addTrade, updateTrade, removeTrade, resetAll, importTrades, riskAlert, dismissRiskAlert } = useTrades();
+  const { limits: customRiskLimits } = useRiskLimits();
   const [entered, setEntered] = useState(() => sessionStorage.getItem('orca-entered') === '1');
   const [onboardingDone, setOnboardingDone] = useState(() => !shouldShowOnboarding());
   const [activeDimension, setActiveDimension] = useState<'orca' | 'journal' | 'backtest'>('orca');
@@ -142,6 +144,31 @@ const Index = () => {
     calDays.forEach((d, i) => { if (d && calDayPnl[d]) { wp += calDayPnl[d].pnl; wt += calDayPnl[d].trades; wd++; } if ((i + 1) % 7 === 0 || i === calDays.length - 1) { w.push({ week: wn, pnl: wp, trades: wt, days: wd }); wp = 0; wt = 0; wd = 0; wn++; } });
     return w;
   }, [calDays, calDayPnl]);
+
+  /* ── Per-displayed-month aggregates (follow calendar navigation) ── */
+  const monthStats = useMemo(() => {
+    const monthTrades = trades.filter(tr => {
+      if (!tr.date) return false;
+      const d = new Date(tr.date.replace(' ', 'T'));
+      return !isNaN(d.getTime()) && d.getMonth() === calMonth && d.getFullYear() === calYear;
+    });
+    const wins = monthTrades.filter(tr => tr.winLoss === 'Win').length;
+    const losses = monthTrades.filter(tr => tr.winLoss === 'Loss').length;
+    const totalPnl = monthTrades.reduce((s, tr) => s + tr.pnl, 0);
+    const totalR = monthTrades.reduce((s, tr) => s + tr.returnR, 0);
+    const winRate = monthTrades.length ? (wins / monthTrades.length) * 100 : 0;
+    const expectancyR = monthTrades.length ? totalR / monthTrades.length : 0;
+    // Streak within this month
+    let streak = 0; let streakType: 'Win' | 'Loss' | null = null;
+    for (let i = monthTrades.length - 1; i >= 0; i--) {
+      const t = monthTrades[i];
+      if (t.winLoss === 'Break Even') continue;
+      if (streakType === null) { streakType = t.winLoss; streak = 1; }
+      else if (t.winLoss === streakType) streak++;
+      else break;
+    }
+    return { count: monthTrades.length, wins, losses, totalPnl, totalR, winRate, expectancyR, streak, streakType };
+  }, [trades, calMonth, calYear]);
 
   const dayNames = [t.sun, t.mon, t.tue, t.wed, t.thu, t.fri, t.sat];
   const radarData = [
@@ -1091,23 +1118,27 @@ const Index = () => {
                 })}
               </div>
             </GlassCard>
-            {/* Monthly EV Badge */}
+            {/* Monthly EV Badge — follows the displayed month */}
             <div style={{ marginTop: 10, display: 'flex', gap: 10 }}>
               <GlassCard T={T} style={{ flex: 1, padding: 12, textAlign: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'center' }}>
                   <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase' }}>{t.monthlyEV}</div>
                   <span style={{ fontSize: 7, padding: '1px 3px', borderRadius: 3, background: `${T.accent.purple}15`, color: T.accent.purple, fontWeight: 700 }}>R</span>
                 </div>
-                <PV><div style={{ fontSize: 18, fontWeight: 700, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>{stats.expectancyR >= 0 ? '+' : ''}{stats.expectancyR.toFixed(3)}R</div></PV>
+                <PV><div style={{ fontSize: 18, fontWeight: 700, color: monthStats.expectancyR >= 0 ? T.accent.cyan : T.accent.red, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>{monthStats.expectancyR >= 0 ? '+' : ''}{monthStats.expectancyR.toFixed(3)}R</div></PV>
+                <div style={{ fontSize: 8, color: T.text.muted, marginTop: 2, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t.month[calMonth]} {calYear}</div>
               </GlassCard>
               <GlassCard T={T} style={{ flex: 1, padding: 12, textAlign: 'center' }}>
                 <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase' }}>{t.streak}</div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: stats.streakType === 'Win' ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>{stats.currentStreak} {stats.streakType === 'Win' ? '🟢' : '🔴'}</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: monthStats.streakType === 'Win' ? T.accent.green : monthStats.streakType === 'Loss' ? T.accent.red : T.text.muted, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>{monthStats.streak} {monthStats.streakType === 'Win' ? '🟢' : monthStats.streakType === 'Loss' ? '🔴' : '—'}</div>
+                <div style={{ fontSize: 8, color: T.text.muted, marginTop: 2, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{isRTL ? 'בחודש המוצג' : 'in displayed month'}</div>
               </GlassCard>
             </div>
           </div>
           <div style={{ flex: 1, minWidth: isMobile ? 0 : 190 }}>
-            <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>{t.weeklySummary}</div>
+            <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
+              {t.weeklySummary} <span style={{ color: T.text.dim, fontWeight: 500 }}>· {t.month[calMonth]} {calYear}</span>
+            </div>
             {weekStats.map((w, i) => (
               <GlassCard T={T} key={i} style={{ marginBottom: 7, padding: 12 }}>
                 <div style={{ fontSize: 9, color: T.text.muted, marginBottom: 4 }}>{isRTL ? `שבוע ${w.week}` : `Week ${w.week}`}</div>
@@ -1115,10 +1146,12 @@ const Index = () => {
                 <div style={{ fontSize: 9, color: T.text.muted, marginTop: 1 }}>{w.trades} {isRTL ? 'עסקאות' : 'trades'}</div>
               </GlassCard>
             ))}
-            <div style={{ marginTop: 14, fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{t.monthlyTotal}</div>
+            <div style={{ marginTop: 14, fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+              {t.monthlyTotal} <span style={{ color: T.text.dim, fontWeight: 500 }}>· {t.month[calMonth]} {calYear}</span>
+            </div>
             <GlassCard T={T} glow={T.accent.cyanGlow}>
-              <PV><div style={{ fontSize: 22, fontWeight: 700, color: stats.totalPnl >= 0 ? T.accent.cyan : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>${stats.totalPnl.toFixed(2)}</div></PV>
-              <div style={{ fontSize: 9, color: T.text.muted, marginTop: 3 }}>{stats.totalTrades} {isRTL ? 'עסקאות' : 'trades'} • {stats.winRate.toFixed(0)}% WR</div>
+              <PV><div style={{ fontSize: 22, fontWeight: 700, color: monthStats.totalPnl >= 0 ? T.accent.cyan : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>${monthStats.totalPnl.toFixed(2)}</div></PV>
+              <div style={{ fontSize: 9, color: T.text.muted, marginTop: 3 }}>{monthStats.count} {isRTL ? 'עסקאות' : 'trades'} • {monthStats.winRate.toFixed(0)}% WR</div>
             </GlassCard>
           </div>
         </div>
@@ -1159,6 +1192,8 @@ const Index = () => {
         T={T}
         isRTL={isRTL}
         isAlpha={isAlpha}
+        operatingMode={opMode}
+        customLimits={customRiskLimits}
         trades={trades}
         stats={stats}
         riskData={riskData}
@@ -1175,6 +1210,7 @@ const Index = () => {
         T={T}
         isRTL={isRTL}
         isAlpha={isAlpha}
+        operatingMode={opMode}
         trades={trades}
         stats={stats}
         onExplainClick={handleExplainClick}

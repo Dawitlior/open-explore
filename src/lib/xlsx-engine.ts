@@ -179,8 +179,8 @@ function excelSerialToDate(serial: number): Date {
 function parseFlexibleDate(value: unknown): string | null {
   if (value === null || value === undefined || value === '') return null;
 
-  // Excel serial number
-  if (typeof value === 'number' && value > 25000 && value < 100000) {
+  // Excel serial number (loosened range: any number 1..200000 covers 1900-02-04..2447)
+  if (typeof value === 'number' && value > 1 && value < 200000) {
     const d = excelSerialToDate(value);
     if (!isNaN(d.getTime())) return formatDate(d);
     return null;
@@ -195,10 +195,9 @@ function parseFlexibleDate(value: unknown): string | null {
   const str = String(value).trim();
   if (!str) return null;
 
-  // Already in YYYY-MM-DD format
-  if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
-    // Parse locally to avoid timezone shift
-    const parts = str.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{1,2}):(\d{2}))?/);
+  // Already in YYYY-MM-DD or YYYY/MM/DD format
+  if (/^\d{4}[-/]\d{1,2}[-/]\d{1,2}/.test(str)) {
+    const parts = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[T\s](\d{1,2}):(\d{2}))?/);
     if (parts) {
       const d = new Date(+parts[1], +parts[2] - 1, +parts[3], +(parts[4] || 0), +(parts[5] || 0));
       if (!isNaN(d.getTime())) return formatDate(d);
@@ -227,9 +226,12 @@ function parseFlexibleDate(value: unknown): string | null {
     }
   }
 
-  // Fallback: try native parsing but use local components
+  // Fallback: native parse — but reconstruct in LOCAL time to avoid TZ drift
   const d = new Date(str);
-  if (!isNaN(d.getTime())) return formatDate(d);
+  if (!isNaN(d.getTime())) {
+    const local = new Date(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes());
+    return formatDate(local);
+  }
 
   return null;
 }
