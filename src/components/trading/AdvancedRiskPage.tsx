@@ -556,8 +556,8 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, operatingMode = 'live', cu
         )}
       </div>
 
-      {/* ═══ RISK EXPLANATIONS LOG ═══ */}
-      {riskExplanations.length > 0 && (
+      {/* ═══ RISK EXPLANATIONS LOG — Alpha + Review/Research ═══ */}
+      {showExplanationLog && riskExplanations.length > 0 && (
         <>
           <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'יומן הסברי סיכון' : 'RISK EXPLANATION LOG'} />
           <GlassCard T={T} style={{ marginTop: 0 }}>
