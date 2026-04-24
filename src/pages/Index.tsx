@@ -1192,6 +1192,8 @@ const Index = () => {
         T={T}
         isRTL={isRTL}
         isAlpha={isAlpha}
+        operatingMode={opMode}
+        customLimits={customRiskLimits}
         trades={trades}
         stats={stats}
         riskData={riskData}
@@ -1208,6 +1210,7 @@ const Index = () => {
         T={T}
         isRTL={isRTL}
         isAlpha={isAlpha}
+        operatingMode={opMode}
         trades={trades}
         stats={stats}
         onExplainClick={handleExplainClick}
