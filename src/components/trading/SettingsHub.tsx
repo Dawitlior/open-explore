@@ -318,8 +318,123 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats }:
               </div>
             </div>
           )}
-        </div>
-      </div>
-    </div>
+
+          {tab === 'risk' && (() => {
+            const cur = pendingLimits || {
+              trade: String(Math.abs(riskCfg.limits.trade)),
+              day: String(Math.abs(riskCfg.limits.day)),
+              week: String(Math.abs(riskCfg.limits.week)),
+              month: String(Math.abs(riskCfg.limits.month)),
+            };
+            const dirty = pendingLimits !== null && (
+              parseFloat(cur.trade) !== Math.abs(riskCfg.limits.trade) ||
+              parseFloat(cur.day) !== Math.abs(riskCfg.limits.day) ||
+              parseFloat(cur.week) !== Math.abs(riskCfg.limits.week) ||
+              parseFloat(cur.month) !== Math.abs(riskCfg.limits.month)
+            );
+            const update = (k: 'trade' | 'day' | 'week' | 'month') => (e: React.ChangeEvent<HTMLInputElement>) => {
+              setPendingLimits(p => ({ ...(p || cur), [k]: e.target.value }));
+            };
+            const apply = () => {
+              const trade = parseFloat(cur.trade); const day = parseFloat(cur.day);
+              const week = parseFloat(cur.week); const month = parseFloat(cur.month);
+              if (![trade, day, week, month].every(n => isFinite(n) && n > 0)) {
+                alert(t('כל הערכים חייבים להיות מספרים חיוביים', 'All values must be positive numbers'));
+                return;
+              }
+              riskCfg.setLimits({ trade: -trade, day: -day, week: -week, month: -month });
+              setPendingLimits(null);
+            };
+            const fieldStyle: React.CSSProperties = {
+              width: '100%', padding: '10px 12px', borderRadius: T.radius.sm,
+              background: T.bg.tertiary, border: `1px solid ${T.border.subtle}`, color: T.text.primary,
+              fontSize: 14, outline: 'none', fontFamily: "'JetBrains Mono', monospace",
+              fontWeight: 700, boxSizing: 'border-box', textAlign: 'center',
+            };
+            const labelStyle: React.CSSProperties = {
+              fontSize: 10, color: T.text.muted, textTransform: 'uppercase',
+              letterSpacing: '0.08em', marginBottom: 6, fontWeight: 700,
+            };
+            const cellStyle: React.CSSProperties = {
+              padding: 14, borderRadius: T.radius.md, background: T.bg.primary,
+              border: `1px solid ${T.border.subtle}`,
+            };
+            return (
+              <div>
+                <p style={{ color: T.text.muted, fontSize: 12, marginBottom: 16, lineHeight: 1.6 }}>
+                  {t(
+                    '🛡️ הגדר את מגבלות ההפסד שלך ב־R שלילי. כשמגיעים למגבלה, האפליקציה מתריעה ומומלץ להפסיק לסחור.',
+                    '🛡️ Set your loss limits in negative R. When breached, the app alerts and recommends to stop trading.'
+                  )}
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginBottom: 14 }}>
+                  <div style={cellStyle}>
+                    <div style={labelStyle}>{t('סיכון לעסקה', 'Per-Trade Risk')}</div>
+                    <input type="number" step="0.1" min="0.1" value={cur.trade} onChange={update('trade')} style={fieldStyle} />
+                    <div style={{ fontSize: 9, color: T.text.muted, marginTop: 6, textAlign: 'center' }}>
+                      −{cur.trade}R {t('לעסקה אחת', 'per single trade')}
+                    </div>
+                  </div>
+                  <div style={cellStyle}>
+                    <div style={labelStyle}>{t('הפסד יומי מקסימלי', 'Daily Max Loss')}</div>
+                    <input type="number" step="0.1" min="0.1" value={cur.day} onChange={update('day')} style={fieldStyle} />
+                    <div style={{ fontSize: 9, color: T.text.muted, marginTop: 6, textAlign: 'center' }}>
+                      −{cur.day}R {t('ביום מסחר', 'per trading day')}
+                    </div>
+                  </div>
+                  <div style={cellStyle}>
+                    <div style={labelStyle}>{t('הפסד שבועי מקסימלי', 'Weekly Max Loss')}</div>
+                    <input type="number" step="0.5" min="0.5" value={cur.week} onChange={update('week')} style={fieldStyle} />
+                    <div style={{ fontSize: 9, color: T.text.muted, marginTop: 6, textAlign: 'center' }}>
+                      −{cur.week}R {t('בשבוע מסחר', 'per trading week')}
+                    </div>
+                  </div>
+                  <div style={cellStyle}>
+                    <div style={labelStyle}>{t('הפסד חודשי מקסימלי', 'Monthly Max Loss')}</div>
+                    <input type="number" step="0.5" min="0.5" value={cur.month} onChange={update('month')} style={fieldStyle} />
+                    <div style={{ fontSize: 9, color: T.text.muted, marginTop: 6, textAlign: 'center' }}>
+                      −{cur.month}R {t('בחודש מסחר', 'per trading month')}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{
+                  padding: 12, borderRadius: T.radius.md,
+                  background: `linear-gradient(135deg, ${T.accent.orange}10, transparent)`,
+                  border: `1px solid ${T.accent.orange}25`, marginBottom: 14, fontSize: 11,
+                  color: T.text.secondary, lineHeight: 1.6,
+                }}>
+                  <div style={{ fontWeight: 700, color: T.accent.orange, marginBottom: 4, fontSize: 11, letterSpacing: '0.05em' }}>
+                    💡 {t('המלצה', 'GUIDELINE')}
+                  </div>
+                  {t(
+                    'יום ≤ 2× סיכון לעסקה  ·  שבוע ≤ 5× סיכון לעסקה  ·  חודש ≤ 10× סיכון לעסקה',
+                    'Day ≤ 2× per-trade  ·  Week ≤ 5× per-trade  ·  Month ≤ 10× per-trade'
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={apply} disabled={!dirty} style={{
+                    flex: 1, padding: '10px 14px', borderRadius: T.radius.sm,
+                    background: dirty ? T.accent.cyan : T.bg.tertiary, border: 'none',
+                    color: dirty ? T.bg.primary : T.text.muted, cursor: dirty ? 'pointer' : 'default',
+                    fontSize: 12, fontWeight: 800,
+                  }}>
+                    {dirty ? t('שמור מגבלות', 'Save Limits') : t('נשמר ✓', 'Saved ✓')}
+                  </button>
+                  <button onClick={() => { riskCfg.reset(); setPendingLimits(null); }} style={{
+                    padding: '10px 14px', borderRadius: T.radius.sm,
+                    background: 'transparent', border: `1px solid ${T.border.medium}`,
+                    color: T.text.muted, cursor: 'pointer', fontSize: 11, fontWeight: 700,
+                  }}>
+                    ↺ {t('ברירת מחדל', 'Reset Default')}
+                  </button>
+                </div>
+                <div style={{ fontSize: 9, color: T.text.dim, marginTop: 10, textAlign: 'center', fontFamily: "'JetBrains Mono', monospace" }}>
+                  {t('ברירת מחדל:', 'Default:')} −{Math.abs(DEFAULT_RISK_LIMITS.trade)}R / −{Math.abs(DEFAULT_RISK_LIMITS.day)}R / −{Math.abs(DEFAULT_RISK_LIMITS.week)}R / −{Math.abs(DEFAULT_RISK_LIMITS.month)}R
+                </div>
+              </div>
+            );
+          })()}
   );
 }
