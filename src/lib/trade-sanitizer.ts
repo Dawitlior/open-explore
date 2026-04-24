@@ -1,6 +1,60 @@
 import type { Trade } from '@/data/trades';
 
 /**
+ * Normalize ANY date input → "YYYY-MM-DD HH:mm" string.
+ * Handles: ISO strings, "YYYY-MM-DD HH:mm", "DD/MM/YYYY", Date objects,
+ * Excel serial numbers, and timestamps. Returns null when truly unparseable.
+ */
+function normalizeDate(raw: unknown): string | null {
+  if (raw == null || raw === '') return null;
+  // Excel serial
+  if (typeof raw === 'number' && raw > 1 && raw < 200000) {
+    const epoch = new Date(1899, 11, 30);
+    const days = Math.floor(raw);
+    const fraction = raw - days;
+    const ms = days * 86400000 + Math.round(fraction * 86400000);
+    const d = new Date(epoch.getTime() + ms);
+    if (isNaN(d.getTime())) return null;
+    return fmt(d);
+  }
+  if (raw instanceof Date) return isNaN(raw.getTime()) ? null : fmt(raw);
+  const str = String(raw).trim();
+  if (!str) return null;
+  // YYYY-MM-DD or YYYY-MM-DDTHH:mm or "YYYY-MM-DD HH:mm"
+  const iso = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[T\s](\d{1,2}):(\d{2}))?/);
+  if (iso) {
+    const d = new Date(+iso[1], +iso[2] - 1, +iso[3], +(iso[4] || 0), +(iso[5] || 0));
+    return isNaN(d.getTime()) ? null : fmt(d);
+  }
+  // DD/MM/YYYY or MM/DD/YYYY
+  const dm = str.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})(?:\s+(\d{1,2}):(\d{2}))?/);
+  if (dm) {
+    const a = +dm[1], b = +dm[2]; let year = +dm[3];
+    if (year < 100) year += 2000;
+    const day = a > 12 ? a : (b > 12 ? b : a);
+    const month = a > 12 ? b : (b > 12 ? a : b);
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      const d = new Date(year, month - 1, day, +(dm[4] || 0), +(dm[5] || 0));
+      if (!isNaN(d.getTime())) return fmt(d);
+    }
+  }
+  const fb = new Date(str);
+  if (!isNaN(fb.getTime())) {
+    const local = new Date(fb.getFullYear(), fb.getMonth(), fb.getDate(), fb.getHours(), fb.getMinutes());
+    return fmt(local);
+  }
+  return null;
+}
+function fmt(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const h = String(d.getHours()).padStart(2, '0');
+  const mn = String(d.getMinutes()).padStart(2, '0');
+  return `${y}-${m}-${day} ${h}:${mn}`;
+}
+
+/**
  * Sanitize a single trade object, ensuring all required fields exist with safe defaults.
  */
 export function sanitizeTrade(t: unknown, fallbackId: number): Trade | null {
@@ -8,8 +62,8 @@ export function sanitizeTrade(t: unknown, fallbackId: number): Trade | null {
   const raw = t as Record<string, unknown>;
 
   const id = typeof raw.id === 'number' && raw.id > 0 ? raw.id : fallbackId;
-  const date = typeof raw.date === 'string' && raw.date.length > 0 ? raw.date : new Date().toISOString().slice(0, 16);
-  const day = typeof raw.day === 'string' ? raw.day : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(date).getDay()] || 'Mon';
+  const date = normalizeDate(raw.date) || new Date().toISOString().slice(0, 16).replace('T', ' ');
+  const day = typeof raw.day === 'string' ? raw.day : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(date.replace(' ', 'T')).getDay()] || 'Mon';
   const coin = typeof raw.coin === 'string' && raw.coin.length > 0 ? raw.coin : 'UNKNOWN';
   const direction: 'Long' | 'Short' = raw.direction === 'Short' ? 'Short' : 'Long';
   const orderType = typeof raw.orderType === 'string' ? raw.orderType : 'Market';
