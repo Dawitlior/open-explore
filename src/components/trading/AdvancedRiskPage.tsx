@@ -81,11 +81,25 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, operatingMode = 'live', cu
   // ─── Live risk-limit status ──────────────────────────────────────
   const limitStatus = useMemo(() => checkRiskLimits(trades, new Date(), LIMITS_USED), [trades, LIMITS_USED]);
 
-  // Mode-aware view config — Beginner sees a simplified surface; Alpha unlocks deep analytics
-  const showAdvanced = isAlpha;
-  const showAnomalies = isAlpha && (operatingMode === 'live' || operatingMode === 'review');
-  const showResearchPanels = operatingMode === 'research';
+  // ─── Composition matrix: Standard/Alpha × Beginner/Live/Review/Research ───
   const isBeginner = operatingMode === 'beginner';
+  const isLive     = operatingMode === 'live';
+  const isReview   = operatingMode === 'review';
+  const isResearch = operatingMode === 'research';
+
+  // What each mode shows on the Risk page
+  const showLimitBars      = !isBeginner || isAlpha; // Beginner Standard: hide live limit bars
+  const showKpiStrip       = true;
+  const showGaugesRow      = !isBeginner;
+  const showAnomalies      = !isBeginner && (isAlpha || isReview); // Standard+Live hides anomalies
+  const showRiskTimeline   = !isBeginner && (isAlpha || isReview || isResearch);
+  const showSetupTable     = !isBeginner;
+  const showAllocAndDD     = true; // everyone gets DD; beginner only DD
+  const showAllocChart     = !isBeginner;
+  const showAlphaEvolution = isAlpha && (isResearch || isReview || isLive);
+  const showStatusWarnings = true;
+  const showExplanationLog = isAlpha && (isReview || isResearch);
+  const showResearchDeepRisk = isAlpha && isResearch;
 
   // Risk behavior over time
   const riskTimeline = useMemo(() => {
