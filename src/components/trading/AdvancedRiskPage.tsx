@@ -284,12 +284,29 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, operatingMode = 'live', cu
           </div>
         </div>
 
-        {/* Live Risk Limit Bars */}
-        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', position: 'relative' }}>
-          <LimitBar T={T} isRTL={isRTL} label={isRTL ? 'יומי' : 'Daily'} current={limitStatus.dailyNegR} limit={DEFAULT_RISK_LIMITS.day} />
-          <LimitBar T={T} isRTL={isRTL} label={isRTL ? 'שבועי' : 'Weekly'} current={limitStatus.weeklyNegR} limit={DEFAULT_RISK_LIMITS.week} />
-          <LimitBar T={T} isRTL={isRTL} label={isRTL ? 'חודשי' : 'Monthly'} current={limitStatus.monthlyNegR} limit={DEFAULT_RISK_LIMITS.month} />
+        {/* Live Risk Limit Bars (hidden in Beginner-Standard) */}
+        {showLimitBars && (
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', position: 'relative' }}>
+            <LimitBar T={T} isRTL={isRTL} label={isRTL ? 'יומי' : 'Daily'} current={limitStatus.dailyNegR} limit={LIMITS_USED.day} />
+            <LimitBar T={T} isRTL={isRTL} label={isRTL ? 'שבועי' : 'Weekly'} current={limitStatus.weeklyNegR} limit={LIMITS_USED.week} />
+            <LimitBar T={T} isRTL={isRTL} label={isRTL ? 'חודשי' : 'Monthly'} current={limitStatus.monthlyNegR} limit={LIMITS_USED.month} />
+          </div>
+        )}
+      </div>
+
+      {/* ═══ MODE BANNER — shows current operating context ═══ */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        padding: '10px 14px', marginTop: 8, marginBottom: 4,
+        background: `linear-gradient(${isRTL ? '270deg' : '90deg'}, ${modeMeta.color}14, transparent)`,
+        border: `1px solid ${modeMeta.color}30`,
+        borderInlineStart: `3px solid ${modeMeta.color}`,
+        borderRadius: 10,
+      }}>
+        <div style={{ fontSize: 9, padding: '3px 8px', background: `${modeMeta.color}25`, color: modeMeta.color, borderRadius: 4, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.16em', fontWeight: 700 }}>
+          {(isAlpha ? (isRTL ? 'אלפא · ' : 'ALPHA · ') : (isRTL ? 'סטנדרט · ' : 'STANDARD · ')) + (isRTL ? modeMeta.he : modeMeta.en).toUpperCase()}
         </div>
+        <div style={{ fontSize: 11, color: T.text.secondary, flex: 1 }}>{isRTL ? modeMeta.sub.he : modeMeta.sub.en}</div>
       </div>
 
       {/* ═══════════════════════════════════════════════════════════
