@@ -335,8 +335,9 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, operatingMode = 'live', cu
       </div>
 
       {/* ═══════════════════════════════════════════════════════════
-          GAUGES & GUARDRAILS
+          GAUGES & GUARDRAILS — hidden in Beginner
           ═══════════════════════════════════════════════════════════ */}
+      {showGaugesRow && (<>
       <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'מדים ומגבלות' : 'GAUGES & GUARDRAILS'} />
       <div style={{ display: 'flex', gap: 12, marginBottom: 4, flexWrap: 'wrap' }}>
         <GlassCard T={T} glow={riskLevel === 'warning' ? 'rgba(245,158,11,0.12)' : T.accent.greenGlow} style={{ flex: 1, minWidth: 220, textAlign: 'center' }}>
