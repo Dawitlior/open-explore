@@ -1,4 +1,5 @@
 import type { ThemeId } from '@/hooks/use-settings';
+// ThemeId now: 'midnight' | 'indigo' | 'platinum'
 
 export interface TradingTheme {
   id?: ThemeId;
