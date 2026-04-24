@@ -479,6 +479,7 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, operatingMode = 'live', cu
       {/* ═══ RISK ALLOCATION + DRAWDOWN — Beginner sees DD only ═══ */}
       <SectionHeader T={T} isRTL={isRTL} label={isBeginner ? (isRTL ? 'נסיגה' : 'DRAWDOWN') : (isRTL ? 'הקצאה ונסיגה' : 'ALLOCATION & DRAWDOWN')} />
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 4 }}>
+        {showAllocChart && (
         <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'הקצאת סיכון' : 'Risk Allocation'} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ flex: 1, minWidth: 280 }}>
           <LazyChart height={190}>
             <ResponsiveContainer width="100%" height={190}>
@@ -492,6 +493,7 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, operatingMode = 'live', cu
             </ResponsiveContainer>
           </LazyChart>
         </ChartWrapper>
+        )}
         <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'ניתוח נסיגה' : 'Drawdown Analysis'} explanation={EXPLANATIONS.drawdown} unit="%" style={{ flex: 1, minWidth: 280 }}>
           <LazyChart height={190}>
             <ResponsiveContainer width="100%" height={190}>
