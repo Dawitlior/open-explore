@@ -36,6 +36,7 @@ import { assessRisk } from '@/lib/risk-engine';
 import { generateInsights, generateSummary } from '@/lib/ai-engine';
 import { exportToXlsx, importFromXlsx } from '@/lib/xlsx-engine';
 import { getDayRiskColor, checkRiskLimits, DEFAULT_RISK_LIMITS } from '@/lib/risk-limits';
+import { useRiskLimits } from '@/hooks/use-risk-limits';
 
 const Index = () => {
   const isMobile = useIsMobile();
