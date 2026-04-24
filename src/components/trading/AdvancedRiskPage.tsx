@@ -369,9 +369,10 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, operatingMode = 'live', cu
           ))}
         </GlassCard>
       </div>
+      </>)}
 
       {/* ═══ RISK ANOMALIES ═══ */}
-      {anomalies.length > 0 && (
+      {showAnomalies && anomalies.length > 0 && (
         <>
           <SectionHeader T={T} isRTL={isRTL} accent={T.accent.red} label={isRTL ? 'חריגות סיכון שזוהו' : 'RISK ANOMALIES DETECTED'} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 4 }}>
