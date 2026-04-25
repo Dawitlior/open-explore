@@ -3344,11 +3344,29 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
 // ═══════════════════════════════════════════════════════════════
 // EOD FORM
 // ═══════════════════════════════════════════════════════════════
-const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk, onInfoClick }: any) => {
+const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk, onInfoClick, onAddOrcaTrade }: any) => {
   const f = t.f;
   const U = (k: string) => (v: any) => upd({ [k]: v });
   const dp = sumPnl(day), dw = numWins(day);
-  const addTrade = () => upd({ trades: [...(day.trades || []), { id: Date.now(), pair: '', side: 'LONG', entry: '', exit: '', size: '', pnl: '', rr: '', notes: '' }] });
+  const addTrade = () => {
+    const newJTrade = { id: Date.now(), pair: '', side: 'LONG', entry: '', exit: '', size: '', pnl: '', rr: '', notes: '' };
+    upd({ trades: [...(day.trades || []), newJTrade] });
+    // Mirror to Orca: create a corresponding Orca trade so it shows up in
+    // dashboard, calendar, analytics, risk and psychology pages.
+    if (typeof onAddOrcaTrade === 'function') {
+      try {
+        const dateStr = (day.date || new Date().toISOString().slice(0, 10)) + ' 00:00';
+        const dayLabel = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date((day.date || '').replace(' ', 'T')).getDay()] || 'Mon';
+        onAddOrcaTrade({
+          date: dateStr, day: dayLabel, coin: 'JOURNAL', direction: 'Long',
+          orderType: 'Market', entry: 0, stopLoss: 0, exit: 0, returnR: 0,
+          winLoss: 'Break Even', risk: 0, expectedLoss: 0, pnl: 0, deviation: 0,
+          positionSize: 0, leverage: 1, riskPct: 0, rules: true,
+          comments: dir === 'rtl' ? 'נוסף מהיומן האישי · יש לעדכן פרטים' : 'Added from personal Journal · please fill details',
+        });
+      } catch { /* silent */ }
+    }
+  };
   const fullLocked = isDayFullyLocked(day);
   const sLocks = day.sectionLocks || {};
   const lockSec = (k: string) => upd({ sectionLocks: { ...sLocks, [k]: true } });
@@ -3732,9 +3750,11 @@ interface JournalDimensionProps {
   onReturn: () => void;
   isRTL: boolean;
   orcaTrades: Trade[];
+  /** Optional bridge: when set, every new Journal trade also creates an Orca trade. */
+  onAddOrcaTrade?: (trade: Omit<Trade, 'id' | 'balance'>) => Promise<unknown> | void;
 }
 
-export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensionProps) => {
+export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade }: JournalDimensionProps) => {
   const [lang, setLang] = useState(isRTL ? 'he' : 'en');
   const [days, setDays] = useState<JournalDay[]>(() => {
     const d = makeDay(isRTL ? 'he' : 'en'); d.dayNum = '1'; d.weekNum = '1';
@@ -3899,16 +3919,35 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
       const newDays: JournalDay[] = missing.map(dateStr => {
         const d = makeDay(curLang);
         d.date = dateStr;
-        // Auto-mark as fully archived so it appears in archive list
-        // without requiring morning/EOD entry. User can still unlock & edit.
         d.morningSaved = true;
         d.eodSaved = true;
         d.autoSynced = true;
+        // Build a dynamic context summary describing the imported day.
+        const dayTrades = orcaTrades.filter(tr => {
+          try { return safeDateStr(tr.date as any) === dateStr; } catch { return false; }
+        });
+        const total = dayTrades.length;
+        const wins = dayTrades.filter(tr => (tr as any).winLoss === 'Win').length;
+        const losses = dayTrades.filter(tr => (tr as any).winLoss === 'Loss').length;
+        const wr = total ? (wins / total) * 100 : 0;
+        const totalPnl = dayTrades.reduce((s, tr) => s + ((tr as any).pnl || 0), 0);
+        const totalR = dayTrades.reduce((s, tr) => s + ((tr as any).returnR || 0), 0);
+        const ev = total ? totalR / total : 0;
+        const verdict = totalPnl > 0 ? (curLang === 'he' ? 'יום חיובי' : 'profitable day')
+                      : totalPnl < 0 ? (curLang === 'he' ? 'יום שלילי' : 'losing day')
+                      : (curLang === 'he' ? 'יום ניטרלי' : 'flat day');
+        const tone = ev >= 0.3 ? (curLang === 'he' ? 'תוחלת מצוינת' : 'excellent expectancy')
+                   : ev >= 0   ? (curLang === 'he' ? 'תוחלת חיובית' : 'positive expectancy')
+                                : (curLang === 'he' ? 'תוחלת שלילית' : 'negative expectancy');
+        const ctx = curLang === 'he'
+          ? `נוסף אוטומטית מייבוא נתונים (${total} עסקאות). ${verdict}: ${totalPnl >= 0 ? '+' : ''}$${totalPnl.toFixed(2)} · ${wins}W/${losses}L · אחוז ניצחון ${wr.toFixed(0)}% · ${tone} (${ev >= 0 ? '+' : ''}${ev.toFixed(2)}R לעסקה).`
+          : `Auto-imported from external data (${total} trades). ${verdict}: ${totalPnl >= 0 ? '+' : ''}$${totalPnl.toFixed(2)} · ${wins}W/${losses}L · ${wr.toFixed(0)}% win-rate · ${tone} (${ev >= 0 ? '+' : ''}${ev.toFixed(2)}R/trade).`;
+        d.closing = ctx;
+        d.wins = wins > 0 && totalPnl > 0 ? (curLang === 'he' ? `ניצחתי ${wins} עסקאות, P&L חיובי` : `Won ${wins} trades, positive P&L`) : '';
+        d.lessons = totalPnl < 0 ? (curLang === 'he' ? 'יש לבחון את העסקאות המפסידות וזיהוי דפוסים' : 'Review losing trades — look for repeating patterns') : '';
         return d;
       });
-      // Merge + sort chronologically by date
       const merged = [...prev, ...newDays].sort((a, b) => safeDateStr(a.date).localeCompare(safeDateStr(b.date)));
-      // Renumber day/week sequentially
       merged.forEach((d, i) => {
         d.dayNum = String(i + 1);
         d.weekNum = String(Math.floor(i / 5) + 1);
@@ -4292,7 +4331,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades }: JournalDimensi
               ) : (
                 !displayDay.morningSaved
                   ? <MorningForm day={displayDay} upd={upd} t={t} dir={dir} onSave={saveMorning} dirty={mDirty} th={th} onInfoClick={() => setKnowledgePanel('morning')} />
-                  : <EodForm day={displayDay} upd={upd} t={t} dir={dir} onSave={saveEOD} dirty={eDirty} orcaTrades={tradesForDate(displayDay.date)} th={th} risk={riskStatus} onInfoClick={() => setKnowledgePanel('eod')} />
+                  : <EodForm day={displayDay} upd={upd} t={t} dir={dir} onSave={saveEOD} dirty={eDirty} orcaTrades={tradesForDate(displayDay.date)} th={th} risk={riskStatus} onInfoClick={() => setKnowledgePanel('eod')} onAddOrcaTrade={onAddOrcaTrade} />
               )}
             </div>
           )}
