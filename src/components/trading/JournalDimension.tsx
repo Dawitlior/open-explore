@@ -3919,16 +3919,35 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade }
       const newDays: JournalDay[] = missing.map(dateStr => {
         const d = makeDay(curLang);
         d.date = dateStr;
-        // Auto-mark as fully archived so it appears in archive list
-        // without requiring morning/EOD entry. User can still unlock & edit.
         d.morningSaved = true;
         d.eodSaved = true;
         d.autoSynced = true;
+        // Build a dynamic context summary describing the imported day.
+        const dayTrades = orcaTrades.filter(tr => {
+          try { return safeDateStr(tr.date as any) === dateStr; } catch { return false; }
+        });
+        const total = dayTrades.length;
+        const wins = dayTrades.filter(tr => (tr as any).winLoss === 'Win').length;
+        const losses = dayTrades.filter(tr => (tr as any).winLoss === 'Loss').length;
+        const wr = total ? (wins / total) * 100 : 0;
+        const totalPnl = dayTrades.reduce((s, tr) => s + ((tr as any).pnl || 0), 0);
+        const totalR = dayTrades.reduce((s, tr) => s + ((tr as any).returnR || 0), 0);
+        const ev = total ? totalR / total : 0;
+        const verdict = totalPnl > 0 ? (curLang === 'he' ? 'יום חיובי' : 'profitable day')
+                      : totalPnl < 0 ? (curLang === 'he' ? 'יום שלילי' : 'losing day')
+                      : (curLang === 'he' ? 'יום ניטרלי' : 'flat day');
+        const tone = ev >= 0.3 ? (curLang === 'he' ? 'תוחלת מצוינת' : 'excellent expectancy')
+                   : ev >= 0   ? (curLang === 'he' ? 'תוחלת חיובית' : 'positive expectancy')
+                                : (curLang === 'he' ? 'תוחלת שלילית' : 'negative expectancy');
+        const ctx = curLang === 'he'
+          ? `נוסף אוטומטית מייבוא נתונים (${total} עסקאות). ${verdict}: ${totalPnl >= 0 ? '+' : ''}$${totalPnl.toFixed(2)} · ${wins}W/${losses}L · אחוז ניצחון ${wr.toFixed(0)}% · ${tone} (${ev >= 0 ? '+' : ''}${ev.toFixed(2)}R לעסקה).`
+          : `Auto-imported from external data (${total} trades). ${verdict}: ${totalPnl >= 0 ? '+' : ''}$${totalPnl.toFixed(2)} · ${wins}W/${losses}L · ${wr.toFixed(0)}% win-rate · ${tone} (${ev >= 0 ? '+' : ''}${ev.toFixed(2)}R/trade).`;
+        d.closing = ctx;
+        d.wins = wins > 0 && totalPnl > 0 ? (curLang === 'he' ? `ניצחתי ${wins} עסקאות, P&L חיובי` : `Won ${wins} trades, positive P&L`) : '';
+        d.lessons = totalPnl < 0 ? (curLang === 'he' ? 'יש לבחון את העסקאות המפסידות וזיהוי דפוסים' : 'Review losing trades — look for repeating patterns') : '';
         return d;
       });
-      // Merge + sort chronologically by date
       const merged = [...prev, ...newDays].sort((a, b) => safeDateStr(a.date).localeCompare(safeDateStr(b.date)));
-      // Renumber day/week sequentially
       merged.forEach((d, i) => {
         d.dayNum = String(i + 1);
         d.weekNum = String(Math.floor(i / 5) + 1);
