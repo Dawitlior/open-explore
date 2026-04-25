@@ -303,21 +303,21 @@ export const OrcaUXLayer = () => {
         }}
       />
 
-      {/* 8. Live clock + market session — bottom-left, out of the way of header & sidebar */}
-      <div className="fixed bottom-3 left-3 z-[9985] hidden md:flex items-center gap-2 pointer-events-none print:hidden">
-        <div className="orca-chip flex items-center gap-2 px-2.5 py-1 rounded-full text-[10.5px] font-mono uppercase tracking-wider"
+      {/* 8. Live clock + market session — fixed top, centered, above main nav */}
+      <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9986] hidden md:flex items-center gap-2 pointer-events-none print:hidden">
+        <div className="orca-chip flex items-center gap-2 px-3 py-1 rounded-full text-[10.5px] font-mono uppercase tracking-wider"
              style={{
-               background: 'hsl(var(--card) / 0.7)',
-               backdropFilter: 'blur(10px)',
-               WebkitBackdropFilter: 'blur(10px)',
+               background: 'hsl(var(--card) / 0.78)',
+               backdropFilter: 'blur(14px)',
+               WebkitBackdropFilter: 'blur(14px)',
                border: '1px solid hsl(var(--border, 0 0% 100% / 0.08))',
                color: 'hsl(var(--muted-foreground))',
-               boxShadow: '0 4px 14px hsl(0 0% 0% / 0.18)',
+               boxShadow: '0 6px 20px hsl(0 0% 0% / 0.22)',
              }}>
           <span className="orca-live-dot" />
-          <span style={{ color: 'hsl(var(--foreground) / 0.9)' }}>{now.toLocaleTimeString('en-GB', { hour12: false })}</span>
+          <span style={{ color: 'hsl(var(--foreground) / 0.92)', fontWeight: 600 }}>{now.toLocaleTimeString('en-GB', { hour12: false })}</span>
           <span className="opacity-50">·</span>
-          <span style={{ color: session.color }}>{session.label}</span>
+          <span style={{ color: session.color, fontWeight: 700 }}>{session.label}</span>
         </div>
       </div>
 
