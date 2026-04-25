@@ -26,13 +26,15 @@ function normalizeDate(raw: unknown): string | null {
     const d = new Date(+iso[1], +iso[2] - 1, +iso[3], +(iso[4] || 0), +(iso[5] || 0));
     return isNaN(d.getTime()) ? null : fmt(d);
   }
-  // DD/MM/YYYY or MM/DD/YYYY
-  const dm = str.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})(?:\s+(\d{1,2}):(\d{2}))?/);
+  // DD/MM/YYYY (Israeli) — strict default; falls back to MM/DD only when DD/MM is impossible
+  const dm = str.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})(?:[\sT](\d{1,2}):(\d{2}))?/);
   if (dm) {
     const a = +dm[1], b = +dm[2]; let year = +dm[3];
     if (year < 100) year += 2000;
-    const day = a > 12 ? a : (b > 12 ? b : a);
-    const month = a > 12 ? b : (b > 12 ? a : b);
+    let day: number, month: number;
+    if (a >= 1 && a <= 31 && b >= 1 && b <= 12) { day = a; month = b; }
+    else if (a >= 1 && a <= 12 && b >= 1 && b <= 31) { month = a; day = b; }
+    else { day = a; month = b; }
     if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
       const d = new Date(year, month - 1, day, +(dm[4] || 0), +(dm[5] || 0));
       if (!isNaN(d.getTime())) return fmt(d);
