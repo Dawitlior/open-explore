@@ -19,7 +19,7 @@ export const LiquidSweep = () => {
       if (!detail) return;
 
       const labels: Record<string, string> = {
-        midnight: 'MIDNIGHT', indigo: 'INDIGO  NOIR', crimson: 'CRIMSON  ONYX',
+        midnight: 'MIDNIGHT', indigo: 'INDIGO  NOIR', platinum: 'PLATINUM  WHITE',
         standard: 'STANDARD', alpha: 'ALPHA  MODE',
         beginner: 'BEGINNER', live: 'LIVE  MODE', review: 'REVIEW', research: 'RESEARCH  LAB',
       };
