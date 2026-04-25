@@ -3344,11 +3344,29 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
 // ═══════════════════════════════════════════════════════════════
 // EOD FORM
 // ═══════════════════════════════════════════════════════════════
-const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk, onInfoClick }: any) => {
+const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk, onInfoClick, onAddOrcaTrade }: any) => {
   const f = t.f;
   const U = (k: string) => (v: any) => upd({ [k]: v });
   const dp = sumPnl(day), dw = numWins(day);
-  const addTrade = () => upd({ trades: [...(day.trades || []), { id: Date.now(), pair: '', side: 'LONG', entry: '', exit: '', size: '', pnl: '', rr: '', notes: '' }] });
+  const addTrade = () => {
+    const newJTrade = { id: Date.now(), pair: '', side: 'LONG', entry: '', exit: '', size: '', pnl: '', rr: '', notes: '' };
+    upd({ trades: [...(day.trades || []), newJTrade] });
+    // Mirror to Orca: create a corresponding Orca trade so it shows up in
+    // dashboard, calendar, analytics, risk and psychology pages.
+    if (typeof onAddOrcaTrade === 'function') {
+      try {
+        const dateStr = (day.date || new Date().toISOString().slice(0, 10)) + ' 00:00';
+        const dayLabel = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date((day.date || '').replace(' ', 'T')).getDay()] || 'Mon';
+        onAddOrcaTrade({
+          date: dateStr, day: dayLabel, coin: 'JOURNAL', direction: 'Long',
+          orderType: 'Market', entry: 0, stopLoss: 0, exit: 0, returnR: 0,
+          winLoss: 'Break Even', risk: 0, expectedLoss: 0, pnl: 0, deviation: 0,
+          positionSize: 0, leverage: 1, riskPct: 0, rules: true,
+          comments: dir === 'rtl' ? 'נוסף מהיומן האישי · יש לעדכן פרטים' : 'Added from personal Journal · please fill details',
+        });
+      } catch { /* silent */ }
+    }
+  };
   const fullLocked = isDayFullyLocked(day);
   const sLocks = day.sectionLocks || {};
   const lockSec = (k: string) => upd({ sectionLocks: { ...sLocks, [k]: true } });
