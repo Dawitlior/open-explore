@@ -1558,40 +1558,97 @@ const Index = () => {
       {showRiskExplanation && <RiskExplanationModal T={T} isRTL={isRTL} tradeId={showRiskExplanation.tradeId} riskChange={showRiskExplanation.riskChange} onSave={handleSaveRiskExplanation} onClose={() => setShowRiskExplanation(null)} />}
       {showFeatureModal && <FeatureManifestModal T={T} isRTL={isRTL} onClose={() => setShowFeatureModal(false)} />}
       <CommandPalette T={T} commands={commands} isOpen={showCmdPalette} onClose={() => setShowCmdPalette(false)} />
-      {/* Import Warning Modal */}
+      {/* Import Warning Modal — with format guide + template link */}
       {showImportWarning && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(6px)', animation: 'fadeIn 0.2s ease' }} onClick={() => setShowImportWarning(false)}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.72)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)', animation: 'fadeIn 0.2s ease' }} onClick={() => setShowImportWarning(false)}>
           <div onClick={e => e.stopPropagation()} style={{
             background: `linear-gradient(165deg, ${T.bg.card} 0%, ${T.bg.secondary} 100%)`,
             border: `1px solid ${T.border.medium}`, borderRadius: T.radius.xl,
-            padding: 28, maxWidth: 460, width: '90%',
-            boxShadow: T.shadow.elevated, animation: 'scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
+            padding: 26, maxWidth: 520, width: '92%',
+            boxShadow: T.shadow.elevated, animation: 'scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+            maxHeight: '90vh', overflowY: 'auto', direction: isRTL ? 'rtl' : 'ltr',
           }}>
-            <div style={{ fontSize: 28, textAlign: 'center', marginBottom: 12 }}>📥</div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: T.text.primary, textAlign: 'center', marginBottom: 12 }}>
-              {isRTL ? 'ייבוא נתונים' : 'Import Trading Data'}
+            <div style={{ fontSize: 32, textAlign: 'center', marginBottom: 8 }}>📥</div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: T.text.primary, textAlign: 'center', marginBottom: 4, letterSpacing: '0.3px' }}>
+              {isRTL ? 'ייבוא נתוני מסחר' : 'Import Trading Data'}
             </div>
-            <div style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.7, marginBottom: 8, textAlign: isRTL ? 'right' : 'left' }}>
+            <div style={{ fontSize: 11, color: T.text.muted, textAlign: 'center', marginBottom: 18, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              {isRTL ? 'XLSX · XLS · JSON' : 'XLSX · XLS · JSON'}
+            </div>
+
+            {/* Template link banner */}
+            <a href="https://docs.google.com/spreadsheets/d/1zI12IMRFsBRaZaxS-51CIYsg9vezB1K7U2enIzAaops/copy"
+               target="_blank" rel="noopener noreferrer"
+               style={{
+                 display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px',
+                 background: `linear-gradient(135deg, ${T.accent.cyan}18, ${T.accent.teal}10)`,
+                 border: `1px solid ${T.accent.cyan}40`,
+                 borderRadius: T.radius.md, marginBottom: 16, textDecoration: 'none',
+                 transition: 'transform .15s, box-shadow .15s',
+               }}
+               onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = `0 6px 18px ${T.accent.cyan}30`; }}
+               onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; }}>
+              <span style={{ fontSize: 22 }}>📋</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: T.accent.cyan, marginBottom: 2 }}>
+                  {isRTL ? 'הורד תבנית רשמית' : 'Get the Official Template'}
+                </div>
+                <div style={{ fontSize: 10, color: T.text.secondary, lineHeight: 1.4 }}>
+                  {isRTL ? 'פתח עותק ב-Google Sheets · מלא עסקאות · ייצא ל-XLSX' : 'Open in Google Sheets · fill trades · export as XLSX'}
+                </div>
+              </div>
+              <span style={{ fontSize: 16, color: T.accent.cyan }}>↗</span>
+            </a>
+
+            {/* Format guide */}
+            <div style={{ background: T.bg.tertiary, border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.md, padding: '12px 14px', marginBottom: 14 }}>
+              <div style={{ fontSize: 10, fontWeight: 800, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
+                {isRTL ? '📐 פורמט תאריך נדרש' : '📐 Required Date Format'}
+              </div>
+              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, color: T.accent.cyan, fontWeight: 700, padding: '6px 10px', background: T.bg.primary, borderRadius: 6, display: 'inline-block', marginBottom: 8 }}>
+                DD/MM/YYYY HH:mm
+              </div>
+              <div style={{ fontSize: 11, color: T.text.secondary, lineHeight: 1.5 }}>
+                {isRTL ? 'דוגמה: ' : 'Example: '}
+                <code style={{ color: T.accent.green, fontFamily: "'IBM Plex Mono', monospace" }}>27/02/2026 13:34</code>
+                {isRTL ? ' (יום/חודש/שנה שעה:דקה — בפורמט ישראלי)' : ' (day/month/year hour:min — Israeli format)'}
+              </div>
+            </div>
+
+            {/* Required columns */}
+            <div style={{ background: T.bg.tertiary, border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.md, padding: '12px 14px', marginBottom: 14 }}>
+              <div style={{ fontSize: 10, fontWeight: 800, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
+                {isRTL ? '📑 עמודות נדרשות (אנגלית או עברית)' : '📑 Required Columns (English or Hebrew)'}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 10px', fontSize: 11, color: T.text.secondary }}>
+                {[
+                  ['Entry Date', 'תאריך כניסה'],
+                  ['Coin / Symbol', 'מטבע'],
+                  ['Direction', 'כיוון'],
+                  ['Entry / SL / Exit', 'כניסה / סטופ / יציאה'],
+                  ['R+/-', 'תוצאה ב-R'],
+                  ['P&L', 'רווח/הפסד'],
+                ].map(([en, he], i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ color: T.accent.cyan, fontSize: 9 }}>●</span>
+                    <span>{isRTL ? he : en}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ fontSize: 10, color: T.text.muted, lineHeight: 1.6, marginBottom: 18, textAlign: 'center' }}>
               {isRTL
-                ? 'ייבוא נתוני מסחר חיצוניים עלול לגרום לאי-עקביות זמנית בתצוגה בזמן שהמערכת מעבדת את הקובץ.'
-                : 'Importing external trading data may occasionally cause temporary display inconsistencies while the system processes the file.'}
+                ? 'המערכת מזהה אוטומטית את עמודות הקובץ. אם משהו חסר — היא תשלים בערכי ברירת מחדל.'
+                : 'Auto-detects all columns. Missing values fall back to safe defaults.'}
             </div>
-            <div style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.7, marginBottom: 8, textAlign: isRTL ? 'right' : 'left' }}>
-              {isRTL
-                ? 'במקרים מסוימים, גרפים או נתונים סטטיסטיים עשויים להתעדכן תוך מספר שניות.'
-                : 'In some cases, charts or statistics may take a few seconds to update.'}
-            </div>
-            <div style={{ fontSize: 11, color: T.text.muted, lineHeight: 1.6, marginBottom: 20, textAlign: isRTL ? 'right' : 'left' }}>
-              {isRTL
-                ? 'אנו מתנצלים על כל אי-נוחות זמנית. אנא המתן לסיום הסנכרון.'
-                : 'We apologize for any temporary inconvenience. Please wait for synchronization to complete.'}
-            </div>
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-              <button onClick={() => setShowImportWarning(false)} style={{ padding: '8px 20px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, cursor: 'pointer', fontSize: 12 }}>
+
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowImportWarning(false)} style={{ padding: '9px 18px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
                 {isRTL ? 'ביטול' : 'Cancel'}
               </button>
-              <button onClick={handleImportConfirmed} style={{ padding: '8px 20px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 700, cursor: 'pointer', fontSize: 12 }}>
-                {isRTL ? 'המשך בייבוא' : 'Continue Import'}
+              <button onClick={handleImportConfirmed} style={{ padding: '9px 22px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 800, cursor: 'pointer', fontSize: 12, letterSpacing: '0.3px', boxShadow: `0 4px 14px ${T.accent.cyan}40` }}>
+                {isRTL ? '📂 בחר קובץ' : '📂 Choose File'}
               </button>
             </div>
           </div>
