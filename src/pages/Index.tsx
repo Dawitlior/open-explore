@@ -1359,9 +1359,9 @@ const Index = () => {
                 </button>
                 {showThemeMenu && (
                   <div style={{ position: 'absolute', bottom: '100%', left: 0, right: 0, background: T.bg.card, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, padding: 6, marginBottom: 4, zIndex: 20, boxShadow: T.shadow.elevated }}>
-                    {(['midnight','indigo','crimson'] as ThemeId[]).map(th => (
+                    {(['midnight','indigo','platinum'] as ThemeId[]).map(th => (
                       <button key={th} onClick={() => { settings.setTheme(th); setShowThemeMenu(false); }} style={{ display: 'block', width: '100%', padding: '6px 10px', fontSize: 11, fontWeight: settings.theme === th ? 700 : 400, color: settings.theme === th ? T.accent.cyan : T.text.secondary, background: settings.theme === th ? `${T.accent.cyan}10` : 'transparent', border: 'none', borderRadius: T.radius.sm, cursor: 'pointer', textAlign: isRTL ? 'right' : 'left' }}>
-                        {th === 'midnight' ? (isRTL ? 'חצות' : 'Midnight') : th === 'indigo' ? (isRTL ? 'אינדיגו ליל' : 'Indigo Noir') : (isRTL ? 'אוניקס ארגמן' : 'Crimson Onyx')}
+                        {th === 'midnight' ? (isRTL ? '🌙 חצות' : '🌙 Midnight') : th === 'indigo' ? (isRTL ? '🌌 אינדיגו ליל' : '🌌 Indigo Noir') : (isRTL ? '🤍 לבן יוקרתי' : '🤍 Platinum White')}
                       </button>
                     ))}
                   </div>
