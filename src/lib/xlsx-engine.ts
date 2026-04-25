@@ -205,8 +205,9 @@ function parseFlexibleDate(value: unknown): string | null {
     return null;
   }
 
-  // DD/MM/YYYY HH:MM or MM/DD/YYYY HH:MM (with /, -, or . separators)
-  const match = str.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  // Israeli/European format: DD/MM/YYYY HH:MM (preferred — also accepts -, .)
+  // Example: "27/02/2026 13:34" → 2026-02-27 13:34
+  const match = str.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})(?:[\sT](\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
   if (match) {
     const a = parseInt(match[1], 10);
     const b = parseInt(match[2], 10);
@@ -215,10 +216,18 @@ function parseFlexibleDate(value: unknown): string | null {
     const hour = match[4] ? parseInt(match[4], 10) : 0;
     const min = match[5] ? parseInt(match[5], 10) : 0;
 
+    // STRICT DD/MM/YYYY (Israeli convention) — only fall back to MM/DD if first
+    // number is impossible as a day AND second is impossible as a month.
     let day: number, month: number;
-    if (a > 12) { day = a; month = b; }
-    else if (b > 12) { month = a; day = b; }
-    else { day = a; month = b; } // Default DD/MM/YYYY
+    if (a >= 1 && a <= 31 && b >= 1 && b <= 12) {
+      // Prefer DD/MM (the Israeli way the user explicitly requested)
+      day = a; month = b;
+    } else if (a >= 1 && a <= 12 && b >= 1 && b <= 31) {
+      // Fallback only when DD/MM is invalid
+      month = a; day = b;
+    } else {
+      day = a; month = b;
+    }
 
     if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
       const d = new Date(year, month - 1, day, hour, min);
