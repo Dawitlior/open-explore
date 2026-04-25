@@ -1275,7 +1275,7 @@ const Index = () => {
       <DimensionController
         activeDimension="journal"
         orcaUI={<div />}
-        journalUI={<JournalDimension onReturn={() => setActiveDimension('orca')} isRTL={isRTL} orcaTrades={trades} />}
+        journalUI={<JournalDimension onReturn={() => setActiveDimension('orca')} isRTL={isRTL} orcaTrades={trades} onAddOrcaTrade={addTrade} />}
       />
     );
   }
