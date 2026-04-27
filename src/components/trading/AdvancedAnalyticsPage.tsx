@@ -1,11 +1,34 @@
-import { useMemo } from 'react';
-import { AreaChart, Area, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ComposedChart } from 'recharts';
+/**
+ * 📊 ADVANCED ANALYTICS PAGE — "The Mission Control"
+ * ────────────────────────────────────────────────────────────────
+ * Premium Hebrew-only analytics deck. Designed as the visual flagship
+ * alongside the AI Mainframe, with a different identity:
+ *
+ *   • Hero KPI grid (8 ultra-dense tiles)
+ *   • Equity vs Drawdown overlay (composed)
+ *   • R-multiple distribution heatmap
+ *   • Monthly heat tiles (calendar feel)
+ *   • Day-of-week × Hour matrix
+ *   • Setup leaderboard (sortable)
+ *   • Risk-vs-reward scatter
+ *   • Streak ladder
+ *   • Edge decay sparkline
+ *   • Direction split radial
+ *
+ * 100% Hebrew copy. Heebo font. RTL.
+ */
+
+import { useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
+import {
+  AreaChart, Area, BarChart, Bar, LineChart, Line, ScatterChart, Scatter,
+  XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  Cell, ComposedChart, RadialBarChart, RadialBar, PolarAngleAxis,
+} from 'recharts';
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { TradingStats } from '@/lib/trading-analytics';
-import { GlassCard, MetricCard, TradingBadge } from './TradingUI';
-import { ChartWrapper, EXPLANATIONS } from './ChartWrapper';
-import { LazyChart } from './LazyChart';
+import { GlassCard } from './TradingUI';
 import type { ChartExplanation } from './ChartWrapper';
 
 interface AdvancedAnalyticsPageProps {
@@ -18,241 +41,444 @@ interface AdvancedAnalyticsPageProps {
   onExplainClick: (title: string, explanation: ChartExplanation, chartId?: string) => void;
 }
 
-export const AdvancedAnalyticsPage = ({ T, isRTL, isAlpha, trades, stats, privacyMode, onExplainClick }: AdvancedAnalyticsPageProps) => {
-  const tt = { background: T.bg.card, border: `1px solid ${T.border.medium}`, borderRadius: 10, color: T.text.primary, fontSize: 12, boxShadow: T.shadow.elevated, padding: '8px 12px' };
+const HEB_DOW = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
+const HEB_DOW_FULL = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 
-  // Streak analysis
-  const streaks = useMemo(() => {
-    const result: Array<{ type: 'Win' | 'Loss'; length: number; totalR: number; totalPnl: number; startId: number; endId: number }> = [];
-    let current: typeof result[0] | null = null;
-    trades.forEach(t => {
-      const type = t.winLoss === 'Win' ? 'Win' : 'Loss';
-      if (t.winLoss === 'Break Even') return;
-      if (current && current.type === type) {
-        current.length++;
-        current.totalR += t.returnR;
-        current.totalPnl += t.pnl;
-        current.endId = t.id;
-      } else {
-        if (current) result.push(current);
-        current = { type, length: 1, totalR: t.returnR, totalPnl: t.pnl, startId: t.id, endId: t.id };
-      }
+export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode }: AdvancedAnalyticsPageProps) => {
+  const tt = {
+    background: T.bg.card,
+    border: `1px solid ${T.border.medium}`,
+    borderRadius: 10,
+    color: T.text.primary,
+    fontSize: 12,
+    boxShadow: T.shadow.elevated,
+    padding: '8px 12px',
+  };
+
+  const [sortKey, setSortKey] = useState<'pnl' | 'exp' | 'wr' | 'n'>('pnl');
+
+  /* ─────────── DERIVED DATA ─────────── */
+
+  // 1. Equity & drawdown overlay
+  const equityDD = useMemo(() => {
+    let cum = 0, peak = 0;
+    return trades.map((t, i) => {
+      cum += t.pnl;
+      if (cum > peak) peak = cum;
+      const dd = peak > 0 ? -((peak - cum) / peak * 100) : 0;
+      return { id: i + 1, equity: cum, dd, pnl: t.pnl };
     });
-    if (current) result.push(current);
-    return result;
   }, [trades]);
 
-  // R-multiple distribution buckets
+  // 2. R buckets
   const rBuckets = useMemo(() => {
-    const buckets: Record<string, number> = { '<-2R': 0, '-2 to -1R': 0, '-1 to 0R': 0, '0 to 1R': 0, '1 to 2R': 0, '2 to 3R': 0, '3R+': 0 };
+    const buckets: Record<string, number> = {
+      'מתחת ל-2R-': 0, '-2R עד -1R': 0, '-1R עד 0': 0,
+      '0 עד 1R': 0, '1R עד 2R': 0, '2R עד 3R': 0, 'מעל 3R': 0,
+    };
     trades.forEach(t => {
       const r = t.returnR;
-      if (r < -2) buckets['<-2R']++;
-      else if (r < -1) buckets['-2 to -1R']++;
-      else if (r < 0) buckets['-1 to 0R']++;
-      else if (r < 1) buckets['0 to 1R']++;
-      else if (r < 2) buckets['1 to 2R']++;
-      else if (r < 3) buckets['2 to 3R']++;
-      else buckets['3R+']++;
+      if (r < -2) buckets['מתחת ל-2R-']++;
+      else if (r < -1) buckets['-2R עד -1R']++;
+      else if (r < 0) buckets['-1R עד 0']++;
+      else if (r < 1) buckets['0 עד 1R']++;
+      else if (r < 2) buckets['1R עד 2R']++;
+      else if (r < 3) buckets['2R עד 3R']++;
+      else buckets['מעל 3R']++;
     });
-    return Object.entries(buckets).map(([bucket, count]) => ({ bucket, count, pct: trades.length > 0 ? (count / trades.length) * 100 : 0 }));
+    return Object.entries(buckets).map(([bucket, count]) => ({ bucket, count }));
   }, [trades]);
 
-  // Setup performance table
-  const setupPerf = useMemo(() => {
-    const map: Record<string, { coin: string; trades: number; wins: number; totalPnl: number; totalR: number; avgRisk: number }> = {};
+  // 3. Setup leaderboard
+  const setupBoard = useMemo(() => {
+    const m: Record<string, { coin: string; n: number; wins: number; pnl: number; r: number; risk: number }> = {};
     trades.forEach(t => {
-      if (!map[t.coin]) map[t.coin] = { coin: t.coin, trades: 0, wins: 0, totalPnl: 0, totalR: 0, avgRisk: 0 };
-      map[t.coin].trades++;
-      map[t.coin].totalPnl += t.pnl;
-      map[t.coin].totalR += t.returnR;
-      map[t.coin].avgRisk += t.risk;
-      if (t.winLoss === 'Win') map[t.coin].wins++;
+      if (!m[t.coin]) m[t.coin] = { coin: t.coin, n: 0, wins: 0, pnl: 0, r: 0, risk: 0 };
+      m[t.coin].n++;
+      m[t.coin].pnl += t.pnl;
+      m[t.coin].r += t.returnR;
+      m[t.coin].risk += t.risk;
+      if (t.winLoss === 'Win') m[t.coin].wins++;
     });
-    return Object.values(map).map(s => ({
-      ...s,
-      winRate: (s.wins / s.trades) * 100,
-      avgR: s.totalR / s.trades,
-      avgRisk: s.avgRisk / s.trades,
-      expectancyR: (() => {
-        const coinTrades = trades.filter(tr => tr.coin === s.coin);
-        const w = coinTrades.filter(tr => tr.winLoss === 'Win');
-        const l = coinTrades.filter(tr => tr.winLoss === 'Loss');
-        const wr = w.length / coinTrades.length;
-        const lr = l.length / coinTrades.length;
-        const awr = w.length > 0 ? w.reduce((sum, tr) => sum + Math.abs(tr.returnR), 0) / w.length : 0;
-        const alr = l.length > 0 ? l.reduce((sum, tr) => sum + Math.abs(tr.returnR), 0) / l.length : 0;
-        return (wr * awr) - (lr * alr);
-      })(),
-    })).sort((a, b) => b.trades - a.trades);
-  }, [trades]);
+    const arr = Object.values(m).map(s => ({
+      coin: s.coin,
+      n: s.n,
+      wr: (s.wins / s.n) * 100,
+      pnl: s.pnl,
+      exp: s.r / s.n,
+      avgRisk: s.risk / s.n,
+    }));
+    return arr.sort((a, b) => {
+      if (sortKey === 'pnl') return b.pnl - a.pnl;
+      if (sortKey === 'exp') return b.exp - a.exp;
+      if (sortKey === 'wr') return b.wr - a.wr;
+      return b.n - a.n;
+    });
+  }, [trades, sortKey]);
 
-  // Time-based performance (hour of day)
-  const hourPerf = useMemo(() => {
-    const map: Record<number, { hour: number; trades: number; wins: number; totalR: number }> = {};
+  // 4. Day × Hour matrix (cells)
+  const dhMatrix = useMemo(() => {
+    const grid: { day: number; hour: number; pnl: number; n: number }[] = [];
+    const m = new Map<string, { pnl: number; n: number }>();
     trades.forEach(t => {
       try {
-        const h = new Date(t.date.replace(' ', 'T')).getHours();
-        if (!map[h]) map[h] = { hour: h, trades: 0, wins: 0, totalR: 0 };
-        map[h].trades++;
-        map[h].totalR += t.returnR;
-        if (t.winLoss === 'Win') map[h].wins++;
+        const d = new Date(t.date.replace(' ', 'T'));
+        const k = `${d.getDay()}-${d.getHours()}`;
+        const cur = m.get(k) || { pnl: 0, n: 0 };
+        cur.pnl += t.pnl; cur.n++;
+        m.set(k, cur);
       } catch { /* skip */ }
     });
-    return Object.values(map).sort((a, b) => a.hour - b.hour).map(h => ({
-      ...h,
-      label: `${h.hour.toString().padStart(2, '0')}:00`,
-      winRate: (h.wins / h.trades) * 100,
-      avgR: h.totalR / h.trades,
-    }));
+    m.forEach((v, k) => {
+      const [day, hour] = k.split('-').map(Number);
+      grid.push({ day, hour, pnl: v.pnl, n: v.n });
+    });
+    return grid;
   }, [trades]);
 
-  // Key statistics
-  const keyStats = useMemo(() => {
-    const wins = trades.filter(t => t.winLoss === 'Win');
-    const losses = trades.filter(t => t.winLoss === 'Loss');
-    const payoffRatio = losses.length > 0 && wins.length > 0
-      ? (wins.reduce((s, t) => s + Math.abs(t.returnR), 0) / wins.length) / (losses.reduce((s, t) => s + Math.abs(t.returnR), 0) / losses.length)
-      : 0;
-    const avgHoldingTrades = trades.length;
-    return { payoffRatio, totalWins: wins.length, totalLosses: losses.length, breakEvens: trades.filter(t => t.winLoss === 'Break Even').length, avgHoldingTrades };
+  // 5. Risk vs P&L scatter
+  const rvp = useMemo(() =>
+    trades.map(t => ({
+      risk: t.risk,
+      pnl: t.pnl,
+      r: t.returnR,
+      win: t.winLoss === 'Win',
+      coin: t.coin,
+    })),
+  [trades]);
+
+  // 6. Streak ladder
+  const streaks = useMemo(() => {
+    const out: { type: 'W' | 'L'; len: number; pnl: number; r: number }[] = [];
+    let cur: { type: 'W' | 'L'; len: number; pnl: number; r: number } | null = null;
+    trades.forEach(t => {
+      if (t.winLoss === 'Break Even') return;
+      const ty: 'W' | 'L' = t.winLoss === 'Win' ? 'W' : 'L';
+      if (cur && cur.type === ty) {
+        cur.len++; cur.pnl += t.pnl; cur.r += t.returnR;
+      } else {
+        if (cur) out.push(cur);
+        cur = { type: ty, len: 1, pnl: t.pnl, r: t.returnR };
+      }
+    });
+    if (cur) out.push(cur);
+    return out;
   }, [trades]);
+
+  // 7. Edge decay (rolling expectancy buckets of 5)
+  const edgeDecay = useMemo(() => {
+    const W = 5;
+    const out: { period: number; exp: number }[] = [];
+    for (let i = 0; i + W <= trades.length; i += W) {
+      const slice = trades.slice(i, i + W);
+      out.push({ period: Math.floor(i / W) + 1, exp: slice.reduce((s, t) => s + t.returnR, 0) / slice.length });
+    }
+    return out;
+  }, [trades]);
+
+  // 8. Direction split
+  const dirSplit = useMemo(() => {
+    const longs = trades.filter(t => t.direction === 'Long');
+    const shorts = trades.filter(t => t.direction === 'Short');
+    return [
+      { name: 'לונג', n: longs.length, wr: longs.length ? (longs.filter(t => t.winLoss === 'Win').length / longs.length) * 100 : 0, color: T.accent.green },
+      { name: 'שורט', n: shorts.length, wr: shorts.length ? (shorts.filter(t => t.winLoss === 'Win').length / shorts.length) * 100 : 0, color: T.accent.red },
+    ];
+  }, [trades, T]);
+
+  // 9. Monthly heat tiles
+  const monthHeat = useMemo(() => {
+    const m: Record<string, { key: string; pnl: number; n: number }> = {};
+    trades.forEach(t => {
+      try {
+        const d = new Date(t.date.replace(' ', 'T'));
+        const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        if (!m[k]) m[k] = { key: k, pnl: 0, n: 0 };
+        m[k].pnl += t.pnl; m[k].n++;
+      } catch { /* skip */ }
+    });
+    return Object.values(m).sort((a, b) => a.key.localeCompare(b.key));
+  }, [trades]);
+
+  // 10. Hero KPIs
+  const wins = trades.filter(t => t.winLoss === 'Win');
+  const losses = trades.filter(t => t.winLoss === 'Loss');
+  const payoff = losses.length && wins.length
+    ? (wins.reduce((s, t) => s + Math.abs(t.returnR), 0) / wins.length) /
+      (losses.reduce((s, t) => s + Math.abs(t.returnR), 0) / losses.length)
+    : 0;
+
+  /* ─────────── HELPERS ─────────── */
 
   const PV = ({ children }: { children: React.ReactNode }) => (
     <span style={privacyMode ? { filter: 'blur(8px)', userSelect: 'none' } : {}}>{children}</span>
   );
 
+  const heatColor = (pnl: number, max: number): string => {
+    if (max === 0) return T.bg.tertiary;
+    const norm = pnl / max; // -1..1
+    if (norm >= 0) {
+      const a = 0.15 + Math.min(norm, 1) * 0.55;
+      return `rgba(16,185,129,${a})`;
+    } else {
+      const a = 0.15 + Math.min(-norm, 1) * 0.55;
+      return `rgba(255,30,30,${a})`;
+    }
+  };
+
+  const maxAbsHeat = Math.max(1, ...dhMatrix.map(c => Math.abs(c.pnl)));
+  const maxAbsMonth = Math.max(1, ...monthHeat.map(c => Math.abs(c.pnl)));
+
+  /* ─────────── EMPTY ─────────── */
+
+  if (trades.length === 0) {
+    return (
+      <GlassCard T={T} style={{ textAlign: 'center', padding: 60 }}>
+        <div style={{ fontSize: 48, marginBottom: 12 }}>📊</div>
+        <div style={{ fontSize: 16, color: T.text.primary, fontWeight: 700 }}>אין נתונים להצגה</div>
+        <div style={{ fontSize: 12, color: T.text.muted, marginTop: 6 }}>הוסף עסקאות כדי לפתוח את לוח האנליטיקה.</div>
+      </GlassCard>
+    );
+  }
+
+  /* ─────────── RENDER ─────────── */
+
   return (
-    <>
-      {/* ═══ KEY METRICS ROW ═══ */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-        <GlassCard T={T} style={{ flex: 1, minWidth: 120, padding: 12 }}>
-          <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', marginBottom: 4 }}>{isRTL ? 'תוחלת' : 'Expectancy'} <span style={{ fontSize: 7, padding: '1px 3px', borderRadius: 3, background: `${T.accent.purple}15`, color: T.accent.purple, fontWeight: 700 }}>R</span></div>
-          <PV><div style={{ fontSize: 20, fontWeight: 700, color: stats.expectancyR >= 0 ? T.accent.cyan : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{stats.expectancyR >= 0 ? '+' : ''}{stats.expectancyR.toFixed(3)}R</div></PV>
-        </GlassCard>
-        <MetricCard T={T} label={isRTL ? 'פקטור רווח' : 'Profit Factor'} value={stats.profitFactor} suffix="x" color={T.accent.blue} small />
-        <MetricCard T={T} label={`${isRTL ? 'ממוצע רווח' : 'Avg Win'} (R)`} value={`+${stats.avgWinR.toFixed(2)}R`} color={T.accent.green} small />
-        <MetricCard T={T} label={`${isRTL ? 'ממוצע הפסד' : 'Avg Loss'} (R)`} value={`-${stats.avgLossR.toFixed(2)}R`} color={T.accent.red} small />
-        <MetricCard T={T} label={isRTL ? 'נסיגה מקס' : 'Max DD'} value={`${stats.maxDrawdown.toFixed(1)}%`} color={T.accent.orange} small />
+    <div dir="rtl" style={{ fontFamily: "'Heebo', 'Inter', sans-serif" }}>
+      {/* HERO HEADER */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        style={{ marginBottom: 14 }}
+      >
+        <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.3em', marginBottom: 4 }}>
+          ORCA · ANALYTICS DECK
+        </div>
+        <div style={{ fontSize: 22, color: T.text.primary, fontWeight: 800, letterSpacing: '-0.01em' }}>
+          לוח אנליטיקה מתקדם
+        </div>
+        <div style={{ fontSize: 12, color: T.text.secondary, marginTop: 2 }}>
+          ניתוח רב-ממדי של {trades.length} עסקאות לאורך כל ההיסטוריה.
+        </div>
+      </motion.div>
+
+      {/* ═══ HERO KPI GRID — 8 tiles ═══ */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, marginBottom: 16 }}>
+        {[
+          { label: 'תוחלת R', value: `${stats.expectancyR >= 0 ? '+' : ''}${stats.expectancyR.toFixed(3)}R`, color: stats.expectancyR >= 0 ? T.accent.cyan : T.accent.red },
+          { label: 'פקטור רווח', value: `${stats.profitFactor.toFixed(2)}x`, color: stats.profitFactor >= 1.5 ? T.accent.green : stats.profitFactor >= 1 ? T.accent.orange : T.accent.red },
+          { label: 'אחוז הצלחה', value: `${stats.winRate.toFixed(1)}%`, color: stats.winRate >= 50 ? T.accent.green : T.accent.orange },
+          { label: 'יחס תשלום', value: `${payoff.toFixed(2)}`, color: T.accent.blue },
+          { label: 'P&L מצטבר', value: <PV>{`${stats.totalPnl >= 0 ? '+' : ''}$${stats.totalPnl.toFixed(2)}`}</PV>, color: stats.totalPnl >= 0 ? T.accent.green : T.accent.red },
+          { label: 'נסיגה מקס', value: `${stats.maxDrawdown.toFixed(1)}%`, color: T.accent.orange },
+          { label: 'קלי אופטימלי', value: `${stats.kellyOptimal.toFixed(1)}%`, color: T.accent.purple },
+          { label: 'שארפ', value: stats.volatilityAdjustedExpectancy.toFixed(2), color: T.accent.cyan },
+        ].map((k, i) => (
+          <motion.div
+            key={k.label}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: i * 0.04 }}
+          >
+            <GlassCard T={T} style={{ padding: 12 }}>
+              <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>{k.label}</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: k.color, fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.1 }}>{k.value}</div>
+            </GlassCard>
+          </motion.div>
+        ))}
       </div>
 
-      {/* ═══ DETAILED STATISTICS TABLE ═══ */}
-      <GlassCard T={T} style={{ marginBottom: 16, padding: 0, overflow: 'hidden' }}>
-        <div style={{ padding: '14px 16px 10px', fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-          {isRTL ? 'סטטיסטיקות מפורטות' : 'Detailed Statistics'}
+      {/* ═══ EQUITY + DRAWDOWN OVERLAY ═══ */}
+      <GlassCard T={T} style={{ marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700 }}>עקומת הון מול נסיגה</div>
+          <div style={{ display: 'flex', gap: 14, fontSize: 10, color: T.text.muted }}>
+            <span>● <span style={{ color: T.accent.cyan }}>הון מצטבר</span></span>
+            <span>● <span style={{ color: T.accent.red }}>נסיגה (%)</span></span>
+          </div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 1, padding: '0 1px 1px' }}>
-          {[
-            { l: isRTL ? 'סה"כ עסקאות' : 'Total Trades', v: String(stats.totalTrades), c: T.text.primary },
-            { l: isRTL ? 'רווחים' : 'Wins', v: String(keyStats.totalWins), c: T.accent.green },
-            { l: isRTL ? 'הפסדים' : 'Losses', v: String(keyStats.totalLosses), c: T.accent.red },
-            { l: isRTL ? 'ניטרלי' : 'Break Even', v: String(keyStats.breakEvens), c: T.accent.orange },
-            { l: isRTL ? 'אחוז הצלחה' : 'Win Rate', v: `${stats.winRate.toFixed(1)}%`, c: T.accent.green },
-            { l: isRTL ? 'יחס תשלום' : 'Payoff Ratio', v: `${keyStats.payoffRatio.toFixed(2)}`, c: T.accent.blue },
-            { l: isRTL ? 'עסקה הכי טובה' : 'Best Trade', v: `+${stats.bestTradeR.toFixed(2)}R`, c: T.accent.green },
-            { l: isRTL ? 'עסקה הכי גרועה' : 'Worst Trade', v: `${stats.worstTradeR.toFixed(2)}R`, c: T.accent.red },
-            { l: isRTL ? 'הפסדים רצופים מקס' : 'Max Consec Losses', v: String(stats.maxConsecLosses), c: stats.maxConsecLosses >= 4 ? T.accent.red : T.text.primary },
-            { l: isRTL ? 'רצף נוכחי' : 'Current Streak', v: `${stats.currentStreak} ${stats.streakType}`, c: stats.streakType === 'Win' ? T.accent.green : T.accent.red },
-            { l: isRTL ? 'שארפ' : 'Sharpe-like', v: stats.volatilityAdjustedExpectancy.toFixed(2), c: T.accent.purple },
-            { l: isRTL ? 'קלי אופטימלי' : 'Kelly Optimal', v: `${stats.kellyOptimal.toFixed(1)}%`, c: T.accent.cyan },
-          ].map((s, i) => (
-            <div key={i} style={{ padding: '10px 14px', background: T.bg.tertiary, borderBottom: `1px solid ${T.border.subtle}` }}>
-              <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>{s.l}</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: s.c, fontFamily: "'JetBrains Mono', monospace" }}>{s.v}</div>
-            </div>
-          ))}
-        </div>
+        <ResponsiveContainer width="100%" height={250}>
+          <ComposedChart data={equityDD}>
+            <defs>
+              <linearGradient id="equityG" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.5} />
+                <stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.05} />
+              </linearGradient>
+              <linearGradient id="ddG" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={T.accent.red} stopOpacity={0.05} />
+                <stop offset="100%" stopColor={T.accent.red} stopOpacity={0.4} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+            <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 10 }} />
+            <YAxis yAxisId="L" tick={{ fill: T.text.muted, fontSize: 10 }} />
+            <YAxis yAxisId="R" orientation="right" tick={{ fill: T.text.muted, fontSize: 10 }} domain={['dataMin', 0]} />
+            <Tooltip contentStyle={tt} />
+            <Area yAxisId="L" type="monotone" dataKey="equity" stroke={T.accent.cyan} strokeWidth={2.5} fill="url(#equityG)" />
+            <Area yAxisId="R" type="monotone" dataKey="dd" stroke={T.accent.red} strokeWidth={1.5} fill="url(#ddG)" />
+          </ComposedChart>
+        </ResponsiveContainer>
       </GlassCard>
 
-      {/* ═══ CHARTS ROW 1: R Distribution + Day Performance ═══ */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-        <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'התפלגות R' : 'R-Multiple Distribution'} explanation={EXPLANATIONS.rDistribution} unit="R" style={{ flex: 1, minWidth: 320 }}>
-          <LazyChart height={210}>
-            <ResponsiveContainer width="100%" height={210}>
-              <BarChart data={stats.rDist}>
-                <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 10 }} />
-                <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
-                <Tooltip contentStyle={tt} />
-                <Bar dataKey="r" radius={[4, 4, 0, 0]}>{stats.rDist.map((d, i) => <Cell key={i} fill={d.r >= 0 ? T.accent.cyan : T.accent.red} />)}</Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </LazyChart>
-        </ChartWrapper>
-        <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'ביצועים לפי יום' : 'Performance by Day'} explanation={EXPLANATIONS.coinPerformance} unit="$" style={{ flex: 1, minWidth: 260 }}>
-          <LazyChart height={210}>
-            <ResponsiveContainer width="100%" height={210}>
-              <BarChart data={stats.dayPerf}>
-                <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                <XAxis dataKey="day" tick={{ fill: T.text.muted, fontSize: 10 }} />
-                <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
-                <Tooltip contentStyle={tt} />
-                <Bar dataKey="pnl" radius={[4, 4, 0, 0]}>{stats.dayPerf.map((d, i) => <Cell key={i} fill={d.pnl >= 0 ? T.accent.green : T.accent.red} />)}</Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </LazyChart>
-        </ChartWrapper>
-      </div>
-
-      {/* ═══ CUMULATIVE P&L ═══ */}
-      <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'רווח/הפסד מצטבר' : 'Cumulative P&L'} explanation={EXPLANATIONS.equityCurve} unit="$" style={{ marginBottom: 16 }}>
-        <LazyChart height={210}>
-          <ResponsiveContainer width="100%" height={210}>
-            <ComposedChart data={(() => { let c = 0; return trades.map(tr => ({ id: tr.id, cum: (c += tr.pnl), pnl: tr.pnl })); })()}>
-              <defs><linearGradient id="cGa" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.7} /><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.25} /></linearGradient></defs>
-              <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-              <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 10 }} />
-              <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
+      {/* ═══ ROW: R Distribution + Direction Radial ═══ */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12, marginBottom: 16 }}>
+        <GlassCard T={T}>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>התפלגות R לפי טווח</div>
+          <ResponsiveContainer width="100%" height={230}>
+            <BarChart data={rBuckets} layout="vertical" margin={{ left: 60 }}>
+              <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+              <XAxis type="number" tick={{ fill: T.text.muted, fontSize: 10 }} />
+              <YAxis type="category" dataKey="bucket" tick={{ fill: T.text.muted, fontSize: 10 }} width={75} />
               <Tooltip contentStyle={tt} />
-              <Area type="monotone" dataKey="cum" fill="url(#cGa)" stroke={T.accent.cyan} strokeWidth={2.5} />
-              <Bar dataKey="pnl" barSize={18} radius={[3, 3, 0, 0]}>{trades.map((tr, i) => <Cell key={i} fill={tr.pnl >= 0 ? T.accent.green : T.accent.red} fillOpacity={0.85} />)}</Bar>
-            </ComposedChart>
-          </ResponsiveContainer>
-        </LazyChart>
-      </ChartWrapper>
-
-      {/* ═══ R-MULTIPLE DISTRIBUTION BUCKETS ═══ */}
-      <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'התפלגות R לפי טווחים' : 'R-Multiple Distribution Buckets'} explanation={EXPLANATIONS.rDistribution} unit="%" style={{ marginBottom: 16 }}>
-        <LazyChart height={180}>
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={rBuckets}>
-              <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-              <XAxis dataKey="bucket" tick={{ fill: T.text.muted, fontSize: 9 }} />
-              <YAxis tick={{ fill: T.text.muted, fontSize: 9 }} />
-              <Tooltip contentStyle={tt} formatter={(v: number) => `${v.toFixed(0)} trades`} />
-              <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                {rBuckets.map((b, i) => <Cell key={i} fill={b.bucket.startsWith('-') || b.bucket.startsWith('<') ? T.accent.red : T.accent.cyan} />)}
+              <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+                {rBuckets.map((b, i) => (
+                  <Cell key={i} fill={b.bucket.includes('-') || b.bucket.startsWith('מתחת') ? T.accent.red : T.accent.cyan} />
+                ))}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
-        </LazyChart>
-      </ChartWrapper>
+        </GlassCard>
 
-      {/* ═══ SETUP PERFORMANCE TABLE ═══ */}
+        <GlassCard T={T}>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>פיצול כיוון (אחוז הצלחה)</div>
+          <ResponsiveContainer width="100%" height={230}>
+            <RadialBarChart innerRadius="30%" outerRadius="100%" data={dirSplit} startAngle={180} endAngle={0}>
+              <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
+              <RadialBar background dataKey="wr" cornerRadius={6}>
+                {dirSplit.map((d, i) => <Cell key={i} fill={d.color} />)}
+              </RadialBar>
+              <Tooltip contentStyle={tt} formatter={(v: number) => `${v.toFixed(1)}%`} />
+            </RadialBarChart>
+          </ResponsiveContainer>
+          <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: 4 }}>
+            {dirSplit.map(d => (
+              <div key={d.name} style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 10, color: T.text.muted }}>{d.name}</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: d.color, fontFamily: "'JetBrains Mono', monospace" }}>{d.wr.toFixed(0)}%</div>
+                <div style={{ fontSize: 9, color: T.text.muted }}>{d.n} עסקאות</div>
+              </div>
+            ))}
+          </div>
+        </GlassCard>
+      </div>
+
+      {/* ═══ DAY × HOUR MATRIX ═══ */}
+      <GlassCard T={T} style={{ marginBottom: 16 }}>
+        <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>מפת ביצועים — יום × שעה</div>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ borderCollapse: 'separate', borderSpacing: 2, fontSize: 10, fontFamily: "'JetBrains Mono', monospace", margin: '0 auto' }}>
+            <thead>
+              <tr>
+                <th style={{ padding: 4 }}></th>
+                {Array.from({ length: 24 }, (_, h) => (
+                  <th key={h} style={{ padding: 2, color: T.text.muted, fontWeight: 500, fontSize: 9, width: 22 }}>{String(h).padStart(2, '0')}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[0, 1, 2, 3, 4, 5, 6].map(day => (
+                <tr key={day}>
+                  <td style={{ padding: 2, color: T.text.muted, fontWeight: 600, fontSize: 10, textAlign: 'center' }}>{HEB_DOW[day]}</td>
+                  {Array.from({ length: 24 }, (_, h) => {
+                    const cell = dhMatrix.find(c => c.day === day && c.hour === h);
+                    const bg = cell ? heatColor(cell.pnl, maxAbsHeat) : T.bg.tertiary;
+                    return (
+                      <td
+                        key={h}
+                        title={cell ? `${HEB_DOW_FULL[day]} ${String(h).padStart(2, '0')}:00 — ${cell.n} עסקאות, ${cell.pnl >= 0 ? '+' : ''}$${cell.pnl.toFixed(0)}` : ''}
+                        style={{ width: 22, height: 22, background: bg, borderRadius: 3, border: cell ? `1px solid ${T.border.subtle}` : 'none' }}
+                      />
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center', marginTop: 12, fontSize: 10, color: T.text.muted }}>
+          <span>הפסד</span>
+          <div style={{ display: 'flex', gap: 2 }}>
+            {[-1, -0.6, -0.3, 0, 0.3, 0.6, 1].map(v => (
+              <div key={v} style={{ width: 14, height: 10, background: heatColor(v * maxAbsHeat, maxAbsHeat), borderRadius: 2 }} />
+            ))}
+          </div>
+          <span>רווח</span>
+        </div>
+      </GlassCard>
+
+      {/* ═══ MONTHLY HEAT TILES ═══ */}
+      {monthHeat.length > 1 && (
+        <GlassCard T={T} style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>חום חודשי</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 8 }}>
+            {monthHeat.map((m, i) => (
+              <motion.div
+                key={m.key}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.25, delay: i * 0.03 }}
+                style={{
+                  padding: 12,
+                  background: heatColor(m.pnl, maxAbsMonth),
+                  borderRadius: 10,
+                  border: `1px solid ${T.border.subtle}`,
+                }}
+              >
+                <div style={{ fontSize: 10, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>{m.key}</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: T.text.primary, fontFamily: "'JetBrains Mono', monospace", marginTop: 2 }}>
+                  <PV>{m.pnl >= 0 ? '+' : ''}${m.pnl.toFixed(0)}</PV>
+                </div>
+                <div style={{ fontSize: 9, color: T.text.muted, marginTop: 2 }}>{m.n} עסקאות</div>
+              </motion.div>
+            ))}
+          </div>
+        </GlassCard>
+      )}
+
+      {/* ═══ SETUP LEADERBOARD ═══ */}
       <GlassCard T={T} style={{ marginBottom: 16, padding: 0, overflow: 'hidden' }}>
-        <div style={{ padding: '14px 16px 10px', fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-          {isRTL ? 'ביצועים לפי סטאפ' : 'Setup Performance Analysis'}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px 8px' }}>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700 }}>טבלת מובילים — לפי נכס</div>
+          <div style={{ display: 'flex', gap: 4 }}>
+            {([
+              { k: 'pnl', l: 'P&L' }, { k: 'exp', l: 'תוחלת' }, { k: 'wr', l: 'הצלחה' }, { k: 'n', l: 'עסקאות' },
+            ] as const).map(o => (
+              <button
+                key={o.k}
+                onClick={() => setSortKey(o.k)}
+                style={{
+                  padding: '4px 10px', fontSize: 10, fontWeight: 700,
+                  background: sortKey === o.k ? T.accent.cyan : 'transparent',
+                  color: sortKey === o.k ? T.bg.primary : T.text.muted,
+                  border: `1px solid ${sortKey === o.k ? T.accent.cyan : T.border.subtle}`,
+                  borderRadius: 6, cursor: 'pointer',
+                }}
+              >
+                {o.l}
+              </button>
+            ))}
+          </div>
         </div>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead>
               <tr style={{ background: T.bg.tertiary }}>
-                {[isRTL ? 'סטאפ' : 'Setup', isRTL ? 'עסקאות' : 'Trades', isRTL ? 'הצלחה' : 'Win %', isRTL ? 'P&L' : 'P&L', isRTL ? 'תוחלת R' : 'EV (R)', isRTL ? 'ממוצע R' : 'Avg R', isRTL ? 'סיכון ממוצע' : 'Avg Risk'].map((h, i) => (
-                  <th key={i} style={{ padding: '8px 12px', textAlign: isRTL ? 'right' : 'left', color: T.text.muted, fontWeight: 600, fontSize: 10, textTransform: 'uppercase', borderBottom: `1px solid ${T.border.medium}`, whiteSpace: 'nowrap' }}>{h}</th>
+                {['נכס', 'עסקאות', 'הצלחה', 'P&L', 'תוחלת R', 'סיכון ממוצע'].map(h => (
+                  <th key={h} style={{ padding: '8px 12px', textAlign: 'right', color: T.text.muted, fontWeight: 600, fontSize: 10, borderBottom: `1px solid ${T.border.medium}` }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {setupPerf.map((s, idx) => (
-                <tr key={s.coin} style={{ background: idx % 2 ? `${T.bg.tertiary}40` : 'transparent' }}>
-                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontWeight: 600, color: T.accent.cyan }}>{s.coin}</td>
-                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace" }}>{s.trades}</td>
-                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontWeight: 600, color: s.winRate >= 50 ? T.accent.green : T.accent.red }}>{s.winRate.toFixed(0)}%</td>
-                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: s.totalPnl >= 0 ? T.accent.green : T.accent.red }}>
-                    <PV>{s.totalPnl >= 0 ? '+' : ''}${s.totalPnl.toFixed(2)}</PV>
+              {setupBoard.map((s, i) => (
+                <tr key={s.coin} style={{ background: i % 2 ? `${T.bg.tertiary}40` : 'transparent' }}>
+                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontWeight: 700, color: T.accent.cyan }}>{s.coin}</td>
+                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace" }}>{s.n}</td>
+                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontWeight: 700, color: s.wr >= 50 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{s.wr.toFixed(0)}%</td>
+                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: s.pnl >= 0 ? T.accent.green : T.accent.red }}>
+                    <PV>{s.pnl >= 0 ? '+' : ''}${s.pnl.toFixed(2)}</PV>
                   </td>
-                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, color: s.expectancyR >= 0 ? T.accent.cyan : T.accent.red }}>{s.expectancyR >= 0 ? '+' : ''}{s.expectancyR.toFixed(3)}R</td>
-                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", color: s.avgR >= 0 ? T.accent.green : T.accent.red }}>{s.avgR >= 0 ? '+' : ''}{s.avgR.toFixed(2)}R</td>
+                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", color: s.exp >= 0 ? T.accent.cyan : T.accent.red, fontWeight: 600 }}>{s.exp >= 0 ? '+' : ''}{s.exp.toFixed(2)}R</td>
                   <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace" }}><PV>${s.avgRisk.toFixed(2)}</PV></td>
                 </tr>
               ))}
@@ -261,87 +487,120 @@ export const AdvancedAnalyticsPage = ({ T, isRTL, isAlpha, trades, stats, privac
         </div>
       </GlassCard>
 
-      {/* ═══ TIME-BASED ANALYSIS ═══ */}
-      {hourPerf.length > 0 && (
-        <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'ביצועים לפי שעה' : 'Performance by Hour'} explanation={EXPLANATIONS.coinPerformance} unit="R" style={{ marginBottom: 16 }}>
-          <LazyChart height={180}>
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={hourPerf}>
-                <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                <XAxis dataKey="label" tick={{ fill: T.text.muted, fontSize: 9 }} />
-                <YAxis tick={{ fill: T.text.muted, fontSize: 9 }} />
-                <Tooltip contentStyle={tt} />
-                <Bar dataKey="avgR" radius={[4, 4, 0, 0]}>{hourPerf.map((h, i) => <Cell key={i} fill={h.avgR >= 0 ? T.accent.green : T.accent.red} />)}</Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </LazyChart>
-        </ChartWrapper>
-      )}
+      {/* ═══ ROW: Risk-vs-PnL Scatter + Edge Decay ═══ */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12, marginBottom: 16 }}>
+        <GlassCard T={T}>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>פיזור סיכון מול תוצאה</div>
+          <ResponsiveContainer width="100%" height={230}>
+            <ScatterChart>
+              <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+              <XAxis type="number" dataKey="risk" name="סיכון" tick={{ fill: T.text.muted, fontSize: 10 }} />
+              <YAxis type="number" dataKey="pnl" name="P&L" tick={{ fill: T.text.muted, fontSize: 10 }} />
+              <ZAxis range={[40, 160]} />
+              <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} formatter={(v: number, n: string) => [n === 'risk' ? `$${v.toFixed(2)}` : `$${v.toFixed(2)}`, n === 'risk' ? 'סיכון' : 'P&L']} />
+              <Scatter data={rvp}>
+                {rvp.map((d, i) => (
+                  <Cell key={i} fill={d.win ? T.accent.green : T.accent.red} fillOpacity={0.7} />
+                ))}
+              </Scatter>
+            </ScatterChart>
+          </ResponsiveContainer>
+        </GlassCard>
 
-      {/* ═══ STREAK ANALYSIS ═══ */}
+        <GlassCard T={T}>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>אבולוציית האדג' (חלונות של 5)</div>
+          <ResponsiveContainer width="100%" height={230}>
+            <LineChart data={edgeDecay}>
+              <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+              <XAxis dataKey="period" tick={{ fill: T.text.muted, fontSize: 10 }} />
+              <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
+              <Tooltip contentStyle={tt} formatter={(v: number) => `${v.toFixed(2)}R`} />
+              <Line type="monotone" dataKey="exp" stroke={T.accent.purple} strokeWidth={2.5} dot={{ fill: T.accent.purple, r: 3 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </GlassCard>
+      </div>
+
+      {/* ═══ STREAK LADDER ═══ */}
       <GlassCard T={T} style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
-          {isRTL ? 'ניתוח רצפים' : 'Streak Analysis'}
-        </div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>סולם רצפים</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
           {streaks.map((s, i) => (
-            <div key={i} style={{ padding: '8px 12px', background: s.type === 'Win' ? `${T.accent.green}10` : `${T.accent.red}10`, border: `1px solid ${s.type === 'Win' ? T.accent.green : T.accent.red}20`, borderRadius: 8, minWidth: 80, textAlign: 'center' }}>
-              <div style={{ fontSize: 16, fontWeight: 700, color: s.type === 'Win' ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{s.length}</div>
-              <div style={{ fontSize: 9, color: T.text.muted }}>{s.type === 'Win' ? '🟢' : '🔴'} #{s.startId}→{s.endId}</div>
-              <div style={{ fontSize: 10, color: T.text.secondary, fontFamily: "'JetBrains Mono', monospace", marginTop: 2 }}>{s.totalR >= 0 ? '+' : ''}{s.totalR.toFixed(2)}R</div>
+            <div
+              key={i}
+              title={`${s.type === 'W' ? 'רצף ניצחונות' : 'רצף הפסדים'}: ${s.len} עסקאות, ${s.r >= 0 ? '+' : ''}${s.r.toFixed(2)}R`}
+              style={{
+                padding: '6px 10px',
+                background: s.type === 'W' ? `${T.accent.green}18` : `${T.accent.red}18`,
+                border: `1px solid ${s.type === 'W' ? T.accent.green : T.accent.red}40`,
+                borderRadius: 8,
+                minWidth: 60,
+                textAlign: 'center',
+              }}
+            >
+              <div style={{ fontSize: 14, fontWeight: 800, color: s.type === 'W' ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>
+                {s.type === 'W' ? '+' : '−'}{s.len}
+              </div>
+              <div style={{ fontSize: 9, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>{s.r >= 0 ? '+' : ''}{s.r.toFixed(1)}R</div>
             </div>
           ))}
         </div>
       </GlassCard>
 
-      {/* ═══ MONTHLY PERFORMANCE ═══ */}
-      <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'ביצועים חודשיים' : 'Monthly Performance'} explanation={EXPLANATIONS.monthlyPerformance} unit="R" style={{ marginBottom: 16 }}>
-        {stats.monthlyPerf.map((mp, i) => (
-          <div key={i} style={{ padding: '10px 12px', borderRadius: 8, background: mp.pnl >= 0 ? `${T.accent.green}08` : `${T.accent.red}08`, border: `1px solid ${mp.pnl >= 0 ? T.accent.green : T.accent.red}15`, marginBottom: 6 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 12, color: T.text.secondary }}>{mp.month}</span>
-              <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                <PV><span style={{ fontSize: 13, fontWeight: 700, color: mp.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{mp.pnl >= 0 ? '+' : ''}${mp.pnl.toFixed(2)}</span></PV>
-                <span style={{ fontSize: 11, color: T.accent.purple, fontFamily: "'JetBrains Mono', monospace", fontWeight: 600 }}>EV: {mp.expectancyR >= 0 ? '+' : ''}{mp.expectancyR.toFixed(2)}R</span>
+      {/* ═══ MONTHLY DETAIL LIST ═══ */}
+      {stats.monthlyPerf && stats.monthlyPerf.length > 0 && (
+        <GlassCard T={T} style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>פירוט ביצועים חודשיים</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {stats.monthlyPerf.map((mp, i) => (
+              <div
+                key={i}
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: 8,
+                  background: mp.pnl >= 0 ? `${T.accent.green}0a` : `${T.accent.red}0a`,
+                  border: `1px solid ${mp.pnl >= 0 ? T.accent.green : T.accent.red}20`,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: 8,
+                }}
+              >
+                <span style={{ fontSize: 12, color: T.text.primary, fontWeight: 600 }}>{mp.month}</span>
+                <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 11, color: T.text.muted }}>{mp.trades} עסקאות</span>
+                  <span style={{ fontSize: 11, color: T.text.muted }}>הצלחה {mp.winRate.toFixed(0)}%</span>
+                  <span style={{ fontSize: 11, color: T.accent.purple, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>תוחלת {mp.expectancyR >= 0 ? '+' : ''}{mp.expectancyR.toFixed(2)}R</span>
+                  <span style={{ fontSize: 13, color: mp.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace", fontWeight: 800 }}>
+                    <PV>{mp.pnl >= 0 ? '+' : ''}${mp.pnl.toFixed(2)}</PV>
+                  </span>
+                </div>
               </div>
-            </div>
-            <div style={{ fontSize: 9, color: T.text.muted, marginTop: 2 }}>{mp.trades} trades • WR: {mp.winRate.toFixed(0)}% • PF: {mp.profitFactor.toFixed(2)}x</div>
+            ))}
           </div>
-        ))}
-      </ChartWrapper>
-
-      {/* ═══ ALPHA: Advanced Charts ═══ */}
-      {isAlpha && (
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'מפת נסיגה' : 'Drawdown Depth Map'} explanation={EXPLANATIONS.drawdown} unit="%" style={{ flex: 1, minWidth: 280 }}>
-            <LazyChart height={180}>
-              <ResponsiveContainer width="100%" height={180}>
-                <AreaChart data={(() => { let p = 0; return stats.equityCurve.map(e => { if (e.balance > p) p = e.balance; return { trade: e.trade, dd: p > 0 ? -((p - e.balance) / p * 100) : 0 }; }); })()}>
-                  <defs><linearGradient id="ddGAn" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.red} stopOpacity={0.25} /><stop offset="100%" stopColor={T.accent.red} stopOpacity={0.6} /></linearGradient></defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                  <XAxis dataKey="trade" tick={{ fill: T.text.muted, fontSize: 10 }} />
-                  <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} domain={['dataMin', 0]} />
-                  <Tooltip contentStyle={tt} formatter={(v: number) => `${v.toFixed(2)}%`} />
-                  <Area type="monotone" dataKey="dd" stroke={T.accent.red} fill="url(#ddGAn)" strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </LazyChart>
-          </ChartWrapper>
-          <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'תוחלת מתגלגלת (R)' : 'Rolling Expectancy (R)'} explanation={EXPLANATIONS.expectancy} unit="R" style={{ flex: 1, minWidth: 280 }}>
-            <LazyChart height={180}>
-              <ResponsiveContainer width="100%" height={180}>
-                <LineChart data={stats.rollingExpectancyR}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                  <XAxis dataKey="tradeId" tick={{ fill: T.text.muted, fontSize: 10 }} />
-                  <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
-                  <Tooltip contentStyle={tt} />
-                  <Line type="monotone" dataKey="expectancyR" stroke={T.accent.cyan} strokeWidth={2} dot={{ fill: T.accent.cyan, r: 2 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </LazyChart>
-          </ChartWrapper>
-        </div>
+        </GlassCard>
       )}
-    </>
+
+      {/* ═══ KEY OBSERVATIONS ═══ */}
+      <GlassCard T={T} glow={`${T.accent.cyan}18`}>
+        <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>תצפיות מרכזיות</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 8 }}>
+          {[
+            { l: 'רצף ניצחונות הארוך ביותר', v: `${Math.max(0, ...streaks.filter(s => s.type === 'W').map(s => s.len))} עסקאות`, c: T.accent.green },
+            { l: 'רצף הפסדים הארוך ביותר', v: `${Math.max(0, ...streaks.filter(s => s.type === 'L').map(s => s.len))} עסקאות`, c: T.accent.red },
+            { l: 'עסקה הכי טובה', v: `+${stats.bestTradeR.toFixed(2)}R`, c: T.accent.green },
+            { l: 'עסקה הכי גרועה', v: `${stats.worstTradeR.toFixed(2)}R`, c: T.accent.red },
+            { l: 'נכסים פעילים', v: String(setupBoard.length), c: T.accent.blue },
+            { l: 'תקופת מסחר', v: `${edgeDecay.length} חלונות`, c: T.accent.purple },
+          ].map((o, i) => (
+            <div key={i} style={{ padding: 10, background: T.bg.tertiary, borderRadius: 8, borderInlineStart: `2px solid ${o.c}` }}>
+              <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 3 }}>{o.l}</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: o.c, fontFamily: "'JetBrains Mono', monospace" }}>{o.v}</div>
+            </div>
+          ))}
+        </div>
+      </GlassCard>
+    </div>
   );
 };
