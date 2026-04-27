@@ -25,6 +25,7 @@ import { RiskExplanationModal, type RiskExplanation } from '@/components/trading
 import { AdvancedRiskPage } from '@/components/trading/AdvancedRiskPage';
 import { AdvancedAnalyticsPage } from '@/components/trading/AdvancedAnalyticsPage';
 import { AdvancedPsychologyPage } from '@/components/trading/AdvancedPsychologyPage';
+import { AIInsightsPage } from '@/components/trading/AIInsightsPage';
 import { WeeklyReviewPage } from '@/components/trading/WeeklyReviewPage';
 import { InstallPrompt } from '@/components/trading/InstallPrompt';
 import { DimensionController, PortalButton, BacktestPortalButton } from '@/components/trading/DimensionController';
@@ -1218,53 +1219,7 @@ const Index = () => {
     );
   };
 
-  const renderAI = () => {
-    if (trades.length === 0) return null;
-    return (
-      <>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <div style={{ fontSize: 12, color: T.text.secondary }}>{isRTL ? `ניתוח מבוסס ראיות של ${trades.length} עסקאות` : `Evidence-based analysis of ${trades.length} trades`}</div>
-          <button onClick={handleGenerateInsights} disabled={aiLoading} style={{ padding: '8px 20px', background: aiLoading ? T.bg.tertiary : `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: aiLoading ? T.text.muted : T.bg.primary, fontWeight: 700, cursor: aiLoading ? 'default' : 'pointer', fontSize: 12, transition: 'all 0.3s ease' }}>
-            {aiLoading ? (isRTL ? 'מחשב...' : 'Computing...') : t.generateInsights}
-          </button>
-        </div>
-        {aiInsights.length === 0 && !aiLoading && (
-          <GlassCard T={T} style={{ textAlign: 'center', padding: 40 }}>
-            <div style={{ fontSize: 36, marginBottom: 12 }}>🧠</div>
-            <div style={{ fontSize: 14, color: T.text.secondary }}>{isRTL ? 'לחץ "צור תובנות" לקבלת ניתוח חכם' : 'Click "Generate Insights" for AI-powered analysis'}</div>
-          </GlassCard>
-        )}
-        {aiLoading && <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>{[1,2,3].map(i => (<GlassCard T={T} key={i} style={{ opacity: 0.5 }}><div style={{ height: 16, width: '30%', background: T.bg.surface, borderRadius: 4, marginBottom: 8 }} /><div style={{ height: 12, width: '80%', background: T.bg.surface, borderRadius: 4 }} /></GlassCard>))}</div>}
-        {aiInsights.length > 0 && !aiLoading && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {aiInsights.map((ins, i) => {
-              const c = ins.type === 'strength' ? T.accent.green : ins.type === 'weakness' ? T.accent.red : ins.type === 'alert' ? T.accent.orange : ins.type === 'momentum' ? T.accent.purple : T.accent.cyan;
-              return (
-                <GlassCard T={T} key={i} glow={`${c}15`} style={{ borderInlineStart: `3px solid ${c}` }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                    <div style={{ fontSize: 18, flexShrink: 0 }}>{ins.icon}</div>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <TradingBadge color={c}>{ins.title}</TradingBadge>
-                        {ins.severity === 'high' && <span style={{ fontSize: 8, color: T.accent.red, fontWeight: 700, textTransform: 'uppercase' }}>HIGH</span>}
-                      </div>
-                      <div style={{ fontSize: 13, color: T.text.primary, marginTop: 7, lineHeight: 1.6 }}>{ins.text}</div>
-                    </div>
-                  </div>
-                </GlassCard>
-              );
-            })}
-          </div>
-        )}
-        {aiInsights.length > 0 && !aiLoading && (
-          <GlassCard T={T} style={{ marginTop: 16 }} glow={T.accent.cyanGlow}>
-            <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>{t.aiSummary}</div>
-            <div style={{ fontSize: 13, color: T.text.secondary, lineHeight: 1.8 }}>{generateSummary(stats, trades, isRTL)}</div>
-          </GlassCard>
-        )}
-      </>
-    );
-  };
+  const renderAI = () => <AIInsightsPage T={T} trades={trades} />;
 
 
   // Portal pulse animation
