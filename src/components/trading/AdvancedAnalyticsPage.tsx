@@ -28,6 +28,7 @@ import {
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { TradingStats } from '@/lib/trading-analytics';
+import type { OperatingMode } from '@/hooks/use-settings';
 import { GlassCard } from './TradingUI';
 import type { ChartExplanation } from './ChartWrapper';
 
@@ -35,6 +36,8 @@ interface AdvancedAnalyticsPageProps {
   T: TradingTheme;
   isRTL: boolean;
   isAlpha: boolean;
+  /** Operating context: beginner | live (standard) | review | research */
+  operatingMode?: OperatingMode;
   trades: Trade[];
   stats: TradingStats;
   privacyMode: boolean;
@@ -44,7 +47,16 @@ interface AdvancedAnalyticsPageProps {
 const HEB_DOW = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
 const HEB_DOW_FULL = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 
-export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode }: AdvancedAnalyticsPageProps) => {
+export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, operatingMode = 'live' }: AdvancedAnalyticsPageProps) => {
+  // Tier resolution — controls which chart layers render.
+  // beginner → minimal · live (standard) → core · review → +pro · research/alpha → +everything
+  const tier: 'minimal' | 'core' | 'pro' | 'max' =
+    isAlpha || operatingMode === 'research' ? 'max'
+    : operatingMode === 'review' ? 'pro'
+    : operatingMode === 'beginner' ? 'minimal'
+    : 'core';
+  const showPro = tier === 'pro' || tier === 'max';
+  const showMax = tier === 'max';
   const tt = {
     background: T.bg.card,
     border: `1px solid ${T.border.medium}`,
