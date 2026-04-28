@@ -4044,7 +4044,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
   }
 
   return (
-    <div className="journal-dimension" style={{
+    <div className="journal-dimension j-no-tilt" data-journal-root style={{
       height: '100%', display: 'flex', flexDirection: 'column',
       fontFamily: "'Poppins', sans-serif", direction: dir,
       background: th.bg, color: th.tx,
