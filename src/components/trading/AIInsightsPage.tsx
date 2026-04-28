@@ -380,6 +380,115 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
     return Object.entries(b).map(([k, v]) => ({ bucket: k, count: v }));
   }, [trades]);
 
+  /* ──── NEW DATASETS for advanced packs ──── */
+
+  const equityDrawdown = useMemo(() => {
+    let eq = 0, peak = 0;
+    return trades.map((t, i) => {
+      eq += t.pnl;
+      if (eq > peak) peak = eq;
+      const dd = peak > 0 ? ((eq - peak) / peak) * 100 : 0;
+      return { i: i + 1, equity: +eq.toFixed(2), drawdown: +dd.toFixed(2) };
+    });
+  }, [trades]);
+
+  const sessionRing = useMemo(() => {
+    const s = [
+      { name: 'אסיה', from: 0, to: 7, pnl: 0, n: 0 },
+      { name: 'לונדון', from: 7, to: 13, pnl: 0, n: 0 },
+      { name: 'ניו-יורק', from: 13, to: 20, pnl: 0, n: 0 },
+      { name: 'לילה', from: 20, to: 24, pnl: 0, n: 0 },
+    ];
+    trades.forEach(t => {
+      try {
+        const h = new Date(t.date.replace(' ', 'T')).getHours();
+        const sess = s.find(x => h >= x.from && h < x.to);
+        if (sess) { sess.pnl += t.pnl; sess.n++; }
+      } catch { /* skip */ }
+    });
+    return s.map(x => ({ name: x.name, value: Math.abs(x.pnl) || 0.01, pnl: +x.pnl.toFixed(2), n: x.n }));
+  }, [trades]);
+
+  const durationData = useMemo(() =>
+    trades.slice(0, 200).map((t, i) => ({
+      idx: i + 1,
+      r: t.returnR,
+      size: Math.max(2, Math.abs(t.risk) || 2),
+      win: t.winLoss === 'Win',
+    })), [trades]);
+
+  const momentumData = useMemo(() => {
+    const W = 10;
+    return trades.map((_, i) => {
+      const slice = trades.slice(Math.max(0, i - W + 1), i + 1);
+      const wins = slice.filter(x => x.winLoss === 'Win').length;
+      const wr = (wins / slice.length) * 100;
+      const mean = slice.reduce((s, x) => s + x.returnR, 0) / slice.length;
+      const variance = slice.reduce((s, x) => s + Math.pow(x.returnR - mean, 2), 0) / slice.length;
+      return { i: i + 1, wr: +wr.toFixed(1), vol: +Math.sqrt(variance).toFixed(3) };
+    });
+  }, [trades]);
+
+  const kellyData = useMemo(() => {
+    const W = 20;
+    return trades.map((_, i) => {
+      const slice = trades.slice(Math.max(0, i - W + 1), i + 1);
+      const wins = slice.filter(x => x.winLoss === 'Win');
+      const losses = slice.filter(x => x.winLoss === 'Loss');
+      const wr = wins.length / Math.max(slice.length, 1);
+      const avgW = wins.length ? wins.reduce((s, x) => s + x.returnR, 0) / wins.length : 1;
+      const avgL = losses.length ? Math.abs(losses.reduce((s, x) => s + x.returnR, 0) / losses.length) : 1;
+      const rr = avgW / Math.max(avgL, 0.001);
+      const kelly = Math.max(0, Math.min(0.25, (wr - (1 - wr) / Math.max(rr, 0.01))));
+      const actual = (slice.reduce((s, x) => s + Math.abs(x.risk || 0), 0) / Math.max(slice.length, 1)) / 100;
+      return { i: i + 1, kelly: +(kelly * 100).toFixed(2), actual: +(actual * 100).toFixed(2) };
+    });
+  }, [trades]);
+
+  const efficiencyCloud = useMemo(() =>
+    trades.map((t, i) => ({
+      i,
+      eff: Math.max(-5, Math.min(5, t.returnR)),
+      pnl: t.pnl,
+      risk: Math.abs(t.risk) || 1,
+      win: t.winLoss === 'Win',
+    })), [trades]);
+
+  const setupSpider = useMemo(() => {
+    const map: Record<string, { pnl: number; wins: number; n: number; r: number }> = {};
+    trades.forEach(t => {
+      const k = t.coin || 'OTHER';
+      if (!map[k]) map[k] = { pnl: 0, wins: 0, n: 0, r: 0 };
+      map[k].pnl += t.pnl; map[k].n++; map[k].r += t.returnR;
+      if (t.winLoss === 'Win') map[k].wins++;
+    });
+    const arr = Object.entries(map).map(([coin, v]) => ({
+      coin, pnl: v.pnl, wr: (v.wins / v.n) * 100, exp: v.r / v.n, n: v.n,
+    })).sort((a, b) => b.pnl - a.pnl).slice(0, 6);
+    if (arr.length === 0) return [];
+    const maxP = Math.max(...arr.map(x => Math.abs(x.pnl)), 1);
+    const maxN = Math.max(...arr.map(x => x.n), 1);
+    return arr.map(x => ({
+      axis: x.coin,
+      רווח: Math.max(0, Math.round((x.pnl / maxP) * 100)),
+      ניצחונות: Math.round(x.wr),
+      תוחלת: Math.max(0, Math.min(100, Math.round((x.exp + 1) * 50))),
+      נפח: Math.round((x.n / maxN) * 100),
+    }));
+  }, [trades]);
+
+  const focusPareto = useMemo(() => {
+    const map: Record<string, number> = {};
+    trades.forEach(t => { map[t.coin] = (map[t.coin] || 0) + t.pnl; });
+    const arr = Object.entries(map).map(([k, v]) => ({ k, pnl: v })).sort((a, b) => Math.abs(b.pnl) - Math.abs(a.pnl)).slice(0, 10);
+    let cum = 0;
+    const total = arr.reduce((s, x) => s + Math.abs(x.pnl), 0) || 1;
+    return arr.map(x => {
+      cum += Math.abs(x.pnl);
+      return { name: x.k, pnl: +x.pnl.toFixed(2), cum: +((cum / total) * 100).toFixed(1) };
+    });
+  }, [trades]);
+
   /* ──── EMPTY STATE ──── */
 
   if (trades.length === 0) {
