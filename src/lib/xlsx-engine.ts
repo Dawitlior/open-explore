@@ -358,27 +358,34 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
     reader.onload = (e) => {
       try {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        // CRITICAL: Read with cellDates:true so xlsx parses date cells into JS Date
-        // objects using the workbook's stored format (NOT US locale heuristics).
-        // For text cells like "27/02/2026 13:34" we still receive raw strings —
-        // these are then run through parseFlexibleDate which strictly applies DD/MM.
-        const wb = XLSX.read(data, { type: 'array', cellDates: true, dateNF: 'dd/mm/yyyy hh:mm', raw: false });
+        // CRITICAL: keep formatted cell text (`cellText`) and avoid locale auto-parsing.
+        // Dates like 04/02/2026 must stay DD/MM instead of being guessed as MM/DD.
+        const wb = XLSX.read(data, { type: 'array', cellDates: false, cellText: true, dateNF: 'dd/mm/yyyy hh:mm', raw: true });
         const ws = wb.Sheets[wb.SheetNames[0]];
         if (!ws) { resolve({ trades: [], errors: ['Empty spreadsheet'], skipped: 0, imported: 0 }); return; }
 
-        // Force any remaining numeric/serial date cells whose header looks like a
-        // date column to be treated as Date objects (defense in depth for files
-        // where xlsx fails to recognize the format).
         const headerRowIdx = findHeaderRow(ws);
+        const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+        const headers: string[] = [];
+        for (let c = range.s.c; c <= range.e.c; c++) {
+          const rawHeader = readCellValue(ws[XLSX.utils.encode_cell({ r: headerRowIdx, c })]);
+          headers[c] = String(rawHeader ?? '').trim();
+        }
 
-        // Re-parse with the correct header row. raw:false ensures we get
-        // formatted strings (e.g. "27/02/2026 13:34") instead of US-locale
-        // auto-conversions that mangle Feb dates.
-        const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, {
-          raw: false,
-          dateNF: 'dd/mm/yyyy hh:mm',
-          range: headerRowIdx,
-        });
+        const jsonData: Record<string, unknown>[] = [];
+        for (let r = headerRowIdx + 1; r <= range.e.r; r++) {
+          const row: Record<string, unknown> = {};
+          let hasValue = false;
+          for (let c = range.s.c; c <= range.e.c; c++) {
+            const header = headers[c];
+            if (!header) continue;
+            const field = mapHeaderToField(header);
+            const value = readCellValue(ws[XLSX.utils.encode_cell({ r, c })], field === 'date');
+            if (value !== undefined && value !== null && String(value).trim() !== '') hasValue = true;
+            row[header] = value;
+          }
+          if (hasValue) jsonData.push(row);
+        }
 
         if (jsonData.length === 0) { resolve({ trades: [], errors: ['No data rows found'], skipped: 0, imported: 0 }); return; }
 
