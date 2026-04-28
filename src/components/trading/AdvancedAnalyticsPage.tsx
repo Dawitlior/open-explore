@@ -28,6 +28,7 @@ import {
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { TradingStats } from '@/lib/trading-analytics';
+import type { OperatingMode } from '@/hooks/use-settings';
 import { GlassCard } from './TradingUI';
 import type { ChartExplanation } from './ChartWrapper';
 
@@ -35,6 +36,8 @@ interface AdvancedAnalyticsPageProps {
   T: TradingTheme;
   isRTL: boolean;
   isAlpha: boolean;
+  /** Operating context: beginner | live (standard) | review | research */
+  operatingMode?: OperatingMode;
   trades: Trade[];
   stats: TradingStats;
   privacyMode: boolean;
@@ -44,7 +47,16 @@ interface AdvancedAnalyticsPageProps {
 const HEB_DOW = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
 const HEB_DOW_FULL = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 
-export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode }: AdvancedAnalyticsPageProps) => {
+export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, operatingMode = 'live' }: AdvancedAnalyticsPageProps) => {
+  // Tier resolution — controls which chart layers render.
+  // beginner → minimal · live (standard) → core · review → +pro · research/alpha → +everything
+  const tier: 'minimal' | 'core' | 'pro' | 'max' =
+    isAlpha || operatingMode === 'research' ? 'max'
+    : operatingMode === 'review' ? 'pro'
+    : operatingMode === 'beginner' ? 'minimal'
+    : 'core';
+  const showPro = tier === 'pro' || tier === 'max';
+  const showMax = tier === 'max';
   const tt = {
     background: T.bg.card,
     border: `1px solid ${T.border.medium}`,
@@ -207,6 +219,62 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode }: Advance
     ? (wins.reduce((s, t) => s + Math.abs(t.returnR), 0) / wins.length) /
       (losses.reduce((s, t) => s + Math.abs(t.returnR), 0) / losses.length)
     : 0;
+
+  /* ─────────── ADVANCED (PRO/MAX) DATASETS ─────────── */
+
+  // A) Sharpe-like rolling ratio (mean / stdev) — window of 20
+  const sharpeRoll = useMemo(() => {
+    const W = 20;
+    return trades.map((_, i) => {
+      const slice = trades.slice(Math.max(0, i - W + 1), i + 1);
+      const mean = slice.reduce((s, t) => s + t.returnR, 0) / slice.length;
+      const variance = slice.reduce((s, t) => s + Math.pow(t.returnR - mean, 2), 0) / slice.length;
+      const sd = Math.sqrt(variance);
+      return { i: i + 1, sharpe: sd > 0 ? +(mean / sd).toFixed(3) : 0 };
+    });
+  }, [trades]);
+
+  // B) Underwater curve — % below all-time peak
+  const underwater = useMemo(() => {
+    let cum = 0, peak = 0;
+    return trades.map((t, i) => {
+      cum += t.pnl;
+      if (cum > peak) peak = cum;
+      const uw = peak > 0 ? -((peak - cum) / peak) * 100 : 0;
+      return { i: i + 1, uw: +uw.toFixed(2) };
+    });
+  }, [trades]);
+
+  // C) Profit-factor evolution (cumulative gross-win / gross-loss)
+  const pfEvolution = useMemo(() => {
+    let gw = 0, gl = 0;
+    return trades.map((t, i) => {
+      if (t.pnl >= 0) gw += t.pnl; else gl += Math.abs(t.pnl);
+      return { i: i + 1, pf: gl > 0 ? +(gw / gl).toFixed(3) : (gw > 0 ? 5 : 0) };
+    });
+  }, [trades]);
+
+  // D) Win-rate vs Avg-R quadrant (per coin) — strategic positioning
+  const quadrant = useMemo(() => {
+    const m: Record<string, { n: number; wins: number; r: number; pnl: number }> = {};
+    trades.forEach(t => {
+      if (!m[t.coin]) m[t.coin] = { n: 0, wins: 0, r: 0, pnl: 0 };
+      m[t.coin].n++; m[t.coin].r += t.returnR; m[t.coin].pnl += t.pnl;
+      if (t.winLoss === 'Win') m[t.coin].wins++;
+    });
+    return Object.entries(m).map(([coin, v]) => ({
+      coin,
+      wr: +((v.wins / v.n) * 100).toFixed(1),
+      avgR: +(v.r / v.n).toFixed(3),
+      n: v.n,
+      pnl: v.pnl,
+    }));
+  }, [trades]);
+
+  // E) Heat-tape (last 60 trades as a vertical strip)
+  const heatTape = useMemo(() =>
+    trades.slice(-60).map((t, i) => ({ i, r: t.returnR, win: t.winLoss === 'Win' })),
+  [trades]);
 
   /* ─────────── HELPERS ─────────── */
 
@@ -581,6 +649,116 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode }: Advance
           </div>
         </GlassCard>
       )}
+
+      {/* ═══ ADVANCED LAYER (PRO/MAX modes) ═══ */}
+      {showPro && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12, marginBottom: 12 }}>
+          <GlassCard T={T} glow={`${T.accent.purple}18`}>
+            <div style={{ fontSize: 11, color: T.accent.purple, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>● PRO · יחס שארפ מתגלגל</div>
+            <ResponsiveContainer width="100%" height={220}>
+              <LineChart data={sharpeRoll}>
+                <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+                <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
+                <Tooltip contentStyle={tt} />
+                <Line type="monotone" dataKey="sharpe" stroke={T.accent.purple} strokeWidth={2.4} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </GlassCard>
+          <GlassCard T={T} glow={`${T.accent.red}18`}>
+            <div style={{ fontSize: 11, color: T.accent.red, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>● PRO · עקומת תת-מים (Underwater)</div>
+            <ResponsiveContainer width="100%" height={220}>
+              <AreaChart data={underwater}>
+                <defs>
+                  <linearGradient id="uwG" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={T.accent.red} stopOpacity={0.04} />
+                    <stop offset="100%" stopColor={T.accent.red} stopOpacity={0.55} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+                <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} unit="%" />
+                <Tooltip contentStyle={tt} />
+                <Area type="monotone" dataKey="uw" stroke={T.accent.red} fill="url(#uwG)" strokeWidth={2} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </GlassCard>
+          <GlassCard T={T} glow={`${T.accent.green}18`}>
+            <div style={{ fontSize: 11, color: T.accent.green, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>● PRO · אבולוציית Profit Factor</div>
+            <ResponsiveContainer width="100%" height={220}>
+              <AreaChart data={pfEvolution}>
+                <defs>
+                  <linearGradient id="pfG" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={T.accent.green} stopOpacity={0.5} />
+                    <stop offset="100%" stopColor={T.accent.green} stopOpacity={0.04} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+                <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
+                <Tooltip contentStyle={tt} />
+                <Area type="monotone" dataKey="pf" stroke={T.accent.green} fill="url(#pfG)" strokeWidth={2.2} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </GlassCard>
+        </div>
+      )}
+
+      {showMax && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12, marginBottom: 12 }}>
+          <GlassCard T={T} glow={`${T.accent.cyan}22`}>
+            <div style={{ fontSize: 11, color: T.accent.cyan, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>★ MAX · רביעון אסטרטגי (WR × R)</div>
+            <ResponsiveContainer width="100%" height={260}>
+              <ScatterChart>
+                <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+                <XAxis type="number" dataKey="wr" name="ניצחונות" unit="%" domain={[0, 100]} tick={{ fill: T.text.muted, fontSize: 10 }} />
+                <YAxis type="number" dataKey="avgR" name="תוחלת R" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                <ZAxis type="number" dataKey="n" range={[60, 380]} />
+                <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} formatter={(v: any, n: any, p: any) => [v, p.payload.coin]} />
+                <Scatter data={quadrant}>
+                  {quadrant.map((d, i) => (
+                    <Cell key={i} fill={d.pnl >= 0 ? T.accent.green : T.accent.red} fillOpacity={0.75} />
+                  ))}
+                </Scatter>
+              </ScatterChart>
+            </ResponsiveContainer>
+          </GlassCard>
+          <GlassCard T={T} glow={`${T.accent.orange}22`}>
+            <div style={{ fontSize: 11, color: T.accent.orange, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>★ MAX · סרט-חום 60 עסקאות אחרונות</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(20, 1fr)', gap: 3, padding: 8 }}>
+              {heatTape.map((c, i) => {
+                const intensity = Math.min(1, Math.abs(c.r) / 3);
+                const bg = c.r >= 0
+                  ? `rgba(0,255,163,${0.15 + intensity * 0.7})`
+                  : `rgba(255,77,77,${0.15 + intensity * 0.7})`;
+                return (
+                  <div key={i} title={`R: ${c.r.toFixed(2)}`} style={{
+                    aspectRatio: '1', borderRadius: 4, background: bg,
+                    border: `1px solid ${T.border.subtle}`,
+                    boxShadow: `inset 0 0 4px ${bg}`,
+                  }} />
+                );
+              })}
+            </div>
+            <div style={{ fontSize: 10, color: T.text.muted, textAlign: 'center', marginTop: 8, fontFamily: "'JetBrains Mono', monospace" }}>
+              ירוק = רווח · אדום = הפסד · עוצמה = |R|
+            </div>
+          </GlassCard>
+        </div>
+      )}
+
+      {/* Tier badge */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+        <span style={{
+          fontSize: 9.5, padding: '3px 10px', borderRadius: 10,
+          background: showMax ? `${T.accent.cyan}18` : showPro ? `${T.accent.purple}18` : `${T.bg.tertiary}`,
+          color: showMax ? T.accent.cyan : showPro ? T.accent.purple : T.text.muted,
+          fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.12em', fontWeight: 700,
+          border: `1px solid ${showMax ? T.accent.cyan : showPro ? T.accent.purple : T.border.subtle}33`,
+        }}>
+          רמה: {showMax ? 'MAX · מחקר/אלפא' : showPro ? 'PRO · סקירה' : tier === 'minimal' ? 'BASIC · מתחיל' : 'CORE · סטנדרט'}
+        </span>
+      </div>
 
       {/* ═══ KEY OBSERVATIONS ═══ */}
       <GlassCard T={T} glow={`${T.accent.cyan}18`}>

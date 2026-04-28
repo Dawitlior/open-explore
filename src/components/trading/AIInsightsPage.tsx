@@ -224,7 +224,19 @@ const MotherboardButton: React.FC<{
 /* CHART PACKS                                                      */
 /* ──────────────────────────────────────────────────────────────── */
 
-const CHART_PACKS = ['radar+heat', 'scatter+treemap', 'monthly+rolling', 'streak+bucket'] as const;
+const CHART_PACKS = [
+  'radar+heat',
+  'scatter+treemap',
+  'monthly+rolling',
+  'streak+bucket',
+  // ──── NEW ADVANCED PACKS ─────────────────────────────────────
+  'equity+drawdown',     // pack 5: full equity curve + max-drawdown river
+  'duration+session',    // pack 6: hold-time vs R + 24h session profit ring
+  'momentum+volatility', // pack 7: rolling 10-trade win-rate + R volatility
+  'kelly+sizing',        // pack 8: Kelly-optimal sizing vs actual + risk drift
+  'efficiency+mae',      // pack 9: MAE/MFE-style efficiency cloud + regret index
+  'dna+focus',           // pack 10: spider matrix per setup + focus pareto
+] as const;
 type Pack = typeof CHART_PACKS[number];
 
 /* ──────────────────────────────────────────────────────────────── */
@@ -366,6 +378,115 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
       else b['3R+']++;
     });
     return Object.entries(b).map(([k, v]) => ({ bucket: k, count: v }));
+  }, [trades]);
+
+  /* ──── NEW DATASETS for advanced packs ──── */
+
+  const equityDrawdown = useMemo(() => {
+    let eq = 0, peak = 0;
+    return trades.map((t, i) => {
+      eq += t.pnl;
+      if (eq > peak) peak = eq;
+      const dd = peak > 0 ? ((eq - peak) / peak) * 100 : 0;
+      return { i: i + 1, equity: +eq.toFixed(2), drawdown: +dd.toFixed(2) };
+    });
+  }, [trades]);
+
+  const sessionRing = useMemo(() => {
+    const s = [
+      { name: 'אסיה', from: 0, to: 7, pnl: 0, n: 0 },
+      { name: 'לונדון', from: 7, to: 13, pnl: 0, n: 0 },
+      { name: 'ניו-יורק', from: 13, to: 20, pnl: 0, n: 0 },
+      { name: 'לילה', from: 20, to: 24, pnl: 0, n: 0 },
+    ];
+    trades.forEach(t => {
+      try {
+        const h = new Date(t.date.replace(' ', 'T')).getHours();
+        const sess = s.find(x => h >= x.from && h < x.to);
+        if (sess) { sess.pnl += t.pnl; sess.n++; }
+      } catch { /* skip */ }
+    });
+    return s.map(x => ({ name: x.name, value: Math.abs(x.pnl) || 0.01, pnl: +x.pnl.toFixed(2), n: x.n }));
+  }, [trades]);
+
+  const durationData = useMemo(() =>
+    trades.slice(0, 200).map((t, i) => ({
+      idx: i + 1,
+      r: t.returnR,
+      size: Math.max(2, Math.abs(t.risk) || 2),
+      win: t.winLoss === 'Win',
+    })), [trades]);
+
+  const momentumData = useMemo(() => {
+    const W = 10;
+    return trades.map((_, i) => {
+      const slice = trades.slice(Math.max(0, i - W + 1), i + 1);
+      const wins = slice.filter(x => x.winLoss === 'Win').length;
+      const wr = (wins / slice.length) * 100;
+      const mean = slice.reduce((s, x) => s + x.returnR, 0) / slice.length;
+      const variance = slice.reduce((s, x) => s + Math.pow(x.returnR - mean, 2), 0) / slice.length;
+      return { i: i + 1, wr: +wr.toFixed(1), vol: +Math.sqrt(variance).toFixed(3) };
+    });
+  }, [trades]);
+
+  const kellyData = useMemo(() => {
+    const W = 20;
+    return trades.map((_, i) => {
+      const slice = trades.slice(Math.max(0, i - W + 1), i + 1);
+      const wins = slice.filter(x => x.winLoss === 'Win');
+      const losses = slice.filter(x => x.winLoss === 'Loss');
+      const wr = wins.length / Math.max(slice.length, 1);
+      const avgW = wins.length ? wins.reduce((s, x) => s + x.returnR, 0) / wins.length : 1;
+      const avgL = losses.length ? Math.abs(losses.reduce((s, x) => s + x.returnR, 0) / losses.length) : 1;
+      const rr = avgW / Math.max(avgL, 0.001);
+      const kelly = Math.max(0, Math.min(0.25, (wr - (1 - wr) / Math.max(rr, 0.01))));
+      const actual = (slice.reduce((s, x) => s + Math.abs(x.risk || 0), 0) / Math.max(slice.length, 1)) / 100;
+      return { i: i + 1, kelly: +(kelly * 100).toFixed(2), actual: +(actual * 100).toFixed(2) };
+    });
+  }, [trades]);
+
+  const efficiencyCloud = useMemo(() =>
+    trades.map((t, i) => ({
+      i,
+      eff: Math.max(-5, Math.min(5, t.returnR)),
+      pnl: t.pnl,
+      risk: Math.abs(t.risk) || 1,
+      win: t.winLoss === 'Win',
+    })), [trades]);
+
+  const setupSpider = useMemo(() => {
+    const map: Record<string, { pnl: number; wins: number; n: number; r: number }> = {};
+    trades.forEach(t => {
+      const k = t.coin || 'OTHER';
+      if (!map[k]) map[k] = { pnl: 0, wins: 0, n: 0, r: 0 };
+      map[k].pnl += t.pnl; map[k].n++; map[k].r += t.returnR;
+      if (t.winLoss === 'Win') map[k].wins++;
+    });
+    const arr = Object.entries(map).map(([coin, v]) => ({
+      coin, pnl: v.pnl, wr: (v.wins / v.n) * 100, exp: v.r / v.n, n: v.n,
+    })).sort((a, b) => b.pnl - a.pnl).slice(0, 6);
+    if (arr.length === 0) return [];
+    const maxP = Math.max(...arr.map(x => Math.abs(x.pnl)), 1);
+    const maxN = Math.max(...arr.map(x => x.n), 1);
+    return arr.map(x => ({
+      axis: x.coin,
+      רווח: Math.max(0, Math.round((x.pnl / maxP) * 100)),
+      ניצחונות: Math.round(x.wr),
+      תוחלת: Math.max(0, Math.min(100, Math.round((x.exp + 1) * 50))),
+      נפח: Math.round((x.n / maxN) * 100),
+    }));
+  }, [trades]);
+
+  const focusPareto = useMemo(() => {
+    const map: Record<string, number> = {};
+    trades.forEach(t => { map[t.coin] = (map[t.coin] || 0) + t.pnl; });
+    const arr = Object.entries(map).map(([k, v]) => ({ k, pnl: v })).sort((a, b) => Math.abs(b.pnl) - Math.abs(a.pnl)).slice(0, 10);
+    let cum = 0;
+    const total = arr.reduce((s, x) => s + Math.abs(x.pnl), 0) || 1;
+    return arr.map(x => {
+      cum += Math.abs(x.pnl);
+      return { name: x.k, pnl: +x.pnl.toFixed(2), cum: +((cum / total) * 100).toFixed(1) };
+    });
   }, [trades]);
 
   /* ──── EMPTY STATE ──── */
@@ -603,6 +724,228 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                         </RadialBar>
                         <Tooltip contentStyle={tt} />
                       </RadialBarChart>
+                    </ResponsiveContainer>
+                  </GlassCard>
+                </>
+              )}
+
+              {/* PACK 5 — Equity curve + Drawdown river */}
+              {pack === 'equity+drawdown' && (
+                <>
+                  <GlassCard T={T}>
+                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>עקומת הון מצטברת</div>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <AreaChart data={equityDrawdown}>
+                        <defs>
+                          <linearGradient id="eqG" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={T.accent.green} stopOpacity={0.55} />
+                            <stop offset="100%" stopColor={T.accent.green} stopOpacity={0.04} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+                        <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                        <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
+                        <Tooltip contentStyle={tt} />
+                        <Area type="monotone" dataKey="equity" stroke={T.accent.green} fill="url(#eqG)" strokeWidth={2.4} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </GlassCard>
+                  <GlassCard T={T}>
+                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>נהר ירידות (Drawdown %)</div>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <AreaChart data={equityDrawdown}>
+                        <defs>
+                          <linearGradient id="ddG" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={T.accent.red} stopOpacity={0.05} />
+                            <stop offset="100%" stopColor={T.accent.red} stopOpacity={0.55} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+                        <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                        <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
+                        <Tooltip contentStyle={tt} />
+                        <Area type="monotone" dataKey="drawdown" stroke={T.accent.red} fill="url(#ddG)" strokeWidth={2} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </GlassCard>
+                </>
+              )}
+
+              {/* PACK 6 — Duration vs R + Session ring */}
+              {pack === 'duration+session' && (
+                <>
+                  <GlassCard T={T}>
+                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>משך החזקה מול תשואה (R)</div>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <ScatterChart>
+                        <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+                        <XAxis type="number" dataKey="idx" name="עסקה" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                        <YAxis type="number" dataKey="r" name="R" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                        <ZAxis type="number" dataKey="size" range={[30, 320]} />
+                        <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} />
+                        <Scatter data={durationData}>
+                          {durationData.map((d, i) => (
+                            <Cell key={i} fill={d.win ? T.accent.green : T.accent.red} fillOpacity={0.7} />
+                          ))}
+                        </Scatter>
+                      </ScatterChart>
+                    </ResponsiveContainer>
+                  </GlassCard>
+                  <GlassCard T={T}>
+                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>טבעת סשנים גלובליים</div>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <RadialBarChart innerRadius="35%" outerRadius="100%" data={sessionRing} startAngle={90} endAngle={-270}>
+                        <RadialBar background dataKey="value">
+                          {sessionRing.map((s, i) => (
+                            <Cell key={i} fill={s.pnl >= 0 ? T.accent.green : T.accent.red} fillOpacity={0.85} />
+                          ))}
+                        </RadialBar>
+                        <Tooltip contentStyle={tt} formatter={(v: any, _n: any, p: any) => [`${p.payload.pnl >= 0 ? '+' : ''}$${p.payload.pnl} · ${p.payload.n} עסקאות`, p.payload.name]} />
+                      </RadialBarChart>
+                    </ResponsiveContainer>
+                  </GlassCard>
+                </>
+              )}
+
+              {/* PACK 7 — Momentum win-rate + Volatility */}
+              {pack === 'momentum+volatility' && (
+                <>
+                  <GlassCard T={T}>
+                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>מומנטום אחוז ניצחונות (חלון 10)</div>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <LineChart data={momentumData}>
+                        <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+                        <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                        <YAxis domain={[0, 100]} tick={{ fill: T.text.muted, fontSize: 10 }} unit="%" />
+                        <Tooltip contentStyle={tt} />
+                        <Line type="monotone" dataKey="wr" stroke={T.accent.cyan} strokeWidth={2.5} dot={false} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </GlassCard>
+                  <GlassCard T={T}>
+                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>תנודתיות תשואה (סטיית-תקן R)</div>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <AreaChart data={momentumData}>
+                        <defs>
+                          <linearGradient id="volG" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={T.accent.orange} stopOpacity={0.5} />
+                            <stop offset="100%" stopColor={T.accent.orange} stopOpacity={0.05} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+                        <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                        <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
+                        <Tooltip contentStyle={tt} />
+                        <Area type="monotone" dataKey="vol" stroke={T.accent.orange} fill="url(#volG)" strokeWidth={2} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </GlassCard>
+                </>
+              )}
+
+              {/* PACK 8 — Kelly optimal vs Actual sizing */}
+              {pack === 'kelly+sizing' && (
+                <>
+                  <GlassCard T={T}>
+                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>Kelly אופטימלי מול גודל פוזיציה בפועל (%)</div>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <ComposedChart data={kellyData}>
+                        <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+                        <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                        <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} unit="%" />
+                        <Tooltip contentStyle={tt} />
+                        <Area type="monotone" dataKey="kelly" stroke={T.accent.purple} fill={T.accent.purple} fillOpacity={0.18} strokeWidth={2} />
+                        <Line type="monotone" dataKey="actual" stroke={T.accent.cyan} strokeWidth={2.2} dot={false} />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  </GlassCard>
+                  <GlassCard T={T}>
+                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>סחיפת סיכון לאורך זמן</div>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <LineChart data={kellyData}>
+                        <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+                        <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                        <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} unit="%" />
+                        <Tooltip contentStyle={tt} />
+                        <Line type="monotone" dataKey="actual" stroke={T.accent.red} strokeWidth={2} dot={false} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </GlassCard>
+                </>
+              )}
+
+              {/* PACK 9 — Efficiency cloud + R distribution */}
+              {pack === 'efficiency+mae' && (
+                <>
+                  <GlassCard T={T}>
+                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>ענן יעילות (R לעסקה)</div>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <ScatterChart>
+                        <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+                        <XAxis type="number" dataKey="i" name="עסקה" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                        <YAxis type="number" dataKey="eff" name="R" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                        <ZAxis type="number" dataKey="risk" range={[40, 300]} />
+                        <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} />
+                        <Scatter data={efficiencyCloud}>
+                          {efficiencyCloud.map((d, i) => (
+                            <Cell key={i} fill={d.win ? T.accent.green : T.accent.red} fillOpacity={0.65} />
+                          ))}
+                        </Scatter>
+                      </ScatterChart>
+                    </ResponsiveContainer>
+                  </GlassCard>
+                  <GlassCard T={T}>
+                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>מדד חרטה — צבירת הפסדים נמנעים</div>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <AreaChart data={equityDrawdown.map(d => ({ i: d.i, regret: Math.abs(Math.min(0, d.drawdown)) }))}>
+                        <defs>
+                          <linearGradient id="rgG" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={T.accent.orange} stopOpacity={0.55} />
+                            <stop offset="100%" stopColor={T.accent.orange} stopOpacity={0.04} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+                        <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                        <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
+                        <Tooltip contentStyle={tt} />
+                        <Area type="monotone" dataKey="regret" stroke={T.accent.orange} fill="url(#rgG)" strokeWidth={2} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </GlassCard>
+                </>
+              )}
+
+              {/* PACK 10 — Setup spider + Pareto focus */}
+              {pack === 'dna+focus' && (
+                <>
+                  <GlassCard T={T}>
+                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>DNA לפי נכס — 4 צירים</div>
+                    <ResponsiveContainer width="100%" height={260}>
+                      <RadarChart data={setupSpider}>
+                        <PolarGrid stroke={T.border.subtle} />
+                        <PolarAngleAxis dataKey="axis" tick={{ fill: T.text.secondary, fontSize: 10 }} />
+                        <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fill: T.text.muted, fontSize: 9 }} />
+                        <Radar dataKey="רווח" stroke={T.accent.green} fill={T.accent.green} fillOpacity={0.22} strokeWidth={1.6} />
+                        <Radar dataKey="ניצחונות" stroke={T.accent.cyan} fill={T.accent.cyan} fillOpacity={0.18} strokeWidth={1.6} />
+                        <Radar dataKey="תוחלת" stroke={T.accent.purple} fill={T.accent.purple} fillOpacity={0.18} strokeWidth={1.6} />
+                        <Tooltip contentStyle={tt} />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  </GlassCard>
+                  <GlassCard T={T}>
+                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>פוקוס פארטו — 80/20 של הרווח</div>
+                    <ResponsiveContainer width="100%" height={260}>
+                      <ComposedChart data={focusPareto}>
+                        <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+                        <XAxis dataKey="name" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                        <YAxis yAxisId="l" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                        <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tick={{ fill: T.text.muted, fontSize: 10 }} unit="%" />
+                        <Tooltip contentStyle={tt} />
+                        <Bar yAxisId="l" dataKey="pnl" radius={[4, 4, 0, 0]}>
+                          {focusPareto.map((d, i) => <Cell key={i} fill={d.pnl >= 0 ? T.accent.green : T.accent.red} fillOpacity={0.85} />)}
+                        </Bar>
+                        <Line yAxisId="r" type="monotone" dataKey="cum" stroke={T.accent.orange} strokeWidth={2.5} dot={{ fill: T.accent.orange, r: 3 }} />
+                      </ComposedChart>
                     </ResponsiveContainer>
                   </GlassCard>
                 </>

@@ -42,6 +42,8 @@ export const OrcaUXLayer = () => {
     const onMove = (e: PointerEvent) => {
       const target = (e.target as HTMLElement | null)?.closest?.('.orca-glass-hover') as HTMLElement | null;
       if (!target) return;
+      // Disable magnetic tilt inside the Journal — user requested no hover transform there.
+      if (target.closest('[data-journal-root]') || target.closest('.j-no-tilt')) return;
       const r = target.getBoundingClientRect();
       const x = e.clientX - r.left;
       const y = e.clientY - r.top;

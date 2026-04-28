@@ -1171,6 +1171,7 @@ const Index = () => {
         T={T}
         isRTL={isRTL}
         isAlpha={isAlpha}
+        operatingMode={opMode}
         trades={trades}
         stats={stats}
         privacyMode={settings.privacyMode}
@@ -1230,7 +1231,7 @@ const Index = () => {
       <DimensionController
         activeDimension="journal"
         orcaUI={<div />}
-        journalUI={<JournalDimension onReturn={() => setActiveDimension('orca')} isRTL={isRTL} orcaTrades={trades} onAddOrcaTrade={addTrade} />}
+        journalUI={<JournalDimension onReturn={() => setActiveDimension('orca')} isRTL={isRTL} orcaTrades={trades} onAddOrcaTrade={addTrade} onUpdateOrcaTrade={updateTrade} />}
       />
     );
   }

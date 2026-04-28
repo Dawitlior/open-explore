@@ -339,16 +339,25 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
     reader.onload = (e) => {
       try {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const wb = XLSX.read(data, { type: 'array', cellDates: false, raw: true });
+        // CRITICAL: Read with cellDates:true so xlsx parses date cells into JS Date
+        // objects using the workbook's stored format (NOT US locale heuristics).
+        // For text cells like "27/02/2026 13:34" we still receive raw strings —
+        // these are then run through parseFlexibleDate which strictly applies DD/MM.
+        const wb = XLSX.read(data, { type: 'array', cellDates: true, dateNF: 'dd/mm/yyyy hh:mm', raw: false });
         const ws = wb.Sheets[wb.SheetNames[0]];
         if (!ws) { resolve({ trades: [], errors: ['Empty spreadsheet'], skipped: 0, imported: 0 }); return; }
 
-        // Find the header row dynamically
+        // Force any remaining numeric/serial date cells whose header looks like a
+        // date column to be treated as Date objects (defense in depth for files
+        // where xlsx fails to recognize the format).
         const headerRowIdx = findHeaderRow(ws);
 
-        // Re-parse with the correct header row
+        // Re-parse with the correct header row. raw:false ensures we get
+        // formatted strings (e.g. "27/02/2026 13:34") instead of US-locale
+        // auto-conversions that mangle Feb dates.
         const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, {
-          raw: true,
+          raw: false,
+          dateNF: 'dd/mm/yyyy hh:mm',
           range: headerRowIdx,
         });
 
