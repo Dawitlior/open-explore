@@ -224,7 +224,19 @@ const MotherboardButton: React.FC<{
 /* CHART PACKS                                                      */
 /* ──────────────────────────────────────────────────────────────── */
 
-const CHART_PACKS = ['radar+heat', 'scatter+treemap', 'monthly+rolling', 'streak+bucket'] as const;
+const CHART_PACKS = [
+  'radar+heat',
+  'scatter+treemap',
+  'monthly+rolling',
+  'streak+bucket',
+  // ──── NEW ADVANCED PACKS ─────────────────────────────────────
+  'equity+drawdown',     // pack 5: full equity curve + max-drawdown river
+  'duration+session',    // pack 6: hold-time vs R + 24h session profit ring
+  'momentum+volatility', // pack 7: rolling 10-trade win-rate + R volatility
+  'kelly+sizing',        // pack 8: Kelly-optimal sizing vs actual + risk drift
+  'efficiency+mae',      // pack 9: MAE/MFE-style efficiency cloud + regret index
+  'dna+focus',           // pack 10: spider matrix per setup + focus pareto
+] as const;
 type Pack = typeof CHART_PACKS[number];
 
 /* ──────────────────────────────────────────────────────────────── */
