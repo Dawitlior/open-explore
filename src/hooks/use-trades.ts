@@ -96,12 +96,7 @@ export function useTrades() {
   }, [trades, recalcBalances]);
 
   const importTrades = useCallback(async (newTrades: Trade[]) => {
-    const toMs = (date: string) => {
-      const ms = new Date(String(date).replace(' ', 'T')).getTime();
-      return Number.isFinite(ms) ? ms : Number.MAX_SAFE_INTEGER;
-    };
-    const sanitized = sanitizeTrades(newTrades)
-      .sort((a, b) => toMs(a.date) - toMs(b.date) || a.id - b.id);
+    const sanitized = sanitizeTrades(newTrades);
     const rebalanced = recalcBalances(sanitized.map((t, i) => ({ ...t, id: i + 1 })));
     // Clear only trades (not settings) for deterministic state.
     // Open without specifying a version to avoid VersionError when the DB
