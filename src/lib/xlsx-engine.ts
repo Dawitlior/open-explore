@@ -283,14 +283,33 @@ function findHeaderRow(sheet: XLSX.WorkSheet): number {
     let score = 0;
     for (let c = range.s.c; c <= range.e.c; c++) {
       const cell = sheet[XLSX.utils.encode_cell({ r, c })];
-      if (cell && typeof cell.v === 'string') {
-        const field = mapHeaderToField(cell.v);
+      const header = typeof cell?.w === 'string' && cell.w.trim() ? cell.w : cell?.v;
+      if (typeof header === 'string') {
+        const field = mapHeaderToField(header);
         if (field) score++;
       }
     }
     if (score > bestScore) { bestScore = score; bestRow = r; }
   }
   return bestRow;
+}
+
+function readCellValue(cell: XLSX.CellObject | undefined, preferFormattedText = false): unknown {
+  if (!cell) return undefined;
+  if (preferFormattedText && typeof cell.w === 'string' && cell.w.trim()) return cell.w.trim();
+  if (cell.v instanceof Date) return cell.v;
+  if (cell.t === 'd' && cell.v) return cell.v;
+  if (cell.t === 'n' && typeof cell.v === 'number') return cell.v;
+  if (typeof cell.w === 'string' && cell.w.trim()) return cell.w.trim();
+  return cell.v;
+}
+
+function sortTradesChronologically(trades: Trade[]): Trade[] {
+  const toMs = (date: string) => {
+    const ms = new Date(String(date).replace(' ', 'T')).getTime();
+    return Number.isFinite(ms) ? ms : Number.MAX_SAFE_INTEGER;
+  };
+  return [...trades].sort((a, b) => toMs(a.date) - toMs(b.date) || a.id - b.id);
 }
 
 // ═══════════════════════════════════════════════════
