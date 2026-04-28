@@ -1171,6 +1171,7 @@ const Index = () => {
         T={T}
         isRTL={isRTL}
         isAlpha={isAlpha}
+        operatingMode={opMode}
         trades={trades}
         stats={stats}
         privacyMode={settings.privacyMode}
