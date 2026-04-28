@@ -3344,29 +3344,57 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
 // ═══════════════════════════════════════════════════════════════
 // EOD FORM
 // ═══════════════════════════════════════════════════════════════
-const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk, onInfoClick, onAddOrcaTrade }: any) => {
+const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk, onInfoClick, onAddOrcaTrade, onUpdateOrcaTrade }: any) => {
   const f = t.f;
   const U = (k: string) => (v: any) => upd({ [k]: v });
   const dp = sumPnl(day), dw = numWins(day);
+
+  // Build a "snapshot" of an Orca trade derived from a Journal trade row.
+  const buildOrcaPayload = (jtr: any): Omit<Trade, 'id' | 'balance'> => {
+    const dateStr = (day.date || new Date().toISOString().slice(0, 10)) + ' 00:00';
+    const dayLabel = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date((day.date || '').replace(' ', 'T')).getDay()] || 'Mon';
+    const entry = parseFloat(jtr.entry) || 0;
+    const exit = parseFloat(jtr.exit) || 0;
+    const size = parseFloat(jtr.size) || 0;
+    const pnl = parseFloat(jtr.pnl) || 0;
+    const rr = parseFloat(jtr.rr) || 0;
+    const winLoss: Trade['winLoss'] = pnl > 0.05 ? 'Win' : pnl < -0.05 ? 'Loss' : 'Break Even';
+    const direction: Trade['direction'] = (jtr.side === 'SHORT' || jtr.side === 'Short') ? 'Short' : 'Long';
+    return {
+      date: dateStr, day: dayLabel,
+      coin: (jtr.pair || 'JOURNAL').toString().toUpperCase().slice(0, 12),
+      direction, orderType: 'Market',
+      entry, stopLoss: 0, exit, returnR: rr,
+      winLoss, risk: Math.abs(pnl / Math.max(rr || 1, 1)) || 0,
+      expectedLoss: 0, pnl, deviation: 0,
+      positionSize: size, leverage: 1, riskPct: 0, rules: true,
+      // Tag with the Journal trade id so we can find & update the mirror.
+      comments: `__JID:${jtr.id}__ ${jtr.notes || ''}`.trim(),
+    };
+  };
+
   const addTrade = () => {
     const newJTrade = { id: Date.now(), pair: '', side: 'LONG', entry: '', exit: '', size: '', pnl: '', rr: '', notes: '' };
     upd({ trades: [...(day.trades || []), newJTrade] });
-    // Mirror to Orca: create a corresponding Orca trade so it shows up in
-    // dashboard, calendar, analytics, risk and psychology pages.
     if (typeof onAddOrcaTrade === 'function') {
-      try {
-        const dateStr = (day.date || new Date().toISOString().slice(0, 10)) + ' 00:00';
-        const dayLabel = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date((day.date || '').replace(' ', 'T')).getDay()] || 'Mon';
-        onAddOrcaTrade({
-          date: dateStr, day: dayLabel, coin: 'JOURNAL', direction: 'Long',
-          orderType: 'Market', entry: 0, stopLoss: 0, exit: 0, returnR: 0,
-          winLoss: 'Break Even', risk: 0, expectedLoss: 0, pnl: 0, deviation: 0,
-          positionSize: 0, leverage: 1, riskPct: 0, rules: true,
-          comments: dir === 'rtl' ? 'נוסף מהיומן האישי · יש לעדכן פרטים' : 'Added from personal Journal · please fill details',
-        });
-      } catch { /* silent */ }
+      try { onAddOrcaTrade(buildOrcaPayload(newJTrade)); } catch { /* silent */ }
     }
   };
+
+  // Sync a single journal-trade edit to its linked Orca trade (or create one if missing).
+  const syncRowToOrca = (jtr: any) => {
+    const tag = `__JID:${jtr.id}__`;
+    const linked = (orcaTrades || []).find((o: Trade) => typeof o.comments === 'string' && o.comments.includes(tag));
+    if (linked && typeof onUpdateOrcaTrade === 'function') {
+      try {
+        const payload = buildOrcaPayload(jtr);
+        onUpdateOrcaTrade({ ...linked, ...payload });
+      } catch { /* silent */ }
+    } else if (!linked && typeof onAddOrcaTrade === 'function') {
+      try { onAddOrcaTrade(buildOrcaPayload(jtr)); } catch { /* silent */ }
+    }
+  };
+
   const fullLocked = isDayFullyLocked(day);
   const sLocks = day.sectionLocks || {};
   const lockSec = (k: string) => upd({ sectionLocks: { ...sLocks, [k]: true } });
