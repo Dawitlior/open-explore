@@ -728,9 +728,7 @@ const Sec = ({ title, icon, accent = '#5AA9FF', children, open: initOpen = true,
   const [open, setOpen] = useState(initOpen);
   const isLocked = locked || fullLocked;
   return (
-    <div style={{ background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 14, marginBottom: 12, overflow: 'hidden', transition: 'box-shadow .25s, transform .2s', boxShadow: open ? `0 0 20px ${accent}08` : 'none' }}
-      onMouseEnter={e => { if (!open) (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
-      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}>
+    <div style={{ background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 14, marginBottom: 12, overflow: 'hidden', transition: 'box-shadow .25s', boxShadow: open ? `0 0 20px ${accent}08` : 'none' }}>
       <div onClick={() => setOpen((o: boolean) => !o)}
         style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '13px 18px', cursor: 'pointer', userSelect: 'none' as const, transition: 'background .2s', background: open ? `linear-gradient(90deg,${accent}08,transparent 60%)` : 'transparent' }}>
         <span style={{ fontSize: 14, transition: 'transform .3s', transform: open ? 'scale(1.1)' : 'scale(1)' }}>{icon}</span>
@@ -3087,11 +3085,11 @@ const CalendarView = ({ days, dir, th, t, risk, onSelectDay }: { days: JournalDa
               style={{
                 aspectRatio: '1', borderRadius: 10, background: color, border: `1.5px solid ${borderColor}`,
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                cursor: jDay ? 'pointer' : 'default', transition: 'all .25s', position: 'relative',
+                cursor: jDay ? 'pointer' : 'default', transition: 'border-color .25s, box-shadow .25s, background .25s', position: 'relative',
                 boxShadow: isToday ? '0 0 12px rgba(90,169,255,0.3)' : dayBreached ? '0 0 10px rgba(255,77,77,0.2)' : 'none',
               }}
-              onMouseEnter={e => { if (jDay) { (e.currentTarget as HTMLElement).style.transform = 'scale(1.08)'; (e.currentTarget as HTMLElement).style.zIndex = '10'; } }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; (e.currentTarget as HTMLElement).style.zIndex = '1'; }}>
+              onMouseEnter={e => { if (jDay) (e.currentTarget as HTMLElement).style.zIndex = '10'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.zIndex = '1'; }}>
               <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 13, fontWeight: isToday ? 800 : 600, color: isToday ? '#5AA9FF' : hasTrades ? th.tx : th.tx3 }}>{dayNum}</span>
               {hasTrades && (
                 <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8.5, fontWeight: 700, color: pnl >= 0 ? '#00FFA3' : '#FF4D4D', marginTop: 1 }}>
