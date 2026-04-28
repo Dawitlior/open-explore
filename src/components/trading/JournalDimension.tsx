@@ -3752,9 +3752,11 @@ interface JournalDimensionProps {
   orcaTrades: Trade[];
   /** Optional bridge: when set, every new Journal trade also creates an Orca trade. */
   onAddOrcaTrade?: (trade: Omit<Trade, 'id' | 'balance'>) => Promise<unknown> | void;
+  /** Optional bridge: when set, journal trade edits update the linked Orca trade. */
+  onUpdateOrcaTrade?: (trade: Trade) => Promise<unknown> | void;
 }
 
-export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade }: JournalDimensionProps) => {
+export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, onUpdateOrcaTrade }: JournalDimensionProps) => {
   const [lang, setLang] = useState(isRTL ? 'he' : 'en');
   const [days, setDays] = useState<JournalDay[]>(() => {
     const d = makeDay(isRTL ? 'he' : 'en'); d.dayNum = '1'; d.weekNum = '1';
