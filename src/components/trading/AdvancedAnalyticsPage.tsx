@@ -220,6 +220,62 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
       (losses.reduce((s, t) => s + Math.abs(t.returnR), 0) / losses.length)
     : 0;
 
+  /* ─────────── ADVANCED (PRO/MAX) DATASETS ─────────── */
+
+  // A) Sharpe-like rolling ratio (mean / stdev) — window of 20
+  const sharpeRoll = useMemo(() => {
+    const W = 20;
+    return trades.map((_, i) => {
+      const slice = trades.slice(Math.max(0, i - W + 1), i + 1);
+      const mean = slice.reduce((s, t) => s + t.returnR, 0) / slice.length;
+      const variance = slice.reduce((s, t) => s + Math.pow(t.returnR - mean, 2), 0) / slice.length;
+      const sd = Math.sqrt(variance);
+      return { i: i + 1, sharpe: sd > 0 ? +(mean / sd).toFixed(3) : 0 };
+    });
+  }, [trades]);
+
+  // B) Underwater curve — % below all-time peak
+  const underwater = useMemo(() => {
+    let cum = 0, peak = 0;
+    return trades.map((t, i) => {
+      cum += t.pnl;
+      if (cum > peak) peak = cum;
+      const uw = peak > 0 ? -((peak - cum) / peak) * 100 : 0;
+      return { i: i + 1, uw: +uw.toFixed(2) };
+    });
+  }, [trades]);
+
+  // C) Profit-factor evolution (cumulative gross-win / gross-loss)
+  const pfEvolution = useMemo(() => {
+    let gw = 0, gl = 0;
+    return trades.map((t, i) => {
+      if (t.pnl >= 0) gw += t.pnl; else gl += Math.abs(t.pnl);
+      return { i: i + 1, pf: gl > 0 ? +(gw / gl).toFixed(3) : (gw > 0 ? 5 : 0) };
+    });
+  }, [trades]);
+
+  // D) Win-rate vs Avg-R quadrant (per coin) — strategic positioning
+  const quadrant = useMemo(() => {
+    const m: Record<string, { n: number; wins: number; r: number; pnl: number }> = {};
+    trades.forEach(t => {
+      if (!m[t.coin]) m[t.coin] = { n: 0, wins: 0, r: 0, pnl: 0 };
+      m[t.coin].n++; m[t.coin].r += t.returnR; m[t.coin].pnl += t.pnl;
+      if (t.winLoss === 'Win') m[t.coin].wins++;
+    });
+    return Object.entries(m).map(([coin, v]) => ({
+      coin,
+      wr: +((v.wins / v.n) * 100).toFixed(1),
+      avgR: +(v.r / v.n).toFixed(3),
+      n: v.n,
+      pnl: v.pnl,
+    }));
+  }, [trades]);
+
+  // E) Heat-tape (last 60 trades as a vertical strip)
+  const heatTape = useMemo(() =>
+    trades.slice(-60).map((t, i) => ({ i, r: t.returnR, win: t.winLoss === 'Win' })),
+  [trades]);
+
   /* ─────────── HELPERS ─────────── */
 
   const PV = ({ children }: { children: React.ReactNode }) => (
