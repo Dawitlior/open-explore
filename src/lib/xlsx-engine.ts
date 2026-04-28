@@ -400,7 +400,6 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
         const trades: Trade[] = [];
         const errors: string[] = [];
         let skipped = 0;
-        let lastValidDate: string | null = null;
 
         jsonData.forEach((row, idx) => {
           try {
@@ -426,21 +425,21 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
               }
             }
 
-            // Parse date — if missing/invalid, carry forward last valid date or use today
+            // Parse date strictly. Do NOT duplicate/carry-forward dates: an invalid date row
+            // must be skipped so the calendar never fills gaps with repeated dates.
             if (mapped.date !== undefined && mapped.date !== null && mapped.date !== '') {
               const parsed = parseFlexibleDate(mapped.date);
               if (parsed) {
                 mapped.date = parsed;
-                lastValidDate = parsed;
-              } else if (lastValidDate) {
-                mapped.date = lastValidDate;
               } else {
-                mapped.date = formatDate(new Date());
+                skipped++;
+                if (errors.length < 10) errors.push(`Row ${idx + headerRowIdx + 2}: Invalid date "${String(mapped.date)}"`);
+                return;
               }
-            } else if (lastValidDate) {
-              mapped.date = lastValidDate;
             } else {
-              mapped.date = formatDate(new Date());
+              skipped++;
+              if (errors.length < 10) errors.push(`Row ${idx + headerRowIdx + 2}: Missing date`);
+              return;
             }
 
             // Direction normalization
@@ -494,7 +493,8 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
           }
         });
 
-        resolve({ trades, errors, skipped, imported: trades.length });
+        const sortedTrades = sortTradesChronologically(trades).map((t, i) => ({ ...t, id: i + 1 }));
+        resolve({ trades: sortedTrades, errors, skipped, imported: sortedTrades.length });
       } catch (err) {
         reject(err);
       }
