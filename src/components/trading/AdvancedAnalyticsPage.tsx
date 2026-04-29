@@ -391,7 +391,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
       </GlassCard>}
 
       {/* ═══ ROW: R Distribution + Direction Radial ═══ */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12, marginBottom: 16 }}>
+      {showCore && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12, marginBottom: 16 }}>
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>התפלגות R לפי טווח</div>
           <ResponsiveContainer width="100%" height={230}>
@@ -430,7 +430,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
             ))}
           </div>
         </GlassCard>
-      </div>
+      </div>}
 
       {/* ═══ DAY × HOUR MATRIX ═══ */}
       {showMax && <GlassCard T={T} style={{ marginBottom: 16 }}>
@@ -591,7 +591,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
       </div>
 
       {/* ═══ STREAK LADDER ═══ */}
-      <GlassCard T={T} style={{ marginBottom: 16 }}>
+      {showPro && <GlassCard T={T} style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>סולם רצפים</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
           {streaks.map((s, i) => (
@@ -614,10 +614,10 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
             </div>
           ))}
         </div>
-      </GlassCard>
+      </GlassCard>}
 
       {/* ═══ MONTHLY DETAIL LIST ═══ */}
-      {stats.monthlyPerf && stats.monthlyPerf.length > 0 && (
+      {showPro && stats.monthlyPerf && stats.monthlyPerf.length > 0 && (
         <GlassCard T={T} style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>פירוט ביצועים חודשיים</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
