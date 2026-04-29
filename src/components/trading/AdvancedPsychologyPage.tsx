@@ -38,6 +38,14 @@ const SectionHeader = ({ T, label, accent, isRTL }: { T: TradingTheme; label: st
 
 export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'live', trades, stats, onExplainClick }: AdvancedPsychologyPageProps) => {
   const [diagnosisOpen, setDiagnosisOpen] = useState(false);
+  const [diagLoading, setDiagLoading] = useState(false);
+  const MIN_DIAG_TRADES = 8;
+  const enoughForDiag = trades.length >= MIN_DIAG_TRADES;
+  const startDiagnosis = () => {
+    if (!enoughForDiag) { setDiagnosisOpen(true); return; } // popup will show insufficient-data state
+    setDiagLoading(true);
+    setTimeout(() => { setDiagLoading(false); setDiagnosisOpen(true); }, 1500);
+  };
   // ─── Composition matrix: Standard/Alpha × Beginner/Live/Review/Research ───
   const isBeginner = operatingMode === 'beginner';
   const isLive     = operatingMode === 'live';
@@ -380,10 +388,68 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
           {(isAlpha ? (isRTL ? 'אלפא · ' : 'ALPHA · ') : (isRTL ? 'סטנדרט · ' : 'STANDARD · ')) + (isRTL ? modeMeta.he : modeMeta.en).toUpperCase()}
         </div>
         <div style={{ fontSize: 11, color: T.text.secondary, flex: 1 }}>{isRTL ? modeMeta.sub.he : modeMeta.sub.en}</div>
-        <button onClick={() => setDiagnosisOpen(true)} style={{ padding: '9px 16px', borderRadius: 10, border: `1px solid ${T.accent.cyan}55`, background: `linear-gradient(135deg, ${T.accent.cyan}22, ${T.accent.purple}18)`, color: T.accent.cyan, fontSize: 12, fontWeight: 800, cursor: 'pointer', boxShadow: `0 0 22px ${T.accent.cyan}18` }}>
-          {isRTL ? 'אבחן אותי' : 'Diagnose Me'}
+        <button
+          onClick={startDiagnosis}
+          disabled={diagLoading}
+          style={{
+            position: 'relative', overflow: 'hidden',
+            padding: '12px 22px 12px 18px', borderRadius: 14,
+            border: `1px solid ${T.accent.cyan}66`,
+            background: `linear-gradient(135deg, ${T.accent.cyan}1f, ${T.accent.purple}22 60%, ${T.accent.cyan}1a)`,
+            color: T.accent.cyan, fontSize: 13, fontWeight: 900, cursor: diagLoading ? 'wait' : 'pointer',
+            boxShadow: `0 0 28px ${T.accent.cyan}33, inset 0 0 18px ${T.accent.cyan}10`,
+            display: 'inline-flex', alignItems: 'center', gap: 10, letterSpacing: '0.04em',
+          }}
+        >
+          {/* Motherboard glyph */}
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ filter: `drop-shadow(0 0 4px ${T.accent.cyan})` }}>
+            <rect x="6" y="6" width="12" height="12" rx="2" stroke={T.accent.cyan} strokeWidth="1.4" />
+            <rect x="9.5" y="9.5" width="5" height="5" rx="1" fill={T.accent.cyan} fillOpacity="0.35" stroke={T.accent.cyan} strokeWidth="1" />
+            {[3, 7, 11, 15, 19].map(y => <line key={'l' + y} x1="2" y1={y} x2="6" y2={y} stroke={T.accent.cyan} strokeWidth="1" opacity="0.7" />)}
+            {[3, 7, 11, 15, 19].map(y => <line key={'r' + y} x1="18" y1={y} x2="22" y2={y} stroke={T.accent.cyan} strokeWidth="1" opacity="0.7" />)}
+            {[5, 9, 13, 17].map(x => <line key={'t' + x} x1={x} y1="2" x2={x} y2="6" stroke={T.accent.cyan} strokeWidth="1" opacity="0.7" />)}
+            {[5, 9, 13, 17].map(x => <line key={'b' + x} x1={x} y1="18" x2={x} y2="22" stroke={T.accent.cyan} strokeWidth="1" opacity="0.7" />)}
+          </svg>
+          <span>{diagLoading ? (isRTL ? 'מאבחן...' : 'Diagnosing...') : (isRTL ? 'אבחן אותי' : 'Diagnose Me')}</span>
+          {/* Shimmer sweep */}
+          <span style={{ position: 'absolute', inset: 0, background: `linear-gradient(110deg, transparent 35%, ${T.accent.cyan}55 50%, transparent 65%)`, backgroundSize: '200% 100%', animation: diagLoading ? 'none' : 'shimmer 3.4s ease-in-out infinite', pointerEvents: 'none' }} />
         </button>
       </div>
+
+      {/* Cinematic loading overlay — motherboard pulse */}
+      {diagLoading && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1100, background: 'rgba(2,8,20,0.86)', backdropFilter: 'blur(18px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 22 }}>
+          <svg width="220" height="220" viewBox="0 0 220 220" style={{ filter: `drop-shadow(0 0 24px ${T.accent.cyan})` }}>
+            <defs>
+              <linearGradient id="diag-trace" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor={T.accent.cyan} stopOpacity="0" />
+                <stop offset="50%" stopColor={T.accent.cyan} stopOpacity="1" />
+                <stop offset="100%" stopColor={T.accent.cyan} stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            <rect x="20" y="20" width="180" height="180" rx="18" stroke={`${T.accent.cyan}55`} strokeWidth="1.4" fill="none" />
+            <rect x="78" y="78" width="64" height="64" rx="8" stroke={T.accent.cyan} strokeWidth="1.6" fill={`${T.accent.cyan}10`} />
+            {['M30,30 L80,30 L80,80','M190,30 L140,30 L140,80','M30,190 L80,190 L80,140','M190,190 L140,190 L140,140','M20,110 L78,110','M200,110 L142,110','M110,20 L110,78','M110,200 L110,142'].map((d,i)=>(
+              <g key={i}>
+                <path d={d} stroke={`${T.accent.cyan}30`} strokeWidth="1.4" fill="none" />
+                <path d={d} stroke="url(#diag-trace)" strokeWidth="2.4" fill="none" strokeDasharray="14 180">
+                  <animate attributeName="stroke-dashoffset" from="0" to="-200" dur={`${1.1 + i * 0.12}s`} repeatCount="indefinite" />
+                </path>
+              </g>
+            ))}
+            {[[30,30],[190,30],[30,190],[190,190],[20,110],[200,110],[110,20],[110,200]].map(([x,y],i)=>(
+              <circle key={i} cx={x} cy={y} r="4" fill={T.bg.primary} stroke={T.accent.cyan} strokeWidth="1.5" />
+            ))}
+            <text x="110" y="115" textAnchor="middle" fill={T.accent.cyan} fontSize="14" fontFamily="'JetBrains Mono', monospace" letterSpacing="0.2em">ORCA·DX</text>
+          </svg>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+            {[isRTL ? 'סורק התנהגות סוחר...' : 'Scanning trader behavior...', isRTL ? 'מזהה דפוסי סיכון ומתח...' : 'Detecting risk & pressure patterns...', isRTL ? 'מחבר ארכיטיפ אישי...' : 'Composing personal archetype...'].map((s, i) => (
+              <div key={i} style={{ fontSize: 11, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em', opacity: 0.4 + i * 0.2, animation: `pulse ${1.4 + i * 0.2}s ease-in-out infinite` }}>◆ {s}</div>
+            ))}
+          </div>
+        </div>
+      )}
+      
 
       {/* ═══ RADAR + GAUGES — hidden in Beginner ═══ */}
       {showRadar && (<>
@@ -558,34 +624,86 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
       )}
 
       {diagnosisOpen && (
-        <div onClick={() => setDiagnosisOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.78)', backdropFilter: 'blur(14px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18 }}>
-          <div onClick={e => e.stopPropagation()} dir="rtl" style={{ width: 'min(760px, 100%)', maxHeight: '88vh', overflow: 'auto', borderRadius: 18, border: `1px solid ${healthColor}55`, background: `linear-gradient(145deg, ${T.bg.card}, ${T.bg.secondary} 48%, ${T.bg.tertiary})`, boxShadow: `0 30px 90px rgba(0,0,0,.62), 0 0 42px ${healthColor}22`, padding: 24, animation: 'scaleIn .22s ease' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', marginBottom: 18 }}>
-              <div>
-                <div style={{ fontSize: 10, color: healthColor, letterSpacing: '0.2em', fontFamily: "'JetBrains Mono', monospace", marginBottom: 6 }}>ORCA PSYCHOLOGICAL DIAGNOSTIC</div>
-                <div style={{ fontSize: 28, color: T.text.primary, fontWeight: 900 }}>{diagnosis.archetype}</div>
-                <div style={{ fontSize: 13, color: T.text.secondary, marginTop: 6 }}>אבחון מבוסס {trades.length} עסקאות, דפוסי סיכון, משמעת, רצפים והתנהגות לאחר הפסד.</div>
-              </div>
-              <button onClick={() => setDiagnosisOpen(false)} style={{ width: 36, height: 36, borderRadius: 10, border: `1px solid ${T.border.medium}`, background: T.bg.tertiary, color: T.text.secondary, cursor: 'pointer', fontSize: 22 }}>×</button>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginBottom: 16 }}>
-              {[['בריאות', behavioralHealth.toFixed(0), healthColor], ['הון מנטלי', mentalCapital.toFixed(0), mentalCapital >= 60 ? T.accent.green : T.accent.orange], ['Tilt', tiltLabel, tiltColor], ['משמעת', `${rulesPct.toFixed(0)}%`, rulesPct >= 80 ? T.accent.green : T.accent.red]].map(([l, v, c]) => (
-                <div key={String(l)} style={{ padding: 14, borderRadius: 12, background: `${c}10`, border: `1px solid ${c}33` }}>
-                  <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 5 }}>{l}</div>
-                  <div style={{ fontSize: 24, color: String(c), fontWeight: 900, fontFamily: "'JetBrains Mono', monospace" }}>{v}</div>
+        <div onClick={() => setDiagnosisOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(16px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18, animation: 'fadeIn .25s ease' }}>
+          <div onClick={e => e.stopPropagation()} dir="rtl" style={{ width: 'min(820px, 100%)', maxHeight: '90vh', overflow: 'auto', borderRadius: 20, border: `1px solid ${enoughForDiag ? healthColor : T.accent.orange}55`, background: `linear-gradient(145deg, ${T.bg.card}, ${T.bg.secondary} 48%, ${T.bg.tertiary})`, boxShadow: `0 30px 90px rgba(0,0,0,.62), 0 0 60px ${enoughForDiag ? healthColor : T.accent.orange}25`, padding: 26, animation: 'scaleIn .32s cubic-bezier(0.16,1,0.3,1)' }}>
+            {!enoughForDiag ? (
+              <div style={{ textAlign: 'center', padding: '20px 10px' }}>
+                <div style={{ fontSize: 56, marginBottom: 12 }}>📉</div>
+                <div style={{ fontSize: 11, color: T.accent.orange, letterSpacing: '0.2em', fontFamily: "'JetBrains Mono', monospace", marginBottom: 8 }}>INSUFFICIENT DATA</div>
+                <div style={{ fontSize: 22, color: T.text.primary, fontWeight: 900, marginBottom: 10 }}>{isRTL ? 'אין מספיק נתונים לאבחון מדויק' : 'Not enough data for an accurate diagnosis'}</div>
+                <div style={{ fontSize: 13, color: T.text.secondary, lineHeight: 1.7, maxWidth: 540, margin: '0 auto' }}>
+                  {isRTL
+                    ? `כדי לייצר אבחון פסיכולוגי אמין נדרשות לפחות ${MIN_DIAG_TRADES} עסקאות. כרגע יש ${trades.length}. המערכת לא תייצר תובנות מומצאות — המשך לתעד עסקאות נקיות וחזור.`
+                    : `A reliable psychological diagnosis requires at least ${MIN_DIAG_TRADES} trades. You currently have ${trades.length}. The system will not fabricate insights — log more clean trades and return.`}
                 </div>
-              ))}
-            </div>
-            {[
-              ['חוזקות שאסור לאבד', diagnosis.strengths.length ? diagnosis.strengths : ['עדיין אין מספיק יתרון ברור — המשימה היא לצבור עוד דאטה נקי.'], T.accent.green],
-              ['נקודות סיכון שמאטות אותך', diagnosis.risksList.length ? diagnosis.risksList : ['לא זוהתה בעיה קריטית כרגע — המיקוד הוא שיפור הדרגתי ולא תיקון חירום.'], T.accent.red],
-              ['פרוטוקול פעולה אישי', diagnosis.plan, T.accent.cyan],
-            ].map(([title, items, color]) => (
-              <div key={String(title)} style={{ marginTop: 12, padding: 16, borderRadius: 14, background: T.bg.tertiary, borderInlineStart: `4px solid ${color}` }}>
-                <div style={{ fontSize: 14, color: String(color), fontWeight: 900, marginBottom: 10 }}>{title}</div>
-                {(items as string[]).map((x, i) => <div key={i} style={{ fontSize: 13, color: T.text.secondary, lineHeight: 1.8 }}>◆ {x}</div>)}
+                <div style={{ marginTop: 20, display: 'inline-flex', alignItems: 'center', gap: 10, padding: '10px 16px', borderRadius: 10, background: `${T.accent.orange}10`, border: `1px solid ${T.accent.orange}33` }}>
+                  <span style={{ fontSize: 11, color: T.text.muted }}>{isRTL ? 'התקדמות:' : 'Progress:'}</span>
+                  <div style={{ width: 160, height: 6, background: T.bg.tertiary, borderRadius: 3, overflow: 'hidden' }}>
+                    <div style={{ width: `${Math.min(100, (trades.length / MIN_DIAG_TRADES) * 100)}%`, height: '100%', background: T.accent.orange, transition: 'width .4s' }} />
+                  </div>
+                  <span style={{ fontSize: 12, color: T.accent.orange, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>{trades.length}/{MIN_DIAG_TRADES}</span>
+                </div>
+                <div style={{ marginTop: 22 }}>
+                  <button onClick={() => setDiagnosisOpen(false)} style={{ padding: '10px 22px', borderRadius: 10, border: `1px solid ${T.border.medium}`, background: T.bg.tertiary, color: T.text.secondary, cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>{isRTL ? 'סגור' : 'Close'}</button>
+                </div>
               </div>
-            ))}
+            ) : (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', marginBottom: 18 }}>
+                  <div>
+                    <div style={{ fontSize: 10, color: healthColor, letterSpacing: '0.22em', fontFamily: "'JetBrains Mono', monospace", marginBottom: 6 }}>◆ ORCA PSYCHOLOGICAL DIAGNOSTIC</div>
+                    <div style={{ fontSize: 28, color: T.text.primary, fontWeight: 900, lineHeight: 1.15 }}>{diagnosis.archetype}</div>
+                    <div style={{ fontSize: 13, color: T.text.secondary, marginTop: 8, lineHeight: 1.6 }}>
+                      {isRTL
+                        ? `אבחון מבוסס ${trades.length} עסקאות, דפוסי סיכון, משמעת, רצפים והתנהגות לאחר הפסד.`
+                        : `Diagnosis based on ${trades.length} trades — risk patterns, discipline, streaks, and post-loss behavior.`}
+                    </div>
+                  </div>
+                  <button onClick={() => setDiagnosisOpen(false)} style={{ width: 36, height: 36, borderRadius: 10, border: `1px solid ${T.border.medium}`, background: T.bg.tertiary, color: T.text.secondary, cursor: 'pointer', fontSize: 22 }}>×</button>
+                </div>
+
+                {/* KPI grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginBottom: 16 }}>
+                  {[
+                    [isRTL ? 'בריאות' : 'Health', behavioralHealth.toFixed(0), healthColor],
+                    [isRTL ? 'הון מנטלי' : 'Mental Cap', mentalCapital.toFixed(0), mentalCapital >= 60 ? T.accent.green : T.accent.orange],
+                    ['Tilt', tiltLabel, tiltColor],
+                    [isRTL ? 'משמעת' : 'Discipline', `${rulesPct.toFixed(0)}%`, rulesPct >= 80 ? T.accent.green : T.accent.red],
+                    [isRTL ? 'CV סיכון' : 'Risk CV', `${riskCV.toFixed(0)}%`, riskCV <= 35 ? T.accent.green : riskCV <= 60 ? T.accent.orange : T.accent.red],
+                    [isRTL ? 'תוחלת' : 'Expectancy', `${stats.expectancyR >= 0 ? '+' : ''}${stats.expectancyR.toFixed(2)}R`, stats.expectancyR >= 0 ? T.accent.cyan : T.accent.red],
+                  ].map(([l, v, c]) => (
+                    <div key={String(l)} style={{ padding: 14, borderRadius: 12, background: `${c}10`, border: `1px solid ${c}33` }}>
+                      <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 5 }}>{l}</div>
+                      <div style={{ fontSize: 22, color: String(c), fontWeight: 900, fontFamily: "'JetBrains Mono', monospace" }}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Behavior fingerprint chips */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
+                  {[
+                    revengeTrades > 0 ? { l: isRTL ? `${revengeTrades} מסחרי נקמה` : `${revengeTrades} revenge trades`, c: T.accent.red } : { l: isRTL ? 'ללא מסחר נקמה' : 'No revenge', c: T.accent.green },
+                    overtradingDays.length > 0 ? { l: isRTL ? `${overtradingDays.length} ימי מסחר יתר` : `${overtradingDays.length} overtrade days`, c: T.accent.orange } : { l: isRTL ? 'תדירות בריאה' : 'Healthy frequency', c: T.accent.green },
+                    maxStreak >= 3 ? { l: isRTL ? `רצף הפסדים מקס׳ ${maxStreak}` : `max loss streak ${maxStreak}`, c: T.accent.orange } : { l: isRTL ? 'ללא רצפים מסוכנים' : 'No dangerous streaks', c: T.accent.green },
+                    highDevTrades.length > 0 ? { l: isRTL ? `${highDevTrades.length} עסקאות בסטייה גבוהה` : `${highDevTrades.length} high-deviation`, c: T.accent.orange } : { l: isRTL ? 'ביצוע מדויק' : 'Precise execution', c: T.accent.cyan },
+                    postLossBehavior.totalAfterLoss > 0 && (postLossBehavior.riskIncAfterLoss / postLossBehavior.totalAfterLoss) > 0.3 ? { l: isRTL ? 'הסלמת סיכון אחרי הפסד' : 'Risk escalation after loss', c: T.accent.red } : null,
+                  ].filter(Boolean).map((chip: any, i) => (
+                    <span key={i} style={{ fontSize: 11, padding: '5px 10px', borderRadius: 999, background: `${chip.c}14`, border: `1px solid ${chip.c}38`, color: chip.c, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.04em' }}>● {chip.l}</span>
+                  ))}
+                </div>
+
+                {[
+                  [isRTL ? 'חוזקות שאסור לאבד' : 'Strengths to protect', diagnosis.strengths.length ? diagnosis.strengths : [isRTL ? 'עדיין אין מספיק יתרון ברור — המשימה היא לצבור עוד דאטה נקי.' : 'No clear edge yet — keep collecting clean data.'], T.accent.green],
+                  [isRTL ? 'נקודות סיכון שמאטות אותך' : 'Risks slowing you down', diagnosis.risksList.length ? diagnosis.risksList : [isRTL ? 'לא זוהתה בעיה קריטית כרגע — המיקוד הוא שיפור הדרגתי.' : 'No critical issue — focus on incremental improvement.'], T.accent.red],
+                  [isRTL ? 'פרוטוקול פעולה אישי' : 'Personal action protocol', diagnosis.plan, T.accent.cyan],
+                ].map(([title, items, color]) => (
+                  <div key={String(title)} style={{ marginTop: 12, padding: 16, borderRadius: 14, background: T.bg.tertiary, borderInlineStart: `4px solid ${color}` }}>
+                    <div style={{ fontSize: 14, color: String(color), fontWeight: 900, marginBottom: 10 }}>{title}</div>
+                    {(items as string[]).map((x, i) => <div key={i} style={{ fontSize: 13, color: T.text.secondary, lineHeight: 1.8 }}>◆ {x}</div>)}
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         </div>
       )}

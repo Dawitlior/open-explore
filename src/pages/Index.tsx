@@ -742,34 +742,34 @@ const Index = () => {
           ))}
         </div>
 
-        {/* Research charts grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12, marginBottom: 16 }}>
+        {/* Research charts grid — slim quant style on desktop, denser packing in alpha */}
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : (isAlpha ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)'), gap: 10, marginBottom: 14 }}>
           <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'התפלגות R-Multiple' : 'R-Multiple Distribution'} explanation={EXPLANATIONS.rDistribution} unit="R">
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={isAlpha ? 120 : 200}>
               <BarChart data={stats.rDist}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 9 }} /><Tooltip contentStyle={tt} /><Bar dataKey="r" radius={[3,3,0,0]}>{stats.rDist.map((d, i) => <Cell key={i} fill={d.r >= 0 ? T.accent.cyan : T.accent.red} />)}</Bar></BarChart>
             </ResponsiveContainer>
           </ChartWrapper>
 
           <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'שארפ מתגלגל' : 'Rolling Sharpe Ratio'} explanation={EXPLANATIONS.rollingSharpe} unit="R/σ">
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={isAlpha?120:200}>
               <LineChart data={stats.rollingSharpe}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="tradeId" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 9 }} /><Tooltip contentStyle={tt} /><Line type="monotone" dataKey="sharpe" stroke={T.accent.blue} strokeWidth={2} dot={{ fill: T.accent.blue, r: 2 }} /><Line type="monotone" dataKey="sharpe" stroke="transparent" />{/* zero line */}</LineChart>
             </ResponsiveContainer>
           </ChartWrapper>
 
           <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'דעיכת יתרון' : 'Edge Decay Timeline'} explanation={EXPLANATIONS.edgeDecay} unit="R">
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={isAlpha?120:200}>
               <BarChart data={stats.edgeDecay}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="period" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 9 }} /><Tooltip contentStyle={tt} /><Bar dataKey="expectancyR" radius={[4,4,0,0]}>{stats.edgeDecay.map((d, i) => <Cell key={i} fill={d.expectancyR >= 0 ? T.accent.cyan : T.accent.red} />)}</Bar></BarChart>
             </ResponsiveContainer>
           </ChartWrapper>
 
           <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'אחוז הצלחה vs R:R' : 'Win Rate vs R:R Bucket'} explanation={EXPLANATIONS.winRateVsRR} unit="%">
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={isAlpha?120:200}>
               <BarChart data={stats.winRateVsRR}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="rr" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 9 }} domain={[0, 100]} /><Tooltip contentStyle={tt} /><Bar dataKey="winRate" fill={T.accent.blue} radius={[4,4,0,0]} /><Bar dataKey="count" fill={`${T.accent.cyan}40`} radius={[4,4,0,0]} /></BarChart>
             </ResponsiveContainer>
           </ChartWrapper>
 
           <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'תוחלת מתגלגלת (R)' : 'Rolling Expectancy (R)'} explanation={EXPLANATIONS.expectancy} unit="R">
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={isAlpha?120:200}>
               <AreaChart data={stats.rollingExpectancyR}>
                 <defs><linearGradient id="reGRes" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.55}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.25}/></linearGradient></defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="tradeId" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 9 }} />
@@ -779,13 +779,13 @@ const Index = () => {
           </ChartWrapper>
 
           <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'תוחלת לפי מטבע (R)' : 'Strategy Expectancy (R)'} explanation={EXPLANATIONS.coinPerformance} unit="R">
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={isAlpha?120:200}>
               <BarChart data={stats.strategyExpectancyR} layout="vertical"><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis type="number" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis dataKey="coin" type="category" tick={{ fill: T.text.secondary, fontSize: 10 }} width={40} /><Tooltip contentStyle={tt} /><Bar dataKey="expectancyR" radius={[0,4,4,0]}>{stats.strategyExpectancyR.map((d, i) => <Cell key={i} fill={d.expectancyR >= 0 ? T.accent.green : T.accent.red} />)}</Bar></BarChart>
             </ResponsiveContainer>
           </ChartWrapper>
 
           <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'מפת נסיגה' : 'Drawdown Depth Map'} explanation={EXPLANATIONS.drawdown} unit="%">
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={isAlpha?120:200}>
               <AreaChart data={(() => { let p = 200; return stats.equityCurve.map(e => { if (e.balance > p) p = e.balance; return { trade: e.trade, dd: -((p - e.balance) / p * 100) }; }); })()}>
                 <defs><linearGradient id="ddGRRes" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.red} stopOpacity={0.25}/><stop offset="100%" stopColor={T.accent.red} stopOpacity={0.6}/></linearGradient></defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="trade" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 9 }} domain={['dataMin', 0]} />
@@ -795,7 +795,7 @@ const Index = () => {
           </ChartWrapper>
 
           <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ביצועים לפי יום (R)' : 'Performance by Day (R)'} explanation={EXPLANATIONS.coinPerformance} unit="R">
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={isAlpha?120:200}>
               <BarChart data={stats.dayPerf}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="day" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 9 }} /><Tooltip contentStyle={tt} /><Bar dataKey="avgR" radius={[4,4,0,0]}>{stats.dayPerf.map((d, i) => <Cell key={i} fill={d.avgR >= 0 ? T.accent.green : T.accent.red} />)}</Bar></BarChart>
             </ResponsiveContainer>
           </ChartWrapper>
@@ -849,6 +849,145 @@ const Index = () => {
               </ScatterChart>
             </ResponsiveContainer>
           </ChartWrapper>
+
+          {/* ═══ ALPHA QUANT LAB — slim-line advanced visualisations ═══ */}
+          <div style={{ fontSize: 9, color: T.accent.purple, textTransform: 'uppercase', letterSpacing: '0.18em', fontWeight: 700, margin: '20px 0 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ width: 22, height: 1, background: T.accent.purple, display: 'inline-block' }} />
+            {isRTL ? 'מעבדת קוונט · גרפים דקיקים מתקדמים' : 'QUANT LAB · slim advanced visualisations'}
+          </div>
+          {(() => {
+            // Rolling Sortino — downside-only volatility ratio (window 20)
+            const W = 20;
+            const sortino = trades.map((_, i) => {
+              const slice = trades.slice(Math.max(0, i - W + 1), i + 1).map(x => x.returnR);
+              const mean = slice.reduce((s, x) => s + x, 0) / slice.length;
+              const downs = slice.filter(x => x < 0);
+              const dd = Math.sqrt(downs.reduce((s, x) => s + x * x, 0) / Math.max(downs.length, 1));
+              return { i: i + 1, sortino: dd > 0 ? +(mean / dd).toFixed(3) : 0 };
+            });
+            // R-return histogram (bins of 0.5R)
+            const minR = Math.floor(Math.min(...trades.map(t => t.returnR), 0) * 2) / 2;
+            const maxR = Math.ceil(Math.max(...trades.map(t => t.returnR), 0) * 2) / 2;
+            const bins: { bin: string; n: number; mid: number }[] = [];
+            for (let b = minR; b <= maxR; b += 0.5) {
+              const n = trades.filter(t => t.returnR >= b && t.returnR < b + 0.5).length;
+              bins.push({ bin: `${b.toFixed(1)}`, mid: b + 0.25, n });
+            }
+            // Lag-1 autocorrelation point cloud (R[i] vs R[i-1])
+            const acData = trades.slice(1).map((t, i) => ({ prev: trades[i].returnR, cur: t.returnR }));
+            // MAR ratio evolution: cumulative R / max DD R so far
+            let cumR = 0, peakR = 0, mddR = 0;
+            const mar = trades.map((t, i) => {
+              cumR += t.returnR;
+              if (cumR > peakR) peakR = cumR;
+              const dd = peakR - cumR;
+              if (dd > mddR) mddR = dd;
+              return { i: i + 1, mar: mddR > 0 ? +(cumR / mddR).toFixed(3) : cumR };
+            });
+            // Inter-trade interval (hours between trades)
+            const interHrs = trades.slice(1).map((t, i) => {
+              try {
+                const a = new Date(trades[i].date.replace(' ', 'T')).getTime();
+                const b = new Date(t.date.replace(' ', 'T')).getTime();
+                return { i: i + 1, hrs: Math.max(0, +((b - a) / 3600000).toFixed(2)) };
+              } catch { return { i: i + 1, hrs: 0 }; }
+            });
+            return (
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 10, marginBottom: 12 }}>
+                <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'Sortino מתגלגל' : 'Rolling Sortino'} explanation={EXPLANATIONS.rollingSharpe} unit="R/σ⁻">
+                  <ResponsiveContainer width="100%" height={120}>
+                    <LineChart data={sortino}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
+                      <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 9 }} hide />
+                      <YAxis tick={{ fill: T.text.muted, fontSize: 9 }} />
+                      <Tooltip contentStyle={tt} />
+                      <ReferenceLine y={0} stroke={T.border.medium} strokeDasharray="2 2" />
+                      <Line type="monotone" dataKey="sortino" stroke={T.accent.purple} strokeWidth={1.4} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </ChartWrapper>
+                <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'MAR מצטבר (תשואה/נסיגה)' : 'Cumulative MAR (return/DD)'} explanation={EXPLANATIONS.kellyOptimal} unit="x">
+                  <ResponsiveContainer width="100%" height={120}>
+                    <AreaChart data={mar}>
+                      <defs>
+                        <linearGradient id="marG" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.45} />
+                          <stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.04} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
+                      <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 9 }} hide />
+                      <YAxis tick={{ fill: T.text.muted, fontSize: 9 }} />
+                      <Tooltip contentStyle={tt} />
+                      <Area type="monotone" dataKey="mar" stroke={T.accent.cyan} fill="url(#marG)" strokeWidth={1.4} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </ChartWrapper>
+                <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'התפלגות R (היסטוגרמה)' : 'R Histogram'} explanation={EXPLANATIONS.rDistribution} unit="R">
+                  <ResponsiveContainer width="100%" height={120}>
+                    <BarChart data={bins}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
+                      <XAxis dataKey="bin" tick={{ fill: T.text.muted, fontSize: 9 }} />
+                      <YAxis tick={{ fill: T.text.muted, fontSize: 9 }} />
+                      <Tooltip contentStyle={tt} />
+                      <Bar dataKey="n" radius={[2, 2, 0, 0]}>
+                        {bins.map((b, i) => <Cell key={i} fill={b.mid >= 0 ? T.accent.green : T.accent.red} fillOpacity={0.85} />)}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartWrapper>
+                <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'אוטוקורלציה Lag-1 (R[t] מול R[t-1])' : 'Lag-1 Autocorrelation'} explanation={EXPLANATIONS.rDistribution} unit="R">
+                  <ResponsiveContainer width="100%" height={120}>
+                    <ScatterChart>
+                      <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
+                      <XAxis type="number" dataKey="prev" name="R(t-1)" tick={{ fill: T.text.muted, fontSize: 9 }} />
+                      <YAxis type="number" dataKey="cur" name="R(t)" tick={{ fill: T.text.muted, fontSize: 9 }} />
+                      <Tooltip contentStyle={tt} cursor={{ strokeDasharray: '3 3' }} />
+                      <ReferenceLine x={0} stroke={T.border.medium} strokeDasharray="2 2" />
+                      <ReferenceLine y={0} stroke={T.border.medium} strokeDasharray="2 2" />
+                      <Scatter data={acData} fill={T.accent.purple} fillOpacity={0.7} />
+                    </ScatterChart>
+                  </ResponsiveContainer>
+                </ChartWrapper>
+                <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'מרווחים בין עסקאות (שעות)' : 'Inter-trade Interval (hrs)'} explanation={EXPLANATIONS.rDistribution} unit="h">
+                  <ResponsiveContainer width="100%" height={120}>
+                    <AreaChart data={interHrs}>
+                      <defs>
+                        <linearGradient id="ihG" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={T.accent.orange} stopOpacity={0.5} />
+                          <stop offset="100%" stopColor={T.accent.orange} stopOpacity={0.04} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
+                      <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 9 }} hide />
+                      <YAxis tick={{ fill: T.text.muted, fontSize: 9 }} />
+                      <Tooltip contentStyle={tt} />
+                      <Area type="monotone" dataKey="hrs" stroke={T.accent.orange} fill="url(#ihG)" strokeWidth={1.2} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </ChartWrapper>
+                <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'יחס Win/Loss מצטבר' : 'Cumulative Win/Loss Ratio'} explanation={EXPLANATIONS.winRate} unit="x">
+                  <ResponsiveContainer width="100%" height={120}>
+                    <LineChart data={(() => {
+                      let w = 0, l = 0;
+                      return trades.map((t, i) => {
+                        if (t.winLoss === 'Win') w++;
+                        else if (t.winLoss === 'Loss') l++;
+                        return { i: i + 1, ratio: l > 0 ? +(w / l).toFixed(3) : w };
+                      });
+                    })()}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
+                      <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 9 }} hide />
+                      <YAxis tick={{ fill: T.text.muted, fontSize: 9 }} />
+                      <Tooltip contentStyle={tt} />
+                      <ReferenceLine y={1} stroke={T.border.medium} strokeDasharray="2 2" />
+                      <Line type="monotone" dataKey="ratio" stroke={T.accent.green} strokeWidth={1.4} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </ChartWrapper>
+              </div>
+            );
+          })()}
         </>}
 
         {/* ═══ ALPHA+REVIEW: Structured Performance Tables ═══ */}
