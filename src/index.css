@@ -144,7 +144,7 @@
       0 1px 0 0 hsl(0 0% 100% / 0.04) inset,
       0 0 0 1px hsl(0 0% 0% / 0.4),
       0 12px 40px -12px hsl(0 0% 0% / 0.6);
-    transition: border-color 280ms ease, box-shadow 280ms ease, transform 280ms ease, background 480ms ease;
+    transition: border-color 180ms ease, box-shadow 180ms ease, background 240ms ease;
     position: relative;
   }
 
@@ -162,7 +162,7 @@
     transition: opacity 280ms ease;
     z-index: 1;
   }
-  .orca-glass-hover:hover::before { opacity: 1; }
+  .orca-glass-hover:hover::before { opacity: 0.35; }
 
   .orca-glass-hover:hover {
     border-color: hsl(184 100% 50% / 0.35);
@@ -171,6 +171,19 @@
       0 0 0 1px hsl(0 0% 0% / 0.4),
       0 0 24px -4px hsl(184 100% 50% / 0.25),
       0 20px 50px -16px hsl(0 0% 0% / 0.7);
+  }
+
+  [data-journal-root] .orca-glass-hover::before,
+  [data-journal-root] .orca-glass-hover:hover::before {
+    opacity: 0 !important;
+  }
+
+  [data-journal-root] .orca-glass,
+  [data-journal-root] .orca-glass-hover,
+  [data-journal-root] .orca-tilt,
+  .j-no-tilt {
+    transform: none !important;
+    transition-property: border-color, box-shadow, background !important;
   }
 
   .orca-panel {

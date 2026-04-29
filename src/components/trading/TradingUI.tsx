@@ -21,9 +21,8 @@ interface GlassCardProps {
 export const GlassCard = ({ children, style, glow, onClick, className }: GlassCardProps) => (
   <motion.div
     onClick={onClick}
-    whileHover={onClick ? { y: -1 } : undefined}
-    whileTap={onClick ? { scale: 0.995 } : undefined}
-    transition={{ type: 'spring', stiffness: 320, damping: 24 }}
+    whileTap={onClick ? { scale: 0.998 } : undefined}
+    transition={{ duration: 0.12 }}
     className={cn(
       'orca-glass orca-grain orca-glass-hover relative overflow-hidden',
       'rounded-[var(--radius)] p-5',

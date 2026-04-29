@@ -236,28 +236,57 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
     transition: 'all 0.15s',
   });
 
+  const panelStyle = {
+    background: `linear-gradient(145deg, ${T.bg.card} 0%, ${T.bg.secondary} 52%, ${T.bg.tertiary} 100%)`,
+    border: `1px solid ${T.border.medium}`,
+    borderRadius: isMobile ? `${T.radius.xl}px ${T.radius.xl}px 0 0` : `${T.radius.xl}px`,
+    padding: 0,
+    maxWidth: isMobile ? '100%' : 760,
+    width: isMobile ? '100%' : '95%',
+    maxHeight: isMobile ? '92vh' : '90vh',
+    overflow: 'hidden',
+    boxShadow: `0 28px 90px rgba(0,0,0,0.58), 0 0 0 1px ${T.accent.cyan}18 inset`,
+    animation: 'scaleIn 0.18s ease',
+  } as const;
+
+  const sectionStyle = {
+    padding: isMobile ? 12 : 14,
+    borderRadius: 14,
+    background: `${T.bg.tertiary}88`,
+    border: `1px solid ${T.border.subtle}`,
+    marginBottom: 12,
+  } as const;
+
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 100, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', backdropFilter: 'blur(6px)' }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{
-        background: T.bg.card, border: `1px solid ${T.border.medium}`,
-        borderRadius: isMobile ? `${T.radius.xl}px ${T.radius.xl}px 0 0` : `${T.radius.xl}px`,
-        padding: isMobile ? '20px 16px 24px' : 28,
-        maxWidth: isMobile ? '100%' : 640,
-        width: isMobile ? '100%' : '95%',
-        maxHeight: isMobile ? '92vh' : '90vh',
-        overflow: 'auto', boxShadow: T.shadow.elevated,
-        animation: 'scaleIn 0.2s ease',
-      }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.76)', zIndex: 100, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', backdropFilter: 'blur(14px)', padding: isMobile ? 0 : 18 }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={panelStyle}>
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isMobile ? 14 : 20 }}>
-          <div style={{ fontSize: isMobile ? 16 : 18, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>{trade ? t.editTrade : t.addTrade}</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: T.text.muted, fontSize: 22, cursor: 'pointer', padding: '4px 8px' }}>×</button>
+        <div style={{ padding: isMobile ? '16px 16px 12px' : '20px 24px 14px', borderBottom: `1px solid ${T.border.subtle}`, background: `linear-gradient(90deg, ${T.accent.cyan}10, transparent 45%)` }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
+            <div>
+              <div style={{ fontSize: 9, color: T.accent.cyan, letterSpacing: '0.18em', textTransform: 'uppercase', fontFamily: "'JetBrains Mono', monospace", marginBottom: 4 }}>
+                {isRTL ? 'קליטת עסקה מודרכת' : 'Guided Trade Entry'}
+              </div>
+              <div style={{ fontSize: isMobile ? 20 : 24, fontWeight: 800, color: T.text.primary }}>{trade ? t.editTrade : t.addTrade}</div>
+              <div style={{ fontSize: 12, color: T.text.secondary, marginTop: 4 }}>{isRTL ? 'כל השדות המתקדמים נשמרו — רק הסדר והבהירות שודרגו.' : 'All advanced fields preserved — clearer flow.'}</div>
+            </div>
+            <button onClick={onClose} aria-label="Close" style={{ width: 34, height: 34, borderRadius: 10, background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, color: T.text.secondary, fontSize: 22, cursor: 'pointer', lineHeight: 1 }}>×</button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 8, marginTop: 14 }}>
+            {[(isRTL ? '1 · נכס וזמן' : '1 · Asset & Time'), (isRTL ? '2 · כניסה וסיכון' : '2 · Entry & Risk'), (isRTL ? '3 · בדיקה ושמירה' : '3 · Review & Save')].map((step, i) => (
+              <div key={step} style={{ padding: '8px 10px', borderRadius: 10, background: i === 0 ? `${T.accent.cyan}13` : `${T.bg.tertiary}88`, border: `1px solid ${i === 0 ? T.accent.cyan : T.border.subtle}30`, color: i === 0 ? T.accent.cyan : T.text.muted, fontSize: 11, fontWeight: 700 }}>
+                {step}
+              </div>
+            ))}
+          </div>
         </div>
+
+        <div style={{ padding: isMobile ? '14px 16px 18px' : '18px 24px 22px', overflow: 'auto', maxHeight: isMobile ? 'calc(92vh - 132px)' : 'calc(90vh - 148px)' }}>
 
         {errors.length > 0 && <div style={{ padding: 10, background: `${T.accent.red}15`, border: `1px solid ${T.accent.red}30`, borderRadius: T.radius.sm, marginBottom: 14, fontSize: 12, color: T.accent.red }}>{errors.join(' • ')}</div>}
 
         {/* Asset Category Selector */}
-        <div style={{ marginBottom: 14 }}>
+        <div style={sectionStyle}>
           <label style={labelStyle}>{isRTL ? 'סוג נכס' : 'Asset Type'}</label>
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
             {(Object.keys(ASSET_CATEGORIES) as AssetCategory[]).map(cat => (
@@ -406,6 +435,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
           <button onClick={onClose} style={{ padding: isMobile ? '11px 20px' : '9px 20px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, cursor: 'pointer', fontSize: 13 }}>{t.cancel}</button>
           <button onClick={handleSubmit} style={{ padding: isMobile ? '11px 28px' : '9px 24px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 700, cursor: 'pointer', fontSize: 13, flex: isMobile ? 1 : 'none' }}>{t.save}</button>
+        </div>
         </div>
       </div>
     </div>
