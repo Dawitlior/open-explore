@@ -57,6 +57,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
     : 'core';
   const showPro = tier === 'pro' || tier === 'max';
   const showMax = tier === 'max';
+  const showCore = tier !== 'minimal';
   const tt = {
     background: T.bg.card,
     border: `1px solid ${T.border.medium}`,
@@ -358,7 +359,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
       </div>
 
       {/* ═══ EQUITY + DRAWDOWN OVERLAY ═══ */}
-      <GlassCard T={T} style={{ marginBottom: 16 }}>
+      {showCore && <GlassCard T={T} style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700 }}>עקומת הון מול נסיגה</div>
           <div style={{ display: 'flex', gap: 14, fontSize: 10, color: T.text.muted }}>
@@ -387,7 +388,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
             <Area yAxisId="R" type="monotone" dataKey="dd" stroke={T.accent.red} strokeWidth={1.5} fill="url(#ddG)" />
           </ComposedChart>
         </ResponsiveContainer>
-      </GlassCard>
+      </GlassCard>}
 
       {/* ═══ ROW: R Distribution + Direction Radial ═══ */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12, marginBottom: 16 }}>
@@ -432,7 +433,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
       </div>
 
       {/* ═══ DAY × HOUR MATRIX ═══ */}
-      <GlassCard T={T} style={{ marginBottom: 16 }}>
+      {showMax && <GlassCard T={T} style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>מפת ביצועים — יום × שעה</div>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ borderCollapse: 'separate', borderSpacing: 2, fontSize: 10, fontFamily: "'JetBrains Mono', monospace", margin: '0 auto' }}>
@@ -473,10 +474,10 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
           </div>
           <span>רווח</span>
         </div>
-      </GlassCard>
+      </GlassCard>}
 
       {/* ═══ MONTHLY HEAT TILES ═══ */}
-      {monthHeat.length > 1 && (
+      {showPro && monthHeat.length > 1 && (
         <GlassCard T={T} style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>חום חודשי</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 8 }}>
@@ -505,7 +506,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
       )}
 
       {/* ═══ SETUP LEADERBOARD ═══ */}
-      <GlassCard T={T} style={{ marginBottom: 16, padding: 0, overflow: 'hidden' }}>
+      {showPro && <GlassCard T={T} style={{ marginBottom: 16, padding: 0, overflow: 'hidden' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px 8px' }}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700 }}>טבלת מובילים — לפי נכס</div>
           <div style={{ display: 'flex', gap: 4 }}>
@@ -553,7 +554,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
             </tbody>
           </table>
         </div>
-      </GlassCard>
+      </GlassCard>}
 
       {/* ═══ ROW: Risk-vs-PnL Scatter + Edge Decay ═══ */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12, marginBottom: 16 }}>
