@@ -412,7 +412,7 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
           </svg>
           <span>{diagLoading ? (isRTL ? 'מאבחן...' : 'Diagnosing...') : (isRTL ? 'אבחן אותי' : 'Diagnose Me')}</span>
           {/* Shimmer sweep */}
-          <span style={{ position: 'absolute', inset: 0, background: `linear-gradient(110deg, transparent 35%, ${T.accent.cyan}55 50%, transparent 65%)`, transform: 'translateX(-100%)', animation: diagLoading ? 'none' : 'shimmer 3.4s ease-in-out infinite', pointerEvents: 'none' }} />
+          <span style={{ position: 'absolute', inset: 0, background: `linear-gradient(110deg, transparent 35%, ${T.accent.cyan}55 50%, transparent 65%)`, backgroundSize: '200% 100%', animation: diagLoading ? 'none' : 'shimmer 3.4s ease-in-out infinite', pointerEvents: 'none' }} />
         </button>
       </div>
 
