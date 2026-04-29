@@ -7,6 +7,10 @@ import { sanitizeTrade } from './trade-sanitizer';
 // ═══════════════════════════════════════════════════
 
 const HEADER_MAP: Record<string, keyof Trade | '_ignore'> = {
+  '#': '_ignore',
+  'nr.': '_ignore',
+  'nr': '_ignore',
+  'trade no': '_ignore',
   // English headers
   'entry date/time': 'date',
   'entry date': 'date',
@@ -75,6 +79,7 @@ const HEADER_MAP: Record<string, keyof Trade | '_ignore'> = {
   'comment': 'comments',
   'comments': 'comments',
   'system no.': '_ignore',
+  'system no': '_ignore',
   'leverage': 'leverage',
   'lev': 'leverage',
   'p&l': 'pnl',
@@ -84,6 +89,7 @@ const HEADER_MAP: Record<string, keyof Trade | '_ignore'> = {
   'result': 'winLoss',
   'win/loss': 'winLoss',
   'outcome': 'winLoss',
+  'trade status': 'winLoss',
   // Hebrew headers
   'תאריך כניסה': 'date',
   'תאריך יציאה': '_ignore',
