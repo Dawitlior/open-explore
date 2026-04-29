@@ -38,6 +38,14 @@ const SectionHeader = ({ T, label, accent, isRTL }: { T: TradingTheme; label: st
 
 export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'live', trades, stats, onExplainClick }: AdvancedPsychologyPageProps) => {
   const [diagnosisOpen, setDiagnosisOpen] = useState(false);
+  const [diagLoading, setDiagLoading] = useState(false);
+  const MIN_DIAG_TRADES = 8;
+  const enoughForDiag = trades.length >= MIN_DIAG_TRADES;
+  const startDiagnosis = () => {
+    if (!enoughForDiag) { setDiagnosisOpen(true); return; } // popup will show insufficient-data state
+    setDiagLoading(true);
+    setTimeout(() => { setDiagLoading(false); setDiagnosisOpen(true); }, 1500);
+  };
   // ─── Composition matrix: Standard/Alpha × Beginner/Live/Review/Research ───
   const isBeginner = operatingMode === 'beginner';
   const isLive     = operatingMode === 'live';
