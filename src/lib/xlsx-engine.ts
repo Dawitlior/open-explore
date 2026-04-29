@@ -145,7 +145,15 @@ function parseNumericValue(value: unknown): number | null {
   if (value === null || value === undefined || value === '') return null;
   if (typeof value === 'number') return isFinite(value) ? value : null;
 
-  let cleaned = String(value).trim().replace(/\s/g, '').replace(/[R$€₪%]/gi, '');
+  let cleaned = String(value).trim();
+  if (!cleaned || cleaned === '—' || cleaned === '-') return null;
+  const negative = /^\(.*\)$/.test(cleaned) || /^-/.test(cleaned);
+  cleaned = cleaned
+    .replace(/[\u200e\u200f\u202a-\u202e]/g, '')
+    .replace(/\((.*)\)/, '$1')
+    .replace(/[^0-9.,\-]/g, '')
+    .replace(/^-/, '')
+    .trim();
   if (!cleaned) return null;
 
   const lastDot = cleaned.lastIndexOf('.');
@@ -153,19 +161,27 @@ function parseNumericValue(value: unknown): number | null {
 
   if (lastDot === -1 && lastComma === -1) {
     const n = parseFloat(cleaned);
-    return isFinite(n) ? n : null;
+    return isFinite(n) ? (negative ? -n : n) : null;
   }
 
-  if (lastDot > lastComma) {
-    // US/UK: 1,234.56
-    cleaned = cleaned.replace(/,/g, '');
-  } else if (lastComma > lastDot) {
-    // European: 1.234,56
-    cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+  if (lastDot !== -1 && lastComma !== -1) {
+    if (lastDot > lastComma) cleaned = cleaned.replace(/,/g, '');
+    else cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+  } else if (lastComma !== -1) {
+    cleaned = /^\d{1,3}(,\d{3})+$/.test(cleaned) ? cleaned.replace(/,/g, '') : cleaned.replace(',', '.');
+  } else if (lastDot !== -1) {
+    cleaned = /^\d{1,3}(\.\d{3})+$/.test(cleaned) ? cleaned.replace(/\./g, '') : cleaned;
   }
 
   const num = parseFloat(cleaned);
-  return isFinite(num) ? num : null;
+  return isFinite(num) ? (negative ? -num : num) : null;
+}
+
+function parseDeviationValue(value: unknown): number {
+  const n = parseNumericValue(value);
+  if (n === null) return 0;
+  if (typeof value === 'string' && value.includes('%')) return n / 100;
+  return Math.abs(n) > 1 ? n / 100 : n;
 }
 
 // ═══════════════════════════════════════════════════
