@@ -34,7 +34,6 @@ export const OrcaUXLayer = () => {
   const [now, setNow] = useState<Date>(new Date());
   const [idle, setIdle] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
-  const [holo, setHolo] = useState(false);
   const [pageLoaded, setPageLoaded] = useState(false);
 
   /* ─── 1. Pointer-tracked spotlight + 2. magnetic tilt ─── */
@@ -154,29 +153,17 @@ export const OrcaUXLayer = () => {
     document.documentElement.style.transition = 'filter 600ms ease';
   }, [idle]);
 
-  /* ─── 10. Help (?) + 12. Konami easter egg ─── */
+  /* ─── 10. Help (?) ─── */
   useEffect(() => {
-    let konami: string[] = [];
-    const target = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
     const onKey = (e: KeyboardEvent) => {
       if (e.key === '?' && !(e.target instanceof HTMLInputElement) && !(e.target instanceof HTMLTextAreaElement)) {
         e.preventDefault();
         setShowHelp(s => !s);
       }
-      konami.push(e.key);
-      if (konami.length > target.length) konami.shift();
-      if (konami.join(',') === target.join(',')) {
-        setHolo(h => !h);
-        konami = [];
-      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('orca-holo-mode', holo);
-  }, [holo]);
 
   /* ─── 6. Scroll-reveal observer ─── */
   useEffect(() => {
@@ -388,7 +375,7 @@ export const OrcaUXLayer = () => {
                   ['⌘ ,', 'Settings'],
                   ['⌘ B', 'Toggle sidebar'],
                   ['⌘ /', 'Privacy mask'],
-                  ['?',   'This panel'],
+                    ['?',   'This panel'],
                   ['Esc', 'Close any modal'],
                 ].map(([k, l]) => (
                   <div key={k} className="flex items-center justify-between py-1.5 border-b border-white/5 last:border-0">
@@ -396,9 +383,6 @@ export const OrcaUXLayer = () => {
                     <kbd className="px-2 py-1 rounded bg-white/5 border border-white/10 text-foreground text-xs">{k}</kbd>
                   </div>
                 ))}
-              </div>
-              <div className="mt-4 text-[10px] uppercase tracking-wider text-muted-foreground/60">
-                Try the Konami code ↑↑↓↓←→←→ B A
               </div>
             </motion.div>
           </motion.div>
