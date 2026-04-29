@@ -389,132 +389,80 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
     reader.onload = (e) => {
       try {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        // CRITICAL: Read with cellDates:true so xlsx parses date cells into JS Date
-        // objects using the workbook's stored format (NOT US locale heuristics).
-        // For text cells like "27/02/2026 13:34" we still receive raw strings —
-        // these are then run through parseFlexibleDate which strictly applies DD/MM.
-        const wb = XLSX.read(data, { type: 'array', cellDates: true, dateNF: 'dd/mm/yyyy hh:mm', raw: false });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        if (!ws) { resolve({ trades: [], errors: ['Empty spreadsheet'], skipped: 0, imported: 0 }); return; }
+        const wb = XLSX.read(data, { type: 'array', cellDates: true, dateNF: 'dd/mm/yyyy hh:mm', raw: true });
+        const ws = pickMainSheet(wb);
+        if (!ws) { resolve({ trades: [], errors: ['Main Sheet not found'], skipped: 0, imported: 0 }); return; }
 
-        // Force any remaining numeric/serial date cells whose header looks like a
-        // date column to be treated as Date objects (defense in depth for files
-        // where xlsx fails to recognize the format).
-        const headerRowIdx = findHeaderRow(ws);
+        const rows = XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1, raw: false, dateNF: 'dd/mm/yyyy hh:mm', blankrows: false, defval: '' });
+        if (rows.length < 3) { resolve({ trades: [], errors: ['Main Sheet must include headers, description row, and data rows'], skipped: 0, imported: 0 }); return; }
 
-        // Re-parse with the correct header row. raw:false ensures we get
-        // formatted strings (e.g. "27/02/2026 13:34") instead of US-locale
-        // auto-conversions that mangle Feb dates.
-        const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, {
-          raw: false,
-          dateNF: 'dd/mm/yyyy hh:mm',
-          range: headerRowIdx,
-        });
-
-        if (jsonData.length === 0) { resolve({ trades: [], errors: ['No data rows found'], skipped: 0, imported: 0 }); return; }
-
-        // Map headers from first data object keys
-        const firstRow = jsonData[0];
-        const headerMapping: Record<string, keyof Trade | '_ignore'> = {};
-        Object.keys(firstRow).forEach(h => {
-          const field = mapHeaderToField(h);
-          if (field) headerMapping[h] = field;
-        });
+        const headers: Record<string, number> = {};
+        (rows[0] || []).forEach((h, i) => { if (String(h).trim()) headers[normalizeHeader(String(h))] = i; });
+        const nrIndex = headers['#'] ?? headers['nr.'] ?? headers['nr'];
+        if (nrIndex === undefined) { resolve({ trades: [], errors: ['Missing required # / Nr. column in Main Sheet'], skipped: 0, imported: 0 }); return; }
 
         const trades: Trade[] = [];
         const errors: string[] = [];
         let skipped = 0;
-        let lastValidDate: string | null = null;
-
-        jsonData.forEach((row, idx) => {
+        rows.slice(2).forEach((row, idx) => {
           try {
-            const mapped: Record<string, unknown> = {};
-            Object.entries(row).forEach(([h, v]) => {
-              const field = headerMapping[h];
-              if (field && field !== '_ignore') {
-                mapped[field] = v;
-              }
-            });
+            const nr = String(row[nrIndex] ?? '').trim();
+            if (!nr) { skipped++; return; }
 
-            // Skip empty / all-zero rows
-            if (isEmptyRow(mapped)) {
-              skipped++;
-              return;
-            }
+            const entryDate = parseFlexibleDate(cellAt(row, headers, ['ENTRY DATE/TIME', 'Entry Date', 'Date']));
+            if (!entryDate) { skipped++; if (errors.length < 10) errors.push(`Row ${idx + 3}: invalid ENTRY DATE/TIME`); return; }
 
-            // Parse numeric fields with locale awareness
-            for (const numField of ['entry', 'stopLoss', 'exit', 'positionSize', 'risk', 'riskPct', 'expectedLoss', 'returnR', 'deviation', 'leverage', 'pnl'] as const) {
-              if (mapped[numField] !== undefined) {
-                const parsed = parseNumericValue(mapped[numField]);
-                mapped[numField] = parsed !== null ? parsed : 0;
-              }
-            }
+            const status = String(cellAt(row, headers, ['TRADE STATUS', 'Result', 'Win/Loss', 'Outcome']) ?? '').toLowerCase().trim();
+            const directionRaw = String(cellAt(row, headers, ['DIRECTION', 'Side', 'Type']) ?? '').toLowerCase().trim();
+            const realisedLoss = Math.abs(parseNumericValue(cellAt(row, headers, ['REALISED LOSS', 'Realized Loss'])) ?? 0);
+            const realisedWin = Math.abs(parseNumericValue(cellAt(row, headers, ['REALISED WIN', 'Realized Win'])) ?? 0);
+            const returnR = parseNumericValue(cellAt(row, headers, ['R+/-', 'R', 'R Multiple'])) ?? 0;
+            const risk = Math.abs(parseNumericValue(cellAt(row, headers, ['DESIRED RISK (USD)', 'Risk USD', 'Risk'])) ?? 0);
+            const pnl = realisedWin > 0 ? realisedWin : realisedLoss > 0 ? -realisedLoss : returnR * (risk || 1);
+            const deviation = parseDeviationValue(cellAt(row, headers, ['DEVIATION', 'Deviation']));
+            const durationMin = parseTimespanMinutes(cellAt(row, headers, ['TRADE DURATION', 'Trade Duration']));
+            const mfeR = parseNumericValue(cellAt(row, headers, ['MFE R+/-', 'MFE R'])) ?? 0;
+            const maeR = parseNumericValue(cellAt(row, headers, ['MAE R+/-', 'MAE R'])) ?? 0;
 
-            // Parse date — if missing/invalid, carry forward last valid date or use today
-            if (mapped.date !== undefined && mapped.date !== null && mapped.date !== '') {
-              const parsed = parseFlexibleDate(mapped.date);
-              if (parsed) {
-                mapped.date = parsed;
-                lastValidDate = parsed;
-              } else if (lastValidDate) {
-                mapped.date = lastValidDate;
-              } else {
-                mapped.date = formatDate(new Date());
-              }
-            } else if (lastValidDate) {
-              mapped.date = lastValidDate;
-            } else {
-              mapped.date = formatDate(new Date());
-            }
+            const mapped: Record<string, unknown> = {
+              id: parseNumericValue(nr) || idx + 1,
+              date: entryDate,
+              coin: String(cellAt(row, headers, ['COIN', 'Symbol', 'Ticker', 'Pair']) || 'UNKNOWN').trim().toUpperCase(),
+              direction: directionRaw.includes('short') || directionRaw === 's' || directionRaw.includes('sell') ? 'Short' : 'Long',
+              orderType: String(cellAt(row, headers, ['ENTRY ORDER TYPE', 'Order Type']) || 'Market').trim() || 'Market',
+              entry: parseNumericValue(cellAt(row, headers, ['ENTRY', 'Entry Price'])) ?? 0,
+              stopLoss: parseNumericValue(cellAt(row, headers, ['STOP LOSS', 'SL', 'Stoploss'])) ?? 0,
+              exit: parseNumericValue(cellAt(row, headers, ['AVG EXIT', 'Exit', 'Exit Price', 'Close Price'])) ?? 0,
+              riskPct: parseDeviationValue(cellAt(row, headers, ['DESIRED RISK (%)', 'Risk %', 'Risk Pct'])) * 100 || 1,
+              risk,
+              expectedLoss: parseNumericValue(cellAt(row, headers, ['EXPECTED LOSS', 'Expected Loss'])) ?? risk,
+              returnR,
+              deviation,
+              pnl,
+              positionSize: parseNumericValue(cellAt(row, headers, ['POSITION SIZE', 'Size', 'Quantity', 'Qty'])) ?? 0,
+              leverage: parseNumericValue(cellAt(row, headers, ['LEVERAGE', 'Lev'])) ?? 1,
+              rules: true,
+              winLoss: status.includes('loss') || status === 'l' ? 'Loss' : status.includes('be') || status.includes('break') ? 'Break Even' : status.includes('win') || status === 'w' ? 'Win' : pnl > 0.05 ? 'Win' : pnl < -0.05 ? 'Loss' : 'Break Even',
+              comments: [
+                `Nr:${nr}`,
+                String(cellAt(row, headers, ['SYSTEM NO.', 'SYSTEM NO', 'System']) || '').trim(),
+                durationMin ? `Duration:${durationMin}m` : '',
+                mfeR || maeR ? `MFE:${mfeR}R MAE:${maeR}R` : '',
+                deviation > 0.1 ? 'Red Flag: Deviation > 10%' : '',
+              ].filter(Boolean).join(' | '),
+            };
 
-            // Direction normalization
-            if (typeof mapped.direction === 'string') {
-              const dir = mapped.direction.toLowerCase().trim();
-              if (dir === 'long' || dir === 'לונג' || dir === 'buy' || dir === 'l') mapped.direction = 'Long';
-              else if (dir === 'short' || dir === 'שורט' || dir === 'sell' || dir === 's') mapped.direction = 'Short';
-            }
-
-            // Rules normalization
-            if (typeof mapped.rules === 'string') {
-              const r = mapped.rules.toLowerCase().trim();
-              mapped.rules = r === 'yes' || r === 'כן' || r === 'true' || r === '1' || r === 'v' || r === '✓';
-            } else if (typeof mapped.rules === 'number') {
-              mapped.rules = mapped.rules === 1;
-            }
-
-            // Win/Loss normalization
-            if (typeof mapped.winLoss === 'string') {
-              const wl = mapped.winLoss.toLowerCase().trim();
-              if (wl === 'win' || wl === 'w' || wl === 'ניצחון') mapped.winLoss = 'Win';
-              else if (wl === 'loss' || wl === 'l' || wl === 'הפסד') mapped.winLoss = 'Loss';
-              else mapped.winLoss = 'Break Even';
-            }
-
-            // Determine winLoss from returnR/pnl if not provided
-            if (!mapped.winLoss) {
-              const returnR = typeof mapped.returnR === 'number' ? mapped.returnR : 0;
-              const pnl = typeof mapped.pnl === 'number' ? mapped.pnl : 0;
-              const signal = returnR || pnl;
-              if (signal > 0.05) mapped.winLoss = 'Win';
-              else if (signal < -0.05) mapped.winLoss = 'Loss';
-              else mapped.winLoss = 'Break Even';
-            }
-
-            // Calculate PnL if missing
-            if ((mapped.pnl === undefined || mapped.pnl === 0) && mapped.risk !== undefined && mapped.returnR !== undefined) {
-              mapped.pnl = (mapped.returnR as number) * (typeof mapped.risk === 'number' ? mapped.risk : 2);
-            }
-
-            const sanitized = sanitizeTrade(mapped, idx + 1);
+            if (isEmptyRow(mapped)) { skipped++; return; }
+            const sanitized = sanitizeTrade(mapped, trades.length + 1);
             if (sanitized) {
               trades.push(sanitized);
             } else {
               skipped++;
-              if (errors.length < 10) errors.push(`Row ${idx + 2}: Invalid data`);
+              if (errors.length < 10) errors.push(`Row ${idx + 3}: Invalid data`);
             }
           } catch (err) {
             skipped++;
-            if (errors.length < 10) errors.push(`Row ${idx + 2}: ${err instanceof Error ? err.message : 'Parse error'}`);
+            if (errors.length < 10) errors.push(`Row ${idx + 3}: ${err instanceof Error ? err.message : 'Parse error'}`);
           }
         });
 
