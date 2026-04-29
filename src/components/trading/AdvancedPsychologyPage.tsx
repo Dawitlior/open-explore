@@ -388,10 +388,68 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
           {(isAlpha ? (isRTL ? 'אלפא · ' : 'ALPHA · ') : (isRTL ? 'סטנדרט · ' : 'STANDARD · ')) + (isRTL ? modeMeta.he : modeMeta.en).toUpperCase()}
         </div>
         <div style={{ fontSize: 11, color: T.text.secondary, flex: 1 }}>{isRTL ? modeMeta.sub.he : modeMeta.sub.en}</div>
-        <button onClick={() => setDiagnosisOpen(true)} style={{ padding: '9px 16px', borderRadius: 10, border: `1px solid ${T.accent.cyan}55`, background: `linear-gradient(135deg, ${T.accent.cyan}22, ${T.accent.purple}18)`, color: T.accent.cyan, fontSize: 12, fontWeight: 800, cursor: 'pointer', boxShadow: `0 0 22px ${T.accent.cyan}18` }}>
-          {isRTL ? 'אבחן אותי' : 'Diagnose Me'}
+        <button
+          onClick={startDiagnosis}
+          disabled={diagLoading}
+          style={{
+            position: 'relative', overflow: 'hidden',
+            padding: '12px 22px 12px 18px', borderRadius: 14,
+            border: `1px solid ${T.accent.cyan}66`,
+            background: `linear-gradient(135deg, ${T.accent.cyan}1f, ${T.accent.purple}22 60%, ${T.accent.cyan}1a)`,
+            color: T.accent.cyan, fontSize: 13, fontWeight: 900, cursor: diagLoading ? 'wait' : 'pointer',
+            boxShadow: `0 0 28px ${T.accent.cyan}33, inset 0 0 18px ${T.accent.cyan}10`,
+            display: 'inline-flex', alignItems: 'center', gap: 10, letterSpacing: '0.04em',
+          }}
+        >
+          {/* Motherboard glyph */}
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ filter: `drop-shadow(0 0 4px ${T.accent.cyan})` }}>
+            <rect x="6" y="6" width="12" height="12" rx="2" stroke={T.accent.cyan} strokeWidth="1.4" />
+            <rect x="9.5" y="9.5" width="5" height="5" rx="1" fill={T.accent.cyan} fillOpacity="0.35" stroke={T.accent.cyan} strokeWidth="1" />
+            {[3, 7, 11, 15, 19].map(y => <line key={'l' + y} x1="2" y1={y} x2="6" y2={y} stroke={T.accent.cyan} strokeWidth="1" opacity="0.7" />)}
+            {[3, 7, 11, 15, 19].map(y => <line key={'r' + y} x1="18" y1={y} x2="22" y2={y} stroke={T.accent.cyan} strokeWidth="1" opacity="0.7" />)}
+            {[5, 9, 13, 17].map(x => <line key={'t' + x} x1={x} y1="2" x2={x} y2="6" stroke={T.accent.cyan} strokeWidth="1" opacity="0.7" />)}
+            {[5, 9, 13, 17].map(x => <line key={'b' + x} x1={x} y1="18" x2={x} y2="22" stroke={T.accent.cyan} strokeWidth="1" opacity="0.7" />)}
+          </svg>
+          <span>{diagLoading ? (isRTL ? 'מאבחן...' : 'Diagnosing...') : (isRTL ? 'אבחן אותי' : 'Diagnose Me')}</span>
+          {/* Shimmer sweep */}
+          <span style={{ position: 'absolute', inset: 0, background: `linear-gradient(110deg, transparent 35%, ${T.accent.cyan}55 50%, transparent 65%)`, transform: 'translateX(-100%)', animation: diagLoading ? 'none' : 'shimmer 3.4s ease-in-out infinite', pointerEvents: 'none' }} />
         </button>
       </div>
+
+      {/* Cinematic loading overlay — motherboard pulse */}
+      {diagLoading && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1100, background: 'rgba(2,8,20,0.86)', backdropFilter: 'blur(18px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 22 }}>
+          <svg width="220" height="220" viewBox="0 0 220 220" style={{ filter: `drop-shadow(0 0 24px ${T.accent.cyan})` }}>
+            <defs>
+              <linearGradient id="diag-trace" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor={T.accent.cyan} stopOpacity="0" />
+                <stop offset="50%" stopColor={T.accent.cyan} stopOpacity="1" />
+                <stop offset="100%" stopColor={T.accent.cyan} stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            <rect x="20" y="20" width="180" height="180" rx="18" stroke={`${T.accent.cyan}55`} strokeWidth="1.4" fill="none" />
+            <rect x="78" y="78" width="64" height="64" rx="8" stroke={T.accent.cyan} strokeWidth="1.6" fill={`${T.accent.cyan}10`} />
+            {['M30,30 L80,30 L80,80','M190,30 L140,30 L140,80','M30,190 L80,190 L80,140','M190,190 L140,190 L140,140','M20,110 L78,110','M200,110 L142,110','M110,20 L110,78','M110,200 L110,142'].map((d,i)=>(
+              <g key={i}>
+                <path d={d} stroke={`${T.accent.cyan}30`} strokeWidth="1.4" fill="none" />
+                <path d={d} stroke="url(#diag-trace)" strokeWidth="2.4" fill="none" strokeDasharray="14 180">
+                  <animate attributeName="stroke-dashoffset" from="0" to="-200" dur={`${1.1 + i * 0.12}s`} repeatCount="indefinite" />
+                </path>
+              </g>
+            ))}
+            {[[30,30],[190,30],[30,190],[190,190],[20,110],[200,110],[110,20],[110,200]].map(([x,y],i)=>(
+              <circle key={i} cx={x} cy={y} r="4" fill={T.bg.primary} stroke={T.accent.cyan} strokeWidth="1.5" />
+            ))}
+            <text x="110" y="115" textAnchor="middle" fill={T.accent.cyan} fontSize="14" fontFamily="'JetBrains Mono', monospace" letterSpacing="0.2em">ORCA·DX</text>
+          </svg>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+            {[isRTL ? 'סורק התנהגות סוחר...' : 'Scanning trader behavior...', isRTL ? 'מזהה דפוסי סיכון ומתח...' : 'Detecting risk & pressure patterns...', isRTL ? 'מחבר ארכיטיפ אישי...' : 'Composing personal archetype...'].map((s, i) => (
+              <div key={i} style={{ fontSize: 11, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em', opacity: 0.4 + i * 0.2, animation: `pulse ${1.4 + i * 0.2}s ease-in-out infinite` }}>◆ {s}</div>
+            ))}
+          </div>
+        </div>
+      )}
+      <div style={{ display: 'none' }}>
 
       {/* ═══ RADAR + GAUGES — hidden in Beginner ═══ */}
       {showRadar && (<>
