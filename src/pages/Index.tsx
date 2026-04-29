@@ -742,10 +742,10 @@ const Index = () => {
           ))}
         </div>
 
-        {/* Research charts grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12, marginBottom: 16 }}>
+        {/* Research charts grid — slim quant style on desktop, denser packing in alpha */}
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : (isAlpha ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)'), gap: 10, marginBottom: 14 }}>
           <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'התפלגות R-Multiple' : 'R-Multiple Distribution'} explanation={EXPLANATIONS.rDistribution} unit="R">
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={isAlpha ? 120 : 200}>
               <BarChart data={stats.rDist}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 9 }} /><Tooltip contentStyle={tt} /><Bar dataKey="r" radius={[3,3,0,0]}>{stats.rDist.map((d, i) => <Cell key={i} fill={d.r >= 0 ? T.accent.cyan : T.accent.red} />)}</Bar></BarChart>
             </ResponsiveContainer>
           </ChartWrapper>
