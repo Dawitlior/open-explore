@@ -624,34 +624,86 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
       )}
 
       {diagnosisOpen && (
-        <div onClick={() => setDiagnosisOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.78)', backdropFilter: 'blur(14px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18 }}>
-          <div onClick={e => e.stopPropagation()} dir="rtl" style={{ width: 'min(760px, 100%)', maxHeight: '88vh', overflow: 'auto', borderRadius: 18, border: `1px solid ${healthColor}55`, background: `linear-gradient(145deg, ${T.bg.card}, ${T.bg.secondary} 48%, ${T.bg.tertiary})`, boxShadow: `0 30px 90px rgba(0,0,0,.62), 0 0 42px ${healthColor}22`, padding: 24, animation: 'scaleIn .22s ease' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', marginBottom: 18 }}>
-              <div>
-                <div style={{ fontSize: 10, color: healthColor, letterSpacing: '0.2em', fontFamily: "'JetBrains Mono', monospace", marginBottom: 6 }}>ORCA PSYCHOLOGICAL DIAGNOSTIC</div>
-                <div style={{ fontSize: 28, color: T.text.primary, fontWeight: 900 }}>{diagnosis.archetype}</div>
-                <div style={{ fontSize: 13, color: T.text.secondary, marginTop: 6 }}>אבחון מבוסס {trades.length} עסקאות, דפוסי סיכון, משמעת, רצפים והתנהגות לאחר הפסד.</div>
-              </div>
-              <button onClick={() => setDiagnosisOpen(false)} style={{ width: 36, height: 36, borderRadius: 10, border: `1px solid ${T.border.medium}`, background: T.bg.tertiary, color: T.text.secondary, cursor: 'pointer', fontSize: 22 }}>×</button>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginBottom: 16 }}>
-              {[['בריאות', behavioralHealth.toFixed(0), healthColor], ['הון מנטלי', mentalCapital.toFixed(0), mentalCapital >= 60 ? T.accent.green : T.accent.orange], ['Tilt', tiltLabel, tiltColor], ['משמעת', `${rulesPct.toFixed(0)}%`, rulesPct >= 80 ? T.accent.green : T.accent.red]].map(([l, v, c]) => (
-                <div key={String(l)} style={{ padding: 14, borderRadius: 12, background: `${c}10`, border: `1px solid ${c}33` }}>
-                  <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 5 }}>{l}</div>
-                  <div style={{ fontSize: 24, color: String(c), fontWeight: 900, fontFamily: "'JetBrains Mono', monospace" }}>{v}</div>
+        <div onClick={() => setDiagnosisOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(16px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18, animation: 'fadeIn .25s ease' }}>
+          <div onClick={e => e.stopPropagation()} dir="rtl" style={{ width: 'min(820px, 100%)', maxHeight: '90vh', overflow: 'auto', borderRadius: 20, border: `1px solid ${enoughForDiag ? healthColor : T.accent.orange}55`, background: `linear-gradient(145deg, ${T.bg.card}, ${T.bg.secondary} 48%, ${T.bg.tertiary})`, boxShadow: `0 30px 90px rgba(0,0,0,.62), 0 0 60px ${enoughForDiag ? healthColor : T.accent.orange}25`, padding: 26, animation: 'scaleIn .32s cubic-bezier(0.16,1,0.3,1)' }}>
+            {!enoughForDiag ? (
+              <div style={{ textAlign: 'center', padding: '20px 10px' }}>
+                <div style={{ fontSize: 56, marginBottom: 12 }}>📉</div>
+                <div style={{ fontSize: 11, color: T.accent.orange, letterSpacing: '0.2em', fontFamily: "'JetBrains Mono', monospace", marginBottom: 8 }}>INSUFFICIENT DATA</div>
+                <div style={{ fontSize: 22, color: T.text.primary, fontWeight: 900, marginBottom: 10 }}>{isRTL ? 'אין מספיק נתונים לאבחון מדויק' : 'Not enough data for an accurate diagnosis'}</div>
+                <div style={{ fontSize: 13, color: T.text.secondary, lineHeight: 1.7, maxWidth: 540, margin: '0 auto' }}>
+                  {isRTL
+                    ? `כדי לייצר אבחון פסיכולוגי אמין נדרשות לפחות ${MIN_DIAG_TRADES} עסקאות. כרגע יש ${trades.length}. המערכת לא תייצר תובנות מומצאות — המשך לתעד עסקאות נקיות וחזור.`
+                    : `A reliable psychological diagnosis requires at least ${MIN_DIAG_TRADES} trades. You currently have ${trades.length}. The system will not fabricate insights — log more clean trades and return.`}
                 </div>
-              ))}
-            </div>
-            {[
-              ['חוזקות שאסור לאבד', diagnosis.strengths.length ? diagnosis.strengths : ['עדיין אין מספיק יתרון ברור — המשימה היא לצבור עוד דאטה נקי.'], T.accent.green],
-              ['נקודות סיכון שמאטות אותך', diagnosis.risksList.length ? diagnosis.risksList : ['לא זוהתה בעיה קריטית כרגע — המיקוד הוא שיפור הדרגתי ולא תיקון חירום.'], T.accent.red],
-              ['פרוטוקול פעולה אישי', diagnosis.plan, T.accent.cyan],
-            ].map(([title, items, color]) => (
-              <div key={String(title)} style={{ marginTop: 12, padding: 16, borderRadius: 14, background: T.bg.tertiary, borderInlineStart: `4px solid ${color}` }}>
-                <div style={{ fontSize: 14, color: String(color), fontWeight: 900, marginBottom: 10 }}>{title}</div>
-                {(items as string[]).map((x, i) => <div key={i} style={{ fontSize: 13, color: T.text.secondary, lineHeight: 1.8 }}>◆ {x}</div>)}
+                <div style={{ marginTop: 20, display: 'inline-flex', alignItems: 'center', gap: 10, padding: '10px 16px', borderRadius: 10, background: `${T.accent.orange}10`, border: `1px solid ${T.accent.orange}33` }}>
+                  <span style={{ fontSize: 11, color: T.text.muted }}>{isRTL ? 'התקדמות:' : 'Progress:'}</span>
+                  <div style={{ width: 160, height: 6, background: T.bg.tertiary, borderRadius: 3, overflow: 'hidden' }}>
+                    <div style={{ width: `${Math.min(100, (trades.length / MIN_DIAG_TRADES) * 100)}%`, height: '100%', background: T.accent.orange, transition: 'width .4s' }} />
+                  </div>
+                  <span style={{ fontSize: 12, color: T.accent.orange, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>{trades.length}/{MIN_DIAG_TRADES}</span>
+                </div>
+                <div style={{ marginTop: 22 }}>
+                  <button onClick={() => setDiagnosisOpen(false)} style={{ padding: '10px 22px', borderRadius: 10, border: `1px solid ${T.border.medium}`, background: T.bg.tertiary, color: T.text.secondary, cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>{isRTL ? 'סגור' : 'Close'}</button>
+                </div>
               </div>
-            ))}
+            ) : (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', marginBottom: 18 }}>
+                  <div>
+                    <div style={{ fontSize: 10, color: healthColor, letterSpacing: '0.22em', fontFamily: "'JetBrains Mono', monospace", marginBottom: 6 }}>◆ ORCA PSYCHOLOGICAL DIAGNOSTIC</div>
+                    <div style={{ fontSize: 28, color: T.text.primary, fontWeight: 900, lineHeight: 1.15 }}>{diagnosis.archetype}</div>
+                    <div style={{ fontSize: 13, color: T.text.secondary, marginTop: 8, lineHeight: 1.6 }}>
+                      {isRTL
+                        ? `אבחון מבוסס ${trades.length} עסקאות, דפוסי סיכון, משמעת, רצפים והתנהגות לאחר הפסד.`
+                        : `Diagnosis based on ${trades.length} trades — risk patterns, discipline, streaks, and post-loss behavior.`}
+                    </div>
+                  </div>
+                  <button onClick={() => setDiagnosisOpen(false)} style={{ width: 36, height: 36, borderRadius: 10, border: `1px solid ${T.border.medium}`, background: T.bg.tertiary, color: T.text.secondary, cursor: 'pointer', fontSize: 22 }}>×</button>
+                </div>
+
+                {/* KPI grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginBottom: 16 }}>
+                  {[
+                    [isRTL ? 'בריאות' : 'Health', behavioralHealth.toFixed(0), healthColor],
+                    [isRTL ? 'הון מנטלי' : 'Mental Cap', mentalCapital.toFixed(0), mentalCapital >= 60 ? T.accent.green : T.accent.orange],
+                    ['Tilt', tiltLabel, tiltColor],
+                    [isRTL ? 'משמעת' : 'Discipline', `${rulesPct.toFixed(0)}%`, rulesPct >= 80 ? T.accent.green : T.accent.red],
+                    [isRTL ? 'CV סיכון' : 'Risk CV', `${riskCV.toFixed(0)}%`, riskCV <= 35 ? T.accent.green : riskCV <= 60 ? T.accent.orange : T.accent.red],
+                    [isRTL ? 'תוחלת' : 'Expectancy', `${stats.expectancyR >= 0 ? '+' : ''}${stats.expectancyR.toFixed(2)}R`, stats.expectancyR >= 0 ? T.accent.cyan : T.accent.red],
+                  ].map(([l, v, c]) => (
+                    <div key={String(l)} style={{ padding: 14, borderRadius: 12, background: `${c}10`, border: `1px solid ${c}33` }}>
+                      <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 5 }}>{l}</div>
+                      <div style={{ fontSize: 22, color: String(c), fontWeight: 900, fontFamily: "'JetBrains Mono', monospace" }}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Behavior fingerprint chips */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
+                  {[
+                    revengeTrades > 0 ? { l: isRTL ? `${revengeTrades} מסחרי נקמה` : `${revengeTrades} revenge trades`, c: T.accent.red } : { l: isRTL ? 'ללא מסחר נקמה' : 'No revenge', c: T.accent.green },
+                    overtradingDays.length > 0 ? { l: isRTL ? `${overtradingDays.length} ימי מסחר יתר` : `${overtradingDays.length} overtrade days`, c: T.accent.orange } : { l: isRTL ? 'תדירות בריאה' : 'Healthy frequency', c: T.accent.green },
+                    maxStreak >= 3 ? { l: isRTL ? `רצף הפסדים מקס׳ ${maxStreak}` : `max loss streak ${maxStreak}`, c: T.accent.orange } : { l: isRTL ? 'ללא רצפים מסוכנים' : 'No dangerous streaks', c: T.accent.green },
+                    highDevTrades.length > 0 ? { l: isRTL ? `${highDevTrades.length} עסקאות בסטייה גבוהה` : `${highDevTrades.length} high-deviation`, c: T.accent.orange } : { l: isRTL ? 'ביצוע מדויק' : 'Precise execution', c: T.accent.cyan },
+                    postLossBehavior.totalAfterLoss > 0 && (postLossBehavior.riskIncAfterLoss / postLossBehavior.totalAfterLoss) > 0.3 ? { l: isRTL ? 'הסלמת סיכון אחרי הפסד' : 'Risk escalation after loss', c: T.accent.red } : null,
+                  ].filter(Boolean).map((chip: any, i) => (
+                    <span key={i} style={{ fontSize: 11, padding: '5px 10px', borderRadius: 999, background: `${chip.c}14`, border: `1px solid ${chip.c}38`, color: chip.c, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.04em' }}>● {chip.l}</span>
+                  ))}
+                </div>
+
+                {[
+                  [isRTL ? 'חוזקות שאסור לאבד' : 'Strengths to protect', diagnosis.strengths.length ? diagnosis.strengths : [isRTL ? 'עדיין אין מספיק יתרון ברור — המשימה היא לצבור עוד דאטה נקי.' : 'No clear edge yet — keep collecting clean data.'], T.accent.green],
+                  [isRTL ? 'נקודות סיכון שמאטות אותך' : 'Risks slowing you down', diagnosis.risksList.length ? diagnosis.risksList : [isRTL ? 'לא זוהתה בעיה קריטית כרגע — המיקוד הוא שיפור הדרגתי.' : 'No critical issue — focus on incremental improvement.'], T.accent.red],
+                  [isRTL ? 'פרוטוקול פעולה אישי' : 'Personal action protocol', diagnosis.plan, T.accent.cyan],
+                ].map(([title, items, color]) => (
+                  <div key={String(title)} style={{ marginTop: 12, padding: 16, borderRadius: 14, background: T.bg.tertiary, borderInlineStart: `4px solid ${color}` }}>
+                    <div style={{ fontSize: 14, color: String(color), fontWeight: 900, marginBottom: 10 }}>{title}</div>
+                    {(items as string[]).map((x, i) => <div key={i} style={{ fontSize: 13, color: T.text.secondary, lineHeight: 1.8 }}>◆ {x}</div>)}
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         </div>
       )}
