@@ -436,6 +436,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
           <button onClick={onClose} style={{ padding: isMobile ? '11px 20px' : '9px 20px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, cursor: 'pointer', fontSize: 13 }}>{t.cancel}</button>
           <button onClick={handleSubmit} style={{ padding: isMobile ? '11px 28px' : '9px 24px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 700, cursor: 'pointer', fontSize: 13, flex: isMobile ? 1 : 'none' }}>{t.save}</button>
         </div>
+        </div>
       </div>
     </div>
   );
