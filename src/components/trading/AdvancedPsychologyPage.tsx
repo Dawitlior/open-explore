@@ -380,6 +380,9 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
           {(isAlpha ? (isRTL ? 'אלפא · ' : 'ALPHA · ') : (isRTL ? 'סטנדרט · ' : 'STANDARD · ')) + (isRTL ? modeMeta.he : modeMeta.en).toUpperCase()}
         </div>
         <div style={{ fontSize: 11, color: T.text.secondary, flex: 1 }}>{isRTL ? modeMeta.sub.he : modeMeta.sub.en}</div>
+        <button onClick={() => setDiagnosisOpen(true)} style={{ padding: '9px 16px', borderRadius: 10, border: `1px solid ${T.accent.cyan}55`, background: `linear-gradient(135deg, ${T.accent.cyan}22, ${T.accent.purple}18)`, color: T.accent.cyan, fontSize: 12, fontWeight: 800, cursor: 'pointer', boxShadow: `0 0 22px ${T.accent.cyan}18` }}>
+          {isRTL ? 'אבחן אותי' : 'Diagnose Me'}
+        </button>
       </div>
 
       {/* ═══ RADAR + GAUGES — hidden in Beginner ═══ */}
@@ -552,6 +555,39 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
             </LazyChart>
           </ChartWrapper>
         </>
+      )}
+
+      {diagnosisOpen && (
+        <div onClick={() => setDiagnosisOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.78)', backdropFilter: 'blur(14px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18 }}>
+          <div onClick={e => e.stopPropagation()} dir="rtl" style={{ width: 'min(760px, 100%)', maxHeight: '88vh', overflow: 'auto', borderRadius: 18, border: `1px solid ${healthColor}55`, background: `linear-gradient(145deg, ${T.bg.card}, ${T.bg.secondary} 48%, ${T.bg.tertiary})`, boxShadow: `0 30px 90px rgba(0,0,0,.62), 0 0 42px ${healthColor}22`, padding: 24, animation: 'scaleIn .22s ease' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', marginBottom: 18 }}>
+              <div>
+                <div style={{ fontSize: 10, color: healthColor, letterSpacing: '0.2em', fontFamily: "'JetBrains Mono', monospace", marginBottom: 6 }}>ORCA PSYCHOLOGICAL DIAGNOSTIC</div>
+                <div style={{ fontSize: 28, color: T.text.primary, fontWeight: 900 }}>{diagnosis.archetype}</div>
+                <div style={{ fontSize: 13, color: T.text.secondary, marginTop: 6 }}>אבחון מבוסס {trades.length} עסקאות, דפוסי סיכון, משמעת, רצפים והתנהגות לאחר הפסד.</div>
+              </div>
+              <button onClick={() => setDiagnosisOpen(false)} style={{ width: 36, height: 36, borderRadius: 10, border: `1px solid ${T.border.medium}`, background: T.bg.tertiary, color: T.text.secondary, cursor: 'pointer', fontSize: 22 }}>×</button>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginBottom: 16 }}>
+              {[['בריאות', behavioralHealth.toFixed(0), healthColor], ['הון מנטלי', mentalCapital.toFixed(0), mentalCapital >= 60 ? T.accent.green : T.accent.orange], ['Tilt', tiltLabel, tiltColor], ['משמעת', `${rulesPct.toFixed(0)}%`, rulesPct >= 80 ? T.accent.green : T.accent.red]].map(([l, v, c]) => (
+                <div key={String(l)} style={{ padding: 14, borderRadius: 12, background: `${c}10`, border: `1px solid ${c}33` }}>
+                  <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 5 }}>{l}</div>
+                  <div style={{ fontSize: 24, color: String(c), fontWeight: 900, fontFamily: "'JetBrains Mono', monospace" }}>{v}</div>
+                </div>
+              ))}
+            </div>
+            {[
+              ['חוזקות שאסור לאבד', diagnosis.strengths.length ? diagnosis.strengths : ['עדיין אין מספיק יתרון ברור — המשימה היא לצבור עוד דאטה נקי.'], T.accent.green],
+              ['נקודות סיכון שמאטות אותך', diagnosis.risksList.length ? diagnosis.risksList : ['לא זוהתה בעיה קריטית כרגע — המיקוד הוא שיפור הדרגתי ולא תיקון חירום.'], T.accent.red],
+              ['פרוטוקול פעולה אישי', diagnosis.plan, T.accent.cyan],
+            ].map(([title, items, color]) => (
+              <div key={String(title)} style={{ marginTop: 12, padding: 16, borderRadius: 14, background: T.bg.tertiary, borderInlineStart: `4px solid ${color}` }}>
+                <div style={{ fontSize: 14, color: String(color), fontWeight: 900, marginBottom: 10 }}>{title}</div>
+                {(items as string[]).map((x, i) => <div key={i} style={{ fontSize: 13, color: T.text.secondary, lineHeight: 1.8 }}>◆ {x}</div>)}
+              </div>
+            ))}
+          </div>
+        </div>
       )}
     </>
   );
