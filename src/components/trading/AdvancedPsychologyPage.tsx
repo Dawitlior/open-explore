@@ -449,7 +449,7 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
           </div>
         </div>
       )}
-      <div style={{ display: 'none' }}>
+      
 
       {/* ═══ RADAR + GAUGES — hidden in Beginner ═══ */}
       {showRadar && (<>
