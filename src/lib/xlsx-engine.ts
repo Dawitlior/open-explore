@@ -315,6 +315,34 @@ function findHeaderRow(sheet: XLSX.WorkSheet): number {
   return bestRow;
 }
 
+function pickMainSheet(wb: XLSX.WorkBook): XLSX.WorkSheet | null {
+  const name = wb.SheetNames.find(n => normalizeHeader(n) === 'main sheet')
+    || wb.SheetNames.find(n => normalizeHeader(n).includes('main'))
+    || wb.SheetNames.find(n => !['calculations', 'statistics'].includes(normalizeHeader(n)));
+  return name ? wb.Sheets[name] : null;
+}
+
+function cellAt(row: unknown[], headers: Record<string, number>, names: string[]): unknown {
+  for (const name of names) {
+    const idx = headers[normalizeHeader(name)];
+    if (idx !== undefined) return row[idx];
+  }
+  return undefined;
+}
+
+function parseTimespanMinutes(value: unknown): number {
+  if (value == null || value === '') return 0;
+  if (typeof value === 'number') return Math.round(value * 24 * 60);
+  const str = String(value).toLowerCase();
+  const day = Number(str.match(/(\d+(?:\.\d+)?)\s*d/)?.[1] || 0);
+  const hour = Number(str.match(/(\d+(?:\.\d+)?)\s*h/)?.[1] || 0);
+  const min = Number(str.match(/(\d+(?:\.\d+)?)\s*m/)?.[1] || 0);
+  if (day || hour || min) return Math.round(day * 1440 + hour * 60 + min);
+  const clock = str.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  if (clock) return Number(clock[1]) * 60 + Number(clock[2]);
+  return 0;
+}
+
 // ═══════════════════════════════════════════════════
 // EXPORT
 // ═══════════════════════════════════════════════════
