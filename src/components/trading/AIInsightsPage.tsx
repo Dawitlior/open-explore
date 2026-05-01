@@ -1008,6 +1008,88 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                   </GlassCard>
                 </>
               )}
+
+              {/* PACK 11 — Lag-1 Autocorrelation + Win-rate Regime */}
+              {pack === 'autocorr+regime' && (
+                <>
+                  <GlassCard T={T}>
+                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>אוטוקורלציה — האם הביצועים משפיעים על הבא?</div>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <ScatterChart>
+                        <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+                        <XAxis type="number" dataKey="prev" name="R קודם" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                        <YAxis type="number" dataKey="cur" name="R נוכחי" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                        <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} />
+                        <Scatter data={autocorrData}>
+                          {autocorrData.map((d, i) => (
+                            <Cell key={i} fill={d.win ? T.accent.green : T.accent.red} fillOpacity={0.7} />
+                          ))}
+                        </Scatter>
+                      </ScatterChart>
+                    </ResponsiveContainer>
+                  </GlassCard>
+                  <GlassCard T={T}>
+                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>משטר ביצועים — חלון 20 עסקאות</div>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <ComposedChart data={regimeData}>
+                        <defs>
+                          <linearGradient id="regG" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.5} />
+                            <stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.04} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+                        <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                        <YAxis domain={[0, 100]} tick={{ fill: T.text.muted, fontSize: 10 }} unit="%" />
+                        <Tooltip contentStyle={tt} />
+                        <Area type="monotone" dataKey="wr" stroke={T.accent.cyan} fill="url(#regG)" strokeWidth={2.4} />
+                        <Line type="monotone" dataKey="bull" stroke={T.accent.green} strokeWidth={1.2} strokeDasharray="4 4" dot={false} />
+                        <Line type="monotone" dataKey="bear" stroke={T.accent.red} strokeWidth={1.2} strokeDasharray="4 4" dot={false} />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  </GlassCard>
+                </>
+              )}
+
+              {/* PACK 12 — Monte Carlo Equity Cone (probabilistic forecast) */}
+              {pack === 'montecarlo+riskcone' && (
+                <>
+                  <GlassCard T={T} style={{ gridColumn: '1 / -1' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                      <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em' }}>Monte Carlo — קונוס תוצאות אפשריות (50 מסלולים)</div>
+                      <div style={{ fontSize: 10, color: T.accent.purple, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.12em' }}>QUANT TIER</div>
+                    </div>
+                    <ResponsiveContainer width="100%" height={290}>
+                      <AreaChart data={monteCarloData}>
+                        <defs>
+                          <linearGradient id="mcOuter" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={T.accent.purple} stopOpacity={0.35} />
+                            <stop offset="100%" stopColor={T.accent.purple} stopOpacity={0.02} />
+                          </linearGradient>
+                          <linearGradient id="mcInner" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.45} />
+                            <stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.05} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+                        <XAxis dataKey="step" tick={{ fill: T.text.muted, fontSize: 10 }} label={{ value: 'עסקאות קדימה', fill: T.text.muted, fontSize: 10, position: 'insideBottom', offset: -4 }} />
+                        <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} label={{ value: 'R מצטבר', angle: -90, fill: T.text.muted, fontSize: 10, position: 'insideLeft' }} />
+                        <Tooltip contentStyle={tt} />
+                        <Area type="monotone" dataKey="p95" stroke={T.accent.purple} fill="url(#mcOuter)" strokeWidth={1.4} />
+                        <Area type="monotone" dataKey="p75" stroke={T.accent.cyan} fill="url(#mcInner)" strokeWidth={1.5} />
+                        <Area type="monotone" dataKey="p25" stroke={T.accent.cyan} fill={T.bg.primary} fillOpacity={0.6} strokeWidth={1.5} />
+                        <Area type="monotone" dataKey="p05" stroke={T.accent.purple} fill={T.bg.primary} fillOpacity={1} strokeWidth={1.4} />
+                        <Line type="monotone" dataKey="p50" stroke={T.accent.green} strokeWidth={2.5} dot={false} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                    <div style={{ display: 'flex', gap: 14, marginTop: 8, fontSize: 10, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace", flexWrap: 'wrap' }}>
+                      <span>● חציון (P50)</span>
+                      <span style={{ color: T.accent.cyan }}>● 50% טווח (P25-P75)</span>
+                      <span style={{ color: T.accent.purple }}>● 90% טווח (P05-P95)</span>
+                    </div>
+                  </GlassCard>
+                </>
+              )}
             </div>
 
             {/* INSIGHTS */}
