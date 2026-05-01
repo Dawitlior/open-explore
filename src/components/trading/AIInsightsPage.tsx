@@ -1105,6 +1105,74 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                 ))}
               </div>
             )}
+
+            {/* GOLDEN CARD — "כרטיסיית הזהב" — Best Of Edge */}
+            {bestEdge.enoughData && (
+              <motion.div
+                initial={{ opacity: 0, y: 24, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.7, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                style={{
+                  marginTop: 18, position: 'relative', borderRadius: 22, padding: 24,
+                  background: `linear-gradient(135deg, rgba(255,200,80,0.08) 0%, rgba(255,160,40,0.04) 50%, rgba(120,80,20,0.06) 100%), ${T.bg.card}`,
+                  border: '1.5px solid rgba(255,196,90,0.45)',
+                  boxShadow: '0 24px 80px -20px rgba(255,180,40,0.30), 0 0 0 1px rgba(255,196,90,0.18) inset, 0 0 60px rgba(255,180,40,0.15)',
+                  overflow: 'hidden',
+                }}
+              >
+                <motion.div
+                  animate={{ x: ['-100%', '200%'] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+                  style={{ position: 'absolute', inset: 0, background: 'linear-gradient(110deg, transparent 35%, rgba(255,220,140,0.18) 50%, transparent 65%)', pointerEvents: 'none' }}
+                />
+                <div style={{ position: 'relative' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, flexWrap: 'wrap', gap: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: 30, filter: 'drop-shadow(0 0 12px rgba(255,200,80,0.7))' }}>👑</span>
+                      <div>
+                        <div style={{ fontSize: 11, color: '#FFD27A', letterSpacing: '0.22em', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>◆ ORCA · GOLDEN EDGE</div>
+                        <div style={{ fontSize: 22, color: T.text.primary, fontWeight: 900, marginTop: 2 }}>כרטיסיית הזהב — האדג׳ האישי שלך</div>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 11, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>מבוסס {trades.length} עסקאות</div>
+                  </div>
+
+                  <div style={{ fontSize: 14, color: T.text.secondary, lineHeight: 1.6, marginBottom: 18, padding: '10px 14px', background: 'rgba(255,200,80,0.06)', borderRadius: 12, border: '1px solid rgba(255,200,80,0.18)' }}>
+                    💡 {bestEdge.edgeStatement}
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
+                    {[
+                      bestEdge.bestAsset && { icon: '💎', label: 'הנכס הכי טוב', value: bestEdge.bestAsset.name, sub: `${bestEdge.bestAsset.pnl >= 0 ? '+' : ''}$${bestEdge.bestAsset.pnl} · ${bestEdge.bestAsset.wr}% WR · ${bestEdge.bestAsset.expR >= 0 ? '+' : ''}${bestEdge.bestAsset.expR}R` },
+                      bestEdge.bestDay && { icon: '📅', label: 'היום הכי טוב', value: bestEdge.bestDay.name, sub: `${bestEdge.bestDay.pnl >= 0 ? '+' : ''}$${bestEdge.bestDay.pnl} · ${bestEdge.bestDay.wr}% WR · ${bestEdge.bestDay.n} עסקאות` },
+                      bestEdge.bestHour && { icon: '⏰', label: 'השעה הכי טובה', value: bestEdge.bestHour.label, sub: `${bestEdge.bestHour.pnl >= 0 ? '+' : ''}$${bestEdge.bestHour.pnl} · ${bestEdge.bestHour.wr}% WR` },
+                      bestEdge.bestSession && { icon: '🌍', label: 'הסשן הכי טוב', value: bestEdge.bestSession.name, sub: `${bestEdge.bestSession.pnl >= 0 ? '+' : ''}$${bestEdge.bestSession.pnl} · ${bestEdge.bestSession.n} עסקאות` },
+                      bestEdge.bestSetup && { icon: '🎯', label: 'האסטרטגיה הכי טובה', value: bestEdge.bestSetup.name, sub: `${bestEdge.bestSetup.pnl >= 0 ? '+' : ''}$${bestEdge.bestSetup.pnl} · ${bestEdge.bestSetup.wr}% WR` },
+                      bestEdge.bestStreakDay && { icon: '🚀', label: 'היום הכי רווחי בלוח', value: bestEdge.bestStreakDay.name, sub: `${bestEdge.bestStreakDay.pnl >= 0 ? '+' : ''}$${bestEdge.bestStreakDay.pnl} · ${bestEdge.bestStreakDay.n} עסקאות` },
+                    ].filter(Boolean).map((card: any, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4 + i * 0.06 }}
+                        style={{ padding: 14, borderRadius: 14, background: 'rgba(255,210,120,0.06)', border: '1px solid rgba(255,210,120,0.22)', position: 'relative', overflow: 'hidden' }}
+                      >
+                        <div style={{ fontSize: 22, marginBottom: 4 }}>{card.icon}</div>
+                        <div style={{ fontSize: 10, color: '#FFD27A', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4, fontFamily: "'JetBrains Mono', monospace" }}>{card.label}</div>
+                        <div style={{ fontSize: 17, fontWeight: 900, color: T.text.primary, marginBottom: 4, lineHeight: 1.2 }}>{card.value}</div>
+                        <div style={{ fontSize: 11, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>{card.sub}</div>
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  {bestEdge.worstAsset && (
+                    <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 10, background: `${T.accent.red}10`, border: `1px solid ${T.accent.red}30`, fontSize: 12, color: T.text.secondary }}>
+                      ⚠️ <strong style={{ color: T.accent.red }}>הנכס שמדמם הכי הרבה:</strong> {bestEdge.worstAsset.name} ({bestEdge.worstAsset.pnl}$ ב-{bestEdge.worstAsset.n} עסקאות) — שקול לסנן או להוריד גודל.
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
