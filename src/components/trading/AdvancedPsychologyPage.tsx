@@ -274,24 +274,7 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
   const tiltColor = tiltScore.status === 'calm' ? T.accent.green : tiltScore.status === 'elevated' ? T.accent.orange : T.accent.red;
   const tiltLabel = tiltScore.status === 'calm' ? (isRTL ? 'רגוע' : 'CALM') : tiltScore.status === 'elevated' ? (isRTL ? 'מוגבר' : 'ELEVATED') : (isRTL ? 'מוטה' : 'TILTED');
 
-  const diagnosis = useMemo(() => {
-    const strengths = [
-      rulesPct >= 80 ? 'משמעת הכללים שלך היא נכס מרכזי — אתה יודע לעבוד לפי תהליך ולא רק לפי תחושה.' : '',
-      riskCV <= 35 ? 'ניהול הסיכון שלך עקבי יחסית, וזה מייצר בסיס יציב לצמיחה.' : '',
-      stats.expectancyR > 0 ? `התוחלת שלך חיובית (${stats.expectancyR.toFixed(2)}R), כלומר קיימת עדות לאדג׳ אמיתי.` : '',
-    ].filter(Boolean);
-    const risksList = [
-      revengeTrades > 0 ? `זוהה דפוס נקמה ב-${revengeTrades} עסקאות — אחרי הפסד המערכת מזהה נטייה להחזיר מהר מדי.` : '',
-      riskCV > 50 ? `הסיכון שלך תנודתי מדי (CV ${riskCV.toFixed(0)}%). זה גורם לתוצאות להיות תלויות ברגש ולא בתהליך.` : '',
-      highDevTrades.length > 0 ? `${highDevTrades.length} עסקאות עם סטייה חריגה מעל 10%. זו נקודת בקרת איכות קריטית.` : '',
-      maxStreak >= 3 ? `רצף הפסדים מקסימלי של ${maxStreak} מחייב פרוטוקול עצירה לפני המשך פעילות.` : '',
-    ].filter(Boolean);
-    const plan = risksList.length
-      ? ['אחרי הפסד: עצירה של 20 דקות לפני העסקה הבאה.', 'הגבלת סיכון קבועה עד שה-CV יורד מתחת ל-35%.', 'לסמן מראש תנאי כניסה/יציאה ולהשוות מול הסטייה בפועל.']
-      : ['להעלות איכות דרך סינון סטאפים חלשים.', 'לבחון איזה יום ושעה מייצרים את התוחלת הטובה ביותר.', 'להמשיך לתעד רגש לפני ואחרי עסקה כדי למנוע הידרדרות סמויה.'];
-    const archetype = behavioralHealth >= 75 ? 'סוחר תהליכי יציב' : behavioralHealth >= 50 ? 'סוחר עם אדג׳ אך רגיש ללחץ' : 'סוחר אימפולסיבי תחת לחץ';
-    return { archetype, strengths, risksList, plan };
-  }, [rulesPct, riskCV, stats.expectancyR, revengeTrades, highDevTrades.length, maxStreak, behavioralHealth]);
+  const deepDiag: DeepDiagnosis = useMemo(() => diagnose(trades), [trades]);
 
   // Heatmap color helper
   const heatColor = (r: number) => {
