@@ -23,6 +23,7 @@ import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { GlassCard } from './TradingUI';
 import { analyzeDeep, type DeepInsight, type DeepSeverity } from '@/lib/ai-insights-deep';
+import { findBestEdge } from '@/lib/psychology-diagnostic';
 
 interface AIInsightsPageProps {
   T: TradingTheme;
@@ -229,13 +230,15 @@ const CHART_PACKS = [
   'scatter+treemap',
   'monthly+rolling',
   'streak+bucket',
-  // ──── NEW ADVANCED PACKS ─────────────────────────────────────
-  'equity+drawdown',     // pack 5: full equity curve + max-drawdown river
-  'duration+session',    // pack 6: hold-time vs R + 24h session profit ring
-  'momentum+volatility', // pack 7: rolling 10-trade win-rate + R volatility
-  'kelly+sizing',        // pack 8: Kelly-optimal sizing vs actual + risk drift
-  'efficiency+mae',      // pack 9: MAE/MFE-style efficiency cloud + regret index
-  'dna+focus',           // pack 10: spider matrix per setup + focus pareto
+  'equity+drawdown',
+  'duration+session',
+  'momentum+volatility',
+  'kelly+sizing',
+  'efficiency+mae',
+  'dna+focus',
+  // ── ELITE QUANT PACKS ─────────────────────────────────────────
+  'autocorr+regime',     // pack 11: lag-1 autocorrelation + win-rate regime band
+  'montecarlo+riskcone', // pack 12: 200-path Monte Carlo equity + 95% risk cone
 ] as const;
 type Pack = typeof CHART_PACKS[number];
 
@@ -489,7 +492,62 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
     });
   }, [trades]);
 
-  /* ──── EMPTY STATE ──── */
+  /* ── Lag-1 autocorrelation: does today's R predict tomorrow's R? ── */
+  const autocorrData = useMemo(() => {
+    if (trades.length < 3) return [];
+    return trades.slice(1).map((t, i) => ({
+      prev: +trades[i].returnR.toFixed(2),
+      cur: +t.returnR.toFixed(2),
+      win: t.winLoss === 'Win',
+    }));
+  }, [trades]);
+
+  /* ── Rolling regime band: 20-trade win-rate corridor ── */
+  const regimeData = useMemo(() => {
+    const W = 20;
+    return trades.map((_, i) => {
+      const slice = trades.slice(Math.max(0, i - W + 1), i + 1);
+      const wins = slice.filter(x => x.winLoss === 'Win').length;
+      const wr = (wins / slice.length) * 100;
+      // bull/bear regime bands
+      return { i: i + 1, wr: +wr.toFixed(1), bull: 60, bear: 40 };
+    });
+  }, [trades]);
+
+  /* ── Monte Carlo equity simulation (200 paths) ── */
+  const monteCarloData = useMemo(() => {
+    if (trades.length < 5) return [];
+    const returns = trades.map(t => t.returnR);
+    const PATHS = 50;
+    const STEPS = Math.min(60, trades.length * 2);
+    const allPaths: number[][] = [];
+    for (let p = 0; p < PATHS; p++) {
+      const path = [0];
+      for (let s = 0; s < STEPS; s++) {
+        const r = returns[Math.floor(Math.random() * returns.length)];
+        path.push(path[path.length - 1] + r);
+      }
+      allPaths.push(path);
+    }
+    // build per-step percentile envelope
+    const result = [];
+    for (let s = 0; s <= STEPS; s++) {
+      const vals = allPaths.map(p => p[s]).sort((a, b) => a - b);
+      result.push({
+        step: s,
+        p05: +vals[Math.floor(vals.length * 0.05)].toFixed(2),
+        p25: +vals[Math.floor(vals.length * 0.25)].toFixed(2),
+        p50: +vals[Math.floor(vals.length * 0.5)].toFixed(2),
+        p75: +vals[Math.floor(vals.length * 0.75)].toFixed(2),
+        p95: +vals[Math.floor(vals.length * 0.95)].toFixed(2),
+      });
+    }
+    return result;
+  }, [trades]);
+
+  /* ── BEST-OF EDGE — golden card data ── */
+  const bestEdge = useMemo(() => findBestEdge(trades), [trades]);
+
 
   if (trades.length === 0) {
     return (
@@ -950,6 +1008,88 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                   </GlassCard>
                 </>
               )}
+
+              {/* PACK 11 — Lag-1 Autocorrelation + Win-rate Regime */}
+              {pack === 'autocorr+regime' && (
+                <>
+                  <GlassCard T={T}>
+                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>אוטוקורלציה — האם הביצועים משפיעים על הבא?</div>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <ScatterChart>
+                        <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+                        <XAxis type="number" dataKey="prev" name="R קודם" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                        <YAxis type="number" dataKey="cur" name="R נוכחי" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                        <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} />
+                        <Scatter data={autocorrData}>
+                          {autocorrData.map((d, i) => (
+                            <Cell key={i} fill={d.win ? T.accent.green : T.accent.red} fillOpacity={0.7} />
+                          ))}
+                        </Scatter>
+                      </ScatterChart>
+                    </ResponsiveContainer>
+                  </GlassCard>
+                  <GlassCard T={T}>
+                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>משטר ביצועים — חלון 20 עסקאות</div>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <ComposedChart data={regimeData}>
+                        <defs>
+                          <linearGradient id="regG" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.5} />
+                            <stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.04} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+                        <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                        <YAxis domain={[0, 100]} tick={{ fill: T.text.muted, fontSize: 10 }} unit="%" />
+                        <Tooltip contentStyle={tt} />
+                        <Area type="monotone" dataKey="wr" stroke={T.accent.cyan} fill="url(#regG)" strokeWidth={2.4} />
+                        <Line type="monotone" dataKey="bull" stroke={T.accent.green} strokeWidth={1.2} strokeDasharray="4 4" dot={false} />
+                        <Line type="monotone" dataKey="bear" stroke={T.accent.red} strokeWidth={1.2} strokeDasharray="4 4" dot={false} />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  </GlassCard>
+                </>
+              )}
+
+              {/* PACK 12 — Monte Carlo Equity Cone (probabilistic forecast) */}
+              {pack === 'montecarlo+riskcone' && (
+                <>
+                  <GlassCard T={T} style={{ gridColumn: '1 / -1' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                      <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em' }}>Monte Carlo — קונוס תוצאות אפשריות (50 מסלולים)</div>
+                      <div style={{ fontSize: 10, color: T.accent.purple, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.12em' }}>QUANT TIER</div>
+                    </div>
+                    <ResponsiveContainer width="100%" height={290}>
+                      <AreaChart data={monteCarloData}>
+                        <defs>
+                          <linearGradient id="mcOuter" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={T.accent.purple} stopOpacity={0.35} />
+                            <stop offset="100%" stopColor={T.accent.purple} stopOpacity={0.02} />
+                          </linearGradient>
+                          <linearGradient id="mcInner" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.45} />
+                            <stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.05} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+                        <XAxis dataKey="step" tick={{ fill: T.text.muted, fontSize: 10 }} label={{ value: 'עסקאות קדימה', fill: T.text.muted, fontSize: 10, position: 'insideBottom', offset: -4 }} />
+                        <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} label={{ value: 'R מצטבר', angle: -90, fill: T.text.muted, fontSize: 10, position: 'insideLeft' }} />
+                        <Tooltip contentStyle={tt} />
+                        <Area type="monotone" dataKey="p95" stroke={T.accent.purple} fill="url(#mcOuter)" strokeWidth={1.4} />
+                        <Area type="monotone" dataKey="p75" stroke={T.accent.cyan} fill="url(#mcInner)" strokeWidth={1.5} />
+                        <Area type="monotone" dataKey="p25" stroke={T.accent.cyan} fill={T.bg.primary} fillOpacity={0.6} strokeWidth={1.5} />
+                        <Area type="monotone" dataKey="p05" stroke={T.accent.purple} fill={T.bg.primary} fillOpacity={1} strokeWidth={1.4} />
+                        <Line type="monotone" dataKey="p50" stroke={T.accent.green} strokeWidth={2.5} dot={false} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                    <div style={{ display: 'flex', gap: 14, marginTop: 8, fontSize: 10, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace", flexWrap: 'wrap' }}>
+                      <span>● חציון (P50)</span>
+                      <span style={{ color: T.accent.cyan }}>● 50% טווח (P25-P75)</span>
+                      <span style={{ color: T.accent.purple }}>● 90% טווח (P05-P95)</span>
+                    </div>
+                  </GlassCard>
+                </>
+              )}
             </div>
 
             {/* INSIGHTS */}
@@ -964,6 +1104,74 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                   <DeepInsightCard key={ins.id} ins={ins} T={T} delay={i * 0.06} />
                 ))}
               </div>
+            )}
+
+            {/* GOLDEN CARD — "כרטיסיית הזהב" — Best Of Edge */}
+            {bestEdge.enoughData && (
+              <motion.div
+                initial={{ opacity: 0, y: 24, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.7, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                style={{
+                  marginTop: 18, position: 'relative', borderRadius: 22, padding: 24,
+                  background: `linear-gradient(135deg, rgba(255,200,80,0.08) 0%, rgba(255,160,40,0.04) 50%, rgba(120,80,20,0.06) 100%), ${T.bg.card}`,
+                  border: '1.5px solid rgba(255,196,90,0.45)',
+                  boxShadow: '0 24px 80px -20px rgba(255,180,40,0.30), 0 0 0 1px rgba(255,196,90,0.18) inset, 0 0 60px rgba(255,180,40,0.15)',
+                  overflow: 'hidden',
+                }}
+              >
+                <motion.div
+                  animate={{ x: ['-100%', '200%'] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+                  style={{ position: 'absolute', inset: 0, background: 'linear-gradient(110deg, transparent 35%, rgba(255,220,140,0.18) 50%, transparent 65%)', pointerEvents: 'none' }}
+                />
+                <div style={{ position: 'relative' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, flexWrap: 'wrap', gap: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: 30, filter: 'drop-shadow(0 0 12px rgba(255,200,80,0.7))' }}>👑</span>
+                      <div>
+                        <div style={{ fontSize: 11, color: '#FFD27A', letterSpacing: '0.22em', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>◆ ORCA · GOLDEN EDGE</div>
+                        <div style={{ fontSize: 22, color: T.text.primary, fontWeight: 900, marginTop: 2 }}>כרטיסיית הזהב — האדג׳ האישי שלך</div>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 11, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>מבוסס {trades.length} עסקאות</div>
+                  </div>
+
+                  <div style={{ fontSize: 14, color: T.text.secondary, lineHeight: 1.6, marginBottom: 18, padding: '10px 14px', background: 'rgba(255,200,80,0.06)', borderRadius: 12, border: '1px solid rgba(255,200,80,0.18)' }}>
+                    💡 {bestEdge.edgeStatement}
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
+                    {[
+                      bestEdge.bestAsset && { icon: '💎', label: 'הנכס הכי טוב', value: bestEdge.bestAsset.name, sub: `${bestEdge.bestAsset.pnl >= 0 ? '+' : ''}$${bestEdge.bestAsset.pnl} · ${bestEdge.bestAsset.wr}% WR · ${bestEdge.bestAsset.expR >= 0 ? '+' : ''}${bestEdge.bestAsset.expR}R` },
+                      bestEdge.bestDay && { icon: '📅', label: 'היום הכי טוב', value: bestEdge.bestDay.name, sub: `${bestEdge.bestDay.pnl >= 0 ? '+' : ''}$${bestEdge.bestDay.pnl} · ${bestEdge.bestDay.wr}% WR · ${bestEdge.bestDay.n} עסקאות` },
+                      bestEdge.bestHour && { icon: '⏰', label: 'השעה הכי טובה', value: bestEdge.bestHour.label, sub: `${bestEdge.bestHour.pnl >= 0 ? '+' : ''}$${bestEdge.bestHour.pnl} · ${bestEdge.bestHour.wr}% WR` },
+                      bestEdge.bestSession && { icon: '🌍', label: 'הסשן הכי טוב', value: bestEdge.bestSession.name, sub: `${bestEdge.bestSession.pnl >= 0 ? '+' : ''}$${bestEdge.bestSession.pnl} · ${bestEdge.bestSession.n} עסקאות` },
+                      bestEdge.bestSetup && { icon: '🎯', label: 'האסטרטגיה הכי טובה', value: bestEdge.bestSetup.name, sub: `${bestEdge.bestSetup.pnl >= 0 ? '+' : ''}$${bestEdge.bestSetup.pnl} · ${bestEdge.bestSetup.wr}% WR` },
+                      bestEdge.bestStreakDay && { icon: '🚀', label: 'היום הכי רווחי בלוח', value: bestEdge.bestStreakDay.name, sub: `${bestEdge.bestStreakDay.pnl >= 0 ? '+' : ''}$${bestEdge.bestStreakDay.pnl} · ${bestEdge.bestStreakDay.n} עסקאות` },
+                    ].filter(Boolean).map((card: any, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4 + i * 0.06 }}
+                        style={{ padding: 14, borderRadius: 14, background: 'rgba(255,210,120,0.06)', border: '1px solid rgba(255,210,120,0.22)', position: 'relative', overflow: 'hidden' }}
+                      >
+                        <div style={{ fontSize: 22, marginBottom: 4 }}>{card.icon}</div>
+                        <div style={{ fontSize: 10, color: '#FFD27A', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4, fontFamily: "'JetBrains Mono', monospace" }}>{card.label}</div>
+                        <div style={{ fontSize: 17, fontWeight: 900, color: T.text.primary, marginBottom: 4, lineHeight: 1.2 }}>{card.value}</div>
+                        <div style={{ fontSize: 11, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>{card.sub}</div>
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  {bestEdge.worstAsset && (
+                    <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 10, background: `${T.accent.red}10`, border: `1px solid ${T.accent.red}30`, fontSize: 12, color: T.text.secondary }}>
+                      ⚠️ <strong style={{ color: T.accent.red }}>הנכס שמדמם הכי הרבה:</strong> {bestEdge.worstAsset.name} ({bestEdge.worstAsset.pnl}$ ב-{bestEdge.worstAsset.n} עסקאות) — שקול לסנן או להוריד גודל.
+                    </div>
+                  )}
+                </div>
+              </motion.div>
             )}
           </motion.div>
         )}
