@@ -7,6 +7,7 @@ import { GlassCard, ScoreGauge, TradingBadge } from './TradingUI';
 import { ChartWrapper, EXPLANATIONS } from './ChartWrapper';
 import { LazyChart } from './LazyChart';
 import type { ChartExplanation } from './ChartWrapper';
+import { diagnose, type DeepDiagnosis } from '@/lib/psychology-diagnostic';
 
 type OperatingMode = 'live' | 'review' | 'research' | 'beginner';
 
