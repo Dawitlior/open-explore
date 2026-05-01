@@ -230,13 +230,15 @@ const CHART_PACKS = [
   'scatter+treemap',
   'monthly+rolling',
   'streak+bucket',
-  // ──── NEW ADVANCED PACKS ─────────────────────────────────────
-  'equity+drawdown',     // pack 5: full equity curve + max-drawdown river
-  'duration+session',    // pack 6: hold-time vs R + 24h session profit ring
-  'momentum+volatility', // pack 7: rolling 10-trade win-rate + R volatility
-  'kelly+sizing',        // pack 8: Kelly-optimal sizing vs actual + risk drift
-  'efficiency+mae',      // pack 9: MAE/MFE-style efficiency cloud + regret index
-  'dna+focus',           // pack 10: spider matrix per setup + focus pareto
+  'equity+drawdown',
+  'duration+session',
+  'momentum+volatility',
+  'kelly+sizing',
+  'efficiency+mae',
+  'dna+focus',
+  // ── ELITE QUANT PACKS ─────────────────────────────────────────
+  'autocorr+regime',     // pack 11: lag-1 autocorrelation + win-rate regime band
+  'montecarlo+riskcone', // pack 12: 200-path Monte Carlo equity + 95% risk cone
 ] as const;
 type Pack = typeof CHART_PACKS[number];
 
