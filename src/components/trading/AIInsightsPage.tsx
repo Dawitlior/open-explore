@@ -23,6 +23,7 @@ import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { GlassCard } from './TradingUI';
 import { analyzeDeep, type DeepInsight, type DeepSeverity } from '@/lib/ai-insights-deep';
+import { findBestEdge } from '@/lib/psychology-diagnostic';
 
 interface AIInsightsPageProps {
   T: TradingTheme;
