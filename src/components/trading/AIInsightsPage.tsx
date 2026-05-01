@@ -492,7 +492,62 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
     });
   }, [trades]);
 
-  /* ──── EMPTY STATE ──── */
+  /* ── Lag-1 autocorrelation: does today's R predict tomorrow's R? ── */
+  const autocorrData = useMemo(() => {
+    if (trades.length < 3) return [];
+    return trades.slice(1).map((t, i) => ({
+      prev: +trades[i].returnR.toFixed(2),
+      cur: +t.returnR.toFixed(2),
+      win: t.winLoss === 'Win',
+    }));
+  }, [trades]);
+
+  /* ── Rolling regime band: 20-trade win-rate corridor ── */
+  const regimeData = useMemo(() => {
+    const W = 20;
+    return trades.map((_, i) => {
+      const slice = trades.slice(Math.max(0, i - W + 1), i + 1);
+      const wins = slice.filter(x => x.winLoss === 'Win').length;
+      const wr = (wins / slice.length) * 100;
+      // bull/bear regime bands
+      return { i: i + 1, wr: +wr.toFixed(1), bull: 60, bear: 40 };
+    });
+  }, [trades]);
+
+  /* ── Monte Carlo equity simulation (200 paths) ── */
+  const monteCarloData = useMemo(() => {
+    if (trades.length < 5) return [];
+    const returns = trades.map(t => t.returnR);
+    const PATHS = 50;
+    const STEPS = Math.min(60, trades.length * 2);
+    const allPaths: number[][] = [];
+    for (let p = 0; p < PATHS; p++) {
+      const path = [0];
+      for (let s = 0; s < STEPS; s++) {
+        const r = returns[Math.floor(Math.random() * returns.length)];
+        path.push(path[path.length - 1] + r);
+      }
+      allPaths.push(path);
+    }
+    // build per-step percentile envelope
+    const result = [];
+    for (let s = 0; s <= STEPS; s++) {
+      const vals = allPaths.map(p => p[s]).sort((a, b) => a - b);
+      result.push({
+        step: s,
+        p05: +vals[Math.floor(vals.length * 0.05)].toFixed(2),
+        p25: +vals[Math.floor(vals.length * 0.25)].toFixed(2),
+        p50: +vals[Math.floor(vals.length * 0.5)].toFixed(2),
+        p75: +vals[Math.floor(vals.length * 0.75)].toFixed(2),
+        p95: +vals[Math.floor(vals.length * 0.95)].toFixed(2),
+      });
+    }
+    return result;
+  }, [trades]);
+
+  /* ── BEST-OF EDGE — golden card data ── */
+  const bestEdge = useMemo(() => findBestEdge(trades), [trades]);
+
 
   if (trades.length === 0) {
     return (
