@@ -1445,9 +1445,14 @@ const Index = () => {
             {nav.map(item => {
               const isWeekly = item.id === 'weekly-review';
               const activeColor = isWeekly ? '#FFD700' : T.accent.cyan;
+              const showBadge = isWeekly && showWeeklyReminder;
               return (
-                <button key={item.id} onClick={() => { setPage(item.id); setSbOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: page === item.id ? `${activeColor}10` : 'transparent', color: page === item.id ? activeColor : (isWeekly ? '#FFD700' : T.text.secondary), border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: page === item.id ? 600 : 400, width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: page === item.id ? `2px solid ${activeColor}` : '2px solid transparent' }}>
-                  {typeof item.icon === 'string' ? <span style={{ fontSize: 18 }}>{item.icon}</span> : item.icon}<span>{item.label}</span>
+                <button key={item.id} onClick={() => { setPage(item.id); setSbOpen(false); if (isWeekly) dismissWeeklyReminder(); }} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: page === item.id ? `${activeColor}10` : 'transparent', color: page === item.id ? activeColor : (isWeekly ? '#FFD700' : T.text.secondary), border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: page === item.id ? 600 : 400, width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: page === item.id ? `2px solid ${activeColor}` : '2px solid transparent' }}>
+                  <span style={{ position: 'relative', display: 'inline-flex' }}>
+                    {typeof item.icon === 'string' ? <span style={{ fontSize: 18 }}>{item.icon}</span> : item.icon}
+                    {showBadge && <ReminderBadge />}
+                  </span>
+                  <span>{item.label}</span>
                 </button>
               );
             })}
