@@ -9,16 +9,9 @@ import type { Trade } from '@/data/trades';
 // logic of the embedded app are kept 100% intact.
 // ═══════════════════════════════════════════════════
 
-// Loose theme type — only the few tokens we need.
-type OrcaTheme = {
-  bg: { primary: string; [k: string]: string };
-  text: { primary?: string; secondary?: string; muted?: string; [k: string]: string | undefined };
-  border: { subtle?: string; medium?: string; [k: string]: string | undefined };
-  radius: { sm?: string; md?: string; lg?: string; xl?: string; [k: string]: string | undefined };
-  status?: { warning?: string; [k: string]: string | undefined };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [k: string]: any;
-};
+// Loose theme — accept anything with the few tokens we touch.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type OrcaTheme = any;
 
 interface Props {
   T: OrcaTheme;
