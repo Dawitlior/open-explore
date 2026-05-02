@@ -42,6 +42,28 @@
   <div id="__loading__">טוען מערכת מסחר</div>
   <div id="root"></div>
 
+<!-- ORCA BRIDGE: receives trades from parent window via postMessage. Read-only injection — does not alter app logic. -->
+<script>
+(function(){
+  try {
+    var ORCA_KEY = 'orca_trades_bridge_v1';
+    function notifyParentReady(){
+      try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'WEEKLY_REVIEW_READY' }, '*'); } catch(e){}
+    }
+    window.addEventListener('message', function(ev){
+      var d = ev && ev.data;
+      if (!d || typeof d !== 'object') return;
+      if (d.type === 'ORCA_TRADES_SYNC' && Array.isArray(d.trades)) {
+        try { localStorage.setItem(ORCA_KEY, JSON.stringify({ ts: Date.now(), trades: d.trades })); } catch(e){}
+        try { window.dispatchEvent(new CustomEvent('orca-trades-updated', { detail: d.trades })); } catch(e){}
+      }
+    }, false);
+    if (document.readyState === 'complete' || document.readyState === 'interactive') notifyParentReady();
+    else document.addEventListener('DOMContentLoaded', notifyParentReady);
+  } catch(e){}
+})();
+</script>
+
 <!-- React 18 (UMD) - inlined -->
 <script>/**
  * @license React
