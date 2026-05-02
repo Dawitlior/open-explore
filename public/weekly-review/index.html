@@ -50,12 +50,25 @@
     function notifyParentReady(){
       try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'WEEKLY_REVIEW_READY' }, '*'); } catch(e){}
     }
+    var THEME_KEY = 'journal-theme';
+    var VALID_THEMES = { night:1, snow:1, forest:1 };
     window.addEventListener('message', function(ev){
       var d = ev && ev.data;
       if (!d || typeof d !== 'object') return;
       if (d.type === 'ORCA_TRADES_SYNC' && Array.isArray(d.trades)) {
         try { localStorage.setItem(ORCA_KEY, JSON.stringify({ ts: Date.now(), trades: d.trades })); } catch(e){}
         try { window.dispatchEvent(new CustomEvent('orca-trades-updated', { detail: d.trades })); } catch(e){}
+      }
+      if (d.type === 'ORCA_THEME_SYNC' && typeof d.theme === 'string' && VALID_THEMES[d.theme]) {
+        try {
+          var current = localStorage.getItem(THEME_KEY);
+          if (current !== d.theme) {
+            localStorage.setItem(THEME_KEY, d.theme);
+            // The embedded React app reads journal-theme only on mount,
+            // so a soft reload is the safest way to apply without breaking layout.
+            setTimeout(function(){ try { location.reload(); } catch(e){} }, 30);
+          }
+        } catch(e){}
       }
     }, false);
     if (document.readyState === 'complete' || document.readyState === 'interactive') notifyParentReady();
