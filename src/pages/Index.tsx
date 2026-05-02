@@ -39,6 +39,35 @@ import { exportToXlsx, importFromXlsx } from '@/lib/xlsx-engine';
 import { getDayRiskColor, checkRiskLimits, DEFAULT_RISK_LIMITS } from '@/lib/risk-limits';
 import { useRiskLimits } from '@/hooks/use-risk-limits';
 
+// ─── Facebook-style red notification badge with "1" ───
+const ReminderBadge = () => (
+  <span
+    aria-label="reminder"
+    style={{
+      position: 'absolute',
+      top: -4,
+      insetInlineEnd: -6,
+      minWidth: 14,
+      height: 14,
+      padding: '0 3px',
+      borderRadius: 999,
+      background: 'linear-gradient(180deg, #ff4d4f 0%, #d6202a 100%)',
+      color: '#fff',
+      fontSize: 9,
+      fontWeight: 800,
+      lineHeight: '14px',
+      textAlign: 'center',
+      boxShadow: '0 0 0 1.5px #061326, 0 0 8px rgba(255,77,79,0.7), 0 0 14px rgba(255,77,79,0.4)',
+      fontFamily: "'Poppins', sans-serif",
+      pointerEvents: 'none',
+      animation: 'orcaBadgePulse 2s ease-in-out infinite',
+      zIndex: 2,
+    }}
+  >
+    1
+  </span>
+);
+
 const Index = () => {
   const isMobile = useIsMobile();
   const settings = useSettings();
