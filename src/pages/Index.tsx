@@ -39,6 +39,35 @@ import { exportToXlsx, importFromXlsx } from '@/lib/xlsx-engine';
 import { getDayRiskColor, checkRiskLimits, DEFAULT_RISK_LIMITS } from '@/lib/risk-limits';
 import { useRiskLimits } from '@/hooks/use-risk-limits';
 
+// ─── Facebook-style red notification badge with "1" ───
+const ReminderBadge = () => (
+  <span
+    aria-label="reminder"
+    style={{
+      position: 'absolute',
+      top: -4,
+      insetInlineEnd: -6,
+      minWidth: 14,
+      height: 14,
+      padding: '0 3px',
+      borderRadius: 999,
+      background: 'linear-gradient(180deg, #ff4d4f 0%, #d6202a 100%)',
+      color: '#fff',
+      fontSize: 9,
+      fontWeight: 800,
+      lineHeight: '14px',
+      textAlign: 'center',
+      boxShadow: '0 0 0 1.5px #061326, 0 0 8px rgba(255,77,79,0.7), 0 0 14px rgba(255,77,79,0.4)',
+      fontFamily: "'Poppins', sans-serif",
+      pointerEvents: 'none',
+      animation: 'orcaBadgePulse 2s ease-in-out infinite',
+      zIndex: 2,
+    }}
+  >
+    1
+  </span>
+);
+
 const Index = () => {
   const isMobile = useIsMobile();
   const settings = useSettings();
@@ -348,6 +377,30 @@ const Index = () => {
     { id: 'journal-sanctuary', label: isRTL ? 'יומן מסע לסוחר' : 'Trader Journey', icon: '🏛️', category: isRTL ? 'ממדים' : 'Dimensions', action: () => setActiveDimension('journal') },
     { id: 'backtest-journal', label: isRTL ? 'יומן באק-טסט' : 'Backtest Journal', icon: '📊', category: isRTL ? 'ממדים' : 'Dimensions', action: () => setActiveDimension('backtest') },
   ], [isRTL, handleExport, handleImport, handleGenerateInsights, isAlpha, settings]);
+
+  // ─── Weekly Review reminder badge (Friday or 1st of month) ───
+  const [reviewReminderTick, setReviewReminderTick] = useState(0);
+  useEffect(() => {
+    // Re-evaluate every 5 min so the badge appears/disappears on date roll-over
+    const id = window.setInterval(() => setReviewReminderTick(t => t + 1), 5 * 60 * 1000);
+    return () => window.clearInterval(id);
+  }, []);
+  const showWeeklyReminder = useMemo(() => {
+    void reviewReminderTick;
+    const now = new Date();
+    const isFri = now.getDay() === 5;
+    const isFirst = now.getDate() === 1;
+    if (!isFri && !isFirst) return false;
+    // Dismissal key: per-day so it re-appears each Friday / each 1st-of-month
+    const key = `orca-weekly-reminder-dismissed-${now.toISOString().slice(0, 10)}`;
+    try { if (localStorage.getItem(key) === '1') return false; } catch { /* noop */ }
+    return true;
+  }, [reviewReminderTick, page]); // eslint-disable-line react-hooks/exhaustive-deps
+  const dismissWeeklyReminder = useCallback(() => {
+    const key = `orca-weekly-reminder-dismissed-${new Date().toISOString().slice(0, 10)}`;
+    try { localStorage.setItem(key, '1'); } catch { /* noop */ }
+    setReviewReminderTick(t => t + 1);
+  }, []);
 
   const nav = [
     { id: 'dashboard', icon: Ico.dash, label: isRTL ? 'דשבורד' : 'Dashboard' },
@@ -1421,9 +1474,14 @@ const Index = () => {
             {nav.map(item => {
               const isWeekly = item.id === 'weekly-review';
               const activeColor = isWeekly ? '#FFD700' : T.accent.cyan;
+              const showBadge = isWeekly && showWeeklyReminder;
               return (
-                <button key={item.id} onClick={() => { setPage(item.id); setSbOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: page === item.id ? `${activeColor}10` : 'transparent', color: page === item.id ? activeColor : (isWeekly ? '#FFD700' : T.text.secondary), border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: page === item.id ? 600 : 400, width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: page === item.id ? `2px solid ${activeColor}` : '2px solid transparent' }}>
-                  {typeof item.icon === 'string' ? <span style={{ fontSize: 18 }}>{item.icon}</span> : item.icon}<span>{item.label}</span>
+                <button key={item.id} onClick={() => { setPage(item.id); setSbOpen(false); if (isWeekly) dismissWeeklyReminder(); }} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: page === item.id ? `${activeColor}10` : 'transparent', color: page === item.id ? activeColor : (isWeekly ? '#FFD700' : T.text.secondary), border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: page === item.id ? 600 : 400, width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: page === item.id ? `2px solid ${activeColor}` : '2px solid transparent' }}>
+                  <span style={{ position: 'relative', display: 'inline-flex' }}>
+                    {typeof item.icon === 'string' ? <span style={{ fontSize: 18 }}>{item.icon}</span> : item.icon}
+                    {showBadge && <ReminderBadge />}
+                  </span>
+                  <span>{item.label}</span>
                 </button>
               );
             })}
@@ -1495,9 +1553,14 @@ const Index = () => {
           {nav.map(item => {
             const isWeekly = item.id === 'weekly-review';
             const activeColor = isWeekly ? '#FFD700' : T.accent.cyan;
+            const showBadge = isWeekly && showWeeklyReminder;
             return (
-            <button key={item.id} onClick={() => { setPage(item.id); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: sbOpen ? '9px 10px' : '9px 0', justifyContent: sbOpen ? 'flex-start' : 'center', background: page === item.id ? `${activeColor}10` : 'transparent', color: page === item.id ? activeColor : (isWeekly ? '#FFD700' : T.text.secondary), border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: page === item.id ? 600 : (isWeekly ? 600 : 400), transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: page === item.id ? `2px solid ${activeColor}` : '2px solid transparent' }}>
-              {typeof item.icon === 'string' ? <span style={{ fontSize: 18 }}>{item.icon}</span> : item.icon}{sbOpen && <span>{item.label}</span>}
+            <button key={item.id} onClick={() => { setPage(item.id); if (isWeekly) dismissWeeklyReminder(); }} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10, padding: sbOpen ? '9px 10px' : '9px 0', justifyContent: sbOpen ? 'flex-start' : 'center', background: page === item.id ? `${activeColor}10` : 'transparent', color: page === item.id ? activeColor : (isWeekly ? '#FFD700' : T.text.secondary), border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: page === item.id ? 600 : (isWeekly ? 600 : 400), transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: page === item.id ? `2px solid ${activeColor}` : '2px solid transparent' }}>
+              <span style={{ position: 'relative', display: 'inline-flex' }}>
+                {typeof item.icon === 'string' ? <span style={{ fontSize: 18 }}>{item.icon}</span> : item.icon}
+                {showBadge && <ReminderBadge />}
+              </span>
+              {sbOpen && <span>{item.label}</span>}
             </button>
             );
           })}
@@ -1640,7 +1703,7 @@ const Index = () => {
           {page === 'psychology' && renderPsychology()}
           {page === 'ai' && renderAI()}
           {page === 'weekly-review' && (
-            <WeeklyReviewPage T={T} isRTL={isRTL} trades={trades} stats={stats} riskData={riskData} />
+            <WeeklyReviewPage T={T} isRTL={isRTL} trades={trades} themeId={settings.theme} stats={stats} riskData={riskData} />
           )}
         </div>
       </main>

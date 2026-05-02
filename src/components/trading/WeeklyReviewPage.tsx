@@ -13,10 +13,13 @@ import type { Trade } from '@/data/trades';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type OrcaTheme = any;
 
+type OrcaThemeId = 'midnight' | 'indigo' | 'platinum';
+
 interface Props {
   T: OrcaTheme;
   isRTL: boolean;
   trades: Trade[];
+  themeId?: OrcaThemeId;
   // legacy props kept for call-site compatibility
   stats?: unknown;
   riskData?: unknown;
@@ -24,7 +27,15 @@ interface Props {
 
 const IFRAME_SRC = '/weekly-review/index.html';
 
-export const WeeklyReviewPage = ({ T, isRTL, trades }: Props) => {
+// Maps Orca theme → embedded Weekly Review theme name.
+// midnight → night, indigo → night, platinum → snow
+const THEME_MAP: Record<OrcaThemeId, 'night' | 'snow'> = {
+  midnight: 'night',
+  indigo: 'night',
+  platinum: 'snow',
+};
+
+export const WeeklyReviewPage = ({ T, isRTL, trades, themeId }: Props) => {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const [ready, setReady] = useState(false);
   const [loadError, setLoadError] = useState(false);
@@ -39,6 +50,17 @@ export const WeeklyReviewPage = ({ T, isRTL, trades }: Props) => {
     }
   }, [trades]);
 
+  const sendTheme = useCallback(() => {
+    const win = iframeRef.current?.contentWindow;
+    if (!win || !themeId) return;
+    const mapped = THEME_MAP[themeId] || 'night';
+    try {
+      win.postMessage({ type: 'ORCA_THEME_SYNC', theme: mapped }, '*');
+    } catch {
+      /* noop */
+    }
+  }, [themeId]);
+
   // Listen for "ready" handshake from the embedded app
   useEffect(() => {
     const onMessage = (ev: MessageEvent) => {
@@ -51,10 +73,13 @@ export const WeeklyReviewPage = ({ T, isRTL, trades }: Props) => {
     return () => window.removeEventListener('message', onMessage);
   }, []);
 
-  // Push trades whenever they change OR when the iframe signals it's ready
+  // Push trades + theme whenever ready / data changes
   useEffect(() => {
-    if (ready) sendTrades();
-  }, [ready, sendTrades]);
+    if (ready) {
+      sendTrades();
+      sendTheme();
+    }
+  }, [ready, sendTrades, sendTheme]);
 
   // Failsafe: if no handshake within 4s, surface a graceful fallback message
   useEffect(() => {
