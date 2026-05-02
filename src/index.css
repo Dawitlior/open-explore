@@ -538,3 +538,9 @@ html, body, .orca-glass, .orca-panel, [class*="bg-"], [class*="text-"] {
   background: radial-gradient(circle, hsl(224 76% 48% / 0.18), transparent 70%) !important;
   mix-blend-mode: multiply !important;
 }
+
+/* ─── Reminder badge pulse (Weekly Review notification) ─── */
+@keyframes orcaBadgePulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 1.5px #061326, 0 0 8px rgba(255,77,79,0.7), 0 0 14px rgba(255,77,79,0.4); }
+  50%      { transform: scale(1.12); box-shadow: 0 0 0 1.5px #061326, 0 0 14px rgba(255,77,79,0.95), 0 0 22px rgba(255,77,79,0.6); }
+}
