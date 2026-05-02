@@ -349,6 +349,30 @@ const Index = () => {
     { id: 'backtest-journal', label: isRTL ? 'יומן באק-טסט' : 'Backtest Journal', icon: '📊', category: isRTL ? 'ממדים' : 'Dimensions', action: () => setActiveDimension('backtest') },
   ], [isRTL, handleExport, handleImport, handleGenerateInsights, isAlpha, settings]);
 
+  // ─── Weekly Review reminder badge (Friday or 1st of month) ───
+  const [reviewReminderTick, setReviewReminderTick] = useState(0);
+  useEffect(() => {
+    // Re-evaluate every 5 min so the badge appears/disappears on date roll-over
+    const id = window.setInterval(() => setReviewReminderTick(t => t + 1), 5 * 60 * 1000);
+    return () => window.clearInterval(id);
+  }, []);
+  const showWeeklyReminder = useMemo(() => {
+    void reviewReminderTick;
+    const now = new Date();
+    const isFri = now.getDay() === 5;
+    const isFirst = now.getDate() === 1;
+    if (!isFri && !isFirst) return false;
+    // Dismissal key: per-day so it re-appears each Friday / each 1st-of-month
+    const key = `orca-weekly-reminder-dismissed-${now.toISOString().slice(0, 10)}`;
+    try { if (localStorage.getItem(key) === '1') return false; } catch { /* noop */ }
+    return true;
+  }, [reviewReminderTick, page]); // eslint-disable-line react-hooks/exhaustive-deps
+  const dismissWeeklyReminder = useCallback(() => {
+    const key = `orca-weekly-reminder-dismissed-${new Date().toISOString().slice(0, 10)}`;
+    try { localStorage.setItem(key, '1'); } catch { /* noop */ }
+    setReviewReminderTick(t => t + 1);
+  }, []);
+
   const nav = [
     { id: 'dashboard', icon: Ico.dash, label: isRTL ? 'דשבורד' : 'Dashboard' },
     { id: 'journal', icon: Ico.book, label: t.journal },
