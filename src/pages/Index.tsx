@@ -1674,7 +1674,7 @@ const Index = () => {
           {page === 'psychology' && renderPsychology()}
           {page === 'ai' && renderAI()}
           {page === 'weekly-review' && (
-            <WeeklyReviewPage T={T} isRTL={isRTL} trades={trades} stats={stats} riskData={riskData} />
+            <WeeklyReviewPage T={T} isRTL={isRTL} trades={trades} themeId={settings.theme} stats={stats} riskData={riskData} />
           )}
         </div>
       </main>
