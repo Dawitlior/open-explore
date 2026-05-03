@@ -47,17 +47,111 @@
 (function(){
   try {
     var ORCA_KEY = 'orca_trades_bridge_v1';
+    var WEEK_KEY = 'journal-week';
+    var MERGED_FLAG = 'orca_week_merged_v1'; // session-scoped guard
     function notifyParentReady(){
       try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'WEEKLY_REVIEW_READY' }, '*'); } catch(e){}
     }
     var THEME_KEY = 'journal-theme';
     var VALID_THEMES = { night:1, snow:1, forest:1 };
+
+    // Convert any Orca date (ISO / "YYYY-MM-DD HH:mm" / Date) → DD/MM/YYYY
+    function toDMY(raw){
+      try {
+        var s = String(raw || '').trim();
+        // datetime-local style: "YYYY-MM-DD HH:mm" or "YYYY-MM-DDTHH:mm"
+        var m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+        if (m) return String(+m[3]).padStart(2,'0')+'/'+String(+m[2]).padStart(2,'0')+'/'+m[1];
+        var d = new Date(s);
+        if (!isNaN(d.getTime())) return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
+      } catch(e){}
+      return '';
+    }
+    // Current trading week: Sunday → Saturday (Israeli week). Returns [start,end] Date.
+    function currentWeekRange(){
+      var now = new Date();
+      var dow = now.getDay(); // 0=Sun
+      var start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dow);
+      var end = new Date(start.getTime() + 7*86400000 - 1);
+      return [start, end];
+    }
+    function inCurrentWeek(raw){
+      var s = String(raw || '');
+      var d;
+      var m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+      if (m) d = new Date(+m[1], +m[2]-1, +m[3]);
+      else { d = new Date(s); if (isNaN(d.getTime())) return false; }
+      var r = currentWeekRange();
+      return d >= r[0] && d <= r[1];
+    }
+    // Convert one Orca trade → journal weekly tradeLog row.
+    function orcaToWeekRow(tr){
+      var pnl = +tr.pnl || 0;
+      var rr  = +tr.returnR || 0;
+      return {
+        id: 'orca-' + tr.id,
+        asset: String(tr.coin || '').toUpperCase(),
+        date: toDMY(tr.date),
+        setupType: '',                 // user fills
+        entryPrice: tr.entry != null ? String(tr.entry) : '',
+        stopLoss:   tr.stopLoss != null ? String(tr.stopLoss) : '',
+        exitPrice:  tr.exit != null ? String(tr.exit) : '',
+        resultR: Math.round(rr * 100) / 100,
+        isWin: pnl > 0 || rr > 0,
+        riskMultiplier: 1,
+        targetR: '',
+        targetPrice: '',
+        targetReached: false,
+        pnl: pnl,
+        _orcaId: tr.id,                // marker so we can match on subsequent syncs
+        _autoFilled: true              // tells UI it came from Orca
+      };
+    }
+    // Merge Orca trades into journal-week.tradeLog (current week only).
+    // Returns true if anything changed.
+    function mergeOrcaIntoWeek(orcaTrades){
+      var raw = localStorage.getItem(WEEK_KEY);
+      var week;
+      try { week = raw ? JSON.parse(raw) : null; } catch(e){ week = null; }
+      if (!week || typeof week !== 'object') week = {};
+      if (!Array.isArray(week.tradeLog)) week.tradeLog = [];
+      // Locked weeks are not auto-modified — preserve user lock state.
+      if (week.locked) return false;
+      var existingIds = {};
+      week.tradeLog.forEach(function(t){
+        if (t && t._orcaId != null) existingIds[t._orcaId] = true;
+        if (t && typeof t.id === 'string' && t.id.indexOf('orca-') === 0) existingIds[t.id.slice(5)] = true;
+      });
+      var added = 0;
+      orcaTrades.forEach(function(tr){
+        if (!tr || tr.id == null) return;
+        if (existingIds[tr.id]) return;
+        if (!inCurrentWeek(tr.date)) return;
+        week.tradeLog.push(orcaToWeekRow(tr));
+        added++;
+      });
+      if (added > 0) {
+        localStorage.setItem(WEEK_KEY, JSON.stringify(week));
+        return true;
+      }
+      return false;
+    }
+
     window.addEventListener('message', function(ev){
       var d = ev && ev.data;
       if (!d || typeof d !== 'object') return;
       if (d.type === 'ORCA_TRADES_SYNC' && Array.isArray(d.trades)) {
         try { localStorage.setItem(ORCA_KEY, JSON.stringify({ ts: Date.now(), trades: d.trades })); } catch(e){}
         try { window.dispatchEvent(new CustomEvent('orca-trades-updated', { detail: d.trades })); } catch(e){}
+        // One-shot per page-load: merge current-week trades into journal-week
+        // and soft-reload so the React app picks them up cleanly.
+        try {
+          if (!sessionStorage.getItem(MERGED_FLAG)) {
+            sessionStorage.setItem(MERGED_FLAG, '1');
+            var changed = mergeOrcaIntoWeek(d.trades);
+            if (changed) setTimeout(function(){ try { location.reload(); } catch(e){} }, 60);
+          }
+        } catch(e){}
       }
       if (d.type === 'ORCA_THEME_SYNC' && typeof d.theme === 'string' && VALID_THEMES[d.theme]) {
         try {
