@@ -25,13 +25,11 @@ const ASSET_CATEGORIES = {
 
 type AssetCategory = keyof typeof ASSET_CATEGORIES;
 
-// Pip values for common forex pairs
 const PIP_VALUES: Record<string, number> = {
   'EUR/USD': 0.0001, 'GBP/USD': 0.0001, 'AUD/USD': 0.0001, 'USD/CAD': 0.0001,
   'EUR/GBP': 0.0001, 'USD/CHF': 0.0001, 'USD/JPY': 0.01,
 };
 
-// Tick values for futures
 const TICK_VALUES: Record<string, { tick: number; value: number }> = {
   'ES': { tick: 0.25, value: 12.50 }, 'NQ': { tick: 0.25, value: 5.00 },
   'YM': { tick: 1, value: 5.00 }, 'CL': { tick: 0.01, value: 10.00 },
@@ -52,10 +50,11 @@ const detectCategory = (symbol: string): AssetCategory => {
 
 export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose }: TradeFormProps) => {
   const isMobile = useIsMobile();
+  const [step, setStep] = useState(0); // 0,1,2
   const [assetCategory, setAssetCategory] = useState<AssetCategory>(() => trade?.coin ? detectCategory(trade.coin) : 'Crypto');
   const [customSymbol, setCustomSymbol] = useState('');
   const [stopMode, setStopMode] = useState<StopMode>('price');
-  const [riskMode, setRiskMode] = useState<RiskMode>('dollar');
+  const [riskMode, setRiskMode] = useState<RiskMode>('percent');
   const [stopPips, setStopPips] = useState(0);
   const [stopPercent, setStopPercent] = useState(0);
   const [stopDollar, setStopDollar] = useState(0);
@@ -78,23 +77,23 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
   });
   const [errors, setErrors] = useState<string[]>([]);
 
-  // Auto-detect best stop mode based on asset category
+  const STEPS = [
+    { title: isRTL ? 'מה סחרת ומתי' : 'What & When', sub: isRTL ? 'בחר את הנכס, הכיוון והזמן' : 'Pick asset, direction and time' },
+    { title: isRTL ? 'מחירים וסיכון' : 'Prices & Risk', sub: isRTL ? 'הזן כניסה, סטופ ויציאה' : 'Enter prices and how much you risked' },
+    { title: isRTL ? 'אישור ושמירה' : 'Review & Save', sub: isRTL ? 'בדוק את התוצאה ושמור' : 'Check the result and save' },
+  ];
+
   const availableStopModes = useMemo(() => {
-    const modes: { id: StopMode; label: string }[] = [
-      { id: 'price', label: isRTL ? 'מחיר' : 'Price' },
+    const modes: { id: StopMode; label: string; hint: string }[] = [
+      { id: 'price', label: isRTL ? 'מחיר' : 'Price', hint: isRTL ? 'מחיר הסטופ בדיוק' : 'Exact stop price' },
     ];
-    if (assetCategory === 'Forex') {
-      modes.push({ id: 'pips', label: 'Pips' });
-    }
-    if (assetCategory === 'Futures') {
-      modes.push({ id: 'pips', label: 'Ticks' });
-    }
-    modes.push({ id: 'percent', label: '%' });
-    modes.push({ id: 'dollar', label: '$' });
+    if (assetCategory === 'Forex') modes.push({ id: 'pips', label: 'Pips', hint: isRTL ? 'מרחק בפיפים' : 'Distance in pips' });
+    if (assetCategory === 'Futures') modes.push({ id: 'pips', label: 'Ticks', hint: isRTL ? 'מרחק בטיקים' : 'Distance in ticks' });
+    modes.push({ id: 'percent', label: '%', hint: isRTL ? 'מרחק באחוזים' : 'Distance in %' });
+    modes.push({ id: 'dollar', label: '$', hint: isRTL ? 'הפסד בדולרים' : 'Loss in $' });
     return modes;
   }, [assetCategory, isRTL]);
 
-  // Convert stop mode to actual stop loss price
   const computeStopFromMode = (entry: number, mode: StopMode, value: number, direction: string, coin: string): number => {
     if (mode === 'price') return value;
     const sign = direction === 'Long' ? -1 : 1;
@@ -102,28 +101,18 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
       const pipVal = PIP_VALUES[coin] || TICK_VALUES[coin]?.tick || 0.01;
       return entry + sign * value * pipVal;
     }
-    if (mode === 'percent') {
-      return entry * (1 + sign * value / 100);
-    }
-    if (mode === 'dollar' && entry > 0) {
-      // dollar risk -> need position size to compute stop, use approximate
-      return entry + sign * (value / (form.positionSize || 1));
-    }
+    if (mode === 'percent') return entry * (1 + sign * value / 100);
+    if (mode === 'dollar' && entry > 0) return entry + sign * (value / (form.positionSize || 1));
     return entry;
   };
 
-  // Auto-calculate position size from risk
   const autoCalcPositionSize = useMemo(() => {
     const { entry, stopLoss, risk } = form;
     if (!entry || !stopLoss || !risk || entry === stopLoss) return 0;
-    const riskPerUnit = Math.abs(entry - stopLoss);
-    return risk / riskPerUnit;
+    return risk / Math.abs(entry - stopLoss);
   }, [form.entry, form.stopLoss, form.risk]);
 
-  // Auto-calculate dollar risk from percent
-  const riskFromPercent = useMemo(() => {
-    return currentBalance * (form.riskPct / 100);
-  }, [currentBalance, form.riskPct]);
+  const riskFromPercent = useMemo(() => currentBalance * (form.riskPct / 100), [currentBalance, form.riskPct]);
 
   const handleDateChange = (val: string) => {
     const d = new Date(val);
@@ -134,9 +123,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
   const handleSymbolSelect = (symbol: string) => {
     setForm(f => ({ ...f, coin: symbol }));
     setCustomSymbol('');
-    // Auto-set best stop mode
-    if (PIP_VALUES[symbol]) setStopMode('pips');
-    else if (TICK_VALUES[symbol]) setStopMode('pips');
+    if (PIP_VALUES[symbol] || TICK_VALUES[symbol]) setStopMode('pips');
   };
 
   const handleCustomSymbol = (val: string) => {
@@ -147,7 +134,6 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
   const handleStopModeChange = (mode: StopMode) => {
     setStopMode(mode);
     if (mode === 'price') return;
-    // Recompute stop when mode changes
     const val = mode === 'pips' ? stopPips : mode === 'percent' ? stopPercent : stopDollar;
     if (val && form.entry) {
       const newStop = computeStopFromMode(form.entry, mode, val, form.direction, form.coin);
@@ -159,7 +145,6 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
     if (stopMode === 'pips') setStopPips(val);
     else if (stopMode === 'percent') setStopPercent(val);
     else if (stopMode === 'dollar') setStopDollar(val);
-
     if (form.entry && val) {
       const newStop = computeStopFromMode(form.entry, stopMode, val, form.direction, form.coin);
       setForm(f => ({ ...f, stopLoss: +newStop.toFixed(8) }));
@@ -170,17 +155,12 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
     if (riskMode === 'dollar') {
       setRiskMode('percent');
       setForm(f => ({ ...f, risk: riskFromPercent }));
-    } else {
-      setRiskMode('dollar');
-    }
+    } else setRiskMode('dollar');
   };
 
   const handleRiskChange = (val: number) => {
-    if (riskMode === 'percent') {
-      setForm(f => ({ ...f, riskPct: val, risk: currentBalance * (val / 100) }));
-    } else {
-      setForm(f => ({ ...f, risk: val, riskPct: currentBalance > 0 ? (val / currentBalance) * 100 : 0 }));
-    }
+    if (riskMode === 'percent') setForm(f => ({ ...f, riskPct: val, risk: currentBalance * (val / 100) }));
+    else setForm(f => ({ ...f, risk: val, riskPct: currentBalance > 0 ? (val / currentBalance) * 100 : 0 }));
   };
 
   const calc = () => {
@@ -196,14 +176,32 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
     return { returnR, pnl, winLoss, expectedLoss, deviation };
   };
 
-  const handleSubmit = () => {
+  const validateStep = (s: number): string[] => {
     const errs: string[] = [];
-    if (!form.coin.trim()) errs.push(isRTL ? 'סימול חסר' : 'Symbol required');
-    if (!form.entry) errs.push(isRTL ? 'כניסה חסרה' : 'Entry required');
-    if (!form.stopLoss) errs.push(isRTL ? 'סטופ לוס חסר' : 'Stop loss required');
-    if (!form.exit) errs.push(isRTL ? 'יציאה חסרה' : 'Exit required');
-    if (form.risk <= 0) errs.push(isRTL ? 'סיכון חייב להיות חיובי' : 'Risk must be positive');
-    if (errs.length > 0) { setErrors(errs); return; }
+    if (s >= 0) {
+      if (!form.coin.trim()) errs.push(isRTL ? 'בחר נכס' : 'Pick an asset');
+    }
+    if (s >= 1) {
+      if (!form.entry) errs.push(isRTL ? 'מחיר כניסה חסר' : 'Entry price required');
+      if (!form.stopLoss) errs.push(isRTL ? 'סטופ לוס חסר' : 'Stop loss required');
+      if (!form.exit) errs.push(isRTL ? 'מחיר יציאה חסר' : 'Exit price required');
+      if (form.risk <= 0) errs.push(isRTL ? 'סכום סיכון חייב להיות גדול מ-0' : 'Risk amount must be greater than 0');
+    }
+    return errs;
+  };
+
+  const handleNext = () => {
+    const errs = validateStep(step);
+    if (errs.length) { setErrors(errs); return; }
+    setErrors([]);
+    setStep(s => Math.min(2, s + 1));
+  };
+
+  const handleBack = () => { setErrors([]); setStep(s => Math.max(0, s - 1)); };
+
+  const handleSubmit = () => {
+    const errs = validateStep(1);
+    if (errs.length) { setErrors(errs); setStep(1); return; }
     const { returnR, pnl, winLoss, expectedLoss, deviation } = calc();
     onSave({
       date: form.date, day: form.day, coin: form.coin, direction: form.direction, orderType: form.orderType,
@@ -215,227 +213,341 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
 
   const { returnR, pnl, winLoss } = calc();
 
-  const inputStyle = {
-    width: '100%', padding: isMobile ? '10px 10px' : '8px 10px',
-    background: T.bg.tertiary, border: `1px solid ${T.border.medium}`,
-    borderRadius: T.radius.sm, color: T.text.primary,
-    fontSize: isMobile ? 14 : 13, fontFamily: "'JetBrains Mono', monospace", outline: 'none',
-  };
-  const labelStyle = { fontSize: isMobile ? 10 : 9, color: T.text.muted, textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 4, display: 'block' };
+  // ── Big, friendly styles ──
+  const bigInput = {
+    width: '100%', padding: isMobile ? '14px 14px' : '13px 14px',
+    background: T.bg.tertiary, border: `1.5px solid ${T.border.medium}`,
+    borderRadius: 12, color: T.text.primary,
+    fontSize: isMobile ? 16 : 15, fontFamily: "'Inter', system-ui, sans-serif", outline: 'none',
+    transition: 'border-color 0.2s, box-shadow 0.2s',
+  } as const;
+  const bigLabel = {
+    fontSize: isMobile ? 14 : 13, color: T.text.primary, fontWeight: 600,
+    marginBottom: 6, display: 'block',
+  } as const;
+  const helpText = {
+    fontSize: 12, color: T.text.muted, marginTop: 6, lineHeight: 1.5,
+  } as const;
   const categoryColors: Record<AssetCategory, string> = { Crypto: T.accent.cyan, Stocks: T.accent.green, Forex: T.accent.purple, Futures: T.accent.orange, Options: T.accent.blue };
 
-  const modeBtnStyle = (active: boolean, color: string) => ({
-    padding: isMobile ? '6px 10px' : '4px 8px',
-    border: `1px solid ${active ? color : T.border.medium}`,
-    borderRadius: T.radius.sm,
-    background: active ? `${color}15` : T.bg.tertiary,
-    color: active ? color : T.text.muted,
-    cursor: 'pointer' as const,
-    fontSize: isMobile ? 11 : 10,
-    fontWeight: active ? 700 : 400,
-    transition: 'all 0.15s',
-  });
+  const sectionCard = {
+    padding: isMobile ? 16 : 18,
+    borderRadius: 16,
+    background: `${T.bg.tertiary}66`,
+    border: `1px solid ${T.border.subtle}`,
+    marginBottom: 14,
+  } as const;
 
   const panelStyle = {
     background: `linear-gradient(145deg, ${T.bg.card} 0%, ${T.bg.secondary} 52%, ${T.bg.tertiary} 100%)`,
     border: `1px solid ${T.border.medium}`,
-    borderRadius: isMobile ? `${T.radius.xl}px ${T.radius.xl}px 0 0` : `${T.radius.xl}px`,
+    borderRadius: isMobile ? `20px 20px 0 0` : `20px`,
     padding: 0,
-    maxWidth: isMobile ? '100%' : 760,
+    maxWidth: isMobile ? '100%' : 720,
     width: isMobile ? '100%' : '95%',
-    maxHeight: isMobile ? '92vh' : '90vh',
+    maxHeight: isMobile ? '94vh' : '92vh',
     overflow: 'hidden',
-    boxShadow: `0 28px 90px rgba(0,0,0,0.58), 0 0 0 1px ${T.accent.cyan}18 inset`,
+    boxShadow: `0 28px 90px rgba(0,0,0,0.6), 0 0 0 1px ${T.accent.cyan}18 inset`,
     animation: 'scaleIn 0.18s ease',
-  } as const;
+    display: 'flex', flexDirection: 'column' as const,
+  };
 
-  const sectionStyle = {
-    padding: isMobile ? 12 : 14,
-    borderRadius: 14,
-    background: `${T.bg.tertiary}88`,
-    border: `1px solid ${T.border.subtle}`,
-    marginBottom: 12,
-  } as const;
+  // Step indicator pill
+  const StepDot = ({ idx }: { idx: number }) => {
+    const active = idx === step;
+    const done = idx < step;
+    const color = done ? T.accent.green : active ? T.accent.cyan : T.text.muted;
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+        <div style={{
+          width: 28, height: 28, borderRadius: '50%',
+          background: done || active ? `${color}20` : T.bg.tertiary,
+          border: `2px solid ${color}`,
+          color, fontSize: 13, fontWeight: 800,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0,
+        }}>
+          {done ? '✓' : idx + 1}
+        </div>
+        {!isMobile && (
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: active ? T.text.primary : T.text.muted, lineHeight: 1.1 }}>{STEPS[idx].title}</div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.76)', zIndex: 100, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', backdropFilter: 'blur(14px)', padding: isMobile ? 0 : 18 }} onClick={onClose}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.78)', zIndex: 100, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', backdropFilter: 'blur(14px)', padding: isMobile ? 0 : 18 }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={panelStyle}>
+
         {/* Header */}
-        <div style={{ padding: isMobile ? '16px 16px 12px' : '20px 24px 14px', borderBottom: `1px solid ${T.border.subtle}`, background: `linear-gradient(90deg, ${T.accent.cyan}10, transparent 45%)` }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
+        <div style={{ padding: isMobile ? '18px 18px 14px' : '22px 26px 16px', borderBottom: `1px solid ${T.border.subtle}`, background: `linear-gradient(90deg, ${T.accent.cyan}10, transparent 45%)` }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 14 }}>
             <div>
-              <div style={{ fontSize: 9, color: T.accent.cyan, letterSpacing: '0.18em', textTransform: 'uppercase', fontFamily: "'JetBrains Mono', monospace", marginBottom: 4 }}>
-                {isRTL ? 'קליטת עסקה מודרכת' : 'Guided Trade Entry'}
-              </div>
-              <div style={{ fontSize: isMobile ? 20 : 24, fontWeight: 800, color: T.text.primary }}>{trade ? t.editTrade : t.addTrade}</div>
-              <div style={{ fontSize: 12, color: T.text.secondary, marginTop: 4 }}>{isRTL ? 'כל השדות המתקדמים נשמרו — רק הסדר והבהירות שודרגו.' : 'All advanced fields preserved — clearer flow.'}</div>
+              <div style={{ fontSize: isMobile ? 22 : 26, fontWeight: 800, color: T.text.primary, lineHeight: 1.1 }}>{trade ? t.editTrade : (isRTL ? 'הוספת עסקה חדשה' : 'Add a New Trade')}</div>
+              <div style={{ fontSize: 13, color: T.text.secondary, marginTop: 6 }}>{STEPS[step].sub}</div>
             </div>
-            <button onClick={onClose} aria-label="Close" style={{ width: 34, height: 34, borderRadius: 10, background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, color: T.text.secondary, fontSize: 22, cursor: 'pointer', lineHeight: 1 }}>×</button>
+            <button onClick={onClose} aria-label="Close" style={{ width: 38, height: 38, borderRadius: 12, background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, color: T.text.secondary, fontSize: 22, cursor: 'pointer', lineHeight: 1, flexShrink: 0 }}>×</button>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 8, marginTop: 14 }}>
-            {[(isRTL ? '1 · נכס וזמן' : '1 · Asset & Time'), (isRTL ? '2 · כניסה וסיכון' : '2 · Entry & Risk'), (isRTL ? '3 · בדיקה ושמירה' : '3 · Review & Save')].map((step, i) => (
-              <div key={step} style={{ padding: '8px 10px', borderRadius: 10, background: i === 0 ? `${T.accent.cyan}13` : `${T.bg.tertiary}88`, border: `1px solid ${i === 0 ? T.accent.cyan : T.border.subtle}30`, color: i === 0 ? T.accent.cyan : T.text.muted, fontSize: 11, fontWeight: 700 }}>
-                {step}
-              </div>
+          {/* Step indicator */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {[0,1,2].map(i => (
+              <>
+                <StepDot key={`d${i}`} idx={i} />
+                {i < 2 && <div key={`s${i}`} style={{ height: 2, background: i < step ? T.accent.green : T.border.medium, flex: isMobile ? 1 : 0, minWidth: isMobile ? 0 : 24 }} />}
+              </>
             ))}
           </div>
         </div>
 
-        <div style={{ padding: isMobile ? '14px 16px 18px' : '18px 24px 22px', overflow: 'auto', maxHeight: isMobile ? 'calc(92vh - 132px)' : 'calc(90vh - 148px)' }}>
+        {/* Body */}
+        <div style={{ padding: isMobile ? '16px 18px 18px' : '20px 26px 22px', overflow: 'auto', flex: 1 }}>
 
-        {errors.length > 0 && <div style={{ padding: 10, background: `${T.accent.red}15`, border: `1px solid ${T.accent.red}30`, borderRadius: T.radius.sm, marginBottom: 14, fontSize: 12, color: T.accent.red }}>{errors.join(' • ')}</div>}
-
-        {/* Asset Category Selector */}
-        <div style={sectionStyle}>
-          <label style={labelStyle}>{isRTL ? 'סוג נכס' : 'Asset Type'}</label>
-          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-            {(Object.keys(ASSET_CATEGORIES) as AssetCategory[]).map(cat => (
-              <button key={cat} onClick={() => { setAssetCategory(cat); if (ASSET_CATEGORIES[cat].length > 0) setForm(f => ({ ...f, coin: ASSET_CATEGORIES[cat][0] })); }}
-                style={{ padding: isMobile ? '8px 14px' : '6px 14px', border: `1px solid ${assetCategory === cat ? categoryColors[cat] : T.border.medium}`, borderRadius: T.radius.sm, background: assetCategory === cat ? `${categoryColors[cat]}15` : T.bg.tertiary, color: assetCategory === cat ? categoryColors[cat] : T.text.muted, cursor: 'pointer', fontSize: isMobile ? 12 : 11, fontWeight: 600, transition: 'all 0.2s' }}>
-                {cat}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Symbol Selection */}
-        <div style={{ marginBottom: 14 }}>
-          <label style={labelStyle}>{isRTL ? 'סימול' : 'Symbol'}</label>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <input type="text" placeholder={isRTL ? 'הקלד סימול...' : 'Type any symbol...'} value={customSymbol || form.coin} onChange={e => handleCustomSymbol(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
-            {form.coin && <span style={{ padding: '4px 10px', background: `${categoryColors[assetCategory]}15`, border: `1px solid ${categoryColors[assetCategory]}30`, borderRadius: T.radius.sm, fontSize: 11, fontWeight: 700, color: categoryColors[assetCategory], fontFamily: "'JetBrains Mono', monospace" }}>{form.coin}</span>}
-          </div>
-          {ASSET_CATEGORIES[assetCategory].length > 0 && (
-            <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', marginTop: 6 }}>
-              {ASSET_CATEGORIES[assetCategory].map(s => (
-                <button key={s} onClick={() => handleSymbolSelect(s)} style={{ padding: isMobile ? '5px 10px' : '3px 8px', border: `1px solid ${form.coin === s ? categoryColors[assetCategory] : T.border.subtle}`, borderRadius: 4, background: form.coin === s ? `${categoryColors[assetCategory]}12` : 'transparent', color: form.coin === s ? categoryColors[assetCategory] : T.text.muted, cursor: 'pointer', fontSize: isMobile ? 11 : 10, fontFamily: "'JetBrains Mono', monospace", transition: 'all 0.15s' }}>{s}</button>
-              ))}
+          {errors.length > 0 && (
+            <div style={{ padding: 12, background: `${T.accent.red}15`, border: `1.5px solid ${T.accent.red}50`, borderRadius: 12, marginBottom: 14, fontSize: 13, color: T.accent.red, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+              <span style={{ fontSize: 16 }}>⚠</span>
+              <div>{errors.join(' • ')}</div>
             </div>
+          )}
+
+          {/* ─── STEP 1: Asset, Date, Direction ─── */}
+          {step === 0 && (
+            <>
+              <div style={sectionCard}>
+                <label style={bigLabel}>{isRTL ? '1. איזה סוג נכס סחרת?' : '1. What type of asset did you trade?'}</label>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {(Object.keys(ASSET_CATEGORIES) as AssetCategory[]).map(cat => (
+                    <button key={cat} onClick={() => { setAssetCategory(cat); if (ASSET_CATEGORIES[cat].length > 0) setForm(f => ({ ...f, coin: ASSET_CATEGORIES[cat][0] })); }}
+                      style={{ padding: isMobile ? '12px 18px' : '10px 18px', border: `1.5px solid ${assetCategory === cat ? categoryColors[cat] : T.border.medium}`, borderRadius: 12, background: assetCategory === cat ? `${categoryColors[cat]}18` : T.bg.tertiary, color: assetCategory === cat ? categoryColors[cat] : T.text.secondary, cursor: 'pointer', fontSize: isMobile ? 14 : 13, fontWeight: 700, transition: 'all 0.2s' }}>
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+                <div style={helpText}>{isRTL ? 'בחר את הקטגוריה שמתאימה לנכס שסחרת.' : 'Pick the category that matches the instrument you traded.'}</div>
+              </div>
+
+              <div style={sectionCard}>
+                <label style={bigLabel}>{isRTL ? '2. מהו הסימול?' : '2. What is the symbol?'}</label>
+                <input type="text" placeholder={isRTL ? 'לדוגמה: BTC, AAPL, EUR/USD...' : 'e.g. BTC, AAPL, EUR/USD...'} value={customSymbol || form.coin} onChange={e => handleCustomSymbol(e.target.value)} style={bigInput} />
+                {ASSET_CATEGORIES[assetCategory].length > 0 && (
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 10 }}>
+                    {ASSET_CATEGORIES[assetCategory].map(s => (
+                      <button key={s} onClick={() => handleSymbolSelect(s)} style={{ padding: isMobile ? '8px 12px' : '6px 12px', border: `1px solid ${form.coin === s ? categoryColors[assetCategory] : T.border.subtle}`, borderRadius: 8, background: form.coin === s ? `${categoryColors[assetCategory]}15` : 'transparent', color: form.coin === s ? categoryColors[assetCategory] : T.text.muted, cursor: 'pointer', fontSize: isMobile ? 12 : 11, fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, transition: 'all 0.15s' }}>{s}</button>
+                    ))}
+                  </div>
+                )}
+                <div style={helpText}>{isRTL ? 'תוכל להקליד כל סימול חופשי או לבחור מהרשימה למטה.' : 'Type any symbol freely, or pick one from the list below.'}</div>
+              </div>
+
+              <div style={sectionCard}>
+                <label style={bigLabel}>{isRTL ? '3. מתי ביצעת את העסקה?' : '3. When did you make this trade?'}</label>
+                <input type="datetime-local" value={form.date} onChange={e => handleDateChange(e.target.value)} style={bigInput} />
+              </div>
+
+              <div style={sectionCard}>
+                <label style={bigLabel}>{isRTL ? '4. כיוון העסקה' : '4. Trade direction'}</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  {(['Long','Short'] as const).map(d => (
+                    <button key={d} onClick={() => setForm(f => ({ ...f, direction: d }))}
+                      style={{ padding: isMobile ? '16px' : '14px', border: `2px solid ${form.direction === d ? (d === 'Long' ? T.accent.green : T.accent.red) : T.border.medium}`, borderRadius: 14, background: form.direction === d ? `${d === 'Long' ? T.accent.green : T.accent.red}15` : T.bg.tertiary, color: form.direction === d ? (d === 'Long' ? T.accent.green : T.accent.red) : T.text.secondary, cursor: 'pointer', fontSize: isMobile ? 15 : 14, fontWeight: 700, display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
+                      <span style={{ fontSize: 22 }}>{d === 'Long' ? '↑' : '↓'}</span>
+                      <span>{d === 'Long' ? (isRTL ? 'לונג (קנייה)' : 'Long (Buy)') : (isRTL ? 'שורט (מכירה)' : 'Short (Sell)')}</span>
+                      <span style={{ fontSize: 11, opacity: 0.75, fontWeight: 500 }}>{d === 'Long' ? (isRTL ? 'הימור על עלייה' : 'Bet on going up') : (isRTL ? 'הימור על ירידה' : 'Bet on going down')}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={sectionCard}>
+                <label style={bigLabel}>{isRTL ? '5. סוג הוראה' : '5. Order type'}</label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {['Market','Limit','Stop'].map(o => (
+                    <button key={o} onClick={() => setForm(f => ({ ...f, orderType: o }))}
+                      style={{ flex: 1, padding: isMobile ? '12px' : '11px', border: `1.5px solid ${form.orderType === o ? T.accent.cyan : T.border.medium}`, borderRadius: 12, background: form.orderType === o ? `${T.accent.cyan}15` : T.bg.tertiary, color: form.orderType === o ? T.accent.cyan : T.text.secondary, cursor: 'pointer', fontSize: isMobile ? 14 : 13, fontWeight: 600 }}>
+                      {o}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* ─── STEP 2: Prices & Risk ─── */}
+          {step === 1 && (
+            <>
+              <div style={sectionCard}>
+                <label style={bigLabel}>{isRTL ? 'מחיר הכניסה' : 'Entry price'}</label>
+                <input type="number" step="any" inputMode="decimal" value={form.entry || ''} onChange={e => setForm(f => ({ ...f, entry: +e.target.value }))} placeholder="0.00" style={bigInput} />
+                <div style={helpText}>{isRTL ? 'המחיר בו פתחת את העסקה.' : 'The price you opened the trade at.'}</div>
+              </div>
+
+              <div style={sectionCard}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, flexWrap: 'wrap', gap: 6 }}>
+                  <label style={{ ...bigLabel, marginBottom: 0 }}>{isRTL ? 'סטופ לוס (היכן יצאת אם טעית)' : 'Stop loss (your safety exit)'}</label>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    {availableStopModes.map(m => (
+                      <button key={m.id} onClick={() => handleStopModeChange(m.id)}
+                        style={{ padding: '6px 10px', border: `1.5px solid ${stopMode === m.id ? T.accent.orange : T.border.medium}`, borderRadius: 8, background: stopMode === m.id ? `${T.accent.orange}15` : T.bg.tertiary, color: stopMode === m.id ? T.accent.orange : T.text.muted, cursor: 'pointer', fontSize: 11, fontWeight: 700 }}>
+                        {m.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {stopMode === 'price' ? (
+                  <input type="number" step="any" inputMode="decimal" value={form.stopLoss || ''} onChange={e => setForm(f => ({ ...f, stopLoss: +e.target.value }))} placeholder="0.00" style={bigInput} />
+                ) : (
+                  <>
+                    <input type="number" step="any" inputMode="decimal"
+                      value={stopMode === 'pips' ? (stopPips || '') : stopMode === 'percent' ? (stopPercent || '') : (stopDollar || '')}
+                      onChange={e => handleStopValueChange(+e.target.value)}
+                      placeholder={stopMode === 'pips' ? (assetCategory === 'Futures' ? 'Ticks' : 'Pips') : stopMode === 'percent' ? '%' : '$'}
+                      style={bigInput} />
+                    {form.stopLoss > 0 && (
+                      <div style={{ fontSize: 12, color: T.accent.cyan, marginTop: 6, fontFamily: "'JetBrains Mono', monospace" }}>
+                        → {isRTL ? 'מחיר סטופ:' : 'Stop price:'} {form.stopLoss.toFixed(form.stopLoss < 1 ? 5 : 2)}
+                      </div>
+                    )}
+                  </>
+                )}
+                <div style={helpText}>{isRTL ? 'המחיר שבו תצא מהעסקה אם השוק הולך נגדך — להגנה על ההון.' : "The price you'll exit if the market moves against you — to protect your capital."}</div>
+              </div>
+
+              <div style={sectionCard}>
+                <label style={bigLabel}>{isRTL ? 'מחיר היציאה' : 'Exit price'}</label>
+                <input type="number" step="any" inputMode="decimal" value={form.exit || ''} onChange={e => setForm(f => ({ ...f, exit: +e.target.value }))} placeholder="0.00" style={bigInput} />
+                <div style={helpText}>{isRTL ? 'המחיר שבו סגרת את העסקה בפועל.' : 'The price you actually closed at.'}</div>
+              </div>
+
+              <div style={sectionCard}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, flexWrap: 'wrap', gap: 6 }}>
+                  <label style={{ ...bigLabel, marginBottom: 0 }}>{isRTL ? 'כמה הסתכנת?' : 'How much did you risk?'}</label>
+                  <button onClick={handleRiskModeToggle}
+                    style={{ padding: '6px 12px', border: `1.5px solid ${T.accent.cyan}`, borderRadius: 8, background: `${T.accent.cyan}15`, color: T.accent.cyan, cursor: 'pointer', fontSize: 11, fontWeight: 700 }}>
+                    {riskMode === 'dollar' ? (isRTL ? 'עבור ל-%' : 'Use %') : (isRTL ? 'עבור ל-$' : 'Use $')}
+                  </button>
+                </div>
+                {riskMode === 'dollar' ? (
+                  <input type="number" step="any" inputMode="decimal" value={form.risk || ''} onChange={e => handleRiskChange(+e.target.value)} placeholder={isRTL ? 'סכום בדולרים' : 'Amount in $'} style={bigInput} />
+                ) : (
+                  <input type="number" step="0.1" inputMode="decimal" value={form.riskPct || ''} onChange={e => handleRiskChange(+e.target.value)} placeholder={isRTL ? 'אחוז מההון' : '% of balance'} style={bigInput} />
+                )}
+                <div style={helpText}>
+                  {riskMode === 'dollar'
+                    ? `${isRTL ? 'שווה ערך ל-' : 'Equivalent to '}${form.riskPct.toFixed(1)}% ${isRTL ? 'מההון' : 'of your balance'} ${currentBalance > 0 ? `($${currentBalance.toFixed(0)})` : ''}`
+                    : `${isRTL ? 'שווה ערך ל-' : 'Equivalent to '}$${form.risk.toFixed(2)}`
+                  }
+                </div>
+              </div>
+
+              <div style={sectionCard}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
+                  <div>
+                    <label style={bigLabel}>{isRTL ? 'מינוף' : 'Leverage'}</label>
+                    <input type="number" inputMode="numeric" value={form.leverage} onChange={e => setForm(f => ({ ...f, leverage: +e.target.value }))} style={bigInput} />
+                  </div>
+                  <div>
+                    <label style={bigLabel}>{isRTL ? 'גודל פוזיציה' : 'Position size'}</label>
+                    <input type="number" step="any" inputMode="decimal" value={form.positionSize || ''} onChange={e => setForm(f => ({ ...f, positionSize: +e.target.value }))} placeholder={isRTL ? 'אופציונלי' : 'Optional'} style={bigInput} />
+                    {autoCalcPositionSize > 0 && !form.positionSize && (
+                      <button onClick={() => setForm(f => ({ ...f, positionSize: +autoCalcPositionSize.toFixed(4) }))}
+                        style={{ fontSize: 12, color: T.accent.cyan, background: 'none', border: 'none', cursor: 'pointer', marginTop: 6, padding: 0, fontWeight: 600 }}>
+                        ✨ {isRTL ? 'חשב אוטומטית:' : 'Auto-fill:'} {autoCalcPositionSize.toFixed(4)}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div style={sectionCard}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 14, color: T.text.primary, fontWeight: 600 }}>
+                  <input type="checkbox" checked={form.rules} onChange={e => setForm(f => ({ ...f, rules: e.target.checked }))} style={{ accentColor: T.accent.cyan, width: 18, height: 18 }} />
+                  {isRTL ? 'עקבתי אחר חוקי המסחר שלי' : 'I followed my trading rules'}
+                </label>
+                <div style={helpText}>{isRTL ? 'סמן אם פעלת לפי האסטרטגיה והכללים שהגדרת לעצמך.' : 'Check this if you stuck to your strategy and rules.'}</div>
+              </div>
+
+              <div style={sectionCard}>
+                <label style={bigLabel}>{isRTL ? 'הערות (אופציונלי)' : 'Notes (optional)'}</label>
+                <textarea value={form.comments} onChange={e => setForm(f => ({ ...f, comments: e.target.value }))} placeholder={isRTL ? 'מה למדת? איך הרגשת? מה הסיבה לעסקה?' : 'What did you learn? How did you feel? Why this trade?'} style={{ ...bigInput, minHeight: 80, resize: 'vertical', fontFamily: "'Inter', system-ui, sans-serif" }} />
+              </div>
+            </>
+          )}
+
+          {/* ─── STEP 3: Review ─── */}
+          {step === 2 && (
+            <>
+              <GlassCard T={T} style={{ marginBottom: 16, padding: isMobile ? 18 : 22 }}>
+                <div style={{ fontSize: 12, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 14, fontWeight: 700 }}>{isRTL ? 'סיכום העסקה' : 'Trade summary'}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                  <div>
+                    <div style={{ fontSize: 11, color: T.text.muted }}>{isRTL ? 'נכס' : 'Asset'}</div>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: T.text.primary, fontFamily: "'JetBrains Mono', monospace" }}>{form.coin}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, color: T.text.muted }}>{isRTL ? 'כיוון' : 'Direction'}</div>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: form.direction === 'Long' ? T.accent.green : T.accent.red }}>{form.direction === 'Long' ? '↑ Long' : '↓ Short'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, color: T.text.muted }}>{isRTL ? 'כניסה / יציאה' : 'Entry / Exit'}</div>
+                    <div style={{ fontSize: 14, color: T.text.primary, fontFamily: "'JetBrains Mono', monospace" }}>{form.entry} → {form.exit}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, color: T.text.muted }}>{isRTL ? 'סטופ לוס' : 'Stop loss'}</div>
+                    <div style={{ fontSize: 14, color: T.accent.orange, fontFamily: "'JetBrains Mono', monospace" }}>{form.stopLoss}</div>
+                  </div>
+                </div>
+              </GlassCard>
+
+              <GlassCard T={T} style={{ marginBottom: 18, padding: isMobile ? 18 : 22, background: pnl >= 0 ? `${T.accent.green}10` : `${T.accent.red}10`, border: `2px solid ${pnl >= 0 ? T.accent.green : T.accent.red}40` }}>
+                <div style={{ fontSize: 12, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 14, fontWeight: 700 }}>{isRTL ? 'התוצאה' : 'Result'}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
+                  <div>
+                    <div style={{ fontSize: 11, color: T.text.muted }}>R-Multiple</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: returnR >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{returnR.toFixed(2)}R</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, color: T.text.muted }}>P&L</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, color: T.text.muted }}>{isRTL ? 'תוצאה' : 'Outcome'}</div>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: winLoss === 'Win' ? T.accent.green : winLoss === 'Loss' ? T.accent.red : T.accent.orange }}>{winLoss === 'Win' ? (isRTL ? 'רווח' : 'Win') : winLoss === 'Loss' ? (isRTL ? 'הפסד' : 'Loss') : 'Break-even'}</div>
+                  </div>
+                </div>
+                <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${T.border.subtle}`, fontSize: 12, color: T.text.secondary }}>
+                  {isRTL ? 'יתרה לאחר עסקה זו: ' : 'Balance after this trade: '}
+                  <span style={{ color: T.text.primary, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>${(currentBalance + pnl).toFixed(2)}</span>
+                </div>
+              </GlassCard>
+
+              <div style={{ fontSize: 12, color: T.text.muted, textAlign: 'center', marginBottom: 6 }}>
+                {isRTL ? 'בדוק את הנתונים. כדי לתקן — חזור אחורה.' : 'Review the details. Hit Back to make changes.'}
+              </div>
+            </>
           )}
         </div>
 
-        {/* Date + Direction + Order Type */}
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 1fr', gap: 12, marginBottom: 14 }}>
-          <div style={{ gridColumn: isMobile ? '1 / -1' : 'auto' }}>
-            <label style={labelStyle}>{t.date}</label>
-            <input type="datetime-local" value={form.date} onChange={e => handleDateChange(e.target.value)} style={inputStyle} />
-          </div>
-          <div><label style={labelStyle}>{t.direction}</label><div style={{ display: 'flex', gap: 4 }}>
-            {(['Long','Short'] as const).map(d => <button key={d} onClick={() => setForm(f => ({ ...f, direction: d }))} style={{ flex: 1, padding: isMobile ? '10px' : '8px', border: `1px solid ${form.direction === d ? (d === 'Long' ? T.accent.green : T.accent.red) : T.border.medium}`, borderRadius: T.radius.sm, background: form.direction === d ? `${d === 'Long' ? T.accent.green : T.accent.red}15` : T.bg.tertiary, color: form.direction === d ? (d === 'Long' ? T.accent.green : T.accent.red) : T.text.muted, cursor: 'pointer', fontSize: isMobile ? 13 : 12, fontWeight: 600 }}>{d === 'Long' ? '↑ ' + t.long : '↓ ' + t.short}</button>)}
-          </div></div>
-          <div><label style={labelStyle}>{t.orderType}</label><select value={form.orderType} onChange={e => setForm(f => ({ ...f, orderType: e.target.value }))} style={inputStyle}><option value="Market">Market</option><option value="Limit">Limit</option><option value="Stop">Stop</option></select></div>
-        </div>
-
-        {/* Entry */}
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: 12, marginBottom: 14 }}>
-          <div><label style={labelStyle}>{t.entry}</label><input type="number" step="any" value={form.entry || ''} onChange={e => setForm(f => ({ ...f, entry: +e.target.value }))} style={inputStyle} /></div>
-
-          {/* Stop Loss with mode selector */}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-              <label style={{ ...labelStyle, marginBottom: 0 }}>{t.stopLoss}</label>
-              <div style={{ display: 'flex', gap: 2 }}>
-                {availableStopModes.map(m => (
-                  <button key={m.id} onClick={() => handleStopModeChange(m.id)} style={modeBtnStyle(stopMode === m.id, T.accent.orange)}>
-                    {m.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {stopMode === 'price' ? (
-              <input type="number" step="any" value={form.stopLoss || ''} onChange={e => setForm(f => ({ ...f, stopLoss: +e.target.value }))} style={inputStyle} />
-            ) : (
-              <div style={{ display: 'flex', gap: 6 }}>
-                <input
-                  type="number" step="any"
-                  value={stopMode === 'pips' ? (stopPips || '') : stopMode === 'percent' ? (stopPercent || '') : (stopDollar || '')}
-                  onChange={e => handleStopValueChange(+e.target.value)}
-                  placeholder={stopMode === 'pips' ? (assetCategory === 'Futures' ? 'Ticks' : 'Pips') : stopMode === 'percent' ? '%' : '$'}
-                  style={{ ...inputStyle, flex: 1 }}
-                />
-                {form.stopLoss > 0 && (
-                  <div style={{ fontSize: 10, color: T.text.muted, alignSelf: 'center', fontFamily: "'JetBrains Mono', monospace", whiteSpace: 'nowrap' }}>
-                    → {form.stopLoss.toFixed(form.stopLoss < 1 ? 5 : 2)}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div><label style={labelStyle}>{t.exit}</label><input type="number" step="any" value={form.exit || ''} onChange={e => setForm(f => ({ ...f, exit: +e.target.value }))} style={inputStyle} /></div>
-        </div>
-
-        {/* Risk section with mode toggle */}
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 1fr 1fr', gap: 12, marginBottom: 14 }}>
-          <div style={{ gridColumn: isMobile ? '1 / -1' : 'auto' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-              <label style={{ ...labelStyle, marginBottom: 0 }}>{isRTL ? 'סיכון' : 'Risk'}</label>
-              <button onClick={handleRiskModeToggle} style={modeBtnStyle(true, T.accent.cyan)}>
-                {riskMode === 'dollar' ? '$ → %' : '% → $'}
-              </button>
-            </div>
-            {riskMode === 'dollar' ? (
-              <input type="number" step="any" value={form.risk || ''} onChange={e => handleRiskChange(+e.target.value)} placeholder="$ Risk" style={inputStyle} />
-            ) : (
-              <input type="number" step="0.1" value={form.riskPct || ''} onChange={e => handleRiskChange(+e.target.value)} placeholder="% Risk" style={inputStyle} />
-            )}
-            <div style={{ fontSize: 9, color: T.text.muted, marginTop: 2, fontFamily: "'JetBrains Mono', monospace" }}>
-              {riskMode === 'dollar'
-                ? `${form.riskPct.toFixed(1)}% of ${currentBalance > 0 ? '$' + currentBalance.toFixed(0) : 'balance'}`
-                : `$${form.risk.toFixed(2)}`
-              }
-            </div>
-          </div>
-          <div><label style={labelStyle}>{t.leverage}x</label><input type="number" value={form.leverage} onChange={e => setForm(f => ({ ...f, leverage: +e.target.value }))} style={inputStyle} /></div>
-          <div>
-            <label style={labelStyle}>{t.positionSize}</label>
-            <input type="number" step="any" value={form.positionSize || ''} onChange={e => setForm(f => ({ ...f, positionSize: +e.target.value }))} style={inputStyle} />
-            {autoCalcPositionSize > 0 && !form.positionSize && (
-              <button onClick={() => setForm(f => ({ ...f, positionSize: +autoCalcPositionSize.toFixed(4) }))} style={{ fontSize: 9, color: T.accent.cyan, background: 'none', border: 'none', cursor: 'pointer', marginTop: 2, padding: 0 }}>
-                {isRTL ? 'חישוב אוטומטי:' : 'Auto:'} {autoCalcPositionSize.toFixed(4)}
-              </button>
-            )}
-          </div>
-          {!isMobile && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 12, color: T.text.secondary }}>
-              <input type="checkbox" checked={form.rules} onChange={e => setForm(f => ({ ...f, rules: e.target.checked }))} style={{ accentColor: T.accent.cyan }} />
-              {t.rules}
-            </label>
-          </div>}
-        </div>
-
-        {/* Mobile rules checkbox */}
-        {isMobile && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 12, color: T.text.secondary }}>
-              <input type="checkbox" checked={form.rules} onChange={e => setForm(f => ({ ...f, rules: e.target.checked }))} style={{ accentColor: T.accent.cyan }} />
-              {t.rules} {isRTL ? 'נשמרו' : 'Followed'}
-            </label>
-          </div>
-        )}
-
-        {/* Comments */}
-        <div style={{ marginBottom: 14 }}>
-          <label style={labelStyle}>{t.comments}</label>
-          <textarea value={form.comments} onChange={e => setForm(f => ({ ...f, comments: e.target.value }))} style={{ ...inputStyle, minHeight: isMobile ? 50 : 60, resize: 'vertical' }} />
-        </div>
-
-        {/* Live preview */}
-        <GlassCard T={T} style={{ marginBottom: 18, padding: isMobile ? 12 : 14 }}>
-          <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', marginBottom: 8 }}>{isRTL ? 'תצוגה מקדימה' : 'Preview'}</div>
-          <div style={{ display: 'flex', gap: isMobile ? 14 : 20, flexWrap: 'wrap' }}>
-            <div><div style={{ fontSize: 9, color: T.text.muted }}>R</div><div style={{ fontSize: isMobile ? 14 : 16, fontWeight: 700, color: returnR >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{returnR.toFixed(2)}R</div></div>
-            <div><div style={{ fontSize: 9, color: T.text.muted }}>P&L</div><div style={{ fontSize: isMobile ? 14 : 16, fontWeight: 700, color: pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}</div></div>
-            <div><div style={{ fontSize: 9, color: T.text.muted }}>{t.result}</div><div style={{ fontSize: isMobile ? 12 : 14, fontWeight: 600, color: winLoss === 'Win' ? T.accent.green : winLoss === 'Loss' ? T.accent.red : T.accent.orange }}>{winLoss}</div></div>
-            <div><div style={{ fontSize: 9, color: T.text.muted }}>{t.balance}</div><div style={{ fontSize: isMobile ? 12 : 14, fontWeight: 600, color: T.text.primary, fontFamily: "'JetBrains Mono', monospace" }}>${(currentBalance + pnl).toFixed(2)}</div></div>
-          </div>
-        </GlassCard>
-
-        {/* Submit buttons */}
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-          <button onClick={onClose} style={{ padding: isMobile ? '11px 20px' : '9px 20px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, cursor: 'pointer', fontSize: 13 }}>{t.cancel}</button>
-          <button onClick={handleSubmit} style={{ padding: isMobile ? '11px 28px' : '9px 24px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 700, cursor: 'pointer', fontSize: 13, flex: isMobile ? 1 : 'none' }}>{t.save}</button>
-        </div>
+        {/* Footer / Nav buttons */}
+        <div style={{ padding: isMobile ? '14px 18px' : '16px 26px', borderTop: `1px solid ${T.border.subtle}`, background: T.bg.secondary, display: 'flex', gap: 10, justifyContent: 'space-between', alignItems: 'center' }}>
+          <button
+            onClick={step === 0 ? onClose : handleBack}
+            style={{ padding: isMobile ? '13px 22px' : '12px 22px', background: T.bg.tertiary, border: `1.5px solid ${T.border.medium}`, borderRadius: 12, color: T.text.secondary, cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>
+            {step === 0 ? (isRTL ? 'ביטול' : 'Cancel') : (isRTL ? '← חזור' : '← Back')}
+          </button>
+          <div style={{ fontSize: 11, color: T.text.muted }}>{isRTL ? `שלב ${step + 1} מתוך 3` : `Step ${step + 1} of 3`}</div>
+          {step < 2 ? (
+            <button onClick={handleNext}
+              style={{ padding: isMobile ? '13px 28px' : '12px 28px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: 12, color: T.bg.primary, fontWeight: 700, cursor: 'pointer', fontSize: 14 }}>
+              {isRTL ? 'המשך →' : 'Continue →'}
+            </button>
+          ) : (
+            <button onClick={handleSubmit}
+              style={{ padding: isMobile ? '13px 28px' : '12px 28px', background: `linear-gradient(135deg, ${T.accent.green}, ${T.accent.teal})`, border: 'none', borderRadius: 12, color: T.bg.primary, fontWeight: 800, cursor: 'pointer', fontSize: 14 }}>
+              ✓ {isRTL ? 'שמור עסקה' : 'Save Trade'}
+            </button>
+          )}
         </div>
       </div>
     </div>
