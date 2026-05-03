@@ -294,10 +294,10 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
           {/* Step indicator */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {[0,1,2].map(i => (
-              <>
-                <StepDot key={`d${i}`} idx={i} />
-                {i < 2 && <div key={`s${i}`} style={{ height: 2, background: i < step ? T.accent.green : T.border.medium, flex: isMobile ? 1 : 0, minWidth: isMobile ? 0 : 24 }} />}
-              </>
+              <div key={i} style={{ display: 'contents' }}>
+                <StepDot idx={i} />
+                {i < 2 && <div style={{ height: 2, background: i < step ? T.accent.green : T.border.medium, flex: isMobile ? 1 : 0, minWidth: isMobile ? 0 : 24 }} />}
+              </div>
             ))}
           </div>
         </div>
