@@ -3374,14 +3374,20 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk, onInfo
   };
 
   const addTrade = () => {
+    // Add an empty row locally only — we only push to Orca once the row
+    // has meaningful data (pair + a price/PNL). Avoids creating ghost
+    // Orca trades full of zeros.
     const newJTrade = { id: Date.now(), pair: '', side: 'LONG', entry: '', exit: '', size: '', pnl: '', rr: '', notes: '' };
     upd({ trades: [...(day.trades || []), newJTrade] });
-    if (typeof onAddOrcaTrade === 'function') {
-      try { onAddOrcaTrade(buildOrcaPayload(newJTrade)); } catch { /* silent */ }
-    }
   };
 
   // Sync a single journal-trade edit to its linked Orca trade (or create one if missing).
+  // Treats Journal trades as first-class siblings of Orca trades — full bidirectional bridge.
+  const isMeaningful = (jtr: any) => {
+    const pair = String(jtr?.pair || '').trim();
+    const hasPrice = parseFloat(jtr?.entry) || parseFloat(jtr?.exit) || parseFloat(jtr?.pnl) || parseFloat(jtr?.rr);
+    return pair.length > 0 && !!hasPrice;
+  };
   const syncRowToOrca = (jtr: any) => {
     const tag = `__JID:${jtr.id}__`;
     const linked = (orcaTrades || []).find((o: Trade) => typeof o.comments === 'string' && o.comments.includes(tag));
@@ -3390,7 +3396,7 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk, onInfo
         const payload = buildOrcaPayload(jtr);
         onUpdateOrcaTrade({ ...linked, ...payload });
       } catch { /* silent */ }
-    } else if (!linked && typeof onAddOrcaTrade === 'function') {
+    } else if (!linked && isMeaningful(jtr) && typeof onAddOrcaTrade === 'function') {
       try { onAddOrcaTrade(buildOrcaPayload(jtr)); } catch { /* silent */ }
     }
   };
