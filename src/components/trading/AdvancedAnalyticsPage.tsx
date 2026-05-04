@@ -31,6 +31,7 @@ import type { TradingStats } from '@/lib/trading-analytics';
 import type { OperatingMode } from '@/hooks/use-settings';
 import { GlassCard } from './TradingUI';
 import type { ChartExplanation } from './ChartWrapper';
+import { AnalyticsQuantLab } from './AnalyticsQuantLab';
 
 interface AdvancedAnalyticsPageProps {
   T: TradingTheme;
@@ -760,6 +761,9 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
           רמה: {showMax ? 'MAX · מחקר/אלפא' : showPro ? 'PRO · סקירה' : tier === 'minimal' ? 'BASIC · מתחיל' : 'CORE · סטנדרט'}
         </span>
       </div>
+
+      {/* ═══ QUANT LAB — appears in review/research/alpha ═══ */}
+      {showPro && <AnalyticsQuantLab T={T} trades={trades} privacyMode={privacyMode} />}
 
       {/* ═══ KEY OBSERVATIONS ═══ */}
       <GlassCard T={T} glow={`${T.accent.cyan}18`}>

@@ -95,11 +95,9 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, themeId }: Props) => {
       style={{
         position: 'relative',
         width: '100%',
-        minHeight: 'calc(100vh - 120px)',
-        background: T.bg.primary,
-        borderRadius: T.radius.lg,
+        minHeight: 'calc(100vh - 80px)',
+        background: 'transparent',
         overflow: 'hidden',
-        border: `1px solid ${T.border.subtle}`,
       }}
     >
       <iframe
@@ -108,18 +106,16 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, themeId }: Props) => {
         title="Weekly Review"
         loading="eager"
         onLoad={() => {
-          // Handshake fallback: even if the inner script didn't fire READY,
-          // mark as ready after onLoad so we still push data.
           setTimeout(() => setReady(true), 50);
           setLoadError(false);
         }}
         style={{
           display: 'block',
           width: '100%',
-          height: 'calc(100vh - 140px)',
+          height: 'calc(100vh - 80px)',
           minHeight: 720,
           border: 0,
-          background: '#0a0a0f',
+          background: 'transparent',
           colorScheme: 'dark',
         }}
         // sandbox is intentionally NOT set — the embedded app needs
