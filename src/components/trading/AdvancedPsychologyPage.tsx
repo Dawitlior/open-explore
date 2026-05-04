@@ -8,6 +8,7 @@ import { ChartWrapper, EXPLANATIONS } from './ChartWrapper';
 import { LazyChart } from './LazyChart';
 import type { ChartExplanation } from './ChartWrapper';
 import { diagnose, type DeepDiagnosis } from '@/lib/psychology-diagnostic';
+import { PsychologyLab } from './PsychologyLab';
 
 type OperatingMode = 'live' | 'review' | 'research' | 'beginner';
 
@@ -606,6 +607,9 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
           </ChartWrapper>
         </>
       )}
+
+      {/* ═══ PSYCHOLOGY LAB · advanced behavioral metrics ═══ */}
+      {!isBeginner && <PsychologyLab T={T} trades={trades} isRTL={isRTL} />}
 
       {diagnosisOpen && (
         <div onClick={() => setDiagnosisOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(16px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18, animation: 'fadeIn .25s ease' }}>
