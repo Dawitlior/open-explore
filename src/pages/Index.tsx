@@ -1622,8 +1622,8 @@ const Index = () => {
               </button>
             )}
             <h1 style={{ fontSize: isMobile ? 14 : 17, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", margin: 0 }}>{nav.find(n => n.id === page)?.label}</h1>
-            {!isMobile && <TradingBadge color={modeColors[opMode]}>{opMode === 'beginner' ? (isRTL ? '🎓 מתחיל' : '🎓 BEGINNER') : opMode === 'live' ? (isRTL ? '🔴 חי' : '🔴 LIVE') : opMode === 'review' ? (isRTL ? '🔵 סקירה' : '🔵 REVIEW') : (isRTL ? '🟣 מחקר' : '🟣 RESEARCH')}</TradingBadge>}
-            {!isMobile && isAlpha && <TradingBadge color={T.accent.purple}>⚡ ALPHA</TradingBadge>}
+            {!isMobile && !uiPrefs.hideHeaderBadges && <TradingBadge color={modeColors[opMode]}>{opMode === 'beginner' ? (isRTL ? '🎓 מתחיל' : '🎓 BEGINNER') : opMode === 'live' ? (isRTL ? '🔴 חי' : '🔴 LIVE') : opMode === 'review' ? (isRTL ? '🔵 סקירה' : '🔵 REVIEW') : (isRTL ? '🟣 מחקר' : '🟣 RESEARCH')}</TradingBadge>}
+            {!isMobile && isAlpha && !uiPrefs.hideHeaderBadges && <TradingBadge color={T.accent.purple}>⚡ ALPHA</TradingBadge>}
             {!isMobile && settings.privacyMode && <TradingBadge color={T.accent.orange}>🔒</TradingBadge>}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 10, flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
