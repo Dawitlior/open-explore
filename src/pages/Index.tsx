@@ -14,6 +14,7 @@ import { CalendarModal } from '@/components/trading/CalendarModal';
 import { FeatureManifestModal } from '@/components/trading/FeatureManifestModal';
 import { CommandPalette } from '@/components/trading/CommandPalette';
 import { ModeSwitch } from '@/components/trading/ModeSwitch';
+import { useUIPrefs } from '@/hooks/use-ui-prefs';
 import { PrivacyMask, usePrivacyShortcut } from '@/components/trading/PrivacyMask';
 import { TradeForm } from '@/components/trading/TradeForm';
 import { ResetModal } from '@/components/trading/ResetModal';
