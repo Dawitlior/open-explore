@@ -1636,7 +1636,7 @@ const Index = () => {
                 ↩ {isRTL ? 'שחזר גרפים' : 'Restore Charts'} ({hiddenCharts.length})
               </button>
             )}
-            {!isMobile && (
+            {!isMobile && !uiPrefs.hideQuickActions && (
               <button
                 onClick={() => setShowCmdPalette(true)}
                 style={{
