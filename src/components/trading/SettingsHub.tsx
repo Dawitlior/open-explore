@@ -33,6 +33,7 @@ const TOKEN_LIST = [
 export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats }: SettingsHubProps) {
   const [tab, setTab] = useState<TabId>('theme');
   const dash = useDashboardConfig();
+  const ui = useUIPrefs();
   const riskCfg = useRiskLimits();
   const [pendingLimits, setPendingLimits] = useState<{ trade: string; day: string; week: string; month: string } | null>(null);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
