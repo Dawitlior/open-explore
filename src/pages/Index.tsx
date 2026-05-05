@@ -82,6 +82,7 @@ const Index = () => {
   const isRTL = settings.isRTL;
   const isAlpha = settings.isAlpha;
   const opMode = settings.operatingMode;
+  const { prefs: uiPrefs, setPrefs: setUIPrefs, toggleHiddenMode, reset: resetUIPrefs } = useUIPrefs();
 
   const [page, setPage] = useState('dashboard');
   const [sbOpen, setSbOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth > 768);
