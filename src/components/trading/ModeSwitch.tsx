@@ -32,7 +32,7 @@ export const ModeSwitch = ({ T, isRTL, operatingMode, systemMode, onOperatingMod
     }, 600);
   };
 
-  const operatingModes: { id: OperatingMode; label: string; labelHe: string; color: string; desc: string; descHe: string }[] = [
+  const operatingModes: { id: OperatingMode; label: string; labelHe: string; color: string; desc: string; descHe: string }[] = ([
     { id: 'beginner', label: 'BEGINNER', labelHe: 'מתחיל', color: modeColors.beginner || '#22d3ee', desc: 'Simplified dashboard for new traders', descHe: 'לוח פשוט לסוחרים מתחילים' },
     { id: 'live', label: 'LIVE', labelHe: 'חי', color: modeColors.live, desc: 'Real-time execution focus', descHe: 'מיקוד ביצוע בזמן אמת' },
     { id: 'review', label: 'REVIEW', labelHe: 'סקירה', color: modeColors.review, desc: 'Statistical intelligence', descHe: 'מודיעין סטטיסטי' },
