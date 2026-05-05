@@ -17,7 +17,7 @@ interface SettingsHubProps {
   stats: TradingStats;
 }
 
-type TabId = 'theme' | 'dashboard' | 'kpis' | 'risk';
+type TabId = 'theme' | 'dashboard' | 'kpis' | 'risk' | 'interface';
 
 const THEME_OPTIONS: { id: ThemeId; label: { he: string; en: string }; icon: string; preview: string[] }[] = [
   { id: 'midnight', label: { he: 'חצות', en: 'Midnight' }, icon: '🌙', preview: ['#020202', '#00f2ff', '#3b82f6'] },
