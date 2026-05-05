@@ -86,7 +86,7 @@ export const ModeSwitch = ({ T, isRTL, operatingMode, systemMode, onOperatingMod
             </button>
           ))}
         </div>
-      </div>
+      </div>}
 
       {/* Confirmation Modal */}
       {pendingMode && (
