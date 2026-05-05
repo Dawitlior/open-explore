@@ -1684,7 +1684,7 @@ const Index = () => {
         </header>
 
         <div style={{ padding: isMobile ? '12px 10px' : '20px 24px', maxWidth: 1400, margin: '0 auto' }}>
-          {trades.length === 0 && (
+          {trades.length === 0 && page !== 'weekly-review' && (
             <div style={{ textAlign: 'center', padding: isMobile ? 30 : 60 }}>
               <div style={{ fontSize: 48, marginBottom: 16 }}>🐋</div>
               <div style={{ fontSize: 16, color: T.text.secondary, marginBottom: 20 }}>{t.noTrades}</div>
