@@ -37,7 +37,7 @@ export const ModeSwitch = ({ T, isRTL, operatingMode, systemMode, onOperatingMod
     { id: 'live', label: 'LIVE', labelHe: 'חי', color: modeColors.live, desc: 'Real-time execution focus', descHe: 'מיקוד ביצוע בזמן אמת' },
     { id: 'review', label: 'REVIEW', labelHe: 'סקירה', color: modeColors.review, desc: 'Statistical intelligence', descHe: 'מודיעין סטטיסטי' },
     { id: 'research', label: 'RESEARCH', labelHe: 'מחקר', color: modeColors.research, desc: 'Advanced analytics lab', descHe: 'מעבדת אנליטיקה מתקדמת' },
-  ];
+  ] as const).filter(m => !hiddenModes.includes(m.id) || m.id === operatingMode);
 
   return (
     <>
