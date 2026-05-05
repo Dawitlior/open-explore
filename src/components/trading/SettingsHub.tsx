@@ -1,10 +1,11 @@
 import { useState, useRef } from 'react';
 import type { TradingTheme } from '@/lib/trading-theme';
-import type { ThemeId } from '@/hooks/use-settings';
+import type { ThemeId, OperatingMode } from '@/hooks/use-settings';
 import { useDashboardConfig, WIDGET_LABELS, evalCustomKPI, type CustomKPI, type WidgetId } from '@/hooks/use-dashboard-config';
 import type { TradingStats } from '@/lib/trading-analytics';
 import { useRiskLimits } from '@/hooks/use-risk-limits';
 import { DEFAULT_RISK_LIMITS } from '@/lib/risk-limits';
+import { useUIPrefs } from '@/hooks/use-ui-prefs';
 
 interface SettingsHubProps {
   T: TradingTheme;
