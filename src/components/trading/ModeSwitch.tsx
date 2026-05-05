@@ -66,7 +66,7 @@ export const ModeSwitch = ({ T, isRTL, operatingMode, systemMode, onOperatingMod
       </div>
 
       {/* Depth Mode Switcher */}
-      <div style={{ padding: '0 10px', marginBottom: 10 }}>
+      {!hideDepthSwitch && <div style={{ padding: '0 10px', marginBottom: 10 }}>
         <div style={{ display: 'flex', gap: 3, background: T.bg.primary, borderRadius: T.radius.md, padding: 3 }}>
           {(['standard', 'alpha'] as SystemMode[]).map(m => (
             <button
