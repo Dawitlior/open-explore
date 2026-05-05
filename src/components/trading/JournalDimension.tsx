@@ -10,7 +10,7 @@ import { MORNING_VARIATIONS, EOD_VARIATIONS } from '@/lib/journal-demo-data';
 // ═══════════════════════════════════════════════════════════════
 const ENTRY_SESSION_KEY = 'journal-entry-seen';
 
-const JournalEntryScreen = ({ onEnter }: { onEnter: () => void }) => {
+const JournalEntryScreen = ({ onEnter, isRTL = true }: { onEnter: () => void; isRTL?: boolean }) => {
   const [phase, setPhase] = useState<'ambient' | 'boot' | 'ready' | 'portal' | 'consumed'>('ambient');
   const [bootStep, setBootStep] = useState(0);
   const [clock, setClock] = useState('');
@@ -252,15 +252,15 @@ const JournalEntryScreen = ({ onEnter }: { onEnter: () => void }) => {
           transform: bootStep >= 1 ? 'translateY(0)' : 'translateY(30px)',
           transition: 'all 0.9s cubic-bezier(0.16,1,0.3,1)',
         }}>
-          <span style={{ color: '#ffffff' }}>APEX</span>
-          <span style={{ fontWeight: 300, color: '#475569', marginLeft: 8 }}>OS</span>
+          <span style={{ color: '#ffffff' }}>Orca</span>
+          <span style={{ fontWeight: 300, color: '#475569', marginLeft: 8 }}>Journal</span>
         </h1>
         <p style={{
           fontSize: 'clamp(10px, 2vw, 12px)', fontWeight: 600,
           color: '#475569', letterSpacing: 6, textTransform: 'uppercase' as const,
           marginBottom: 48,
           opacity: bootStep >= 2 ? 1 : 0, transition: 'opacity 1s ease 0.2s',
-        }}>TRADING INTELLIGENCE SYSTEM</p>
+        }}>{isRTL ? 'יומן מסחר חכם' : 'Smart Trading Journal'}</p>
 
         {/* Boot indicators */}
         <div style={{ display: 'flex', gap: 16, marginBottom: 28, fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>
@@ -317,11 +317,11 @@ const JournalEntryScreen = ({ onEnter }: { onEnter: () => void }) => {
               e.currentTarget.style.transform = 'translateY(0) scale(1)';
               e.currentTarget.style.boxShadow = '0 0 60px rgba(0,255,163,0.2), 0 4px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2)';
             }}
-            >ENTER SYSTEM</button>
+            >{isRTL ? 'כניסה ליומן' : 'ENTER JOURNAL'}</button>
             <div style={{
               textAlign: 'center', marginTop: 12, fontFamily: "'JetBrains Mono', monospace",
               fontSize: 9, color: '#334155', letterSpacing: 2,
-            }}>PRESS ENTER OR CLICK</div>
+            }}>{isRTL ? 'לחץ אנטר או על הכפתור' : 'PRESS ENTER OR CLICK'}</div>
           </div>
         )}
       </div>
@@ -353,7 +353,7 @@ const JournalEntryScreen = ({ onEnter }: { onEnter: () => void }) => {
         opacity: phase === 'portal' || phase === 'consumed' ? 0 : 1,
         transition: 'opacity 0.4s ease',
       }}>
-        <span>APEX OS v4.0</span>
+        <span>Orca Journal v4.0</span>
         <span style={{ color: '#00FFA340' }}>●</span>
         <span>ENCRYPTED</span>
         <span style={{ color: '#00FFA340' }}>●</span>
@@ -3349,6 +3349,21 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk, onInfo
   const U = (k: string) => (v: any) => upd({ [k]: v });
   const dp = sumPnl(day), dw = numWins(day);
 
+  // Map of Journal-trade-id → Orca-trade-id, kept in a ref so it survives
+  // every keystroke without depending on stale `orcaTrades` snapshots.
+  const jidMapRef = useRef<Map<number, number>>(new Map());
+  // Per-jid in-flight guard so rapid edits don't create duplicate Orca trades.
+  const inFlightRef = useRef<Set<number>>(new Set());
+
+  // Keep the map fresh from props (covers reloads / external changes).
+  useEffect(() => {
+    const map = jidMapRef.current;
+    (orcaTrades || []).forEach((o: Trade) => {
+      const m = typeof o.comments === 'string' ? o.comments.match(/__JID:(\d+)__/) : null;
+      if (m) map.set(parseInt(m[1], 10), o.id);
+    });
+  }, [orcaTrades]);
+
   // Build a "snapshot" of an Orca trade derived from a Journal trade row.
   const buildOrcaPayload = (jtr: any): Omit<Trade, 'id' | 'balance'> => {
     const dateStr = (day.date || new Date().toISOString().slice(0, 10)) + ' 00:00';
@@ -3388,17 +3403,32 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk, onInfo
     const hasPrice = parseFloat(jtr?.entry) || parseFloat(jtr?.exit) || parseFloat(jtr?.pnl) || parseFloat(jtr?.rr);
     return pair.length > 0 && !!hasPrice;
   };
-  const syncRowToOrca = (jtr: any) => {
-    const tag = `__JID:${jtr.id}__`;
-    const linked = (orcaTrades || []).find((o: Trade) => typeof o.comments === 'string' && o.comments.includes(tag));
+  const syncRowToOrca = async (jtr: any) => {
+    if (!isMeaningful(jtr)) return;
+    const map = jidMapRef.current;
+    const linkedId = map.get(jtr.id);
+    const linked = linkedId != null
+      ? (orcaTrades || []).find((o: Trade) => o.id === linkedId)
+      : (orcaTrades || []).find((o: Trade) => typeof o.comments === 'string' && o.comments.includes(`__JID:${jtr.id}__`));
+
     if (linked && typeof onUpdateOrcaTrade === 'function') {
       try {
         const payload = buildOrcaPayload(jtr);
-        onUpdateOrcaTrade({ ...linked, ...payload });
+        await onUpdateOrcaTrade({ ...linked, ...payload });
+        map.set(jtr.id, linked.id);
       } catch { /* silent */ }
-    } else if (!linked && isMeaningful(jtr) && typeof onAddOrcaTrade === 'function') {
-      try { onAddOrcaTrade(buildOrcaPayload(jtr)); } catch { /* silent */ }
+      return;
     }
+    if (typeof onAddOrcaTrade !== 'function') return;
+    if (inFlightRef.current.has(jtr.id)) return;
+    inFlightRef.current.add(jtr.id);
+    try {
+      const created = await onAddOrcaTrade(buildOrcaPayload(jtr));
+      const newId = (created && typeof created === 'object' && 'id' in (created as any))
+        ? (created as Trade).id : null;
+      if (newId != null) map.set(jtr.id, newId);
+    } catch { /* silent */ }
+    finally { inFlightRef.current.delete(jtr.id); }
   };
 
   const fullLocked = isDayFullyLocked(day);
@@ -4046,7 +4076,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
 
   // Entry screen
   if (showEntry) {
-    return <JournalEntryScreen onEnter={() => setShowEntry(false)} />;
+    return <JournalEntryScreen onEnter={() => setShowEntry(false)} isRTL={isRTL} />;
   }
 
   return (

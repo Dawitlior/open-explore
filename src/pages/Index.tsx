@@ -14,6 +14,7 @@ import { CalendarModal } from '@/components/trading/CalendarModal';
 import { FeatureManifestModal } from '@/components/trading/FeatureManifestModal';
 import { CommandPalette } from '@/components/trading/CommandPalette';
 import { ModeSwitch } from '@/components/trading/ModeSwitch';
+import { useUIPrefs } from '@/hooks/use-ui-prefs';
 import { PrivacyMask, usePrivacyShortcut } from '@/components/trading/PrivacyMask';
 import { TradeForm } from '@/components/trading/TradeForm';
 import { ResetModal } from '@/components/trading/ResetModal';
@@ -81,6 +82,7 @@ const Index = () => {
   const isRTL = settings.isRTL;
   const isAlpha = settings.isAlpha;
   const opMode = settings.operatingMode;
+  const { prefs: uiPrefs, setPrefs: setUIPrefs, toggleHiddenMode, reset: resetUIPrefs } = useUIPrefs();
 
   const [page, setPage] = useState('dashboard');
   const [sbOpen, setSbOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth > 768);
@@ -1185,7 +1187,7 @@ const Index = () => {
         </div>
         {/* Mode-specific journal header */}
         {opMode === 'live' && <div style={{ padding: '8px 12px', background: `${modeColors.live}08`, border: `1px solid ${modeColors.live}20`, borderRadius: T.radius.md, marginBottom: 12, fontSize: 11, color: modeColors.live }}>🔴 {isRTL ? 'תצוגה חיה — עסקאות אחרונות בלבד' : 'Live View — Recent trades only'}</div>}
-        <GlassCard T={T} style={{ padding: 0, overflow: 'hidden' }}>
+        <GlassCard T={T} style={{ padding: 0, overflow: 'hidden' }} className="orca-no-hover">
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead><tr style={{ background: T.bg.tertiary }}>
@@ -1464,7 +1466,7 @@ const Index = () => {
               </div>
               <button onClick={() => setSbOpen(false)} style={{ background: 'none', border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.sm, color: T.text.muted, cursor: 'pointer', padding: '4px 8px', fontSize: 16 }}>✕</button>
             </div>
-            <ModeSwitch T={T} isRTL={isRTL} operatingMode={settings.operatingMode} systemMode={settings.systemMode} onOperatingModeChange={settings.setOperatingMode} onSystemModeChange={settings.setSystemMode} />
+            <ModeSwitch T={T} isRTL={isRTL} operatingMode={settings.operatingMode} systemMode={settings.systemMode} onOperatingModeChange={settings.setOperatingMode} onSystemModeChange={settings.setSystemMode} hiddenModes={uiPrefs.hiddenOperatingModes} hideDepthSwitch={uiPrefs.hideDepthSwitch} />
             {/* Nav items */}
             {nav.map(item => {
               const isWeekly = item.id === 'weekly-review';
@@ -1543,7 +1545,7 @@ const Index = () => {
           {sbOpen && <button onClick={() => setSbOpen(false)} style={{ marginInlineStart: 'auto', background: 'none', border: 'none', color: T.text.muted, cursor: 'pointer', fontSize: 14, padding: 4, lineHeight: 1, transition: 'color 0.2s' }}>‹</button>}
         </div>
         {!sbOpen && <button onClick={() => setSbOpen(true)} style={{ background: 'none', border: 'none', color: T.text.muted, cursor: 'pointer', fontSize: 14, padding: '6px 0', lineHeight: 1, transition: 'color 0.2s' }}>›</button>}
-        {sbOpen && <ModeSwitch T={T} isRTL={isRTL} operatingMode={settings.operatingMode} systemMode={settings.systemMode} onOperatingModeChange={settings.setOperatingMode} onSystemModeChange={settings.setSystemMode} />}
+        {sbOpen && <ModeSwitch T={T} isRTL={isRTL} operatingMode={settings.operatingMode} systemMode={settings.systemMode} onOperatingModeChange={settings.setOperatingMode} onSystemModeChange={settings.setSystemMode} hiddenModes={uiPrefs.hiddenOperatingModes} hideDepthSwitch={uiPrefs.hideDepthSwitch} />}
         <nav style={{ flex: 1, padding: '0 6px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
           {nav.map(item => {
             const isWeekly = item.id === 'weekly-review';
@@ -1620,21 +1622,21 @@ const Index = () => {
               </button>
             )}
             <h1 style={{ fontSize: isMobile ? 14 : 17, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", margin: 0 }}>{nav.find(n => n.id === page)?.label}</h1>
-            {!isMobile && <TradingBadge color={modeColors[opMode]}>{opMode === 'beginner' ? (isRTL ? '🎓 מתחיל' : '🎓 BEGINNER') : opMode === 'live' ? (isRTL ? '🔴 חי' : '🔴 LIVE') : opMode === 'review' ? (isRTL ? '🔵 סקירה' : '🔵 REVIEW') : (isRTL ? '🟣 מחקר' : '🟣 RESEARCH')}</TradingBadge>}
-            {!isMobile && isAlpha && <TradingBadge color={T.accent.purple}>⚡ ALPHA</TradingBadge>}
+            {!isMobile && !uiPrefs.hideHeaderBadges && <TradingBadge color={modeColors[opMode]}>{opMode === 'beginner' ? (isRTL ? '🎓 מתחיל' : '🎓 BEGINNER') : opMode === 'live' ? (isRTL ? '🔴 חי' : '🔴 LIVE') : opMode === 'review' ? (isRTL ? '🔵 סקירה' : '🔵 REVIEW') : (isRTL ? '🟣 מחקר' : '🟣 RESEARCH')}</TradingBadge>}
+            {!isMobile && isAlpha && !uiPrefs.hideHeaderBadges && <TradingBadge color={T.accent.purple}>⚡ ALPHA</TradingBadge>}
             {!isMobile && settings.privacyMode && <TradingBadge color={T.accent.orange}>🔒</TradingBadge>}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 10, flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
             {/* Prominent Add Trade button */}
-            <button onClick={() => { setEditingTrade(null); setShowTradeForm(true); }} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: isMobile ? '5px 10px' : '6px 16px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 700, cursor: 'pointer', fontSize: isMobile ? 11 : 12, transition: 'all 0.2s', boxShadow: `0 0 12px ${T.accent.cyan}30` }}>
+            {!uiPrefs.hideAddTradeButton && <button onClick={() => { setEditingTrade(null); setShowTradeForm(true); }} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: isMobile ? '5px 10px' : '6px 16px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 700, cursor: 'pointer', fontSize: isMobile ? 11 : 12, transition: 'all 0.2s', boxShadow: `0 0 12px ${T.accent.cyan}30` }}>
               + {isMobile ? '' : t.addTrade}
-            </button>
+            </button>}
             {!isMobile && hiddenCharts.length > 0 && (
               <button onClick={handleRestoreCharts} style={{ padding: '4px 10px', background: `${T.accent.orange}15`, border: `1px solid ${T.accent.orange}30`, borderRadius: T.radius.sm, color: T.accent.orange, cursor: 'pointer', fontSize: 10, fontWeight: 600, transition: 'all 0.2s' }}>
                 ↩ {isRTL ? 'שחזר גרפים' : 'Restore Charts'} ({hiddenCharts.length})
               </button>
             )}
-            {!isMobile && (
+            {!isMobile && !uiPrefs.hideQuickActions && (
               <button
                 onClick={() => setShowCmdPalette(true)}
                 style={{
@@ -1677,14 +1679,14 @@ const Index = () => {
                 }}>⌘K</span>
               </button>
             )}
-            {!isMobile && <div style={{ fontSize: 11, color: T.text.muted }}>{new Date().toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</div>}
+            {!isMobile && !uiPrefs.hideHeaderDate && <div style={{ fontSize: 11, color: T.text.muted }}>{new Date().toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</div>}
             <PV><div style={{ fontSize: 11, color: T.accent.cyan, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace" }}>${currentBalance.toFixed(2)}</div></PV>
             {!isMobile && <span onClick={() => setShowFeatureModal(true)} style={{ fontSize: 13, fontWeight: 800, letterSpacing: '-0.02em', color: T.text.primary, fontFamily: "'JetBrains Mono', monospace", cursor: 'pointer', transition: 'opacity 0.2s' }}>Orca<span style={{ fontWeight: 300, color: T.text.muted, marginLeft: 4 }}>Investment</span></span>}
           </div>
         </header>
 
         <div style={{ padding: isMobile ? '12px 10px' : '20px 24px', maxWidth: 1400, margin: '0 auto' }}>
-          {trades.length === 0 && (
+          {trades.length === 0 && page !== 'weekly-review' && (
             <div style={{ textAlign: 'center', padding: isMobile ? 30 : 60 }}>
               <div style={{ fontSize: 48, marginBottom: 16 }}>🐋</div>
               <div style={{ fontSize: 16, color: T.text.secondary, marginBottom: 20 }}>{t.noTrades}</div>

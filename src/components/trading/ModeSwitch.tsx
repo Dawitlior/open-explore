@@ -10,9 +10,11 @@ interface ModeSwitchProps {
   systemMode: SystemMode;
   onOperatingModeChange: (mode: OperatingMode) => void;
   onSystemModeChange: (mode: SystemMode) => void;
+  hiddenModes?: OperatingMode[];
+  hideDepthSwitch?: boolean;
 }
 
-export const ModeSwitch = ({ T, isRTL, operatingMode, systemMode, onOperatingModeChange, onSystemModeChange }: ModeSwitchProps) => {
+export const ModeSwitch = ({ T, isRTL, operatingMode, systemMode, onOperatingModeChange, onSystemModeChange, hiddenModes = [], hideDepthSwitch = false }: ModeSwitchProps) => {
   const [pendingMode, setPendingMode] = useState<{ type: 'operating' | 'depth'; value: string } | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -30,12 +32,12 @@ export const ModeSwitch = ({ T, isRTL, operatingMode, systemMode, onOperatingMod
     }, 600);
   };
 
-  const operatingModes: { id: OperatingMode; label: string; labelHe: string; color: string; desc: string; descHe: string }[] = [
+  const operatingModes: { id: OperatingMode; label: string; labelHe: string; color: string; desc: string; descHe: string }[] = ([
     { id: 'beginner', label: 'BEGINNER', labelHe: 'מתחיל', color: modeColors.beginner || '#22d3ee', desc: 'Simplified dashboard for new traders', descHe: 'לוח פשוט לסוחרים מתחילים' },
     { id: 'live', label: 'LIVE', labelHe: 'חי', color: modeColors.live, desc: 'Real-time execution focus', descHe: 'מיקוד ביצוע בזמן אמת' },
     { id: 'review', label: 'REVIEW', labelHe: 'סקירה', color: modeColors.review, desc: 'Statistical intelligence', descHe: 'מודיעין סטטיסטי' },
     { id: 'research', label: 'RESEARCH', labelHe: 'מחקר', color: modeColors.research, desc: 'Advanced analytics lab', descHe: 'מעבדת אנליטיקה מתקדמת' },
-  ];
+  ] as const).filter(m => !hiddenModes.includes(m.id) || m.id === operatingMode);
 
   return (
     <>
@@ -64,7 +66,7 @@ export const ModeSwitch = ({ T, isRTL, operatingMode, systemMode, onOperatingMod
       </div>
 
       {/* Depth Mode Switcher */}
-      <div style={{ padding: '0 10px', marginBottom: 10 }}>
+      {!hideDepthSwitch && <div style={{ padding: '0 10px', marginBottom: 10 }}>
         <div style={{ display: 'flex', gap: 3, background: T.bg.primary, borderRadius: T.radius.md, padding: 3 }}>
           {(['standard', 'alpha'] as SystemMode[]).map(m => (
             <button
@@ -84,7 +86,7 @@ export const ModeSwitch = ({ T, isRTL, operatingMode, systemMode, onOperatingMod
             </button>
           ))}
         </div>
-      </div>
+      </div>}
 
       {/* Confirmation Modal */}
       {pendingMode && (
