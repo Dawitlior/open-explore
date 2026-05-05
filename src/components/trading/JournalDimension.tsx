@@ -10,7 +10,7 @@ import { MORNING_VARIATIONS, EOD_VARIATIONS } from '@/lib/journal-demo-data';
 // ═══════════════════════════════════════════════════════════════
 const ENTRY_SESSION_KEY = 'journal-entry-seen';
 
-const JournalEntryScreen = ({ onEnter }: { onEnter: () => void }) => {
+const JournalEntryScreen = ({ onEnter, isRTL = true }: { onEnter: () => void; isRTL?: boolean }) => {
   const [phase, setPhase] = useState<'ambient' | 'boot' | 'ready' | 'portal' | 'consumed'>('ambient');
   const [bootStep, setBootStep] = useState(0);
   const [clock, setClock] = useState('');
