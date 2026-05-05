@@ -10,9 +10,11 @@ interface ModeSwitchProps {
   systemMode: SystemMode;
   onOperatingModeChange: (mode: OperatingMode) => void;
   onSystemModeChange: (mode: SystemMode) => void;
+  hiddenModes?: OperatingMode[];
+  hideDepthSwitch?: boolean;
 }
 
-export const ModeSwitch = ({ T, isRTL, operatingMode, systemMode, onOperatingModeChange, onSystemModeChange }: ModeSwitchProps) => {
+export const ModeSwitch = ({ T, isRTL, operatingMode, systemMode, onOperatingModeChange, onSystemModeChange, hiddenModes = [], hideDepthSwitch = false }: ModeSwitchProps) => {
   const [pendingMode, setPendingMode] = useState<{ type: 'operating' | 'depth'; value: string } | null>(null);
   const [loading, setLoading] = useState(false);
 
