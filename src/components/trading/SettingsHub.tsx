@@ -439,6 +439,89 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats }:
               </div>
             );
           })()}
+
+          {tab === 'interface' && (() => {
+            const p = ui.prefs;
+            const modes: { id: OperatingMode; label: string }[] = [
+              { id: 'beginner', label: t('🎓 מתחיל', '🎓 Beginner') },
+              { id: 'live', label: t('🔴 חי', '🔴 Live') },
+              { id: 'review', label: t('🔵 סקירה', '🔵 Review') },
+              { id: 'research', label: t('🟣 מחקר', '🟣 Research') },
+            ];
+            const Toggle = ({ on, onClick, label, hint }: { on: boolean; onClick: () => void; label: string; hint?: string }) => (
+              <button onClick={onClick} style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+                width: '100%', padding: '12px 14px', borderRadius: T.radius.md,
+                background: T.bg.primary, border: `1px solid ${on ? T.accent.cyan : T.border.subtle}`,
+                cursor: 'pointer', textAlign: isRTL ? 'right' : 'left' as const, marginBottom: 6,
+              }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: T.text.primary }}>{label}</div>
+                  {hint && <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>{hint}</div>}
+                </div>
+                <div style={{
+                  width: 36, height: 20, borderRadius: 10, position: 'relative',
+                  background: on ? T.accent.cyan : T.bg.tertiary, transition: 'background .15s',
+                }}>
+                  <div style={{
+                    position: 'absolute', top: 2, left: on ? 18 : 2, width: 16, height: 16,
+                    borderRadius: '50%', background: '#fff', transition: 'left .15s',
+                  }} />
+                </div>
+              </button>
+            );
+            return (
+              <div>
+                <p style={{ color: T.text.muted, fontSize: 12, marginBottom: 14, lineHeight: 1.6 }}>
+                  {t('שלוט במה שמופיע בממשק. השינויים מיידיים וגלובליים.', 'Control what appears across the interface. Changes apply instantly.')}
+                </p>
+
+                <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.5, color: T.text.muted, textTransform: 'uppercase', margin: '6px 0 8px' }}>
+                  {t('מצבי תפעול בנאב-בר', 'Operating modes in nav')}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6, marginBottom: 14 }}>
+                  {modes.map(m => {
+                    const hidden = p.hiddenOperatingModes.includes(m.id);
+                    return (
+                      <button key={m.id} onClick={() => ui.toggleHiddenMode(m.id)} style={{
+                        padding: '10px 12px', borderRadius: T.radius.md,
+                        background: hidden ? T.bg.tertiary : `${T.accent.cyan}10`,
+                        border: `1px solid ${hidden ? T.border.subtle : T.accent.cyan}`,
+                        color: hidden ? T.text.muted : T.accent.cyan,
+                        cursor: 'pointer', fontSize: 12, fontWeight: 700, textAlign: isRTL ? 'right' : 'left' as const,
+                      }}>
+                        {hidden ? '🚫 ' : '👁️ '}{m.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 16 }}>
+                  {t('המצב הפעיל לעולם לא יוסתר', 'Active mode is never hidden')}
+                </div>
+
+                <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.5, color: T.text.muted, textTransform: 'uppercase', margin: '6px 0 8px' }}>
+                  {t('כותרת ראשית', 'Header')}
+                </div>
+                <Toggle on={p.hideAddTradeButton} onClick={() => ui.setPrefs({ hideAddTradeButton: !p.hideAddTradeButton })} label={t('הסתר כפתור הוספת עסקה', 'Hide + Add Trade button')} hint={t('עדיין נגיש דרך ⌘K', 'Still accessible via ⌘K')} />
+                <Toggle on={p.hideQuickActions} onClick={() => ui.setPrefs({ hideQuickActions: !p.hideQuickActions })} label={t('הסתר פעולות מהירות (⌘K)', 'Hide Quick Actions (⌘K)')} />
+                <Toggle on={p.hideHeaderBadges} onClick={() => ui.setPrefs({ hideHeaderBadges: !p.hideHeaderBadges })} label={t('הסתר תגיות מצב בכותרת', 'Hide mode badges in header')} />
+                <Toggle on={p.hideHeaderDate} onClick={() => ui.setPrefs({ hideHeaderDate: !p.hideHeaderDate })} label={t('הסתר תאריך בכותרת', 'Hide header date')} />
+                <Toggle on={p.hideDepthSwitch} onClick={() => ui.setPrefs({ hideDepthSwitch: !p.hideDepthSwitch })} label={t('הסתר מתג Standard/Alpha', 'Hide Standard/Alpha switch')} />
+
+                <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.5, color: T.text.muted, textTransform: 'uppercase', margin: '14px 0 8px' }}>
+                  {t('ביצועים ונוחות', 'Performance & comfort')}
+                </div>
+                <Toggle on={p.reduceMotion} onClick={() => ui.setPrefs({ reduceMotion: !p.reduceMotion })} label={t('הפחת אנימציות', 'Reduce motion')} hint={t('משבית מעברים והנפשות לחווית עבודה רגועה', 'Disables transitions across the app')} />
+                <Toggle on={p.denseTables} onClick={() => ui.setPrefs({ denseTables: !p.denseTables })} label={t('טבלאות צפופות', 'Dense tables')} hint={t('יותר שורות במסך', 'More rows visible at once')} />
+
+                <button onClick={ui.reset} style={{
+                  marginTop: 14, padding: '8px 14px', borderRadius: T.radius.sm,
+                  background: 'transparent', border: `1px solid ${T.border.medium}`,
+                  color: T.text.muted, cursor: 'pointer', fontSize: 11, fontWeight: 700,
+                }}>↺ {t('ברירת מחדל', 'Reset to defaults')}</button>
+              </div>
+            );
+          })()}
         </div>
       </div>
     </div>
