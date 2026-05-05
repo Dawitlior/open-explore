@@ -353,7 +353,7 @@ const JournalEntryScreen = ({ onEnter, isRTL = true }: { onEnter: () => void; is
         opacity: phase === 'portal' || phase === 'consumed' ? 0 : 1,
         transition: 'opacity 0.4s ease',
       }}>
-        <span>APEX OS v4.0</span>
+        <span>Orca Journal v4.0</span>
         <span style={{ color: '#00FFA340' }}>●</span>
         <span>ENCRYPTED</span>
         <span style={{ color: '#00FFA340' }}>●</span>
