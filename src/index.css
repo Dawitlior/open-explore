@@ -186,7 +186,30 @@
     transition-property: border-color, box-shadow, background !important;
   }
 
-  .orca-panel {
+  /* Opt-out: any GlassCard or container marked .orca-no-hover loses the
+     cyan spotlight + glow on hover. Used by Orca's Journal table where
+     the animation feels distracting. Also disables row striping pop. */
+  .orca-no-hover.orca-glass-hover::before,
+  .orca-no-hover .orca-glass-hover::before { opacity: 0 !important; }
+  .orca-no-hover.orca-glass-hover:hover,
+  .orca-no-hover .orca-glass-hover:hover {
+    border-color: hsl(var(--border, 0 0% 100% / 0.08)) !important;
+    box-shadow:
+      0 1px 0 0 hsl(0 0% 100% / 0.04) inset,
+      0 0 0 1px hsl(0 0% 0% / 0.4),
+      0 12px 40px -12px hsl(0 0% 0% / 0.6) !important;
+  }
+  .orca-no-hover tbody tr:hover { background: inherit !important; }
+  /* Reduce motion (UI Prefs): kill all transitions/animations sitewide */
+  body[data-reduce-motion="1"] *,
+  body[data-reduce-motion="1"] *::before,
+  body[data-reduce-motion="1"] *::after {
+    transition: none !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
+  body[data-dense-tables="1"] td,
+  body[data-dense-tables="1"] th { padding-top: 4px !important; padding-bottom: 4px !important; }
     background: hsl(0 0% 4%);
     border: 1px solid hsl(0 0% 100% / 0.04);
     border-radius: var(--radius);
