@@ -3403,17 +3403,32 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk, onInfo
     const hasPrice = parseFloat(jtr?.entry) || parseFloat(jtr?.exit) || parseFloat(jtr?.pnl) || parseFloat(jtr?.rr);
     return pair.length > 0 && !!hasPrice;
   };
-  const syncRowToOrca = (jtr: any) => {
-    const tag = `__JID:${jtr.id}__`;
-    const linked = (orcaTrades || []).find((o: Trade) => typeof o.comments === 'string' && o.comments.includes(tag));
+  const syncRowToOrca = async (jtr: any) => {
+    if (!isMeaningful(jtr)) return;
+    const map = jidMapRef.current;
+    const linkedId = map.get(jtr.id);
+    const linked = linkedId != null
+      ? (orcaTrades || []).find((o: Trade) => o.id === linkedId)
+      : (orcaTrades || []).find((o: Trade) => typeof o.comments === 'string' && o.comments.includes(`__JID:${jtr.id}__`));
+
     if (linked && typeof onUpdateOrcaTrade === 'function') {
       try {
         const payload = buildOrcaPayload(jtr);
-        onUpdateOrcaTrade({ ...linked, ...payload });
+        await onUpdateOrcaTrade({ ...linked, ...payload });
+        map.set(jtr.id, linked.id);
       } catch { /* silent */ }
-    } else if (!linked && isMeaningful(jtr) && typeof onAddOrcaTrade === 'function') {
-      try { onAddOrcaTrade(buildOrcaPayload(jtr)); } catch { /* silent */ }
+      return;
     }
+    if (typeof onAddOrcaTrade !== 'function') return;
+    if (inFlightRef.current.has(jtr.id)) return;
+    inFlightRef.current.add(jtr.id);
+    try {
+      const created = await onAddOrcaTrade(buildOrcaPayload(jtr));
+      const newId = (created && typeof created === 'object' && 'id' in (created as any))
+        ? (created as Trade).id : null;
+      if (newId != null) map.set(jtr.id, newId);
+    } catch { /* silent */ }
+    finally { inFlightRef.current.delete(jtr.id); }
   };
 
   const fullLocked = isDayFullyLocked(day);
