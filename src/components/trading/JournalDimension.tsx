@@ -252,15 +252,15 @@ const JournalEntryScreen = ({ onEnter }: { onEnter: () => void }) => {
           transform: bootStep >= 1 ? 'translateY(0)' : 'translateY(30px)',
           transition: 'all 0.9s cubic-bezier(0.16,1,0.3,1)',
         }}>
-          <span style={{ color: '#ffffff' }}>APEX</span>
-          <span style={{ fontWeight: 300, color: '#475569', marginLeft: 8 }}>OS</span>
+          <span style={{ color: '#ffffff' }}>Orca</span>
+          <span style={{ fontWeight: 300, color: '#475569', marginLeft: 8 }}>Journal</span>
         </h1>
         <p style={{
           fontSize: 'clamp(10px, 2vw, 12px)', fontWeight: 600,
           color: '#475569', letterSpacing: 6, textTransform: 'uppercase' as const,
           marginBottom: 48,
           opacity: bootStep >= 2 ? 1 : 0, transition: 'opacity 1s ease 0.2s',
-        }}>TRADING INTELLIGENCE SYSTEM</p>
+        }}>{isRTL ? 'יומן מסחר חכם' : 'Smart Trading Journal'}</p>
 
         {/* Boot indicators */}
         <div style={{ display: 'flex', gap: 16, marginBottom: 28, fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>
