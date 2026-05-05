@@ -149,6 +149,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats }:
           <button style={tabBtn(tab === 'dashboard')} onClick={() => setTab('dashboard')}>📊 {t('דאשבורד', 'Dashboard')}</button>
           <button style={tabBtn(tab === 'kpis')} onClick={() => setTab('kpis')}>🧮 {t('KPI מותאמים', 'Custom KPIs')}</button>
           <button style={tabBtn(tab === 'risk')} onClick={() => setTab('risk')}>🛡️ {t('סיכון', 'Risk Limits')}</button>
+          <button style={tabBtn(tab === 'interface')} onClick={() => setTab('interface')}>🧩 {t('ממשק', 'Interface')}</button>
         </div>
 
         <div style={body}>
