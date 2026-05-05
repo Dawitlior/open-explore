@@ -317,11 +317,11 @@ const JournalEntryScreen = ({ onEnter, isRTL = true }: { onEnter: () => void; is
               e.currentTarget.style.transform = 'translateY(0) scale(1)';
               e.currentTarget.style.boxShadow = '0 0 60px rgba(0,255,163,0.2), 0 4px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2)';
             }}
-            >ENTER SYSTEM</button>
+            >{isRTL ? 'כניסה ליומן' : 'ENTER JOURNAL'}</button>
             <div style={{
               textAlign: 'center', marginTop: 12, fontFamily: "'JetBrains Mono', monospace",
               fontSize: 9, color: '#334155', letterSpacing: 2,
-            }}>PRESS ENTER OR CLICK</div>
+            }}>{isRTL ? 'לחץ אנטר או על הכפתור' : 'PRESS ENTER OR CLICK'}</div>
           </div>
         )}
       </div>
