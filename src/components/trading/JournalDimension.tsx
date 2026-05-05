@@ -4076,7 +4076,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
 
   // Entry screen
   if (showEntry) {
-    return <JournalEntryScreen onEnter={() => setShowEntry(false)} />;
+    return <JournalEntryScreen onEnter={() => setShowEntry(false)} isRTL={isRTL} />;
   }
 
   return (
