@@ -3344,25 +3344,29 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
 // ═══════════════════════════════════════════════════════════════
 // EOD FORM
 // ═══════════════════════════════════════════════════════════════
-const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk, onInfoClick, onAddOrcaTrade, onUpdateOrcaTrade }: any) => {
+const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, th, risk, onInfoClick, onAddOrcaTrade, onUpdateOrcaTrade }: any) => {
   const f = t.f;
   const U = (k: string) => (v: any) => upd({ [k]: v });
   const dp = sumPnl(day), dw = numWins(day);
+  const bridgeTrades = allOrcaTrades || orcaTrades || [];
 
   // Map of Journal-trade-id → Orca-trade-id, kept in a ref so it survives
   // every keystroke without depending on stale `orcaTrades` snapshots.
   const jidMapRef = useRef<Map<number, number>>(new Map());
   // Per-jid in-flight guard so rapid edits don't create duplicate Orca trades.
   const inFlightRef = useRef<Set<number>>(new Set());
+  const pendingRef = useRef<Set<number>>(new Set());
+  const latestRowsRef = useRef<Map<number, any>>(new Map());
+  const syncRowRef = useRef<(jtr: any) => void>(() => {});
 
   // Keep the map fresh from props (covers reloads / external changes).
   useEffect(() => {
     const map = jidMapRef.current;
-    (orcaTrades || []).forEach((o: Trade) => {
+    (bridgeTrades || []).forEach((o: Trade) => {
       const m = typeof o.comments === 'string' ? o.comments.match(/__JID:(\d+)__/) : null;
       if (m) map.set(parseInt(m[1], 10), o.id);
     });
-  }, [orcaTrades]);
+  }, [bridgeTrades]);
 
   // Build a "snapshot" of an Orca trade derived from a Journal trade row.
   const buildOrcaPayload = (jtr: any): Omit<Trade, 'id' | 'balance'> => {
