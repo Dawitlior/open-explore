@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { Trade } from '@/data/trades';
 import { getAllTrades, saveTrades, deleteTrade as dbDelete, clearAllData } from '@/lib/storage';
 import { computeAnalytics, type TradingStats } from '@/lib/trading-analytics';
@@ -10,11 +10,17 @@ export function useTrades() {
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
   const [riskAlert, setRiskAlert] = useState<RiskLimitStatus | null>(null);
+  const tradesRef = useRef<Trade[]>([]);
+
+  useEffect(() => {
+    tradesRef.current = trades;
+  }, [trades]);
 
   useEffect(() => {
     getAllTrades().then(t => {
       const sanitized = sanitizeTrades(t);
       const sorted = sanitized.sort((a, b) => a.id - b.id);
+      tradesRef.current = sorted;
       setTrades(sorted);
       setLoading(false);
       setInitialized(true);
