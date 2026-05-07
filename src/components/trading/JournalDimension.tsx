@@ -3366,6 +3366,13 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
       const m = typeof o.comments === 'string' ? o.comments.match(/__JID:(\d+)__/) : null;
       if (m) map.set(parseInt(m[1], 10), o.id);
     });
+    pendingRef.current.forEach(jid => {
+      const linkedId = map.get(jid);
+      if (linkedId == null || !(bridgeTrades || []).some((o: Trade) => o.id === linkedId)) return;
+      pendingRef.current.delete(jid);
+      const latest = latestRowsRef.current.get(jid);
+      if (latest) setTimeout(() => syncRowRef.current(latest), 0);
+    });
   }, [bridgeTrades]);
 
   // Build a "snapshot" of an Orca trade derived from a Journal trade row.
@@ -3418,6 +3425,8 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
     const linked = linkedId != null
       ? (bridgeTrades || []).find((o: Trade) => o.id === linkedId)
       : (bridgeTrades || []).find((o: Trade) => typeof o.comments === 'string' && o.comments.includes(`__JID:${jtr.id}__`));
+
+    if (linkedId != null && !linked) { pendingRef.current.add(jtr.id); return; }
 
     if (linked && typeof onUpdateOrcaTrade === 'function') {
       try {
