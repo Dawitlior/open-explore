@@ -3582,7 +3582,7 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
           <>
             {(day.trades || []).map((tr: JournalTrade, i: number) => (
               <TCard key={tr.id} trade={tr} idx={i} f={f} dir={dir} disabled={fullLocked || sLocks['trades']} th={th}
-                onChange={(nt: JournalTrade) => { upd({ trades: (day.trades || []).map((x: any, j: number) => j === i ? nt : x) }); syncRowToOrca(nt); }}
+                onChange={(nt: JournalTrade) => { upd({ trades: (day.trades || []).map((x: any, j: number) => j === i ? nt : x) }); syncRowRef.current(nt); }}
                 onDel={() => upd({ trades: day.trades.filter((_: any, j: number) => j !== i) })} />
             ))}
             {!fullLocked && !sLocks['trades'] && (
