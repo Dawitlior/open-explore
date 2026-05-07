@@ -71,24 +71,28 @@ export function useTrades() {
   const dismissRiskAlert = useCallback(() => setRiskAlert(null), []);
 
   const addTrade = useCallback(async (trade: Omit<Trade, 'id' | 'balance'>) => {
-    const id = nextId();
+    const currentTrades = tradesRef.current;
+    const id = currentTrades.length === 0 ? 1 : Math.max(...currentTrades.map(t => t.id || 0)) + 1;
     const newTrade: Trade = { ...trade, id, balance: 0 } as Trade;
-    const updated = recalcBalances([...trades, newTrade]);
+    const updated = recalcBalances([...currentTrades, newTrade]);
     await saveTrades(updated);
+    tradesRef.current = updated;
     setTrades(updated);
     checkAndAlertRisk(updated);
     return updated[updated.length - 1];
-  }, [trades, nextId, recalcBalances, checkAndAlertRisk]);
+  }, [recalcBalances, checkAndAlertRisk]);
 
   const updateTrade = useCallback(async (trade: Trade) => {
-    const idx = trades.findIndex(t => t.id === trade.id);
+    const currentTrades = tradesRef.current;
+    const idx = currentTrades.findIndex(t => t.id === trade.id);
     if (idx === -1) return;
-    const updated = [...trades];
+    const updated = [...currentTrades];
     updated[idx] = trade;
     const rebalanced = recalcBalances(updated);
     await saveTrades(rebalanced);
+    tradesRef.current = rebalanced;
     setTrades(rebalanced);
-  }, [trades, recalcBalances]);
+  }, [recalcBalances]);
 
   const removeTrade = useCallback(async (id: number) => {
     await dbDelete(id);
