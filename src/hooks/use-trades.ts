@@ -95,15 +95,17 @@ export function useTrades() {
   }, [recalcBalances]);
 
   const removeTrade = useCallback(async (id: number) => {
+    const currentTrades = tradesRef.current;
     await dbDelete(id);
-    const remaining = trades.filter(t => t.id !== id);
+    const remaining = currentTrades.filter(t => t.id !== id);
     const rebalanced = recalcBalances(remaining.map((t, i) => ({ ...t, id: i + 1 })));
     await saveTrades(rebalanced);
-    for (let i = rebalanced.length + 1; i <= trades.length; i++) {
+    for (let i = rebalanced.length + 1; i <= currentTrades.length; i++) {
       await dbDelete(i);
     }
+    tradesRef.current = rebalanced;
     setTrades(rebalanced);
-  }, [trades, recalcBalances]);
+  }, [recalcBalances]);
 
   const importTrades = useCallback(async (newTrades: Trade[]) => {
     const sanitized = sanitizeTrades(newTrades);
@@ -126,11 +128,13 @@ export function useTrades() {
     });
     db.close();
     await saveTrades(rebalanced);
+    tradesRef.current = rebalanced;
     setTrades(rebalanced);
   }, [recalcBalances]);
 
   const resetAll = useCallback(async () => {
     await clearAllData();
+    tradesRef.current = [];
     setTrades([]);
   }, []);
 
