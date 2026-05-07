@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { Trade } from '@/data/trades';
 import { getAllTrades, saveTrades, deleteTrade as dbDelete, clearAllData } from '@/lib/storage';
 import { computeAnalytics, type TradingStats } from '@/lib/trading-analytics';
@@ -10,11 +10,17 @@ export function useTrades() {
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
   const [riskAlert, setRiskAlert] = useState<RiskLimitStatus | null>(null);
+  const tradesRef = useRef<Trade[]>([]);
+
+  useEffect(() => {
+    tradesRef.current = trades;
+  }, [trades]);
 
   useEffect(() => {
     getAllTrades().then(t => {
       const sanitized = sanitizeTrades(t);
       const sorted = sanitized.sort((a, b) => a.id - b.id);
+      tradesRef.current = sorted;
       setTrades(sorted);
       setLoading(false);
       setInitialized(true);
@@ -65,35 +71,41 @@ export function useTrades() {
   const dismissRiskAlert = useCallback(() => setRiskAlert(null), []);
 
   const addTrade = useCallback(async (trade: Omit<Trade, 'id' | 'balance'>) => {
-    const id = nextId();
+    const currentTrades = tradesRef.current;
+    const id = currentTrades.length === 0 ? 1 : Math.max(...currentTrades.map(t => t.id || 0)) + 1;
     const newTrade: Trade = { ...trade, id, balance: 0 } as Trade;
-    const updated = recalcBalances([...trades, newTrade]);
+    const updated = recalcBalances([...currentTrades, newTrade]);
     await saveTrades(updated);
+    tradesRef.current = updated;
     setTrades(updated);
     checkAndAlertRisk(updated);
     return updated[updated.length - 1];
-  }, [trades, nextId, recalcBalances, checkAndAlertRisk]);
+  }, [recalcBalances, checkAndAlertRisk]);
 
   const updateTrade = useCallback(async (trade: Trade) => {
-    const idx = trades.findIndex(t => t.id === trade.id);
+    const currentTrades = tradesRef.current;
+    const idx = currentTrades.findIndex(t => t.id === trade.id);
     if (idx === -1) return;
-    const updated = [...trades];
+    const updated = [...currentTrades];
     updated[idx] = trade;
     const rebalanced = recalcBalances(updated);
     await saveTrades(rebalanced);
+    tradesRef.current = rebalanced;
     setTrades(rebalanced);
-  }, [trades, recalcBalances]);
+  }, [recalcBalances]);
 
   const removeTrade = useCallback(async (id: number) => {
+    const currentTrades = tradesRef.current;
     await dbDelete(id);
-    const remaining = trades.filter(t => t.id !== id);
+    const remaining = currentTrades.filter(t => t.id !== id);
     const rebalanced = recalcBalances(remaining.map((t, i) => ({ ...t, id: i + 1 })));
     await saveTrades(rebalanced);
-    for (let i = rebalanced.length + 1; i <= trades.length; i++) {
+    for (let i = rebalanced.length + 1; i <= currentTrades.length; i++) {
       await dbDelete(i);
     }
+    tradesRef.current = rebalanced;
     setTrades(rebalanced);
-  }, [trades, recalcBalances]);
+  }, [recalcBalances]);
 
   const importTrades = useCallback(async (newTrades: Trade[]) => {
     const sanitized = sanitizeTrades(newTrades);
@@ -116,11 +128,13 @@ export function useTrades() {
     });
     db.close();
     await saveTrades(rebalanced);
+    tradesRef.current = rebalanced;
     setTrades(rebalanced);
   }, [recalcBalances]);
 
   const resetAll = useCallback(async () => {
     await clearAllData();
+    tradesRef.current = [];
     setTrades([]);
   }, []);
 

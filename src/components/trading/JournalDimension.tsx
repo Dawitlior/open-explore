@@ -3344,25 +3344,36 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
 // ═══════════════════════════════════════════════════════════════
 // EOD FORM
 // ═══════════════════════════════════════════════════════════════
-const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk, onInfoClick, onAddOrcaTrade, onUpdateOrcaTrade }: any) => {
+const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, th, risk, onInfoClick, onAddOrcaTrade, onUpdateOrcaTrade }: any) => {
   const f = t.f;
   const U = (k: string) => (v: any) => upd({ [k]: v });
   const dp = sumPnl(day), dw = numWins(day);
+  const bridgeTrades = allOrcaTrades || orcaTrades || [];
 
   // Map of Journal-trade-id → Orca-trade-id, kept in a ref so it survives
   // every keystroke without depending on stale `orcaTrades` snapshots.
   const jidMapRef = useRef<Map<number, number>>(new Map());
   // Per-jid in-flight guard so rapid edits don't create duplicate Orca trades.
   const inFlightRef = useRef<Set<number>>(new Set());
+  const pendingRef = useRef<Set<number>>(new Set());
+  const latestRowsRef = useRef<Map<number, any>>(new Map());
+  const syncRowRef = useRef<(jtr: any) => void>(() => {});
 
   // Keep the map fresh from props (covers reloads / external changes).
   useEffect(() => {
     const map = jidMapRef.current;
-    (orcaTrades || []).forEach((o: Trade) => {
+    (bridgeTrades || []).forEach((o: Trade) => {
       const m = typeof o.comments === 'string' ? o.comments.match(/__JID:(\d+)__/) : null;
       if (m) map.set(parseInt(m[1], 10), o.id);
     });
-  }, [orcaTrades]);
+    pendingRef.current.forEach(jid => {
+      const linkedId = map.get(jid);
+      if (linkedId == null || !(bridgeTrades || []).some((o: Trade) => o.id === linkedId)) return;
+      pendingRef.current.delete(jid);
+      const latest = latestRowsRef.current.get(jid);
+      if (latest) setTimeout(() => syncRowRef.current(latest), 0);
+    });
+  }, [bridgeTrades]);
 
   // Build a "snapshot" of an Orca trade derived from a Journal trade row.
   const buildOrcaPayload = (jtr: any): Omit<Trade, 'id' | 'balance'> => {
@@ -3400,16 +3411,22 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk, onInfo
   // Treats Journal trades as first-class siblings of Orca trades — full bidirectional bridge.
   const isMeaningful = (jtr: any) => {
     const pair = String(jtr?.pair || '').trim();
-    const hasPrice = parseFloat(jtr?.entry) || parseFloat(jtr?.exit) || parseFloat(jtr?.pnl) || parseFloat(jtr?.rr);
-    return pair.length > 0 && !!hasPrice;
+    const hasPrice = [jtr?.entry, jtr?.exit, jtr?.pnl, jtr?.rr, jtr?.size].some(v => {
+      const n = parseFloat(v);
+      return Number.isFinite(n) && n !== 0;
+    });
+    return pair.length > 0 && hasPrice;
   };
   const syncRowToOrca = async (jtr: any) => {
     if (!isMeaningful(jtr)) return;
+    latestRowsRef.current.set(jtr.id, jtr);
     const map = jidMapRef.current;
     const linkedId = map.get(jtr.id);
     const linked = linkedId != null
-      ? (orcaTrades || []).find((o: Trade) => o.id === linkedId)
-      : (orcaTrades || []).find((o: Trade) => typeof o.comments === 'string' && o.comments.includes(`__JID:${jtr.id}__`));
+      ? (bridgeTrades || []).find((o: Trade) => o.id === linkedId)
+      : (bridgeTrades || []).find((o: Trade) => typeof o.comments === 'string' && o.comments.includes(`__JID:${jtr.id}__`));
+
+    if (linkedId != null && !linked) { pendingRef.current.add(jtr.id); return; }
 
     if (linked && typeof onUpdateOrcaTrade === 'function') {
       try {
@@ -3420,7 +3437,7 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk, onInfo
       return;
     }
     if (typeof onAddOrcaTrade !== 'function') return;
-    if (inFlightRef.current.has(jtr.id)) return;
+    if (inFlightRef.current.has(jtr.id)) { pendingRef.current.add(jtr.id); return; }
     inFlightRef.current.add(jtr.id);
     try {
       const created = await onAddOrcaTrade(buildOrcaPayload(jtr));
@@ -3428,8 +3445,15 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk, onInfo
         ? (created as Trade).id : null;
       if (newId != null) map.set(jtr.id, newId);
     } catch { /* silent */ }
-    finally { inFlightRef.current.delete(jtr.id); }
+    finally {
+      inFlightRef.current.delete(jtr.id);
+      if (pendingRef.current.delete(jtr.id)) {
+        const latest = latestRowsRef.current.get(jtr.id);
+        if (latest) setTimeout(() => syncRowRef.current(latest), 0);
+      }
+    }
   };
+  syncRowRef.current = (jtr: any) => { void syncRowToOrca(jtr); };
 
   const fullLocked = isDayFullyLocked(day);
   const sLocks = day.sectionLocks || {};
@@ -3567,7 +3591,7 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, th, risk, onInfo
           <>
             {(day.trades || []).map((tr: JournalTrade, i: number) => (
               <TCard key={tr.id} trade={tr} idx={i} f={f} dir={dir} disabled={fullLocked || sLocks['trades']} th={th}
-                onChange={(nt: JournalTrade) => { upd({ trades: (day.trades || []).map((x: any, j: number) => j === i ? nt : x) }); syncRowToOrca(nt); }}
+                onChange={(nt: JournalTrade) => { upd({ trades: (day.trades || []).map((x: any, j: number) => j === i ? nt : x) }); syncRowRef.current(nt); }}
                 onDel={() => upd({ trades: day.trades.filter((_: any, j: number) => j !== i) })} />
             ))}
             {!fullLocked && !sLocks['trades'] && (
@@ -4392,12 +4416,12 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
               {isViewingArchive ? (
                 /* Read-only view for archived day */
                 displayDay.morningSaved
-                 ? <EodForm day={displayDay} upd={() => {}} t={t} dir={dir} onSave={() => {}} dirty={false} orcaTrades={tradesForDate(displayDay.date)} th={th} risk={riskStatus} onInfoClick={() => setKnowledgePanel('eod')} />
+                 ? <EodForm day={displayDay} upd={() => {}} t={t} dir={dir} onSave={() => {}} dirty={false} orcaTrades={tradesForDate(displayDay.date)} allOrcaTrades={orcaTrades} th={th} risk={riskStatus} onInfoClick={() => setKnowledgePanel('eod')} />
                  : <MorningForm day={displayDay} upd={() => {}} t={t} dir={dir} onSave={() => {}} dirty={false} th={th} onInfoClick={() => setKnowledgePanel('morning')} />
               ) : (
                 !displayDay.morningSaved
                   ? <MorningForm day={displayDay} upd={upd} t={t} dir={dir} onSave={saveMorning} dirty={mDirty} th={th} onInfoClick={() => setKnowledgePanel('morning')} />
-                  : <EodForm day={displayDay} upd={upd} t={t} dir={dir} onSave={saveEOD} dirty={eDirty} orcaTrades={tradesForDate(displayDay.date)} th={th} risk={riskStatus} onInfoClick={() => setKnowledgePanel('eod')} onAddOrcaTrade={onAddOrcaTrade} onUpdateOrcaTrade={onUpdateOrcaTrade} />
+                  : <EodForm day={displayDay} upd={upd} t={t} dir={dir} onSave={saveEOD} dirty={eDirty} orcaTrades={tradesForDate(displayDay.date)} allOrcaTrades={orcaTrades} th={th} risk={riskStatus} onInfoClick={() => setKnowledgePanel('eod')} onAddOrcaTrade={onAddOrcaTrade} onUpdateOrcaTrade={onUpdateOrcaTrade} />
               )}
             </div>
           )}
