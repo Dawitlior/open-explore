@@ -3404,16 +3404,20 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
   // Treats Journal trades as first-class siblings of Orca trades — full bidirectional bridge.
   const isMeaningful = (jtr: any) => {
     const pair = String(jtr?.pair || '').trim();
-    const hasPrice = parseFloat(jtr?.entry) || parseFloat(jtr?.exit) || parseFloat(jtr?.pnl) || parseFloat(jtr?.rr);
-    return pair.length > 0 && !!hasPrice;
+    const hasPrice = [jtr?.entry, jtr?.exit, jtr?.pnl, jtr?.rr, jtr?.size].some(v => {
+      const n = parseFloat(v);
+      return Number.isFinite(n) && n !== 0;
+    });
+    return pair.length > 0 && hasPrice;
   };
   const syncRowToOrca = async (jtr: any) => {
     if (!isMeaningful(jtr)) return;
+    latestRowsRef.current.set(jtr.id, jtr);
     const map = jidMapRef.current;
     const linkedId = map.get(jtr.id);
     const linked = linkedId != null
-      ? (orcaTrades || []).find((o: Trade) => o.id === linkedId)
-      : (orcaTrades || []).find((o: Trade) => typeof o.comments === 'string' && o.comments.includes(`__JID:${jtr.id}__`));
+      ? (bridgeTrades || []).find((o: Trade) => o.id === linkedId)
+      : (bridgeTrades || []).find((o: Trade) => typeof o.comments === 'string' && o.comments.includes(`__JID:${jtr.id}__`));
 
     if (linked && typeof onUpdateOrcaTrade === 'function') {
       try {
@@ -3424,7 +3428,7 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
       return;
     }
     if (typeof onAddOrcaTrade !== 'function') return;
-    if (inFlightRef.current.has(jtr.id)) return;
+    if (inFlightRef.current.has(jtr.id)) { pendingRef.current.add(jtr.id); return; }
     inFlightRef.current.add(jtr.id);
     try {
       const created = await onAddOrcaTrade(buildOrcaPayload(jtr));
@@ -3432,8 +3436,15 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
         ? (created as Trade).id : null;
       if (newId != null) map.set(jtr.id, newId);
     } catch { /* silent */ }
-    finally { inFlightRef.current.delete(jtr.id); }
+    finally {
+      inFlightRef.current.delete(jtr.id);
+      if (pendingRef.current.delete(jtr.id)) {
+        const latest = latestRowsRef.current.get(jtr.id);
+        if (latest) setTimeout(() => syncRowRef.current(latest), 0);
+      }
+    }
   };
+  syncRowRef.current = (jtr: any) => { void syncRowToOrca(jtr); };
 
   const fullLocked = isDayFullyLocked(day);
   const sLocks = day.sectionLocks || {};
