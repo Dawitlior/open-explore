@@ -72,7 +72,7 @@ const ReminderBadge = () => (
 const Index = () => {
   const isMobile = useIsMobile();
   const settings = useSettings();
-  const { trades, stats, loading, initialized, addTrade, updateTrade, removeTrade, resetAll, importTrades, riskAlert, dismissRiskAlert } = useTrades();
+  const { trades, stats, loading, initialized, addTrade, updateTrade, upsertJournalTrade, removeTrade, resetAll, importTrades, riskAlert, dismissRiskAlert } = useTrades();
   const { limits: customRiskLimits } = useRiskLimits();
   const [entered, setEntered] = useState(() => sessionStorage.getItem('orca-entered') === '1');
   const [onboardingDone, setOnboardingDone] = useState(() => !shouldShowOnboarding());
@@ -1420,7 +1420,7 @@ const Index = () => {
       <DimensionController
         activeDimension="journal"
         orcaUI={<div />}
-        journalUI={<JournalDimension onReturn={() => setActiveDimension('orca')} isRTL={isRTL} orcaTrades={trades} onAddOrcaTrade={addTrade} onUpdateOrcaTrade={updateTrade} />}
+        journalUI={<JournalDimension onReturn={() => setActiveDimension('orca')} isRTL={isRTL} orcaTrades={trades} onAddOrcaTrade={addTrade} onUpdateOrcaTrade={updateTrade} onUpsertJournalTrade={upsertJournalTrade} />}
       />
     );
   }

@@ -3344,7 +3344,7 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
 // ═══════════════════════════════════════════════════════════════
 // EOD FORM
 // ═══════════════════════════════════════════════════════════════
-const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, th, risk, onInfoClick, onAddOrcaTrade, onUpdateOrcaTrade }: any) => {
+const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, th, risk, onInfoClick, onAddOrcaTrade, onUpdateOrcaTrade, onUpsertJournalTrade }: any) => {
   const f = t.f;
   const U = (k: string) => (v: any) => upd({ [k]: v });
   const dp = sumPnl(day), dw = numWins(day);
@@ -3377,7 +3377,8 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
 
   // Build a "snapshot" of an Orca trade derived from a Journal trade row.
   const buildOrcaPayload = (jtr: any): Omit<Trade, 'id' | 'balance'> => {
-    const dateStr = (day.date || new Date().toISOString().slice(0, 10)) + ' 00:00';
+    const nowTime = new Date().toTimeString().slice(0, 5);
+    const dateStr = `${safeDateStr(day.date)} ${nowTime}`;
     const dayLabel = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date((day.date || '').replace(' ', 'T')).getDay()] || 'Mon';
     const entry = parseFloat(jtr.entry) || 0;
     const exit = parseFloat(jtr.exit) || 0;
@@ -3411,15 +3412,23 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
   // Treats Journal trades as first-class siblings of Orca trades — full bidirectional bridge.
   const isMeaningful = (jtr: any) => {
     const pair = String(jtr?.pair || '').trim();
-    const hasPrice = [jtr?.entry, jtr?.exit, jtr?.pnl, jtr?.rr, jtr?.size].some(v => {
+    const hasData = [jtr?.pair, jtr?.entry, jtr?.exit, jtr?.pnl, jtr?.rr, jtr?.size, jtr?.notes].some(v => {
+      if (typeof v === 'string' && v.trim().length > 0) return true;
       const n = parseFloat(v);
       return Number.isFinite(n) && n !== 0;
     });
-    return pair.length > 0 && hasPrice;
+    return pair.length > 0 || hasData;
   };
   const syncRowToOrca = async (jtr: any) => {
     if (!isMeaningful(jtr)) return;
     latestRowsRef.current.set(jtr.id, jtr);
+    if (typeof onUpsertJournalTrade === 'function') {
+      try {
+        const saved = await onUpsertJournalTrade(jtr.id, buildOrcaPayload(jtr));
+        if (saved && typeof saved === 'object' && 'id' in saved) jidMapRef.current.set(jtr.id, (saved as Trade).id);
+      } catch { /* fallback to legacy bridge below */ }
+      return;
+    }
     const map = jidMapRef.current;
     const linkedId = map.get(jtr.id);
     const linked = linkedId != null
@@ -3842,9 +3851,11 @@ interface JournalDimensionProps {
   onAddOrcaTrade?: (trade: Omit<Trade, 'id' | 'balance'>) => Promise<unknown> | void;
   /** Optional bridge: when set, journal trade edits update the linked Orca trade. */
   onUpdateOrcaTrade?: (trade: Trade) => Promise<unknown> | void;
+  /** Guaranteed bridge: creates or updates the Orca mirror by Journal trade id. */
+  onUpsertJournalTrade?: (journalTradeId: number, trade: Omit<Trade, 'id' | 'balance'>) => Promise<unknown> | void;
 }
 
-export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, onUpdateOrcaTrade }: JournalDimensionProps) => {
+export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, onUpdateOrcaTrade, onUpsertJournalTrade }: JournalDimensionProps) => {
   const [lang, setLang] = useState(isRTL ? 'he' : 'en');
   const [days, setDays] = useState<JournalDay[]>(() => {
     const d = makeDay(isRTL ? 'he' : 'en'); d.dayNum = '1'; d.weekNum = '1';
@@ -4421,7 +4432,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
               ) : (
                 !displayDay.morningSaved
                   ? <MorningForm day={displayDay} upd={upd} t={t} dir={dir} onSave={saveMorning} dirty={mDirty} th={th} onInfoClick={() => setKnowledgePanel('morning')} />
-                  : <EodForm day={displayDay} upd={upd} t={t} dir={dir} onSave={saveEOD} dirty={eDirty} orcaTrades={tradesForDate(displayDay.date)} allOrcaTrades={orcaTrades} th={th} risk={riskStatus} onInfoClick={() => setKnowledgePanel('eod')} onAddOrcaTrade={onAddOrcaTrade} onUpdateOrcaTrade={onUpdateOrcaTrade} />
+                  : <EodForm day={displayDay} upd={upd} t={t} dir={dir} onSave={saveEOD} dirty={eDirty} orcaTrades={tradesForDate(displayDay.date)} allOrcaTrades={orcaTrades} th={th} risk={riskStatus} onInfoClick={() => setKnowledgePanel('eod')} onAddOrcaTrade={onAddOrcaTrade} onUpdateOrcaTrade={onUpdateOrcaTrade} onUpsertJournalTrade={onUpsertJournalTrade} />
               )}
             </div>
           )}
