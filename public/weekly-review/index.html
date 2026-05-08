@@ -117,20 +117,34 @@
       if (!Array.isArray(week.tradeLog)) week.tradeLog = [];
       // Locked weeks are not auto-modified — preserve user lock state.
       if (week.locked) return false;
-      var existingIds = {};
+      var existingById = {};
       week.tradeLog.forEach(function(t){
-        if (t && t._orcaId != null) existingIds[t._orcaId] = true;
-        if (t && typeof t.id === 'string' && t.id.indexOf('orca-') === 0) existingIds[t.id.slice(5)] = true;
+        var idx = week.tradeLog.indexOf(t);
+        if (t && t._orcaId != null) existingById[String(t._orcaId)] = idx;
+        if (t && typeof t.id === 'string' && t.id.indexOf('orca-') === 0) existingById[String(t.id.slice(5))] = idx;
       });
-      var added = 0;
+      var changed = 0;
       orcaTrades.forEach(function(tr){
         if (!tr || tr.id == null) return;
-        if (existingIds[tr.id]) return;
         if (!inCurrentWeek(tr.date)) return;
-        week.tradeLog.push(orcaToWeekRow(tr));
-        added++;
+        var row = orcaToWeekRow(tr);
+        var idx = existingById[String(tr.id)];
+        if (idx != null && idx >= 0) {
+          var prev = week.tradeLog[idx] || {};
+          var next = Object.assign({}, row, {
+            setupType: prev.setupType || row.setupType,
+            riskMultiplier: prev.riskMultiplier != null ? prev.riskMultiplier : row.riskMultiplier,
+            targetR: prev.targetR || row.targetR,
+            targetPrice: prev.targetPrice || row.targetPrice,
+            targetReached: prev.targetReached || row.targetReached
+          });
+          if (JSON.stringify(prev) !== JSON.stringify(next)) { week.tradeLog[idx] = next; changed++; }
+        } else {
+          week.tradeLog.push(row);
+          changed++;
+        }
       });
-      if (added > 0) {
+      if (changed > 0) {
         localStorage.setItem(WEEK_KEY, JSON.stringify(week));
         return true;
       }
@@ -143,14 +157,11 @@
       if (d.type === 'ORCA_TRADES_SYNC' && Array.isArray(d.trades)) {
         try { localStorage.setItem(ORCA_KEY, JSON.stringify({ ts: Date.now(), trades: d.trades })); } catch(e){}
         try { window.dispatchEvent(new CustomEvent('orca-trades-updated', { detail: d.trades })); } catch(e){}
-        // One-shot per page-load: merge current-week trades into journal-week
-        // and soft-reload so the React app picks them up cleanly.
+        // Merge current-week trades into journal-week every sync and soft-reload
+        // only when the stored rows actually changed.
         try {
-          if (!sessionStorage.getItem(MERGED_FLAG)) {
-            sessionStorage.setItem(MERGED_FLAG, '1');
-            var changed = mergeOrcaIntoWeek(d.trades);
-            if (changed) setTimeout(function(){ try { location.reload(); } catch(e){} }, 60);
-          }
+          var changed = mergeOrcaIntoWeek(d.trades);
+          if (changed) setTimeout(function(){ try { location.reload(); } catch(e){} }, 60);
         } catch(e){}
       }
       if (d.type === 'ORCA_THEME_SYNC' && typeof d.theme === 'string' && VALID_THEMES[d.theme]) {
