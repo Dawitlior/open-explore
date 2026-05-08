@@ -3851,9 +3851,11 @@ interface JournalDimensionProps {
   onAddOrcaTrade?: (trade: Omit<Trade, 'id' | 'balance'>) => Promise<unknown> | void;
   /** Optional bridge: when set, journal trade edits update the linked Orca trade. */
   onUpdateOrcaTrade?: (trade: Trade) => Promise<unknown> | void;
+  /** Guaranteed bridge: creates or updates the Orca mirror by Journal trade id. */
+  onUpsertJournalTrade?: (journalTradeId: number, trade: Omit<Trade, 'id' | 'balance'>) => Promise<unknown> | void;
 }
 
-export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, onUpdateOrcaTrade }: JournalDimensionProps) => {
+export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, onUpdateOrcaTrade, onUpsertJournalTrade }: JournalDimensionProps) => {
   const [lang, setLang] = useState(isRTL ? 'he' : 'en');
   const [days, setDays] = useState<JournalDay[]>(() => {
     const d = makeDay(isRTL ? 'he' : 'en'); d.dayNum = '1'; d.weekNum = '1';
@@ -4430,7 +4432,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
               ) : (
                 !displayDay.morningSaved
                   ? <MorningForm day={displayDay} upd={upd} t={t} dir={dir} onSave={saveMorning} dirty={mDirty} th={th} onInfoClick={() => setKnowledgePanel('morning')} />
-                  : <EodForm day={displayDay} upd={upd} t={t} dir={dir} onSave={saveEOD} dirty={eDirty} orcaTrades={tradesForDate(displayDay.date)} allOrcaTrades={orcaTrades} th={th} risk={riskStatus} onInfoClick={() => setKnowledgePanel('eod')} onAddOrcaTrade={onAddOrcaTrade} onUpdateOrcaTrade={onUpdateOrcaTrade} />
+                  : <EodForm day={displayDay} upd={upd} t={t} dir={dir} onSave={saveEOD} dirty={eDirty} orcaTrades={tradesForDate(displayDay.date)} allOrcaTrades={orcaTrades} th={th} risk={riskStatus} onInfoClick={() => setKnowledgePanel('eod')} onAddOrcaTrade={onAddOrcaTrade} onUpdateOrcaTrade={onUpdateOrcaTrade} onUpsertJournalTrade={onUpsertJournalTrade} />
               )}
             </div>
           )}
