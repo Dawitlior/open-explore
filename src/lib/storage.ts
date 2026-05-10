@@ -21,7 +21,7 @@ export async function getAllTrades(): Promise<Trade[]> {
     .eq('user_id', uid)
     .order('trade_id', { ascending: true });
   if (error) { console.error('getAllTrades', error); return []; }
-  return (data ?? []).map(r => ({ ...(r.data as Trade), id: r.trade_id }));
+  return (data ?? []).map(r => ({ ...(r.data as unknown as Trade), id: r.trade_id }));
 }
 
 export async function saveTrade(trade: Trade): Promise<void> {
@@ -29,7 +29,7 @@ export async function saveTrade(trade: Trade): Promise<void> {
   if (!uid) return;
   const { error } = await supabase
     .from('trades')
-    .upsert({ user_id: uid, trade_id: trade.id, data: trade as unknown as Record<string, unknown> }, { onConflict: 'user_id,trade_id' });
+    .upsert({ user_id: uid, trade_id: trade.id, data: trade as any }, { onConflict: 'user_id,trade_id' });
   if (error) console.error('saveTrade', error);
 }
 
@@ -39,7 +39,7 @@ export async function saveTrades(trades: Trade[]): Promise<void> {
   const rows = trades.map(t => ({
     user_id: uid,
     trade_id: t.id,
-    data: t as unknown as Record<string, unknown>,
+    data: t as any,
   }));
   // Chunk to stay polite with payload size
   const CHUNK = 200;
@@ -88,7 +88,7 @@ export async function setSetting<T = unknown>(key: string, value: T): Promise<vo
   if (!uid) return;
   const { error } = await supabase
     .from('user_settings')
-    .upsert({ user_id: uid, key, value: value as unknown as Record<string, unknown> }, { onConflict: 'user_id,key' });
+    .upsert({ user_id: uid, key, value: value as any }, { onConflict: 'user_id,key' });
   if (error) console.error('setSetting', error);
 }
 

@@ -82,7 +82,7 @@ export async function readJournalState(): Promise<JournalState | null> {
     .eq('user_id', uid)
     .maybeSingle();
   if (error) { console.error('readJournalState', error); return null; }
-  return (data?.state as JournalState | null) ?? null;
+  return (data?.state as unknown as JournalState | null) ?? null;
 }
 
 export async function writeJournalState(state: JournalState): Promise<void> {
@@ -90,6 +90,6 @@ export async function writeJournalState(state: JournalState): Promise<void> {
   if (!uid) return;
   const { error } = await supabase
     .from('journal_state')
-    .upsert({ user_id: uid, state: state as unknown as Record<string, unknown> }, { onConflict: 'user_id' });
+    .upsert({ user_id: uid, state: state as any }, { onConflict: 'user_id' });
   if (error) console.error('writeJournalState', error);
 }
