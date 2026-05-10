@@ -529,7 +529,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats }:
         {/* Account / sign out */}
         <div style={{
           marginTop: 18, padding: '12px 14px', borderRadius: T.radius.sm,
-          background: T.surface.glass, border: `1px solid ${T.border.medium}`,
+          background: T.bg.card, border: `1px solid ${T.border.medium}`,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
         }}>
           <div style={{ minWidth: 0 }}>
