@@ -80,7 +80,7 @@ export async function getSetting<T = unknown>(key: string): Promise<T | undefine
     .eq('key', key)
     .maybeSingle();
   if (error) { console.error('getSetting', error); return undefined; }
-  return (data?.value as T | undefined);
+  return (data?.value as unknown as T | undefined);
 }
 
 export async function setSetting<T = unknown>(key: string, value: T): Promise<void> {
