@@ -1,11 +1,71 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable/index';
 import { useAuth } from '@/hooks/use-auth';
 import { toast } from 'sonner';
 
 type Mode = 'sign-in' | 'sign-up';
+
+// Translate common Supabase auth errors to friendly Hebrew
+function translateAuthError(message: string): string {
+  const m = message.toLowerCase();
+  if (m.includes('invalid login') || m.includes('invalid credentials'))
+    return 'אימייל או סיסמה שגויים';
+  if (m.includes('email not confirmed'))
+    return 'האימייל עדיין לא אושר — בדוק/י את תיבת הדואר';
+  if (m.includes('user already registered') || m.includes('already registered'))
+    return 'כתובת האימייל כבר רשומה במערכת';
+  if (m.includes('password should be at least'))
+    return 'הסיסמה קצרה מדי — נדרשים לפחות 8 תווים';
+  if (m.includes('unable to validate email') || m.includes('invalid email'))
+    return 'כתובת האימייל לא תקינה';
+  if (m.includes('rate limit') || m.includes('too many'))
+    return 'יותר מדי נסיונות — נסה/י שוב בעוד כמה דקות';
+  if (m.includes('network') || m.includes('failed to fetch'))
+    return 'בעיית רשת — בדוק/י את החיבור לאינטרנט';
+  if (m.includes('weak password') || m.includes('pwned'))
+    return 'הסיסמה חלשה מדי — בחר/י סיסמה חזקה יותר';
+  return 'שגיאה: ' + message;
+}
+
+// Password strength evaluator — messages in English
+type Strength = {
+  score: 0 | 1 | 2 | 3 | 4;
+  label: string;
+  color: string;
+  hints: string[];
+};
+
+function evaluatePassword(pw: string): Strength {
+  const checks = {
+    length: pw.length >= 8,
+    upper: /[A-Z]/.test(pw),
+    lower: /[a-z]/.test(pw),
+    number: /[0-9]/.test(pw),
+    symbol: /[^A-Za-z0-9]/.test(pw),
+  };
+  const passed = Object.values(checks).filter(Boolean).length;
+  const hints: string[] = [];
+  if (!checks.length) hints.push('At least 8 characters');
+  if (!checks.upper) hints.push('One uppercase letter (A-Z)');
+  if (!checks.lower) hints.push('One lowercase letter (a-z)');
+  if (!checks.number) hints.push('One number (0-9)');
+  if (!checks.symbol) hints.push('One symbol (!@#$…)');
+
+  let score: Strength['score'] = 0;
+  let label = 'Too weak';
+  let color = '#ef4444';
+  if (pw.length === 0) {
+    return { score: 0, label: '', color: '#3a4a66', hints };
+  }
+  if (passed <= 2) { score = 1; label = 'Weak'; color = '#ef4444'; }
+  else if (passed === 3) { score = 2; label = 'Fair'; color = '#f59e0b'; }
+  else if (passed === 4) { score = 3; label = 'Strong'; color = '#10b981'; }
+  else { score = 4; label = 'Excellent'; color = '#22d3ee'; }
+  return { score, label, color, hints };
+}
 
 export default function AuthPage() {
   const navigate = useNavigate();
@@ -14,16 +74,23 @@ export default function AuthPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     document.title = mode === 'sign-in' ? 'Sign in · Orca' : 'Create account · Orca';
   }, [mode]);
 
+  const strength = useMemo(() => evaluatePassword(password), [password]);
+
   if (!loading && session) return <Navigate to="/" replace />;
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (mode === 'sign-up' && strength.score < 2) {
+      toast.error('Please choose a stronger password (see requirements below)');
+      return;
+    }
     setBusy(true);
     try {
       if (mode === 'sign-up') {
@@ -36,15 +103,15 @@ export default function AuthPage() {
           },
         });
         if (error) throw error;
-        toast.success('בדוק את האימייל לאישור החשבון');
+        toast.success('בדוק/י את האימייל לאישור החשבון');
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         navigate('/', { replace: true });
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'שגיאה לא ידועה';
-      toast.error(msg);
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      toast.error(translateAuthError(msg));
     } finally {
       setBusy(false);
     }
@@ -57,10 +124,9 @@ export default function AuthPage() {
         redirect_uri: window.location.origin,
       });
       if (result.error) throw result.error;
-      // If redirected, browser navigates away
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Google sign-in failed';
-      toast.error(msg);
+      toast.error(translateAuthError(msg));
       setBusy(false);
     }
   };
@@ -149,17 +215,75 @@ export default function AuthPage() {
             dir="ltr"
             style={inputStyle}
           />
-          <input
-            type="password"
-            required
-            minLength={6}
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            placeholder="סיסמה (לפחות 6 תווים)"
-            autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'}
-            dir="ltr"
-            style={inputStyle}
-          />
+
+          <div style={{ position: 'relative' }}>
+            <input
+              type={showPassword ? 'text' : 'password'}
+              required
+              minLength={mode === 'sign-up' ? 8 : 6}
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder={mode === 'sign-up' ? 'סיסמה (לפחות 8 תווים)' : 'סיסמה'}
+              autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'}
+              dir="ltr"
+              style={{ ...inputStyle, paddingRight: 44, width: '100%' }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(v => !v)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              style={{
+                position: 'absolute',
+                top: '50%',
+                right: 10,
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                color: '#90a3c0',
+                cursor: 'pointer',
+                padding: 6,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+
+          {mode === 'sign-up' && password.length > 0 && (
+            <div style={{ display: 'grid', gap: 8 }} dir="ltr">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ flex: 1, height: 4, background: 'rgba(120,160,220,0.12)', borderRadius: 999, overflow: 'hidden' }}>
+                  <div style={{
+                    width: `${(strength.score / 4) * 100}%`,
+                    height: '100%',
+                    background: strength.color,
+                    transition: 'width 0.25s ease, background 0.25s ease',
+                  }} />
+                </div>
+                <span style={{ fontSize: 11, color: strength.color, fontFamily: "'IBM Plex Mono', monospace", minWidth: 70, textAlign: 'right' }}>
+                  {strength.label}
+                </span>
+              </div>
+              {strength.hints.length > 0 && (
+                <ul style={{
+                  margin: 0,
+                  paddingInlineStart: 18,
+                  fontSize: 11,
+                  color: '#90a3c0',
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  lineHeight: 1.6,
+                }}>
+                  <li style={{ color: '#cbd5e1', listStyle: 'none', marginBottom: 2, marginInlineStart: -18 }}>
+                    Password must include:
+                  </li>
+                  {strength.hints.map(h => <li key={h}>{h}</li>)}
+                </ul>
+              )}
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={busy}
