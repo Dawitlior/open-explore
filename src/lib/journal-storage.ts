@@ -1,19 +1,4 @@
-// Journal dimension storage — isolated from Orca trades
-const DB_NAME = 'apex-journal-os';
-const DB_VERSION = 1;
-const STORE = 'journal';
-
-function openJournalDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: 'key' });
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
+import { supabase } from '@/integrations/supabase/client';
 
 export interface PsychAnswers {
   sleepWell: boolean | null;
@@ -55,7 +40,6 @@ export interface JournalDay {
   mistakes: string;
   solutions: string;
   closing: string;
-  // New fields
   morningImages: string[];
   eodImages: string[];
   btcThoughts: string;
@@ -63,9 +47,6 @@ export interface JournalDay {
   disciplineCommitments: string[];
   disciplineConfirmed: boolean;
   sectionLocks: Record<string, boolean>;
-  // Auto-sync metadata: true if this day was created automatically from
-  // an Orca trade import rather than by the user filling morning/EOD.
-  // When true, user can click "Unlock" to retroactively edit it.
   autoSynced?: boolean;
 }
 
@@ -87,28 +68,28 @@ export interface JournalState {
   lang: string;
 }
 
+async function currentUserId(): Promise<string | null> {
+  const { data } = await supabase.auth.getUser();
+  return data.user?.id ?? null;
+}
+
 export async function readJournalState(): Promise<JournalState | null> {
-  try {
-    const db = await openJournalDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE, 'readonly');
-      const store = tx.objectStore(STORE);
-      const req = store.get('state');
-      req.onsuccess = () => resolve(req.result?.value || null);
-      req.onerror = () => reject(req.error);
-    });
-  } catch { return null; }
+  const uid = await currentUserId();
+  if (!uid) return null;
+  const { data, error } = await supabase
+    .from('journal_state')
+    .select('state')
+    .eq('user_id', uid)
+    .maybeSingle();
+  if (error) { console.error('readJournalState', error); return null; }
+  return (data?.state as unknown as JournalState | null) ?? null;
 }
 
 export async function writeJournalState(state: JournalState): Promise<void> {
-  try {
-    const db = await openJournalDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE, 'readwrite');
-      const store = tx.objectStore(STORE);
-      store.put({ key: 'state', value: state });
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
-  } catch { /* ignore */ }
+  const uid = await currentUserId();
+  if (!uid) return;
+  const { error } = await supabase
+    .from('journal_state')
+    .upsert({ user_id: uid, state: state as any }, { onConflict: 'user_id' });
+  if (error) console.error('writeJournalState', error);
 }
