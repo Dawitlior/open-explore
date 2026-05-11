@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Navigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { lovable } from '@/integrations/lovable/index';
 import { useAuth } from '@/hooks/use-auth';
 import { evaluatePassword, isValidEmail, PASSWORD_REQUIREMENTS, translateAuthError } from '@/lib/auth-utils';
 import { toast } from 'sonner';
