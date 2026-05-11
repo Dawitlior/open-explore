@@ -91,6 +91,27 @@ export default function AuthPage() {
     }
   };
 
+  const handleForgotPassword = async () => {
+    const cleanEmail = email.trim();
+    if (!isValidEmail(cleanEmail)) {
+      toast.error('הכנס/י אימייל תקין כדי לאפס סיסמה');
+      return;
+    }
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success('שלחנו לך קישור לאיפוס הסיסמה');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Password reset failed';
+      toast.error(translateAuthError(msg));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <main
       dir="rtl"
@@ -267,6 +288,16 @@ export default function AuthPage() {
           >
             {busy ? '…' : mode === 'sign-in' ? 'התחבר/י' : 'הרשם/י'}
           </button>
+          {mode === 'sign-in' && (
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              disabled={busy}
+              style={{ background: 'none', border: 'none', color: '#90a3c0', cursor: 'pointer', fontSize: 12, padding: 4 }}
+            >
+              שכחת סיסמה?
+            </button>
+          )}
         </form>
 
         <p style={{ textAlign: 'center', marginTop: 18, fontSize: 12, color: '#90a3c0' }}>
