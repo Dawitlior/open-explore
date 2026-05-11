@@ -233,6 +233,7 @@ export default function AuthPage() {
               value={displayName}
               onChange={e => setDisplayName(e.target.value)}
               placeholder="שם תצוגה"
+              autoComplete="name"
               style={inputStyle}
             />
           )}
@@ -263,6 +264,7 @@ export default function AuthPage() {
               type="button"
               onClick={() => setShowPassword(v => !v)}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
+              title={showPassword ? 'Hide password' : 'Show password'}
               style={{
                 position: 'absolute',
                 top: '50%',
@@ -310,6 +312,9 @@ export default function AuthPage() {
                     Password must include:
                   </li>
                   {strength.hints.map(h => <li key={h}>{h}</li>)}
+                  {strength.hints.length === 0 && (
+                    <li style={{ color: '#10b981' }}>All minimum requirements are met.</li>
+                  )}
                 </ul>
               )}
             </div>
@@ -339,7 +344,7 @@ export default function AuthPage() {
           {mode === 'sign-in' ? 'אין לך חשבון?' : 'כבר רשום?'}{' '}
           <button
             type="button"
-            onClick={() => setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in')}
+            onClick={() => { setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in'); setPassword(''); }}
             style={{ background: 'none', border: 'none', color: '#38bdf8', cursor: 'pointer', fontWeight: 600 }}
           >
             {mode === 'sign-in' ? 'הרשמה' : 'התחברות'}
