@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable/index';
@@ -7,6 +7,11 @@ import { useAuth } from '@/hooks/use-auth';
 import { toast } from 'sonner';
 
 type Mode = 'sign-in' | 'sign-up';
+const PASSWORD_REQUIREMENTS = 'Password must include at least 8 characters, one uppercase letter (A-Z), one lowercase letter (a-z), one number (0-9), and one symbol (!@#$…).';
+
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
 
 // Translate common Supabase auth errors to friendly Hebrew
 function translateAuthError(message: string): string {
@@ -21,10 +26,18 @@ function translateAuthError(message: string): string {
     return 'הסיסמה קצרה מדי — נדרשים לפחות 8 תווים';
   if (m.includes('unable to validate email') || m.includes('invalid email'))
     return 'כתובת האימייל לא תקינה';
+  if (m.includes('signup') && m.includes('disabled'))
+    return 'הרשמה אינה זמינה כרגע';
+  if (m.includes('email rate limit exceeded'))
+    return 'נשלחו יותר מדי אימיילים — נסה/י שוב מאוחר יותר';
+  if (m.includes('same password'))
+    return 'הסיסמה החדשה חייבת להיות שונה מהסיסמה הקודמת';
   if (m.includes('rate limit') || m.includes('too many'))
     return 'יותר מדי נסיונות — נסה/י שוב בעוד כמה דקות';
   if (m.includes('network') || m.includes('failed to fetch'))
-    return 'בעיית רשת — בדוק/י את החיבור לאינטרנט';
+    return 'בעיית חיבור זמנית — אם זה קורה בתצוגה המקדימה, נסה/י גם אחרי Publish';
+  if (m.includes('provider') || m.includes('oauth') || m.includes('google'))
+    return 'התחברות Google נכשלה — נסה/י שוב בעוד רגע';
   if (m.includes('weak password') || m.includes('pwned'))
     return 'הסיסמה חלשה מדי — בחר/י סיסמה חזקה יותר';
   return 'שגיאה: ' + message;
@@ -69,6 +82,7 @@ function evaluatePassword(pw: string): Strength {
 
 export default function AuthPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { session, loading } = useAuth();
   const [mode, setMode] = useState<Mode>('sign-in');
   const [email, setEmail] = useState('');
@@ -82,32 +96,46 @@ export default function AuthPage() {
   }, [mode]);
 
   const strength = useMemo(() => evaluatePassword(password), [password]);
+  const redirectTo = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || '/';
 
-  if (!loading && session) return <Navigate to="/" replace />;
+  useEffect(() => {
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    const search = new URLSearchParams(window.location.search);
+    const error = hash.get('error_description') || search.get('error_description');
+    if (error) toast.error(translateAuthError(decodeURIComponent(error)));
+    if (search.get('verified') === '1') toast.success('האימייל אושר — אפשר להתחבר עכשיו');
+  }, []);
+
+  if (!loading && session) return <Navigate to={redirectTo} replace />;
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (mode === 'sign-up' && strength.score < 2) {
-      toast.error('Please choose a stronger password (see requirements below)');
+    const cleanEmail = email.trim();
+    if (!isValidEmail(cleanEmail)) {
+      toast.error('כתובת האימייל לא תקינה');
+      return;
+    }
+    if (mode === 'sign-up' && strength.score < 4) {
+      toast.error(PASSWORD_REQUIREMENTS);
       return;
     }
     setBusy(true);
     try {
       if (mode === 'sign-up') {
         const { error } = await supabase.auth.signUp({
-          email,
+          email: cleanEmail,
           password,
           options: {
-            emailRedirectTo: window.location.origin,
-            data: { display_name: displayName || email.split('@')[0] },
+            emailRedirectTo: `${window.location.origin}/auth?verified=1`,
+            data: { display_name: displayName.trim() || cleanEmail.split('@')[0] },
           },
         });
         if (error) throw error;
         toast.success('בדוק/י את האימייל לאישור החשבון');
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
         if (error) throw error;
-        navigate('/', { replace: true });
+        navigate(redirectTo, { replace: true });
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error';
@@ -122,8 +150,11 @@ export default function AuthPage() {
     try {
       const result = await lovable.auth.signInWithOAuth('google', {
         redirect_uri: window.location.origin,
+        extraParams: { prompt: 'select_account' },
       });
       if (result.error) throw result.error;
+      if (result.redirected) return;
+      navigate(redirectTo, { replace: true });
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Google sign-in failed';
       toast.error(translateAuthError(msg));
