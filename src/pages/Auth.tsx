@@ -1,74 +1,17 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable/index';
 import { useAuth } from '@/hooks/use-auth';
+import { evaluatePassword, isValidEmail, PASSWORD_REQUIREMENTS, translateAuthError } from '@/lib/auth-utils';
 import { toast } from 'sonner';
 
 type Mode = 'sign-in' | 'sign-up';
 
-// Translate common Supabase auth errors to friendly Hebrew
-function translateAuthError(message: string): string {
-  const m = message.toLowerCase();
-  if (m.includes('invalid login') || m.includes('invalid credentials'))
-    return 'אימייל או סיסמה שגויים';
-  if (m.includes('email not confirmed'))
-    return 'האימייל עדיין לא אושר — בדוק/י את תיבת הדואר';
-  if (m.includes('user already registered') || m.includes('already registered'))
-    return 'כתובת האימייל כבר רשומה במערכת';
-  if (m.includes('password should be at least'))
-    return 'הסיסמה קצרה מדי — נדרשים לפחות 8 תווים';
-  if (m.includes('unable to validate email') || m.includes('invalid email'))
-    return 'כתובת האימייל לא תקינה';
-  if (m.includes('rate limit') || m.includes('too many'))
-    return 'יותר מדי נסיונות — נסה/י שוב בעוד כמה דקות';
-  if (m.includes('network') || m.includes('failed to fetch'))
-    return 'בעיית רשת — בדוק/י את החיבור לאינטרנט';
-  if (m.includes('weak password') || m.includes('pwned'))
-    return 'הסיסמה חלשה מדי — בחר/י סיסמה חזקה יותר';
-  return 'שגיאה: ' + message;
-}
-
-// Password strength evaluator — messages in English
-type Strength = {
-  score: 0 | 1 | 2 | 3 | 4;
-  label: string;
-  color: string;
-  hints: string[];
-};
-
-function evaluatePassword(pw: string): Strength {
-  const checks = {
-    length: pw.length >= 8,
-    upper: /[A-Z]/.test(pw),
-    lower: /[a-z]/.test(pw),
-    number: /[0-9]/.test(pw),
-    symbol: /[^A-Za-z0-9]/.test(pw),
-  };
-  const passed = Object.values(checks).filter(Boolean).length;
-  const hints: string[] = [];
-  if (!checks.length) hints.push('At least 8 characters');
-  if (!checks.upper) hints.push('One uppercase letter (A-Z)');
-  if (!checks.lower) hints.push('One lowercase letter (a-z)');
-  if (!checks.number) hints.push('One number (0-9)');
-  if (!checks.symbol) hints.push('One symbol (!@#$…)');
-
-  let score: Strength['score'] = 0;
-  let label = 'Too weak';
-  let color = '#ef4444';
-  if (pw.length === 0) {
-    return { score: 0, label: '', color: '#3a4a66', hints };
-  }
-  if (passed <= 2) { score = 1; label = 'Weak'; color = '#ef4444'; }
-  else if (passed === 3) { score = 2; label = 'Fair'; color = '#f59e0b'; }
-  else if (passed === 4) { score = 3; label = 'Strong'; color = '#10b981'; }
-  else { score = 4; label = 'Excellent'; color = '#22d3ee'; }
-  return { score, label, color, hints };
-}
-
 export default function AuthPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { session, loading } = useAuth();
   const [mode, setMode] = useState<Mode>('sign-in');
   const [email, setEmail] = useState('');
@@ -82,32 +25,46 @@ export default function AuthPage() {
   }, [mode]);
 
   const strength = useMemo(() => evaluatePassword(password), [password]);
+  const redirectTo = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || '/';
 
-  if (!loading && session) return <Navigate to="/" replace />;
+  useEffect(() => {
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    const search = new URLSearchParams(window.location.search);
+    const error = hash.get('error_description') || search.get('error_description');
+    if (error) toast.error(translateAuthError(decodeURIComponent(error)));
+    if (search.get('verified') === '1') toast.success('האימייל אושר — אפשר להתחבר עכשיו');
+  }, []);
+
+  if (!loading && session) return <Navigate to={redirectTo} replace />;
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (mode === 'sign-up' && strength.score < 2) {
-      toast.error('Please choose a stronger password (see requirements below)');
+    const cleanEmail = email.trim();
+    if (!isValidEmail(cleanEmail)) {
+      toast.error('כתובת האימייל לא תקינה');
+      return;
+    }
+    if (mode === 'sign-up' && strength.score < 4) {
+      toast.error(PASSWORD_REQUIREMENTS);
       return;
     }
     setBusy(true);
     try {
       if (mode === 'sign-up') {
         const { error } = await supabase.auth.signUp({
-          email,
+          email: cleanEmail,
           password,
           options: {
-            emailRedirectTo: window.location.origin,
-            data: { display_name: displayName || email.split('@')[0] },
+            emailRedirectTo: `${window.location.origin}/auth?verified=1`,
+            data: { display_name: displayName.trim() || cleanEmail.split('@')[0] },
           },
         });
         if (error) throw error;
         toast.success('בדוק/י את האימייל לאישור החשבון');
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
         if (error) throw error;
-        navigate('/', { replace: true });
+        navigate(redirectTo, { replace: true });
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error';
@@ -122,11 +79,35 @@ export default function AuthPage() {
     try {
       const result = await lovable.auth.signInWithOAuth('google', {
         redirect_uri: window.location.origin,
+        extraParams: { prompt: 'select_account' },
       });
       if (result.error) throw result.error;
+      if (result.redirected) return;
+      navigate(redirectTo, { replace: true });
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Google sign-in failed';
       toast.error(translateAuthError(msg));
+      setBusy(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    const cleanEmail = email.trim();
+    if (!isValidEmail(cleanEmail)) {
+      toast.error('הכנס/י אימייל תקין כדי לאפס סיסמה');
+      return;
+    }
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success('שלחנו לך קישור לאיפוס הסיסמה');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Password reset failed';
+      toast.error(translateAuthError(msg));
+    } finally {
       setBusy(false);
     }
   };
@@ -202,6 +183,7 @@ export default function AuthPage() {
               value={displayName}
               onChange={e => setDisplayName(e.target.value)}
               placeholder="שם תצוגה"
+              autoComplete="name"
               style={inputStyle}
             />
           )}
@@ -232,6 +214,7 @@ export default function AuthPage() {
               type="button"
               onClick={() => setShowPassword(v => !v)}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
+              title={showPassword ? 'Hide password' : 'Show password'}
               style={{
                 position: 'absolute',
                 top: '50%',
@@ -279,6 +262,9 @@ export default function AuthPage() {
                     Password must include:
                   </li>
                   {strength.hints.map(h => <li key={h}>{h}</li>)}
+                  {strength.hints.length === 0 && (
+                    <li style={{ color: '#10b981' }}>All minimum requirements are met.</li>
+                  )}
                 </ul>
               )}
             </div>
@@ -302,13 +288,23 @@ export default function AuthPage() {
           >
             {busy ? '…' : mode === 'sign-in' ? 'התחבר/י' : 'הרשם/י'}
           </button>
+          {mode === 'sign-in' && (
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              disabled={busy}
+              style={{ background: 'none', border: 'none', color: '#90a3c0', cursor: 'pointer', fontSize: 12, padding: 4 }}
+            >
+              שכחת סיסמה?
+            </button>
+          )}
         </form>
 
         <p style={{ textAlign: 'center', marginTop: 18, fontSize: 12, color: '#90a3c0' }}>
           {mode === 'sign-in' ? 'אין לך חשבון?' : 'כבר רשום?'}{' '}
           <button
             type="button"
-            onClick={() => setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in')}
+            onClick={() => { setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in'); setPassword(''); }}
             style={{ background: 'none', border: 'none', color: '#38bdf8', cursor: 'pointer', fontWeight: 600 }}
           >
             {mode === 'sign-in' ? 'הרשמה' : 'התחברות'}

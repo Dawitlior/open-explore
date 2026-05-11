@@ -16,23 +16,49 @@ const AuthContext = createContext<AuthContextValue>({
   signOut: async () => {},
 });
 
+async function ensureProfile(user: User) {
+  const meta = user.user_metadata ?? {};
+  const displayName =
+    meta.display_name ||
+    meta.full_name ||
+    meta.name ||
+    user.email?.split('@')[0] ||
+    'Orca Trader';
+
+  const { error } = await supabase.from('profiles').upsert(
+    {
+      id: user.id,
+      email: user.email ?? null,
+      display_name: displayName,
+      avatar_url: meta.avatar_url ?? null,
+    },
+    { onConflict: 'id' },
+  );
+
+  if (error) console.error('Failed to ensure profile:', error);
+}
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 1) Subscribe FIRST so nothing is missed
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
       setLoading(false);
     });
-    // 2) Then prime with existing session
+
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setLoading(false);
     });
     return () => sub.subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!session?.user) return;
+    void ensureProfile(session.user);
+  }, [session?.user?.id]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
