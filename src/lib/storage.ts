@@ -7,6 +7,13 @@ import { supabase } from '@/integrations/supabase/client';
  * module so callers don't need to change.
  */
 
+function reportStorageError(op: string, error: unknown) {
+  console.error(op, error);
+  if (typeof window === 'undefined') return;
+  const message = (error as { message?: string })?.message || String(error);
+  window.dispatchEvent(new CustomEvent('orca:storage-error', { detail: { op, message } }));
+}
+
 async function currentUserId(): Promise<string | null> {
   const { data } = await supabase.auth.getUser();
   return data.user?.id ?? null;
