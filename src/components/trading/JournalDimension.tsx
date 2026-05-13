@@ -3853,7 +3853,7 @@ interface JournalDimensionProps {
   /** Optional bridge: when set, journal trade edits update the linked Orca trade. */
   onUpdateOrcaTrade?: (trade: Trade) => Promise<unknown> | void;
   /** Guaranteed bridge: creates or updates the Orca mirror by Journal trade id. */
-  onUpsertJournalTrade?: (journalTradeId: number, trade: Omit<Trade, 'id' | 'balance'>) => Promise<unknown> | void;
+  onUpsertJournalTrade?: (journalTradeId: number | string, trade: Omit<Trade, 'id' | 'balance'>) => Promise<unknown> | void;
 }
 
 export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, onUpdateOrcaTrade, onUpsertJournalTrade }: JournalDimensionProps) => {
