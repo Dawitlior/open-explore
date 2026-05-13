@@ -40,8 +40,8 @@ const TOKEN_LIST = [
   'avgWin', 'avgLoss', 'expectancy', 'profitFactor', 'maxDrawdown', 'totalR',
 ];
 
-export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats }: SettingsHubProps) {
-  const [tab, setTab] = useState<TabId>('theme');
+export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, lang, setLang, privacyMode, setPrivacyMode, trades }: SettingsHubProps) {
+  const [tab, setTab] = useState<TabId>('account');
   const dash = useDashboardConfig();
   const ui = useUIPrefs();
   const riskCfg = useRiskLimits();
@@ -50,6 +50,11 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats }:
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
   const [newKpi, setNewKpi] = useState<Partial<CustomKPI>>({ label: '', formula: '', format: 'number' });
+  const [newPassword, setNewPassword] = useState('');
+  const [newPasswordConfirm, setNewPasswordConfirm] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [pwBusy, setPwBusy] = useState(false);
+  const [emailBusy, setEmailBusy] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
 
   if (!open) return null;
