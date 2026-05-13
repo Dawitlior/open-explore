@@ -7,6 +7,13 @@ import { supabase } from '@/integrations/supabase/client';
  * module so callers don't need to change.
  */
 
+function reportStorageError(op: string, error: unknown) {
+  console.error(op, error);
+  if (typeof window === 'undefined') return;
+  const message = (error as { message?: string })?.message || String(error);
+  window.dispatchEvent(new CustomEvent('orca:storage-error', { detail: { op, message } }));
+}
+
 async function currentUserId(): Promise<string | null> {
   const { data } = await supabase.auth.getUser();
   return data.user?.id ?? null;
@@ -15,13 +22,26 @@ async function currentUserId(): Promise<string | null> {
 export async function getAllTrades(): Promise<Trade[]> {
   const uid = await currentUserId();
   if (!uid) return [];
-  const { data, error } = await supabase
-    .from('trades')
-    .select('trade_id, data')
-    .eq('user_id', uid)
-    .order('trade_id', { ascending: true });
-  if (error) { console.error('getAllTrades', error); return []; }
-  return (data ?? []).map(r => ({ ...(r.data as unknown as Trade), id: r.trade_id }));
+  // Supabase caps each response at 1000 rows. Page through the entire set
+  // so users with large histories don't silently lose trades.
+  const PAGE = 1000;
+  const out: Trade[] = [];
+  let from = 0;
+  // Hard upper bound to avoid runaway loops if something goes wrong
+  for (let i = 0; i < 100; i++) {
+    const { data, error } = await supabase
+      .from('trades')
+      .select('trade_id, data')
+      .eq('user_id', uid)
+      .order('trade_id', { ascending: true })
+      .range(from, from + PAGE - 1);
+    if (error) { console.error('getAllTrades', error); return out; }
+    const rows = data ?? [];
+    for (const r of rows) out.push({ ...(r.data as unknown as Trade), id: r.trade_id });
+    if (rows.length < PAGE) break;
+    from += PAGE;
+  }
+  return out;
 }
 
 export async function saveTrade(trade: Trade): Promise<void> {
@@ -30,7 +50,7 @@ export async function saveTrade(trade: Trade): Promise<void> {
   const { error } = await supabase
     .from('trades')
     .upsert({ user_id: uid, trade_id: trade.id, data: trade as any }, { onConflict: 'user_id,trade_id' });
-  if (error) console.error('saveTrade', error);
+  if (error) reportStorageError('saveTrade', error);
 }
 
 export async function saveTrades(trades: Trade[]): Promise<void> {
@@ -48,7 +68,7 @@ export async function saveTrades(trades: Trade[]): Promise<void> {
     const { error } = await supabase
       .from('trades')
       .upsert(slice, { onConflict: 'user_id,trade_id' });
-    if (error) { console.error('saveTrades', error); return; }
+    if (error) { reportStorageError('saveTrades', error); throw error; }
   }
 }
 
@@ -60,14 +80,14 @@ export async function deleteTrade(id: number): Promise<void> {
     .delete()
     .eq('user_id', uid)
     .eq('trade_id', id);
-  if (error) console.error('deleteTrade', error);
+  if (error) reportStorageError('deleteTrade', error);
 }
 
 export async function deleteAllTrades(): Promise<void> {
   const uid = await currentUserId();
   if (!uid) return;
   const { error } = await supabase.from('trades').delete().eq('user_id', uid);
-  if (error) console.error('deleteAllTrades', error);
+  if (error) reportStorageError('deleteAllTrades', error);
 }
 
 export async function getSetting<T = unknown>(key: string): Promise<T | undefined> {
@@ -89,7 +109,7 @@ export async function setSetting<T = unknown>(key: string, value: T): Promise<vo
   const { error } = await supabase
     .from('user_settings')
     .upsert({ user_id: uid, key, value: value as any }, { onConflict: 'user_id,key' });
-  if (error) console.error('setSetting', error);
+  if (error) reportStorageError('setSetting', error);
 }
 
 export async function clearAllData(): Promise<void> {

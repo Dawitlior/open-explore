@@ -23,15 +23,17 @@ import ImportLoadingOverlay from '@/components/trading/ImportLoadingOverlay';
 import { EntryGate } from '@/components/trading/EntryGate';
 import { RiskLimitAlert } from '@/components/trading/RiskLimitAlert';
 import { RiskExplanationModal, type RiskExplanation } from '@/components/trading/RiskExplanationModal';
-import { AdvancedRiskPage } from '@/components/trading/AdvancedRiskPage';
-import { AdvancedAnalyticsPage } from '@/components/trading/AdvancedAnalyticsPage';
-import { AdvancedPsychologyPage } from '@/components/trading/AdvancedPsychologyPage';
-import { AIInsightsPage } from '@/components/trading/AIInsightsPage';
-import { WeeklyReviewPage } from '@/components/trading/WeeklyReviewPage';
+import { lazy } from 'react';
+import { LazyShell } from '@/components/LazyShell';
+const AdvancedRiskPage = lazy(() => import('@/components/trading/AdvancedRiskPage').then(m => ({ default: m.AdvancedRiskPage })));
+const AdvancedAnalyticsPage = lazy(() => import('@/components/trading/AdvancedAnalyticsPage').then(m => ({ default: m.AdvancedAnalyticsPage })));
+const AdvancedPsychologyPage = lazy(() => import('@/components/trading/AdvancedPsychologyPage').then(m => ({ default: m.AdvancedPsychologyPage })));
+const AIInsightsPage = lazy(() => import('@/components/trading/AIInsightsPage').then(m => ({ default: m.AIInsightsPage })));
+const WeeklyReviewPage = lazy(() => import('@/components/trading/WeeklyReviewPage').then(m => ({ default: m.WeeklyReviewPage })));
 import { InstallPrompt } from '@/components/trading/InstallPrompt';
 import { DimensionController, PortalButton, BacktestPortalButton } from '@/components/trading/DimensionController';
-import { JournalDimension } from '@/components/trading/JournalDimension';
-import { BacktestDimension } from '@/components/trading/BacktestDimension';
+const JournalDimension = lazy(() => import('@/components/trading/JournalDimension').then(m => ({ default: m.JournalDimension })));
+const BacktestDimension = lazy(() => import('@/components/trading/BacktestDimension').then(m => ({ default: m.BacktestDimension })));
 import { useTrades } from '@/hooks/use-trades';
 import { useSettings, type ThemeId } from '@/hooks/use-settings';
 import { assessRisk } from '@/lib/risk-engine';
@@ -1356,16 +1358,18 @@ const Index = () => {
   const renderAnalytics = () => {
     if (trades.length === 0) return null;
     return (
-      <AdvancedAnalyticsPage
-        T={T}
-        isRTL={isRTL}
-        isAlpha={isAlpha}
-        operatingMode={opMode}
-        trades={trades}
-        stats={stats}
-        privacyMode={settings.privacyMode}
-        onExplainClick={handleExplainClick}
-      />
+      <LazyShell>
+        <AdvancedAnalyticsPage
+          T={T}
+          isRTL={isRTL}
+          isAlpha={isAlpha}
+          operatingMode={opMode}
+          trades={trades}
+          stats={stats}
+          privacyMode={settings.privacyMode}
+          onExplainClick={handleExplainClick}
+        />
+      </LazyShell>
     );
   };
 
@@ -1379,37 +1383,41 @@ const Index = () => {
   const renderRisk = () => {
     if (trades.length === 0) return null;
     return (
-      <AdvancedRiskPage
-        T={T}
-        isRTL={isRTL}
-        isAlpha={isAlpha}
-        operatingMode={opMode}
-        customLimits={customRiskLimits}
-        trades={trades}
-        stats={stats}
-        riskData={riskData}
-        onExplainClick={handleExplainClick}
-        riskExplanations={riskExplanations}
-      />
+      <LazyShell>
+        <AdvancedRiskPage
+          T={T}
+          isRTL={isRTL}
+          isAlpha={isAlpha}
+          operatingMode={opMode}
+          customLimits={customRiskLimits}
+          trades={trades}
+          stats={stats}
+          riskData={riskData}
+          onExplainClick={handleExplainClick}
+          riskExplanations={riskExplanations}
+        />
+      </LazyShell>
     );
   };
 
   const renderPsychology = () => {
     if (trades.length === 0) return null;
     return (
-      <AdvancedPsychologyPage
-        T={T}
-        isRTL={isRTL}
-        isAlpha={isAlpha}
-        operatingMode={opMode}
-        trades={trades}
-        stats={stats}
-        onExplainClick={handleExplainClick}
-      />
+      <LazyShell>
+        <AdvancedPsychologyPage
+          T={T}
+          isRTL={isRTL}
+          isAlpha={isAlpha}
+          operatingMode={opMode}
+          trades={trades}
+          stats={stats}
+          onExplainClick={handleExplainClick}
+        />
+      </LazyShell>
     );
   };
 
-  const renderAI = () => <AIInsightsPage T={T} trades={trades} />;
+  const renderAI = () => <LazyShell><AIInsightsPage T={T} trades={trades} /></LazyShell>;
 
 
   // Portal pulse animation
@@ -1420,7 +1428,7 @@ const Index = () => {
       <DimensionController
         activeDimension="journal"
         orcaUI={<div />}
-        journalUI={<JournalDimension onReturn={() => setActiveDimension('orca')} isRTL={isRTL} orcaTrades={trades} onAddOrcaTrade={addTrade} onUpdateOrcaTrade={updateTrade} onUpsertJournalTrade={upsertJournalTrade} />}
+        journalUI={<LazyShell><JournalDimension onReturn={() => setActiveDimension('orca')} isRTL={isRTL} orcaTrades={trades} onAddOrcaTrade={addTrade} onUpdateOrcaTrade={updateTrade} onUpsertJournalTrade={upsertJournalTrade} /></LazyShell>}
       />
     );
   }
@@ -1431,7 +1439,7 @@ const Index = () => {
         activeDimension="backtest"
         orcaUI={<div />}
         journalUI={<div />}
-        backtestUI={<BacktestDimension onReturn={() => setActiveDimension('orca')} />}
+        backtestUI={<LazyShell><BacktestDimension onReturn={() => setActiveDimension('orca')} /></LazyShell>}
       />
     );
   }
@@ -1700,7 +1708,7 @@ const Index = () => {
           {page === 'psychology' && renderPsychology()}
           {page === 'ai' && renderAI()}
           {page === 'weekly-review' && (
-            <WeeklyReviewPage T={T} isRTL={isRTL} trades={trades} themeId={settings.theme} stats={stats} riskData={riskData} />
+            <LazyShell><WeeklyReviewPage T={T} isRTL={isRTL} trades={trades} themeId={settings.theme} stats={stats} riskData={riskData} /></LazyShell>
           )}
         </div>
       </main>
