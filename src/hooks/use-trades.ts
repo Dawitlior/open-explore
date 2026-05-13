@@ -121,40 +121,64 @@ export function useTrades() {
   }, [enqueueTradeMutation, recalcBalances, checkAndAlertRisk]);
 
   const updateTrade = useCallback(async (trade: Trade) => {
-    const currentTrades = tradesRef.current;
-    const idx = currentTrades.findIndex(t => t.id === trade.id);
-    if (idx === -1) return;
-    const updated = [...currentTrades];
-    updated[idx] = trade;
-    const rebalanced = recalcBalances(updated);
-    await saveTrades(rebalanced);
-    tradesRef.current = rebalanced;
-    setTrades(rebalanced);
-  }, [recalcBalances]);
+    return enqueueTradeMutation(async () => {
+      const currentTrades = tradesRef.current;
+      const idx = currentTrades.findIndex(t => t.id === trade.id);
+      if (idx === -1) return;
+      const updated = [...currentTrades];
+      updated[idx] = trade;
+      const rebalanced = recalcBalances(updated);
+      await saveTrades(rebalanced);
+      tradesRef.current = rebalanced;
+      setTrades(rebalanced);
+      checkAndAlertRisk(rebalanced);
+    });
+  }, [enqueueTradeMutation, recalcBalances, checkAndAlertRisk]);
 
   const removeTrade = useCallback(async (id: number) => {
-    const currentTrades = tradesRef.current;
-    await dbDelete(id);
-    const remaining = currentTrades.filter(t => t.id !== id);
-    const rebalanced = recalcBalances(remaining.map((t, i) => ({ ...t, id: i + 1 })));
-    await saveTrades(rebalanced);
-    for (let i = rebalanced.length + 1; i <= currentTrades.length; i++) {
-      await dbDelete(i);
-    }
-    tradesRef.current = rebalanced;
-    setTrades(rebalanced);
-  }, [recalcBalances]);
+    return enqueueTradeMutation(async () => {
+      const currentTrades = tradesRef.current;
+      // Delete only the targeted trade — preserve all other trade_ids
+      // so that __JID:xxx__ links from the Journal remain intact.
+      await dbDelete(id);
+      const remaining = currentTrades.filter(t => t.id !== id);
+      // Recalc balances but DO NOT renumber ids
+      const rebalanced = recalcBalances(remaining);
+      // Persist updated balances for the surviving trades
+      if (rebalanced.length > 0) {
+        try { await saveTrades(rebalanced); } catch (e) { console.error('removeTrade saveTrades', e); }
+      }
+      tradesRef.current = rebalanced;
+      setTrades(rebalanced);
+    });
+  }, [enqueueTradeMutation, recalcBalances]);
 
   const importTrades = useCallback(async (newTrades: Trade[]) => {
-    const sanitized = sanitizeTrades(newTrades);
-    const rebalanced = recalcBalances(sanitized.map((t, i) => ({ ...t, id: i + 1 })));
-    // Wipe existing per-user trades, then save the imported set.
-    const { deleteAllTrades } = await import('@/lib/storage');
-    await deleteAllTrades();
-    await saveTrades(rebalanced);
-    tradesRef.current = rebalanced;
-    setTrades(rebalanced);
-  }, [recalcBalances]);
+    return enqueueTradeMutation(async () => {
+      const sanitized = sanitizeTrades(newTrades);
+      const rebalanced = recalcBalances(sanitized.map((t, i) => ({ ...t, id: i + 1 })));
+      const previous = tradesRef.current;
+      const { deleteAllTrades } = await import('@/lib/storage');
+      try {
+        await deleteAllTrades();
+        await saveTrades(rebalanced);
+        tradesRef.current = rebalanced;
+        setTrades(rebalanced);
+      } catch (err) {
+        console.error('importTrades failed, attempting rollback', err);
+        // Best-effort rollback to the prior dataset
+        try {
+          await deleteAllTrades();
+          if (previous.length > 0) await saveTrades(previous);
+          tradesRef.current = previous;
+          setTrades(previous);
+        } catch (rollbackErr) {
+          console.error('importTrades rollback also failed', rollbackErr);
+        }
+        throw err;
+      }
+    });
+  }, [enqueueTradeMutation, recalcBalances]);
 
   const resetAll = useCallback(async () => {
     await clearAllData();
