@@ -222,3 +222,63 @@ export const modeColors: Record<string, string> = {
 
 // Legacy
 export const T = midnight;
+
+/* ════════════════════════════════════════════════
+   CUSTOM ACCENT — derive an HSL string from a hex
+   and override the live primary/accent/ring tokens.
+   Works on top of any base theme (midnight/indigo/platinum).
+   ════════════════════════════════════════════════ */
+export function hexToHsl(hex: string): { h: number; s: number; l: number } | null {
+  const m = /^#?([0-9a-f]{6}|[0-9a-f]{3})$/i.exec(hex.trim());
+  if (!m) return null;
+  let h = m[1];
+  if (h.length === 3) h = h.split('').map(c => c + c).join('');
+  const r = parseInt(h.slice(0, 2), 16) / 255;
+  const g = parseInt(h.slice(2, 4), 16) / 255;
+  const b = parseInt(h.slice(4, 6), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let H = 0, S = 0; const L = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    S = L > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: H = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: H = (b - r) / d + 2; break;
+      case b: H = (r - g) / d + 4; break;
+    }
+    H *= 60;
+  }
+  return { h: Math.round(H), s: Math.round(S * 100), l: Math.round(L * 100) };
+}
+
+export function applyCustomAccent(hex: string) {
+  if (typeof document === 'undefined') return;
+  const hsl = hexToHsl(hex);
+  if (!hsl) return;
+  const r = document.documentElement;
+  const base = `${hsl.h} ${hsl.s}% ${hsl.l}%`;
+  const glow = `${hsl.h} ${Math.min(100, hsl.s + 5)}% ${Math.min(70, hsl.l + 10)}%`;
+  // Decide foreground for primary based on lightness
+  const fg = hsl.l > 60 ? '0 0% 5%' : '0 0% 100%';
+  r.style.setProperty('--primary', base);
+  r.style.setProperty('--primary-foreground', fg);
+  r.style.setProperty('--accent', base);
+  r.style.setProperty('--accent-foreground', fg);
+  r.style.setProperty('--ring', base);
+  r.style.setProperty('--sidebar-primary', base);
+  r.style.setProperty('--sidebar-primary-foreground', fg);
+  r.style.setProperty('--sidebar-ring', base);
+  r.style.setProperty('--orca-aurora-a', base);
+  r.style.setProperty('--orca-glow-spot', glow);
+  r.style.setProperty('--orca-primary-h', base);
+  r.setAttribute('data-custom-accent', hex);
+}
+
+export function clearCustomAccent() {
+  if (typeof document === 'undefined') return;
+  const r = document.documentElement;
+  r.removeAttribute('data-custom-accent');
+  // Re-apply the active base theme to wipe custom overrides
+  const id = (r.getAttribute('data-theme') as ThemeId) || 'midnight';
+  applyThemeToDOM(id);
+}
