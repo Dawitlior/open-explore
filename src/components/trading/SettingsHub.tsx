@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import {
   User, Palette, LayoutDashboard, Calculator, Shield, SlidersHorizontal, Database,
   X, LogOut, Mail, KeyRound, Send, Download, Eye, EyeOff, Globe, GripVertical,
@@ -71,9 +71,8 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
   const [pwBusy, setPwBusy] = useState(false);
   const [emailBusy, setEmailBusy] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
-  const [draftAccent, setDraftAccent] = useState<string>('');
-  // Sync draft to committed accent when prefs load / change
-  useMemo(() => { if (!draftAccent && ui.prefs.customAccent) setDraftAccent(ui.prefs.customAccent); }, [ui.prefs.customAccent, draftAccent]);
+  const [draftAccent, setDraftAccent] = useState<string>('#00f2ff');
+  useEffect(() => { if (ui.prefs.customAccent) setDraftAccent(ui.prefs.customAccent); }, [ui.prefs.customAccent]);
 
   if (!open) return null;
   const t = (he: string, en: string) => isRTL ? he : en;
