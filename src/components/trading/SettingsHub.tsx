@@ -3,7 +3,9 @@ import {
   User, Palette, LayoutDashboard, Calculator, Shield, SlidersHorizontal, Database,
   X, LogOut, Mail, KeyRound, Send, Download, Eye, EyeOff, Globe, GripVertical,
   Plus, Trash2, RotateCcw, Check, AlertTriangle, Sparkles, Search,
+  Volume2, VolumeX, Zap, Type, Brush, Target, Gauge,
 } from 'lucide-react';
+import { playMorningLock } from '@/lib/apex-sounds';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { ThemeId, OperatingMode, Lang } from '@/hooks/use-settings';
 import { useDashboardConfig, WIDGET_LABELS, evalCustomKPI, type CustomKPI } from '@/hooks/use-dashboard-config';
