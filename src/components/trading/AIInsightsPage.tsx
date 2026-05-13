@@ -561,8 +561,92 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
 
   /* ──── RENDER ──── */
 
+  // Elite SVG defs — referenced by url(#id) inside Recharts charts below.
+  // Rendered once, hidden, accessible to all chart SVGs as global defs.
+  const EliteDefs = (
+    <svg width="0" height="0" style={{ position: 'absolute', pointerEvents: 'none' }} aria-hidden>
+      <defs>
+        <linearGradient id="orca-g-cyan" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.95} />
+          <stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.05} />
+        </linearGradient>
+        <linearGradient id="orca-g-cyan-bar" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={T.accent.cyan} stopOpacity={1} />
+          <stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.35} />
+        </linearGradient>
+        <linearGradient id="orca-g-green" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={T.accent.green} stopOpacity={1} />
+          <stop offset="100%" stopColor={T.accent.green} stopOpacity={0.25} />
+        </linearGradient>
+        <linearGradient id="orca-g-red" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={T.accent.red} stopOpacity={1} />
+          <stop offset="100%" stopColor={T.accent.red} stopOpacity={0.25} />
+        </linearGradient>
+        <linearGradient id="orca-g-purple" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={T.accent.purple} stopOpacity={0.9} />
+          <stop offset="100%" stopColor={T.accent.purple} stopOpacity={0.08} />
+        </linearGradient>
+        <linearGradient id="orca-g-orange" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={T.accent.orange} stopOpacity={1} />
+          <stop offset="100%" stopColor={T.accent.orange} stopOpacity={0.2} />
+        </linearGradient>
+        <radialGradient id="orca-g-radial" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.7} />
+          <stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0} />
+        </radialGradient>
+        <filter id="orca-glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="3.5" result="b" />
+          <feMerge>
+            <feMergeNode in="b" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        <filter id="orca-shadow" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="0" dy="3" stdDeviation="4" floodColor={T.accent.cyan} floodOpacity="0.35" />
+        </filter>
+      </defs>
+    </svg>
+  );
+
+  // Elite chart frame — premium header, badges, divider strip
+  const Frame: React.FC<{
+    title: string; subtitle?: string; tone?: 'cyan' | 'green' | 'red' | 'purple' | 'orange';
+    badge?: string | number; children: React.ReactNode;
+  }> = ({ title, subtitle, tone = 'cyan', badge, children }) => {
+    const tColor = tone === 'green' ? T.accent.green : tone === 'red' ? T.accent.red
+      : tone === 'purple' ? T.accent.purple : tone === 'orange' ? T.accent.orange : T.accent.cyan;
+    return (
+      <GlassCard T={T} style={{ padding: 0, overflow: 'hidden', position: 'relative' }}>
+        <div style={{
+          height: 2, background: `linear-gradient(90deg, transparent, ${tColor}, transparent)`,
+          opacity: 0.7,
+        }} />
+        <div style={{ padding: '14px 16px 6px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{
+              fontSize: 9.5, color: T.text.dim, textTransform: 'uppercase',
+              letterSpacing: '0.22em', marginBottom: 3, fontFamily: "'JetBrains Mono', monospace",
+            }}>{tone.toUpperCase()} · ANALYSIS</div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: T.text.primary, letterSpacing: '-0.01em' }}>{title}</div>
+            {subtitle && <div style={{ fontSize: 10.5, color: T.text.muted, marginTop: 2 }}>{subtitle}</div>}
+          </div>
+          {badge !== undefined && (
+            <div style={{
+              padding: '4px 10px', borderRadius: 999, fontSize: 10,
+              fontWeight: 800, fontFamily: "'JetBrains Mono', monospace",
+              background: `${tColor}18`, color: tColor, border: `1px solid ${tColor}40`,
+              flexShrink: 0,
+            }}>{badge}</div>
+          )}
+        </div>
+        <div style={{ padding: '4px 8px 12px' }}>{children}</div>
+      </GlassCard>
+    );
+  };
+
   return (
     <div dir="rtl" style={{ fontFamily: "'Heebo', 'Inter', sans-serif" }}>
+      {EliteDefs}
       {/* HERO — central motherboard button */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 16px 28px' }}>
         <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.3em', marginBottom: 6 }}>
