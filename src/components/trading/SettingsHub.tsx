@@ -1,12 +1,16 @@
 import { useState, useRef } from 'react';
 import type { TradingTheme } from '@/lib/trading-theme';
-import type { ThemeId, OperatingMode } from '@/hooks/use-settings';
+import type { ThemeId, OperatingMode, Lang } from '@/hooks/use-settings';
 import { useDashboardConfig, WIDGET_LABELS, evalCustomKPI, type CustomKPI, type WidgetId } from '@/hooks/use-dashboard-config';
 import type { TradingStats } from '@/lib/trading-analytics';
 import { useRiskLimits } from '@/hooks/use-risk-limits';
 import { DEFAULT_RISK_LIMITS } from '@/lib/risk-limits';
 import { useUIPrefs } from '@/hooks/use-ui-prefs';
 import { useAuth } from '@/hooks/use-auth';
+import { supabase } from '@/integrations/supabase/client';
+import { translateAuthError } from '@/lib/auth-utils';
+import { toast } from 'sonner';
+import type { Trade } from '@/data/trades';
 
 interface SettingsHubProps {
   T: TradingTheme;
@@ -16,9 +20,14 @@ interface SettingsHubProps {
   theme: ThemeId;
   setTheme: (t: ThemeId) => void;
   stats: TradingStats;
+  lang: Lang;
+  setLang: (l: Lang) => void;
+  privacyMode: boolean;
+  setPrivacyMode: (p: boolean) => void;
+  trades: Trade[];
 }
 
-type TabId = 'theme' | 'dashboard' | 'kpis' | 'risk' | 'interface';
+type TabId = 'account' | 'theme' | 'dashboard' | 'kpis' | 'risk' | 'interface' | 'data';
 
 const THEME_OPTIONS: { id: ThemeId; label: { he: string; en: string }; icon: string; preview: string[] }[] = [
   { id: 'midnight', label: { he: 'חצות', en: 'Midnight' }, icon: '🌙', preview: ['#020202', '#00f2ff', '#3b82f6'] },
@@ -31,8 +40,8 @@ const TOKEN_LIST = [
   'avgWin', 'avgLoss', 'expectancy', 'profitFactor', 'maxDrawdown', 'totalR',
 ];
 
-export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats }: SettingsHubProps) {
-  const [tab, setTab] = useState<TabId>('theme');
+export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, lang, setLang, privacyMode, setPrivacyMode, trades }: SettingsHubProps) {
+  const [tab, setTab] = useState<TabId>('account');
   const dash = useDashboardConfig();
   const ui = useUIPrefs();
   const riskCfg = useRiskLimits();
@@ -41,6 +50,11 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats }:
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
   const [newKpi, setNewKpi] = useState<Partial<CustomKPI>>({ label: '', formula: '', format: 'number' });
+  const [newPassword, setNewPassword] = useState('');
+  const [newPasswordConfirm, setNewPasswordConfirm] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [pwBusy, setPwBusy] = useState(false);
+  const [emailBusy, setEmailBusy] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
 
   if (!open) return null;
@@ -146,15 +160,160 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats }:
               width: 30, height: 30, borderRadius: T.radius.sm, cursor: 'pointer', fontSize: 14 }}>✕</button>
         </div>
 
-        <div style={tabBar}>
+        {/* Quick toggles row — accessible from any tab */}
+        <div style={{ display: 'flex', gap: 8, padding: '10px 24px', borderBottom: `1px solid ${T.border.subtle}`, background: T.bg.primary, flexWrap: 'wrap' }}>
+          <button onClick={() => setLang(lang === 'he' ? 'en' : 'he')} style={{
+            display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: T.radius.sm,
+            background: `${T.accent.blue}10`, border: `1px solid ${T.accent.blue}30`, color: T.accent.blue,
+            cursor: 'pointer', fontSize: 11, fontWeight: 700,
+          }}>🌐 {lang === 'he' ? 'English' : 'עברית'}</button>
+          <button onClick={() => setPrivacyMode(!privacyMode)} style={{
+            display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: T.radius.sm,
+            background: privacyMode ? `${T.accent.orange}15` : `${T.accent.cyan}10`,
+            border: `1px solid ${privacyMode ? T.accent.orange : T.accent.cyan}30`,
+            color: privacyMode ? T.accent.orange : T.accent.cyan,
+            cursor: 'pointer', fontSize: 11, fontWeight: 700,
+          }}>{privacyMode ? '🔒' : '👁️'} {privacyMode ? t('פרטיות מופעלת', 'Privacy ON') : t('פרטיות כבויה', 'Privacy OFF')}</button>
+          <div style={{ marginInlineStart: 'auto', fontSize: 10, color: T.text.muted, alignSelf: 'center', fontFamily: "'IBM Plex Mono', monospace" }}>
+            {auth.user?.email ?? '—'}
+          </div>
+        </div>
+
+        <div style={{ ...tabBar, overflowX: 'auto', flexWrap: 'nowrap' as const }}>
+          <button style={tabBtn(tab === 'account')} onClick={() => setTab('account')}>👤 {t('חשבון', 'Account')}</button>
           <button style={tabBtn(tab === 'theme')} onClick={() => setTab('theme')}>🎨 {t('ערכת נושא', 'Theme')}</button>
           <button style={tabBtn(tab === 'dashboard')} onClick={() => setTab('dashboard')}>📊 {t('דאשבורד', 'Dashboard')}</button>
-          <button style={tabBtn(tab === 'kpis')} onClick={() => setTab('kpis')}>🧮 {t('KPI מותאמים', 'Custom KPIs')}</button>
-          <button style={tabBtn(tab === 'risk')} onClick={() => setTab('risk')}>🛡️ {t('סיכון', 'Risk Limits')}</button>
+          <button style={tabBtn(tab === 'kpis')} onClick={() => setTab('kpis')}>🧮 {t('KPI', 'KPIs')}</button>
+          <button style={tabBtn(tab === 'risk')} onClick={() => setTab('risk')}>🛡️ {t('סיכון', 'Risk')}</button>
           <button style={tabBtn(tab === 'interface')} onClick={() => setTab('interface')}>🧩 {t('ממשק', 'Interface')}</button>
+          <button style={tabBtn(tab === 'data')} onClick={() => setTab('data')}>💾 {t('נתונים', 'Data')}</button>
         </div>
 
         <div style={body}>
+          {tab === 'account' && (() => {
+            const handleChangePassword = async () => {
+              if (newPassword.length < 6) { toast.error(t('סיסמה חייבת להכיל לפחות 6 תווים', 'Password must be at least 6 characters')); return; }
+              if (newPassword !== newPasswordConfirm) { toast.error(t('הסיסמאות אינן תואמות', 'Passwords do not match')); return; }
+              setPwBusy(true);
+              try {
+                const { error } = await supabase.auth.updateUser({ password: newPassword });
+                if (error) throw error;
+                toast.success(t('הסיסמה עודכנה בהצלחה', 'Password updated successfully'));
+                setNewPassword(''); setNewPasswordConfirm('');
+              } catch (err) {
+                toast.error(translateAuthError(err instanceof Error ? err.message : String(err)));
+              } finally { setPwBusy(false); }
+            };
+            const handleChangeEmail = async () => {
+              if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail.trim())) { toast.error(t('כתובת אימייל לא תקינה', 'Invalid email')); return; }
+              setEmailBusy(true);
+              try {
+                const { error } = await supabase.auth.updateUser({ email: newEmail.trim() });
+                if (error) throw error;
+                toast.success(t('נשלח אימייל אישור לכתובת החדשה', 'Confirmation email sent to the new address'));
+                setNewEmail('');
+              } catch (err) {
+                toast.error(translateAuthError(err instanceof Error ? err.message : String(err)));
+              } finally { setEmailBusy(false); }
+            };
+            const handleSendReset = async () => {
+              if (!auth.user?.email) return;
+              try {
+                const { error } = await supabase.auth.resetPasswordForEmail(auth.user.email, { redirectTo: `${window.location.origin}/reset-password` });
+                if (error) throw error;
+                toast.success(t('שלחנו לך מייל לאיפוס סיסמה', 'Password reset email sent'));
+              } catch (err) {
+                toast.error(translateAuthError(err instanceof Error ? err.message : String(err)));
+              }
+            };
+            const fld: React.CSSProperties = { width: '100%', padding: '10px 12px', borderRadius: T.radius.sm, background: T.bg.tertiary, border: `1px solid ${T.border.subtle}`, color: T.text.primary, fontSize: 13, outline: 'none', fontFamily: "'IBM Plex Mono', monospace", boxSizing: 'border-box', direction: 'ltr' };
+            const sec: React.CSSProperties = { fontSize: 10, fontWeight: 800, letterSpacing: 1.5, color: T.text.muted, textTransform: 'uppercase', margin: '4px 0 10px' };
+            const card2: React.CSSProperties = { padding: 16, borderRadius: T.radius.md, background: T.bg.primary, border: `1px solid ${T.border.subtle}`, marginBottom: 14 };
+            const cta = (color: string): React.CSSProperties => ({ padding: '10px 16px', borderRadius: T.radius.sm, border: 'none', background: color, color: T.bg.primary, cursor: 'pointer', fontSize: 12, fontWeight: 800, letterSpacing: 0.5 });
+            return (
+              <div>
+                <div style={card2}>
+                  <div style={sec}>{t('פרטי משתמש', 'Profile')}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                    <div style={{ width: 56, height: 56, borderRadius: '50%', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.purple})`, display: 'grid', placeItems: 'center', fontSize: 22, fontWeight: 800, color: T.bg.primary }}>
+                      {(auth.user?.email || '?').charAt(0).toUpperCase()}
+                    </div>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: T.text.primary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} dir="ltr">{auth.user?.email ?? '—'}</div>
+                      <div style={{ fontSize: 10, color: T.text.muted, marginTop: 4, fontFamily: "'IBM Plex Mono', monospace" }}>ID: {auth.user?.id?.slice(0, 8)}…</div>
+                    </div>
+                    <button onClick={async () => { await auth.signOut(); window.location.href = '/auth'; }} style={{ padding: '8px 14px', borderRadius: T.radius.sm, background: `${T.accent.orange}10`, border: `1px solid ${T.accent.orange}40`, color: T.accent.orange, cursor: 'pointer', fontSize: 11, fontWeight: 800, letterSpacing: 1 }}>
+                      🚪 {t('התנתק', 'Sign out')}
+                    </button>
+                  </div>
+                </div>
+                <div style={card2}>
+                  <div style={sec}>🔑 {t('שינוי סיסמה', 'Change Password')}</div>
+                  <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder={t('סיסמה חדשה (לפחות 6 תווים)', 'New password (min 6 characters)')} autoComplete="new-password" style={{ ...fld, marginBottom: 8 }} />
+                  <input type="password" value={newPasswordConfirm} onChange={e => setNewPasswordConfirm(e.target.value)} placeholder={t('אימות סיסמה', 'Confirm password')} autoComplete="new-password" style={{ ...fld, marginBottom: 10 }} />
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button onClick={handleChangePassword} disabled={pwBusy || !newPassword || !newPasswordConfirm} style={{ ...cta(T.accent.cyan), opacity: (pwBusy || !newPassword) ? 0.5 : 1 }}>
+                      {pwBusy ? '…' : t('עדכן סיסמה', 'Update Password')}
+                    </button>
+                    <button onClick={handleSendReset} style={{ padding: '10px 14px', borderRadius: T.radius.sm, background: 'transparent', border: `1px solid ${T.border.medium}`, color: T.text.secondary, cursor: 'pointer', fontSize: 11, fontWeight: 700 }}>
+                      ✉️ {t('שלח מייל איפוס', 'Send reset email')}
+                    </button>
+                  </div>
+                </div>
+                <div style={card2}>
+                  <div style={sec}>📧 {t('שינוי כתובת אימייל', 'Change Email')}</div>
+                  <input type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder={t('כתובת אימייל חדשה', 'New email address')} autoComplete="email" style={{ ...fld, marginBottom: 10 }} />
+                  <button onClick={handleChangeEmail} disabled={emailBusy || !newEmail} style={{ ...cta(T.accent.blue), opacity: (emailBusy || !newEmail) ? 0.5 : 1 }}>
+                    {emailBusy ? '…' : t('עדכן אימייל', 'Update Email')}
+                  </button>
+                  <div style={{ fontSize: 10, color: T.text.muted, marginTop: 8, lineHeight: 1.5 }}>
+                    {t('תקבל/י אימייל אישור לכתובת החדשה. השינוי ייכנס לתוקף לאחר האישור.', 'You will receive a confirmation email at the new address. Change applies after confirmation.')}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+          {tab === 'data' && (() => {
+            const total = trades.length;
+            const wins = trades.filter(tr => tr.winLoss === 'Win').length;
+            const losses = trades.filter(tr => tr.winLoss === 'Loss').length;
+            const exportJson = () => {
+              const blob = new Blob([JSON.stringify({ exported_at: new Date().toISOString(), user_email: auth.user?.email, trades }, null, 2)], { type: 'application/json' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url; a.download = `orca-backup-${new Date().toISOString().slice(0, 10)}.json`; a.click();
+              URL.revokeObjectURL(url);
+              toast.success(t('הגיבוי הורד בהצלחה', 'Backup downloaded'));
+            };
+            const stat: React.CSSProperties = { padding: 14, borderRadius: T.radius.md, background: T.bg.primary, border: `1px solid ${T.border.subtle}`, textAlign: 'center' };
+            return (
+              <div>
+                <p style={{ color: T.text.muted, fontSize: 12, marginBottom: 14, lineHeight: 1.6 }}>
+                  {t('הנתונים שלך מאוחסנים בענן ומסונכרנים בין המכשירים. גבה גיבוי מקומי בכל עת.', 'Your data lives in the cloud and syncs across devices. Take a local backup any time.')}
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
+                  <div style={stat}>
+                    <div style={{ fontSize: 10, color: T.text.muted, letterSpacing: 1.5, textTransform: 'uppercase' }}>{t('סך עסקאות', 'Total')}</div>
+                    <div style={{ fontSize: 24, fontWeight: 800, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>{total}</div>
+                  </div>
+                  <div style={stat}>
+                    <div style={{ fontSize: 10, color: T.text.muted, letterSpacing: 1.5, textTransform: 'uppercase' }}>{t('זכיות', 'Wins')}</div>
+                    <div style={{ fontSize: 24, fontWeight: 800, color: T.accent.green, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>{wins}</div>
+                  </div>
+                  <div style={stat}>
+                    <div style={{ fontSize: 10, color: T.text.muted, letterSpacing: 1.5, textTransform: 'uppercase' }}>{t('הפסדים', 'Losses')}</div>
+                    <div style={{ fontSize: 24, fontWeight: 800, color: T.accent.red, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>{losses}</div>
+                  </div>
+                </div>
+                <button onClick={exportJson} style={{ width: '100%', padding: '14px 16px', borderRadius: T.radius.md, background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.blue})`, border: 'none', color: T.bg.primary, cursor: 'pointer', fontSize: 13, fontWeight: 800, letterSpacing: 0.5, marginBottom: 10 }}>
+                  💾 {t('הורד גיבוי מלא (JSON)', 'Download Full Backup (JSON)')}
+                </button>
+                <div style={{ fontSize: 10, color: T.text.muted, textAlign: 'center', lineHeight: 1.5 }}>
+                  {t('הגיבוי כולל את כל העסקאות והמטא-דאטה. שמור אותו במקום בטוח.', 'Includes all trades and metadata. Keep it somewhere safe.')}
+                </div>
+              </div>
+            );
+          })()}
           {tab === 'theme' && (
             <div>
               <p style={{ color: T.text.muted, fontSize: 12, marginBottom: 16 }}>

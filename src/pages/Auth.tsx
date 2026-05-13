@@ -43,8 +43,8 @@ export default function AuthPage() {
       toast.error('כתובת האימייל לא תקינה');
       return;
     }
-    if (mode === 'sign-up' && strength.score < 4) {
-      toast.error(PASSWORD_REQUIREMENTS);
+    if (mode === 'sign-up' && password.length < 6) {
+      toast.error('הסיסמה חייבת להכיל לפחות 6 תווים');
       return;
     }
     setBusy(true);
@@ -203,10 +203,10 @@ export default function AuthPage() {
             <input
               type={showPassword ? 'text' : 'password'}
               required
-              minLength={mode === 'sign-up' ? 8 : 6}
+              minLength={6}
               value={password}
               onChange={e => setPassword(e.target.value)}
-              placeholder={mode === 'sign-up' ? 'סיסמה (לפחות 8 תווים)' : 'סיסמה'}
+              placeholder={mode === 'sign-up' ? 'סיסמה (לפחות 6 תווים)' : 'סיסמה'}
               autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'}
               dir="ltr"
               style={{ ...inputStyle, paddingRight: 44, width: '100%' }}
@@ -236,38 +236,18 @@ export default function AuthPage() {
           </div>
 
           {mode === 'sign-up' && password.length > 0 && (
-            <div style={{ display: 'grid', gap: 8 }} dir="ltr">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ flex: 1, height: 4, background: 'rgba(120,160,220,0.12)', borderRadius: 999, overflow: 'hidden' }}>
-                  <div style={{
-                    width: `${(strength.score / 4) * 100}%`,
-                    height: '100%',
-                    background: strength.color,
-                    transition: 'width 0.25s ease, background 0.25s ease',
-                  }} />
-                </div>
-                <span style={{ fontSize: 11, color: strength.color, fontFamily: "'IBM Plex Mono', monospace", minWidth: 70, textAlign: 'right' }}>
-                  {strength.label}
-                </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} dir="ltr">
+              <div style={{ flex: 1, height: 4, background: 'rgba(120,160,220,0.12)', borderRadius: 999, overflow: 'hidden' }}>
+                <div style={{
+                  width: `${(strength.score / 4) * 100}%`,
+                  height: '100%',
+                  background: strength.color,
+                  transition: 'width 0.25s ease, background 0.25s ease',
+                }} />
               </div>
-              {strength.hints.length > 0 && (
-                <ul style={{
-                  margin: 0,
-                  paddingInlineStart: 18,
-                  fontSize: 11,
-                  color: '#90a3c0',
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  lineHeight: 1.6,
-                }}>
-                  <li style={{ color: '#cbd5e1', listStyle: 'none', marginBottom: 2, marginInlineStart: -18 }}>
-                    Password must include:
-                  </li>
-                  {strength.hints.map(h => <li key={h}>{h}</li>)}
-                  {strength.hints.length === 0 && (
-                    <li style={{ color: '#10b981' }}>All minimum requirements are met.</li>
-                  )}
-                </ul>
-              )}
+              <span style={{ fontSize: 11, color: strength.color, fontFamily: "'IBM Plex Mono', monospace", minWidth: 70, textAlign: 'right' }}>
+                {strength.label}
+              </span>
             </div>
           )}
 
