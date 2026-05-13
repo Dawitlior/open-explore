@@ -3982,6 +3982,13 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
     const curLang = langRef.current;
     setDays(prev => {
       const cur = prev.find(d => d.id === curId);
+      if (cur && typeof onUpsertJournalTrade === 'function') {
+        (cur.trades || [])
+          .filter(isMeaningfulJournalTrade)
+          .forEach(jtr => {
+            void onUpsertJournalTrade(String(jtr.id), buildJournalOrcaPayload(cur, jtr));
+          });
+      }
       const sealed = prev.map(d => d.id === curId ? { ...d, eodSaved: true } : d);
       const newDay = makeDay(curLang);
       const lastNum = parseInt(cur?.dayNum || '0') || 0;
@@ -3996,7 +4003,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
     });
     setED(false); setMD(false);
     showToast(langRef.current === 'he' ? '✓ יום נסגר — יום חדש נפתח' : '✓ Day sealed — new day opened', 'p');
-  }, [showToast]);
+  }, [showToast, onUpsertJournalTrade]);
 
   const sbDays = useMemo(() => {
     const q = sbQ.toLowerCase();
