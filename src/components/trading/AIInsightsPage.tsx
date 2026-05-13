@@ -58,6 +58,7 @@ const MotherboardButton: React.FC<{
   const accent = T.accent.cyan;
   return (
     <motion.button
+      data-mainframe-button
       onClick={onClick}
       disabled={loading}
       whileHover={loading ? {} : { scale: 1.03 }}
