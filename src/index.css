@@ -211,6 +211,15 @@
   body[data-dense-tables="1"] td,
   body[data-dense-tables="1"] th { padding-top: 4px !important; padding-bottom: 4px !important; }
 
+  /* Density posture — tightens / loosens global rhythm */
+  body[data-density="compact"]    { --orca-pad-y: 8px;  --orca-pad-x: 10px; --orca-gap: 8px;  }
+  body[data-density="comfortable"]{ --orca-pad-y: 12px; --orca-pad-x: 14px; --orca-gap: 12px; }
+  body[data-density="spacious"]   { --orca-pad-y: 18px; --orca-pad-x: 20px; --orca-gap: 18px; }
+  body[data-density="compact"] .orca-glass,
+  body[data-density="compact"] .orca-panel { padding: 12px !important; }
+  body[data-density="spacious"] .orca-glass,
+  body[data-density="spacious"] .orca-panel { padding: 24px !important; }
+
   .orca-panel {
     background: hsl(0 0% 4%);
     border: 1px solid hsl(0 0% 100% / 0.04);
