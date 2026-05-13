@@ -553,6 +553,37 @@ const makeDay = (lang = 'he'): JournalDay => {
 
 const sumPnl = (d: JournalDay) => (d.trades || []).reduce((s, t) => s + (parseFloat(t.pnl) || 0), 0);
 const numWins = (d: JournalDay) => (d.trades || []).filter(t => parseFloat(t.pnl) > 0).length;
+const isMeaningfulJournalTrade = (jtr: Partial<JournalTrade> | undefined | null) => {
+  const pair = String(jtr?.pair || '').trim();
+  const hasData = [jtr?.pair, jtr?.entry, jtr?.exit, jtr?.pnl, jtr?.rr, jtr?.size, jtr?.notes].some(v => {
+    if (typeof v === 'string' && v.trim().length > 0) return true;
+    const n = parseFloat(String(v ?? ''));
+    return Number.isFinite(n) && n !== 0;
+  });
+  return pair.length > 0 || hasData;
+};
+const buildJournalOrcaPayload = (day: JournalDay, jtr: JournalTrade): Omit<Trade, 'id' | 'balance'> => {
+  const nowTime = new Date().toTimeString().slice(0, 5);
+  const dateStr = `${safeDateStr(day.date)} ${nowTime}`;
+  const dayLabel = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(`${safeDateStr(day.date)}T12:00`).getDay()] || 'Mon';
+  const entry = parseFloat(jtr.entry) || 0;
+  const exit = parseFloat(jtr.exit) || 0;
+  const size = parseFloat(jtr.size) || 0;
+  const pnl = parseFloat(jtr.pnl) || 0;
+  const rr = getTradeR(jtr);
+  const winLoss: Trade['winLoss'] = pnl > 0.05 ? 'Win' : pnl < -0.05 ? 'Loss' : 'Break Even';
+  const direction: Trade['direction'] = (jtr.side === 'SHORT' || jtr.side === 'Short') ? 'Short' : 'Long';
+  return {
+    date: dateStr, day: dayLabel,
+    coin: (jtr.pair || 'JOURNAL').toString().toUpperCase().slice(0, 12),
+    direction, orderType: 'Market',
+    entry, stopLoss: 0, exit, returnR: rr,
+    winLoss, risk: Math.abs(pnl / Math.max(Math.abs(rr) || 1, 1)) || 0,
+    expectedLoss: 0, pnl, deviation: 0,
+    positionSize: size, leverage: 1, riskPct: 0, rules: true,
+    comments: `__JID:${jtr.id}__ ${jtr.notes || ''}`.trim(),
+  };
+};
 const fmtFull = (iso: string, locale: string) => {
   const safe = safeDateStr(iso);
   try { return new Date(safe + 'T12:00').toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); } catch { return safe; }
@@ -3352,19 +3383,19 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
 
   // Map of Journal-trade-id → Orca-trade-id, kept in a ref so it survives
   // every keystroke without depending on stale `orcaTrades` snapshots.
-  const jidMapRef = useRef<Map<number, number>>(new Map());
+  const jidMapRef = useRef<Map<string, number>>(new Map());
   // Per-jid in-flight guard so rapid edits don't create duplicate Orca trades.
-  const inFlightRef = useRef<Set<number>>(new Set());
-  const pendingRef = useRef<Set<number>>(new Set());
-  const latestRowsRef = useRef<Map<number, any>>(new Map());
+  const inFlightRef = useRef<Set<string>>(new Set());
+  const pendingRef = useRef<Set<string>>(new Set());
+  const latestRowsRef = useRef<Map<string, any>>(new Map());
   const syncRowRef = useRef<(jtr: any) => void>(() => {});
 
   // Keep the map fresh from props (covers reloads / external changes).
   useEffect(() => {
     const map = jidMapRef.current;
     (bridgeTrades || []).forEach((o: Trade) => {
-      const m = typeof o.comments === 'string' ? o.comments.match(/__JID:(\d+)__/) : null;
-      if (m) map.set(parseInt(m[1], 10), o.id);
+      const m = typeof o.comments === 'string' ? o.comments.match(/__JID:([^_]+)__/ ) : null;
+      if (m) map.set(m[1], o.id);
     });
     pendingRef.current.forEach(jid => {
       const linkedId = map.get(jid);
@@ -3377,27 +3408,7 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
 
   // Build a "snapshot" of an Orca trade derived from a Journal trade row.
   const buildOrcaPayload = (jtr: any): Omit<Trade, 'id' | 'balance'> => {
-    const nowTime = new Date().toTimeString().slice(0, 5);
-    const dateStr = `${safeDateStr(day.date)} ${nowTime}`;
-    const dayLabel = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date((day.date || '').replace(' ', 'T')).getDay()] || 'Mon';
-    const entry = parseFloat(jtr.entry) || 0;
-    const exit = parseFloat(jtr.exit) || 0;
-    const size = parseFloat(jtr.size) || 0;
-    const pnl = parseFloat(jtr.pnl) || 0;
-    const rr = parseFloat(jtr.rr) || 0;
-    const winLoss: Trade['winLoss'] = pnl > 0.05 ? 'Win' : pnl < -0.05 ? 'Loss' : 'Break Even';
-    const direction: Trade['direction'] = (jtr.side === 'SHORT' || jtr.side === 'Short') ? 'Short' : 'Long';
-    return {
-      date: dateStr, day: dayLabel,
-      coin: (jtr.pair || 'JOURNAL').toString().toUpperCase().slice(0, 12),
-      direction, orderType: 'Market',
-      entry, stopLoss: 0, exit, returnR: rr,
-      winLoss, risk: Math.abs(pnl / Math.max(rr || 1, 1)) || 0,
-      expectedLoss: 0, pnl, deviation: 0,
-      positionSize: size, leverage: 1, riskPct: 0, rules: true,
-      // Tag with the Journal trade id so we can find & update the mirror.
-      comments: `__JID:${jtr.id}__ ${jtr.notes || ''}`.trim(),
-    };
+    return buildJournalOrcaPayload(day, jtr);
   };
 
   const addTrade = () => {
@@ -3411,53 +3422,48 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
   // Sync a single journal-trade edit to its linked Orca trade (or create one if missing).
   // Treats Journal trades as first-class siblings of Orca trades — full bidirectional bridge.
   const isMeaningful = (jtr: any) => {
-    const pair = String(jtr?.pair || '').trim();
-    const hasData = [jtr?.pair, jtr?.entry, jtr?.exit, jtr?.pnl, jtr?.rr, jtr?.size, jtr?.notes].some(v => {
-      if (typeof v === 'string' && v.trim().length > 0) return true;
-      const n = parseFloat(v);
-      return Number.isFinite(n) && n !== 0;
-    });
-    return pair.length > 0 || hasData;
+    return isMeaningfulJournalTrade(jtr);
   };
   const syncRowToOrca = async (jtr: any) => {
     if (!isMeaningful(jtr)) return;
-    latestRowsRef.current.set(jtr.id, jtr);
+    const jid = String(jtr.id);
+    latestRowsRef.current.set(jid, jtr);
     if (typeof onUpsertJournalTrade === 'function') {
       try {
-        const saved = await onUpsertJournalTrade(jtr.id, buildOrcaPayload(jtr));
-        if (saved && typeof saved === 'object' && 'id' in saved) jidMapRef.current.set(jtr.id, (saved as Trade).id);
+        const saved = await onUpsertJournalTrade(jid, buildOrcaPayload(jtr));
+        if (saved && typeof saved === 'object' && 'id' in saved) jidMapRef.current.set(jid, (saved as Trade).id);
       } catch { /* fallback to legacy bridge below */ }
       return;
     }
     const map = jidMapRef.current;
-    const linkedId = map.get(jtr.id);
+    const linkedId = map.get(jid);
     const linked = linkedId != null
       ? (bridgeTrades || []).find((o: Trade) => o.id === linkedId)
       : (bridgeTrades || []).find((o: Trade) => typeof o.comments === 'string' && o.comments.includes(`__JID:${jtr.id}__`));
 
-    if (linkedId != null && !linked) { pendingRef.current.add(jtr.id); return; }
+    if (linkedId != null && !linked) { pendingRef.current.add(jid); return; }
 
     if (linked && typeof onUpdateOrcaTrade === 'function') {
       try {
         const payload = buildOrcaPayload(jtr);
         await onUpdateOrcaTrade({ ...linked, ...payload });
-        map.set(jtr.id, linked.id);
+        map.set(jid, linked.id);
       } catch { /* silent */ }
       return;
     }
     if (typeof onAddOrcaTrade !== 'function') return;
-    if (inFlightRef.current.has(jtr.id)) { pendingRef.current.add(jtr.id); return; }
-    inFlightRef.current.add(jtr.id);
+    if (inFlightRef.current.has(jid)) { pendingRef.current.add(jid); return; }
+    inFlightRef.current.add(jid);
     try {
       const created = await onAddOrcaTrade(buildOrcaPayload(jtr));
       const newId = (created && typeof created === 'object' && 'id' in (created as any))
         ? (created as Trade).id : null;
-      if (newId != null) map.set(jtr.id, newId);
+      if (newId != null) map.set(jid, newId);
     } catch { /* silent */ }
     finally {
-      inFlightRef.current.delete(jtr.id);
-      if (pendingRef.current.delete(jtr.id)) {
-        const latest = latestRowsRef.current.get(jtr.id);
+      inFlightRef.current.delete(jid);
+      if (pendingRef.current.delete(jid)) {
+        const latest = latestRowsRef.current.get(jid);
         if (latest) setTimeout(() => syncRowRef.current(latest), 0);
       }
     }
@@ -3852,7 +3858,7 @@ interface JournalDimensionProps {
   /** Optional bridge: when set, journal trade edits update the linked Orca trade. */
   onUpdateOrcaTrade?: (trade: Trade) => Promise<unknown> | void;
   /** Guaranteed bridge: creates or updates the Orca mirror by Journal trade id. */
-  onUpsertJournalTrade?: (journalTradeId: number, trade: Omit<Trade, 'id' | 'balance'>) => Promise<unknown> | void;
+  onUpsertJournalTrade?: (journalTradeId: number | string, trade: Omit<Trade, 'id' | 'balance'>) => Promise<unknown> | void;
 }
 
 export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, onUpdateOrcaTrade, onUpsertJournalTrade }: JournalDimensionProps) => {
@@ -3937,6 +3943,14 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
 
       // Check risk after trade updates
       if ('trades' in patch) {
+        const updatedDay = next.find(d => d.id === curId);
+        if (updatedDay && typeof onUpsertJournalTrade === 'function') {
+          (updatedDay.trades || [])
+            .filter(isMeaningfulJournalTrade)
+            .forEach(jtr => {
+              void onUpsertJournalTrade(String(jtr.id), buildJournalOrcaPayload(updatedDay, jtr));
+            });
+        }
         const newRisk = checkJournalRisk(next);
         if (newRisk.breachedLevel !== 'none') {
           setRiskAlertShown(true);
@@ -3947,7 +3961,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
     });
     if (Object.keys(patch).some(k => MORNING_KEYS.has(k))) setMD(true);
     else setED(true);
-  }, []);
+  }, [onUpsertJournalTrade]);
 
   const showToast = useCallback((msg: string, type = 'g') => {
     clearTimeout(tRef.current);
@@ -3976,6 +3990,13 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
     const curLang = langRef.current;
     setDays(prev => {
       const cur = prev.find(d => d.id === curId);
+      if (cur && typeof onUpsertJournalTrade === 'function') {
+        (cur.trades || [])
+          .filter(isMeaningfulJournalTrade)
+          .forEach(jtr => {
+            void onUpsertJournalTrade(String(jtr.id), buildJournalOrcaPayload(cur, jtr));
+          });
+      }
       const sealed = prev.map(d => d.id === curId ? { ...d, eodSaved: true } : d);
       const newDay = makeDay(curLang);
       const lastNum = parseInt(cur?.dayNum || '0') || 0;
@@ -3990,7 +4011,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
     });
     setED(false); setMD(false);
     showToast(langRef.current === 'he' ? '✓ יום נסגר — יום חדש נפתח' : '✓ Day sealed — new day opened', 'p');
-  }, [showToast]);
+  }, [showToast, onUpsertJournalTrade]);
 
   const sbDays = useMemo(() => {
     const q = sbQ.toLowerCase();
@@ -4057,6 +4078,24 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
       return merged;
     });
   }, [orcaTrades, loaded]);
+
+  // Backfill: if Journal trades already exist but their Orca mirrors are missing
+  // (for example trades created before the bridge fix), sync them on load.
+  useEffect(() => {
+    if (!loaded || typeof onUpsertJournalTrade !== 'function') return;
+    const mirroredJids = new Set(
+      (orcaTrades || [])
+        .map(tr => (typeof tr.comments === 'string' ? tr.comments.match(/__JID:([^_]+)__/ )?.[1] : null))
+        .filter(Boolean) as string[]
+    );
+    days.forEach(day => {
+      (day.trades || [])
+        .filter(jtr => isMeaningfulJournalTrade(jtr) && !mirroredJids.has(String(jtr.id)))
+        .forEach(jtr => {
+          void onUpsertJournalTrade(String(jtr.id), buildJournalOrcaPayload(day, jtr));
+        });
+    });
+  }, [loaded, days, orcaTrades, onUpsertJournalTrade]);
 
   // Bridge: Orca trades filtered by the displayed journal day's date.
   // Recomputes whenever a new Orca trade is added — live sync.
