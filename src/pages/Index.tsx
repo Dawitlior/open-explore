@@ -1358,16 +1358,18 @@ const Index = () => {
   const renderAnalytics = () => {
     if (trades.length === 0) return null;
     return (
-      <AdvancedAnalyticsPage
-        T={T}
-        isRTL={isRTL}
-        isAlpha={isAlpha}
-        operatingMode={opMode}
-        trades={trades}
-        stats={stats}
-        privacyMode={settings.privacyMode}
-        onExplainClick={handleExplainClick}
-      />
+      <LazyShell>
+        <AdvancedAnalyticsPage
+          T={T}
+          isRTL={isRTL}
+          isAlpha={isAlpha}
+          operatingMode={opMode}
+          trades={trades}
+          stats={stats}
+          privacyMode={settings.privacyMode}
+          onExplainClick={handleExplainClick}
+        />
+      </LazyShell>
     );
   };
 
@@ -1381,37 +1383,41 @@ const Index = () => {
   const renderRisk = () => {
     if (trades.length === 0) return null;
     return (
-      <AdvancedRiskPage
-        T={T}
-        isRTL={isRTL}
-        isAlpha={isAlpha}
-        operatingMode={opMode}
-        customLimits={customRiskLimits}
-        trades={trades}
-        stats={stats}
-        riskData={riskData}
-        onExplainClick={handleExplainClick}
-        riskExplanations={riskExplanations}
-      />
+      <LazyShell>
+        <AdvancedRiskPage
+          T={T}
+          isRTL={isRTL}
+          isAlpha={isAlpha}
+          operatingMode={opMode}
+          customLimits={customRiskLimits}
+          trades={trades}
+          stats={stats}
+          riskData={riskData}
+          onExplainClick={handleExplainClick}
+          riskExplanations={riskExplanations}
+        />
+      </LazyShell>
     );
   };
 
   const renderPsychology = () => {
     if (trades.length === 0) return null;
     return (
-      <AdvancedPsychologyPage
-        T={T}
-        isRTL={isRTL}
-        isAlpha={isAlpha}
-        operatingMode={opMode}
-        trades={trades}
-        stats={stats}
-        onExplainClick={handleExplainClick}
-      />
+      <LazyShell>
+        <AdvancedPsychologyPage
+          T={T}
+          isRTL={isRTL}
+          isAlpha={isAlpha}
+          operatingMode={opMode}
+          trades={trades}
+          stats={stats}
+          onExplainClick={handleExplainClick}
+        />
+      </LazyShell>
     );
   };
 
-  const renderAI = () => <AIInsightsPage T={T} trades={trades} />;
+  const renderAI = () => <LazyShell><AIInsightsPage T={T} trades={trades} /></LazyShell>;
 
 
   // Portal pulse animation
