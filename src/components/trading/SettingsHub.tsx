@@ -780,8 +780,6 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                     <h3 style={sectionTitle}><SlidersHorizontal size={14} /> {t('הסתרת אלמנטים', 'Hide UI elements')}</h3>
                     <p style={sectionHint}>{t('צמצום הממשק לפעולות הליבה שלך.', 'Reduce the interface to your core actions.')}</p>
                     <Toggle on={p.hideQuickActions} onClick={() => ui.setPrefs({ hideQuickActions: !p.hideQuickActions })} label={t('הסתר Quick Actions', 'Hide Quick Actions')} />
-                    <Toggle on={p.hideMarketTime} onClick={() => ui.setPrefs({ hideMarketTime: !p.hideMarketTime })} label={t('הסתר שעון שוק', 'Hide market clock')} />
-                    <Toggle on={p.hideThemeSwitch} onClick={() => ui.setPrefs({ hideThemeSwitch: !p.hideThemeSwitch })} label={t('הסתר מתג Theme', 'Hide theme switch')} />
                     <Toggle on={p.hideDepthSwitch} onClick={() => ui.setPrefs({ hideDepthSwitch: !p.hideDepthSwitch })} label={t('הסתר מתג Standard/Alpha', 'Hide Standard/Alpha switch')} />
                   </div>
 
