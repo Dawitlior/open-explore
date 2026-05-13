@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getSetting, setSetting } from '@/lib/storage';
 import type { OperatingMode } from '@/hooks/use-settings';
-import { applyCustomAccent, clearCustomAccent } from '@/lib/trading-theme';
+import { applyDerivedPalette, clearCustomAccent } from '@/lib/trading-theme';
 
 export type DensityLevel = 'compact' | 'comfortable' | 'spacious';
 
@@ -19,17 +19,18 @@ export interface UIPrefs {
   reduceMotion: boolean;
   denseTables: boolean;
 
-  // ── NEW: functional UX prefs ──────────────────────
-  density: DensityLevel;          // global spacing posture
-  fontScale: number;              // 0.85 .. 1.15 (1 = default)
-  soundsEnabled: boolean;         // master sound switch
-  soundVolume: number;            // 0..1
-  // Custom accent — a single hex applied on top of the active theme
+  density: DensityLevel;
+  fontScale: number;
+  soundsEnabled: boolean;
+  soundVolume: number;
+
+  // Custom theme — derived full palette
   customAccentEnabled: boolean;
-  customAccent: string;           // "#00f2ff"
-  // Trading defaults
-  defaultRiskPercent: number;     // 0.25..5
-  defaultRMultiple: number;       // 1..5
+  customAccent: string;            // committed hex (drives DOM)
+  customAccentLockedUntil: number; // ms timestamp
+
+  defaultRiskPercent: number;
+  defaultRMultiple: number;
 }
 
 const DEFAULTS: UIPrefs = {
@@ -51,13 +52,14 @@ const DEFAULTS: UIPrefs = {
   soundVolume: 0.7,
   customAccentEnabled: false,
   customAccent: '#00f2ff',
+  customAccentLockedUntil: 0,
   defaultRiskPercent: 1,
   defaultRMultiple: 2,
 };
 
 const KEY = 'uiPrefs';
+export const THEME_LOCK_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-// Expose a tiny global hook so non-React modules (apex-sounds) can read prefs
 declare global {
   interface Window {
     __orcaPrefs?: { soundsEnabled: boolean; soundVolume: number };
@@ -75,7 +77,6 @@ export function useUIPrefs() {
     });
   }, []);
 
-  // Apply prefs that have global DOM/window side-effects
   useEffect(() => {
     if (typeof document === 'undefined') return;
     const body = document.body;
@@ -85,14 +86,12 @@ export function useUIPrefs() {
     document.documentElement.style.setProperty('--orca-font-scale', String(prefs.fontScale));
     document.documentElement.style.fontSize = `${16 * prefs.fontScale}px`;
 
-    // Sound bridge for non-React modules
     if (typeof window !== 'undefined') {
       window.__orcaPrefs = { soundsEnabled: prefs.soundsEnabled, soundVolume: prefs.soundVolume };
     }
 
-    // Custom accent
     if (prefs.customAccentEnabled && prefs.customAccent) {
-      applyCustomAccent(prefs.customAccent);
+      applyDerivedPalette(prefs.customAccent);
     } else {
       clearCustomAccent();
     }
@@ -125,5 +124,41 @@ export function useUIPrefs() {
     setSetting(KEY, DEFAULTS);
   }, []);
 
-  return { prefs, setPrefs, toggleHiddenMode, reset, loaded };
+  /** Commit a new custom accent and lock it for 7 days. */
+  const commitCustomAccent = useCallback((hex: string) => {
+    const now = Date.now();
+    setPrefsState(prev => {
+      if (prev.customAccentLockedUntil > now) return prev; // still locked
+      const next: UIPrefs = {
+        ...prev,
+        customAccent: hex,
+        customAccentEnabled: true,
+        customAccentLockedUntil: now + THEME_LOCK_MS,
+      };
+      setSetting(KEY, next);
+      return next;
+    });
+  }, []);
+
+  /** Force-clear custom accent (also resets lock). */
+  const removeCustomAccent = useCallback(() => {
+    setPrefsState(prev => {
+      const next: UIPrefs = {
+        ...prev,
+        customAccentEnabled: false,
+        customAccentLockedUntil: 0,
+      };
+      setSetting(KEY, next);
+      return next;
+    });
+  }, []);
+
+  const themeLockMsRemaining = Math.max(0, prefs.customAccentLockedUntil - Date.now());
+  const themeLocked = themeLockMsRemaining > 0;
+
+  return {
+    prefs, setPrefs, toggleHiddenMode, reset, loaded,
+    commitCustomAccent, removeCustomAccent,
+    themeLocked, themeLockMsRemaining,
+  };
 }
