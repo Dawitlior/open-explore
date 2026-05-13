@@ -553,6 +553,37 @@ const makeDay = (lang = 'he'): JournalDay => {
 
 const sumPnl = (d: JournalDay) => (d.trades || []).reduce((s, t) => s + (parseFloat(t.pnl) || 0), 0);
 const numWins = (d: JournalDay) => (d.trades || []).filter(t => parseFloat(t.pnl) > 0).length;
+const isMeaningfulJournalTrade = (jtr: Partial<JournalTrade> | undefined | null) => {
+  const pair = String(jtr?.pair || '').trim();
+  const hasData = [jtr?.pair, jtr?.entry, jtr?.exit, jtr?.pnl, jtr?.rr, jtr?.size, jtr?.notes].some(v => {
+    if (typeof v === 'string' && v.trim().length > 0) return true;
+    const n = parseFloat(String(v ?? ''));
+    return Number.isFinite(n) && n !== 0;
+  });
+  return pair.length > 0 || hasData;
+};
+const buildJournalOrcaPayload = (day: JournalDay, jtr: JournalTrade): Omit<Trade, 'id' | 'balance'> => {
+  const nowTime = new Date().toTimeString().slice(0, 5);
+  const dateStr = `${safeDateStr(day.date)} ${nowTime}`;
+  const dayLabel = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(`${safeDateStr(day.date)}T12:00`).getDay()] || 'Mon';
+  const entry = parseFloat(jtr.entry) || 0;
+  const exit = parseFloat(jtr.exit) || 0;
+  const size = parseFloat(jtr.size) || 0;
+  const pnl = parseFloat(jtr.pnl) || 0;
+  const rr = getTradeR(jtr);
+  const winLoss: Trade['winLoss'] = pnl > 0.05 ? 'Win' : pnl < -0.05 ? 'Loss' : 'Break Even';
+  const direction: Trade['direction'] = (jtr.side === 'SHORT' || jtr.side === 'Short') ? 'Short' : 'Long';
+  return {
+    date: dateStr, day: dayLabel,
+    coin: (jtr.pair || 'JOURNAL').toString().toUpperCase().slice(0, 12),
+    direction, orderType: 'Market',
+    entry, stopLoss: 0, exit, returnR: rr,
+    winLoss, risk: Math.abs(pnl / Math.max(Math.abs(rr) || 1, 1)) || 0,
+    expectedLoss: 0, pnl, deviation: 0,
+    positionSize: size, leverage: 1, riskPct: 0, rules: true,
+    comments: `__JID:${jtr.id}__ ${jtr.notes || ''}`.trim(),
+  };
+};
 const fmtFull = (iso: string, locale: string) => {
   const safe = safeDateStr(iso);
   try { return new Date(safe + 'T12:00').toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); } catch { return safe; }
