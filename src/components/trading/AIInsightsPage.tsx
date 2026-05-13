@@ -737,137 +737,129 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12, marginBottom: 16 }}>
               {pack === 'radar+heat' && (
                 <>
-                  <GlassCard T={T}>
-                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>ראדאר DNA</div>
-                    <ResponsiveContainer width="100%" height={250}>
+                  <Frame title="ראדאר ה-DNA הסוחר" subtitle="ארבעה מימדים: אדג', משמעת, עקביות, התנהגות" tone="cyan" badge={`${analysis.dna.overall}/100`}>
+                    <ResponsiveContainer width="100%" height={290}>
                       <RadarChart data={dnaData}>
-                        <PolarGrid stroke={T.border.subtle} />
-                        <PolarAngleAxis dataKey="axis" tick={{ fill: T.text.secondary, fontSize: 11 }} />
-                        <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fill: T.text.muted, fontSize: 9 }} />
-                        <Radar dataKey="value" stroke={T.accent.cyan} fill={T.accent.cyan} fillOpacity={0.35} strokeWidth={2} />
+                        <defs>
+                          <radialGradient id="radar-fill">
+                            <stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.55} />
+                            <stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.05} />
+                          </radialGradient>
+                        </defs>
+                        <PolarGrid stroke={T.border.subtle} strokeDasharray="2 4" />
+                        <PolarAngleAxis dataKey="axis" tick={{ fill: T.text.secondary, fontSize: 12, fontWeight: 700 }} />
+                        <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fill: T.text.dim, fontSize: 9 }} stroke={T.border.subtle} />
+                        <Radar dataKey="value" stroke={T.accent.cyan} fill="url(#radar-fill)" strokeWidth={2.5} filter="url(#orca-glow)" />
                         <Tooltip contentStyle={tt} />
                       </RadarChart>
                     </ResponsiveContainer>
-                  </GlassCard>
-                  <GlassCard T={T}>
-                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>מפת ביצועים יום × שעה</div>
-                    <ResponsiveContainer width="100%" height={250}>
-                      <ScatterChart>
-                        <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
-                        <XAxis type="number" dataKey="hour" name="שעה" domain={[0, 23]} tick={{ fill: T.text.muted, fontSize: 10 }} />
+                  </Frame>
+                  <Frame title="מפת ביצועים: יום × שעה" subtitle="גודל הנקודה = מספר עסקאות, צבע = רווח/הפסד" tone="purple" badge={`${heatData.length} buckets`}>
+                    <ResponsiveContainer width="100%" height={290}>
+                      <ScatterChart margin={{ top: 8, right: 14, left: 0, bottom: 8 }}>
+                        <CartesianGrid stroke={T.border.subtle} strokeDasharray="2 4" />
+                        <XAxis type="number" dataKey="hour" name="שעה" domain={[0, 23]} ticks={[0, 4, 8, 12, 16, 20]} tick={{ fill: T.text.muted, fontSize: 10 }} label={{ value: 'שעה', position: 'insideBottom', offset: -2, fill: T.text.dim, fontSize: 10 }} />
                         <YAxis type="number" dataKey="day" name="יום" domain={[0, 6]} tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(d) => ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'][d] || ''} />
-                        <ZAxis type="number" dataKey="n" range={[40, 400]} />
-                        <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} />
+                        <ZAxis type="number" dataKey="n" range={[60, 520]} />
+                        <Tooltip contentStyle={tt} cursor={{ stroke: T.accent.cyan, strokeOpacity: 0.3, strokeDasharray: '3 3' }} />
                         <Scatter data={heatData}>
                           {heatData.map((d, i) => (
-                            <Cell key={i} fill={d.avgR >= 0 ? T.accent.green : T.accent.red} fillOpacity={0.7} />
+                            <Cell key={i} fill={d.avgR >= 0 ? T.accent.green : T.accent.red} fillOpacity={0.78} stroke={d.avgR >= 0 ? T.accent.green : T.accent.red} />
                           ))}
                         </Scatter>
                       </ScatterChart>
                     </ResponsiveContainer>
-                  </GlassCard>
+                  </Frame>
                 </>
               )}
 
               {pack === 'scatter+treemap' && (
                 <>
-                  <GlassCard T={T}>
-                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>סיכון מול תשואה</div>
-                    <ResponsiveContainer width="100%" height={250}>
-                      <ScatterChart>
-                        <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+                  <Frame title="סיכון מול תשואה" subtitle="גילוי קלאסטרים — היכן ה-edge האמיתי שלך" tone="cyan" badge={`r-pearson`}>
+                    <ResponsiveContainer width="100%" height={290}>
+                      <ScatterChart margin={{ top: 8, right: 14, left: 0, bottom: 8 }}>
+                        <CartesianGrid stroke={T.border.subtle} strokeDasharray="2 4" />
                         <XAxis type="number" dataKey="risk" name="סיכון $" tick={{ fill: T.text.muted, fontSize: 10 }} />
                         <YAxis type="number" dataKey="pnl" name="P&L $" tick={{ fill: T.text.muted, fontSize: 10 }} />
-                        <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} />
+                        <Tooltip contentStyle={tt} cursor={{ stroke: T.accent.cyan, strokeOpacity: 0.3 }} />
                         <Scatter data={scatterData}>
                           {scatterData.map((d, i) => (
-                            <Cell key={i} fill={d.win ? T.accent.green : T.accent.red} fillOpacity={0.75} />
+                            <Cell key={i} fill={d.win ? T.accent.green : T.accent.red} fillOpacity={0.8} />
                           ))}
                         </Scatter>
                       </ScatterChart>
                     </ResponsiveContainer>
-                  </GlassCard>
-                  <GlassCard T={T}>
-                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>מפת חשיפה לפי נכס</div>
-                    <ResponsiveContainer width="100%" height={250}>
+                  </Frame>
+                  <Frame title="מפת חשיפה לפי נכס" subtitle="ריכוז סיכון — איפה אתה מוטה" tone="purple" badge={`${treemapData.length} assets`}>
+                    <ResponsiveContainer width="100%" height={290}>
                       <Treemap
                         data={treemapData}
                         dataKey="size"
                         stroke={T.bg.primary}
-                        fill={T.accent.cyan}
+                        fill="url(#orca-g-purple)"
                       />
                     </ResponsiveContainer>
-                  </GlassCard>
+                  </Frame>
                 </>
               )}
 
               {pack === 'monthly+rolling' && (
                 <>
-                  <GlassCard T={T}>
-                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>אבולוציית תוחלת חודשית</div>
-                    <ResponsiveContainer width="100%" height={250}>
-                      <ComposedChart data={monthlyData}>
-                        <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+                  <Frame title="אבולוציית תוחלת חודשית" subtitle="עמודה = P&L · קו = ממוצע R" tone="green" badge={`${monthlyData.length} mo`}>
+                    <ResponsiveContainer width="100%" height={290}>
+                      <ComposedChart data={monthlyData} margin={{ top: 8, right: 14, left: 0, bottom: 4 }}>
+                        <CartesianGrid stroke={T.border.subtle} strokeDasharray="2 4" />
                         <XAxis dataKey="month" tick={{ fill: T.text.muted, fontSize: 10 }} />
                         <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
                         <Tooltip contentStyle={tt} />
-                        <Bar dataKey="pnl" radius={[4, 4, 0, 0]}>
-                          {monthlyData.map((m, i) => <Cell key={i} fill={m.pnl >= 0 ? T.accent.green : T.accent.red} fillOpacity={0.85} />)}
+                        <Bar dataKey="pnl" radius={[6, 6, 0, 0]}>
+                          {monthlyData.map((m, i) => <Cell key={i} fill={m.pnl >= 0 ? 'url(#orca-g-green)' : 'url(#orca-g-red)'} />)}
                         </Bar>
-                        <Line type="monotone" dataKey="avgR" stroke={T.accent.cyan} strokeWidth={2} dot={{ fill: T.accent.cyan, r: 3 }} />
+                        <Line type="monotone" dataKey="avgR" stroke={T.accent.cyan} strokeWidth={2.5} dot={{ fill: T.accent.cyan, r: 3.5, strokeWidth: 0 }} filter="url(#orca-glow)" />
                       </ComposedChart>
                     </ResponsiveContainer>
-                  </GlassCard>
-                  <GlassCard T={T}>
-                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>תוחלת מתגלגלת (R)</div>
-                    <ResponsiveContainer width="100%" height={250}>
-                      <AreaChart data={rollingData}>
-                        <defs>
-                          <linearGradient id="rollG" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor={T.accent.purple} stopOpacity={0.5} />
-                            <stop offset="100%" stopColor={T.accent.purple} stopOpacity={0.05} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+                  </Frame>
+                  <Frame title="תוחלת מתגלגלת (R)" subtitle="חלון מתגלגל מציג את היציבות שלך לאורך זמן" tone="purple" badge={`${rollingData.length} pts`}>
+                    <ResponsiveContainer width="100%" height={290}>
+                      <AreaChart data={rollingData} margin={{ top: 8, right: 14, left: 0, bottom: 4 }}>
+                        <CartesianGrid stroke={T.border.subtle} strokeDasharray="2 4" />
                         <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 10 }} />
                         <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
                         <Tooltip contentStyle={tt} />
-                        <Area type="monotone" dataKey="exp" stroke={T.accent.purple} fill="url(#rollG)" strokeWidth={2.5} />
+                        <Area type="monotone" dataKey="exp" stroke={T.accent.purple} fill="url(#orca-g-purple)" strokeWidth={2.8} filter="url(#orca-glow)" />
                       </AreaChart>
                     </ResponsiveContainer>
-                  </GlassCard>
+                  </Frame>
                 </>
               )}
 
               {pack === 'streak+bucket' && (
                 <>
-                  <GlassCard T={T}>
-                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>גלי רצפים</div>
-                    <ResponsiveContainer width="100%" height={250}>
-                      <BarChart data={streakBands.map(b => ({ idx: b.idx + 1, len: b.type === 'W' ? b.len : -b.len, type: b.type }))}>
-                        <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+                  <Frame title="גלי רצפים: ניצחונות מול הפסדים" subtitle="גובה = אורך הרצף · צבע = סוג" tone="green" badge={`${streakBands.length} streaks`}>
+                    <ResponsiveContainer width="100%" height={290}>
+                      <BarChart data={streakBands.map(b => ({ idx: b.idx + 1, len: b.type === 'W' ? b.len : -b.len, type: b.type }))} margin={{ top: 8, right: 14, left: 0, bottom: 4 }}>
+                        <CartesianGrid stroke={T.border.subtle} strokeDasharray="2 4" />
                         <XAxis dataKey="idx" tick={{ fill: T.text.muted, fontSize: 10 }} />
                         <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
                         <Tooltip contentStyle={tt} />
-                        <Bar dataKey="len" radius={[4, 4, 4, 4]}>
-                          {streakBands.map((b, i) => <Cell key={i} fill={b.type === 'W' ? T.accent.green : T.accent.red} />)}
+                        <Bar dataKey="len" radius={[6, 6, 6, 6]}>
+                          {streakBands.map((b, i) => <Cell key={i} fill={b.type === 'W' ? 'url(#orca-g-green)' : 'url(#orca-g-red)'} />)}
                         </Bar>
                       </BarChart>
                     </ResponsiveContainer>
-                  </GlassCard>
-                  <GlassCard T={T}>
-                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>התפלגות R לפי טווח</div>
-                    <ResponsiveContainer width="100%" height={250}>
-                      <RadialBarChart innerRadius="20%" outerRadius="100%" data={rBuckets} startAngle={180} endAngle={0}>
-                        <RadialBar background dataKey="count">
+                  </Frame>
+                  <Frame title="התפלגות R לפי טווח" subtitle="הצורה האידיאלית: זנב ימני שמן, זנב שמאלי קצר" tone="cyan" badge={`${rBuckets.reduce((a, b) => a + b.count, 0)} trades`}>
+                    <ResponsiveContainer width="100%" height={290}>
+                      <RadialBarChart innerRadius="22%" outerRadius="100%" data={rBuckets} startAngle={180} endAngle={0}>
+                        <RadialBar background={{ fill: T.bg.tertiary }} dataKey="count" cornerRadius={6}>
                           {rBuckets.map((b, i) => (
-                            <Cell key={i} fill={b.bucket.includes('-') || b.bucket.startsWith('<') ? T.accent.red : T.accent.cyan} />
+                            <Cell key={i} fill={b.bucket.includes('-') || b.bucket.startsWith('<') ? 'url(#orca-g-red)' : 'url(#orca-g-cyan-bar)'} />
                           ))}
                         </RadialBar>
                         <Tooltip contentStyle={tt} />
                       </RadialBarChart>
                     </ResponsiveContainer>
-                  </GlassCard>
+                  </Frame>
                 </>
               )}
 
