@@ -3,7 +3,9 @@ import {
   User, Palette, LayoutDashboard, Calculator, Shield, SlidersHorizontal, Database,
   X, LogOut, Mail, KeyRound, Send, Download, Eye, EyeOff, Globe, GripVertical,
   Plus, Trash2, RotateCcw, Check, AlertTriangle, Sparkles, Search,
+  Volume2, VolumeX, Zap, Type, Brush, Target, Gauge,
 } from 'lucide-react';
+import { playMorningLock } from '@/lib/apex-sounds';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { ThemeId, OperatingMode, Lang } from '@/hooks/use-settings';
 import { useDashboardConfig, WIDGET_LABELS, evalCustomKPI, type CustomKPI } from '@/hooks/use-dashboard-config';
@@ -32,7 +34,13 @@ interface SettingsHubProps {
   trades: Trade[];
 }
 
-type TabId = 'account' | 'appearance' | 'dashboard' | 'kpis' | 'risk' | 'interface' | 'data';
+type TabId = 'account' | 'appearance' | 'theme-studio' | 'dashboard' | 'kpis' | 'risk' | 'interface' | 'sounds' | 'trading' | 'data';
+
+const ACCENT_PRESETS = [
+  '#00f2ff', '#06d6a0', '#3b82f6', '#8b5cf6',
+  '#a78bfa', '#f43f5e', '#f59e0b', '#10b981',
+  '#ec4899', '#14b8a6', '#eab308', '#ef4444',
+];
 
 const THEME_OPTIONS: { id: ThemeId; label: { he: string; en: string }; sub: { he: string; en: string }; preview: string[] }[] = [
   { id: 'midnight', label: { he: 'חצות', en: 'Midnight' }, sub: { he: 'כחול עמוק • ברירת מחדל', en: 'Deep blue • Default' }, preview: ['#020202', '#0b1730', '#00f2ff', '#3b82f6'] },
@@ -82,11 +90,14 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
 
   const NAV: { id: TabId; icon: typeof User; label: { he: string; en: string }; group: { he: string; en: string }; desc: { he: string; en: string } }[] = [
     { id: 'account', icon: User, label: { he: 'חשבון ופרופיל', en: 'Account & Profile' }, group: { he: 'אישי', en: 'Personal' }, desc: { he: 'ניהול פרטי החשבון, סיסמה ואימייל', en: 'Manage account details, password and email' } },
-    { id: 'appearance', icon: Palette, label: { he: 'מראה', en: 'Appearance' }, group: { he: 'אישי', en: 'Personal' }, desc: { he: 'ערכת נושא, שפה ופרטיות', en: 'Theme, language and privacy' } },
+    { id: 'appearance', icon: Palette, label: { he: 'מראה ושפה', en: 'Appearance' }, group: { he: 'אישי', en: 'Personal' }, desc: { he: 'ערכת נושא, שפה ופרטיות', en: 'Theme, language and privacy' } },
+    { id: 'theme-studio', icon: Brush, label: { he: 'אולפן צבע', en: 'Theme Studio' }, group: { he: 'אישי', en: 'Personal' }, desc: { he: 'בחר צבע מבטא משלך והתאם את כל אורקה אליו', en: 'Pick your own accent and re-tint all of Orca live' } },
     { id: 'dashboard', icon: LayoutDashboard, label: { he: 'סידור דאשבורד', en: 'Dashboard Layout' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'גרור, הסתר וסדר ווידג׳טים', en: 'Drag, hide and arrange widgets' } },
     { id: 'kpis', icon: Calculator, label: { he: 'מדדים מותאמים', en: 'Custom KPIs' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'בנה נוסחאות מתמטיות משלך', en: 'Build your own math formulas' } },
-    { id: 'interface', icon: SlidersHorizontal, label: { he: 'ממשק וניווט', en: 'Interface & Navigation' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'מצבי תפעול, צפיפות ואנימציות', en: 'Operating modes, density, animations' } },
+    { id: 'interface', icon: SlidersHorizontal, label: { he: 'ממשק, צפיפות ותנועה', en: 'Interface, Density & Motion' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'מצבי תפעול, צפיפות, גודל גופן ואנימציות', en: 'Operating modes, density, font scale, motion' } },
+    { id: 'sounds', icon: Volume2, label: { he: 'צלילים והתראות', en: 'Sounds & Alerts' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'הפעלה, ווליום ותצוגת אפקטים אקוסטיים', en: 'Enable, volume and acoustic feedback preview' } },
     { id: 'risk', icon: Shield, label: { he: 'מגבלות סיכון', en: 'Risk Limits' }, group: { he: 'מסחר', en: 'Trading' }, desc: { he: 'מערכת ה־R המותרת ביום/שבוע/חודש', en: 'Allowed R-budget per day/week/month' } },
+    { id: 'trading', icon: Target, label: { he: 'ברירות מחדל למסחר', en: 'Trading Defaults' }, group: { he: 'מסחר', en: 'Trading' }, desc: { he: 'אחוז סיכון ברירת מחדל ויעד R לעסקה חדשה', en: 'Default risk percent and R target for new trades' } },
     { id: 'data', icon: Database, label: { he: 'נתונים וגיבוי', en: 'Data & Backup' }, group: { he: 'מסחר', en: 'Trading' }, desc: { he: 'יצוא, סטטיסטיקות וניהול אחסון', en: 'Export, stats and storage management' } },
   ];
 
@@ -784,12 +795,212 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                   </div>
 
                   <div style={card}>
+                    <h3 style={sectionTitle}><Gauge size={14} /> {t('צפיפות תצוגה', 'Display density')}</h3>
+                    <p style={sectionHint}>{t('בחר עד כמה הממשק דחוס. משפיע על ריווח גלובלי וטבלאות.', 'How tightly the UI is packed. Affects global spacing and tables.')}</p>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
+                      {(['compact', 'comfortable', 'spacious'] as const).map(d => {
+                        const active = p.density === d;
+                        return (
+                          <button key={d} onClick={() => ui.setPrefs({ density: d })} style={{
+                            padding: '12px 10px', borderRadius: T.radius.md, cursor: 'pointer',
+                            background: active ? `${T.accent.cyan}14` : T.bg.secondary,
+                            border: `2px solid ${active ? T.accent.cyan : T.border.subtle}`,
+                            color: active ? T.accent.cyan : T.text.primary,
+                            fontSize: 12, fontWeight: 800, fontFamily: sans,
+                          }}>
+                            {d === 'compact' ? t('דחוס', 'Compact') : d === 'comfortable' ? t('נוח', 'Comfortable') : t('מרווח', 'Spacious')}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div style={card}>
+                    <h3 style={sectionTitle}><Type size={14} /> {t('גודל טקסט גלובלי', 'Global font scale')}</h3>
+                    <p style={sectionHint}>{t('משנה את גודל הבסיס בכל האפליקציה. ערך נוכחי: ', 'Scales the base font size everywhere. Current: ')}<strong style={{ color: T.text.primary, fontFamily: mono }}>{Math.round(p.fontScale * 100)}%</strong></p>
+                    <input type="range" min={0.85} max={1.2} step={0.01} value={p.fontScale}
+                      onChange={e => ui.setPrefs({ fontScale: parseFloat(e.target.value) })}
+                      style={{ width: '100%', accentColor: T.accent.cyan }} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: T.text.muted, fontFamily: mono, marginTop: 4 }}>
+                      <span>85%</span><span>100%</span><span>120%</span>
+                    </div>
+                  </div>
+
+                  <div style={card}>
                     <h3 style={sectionTitle}><Sparkles size={14} /> {t('ביצועים ונוחות', 'Performance & comfort')}</h3>
                     <Toggle on={p.reduceMotion} onClick={() => ui.setPrefs({ reduceMotion: !p.reduceMotion })} label={t('הפחת אנימציות', 'Reduce motion')} hint={t('משבית מעברים והנפשות לחווית עבודה רגועה', 'Disables transitions across the app')} />
                     <Toggle on={p.denseTables} onClick={() => ui.setPrefs({ denseTables: !p.denseTables })} label={t('טבלאות צפופות', 'Dense tables')} hint={t('יותר שורות במסך אחד', 'More rows visible at once')} />
                     <button onClick={ui.reset} style={{ ...ghostBtn, marginTop: 8 }}>
                       <RotateCcw size={12} /> {t('ברירת מחדל לכל ההעדפות', 'Reset all preferences')}
                     </button>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ============ THEME STUDIO ============ */}
+            {tab === 'theme-studio' && (() => {
+              const p = ui.prefs;
+              return (
+                <div>
+                  <div style={card}>
+                    <h3 style={sectionTitle}><Brush size={14} /> {t('צבע מבטא מותאם', 'Custom accent color')}</h3>
+                    <p style={sectionHint}>{t('בחר צבע ואורקה תיגזור ממנו את כל הפלטה — כפתורים, הילות, אורות, פוקוס וצללים. השינוי מיידי וחי על גבי כל ערכת נושא.', 'Pick one color and Orca derives the entire palette — buttons, glows, focus rings and shadows. Instant live tint on top of any theme.')}</p>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18 }}>
+                      <div style={{
+                        width: 72, height: 72, borderRadius: T.radius.lg,
+                        background: p.customAccentEnabled ? p.customAccent : T.bg.tertiary,
+                        border: `2px solid ${T.border.medium}`,
+                        boxShadow: p.customAccentEnabled ? `0 0 32px ${p.customAccent}55` : 'none',
+                        flexShrink: 0, transition: 'all .25s',
+                      }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: T.text.primary, marginBottom: 4 }}>
+                          {p.customAccentEnabled ? t('צבע מותאם פעיל', 'Custom accent active') : t('צבע מותאם כבוי', 'Custom accent off')}
+                        </div>
+                        <div style={{ fontSize: 11, color: T.text.muted, fontFamily: mono }}>{p.customAccent.toUpperCase()}</div>
+                        <button onClick={() => ui.setPrefs({ customAccentEnabled: !p.customAccentEnabled })}
+                          style={{
+                            ...primaryBtn(p.customAccentEnabled ? T.accent.orange : T.accent.cyan),
+                            marginTop: 10, fontSize: 11, padding: '8px 14px',
+                          }}>
+                          {p.customAccentEnabled ? <><X size={12} /> {t('בטל מותאם', 'Disable')}</> : <><Check size={12} /> {t('הפעל מותאם', 'Enable custom')}</>}
+                        </button>
+                      </div>
+                    </div>
+
+                    <label style={fieldLabel}>{t('בחר צבע', 'Pick color')}</label>
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 14 }}>
+                      <input type="color" value={p.customAccent}
+                        onChange={e => ui.setPrefs({ customAccent: e.target.value, customAccentEnabled: true })}
+                        style={{ width: 56, height: 40, border: 'none', borderRadius: T.radius.sm, background: 'transparent', cursor: 'pointer' }} />
+                      <input className="orca-settings-input" value={p.customAccent}
+                        onChange={e => ui.setPrefs({ customAccent: e.target.value })}
+                        placeholder="#00f2ff" dir="ltr" style={{ ...input, fontFamily: mono, maxWidth: 180 }} />
+                    </div>
+
+                    <label style={fieldLabel}>{t('דוגמיות מהירות', 'Quick swatches')}</label>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 6, marginBottom: 14 }}>
+                      {ACCENT_PRESETS.map(c => {
+                        const active = p.customAccent.toLowerCase() === c.toLowerCase();
+                        return (
+                          <button key={c} onClick={() => ui.setPrefs({ customAccent: c, customAccentEnabled: true })}
+                            title={c}
+                            style={{
+                              aspectRatio: '1', borderRadius: T.radius.sm, cursor: 'pointer',
+                              background: c, border: `2px solid ${active ? '#fff' : 'transparent'}`,
+                              boxShadow: active ? `0 0 14px ${c}` : 'none', transition: 'all .15s',
+                            }} />
+                        );
+                      })}
+                    </div>
+
+                    <div style={{
+                      padding: 14, borderRadius: T.radius.md,
+                      background: T.bg.secondary, border: `1px solid ${T.border.subtle}`,
+                    }}>
+                      <div style={{ fontSize: 10.5, fontWeight: 800, color: T.text.muted, textTransform: 'uppercase', letterSpacing: 1.4, marginBottom: 10 }}>
+                        {t('תצוגה מקדימה חיה', 'Live preview')}
+                      </div>
+                      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <button style={{
+                          padding: '10px 16px', borderRadius: T.radius.sm, border: 'none',
+                          background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))',
+                          fontSize: 12, fontWeight: 800, cursor: 'pointer', fontFamily: sans,
+                        }}>{t('כפתור ראשי', 'Primary action')}</button>
+                        <button style={{
+                          padding: '10px 16px', borderRadius: T.radius.sm,
+                          background: 'transparent', color: 'hsl(var(--primary))',
+                          border: '1px solid hsl(var(--primary))', fontSize: 12, fontWeight: 800, cursor: 'pointer', fontFamily: sans,
+                        }}>{t('משני', 'Secondary')}</button>
+                        <span style={{
+                          padding: '6px 12px', borderRadius: 999,
+                          background: 'hsl(var(--primary) / 0.15)', color: 'hsl(var(--primary))',
+                          fontSize: 11, fontWeight: 700, fontFamily: mono,
+                        }}>+12.4R</span>
+                        <input className="orca-settings-input" placeholder={t('שדה ממוקד', 'Focused input')}
+                          style={{ ...input, maxWidth: 180, borderColor: 'hsl(var(--ring))', boxShadow: '0 0 0 3px hsl(var(--ring) / 0.18)' }} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ============ SOUNDS ============ */}
+            {tab === 'sounds' && (() => {
+              const p = ui.prefs;
+              return (
+                <div>
+                  <div style={card}>
+                    <h3 style={sectionTitle}>{p.soundsEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />} {t('צלילי המערכת', 'System sounds')}</h3>
+                    <p style={sectionHint}>{t('צלילים אקוסטיים מקצועיים בפעולות מפתח: פתיחה, נעילה ואזהרת סיכון.', 'Professional acoustic feedback on key actions: open, lock, risk warning.')}</p>
+
+                    <button onClick={() => ui.setPrefs({ soundsEnabled: !p.soundsEnabled })} style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+                      width: '100%', padding: '14px 16px', borderRadius: T.radius.md,
+                      background: T.bg.primary, border: `1px solid ${p.soundsEnabled ? T.accent.cyan : T.border.subtle}`,
+                      cursor: 'pointer', textAlign: isRTL ? 'right' : 'left' as const, marginBottom: 14, fontFamily: sans,
+                    }}>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: T.text.primary }}>
+                          {p.soundsEnabled ? t('צלילים מופעלים', 'Sounds ON') : t('צלילים כבויים', 'Sounds OFF')}
+                        </div>
+                        <div style={{ fontSize: 11, color: T.text.muted, marginTop: 2 }}>
+                          {p.soundsEnabled ? t('כל פידבק אקוסטי פעיל', 'All acoustic feedback enabled') : t('האפליקציה דוממת לחלוטין', 'App stays completely silent')}
+                        </div>
+                      </div>
+                      <div style={{ width: 40, height: 22, borderRadius: 11, position: 'relative', background: p.soundsEnabled ? T.accent.cyan : T.bg.tertiary, transition: 'background .15s' }}>
+                        <div style={{ position: 'absolute', top: 2, insetInlineStart: p.soundsEnabled ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'inset-inline-start .15s' }} />
+                      </div>
+                    </button>
+
+                    <label style={fieldLabel}>{t('עוצמה', 'Volume')} · <span style={{ fontFamily: mono, color: T.text.primary }}>{Math.round(p.soundVolume * 100)}%</span></label>
+                    <input type="range" min={0} max={1} step={0.01} value={p.soundVolume}
+                      disabled={!p.soundsEnabled}
+                      onChange={e => ui.setPrefs({ soundVolume: parseFloat(e.target.value) })}
+                      style={{ width: '100%', accentColor: T.accent.cyan, opacity: p.soundsEnabled ? 1 : 0.4 }} />
+
+                    <div style={{ marginTop: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <button onClick={playMorningLock} disabled={!p.soundsEnabled} style={primaryBtn(T.accent.cyan, !p.soundsEnabled)}>
+                        <Zap size={13} /> {t('נגן דוגמה', 'Play sample')}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ============ TRADING DEFAULTS ============ */}
+            {tab === 'trading' && (() => {
+              const p = ui.prefs;
+              return (
+                <div>
+                  <div style={card}>
+                    <h3 style={sectionTitle}><Target size={14} /> {t('סיכון ברירת מחדל', 'Default risk')}</h3>
+                    <p style={sectionHint}>{t('הערכים הללו ייטענו אוטומטית בכל עסקה חדשה. אפשר תמיד לדרוס בעת ההזנה.', 'These values pre-fill every new trade. You can always override at entry time.')}</p>
+
+                    <label style={fieldLabel}>{t('אחוז סיכון מהחשבון', 'Account risk %')} · <span style={{ fontFamily: mono, color: T.text.primary }}>{p.defaultRiskPercent.toFixed(2)}%</span></label>
+                    <input type="range" min={0.1} max={5} step={0.05} value={p.defaultRiskPercent}
+                      onChange={e => ui.setPrefs({ defaultRiskPercent: parseFloat(e.target.value) })}
+                      style={{ width: '100%', accentColor: T.accent.cyan, marginBottom: 16 }} />
+
+                    <label style={fieldLabel}>{t('יעד R לעסקה', 'Default R target')} · <span style={{ fontFamily: mono, color: T.text.primary }}>{p.defaultRMultiple.toFixed(1)}R</span></label>
+                    <input type="range" min={0.5} max={5} step={0.1} value={p.defaultRMultiple}
+                      onChange={e => ui.setPrefs({ defaultRMultiple: parseFloat(e.target.value) })}
+                      style={{ width: '100%', accentColor: T.accent.cyan }} />
+
+                    <div style={{
+                      marginTop: 18, padding: 12, borderRadius: T.radius.md,
+                      background: `linear-gradient(135deg, ${T.accent.cyan}10, transparent)`,
+                      border: `1px solid ${T.accent.cyan}30`, fontSize: 11.5, color: T.text.secondary, lineHeight: 1.65,
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 800, color: T.accent.cyan, marginBottom: 4, fontSize: 11 }}>
+                        <Sparkles size={12} /> {t('המלצה', 'Guideline')}
+                      </div>
+                      {t('סיכון 0.5%–1% לעסקה ויעד 2R+ הם הסטנדרט המקצועי.', '0.5%–1% risk per trade and 2R+ targets are the professional standard.')}
+                    </div>
                   </div>
                 </div>
               );

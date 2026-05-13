@@ -12,6 +12,17 @@ function ctx(): AudioContext {
   return sharedCtx;
 }
 
+function soundsAllowed(): boolean {
+  if (typeof window === 'undefined') return true;
+  const p = (window as any).__orcaPrefs;
+  return !p || p.soundsEnabled !== false;
+}
+function masterVol(): number {
+  if (typeof window === 'undefined') return 1;
+  const p = (window as any).__orcaPrefs;
+  return typeof p?.soundVolume === 'number' ? Math.max(0, Math.min(1, p.soundVolume)) : 1;
+}
+
 // Pre-warm the AudioContext on first user interaction
 if (typeof window !== 'undefined') {
   const warm = () => { ctx(); window.removeEventListener('click', warm); window.removeEventListener('touchstart', warm); };
@@ -39,12 +50,12 @@ function tone(c: AudioContext, t: number, freq: number, endFreq: number | null, 
   const osc = c.createOscillator(); osc.type = 'sine';
   const g = c.createGain();
   const total = attack + sustain + release;
+  const v = vol * masterVol();
   osc.frequency.setValueAtTime(freq, t);
   if (endFreq) osc.frequency.exponentialRampToValueAtTime(endFreq, t + total * 0.8);
-  // Envelope
   g.gain.setValueAtTime(0, t);
-  g.gain.linearRampToValueAtTime(vol, t + attack);
-  g.gain.setValueAtTime(vol, t + attack + sustain);
+  g.gain.linearRampToValueAtTime(v, t + attack);
+  g.gain.setValueAtTime(v, t + attack + sustain);
   g.gain.exponentialRampToValueAtTime(0.0001, t + total);
   osc.connect(g); g.connect(c.destination);
   osc.start(t); osc.stop(t + total + 0.05);
@@ -57,7 +68,8 @@ function tone(c: AudioContext, t: number, freq: number, endFreq: number | null, 
  * Think: powering on a Bloomberg terminal.
  */
 export function playSystemOpen() {
-  try {
+  if (!soundsAllowed()) return;
+    try {
     const c = ctx(); const t = c.currentTime;
 
     // Ascending triad: A3 → E4 → A4 (perfect fifth + octave = powerful & clean)
@@ -79,7 +91,8 @@ export function playSystemOpen() {
  * Think: Apple Pay success ding.
  */
 export function playMorningLock() {
-  try {
+  if (!soundsAllowed()) return;
+    try {
     const c = ctx(); const t = c.currentTime;
 
     // E5 → G#5 (major third = positive, resolved)
@@ -100,7 +113,8 @@ export function playMorningLock() {
  * Think: vault door sealing shut.
  */
 export function playEODLock() {
-  try {
+  if (!soundsAllowed()) return;
+    try {
     const c = ctx(); const t = c.currentTime;
 
     // Double metallic click
@@ -122,7 +136,8 @@ export function playEODLock() {
  * Risk Alert — Two descending tones, slightly urgent but elegant
  */
 export function playRiskAlert() {
-  try {
+  if (!soundsAllowed()) return;
+    try {
     const c = ctx(); const t = c.currentTime;
 
     tone(c, t,        660, 440, 0.035, 0.015, 0.05, 0.22);

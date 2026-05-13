@@ -1,20 +1,35 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getSetting, setSetting } from '@/lib/storage';
 import type { OperatingMode } from '@/hooks/use-settings';
+import { applyCustomAccent, clearCustomAccent } from '@/lib/trading-theme';
+
+export type DensityLevel = 'compact' | 'comfortable' | 'spacious';
 
 export interface UIPrefs {
-  hiddenOperatingModes: OperatingMode[]; // modes removed from the navbar mode-switcher
-  hideDepthSwitch: boolean;              // hide Standard/Alpha switch
-  hideHeaderBadges: boolean;             // hide mode badges in main header
-  hideQuickActions: boolean;             // hide ⌘K Quick Actions button
-  hideAddTradeButton: boolean;           // hide the prominent + Add Trade button in header
-  hideHeaderDate: boolean;               // hide date in header
-  hideDiscord: boolean;                  // hide discord link in sidebar
-  hideAbout: boolean;                    // hide "About System" link
-  hideInstallPrompt: boolean;            // hide PWA install prompt in sidebar
-  compactSidebarIcons: boolean;          // smaller icons in sidebar
-  reduceMotion: boolean;                 // disable hover/transition animations
-  denseTables: boolean;                  // tighter row padding
+  hiddenOperatingModes: OperatingMode[];
+  hideDepthSwitch: boolean;
+  hideHeaderBadges: boolean;
+  hideQuickActions: boolean;
+  hideAddTradeButton: boolean;
+  hideHeaderDate: boolean;
+  hideDiscord: boolean;
+  hideAbout: boolean;
+  hideInstallPrompt: boolean;
+  compactSidebarIcons: boolean;
+  reduceMotion: boolean;
+  denseTables: boolean;
+
+  // ── NEW: functional UX prefs ──────────────────────
+  density: DensityLevel;          // global spacing posture
+  fontScale: number;              // 0.85 .. 1.15 (1 = default)
+  soundsEnabled: boolean;         // master sound switch
+  soundVolume: number;            // 0..1
+  // Custom accent — a single hex applied on top of the active theme
+  customAccentEnabled: boolean;
+  customAccent: string;           // "#00f2ff"
+  // Trading defaults
+  defaultRiskPercent: number;     // 0.25..5
+  defaultRMultiple: number;       // 1..5
 }
 
 const DEFAULTS: UIPrefs = {
@@ -30,9 +45,24 @@ const DEFAULTS: UIPrefs = {
   compactSidebarIcons: false,
   reduceMotion: false,
   denseTables: false,
+  density: 'comfortable',
+  fontScale: 1,
+  soundsEnabled: true,
+  soundVolume: 0.7,
+  customAccentEnabled: false,
+  customAccent: '#00f2ff',
+  defaultRiskPercent: 1,
+  defaultRMultiple: 2,
 };
 
 const KEY = 'uiPrefs';
+
+// Expose a tiny global hook so non-React modules (apex-sounds) can read prefs
+declare global {
+  interface Window {
+    __orcaPrefs?: { soundsEnabled: boolean; soundVolume: number };
+  }
+}
 
 export function useUIPrefs() {
   const [prefs, setPrefsState] = useState<UIPrefs>(DEFAULTS);
@@ -45,12 +75,28 @@ export function useUIPrefs() {
     });
   }, []);
 
-  // Apply reduce-motion as a body data-attribute so CSS can react.
+  // Apply prefs that have global DOM/window side-effects
   useEffect(() => {
     if (typeof document === 'undefined') return;
-    document.body.dataset.reduceMotion = prefs.reduceMotion ? '1' : '0';
-    document.body.dataset.denseTables = prefs.denseTables ? '1' : '0';
-  }, [prefs.reduceMotion, prefs.denseTables]);
+    const body = document.body;
+    body.dataset.reduceMotion = prefs.reduceMotion ? '1' : '0';
+    body.dataset.denseTables = prefs.denseTables ? '1' : '0';
+    body.dataset.density = prefs.density;
+    document.documentElement.style.setProperty('--orca-font-scale', String(prefs.fontScale));
+    document.documentElement.style.fontSize = `${16 * prefs.fontScale}px`;
+
+    // Sound bridge for non-React modules
+    if (typeof window !== 'undefined') {
+      window.__orcaPrefs = { soundsEnabled: prefs.soundsEnabled, soundVolume: prefs.soundVolume };
+    }
+
+    // Custom accent
+    if (prefs.customAccentEnabled && prefs.customAccent) {
+      applyCustomAccent(prefs.customAccent);
+    } else {
+      clearCustomAccent();
+    }
+  }, [prefs.reduceMotion, prefs.denseTables, prefs.density, prefs.fontScale, prefs.soundsEnabled, prefs.soundVolume, prefs.customAccentEnabled, prefs.customAccent]);
 
   const setPrefs = useCallback((patch: Partial<UIPrefs>) => {
     setPrefsState(prev => {
