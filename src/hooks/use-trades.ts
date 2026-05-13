@@ -11,6 +11,7 @@ export function useTrades() {
   const [initialized, setInitialized] = useState(false);
   const [riskAlert, setRiskAlert] = useState<RiskLimitStatus | null>(null);
   const tradesRef = useRef<Trade[]>([]);
+  const mutationQueueRef = useRef<Promise<void>>(Promise.resolve());
 
   useEffect(() => {
     tradesRef.current = trades;
@@ -70,44 +71,54 @@ export function useTrades() {
 
   const dismissRiskAlert = useCallback(() => setRiskAlert(null), []);
 
+  const enqueueTradeMutation = useCallback(<T,>(mutation: () => Promise<T>): Promise<T> => {
+    const run = mutationQueueRef.current.then(mutation, mutation);
+    mutationQueueRef.current = run.then(() => undefined, () => undefined);
+    return run;
+  }, []);
+
   const addTrade = useCallback(async (trade: Omit<Trade, 'id' | 'balance'>) => {
-    const currentTrades = tradesRef.current;
-    const id = currentTrades.length === 0 ? 1 : Math.max(...currentTrades.map(t => t.id || 0)) + 1;
-    const newTrade: Trade = { ...trade, id, balance: 0 } as Trade;
-    const updated = recalcBalances([...currentTrades, newTrade]);
-    await saveTrades(updated);
-    tradesRef.current = updated;
-    setTrades(updated);
-    checkAndAlertRisk(updated);
-    return updated[updated.length - 1];
-  }, [recalcBalances, checkAndAlertRisk]);
-
-  const upsertJournalTrade = useCallback(async (journalTradeId: number, trade: Omit<Trade, 'id' | 'balance'>) => {
-    const tag = `__JID:${journalTradeId}__`;
-    const currentTrades = tradesRef.current;
-    const existingIdx = currentTrades.findIndex(t => typeof t.comments === 'string' && t.comments.includes(tag));
-    const cleanComments = typeof trade.comments === 'string' && trade.comments.includes(tag)
-      ? trade.comments
-      : `${tag} ${trade.comments || ''}`.trim();
-
-    const updated = [...currentTrades];
-    let saved: Trade;
-    if (existingIdx >= 0) {
-      saved = { ...updated[existingIdx], ...trade, id: updated[existingIdx].id, comments: cleanComments } as Trade;
-      updated[existingIdx] = saved;
-    } else {
+    return enqueueTradeMutation(async () => {
+      const currentTrades = tradesRef.current;
       const id = currentTrades.length === 0 ? 1 : Math.max(...currentTrades.map(t => t.id || 0)) + 1;
-      saved = { ...trade, id, balance: 0, comments: cleanComments } as Trade;
-      updated.push(saved);
-    }
+      const newTrade: Trade = { ...trade, id, balance: 0 } as Trade;
+      const updated = recalcBalances([...currentTrades, newTrade]);
+      await saveTrades(updated);
+      tradesRef.current = updated;
+      setTrades(updated);
+      checkAndAlertRisk(updated);
+      return updated[updated.length - 1];
+    });
+  }, [enqueueTradeMutation, recalcBalances, checkAndAlertRisk]);
 
-    const rebalanced = recalcBalances(updated);
-    await saveTrades(rebalanced);
-    tradesRef.current = rebalanced;
-    setTrades(rebalanced);
-    checkAndAlertRisk(rebalanced);
-    return rebalanced.find(t => t.id === saved.id) || saved;
-  }, [recalcBalances, checkAndAlertRisk]);
+  const upsertJournalTrade = useCallback(async (journalTradeId: number | string, trade: Omit<Trade, 'id' | 'balance'>) => {
+    return enqueueTradeMutation(async () => {
+      const tag = `__JID:${journalTradeId}__`;
+      const currentTrades = tradesRef.current;
+      const existingIdx = currentTrades.findIndex(t => typeof t.comments === 'string' && t.comments.includes(tag));
+      const cleanComments = typeof trade.comments === 'string' && trade.comments.includes(tag)
+        ? trade.comments
+        : `${tag} ${trade.comments || ''}`.trim();
+
+      const updated = [...currentTrades];
+      let saved: Trade;
+      if (existingIdx >= 0) {
+        saved = { ...updated[existingIdx], ...trade, id: updated[existingIdx].id, comments: cleanComments } as Trade;
+        updated[existingIdx] = saved;
+      } else {
+        const id = currentTrades.length === 0 ? 1 : Math.max(...currentTrades.map(t => t.id || 0)) + 1;
+        saved = { ...trade, id, balance: 0, comments: cleanComments } as Trade;
+        updated.push(saved);
+      }
+
+      const rebalanced = recalcBalances(updated);
+      await saveTrades(rebalanced);
+      tradesRef.current = rebalanced;
+      setTrades(rebalanced);
+      checkAndAlertRisk(rebalanced);
+      return rebalanced.find(t => t.id === saved.id) || saved;
+    });
+  }, [enqueueTradeMutation, recalcBalances, checkAndAlertRisk]);
 
   const updateTrade = useCallback(async (trade: Trade) => {
     const currentTrades = tradesRef.current;
