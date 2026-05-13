@@ -850,18 +850,8 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
               const hoursLeft = Math.ceil(msLeft / (60 * 60 * 1000));
               const lockText = daysLeft > 1 ? t(`עוד ${daysLeft} ימים`, `${daysLeft} days left`) : t(`עוד ${hoursLeft} שעות`, `${hoursLeft}h left`);
 
-              // Draft state — local to the studio, separate from committed accent
-              const [draft, setDraft] = ((): [string, (v: string) => void] => {
-                // useState wrapper inside IIFE — store on window so we don't re-init
-                // simpler: real useState above wouldn't work in IIFE; emulate via dataset
-                const w = (window as unknown as { __orcaDraftAccent?: string });
-                if (!w.__orcaDraftAccent) w.__orcaDraftAccent = p.customAccent;
-                return [w.__orcaDraftAccent, (v: string) => { w.__orcaDraftAccent = v; setSearch(s => s); /* force rerender */ }];
-              })();
-
-              // Derive a sketch palette from the draft (read-only, doesn't apply)
-              // eslint-disable-next-line @typescript-eslint/no-var-requires
-              const { deriveFullPalette } = require('@/lib/trading-theme') as typeof import('@/lib/trading-theme');
+              const draft = draftAccent;
+              const setDraft = setDraftAccent;
               const isLight = theme === 'platinum';
               const sketch = deriveFullPalette(draft, isLight ? 'light' : 'dark');
               const swatches = sketch?.preview;
