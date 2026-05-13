@@ -34,7 +34,13 @@ interface SettingsHubProps {
   trades: Trade[];
 }
 
-type TabId = 'account' | 'appearance' | 'dashboard' | 'kpis' | 'risk' | 'interface' | 'data';
+type TabId = 'account' | 'appearance' | 'theme-studio' | 'dashboard' | 'kpis' | 'risk' | 'interface' | 'sounds' | 'trading' | 'data';
+
+const ACCENT_PRESETS = [
+  '#00f2ff', '#06d6a0', '#3b82f6', '#8b5cf6',
+  '#a78bfa', '#f43f5e', '#f59e0b', '#10b981',
+  '#ec4899', '#14b8a6', '#eab308', '#ef4444',
+];
 
 const THEME_OPTIONS: { id: ThemeId; label: { he: string; en: string }; sub: { he: string; en: string }; preview: string[] }[] = [
   { id: 'midnight', label: { he: 'חצות', en: 'Midnight' }, sub: { he: 'כחול עמוק • ברירת מחדל', en: 'Deep blue • Default' }, preview: ['#020202', '#0b1730', '#00f2ff', '#3b82f6'] },
