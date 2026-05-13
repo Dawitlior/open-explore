@@ -68,7 +68,8 @@ function tone(c: AudioContext, t: number, freq: number, endFreq: number | null, 
  * Think: powering on a Bloomberg terminal.
  */
 export function playSystemOpen() {
-  try {
+  if (!soundsAllowed()) return;
+    try {
     const c = ctx(); const t = c.currentTime;
 
     // Ascending triad: A3 → E4 → A4 (perfect fifth + octave = powerful & clean)
@@ -90,7 +91,8 @@ export function playSystemOpen() {
  * Think: Apple Pay success ding.
  */
 export function playMorningLock() {
-  try {
+  if (!soundsAllowed()) return;
+    try {
     const c = ctx(); const t = c.currentTime;
 
     // E5 → G#5 (major third = positive, resolved)
@@ -111,7 +113,8 @@ export function playMorningLock() {
  * Think: vault door sealing shut.
  */
 export function playEODLock() {
-  try {
+  if (!soundsAllowed()) return;
+    try {
     const c = ctx(); const t = c.currentTime;
 
     // Double metallic click
@@ -133,7 +136,8 @@ export function playEODLock() {
  * Risk Alert — Two descending tones, slightly urgent but elegant
  */
 export function playRiskAlert() {
-  try {
+  if (!soundsAllowed()) return;
+    try {
     const c = ctx(); const t = c.currentTime;
 
     tone(c, t,        660, 440, 0.035, 0.015, 0.05, 0.22);
