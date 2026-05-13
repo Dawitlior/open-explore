@@ -160,12 +160,33 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
               width: 30, height: 30, borderRadius: T.radius.sm, cursor: 'pointer', fontSize: 14 }}>✕</button>
         </div>
 
-        <div style={tabBar}>
+        {/* Quick toggles row — accessible from any tab */}
+        <div style={{ display: 'flex', gap: 8, padding: '10px 24px', borderBottom: `1px solid ${T.border.subtle}`, background: T.bg.primary, flexWrap: 'wrap' }}>
+          <button onClick={() => setLang(lang === 'he' ? 'en' : 'he')} style={{
+            display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: T.radius.sm,
+            background: `${T.accent.blue}10`, border: `1px solid ${T.accent.blue}30`, color: T.accent.blue,
+            cursor: 'pointer', fontSize: 11, fontWeight: 700,
+          }}>🌐 {lang === 'he' ? 'English' : 'עברית'}</button>
+          <button onClick={() => setPrivacyMode(!privacyMode)} style={{
+            display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: T.radius.sm,
+            background: privacyMode ? `${T.accent.orange}15` : `${T.accent.cyan}10`,
+            border: `1px solid ${privacyMode ? T.accent.orange : T.accent.cyan}30`,
+            color: privacyMode ? T.accent.orange : T.accent.cyan,
+            cursor: 'pointer', fontSize: 11, fontWeight: 700,
+          }}>{privacyMode ? '🔒' : '👁️'} {privacyMode ? t('פרטיות מופעלת', 'Privacy ON') : t('פרטיות כבויה', 'Privacy OFF')}</button>
+          <div style={{ marginInlineStart: 'auto', fontSize: 10, color: T.text.muted, alignSelf: 'center', fontFamily: "'IBM Plex Mono', monospace" }}>
+            {auth.user?.email ?? '—'}
+          </div>
+        </div>
+
+        <div style={{ ...tabBar, overflowX: 'auto', flexWrap: 'nowrap' as const }}>
+          <button style={tabBtn(tab === 'account')} onClick={() => setTab('account')}>👤 {t('חשבון', 'Account')}</button>
           <button style={tabBtn(tab === 'theme')} onClick={() => setTab('theme')}>🎨 {t('ערכת נושא', 'Theme')}</button>
           <button style={tabBtn(tab === 'dashboard')} onClick={() => setTab('dashboard')}>📊 {t('דאשבורד', 'Dashboard')}</button>
-          <button style={tabBtn(tab === 'kpis')} onClick={() => setTab('kpis')}>🧮 {t('KPI מותאמים', 'Custom KPIs')}</button>
-          <button style={tabBtn(tab === 'risk')} onClick={() => setTab('risk')}>🛡️ {t('סיכון', 'Risk Limits')}</button>
+          <button style={tabBtn(tab === 'kpis')} onClick={() => setTab('kpis')}>🧮 {t('KPI', 'KPIs')}</button>
+          <button style={tabBtn(tab === 'risk')} onClick={() => setTab('risk')}>🛡️ {t('סיכון', 'Risk')}</button>
           <button style={tabBtn(tab === 'interface')} onClick={() => setTab('interface')}>🧩 {t('ממשק', 'Interface')}</button>
+          <button style={tabBtn(tab === 'data')} onClick={() => setTab('data')}>💾 {t('נתונים', 'Data')}</button>
         </div>
 
         <div style={body}>
