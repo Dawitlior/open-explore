@@ -12,6 +12,17 @@ function ctx(): AudioContext {
   return sharedCtx;
 }
 
+function soundsAllowed(): boolean {
+  if (typeof window === 'undefined') return true;
+  const p = (window as any).__orcaPrefs;
+  return !p || p.soundsEnabled !== false;
+}
+function masterVol(): number {
+  if (typeof window === 'undefined') return 1;
+  const p = (window as any).__orcaPrefs;
+  return typeof p?.soundVolume === 'number' ? Math.max(0, Math.min(1, p.soundVolume)) : 1;
+}
+
 // Pre-warm the AudioContext on first user interaction
 if (typeof window !== 'undefined') {
   const warm = () => { ctx(); window.removeEventListener('click', warm); window.removeEventListener('touchstart', warm); };
