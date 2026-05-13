@@ -15,13 +15,26 @@ async function currentUserId(): Promise<string | null> {
 export async function getAllTrades(): Promise<Trade[]> {
   const uid = await currentUserId();
   if (!uid) return [];
-  const { data, error } = await supabase
-    .from('trades')
-    .select('trade_id, data')
-    .eq('user_id', uid)
-    .order('trade_id', { ascending: true });
-  if (error) { console.error('getAllTrades', error); return []; }
-  return (data ?? []).map(r => ({ ...(r.data as unknown as Trade), id: r.trade_id }));
+  // Supabase caps each response at 1000 rows. Page through the entire set
+  // so users with large histories don't silently lose trades.
+  const PAGE = 1000;
+  const out: Trade[] = [];
+  let from = 0;
+  // Hard upper bound to avoid runaway loops if something goes wrong
+  for (let i = 0; i < 100; i++) {
+    const { data, error } = await supabase
+      .from('trades')
+      .select('trade_id, data')
+      .eq('user_id', uid)
+      .order('trade_id', { ascending: true })
+      .range(from, from + PAGE - 1);
+    if (error) { console.error('getAllTrades', error); return out; }
+    const rows = data ?? [];
+    for (const r of rows) out.push({ ...(r.data as unknown as Trade), id: r.trade_id });
+    if (rows.length < PAGE) break;
+    from += PAGE;
+  }
+  return out;
 }
 
 export async function saveTrade(trade: Trade): Promise<void> {
