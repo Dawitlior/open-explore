@@ -36,35 +36,21 @@ export const OrcaUXLayer = () => {
   const [showHelp, setShowHelp] = useState(false);
   const [pageLoaded, setPageLoaded] = useState(false);
 
-  /* ─── 1. Pointer-tracked spotlight + 2. magnetic tilt ─── */
+  /* ─── 1. Pointer-tracked spotlight (no tilt — disabled per user request) ─── */
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
       const target = (e.target as HTMLElement | null)?.closest?.('.orca-glass-hover') as HTMLElement | null;
       if (!target) return;
-      // Disable magnetic tilt inside the Journal — user requested no hover transform there.
-      if (target.closest('[data-journal-root]') || target.closest('.j-no-tilt')) return;
       const r = target.getBoundingClientRect();
       const x = e.clientX - r.left;
       const y = e.clientY - r.top;
       target.style.setProperty('--orca-mx', `${x}px`);
       target.style.setProperty('--orca-my', `${y}px`);
-      // gentle magnetic tilt (max 4 deg)
-      const rx = ((y / r.height) - 0.5) * -3;
-      const ry = ((x / r.width) - 0.5) * 3;
-      target.style.transform = `perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg) translateZ(0)`;
-    };
-    const onLeave = (e: PointerEvent) => {
-      const target = (e.target as HTMLElement | null)?.closest?.('.orca-glass-hover') as HTMLElement | null;
-      if (!target) return;
-      target.style.transform = '';
+      // Magnetic 3D tilt removed — caused unwanted hover animation on Journal & cards.
     };
     window.addEventListener('pointermove', onMove, { passive: true });
-    window.addEventListener('pointerleave', onLeave, { passive: true });
-    document.addEventListener('mouseout', onLeave as any, { passive: true });
     return () => {
       window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerleave', onLeave);
-      document.removeEventListener('mouseout', onLeave as any);
     };
   }, []);
 
@@ -81,41 +67,7 @@ export const OrcaUXLayer = () => {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  /* ─── 4. Custom cyan cursor halo (desktop only) ─── */
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (!window.matchMedia('(pointer: fine)').matches) return;
-    const halo = document.createElement('div');
-    halo.id = 'orca-cursor-halo';
-    halo.style.cssText = `
-      position: fixed; left: 0; top: 0; width: 28px; height: 28px;
-      border-radius: 50%; pointer-events: none; z-index: 9998;
-      background: radial-gradient(circle, hsl(184 100% 50% / 0.18), transparent 70%);
-      transition: transform 90ms ease-out, opacity 200ms;
-      transform: translate(-100px, -100px); opacity: 0;
-      mix-blend-mode: screen;
-    `;
-    document.body.appendChild(halo);
-    let raf = 0;
-    let tx = 0, ty = 0;
-    const onMove = (e: MouseEvent) => {
-      tx = e.clientX - 14; ty = e.clientY - 14;
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        halo.style.transform = `translate(${tx}px, ${ty}px)`;
-        halo.style.opacity = '1';
-      });
-    };
-    const onLeave = () => { halo.style.opacity = '0'; };
-    window.addEventListener('mousemove', onMove, { passive: true });
-    window.addEventListener('mouseleave', onLeave);
-    return () => {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseleave', onLeave);
-      halo.remove();
-      cancelAnimationFrame(raf);
-    };
-  }, []);
+  /* ─── 4. Custom cursor halo — DISABLED per user request ─── */
 
   /* ─── 7. Online / offline toasts ─── */
   useEffect(() => {
