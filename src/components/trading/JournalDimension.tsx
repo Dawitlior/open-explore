@@ -3408,27 +3408,7 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
 
   // Build a "snapshot" of an Orca trade derived from a Journal trade row.
   const buildOrcaPayload = (jtr: any): Omit<Trade, 'id' | 'balance'> => {
-    const nowTime = new Date().toTimeString().slice(0, 5);
-    const dateStr = `${safeDateStr(day.date)} ${nowTime}`;
-    const dayLabel = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date((day.date || '').replace(' ', 'T')).getDay()] || 'Mon';
-    const entry = parseFloat(jtr.entry) || 0;
-    const exit = parseFloat(jtr.exit) || 0;
-    const size = parseFloat(jtr.size) || 0;
-    const pnl = parseFloat(jtr.pnl) || 0;
-    const rr = parseFloat(jtr.rr) || 0;
-    const winLoss: Trade['winLoss'] = pnl > 0.05 ? 'Win' : pnl < -0.05 ? 'Loss' : 'Break Even';
-    const direction: Trade['direction'] = (jtr.side === 'SHORT' || jtr.side === 'Short') ? 'Short' : 'Long';
-    return {
-      date: dateStr, day: dayLabel,
-      coin: (jtr.pair || 'JOURNAL').toString().toUpperCase().slice(0, 12),
-      direction, orderType: 'Market',
-      entry, stopLoss: 0, exit, returnR: rr,
-      winLoss, risk: Math.abs(pnl / Math.max(rr || 1, 1)) || 0,
-      expectedLoss: 0, pnl, deviation: 0,
-      positionSize: size, leverage: 1, riskPct: 0, rules: true,
-      // Tag with the Journal trade id so we can find & update the mirror.
-      comments: `__JID:${jtr.id}__ ${jtr.notes || ''}`.trim(),
-    };
+    return buildJournalOrcaPayload(day, jtr);
   };
 
   const addTrade = () => {
@@ -3442,13 +3422,7 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
   // Sync a single journal-trade edit to its linked Orca trade (or create one if missing).
   // Treats Journal trades as first-class siblings of Orca trades — full bidirectional bridge.
   const isMeaningful = (jtr: any) => {
-    const pair = String(jtr?.pair || '').trim();
-    const hasData = [jtr?.pair, jtr?.entry, jtr?.exit, jtr?.pnl, jtr?.rr, jtr?.size, jtr?.notes].some(v => {
-      if (typeof v === 'string' && v.trim().length > 0) return true;
-      const n = parseFloat(v);
-      return Number.isFinite(n) && n !== 0;
-    });
-    return pair.length > 0 || hasData;
+    return isMeaningfulJournalTrade(jtr);
   };
   const syncRowToOrca = async (jtr: any) => {
     if (!isMeaningful(jtr)) return;
