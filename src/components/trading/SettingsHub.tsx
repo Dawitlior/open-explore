@@ -1,12 +1,16 @@
 import { useState, useRef } from 'react';
 import type { TradingTheme } from '@/lib/trading-theme';
-import type { ThemeId, OperatingMode } from '@/hooks/use-settings';
+import type { ThemeId, OperatingMode, Lang } from '@/hooks/use-settings';
 import { useDashboardConfig, WIDGET_LABELS, evalCustomKPI, type CustomKPI, type WidgetId } from '@/hooks/use-dashboard-config';
 import type { TradingStats } from '@/lib/trading-analytics';
 import { useRiskLimits } from '@/hooks/use-risk-limits';
 import { DEFAULT_RISK_LIMITS } from '@/lib/risk-limits';
 import { useUIPrefs } from '@/hooks/use-ui-prefs';
 import { useAuth } from '@/hooks/use-auth';
+import { supabase } from '@/integrations/supabase/client';
+import { translateAuthError } from '@/lib/auth-utils';
+import { toast } from 'sonner';
+import type { Trade } from '@/data/trades';
 
 interface SettingsHubProps {
   T: TradingTheme;
@@ -16,9 +20,14 @@ interface SettingsHubProps {
   theme: ThemeId;
   setTheme: (t: ThemeId) => void;
   stats: TradingStats;
+  lang: Lang;
+  setLang: (l: Lang) => void;
+  privacyMode: boolean;
+  setPrivacyMode: (p: boolean) => void;
+  trades: Trade[];
 }
 
-type TabId = 'theme' | 'dashboard' | 'kpis' | 'risk' | 'interface';
+type TabId = 'account' | 'theme' | 'dashboard' | 'kpis' | 'risk' | 'interface' | 'data';
 
 const THEME_OPTIONS: { id: ThemeId; label: { he: string; en: string }; icon: string; preview: string[] }[] = [
   { id: 'midnight', label: { he: 'חצות', en: 'Midnight' }, icon: '🌙', preview: ['#020202', '#00f2ff', '#3b82f6'] },
