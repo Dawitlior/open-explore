@@ -684,32 +684,6 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
             );
           })()}
         </div>
-
-        {/* Account / sign out */}
-        <div style={{
-          marginTop: 18, padding: '12px 14px', borderRadius: T.radius.sm,
-          background: T.bg.card, border: `1px solid ${T.border.medium}`,
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
-        }}>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 10, color: T.text.muted, letterSpacing: 1.5, textTransform: 'uppercase' }}>
-              {t('חשבון', 'Account')}
-            </div>
-            <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} dir="ltr">
-              {auth.user?.email ?? '—'}
-            </div>
-          </div>
-          <button
-            onClick={async () => { await auth.signOut(); window.location.href = '/auth'; }}
-            style={{
-              padding: '8px 14px', borderRadius: T.radius.sm,
-              background: 'transparent', border: `1px solid ${T.border.medium}`,
-              color: T.accent.cyan, cursor: 'pointer', fontSize: 11, fontWeight: 800, letterSpacing: 1,
-            }}
-          >
-            {t('התנתק', 'Sign out')}
-          </button>
-        </div>
       </div>
     </div>
   );
