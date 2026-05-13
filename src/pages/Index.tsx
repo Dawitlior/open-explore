@@ -1428,7 +1428,7 @@ const Index = () => {
       <DimensionController
         activeDimension="journal"
         orcaUI={<div />}
-        journalUI={<JournalDimension onReturn={() => setActiveDimension('orca')} isRTL={isRTL} orcaTrades={trades} onAddOrcaTrade={addTrade} onUpdateOrcaTrade={updateTrade} onUpsertJournalTrade={upsertJournalTrade} />}
+        journalUI={<LazyShell><JournalDimension onReturn={() => setActiveDimension('orca')} isRTL={isRTL} orcaTrades={trades} onAddOrcaTrade={addTrade} onUpdateOrcaTrade={updateTrade} onUpsertJournalTrade={upsertJournalTrade} /></LazyShell>}
       />
     );
   }
@@ -1439,7 +1439,7 @@ const Index = () => {
         activeDimension="backtest"
         orcaUI={<div />}
         journalUI={<div />}
-        backtestUI={<BacktestDimension onReturn={() => setActiveDimension('orca')} />}
+        backtestUI={<LazyShell><BacktestDimension onReturn={() => setActiveDimension('orca')} /></LazyShell>}
       />
     );
   }
@@ -1708,7 +1708,7 @@ const Index = () => {
           {page === 'psychology' && renderPsychology()}
           {page === 'ai' && renderAI()}
           {page === 'weekly-review' && (
-            <WeeklyReviewPage T={T} isRTL={isRTL} trades={trades} themeId={settings.theme} stats={stats} riskData={riskData} />
+            <LazyShell><WeeklyReviewPage T={T} isRTL={isRTL} trades={trades} themeId={settings.theme} stats={stats} riskData={riskData} /></LazyShell>
           )}
         </div>
       </main>
