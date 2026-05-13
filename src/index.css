@@ -584,3 +584,183 @@ html, body, .orca-glass, .orca-panel, [class*="bg-"], [class*="text-"] {
   to { transform: rotate(360deg); }
 }
 
+
+/* ════════════════════════════════════════════════════════════════
+   📱 ELITE MOBILE OPTIMIZATION — comprehensive native-app feel
+   Touch targets, sticky bars, safe-area, scroll, cards, modals,
+   tables, charts, typography, journals, settings dialog.
+   ════════════════════════════════════════════════════════════════ */
+
+/* iOS safe-area + native viewport units */
+:root {
+  --orca-sa-top:    env(safe-area-inset-top, 0px);
+  --orca-sa-bottom: env(safe-area-inset-bottom, 0px);
+  --orca-sa-left:   env(safe-area-inset-left, 0px);
+  --orca-sa-right:  env(safe-area-inset-right, 0px);
+}
+
+@supports (height: 100dvh) {
+  .orca-mobile-fullh { min-height: 100dvh; }
+}
+
+@media (max-width: 768px) {
+  /* — Base typography rhythm — */
+  html { font-size: 15px; }
+  h1 { font-size: clamp(22px, 6vw, 30px) !important; line-height: 1.18 !important; }
+  h2 { font-size: clamp(18px, 5vw, 24px) !important; line-height: 1.25 !important; }
+  h3 { font-size: clamp(15px, 4.2vw, 18px) !important; }
+
+  /* — Universal touch targets — */
+  button, a[role="button"], [data-touch], .orca-btn {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+  }
+  /* Prevent iOS auto-zoom on focus */
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+
+  /* — App body & padding chrome — */
+  body { -webkit-tap-highlight-color: transparent; overscroll-behavior-y: contain; }
+  .orca-page { padding-left: max(12px, var(--orca-sa-left)) !important; padding-right: max(12px, var(--orca-sa-right)) !important; }
+
+  /* — Cards & glass — tighter rhythm, less blur for perf — */
+  .orca-glass, .orca-panel {
+    border-radius: 14px !important;
+    padding: 14px !important;
+    backdrop-filter: blur(14px) saturate(130%) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(130%) !important;
+  }
+  .orca-bento { gap: 10px !important; }
+
+  /* — Modal / Dialog / Sheet adaptation — */
+  [role="dialog"], .orca-modal {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+  }
+  /* Settings hub becomes a stacked single-column bottom sheet on mobile */
+  [data-orca-settings] { display: block !important; }
+
+  /* — Tables: convert to scrollable cards on phone — */
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+  }
+  th, td {
+    padding: 8px 10px !important;
+    font-size: 12px !important;
+    white-space: nowrap;
+  }
+  td { scroll-snap-align: start; }
+
+  /* — Charts: smaller, denser, never overflow — */
+  .recharts-responsive-container { max-height: 240px !important; }
+  .recharts-cartesian-axis-tick text,
+  .recharts-polar-angle-axis-tick text { font-size: 10px !important; }
+  .recharts-default-tooltip {
+    font-size: 11px !important;
+    padding: 6px 9px !important;
+    max-width: 200px !important;
+  }
+  .recharts-legend-wrapper { font-size: 10px !important; }
+
+  /* — KPI / metric values keep tabular alignment — */
+  .orca-metric-value { font-size: 20px !important; letter-spacing: -0.02em !important; }
+
+  /* — Sidebar / Nav: compact, sticky bottom or top — */
+  [data-mobile-nav] {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    padding: 8px max(10px, var(--orca-sa-left)) calc(8px + var(--orca-sa-bottom)) max(10px, var(--orca-sa-right));
+    background: hsl(var(--background) / 0.92);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border-top: 1px solid hsl(var(--border, 0 0% 100% / 0.08));
+    z-index: 60;
+  }
+
+  /* — Journals & long lists — single column, tighter rows — */
+  [data-journal-root] .orca-grid-2col,
+  [data-journal-root] [class*="grid-cols-2"],
+  [data-journal-root] [class*="grid-cols-3"],
+  [data-journal-root] [class*="grid-cols-4"] { grid-template-columns: 1fr !important; }
+  [data-journal-root] tr { font-size: 12px !important; }
+
+  /* — Trade form: stack pairs, full-width inputs — */
+  [data-trade-form] [class*="grid-cols-"] { grid-template-columns: 1fr !important; gap: 10px !important; }
+  [data-trade-form] input, [data-trade-form] select { width: 100% !important; }
+
+  /* — Calendar grid: scale day cells — */
+  [data-orca-calendar] .day-cell { min-height: 56px !important; padding: 6px !important; font-size: 11px !important; }
+  [data-orca-calendar] .day-cell .pnl { font-size: 10px !important; }
+
+  /* — Settings hub: 1 column on mobile (no sidebar) — */
+  [data-settings-hub] {
+    grid-template-columns: 1fr !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+  }
+  [data-settings-hub] aside { display: none !important; }
+  [data-settings-hub-mobile-nav] { display: flex !important; }
+
+  /* — Hide non-essential decorations on phone — */
+  .orca-marquee, .orca-scanlines::before { display: none !important; }
+  body::before { opacity: 0.6; }  /* lighter aurora to save GPU */
+
+  /* — Force long words to break in cards — */
+  .orca-glass *, .orca-panel * { overflow-wrap: anywhere; }
+
+  /* — Sticky CTA bar at bottom — */
+  .orca-mobile-sticky-cta {
+    position: sticky;
+    bottom: var(--orca-sa-bottom);
+    background: linear-gradient(180deg, transparent, hsl(var(--background) / 0.95) 30%);
+    padding: 12px 0;
+    z-index: 30;
+  }
+
+  /* — Fix iOS rubber-band on fixed overlays — */
+  [role="dialog"] { position: fixed !important; touch-action: pan-y; }
+
+  /* — Remove tilt 3d on touch (no hover) — */
+  .orca-tilt { transform: none !important; }
+
+  /* — AI Insights: motherboard button shrinks gracefully — */
+  [data-mainframe-button] { width: 200px !important; height: 200px !important; }
+}
+
+/* Tiny phones (≤375px) — extra-compact */
+@media (max-width: 375px) {
+  html { font-size: 14px; }
+  .orca-glass, .orca-panel { padding: 12px !important; border-radius: 12px !important; }
+  .orca-metric-value { font-size: 17px !important; }
+  .recharts-responsive-container { max-height: 200px !important; }
+  th, td { padding: 6px 8px !important; font-size: 11px !important; }
+  [data-mainframe-button] { width: 170px !important; height: 170px !important; }
+}
+
+/* Landscape phones — compress vertical space */
+@media (max-height: 480px) and (orientation: landscape) {
+  .orca-glass, .orca-panel { padding: 10px !important; }
+  .recharts-responsive-container { max-height: 160px !important; }
+  h1 { font-size: 18px !important; }
+}
+
+/* High-DPI fine-tuning (retina) — sharper hairlines */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .orca-glass, .orca-panel { border-width: 0.5px; }
+}
+
+/* Pointer:coarse (touch devices) — bigger hit areas, no hover glow */
+@media (pointer: coarse) {
+  .orca-glass-hover::before { display: none !important; }
+  .orca-tilt:hover { transform: none !important; }
+}

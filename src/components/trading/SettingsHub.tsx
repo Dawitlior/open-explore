@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import {
   User, Palette, LayoutDashboard, Calculator, Shield, SlidersHorizontal, Database,
   X, LogOut, Mail, KeyRound, Send, Download, Eye, EyeOff, Globe, GripVertical,
@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { playMorningLock } from '@/lib/apex-sounds';
 import type { TradingTheme } from '@/lib/trading-theme';
+import { deriveFullPalette } from '@/lib/trading-theme';
 import type { ThemeId, OperatingMode, Lang } from '@/hooks/use-settings';
 import { useDashboardConfig, WIDGET_LABELS, evalCustomKPI, type CustomKPI } from '@/hooks/use-dashboard-config';
 import type { TradingStats } from '@/lib/trading-analytics';
@@ -70,6 +71,8 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
   const [pwBusy, setPwBusy] = useState(false);
   const [emailBusy, setEmailBusy] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const [draftAccent, setDraftAccent] = useState<string>('#00f2ff');
+  useEffect(() => { if (ui.prefs.customAccent) setDraftAccent(ui.prefs.customAccent); }, [ui.prefs.customAccent]);
 
   if (!open) return null;
   const t = (he: string, en: string) => isRTL ? he : en;
@@ -169,6 +172,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
       `}</style>
       <div
         ref={dialogRef}
+        data-settings-hub
         onClick={e => e.stopPropagation()}
         style={{
           width: '100%', maxWidth: 1180, height: '92vh', maxHeight: 880,
@@ -841,89 +845,220 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
             {/* ============ THEME STUDIO ============ */}
             {tab === 'theme-studio' && (() => {
               const p = ui.prefs;
+              const locked = ui.themeLocked;
+              const msLeft = ui.themeLockMsRemaining;
+              const daysLeft = Math.ceil(msLeft / (24 * 60 * 60 * 1000));
+              const hoursLeft = Math.ceil(msLeft / (60 * 60 * 1000));
+              const lockText = daysLeft > 1 ? t(`עוד ${daysLeft} ימים`, `${daysLeft} days left`) : t(`עוד ${hoursLeft} שעות`, `${hoursLeft}h left`);
+
+              const draft = draftAccent;
+              const setDraft = setDraftAccent;
+              const isLight = theme === 'platinum';
+              const sketch = deriveFullPalette(draft, isLight ? 'light' : 'dark');
+              const swatches = sketch?.preview;
+
+              const handleCommit = () => {
+                if (locked) {
+                  toast.error(t(`נעול ל-7 ימים. ${lockText}`, `Locked for 7 days. ${lockText}`));
+                  return;
+                }
+                if (!/^#[0-9a-f]{6}$/i.test(draft)) {
+                  toast.error(t('צבע לא תקין', 'Invalid hex color'));
+                  return;
+                }
+                if (!confirm(t(
+                  `אישור: בחירת הצבע הזה תינעל ל-7 ימים. אורקה תיגזור ממנו פלטה מלאה ותחיל אותה על כל הממשק. להמשיך?`,
+                  `Confirm: this color will be locked for 7 days. Orca will derive a full palette from it and apply it across the UI. Continue?`,
+                ))) return;
+                ui.commitCustomAccent(draft);
+                playMorningLock();
+                toast.success(t('הפלטה נשמרה ונעולה ל-7 ימים', 'Palette committed and locked for 7 days'));
+              };
+
               return (
                 <div>
-                  <div style={card}>
-                    <h3 style={sectionTitle}><Brush size={14} /> {t('צבע מבטא מותאם', 'Custom accent color')}</h3>
-                    <p style={sectionHint}>{t('בחר צבע ואורקה תיגזור ממנו את כל הפלטה — כפתורים, הילות, אורות, פוקוס וצללים. השינוי מיידי וחי על גבי כל ערכת נושא.', 'Pick one color and Orca derives the entire palette — buttons, glows, focus rings and shadows. Instant live tint on top of any theme.')}</p>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18 }}>
-                      <div style={{
-                        width: 72, height: 72, borderRadius: T.radius.lg,
-                        background: p.customAccentEnabled ? p.customAccent : T.bg.tertiary,
-                        border: `2px solid ${T.border.medium}`,
-                        boxShadow: p.customAccentEnabled ? `0 0 32px ${p.customAccent}55` : 'none',
-                        flexShrink: 0, transition: 'all .25s',
-                      }} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 800, color: T.text.primary, marginBottom: 4 }}>
-                          {p.customAccentEnabled ? t('צבע מותאם פעיל', 'Custom accent active') : t('צבע מותאם כבוי', 'Custom accent off')}
-                        </div>
-                        <div style={{ fontSize: 11, color: T.text.muted, fontFamily: mono }}>{p.customAccent.toUpperCase()}</div>
-                        <button onClick={() => ui.setPrefs({ customAccentEnabled: !p.customAccentEnabled })}
-                          style={{
-                            ...primaryBtn(p.customAccentEnabled ? T.accent.orange : T.accent.cyan),
-                            marginTop: 10, fontSize: 11, padding: '8px 14px',
-                          }}>
-                          {p.customAccentEnabled ? <><X size={12} /> {t('בטל מותאם', 'Disable')}</> : <><Check size={12} /> {t('הפעל מותאם', 'Enable custom')}</>}
-                        </button>
+                  {/* Status / lock banner */}
+                  <div style={{
+                    ...card,
+                    background: locked
+                      ? `linear-gradient(135deg, ${T.accent.orange}10, transparent)`
+                      : p.customAccentEnabled
+                        ? `linear-gradient(135deg, ${p.customAccent}18, transparent)`
+                        : T.bg.primary,
+                    borderColor: locked ? `${T.accent.orange}40` : p.customAccentEnabled ? `${p.customAccent}40` : T.border.subtle,
+                    display: 'flex', alignItems: 'center', gap: 14,
+                  }}>
+                    <div style={{
+                      width: 56, height: 56, borderRadius: T.radius.lg, flexShrink: 0,
+                      background: p.customAccentEnabled ? p.customAccent : T.bg.tertiary,
+                      boxShadow: p.customAccentEnabled ? `0 0 28px ${p.customAccent}55` : 'none',
+                      border: `2px solid ${T.border.medium}`,
+                    }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: T.text.primary }}>
+                        {p.customAccentEnabled
+                          ? t('פלטה אישית פעילה', 'Custom palette active')
+                          : t('פלטה אישית כבויה — משתמש בערכת הבסיס', 'Custom palette off — using base theme')}
+                      </div>
+                      <div style={{ fontSize: 11, color: T.text.muted, fontFamily: mono, marginTop: 3 }}>
+                        {p.customAccentEnabled ? p.customAccent.toUpperCase() : '—'}
+                        {locked && <span style={{ color: T.accent.orange, marginInlineStart: 10, fontWeight: 800 }}>🔒 {lockText}</span>}
                       </div>
                     </div>
+                    {p.customAccentEnabled && !locked && (
+                      <button onClick={() => { ui.removeCustomAccent(); toast.success(t('הוסר', 'Removed')); }}
+                        style={{ ...ghostBtn, color: T.accent.orange, borderColor: `${T.accent.orange}55` }}>
+                        <X size={13} /> {t('הסר פלטה', 'Remove')}
+                      </button>
+                    )}
+                  </div>
 
-                    <label style={fieldLabel}>{t('בחר צבע', 'Pick color')}</label>
-                    <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 14 }}>
-                      <input type="color" value={p.customAccent}
-                        onChange={e => ui.setPrefs({ customAccent: e.target.value, customAccentEnabled: true })}
-                        style={{ width: 56, height: 40, border: 'none', borderRadius: T.radius.sm, background: 'transparent', cursor: 'pointer' }} />
-                      <input className="orca-settings-input" value={p.customAccent}
-                        onChange={e => ui.setPrefs({ customAccent: e.target.value })}
-                        placeholder="#00f2ff" dir="ltr" style={{ ...input, fontFamily: mono, maxWidth: 180 }} />
+                  {/* COLOR PICKER */}
+                  <div style={{ ...card, opacity: locked ? 0.55 : 1 }}>
+                    <h3 style={sectionTitle}><Brush size={14} /> {t('בחר צבע בסיס', 'Pick base color')}</h3>
+                    <p style={sectionHint}>
+                      {t('צבע אחד — אורקה גוזרת ממנו את כל הפלטה: רקעים, משטחים, גבולות, אורות, פוקוס וצללים. אפשר לבחור עד 7 ימים פעם אחת בשביל יציבות.',
+                         'Pick one color — Orca derives the entire palette: surfaces, borders, glows, focus and shadows. Limited to one change every 7 days for stability.')}
+                    </p>
+
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
+                      <input type="color" value={draft} disabled={locked}
+                        onChange={e => setDraft(e.target.value)}
+                        style={{ width: 64, height: 44, border: 'none', borderRadius: T.radius.sm, background: 'transparent', cursor: locked ? 'not-allowed' : 'pointer' }} />
+                      <input className="orca-settings-input" value={draft} disabled={locked}
+                        onChange={e => setDraft(e.target.value)}
+                        placeholder="#00f2ff" dir="ltr" style={{ ...input, fontFamily: mono, maxWidth: 200 }} />
+                      <span style={{ fontSize: 10.5, color: T.text.muted, fontFamily: mono }}>
+                        H {sketch ? sketch.primary.split(' ')[0] : '—'}°
+                      </span>
                     </div>
 
                     <label style={fieldLabel}>{t('דוגמיות מהירות', 'Quick swatches')}</label>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 6, marginBottom: 14 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 6, marginBottom: 4 }}>
                       {ACCENT_PRESETS.map(c => {
-                        const active = p.customAccent.toLowerCase() === c.toLowerCase();
+                        const active = draft.toLowerCase() === c.toLowerCase();
                         return (
-                          <button key={c} onClick={() => ui.setPrefs({ customAccent: c, customAccentEnabled: true })}
-                            title={c}
+                          <button key={c} onClick={() => !locked && setDraft(c)} disabled={locked} title={c}
                             style={{
-                              aspectRatio: '1', borderRadius: T.radius.sm, cursor: 'pointer',
+                              aspectRatio: '1', borderRadius: T.radius.sm, cursor: locked ? 'not-allowed' : 'pointer',
                               background: c, border: `2px solid ${active ? '#fff' : 'transparent'}`,
                               boxShadow: active ? `0 0 14px ${c}` : 'none', transition: 'all .15s',
                             }} />
                         );
                       })}
                     </div>
-
-                    <div style={{
-                      padding: 14, borderRadius: T.radius.md,
-                      background: T.bg.secondary, border: `1px solid ${T.border.subtle}`,
-                    }}>
-                      <div style={{ fontSize: 10.5, fontWeight: 800, color: T.text.muted, textTransform: 'uppercase', letterSpacing: 1.4, marginBottom: 10 }}>
-                        {t('תצוגה מקדימה חיה', 'Live preview')}
-                      </div>
-                      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                        <button style={{
-                          padding: '10px 16px', borderRadius: T.radius.sm, border: 'none',
-                          background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))',
-                          fontSize: 12, fontWeight: 800, cursor: 'pointer', fontFamily: sans,
-                        }}>{t('כפתור ראשי', 'Primary action')}</button>
-                        <button style={{
-                          padding: '10px 16px', borderRadius: T.radius.sm,
-                          background: 'transparent', color: 'hsl(var(--primary))',
-                          border: '1px solid hsl(var(--primary))', fontSize: 12, fontWeight: 800, cursor: 'pointer', fontFamily: sans,
-                        }}>{t('משני', 'Secondary')}</button>
-                        <span style={{
-                          padding: '6px 12px', borderRadius: 999,
-                          background: 'hsl(var(--primary) / 0.15)', color: 'hsl(var(--primary))',
-                          fontSize: 11, fontWeight: 700, fontFamily: mono,
-                        }}>+12.4R</span>
-                        <input className="orca-settings-input" placeholder={t('שדה ממוקד', 'Focused input')}
-                          style={{ ...input, maxWidth: 180, borderColor: 'hsl(var(--ring))', boxShadow: '0 0 0 3px hsl(var(--ring) / 0.18)' }} />
-                      </div>
-                    </div>
                   </div>
+
+                  {/* SKETCH PREVIEW (uses derived palette WITHOUT applying) */}
+                  {swatches && (
+                    <div style={card}>
+                      <h3 style={sectionTitle}><Eye size={14} /> {t('סקיצת תצוגה — איך זה ייראה', 'Sketch preview — how it will look')}</h3>
+                      <p style={sectionHint}>
+                        {t('זוהי תצוגה ויזואלית של הפלטה הנגזרת. שום דבר עוד לא הופעל. לחץ "החל ונעל" אם זה מוצא חן בעיניך.',
+                           'This is a visual preview of the derived palette. Nothing is applied yet. Click "Apply & Lock" if you like it.')}
+                      </p>
+
+                      {/* Mini-app sketch */}
+                      <div style={{
+                        borderRadius: T.radius.lg, overflow: 'hidden',
+                        border: `1px solid ${T.border.medium}`, background: swatches.bg,
+                        padding: 0, marginBottom: 14,
+                      }}>
+                        {/* Top bar */}
+                        <div style={{
+                          display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px',
+                          background: swatches.surface, borderBottom: `1px solid ${swatches.soft}`,
+                        }}>
+                          <div style={{ width: 10, height: 10, borderRadius: '50%', background: swatches.primary, boxShadow: `0 0 10px ${swatches.glow}` }} />
+                          <div style={{ fontSize: 11, fontWeight: 800, color: '#fff', letterSpacing: 1 }}>ORCA</div>
+                          <div style={{ flex: 1 }} />
+                          <div style={{ padding: '4px 10px', borderRadius: 6, background: swatches.soft, color: swatches.primary, fontSize: 10, fontFamily: mono }}>+12.4R</div>
+                        </div>
+                        {/* Body */}
+                        <div style={{ padding: 14, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                          {[1, 2, 3].map(i => (
+                            <div key={i} style={{
+                              padding: 12, borderRadius: 10, background: swatches.surface,
+                              border: `1px solid ${swatches.soft}`,
+                            }}>
+                              <div style={{ fontSize: 9, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 6 }}>KPI {i}</div>
+                              <div style={{ fontSize: 18, fontWeight: 800, color: swatches.primary, fontFamily: mono }}>${(i * 1234).toLocaleString()}</div>
+                              <div style={{
+                                height: 4, marginTop: 8, borderRadius: 2,
+                                background: `linear-gradient(90deg, ${swatches.primary}, ${swatches.accent})`,
+                                width: `${30 + i * 20}%`, boxShadow: `0 0 8px ${swatches.glow}`,
+                              }} />
+                            </div>
+                          ))}
+                        </div>
+                        {/* CTA strip */}
+                        <div style={{ display: 'flex', gap: 8, padding: 14, paddingTop: 0 }}>
+                          <button style={{
+                            padding: '10px 16px', borderRadius: 8, border: 'none',
+                            background: swatches.primary, color: '#000',
+                            fontSize: 12, fontWeight: 800, cursor: 'pointer',
+                            boxShadow: `0 4px 16px ${swatches.glow}`,
+                          }}>{t('כפתור ראשי', 'Primary')}</button>
+                          <button style={{
+                            padding: '10px 16px', borderRadius: 8,
+                            background: 'transparent', color: swatches.primary,
+                            border: `1px solid ${swatches.primary}`, fontSize: 12, fontWeight: 800, cursor: 'pointer',
+                          }}>{t('משני', 'Secondary')}</button>
+                          <span style={{
+                            padding: '6px 12px', borderRadius: 999,
+                            background: swatches.soft, color: swatches.primary,
+                            fontSize: 11, fontWeight: 700, fontFamily: mono, alignSelf: 'center',
+                          }}>{t('מבטא', 'Accent')}</span>
+                        </div>
+                      </div>
+
+                      {/* Token chips */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 8 }}>
+                        {[
+                          { label: t('רקע', 'BG'), c: swatches.bg },
+                          { label: t('משטח', 'Surface'), c: swatches.surface },
+                          { label: t('ראשי', 'Primary'), c: swatches.primary },
+                          { label: t('מבטא', 'Accent'), c: swatches.accent },
+                          { label: t('רך', 'Soft'), c: swatches.soft },
+                          { label: t('הילה', 'Glow'), c: swatches.glow },
+                        ].map(s => (
+                          <div key={s.label} style={{
+                            borderRadius: T.radius.sm, padding: 8, textAlign: 'center',
+                            background: T.bg.secondary, border: `1px solid ${T.border.subtle}`,
+                          }}>
+                            <div style={{ height: 22, borderRadius: 4, background: s.c, marginBottom: 4 }} />
+                            <div style={{ fontSize: 9, color: T.text.muted, fontFamily: mono }}>{s.label}</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* COMMIT BUTTONS */}
+                      <div style={{ display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
+                        <button className="orca-cta" onClick={handleCommit} disabled={locked}
+                          style={{
+                            ...primaryBtn(swatches.primary, locked), flex: 1, padding: '12px 20px',
+                            color: '#000', fontSize: 13, boxShadow: locked ? 'none' : `0 4px 20px ${swatches.glow}`,
+                          }}>
+                          {locked ? <>🔒 {t(`נעול — ${lockText}`, `Locked — ${lockText}`)}</> : <><Sparkles size={14} /> {t('החל ונעל ל-7 ימים', 'Apply & Lock for 7 days')}</>}
+                        </button>
+                        <button onClick={() => setDraft(p.customAccent)} disabled={locked} style={ghostBtn}>
+                          <RotateCcw size={12} /> {t('שחזר', 'Reset draft')}
+                        </button>
+                      </div>
+
+                      {locked && (
+                        <div style={{
+                          marginTop: 10, padding: 10, borderRadius: T.radius.sm,
+                          background: `${T.accent.orange}10`, border: `1px solid ${T.accent.orange}40`,
+                          fontSize: 11, color: T.text.secondary, lineHeight: 1.6,
+                        }}>
+                          <strong style={{ color: T.accent.orange }}>🔒 {t('הפלטה נעולה', 'Palette locked')}.</strong>{' '}
+                          {t('המנגנון מגביל החלפת פלטה לפעם אחת ב-7 ימים בשביל יציבות חזותית. תוכל לערוך שוב ב', 'The system limits palette changes to once per 7 days for visual stability. You can edit again on ')}
+                          <strong>{new Date(p.customAccentLockedUntil).toLocaleString(isRTL ? 'he-IL' : 'en-US')}</strong>.
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })()}

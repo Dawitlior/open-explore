@@ -278,7 +278,134 @@ export function clearCustomAccent() {
   if (typeof document === 'undefined') return;
   const r = document.documentElement;
   r.removeAttribute('data-custom-accent');
+  r.removeAttribute('data-derived-palette');
   // Re-apply the active base theme to wipe custom overrides
   const id = (r.getAttribute('data-theme') as ThemeId) || 'midnight';
   applyThemeToDOM(id);
+}
+
+/* ════════════════════════════════════════════════
+   DERIVED PALETTE — generate a cohesive full palette
+   from one base hex. Uses HSL relations to keep
+   contrast & accessibility safe across surfaces.
+   Returns BOTH the css var map AND a preview palette
+   so the Theme Studio can render a sketch.
+   ════════════════════════════════════════════════ */
+export interface DerivedPalette {
+  hex: string;
+  primary: string;        // hsl string "h s% l%"
+  primaryFg: string;
+  accent: string;
+  accentSoft: string;     // 92% darken
+  ring: string;
+  glow: string;
+  auroraA: string;
+  auroraB: string;
+  background: string;
+  surface: string;
+  card: string;
+  border: string;
+  foreground: string;
+  preview: { bg: string; surface: string; primary: string; accent: string; soft: string; glow: string };
+}
+
+export function deriveFullPalette(hex: string, mode: 'dark' | 'light' = 'dark'): DerivedPalette | null {
+  const hsl = hexToHsl(hex);
+  if (!hsl) return null;
+  const { h, s } = hsl;
+  // Anchor saturation in a comfortable band
+  const S = Math.max(60, Math.min(92, s));
+  const compH = (h + 28) % 360;     // analog harmony for aurora B
+  const triH = (h + 180) % 360;
+
+  if (mode === 'dark') {
+    return {
+      hex,
+      primary:    `${h} ${S}% 60%`,
+      primaryFg:  `0 0% 4%`,
+      accent:     `${h} ${S}% 60%`,
+      accentSoft: `${h} ${Math.round(S * 0.6)}% 22%`,
+      ring:       `${h} ${S}% 60%`,
+      glow:       `${h} ${Math.min(100, S + 5)}% 70%`,
+      auroraA:    `${h} ${S}% 60%`,
+      auroraB:    `${compH} ${Math.max(60, S - 8)}% 58%`,
+      background: `${h} 30% 4%`,
+      surface:    `${h} 24% 8%`,
+      card:       `${h} 26% 7%`,
+      border:     `${h} 30% 22%`,
+      foreground: `${h} 20% 95%`,
+      preview: {
+        bg:      `hsl(${h} 30% 4%)`,
+        surface: `hsl(${h} 24% 8%)`,
+        primary: `hsl(${h} ${S}% 60%)`,
+        accent:  `hsl(${triH} ${Math.max(55, S - 12)}% 62%)`,
+        soft:    `hsl(${h} ${Math.round(S * 0.4)}% 18%)`,
+        glow:    `hsl(${h} ${S}% 70% / 0.5)`,
+      },
+    };
+  }
+  // light
+  return {
+    hex,
+    primary:    `${h} ${S}% 48%`,
+    primaryFg:  `0 0% 100%`,
+    accent:     `${h} ${S}% 48%`,
+    accentSoft: `${h} ${Math.round(S * 0.5)}% 88%`,
+    ring:       `${h} ${S}% 48%`,
+    glow:       `${h} ${S}% 60%`,
+    auroraA:    `${h} ${S}% 60%`,
+    auroraB:    `${compH} ${Math.max(50, S - 10)}% 55%`,
+    background: `${h} 30% 97%`,
+    surface:    `${h} 20% 94%`,
+    card:       `0 0% 100%`,
+    border:     `${h} 20% 86%`,
+    foreground: `${h} 30% 12%`,
+    preview: {
+      bg: `hsl(${h} 30% 97%)`, surface: `hsl(${h} 20% 94%)`,
+      primary: `hsl(${h} ${S}% 48%)`, accent: `hsl(${triH} ${Math.max(45, S - 14)}% 52%)`,
+      soft: `hsl(${h} ${Math.round(S * 0.4)}% 88%)`, glow: `hsl(${h} ${S}% 60% / 0.4)`,
+    },
+  };
+}
+
+export function applyDerivedPalette(hex: string) {
+  if (typeof document === 'undefined') return;
+  const r = document.documentElement;
+  // Decide mode based on currently active theme
+  const isLight = r.getAttribute('data-theme') === 'platinum';
+  const p = deriveFullPalette(hex, isLight ? 'light' : 'dark');
+  if (!p) return;
+  const set = (k: string, v: string) => r.style.setProperty(k, v);
+
+  set('--background', p.background);
+  set('--foreground', p.foreground);
+  set('--card', p.card);
+  set('--card-foreground', p.foreground);
+  set('--popover', p.card);
+  set('--popover-foreground', p.foreground);
+  set('--primary', p.primary);
+  set('--primary-foreground', p.primaryFg);
+  set('--accent', p.primary);
+  set('--accent-foreground', p.primaryFg);
+  set('--secondary', p.accentSoft);
+  set('--secondary-foreground', p.foreground);
+  set('--muted', p.accentSoft);
+  set('--muted-foreground', isLight ? '215 18% 38%' : '215 12% 65%');
+  set('--ring', p.ring);
+  set('--border', p.border);
+  set('--input', p.border);
+
+  set('--sidebar-background', isLight ? p.surface : `${hexToHsl(hex)?.h ?? 0} 30% 5%`);
+  set('--sidebar-foreground', p.foreground);
+  set('--sidebar-primary', p.primary);
+  set('--sidebar-primary-foreground', p.primaryFg);
+  set('--sidebar-accent', p.accentSoft);
+  set('--sidebar-accent-foreground', p.foreground);
+  set('--sidebar-ring', p.ring);
+
+  set('--orca-aurora-a', p.auroraA);
+  set('--orca-aurora-b', p.auroraB);
+  set('--orca-glow-spot', p.glow);
+  set('--orca-primary-h', p.primary);
+  r.setAttribute('data-derived-palette', hex);
 }
