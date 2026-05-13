@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { playMorningLock } from '@/lib/apex-sounds';
 import type { TradingTheme } from '@/lib/trading-theme';
+import { deriveFullPalette } from '@/lib/trading-theme';
 import type { ThemeId, OperatingMode, Lang } from '@/hooks/use-settings';
 import { useDashboardConfig, WIDGET_LABELS, evalCustomKPI, type CustomKPI } from '@/hooks/use-dashboard-config';
 import type { TradingStats } from '@/lib/trading-analytics';
@@ -70,6 +71,9 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
   const [pwBusy, setPwBusy] = useState(false);
   const [emailBusy, setEmailBusy] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const [draftAccent, setDraftAccent] = useState<string>('');
+  // Sync draft to committed accent when prefs load / change
+  useMemo(() => { if (!draftAccent && ui.prefs.customAccent) setDraftAccent(ui.prefs.customAccent); }, [ui.prefs.customAccent, draftAccent]);
 
   if (!open) return null;
   const t = (he: string, en: string) => isRTL ? he : en;
