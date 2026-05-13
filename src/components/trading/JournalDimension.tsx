@@ -3943,6 +3943,14 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
 
       // Check risk after trade updates
       if ('trades' in patch) {
+        const updatedDay = next.find(d => d.id === curId);
+        if (updatedDay && typeof onUpsertJournalTrade === 'function') {
+          (updatedDay.trades || [])
+            .filter(isMeaningfulJournalTrade)
+            .forEach(jtr => {
+              void onUpsertJournalTrade(String(jtr.id), buildJournalOrcaPayload(updatedDay, jtr));
+            });
+        }
         const newRisk = checkJournalRisk(next);
         if (newRisk.breachedLevel !== 'none') {
           setRiskAlertShown(true);
@@ -3953,7 +3961,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
     });
     if (Object.keys(patch).some(k => MORNING_KEYS.has(k))) setMD(true);
     else setED(true);
-  }, []);
+  }, [onUpsertJournalTrade]);
 
   const showToast = useCallback((msg: string, type = 'g') => {
     clearTimeout(tRef.current);
