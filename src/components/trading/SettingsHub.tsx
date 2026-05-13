@@ -172,6 +172,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
       `}</style>
       <div
         ref={dialogRef}
+        data-settings-hub
         onClick={e => e.stopPropagation()}
         style={{
           width: '100%', maxWidth: 1180, height: '92vh', maxHeight: 880,
