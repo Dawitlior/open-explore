@@ -3352,19 +3352,19 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
 
   // Map of Journal-trade-id → Orca-trade-id, kept in a ref so it survives
   // every keystroke without depending on stale `orcaTrades` snapshots.
-  const jidMapRef = useRef<Map<number, number>>(new Map());
+  const jidMapRef = useRef<Map<string, number>>(new Map());
   // Per-jid in-flight guard so rapid edits don't create duplicate Orca trades.
-  const inFlightRef = useRef<Set<number>>(new Set());
-  const pendingRef = useRef<Set<number>>(new Set());
-  const latestRowsRef = useRef<Map<number, any>>(new Map());
+  const inFlightRef = useRef<Set<string>>(new Set());
+  const pendingRef = useRef<Set<string>>(new Set());
+  const latestRowsRef = useRef<Map<string, any>>(new Map());
   const syncRowRef = useRef<(jtr: any) => void>(() => {});
 
   // Keep the map fresh from props (covers reloads / external changes).
   useEffect(() => {
     const map = jidMapRef.current;
     (bridgeTrades || []).forEach((o: Trade) => {
-      const m = typeof o.comments === 'string' ? o.comments.match(/__JID:(\d+)__/) : null;
-      if (m) map.set(parseInt(m[1], 10), o.id);
+      const m = typeof o.comments === 'string' ? o.comments.match(/__JID:([^_]+)__/ ) : null;
+      if (m) map.set(m[1], o.id);
     });
     pendingRef.current.forEach(jid => {
       const linkedId = map.get(jid);
@@ -3421,43 +3421,44 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
   };
   const syncRowToOrca = async (jtr: any) => {
     if (!isMeaningful(jtr)) return;
-    latestRowsRef.current.set(jtr.id, jtr);
+    const jid = String(jtr.id);
+    latestRowsRef.current.set(jid, jtr);
     if (typeof onUpsertJournalTrade === 'function') {
       try {
-        const saved = await onUpsertJournalTrade(jtr.id, buildOrcaPayload(jtr));
-        if (saved && typeof saved === 'object' && 'id' in saved) jidMapRef.current.set(jtr.id, (saved as Trade).id);
+        const saved = await onUpsertJournalTrade(jid, buildOrcaPayload(jtr));
+        if (saved && typeof saved === 'object' && 'id' in saved) jidMapRef.current.set(jid, (saved as Trade).id);
       } catch { /* fallback to legacy bridge below */ }
       return;
     }
     const map = jidMapRef.current;
-    const linkedId = map.get(jtr.id);
+    const linkedId = map.get(jid);
     const linked = linkedId != null
       ? (bridgeTrades || []).find((o: Trade) => o.id === linkedId)
       : (bridgeTrades || []).find((o: Trade) => typeof o.comments === 'string' && o.comments.includes(`__JID:${jtr.id}__`));
 
-    if (linkedId != null && !linked) { pendingRef.current.add(jtr.id); return; }
+    if (linkedId != null && !linked) { pendingRef.current.add(jid); return; }
 
     if (linked && typeof onUpdateOrcaTrade === 'function') {
       try {
         const payload = buildOrcaPayload(jtr);
         await onUpdateOrcaTrade({ ...linked, ...payload });
-        map.set(jtr.id, linked.id);
+        map.set(jid, linked.id);
       } catch { /* silent */ }
       return;
     }
     if (typeof onAddOrcaTrade !== 'function') return;
-    if (inFlightRef.current.has(jtr.id)) { pendingRef.current.add(jtr.id); return; }
-    inFlightRef.current.add(jtr.id);
+    if (inFlightRef.current.has(jid)) { pendingRef.current.add(jid); return; }
+    inFlightRef.current.add(jid);
     try {
       const created = await onAddOrcaTrade(buildOrcaPayload(jtr));
       const newId = (created && typeof created === 'object' && 'id' in (created as any))
         ? (created as Trade).id : null;
-      if (newId != null) map.set(jtr.id, newId);
+      if (newId != null) map.set(jid, newId);
     } catch { /* silent */ }
     finally {
-      inFlightRef.current.delete(jtr.id);
-      if (pendingRef.current.delete(jtr.id)) {
-        const latest = latestRowsRef.current.get(jtr.id);
+      inFlightRef.current.delete(jid);
+      if (pendingRef.current.delete(jid)) {
+        const latest = latestRowsRef.current.get(jid);
         if (latest) setTimeout(() => syncRowRef.current(latest), 0);
       }
     }
