@@ -50,7 +50,7 @@ export async function saveTrade(trade: Trade): Promise<void> {
   const { error } = await supabase
     .from('trades')
     .upsert({ user_id: uid, trade_id: trade.id, data: trade as any }, { onConflict: 'user_id,trade_id' });
-  if (error) console.error('saveTrade', error);
+  if (error) reportStorageError('saveTrade', error);
 }
 
 export async function saveTrades(trades: Trade[]): Promise<void> {
@@ -68,7 +68,7 @@ export async function saveTrades(trades: Trade[]): Promise<void> {
     const { error } = await supabase
       .from('trades')
       .upsert(slice, { onConflict: 'user_id,trade_id' });
-    if (error) { console.error('saveTrades', error); return; }
+    if (error) { reportStorageError('saveTrades', error); throw error; }
   }
 }
 
@@ -80,14 +80,14 @@ export async function deleteTrade(id: number): Promise<void> {
     .delete()
     .eq('user_id', uid)
     .eq('trade_id', id);
-  if (error) console.error('deleteTrade', error);
+  if (error) reportStorageError('deleteTrade', error);
 }
 
 export async function deleteAllTrades(): Promise<void> {
   const uid = await currentUserId();
   if (!uid) return;
   const { error } = await supabase.from('trades').delete().eq('user_id', uid);
-  if (error) console.error('deleteAllTrades', error);
+  if (error) reportStorageError('deleteAllTrades', error);
 }
 
 export async function getSetting<T = unknown>(key: string): Promise<T | undefined> {
@@ -109,7 +109,7 @@ export async function setSetting<T = unknown>(key: string, value: T): Promise<vo
   const { error } = await supabase
     .from('user_settings')
     .upsert({ user_id: uid, key, value: value as any }, { onConflict: 'user_id,key' });
-  if (error) console.error('setSetting', error);
+  if (error) reportStorageError('setSetting', error);
 }
 
 export async function clearAllData(): Promise<void> {
