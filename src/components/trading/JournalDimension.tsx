@@ -4079,6 +4079,24 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
     });
   }, [orcaTrades, loaded]);
 
+  // Backfill: if Journal trades already exist but their Orca mirrors are missing
+  // (for example trades created before the bridge fix), sync them on load.
+  useEffect(() => {
+    if (!loaded || typeof onUpsertJournalTrade !== 'function') return;
+    const mirroredJids = new Set(
+      (orcaTrades || [])
+        .map(tr => (typeof tr.comments === 'string' ? tr.comments.match(/__JID:([^_]+)__/ )?.[1] : null))
+        .filter(Boolean) as string[]
+    );
+    days.forEach(day => {
+      (day.trades || [])
+        .filter(jtr => isMeaningfulJournalTrade(jtr) && !mirroredJids.has(String(jtr.id)))
+        .forEach(jtr => {
+          void onUpsertJournalTrade(String(jtr.id), buildJournalOrcaPayload(day, jtr));
+        });
+    });
+  }, [loaded, days, orcaTrades, onUpsertJournalTrade]);
+
   // Bridge: Orca trades filtered by the displayed journal day's date.
   // Recomputes whenever a new Orca trade is added — live sync.
   // Robust date matching — normalizes ANY trade date format (ISO, datetime-local,
