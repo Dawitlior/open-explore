@@ -50,12 +50,12 @@ function tone(c: AudioContext, t: number, freq: number, endFreq: number | null, 
   const osc = c.createOscillator(); osc.type = 'sine';
   const g = c.createGain();
   const total = attack + sustain + release;
+  const v = vol * masterVol();
   osc.frequency.setValueAtTime(freq, t);
   if (endFreq) osc.frequency.exponentialRampToValueAtTime(endFreq, t + total * 0.8);
-  // Envelope
   g.gain.setValueAtTime(0, t);
-  g.gain.linearRampToValueAtTime(vol, t + attack);
-  g.gain.setValueAtTime(vol, t + attack + sustain);
+  g.gain.linearRampToValueAtTime(v, t + attack);
+  g.gain.setValueAtTime(v, t + attack + sustain);
   g.gain.exponentialRampToValueAtTime(0.0001, t + total);
   osc.connect(g); g.connect(c.destination);
   osc.start(t); osc.stop(t + total + 0.05);
