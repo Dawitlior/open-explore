@@ -1485,9 +1485,9 @@ const Index = () => {
       )}
       {/* MOBILE MENU POPUP */}
       {isMobile && sbOpen && (
-        <div onClick={() => setSbOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 100, backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 'max(20px, env(safe-area-inset-top, 20px))' }}>
+        <div onClick={() => setSbOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 100, backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 'max(20px, env(safe-area-inset-top, 20px))', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
           <div onClick={e => e.stopPropagation()} style={{
-            width: 'min(400px, 92vw)', maxHeight: 'calc(100vh - 40px)', overflowY: 'auto',
+            width: 'min(400px, 92vw)', maxHeight: 'min(calc(100dvh - 40px), calc(100vh - 40px))', overflowY: 'auto',
             background: `linear-gradient(180deg, ${T.bg.secondary} 0%, ${T.bg.primary} 100%)`,
             border: `1px solid ${T.border.medium}`, borderRadius: T.radius.xl,
             boxShadow: T.shadow.elevated, animation: 'scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
