@@ -3,6 +3,7 @@ import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { I18nStrings } from '@/lib/trading-i18n';
 import { GlassCard } from './TradingUI';
+import { FeatureHint } from './FeatureHint';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface TradeFormProps {
