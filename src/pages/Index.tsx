@@ -614,7 +614,15 @@ const Index = () => {
     // REVIEW MODE: statistical intelligence
     if (opMode === 'review') return (
       <>
-        <h2 style={{ fontSize: 22, fontWeight: 300, color: T.text.secondary, margin: '0 0 20px', fontFamily: "'JetBrains Mono', monospace" }}>{t.goodMorning} 👋</h2>
+        <h2 style={{ fontSize: 22, fontWeight: 300, color: T.text.secondary, margin: '0 0 20px', fontFamily: "'JetBrainsCa Mono', monospace" }}>{t.goodMorning} 👋</h2>
+
+        <FeatureHint
+          T={T}
+          id="dashboard-review-layers"
+          text={isRTL
+            ? 'הדאשבורד בנוי בשלוש שכבות: בריאות מסחר (KPI), בריאות מערכת (Orca Score, Regime Fit, משמעת) וניתוח מתקדם (פתח/סגור).'
+            : 'The dashboard is built in 3 layers: Trading Health (KPIs), System Health (Orca Score, Regime Fit, Discipline), and Advanced Analysis (collapsible).'}
+        />
 
         {/* ═══ LAYER 1 — CORE TRADING HEALTH ═══ */}
         <div style={{ marginBottom: 6 }}>
