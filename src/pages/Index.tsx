@@ -20,6 +20,7 @@ import { TradeForm } from '@/components/trading/TradeForm';
 import { ResetModal } from '@/components/trading/ResetModal';
 import { SettingsHub } from '@/components/trading/SettingsHub';
 import ImportLoadingOverlay from '@/components/trading/ImportLoadingOverlay';
+import { FeatureHint } from '@/components/trading/FeatureHint';
 import { EntryGate } from '@/components/trading/EntryGate';
 import { RiskLimitAlert } from '@/components/trading/RiskLimitAlert';
 import { RiskExplanationModal, type RiskExplanation } from '@/components/trading/RiskExplanationModal';
