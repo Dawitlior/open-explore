@@ -1040,7 +1040,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                             ...primaryBtn(swatches.primary, locked), flex: 1, padding: '12px 20px',
                             color: '#000', fontSize: 13, boxShadow: locked ? 'none' : `0 4px 20px ${swatches.glow}`,
                           }}>
-                          {locked ? <>🔒 {t(`נעול — ${lockText}`, `Locked — ${lockText}`)}</> : <><Sparkles size={14} /> {t('החל ונעל ל-7 ימים', 'Apply & Lock for 7 days')}</>}
+                          {locked ? <>🔒 {t(`נעול — ${lockText}`, `Locked — ${lockText}`)}</> : <><Sparkles size={14} /> {t('החל ונעל ליום', 'Apply & Lock for 1 day')}</>}
                         </button>
                         <button onClick={() => setDraft(p.customAccent)} disabled={locked} style={ghostBtn}>
                           <RotateCcw size={12} /> {t('שחזר', 'Reset draft')}
@@ -1054,7 +1054,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                           fontSize: 11, color: T.text.secondary, lineHeight: 1.6,
                         }}>
                           <strong style={{ color: T.accent.orange }}>🔒 {t('הפלטה נעולה', 'Palette locked')}.</strong>{' '}
-                          {t('המנגנון מגביל החלפת פלטה לפעם אחת ב-7 ימים בשביל יציבות חזותית. תוכל לערוך שוב ב', 'The system limits palette changes to once per 7 days for visual stability. You can edit again on ')}
+                          {t('המנגנון מגביל החלפת פלטה לפעם אחת ביום בשביל יציבות חזותית. תוכל לערוך שוב ב', 'The system limits palette changes to once per day for visual stability. You can edit again on ')}
                           <strong>{new Date(p.customAccentLockedUntil).toLocaleString(isRTL ? 'he-IL' : 'en-US')}</strong>.
                         </div>
                       )}
