@@ -1262,6 +1262,13 @@ const Index = () => {
     const calRiskStatus = checkRiskLimits(trades);
     return (
       <>
+        <FeatureHint
+          T={T}
+          id="dashboard-calendar-hub"
+          text={isRTL
+            ? 'הלוח שנה הוא לב הדאשבורד — כל יום מציג רווח/הפסד, מספר עסקאות ומצב סיכון. לחיצה על יום פותחת ניתוח עסקאות מלא.'
+            : 'The calendar is the heart of your dashboard — each day shows P&L, trade count, and risk status. Click a day to open the full trade breakdown.'}
+        />
         {/* Monthly risk warning banner */}
         {calRiskStatus.monthlyBreached && (
           <div style={{ padding: '10px 16px', background: `${T.accent.red}15`, border: `2px solid ${T.accent.red}40`, borderRadius: T.radius.md, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
