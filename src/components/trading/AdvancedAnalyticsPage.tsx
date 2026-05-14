@@ -31,7 +31,8 @@ import type { TradingStats } from '@/lib/trading-analytics';
 import type { OperatingMode } from '@/hooks/use-settings';
 import { GlassCard } from './TradingUI';
 import type { ChartExplanation } from './ChartWrapper';
-import { AnalyticsQuantLab } from './AnalyticsQuantLab';
+import { lazy, Suspense } from 'react';
+const AnalyticsQuantLab = lazy(() => import('./AnalyticsQuantLab').then(m => ({ default: m.AnalyticsQuantLab })));
 
 interface AdvancedAnalyticsPageProps {
   T: TradingTheme;
@@ -763,7 +764,11 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
       </div>
 
       {/* ═══ QUANT LAB — appears in review/research/alpha ═══ */}
-      {showPro && <AnalyticsQuantLab T={T} trades={trades} privacyMode={privacyMode} />}
+      {showPro && (
+        <Suspense fallback={<div style={{ padding: 18, fontSize: 11, color: T.text.muted, opacity: 0.7 }}>Loading Quant Lab…</div>}>
+          <AnalyticsQuantLab T={T} trades={trades} privacyMode={privacyMode} />
+        </Suspense>
+      )}
 
       {/* ═══ KEY OBSERVATIONS ═══ */}
       <GlassCard T={T} glow={`${T.accent.cyan}18`}>
