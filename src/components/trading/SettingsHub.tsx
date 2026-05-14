@@ -72,6 +72,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
   const [emailBusy, setEmailBusy] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const [draftAccent, setDraftAccent] = useState<string>('#00f2ff');
+  const [showThemeConfirm, setShowThemeConfirm] = useState(false);
   useEffect(() => { if (ui.prefs.customAccent) setDraftAccent(ui.prefs.customAccent); }, [ui.prefs.customAccent]);
 
   if (!open) return null;
@@ -847,9 +848,9 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
               const p = ui.prefs;
               const locked = ui.themeLocked;
               const msLeft = ui.themeLockMsRemaining;
-              const daysLeft = Math.ceil(msLeft / (24 * 60 * 60 * 1000));
               const hoursLeft = Math.ceil(msLeft / (60 * 60 * 1000));
-              const lockText = daysLeft > 1 ? t(`עוד ${daysLeft} ימים`, `${daysLeft} days left`) : t(`עוד ${hoursLeft} שעות`, `${hoursLeft}h left`);
+              const minsLeft = Math.ceil(msLeft / (60 * 1000));
+              const lockText = hoursLeft > 1 ? t(`עוד ${hoursLeft} שעות`, `${hoursLeft}h left`) : t(`עוד ${minsLeft} דקות`, `${minsLeft}m left`);
 
               const draft = draftAccent;
               const setDraft = setDraftAccent;
@@ -859,20 +860,20 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
 
               const handleCommit = () => {
                 if (locked) {
-                  toast.error(t(`נעול ל-7 ימים. ${lockText}`, `Locked for 7 days. ${lockText}`));
+                  toast.error(t(`נעול ליום. ${lockText}`, `Locked for 1 day. ${lockText}`));
                   return;
                 }
                 if (!/^#[0-9a-f]{6}$/i.test(draft)) {
                   toast.error(t('צבע לא תקין', 'Invalid hex color'));
                   return;
                 }
-                if (!confirm(t(
-                  `אישור: בחירת הצבע הזה תינעל ל-7 ימים. אורקה תיגזור ממנו פלטה מלאה ותחיל אותה על כל הממשק. להמשיך?`,
-                  `Confirm: this color will be locked for 7 days. Orca will derive a full palette from it and apply it across the UI. Continue?`,
-                ))) return;
+                setShowThemeConfirm(true);
+              };
+              const confirmCommit = () => {
+                setShowThemeConfirm(false);
                 ui.commitCustomAccent(draft);
                 playMorningLock();
-                toast.success(t('הפלטה נשמרה ונעולה ל-7 ימים', 'Palette committed and locked for 7 days'));
+                toast.success(t('הפלטה נשמרה ונעולה ליום', 'Palette committed and locked for 1 day'));
               };
 
               return (
@@ -917,8 +918,8 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                   <div style={{ ...card, opacity: locked ? 0.55 : 1 }}>
                     <h3 style={sectionTitle}><Brush size={14} /> {t('בחר צבע בסיס', 'Pick base color')}</h3>
                     <p style={sectionHint}>
-                      {t('צבע אחד — אורקה גוזרת ממנו את כל הפלטה: רקעים, משטחים, גבולות, אורות, פוקוס וצללים. אפשר לבחור עד 7 ימים פעם אחת בשביל יציבות.',
-                         'Pick one color — Orca derives the entire palette: surfaces, borders, glows, focus and shadows. Limited to one change every 7 days for stability.')}
+                      {t('צבע אחד — אורקה גוזרת ממנו את כל הפלטה: רקעים, משטחים, גבולות, אורות, פוקוס וצללים. אפשר לבחור פעם ביום בשביל יציבות.',
+                         'Pick one color — Orca derives the entire palette: surfaces, borders, glows, focus and shadows. Limited to one change per day for stability.')}
                     </p>
 
                     <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
@@ -1039,7 +1040,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                             ...primaryBtn(swatches.primary, locked), flex: 1, padding: '12px 20px',
                             color: '#000', fontSize: 13, boxShadow: locked ? 'none' : `0 4px 20px ${swatches.glow}`,
                           }}>
-                          {locked ? <>🔒 {t(`נעול — ${lockText}`, `Locked — ${lockText}`)}</> : <><Sparkles size={14} /> {t('החל ונעל ל-7 ימים', 'Apply & Lock for 7 days')}</>}
+                          {locked ? <>🔒 {t(`נעול — ${lockText}`, `Locked — ${lockText}`)}</> : <><Sparkles size={14} /> {t('החל ונעל ליום', 'Apply & Lock for 1 day')}</>}
                         </button>
                         <button onClick={() => setDraft(p.customAccent)} disabled={locked} style={ghostBtn}>
                           <RotateCcw size={12} /> {t('שחזר', 'Reset draft')}
@@ -1053,7 +1054,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                           fontSize: 11, color: T.text.secondary, lineHeight: 1.6,
                         }}>
                           <strong style={{ color: T.accent.orange }}>🔒 {t('הפלטה נעולה', 'Palette locked')}.</strong>{' '}
-                          {t('המנגנון מגביל החלפת פלטה לפעם אחת ב-7 ימים בשביל יציבות חזותית. תוכל לערוך שוב ב', 'The system limits palette changes to once per 7 days for visual stability. You can edit again on ')}
+                          {t('המנגנון מגביל החלפת פלטה לפעם אחת ביום בשביל יציבות חזותית. תוכל לערוך שוב ב', 'The system limits palette changes to once per day for visual stability. You can edit again on ')}
                           <strong>{new Date(p.customAccentLockedUntil).toLocaleString(isRTL ? 'he-IL' : 'en-US')}</strong>.
                         </div>
                       )}
@@ -1184,6 +1185,103 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
           </div>
         </section>
       </div>
+
+      {/* ============ THEME COMMIT CONFIRMATION ============ */}
+      {showThemeConfirm && (
+        <div
+          onClick={() => setShowThemeConfirm(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 10010,
+            background: 'rgba(2,6,15,0.78)',
+            backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 20, animation: 'orcaSettingsFade .18s ease-out',
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: '100%', maxWidth: 460,
+              background: `linear-gradient(180deg, ${T.bg.secondary} 0%, ${T.bg.primary} 100%)`,
+              border: `1px solid ${draftAccent}55`,
+              borderRadius: T.radius.xl,
+              boxShadow: `0 30px 80px rgba(0,0,0,0.6), 0 0 60px ${draftAccent}22`,
+              overflow: 'hidden',
+              animation: 'orcaSettingsRise .28s cubic-bezier(0.16,1,0.3,1)',
+            }}
+          >
+            <div style={{
+              height: 80, position: 'relative',
+              background: `linear-gradient(135deg, ${draftAccent}28, ${draftAccent}05)`,
+              borderBottom: `1px solid ${T.border.subtle}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <div style={{
+                width: 52, height: 52, borderRadius: '50%',
+                background: draftAccent,
+                boxShadow: `0 0 40px ${draftAccent}99, inset 0 0 20px rgba(255,255,255,0.18)`,
+                border: '2px solid rgba(255,255,255,0.18)',
+              }} />
+            </div>
+            <div style={{ padding: '22px 24px 8px', textAlign: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: T.text.primary, fontFamily: sans, letterSpacing: '-0.01em' }}>
+                {t('לאשר את הפלטה האישית?', 'Apply this custom palette?')}
+              </h3>
+              <p style={{ margin: '10px 0 0', fontSize: 13, color: T.text.secondary, lineHeight: 1.6 }}>
+                {t(
+                  'אורקה תיגזור פלטה מלאה מהצבע הזה ותחיל אותה על כל הממשק.',
+                  'Orca will derive a full palette from this color and apply it across the UI.',
+                )}
+              </p>
+              <div style={{
+                marginTop: 14, padding: '10px 14px',
+                background: `${T.accent.orange}10`,
+                border: `1px solid ${T.accent.orange}35`,
+                borderRadius: T.radius.md,
+                fontSize: 12, color: T.accent.orange, fontWeight: 600,
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+              }}>
+                🔒 {t('הבחירה תינעל ל־24 שעות', 'Locked for 24 hours after applying')}
+              </div>
+              <div style={{ marginTop: 12, fontSize: 11, color: T.text.muted, fontFamily: mono, letterSpacing: '0.05em' }}>
+                {draftAccent.toUpperCase()}
+              </div>
+            </div>
+            <div style={{ padding: '16px 20px 20px', display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setShowThemeConfirm(false)}
+                style={{
+                  flex: 1, padding: '12px 16px', borderRadius: T.radius.md,
+                  background: 'transparent', border: `1px solid ${T.border.medium}`,
+                  color: T.text.secondary, fontSize: 13, fontWeight: 600,
+                  cursor: 'pointer', fontFamily: sans,
+                }}
+              >
+                {t('ביטול', 'Cancel')}
+              </button>
+              <button
+                onClick={() => {
+                  setShowThemeConfirm(false);
+                  ui.commitCustomAccent(draftAccent);
+                  playMorningLock();
+                  toast.success(t('הפלטה נשמרה ונעולה ליום', 'Palette committed and locked for 1 day'));
+                }}
+                style={{
+                  flex: 1.4, padding: '12px 16px', borderRadius: T.radius.md,
+                  background: `linear-gradient(135deg, ${draftAccent}, ${draftAccent}dd)`,
+                  border: `1px solid ${draftAccent}`,
+                  color: '#000', fontSize: 13, fontWeight: 800,
+                  cursor: 'pointer', fontFamily: sans,
+                  boxShadow: `0 6px 24px ${draftAccent}66`,
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                }}
+              >
+                <Sparkles size={14} /> {t('החל ונעל', 'Apply & Lock')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

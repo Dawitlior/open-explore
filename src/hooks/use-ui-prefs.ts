@@ -58,7 +58,7 @@ const DEFAULTS: UIPrefs = {
 };
 
 const KEY = 'uiPrefs';
-export const THEME_LOCK_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+export const THEME_LOCK_MS = 24 * 60 * 60 * 1000; // 1 day
 
 declare global {
   interface Window {
