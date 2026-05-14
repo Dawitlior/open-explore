@@ -1694,7 +1694,7 @@ const Index = () => {
               <button onClick={() => setShowTradeForm(true)} style={{ padding: '10px 24px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 700, cursor: 'pointer', fontSize: 14 }}>+ {t.addTrade}</button>
             </div>
           )}
-          {page === 'dashboard' && (<>{renderDashboard()}{renderCalendar()}</>)}
+          {page === 'dashboard' && (<>{renderCalendar()}{renderDashboard()}</>)}
           {page === 'journal' && renderJournal()}
           {page === 'analytics' && renderAnalytics()}
           {page === 'risk' && renderRisk()}
