@@ -449,6 +449,13 @@ const Index = () => {
     // BEGINNER MODE: simplified, friendly
     if (opMode === 'beginner') return (
       <>
+        <FeatureHint
+          T={T}
+          id="dashboard-beginner-intro"
+          text={isRTL
+            ? 'מצב מתחיל מציג רק את המדדים הקריטיים: רווח, אחוז הצלחה ומשמעת. ככל שתתקדם — תוכל לעבור למצב Standard או Alpha בהגדרות.'
+            : 'Beginner Mode shows only the essentials: P&L, win rate, and discipline. As you progress, switch to Standard or Alpha mode in Settings.'}
+        />
         <h2 style={{ fontSize: 22, fontWeight: 300, color: T.text.secondary, margin: '0 0 20px', fontFamily: "'JetBrains Mono', monospace" }}>
           {isRTL ? '🎓 מצב מתחיל — ברוך הבא!' : '🎓 Beginner Mode — Welcome!'}
         </h2>
