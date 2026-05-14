@@ -918,8 +918,8 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                   <div style={{ ...card, opacity: locked ? 0.55 : 1 }}>
                     <h3 style={sectionTitle}><Brush size={14} /> {t('בחר צבע בסיס', 'Pick base color')}</h3>
                     <p style={sectionHint}>
-                      {t('צבע אחד — אורקה גוזרת ממנו את כל הפלטה: רקעים, משטחים, גבולות, אורות, פוקוס וצללים. אפשר לבחור עד 7 ימים פעם אחת בשביל יציבות.',
-                         'Pick one color — Orca derives the entire palette: surfaces, borders, glows, focus and shadows. Limited to one change every 7 days for stability.')}
+                      {t('צבע אחד — אורקה גוזרת ממנו את כל הפלטה: רקעים, משטחים, גבולות, אורות, פוקוס וצללים. אפשר לבחור פעם ביום בשביל יציבות.',
+                         'Pick one color — Orca derives the entire palette: surfaces, borders, glows, focus and shadows. Limited to one change per day for stability.')}
                     </p>
 
                     <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
