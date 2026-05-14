@@ -6,7 +6,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 import { computeAnalytics, getCalDays } from '@/lib/trading-analytics';
 import { i18n } from '@/lib/trading-i18n';
-import { getTheme, ttStyle, modeColors, type TradingTheme } from '@/lib/trading-theme';
+import { getTheme, tintTheme, ttStyle, modeColors, type TradingTheme } from '@/lib/trading-theme';
 import { GlassCard, MetricCard, ScoreGauge, TradingBadge, Ico } from '@/components/trading/TradingUI';
 import { ChartWrapper, EXPLANATIONS, type ChartExplanation } from '@/components/trading/ChartWrapper';
 import { ChartExplanationModal } from '@/components/trading/ChartExplanationModal';
@@ -20,6 +20,7 @@ import { TradeForm } from '@/components/trading/TradeForm';
 import { ResetModal } from '@/components/trading/ResetModal';
 import { SettingsHub } from '@/components/trading/SettingsHub';
 import ImportLoadingOverlay from '@/components/trading/ImportLoadingOverlay';
+import { FeatureHint } from '@/components/trading/FeatureHint';
 import { EntryGate } from '@/components/trading/EntryGate';
 import { RiskLimitAlert } from '@/components/trading/RiskLimitAlert';
 import { RiskExplanationModal, type RiskExplanation } from '@/components/trading/RiskExplanationModal';
@@ -79,12 +80,16 @@ const Index = () => {
   const [entered, setEntered] = useState(() => sessionStorage.getItem('orca-entered') === '1');
   const [onboardingDone, setOnboardingDone] = useState(() => !shouldShowOnboarding());
   const [activeDimension, setActiveDimension] = useState<'orca' | 'journal' | 'backtest'>('orca');
-  const T = getTheme(settings.theme);
+  const baseTheme = getTheme(settings.theme);
   const t = i18n[settings.lang];
   const isRTL = settings.isRTL;
   const isAlpha = settings.isAlpha;
   const opMode = settings.operatingMode;
   const { prefs: uiPrefs, setPrefs: setUIPrefs, toggleHiddenMode, reset: resetUIPrefs } = useUIPrefs();
+  const T = useMemo(
+    () => (uiPrefs.customAccentEnabled ? tintTheme(baseTheme, uiPrefs.customAccent) : baseTheme),
+    [baseTheme, uiPrefs.customAccentEnabled, uiPrefs.customAccent],
+  );
 
   const [page, setPage] = useState('dashboard');
   const [sbOpen, setSbOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth > 768);
@@ -444,6 +449,13 @@ const Index = () => {
     // BEGINNER MODE: simplified, friendly
     if (opMode === 'beginner') return (
       <>
+        <FeatureHint
+          T={T}
+          id="dashboard-beginner-intro"
+          text={isRTL
+            ? 'מצב מתחיל מציג רק את המדדים הקריטיים: רווח, אחוז הצלחה ומשמעת. ככל שתתקדם — תוכל לעבור למצב Standard או Alpha בהגדרות.'
+            : 'Beginner Mode shows only the essentials: P&L, win rate, and discipline. As you progress, switch to Standard or Alpha mode in Settings.'}
+        />
         <h2 style={{ fontSize: 22, fontWeight: 300, color: T.text.secondary, margin: '0 0 20px', fontFamily: "'JetBrains Mono', monospace" }}>
           {isRTL ? '🎓 מצב מתחיל — ברוך הבא!' : '🎓 Beginner Mode — Welcome!'}
         </h2>
@@ -603,6 +615,14 @@ const Index = () => {
     if (opMode === 'review') return (
       <>
         <h2 style={{ fontSize: 22, fontWeight: 300, color: T.text.secondary, margin: '0 0 20px', fontFamily: "'JetBrains Mono', monospace" }}>{t.goodMorning} 👋</h2>
+
+        <FeatureHint
+          T={T}
+          id="dashboard-review-layers"
+          text={isRTL
+            ? 'הדאשבורד בנוי בשלוש שכבות: בריאות מסחר (KPI), בריאות מערכת (Orca Score, Regime Fit, משמעת) וניתוח מתקדם (פתח/סגור).'
+            : 'The dashboard is built in 3 layers: Trading Health (KPIs), System Health (Orca Score, Regime Fit, Discipline), and Advanced Analysis (collapsible).'}
+        />
 
         {/* ═══ LAYER 1 — CORE TRADING HEALTH ═══ */}
         <div style={{ marginBottom: 6 }}>
@@ -1257,6 +1277,13 @@ const Index = () => {
     const calRiskStatus = checkRiskLimits(trades);
     return (
       <>
+        <FeatureHint
+          T={T}
+          id="dashboard-calendar-hub"
+          text={isRTL
+            ? 'הלוח שנה הוא לב הדאשבורד — כל יום מציג רווח/הפסד, מספר עסקאות ומצב סיכון. לחיצה על יום פותחת ניתוח עסקאות מלא.'
+            : 'The calendar is the heart of your dashboard — each day shows P&L, trade count, and risk status. Click a day to open the full trade breakdown.'}
+        />
         {/* Monthly risk warning banner */}
         {calRiskStatus.monthlyBreached && (
           <div style={{ padding: '10px 16px', background: `${T.accent.red}15`, border: `2px solid ${T.accent.red}40`, borderRadius: T.radius.md, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -1690,7 +1717,7 @@ const Index = () => {
               <button onClick={() => setShowTradeForm(true)} style={{ padding: '10px 24px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 700, cursor: 'pointer', fontSize: 14 }}>+ {t.addTrade}</button>
             </div>
           )}
-          {page === 'dashboard' && (<>{renderDashboard()}{renderCalendar()}</>)}
+          {page === 'dashboard' && (<>{renderCalendar()}{renderDashboard()}</>)}
           {page === 'journal' && renderJournal()}
           {page === 'analytics' && renderAnalytics()}
           {page === 'risk' && renderRisk()}

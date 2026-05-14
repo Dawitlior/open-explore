@@ -3,6 +3,7 @@ import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { I18nStrings } from '@/lib/trading-i18n';
 import { GlassCard } from './TradingUI';
+import { FeatureHint } from './FeatureHint';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface TradeFormProps {
@@ -39,7 +40,6 @@ const TICK_VALUES: Record<string, { tick: number; value: number }> = {
 };
 
 type StopMode = 'price' | 'pips' | 'percent' | 'dollar';
-type RiskMode = 'dollar' | 'percent';
 
 const detectCategory = (symbol: string): AssetCategory => {
   for (const [cat, symbols] of Object.entries(ASSET_CATEGORIES)) {
@@ -54,7 +54,6 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
   const [assetCategory, setAssetCategory] = useState<AssetCategory>(() => trade?.coin ? detectCategory(trade.coin) : 'Crypto');
   const [customSymbol, setCustomSymbol] = useState('');
   const [stopMode, setStopMode] = useState<StopMode>('price');
-  const [riskMode, setRiskMode] = useState<RiskMode>('percent');
   const [stopPips, setStopPips] = useState(0);
   const [stopPercent, setStopPercent] = useState(0);
   const [stopDollar, setStopDollar] = useState(0);
@@ -112,7 +111,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
     return risk / Math.abs(entry - stopLoss);
   }, [form.entry, form.stopLoss, form.risk]);
 
-  const riskFromPercent = useMemo(() => currentBalance * (form.riskPct / 100), [currentBalance, form.riskPct]);
+  const equivPercent = useMemo(() => currentBalance > 0 ? (form.risk / currentBalance) * 100 : 0, [currentBalance, form.risk]);
 
   const handleDateChange = (val: string) => {
     const d = new Date(val);
@@ -151,16 +150,8 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
     }
   };
 
-  const handleRiskModeToggle = () => {
-    if (riskMode === 'dollar') {
-      setRiskMode('percent');
-      setForm(f => ({ ...f, risk: riskFromPercent }));
-    } else setRiskMode('dollar');
-  };
-
   const handleRiskChange = (val: number) => {
-    if (riskMode === 'percent') setForm(f => ({ ...f, riskPct: val, risk: currentBalance * (val / 100) }));
-    else setForm(f => ({ ...f, risk: val, riskPct: currentBalance > 0 ? (val / currentBalance) * 100 : 0 }));
+    setForm(f => ({ ...f, risk: val, riskPct: currentBalance > 0 ? (val / currentBalance) * 100 : 0 }));
   };
 
   const calc = () => {
@@ -278,8 +269,20 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
     );
   };
 
+  // Guard against accidental backdrop dismiss that wipes the in-progress trade.
+  const isDirty = form.coin !== (trade?.coin || 'BTC') || form.entry || form.stopLoss || form.exit || form.risk || form.comments;
+  const safeClose = () => {
+    if (isDirty && !trade) {
+      const ok = confirm(isRTL
+        ? 'יש לך נתונים שלא נשמרו. לסגור ולמחוק את הטיוטה?'
+        : 'You have unsaved trade data. Close and discard the draft?');
+      if (!ok) return;
+    }
+    onClose();
+  };
+
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.78)', zIndex: 100, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', backdropFilter: 'blur(14px)', padding: isMobile ? 0 : 18 }} onClick={onClose}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.78)', zIndex: 100, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', backdropFilter: 'blur(14px)', padding: isMobile ? 0 : 18 }} onClick={safeClose}>
       <div onClick={e => e.stopPropagation()} style={panelStyle}>
 
         {/* Header */}
@@ -289,7 +292,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
               <div style={{ fontSize: isMobile ? 22 : 26, fontWeight: 800, color: T.text.primary, lineHeight: 1.1 }}>{trade ? t.editTrade : (isRTL ? 'הוספת עסקה חדשה' : 'Add a New Trade')}</div>
               <div style={{ fontSize: 13, color: T.text.secondary, marginTop: 6 }}>{STEPS[step].sub}</div>
             </div>
-            <button onClick={onClose} aria-label="Close" style={{ width: 38, height: 38, borderRadius: 12, background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, color: T.text.secondary, fontSize: 22, cursor: 'pointer', lineHeight: 1, flexShrink: 0 }}>×</button>
+            <button onClick={safeClose} aria-label="Close" style={{ width: 38, height: 38, borderRadius: 12, background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, color: T.text.secondary, fontSize: 22, cursor: 'pointer', lineHeight: 1, flexShrink: 0 }}>×</button>
           </div>
           {/* Step indicator */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -315,6 +318,13 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
           {/* ─── STEP 1: Asset, Date, Direction ─── */}
           {step === 0 && (
             <>
+              <FeatureHint
+                T={T}
+                id="trade-form-wizard-intro"
+                text={isRTL
+                  ? 'הוספת עסקה ב-3 שלבים: נכס וזמן → מחירים וסיכון → סקירה ושמירה. הנתונים שלך נשמרים בזיכרון עד שתלחץ "שמור" — לחיצה מחוץ למסך תבקש אישור לפני מחיקת הטיוטה.'
+                  : 'Add a trade in 3 steps: Asset & time → Prices & risk → Review & save. Your draft is held in memory until you click Save — clicking outside will ask before discarding.'}
+              />
               <div style={sectionCard}>
                 <label style={bigLabel}>{isRTL ? '1. איזה סוג נכס סחרת?' : '1. What type of asset did you trade?'}</label>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -421,23 +431,16 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
               </div>
 
               <div style={sectionCard}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, flexWrap: 'wrap', gap: 6 }}>
-                  <label style={{ ...bigLabel, marginBottom: 0 }}>{isRTL ? 'כמה הסתכנת?' : 'How much did you risk?'}</label>
-                  <button onClick={handleRiskModeToggle}
-                    style={{ padding: '6px 12px', border: `1.5px solid ${T.accent.cyan}`, borderRadius: 8, background: `${T.accent.cyan}15`, color: T.accent.cyan, cursor: 'pointer', fontSize: 11, fontWeight: 700 }}>
-                    {riskMode === 'dollar' ? (isRTL ? 'עבור ל-%' : 'Use %') : (isRTL ? 'עבור ל-$' : 'Use $')}
-                  </button>
-                </div>
-                {riskMode === 'dollar' ? (
-                  <input type="number" step="any" inputMode="decimal" value={form.risk || ''} onChange={e => handleRiskChange(+e.target.value)} placeholder={isRTL ? 'סכום בדולרים' : 'Amount in $'} style={bigInput} />
-                ) : (
-                  <input type="number" step="0.1" inputMode="decimal" value={form.riskPct || ''} onChange={e => handleRiskChange(+e.target.value)} placeholder={isRTL ? 'אחוז מההון' : '% of balance'} style={bigInput} />
-                )}
+                <label style={bigLabel}>{isRTL ? 'כמה הסתכנת? (בדולרים)' : 'How much did you risk? ($)'}</label>
+                <input
+                  type="number" step="any" inputMode="decimal"
+                  value={form.risk || ''}
+                  onChange={e => handleRiskChange(+e.target.value)}
+                  placeholder={isRTL ? 'סכום בדולרים' : 'Amount in $'}
+                  style={bigInput}
+                />
                 <div style={helpText}>
-                  {riskMode === 'dollar'
-                    ? `${isRTL ? 'שווה ערך ל-' : 'Equivalent to '}${form.riskPct.toFixed(1)}% ${isRTL ? 'מההון' : 'of your balance'} ${currentBalance > 0 ? `($${currentBalance.toFixed(0)})` : ''}`
-                    : `${isRTL ? 'שווה ערך ל-' : 'Equivalent to '}$${form.risk.toFixed(2)}`
-                  }
+                  {`${isRTL ? 'שווה ערך ל-' : 'Equivalent to '}${equivPercent.toFixed(2)}% ${isRTL ? 'מההון' : 'of your balance'} ${currentBalance > 0 ? `($${currentBalance.toFixed(0)})` : ''}`}
                 </div>
               </div>
 
@@ -532,7 +535,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
         {/* Footer / Nav buttons */}
         <div style={{ padding: isMobile ? '14px 18px' : '16px 26px', borderTop: `1px solid ${T.border.subtle}`, background: T.bg.secondary, display: 'flex', gap: 10, justifyContent: 'space-between', alignItems: 'center' }}>
           <button
-            onClick={step === 0 ? onClose : handleBack}
+            onClick={step === 0 ? safeClose : handleBack}
             style={{ padding: isMobile ? '13px 22px' : '12px 22px', background: T.bg.tertiary, border: `1.5px solid ${T.border.medium}`, borderRadius: 12, color: T.text.secondary, cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>
             {step === 0 ? (isRTL ? 'ביטול' : 'Cancel') : (isRTL ? '← חזור' : '← Back')}
           </button>

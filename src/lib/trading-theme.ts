@@ -150,6 +150,73 @@ export function getTheme(id: ThemeId): TradingTheme {
   return themes[id] || midnight;
 }
 
+/* ════════════════════════════════════════════════
+   tintTheme — re-tint the JS-side TradingTheme so all
+   inline-style components (which use T.accent.cyan,
+   T.border.active, glows, etc.) ACTUALLY change color
+   when the user picks a custom accent.
+   This complements applyDerivedPalette which only
+   touches CSS vars consumed by shadcn/Tailwind.
+   ════════════════════════════════════════════════ */
+function hexShift(hex: string, dl: number, ds = 0): string {
+  const hsl = hexToHsl(hex);
+  if (!hsl) return hex;
+  const h = hsl.h;
+  const s = Math.max(0, Math.min(100, hsl.s + ds));
+  const l = Math.max(0, Math.min(100, hsl.l + dl));
+  // back to hex via HSL math
+  const c = (1 - Math.abs(2 * (l / 100) - 1)) * (s / 100);
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l / 100 - c / 2;
+  let r1 = 0, g1 = 0, b1 = 0;
+  if (h < 60) { r1 = c; g1 = x; }
+  else if (h < 120) { r1 = x; g1 = c; }
+  else if (h < 180) { g1 = c; b1 = x; }
+  else if (h < 240) { g1 = x; b1 = c; }
+  else if (h < 300) { r1 = x; b1 = c; }
+  else { r1 = c; b1 = x; }
+  const to = (n: number) => {
+    const v = Math.round((n + m) * 255);
+    return Math.max(0, Math.min(255, v)).toString(16).padStart(2, '0');
+  };
+  return `#${to(r1)}${to(g1)}${to(b1)}`;
+}
+
+function rgba(hex: string, a: number): string {
+  const h = hex.replace('#', '');
+  const full = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+export function tintTheme(base: TradingTheme, hex: string): TradingTheme {
+  if (!/^#[0-9a-f]{6}$/i.test(hex)) return base;
+  const lighter = hexShift(hex, 8);
+  const darker = hexShift(hex, -8);
+  const teal = hexShift(hex, 0, -10);
+  return {
+    ...base,
+    accent: {
+      ...base.accent,
+      cyan: hex,
+      cyanGlow: rgba(hex, 0.18),
+      teal,
+      blue: darker,
+      blueGlow: rgba(darker, 0.16),
+    },
+    border: {
+      ...base.border,
+      active: rgba(lighter, 0.4),
+    },
+    shadow: {
+      ...base.shadow,
+      glow: (c: string) => `0 0 20px ${c || rgba(hex, 0.5)}, 0 0 40px ${c || rgba(hex, 0.3)}`,
+    },
+  };
+}
+
 /**
  * applyThemeToDOM — pushes the active theme's HSL tokens to :root so that
  * every component that reads from CSS vars (shadcn ui, orca-glass, aurora,
