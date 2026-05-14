@@ -1185,6 +1185,103 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
           </div>
         </section>
       </div>
+
+      {/* ============ THEME COMMIT CONFIRMATION ============ */}
+      {showThemeConfirm && (
+        <div
+          onClick={() => setShowThemeConfirm(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 10010,
+            background: 'rgba(2,6,15,0.78)',
+            backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 20, animation: 'orcaSettingsFade .18s ease-out',
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: '100%', maxWidth: 460,
+              background: `linear-gradient(180deg, ${T.bg.secondary} 0%, ${T.bg.primary} 100%)`,
+              border: `1px solid ${draftAccent}55`,
+              borderRadius: T.radius.xl,
+              boxShadow: `0 30px 80px rgba(0,0,0,0.6), 0 0 60px ${draftAccent}22`,
+              overflow: 'hidden',
+              animation: 'orcaSettingsRise .28s cubic-bezier(0.16,1,0.3,1)',
+            }}
+          >
+            <div style={{
+              height: 80, position: 'relative',
+              background: `linear-gradient(135deg, ${draftAccent}28, ${draftAccent}05)`,
+              borderBottom: `1px solid ${T.border.subtle}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <div style={{
+                width: 52, height: 52, borderRadius: '50%',
+                background: draftAccent,
+                boxShadow: `0 0 40px ${draftAccent}99, inset 0 0 20px rgba(255,255,255,0.18)`,
+                border: '2px solid rgba(255,255,255,0.18)',
+              }} />
+            </div>
+            <div style={{ padding: '22px 24px 8px', textAlign: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: T.text.primary, fontFamily: sans, letterSpacing: '-0.01em' }}>
+                {t('לאשר את הפלטה האישית?', 'Apply this custom palette?')}
+              </h3>
+              <p style={{ margin: '10px 0 0', fontSize: 13, color: T.text.secondary, lineHeight: 1.6 }}>
+                {t(
+                  'אורקה תיגזור פלטה מלאה מהצבע הזה ותחיל אותה על כל הממשק.',
+                  'Orca will derive a full palette from this color and apply it across the UI.',
+                )}
+              </p>
+              <div style={{
+                marginTop: 14, padding: '10px 14px',
+                background: `${T.accent.orange}10`,
+                border: `1px solid ${T.accent.orange}35`,
+                borderRadius: T.radius.md,
+                fontSize: 12, color: T.accent.orange, fontWeight: 600,
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+              }}>
+                🔒 {t('הבחירה תינעל ל־24 שעות', 'Locked for 24 hours after applying')}
+              </div>
+              <div style={{ marginTop: 12, fontSize: 11, color: T.text.muted, fontFamily: mono, letterSpacing: '0.05em' }}>
+                {draftAccent.toUpperCase()}
+              </div>
+            </div>
+            <div style={{ padding: '16px 20px 20px', display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setShowThemeConfirm(false)}
+                style={{
+                  flex: 1, padding: '12px 16px', borderRadius: T.radius.md,
+                  background: 'transparent', border: `1px solid ${T.border.medium}`,
+                  color: T.text.secondary, fontSize: 13, fontWeight: 600,
+                  cursor: 'pointer', fontFamily: sans,
+                }}
+              >
+                {t('ביטול', 'Cancel')}
+              </button>
+              <button
+                onClick={() => {
+                  setShowThemeConfirm(false);
+                  ui.commitCustomAccent(draftAccent);
+                  playMorningLock();
+                  toast.success(t('הפלטה נשמרה ונעולה ליום', 'Palette committed and locked for 1 day'));
+                }}
+                style={{
+                  flex: 1.4, padding: '12px 16px', borderRadius: T.radius.md,
+                  background: `linear-gradient(135deg, ${draftAccent}, ${draftAccent}dd)`,
+                  border: `1px solid ${draftAccent}`,
+                  color: '#000', fontSize: 13, fontWeight: 800,
+                  cursor: 'pointer', fontFamily: sans,
+                  boxShadow: `0 6px 24px ${draftAccent}66`,
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                }}
+              >
+                <Sparkles size={14} /> {t('החל ונעל', 'Apply & Lock')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
