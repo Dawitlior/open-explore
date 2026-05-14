@@ -79,12 +79,16 @@ const Index = () => {
   const [entered, setEntered] = useState(() => sessionStorage.getItem('orca-entered') === '1');
   const [onboardingDone, setOnboardingDone] = useState(() => !shouldShowOnboarding());
   const [activeDimension, setActiveDimension] = useState<'orca' | 'journal' | 'backtest'>('orca');
-  const T = getTheme(settings.theme);
+  const baseTheme = getTheme(settings.theme);
   const t = i18n[settings.lang];
   const isRTL = settings.isRTL;
   const isAlpha = settings.isAlpha;
   const opMode = settings.operatingMode;
   const { prefs: uiPrefs, setPrefs: setUIPrefs, toggleHiddenMode, reset: resetUIPrefs } = useUIPrefs();
+  const T = useMemo(
+    () => (uiPrefs.customAccentEnabled ? tintTheme(baseTheme, uiPrefs.customAccent) : baseTheme),
+    [baseTheme, uiPrefs.customAccentEnabled, uiPrefs.customAccent],
+  );
 
   const [page, setPage] = useState('dashboard');
   const [sbOpen, setSbOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth > 768);
