@@ -1548,6 +1548,9 @@ const Index = () => {
                   </div>
                 )}
               </div>
+              <button onClick={() => { setSbOpen(false); setShowSettings(true); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: `${T.accent.cyan}10`, border: `1px solid ${T.accent.cyan}30`, borderRadius: T.radius.md, color: T.accent.cyan, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+                <span style={{ fontSize: 14 }}>⚙️</span><span>{isRTL ? 'הגדרות' : 'Settings'}</span>
+              </button>
               <button onClick={() => { setSbOpen(false); setShowReset(true); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: `${T.accent.red}08`, border: `1px solid ${T.accent.red}20`, borderRadius: T.radius.md, color: T.accent.red, cursor: 'pointer', fontSize: 11, fontWeight: 500 }}>
                 {Ico.reset}<span>{t.resetAll}</span>
               </button>
