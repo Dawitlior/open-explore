@@ -848,9 +848,9 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
               const p = ui.prefs;
               const locked = ui.themeLocked;
               const msLeft = ui.themeLockMsRemaining;
-              const daysLeft = Math.ceil(msLeft / (24 * 60 * 60 * 1000));
               const hoursLeft = Math.ceil(msLeft / (60 * 60 * 1000));
-              const lockText = daysLeft > 1 ? t(`עוד ${daysLeft} ימים`, `${daysLeft} days left`) : t(`עוד ${hoursLeft} שעות`, `${hoursLeft}h left`);
+              const minsLeft = Math.ceil(msLeft / (60 * 1000));
+              const lockText = hoursLeft > 1 ? t(`עוד ${hoursLeft} שעות`, `${hoursLeft}h left`) : t(`עוד ${minsLeft} דקות`, `${minsLeft}m left`);
 
               const draft = draftAccent;
               const setDraft = setDraftAccent;
@@ -860,20 +860,20 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
 
               const handleCommit = () => {
                 if (locked) {
-                  toast.error(t(`נעול ל-7 ימים. ${lockText}`, `Locked for 7 days. ${lockText}`));
+                  toast.error(t(`נעול ליום. ${lockText}`, `Locked for 1 day. ${lockText}`));
                   return;
                 }
                 if (!/^#[0-9a-f]{6}$/i.test(draft)) {
                   toast.error(t('צבע לא תקין', 'Invalid hex color'));
                   return;
                 }
-                if (!confirm(t(
-                  `אישור: בחירת הצבע הזה תינעל ל-7 ימים. אורקה תיגזור ממנו פלטה מלאה ותחיל אותה על כל הממשק. להמשיך?`,
-                  `Confirm: this color will be locked for 7 days. Orca will derive a full palette from it and apply it across the UI. Continue?`,
-                ))) return;
+                setShowThemeConfirm(true);
+              };
+              const confirmCommit = () => {
+                setShowThemeConfirm(false);
                 ui.commitCustomAccent(draft);
                 playMorningLock();
-                toast.success(t('הפלטה נשמרה ונעולה ל-7 ימים', 'Palette committed and locked for 7 days'));
+                toast.success(t('הפלטה נשמרה ונעולה ליום', 'Palette committed and locked for 1 day'));
               };
 
               return (
