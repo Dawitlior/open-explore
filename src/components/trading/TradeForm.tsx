@@ -39,7 +39,6 @@ const TICK_VALUES: Record<string, { tick: number; value: number }> = {
 };
 
 type StopMode = 'price' | 'pips' | 'percent' | 'dollar';
-type RiskMode = 'dollar' | 'percent';
 
 const detectCategory = (symbol: string): AssetCategory => {
   for (const [cat, symbols] of Object.entries(ASSET_CATEGORIES)) {
@@ -54,7 +53,6 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
   const [assetCategory, setAssetCategory] = useState<AssetCategory>(() => trade?.coin ? detectCategory(trade.coin) : 'Crypto');
   const [customSymbol, setCustomSymbol] = useState('');
   const [stopMode, setStopMode] = useState<StopMode>('price');
-  const [riskMode, setRiskMode] = useState<RiskMode>('percent');
   const [stopPips, setStopPips] = useState(0);
   const [stopPercent, setStopPercent] = useState(0);
   const [stopDollar, setStopDollar] = useState(0);
@@ -112,7 +110,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
     return risk / Math.abs(entry - stopLoss);
   }, [form.entry, form.stopLoss, form.risk]);
 
-  const riskFromPercent = useMemo(() => currentBalance * (form.riskPct / 100), [currentBalance, form.riskPct]);
+  const equivPercent = useMemo(() => currentBalance > 0 ? (form.risk / currentBalance) * 100 : 0, [currentBalance, form.risk]);
 
   const handleDateChange = (val: string) => {
     const d = new Date(val);
@@ -151,16 +149,8 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
     }
   };
 
-  const handleRiskModeToggle = () => {
-    if (riskMode === 'dollar') {
-      setRiskMode('percent');
-      setForm(f => ({ ...f, risk: riskFromPercent }));
-    } else setRiskMode('dollar');
-  };
-
   const handleRiskChange = (val: number) => {
-    if (riskMode === 'percent') setForm(f => ({ ...f, riskPct: val, risk: currentBalance * (val / 100) }));
-    else setForm(f => ({ ...f, risk: val, riskPct: currentBalance > 0 ? (val / currentBalance) * 100 : 0 }));
+    setForm(f => ({ ...f, risk: val, riskPct: currentBalance > 0 ? (val / currentBalance) * 100 : 0 }));
   };
 
   const calc = () => {
@@ -421,23 +411,16 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
               </div>
 
               <div style={sectionCard}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, flexWrap: 'wrap', gap: 6 }}>
-                  <label style={{ ...bigLabel, marginBottom: 0 }}>{isRTL ? 'כמה הסתכנת?' : 'How much did you risk?'}</label>
-                  <button onClick={handleRiskModeToggle}
-                    style={{ padding: '6px 12px', border: `1.5px solid ${T.accent.cyan}`, borderRadius: 8, background: `${T.accent.cyan}15`, color: T.accent.cyan, cursor: 'pointer', fontSize: 11, fontWeight: 700 }}>
-                    {riskMode === 'dollar' ? (isRTL ? 'עבור ל-%' : 'Use %') : (isRTL ? 'עבור ל-$' : 'Use $')}
-                  </button>
-                </div>
-                {riskMode === 'dollar' ? (
-                  <input type="number" step="any" inputMode="decimal" value={form.risk || ''} onChange={e => handleRiskChange(+e.target.value)} placeholder={isRTL ? 'סכום בדולרים' : 'Amount in $'} style={bigInput} />
-                ) : (
-                  <input type="number" step="0.1" inputMode="decimal" value={form.riskPct || ''} onChange={e => handleRiskChange(+e.target.value)} placeholder={isRTL ? 'אחוז מההון' : '% of balance'} style={bigInput} />
-                )}
+                <label style={bigLabel}>{isRTL ? 'כמה הסתכנת? (בדולרים)' : 'How much did you risk? ($)'}</label>
+                <input
+                  type="number" step="any" inputMode="decimal"
+                  value={form.risk || ''}
+                  onChange={e => handleRiskChange(+e.target.value)}
+                  placeholder={isRTL ? 'סכום בדולרים' : 'Amount in $'}
+                  style={bigInput}
+                />
                 <div style={helpText}>
-                  {riskMode === 'dollar'
-                    ? `${isRTL ? 'שווה ערך ל-' : 'Equivalent to '}${form.riskPct.toFixed(1)}% ${isRTL ? 'מההון' : 'of your balance'} ${currentBalance > 0 ? `($${currentBalance.toFixed(0)})` : ''}`
-                    : `${isRTL ? 'שווה ערך ל-' : 'Equivalent to '}$${form.risk.toFixed(2)}`
-                  }
+                  {`${isRTL ? 'שווה ערך ל-' : 'Equivalent to '}${equivPercent.toFixed(2)}% ${isRTL ? 'מההון' : 'of your balance'} ${currentBalance > 0 ? `($${currentBalance.toFixed(0)})` : ''}`}
                 </div>
               </div>
 
