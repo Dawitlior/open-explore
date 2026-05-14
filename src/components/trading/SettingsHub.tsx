@@ -72,6 +72,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
   const [emailBusy, setEmailBusy] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const [draftAccent, setDraftAccent] = useState<string>('#00f2ff');
+  const [showThemeConfirm, setShowThemeConfirm] = useState(false);
   useEffect(() => { if (ui.prefs.customAccent) setDraftAccent(ui.prefs.customAccent); }, [ui.prefs.customAccent]);
 
   if (!open) return null;
