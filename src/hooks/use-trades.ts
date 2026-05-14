@@ -156,29 +156,41 @@ export function useTrades() {
   const importTrades = useCallback(async (newTrades: Trade[]) => {
     return enqueueTradeMutation(async () => {
       const sanitized = sanitizeTrades(newTrades);
-      const rebalanced = recalcBalances(sanitized.map((t, i) => ({ ...t, id: i + 1 })));
-      const previous = tradesRef.current;
-      const { deleteAllTrades } = await import('@/lib/storage');
+      const existing = tradesRef.current;
+
+      // Build a fingerprint of existing trades so we can dedupe safely:
+      // an imported row that matches an existing one (date+coin+entry+exit+pnl)
+      // is skipped instead of duplicated.
+      const fp = (t: Trade) =>
+        [String(t.date || ''), String(t.coin || '').toUpperCase(), String(t.entry ?? ''), String(t.exit ?? ''), String(t.pnl ?? '')].join('|');
+      const seen = new Set(existing.map(fp));
+
+      let nextId = existing.length === 0 ? 1 : Math.max(...existing.map(t => t.id || 0)) + 1;
+      const additions: Trade[] = [];
+      for (const raw of sanitized) {
+        const key = fp(raw as Trade);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        additions.push({ ...(raw as Trade), id: nextId++, balance: 0 });
+      }
+
+      if (additions.length === 0) {
+        // Nothing new to merge — keep dataset as-is.
+        return;
+      }
+
+      const rebalanced = recalcBalances([...existing, ...additions]);
       try {
-        await deleteAllTrades();
         await saveTrades(rebalanced);
         tradesRef.current = rebalanced;
         setTrades(rebalanced);
+        checkAndAlertRisk(rebalanced);
       } catch (err) {
-        console.error('importTrades failed, attempting rollback', err);
-        // Best-effort rollback to the prior dataset
-        try {
-          await deleteAllTrades();
-          if (previous.length > 0) await saveTrades(previous);
-          tradesRef.current = previous;
-          setTrades(previous);
-        } catch (rollbackErr) {
-          console.error('importTrades rollback also failed', rollbackErr);
-        }
+        console.error('importTrades failed (merge mode)', err);
         throw err;
       }
     });
-  }, [enqueueTradeMutation, recalcBalances]);
+  }, [enqueueTradeMutation, recalcBalances, checkAndAlertRisk]);
 
   const resetAll = useCallback(async () => {
     await clearAllData();

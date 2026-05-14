@@ -124,6 +124,32 @@
         if (t && typeof t.id === 'string' && t.id.indexOf('orca-') === 0) existingById[String(t.id.slice(5))] = idx;
       });
       var changed = 0;
+      // Build a set of currently-existing Orca trade ids that fall in this week
+      var liveOrcaIds = {};
+      orcaTrades.forEach(function(tr){
+        if (tr && tr.id != null && inCurrentWeek(tr.date)) liveOrcaIds[String(tr.id)] = 1;
+      });
+      // Remove any auto-filled Orca rows whose source trade was deleted in Orca
+      // (only touches non-locked / non-archived weeks — guarded above by week.locked).
+      var pruned = week.tradeLog.filter(function(t){
+        if (!t) return false;
+        var orcaId = null;
+        if (t._orcaId != null) orcaId = String(t._orcaId);
+        else if (typeof t.id === 'string' && t.id.indexOf('orca-') === 0) orcaId = t.id.slice(5);
+        if (orcaId == null) return true; // user-entered row — keep
+        if (liveOrcaIds[orcaId]) return true; // still exists in Orca — keep
+        return false; // was deleted in Orca — drop
+      });
+      if (pruned.length !== week.tradeLog.length) {
+        week.tradeLog = pruned;
+        changed += (week.tradeLog.length === pruned.length ? 1 : 1);
+      }
+      // Rebuild index after pruning
+      existingById = {};
+      week.tradeLog.forEach(function(t, i){
+        if (t && t._orcaId != null) existingById[String(t._orcaId)] = i;
+        if (t && typeof t.id === 'string' && t.id.indexOf('orca-') === 0) existingById[String(t.id.slice(5))] = i;
+      });
       orcaTrades.forEach(function(tr){
         if (!tr || tr.id == null) return;
         if (!inCurrentWeek(tr.date)) return;
