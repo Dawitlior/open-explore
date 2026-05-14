@@ -18,7 +18,7 @@
  * 100% Hebrew copy. Heebo font. RTL.
  */
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line, ScatterChart, Scatter,
@@ -31,7 +31,6 @@ import type { TradingStats } from '@/lib/trading-analytics';
 import type { OperatingMode } from '@/hooks/use-settings';
 import { GlassCard } from './TradingUI';
 import type { ChartExplanation } from './ChartWrapper';
-import { lazy, Suspense } from 'react';
 const AnalyticsQuantLab = lazy(() => import('./AnalyticsQuantLab').then(m => ({ default: m.AnalyticsQuantLab })));
 
 interface AdvancedAnalyticsPageProps {
