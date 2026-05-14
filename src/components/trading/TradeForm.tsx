@@ -318,6 +318,13 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
           {/* ─── STEP 1: Asset, Date, Direction ─── */}
           {step === 0 && (
             <>
+              <FeatureHint
+                T={T}
+                id="trade-form-wizard-intro"
+                text={isRTL
+                  ? 'הוספת עסקה ב-3 שלבים: נכס וזמן → מחירים וסיכון → סקירה ושמירה. הנתונים שלך נשמרים בזיכרון עד שתלחץ "שמור" — לחיצה מחוץ למסך תבקש אישור לפני מחיקת הטיוטה.'
+                  : 'Add a trade in 3 steps: Asset & time → Prices & risk → Review & save. Your draft is held in memory until you click Save — clicking outside will ask before discarding.'}
+              />
               <div style={sectionCard}>
                 <label style={bigLabel}>{isRTL ? '1. איזה סוג נכס סחרת?' : '1. What type of asset did you trade?'}</label>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
