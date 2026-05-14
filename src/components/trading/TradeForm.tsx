@@ -291,7 +291,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
               <div style={{ fontSize: isMobile ? 22 : 26, fontWeight: 800, color: T.text.primary, lineHeight: 1.1 }}>{trade ? t.editTrade : (isRTL ? 'הוספת עסקה חדשה' : 'Add a New Trade')}</div>
               <div style={{ fontSize: 13, color: T.text.secondary, marginTop: 6 }}>{STEPS[step].sub}</div>
             </div>
-            <button onClick={onClose} aria-label="Close" style={{ width: 38, height: 38, borderRadius: 12, background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, color: T.text.secondary, fontSize: 22, cursor: 'pointer', lineHeight: 1, flexShrink: 0 }}>×</button>
+            <button onClick={safeClose} aria-label="Close" style={{ width: 38, height: 38, borderRadius: 12, background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, color: T.text.secondary, fontSize: 22, cursor: 'pointer', lineHeight: 1, flexShrink: 0 }}>×</button>
           </div>
           {/* Step indicator */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -527,7 +527,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
         {/* Footer / Nav buttons */}
         <div style={{ padding: isMobile ? '14px 18px' : '16px 26px', borderTop: `1px solid ${T.border.subtle}`, background: T.bg.secondary, display: 'flex', gap: 10, justifyContent: 'space-between', alignItems: 'center' }}>
           <button
-            onClick={step === 0 ? onClose : handleBack}
+            onClick={step === 0 ? safeClose : handleBack}
             style={{ padding: isMobile ? '13px 22px' : '12px 22px', background: T.bg.tertiary, border: `1.5px solid ${T.border.medium}`, borderRadius: 12, color: T.text.secondary, cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>
             {step === 0 ? (isRTL ? 'ביטול' : 'Cancel') : (isRTL ? '← חזור' : '← Back')}
           </button>
