@@ -268,8 +268,20 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
     );
   };
 
+  // Guard against accidental backdrop dismiss that wipes the in-progress trade.
+  const isDirty = form.coin !== (trade?.coin || 'BTC') || form.entry || form.stopLoss || form.exit || form.risk || form.comments;
+  const safeClose = () => {
+    if (isDirty && !trade) {
+      const ok = confirm(isRTL
+        ? 'יש לך נתונים שלא נשמרו. לסגור ולמחוק את הטיוטה?'
+        : 'You have unsaved trade data. Close and discard the draft?');
+      if (!ok) return;
+    }
+    onClose();
+  };
+
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.78)', zIndex: 100, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', backdropFilter: 'blur(14px)', padding: isMobile ? 0 : 18 }} onClick={onClose}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.78)', zIndex: 100, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', backdropFilter: 'blur(14px)', padding: isMobile ? 0 : 18 }} onClick={safeClose}>
       <div onClick={e => e.stopPropagation()} style={panelStyle}>
 
         {/* Header */}
