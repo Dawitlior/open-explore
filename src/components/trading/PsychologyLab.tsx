@@ -323,7 +323,7 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12, marginBottom: 12 }}>
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
-            Consecutive Loss Probability · סיכוי לרצף הפסדים בהינתן ה-WR הנוכחי
+            {t('Consecutive Loss Probability · סיכוי לרצף הפסדים בהינתן ה-WR הנוכחי','Consecutive Loss Probability · Streak risk given current WR')}
           </div>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={consecLossProb}>
