@@ -432,7 +432,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
               <div key={d.name} style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 10, color: T.text.muted }}>{d.name}</div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: d.color, fontFamily: "'JetBrains Mono', monospace" }}>{d.wr.toFixed(0)}%</div>
-                <div style={{ fontSize: 9, color: T.text.muted }}>{d.n} עסקאות</div>
+                <div style={{ fontSize: 9, color: T.text.muted }}>{d.n} {t('עסקאות','trades')}</div>
               </div>
             ))}
           </div>
