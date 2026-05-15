@@ -188,13 +188,13 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
 
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} style={{ marginTop: 20 }}>
-      <div style={sectionStyle}>◆ PSYCHOLOGY LAB · מעבדה התנהגותית מתקדמת</div>
+      <div style={sectionStyle}>{t('◆ PSYCHOLOGY LAB · מעבדה התנהגותית מתקדמת','◆ PSYCHOLOGY LAB · Advanced Behavioral Lab')}</div>
 
       {/* Row 1: RAR + Rolling PF */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12, marginBottom: 12 }}>
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
-            Rule Adherence Rate · עמידה בכללים (חלון 10)
+            {t('Rule Adherence Rate · עמידה בכללים (חלון 10)','Rule Adherence Rate · Rule compliance (window 10)')}
           </div>
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={rar}>
