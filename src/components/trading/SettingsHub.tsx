@@ -1573,5 +1573,6 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
           </div>
         </div>
       )}
+    </div>
   );
 }
