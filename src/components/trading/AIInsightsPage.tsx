@@ -253,6 +253,7 @@ type Pack = typeof CHART_PACKS[number];
 /* ──────────────────────────────────────────────────────────────── */
 
 export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => {
+  const { t } = useLang();
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<ReturnType<typeof analyzeDeep> | null>(null);
   const [pack, setPack] = useState<Pack>('radar+heat');
