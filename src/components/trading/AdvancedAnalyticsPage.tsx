@@ -584,7 +584,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
         </GlassCard>
 
         <GlassCard T={T}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>אבולוציית האדג' (חלונות של 5)</div>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t("אבולוציית האדג' (חלונות של 5)",'Edge Evolution (5-trade windows)')}</div>
           <ResponsiveContainer width="100%" height={230}>
             <LineChart data={edgeDecay}>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
