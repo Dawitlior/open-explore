@@ -1267,7 +1267,9 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
 /* ──────────────────────────────────────────────────────────────── */
 
 const DeepInsightCard: React.FC<{ ins: DeepInsight; T: TradingTheme; delay: number }> = ({ ins, T, delay }) => {
-  const meta = SEV_META[ins.severity];
+  const { t } = useLang();
+  const meta = getSevMeta(t)[ins.severity];
+  const catLabel = getCatLabel(t);
   const c = meta.color(T);
   return (
     <motion.div
