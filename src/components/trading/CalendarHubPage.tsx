@@ -9,6 +9,7 @@ import { getDayRiskColor, checkRiskLimits, DEFAULT_RISK_LIMITS } from '@/lib/ris
 
 type Props = {
   T: any; isRTL: boolean; trades: Trade[];
+  t: any; // I18nStrings — passed through for CalendarModal
   isMobile?: boolean;
   onGenerateInsight?: () => void;
 };
