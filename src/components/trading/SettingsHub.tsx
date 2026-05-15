@@ -1483,6 +1483,95 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
           </div>
         </div>
       )}
-    </div>
+
+      {/* ============ STUDIO COMMIT CONFIRMATION ============ */}
+      {showStudioConfirm && (
+        <div onClick={() => setShowStudioConfirm(false)}
+          style={{ position: 'fixed', inset: 0, zIndex: 10010, background: 'rgba(2,6,15,0.78)', backdropFilter: 'blur(14px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{
+              width: '100%', maxWidth: 460,
+              background: `linear-gradient(180deg, ${T.bg.secondary} 0%, ${T.bg.primary} 100%)`,
+              border: `1px solid ${draftTheme.accentPrimary}55`, borderRadius: T.radius.xl,
+              boxShadow: `0 30px 80px rgba(0,0,0,0.6), 0 0 60px ${draftTheme.accentPrimary}22`, overflow: 'hidden',
+            }}>
+            <div style={{ height: 80, background: `linear-gradient(135deg, ${draftTheme.accentPrimary}28, ${draftTheme.accentSecondary}18)`, borderBottom: `1px solid ${T.border.subtle}`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+              <div style={{ width: 44, height: 44, borderRadius: '50%', background: draftTheme.accentPrimary, boxShadow: `0 0 30px ${draftTheme.accentPrimary}99` }} />
+              <div style={{ width: 44, height: 44, borderRadius: '50%', background: draftTheme.accentSecondary, boxShadow: `0 0 30px ${draftTheme.accentSecondary}99` }} />
+            </div>
+            <div style={{ padding: '22px 24px 8px', textAlign: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: T.text.primary, fontFamily: sans }}>
+                {t('להחיל את ערכת הנושא המותאמת?', 'Apply this custom theme?')}
+              </h3>
+              <p style={{ margin: '10px 0 0', fontSize: 13, color: T.text.secondary, lineHeight: 1.6 }}>
+                {t('כל 7 הצירים יישמרו כאובייקט customTheme וייטענו אוטומטית בכל מכשיר.',
+                   'All 7 axes will be saved as a customTheme object and auto-loaded across devices.')}
+              </p>
+              <div style={{ marginTop: 14, padding: '10px 14px', background: `${T.accent.orange}10`, border: `1px solid ${T.accent.orange}35`, borderRadius: T.radius.md, fontSize: 12, color: T.accent.orange, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                🔒 {t('הבחירה תינעל ל־24 שעות', 'Locked for 24 hours')}
+              </div>
+            </div>
+            <div style={{ padding: '16px 20px 20px', display: 'flex', gap: 10 }}>
+              <button onClick={() => setShowStudioConfirm(false)}
+                style={{ flex: 1, padding: '12px 16px', borderRadius: T.radius.md, background: 'transparent', border: `1px solid ${T.border.medium}`, color: T.text.secondary, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: sans }}>
+                {t('ביטול', 'Cancel')}
+              </button>
+              <button
+                onClick={() => { setShowStudioConfirm(false); ui.commitCustomTheme(draftTheme); playMorningLock(); toast.success(t('ערכה נשמרה ונעולה', 'Theme committed & locked')); }}
+                style={{ flex: 1.4, padding: '12px 16px', borderRadius: T.radius.md, background: `linear-gradient(135deg, ${draftTheme.accentPrimary}, ${draftTheme.accentSecondary})`, border: `1px solid ${draftTheme.accentPrimary}`, color: '#000', fontSize: 13, fontWeight: 800, cursor: 'pointer', fontFamily: sans, boxShadow: `0 6px 24px ${draftTheme.accentPrimary}66`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <Sparkles size={14} /> {t('החל ונעל', 'Apply & Lock')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============ UNLOCK 24h DOUBLE-CONFIRM ============ */}
+      {unlockStep > 0 && (
+        <div onClick={() => setUnlockStep(0)}
+          style={{ position: 'fixed', inset: 0, zIndex: 10020, background: 'rgba(2,6,15,0.85)', backdropFilter: 'blur(16px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{
+              width: '100%', maxWidth: 460,
+              background: `linear-gradient(180deg, ${T.bg.secondary} 0%, ${T.bg.primary} 100%)`,
+              border: `1px solid ${T.accent.orange}55`, borderRadius: T.radius.xl,
+              boxShadow: `0 30px 80px rgba(0,0,0,0.6), 0 0 60px ${T.accent.orange}22`, overflow: 'hidden',
+            }}>
+            <div style={{ height: 76, background: `linear-gradient(135deg, ${T.accent.orange}30, transparent)`, borderBottom: `1px solid ${T.border.subtle}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <AlertTriangle size={36} color={T.accent.orange} />
+            </div>
+            <div style={{ padding: '22px 24px 8px', textAlign: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: T.text.primary, fontFamily: sans }}>
+                {unlockStep === 1
+                  ? t('בטל את נעילת 24 השעות?', 'Bypass the 24h lock?')
+                  : t('בטוח/ה? זה ידלג על מנגנון היציבות.', 'Are you sure? This skips the stability mechanism.')}
+              </h3>
+              <p style={{ margin: '10px 0 0', fontSize: 13, color: T.text.secondary, lineHeight: 1.65 }}>
+                {unlockStep === 1
+                  ? t('הנעילה קיימת כדי שלא תחליף ערכה אובססיבית. אישור כפול נדרש להמשך.',
+                       'The lock exists so you don\'t obsessively re-tint. Double confirmation is required to continue.')
+                  : t('לאחר ביטול תוכל להחיל ערכה חדשה מיד. השעון יתאפס רק לאחר Apply הבא.',
+                       'After unlocking you can apply a new theme immediately. The clock will reset only after the next Apply.')}
+              </p>
+            </div>
+            <div style={{ padding: '16px 20px 20px', display: 'flex', gap: 10 }}>
+              <button onClick={() => setUnlockStep(0)}
+                style={{ flex: 1, padding: '12px 16px', borderRadius: T.radius.md, background: 'transparent', border: `1px solid ${T.border.medium}`, color: T.text.secondary, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: sans }}>
+                {t('השאר נעול', 'Keep locked')}
+              </button>
+              <button
+                onClick={() => {
+                  if (unlockStep === 1) { setUnlockStep(2); return; }
+                  ui.unlockTheme();
+                  setUnlockStep(0);
+                  toast.success(t('הנעילה בוטלה — תוכל להחיל ערכה חדשה', 'Lock bypassed — you can apply a new theme now'));
+                }}
+                style={{ flex: 1.4, padding: '12px 16px', borderRadius: T.radius.md, background: `linear-gradient(135deg, ${T.accent.orange}, ${T.accent.red})`, border: `1px solid ${T.accent.orange}`, color: '#fff', fontSize: 13, fontWeight: 800, cursor: 'pointer', fontFamily: sans, boxShadow: `0 6px 24px ${T.accent.orange}66`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                {unlockStep === 1 ? <>{t('המשך', 'Continue')} →</> : <><AlertTriangle size={14} /> {t('בטל נעילה', 'Confirm unlock')}</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
   );
 }
