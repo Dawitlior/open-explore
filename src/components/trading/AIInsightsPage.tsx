@@ -765,7 +765,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                       <ScatterChart margin={{ top: 8, right: 14, left: 0, bottom: 8 }}>
                         <CartesianGrid stroke={T.border.subtle} strokeDasharray="2 4" />
                         <XAxis type="number" dataKey="hour" name={t('שעה','Hour')} domain={[0, 23]} ticks={[0, 4, 8, 12, 16, 20]} tick={{ fill: T.text.muted, fontSize: 10 }} label={{ value: t('שעה','Hour'), position: 'insideBottom', offset: -2, fill: T.text.dim, fontSize: 10 }} />
-                        <YAxis type="number" dataKey="day" name={t('יום','Day')} domain={[0, 6]} tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(d) => ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'][d] || ''} />
+                        <YAxis type="number" dataKey="day" name={t('יום','Day')} domain={[0, 6]} tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(d) => (t('rtl','ltr') === 'rtl' ? ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'] : ['Su','Mo','Tu','We','Th','Fr','Sa'])[d] || ''} />
                         <ZAxis type="number" dataKey="n" range={[60, 520]} />
                         <Tooltip contentStyle={tt} cursor={{ stroke: T.accent.cyan, strokeOpacity: 0.3, strokeDasharray: '3 3' }} />
                         <Scatter data={heatData}>
