@@ -31,6 +31,7 @@ import type { TradingStats } from '@/lib/trading-analytics';
 import type { OperatingMode } from '@/hooks/use-settings';
 import { GlassCard } from './TradingUI';
 import type { ChartExplanation } from './ChartWrapper';
+import { useLang } from '@/hooks/use-lang';
 const AnalyticsQuantLab = lazy(() => import('./AnalyticsQuantLab').then(m => ({ default: m.AnalyticsQuantLab })));
 
 interface AdvancedAnalyticsPageProps {
@@ -46,9 +47,14 @@ interface AdvancedAnalyticsPageProps {
 }
 
 const HEB_DOW = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
+const ENG_DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 const HEB_DOW_FULL = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+const ENG_DOW_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, operatingMode = 'live' }: AdvancedAnalyticsPageProps) => {
+  const { t, isRTL: langRTL } = useLang();
+  const DOW = langRTL ? HEB_DOW : ENG_DOW;
+  const DOW_FULL = langRTL ? HEB_DOW_FULL : ENG_DOW_FULL;
   // Tier resolution — controls which chart layers render.
   // beginner → minimal · live (standard) → core · review → +pro · research/alpha → +everything
   const tier: 'minimal' | 'core' | 'pro' | 'max' =
