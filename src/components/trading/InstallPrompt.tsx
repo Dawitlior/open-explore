@@ -52,7 +52,7 @@ export const InstallPrompt = ({ T, isRTL, compact }: Props) => {
 
   const handleDismiss = useCallback(() => {
     setDismissed(true);
-    localStorage.setItem('orca-install-dismissed', '1');
+    void scopedStorage.setItem('orca-install-dismissed', '1');
   }, []);
 
   // Don't show if installed, dismissed, or no prompt available
