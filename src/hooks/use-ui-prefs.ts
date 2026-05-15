@@ -57,6 +57,8 @@ const DEFAULTS: UIPrefs = {
   customAccentEnabled: false,
   customAccent: '#00f2ff',
   customAccentLockedUntil: 0,
+  customThemeEnabled: false,
+  customTheme: CUSTOM_THEME_DEFAULT,
   defaultRiskPercent: 1,
   defaultRMultiple: 2,
 };
