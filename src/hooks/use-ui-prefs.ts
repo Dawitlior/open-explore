@@ -29,6 +29,10 @@ export interface UIPrefs {
   customAccent: string;            // committed hex (drives DOM)
   customAccentLockedUntil: number; // ms timestamp
 
+  // Advanced Theme Studio — multi-axis customTheme
+  customThemeEnabled: boolean;
+  customTheme: CustomTheme;
+
   defaultRiskPercent: number;
   defaultRMultiple: number;
 }
