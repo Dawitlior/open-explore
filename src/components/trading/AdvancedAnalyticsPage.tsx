@@ -342,14 +342,14 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
       {/* ═══ HERO KPI GRID — 8 tiles ═══ */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, marginBottom: 16 }}>
         {[
-          { label: 'תוחלת R', value: `${stats.expectancyR >= 0 ? '+' : ''}${stats.expectancyR.toFixed(3)}R`, color: stats.expectancyR >= 0 ? T.accent.cyan : T.accent.red },
-          { label: 'פקטור רווח', value: `${stats.profitFactor.toFixed(2)}x`, color: stats.profitFactor >= 1.5 ? T.accent.green : stats.profitFactor >= 1 ? T.accent.orange : T.accent.red },
-          { label: 'אחוז הצלחה', value: `${stats.winRate.toFixed(1)}%`, color: stats.winRate >= 50 ? T.accent.green : T.accent.orange },
-          { label: 'יחס תשלום', value: `${payoff.toFixed(2)}`, color: T.accent.blue },
-          { label: 'P&L מצטבר', value: <PV>{`${stats.totalPnl >= 0 ? '+' : ''}$${stats.totalPnl.toFixed(2)}`}</PV>, color: stats.totalPnl >= 0 ? T.accent.green : T.accent.red },
-          { label: 'נסיגה מקס', value: `${stats.maxDrawdown.toFixed(1)}%`, color: T.accent.orange },
-          { label: 'קלי אופטימלי', value: `${stats.kellyOptimal.toFixed(1)}%`, color: T.accent.purple },
-          { label: 'שארפ', value: stats.volatilityAdjustedExpectancy.toFixed(2), color: T.accent.cyan },
+          { label: t('תוחלת R','Expectancy R'), value: `${stats.expectancyR >= 0 ? '+' : ''}${stats.expectancyR.toFixed(3)}R`, color: stats.expectancyR >= 0 ? T.accent.cyan : T.accent.red },
+          { label: t('פקטור רווח','Profit Factor'), value: `${stats.profitFactor.toFixed(2)}x`, color: stats.profitFactor >= 1.5 ? T.accent.green : stats.profitFactor >= 1 ? T.accent.orange : T.accent.red },
+          { label: t('אחוז הצלחה','Win Rate'), value: `${stats.winRate.toFixed(1)}%`, color: stats.winRate >= 50 ? T.accent.green : T.accent.orange },
+          { label: t('יחס תשלום','Payoff Ratio'), value: `${payoff.toFixed(2)}`, color: T.accent.blue },
+          { label: t('P&L מצטבר','Cumulative P&L'), value: <PV>{`${stats.totalPnl >= 0 ? '+' : ''}$${stats.totalPnl.toFixed(2)}`}</PV>, color: stats.totalPnl >= 0 ? T.accent.green : T.accent.red },
+          { label: t('נסיגה מקס','Max Drawdown'), value: `${stats.maxDrawdown.toFixed(1)}%`, color: T.accent.orange },
+          { label: t('קלי אופטימלי','Optimal Kelly'), value: `${stats.kellyOptimal.toFixed(1)}%`, color: T.accent.purple },
+          { label: t('שארפ','Sharpe'), value: stats.volatilityAdjustedExpectancy.toFixed(2), color: T.accent.cyan },
         ].map((k, i) => (
           <motion.div
             key={k.label}
