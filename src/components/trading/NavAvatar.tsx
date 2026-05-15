@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
+import { resolveAvatarUrl } from '@/lib/avatar';
 
 interface Props {
   T: any; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -11,6 +12,7 @@ interface Props {
 /**
  * Small clickable avatar shown in the global navbar. Listens for
  * `orca:avatar-changed` from AvatarUploader to update without a page reload.
+ * Uses signed URLs from the private avatars bucket.
  */
 export const NavAvatar = ({ T, size = 30, onClick }: Props) => {
   const { user } = useAuth();
@@ -19,11 +21,14 @@ export const NavAvatar = ({ T, size = 30, onClick }: Props) => {
   useEffect(() => {
     let cancelled = false;
     if (!user?.id) { setUrl(null); return; }
-    supabase.from('profiles').select('avatar_url').eq('id', user.id).maybeSingle()
-      .then(({ data }) => { if (!cancelled) setUrl(data?.avatar_url ?? null); });
+    (async () => {
+      const { data } = await supabase.from('profiles').select('avatar_url').eq('id', user.id).maybeSingle();
+      const signed = await resolveAvatarUrl(data?.avatar_url);
+      if (!cancelled) setUrl(signed);
+    })();
     const onChange = (e: Event) => {
       const detail = (e as CustomEvent).detail;
-      if (detail?.url) setUrl(detail.url);
+      if (detail && 'url' in detail) setUrl(detail.url ?? null);
     };
     window.addEventListener('orca:avatar-changed', onChange);
     return () => { cancelled = true; window.removeEventListener('orca:avatar-changed', onChange); };
