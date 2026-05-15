@@ -755,11 +755,11 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
 
                 {/* PERSONAL ACTION PROTOCOL */}
                 <div style={{ marginTop: 10, padding: 14, borderRadius: 12, background: T.bg.tertiary, borderInlineStart: `4px solid ${T.accent.cyan}` }}>
-                  <div style={{ fontSize: 13, color: T.accent.cyan, fontWeight: 900, marginBottom: 10 }}>◆ פרוטוקול פעולה אישי</div>
+                  <div style={{ fontSize: 13, color: T.accent.cyan, fontWeight: 900, marginBottom: 10 }}>{isRTL ? '◆ פרוטוקול פעולה אישי' : '◆ PERSONAL ACTION PROTOCOL'}</div>
                   {deepDiag.plan.map((p, i) => (
                     <div key={i} style={{ padding: '8px 0', borderBottom: i < deepDiag.plan.length - 1 ? `1px solid ${T.border.subtle}` : 'none' }}>
                       <div style={{ fontSize: 13, color: T.text.primary, fontWeight: 700, marginBottom: 3 }}>{i + 1}. {p.step}</div>
-                      <div style={{ fontSize: 11, color: T.text.muted, lineHeight: 1.5 }}>למה: {p.why}</div>
+                      <div style={{ fontSize: 11, color: T.text.muted, lineHeight: 1.5 }}>{isRTL ? 'למה' : 'Why'}: {p.why}</div>
                     </div>
                   ))}
                 </div>
