@@ -651,7 +651,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
   };
 
   return (
-    <div dir="rtl" style={{ fontFamily: "'Heebo', 'Inter', sans-serif" }}>
+    <div dir={t('rtl','ltr')} style={{ fontFamily: "'Heebo', 'Inter', sans-serif" }}>
       {EliteDefs}
       {/* HERO — central motherboard button */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 16px 28px' }}>
@@ -659,10 +659,10 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
           ORCA · MAINFRAME
         </div>
         <div style={{ fontSize: 22, color: T.text.primary, fontWeight: 800, marginBottom: 4, letterSpacing: '-0.01em' }}>
-          מנוע תובנות עמוק
+          {t('מנוע תובנות עמוק','Deep Insights Engine')}
         </div>
         <div style={{ fontSize: 12, color: T.text.secondary, marginBottom: 22, maxWidth: 460, textAlign: 'center', lineHeight: 1.6 }}>
-          ניתוח רב-שכבתי של {trades.length} trades — מזהה דפוסים סמויים שאף סוחר לא היה רואה לבד.
+          {t(`ניתוח רב-שכבתי של ${trades.length} trades — מזהה דפוסים סמויים שאף סוחר לא היה רואה לבד.`, `Multi-layer analysis of ${trades.length} trades — surfaces hidden patterns no trader could spot alone.`)}
         </div>
 
         <MotherboardButton onClick={run} loading={loading} T={T} hasResult={!!analysis} t={t} />
