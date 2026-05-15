@@ -1,18 +1,18 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { Trade } from '@/data/trades';
+import { useAuth } from '@/hooks/use-auth';
 
 // ═══════════════════════════════════════════════════
 // WeeklyReviewPage — wraps the standalone Trading
 // Journal HTML app (public/weekly-review/index.html)
 // inside an isolated iframe and bridges Orca trades
-// into it via postMessage. The internal design and
-// logic of the embedded app are kept 100% intact.
+// into it via postMessage. The iframe URL carries the
+// authenticated user id so its localStorage is fully
+// isolated per user (see top of /weekly-review/index.html).
 // ═══════════════════════════════════════════════════
 
-// Loose theme — accept anything with the few tokens we touch.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type OrcaTheme = any;
-
 type OrcaThemeId = 'midnight' | 'indigo' | 'platinum';
 
 interface Props {
@@ -20,15 +20,10 @@ interface Props {
   isRTL: boolean;
   trades: Trade[];
   themeId?: OrcaThemeId;
-  // legacy props kept for call-site compatibility
   stats?: unknown;
   riskData?: unknown;
 }
 
-const IFRAME_SRC = '/weekly-review/index.html';
-
-// Maps Orca theme → embedded Weekly Review theme name.
-// midnight → night, indigo → night, platinum → snow
 const THEME_MAP: Record<OrcaThemeId, 'night' | 'snow'> = {
   midnight: 'night',
   indigo: 'night',
@@ -39,53 +34,38 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, themeId }: Props) => {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const [ready, setReady] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const { user } = useAuth();
+  const uid = user?.id || 'anon';
+  const iframeSrc = `/weekly-review/index.html?uid=${encodeURIComponent(uid)}`;
 
   const sendTrades = useCallback(() => {
     const win = iframeRef.current?.contentWindow;
     if (!win) return;
-    try {
-      win.postMessage({ type: 'ORCA_TRADES_SYNC', trades }, '*');
-    } catch {
-      /* noop */
-    }
+    try { win.postMessage({ type: 'ORCA_TRADES_SYNC', trades }, '*'); } catch { /* noop */ }
   }, [trades]);
 
   const sendTheme = useCallback(() => {
     const win = iframeRef.current?.contentWindow;
     if (!win || !themeId) return;
     const mapped = THEME_MAP[themeId] || 'night';
-    try {
-      win.postMessage({ type: 'ORCA_THEME_SYNC', theme: mapped }, '*');
-    } catch {
-      /* noop */
-    }
+    try { win.postMessage({ type: 'ORCA_THEME_SYNC', theme: mapped }, '*'); } catch { /* noop */ }
   }, [themeId]);
 
-  // Listen for "ready" handshake from the embedded app
   useEffect(() => {
     const onMessage = (ev: MessageEvent) => {
       const d = ev.data;
-      if (d && typeof d === 'object' && d.type === 'WEEKLY_REVIEW_READY') {
-        setReady(true);
-      }
+      if (d && typeof d === 'object' && d.type === 'WEEKLY_REVIEW_READY') setReady(true);
     };
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
   }, []);
 
-  // Push trades + theme whenever ready / data changes
   useEffect(() => {
-    if (ready) {
-      sendTrades();
-      sendTheme();
-    }
+    if (ready) { sendTrades(); sendTheme(); }
   }, [ready, sendTrades, sendTheme]);
 
-  // Failsafe: if no handshake within 4s, surface a graceful fallback message
   useEffect(() => {
-    const t = setTimeout(() => {
-      if (!ready) setLoadError(true);
-    }, 4000);
+    const t = setTimeout(() => { if (!ready) setLoadError(true); }, 6000);
     return () => clearTimeout(t);
   }, [ready]);
 
@@ -95,67 +75,62 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, themeId }: Props) => {
       style={{
         position: 'relative',
         width: '100%',
-        minHeight: 'calc(100vh - 80px)',
-        background: 'transparent',
+        // Use 100dvh so iOS / mobile browser chrome doesn't crop the frame.
+        height: 'calc(100dvh - 60px)',
+        minHeight: 480,
+        background: T?.bg?.primary || '#061326',
         overflow: 'hidden',
       }}
     >
       <iframe
         ref={iframeRef}
-        src={IFRAME_SRC}
+        src={iframeSrc}
         title="Weekly Review"
         loading="eager"
-        onLoad={() => {
-          setTimeout(() => setReady(true), 50);
-          setLoadError(false);
-        }}
+        onLoad={() => { setTimeout(() => setReady(true), 50); setLoadError(false); }}
         style={{
           display: 'block',
           width: '100%',
-          height: 'calc(100vh - 80px)',
-          minHeight: 720,
+          height: '100%',
           border: 0,
           background: 'transparent',
           colorScheme: 'dark',
         }}
-        // sandbox is intentionally NOT set — the embedded app needs
-        // localStorage and same-origin features to function.
       />
 
-      {!ready && !loadError && (
+      {!ready && (
         <div
           style={{
             position: 'absolute',
             inset: 0,
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            background: T.bg.primary,
-            color: T.text.muted,
+            gap: 16,
+            background: T?.bg?.primary || '#061326',
+            color: T?.text?.muted || '#7a8aa3',
             fontSize: 12,
             letterSpacing: 2,
             pointerEvents: 'none',
+            zIndex: 5,
           }}
         >
-          טוען סקירה שבועית…
-        </div>
-      )}
-
-      {loadError && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 12,
-            insetInlineEnd: 12,
-            padding: '6px 10px',
-            background: T.status.warning + '22',
-            border: `1px solid ${T.status.warning}55`,
-            color: T.status.warning,
-            fontSize: 11,
-            borderRadius: T.radius.sm,
-          }}
-        >
-          הסנכרון מתעכב — נסה לרענן
+          <div
+            style={{
+              width: 48, height: 48, borderRadius: '50%',
+              border: `2px solid ${(T?.accent?.cyan || '#00f2ff') + '22'}`,
+              borderTopColor: T?.accent?.cyan || '#00f2ff',
+              animation: 'spin 0.8s linear infinite',
+            }}
+          />
+          <div>{isRTL ? 'טוען סקירה שבועית…' : 'Loading Weekly Review…'}</div>
+          {loadError && (
+            <div style={{ fontSize: 11, color: T?.status?.warning || '#ffb84d' }}>
+              {isRTL ? 'הסנכרון מתעכב — נסה לרענן' : 'Sync is slow — try refreshing'}
+            </div>
+          )}
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       )}
     </div>
