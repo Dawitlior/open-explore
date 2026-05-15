@@ -781,7 +781,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
 
               {pack === 'scatter+treemap' && (
                 <>
-                  <Frame title="Risk מול תשואה" subtitle={t('גילוי קלאסטרים — היכן ה-edge האמיתי שלך','Cluster discovery — where your real edge lives')} tone="cyan" badge={`r-pearson`}>
+                  <Frame title={t('Risk מול תשואה','Risk vs Return')} subtitle={t('גילוי קלאסטרים — היכן ה-edge האמיתי שלך','Cluster discovery — where your real edge lives')} tone="cyan" badge={`r-pearson`}>
                     <ResponsiveContainer width="100%" height={290}>
                       <ScatterChart margin={{ top: 8, right: 14, left: 0, bottom: 8 }}>
                         <CartesianGrid stroke={T.border.subtle} strokeDasharray="2 4" />
