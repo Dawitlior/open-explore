@@ -1408,7 +1408,7 @@ const Index = () => {
   const handleSaveRiskExplanation = (explanation: RiskExplanation) => {
     const updated = [...riskExplanations, explanation];
     setRiskExplanations(updated);
-    localStorage.setItem('orca-risk-explanations', JSON.stringify(updated));
+    void scopedStorage.setItem('orca-risk-explanations', JSON.stringify(updated));
     setShowRiskExplanation(null);
   };
 
