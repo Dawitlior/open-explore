@@ -421,7 +421,7 @@ export const CalendarHubPage = ({ T, isRTL, trades, t, isMobile, onGenerateInsig
       {calModalDay && (
         <CalendarModal
           T={T}
-          t={{ month: months }}
+          t={t}
           isRTL={isRTL}
           day={calModalDay}
           month={calMonth}
