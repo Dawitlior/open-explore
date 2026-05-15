@@ -1284,7 +1284,7 @@ const DeepInsightCard: React.FC<{ ins: DeepInsight; T: TradingTheme; delay: numb
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
               <span style={{ fontSize: 14, fontWeight: 800, color: T.text.primary }}>{ins.title}</span>
               <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 10, background: `${c}22`, color: c, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{meta.label}</span>
-              <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 10, background: T.bg.tertiary, color: T.text.muted, fontWeight: 600 }}>{CAT_LABEL[ins.category] || ins.category}</span>
+              <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 10, background: T.bg.tertiary, color: T.text.muted, fontWeight: 600 }}>{catLabel[ins.category] || ins.category}</span>
               <span style={{ fontSize: 9, color: T.text.dim, marginInlineStart: 'auto', fontFamily: "'JetBrains Mono', monospace" }}>
                 {(ins.confidence * 100).toFixed(0)}% ביטחון
               </span>
