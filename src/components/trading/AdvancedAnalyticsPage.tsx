@@ -201,8 +201,8 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
     const longs = trades.filter(t => t.direction === 'Long');
     const shorts = trades.filter(t => t.direction === 'Short');
     return [
-      { name: 'לונג', n: longs.length, wr: longs.length ? (longs.filter(t => t.winLoss === 'Win').length / longs.length) * 100 : 0, color: T.accent.green },
-      { name: 'שורט', n: shorts.length, wr: shorts.length ? (shorts.filter(t => t.winLoss === 'Win').length / shorts.length) * 100 : 0, color: T.accent.red },
+      { name: t('לונג','Long'), n: longs.length, wr: longs.length ? (longs.filter(t => t.winLoss === 'Win').length / longs.length) * 100 : 0, color: T.accent.green },
+      { name: t('שורט','Short'), n: shorts.length, wr: shorts.length ? (shorts.filter(t => t.winLoss === 'Win').length / shorts.length) * 100 : 0, color: T.accent.red },
     ];
   }, [trades, T]);
 
