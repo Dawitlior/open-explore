@@ -24,6 +24,7 @@ import type { TradingTheme } from '@/lib/trading-theme';
 import { GlassCard } from './TradingUI';
 import { analyzeDeep, type DeepInsight, type DeepSeverity } from '@/lib/ai-insights-deep';
 import { findBestEdge } from '@/lib/psychology-diagnostic';
+import { useLang } from '@/hooks/use-lang';
 
 interface AIInsightsPageProps {
   T: TradingTheme;
