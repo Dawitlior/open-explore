@@ -515,10 +515,10 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
       {/* ═══ SETUP LEADERBOARD ═══ */}
       {showPro && <GlassCard T={T} style={{ marginBottom: 16, padding: 0, overflow: 'hidden' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px 8px' }}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700 }}>טבלת מובילים — לפי נכס</div>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700 }}>{t('טבלת מובילים — לפי נכס','Leaderboard — by asset')}</div>
           <div style={{ display: 'flex', gap: 4 }}>
             {([
-              { k: 'pnl', l: 'P&L' }, { k: 'exp', l: 'תוחלת' }, { k: 'wr', l: 'הצלחה' }, { k: 'n', l: 'עסקאות' },
+              { k: 'pnl', l: 'P&L' }, { k: 'exp', l: t('תוחלת','Expectancy') }, { k: 'wr', l: t('הצלחה','Win %') }, { k: 'n', l: t('עסקאות','Trades') },
             ] as const).map(o => (
               <button
                 key={o.k}
