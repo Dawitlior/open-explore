@@ -92,22 +92,31 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
 
   // 2. R buckets
   const rBuckets = useMemo(() => {
+    const labels = {
+      lt_m2: t('מתחת ל-2R-','< -2R'),
+      m2_m1: t('-2R עד -1R','-2R to -1R'),
+      m1_0:  t('-1R עד 0','-1R to 0'),
+      z_1:   t('0 עד 1R','0 to 1R'),
+      o1_2:  t('1R עד 2R','1R to 2R'),
+      o2_3:  t('2R עד 3R','2R to 3R'),
+      gt_3:  t('מעל 3R','> 3R'),
+    } as const;
     const buckets: Record<string, number> = {
-      'מתחת ל-2R-': 0, '-2R עד -1R': 0, '-1R עד 0': 0,
-      '0 עד 1R': 0, '1R עד 2R': 0, '2R עד 3R': 0, 'מעל 3R': 0,
+      [labels.lt_m2]: 0, [labels.m2_m1]: 0, [labels.m1_0]: 0,
+      [labels.z_1]: 0, [labels.o1_2]: 0, [labels.o2_3]: 0, [labels.gt_3]: 0,
     };
-    trades.forEach(t => {
-      const r = t.returnR;
-      if (r < -2) buckets['מתחת ל-2R-']++;
-      else if (r < -1) buckets['-2R עד -1R']++;
-      else if (r < 0) buckets['-1R עד 0']++;
-      else if (r < 1) buckets['0 עד 1R']++;
-      else if (r < 2) buckets['1R עד 2R']++;
-      else if (r < 3) buckets['2R עד 3R']++;
-      else buckets['מעל 3R']++;
+    trades.forEach(tr => {
+      const r = tr.returnR;
+      if (r < -2) buckets[labels.lt_m2]++;
+      else if (r < -1) buckets[labels.m2_m1]++;
+      else if (r < 0) buckets[labels.m1_0]++;
+      else if (r < 1) buckets[labels.z_1]++;
+      else if (r < 2) buckets[labels.o1_2]++;
+      else if (r < 3) buckets[labels.o2_3]++;
+      else buckets[labels.gt_3]++;
     });
     return Object.entries(buckets).map(([bucket, count]) => ({ bucket, count }));
-  }, [trades]);
+  }, [trades, t]);
 
   // 3. Setup leaderboard
   const setupBoard = useMemo(() => {
@@ -409,7 +418,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
               <Tooltip contentStyle={tt} />
               <Bar dataKey="count" radius={[0, 4, 4, 0]}>
                 {rBuckets.map((b, i) => (
-                  <Cell key={i} fill={b.bucket.includes('-') || b.bucket.startsWith('מתחת') ? T.accent.red : T.accent.cyan} />
+                  <Cell key={i} fill={b.bucket.includes('-') || b.bucket.startsWith('מתחת') || b.bucket.startsWith('<') ? T.accent.red : T.accent.cyan} />
                 ))}
               </Bar>
             </BarChart>
@@ -570,10 +579,10 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
           <ResponsiveContainer width="100%" height={230}>
             <ScatterChart>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
-              <XAxis type="number" dataKey="risk" name="סיכון" tick={{ fill: T.text.muted, fontSize: 10 }} />
+              <XAxis type="number" dataKey="risk" name={t('סיכון','Risk')} tick={{ fill: T.text.muted, fontSize: 10 }} />
               <YAxis type="number" dataKey="pnl" name="P&L" tick={{ fill: T.text.muted, fontSize: 10 }} />
               <ZAxis range={[40, 160]} />
-              <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} formatter={(v: number, n: string) => [n === 'risk' ? `$${v.toFixed(2)}` : `$${v.toFixed(2)}`, n === 'risk' ? 'סיכון' : 'P&L']} />
+              <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} formatter={(v: number, n: string) => [`$${v.toFixed(2)}`, n === 'risk' ? t('סיכון','Risk') : 'P&L']} />
               <Scatter data={rvp}>
                 {rvp.map((d, i) => (
                   <Cell key={i} fill={d.win ? T.accent.green : T.accent.red} fillOpacity={0.7} />
@@ -645,7 +654,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
               >
                 <span style={{ fontSize: 12, color: T.text.primary, fontWeight: 600 }}>{mp.month}</span>
                 <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 11, color: T.text.muted }}>{mp.trades} עסקאות</span>
+                  <span style={{ fontSize: 11, color: T.text.muted }}>{mp.trades} {t('עסקאות','trades')}</span>
                   <span style={{ fontSize: 11, color: T.text.muted }}>{t('הצלחה','Win')} {mp.winRate.toFixed(0)}%</span>
                   <span style={{ fontSize: 11, color: T.accent.purple, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>{t('תוחלת','Exp')} {mp.expectancyR >= 0 ? '+' : ''}{mp.expectancyR.toFixed(2)}R</span>
                   <span style={{ fontSize: 13, color: mp.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace", fontWeight: 800 }}>
