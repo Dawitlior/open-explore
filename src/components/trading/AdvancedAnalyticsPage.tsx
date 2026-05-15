@@ -479,7 +479,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
               <div key={v} style={{ width: 14, height: 10, background: heatColor(v * maxAbsHeat, maxAbsHeat), borderRadius: 2 }} />
             ))}
           </div>
-          <span>רווח</span>
+          <span>{t('רווח','Profit')}</span>
         </div>
       </GlassCard>}
 
