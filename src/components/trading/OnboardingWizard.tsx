@@ -46,9 +46,9 @@ export const OnboardingWizard = ({ onComplete }: { onComplete: () => void }) => 
   };
 
   const finish = () => {
-    localStorage.setItem(STORAGE_KEY, '1');
-    localStorage.setItem(NAME_KEY, name.trim());
-    if (profile) localStorage.setItem(PROFILE_KEY, profile);
+    void scopedStorage.setItem(STORAGE_KEY, '1');
+    void scopedStorage.setItem(NAME_KEY, name.trim());
+    if (profile) void scopedStorage.setItem(PROFILE_KEY, profile);
     onComplete();
   };
 
