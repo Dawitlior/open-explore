@@ -740,7 +740,7 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
                 {/* RISKS */}
                 {deepDiag.risks.length > 0 && (
                   <div style={{ marginTop: 10, padding: 14, borderRadius: 12, background: T.bg.tertiary, borderInlineStart: `4px solid ${T.accent.red}` }}>
-                    <div style={{ fontSize: 13, color: T.accent.red, fontWeight: 900, marginBottom: 10 }}>◆ סיכונים שמרסנים אותך</div>
+                    <div style={{ fontSize: 13, color: T.accent.red, fontWeight: 900, marginBottom: 10 }}>{isRTL ? '◆ סיכונים שמרסנים אותך' : '◆ RISKS HOLDING YOU BACK'}</div>
                     {deepDiag.risks.map((r, i) => {
                       const c = r.severity === 'danger' ? T.accent.red : T.accent.orange;
                       return (
