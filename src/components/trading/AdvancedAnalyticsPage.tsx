@@ -418,7 +418,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
               <Tooltip contentStyle={tt} />
               <Bar dataKey="count" radius={[0, 4, 4, 0]}>
                 {rBuckets.map((b, i) => (
-                  <Cell key={i} fill={b.bucket.includes('-') || b.bucket.startsWith('מתחת') ? T.accent.red : T.accent.cyan} />
+                  <Cell key={i} fill={b.bucket.includes('-') || b.bucket.startsWith('מתחת') || b.bucket.startsWith('<') ? T.accent.red : T.accent.cyan} />
                 ))}
               </Bar>
             </BarChart>
