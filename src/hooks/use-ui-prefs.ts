@@ -162,12 +162,52 @@ export function useUIPrefs() {
     });
   }, []);
 
+  /** Commit a multi-axis CustomTheme and lock for 24h. */
+  const commitCustomTheme = useCallback((theme: CustomTheme) => {
+    const now = Date.now();
+    setPrefsState(prev => {
+      if (prev.customAccentLockedUntil > now) return prev;
+      const next: UIPrefs = {
+        ...prev,
+        customTheme: theme,
+        customThemeEnabled: true,
+        customAccentEnabled: false, // theme studio supersedes single-accent mode
+        customAccentLockedUntil: now + THEME_LOCK_MS,
+      };
+      setSetting(KEY, next);
+      return next;
+    });
+  }, []);
+
+  /** Force-clear custom theme (keeps base theme intact). */
+  const removeCustomTheme = useCallback(() => {
+    setPrefsState(prev => {
+      const next: UIPrefs = {
+        ...prev,
+        customThemeEnabled: false,
+        customAccentLockedUntil: 0,
+      };
+      setSetting(KEY, next);
+      return next;
+    });
+  }, []);
+
+  /** Bypass the 24h lock — caller is responsible for double-confirmation UI. */
+  const unlockTheme = useCallback(() => {
+    setPrefsState(prev => {
+      const next: UIPrefs = { ...prev, customAccentLockedUntil: 0 };
+      setSetting(KEY, next);
+      return next;
+    });
+  }, []);
+
   const themeLockMsRemaining = Math.max(0, prefs.customAccentLockedUntil - Date.now());
   const themeLocked = themeLockMsRemaining > 0;
 
   return {
     prefs, setPrefs, toggleHiddenMode, reset, loaded,
     commitCustomAccent, removeCustomAccent,
+    commitCustomTheme, removeCustomTheme, unlockTheme,
     themeLocked, themeLockMsRemaining,
   };
 }
