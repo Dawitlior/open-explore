@@ -216,7 +216,7 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
 
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
-            Profit Factor מתגלגל · שחיקת אדג' (חלון 30)
+            {t("Profit Factor מתגלגל · שחיקת אדג' (חלון 30)",'Rolling Profit Factor · Edge decay (window 30)')}
           </div>
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={rollingPF}>
