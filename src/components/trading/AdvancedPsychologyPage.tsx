@@ -709,7 +709,7 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
                 {/* PATTERNS — only what was actually detected */}
                 {deepDiag.patterns.length > 0 && (
                   <div style={{ marginBottom: 14 }}>
-                    <div style={{ fontSize: 11, color: T.text.muted, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>◆ דפוסים שזוהו</div>
+                    <div style={{ fontSize: 11, color: T.text.muted, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>{isRTL ? '◆ דפוסים שזוהו' : '◆ DETECTED PATTERNS'}</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {deepDiag.patterns.map(p => {
                         const c = p.severity === 'good' ? T.accent.green : p.severity === 'warning' ? T.accent.orange : T.accent.red;
