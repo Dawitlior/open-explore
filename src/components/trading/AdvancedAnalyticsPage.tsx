@@ -455,7 +455,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
             <tbody>
               {[0, 1, 2, 3, 4, 5, 6].map(day => (
                 <tr key={day}>
-                  <td style={{ padding: 2, color: T.text.muted, fontWeight: 600, fontSize: 10, textAlign: 'center' }}>{HEB_DOW[day]}</td>
+                  <td style={{ padding: 2, color: T.text.muted, fontWeight: 600, fontSize: 10, textAlign: 'center' }}>{DOW[day]}</td>
                   {Array.from({ length: 24 }, (_, h) => {
                     const cell = dhMatrix.find(c => c.day === day && c.hour === h);
                     const bg = cell ? heatColor(cell.pnl, maxAbsHeat) : T.bg.tertiary;
