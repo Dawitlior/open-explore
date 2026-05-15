@@ -1059,7 +1059,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
               {pack === 'dna+focus' && (
                 <>
                   <GlassCard T={T}>
-                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>DNA לפי נכס — 4 צירים</div>
+                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>{t('DNA לפי נכס — 4 צירים','DNA by asset — 4 axes')}</div>
                     <ResponsiveContainer width="100%" height={260}>
                       <RadarChart data={setupSpider}>
                         <PolarGrid stroke={T.border.subtle} />
