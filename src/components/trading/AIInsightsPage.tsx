@@ -1165,9 +1165,9 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                       </AreaChart>
                     </ResponsiveContainer>
                     <div style={{ display: 'flex', gap: 14, marginTop: 8, fontSize: 10, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace", flexWrap: 'wrap' }}>
-                      <span>● חציון (P50)</span>
-                      <span style={{ color: T.accent.cyan }}>● 50% טווח (P25-P75)</span>
-                      <span style={{ color: T.accent.purple }}>● 90% טווח (P05-P95)</span>
+                      <span>● {t('חציון','Median')} (P50)</span>
+                      <span style={{ color: T.accent.cyan }}>● {t('50% טווח','50% range')} (P25-P75)</span>
+                      <span style={{ color: T.accent.purple }}>● {t('90% טווח','90% range')} (P05-P95)</span>
                     </div>
                   </GlassCard>
                 </>
