@@ -156,6 +156,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
 
   return (
     <div
+      className="orca-settings-overlay"
       style={{
         position: 'fixed', inset: 0, background: 'rgba(2,6,15,0.78)',
         backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
