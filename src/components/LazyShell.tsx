@@ -2,29 +2,33 @@ import type { ReactNode } from 'react';
 import { Suspense, useEffect, useState } from 'react';
 
 /**
- * Premium loading shell — a calm orca-style ripple while a lazy chunk loads.
- * Hidden for the first ~120ms to avoid flash on instant loads.
+ * Premium full-bleed loading shell — used during route/dimension swaps
+ * (Orca ↔ Journal ↔ Backtest). Owns the entire viewport with a deep
+ * navy background so users never see a white flash while a lazy chunk
+ * downloads or while a heavy iframe boots.
  */
 const Fallback = () => {
   const [show, setShow] = useState(false);
   useEffect(() => {
-    const t = setTimeout(() => setShow(true), 120);
+    const t = setTimeout(() => setShow(true), 80);
     return () => clearTimeout(t);
   }, []);
-  if (!show) return <div style={{ minHeight: 200 }} />;
 
   return (
     <div
       style={{
-        minHeight: 320,
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9998,
         display: 'grid',
         placeItems: 'center',
-        padding: 32,
-        animation: 'orca-fade-in 0.35s ease-out',
+        background:
+          'radial-gradient(ellipse at center, #0a1830 0%, #050b18 60%, #02060e 100%)',
+        opacity: show ? 1 : 0,
+        transition: 'opacity 0.3s ease',
       }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
-        {/* Concentric ripples */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
         <div style={{ position: 'relative', width: 96, height: 96 }}>
           <span className="orca-ripple" style={{ animationDelay: '0s' }} />
           <span className="orca-ripple" style={{ animationDelay: '0.4s' }} />
@@ -54,10 +58,6 @@ const Fallback = () => {
       </div>
 
       <style>{`
-        @keyframes orca-fade-in {
-          from { opacity: 0; transform: translateY(8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
         @keyframes orca-ripple {
           0% { transform: scale(0.4); opacity: 0.7; }
           100% { transform: scale(1.6); opacity: 0; }

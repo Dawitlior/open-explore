@@ -42,6 +42,8 @@ import { generateInsights, generateSummary } from '@/lib/ai-engine';
 import { exportToXlsx, importFromXlsx } from '@/lib/xlsx-engine';
 import { getDayRiskColor, checkRiskLimits, DEFAULT_RISK_LIMITS } from '@/lib/risk-limits';
 import { useRiskLimits } from '@/hooks/use-risk-limits';
+import { scopedStorage } from '@/lib/scoped-storage';
+import { useAuth } from '@/hooks/use-auth';
 
 // ─── Facebook-style red notification badge with "1" ───
 const ReminderBadge = () => (
@@ -108,20 +110,31 @@ const Index = () => {
   const [calModalDay, setCalModalDay] = useState<number | null>(null);
   const [showCmdPalette, setShowCmdPalette] = useState(false);
   const [showFeatureModal, setShowFeatureModal] = useState(false);
-  const [hiddenCharts, setHiddenCharts] = useState<string[]>(() => {
-    try { return JSON.parse(localStorage.getItem('orca-hidden-charts') || '[]'); } catch { return []; }
-  });
+  const [hiddenCharts, setHiddenCharts] = useState<string[]>([]);
   const [showImportWarning, setShowImportWarning] = useState(false);
   const [importLoading, setImportLoading] = useState(false);
   const [importFileName, setImportFileName] = useState<string>('');
   const [importedCount, setImportedCount] = useState(0);
   const [importPhase, setImportPhase] = useState<'reading' | 'parsing' | 'validating' | 'saving' | 'done'>('reading');
   const [explainModal, setExplainModal] = useState<{ title: string; explanation: ChartExplanation; chartId?: string } | null>(null);
-  const [riskExplanations, setRiskExplanations] = useState<RiskExplanation[]>(() => {
-    try { return JSON.parse(localStorage.getItem('orca-risk-explanations') || '[]'); } catch { return []; }
-  });
+  const [riskExplanations, setRiskExplanations] = useState<RiskExplanation[]>([]);
   const [showRiskExplanation, setShowRiskExplanation] = useState<{ tradeId: number; riskChange: string } | null>(null);
 
+  // Hydrate per-user UI prefs from scoped storage once we know who is logged in.
+  const { user: authUser } = useAuth();
+  useEffect(() => {
+    if (!authUser?.id) return;
+    (async () => {
+      try {
+        const [hc, re] = await Promise.all([
+          scopedStorage.getItem('orca-hidden-charts'),
+          scopedStorage.getItem('orca-risk-explanations'),
+        ]);
+        if (hc) { try { setHiddenCharts(JSON.parse(hc)); } catch { /* noop */ } }
+        if (re) { try { setRiskExplanations(JSON.parse(re)); } catch { /* noop */ } }
+      } catch { /* noop */ }
+    })();
+  }, [authUser?.id]);
 
   const handleExplainClick = useCallback((title: string, explanation: ChartExplanation, chartId?: string) => {
     setExplainModal({ title, explanation, chartId });
@@ -129,13 +142,13 @@ const Index = () => {
   const handleHideChart = useCallback((chartId: string) => {
     setHiddenCharts(prev => {
       const next = [...prev, chartId];
-      localStorage.setItem('orca-hidden-charts', JSON.stringify(next));
+      void scopedStorage.setItem('orca-hidden-charts', JSON.stringify(next));
       return next;
     });
   }, []);
   const handleRestoreCharts = useCallback(() => {
     setHiddenCharts([]);
-    localStorage.removeItem('orca-hidden-charts');
+    void scopedStorage.removeItem('orca-hidden-charts');
   }, []);
   const isChartVisible = useCallback((chartId: string) => !hiddenCharts.includes(chartId), [hiddenCharts]);
 
@@ -250,38 +263,30 @@ const Index = () => {
 
   const handleDeleteTrade = useCallback(async (id: number) => { await removeTrade(id); setSelTrade(null); }, [removeTrade]);
   const handleReset = useCallback(async () => {
-    console.log('[Reset] Starting full system wipe…');
+    console.log('[Reset] Starting per-user wipe…');
     try {
-      // 1. Clear Orca trades + settings via hook
+      // 1. Clear THIS user's cloud data only (RLS-scoped). Other users' data is untouched.
       await resetAll();
-      console.log('[Reset] Orca DB cleared');
+      console.log('[Reset] Cloud rows cleared for current user only');
 
-      // 2. Wipe Journal IndexedDB (apex-journal-os)
-      await new Promise<void>((resolve) => {
-        const req = indexedDB.deleteDatabase('apex-journal-os');
-        req.onsuccess = () => { console.log('[Reset] Journal DB cleared'); resolve(); };
-        req.onerror = () => { console.warn('[Reset] Journal DB delete error (continuing)'); resolve(); };
-        req.onblocked = () => { console.warn('[Reset] Journal DB delete blocked (continuing)'); resolve(); };
-        // Safety timeout — never hang
-        setTimeout(() => resolve(), 1500);
-      });
-
-      // 3. Wipe relevant localStorage / sessionStorage keys
+      // 2. Wipe browser storage that belongs to the CURRENT user only.
+      //    All localStorage in Orca is namespaced as orca:<uid>:*, so other
+      //    accounts on the same device keep their data intact.
       try {
-        const keysToWipe = [
-          'orca-hidden-charts', 'orca-risk-explanations', 'orca-onboarding-done',
-          'orca-onboarding-data', 'orca-user-name', 'orca-trader-level',
-        ];
-        keysToWipe.forEach(k => localStorage.removeItem(k));
-        sessionStorage.removeItem('orca-entered');
-      } catch { /* ignore */ }
+        const { scopedStorage } = await import('@/lib/scoped-storage');
+        const wiped = await scopedStorage.wipeCurrentUser();
+        console.log(`[Reset] Wiped ${wiped} per-user localStorage keys`);
+      } catch (e) { console.warn('[Reset] scoped wipe failed', e); }
+
+      // 3. Reset transient session flags for this tab.
+      try { sessionStorage.removeItem('orca-entered'); } catch { /* ignore */ }
 
       // 4. Reset local UI state
       setHiddenCharts([]);
       setRiskExplanations([]);
       sessionStorage.setItem('orca-seeded', '1');
       setPage('dashboard');
-      console.log('[Reset] Complete');
+      console.log('[Reset] Complete (current user only)');
     } catch (err) {
       console.error('[Reset] Failed:', err);
       throw err;
@@ -400,14 +405,14 @@ const Index = () => {
     const isFri = now.getDay() === 5;
     const isFirst = now.getDate() === 1;
     if (!isFri && !isFirst) return false;
-    // Dismissal key: per-day so it re-appears each Friday / each 1st-of-month
+    // Dismissal key: per-day per-user so it re-appears each Friday / each 1st-of-month
     const key = `orca-weekly-reminder-dismissed-${now.toISOString().slice(0, 10)}`;
-    try { if (localStorage.getItem(key) === '1') return false; } catch { /* noop */ }
+    try { if (scopedStorage.getSync(key) === '1') return false; } catch { /* noop */ }
     return true;
   }, [reviewReminderTick, page]); // eslint-disable-line react-hooks/exhaustive-deps
   const dismissWeeklyReminder = useCallback(() => {
     const key = `orca-weekly-reminder-dismissed-${new Date().toISOString().slice(0, 10)}`;
-    try { localStorage.setItem(key, '1'); } catch { /* noop */ }
+    try { scopedStorage.setSync(key, '1'); } catch { /* noop */ }
     setReviewReminderTick(t => t + 1);
   }, []);
 
@@ -1403,7 +1408,7 @@ const Index = () => {
   const handleSaveRiskExplanation = (explanation: RiskExplanation) => {
     const updated = [...riskExplanations, explanation];
     setRiskExplanations(updated);
-    localStorage.setItem('orca-risk-explanations', JSON.stringify(updated));
+    void scopedStorage.setItem('orca-risk-explanations', JSON.stringify(updated));
     setShowRiskExplanation(null);
   };
 

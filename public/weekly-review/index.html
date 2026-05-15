@@ -8,6 +8,71 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    // ═══════════════════════════════════════════════════════════════
+    // PER-USER LOCALSTORAGE ISOLATION
+    // Without this, two users sharing the same browser would see and
+    // overwrite each other's weekly journal data. We wrap localStorage
+    // so every key is silently prefixed with the authenticated user id
+    // passed by the parent via the ?uid= query parameter.
+    // ═══════════════════════════════════════════════════════════════
+    (function(){
+      try {
+        var params = new URLSearchParams(window.location.search);
+        var uid = params.get('uid') || 'anon';
+        var PFX = 'u:' + uid + ':';
+        var raw = window.localStorage;
+        var realGet = raw.getItem.bind(raw);
+        var realSet = raw.setItem.bind(raw);
+        var realDel = raw.removeItem.bind(raw);
+        // Whitelist a tiny set of keys that should remain global (none today).
+        function isInternal(k){ return typeof k === 'string' && k.indexOf(PFX) === 0; }
+        var shim = {
+          getItem: function(k){ return realGet(PFX + k); },
+          setItem: function(k, v){ return realSet(PFX + k, v); },
+          removeItem: function(k){ return realDel(PFX + k); },
+          clear: function(){
+            // Only clear THIS user's keys.
+            var toDel = [];
+            for (var i = 0; i < raw.length; i++){
+              var key = raw.key(i);
+              if (key && key.indexOf(PFX) === 0) toDel.push(key);
+            }
+            toDel.forEach(function(k){ realDel(k); });
+          },
+          key: function(i){
+            // Return user-keys only, stripped of prefix.
+            var matched = -1;
+            for (var j = 0; j < raw.length; j++){
+              var key = raw.key(j);
+              if (key && key.indexOf(PFX) === 0) {
+                matched++;
+                if (matched === i) return key.slice(PFX.length);
+              }
+            }
+            return null;
+          },
+          get length(){
+            var n = 0;
+            for (var j = 0; j < raw.length; j++){
+              var key = raw.key(j);
+              if (key && key.indexOf(PFX) === 0) n++;
+            }
+            return n;
+          }
+        };
+        try {
+          Object.defineProperty(window, 'localStorage', { configurable: true, get: function(){ return shim; } });
+        } catch(e) {
+          // Safari sometimes blocks the override — fall back to monkey-patching the prototype methods.
+          raw.getItem = shim.getItem;
+          raw.setItem = shim.setItem;
+          raw.removeItem = shim.removeItem;
+          raw.clear = shim.clear;
+        }
+      } catch(e) { /* swallow — keep app functional even if shim fails */ }
+    })();
+  </script>
   <style>
 
     * { box-sizing: border-box; }

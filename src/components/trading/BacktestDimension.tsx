@@ -15,7 +15,8 @@ const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const fm=(v:any,d=2)=>v!=null&&!isNaN(v)?Number(v).toFixed(d):"—";const fp=(v:any)=>v!=null?(v*100).toFixed(1)+"%":"—";const rc=(v:number)=>v>0?"#0ecb81":v<0?"#f6465d":"#6b7280";
 const emptyRow=()=>({id:uid(),coin:"",entryDT:"",exitDT:"",entry:"",sl:"",exit:"",mfeP:"",maeP:"",notes:"",chartE:"",chartX:"",dir:"",r:null as number|null,mfeR:null as number|null,maeR:null as number|null,dur:""});
 const recalc=(t:any)=>{const e=parseFloat(t.entry),sl=parseFloat(t.sl),ex=parseFloat(t.exit),mfe=parseFloat(t.mfeP),mae=parseFloat(t.maeP);t.dir=autoDir(e,sl);t.r=(e&&sl&&ex)?calcR(e,sl,ex):null;t.mfeR=(e&&sl&&mfe)?calcR(e,sl,mfe):null;t.maeR=(e&&sl&&mae)?calcR(e,sl,mae):null;const d=durCalc(t.entryDT,t.exitDT);t.dur=d?d.t:"";return t;};
-const SK="orca-bt-v13";const loadS=async()=>{try{const r=localStorage.getItem(SK);return r?JSON.parse(r):[];}catch{return[];}};const persist=async (t:any)=>{try{localStorage.setItem(SK,JSON.stringify(t));}catch{}};
+import { scopedStorage } from '@/lib/scoped-storage';
+const SK="orca-bt-v13";const loadS=async()=>{try{const r=await scopedStorage.getItem(SK);return r?JSON.parse(r):[];}catch{return[];}};const persist=async (t:any)=>{try{await scopedStorage.setItem(SK,JSON.stringify(t));}catch{}};
 
 const BL="#2563eb",BL2="#3b82f6",G="#0ecb81",RD="#f6465d",CY="#06b6d4",PU="#a855f7";
 const BG="#0c0f14",BG2="#10141b",BG3="#161c26",SURF="#1e2535",BRD="#1e2736",BRDH="#2a3548";

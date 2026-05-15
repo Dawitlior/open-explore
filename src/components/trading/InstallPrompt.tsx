@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { GlassCard } from './TradingUI';
+import { scopedStorage } from '@/lib/scoped-storage';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -15,9 +16,10 @@ interface Props {
 
 export const InstallPrompt = ({ T, isRTL, compact }: Props) => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [dismissed, setDismissed] = useState(() => {
-    try { return localStorage.getItem('orca-install-dismissed') === '1'; } catch { return false; }
-  });
+  const [dismissed, setDismissed] = useState(false);
+  useEffect(() => {
+    void scopedStorage.getItem('orca-install-dismissed').then(v => { if (v === '1') setDismissed(true); });
+  }, []);
   const [installed, setInstalled] = useState(false);
 
   useEffect(() => {
@@ -50,7 +52,7 @@ export const InstallPrompt = ({ T, isRTL, compact }: Props) => {
 
   const handleDismiss = useCallback(() => {
     setDismissed(true);
-    localStorage.setItem('orca-install-dismissed', '1');
+    void scopedStorage.setItem('orca-install-dismissed', '1');
   }, []);
 
   // Don't show if installed, dismissed, or no prompt available

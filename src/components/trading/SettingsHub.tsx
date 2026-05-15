@@ -1045,6 +1045,23 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                         <button onClick={() => setDraft(p.customAccent)} disabled={locked} style={ghostBtn}>
                           <RotateCcw size={12} /> {t('שחזר', 'Reset draft')}
                         </button>
+                        <button
+                          onClick={() => {
+                            // Re-apply current accent to the DOM immediately, no page reload required.
+                            try {
+                              if (p.customAccentEnabled && p.customAccent) {
+                                // Re-trigger the prefs effect by toggling a no-op patch
+                                ui.setPrefs({ customAccent: p.customAccent });
+                                window.dispatchEvent(new CustomEvent('orca:theme-refresh'));
+                                toast.success(t('הצבעים הוחלו מחדש', 'Theme re-applied'));
+                              }
+                            } catch { /* noop */ }
+                          }}
+                          style={ghostBtn}
+                          title={t('החל מחדש ללא רענון', 'Re-apply without page reload')}
+                        >
+                          <Sparkles size={12} /> {t('החל מיד', 'Apply now')}
+                        </button>
                       </div>
 
                       {locked && (

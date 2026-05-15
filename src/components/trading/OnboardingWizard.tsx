@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import orcaQR from '@/assets/orca-qr-code.jpeg';
+import { scopedStorage } from '@/lib/scoped-storage';
 
 const STORAGE_KEY = 'orca-onboarding-done';
 const NAME_KEY = 'orca-user-name';
@@ -45,9 +46,9 @@ export const OnboardingWizard = ({ onComplete }: { onComplete: () => void }) => 
   };
 
   const finish = () => {
-    localStorage.setItem(STORAGE_KEY, '1');
-    localStorage.setItem(NAME_KEY, name.trim());
-    if (profile) localStorage.setItem(PROFILE_KEY, profile);
+    void scopedStorage.setItem(STORAGE_KEY, '1');
+    void scopedStorage.setItem(NAME_KEY, name.trim());
+    if (profile) void scopedStorage.setItem(PROFILE_KEY, profile);
     onComplete();
   };
 
@@ -345,5 +346,5 @@ export const OnboardingWizard = ({ onComplete }: { onComplete: () => void }) => 
 };
 
 export const shouldShowOnboarding = (): boolean => {
-  return !localStorage.getItem(STORAGE_KEY);
+  return !scopedStorage.getSync(STORAGE_KEY);
 };

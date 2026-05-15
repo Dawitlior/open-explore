@@ -1,43 +1,44 @@
 import { useState, useEffect } from 'react';
 import { X, HelpCircle } from 'lucide-react';
 import type { TradingTheme } from '@/lib/trading-theme';
+import { scopedStorage } from '@/lib/scoped-storage';
 
 /**
  * FeatureHint — small dismissible explanation chip.
- * Persists dismissal in localStorage by `id`.
- *
- * Usage:
- *   <FeatureHint T={T} id="dashboard-calendar" text="הלוח שנה מציג את כל העסקאות..." />
+ * Persists dismissal in PER-USER scoped storage by `id`.
  */
 interface Props {
   T: TradingTheme;
   id: string;
   text: string;
-  /** Optional inline style override */
   style?: React.CSSProperties;
-  /** Compact mode = single line, no wrap */
   compact?: boolean;
 }
 
 const STORAGE_KEY = 'orca-feature-hints-dismissed';
 
-function readDismissed(): Set<string> {
+async function readDismissed(): Promise<Set<string>> {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = await scopedStorage.getItem(STORAGE_KEY);
     if (!raw) return new Set();
     return new Set(JSON.parse(raw));
   } catch { return new Set(); }
 }
 
-function writeDismissed(set: Set<string>) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify([...set])); } catch {}
+async function writeDismissed(set: Set<string>) {
+  try { await scopedStorage.setItem(STORAGE_KEY, JSON.stringify([...set])); } catch {}
 }
 
 export const FeatureHint = ({ T, id, text, style, compact }: Props) => {
   const [dismissed, setDismissed] = useState(true);
 
   useEffect(() => {
-    setDismissed(readDismissed().has(id));
+    let alive = true;
+    (async () => {
+      const set = await readDismissed();
+      if (alive) setDismissed(set.has(id));
+    })();
+    return () => { alive = false; };
   }, [id]);
 
   if (dismissed) return null;
@@ -64,10 +65,10 @@ export const FeatureHint = ({ T, id, text, style, compact }: Props) => {
       <div style={{ flex: 1, minWidth: 0 }}>{text}</div>
       <button
         aria-label="Dismiss hint"
-        onClick={() => {
-          const next = readDismissed();
+        onClick={async () => {
+          const next = await readDismissed();
           next.add(id);
-          writeDismissed(next);
+          await writeDismissed(next);
           setDismissed(true);
         }}
         style={{
