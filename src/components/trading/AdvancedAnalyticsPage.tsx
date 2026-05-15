@@ -368,10 +368,10 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
       {/* ═══ EQUITY + DRAWDOWN OVERLAY ═══ */}
       {showCore && <GlassCard T={T} style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700 }}>עקומת הון מול נסיגה</div>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700 }}>{t('עקומת הון מול נסיגה','Equity vs Drawdown')}</div>
           <div style={{ display: 'flex', gap: 14, fontSize: 10, color: T.text.muted }}>
-            <span>● <span style={{ color: T.accent.cyan }}>הון מצטבר</span></span>
-            <span>● <span style={{ color: T.accent.red }}>נסיגה (%)</span></span>
+            <span>● <span style={{ color: T.accent.cyan }}>{t('הון מצטבר','Cumulative equity')}</span></span>
+            <span>● <span style={{ color: T.accent.red }}>{t('נסיגה (%)','Drawdown (%)')}</span></span>
           </div>
         </div>
         <ResponsiveContainer width="100%" height={250}>
