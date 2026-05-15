@@ -46,11 +46,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
+      setScopedUid(s?.user?.id ?? null);
       setLoading(false);
     });
 
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
+      setScopedUid(data.session?.user?.id ?? null);
       setLoading(false);
     });
     return () => sub.subscription.unsubscribe();
