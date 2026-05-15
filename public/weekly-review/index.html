@@ -10456,7 +10456,7 @@ function TradingJournal() {
     onSaveEditRow: saveEditRow,
     onSetEditForm: setEditForm,
     onDeleteRow: deleteRow
-  }), activeTab === 3 && /*#__PURE__*/React.createElement(React.Fragment, null, monthSummaries.length === 0 ? /*#__PURE__*/React.createElement("div", {
+  }), activeTab === 3 && /*#__PURE__*/React.createElement(DashErrorBoundary, { resetKey: archive.length }, monthSummaries.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: s.emptyState
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -10470,7 +10470,7 @@ function TradingJournal() {
     archive: archive,
     setups: setups,
     onBack: () => setActiveTab(2)
-  })), activeTab === 4 && /*#__PURE__*/React.createElement(React.Fragment, null, monthSummaries.length === 0 ? /*#__PURE__*/React.createElement("div", {
+  })), activeTab === 4 && /*#__PURE__*/React.createElement(DashErrorBoundary, { resetKey: archive.length }, monthSummaries.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: s.emptyState
   }, /*#__PURE__*/React.createElement("div", {
     style: {
