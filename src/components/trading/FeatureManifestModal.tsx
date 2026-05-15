@@ -243,18 +243,29 @@ export const FeatureManifestModal = ({ T, isRTL, onClose }: FeatureManifestModal
     >
       <div
         onClick={e => e.stopPropagation()}
+        className="orca-manifest-shell"
         style={{
           background: `linear-gradient(165deg, ${T.bg.card} 0%, ${T.bg.secondary} 100%)`,
           border: `1px solid ${T.border.medium}`,
           borderRadius: T.radius.xl,
-          maxWidth: 780, width: '94%', maxHeight: '90vh', overflow: 'hidden',
+          maxWidth: 780, width: '94%', maxHeight: '90dvh', overflow: 'hidden',
           boxShadow: `${T.shadow.elevated}, 0 0 80px rgba(0,0,0,0.4)`,
           animation: 'scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
           display: 'flex', flexDirection: 'column',
         }}
       >
+        <style>{`
+          @media (max-width: 640px) {
+            .orca-manifest-shell { width: 100% !important; max-width: 100% !important; max-height: 100dvh !important; height: 100dvh !important; border-radius: 0 !important; }
+            .orca-manifest-shell .orca-manifest-header { padding: 18px 16px 14px !important; }
+            .orca-manifest-shell .orca-manifest-body { padding: 14px 16px 24px !important; padding-bottom: calc(24px + env(safe-area-inset-bottom)) !important; }
+            .orca-manifest-shell .orca-manifest-grid { grid-template-columns: 1fr !important; gap: 10px !important; }
+            .orca-manifest-shell h2 { font-size: 13px !important; }
+            .orca-manifest-shell .orca-manifest-intro { font-size: 11px !important; line-height: 1.6 !important; }
+          }
+        `}</style>
         {/* Header */}
-        <div style={{
+        <div className="orca-manifest-header" style={{
           padding: '28px 32px 20px',
           background: `linear-gradient(135deg, ${T.accent.cyan}06, ${T.accent.purple}06)`,
           borderBottom: `1px solid ${T.border.subtle}`,
@@ -280,7 +291,7 @@ export const FeatureManifestModal = ({ T, isRTL, onClose }: FeatureManifestModal
               }}>
                 מערכת Orca – סביבת עבודה לסוחר מקצועי
               </h2>
-              <p style={{
+              <p className="orca-manifest-intro" style={{
                 fontSize: 12, color: T.text.secondary, lineHeight: 1.8, margin: 0,
                 direction: 'rtl', textAlign: 'right',
               }}>
@@ -301,7 +312,7 @@ export const FeatureManifestModal = ({ T, isRTL, onClose }: FeatureManifestModal
         </div>
 
         {/* Scrollable content */}
-        <div style={{ overflow: 'auto', padding: '20px 32px 28px', flex: 1 }}>
+        <div className="orca-manifest-body" style={{ overflow: 'auto', padding: '20px 32px 28px', flex: 1, WebkitOverflowScrolling: 'touch' }}>
           {/* Disclaimer */}
           <div style={{
             padding: 16, marginBottom: 20,
@@ -319,7 +330,7 @@ export const FeatureManifestModal = ({ T, isRTL, onClose }: FeatureManifestModal
           </div>
 
           {/* Feature sections */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
+          <div className="orca-manifest-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
             {SECTIONS.map((section, i) => (
               <div
                 key={i}
