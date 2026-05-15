@@ -200,7 +200,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
         }}
       >
         {/* SIDEBAR */}
-        <aside style={{
+        <aside className="orca-settings-sidebar" style={{
           background: T.bg.primary, borderInlineEnd: `1px solid ${T.border.subtle}`,
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
         }}>
