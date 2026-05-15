@@ -1249,7 +1249,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
 
                   {bestEdge.worstAsset && (
                     <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 10, background: `${T.accent.red}10`, border: `1px solid ${T.accent.red}30`, fontSize: 12, color: T.text.secondary }}>
-                      ⚠️ <strong style={{ color: T.accent.red }}>{t('הנכס שמדמם הכי הרבה:','Worst-bleeding asset:')}</strong> {bestEdge.worstAsset.name} ({bestEdge.worstAsset.pnl}$ ב-{bestEdge.worstAsset.n} trades) — שקול לסנן או להוריד גודל.
+                      ⚠️ <strong style={{ color: T.accent.red }}>{t('הנכס שמדמם הכי הרבה:','Worst-bleeding asset:')}</strong> {bestEdge.worstAsset.name} ({bestEdge.worstAsset.pnl}$ {t('ב','in')}-{bestEdge.worstAsset.n} trades) — {t('שקול לסנן או להוריד גודל.','consider filtering or reducing size.')}
                     </div>
                   )}
                 </div>
