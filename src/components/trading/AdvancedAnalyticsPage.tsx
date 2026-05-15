@@ -417,7 +417,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
         </GlassCard>
 
         <GlassCard T={T}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>פיצול כיוון (אחוז הצלחה)</div>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('פיצול כיוון (אחוז הצלחה)','Direction Split (Win Rate)')}</div>
           <ResponsiveContainer width="100%" height={230}>
             <RadialBarChart innerRadius="30%" outerRadius="100%" data={dirSplit} startAngle={180} endAngle={0}>
               <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
