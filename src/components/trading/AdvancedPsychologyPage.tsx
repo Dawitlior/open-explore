@@ -727,7 +727,7 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
                 {/* STRENGTHS */}
                 {deepDiag.strengths.length > 0 && (
                   <div style={{ marginTop: 8, padding: 14, borderRadius: 12, background: T.bg.tertiary, borderInlineStart: `4px solid ${T.accent.green}` }}>
-                    <div style={{ fontSize: 13, color: T.accent.green, fontWeight: 900, marginBottom: 10 }}>◆ חוזקות מאומתות בנתונים</div>
+                    <div style={{ fontSize: 13, color: T.accent.green, fontWeight: 900, marginBottom: 10 }}>{isRTL ? '◆ חוזקות מאומתות בנתונים' : '◆ DATA-VERIFIED STRENGTHS'}</div>
                     {deepDiag.strengths.map((s, i) => (
                       <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '6px 0', borderBottom: i < deepDiag.strengths.length - 1 ? `1px solid ${T.border.subtle}` : 'none' }}>
                         <span style={{ fontSize: 13, color: T.text.primary, fontWeight: 600 }}>● {s.title}</span>
