@@ -253,7 +253,7 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
 
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
-            Time-of-Day Edge · תוחלת R לפי שעה
+            {t('Time-of-Day Edge · תוחלת R לפי שעה','Time-of-Day Edge · Average R by hour')}
           </div>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={todEdge}>
