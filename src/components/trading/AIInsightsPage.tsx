@@ -665,7 +665,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
           ניתוח רב-שכבתי של {trades.length} trades — מזהה דפוסים סמויים שאף סוחר לא היה רואה לבד.
         </div>
 
-        <MotherboardButton onClick={run} loading={loading} T={T} hasResult={!!analysis} />
+        <MotherboardButton onClick={run} loading={loading} T={T} hasResult={!!analysis} t={t} />
 
         {/* Loading status text */}
         <AnimatePresence>
