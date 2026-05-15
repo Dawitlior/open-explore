@@ -26,29 +26,27 @@ import { analyzeDeep, type DeepInsight, type DeepSeverity } from '@/lib/ai-insig
 import { findBestEdge } from '@/lib/psychology-diagnostic';
 import { useLang } from '@/hooks/use-lang';
 
-// Module-level fallback so static constants (SEV_META, CAT_LABEL) compile.
-// Inside components, this is shadowed by `const { t } = useLang()` for reactivity.
-const t = (he: string, _en: string) => he;
+type Tr = (he: string, en: string) => string;
 
 interface AIInsightsPageProps {
   T: TradingTheme;
   trades: Trade[];
 }
 
-const SEV_META: Record<DeepSeverity, { label: string; color: (T: TradingTheme) => string; icon: string }> = {
+const getSevMeta = (t: Tr): Record<DeepSeverity, { label: string; color: (T: TradingTheme) => string; icon: string }> => ({
   critical: { label: t('דחוף','Critical'), color: (T) => T.accent.red, icon: '⛔' },
   warning:  { label: t('אזהרה','Warning'), color: (T) => T.accent.orange, icon: '⚠️' },
   strength: { label: t('חוזק','Strength'), color: (T) => T.accent.green, icon: '💎' },
   insight:  { label: t('תובנה','Insight'), color: (T) => T.accent.cyan, icon: '🔍' },
-};
+});
 
-const CAT_LABEL: Record<string, string> = {
+const getCatLabel = (t: Tr): Record<string, string> => ({
   behavioural: t('התנהגותי','Behavioral'),
   statistical: t('סטטיסטי','Statistical'),
-  edge: t('אדג׳',t('אדג\'','Edge')),
+  edge: t("אדג'",'Edge'),
   timing: t('תזמון','Timing'),
   risk: t('סיכון','Risk'),
-};
+});
 
 /* ──────────────────────────────────────────────────────────────── */
 /* MOTHERBOARD BUTTON                                               */
@@ -59,7 +57,8 @@ const MotherboardButton: React.FC<{
   loading: boolean;
   T: TradingTheme;
   hasResult: boolean;
-}> = ({ onClick, loading, T, hasResult }) => {
+  t: Tr;
+}> = ({ onClick, loading, T, hasResult, t }) => {
   const accent = T.accent.cyan;
   return (
     <motion.button
@@ -483,7 +482,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
       Profit: Math.max(0, Math.round((x.pnl / maxP) * 100)),
       Wins: Math.round(x.wr),
       Expectancy: Math.max(0, Math.min(100, Math.round((x.exp + 1) * 50))),
-      נפח: Math.round((x.n / maxN) * 100),
+      Volume: Math.round((x.n / maxN) * 100),
     }));
   }, [trades]);
 
@@ -652,7 +651,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
   };
 
   return (
-    <div dir="rtl" style={{ fontFamily: "'Heebo', 'Inter', sans-serif" }}>
+    <div dir={t('rtl','ltr')} style={{ fontFamily: "'Heebo', 'Inter', sans-serif" }}>
       {EliteDefs}
       {/* HERO — central motherboard button */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 16px 28px' }}>
@@ -660,13 +659,13 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
           ORCA · MAINFRAME
         </div>
         <div style={{ fontSize: 22, color: T.text.primary, fontWeight: 800, marginBottom: 4, letterSpacing: '-0.01em' }}>
-          מנוע תובנות עמוק
+          {t('מנוע תובנות עמוק','Deep Insights Engine')}
         </div>
         <div style={{ fontSize: 12, color: T.text.secondary, marginBottom: 22, maxWidth: 460, textAlign: 'center', lineHeight: 1.6 }}>
-          ניתוח רב-שכבתי של {trades.length} trades — מזהה דפוסים סמויים שאף סוחר לא היה רואה לבד.
+          {t(`ניתוח רב-שכבתי של ${trades.length} trades — מזהה דפוסים סמויים שאף סוחר לא היה רואה לבד.`, `Multi-layer analysis of ${trades.length} trades — surfaces hidden patterns no trader could spot alone.`)}
         </div>
 
-        <MotherboardButton onClick={run} loading={loading} T={T} hasResult={!!analysis} />
+        <MotherboardButton onClick={run} loading={loading} T={T} hasResult={!!analysis} t={t} />
 
         {/* Loading status text */}
         <AnimatePresence>
@@ -681,7 +680,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                 t('טוען מטריצת עסקאות...','Loading trade matrix...'),
                 t('מזהה דפוסים סמויים...','Detecting hidden patterns...'),
                 t('מחשב DNA סוחר...','Computing trader DNA...'),
-                'מסנן לפי מובהקות Statisticalת...',
+                t('מסנן לפי מובהקות סטטיסטית...','Filtering by statistical significance...'),
               ].map((s, i) => (
                 <motion.div
                   key={s}
@@ -711,7 +710,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
             {/* DNA STRIP */}
             <GlassCard T={T} style={{ marginBottom: 16, padding: 18 }} glow={`${T.accent.cyan}22`}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.18em' }}>DNA סוחר</div>
+                <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.18em' }}>{t('DNA סוחר','Trader DNA')}</div>
                 <div style={{ fontSize: 28, fontWeight: 800, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>
                   {analysis.dna.overall}
                   <span style={{ fontSize: 12, color: T.text.muted, marginInlineStart: 4 }}>/100</span>
@@ -744,7 +743,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12, marginBottom: 16 }}>
               {pack === 'radar+heat' && (
                 <>
-                  <Frame title={t('ראדאר ה-DNA הסוחר','Trader DNA Radar')} subtitle="ארבעה מימדים: Edge, Discipline, Consistency, Behavior" tone="cyan" badge={`${analysis.dna.overall}/100`}>
+                  <Frame title={t('ראדאר ה-DNA הסוחר','Trader DNA Radar')} subtitle={t('ארבעה מימדים: Edge, Discipline, Consistency, Behavior','Four axes: Edge, Discipline, Consistency, Behavior')} tone="cyan" badge={`${analysis.dna.overall}/100`}>
                     <ResponsiveContainer width="100%" height={290}>
                       <RadarChart data={dnaData}>
                         <defs>
@@ -766,7 +765,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                       <ScatterChart margin={{ top: 8, right: 14, left: 0, bottom: 8 }}>
                         <CartesianGrid stroke={T.border.subtle} strokeDasharray="2 4" />
                         <XAxis type="number" dataKey="hour" name={t('שעה','Hour')} domain={[0, 23]} ticks={[0, 4, 8, 12, 16, 20]} tick={{ fill: T.text.muted, fontSize: 10 }} label={{ value: t('שעה','Hour'), position: 'insideBottom', offset: -2, fill: T.text.dim, fontSize: 10 }} />
-                        <YAxis type="number" dataKey="day" name={t('יום','Day')} domain={[0, 6]} tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(d) => ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'][d] || ''} />
+                        <YAxis type="number" dataKey="day" name={t('יום','Day')} domain={[0, 6]} tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(d) => (t('rtl','ltr') === 'rtl' ? ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'] : ['Su','Mo','Tu','We','Th','Fr','Sa'])[d] || ''} />
                         <ZAxis type="number" dataKey="n" range={[60, 520]} />
                         <Tooltip contentStyle={tt} cursor={{ stroke: T.accent.cyan, strokeOpacity: 0.3, strokeDasharray: '3 3' }} />
                         <Scatter data={heatData}>
@@ -782,7 +781,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
 
               {pack === 'scatter+treemap' && (
                 <>
-                  <Frame title="Risk מול תשואה" subtitle={t('גילוי קלאסטרים — היכן ה-edge האמיתי שלך','Cluster discovery — where your real edge lives')} tone="cyan" badge={`r-pearson`}>
+                  <Frame title={t('Risk מול תשואה','Risk vs Return')} subtitle={t('גילוי קלאסטרים — היכן ה-edge האמיתי שלך','Cluster discovery — where your real edge lives')} tone="cyan" badge={`r-pearson`}>
                     <ResponsiveContainer width="100%" height={290}>
                       <ScatterChart margin={{ top: 8, right: 14, left: 0, bottom: 8 }}>
                         <CartesianGrid stroke={T.border.subtle} strokeDasharray="2 4" />
@@ -797,7 +796,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                       </ScatterChart>
                     </ResponsiveContainer>
                   </Frame>
-                  <Frame title={t('מפת חשיפה לפי נכס','Asset Exposure Map')} subtitle="ריכוז Risk — איפה אתה מוטה" tone="purple" badge={`${treemapData.length} assets`}>
+                  <Frame title={t('מפת חשיפה לפי נכס','Asset Exposure Map')} subtitle={t('ריכוז Risk — איפה אתה מוטה','Risk concentration — where you are exposed')} tone="purple" badge={`${treemapData.length} assets`}>
                     <ResponsiveContainer width="100%" height={290}>
                       <Treemap
                         data={treemapData}
@@ -988,7 +987,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
               {pack === 'kelly+sizing' && (
                 <>
                   <GlassCard T={T}>
-                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>Kelly אופטימלי מול גודל פוזיציה בפועל (%)</div>
+                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>{t('Kelly אופטימלי מול גודל פוזיציה בפועל (%)','Optimal Kelly vs actual position size (%)')}</div>
                     <ResponsiveContainer width="100%" height={250}>
                       <ComposedChart data={kellyData}>
                         <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
@@ -1001,7 +1000,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                     </ResponsiveContainer>
                   </GlassCard>
                   <GlassCard T={T}>
-                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>סחיפת Risk לאורך זמן</div>
+                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>{t('סחיפת Risk לאורך זמן','Risk drift over time')}</div>
                     <ResponsiveContainer width="100%" height={250}>
                       <LineChart data={kellyData}>
                         <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
@@ -1019,7 +1018,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
               {pack === 'efficiency+mae' && (
                 <>
                   <GlassCard T={T}>
-                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>ענן יעילות (R לTrade)</div>
+                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>{t('ענן יעילות (R לTrade)','Efficiency Cloud (R per trade)')}</div>
                     <ResponsiveContainer width="100%" height={250}>
                       <ScatterChart>
                         <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
@@ -1060,7 +1059,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
               {pack === 'dna+focus' && (
                 <>
                   <GlassCard T={T}>
-                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>DNA לפי נכס — 4 צירים</div>
+                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>{t('DNA לפי נכס — 4 צירים','DNA by asset — 4 axes')}</div>
                     <ResponsiveContainer width="100%" height={260}>
                       <RadarChart data={setupSpider}>
                         <PolarGrid stroke={T.border.subtle} />
@@ -1074,7 +1073,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                     </ResponsiveContainer>
                   </GlassCard>
                   <GlassCard T={T}>
-                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>פוקוס פארטו — 80/20 של הProfit</div>
+                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>{t('פוקוס פארטו — 80/20 של הProfit','Pareto Focus — 80/20 of P&L')}</div>
                     <ResponsiveContainer width="100%" height={260}>
                       <ComposedChart data={focusPareto}>
                         <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
@@ -1100,8 +1099,8 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                     <ResponsiveContainer width="100%" height={250}>
                       <ScatterChart>
                         <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
-                        <XAxis type="number" dataKey="prev" name="R קודם" tick={{ fill: T.text.muted, fontSize: 10 }} />
-                        <YAxis type="number" dataKey="cur" name="R נוכחי" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                        <XAxis type="number" dataKey="prev" name={t('R קודם','Previous R')} tick={{ fill: T.text.muted, fontSize: 10 }} />
+                        <YAxis type="number" dataKey="cur" name={t('R נוכחי','Current R')} tick={{ fill: T.text.muted, fontSize: 10 }} />
                         <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} />
                         <Scatter data={autocorrData}>
                           {autocorrData.map((d, i) => (
@@ -1139,7 +1138,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                 <>
                   <GlassCard T={T} style={{ gridColumn: '1 / -1' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                      <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em' }}>Monte Carlo — קונוס תוצאות אפשריות (50 מסלולים)</div>
+                      <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em' }}>{t('Monte Carlo — קונוס תוצאות אפשריות (50 מסלולים)','Monte Carlo — outcome cone (50 paths)')}</div>
                       <div style={{ fontSize: 10, color: T.accent.purple, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.12em' }}>QUANT TIER</div>
                     </div>
                     <ResponsiveContainer width="100%" height={290}>
@@ -1156,7 +1155,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                         </defs>
                         <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
                         <XAxis dataKey="step" tick={{ fill: T.text.muted, fontSize: 10 }} label={{ value: t('עסקאות קדימה','Trades ahead'), fill: T.text.muted, fontSize: 10, position: 'insideBottom', offset: -4 }} />
-                        <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} label={{ value: 'R מצטבר', angle: -90, fill: T.text.muted, fontSize: 10, position: 'insideLeft' }} />
+                        <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} label={{ value: t('R מצטבר','Cumulative R'), angle: -90, fill: T.text.muted, fontSize: 10, position: 'insideLeft' }} />
                         <Tooltip contentStyle={tt} />
                         <Area type="monotone" dataKey="p95" stroke={T.accent.purple} fill="url(#mcOuter)" strokeWidth={1.4} />
                         <Area type="monotone" dataKey="p75" stroke={T.accent.cyan} fill="url(#mcInner)" strokeWidth={1.5} />
@@ -1166,9 +1165,9 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                       </AreaChart>
                     </ResponsiveContainer>
                     <div style={{ display: 'flex', gap: 14, marginTop: 8, fontSize: 10, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace", flexWrap: 'wrap' }}>
-                      <span>● חציון (P50)</span>
-                      <span style={{ color: T.accent.cyan }}>● 50% טווח (P25-P75)</span>
-                      <span style={{ color: T.accent.purple }}>● 90% טווח (P05-P95)</span>
+                      <span>● {t('חציון','Median')} (P50)</span>
+                      <span style={{ color: T.accent.cyan }}>● {t('50% טווח','50% range')} (P25-P75)</span>
+                      <span style={{ color: T.accent.purple }}>● {t('90% טווח','90% range')} (P05-P95)</span>
                     </div>
                   </GlassCard>
                 </>
@@ -1214,7 +1213,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                       <span style={{ fontSize: 30, filter: 'drop-shadow(0 0 12px rgba(255,200,80,0.7))' }}>👑</span>
                       <div>
                         <div style={{ fontSize: 11, color: '#FFD27A', letterSpacing: '0.22em', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>◆ ORCA · GOLDEN EDGE</div>
-                        <div style={{ fontSize: 22, color: T.text.primary, fontWeight: 900, marginTop: 2 }}>Gold Card — הEdge האישי שלך</div>
+                        <div style={{ fontSize: 22, color: T.text.primary, fontWeight: 900, marginTop: 2 }}>{t('Gold Card — הEdge האישי שלך','Gold Card — Your Personal Edge')}</div>
                       </div>
                     </div>
                     <div style={{ fontSize: 11, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>Based on {trades.length} trades</div>
@@ -1227,11 +1226,11 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
                     {[
                       bestEdge.bestAsset && { icon: '💎', label: t('הנכס הכי טוב','Best Asset'), value: bestEdge.bestAsset.name, sub: `${bestEdge.bestAsset.pnl >= 0 ? '+' : ''}$${bestEdge.bestAsset.pnl} · ${bestEdge.bestAsset.wr}% WR · ${bestEdge.bestAsset.expR >= 0 ? '+' : ''}${bestEdge.bestAsset.expR}R` },
-                      bestEdge.bestDay && { icon: '📅', label: 'הDay הכי טוב', value: bestEdge.bestDay.name, sub: `${bestEdge.bestDay.pnl >= 0 ? '+' : ''}$${bestEdge.bestDay.pnl} · ${bestEdge.bestDay.wr}% WR · ${bestEdge.bestDay.n} trades` },
-                      bestEdge.bestHour && { icon: '⏰', label: 'הHour הכי טובה', value: bestEdge.bestHour.label, sub: `${bestEdge.bestHour.pnl >= 0 ? '+' : ''}$${bestEdge.bestHour.pnl} · ${bestEdge.bestHour.wr}% WR` },
+                      bestEdge.bestDay && { icon: '📅', label: t('היום הכי טוב','Best Day'), value: bestEdge.bestDay.name, sub: `${bestEdge.bestDay.pnl >= 0 ? '+' : ''}$${bestEdge.bestDay.pnl} · ${bestEdge.bestDay.wr}% WR · ${bestEdge.bestDay.n} trades` },
+                      bestEdge.bestHour && { icon: '⏰', label: t('השעה הכי טובה','Best Hour'), value: bestEdge.bestHour.label, sub: `${bestEdge.bestHour.pnl >= 0 ? '+' : ''}$${bestEdge.bestHour.pnl} · ${bestEdge.bestHour.wr}% WR` },
                       bestEdge.bestSession && { icon: '🌍', label: t('הסשן הכי טוב','Best Session'), value: bestEdge.bestSession.name, sub: `${bestEdge.bestSession.pnl >= 0 ? '+' : ''}$${bestEdge.bestSession.pnl} · ${bestEdge.bestSession.n} trades` },
                       bestEdge.bestSetup && { icon: '🎯', label: t('האסטרטגיה הכי טובה','Best Strategy'), value: bestEdge.bestSetup.name, sub: `${bestEdge.bestSetup.pnl >= 0 ? '+' : ''}$${bestEdge.bestSetup.pnl} · ${bestEdge.bestSetup.wr}% WR` },
-                      bestEdge.bestStreakDay && { icon: '🚀', label: 'הDay הכי Profitי בלוח', value: bestEdge.bestStreakDay.name, sub: `${bestEdge.bestStreakDay.pnl >= 0 ? '+' : ''}$${bestEdge.bestStreakDay.pnl} · ${bestEdge.bestStreakDay.n} trades` },
+                      bestEdge.bestStreakDay && { icon: '🚀', label: t('היום הכי רווחי בלוח','Most Profitable Day'), value: bestEdge.bestStreakDay.name, sub: `${bestEdge.bestStreakDay.pnl >= 0 ? '+' : ''}$${bestEdge.bestStreakDay.pnl} · ${bestEdge.bestStreakDay.n} trades` },
                     ].filter(Boolean).map((card: any, i) => (
                       <motion.div
                         key={i}
@@ -1250,7 +1249,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
 
                   {bestEdge.worstAsset && (
                     <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 10, background: `${T.accent.red}10`, border: `1px solid ${T.accent.red}30`, fontSize: 12, color: T.text.secondary }}>
-                      ⚠️ <strong style={{ color: T.accent.red }}>{t('הנכס שמדמם הכי הרבה:','Worst-bleeding asset:')}</strong> {bestEdge.worstAsset.name} ({bestEdge.worstAsset.pnl}$ ב-{bestEdge.worstAsset.n} trades) — שקול לסנן או להוריד גודל.
+                      ⚠️ <strong style={{ color: T.accent.red }}>{t('הנכס שמדמם הכי הרבה:','Worst-bleeding asset:')}</strong> {bestEdge.worstAsset.name} ({bestEdge.worstAsset.pnl}$ {t('ב','in')}-{bestEdge.worstAsset.n} trades) — {t('שקול לסנן או להוריד גודל.','consider filtering or reducing size.')}
                     </div>
                   )}
                 </div>
@@ -1268,7 +1267,9 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
 /* ──────────────────────────────────────────────────────────────── */
 
 const DeepInsightCard: React.FC<{ ins: DeepInsight; T: TradingTheme; delay: number }> = ({ ins, T, delay }) => {
-  const meta = SEV_META[ins.severity];
+  const { t } = useLang();
+  const meta = getSevMeta(t)[ins.severity];
+  const catLabel = getCatLabel(t);
   const c = meta.color(T);
   return (
     <motion.div
@@ -1283,18 +1284,18 @@ const DeepInsightCard: React.FC<{ ins: DeepInsight; T: TradingTheme; delay: numb
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
               <span style={{ fontSize: 14, fontWeight: 800, color: T.text.primary }}>{ins.title}</span>
               <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 10, background: `${c}22`, color: c, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{meta.label}</span>
-              <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 10, background: T.bg.tertiary, color: T.text.muted, fontWeight: 600 }}>{CAT_LABEL[ins.category] || ins.category}</span>
+              <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 10, background: T.bg.tertiary, color: T.text.muted, fontWeight: 600 }}>{catLabel[ins.category] || ins.category}</span>
               <span style={{ fontSize: 9, color: T.text.dim, marginInlineStart: 'auto', fontFamily: "'JetBrains Mono', monospace" }}>
-                {(ins.confidence * 100).toFixed(0)}% ביטחון
+                {(ins.confidence * 100).toFixed(0)}% {t('ביטחון','confidence')}
               </span>
             </div>
             <div style={{ fontSize: 12.5, color: T.text.primary, lineHeight: 1.65, marginBottom: 8 }}>{ins.finding}</div>
             <div style={{ fontSize: 11.5, color: T.text.secondary, lineHeight: 1.6, marginBottom: 10, padding: '8px 10px', background: T.bg.tertiary, borderRadius: 8, borderInlineStart: `2px solid ${T.border.medium}` }}>
-              <span style={{ color: T.text.muted, fontWeight: 700, marginInlineEnd: 6 }}>ראיה:</span>
+              <span style={{ color: T.text.muted, fontWeight: 700, marginInlineEnd: 6 }}>{t('ראיה:','Evidence:')}</span>
               {ins.evidence}
             </div>
             <div style={{ fontSize: 12, color: T.text.primary, lineHeight: 1.55, padding: '8px 10px', background: `${c}10`, borderRadius: 8, borderInlineStart: `2px solid ${c}` }}>
-              <span style={{ color: c, fontWeight: 800, marginInlineEnd: 6 }}>פעולה:</span>
+              <span style={{ color: c, fontWeight: 800, marginInlineEnd: 6 }}>{t('פעולה:','Action:')}</span>
               {ins.action}
             </div>
             {ins.metric && ins.metric.length > 0 && (

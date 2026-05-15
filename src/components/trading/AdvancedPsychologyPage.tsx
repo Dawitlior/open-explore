@@ -613,7 +613,7 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
 
       {diagnosisOpen && (
         <div onClick={() => setDiagnosisOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(16px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18, animation: 'fadeIn .25s ease' }}>
-          <div onClick={e => e.stopPropagation()} dir="rtl" style={{ width: 'min(820px, 100%)', maxHeight: '90vh', overflow: 'auto', borderRadius: 20, border: `1px solid ${enoughForDiag ? healthColor : T.accent.orange}55`, background: `linear-gradient(145deg, ${T.bg.card}, ${T.bg.secondary} 48%, ${T.bg.tertiary})`, boxShadow: `0 30px 90px rgba(0,0,0,.62), 0 0 60px ${enoughForDiag ? healthColor : T.accent.orange}25`, padding: 26, animation: 'scaleIn .32s cubic-bezier(0.16,1,0.3,1)' }}>
+          <div onClick={e => e.stopPropagation()} dir={isRTL ? 'rtl' : 'ltr'} style={{ width: 'min(820px, 100%)', maxHeight: '90vh', overflow: 'auto', borderRadius: 20, border: `1px solid ${enoughForDiag ? healthColor : T.accent.orange}55`, background: `linear-gradient(145deg, ${T.bg.card}, ${T.bg.secondary} 48%, ${T.bg.tertiary})`, boxShadow: `0 30px 90px rgba(0,0,0,.62), 0 0 60px ${enoughForDiag ? healthColor : T.accent.orange}25`, padding: 26, animation: 'scaleIn .32s cubic-bezier(0.16,1,0.3,1)' }}>
             {!enoughForDiag ? (
               <div style={{ textAlign: 'center', padding: '20px 10px' }}>
                 <div style={{ fontSize: 56, marginBottom: 12 }}>📉</div>
@@ -652,7 +652,7 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
                 {/* OVERALL SCORE BAR */}
                 <div style={{ marginBottom: 14, padding: 14, borderRadius: 12, background: T.bg.tertiary, border: `1px solid ${T.border.subtle}` }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                    <span style={{ fontSize: 11, color: T.text.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>ציון סינתזה כללי</span>
+                    <span style={{ fontSize: 11, color: T.text.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{isRTL ? 'ציון סינתזה כללי' : 'Overall synthesis score'}</span>
                     <span style={{ fontSize: 26, fontWeight: 900, color: healthColor, fontFamily: "'JetBrains Mono', monospace" }}>{deepDiag.scores.overall}<span style={{ fontSize: 12, color: T.text.muted }}>/100</span></span>
                   </div>
                   <div style={{ height: 6, background: T.bg.primary, borderRadius: 3, overflow: 'hidden' }}>
@@ -663,13 +663,13 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
                 {/* 7-AXIS SCORE GRID */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 8, marginBottom: 14 }}>
                   {[
-                    { l: 'משמעת', v: deepDiag.scores.discipline, c: T.accent.green },
-                    { l: 'עקביות', v: deepDiag.scores.consistency, c: T.accent.blue },
-                    { l: 'רגשי', v: deepDiag.scores.emotional, c: T.accent.purple },
-                    { l: 'אדג׳', v: deepDiag.scores.edge, c: T.accent.cyan },
-                    { l: 'סבלנות', v: deepDiag.scores.patience, c: T.accent.orange },
-                    { l: 'הסתגלות', v: deepDiag.scores.adaptability, c: T.accent.cyan },
-                    { l: 'סיכון', v: deepDiag.scores.risk, c: deepDiag.scores.risk >= 60 ? T.accent.green : T.accent.red },
+                    { l: isRTL ? 'משמעת' : 'Discipline', v: deepDiag.scores.discipline, c: T.accent.green },
+                    { l: isRTL ? 'עקביות' : 'Consistency', v: deepDiag.scores.consistency, c: T.accent.blue },
+                    { l: isRTL ? 'רגשי' : 'Emotional', v: deepDiag.scores.emotional, c: T.accent.purple },
+                    { l: isRTL ? 'אדג׳' : 'Edge', v: deepDiag.scores.edge, c: T.accent.cyan },
+                    { l: isRTL ? 'סבלנות' : 'Patience', v: deepDiag.scores.patience, c: T.accent.orange },
+                    { l: isRTL ? 'הסתגלות' : 'Adaptability', v: deepDiag.scores.adaptability, c: T.accent.cyan },
+                    { l: isRTL ? 'סיכון' : 'Risk', v: deepDiag.scores.risk, c: deepDiag.scores.risk >= 60 ? T.accent.green : T.accent.red },
                   ].map(s => (
                     <div key={s.l} style={{ padding: 10, borderRadius: 10, background: `${s.c}10`, border: `1px solid ${s.c}30` }}>
                       <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>{s.l}</div>
@@ -709,7 +709,7 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
                 {/* PATTERNS — only what was actually detected */}
                 {deepDiag.patterns.length > 0 && (
                   <div style={{ marginBottom: 14 }}>
-                    <div style={{ fontSize: 11, color: T.text.muted, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>◆ דפוסים שזוהו</div>
+                    <div style={{ fontSize: 11, color: T.text.muted, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>{isRTL ? '◆ דפוסים שזוהו' : '◆ DETECTED PATTERNS'}</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {deepDiag.patterns.map(p => {
                         const c = p.severity === 'good' ? T.accent.green : p.severity === 'warning' ? T.accent.orange : T.accent.red;
@@ -727,7 +727,7 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
                 {/* STRENGTHS */}
                 {deepDiag.strengths.length > 0 && (
                   <div style={{ marginTop: 8, padding: 14, borderRadius: 12, background: T.bg.tertiary, borderInlineStart: `4px solid ${T.accent.green}` }}>
-                    <div style={{ fontSize: 13, color: T.accent.green, fontWeight: 900, marginBottom: 10 }}>◆ חוזקות מאומתות בנתונים</div>
+                    <div style={{ fontSize: 13, color: T.accent.green, fontWeight: 900, marginBottom: 10 }}>{isRTL ? '◆ חוזקות מאומתות בנתונים' : '◆ DATA-VERIFIED STRENGTHS'}</div>
                     {deepDiag.strengths.map((s, i) => (
                       <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '6px 0', borderBottom: i < deepDiag.strengths.length - 1 ? `1px solid ${T.border.subtle}` : 'none' }}>
                         <span style={{ fontSize: 13, color: T.text.primary, fontWeight: 600 }}>● {s.title}</span>
@@ -740,7 +740,7 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
                 {/* RISKS */}
                 {deepDiag.risks.length > 0 && (
                   <div style={{ marginTop: 10, padding: 14, borderRadius: 12, background: T.bg.tertiary, borderInlineStart: `4px solid ${T.accent.red}` }}>
-                    <div style={{ fontSize: 13, color: T.accent.red, fontWeight: 900, marginBottom: 10 }}>◆ סיכונים שמרסנים אותך</div>
+                    <div style={{ fontSize: 13, color: T.accent.red, fontWeight: 900, marginBottom: 10 }}>{isRTL ? '◆ סיכונים שמרסנים אותך' : '◆ RISKS HOLDING YOU BACK'}</div>
                     {deepDiag.risks.map((r, i) => {
                       const c = r.severity === 'danger' ? T.accent.red : T.accent.orange;
                       return (
@@ -755,11 +755,11 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
 
                 {/* PERSONAL ACTION PROTOCOL */}
                 <div style={{ marginTop: 10, padding: 14, borderRadius: 12, background: T.bg.tertiary, borderInlineStart: `4px solid ${T.accent.cyan}` }}>
-                  <div style={{ fontSize: 13, color: T.accent.cyan, fontWeight: 900, marginBottom: 10 }}>◆ פרוטוקול פעולה אישי</div>
+                  <div style={{ fontSize: 13, color: T.accent.cyan, fontWeight: 900, marginBottom: 10 }}>{isRTL ? '◆ פרוטוקול פעולה אישי' : '◆ PERSONAL ACTION PROTOCOL'}</div>
                   {deepDiag.plan.map((p, i) => (
                     <div key={i} style={{ padding: '8px 0', borderBottom: i < deepDiag.plan.length - 1 ? `1px solid ${T.border.subtle}` : 'none' }}>
                       <div style={{ fontSize: 13, color: T.text.primary, fontWeight: 700, marginBottom: 3 }}>{i + 1}. {p.step}</div>
-                      <div style={{ fontSize: 11, color: T.text.muted, lineHeight: 1.5 }}>למה: {p.why}</div>
+                      <div style={{ fontSize: 11, color: T.text.muted, lineHeight: 1.5 }}>{isRTL ? 'למה' : 'Why'}: {p.why}</div>
                     </div>
                   ))}
                 </div>

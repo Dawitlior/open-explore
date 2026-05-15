@@ -33,6 +33,7 @@ import {
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { GlassCard } from './TradingUI';
+import { useLang } from '@/hooks/use-lang';
 
 interface Props {
   T: TradingTheme;
@@ -41,6 +42,7 @@ interface Props {
 }
 
 export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
+  const { t } = useLang();
   const tt = {
     background: T.bg.card, border: `1px solid ${T.border.medium}`,
     borderRadius: 10, color: T.text.primary, fontSize: 12,
@@ -157,8 +159,8 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
       if (trades[i - 1].winLoss === 'Win' && trades[i].risk > trades[i - 1].risk * 1.1) upAfterWin++;
       if (trades[i - 1].winLoss === 'Loss' && trades[i].risk < trades[i - 1].risk * 0.9) downAfterLoss++;
     }
-    if (total > 0 && (upAfterWin / total) > 0.3) flags.push({ label: 'Recency Bias', severity: 'warn', detail: `${((upAfterWin / total) * 100).toFixed(0)}% מהעסקאות לאחר ניצחון כללו הגדלת סיכון.` });
-    if (total > 0 && (downAfterLoss / total) > 0.3) flags.push({ label: 'Loss Aversion', severity: 'good', detail: `${((downAfterLoss / total) * 100).toFixed(0)}% מהעסקאות לאחר הפסד כללו הקטנת סיכון — הגנה בריאה.` });
+    if (total > 0 && (upAfterWin / total) > 0.3) flags.push({ label: 'Recency Bias', severity: 'warn', detail: t(`${((upAfterWin / total) * 100).toFixed(0)}% מהעסקאות לאחר ניצחון כללו הגדלת סיכון.`, `${((upAfterWin / total) * 100).toFixed(0)}% of trades after a win increased risk.`) });
+    if (total > 0 && (downAfterLoss / total) > 0.3) flags.push({ label: 'Loss Aversion', severity: 'good', detail: t(`${((downAfterLoss / total) * 100).toFixed(0)}% מהעסקאות לאחר הפסד כללו הקטנת סיכון — הגנה בריאה.`, `${((downAfterLoss / total) * 100).toFixed(0)}% of trades after a loss reduced risk — healthy defense.`) });
     // Confirmation bias proxy: same direction repeated for >5 trades
     let dirRun = 1; let maxDirRun = 1;
     for (let i = 1; i < trades.length; i++) {
@@ -166,12 +168,12 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
       else dirRun = 1;
       maxDirRun = Math.max(maxDirRun, dirRun);
     }
-    if (maxDirRun >= 6) flags.push({ label: 'Confirmation Bias', severity: 'warn', detail: `רצף של ${maxDirRun} עסקאות באותו כיוון — בדוק שאתה לא מתעלם מסיגנלים נגדיים.` });
+    if (maxDirRun >= 6) flags.push({ label: 'Confirmation Bias', severity: 'warn', detail: t(`רצף של ${maxDirRun} עסקאות באותו כיוון — בדוק שאתה לא מתעלם מסיגנלים נגדיים.`, `Streak of ${maxDirRun} trades in the same direction — make sure you're not ignoring counter-signals.`) });
     // Overtrading bias: days with 4+ trades
     const byDay = new Map<string, number>();
     trades.forEach(t => { try { const d = new Date(t.date.replace(' ', 'T')).toDateString(); byDay.set(d, (byDay.get(d) || 0) + 1); } catch { /* skip */ } });
     const heavyDays = Array.from(byDay.values()).filter(n => n >= 4).length;
-    if (heavyDays > 0) flags.push({ label: 'Overtrading', severity: 'danger', detail: `${heavyDays} ימים עם 4+ עסקאות — סיכון לתשישות החלטות.` });
+    if (heavyDays > 0) flags.push({ label: 'Overtrading', severity: 'danger', detail: t(`${heavyDays} ימים עם 4+ עסקאות — סיכון לתשישות החלטות.`, `${heavyDays} days with 4+ trades — risk of decision fatigue.`) });
     return flags;
   }, [trades]);
 
@@ -186,13 +188,13 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
 
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} style={{ marginTop: 20 }}>
-      <div style={sectionStyle}>◆ PSYCHOLOGY LAB · מעבדה התנהגותית מתקדמת</div>
+      <div style={sectionStyle}>{t('◆ PSYCHOLOGY LAB · מעבדה התנהגותית מתקדמת','◆ PSYCHOLOGY LAB · Advanced Behavioral Lab')}</div>
 
       {/* Row 1: RAR + Rolling PF */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12, marginBottom: 12 }}>
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
-            Rule Adherence Rate · עמידה בכללים (חלון 10)
+            {t('Rule Adherence Rate · עמידה בכללים (חלון 10)','Rule Adherence Rate · Rule compliance (window 10)')}
           </div>
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={rar}>
@@ -214,7 +216,7 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
 
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
-            Profit Factor מתגלגל · שחיקת אדג' (חלון 30)
+            {t("Profit Factor מתגלגל · שחיקת אדג' (חלון 30)",'Rolling Profit Factor · Edge decay (window 30)')}
           </div>
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={rollingPF}>
@@ -233,7 +235,7 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12, marginBottom: 12 }}>
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
-            Expected Value · תוחלת R לפי נכס
+            {t('Expected Value · תוחלת R לפי נכס','Expected Value · Average R per asset')}
           </div>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={evPerAsset} layout="vertical" margin={{ left: 60 }}>
@@ -251,7 +253,7 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
 
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
-            Time-of-Day Edge · תוחלת R לפי שעה
+            {t('Time-of-Day Edge · תוחלת R לפי שעה','Time-of-Day Edge · Average R by hour')}
           </div>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={todEdge}>
@@ -272,7 +274,7 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12, marginBottom: 12 }}>
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
-            Tilt Meter · עוצמת טילט לאורך זמן
+            {t('Tilt Meter · עוצמת טילט לאורך זמן','Tilt Meter · Tilt intensity over time')}
           </div>
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={tiltTl}>
@@ -294,11 +296,11 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
 
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
-            Post-Win Overconfidence · שינוי סיכון לאחר רצף ניצחונות
+            {t('Post-Win Overconfidence · שינוי סיכון לאחר רצף ניצחונות','Post-Win Overconfidence · Risk change after winning streaks')}
           </div>
           {postWin.length === 0 ? (
             <div style={{ fontSize: 12, color: T.text.muted, textAlign: 'center', padding: 60 }}>
-              עדיין אין רצפי ניצחון של 2+ במדגם הזה.
+              {t('עדיין אין רצפי ניצחון של 2+ במדגם הזה.','No 2+ winning streaks in this sample yet.')}
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={200}>
@@ -321,7 +323,7 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12, marginBottom: 12 }}>
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
-            Consecutive Loss Probability · סיכוי לרצף הפסדים בהינתן ה-WR הנוכחי
+            {t('Consecutive Loss Probability · סיכוי לרצף הפסדים בהינתן ה-WR הנוכחי','Consecutive Loss Probability · Streak risk given current WR')}
           </div>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={consecLossProb}>
@@ -336,23 +338,23 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
 
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
-            Trade Distribution Skew · מקור הרווח שלך
+            {t('Trade Distribution Skew · מקור הרווח שלך','Trade Distribution Skew · Where your profit comes from')}
           </div>
           <div style={{ padding: 16, textAlign: 'center' }}>
             <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.16em', textTransform: 'uppercase' }}>
-              חלק העשירון העליון מסך הרווחים
+              {t('חלק העשירון העליון מסך הרווחים','Top decile share of total profits')}
             </div>
             <div style={{ fontSize: 56, fontWeight: 800, color: skew.topDecileShare > 60 ? T.accent.orange : T.accent.cyan, fontFamily: "'JetBrains Mono', monospace", marginTop: 8 }}>
               {skew.topDecileShare}%
             </div>
             <div style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.6, marginTop: 10, maxWidth: 380, margin: '10px auto 0' }}>
               {skew.topDecileShare > 60
-                ? 'מסה גבוהה: רוב הרווח שלך מגיע מ"ברבורים שחורים". האסטרטגיה תלויה בנדירים.'
+                ? t('מסה גבוהה: רוב הרווח שלך מגיע מ"ברבורים שחורים". האסטרטגיה תלויה בנדירים.','High concentration: most of your profit comes from "black swans". Strategy depends on rare events.')
                 : skew.topDecileShare > 35
-                ? 'מאוזן: הרווחים מתפזרים בין עסקאות גדולות לבינוניות.'
-                : 'עקבי: הרווח נבנה מטרייד אחר טרייד — סימן לאדג\' יציב.'}
+                ? t('מאוזן: הרווחים מתפזרים בין עסקאות גדולות לבינוניות.','Balanced: profits spread between large and medium trades.')
+                : t("עקבי: הרווח נבנה מטרייד אחר טרייד — סימן לאדג' יציב.",'Consistent: profit built trade by trade — sign of a stable edge.')}
             </div>
-            <div style={{ fontSize: 10, color: T.text.muted, marginTop: 8 }}>{skew.totalWins} עסקאות מנצחות</div>
+            <div style={{ fontSize: 10, color: T.text.muted, marginTop: 8 }}>{skew.totalWins} {t('עסקאות מנצחות','winning trades')}</div>
           </div>
         </GlassCard>
       </div>
@@ -360,10 +362,10 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
       {/* Row 5: Cognitive Bias Report */}
       <GlassCard T={T} style={{ marginBottom: 12 }} glow={`${T.accent.purple}18`}>
         <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
-          ◆ Cognitive Bias Report · דוח הטיות קוגניטיביות
+          {t('◆ Cognitive Bias Report · דוח הטיות קוגניטיביות','◆ Cognitive Bias Report')}
         </div>
         {biasFlags.length === 0 ? (
-          <div style={{ fontSize: 12, color: T.accent.green, padding: 14 }}>✅ לא זוהו דפוסי הטיה דומיננטיים במדגם הנוכחי.</div>
+          <div style={{ fontSize: 12, color: T.accent.green, padding: 14 }}>{t('✅ לא זוהו דפוסי הטיה דומיננטיים במדגם הנוכחי.','✅ No dominant bias patterns detected in the current sample.')}</div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 8 }}>
             {biasFlags.map((b, i) => {
