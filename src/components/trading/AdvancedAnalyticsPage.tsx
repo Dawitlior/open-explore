@@ -441,7 +441,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
 
       {/* ═══ DAY × HOUR MATRIX ═══ */}
       {showMax && <GlassCard T={T} style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>מפת ביצועים — יום × שעה</div>
+        <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>{t('מפת ביצועים — יום × שעה','Performance Heatmap — Day × Hour')}</div>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ borderCollapse: 'separate', borderSpacing: 2, fontSize: 10, fontFamily: "'JetBrains Mono', monospace", margin: '0 auto' }}>
             <thead>
