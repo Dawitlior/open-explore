@@ -436,8 +436,55 @@ const Index = () => {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: T.bg.primary, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace", fontSize: 16 }}>
-        {Ico.orca}<span style={{ marginInlineStart: 12 }}>Loading Orca...</span>
+      <div style={{
+        position: 'fixed', inset: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 28,
+        background: `radial-gradient(circle at 50% 40%, ${T.bg.secondary} 0%, ${T.bg.primary} 70%)`,
+        color: T.accent.cyan,
+      }}>
+        {/* Logo + dual-orbit ring loader */}
+        <div style={{ position: 'relative', width: 96, height: 96 }}>
+          <div style={{
+            position: 'absolute', inset: 0, borderRadius: '50%',
+            border: `2px solid ${T.accent.cyan}22`,
+            borderTopColor: T.accent.cyan,
+            animation: 'orca-spin 1.1s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite',
+          }} />
+          <div style={{
+            position: 'absolute', inset: 10, borderRadius: '50%',
+            border: `2px solid ${T.accent.purple}18`,
+            borderBottomColor: T.accent.purple,
+            animation: 'orca-spin-rev 1.6s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite',
+          }} />
+          <div style={{
+            position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: T.accent.cyan, filter: `drop-shadow(0 0 12px ${T.accent.cyan}88)`,
+          }}>
+            {Ico.orca}
+          </div>
+        </div>
+        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '0.32em', fontFamily: "'JetBrains Mono', monospace", color: T.text.primary }}>
+            ORCA
+          </div>
+          <div style={{ fontSize: 10, color: T.text.muted, letterSpacing: '0.4em', textTransform: 'uppercase' }}>
+            Investment Terminal
+          </div>
+          <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            {[0, 1, 2].map(i => (
+              <span key={i} style={{
+                width: 6, height: 6, borderRadius: '50%', background: T.accent.cyan,
+                opacity: 0.35,
+                animation: `orca-pulse 1.2s ease-in-out ${i * 0.18}s infinite`,
+              }} />
+            ))}
+          </div>
+        </div>
+        <style>{`
+          @keyframes orca-spin { to { transform: rotate(360deg); } }
+          @keyframes orca-spin-rev { to { transform: rotate(-360deg); } }
+          @keyframes orca-pulse { 0%, 100% { opacity: 0.25; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1.25); } }
+        `}</style>
       </div>
     );
   }
@@ -1536,34 +1583,12 @@ const Index = () => {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                 <span>{isRTL ? 'אודות המערכת' : 'About System'}</span>
               </button>
-              <button onClick={() => settings.setLang(settings.lang === 'he' ? 'en' : 'he')} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: `${T.accent.blue}10`, border: `1px solid ${T.accent.blue}25`, borderRadius: T.radius.md, color: T.accent.blue, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
-                {Ico.globe}<span>{settings.lang === 'he' ? 'English' : 'עברית'}</span>
-              </button>
-              <button onClick={() => { setSbOpen(false); settings.setPrivacyMode(!settings.privacyMode); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: settings.privacyMode ? `${T.accent.orange}15` : `${T.accent.blue}08`, border: `1px solid ${settings.privacyMode ? T.accent.orange : T.accent.blue}25`, borderRadius: T.radius.md, color: settings.privacyMode ? T.accent.orange : T.accent.blue, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
-                {settings.privacyMode ? '🔒' : '👁️'}<span>{settings.privacyMode ? (isRTL ? 'מוסתר' : 'Hidden') : (isRTL ? 'גלוי' : 'Visible')}</span>
-              </button>
-              <div style={{ position: 'relative' }}>
-                <button onClick={() => setShowThemeMenu(!showThemeMenu)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: `${T.accent.purple}10`, border: `1px solid ${T.accent.purple}25`, borderRadius: T.radius.md, color: T.accent.purple, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
-                  {Ico.settings}<span>{t.theme}</span>
-                </button>
-                {showThemeMenu && (
-                  <div style={{ position: 'absolute', bottom: '100%', left: 0, right: 0, background: T.bg.card, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, padding: 6, marginBottom: 4, zIndex: 20, boxShadow: T.shadow.elevated }}>
-                    {(['midnight','indigo','platinum'] as ThemeId[]).map(th => (
-                      <button key={th} onClick={() => { settings.setTheme(th); setShowThemeMenu(false); }} style={{ display: 'block', width: '100%', padding: '6px 10px', fontSize: 11, fontWeight: settings.theme === th ? 700 : 400, color: settings.theme === th ? T.accent.cyan : T.text.secondary, background: settings.theme === th ? `${T.accent.cyan}10` : 'transparent', border: 'none', borderRadius: T.radius.sm, cursor: 'pointer', textAlign: isRTL ? 'right' : 'left' }}>
-                        {th === 'midnight' ? (isRTL ? '🌙 חצות' : '🌙 Midnight') : th === 'indigo' ? (isRTL ? '🌌 אינדיגו ליל' : '🌌 Indigo Noir') : (isRTL ? '🤍 לבן יוקרתי' : '🤍 Platinum White')}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <button onClick={() => { setSbOpen(false); setShowSettings(true); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: `${T.accent.cyan}10`, border: `1px solid ${T.accent.cyan}30`, borderRadius: T.radius.md, color: T.accent.cyan, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
-                <span style={{ fontSize: 14 }}>⚙️</span><span>{isRTL ? 'הגדרות' : 'Settings'}</span>
-              </button>
-              <button onClick={() => { setSbOpen(false); setShowReset(true); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: `${T.accent.red}08`, border: `1px solid ${T.accent.red}20`, borderRadius: T.radius.md, color: T.accent.red, cursor: 'pointer', fontSize: 11, fontWeight: 500 }}>
-                {Ico.reset}<span>{t.resetAll}</span>
-              </button>
-              <button onClick={() => { setSbOpen(false); handleLogout(); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: `${T.accent.orange}08`, border: `1px solid ${T.accent.orange}20`, borderRadius: T.radius.md, color: T.accent.orange, cursor: 'pointer', fontSize: 11, fontWeight: 500 }}>
-                <span>🚪</span><span>{isRTL ? 'יציאה' : 'Logout'}</span>
+              <button onClick={() => { setSbOpen(false); setShowSettings(true); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 12px', background: `${T.accent.cyan}10`, border: `1px solid ${T.accent.cyan}30`, borderRadius: T.radius.md, color: T.accent.cyan, cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>
+                <span style={{ fontSize: 16 }}>⚙️</span>
+                <span>{isRTL ? 'הגדרות' : 'Settings'}</span>
+                <span style={{ marginInlineStart: 'auto', fontSize: 9, color: T.text.muted, fontWeight: 400, opacity: 0.8 }}>
+                  {isRTL ? 'נושא · שפה · פרטיות · יציאה' : 'Theme · Lang · Privacy · Logout'}
+                </span>
               </button>
             </div>
           </div>
@@ -1613,34 +1638,15 @@ const Index = () => {
         {sbOpen && <div style={{ padding: '4px 6px' }}><BacktestPortalButton onClick={() => setActiveDimension('backtest')} isRTL={isRTL} expanded={true} /></div>}
         {sbOpen && <div style={{ padding: '4px 6px' }}><InstallPrompt T={T} isRTL={isRTL} compact /></div>}
         <div style={{ padding: 10, borderTop: `1px solid ${T.border.subtle}`, display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {sbOpen && <div style={{ position: 'relative' }}>
-            <button onClick={() => setShowThemeMenu(!showThemeMenu)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: `${T.accent.purple}10`, border: `1px solid ${T.accent.purple}25`, borderRadius: T.radius.md, color: T.accent.purple, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
-              {Ico.settings}<span>{t.theme}</span>
-            </button>
-            {showThemeMenu && (
-              <div style={{ position: 'absolute', bottom: '100%', left: 0, right: 0, background: T.bg.card, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, padding: 6, marginBottom: 4, zIndex: 20, boxShadow: T.shadow.elevated }}>
-                {(['midnight','indigo','platinum'] as ThemeId[]).map(th => (
-                  <button key={th} onClick={() => { settings.setTheme(th); setShowThemeMenu(false); }} style={{ display: 'block', width: '100%', padding: '6px 10px', fontSize: 11, fontWeight: settings.theme === th ? 700 : 400, color: settings.theme === th ? T.accent.cyan : T.text.secondary, background: settings.theme === th ? `${T.accent.cyan}10` : 'transparent', border: 'none', borderRadius: T.radius.sm, cursor: 'pointer', textAlign: isRTL ? 'right' : 'left' }}>
-                    {th === 'midnight' ? (isRTL ? '🌙 חצות' : '🌙 Midnight') : th === 'indigo' ? (isRTL ? '🌌 אינדיגו ליל' : '🌌 Indigo Noir') : (isRTL ? '🤍 לבן יוקרתי' : '🤍 Platinum White')}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>}
-          {sbOpen && <button onClick={() => settings.setPrivacyMode(!settings.privacyMode)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: settings.privacyMode ? `${T.accent.orange}15` : `${T.accent.blue}08`, border: `1px solid ${settings.privacyMode ? T.accent.orange : T.accent.blue}25`, borderRadius: T.radius.md, color: settings.privacyMode ? T.accent.orange : T.accent.blue, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
-            {settings.privacyMode ? '🔒' : '👁️'}<span>{settings.privacyMode ? (isRTL ? 'מוסתר' : 'Hidden') : (isRTL ? 'גלוי' : 'Visible')}</span>
+          {sbOpen && <button onClick={() => setShowSettings(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '9px 10px', background: `${T.accent.cyan}10`, border: `1px solid ${T.accent.cyan}30`, borderRadius: T.radius.md, color: T.accent.cyan, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+            <span style={{ fontSize: 14 }}>⚙️</span>
+            <span>{isRTL ? 'הגדרות' : 'Settings'}</span>
+            <span style={{ marginInlineStart: 'auto', fontSize: 8, color: T.text.muted, fontWeight: 400, opacity: 0.75 }}>
+              {isRTL ? 'נושא · שפה · פרטיות' : 'Theme · Lang · Privacy'}
+            </span>
           </button>}
-          <button onClick={() => settings.setLang(settings.lang === 'he' ? 'en' : 'he')} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: `${T.accent.blue}10`, border: `1px solid ${T.accent.blue}25`, borderRadius: T.radius.md, color: T.accent.blue, cursor: 'pointer', fontSize: 12, fontWeight: 600, justifyContent: sbOpen ? 'flex-start' : 'center' }}>
-            {Ico.globe}{sbOpen && <span>{settings.lang === 'he' ? 'English' : 'עברית'}</span>}
-          </button>
-          {sbOpen && <button onClick={() => setShowSettings(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: `${T.accent.cyan}08`, border: `1px solid ${T.accent.cyan}20`, borderRadius: T.radius.md, color: T.accent.cyan, cursor: 'pointer', fontSize: 11, fontWeight: 500, marginBottom: 6 }}>
-            <span style={{ fontSize: 13 }}>⚙️</span><span>{isRTL ? 'הגדרות' : 'Settings'}</span>
-          </button>}
-          {sbOpen && <button onClick={() => setShowReset(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: `${T.accent.red}08`, border: `1px solid ${T.accent.red}20`, borderRadius: T.radius.md, color: T.accent.red, cursor: 'pointer', fontSize: 11, fontWeight: 500 }}>
-            {Ico.reset}<span>{t.resetAll}</span>
-          </button>}
-          {sbOpen && <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: `${T.accent.orange}08`, border: `1px solid ${T.accent.orange}20`, borderRadius: T.radius.md, color: T.accent.orange, cursor: 'pointer', fontSize: 11, fontWeight: 500 }}>
-            <span>🚪</span><span>{isRTL ? 'יציאה' : 'Logout'}</span>
+          {!sbOpen && <button onClick={() => setShowSettings(true)} title={isRTL ? 'הגדרות' : 'Settings'} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '9px 0', background: 'transparent', border: 'none', borderRadius: T.radius.md, color: T.accent.cyan, cursor: 'pointer', fontSize: 18 }}>
+            ⚙️
           </button>}
         </div>
       </aside>
