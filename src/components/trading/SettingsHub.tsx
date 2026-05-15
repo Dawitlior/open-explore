@@ -308,9 +308,9 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
         </aside>
 
         {/* CONTENT */}
-        <section style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', background: T.bg.secondary }}>
+        <section className="orca-settings-content" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', background: T.bg.secondary }}>
           {/* Topbar */}
-          <header style={{
+          <header className="orca-settings-topbar" style={{
             padding: '18px 26px', borderBottom: `1px solid ${T.border.subtle}`,
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             background: `linear-gradient(180deg, ${T.bg.primary}, ${T.bg.secondary})`,
