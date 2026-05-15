@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import orcaQR from '@/assets/orca-qr-code.jpeg';
+import { scopedStorage } from '@/lib/scoped-storage';
 
 const STORAGE_KEY = 'orca-onboarding-done';
 const NAME_KEY = 'orca-user-name';
