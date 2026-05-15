@@ -482,7 +482,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
       Profit: Math.max(0, Math.round((x.pnl / maxP) * 100)),
       Wins: Math.round(x.wr),
       Expectancy: Math.max(0, Math.min(100, Math.round((x.exp + 1) * 50))),
-      נפח: Math.round((x.n / maxN) * 100),
+      Volume: Math.round((x.n / maxN) * 100),
     }));
   }, [trades]);
 
