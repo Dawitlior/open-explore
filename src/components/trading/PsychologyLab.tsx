@@ -235,7 +235,7 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12, marginBottom: 12 }}>
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
-            Expected Value · תוחלת R לפי נכס
+            {t('Expected Value · תוחלת R לפי נכס','Expected Value · Average R per asset')}
           </div>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={evPerAsset} layout="vertical" margin={{ left: 60 }}>
