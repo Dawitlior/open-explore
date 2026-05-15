@@ -486,7 +486,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
       {/* ═══ MONTHLY HEAT TILES ═══ */}
       {showPro && monthHeat.length > 1 && (
         <GlassCard T={T} style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>חום חודשי</div>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>{t('חום חודשי','Monthly Heat')}</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 8 }}>
             {monthHeat.map((m, i) => (
               <motion.div
