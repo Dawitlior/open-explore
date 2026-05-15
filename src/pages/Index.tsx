@@ -110,20 +110,31 @@ const Index = () => {
   const [calModalDay, setCalModalDay] = useState<number | null>(null);
   const [showCmdPalette, setShowCmdPalette] = useState(false);
   const [showFeatureModal, setShowFeatureModal] = useState(false);
-  const [hiddenCharts, setHiddenCharts] = useState<string[]>(() => {
-    try { return JSON.parse(localStorage.getItem('orca-hidden-charts') || '[]'); } catch { return []; }
-  });
+  const [hiddenCharts, setHiddenCharts] = useState<string[]>([]);
   const [showImportWarning, setShowImportWarning] = useState(false);
   const [importLoading, setImportLoading] = useState(false);
   const [importFileName, setImportFileName] = useState<string>('');
   const [importedCount, setImportedCount] = useState(0);
   const [importPhase, setImportPhase] = useState<'reading' | 'parsing' | 'validating' | 'saving' | 'done'>('reading');
   const [explainModal, setExplainModal] = useState<{ title: string; explanation: ChartExplanation; chartId?: string } | null>(null);
-  const [riskExplanations, setRiskExplanations] = useState<RiskExplanation[]>(() => {
-    try { return JSON.parse(localStorage.getItem('orca-risk-explanations') || '[]'); } catch { return []; }
-  });
+  const [riskExplanations, setRiskExplanations] = useState<RiskExplanation[]>([]);
   const [showRiskExplanation, setShowRiskExplanation] = useState<{ tradeId: number; riskChange: string } | null>(null);
 
+  // Hydrate per-user UI prefs from scoped storage once we know who is logged in.
+  const { user: authUser } = useAuth();
+  useEffect(() => {
+    if (!authUser?.id) return;
+    (async () => {
+      try {
+        const [hc, re] = await Promise.all([
+          scopedStorage.getItem('orca-hidden-charts'),
+          scopedStorage.getItem('orca-risk-explanations'),
+        ]);
+        if (hc) { try { setHiddenCharts(JSON.parse(hc)); } catch { /* noop */ } }
+        if (re) { try { setRiskExplanations(JSON.parse(re)); } catch { /* noop */ } }
+      } catch { /* noop */ }
+    })();
+  }, [authUser?.id]);
 
   const handleExplainClick = useCallback((title: string, explanation: ChartExplanation, chartId?: string) => {
     setExplainModal({ title, explanation, chartId });
@@ -131,13 +142,13 @@ const Index = () => {
   const handleHideChart = useCallback((chartId: string) => {
     setHiddenCharts(prev => {
       const next = [...prev, chartId];
-      localStorage.setItem('orca-hidden-charts', JSON.stringify(next));
+      void scopedStorage.setItem('orca-hidden-charts', JSON.stringify(next));
       return next;
     });
   }, []);
   const handleRestoreCharts = useCallback(() => {
     setHiddenCharts([]);
-    localStorage.removeItem('orca-hidden-charts');
+    void scopedStorage.removeItem('orca-hidden-charts');
   }, []);
   const isChartVisible = useCallback((chartId: string) => !hiddenCharts.includes(chartId), [hiddenCharts]);
 
