@@ -346,5 +346,5 @@ export const OnboardingWizard = ({ onComplete }: { onComplete: () => void }) => 
 };
 
 export const shouldShowOnboarding = (): boolean => {
-  return !localStorage.getItem(STORAGE_KEY);
+  return !scopedStorage.getSync(STORAGE_KEY);
 };
