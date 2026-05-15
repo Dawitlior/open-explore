@@ -77,7 +77,10 @@ export function useSettings() {
     if (from !== o) ModeSwitchEvents.emit({ kind: 'operating', from, to: o });
     prev.current.operatingMode = o;
   }, []);
-  const setLang = useCallback((l: Lang) => { setLangState(l); setSetting('lang', l); }, []);
+  const setLang = useCallback((l: Lang) => {
+    setLangState(l); setSetting('lang', l);
+    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('orca:lang-changed', { detail: { lang: l } }));
+  }, []);
   const setPrivacyMode = useCallback((p: boolean) => { setPrivacyModeState(p); setSetting('privacyMode', p); }, []);
 
   const modeCombo: ModeCombo = { operating: operatingMode, depth: systemMode };
