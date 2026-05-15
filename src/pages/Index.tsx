@@ -32,6 +32,7 @@ const AdvancedAnalyticsPage = lazy(() => import('@/components/trading/AdvancedAn
 const AdvancedPsychologyPage = lazy(() => import('@/components/trading/AdvancedPsychologyPage').then(m => ({ default: m.AdvancedPsychologyPage })));
 const AIInsightsPage = lazy(() => import('@/components/trading/AIInsightsPage').then(m => ({ default: m.AIInsightsPage })));
 const WeeklyReviewPage = lazy(() => import('@/components/trading/WeeklyReviewPage').then(m => ({ default: m.WeeklyReviewPage })));
+const CalendarHubPage = lazy(() => import('@/components/trading/CalendarHubPage').then(m => ({ default: m.CalendarHubPage })));
 import { InstallPrompt } from '@/components/trading/InstallPrompt';
 import { DimensionController, PortalButton, BacktestPortalButton } from '@/components/trading/DimensionController';
 const JournalDimension = lazy(() => import('@/components/trading/JournalDimension').then(m => ({ default: m.JournalDimension })));
