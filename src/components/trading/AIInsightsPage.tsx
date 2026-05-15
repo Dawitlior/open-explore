@@ -1018,7 +1018,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
               {pack === 'efficiency+mae' && (
                 <>
                   <GlassCard T={T}>
-                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>ענן יעילות (R לTrade)</div>
+                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>{t('ענן יעילות (R לTrade)','Efficiency Cloud (R per trade)')}</div>
                     <ResponsiveContainer width="100%" height={250}>
                       <ScatterChart>
                         <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
