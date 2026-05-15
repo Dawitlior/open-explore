@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { GlassCard } from './TradingUI';
+import { scopedStorage } from '@/lib/scoped-storage';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
