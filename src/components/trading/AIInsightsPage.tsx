@@ -57,7 +57,8 @@ const MotherboardButton: React.FC<{
   loading: boolean;
   T: TradingTheme;
   hasResult: boolean;
-}> = ({ onClick, loading, T, hasResult }) => {
+  t: Tr;
+}> = ({ onClick, loading, T, hasResult, t }) => {
   const accent = T.accent.cyan;
   return (
     <motion.button
