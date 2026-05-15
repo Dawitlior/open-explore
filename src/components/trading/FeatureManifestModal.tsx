@@ -312,7 +312,7 @@ export const FeatureManifestModal = ({ T, isRTL, onClose }: FeatureManifestModal
         </div>
 
         {/* Scrollable content */}
-        <div style={{ overflow: 'auto', padding: '20px 32px 28px', flex: 1 }}>
+        <div className="orca-manifest-body" style={{ overflow: 'auto', padding: '20px 32px 28px', flex: 1, WebkitOverflowScrolling: 'touch' }}>
           {/* Disclaimer */}
           <div style={{
             padding: 16, marginBottom: 20,
