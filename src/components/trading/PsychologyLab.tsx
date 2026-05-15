@@ -168,7 +168,7 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
       else dirRun = 1;
       maxDirRun = Math.max(maxDirRun, dirRun);
     }
-    if (maxDirRun >= 6) flags.push({ label: 'Confirmation Bias', severity: 'warn', detail: `רצף של ${maxDirRun} עסקאות באותו כיוון — בדוק שאתה לא מתעלם מסיגנלים נגדיים.` });
+    if (maxDirRun >= 6) flags.push({ label: 'Confirmation Bias', severity: 'warn', detail: t(`רצף של ${maxDirRun} עסקאות באותו כיוון — בדוק שאתה לא מתעלם מסיגנלים נגדיים.`, `Streak of ${maxDirRun} trades in the same direction — make sure you're not ignoring counter-signals.`) });
     // Overtrading bias: days with 4+ trades
     const byDay = new Map<string, number>();
     trades.forEach(t => { try { const d = new Date(t.date.replace(' ', 'T')).toDateString(); byDay.set(d, (byDay.get(d) || 0) + 1); } catch { /* skip */ } });
