@@ -743,7 +743,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12, marginBottom: 16 }}>
               {pack === 'radar+heat' && (
                 <>
-                  <Frame title={t('ראדאר ה-DNA הסוחר','Trader DNA Radar')} subtitle="ארבעה מימדים: Edge, Discipline, Consistency, Behavior" tone="cyan" badge={`${analysis.dna.overall}/100`}>
+                  <Frame title={t('ראדאר ה-DNA הסוחר','Trader DNA Radar')} subtitle={t('ארבעה מימדים: Edge, Discipline, Consistency, Behavior','Four axes: Edge, Discipline, Consistency, Behavior')} tone="cyan" badge={`${analysis.dna.overall}/100`}>
                     <ResponsiveContainer width="100%" height={290}>
                       <RadarChart data={dnaData}>
                         <defs>
