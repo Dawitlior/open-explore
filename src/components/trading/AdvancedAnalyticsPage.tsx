@@ -400,7 +400,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
       {/* ═══ ROW: R Distribution + Direction Radial ═══ */}
       {showCore && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12, marginBottom: 16 }}>
         <GlassCard T={T}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>התפלגות R לפי טווח</div>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('התפלגות R לפי טווח','R Distribution by Range')}</div>
           <ResponsiveContainer width="100%" height={230}>
             <BarChart data={rBuckets} layout="vertical" margin={{ left: 60 }}>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
