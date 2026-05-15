@@ -96,12 +96,15 @@ export function useUIPrefs() {
       window.__orcaPrefs = { soundsEnabled: prefs.soundsEnabled, soundVolume: prefs.soundVolume };
     }
 
-    if (prefs.customAccentEnabled && prefs.customAccent) {
+    if (prefs.customThemeEnabled && prefs.customTheme) {
+      applyCustomTheme(prefs.customTheme);
+    } else if (prefs.customAccentEnabled && prefs.customAccent) {
       applyDerivedPalette(prefs.customAccent);
     } else {
+      clearCustomTheme();
       clearCustomAccent();
     }
-  }, [prefs.reduceMotion, prefs.denseTables, prefs.density, prefs.fontScale, prefs.soundsEnabled, prefs.soundVolume, prefs.customAccentEnabled, prefs.customAccent]);
+  }, [prefs.reduceMotion, prefs.denseTables, prefs.density, prefs.fontScale, prefs.soundsEnabled, prefs.soundVolume, prefs.customAccentEnabled, prefs.customAccent, prefs.customThemeEnabled, prefs.customTheme]);
 
   const setPrefs = useCallback((patch: Partial<UIPrefs>) => {
     setPrefsState(prev => {
