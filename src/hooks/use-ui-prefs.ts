@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getSetting, setSetting } from '@/lib/storage';
 import type { OperatingMode } from '@/hooks/use-settings';
-import { applyDerivedPalette, clearCustomAccent } from '@/lib/trading-theme';
+import { applyDerivedPalette, clearCustomAccent, applyCustomTheme, clearCustomTheme, CUSTOM_THEME_DEFAULT, type CustomTheme } from '@/lib/trading-theme';
 
 export type DensityLevel = 'compact' | 'comfortable' | 'spacious';
 
