@@ -436,8 +436,55 @@ const Index = () => {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: T.bg.primary, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace", fontSize: 16 }}>
-        {Ico.orca}<span style={{ marginInlineStart: 12 }}>Loading Orca...</span>
+      <div style={{
+        position: 'fixed', inset: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 28,
+        background: `radial-gradient(circle at 50% 40%, ${T.bg.secondary} 0%, ${T.bg.primary} 70%)`,
+        color: T.accent.cyan,
+      }}>
+        {/* Logo + dual-orbit ring loader */}
+        <div style={{ position: 'relative', width: 96, height: 96 }}>
+          <div style={{
+            position: 'absolute', inset: 0, borderRadius: '50%',
+            border: `2px solid ${T.accent.cyan}22`,
+            borderTopColor: T.accent.cyan,
+            animation: 'orca-spin 1.1s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite',
+          }} />
+          <div style={{
+            position: 'absolute', inset: 10, borderRadius: '50%',
+            border: `2px solid ${T.accent.purple}18`,
+            borderBottomColor: T.accent.purple,
+            animation: 'orca-spin-rev 1.6s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite',
+          }} />
+          <div style={{
+            position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: T.accent.cyan, filter: `drop-shadow(0 0 12px ${T.accent.cyan}88)`,
+          }}>
+            {Ico.orca}
+          </div>
+        </div>
+        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '0.32em', fontFamily: "'JetBrains Mono', monospace", color: T.text.primary }}>
+            ORCA
+          </div>
+          <div style={{ fontSize: 10, color: T.text.muted, letterSpacing: '0.4em', textTransform: 'uppercase' }}>
+            Investment Terminal
+          </div>
+          <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            {[0, 1, 2].map(i => (
+              <span key={i} style={{
+                width: 6, height: 6, borderRadius: '50%', background: T.accent.cyan,
+                opacity: 0.35,
+                animation: `orca-pulse 1.2s ease-in-out ${i * 0.18}s infinite`,
+              }} />
+            ))}
+          </div>
+        </div>
+        <style>{`
+          @keyframes orca-spin { to { transform: rotate(360deg); } }
+          @keyframes orca-spin-rev { to { transform: rotate(-360deg); } }
+          @keyframes orca-pulse { 0%, 100% { opacity: 0.25; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1.25); } }
+        `}</style>
       </div>
     );
   }
