@@ -19,6 +19,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { translateAuthError } from '@/lib/auth-utils';
 import { toast } from 'sonner';
 import type { Trade } from '@/data/trades';
+import { AvatarUploader } from './AvatarUploader';
 
 interface SettingsHubProps {
   T: TradingTheme;
@@ -387,13 +388,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                     background: `linear-gradient(135deg, ${T.bg.primary}, ${T.bg.tertiary})`,
                     display: 'flex', alignItems: 'center', gap: 18,
                   }}>
-                    <div style={{
-                      width: 72, height: 72, borderRadius: '50%',
-                      background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.purple})`,
-                      display: 'grid', placeItems: 'center', fontSize: 28, fontWeight: 800,
-                      color: T.bg.primary, flexShrink: 0,
-                      boxShadow: T.shadow.glow(T.accent.cyanGlow),
-                    }}>{(auth.user?.email || '?').charAt(0).toUpperCase()}</div>
+                    <AvatarUploader T={T} size={72} isRTL={isRTL} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 16, fontWeight: 800, color: T.text.primary, marginBottom: 4 }} dir="ltr">
                         {auth.user?.email ?? '—'}
