@@ -405,14 +405,14 @@ const Index = () => {
     const isFri = now.getDay() === 5;
     const isFirst = now.getDate() === 1;
     if (!isFri && !isFirst) return false;
-    // Dismissal key: per-day so it re-appears each Friday / each 1st-of-month
+    // Dismissal key: per-day per-user so it re-appears each Friday / each 1st-of-month
     const key = `orca-weekly-reminder-dismissed-${now.toISOString().slice(0, 10)}`;
-    try { if (localStorage.getItem(key) === '1') return false; } catch { /* noop */ }
+    try { if (scopedStorage.getSync(key) === '1') return false; } catch { /* noop */ }
     return true;
   }, [reviewReminderTick, page]); // eslint-disable-line react-hooks/exhaustive-deps
   const dismissWeeklyReminder = useCallback(() => {
     const key = `orca-weekly-reminder-dismissed-${new Date().toISOString().slice(0, 10)}`;
-    try { localStorage.setItem(key, '1'); } catch { /* noop */ }
+    try { scopedStorage.setSync(key, '1'); } catch { /* noop */ }
     setReviewReminderTick(t => t + 1);
   }, []);
 
