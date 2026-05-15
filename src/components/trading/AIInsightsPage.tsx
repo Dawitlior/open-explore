@@ -680,7 +680,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                 t('טוען מטריצת עסקאות...','Loading trade matrix...'),
                 t('מזהה דפוסים סמויים...','Detecting hidden patterns...'),
                 t('מחשב DNA סוחר...','Computing trader DNA...'),
-                'מסנן לפי מובהקות Statisticalת...',
+                t('מסנן לפי מובהקות סטטיסטית...','Filtering by statistical significance...'),
               ].map((s, i) => (
                 <motion.div
                   key={s}
