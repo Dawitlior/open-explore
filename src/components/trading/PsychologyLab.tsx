@@ -173,7 +173,7 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
     const byDay = new Map<string, number>();
     trades.forEach(t => { try { const d = new Date(t.date.replace(' ', 'T')).toDateString(); byDay.set(d, (byDay.get(d) || 0) + 1); } catch { /* skip */ } });
     const heavyDays = Array.from(byDay.values()).filter(n => n >= 4).length;
-    if (heavyDays > 0) flags.push({ label: 'Overtrading', severity: 'danger', detail: `${heavyDays} ימים עם 4+ עסקאות — סיכון לתשישות החלטות.` });
+    if (heavyDays > 0) flags.push({ label: 'Overtrading', severity: 'danger', detail: t(`${heavyDays} ימים עם 4+ עסקאות — סיכון לתשישות החלטות.`, `${heavyDays} days with 4+ trades — risk of decision fatigue.`) });
     return flags;
   }, [trades]);
 
