@@ -265,7 +265,7 @@ export const FeatureManifestModal = ({ T, isRTL, onClose }: FeatureManifestModal
           }
         `}</style>
         {/* Header */}
-        <div style={{
+        <div className="orca-manifest-header" style={{
           padding: '28px 32px 20px',
           background: `linear-gradient(135deg, ${T.accent.cyan}06, ${T.accent.purple}06)`,
           borderBottom: `1px solid ${T.border.subtle}`,
