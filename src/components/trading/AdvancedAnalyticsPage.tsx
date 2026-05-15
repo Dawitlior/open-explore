@@ -540,7 +540,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead>
               <tr style={{ background: T.bg.tertiary }}>
-                {['נכס', 'עסקאות', 'הצלחה', 'P&L', 'תוחלת R', 'סיכון ממוצע'].map(h => (
+                {[t('נכס','Asset'), t('עסקאות','Trades'), t('הצלחה','Win %'), 'P&L', t('תוחלת R','Expectancy R'), t('סיכון ממוצע','Avg Risk')].map(h => (
                   <th key={h} style={{ padding: '8px 12px', textAlign: 'right', color: T.text.muted, fontWeight: 600, fontSize: 10, borderBottom: `1px solid ${T.border.medium}` }}>{h}</th>
                 ))}
               </tr>
