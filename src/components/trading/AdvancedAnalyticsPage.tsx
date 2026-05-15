@@ -31,6 +31,7 @@ import type { TradingStats } from '@/lib/trading-analytics';
 import type { OperatingMode } from '@/hooks/use-settings';
 import { GlassCard } from './TradingUI';
 import type { ChartExplanation } from './ChartWrapper';
+import { useLang } from '@/hooks/use-lang';
 const AnalyticsQuantLab = lazy(() => import('./AnalyticsQuantLab').then(m => ({ default: m.AnalyticsQuantLab })));
 
 interface AdvancedAnalyticsPageProps {
@@ -46,9 +47,14 @@ interface AdvancedAnalyticsPageProps {
 }
 
 const HEB_DOW = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
+const ENG_DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 const HEB_DOW_FULL = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+const ENG_DOW_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, operatingMode = 'live' }: AdvancedAnalyticsPageProps) => {
+  const { t, isRTL: langRTL } = useLang();
+  const DOW = langRTL ? HEB_DOW : ENG_DOW;
+  const DOW_FULL = langRTL ? HEB_DOW_FULL : ENG_DOW_FULL;
   // Tier resolution — controls which chart layers render.
   // beginner → minimal · live (standard) → core · review → +pro · research/alpha → +everything
   const tier: 'minimal' | 'core' | 'pro' | 'max' =
@@ -195,10 +201,10 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
     const longs = trades.filter(t => t.direction === 'Long');
     const shorts = trades.filter(t => t.direction === 'Short');
     return [
-      { name: 'לונג', n: longs.length, wr: longs.length ? (longs.filter(t => t.winLoss === 'Win').length / longs.length) * 100 : 0, color: T.accent.green },
-      { name: 'שורט', n: shorts.length, wr: shorts.length ? (shorts.filter(t => t.winLoss === 'Win').length / shorts.length) * 100 : 0, color: T.accent.red },
+      { name: t('לונג','Long'), n: longs.length, wr: longs.length ? (longs.filter(t => t.winLoss === 'Win').length / longs.length) * 100 : 0, color: T.accent.green },
+      { name: t('שורט','Short'), n: shorts.length, wr: shorts.length ? (shorts.filter(t => t.winLoss === 'Win').length / shorts.length) * 100 : 0, color: T.accent.red },
     ];
-  }, [trades, T]);
+  }, [trades, T, t]);
 
   // 9. Monthly heat tiles
   const monthHeat = useMemo(() => {
@@ -305,8 +311,8 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
     return (
       <GlassCard T={T} style={{ textAlign: 'center', padding: 60 }}>
         <div style={{ fontSize: 48, marginBottom: 12 }}>📊</div>
-        <div style={{ fontSize: 16, color: T.text.primary, fontWeight: 700 }}>אין נתונים להצגה</div>
-        <div style={{ fontSize: 12, color: T.text.muted, marginTop: 6 }}>הוסף עסקאות כדי לפתוח את לוח האנליטיקה.</div>
+        <div style={{ fontSize: 16, color: T.text.primary, fontWeight: 700 }}>{t('אין נתונים להצגה','No data to display')}</div>
+        <div style={{ fontSize: 12, color: T.text.muted, marginTop: 6 }}>{t('הוסף עסקאות כדי לפתוח את לוח האנליטיקה.','Add trades to unlock the analytics deck.')}</div>
       </GlassCard>
     );
   }
@@ -314,7 +320,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
   /* ─────────── RENDER ─────────── */
 
   return (
-    <div dir="rtl" style={{ fontFamily: "'Heebo', 'Inter', sans-serif" }}>
+    <div dir={langRTL ? 'rtl' : 'ltr'} style={{ fontFamily: langRTL ? "'Heebo', 'Inter', sans-serif" : "'Inter', 'Heebo', sans-serif" }}>
       {/* HERO HEADER */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
@@ -326,24 +332,24 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
           ORCA · ANALYTICS DECK
         </div>
         <div style={{ fontSize: 22, color: T.text.primary, fontWeight: 800, letterSpacing: '-0.01em' }}>
-          לוח אנליטיקה מתקדם
+          {t('לוח אנליטיקה מתקדם','Advanced Analytics Deck')}
         </div>
         <div style={{ fontSize: 12, color: T.text.secondary, marginTop: 2 }}>
-          ניתוח רב-ממדי של {trades.length} עסקאות לאורך כל ההיסטוריה.
+          {t(`ניתוח רב-ממדי של ${trades.length} עסקאות לאורך כל ההיסטוריה.`, `Multi-dimensional analysis of ${trades.length} trades across history.`)}
         </div>
       </motion.div>
 
       {/* ═══ HERO KPI GRID — 8 tiles ═══ */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, marginBottom: 16 }}>
         {[
-          { label: 'תוחלת R', value: `${stats.expectancyR >= 0 ? '+' : ''}${stats.expectancyR.toFixed(3)}R`, color: stats.expectancyR >= 0 ? T.accent.cyan : T.accent.red },
-          { label: 'פקטור רווח', value: `${stats.profitFactor.toFixed(2)}x`, color: stats.profitFactor >= 1.5 ? T.accent.green : stats.profitFactor >= 1 ? T.accent.orange : T.accent.red },
-          { label: 'אחוז הצלחה', value: `${stats.winRate.toFixed(1)}%`, color: stats.winRate >= 50 ? T.accent.green : T.accent.orange },
-          { label: 'יחס תשלום', value: `${payoff.toFixed(2)}`, color: T.accent.blue },
-          { label: 'P&L מצטבר', value: <PV>{`${stats.totalPnl >= 0 ? '+' : ''}$${stats.totalPnl.toFixed(2)}`}</PV>, color: stats.totalPnl >= 0 ? T.accent.green : T.accent.red },
-          { label: 'נסיגה מקס', value: `${stats.maxDrawdown.toFixed(1)}%`, color: T.accent.orange },
-          { label: 'קלי אופטימלי', value: `${stats.kellyOptimal.toFixed(1)}%`, color: T.accent.purple },
-          { label: 'שארפ', value: stats.volatilityAdjustedExpectancy.toFixed(2), color: T.accent.cyan },
+          { label: t('תוחלת R','Expectancy R'), value: `${stats.expectancyR >= 0 ? '+' : ''}${stats.expectancyR.toFixed(3)}R`, color: stats.expectancyR >= 0 ? T.accent.cyan : T.accent.red },
+          { label: t('פקטור רווח','Profit Factor'), value: `${stats.profitFactor.toFixed(2)}x`, color: stats.profitFactor >= 1.5 ? T.accent.green : stats.profitFactor >= 1 ? T.accent.orange : T.accent.red },
+          { label: t('אחוז הצלחה','Win Rate'), value: `${stats.winRate.toFixed(1)}%`, color: stats.winRate >= 50 ? T.accent.green : T.accent.orange },
+          { label: t('יחס תשלום','Payoff Ratio'), value: `${payoff.toFixed(2)}`, color: T.accent.blue },
+          { label: t('P&L מצטבר','Cumulative P&L'), value: <PV>{`${stats.totalPnl >= 0 ? '+' : ''}$${stats.totalPnl.toFixed(2)}`}</PV>, color: stats.totalPnl >= 0 ? T.accent.green : T.accent.red },
+          { label: t('נסיגה מקס','Max Drawdown'), value: `${stats.maxDrawdown.toFixed(1)}%`, color: T.accent.orange },
+          { label: t('קלי אופטימלי','Optimal Kelly'), value: `${stats.kellyOptimal.toFixed(1)}%`, color: T.accent.purple },
+          { label: t('שארפ','Sharpe'), value: stats.volatilityAdjustedExpectancy.toFixed(2), color: T.accent.cyan },
         ].map((k, i) => (
           <motion.div
             key={k.label}
@@ -362,10 +368,10 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
       {/* ═══ EQUITY + DRAWDOWN OVERLAY ═══ */}
       {showCore && <GlassCard T={T} style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700 }}>עקומת הון מול נסיגה</div>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700 }}>{t('עקומת הון מול נסיגה','Equity vs Drawdown')}</div>
           <div style={{ display: 'flex', gap: 14, fontSize: 10, color: T.text.muted }}>
-            <span>● <span style={{ color: T.accent.cyan }}>הון מצטבר</span></span>
-            <span>● <span style={{ color: T.accent.red }}>נסיגה (%)</span></span>
+            <span>● <span style={{ color: T.accent.cyan }}>{t('הון מצטבר','Cumulative equity')}</span></span>
+            <span>● <span style={{ color: T.accent.red }}>{t('נסיגה (%)','Drawdown (%)')}</span></span>
           </div>
         </div>
         <ResponsiveContainer width="100%" height={250}>
@@ -394,7 +400,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
       {/* ═══ ROW: R Distribution + Direction Radial ═══ */}
       {showCore && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12, marginBottom: 16 }}>
         <GlassCard T={T}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>התפלגות R לפי טווח</div>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('התפלגות R לפי טווח','R Distribution by Range')}</div>
           <ResponsiveContainer width="100%" height={230}>
             <BarChart data={rBuckets} layout="vertical" margin={{ left: 60 }}>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
@@ -411,7 +417,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
         </GlassCard>
 
         <GlassCard T={T}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>פיצול כיוון (אחוז הצלחה)</div>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('פיצול כיוון (אחוז הצלחה)','Direction Split (Win Rate)')}</div>
           <ResponsiveContainer width="100%" height={230}>
             <RadialBarChart innerRadius="30%" outerRadius="100%" data={dirSplit} startAngle={180} endAngle={0}>
               <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
@@ -426,7 +432,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
               <div key={d.name} style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 10, color: T.text.muted }}>{d.name}</div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: d.color, fontFamily: "'JetBrains Mono', monospace" }}>{d.wr.toFixed(0)}%</div>
-                <div style={{ fontSize: 9, color: T.text.muted }}>{d.n} עסקאות</div>
+                <div style={{ fontSize: 9, color: T.text.muted }}>{d.n} {t('עסקאות','trades')}</div>
               </div>
             ))}
           </div>
@@ -435,7 +441,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
 
       {/* ═══ DAY × HOUR MATRIX ═══ */}
       {showMax && <GlassCard T={T} style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>מפת ביצועים — יום × שעה</div>
+        <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>{t('מפת ביצועים — יום × שעה','Performance Heatmap — Day × Hour')}</div>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ borderCollapse: 'separate', borderSpacing: 2, fontSize: 10, fontFamily: "'JetBrains Mono', monospace", margin: '0 auto' }}>
             <thead>
@@ -449,14 +455,14 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
             <tbody>
               {[0, 1, 2, 3, 4, 5, 6].map(day => (
                 <tr key={day}>
-                  <td style={{ padding: 2, color: T.text.muted, fontWeight: 600, fontSize: 10, textAlign: 'center' }}>{HEB_DOW[day]}</td>
+                  <td style={{ padding: 2, color: T.text.muted, fontWeight: 600, fontSize: 10, textAlign: 'center' }}>{DOW[day]}</td>
                   {Array.from({ length: 24 }, (_, h) => {
                     const cell = dhMatrix.find(c => c.day === day && c.hour === h);
                     const bg = cell ? heatColor(cell.pnl, maxAbsHeat) : T.bg.tertiary;
                     return (
                       <td
                         key={h}
-                        title={cell ? `${HEB_DOW_FULL[day]} ${String(h).padStart(2, '0')}:00 — ${cell.n} עסקאות, ${cell.pnl >= 0 ? '+' : ''}$${cell.pnl.toFixed(0)}` : ''}
+                        title={cell ? `${DOW_FULL[day]} ${String(h).padStart(2, '0')}:00 — ${cell.n} ${t('עסקאות','trades')}, ${cell.pnl >= 0 ? '+' : ''}$${cell.pnl.toFixed(0)}` : ''}
                         style={{ width: 22, height: 22, background: bg, borderRadius: 3, border: cell ? `1px solid ${T.border.subtle}` : 'none' }}
                       />
                     );
@@ -467,20 +473,20 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
           </table>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center', marginTop: 12, fontSize: 10, color: T.text.muted }}>
-          <span>הפסד</span>
+          <span>{t('הפסד','Loss')}</span>
           <div style={{ display: 'flex', gap: 2 }}>
             {[-1, -0.6, -0.3, 0, 0.3, 0.6, 1].map(v => (
               <div key={v} style={{ width: 14, height: 10, background: heatColor(v * maxAbsHeat, maxAbsHeat), borderRadius: 2 }} />
             ))}
           </div>
-          <span>רווח</span>
+          <span>{t('רווח','Profit')}</span>
         </div>
       </GlassCard>}
 
       {/* ═══ MONTHLY HEAT TILES ═══ */}
       {showPro && monthHeat.length > 1 && (
         <GlassCard T={T} style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>חום חודשי</div>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>{t('חום חודשי','Monthly Heat')}</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 8 }}>
             {monthHeat.map((m, i) => (
               <motion.div
@@ -499,7 +505,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
                 <div style={{ fontSize: 16, fontWeight: 800, color: T.text.primary, fontFamily: "'JetBrains Mono', monospace", marginTop: 2 }}>
                   <PV>{m.pnl >= 0 ? '+' : ''}${m.pnl.toFixed(0)}</PV>
                 </div>
-                <div style={{ fontSize: 9, color: T.text.muted, marginTop: 2 }}>{m.n} עסקאות</div>
+                <div style={{ fontSize: 9, color: T.text.muted, marginTop: 2 }}>{m.n} {t('עסקאות','trades')}</div>
               </motion.div>
             ))}
           </div>
@@ -509,10 +515,10 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
       {/* ═══ SETUP LEADERBOARD ═══ */}
       {showPro && <GlassCard T={T} style={{ marginBottom: 16, padding: 0, overflow: 'hidden' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px 8px' }}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700 }}>טבלת מובילים — לפי נכס</div>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700 }}>{t('טבלת מובילים — לפי נכס','Leaderboard — by asset')}</div>
           <div style={{ display: 'flex', gap: 4 }}>
             {([
-              { k: 'pnl', l: 'P&L' }, { k: 'exp', l: 'תוחלת' }, { k: 'wr', l: 'הצלחה' }, { k: 'n', l: 'עסקאות' },
+              { k: 'pnl', l: 'P&L' }, { k: 'exp', l: t('תוחלת','Expectancy') }, { k: 'wr', l: t('הצלחה','Win %') }, { k: 'n', l: t('עסקאות','Trades') },
             ] as const).map(o => (
               <button
                 key={o.k}
@@ -534,7 +540,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead>
               <tr style={{ background: T.bg.tertiary }}>
-                {['נכס', 'עסקאות', 'הצלחה', 'P&L', 'תוחלת R', 'סיכון ממוצע'].map(h => (
+                {[t('נכס','Asset'), t('עסקאות','Trades'), t('הצלחה','Win %'), 'P&L', t('תוחלת R','Expectancy R'), t('סיכון ממוצע','Avg Risk')].map(h => (
                   <th key={h} style={{ padding: '8px 12px', textAlign: 'right', color: T.text.muted, fontWeight: 600, fontSize: 10, borderBottom: `1px solid ${T.border.medium}` }}>{h}</th>
                 ))}
               </tr>
@@ -560,7 +566,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
       {/* ═══ ROW: Risk-vs-PnL Scatter + Edge Decay ═══ */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12, marginBottom: 16 }}>
         <GlassCard T={T}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>פיזור סיכון מול תוצאה</div>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('פיזור סיכון מול תוצאה','Risk vs Outcome Scatter')}</div>
           <ResponsiveContainer width="100%" height={230}>
             <ScatterChart>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
@@ -578,7 +584,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
         </GlassCard>
 
         <GlassCard T={T}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>אבולוציית האדג' (חלונות של 5)</div>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t("אבולוציית האדג' (חלונות של 5)",'Edge Evolution (5-trade windows)')}</div>
           <ResponsiveContainer width="100%" height={230}>
             <LineChart data={edgeDecay}>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
@@ -593,12 +599,12 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
 
       {/* ═══ STREAK LADDER ═══ */}
       {showPro && <GlassCard T={T} style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>סולם רצפים</div>
+        <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>{t('סולם רצפים','Streak Ladder')}</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
           {streaks.map((s, i) => (
             <div
               key={i}
-              title={`${s.type === 'W' ? 'רצף ניצחונות' : 'רצף הפסדים'}: ${s.len} עסקאות, ${s.r >= 0 ? '+' : ''}${s.r.toFixed(2)}R`}
+              title={`${s.type === 'W' ? t('רצף ניצחונות','Win streak') : t('רצף הפסדים','Loss streak')}: ${s.len} ${t('עסקאות','trades')}, ${s.r >= 0 ? '+' : ''}${s.r.toFixed(2)}R`}
               style={{
                 padding: '6px 10px',
                 background: s.type === 'W' ? `${T.accent.green}18` : `${T.accent.red}18`,
@@ -620,7 +626,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
       {/* ═══ MONTHLY DETAIL LIST ═══ */}
       {showPro && stats.monthlyPerf && stats.monthlyPerf.length > 0 && (
         <GlassCard T={T} style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>פירוט ביצועים חודשיים</div>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>{t('פירוט ביצועים חודשיים','Monthly Performance Detail')}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {stats.monthlyPerf.map((mp, i) => (
               <div
@@ -640,8 +646,8 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
                 <span style={{ fontSize: 12, color: T.text.primary, fontWeight: 600 }}>{mp.month}</span>
                 <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
                   <span style={{ fontSize: 11, color: T.text.muted }}>{mp.trades} עסקאות</span>
-                  <span style={{ fontSize: 11, color: T.text.muted }}>הצלחה {mp.winRate.toFixed(0)}%</span>
-                  <span style={{ fontSize: 11, color: T.accent.purple, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>תוחלת {mp.expectancyR >= 0 ? '+' : ''}{mp.expectancyR.toFixed(2)}R</span>
+                  <span style={{ fontSize: 11, color: T.text.muted }}>{t('הצלחה','Win')} {mp.winRate.toFixed(0)}%</span>
+                  <span style={{ fontSize: 11, color: T.accent.purple, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>{t('תוחלת','Exp')} {mp.expectancyR >= 0 ? '+' : ''}{mp.expectancyR.toFixed(2)}R</span>
                   <span style={{ fontSize: 13, color: mp.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace", fontWeight: 800 }}>
                     <PV>{mp.pnl >= 0 ? '+' : ''}${mp.pnl.toFixed(2)}</PV>
                   </span>
@@ -656,7 +662,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
       {showPro && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12, marginBottom: 12 }}>
           <GlassCard T={T} glow={`${T.accent.purple}18`}>
-            <div style={{ fontSize: 11, color: T.accent.purple, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>● PRO · יחס שארפ מתגלגל</div>
+            <div style={{ fontSize: 11, color: T.accent.purple, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>● PRO · {t('יחס שארפ מתגלגל','Rolling Sharpe Ratio')}</div>
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={sharpeRoll}>
                 <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
@@ -668,7 +674,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
             </ResponsiveContainer>
           </GlassCard>
           <GlassCard T={T} glow={`${T.accent.red}18`}>
-            <div style={{ fontSize: 11, color: T.accent.red, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>● PRO · עקומת תת-מים (Underwater)</div>
+            <div style={{ fontSize: 11, color: T.accent.red, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>● PRO · {t('עקומת תת-מים (Underwater)','Underwater Curve')}</div>
             <ResponsiveContainer width="100%" height={220}>
               <AreaChart data={underwater}>
                 <defs>
@@ -686,7 +692,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
             </ResponsiveContainer>
           </GlassCard>
           <GlassCard T={T} glow={`${T.accent.green}18`}>
-            <div style={{ fontSize: 11, color: T.accent.green, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>● PRO · אבולוציית Profit Factor</div>
+            <div style={{ fontSize: 11, color: T.accent.green, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>● PRO · {t('אבולוציית Profit Factor','Profit Factor Evolution')}</div>
             <ResponsiveContainer width="100%" height={220}>
               <AreaChart data={pfEvolution}>
                 <defs>
@@ -709,12 +715,12 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
       {showMax && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12, marginBottom: 12 }}>
           <GlassCard T={T} glow={`${T.accent.cyan}22`}>
-            <div style={{ fontSize: 11, color: T.accent.cyan, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>★ MAX · רביעון אסטרטגי (WR × R)</div>
+            <div style={{ fontSize: 11, color: T.accent.cyan, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>★ MAX · {t('רביעון אסטרטגי (WR × R)','Strategic Quadrant (WR × R)')}</div>
             <ResponsiveContainer width="100%" height={260}>
               <ScatterChart>
                 <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
-                <XAxis type="number" dataKey="wr" name="ניצחונות" unit="%" domain={[0, 100]} tick={{ fill: T.text.muted, fontSize: 10 }} />
-                <YAxis type="number" dataKey="avgR" name="תוחלת R" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                <XAxis type="number" dataKey="wr" name={t("ניצחונות","Wins")} unit="%" domain={[0, 100]} tick={{ fill: T.text.muted, fontSize: 10 }} />
+                <YAxis type="number" dataKey="avgR" name={t("תוחלת R","Expectancy R")} tick={{ fill: T.text.muted, fontSize: 10 }} />
                 <ZAxis type="number" dataKey="n" range={[60, 380]} />
                 <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} formatter={(v: any, n: any, p: any) => [v, p.payload.coin]} />
                 <Scatter data={quadrant}>
@@ -726,7 +732,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
             </ResponsiveContainer>
           </GlassCard>
           <GlassCard T={T} glow={`${T.accent.orange}22`}>
-            <div style={{ fontSize: 11, color: T.accent.orange, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>★ MAX · סרט-חום 60 עסקאות אחרונות</div>
+            <div style={{ fontSize: 11, color: T.accent.orange, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>★ MAX · {t('סרט-חום 60 עסקאות אחרונות','Heat tape · last 60 trades')}</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(20, 1fr)', gap: 3, padding: 8 }}>
               {heatTape.map((c, i) => {
                 const intensity = Math.min(1, Math.abs(c.r) / 3);
@@ -743,7 +749,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
               })}
             </div>
             <div style={{ fontSize: 10, color: T.text.muted, textAlign: 'center', marginTop: 8, fontFamily: "'JetBrains Mono', monospace" }}>
-              ירוק = רווח · אדום = הפסד · עוצמה = |R|
+              {t('ירוק = רווח · אדום = הפסד · עוצמה = |R|','Green = profit · Red = loss · Intensity = |R|')}
             </div>
           </GlassCard>
         </div>
@@ -758,7 +764,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
           fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.12em', fontWeight: 700,
           border: `1px solid ${showMax ? T.accent.cyan : showPro ? T.accent.purple : T.border.subtle}33`,
         }}>
-          רמה: {showMax ? 'MAX · מחקר/אלפא' : showPro ? 'PRO · סקירה' : tier === 'minimal' ? 'BASIC · מתחיל' : 'CORE · סטנדרט'}
+          {t('רמה','Tier')}: {showMax ? t('MAX · מחקר/אלפא','MAX · Research/Alpha') : showPro ? t('PRO · סקירה','PRO · Review') : tier === 'minimal' ? t('BASIC · מתחיל','BASIC · Beginner') : t('CORE · סטנדרט','CORE · Standard')}
         </span>
       </div>
 
@@ -771,15 +777,15 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
 
       {/* ═══ KEY OBSERVATIONS ═══ */}
       <GlassCard T={T} glow={`${T.accent.cyan}18`}>
-        <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>תצפיות מרכזיות</div>
+        <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('תצפיות מרכזיות','Key Observations')}</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 8 }}>
           {[
-            { l: 'רצף ניצחונות הארוך ביותר', v: `${Math.max(0, ...streaks.filter(s => s.type === 'W').map(s => s.len))} עסקאות`, c: T.accent.green },
-            { l: 'רצף הפסדים הארוך ביותר', v: `${Math.max(0, ...streaks.filter(s => s.type === 'L').map(s => s.len))} עסקאות`, c: T.accent.red },
-            { l: 'עסקה הכי טובה', v: `+${stats.bestTradeR.toFixed(2)}R`, c: T.accent.green },
-            { l: 'עסקה הכי גרועה', v: `${stats.worstTradeR.toFixed(2)}R`, c: T.accent.red },
-            { l: 'נכסים פעילים', v: String(setupBoard.length), c: T.accent.blue },
-            { l: 'תקופת מסחר', v: `${edgeDecay.length} חלונות`, c: T.accent.purple },
+            { l: t('רצף ניצחונות הארוך ביותר','Longest win streak'), v: `${Math.max(0, ...streaks.filter(s => s.type === 'W').map(s => s.len))} ${t('עסקאות','trades')}`, c: T.accent.green },
+            { l: t('רצף הפסדים הארוך ביותר','Longest loss streak'), v: `${Math.max(0, ...streaks.filter(s => s.type === 'L').map(s => s.len))} ${t('עסקאות','trades')}`, c: T.accent.red },
+            { l: t('עסקה הכי טובה','Best trade'), v: `+${stats.bestTradeR.toFixed(2)}R`, c: T.accent.green },
+            { l: t('עסקה הכי גרועה','Worst trade'), v: `${stats.worstTradeR.toFixed(2)}R`, c: T.accent.red },
+            { l: t('נכסים פעילים','Active assets'), v: String(setupBoard.length), c: T.accent.blue },
+            { l: t('תקופת מסחר','Trading period'), v: `${edgeDecay.length} ${t('חלונות','windows')}`, c: T.accent.purple },
           ].map((o, i) => (
             <div key={i} style={{ padding: 10, background: T.bg.tertiary, borderRadius: 8, borderInlineStart: `2px solid ${o.c}` }}>
               <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 3 }}>{o.l}</div>
