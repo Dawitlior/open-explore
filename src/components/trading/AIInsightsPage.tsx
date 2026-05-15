@@ -1213,7 +1213,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                       <span style={{ fontSize: 30, filter: 'drop-shadow(0 0 12px rgba(255,200,80,0.7))' }}>👑</span>
                       <div>
                         <div style={{ fontSize: 11, color: '#FFD27A', letterSpacing: '0.22em', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>◆ ORCA · GOLDEN EDGE</div>
-                        <div style={{ fontSize: 22, color: T.text.primary, fontWeight: 900, marginTop: 2 }}>Gold Card — הEdge האישי שלך</div>
+                        <div style={{ fontSize: 22, color: T.text.primary, fontWeight: 900, marginTop: 2 }}>{t('Gold Card — הEdge האישי שלך','Gold Card — Your Personal Edge')}</div>
                       </div>
                     </div>
                     <div style={{ fontSize: 11, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>Based on {trades.length} trades</div>
