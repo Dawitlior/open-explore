@@ -33,7 +33,12 @@ export const FeatureHint = ({ T, id, text, style, compact }: Props) => {
   const [dismissed, setDismissed] = useState(true);
 
   useEffect(() => {
-    setDismissed(readDismissed().has(id));
+    let alive = true;
+    (async () => {
+      const set = await readDismissed();
+      if (alive) setDismissed(set.has(id));
+    })();
+    return () => { alive = false; };
   }, [id]);
 
   if (dismissed) return null;
@@ -60,10 +65,10 @@ export const FeatureHint = ({ T, id, text, style, compact }: Props) => {
       <div style={{ flex: 1, minWidth: 0 }}>{text}</div>
       <button
         aria-label="Dismiss hint"
-        onClick={() => {
-          const next = readDismissed();
+        onClick={async () => {
+          const next = await readDismissed();
           next.add(id);
-          writeDismissed(next);
+          await writeDismissed(next);
           setDismissed(true);
         }}
         style={{
