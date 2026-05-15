@@ -462,7 +462,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
                     return (
                       <td
                         key={h}
-                        title={cell ? `${HEB_DOW_FULL[day]} ${String(h).padStart(2, '0')}:00 — ${cell.n} עסקאות, ${cell.pnl >= 0 ? '+' : ''}$${cell.pnl.toFixed(0)}` : ''}
+                        title={cell ? `${DOW_FULL[day]} ${String(h).padStart(2, '0')}:00 — ${cell.n} ${t('עסקאות','trades')}, ${cell.pnl >= 0 ? '+' : ''}$${cell.pnl.toFixed(0)}` : ''}
                         style={{ width: 22, height: 22, background: bg, borderRadius: 3, border: cell ? `1px solid ${T.border.subtle}` : 'none' }}
                       />
                     );
