@@ -42,6 +42,8 @@ import { generateInsights, generateSummary } from '@/lib/ai-engine';
 import { exportToXlsx, importFromXlsx } from '@/lib/xlsx-engine';
 import { getDayRiskColor, checkRiskLimits, DEFAULT_RISK_LIMITS } from '@/lib/risk-limits';
 import { useRiskLimits } from '@/hooks/use-risk-limits';
+import { scopedStorage } from '@/lib/scoped-storage';
+import { useAuth } from '@/hooks/use-auth';
 
 // ─── Facebook-style red notification badge with "1" ───
 const ReminderBadge = () => (
