@@ -92,22 +92,31 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
 
   // 2. R buckets
   const rBuckets = useMemo(() => {
+    const labels = {
+      lt_m2: t('מתחת ל-2R-','< -2R'),
+      m2_m1: t('-2R עד -1R','-2R to -1R'),
+      m1_0:  t('-1R עד 0','-1R to 0'),
+      z_1:   t('0 עד 1R','0 to 1R'),
+      o1_2:  t('1R עד 2R','1R to 2R'),
+      o2_3:  t('2R עד 3R','2R to 3R'),
+      gt_3:  t('מעל 3R','> 3R'),
+    } as const;
     const buckets: Record<string, number> = {
-      'מתחת ל-2R-': 0, '-2R עד -1R': 0, '-1R עד 0': 0,
-      '0 עד 1R': 0, '1R עד 2R': 0, '2R עד 3R': 0, 'מעל 3R': 0,
+      [labels.lt_m2]: 0, [labels.m2_m1]: 0, [labels.m1_0]: 0,
+      [labels.z_1]: 0, [labels.o1_2]: 0, [labels.o2_3]: 0, [labels.gt_3]: 0,
     };
-    trades.forEach(t => {
-      const r = t.returnR;
-      if (r < -2) buckets['מתחת ל-2R-']++;
-      else if (r < -1) buckets['-2R עד -1R']++;
-      else if (r < 0) buckets['-1R עד 0']++;
-      else if (r < 1) buckets['0 עד 1R']++;
-      else if (r < 2) buckets['1R עד 2R']++;
-      else if (r < 3) buckets['2R עד 3R']++;
-      else buckets['מעל 3R']++;
+    trades.forEach(tr => {
+      const r = tr.returnR;
+      if (r < -2) buckets[labels.lt_m2]++;
+      else if (r < -1) buckets[labels.m2_m1]++;
+      else if (r < 0) buckets[labels.m1_0]++;
+      else if (r < 1) buckets[labels.z_1]++;
+      else if (r < 2) buckets[labels.o1_2]++;
+      else if (r < 3) buckets[labels.o2_3]++;
+      else buckets[labels.gt_3]++;
     });
     return Object.entries(buckets).map(([bucket, count]) => ({ bucket, count }));
-  }, [trades]);
+  }, [trades, t]);
 
   // 3. Setup leaderboard
   const setupBoard = useMemo(() => {
