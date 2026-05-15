@@ -26,29 +26,27 @@ import { analyzeDeep, type DeepInsight, type DeepSeverity } from '@/lib/ai-insig
 import { findBestEdge } from '@/lib/psychology-diagnostic';
 import { useLang } from '@/hooks/use-lang';
 
-// Module-level fallback so static constants (SEV_META, CAT_LABEL) compile.
-// Inside components, this is shadowed by `const { t } = useLang()` for reactivity.
-const t = (he: string, _en: string) => he;
+type Tr = (he: string, en: string) => string;
 
 interface AIInsightsPageProps {
   T: TradingTheme;
   trades: Trade[];
 }
 
-const SEV_META: Record<DeepSeverity, { label: string; color: (T: TradingTheme) => string; icon: string }> = {
+const getSevMeta = (t: Tr): Record<DeepSeverity, { label: string; color: (T: TradingTheme) => string; icon: string }> => ({
   critical: { label: t('דחוף','Critical'), color: (T) => T.accent.red, icon: '⛔' },
   warning:  { label: t('אזהרה','Warning'), color: (T) => T.accent.orange, icon: '⚠️' },
   strength: { label: t('חוזק','Strength'), color: (T) => T.accent.green, icon: '💎' },
   insight:  { label: t('תובנה','Insight'), color: (T) => T.accent.cyan, icon: '🔍' },
-};
+});
 
-const CAT_LABEL: Record<string, string> = {
+const getCatLabel = (t: Tr): Record<string, string> => ({
   behavioural: t('התנהגותי','Behavioral'),
   statistical: t('סטטיסטי','Statistical'),
-  edge: t('אדג׳',t('אדג\'','Edge')),
+  edge: t("אדג'",'Edge'),
   timing: t('תזמון','Timing'),
   risk: t('סיכון','Risk'),
-};
+});
 
 /* ──────────────────────────────────────────────────────────────── */
 /* MOTHERBOARD BUTTON                                               */
