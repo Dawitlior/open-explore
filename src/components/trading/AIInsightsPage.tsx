@@ -987,7 +987,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
               {pack === 'kelly+sizing' && (
                 <>
                   <GlassCard T={T}>
-                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>Kelly אופטימלי מול גודל פוזיציה בפועל (%)</div>
+                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>{t('Kelly אופטימלי מול גודל פוזיציה בפועל (%)','Optimal Kelly vs actual position size (%)')}</div>
                     <ResponsiveContainer width="100%" height={250}>
                       <ComposedChart data={kellyData}>
                         <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
