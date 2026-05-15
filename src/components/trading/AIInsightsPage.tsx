@@ -1155,7 +1155,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                         </defs>
                         <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
                         <XAxis dataKey="step" tick={{ fill: T.text.muted, fontSize: 10 }} label={{ value: t('עסקאות קדימה','Trades ahead'), fill: T.text.muted, fontSize: 10, position: 'insideBottom', offset: -4 }} />
-                        <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} label={{ value: 'R מצטבר', angle: -90, fill: T.text.muted, fontSize: 10, position: 'insideLeft' }} />
+                        <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} label={{ value: t('R מצטבר','Cumulative R'), angle: -90, fill: T.text.muted, fontSize: 10, position: 'insideLeft' }} />
                         <Tooltip contentStyle={tt} />
                         <Area type="monotone" dataKey="p95" stroke={T.accent.purple} fill="url(#mcOuter)" strokeWidth={1.4} />
                         <Area type="monotone" dataKey="p75" stroke={T.accent.cyan} fill="url(#mcInner)" strokeWidth={1.5} />
