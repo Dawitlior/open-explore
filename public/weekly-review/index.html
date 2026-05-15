@@ -1008,6 +1008,37 @@ const EMPTY_WEEK = {
   locked: false
 };
 
+// === ErrorBoundary (catches dashboard render crashes after week-close) ===
+class DashErrorBoundary extends React.Component {
+  constructor(p) { super(p); this.state = { err: null }; }
+  static getDerivedStateFromError(err) { return { err }; }
+  componentDidCatch(err, info) { try { console.error('[journal/dash]', err, info); } catch (e) {} }
+  componentDidUpdate(prev) { if (prev.resetKey !== this.props.resetKey && this.state.err) this.setState({ err: null }); }
+  render() {
+    if (this.state.err) {
+      return React.createElement('div', {
+        style: {
+          padding: 32, textAlign: 'center', color: '#ffb84d',
+          background: 'rgba(255, 184, 77, 0.06)', border: '1px solid rgba(255, 184, 77, 0.3)',
+          borderRadius: 12, margin: 24, fontFamily: 'Poppins, sans-serif',
+        }
+      },
+        React.createElement('div', { style: { fontSize: 36, marginBottom: 12 } }, '⚠️'),
+        React.createElement('div', { style: { fontWeight: 700, marginBottom: 6 } }, 'תקלה זמנית בתצוגה'),
+        React.createElement('div', { style: { fontSize: 12, opacity: 0.85, marginBottom: 14, lineHeight: 1.6 } },
+          'נראה שיש שורה אחת בארכיון עם נתונים פגומים. הניסיון מתבצע מחדש אוטומטית — אם זה ממשיך, מחק את השורה הבעייתית מתוך לשונית "ארכיון חודשי".'),
+        React.createElement('div', { style: { fontSize: 10, fontFamily: 'monospace', opacity: 0.6 } },
+          String(this.state.err && this.state.err.message || this.state.err)),
+        React.createElement('button', {
+          onClick: () => this.setState({ err: null }),
+          style: { marginTop: 14, padding: '8px 18px', borderRadius: 8, border: '1px solid #ffb84d', background: 'transparent', color: '#ffb84d', cursor: 'pointer', fontFamily: 'inherit' },
+        }, 'נסה שוב')
+      );
+    }
+    return this.props.children;
+  }
+}
+
 // === utils.ts ===
 
 function storageGet(key) {
@@ -10425,7 +10456,7 @@ function TradingJournal() {
     onSaveEditRow: saveEditRow,
     onSetEditForm: setEditForm,
     onDeleteRow: deleteRow
-  }), activeTab === 3 && /*#__PURE__*/React.createElement(React.Fragment, null, monthSummaries.length === 0 ? /*#__PURE__*/React.createElement("div", {
+  }), activeTab === 3 && /*#__PURE__*/React.createElement(DashErrorBoundary, { resetKey: archive.length }, monthSummaries.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: s.emptyState
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -10439,7 +10470,7 @@ function TradingJournal() {
     archive: archive,
     setups: setups,
     onBack: () => setActiveTab(2)
-  })), activeTab === 4 && /*#__PURE__*/React.createElement(React.Fragment, null, monthSummaries.length === 0 ? /*#__PURE__*/React.createElement("div", {
+  })), activeTab === 4 && /*#__PURE__*/React.createElement(DashErrorBoundary, { resetKey: archive.length }, monthSummaries.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: s.emptyState
   }, /*#__PURE__*/React.createElement("div", {
     style: {
