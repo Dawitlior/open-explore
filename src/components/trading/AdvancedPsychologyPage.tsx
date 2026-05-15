@@ -652,7 +652,7 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
                 {/* OVERALL SCORE BAR */}
                 <div style={{ marginBottom: 14, padding: 14, borderRadius: 12, background: T.bg.tertiary, border: `1px solid ${T.border.subtle}` }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                    <span style={{ fontSize: 11, color: T.text.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>ציון סינתזה כללי</span>
+                    <span style={{ fontSize: 11, color: T.text.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{isRTL ? 'ציון סינתזה כללי' : 'Overall synthesis score'}</span>
                     <span style={{ fontSize: 26, fontWeight: 900, color: healthColor, fontFamily: "'JetBrains Mono', monospace" }}>{deepDiag.scores.overall}<span style={{ fontSize: 12, color: T.text.muted }}>/100</span></span>
                   </div>
                   <div style={{ height: 6, background: T.bg.primary, borderRadius: 3, overflow: 'hidden' }}>
@@ -663,13 +663,13 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
                 {/* 7-AXIS SCORE GRID */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 8, marginBottom: 14 }}>
                   {[
-                    { l: 'משמעת', v: deepDiag.scores.discipline, c: T.accent.green },
-                    { l: 'עקביות', v: deepDiag.scores.consistency, c: T.accent.blue },
-                    { l: 'רגשי', v: deepDiag.scores.emotional, c: T.accent.purple },
-                    { l: 'אדג׳', v: deepDiag.scores.edge, c: T.accent.cyan },
-                    { l: 'סבלנות', v: deepDiag.scores.patience, c: T.accent.orange },
-                    { l: 'הסתגלות', v: deepDiag.scores.adaptability, c: T.accent.cyan },
-                    { l: 'סיכון', v: deepDiag.scores.risk, c: deepDiag.scores.risk >= 60 ? T.accent.green : T.accent.red },
+                    { l: isRTL ? 'משמעת' : 'Discipline', v: deepDiag.scores.discipline, c: T.accent.green },
+                    { l: isRTL ? 'עקביות' : 'Consistency', v: deepDiag.scores.consistency, c: T.accent.blue },
+                    { l: isRTL ? 'רגשי' : 'Emotional', v: deepDiag.scores.emotional, c: T.accent.purple },
+                    { l: isRTL ? 'אדג׳' : 'Edge', v: deepDiag.scores.edge, c: T.accent.cyan },
+                    { l: isRTL ? 'סבלנות' : 'Patience', v: deepDiag.scores.patience, c: T.accent.orange },
+                    { l: isRTL ? 'הסתגלות' : 'Adaptability', v: deepDiag.scores.adaptability, c: T.accent.cyan },
+                    { l: isRTL ? 'סיכון' : 'Risk', v: deepDiag.scores.risk, c: deepDiag.scores.risk >= 60 ? T.accent.green : T.accent.red },
                   ].map(s => (
                     <div key={s.l} style={{ padding: 10, borderRadius: 10, background: `${s.c}10`, border: `1px solid ${s.c}30` }}>
                       <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>{s.l}</div>
