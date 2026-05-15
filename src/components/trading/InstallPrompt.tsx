@@ -16,9 +16,10 @@ interface Props {
 
 export const InstallPrompt = ({ T, isRTL, compact }: Props) => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [dismissed, setDismissed] = useState(() => {
-    try { return localStorage.getItem('orca-install-dismissed') === '1'; } catch { return false; }
-  });
+  const [dismissed, setDismissed] = useState(false);
+  useEffect(() => {
+    void scopedStorage.getItem('orca-install-dismissed').then(v => { if (v === '1') setDismissed(true); });
+  }, []);
   const [installed, setInstalled] = useState(false);
 
   useEffect(() => {
