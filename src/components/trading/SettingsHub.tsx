@@ -6,8 +6,8 @@ import {
   Volume2, VolumeX, Zap, Type, Brush, Target, Gauge,
 } from 'lucide-react';
 import { playMorningLock } from '@/lib/apex-sounds';
-import type { TradingTheme } from '@/lib/trading-theme';
-import { deriveFullPalette } from '@/lib/trading-theme';
+import type { TradingTheme, CustomTheme, BaseMood } from '@/lib/trading-theme';
+import { deriveFullPalette, deriveFromCustomTheme, CUSTOM_THEME_DEFAULT } from '@/lib/trading-theme';
 import type { ThemeId, OperatingMode, Lang } from '@/hooks/use-settings';
 import { useDashboardConfig, WIDGET_LABELS, evalCustomKPI, type CustomKPI } from '@/hooks/use-dashboard-config';
 import type { TradingStats } from '@/lib/trading-analytics';
@@ -74,7 +74,11 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
   const dialogRef = useRef<HTMLDivElement>(null);
   const [draftAccent, setDraftAccent] = useState<string>('#00f2ff');
   const [showThemeConfirm, setShowThemeConfirm] = useState(false);
+  const [draftTheme, setDraftTheme] = useState<CustomTheme>(CUSTOM_THEME_DEFAULT);
+  const [showStudioConfirm, setShowStudioConfirm] = useState(false);
+  const [unlockStep, setUnlockStep] = useState<0 | 1 | 2>(0);
   useEffect(() => { if (ui.prefs.customAccent) setDraftAccent(ui.prefs.customAccent); }, [ui.prefs.customAccent]);
+  useEffect(() => { if (ui.prefs.customTheme) setDraftTheme(ui.prefs.customTheme); }, [ui.prefs.customTheme]);
 
   if (!open) return null;
   const t = (he: string, en: string) => isRTL ? he : en;
@@ -1087,6 +1091,176 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                       )}
                     </div>
                   )}
+
+                  {/* ═══════════ ADVANCED THEME STUDIO (multi-axis) ═══════════ */}
+                  {(() => {
+                    const dt = draftTheme;
+                    const setDt = (patch: Partial<CustomTheme>) => setDraftTheme(prev => ({ ...prev, ...patch }));
+                    const out = deriveFromCustomTheme(dt);
+                    const pv = out?.preview;
+                    const studioLocked = locked;
+
+                    const moods: { id: BaseMood; he: string; en: string }[] = [
+                      { id: 'cool', he: 'קר', en: 'Cool' },
+                      { id: 'warm', he: 'חמים', en: 'Warm' },
+                      { id: 'neutral', he: 'נייטרלי', en: 'Neutral' },
+                      { id: 'monochrome', he: 'מונוכרום', en: 'Mono' },
+                    ];
+
+                    const slider = (label: string, val: number, min: number, max: number, onCh: (n: number) => void, suffix = '') => (
+                      <div style={{ marginBottom: 12 }}>
+                        <label style={{ ...fieldLabel, display: 'flex', justifyContent: 'space-between' }}>
+                          <span>{label}</span>
+                          <span style={{ fontFamily: mono, color: T.text.primary }}>{val}{suffix}</span>
+                        </label>
+                        <input type="range" min={min} max={max} value={val} disabled={studioLocked}
+                          onChange={e => onCh(parseInt(e.target.value, 10))}
+                          style={{ width: '100%', accentColor: dt.accentPrimary, opacity: studioLocked ? 0.5 : 1 }} />
+                      </div>
+                    );
+
+                    const handleApply = () => {
+                      if (studioLocked) { toast.error(t(`נעול ליום. ${lockText}`, `Locked for 1 day. ${lockText}`)); return; }
+                      setShowStudioConfirm(true);
+                    };
+                    const confirmApply = () => {
+                      setShowStudioConfirm(false);
+                      ui.commitCustomTheme(dt);
+                      playMorningLock();
+                      toast.success(t('ערכת נושא מותאמת נשמרה ונעולה ליום', 'Custom theme committed and locked for 1 day'));
+                    };
+
+                    return (
+                      <div style={{ ...card, borderColor: T.border.medium }}>
+                        <h3 style={sectionTitle}>
+                          <Sparkles size={14} /> {t('סטודיו צבעים מתקדם', 'Advanced Theme Studio')}
+                          <span style={{ marginInlineStart: 'auto', fontSize: 9, color: T.text.muted, fontFamily: mono, padding: '2px 6px', borderRadius: 4, border: `1px solid ${T.border.subtle}` }}>BETA</span>
+                        </h3>
+                        <p style={sectionHint}>
+                          {t('שלוט ב-7 צירים: מצב-רוח, גוון רקע, גובה משטח, שני מבטאים, גבולות והילה. תצוגה חיה — לא מוחל עד שתאשר.',
+                             'Control 7 axes: mood, background hue, surface elevation, two accents, borders and glow. Live preview — nothing applies until you confirm.')}
+                        </p>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16, marginBottom: 16 }}>
+                          {/* Mode + Mood */}
+                          <div>
+                            <label style={fieldLabel}>{t('מצב בסיס', 'Base mode')}</label>
+                            <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+                              {(['dark', 'light'] as const).map(m => (
+                                <button key={m} disabled={studioLocked} onClick={() => setDt({ mode: m })}
+                                  style={{
+                                    flex: 1, padding: '8px 10px', borderRadius: T.radius.sm, fontSize: 11, fontWeight: 700, cursor: studioLocked ? 'not-allowed' : 'pointer',
+                                    background: dt.mode === m ? `${dt.accentPrimary}22` : T.bg.secondary,
+                                    border: `1px solid ${dt.mode === m ? dt.accentPrimary : T.border.subtle}`,
+                                    color: dt.mode === m ? dt.accentPrimary : T.text.secondary, fontFamily: sans,
+                                  }}>{m === 'dark' ? t('כהה', 'Dark') : t('בהיר', 'Light')}</button>
+                              ))}
+                            </div>
+
+                            <label style={fieldLabel}>{t('מצב-רוח', 'Base mood')}</label>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6 }}>
+                              {moods.map(m => (
+                                <button key={m.id} disabled={studioLocked} onClick={() => setDt({ baseMood: m.id })}
+                                  style={{
+                                    padding: '8px 10px', borderRadius: T.radius.sm, fontSize: 11, fontWeight: 700, cursor: studioLocked ? 'not-allowed' : 'pointer',
+                                    background: dt.baseMood === m.id ? `${dt.accentPrimary}22` : T.bg.secondary,
+                                    border: `1px solid ${dt.baseMood === m.id ? dt.accentPrimary : T.border.subtle}`,
+                                    color: dt.baseMood === m.id ? dt.accentPrimary : T.text.secondary, fontFamily: sans,
+                                  }}>{t(m.he, m.en)}</button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Accents */}
+                          <div>
+                            <label style={fieldLabel}>{t('מבטא ראשי', 'Accent · Primary')}</label>
+                            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
+                              <input type="color" value={dt.accentPrimary} disabled={studioLocked}
+                                onChange={e => setDt({ accentPrimary: e.target.value })}
+                                style={{ width: 44, height: 36, border: 'none', borderRadius: 6, background: 'transparent', cursor: studioLocked ? 'not-allowed' : 'pointer' }} />
+                              <input className="orca-settings-input" value={dt.accentPrimary} disabled={studioLocked}
+                                onChange={e => setDt({ accentPrimary: e.target.value })}
+                                dir="ltr" style={{ ...input, fontFamily: mono, flex: 1 }} />
+                            </div>
+
+                            <label style={fieldLabel}>{t('מבטא משני', 'Accent · Secondary')}</label>
+                            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                              <input type="color" value={dt.accentSecondary} disabled={studioLocked}
+                                onChange={e => setDt({ accentSecondary: e.target.value })}
+                                style={{ width: 44, height: 36, border: 'none', borderRadius: 6, background: 'transparent', cursor: studioLocked ? 'not-allowed' : 'pointer' }} />
+                              <input className="orca-settings-input" value={dt.accentSecondary} disabled={studioLocked}
+                                onChange={e => setDt({ accentSecondary: e.target.value })}
+                                dir="ltr" style={{ ...input, fontFamily: mono, flex: 1 }} />
+                            </div>
+                          </div>
+
+                          {/* Sliders */}
+                          <div>
+                            {slider(t('הסטת גוון רקע', 'BG hue shift'), dt.bgHueShift, -30, 30, n => setDt({ bgHueShift: n }), '°')}
+                            {slider(t('גובה משטח', 'Surface elevation'), dt.surfaceElevation, 0, 100, n => setDt({ surfaceElevation: n }), '%')}
+                          </div>
+                          <div>
+                            {slider(t('עוצמת גבולות', 'Border intensity'), dt.borderIntensity, 0, 100, n => setDt({ borderIntensity: n }), '%')}
+                            {slider(t('עוצמת הילה', 'Glow intensity'), dt.glowIntensity, 0, 100, n => setDt({ glowIntensity: n }), '%')}
+                          </div>
+                        </div>
+
+                        {/* LIVE PREVIEW (sketch — not applied) */}
+                        {pv && (
+                          <div style={{
+                            borderRadius: T.radius.lg, overflow: 'hidden',
+                            border: `1px solid ${pv.border}`, background: pv.bg, marginBottom: 14,
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: pv.surface, borderBottom: `1px solid ${pv.border}` }}>
+                              <div style={{ width: 10, height: 10, borderRadius: '50%', background: pv.primary, boxShadow: `0 0 12px ${pv.glow}` }} />
+                              <div style={{ fontSize: 11, fontWeight: 800, color: dt.mode === 'light' ? '#0f172a' : '#fff', letterSpacing: 1 }}>ORCA · LIVE</div>
+                              <div style={{ flex: 1 }} />
+                              <div style={{ padding: '4px 10px', borderRadius: 6, background: pv.soft, color: pv.primary, fontSize: 10, fontFamily: mono }}>+12.4R</div>
+                            </div>
+                            <div style={{ padding: 14, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                              {[1, 2, 3].map(i => (
+                                <div key={i} style={{ padding: 12, borderRadius: 10, background: pv.card, border: `1px solid ${pv.border}` }}>
+                                  <div style={{ fontSize: 9, color: dt.mode === 'light' ? '#64748b' : '#94a3b8', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 6 }}>KPI {i}</div>
+                                  <div style={{ fontSize: 18, fontWeight: 800, color: i === 2 ? pv.accent : pv.primary, fontFamily: mono }}>${(i * 1234).toLocaleString()}</div>
+                                  <div style={{ height: 4, marginTop: 8, borderRadius: 2, background: `linear-gradient(90deg, ${pv.primary}, ${pv.accent})`, width: `${30 + i * 20}%`, boxShadow: `0 0 8px ${pv.glow}` }} />
+                                </div>
+                              ))}
+                            </div>
+                            <div style={{ display: 'flex', gap: 8, padding: 14, paddingTop: 0 }}>
+                              <button style={{ padding: '10px 16px', borderRadius: 8, border: 'none', background: pv.primary, color: dt.mode === 'light' ? '#fff' : '#000', fontSize: 12, fontWeight: 800, boxShadow: `0 4px 18px ${pv.glow}`, cursor: 'default' }}>{t('כפתור ראשי', 'Primary')}</button>
+                              <button style={{ padding: '10px 16px', borderRadius: 8, background: 'transparent', color: pv.accent, border: `1px solid ${pv.accent}`, fontSize: 12, fontWeight: 800, cursor: 'default' }}>{t('משני', 'Secondary')}</button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Actions */}
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                          <button onClick={handleApply} disabled={studioLocked}
+                            style={{
+                              ...primaryBtn(dt.accentPrimary, studioLocked), flex: 1, minWidth: 180, padding: '12px 18px',
+                              color: dt.mode === 'light' ? '#fff' : '#000', fontSize: 13,
+                            }}>
+                            {studioLocked ? <>🔒 {t('נעול', 'Locked')}</> : <><Sparkles size={14} /> {t('החל ונעל ליום', 'Apply & Lock for 1 day')}</>}
+                          </button>
+                          <button onClick={() => setDraftTheme(p.customTheme || CUSTOM_THEME_DEFAULT)} disabled={studioLocked} style={ghostBtn}>
+                            <RotateCcw size={12} /> {t('שחזר', 'Reset')}
+                          </button>
+                          {p.customThemeEnabled && !studioLocked && (
+                            <button onClick={() => { ui.removeCustomTheme(); toast.success(t('בוטל', 'Disabled')); }}
+                              style={{ ...ghostBtn, color: T.accent.orange, borderColor: `${T.accent.orange}55` }}>
+                              <X size={13} /> {t('כבה ערכה אישית', 'Disable custom theme')}
+                            </button>
+                          )}
+                          {studioLocked && (
+                            <button onClick={() => setUnlockStep(1)}
+                              style={{ ...ghostBtn, color: T.accent.orange, borderColor: `${T.accent.orange}55` }}>
+                              <AlertTriangle size={13} /> {t('בטל נעילה', 'Unlock now')}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               );
             })()}
@@ -1304,6 +1478,96 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                 }}
               >
                 <Sparkles size={14} /> {t('החל ונעל', 'Apply & Lock')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============ STUDIO COMMIT CONFIRMATION ============ */}
+      {showStudioConfirm && (
+        <div onClick={() => setShowStudioConfirm(false)}
+          style={{ position: 'fixed', inset: 0, zIndex: 10010, background: 'rgba(2,6,15,0.78)', backdropFilter: 'blur(14px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{
+              width: '100%', maxWidth: 460,
+              background: `linear-gradient(180deg, ${T.bg.secondary} 0%, ${T.bg.primary} 100%)`,
+              border: `1px solid ${draftTheme.accentPrimary}55`, borderRadius: T.radius.xl,
+              boxShadow: `0 30px 80px rgba(0,0,0,0.6), 0 0 60px ${draftTheme.accentPrimary}22`, overflow: 'hidden',
+            }}>
+            <div style={{ height: 80, background: `linear-gradient(135deg, ${draftTheme.accentPrimary}28, ${draftTheme.accentSecondary}18)`, borderBottom: `1px solid ${T.border.subtle}`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+              <div style={{ width: 44, height: 44, borderRadius: '50%', background: draftTheme.accentPrimary, boxShadow: `0 0 30px ${draftTheme.accentPrimary}99` }} />
+              <div style={{ width: 44, height: 44, borderRadius: '50%', background: draftTheme.accentSecondary, boxShadow: `0 0 30px ${draftTheme.accentSecondary}99` }} />
+            </div>
+            <div style={{ padding: '22px 24px 8px', textAlign: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: T.text.primary, fontFamily: sans }}>
+                {t('להחיל את ערכת הנושא המותאמת?', 'Apply this custom theme?')}
+              </h3>
+              <p style={{ margin: '10px 0 0', fontSize: 13, color: T.text.secondary, lineHeight: 1.6 }}>
+                {t('כל 7 הצירים יישמרו כאובייקט customTheme וייטענו אוטומטית בכל מכשיר.',
+                   'All 7 axes will be saved as a customTheme object and auto-loaded across devices.')}
+              </p>
+              <div style={{ marginTop: 14, padding: '10px 14px', background: `${T.accent.orange}10`, border: `1px solid ${T.accent.orange}35`, borderRadius: T.radius.md, fontSize: 12, color: T.accent.orange, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                🔒 {t('הבחירה תינעל ל־24 שעות', 'Locked for 24 hours')}
+              </div>
+            </div>
+            <div style={{ padding: '16px 20px 20px', display: 'flex', gap: 10 }}>
+              <button onClick={() => setShowStudioConfirm(false)}
+                style={{ flex: 1, padding: '12px 16px', borderRadius: T.radius.md, background: 'transparent', border: `1px solid ${T.border.medium}`, color: T.text.secondary, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: sans }}>
+                {t('ביטול', 'Cancel')}
+              </button>
+              <button
+                onClick={() => { setShowStudioConfirm(false); ui.commitCustomTheme(draftTheme); playMorningLock(); toast.success(t('ערכה נשמרה ונעולה', 'Theme committed & locked')); }}
+                style={{ flex: 1.4, padding: '12px 16px', borderRadius: T.radius.md, background: `linear-gradient(135deg, ${draftTheme.accentPrimary}, ${draftTheme.accentSecondary})`, border: `1px solid ${draftTheme.accentPrimary}`, color: '#000', fontSize: 13, fontWeight: 800, cursor: 'pointer', fontFamily: sans, boxShadow: `0 6px 24px ${draftTheme.accentPrimary}66`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <Sparkles size={14} /> {t('החל ונעל', 'Apply & Lock')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============ UNLOCK 24h DOUBLE-CONFIRM ============ */}
+      {unlockStep > 0 && (
+        <div onClick={() => setUnlockStep(0)}
+          style={{ position: 'fixed', inset: 0, zIndex: 10020, background: 'rgba(2,6,15,0.85)', backdropFilter: 'blur(16px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{
+              width: '100%', maxWidth: 460,
+              background: `linear-gradient(180deg, ${T.bg.secondary} 0%, ${T.bg.primary} 100%)`,
+              border: `1px solid ${T.accent.orange}55`, borderRadius: T.radius.xl,
+              boxShadow: `0 30px 80px rgba(0,0,0,0.6), 0 0 60px ${T.accent.orange}22`, overflow: 'hidden',
+            }}>
+            <div style={{ height: 76, background: `linear-gradient(135deg, ${T.accent.orange}30, transparent)`, borderBottom: `1px solid ${T.border.subtle}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <AlertTriangle size={36} color={T.accent.orange} />
+            </div>
+            <div style={{ padding: '22px 24px 8px', textAlign: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: T.text.primary, fontFamily: sans }}>
+                {unlockStep === 1
+                  ? t('בטל את נעילת 24 השעות?', 'Bypass the 24h lock?')
+                  : t('בטוח/ה? זה ידלג על מנגנון היציבות.', 'Are you sure? This skips the stability mechanism.')}
+              </h3>
+              <p style={{ margin: '10px 0 0', fontSize: 13, color: T.text.secondary, lineHeight: 1.65 }}>
+                {unlockStep === 1
+                  ? t('הנעילה קיימת כדי שלא תחליף ערכה אובססיבית. אישור כפול נדרש להמשך.',
+                       'The lock exists so you don\'t obsessively re-tint. Double confirmation is required to continue.')
+                  : t('לאחר ביטול תוכל להחיל ערכה חדשה מיד. השעון יתאפס רק לאחר Apply הבא.',
+                       'After unlocking you can apply a new theme immediately. The clock will reset only after the next Apply.')}
+              </p>
+            </div>
+            <div style={{ padding: '16px 20px 20px', display: 'flex', gap: 10 }}>
+              <button onClick={() => setUnlockStep(0)}
+                style={{ flex: 1, padding: '12px 16px', borderRadius: T.radius.md, background: 'transparent', border: `1px solid ${T.border.medium}`, color: T.text.secondary, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: sans }}>
+                {t('השאר נעול', 'Keep locked')}
+              </button>
+              <button
+                onClick={() => {
+                  if (unlockStep === 1) { setUnlockStep(2); return; }
+                  ui.unlockTheme();
+                  setUnlockStep(0);
+                  toast.success(t('הנעילה בוטלה — תוכל להחיל ערכה חדשה', 'Lock bypassed — you can apply a new theme now'));
+                }}
+                style={{ flex: 1.4, padding: '12px 16px', borderRadius: T.radius.md, background: `linear-gradient(135deg, ${T.accent.orange}, ${T.accent.red})`, border: `1px solid ${T.accent.orange}`, color: '#fff', fontSize: 13, fontWeight: 800, cursor: 'pointer', fontFamily: sans, boxShadow: `0 6px 24px ${T.accent.orange}66`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                {unlockStep === 1 ? <>{t('המשך', 'Continue')} →</> : <><AlertTriangle size={14} /> {t('בטל נעילה', 'Confirm unlock')}</>}
               </button>
             </div>
           </div>

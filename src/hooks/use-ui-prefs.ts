@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getSetting, setSetting } from '@/lib/storage';
 import type { OperatingMode } from '@/hooks/use-settings';
-import { applyDerivedPalette, clearCustomAccent } from '@/lib/trading-theme';
+import { applyDerivedPalette, clearCustomAccent, applyCustomTheme, clearCustomTheme, CUSTOM_THEME_DEFAULT, type CustomTheme } from '@/lib/trading-theme';
 
 export type DensityLevel = 'compact' | 'comfortable' | 'spacious';
 
@@ -29,6 +29,10 @@ export interface UIPrefs {
   customAccent: string;            // committed hex (drives DOM)
   customAccentLockedUntil: number; // ms timestamp
 
+  // Advanced Theme Studio — multi-axis customTheme
+  customThemeEnabled: boolean;
+  customTheme: CustomTheme;
+
   defaultRiskPercent: number;
   defaultRMultiple: number;
 }
@@ -53,6 +57,8 @@ const DEFAULTS: UIPrefs = {
   customAccentEnabled: false,
   customAccent: '#00f2ff',
   customAccentLockedUntil: 0,
+  customThemeEnabled: false,
+  customTheme: CUSTOM_THEME_DEFAULT,
   defaultRiskPercent: 1,
   defaultRMultiple: 2,
 };
@@ -90,12 +96,15 @@ export function useUIPrefs() {
       window.__orcaPrefs = { soundsEnabled: prefs.soundsEnabled, soundVolume: prefs.soundVolume };
     }
 
-    if (prefs.customAccentEnabled && prefs.customAccent) {
+    if (prefs.customThemeEnabled && prefs.customTheme) {
+      applyCustomTheme(prefs.customTheme);
+    } else if (prefs.customAccentEnabled && prefs.customAccent) {
       applyDerivedPalette(prefs.customAccent);
     } else {
+      clearCustomTheme();
       clearCustomAccent();
     }
-  }, [prefs.reduceMotion, prefs.denseTables, prefs.density, prefs.fontScale, prefs.soundsEnabled, prefs.soundVolume, prefs.customAccentEnabled, prefs.customAccent]);
+  }, [prefs.reduceMotion, prefs.denseTables, prefs.density, prefs.fontScale, prefs.soundsEnabled, prefs.soundVolume, prefs.customAccentEnabled, prefs.customAccent, prefs.customThemeEnabled, prefs.customTheme]);
 
   const setPrefs = useCallback((patch: Partial<UIPrefs>) => {
     setPrefsState(prev => {
@@ -153,12 +162,52 @@ export function useUIPrefs() {
     });
   }, []);
 
+  /** Commit a multi-axis CustomTheme and lock for 24h. */
+  const commitCustomTheme = useCallback((theme: CustomTheme) => {
+    const now = Date.now();
+    setPrefsState(prev => {
+      if (prev.customAccentLockedUntil > now) return prev;
+      const next: UIPrefs = {
+        ...prev,
+        customTheme: theme,
+        customThemeEnabled: true,
+        customAccentEnabled: false, // theme studio supersedes single-accent mode
+        customAccentLockedUntil: now + THEME_LOCK_MS,
+      };
+      setSetting(KEY, next);
+      return next;
+    });
+  }, []);
+
+  /** Force-clear custom theme (keeps base theme intact). */
+  const removeCustomTheme = useCallback(() => {
+    setPrefsState(prev => {
+      const next: UIPrefs = {
+        ...prev,
+        customThemeEnabled: false,
+        customAccentLockedUntil: 0,
+      };
+      setSetting(KEY, next);
+      return next;
+    });
+  }, []);
+
+  /** Bypass the 24h lock — caller is responsible for double-confirmation UI. */
+  const unlockTheme = useCallback(() => {
+    setPrefsState(prev => {
+      const next: UIPrefs = { ...prev, customAccentLockedUntil: 0 };
+      setSetting(KEY, next);
+      return next;
+    });
+  }, []);
+
   const themeLockMsRemaining = Math.max(0, prefs.customAccentLockedUntil - Date.now());
   const themeLocked = themeLockMsRemaining > 0;
 
   return {
     prefs, setPrefs, toggleHiddenMode, reset, loaded,
     commitCustomAccent, removeCustomAccent,
+    commitCustomTheme, removeCustomTheme, unlockTheme,
     themeLocked, themeLockMsRemaining,
   };
 }

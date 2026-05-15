@@ -476,3 +476,143 @@ export function applyDerivedPalette(hex: string) {
   set('--orca-primary-h', p.primary);
   r.setAttribute('data-derived-palette', hex);
 }
+
+/* ════════════════════════════════════════════════
+   ADVANCED THEME STUDIO — multi-axis CustomTheme
+   Lets the user dial 7 dimensions instead of one
+   single accent. Derives a coherent CSS-vars set
+   that respects light/dark mode automatically.
+   ════════════════════════════════════════════════ */
+export type BaseMood = 'cool' | 'warm' | 'neutral' | 'monochrome';
+
+export interface CustomTheme {
+  baseMood: BaseMood;        // overall temperature bias
+  bgHueShift: number;        // -30..30 nudge over derived hue
+  surfaceElevation: number;  // 0..100 — how light surfaces are vs bg
+  accentPrimary: string;     // hex
+  accentSecondary: string;   // hex
+  borderIntensity: number;   // 0..100
+  glowIntensity: number;     // 0..100
+  mode: 'dark' | 'light';
+}
+
+export const CUSTOM_THEME_DEFAULT: CustomTheme = {
+  baseMood: 'cool',
+  bgHueShift: 0,
+  surfaceElevation: 50,
+  accentPrimary: '#00f2ff',
+  accentSecondary: '#8b5cf6',
+  borderIntensity: 35,
+  glowIntensity: 60,
+  mode: 'dark',
+};
+
+interface DerivedFromCustom {
+  vars: Record<string, string>;
+  preview: { bg: string; surface: string; card: string; primary: string; accent: string; soft: string; glow: string; border: string };
+}
+
+export function deriveFromCustomTheme(t: CustomTheme): DerivedFromCustom | null {
+  const p = hexToHsl(t.accentPrimary);
+  const a = hexToHsl(t.accentSecondary);
+  if (!p || !a) return null;
+
+  const isLight = t.mode === 'light';
+  const moodBias = t.baseMood === 'warm' ? 30 : t.baseMood === 'cool' ? -10 : t.baseMood === 'monochrome' ? 0 : 0;
+  const moodSat  = t.baseMood === 'monochrome' ? 4 : 24;
+
+  // Background hue derived from primary + mood bias + user shift
+  const bgH = ((p.h + moodBias + t.bgHueShift) + 360) % 360;
+  const bgS = isLight ? Math.min(40, moodSat + 6) : moodSat;
+
+  // Surface elevation: how much lighter surfaces are than background
+  const elev = Math.max(0, Math.min(100, t.surfaceElevation)) / 100;
+  const bgL      = isLight ? 96 : 4;
+  const surfaceL = isLight ? 96 - elev * 6 : 4 + elev * 8;
+  const cardL    = isLight ? 100 : 4 + elev * 6;
+  const popL     = cardL;
+
+  const fgL = isLight ? 12 : 95;
+  const mutedFgL = isLight ? 38 : 65;
+
+  // Border intensity → opacity-like lightness shift
+  const borderInt = Math.max(0, Math.min(100, t.borderIntensity)) / 100;
+  const borderL = isLight ? 92 - borderInt * 14 : 14 + borderInt * 22;
+
+  // Accent primary + secondary
+  const Sp = Math.max(60, Math.min(94, p.s));
+  const Sa = Math.max(55, Math.min(94, a.s));
+  const primaryL = isLight ? 48 : 60;
+  const accentL  = isLight ? 52 : 62;
+
+  // Glow intensity
+  const glowI = Math.max(0, Math.min(100, t.glowIntensity)) / 100;
+  const glowL = isLight ? 60 : 60 + glowI * 12;
+  const glowAlpha = 0.15 + glowI * 0.55;
+
+  const fgChip = p.l > 60 ? '0 0% 5%' : '0 0% 100%';
+
+  const vars: Record<string, string> = {
+    '--background': `${bgH} ${bgS}% ${bgL}%`,
+    '--foreground': `${bgH} 20% ${fgL}%`,
+    '--card': `${bgH} ${Math.max(10, bgS - 4)}% ${cardL}%`,
+    '--card-foreground': `${bgH} 20% ${fgL}%`,
+    '--popover': `${bgH} ${Math.max(10, bgS - 4)}% ${popL}%`,
+    '--popover-foreground': `${bgH} 20% ${fgL}%`,
+    '--primary': `${p.h} ${Sp}% ${primaryL}%`,
+    '--primary-foreground': fgChip,
+    '--accent': `${a.h} ${Sa}% ${accentL}%`,
+    '--accent-foreground': fgChip,
+    '--secondary': `${bgH} ${Math.max(10, bgS - 6)}% ${isLight ? 92 : 14}%`,
+    '--secondary-foreground': `${bgH} 20% ${fgL}%`,
+    '--muted': `${bgH} ${Math.max(8, bgS - 8)}% ${isLight ? 90 : 12}%`,
+    '--muted-foreground': `${bgH} 14% ${mutedFgL}%`,
+    '--ring': `${p.h} ${Sp}% ${primaryL}%`,
+    '--border': `${bgH} ${bgS}% ${borderL}%`,
+    '--input': `${bgH} ${bgS}% ${borderL}%`,
+    '--destructive': isLight ? '0 75% 42%' : '0 95% 60%',
+    '--sidebar-background': `${bgH} ${bgS}% ${isLight ? 94 : Math.max(2, bgL - 2)}%`,
+    '--sidebar-foreground': `${bgH} 20% ${fgL}%`,
+    '--sidebar-primary': `${p.h} ${Sp}% ${primaryL}%`,
+    '--sidebar-primary-foreground': fgChip,
+    '--sidebar-accent': `${bgH} ${Math.max(10, bgS - 4)}% ${isLight ? 92 : 14}%`,
+    '--sidebar-accent-foreground': `${bgH} 20% ${fgL}%`,
+    '--sidebar-ring': `${p.h} ${Sp}% ${primaryL}%`,
+    '--orca-aurora-a': `${p.h} ${Sp}% ${primaryL}%`,
+    '--orca-aurora-b': `${a.h} ${Sa}% ${accentL}%`,
+    '--orca-glow-spot': `${p.h} ${Math.min(100, Sp + 5)}% ${glowL}%`,
+    '--orca-glow-alpha': glowAlpha.toFixed(2),
+    '--orca-primary-h': `${p.h} ${Sp}% ${primaryL}%`,
+  };
+
+  return {
+    vars,
+    preview: {
+      bg:      `hsl(${bgH} ${bgS}% ${bgL}%)`,
+      surface: `hsl(${bgH} ${Math.max(10, bgS - 4)}% ${surfaceL}%)`,
+      card:    `hsl(${bgH} ${Math.max(10, bgS - 4)}% ${cardL}%)`,
+      primary: `hsl(${p.h} ${Sp}% ${primaryL}%)`,
+      accent:  `hsl(${a.h} ${Sa}% ${accentL}%)`,
+      soft:    `hsl(${bgH} ${Math.max(10, bgS - 6)}% ${isLight ? 92 : 14}%)`,
+      glow:    `hsl(${p.h} ${Sp}% ${glowL}% / ${glowAlpha.toFixed(2)})`,
+      border:  `hsl(${bgH} ${bgS}% ${borderL}%)`,
+    },
+  };
+}
+
+export function applyCustomTheme(t: CustomTheme) {
+  if (typeof document === 'undefined') return;
+  const out = deriveFromCustomTheme(t);
+  if (!out) return;
+  const r = document.documentElement;
+  Object.entries(out.vars).forEach(([k, v]) => r.style.setProperty(k, v));
+  r.setAttribute('data-custom-theme', '1');
+}
+
+export function clearCustomTheme() {
+  if (typeof document === 'undefined') return;
+  const r = document.documentElement;
+  r.removeAttribute('data-custom-theme');
+  const id = (r.getAttribute('data-theme') as ThemeId) || 'midnight';
+  applyThemeToDOM(id);
+}
