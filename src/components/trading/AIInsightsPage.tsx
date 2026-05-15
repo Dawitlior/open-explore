@@ -1286,16 +1286,16 @@ const DeepInsightCard: React.FC<{ ins: DeepInsight; T: TradingTheme; delay: numb
               <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 10, background: `${c}22`, color: c, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{meta.label}</span>
               <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 10, background: T.bg.tertiary, color: T.text.muted, fontWeight: 600 }}>{catLabel[ins.category] || ins.category}</span>
               <span style={{ fontSize: 9, color: T.text.dim, marginInlineStart: 'auto', fontFamily: "'JetBrains Mono', monospace" }}>
-                {(ins.confidence * 100).toFixed(0)}% ביטחון
+                {(ins.confidence * 100).toFixed(0)}% {t('ביטחון','confidence')}
               </span>
             </div>
             <div style={{ fontSize: 12.5, color: T.text.primary, lineHeight: 1.65, marginBottom: 8 }}>{ins.finding}</div>
             <div style={{ fontSize: 11.5, color: T.text.secondary, lineHeight: 1.6, marginBottom: 10, padding: '8px 10px', background: T.bg.tertiary, borderRadius: 8, borderInlineStart: `2px solid ${T.border.medium}` }}>
-              <span style={{ color: T.text.muted, fontWeight: 700, marginInlineEnd: 6 }}>ראיה:</span>
+              <span style={{ color: T.text.muted, fontWeight: 700, marginInlineEnd: 6 }}>{t('ראיה:','Evidence:')}</span>
               {ins.evidence}
             </div>
             <div style={{ fontSize: 12, color: T.text.primary, lineHeight: 1.55, padding: '8px 10px', background: `${c}10`, borderRadius: 8, borderInlineStart: `2px solid ${c}` }}>
-              <span style={{ color: c, fontWeight: 800, marginInlineEnd: 6 }}>פעולה:</span>
+              <span style={{ color: c, fontWeight: 800, marginInlineEnd: 6 }}>{t('פעולה:','Action:')}</span>
               {ins.action}
             </div>
             {ins.metric && ins.metric.length > 0 && (
