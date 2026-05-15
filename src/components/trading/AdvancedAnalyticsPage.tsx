@@ -311,8 +311,8 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
     return (
       <GlassCard T={T} style={{ textAlign: 'center', padding: 60 }}>
         <div style={{ fontSize: 48, marginBottom: 12 }}>📊</div>
-        <div style={{ fontSize: 16, color: T.text.primary, fontWeight: 700 }}>אין נתונים להצגה</div>
-        <div style={{ fontSize: 12, color: T.text.muted, marginTop: 6 }}>הוסף עסקאות כדי לפתוח את לוח האנליטיקה.</div>
+        <div style={{ fontSize: 16, color: T.text.primary, fontWeight: 700 }}>{t('אין נתונים להצגה','No data to display')}</div>
+        <div style={{ fontSize: 12, color: T.text.muted, marginTop: 6 }}>{t('הוסף עסקאות כדי לפתוח את לוח האנליטיקה.','Add trades to unlock the analytics deck.')}</div>
       </GlassCard>
     );
   }
