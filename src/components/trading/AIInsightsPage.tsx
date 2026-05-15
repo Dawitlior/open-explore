@@ -1226,11 +1226,11 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
                     {[
                       bestEdge.bestAsset && { icon: '💎', label: t('הנכס הכי טוב','Best Asset'), value: bestEdge.bestAsset.name, sub: `${bestEdge.bestAsset.pnl >= 0 ? '+' : ''}$${bestEdge.bestAsset.pnl} · ${bestEdge.bestAsset.wr}% WR · ${bestEdge.bestAsset.expR >= 0 ? '+' : ''}${bestEdge.bestAsset.expR}R` },
-                      bestEdge.bestDay && { icon: '📅', label: 'הDay הכי טוב', value: bestEdge.bestDay.name, sub: `${bestEdge.bestDay.pnl >= 0 ? '+' : ''}$${bestEdge.bestDay.pnl} · ${bestEdge.bestDay.wr}% WR · ${bestEdge.bestDay.n} trades` },
-                      bestEdge.bestHour && { icon: '⏰', label: 'הHour הכי טובה', value: bestEdge.bestHour.label, sub: `${bestEdge.bestHour.pnl >= 0 ? '+' : ''}$${bestEdge.bestHour.pnl} · ${bestEdge.bestHour.wr}% WR` },
+                      bestEdge.bestDay && { icon: '📅', label: t('היום הכי טוב','Best Day'), value: bestEdge.bestDay.name, sub: `${bestEdge.bestDay.pnl >= 0 ? '+' : ''}$${bestEdge.bestDay.pnl} · ${bestEdge.bestDay.wr}% WR · ${bestEdge.bestDay.n} trades` },
+                      bestEdge.bestHour && { icon: '⏰', label: t('השעה הכי טובה','Best Hour'), value: bestEdge.bestHour.label, sub: `${bestEdge.bestHour.pnl >= 0 ? '+' : ''}$${bestEdge.bestHour.pnl} · ${bestEdge.bestHour.wr}% WR` },
                       bestEdge.bestSession && { icon: '🌍', label: t('הסשן הכי טוב','Best Session'), value: bestEdge.bestSession.name, sub: `${bestEdge.bestSession.pnl >= 0 ? '+' : ''}$${bestEdge.bestSession.pnl} · ${bestEdge.bestSession.n} trades` },
                       bestEdge.bestSetup && { icon: '🎯', label: t('האסטרטגיה הכי טובה','Best Strategy'), value: bestEdge.bestSetup.name, sub: `${bestEdge.bestSetup.pnl >= 0 ? '+' : ''}$${bestEdge.bestSetup.pnl} · ${bestEdge.bestSetup.wr}% WR` },
-                      bestEdge.bestStreakDay && { icon: '🚀', label: 'הDay הכי Profitי בלוח', value: bestEdge.bestStreakDay.name, sub: `${bestEdge.bestStreakDay.pnl >= 0 ? '+' : ''}$${bestEdge.bestStreakDay.pnl} · ${bestEdge.bestStreakDay.n} trades` },
+                      bestEdge.bestStreakDay && { icon: '🚀', label: t('היום הכי רווחי בלוח','Most Profitable Day'), value: bestEdge.bestStreakDay.name, sub: `${bestEdge.bestStreakDay.pnl >= 0 ? '+' : ''}$${bestEdge.bestStreakDay.pnl} · ${bestEdge.bestStreakDay.n} trades` },
                     ].filter(Boolean).map((card: any, i) => (
                       <motion.div
                         key={i}
