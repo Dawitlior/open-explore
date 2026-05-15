@@ -710,7 +710,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
             {/* DNA STRIP */}
             <GlassCard T={T} style={{ marginBottom: 16, padding: 18 }} glow={`${T.accent.cyan}22`}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.18em' }}>DNA סוחר</div>
+                <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.18em' }}>{t('DNA סוחר','Trader DNA')}</div>
                 <div style={{ fontSize: 28, fontWeight: 800, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>
                   {analysis.dna.overall}
                   <span style={{ fontSize: 12, color: T.text.muted, marginInlineStart: 4 }}>/100</span>
