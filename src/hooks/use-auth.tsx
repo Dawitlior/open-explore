@@ -26,17 +26,33 @@ async function ensureProfile(user: User) {
     user.email?.split('@')[0] ||
     'Orca Trader';
 
-  const { error } = await supabase.from('profiles').upsert(
-    {
-      id: user.id,
-      email: user.email ?? null,
-      display_name: displayName,
-      avatar_url: meta.avatar_url ?? null,
-    },
-    { onConflict: 'id' },
-  );
+  // Check if a profile already exists — if it does, DO NOT overwrite avatar_url
+  // (the user may have uploaded a custom avatar that would otherwise be wiped on
+  // every sign-in / page refresh by the OAuth metadata avatar).
+  const { data: existing } = await supabase
+    .from('profiles')
+    .select('id, avatar_url')
+    .eq('id', user.id)
+    .maybeSingle();
 
-  if (error) console.error('Failed to ensure profile:', error);
+  if (existing) {
+    // Only update non-destructive fields (email/display_name) — preserve avatar.
+    const { error } = await supabase
+      .from('profiles')
+      .update({ email: user.email ?? null, display_name: displayName })
+      .eq('id', user.id);
+    if (error) console.error('Failed to update profile:', error);
+    return;
+  }
+
+  // First-time profile creation — seed avatar from OAuth metadata if present.
+  const { error } = await supabase.from('profiles').insert({
+    id: user.id,
+    email: user.email ?? null,
+    display_name: displayName,
+    avatar_url: meta.avatar_url ?? null,
+  });
+  if (error) console.error('Failed to create profile:', error);
 }
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
