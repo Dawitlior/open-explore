@@ -330,7 +330,7 @@ export const FeatureManifestModal = ({ T, isRTL, onClose }: FeatureManifestModal
           </div>
 
           {/* Feature sections */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
+          <div className="orca-manifest-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
             {SECTIONS.map((section, i) => (
               <div
                 key={i}
