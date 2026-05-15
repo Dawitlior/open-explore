@@ -274,7 +274,7 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12, marginBottom: 12 }}>
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
-            Tilt Meter · עוצמת טילט לאורך זמן
+            {t('Tilt Meter · עוצמת טילט לאורך זמן','Tilt Meter · Tilt intensity over time')}
           </div>
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={tiltTl}>
