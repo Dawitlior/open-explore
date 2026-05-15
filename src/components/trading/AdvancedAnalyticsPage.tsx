@@ -570,10 +570,10 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
           <ResponsiveContainer width="100%" height={230}>
             <ScatterChart>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
-              <XAxis type="number" dataKey="risk" name="סיכון" tick={{ fill: T.text.muted, fontSize: 10 }} />
+              <XAxis type="number" dataKey="risk" name={t('סיכון','Risk')} tick={{ fill: T.text.muted, fontSize: 10 }} />
               <YAxis type="number" dataKey="pnl" name="P&L" tick={{ fill: T.text.muted, fontSize: 10 }} />
               <ZAxis range={[40, 160]} />
-              <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} formatter={(v: number, n: string) => [n === 'risk' ? `$${v.toFixed(2)}` : `$${v.toFixed(2)}`, n === 'risk' ? 'סיכון' : 'P&L']} />
+              <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} formatter={(v: number, n: string) => [`$${v.toFixed(2)}`, n === 'risk' ? t('סיכון','Risk') : 'P&L']} />
               <Scatter data={rvp}>
                 {rvp.map((d, i) => (
                   <Cell key={i} fill={d.win ? T.accent.green : T.accent.red} fillOpacity={0.7} />
