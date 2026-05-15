@@ -291,7 +291,7 @@ export const FeatureManifestModal = ({ T, isRTL, onClose }: FeatureManifestModal
               }}>
                 מערכת Orca – סביבת עבודה לסוחר מקצועי
               </h2>
-              <p style={{
+              <p className="orca-manifest-intro" style={{
                 fontSize: 12, color: T.text.secondary, lineHeight: 1.8, margin: 0,
                 direction: 'rtl', textAlign: 'right',
               }}>
