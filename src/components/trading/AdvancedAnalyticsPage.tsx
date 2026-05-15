@@ -332,10 +332,10 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
           ORCA · ANALYTICS DECK
         </div>
         <div style={{ fontSize: 22, color: T.text.primary, fontWeight: 800, letterSpacing: '-0.01em' }}>
-          לוח אנליטיקה מתקדם
+          {t('לוח אנליטיקה מתקדם','Advanced Analytics Deck')}
         </div>
         <div style={{ fontSize: 12, color: T.text.secondary, marginTop: 2 }}>
-          ניתוח רב-ממדי של {trades.length} עסקאות לאורך כל ההיסטוריה.
+          {t(`ניתוח רב-ממדי של ${trades.length} עסקאות לאורך כל ההיסטוריה.`, `Multi-dimensional analysis of ${trades.length} trades across history.`)}
         </div>
       </motion.div>
 
