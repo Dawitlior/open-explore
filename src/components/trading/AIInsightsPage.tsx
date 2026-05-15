@@ -1138,7 +1138,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                 <>
                   <GlassCard T={T} style={{ gridColumn: '1 / -1' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                      <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em' }}>Monte Carlo — קונוס תוצאות אפשריות (50 מסלולים)</div>
+                      <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em' }}>{t('Monte Carlo — קונוס תוצאות אפשריות (50 מסלולים)','Monte Carlo — outcome cone (50 paths)')}</div>
                       <div style={{ fontSize: 10, color: T.accent.purple, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.12em' }}>QUANT TIER</div>
                     </div>
                     <ResponsiveContainer width="100%" height={290}>
