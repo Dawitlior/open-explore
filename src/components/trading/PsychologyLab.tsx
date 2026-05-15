@@ -296,11 +296,11 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
 
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
-            Post-Win Overconfidence · שינוי סיכון לאחר רצף ניצחונות
+            {t('Post-Win Overconfidence · שינוי סיכון לאחר רצף ניצחונות','Post-Win Overconfidence · Risk change after winning streaks')}
           </div>
           {postWin.length === 0 ? (
             <div style={{ fontSize: 12, color: T.text.muted, textAlign: 'center', padding: 60 }}>
-              עדיין אין רצפי ניצחון של 2+ במדגם הזה.
+              {t('עדיין אין רצפי ניצחון של 2+ במדגם הזה.','No 2+ winning streaks in this sample yet.')}
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={200}>
