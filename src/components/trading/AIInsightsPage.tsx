@@ -1000,7 +1000,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                     </ResponsiveContainer>
                   </GlassCard>
                   <GlassCard T={T}>
-                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>סחיפת Risk לאורך זמן</div>
+                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>{t('סחיפת Risk לאורך זמן','Risk drift over time')}</div>
                     <ResponsiveContainer width="100%" height={250}>
                       <LineChart data={kellyData}>
                         <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
