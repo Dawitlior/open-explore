@@ -362,10 +362,10 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
       {/* Row 5: Cognitive Bias Report */}
       <GlassCard T={T} style={{ marginBottom: 12 }} glow={`${T.accent.purple}18`}>
         <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
-          ◆ Cognitive Bias Report · דוח הטיות קוגניטיביות
+          {t('◆ Cognitive Bias Report · דוח הטיות קוגניטיביות','◆ Cognitive Bias Report')}
         </div>
         {biasFlags.length === 0 ? (
-          <div style={{ fontSize: 12, color: T.accent.green, padding: 14 }}>✅ לא זוהו דפוסי הטיה דומיננטיים במדגם הנוכחי.</div>
+          <div style={{ fontSize: 12, color: T.accent.green, padding: 14 }}>{t('✅ לא זוהו דפוסי הטיה דומיננטיים במדגם הנוכחי.','✅ No dominant bias patterns detected in the current sample.')}</div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 8 }}>
             {biasFlags.map((b, i) => {
