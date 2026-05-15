@@ -1099,8 +1099,8 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                     <ResponsiveContainer width="100%" height={250}>
                       <ScatterChart>
                         <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
-                        <XAxis type="number" dataKey="prev" name="R קודם" tick={{ fill: T.text.muted, fontSize: 10 }} />
-                        <YAxis type="number" dataKey="cur" name="R נוכחי" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                        <XAxis type="number" dataKey="prev" name={t('R קודם','Previous R')} tick={{ fill: T.text.muted, fontSize: 10 }} />
+                        <YAxis type="number" dataKey="cur" name={t('R נוכחי','Current R')} tick={{ fill: T.text.muted, fontSize: 10 }} />
                         <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} />
                         <Scatter data={autocorrData}>
                           {autocorrData.map((d, i) => (
