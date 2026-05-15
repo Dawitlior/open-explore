@@ -338,23 +338,23 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
 
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
-            Trade Distribution Skew · מקור הרווח שלך
+            {t('Trade Distribution Skew · מקור הרווח שלך','Trade Distribution Skew · Where your profit comes from')}
           </div>
           <div style={{ padding: 16, textAlign: 'center' }}>
             <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.16em', textTransform: 'uppercase' }}>
-              חלק העשירון העליון מסך הרווחים
+              {t('חלק העשירון העליון מסך הרווחים','Top decile share of total profits')}
             </div>
             <div style={{ fontSize: 56, fontWeight: 800, color: skew.topDecileShare > 60 ? T.accent.orange : T.accent.cyan, fontFamily: "'JetBrains Mono', monospace", marginTop: 8 }}>
               {skew.topDecileShare}%
             </div>
             <div style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.6, marginTop: 10, maxWidth: 380, margin: '10px auto 0' }}>
               {skew.topDecileShare > 60
-                ? 'מסה גבוהה: רוב הרווח שלך מגיע מ"ברבורים שחורים". האסטרטגיה תלויה בנדירים.'
+                ? t('מסה גבוהה: רוב הרווח שלך מגיע מ"ברבורים שחורים". האסטרטגיה תלויה בנדירים.','High concentration: most of your profit comes from "black swans". Strategy depends on rare events.')
                 : skew.topDecileShare > 35
-                ? 'מאוזן: הרווחים מתפזרים בין עסקאות גדולות לבינוניות.'
-                : 'עקבי: הרווח נבנה מטרייד אחר טרייד — סימן לאדג\' יציב.'}
+                ? t('מאוזן: הרווחים מתפזרים בין עסקאות גדולות לבינוניות.','Balanced: profits spread between large and medium trades.')
+                : t("עקבי: הרווח נבנה מטרייד אחר טרייד — סימן לאדג' יציב.",'Consistent: profit built trade by trade — sign of a stable edge.')}
             </div>
-            <div style={{ fontSize: 10, color: T.text.muted, marginTop: 8 }}>{skew.totalWins} עסקאות מנצחות</div>
+            <div style={{ fontSize: 10, color: T.text.muted, marginTop: 8 }}>{skew.totalWins} {t('עסקאות מנצחות','winning trades')}</div>
           </div>
         </GlassCard>
       </div>
