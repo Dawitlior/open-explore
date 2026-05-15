@@ -159,8 +159,8 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
       if (trades[i - 1].winLoss === 'Win' && trades[i].risk > trades[i - 1].risk * 1.1) upAfterWin++;
       if (trades[i - 1].winLoss === 'Loss' && trades[i].risk < trades[i - 1].risk * 0.9) downAfterLoss++;
     }
-    if (total > 0 && (upAfterWin / total) > 0.3) flags.push({ label: 'Recency Bias', severity: 'warn', detail: `${((upAfterWin / total) * 100).toFixed(0)}% מהעסקאות לאחר ניצחון כללו הגדלת סיכון.` });
-    if (total > 0 && (downAfterLoss / total) > 0.3) flags.push({ label: 'Loss Aversion', severity: 'good', detail: `${((downAfterLoss / total) * 100).toFixed(0)}% מהעסקאות לאחר הפסד כללו הקטנת סיכון — הגנה בריאה.` });
+    if (total > 0 && (upAfterWin / total) > 0.3) flags.push({ label: 'Recency Bias', severity: 'warn', detail: t(`${((upAfterWin / total) * 100).toFixed(0)}% מהעסקאות לאחר ניצחון כללו הגדלת סיכון.`, `${((upAfterWin / total) * 100).toFixed(0)}% of trades after a win increased risk.`) });
+    if (total > 0 && (downAfterLoss / total) > 0.3) flags.push({ label: 'Loss Aversion', severity: 'good', detail: t(`${((downAfterLoss / total) * 100).toFixed(0)}% מהעסקאות לאחר הפסד כללו הקטנת סיכון — הגנה בריאה.`, `${((downAfterLoss / total) * 100).toFixed(0)}% of trades after a loss reduced risk — healthy defense.`) });
     // Confirmation bias proxy: same direction repeated for >5 trades
     let dirRun = 1; let maxDirRun = 1;
     for (let i = 1; i < trades.length; i++) {
