@@ -8967,7 +8967,24 @@ function TradingJournal() {
     const w = storageGet("journal-week");
     if (w) setWeek(safeWeek(w));
     const a = storageGet("journal-archive");
-    if (a) setArchive(a);
+    if (Array.isArray(a)) {
+      // Defensive sanitize: ensure every numeric field used by archive UIs is a finite number
+      const N = (v, d = 0) => { const n = Number(v); return Number.isFinite(n) ? n : d; };
+      const safe = a.filter(r => r && typeof r === 'object').map(r => ({
+        ...r,
+        date: r.date || new Date().toISOString(),
+        r: N(r.r),
+        trades: N(r.trades),
+        violations: N(r.violations),
+        winR: N(r.winR),
+        lossR: N(r.lossR),
+        focusRating: r.focusRating == null ? null : N(r.focusRating),
+        executionScore: r.executionScore == null ? null : N(r.executionScore),
+        grade: r.grade || 'C',
+        tradeLog: Array.isArray(r.tradeLog) ? r.tradeLog : [],
+      }));
+      setArchive(safe);
+    }
     const t = localStorage.getItem("journal-theme");
     if (t && THEMES[t]) setT(THEMES[t]);
     const s = storageGet("journal-setups");
