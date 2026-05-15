@@ -356,7 +356,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
             </div>
           </header>
 
-          <div style={{ flex: 1, overflowY: 'auto', padding: '26px 26px 40px' }}>
+          <div className="orca-settings-body" style={{ flex: 1, overflowY: 'auto', padding: '26px 26px 40px', WebkitOverflowScrolling: 'touch' }}>
             {/* ============ ACCOUNT ============ */}
             {tab === 'account' && (() => {
               const handleChangePassword = async () => {
