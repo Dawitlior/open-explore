@@ -1073,7 +1073,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                     </ResponsiveContainer>
                   </GlassCard>
                   <GlassCard T={T}>
-                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>פוקוס פארטו — 80/20 של הProfit</div>
+                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>{t('פוקוס פארטו — 80/20 של הProfit','Pareto Focus — 80/20 of P&L')}</div>
                     <ResponsiveContainer width="100%" height={260}>
                       <ComposedChart data={focusPareto}>
                         <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
