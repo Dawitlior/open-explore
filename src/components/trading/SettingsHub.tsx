@@ -74,7 +74,11 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
   const dialogRef = useRef<HTMLDivElement>(null);
   const [draftAccent, setDraftAccent] = useState<string>('#00f2ff');
   const [showThemeConfirm, setShowThemeConfirm] = useState(false);
+  const [draftTheme, setDraftTheme] = useState<CustomTheme>(CUSTOM_THEME_DEFAULT);
+  const [showStudioConfirm, setShowStudioConfirm] = useState(false);
+  const [unlockStep, setUnlockStep] = useState<0 | 1 | 2>(0);
   useEffect(() => { if (ui.prefs.customAccent) setDraftAccent(ui.prefs.customAccent); }, [ui.prefs.customAccent]);
+  useEffect(() => { if (ui.prefs.customTheme) setDraftTheme(ui.prefs.customTheme); }, [ui.prefs.customTheme]);
 
   if (!open) return null;
   const t = (he: string, en: string) => isRTL ? he : en;
