@@ -6,8 +6,8 @@ import {
   Volume2, VolumeX, Zap, Type, Brush, Target, Gauge,
 } from 'lucide-react';
 import { playMorningLock } from '@/lib/apex-sounds';
-import type { TradingTheme } from '@/lib/trading-theme';
-import { deriveFullPalette } from '@/lib/trading-theme';
+import type { TradingTheme, CustomTheme, BaseMood } from '@/lib/trading-theme';
+import { deriveFullPalette, deriveFromCustomTheme, CUSTOM_THEME_DEFAULT } from '@/lib/trading-theme';
 import type { ThemeId, OperatingMode, Lang } from '@/hooks/use-settings';
 import { useDashboardConfig, WIDGET_LABELS, evalCustomKPI, type CustomKPI } from '@/hooks/use-dashboard-config';
 import type { TradingStats } from '@/lib/trading-analytics';
