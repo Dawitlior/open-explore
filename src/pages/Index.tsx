@@ -381,7 +381,7 @@ const Index = () => {
     { id: 'settings', label: isRTL ? 'הגדרות' : 'Settings', icon: '⚙️', category: isRTL ? 'מערכת' : 'System', shortcut: '⌘,', action: () => setShowSettings(true) },
     { id: 'privacy', label: isRTL ? 'מצב פרטיות' : 'Toggle Privacy Mode', icon: '🔒', category: isRTL ? 'מערכת' : 'System', shortcut: '⌘⇧P', action: () => settings.setPrivacyMode(!settings.privacyMode) },
     { id: 'ai', label: isRTL ? 'צור תובנות AI' : 'Generate AI Insights', icon: '🧠', category: 'AI', action: () => { setPage('ai'); handleGenerateInsights(); } },
-    ...(['dashboard', 'journal', 'analytics', 'risk', 'psychology', 'ai'] as const).map(p => ({
+    ...(['dashboard', 'calendar', 'journal', 'analytics', 'risk', 'psychology', 'ai'] as const).map(p => ({
       id: `nav-${p}`, label: `Go to ${p.charAt(0).toUpperCase() + p.slice(1)}`, icon: '📄', category: isRTL ? 'ניווט' : 'Navigation', action: () => setPage(p)
     })),
     { id: 'feature-info', label: isRTL ? 'אודות המערכת' : 'About Orca System', icon: 'ℹ️', category: isRTL ? 'מערכת' : 'System', action: () => setShowFeatureModal(true) },
