@@ -320,7 +320,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
   /* ─────────── RENDER ─────────── */
 
   return (
-    <div dir="rtl" style={{ fontFamily: "'Heebo', 'Inter', sans-serif" }}>
+    <div dir={langRTL ? 'rtl' : 'ltr'} style={{ fontFamily: langRTL ? "'Heebo', 'Inter', sans-serif" : "'Inter', 'Heebo', sans-serif" }}>
       {/* HERO HEADER */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
