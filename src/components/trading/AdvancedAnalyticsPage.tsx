@@ -473,7 +473,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
           </table>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center', marginTop: 12, fontSize: 10, color: T.text.muted }}>
-          <span>הפסד</span>
+          <span>{t('הפסד','Loss')}</span>
           <div style={{ display: 'flex', gap: 2 }}>
             {[-1, -0.6, -0.3, 0, 0.3, 0.6, 1].map(v => (
               <div key={v} style={{ width: 14, height: 10, background: heatColor(v * maxAbsHeat, maxAbsHeat), borderRadius: 2 }} />
