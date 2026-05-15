@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { Camera, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { resolveAvatarUrl } from '@/lib/avatar';
 
 interface Props {
   T: any; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -10,43 +12,53 @@ interface Props {
 }
 
 /**
- * Click-to-upload avatar. Stores under `avatars/<uid>/avatar.<ext>` and writes the
- * resulting public URL into `profiles.avatar_url`. Falls back to the email initial.
+ * Click-to-upload avatar. Stores under `avatars/<uid>/avatar.<ext>` (private bucket)
+ * and writes the storage **path** into `profiles.avatar_url`. Resolves to a short-lived
+ * signed URL for display.
  */
 export const AvatarUploader = ({ T, size = 72, isRTL }: Props) => {
   const { user } = useAuth();
   const [url, setUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     if (!user?.id) return;
-    supabase.from('profiles').select('avatar_url').eq('id', user.id).maybeSingle()
-      .then(({ data }) => { if (!cancelled) setUrl(data?.avatar_url ?? null); });
+    (async () => {
+      const { data } = await supabase.from('profiles').select('avatar_url').eq('id', user.id).maybeSingle();
+      const signed = await resolveAvatarUrl(data?.avatar_url);
+      if (!cancelled) setUrl(signed);
+    })();
     return () => { cancelled = true; };
   }, [user?.id]);
 
   const onFile = async (file: File) => {
     if (!user?.id) return;
-    setErr(null);
-    if (!file.type.startsWith('image/')) { setErr(isRTL ? 'קובץ לא תקין' : 'Invalid file'); return; }
-    if (file.size > 3 * 1024 * 1024) { setErr(isRTL ? 'מקסימום 3MB' : 'Max 3MB'); return; }
+    if (!file.type.startsWith('image/')) {
+      toast.error(isRTL ? 'קובץ לא תקין — חובה תמונה' : 'Invalid file — image required');
+      return;
+    }
+    if (file.size > 3 * 1024 * 1024) {
+      toast.error(isRTL ? 'מקסימום 3MB' : 'Max file size: 3MB');
+      return;
+    }
     setBusy(true);
+    const tId = toast.loading(isRTL ? 'מעלה תמונה...' : 'Uploading image...');
     try {
       const ext = (file.name.split('.').pop() || 'png').toLowerCase().replace(/[^a-z0-9]/g, '') || 'png';
       const path = `${user.id}/avatar.${ext}`;
       const { error: upErr } = await supabase.storage.from('avatars').upload(path, file, { upsert: true, cacheControl: '3600' });
       if (upErr) throw upErr;
-      const { data: pub } = supabase.storage.from('avatars').getPublicUrl(path);
-      const finalUrl = `${pub.publicUrl}?t=${Date.now()}`;
-      const { error: dbErr } = await supabase.from('profiles').update({ avatar_url: finalUrl }).eq('id', user.id);
+      const { error: dbErr } = await supabase.from('profiles').update({ avatar_url: path }).eq('id', user.id);
       if (dbErr) throw dbErr;
+      const signed = await resolveAvatarUrl(path);
+      const finalUrl = signed ? `${signed}${signed.includes('?') ? '&' : '?'}v=${Date.now()}` : null;
       setUrl(finalUrl);
       window.dispatchEvent(new CustomEvent('orca:avatar-changed', { detail: { url: finalUrl } }));
+      toast.success(isRTL ? 'תמונת פרופיל עודכנה' : 'Profile photo updated', { id: tId });
     } catch (e: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-      setErr(e?.message || (isRTL ? 'שגיאת העלאה' : 'Upload failed'));
+      toast.error(e?.message || (isRTL ? 'שגיאה בהעלאת התמונה' : 'Upload failed'), { id: tId });
     } finally {
       setBusy(false);
     }
@@ -91,7 +103,6 @@ export const AvatarUploader = ({ T, size = 72, isRTL }: Props) => {
         style={{ display: 'none' }}
         onChange={e => { const f = e.target.files?.[0]; if (f) void onFile(f); e.target.value = ''; }}
       />
-      {err && <span style={{ fontSize: 11, color: T.accent.orange }}>{err}</span>}
     </div>
   );
 };
