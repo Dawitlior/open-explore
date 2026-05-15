@@ -33,6 +33,7 @@ import {
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { GlassCard } from './TradingUI';
+import { useLang } from '@/hooks/use-lang';
 
 interface Props {
   T: TradingTheme;
@@ -41,6 +42,7 @@ interface Props {
 }
 
 export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
+  const { t } = useLang();
   const tt = {
     background: T.bg.card, border: `1px solid ${T.border.medium}`,
     borderRadius: 10, color: T.text.primary, fontSize: 12,
