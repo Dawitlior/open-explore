@@ -26,6 +26,10 @@ import { analyzeDeep, type DeepInsight, type DeepSeverity } from '@/lib/ai-insig
 import { findBestEdge } from '@/lib/psychology-diagnostic';
 import { useLang } from '@/hooks/use-lang';
 
+// Module-level fallback so static constants (SEV_META, CAT_LABEL) compile.
+// Inside components, this is shadowed by `const { t } = useLang()` for reactivity.
+const t = (he: string, _en: string) => he;
+
 interface AIInsightsPageProps {
   T: TradingTheme;
   trades: Trade[];
