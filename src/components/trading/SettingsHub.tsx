@@ -156,6 +156,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
 
   return (
     <div
+      className="orca-settings-overlay"
       style={{
         position: 'fixed', inset: 0, background: 'rgba(2,6,15,0.78)',
         backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
@@ -171,10 +172,24 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
         .orca-settings-input:focus { border-color: ${T.accent.cyan} !important; background: ${T.bg.secondary} !important; }
         .orca-nav-item:hover { background: ${T.bg.tertiary} !important; }
         .orca-cta:hover:not(:disabled) { transform: translateY(-1px); }
+        @media (max-width: 768px) {
+          .orca-settings-overlay { padding: 0 !important; }
+          .orca-settings-shell { width: 100vw !important; max-width: 100vw !important; height: 100dvh !important; max-height: 100dvh !important; border-radius: 0 !important; grid-template-columns: 1fr !important; grid-template-rows: auto 1fr !important; }
+          .orca-settings-sidebar { border-inline-end: 0 !important; border-bottom: 1px solid ${T.border.subtle} !important; max-height: 38dvh !important; }
+          .orca-settings-sidebar nav { padding: 4px 8px 10px !important; }
+          .orca-settings-content { min-width: 0 !important; }
+          .orca-settings-topbar { padding: 12px 14px !important; flex-wrap: wrap !important; gap: 8px !important; }
+          .orca-settings-topbar > div:first-child div:first-child { font-size: 15px !important; }
+          .orca-settings-topbar > div:first-child div:nth-child(2) { font-size: 11px !important; }
+          .orca-settings-body { padding: 14px 14px calc(28px + env(safe-area-inset-bottom)) !important; }
+          .orca-settings-body > div > div { padding: 14px !important; }
+          .orca-settings-body [style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; }
+        }
       `}</style>
       <div
         ref={dialogRef}
         data-settings-hub
+        className="orca-settings-shell"
         onClick={e => e.stopPropagation()}
         style={{
           width: '100%', maxWidth: 1180, height: '92vh', maxHeight: 880,
@@ -185,7 +200,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
         }}
       >
         {/* SIDEBAR */}
-        <aside style={{
+        <aside className="orca-settings-sidebar" style={{
           background: T.bg.primary, borderInlineEnd: `1px solid ${T.border.subtle}`,
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
         }}>
@@ -293,9 +308,9 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
         </aside>
 
         {/* CONTENT */}
-        <section style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', background: T.bg.secondary }}>
+        <section className="orca-settings-content" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', background: T.bg.secondary }}>
           {/* Topbar */}
-          <header style={{
+          <header className="orca-settings-topbar" style={{
             padding: '18px 26px', borderBottom: `1px solid ${T.border.subtle}`,
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             background: `linear-gradient(180deg, ${T.bg.primary}, ${T.bg.secondary})`,
@@ -341,7 +356,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
             </div>
           </header>
 
-          <div style={{ flex: 1, overflowY: 'auto', padding: '26px 26px 40px' }}>
+          <div className="orca-settings-body" style={{ flex: 1, overflowY: 'auto', padding: '26px 26px 40px', WebkitOverflowScrolling: 'touch' }}>
             {/* ============ ACCOUNT ============ */}
             {tab === 'account' && (() => {
               const handleChangePassword = async () => {
