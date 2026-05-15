@@ -613,7 +613,7 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
 
       {diagnosisOpen && (
         <div onClick={() => setDiagnosisOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(16px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18, animation: 'fadeIn .25s ease' }}>
-          <div onClick={e => e.stopPropagation()} dir="rtl" style={{ width: 'min(820px, 100%)', maxHeight: '90vh', overflow: 'auto', borderRadius: 20, border: `1px solid ${enoughForDiag ? healthColor : T.accent.orange}55`, background: `linear-gradient(145deg, ${T.bg.card}, ${T.bg.secondary} 48%, ${T.bg.tertiary})`, boxShadow: `0 30px 90px rgba(0,0,0,.62), 0 0 60px ${enoughForDiag ? healthColor : T.accent.orange}25`, padding: 26, animation: 'scaleIn .32s cubic-bezier(0.16,1,0.3,1)' }}>
+          <div onClick={e => e.stopPropagation()} dir={isRTL ? 'rtl' : 'ltr'} style={{ width: 'min(820px, 100%)', maxHeight: '90vh', overflow: 'auto', borderRadius: 20, border: `1px solid ${enoughForDiag ? healthColor : T.accent.orange}55`, background: `linear-gradient(145deg, ${T.bg.card}, ${T.bg.secondary} 48%, ${T.bg.tertiary})`, boxShadow: `0 30px 90px rgba(0,0,0,.62), 0 0 60px ${enoughForDiag ? healthColor : T.accent.orange}25`, padding: 26, animation: 'scaleIn .32s cubic-bezier(0.16,1,0.3,1)' }}>
             {!enoughForDiag ? (
               <div style={{ textAlign: 'center', padding: '20px 10px' }}>
                 <div style={{ fontSize: 56, marginBottom: 12 }}>📉</div>
