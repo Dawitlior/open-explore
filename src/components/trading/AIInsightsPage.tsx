@@ -739,7 +739,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12, marginBottom: 16 }}>
               {pack === 'radar+heat' && (
                 <>
-                  <Frame title=t('ראדאר ה-DNA הסוחר','Trader DNA Radar') subtitle="ארבעה מימדים: Edge, Discipline, Consistency, Behavior" tone="cyan" badge={`${analysis.dna.overall}/100`}>
+                  <Frame title={t('ראדאר ה-DNA הסוחר','Trader DNA Radar')} subtitle="ארבעה מימדים: Edge, Discipline, Consistency, Behavior" tone="cyan" badge={`${analysis.dna.overall}/100`}>
                     <ResponsiveContainer width="100%" height={290}>
                       <RadarChart data={dnaData}>
                         <defs>
@@ -756,12 +756,12 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                       </RadarChart>
                     </ResponsiveContainer>
                   </Frame>
-                  <Frame title=t('מפת ביצועים: יום × שעה','Performance Heatmap: day × hour') subtitle=t('גודל הנקודה = מספר עסקאות, צבע = רווח/הפסד','Dot size = trade count, color = P&L') tone="purple" badge={`${heatData.length} buckets`}>
+                  <Frame title={t('מפת ביצועים: יום × שעה','Performance Heatmap: day × hour')} subtitle={t('גודל הנקודה = מספר עסקאות, צבע = רווח/הפסד','Dot size = trade count, color = P&L')} tone="purple" badge={`${heatData.length} buckets`}>
                     <ResponsiveContainer width="100%" height={290}>
                       <ScatterChart margin={{ top: 8, right: 14, left: 0, bottom: 8 }}>
                         <CartesianGrid stroke={T.border.subtle} strokeDasharray="2 4" />
-                        <XAxis type="number" dataKey="hour" name=t('שעה','Hour') domain={[0, 23]} ticks={[0, 4, 8, 12, 16, 20]} tick={{ fill: T.text.muted, fontSize: 10 }} label={{ value: t('שעה','Hour'), position: 'insideBottom', offset: -2, fill: T.text.dim, fontSize: 10 }} />
-                        <YAxis type="number" dataKey="day" name=t('יום','Day') domain={[0, 6]} tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(d) => ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'][d] || ''} />
+                        <XAxis type="number" dataKey="hour" name={t('שעה','Hour')} domain={[0, 23]} ticks={[0, 4, 8, 12, 16, 20]} tick={{ fill: T.text.muted, fontSize: 10 }} label={{ value: t('שעה','Hour'), position: 'insideBottom', offset: -2, fill: T.text.dim, fontSize: 10 }} />
+                        <YAxis type="number" dataKey="day" name={t('יום','Day')} domain={[0, 6]} tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(d) => ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'][d] || ''} />
                         <ZAxis type="number" dataKey="n" range={[60, 520]} />
                         <Tooltip contentStyle={tt} cursor={{ stroke: T.accent.cyan, strokeOpacity: 0.3, strokeDasharray: '3 3' }} />
                         <Scatter data={heatData}>
@@ -777,11 +777,11 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
 
               {pack === 'scatter+treemap' && (
                 <>
-                  <Frame title="Risk מול תשואה" subtitle=t('גילוי קלאסטרים — היכן ה-edge האמיתי שלך','Cluster discovery — where your real edge lives') tone="cyan" badge={`r-pearson`}>
+                  <Frame title="Risk מול תשואה" subtitle={t('גילוי קלאסטרים — היכן ה-edge האמיתי שלך','Cluster discovery — where your real edge lives')} tone="cyan" badge={`r-pearson`}>
                     <ResponsiveContainer width="100%" height={290}>
                       <ScatterChart margin={{ top: 8, right: 14, left: 0, bottom: 8 }}>
                         <CartesianGrid stroke={T.border.subtle} strokeDasharray="2 4" />
-                        <XAxis type="number" dataKey="risk" name=t('סיכון $','Risk $') tick={{ fill: T.text.muted, fontSize: 10 }} />
+                        <XAxis type="number" dataKey="risk" name={t('סיכון $','Risk $')} tick={{ fill: T.text.muted, fontSize: 10 }} />
                         <YAxis type="number" dataKey="pnl" name="P&L $" tick={{ fill: T.text.muted, fontSize: 10 }} />
                         <Tooltip contentStyle={tt} cursor={{ stroke: T.accent.cyan, strokeOpacity: 0.3 }} />
                         <Scatter data={scatterData}>
@@ -792,7 +792,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                       </ScatterChart>
                     </ResponsiveContainer>
                   </Frame>
-                  <Frame title=t('מפת חשיפה לפי נכס','Asset Exposure Map') subtitle="ריכוז Risk — איפה אתה מוטה" tone="purple" badge={`${treemapData.length} assets`}>
+                  <Frame title={t('מפת חשיפה לפי נכס','Asset Exposure Map')} subtitle="ריכוז Risk — איפה אתה מוטה" tone="purple" badge={`${treemapData.length} assets`}>
                     <ResponsiveContainer width="100%" height={290}>
                       <Treemap
                         data={treemapData}
@@ -807,7 +807,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
 
               {pack === 'monthly+rolling' && (
                 <>
-                  <Frame title=t('אבולוציית תוחלת חודשית','Monthly Expectancy Evolution') subtitle=t('עמודה = P&L · קו = ממוצע R','Bar = P&L · Line = avg R') tone="green" badge={`${monthlyData.length} mo`}>
+                  <Frame title={t('אבולוציית תוחלת חודשית','Monthly Expectancy Evolution')} subtitle={t('עמודה = P&L · קו = ממוצע R','Bar = P&L · Line = avg R')} tone="green" badge={`${monthlyData.length} mo`}>
                     <ResponsiveContainer width="100%" height={290}>
                       <ComposedChart data={monthlyData} margin={{ top: 8, right: 14, left: 0, bottom: 4 }}>
                         <CartesianGrid stroke={T.border.subtle} strokeDasharray="2 4" />
@@ -821,7 +821,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                       </ComposedChart>
                     </ResponsiveContainer>
                   </Frame>
-                  <Frame title=t('תוחלת מתגלגלת (R)','Rolling Expectancy (R)') subtitle=t('חלון מתגלגל מציג את היציבות שלך לאורך זמן','Rolling window shows your stability over time') tone="purple" badge={`${rollingData.length} pts`}>
+                  <Frame title={t('תוחלת מתגלגלת (R)','Rolling Expectancy (R)')} subtitle={t('חלון מתגלגל מציג את היציבות שלך לאורך זמן','Rolling window shows your stability over time')} tone="purple" badge={`${rollingData.length} pts`}>
                     <ResponsiveContainer width="100%" height={290}>
                       <AreaChart data={rollingData} margin={{ top: 8, right: 14, left: 0, bottom: 4 }}>
                         <CartesianGrid stroke={T.border.subtle} strokeDasharray="2 4" />
@@ -837,7 +837,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
 
               {pack === 'streak+bucket' && (
                 <>
-                  <Frame title=t('גלי רצפים: ניצחונות מול הפסדים','Streak Waves: wins vs losses') subtitle=t('גובה = אורך הרצף · צבע = סוג','Height = streak length · Color = type') tone="green" badge={`${streakBands.length} streaks`}>
+                  <Frame title={t('גלי רצפים: ניצחונות מול הפסדים','Streak Waves: wins vs losses')} subtitle={t('גובה = אורך הרצף · צבע = סוג','Height = streak length · Color = type')} tone="green" badge={`${streakBands.length} streaks`}>
                     <ResponsiveContainer width="100%" height={290}>
                       <BarChart data={streakBands.map(b => ({ idx: b.idx + 1, len: b.type === 'W' ? b.len : -b.len, type: b.type }))} margin={{ top: 8, right: 14, left: 0, bottom: 4 }}>
                         <CartesianGrid stroke={T.border.subtle} strokeDasharray="2 4" />
@@ -850,7 +850,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                       </BarChart>
                     </ResponsiveContainer>
                   </Frame>
-                  <Frame title=t('התפלגות R לפי טווח','R Distribution by Range') subtitle=t('הצורה האידיאלית: זנב ימני שמן, זנב שמאלי קצר','Ideal shape: fat right tail, short left tail') tone="cyan" badge={`${rBuckets.reduce((a, b) => a + b.count, 0)} trades`}>
+                  <Frame title={t('התפלגות R לפי טווח','R Distribution by Range')} subtitle={t('הצורה האידיאלית: זנב ימני שמן, זנב שמאלי קצר','Ideal shape: fat right tail, short left tail')} tone="cyan" badge={`${rBuckets.reduce((a, b) => a + b.count, 0)} trades`}>
                     <ResponsiveContainer width="100%" height={290}>
                       <RadialBarChart innerRadius="22%" outerRadius="100%" data={rBuckets} startAngle={180} endAngle={0}>
                         <RadialBar background={{ fill: T.bg.tertiary }} dataKey="count" cornerRadius={6}>
@@ -915,7 +915,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                     <ResponsiveContainer width="100%" height={250}>
                       <ScatterChart>
                         <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
-                        <XAxis type="number" dataKey="idx" name=t('עסקה','Trade') tick={{ fill: T.text.muted, fontSize: 10 }} />
+                        <XAxis type="number" dataKey="idx" name={t('עסקה','Trade')} tick={{ fill: T.text.muted, fontSize: 10 }} />
                         <YAxis type="number" dataKey="r" name="R" tick={{ fill: T.text.muted, fontSize: 10 }} />
                         <ZAxis type="number" dataKey="size" range={[30, 320]} />
                         <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} />
@@ -1018,7 +1018,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                     <ResponsiveContainer width="100%" height={250}>
                       <ScatterChart>
                         <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
-                        <XAxis type="number" dataKey="i" name=t('עסקה','Trade') tick={{ fill: T.text.muted, fontSize: 10 }} />
+                        <XAxis type="number" dataKey="i" name={t('עסקה','Trade')} tick={{ fill: T.text.muted, fontSize: 10 }} />
                         <YAxis type="number" dataKey="eff" name="R" tick={{ fill: T.text.muted, fontSize: 10 }} />
                         <ZAxis type="number" dataKey="risk" range={[40, 300]} />
                         <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} />
@@ -1061,9 +1061,9 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                         <PolarGrid stroke={T.border.subtle} />
                         <PolarAngleAxis dataKey="axis" tick={{ fill: T.text.secondary, fontSize: 10 }} />
                         <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fill: T.text.muted, fontSize: 9 }} />
-                        <Radar dataKey=t('רווח','Profit') stroke={T.accent.green} fill={T.accent.green} fillOpacity={0.22} strokeWidth={1.6} />
-                        <Radar dataKey=t('ניצחונות','Wins') stroke={T.accent.cyan} fill={T.accent.cyan} fillOpacity={0.18} strokeWidth={1.6} />
-                        <Radar dataKey=t('תוחלת','Expectancy') stroke={T.accent.purple} fill={T.accent.purple} fillOpacity={0.18} strokeWidth={1.6} />
+                        <Radar dataKey={t('רווח','Profit')} stroke={T.accent.green} fill={T.accent.green} fillOpacity={0.22} strokeWidth={1.6} />
+                        <Radar dataKey={t('ניצחונות','Wins')} stroke={T.accent.cyan} fill={T.accent.cyan} fillOpacity={0.18} strokeWidth={1.6} />
+                        <Radar dataKey={t('תוחלת','Expectancy')} stroke={T.accent.purple} fill={T.accent.purple} fillOpacity={0.18} strokeWidth={1.6} />
                         <Tooltip contentStyle={tt} />
                       </RadarChart>
                     </ResponsiveContainer>
