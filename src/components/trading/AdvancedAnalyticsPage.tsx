@@ -505,7 +505,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
                 <div style={{ fontSize: 16, fontWeight: 800, color: T.text.primary, fontFamily: "'JetBrains Mono', monospace", marginTop: 2 }}>
                   <PV>{m.pnl >= 0 ? '+' : ''}${m.pnl.toFixed(0)}</PV>
                 </div>
-                <div style={{ fontSize: 9, color: T.text.muted, marginTop: 2 }}>{m.n} עסקאות</div>
+                <div style={{ fontSize: 9, color: T.text.muted, marginTop: 2 }}>{m.n} {t('עסקאות','trades')}</div>
               </motion.div>
             ))}
           </div>
