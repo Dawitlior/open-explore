@@ -202,14 +202,22 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
           width: '100%', maxWidth: 1180, height: '92vh', maxHeight: 880,
           background: T.bg.secondary, border: `1px solid ${T.border.medium}`,
           borderRadius: T.radius.xl, boxShadow: T.shadow.elevated,
-          display: 'grid', gridTemplateColumns: '280px 1fr', overflow: 'hidden',
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : '280px 1fr',
+          gridTemplateRows: isMobile ? 'auto 1fr' : '1fr',
+          overflow: 'hidden',
           fontFamily: sans, animation: 'orcaSettingsRise .25s ease-out',
         }}
       >
         {/* SIDEBAR */}
         <aside className="orca-settings-sidebar" style={{
-          background: T.bg.primary, borderInlineEnd: `1px solid ${T.border.subtle}`,
-          display: 'flex', flexDirection: 'column', overflow: 'hidden',
+          background: T.bg.primary,
+          borderInlineEnd: isMobile ? 'none' : `1px solid ${T.border.subtle}`,
+          borderBottom: isMobile ? `1px solid ${T.border.subtle}` : 'none',
+          display: 'flex',
+          flexDirection: isMobile ? 'row' : 'column',
+          overflow: 'hidden',
+          maxHeight: isMobile ? 140 : 'none',
         }}>
           <div style={{ padding: '20px 18px 14px' }}>
             <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: T.text.muted, textTransform: 'uppercase', marginBottom: 4 }}>
