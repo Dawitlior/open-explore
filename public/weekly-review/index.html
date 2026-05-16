@@ -9187,22 +9187,24 @@ function TradingJournal() {
     return acc;
   }, {});
   const monthSummaries = Object.entries(byMonth).map(([mk, rows]) => {
+    const N = v => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
     const allTrades = rows.flatMap(r => r.tradeLog || []);
     const setupPerf = getSetupBreakdown(allTrades);
-    const totalR = rows.reduce((s, r) => s + r.r, 0);
-    const wins = rows.filter(r => r.r > 0).length;
+    const totalR = rows.reduce((s, r) => s + N(r.r), 0);
+    const wins = rows.filter(r => N(r.r) > 0).length;
+    const rs = rows.map(r => N(r.r));
     return {
       month: mk,
       rows,
-      totalR,
-      trades: rows.reduce((s, r) => s + r.trades, 0),
-      violations: rows.reduce((s, r) => s + r.violations, 0),
+      totalR: N(totalR),
+      trades: rows.reduce((s, r) => s + N(r.trades), 0),
+      violations: rows.reduce((s, r) => s + N(r.violations), 0),
       weeks: rows.length,
-      avgR: rows.length ? totalR / rows.length : 0,
+      avgR: rows.length ? N(totalR) / rows.length : 0,
       bestGrade: rows.some(r => r.grade === "A+") ? "A+" : rows.some(r => r.grade === "B") ? "B" : "C",
       winRate: rows.length ? wins / rows.length * 100 : 0,
-      bestWeekR: rows.length ? Math.max(...rows.map(r => r.r)) : 0,
-      worstWeekR: rows.length ? Math.min(...rows.map(r => r.r)) : 0,
+      bestWeekR: rs.length ? Math.max(...rs) : 0,
+      worstWeekR: rs.length ? Math.min(...rs) : 0,
       riskBreaches: 0,
       setupPerformance: setupPerf
     };
