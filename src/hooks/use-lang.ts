@@ -10,12 +10,30 @@ export type Lang = 'he' | 'en';
  *
  * Reactively updates on `orca:lang-changed` (dispatched by useSettings.setLang).
  */
+// Synchronous cache so language is correct on first paint of any
+// lazy-loaded page. Without this, EN users briefly see HE before the
+// async cloud setting resolves.
+const LANG_CACHE_KEY = 'orca:lang-cache';
+function readCachedLang(): Lang {
+  if (typeof window === 'undefined') return 'he';
+  try {
+    const v = window.localStorage.getItem(LANG_CACHE_KEY);
+    return v === 'en' ? 'en' : 'he';
+  } catch { return 'he'; }
+}
+export function writeCachedLang(v: Lang) {
+  if (typeof window === 'undefined') return;
+  try { window.localStorage.setItem(LANG_CACHE_KEY, v); } catch { /* noop */ }
+}
+
 export function useLang() {
-  const [lang, setLang] = useState<Lang>('he');
+  const [lang, setLang] = useState<Lang>(() => readCachedLang());
 
   useEffect(() => {
     let cancelled = false;
-    getSetting<Lang>('lang').then(v => { if (!cancelled && (v === 'he' || v === 'en')) setLang(v); });
+    getSetting<Lang>('lang').then(v => {
+      if (!cancelled && (v === 'he' || v === 'en')) { setLang(v); writeCachedLang(v); }
+    });
     const onChange = (e: Event) => {
       const next = (e as CustomEvent).detail?.lang as Lang | undefined;
       if (next === 'he' || next === 'en') setLang(next);

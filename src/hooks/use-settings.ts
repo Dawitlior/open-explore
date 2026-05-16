@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { getSetting, setSetting } from '@/lib/storage';
 import { applyThemeToDOM } from '@/lib/trading-theme';
+import { writeCachedLang } from '@/hooks/use-lang';
 
 export type ThemeId = 'midnight' | 'indigo' | 'platinum';
 export type SystemMode = 'standard' | 'alpha';
@@ -27,7 +28,10 @@ export function useSettings() {
   const [theme, setThemeState] = useState<ThemeId>('midnight');
   const [systemMode, setSystemModeState] = useState<SystemMode>('standard');
   const [operatingMode, setOperatingModeState] = useState<OperatingMode>('beginner');
-  const [lang, setLangState] = useState<Lang>('he');
+  const [lang, setLangState] = useState<Lang>(() => {
+    if (typeof window === 'undefined') return 'he';
+    try { const v = window.localStorage.getItem('orca:lang-cache'); return v === 'en' ? 'en' : 'he'; } catch { return 'he'; }
+  });
   const [privacyMode, setPrivacyModeState] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const prev = useRef({ theme, systemMode, operatingMode });
@@ -45,7 +49,7 @@ export function useSettings() {
       setThemeState(migrated);
       if (m) setSystemModeState(m);
       if (o) setOperatingModeState(o);
-      if (l) setLangState(l);
+      if (l) { setLangState(l); writeCachedLang(l); }
       if (p !== undefined) setPrivacyModeState(p);
       applyThemeToDOM(migrated);
       prev.current = { theme: migrated, systemMode: m || 'standard', operatingMode: o || 'beginner' };
@@ -78,7 +82,7 @@ export function useSettings() {
     prev.current.operatingMode = o;
   }, []);
   const setLang = useCallback((l: Lang) => {
-    setLangState(l); setSetting('lang', l);
+    setLangState(l); setSetting('lang', l); writeCachedLang(l);
     if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('orca:lang-changed', { detail: { lang: l } }));
   }, []);
   const setPrivacyMode = useCallback((p: boolean) => { setPrivacyModeState(p); setSetting('privacyMode', p); }, []);

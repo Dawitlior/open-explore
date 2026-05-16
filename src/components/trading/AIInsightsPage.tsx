@@ -248,14 +248,65 @@ const CHART_PACKS = [
 type Pack = typeof CHART_PACKS[number];
 
 /* ──────────────────────────────────────────────────────────────── */
+/* LOW TRADES POPUP                                                 */
+/* ──────────────────────────────────────────────────────────────── */
+const LowTradesPopup: React.FC<{ count: number; T: TradingTheme; isRTL: boolean; onClose: () => void }> = ({ count, T, isRTL, onClose }) => {
+  const linesHe = [
+    `עם ${count} עסקאות איזה תובנות אתה רוצה חחח 😅`,
+    'אחי, גם המודל הכי חכם בעולם לא ימציא דפוסים יש מאין.',
+    'תחזור לשוק, תן בראש, ותבוא נדבר אחרי שיש לפחות 10 עסקאות.',
+    'אנחנו מחכים לך 🐋📈',
+  ];
+  const linesEn = [
+    `With only ${count} trades — what insights are you even hoping for? 😅`,
+    "Even the smartest model on Earth can't hallucinate patterns out of nothing.",
+    'Get back to the market, give it your best, and come back once you have at least 10 trades.',
+    "We'll be waiting 🐋📈",
+  ];
+  const lines = isRTL ? linesHe : linesEn;
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      onClick={onClose}
+      style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.78)', backdropFilter: 'blur(14px)', display: 'grid', placeItems: 'center', padding: 20 }}
+    >
+      <motion.div
+        onClick={e => e.stopPropagation()}
+        initial={{ scale: 0.8, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0 }}
+        transition={{ type: 'spring', stiffness: 220, damping: 22 }}
+        dir={isRTL ? 'rtl' : 'ltr'}
+        style={{ width: '100%', maxWidth: 460, background: `linear-gradient(165deg, ${T.bg.card}, ${T.bg.secondary})`, border: `1px solid ${T.accent.cyan}40`, borderRadius: 24, padding: 32, textAlign: 'center', position: 'relative', overflow: 'hidden', boxShadow: `0 30px 80px rgba(0,0,0,0.6), 0 0 60px ${T.accent.cyan}22` }}
+      >
+        <div style={{ position: 'absolute', top: -2, left: 24, right: 24, height: 2, background: `linear-gradient(90deg, transparent, ${T.accent.cyan}, transparent)` }} />
+        <div style={{ fontSize: 64, marginBottom: 12, lineHeight: 1 }}>🤔</div>
+        <div style={{ fontSize: 11, color: T.accent.cyan, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: 14 }}>
+          {isRTL ? 'אזהרת נתונים דלילים' : 'Sparse data warning'}
+        </div>
+        <div style={{ fontSize: 18, fontWeight: 800, color: T.text.primary, marginBottom: 18, lineHeight: 1.4 }}>{lines[0]}</div>
+        <div style={{ fontSize: 13, color: T.text.secondary, lineHeight: 1.7, marginBottom: 22 }}>
+          {lines.slice(1).map((l, i) => <div key={i} style={{ marginBottom: 6 }}>{l}</div>)}
+        </div>
+        <div style={{ padding: '10px 16px', marginBottom: 20, borderRadius: 12, background: `${T.accent.green}10`, border: `1px solid ${T.accent.green}30`, fontSize: 12, color: T.accent.green, fontWeight: 600 }}>
+          {isRTL ? `יש לך ${count} עסקאות · נדרשות לפחות 10` : `You have ${count} trades · 10 minimum required`}
+        </div>
+        <button onClick={onClose} style={{ width: '100%', padding: '13px 16px', borderRadius: 12, border: 'none', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.green})`, color: T.bg.primary, fontWeight: 800, fontSize: 14, cursor: 'pointer', letterSpacing: '0.04em', boxShadow: `0 10px 24px ${T.accent.cyan}40` }}>
+          {isRTL ? 'יאלה, חזרתי לשוק 🚀' : 'Got it, back to the market 🚀'}
+        </button>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+/* ──────────────────────────────────────────────────────────────── */
 /* MAIN PAGE                                                        */
 /* ──────────────────────────────────────────────────────────────── */
 
 export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => {
-  const { t } = useLang();
+  const { t, isRTL } = useLang();
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<ReturnType<typeof analyzeDeep> | null>(null);
   const [pack, setPack] = useState<Pack>('radar+heat');
+  const [showLowTradesPopup, setShowLowTradesPopup] = useState(false);
   const runCount = useRef(0);
 
   const tt = {
@@ -270,12 +321,14 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
 
   const run = useCallback(() => {
     if (loading) return;
+    if (trades.length < 10) {
+      setShowLowTradesPopup(true);
+      return;
+    }
     setLoading(true);
-    // pick a different pack
     runCount.current++;
     const next = CHART_PACKS[runCount.current % CHART_PACKS.length];
     setPack(next);
-    // royal loading window
     setTimeout(() => {
       setAnalysis(analyzeDeep(trades));
       setLoading(false);
@@ -653,6 +706,12 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
   return (
     <div dir={t('rtl','ltr')} style={{ fontFamily: "'Heebo', 'Inter', sans-serif" }}>
       {EliteDefs}
+      <AnimatePresence>
+        {showLowTradesPopup && (
+          <LowTradesPopup count={trades.length} T={T} isRTL={isRTL} onClose={() => setShowLowTradesPopup(false)} />
+        )}
+      </AnimatePresence>
+
       {/* HERO — central motherboard button */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 16px 28px' }}>
         <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.3em', marginBottom: 6 }}>
