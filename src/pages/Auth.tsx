@@ -82,10 +82,15 @@ export default function AuthPage() {
     if (!isValidEmail(cleanEmail)) { toast.error('הכנס/י אימייל תקין כדי לאפס סיסמה'); return; }
     setBusy(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      const { data, error } = await supabase.functions.invoke('request-password-reset', {
+        body: { email: cleanEmail, redirectTo: `${window.location.origin}/reset-password` },
       });
-      if (error) throw error;
+      if (error || !data?.ok) {
+        const code = data?.error;
+        if (code === 'not_registered') { toast.error('כתובת אימייל זו לא רשומה במערכת'); return; }
+        if (code === 'invalid_email') { toast.error('כתובת האימייל לא תקינה'); return; }
+        throw new Error(code || error?.message || 'reset_failed');
+      }
       toast.success('שלחנו לך קישור לאיפוס הסיסמה');
     } catch (err) {
       toast.error(translateAuthError(err instanceof Error ? err.message : 'Password reset failed'));
