@@ -8970,19 +8970,29 @@ function TradingJournal() {
     if (Array.isArray(a)) {
       // Defensive sanitize: ensure every numeric field used by archive UIs is a finite number
       const N = (v, d = 0) => { const n = Number(v); return Number.isFinite(n) ? n : d; };
-      const safe = a.filter(r => r && typeof r === 'object').map(r => ({
-        ...r,
-        date: r.date || new Date().toISOString(),
-        r: N(r.r),
-        trades: N(r.trades),
-        violations: N(r.violations),
-        winR: N(r.winR),
-        lossR: N(r.lossR),
-        focusRating: r.focusRating == null ? null : N(r.focusRating),
-        executionScore: r.executionScore == null ? null : N(r.executionScore),
-        grade: r.grade || 'C',
-        tradeLog: Array.isArray(r.tradeLog) ? r.tradeLog : [],
-      }));
+      const isValidDate = d => typeof d === 'string' && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(d);
+      const safe = a
+        .filter(r => r && typeof r === 'object' && isValidDate(r.date))
+        .map(r => ({
+          ...r,
+          date: r.date,
+          r: N(r.r),
+          trades: N(r.trades),
+          violations: N(r.violations),
+          winR: N(r.winR),
+          lossR: N(r.lossR),
+          focusRating: r.focusRating == null ? null : N(r.focusRating),
+          executionScore: r.executionScore == null ? null : N(r.executionScore),
+          grade: r.grade || 'C',
+          tradeLog: Array.isArray(r.tradeLog) ? r.tradeLog.map(t => ({
+            ...t,
+            resultR: N(t && t.resultR),
+            riskReward: N(t && t.riskReward),
+            entryPrice: N(t && t.entryPrice),
+            stopLoss: N(t && t.stopLoss),
+            exitPrice: N(t && t.exitPrice),
+          })) : [],
+        }));
       setArchive(safe);
     }
     const t = localStorage.getItem("journal-theme");
