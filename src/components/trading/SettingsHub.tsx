@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { Trade } from '@/data/trades';
 import { AvatarUploader } from './AvatarUploader';
+import { InstallGuide } from './InstallGuide';
 
 interface SettingsHubProps {
   T: TradingTheme;
@@ -1446,48 +1447,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
             })()}
 
             {tab === 'install' && (
-              <div style={card}>
-                <h3 style={sectionTitle}>{t('הורד את אורקה כאפליקציה', 'Download Orca as an App')}</h3>
-                <p style={{ fontSize: 13, color: T.text.secondary, lineHeight: 1.7, marginBottom: 16 }}>
-                  {t('אורקה זמינה כאפליקציית PWA — אפשר להתקין אותה ישירות מהדפדפן על הטלפון או על שולחן העבודה, עם פתיחה מהירה ובמסך מלא.', 'Orca is available as a PWA — install it straight from your browser to your phone or desktop for a fast, full-screen native experience.')}
-                </p>
-                <div style={{ display: 'grid', gap: 12, marginTop: 8 }}>
-                  <div style={{ padding: 16, borderRadius: T.radius.md, background: T.bg.tertiary, border: `1px solid ${T.border.subtle}` }}>
-                    <div style={{ fontWeight: 700, color: T.accent.cyan, fontSize: 13, marginBottom: 8 }}>📱 {t('מובייל (iPhone / Android)', 'Mobile (iPhone / Android)')}</div>
-                    <div style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.7 }}>
-                      {t('iPhone: פתח/י בספארי → כפתור Share → "Add to Home Screen". אנדרואיד: בכרום → התפריט (⋮) → "Install app".', 'iPhone: open in Safari → Share button → "Add to Home Screen". Android: in Chrome → menu (⋮) → "Install app".')}
-                    </div>
-                  </div>
-                  <div style={{ padding: 16, borderRadius: T.radius.md, background: T.bg.tertiary, border: `1px solid ${T.border.subtle}` }}>
-                    <div style={{ fontWeight: 700, color: T.accent.cyan, fontSize: 13, marginBottom: 8 }}>💻 {t('שולחן עבודה (Mac / Windows)', 'Desktop (Mac / Windows)')}</div>
-                    <div style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.7 }}>
-                      {t('בכרום או אדג׳: לחץ/י על אייקון ההתקנה (⊕) ב-URL bar, או תפריט → "Install Orca…". האפליקציה תיפתח בחלון משלה, ותופיע ב-Dock / Start.', 'In Chrome or Edge: click the install icon (⊕) in the URL bar, or menu → "Install Orca…". The app will open in its own window and appear in the Dock / Start menu.')}
-                    </div>
-                  </div>
-                  <button
-                    onClick={async () => {
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      const dp: any = (window as any).deferredInstallPrompt;
-                      if (dp && dp.prompt) {
-                        dp.prompt();
-                        const choice = await dp.userChoice;
-                        if (choice?.outcome === 'accepted') toast.success(t('האפליקציה הותקנה בהצלחה', 'App installed successfully'));
-                      } else {
-                        toast.info(t('אם הכפתור לא פעיל, השתמש/י בתפריט הדפדפן להתקנה ידנית', "If the button is inactive, use your browser menu to install manually"));
-                      }
-                    }}
-                    style={{
-                      padding: '12px 16px', borderRadius: T.radius.md, border: 'none',
-                      background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.green})`,
-                      color: T.bg.primary, fontWeight: 800, fontSize: 13, cursor: 'pointer',
-                      boxShadow: `0 8px 22px ${T.accent.cyan}40`,
-                    }}
-                  >
-                    <Download size={14} style={{ display: 'inline', marginInlineEnd: 8, verticalAlign: '-2px' }} />
-                    {t('התקן עכשיו', 'Install Now')}
-                  </button>
-                </div>
-              </div>
+              <InstallGuide T={T} t={t} isRTL={isRTL} />
             )}
           </div>
         </section>
