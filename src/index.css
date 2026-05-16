@@ -701,22 +701,48 @@ html, body, .orca-glass, .orca-panel, [class*="bg-"], [class*="text-"] {
   [data-orca-calendar] .day-cell { min-height: 56px !important; padding: 6px !important; font-size: 11px !important; }
   [data-orca-calendar] .day-cell .pnl { font-size: 10px !important; }
 
-  /* — Settings hub: 1 column on mobile (no sidebar) — */
+  /* — Settings hub: 1 column on mobile with a visible horizontal tab rail — */
   [data-settings-hub] {
     grid-template-columns: 1fr !important;
     height: 100dvh !important;
     max-height: 100dvh !important;
     border-radius: 0 !important;
   }
-  [data-settings-hub] aside { display: none !important; }
+  [data-settings-hub] aside.orca-settings-sidebar { display: flex !important; }
   [data-settings-hub-mobile-nav] { display: flex !important; }
+
+  /* — Dashboard: keep cards readable and charts inside the viewport — */
+  [data-orca-dashboard="true"] { width: 100%; max-width: 100%; overflow-x: hidden; }
+  [data-orca-dashboard="true"] .orca-glass { min-width: 0 !important; max-width: 100%; box-sizing: border-box; }
+  [data-orca-dashboard="true"] .orca-metric-card,
+  [data-orca-dashboard="true"] .orca-score-gauge,
+  [data-orca-dashboard="true"] .orca-dashboard-stat-card {
+    flex: 1 1 calc(50% - 6px) !important;
+    width: auto !important;
+    min-width: 0 !important;
+  }
+  [data-orca-dashboard="true"] .orca-dashboard-metric-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+  [data-orca-dashboard="true"] [style*="grid-template-columns: 1fr 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+  [data-orca-dashboard="true"] .recharts-responsive-container,
+  [data-orca-dashboard="true"] .recharts-wrapper,
+  [data-orca-dashboard="true"] .recharts-surface { max-width: 100% !important; }
 
   /* — Hide non-essential decorations on phone — */
   .orca-marquee, .orca-scanlines::before { display: none !important; }
   body::before { opacity: 0.6; }  /* lighter aurora to save GPU */
 
-  /* — Force long words to break in cards — */
-  .orca-glass *, .orca-panel * { overflow-wrap: anywhere; }
+  /* — Prevent long content from causing overflow without splitting every label into vertical letters — */
+  .orca-glass *, .orca-panel * { overflow-wrap: break-word; word-break: normal; }
+  .orca-metric-label, .orca-chart-title, .orca-metric-value {
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+  }
 
   /* — Sticky CTA bar at bottom — */
   .orca-mobile-sticky-cta {

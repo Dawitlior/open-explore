@@ -46,22 +46,22 @@ export const ChartWrapper = ({ T, title, explanation, children, style, unit, cha
   };
 
   return (
-    <GlassCard T={T} style={{ position: 'relative', ...style }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+    <GlassCard T={T} style={{ position: 'relative', minWidth: 0, maxWidth: '100%', ...style }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, gap: 8, minWidth: 0 }}>
         <div
-          style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
+          style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', minWidth: 0 }}
           onClick={handleInfoClick}
         >
-          <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{title}</div>
-          {unit && <span style={{ fontSize: 8, padding: '1px 5px', borderRadius: 4, background: `${T.accent.purple}15`, color: T.accent.purple, fontWeight: 600 }}>{unit}</span>}
+          <div className="orca-chart-title" style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</div>
+          {unit && <span style={{ fontSize: 8, padding: '1px 5px', borderRadius: 4, background: `${T.accent.purple}15`, color: T.accent.purple, fontWeight: 600, flexShrink: 0 }}>{unit}</span>}
         </div>
         <button
           onClick={handleInfoClick}
           style={{
-            width: 18, height: 18, borderRadius: '50%', border: `1px solid ${T.border.medium}`,
+            width: 18, height: 18, minWidth: 18, minHeight: 18, borderRadius: '50%', border: `1px solid ${T.border.medium}`,
             background: 'transparent', color: T.text.muted,
             cursor: 'pointer', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            transition: 'all 0.2s'
+            transition: 'all 0.2s', flexShrink: 0,
           }}
         >
           i

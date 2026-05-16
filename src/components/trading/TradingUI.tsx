@@ -32,10 +32,12 @@ export const GlassCard = ({ children, style, glow, onClick, className }: GlassCa
     style={{
       // Optional glow ring when explicitly requested
       ...(glow ? { boxShadow: `0 0 24px -4px ${glow}, 0 12px 40px -12px hsl(0 0% 0% / 0.6)` } : {}),
+      minWidth: 0,
+      boxSizing: 'border-box',
       ...style,
     }}
   >
-    <div className="relative z-10">{children}</div>
+    <div className="relative z-10 min-w-0">{children}</div>
   </motion.div>
 );
 
@@ -61,9 +63,9 @@ export const MetricCard = ({ label, value, suffix, color, small, T, onInfoClick 
     'text-foreground';
 
   return (
-    <GlassCard T={T} style={{ minWidth: small ? 100 : 120, flex: 1 }}>
+    <GlassCard T={T} className="orca-metric-card" style={{ minWidth: small ? 100 : 120, flex: 1 }}>
       <div className="flex items-center justify-between mb-2">
-        <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-medium">{label}</div>
+        <div className="orca-metric-label text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-medium min-w-0 leading-snug">{label}</div>
         {onInfoClick && (
           <button
             onClick={onInfoClick}
@@ -76,11 +78,14 @@ export const MetricCard = ({ label, value, suffix, color, small, T, onInfoClick 
       <div
         data-numeric="true"
         className={cn(
-          'font-mono font-semibold leading-tight tracking-tight',
+          'orca-metric-value font-mono font-semibold leading-tight tracking-tight',
           small ? 'text-xl' : 'text-[26px]',
           tone,
         )}
-        style={color && !['cyan','red','green'].some(k => color === (T.accent as any)[k]) ? { color } : undefined}
+        style={{
+          fontSize: small ? 'clamp(16px, 5vw, 20px)' : 'clamp(18px, 6.4vw, 26px)',
+          ...(color && !['cyan','red','green'].some(k => color === (T.accent as any)[k]) ? { color } : {}),
+        }}
       >
         {typeof value === 'number'
           ? (suffix === '%'
@@ -109,9 +114,9 @@ export const ScoreGauge = ({ score, label, color, T, description, onInfoClick }:
   const c = 2 * Math.PI * 40;
   const off = c - (score / 100) * c;
   return (
-    <GlassCard T={T} style={{ textAlign: 'center', minWidth: 140, flex: 1 }}>
+    <GlassCard T={T} className="orca-score-gauge" style={{ textAlign: 'center', minWidth: 140, flex: 1 }}>
       <div className="flex items-center justify-center gap-1.5" style={{ marginBottom: description ? 4 : 10 }}>
-        <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-medium">{label}</div>
+        <div className="orca-metric-label text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-medium leading-snug">{label}</div>
         {onInfoClick && (
           <button
             onClick={onInfoClick}
