@@ -18,6 +18,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/integrations/supabase/client';
 import { translateAuthError } from '@/lib/auth-utils';
 import { toast } from 'sonner';
+import { useIsMobile } from '@/hooks/use-mobile';
 import type { Trade } from '@/data/trades';
 import { AvatarUploader } from './AvatarUploader';
 
