@@ -103,6 +103,10 @@ export default function AuthPage() {
   const [displayName, setDisplayName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [idleGate, setIdleGate] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return new URLSearchParams(window.location.search).get('idle') === '1';
+  });
   const c = COPY[lang];
   const isRTL = lang === 'he';
 
