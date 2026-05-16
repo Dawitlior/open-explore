@@ -374,13 +374,13 @@ export function InstallGuide({ T, t, isRTL }: Props) {
         {!installed && (
           <div style={{
             marginTop: 16, padding: 18, borderRadius: 14,
-            background: `linear-gradient(135deg, ${T.accent.amber || '#f59e0b'}10, ${T.accent.cyan}08)`,
-            border: `1px solid ${(T.accent.amber || '#f59e0b')}35`,
+            background: `linear-gradient(135deg, ${T.accent.orange}10, ${T.accent.cyan}08)`,
+            border: `1px solid ${(T.accent.orange)}35`,
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
               <div style={{
                 width: 32, height: 32, borderRadius: 10,
-                background: `${T.accent.amber || '#f59e0b'}25`,
+                background: `${T.accent.orange}25`,
                 display: 'grid', placeItems: 'center', fontSize: 18,
               }}>🤔</div>
               <div style={{ flex: 1, textAlign: isRTL ? 'right' : 'left' }}>
