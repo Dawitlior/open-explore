@@ -36,7 +36,8 @@ export const WeeklyReviewPage = ({ T, isRTL, trades, themeId }: Props) => {
   const [loadError, setLoadError] = useState(false);
   const { user } = useAuth();
   const uid = user?.id || 'anon';
-  const iframeSrc = `/weekly-review/index.html?uid=${encodeURIComponent(uid)}`;
+  const initialTheme = themeId ? (THEME_MAP[themeId] || 'night') : 'night';
+  const iframeSrc = `/weekly-review/index.html?uid=${encodeURIComponent(uid)}&theme=${initialTheme}&lang=${isRTL ? 'he' : 'en'}`;
 
   const sendTrades = useCallback(() => {
     const win = iframeRef.current?.contentWindow;
