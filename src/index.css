@@ -726,6 +726,9 @@ html, body, .orca-glass, .orca-panel, [class*="bg-"], [class*="text-"] {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 10px !important;
   }
+  [data-orca-dashboard="true"] [style*="grid-template-columns: 1fr 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
   [data-orca-dashboard="true"] .recharts-responsive-container,
   [data-orca-dashboard="true"] .recharts-wrapper,
   [data-orca-dashboard="true"] .recharts-surface { max-width: 100% !important; }
