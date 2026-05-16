@@ -46,7 +46,7 @@ export function useSettings() {
       setThemeState(migrated);
       if (m) setSystemModeState(m);
       if (o) setOperatingModeState(o);
-      if (l) setLangState(l);
+      if (l) { setLangState(l); writeCachedLang(l); }
       if (p !== undefined) setPrivacyModeState(p);
       applyThemeToDOM(migrated);
       prev.current = { theme: migrated, systemMode: m || 'standard', operatingMode: o || 'beginner' };
