@@ -103,6 +103,10 @@ export default function AuthPage() {
   const [displayName, setDisplayName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [idleGate, setIdleGate] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return new URLSearchParams(window.location.search).get('idle') === '1';
+  });
   const c = COPY[lang];
   const isRTL = lang === 'he';
 
@@ -401,6 +405,71 @@ export default function AuthPage() {
           </div>
         </div>
       </section>
+
+      {idleGate && (
+        <div
+          onClick={() => { setIdleGate(false); try { window.history.replaceState({}, '', '/auth'); } catch { /* noop */ } }}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 50,
+            background: 'radial-gradient(circle at 50% 40%, rgba(8,14,26,0.92), rgba(0,0,0,0.96))',
+            backdropFilter: 'blur(14px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            direction: isRTL ? 'rtl' : 'ltr',
+            cursor: 'pointer',
+            animation: 'orca-idle-fadebg 0.35s ease forwards',
+          }}
+        >
+          <style>{`
+            @keyframes orca-idle-fadebg { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes orca-auth-rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+          `}</style>
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: 'min(440px, 92vw)', textAlign: 'center', padding: '40px 28px',
+              background: 'linear-gradient(180deg, rgba(15,24,44,0.92), rgba(8,14,26,0.98))',
+              border: '1px solid rgba(125,160,220,0.22)', borderRadius: 28,
+              boxShadow: '0 40px 100px rgba(0,0,0,0.7)',
+              animation: 'orca-auth-rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+            }}
+          >
+            <div style={{
+              width: 72, height: 72, borderRadius: 22, margin: '0 auto 18px',
+              background: 'linear-gradient(135deg, #38bdf8, #a78bfa)',
+              display: 'grid', placeItems: 'center', fontSize: 34,
+              boxShadow: '0 18px 44px rgba(56,189,248,0.45)',
+            }}>🐋</div>
+            <div style={{
+              fontSize: 10, letterSpacing: '0.28em', color: '#38bdf8',
+              fontWeight: 800, textTransform: 'uppercase', marginBottom: 8,
+            }}>
+              {lang === 'he' ? 'הפלטפורמה ננעלה' : 'Session locked'}
+            </div>
+            <h2 style={{ fontSize: 24, margin: '0 0 10px', fontWeight: 800, letterSpacing: '-0.01em', color: '#e8eef9' }}>
+              {lang === 'he' ? 'ברוך שובך ל-OrcaInvestment' : 'Welcome back to OrcaInvestment'}
+            </h2>
+            <p style={{ fontSize: 13, color: '#7a8aa3', lineHeight: 1.7, margin: '0 0 24px' }}>
+              {lang === 'he'
+                ? 'לאבטחתך, ננעלת המערכת לאחר חוסר פעילות. לחץ להמשיך לכניסה לחשבון שלך.'
+                : "For your security, the session was locked after inactivity. Tap to continue and sign back in."}
+            </p>
+            <button
+              onClick={() => { setIdleGate(false); try { window.history.replaceState({}, '', '/auth'); } catch { /* noop */ } }}
+              style={{
+                width: '100%', padding: '14px 18px', borderRadius: 16,
+                border: 'none', cursor: 'pointer',
+                background: 'linear-gradient(135deg, #38bdf8, #a78bfa)',
+                color: '#04101f', fontSize: 15, fontWeight: 800,
+                boxShadow: '0 14px 36px rgba(56,189,248,0.45)',
+                fontFamily: "'Poppins', system-ui, sans-serif",
+                letterSpacing: '0.02em',
+              }}
+            >
+              {lang === 'he' ? 'המשך לכניסה →' : 'Continue to sign in →'}
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

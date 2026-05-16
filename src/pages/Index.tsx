@@ -19,6 +19,7 @@ import { PrivacyMask, usePrivacyShortcut } from '@/components/trading/PrivacyMas
 import { TradeForm } from '@/components/trading/TradeForm';
 import { ResetModal } from '@/components/trading/ResetModal';
 import { SettingsHub } from '@/components/trading/SettingsHub';
+import { IdleTimeoutModal } from '@/components/IdleTimeoutModal';
 import { NavAvatar } from '@/components/trading/NavAvatar';
 import ImportLoadingOverlay from '@/components/trading/ImportLoadingOverlay';
 import { FeatureHint } from '@/components/trading/FeatureHint';
@@ -1754,6 +1755,7 @@ const Index = () => {
       {showTradeForm && <TradeForm T={T} t={t} isRTL={isRTL} trade={editingTrade} currentBalance={currentBalance} onSave={handleSaveTrade} onClose={() => { setShowTradeForm(false); setEditingTrade(null); }} />}
       {showReset && <ResetModal T={T} t={t} isRTL={isRTL} onConfirm={handleReset} onClose={() => setShowReset(false)} />}
       {showSettings && <SettingsHub T={T} isRTL={isRTL} open={showSettings} onClose={() => setShowSettings(false)} theme={settings.theme} setTheme={settings.setTheme} stats={stats} lang={settings.lang} setLang={settings.setLang} privacyMode={settings.privacyMode} setPrivacyMode={settings.setPrivacyMode} trades={trades} />}
+      <IdleTimeoutModal isRTL={isRTL} lang={settings.lang as 'he' | 'en'} />
       {riskAlert && <RiskLimitAlert T={T} isRTL={isRTL} status={riskAlert} onClose={dismissRiskAlert} />}
       {showRiskExplanation && <RiskExplanationModal T={T} isRTL={isRTL} tradeId={showRiskExplanation.tradeId} riskChange={showRiskExplanation.riskChange} onSave={handleSaveRiskExplanation} onClose={() => setShowRiskExplanation(null)} />}
       {showFeatureModal && <FeatureManifestModal T={T} isRTL={isRTL} onClose={() => setShowFeatureModal(false)} />}
