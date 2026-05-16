@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { Trade } from '@/data/trades';
 import { AvatarUploader } from './AvatarUploader';
+import { InstallGuide } from './InstallGuide';
 
 interface SettingsHubProps {
   T: TradingTheme;
