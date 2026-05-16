@@ -864,15 +864,8 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                       </ScatterChart>
                     </ResponsiveContainer>
                   </Frame>
-                  <Frame title={t('מפת חשיפה לפי נכס','Asset Exposure Map')} subtitle={t('ריכוז Risk — איפה אתה מוטה','Risk concentration — where you are exposed')} tone="purple" badge={`${treemapData.length} assets`}>
-                    <ResponsiveContainer width="100%" height={290}>
-                      <Treemap
-                        data={treemapData}
-                        dataKey="size"
-                        stroke={T.bg.primary}
-                        fill="url(#orca-g-purple)"
-                      />
-                    </ResponsiveContainer>
+                  <Frame title={t('מפת חשיפה לפי נכס','Asset Exposure Map')} subtitle={t('ריכוז Risk — איפה אתה מוטה','Risk concentration — where you are exposed')} tone="purple" badge={`${treemapData.length} ${t('נכסים','assets')}`}>
+                    <ExposureMap data={treemapData} T={T} isRTL={t('rtl','ltr') === 'rtl'} />
                   </Frame>
                 </>
               )}
