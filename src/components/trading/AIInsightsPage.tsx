@@ -379,9 +379,18 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
   [trades]);
 
   const treemapData = useMemo(() => {
-    const map: Record<string, number> = {};
-    trades.forEach(t => { map[t.coin] = (map[t.coin] || 0) + Math.abs(t.pnl); });
-    return Object.entries(map).map(([name, size]) => ({ name, size }));
+    const map: Record<string, { size: number; pnl: number; wins: number; losses: number; n: number }> = {};
+    trades.forEach(t => {
+      if (!map[t.coin]) map[t.coin] = { size: 0, pnl: 0, wins: 0, losses: 0, n: 0 };
+      map[t.coin].size += Math.abs(t.pnl);
+      map[t.coin].pnl += t.pnl;
+      map[t.coin].n += 1;
+      if (t.winLoss === 'Win') map[t.coin].wins += 1;
+      else if (t.winLoss === 'Loss') map[t.coin].losses += 1;
+    });
+    return Object.entries(map)
+      .map(([name, v]) => ({ name, ...v }))
+      .sort((a, b) => b.size - a.size);
   }, [trades]);
 
   const monthlyData = useMemo(() => {
