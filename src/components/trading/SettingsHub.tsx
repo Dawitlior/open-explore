@@ -973,6 +973,20 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                         <X size={13} /> {t('הסר פלטה', 'Remove')}
                       </button>
                     )}
+                    <button
+                      onClick={() => {
+                        ui.removeCustomAccent();
+                        ui.removeCustomTheme();
+                        ui.unlockTheme();
+                        setTheme('midnight');
+                        setDraftAccent('#00f2ff');
+                        toast.success(t('הצבעים אופסו לברירת המחדל (חצות)', 'Colors reset to default (Midnight)'));
+                      }}
+                      style={{ ...ghostBtn, color: T.accent.blue, borderColor: `${T.accent.blue}55` }}
+                      title={t('אפס הכל לערכת חצות ברירת המחדל', 'Reset everything to the default Midnight theme')}
+                    >
+                      <RotateCcw size={13} /> {t('ברירת מחדל', 'Default')}
+                    </button>
                   </div>
 
                   {/* COLOR PICKER */}
