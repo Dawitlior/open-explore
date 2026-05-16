@@ -132,19 +132,17 @@ export const FeatureManifestModal = ({ T, isRTL, onClose }: FeatureManifestModal
               <h2 style={{
                 fontSize: 15, fontWeight: 700, color: T.text.primary, margin: '0 0 10px',
                 fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.5,
-                direction: 'rtl', textAlign: 'right',
+                direction: isRTL ? 'rtl' : 'ltr', textAlign: isRTL ? 'right' : 'left',
               }}>
-                מערכת Orca – סביבת עבודה לסוחר מקצועי
+                {copy.title}
               </h2>
               <p className="orca-manifest-intro" style={{
                 fontSize: 12, color: T.text.secondary, lineHeight: 1.8, margin: 0,
-                direction: 'rtl', textAlign: 'right',
+                direction: isRTL ? 'rtl' : 'ltr', textAlign: isRTL ? 'right' : 'left',
               }}>
-                מערכת זו נבנתה כדי לעזור לחברי קהילת Orca להפוך לסוחרים טובים יותר באמצעות משמעת, ניתוח נתונים וניהול סיכונים מתקדם.
-                <br />
-                הדאשבורד משלב יומן מסחר, יומן בק-טסט, ניתוח ביצועים, מעקב פסיכולוגי, ניהול סיכונים וכלי בינה מלאכותית לתמונה מלאה על תהליך המסחר.
-                <br />
-                המטרה של המערכת אינה לייצר איתותים, אלא לעזור לסוחר להבין את הביצועים שלו ולשפר את קבלת ההחלטות לאורך זמן.
+                {copy.intro.map((line, i) => (
+                  <span key={i}>{line}{i < copy.intro.length - 1 && <br />}</span>
+                ))}
               </p>
             </div>
             <button onClick={onClose} style={{
@@ -162,21 +160,19 @@ export const FeatureManifestModal = ({ T, isRTL, onClose }: FeatureManifestModal
           <div style={{
             padding: 16, marginBottom: 20,
             background: `${T.accent.orange}06`, border: `1px solid ${T.accent.orange}18`,
-            borderRadius: T.radius.md, direction: 'rtl', textAlign: 'right',
+            borderRadius: T.radius.md, direction: isRTL ? 'rtl' : 'ltr', textAlign: isRTL ? 'right' : 'left',
           }}>
             <div style={{ fontSize: 9, color: T.accent.orange, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
-              ⚠️ הבהרה חשובה
+              {copy.disclaimerTitle}
             </div>
             <p style={{ fontSize: 11, color: T.text.secondary, lineHeight: 1.8, margin: 0 }}>
-              המערכת אינה מערכת איתותים ואינה מספקת המלצות השקעה.
-              הנתונים והניתוחים המוצגים מבוססים על פעילות המסחר האישית של המשתמש ונועדו לצרכי למידה, שיפור תהליך המסחר ופיתוח משמעת מקצועית.
-              המסחר בשווקים פיננסיים כרוך בסיכון, ועל כל משתמש לפעול בהתאם לשיקול דעתו האישי.
+              {copy.disclaimer}
             </p>
           </div>
 
           {/* Feature sections */}
           <div className="orca-manifest-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
-            {SECTIONS.map((section, i) => (
+            {sections.map((section, i) => (
               <div
                 key={i}
                 style={{
@@ -190,12 +186,12 @@ export const FeatureManifestModal = ({ T, isRTL, onClose }: FeatureManifestModal
                   <span style={{ fontSize: 20 }}>{section.icon}</span>
                   <div style={{
                     fontSize: 12, fontWeight: 700, color: T.accent.cyan,
-                    fontFamily: "'JetBrains Mono', monospace", direction: 'rtl',
+                    fontFamily: "'JetBrains Mono', monospace", direction: isRTL ? 'rtl' : 'ltr',
                   }}>
                     {section.title}
                   </div>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, direction: 'rtl' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, direction: isRTL ? 'rtl' : 'ltr' }}>
                   {section.items.map((item, j) => (
                     <div key={j} style={{
                       display: 'flex', alignItems: 'center', gap: 8,
