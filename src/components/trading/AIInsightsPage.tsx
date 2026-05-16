@@ -656,6 +656,12 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
   return (
     <div dir={t('rtl','ltr')} style={{ fontFamily: "'Heebo', 'Inter', sans-serif" }}>
       {EliteDefs}
+      <AnimatePresence>
+        {showLowTradesPopup && (
+          <LowTradesPopup count={trades.length} T={T} isRTL={isRTL} onClose={() => setShowLowTradesPopup(false)} />
+        )}
+      </AnimatePresence>
+
       {/* HERO — central motherboard button */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 16px 28px' }}>
         <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.3em', marginBottom: 6 }}>
