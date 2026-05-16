@@ -219,35 +219,70 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
           overflow: 'hidden',
           maxHeight: isMobile ? 140 : 'none',
         }}>
-          <div style={{ padding: '20px 18px 14px' }}>
-            <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: T.text.muted, textTransform: 'uppercase', marginBottom: 4 }}>
-              ORCA OS
+          {!isMobile && (
+            <div style={{ padding: '20px 18px 14px' }}>
+              <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: T.text.muted, textTransform: 'uppercase', marginBottom: 4 }}>
+                ORCA OS
+              </div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: T.text.primary, letterSpacing: '-0.01em' }}>
+                {t('הגדרות', 'Settings')}
+              </div>
             </div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: T.text.primary, letterSpacing: '-0.01em' }}>
-              {t('הגדרות', 'Settings')}
-            </div>
-          </div>
+          )}
 
-          <div style={{ padding: '0 14px 12px' }}>
-            <div style={{ position: 'relative' }}>
-              <Search size={13} style={{ position: 'absolute', top: '50%', insetInlineStart: 11, transform: 'translateY(-50%)', color: T.text.muted, pointerEvents: 'none' }} />
-              <input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder={t('חיפוש בהגדרות', 'Search settings')}
-                style={{
-                  width: '100%', padding: `8px 12px 8px ${isRTL ? '12px' : '32px'}`, paddingInlineStart: 32,
-                  borderRadius: T.radius.sm, background: T.bg.tertiary,
-                  border: `1px solid ${T.border.subtle}`, color: T.text.primary,
-                  fontSize: 12, outline: 'none', fontFamily: sans, boxSizing: 'border-box',
-                }}
-                className="orca-settings-input"
-              />
+          {!isMobile && (
+            <div style={{ padding: '0 14px 12px' }}>
+              <div style={{ position: 'relative' }}>
+                <Search size={13} style={{ position: 'absolute', top: '50%', insetInlineStart: 11, transform: 'translateY(-50%)', color: T.text.muted, pointerEvents: 'none' }} />
+                <input
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder={t('חיפוש בהגדרות', 'Search settings')}
+                  style={{
+                    width: '100%', padding: `8px 12px 8px ${isRTL ? '12px' : '32px'}`, paddingInlineStart: 32,
+                    borderRadius: T.radius.sm, background: T.bg.tertiary,
+                    border: `1px solid ${T.border.subtle}`, color: T.text.primary,
+                    fontSize: 12, outline: 'none', fontFamily: sans, boxSizing: 'border-box',
+                  }}
+                  className="orca-settings-input"
+                />
+              </div>
             </div>
-          </div>
+          )}
 
-          <nav style={{ flex: 1, overflowY: 'auto', padding: '4px 10px 16px' }}>
-            {groups.map(group => (
+          <nav style={{
+            flex: 1,
+            overflowY: isMobile ? 'hidden' : 'auto',
+            overflowX: isMobile ? 'auto' : 'hidden',
+            padding: isMobile ? '10px 10px' : '4px 10px 16px',
+            display: isMobile ? 'flex' : 'block',
+            gap: isMobile ? 6 : 0,
+            WebkitOverflowScrolling: 'touch',
+          }}>
+            {isMobile ? (
+              filteredNav.map(item => {
+                const Icon = item.icon;
+                const active = tab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setTab(item.id)}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 6,
+                      padding: '8px 12px', borderRadius: T.radius.sm,
+                      background: active ? `${T.accent.cyan}18` : T.bg.tertiary,
+                      border: `1px solid ${active ? T.accent.cyan : T.border.subtle}`,
+                      color: active ? T.accent.cyan : T.text.secondary,
+                      fontFamily: sans, fontSize: 12, fontWeight: active ? 700 : 500,
+                      whiteSpace: 'nowrap', cursor: 'pointer', flex: '0 0 auto',
+                    }}
+                  >
+                    <Icon size={13} strokeWidth={2.2} />
+                    {item.label[isRTL ? 'he' : 'en']}
+                  </button>
+                );
+              })
+            ) : groups.map(group => (
               <div key={group} style={{ marginBottom: 14 }}>
                 <div style={{
                   fontSize: 9.5, fontWeight: 800, letterSpacing: 1.8, color: T.text.dim,
