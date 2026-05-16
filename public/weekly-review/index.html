@@ -8970,19 +8970,29 @@ function TradingJournal() {
     if (Array.isArray(a)) {
       // Defensive sanitize: ensure every numeric field used by archive UIs is a finite number
       const N = (v, d = 0) => { const n = Number(v); return Number.isFinite(n) ? n : d; };
-      const safe = a.filter(r => r && typeof r === 'object').map(r => ({
-        ...r,
-        date: r.date || new Date().toISOString(),
-        r: N(r.r),
-        trades: N(r.trades),
-        violations: N(r.violations),
-        winR: N(r.winR),
-        lossR: N(r.lossR),
-        focusRating: r.focusRating == null ? null : N(r.focusRating),
-        executionScore: r.executionScore == null ? null : N(r.executionScore),
-        grade: r.grade || 'C',
-        tradeLog: Array.isArray(r.tradeLog) ? r.tradeLog : [],
-      }));
+      const isValidDate = d => typeof d === 'string' && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(d);
+      const safe = a
+        .filter(r => r && typeof r === 'object' && isValidDate(r.date))
+        .map(r => ({
+          ...r,
+          date: r.date,
+          r: N(r.r),
+          trades: N(r.trades),
+          violations: N(r.violations),
+          winR: N(r.winR),
+          lossR: N(r.lossR),
+          focusRating: r.focusRating == null ? null : N(r.focusRating),
+          executionScore: r.executionScore == null ? null : N(r.executionScore),
+          grade: r.grade || 'C',
+          tradeLog: Array.isArray(r.tradeLog) ? r.tradeLog.map(t => ({
+            ...t,
+            resultR: N(t && t.resultR),
+            riskReward: N(t && t.riskReward),
+            entryPrice: N(t && t.entryPrice),
+            stopLoss: N(t && t.stopLoss),
+            exitPrice: N(t && t.exitPrice),
+          })) : [],
+        }));
       setArchive(safe);
     }
     const t = localStorage.getItem("journal-theme");
@@ -9177,22 +9187,24 @@ function TradingJournal() {
     return acc;
   }, {});
   const monthSummaries = Object.entries(byMonth).map(([mk, rows]) => {
+    const N = v => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
     const allTrades = rows.flatMap(r => r.tradeLog || []);
     const setupPerf = getSetupBreakdown(allTrades);
-    const totalR = rows.reduce((s, r) => s + r.r, 0);
-    const wins = rows.filter(r => r.r > 0).length;
+    const totalR = rows.reduce((s, r) => s + N(r.r), 0);
+    const wins = rows.filter(r => N(r.r) > 0).length;
+    const rs = rows.map(r => N(r.r));
     return {
       month: mk,
       rows,
-      totalR,
-      trades: rows.reduce((s, r) => s + r.trades, 0),
-      violations: rows.reduce((s, r) => s + r.violations, 0),
+      totalR: N(totalR),
+      trades: rows.reduce((s, r) => s + N(r.trades), 0),
+      violations: rows.reduce((s, r) => s + N(r.violations), 0),
       weeks: rows.length,
-      avgR: rows.length ? totalR / rows.length : 0,
+      avgR: rows.length ? N(totalR) / rows.length : 0,
       bestGrade: rows.some(r => r.grade === "A+") ? "A+" : rows.some(r => r.grade === "B") ? "B" : "C",
       winRate: rows.length ? wins / rows.length * 100 : 0,
-      bestWeekR: rows.length ? Math.max(...rows.map(r => r.r)) : 0,
-      worstWeekR: rows.length ? Math.min(...rows.map(r => r.r)) : 0,
+      bestWeekR: rs.length ? Math.max(...rs) : 0,
+      worstWeekR: rs.length ? Math.min(...rs) : 0,
       riskBreaches: 0,
       setupPerformance: setupPerf
     };
