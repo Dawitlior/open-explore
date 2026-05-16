@@ -584,7 +584,7 @@ const Index = () => {
       <>
         {/* Session Focus Panel */}
         <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-          <GlassCard T={T} glow={T.accent.cyanGlow} style={{ flex: 2, minWidth: 300 }}>
+          <GlassCard T={T} glow={T.accent.cyanGlow} style={{ flex: 2, minWidth: isMobile ? 0 : 300, width: isMobile ? '100%' : undefined }}>
             <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>{isRTL ? '🔴 מצב חי — פוקוס ביצוע' : '🔴 LIVE — Execution Focus'}</div>
             <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
               <div>
@@ -602,7 +602,7 @@ const Index = () => {
             </div>
           </GlassCard>
           {/* Risk Exposure Meter */}
-          <GlassCard T={T} style={{ flex: 1, minWidth: 200, textAlign: 'center' }}>
+          <GlassCard T={T} style={{ flex: 1, minWidth: isMobile ? 0 : 200, width: isMobile ? '100%' : undefined, textAlign: 'center' }}>
             <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>{isRTL ? 'חשיפת סיכון' : 'Risk Exposure'}</div>
             <svg width="100" height="55" viewBox="0 0 200 110" style={{ margin: '0 auto', display: 'block' }}>
               <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke={T.border.subtle} strokeWidth="12" strokeLinecap="round"/>
@@ -614,14 +614,14 @@ const Index = () => {
         </div>
         {/* Streak Pressure + Emotional Deviation */}
         <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-          <GlassCard T={T} style={{ flex: 1, minWidth: 200 }}>
+          <GlassCard T={T} style={{ flex: 1, minWidth: isMobile ? 0 : 200, width: isMobile ? '100%' : undefined }}>
             <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{isRTL ? 'לחץ רצף' : 'Streak Pressure'}</div>
             <div style={{ padding: 14, borderRadius: T.radius.md, textAlign: 'center', background: stats.maxConsecLosses >= 3 ? `${T.accent.red}10` : stats.currentStreak >= 3 && stats.streakType === 'Win' ? `${T.accent.green}10` : `${T.accent.blue}08`, border: `1px solid ${stats.maxConsecLosses >= 3 ? T.accent.red : T.accent.green}20` }}>
               <div style={{ fontSize: 28, marginBottom: 4 }}>{stats.maxConsecLosses >= 3 ? '🔥' : stats.currentStreak >= 3 ? '🚀' : '⚖️'}</div>
               <div style={{ fontSize: 12, fontWeight: 600, color: T.text.primary }}>{stats.maxConsecLosses >= 3 ? (isRTL ? 'צינון מומלץ' : 'Cool-Off Recommended') : stats.currentStreak >= 3 ? (isRTL ? 'מומנטום חיובי' : 'Positive Momentum') : (isRTL ? 'ניטרלי' : 'Neutral')}</div>
             </div>
           </GlassCard>
-          <GlassCard T={T} style={{ flex: 1, minWidth: 200 }}>
+          <GlassCard T={T} style={{ flex: 1, minWidth: isMobile ? 0 : 200, width: isMobile ? '100%' : undefined }}>
             <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{isRTL ? 'סטייה רגשית' : 'Emotional Deviation'}</div>
             {trades.slice(-5).map(tr => (
               <div key={tr.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: `1px solid ${T.border.subtle}`, fontSize: 11 }}>
@@ -630,7 +630,7 @@ const Index = () => {
               </div>
             ))}
           </GlassCard>
-          <GlassCard T={T} style={{ flex: 1, minWidth: 200 }}>
+          <GlassCard T={T} style={{ flex: 1, minWidth: isMobile ? 0 : 200, width: isMobile ? '100%' : undefined }}>
             <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{isRTL ? 'מד מסחר יתר' : 'Overtrading Monitor'}</div>
             <div style={{ textAlign: 'center', padding: 10 }}>
               {(() => {
@@ -688,7 +688,7 @@ const Index = () => {
           <div style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
             <MetricCard T={T} label={t.netPnl} value={stats.totalPnl} color={stats.totalPnl >= 0 ? T.accent.cyan : T.accent.red} onInfoClick={() => handleExplainClick(t.netPnl, EXPLANATIONS.netPnl)} />
             <MetricCard T={T} label={t.winRate} value={stats.winRate} suffix="%" color={T.accent.green} onInfoClick={() => handleExplainClick(t.winRate, EXPLANATIONS.winRate)} />
-            <GlassCard T={T} glow={T.accent.cyanGlow} style={{ flex: 1, minWidth: 170 }}>
+            <GlassCard T={T} glow={T.accent.cyanGlow} style={{ flex: 1, minWidth: isMobile ? 0 : 170, width: isMobile ? '100%' : undefined }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{t.expectancy}</div>
@@ -749,7 +749,7 @@ const Index = () => {
             <div style={{ marginTop: 14, animation: 'fadeIn 0.3s ease' }}>
               {/* Equity + P&L */}
               <div style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
-                {isChartVisible('equityCurve') && <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.equityCurve} explanation={EXPLANATIONS.equityCurve} unit="$" chartId="equityCurve" onRemove={handleHideChart} style={{ flex: 2, minWidth: 380 }}>
+                {isChartVisible('equityCurve') && <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.equityCurve} explanation={EXPLANATIONS.equityCurve} unit="$" chartId="equityCurve" onRemove={handleHideChart} style={{ flex: 2, minWidth: isMobile ? 0 : 380, width: isMobile ? '100%' : undefined }}>
                   <ResponsiveContainer width="100%" height={190}>
                     <AreaChart data={stats.equityCurve}>
                       <defs><linearGradient id="eqGAdv" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.6}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.25}/></linearGradient></defs>
@@ -758,7 +758,7 @@ const Index = () => {
                     </AreaChart>
                   </ResponsiveContainer>
                 </ChartWrapper>}
-                {isChartVisible('pnlDistribution') && <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.pnlDistribution} explanation={EXPLANATIONS.pnlDistribution} unit="$" chartId="pnlDistribution" onRemove={handleHideChart} style={{ flex: 1, minWidth: 260 }}>
+                {isChartVisible('pnlDistribution') && <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.pnlDistribution} explanation={EXPLANATIONS.pnlDistribution} unit="$" chartId="pnlDistribution" onRemove={handleHideChart} style={{ flex: 1, minWidth: isMobile ? 0 : 260, width: isMobile ? '100%' : undefined }}>
                   <ResponsiveContainer width="100%" height={190}>
                     <BarChart data={trades.map(tr => ({ id: tr.id, pnl: tr.pnl }))}>
                       <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 10 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
@@ -769,7 +769,7 @@ const Index = () => {
               </div>
               {/* Radar + Direction + Quick Stats */}
               <div style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
-                {isChartVisible('radarScore') && <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ציון Orca — פירוט' : 'Orca Score — Breakdown'} explanation={EXPLANATIONS.radarScore} chartId="radarScore" onRemove={handleHideChart} style={{ flex: 1, minWidth: 260 }}>
+                {isChartVisible('radarScore') && <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ציון Orca — פירוט' : 'Orca Score — Breakdown'} explanation={EXPLANATIONS.radarScore} chartId="radarScore" onRemove={handleHideChart} style={{ flex: 1, minWidth: isMobile ? 0 : 260, width: isMobile ? '100%' : undefined }}>
                   <ResponsiveContainer width="100%" height={170}>
                     <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="68%">
                       <PolarGrid stroke={T.border.medium} /><PolarAngleAxis dataKey="m" tick={{ fill: T.text.muted, fontSize: 9 }} /><PolarRadiusAxis tick={false} domain={[0, 100]} axisLine={false} />
@@ -777,14 +777,14 @@ const Index = () => {
                     </RadarChart>
                   </ResponsiveContainer>
                 </ChartWrapper>}
-                {isChartVisible('coinPerformance') && <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.coinPerformance} explanation={EXPLANATIONS.coinPerformance} unit="$" chartId="coinPerformance" onRemove={handleHideChart} style={{ flex: 1, minWidth: 280 }}>
+                {isChartVisible('coinPerformance') && <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.coinPerformance} explanation={EXPLANATIONS.coinPerformance} unit="$" chartId="coinPerformance" onRemove={handleHideChart} style={{ flex: 1, minWidth: isMobile ? 0 : 280, width: isMobile ? '100%' : undefined }}>
                   <ResponsiveContainer width="100%" height={190}>
                     <BarChart data={stats.coinPerf} layout="vertical"><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis type="number" tick={{ fill: T.text.muted, fontSize: 10 }} /><YAxis dataKey="coin" type="category" tick={{ fill: T.text.secondary, fontSize: 11 }} width={45} />
                       <Tooltip contentStyle={tt} /><Bar dataKey="pnl" radius={[0,4,4,0]}>{stats.coinPerf.map((c, i) => <Cell key={i} fill={c.pnl >= 0 ? T.accent.green : T.accent.red} />)}</Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </ChartWrapper>}
-                <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.directionAnalysis} explanation={EXPLANATIONS.directionAnalysis} style={{ flex: 1, minWidth: 240 }}>
+                <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.directionAnalysis} explanation={EXPLANATIONS.directionAnalysis} style={{ flex: 1, minWidth: isMobile ? 0 : 240, width: isMobile ? '100%' : undefined }}>
                   <ResponsiveContainer width="100%" height={140}>
                     <PieChart><Pie data={stats.directionData} dataKey="trades" nameKey="name" cx="50%" cy="50%" innerRadius={38} outerRadius={60} paddingAngle={4} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}><Cell fill={T.accent.green} /><Cell fill={T.accent.red} /></Pie><Tooltip contentStyle={tt} /></PieChart>
                   </ResponsiveContainer>
@@ -814,7 +814,7 @@ const Index = () => {
               </GlassCard>
               {/* Alpha additions */}
               {isAlpha && <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.riskEvolution} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ flex: 1, minWidth: 300 }}>
+                <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.riskEvolution} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ flex: 1, minWidth: isMobile ? 0 : 300, width: isMobile ? '100%' : undefined }}>
                   <ResponsiveContainer width="100%" height={160}>
                     <LineChart data={riskData.riskGrowthEvolution}>
                       <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="tradeId" tick={{ fill: T.text.muted, fontSize: 10 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
@@ -822,7 +822,7 @@ const Index = () => {
                     </LineChart>
                   </ResponsiveContainer>
                 </ChartWrapper>
-                <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ביצועים חודשיים (R)' : 'Monthly Performance (R)'} explanation={EXPLANATIONS.monthlyPerformance} unit="R" style={{ flex: 1, minWidth: 250 }}>
+                <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ביצועים חודשיים (R)' : 'Monthly Performance (R)'} explanation={EXPLANATIONS.monthlyPerformance} unit="R" style={{ flex: 1, minWidth: isMobile ? 0 : 250, width: isMobile ? '100%' : undefined }}>
                   {stats.monthlyPerf.map((mp, i) => (
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px solid ${T.border.subtle}` }}>
                       <span style={{ fontSize: 12, color: T.text.secondary }}>{mp.month}</span>
@@ -859,7 +859,7 @@ const Index = () => {
             { l: 'Avg Win R', v: `+${stats.avgWinR.toFixed(2)}R`, c: T.accent.green, u: 'R' },
             { l: 'Avg Loss R', v: `-${stats.avgLossR.toFixed(2)}R`, c: T.accent.red, u: 'R' },
           ].map((m, i) => (
-            <GlassCard T={T} key={i} style={{ flex: 1, minWidth: 130, padding: 12 }}>
+            <GlassCard T={T} key={i} style={{ flex: 1, minWidth: isMobile ? 0 : 130, width: isMobile ? '100%' : undefined, padding: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}>
                 <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{m.l}</div>
                 <span style={{ fontSize: 7, padding: '1px 3px', borderRadius: 3, background: `${T.accent.purple}12`, color: T.accent.purple, fontWeight: 700 }}>{m.u}</span>
