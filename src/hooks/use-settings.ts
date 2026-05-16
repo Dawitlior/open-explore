@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { getSetting, setSetting } from '@/lib/storage';
 import { applyThemeToDOM } from '@/lib/trading-theme';
+import { writeCachedLang } from '@/hooks/use-lang';
 
 export type ThemeId = 'midnight' | 'indigo' | 'platinum';
 export type SystemMode = 'standard' | 'alpha';
