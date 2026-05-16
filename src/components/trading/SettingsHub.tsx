@@ -58,6 +58,7 @@ const TOKEN_LIST = [
 
 export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, lang, setLang, privacyMode, setPrivacyMode, trades }: SettingsHubProps) {
   const [tab, setTab] = useState<TabId>('account');
+  const isMobile = useIsMobile();
   const [search, setSearch] = useState('');
   const dash = useDashboardConfig();
   const ui = useUIPrefs();
