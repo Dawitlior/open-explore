@@ -179,7 +179,16 @@ export function useTrades() {
         return;
       }
 
-      const rebalanced = recalcBalances([...existing, ...additions]);
+      // Sort the combined set chronologically by date (oldest → newest),
+      // then renumber ids so the trade list reflects true chronology
+      // instead of pushing imports to the top.
+      const combined = [...existing, ...additions].sort((a, b) => {
+        const da = new Date(String(a.date || '').replace(' ', 'T')).getTime() || 0;
+        const db = new Date(String(b.date || '').replace(' ', 'T')).getTime() || 0;
+        return da - db;
+      }).map((t, i) => ({ ...t, id: i + 1 }));
+
+      const rebalanced = recalcBalances(combined);
       try {
         await saveTrades(rebalanced);
         tradesRef.current = rebalanced;

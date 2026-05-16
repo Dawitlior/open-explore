@@ -379,9 +379,18 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
   [trades]);
 
   const treemapData = useMemo(() => {
-    const map: Record<string, number> = {};
-    trades.forEach(t => { map[t.coin] = (map[t.coin] || 0) + Math.abs(t.pnl); });
-    return Object.entries(map).map(([name, size]) => ({ name, size }));
+    const map: Record<string, { size: number; pnl: number; wins: number; losses: number; n: number }> = {};
+    trades.forEach(t => {
+      if (!map[t.coin]) map[t.coin] = { size: 0, pnl: 0, wins: 0, losses: 0, n: 0 };
+      map[t.coin].size += Math.abs(t.pnl);
+      map[t.coin].pnl += t.pnl;
+      map[t.coin].n += 1;
+      if (t.winLoss === 'Win') map[t.coin].wins += 1;
+      else if (t.winLoss === 'Loss') map[t.coin].losses += 1;
+    });
+    return Object.entries(map)
+      .map(([name, v]) => ({ name, ...v }))
+      .sort((a, b) => b.size - a.size);
   }, [trades]);
 
   const monthlyData = useMemo(() => {
@@ -855,15 +864,8 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
                       </ScatterChart>
                     </ResponsiveContainer>
                   </Frame>
-                  <Frame title={t('מפת חשיפה לפי נכס','Asset Exposure Map')} subtitle={t('ריכוז Risk — איפה אתה מוטה','Risk concentration — where you are exposed')} tone="purple" badge={`${treemapData.length} assets`}>
-                    <ResponsiveContainer width="100%" height={290}>
-                      <Treemap
-                        data={treemapData}
-                        dataKey="size"
-                        stroke={T.bg.primary}
-                        fill="url(#orca-g-purple)"
-                      />
-                    </ResponsiveContainer>
+                  <Frame title={t('מפת חשיפה לפי נכס','Asset Exposure Map')} subtitle={t('ריכוז Risk — איפה אתה מוטה','Risk concentration — where you are exposed')} tone="purple" badge={`${treemapData.length} ${t('נכסים','assets')}`}>
+                    <ExposureMap data={treemapData} T={T} isRTL={t('rtl','ltr') === 'rtl'} />
                   </Frame>
                 </>
               )}
@@ -1371,5 +1373,70 @@ const DeepInsightCard: React.FC<{ ins: DeepInsight; T: TradingTheme; delay: numb
         </div>
       </GlassCard>
     </motion.div>
+  );
+};
+
+// ============================================================================
+// Asset Exposure Map — clean, label-correct, no overlapping text.
+// Replaces the broken Recharts Treemap. Shows ranked assets with
+// risk-weighted bars, P&L sign, win/loss split, and percentage of total.
+// ============================================================================
+interface ExposureRow { name: string; size: number; pnl: number; wins: number; losses: number; n: number; }
+const ExposureMap = ({ data, T, isRTL }: { data: ExposureRow[]; T: any; isRTL: boolean }) => {
+  if (!data || data.length === 0) {
+    return (
+      <div style={{ height: 290, display: 'grid', placeItems: 'center', color: T.text.dim, fontSize: 12 }}>
+        {isRTL ? 'אין נתוני חשיפה' : 'No exposure data yet'}
+      </div>
+    );
+  }
+  const total = data.reduce((s, d) => s + d.size, 0) || 1;
+  const rows = data.slice(0, 10);
+  return (
+    <div style={{ height: 290, overflowY: 'auto', padding: '4px 2px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {rows.map((row) => {
+        const pct = (row.size / total) * 100;
+        const isPositive = row.pnl >= 0;
+        const accent = isPositive ? T.accent.green : T.accent.red;
+        const winRate = row.n > 0 ? Math.round((row.wins / row.n) * 100) : 0;
+        return (
+          <div key={row.name} style={{
+            position: 'relative', padding: '10px 12px', borderRadius: 10,
+            background: T.bg.tertiary, border: `1px solid ${T.border.subtle}`,
+            overflow: 'hidden',
+          }}>
+            {/* Fill bar (absolute, behind text) */}
+            <div style={{
+              position: 'absolute', insetInlineStart: 0, top: 0, bottom: 0,
+              width: `${Math.max(4, pct)}%`,
+              background: `linear-gradient(90deg, ${accent}33, ${accent}11)`,
+              borderInlineEnd: `2px solid ${accent}88`,
+              transition: 'width .35s ease',
+            }} />
+            {/* Content */}
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <span style={{
+                fontFamily: "'JetBrains Mono', monospace", fontWeight: 800, fontSize: 13,
+                color: T.text.primary, letterSpacing: 0.4, minWidth: 64,
+              }}>{row.name}</span>
+              <span style={{
+                fontSize: 10, padding: '2px 8px', borderRadius: 999,
+                background: `${accent}22`, color: accent, fontWeight: 700,
+                fontFamily: "'JetBrains Mono', monospace",
+              }}>{pct.toFixed(1)}%</span>
+              <span style={{ fontSize: 10.5, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>
+                {row.n} {isRTL ? 'עסקאות' : 'trades'} · {winRate}% WR
+              </span>
+              <span style={{
+                marginInlineStart: 'auto', fontSize: 12, fontWeight: 700,
+                color: accent, fontFamily: "'JetBrains Mono', monospace",
+              }}>
+                {isPositive ? '+' : ''}${row.pnl.toFixed(0)}
+              </span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 };
