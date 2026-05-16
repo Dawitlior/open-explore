@@ -252,10 +252,11 @@ type Pack = typeof CHART_PACKS[number];
 /* ──────────────────────────────────────────────────────────────── */
 
 export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => {
-  const { t } = useLang();
+  const { t, isRTL } = useLang();
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<ReturnType<typeof analyzeDeep> | null>(null);
   const [pack, setPack] = useState<Pack>('radar+heat');
+  const [showLowTradesPopup, setShowLowTradesPopup] = useState(false);
   const runCount = useRef(0);
 
   const tt = {
@@ -270,12 +271,14 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
 
   const run = useCallback(() => {
     if (loading) return;
+    if (trades.length < 10) {
+      setShowLowTradesPopup(true);
+      return;
+    }
     setLoading(true);
-    // pick a different pack
     runCount.current++;
     const next = CHART_PACKS[runCount.current % CHART_PACKS.length];
     setPack(next);
-    // royal loading window
     setTimeout(() => {
       setAnalysis(analyzeDeep(trades));
       setLoading(false);
