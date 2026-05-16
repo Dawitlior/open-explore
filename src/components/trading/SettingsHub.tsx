@@ -326,35 +326,36 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
             )}
           </nav>
 
-          {/* footer mini-account */}
-          <div style={{
-            padding: '12px 14px', borderTop: `1px solid ${T.border.subtle}`,
-            display: 'flex', alignItems: 'center', gap: 10,
-          }}>
+          {!isMobile && (
             <div style={{
-              width: 32, height: 32, borderRadius: '50%',
-              background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.purple})`,
-              display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 800,
-              color: T.bg.primary, flexShrink: 0,
-            }}>{(auth.user?.email || '?').charAt(0).toUpperCase()}</div>
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: T.text.primary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} dir="ltr">
-                {auth.user?.email ?? '—'}
+              padding: '12px 14px', borderTop: `1px solid ${T.border.subtle}`,
+              display: 'flex', alignItems: 'center', gap: 10,
+            }}>
+              <div style={{
+                width: 32, height: 32, borderRadius: '50%',
+                background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.purple})`,
+                display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 800,
+                color: T.bg.primary, flexShrink: 0,
+              }}>{(auth.user?.email || '?').charAt(0).toUpperCase()}</div>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: T.text.primary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} dir="ltr">
+                  {auth.user?.email ?? '—'}
+                </div>
+                <div style={{ fontSize: 9.5, color: T.text.muted, fontFamily: mono }}>
+                  {t('מחובר/ת', 'Signed in')}
+                </div>
               </div>
-              <div style={{ fontSize: 9.5, color: T.text.muted, fontFamily: mono }}>
-                {t('מחובר/ת', 'Signed in')}
-              </div>
+              <button
+                onClick={async () => { await auth.signOut(); window.location.href = '/auth'; }}
+                title={t('התנתק', 'Sign out')}
+                style={{
+                  width: 30, height: 30, borderRadius: T.radius.sm,
+                  background: 'transparent', border: `1px solid ${T.border.medium}`,
+                  color: T.accent.orange, cursor: 'pointer', display: 'grid', placeItems: 'center',
+                }}
+              ><LogOut size={14} /></button>
             </div>
-            <button
-              onClick={async () => { await auth.signOut(); window.location.href = '/auth'; }}
-              title={t('התנתק', 'Sign out')}
-              style={{
-                width: 30, height: 30, borderRadius: T.radius.sm,
-                background: 'transparent', border: `1px solid ${T.border.medium}`,
-                color: T.accent.orange, cursor: 'pointer', display: 'grid', placeItems: 'center',
-              }}
-            ><LogOut size={14} /></button>
-          </div>
+          )}
         </aside>
 
         {/* CONTENT */}
