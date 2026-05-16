@@ -369,6 +369,85 @@ export function InstallGuide({ T, t, isRTL }: Props) {
             </div>
           </div>
         )}
+
+        {/* "Didn't work?" rescue block — always available */}
+        {!installed && (
+          <div style={{
+            marginTop: 16, padding: 18, borderRadius: 14,
+            background: `linear-gradient(135deg, ${T.accent.orange}10, ${T.accent.cyan}08)`,
+            border: `1px solid ${(T.accent.orange)}35`,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+              <div style={{
+                width: 32, height: 32, borderRadius: 10,
+                background: `${T.accent.orange}25`,
+                display: 'grid', placeItems: 'center', fontSize: 18,
+              }}>🤔</div>
+              <div style={{ flex: 1, textAlign: isRTL ? 'right' : 'left' }}>
+                <div style={{ fontWeight: 800, color: T.text.primary, fontSize: 14 }}>
+                  {t('לא הצלחתם?', "Didn't work?")}
+                </div>
+                <div style={{ fontSize: 11, color: T.text.muted }}>
+                  {t('אל דאגה — יש לנו עוד שתי דרכים מהירות להתקין את אורקה', "No worries — we have two more quick ways to install Orca")}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gap: 10 }}>
+              <button
+                onClick={handleInstallNow}
+                style={{
+                  width: '100%', padding: '14px 18px', borderRadius: 12,
+                  background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.green})`,
+                  border: 'none', color: T.bg.primary, fontWeight: 800, fontSize: 14, cursor: 'pointer',
+                  boxShadow: `0 10px 26px ${T.accent.cyan}45`, fontFamily: 'inherit',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                }}
+              >
+                <Download size={16} /> {t('נסו להוריד את זה מפה', "Try installing from here")}
+              </button>
+
+              <button
+                onClick={async () => {
+                  const url = location.origin;
+                  try {
+                    if (navigator.share) {
+                      await navigator.share({ title: 'Orca Investment', url });
+                      return;
+                    }
+                  } catch { /* user cancelled */ }
+                  try {
+                    await navigator.clipboard.writeText(url);
+                    toast.success(t('הקישור הועתק! פתח/י אותו בכרום או ספארי כדי להתקין', 'Link copied! Open it in Chrome or Safari to install'));
+                  } catch {
+                    toast.info(t(`העתק/י ידנית: ${url}`, `Copy manually: ${url}`));
+                  }
+                }}
+                style={{
+                  width: '100%', padding: '12px 16px', borderRadius: 12,
+                  background: 'transparent', border: `1.5px solid ${T.border.subtle}`,
+                  color: T.text.primary, fontWeight: 700, fontSize: 12, cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                }}
+              >
+                📤 {t('שלח/י לטלפון או העתק קישור', 'Send to phone or copy link')}
+              </button>
+
+              <div style={{
+                fontSize: 11, color: T.text.muted, lineHeight: 1.6,
+                padding: '10px 12px', borderRadius: 10,
+                background: T.bg.tertiary, border: `1px dashed ${T.border.subtle}`,
+                textAlign: isRTL ? 'right' : 'left',
+              }}>
+                💡 {t(
+                  'גם אם ההתקנה לא מצליחה — אורקה עובדת בדפדפן ב-100%. אפשר פשוט לסמן את האתר ב"מועדפים" / "Bookmark" (Ctrl+D או ⌘+D) ולגשת אליה מתי שרוצים.',
+                  'Even if installation fails, Orca works 100% in the browser. Just bookmark this site (Ctrl+D or ⌘+D) and open it anytime.'
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
