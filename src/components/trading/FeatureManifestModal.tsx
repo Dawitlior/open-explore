@@ -77,6 +77,9 @@ export const FeatureManifestModal = ({ T, isRTL, onClose }: FeatureManifestModal
     return () => window.removeEventListener('keydown', handleEsc);
   }, [handleEsc]);
 
+  const sections = isRTL ? SECTIONS_HE : SECTIONS_EN;
+  const copy = isRTL ? COPY.he : COPY.en;
+
   return (
     <div
       onClick={onClose}
