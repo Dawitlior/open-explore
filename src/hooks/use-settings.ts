@@ -28,7 +28,10 @@ export function useSettings() {
   const [theme, setThemeState] = useState<ThemeId>('midnight');
   const [systemMode, setSystemModeState] = useState<SystemMode>('standard');
   const [operatingMode, setOperatingModeState] = useState<OperatingMode>('beginner');
-  const [lang, setLangState] = useState<Lang>('he');
+  const [lang, setLangState] = useState<Lang>(() => {
+    if (typeof window === 'undefined') return 'he';
+    try { const v = window.localStorage.getItem('orca:lang-cache'); return v === 'en' ? 'en' : 'he'; } catch { return 'he'; }
+  });
   const [privacyMode, setPrivacyModeState] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const prev = useRef({ theme, systemMode, operatingMode });
