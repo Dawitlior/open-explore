@@ -859,7 +859,7 @@ const Index = () => {
             { l: 'Avg Win R', v: `+${stats.avgWinR.toFixed(2)}R`, c: T.accent.green, u: 'R' },
             { l: 'Avg Loss R', v: `-${stats.avgLossR.toFixed(2)}R`, c: T.accent.red, u: 'R' },
           ].map((m, i) => (
-            <GlassCard T={T} key={i} style={{ flex: 1, minWidth: isMobile ? 0 : 130, width: isMobile ? '100%' : undefined, padding: 12 }}>
+            <GlassCard T={T} key={i} className="orca-dashboard-stat-card" style={{ flex: isMobile ? '1 1 calc(50% - 5px)' : 1, minWidth: isMobile ? 0 : 130, width: isMobile ? 'auto' : undefined, padding: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}>
                 <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{m.l}</div>
                 <span style={{ fontSize: 7, padding: '1px 3px', borderRadius: 3, background: `${T.accent.purple}12`, color: T.accent.purple, fontWeight: 700 }}>{m.u}</span>
