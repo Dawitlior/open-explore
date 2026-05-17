@@ -356,25 +356,45 @@ function CredentialModal({
     if (!user) { toast.error(t('יש להתחבר תחילה', 'Please sign in first')); return; }
     if (!canSubmit) return;
     setBusy(true);
-    const payload = {
-      user_id: user.id,
-      provider: provider.id,
-      label: label.trim() || 'main',
-      api_key: apiKey.trim(),
-      api_secret: apiSecret.trim(),
-      scope: 'read_only',
-      is_active: true,
-    };
-    const { error } = await supabase
-      .from('exchange_credentials')
-      .upsert(payload as never, { onConflict: 'user_id,provider,label' });
+    const { data, error } = await supabase.functions.invoke('validate-exchange-credential', {
+      body: {
+        provider: provider.id,
+        label: label.trim() || 'main',
+        api_key: apiKey.trim(),
+        api_secret: apiSecret.trim(),
+      },
+    });
     setBusy(false);
-    if (error) {
-      console.error(error);
-      toast.error(t('שמירה נכשלה: ', 'Save failed: ') + error.message);
+
+    const payload = (data ?? {}) as { ok?: boolean; error?: string; reason?: string; detail?: string };
+
+    if (error || !payload.ok) {
+      if (payload.error === 'security_rejected') {
+        toast.error(
+          t('חיבור נדחה', 'Connection Refused'),
+          {
+            description: t(
+              'מפתח ה־API מכיל הרשאות מסחר או משיכה פעילות. למען בטיחותך, Orca מקבלת אך ורק מפתחות לקריאה בלבד (Read-Only).',
+              'This API key contains active Trading or Withdrawal permissions. For your security, Orca only accepts strictly Read-Only keys.'
+            ),
+            duration: 8000,
+          }
+        );
+      } else if (payload.error === 'verification_failed') {
+        toast.error(t('אימות מול הבורסה נכשל', 'Exchange verification failed'), {
+          description: t('בדוק חיבור אינטרנט ונסה שוב.', 'Check your connection and try again.'),
+        });
+      } else {
+        toast.error(
+          t('שמירה נכשלה: ', 'Save failed: ') + (payload.detail || payload.error || error?.message || 'unknown')
+        );
+      }
       return;
     }
-    toast.success(t(`הכספת עודכנה עבור ${provider.name}`, `Vault updated for ${provider.name}`));
+
+    toast.success(t(`הכספת עודכנה עבור ${provider.name}`, `Vault updated for ${provider.name}`), {
+      description: t('המפתח אומת כ־Read-Only ואוחסן בכספת.', 'Key verified as Read-Only and stored in the vault.'),
+    });
     setApiKey(''); setApiSecret('');
     onSaved();
   };
