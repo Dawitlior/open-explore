@@ -83,7 +83,7 @@ const ReminderBadge = () => (
 const Index = () => {
   const isMobile = useIsMobile();
   const settings = useSettings();
-  useUserPreferences(); // warm cache for centralized R-multiple Tier-3 proxy
+  const { prefs: userPrefs, loaded: userPrefsLoaded } = useUserPreferences(); // warm cache for centralized R-multiple Tier-3 proxy
   const { trades, stats, loading, initialized, addTrade, updateTrade, upsertJournalTrade, removeTrade, resetAll, importTrades, riskAlert, dismissRiskAlert, setManualR } = useTrades();
   const { limits: customRiskLimits } = useRiskLimits();
   const [entered, setEntered] = useState(() => sessionStorage.getItem('orca-entered') === '1');
