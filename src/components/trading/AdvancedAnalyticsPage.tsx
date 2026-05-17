@@ -331,6 +331,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
 
   return (
     <div dir={langRTL ? 'rtl' : 'ltr'} style={{ fontFamily: langRTL ? "'Heebo', 'Inter', sans-serif" : "'Inter', 'Heebo', sans-serif" }}>
+      <RProxyBanner T={T} isRTL={langRTL} />
       {/* HERO HEADER */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
