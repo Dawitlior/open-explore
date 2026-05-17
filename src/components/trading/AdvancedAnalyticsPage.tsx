@@ -33,7 +33,7 @@ import { GlassCard } from './TradingUI';
 import type { ChartExplanation } from './ChartWrapper';
 import { useLang } from '@/hooks/use-lang';
 import { RProxyBanner } from './RProxyBanner';
-import { getEffectiveR } from '@/lib/r-multiple';
+import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
 const AnalyticsQuantLab = lazy(() => import('./AnalyticsQuantLab').then(m => ({ default: m.AnalyticsQuantLab })));
 
 interface AdvancedAnalyticsPageProps {
@@ -81,16 +81,29 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
 
   /* ─────────── DERIVED DATA ─────────── */
 
-  // 1. Equity & drawdown overlay
+  const tradesByDay = useMemo(() => {
+    const byDay = new Map<string, Trade[]>();
+    for (const tr of trades) {
+      const key = (tr.date || '').slice(0, 10);
+      if (!key) continue;
+      const list = byDay.get(key) || [];
+      list.push(tr);
+      byDay.set(key, list);
+    }
+    return Array.from(byDay.entries()).sort(([a], [b]) => a.localeCompare(b));
+  }, [trades]);
+
+  // 1. Equity & drawdown overlay in R-space using day-level proxy aggregation
   const equityDD = useMemo(() => {
     let cum = 0, peak = 0;
-    return trades.map((t, i) => {
-      cum += t.pnl;
+    return tradesByDay.map(([day, dayTrades], i) => {
+      const { total } = sumDailyR(dayTrades);
+      cum += total;
       if (cum > peak) peak = cum;
-      const dd = peak > 0 ? -((peak - cum) / peak * 100) : 0;
-      return { id: i + 1, equity: cum, dd, pnl: t.pnl };
+      const dd = peak > 0 ? -((peak - cum) / Math.max(Math.abs(peak), 1) * 100) : 0;
+      return { id: i + 1, day: day.slice(5), equity: +cum.toFixed(3), dd: +dd.toFixed(2), pnl: dayTrades.reduce((s, t) => s + t.pnl, 0) };
     });
-  }, [trades]);
+  }, [tradesByDay]);
 
   // 2. R buckets
   const rBuckets = useMemo(() => {
@@ -207,6 +220,36 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
     return out;
   }, [trades]);
 
+  const effectiveStats = useMemo(() => {
+    const returns = trades.map(t => getEffectiveR(t));
+    if (!returns.length) return { expectancyR: 0, volAdjExpectancy: 0, kelly: 0, riskOfRuin: 0, bestR: 0, worstR: 0 };
+    const winsR = trades.filter(t => t.winLoss === 'Win').map(t => Math.abs(getEffectiveR(t)));
+    const lossesR = trades.filter(t => t.winLoss === 'Loss').map(t => Math.abs(getEffectiveR(t)));
+    const wins = winsR.length;
+    const losses = lossesR.length;
+    const winRate = wins / trades.length;
+    const lossRate = losses / trades.length;
+    const avgWinR = wins ? winsR.reduce((s, r) => s + r, 0) / wins : 0;
+    const avgLossR = losses ? lossesR.reduce((s, r) => s + r, 0) / losses : 0;
+    const expectancyR = (winRate * avgWinR) - (lossRate * avgLossR);
+    const mean = returns.reduce((s, r) => s + r, 0) / returns.length;
+    const variance = returns.reduce((s, r) => s + Math.pow(r - mean, 2), 0) / returns.length;
+    const sd = Math.sqrt(variance);
+    const payoffRatio = avgLossR > 0 ? avgWinR / avgLossR : 0;
+    const kelly = payoffRatio > 0 ? Math.max(0, Math.min(100, (winRate - ((1 - winRate) / payoffRatio)) * 100)) : 0;
+    const edge = expectancyR > 0 && avgLossR > 0 ? expectancyR / avgLossR : 0;
+    const ruinBase = edge > 0 ? Math.max(0, Math.min(0.99, (1 - edge) / (1 + edge))) : 1;
+    const riskOfRuin = edge > 0 ? Math.max(0, Math.min(99.9, Math.pow(ruinBase, 10) * 100)) : 99.9;
+    return {
+      expectancyR,
+      volAdjExpectancy: sd > 0 ? expectancyR / sd : 0,
+      kelly,
+      riskOfRuin,
+      bestR: Math.max(...returns),
+      worstR: Math.min(...returns),
+    };
+  }, [trades]);
+
   // 8. Direction split
   const dirSplit = useMemo(() => {
     const longs = trades.filter(t => t.direction === 'Long');
@@ -256,13 +299,14 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
   // B) Underwater curve — % below all-time peak
   const underwater = useMemo(() => {
     let cum = 0, peak = 0;
-    return trades.map((t, i) => {
-      cum += t.pnl;
+    return tradesByDay.map(([day, dayTrades], i) => {
+      const { total } = sumDailyR(dayTrades);
+      cum += total;
       if (cum > peak) peak = cum;
-      const uw = peak > 0 ? -((peak - cum) / peak) * 100 : 0;
-      return { i: i + 1, uw: +uw.toFixed(2) };
+      const uw = peak > 0 ? -((peak - cum) / Math.max(Math.abs(peak), 1)) * 100 : 0;
+      return { i: i + 1, day: day.slice(5), uw: +uw.toFixed(2) };
     });
-  }, [trades]);
+  }, [tradesByDay]);
 
   // C) Profit-factor evolution (cumulative gross-win / gross-loss)
   const pfEvolution = useMemo(() => {
@@ -354,14 +398,14 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
       {/* ═══ HERO KPI GRID — 8 tiles ═══ */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, marginBottom: 16 }}>
         {[
-          { label: t('תוחלת R','Expectancy R'), value: `${stats.expectancyR >= 0 ? '+' : ''}${stats.expectancyR.toFixed(3)}R`, color: stats.expectancyR >= 0 ? T.accent.cyan : T.accent.red },
+          { label: t('תוחלת R','Expectancy R'), value: `${effectiveStats.expectancyR >= 0 ? '+' : ''}${effectiveStats.expectancyR.toFixed(3)}R`, color: effectiveStats.expectancyR >= 0 ? T.accent.cyan : T.accent.red },
           { label: t('פקטור רווח','Profit Factor'), value: `${stats.profitFactor.toFixed(2)}x`, color: stats.profitFactor >= 1.5 ? T.accent.green : stats.profitFactor >= 1 ? T.accent.orange : T.accent.red },
           { label: t('אחוז הצלחה','Win Rate'), value: `${stats.winRate.toFixed(1)}%`, color: stats.winRate >= 50 ? T.accent.green : T.accent.orange },
           { label: t('יחס תשלום','Payoff Ratio'), value: `${payoff.toFixed(2)}`, color: T.accent.blue },
           { label: t('P&L מצטבר','Cumulative P&L'), value: <PV>{`${stats.totalPnl >= 0 ? '+' : ''}$${stats.totalPnl.toFixed(2)}`}</PV>, color: stats.totalPnl >= 0 ? T.accent.green : T.accent.red },
           { label: t('נסיגה מקס','Max Drawdown'), value: `${stats.maxDrawdown.toFixed(1)}%`, color: T.accent.orange },
-          { label: t('קלי אופטימלי','Optimal Kelly'), value: `${stats.kellyOptimal.toFixed(1)}%`, color: T.accent.purple },
-          { label: t('שארפ','Sharpe'), value: stats.volatilityAdjustedExpectancy.toFixed(2), color: T.accent.cyan },
+          { label: t('קלי אופטימלי','Optimal Kelly'), value: `${effectiveStats.kelly.toFixed(1)}%`, color: T.accent.purple },
+          { label: t('שארפ','Sharpe'), value: effectiveStats.volAdjExpectancy.toFixed(2), color: T.accent.cyan },
         ].map((k, i) => (
           <motion.div
             key={k.label}
@@ -382,7 +426,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700 }}>{t('עקומת הון מול נסיגה','Equity vs Drawdown')}</div>
           <div style={{ display: 'flex', gap: 14, fontSize: 10, color: T.text.muted }}>
-            <span>● <span style={{ color: T.accent.cyan }}>{t('הון מצטבר','Cumulative equity')}</span></span>
+            <span>● <span style={{ color: T.accent.cyan }}>{t('R מצטבר','Cumulative R')}</span></span>
             <span>● <span style={{ color: T.accent.red }}>{t('נסיגה (%)','Drawdown (%)')}</span></span>
           </div>
         </div>
@@ -400,9 +444,9 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
             </defs>
             <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
             <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 10 }} />
-            <YAxis yAxisId="L" tick={{ fill: T.text.muted, fontSize: 10 }} />
+            <YAxis yAxisId="L" tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => `${v}R`} />
             <YAxis yAxisId="R" orientation="right" tick={{ fill: T.text.muted, fontSize: 10 }} domain={['dataMin', 0]} />
-            <Tooltip contentStyle={tt} />
+            <Tooltip contentStyle={tt} formatter={(v: number, n: string) => n === 'equity' ? `${v.toFixed(2)}R` : `${v.toFixed(2)}%`} />
             <Area yAxisId="L" type="monotone" dataKey="equity" stroke={T.accent.cyan} strokeWidth={2.5} fill="url(#equityG)" />
             <Area yAxisId="R" type="monotone" dataKey="dd" stroke={T.accent.red} strokeWidth={1.5} fill="url(#ddG)" />
           </ComposedChart>
@@ -734,7 +778,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
                 <XAxis type="number" dataKey="wr" name={t("ניצחונות","Wins")} unit="%" domain={[0, 100]} tick={{ fill: T.text.muted, fontSize: 10 }} />
                 <YAxis type="number" dataKey="avgR" name={t("תוחלת R","Expectancy R")} tick={{ fill: T.text.muted, fontSize: 10 }} />
                 <ZAxis type="number" dataKey="n" range={[60, 380]} />
-                <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} formatter={(v: any, n: any, p: any) => [v, p.payload.coin]} />
+                <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} formatter={(v: number | string, _n: string, p: { payload?: { coin?: string } }) => [v, p.payload?.coin ?? '']} />
                 <Scatter data={quadrant}>
                   {quadrant.map((d, i) => (
                     <Cell key={i} fill={d.pnl >= 0 ? T.accent.green : T.accent.red} fillOpacity={0.75} />
@@ -797,7 +841,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
             { l: t('עסקה הכי טובה','Best trade'), v: `+${stats.bestTradeR.toFixed(2)}R`, c: T.accent.green },
             { l: t('עסקה הכי גרועה','Worst trade'), v: `${stats.worstTradeR.toFixed(2)}R`, c: T.accent.red },
             { l: t('נכסים פעילים','Active assets'), v: String(setupBoard.length), c: T.accent.blue },
-            { l: t('תקופת מסחר','Trading period'), v: `${edgeDecay.length} ${t('חלונות','windows')}`, c: T.accent.purple },
+            { l: t('סיכון קריסה','Risk of Ruin'), v: `${effectiveStats.riskOfRuin.toFixed(1)}%`, c: effectiveStats.riskOfRuin > 50 ? T.accent.red : T.accent.green },
           ].map((o, i) => (
             <div key={i} style={{ padding: 10, background: T.bg.tertiary, borderRadius: 8, borderInlineStart: `2px solid ${o.c}` }}>
               <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 3 }}>{o.l}</div>

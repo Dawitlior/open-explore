@@ -32,6 +32,8 @@ import type { TradingTheme } from '@/lib/trading-theme';
 import { GlassCard } from './TradingUI';
 import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
 
+type DayRPoint = { i: number; day: string; total: number; cum: number; trades: Trade[] };
+
 interface Props {
   T: TradingTheme;
   trades: Trade[];
@@ -59,6 +61,23 @@ export const AnalyticsQuantLab = ({ T, trades, privacyMode }: Props) => {
   const PV = ({ children }: { children: React.ReactNode }) => (
     <span style={privacyMode ? { filter: 'blur(8px)', userSelect: 'none' } : {}}>{children}</span>
   );
+
+  const dailyRSeries = useMemo<DayRPoint[]>(() => {
+    const byDay = new Map<string, Trade[]>();
+    for (const t of trades) {
+      const key = (t.date || '').slice(0, 10);
+      if (!key) continue;
+      const arr = byDay.get(key) || [];
+      arr.push(t);
+      byDay.set(key, arr);
+    }
+    let cum = 0;
+    return Array.from(byDay.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([day, dayTrades], i) => {
+      const { total } = sumDailyR(dayTrades);
+      cum += total;
+      return { i: i + 1, day: day.slice(5), total, cum: +cum.toFixed(3), trades: dayTrades };
+    });
+  }, [trades]);
 
   /* ── 1. R-Multiple histogram + bell curve overlay ── */
   const rHisto = useMemo(() => {
@@ -100,38 +119,24 @@ export const AnalyticsQuantLab = ({ T, trades, privacyMode }: Props) => {
 
   /* ── 3. Cumulative R (day-grouped, Tier-3 proxy for missing-SL days) ── */
   const cumR = useMemo(() => {
-    const byDay = new Map<string, Trade[]>();
-    for (const t of trades) {
-      const key = (t.date || '').slice(0, 10);
-      if (!key) continue;
-      const arr = byDay.get(key) || [];
-      arr.push(t);
-      byDay.set(key, arr);
-    }
-    const days = Array.from(byDay.keys()).sort();
-    let c = 0;
-    return days.map((day, i) => {
-      const { total } = sumDailyR(byDay.get(day)!);
-      c += total;
-      return { i: i + 1, r: +c.toFixed(3) };
-    });
-  }, [trades]);
+    return dailyRSeries.map(({ i, day, cum }) => ({ i, day, r: cum }));
+  }, [dailyRSeries]);
 
   /* ── 4. Rolling Calmar (mean R / max DD in window) ── */
   const rollingCalmar = useMemo(() => {
     const W = 20;
     const out: { i: number; calmar: number }[] = [];
-    for (let i = 0; i < trades.length; i++) {
+    for (let i = 0; i < dailyRSeries.length; i++) {
       const start = Math.max(0, i - W + 1);
-      const slice = trades.slice(start, i + 1);
+      const slice = dailyRSeries.slice(start, i + 1);
       if (slice.length < 5) { out.push({ i: i + 1, calmar: 0 }); continue; }
-      const mean = slice.reduce((s, t) => s + getEffectiveR(t), 0) / slice.length;
+      const mean = slice.reduce((s, d) => s + d.total, 0) / slice.length;
       let cum = 0, peak = 0, dd = 0;
-      slice.forEach(t => { cum += getEffectiveR(t); if (cum > peak) peak = cum; dd = Math.max(dd, peak - cum); });
+      slice.forEach(d => { cum += d.total; if (cum > peak) peak = cum; dd = Math.max(dd, peak - cum); });
       out.push({ i: i + 1, calmar: dd > 0 ? +(mean / dd).toFixed(3) : 0 });
     }
     return out;
-  }, [trades]);
+  }, [dailyRSeries]);
 
   /* ── 5. Recovery factor (gross profit / max DD $) ── */
   const recovery = useMemo(() => {

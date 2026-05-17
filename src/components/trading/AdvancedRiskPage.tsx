@@ -9,7 +9,7 @@ import { ChartWrapper, EXPLANATIONS } from './ChartWrapper';
 import { LazyChart } from './LazyChart';
 import type { ChartExplanation } from './ChartWrapper';
 import { checkRiskLimits, DEFAULT_RISK_LIMITS, type RiskLimits } from '@/lib/risk-limits';
-import { getEffectiveR } from '@/lib/r-multiple';
+import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
 
 type OperatingMode = 'live' | 'review' | 'research' | 'beginner';
 
@@ -81,6 +81,25 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, operatingMode = 'live', cu
 
   // ─── Live risk-limit status ──────────────────────────────────────
   const limitStatus = useMemo(() => checkRiskLimits(trades, new Date(), LIMITS_USED), [trades, LIMITS_USED]);
+
+  const rDrawdownCurve = useMemo(() => {
+    const byDay = new Map<string, Trade[]>();
+    for (const t of trades) {
+      const key = (t.date || '').slice(0, 10);
+      if (!key) continue;
+      const arr = byDay.get(key) || [];
+      arr.push(t);
+      byDay.set(key, arr);
+    }
+    let cum = 0, peak = 0;
+    return Array.from(byDay.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([day, dayTrades], i) => {
+      const { total } = sumDailyR(dayTrades);
+      cum += total;
+      if (cum > peak) peak = cum;
+      const dd = peak > 0 ? -((peak - cum) / Math.max(Math.abs(peak), 1) * 100) : 0;
+      return { trade: i + 1, day: day.slice(5), dd: +dd.toFixed(2), cumR: +cum.toFixed(3) };
+    });
+  }, [trades]);
 
   // ─── Composition matrix: Standard/Alpha × Beginner/Live/Review/Research ───
   const isBeginner = operatingMode === 'beginner';
@@ -498,7 +517,7 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, operatingMode = 'live', cu
         <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'ניתוח נסיגה' : 'Drawdown Analysis'} explanation={EXPLANATIONS.drawdown} unit="%" style={{ flex: 1, minWidth: 280 }}>
           <LazyChart height={190}>
             <ResponsiveContainer width="100%" height={190}>
-              <AreaChart data={(() => { let p = 0; return stats.equityCurve.map(e => { if (e.balance > p) p = e.balance; return { trade: e.trade, dd: p > 0 ? -((p - e.balance) / p * 100) : 0 }; }); })()}>
+              <AreaChart data={rDrawdownCurve}>
                 <defs><linearGradient id="dGadv" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.red} stopOpacity={0.25} /><stop offset="100%" stopColor={T.accent.red} stopOpacity={0.5} /></linearGradient></defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
                 <XAxis dataKey="trade" tick={{ fill: T.text.muted, fontSize: 10 }} />

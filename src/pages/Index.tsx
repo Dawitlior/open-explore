@@ -49,6 +49,7 @@ import { getDayRiskColor, checkRiskLimits, DEFAULT_RISK_LIMITS } from '@/lib/ris
 import { useRiskLimits } from '@/hooks/use-risk-limits';
 import { scopedStorage } from '@/lib/scoped-storage';
 import { useAuth } from '@/hooks/use-auth';
+import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
 
 // ─── Facebook-style red notification badge with "1" ───
 const ReminderBadge = () => (
@@ -213,7 +214,7 @@ const Index = () => {
     const wins = monthTrades.filter(tr => tr.winLoss === 'Win').length;
     const losses = monthTrades.filter(tr => tr.winLoss === 'Loss').length;
     const totalPnl = monthTrades.reduce((s, tr) => s + tr.pnl, 0);
-    const totalR = monthTrades.reduce((s, tr) => s + tr.returnR, 0);
+    const totalR = monthTrades.reduce((s, tr) => s + getEffectiveR(tr), 0);
     const winRate = monthTrades.length ? (wins / monthTrades.length) * 100 : 0;
     const expectancyR = monthTrades.length ? totalR / monthTrades.length : 0;
     // Streak within this month
@@ -917,7 +918,7 @@ const Index = () => {
 
           <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'מפת נסיגה' : 'Drawdown Depth Map'} explanation={EXPLANATIONS.drawdown} unit="%">
             <ResponsiveContainer width="100%" height={isAlpha?120:200}>
-              <AreaChart data={(() => { let p = 200; return stats.equityCurve.map(e => { if (e.balance > p) p = e.balance; return { trade: e.trade, dd: -((p - e.balance) / p * 100) }; }); })()}>
+              <AreaChart data={(() => { let p = 0; return stats.equityCurve.map(e => { if (e.balance > p) p = e.balance; return { trade: e.trade, dd: p > 0 ? -((p - e.balance) / Math.max(Math.abs(p), 1) * 100) : 0 }; }); })()}>
                 <defs><linearGradient id="ddGRRes" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.red} stopOpacity={0.25}/><stop offset="100%" stopColor={T.accent.red} stopOpacity={0.6}/></linearGradient></defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="trade" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 9 }} domain={['dataMin', 0]} />
                 <Tooltip contentStyle={tt} formatter={(v: number) => `${v.toFixed(2)}%`} /><Area type="monotone" dataKey="dd" stroke={T.accent.red} fill="url(#ddGRRes)" strokeWidth={2} />
@@ -976,7 +977,7 @@ const Index = () => {
             <ResponsiveContainer width="100%" height={200}>
               <ScatterChart><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
                 <XAxis dataKey="deviation" name="Deviation" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis dataKey="returnR" name="R-Multiple" tick={{ fill: T.text.muted, fontSize: 9 }} /><ZAxis dataKey="risk" range={[40, 90]} />
-                <Tooltip contentStyle={tt} cursor={{ strokeDasharray: '3 3' }} /><ReferenceLine y={0} stroke={T.border.medium} strokeDasharray="2 2" /><Scatter data={trades.map(tr => ({ deviation: tr.deviation, returnR: tr.returnR, risk: tr.risk, coin: tr.coin }))} fill={T.accent.cyan} fillOpacity={0.85} stroke={T.bg.card} strokeWidth={1} />
+                <Tooltip contentStyle={tt} cursor={{ strokeDasharray: '3 3' }} /><ReferenceLine y={0} stroke={T.border.medium} strokeDasharray="2 2" /><Scatter data={trades.map(tr => ({ deviation: tr.deviation, returnR: getEffectiveR(tr), risk: tr.risk, coin: tr.coin }))} fill={T.accent.cyan} fillOpacity={0.85} stroke={T.bg.card} strokeWidth={1} />
               </ScatterChart>
             </ResponsiveContainer>
           </ChartWrapper>
@@ -987,29 +988,46 @@ const Index = () => {
             {isRTL ? 'מעבדת קוונט · גרפים דקיקים מתקדמים' : 'QUANT LAB · slim advanced visualisations'}
           </div>
           {(() => {
+            const effectiveRs = trades.map(tr => getEffectiveR(tr));
+            const dailyRSeries = (() => {
+              const byDay = new Map<string, Trade[]>();
+              trades.forEach(tr => {
+                const key = (tr.date || '').slice(0, 10);
+                if (!key) return;
+                const arr = byDay.get(key) || [];
+                arr.push(tr);
+                byDay.set(key, arr);
+              });
+              let c = 0;
+              return Array.from(byDay.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([day, dayTrades], i) => {
+                const { total } = sumDailyR(dayTrades);
+                c += total;
+                return { i: i + 1, day, total, cum: c };
+              });
+            })();
             // Rolling Sortino — downside-only volatility ratio (window 20)
             const W = 20;
             const sortino = trades.map((_, i) => {
-              const slice = trades.slice(Math.max(0, i - W + 1), i + 1).map(x => x.returnR);
+              const slice = effectiveRs.slice(Math.max(0, i - W + 1), i + 1);
               const mean = slice.reduce((s, x) => s + x, 0) / slice.length;
               const downs = slice.filter(x => x < 0);
               const dd = Math.sqrt(downs.reduce((s, x) => s + x * x, 0) / Math.max(downs.length, 1));
               return { i: i + 1, sortino: dd > 0 ? +(mean / dd).toFixed(3) : 0 };
             });
             // R-return histogram (bins of 0.5R)
-            const minR = Math.floor(Math.min(...trades.map(t => t.returnR), 0) * 2) / 2;
-            const maxR = Math.ceil(Math.max(...trades.map(t => t.returnR), 0) * 2) / 2;
+            const minR = Math.floor(Math.min(...effectiveRs, 0) * 2) / 2;
+            const maxR = Math.ceil(Math.max(...effectiveRs, 0) * 2) / 2;
             const bins: { bin: string; n: number; mid: number }[] = [];
             for (let b = minR; b <= maxR; b += 0.5) {
-              const n = trades.filter(t => t.returnR >= b && t.returnR < b + 0.5).length;
+              const n = effectiveRs.filter(r => r >= b && r < b + 0.5).length;
               bins.push({ bin: `${b.toFixed(1)}`, mid: b + 0.25, n });
             }
             // Lag-1 autocorrelation point cloud (R[i] vs R[i-1])
-            const acData = trades.slice(1).map((t, i) => ({ prev: trades[i].returnR, cur: t.returnR }));
+            const acData = effectiveRs.slice(1).map((r, i) => ({ prev: effectiveRs[i], cur: r }));
             // MAR ratio evolution: cumulative R / max DD R so far
-            let cumR = 0, peakR = 0, mddR = 0;
-            const mar = trades.map((t, i) => {
-              cumR += t.returnR;
+            let peakR = 0, mddR = 0;
+            const mar = dailyRSeries.map((d, i) => {
+              const cumR = d.cum;
               if (cumR > peakR) peakR = cumR;
               const dd = peakR - cumR;
               if (dd > mddR) mddR = dd;
@@ -1149,9 +1167,10 @@ const Index = () => {
                         if (!setupMap[s]) setupMap[s] = { trades: 0, wins: 0, totalR: 0, best: -Infinity, worst: Infinity };
                         setupMap[s].trades++;
                         if (tr.winLoss === 'Win') setupMap[s].wins++;
-                        setupMap[s].totalR += tr.returnR;
-                        setupMap[s].best = Math.max(setupMap[s].best, tr.returnR);
-                        setupMap[s].worst = Math.min(setupMap[s].worst, tr.returnR);
+                        const r = getEffectiveR(tr);
+                        setupMap[s].totalR += r;
+                        setupMap[s].best = Math.max(setupMap[s].best, r);
+                        setupMap[s].worst = Math.min(setupMap[s].worst, r);
                       });
                       return Object.entries(setupMap).sort((a, b) => b[1].totalR - a[1].totalR).slice(0, 8).map(([name, d]) => (
                         <tr key={name} style={{ borderBottom: `1px solid ${T.border.subtle}` }}>
@@ -1193,7 +1212,7 @@ const Index = () => {
                         if (!dayMap[day]) dayMap[day] = { trades: 0, wins: 0, totalR: 0, totalPnl: 0 };
                         dayMap[day].trades++;
                         if (tr.winLoss === 'Win') dayMap[day].wins++;
-                        dayMap[day].totalR += tr.returnR;
+                        dayMap[day].totalR += getEffectiveR(tr);
                         dayMap[day].totalPnl += tr.pnl;
                       });
                       return [1, 2, 3, 4, 5].filter(d => dayMap[d]).map(d => (
@@ -1288,7 +1307,7 @@ const Index = () => {
                     <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }}>{tr.exit}</td>
                     <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: tr.pnl >= 0 ? T.accent.green : T.accent.red }}><PV>{tr.pnl >= 0 ? '+' : ''}{tr.pnl.toFixed(2)}</PV></td>
                     {opMode !== 'live' && <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}` }}><TradingBadge color={tr.winLoss === 'Win' ? T.accent.green : tr.winLoss === 'Loss' ? T.accent.red : T.accent.orange}>{tr.winLoss}</TradingBadge></td>}
-                    <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }}>{tr.returnR.toFixed(2)}R</td>
+                    <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }}>{getEffectiveR(tr).toFixed(2)}R</td>
                     {isAlpha && <>
                       <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: tr.deviation > 0.1 ? T.accent.red : T.accent.green }}>{tr.deviation.toFixed(3)}R</td>
                       <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }}>{tr.leverage}x</td>
@@ -1315,7 +1334,7 @@ const Index = () => {
                 {[
                   { l: t.entry, v: selTrade.entry }, { l: t.stopLoss, v: selTrade.stopLoss, c: T.accent.red },
                   { l: t.exit, v: selTrade.exit }, { l: `${t.pnl} ($)`, v: `${selTrade.pnl >= 0 ? '+' : ''}$${selTrade.pnl.toFixed(4)}`, c: selTrade.pnl >= 0 ? T.accent.green : T.accent.red },
-                  { l: `${t.riskR} (R)`, v: `${selTrade.returnR.toFixed(2)}R` }, { l: t.deviation, v: selTrade.deviation ? selTrade.deviation.toFixed(4) + 'R' : '0', c: selTrade.deviation > 0 ? T.accent.orange : T.accent.green },
+                  { l: `${t.riskR} (R)`, v: `${getEffectiveR(selTrade).toFixed(2)}R` }, { l: t.deviation, v: selTrade.deviation ? selTrade.deviation.toFixed(4) + 'R' : '0', c: selTrade.deviation > 0 ? T.accent.orange : T.accent.green },
                   { l: t.leverage, v: `${selTrade.leverage}x` }, { l: `${t.balance} ($)`, v: `$${selTrade.balance.toFixed(2)}` },
                 ].map((item, i) => (<div key={i}><div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{item.l}</div><PV><div style={{ fontSize: 15, fontWeight: 600, color: item.c || T.text.primary, fontFamily: "'JetBrains Mono', monospace", marginTop: 2 }}>{item.v}</div></PV></div>))}
               </div>
