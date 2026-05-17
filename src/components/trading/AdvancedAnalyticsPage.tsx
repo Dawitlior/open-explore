@@ -33,6 +33,7 @@ import { GlassCard } from './TradingUI';
 import type { ChartExplanation } from './ChartWrapper';
 import { useLang } from '@/hooks/use-lang';
 import { RProxyBanner } from './RProxyBanner';
+import { getEffectiveR } from '@/lib/r-multiple';
 const AnalyticsQuantLab = lazy(() => import('./AnalyticsQuantLab').then(m => ({ default: m.AnalyticsQuantLab })));
 
 interface AdvancedAnalyticsPageProps {
