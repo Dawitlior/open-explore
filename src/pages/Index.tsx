@@ -107,6 +107,8 @@ const Index = () => {
   const [calMonth, setCalMonth] = useState(() => new Date().getMonth());
   const [calYear, setCalYear] = useState(() => new Date().getFullYear());
   const [selTrade, setSelTrade] = useState<Trade | null>(null);
+  const [journalPage, setJournalPage] = useState(0);
+  const JOURNAL_PAGE_SIZE = 50;
   const [showTradeForm, setShowTradeForm] = useState(false);
   const [editingTrade, setEditingTrade] = useState<Trade | null>(null);
   const [showReset, setShowReset] = useState(false);
