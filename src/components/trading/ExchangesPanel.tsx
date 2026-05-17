@@ -440,6 +440,7 @@ function CredentialModal({
   const [showSecret, setShowSecret] = useState(false);
   const [cooldownUntil, setCooldownUntil] = useState(0);
   const [nowTick, setNowTick] = useState(Date.now());
+  const [consecutiveFailures, setConsecutiveFailures] = useState(0);
 
   // Live tick while cooldown is active so the button re-enables crisply
   useEffect(() => {
@@ -463,9 +464,23 @@ function CredentialModal({
 
   const canSubmit = apiKey.trim().length >= 8 && apiSecret.trim().length >= 8 && !busy && !inCooldown;
 
+  // Escalating backoff: 1st fail = 2s, every subsequent fail adds +30s.
+  // (1=2s, 2=32s, 3=62s, 4=92s, ...)
+  const computeCooldownMs = (failures: number) =>
+    failures <= 0 ? 0 : (2 + (failures - 1) * 30) * 1000;
+
   const fireAlert = (a: Omit<AlertState, 'shakeKey'>) => {
     setAlertState({ ...a, shakeKey: Date.now() });
-    if (a.kind === 'error') setCooldownUntil(Date.now() + 3000);
+    if (a.kind === 'error') {
+      setConsecutiveFailures(prev => {
+        const next = prev + 1;
+        setCooldownUntil(Date.now() + computeCooldownMs(next));
+        return next;
+      });
+    } else if (a.kind === 'success') {
+      setConsecutiveFailures(0);
+      setCooldownUntil(0);
+    }
   };
 
   const submit = async () => {
