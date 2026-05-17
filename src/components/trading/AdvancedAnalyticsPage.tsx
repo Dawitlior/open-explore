@@ -32,6 +32,7 @@ import type { OperatingMode } from '@/hooks/use-settings';
 import { GlassCard } from './TradingUI';
 import type { ChartExplanation } from './ChartWrapper';
 import { useLang } from '@/hooks/use-lang';
+import { RProxyBanner } from './RProxyBanner';
 const AnalyticsQuantLab = lazy(() => import('./AnalyticsQuantLab').then(m => ({ default: m.AnalyticsQuantLab })));
 
 interface AdvancedAnalyticsPageProps {
@@ -330,6 +331,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
 
   return (
     <div dir={langRTL ? 'rtl' : 'ltr'} style={{ fontFamily: langRTL ? "'Heebo', 'Inter', sans-serif" : "'Inter', 'Heebo', sans-serif" }}>
+      <RProxyBanner T={T} isRTL={langRTL} />
       {/* HERO HEADER */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
