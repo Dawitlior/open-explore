@@ -633,19 +633,67 @@ function CredentialModal({
           <button
             onClick={submit}
             disabled={!canSubmit}
+            aria-busy={busy}
             style={{
+              position: 'relative', overflow: 'hidden',
               padding: '11px 18px', borderRadius: 10,
-              background: canSubmit ? provider.accent : T.bg.tertiary,
-              border: 'none',
-              color: canSubmit ? '#06121f' : T.text.muted,
+              minWidth: 168,
+              background: busy
+                ? 'linear-gradient(180deg, rgba(6,12,28,0.95), rgba(2,6,15,0.95))'
+                : inCooldown
+                ? 'rgba(255,59,92,0.10)'
+                : canSubmit ? provider.accent : T.bg.tertiary,
+              border: busy
+                ? `1px solid ${provider.accent}66`
+                : inCooldown
+                ? '1px solid rgba(255,59,92,0.45)'
+                : 'none',
+              color: busy
+                ? provider.accent
+                : inCooldown
+                ? '#ff8198'
+                : canSubmit ? '#06121f' : T.text.muted,
               cursor: canSubmit ? 'pointer' : 'not-allowed',
               fontWeight: 800, fontSize: 12.5, fontFamily: sans,
-              letterSpacing: 0.4, display: 'inline-flex', alignItems: 'center', gap: 8,
-              boxShadow: canSubmit ? `0 12px 28px -16px ${provider.accent}` : 'none',
+              letterSpacing: 0.4, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              boxShadow: busy
+                ? `0 0 22px -6px ${provider.accent}aa, inset 0 0 0 1px rgba(255,255,255,0.04)`
+                : inCooldown
+                ? '0 0 22px -10px rgba(255,59,92,0.6)'
+                : canSubmit ? `0 12px 28px -16px ${provider.accent}` : 'none',
+              transition: 'background .2s ease, color .2s ease, box-shadow .2s ease',
             }}
           >
-            {busy ? <Loader2 size={13} className="orca-spin" /> : <Plug size={13} />}
-            {t('חבר חשבון', 'Connect Account')}
+            {busy ? (
+              <>
+                {/* Premium data-stream loader replaces the label */}
+                <span style={{
+                  fontFamily: mono, fontSize: 10.5, fontWeight: 800,
+                  letterSpacing: 1.4, textTransform: 'uppercase',
+                }}>
+                  {t('מאמת…', 'Verifying…')}
+                </span>
+                <span style={{
+                  position: 'absolute', left: 0, right: 0, bottom: 0, height: 2,
+                  background: `linear-gradient(90deg, transparent, ${provider.accent}, transparent)`,
+                  backgroundSize: '200% 100%',
+                  animation: 'orcaStream 1.1s linear infinite',
+                  boxShadow: `0 0 10px ${provider.accent}`,
+                }} />
+              </>
+            ) : inCooldown ? (
+              <>
+                <Lock size={12} />
+                <span style={{ fontFamily: mono, letterSpacing: 1 }}>
+                  {t('נעול', 'Locked')} {(cooldownRemainingMs / 1000).toFixed(1)}s
+                </span>
+              </>
+            ) : (
+              <>
+                <Plug size={13} />
+                {t('חבר חשבון', 'Connect Account')}
+              </>
+            )}
           </button>
         </div>
 
