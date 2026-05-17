@@ -49,7 +49,8 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
   const totalPnl = dayTrades.reduce((s, tr) => s + tr.pnl, 0);
   const wins = dayTrades.filter(tr => tr.winLoss === 'Win').length;
   const losses = dayTrades.filter(tr => tr.winLoss === 'Loss').length;
-  const totalR = dayTrades.reduce((s, tr) => s + tr.returnR, 0);
+  const rAgg = sumR(dayTrades);
+  const totalR = rAgg.total;
   const rulesFollowed = dayTrades.filter(tr => tr.rules).length;
   const highDeviation = dayTrades.filter(tr => tr.deviation > 0.1);
   const allRulesFollowed = rulesFollowed === dayTrades.length;
