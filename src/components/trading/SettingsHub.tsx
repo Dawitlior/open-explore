@@ -1487,6 +1487,39 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
         </section>
       </div>
 
+      {/* ============ PERSONAL DATA WIPE (keeps Google / auth account) ============ */}
+      {showWipeModal && (
+        <ResetModal
+          T={T}
+          t={t as never}
+          isRTL={isRTL}
+          onClose={() => setShowWipeModal(false)}
+          onConfirm={async () => {
+            const uid = auth.user?.id;
+            if (!uid) throw new Error('not_authenticated');
+
+            // Cloud wipe — auth.users row is intentionally NOT touched, so
+            // the Google identity / email login stays fully functional.
+            const results = await Promise.all([
+              supabase.from('trades').delete().eq('user_id', uid),
+              supabase.from('journal_state').delete().eq('user_id', uid),
+              supabase.from('user_settings').delete().eq('user_id', uid),
+              supabase.from('exchange_credentials').delete().eq('user_id', uid),
+            ]);
+            const firstErr = results.find(r => r.error)?.error;
+            if (firstErr) throw new Error(firstErr.message);
+
+            try { await scopedStorage.wipeCurrentUser(); } catch { /* ignore */ }
+            try {
+              window.dispatchEvent(new CustomEvent('orca:trades-synced'));
+              window.dispatchEvent(new CustomEvent('orca:data-wiped'));
+            } catch { /* ignore */ }
+
+            toast.success(t('כל הנתונים האישיים נמחקו. החשבון שלך פעיל.', 'All personal data deleted. Your account is still active.'));
+          }}
+        />
+      )}
+
       {/* ============ THEME COMMIT CONFIRMATION ============ */}
       {showThemeConfirm && (
         <div
