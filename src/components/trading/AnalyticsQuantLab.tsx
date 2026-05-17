@@ -170,8 +170,8 @@ export const AnalyticsQuantLab = ({ T, trades, privacyMode }: Props) => {
   }, [trades]);
 
   /* ── 8. Top winners / losers ── */
-  const topW = useMemo(() => [...trades].sort((a, b) => b.returnR - a.returnR).slice(0, 5), [trades]);
-  const topL = useMemo(() => [...trades].sort((a, b) => a.returnR - b.returnR).slice(0, 5), [trades]);
+  const topW = useMemo(() => [...trades].sort((a, b) => getEffectiveR(b) - getEffectiveR(a)).slice(0, 5), [trades]);
+  const topL = useMemo(() => [...trades].sort((a, b) => getEffectiveR(a) - getEffectiveR(b)).slice(0, 5), [trades]);
 
   /* ── 9. Position size vs P&L ── */
   const sizePnl = useMemo(() =>
