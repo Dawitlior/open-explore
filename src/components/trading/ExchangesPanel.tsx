@@ -356,20 +356,54 @@ function CredentialModal({
     if (!user) { toast.error(t('יש להתחבר תחילה', 'Please sign in first')); return; }
     if (!canSubmit) return;
     setBusy(true);
-    const { data, error } = await supabase.functions.invoke('validate-exchange-credential', {
-      body: {
-        provider: provider.id,
-        label: label.trim() || 'main',
-        api_key: apiKey.trim(),
-        api_secret: apiSecret.trim(),
-      },
-    });
+
+    // Strict server-bound validation. We use raw fetch (not supabase.functions.invoke)
+    // because invoke() drops the JSON body on non-2xx responses — and we MUST
+    // read the structured `error` code to render the correct red warning toast.
+    // Raw credentials live in this request body only; never logged, never stored
+    // in component state once the call resolves.
+    let status = 0;
+    let payload: { ok?: boolean; error?: string; reason?: string; detail?: string } = {};
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) {
+        setBusy(false);
+        toast.error(t('יש להתחבר מחדש', 'Please sign in again'));
+        return;
+      }
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/validate-exchange-credential`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({
+          provider: provider.id,
+          label: label.trim() || 'main',
+          api_key: apiKey.trim(),
+          api_secret: apiSecret.trim(),
+        }),
+      });
+      status = res.status;
+      payload = await res.json().catch(() => ({}));
+    } catch (e) {
+      setBusy(false);
+      toast.error(t('שגיאת רשת', 'Network error'), {
+        description: t('לא ניתן להגיע לשרת. נסה שוב.', 'Could not reach the server. Please try again.'),
+      });
+      return;
+    }
     setBusy(false);
 
-    const payload = (data ?? {}) as { ok?: boolean; error?: string; reason?: string; detail?: string };
+    // STRICT GUARD: only HTTP 200 + payload.ok === true means a verified vault write.
+    // Anything else → card MUST remain Disconnected; modal stays open; red toast.
+    const verified = status === 200 && payload.ok === true;
 
-    if (error || !payload.ok) {
-      if (payload.error === 'security_rejected') {
+    if (!verified) {
+      if (status === 403 || payload.error === 'security_rejected') {
         toast.error(
           t('חיבור נדחה', 'Connection Refused'),
           {
@@ -380,18 +414,42 @@ function CredentialModal({
             duration: 8000,
           }
         );
-      } else if (payload.error === 'verification_failed') {
-        toast.error(t('אימות מול הבורסה נכשל', 'Exchange verification failed'), {
-          description: t('בדוק חיבור אינטרנט ונסה שוב.', 'Check your connection and try again.'),
+      } else if (status === 503 || payload.error === 'connection_error') {
+        toast.error(t('הבורסה לא זמינה כרגע', 'Exchange unavailable'), {
+          description: t(
+            'לא הצלחנו לאמת את המפתח מול הבורסה. החיבור נחסם עד לאימות מוצלח.',
+            'We could not verify the key against the exchange. Connection blocked until verification succeeds.'
+          ),
+          duration: 7000,
+        });
+      } else if (status === 429 || payload.error === 'rate_limited') {
+        toast.error(t('יותר מדי ניסיונות', 'Too many attempts'), {
+          description: t('המתן דקה ונסה שוב.', 'Please wait a minute and try again.'),
+        });
+      } else if (status === 401 || payload.error === 'unauthorized') {
+        toast.error(t('נדרשת התחברות מחדש', 'Re-authentication required'));
+      } else if (
+        payload.error === 'invalid_api_key' ||
+        payload.error === 'invalid_api_secret' ||
+        payload.error === 'invalid_label' ||
+        payload.error === 'invalid_body'
+      ) {
+        toast.error(t('קלט לא תקין', 'Invalid input'), {
+          description: t(
+            'המפתח או הסוד מכילים תווים אסורים. הדבק את הערכים בדיוק כפי שסופקו על ידי הבורסה.',
+            'The key or secret contains forbidden characters. Paste the values exactly as the exchange provided them.'
+          ),
         });
       } else {
         toast.error(
-          t('שמירה נכשלה: ', 'Save failed: ') + (payload.detail || payload.error || error?.message || 'unknown')
+          t('האימות נכשל', 'Verification failed'),
+          { description: payload.detail || payload.error || `HTTP ${status}` }
         );
       }
-      return;
+      return; // ❌ DO NOT close modal, DO NOT call onSaved → card stays Disconnected.
     }
 
+    // ✅ Verified by server. Now and ONLY now refresh the card list.
     toast.success(t(`הכספת עודכנה עבור ${provider.name}`, `Vault updated for ${provider.name}`), {
       description: t('המפתח אומת כ־Read-Only ואוחסן בכספת.', 'Key verified as Read-Only and stored in the vault.'),
     });
