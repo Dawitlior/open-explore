@@ -4,6 +4,7 @@ import type { TradingTheme } from '@/lib/trading-theme';
 import type { I18nStrings } from '@/lib/trading-i18n';
 import { TradingBadge } from './TradingUI';
 import { generateDayInsights, generateDaySummary } from '@/lib/ai-engine';
+import { getR, sumR, formatR } from '@/lib/r-multiple';
 
 interface CalendarModalProps {
   T: TradingTheme;
