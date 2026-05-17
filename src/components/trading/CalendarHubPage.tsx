@@ -5,6 +5,7 @@ import { CalendarModal } from '@/components/trading/CalendarModal';
 import { FeatureHint } from '@/components/trading/FeatureHint';
 import { getCalDays } from '@/lib/trading-analytics';
 import { getDayRiskColor, checkRiskLimits } from '@/lib/risk-limits';
+import { sumR, formatR } from '@/lib/r-multiple';
 
 type Props = {
   T: any; isRTL: boolean; trades: Trade[];
@@ -33,13 +34,21 @@ export const CalendarHubPage = ({ T, isRTL, trades, t, isMobile, onGenerateInsig
   }), [trades, calMonth, calYear]);
 
   const calDayPnl = useMemo(() => {
-    const m: Record<number, { pnl: number; trades: number; wins: number; details: Trade[] }> = {};
+    const m: Record<number, { pnl: number; trades: number; wins: number; details: Trade[]; rTotal: number; rValid: number; rMissing: number }> = {};
     monthTrades.forEach(tr => {
       const d = new Date(tr.date.replace(' ', 'T'));
       const day = d.getDate();
-      if (!m[day]) m[day] = { pnl: 0, trades: 0, wins: 0, details: [] };
+      if (!m[day]) m[day] = { pnl: 0, trades: 0, wins: 0, details: [], rTotal: 0, rValid: 0, rMissing: 0 };
       m[day].pnl += tr.pnl; m[day].trades++; if (tr.winLoss === 'Win') m[day].wins++;
       m[day].details.push(tr);
+    });
+    // Aggregate R per day via the centralized engine (ignores N/A).
+    Object.keys(m).forEach(k => {
+      const day = +k;
+      const agg = sumR(m[day].details);
+      m[day].rTotal = agg.total;
+      m[day].rValid = agg.validCount;
+      m[day].rMissing = agg.missingCount;
     });
     return m;
   }, [monthTrades]);
@@ -60,9 +69,9 @@ export const CalendarHubPage = ({ T, isRTL, trades, t, isMobile, onGenerateInsig
     const wins = monthTrades.filter(tr => tr.winLoss === 'Win').length;
     const losses = monthTrades.filter(tr => tr.winLoss === 'Loss').length;
     const totalPnl = monthTrades.reduce((s, tr) => s + tr.pnl, 0);
-    const totalR = monthTrades.reduce((s, tr) => s + tr.returnR, 0);
+    const rAgg = sumR(monthTrades);
     const winRate = monthTrades.length ? (wins / monthTrades.length) * 100 : 0;
-    return { count: monthTrades.length, wins, losses, totalPnl, totalR, winRate };
+    return { count: monthTrades.length, wins, losses, totalPnl, totalR: rAgg.total, rValid: rAgg.validCount, rMissing: rAgg.missingCount, winRate };
   }, [monthTrades]);
 
   const calRiskStatus = checkRiskLimits(trades);
@@ -328,8 +337,11 @@ export const CalendarHubPage = ({ T, isRTL, trades, t, isMobile, onGenerateInsig
                             <div style={{ fontSize: 22, fontWeight: 800, color: isDarkRed ? T.accent.red : dd.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace", marginTop: 6 }}>
                               {dd.pnl >= 0 ? '+' : '-'}${Math.abs(dd.pnl).toFixed(0)}
                             </div>
-                            <div style={{ fontSize: 11, color: T.text.muted, marginTop: 4 }}>
-                              {dd.trades} {isRTL ? 'עסקאות' : 'tr'} · {dd.wins}/{dd.trades} W
+                            <div style={{ fontSize: 11, color: T.text.muted, marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span>{dd.trades} {isRTL ? 'עסקאות' : 'tr'} · {dd.wins}/{dd.trades} W</span>
+                              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: dd.rValid === 0 ? T.text.muted : dd.rTotal >= 0 ? T.accent.green : T.accent.red }}>
+                                {dd.rValid === 0 ? 'N/A' : `${dd.rTotal >= 0 ? '+' : ''}${dd.rTotal.toFixed(1)}R`}
+                              </span>
                             </div>
                             {isHovered && (
                               <div style={{ fontSize: 10, color: T.text.secondary, marginTop: 6, lineHeight: 1.3, overflow: 'hidden' }}>

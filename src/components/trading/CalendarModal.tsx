@@ -4,6 +4,7 @@ import type { TradingTheme } from '@/lib/trading-theme';
 import type { I18nStrings } from '@/lib/trading-i18n';
 import { TradingBadge } from './TradingUI';
 import { generateDayInsights, generateDaySummary } from '@/lib/ai-engine';
+import { getR, sumR, formatR } from '@/lib/r-multiple';
 
 interface CalendarModalProps {
   T: TradingTheme;
@@ -48,7 +49,8 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
   const totalPnl = dayTrades.reduce((s, tr) => s + tr.pnl, 0);
   const wins = dayTrades.filter(tr => tr.winLoss === 'Win').length;
   const losses = dayTrades.filter(tr => tr.winLoss === 'Loss').length;
-  const totalR = dayTrades.reduce((s, tr) => s + tr.returnR, 0);
+  const rAgg = sumR(dayTrades);
+  const totalR = rAgg.total;
   const rulesFollowed = dayTrades.filter(tr => tr.rules).length;
   const highDeviation = dayTrades.filter(tr => tr.deviation > 0.1);
   const allRulesFollowed = rulesFollowed === dayTrades.length;
@@ -104,9 +106,11 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, fontSize: 11 }}>
         <div><span style={{ color: T.text.muted }}>Entry </span><span style={{ color: T.text.primary, fontFamily: "'JetBrains Mono', monospace" }}>{tr.entry}</span></div>
-        <div><span style={{ color: T.text.muted }}>SL </span><span style={{ color: T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{tr.stopLoss}</span></div>
+        <div><span style={{ color: T.text.muted }}>SL </span><span style={{ color: T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{tr.stopLoss || '—'}</span></div>
         <div><span style={{ color: T.text.muted }}>Exit </span><span style={{ color: T.text.primary, fontFamily: "'JetBrains Mono', monospace" }}>{tr.exit}</span></div>
-        <div><span style={{ color: T.text.muted }}>R </span><span style={{ color: tr.returnR >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{tr.returnR.toFixed(2)}R</span></div>
+        {(() => { const r = getR(tr); return (
+          <div><span style={{ color: T.text.muted }}>R </span><span style={{ color: r === null ? T.text.muted : r >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{formatR(r, 2)}</span></div>
+        ); })()}
       </div>
       {tr.comments && <div style={{ marginTop: 8, fontSize: 11, color: T.text.muted, fontStyle: 'italic' }}>"{tr.comments}"</div>}
     </div>
