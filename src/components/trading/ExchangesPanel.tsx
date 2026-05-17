@@ -643,7 +643,8 @@ function CredentialModal({
           </div>
         </div>
 
-        {/* Label */}
+        {/* Embedded Onboarding Guide (Phase 4) */}
+        <KeyGuide T={T} isRTL={isRTL} provider={provider} />
         <Field label={t('כינוי לחשבון', 'Account label')} T={T}>
           <input
             value={label}
