@@ -83,6 +83,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
   const [draftTheme, setDraftTheme] = useState<CustomTheme>(CUSTOM_THEME_DEFAULT);
   const [showStudioConfirm, setShowStudioConfirm] = useState(false);
   const [unlockStep, setUnlockStep] = useState<0 | 1 | 2>(0);
+  const [showWipeModal, setShowWipeModal] = useState(false);
   useEffect(() => { if (ui.prefs.customAccent) setDraftAccent(ui.prefs.customAccent); }, [ui.prefs.customAccent]);
   useEffect(() => { if (ui.prefs.customTheme) setDraftTheme(ui.prefs.customTheme); }, [ui.prefs.customTheme]);
 
