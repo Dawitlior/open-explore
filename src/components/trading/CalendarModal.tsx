@@ -17,6 +17,7 @@ interface CalendarModalProps {
   isMobile?: boolean;
   onClose: () => void;
   onGenerateInsight?: () => void;
+  onSetManualR?: (tradeId: number, value: number | null) => Promise<void> | void;
 }
 
 interface DayAIInsight {
