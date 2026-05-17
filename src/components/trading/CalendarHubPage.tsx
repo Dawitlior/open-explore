@@ -337,8 +337,11 @@ export const CalendarHubPage = ({ T, isRTL, trades, t, isMobile, onGenerateInsig
                             <div style={{ fontSize: 22, fontWeight: 800, color: isDarkRed ? T.accent.red : dd.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace", marginTop: 6 }}>
                               {dd.pnl >= 0 ? '+' : '-'}${Math.abs(dd.pnl).toFixed(0)}
                             </div>
-                            <div style={{ fontSize: 11, color: T.text.muted, marginTop: 4 }}>
-                              {dd.trades} {isRTL ? 'עסקאות' : 'tr'} · {dd.wins}/{dd.trades} W
+                            <div style={{ fontSize: 11, color: T.text.muted, marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span>{dd.trades} {isRTL ? 'עסקאות' : 'tr'} · {dd.wins}/{dd.trades} W</span>
+                              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: dd.rValid === 0 ? T.text.muted : dd.rTotal >= 0 ? T.accent.green : T.accent.red }}>
+                                {dd.rValid === 0 ? 'N/A' : `${dd.rTotal >= 0 ? '+' : ''}${dd.rTotal.toFixed(1)}R`}
+                              </span>
                             </div>
                             {isHovered && (
                               <div style={{ fontSize: 10, color: T.text.secondary, marginTop: 6, lineHeight: 1.3, overflow: 'hidden' }}>
