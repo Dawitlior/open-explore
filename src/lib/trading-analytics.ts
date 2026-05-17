@@ -152,6 +152,7 @@ export function computeAnalytics(trades: Trade[]): TradingStats {
 function _computeAnalyticsInternal(trades: Trade[]): TradingStats {
   const wins = trades.filter(t => t.winLoss === 'Win');
   const losses = trades.filter(t => t.winLoss === 'Loss');
+  const dailyRSeries = buildDailyRSeries(trades);
   const totalPnl = trades.reduce((s, t) => s + safeNum(t.pnl), 0);
   const winRate = trades.length > 0 ? (wins.length / trades.length) * 100 : 0;
   const avgWin = wins.length > 0 ? wins.reduce((s, t) => s + safeNum(t.pnl), 0) / wins.length : 0;
@@ -188,16 +189,20 @@ function _computeAnalyticsInternal(trades: Trade[]): TradingStats {
     else break;
   }
 
-  let peak = 200, maxDD = 0;
-  trades.forEach(t => {
-    const bal = safeNum(t.balance, 200);
-    if (bal > peak) peak = bal;
-    const dd = peak > 0 ? ((peak - bal) / peak) * 100 : 0;
-    if (dd > maxDD) maxDD = dd;
+  let peak = 0, maxDD = 0, runningR = 0;
+  dailyRSeries.forEach(d => {
+    runningR += d.r;
+    if (runningR > peak) peak = runningR;
+    const dd = peak > 0 ? ((peak - runningR) / Math.max(Math.abs(peak), 1)) * 100 : 0;
+    if (Number.isFinite(dd) && dd > maxDD) maxDD = dd;
   });
 
-  const equityCurve: EquityPoint[] = [{ trade: 0, balance: 200, pnl: 0 }];
-  trades.forEach((t, i) => equityCurve.push({ trade: i + 1, balance: safeNum(t.balance, 200), pnl: safeNum(t.pnl) }));
+  const equityCurve: EquityPoint[] = [{ trade: 0, balance: 0, pnl: 0 }];
+  let equityR = 0;
+  dailyRSeries.forEach((d, i) => {
+    equityR += d.r;
+    equityCurve.push({ trade: i + 1, balance: +equityR.toFixed(3), pnl: d.pnl });
+  });
 
   // Coin performance
   const coinMap: Record<string, { coin: string; pnl: number; trades: number; wins: number; totalR: number }> = {};
