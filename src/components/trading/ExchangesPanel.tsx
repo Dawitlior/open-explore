@@ -603,7 +603,7 @@ function CredentialModal({
         </div>
 
         {/* Actions */}
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', position: 'relative' }}>
           <button
             onClick={onClose}
             disabled={busy}
@@ -635,11 +635,271 @@ function CredentialModal({
           </button>
         </div>
 
+        {/* Cinematic in-modal alert overlay (replaces toasts) */}
+        {(busy || alertState) && (
+          <CinematicAlert
+            T={T}
+            isRTL={isRTL}
+            loading={busy}
+            alert={alertState}
+            onDismiss={() => setAlertState(null)}
+          />
+        )}
+
         <style>{`
           .orca-spin { animation: orcaSpin 0.9s linear infinite; }
           @keyframes orcaSpin { to { transform: rotate(360deg); } }
+          @keyframes orcaAlertIn {
+            0%   { opacity: 0; transform: translateY(8px) scale(0.96); filter: blur(6px); }
+            100% { opacity: 1; transform: translateY(0)   scale(1);    filter: blur(0); }
+          }
+          @keyframes orcaShake {
+            0%, 100% { transform: translateX(0); }
+            15%      { transform: translateX(-6px); }
+            30%      { transform: translateX(5px); }
+            45%      { transform: translateX(-4px); }
+            60%      { transform: translateX(3px); }
+            75%      { transform: translateX(-2px); }
+            90%      { transform: translateX(1px); }
+          }
+          @keyframes orcaPulseGlow {
+            0%, 100% { opacity: .55; transform: scale(1); }
+            50%      { opacity: 1;   transform: scale(1.08); }
+          }
+          @keyframes orcaRadarSweep {
+            0%   { transform: rotate(0deg);   opacity: 0; }
+            10%  { opacity: .9; }
+            90%  { opacity: .9; }
+            100% { transform: rotate(360deg); opacity: 0; }
+          }
+          @keyframes orcaScanLine {
+            0%   { transform: translateY(-100%); }
+            100% { transform: translateY(220%); }
+          }
+          @keyframes orcaStream {
+            0%   { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+          }
         `}</style>
       </div>
+    </div>
+  );
+}
+
+/* ====================== CINEMATIC ALERT BLOCK ====================== */
+function CinematicAlert({
+  T, isRTL, loading, alert, onDismiss,
+}: {
+  T: TradingTheme;
+  isRTL: boolean;
+  loading: boolean;
+  alert: { kind: 'success' | 'error'; title: string; body: string; code?: string; shakeKey: number } | null;
+  onDismiss: () => void;
+}) {
+  const sans = "'Poppins', sans-serif";
+  const mono = "'IBM Plex Mono', monospace";
+  const t = (he: string, en: string) => (isRTL ? he : en);
+
+  const isError = alert?.kind === 'error';
+  const isSuccess = alert?.kind === 'success';
+  const stateColor = loading ? '#00f2ff' : isError ? '#ff3b5c' : '#22e08a';
+  const stateGradient = loading
+    ? 'linear-gradient(135deg, rgba(0,242,255,0.95), rgba(20,20,28,0.4))'
+    : isError
+    ? 'linear-gradient(135deg, rgba(255,59,92,0.95), rgba(20,20,28,0.4))'
+    : 'linear-gradient(135deg, rgba(34,224,138,0.95), rgba(20,20,28,0.4))';
+
+  const subhead = loading
+    ? t('מאמת מול הבורסה', 'Verifying against exchange')
+    : isError ? t('חיבור נחסם', 'Connection blocked')
+    : t('כספת נחתמה', 'Vault sealed');
+
+  return (
+    <div
+      style={{
+        position: 'absolute', inset: -22, // covers the modal padding fully
+        zIndex: 3,
+        background: 'rgba(2,4,10,0.62)',
+        backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
+        borderRadius: 18,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: 22,
+        animation: 'orcaAlertIn 480ms cubic-bezier(0.16,1,0.3,1) both',
+      }}
+    >
+      <div
+        key={alert?.shakeKey ?? 'loading'}
+        style={{
+          position: 'relative',
+          width: '100%', maxWidth: 440,
+          padding: 2,
+          borderRadius: 16,
+          background: stateGradient,
+          boxShadow: `0 24px 70px -28px ${stateColor}, 0 0 0 1px rgba(255,255,255,0.03)`,
+          animation: isError
+            ? 'orcaAlertIn 520ms cubic-bezier(0.16,1,0.3,1) both, orcaShake 520ms 480ms cubic-bezier(.36,.07,.19,.97) both'
+            : 'orcaAlertIn 520ms cubic-bezier(0.16,1,0.3,1) both',
+        }}
+      >
+        <div style={{
+          background: 'linear-gradient(180deg, rgba(6,8,14,0.96), rgba(2,4,10,0.96))',
+          borderRadius: 14,
+          padding: 22,
+          fontFamily: sans,
+          overflow: 'hidden',
+          position: 'relative',
+        }}>
+          {/* Internal glow */}
+          <div style={{
+            position: 'absolute', inset: 0, pointerEvents: 'none',
+            background: `radial-gradient(120% 60% at 50% 0%, ${stateColor}22 0%, transparent 60%)`,
+          }} />
+
+          {/* Subhead */}
+          <div style={{
+            fontFamily: mono, fontSize: 9.5, fontWeight: 800,
+            color: stateColor, letterSpacing: 1.2, textTransform: 'uppercase',
+            marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8,
+          }}>
+            <span style={{
+              width: 5, height: 5, borderRadius: '50%',
+              background: stateColor, boxShadow: `0 0 10px ${stateColor}`,
+              animation: 'orcaPulseGlow 1.6s ease-in-out infinite',
+            }} />
+            {subhead}
+            {alert?.code && (
+              <span style={{
+                marginInlineStart: 'auto',
+                fontSize: 9, color: T.text.muted, letterSpacing: 1,
+              }}>
+                {alert.code}
+              </span>
+            )}
+          </div>
+
+          {/* Icon + content */}
+          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+            <AlertSigil color={stateColor} kind={loading ? 'scan' : isError ? 'shield-x' : 'shield-check'} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{
+                fontSize: 17, fontWeight: 800, color: '#fff',
+                letterSpacing: 0.2, marginBottom: 6, lineHeight: 1.25,
+              }}>
+                {loading
+                  ? t('סורק הרשאות מפתח...', 'Scanning key permissions...')
+                  : alert?.title}
+              </div>
+              <div style={{
+                fontSize: 12.5, color: '#cbd5e1', lineHeight: 1.6,
+              }}>
+                {loading
+                  ? t(
+                      'תקשורת מאובטחת מול שרת האימות. אנא המתן.',
+                      'Establishing a sealed channel with the verification server. Please wait.'
+                    )
+                  : alert?.body}
+              </div>
+
+              {/* Loading data-stream */}
+              {loading && (
+                <div style={{
+                  marginTop: 14, height: 4, borderRadius: 4, overflow: 'hidden',
+                  background: 'rgba(0,242,255,0.08)',
+                  border: '1px solid rgba(0,242,255,0.18)',
+                }}>
+                  <div style={{
+                    width: '40%', height: '100%',
+                    background: 'linear-gradient(90deg, transparent, #00f2ff, transparent)',
+                    backgroundSize: '200% 100%',
+                    animation: 'orcaStream 1.4s linear infinite',
+                  }} />
+                </div>
+              )}
+
+              {/* Dismiss for non-loading alerts */}
+              {!loading && (
+                <button
+                  onClick={onDismiss}
+                  style={{
+                    marginTop: 16,
+                    padding: '8px 14px', borderRadius: 8,
+                    background: 'transparent',
+                    border: `1px solid ${stateColor}55`,
+                    color: stateColor,
+                    fontFamily: mono, fontSize: 10.5, fontWeight: 800,
+                    letterSpacing: 0.8, textTransform: 'uppercase',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {isError ? t('סגור', 'Dismiss') : t('הבנתי', 'Acknowledge')}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Loading scan-line over modal */}
+          {loading && (
+            <div style={{
+              position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden',
+            }}>
+              <div style={{
+                position: 'absolute', insetInline: 0, height: 2,
+                background: `linear-gradient(90deg, transparent, ${stateColor}, transparent)`,
+                boxShadow: `0 0 14px ${stateColor}`,
+                animation: 'orcaScanLine 1.8s linear infinite',
+              }} />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AlertSigil({ color, kind }: { color: string; kind: 'scan' | 'shield-check' | 'shield-x' }) {
+  const size = 56;
+  return (
+    <div style={{
+      position: 'relative', width: size, height: size, flexShrink: 0,
+      borderRadius: '50%',
+      background: `radial-gradient(circle at 50% 50%, ${color}22 0%, transparent 70%)`,
+    }}>
+      {/* Radar sweep */}
+      <div style={{
+        position: 'absolute', inset: 0, borderRadius: '50%',
+        background: `conic-gradient(from 0deg, transparent 0deg, ${color}55 60deg, transparent 120deg)`,
+        animation: 'orcaRadarSweep 2.4s linear infinite',
+        maskImage: 'radial-gradient(circle, black 60%, transparent 70%)',
+        WebkitMaskImage: 'radial-gradient(circle, black 60%, transparent 70%)',
+      }} />
+      {/* Pulse ring */}
+      <div style={{
+        position: 'absolute', inset: 6, borderRadius: '50%',
+        border: `1px solid ${color}66`,
+        animation: 'orcaPulseGlow 1.8s ease-in-out infinite',
+      }} />
+      {/* Inner glyph */}
+      <svg
+        viewBox="0 0 24 24" width={size} height={size}
+        style={{ position: 'absolute', inset: 0, display: 'block' }}
+        fill="none" stroke={color} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"
+      >
+        <path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3z"
+          style={{ filter: `drop-shadow(0 0 6px ${color}88)` }} />
+        {kind === 'shield-check' && <path d="M8.5 12.2l2.4 2.4 4.6-4.8" />}
+        {kind === 'shield-x' && (
+          <>
+            <path d="M9 9.5l6 6" />
+            <path d="M15 9.5l-6 6" />
+          </>
+        )}
+        {kind === 'scan' && (
+          <path d="M7.5 12h9" style={{
+            transformOrigin: '12px 12px',
+            animation: 'orcaPulseGlow 1.4s ease-in-out infinite',
+          }} />
+        )}
+      </svg>
     </div>
   );
 }
