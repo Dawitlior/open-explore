@@ -1,5 +1,5 @@
 import type { Trade } from '@/data/trades';
-import { getEffectiveR } from '@/lib/r-multiple';
+import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
 
 export interface CoinPerf {
   coin: string;
@@ -117,6 +117,22 @@ function computeExpectancyR(trades: Trade[]): number {
   const avgWinR = wins.length > 0 ? wins.reduce((s, t) => s + Math.abs(getEffectiveR(t)), 0) / wins.length : 0;
   const avgLossR = losses.length > 0 ? losses.reduce((s, t) => s + Math.abs(getEffectiveR(t)), 0) / losses.length : 0;
   return (winRate * avgWinR) - (lossRate * avgLossR);
+}
+
+function buildDailyRSeries(trades: Trade[]): { day: string; trades: Trade[]; r: number; pnl: number }[] {
+  const byDay = new Map<string, Trade[]>();
+  for (const t of trades) {
+    const key = (t.date || '').slice(0, 10) || t.day || String(t.id);
+    const arr = byDay.get(key) || [];
+    arr.push(t);
+    byDay.set(key, arr);
+  }
+  return Array.from(byDay.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([day, dayTrades]) => ({
+    day,
+    trades: dayTrades,
+    r: sumDailyR(dayTrades).total,
+    pnl: dayTrades.reduce((s, t) => s + safeNum(t.pnl), 0),
+  }));
 }
 
 export function computeAnalytics(trades: Trade[]): TradingStats {
