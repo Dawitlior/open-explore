@@ -1908,6 +1908,9 @@ const Index = () => {
       )}
       {/* Floating system update notification (bottom-right) */}
       <DeploymentToast isRTL={isRTL} />
+      {showRiskOnboarding && (
+        <RiskOnboardingWizard isRTL={isRTL} onDismiss={() => setShowRiskOnboarding(false)} />
+      )}
     </div>
   );
 };
