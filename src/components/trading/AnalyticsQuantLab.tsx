@@ -30,6 +30,7 @@ import {
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { GlassCard } from './TradingUI';
+import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
 
 interface Props {
   T: TradingTheme;
