@@ -214,7 +214,7 @@ const Index = () => {
     const wins = monthTrades.filter(tr => tr.winLoss === 'Win').length;
     const losses = monthTrades.filter(tr => tr.winLoss === 'Loss').length;
     const totalPnl = monthTrades.reduce((s, tr) => s + tr.pnl, 0);
-    const totalR = monthTrades.reduce((s, tr) => s + tr.returnR, 0);
+    const totalR = monthTrades.reduce((s, tr) => s + getEffectiveR(tr), 0);
     const winRate = monthTrades.length ? (wins / monthTrades.length) * 100 : 0;
     const expectancyR = monthTrades.length ? totalR / monthTrades.length : 0;
     // Streak within this month
@@ -1167,9 +1167,10 @@ const Index = () => {
                         if (!setupMap[s]) setupMap[s] = { trades: 0, wins: 0, totalR: 0, best: -Infinity, worst: Infinity };
                         setupMap[s].trades++;
                         if (tr.winLoss === 'Win') setupMap[s].wins++;
-                        setupMap[s].totalR += tr.returnR;
-                        setupMap[s].best = Math.max(setupMap[s].best, tr.returnR);
-                        setupMap[s].worst = Math.min(setupMap[s].worst, tr.returnR);
+                        const r = getEffectiveR(tr);
+                        setupMap[s].totalR += r;
+                        setupMap[s].best = Math.max(setupMap[s].best, r);
+                        setupMap[s].worst = Math.min(setupMap[s].worst, r);
                       });
                       return Object.entries(setupMap).sort((a, b) => b[1].totalR - a[1].totalR).slice(0, 8).map(([name, d]) => (
                         <tr key={name} style={{ borderBottom: `1px solid ${T.border.subtle}` }}>
@@ -1211,7 +1212,7 @@ const Index = () => {
                         if (!dayMap[day]) dayMap[day] = { trades: 0, wins: 0, totalR: 0, totalPnl: 0 };
                         dayMap[day].trades++;
                         if (tr.winLoss === 'Win') dayMap[day].wins++;
-                        dayMap[day].totalR += tr.returnR;
+                        dayMap[day].totalR += getEffectiveR(tr);
                         dayMap[day].totalPnl += tr.pnl;
                       });
                       return [1, 2, 3, 4, 5].filter(d => dayMap[d]).map(d => (
