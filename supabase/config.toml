@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.validate-exchange-credential]
 verify_jwt = false
+
+[functions.sync-futures-trades]
+verify_jwt = false
