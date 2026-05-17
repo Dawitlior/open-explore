@@ -109,18 +109,20 @@ async function bybitSignedGet(
   return { ok: true, body };
 }
 
-// Fetch up to 180 days of linear execution history, paginating via nextPageCursor.
-async function fetchBybitLinear(
+// Fetch up to 180 days of consolidated CLOSED PNL history.
+// /v5/position/closed-pnl returns one row per fully-closed position session
+// with avgEntryPrice, avgExitPrice and closedPnl already aggregated by Bybit.
+async function fetchBybitClosedPnl(
   apiKey: string,
   apiSecret: string,
 ): Promise<BybitFetchResult | BybitFetchError> {
   const DAY_MS = 86_400_000;
   const endTime = Date.now();
   const startTime = endTime - 180 * DAY_MS;
-  // Bybit caps each execution query window at ~7 days, so iterate in 7-day chunks.
+  // Bybit closed-pnl supports max 7-day windows; iterate in 7-day chunks.
   const WINDOW_MS = 7 * DAY_MS;
-  const all: BybitExec[] = [];
-  const MAX_PAGES = 400; // hard safety cap
+  const all: BybitClosedPnl[] = [];
+  const MAX_PAGES = 400;
 
   for (let wEnd = endTime; wEnd > startTime; wEnd -= WINDOW_MS) {
     const wStart = Math.max(startTime, wEnd - WINDOW_MS);
@@ -134,10 +136,10 @@ async function fetchBybitLinear(
         endTime: String(wEnd),
       });
       if (cursor) params.set('cursor', cursor);
-      const r = await bybitSignedGet(apiKey, apiSecret, '/v5/execution/list', params.toString());
+      const r = await bybitSignedGet(apiKey, apiSecret, '/v5/position/closed-pnl', params.toString());
       if (!r.ok) return r;
       const list = r.body.result?.list;
-      if (Array.isArray(list)) all.push(...(list as BybitExec[]));
+      if (Array.isArray(list)) all.push(...(list as BybitClosedPnl[]));
       cursor = r.body.result?.nextPageCursor || undefined;
       pages++;
       if (pages > MAX_PAGES) break;
