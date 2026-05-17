@@ -30,25 +30,28 @@ async function hmacSha256Hex(secret: string, message: string): Promise<string> {
   return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// ---------- Bybit linear execution history ----------
-interface BybitExec {
-  execId: string;
+// ---------- Bybit closed-pnl history (consolidated trades) ----------
+interface BybitClosedPnl {
   orderId: string;
   symbol: string;
+  // For closed-pnl, `side` is the CLOSING side. The position side is the opposite.
   side: 'Buy' | 'Sell';
-  execPrice: string;
-  execQty: string;
-  execFee: string;
-  execTime: string; // ms
-  closedSize?: string;
+  qty: string;
+  closedSize: string;
+  avgEntryPrice: string;
+  avgExitPrice: string;
+  closedPnl: string;
+  openFee?: string;
+  closeFee?: string;
+  leverage?: string;
+  createdTime: string; // ms
+  updatedTime: string; // ms
   execType?: string;
-  execPnl?: string; // realized PnL for closing fills (Bybit V5)
-  closedPnl?: string;
 }
 
 interface BybitFetchResult {
   ok: true;
-  list: BybitExec[];
+  list: BybitClosedPnl[];
 }
 interface BybitFetchError {
   ok: false;
@@ -106,18 +109,20 @@ async function bybitSignedGet(
   return { ok: true, body };
 }
 
-// Fetch up to 180 days of linear execution history, paginating via nextPageCursor.
-async function fetchBybitLinear(
+// Fetch up to 180 days of consolidated CLOSED PNL history.
+// /v5/position/closed-pnl returns one row per fully-closed position session
+// with avgEntryPrice, avgExitPrice and closedPnl already aggregated by Bybit.
+async function fetchBybitClosedPnl(
   apiKey: string,
   apiSecret: string,
 ): Promise<BybitFetchResult | BybitFetchError> {
   const DAY_MS = 86_400_000;
   const endTime = Date.now();
   const startTime = endTime - 180 * DAY_MS;
-  // Bybit caps each execution query window at ~7 days, so iterate in 7-day chunks.
+  // Bybit closed-pnl supports max 7-day windows; iterate in 7-day chunks.
   const WINDOW_MS = 7 * DAY_MS;
-  const all: BybitExec[] = [];
-  const MAX_PAGES = 400; // hard safety cap
+  const all: BybitClosedPnl[] = [];
+  const MAX_PAGES = 400;
 
   for (let wEnd = endTime; wEnd > startTime; wEnd -= WINDOW_MS) {
     const wStart = Math.max(startTime, wEnd - WINDOW_MS);
@@ -131,10 +136,10 @@ async function fetchBybitLinear(
         endTime: String(wEnd),
       });
       if (cursor) params.set('cursor', cursor);
-      const r = await bybitSignedGet(apiKey, apiSecret, '/v5/execution/list', params.toString());
+      const r = await bybitSignedGet(apiKey, apiSecret, '/v5/position/closed-pnl', params.toString());
       if (!r.ok) return r;
       const list = r.body.result?.list;
-      if (Array.isArray(list)) all.push(...(list as BybitExec[]));
+      if (Array.isArray(list)) all.push(...(list as BybitClosedPnl[]));
       cursor = r.body.result?.nextPageCursor || undefined;
       pages++;
       if (pages > MAX_PAGES) break;
@@ -181,43 +186,46 @@ interface Trade {
   exchange_exec_id?: string;
 }
 
-function bybitToTrade(e: BybitExec, provider: string): Omit<Trade, 'id' | 'balance'> {
-  const px = Number(e.execPrice) || 0;
-  const qty = Number(e.execQty) || 0;
-  const fee = Number(e.execFee) || 0;
-  const tsMs = Number(e.execTime) || Date.now();
-  // Realized PnL for closing fills: Bybit returns this in `execPnl`
-  // (legacy `closedPnl` fallback retained for older payload shapes).
-  const realizedPnl = parseFloat(e.execPnl ?? e.closedPnl ?? '0') || 0;
-  const netPnl = realizedPnl - fee;
+function bybitToTrade(e: BybitClosedPnl, provider: string): Omit<Trade, 'id' | 'balance'> {
+  const entryPx = Number(e.avgEntryPrice) || 0;
+  const exitPx = Number(e.avgExitPrice) || 0;
+  const qty = Number(e.closedSize) || Number(e.qty) || 0;
+  const openFee = Number(e.openFee) || 0;
+  const closeFee = Number(e.closeFee) || 0;
+  const realizedPnl = parseFloat(e.closedPnl ?? '0') || 0;
+  // Bybit closed-pnl `closedPnl` is ALREADY net of fees, so we don't subtract again.
+  const netPnl = realizedPnl;
+  const tsMs = Number(e.updatedTime) || Number(e.createdTime) || Date.now();
   const d = new Date(tsMs);
   const iso = d.toISOString().slice(0, 19).replace('T', ' ');
   const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
-  const direction: 'Long' | 'Short' = e.side === 'Buy' ? 'Long' : 'Short';
+  // `side` on closed-pnl is the CLOSING side. Position direction is the opposite.
+  const direction: 'Long' | 'Short' = e.side === 'Sell' ? 'Long' : 'Short';
   const winLoss: 'Win' | 'Loss' | 'Break Even' =
-    realizedPnl > 0 ? 'Win' : realizedPnl < 0 ? 'Loss' : 'Break Even';
+    netPnl > 0 ? 'Win' : netPnl < 0 ? 'Loss' : 'Break Even';
+  const lev = Number(e.leverage) || 1;
   return {
     date: iso,
     day: dayName,
     coin: e.symbol,
     direction,
     orderType: e.execType || 'Market',
-    entry: px,
+    entry: entryPx,
     stopLoss: 0,
-    exit: px,
+    exit: exitPx,
     returnR: 0,
     winLoss,
     risk: 0,
     expectedLoss: 0,
     pnl: netPnl,
     deviation: 0,
-    positionSize: qty * px,
-    leverage: 1,
+    positionSize: qty * entryPx,
+    leverage: lev,
     riskPct: 0,
     rules: true,
-    comments: `__EXEC:${e.execId}__ ${provider}/${e.orderId}`,
+    comments: `__CLOSED:${e.orderId}__ ${provider} fees:${(openFee + closeFee).toFixed(4)}`,
     exchange_provider: provider,
-    exchange_exec_id: e.execId,
+    exchange_exec_id: e.orderId,
   };
 }
 
@@ -304,35 +312,34 @@ Deno.serve(async (req) => {
       return json({ ok: false, error: 'vault_read_failed', detail: secErr?.message ?? 'no_secret' }, 500);
     }
 
-    // ---- Fetch executions (defensively validated) ----
-    const fetchResult = await fetchBybitLinear(cred.api_key, apiSecret);
+    // ---- Fetch consolidated closed-pnl trades (defensively validated) ----
+    const fetchResult = await fetchBybitClosedPnl(cred.api_key, apiSecret);
     if (!fetchResult.ok) {
       return json({ ok: false, error: fetchResult.error, detail: fetchResult.detail }, fetchResult.status);
     }
-    const execs = fetchResult.list;
+    const closed = fetchResult.list;
 
-    // Zero-trade fast path — perfectly legitimate (new account / no 30d activity)
-    if (execs.length === 0) {
-      return json({ ok: true, fetched: 0, inserted: 0, skipped: 0, syncedCount: 0 });
+    // ---- WIPE corrupted execution-level rows for this user/provider ----
+    // The previous pipeline persisted raw fills as standalone trades, which
+    // inflated counts + fragmented PnL. We start clean every sync — closed-pnl
+    // is itself idempotent + bounded by the 180-day window.
+    let wiped = 0;
+    {
+      const { data: wipedRows, error: wipeErr } = await admin
+        .from('trades')
+        .delete()
+        .eq('user_id', userId)
+        .filter('data->>exchange_provider', 'eq', provider)
+        .select('trade_id');
+      if (wipeErr) {
+        return json({ ok: false, error: 'wipe_failed', detail: wipeErr.message }, 500);
+      }
+      wiped = wipedRows?.length ?? 0;
     }
 
-    // ---- Idempotency: load existing exec ids for this user ----
-    // We fetch via a bounded select and filter in JS — this avoids fragile
-    // PostgREST `->>` jsonb operator behaviour and tolerates schema variance.
-    const execIds = execs.map(e => e.execId).filter(Boolean);
-    const seen = new Set<string>();
-    try {
-      const { data: existing, error: exErr } = await admin
-        .from('trades')
-        .select('data')
-        .eq('user_id', userId);
-      if (exErr) throw new Error(exErr.message);
-      for (const r of (existing ?? []) as Array<{ data: { exchange_exec_id?: string } | null }>) {
-        const id = r?.data?.exchange_exec_id;
-        if (id && execIds.includes(id)) seen.add(id);
-      }
-    } catch (e) {
-      return json({ ok: false, error: 'idempotency_scan_failed', detail: (e as Error).message }, 500);
+    // Zero-trade fast path — legitimate (new account / no 180d activity)
+    if (closed.length === 0) {
+      return json({ ok: true, fetched: 0, inserted: 0, skipped: 0, wiped, syncedCount: 0 });
     }
 
     // ---- Allocate trade_ids on top of the user's current max ----
@@ -346,18 +353,20 @@ Deno.serve(async (req) => {
     if (maxErr) return json({ ok: false, error: 'max_id_lookup_failed', detail: maxErr.message }, 500);
     let nextId = ((maxRow?.trade_id as number | undefined) ?? 0) + 1;
 
-    // ---- Build rows aligned with public.trades schema (user_id, trade_id, data) ----
-    // Idempotency tier 2: collapse any duplicate execIds returned across paginated
-    // pages or overlapping 7-day windows before we even consider persistence.
+    // ---- Build rows from closed-pnl, deduped by orderId across paginated windows ----
     const localSeen = new Set<string>();
     const rows: Array<{ user_id: string; trade_id: number; data: unknown }> = [];
     let inserted = 0;
     let skipped = 0;
     let runningBalance = 0;
-    for (const e of execs) {
-      if (!e?.execId) { skipped++; continue; }
-      if (seen.has(e.execId) || localSeen.has(e.execId)) { skipped++; continue; }
-      localSeen.add(e.execId);
+    // Sort chronologically so running balance is meaningful.
+    const sorted = [...closed].sort((a, b) =>
+      (Number(a.updatedTime) || 0) - (Number(b.updatedTime) || 0),
+    );
+    for (const e of sorted) {
+      if (!e?.orderId) { skipped++; continue; }
+      if (localSeen.has(e.orderId)) { skipped++; continue; }
+      localSeen.add(e.orderId);
       const t = bybitToTrade(e, provider);
       runningBalance += t.pnl;
       const full: Trade = { ...t, id: nextId, balance: Math.round(runningBalance * 10000) / 10000 };
@@ -432,9 +441,10 @@ Deno.serve(async (req) => {
 
     return json({
       ok: true,
-      fetched: execs.length,
+      fetched: closed.length,
       inserted,
       skipped,
+      wiped,
       syncedCount: inserted,
       positionsSynced,
     });

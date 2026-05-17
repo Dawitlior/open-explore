@@ -2663,7 +2663,7 @@ const DailyIntelligencePanel = ({ day, dir, th, onClose, onOpenJournal }: {
   const [tradePage, setTradePage] = useState(0);
   const TRADES_PER_PAGE = 50;
   const isRTL = dir === 'rtl';
-  const trades = day.trades || [];
+  const trades = Array.isArray(day?.trades) ? day.trades : [];
   // Memoise heavy aggregates so re-renders on dense days (1k+ trades) stay snappy.
   const { pnl, wins, totalR, winRate, negR } = useMemo(() => {
     const p = sumPnl(day);
@@ -2851,7 +2851,7 @@ const DailyIntelligencePanel = ({ day, dir, th, onClose, onOpenJournal }: {
           )}
 
           {/* SECTION 3 — Trade List */}
-          {trades.length > 0 && (
+          {trades.length > 0 && Array.isArray(pagedTrades) && pagedTrades.length > 0 && (
             <div style={S.section}>
               <div style={{ ...S.secTitle, color: '#FFC857' }}>
                 <span>📈</span> {isRTL ? `עסקאות (${trades.length})` : `Trades (${trades.length})`}
