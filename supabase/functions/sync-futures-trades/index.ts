@@ -186,43 +186,46 @@ interface Trade {
   exchange_exec_id?: string;
 }
 
-function bybitToTrade(e: BybitExec, provider: string): Omit<Trade, 'id' | 'balance'> {
-  const px = Number(e.execPrice) || 0;
-  const qty = Number(e.execQty) || 0;
-  const fee = Number(e.execFee) || 0;
-  const tsMs = Number(e.execTime) || Date.now();
-  // Realized PnL for closing fills: Bybit returns this in `execPnl`
-  // (legacy `closedPnl` fallback retained for older payload shapes).
-  const realizedPnl = parseFloat(e.execPnl ?? e.closedPnl ?? '0') || 0;
-  const netPnl = realizedPnl - fee;
+function bybitToTrade(e: BybitClosedPnl, provider: string): Omit<Trade, 'id' | 'balance'> {
+  const entryPx = Number(e.avgEntryPrice) || 0;
+  const exitPx = Number(e.avgExitPrice) || 0;
+  const qty = Number(e.closedSize) || Number(e.qty) || 0;
+  const openFee = Number(e.openFee) || 0;
+  const closeFee = Number(e.closeFee) || 0;
+  const realizedPnl = parseFloat(e.closedPnl ?? '0') || 0;
+  // Bybit closed-pnl `closedPnl` is ALREADY net of fees, so we don't subtract again.
+  const netPnl = realizedPnl;
+  const tsMs = Number(e.updatedTime) || Number(e.createdTime) || Date.now();
   const d = new Date(tsMs);
   const iso = d.toISOString().slice(0, 19).replace('T', ' ');
   const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
-  const direction: 'Long' | 'Short' = e.side === 'Buy' ? 'Long' : 'Short';
+  // `side` on closed-pnl is the CLOSING side. Position direction is the opposite.
+  const direction: 'Long' | 'Short' = e.side === 'Sell' ? 'Long' : 'Short';
   const winLoss: 'Win' | 'Loss' | 'Break Even' =
-    realizedPnl > 0 ? 'Win' : realizedPnl < 0 ? 'Loss' : 'Break Even';
+    netPnl > 0 ? 'Win' : netPnl < 0 ? 'Loss' : 'Break Even';
+  const lev = Number(e.leverage) || 1;
   return {
     date: iso,
     day: dayName,
     coin: e.symbol,
     direction,
     orderType: e.execType || 'Market',
-    entry: px,
+    entry: entryPx,
     stopLoss: 0,
-    exit: px,
+    exit: exitPx,
     returnR: 0,
     winLoss,
     risk: 0,
     expectedLoss: 0,
     pnl: netPnl,
     deviation: 0,
-    positionSize: qty * px,
-    leverage: 1,
+    positionSize: qty * entryPx,
+    leverage: lev,
     riskPct: 0,
     rules: true,
-    comments: `__EXEC:${e.execId}__ ${provider}/${e.orderId}`,
+    comments: `__CLOSED:${e.orderId}__ ${provider} fees:${(openFee + closeFee).toFixed(4)}`,
     exchange_provider: provider,
-    exchange_exec_id: e.execId,
+    exchange_exec_id: e.orderId,
   };
 }
 
