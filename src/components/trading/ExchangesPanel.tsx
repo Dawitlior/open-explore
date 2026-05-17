@@ -349,6 +349,18 @@ function CredentialModal({
   const [apiSecret, setApiSecret] = useState('');
   const [busy, setBusy] = useState(false);
   const [showSecret, setShowSecret] = useState(false);
+  const [cooldownUntil, setCooldownUntil] = useState(0);
+  const [nowTick, setNowTick] = useState(Date.now());
+
+  // Live tick while cooldown is active so the button re-enables crisply
+  useEffect(() => {
+    if (cooldownUntil <= Date.now()) return;
+    const id = setInterval(() => setNowTick(Date.now()), 120);
+    return () => clearInterval(id);
+  }, [cooldownUntil]);
+
+  const cooldownRemainingMs = Math.max(0, cooldownUntil - nowTick);
+  const inCooldown = cooldownRemainingMs > 0;
 
   type AlertKind = 'success' | 'error';
   interface AlertState {
