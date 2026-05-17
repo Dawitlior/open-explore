@@ -23,6 +23,9 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import type { Trade } from '@/data/trades';
 import { AvatarUploader } from './AvatarUploader';
 import { InstallGuide } from './InstallGuide';
+import { ResetModal } from './ResetModal';
+import { scopedStorage } from '@/lib/scoped-storage';
+import { i18n as i18nStrings } from '@/lib/trading-i18n';
 
 interface SettingsHubProps {
   T: TradingTheme;
@@ -81,6 +84,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
   const [draftTheme, setDraftTheme] = useState<CustomTheme>(CUSTOM_THEME_DEFAULT);
   const [showStudioConfirm, setShowStudioConfirm] = useState(false);
   const [unlockStep, setUnlockStep] = useState<0 | 1 | 2>(0);
+  const [showWipeModal, setShowWipeModal] = useState(false);
   useEffect(() => { if (ui.prefs.customAccent) setDraftAccent(ui.prefs.customAccent); }, [ui.prefs.customAccent]);
   useEffect(() => { if (ui.prefs.customTheme) setDraftTheme(ui.prefs.customTheme); }, [ui.prefs.customTheme]);
 
@@ -1444,6 +1448,31 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                       <Download size={14} /> {t('הורד גיבוי מלא (JSON)', 'Download full backup (JSON)')}
                     </button>
                   </div>
+
+                  {/* ============ DANGER ZONE — wipe personal data, keep account ============ */}
+                  <div style={{ ...card, border: `1px solid ${T.accent.red}55`, background: `linear-gradient(180deg, ${T.bg.secondary} 0%, ${T.accent.red}08 100%)` }}>
+                    <h3 style={{ ...sectionTitle, color: T.accent.red }}>
+                      <AlertTriangle size={14} /> {t('אזור מסוכן — מחיקת נתונים אישיים', 'Danger zone — wipe personal data')}
+                    </h3>
+                    <p style={sectionHint}>
+                      {t(
+                        'מוחק לצמיתות את כל העסקאות, היומנים, ההגדרות וחיבורי הבורסות (Bybit / Binance) השמורים בענן. חשבון המשתמש וההתחברות עם Google נשארים פעילים — תוכל להמשיך להיכנס עם אותו אימייל.',
+                        'Permanently deletes every trade, journal entry, setting and exchange connection (Bybit / Binance) stored in the cloud. Your user account and Google sign-in stay intact — you can keep signing in with the same email.'
+                      )}
+                    </p>
+                    <button
+                      onClick={() => setShowWipeModal(true)}
+                      style={{
+                        ...primaryBtn(T.accent.red),
+                        padding: '14px 18px',
+                        fontSize: 13,
+                        background: `linear-gradient(135deg, ${T.accent.red}, #991b1b)`,
+                        color: '#fff',
+                      }}
+                    >
+                      <Trash2 size={14} /> {t('מחק את כל הנתונים האישיים שלי', 'Delete all my personal data')}
+                    </button>
+                  </div>
                 </div>
               );
             })()}
@@ -1458,6 +1487,39 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
           </div>
         </section>
       </div>
+
+      {/* ============ PERSONAL DATA WIPE (keeps Google / auth account) ============ */}
+      {showWipeModal && (
+        <ResetModal
+          T={T}
+          t={isRTL ? i18nStrings.he : i18nStrings.en}
+          isRTL={isRTL}
+          onClose={() => setShowWipeModal(false)}
+          onConfirm={async () => {
+            const uid = auth.user?.id;
+            if (!uid) throw new Error('not_authenticated');
+
+            // Cloud wipe — auth.users row is intentionally NOT touched, so
+            // the Google identity / email login stays fully functional.
+            const results = await Promise.all([
+              supabase.from('trades').delete().eq('user_id', uid),
+              supabase.from('journal_state').delete().eq('user_id', uid),
+              supabase.from('user_settings').delete().eq('user_id', uid),
+              supabase.from('exchange_credentials').delete().eq('user_id', uid),
+            ]);
+            const firstErr = results.find(r => r.error)?.error;
+            if (firstErr) throw new Error(firstErr.message);
+
+            try { await scopedStorage.wipeCurrentUser(); } catch { /* ignore */ }
+            try {
+              window.dispatchEvent(new CustomEvent('orca:trades-synced'));
+              window.dispatchEvent(new CustomEvent('orca:data-wiped'));
+            } catch { /* ignore */ }
+
+            toast.success(t('כל הנתונים האישיים נמחקו. החשבון שלך פעיל.', 'All personal data deleted. Your account is still active.'));
+          }}
+        />
+      )}
 
       {/* ============ THEME COMMIT CONFIRMATION ============ */}
       {showThemeConfirm && (
