@@ -3,8 +3,9 @@ import {
   User, Palette, LayoutDashboard, Calculator, Shield, SlidersHorizontal, Database,
   X, LogOut, Mail, KeyRound, Send, Download, Eye, EyeOff, Globe, GripVertical,
   Plus, Trash2, RotateCcw, Check, AlertTriangle, Sparkles, Search,
-  Volume2, VolumeX, Zap, Type, Brush, Target, Gauge, Plug,
+  Volume2, VolumeX, Zap, Type, Brush, Target, Gauge, Plug, Scale,
 } from 'lucide-react';
+import { LEGAL_TITLE_HE, LEGAL_SECTIONS_HE, LEGAL_FOOTER_HE } from '@/lib/legal-text';
 import { ExchangesPanel } from './ExchangesPanel';
 import { playMorningLock } from '@/lib/apex-sounds';
 import type { TradingTheme, CustomTheme, BaseMood } from '@/lib/trading-theme';
