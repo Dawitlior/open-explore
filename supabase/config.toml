@@ -2,3 +2,6 @@ project_id = "pqezqcbbaekohzqnpmoc"
 
 [functions.request-password-reset]
 verify_jwt = false
+
+[functions.validate-exchange-credential]
+verify_jwt = false
