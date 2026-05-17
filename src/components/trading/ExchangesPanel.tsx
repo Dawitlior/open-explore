@@ -350,18 +350,32 @@ function CredentialModal({
   const [busy, setBusy] = useState(false);
   const [showSecret, setShowSecret] = useState(false);
 
+  type AlertKind = 'success' | 'error';
+  interface AlertState {
+    kind: AlertKind;
+    title: string;
+    body: string;
+    code?: string;
+    shakeKey: number;
+  }
+  const [alertState, setAlertState] = useState<AlertState | null>(null);
+
   const canSubmit = apiKey.trim().length >= 8 && apiSecret.trim().length >= 8 && !busy;
 
+  const fireAlert = (a: Omit<AlertState, 'shakeKey'>) =>
+    setAlertState({ ...a, shakeKey: Date.now() });
+
   const submit = async () => {
-    if (!user) { toast.error(t('יש להתחבר תחילה', 'Please sign in first')); return; }
+    if (!user) {
+      fireAlert({ kind: 'error', title: t('נדרשת התחברות', 'Sign-in required'),
+        body: t('יש להתחבר לפני חיבור בורסה.', 'Please sign in before connecting an exchange.'),
+        code: 'AUTH_REQUIRED' });
+      return;
+    }
     if (!canSubmit) return;
+    setAlertState(null);
     setBusy(true);
 
-    // Strict server-bound validation. We use raw fetch (not supabase.functions.invoke)
-    // because invoke() drops the JSON body on non-2xx responses — and we MUST
-    // read the structured `error` code to render the correct red warning toast.
-    // Raw credentials live in this request body only; never logged, never stored
-    // in component state once the call resolves.
     let status = 0;
     let payload: { ok?: boolean; error?: string; reason?: string; detail?: string } = {};
     try {
@@ -369,7 +383,8 @@ function CredentialModal({
       const token = session?.access_token;
       if (!token) {
         setBusy(false);
-        toast.error(t('יש להתחבר מחדש', 'Please sign in again'));
+        fireAlert({ kind: 'error', title: t('פג תוקף החיבור', 'Session expired'),
+          body: t('יש להתחבר מחדש.', 'Please sign in again.'), code: 'NO_SESSION' });
         return;
       }
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/validate-exchange-credential`;
@@ -389,72 +404,71 @@ function CredentialModal({
       });
       status = res.status;
       payload = await res.json().catch(() => ({}));
-    } catch (e) {
+    } catch {
       setBusy(false);
-      toast.error(t('שגיאת רשת', 'Network error'), {
-        description: t('לא ניתן להגיע לשרת. נסה שוב.', 'Could not reach the server. Please try again.'),
-      });
+      fireAlert({ kind: 'error', title: t('שגיאת רשת', 'Network error'),
+        body: t('לא ניתן להגיע לשרת. נסה שוב.', 'Could not reach the server. Please try again.'),
+        code: 'NETWORK' });
       return;
     }
     setBusy(false);
 
-    // STRICT GUARD: only HTTP 200 + payload.ok === true means a verified vault write.
-    // Anything else → card MUST remain Disconnected; modal stays open; red toast.
     const verified = status === 200 && payload.ok === true;
 
     if (!verified) {
       if (status === 403 || payload.error === 'security_rejected') {
-        toast.error(
-          t('חיבור נדחה', 'Connection Refused'),
-          {
-            description: t(
-              'מפתח ה־API מכיל הרשאות מסחר או משיכה פעילות. למען בטיחותך, Orca מקבלת אך ורק מפתחות לקריאה בלבד (Read-Only).',
-              'This API key contains active Trading or Withdrawal permissions. For your security, Orca only accepts strictly Read-Only keys.'
-            ),
-            duration: 8000,
-          }
-        );
-      } else if (status === 503 || payload.error === 'connection_error') {
-        toast.error(t('הבורסה לא זמינה כרגע', 'Exchange unavailable'), {
-          description: t(
-            'לא הצלחנו לאמת את המפתח מול הבורסה. החיבור נחסם עד לאימות מוצלח.',
-            'We could not verify the key against the exchange. Connection blocked until verification succeeds.'
+        fireAlert({ kind: 'error',
+          title: t('חיבור נדחה — הרשאות גבוהות מדי', 'Connection refused — scope too broad'),
+          body: t(
+            'מפתח ה־API מכיל הרשאות מסחר או משיכה. Orca מקבלת אך ורק מפתחות לקריאה בלבד (Read-Only).',
+            'This API key carries Trading or Withdrawal permissions. Orca accepts strictly Read-Only keys.'
           ),
-          duration: 7000,
-        });
+          code: 'SECURITY_REJECTED' });
+      } else if (status === 503 || payload.error === 'connection_error') {
+        fireAlert({ kind: 'error',
+          title: t('הבורסה לא זמינה', 'Exchange unavailable'),
+          body: t('לא הצלחנו לאמת את המפתח מול הבורסה. החיבור נחסם.',
+            'We could not verify against the exchange. Connection blocked.'),
+          code: 'CONNECTION_ERROR' });
       } else if (status === 429 || payload.error === 'rate_limited') {
-        toast.error(t('יותר מדי ניסיונות', 'Too many attempts'), {
-          description: t('המתן דקה ונסה שוב.', 'Please wait a minute and try again.'),
-        });
+        fireAlert({ kind: 'error',
+          title: t('יותר מדי ניסיונות', 'Rate-limited'),
+          body: t('המתן דקה ונסה שוב.', 'Please wait a minute and try again.'),
+          code: 'RATE_LIMITED' });
       } else if (status === 401 || payload.error === 'unauthorized') {
-        toast.error(t('נדרשת התחברות מחדש', 'Re-authentication required'));
+        fireAlert({ kind: 'error',
+          title: t('נדרשת התחברות מחדש', 'Re-authentication required'),
+          body: t('הסשן פג. התחבר מחדש.', 'Your session expired. Please sign in again.'),
+          code: 'UNAUTHORIZED' });
       } else if (
         payload.error === 'invalid_api_key' ||
         payload.error === 'invalid_api_secret' ||
         payload.error === 'invalid_label' ||
         payload.error === 'invalid_body'
       ) {
-        toast.error(t('קלט לא תקין', 'Invalid input'), {
-          description: t(
-            'המפתח או הסוד מכילים תווים אסורים. הדבק את הערכים בדיוק כפי שסופקו על ידי הבורסה.',
+        fireAlert({ kind: 'error',
+          title: t('קלט לא תקין', 'Invalid input'),
+          body: t(
+            'המפתח או הסוד מכילים תווים אסורים. הדבק את הערכים כפי שסופקו על ידי הבורסה.',
             'The key or secret contains forbidden characters. Paste the values exactly as the exchange provided them.'
           ),
-        });
+          code: payload.error?.toUpperCase() });
       } else {
-        toast.error(
-          t('האימות נכשל', 'Verification failed'),
-          { description: payload.detail || payload.error || `HTTP ${status}` }
-        );
+        fireAlert({ kind: 'error',
+          title: t('האימות נכשל', 'Verification failed'),
+          body: payload.detail || payload.error || `HTTP ${status}`,
+          code: `HTTP_${status}` });
       }
-      return; // ❌ DO NOT close modal, DO NOT call onSaved → card stays Disconnected.
+      return;
     }
 
-    // ✅ Verified by server. Now and ONLY now refresh the card list.
-    toast.success(t(`הכספת עודכנה עבור ${provider.name}`, `Vault updated for ${provider.name}`), {
-      description: t('המפתח אומת כ־Read-Only ואוחסן בכספת.', 'Key verified as Read-Only and stored in the vault.'),
-    });
+    fireAlert({ kind: 'success',
+      title: t(`${provider.name} מחובר`, `${provider.name} connected`),
+      body: t('המפתח אומת כ־Read-Only ואוחסן בכספת השרת.',
+        'Key verified as Read-Only and sealed inside the server vault.'),
+      code: 'VAULT_SEALED' });
     setApiKey(''); setApiSecret('');
-    onSaved();
+    setTimeout(() => onSaved(), 1600);
   };
 
   return (
