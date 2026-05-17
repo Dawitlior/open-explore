@@ -9,7 +9,7 @@ import { ChartWrapper, EXPLANATIONS } from './ChartWrapper';
 import { LazyChart } from './LazyChart';
 import type { ChartExplanation } from './ChartWrapper';
 import { checkRiskLimits, DEFAULT_RISK_LIMITS, type RiskLimits } from '@/lib/risk-limits';
-import { getEffectiveR } from '@/lib/r-multiple';
+import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
 
 type OperatingMode = 'live' | 'review' | 'research' | 'beginner';
 
@@ -81,6 +81,25 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, operatingMode = 'live', cu
 
   // ─── Live risk-limit status ──────────────────────────────────────
   const limitStatus = useMemo(() => checkRiskLimits(trades, new Date(), LIMITS_USED), [trades, LIMITS_USED]);
+
+  const rDrawdownCurve = useMemo(() => {
+    const byDay = new Map<string, Trade[]>();
+    for (const t of trades) {
+      const key = (t.date || '').slice(0, 10);
+      if (!key) continue;
+      const arr = byDay.get(key) || [];
+      arr.push(t);
+      byDay.set(key, arr);
+    }
+    let cum = 0, peak = 0;
+    return Array.from(byDay.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([day, dayTrades], i) => {
+      const { total } = sumDailyR(dayTrades);
+      cum += total;
+      if (cum > peak) peak = cum;
+      const dd = peak > 0 ? -((peak - cum) / Math.max(Math.abs(peak), 1) * 100) : 0;
+      return { trade: i + 1, day: day.slice(5), dd: +dd.toFixed(2), cumR: +cum.toFixed(3) };
+    });
+  }, [trades]);
 
   // ─── Composition matrix: Standard/Alpha × Beginner/Live/Review/Research ───
   const isBeginner = operatingMode === 'beginner';
