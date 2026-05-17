@@ -4099,8 +4099,9 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
         const losses = dayTrades.filter(tr => (tr as any).winLoss === 'Loss').length;
         const wr = total ? (wins / total) * 100 : 0;
         const totalPnl = dayTrades.reduce((s, tr) => s + ((tr as any).pnl || 0), 0);
-        const totalR = dayTrades.reduce((s, tr) => s + ((tr as any).returnR || 0), 0);
-        const ev = total ? totalR / total : 0;
+        const rAgg = sumR(dayTrades as any);
+        const totalR = rAgg.total;
+        const ev = rAgg.validCount ? totalR / rAgg.validCount : 0;
         const verdict = totalPnl > 0 ? (curLang === 'he' ? 'יום חיובי' : 'profitable day')
                       : totalPnl < 0 ? (curLang === 'he' ? 'יום שלילי' : 'losing day')
                       : (curLang === 'he' ? 'יום ניטרלי' : 'flat day');
