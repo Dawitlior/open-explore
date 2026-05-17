@@ -30,6 +30,7 @@ import {
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { GlassCard } from './TradingUI';
+import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
 
 interface Props {
   T: TradingTheme;
@@ -62,7 +63,7 @@ export const AnalyticsQuantLab = ({ T, trades, privacyMode }: Props) => {
   /* ── 1. R-Multiple histogram + bell curve overlay ── */
   const rHisto = useMemo(() => {
     if (trades.length === 0) return [] as { bin: string; mid: number; count: number; bell: number }[];
-    const rs = trades.map(t => t.returnR);
+    const rs = trades.map(t => getEffectiveR(t));
     const min = Math.floor(Math.min(...rs) * 2) / 2;
     const max = Math.ceil(Math.max(...rs) * 2) / 2;
     const step = 0.5;
@@ -97,10 +98,23 @@ export const AnalyticsQuantLab = ({ T, trades, privacyMode }: Props) => {
     ];
   }, [trades, T]);
 
-  /* ── 3. Cumulative R ── */
+  /* ── 3. Cumulative R (day-grouped, Tier-3 proxy for missing-SL days) ── */
   const cumR = useMemo(() => {
+    const byDay = new Map<string, Trade[]>();
+    for (const t of trades) {
+      const key = (t.date || '').slice(0, 10);
+      if (!key) continue;
+      const arr = byDay.get(key) || [];
+      arr.push(t);
+      byDay.set(key, arr);
+    }
+    const days = Array.from(byDay.keys()).sort();
     let c = 0;
-    return trades.map((t, i) => { c += t.returnR; return { i: i + 1, r: +c.toFixed(3) }; });
+    return days.map((day, i) => {
+      const { total } = sumDailyR(byDay.get(day)!);
+      c += total;
+      return { i: i + 1, r: +c.toFixed(3) };
+    });
   }, [trades]);
 
   /* ── 4. Rolling Calmar (mean R / max DD in window) ── */
@@ -111,9 +125,9 @@ export const AnalyticsQuantLab = ({ T, trades, privacyMode }: Props) => {
       const start = Math.max(0, i - W + 1);
       const slice = trades.slice(start, i + 1);
       if (slice.length < 5) { out.push({ i: i + 1, calmar: 0 }); continue; }
-      const mean = slice.reduce((s, t) => s + t.returnR, 0) / slice.length;
+      const mean = slice.reduce((s, t) => s + getEffectiveR(t), 0) / slice.length;
       let cum = 0, peak = 0, dd = 0;
-      slice.forEach(t => { cum += t.returnR; if (cum > peak) peak = cum; dd = Math.max(dd, peak - cum); });
+      slice.forEach(t => { cum += getEffectiveR(t); if (cum > peak) peak = cum; dd = Math.max(dd, peak - cum); });
       out.push({ i: i + 1, calmar: dd > 0 ? +(mean / dd).toFixed(3) : 0 });
     }
     return out;
@@ -143,7 +157,7 @@ export const AnalyticsQuantLab = ({ T, trades, privacyMode }: Props) => {
         label: b.label,
         n: slice.length,
         wr: slice.length ? +((wins / slice.length) * 100).toFixed(1) : 0,
-        avgR: slice.length ? +(slice.reduce((s, t) => s + t.returnR, 0) / slice.length).toFixed(2) : 0,
+        avgR: slice.length ? +(slice.reduce((s, t) => s + getEffectiveR(t), 0) / slice.length).toFixed(2) : 0,
       };
     });
   }, [trades]);
@@ -170,8 +184,8 @@ export const AnalyticsQuantLab = ({ T, trades, privacyMode }: Props) => {
   }, [trades]);
 
   /* ── 8. Top winners / losers ── */
-  const topW = useMemo(() => [...trades].sort((a, b) => b.returnR - a.returnR).slice(0, 5), [trades]);
-  const topL = useMemo(() => [...trades].sort((a, b) => a.returnR - b.returnR).slice(0, 5), [trades]);
+  const topW = useMemo(() => [...trades].sort((a, b) => getEffectiveR(b) - getEffectiveR(a)).slice(0, 5), [trades]);
+  const topL = useMemo(() => [...trades].sort((a, b) => getEffectiveR(a) - getEffectiveR(b)).slice(0, 5), [trades]);
 
   /* ── 9. Position size vs P&L ── */
   const sizePnl = useMemo(() =>
@@ -182,7 +196,7 @@ export const AnalyticsQuantLab = ({ T, trades, privacyMode }: Props) => {
   const mcEnvelope = useMemo(() => {
     if (trades.length < 5) return [] as { i: number; p10: number; p50: number; p90: number }[];
     const N = 60;
-    const rs = trades.map(t => t.returnR);
+    const rs = trades.map(t => getEffectiveR(t));
     const paths: number[][] = [];
     const rand = (seed: number) => { let s = seed; return () => { s = (s * 9301 + 49297) % 233280; return s / 233280; }; };
     for (let p = 0; p < N; p++) {
@@ -499,7 +513,7 @@ export const AnalyticsQuantLab = ({ T, trades, privacyMode }: Props) => {
                     <td style={{ padding: '6px 10px', borderBottom: `1px solid ${T.border.subtle}`, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>{t.id}</td>
                     <td style={{ padding: '6px 10px', borderBottom: `1px solid ${T.border.subtle}`, color: T.accent.cyan, fontWeight: 700 }}>{t.coin}</td>
                     <td style={{ padding: '6px 10px', borderBottom: `1px solid ${T.border.subtle}`, color: T.text.muted, fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>{(t.date || '').slice(0, 10)}</td>
-                    <td style={{ padding: '6px 10px', borderBottom: `1px solid ${T.border.subtle}`, color: t.returnR >= 0 ? T.accent.green : T.accent.red, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>{t.returnR >= 0 ? '+' : ''}{t.returnR.toFixed(2)}R</td>
+                    <td style={{ padding: '6px 10px', borderBottom: `1px solid ${T.border.subtle}`, color: getEffectiveR(t) >= 0 ? T.accent.green : T.accent.red, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>{getEffectiveR(t) >= 0 ? '+' : ''}{getEffectiveR(t).toFixed(2)}R</td>
                     <td style={{ padding: '6px 10px', borderBottom: `1px solid ${T.border.subtle}`, color: t.pnl >= 0 ? T.accent.green : T.accent.red, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}><PV>{t.pnl >= 0 ? '+' : ''}${t.pnl.toFixed(2)}</PV></td>
                   </tr>
                 ))}

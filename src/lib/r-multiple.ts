@@ -133,6 +133,28 @@ export function sumDailyR(
   return { total: proxy, usedProxy: true };
 }
 
+/**
+ * Per-trade effective R for chart series.
+ * Falls back to Tier-3 daily proxy at the single-trade level
+ * (pnl / dailyRiskLimit) when explicit per-trade R is unknown,
+ * so historical Bybit nodes contribute a real curve instead of 0.
+ */
+export function getEffectiveR(
+  t: TradeLike | null | undefined,
+  dailyRiskLimit?: number,
+): number {
+  if (!t) return 0;
+  const r = getR(t);
+  if (r !== null && Number.isFinite(r)) return r;
+  const pnl = toNum(t.pnl);
+  if (!Number.isFinite(pnl)) return 0;
+  const limit = (Number.isFinite(dailyRiskLimit) && (dailyRiskLimit as number) > 0)
+    ? (dailyRiskLimit as number)
+    : getDailyRiskLimit();
+  if (!(limit > 0)) return 0;
+  return pnl / limit;
+}
+
 /** Format an R value with sign + fixed decimals. */
 export function formatR(r: number | null | undefined, decimals = 1): string {
   if (r === null || r === undefined || !Number.isFinite(r)) return 'N/A';
