@@ -85,6 +85,7 @@ export const CalendarHubPage = ({ T, isRTL, trades, t, isMobile, onGenerateInsig
   if (isMobile) {
     return (
       <div style={{ direction: isRTL ? 'rtl' : 'ltr', padding: '4px 2px 24px' }}>
+        <RProxyBanner T={T} isRTL={isRTL} compact />
         {calRiskStatus.monthlyBreached && (
           <div style={{ padding: '10px 14px', background: `${T.accent.red}15`, border: `1px solid ${T.accent.red}40`, borderRadius: 14, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 18 }}>🚨</span>
