@@ -218,8 +218,8 @@ Deno.serve(async (req) => {
 
     // ---- Service-role client ----
     const admin = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      SUPABASE_URL,
+      SUPABASE_SERVICE_ROLE_KEY,
     );
 
     // ---- Resolve credential row ----
