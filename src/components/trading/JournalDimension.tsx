@@ -4,6 +4,7 @@ import { readJournalState, writeJournalState, type JournalDay, type JournalTrade
 import { ReturnButton } from './DimensionController';
 import { playSystemOpen, playMorningLock, playEODLock, playRiskAlert } from '@/lib/apex-sounds';
 import { MORNING_VARIATIONS, EOD_VARIATIONS } from '@/lib/journal-demo-data';
+import { getR, sumR, formatR } from '@/lib/r-multiple';
 
 // ═══════════════════════════════════════════════════════════════
 // CINEMATIC ENTRY SCREEN
