@@ -34,13 +34,21 @@ export const CalendarHubPage = ({ T, isRTL, trades, t, isMobile, onGenerateInsig
   }), [trades, calMonth, calYear]);
 
   const calDayPnl = useMemo(() => {
-    const m: Record<number, { pnl: number; trades: number; wins: number; details: Trade[] }> = {};
+    const m: Record<number, { pnl: number; trades: number; wins: number; details: Trade[]; rTotal: number; rValid: number; rMissing: number }> = {};
     monthTrades.forEach(tr => {
       const d = new Date(tr.date.replace(' ', 'T'));
       const day = d.getDate();
-      if (!m[day]) m[day] = { pnl: 0, trades: 0, wins: 0, details: [] };
+      if (!m[day]) m[day] = { pnl: 0, trades: 0, wins: 0, details: [], rTotal: 0, rValid: 0, rMissing: 0 };
       m[day].pnl += tr.pnl; m[day].trades++; if (tr.winLoss === 'Win') m[day].wins++;
       m[day].details.push(tr);
+    });
+    // Aggregate R per day via the centralized engine (ignores N/A).
+    Object.keys(m).forEach(k => {
+      const day = +k;
+      const agg = sumR(m[day].details);
+      m[day].rTotal = agg.total;
+      m[day].rValid = agg.validCount;
+      m[day].rMissing = agg.missingCount;
     });
     return m;
   }, [monthTrades]);
@@ -61,9 +69,9 @@ export const CalendarHubPage = ({ T, isRTL, trades, t, isMobile, onGenerateInsig
     const wins = monthTrades.filter(tr => tr.winLoss === 'Win').length;
     const losses = monthTrades.filter(tr => tr.winLoss === 'Loss').length;
     const totalPnl = monthTrades.reduce((s, tr) => s + tr.pnl, 0);
-    const totalR = monthTrades.reduce((s, tr) => s + tr.returnR, 0);
+    const rAgg = sumR(monthTrades);
     const winRate = monthTrades.length ? (wins / monthTrades.length) * 100 : 0;
-    return { count: monthTrades.length, wins, losses, totalPnl, totalR, winRate };
+    return { count: monthTrades.length, wins, losses, totalPnl, totalR: rAgg.total, rValid: rAgg.validCount, rMissing: rAgg.missingCount, winRate };
   }, [monthTrades]);
 
   const calRiskStatus = checkRiskLimits(trades);
