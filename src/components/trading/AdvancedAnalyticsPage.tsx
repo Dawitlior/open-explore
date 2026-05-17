@@ -220,6 +220,35 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
     return out;
   }, [trades]);
 
+  const effectiveStats = useMemo(() => {
+    const returns = trades.map(t => getEffectiveR(t));
+    if (!returns.length) return { expectancyR: 0, volAdjExpectancy: 0, kelly: 0, riskOfRuin: 0, bestR: 0, worstR: 0 };
+    const winsR = trades.filter(t => t.winLoss === 'Win').map(t => Math.abs(getEffectiveR(t)));
+    const lossesR = trades.filter(t => t.winLoss === 'Loss').map(t => Math.abs(getEffectiveR(t)));
+    const wins = winsR.length;
+    const losses = lossesR.length;
+    const winRate = wins / trades.length;
+    const lossRate = losses / trades.length;
+    const avgWinR = wins ? winsR.reduce((s, r) => s + r, 0) / wins : 0;
+    const avgLossR = losses ? lossesR.reduce((s, r) => s + r, 0) / losses : 0;
+    const expectancyR = (winRate * avgWinR) - (lossRate * avgLossR);
+    const mean = returns.reduce((s, r) => s + r, 0) / returns.length;
+    const variance = returns.reduce((s, r) => s + Math.pow(r - mean, 2), 0) / returns.length;
+    const sd = Math.sqrt(variance);
+    const payoffRatio = avgLossR > 0 ? avgWinR / avgLossR : 0;
+    const kelly = payoffRatio > 0 ? Math.max(0, Math.min(100, (winRate - ((1 - winRate) / payoffRatio)) * 100)) : 0;
+    const edge = expectancyR > 0 && avgLossR > 0 ? expectancyR / avgLossR : 0;
+    const riskOfRuin = edge > 0 ? Math.max(0, Math.min(99.9, Math.pow((1 - edge) / (1 + edge), 10) * 100)) : 99.9;
+    return {
+      expectancyR,
+      volAdjExpectancy: sd > 0 ? expectancyR / sd : 0,
+      kelly,
+      riskOfRuin,
+      bestR: Math.max(...returns),
+      worstR: Math.min(...returns),
+    };
+  }, [trades]);
+
   // 8. Direction split
   const dirSplit = useMemo(() => {
     const longs = trades.filter(t => t.direction === 'Long');
