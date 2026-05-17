@@ -1549,6 +1549,65 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
             {tab === 'install' && (
               <InstallGuide T={T} t={t} isRTL={isRTL} />
             )}
+
+            {tab === 'legal' && (
+              <div style={card}>
+                <h3 style={sectionTitle}><Scale size={14} /> {t('משפטי ונגישות', 'Legal & Accessibility')}</h3>
+                <p style={sectionHint}>
+                  {t(
+                    'תנאי השימוש, מדיניות הפרטיות והצהרת הנגישות של Orca — נגישים בכל עת.',
+                    'Full Terms of Service, Privacy Policy and Accessibility Statement — always available.'
+                  )}
+                </p>
+                <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {LEGAL_SECTIONS_HE.map((s) => (
+                    <a
+                      key={s.heading}
+                      href={`#legal-${s.heading.split('.')[0]}`}
+                      style={{
+                        fontSize: 11, fontWeight: 600, padding: '5px 10px',
+                        borderRadius: 999, border: `1px solid ${T.border.subtle}`,
+                        color: T.accent.cyan, textDecoration: 'none', background: T.bg.secondary,
+                      }}
+                    >
+                      {s.heading}
+                    </a>
+                  ))}
+                </div>
+                <div
+                  dir="rtl"
+                  style={{
+                    marginTop: 16, maxHeight: 460, overflowY: 'auto',
+                    padding: 16, borderRadius: T.radius.md,
+                    background: T.bg.secondary, border: `1px solid ${T.border.subtle}`,
+                  }}
+                >
+                  <h4 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 800, color: T.accent.cyan, lineHeight: 1.5 }}>
+                    {LEGAL_TITLE_HE}
+                  </h4>
+                  {LEGAL_SECTIONS_HE.map((s) => (
+                    <section key={s.heading} id={`legal-${s.heading.split('.')[0]}`} style={{ marginBottom: 16 }}>
+                      <h5 style={{ margin: '0 0 6px', fontSize: 13, fontWeight: 700, color: T.text.primary }}>
+                        {s.heading}
+                      </h5>
+                      <p style={{
+                        margin: 0, fontSize: 12.5, lineHeight: 1.8,
+                        color: T.text.secondary, whiteSpace: 'pre-line',
+                      }}>
+                        {s.body}
+                      </p>
+                    </section>
+                  ))}
+                  <p style={{
+                    marginTop: 14, paddingTop: 12,
+                    borderTop: `1px solid ${T.border.subtle}`,
+                    fontSize: 12, fontWeight: 600, color: T.accent.cyan, textAlign: 'center',
+                  }}>
+                    {LEGAL_FOOTER_HE}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </section>
       </div>
