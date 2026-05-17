@@ -2660,13 +2660,25 @@ const DailyIntelligencePanel = ({ day, dir, th, onClose, onOpenJournal }: {
 }) => {
   const [aiResult, setAiResult] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [tradePage, setTradePage] = useState(0);
+  const TRADES_PER_PAGE = 50;
   const isRTL = dir === 'rtl';
   const trades = day.trades || [];
-  const pnl = sumPnl(day);
-  const wins = numWins(day);
-  const totalR = trades.reduce((s, t) => s + (parseFloat(t.rr) || 0), 0);
-  const winRate = trades.length > 0 ? ((wins / trades.length) * 100).toFixed(0) : '0';
-  const negR = sumNegR(trades);
+  // Memoise heavy aggregates so re-renders on dense days (1k+ trades) stay snappy.
+  const { pnl, wins, totalR, winRate, negR } = useMemo(() => {
+    const p = sumPnl(day);
+    const w = numWins(day);
+    const tR = trades.reduce((s, t) => s + (parseFloat(t.rr) || 0), 0);
+    const wr = trades.length > 0 ? ((w / trades.length) * 100).toFixed(0) : '0';
+    const nR = sumNegR(trades);
+    return { pnl: p, wins: w, totalR: tR, winRate: wr, negR: nR };
+  }, [day, trades]);
+  const totalPages = Math.max(1, Math.ceil(trades.length / TRADES_PER_PAGE));
+  const safePage = Math.min(tradePage, totalPages - 1);
+  const pagedTrades = useMemo(
+    () => trades.slice(safePage * TRADES_PER_PAGE, (safePage + 1) * TRADES_PER_PAGE),
+    [trades, safePage],
+  );
   const dateFmt = fmtFull(day.date, isRTL ? 'he-IL' : 'en-US');
 
   const runAI = () => {
