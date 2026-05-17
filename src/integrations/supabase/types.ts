@@ -77,6 +77,54 @@ export type Database = {
         }
         Relationships: []
       }
+      live_risk_locks: {
+        Row: {
+          captured_at: string
+          closed_at: string | null
+          created_at: string
+          entry_price: number
+          exchange_order_id: string | null
+          id: string
+          side: string
+          size: number
+          stop_loss: number
+          symbol: string
+          trade_id: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          captured_at?: string
+          closed_at?: string | null
+          created_at?: string
+          entry_price?: number
+          exchange_order_id?: string | null
+          id?: string
+          side: string
+          size?: number
+          stop_loss?: number
+          symbol: string
+          trade_id?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          captured_at?: string
+          closed_at?: string | null
+          created_at?: string
+          entry_price?: number
+          exchange_order_id?: string | null
+          id?: string
+          side?: string
+          size?: number
+          stop_loss?: number
+          symbol?: string
+          trade_id?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       open_positions: {
         Row: {
           entry_price: number
