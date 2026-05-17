@@ -7,7 +7,7 @@
 // Every failure path returns a STRUCTURED JSON response (never a raw 500),
 // so the client can surface the exact reason in console + UI.
 
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createClient } from 'npm:@supabase/supabase-js@2.45.4';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
