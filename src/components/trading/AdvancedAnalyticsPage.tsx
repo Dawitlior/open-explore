@@ -840,7 +840,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
             { l: t('עסקה הכי טובה','Best trade'), v: `+${stats.bestTradeR.toFixed(2)}R`, c: T.accent.green },
             { l: t('עסקה הכי גרועה','Worst trade'), v: `${stats.worstTradeR.toFixed(2)}R`, c: T.accent.red },
             { l: t('נכסים פעילים','Active assets'), v: String(setupBoard.length), c: T.accent.blue },
-            { l: t('תקופת מסחר','Trading period'), v: `${edgeDecay.length} ${t('חלונות','windows')}`, c: T.accent.purple },
+            { l: t('סיכון קריסה','Risk of Ruin'), v: `${effectiveStats.riskOfRuin.toFixed(1)}%`, c: effectiveStats.riskOfRuin > 50 ? T.accent.red : T.accent.green },
           ].map((o, i) => (
             <div key={i} style={{ padding: 10, background: T.bg.tertiary, borderRadius: 8, borderInlineStart: `2px solid ${o.c}` }}>
               <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 3 }}>{o.l}</div>
