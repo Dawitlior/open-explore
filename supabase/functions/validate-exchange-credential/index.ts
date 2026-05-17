@@ -218,44 +218,34 @@ export async function handler(req: Request, deps: HandlerDeps): Promise<Response
 }
 
 // ---------- Real wiring ----------
-Deno.serve((req) => handler(req, {
-  getUserId: async (authHeader) => {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: authHeader } } },
-    );
-    const token = authHeader.replace('Bearer ', '');
-    const { data, error } = await supabase.auth.getClaims(token);
-    if (error || !data?.claims?.sub) return null;
-    return data.claims.sub as string;
-  },
-  persist: async (userId, input) => {
-    const authHeader = `Bearer ${input.api_secret /* unused */ ? '' : ''}`; // placeholder
-    // Rebuild a user-scoped client with the original Authorization header so RLS applies.
-    // We re-derive it from the request inside handler via a closure — but to keep deps
-    // simple we rely on service role here is NOT allowed (would bypass RLS). Instead use
-    // a fresh client created with the caller token, stored on globalThis by handler.
-    // For simplicity & RLS-safety we use the anon key + caller header from a side-channel.
-    void authHeader;
-    const caller = (globalThis as unknown as { __caller_auth?: string }).__caller_auth;
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      caller ? { global: { headers: { Authorization: caller } } } : undefined,
-    );
-    const { error } = await supabase
-      .from('exchange_credentials')
-      .upsert({
-        user_id: userId,
-        provider: input.provider,
-        label: input.label,
-        api_key: input.api_key,
-        api_secret: input.api_secret,
-        scope: 'read_only',
-        is_active: true,
-        last_validated_at: new Date().toISOString(),
-      }, { onConflict: 'user_id,provider,label' });
-    return { error: error ? { message: error.message } : null };
-  },
-}));
+Deno.serve((req) => {
+  const authHeader = req.headers.get('Authorization') ?? '';
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_ANON_KEY')!,
+    { global: { headers: { Authorization: authHeader } } },
+  );
+  return handler(req, {
+    getUserId: async (h) => {
+      const token = h.replace('Bearer ', '');
+      const { data, error } = await supabase.auth.getClaims(token);
+      if (error || !data?.claims?.sub) return null;
+      return data.claims.sub as string;
+    },
+    persist: async (userId, input) => {
+      const { error } = await supabase
+        .from('exchange_credentials')
+        .upsert({
+          user_id: userId,
+          provider: input.provider,
+          label: input.label,
+          api_key: input.api_key,
+          api_secret: input.api_secret,
+          scope: 'read_only',
+          is_active: true,
+          last_validated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id,provider,label' });
+      return { error: error ? { message: error.message } : null };
+    },
+  });
+});
