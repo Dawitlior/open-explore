@@ -1761,7 +1761,7 @@ const Index = () => {
           )}
           {page === 'dashboard' && <div data-orca-dashboard="true">{renderDashboard()}</div>}
           {page === 'calendar' && (
-            <LazyShell><CalendarHubPage T={T} isRTL={isRTL} t={t} trades={trades} isMobile={isMobile} onGenerateInsight={handleGenerateInsights} /></LazyShell>
+            <LazyShell><CalendarHubPage T={T} isRTL={isRTL} t={t} trades={trades} isMobile={isMobile} onGenerateInsight={handleGenerateInsights} onSetManualR={setManualR} /></LazyShell>
           )}
           {page === 'journal' && renderJournal()}
           {page === 'analytics' && renderAnalytics()}
