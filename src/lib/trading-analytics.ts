@@ -272,7 +272,7 @@ function _computeAnalyticsInternal(trades: Trade[]): TradingStats {
       monthKey: key, pnl: mPnl, trades: mTrades.length, wins: mWins.length,
       winRate: mTrades.length > 0 ? (mWins.length / mTrades.length) * 100 : 0,
       expectancyR: computeExpectancyR(mTrades),
-      avgR: mTrades.length > 0 ? mTrades.reduce((s, t) => s + safeNum(t.returnR), 0) / mTrades.length : 0,
+      avgR: mTrades.length > 0 ? mTrades.reduce((s, t) => s + getEffectiveR(t), 0) / mTrades.length : 0,
       profitFactor: mGrossLoss > 0 ? mGrossWin / mGrossLoss : 0,
     };
   });
@@ -283,7 +283,7 @@ function _computeAnalyticsInternal(trades: Trade[]): TradingStats {
   for (let i = windowSize - 1; i < trades.length; i++) {
     const window = trades.slice(i - windowSize + 1, i + 1);
     const wWins = window.filter(t => t.winLoss === 'Win');
-    const returns = window.map(t => safeNum(t.returnR));
+    const returns = window.map(t => getEffectiveR(t));
     const mean = returns.reduce((s, r) => s + r, 0) / returns.length;
     const variance = returns.reduce((s, r) => s + (r - mean) ** 2, 0) / returns.length;
     const std = Math.sqrt(variance);
@@ -303,16 +303,16 @@ function _computeAnalyticsInternal(trades: Trade[]): TradingStats {
 
   // MAE/MFE approximation
   const maeDistribution = trades.map(t => ({
-    id: t.id, mae: t.winLoss === 'Loss' ? -Math.abs(safeNum(t.returnR)) : -safeNum(t.deviation), pnl: safeNum(t.pnl)
+    id: t.id, mae: t.winLoss === 'Loss' ? -Math.abs(getEffectiveR(t)) : -safeNum(t.deviation), pnl: safeNum(t.pnl)
   }));
   const mfeDistribution = trades.map(t => ({
-    id: t.id, mfe: t.winLoss === 'Win' ? Math.abs(safeNum(t.returnR)) : Math.abs(safeNum(t.returnR)) * 0.3, pnl: safeNum(t.pnl)
+    id: t.id, mfe: t.winLoss === 'Win' ? Math.abs(getEffectiveR(t)) : Math.abs(getEffectiveR(t)) * 0.3, pnl: safeNum(t.pnl)
   }));
 
   // Win rate vs R:R buckets
   const rrBuckets: Record<string, { wins: number; total: number }> = {};
   trades.forEach(t => {
-    const rr = Math.abs(safeNum(t.returnR));
+    const rr = Math.abs(getEffectiveR(t));
     const bucket = rr < 1 ? '<1R' : rr < 2 ? '1-2R' : rr < 3 ? '2-3R' : '3R+';
     if (!rrBuckets[bucket]) rrBuckets[bucket] = { wins: 0, total: 0 };
     rrBuckets[bucket].total++;
@@ -329,7 +329,7 @@ function _computeAnalyticsInternal(trades: Trade[]): TradingStats {
     const bucket = lev <= 5 ? 'Low Lev' : lev <= 15 ? 'Med Lev' : 'High Lev';
     if (!timeBuckets[bucket]) timeBuckets[bucket] = { count: 0, totalR: 0 };
     timeBuckets[bucket].count++;
-    timeBuckets[bucket].totalR += safeNum(t.returnR);
+    timeBuckets[bucket].totalR += getEffectiveR(t);
   });
   const timeInTradeDistribution = Object.entries(timeBuckets).map(([bucket, d]) => ({
     bucket, count: d.count, avgR: d.count > 0 ? d.totalR / d.count : 0
