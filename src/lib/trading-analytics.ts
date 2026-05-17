@@ -1,4 +1,5 @@
 import type { Trade } from '@/data/trades';
+import { getEffectiveR } from '@/lib/r-multiple';
 
 export interface CoinPerf {
   coin: string;
@@ -113,8 +114,8 @@ function computeExpectancyR(trades: Trade[]): number {
   const losses = trades.filter(t => t && t.winLoss === 'Loss');
   const winRate = wins.length / trades.length;
   const lossRate = losses.length / trades.length;
-  const avgWinR = wins.length > 0 ? wins.reduce((s, t) => s + Math.abs(safeNum(t.returnR)), 0) / wins.length : 0;
-  const avgLossR = losses.length > 0 ? losses.reduce((s, t) => s + Math.abs(safeNum(t.returnR)), 0) / losses.length : 0;
+  const avgWinR = wins.length > 0 ? wins.reduce((s, t) => s + Math.abs(getEffectiveR(t)), 0) / wins.length : 0;
+  const avgLossR = losses.length > 0 ? losses.reduce((s, t) => s + Math.abs(getEffectiveR(t)), 0) / losses.length : 0;
   return (winRate * avgWinR) - (lossRate * avgLossR);
 }
 
