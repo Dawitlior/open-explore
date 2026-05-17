@@ -157,7 +157,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      read_exchange_secret: {
+        Args: { p_cred_id: string; p_user_id: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
