@@ -1454,7 +1454,7 @@ const Index = () => {
         </div>
         {/* Calendar Day Modal */}
         {calModalDay && (
-          <CalendarModal T={T} t={t} isRTL={isRTL} day={calModalDay} month={calMonth} year={calYear} trades={trades} onClose={() => setCalModalDay(null)} onGenerateInsight={handleGenerateInsights} />
+          <CalendarModal T={T} t={t} isRTL={isRTL} day={calModalDay} month={calMonth} year={calYear} trades={trades} onClose={() => setCalModalDay(null)} onGenerateInsight={handleGenerateInsights} onSetManualR={setManualR} />
         )}
       </>
     );
