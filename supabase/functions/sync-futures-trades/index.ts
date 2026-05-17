@@ -238,14 +238,14 @@ Deno.serve(async (req) => {
     const cred = credRows?.[0];
     if (!cred) return json({ ok: false, error: 'no_credential', detail: 'No active credential found for this user/provider' }, 404);
 
-    // ---- Decrypt secret via vault ----
-    const { data: secretRow, error: secErr } = await admin
-      .schema('vault' as never)
-      .from('decrypted_secrets' as never)
-      .select('decrypted_secret')
-      .eq('id', cred.secret_id)
-      .maybeSingle();
-    const apiSecret = (secretRow as { decrypted_secret?: string } | null)?.decrypted_secret;
+    // ---- Decrypt secret via SECURITY DEFINER RPC ----
+    // vault schema isn't reachable through PostgREST, so we proxy through a
+    // service_role-only function that performs the ownership check + lookup.
+    const { data: secretPlain, error: secErr } = await admin.rpc('read_exchange_secret', {
+      p_user_id: userId,
+      p_cred_id: cred.id,
+    });
+    const apiSecret = typeof secretPlain === 'string' ? secretPlain : null;
     if (secErr || !apiSecret) {
       return json({ ok: false, error: 'vault_read_failed', detail: secErr?.message ?? 'no_secret' }, 500);
     }
