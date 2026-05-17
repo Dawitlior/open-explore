@@ -107,7 +107,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
       [labels.z_1]: 0, [labels.o1_2]: 0, [labels.o2_3]: 0, [labels.gt_3]: 0,
     };
     trades.forEach(tr => {
-      const r = tr.returnR;
+      const r = getEffectiveR(tr);
       if (r < -2) buckets[labels.lt_m2]++;
       else if (r < -1) buckets[labels.m2_m1]++;
       else if (r < 0) buckets[labels.m1_0]++;
@@ -126,7 +126,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
       if (!m[t.coin]) m[t.coin] = { coin: t.coin, n: 0, wins: 0, pnl: 0, r: 0, risk: 0 };
       m[t.coin].n++;
       m[t.coin].pnl += t.pnl;
-      m[t.coin].r += t.returnR;
+      m[t.coin].r += getEffectiveR(t);
       m[t.coin].risk += t.risk;
       if (t.winLoss === 'Win') m[t.coin].wins++;
     });
@@ -171,7 +171,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
     trades.map(t => ({
       risk: t.risk,
       pnl: t.pnl,
-      r: t.returnR,
+      r: getEffectiveR(t),
       win: t.winLoss === 'Win',
       coin: t.coin,
     })),
@@ -185,10 +185,10 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
       if (t.winLoss === 'Break Even') return;
       const ty: 'W' | 'L' = t.winLoss === 'Win' ? 'W' : 'L';
       if (cur && cur.type === ty) {
-        cur.len++; cur.pnl += t.pnl; cur.r += t.returnR;
+        cur.len++; cur.pnl += t.pnl; cur.r += getEffectiveR(t);
       } else {
         if (cur) out.push(cur);
-        cur = { type: ty, len: 1, pnl: t.pnl, r: t.returnR };
+        cur = { type: ty, len: 1, pnl: t.pnl, r: getEffectiveR(t) };
       }
     });
     if (cur) out.push(cur);
@@ -201,7 +201,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
     const out: { period: number; exp: number }[] = [];
     for (let i = 0; i + W <= trades.length; i += W) {
       const slice = trades.slice(i, i + W);
-      out.push({ period: Math.floor(i / W) + 1, exp: slice.reduce((s, t) => s + t.returnR, 0) / slice.length });
+      out.push({ period: Math.floor(i / W) + 1, exp: slice.reduce((s, t) => s + getEffectiveR(t), 0) / slice.length });
     }
     return out;
   }, [trades]);
@@ -234,8 +234,8 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
   const wins = trades.filter(t => t.winLoss === 'Win');
   const losses = trades.filter(t => t.winLoss === 'Loss');
   const payoff = losses.length && wins.length
-    ? (wins.reduce((s, t) => s + Math.abs(t.returnR), 0) / wins.length) /
-      (losses.reduce((s, t) => s + Math.abs(t.returnR), 0) / losses.length)
+    ? (wins.reduce((s, t) => s + Math.abs(getEffectiveR(t)), 0) / wins.length) /
+      (losses.reduce((s, t) => s + Math.abs(getEffectiveR(t)), 0) / losses.length)
     : 0;
 
   /* ─────────── ADVANCED (PRO/MAX) DATASETS ─────────── */
@@ -245,8 +245,8 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
     const W = 20;
     return trades.map((_, i) => {
       const slice = trades.slice(Math.max(0, i - W + 1), i + 1);
-      const mean = slice.reduce((s, t) => s + t.returnR, 0) / slice.length;
-      const variance = slice.reduce((s, t) => s + Math.pow(t.returnR - mean, 2), 0) / slice.length;
+      const mean = slice.reduce((s, t) => s + getEffectiveR(t), 0) / slice.length;
+      const variance = slice.reduce((s, t) => s + Math.pow(getEffectiveR(t) - mean, 2), 0) / slice.length;
       const sd = Math.sqrt(variance);
       return { i: i + 1, sharpe: sd > 0 ? +(mean / sd).toFixed(3) : 0 };
     });
@@ -277,7 +277,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
     const m: Record<string, { n: number; wins: number; r: number; pnl: number }> = {};
     trades.forEach(t => {
       if (!m[t.coin]) m[t.coin] = { n: 0, wins: 0, r: 0, pnl: 0 };
-      m[t.coin].n++; m[t.coin].r += t.returnR; m[t.coin].pnl += t.pnl;
+      m[t.coin].n++; m[t.coin].r += getEffectiveR(t); m[t.coin].pnl += t.pnl;
       if (t.winLoss === 'Win') m[t.coin].wins++;
     });
     return Object.entries(m).map(([coin, v]) => ({
@@ -291,7 +291,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
 
   // E) Heat-tape (last 60 trades as a vertical strip)
   const heatTape = useMemo(() =>
-    trades.slice(-60).map((t, i) => ({ i, r: t.returnR, win: t.winLoss === 'Win' })),
+    trades.slice(-60).map((t, i) => ({ i, r: getEffectiveR(t), win: t.winLoss === 'Win' })),
   [trades]);
 
   /* ─────────── HELPERS ─────────── */

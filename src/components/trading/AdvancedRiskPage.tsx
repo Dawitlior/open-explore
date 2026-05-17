@@ -210,7 +210,7 @@ export const AdvancedRiskPage = ({ T, isRTL, isAlpha, operatingMode = 'live', cu
       map[t.coin].trades++;
       map[t.coin].avgRisk += t.risk;
       map[t.coin].avgRiskPct += t.riskPct;
-      map[t.coin].totalR += t.returnR;
+      map[t.coin].totalR += getEffectiveR(t);
       if (t.winLoss === 'Win') map[t.coin].wins++;
     });
     return Object.values(map).map(s => ({
