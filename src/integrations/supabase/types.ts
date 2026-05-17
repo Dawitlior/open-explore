@@ -146,6 +146,7 @@ export type Database = {
           data: Json
           exchange_exec_id: string | null
           id: string
+          manual_r_multiple: number | null
           trade_id: number
           updated_at: string
           user_id: string
@@ -155,6 +156,7 @@ export type Database = {
           data: Json
           exchange_exec_id?: string | null
           id?: string
+          manual_r_multiple?: number | null
           trade_id: number
           updated_at?: string
           user_id: string
@@ -164,9 +166,43 @@ export type Database = {
           data?: Json
           exchange_exec_id?: string | null
           id?: string
+          manual_r_multiple?: number | null
           trade_id?: number
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          created_at: string
+          daily_risk_limit: number
+          monthly_risk_limit: number
+          risk_per_trade_default: number
+          theme: string
+          updated_at: string
+          user_id: string
+          weekly_risk_limit: number
+        }
+        Insert: {
+          created_at?: string
+          daily_risk_limit?: number
+          monthly_risk_limit?: number
+          risk_per_trade_default?: number
+          theme?: string
+          updated_at?: string
+          user_id: string
+          weekly_risk_limit?: number
+        }
+        Update: {
+          created_at?: string
+          daily_risk_limit?: number
+          monthly_risk_limit?: number
+          risk_per_trade_default?: number
+          theme?: string
+          updated_at?: string
+          user_id?: string
+          weekly_risk_limit?: number
         }
         Relationships: []
       }
