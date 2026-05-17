@@ -1492,7 +1492,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
       {showWipeModal && (
         <ResetModal
           T={T}
-          t={t as never}
+          t={isRTL ? i18nStrings.he : i18nStrings.en}
           isRTL={isRTL}
           onClose={() => setShowWipeModal(false)}
           onConfirm={async () => {
