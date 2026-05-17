@@ -1302,7 +1302,10 @@ const Index = () => {
                 ))}
               </tr></thead>
               <tbody>
-                {(opMode === 'live' ? trades.slice(-8) : trades).map((tr, idx) => (
+                {(opMode === 'live'
+                  ? trades.slice(-8)
+                  : [...trades].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 50)
+                ).map((tr, idx) => (
                   <tr key={tr.id} onClick={() => setSelTrade(tr)} style={{ cursor: 'pointer', background: idx % 2 ? `${T.bg.tertiary}40` : 'transparent' }}>
                     <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, color: T.text.muted }}>{tr.id}</td>
                     <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, whiteSpace: 'nowrap', fontSize: 11 }}>{new Date(tr.date).toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
