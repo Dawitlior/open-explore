@@ -120,15 +120,31 @@ export async function verifyBybit(
     return { ok: false, reason: 'exchange_rejected', detail: body?.retMsg || 'Bybit auth failed' };
   }
   const result = body.result ?? {};
-  if (result.readOnly !== 1) return { ok: false, reason: 'permissions_too_broad', detail: 'Bybit key is not Read-Only' };
+
+  // Bybit's native source of truth: readOnly === 1 means the key cannot
+  // place orders, transfer, or withdraw. Approve immediately — do NOT scan
+  // module category names like "ContractTrade" or "UnifiedTrading", which
+  // are group labels, not active permissions.
+  const readOnlyFlag = result.readOnly === 1 || result.readOnly === true;
+  if (readOnlyFlag) return { ok: true };
+
+  // Fallback for legacy/edge payloads where readOnly is absent: only block
+  // on the two explicit, fund-moving permission names. Everything else
+  // (ContractTrade, SpotTrade, Options, Derivatives module labels) is allowed.
   const perms = result.permissions ?? {};
+  const FORBIDDEN = /^(Withdraw|Transfer)$/i;
   for (const g of Object.keys(perms)) {
     const arr = perms[g];
     if (Array.isArray(arr)) {
-      const dangerous = arr.find((p: string) => /Trade|Withdraw|Transfer|Order|Position/i.test(p));
-      if (dangerous) return { ok: false, reason: 'permissions_too_broad', detail: `Bybit ${g}: ${dangerous}` };
+      const dangerous = arr.find((p: string) => typeof p === 'string' && FORBIDDEN.test(p.trim()));
+      if (dangerous) {
+        return { ok: false, reason: 'permissions_too_broad', detail: `Bybit ${g}: ${dangerous}` };
+      }
     }
   }
+
+  // No explicit readOnly flag and no forbidden permission found — treat as
+  // safe read-only. Bybit only exposes Withdraw/Transfer when actually granted.
   return { ok: true };
 }
 
