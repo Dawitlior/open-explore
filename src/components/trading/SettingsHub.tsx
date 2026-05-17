@@ -25,6 +25,7 @@ import { AvatarUploader } from './AvatarUploader';
 import { InstallGuide } from './InstallGuide';
 import { ResetModal } from './ResetModal';
 import { scopedStorage } from '@/lib/scoped-storage';
+import { useUserPreferences } from '@/hooks/use-user-preferences';
 import { i18n as i18nStrings } from '@/lib/trading-i18n';
 
 interface SettingsHubProps {
