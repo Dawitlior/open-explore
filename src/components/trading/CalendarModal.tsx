@@ -85,37 +85,122 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
   }, [dayTrades, isRTL]);
 
   /* ============= Shared trade-row renderer ============= */
-  const TradeRow = ({ tr }: { tr: Trade }) => (
-    <div style={{
-      padding: 14, background: T.bg.tertiary, borderRadius: T.radius.md, marginBottom: 8,
-      border: `1px solid ${tr.winLoss === 'Win' ? T.accent.green : tr.winLoss === 'Loss' ? T.accent.red : T.accent.orange}20`,
-      borderInlineStart: `3px solid ${tr.winLoss === 'Win' ? T.accent.green : tr.winLoss === 'Loss' ? T.accent.red : T.accent.orange}`,
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 6 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 14, fontWeight: 700, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>{tr.coin}</span>
-          <TradingBadge color={tr.direction === 'Long' ? T.accent.green : T.accent.red}>
-            {tr.direction === 'Long' ? '↑' : '↓'} {tr.direction}
-          </TradingBadge>
-          <TradingBadge color={tr.winLoss === 'Win' ? T.accent.green : tr.winLoss === 'Loss' ? T.accent.red : T.accent.orange}>
-            {tr.winLoss}
-          </TradingBadge>
+  const TradeRow = ({ tr }: { tr: Trade }) => {
+    const r = getR(tr);
+    const hasManual = tr.manual_r_multiple !== null && tr.manual_r_multiple !== undefined;
+    const [editing, setEditing] = useState(false);
+    const [draft, setDraft] = useState<string>(hasManual ? String(tr.manual_r_multiple) : (r !== null ? r.toFixed(2) : ''));
+    const [saving, setSaving] = useState(false);
+
+    const commit = async (clear: boolean) => {
+      if (!onSetManualR) { setEditing(false); return; }
+      let value: number | null = null;
+      if (!clear) {
+        const v = parseFloat(draft.replace(',', '.'));
+        if (!Number.isFinite(v)) { setEditing(false); return; }
+        value = v;
+      }
+      try {
+        setSaving(true);
+        await onSetManualR(tr.id, value);
+      } finally {
+        setSaving(false);
+        setEditing(false);
+      }
+    };
+
+    return (
+      <div style={{
+        padding: 14, background: T.bg.tertiary, borderRadius: T.radius.md, marginBottom: 8,
+        border: `1px solid ${tr.winLoss === 'Win' ? T.accent.green : tr.winLoss === 'Loss' ? T.accent.red : T.accent.orange}20`,
+        borderInlineStart: `3px solid ${tr.winLoss === 'Win' ? T.accent.green : tr.winLoss === 'Loss' ? T.accent.red : T.accent.orange}`,
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 6 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>{tr.coin}</span>
+            <TradingBadge color={tr.direction === 'Long' ? T.accent.green : T.accent.red}>
+              {tr.direction === 'Long' ? '↑' : '↓'} {tr.direction}
+            </TradingBadge>
+            <TradingBadge color={tr.winLoss === 'Win' ? T.accent.green : tr.winLoss === 'Loss' ? T.accent.red : T.accent.orange}>
+              {tr.winLoss}
+            </TradingBadge>
+            {hasManual && (
+              <span title={isRTL ? 'R ידני' : 'Manual R'} style={{
+                fontSize: 9, fontWeight: 800, color: T.accent.purple,
+                padding: '2px 6px', borderRadius: 999,
+                background: `${T.accent.purple}18`, border: `1px solid ${T.accent.purple}40`,
+                letterSpacing: '0.05em',
+              }}>MANUAL</span>
+            )}
+          </div>
+          <span style={{ fontSize: 15, fontWeight: 700, color: tr.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>
+            {tr.pnl >= 0 ? '+' : ''}${tr.pnl.toFixed(2)}
+          </span>
         </div>
-        <span style={{ fontSize: 15, fontWeight: 700, color: tr.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>
-          {tr.pnl >= 0 ? '+' : ''}${tr.pnl.toFixed(2)}
-        </span>
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, fontSize: 11 }}>
-        <div><span style={{ color: T.text.muted }}>Entry </span><span style={{ color: T.text.primary, fontFamily: "'JetBrains Mono', monospace" }}>{tr.entry}</span></div>
-        <div><span style={{ color: T.text.muted }}>SL </span><span style={{ color: T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{tr.stopLoss || '—'}</span></div>
-        <div><span style={{ color: T.text.muted }}>Exit </span><span style={{ color: T.text.primary, fontFamily: "'JetBrains Mono', monospace" }}>{tr.exit}</span></div>
-        {(() => { const r = getR(tr); return (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, fontSize: 11 }}>
+          <div><span style={{ color: T.text.muted }}>Entry </span><span style={{ color: T.text.primary, fontFamily: "'JetBrains Mono', monospace" }}>{tr.entry}</span></div>
+          <div><span style={{ color: T.text.muted }}>SL </span><span style={{ color: T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{tr.stopLoss || '—'}</span></div>
+          <div><span style={{ color: T.text.muted }}>Exit </span><span style={{ color: T.text.primary, fontFamily: "'JetBrains Mono', monospace" }}>{tr.exit}</span></div>
           <div><span style={{ color: T.text.muted }}>R </span><span style={{ color: r === null ? T.text.muted : r >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{formatR(r, 2)}</span></div>
-        ); })()}
+        </div>
+        {onSetManualR && (
+          <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            {!editing ? (
+              <button
+                onClick={() => { setDraft(hasManual ? String(tr.manual_r_multiple) : (r !== null ? r.toFixed(2) : '')); setEditing(true); }}
+                style={{
+                  fontSize: 10.5, fontWeight: 700, padding: '5px 10px',
+                  borderRadius: 999, cursor: 'pointer',
+                  background: `${T.accent.cyan}12`, color: T.accent.cyan,
+                  border: `1px solid ${T.accent.cyan}40`,
+                  fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.04em',
+                }}
+              >
+                ✎ {isRTL ? 'ערוך R-Multiple' : 'Override R'}
+              </button>
+            ) : (
+              <>
+                <input
+                  autoFocus
+                  type="number"
+                  step="0.1"
+                  value={draft}
+                  onChange={e => setDraft(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') void commit(false); if (e.key === 'Escape') setEditing(false); }}
+                  placeholder="+3.5"
+                  style={{
+                    width: 86, padding: '5px 8px', borderRadius: 8,
+                    border: `1px solid ${T.accent.cyan}55`, background: T.bg.secondary,
+                    color: T.text.primary, fontSize: 12, fontFamily: "'JetBrains Mono', monospace",
+                    outline: 'none', textAlign: 'center', fontWeight: 700,
+                  }}
+                />
+                <button disabled={saving} onClick={() => void commit(false)} style={{
+                  fontSize: 10.5, fontWeight: 800, padding: '5px 12px', borderRadius: 8,
+                  background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`,
+                  color: T.bg.primary, border: 'none', cursor: 'pointer',
+                  boxShadow: `0 4px 12px ${T.accent.cyan}40`,
+                }}>{saving ? '…' : (isRTL ? 'שמור' : 'Save')}</button>
+                {hasManual && (
+                  <button disabled={saving} onClick={() => void commit(true)} style={{
+                    fontSize: 10.5, fontWeight: 700, padding: '5px 10px', borderRadius: 8,
+                    background: 'transparent', color: T.accent.red,
+                    border: `1px solid ${T.accent.red}50`, cursor: 'pointer',
+                  }}>{isRTL ? 'נקה' : 'Clear'}</button>
+                )}
+                <button disabled={saving} onClick={() => setEditing(false)} style={{
+                  fontSize: 10.5, fontWeight: 600, padding: '5px 8px', borderRadius: 8,
+                  background: 'transparent', color: T.text.muted,
+                  border: `1px solid ${T.border.subtle}`, cursor: 'pointer',
+                }}>{isRTL ? 'ביטול' : 'Cancel'}</button>
+              </>
+            )}
+          </div>
+        )}
+        {tr.comments && <div style={{ marginTop: 8, fontSize: 11, color: T.text.muted, fontStyle: 'italic' }}>"{tr.comments}"</div>}
       </div>
-      {tr.comments && <div style={{ marginTop: 8, fontSize: 11, color: T.text.muted, fontStyle: 'italic' }}>"{tr.comments}"</div>}
-    </div>
-  );
+    );
+  };
 
   /* ============= Shared AI section ============= */
   const AISection = () => (
