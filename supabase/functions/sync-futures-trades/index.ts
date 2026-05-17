@@ -339,13 +339,17 @@ Deno.serve(async (req) => {
     let nextId = ((maxRow?.trade_id as number | undefined) ?? 0) + 1;
 
     // ---- Build rows aligned with public.trades schema (user_id, trade_id, data) ----
+    // Idempotency tier 2: collapse any duplicate execIds returned across paginated
+    // pages or overlapping 7-day windows before we even consider persistence.
+    const localSeen = new Set<string>();
     const rows: Array<{ user_id: string; trade_id: number; data: unknown }> = [];
     let inserted = 0;
     let skipped = 0;
     let runningBalance = 0;
     for (const e of execs) {
       if (!e?.execId) { skipped++; continue; }
-      if (seen.has(e.execId)) { skipped++; continue; }
+      if (seen.has(e.execId) || localSeen.has(e.execId)) { skipped++; continue; }
+      localSeen.add(e.execId);
       const t = bybitToTrade(e, provider);
       runningBalance += t.pnl;
       const full: Trade = { ...t, id: nextId, balance: Math.round(runningBalance * 10000) / 10000 };
@@ -355,12 +359,59 @@ Deno.serve(async (req) => {
     }
 
     if (rows.length > 0) {
+      // ON CONFLICT DO NOTHING semantics via ignoreDuplicates guarantees no
+      // multiplication on repeated clicks even if a race occurs.
       const { error: upErr } = await admin
         .from('trades')
         .upsert(rows, { onConflict: 'user_id,trade_id', ignoreDuplicates: true });
       if (upErr) {
         return json({ ok: false, error: 'persist_failed', detail: upErr.message }, 422);
       }
+    }
+
+    // ---- Sync live open positions ----
+    let positionsSynced = 0;
+    try {
+      const posResult = await fetchBybitOpenPositions(cred.api_key, apiSecret);
+      if (posResult.ok) {
+        const active = posResult.list.filter(p => Number(p.size) > 0);
+        const activeSymbols = new Set(active.map(p => p.symbol));
+
+        if (active.length > 0) {
+          const posRows = active.map(p => ({
+            user_id: userId,
+            provider,
+            symbol: p.symbol,
+            side: p.side,
+            size: Number(p.size) || 0,
+            entry_price: Number(p.avgPrice ?? p.entryPrice ?? 0) || 0,
+            unrealized_pnl: Number(p.unrealisedPnl ?? p.unrealizedPnl ?? 0) || 0,
+            updated_at: new Date().toISOString(),
+          }));
+          const { error: posUpErr } = await admin
+            .from('open_positions')
+            .upsert(posRows, { onConflict: 'user_id,provider,symbol' });
+          if (posUpErr) console.error('[sync-futures-trades] open_positions upsert', posUpErr.message);
+          else positionsSynced = posRows.length;
+        }
+
+        // Remove stale rows for this user/provider not in the current active set
+        const { data: existingPos } = await admin
+          .from('open_positions')
+          .select('id, symbol')
+          .eq('user_id', userId)
+          .eq('provider', provider);
+        const staleIds = (existingPos ?? [])
+          .filter(r => !activeSymbols.has(r.symbol as string))
+          .map(r => r.id);
+        if (staleIds.length > 0) {
+          await admin.from('open_positions').delete().in('id', staleIds);
+        }
+      } else {
+        console.error('[sync-futures-trades] positions fetch failed', posResult.detail);
+      }
+    } catch (e) {
+      console.error('[sync-futures-trades] positions sync threw', (e as Error).message);
     }
 
     // Stamp last_validated_at as a successful-sync marker (non-fatal)
@@ -376,6 +427,7 @@ Deno.serve(async (req) => {
       inserted,
       skipped,
       syncedCount: inserted,
+      positionsSynced,
     });
   } catch (e) {
     // Final safety net — never leak a raw 500
