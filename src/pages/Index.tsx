@@ -127,6 +127,11 @@ const Index = () => {
   const [explainModal, setExplainModal] = useState<{ title: string; explanation: ChartExplanation; chartId?: string } | null>(null);
   const [riskExplanations, setRiskExplanations] = useState<RiskExplanation[]>([]);
   const [showRiskExplanation, setShowRiskExplanation] = useState<{ tradeId: number; riskChange: string } | null>(null);
+  const [showRiskOnboarding, setShowRiskOnboarding] = useState(false);
+
+  useEffect(() => {
+    if (shouldShowRiskOnboarding(userPrefs, userPrefsLoaded)) setShowRiskOnboarding(true);
+  }, [userPrefs, userPrefsLoaded]);
 
   // Hydrate per-user UI prefs from scoped storage once we know who is logged in.
   const { user: authUser } = useAuth();
