@@ -12,8 +12,16 @@ export interface DeepDiagnosis {
   archetype: string;
   archetypeEN: string;
   archetypeBlurb: string;
+  /** Hebrew shock-line summary — the “bottom line” for the trader. */
+  bottomLine: string;
+  bottomLineEN: string;
   confidence: number;        // 0-100 — how reliable based on sample size
   scores: {
+    /** Setup-entry discipline (rules%) — separated from risk discipline. */
+    setupDiscipline: number;
+    /** Position-sizing / risk-management discipline (CV-based). */
+    riskDiscipline: number;
+    /** Legacy combined discipline (kept for back-compat, = avg of above). */
     discipline: number;
     consistency: number;
     emotional: number;
@@ -21,12 +29,17 @@ export interface DeepDiagnosis {
     patience: number;
     adaptability: number;
     risk: number;
+    /** Headline — Account Survivability Score. Brutal, capital-preservation focused. */
+    survivability: number;
+    /** Legacy overall (kept for back-compat, equals survivability). */
     overall: number;
   };
+  /** Did we detect the “discipline paradox” (high setup adherence + chaotic sizing)? */
+  disciplineParadox: boolean;
   strengths: { title: string; metric: string; severity: 'good' }[];
   risks: { title: string; metric: string; severity: 'warning' | 'danger' }[];
   patterns: { id: string; label: string; detail: string; severity: 'good' | 'warning' | 'danger' }[];
-  plan: { step: string; why: string }[];
+  plan: { step: string; why: string; priority?: 'critical' | 'high' | 'standard' }[];
   fingerprint: { l: string; c: 'green' | 'red' | 'orange' | 'cyan' | 'purple' }[];
   raw: {
     trades: number;
