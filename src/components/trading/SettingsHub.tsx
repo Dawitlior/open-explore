@@ -39,7 +39,7 @@ interface SettingsHubProps {
   trades: Trade[];
 }
 
-type TabId = 'account' | 'appearance' | 'theme-studio' | 'dashboard' | 'kpis' | 'risk' | 'interface' | 'sounds' | 'trading' | 'data' | 'install';
+type TabId = 'account' | 'appearance' | 'theme-studio' | 'dashboard' | 'kpis' | 'risk' | 'interface' | 'sounds' | 'trading' | 'exchanges' | 'data' | 'install';
 
 const ACCENT_PRESETS = [
   '#00f2ff', '#06d6a0', '#3b82f6', '#8b5cf6',
