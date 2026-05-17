@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plug, Shield, ShieldCheck, X, Trash2, Sparkles, Lock } from 'lucide-react';
+import { Plug, Shield, ShieldCheck, X, Trash2, Sparkles, Lock, ChevronDown, BookOpen, AlertTriangle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
@@ -102,8 +102,49 @@ export function ExchangesPanel({ T, isRTL }: Props) {
     void refresh();
   };
 
+  const [syncingProvider, setSyncingProvider] = useState<ProviderId | null>(null);
+  const onSync = async (providerId: ProviderId, label: string | null) => {
+    if (!user) return;
+    setSyncingProvider(providerId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error('NO_SESSION');
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sync-futures-trades`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({ provider: providerId, label: label ?? undefined }),
+      });
+      const payload = await res.json().catch(() => ({} as { ok?: boolean; inserted?: number; skipped?: number; error?: string; detail?: string }));
+      if (res.status === 200 && payload.ok) {
+        toast.success(t(
+          `סנכרון הושלם • ${payload.inserted ?? 0} חדשות, ${payload.skipped ?? 0} קיימות`,
+          `Sync complete • ${payload.inserted ?? 0} new, ${payload.skipped ?? 0} existing`
+        ));
+        // Notify any listeners (useTrades, journal) that data changed
+        window.dispatchEvent(new CustomEvent('orca:trades-synced', { detail: payload }));
+      } else if (res.status === 404 || payload.error === 'no_credential') {
+        toast.error(t('לא נמצא חיבור פעיל לבורסה.', 'No active exchange connection found.'));
+      } else if (res.status === 502 || res.status === 503 || payload.error === 'exchange_error') {
+        toast.error(t('הבורסה לא הגיבה. נסה שוב מאוחר יותר.', 'Exchange unavailable. Try again later.'));
+      } else {
+        toast.error(t('סנכרון נכשל.', 'Sync failed.') + (payload.detail ? ` (${payload.detail})` : ''));
+      }
+    } catch (e) {
+      toast.error(t('שגיאת רשת בסנכרון.', 'Network error during sync.'));
+    } finally {
+      setSyncingProvider(null);
+    }
+  };
+
   return (
     <div>
+      <style>{`@keyframes orcaStream { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }`}</style>
       {/* Header */}
       <div style={{
         marginBottom: 18, padding: 18,
@@ -135,6 +176,7 @@ export function ExchangesPanel({ T, isRTL }: Props) {
         {PROVIDERS.map(p => {
           const conns = byProvider.get(p.id) ?? [];
           const connected = conns.length > 0 && p.enabled;
+          const supportsSync = p.id === 'bybit';
           return (
             <ExchangeCard
               key={p.id}
@@ -146,6 +188,8 @@ export function ExchangesPanel({ T, isRTL }: Props) {
               isRTL={isRTL}
               onConnect={() => p.enabled && setOpenProvider(p.id)}
               onDisconnect={connected ? () => onDisconnect(conns[0].id) : undefined}
+              onSync={connected && supportsSync ? () => onSync(p.id, conns[0].label) : undefined}
+              syncing={syncingProvider === p.id}
             />
           );
         })}
@@ -166,7 +210,7 @@ export function ExchangesPanel({ T, isRTL }: Props) {
 
 /* ============================== CARD ============================== */
 function ExchangeCard({
-  T, meta, connected, loading, connectionLabel, isRTL, onConnect, onDisconnect,
+  T, meta, connected, loading, connectionLabel, isRTL, onConnect, onDisconnect, onSync, syncing,
 }: {
   T: TradingTheme;
   meta: ProviderMeta;
@@ -176,6 +220,8 @@ function ExchangeCard({
   isRTL: boolean;
   onConnect: () => void;
   onDisconnect?: () => void;
+  onSync?: () => void;
+  syncing?: boolean;
 }) {
   const t = (he: string, en: string) => (isRTL ? he : en);
   const sans = "'Poppins', sans-serif";
@@ -315,6 +361,49 @@ function ExchangeCard({
           </button>
         )}
       </div>
+
+      {/* Sync Trades — futures fetch engine */}
+      {connected && onSync && (
+        <button
+          onClick={(e) => { e.stopPropagation(); if (!syncing) onSync(); }}
+          disabled={syncing}
+          style={{
+            position: 'relative', overflow: 'hidden',
+            marginTop: 10, width: '100%',
+            padding: '10px 12px', borderRadius: 10,
+            background: syncing
+              ? 'linear-gradient(180deg, rgba(6,12,28,0.95), rgba(2,6,15,0.95))'
+              : 'linear-gradient(135deg, rgba(0,242,255,0.14), rgba(0,242,255,0.04))',
+            border: `1px solid ${syncing ? '#00f2ff66' : '#00f2ff44'}`,
+            color: '#7defff',
+            fontWeight: 800, fontSize: 11, fontFamily: sans,
+            cursor: syncing ? 'wait' : 'pointer', letterSpacing: 0.5,
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            boxShadow: syncing ? '0 0 22px -6px #00f2ffaa' : '0 8px 22px -16px #00f2ff',
+            transition: 'background .2s ease, box-shadow .2s ease',
+          }}
+        >
+          {syncing ? (
+            <>
+              <span style={{ fontFamily: mono, fontSize: 10.5, letterSpacing: 1.2, textTransform: 'uppercase' }}>
+                {t('מסנכרן…', 'Syncing…')}
+              </span>
+              <span style={{
+                position: 'absolute', left: 0, right: 0, bottom: 0, height: 2,
+                background: 'linear-gradient(90deg, transparent, #00f2ff, transparent)',
+                backgroundSize: '200% 100%',
+                animation: 'orcaStream 1.1s linear infinite',
+                boxShadow: '0 0 10px #00f2ff',
+              }} />
+            </>
+          ) : (
+            <>
+              <RefreshCw size={11} />
+              {t('סנכרן עסקאות פיוצ\'רס', 'Sync Futures Trades')}
+            </>
+          )}
+        </button>
+      )}
 
       {connected && connectionLabel && (
         <div style={{
@@ -554,7 +643,8 @@ function CredentialModal({
           </div>
         </div>
 
-        {/* Label */}
+        {/* Embedded Onboarding Guide (Phase 4) */}
+        <KeyGuide T={T} isRTL={isRTL} provider={provider} />
         <Field label={t('כינוי לחשבון', 'Account label')} T={T}>
           <input
             value={label}
@@ -990,4 +1080,122 @@ function inputStyle(T: TradingTheme, mono: string): React.CSSProperties {
     fontFamily: mono, boxSizing: 'border-box',
     transition: 'border-color .15s, background .15s',
   };
+}
+
+/* ====================== EMBEDDED KEY GUIDE (Phase 4) ====================== */
+function KeyGuide({ T, isRTL, provider }: { T: TradingTheme; isRTL: boolean; provider: ProviderMeta }) {
+  const [open, setOpen] = useState(false);
+  const t = (he: string, en: string) => (isRTL ? he : en);
+  const sans = "'Poppins', sans-serif";
+  const mono = "'IBM Plex Mono', monospace";
+
+  const steps: { he: string; en: string }[] = provider.id === 'bybit' ? [
+    { he: 'היכנס ל־Bybit ופתח Account → API.', en: 'Open Bybit and go to Account → API.' },
+    { he: 'בחר "Create New Key" → System-generated.', en: 'Choose "Create New Key" → System-generated.' },
+    { he: 'תחת Permissions, סמן "Read-Only" בלבד.', en: 'Under Permissions, select "Read-Only" only.' },
+    { he: 'הפעל את "Unified Trading / Contract" — לצפייה בלבד.', en: 'Enable "Unified Trading / Contract" — read scope only.' },
+    { he: 'אל תסמן Trade / Withdraw / Transfer / Options.', en: 'Do NOT check Trade, Withdraw, Transfer, or Options.' },
+    { he: 'העתק את ה־API Key וה־Secret והדבק כאן.', en: 'Copy the API Key and Secret, then paste them here.' },
+  ] : [
+    { he: 'היכנס ל־Binance → API Management.', en: 'Open Binance → API Management.' },
+    { he: 'לחץ "Create API" → System-generated.', en: 'Click "Create API" → System-generated.' },
+    { he: 'אמת זהות (Email / 2FA) לפי הצורך.', en: 'Complete identity verification (Email / 2FA) if prompted.' },
+    { he: 'תחת Restrictions: השאר רק "Enable Reading" מסומן.', en: 'Under Restrictions: keep ONLY "Enable Reading" checked.' },
+    { he: 'אל תסמן Spot Trading, Margin, Futures Trading, Withdrawals.', en: 'Do NOT check Spot Trading, Margin, Futures Trading, or Withdrawals.' },
+    { he: 'העתק את ה־Key וה־Secret והדבק כאן.', en: 'Copy the API Key and Secret, then paste them here.' },
+  ];
+
+  return (
+    <div style={{
+      marginBottom: 14,
+      borderRadius: 12,
+      background: 'linear-gradient(135deg, rgba(0,242,255,0.05), rgba(11,23,48,0.45))',
+      border: `1px solid ${open ? '#00f2ff44' : T.border.subtle}`,
+      backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
+      overflow: 'hidden',
+      transition: 'border-color .25s ease, box-shadow .25s ease',
+      boxShadow: open ? '0 14px 36px -22px #00f2ff' : 'none',
+    }}>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+          padding: '12px 14px',
+          background: 'transparent', border: 'none', cursor: 'pointer',
+          color: T.text.primary, fontFamily: sans, fontWeight: 700, fontSize: 12.5,
+          letterSpacing: 0.2, textAlign: isRTL ? 'right' : 'left',
+        }}
+      >
+        <BookOpen size={14} color="#00f2ff" style={{ flexShrink: 0 }} />
+        <span style={{ flex: 1 }}>
+          {t('איך מייצרים מפתח בטוח לקריאה בלבד?', 'How to generate a safe Read-Only API key?')}
+        </span>
+        <ChevronDown size={14} color={T.text.muted} style={{
+          transition: 'transform .3s cubic-bezier(0.16,1,0.3,1)',
+          transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+        }} />
+      </button>
+
+      <div style={{
+        maxHeight: open ? 600 : 0,
+        opacity: open ? 1 : 0,
+        transition: 'max-height .45s cubic-bezier(0.16,1,0.3,1), opacity .35s ease',
+        overflow: 'hidden',
+      }}>
+        <div style={{ padding: '4px 16px 16px' }}>
+          <div style={{
+            fontFamily: mono, fontSize: 10.5, lineHeight: 1.85,
+            color: '#cbd5e1',
+            background: 'rgba(2,6,15,0.55)',
+            border: `1px solid ${T.border.subtle}`,
+            borderRadius: 10, padding: '12px 14px',
+          }}>
+            <div style={{
+              fontSize: 9.5, fontWeight: 800, color: provider.accent,
+              letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8,
+            }}>
+              {provider.name} • {t('הוראות', 'Walkthrough')}
+            </div>
+            {steps.map((s, i) => (
+              <div key={i} style={{ display: 'flex', gap: 10, marginBottom: 6 }}>
+                <span style={{
+                  flexShrink: 0,
+                  color: provider.accent, fontWeight: 800,
+                  minWidth: 18, textAlign: isRTL ? 'left' : 'right',
+                }}>
+                  {String(i + 1).padStart(2, '0')}.
+                </span>
+                <span>{s[isRTL ? 'he' : 'en']}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Amber neon firewall notice */}
+          <div style={{
+            marginTop: 12, padding: '10px 12px', borderRadius: 10,
+            background: 'linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.02))',
+            border: '1px solid rgba(245,158,11,0.45)',
+            boxShadow: '0 0 22px -10px rgba(245,158,11,0.7), inset 0 0 0 1px rgba(245,158,11,0.05)',
+            display: 'flex', gap: 10, alignItems: 'flex-start',
+          }}>
+            <AlertTriangle size={14} color="#fbbf24" style={{ flexShrink: 0, marginTop: 2,
+              filter: 'drop-shadow(0 0 4px rgba(251,191,36,0.7))' }} />
+            <div style={{
+              fontFamily: sans, fontSize: 11, lineHeight: 1.55, color: '#fde68a',
+            }}>
+              <strong style={{ color: '#fcd34d', fontWeight: 800, letterSpacing: 0.2 }}>
+                {t('Orca Firewall: ', 'Orca Firewall: ')}
+              </strong>
+              {t(
+                'חומת המגן של Orca תדחה אוטומטית כל מפתח עם הרשאות מסחר או משיכה פעילות. אנו מקבלים אך ורק מפתחות לקריאה בלבד.',
+                'Our serverless firewall automatically rejects any key with active Trading or Withdrawal permissions. Only strict Read-Only keys are accepted.'
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }

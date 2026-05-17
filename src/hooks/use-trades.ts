@@ -18,19 +18,28 @@ export function useTrades() {
   }, [trades]);
 
   useEffect(() => {
-    getAllTrades().then(t => {
-      const sanitized = sanitizeTrades(t);
-      const sorted = sanitized.sort((a, b) => a.id - b.id);
-      tradesRef.current = sorted;
-      setTrades(sorted);
-      setLoading(false);
-      setInitialized(true);
-    }).catch((err) => {
-      console.error('Failed to load trades:', err);
-      setTrades([]);
-      setLoading(false);
-      setInitialized(true);
-    });
+    let cancelled = false;
+    const load = () => {
+      getAllTrades().then(t => {
+        if (cancelled) return;
+        const sanitized = sanitizeTrades(t);
+        const sorted = sanitized.sort((a, b) => a.id - b.id);
+        tradesRef.current = sorted;
+        setTrades(sorted);
+        setLoading(false);
+        setInitialized(true);
+      }).catch((err) => {
+        if (cancelled) return;
+        console.error('Failed to load trades:', err);
+        setTrades([]);
+        setLoading(false);
+        setInitialized(true);
+      });
+    };
+    load();
+    const onSync = () => load();
+    window.addEventListener('orca:trades-synced', onSync);
+    return () => { cancelled = true; window.removeEventListener('orca:trades-synced', onSync); };
   }, []);
 
   const stats = useMemo<TradingStats>(() => {
