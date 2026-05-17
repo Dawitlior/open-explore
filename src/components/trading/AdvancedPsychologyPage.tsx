@@ -639,62 +639,111 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
               <>
                 {/* HEADER */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', marginBottom: 14, position: 'relative' }}>
-                  <div style={{ position: 'absolute', insetInlineEnd: -20, top: -20, width: 220, height: 220, borderRadius: '50%', background: `radial-gradient(circle, ${healthColor}26, transparent 70%)`, filter: 'blur(40px)', pointerEvents: 'none' }} />
-                  <div style={{ position: 'relative' }}>
-                    <div style={{ fontSize: 10, color: healthColor, letterSpacing: '0.22em', fontFamily: "'JetBrains Mono', monospace", marginBottom: 6 }}>◆ ORCA · DEEP PSYCHOLOGICAL DIAGNOSTIC</div>
+                  <div style={{ position: 'absolute', insetInlineEnd: -20, top: -20, width: 260, height: 260, borderRadius: '50%', background: `radial-gradient(circle, ${healthColor}30, transparent 70%)`, filter: 'blur(48px)', pointerEvents: 'none' }} />
+                  <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 10, color: healthColor, letterSpacing: '0.24em', fontFamily: "'JetBrains Mono', monospace", marginBottom: 6 }}>◆ ORCA · DEEP PSYCHOLOGICAL DIAGNOSTIC</div>
+                    <div style={{ fontSize: 13, color: T.text.muted, marginBottom: 4, fontFamily: "'JetBrains Mono', monospace" }}>{isRTL ? 'פרופיל' : 'PROFILE'}</div>
                     <div style={{ fontSize: 26, color: T.text.primary, fontWeight: 900, lineHeight: 1.2 }}>{deepDiag.archetype}</div>
-                    <div style={{ fontSize: 11, color: T.text.muted, marginTop: 4, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em' }}>{deepDiag.archetypeEN.toUpperCase()} · CONFIDENCE {deepDiag.confidence}%</div>
-                    <div style={{ fontSize: 13, color: T.text.secondary, marginTop: 10, lineHeight: 1.65, maxWidth: 620 }}>{deepDiag.archetypeBlurb}</div>
+                    <div style={{ fontSize: 11, color: T.text.muted, marginTop: 4, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em' }}>{deepDiag.archetypeEN.toUpperCase()} · {isRTL ? 'רמת ודאות' : 'CONFIDENCE'} {deepDiag.confidence}%</div>
                   </div>
-                  <button onClick={() => setDiagnosisOpen(false)} style={{ width: 36, height: 36, borderRadius: 10, border: `1px solid ${T.border.medium}`, background: T.bg.tertiary, color: T.text.secondary, cursor: 'pointer', fontSize: 22, position: 'relative' }}>×</button>
+                  <button onClick={() => setDiagnosisOpen(false)} style={{ width: 36, height: 36, borderRadius: 10, border: `1px solid ${T.border.medium}`, background: T.bg.tertiary, color: T.text.secondary, cursor: 'pointer', fontSize: 22, position: 'relative', flexShrink: 0 }}>×</button>
                 </div>
 
-                {/* OVERALL SCORE BAR */}
-                <div style={{ marginBottom: 14, padding: 14, borderRadius: 12, background: T.bg.tertiary, border: `1px solid ${T.border.subtle}` }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                    <span style={{ fontSize: 11, color: T.text.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{isRTL ? 'ציון סינתזה כללי' : 'Overall synthesis score'}</span>
-                    <span style={{ fontSize: 26, fontWeight: 900, color: healthColor, fontFamily: "'JetBrains Mono', monospace" }}>{deepDiag.scores.overall}<span style={{ fontSize: 12, color: T.text.muted }}>/100</span></span>
+                {/* ── BOTTOM LINE (the shock) ─────────────────────────── */}
+                <div style={{
+                  marginBottom: 16, padding: 18, borderRadius: 14,
+                  background: `linear-gradient(135deg, ${healthColor}14, ${healthColor}05)`,
+                  border: `1px solid ${healthColor}40`,
+                  borderInlineStart: `4px solid ${healthColor}`,
+                  position: 'relative', overflow: 'hidden',
+                }}>
+                  <div style={{ position: 'absolute', insetInlineEnd: 12, top: 10, fontSize: 9, color: healthColor, letterSpacing: '0.2em', fontFamily: "'JetBrains Mono', monospace", opacity: 0.7 }}>{isRTL ? 'שורה תחתונה' : 'BOTTOM LINE'}</div>
+                  <div style={{ fontSize: 15, color: T.text.primary, lineHeight: 1.65, fontWeight: 600, marginTop: 4 }}>{isRTL ? deepDiag.bottomLine : deepDiag.bottomLineEN}</div>
+                </div>
+
+                {/* ── SURVIVABILITY SCORE — HEADLINE ─────────────────── */}
+                <div style={{ marginBottom: 14, padding: 16, borderRadius: 14, background: T.bg.tertiary, border: `1px solid ${healthColor}38`, boxShadow: `inset 0 0 30px ${healthColor}10` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10, gap: 12, flexWrap: 'wrap' }}>
+                    <div>
+                      <div style={{ fontSize: 10, color: T.text.muted, letterSpacing: '0.16em', textTransform: 'uppercase', fontFamily: "'JetBrains Mono', monospace" }}>{isRTL ? 'ציון חוסן ביצועי' : 'Account Survivability Score'}</div>
+                      <div style={{ fontSize: 9, color: T.text.dim, marginTop: 2 }}>{isRTL ? 'מקדם שרידות החשבון תחת לחץ' : 'Resilience under pressure'}</div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                      <span style={{ fontSize: 38, fontWeight: 900, color: healthColor, fontFamily: "'JetBrains Mono', monospace", lineHeight: 1 }}>{deepDiag.scores.survivability}</span>
+                      <span style={{ fontSize: 14, color: T.text.muted }}>/100</span>
+                      <span style={{ fontSize: 10, color: healthColor, padding: '3px 8px', borderRadius: 999, background: `${healthColor}18`, border: `1px solid ${healthColor}40`, fontWeight: 700, marginInlineStart: 8 }}>
+                        {deepDiag.scores.survivability >= 75 ? (isRTL ? 'חוסן גבוה' : 'High') :
+                         deepDiag.scores.survivability >= 55 ? (isRTL ? 'חוסן בינוני' : 'Medium') :
+                         deepDiag.scores.survivability >= 35 ? (isRTL ? 'סיכון גבוה' : 'High Risk') :
+                         (isRTL ? 'סיכון קריטי' : 'Critical')}
+                      </span>
+                    </div>
                   </div>
-                  <div style={{ height: 6, background: T.bg.primary, borderRadius: 3, overflow: 'hidden' }}>
-                    <div style={{ width: `${deepDiag.scores.overall}%`, height: '100%', background: `linear-gradient(90deg, ${T.accent.red}, ${T.accent.orange}, ${T.accent.green})`, transition: 'width .8s ease' }} />
+                  <div style={{ height: 8, background: T.bg.primary, borderRadius: 4, overflow: 'hidden', position: 'relative' }}>
+                    <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(90deg, ${T.accent.red}, ${T.accent.orange}, ${T.accent.green})`, opacity: 0.2 }} />
+                    <div style={{ width: `${deepDiag.scores.survivability}%`, height: '100%', background: `linear-gradient(90deg, ${T.accent.red}, ${T.accent.orange}, ${T.accent.green})`, transition: 'width .9s cubic-bezier(0.16,1,0.3,1)', boxShadow: `0 0 12px ${healthColor}80` }} />
+                  </div>
+                  {/* 3-pillar sub-scores */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 12 }}>
+                    {[
+                      { l: isRTL ? 'אדג׳ סטטיסטי' : 'Statistical Edge', v: deepDiag.scores.edge },
+                      { l: isRTL ? 'עקביות סיכון' : 'Risk Consistency', v: deepDiag.scores.riskDiscipline },
+                      { l: isRTL ? 'שליטה רגשית' : 'Emotional Control', v: deepDiag.scores.emotional },
+                    ].map(s => {
+                      const c = s.v >= 60 ? T.accent.green : s.v >= 35 ? T.accent.orange : T.accent.red;
+                      return (
+                        <div key={s.l} style={{ padding: 10, borderRadius: 10, background: `${c}10`, border: `1px solid ${c}30` }}>
+                          <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>{s.l}</div>
+                          <div style={{ fontSize: 18, fontWeight: 900, color: c, fontFamily: "'JetBrains Mono', monospace" }}>{s.v}<span style={{ fontSize: 10, color: T.text.muted, fontWeight: 400 }}>/100</span></div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* 7-AXIS SCORE GRID */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 8, marginBottom: 14 }}>
-                  {[
-                    { l: isRTL ? 'משמעת' : 'Discipline', v: deepDiag.scores.discipline, c: T.accent.green },
-                    { l: isRTL ? 'עקביות' : 'Consistency', v: deepDiag.scores.consistency, c: T.accent.blue },
-                    { l: isRTL ? 'רגשי' : 'Emotional', v: deepDiag.scores.emotional, c: T.accent.purple },
-                    { l: isRTL ? 'אדג׳' : 'Edge', v: deepDiag.scores.edge, c: T.accent.cyan },
-                    { l: isRTL ? 'סבלנות' : 'Patience', v: deepDiag.scores.patience, c: T.accent.orange },
-                    { l: isRTL ? 'הסתגלות' : 'Adaptability', v: deepDiag.scores.adaptability, c: T.accent.cyan },
-                    { l: isRTL ? 'סיכון' : 'Risk', v: deepDiag.scores.risk, c: deepDiag.scores.risk >= 60 ? T.accent.green : T.accent.red },
-                  ].map(s => (
-                    <div key={s.l} style={{ padding: 10, borderRadius: 10, background: `${s.c}10`, border: `1px solid ${s.c}30` }}>
-                      <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>{s.l}</div>
-                      <div style={{ fontSize: 18, fontWeight: 900, color: s.c, fontFamily: "'JetBrains Mono', monospace", lineHeight: 1 }}>{s.v}</div>
-                      <div style={{ height: 3, background: T.bg.primary, borderRadius: 2, marginTop: 6, overflow: 'hidden' }}>
-                        <div style={{ width: `${s.v}%`, height: '100%', background: s.c, transition: 'width .6s' }} />
+                {/* ── DISCIPLINE PARADOX BANNER (only if detected) ───── */}
+                {deepDiag.disciplineParadox && (
+                  <div style={{ marginBottom: 14, padding: 14, borderRadius: 12, background: `linear-gradient(135deg, ${T.accent.red}15, ${T.accent.orange}08)`, border: `1px solid ${T.accent.red}40`, borderInlineStart: `3px solid ${T.accent.red}` }}>
+                    <div style={{ fontSize: 11, color: T.accent.red, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: "'JetBrains Mono', monospace", marginBottom: 8 }}>{isRTL ? '⚠ פרדוקס המשמעת — אשליה של שליטה' : '⚠ DISCIPLINE PARADOX'}</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginBottom: 10 }}>
+                      <div style={{ padding: 10, borderRadius: 8, background: T.bg.tertiary }}>
+                        <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{isRTL ? 'משמעת כניסה' : 'Setup Discipline'}</div>
+                        <div style={{ fontSize: 22, fontWeight: 900, color: T.accent.green, fontFamily: "'JetBrains Mono', monospace" }}>{deepDiag.scores.setupDiscipline}<span style={{ fontSize: 11, color: T.text.muted, fontWeight: 400 }}>/100</span></div>
+                      </div>
+                      <div style={{ padding: 10, borderRadius: 8, background: T.bg.tertiary }}>
+                        <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{isRTL ? 'משמעת ניהול סיכון' : 'Risk Discipline'}</div>
+                        <div style={{ fontSize: 22, fontWeight: 900, color: deepDiag.scores.riskDiscipline >= 50 ? T.accent.orange : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{deepDiag.scores.riskDiscipline}<span style={{ fontSize: 11, color: T.text.muted, fontWeight: 400 }}>/100</span></div>
                       </div>
                     </div>
-                  ))}
-                </div>
+                    <div style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.6 }}>
+                      {isRTL
+                        ? 'אתה ממושמע בכניסה — אבל אנרכיסט בניהול הסיכון. זה הפער שמרוקן את החשבון.'
+                        : "You're disciplined on entry — but anarchic on risk management. This gap drains the account."}
+                    </div>
+                  </div>
+                )}
 
-                {/* RAW METRICS STRIP */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 6, marginBottom: 14, padding: 10, borderRadius: 10, background: T.bg.tertiary, border: `1px solid ${T.border.subtle}` }}>
-                  {[
-                    [`WR ${deepDiag.raw.winRate.toFixed(0)}%`, T.accent.cyan],
-                    [`PF ${deepDiag.raw.profitFactor.toFixed(2)}`, deepDiag.raw.profitFactor >= 1.3 ? T.accent.green : T.accent.orange],
-                    [`Exp ${deepDiag.raw.expectancyR >= 0 ? '+' : ''}${deepDiag.raw.expectancyR.toFixed(2)}R`, deepDiag.raw.expectancyR >= 0 ? T.accent.green : T.accent.red],
-                    [`CV ${deepDiag.raw.riskCV.toFixed(0)}%`, deepDiag.raw.riskCV <= 35 ? T.accent.green : T.accent.red],
-                    [`Sortino ${deepDiag.raw.sortino.toFixed(2)}`, deepDiag.raw.sortino >= 0.3 ? T.accent.green : T.accent.orange],
-                    [`MaxL ${deepDiag.raw.maxLossStreak}`, deepDiag.raw.maxLossStreak >= 4 ? T.accent.red : T.accent.green],
-                    [`MaxW ${deepDiag.raw.maxWinStreak}`, T.accent.purple],
-                    [`Esc ${deepDiag.raw.postLossEscalationPct.toFixed(0)}%`, deepDiag.raw.postLossEscalationPct > 30 ? T.accent.red : T.accent.green],
-                  ].map(([l, c]) => (
-                    <div key={String(l)} style={{ fontSize: 11, color: String(c), fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, padding: '4px 8px', borderRadius: 6, background: `${c}10`, textAlign: 'center' }}>{l}</div>
-                  ))}
+                {/* ── DATA PROOFS — “The Metric That Doesn’t Lie” ──── */}
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontSize: 10, color: T.text.muted, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>{isRTL ? '◆ המטריקה שלא משקרת' : '◆ THE METRIC THAT DOESN’T LIE'}</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 8 }}>
+                    {[
+                      { k: isRTL ? 'תוחלת פוזיציה' : 'Expectancy', v: `${deepDiag.raw.expectancyR >= 0 ? '+' : ''}${deepDiag.raw.expectancyR.toFixed(2)}R`, c: deepDiag.raw.expectancyR >= 0 ? T.accent.green : T.accent.red, sub: isRTL && deepDiag.raw.expectancyR < 0 ? 'אתה משלם לסחור' : (deepDiag.raw.expectancyR < 0 ? 'You pay to trade' : 'Net R per trade') },
+                      { k: isRTL ? 'כאוס סיזינג (CV)' : 'Sizing Chaos (CV)', v: `${deepDiag.raw.riskCV.toFixed(0)}%`, c: deepDiag.raw.riskCV <= 35 ? T.accent.green : deepDiag.raw.riskCV <= 60 ? T.accent.orange : T.accent.red, sub: isRTL ? 'תנודתיות גודל פוזיציה' : 'Position-size volatility' },
+                      { k: isRTL ? 'הסלמה אחרי הפסד' : 'Post-Loss Escalation', v: `${deepDiag.raw.postLossEscalationPct.toFixed(0)}%`, c: deepDiag.raw.postLossEscalationPct > 30 ? T.accent.red : T.accent.green, sub: isRTL ? 'אינדיקציה למסחר נקמה' : 'Revenge-trading indicator' },
+                      { k: isRTL ? 'רצף הפסדים מקס׳' : 'Max Loss Streak', v: `${deepDiag.raw.maxLossStreak}L`, c: deepDiag.raw.maxLossStreak >= 4 ? T.accent.red : T.accent.green, sub: isRTL ? 'ריצה לתוך הקיר ללא בלמים' : 'No-brakes loss run' },
+                      { k: 'Profit Factor', v: deepDiag.raw.profitFactor.toFixed(2), c: deepDiag.raw.profitFactor >= 1.3 ? T.accent.green : deepDiag.raw.profitFactor >= 1 ? T.accent.orange : T.accent.red, sub: isRTL ? 'רווח/הפסד גולמי' : 'Gross win/loss' },
+                      { k: isRTL ? 'ימי מסחר יתר' : 'Overtrading Days', v: `${deepDiag.raw.overtradingDays}`, c: deepDiag.raw.overtradingDays >= 3 ? T.accent.orange : T.accent.green, sub: isRTL ? '3+ עסקאות ביום' : '3+ trades/day' },
+                      { k: 'Win Rate', v: `${deepDiag.raw.winRate.toFixed(0)}%`, c: T.accent.cyan, sub: `${deepDiag.raw.wins}W / ${deepDiag.raw.losses}L` },
+                      { k: 'Sortino', v: deepDiag.raw.sortino.toFixed(2), c: deepDiag.raw.sortino >= 0.3 ? T.accent.green : T.accent.orange, sub: isRTL ? 'תשואה ביחס ללחץ' : 'Risk-adjusted return' },
+                    ].map(m => (
+                      <div key={m.k} style={{ padding: 10, borderRadius: 10, background: T.bg.tertiary, border: `1px solid ${m.c}25` }}>
+                        <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.k}</div>
+                        <div style={{ fontSize: 18, fontWeight: 900, color: m.c, fontFamily: "'JetBrains Mono', monospace", lineHeight: 1 }}>{m.v}</div>
+                        <div style={{ fontSize: 9, color: T.text.dim, marginTop: 4 }}>{m.sub}</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 {/* FINGERPRINT CHIPS */}
@@ -706,17 +755,17 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
                   })}
                 </div>
 
-                {/* PATTERNS — only what was actually detected */}
+                {/* ── PSYCHOLOGICAL PATTERNS — the "why" ─────────────── */}
                 {deepDiag.patterns.length > 0 && (
                   <div style={{ marginBottom: 14 }}>
-                    <div style={{ fontSize: 11, color: T.text.muted, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>{isRTL ? '◆ דפוסים שזוהו' : '◆ DETECTED PATTERNS'}</div>
+                    <div style={{ fontSize: 10, color: T.text.muted, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>{isRTL ? '◆ ניתוח פסיכולוגי · הלמה מאחורי הדפוס' : '◆ PSYCHOLOGICAL ANALYSIS · The Why'}</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {deepDiag.patterns.map(p => {
                         const c = p.severity === 'good' ? T.accent.green : p.severity === 'warning' ? T.accent.orange : T.accent.red;
                         return (
                           <div key={p.id} style={{ padding: 12, borderRadius: 10, background: `${c}08`, border: `1px solid ${c}30`, borderInlineStart: `3px solid ${c}` }}>
                             <div style={{ fontSize: 13, color: c, fontWeight: 800, marginBottom: 4 }}>{p.label}</div>
-                            <div style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.6 }}>{p.detail}</div>
+                            <div style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.65 }}>{p.detail}</div>
                           </div>
                         );
                       })}
@@ -729,9 +778,9 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
                   <div style={{ marginTop: 8, padding: 14, borderRadius: 12, background: T.bg.tertiary, borderInlineStart: `4px solid ${T.accent.green}` }}>
                     <div style={{ fontSize: 13, color: T.accent.green, fontWeight: 900, marginBottom: 10 }}>{isRTL ? '◆ חוזקות מאומתות בנתונים' : '◆ DATA-VERIFIED STRENGTHS'}</div>
                     {deepDiag.strengths.map((s, i) => (
-                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '6px 0', borderBottom: i < deepDiag.strengths.length - 1 ? `1px solid ${T.border.subtle}` : 'none' }}>
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '6px 0', borderBottom: i < deepDiag.strengths.length - 1 ? `1px solid ${T.border.subtle}` : 'none', gap: 12 }}>
                         <span style={{ fontSize: 13, color: T.text.primary, fontWeight: 600 }}>● {s.title}</span>
-                        <span style={{ fontSize: 11, color: T.accent.green, fontFamily: "'JetBrains Mono', monospace" }}>{s.metric}</span>
+                        <span style={{ fontSize: 11, color: T.accent.green, fontFamily: "'JetBrains Mono', monospace", textAlign: 'end' }}>{s.metric}</span>
                       </div>
                     ))}
                   </div>
@@ -744,24 +793,34 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
                     {deepDiag.risks.map((r, i) => {
                       const c = r.severity === 'danger' ? T.accent.red : T.accent.orange;
                       return (
-                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '6px 0', borderBottom: i < deepDiag.risks.length - 1 ? `1px solid ${T.border.subtle}` : 'none' }}>
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '6px 0', borderBottom: i < deepDiag.risks.length - 1 ? `1px solid ${T.border.subtle}` : 'none', gap: 12 }}>
                           <span style={{ fontSize: 13, color: T.text.primary, fontWeight: 600 }}>● {r.title}</span>
-                          <span style={{ fontSize: 11, color: c, fontFamily: "'JetBrains Mono', monospace" }}>{r.metric}</span>
+                          <span style={{ fontSize: 11, color: c, fontFamily: "'JetBrains Mono', monospace", textAlign: 'end' }}>{r.metric}</span>
                         </div>
                       );
                     })}
                   </div>
                 )}
 
-                {/* PERSONAL ACTION PROTOCOL */}
-                <div style={{ marginTop: 10, padding: 14, borderRadius: 12, background: T.bg.tertiary, borderInlineStart: `4px solid ${T.accent.cyan}` }}>
-                  <div style={{ fontSize: 13, color: T.accent.cyan, fontWeight: 900, marginBottom: 10 }}>{isRTL ? '◆ פרוטוקול פעולה אישי' : '◆ PERSONAL ACTION PROTOCOL'}</div>
-                  {deepDiag.plan.map((p, i) => (
-                    <div key={i} style={{ padding: '8px 0', borderBottom: i < deepDiag.plan.length - 1 ? `1px solid ${T.border.subtle}` : 'none' }}>
-                      <div style={{ fontSize: 13, color: T.text.primary, fontWeight: 700, marginBottom: 3 }}>{i + 1}. {p.step}</div>
-                      <div style={{ fontSize: 11, color: T.text.muted, lineHeight: 1.5 }}>{isRTL ? 'למה' : 'Why'}: {p.why}</div>
-                    </div>
-                  ))}
+                {/* ── RECOVERY PROTOCOL — military-style standing orders ─ */}
+                <div style={{ marginTop: 10, padding: 16, borderRadius: 12, background: `linear-gradient(135deg, ${T.accent.cyan}10, ${T.bg.tertiary})`, border: `1px solid ${T.accent.cyan}30`, borderInlineStart: `4px solid ${T.accent.cyan}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+                    <div style={{ fontSize: 13, color: T.accent.cyan, fontWeight: 900 }}>{isRTL ? '◆ פרוטוקול חילוץ · פקודות קבע' : '◆ RECOVERY PROTOCOL · STANDING ORDERS'}</div>
+                    <span style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.16em', fontFamily: "'JetBrains Mono', monospace" }}>{isRTL ? 'חד-משמעי · בלי יוצא מן הכלל' : 'NON-NEGOTIABLE'}</span>
+                  </div>
+                  {deepDiag.plan.map((p, i) => {
+                    const pc = p.priority === 'critical' ? T.accent.red : p.priority === 'high' ? T.accent.orange : T.accent.cyan;
+                    const pLabel = p.priority === 'critical' ? (isRTL ? 'קריטי' : 'CRITICAL') : p.priority === 'high' ? (isRTL ? 'גבוה' : 'HIGH') : (isRTL ? 'תקני' : 'STANDARD');
+                    return (
+                      <div key={i} style={{ padding: '10px 0', borderBottom: i < deepDiag.plan.length - 1 ? `1px solid ${T.border.subtle}` : 'none' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: 11, fontWeight: 900, color: pc, fontFamily: "'JetBrains Mono', monospace", padding: '2px 8px', borderRadius: 4, background: `${pc}15`, border: `1px solid ${pc}40` }}>#{i + 1} · {pLabel}</span>
+                        </div>
+                        <div style={{ fontSize: 13, color: T.text.primary, fontWeight: 700, lineHeight: 1.5, marginBottom: 4 }}>{p.step}</div>
+                        <div style={{ fontSize: 11, color: T.text.muted, lineHeight: 1.55 }}>↳ {isRTL ? 'למה' : 'Why'}: {p.why}</div>
+                      </div>
+                    );
+                  })}
                 </div>
               </>
             )}
