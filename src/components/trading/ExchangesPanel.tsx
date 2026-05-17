@@ -7,6 +7,15 @@ import type { TradingTheme } from '@/lib/trading-theme';
 
 type ProviderId = 'bybit' | 'binance' | 'ibkr';
 
+/* Cooldown formatter: "2.0s" / "32.0s" / "1m 02s" */
+function formatCooldown(ms: number): string {
+  const totalSec = ms / 1000;
+  if (totalSec < 60) return `${totalSec.toFixed(1)}s`;
+  const m = Math.floor(totalSec / 60);
+  const s = Math.floor(totalSec % 60);
+  return `${m}m ${String(s).padStart(2, '0')}s`;
+}
+
 interface ProviderMeta {
   id: ProviderId;
   name: string;
