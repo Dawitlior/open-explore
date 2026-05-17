@@ -359,7 +359,8 @@ function _computeAnalyticsInternal(trades: Trade[]): TradingStats {
   // Risk of ruin — edge-aware in R-space; avoids false 99.9% when Bybit R fields are missing.
   const wr = winRate / 100;
   const edgeRatio = expectancyR > 0 && avgLossR > 0 ? expectancyR / avgLossR : 0;
-  const riskOfRuin = edgeRatio > 0 ? Math.max(0, Math.min(99.9, Math.pow((1 - edgeRatio) / (1 + edgeRatio), 10) * 100)) : 99.9;
+  const ruinBase = edgeRatio > 0 ? Math.max(0, Math.min(0.99, (1 - edgeRatio) / (1 + edgeRatio))) : 1;
+  const riskOfRuin = edgeRatio > 0 ? Math.max(0, Math.min(99.9, Math.pow(ruinBase, 10) * 100)) : 99.9;
 
   // Kelly criterion
   const payoffRatio = avgLossR > 0 ? avgWinR / avgLossR : 0;
