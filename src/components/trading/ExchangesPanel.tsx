@@ -102,6 +102,46 @@ export function ExchangesPanel({ T, isRTL }: Props) {
     void refresh();
   };
 
+  const [syncingProvider, setSyncingProvider] = useState<ProviderId | null>(null);
+  const onSync = async (providerId: ProviderId, label: string | null) => {
+    if (!user) return;
+    setSyncingProvider(providerId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error('NO_SESSION');
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sync-futures-trades`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({ provider: providerId, label: label ?? undefined }),
+      });
+      const payload = await res.json().catch(() => ({} as { ok?: boolean; inserted?: number; skipped?: number; error?: string; detail?: string }));
+      if (res.status === 200 && payload.ok) {
+        toast.success(t(
+          `סנכרון הושלם • ${payload.inserted ?? 0} חדשות, ${payload.skipped ?? 0} קיימות`,
+          `Sync complete • ${payload.inserted ?? 0} new, ${payload.skipped ?? 0} existing`
+        ));
+        // Notify any listeners (useTrades, journal) that data changed
+        window.dispatchEvent(new CustomEvent('orca:trades-synced', { detail: payload }));
+      } else if (res.status === 404 || payload.error === 'no_credential') {
+        toast.error(t('לא נמצא חיבור פעיל לבורסה.', 'No active exchange connection found.'));
+      } else if (res.status === 502 || res.status === 503 || payload.error === 'exchange_error') {
+        toast.error(t('הבורסה לא הגיבה. נסה שוב מאוחר יותר.', 'Exchange unavailable. Try again later.'));
+      } else {
+        toast.error(t('סנכרון נכשל.', 'Sync failed.') + (payload.detail ? ` (${payload.detail})` : ''));
+      }
+    } catch (e) {
+      toast.error(t('שגיאת רשת בסנכרון.', 'Network error during sync.'));
+    } finally {
+      setSyncingProvider(null);
+    }
+  };
+
   return (
     <div>
       {/* Header */}
