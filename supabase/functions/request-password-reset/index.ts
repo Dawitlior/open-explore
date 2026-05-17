@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
     const { email, redirectTo } = await req.json();
     const clean = typeof email === 'string' ? email.trim().toLowerCase() : '';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) {
-      return json({ ok: false, error: 'invalid_email' }, 400);
+      return json({ ok: false, error: 'invalid_email' });
     }
 
     const URL = Deno.env.get('SUPABASE_URL')!;
