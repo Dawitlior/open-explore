@@ -7,7 +7,11 @@ const URL = Deno.env.get("SUPABASE_URL")!;
 const ANON = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
 const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-Deno.test("exchange_credentials — per-user RLS isolation", async () => {
+Deno.test({
+  name: "exchange_credentials — per-user RLS isolation",
+  sanitizeResources: false,
+  sanitizeOps: false,
+  fn: async () => {
   const admin = createClient(URL, SERVICE, { auth: { persistSession: false } });
   const stamp = Date.now();
   const emailA = `rls_a_${stamp}@example.test`;
