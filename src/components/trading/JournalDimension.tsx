@@ -3620,7 +3620,9 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
                     <div style={{ fontSize: 8, color: tr.direction === 'Long' ? '#00FFA3' : '#FF4D4D', fontWeight: 700, letterSpacing: '1px' }}>{tr.direction === 'Long' ? '▲' : '▼'}</div>
                   </div>
                   <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 13, fontWeight: 800, color: tr.pnl >= 0 ? '#00FFA3' : '#FF4D4D', marginTop: 2, textShadow: `0 0 10px ${tr.pnl >= 0 ? 'rgba(0,255,163,0.3)' : 'rgba(255,77,77,0.3)'}` }}>{tr.pnl >= 0 ? '+' : ''}{tr.pnl.toFixed(2)}$</div>
-                  <div style={{ fontSize: 9, color: th.tx3, marginTop: 2, fontFamily: "'Poppins',sans-serif" }}>{(tr.returnR ?? 0) >= 0 ? '+' : ''}{(tr.returnR ?? 0).toFixed(2)}R</div>
+                  {(() => { const r = getR(tr as any); return (
+                    <div style={{ fontSize: 9, color: th.tx3, marginTop: 2, fontFamily: "'Poppins',sans-serif" }}>{formatR(r, 2)}</div>
+                  ); })()}
                 </div>
               ))}
             </div>
