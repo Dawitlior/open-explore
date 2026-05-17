@@ -50,23 +50,33 @@ interface BybitFetchResult {
 }
 interface BybitFetchError {
   ok: false;
-  status: number;       // HTTP status to return to client
-  error: string;        // short code
-  detail: string;       // human-readable
+  status: number;
+  error: string;
+  detail: string;
 }
 
-async function fetchBybitLinear(
+interface BybitPosition {
+  symbol: string;
+  side: string;
+  size: string;
+  avgPrice?: string;
+  entryPrice?: string;
+  unrealisedPnl?: string;
+  unrealizedPnl?: string;
+}
+
+async function bybitSignedGet(
   apiKey: string,
   apiSecret: string,
-): Promise<BybitFetchResult | BybitFetchError> {
+  path: string,
+  query: string,
+): Promise<{ ok: true; body: { retCode?: number; retMsg?: string; result?: { list?: unknown; nextPageCursor?: string } } } | BybitFetchError> {
   const ts = Date.now().toString();
   const recv = '5000';
-  const query = 'category=linear&limit=100';
   const sign = await hmacSha256Hex(apiSecret, ts + apiKey + recv + query);
-
   let res: Response;
   try {
-    res = await fetch(`https://api.bybit.com/v5/execution/list?${query}`, {
+    res = await fetch(`https://api.bybit.com${path}?${query}`, {
       method: 'GET',
       headers: {
         'X-BAPI-API-KEY': apiKey,
@@ -78,17 +88,11 @@ async function fetchBybitLinear(
   } catch (e) {
     return { ok: false, status: 503, error: 'exchange_unreachable', detail: (e as Error).message || 'fetch_failed' };
   }
-
-  // Network-level failure on Bybit
   if (res.status >= 500) {
-    await res.text().catch(() => '');
     return { ok: false, status: 503, error: 'exchange_unreachable', detail: `bybit_http_${res.status}` };
   }
-
-  let body: { retCode?: number; retMsg?: string; result?: { list?: unknown } } = {};
+  let body: { retCode?: number; retMsg?: string; result?: { list?: unknown; nextPageCursor?: string } } = {};
   try { body = await res.json(); } catch { /* keep {} */ }
-
-  // Bybit reports errors with retCode !== 0 (HTTP can still be 200)
   if (typeof body.retCode !== 'number' || body.retCode !== 0) {
     return {
       ok: false,
@@ -97,13 +101,55 @@ async function fetchBybitLinear(
       detail: `retCode=${body.retCode ?? 'unknown'} ${body.retMsg ?? ''}`.trim(),
     };
   }
+  return { ok: true, body };
+}
 
-  // Result list may be missing or empty — both are legitimate zero-trade cases
-  const list = body.result?.list;
-  if (!Array.isArray(list)) {
-    return { ok: true, list: [] };
+// Fetch up to 180 days of linear execution history, paginating via nextPageCursor.
+async function fetchBybitLinear(
+  apiKey: string,
+  apiSecret: string,
+): Promise<BybitFetchResult | BybitFetchError> {
+  const DAY_MS = 86_400_000;
+  const endTime = Date.now();
+  const startTime = endTime - 180 * DAY_MS;
+  // Bybit caps each execution query window at ~7 days, so iterate in 7-day chunks.
+  const WINDOW_MS = 7 * DAY_MS;
+  const all: BybitExec[] = [];
+  const MAX_PAGES = 400; // hard safety cap
+
+  for (let wEnd = endTime; wEnd > startTime; wEnd -= WINDOW_MS) {
+    const wStart = Math.max(startTime, wEnd - WINDOW_MS);
+    let cursor: string | undefined;
+    let pages = 0;
+    do {
+      const params = new URLSearchParams({
+        category: 'linear',
+        limit: '100',
+        startTime: String(wStart),
+        endTime: String(wEnd),
+      });
+      if (cursor) params.set('cursor', cursor);
+      const r = await bybitSignedGet(apiKey, apiSecret, '/v5/execution/list', params.toString());
+      if (!r.ok) return r;
+      const list = r.body.result?.list;
+      if (Array.isArray(list)) all.push(...(list as BybitExec[]));
+      cursor = r.body.result?.nextPageCursor || undefined;
+      pages++;
+      if (pages > MAX_PAGES) break;
+    } while (cursor);
   }
-  return { ok: true, list: list as BybitExec[] };
+  return { ok: true, list: all };
+}
+
+async function fetchBybitOpenPositions(
+  apiKey: string,
+  apiSecret: string,
+): Promise<{ ok: true; list: BybitPosition[] } | BybitFetchError> {
+  const r = await bybitSignedGet(apiKey, apiSecret, '/v5/position/list', 'category=linear&settleCoin=USDT');
+  if (!r.ok) return r;
+  const list = r.body.result?.list;
+  if (!Array.isArray(list)) return { ok: true, list: [] };
+  return { ok: true, list: list as BybitPosition[] };
 }
 
 // ---------- Normalise into Trade shape ----------
