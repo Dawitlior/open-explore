@@ -23,7 +23,15 @@ export function useTrades() {
       getAllTrades().then(t => {
         if (cancelled) return;
         const sanitized = sanitizeTrades(t);
-        const sorted = sanitized.sort((a, b) => a.id - b.id);
+        // Dedupe by unique id before committing to state — guarantees the UI
+        // never shows duplicate rows even if a sync event races a local mutation.
+        const seenIds = new Set<number>();
+        const unique = sanitized.filter(tr => {
+          if (!tr || typeof tr.id !== 'number' || seenIds.has(tr.id)) return false;
+          seenIds.add(tr.id);
+          return true;
+        });
+        const sorted = unique.sort((a, b) => a.id - b.id);
         tradesRef.current = sorted;
         setTrades(sorted);
         setLoading(false);

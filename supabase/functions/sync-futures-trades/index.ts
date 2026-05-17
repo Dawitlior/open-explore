@@ -50,23 +50,33 @@ interface BybitFetchResult {
 }
 interface BybitFetchError {
   ok: false;
-  status: number;       // HTTP status to return to client
-  error: string;        // short code
-  detail: string;       // human-readable
+  status: number;
+  error: string;
+  detail: string;
 }
 
-async function fetchBybitLinear(
+interface BybitPosition {
+  symbol: string;
+  side: string;
+  size: string;
+  avgPrice?: string;
+  entryPrice?: string;
+  unrealisedPnl?: string;
+  unrealizedPnl?: string;
+}
+
+async function bybitSignedGet(
   apiKey: string,
   apiSecret: string,
-): Promise<BybitFetchResult | BybitFetchError> {
+  path: string,
+  query: string,
+): Promise<{ ok: true; body: { retCode?: number; retMsg?: string; result?: { list?: unknown; nextPageCursor?: string } } } | BybitFetchError> {
   const ts = Date.now().toString();
   const recv = '5000';
-  const query = 'category=linear&limit=100';
   const sign = await hmacSha256Hex(apiSecret, ts + apiKey + recv + query);
-
   let res: Response;
   try {
-    res = await fetch(`https://api.bybit.com/v5/execution/list?${query}`, {
+    res = await fetch(`https://api.bybit.com${path}?${query}`, {
       method: 'GET',
       headers: {
         'X-BAPI-API-KEY': apiKey,
@@ -78,17 +88,11 @@ async function fetchBybitLinear(
   } catch (e) {
     return { ok: false, status: 503, error: 'exchange_unreachable', detail: (e as Error).message || 'fetch_failed' };
   }
-
-  // Network-level failure on Bybit
   if (res.status >= 500) {
-    await res.text().catch(() => '');
     return { ok: false, status: 503, error: 'exchange_unreachable', detail: `bybit_http_${res.status}` };
   }
-
-  let body: { retCode?: number; retMsg?: string; result?: { list?: unknown } } = {};
+  let body: { retCode?: number; retMsg?: string; result?: { list?: unknown; nextPageCursor?: string } } = {};
   try { body = await res.json(); } catch { /* keep {} */ }
-
-  // Bybit reports errors with retCode !== 0 (HTTP can still be 200)
   if (typeof body.retCode !== 'number' || body.retCode !== 0) {
     return {
       ok: false,
@@ -97,13 +101,55 @@ async function fetchBybitLinear(
       detail: `retCode=${body.retCode ?? 'unknown'} ${body.retMsg ?? ''}`.trim(),
     };
   }
+  return { ok: true, body };
+}
 
-  // Result list may be missing or empty — both are legitimate zero-trade cases
-  const list = body.result?.list;
-  if (!Array.isArray(list)) {
-    return { ok: true, list: [] };
+// Fetch up to 180 days of linear execution history, paginating via nextPageCursor.
+async function fetchBybitLinear(
+  apiKey: string,
+  apiSecret: string,
+): Promise<BybitFetchResult | BybitFetchError> {
+  const DAY_MS = 86_400_000;
+  const endTime = Date.now();
+  const startTime = endTime - 180 * DAY_MS;
+  // Bybit caps each execution query window at ~7 days, so iterate in 7-day chunks.
+  const WINDOW_MS = 7 * DAY_MS;
+  const all: BybitExec[] = [];
+  const MAX_PAGES = 400; // hard safety cap
+
+  for (let wEnd = endTime; wEnd > startTime; wEnd -= WINDOW_MS) {
+    const wStart = Math.max(startTime, wEnd - WINDOW_MS);
+    let cursor: string | undefined;
+    let pages = 0;
+    do {
+      const params = new URLSearchParams({
+        category: 'linear',
+        limit: '100',
+        startTime: String(wStart),
+        endTime: String(wEnd),
+      });
+      if (cursor) params.set('cursor', cursor);
+      const r = await bybitSignedGet(apiKey, apiSecret, '/v5/execution/list', params.toString());
+      if (!r.ok) return r;
+      const list = r.body.result?.list;
+      if (Array.isArray(list)) all.push(...(list as BybitExec[]));
+      cursor = r.body.result?.nextPageCursor || undefined;
+      pages++;
+      if (pages > MAX_PAGES) break;
+    } while (cursor);
   }
-  return { ok: true, list: list as BybitExec[] };
+  return { ok: true, list: all };
+}
+
+async function fetchBybitOpenPositions(
+  apiKey: string,
+  apiSecret: string,
+): Promise<{ ok: true; list: BybitPosition[] } | BybitFetchError> {
+  const r = await bybitSignedGet(apiKey, apiSecret, '/v5/position/list', 'category=linear&settleCoin=USDT');
+  if (!r.ok) return r;
+  const list = r.body.result?.list;
+  if (!Array.isArray(list)) return { ok: true, list: [] };
+  return { ok: true, list: list as BybitPosition[] };
 }
 
 // ---------- Normalise into Trade shape ----------
@@ -293,13 +339,17 @@ Deno.serve(async (req) => {
     let nextId = ((maxRow?.trade_id as number | undefined) ?? 0) + 1;
 
     // ---- Build rows aligned with public.trades schema (user_id, trade_id, data) ----
+    // Idempotency tier 2: collapse any duplicate execIds returned across paginated
+    // pages or overlapping 7-day windows before we even consider persistence.
+    const localSeen = new Set<string>();
     const rows: Array<{ user_id: string; trade_id: number; data: unknown }> = [];
     let inserted = 0;
     let skipped = 0;
     let runningBalance = 0;
     for (const e of execs) {
       if (!e?.execId) { skipped++; continue; }
-      if (seen.has(e.execId)) { skipped++; continue; }
+      if (seen.has(e.execId) || localSeen.has(e.execId)) { skipped++; continue; }
+      localSeen.add(e.execId);
       const t = bybitToTrade(e, provider);
       runningBalance += t.pnl;
       const full: Trade = { ...t, id: nextId, balance: Math.round(runningBalance * 10000) / 10000 };
@@ -309,12 +359,59 @@ Deno.serve(async (req) => {
     }
 
     if (rows.length > 0) {
+      // ON CONFLICT DO NOTHING semantics via ignoreDuplicates guarantees no
+      // multiplication on repeated clicks even if a race occurs.
       const { error: upErr } = await admin
         .from('trades')
         .upsert(rows, { onConflict: 'user_id,trade_id', ignoreDuplicates: true });
       if (upErr) {
         return json({ ok: false, error: 'persist_failed', detail: upErr.message }, 422);
       }
+    }
+
+    // ---- Sync live open positions ----
+    let positionsSynced = 0;
+    try {
+      const posResult = await fetchBybitOpenPositions(cred.api_key, apiSecret);
+      if (posResult.ok) {
+        const active = posResult.list.filter(p => Number(p.size) > 0);
+        const activeSymbols = new Set(active.map(p => p.symbol));
+
+        if (active.length > 0) {
+          const posRows = active.map(p => ({
+            user_id: userId,
+            provider,
+            symbol: p.symbol,
+            side: p.side,
+            size: Number(p.size) || 0,
+            entry_price: Number(p.avgPrice ?? p.entryPrice ?? 0) || 0,
+            unrealized_pnl: Number(p.unrealisedPnl ?? p.unrealizedPnl ?? 0) || 0,
+            updated_at: new Date().toISOString(),
+          }));
+          const { error: posUpErr } = await admin
+            .from('open_positions')
+            .upsert(posRows, { onConflict: 'user_id,provider,symbol' });
+          if (posUpErr) console.error('[sync-futures-trades] open_positions upsert', posUpErr.message);
+          else positionsSynced = posRows.length;
+        }
+
+        // Remove stale rows for this user/provider not in the current active set
+        const { data: existingPos } = await admin
+          .from('open_positions')
+          .select('id, symbol')
+          .eq('user_id', userId)
+          .eq('provider', provider);
+        const staleIds = (existingPos ?? [])
+          .filter(r => !activeSymbols.has(r.symbol as string))
+          .map(r => r.id);
+        if (staleIds.length > 0) {
+          await admin.from('open_positions').delete().in('id', staleIds);
+        }
+      } else {
+        console.error('[sync-futures-trades] positions fetch failed', posResult.detail);
+      }
+    } catch (e) {
+      console.error('[sync-futures-trades] positions sync threw', (e as Error).message);
     }
 
     // Stamp last_validated_at as a successful-sync marker (non-fatal)
@@ -330,6 +427,7 @@ Deno.serve(async (req) => {
       inserted,
       skipped,
       syncedCount: inserted,
+      positionsSynced,
     });
   } catch (e) {
     // Final safety net — never leak a raw 500
