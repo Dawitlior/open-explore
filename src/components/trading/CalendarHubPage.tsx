@@ -13,12 +13,13 @@ type Props = {
   t: any;
   isMobile?: boolean;
   onGenerateInsight?: () => void;
+  onSetManualR?: (tradeId: number, value: number | null) => Promise<void> | void;
 };
 
 const monthsHe = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
 const monthsEn = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
-export const CalendarHubPage = ({ T, isRTL, trades, t, isMobile, onGenerateInsight }: Props) => {
+export const CalendarHubPage = ({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSetManualR }: Props) => {
   const now = new Date();
   const [calMonth, setCalMonth] = useState(now.getMonth());
   const [calYear, setCalYear] = useState(now.getFullYear());
