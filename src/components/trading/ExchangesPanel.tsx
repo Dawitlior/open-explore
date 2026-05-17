@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plug, Shield, ShieldCheck, X, Loader2, Trash2, Sparkles, Lock } from 'lucide-react';
+import { Plug, Shield, ShieldCheck, X, Trash2, Sparkles, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
