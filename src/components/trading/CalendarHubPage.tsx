@@ -5,6 +5,7 @@ import { CalendarModal } from '@/components/trading/CalendarModal';
 import { FeatureHint } from '@/components/trading/FeatureHint';
 import { getCalDays } from '@/lib/trading-analytics';
 import { getDayRiskColor, checkRiskLimits } from '@/lib/risk-limits';
+import { sumR, formatR } from '@/lib/r-multiple';
 
 type Props = {
   T: any; isRTL: boolean; trades: Trade[];
