@@ -312,35 +312,34 @@ Deno.serve(async (req) => {
       return json({ ok: false, error: 'vault_read_failed', detail: secErr?.message ?? 'no_secret' }, 500);
     }
 
-    // ---- Fetch executions (defensively validated) ----
-    const fetchResult = await fetchBybitLinear(cred.api_key, apiSecret);
+    // ---- Fetch consolidated closed-pnl trades (defensively validated) ----
+    const fetchResult = await fetchBybitClosedPnl(cred.api_key, apiSecret);
     if (!fetchResult.ok) {
       return json({ ok: false, error: fetchResult.error, detail: fetchResult.detail }, fetchResult.status);
     }
-    const execs = fetchResult.list;
+    const closed = fetchResult.list;
 
-    // Zero-trade fast path — perfectly legitimate (new account / no 30d activity)
-    if (execs.length === 0) {
-      return json({ ok: true, fetched: 0, inserted: 0, skipped: 0, syncedCount: 0 });
+    // ---- WIPE corrupted execution-level rows for this user/provider ----
+    // The previous pipeline persisted raw fills as standalone trades, which
+    // inflated counts + fragmented PnL. We start clean every sync — closed-pnl
+    // is itself idempotent + bounded by the 180-day window.
+    let wiped = 0;
+    {
+      const { data: wipedRows, error: wipeErr } = await admin
+        .from('trades')
+        .delete()
+        .eq('user_id', userId)
+        .filter('data->>exchange_provider', 'eq', provider)
+        .select('trade_id');
+      if (wipeErr) {
+        return json({ ok: false, error: 'wipe_failed', detail: wipeErr.message }, 500);
+      }
+      wiped = wipedRows?.length ?? 0;
     }
 
-    // ---- Idempotency: load existing exec ids for this user ----
-    // We fetch via a bounded select and filter in JS — this avoids fragile
-    // PostgREST `->>` jsonb operator behaviour and tolerates schema variance.
-    const execIds = execs.map(e => e.execId).filter(Boolean);
-    const seen = new Set<string>();
-    try {
-      const { data: existing, error: exErr } = await admin
-        .from('trades')
-        .select('data')
-        .eq('user_id', userId);
-      if (exErr) throw new Error(exErr.message);
-      for (const r of (existing ?? []) as Array<{ data: { exchange_exec_id?: string } | null }>) {
-        const id = r?.data?.exchange_exec_id;
-        if (id && execIds.includes(id)) seen.add(id);
-      }
-    } catch (e) {
-      return json({ ok: false, error: 'idempotency_scan_failed', detail: (e as Error).message }, 500);
+    // Zero-trade fast path — legitimate (new account / no 180d activity)
+    if (closed.length === 0) {
+      return json({ ok: true, fetched: 0, inserted: 0, skipped: 0, wiped, syncedCount: 0 });
     }
 
     // ---- Allocate trade_ids on top of the user's current max ----
@@ -354,18 +353,20 @@ Deno.serve(async (req) => {
     if (maxErr) return json({ ok: false, error: 'max_id_lookup_failed', detail: maxErr.message }, 500);
     let nextId = ((maxRow?.trade_id as number | undefined) ?? 0) + 1;
 
-    // ---- Build rows aligned with public.trades schema (user_id, trade_id, data) ----
-    // Idempotency tier 2: collapse any duplicate execIds returned across paginated
-    // pages or overlapping 7-day windows before we even consider persistence.
+    // ---- Build rows from closed-pnl, deduped by orderId across paginated windows ----
     const localSeen = new Set<string>();
     const rows: Array<{ user_id: string; trade_id: number; data: unknown }> = [];
     let inserted = 0;
     let skipped = 0;
     let runningBalance = 0;
-    for (const e of execs) {
-      if (!e?.execId) { skipped++; continue; }
-      if (seen.has(e.execId) || localSeen.has(e.execId)) { skipped++; continue; }
-      localSeen.add(e.execId);
+    // Sort chronologically so running balance is meaningful.
+    const sorted = [...closed].sort((a, b) =>
+      (Number(a.updatedTime) || 0) - (Number(b.updatedTime) || 0),
+    );
+    for (const e of sorted) {
+      if (!e?.orderId) { skipped++; continue; }
+      if (localSeen.has(e.orderId)) { skipped++; continue; }
+      localSeen.add(e.orderId);
       const t = bybitToTrade(e, provider);
       runningBalance += t.pnl;
       const full: Trade = { ...t, id: nextId, balance: Math.round(runningBalance * 10000) / 10000 };
