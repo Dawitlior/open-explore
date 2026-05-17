@@ -1447,6 +1447,31 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                       <Download size={14} /> {t('הורד גיבוי מלא (JSON)', 'Download full backup (JSON)')}
                     </button>
                   </div>
+
+                  {/* ============ DANGER ZONE — wipe personal data, keep account ============ */}
+                  <div style={{ ...card, border: `1px solid ${T.accent.red}55`, background: `linear-gradient(180deg, ${T.bg.secondary} 0%, ${T.accent.red}08 100%)` }}>
+                    <h3 style={{ ...sectionTitle, color: T.accent.red }}>
+                      <AlertTriangle size={14} /> {t('אזור מסוכן — מחיקת נתונים אישיים', 'Danger zone — wipe personal data')}
+                    </h3>
+                    <p style={sectionHint}>
+                      {t(
+                        'מוחק לצמיתות את כל העסקאות, היומנים, ההגדרות וחיבורי הבורסות (Bybit / Binance) השמורים בענן. חשבון המשתמש וההתחברות עם Google נשארים פעילים — תוכל להמשיך להיכנס עם אותו אימייל.',
+                        'Permanently deletes every trade, journal entry, setting and exchange connection (Bybit / Binance) stored in the cloud. Your user account and Google sign-in stay intact — you can keep signing in with the same email.'
+                      )}
+                    </p>
+                    <button
+                      onClick={() => setShowWipeModal(true)}
+                      style={{
+                        ...primaryBtn(T.accent.red),
+                        padding: '14px 18px',
+                        fontSize: 13,
+                        background: `linear-gradient(135deg, ${T.accent.red}, #991b1b)`,
+                        color: '#fff',
+                      }}
+                    >
+                      <Trash2 size={14} /> {t('מחק את כל הנתונים האישיים שלי', 'Delete all my personal data')}
+                    </button>
+                  </div>
                 </div>
               );
             })()}
