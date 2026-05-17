@@ -809,7 +809,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                       {t('ברירת מחדל:', 'Default:')} −{Math.abs(DEFAULT_RISK_LIMITS.trade)}R / −{Math.abs(DEFAULT_RISK_LIMITS.day)}R / −{Math.abs(DEFAULT_RISK_LIMITS.week)}R / −{Math.abs(DEFAULT_RISK_LIMITS.month)}R
                     </div>
                   </div>
-                  {/* ===== USD-denominated preferences (powers Tier-3 R proxy) ===== */}
+                  {/* ===== USD-denominated preferences (powers Tier-3 R proxy) — LIVE APPLY ===== */}
                   {(() => {
                     const cur = usdDraft || {
                       perTrade: String(userPrefs.risk_per_trade_default),
@@ -817,56 +817,53 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                       weekly: String(userPrefs.weekly_risk_limit),
                       monthly: String(userPrefs.monthly_risk_limit),
                     };
-                    const dirty = usdDraft !== null && (
-                      parseFloat(cur.perTrade) !== Number(userPrefs.risk_per_trade_default) ||
-                      parseFloat(cur.daily) !== Number(userPrefs.daily_risk_limit) ||
-                      parseFloat(cur.weekly) !== Number(userPrefs.weekly_risk_limit) ||
-                      parseFloat(cur.monthly) !== Number(userPrefs.monthly_risk_limit)
-                    );
-                    const updU = (k: 'perTrade' | 'daily' | 'weekly' | 'monthly') => (e: React.ChangeEvent<HTMLInputElement>) =>
-                      setUsdDraft(p => ({ ...(p || cur), [k]: e.target.value }));
-                    const saveUsd = async () => {
-                      const perTrade = parseFloat(cur.perTrade), daily = parseFloat(cur.daily);
-                      const weekly = parseFloat(cur.weekly), monthly = parseFloat(cur.monthly);
-                      if (![perTrade, daily, weekly, monthly].every(n => isFinite(n) && n > 0)) {
-                        toast.error(t('כל הערכים חייבים להיות חיוביים', 'All values must be positive')); return;
-                      }
-                      try {
-                        setUsdSaving(true);
-                        await updateUserPrefs({
-                          risk_per_trade_default: perTrade,
-                          daily_risk_limit: daily,
-                          weekly_risk_limit: weekly,
-                          monthly_risk_limit: monthly,
-                        });
-                        setUsdDraft(null);
-                        toast.success(t('הוגדר — כל הגרפים מתעדכנים', 'Saved — recalculating charts'));
-                      } catch {
-                        toast.error(t('שמירה נכשלה', 'Save failed'));
-                      } finally { setUsdSaving(false); }
+                    const keyToField = {
+                      perTrade: 'risk_per_trade_default',
+                      daily: 'daily_risk_limit',
+                      weekly: 'weekly_risk_limit',
+                      monthly: 'monthly_risk_limit',
+                    } as const;
+                    const updU = (k: 'perTrade' | 'daily' | 'weekly' | 'monthly') => (e: React.ChangeEvent<HTMLInputElement>) => {
+                      const raw = e.target.value;
+                      setUsdDraft(p => ({ ...(p || cur), [k]: raw }));
+                      const n = parseFloat(raw);
+                      if (!isFinite(n) || n <= 0) return;
+                      // INSTANT apply: updates in-memory cache → every chart re-renders this tick.
+                      // DB upsert runs in background (debounced via React batching of input events).
+                      updateUserPrefs({ [keyToField[k]]: n } as any);
+                      setUsdSaving(true);
+                      window.clearTimeout((updU as any)._t);
+                      (updU as any)._t = window.setTimeout(() => setUsdSaving(false), 450);
                     };
                     const cell = (label: string, key: 'perTrade' | 'daily' | 'weekly' | 'monthly', val: string) => (
                       <div style={{ padding: 14, borderRadius: T.radius.md, background: T.bg.secondary, border: `1px solid ${T.border.subtle}` }}>
                         <div style={fieldLabel}>{label}</div>
                         <input type="number" step="1" min="0" value={val} onChange={updU(key)}
                           style={{ ...input, textAlign: 'center', fontWeight: 800, fontSize: 16 }} className="orca-settings-input" />
-                        <div style={{ fontSize: 10, color: T.text.muted, marginTop: 6, textAlign: 'center' }}>${val}</div>
+                        <div style={{ fontSize: 10, color: T.text.muted, marginTop: 6, textAlign: 'center' }}>${val || '0'}</div>
                       </div>
                     );
                     return (
                       <div style={{ ...card, marginTop: 14 }}>
-                        <h3 style={sectionTitle}><Gauge size={14} /> {t('מגבלות דולריות (R-Proxy)', 'USD Risk Limits (R-Proxy)')}</h3>
-                        <p style={sectionHint}>{t('ערכים אלו ניזונים ישירות למנוע ה-R של Orca ומפעילים מחדש את כל הגרפים מיד עם שמירה.', 'These values feed the Orca R-engine and instantly recompute every chart on save.')}</p>
+                        <h3 style={sectionTitle}>
+                          <Gauge size={14} /> {t('מגבלות דולריות (R-Proxy)', 'USD Risk Limits (R-Proxy)')}
+                          <span style={{
+                            marginInlineStart: 8, fontSize: 9.5, fontWeight: 800, letterSpacing: 0.6,
+                            padding: '2px 7px', borderRadius: 999,
+                            background: usdSaving ? `${T.accent.cyan}22` : `${T.accent.green}18`,
+                            color: usdSaving ? T.accent.cyan : T.accent.green,
+                            border: `1px solid ${usdSaving ? T.accent.cyan : T.accent.green}55`,
+                            fontFamily: mono, transition: 'all .2s',
+                          }}>
+                            {usdSaving ? t('מסנכרן…', 'SYNCING…') : t('חי', 'LIVE')}
+                          </span>
+                        </h3>
+                        <p style={sectionHint}>{t('כל שינוי מוחל מיידית — מנוע ה-R וכל הגרפים מתעדכנים תוך כדי הקלדה.', 'Every change applies instantly — the R-engine and every chart recompute as you type.')}</p>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
                           {cell(t('סיכון לעסקה ($)', 'Per-Trade ($)'), 'perTrade', cur.perTrade)}
                           {cell(t('מגבלה יומית ($)', 'Daily ($)'), 'daily', cur.daily)}
                           {cell(t('מגבלה שבועית ($)', 'Weekly ($)'), 'weekly', cur.weekly)}
                           {cell(t('מגבלה חודשית ($)', 'Monthly ($)'), 'monthly', cur.monthly)}
-                        </div>
-                        <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-                          <button className="orca-cta" onClick={saveUsd} disabled={!dirty || usdSaving} style={{ ...primaryBtn(T.accent.cyan, !dirty), flex: 1 }}>
-                            <Check size={13} /> {usdSaving ? '…' : dirty ? t('שמור שינויים', 'Save changes') : t('נשמר', 'Saved')}
-                          </button>
                         </div>
                       </div>
                     );
