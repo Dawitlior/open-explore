@@ -4,8 +4,10 @@ import { getAllTrades, saveTrades, deleteTrade as dbDelete, clearAllData } from 
 import { computeAnalytics, type TradingStats } from '@/lib/trading-analytics';
 import { sanitizeTrades } from '@/lib/trade-sanitizer';
 import { checkRiskLimits, type RiskLimitStatus } from '@/lib/risk-limits';
+import { useUserPreferences } from '@/hooks/use-user-preferences';
 
 export function useTrades() {
+  const { prefs } = useUserPreferences();
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
@@ -15,7 +17,7 @@ export function useTrades() {
 
   useEffect(() => {
     tradesRef.current = trades;
-  }, [trades]);
+  }, [trades, prefs.daily_risk_limit]);
 
   useEffect(() => {
     let cancelled = false;
