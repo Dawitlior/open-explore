@@ -778,7 +778,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
                 <XAxis type="number" dataKey="wr" name={t("ניצחונות","Wins")} unit="%" domain={[0, 100]} tick={{ fill: T.text.muted, fontSize: 10 }} />
                 <YAxis type="number" dataKey="avgR" name={t("תוחלת R","Expectancy R")} tick={{ fill: T.text.muted, fontSize: 10 }} />
                 <ZAxis type="number" dataKey="n" range={[60, 380]} />
-                <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} formatter={(v: any, n: any, p: any) => [v, p.payload.coin]} />
+                <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} formatter={(v: number | string, _n: string, p: { payload?: { coin?: string } }) => [v, p.payload?.coin ?? '']} />
                 <Scatter data={quadrant}>
                   {quadrant.map((d, i) => (
                     <Cell key={i} fill={d.pnl >= 0 ? T.accent.green : T.accent.red} fillOpacity={0.75} />
