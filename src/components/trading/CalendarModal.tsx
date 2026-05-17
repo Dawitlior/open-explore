@@ -28,7 +28,7 @@ interface DayAIInsight {
   severity: string;
 }
 
-export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, onClose }: CalendarModalProps) => {
+export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, onClose, onSetManualR }: CalendarModalProps) => {
   const [dayInsights, setDayInsights] = useState<DayAIInsight[]>([]);
   const [aiLoading, setAiLoading] = useState(false);
   const [showAI, setShowAI] = useState(false);
