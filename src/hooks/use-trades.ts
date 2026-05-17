@@ -5,6 +5,7 @@ import { computeAnalytics, type TradingStats } from '@/lib/trading-analytics';
 import { sanitizeTrades } from '@/lib/trade-sanitizer';
 import { checkRiskLimits, type RiskLimitStatus } from '@/lib/risk-limits';
 import { useUserPreferences } from '@/hooks/use-user-preferences';
+import { setManualRMultiple } from '@/lib/manual-r';
 
 export function useTrades() {
   const { prefs } = useUserPreferences();
