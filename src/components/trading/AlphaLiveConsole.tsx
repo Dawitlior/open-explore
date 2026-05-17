@@ -384,13 +384,11 @@ export const AlphaLiveConsole = ({ T, isRTL, enabled }: Props) => {
   useEffect(() => {
     if (!enabled) return;
     if (lastStatusRef.current && lastStatusRef.current !== status) {
+      const tone: 'good' | 'bad' | 'info' =
+        status === 'subscribed' ? 'good' : status === 'error' ? 'bad' : 'info';
       setFeed(prev => [
         ...prev,
-        {
-          id: ++feedIdRef.current, ts: Date.now(),
-          text: `WS · ${statusLabel(status, false)}`,
-          tone: status === 'subscribed' ? 'good' : status === 'error' ? 'bad' : 'info',
-        },
+        { id: ++feedIdRef.current, ts: Date.now(), text: `WS · ${statusLabel(status, false)}`, tone },
       ].slice(-FEED_MAX));
     }
     lastStatusRef.current = status;
