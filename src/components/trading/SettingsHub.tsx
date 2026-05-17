@@ -111,6 +111,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
     { id: 'sounds', icon: Volume2, label: { he: 'צלילים והתראות', en: 'Sounds & Alerts' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'הפעלה, ווליום ותצוגת אפקטים אקוסטיים', en: 'Enable, volume and acoustic feedback preview' } },
     { id: 'risk', icon: Shield, label: { he: 'מגבלות סיכון', en: 'Risk Limits' }, group: { he: 'מסחר', en: 'Trading' }, desc: { he: 'מערכת ה־R המותרת ביום/שבוע/חודש', en: 'Allowed R-budget per day/week/month' } },
     { id: 'trading', icon: Target, label: { he: 'ברירות מחדל למסחר', en: 'Trading Defaults' }, group: { he: 'מסחר', en: 'Trading' }, desc: { he: 'אחוז סיכון ברירת מחדל ויעד R לעסקה חדשה', en: 'Default risk percent and R target for new trades' } },
+    { id: 'exchanges', icon: Plug, label: { he: 'בורסות מחוברות', en: 'Connected Exchanges' }, group: { he: 'מסחר', en: 'Trading' }, desc: { he: 'חבר Bybit, Binance ו־IBKR לכספת מאובטחת', en: 'Connect Bybit, Binance and IBKR to the secure vault' } },
     { id: 'data', icon: Database, label: { he: 'נתונים וגיבוי', en: 'Data & Backup' }, group: { he: 'מסחר', en: 'Trading' }, desc: { he: 'יצוא, סטטיסטיקות וניהול אחסון', en: 'Export, stats and storage management' } },
     { id: 'install', icon: Download, label: { he: 'הורד אפליקציה', en: 'Download App' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'התקן את אורקה על הטלפון או המחשב', en: 'Install Orca on your phone or desktop' } },
   ];
