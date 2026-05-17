@@ -367,11 +367,12 @@ Deno.serve(async (req) => {
     }
 
     if (rows.length > 0) {
-      // ON CONFLICT DO NOTHING semantics via ignoreDuplicates guarantees no
-      // multiplication on repeated clicks even if a race occurs.
+      // Idempotency tier 3 (DB layer): conflict on the unique partial index
+      // (user_id, exchange_exec_id) — generated from data->>'exchange_exec_id'.
+      // ON CONFLICT DO NOTHING semantics via ignoreDuplicates.
       const { error: upErr } = await admin
         .from('trades')
-        .upsert(rows, { onConflict: 'user_id,trade_id', ignoreDuplicates: true });
+        .upsert(rows, { onConflict: 'user_id,exchange_exec_id', ignoreDuplicates: true });
       if (upErr) {
         return json({ ok: false, error: 'persist_failed', detail: upErr.message }, 422);
       }
