@@ -238,7 +238,8 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
     const payoffRatio = avgLossR > 0 ? avgWinR / avgLossR : 0;
     const kelly = payoffRatio > 0 ? Math.max(0, Math.min(100, (winRate - ((1 - winRate) / payoffRatio)) * 100)) : 0;
     const edge = expectancyR > 0 && avgLossR > 0 ? expectancyR / avgLossR : 0;
-    const riskOfRuin = edge > 0 ? Math.max(0, Math.min(99.9, Math.pow((1 - edge) / (1 + edge), 10) * 100)) : 99.9;
+    const ruinBase = edge > 0 ? Math.max(0, Math.min(0.99, (1 - edge) / (1 + edge))) : 1;
+    const riskOfRuin = edge > 0 ? Math.max(0, Math.min(99.9, Math.pow(ruinBase, 10) * 100)) : 99.9;
     return {
       expectancyR,
       volAdjExpectancy: sd > 0 ? expectancyR / sd : 0,
