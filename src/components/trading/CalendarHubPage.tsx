@@ -66,7 +66,180 @@ export const CalendarHubPage = ({ T, isRTL, trades, t, isMobile, onGenerateInsig
   }, [monthTrades]);
 
   const calRiskStatus = checkRiskLimits(trades);
+  const todayN = now.getDate();
+  const isCurrentMonth = now.getMonth() === calMonth && now.getFullYear() === calYear;
 
+  /* =========================================================
+     MOBILE — iOS-style compact calendar
+     ========================================================= */
+  if (isMobile) {
+    return (
+      <div style={{ direction: isRTL ? 'rtl' : 'ltr', padding: '4px 2px 24px' }}>
+        {calRiskStatus.monthlyBreached && (
+          <div style={{ padding: '10px 14px', background: `${T.accent.red}15`, border: `1px solid ${T.accent.red}40`, borderRadius: 14, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 18 }}>🚨</span>
+            <div style={{ fontSize: 11, fontWeight: 700, color: T.accent.red }}>
+              {isRTL ? `מגבלת הפסד חודשית: ${calRiskStatus.monthlyNegR.toFixed(1)}R` : `Monthly loss limit: ${calRiskStatus.monthlyNegR.toFixed(1)}R`}
+            </div>
+          </div>
+        )}
+
+        {/* iOS-style month header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 6px 14px' }}>
+          <button
+            onClick={() => { if (calMonth === 0) { setCalMonth(11); setCalYear(calYear - 1); } else setCalMonth(calMonth - 1); }}
+            style={{ background: 'transparent', border: 'none', color: T.accent.cyan, fontSize: 22, cursor: 'pointer', padding: 4, fontWeight: 300 }}
+            aria-label="previous month"
+          >{isRTL ? '›' : '‹'}</button>
+
+          <button
+            onClick={() => { setCalMonth(now.getMonth()); setCalYear(now.getFullYear()); }}
+            style={{ background: 'transparent', border: 'none', color: T.text.primary, fontSize: 22, fontWeight: 700, cursor: 'pointer', letterSpacing: '-0.02em' }}
+          >
+            {months[calMonth]} <span style={{ color: T.accent.cyan, fontWeight: 400 }}>{calYear}</span>
+          </button>
+
+          <button
+            onClick={() => { if (calMonth === 11) { setCalMonth(0); setCalYear(calYear + 1); } else setCalMonth(calMonth + 1); }}
+            style={{ background: 'transparent', border: 'none', color: T.accent.cyan, fontSize: 22, cursor: 'pointer', padding: 4, fontWeight: 300 }}
+            aria-label="next month"
+          >{isRTL ? '‹' : '›'}</button>
+        </div>
+
+        {/* Compact monthly summary chip row */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginBottom: 14 }}>
+          {[
+            { l: isRTL ? 'P&L' : 'P&L', v: `${monthStats.totalPnl >= 0 ? '+' : '-'}$${Math.abs(monthStats.totalPnl).toFixed(0)}`, c: monthStats.totalPnl >= 0 ? T.accent.green : T.accent.red },
+            { l: isRTL ? 'עסקאות' : 'Trades', v: `${monthStats.count}`, c: T.text.primary },
+            { l: isRTL ? 'WR' : 'Win%', v: `${monthStats.winRate.toFixed(0)}%`, c: monthStats.winRate >= 50 ? T.accent.green : T.accent.orange },
+          ].map((s, i) => (
+            <div key={i} style={{ padding: '8px 6px', background: T.bg.card, borderRadius: 12, border: `1px solid ${T.border.subtle}`, textAlign: 'center' }}>
+              <div style={{ fontSize: 8, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{s.l}</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: s.c, fontFamily: "'JetBrains Mono', monospace", marginTop: 2 }}>{s.v}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Weekday labels */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 4 }}>
+          {dayNames.map((d, i) => (
+            <div key={i} style={{ textAlign: 'center', fontSize: 10, color: T.text.muted, fontWeight: 600, padding: '4px 0', letterSpacing: '0.06em' }}>{d}</div>
+          ))}
+        </div>
+
+        {/* iOS-style compact grid: square cells, dot indicator */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+          {calDays.map((d, i) => {
+            const dd = d ? calDayPnl[d] : null;
+            const isToday = isCurrentMonth && d === todayN;
+            const riskColor = d ? getDayRiskColor(trades, d, calMonth, calYear) : 'neutral';
+            const isDarkRed = riskColor === 'darkred';
+            const dotColor = dd ? (isDarkRed ? T.accent.red : dd.pnl > 0 ? T.accent.green : dd.pnl < 0 ? T.accent.red : T.accent.orange) : null;
+
+            return (
+              <button
+                key={i}
+                disabled={!d}
+                onClick={() => dd && d && setCalModalDay(d)}
+                style={{
+                  aspectRatio: '1',
+                  border: 'none',
+                  background: 'transparent',
+                  cursor: dd ? 'pointer' : 'default',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 3,
+                  padding: 0,
+                  position: 'relative',
+                }}
+              >
+                {d && (
+                  <>
+                    <span style={{
+                      width: 30, height: 30, borderRadius: '50%',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 15,
+                      fontWeight: isToday ? 700 : 500,
+                      color: isToday ? '#001023' : T.text.primary,
+                      background: isToday ? T.accent.cyan : 'transparent',
+                      fontFamily: "'Inter', system-ui, sans-serif",
+                    }}>{d}</span>
+                    {dotColor && (
+                      <span style={{
+                        position: 'absolute', bottom: 4,
+                        width: 5, height: 5, borderRadius: '50%',
+                        background: dotColor,
+                        boxShadow: `0 0 6px ${dotColor}80`,
+                      }} />
+                    )}
+                  </>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Active-day list (mini chips below grid) */}
+        {monthTrades.length > 0 && (
+          <div style={{ marginTop: 18 }}>
+            <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8, fontWeight: 700, padding: '0 4px' }}>
+              {isRTL ? 'ימי מסחר החודש' : 'Active Days'}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {Object.entries(calDayPnl)
+                .sort(([a], [b]) => +a - +b)
+                .map(([day, info]) => {
+                  const dayN = +day;
+                  const pnl = info.pnl;
+                  const isPos = pnl >= 0;
+                  return (
+                    <button
+                      key={dayN}
+                      onClick={() => setCalModalDay(dayN)}
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '10px 14px',
+                        background: T.bg.card,
+                        border: `1px solid ${isPos ? T.accent.green : T.accent.red}25`,
+                        borderRadius: 12, cursor: 'pointer',
+                        borderInlineStart: `3px solid ${isPos ? T.accent.green : T.accent.red}`,
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div style={{ fontSize: 18, fontWeight: 700, color: T.text.primary, minWidth: 24, textAlign: 'center' }}>{dayN}</div>
+                        <div style={{ fontSize: 10, color: T.text.muted }}>
+                          {info.trades} {isRTL ? 'עסקאות' : 'tr'} · {info.wins}/{info.trades} W
+                        </div>
+                      </div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: isPos ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>
+                        {isPos ? '+' : '-'}${Math.abs(pnl).toFixed(0)}
+                      </div>
+                    </button>
+                  );
+                })}
+            </div>
+          </div>
+        )}
+
+        {calModalDay && (
+          <CalendarModal
+            T={T} t={t} isRTL={isRTL}
+            day={calModalDay} month={calMonth} year={calYear}
+            trades={trades}
+            isMobile
+            onClose={() => setCalModalDay(null)}
+            onGenerateInsight={onGenerateInsight}
+          />
+        )}
+      </div>
+    );
+  }
+
+  /* =========================================================
+     DESKTOP — Immersive premium calendar (unchanged behavior)
+     ========================================================= */
   return (
     <div style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
       <FeatureHint
@@ -87,14 +260,13 @@ export const CalendarHubPage = ({ T, isRTL, trades, t, isMobile, onGenerateInsig
         </div>
       )}
 
-      {/* Header / month navigator */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18, gap: 12, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button onClick={() => { if (calMonth === 0) { setCalMonth(11); setCalYear(calYear - 1); } else setCalMonth(calMonth - 1); }} style={{ background: T.bg.card, border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.md, padding: '8px 14px', color: T.text.secondary, cursor: 'pointer', fontSize: 18 }}>‹</button>
           <select value={calYear} onChange={e => setCalYear(+e.target.value)} style={{ background: T.bg.card, border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.sm, padding: '6px 10px', color: T.text.primary, fontSize: 14, fontFamily: "'JetBrains Mono', monospace" }}>
             {[2024,2025,2026,2027,2028].map(y => <option key={y} value={y}>{y}</option>)}
           </select>
-          <div style={{ fontSize: isMobile ? 22 : 28, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: T.text.primary }}>{months[calMonth]}</div>
+          <div style={{ fontSize: 28, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: T.text.primary }}>{months[calMonth]}</div>
           <button onClick={() => { setCalMonth(now.getMonth()); setCalYear(now.getFullYear()); }} style={{ background: 'transparent', border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.sm, padding: '6px 12px', color: T.text.muted, cursor: 'pointer', fontSize: 11 }}>{isRTL ? 'היום' : 'Today'}</button>
           <button onClick={() => { if (calMonth === 11) { setCalMonth(0); setCalYear(calYear + 1); } else setCalMonth(calMonth + 1); }} style={{ background: T.bg.card, border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.md, padding: '8px 14px', color: T.text.secondary, cursor: 'pointer', fontSize: 18 }}>›</button>
         </div>
@@ -114,48 +286,49 @@ export const CalendarHubPage = ({ T, isRTL, trades, t, isMobile, onGenerateInsig
         </div>
       </div>
 
-      {/* Big full-screen calendar grid + slim weekly summary rail */}
-      <div style={{ display: 'flex', gap: isMobile ? 12 : 18, flexDirection: isMobile ? 'column' : 'row', alignItems: 'stretch' }}>
+      <div style={{ display: 'flex', gap: 18 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <GlassCard T={T} style={{ padding: isMobile ? 12 : 20 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: isMobile ? 4 : 8, marginBottom: 8 }}>
-              {dayNames.map((d, i) => <div key={i} style={{ textAlign: 'center', fontSize: isMobile ? 10 : 12, color: T.text.muted, fontWeight: 700, padding: '6px 0', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{d}</div>)}
+          <GlassCard T={T} style={{ padding: 20 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8, marginBottom: 8 }}>
+              {dayNames.map((d, i) => <div key={i} style={{ textAlign: 'center', fontSize: 12, color: T.text.muted, fontWeight: 700, padding: '6px 0', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{d}</div>)}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: isMobile ? 4 : 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8 }}>
               {calDays.map((d, i) => {
                 const dd = d ? calDayPnl[d] : null;
                 const isHovered = d === calHoverDay;
                 const intensity = dd ? Math.min(1, Math.abs(dd.pnl) / 10) : 0;
                 const riskColor = d ? getDayRiskColor(trades, d, calMonth, calYear) : 'neutral';
                 const isDarkRed = riskColor === 'darkred';
-                const baseHeight = isMobile ? 80 : 130;
+                const isToday = isCurrentMonth && d === todayN;
                 return (
                   <div key={i}
                     onMouseEnter={() => d && setCalHoverDay(d)}
                     onMouseLeave={() => setCalHoverDay(null)}
                     onClick={() => dd && d && setCalModalDay(d)}
                     style={{
-                      minHeight: isHovered && dd ? baseHeight + 30 : baseHeight,
+                      minHeight: isHovered && dd ? 160 : 130,
                       borderRadius: T.radius.md,
-                      border: `1px solid ${isDarkRed ? `${T.accent.red}60` : dd ? (dd.pnl > 0 ? `${T.accent.green}${Math.round(40 + intensity * 60).toString(16)}` : dd.pnl < 0 ? `${T.accent.red}${Math.round(40 + intensity * 60).toString(16)}` : `${T.accent.orange}30`) : T.border.subtle}`,
+                      border: `1px solid ${isToday ? T.accent.cyan : isDarkRed ? `${T.accent.red}60` : dd ? (dd.pnl > 0 ? `${T.accent.green}${Math.round(40 + intensity * 60).toString(16)}` : dd.pnl < 0 ? `${T.accent.red}${Math.round(40 + intensity * 60).toString(16)}` : `${T.accent.orange}30`) : T.border.subtle}`,
                       background: isDarkRed ? `${T.accent.red}25` : dd ? (dd.pnl > 0 ? `${T.accent.green}${Math.round(15 + intensity * 25).toString(16).padStart(2, '0')}` : dd.pnl < 0 ? `${T.accent.red}${Math.round(12 + intensity * 20).toString(16).padStart(2, '0')}` : `${T.accent.orange}12`) : 'transparent',
-                      padding: isMobile ? '6px 6px' : '10px 12px',
+                      padding: '10px 12px',
                       transition: 'all 0.2s ease',
                       cursor: dd ? 'pointer' : 'default',
                       display: 'flex',
                       flexDirection: 'column',
+                      transform: isHovered && dd ? 'translateY(-2px)' : 'translateY(0)',
+                      boxShadow: isHovered && dd ? `0 8px 24px ${(dd.pnl >= 0 ? T.accent.green : T.accent.red)}20` : 'none',
                     }}>
                     {d && (
                       <>
-                        <div style={{ fontSize: isMobile ? 12 : 15, color: T.text.muted, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ fontSize: 15, color: isToday ? T.accent.cyan : T.text.muted, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <span>{d}</span>{isDarkRed && <span title="Risk limit exceeded">⚠️</span>}
                         </div>
                         {dd && (
                           <>
-                            <div style={{ fontSize: isMobile ? 14 : 22, fontWeight: 800, color: isDarkRed ? T.accent.red : dd.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace", marginTop: 6 }}>
+                            <div style={{ fontSize: 22, fontWeight: 800, color: isDarkRed ? T.accent.red : dd.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace", marginTop: 6 }}>
                               {dd.pnl >= 0 ? '+' : '-'}${Math.abs(dd.pnl).toFixed(0)}
                             </div>
-                            <div style={{ fontSize: isMobile ? 9 : 11, color: T.text.muted, marginTop: 4 }}>
+                            <div style={{ fontSize: 11, color: T.text.muted, marginTop: 4 }}>
                               {dd.trades} {isRTL ? 'עסקאות' : 'tr'} · {dd.wins}/{dd.trades} W
                             </div>
                             {isHovered && (
@@ -174,8 +347,7 @@ export const CalendarHubPage = ({ T, isRTL, trades, t, isMobile, onGenerateInsig
           </GlassCard>
         </div>
 
-        {/* Slim weekly rail */}
-        <div style={{ width: isMobile ? '100%' : 220, flexShrink: 0 }}>
+        <div style={{ width: 220, flexShrink: 0 }}>
           <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, fontWeight: 700 }}>
             {isRTL ? 'סיכום שבועי' : 'Weekly Summary'}
           </div>
@@ -193,12 +365,8 @@ export const CalendarHubPage = ({ T, isRTL, trades, t, isMobile, onGenerateInsig
 
       {calModalDay && (
         <CalendarModal
-          T={T}
-          t={t}
-          isRTL={isRTL}
-          day={calModalDay}
-          month={calMonth}
-          year={calYear}
+          T={T} t={t} isRTL={isRTL}
+          day={calModalDay} month={calMonth} year={calYear}
           trades={trades}
           onClose={() => setCalModalDay(null)}
           onGenerateInsight={onGenerateInsight}
