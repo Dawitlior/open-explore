@@ -42,6 +42,8 @@ interface BybitExec {
   execTime: string; // ms
   closedSize?: string;
   execType?: string;
+  execPnl?: string; // realized PnL for closing fills (Bybit V5)
+  closedPnl?: string;
 }
 
 interface BybitFetchResult {
@@ -184,10 +186,16 @@ function bybitToTrade(e: BybitExec, provider: string): Omit<Trade, 'id' | 'balan
   const qty = Number(e.execQty) || 0;
   const fee = Number(e.execFee) || 0;
   const tsMs = Number(e.execTime) || Date.now();
+  // Realized PnL for closing fills: Bybit returns this in `execPnl`
+  // (legacy `closedPnl` fallback retained for older payload shapes).
+  const realizedPnl = parseFloat(e.execPnl ?? e.closedPnl ?? '0') || 0;
+  const netPnl = realizedPnl - fee;
   const d = new Date(tsMs);
   const iso = d.toISOString().slice(0, 19).replace('T', ' ');
   const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
   const direction: 'Long' | 'Short' = e.side === 'Buy' ? 'Long' : 'Short';
+  const winLoss: 'Win' | 'Loss' | 'Break Even' =
+    realizedPnl > 0 ? 'Win' : realizedPnl < 0 ? 'Loss' : 'Break Even';
   return {
     date: iso,
     day: dayName,
@@ -198,10 +206,10 @@ function bybitToTrade(e: BybitExec, provider: string): Omit<Trade, 'id' | 'balan
     stopLoss: 0,
     exit: px,
     returnR: 0,
-    winLoss: 'Break Even',
+    winLoss,
     risk: 0,
     expectedLoss: 0,
-    pnl: -fee,
+    pnl: netPnl,
     deviation: 0,
     positionSize: qty * px,
     leverage: 1,
@@ -359,11 +367,12 @@ Deno.serve(async (req) => {
     }
 
     if (rows.length > 0) {
-      // ON CONFLICT DO NOTHING semantics via ignoreDuplicates guarantees no
-      // multiplication on repeated clicks even if a race occurs.
+      // Idempotency tier 3 (DB layer): conflict on the unique partial index
+      // (user_id, exchange_exec_id) — generated from data->>'exchange_exec_id'.
+      // ON CONFLICT DO NOTHING semantics via ignoreDuplicates.
       const { error: upErr } = await admin
         .from('trades')
-        .upsert(rows, { onConflict: 'user_id,trade_id', ignoreDuplicates: true });
+        .upsert(rows, { onConflict: 'user_id,exchange_exec_id', ignoreDuplicates: true });
       if (upErr) {
         return json({ ok: false, error: 'persist_failed', detail: upErr.message }, 422);
       }

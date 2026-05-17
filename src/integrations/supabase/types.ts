@@ -144,6 +144,7 @@ export type Database = {
         Row: {
           created_at: string
           data: Json
+          exchange_exec_id: string | null
           id: string
           trade_id: number
           updated_at: string
@@ -152,6 +153,7 @@ export type Database = {
         Insert: {
           created_at?: string
           data: Json
+          exchange_exec_id?: string | null
           id?: string
           trade_id: number
           updated_at?: string
@@ -160,6 +162,7 @@ export type Database = {
         Update: {
           created_at?: string
           data?: Json
+          exchange_exec_id?: string | null
           id?: string
           trade_id?: number
           updated_at?: string
