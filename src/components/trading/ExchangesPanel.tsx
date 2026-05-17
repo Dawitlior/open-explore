@@ -144,6 +144,7 @@ export function ExchangesPanel({ T, isRTL }: Props) {
 
   return (
     <div>
+      <style>{`@keyframes orcaStream { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }`}</style>
       {/* Header */}
       <div style={{
         marginBottom: 18, padding: 18,
