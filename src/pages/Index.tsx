@@ -1900,6 +1900,8 @@ const Index = () => {
           onClose={() => setExplainModal(null)}
         />
       )}
+      {/* Floating system update notification (bottom-right) */}
+      <DeploymentToast isRTL={isRTL} />
     </div>
   );
 };
