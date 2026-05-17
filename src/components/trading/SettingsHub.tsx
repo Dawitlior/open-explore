@@ -3,8 +3,9 @@ import {
   User, Palette, LayoutDashboard, Calculator, Shield, SlidersHorizontal, Database,
   X, LogOut, Mail, KeyRound, Send, Download, Eye, EyeOff, Globe, GripVertical,
   Plus, Trash2, RotateCcw, Check, AlertTriangle, Sparkles, Search,
-  Volume2, VolumeX, Zap, Type, Brush, Target, Gauge, Plug,
+  Volume2, VolumeX, Zap, Type, Brush, Target, Gauge, Plug, Scale,
 } from 'lucide-react';
+import { LEGAL_TITLE_HE, LEGAL_SECTIONS_HE, LEGAL_FOOTER_HE } from '@/lib/legal-text';
 import { ExchangesPanel } from './ExchangesPanel';
 import { playMorningLock } from '@/lib/apex-sounds';
 import type { TradingTheme, CustomTheme, BaseMood } from '@/lib/trading-theme';
@@ -43,7 +44,7 @@ interface SettingsHubProps {
   trades: Trade[];
 }
 
-type TabId = 'account' | 'appearance' | 'theme-studio' | 'dashboard' | 'kpis' | 'risk' | 'interface' | 'sounds' | 'trading' | 'exchanges' | 'data' | 'install';
+type TabId = 'account' | 'appearance' | 'theme-studio' | 'dashboard' | 'kpis' | 'risk' | 'interface' | 'sounds' | 'trading' | 'exchanges' | 'data' | 'install' | 'legal';
 
 const ACCENT_PRESETS = [
   '#00f2ff', '#06d6a0', '#3b82f6', '#8b5cf6',
@@ -122,6 +123,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
     { id: 'exchanges', icon: Plug, label: { he: 'בורסות מחוברות', en: 'Connected Exchanges' }, group: { he: 'מסחר', en: 'Trading' }, desc: { he: 'חבר Bybit, Binance ו־IBKR לכספת מאובטחת', en: 'Connect Bybit, Binance and IBKR to the secure vault' } },
     { id: 'data', icon: Database, label: { he: 'נתונים וגיבוי', en: 'Data & Backup' }, group: { he: 'מסחר', en: 'Trading' }, desc: { he: 'יצוא, סטטיסטיקות וניהול אחסון', en: 'Export, stats and storage management' } },
     { id: 'install', icon: Download, label: { he: 'הורד אפליקציה', en: 'Download App' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'התקן את אורקה על הטלפון או המחשב', en: 'Install Orca on your phone or desktop' } },
+    { id: 'legal', icon: Scale, label: { he: 'משפטי ונגישות', en: 'Legal & Accessibility' }, group: { he: 'אישי', en: 'Personal' }, desc: { he: 'תנאי שימוש, פרטיות, נגישות והסרת אחריות', en: 'Terms, privacy, accessibility and disclaimers' } },
   ];
 
   const filteredNav = useMemo(() => {
@@ -1546,6 +1548,65 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
 
             {tab === 'install' && (
               <InstallGuide T={T} t={t} isRTL={isRTL} />
+            )}
+
+            {tab === 'legal' && (
+              <div style={card}>
+                <h3 style={sectionTitle}><Scale size={14} /> {t('משפטי ונגישות', 'Legal & Accessibility')}</h3>
+                <p style={sectionHint}>
+                  {t(
+                    'תנאי השימוש, מדיניות הפרטיות והצהרת הנגישות של Orca — נגישים בכל עת.',
+                    'Full Terms of Service, Privacy Policy and Accessibility Statement — always available.'
+                  )}
+                </p>
+                <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {LEGAL_SECTIONS_HE.map((s) => (
+                    <a
+                      key={s.heading}
+                      href={`#legal-${s.heading.split('.')[0]}`}
+                      style={{
+                        fontSize: 11, fontWeight: 600, padding: '5px 10px',
+                        borderRadius: 999, border: `1px solid ${T.border.subtle}`,
+                        color: T.accent.cyan, textDecoration: 'none', background: T.bg.secondary,
+                      }}
+                    >
+                      {s.heading}
+                    </a>
+                  ))}
+                </div>
+                <div
+                  dir="rtl"
+                  style={{
+                    marginTop: 16, maxHeight: 460, overflowY: 'auto',
+                    padding: 16, borderRadius: T.radius.md,
+                    background: T.bg.secondary, border: `1px solid ${T.border.subtle}`,
+                  }}
+                >
+                  <h4 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 800, color: T.accent.cyan, lineHeight: 1.5 }}>
+                    {LEGAL_TITLE_HE}
+                  </h4>
+                  {LEGAL_SECTIONS_HE.map((s) => (
+                    <section key={s.heading} id={`legal-${s.heading.split('.')[0]}`} style={{ marginBottom: 16 }}>
+                      <h5 style={{ margin: '0 0 6px', fontSize: 13, fontWeight: 700, color: T.text.primary }}>
+                        {s.heading}
+                      </h5>
+                      <p style={{
+                        margin: 0, fontSize: 12.5, lineHeight: 1.8,
+                        color: T.text.secondary, whiteSpace: 'pre-line',
+                      }}>
+                        {s.body}
+                      </p>
+                    </section>
+                  ))}
+                  <p style={{
+                    marginTop: 14, paddingTop: 12,
+                    borderTop: `1px solid ${T.border.subtle}`,
+                    fontSize: 12, fontWeight: 600, color: T.accent.cyan, textAlign: 'center',
+                  }}>
+                    {LEGAL_FOOTER_HE}
+                  </p>
+                </div>
+              </div>
             )}
           </div>
         </section>

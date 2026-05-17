@@ -23,6 +23,7 @@ import { AlphaLiveConsole } from '@/components/trading/AlphaLiveConsole';
 import { IdleTimeoutModal } from '@/components/IdleTimeoutModal';
 import { NavAvatar } from '@/components/trading/NavAvatar';
 import { DeploymentToast } from '@/components/DeploymentToast';
+import { LegalFooterLinks } from '@/components/LegalFooterLinks';
 import { RiskOnboardingWizard, shouldShowRiskOnboarding } from '@/components/trading/RiskOnboardingWizard';
 import ImportLoadingOverlay from '@/components/trading/ImportLoadingOverlay';
 import { FeatureHint } from '@/components/trading/FeatureHint';
@@ -1953,6 +1954,7 @@ const Index = () => {
       {showRiskOnboarding && (
         <RiskOnboardingWizard isRTL={isRTL} onDismiss={() => setShowRiskOnboarding(false)} />
       )}
+      <LegalFooterLinks />
     </div>
   );
 };

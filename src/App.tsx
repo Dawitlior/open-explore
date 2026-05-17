@@ -11,7 +11,9 @@ import { StorageErrorListener } from "@/components/StorageErrorListener";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
+import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
+import { LegalGate } from "@/components/LegalGate";
 
 const queryClient = new QueryClient();
 
@@ -26,9 +28,11 @@ const App = () => (
             <StorageErrorListener />
             <OrcaUXLayer />
             <LiquidSweep />
+            <LegalGate />
             <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/terms" element={<Terms />} />
               <Route
                 path="/"
                 element={
