@@ -361,6 +361,49 @@ function ExchangeCard({
         )}
       </div>
 
+      {/* Sync Trades — futures fetch engine */}
+      {connected && onSync && (
+        <button
+          onClick={(e) => { e.stopPropagation(); if (!syncing) onSync(); }}
+          disabled={syncing}
+          style={{
+            position: 'relative', overflow: 'hidden',
+            marginTop: 10, width: '100%',
+            padding: '10px 12px', borderRadius: 10,
+            background: syncing
+              ? 'linear-gradient(180deg, rgba(6,12,28,0.95), rgba(2,6,15,0.95))'
+              : 'linear-gradient(135deg, rgba(0,242,255,0.14), rgba(0,242,255,0.04))',
+            border: `1px solid ${syncing ? '#00f2ff66' : '#00f2ff44'}`,
+            color: '#7defff',
+            fontWeight: 800, fontSize: 11, fontFamily: sans,
+            cursor: syncing ? 'wait' : 'pointer', letterSpacing: 0.5,
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            boxShadow: syncing ? '0 0 22px -6px #00f2ffaa' : '0 8px 22px -16px #00f2ff',
+            transition: 'background .2s ease, box-shadow .2s ease',
+          }}
+        >
+          {syncing ? (
+            <>
+              <span style={{ fontFamily: mono, fontSize: 10.5, letterSpacing: 1.2, textTransform: 'uppercase' }}>
+                {t('מסנכרן…', 'Syncing…')}
+              </span>
+              <span style={{
+                position: 'absolute', left: 0, right: 0, bottom: 0, height: 2,
+                background: 'linear-gradient(90deg, transparent, #00f2ff, transparent)',
+                backgroundSize: '200% 100%',
+                animation: 'orcaStream 1.1s linear infinite',
+                boxShadow: '0 0 10px #00f2ff',
+              }} />
+            </>
+          ) : (
+            <>
+              <RefreshCw size={11} />
+              {t('סנכרן עסקאות פיוצ\'רס', 'Sync Futures Trades')}
+            </>
+          )}
+        </button>
+      )}
+
       {connected && connectionLabel && (
         <div style={{
           marginTop: 12, paddingTop: 12,
