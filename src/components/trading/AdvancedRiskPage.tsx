@@ -9,6 +9,7 @@ import { ChartWrapper, EXPLANATIONS } from './ChartWrapper';
 import { LazyChart } from './LazyChart';
 import type { ChartExplanation } from './ChartWrapper';
 import { checkRiskLimits, DEFAULT_RISK_LIMITS, type RiskLimits } from '@/lib/risk-limits';
+import { getEffectiveR } from '@/lib/r-multiple';
 
 type OperatingMode = 'live' | 'review' | 'research' | 'beginner';
 
