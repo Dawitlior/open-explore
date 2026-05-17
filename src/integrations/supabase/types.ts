@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      exchange_credentials: {
+        Row: {
+          api_key: string
+          api_secret: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string | null
+          last_validated_at: string | null
+          provider: string
+          scope: string
+          secret_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          api_key: string
+          api_secret?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          last_validated_at?: string | null
+          provider: string
+          scope?: string
+          secret_id: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          api_key?: string
+          api_secret?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          last_validated_at?: string | null
+          provider?: string
+          scope?: string
+          secret_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       journal_state: {
         Row: {
           state: Json | null
