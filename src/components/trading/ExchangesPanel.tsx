@@ -790,7 +790,7 @@ function CredentialModal({
               <>
                 <Lock size={12} />
                 <span style={{ fontFamily: mono, letterSpacing: 1 }}>
-                  {t('נעול', 'Locked')} {(cooldownRemainingMs / 1000).toFixed(1)}s
+                  {t('נעול', 'Locked')} {formatCooldown(cooldownRemainingMs)}
                 </span>
               </>
             ) : (
