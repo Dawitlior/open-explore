@@ -213,6 +213,128 @@ export function ExchangesPanel({ T, isRTL }: Props) {
           onSaved={() => { setOpenProvider(null); void refresh(); }}
         />
       )}
+
+      {syncingProvider && (
+        <SyncOverlay
+          isRTL={isRTL}
+          providerName={PROVIDERS.find(p => p.id === syncingProvider)?.name ?? syncingProvider}
+          accent={PROVIDERS.find(p => p.id === syncingProvider)?.accent ?? '#00f2ff'}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ============================ SYNC OVERLAY ============================ */
+function SyncOverlay({ isRTL, providerName, accent }: { isRTL: boolean; providerName: string; accent: string }) {
+  const t = (he: string, en: string) => (isRTL ? he : en);
+  const sans = "'Poppins', sans-serif";
+  const mono = "'IBM Plex Mono', monospace";
+
+  const phases = isRTL
+    ? ['מאמת מפתח בכספת', 'מושך 180 ימי היסטוריה', 'ממפה עסקאות ו-PnL', 'שומר במאגר']
+    : ['Verifying vault key', 'Fetching 180-day history', 'Mapping trades & PnL', 'Saving to journal'];
+
+  const [phaseIdx, setPhaseIdx] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    const t0 = Date.now();
+    const tick = setInterval(() => setElapsed((Date.now() - t0) / 1000), 100);
+    const adv = setInterval(() => setPhaseIdx(i => Math.min(i + 1, phases.length - 1)), 2200);
+    return () => { clearInterval(tick); clearInterval(adv); };
+  }, [phases.length]);
+
+  return (
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 10050,
+        background: 'radial-gradient(ellipse at center, rgba(6,12,28,0.92) 0%, rgba(2,6,15,0.96) 70%)',
+        backdropFilter: 'blur(22px) saturate(160%)', WebkitBackdropFilter: 'blur(22px) saturate(160%)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: 24, direction: isRTL ? 'rtl' : 'ltr',
+        animation: 'orcaFadeIn 0.35s ease',
+      }}
+    >
+      <style>{`
+        @keyframes orcaFadeIn { from { opacity: 0 } to { opacity: 1 } }
+        @keyframes orcaSyncRing { 0% { transform: scale(0.6); opacity: 0.8 } 100% { transform: scale(1.8); opacity: 0 } }
+        @keyframes orcaSyncCore { 0%,100% { transform: scale(1); opacity: 1 } 50% { transform: scale(0.85); opacity: 0.85 } }
+        @keyframes orcaSyncBar { 0% { background-position: 0% 0 } 100% { background-position: 200% 0 } }
+        @keyframes orcaDotPulse { 0%,100% { transform: scale(1); opacity: 0.4 } 50% { transform: scale(1.4); opacity: 1 } }
+      `}</style>
+      <div style={{
+        width: '100%', maxWidth: 460, padding: 'clamp(28px,5vw,40px)',
+        borderRadius: 22,
+        background: 'linear-gradient(180deg, rgba(11,23,48,0.88), rgba(6,12,28,0.92))',
+        border: `1px solid ${accent}44`,
+        boxShadow: `0 30px 80px -30px ${accent}55, 0 0 0 1px rgba(255,255,255,0.04) inset`,
+        fontFamily: sans, color: '#f0f5ff', textAlign: 'center',
+      }}>
+        <div style={{ position: 'relative', width: 96, height: 96, margin: '0 auto 24px' }}>
+          <span style={{
+            position: 'absolute', inset: 0, borderRadius: '50%',
+            border: `1px solid ${accent}88`, animation: 'orcaSyncRing 1.8s cubic-bezier(0.4,0,0.2,1) infinite',
+          }} />
+          <span style={{
+            position: 'absolute', inset: 0, borderRadius: '50%',
+            border: `1px solid ${accent}66`, animation: 'orcaSyncRing 1.8s cubic-bezier(0.4,0,0.2,1) infinite 0.6s',
+          }} />
+          <div style={{
+            position: 'absolute', inset: 30, borderRadius: '50%',
+            background: `radial-gradient(circle, ${accent} 0%, ${accent}aa 50%, transparent 100%)`,
+            boxShadow: `0 0 28px ${accent}99`,
+            animation: 'orcaSyncCore 1.6s ease-in-out infinite',
+          }} />
+        </div>
+        <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: -0.3, marginBottom: 6 }}>
+          {t(`מסנכרן את ${providerName}`, `Syncing ${providerName}`)}
+        </div>
+        <div style={{ fontSize: 12.5, color: 'rgba(240,245,255,0.55)', marginBottom: 22 }}>
+          {t('המתן בבקשה — מאחזר את כל העסקאות מהבורסה', 'Please wait — pulling all trades from the exchange')}
+        </div>
+        <div style={{
+          position: 'relative', height: 3, background: 'rgba(255,255,255,0.06)',
+          borderRadius: 999, overflow: 'hidden', marginBottom: 22,
+        }}>
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: `linear-gradient(90deg, transparent, ${accent}, transparent)`,
+            backgroundSize: '200% 100%',
+            animation: 'orcaSyncBar 1.4s linear infinite',
+          }} />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 9, textAlign: isRTL ? 'right' : 'left' }}>
+          {phases.map((p, i) => {
+            const done = i < phaseIdx;
+            const active = i === phaseIdx;
+            return (
+              <div key={i} style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                opacity: done || active ? 1 : 0.4, transition: 'opacity 0.4s ease',
+              }}>
+                <div style={{
+                  width: 8, height: 8, borderRadius: '50%',
+                  background: done ? '#22c55e' : active ? accent : 'rgba(255,255,255,0.2)',
+                  boxShadow: done ? '0 0 8px rgba(34,197,94,0.6)' : active ? `0 0 8px ${accent}99` : undefined,
+                  animation: active ? 'orcaDotPulse 1.2s ease-in-out infinite' : undefined,
+                  flexShrink: 0,
+                }} />
+                <div style={{ fontSize: 13, fontWeight: active ? 600 : 400 }}>{p}</div>
+              </div>
+            );
+          })}
+        </div>
+        <div style={{
+          marginTop: 22, paddingTop: 14,
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+          display: 'flex', justifyContent: 'space-between',
+          fontSize: 11, color: 'rgba(240,245,255,0.4)',
+          fontFamily: mono, letterSpacing: 0.5,
+        }}>
+          <span>{elapsed.toFixed(1)}s</span>
+          <span>ORCA · SYNC</span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1106,121 +1228,253 @@ function inputStyle(T: TradingTheme, mono: string): React.CSSProperties {
   };
 }
 
-/* ====================== EMBEDDED KEY GUIDE (Phase 4) ====================== */
+/* ====================== KEY GUIDE — LAUNCHER + LARGE MODAL ====================== */
 function KeyGuide({ T, isRTL, provider }: { T: TradingTheme; isRTL: boolean; provider: ProviderMeta }) {
   const [open, setOpen] = useState(false);
   const t = (he: string, en: string) => (isRTL ? he : en);
   const sans = "'Poppins', sans-serif";
   const mono = "'IBM Plex Mono', monospace";
 
-  const steps: { he: string; en: string }[] = provider.id === 'bybit' ? [
-    { he: 'היכנס ל־Bybit ופתח Account → API.', en: 'Open Bybit and go to Account → API.' },
-    { he: 'בחר "Create New Key" → System-generated.', en: 'Choose "Create New Key" → System-generated.' },
-    { he: 'תחת Permissions, סמן "Read-Only" בלבד.', en: 'Under Permissions, select "Read-Only" only.' },
-    { he: 'הפעל את "Unified Trading / Contract" — לצפייה בלבד.', en: 'Enable "Unified Trading / Contract" — read scope only.' },
-    { he: 'אל תסמן Trade / Withdraw / Transfer / Options.', en: 'Do NOT check Trade, Withdraw, Transfer, or Options.' },
-    { he: 'העתק את ה־API Key וה־Secret והדבק כאן.', en: 'Copy the API Key and Secret, then paste them here.' },
+  type Step = { he: { title: string; body: string }; en: { title: string; body: string } };
+  const steps: Step[] = provider.id === 'bybit' ? [
+    {
+      he: { title: 'התחבר לחשבון Bybit שלך', body: 'פתח את האתר bybit.com ולחץ "Log In" בפינה הימנית. אם אין לך חשבון — צור אחד והשלם את אימות הזהות.' },
+      en: { title: 'Log in to your Bybit account', body: 'Open bybit.com and click "Log In" at the top right. If you do not have an account, create one and complete identity verification first.' },
+    },
+    {
+      he: { title: 'פתח את עמוד ה-API', body: 'לחץ על תמונת הפרופיל שלך → "Account & Security" → ולאחר מכן "API". זה הדף שבו יוצרים מפתחות חדשים.' },
+      en: { title: 'Open the API page', body: 'Click your profile picture → "Account & Security" → then "API". This is where new keys are created.' },
+    },
+    {
+      he: { title: 'צור מפתח חדש', body: 'לחץ על הכפתור הכחול "Create New Key", ובחר באפשרות "System-generated API Keys". Bybit ייצור את הקוד עבורך — לא תצטרך להמציא דבר.' },
+      en: { title: 'Create a new key', body: 'Click the blue "Create New Key" button and choose "System-generated API Keys". Bybit will generate the code for you — you do not need to invent anything.' },
+    },
+    {
+      he: { title: 'בחר הרשאות — קריאה בלבד!', body: 'תחת "Permissions" סמן אך ורק את "Read-Only". הפעל את "Unified Trading / Contract" — גם אלו לקריאה בלבד. אל תסמן Trade, Withdraw, Transfer או Options — לעולם!' },
+      en: { title: 'Select permissions — Read-Only ONLY!', body: 'Under "Permissions" tick ONLY "Read-Only". Enable "Unified Trading / Contract" — these are still read-only scopes. NEVER tick Trade, Withdraw, Transfer, or Options.' },
+    },
+    {
+      he: { title: 'אשר ושמור', body: 'הזן את קוד האימות מה-Google Authenticator או מה-Email. Bybit יציג לך עכשיו API Key ו-API Secret. שמור אותם במקום בטוח — לא תוכל לראות את ה-Secret שוב.' },
+      en: { title: 'Confirm and save', body: 'Enter the 2FA code from Google Authenticator or your email. Bybit will now show you an API Key and API Secret. Save them — you cannot view the Secret again.' },
+    },
+    {
+      he: { title: 'הדבק כאן את שני הקודים', body: 'חזור לחלון הזה והדבק את ה-API Key ואת ה-API Secret בשדות למטה. לחץ "אמת ושמור". זה הכל — Orca יבדוק שהמפתח באמת לקריאה בלבד וישמור אותו בכספת מוצפנת.' },
+      en: { title: 'Paste both keys here', body: 'Return to this window and paste the API Key and API Secret into the fields below. Click "Verify & Save". Orca will confirm the key is truly read-only and seal it inside an encrypted vault.' },
+    },
   ] : [
-    { he: 'היכנס ל־Binance → API Management.', en: 'Open Binance → API Management.' },
-    { he: 'לחץ "Create API" → System-generated.', en: 'Click "Create API" → System-generated.' },
-    { he: 'אמת זהות (Email / 2FA) לפי הצורך.', en: 'Complete identity verification (Email / 2FA) if prompted.' },
-    { he: 'תחת Restrictions: השאר רק "Enable Reading" מסומן.', en: 'Under Restrictions: keep ONLY "Enable Reading" checked.' },
-    { he: 'אל תסמן Spot Trading, Margin, Futures Trading, Withdrawals.', en: 'Do NOT check Spot Trading, Margin, Futures Trading, or Withdrawals.' },
-    { he: 'העתק את ה־Key וה־Secret והדבק כאן.', en: 'Copy the API Key and Secret, then paste them here.' },
+    {
+      he: { title: 'התחבר ל-Binance', body: 'פתח את binance.com ולחץ "Log In". אם אין לך חשבון, צור אחד והשלם את אימות הזהות (KYC) לפני שתמשיך.' },
+      en: { title: 'Log in to Binance', body: 'Open binance.com and click "Log In". If you do not have an account, create one and complete identity verification (KYC) before continuing.' },
+    },
+    {
+      he: { title: 'פתח את עמוד ניהול ה-API', body: 'לחץ על תמונת הפרופיל בפינה הימנית → "Account" → "API Management". זה הדף לניהול מפתחות.' },
+      en: { title: 'Open API Management', body: 'Click your profile in the top corner → "Account" → "API Management". This is the page where keys are managed.' },
+    },
+    {
+      he: { title: 'צור API חדש', body: 'לחץ על הכפתור הצהוב "Create API" ובחר "System Generated". תן למפתח שם פשוט כמו "orca".' },
+      en: { title: 'Create a new API', body: 'Click the yellow "Create API" button and choose "System Generated". Give the key a simple name like "orca".' },
+    },
+    {
+      he: { title: 'אשר באמצעות אימייל ו-2FA', body: 'Binance ישלח לך אימייל ויבקש קוד מה-Google Authenticator. הזן את הקודים כדי להמשיך.' },
+      en: { title: 'Confirm via email and 2FA', body: 'Binance will send you an email and ask for a Google Authenticator code. Enter both codes to continue.' },
+    },
+    {
+      he: { title: 'הגדר הרשאות — קריאה בלבד!', body: 'תחת "API restrictions" השאר מסומן אך ורק את "Enable Reading". בטל את הסימון מ-Spot Trading, Margin, Futures Trading ו-Withdrawals. לעולם אל תסמן אותם!' },
+      en: { title: 'Set permissions — Reading ONLY!', body: 'Under "API restrictions" leave ONLY "Enable Reading" ticked. Uncheck Spot Trading, Margin, Futures Trading and Withdrawals. Never enable them!' },
+    },
+    {
+      he: { title: 'הדבק כאן את שני הקודים', body: 'העתק את ה-API Key ואת ה-Secret Key, חזור לחלון הזה, והדבק אותם בשדות למטה. לחץ "אמת ושמור" — אנחנו נוודא שהמפתח באמת לקריאה בלבד.' },
+      en: { title: 'Paste both keys here', body: 'Copy the API Key and Secret Key, return to this window, and paste them into the fields below. Click "Verify & Save" — we will confirm the key is truly read-only.' },
+    },
   ];
 
   return (
-    <div style={{
-      marginBottom: 14,
-      borderRadius: 12,
-      background: 'linear-gradient(135deg, rgba(0,242,255,0.05), rgba(11,23,48,0.45))',
-      border: `1px solid ${open ? '#00f2ff44' : T.border.subtle}`,
-      backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
-      overflow: 'hidden',
-      transition: 'border-color .25s ease, box-shadow .25s ease',
-      boxShadow: open ? '0 14px 36px -22px #00f2ff' : 'none',
-    }}>
+    <>
+      {/* Prominent launcher button */}
       <button
         type="button"
-        onClick={() => setOpen(o => !o)}
-        aria-expanded={open}
+        onClick={() => setOpen(true)}
         style={{
-          width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-          padding: '12px 14px',
-          background: 'transparent', border: 'none', cursor: 'pointer',
-          color: T.text.primary, fontFamily: sans, fontWeight: 700, fontSize: 12.5,
+          width: '100%', marginBottom: 14,
+          display: 'flex', alignItems: 'center', gap: 12,
+          padding: '14px 16px', borderRadius: 12,
+          background: `linear-gradient(135deg, ${provider.accent}26, ${provider.accent}08)`,
+          border: `1px solid ${provider.accent}66`,
+          boxShadow: `0 12px 30px -18px ${provider.accent}cc, inset 0 0 0 1px rgba(255,255,255,0.04)`,
+          color: T.text.primary, cursor: 'pointer',
+          fontFamily: sans, fontWeight: 700, fontSize: 13,
           letterSpacing: 0.2, textAlign: isRTL ? 'right' : 'left',
+          transition: 'transform .15s ease, box-shadow .2s ease',
         }}
+        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; }}
+        onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; }}
       >
-        <BookOpen size={14} color="#00f2ff" style={{ flexShrink: 0 }} />
-        <span style={{ flex: 1 }}>
-          {t('איך מייצרים מפתח בטוח לקריאה בלבד?', 'How to generate a safe Read-Only API key?')}
-        </span>
-        <ChevronDown size={14} color={T.text.muted} style={{
-          transition: 'transform .3s cubic-bezier(0.16,1,0.3,1)',
-          transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
-        }} />
-      </button>
-
-      <div style={{
-        maxHeight: open ? 600 : 0,
-        opacity: open ? 1 : 0,
-        transition: 'max-height .45s cubic-bezier(0.16,1,0.3,1), opacity .35s ease',
-        overflow: 'hidden',
-      }}>
-        <div style={{ padding: '4px 16px 16px' }}>
-          <div style={{
-            fontFamily: mono, fontSize: 10.5, lineHeight: 1.85,
-            color: '#cbd5e1',
-            background: 'rgba(2,6,15,0.55)',
-            border: `1px solid ${T.border.subtle}`,
-            borderRadius: 10, padding: '12px 14px',
-          }}>
-            <div style={{
-              fontSize: 9.5, fontWeight: 800, color: provider.accent,
-              letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8,
-            }}>
-              {provider.name} • {t('הוראות', 'Walkthrough')}
-            </div>
-            {steps.map((s, i) => (
-              <div key={i} style={{ display: 'flex', gap: 10, marginBottom: 6 }}>
-                <span style={{
-                  flexShrink: 0,
-                  color: provider.accent, fontWeight: 800,
-                  minWidth: 18, textAlign: isRTL ? 'left' : 'right',
-                }}>
-                  {String(i + 1).padStart(2, '0')}.
-                </span>
-                <span>{s[isRTL ? 'he' : 'en']}</span>
-              </div>
-            ))}
+        <div style={{
+          width: 38, height: 38, borderRadius: 10,
+          background: `linear-gradient(135deg, ${provider.accent}, ${provider.accent}88)`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0, boxShadow: `0 4px 14px -2px ${provider.accent}99`,
+        }}>
+          <BookOpen size={18} color="#0b1730" />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13.5, fontWeight: 800, color: T.text.primary, marginBottom: 2 }}>
+            {t('מדריך שלב-אחר-שלב', 'Step-by-step walkthrough')}
           </div>
-
-          {/* Amber neon firewall notice */}
-          <div style={{
-            marginTop: 12, padding: '10px 12px', borderRadius: 10,
-            background: 'linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.02))',
-            border: '1px solid rgba(245,158,11,0.45)',
-            boxShadow: '0 0 22px -10px rgba(245,158,11,0.7), inset 0 0 0 1px rgba(245,158,11,0.05)',
-            display: 'flex', gap: 10, alignItems: 'flex-start',
-          }}>
-            <AlertTriangle size={14} color="#fbbf24" style={{ flexShrink: 0, marginTop: 2,
-              filter: 'drop-shadow(0 0 4px rgba(251,191,36,0.7))' }} />
-            <div style={{
-              fontFamily: sans, fontSize: 11, lineHeight: 1.55, color: '#fde68a',
-            }}>
-              <strong style={{ color: '#fcd34d', fontWeight: 800, letterSpacing: 0.2 }}>
-                {t('Orca Firewall: ', 'Orca Firewall: ')}
-              </strong>
-              {t(
-                'חומת המגן של Orca תדחה אוטומטית כל מפתח עם הרשאות מסחר או משיכה פעילות. אנו מקבלים אך ורק מפתחות לקריאה בלבד.',
-                'Our serverless firewall automatically rejects any key with active Trading or Withdrawal permissions. Only strict Read-Only keys are accepted.'
-              )}
-            </div>
+          <div style={{ fontSize: 11, fontWeight: 500, color: T.text.muted, lineHeight: 1.45 }}>
+            {t(
+              `איך מוציאים מפתח API בטוח מ-${provider.name}? לחץ כאן — מוסבר בשפה פשוטה, ללא ידע טכני.`,
+              `How to create a safe API key on ${provider.name}? Click here — explained in plain language, no tech skills needed.`
+            )}
           </div>
         </div>
-      </div>
-    </div>
+        <ChevronDown size={16} color={provider.accent} style={{ flexShrink: 0, transform: 'rotate(-90deg)' }} />
+      </button>
+
+      {open && (
+        <div
+          onClick={() => setOpen(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 10080,
+            background: 'rgba(2,6,15,0.82)',
+            backdropFilter: 'blur(18px) saturate(160%)', WebkitBackdropFilter: 'blur(18px) saturate(160%)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 16, direction: isRTL ? 'rtl' : 'ltr',
+            animation: 'orcaFadeIn 0.3s ease',
+          }}
+        >
+          <style>{`
+            @keyframes orcaFadeIn { from { opacity: 0 } to { opacity: 1 } }
+            @keyframes orcaGuideIn { from { opacity: 0; transform: translateY(14px) scale(0.98) } to { opacity: 1; transform: translateY(0) scale(1) } }
+          `}</style>
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: '100%', maxWidth: 680, maxHeight: '90vh', overflowY: 'auto',
+              background: 'linear-gradient(180deg, rgba(11,23,48,0.98), rgba(6,12,28,0.98))',
+              border: `1px solid ${provider.accent}55`,
+              borderRadius: 20,
+              padding: 'clamp(22px, 4vw, 32px)',
+              boxShadow: `0 40px 100px -30px ${provider.accent}66, inset 0 0 0 1px rgba(255,255,255,0.04)`,
+              fontFamily: sans, color: T.text.primary,
+              animation: 'orcaGuideIn 0.4s cubic-bezier(0.16,1,0.3,1)',
+            }}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 14, marginBottom: 22 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                  fontSize: 10.5, fontWeight: 800, fontFamily: mono,
+                  color: provider.accent, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6,
+                }}>
+                  {provider.name} · {t('מדריך אימות API', 'API onboarding guide')}
+                </div>
+                <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, letterSpacing: -0.4, color: T.text.primary }}>
+                  {t('צור מפתח API לקריאה בלבד', 'Create a Read-Only API key')}
+                </h2>
+                <div style={{ marginTop: 6, fontSize: 13, lineHeight: 1.55, color: T.text.muted }}>
+                  {t(
+                    'עקוב אחרי השלבים אחד-אחד. בכל שלב הסבר מפורט בשפה פשוטה — גם אם אתה רחוק מטכנולוגיה.',
+                    'Follow the steps one by one. Each step is explained in plain language — even if you have zero technical background.'
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={() => setOpen(false)}
+                aria-label="close"
+                style={{
+                  background: 'rgba(255,255,255,0.04)',
+                  border: `1px solid ${T.border.subtle}`,
+                  borderRadius: 10, color: T.text.secondary, cursor: 'pointer',
+                  padding: 8, display: 'inline-flex', flexShrink: 0,
+                }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Steps */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {steps.map((s, i) => {
+                const copy = s[isRTL ? 'he' : 'en'];
+                return (
+                  <div key={i} style={{
+                    display: 'flex', gap: 14,
+                    padding: '16px 18px',
+                    borderRadius: 14,
+                    background: 'linear-gradient(135deg, rgba(0,242,255,0.04), rgba(11,23,48,0.5))',
+                    border: `1px solid ${T.border.subtle}`,
+                  }}>
+                    <div style={{
+                      flexShrink: 0,
+                      width: 38, height: 38, borderRadius: 12,
+                      background: `linear-gradient(135deg, ${provider.accent}, ${provider.accent}aa)`,
+                      color: '#0b1730',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontFamily: mono, fontWeight: 800, fontSize: 14,
+                      boxShadow: `0 6px 16px -4px ${provider.accent}88`,
+                    }}>
+                      {String(i + 1).padStart(2, '0')}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{
+                        fontSize: 14.5, fontWeight: 700, color: T.text.primary,
+                        marginBottom: 4, letterSpacing: -0.1,
+                      }}>
+                        {copy.title}
+                      </div>
+                      <div style={{
+                        fontSize: 13, lineHeight: 1.6, color: T.text.secondary,
+                      }}>
+                        {copy.body}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Firewall notice */}
+            <div style={{
+              marginTop: 18, padding: '14px 16px', borderRadius: 12,
+              background: 'linear-gradient(135deg, rgba(245,158,11,0.12), rgba(245,158,11,0.03))',
+              border: '1px solid rgba(245,158,11,0.5)',
+              boxShadow: '0 0 26px -10px rgba(245,158,11,0.7), inset 0 0 0 1px rgba(245,158,11,0.05)',
+              display: 'flex', gap: 12, alignItems: 'flex-start',
+            }}>
+              <AlertTriangle size={18} color="#fbbf24" style={{
+                flexShrink: 0, marginTop: 1,
+                filter: 'drop-shadow(0 0 4px rgba(251,191,36,0.7))',
+              }} />
+              <div style={{ fontSize: 13, lineHeight: 1.55, color: '#fde68a' }}>
+                <div style={{ color: '#fcd34d', fontWeight: 800, marginBottom: 3, letterSpacing: 0.2 }}>
+                  {t('חומת המגן של Orca', 'Orca Firewall')}
+                </div>
+                {t(
+                  'כל מפתח עם הרשאות מסחר או משיכה יידחה אוטומטית על-ידי השרת. אנחנו מקבלים אך ורק מפתחות לקריאה בלבד — הכסף שלך לעולם לא בסיכון.',
+                  'Any key with Trading or Withdrawal permissions is automatically rejected by our server. Only strict Read-Only keys are accepted — your funds are never at risk.'
+                )}
+              </div>
+            </div>
+
+            {/* Close CTA */}
+            <button
+              onClick={() => setOpen(false)}
+              style={{
+                marginTop: 18, width: '100%',
+                padding: '13px 18px', borderRadius: 12,
+                background: `linear-gradient(135deg, ${provider.accent}, ${provider.accent}cc)`,
+                color: '#0b1730', border: 'none', cursor: 'pointer',
+                fontFamily: sans, fontWeight: 800, fontSize: 13.5, letterSpacing: 0.3,
+                boxShadow: `0 14px 30px -12px ${provider.accent}aa`,
+              }}
+            >
+              {t('הבנתי — בוא נדביק את המפתחות', 'Got it — let me paste the keys')}
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
