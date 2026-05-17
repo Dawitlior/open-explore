@@ -253,6 +253,7 @@ export const CalendarHubPage = ({ T, isRTL, trades, t, isMobile, onGenerateInsig
      ========================================================= */
   return (
     <div style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
+      <RProxyBanner T={T} isRTL={isRTL} />
       <FeatureHint
         T={T}
         id="calendar-hub-page-fullscreen"
