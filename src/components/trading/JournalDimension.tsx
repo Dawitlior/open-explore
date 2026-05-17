@@ -2857,16 +2857,18 @@ const DailyIntelligencePanel = ({ day, dir, th, onClose, onOpenJournal }: {
                 <span>📈</span> {isRTL ? `עסקאות (${trades.length})` : `Trades (${trades.length})`}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {trades.map((tr, i) => {
+                {pagedTrades.map((tr, i) => {
                   const trPnl = parseFloat(tr.pnl) || 0;
                   const trR = parseFloat(tr.rr) || 0;
                   const isWin = trPnl > 0;
+                  // Stagger only the first page; on dense days animations would jank the browser.
+                  const animDelay = safePage === 0 ? `${0.2 + i * 0.05}s` : '0s';
                   return (
-                    <div key={i} style={{
+                    <div key={`${safePage}-${i}`} style={{
                       background: `${isWin ? 'rgba(0,255,163,0.03)' : 'rgba(255,77,77,0.03)'}`,
                       border: `1px solid ${isWin ? 'rgba(0,255,163,0.12)' : 'rgba(255,77,77,0.12)'}`,
                       borderRadius: 10, padding: '12px 16px',
-                      animation: `j-fade-in ${0.2 + i * 0.05}s ease-out`,
+                      animation: `j-fade-in ${animDelay} ease-out`,
                     }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -2895,6 +2897,35 @@ const DailyIntelligencePanel = ({ day, dir, th, onClose, onOpenJournal }: {
                   );
                 })}
               </div>
+              {totalPages > 1 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, padding: '8px 4px' }}>
+                  <button
+                    onClick={() => setTradePage(p => Math.max(0, p - 1))}
+                    disabled={safePage === 0}
+                    style={{
+                      padding: '6px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)',
+                      background: 'rgba(255,255,255,0.04)', color: safePage === 0 ? th.tx3 : th.tx2,
+                      fontSize: 11, fontWeight: 700, cursor: safePage === 0 ? 'default' : 'pointer',
+                      opacity: safePage === 0 ? 0.4 : 1,
+                    }}
+                  >‹ {isRTL ? 'הקודם' : 'Prev'}</button>
+                  <div style={{ fontSize: 10, color: th.tx3, fontFamily: "'JetBrains Mono',monospace" }}>
+                    {isRTL
+                      ? `עמוד ${safePage + 1} / ${totalPages} • ${safePage * TRADES_PER_PAGE + 1}–${Math.min((safePage + 1) * TRADES_PER_PAGE, trades.length)} מתוך ${trades.length}`
+                      : `Page ${safePage + 1} / ${totalPages} • ${safePage * TRADES_PER_PAGE + 1}–${Math.min((safePage + 1) * TRADES_PER_PAGE, trades.length)} of ${trades.length}`}
+                  </div>
+                  <button
+                    onClick={() => setTradePage(p => Math.min(totalPages - 1, p + 1))}
+                    disabled={safePage >= totalPages - 1}
+                    style={{
+                      padding: '6px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)',
+                      background: 'rgba(255,255,255,0.04)', color: safePage >= totalPages - 1 ? th.tx3 : th.tx2,
+                      fontSize: 11, fontWeight: 700, cursor: safePage >= totalPages - 1 ? 'default' : 'pointer',
+                      opacity: safePage >= totalPages - 1 ? 0.4 : 1,
+                    }}
+                  >{isRTL ? 'הבא' : 'Next'} ›</button>
+                </div>
+              )}
             </div>
           )}
 
