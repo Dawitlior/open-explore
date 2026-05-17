@@ -69,6 +69,9 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
   const dash = useDashboardConfig();
   const ui = useUIPrefs();
   const riskCfg = useRiskLimits();
+  const { prefs: userPrefs, update: updateUserPrefs } = useUserPreferences();
+  const [usdDraft, setUsdDraft] = useState<{ perTrade: string; daily: string; weekly: string; monthly: string } | null>(null);
+  const [usdSaving, setUsdSaving] = useState(false);
   const auth = useAuth();
   const [pendingLimits, setPendingLimits] = useState<{ trade: string; day: string; week: string; month: string } | null>(null);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
