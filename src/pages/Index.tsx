@@ -1282,14 +1282,34 @@ const Index = () => {
 
   const renderJournal = () => {
     if (trades.length === 0) return null;
+    const sortedDesc = [...trades].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const isLive = opMode === 'live';
+    const totalPages = isLive ? 1 : Math.max(1, Math.ceil(sortedDesc.length / JOURNAL_PAGE_SIZE));
+    const safePage = Math.min(journalPage, totalPages - 1);
+    const start = safePage * JOURNAL_PAGE_SIZE;
+    const pageRows = isLive ? trades.slice(-8) : sortedDesc.slice(start, start + JOURNAL_PAGE_SIZE);
+    const from = isLive ? Math.max(1, trades.length - pageRows.length + 1) : start + 1;
+    const to = isLive ? trades.length : Math.min(start + JOURNAL_PAGE_SIZE, sortedDesc.length);
+
+    const navBtn = (label: string, onClick: () => void, disabled: boolean) => (
+      <button onClick={onClick} disabled={disabled} style={{
+        padding: '6px 12px', minWidth: 38, fontSize: 11, fontWeight: 700,
+        background: disabled ? T.bg.tertiary : `${T.accent.cyan}14`,
+        border: `1px solid ${disabled ? T.border.subtle : T.accent.cyan}55`,
+        borderRadius: T.radius.md, color: disabled ? T.text.dim : T.accent.cyan,
+        cursor: disabled ? 'not-allowed' : 'pointer', fontFamily: "'JetBrains Mono', monospace",
+        transition: 'all .15s',
+      }}>{label}</button>
+    );
+
     return (
       <>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
           <div style={{ fontSize: 13, color: T.text.muted }}>
             {stats.totalTrades} {isRTL ? 'עסקאות' : 'trades'}
-            {opMode !== 'live' && stats.totalTrades > 50 && (
+            {!isLive && stats.totalTrades > JOURNAL_PAGE_SIZE && (
               <span style={{ marginInlineStart: 8, fontSize: 10, color: T.text.dim, fontFamily: "'JetBrains Mono', monospace" }}>
-                · {isRTL ? `מציג 50 אחרונות` : `showing latest 50`}
+                · {isRTL ? `${from}–${to} מתוך ${sortedDesc.length}` : `${from}–${to} of ${sortedDesc.length}`}
               </span>
             )}
           </div>
@@ -1301,7 +1321,7 @@ const Index = () => {
           </div>
         </div>
         {/* Mode-specific journal header */}
-        {opMode === 'live' && <div style={{ padding: '8px 12px', background: `${modeColors.live}08`, border: `1px solid ${modeColors.live}20`, borderRadius: T.radius.md, marginBottom: 12, fontSize: 11, color: modeColors.live }}>🔴 {isRTL ? 'תצוגה חיה — עסקאות אחרונות בלבד' : 'Live View — Recent trades only'}</div>}
+        {isLive && <div style={{ padding: '8px 12px', background: `${modeColors.live}08`, border: `1px solid ${modeColors.live}20`, borderRadius: T.radius.md, marginBottom: 12, fontSize: 11, color: modeColors.live }}>🔴 {isRTL ? 'תצוגה חיה — עסקאות אחרונות בלבד' : 'Live View — Recent trades only'}</div>}
         <GlassCard T={T} style={{ padding: 0, overflow: 'hidden' }} className="orca-no-hover">
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
@@ -1311,10 +1331,7 @@ const Index = () => {
                 ))}
               </tr></thead>
               <tbody>
-                {(opMode === 'live'
-                  ? trades.slice(-8)
-                  : [...trades].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 50)
-                ).map((tr, idx) => (
+                {pageRows.map((tr, idx) => (
                   <tr key={tr.id} onClick={() => setSelTrade(tr)} style={{ cursor: 'pointer', background: idx % 2 ? `${T.bg.tertiary}40` : 'transparent' }}>
                     <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, color: T.text.muted }}>{tr.id}</td>
                     <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, whiteSpace: 'nowrap', fontSize: 11 }}>{new Date(tr.date).toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
@@ -1337,6 +1354,17 @@ const Index = () => {
             </table>
           </div>
         </GlassCard>
+        {!isLive && totalPages > 1 && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
+            {navBtn('«', () => setJournalPage(0), safePage === 0)}
+            {navBtn(isRTL ? '‹ קודם' : '‹ Prev', () => setJournalPage(p => Math.max(0, p - 1)), safePage === 0)}
+            <span style={{ fontSize: 11, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace", padding: '0 10px' }}>
+              {isRTL ? `עמוד ${safePage + 1} / ${totalPages}` : `Page ${safePage + 1} / ${totalPages}`}
+            </span>
+            {navBtn(isRTL ? 'הבא ›' : 'Next ›', () => setJournalPage(p => Math.min(totalPages - 1, p + 1)), safePage >= totalPages - 1)}
+            {navBtn('»', () => setJournalPage(totalPages - 1), safePage >= totalPages - 1)}
+          </div>
+        )}
         {/* Trade detail modal */}
         {selTrade && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }} onClick={() => setSelTrade(null)}>
