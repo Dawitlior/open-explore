@@ -441,9 +441,10 @@ Deno.serve(async (req) => {
 
     return json({
       ok: true,
-      fetched: execs.length,
+      fetched: closed.length,
       inserted,
       skipped,
+      wiped,
       syncedCount: inserted,
       positionsSynced,
     });
