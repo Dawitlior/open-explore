@@ -298,13 +298,14 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
   // B) Underwater curve — % below all-time peak
   const underwater = useMemo(() => {
     let cum = 0, peak = 0;
-    return trades.map((t, i) => {
-      cum += t.pnl;
+    return tradesByDay.map(([day, dayTrades], i) => {
+      const { total } = sumDailyR(dayTrades);
+      cum += total;
       if (cum > peak) peak = cum;
-      const uw = peak > 0 ? -((peak - cum) / peak) * 100 : 0;
-      return { i: i + 1, uw: +uw.toFixed(2) };
+      const uw = peak > 0 ? -((peak - cum) / Math.max(Math.abs(peak), 1)) * 100 : 0;
+      return { i: i + 1, day: day.slice(5), uw: +uw.toFixed(2) };
     });
-  }, [trades]);
+  }, [tradesByDay]);
 
   // C) Profit-factor evolution (cumulative gross-win / gross-loss)
   const pfEvolution = useMemo(() => {
