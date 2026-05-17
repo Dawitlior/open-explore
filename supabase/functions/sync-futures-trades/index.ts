@@ -7,7 +7,7 @@
 // Every failure path returns a STRUCTURED JSON response (never a raw 500),
 // so the client can surface the exact reason in console + UI.
 
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createClient } from 'npm:@supabase/supabase-js@2.45.4';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -174,6 +174,19 @@ Deno.serve(async (req) => {
 
   // TOP-LEVEL boundary: any uncaught throw lands here as structured JSON.
   try {
+    // ---- Env validation (BEFORE any risky init) ----
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+    const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('[sync-futures-trades] missing env', {
+        hasUrl: !!SUPABASE_URL,
+        hasAnon: !!SUPABASE_ANON_KEY,
+        hasService: !!SUPABASE_SERVICE_ROLE_KEY,
+      });
+      return json({ ok: false, error: 'server_misconfigured', detail: 'missing_env' }, 500);
+    }
+
     // ---- Auth ----
     const authHeader = req.headers.get('Authorization') ?? '';
     if (!authHeader.startsWith('Bearer ')) {
@@ -182,8 +195,8 @@ Deno.serve(async (req) => {
     const token = authHeader.slice('Bearer '.length);
 
     const userClient = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY,
       { global: { headers: { Authorization: authHeader } } },
     );
     const { data: claimData, error: claimErr } = await userClient.auth.getClaims(token);
@@ -205,8 +218,8 @@ Deno.serve(async (req) => {
 
     // ---- Service-role client ----
     const admin = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      SUPABASE_URL,
+      SUPABASE_SERVICE_ROLE_KEY,
     );
 
     // ---- Resolve credential row ----
