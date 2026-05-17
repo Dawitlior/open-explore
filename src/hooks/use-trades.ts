@@ -227,5 +227,36 @@ export function useTrades() {
     setTrades([]);
   }, []);
 
-  return { trades, stats, loading, initialized, addTrade, updateTrade, upsertJournalTrade, removeTrade, importTrades, resetAll, riskAlert, dismissRiskAlert };
+  /**
+   * Persist a Tier-1 manual R-Multiple override on the trades row column.
+   * Mirrors it into local state instantly so every memoized chart that reads
+   * `getEffectiveR(trade)` recomputes in the same React commit — no reload.
+   * Pass `null` to clear the override.
+   */
+  const setManualR = useCallback(async (tradeId: number, value: number | null) => {
+    return enqueueTradeMutation(async () => {
+      const current = tradesRef.current;
+      const idx = current.findIndex(t => t.id === tradeId);
+      if (idx === -1) return;
+      const next = [...current];
+      next[idx] = {
+        ...current[idx],
+        manual_r_multiple: value,
+        manualR: value,
+      } as Trade;
+      tradesRef.current = next;
+      setTrades(next);
+      try {
+        await setManualRMultiple(tradeId, value);
+      } catch (err) {
+        console.error('setManualR', err);
+        // roll back on failure
+        tradesRef.current = current;
+        setTrades(current);
+        throw err;
+      }
+    });
+  }, [enqueueTradeMutation]);
+
+  return { trades, stats, loading, initialized, addTrade, updateTrade, upsertJournalTrade, removeTrade, importTrades, resetAll, riskAlert, dismissRiskAlert, setManualR };
 }
