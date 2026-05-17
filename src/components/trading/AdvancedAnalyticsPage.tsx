@@ -33,7 +33,7 @@ import { GlassCard } from './TradingUI';
 import type { ChartExplanation } from './ChartWrapper';
 import { useLang } from '@/hooks/use-lang';
 import { RProxyBanner } from './RProxyBanner';
-import { getEffectiveR } from '@/lib/r-multiple';
+import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
 const AnalyticsQuantLab = lazy(() => import('./AnalyticsQuantLab').then(m => ({ default: m.AnalyticsQuantLab })));
 
 interface AdvancedAnalyticsPageProps {
@@ -81,16 +81,29 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
 
   /* ─────────── DERIVED DATA ─────────── */
 
-  // 1. Equity & drawdown overlay
+  const tradesByDay = useMemo(() => {
+    const byDay = new Map<string, Trade[]>();
+    for (const tr of trades) {
+      const key = (tr.date || '').slice(0, 10);
+      if (!key) continue;
+      const list = byDay.get(key) || [];
+      list.push(tr);
+      byDay.set(key, list);
+    }
+    return Array.from(byDay.entries()).sort(([a], [b]) => a.localeCompare(b));
+  }, [trades]);
+
+  // 1. Equity & drawdown overlay in R-space using day-level proxy aggregation
   const equityDD = useMemo(() => {
     let cum = 0, peak = 0;
-    return trades.map((t, i) => {
-      cum += t.pnl;
+    return tradesByDay.map(([day, dayTrades], i) => {
+      const { total } = sumDailyR(dayTrades);
+      cum += total;
       if (cum > peak) peak = cum;
-      const dd = peak > 0 ? -((peak - cum) / peak * 100) : 0;
-      return { id: i + 1, equity: cum, dd, pnl: t.pnl };
+      const dd = peak > 0 ? -((peak - cum) / Math.max(Math.abs(peak), 1) * 100) : 0;
+      return { id: i + 1, day: day.slice(5), equity: +cum.toFixed(3), dd: +dd.toFixed(2), pnl: dayTrades.reduce((s, t) => s + t.pnl, 0) };
     });
-  }, [trades]);
+  }, [tradesByDay]);
 
   // 2. R buckets
   const rBuckets = useMemo(() => {
