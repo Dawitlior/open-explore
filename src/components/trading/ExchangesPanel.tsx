@@ -356,18 +356,18 @@ function CredentialModal({
     if (!user) { toast.error(t('יש להתחבר תחילה', 'Please sign in first')); return; }
     if (!canSubmit) return;
     setBusy(true);
-    const { error } = await supabase.from('exchange_credentials').upsert(
-      {
-        user_id: user.id,
-        provider: provider.id,
-        label: label.trim() || 'main',
-        api_key: apiKey.trim(),
-        api_secret: apiSecret.trim(),
-        scope: 'read_only',
-        is_active: true,
-      },
-      { onConflict: 'user_id,provider,label' },
-    );
+    const payload = {
+      user_id: user.id,
+      provider: provider.id,
+      label: label.trim() || 'main',
+      api_key: apiKey.trim(),
+      api_secret: apiSecret.trim(),
+      scope: 'read_only',
+      is_active: true,
+    };
+    const { error } = await supabase
+      .from('exchange_credentials')
+      .upsert(payload as never, { onConflict: 'user_id,provider,label' });
     setBusy(false);
     if (error) {
       console.error(error);
