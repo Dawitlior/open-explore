@@ -25,6 +25,7 @@ import { AvatarUploader } from './AvatarUploader';
 import { InstallGuide } from './InstallGuide';
 import { ResetModal } from './ResetModal';
 import { scopedStorage } from '@/lib/scoped-storage';
+import { useUserPreferences } from '@/hooks/use-user-preferences';
 import { i18n as i18nStrings } from '@/lib/trading-i18n';
 
 interface SettingsHubProps {
@@ -68,6 +69,9 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
   const dash = useDashboardConfig();
   const ui = useUIPrefs();
   const riskCfg = useRiskLimits();
+  const { prefs: userPrefs, update: updateUserPrefs } = useUserPreferences();
+  const [usdDraft, setUsdDraft] = useState<{ perTrade: string; daily: string; weekly: string; monthly: string } | null>(null);
+  const [usdSaving, setUsdSaving] = useState(false);
   const auth = useAuth();
   const [pendingLimits, setPendingLimits] = useState<{ trade: string; day: string; week: string; month: string } | null>(null);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
@@ -805,6 +809,68 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                       {t('ברירת מחדל:', 'Default:')} −{Math.abs(DEFAULT_RISK_LIMITS.trade)}R / −{Math.abs(DEFAULT_RISK_LIMITS.day)}R / −{Math.abs(DEFAULT_RISK_LIMITS.week)}R / −{Math.abs(DEFAULT_RISK_LIMITS.month)}R
                     </div>
                   </div>
+                  {/* ===== USD-denominated preferences (powers Tier-3 R proxy) ===== */}
+                  {(() => {
+                    const cur = usdDraft || {
+                      perTrade: String(userPrefs.risk_per_trade_default),
+                      daily: String(userPrefs.daily_risk_limit),
+                      weekly: String(userPrefs.weekly_risk_limit),
+                      monthly: String(userPrefs.monthly_risk_limit),
+                    };
+                    const dirty = usdDraft !== null && (
+                      parseFloat(cur.perTrade) !== Number(userPrefs.risk_per_trade_default) ||
+                      parseFloat(cur.daily) !== Number(userPrefs.daily_risk_limit) ||
+                      parseFloat(cur.weekly) !== Number(userPrefs.weekly_risk_limit) ||
+                      parseFloat(cur.monthly) !== Number(userPrefs.monthly_risk_limit)
+                    );
+                    const updU = (k: 'perTrade' | 'daily' | 'weekly' | 'monthly') => (e: React.ChangeEvent<HTMLInputElement>) =>
+                      setUsdDraft(p => ({ ...(p || cur), [k]: e.target.value }));
+                    const saveUsd = async () => {
+                      const perTrade = parseFloat(cur.perTrade), daily = parseFloat(cur.daily);
+                      const weekly = parseFloat(cur.weekly), monthly = parseFloat(cur.monthly);
+                      if (![perTrade, daily, weekly, monthly].every(n => isFinite(n) && n > 0)) {
+                        toast.error(t('כל הערכים חייבים להיות חיוביים', 'All values must be positive')); return;
+                      }
+                      try {
+                        setUsdSaving(true);
+                        await updateUserPrefs({
+                          risk_per_trade_default: perTrade,
+                          daily_risk_limit: daily,
+                          weekly_risk_limit: weekly,
+                          monthly_risk_limit: monthly,
+                        });
+                        setUsdDraft(null);
+                        toast.success(t('הוגדר — כל הגרפים מתעדכנים', 'Saved — recalculating charts'));
+                      } catch {
+                        toast.error(t('שמירה נכשלה', 'Save failed'));
+                      } finally { setUsdSaving(false); }
+                    };
+                    const cell = (label: string, key: 'perTrade' | 'daily' | 'weekly' | 'monthly', val: string) => (
+                      <div style={{ padding: 14, borderRadius: T.radius.md, background: T.bg.secondary, border: `1px solid ${T.border.subtle}` }}>
+                        <div style={fieldLabel}>{label}</div>
+                        <input type="number" step="1" min="0" value={val} onChange={updU(key)}
+                          style={{ ...input, textAlign: 'center', fontWeight: 800, fontSize: 16 }} className="orca-settings-input" />
+                        <div style={{ fontSize: 10, color: T.text.muted, marginTop: 6, textAlign: 'center' }}>${val}</div>
+                      </div>
+                    );
+                    return (
+                      <div style={{ ...card, marginTop: 14 }}>
+                        <h3 style={sectionTitle}><Gauge size={14} /> {t('מגבלות דולריות (R-Proxy)', 'USD Risk Limits (R-Proxy)')}</h3>
+                        <p style={sectionHint}>{t('ערכים אלו ניזונים ישירות למנוע ה-R של Orca ומפעילים מחדש את כל הגרפים מיד עם שמירה.', 'These values feed the Orca R-engine and instantly recompute every chart on save.')}</p>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+                          {cell(t('סיכון לעסקה ($)', 'Per-Trade ($)'), 'perTrade', cur.perTrade)}
+                          {cell(t('מגבלה יומית ($)', 'Daily ($)'), 'daily', cur.daily)}
+                          {cell(t('מגבלה שבועית ($)', 'Weekly ($)'), 'weekly', cur.weekly)}
+                          {cell(t('מגבלה חודשית ($)', 'Monthly ($)'), 'monthly', cur.monthly)}
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+                          <button className="orca-cta" onClick={saveUsd} disabled={!dirty || usdSaving} style={{ ...primaryBtn(T.accent.cyan, !dirty), flex: 1 }}>
+                            <Check size={13} /> {usdSaving ? '…' : dirty ? t('שמור שינויים', 'Save changes') : t('נשמר', 'Saved')}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               );
             })()}

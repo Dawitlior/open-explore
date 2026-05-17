@@ -31,13 +31,23 @@ export async function getAllTrades(): Promise<Trade[]> {
   for (let i = 0; i < 100; i++) {
     const { data, error } = await supabase
       .from('trades')
-      .select('trade_id, data')
+      .select('trade_id, data, manual_r_multiple')
       .eq('user_id', uid)
       .order('trade_id', { ascending: true })
       .range(from, from + PAGE - 1);
     if (error) { console.error('getAllTrades', error); return out; }
     const rows = data ?? [];
-    for (const r of rows) out.push({ ...(r.data as unknown as Trade), id: r.trade_id });
+    for (const r of rows) {
+      const base = (r.data as unknown as Trade) || ({} as Trade);
+      // Merge the column-level manual override into the trade object so the
+      // centralized R engine (getR / getEffectiveR) sees Tier-1 immediately.
+      const manual = r.manual_r_multiple as number | null | undefined;
+      out.push({
+        ...base,
+        id: r.trade_id,
+        ...(manual !== null && manual !== undefined ? { manual_r_multiple: manual, manualR: manual } : {}),
+      } as Trade);
+    }
     if (rows.length < PAGE) break;
     from += PAGE;
   }

@@ -21,7 +21,8 @@ import { ResetModal } from '@/components/trading/ResetModal';
 import { SettingsHub } from '@/components/trading/SettingsHub';
 import { IdleTimeoutModal } from '@/components/IdleTimeoutModal';
 import { NavAvatar } from '@/components/trading/NavAvatar';
-import { DeploymentBadge } from '@/components/DeploymentBadge';
+import { DeploymentToast } from '@/components/DeploymentToast';
+import { RiskOnboardingWizard, shouldShowRiskOnboarding } from '@/components/trading/RiskOnboardingWizard';
 import ImportLoadingOverlay from '@/components/trading/ImportLoadingOverlay';
 import { FeatureHint } from '@/components/trading/FeatureHint';
 import { EntryGate } from '@/components/trading/EntryGate';
@@ -83,8 +84,8 @@ const ReminderBadge = () => (
 const Index = () => {
   const isMobile = useIsMobile();
   const settings = useSettings();
-  useUserPreferences(); // warm cache for centralized R-multiple Tier-3 proxy
-  const { trades, stats, loading, initialized, addTrade, updateTrade, upsertJournalTrade, removeTrade, resetAll, importTrades, riskAlert, dismissRiskAlert } = useTrades();
+  const { prefs: userPrefs, loaded: userPrefsLoaded } = useUserPreferences(); // warm cache for centralized R-multiple Tier-3 proxy
+  const { trades, stats, loading, initialized, addTrade, updateTrade, upsertJournalTrade, removeTrade, resetAll, importTrades, riskAlert, dismissRiskAlert, setManualR } = useTrades();
   const { limits: customRiskLimits } = useRiskLimits();
   const [entered, setEntered] = useState(() => sessionStorage.getItem('orca-entered') === '1');
   const [onboardingDone, setOnboardingDone] = useState(() => !shouldShowOnboarding());
@@ -126,6 +127,11 @@ const Index = () => {
   const [explainModal, setExplainModal] = useState<{ title: string; explanation: ChartExplanation; chartId?: string } | null>(null);
   const [riskExplanations, setRiskExplanations] = useState<RiskExplanation[]>([]);
   const [showRiskExplanation, setShowRiskExplanation] = useState<{ tradeId: number; riskChange: string } | null>(null);
+  const [showRiskOnboarding, setShowRiskOnboarding] = useState(false);
+
+  useEffect(() => {
+    if (shouldShowRiskOnboarding(userPrefs, userPrefsLoaded)) setShowRiskOnboarding(true);
+  }, [userPrefs, userPrefsLoaded]);
 
   // Hydrate per-user UI prefs from scoped storage once we know who is logged in.
   const { user: authUser } = useAuth();
@@ -1454,7 +1460,7 @@ const Index = () => {
         </div>
         {/* Calendar Day Modal */}
         {calModalDay && (
-          <CalendarModal T={T} t={t} isRTL={isRTL} day={calModalDay} month={calMonth} year={calYear} trades={trades} onClose={() => setCalModalDay(null)} onGenerateInsight={handleGenerateInsights} />
+          <CalendarModal T={T} t={t} isRTL={isRTL} day={calModalDay} month={calMonth} year={calYear} trades={trades} onClose={() => setCalModalDay(null)} onGenerateInsight={handleGenerateInsights} onSetManualR={setManualR} />
         )}
       </>
     );
@@ -1745,7 +1751,7 @@ const Index = () => {
             )}
             {!isMobile && !uiPrefs.hideHeaderDate && <div style={{ fontSize: 11, color: T.text.muted }}>{new Date().toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</div>}
             <PV><div style={{ fontSize: 11, color: T.accent.cyan, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace" }}>${currentBalance.toFixed(2)}</div></PV>
-            <DeploymentBadge isRTL={isRTL} />
+            
             <NavAvatar T={T} size={isMobile ? 28 : 32} onClick={() => setShowSettings(true)} />
             {!isMobile && <span onClick={() => setShowFeatureModal(true)} style={{ fontSize: 13, fontWeight: 800, letterSpacing: '-0.02em', color: T.text.primary, fontFamily: "'JetBrains Mono', monospace", cursor: 'pointer', transition: 'opacity 0.2s' }}>Orca<span style={{ fontWeight: 300, color: T.text.muted, marginLeft: 4 }}>Investment</span></span>}
           </div>
@@ -1761,7 +1767,7 @@ const Index = () => {
           )}
           {page === 'dashboard' && <div data-orca-dashboard="true">{renderDashboard()}</div>}
           {page === 'calendar' && (
-            <LazyShell><CalendarHubPage T={T} isRTL={isRTL} t={t} trades={trades} isMobile={isMobile} onGenerateInsight={handleGenerateInsights} /></LazyShell>
+            <LazyShell><CalendarHubPage T={T} isRTL={isRTL} t={t} trades={trades} isMobile={isMobile} onGenerateInsight={handleGenerateInsights} onSetManualR={setManualR} /></LazyShell>
           )}
           {page === 'journal' && renderJournal()}
           {page === 'analytics' && renderAnalytics()}
@@ -1899,6 +1905,11 @@ const Index = () => {
           onRemove={handleHideChart}
           onClose={() => setExplainModal(null)}
         />
+      )}
+      {/* Floating system update notification (bottom-right) */}
+      <DeploymentToast isRTL={isRTL} />
+      {showRiskOnboarding && (
+        <RiskOnboardingWizard isRTL={isRTL} onDismiss={() => setShowRiskOnboarding(false)} />
       )}
     </div>
   );

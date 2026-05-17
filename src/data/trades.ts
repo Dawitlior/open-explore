@@ -20,6 +20,9 @@ export interface Trade {
   riskPct: number;
   rules: boolean;
   comments: string;
+  /** Tier-1 user override mirrored from the DB column `manual_r_multiple`. */
+  manual_r_multiple?: number | null;
+  manualR?: number | null;
 }
 
 export const RAW_TRADES: Trade[] = [];
