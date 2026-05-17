@@ -98,10 +98,23 @@ export const AnalyticsQuantLab = ({ T, trades, privacyMode }: Props) => {
     ];
   }, [trades, T]);
 
-  /* ── 3. Cumulative R ── */
+  /* ── 3. Cumulative R (day-grouped, Tier-3 proxy for missing-SL days) ── */
   const cumR = useMemo(() => {
+    const byDay = new Map<string, Trade[]>();
+    for (const t of trades) {
+      const key = (t.date || '').slice(0, 10);
+      if (!key) continue;
+      const arr = byDay.get(key) || [];
+      arr.push(t);
+      byDay.set(key, arr);
+    }
+    const days = Array.from(byDay.keys()).sort();
     let c = 0;
-    return trades.map((t, i) => { c += getEffectiveR(t); return { i: i + 1, r: +c.toFixed(3) }; });
+    return days.map((day, i) => {
+      const { total } = sumDailyR(byDay.get(day)!);
+      c += total;
+      return { i: i + 1, r: +c.toFixed(3) };
+    });
   }, [trades]);
 
   /* ── 4. Rolling Calmar (mean R / max DD in window) ── */
