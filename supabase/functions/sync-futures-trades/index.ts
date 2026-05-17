@@ -42,6 +42,8 @@ interface BybitExec {
   execTime: string; // ms
   closedSize?: string;
   execType?: string;
+  execPnl?: string; // realized PnL for closing fills (Bybit V5)
+  closedPnl?: string;
 }
 
 interface BybitFetchResult {
