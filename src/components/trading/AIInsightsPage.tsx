@@ -1403,7 +1403,7 @@ const ExposureMap = ({ data, T, isRTL }: { data: ExposureRow[]; T: any; isRTL: b
           <div key={row.name} style={{
             position: 'relative', padding: '10px 12px', borderRadius: 10,
             background: T.bg.tertiary, border: `1px solid ${T.border.subtle}`,
-            overflow: 'hidden',
+            overflow: 'hidden', minHeight: 54,
           }}>
             {/* Fill bar (absolute, behind text) */}
             <div style={{
@@ -1411,25 +1411,40 @@ const ExposureMap = ({ data, T, isRTL }: { data: ExposureRow[]; T: any; isRTL: b
               width: `${Math.max(4, pct)}%`,
               background: `linear-gradient(90deg, ${accent}33, ${accent}11)`,
               borderInlineEnd: `2px solid ${accent}88`,
-              transition: 'width .35s ease',
+              transition: 'width .35s ease', pointerEvents: 'none',
             }} />
-            {/* Content */}
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            {/* Content — bullet-proof 2-column grid, no wrap collisions */}
+            <div style={{
+              position: 'relative',
+              display: 'grid',
+              gridTemplateColumns: '1fr auto',
+              alignItems: 'center',
+              gap: 12,
+            }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <span style={{
+                    fontFamily: "'JetBrains Mono', monospace", fontWeight: 800, fontSize: 13,
+                    color: T.text.primary, letterSpacing: 0.4,
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 120,
+                  }}>{row.name}</span>
+                  <span style={{
+                    fontSize: 10, padding: '2px 8px', borderRadius: 999,
+                    background: `${accent}22`, color: accent, fontWeight: 700,
+                    fontFamily: "'JetBrains Mono', monospace", whiteSpace: 'nowrap',
+                  }}>{pct.toFixed(1)}%</span>
+                </div>
+                <span style={{
+                  fontSize: 10.5, color: T.text.muted,
+                  fontFamily: "'JetBrains Mono', monospace", whiteSpace: 'nowrap',
+                }}>
+                  {row.n} {isRTL ? 'עסקאות' : 'trades'} · {winRate}% WR
+                </span>
+              </div>
               <span style={{
-                fontFamily: "'JetBrains Mono', monospace", fontWeight: 800, fontSize: 13,
-                color: T.text.primary, letterSpacing: 0.4, minWidth: 64,
-              }}>{row.name}</span>
-              <span style={{
-                fontSize: 10, padding: '2px 8px', borderRadius: 999,
-                background: `${accent}22`, color: accent, fontWeight: 700,
-                fontFamily: "'JetBrains Mono', monospace",
-              }}>{pct.toFixed(1)}%</span>
-              <span style={{ fontSize: 10.5, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>
-                {row.n} {isRTL ? 'עסקאות' : 'trades'} · {winRate}% WR
-              </span>
-              <span style={{
-                marginInlineStart: 'auto', fontSize: 12, fontWeight: 700,
+                fontSize: 13, fontWeight: 800,
                 color: accent, fontFamily: "'JetBrains Mono', monospace",
+                whiteSpace: 'nowrap',
               }}>
                 {isPositive ? '+' : ''}${row.pnl.toFixed(0)}
               </span>
