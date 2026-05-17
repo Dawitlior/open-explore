@@ -346,7 +346,7 @@ function _computeAnalyticsInternal(trades: Trade[]): TradingStats {
   const rollingSharpe: { tradeId: number; sharpe: number }[] = [];
   for (let i = windowSize - 1; i < trades.length; i++) {
     const window = trades.slice(i - windowSize + 1, i + 1);
-    const returns = window.map(t => safeNum(t.returnR));
+    const returns = window.map(t => getEffectiveR(t));
     const mean = returns.reduce((s, r) => s + r, 0) / returns.length;
     const variance = returns.reduce((s, r) => s + (r - mean) ** 2, 0) / returns.length;
     const std = Math.sqrt(variance);
@@ -354,7 +354,7 @@ function _computeAnalyticsInternal(trades: Trade[]): TradingStats {
   }
 
   // Volatility-adjusted expectancy
-  const allReturns = trades.map(t => safeNum(t.returnR));
+  const allReturns = trades.map(t => getEffectiveR(t));
   const meanR = allReturns.length > 0 ? allReturns.reduce((s, r) => s + r, 0) / allReturns.length : 0;
   const volR = allReturns.length > 1 ? Math.sqrt(allReturns.reduce((s, r) => s + (r - meanR) ** 2, 0) / allReturns.length) : 1;
   const volatilityAdjustedExpectancy = volR > 0 ? expectancyR / volR : 0;
