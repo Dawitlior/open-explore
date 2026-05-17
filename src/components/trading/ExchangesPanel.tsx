@@ -375,8 +375,10 @@ function CredentialModal({
   const canSubmit = apiKey.trim().length >= 8 && apiSecret.trim().length >= 8 && !busy && !inCooldown;
   const lockError = () => setCooldownUntil(Date.now() + 3000);
 
-  const fireAlert = (a: Omit<AlertState, 'shakeKey'>) =>
+  const fireAlert = (a: Omit<AlertState, 'shakeKey'>) => {
     setAlertState({ ...a, shakeKey: Date.now() });
+    if (a.kind === 'error') setCooldownUntil(Date.now() + 3000);
+  };
 
   const submit = async () => {
     if (!user) {
