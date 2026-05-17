@@ -1,3 +1,4 @@
+import { getEffectiveR } from "@/lib/r-multiple";
 import type { Trade } from '@/data/trades';
 import type { TradingStats } from '@/lib/trading-analytics';
 import type { RiskAssessment } from '@/lib/risk-engine';
@@ -91,7 +92,7 @@ export function generateInsights(stats: TradingStats, trades: Trade[], risk: Ris
   // With < 3 trades, only return data-onboarding insights (no edge/discipline/momentum claims)
   if (trades.length < 3) {
     const out: AIInsight[] = [];
-    const totalR = trades.reduce((s, t) => s + t.returnR, 0);
+    const totalR = trades.reduce((s, t) => s + getEffectiveR(t), 0);
     const wins = trades.filter(t => t.winLoss === 'Win').length;
     out.push({
       type: 'recommendation', icon: '📊', severity: 'low',
@@ -330,7 +331,7 @@ export function generateDayInsights(dayTrades: Trade[], isRTL: boolean): AIInsig
   const insights: AIInsight[] = [];
 
   const totalPnl = dayTrades.reduce((s, t) => s + t.pnl, 0);
-  const totalR = dayTrades.reduce((s, t) => s + t.returnR, 0);
+  const totalR = dayTrades.reduce((s, t) => s + getEffectiveR(t), 0);
   const wins = dayTrades.filter(t => t.winLoss === 'Win');
   const losses = dayTrades.filter(t => t.winLoss === 'Loss');
   const winRate = dayTrades.length > 0 ? (wins.length / dayTrades.length) * 100 : 0;
@@ -403,10 +404,10 @@ export function generateDayInsights(dayTrades: Trade[], isRTL: boolean): AIInsig
   // 4. Direction bias
   if (dayTrades.length >= 2) {
     if (longCount > 0 && shortCount === 0) {
-      const longPnl = dayTrades.filter(t => t.direction === 'Long').reduce((s, t) => s + t.returnR, 0);
+      const longPnl = dayTrades.filter(t => t.direction === 'Long').reduce((s, t) => s + getEffectiveR(t), 0);
       insights.push({ type: 'recommendation', icon: '↑', severity: 'low', title: isRTL ? 'הטיה כיוונית' : 'Directional Bias', text: isRTL ? `כל העסקאות לונג (${longCount}). תוצאה: ${longPnl >= 0 ? '+' : ''}${longPnl.toFixed(2)}R.` : `All ${longCount} trades were Long. Result: ${longPnl >= 0 ? '+' : ''}${longPnl.toFixed(2)}R. ${longPnl < 0 ? 'Consider if market was actually bearish.' : ''}` });
     } else if (shortCount > 0 && longCount === 0) {
-      const shortPnl = dayTrades.filter(t => t.direction === 'Short').reduce((s, t) => s + t.returnR, 0);
+      const shortPnl = dayTrades.filter(t => t.direction === 'Short').reduce((s, t) => s + getEffectiveR(t), 0);
       insights.push({ type: 'recommendation', icon: '↓', severity: 'low', title: isRTL ? 'הטיה כיוונית' : 'Directional Bias', text: isRTL ? `כל העסקאות שורט (${shortCount}). תוצאה: ${shortPnl >= 0 ? '+' : ''}${shortPnl.toFixed(2)}R.` : `All ${shortCount} trades were Short. Result: ${shortPnl >= 0 ? '+' : ''}${shortPnl.toFixed(2)}R.` });
     }
   }
@@ -470,8 +471,8 @@ export function generateDayInsights(dayTrades: Trade[], isRTL: boolean): AIInsig
   // 9. R-quality assessment
   const avgR = totalR / dayTrades.length;
   if (wins.length > 0) {
-    const avgWinR = wins.reduce((s, t) => s + t.returnR, 0) / wins.length;
-    const avgLossR = losses.length > 0 ? losses.reduce((s, t) => s + Math.abs(t.returnR), 0) / losses.length : 0;
+    const avgWinR = wins.reduce((s, t) => s + getEffectiveR(t), 0) / wins.length;
+    const avgLossR = losses.length > 0 ? losses.reduce((s, t) => s + Math.abs(getEffectiveR(t)), 0) / losses.length : 0;
     if (avgWinR < 1 && wins.length > 0) {
       insights.push({
         type: 'weakness', icon: '📐', severity: 'medium',
@@ -498,7 +499,7 @@ export function generateDaySummary(dayTrades: Trade[], isRTL: boolean): string {
   if (dayTrades.length === 0) return isRTL ? 'אין עסקאות ביום זה.' : 'No trades on this day.';
 
   const totalPnl = dayTrades.reduce((s, t) => s + t.pnl, 0);
-  const totalR = dayTrades.reduce((s, t) => s + t.returnR, 0);
+  const totalR = dayTrades.reduce((s, t) => s + getEffectiveR(t), 0);
   const wins = dayTrades.filter(t => t.winLoss === 'Win').length;
   const rulesPct = (dayTrades.filter(t => t.rules).length / dayTrades.length * 100).toFixed(0);
   const coins = [...new Set(dayTrades.map(t => t.coin))].join(', ');

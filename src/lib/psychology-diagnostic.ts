@@ -1,3 +1,4 @@
+import { getEffectiveR } from "@/lib/r-multiple";
 /**
  * 🧠 ORCA · DEEP PSYCHOLOGICAL DIAGNOSTIC ENGINE
  * ────────────────────────────────────────────────────────────────
@@ -75,7 +76,7 @@ export function diagnose(trades: Trade[]): DeepDiagnosis {
   const winRate = n ? (wins.length / n) * 100 : 0;
 
   // Expectancy in R
-  const expectancyR = n ? trades.reduce((s, t) => s + t.returnR, 0) / n : 0;
+  const expectancyR = n ? trades.reduce((s, t) => s + getEffectiveR(t), 0) / n : 0;
 
   // Profit factor
   const grossWin = wins.reduce((s, t) => s + Math.max(0, t.pnl), 0);
@@ -126,8 +127,8 @@ export function diagnose(trades: Trade[]): DeepDiagnosis {
   const postLossEscalationPct = postLossTotal ? (postLossInc / postLossTotal) * 100 : 0;
 
   // Avg risk R / Sortino-like
-  const avgRiskR = n ? trades.reduce((s, t) => s + Math.abs(t.returnR < 0 ? t.returnR : 0), 0) / n : 0;
-  const downside = trades.filter(t => t.returnR < 0).map(t => t.returnR);
+  const avgRiskR = n ? trades.reduce((s, t) => s + Math.abs(getEffectiveR(t) < 0 ? getEffectiveR(t) : 0), 0) / n : 0;
+  const downside = trades.filter(t => getEffectiveR(t) < 0).map(t => getEffectiveR(t));
   const ddev = downside.length ? Math.sqrt(downside.reduce((s, x) => s + x * x, 0) / downside.length) : 0;
   const sortino = ddev > 0 ? expectancyR / ddev : 0;
 
@@ -406,7 +407,7 @@ export function findBestEdge(trades: Trade[]): BestOfEdge {
   trades.forEach(t => {
     const k = t.coin || 'OTHER';
     byAsset[k] = byAsset[k] || { pnl: 0, n: 0, wins: 0, r: 0 };
-    byAsset[k].pnl += t.pnl; byAsset[k].n++; byAsset[k].r += t.returnR;
+    byAsset[k].pnl += t.pnl; byAsset[k].n++; byAsset[k].r += getEffectiveR(t);
     if (t.winLoss === 'Win') byAsset[k].wins++;
   });
   const assetEntries = Object.entries(byAsset).filter(([_, v]) => v.n >= 2);
@@ -427,7 +428,7 @@ export function findBestEdge(trades: Trade[]): BestOfEdge {
     try {
       const d = new Date(t.date.replace(' ', 'T')).getDay();
       byDay[d] = byDay[d] || { pnl: 0, n: 0, wins: 0, r: 0 };
-      byDay[d].pnl += t.pnl; byDay[d].n++; byDay[d].r += t.returnR;
+      byDay[d].pnl += t.pnl; byDay[d].n++; byDay[d].r += getEffectiveR(t);
       if (t.winLoss === 'Win') byDay[d].wins++;
     } catch { /* skip */ }
   });

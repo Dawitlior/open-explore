@@ -1,3 +1,4 @@
+import { getEffectiveR } from "@/lib/r-multiple";
 import type { Trade } from '@/data/trades';
 
 export interface RiskLimits {
@@ -33,8 +34,8 @@ export interface RiskLimitStatus {
  */
 function sumNegativeR(trades: Trade[]): number {
   return trades
-    .filter(t => t.returnR < -0.001) // only negative R
-    .reduce((sum, t) => sum + t.returnR, 0); // returnR is already negative
+    .filter(t => getEffectiveR(t) < -0.001) // only negative R
+    .reduce((sum, t) => sum + getEffectiveR(t), 0); // returnR is already negative
 }
 
 /**
