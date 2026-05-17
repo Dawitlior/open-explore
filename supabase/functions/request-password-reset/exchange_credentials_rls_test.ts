@@ -128,5 +128,5 @@ Deno.test({
     await admin.from("exchange_credentials").delete().in("user_id", [userA, userB]);
     await admin.auth.admin.deleteUser(userA);
     await admin.auth.admin.deleteUser(userB);
-  }
+  },
 });
