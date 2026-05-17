@@ -30,25 +30,28 @@ async function hmacSha256Hex(secret: string, message: string): Promise<string> {
   return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// ---------- Bybit linear execution history ----------
-interface BybitExec {
-  execId: string;
+// ---------- Bybit closed-pnl history (consolidated trades) ----------
+interface BybitClosedPnl {
   orderId: string;
   symbol: string;
+  // For closed-pnl, `side` is the CLOSING side. The position side is the opposite.
   side: 'Buy' | 'Sell';
-  execPrice: string;
-  execQty: string;
-  execFee: string;
-  execTime: string; // ms
-  closedSize?: string;
+  qty: string;
+  closedSize: string;
+  avgEntryPrice: string;
+  avgExitPrice: string;
+  closedPnl: string;
+  openFee?: string;
+  closeFee?: string;
+  leverage?: string;
+  createdTime: string; // ms
+  updatedTime: string; // ms
   execType?: string;
-  execPnl?: string; // realized PnL for closing fills (Bybit V5)
-  closedPnl?: string;
 }
 
 interface BybitFetchResult {
   ok: true;
-  list: BybitExec[];
+  list: BybitClosedPnl[];
 }
 interface BybitFetchError {
   ok: false;
