@@ -1,3 +1,4 @@
+import { getEffectiveR } from "@/lib/r-multiple";
 import { useMemo, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LineChart, Line, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import type { Trade } from '@/data/trades';
@@ -178,7 +179,7 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
       if (!buckets[dow]) buckets[dow] = { trades: [], pnl: 0, r: 0 };
       buckets[dow].trades.push(t);
       buckets[dow].pnl += t.pnl;
-      buckets[dow].r += t.returnR;
+      buckets[dow].r += getEffectiveR(t);
     });
     return days.map((d, i) => ({
       day: isRTL ? daysHe[i] : d,

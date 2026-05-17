@@ -1,3 +1,4 @@
+import { getEffectiveR } from "@/lib/r-multiple";
 /**
  * 🧠 AI INSIGHTS PAGE — "The Mainframe"
  * ────────────────────────────────────────────────────────────────
@@ -357,7 +358,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
         const d = new Date(t.date.replace(' ', 'T'));
         const k = `${d.getDay()}-${d.getHours()}`;
         const cur = map.get(k) || { pnl: 0, n: 0, r: 0 };
-        cur.pnl += t.pnl; cur.n++; cur.r += t.returnR;
+        cur.pnl += t.pnl; cur.n++; cur.r += getEffectiveR(t);
         map.set(k, cur);
       } catch { /* skip */ }
     });
@@ -372,7 +373,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
     trades.map(t => ({
       risk: t.risk,
       pnl: t.pnl,
-      r: t.returnR,
+      r: getEffectiveR(t),
       coin: t.coin,
       win: t.winLoss === 'Win',
     })),
@@ -400,7 +401,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
         const d = new Date(t.date.replace(' ', 'T'));
         const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
         if (!map[k]) map[k] = { month: k, pnl: 0, r: 0, n: 0 };
-        map[k].pnl += t.pnl; map[k].r += t.returnR; map[k].n++;
+        map[k].pnl += t.pnl; map[k].r += getEffectiveR(t); map[k].n++;
       } catch { /* skip */ }
     });
     return Object.values(map).sort((a, b) => a.month.localeCompare(b.month)).map(m => ({
@@ -415,7 +416,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
     const W = Math.max(5, Math.min(15, Math.floor(trades.length / 4)));
     return trades.map((_, i) => {
       const slice = trades.slice(Math.max(0, i - W + 1), i + 1);
-      const exp = slice.reduce((s, t) => s + t.returnR, 0) / slice.length;
+      const exp = slice.reduce((s, t) => s + getEffectiveR(t), 0) / slice.length;
       return { id: i + 1, exp };
     });
   }, [trades]);
@@ -439,7 +440,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
   const rBuckets = useMemo(() => {
     const b: Record<string, number> = { '<-2R': 0, '-2 ÷ -1R': 0, '-1 ÷ 0R': 0, '0 ÷ 1R': 0, '1 ÷ 2R': 0, '2 ÷ 3R': 0, '3R+': 0 };
     trades.forEach(t => {
-      const r = t.returnR;
+      const r = getEffectiveR(t);
       if (r < -2) b['<-2R']++;
       else if (r < -1) b['-2 ÷ -1R']++;
       else if (r < 0) b['-1 ÷ 0R']++;
@@ -483,7 +484,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
   const durationData = useMemo(() =>
     trades.slice(0, 200).map((t, i) => ({
       idx: i + 1,
-      r: t.returnR,
+      r: getEffectiveR(t),
       size: Math.max(2, Math.abs(t.risk) || 2),
       win: t.winLoss === 'Win',
     })), [trades]);
@@ -494,8 +495,8 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
       const slice = trades.slice(Math.max(0, i - W + 1), i + 1);
       const wins = slice.filter(x => x.winLoss === 'Win').length;
       const wr = (wins / slice.length) * 100;
-      const mean = slice.reduce((s, x) => s + x.returnR, 0) / slice.length;
-      const variance = slice.reduce((s, x) => s + Math.pow(x.returnR - mean, 2), 0) / slice.length;
+      const mean = slice.reduce((s, x) => s + getEffectiveR(x), 0) / slice.length;
+      const variance = slice.reduce((s, x) => s + Math.pow(getEffectiveR(x) - mean, 2), 0) / slice.length;
       return { i: i + 1, wr: +wr.toFixed(1), vol: +Math.sqrt(variance).toFixed(3) };
     });
   }, [trades]);
@@ -507,8 +508,8 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
       const wins = slice.filter(x => x.winLoss === 'Win');
       const losses = slice.filter(x => x.winLoss === 'Loss');
       const wr = wins.length / Math.max(slice.length, 1);
-      const avgW = wins.length ? wins.reduce((s, x) => s + x.returnR, 0) / wins.length : 1;
-      const avgL = losses.length ? Math.abs(losses.reduce((s, x) => s + x.returnR, 0) / losses.length) : 1;
+      const avgW = wins.length ? wins.reduce((s, x) => s + getEffectiveR(x), 0) / wins.length : 1;
+      const avgL = losses.length ? Math.abs(losses.reduce((s, x) => s + getEffectiveR(x), 0) / losses.length) : 1;
       const rr = avgW / Math.max(avgL, 0.001);
       const kelly = Math.max(0, Math.min(0.25, (wr - (1 - wr) / Math.max(rr, 0.01))));
       const actual = (slice.reduce((s, x) => s + Math.abs(x.risk || 0), 0) / Math.max(slice.length, 1)) / 100;
@@ -519,7 +520,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
   const efficiencyCloud = useMemo(() =>
     trades.map((t, i) => ({
       i,
-      eff: Math.max(-5, Math.min(5, t.returnR)),
+      eff: Math.max(-5, Math.min(5, getEffectiveR(t))),
       pnl: t.pnl,
       risk: Math.abs(t.risk) || 1,
       win: t.winLoss === 'Win',
@@ -530,7 +531,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
     trades.forEach(t => {
       const k = t.coin || 'OTHER';
       if (!map[k]) map[k] = { pnl: 0, wins: 0, n: 0, r: 0 };
-      map[k].pnl += t.pnl; map[k].n++; map[k].r += t.returnR;
+      map[k].pnl += t.pnl; map[k].n++; map[k].r += getEffectiveR(t);
       if (t.winLoss === 'Win') map[k].wins++;
     });
     const arr = Object.entries(map).map(([coin, v]) => ({
@@ -564,8 +565,8 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
   const autocorrData = useMemo(() => {
     if (trades.length < 3) return [];
     return trades.slice(1).map((t, i) => ({
-      prev: +trades[i].returnR.toFixed(2),
-      cur: +t.returnR.toFixed(2),
+      prev: +getEffectiveR(trades[i]).toFixed(2),
+      cur: +getEffectiveR(t).toFixed(2),
       win: t.winLoss === 'Win',
     }));
   }, [trades]);
@@ -585,7 +586,7 @@ export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => 
   /* ── Monte Carlo equity simulation (200 paths) ── */
   const monteCarloData = useMemo(() => {
     if (trades.length < 5) return [];
-    const returns = trades.map(t => t.returnR);
+    const returns = trades.map(t => getEffectiveR(t));
     const PATHS = 50;
     const STEPS = Math.min(60, trades.length * 2);
     const allPaths: number[][] = [];

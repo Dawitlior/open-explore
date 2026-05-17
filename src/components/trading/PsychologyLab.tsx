@@ -1,3 +1,4 @@
+import { getEffectiveR } from "@/lib/r-multiple";
 /**
  * 🧠 PSYCHOLOGY LAB — Advanced behavioral & quant metrics
  * ─────────────────────────────────────────────────────────
@@ -64,7 +65,7 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
     const m = new Map<string, { n: number; r: number; pnl: number }>();
     trades.forEach(t => {
       const c = m.get(t.coin) || { n: 0, r: 0, pnl: 0 };
-      c.n++; c.r += t.returnR; c.pnl += t.pnl;
+      c.n++; c.r += getEffectiveR(t); c.pnl += t.pnl;
       m.set(t.coin, c);
     });
     return Array.from(m.entries())
@@ -80,7 +81,7 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
       try {
         const d = new Date(t.date.replace(' ', 'T'));
         const h = d.getHours();
-        buckets[h].n++; buckets[h].r += t.returnR;
+        buckets[h].n++; buckets[h].r += getEffectiveR(t);
       } catch { /* skip */ }
     });
     return buckets.map(b => ({ hour: `${String(b.hour).padStart(2, '0')}:00`, avgR: b.n ? +(b.r / b.n).toFixed(3) : 0, n: b.n }));

@@ -1,3 +1,4 @@
+import { getEffectiveR } from "@/lib/r-multiple";
 /**
  * 🧠 DEEP AI INSIGHTS ENGINE
  * ────────────────────────────────────────────────────────────────
@@ -85,12 +86,12 @@ function computeDNA(trades: Trade[]): TraderDNA {
 
   const wins = trades.filter(t => t.winLoss === 'Win');
   const losses = trades.filter(t => t.winLoss === 'Loss');
-  const totalR = trades.reduce((s, t) => s + t.returnR, 0);
+  const totalR = trades.reduce((s, t) => s + getEffectiveR(t), 0);
   const expR = totalR / trades.length;
 
   // EDGE: expectancy + profit factor + win rate composite
-  const grossW = wins.reduce((s, t) => s + Math.abs(t.returnR), 0);
-  const grossL = losses.reduce((s, t) => s + Math.abs(t.returnR), 0) || 1;
+  const grossW = wins.reduce((s, t) => s + Math.abs(getEffectiveR(t)), 0);
+  const grossL = losses.reduce((s, t) => s + Math.abs(getEffectiveR(t)), 0) || 1;
   const pf = grossW / grossL;
   const wr = (wins.length / trades.length) * 100;
   const edgeRaw = (Math.min(expR + 0.5, 1.5) / 1.5) * 50 + Math.min(pf / 3, 1) * 30 + Math.min(wr / 70, 1) * 20;
@@ -106,7 +107,7 @@ function computeDNA(trades: Trade[]): TraderDNA {
   const riskCV = mean(trades.map(t => t.risk)) > 0
     ? std(trades.map(t => t.risk)) / mean(trades.map(t => t.risk))
     : 0;
-  const rStd = std(trades.map(t => t.returnR));
+  const rStd = std(trades.map(t => getEffectiveR(t)));
   const consistency = Math.max(0, Math.min(100, 100 - riskCV * 80 - rStd * 10));
 
   // BEHAVIOUR: revenge trades, overtrading, post-loss escalation
@@ -213,7 +214,7 @@ function detectGoldenHour(trades: Trade[]): DeepInsight | null {
   const stats = Object.entries(byHour)
     .filter(([, arr]) => arr.length >= 3)
     .map(([h, arr]) => {
-      const r = arr.reduce((s, t) => s + t.returnR, 0) / arr.length;
+      const r = arr.reduce((s, t) => s + getEffectiveR(t), 0) / arr.length;
       const wr = arr.filter(t => t.winLoss === 'Win').length / arr.length;
       return { hour: Number(h), avgR: r, wr, n: arr.length };
     })
@@ -250,7 +251,7 @@ function detectDeathHour(trades: Trade[]): DeepInsight | null {
     .filter(([, arr]) => arr.length >= 3)
     .map(([h, arr]) => ({
       hour: Number(h),
-      avgR: arr.reduce((s, t) => s + t.returnR, 0) / arr.length,
+      avgR: arr.reduce((s, t) => s + getEffectiveR(t), 0) / arr.length,
       n: arr.length,
     }))
     .sort((a, b) => a.avgR - b.avgR);
@@ -284,7 +285,7 @@ function detectGoldenDay(trades: Trade[]): DeepInsight | null {
     .filter(([, arr]) => arr.length >= 2)
     .map(([d, arr]) => ({
       day: Number(d),
-      avgR: arr.reduce((s, t) => s + t.returnR, 0) / arr.length,
+      avgR: arr.reduce((s, t) => s + getEffectiveR(t), 0) / arr.length,
       n: arr.length,
     }))
     .sort((a, b) => b.avgR - a.avgR);
@@ -313,8 +314,8 @@ function detectKellyMismatch(trades: Trade[]): DeepInsight | null {
   const losses = trades.filter(t => t.winLoss === 'Loss');
   if (!wins.length || !losses.length) return null;
   const wr = wins.length / trades.length;
-  const avgW = mean(wins.map(t => Math.abs(t.returnR)));
-  const avgL = mean(losses.map(t => Math.abs(t.returnR)));
+  const avgW = mean(wins.map(t => Math.abs(getEffectiveR(t))));
+  const avgL = mean(losses.map(t => Math.abs(getEffectiveR(t))));
   if (avgL <= 0) return null;
   const b = avgW / avgL;
   const kellyOptimal = Math.max(0, wr - (1 - wr) / b);
@@ -350,8 +351,8 @@ function detectDeviationCost(trades: Trade[]): DeepInsight | null {
   const followed = trades.filter(t => t.rules);
   const broken = trades.filter(t => !t.rules);
   if (!broken.length || !followed.length) return null;
-  const followedExp = mean(followed.map(t => t.returnR));
-  const brokenExp = mean(broken.map(t => t.returnR));
+  const followedExp = mean(followed.map(t => getEffectiveR(t)));
+  const brokenExp = mean(broken.map(t => getEffectiveR(t)));
   const cost = followedExp - brokenExp;
   if (cost <= 0.1) return null;
   const lostR = cost * broken.length;
@@ -377,8 +378,8 @@ function detectDirectionalBias(trades: Trade[]): DeepInsight | null {
   const longs = trades.filter(t => t.direction === 'Long');
   const shorts = trades.filter(t => t.direction === 'Short');
   if (longs.length < 4 || shorts.length < 4) return null;
-  const longExp = mean(longs.map(t => t.returnR));
-  const shortExp = mean(shorts.map(t => t.returnR));
+  const longExp = mean(longs.map(t => getEffectiveR(t)));
+  const shortExp = mean(shorts.map(t => getEffectiveR(t)));
   const diff = Math.abs(longExp - shortExp);
   if (diff < 0.3) return null;
   const better = longExp > shortExp ? 'לונג' : 'שורט';
@@ -409,7 +410,7 @@ function detectLeadingSetup(trades: Trade[]): DeepInsight | null {
     .map(([c, arr]) => ({
       coin: c,
       n: arr.length,
-      exp: mean(arr.map(t => t.returnR)),
+      exp: mean(arr.map(t => getEffectiveR(t))),
       wr: arr.filter(t => t.winLoss === 'Win').length / arr.length,
       pnl: arr.reduce((s, t) => s + t.pnl, 0),
     }))
@@ -506,8 +507,8 @@ function detectMomentum(trades: Trade[]): DeepInsight | null {
   if (trades.length < 10) return null;
   const recent = trades.slice(-5);
   const earlier = trades.slice(-10, -5);
-  const recentExp = mean(recent.map(t => t.returnR));
-  const earlierExp = mean(earlier.map(t => t.returnR));
+  const recentExp = mean(recent.map(t => getEffectiveR(t)));
+  const earlierExp = mean(earlier.map(t => getEffectiveR(t)));
   const delta = recentExp - earlierExp;
   if (Math.abs(delta) < 0.3) return null;
   const up = delta > 0;
@@ -536,7 +537,7 @@ function detectInconsistentReturns(trades: Trade[]): DeepInsight | null {
   if (trades.length < 8) return null;
   const wins = trades.filter(t => t.winLoss === 'Win');
   if (wins.length < 4) return null;
-  const winRs = wins.map(t => t.returnR);
+  const winRs = wins.map(t => getEffectiveR(t));
   const m = mean(winRs);
   const s = std(winRs);
   const cv = m > 0 ? (s / m) * 100 : 0;
@@ -587,8 +588,8 @@ function detectFridayEffect(trades: Trade[]): DeepInsight | null {
   if (trades.length < 10) return null;
   const fri = trades.filter(t => dowOf(t.date) === 5);
   if (fri.length < 3) return null;
-  const friExp = mean(fri.map(t => t.returnR));
-  const restExp = mean(trades.filter(t => dowOf(t.date) !== 5).map(t => t.returnR));
+  const friExp = mean(fri.map(t => getEffectiveR(t)));
+  const restExp = mean(trades.filter(t => dowOf(t.date) !== 5).map(t => getEffectiveR(t)));
   const diff = friExp - restExp;
   if (Math.abs(diff) < 0.3) return null;
   return {
