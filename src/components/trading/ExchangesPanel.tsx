@@ -209,7 +209,7 @@ export function ExchangesPanel({ T, isRTL }: Props) {
 
 /* ============================== CARD ============================== */
 function ExchangeCard({
-  T, meta, connected, loading, connectionLabel, isRTL, onConnect, onDisconnect,
+  T, meta, connected, loading, connectionLabel, isRTL, onConnect, onDisconnect, onSync, syncing,
 }: {
   T: TradingTheme;
   meta: ProviderMeta;
@@ -219,6 +219,8 @@ function ExchangeCard({
   isRTL: boolean;
   onConnect: () => void;
   onDisconnect?: () => void;
+  onSync?: () => void;
+  syncing?: boolean;
 }) {
   const t = (he: string, en: string) => (isRTL ? he : en);
   const sans = "'Poppins', sans-serif";
