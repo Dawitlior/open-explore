@@ -144,8 +144,8 @@ function _computeAnalyticsInternal(trades: Trade[]): TradingStats {
   const grossLoss = Math.abs(losses.reduce((s, t) => s + safeNum(t.pnl), 0));
   const profitFactor = grossLoss > 0 ? grossWin / grossLoss : 0;
 
-  const avgWinR = wins.length > 0 ? wins.reduce((s, t) => s + Math.abs(safeNum(t.returnR)), 0) / wins.length : 0;
-  const avgLossR = losses.length > 0 ? losses.reduce((s, t) => s + Math.abs(safeNum(t.returnR)), 0) / losses.length : 0;
+  const avgWinR = wins.length > 0 ? wins.reduce((s, t) => s + Math.abs(getEffectiveR(t)), 0) / wins.length : 0;
+  const avgLossR = losses.length > 0 ? losses.reduce((s, t) => s + Math.abs(getEffectiveR(t)), 0) / losses.length : 0;
   const expectancyR = computeExpectancyR(trades);
   const expectancyDollar = trades.length > 0 ? totalPnl / trades.length : 0;
 
@@ -153,7 +153,7 @@ function _computeAnalyticsInternal(trades: Trade[]): TradingStats {
   if (trades.length > 0) {
     bestTrade = -Infinity; worstTrade = Infinity; bestTradeR = -Infinity; worstTradeR = Infinity;
     for (const t of trades) {
-      const p = safeNum(t.pnl), r = safeNum(t.returnR);
+      const p = safeNum(t.pnl), r = getEffectiveR(t);
       if (p > bestTrade) bestTrade = p;
       if (p < worstTrade) worstTrade = p;
       if (r > bestTradeR) bestTradeR = r;
@@ -190,7 +190,7 @@ function _computeAnalyticsInternal(trades: Trade[]): TradingStats {
     if (!coinMap[c]) coinMap[c] = { coin: c, pnl: 0, trades: 0, wins: 0, totalR: 0 };
     coinMap[c].pnl += safeNum(t.pnl);
     coinMap[c].trades++;
-    coinMap[c].totalR += safeNum(t.returnR);
+    coinMap[c].totalR += getEffectiveR(t);
     if (t.winLoss === 'Win') coinMap[c].wins++;
   });
   const coinPerf: CoinPerf[] = Object.values(coinMap).map(c => ({
@@ -204,13 +204,13 @@ function _computeAnalyticsInternal(trades: Trade[]): TradingStats {
     {
       name: 'Long', pnl: longT.reduce((s, t) => s + safeNum(t.pnl), 0), trades: longT.length,
       winRate: longT.length ? (longT.filter(t => t.winLoss === 'Win').length / longT.length * 100) : 0,
-      avgR: longT.length ? longT.reduce((s, t) => s + safeNum(t.returnR), 0) / longT.length : 0,
+      avgR: longT.length ? longT.reduce((s, t) => s + getEffectiveR(t), 0) / longT.length : 0,
       expectancyR: computeExpectancyR(longT)
     },
     {
       name: 'Short', pnl: shortT.reduce((s, t) => s + safeNum(t.pnl), 0), trades: shortT.length,
       winRate: shortT.length ? (shortT.filter(t => t.winLoss === 'Win').length / shortT.length * 100) : 0,
-      avgR: shortT.length ? shortT.reduce((s, t) => s + safeNum(t.returnR), 0) / shortT.length : 0,
+      avgR: shortT.length ? shortT.reduce((s, t) => s + getEffectiveR(t), 0) / shortT.length : 0,
       expectancyR: computeExpectancyR(shortT)
     }
   ];
@@ -234,7 +234,7 @@ function _computeAnalyticsInternal(trades: Trade[]): TradingStats {
     else curConsec = 0;
   });
 
-  const rDist = trades.map(t => ({ id: t.id, r: safeNum(t.returnR), winLoss: t.winLoss || 'Break Even' }));
+  const rDist = trades.map(t => ({ id: t.id, r: getEffectiveR(t), winLoss: t.winLoss || 'Break Even' }));
 
   // Day performance
   const dayMap: Record<string, { day: string; pnl: number; trades: number; totalR: number }> = {};
@@ -243,7 +243,7 @@ function _computeAnalyticsInternal(trades: Trade[]): TradingStats {
     if (!dayMap[d]) dayMap[d] = { day: d, pnl: 0, trades: 0, totalR: 0 };
     dayMap[d].pnl += safeNum(t.pnl);
     dayMap[d].trades++;
-    dayMap[d].totalR += safeNum(t.returnR);
+    dayMap[d].totalR += getEffectiveR(t);
   });
   const dayPerf = Object.values(dayMap).map(d => ({ ...d, avgR: d.totalR / d.trades }));
 
