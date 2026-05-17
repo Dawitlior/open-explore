@@ -3,8 +3,9 @@ import {
   User, Palette, LayoutDashboard, Calculator, Shield, SlidersHorizontal, Database,
   X, LogOut, Mail, KeyRound, Send, Download, Eye, EyeOff, Globe, GripVertical,
   Plus, Trash2, RotateCcw, Check, AlertTriangle, Sparkles, Search,
-  Volume2, VolumeX, Zap, Type, Brush, Target, Gauge,
+  Volume2, VolumeX, Zap, Type, Brush, Target, Gauge, Plug,
 } from 'lucide-react';
+import { ExchangesPanel } from './ExchangesPanel';
 import { playMorningLock } from '@/lib/apex-sounds';
 import type { TradingTheme, CustomTheme, BaseMood } from '@/lib/trading-theme';
 import { deriveFullPalette, deriveFromCustomTheme, CUSTOM_THEME_DEFAULT } from '@/lib/trading-theme';
@@ -38,7 +39,7 @@ interface SettingsHubProps {
   trades: Trade[];
 }
 
-type TabId = 'account' | 'appearance' | 'theme-studio' | 'dashboard' | 'kpis' | 'risk' | 'interface' | 'sounds' | 'trading' | 'data' | 'install';
+type TabId = 'account' | 'appearance' | 'theme-studio' | 'dashboard' | 'kpis' | 'risk' | 'interface' | 'sounds' | 'trading' | 'exchanges' | 'data' | 'install';
 
 const ACCENT_PRESETS = [
   '#00f2ff', '#06d6a0', '#3b82f6', '#8b5cf6',
@@ -110,6 +111,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
     { id: 'sounds', icon: Volume2, label: { he: 'צלילים והתראות', en: 'Sounds & Alerts' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'הפעלה, ווליום ותצוגת אפקטים אקוסטיים', en: 'Enable, volume and acoustic feedback preview' } },
     { id: 'risk', icon: Shield, label: { he: 'מגבלות סיכון', en: 'Risk Limits' }, group: { he: 'מסחר', en: 'Trading' }, desc: { he: 'מערכת ה־R המותרת ביום/שבוע/חודש', en: 'Allowed R-budget per day/week/month' } },
     { id: 'trading', icon: Target, label: { he: 'ברירות מחדל למסחר', en: 'Trading Defaults' }, group: { he: 'מסחר', en: 'Trading' }, desc: { he: 'אחוז סיכון ברירת מחדל ויעד R לעסקה חדשה', en: 'Default risk percent and R target for new trades' } },
+    { id: 'exchanges', icon: Plug, label: { he: 'בורסות מחוברות', en: 'Connected Exchanges' }, group: { he: 'מסחר', en: 'Trading' }, desc: { he: 'חבר Bybit, Binance ו־IBKR לכספת מאובטחת', en: 'Connect Bybit, Binance and IBKR to the secure vault' } },
     { id: 'data', icon: Database, label: { he: 'נתונים וגיבוי', en: 'Data & Backup' }, group: { he: 'מסחר', en: 'Trading' }, desc: { he: 'יצוא, סטטיסטיקות וניהול אחסון', en: 'Export, stats and storage management' } },
     { id: 'install', icon: Download, label: { he: 'הורד אפליקציה', en: 'Download App' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'התקן את אורקה על הטלפון או המחשב', en: 'Install Orca on your phone or desktop' } },
   ];
@@ -1445,6 +1447,10 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                 </div>
               );
             })()}
+
+            {tab === 'exchanges' && (
+              <ExchangesPanel T={T} isRTL={isRTL} />
+            )}
 
             {tab === 'install' && (
               <InstallGuide T={T} t={t} isRTL={isRTL} />
