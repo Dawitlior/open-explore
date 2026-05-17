@@ -126,17 +126,17 @@ export const AnalyticsQuantLab = ({ T, trades, privacyMode }: Props) => {
   const rollingCalmar = useMemo(() => {
     const W = 20;
     const out: { i: number; calmar: number }[] = [];
-    for (let i = 0; i < trades.length; i++) {
+    for (let i = 0; i < dailyRSeries.length; i++) {
       const start = Math.max(0, i - W + 1);
-      const slice = trades.slice(start, i + 1);
+      const slice = dailyRSeries.slice(start, i + 1);
       if (slice.length < 5) { out.push({ i: i + 1, calmar: 0 }); continue; }
-      const mean = slice.reduce((s, t) => s + getEffectiveR(t), 0) / slice.length;
+      const mean = slice.reduce((s, d) => s + d.total, 0) / slice.length;
       let cum = 0, peak = 0, dd = 0;
-      slice.forEach(t => { cum += getEffectiveR(t); if (cum > peak) peak = cum; dd = Math.max(dd, peak - cum); });
+      slice.forEach(d => { cum += d.total; if (cum > peak) peak = cum; dd = Math.max(dd, peak - cum); });
       out.push({ i: i + 1, calmar: dd > 0 ? +(mean / dd).toFixed(3) : 0 });
     }
     return out;
-  }, [trades]);
+  }, [dailyRSeries]);
 
   /* ── 5. Recovery factor (gross profit / max DD $) ── */
   const recovery = useMemo(() => {
