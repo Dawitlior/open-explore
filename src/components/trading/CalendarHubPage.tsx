@@ -387,6 +387,7 @@ export const CalendarHubPage = ({ T, isRTL, trades, t, isMobile, onGenerateInsig
           trades={trades}
           onClose={() => setCalModalDay(null)}
           onGenerateInsight={onGenerateInsight}
+          onSetManualR={onSetManualR}
         />
       )}
     </div>
