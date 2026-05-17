@@ -988,29 +988,46 @@ const Index = () => {
             {isRTL ? 'מעבדת קוונט · גרפים דקיקים מתקדמים' : 'QUANT LAB · slim advanced visualisations'}
           </div>
           {(() => {
+            const effectiveRs = trades.map(tr => getEffectiveR(tr));
+            const dailyRSeries = (() => {
+              const byDay = new Map<string, Trade[]>();
+              trades.forEach(tr => {
+                const key = (tr.date || '').slice(0, 10);
+                if (!key) return;
+                const arr = byDay.get(key) || [];
+                arr.push(tr);
+                byDay.set(key, arr);
+              });
+              let c = 0;
+              return Array.from(byDay.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([day, dayTrades], i) => {
+                const { total } = sumDailyR(dayTrades);
+                c += total;
+                return { i: i + 1, day, total, cum: c };
+              });
+            })();
             // Rolling Sortino — downside-only volatility ratio (window 20)
             const W = 20;
             const sortino = trades.map((_, i) => {
-              const slice = trades.slice(Math.max(0, i - W + 1), i + 1).map(x => x.returnR);
+              const slice = effectiveRs.slice(Math.max(0, i - W + 1), i + 1);
               const mean = slice.reduce((s, x) => s + x, 0) / slice.length;
               const downs = slice.filter(x => x < 0);
               const dd = Math.sqrt(downs.reduce((s, x) => s + x * x, 0) / Math.max(downs.length, 1));
               return { i: i + 1, sortino: dd > 0 ? +(mean / dd).toFixed(3) : 0 };
             });
             // R-return histogram (bins of 0.5R)
-            const minR = Math.floor(Math.min(...trades.map(t => t.returnR), 0) * 2) / 2;
-            const maxR = Math.ceil(Math.max(...trades.map(t => t.returnR), 0) * 2) / 2;
+            const minR = Math.floor(Math.min(...effectiveRs, 0) * 2) / 2;
+            const maxR = Math.ceil(Math.max(...effectiveRs, 0) * 2) / 2;
             const bins: { bin: string; n: number; mid: number }[] = [];
             for (let b = minR; b <= maxR; b += 0.5) {
-              const n = trades.filter(t => t.returnR >= b && t.returnR < b + 0.5).length;
+              const n = effectiveRs.filter(r => r >= b && r < b + 0.5).length;
               bins.push({ bin: `${b.toFixed(1)}`, mid: b + 0.25, n });
             }
             // Lag-1 autocorrelation point cloud (R[i] vs R[i-1])
-            const acData = trades.slice(1).map((t, i) => ({ prev: trades[i].returnR, cur: t.returnR }));
+            const acData = effectiveRs.slice(1).map((r, i) => ({ prev: effectiveRs[i], cur: r }));
             // MAR ratio evolution: cumulative R / max DD R so far
-            let cumR = 0, peakR = 0, mddR = 0;
-            const mar = trades.map((t, i) => {
-              cumR += t.returnR;
+            let peakR = 0, mddR = 0;
+            const mar = dailyRSeries.map((d, i) => {
+              const cumR = d.cum;
               if (cumR > peakR) peakR = cumR;
               const dd = peakR - cumR;
               if (dd > mddR) mddR = dd;
