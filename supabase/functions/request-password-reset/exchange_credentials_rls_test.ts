@@ -124,10 +124,11 @@ Deno.test({
     for (const row of leakRows ?? []) {
       assertEquals(row.api_secret, null, "api_secret must never be persisted in plain text");
     }
-  } finally {
-    await admin.from("exchange_credentials").delete().in("user_id", [userA, userB]);
-    await admin.auth.admin.deleteUser(userA);
-    await admin.auth.admin.deleteUser(userB);
+    } finally {
+      await admin.from("exchange_credentials").delete().in("user_id", [userA, userB]);
+      await admin.auth.admin.deleteUser(userA);
+      await admin.auth.admin.deleteUser(userB);
     }
   },
 });
+
