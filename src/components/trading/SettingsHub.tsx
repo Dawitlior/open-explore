@@ -1448,6 +1448,10 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
               );
             })()}
 
+            {tab === 'exchanges' && (
+              <ExchangesPanel T={T} isRTL={isRTL} />
+            )}
+
             {tab === 'install' && (
               <InstallGuide T={T} t={t} isRTL={isRTL} />
             )}
