@@ -225,6 +225,8 @@ export type Database = {
         Row: {
           created_at: string
           daily_risk_limit: number
+          legal_accepted: boolean
+          legal_accepted_at: string | null
           monthly_risk_limit: number
           risk_per_trade_default: number
           theme: string
@@ -235,6 +237,8 @@ export type Database = {
         Insert: {
           created_at?: string
           daily_risk_limit?: number
+          legal_accepted?: boolean
+          legal_accepted_at?: string | null
           monthly_risk_limit?: number
           risk_per_trade_default?: number
           theme?: string
@@ -245,6 +249,8 @@ export type Database = {
         Update: {
           created_at?: string
           daily_risk_limit?: number
+          legal_accepted?: boolean
+          legal_accepted_at?: string | null
           monthly_risk_limit?: number
           risk_per_trade_default?: number
           theme?: string
