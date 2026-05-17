@@ -23,6 +23,8 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import type { Trade } from '@/data/trades';
 import { AvatarUploader } from './AvatarUploader';
 import { InstallGuide } from './InstallGuide';
+import { ResetModal } from './ResetModal';
+import { scopedStorage } from '@/lib/scoped-storage';
 
 interface SettingsHubProps {
   T: TradingTheme;
