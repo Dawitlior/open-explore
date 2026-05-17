@@ -77,6 +77,42 @@ export type Database = {
         }
         Relationships: []
       }
+      open_positions: {
+        Row: {
+          entry_price: number
+          id: string
+          provider: string
+          side: string
+          size: number
+          symbol: string
+          unrealized_pnl: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          entry_price?: number
+          id?: string
+          provider?: string
+          side: string
+          size?: number
+          symbol: string
+          unrealized_pnl?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          entry_price?: number
+          id?: string
+          provider?: string
+          side?: string
+          size?: number
+          symbol?: string
+          unrealized_pnl?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
