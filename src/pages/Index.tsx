@@ -1305,6 +1305,7 @@ const Index = () => {
 
     return (
       <>
+        <AlphaLiveConsole T={T} isRTL={isRTL} enabled={isAlpha} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
           <div style={{ fontSize: 13, color: T.text.muted }}>
             {stats.totalTrades} {isRTL ? 'עסקאות' : 'trades'}
