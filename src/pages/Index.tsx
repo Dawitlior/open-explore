@@ -1283,7 +1283,14 @@ const Index = () => {
     return (
       <>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
-          <div style={{ fontSize: 13, color: T.text.muted }}>{stats.totalTrades} {isRTL ? 'עסקאות' : 'trades'}</div>
+          <div style={{ fontSize: 13, color: T.text.muted }}>
+            {stats.totalTrades} {isRTL ? 'עסקאות' : 'trades'}
+            {opMode !== 'live' && stats.totalTrades > 50 && (
+              <span style={{ marginInlineStart: 8, fontSize: 10, color: T.text.dim, fontFamily: "'JetBrains Mono', monospace" }}>
+                · {isRTL ? `מציג 50 אחרונות` : `showing latest 50`}
+              </span>
+            )}
+          </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {!isMobile && <button onClick={handleImport} style={{ padding: '7px 14px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, fontSize: 11, cursor: 'pointer' }}>📥 {t.importData}</button>}
             {!isMobile && <button onClick={handleExport} style={{ padding: '7px 14px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, fontSize: 11, cursor: 'pointer' }}>📊 XLSX</button>}
@@ -1302,7 +1309,10 @@ const Index = () => {
                 ))}
               </tr></thead>
               <tbody>
-                {(opMode === 'live' ? trades.slice(-8) : trades).map((tr, idx) => (
+                {(opMode === 'live'
+                  ? trades.slice(-8)
+                  : [...trades].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 50)
+                ).map((tr, idx) => (
                   <tr key={tr.id} onClick={() => setSelTrade(tr)} style={{ cursor: 'pointer', background: idx % 2 ? `${T.bg.tertiary}40` : 'transparent' }}>
                     <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, color: T.text.muted }}>{tr.id}</td>
                     <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, whiteSpace: 'nowrap', fontSize: 11 }}>{new Date(tr.date).toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
