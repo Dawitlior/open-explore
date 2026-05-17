@@ -213,6 +213,128 @@ export function ExchangesPanel({ T, isRTL }: Props) {
           onSaved={() => { setOpenProvider(null); void refresh(); }}
         />
       )}
+
+      {syncingProvider && (
+        <SyncOverlay
+          isRTL={isRTL}
+          providerName={PROVIDERS.find(p => p.id === syncingProvider)?.name ?? syncingProvider}
+          accent={PROVIDERS.find(p => p.id === syncingProvider)?.accent ?? '#00f2ff'}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ============================ SYNC OVERLAY ============================ */
+function SyncOverlay({ isRTL, providerName, accent }: { isRTL: boolean; providerName: string; accent: string }) {
+  const t = (he: string, en: string) => (isRTL ? he : en);
+  const sans = "'Poppins', sans-serif";
+  const mono = "'IBM Plex Mono', monospace";
+
+  const phases = isRTL
+    ? ['מאמת מפתח בכספת', 'מושך 180 ימי היסטוריה', 'ממפה עסקאות ו-PnL', 'שומר במאגר']
+    : ['Verifying vault key', 'Fetching 180-day history', 'Mapping trades & PnL', 'Saving to journal'];
+
+  const [phaseIdx, setPhaseIdx] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    const t0 = Date.now();
+    const tick = setInterval(() => setElapsed((Date.now() - t0) / 1000), 100);
+    const adv = setInterval(() => setPhaseIdx(i => Math.min(i + 1, phases.length - 1)), 2200);
+    return () => { clearInterval(tick); clearInterval(adv); };
+  }, [phases.length]);
+
+  return (
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 10050,
+        background: 'radial-gradient(ellipse at center, rgba(6,12,28,0.92) 0%, rgba(2,6,15,0.96) 70%)',
+        backdropFilter: 'blur(22px) saturate(160%)', WebkitBackdropFilter: 'blur(22px) saturate(160%)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: 24, direction: isRTL ? 'rtl' : 'ltr',
+        animation: 'orcaFadeIn 0.35s ease',
+      }}
+    >
+      <style>{`
+        @keyframes orcaFadeIn { from { opacity: 0 } to { opacity: 1 } }
+        @keyframes orcaSyncRing { 0% { transform: scale(0.6); opacity: 0.8 } 100% { transform: scale(1.8); opacity: 0 } }
+        @keyframes orcaSyncCore { 0%,100% { transform: scale(1); opacity: 1 } 50% { transform: scale(0.85); opacity: 0.85 } }
+        @keyframes orcaSyncBar { 0% { background-position: 0% 0 } 100% { background-position: 200% 0 } }
+        @keyframes orcaDotPulse { 0%,100% { transform: scale(1); opacity: 0.4 } 50% { transform: scale(1.4); opacity: 1 } }
+      `}</style>
+      <div style={{
+        width: '100%', maxWidth: 460, padding: 'clamp(28px,5vw,40px)',
+        borderRadius: 22,
+        background: 'linear-gradient(180deg, rgba(11,23,48,0.88), rgba(6,12,28,0.92))',
+        border: `1px solid ${accent}44`,
+        boxShadow: `0 30px 80px -30px ${accent}55, 0 0 0 1px rgba(255,255,255,0.04) inset`,
+        fontFamily: sans, color: '#f0f5ff', textAlign: 'center',
+      }}>
+        <div style={{ position: 'relative', width: 96, height: 96, margin: '0 auto 24px' }}>
+          <span style={{
+            position: 'absolute', inset: 0, borderRadius: '50%',
+            border: `1px solid ${accent}88`, animation: 'orcaSyncRing 1.8s cubic-bezier(0.4,0,0.2,1) infinite',
+          }} />
+          <span style={{
+            position: 'absolute', inset: 0, borderRadius: '50%',
+            border: `1px solid ${accent}66`, animation: 'orcaSyncRing 1.8s cubic-bezier(0.4,0,0.2,1) infinite 0.6s',
+          }} />
+          <div style={{
+            position: 'absolute', inset: 30, borderRadius: '50%',
+            background: `radial-gradient(circle, ${accent} 0%, ${accent}aa 50%, transparent 100%)`,
+            boxShadow: `0 0 28px ${accent}99`,
+            animation: 'orcaSyncCore 1.6s ease-in-out infinite',
+          }} />
+        </div>
+        <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: -0.3, marginBottom: 6 }}>
+          {t(`מסנכרן את ${providerName}`, `Syncing ${providerName}`)}
+        </div>
+        <div style={{ fontSize: 12.5, color: 'rgba(240,245,255,0.55)', marginBottom: 22 }}>
+          {t('המתן בבקשה — מאחזר את כל העסקאות מהבורסה', 'Please wait — pulling all trades from the exchange')}
+        </div>
+        <div style={{
+          position: 'relative', height: 3, background: 'rgba(255,255,255,0.06)',
+          borderRadius: 999, overflow: 'hidden', marginBottom: 22,
+        }}>
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: `linear-gradient(90deg, transparent, ${accent}, transparent)`,
+            backgroundSize: '200% 100%',
+            animation: 'orcaSyncBar 1.4s linear infinite',
+          }} />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 9, textAlign: isRTL ? 'right' : 'left' }}>
+          {phases.map((p, i) => {
+            const done = i < phaseIdx;
+            const active = i === phaseIdx;
+            return (
+              <div key={i} style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                opacity: done || active ? 1 : 0.4, transition: 'opacity 0.4s ease',
+              }}>
+                <div style={{
+                  width: 8, height: 8, borderRadius: '50%',
+                  background: done ? '#22c55e' : active ? accent : 'rgba(255,255,255,0.2)',
+                  boxShadow: done ? '0 0 8px rgba(34,197,94,0.6)' : active ? `0 0 8px ${accent}99` : undefined,
+                  animation: active ? 'orcaDotPulse 1.2s ease-in-out infinite' : undefined,
+                  flexShrink: 0,
+                }} />
+                <div style={{ fontSize: 13, fontWeight: active ? 600 : 400 }}>{p}</div>
+              </div>
+            );
+          })}
+        </div>
+        <div style={{
+          marginTop: 22, paddingTop: 14,
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+          display: 'flex', justifyContent: 'space-between',
+          fontSize: 11, color: 'rgba(240,245,255,0.4)',
+          fontFamily: mono, letterSpacing: 0.5,
+        }}>
+          <span>{elapsed.toFixed(1)}s</span>
+          <span>ORCA · SYNC</span>
+        </div>
+      </div>
     </div>
   );
 }
