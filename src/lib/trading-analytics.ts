@@ -356,12 +356,14 @@ function _computeAnalyticsInternal(trades: Trade[]): TradingStats {
     bucket, count: d.count, avgR: d.count > 0 ? d.totalR / d.count : 0
   }));
 
-  // Risk of ruin
+  // Risk of ruin — edge-aware in R-space; avoids false 99.9% when Bybit R fields are missing.
   const wr = winRate / 100;
-  const riskOfRuin = wr > 0 && wr < 1 ? Math.pow((1 - wr) / wr, 10) * 100 : wr >= 1 ? 0 : 100;
+  const edgeRatio = expectancyR > 0 && avgLossR > 0 ? expectancyR / avgLossR : 0;
+  const riskOfRuin = edgeRatio > 0 ? Math.max(0, Math.min(99.9, Math.pow((1 - edgeRatio) / (1 + edgeRatio), 10) * 100)) : 99.9;
 
   // Kelly criterion
-  const kellyOptimal = avgLossR > 0 ? (wr - ((1 - wr) / (avgWinR / avgLossR))) * 100 : 0;
+  const payoffRatio = avgLossR > 0 ? avgWinR / avgLossR : 0;
+  const kellyOptimal = payoffRatio > 0 ? Math.max(0, Math.min(100, (wr - ((1 - wr) / payoffRatio)) * 100)) : 0;
 
   // Rolling Sharpe
   const rollingSharpe: { tradeId: number; sharpe: number }[] = [];
@@ -388,9 +390,9 @@ function _computeAnalyticsInternal(trades: Trade[]): TradingStats {
     edgeDecay.push({ period: Math.floor(i / periodSize) + 1, expectancyR: computeExpectancyR(slice) });
   }
 
-  // Drawdown structure
+  // Drawdown structure in day-aggregated R-space
   const drawdownStructure: { start: number; end: number; depth: number; recovery: number }[] = [];
-  let ddPeak = 200, ddStart = -1, ddMax = 0;
+  let ddPeak = 0, ddStart = -1, ddMax = 0;
   equityCurve.forEach((e, i) => {
     if (e.balance > ddPeak) {
       if (ddStart >= 0 && ddMax > 0.5) {
@@ -400,7 +402,7 @@ function _computeAnalyticsInternal(trades: Trade[]): TradingStats {
       ddStart = -1;
       ddMax = 0;
     } else {
-      const dd = ddPeak > 0 ? ((ddPeak - e.balance) / ddPeak) * 100 : 0;
+      const dd = ddPeak > 0 ? ((ddPeak - e.balance) / Math.max(Math.abs(ddPeak), 1)) * 100 : 0;
       if (dd > 0 && ddStart < 0) ddStart = i;
       ddMax = Math.max(ddMax, dd);
     }
