@@ -186,10 +186,16 @@ function bybitToTrade(e: BybitExec, provider: string): Omit<Trade, 'id' | 'balan
   const qty = Number(e.execQty) || 0;
   const fee = Number(e.execFee) || 0;
   const tsMs = Number(e.execTime) || Date.now();
+  // Realized PnL for closing fills: Bybit returns this in `execPnl`
+  // (legacy `closedPnl` fallback retained for older payload shapes).
+  const realizedPnl = parseFloat(e.execPnl ?? e.closedPnl ?? '0') || 0;
+  const netPnl = realizedPnl - fee;
   const d = new Date(tsMs);
   const iso = d.toISOString().slice(0, 19).replace('T', ' ');
   const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
   const direction: 'Long' | 'Short' = e.side === 'Buy' ? 'Long' : 'Short';
+  const winLoss: 'Win' | 'Loss' | 'Break Even' =
+    realizedPnl > 0 ? 'Win' : realizedPnl < 0 ? 'Loss' : 'Break Even';
   return {
     date: iso,
     day: dayName,
@@ -200,10 +206,10 @@ function bybitToTrade(e: BybitExec, provider: string): Omit<Trade, 'id' | 'balan
     stopLoss: 0,
     exit: px,
     returnR: 0,
-    winLoss: 'Break Even',
+    winLoss,
     risk: 0,
     expectedLoss: 0,
-    pnl: -fee,
+    pnl: netPnl,
     deviation: 0,
     positionSize: qty * px,
     leverage: 1,
