@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
     const exists = users.some((u: { email?: string }) => (u.email || '').toLowerCase() === clean);
 
     if (!exists) {
-      return json({ ok: false, error: 'not_registered' }, 404);
+      return json({ ok: false, error: 'not_registered' });
     }
 
     // Trigger the recovery email
