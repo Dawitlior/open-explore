@@ -113,10 +113,13 @@ Deno.test("exchange_credentials — per-user RLS isolation", async () => {
       .from("exchange_credentials").select("id, label").eq("id", insB!.id).single();
     assertEquals(stillB?.label, "main");
 
-    // --- api_secret column must not be readable --------------------------
-    const { error: leakErr } = await clientA
-      .from("exchange_credentials").select("api_secret").limit(1);
-    assert(leakErr, "Selecting api_secret must be denied at the column level");
+    // --- Plain-text api_secret is wiped by the trigger ------------------
+    const { data: leakRows } = await clientA
+      .from("exchange_credentials").select("id, api_secret");
+    assert(leakRows && leakRows.length > 0, "A should still have its own row");
+    for (const row of leakRows ?? []) {
+      assertEquals(row.api_secret, null, "api_secret must never be persisted in plain text");
+    }
   } finally {
     await admin.from("exchange_credentials").delete().in("user_id", [userA, userB]);
     await admin.auth.admin.deleteUser(userA);
