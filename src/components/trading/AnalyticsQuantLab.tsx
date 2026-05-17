@@ -32,6 +32,8 @@ import type { TradingTheme } from '@/lib/trading-theme';
 import { GlassCard } from './TradingUI';
 import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
 
+type DayRPoint = { i: number; day: string; total: number; cum: number; trades: Trade[] };
+
 interface Props {
   T: TradingTheme;
   trades: Trade[];
@@ -59,6 +61,23 @@ export const AnalyticsQuantLab = ({ T, trades, privacyMode }: Props) => {
   const PV = ({ children }: { children: React.ReactNode }) => (
     <span style={privacyMode ? { filter: 'blur(8px)', userSelect: 'none' } : {}}>{children}</span>
   );
+
+  const dailyRSeries = useMemo<DayRPoint[]>(() => {
+    const byDay = new Map<string, Trade[]>();
+    for (const t of trades) {
+      const key = (t.date || '').slice(0, 10);
+      if (!key) continue;
+      const arr = byDay.get(key) || [];
+      arr.push(t);
+      byDay.set(key, arr);
+    }
+    let cum = 0;
+    return Array.from(byDay.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([day, dayTrades], i) => {
+      const { total } = sumDailyR(dayTrades);
+      cum += total;
+      return { i: i + 1, day: day.slice(5), total, cum: +cum.toFixed(3), trades: dayTrades };
+    });
+  }, [trades]);
 
   /* ── 1. R-Multiple histogram + bell curve overlay ── */
   const rHisto = useMemo(() => {
@@ -100,22 +119,8 @@ export const AnalyticsQuantLab = ({ T, trades, privacyMode }: Props) => {
 
   /* ── 3. Cumulative R (day-grouped, Tier-3 proxy for missing-SL days) ── */
   const cumR = useMemo(() => {
-    const byDay = new Map<string, Trade[]>();
-    for (const t of trades) {
-      const key = (t.date || '').slice(0, 10);
-      if (!key) continue;
-      const arr = byDay.get(key) || [];
-      arr.push(t);
-      byDay.set(key, arr);
-    }
-    const days = Array.from(byDay.keys()).sort();
-    let c = 0;
-    return days.map((day, i) => {
-      const { total } = sumDailyR(byDay.get(day)!);
-      c += total;
-      return { i: i + 1, r: +c.toFixed(3) };
-    });
-  }, [trades]);
+    return dailyRSeries.map(({ i, day, cum }) => ({ i, day, r: cum }));
+  }, [dailyRSeries]);
 
   /* ── 4. Rolling Calmar (mean R / max DD in window) ── */
   const rollingCalmar = useMemo(() => {
