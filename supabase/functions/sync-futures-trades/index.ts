@@ -199,10 +199,10 @@ Deno.serve(async (req) => {
       SUPABASE_ANON_KEY,
       { global: { headers: { Authorization: authHeader } } },
     );
-    const { data: claimData, error: claimErr } = await userClient.auth.getClaims(token);
-    const userId = claimData?.claims?.sub as string | undefined;
-    if (claimErr || !userId) {
-      return json({ ok: false, error: 'unauthorized', detail: claimErr?.message ?? 'no_sub' }, 401);
+    const { data: userData, error: authError } = await userClient.auth.getUser(token);
+    const userId = userData?.user?.id;
+    if (authError || !userId) {
+      return json({ ok: false, error: 'unauthorized', detail: authError?.message ?? 'no_user' }, 401);
     }
 
     // ---- Parse body ----
