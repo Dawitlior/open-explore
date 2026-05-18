@@ -585,37 +585,45 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                   </div>
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <button
-                  onClick={() => setLang(lang === 'he' ? 'en' : 'he')}
-                  title={lang === 'he' ? 'Switch to English' : 'החלף לעברית'}
-                  style={{ ...ghostBtn, padding: '8px 12px' }}
-                >
-                  <Globe size={13} /> {lang === 'he' ? 'EN' : 'HE'}
-                </button>
-                <button
-                  onClick={() => setPrivacyMode(!privacyMode)}
-                  title={privacyMode ? t('כיבוי פרטיות', 'Disable privacy') : t('הפעלת פרטיות', 'Enable privacy')}
-                  style={{
-                    ...ghostBtn, padding: '8px 12px',
-                    background: privacyMode ? `${T.accent.orange}10` : 'transparent',
-                    borderColor: privacyMode ? `${T.accent.orange}55` : T.border.medium,
-                    color: privacyMode ? T.accent.orange : T.text.secondary,
-                  }}
-                >
-                  {privacyMode ? <EyeOff size={13} /> : <Eye size={13} />}
-                  {privacyMode ? t('פרטי', 'Private') : t('גלוי', 'Visible')}
-                </button>
-                <button
-                  onClick={onClose}
-                  aria-label="Close"
-                  style={{
-                    width: 34, height: 34, borderRadius: T.radius.sm,
-                    background: 'transparent', border: `1px solid ${T.border.medium}`,
-                    color: T.text.muted, cursor: 'pointer', display: 'grid', placeItems: 'center',
-                  }}
-                ><X size={15} /></button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {(() => {
+                  const iconColor = isLight ? '#1D1D1F' : '#FFFFFF';
+                  const hoverBg = isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)';
+                  const baseBtn: React.CSSProperties = {
+                    width: 34, height: 34, borderRadius: 17,
+                    background: 'transparent', border: 'none',
+                    color: iconColor, cursor: 'pointer',
+                    display: 'grid', placeItems: 'center',
+                    transition: 'background .12s',
+                  };
+                  return (
+                    <>
+                      <button
+                        onClick={goBack}
+                        disabled={!canGoBack}
+                        aria-label={t('חזרה', 'Back')}
+                        title={t('חזרה', 'Back')}
+                        style={{ ...baseBtn, opacity: canGoBack ? 1 : 0.35, cursor: canGoBack ? 'pointer' : 'default' }}
+                        onMouseEnter={e => { if (canGoBack) (e.currentTarget.style.background = hoverBg); }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                      >
+                        <ChevronLeft size={18} style={{ transform: isRTL ? 'scaleX(-1)' : 'none' }} />
+                      </button>
+                      <button
+                        onClick={onClose}
+                        aria-label={t('סגירה', 'Close')}
+                        title={t('סגירה', 'Close')}
+                        style={baseBtn}
+                        onMouseEnter={e => { e.currentTarget.style.background = hoverBg; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                      >
+                        <X size={18} />
+                      </button>
+                    </>
+                  );
+                })()}
               </div>
+
             </header>
           )}
 
