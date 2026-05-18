@@ -1601,7 +1601,9 @@ const Index = () => {
   }
 
   return (
+    <DisplayModeProvider trades={trades}>
     <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden', background: T.bg.primary, color: T.text.primary, fontFamily: "'Inter', system-ui, -apple-system, sans-serif", fontSize: 14, transition: 'background 0.5s ease, color 0.5s ease, filter 0.5s ease, opacity 0.5s ease', opacity: exiting ? 0 : 1, filter: exiting ? 'blur(8px)' : 'none' }}>
+
       <style>{portalCSS}</style>
       {/* Exit animation overlay */}
       {exiting && (
