@@ -4,6 +4,8 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import type { TradingTheme } from '@/lib/trading-theme';
+import { useTrades } from '@/hooks/use-trades';
+import { importFromBrokerCsv } from '@/lib/xlsx-engine';
 
 type ProviderId = 'bybit' | 'binance' | 'ibkr';
 
