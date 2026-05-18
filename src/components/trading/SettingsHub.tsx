@@ -23,6 +23,8 @@ import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { Trade } from '@/data/trades';
 import { AvatarUploader } from './AvatarUploader';
+import { FrogAvatar } from './FrogAvatar';
+import { ChevronLeft } from 'lucide-react';
 import { InstallGuide } from './InstallGuide';
 import { ResetModal } from './ResetModal';
 import { scopedStorage } from '@/lib/scoped-storage';
