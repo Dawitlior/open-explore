@@ -218,18 +218,16 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
       <style>{`
         @keyframes orcaSettingsFade { from { opacity: 0 } to { opacity: 1 } }
         @keyframes orcaSettingsRise { from { opacity: 0; transform: translateY(12px) scale(.99) } to { opacity: 1; transform: none } }
+        @keyframes orcaIosSlide { from { opacity: 0; transform: translateX(${isRTL ? '-' : ''}24px) } to { opacity: 1; transform: none } }
         .orca-settings-input:focus { border-color: ${T.accent.cyan} !important; background: ${T.bg.secondary} !important; }
         .orca-nav-item:hover { background: ${T.bg.tertiary} !important; }
         .orca-cta:hover:not(:disabled) { transform: translateY(-1px); }
+        .orca-ios-row-btn:active { background: rgba(255,255,255,0.10) !important; }
+        .orca-ios-master, .orca-settings-content { overflow-x: hidden; }
         @media (max-width: 768px) {
           .orca-settings-overlay { padding: 0 !important; }
-          .orca-settings-shell { width: 100vw !important; max-width: 100vw !important; height: 100dvh !important; max-height: 100dvh !important; border-radius: 0 !important; grid-template-columns: 1fr !important; grid-template-rows: auto 1fr !important; }
-          .orca-settings-sidebar { border-inline-end: 0 !important; border-bottom: 1px solid ${T.border.subtle} !important; max-height: 38dvh !important; }
-          .orca-settings-sidebar nav { padding: 4px 8px 10px !important; }
-          .orca-settings-content { min-width: 0 !important; }
-          .orca-settings-topbar { padding: 12px 14px !important; flex-wrap: wrap !important; gap: 8px !important; }
-          .orca-settings-topbar > div:first-child div:first-child { font-size: 15px !important; }
-          .orca-settings-topbar > div:first-child div:nth-child(2) { font-size: 11px !important; }
+          .orca-settings-shell { width: 100vw !important; max-width: 100vw !important; height: 100dvh !important; max-height: 100dvh !important; border-radius: 0 !important; grid-template-columns: 1fr !important; grid-template-rows: 1fr !important; border: none !important; }
+          .orca-settings-content { min-width: 0 !important; background: #000 !important; }
           .orca-settings-body { padding: 14px 14px calc(28px + env(safe-area-inset-bottom)) !important; }
           .orca-settings-body > div > div { padding: 14px !important; }
           .orca-settings-body [style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; }
