@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, memo } from 'react';
 import type { Trade } from '@/data/trades';
 import { GlassCard } from '@/components/trading/TradingUI';
 import { CalendarModal } from '@/components/trading/CalendarModal';
@@ -19,7 +19,7 @@ type Props = {
 const monthsHe = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
 const monthsEn = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
-export const CalendarHubPage = ({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSetManualR }: Props) => {
+const CalendarHubPage_Impl = ({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSetManualR }: Props) => {
   const now = new Date();
   const [calMonth, setCalMonth] = useState(now.getMonth());
   const [calYear, setCalYear] = useState(now.getFullYear());
@@ -394,4 +394,6 @@ export const CalendarHubPage = ({ T, isRTL, trades, t, isMobile, onGenerateInsig
   );
 };
 
+
+export const CalendarHubPage = memo(CalendarHubPage_Impl);
 export default CalendarHubPage;

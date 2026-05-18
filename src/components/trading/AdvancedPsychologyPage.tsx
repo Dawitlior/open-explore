@@ -1,5 +1,5 @@
 import { getEffectiveR } from "@/lib/r-multiple";
-import { useMemo, useState } from 'react';
+import { useMemo, useState, memo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LineChart, Line, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
@@ -40,7 +40,7 @@ const SectionHeader = ({ T, label, accent, isRTL }: { T: TradingTheme; label: st
   </div>
 );
 
-export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'live', trades: _allTrades, stats, onExplainClick }: AdvancedPsychologyPageProps) => {
+const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', trades: _allTrades, stats, onExplainClick }: AdvancedPsychologyPageProps) => {
   const { visibleTrades: trades } = useVisibleTrades(_allTrades);
   const [diagnosisOpen, setDiagnosisOpen] = useState(false);
   const [diagLoading, setDiagLoading] = useState(false);
@@ -833,3 +833,5 @@ export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'liv
     </>
   );
 };
+
+export const AdvancedPsychologyPage = memo(AdvancedPsychologyPage_Impl);

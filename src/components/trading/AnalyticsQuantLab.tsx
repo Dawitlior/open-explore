@@ -21,7 +21,7 @@
  * 12. Day-by-day step equity
  */
 
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import {
   Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, ComposedChart,
   Line, LineChart, ResponsiveContainer, Scatter, ScatterChart, Tooltip,
@@ -48,7 +48,7 @@ const sessionOf = (h: number): 'Asia' | 'London' | 'NY' | 'Off' => {
   return 'Off';
 };
 
-export const AnalyticsQuantLab = ({ T, trades: _allTrades, privacyMode }: Props) => {
+const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) => {
   // 🔀 Dual-Currency Engine: filtered dataset + adaptive helpers
   const { visibleTrades: trades, isMoney, formatValue: fmtVal, formatAxis: fmtAxis } = useVisibleTrades(_allTrades);
   const tt = {
@@ -540,4 +540,6 @@ export const AnalyticsQuantLab = ({ T, trades: _allTrades, privacyMode }: Props)
   );
 };
 
+
+export const AnalyticsQuantLab = memo(AnalyticsQuantLab_Impl);
 export default AnalyticsQuantLab;

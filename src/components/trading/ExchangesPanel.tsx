@@ -4,6 +4,8 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import type { TradingTheme } from '@/lib/trading-theme';
+import { useTrades } from '@/hooks/use-trades';
+import { importFromBrokerCsv } from '@/lib/xlsx-engine';
 
 type ProviderId = 'bybit' | 'binance' | 'ibkr';
 
@@ -1651,26 +1653,41 @@ function CsvDropZone({
   const [processing, setProcessing] = useState(false);
   const [doneFile, setDoneFile] = useState<string | null>(null);
 
-  // STUB: parsed CSV trades from this zone MUST be tagged with `stop_loss: null`.
-  // This is the contract the future adaptive chart engine relies on to know that
-  // the stop-loss is missing and should be inferred — do NOT build the engine here.
+  // CSV pipeline: parse the broker file with the generic XLSX/CSV engine,
+  // force `stopLoss: null` on every row (handled inside importFromBrokerCsv),
+  // then push to the global trade store via useTrades.importTrades.
+  const { importTrades } = useTrades();
   const handleFiles = async (files: FileList | File[]) => {
     const f = files[0];
     if (!f) return;
     setProcessing(true);
     setDoneFile(null);
     try {
-      // TODO: real parser will live in src/lib/csv-import/<broker>.ts and
-      // every produced trade row must be created with `stop_loss: null`.
-      await new Promise(res => setTimeout(res, 1400));
+      const result = await importFromBrokerCsv(f, broker.id);
+      if (result.trades.length === 0) {
+        toast.error(t('לא נמצאו עסקאות תקפות בקובץ', 'No valid trades found in file'));
+        setProcessing(false);
+        return;
+      }
+      await importTrades(result.trades);
+      // Notify other useTrades instances (e.g. the main dashboard) to reload
+      // from storage so the new CSV-imported trades appear instantly.
+      window.dispatchEvent(new CustomEvent('orca:trades-synced'));
       setDoneFile(f.name);
-      toast.success(t('הקובץ התקבל ועובד', 'File received and processed'));
+      toast.success(t('הנתונים נטענו בהצלחה', 'Data loaded successfully'), {
+        description: t(
+          `${result.imported} עסקאות יובאו · מצב תצוגה ננעל ל-Money`,
+          `${result.imported} trades imported · display locked to Money`,
+        ),
+      });
     } catch (e) {
+      console.error('[CSV Import] failed', e);
       toast.error(t('נכשל בעיבוד הקובץ', 'Failed to process file'));
     } finally {
       setProcessing(false);
     }
   };
+
 
   return (
     <div
