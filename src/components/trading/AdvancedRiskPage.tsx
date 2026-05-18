@@ -76,7 +76,8 @@ const LimitBar = ({ T, label, current, limit, isRTL }: { T: TradingTheme; label:
   );
 };
 
-export const AdvancedRiskPage = ({ T, isRTL, isAlpha, operatingMode = 'live', customLimits, trades, stats, riskData, onExplainClick, riskExplanations }: AdvancedRiskPageProps) => {
+export const AdvancedRiskPage = ({ T, isRTL, isAlpha, operatingMode = 'live', customLimits, trades: _allTrades, stats, riskData, onExplainClick, riskExplanations }: AdvancedRiskPageProps) => {
+  const { visibleTrades: trades } = useVisibleTrades(_allTrades);
   const tt = { background: T.bg.card, border: `1px solid ${T.border.medium}`, borderRadius: 10, color: T.text.primary, fontSize: 12, boxShadow: T.shadow.elevated, padding: '8px 12px' };
   const LIMITS_USED = customLimits || DEFAULT_RISK_LIMITS;
 
