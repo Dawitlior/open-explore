@@ -790,3 +790,57 @@ html, body, .orca-glass, .orca-panel, [class*="bg-"], [class*="text-"] {
   .orca-glass-hover::before { display: none !important; }
   .orca-tilt:hover { transform: none !important; }
 }
+
+/* ===========================================================
+   RTL bidi safety — Hebrew (he) layout polish
+   Keeps numerics, currency, parentheses, and Latin symbols
+   visually correct inside Hebrew sentences.
+   =========================================================== */
+html[dir="rtl"] body { direction: rtl; text-align: right; }
+
+/* Inputs and code/mono cells stay LTR so digits + symbols don't reverse */
+html[dir="rtl"] input[type="number"],
+html[dir="rtl"] input[type="text"][inputmode="decimal"],
+html[dir="rtl"] input[type="email"],
+html[dir="rtl"] input[type="tel"],
+html[dir="rtl"] input[type="url"],
+html[dir="rtl"] input[type="password"],
+html[dir="rtl"] code,
+html[dir="rtl"] pre,
+html[dir="rtl"] kbd,
+html[dir="rtl"] [data-numeric],
+html[dir="rtl"] .font-mono {
+  direction: ltr;
+  unicode-bidi: plaintext;
+  text-align: start;
+}
+
+/* Currency / percentage / R-multiple cells: isolate bidi so 1,234.50 USD stays LTR
+   even when wrapped in a Hebrew label. */
+html[dir="rtl"] [data-currency],
+html[dir="rtl"] [data-metric],
+html[dir="rtl"] [data-r-multiple] {
+  unicode-bidi: isolate;
+  direction: ltr;
+}
+
+/* Recharts: keep axis ticks, tooltips, and legends LTR — numeric only */
+html[dir="rtl"] .recharts-text,
+html[dir="rtl"] .recharts-cartesian-axis-tick-value,
+html[dir="rtl"] .recharts-tooltip-label,
+html[dir="rtl"] .recharts-tooltip-item-value,
+html[dir="rtl"] .recharts-default-legend {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+/* Tables: numeric columns stay LTR; Hebrew header text stays RTL */
+html[dir="rtl"] td[data-numeric],
+html[dir="rtl"] th[data-numeric] {
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: end;
+}
+
+/* Scrollbars on the correct edge for RTL */
+html[dir="rtl"] * { scrollbar-gutter: stable; }
