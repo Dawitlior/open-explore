@@ -966,8 +966,8 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
                         </defs>
                         <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
                         <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
-                        <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
-                        <Tooltip contentStyle={tt} />
+                        <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} domain={[(dataMin: number) => Math.min(-1, Math.max(-100, dataMin)), 0]} tickFormatter={(v: number) => `${v.toFixed(0)}%`} allowDataOverflow={false} />
+                        <Tooltip contentStyle={tt} formatter={(v: number) => `${Number(v).toFixed(2)}%`} />
                         <Area type="monotone" dataKey="drawdown" stroke={T.accent.red} fill="url(#ddG)" strokeWidth={2} />
                       </AreaChart>
                     </ResponsiveContainer>
