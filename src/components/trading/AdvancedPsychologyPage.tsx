@@ -593,18 +593,36 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
       {showAlphaDeviation && (
         <>
           <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'ביצוע מתקדם (ALPHA)' : 'EXECUTION (ALPHA)'} />
-          <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'סטייה לפי עסקה' : 'Deviation per Trade'} explanation={EXPLANATIONS.rDistribution} unit="R">
+          <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'התפלגות סטייה (R)' : 'Deviation Distribution (R)'} explanation={EXPLANATIONS.rDistribution} unit="R">
             <LazyChart height={160}>
               <ResponsiveContainer width="100%" height={160}>
-                <BarChart data={trades.map(tr => ({ id: `#${tr.id}`, dev: tr.deviation || 0 }))}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                  <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 10 }} />
-                  <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
-                  <Tooltip contentStyle={tt} cursor={false} formatter={(v: number) => `${v.toFixed(4)}R`} />
-                  <Bar dataKey="dev" radius={[4, 4, 0, 0]}>
-                    {trades.map((tr, i) => <Cell key={i} fill={tr.deviation > 0.1 ? T.accent.red : tr.deviation > 0 ? T.accent.orange : T.accent.green} />)}
-                  </Bar>
-                </BarChart>
+                {(() => {
+                  // ── Binned histogram of deviation values (was: per-trade index, hard to read) ──
+                  const edges = [-Infinity, -0.5, -0.2, -0.1, -0.05, 0, 0.05, 0.1, 0.2, 0.5, Infinity];
+                  const labels = ['<-0.5R','-0.5÷-0.2','-0.2÷-0.1','-0.1÷-0.05','-0.05÷0','0÷0.05','0.05÷0.1','0.1÷0.2','0.2÷0.5','>0.5R'];
+                  const bins = labels.map((bucket) => ({ bucket, count: 0, midSign: 0 as -1 | 0 | 1 }));
+                  trades.forEach((tr) => {
+                    const d = Number(tr.deviation) || 0;
+                    for (let i = 0; i < edges.length - 1; i++) {
+                      if (d >= edges[i] && d < edges[i + 1]) {
+                        bins[i].count++;
+                        bins[i].midSign = d > 0.1 ? 1 : d < -0.1 ? -1 : 0;
+                        break;
+                      }
+                    }
+                  });
+                  return (
+                    <BarChart data={bins}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
+                      <XAxis dataKey="bucket" tick={{ fill: T.text.muted, fontSize: 9 }} interval={0} angle={-20} textAnchor="end" height={48} />
+                      <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} allowDecimals={false} />
+                      <Tooltip contentStyle={tt} cursor={false} formatter={(v: number) => [`${v} trades`, 'Count']} />
+                      <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                        {bins.map((b, i) => <Cell key={i} fill={b.midSign === 1 ? T.accent.red : b.midSign === -1 ? T.accent.orange : T.accent.green} />)}
+                      </Bar>
+                    </BarChart>
+                  );
+                })()}
               </ResponsiveContainer>
             </LazyChart>
           </ChartWrapper>
