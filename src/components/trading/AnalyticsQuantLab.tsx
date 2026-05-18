@@ -48,7 +48,9 @@ const sessionOf = (h: number): 'Asia' | 'London' | 'NY' | 'Off' => {
   return 'Off';
 };
 
-export const AnalyticsQuantLab = ({ T, trades, privacyMode }: Props) => {
+export const AnalyticsQuantLab = ({ T, trades: _allTrades, privacyMode }: Props) => {
+  // 🔀 Dual-Currency Engine: filtered dataset + adaptive helpers
+  const { visibleTrades: trades, isMoney, formatValue: fmtVal, formatAxis: fmtAxis } = useVisibleTrades(_allTrades);
   const tt = {
     background: T.bg.card,
     border: `1px solid ${T.border.medium}`,
