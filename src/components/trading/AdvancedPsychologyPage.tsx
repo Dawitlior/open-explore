@@ -40,7 +40,8 @@ const SectionHeader = ({ T, label, accent, isRTL }: { T: TradingTheme; label: st
   </div>
 );
 
-export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'live', trades, stats, onExplainClick }: AdvancedPsychologyPageProps) => {
+export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'live', trades: _allTrades, stats, onExplainClick }: AdvancedPsychologyPageProps) => {
+  const { visibleTrades: trades } = useVisibleTrades(_allTrades);
   const [diagnosisOpen, setDiagnosisOpen] = useState(false);
   const [diagLoading, setDiagLoading] = useState(false);
   const MIN_DIAG_TRADES = 8;
