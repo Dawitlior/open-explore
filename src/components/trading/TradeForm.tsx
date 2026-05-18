@@ -271,12 +271,11 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
 
   // Guard against accidental backdrop dismiss that wipes the in-progress trade.
   const isDirty = form.coin !== (trade?.coin || 'BTC') || form.entry || form.stopLoss || form.exit || form.risk || form.comments;
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
   const safeClose = () => {
     if (isDirty && !trade) {
-      const ok = confirm(isRTL
-        ? 'יש לך נתונים שלא נשמרו. לסגור ולמחוק את הטיוטה?'
-        : 'You have unsaved trade data. Close and discard the draft?');
-      if (!ok) return;
+      setShowExitConfirm(true);
+      return;
     }
     onClose();
   };
