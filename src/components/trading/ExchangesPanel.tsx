@@ -42,14 +42,26 @@ const PROVIDERS: ProviderMeta[] = [
     accent: '#f3ba2f',
     enabled: true,
   },
-  {
-    id: 'ibkr',
-    name: 'Interactive Brokers',
-    tagline: { he: 'מניות, אופציות וחוזים • Flex Query', en: 'Stocks, Options & Futures \u2022 Flex Query' },
-    gradient: 'linear-gradient(135deg, rgba(220,38,38,0.16), rgba(220,38,38,0.04))',
-    accent: '#dc2626',
-    enabled: false,
-  },
+];
+
+/* ============= CSV Import Brokers (no API, journal import via file) ============= */
+interface CsvBrokerMeta {
+  id: string;
+  name: string;
+  tagline: { he: string; en: string };
+  accent: string;
+  glyph: string; // short text mark for the logo tile
+}
+const CSV_BROKERS: CsvBrokerMeta[] = [
+  { id: 'ibkr',         name: 'Interactive Brokers', tagline: { he: 'מניות, אופציות וחוזים',  en: 'Stocks, Options & Futures' }, accent: '#dc2626', glyph: 'IB' },
+  { id: 'ninjatrader',  name: 'NinjaTrader',         tagline: { he: 'פלטפורמת חוזים עתידיים',   en: 'Futures trading platform'   }, accent: '#22c55e', glyph: 'NT' },
+  { id: 'tradovate',    name: 'Tradovate',           tagline: { he: 'חוזים עתידיים בענן',         en: 'Cloud-based futures'        }, accent: '#3b82f6', glyph: 'TV' },
+  { id: 'topstepx',     name: 'TopstepX',            tagline: { he: 'חשבונות פרופ של Topstep',    en: 'Topstep prop accounts'      }, accent: '#f97316', glyph: 'TX' },
+  { id: 'tradelocker',  name: 'TradeLocker',         tagline: { he: 'מולטי־אסט מודרני',           en: 'Modern multi-asset'         }, accent: '#a855f7', glyph: 'TL' },
+  { id: 'mt5',          name: 'MetaTrader 5',        tagline: { he: 'הסטנדרט החדש של פורקס',      en: 'Modern FX standard'         }, accent: '#0ea5e9', glyph: 'M5' },
+  { id: 'mt4',          name: 'MetaTrader 4',        tagline: { he: 'קלאסיקה של פורקס',           en: 'Classic FX terminal'        }, accent: '#06b6d4', glyph: 'M4' },
+  { id: 'sierra',       name: 'Sierra Chart',        tagline: { he: 'גרפים מקצועיים DOM',         en: 'Professional DOM charting'  }, accent: '#eab308', glyph: 'SC' },
+  { id: 'colmexpro',    name: 'ColmexPro',           tagline: { he: 'מניות אמריקאיות לטרייד יום', en: 'US equities day-trading'    }, accent: '#ef4444', glyph: 'CP' },
 ];
 
 interface ConnectionRow {
