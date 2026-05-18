@@ -501,7 +501,8 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
             <header className="orca-ios-back" style={{
               padding: '12px 14px', borderBottom: `1px solid ${T.border.subtle}`,
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              background: '#000', position: 'sticky', top: 0, zIndex: 3,
+              background: iosChromeBg, position: 'sticky', top: 0, zIndex: 3,
+              backdropFilter: 'blur(18px) saturate(160%)', WebkitBackdropFilter: 'blur(18px) saturate(160%)',
             }}>
               <button
                 onClick={() => setMobileDrilled(false)}
@@ -519,7 +520,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                 {activeMeta.label[isRTL ? 'he' : 'en']}
               </div>
               <button onClick={onClose} aria-label="Close" style={{
-                width: 30, height: 30, borderRadius: 15, background: 'rgba(255,255,255,0.08)',
+                width: 30, height: 30, borderRadius: 15, background: iosCircleBg,
                 border: 'none', color: T.text.primary, display: 'grid', placeItems: 'center', cursor: 'pointer',
               }}><X size={14} /></button>
             </header>
