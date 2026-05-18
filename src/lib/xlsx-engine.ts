@@ -475,3 +475,96 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
     reader.readAsArrayBuffer(file);
   });
 }
+
+// ═══════════════════════════════════════════════════
+// BROKER CSV IMPORT — Generic pipeline for the Settings → Brokers drop zone.
+// CONTRACT: every produced trade MUST carry `stopLoss: null` so the
+// Dual-Currency Engine knows R-Multiples are not computable for these rows
+// and locks the dashboard into MONEY mode.
+// ═══════════════════════════════════════════════════
+
+export interface BrokerImportResult extends ImportResult {
+  broker: string;
+}
+
+export function importFromBrokerCsv(file: File, brokerId: string): Promise<BrokerImportResult> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const wb = XLSX.read(data, { type: 'array', cellDates: true, raw: true });
+        const sheetName = wb.SheetNames[0];
+        if (!sheetName) { resolve({ trades: [], errors: ['Empty file'], skipped: 0, imported: 0, broker: brokerId }); return; }
+        const ws = wb.Sheets[sheetName];
+
+        const headerRowIdx = findHeaderRow(ws);
+        const rows = XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1, raw: false, blankrows: false, defval: '' });
+        if (rows.length <= headerRowIdx + 1) {
+          resolve({ trades: [], errors: ['No data rows detected'], skipped: 0, imported: 0, broker: brokerId });
+          return;
+        }
+
+        // Build column → internal field map from the detected header row.
+        const headerRow = rows[headerRowIdx] || [];
+        const colMap: Array<{ idx: number; field: keyof Trade | '_ignore' }> = [];
+        headerRow.forEach((h, i) => {
+          const field = mapHeaderToField(String(h ?? ''));
+          if (field && field !== '_ignore') colMap.push({ idx: i, field });
+        });
+        if (colMap.length === 0) {
+          resolve({ trades: [], errors: ['No recognizable columns'], skipped: 0, imported: 0, broker: brokerId });
+          return;
+        }
+
+        const trades: Trade[] = [];
+        const errors: string[] = [];
+        let skipped = 0;
+
+        rows.slice(headerRowIdx + 1).forEach((row, idx) => {
+          try {
+            const mapped: Record<string, unknown> = {};
+            for (const { idx: ci, field } of colMap) {
+              const val = row[ci];
+              if (field === 'date') mapped.date = parseFlexibleDate(val);
+              else if (field === 'pnl' || field === 'entry' || field === 'exit' || field === 'positionSize' || field === 'leverage' || field === 'risk' || field === 'expectedLoss' || field === 'returnR' || field === 'riskPct') {
+                mapped[field] = parseNumericValue(val);
+              } else if (field === 'deviation') mapped.deviation = parseDeviationValue(val);
+              else if (field === 'direction') {
+                const s = String(val ?? '').toLowerCase().trim();
+                mapped.direction = s.includes('short') || s === 's' || s.includes('sell') ? 'Short' : 'Long';
+              } else if (field === 'rules') mapped.rules = true;
+              else mapped[field] = val;
+            }
+
+            if (isEmptyRow(mapped)) { skipped++; return; }
+
+            const sanitized = sanitizeTrade(mapped, trades.length + 1);
+            if (!sanitized) { skipped++; if (errors.length < 10) errors.push(`Row ${headerRowIdx + 2 + idx}: invalid`); return; }
+
+            // 🔒 Golden Rule: CSV-imported broker trades NEVER carry a stop-loss.
+            // The Dual-Currency Engine reads this null to hide the row from
+            // R-Multiple charts and force MONEY display mode.
+            const enforced: Trade = {
+              ...sanitized,
+              stopLoss: null,
+              comments: [`Broker:${brokerId}`, sanitized.comments].filter(Boolean).join(' | '),
+            };
+
+            trades.push(enforced);
+          } catch (err) {
+            skipped++;
+            if (errors.length < 10) errors.push(`Row ${headerRowIdx + 2 + idx}: ${err instanceof Error ? err.message : 'Parse error'}`);
+          }
+        });
+
+        resolve({ trades, errors, skipped, imported: trades.length, broker: brokerId });
+      } catch (err) {
+        reject(err);
+      }
+    };
+    reader.onerror = () => reject(new Error('File read failed'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
