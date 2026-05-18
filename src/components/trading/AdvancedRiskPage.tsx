@@ -10,6 +10,7 @@ import { LazyChart } from './LazyChart';
 import type { ChartExplanation } from './ChartWrapper';
 import { checkRiskLimits, DEFAULT_RISK_LIMITS, type RiskLimits } from '@/lib/risk-limits';
 import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
+import { useVisibleTrades } from '@/lib/display-mode-format';
 
 type OperatingMode = 'live' | 'review' | 'research' | 'beginner';
 
