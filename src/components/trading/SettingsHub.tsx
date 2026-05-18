@@ -64,7 +64,24 @@ const TOKEN_LIST = [
 ];
 
 export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, lang, setLang, privacyMode, setPrivacyMode, trades }: SettingsHubProps) {
-  const [tab, setTab] = useState<TabId>('account');
+  const [tabHistory, setTabHistory] = useState<TabId[]>(['account']);
+  const [historyIdx, setHistoryIdx] = useState(0);
+  const tab = tabHistory[historyIdx];
+  const setTab = (next: TabId) => {
+    setTabHistory(prev => {
+      if (prev[historyIdx] === next) return prev;
+      const trimmed = prev.slice(0, historyIdx + 1);
+      trimmed.push(next);
+      // cap history to last 20 entries
+      const sliced = trimmed.slice(-20);
+      setHistoryIdx(sliced.length - 1);
+      return sliced;
+    });
+  };
+  const canGoBack = historyIdx > 0;
+  const canGoFwd = historyIdx < tabHistory.length - 1;
+  const goBack = () => { if (canGoBack) setHistoryIdx(historyIdx - 1); };
+  const goFwd = () => { if (canGoFwd) setHistoryIdx(historyIdx + 1); };
   const isMobileHook = useIsMobile();
   // Settings uses a stricter breakpoint: macOS dual-column on ≥1024px, iOS layout below.
   const [isMobile, setIsMobile] = useState<boolean>(() => typeof window !== 'undefined' ? window.innerWidth < 1024 : false);
