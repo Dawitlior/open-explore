@@ -223,7 +223,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
     <div
       className="orca-settings-overlay"
       style={{
-        position: 'fixed', inset: 0, background: 'rgba(2,6,15,0.78)',
+        position: 'fixed', inset: 0, background: iosOverlayBg,
         backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
         zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: 16, direction: isRTL ? 'rtl' : 'ltr',
