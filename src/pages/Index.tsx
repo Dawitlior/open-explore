@@ -1744,6 +1744,9 @@ const Index = () => {
             {!isMobile && settings.privacyMode && <TradingBadge color={T.accent.orange}>🔒</TradingBadge>}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 10, flexWrap: 'nowrap', flexShrink: 0 }}>
+            {(page === 'dashboard' || page === 'analytics' || page === 'calendar') && !isMobile && (
+              <DisplayModeToggle T={T} isRTL={isRTL} compact />
+            )}
             {/* Prominent Add Trade button */}
             {!uiPrefs.hideAddTradeButton && <button onClick={() => { setEditingTrade(null); setShowTradeForm(true); }} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: isMobile ? '5px 10px' : '6px 16px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 700, cursor: 'pointer', fontSize: isMobile ? 11 : 12, transition: 'all 0.2s', boxShadow: `0 0 12px ${T.accent.cyan}30` }}>
               + {isMobile ? '' : t.addTrade}
