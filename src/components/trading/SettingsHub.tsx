@@ -359,7 +359,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                 </div>
               </div>
               <button
-                onClick={async () => { await auth.signOut(); window.location.href = '/auth'; }}
+                onClick={async () => { await auth.signOut(); }}
                 title={t('התנתק', 'Sign out')}
                 style={{
                   width: 30, height: 30, borderRadius: T.radius.sm,
@@ -519,7 +519,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                   <div style={{ ...card, borderColor: `${T.accent.orange}40`, background: `linear-gradient(135deg, ${T.accent.orange}08, transparent)` }}>
                     <h3 style={{ ...sectionTitle, color: T.accent.orange }}><AlertTriangle size={14} /> {t('יציאה מהמערכת', 'Sign out')}</h3>
                     <p style={sectionHint}>{t('יציאה תנתק אותך מהמכשיר הזה. הנתונים שלך נשמרים בענן ויהיו זמינים בכניסה הבאה.', 'Signs you out from this device. Your data stays in the cloud and will be available next sign-in.')}</p>
-                    <button onClick={async () => { await auth.signOut(); window.location.href = '/auth'; }} style={{ ...ghostBtn, color: T.accent.orange, borderColor: `${T.accent.orange}55` }}>
+                    <button onClick={async () => { await auth.signOut(); }} style={{ ...ghostBtn, color: T.accent.orange, borderColor: `${T.accent.orange}55` }}>
                       <LogOut size={13} /> {t('התנתק עכשיו', 'Sign out now')}
                     </button>
                   </div>
