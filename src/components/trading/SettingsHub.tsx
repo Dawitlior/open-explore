@@ -276,7 +276,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
           background: T.bg.secondary, border: `1px solid ${T.border.medium}`,
           borderRadius: T.radius.xl, boxShadow: T.shadow.elevated,
           display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : '280px 1fr',
+          gridTemplateColumns: isMobile ? '1fr' : '240px 1fr',
           gridTemplateRows: '1fr',
           overflow: 'hidden',
           fontFamily: sans, animation: 'orcaSettingsRise .25s ease-out',
