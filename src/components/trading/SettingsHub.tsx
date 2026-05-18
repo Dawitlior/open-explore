@@ -382,18 +382,19 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
         {/* ════════════ MOBILE — iOS master list (Settings.app style) ════════════ */}
         {isMobile && !mobileDrilled && (
           <aside className="orca-ios-master" style={{
-            background: '#000', color: T.text.primary, overflowX: 'hidden', overflowY: 'auto',
+            background: iosChromeBg, color: T.text.primary, overflowX: 'hidden', overflowY: 'auto',
             WebkitOverflowScrolling: 'touch', display: 'flex', flexDirection: 'column',
             animation: 'orcaSettingsFade .18s ease-out',
           }}>
             <div style={{
               padding: '14px 16px 10px', display: 'flex', alignItems: 'center',
               justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 2,
-              background: '#000', borderBottom: `1px solid ${T.border.subtle}`,
+              background: iosChromeBg, borderBottom: `1px solid ${T.border.subtle}`,
+              backdropFilter: 'blur(18px) saturate(160%)', WebkitBackdropFilter: 'blur(18px) saturate(160%)',
             }}>
-              <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>{t('הגדרות', 'Settings')}</div>
+              <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', color: T.text.primary }}>{t('הגדרות', 'Settings')}</div>
               <button onClick={onClose} aria-label="Close" style={{
-                width: 32, height: 32, borderRadius: 16, background: 'rgba(255,255,255,0.08)',
+                width: 32, height: 32, borderRadius: 16, background: iosCircleBg,
                 border: 'none', color: T.text.primary, display: 'grid', placeItems: 'center', cursor: 'pointer',
               }}><X size={16} /></button>
             </div>
@@ -401,11 +402,11 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
             <div style={{ padding: '14px 16px 4px' }}>
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
-                background: 'rgba(255,255,255,0.06)', borderRadius: 12,
+                background: iosRowBgStrong, borderRadius: 12,
                 border: `1px solid ${T.border.subtle}`,
               }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} dir="ltr">
+                  <div style={{ fontSize: 15, fontWeight: 700, color: T.text.primary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} dir="ltr">
                     {auth.user?.email ?? '—'}
                   </div>
                   <div style={{ fontSize: 11, color: T.text.muted, marginTop: 2, fontFamily: mono }}>
@@ -415,7 +416,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                 <div style={{
                   width: 48, height: 48, borderRadius: '50%', flexShrink: 0,
                   background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.purple})`,
-                  display: 'grid', placeItems: 'center', fontSize: 18, fontWeight: 800, color: '#000',
+                  display: 'grid', placeItems: 'center', fontSize: 18, fontWeight: 800, color: isLight ? '#fff' : '#000',
                 }}>{(auth.user?.email || '?').charAt(0).toUpperCase()}</div>
               </div>
             </div>
@@ -431,7 +432,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                       letterSpacing: 1.2, padding: '4px 6px 8px',
                     }}>{group}</div>
                     <div style={{
-                      background: 'rgba(255,255,255,0.05)', borderRadius: 12, overflow: 'hidden',
+                      background: iosRowBg, borderRadius: 12, overflow: 'hidden',
                       border: `1px solid ${T.border.subtle}`,
                     }}>
                       {rows.map((item, i) => {
@@ -455,10 +456,10 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                               width: 30, height: 30, borderRadius: 7, flexShrink: 0,
                               display: 'grid', placeItems: 'center',
                               background: `linear-gradient(160deg, ${tint}, ${tint}aa)`,
-                              boxShadow: `inset 0 0 0 1px rgba(255,255,255,0.15)`,
-                              color: '#000',
+                              boxShadow: `inset 0 0 0 1px ${isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.15)'}`,
+                              color: '#fff',
                             }}><Icon size={16} strokeWidth={2.4} /></span>
-                            <span style={{ flex: 1, fontSize: 14.5, fontWeight: 500, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <span style={{ flex: 1, fontSize: 14.5, fontWeight: 500, color: T.text.primary, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {item.label[isRTL ? 'he' : 'en']}
                             </span>
                             <span style={{
@@ -477,7 +478,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                 onClick={async () => { await auth.signOut(); }}
                 style={{
                   width: '100%', marginTop: 4, padding: '13px 14px',
-                  background: 'rgba(255,255,255,0.05)', border: `1px solid ${T.border.subtle}`,
+                  background: iosRowBg, border: `1px solid ${T.border.subtle}`,
                   borderRadius: 12, color: T.accent.orange, fontFamily: sans, fontSize: 14.5, fontWeight: 600,
                   cursor: 'pointer', textAlign: 'center',
                 }}
