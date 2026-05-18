@@ -1592,3 +1592,176 @@ function KeyGuide({ T, isRTL, provider }: { T: TradingTheme; isRTL: boolean; pro
   );
 }
 
+
+/* ============================ CSV DROP ZONE ============================ */
+function CsvDropZone({
+  T, isRTL, broker, onClose,
+}: {
+  T: TradingTheme;
+  isRTL: boolean;
+  broker: CsvBrokerMeta;
+  onClose: () => void;
+}) {
+  const t = (he: string, en: string) => (isRTL ? he : en);
+  const sans = "'Poppins', sans-serif";
+  const mono = "'IBM Plex Mono', monospace";
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const [doneFile, setDoneFile] = useState<string | null>(null);
+
+  // STUB: parsed CSV trades from this zone MUST be tagged with `stop_loss: null`.
+  // This is the contract the future adaptive chart engine relies on to know that
+  // the stop-loss is missing and should be inferred — do NOT build the engine here.
+  const handleFiles = async (files: FileList | File[]) => {
+    const f = files[0];
+    if (!f) return;
+    setProcessing(true);
+    setDoneFile(null);
+    try {
+      // TODO: real parser will live in src/lib/csv-import/<broker>.ts and
+      // every produced trade row must be created with `stop_loss: null`.
+      await new Promise(res => setTimeout(res, 1400));
+      setDoneFile(f.name);
+      toast.success(t('הקובץ התקבל ועובד', 'File received and processed'));
+    } catch (e) {
+      toast.error(t('נכשל בעיבוד הקובץ', 'Failed to process file'));
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  return (
+    <div
+      style={{
+        marginTop: 16,
+        borderRadius: 18,
+        padding: 22,
+        background: `linear-gradient(135deg, ${broker.accent}11, rgba(11,23,48,0.55))`,
+        border: `1px solid ${broker.accent}44`,
+        backdropFilter: 'blur(20px) saturate(150%)', WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+        boxShadow: `0 24px 70px -30px ${broker.accent}66`,
+        direction: isRTL ? 'rtl' : 'ltr',
+        animation: 'orcaDropIn .35s cubic-bezier(.16,1,.3,1)',
+        position: 'relative',
+      }}
+    >
+      <style>{`
+        @keyframes orcaDropIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes orcaDashSpin { to { stroke-dashoffset: -40; } }
+      `}</style>
+
+      <button
+        onClick={onClose}
+        aria-label={t('סגור', 'Close')}
+        style={{
+          position: 'absolute', top: 12, insetInlineEnd: 12,
+          width: 28, height: 28, borderRadius: 8,
+          background: 'rgba(0,0,0,0.25)', border: `1px solid ${T.border.subtle}`,
+          color: T.text.muted, cursor: 'pointer',
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        }}
+      ><X size={14} /></button>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+        <div style={{
+          width: 30, height: 30, borderRadius: 8,
+          background: `linear-gradient(135deg, ${broker.accent}, ${broker.accent}aa)`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: '#0b1730', fontFamily: mono, fontWeight: 800, fontSize: 11,
+        }}>{broker.glyph}</div>
+        <div style={{ fontFamily: sans, fontWeight: 700, fontSize: 13, color: T.text.primary }}>
+          {broker.name}
+        </div>
+      </div>
+
+      <div
+        onClick={() => !processing && inputRef.current?.click()}
+        onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={e => {
+          e.preventDefault(); setDragOver(false);
+          if (processing) return;
+          if (e.dataTransfer.files?.length) void handleFiles(e.dataTransfer.files);
+        }}
+        style={{
+          position: 'relative',
+          borderRadius: 16,
+          padding: '38px 22px',
+          background: dragOver
+            ? `linear-gradient(135deg, ${broker.accent}22, ${broker.accent}08)`
+            : 'rgba(6,12,24,0.45)',
+          border: `2px dashed ${dragOver ? broker.accent : T.border.medium}`,
+          cursor: processing ? 'wait' : 'pointer',
+          transition: 'background .2s ease, border-color .2s ease',
+          textAlign: 'center',
+          minHeight: 180,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10,
+        }}
+      >
+        <input
+          ref={inputRef}
+          type="file"
+          accept=".csv,.txt,.tsv,.xlsx,.xls"
+          style={{ display: 'none' }}
+          onChange={e => { if (e.target.files?.length) void handleFiles(e.target.files); }}
+        />
+
+        {processing ? (
+          <>
+            <Loader2 size={34} color={broker.accent} style={{ animation: 'spin 1s linear infinite' }} />
+            <div style={{ fontFamily: sans, fontWeight: 700, fontSize: 14, color: T.text.primary }}>
+              {t('מעבד נתונים…', 'Processing data…')}
+            </div>
+            <div style={{ fontFamily: mono, fontSize: 11, color: T.text.muted, letterSpacing: 0.4 }}>
+              {t('קורא שורות וחישובי PnL', 'Reading rows & computing PnL')}
+            </div>
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          </>
+        ) : doneFile ? (
+          <>
+            <CheckCircle2 size={36} color="#10b981" />
+            <div style={{ fontFamily: sans, fontWeight: 700, fontSize: 14, color: T.text.primary }}>
+              {t('הקובץ נטען', 'File loaded')}
+            </div>
+            <div style={{ fontFamily: mono, fontSize: 11, color: T.text.muted }}>{doneFile}</div>
+            <button
+              onClick={(e) => { e.stopPropagation(); setDoneFile(null); inputRef.current?.click(); }}
+              style={{
+                marginTop: 6, padding: '8px 14px', borderRadius: 8,
+                background: 'transparent', border: `1px solid ${broker.accent}66`,
+                color: broker.accent, fontFamily: sans, fontWeight: 700, fontSize: 11,
+                cursor: 'pointer', letterSpacing: 0.4,
+              }}
+            >{t('טען קובץ נוסף', 'Load another file')}</button>
+          </>
+        ) : (
+          <>
+            <UploadCloud size={38} color={dragOver ? broker.accent : T.text.muted} />
+            <div style={{
+              fontFamily: sans, fontWeight: 700, fontSize: 14.5, color: T.text.primary, lineHeight: 1.4,
+              maxWidth: 480,
+            }}>
+              {t('גרור ושחרר קובץ CSV או היסטוריית מסחר', 'Drag & drop a CSV or trade history file')}
+            </div>
+            <div style={{
+              fontFamily: sans, fontSize: 11.5, color: T.text.muted, lineHeight: 1.5,
+              maxWidth: 460,
+            }}>
+              {t(
+                'המערכת תשאב את הנתונים הפיננסיים ותחשב אוטומטית שווי דולרי',
+                'The system will extract the financial data and auto-compute the USD value'
+              )}
+            </div>
+            <div style={{
+              marginTop: 6, fontFamily: mono, fontSize: 10, color: T.text.muted,
+              letterSpacing: 0.6, textTransform: 'uppercase',
+            }}>
+              {t('או לחץ לבחירה ידנית', 'or click to browse')}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
