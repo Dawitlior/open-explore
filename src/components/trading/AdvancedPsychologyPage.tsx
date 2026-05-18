@@ -10,6 +10,7 @@ import { LazyChart } from './LazyChart';
 import type { ChartExplanation } from './ChartWrapper';
 import { diagnose, type DeepDiagnosis } from '@/lib/psychology-diagnostic';
 import { PsychologyLab } from './PsychologyLab';
+import { useVisibleTrades } from '@/lib/display-mode-format';
 
 type OperatingMode = 'live' | 'review' | 'research' | 'beginner';
 
