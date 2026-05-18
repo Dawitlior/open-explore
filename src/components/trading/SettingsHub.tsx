@@ -98,6 +98,30 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
   useEffect(() => { if (ui.prefs.customAccent) setDraftAccent(ui.prefs.customAccent); }, [ui.prefs.customAccent]);
   useEffect(() => { if (ui.prefs.customTheme) setDraftTheme(ui.prefs.customTheme); }, [ui.prefs.customTheme]);
 
+  // ───────────────────────────────────────────────────────────────────
+  // Security interceptors (component-scoped): block context menu and
+  // DevTools hotkeys while the Settings panel is mounted/open.
+  // ───────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!open) return;
+    const root = dialogRef.current;
+    const onCtx = (e: MouseEvent) => { e.preventDefault(); e.stopPropagation(); };
+    const onKey = (e: KeyboardEvent) => {
+      const k = e.key;
+      const isF12 = k === 'F12';
+      const mod = e.ctrlKey || e.metaKey;
+      const inspect = mod && e.shiftKey && (k === 'I' || k === 'i' || k === 'J' || k === 'j' || k === 'C' || k === 'c');
+      const viewSrc = mod && (k === 'U' || k === 'u');
+      if (isF12 || inspect || viewSrc) { e.preventDefault(); e.stopPropagation(); }
+    };
+    root?.addEventListener('contextmenu', onCtx);
+    window.addEventListener('keydown', onKey, true);
+    return () => {
+      root?.removeEventListener('contextmenu', onCtx);
+      window.removeEventListener('keydown', onKey, true);
+    };
+  }, [open]);
+
   if (!open) return null;
   const t = (he: string, en: string) => isRTL ? he : en;
   const mono = "'IBM Plex Mono', 'JetBrains Mono', monospace";
