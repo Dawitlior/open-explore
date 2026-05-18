@@ -8,6 +8,7 @@ import { computeAnalytics, getCalDays } from '@/lib/trading-analytics';
 import { i18n } from '@/lib/trading-i18n';
 import { getTheme, tintTheme, ttStyle, modeColors, type TradingTheme } from '@/lib/trading-theme';
 import { GlassCard, MetricCard, ScoreGauge, TradingBadge, Ico } from '@/components/trading/TradingUI';
+import { AdaptiveExpectancyCard, AdaptiveQuickStats } from '@/components/trading/AdaptiveKpiCards';
 import { ChartWrapper, EXPLANATIONS, type ChartExplanation } from '@/components/trading/ChartWrapper';
 import { ChartExplanationModal } from '@/components/trading/ChartExplanationModal';
 import { CalendarModal } from '@/components/trading/CalendarModal';
