@@ -66,6 +66,11 @@ const TOKEN_LIST = [
 export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, lang, setLang, privacyMode, setPrivacyMode, trades }: SettingsHubProps) {
   const [tab, setTab] = useState<TabId>('account');
   const isMobile = useIsMobile();
+  // iOS-style drill-down: on mobile, the panel opens to the master list.
+  // Tapping a row drills into the detail view; the back chevron returns.
+  const [mobileDrilled, setMobileDrilled] = useState(false);
+  // Reset to the list whenever the panel is (re-)opened on mobile.
+  useEffect(() => { if (!isMobile) setMobileDrilled(false); }, [isMobile]);
   const [search, setSearch] = useState('');
   const dash = useDashboardConfig();
   const ui = useUIPrefs();
