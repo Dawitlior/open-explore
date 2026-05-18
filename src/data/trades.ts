@@ -6,7 +6,9 @@ export interface Trade {
   direction: 'Long' | 'Short';
   orderType: string;
   entry: number;
-  stopLoss: number;
+  /** `null` = trade was imported without a stop-loss (e.g. CSV from a broker).
+   *  Dashboards in R-Multiple mode hide rows where stopLoss is null. */
+  stopLoss: number | null;
   exit: number;
   returnR: number;
   winLoss: 'Win' | 'Loss' | 'Break Even';

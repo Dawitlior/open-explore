@@ -43,6 +43,8 @@ import { DimensionController, PortalButton, BacktestPortalButton } from '@/compo
 const JournalDimension = lazy(() => import('@/components/trading/JournalDimension').then(m => ({ default: m.JournalDimension })));
 const BacktestDimension = lazy(() => import('@/components/trading/BacktestDimension').then(m => ({ default: m.BacktestDimension })));
 import { useTrades } from '@/hooks/use-trades';
+import { DisplayModeProvider } from '@/lib/display-mode';
+import { DisplayModeToggle } from '@/components/trading/DisplayModeToggle';
 import { useSettings, type ThemeId } from '@/hooks/use-settings';
 import { useUserPreferences } from '@/hooks/use-user-preferences';
 import { assessRisk } from '@/lib/risk-engine';
@@ -1599,7 +1601,9 @@ const Index = () => {
   }
 
   return (
+    <DisplayModeProvider trades={trades}>
     <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden', background: T.bg.primary, color: T.text.primary, fontFamily: "'Inter', system-ui, -apple-system, sans-serif", fontSize: 14, transition: 'background 0.5s ease, color 0.5s ease, filter 0.5s ease, opacity 0.5s ease', opacity: exiting ? 0 : 1, filter: exiting ? 'blur(8px)' : 'none' }}>
+
       <style>{portalCSS}</style>
       {/* Exit animation overlay */}
       {exiting && (
@@ -1740,6 +1744,9 @@ const Index = () => {
             {!isMobile && settings.privacyMode && <TradingBadge color={T.accent.orange}>🔒</TradingBadge>}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 10, flexWrap: 'nowrap', flexShrink: 0 }}>
+            {(page === 'dashboard' || page === 'analytics' || page === 'calendar') && !isMobile && (
+              <DisplayModeToggle T={T} isRTL={isRTL} compact />
+            )}
             {/* Prominent Add Trade button */}
             {!uiPrefs.hideAddTradeButton && <button onClick={() => { setEditingTrade(null); setShowTradeForm(true); }} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: isMobile ? '5px 10px' : '6px 16px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 700, cursor: 'pointer', fontSize: isMobile ? 11 : 12, transition: 'all 0.2s', boxShadow: `0 0 12px ${T.accent.cyan}30` }}>
               + {isMobile ? '' : t.addTrade}
@@ -1982,6 +1989,7 @@ const Index = () => {
       )}
       
     </div>
+    </DisplayModeProvider>
   );
 };
 
