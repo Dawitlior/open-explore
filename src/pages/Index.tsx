@@ -1954,7 +1954,7 @@ const Index = () => {
       {showRiskOnboarding && (
         <RiskOnboardingWizard isRTL={isRTL} onDismiss={() => setShowRiskOnboarding(false)} />
       )}
-      <LegalFooterLinks />
+      
     </div>
   );
 };
