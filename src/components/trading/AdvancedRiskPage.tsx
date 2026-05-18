@@ -448,9 +448,9 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
         <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'שינוי סיכון (%)' : 'Risk Change %'} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ flex: 1, minWidth: 260 }}>
           <LazyChart height={200}>
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={riskTimeline.slice(1)}>
+              <BarChart data={riskTimeline.slice(1).map((d, i) => ({ ...d, idx: i + 1 }))}>
                 <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 9 }} />
+                <XAxis dataKey="idx" tick={{ fill: T.text.muted, fontSize: 9 }} tickFormatter={(v: number) => `#${v}`} />
                 <YAxis tick={{ fill: T.text.muted, fontSize: 9 }} />
                 <Tooltip contentStyle={tt} cursor={false} formatter={(v: number) => `${v.toFixed(1)}%`} />
                 <Bar dataKey="change" radius={[3, 3, 0, 0]}>
