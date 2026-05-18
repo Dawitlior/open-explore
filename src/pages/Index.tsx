@@ -706,19 +706,21 @@ const Index = () => {
           <div style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
             <MetricCard T={T} label={t.netPnl} value={stats.totalPnl} color={stats.totalPnl >= 0 ? T.accent.cyan : T.accent.red} onInfoClick={() => handleExplainClick(t.netPnl, EXPLANATIONS.netPnl)} />
             <MetricCard T={T} label={t.winRate} value={stats.winRate} suffix="%" color={T.accent.green} onInfoClick={() => handleExplainClick(t.winRate, EXPLANATIONS.winRate)} />
-            <GlassCard T={T} glow={T.accent.cyanGlow} style={{ flex: 1, minWidth: isMobile ? 0 : 170, width: isMobile ? '100%' : undefined }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{t.expectancy}</div>
-                  <span style={{ fontSize: 7, padding: '1px 4px', borderRadius: 3, background: `${T.accent.purple}15`, color: T.accent.purple, fontWeight: 700 }}>R</span>
-                </div>
-                <button onClick={() => handleExplainClick(t.expectancy, EXPLANATIONS.expectancy)} style={{ width: 16, height: 16, borderRadius: '50%', border: `1px solid ${T.border.medium}`, background: 'transparent', color: T.text.muted, cursor: 'pointer', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1 }}>i</button>
-              </div>
-              <PV><div style={{ fontSize: 26, fontWeight: 700, color: stats.expectancyR >= 0 ? T.accent.cyan : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{stats.expectancyR >= 0 ? '+' : ''}{stats.expectancyR.toFixed(3)}R</div></PV>
-              <div style={{ fontSize: 9, color: T.text.muted, marginTop: 4 }}>
-                {isRTL ? 'תוחלת לעסקה ביחידות סיכון' : 'Expected return per trade in risk units'}
-              </div>
-            </GlassCard>
+            <AdaptiveExpectancyCard
+              T={T}
+              trades={trades}
+              stats={stats}
+              isRTL={isRTL}
+              isMobile={isMobile}
+              privacyMode={settings.privacyMode}
+              onInfoClick={() => handleExplainClick(t.expectancy, EXPLANATIONS.expectancy)}
+              labels={{
+                expectancy: t.expectancy,
+                avgPnl: isRTL ? 'תוחלת ($)' : 'Avg P&L ($)',
+                tooltipR: isRTL ? 'תוחלת לעסקה ביחידות סיכון' : 'Expected return per trade in risk units',
+                tooltipMoney: isRTL ? 'רווח/הפסד ממוצע לעסקה' : 'Average profit/loss per trade',
+              }}
+            />
             <MetricCard T={T} label={t.maxDrawdown} value={`${stats.maxDrawdown.toFixed(1)}%`} color={T.accent.orange} onInfoClick={() => handleExplainClick(t.maxDrawdown, EXPLANATIONS.maxDrawdownMetric)} />
           </div>
         </div>
