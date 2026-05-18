@@ -522,9 +522,9 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
               <AreaChart data={rDrawdownCurve}>
                 <defs><linearGradient id="dGadv" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.red} stopOpacity={0.25} /><stop offset="100%" stopColor={T.accent.red} stopOpacity={0.5} /></linearGradient></defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                <XAxis dataKey="trade" tick={{ fill: T.text.muted, fontSize: 10 }} />
-                <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} domain={['dataMin', 0]} />
-                <Tooltip contentStyle={tt} cursor={false} formatter={(v: number) => `${v.toFixed(2)}%`} />
+                <XAxis dataKey="trade" tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => `#${v}`} />
+                <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} domain={[(dataMin: number) => Math.min(-1, Math.max(-100, dataMin)), 0]} tickFormatter={(v: number) => `${v.toFixed(0)}%`} allowDataOverflow={false} />
+                <Tooltip contentStyle={tt} cursor={false} formatter={(v: number) => `${v.toFixed(2)}%`} labelFormatter={(l) => `Trade #${l}`} />
                 <Area type="monotone" dataKey="dd" stroke={T.accent.red} fill="url(#dGadv)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
