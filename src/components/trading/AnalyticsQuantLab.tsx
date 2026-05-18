@@ -31,6 +31,7 @@ import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { GlassCard } from './TradingUI';
 import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
+import { useVisibleTrades } from '@/lib/display-mode-format';
 
 type DayRPoint = { i: number; day: string; total: number; cum: number; trades: Trade[] };
 
@@ -47,7 +48,9 @@ const sessionOf = (h: number): 'Asia' | 'London' | 'NY' | 'Off' => {
   return 'Off';
 };
 
-export const AnalyticsQuantLab = ({ T, trades, privacyMode }: Props) => {
+export const AnalyticsQuantLab = ({ T, trades: _allTrades, privacyMode }: Props) => {
+  // 🔀 Dual-Currency Engine: filtered dataset + adaptive helpers
+  const { visibleTrades: trades, isMoney, formatValue: fmtVal, formatAxis: fmtAxis } = useVisibleTrades(_allTrades);
   const tt = {
     background: T.bg.card,
     border: `1px solid ${T.border.medium}`,
@@ -78,6 +81,7 @@ export const AnalyticsQuantLab = ({ T, trades, privacyMode }: Props) => {
       return { i: i + 1, day: day.slice(5), total, cum: +cum.toFixed(3), trades: dayTrades };
     });
   }, [trades]);
+
 
   /* ── 1. R-Multiple histogram + bell curve overlay ── */
   const rHisto = useMemo(() => {
@@ -117,10 +121,15 @@ export const AnalyticsQuantLab = ({ T, trades, privacyMode }: Props) => {
     ];
   }, [trades, T]);
 
-  /* ── 3. Cumulative R (day-grouped, Tier-3 proxy for missing-SL days) ── */
+  /* ── 3. Cumulative R (and cumulative $ for MONEY mode) ── */
   const cumR = useMemo(() => {
-    return dailyRSeries.map(({ i, day, cum }) => ({ i, day, r: cum }));
+    let cumMoney = 0;
+    return dailyRSeries.map(({ i, day, cum, trades: dayTrades }) => {
+      cumMoney += dayTrades.reduce((s, t) => s + t.pnl, 0);
+      return { i, day, r: cum, money: +cumMoney.toFixed(2) };
+    });
   }, [dailyRSeries]);
+
 
   /* ── 4. Rolling Calmar (mean R / max DD in window) ── */
   const rollingCalmar = useMemo(() => {
@@ -349,7 +358,7 @@ export const AnalyticsQuantLab = ({ T, trades, privacyMode }: Props) => {
       {/* Row: Cumulative R + Rolling Calmar */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12, marginBottom: 12 }}>
         <GlassCard T={T}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>עקומת R מצטברת</div>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{isMoney ? 'עקומת הון מצטבר ($)' : 'עקומת R מצטברת'}</div>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={cumR}>
               <defs>
@@ -360,10 +369,10 @@ export const AnalyticsQuantLab = ({ T, trades, privacyMode }: Props) => {
               </defs>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
               <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
-              <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
-              <Tooltip contentStyle={tt} formatter={(v: number) => `${v.toFixed(2)}R`} />
+              <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => fmtAxis(v)} />
+              <Tooltip contentStyle={tt} formatter={(v: number) => fmtVal(v)} />
               <ReferenceLine y={0} stroke={T.text.muted} />
-              <Area type="monotone" dataKey="r" stroke={T.accent.cyan} fill="url(#cumR)" strokeWidth={2.4} />
+              <Area type="monotone" dataKey={isMoney ? 'money' : 'r'} stroke={T.accent.cyan} fill="url(#cumR)" strokeWidth={2.4} />
             </AreaChart>
           </ResponsiveContainer>
         </GlassCard>

@@ -34,6 +34,7 @@ import type { ChartExplanation } from './ChartWrapper';
 import { useLang } from '@/hooks/use-lang';
 import { RProxyBanner } from './RProxyBanner';
 import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
+import { useVisibleTrades } from '@/lib/display-mode-format';
 const AnalyticsQuantLab = lazy(() => import('./AnalyticsQuantLab').then(m => ({ default: m.AnalyticsQuantLab })));
 
 interface AdvancedAnalyticsPageProps {
@@ -53,8 +54,10 @@ const ENG_DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 const HEB_DOW_FULL = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 const ENG_DOW_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, operatingMode = 'live' }: AdvancedAnalyticsPageProps) => {
+export const AdvancedAnalyticsPage = ({ T, trades: _allTrades, stats, privacyMode, isAlpha, operatingMode = 'live' }: AdvancedAnalyticsPageProps) => {
   const { t, isRTL: langRTL } = useLang();
+  // 🔀 Dual-Currency Engine: filtered dataset + adaptive axis/format helpers
+  const { visibleTrades: trades, isMoney, formatAxis: fmtAxis, formatValue: fmtVal } = useVisibleTrades(_allTrades);
   const DOW = langRTL ? HEB_DOW : ENG_DOW;
   const DOW_FULL = langRTL ? HEB_DOW_FULL : ENG_DOW_FULL;
   // Tier resolution — controls which chart layers render.
@@ -93,17 +96,31 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
     return Array.from(byDay.entries()).sort(([a], [b]) => a.localeCompare(b));
   }, [trades]);
 
-  // 1. Equity & drawdown overlay in R-space using day-level proxy aggregation
+  // 1. Equity & drawdown overlay — carries BOTH cumulative R and cumulative fiat
+  //    so the chart can swap dataKey at render time based on displayMode.
   const equityDD = useMemo(() => {
-    let cum = 0, peak = 0;
+    let cumR = 0, cumPnl = 0, peak = 0, peakMoney = 0;
     return tradesByDay.map(([day, dayTrades], i) => {
       const { total } = sumDailyR(dayTrades);
-      cum += total;
-      if (cum > peak) peak = cum;
-      const dd = peak > 0 ? -((peak - cum) / Math.max(Math.abs(peak), 1) * 100) : 0;
-      return { id: i + 1, day: day.slice(5), equity: +cum.toFixed(3), dd: +dd.toFixed(2), pnl: dayTrades.reduce((s, t) => s + t.pnl, 0) };
+      const dayPnl = dayTrades.reduce((s, t) => s + t.pnl, 0);
+      cumR += total;
+      cumPnl += dayPnl;
+      if (cumR > peak) peak = cumR;
+      if (cumPnl > peakMoney) peakMoney = cumPnl;
+      const ddR = peak > 0 ? -((peak - cumR) / Math.max(Math.abs(peak), 1) * 100) : 0;
+      const ddMoney = peakMoney > 0 ? -((peakMoney - cumPnl) / Math.max(Math.abs(peakMoney), 1) * 100) : 0;
+      return {
+        id: i + 1,
+        day: day.slice(5),
+        equity: +cumR.toFixed(3),
+        equityMoney: +cumPnl.toFixed(2),
+        dd: +ddR.toFixed(2),
+        ddMoney: +ddMoney.toFixed(2),
+        pnl: dayPnl,
+      };
     });
   }, [tradesByDay]);
+
 
   // 2. R buckets
   const rBuckets = useMemo(() => {
@@ -426,7 +443,7 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700 }}>{t('עקומת הון מול נסיגה','Equity vs Drawdown')}</div>
           <div style={{ display: 'flex', gap: 14, fontSize: 10, color: T.text.muted }}>
-            <span>● <span style={{ color: T.accent.cyan }}>{t('R מצטבר','Cumulative R')}</span></span>
+            <span>● <span style={{ color: T.accent.cyan }}>{isMoney ? t('הון מצטבר ($)','Cumulative P&L ($)') : t('R מצטבר','Cumulative R')}</span></span>
             <span>● <span style={{ color: T.accent.red }}>{t('נסיגה (%)','Drawdown (%)')}</span></span>
           </div>
         </div>
@@ -444,14 +461,15 @@ export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, 
             </defs>
             <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
             <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 10 }} />
-            <YAxis yAxisId="L" tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => `${v}R`} />
+            <YAxis yAxisId="L" tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => fmtAxis(v)} />
             <YAxis yAxisId="R" orientation="right" tick={{ fill: T.text.muted, fontSize: 10 }} domain={['dataMin', 0]} />
-            <Tooltip contentStyle={tt} formatter={(v: number, n: string) => n === 'equity' ? `${v.toFixed(2)}R` : `${v.toFixed(2)}%`} />
-            <Area yAxisId="L" type="monotone" dataKey="equity" stroke={T.accent.cyan} strokeWidth={2.5} fill="url(#equityG)" />
-            <Area yAxisId="R" type="monotone" dataKey="dd" stroke={T.accent.red} strokeWidth={1.5} fill="url(#ddG)" />
+            <Tooltip contentStyle={tt} formatter={(v: number, n: string) => n === 'dd' || n === 'ddMoney' ? `${v.toFixed(2)}%` : fmtVal(v)} />
+            <Area yAxisId="L" type="monotone" dataKey={isMoney ? 'equityMoney' : 'equity'} stroke={T.accent.cyan} strokeWidth={2.5} fill="url(#equityG)" />
+            <Area yAxisId="R" type="monotone" dataKey={isMoney ? 'ddMoney' : 'dd'} stroke={T.accent.red} strokeWidth={1.5} fill="url(#ddG)" />
           </ComposedChart>
         </ResponsiveContainer>
       </GlassCard>}
+
 
       {/* ═══ ROW: R Distribution + Direction Radial ═══ */}
       {showCore && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12, marginBottom: 16 }}>

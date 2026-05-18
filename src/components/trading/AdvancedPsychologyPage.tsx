@@ -10,6 +10,7 @@ import { LazyChart } from './LazyChart';
 import type { ChartExplanation } from './ChartWrapper';
 import { diagnose, type DeepDiagnosis } from '@/lib/psychology-diagnostic';
 import { PsychologyLab } from './PsychologyLab';
+import { useVisibleTrades } from '@/lib/display-mode-format';
 
 type OperatingMode = 'live' | 'review' | 'research' | 'beginner';
 
@@ -39,7 +40,8 @@ const SectionHeader = ({ T, label, accent, isRTL }: { T: TradingTheme; label: st
   </div>
 );
 
-export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'live', trades, stats, onExplainClick }: AdvancedPsychologyPageProps) => {
+export const AdvancedPsychologyPage = ({ T, isRTL, isAlpha, operatingMode = 'live', trades: _allTrades, stats, onExplainClick }: AdvancedPsychologyPageProps) => {
+  const { visibleTrades: trades } = useVisibleTrades(_allTrades);
   const [diagnosisOpen, setDiagnosisOpen] = useState(false);
   const [diagLoading, setDiagLoading] = useState(false);
   const MIN_DIAG_TRADES = 8;

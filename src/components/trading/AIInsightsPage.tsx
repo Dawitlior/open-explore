@@ -1,4 +1,5 @@
 import { getEffectiveR } from "@/lib/r-multiple";
+import { useVisibleTrades } from '@/lib/display-mode-format';
 /**
  * 🧠 AI INSIGHTS PAGE — "The Mainframe"
  * ────────────────────────────────────────────────────────────────
@@ -302,7 +303,8 @@ const LowTradesPopup: React.FC<{ count: number; T: TradingTheme; isRTL: boolean;
 /* MAIN PAGE                                                        */
 /* ──────────────────────────────────────────────────────────────── */
 
-export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades }) => {
+export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades: _allTrades }) => {
+  const { visibleTrades: trades } = useVisibleTrades(_allTrades);
   const { t, isRTL } = useLang();
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<ReturnType<typeof analyzeDeep> | null>(null);

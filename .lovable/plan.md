@@ -1,89 +1,52 @@
+## Task 3 — Adaptive Chart Rendering (Dual-Currency Engine)
 
-# תוכנית עבודה — 11 משימות
+The chart surface is large (9 files, ~40 Recharts canvases). To respect the "do not duplicate / do not modify KPI cards" rule and keep this shippable in one pass, I'll inject the engine in **two layers** rather than touching every chart.
 
-## 🚨 שלב 1 — תיקוני אבטחה ויציבות (קריטי, ראשון)
+### Layer 1 — Data feed (covers 100% of charts automatically)
 
-### 1. Bug קריטי: איפוס נתונים מוחק לכל המשתמשים
-- **חקירה**: ב-`src/lib/storage.ts` המחיקה מוגנת ע"י `user_id` + RLS ולכן בענן זה כן per-user. החשד שלי הוא שה-Reset מוחק גם `localStorage` משותף לדפדפן (למשל ה-iframes של ה-Journal/Backtest שמאחסנים ב-`localStorage` גלובלי ולא מבדילים בין משתמשים על אותו דפדפן).
-- **תיקון**: 
-  - לסרוק כל קריאה ל-`localStorage.clear()` / מפתחות `orca_*` / `weekly-review` ולוודא שהן נמסטרות עם `userId` כתחילית.
-  - ב-Journal/Backtest iframes — כל מפתח localStorage יקבל prefix של `auth.uid()` כך שכל משתמש רואה רק את שלו.
-  - `clearAllData()` תמחק רק את המפתחות של המשתמש הנוכחי.
-- **בדיקת אישור**: הוספת לוג מובהק שמראה איזה user_id מוחק מה.
+In `src/pages/Index.tsx`, derive `visibleTrades` from `useDisplayMode()` and pass it (instead of raw `trades`) to every analytics/risk/psychology/AI/calendar page prop. This means:
 
-### 2. אנימציית מעבר בין Orca ↔ Journal ↔ Backtest (אסור מסך לבן)
-- כיום המעבר ל-iframe (`public/weekly-review/index.html`, `BacktestDimension`) חושף מסך לבן בזמן טעינה.
-- הוספת **overlay של LiquidSweep** מעל ה-iframe עד שמתקבל `iframe.onload` + handshake postMessage `{ type: 'orca:ready' }`.
-- חזרה ל-Orca: כשה-iframe שולח `{ type: 'orca:exit' }` נציג overlay מלא לפני unmount.
+- In `MONEY` mode → every chart sees all trades (current behaviour).
+- In `R_MULTIPLE` mode → every chart automatically receives only trades with a real `stopLoss`. CSV-only datasets are filtered out everywhere at once.
 
-## 📱 שלב 2 — רספונסיביות נייד (סריקה מלאה)
+A tiny `<DisplayModeConsumer>` wrapper inside `DisplayModeProvider` exposes `visibleTrades` to the existing render functions without restructuring the page.
 
-### 3. SettingsHub רספונסיבי
-- נכון לעכשיו זה desktop-first עם grids רחבים. נשכתב ל:
-  - mobile: עמודה אחת, tabs בתחתית בסטיקי, sliders באורך מלא, modals במקום dialogs.
-  - safe-area-inset-bottom + 100dvh.
+### Layer 2 — Axis/format swap on the *primary* canvases
 
-### 4. WeeklyReviewPage רספונסיבי
-- ה-iframe יקבל `width: 100%; height: 100dvh` וגם ה-HTML הפנימי (`public/weekly-review/index.html`) יקבל media queries לנייד (כפתורים גדולים, פונט קריא, גלילה אופקית בטבלאות).
+Only the charts whose Y-axis represents a money-or-R value get adaptive `dataKey` + tick/tooltip formatting. KPI cards are untouched per instructions.
 
-### 5. FeatureManifestModal (אודות המערכת) רספונסיבי
-- max-h-[90dvh], scroll פנימי, כותרות בגודל responsive.
+Targets (existing files, surgical edits only):
 
-### 6. סריקה כללית של כל הדפים
-- Trade form, Calendar Hub, Analytics, AI Insights, Risk page, Psychology Lab — כל דף יקבל בדיקת breakpoint ב-375/414/768.
-- שימוש ב-`useIsMobile()` לפצל layouts כשצריך.
+1. **Equity / cumulative curves**
+   - `AdvancedAnalyticsPage.tsx` → `equityDD` ComposedChart: compute both `equityR` and `equity$` in the same memo; pick `dataKey` + tooltip formatter from `displayMode`.
+   - `AnalyticsQuantLab.tsx` → `cumR` AreaChart + `dailyEq` step-equity: same dual-field pattern.
 
-## 👤 שלב 3 — פרופיל משתמש
+2. **Distribution / histogram**
+   - `AnalyticsQuantLab.tsx` → R-bin histogram: in `MONEY` mode rebuild bins by $ brackets (±$100/250/500/1k); in `R_MULTIPLE` keep the existing R bins. X-axis label switches.
 
-### 7. תמונת פרופיל
-- יצירת bucket `avatars` (public read, owner-only write) במיגרציה.
-- ב-SettingsHub: כפתור העלאה (קרופ ל-256x256, webp, max 500KB).
-- שמירה ב-`profiles.avatar_url`.
-- הצגה בנאב-בר ליד סכום התיק עם fallback של אות ראשונה.
+3. **Heatmaps / day-hour aggregations**
+   - Day-of-week + session bar charts in `AnalyticsQuantLab.tsx` and any heatmap aggregator: accumulate `pnl` vs `r` based on mode; intensity scale + tooltip suffix swap accordingly.
 
-## 🎨 שלב 4 — Theme Studio ברמה עולמית
+### Shared helper (new)
 
-### 8. צבעים פר-משתמש (כבר מאוחסן ב-`user_settings` שזה per-user) — לוודא שאין שום cache גלובלי.
+`src/lib/display-mode-format.ts`:
+- `formatValue(v, mode)` → `+$500` / `+2.5R`
+- `formatAxis(v, mode)` → compact ticks
+- `pickField(mode)` → `'pnl' | 'r'`
+- `getMoneyBins(trades)` → dynamic $ buckets based on data spread
 
-### 9. כפתור "החל מיד" באולפן
-- אחרי שמירת צבע — ירוץ `applyDerivedPalette()` + dispatch `orca:theme-changed` שיגרום ל-Index.tsx לבצע re-render של הvar bindings ללא reload.
+Used only inside the targeted charts above. No global theme/token changes.
 
-### 10. בניית ערכת theme שלמה (לא רק accent)
-- במקום צבע אחד, המשתמש יבחר:
-  - **Base mood**: dark/light/auto
-  - **Background hue** (שולט ב-`--bg-deep`)
-  - **Surface elevation** (שולט ב-`--bg-card`)
-  - **Accent primary**
-  - **Accent secondary** (אופציונלי)
-  - **Border intensity** (slider)
-  - **Glow intensity** (slider)
-- preview חי בתוך מודל עם דוגמת כרטיס + כפתור + טבלה.
-- שמירה כ-`customTheme` object שלם, נטען אוטומטית עם applyCustomTheme().
-- נעילת 24h נשמרת אבל עם אפשרות "ביטול נעילה" אחרי הסכמה כפולה (במקרה של טעות).
+### Out of scope (explicit)
 
-## 🌐 שלב 5 — תרגום מלא לאנגלית
+- KPI / metric text cards (Task 4)
+- Specialty R-only modules (drawdown-R, risk %, calmar, MFE/MAE) — these are inherently R-based and stay as-is even in MONEY mode; they just receive the filtered/full dataset.
+- New layouts, new files beyond the helper, animation rewrites.
 
-### 11. סריקה מלאה של i18n
-- מעבר על `src/lib/trading-i18n.ts` והוספת כל המחרוזות החסרות.
-- סריקת כל קומפוננטה ב-`src/components/trading/` ל-strings קשיחים בעברית — והעברתם לקובץ ה-i18n.
-- קומפוננטות חשודות: `WeeklyReviewPage`, `AIInsightsPage`, `AnalyticsQuantLab`, `PsychologyLab`, `BacktestDimension`, ה-iframes.
-- ה-iframes (`public/weekly-review/index.html`) יקבלו postMessage עם השפה הנוכחית ויחליפו טקסטים.
+### Verification
 
----
+After edits I'll do a build + read-back check and confirm:
+- Toggle in MONEY: every page shows full dataset, equity curves in `$`.
+- Toggle in R_MULTIPLE: CSV-only trades filtered, equity curves in `R`, hidden-hint visible.
 
-## סדר ביצוע מומלץ
-1. ✅ תיקון bug האיפוס (קריטי)
-2. ✅ אנימציות מעבר (UX מעצבן עכשיו)
-3. ✅ רספונסיביות Settings + WeeklyReview + About
-4. ✅ סריקת רספונסיביות לכל הדפים
-5. ✅ תמונת פרופיל
-6. ✅ Theme Studio מתקדם + כפתור "החל"
-7. ✅ סריקת i18n מלאה
-
-## הערות טכניות
-- מיגרציה דרושה ל-bucket avatars + storage policies.
-- אין שינויי schema אחרים.
-- כל הצבעים יישארו כ-HSL בעיצוב tokens.
-- אסטרטגיית ה-localStorage prefix: `orca:${uid}:${key}` — נבנה עוטף קטן ב-`src/lib/local-scoped.ts`.
-
-זה עומס גדול — סביר להניח שאצטרך להריץ את זה בכמה פעימות. אאשר איתך אחרי שלב 1+2, ואז אמשיך הלאה.
+Shall I proceed with this scope, or do you want to narrow Layer 2 to a specific subset (e.g. only the Overview equity curve) for this pass?
