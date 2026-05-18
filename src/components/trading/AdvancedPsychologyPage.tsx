@@ -145,10 +145,10 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
   const lossPressure = useMemo(() => {
     const result: Array<{ id: number; pressure: number; consecLosses: number }> = [];
     let consec = 0;
-    trades.forEach((t, i) => {
+    trades.forEach(t => {
       if (t.winLoss === 'Loss') consec++;
       else consec = 0;
-      result.push({ id: i + 1, pressure: Math.min(100, consec * 25), consecLosses: consec });
+      result.push({ id: t.id, pressure: Math.min(100, consec * 25), consecLosses: consec });
     });
     return result;
   }, [trades]);
