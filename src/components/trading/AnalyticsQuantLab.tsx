@@ -358,7 +358,7 @@ export const AnalyticsQuantLab = ({ T, trades: _allTrades, privacyMode }: Props)
       {/* Row: Cumulative R + Rolling Calmar */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12, marginBottom: 12 }}>
         <GlassCard T={T}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>עקומת R מצטברת</div>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{isMoney ? 'עקומת הון מצטבר ($)' : 'עקומת R מצטברת'}</div>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={cumR}>
               <defs>
@@ -369,10 +369,10 @@ export const AnalyticsQuantLab = ({ T, trades: _allTrades, privacyMode }: Props)
               </defs>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
               <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
-              <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
-              <Tooltip contentStyle={tt} formatter={(v: number) => `${v.toFixed(2)}R`} />
+              <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => fmtAxis(v)} />
+              <Tooltip contentStyle={tt} formatter={(v: number) => fmtVal(v)} />
               <ReferenceLine y={0} stroke={T.text.muted} />
-              <Area type="monotone" dataKey="r" stroke={T.accent.cyan} fill="url(#cumR)" strokeWidth={2.4} />
+              <Area type="monotone" dataKey={isMoney ? 'money' : 'r'} stroke={T.accent.cyan} fill="url(#cumR)" strokeWidth={2.4} />
             </AreaChart>
           </ResponsiveContainer>
         </GlassCard>
