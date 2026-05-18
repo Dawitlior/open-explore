@@ -557,12 +557,34 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               background: `linear-gradient(180deg, ${T.bg.primary}, ${T.bg.secondary})`,
             }}>
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 18, fontWeight: 800, color: T.text.primary, letterSpacing: '-0.01em' }}>
-                  {activeMeta.label[isRTL ? 'he' : 'en']}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  {(() => {
+                    const chevStyle = (enabled: boolean): React.CSSProperties => ({
+                      width: 28, height: 28, borderRadius: 14,
+                      background: enabled ? (isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)') : 'transparent',
+                      border: 'none', color: enabled ? T.text.primary : T.text.dim,
+                      display: 'grid', placeItems: 'center', cursor: enabled ? 'pointer' : 'default',
+                      opacity: enabled ? 1 : 0.45, transition: 'background .12s',
+                      fontSize: 16, fontWeight: 600, lineHeight: 1,
+                    });
+                    const Back = isRTL ? '›' : '‹';
+                    const Fwd = isRTL ? '‹' : '›';
+                    return (
+                      <>
+                        <button aria-label="Back" disabled={!canGoBack} onClick={goBack} style={chevStyle(canGoBack)}>{Back}</button>
+                        <button aria-label="Forward" disabled={!canGoFwd} onClick={goFwd} style={chevStyle(canGoFwd)}>{Fwd}</button>
+                      </>
+                    );
+                  })()}
                 </div>
-                <div style={{ fontSize: 12, color: T.text.muted, marginTop: 2 }}>
-                  {activeMeta.desc[isRTL ? 'he' : 'en']}
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: T.text.primary, letterSpacing: '-0.01em' }}>
+                    {activeMeta.label[isRTL ? 'he' : 'en']}
+                  </div>
+                  <div style={{ fontSize: 12, color: T.text.muted, marginTop: 2 }}>
+                    {activeMeta.desc[isRTL ? 'he' : 'en']}
+                  </div>
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
