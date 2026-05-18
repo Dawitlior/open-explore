@@ -1986,6 +1986,7 @@ const Index = () => {
       )}
       
     </div>
+    </DisplayModeProvider>
   );
 };
 
