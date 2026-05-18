@@ -813,25 +813,25 @@ const Index = () => {
                   </div>
                 </ChartWrapper>
               </div>
-              {/* Quick Stats */}
-              <GlassCard T={T} style={{ marginBottom: 18 }}>
-                <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>{isRTL ? 'סטטיסטיקות מהירות' : 'Quick Stats'}</div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 0 }}>
-                  {[
-                    { l: `${t.avgWin} (R)`, v: `+${stats.avgWinR.toFixed(2)}R`, c: T.accent.green },
-                    { l: `${t.avgLoss} (R)`, v: `-${stats.avgLossR.toFixed(2)}R`, c: T.accent.red },
-                    { l: t.bestTrade, v: `+${stats.bestTradeR.toFixed(2)}R`, c: T.accent.cyan },
-                    { l: t.worstTrade, v: `${stats.worstTradeR.toFixed(2)}R`, c: T.accent.red },
-                    { l: t.profitFactor, v: `${stats.profitFactor.toFixed(2)}x`, c: T.accent.blue },
-                    { l: t.currentStreak, v: `${stats.currentStreak} ${stats.streakType === 'Loss' ? '🔴' : '🟢'}`, c: T.text.primary },
-                  ].map((s, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 12px', borderBottom: `1px solid ${T.border.subtle}` }}>
-                      <span style={{ color: T.text.muted, fontSize: 12 }}>{s.l}</span>
-                      <PV><span style={{ color: s.c, fontSize: 13, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace" }}>{s.v}</span></PV>
-                    </div>
-                  ))}
-                </div>
-              </GlassCard>
+              {/* Quick Stats — adaptive (R / $) */}
+              <AdaptiveQuickStats
+                T={T}
+                trades={trades}
+                stats={stats}
+                isRTL={isRTL}
+                privacyMode={settings.privacyMode}
+                streakDisplay={`${stats.currentStreak} ${stats.streakType === 'Loss' ? '🔴' : '🟢'}`}
+                streakColor={T.text.primary}
+                labels={{
+                  title: isRTL ? 'סטטיסטיקות מהירות' : 'Quick Stats',
+                  avgWin: t.avgWin,
+                  avgLoss: t.avgLoss,
+                  bestTrade: t.bestTrade,
+                  worstTrade: t.worstTrade,
+                  profitFactor: t.profitFactor,
+                  currentStreak: t.currentStreak,
+                }}
+              />
               {/* Alpha additions */}
               {isAlpha && <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                 <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.riskEvolution} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ flex: 1, minWidth: isMobile ? 0 : 300, width: isMobile ? '100%' : undefined }}>
