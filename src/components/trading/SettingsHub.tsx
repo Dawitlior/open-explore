@@ -23,6 +23,8 @@ import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { Trade } from '@/data/trades';
 import { AvatarUploader } from './AvatarUploader';
+import { FrogAvatar } from './FrogAvatar';
+import { ChevronLeft } from 'lucide-react';
 import { InstallGuide } from './InstallGuide';
 import { ResetModal } from './ResetModal';
 import { scopedStorage } from '@/lib/scoped-storage';
@@ -293,28 +295,24 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
             backdropFilter: 'blur(18px) saturate(140%)',
             WebkitBackdropFilter: 'blur(18px) saturate(140%)',
           }}>
-            {/* macOS profile card */}
+            {/* Profile card — dynamic email + Pepe frog avatar */}
             <div style={{
               margin: '14px 12px 10px', padding: '10px 12px',
               borderRadius: 10, background: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)',
               border: `1px solid ${T.border.subtle}`,
               display: 'flex', alignItems: 'center', gap: 10, minWidth: 0,
             }}>
-              <div style={{
-                width: 38, height: 38, borderRadius: '50%',
-                background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.purple})`,
-                display: 'grid', placeItems: 'center', fontSize: 15, fontWeight: 800,
-                color: T.bg.primary, flexShrink: 0,
-              }}>{(auth.user?.email || '?').charAt(0).toUpperCase()}</div>
+              <FrogAvatar size={38} borderColor={isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.18)'} />
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: T.text.primary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} dir="ltr">
-                  {auth.user?.email ?? '—'}
+                  {auth.user?.email ?? t('משתמש', 'User')}
                 </div>
-                <div style={{ fontSize: 10, color: T.text.muted, fontFamily: mono }}>
-                  Apple ID · iCloud
+                <div style={{ fontSize: 10, color: T.text.muted, fontFamily: mono, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {t('חשבון Orca', 'Orca Account')}
                 </div>
               </div>
             </div>
+
 
             <div style={{ padding: '0 12px 10px' }}>
               <div style={{ position: 'relative' }}>
@@ -361,13 +359,13 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                         }}
                       >
                         <span style={{
-                          width: 22, height: 22, borderRadius: 6,
+                          width: 18, height: 18,
                           display: 'grid', placeItems: 'center', flexShrink: 0,
-                          background: active ? 'rgba(255,255,255,0.18)' : (isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)'),
-                          color: active ? '#fff' : T.text.secondary,
+                          color: active ? '#fff' : (isLight ? '#3a3a3c' : T.text.secondary),
                         }}>
-                          <Icon size={13} strokeWidth={2.2} />
+                          <Icon size={16} strokeWidth={1.8} />
                         </span>
+
                         <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {item.label[isRTL ? 'he' : 'en']}
                         </span>
@@ -587,37 +585,45 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                   </div>
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <button
-                  onClick={() => setLang(lang === 'he' ? 'en' : 'he')}
-                  title={lang === 'he' ? 'Switch to English' : 'החלף לעברית'}
-                  style={{ ...ghostBtn, padding: '8px 12px' }}
-                >
-                  <Globe size={13} /> {lang === 'he' ? 'EN' : 'HE'}
-                </button>
-                <button
-                  onClick={() => setPrivacyMode(!privacyMode)}
-                  title={privacyMode ? t('כיבוי פרטיות', 'Disable privacy') : t('הפעלת פרטיות', 'Enable privacy')}
-                  style={{
-                    ...ghostBtn, padding: '8px 12px',
-                    background: privacyMode ? `${T.accent.orange}10` : 'transparent',
-                    borderColor: privacyMode ? `${T.accent.orange}55` : T.border.medium,
-                    color: privacyMode ? T.accent.orange : T.text.secondary,
-                  }}
-                >
-                  {privacyMode ? <EyeOff size={13} /> : <Eye size={13} />}
-                  {privacyMode ? t('פרטי', 'Private') : t('גלוי', 'Visible')}
-                </button>
-                <button
-                  onClick={onClose}
-                  aria-label="Close"
-                  style={{
-                    width: 34, height: 34, borderRadius: T.radius.sm,
-                    background: 'transparent', border: `1px solid ${T.border.medium}`,
-                    color: T.text.muted, cursor: 'pointer', display: 'grid', placeItems: 'center',
-                  }}
-                ><X size={15} /></button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {(() => {
+                  const iconColor = isLight ? '#1D1D1F' : '#FFFFFF';
+                  const hoverBg = isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)';
+                  const baseBtn: React.CSSProperties = {
+                    width: 34, height: 34, borderRadius: 17,
+                    background: 'transparent', border: 'none',
+                    color: iconColor, cursor: 'pointer',
+                    display: 'grid', placeItems: 'center',
+                    transition: 'background .12s',
+                  };
+                  return (
+                    <>
+                      <button
+                        onClick={goBack}
+                        disabled={!canGoBack}
+                        aria-label={t('חזרה', 'Back')}
+                        title={t('חזרה', 'Back')}
+                        style={{ ...baseBtn, opacity: canGoBack ? 1 : 0.35, cursor: canGoBack ? 'pointer' : 'default' }}
+                        onMouseEnter={e => { if (canGoBack) (e.currentTarget.style.background = hoverBg); }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                      >
+                        <ChevronLeft size={18} style={{ transform: isRTL ? 'scaleX(-1)' : 'none' }} />
+                      </button>
+                      <button
+                        onClick={onClose}
+                        aria-label={t('סגירה', 'Close')}
+                        title={t('סגירה', 'Close')}
+                        style={baseBtn}
+                        onMouseEnter={e => { e.currentTarget.style.background = hoverBg; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                      >
+                        <X size={18} />
+                      </button>
+                    </>
+                  );
+                })()}
               </div>
+
             </header>
           )}
 
