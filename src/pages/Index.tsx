@@ -1818,7 +1818,33 @@ const Index = () => {
           {page === 'psychology' && renderPsychology()}
           {page === 'ai' && renderAI()}
           {page === 'weekly-review' && (
-            <LazyShell><WeeklyReviewPage T={T} isRTL={isRTL} trades={trades} themeId={settings.theme} stats={stats} riskData={riskData} /></LazyShell>
+            <div style={{ position: 'relative' }}>
+              {/* Anti-trap escape — sits outside the iframe context, always clickable
+                  even if the embedded Weekly Review app freezes or loses network. */}
+              <button
+                onClick={() => setPage('dashboard')}
+                aria-label={isRTL ? 'חזרה לאורקה OS' : 'Back to Orca OS'}
+                style={{
+                  position: 'fixed',
+                  top: 'calc(env(safe-area-inset-top) + 70px)',
+                  insetInlineStart: 16,
+                  zIndex: 9998,
+                  padding: '10px 14px',
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.purple})`,
+                  color: '#000', border: 'none', borderRadius: 999,
+                  fontSize: 12, fontWeight: 800, letterSpacing: 0.4,
+                  cursor: 'pointer',
+                  boxShadow: `0 8px 24px rgba(0,0,0,0.45), 0 0 18px ${T.accent.cyan}55`,
+                  backdropFilter: 'blur(8px)',
+                  fontFamily: 'inherit',
+                }}
+              >
+                <span style={{ fontSize: 14, lineHeight: 1, transform: isRTL ? 'none' : 'scaleX(-1)' }}>⟵</span>
+                {isRTL ? 'חזרה לאורקה OS' : 'Back to Orca OS'}
+              </button>
+              <LazyShell><WeeklyReviewPage T={T} isRTL={isRTL} trades={trades} themeId={settings.theme} stats={stats} riskData={riskData} /></LazyShell>
+            </div>
           )}
         </div>
       </main>
