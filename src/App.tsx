@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,6 +18,37 @@ import { LegalGate } from "@/components/LegalGate";
 
 const queryClient = new QueryClient();
 
+/**
+ * Global client-side protection layer.
+ * Blocks right-click and common DevTools keyboard shortcuts across every route.
+ * Form/input typing is unaffected — only inspection/source-view keys are intercepted.
+ */
+const SourceProtection = () => {
+  useEffect(() => {
+    const onCtx = (e: MouseEvent) => { e.preventDefault(); };
+    const onKey = (e: KeyboardEvent) => {
+      const mod = e.ctrlKey || e.metaKey;
+      const k = e.key;
+      const K = k.toUpperCase();
+      // F12 — DevTools
+      if (k === 'F12') { e.preventDefault(); e.stopPropagation(); return; }
+      // Ctrl/Cmd+Shift+I/J/C — Inspect / Console / Element selector
+      if (mod && e.shiftKey && (K === 'I' || K === 'J' || K === 'C')) { e.preventDefault(); e.stopPropagation(); return; }
+      // macOS: Cmd+Option (Alt) + I/J/C
+      if (e.metaKey && e.altKey && (K === 'I' || K === 'J' || K === 'C')) { e.preventDefault(); e.stopPropagation(); return; }
+      // Ctrl+U / Cmd+Option+U — View source
+      if ((mod && K === 'U') || (e.metaKey && e.altKey && K === 'U')) { e.preventDefault(); e.stopPropagation(); return; }
+    };
+    document.addEventListener('contextmenu', onCtx);
+    document.addEventListener('keydown', onKey, true);
+    return () => {
+      document.removeEventListener('contextmenu', onCtx);
+      document.removeEventListener('keydown', onKey, true);
+    };
+  }, []);
+  return null;
+};
+
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
@@ -25,6 +57,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
+            <SourceProtection />
             <StorageErrorListener />
             <OrcaUXLayer />
             <LiquidSweep />
