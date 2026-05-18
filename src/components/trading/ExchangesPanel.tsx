@@ -239,12 +239,20 @@ export function ExchangesPanel({ T, isRTL }: Props) {
         </p>
       </div>
 
+      <style>{`
+        @keyframes orcaCsvCardIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes orcaShineSweep { 0% { transform: translateX(-120%) skewX(-18deg); } 100% { transform: translateX(220%) skewX(-18deg); } }
+        @keyframes orcaConicSpin { to { transform: rotate(360deg); } }
+        @keyframes orcaScanLine { 0% { transform: translateY(-100%); } 100% { transform: translateY(700%); } }
+        @keyframes orcaDotOrbit { 0%, 100% { opacity: 0.25; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1.1); } }
+      `}</style>
+
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
         gap: 12,
       }}>
-        {CSV_BROKERS.map(b => {
+        {CSV_BROKERS.map((b, idx) => {
           const active = csvBrokerId === b.id;
           return (
             <button
@@ -254,37 +262,63 @@ export function ExchangesPanel({ T, isRTL }: Props) {
                 position: 'relative', textAlign: isRTL ? 'right' : 'left',
                 padding: 14, borderRadius: 14,
                 background: active
-                  ? `linear-gradient(135deg, ${b.accent}22, ${b.accent}08), rgba(11,23,48,0.6)`
-                  : 'rgba(11,23,48,0.4)',
-                border: `1px solid ${active ? b.accent + '66' : T.border.subtle}`,
-                backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
+                  ? `linear-gradient(135deg, ${b.accent}22, ${b.accent}06 45%, rgba(11,23,48,0.7))`
+                  : 'linear-gradient(135deg, rgba(255,255,255,0.025), rgba(11,23,48,0.55))',
+                border: `1px solid ${active ? b.accent + '77' : 'rgba(255,255,255,0.06)'}`,
+                backdropFilter: 'blur(22px) saturate(160%)', WebkitBackdropFilter: 'blur(22px) saturate(160%)',
                 cursor: 'pointer',
-                filter: active ? 'none' : 'saturate(0.55)',
-                opacity: active ? 1 : 0.78,
-                transition: 'transform .2s ease, filter .2s ease, opacity .2s ease, border-color .2s ease, box-shadow .2s ease',
-                boxShadow: active ? `0 10px 28px -18px ${b.accent}cc, 0 0 0 1px ${b.accent}33` : 'none',
+                filter: active ? 'none' : 'saturate(0.45)',
+                opacity: active ? 1 : 0.82,
+                transition: 'transform .25s cubic-bezier(.16,1,.3,1), filter .25s ease, opacity .25s ease, border-color .25s ease, box-shadow .25s ease, background .25s ease',
+                boxShadow: active
+                  ? `0 18px 40px -22px ${b.accent}cc, 0 0 0 1px ${b.accent}44, inset 0 1px 0 rgba(255,255,255,0.06)`
+                  : 'inset 0 1px 0 rgba(255,255,255,0.04)',
                 display: 'flex', flexDirection: 'column', gap: 10,
+                overflow: 'hidden',
+                animation: `orcaCsvCardIn .35s cubic-bezier(.16,1,.3,1) ${idx * 25}ms both`,
               }}
               onMouseEnter={e => {
-                (e.currentTarget as HTMLButtonElement).style.filter = 'saturate(1)';
-                (e.currentTarget as HTMLButtonElement).style.opacity = '1';
-                (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px)';
+                const el = e.currentTarget as HTMLButtonElement;
+                el.style.filter = 'saturate(1)';
+                el.style.opacity = '1';
+                el.style.transform = 'translateY(-3px)';
+                el.style.boxShadow = `0 18px 40px -22px ${b.accent}cc, 0 0 0 1px ${b.accent}55, inset 0 1px 0 rgba(255,255,255,0.08)`;
+                el.style.borderColor = `${b.accent}66`;
+                const shine = el.querySelector('[data-shine]') as HTMLElement | null;
+                if (shine) { shine.style.animation = 'none'; void shine.offsetWidth; shine.style.animation = 'orcaShineSweep 0.9s cubic-bezier(.16,1,.3,1)'; }
               }}
               onMouseLeave={e => {
+                const el = e.currentTarget as HTMLButtonElement;
                 if (!active) {
-                  (e.currentTarget as HTMLButtonElement).style.filter = 'saturate(0.55)';
-                  (e.currentTarget as HTMLButtonElement).style.opacity = '0.78';
+                  el.style.filter = 'saturate(0.45)';
+                  el.style.opacity = '0.82';
+                  el.style.boxShadow = 'inset 0 1px 0 rgba(255,255,255,0.04)';
+                  el.style.borderColor = 'rgba(255,255,255,0.06)';
                 }
-                (e.currentTarget as HTMLButtonElement).style.transform = 'none';
+                el.style.transform = 'none';
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              {/* shine sweep */}
+              <span data-shine style={{
+                position: 'absolute', top: 0, bottom: 0, width: '40%',
+                background: `linear-gradient(90deg, transparent, ${b.accent}22, transparent)`,
+                pointerEvents: 'none', mixBlendMode: 'screen',
+              }} />
+              {/* corner glow */}
+              <span style={{
+                position: 'absolute', top: -36, insetInlineEnd: -36, width: 110, height: 110,
+                background: `radial-gradient(circle, ${b.accent}${active ? '33' : '14'} 0%, transparent 70%)`,
+                pointerEvents: 'none', transition: 'background .3s ease',
+              }} />
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, position: 'relative' }}>
                 <div style={{
-                  width: 36, height: 36, borderRadius: 10,
-                  background: `linear-gradient(135deg, ${b.accent}, ${b.accent}99)`,
+                  width: 38, height: 38, borderRadius: 11,
+                  background: `linear-gradient(135deg, ${b.accent}, ${b.accent}88)`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   color: '#0b1730', fontFamily: mono, fontWeight: 800, fontSize: 12, letterSpacing: 0.5,
-                  boxShadow: `0 6px 16px -8px ${b.accent}cc`,
+                  boxShadow: `0 8px 20px -10px ${b.accent}dd, inset 0 1px 0 rgba(255,255,255,0.28)`,
+                  border: '1px solid rgba(255,255,255,0.12)',
                 }}>{b.glyph}</div>
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ fontFamily: sans, fontWeight: 700, fontSize: 13, color: T.text.primary, lineHeight: 1.2 }}>
@@ -296,10 +330,16 @@ export function ExchangesPanel({ T, isRTL }: Props) {
                 </div>
               </div>
               <div style={{
-                display: 'flex', alignItems: 'center', gap: 6,
+                display: 'flex', alignItems: 'center', gap: 6, position: 'relative',
                 fontSize: 9.5, fontFamily: mono, color: active ? b.accent : T.text.muted,
-                letterSpacing: 0.5, textTransform: 'uppercase', fontWeight: 700,
+                letterSpacing: 0.6, textTransform: 'uppercase', fontWeight: 700,
               }}>
+                <span style={{
+                  width: 6, height: 6, borderRadius: '50%',
+                  background: active ? b.accent : 'rgba(255,255,255,0.25)',
+                  boxShadow: active ? `0 0 8px ${b.accent}` : 'none',
+                  animation: active ? 'orcaDotOrbit 1.8s ease-in-out infinite' : undefined,
+                }} />
                 <UploadCloud size={11} />
                 {active ? t('פתוח לטעינה', 'Ready to import') : t('CSV', 'CSV')}
               </div>
@@ -307,6 +347,7 @@ export function ExchangesPanel({ T, isRTL }: Props) {
           );
         })}
       </div>
+
 
       {csvBrokerId && (
         <CsvDropZone
