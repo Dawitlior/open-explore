@@ -472,54 +472,92 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
           </aside>
         )}
 
-        {/* CONTENT */}
-        <section className="orca-settings-content" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', background: T.bg.secondary }}>
-          {/* Topbar */}
-          <header className="orca-settings-topbar" style={{
-            padding: '18px 26px', borderBottom: `1px solid ${T.border.subtle}`,
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            background: `linear-gradient(180deg, ${T.bg.primary}, ${T.bg.secondary})`,
-          }}>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: T.text.primary, letterSpacing: '-0.01em' }}>
+        {/* CONTENT — hidden on mobile until a row is tapped */}
+        <section
+          className="orca-settings-content"
+          style={{
+            display: isMobile && !mobileDrilled ? 'none' : 'flex',
+            flexDirection: 'column', overflow: 'hidden', background: T.bg.secondary,
+            animation: isMobile && mobileDrilled ? 'orcaIosSlide .22s ease-out' : undefined,
+          }}
+        >
+          {/* iOS-style back header on mobile drill */}
+          {isMobile && mobileDrilled && (
+            <header className="orca-ios-back" style={{
+              padding: '12px 14px', borderBottom: `1px solid ${T.border.subtle}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              background: '#000', position: 'sticky', top: 0, zIndex: 3,
+            }}>
+              <button
+                onClick={() => setMobileDrilled(false)}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                  background: 'transparent', border: 'none', color: T.accent.cyan,
+                  fontFamily: sans, fontSize: 15, fontWeight: 600, cursor: 'pointer',
+                  padding: '4px 6px',
+                }}
+              >
+                <span style={{ fontSize: 22, lineHeight: 1, transform: isRTL ? 'none' : 'scaleX(-1)' }}>›</span>
+                {t('הגדרות', 'Settings')}
+              </button>
+              <div style={{ fontSize: 15, fontWeight: 700, color: T.text.primary, textAlign: 'center', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', padding: '0 8px' }}>
                 {activeMeta.label[isRTL ? 'he' : 'en']}
               </div>
-              <div style={{ fontSize: 12, color: T.text.muted, marginTop: 2 }}>
-                {activeMeta.desc[isRTL ? 'he' : 'en']}
+              <button onClick={onClose} aria-label="Close" style={{
+                width: 30, height: 30, borderRadius: 15, background: 'rgba(255,255,255,0.08)',
+                border: 'none', color: T.text.primary, display: 'grid', placeItems: 'center', cursor: 'pointer',
+              }}><X size={14} /></button>
+            </header>
+          )}
+
+          {/* Desktop topbar */}
+          {!isMobile && (
+            <header className="orca-settings-topbar" style={{
+              padding: '18px 26px', borderBottom: `1px solid ${T.border.subtle}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              background: `linear-gradient(180deg, ${T.bg.primary}, ${T.bg.secondary})`,
+            }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 18, fontWeight: 800, color: T.text.primary, letterSpacing: '-0.01em' }}>
+                  {activeMeta.label[isRTL ? 'he' : 'en']}
+                </div>
+                <div style={{ fontSize: 12, color: T.text.muted, marginTop: 2 }}>
+                  {activeMeta.desc[isRTL ? 'he' : 'en']}
+                </div>
               </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <button
-                onClick={() => setLang(lang === 'he' ? 'en' : 'he')}
-                title={lang === 'he' ? 'Switch to English' : 'החלף לעברית'}
-                style={{ ...ghostBtn, padding: '8px 12px' }}
-              >
-                <Globe size={13} /> {lang === 'he' ? 'EN' : 'HE'}
-              </button>
-              <button
-                onClick={() => setPrivacyMode(!privacyMode)}
-                title={privacyMode ? t('כיבוי פרטיות', 'Disable privacy') : t('הפעלת פרטיות', 'Enable privacy')}
-                style={{
-                  ...ghostBtn, padding: '8px 12px',
-                  background: privacyMode ? `${T.accent.orange}10` : 'transparent',
-                  borderColor: privacyMode ? `${T.accent.orange}55` : T.border.medium,
-                  color: privacyMode ? T.accent.orange : T.text.secondary,
-                }}
-              >
-                {privacyMode ? <EyeOff size={13} /> : <Eye size={13} />}
-                {privacyMode ? t('פרטי', 'Private') : t('גלוי', 'Visible')}
-              </button>
-              <button
-                onClick={onClose}
-                aria-label="Close"
-                style={{
-                  width: 34, height: 34, borderRadius: T.radius.sm,
-                  background: 'transparent', border: `1px solid ${T.border.medium}`,
-                  color: T.text.muted, cursor: 'pointer', display: 'grid', placeItems: 'center',
-                }}
-              ><X size={15} /></button>
-            </div>
-          </header>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button
+                  onClick={() => setLang(lang === 'he' ? 'en' : 'he')}
+                  title={lang === 'he' ? 'Switch to English' : 'החלף לעברית'}
+                  style={{ ...ghostBtn, padding: '8px 12px' }}
+                >
+                  <Globe size={13} /> {lang === 'he' ? 'EN' : 'HE'}
+                </button>
+                <button
+                  onClick={() => setPrivacyMode(!privacyMode)}
+                  title={privacyMode ? t('כיבוי פרטיות', 'Disable privacy') : t('הפעלת פרטיות', 'Enable privacy')}
+                  style={{
+                    ...ghostBtn, padding: '8px 12px',
+                    background: privacyMode ? `${T.accent.orange}10` : 'transparent',
+                    borderColor: privacyMode ? `${T.accent.orange}55` : T.border.medium,
+                    color: privacyMode ? T.accent.orange : T.text.secondary,
+                  }}
+                >
+                  {privacyMode ? <EyeOff size={13} /> : <Eye size={13} />}
+                  {privacyMode ? t('פרטי', 'Private') : t('גלוי', 'Visible')}
+                </button>
+                <button
+                  onClick={onClose}
+                  aria-label="Close"
+                  style={{
+                    width: 34, height: 34, borderRadius: T.radius.sm,
+                    background: 'transparent', border: `1px solid ${T.border.medium}`,
+                    color: T.text.muted, cursor: 'pointer', display: 'grid', placeItems: 'center',
+                  }}
+                ><X size={15} /></button>
+              </div>
+            </header>
+          )}
 
           <div className="orca-settings-body" style={{ flex: 1, overflowY: 'auto', padding: '26px 26px 40px', WebkitOverflowScrolling: 'touch' }}>
             {/* ============ ACCOUNT ============ */}
