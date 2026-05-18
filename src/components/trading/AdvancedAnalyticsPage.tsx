@@ -18,7 +18,7 @@
  * 100% Hebrew copy. Heebo font. RTL.
  */
 
-import { useMemo, useState, lazy, Suspense } from 'react';
+import { useMemo, useState, lazy, Suspense, memo } from 'react';
 import { motion } from 'framer-motion';
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line, ScatterChart, Scatter,
@@ -54,7 +54,7 @@ const ENG_DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 const HEB_DOW_FULL = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 const ENG_DOW_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-export const AdvancedAnalyticsPage = ({ T, trades: _allTrades, stats, privacyMode, isAlpha, operatingMode = 'live' }: AdvancedAnalyticsPageProps) => {
+const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode, isAlpha, operatingMode = 'live' }: AdvancedAnalyticsPageProps) => {
   const { t, isRTL: langRTL } = useLang();
   // 🔀 Dual-Currency Engine: filtered dataset + adaptive axis/format helpers
   const { visibleTrades: trades, isMoney, formatAxis: fmtAxis, formatValue: fmtVal } = useVisibleTrades(_allTrades);
@@ -906,3 +906,5 @@ export const AdvancedAnalyticsPage = ({ T, trades: _allTrades, stats, privacyMod
     </div>
   );
 };
+
+export const AdvancedAnalyticsPage = memo(AdvancedAnalyticsPage_Impl);

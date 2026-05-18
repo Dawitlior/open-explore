@@ -5,7 +5,7 @@
  * micro-charts + rolling command feed).
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, memo } from 'react';
 import {
   ResponsiveContainer, RadialBarChart, RadialBar, PolarAngleAxis,
   AreaChart, Area, XAxis, YAxis, Tooltip,
@@ -313,7 +313,7 @@ const StripCell = ({ T, label, value, valueNode }: {
 
 // ───────────────────────── component ─────────────────────────
 
-export const AlphaLiveConsole = ({ T, isRTL, enabled }: Props) => {
+const AlphaLiveConsole_Impl = ({ T, isRTL, enabled }: Props) => {
   const { positions, status, lastError, lastFrameAt } = useLivePositions(enabled);
   const [showRaw, setShowRaw] = useState(false);
   const dailyR = getDailyRiskLimit();
@@ -640,4 +640,6 @@ const CommandFeed = ({ T, isRTL, feed, feedRef }: {
   );
 };
 
+
+export const AlphaLiveConsole = memo(AlphaLiveConsole_Impl);
 export default AlphaLiveConsole;

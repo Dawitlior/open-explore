@@ -13,7 +13,7 @@ import { useVisibleTrades } from '@/lib/display-mode-format';
  * All copy in Hebrew. Designed to feel like opening a vault.
  */
 
-import { useMemo, useState, useCallback, useRef } from 'react';
+import { useMemo, useState, useCallback, useRef, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
@@ -1458,3 +1458,5 @@ const ExposureMap = ({ data, T, isRTL }: { data: ExposureRow[]; T: any; isRTL: b
     </div>
   );
 };
+
+export const AIInsightsPage = memo(AIInsightsPage_Impl);
