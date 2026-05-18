@@ -127,7 +127,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
 
   const handleCustomSymbol = (val: string) => {
     setCustomSymbol(val);
-    if (val.trim()) setForm(f => ({ ...f, coin: val.trim().toUpperCase() }));
+    setForm(f => ({ ...f, coin: val.trim() ? val.trim().toUpperCase() : '' }));
   };
 
   const handleStopModeChange = (mode: StopMode) => {
