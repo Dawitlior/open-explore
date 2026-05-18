@@ -291,13 +291,38 @@ export const AdvancedAnalyticsPage = ({ T, trades: _allTrades, stats, privacyMod
     return Object.values(m).sort((a, b) => a.key.localeCompare(b.key));
   }, [trades]);
 
-  // 10. Hero KPIs
+  // 10. Hero KPIs (R-side)
   const wins = trades.filter(t => t.winLoss === 'Win');
   const losses = trades.filter(t => t.winLoss === 'Loss');
   const payoff = losses.length && wins.length
     ? (wins.reduce((s, t) => s + Math.abs(getEffectiveR(t)), 0) / wins.length) /
       (losses.reduce((s, t) => s + Math.abs(getEffectiveR(t)), 0) / losses.length)
     : 0;
+
+  // 10b. Hero KPIs (Money-side) — safe against zero-division / NaN
+  const moneyStats = useMemo(() => {
+    if (!trades.length) {
+      return { avgWin: 0, avgLoss: 0, payoff: 0, profitFactor: 0, maxDDMoney: 0, maxDDPct: 0, grossProfit: 0, grossLoss: 0 };
+    }
+    const w$ = wins.map(t => t.pnl).filter(n => isFinite(n));
+    const l$ = losses.map(t => Math.abs(t.pnl)).filter(n => isFinite(n));
+    const avgWin = w$.length ? w$.reduce((s, v) => s + v, 0) / w$.length : 0;
+    const avgLoss = l$.length ? l$.reduce((s, v) => s + v, 0) / l$.length : 0;
+    const grossProfit = w$.reduce((s, v) => s + v, 0);
+    const grossLoss = l$.reduce((s, v) => s + v, 0);
+    const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : (grossProfit > 0 ? Infinity : 0);
+    const payoff$ = avgLoss > 0 ? avgWin / avgLoss : 0;
+    let cum = 0, peak = 0, maxDD = 0;
+    trades.forEach(t => {
+      cum += t.pnl;
+      if (cum > peak) peak = cum;
+      const dd = peak - cum;
+      if (dd > maxDD) maxDD = dd;
+    });
+    const maxDDPct = peak > 0 ? (maxDD / peak) * 100 : 0;
+    return { avgWin, avgLoss, payoff: payoff$, profitFactor, maxDDMoney: maxDD, maxDDPct, grossProfit, grossLoss };
+  }, [trades, wins, losses]);
+
 
   /* ─────────── ADVANCED (PRO/MAX) DATASETS ─────────── */
 
