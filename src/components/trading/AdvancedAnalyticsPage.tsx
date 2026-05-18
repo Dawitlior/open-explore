@@ -53,8 +53,10 @@ const ENG_DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 const HEB_DOW_FULL = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 const ENG_DOW_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-export const AdvancedAnalyticsPage = ({ T, trades, stats, privacyMode, isAlpha, operatingMode = 'live' }: AdvancedAnalyticsPageProps) => {
+export const AdvancedAnalyticsPage = ({ T, trades: _allTrades, stats, privacyMode, isAlpha, operatingMode = 'live' }: AdvancedAnalyticsPageProps) => {
   const { t, isRTL: langRTL } = useLang();
+  // 🔀 Dual-Currency Engine: filtered dataset + adaptive axis/format helpers
+  const { visibleTrades: trades, displayMode, isMoney, formatAxis: fmtAxis, formatValue: fmtVal } = useVisibleTrades(_allTrades);
   const DOW = langRTL ? HEB_DOW : ENG_DOW;
   const DOW_FULL = langRTL ? HEB_DOW_FULL : ENG_DOW_FULL;
   // Tier resolution — controls which chart layers render.
