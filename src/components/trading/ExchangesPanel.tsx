@@ -1676,20 +1676,28 @@ function CsvDropZone({
     <div
       style={{
         marginTop: 16,
-        borderRadius: 18,
+        borderRadius: 20,
         padding: 22,
-        background: `linear-gradient(135deg, ${broker.accent}11, rgba(11,23,48,0.55))`,
-        border: `1px solid ${broker.accent}44`,
-        backdropFilter: 'blur(20px) saturate(150%)', WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-        boxShadow: `0 24px 70px -30px ${broker.accent}66`,
+        background: `
+          radial-gradient(120% 80% at 100% 0%, ${broker.accent}18, transparent 55%),
+          radial-gradient(80% 60% at 0% 100%, ${broker.accent}10, transparent 60%),
+          linear-gradient(180deg, rgba(13,23,44,0.78), rgba(6,12,24,0.78))
+        `,
+        border: `1px solid rgba(255,255,255,0.07)`,
+        backdropFilter: 'blur(26px) saturate(170%)', WebkitBackdropFilter: 'blur(26px) saturate(170%)',
+        boxShadow: `0 30px 80px -34px ${broker.accent}88, inset 0 1px 0 rgba(255,255,255,0.05)`,
         direction: isRTL ? 'rtl' : 'ltr',
-        animation: 'orcaDropIn .35s cubic-bezier(.16,1,.3,1)',
-        position: 'relative',
+        animation: 'orcaDropIn .4s cubic-bezier(.16,1,.3,1)',
+        position: 'relative', overflow: 'hidden',
       }}
     >
       <style>{`
-        @keyframes orcaDropIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes orcaDashSpin { to { stroke-dashoffset: -40; } }
+        @keyframes orcaDropIn { from { opacity: 0; transform: translateY(10px) scale(.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes orcaConicSpin { to { transform: rotate(360deg); } }
+        @keyframes orcaScanY { 0% { transform: translateY(-10%); opacity: 0; } 25% { opacity: 1; } 100% { transform: translateY(110%); opacity: 0; } }
+        @keyframes orcaSpin { to { transform: rotate(360deg); } }
+        @keyframes orcaGridShift { 0% { background-position: 0 0; } 100% { background-position: 24px 24px; } }
+        @keyframes orcaPulseRing { 0%, 100% { opacity: .4; transform: scale(1); } 50% { opacity: 1; transform: scale(1.08); } }
       `}</style>
 
       <button
@@ -1698,67 +1706,120 @@ function CsvDropZone({
         style={{
           position: 'absolute', top: 12, insetInlineEnd: 12,
           width: 28, height: 28, borderRadius: 8,
-          background: 'rgba(0,0,0,0.25)', border: `1px solid ${T.border.subtle}`,
+          background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.08)',
           color: T.text.muted, cursor: 'pointer',
           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          transition: 'background .2s ease, color .2s ease',
         }}
+        onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#fff'; (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,0,0,0.55)'; }}
+        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = T.text.muted; (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,0,0,0.35)'; }}
       ><X size={14} /></button>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
         <div style={{
-          width: 30, height: 30, borderRadius: 8,
-          background: `linear-gradient(135deg, ${broker.accent}, ${broker.accent}aa)`,
+          width: 32, height: 32, borderRadius: 9,
+          background: `linear-gradient(135deg, ${broker.accent}, ${broker.accent}99)`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: '#0b1730', fontFamily: mono, fontWeight: 800, fontSize: 11,
+          boxShadow: `0 8px 20px -10px ${broker.accent}, inset 0 1px 0 rgba(255,255,255,0.28)`,
+          border: '1px solid rgba(255,255,255,0.12)',
         }}>{broker.glyph}</div>
-        <div style={{ fontFamily: sans, fontWeight: 700, fontSize: 13, color: T.text.primary }}>
-          {broker.name}
+        <div>
+          <div style={{ fontFamily: sans, fontWeight: 700, fontSize: 13, color: T.text.primary, lineHeight: 1.2 }}>
+            {broker.name}
+          </div>
+          <div style={{ fontFamily: mono, fontSize: 9.5, color: T.text.muted, letterSpacing: 0.6, textTransform: 'uppercase', marginTop: 2 }}>
+            {t('ייבוא CSV', 'CSV Import')}
+          </div>
         </div>
       </div>
 
-      <div
-        onClick={() => !processing && inputRef.current?.click()}
-        onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={e => {
-          e.preventDefault(); setDragOver(false);
-          if (processing) return;
-          if (e.dataTransfer.files?.length) void handleFiles(e.dataTransfer.files);
-        }}
-        style={{
-          position: 'relative',
-          borderRadius: 16,
-          padding: '38px 22px',
-          background: dragOver
-            ? `linear-gradient(135deg, ${broker.accent}22, ${broker.accent}08)`
-            : 'rgba(6,12,24,0.45)',
-          border: `2px dashed ${dragOver ? broker.accent : T.border.medium}`,
-          cursor: processing ? 'wait' : 'pointer',
-          transition: 'background .2s ease, border-color .2s ease',
-          textAlign: 'center',
-          minHeight: 180,
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10,
-        }}
-      >
-        <input
-          ref={inputRef}
-          type="file"
-          accept=".csv,.txt,.tsv,.xlsx,.xls"
-          style={{ display: 'none' }}
-          onChange={e => { if (e.target.files?.length) void handleFiles(e.target.files); }}
-        />
+      {/* Wrapper for animated gradient border */}
+      <div style={{ position: 'relative', borderRadius: 18, padding: 1.5 }}>
+        {/* spinning conic gradient border on drag-over */}
+        {dragOver && (
+          <span aria-hidden style={{
+            position: 'absolute', inset: -40,
+            background: `conic-gradient(from 0deg, transparent 0deg, ${broker.accent} 60deg, transparent 120deg, ${broker.accent}88 200deg, transparent 280deg)`,
+            animation: 'orcaConicSpin 3.2s linear infinite',
+            filter: 'blur(8px)',
+            pointerEvents: 'none',
+            borderRadius: 'inherit',
+          }} />
+        )}
+        <div
+          onClick={() => !processing && inputRef.current?.click()}
+          onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={e => {
+            e.preventDefault(); setDragOver(false);
+            if (processing) return;
+            if (e.dataTransfer.files?.length) void handleFiles(e.dataTransfer.files);
+          }}
+          style={{
+            position: 'relative',
+            borderRadius: 16,
+            padding: '42px 22px',
+            background: `
+              linear-gradient(180deg, rgba(6,12,24,0.85), rgba(6,12,24,0.6)),
+              repeating-linear-gradient(0deg, rgba(255,255,255,0.018) 0 1px, transparent 1px 24px),
+              repeating-linear-gradient(90deg, rgba(255,255,255,0.018) 0 1px, transparent 1px 24px)
+            `,
+            backgroundSize: 'auto, 24px 24px, 24px 24px',
+            animation: dragOver ? 'orcaGridShift 4s linear infinite' : undefined,
+            border: `1.5px dashed ${dragOver ? 'transparent' : 'rgba(255,255,255,0.12)'}`,
+            cursor: processing ? 'wait' : 'pointer',
+            transition: 'background .25s ease, border-color .25s ease',
+            textAlign: 'center',
+            minHeight: 200,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12,
+            overflow: 'hidden',
+          }}
+        >
+          {/* drag-over inner glow */}
+          {dragOver && (
+            <span aria-hidden style={{
+              position: 'absolute', inset: 0,
+              background: `radial-gradient(60% 50% at 50% 50%, ${broker.accent}1f, transparent 70%)`,
+              pointerEvents: 'none',
+            }} />
+          )}
 
-        {processing ? (
-          <>
-            <Loader2 size={34} color={broker.accent} style={{ animation: 'spin 1s linear infinite' }} />
-            <div style={{ fontFamily: sans, fontWeight: 700, fontSize: 14, color: T.text.primary }}>
-              {t('מעבד נתונים…', 'Processing data…')}
-            </div>
-            <div style={{ fontFamily: mono, fontSize: 11, color: T.text.muted, letterSpacing: 0.4 }}>
-              {t('קורא שורות וחישובי PnL', 'Reading rows & computing PnL')}
-            </div>
-            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-          </>
+          <input
+            ref={inputRef}
+            type="file"
+            accept=".csv,.txt,.tsv,.xlsx,.xls"
+            style={{ display: 'none' }}
+            onChange={e => { if (e.target.files?.length) void handleFiles(e.target.files); }}
+          />
+
+          {processing ? (
+            <>
+              {/* scan line */}
+              <span aria-hidden style={{
+                position: 'absolute', left: 0, right: 0, height: 2,
+                background: `linear-gradient(90deg, transparent, ${broker.accent}, transparent)`,
+                boxShadow: `0 0 14px ${broker.accent}`,
+                animation: 'orcaScanY 1.4s cubic-bezier(.4,0,.6,1) infinite',
+                pointerEvents: 'none',
+              }} />
+              {/* pulse ring around loader */}
+              <div style={{ position: 'relative', width: 56, height: 56, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span aria-hidden style={{
+                  position: 'absolute', inset: 0, borderRadius: '50%',
+                  border: `1px solid ${broker.accent}66`,
+                  animation: 'orcaPulseRing 1.6s ease-in-out infinite',
+                }} />
+                <Loader2 size={32} color={broker.accent} style={{ animation: 'orcaSpin 1s linear infinite' }} />
+              </div>
+              <div style={{ fontFamily: sans, fontWeight: 700, fontSize: 14.5, color: T.text.primary, letterSpacing: 0.2 }}>
+                {t('מעבד נתונים…', 'Processing data…')}
+              </div>
+              <div style={{ fontFamily: mono, fontSize: 10.5, color: T.text.muted, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+                {t('קורא שורות • חישוב PnL • מיפוי שדות', 'Reading rows • computing PnL • field mapping')}
+              </div>
+            </>
+
         ) : doneFile ? (
           <>
             <CheckCircle2 size={36} color="#10b981" />
