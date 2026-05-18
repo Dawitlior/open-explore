@@ -82,6 +82,7 @@ export const AnalyticsQuantLab = ({ T, trades: _allTrades, privacyMode }: Props)
     });
   }, [trades]);
 
+
   /* ── 1. R-Multiple histogram + bell curve overlay ── */
   const rHisto = useMemo(() => {
     if (trades.length === 0) return [] as { bin: string; mid: number; count: number; bell: number }[];
