@@ -97,6 +97,14 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
   const [showWipeModal, setShowWipeModal] = useState(false);
   useEffect(() => { if (ui.prefs.customAccent) setDraftAccent(ui.prefs.customAccent); }, [ui.prefs.customAccent]);
   useEffect(() => { if (ui.prefs.customTheme) setDraftTheme(ui.prefs.customTheme); }, [ui.prefs.customTheme]);
+  // Light-mode aware token helpers — flip iOS native chrome between premium dark and Apple light gray.
+  const isLight = (T as { id?: string })?.id === 'platinum';
+  const iosChromeBg = isLight ? '#f5f5f7' : '#000';
+  const iosRowBg = isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.05)';
+  const iosRowBgStrong = isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)';
+  const iosCircleBg = isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)';
+  const iosOverlayBg = isLight ? 'rgba(245,245,247,0.85)' : 'rgba(2,6,15,0.78)';
+  const iosActiveTap = isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.10)';
 
   // ───────────────────────────────────────────────────────────────────
   // Security interceptors (component-scoped): block context menu and
