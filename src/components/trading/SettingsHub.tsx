@@ -293,25 +293,39 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
             backdropFilter: 'blur(18px) saturate(140%)',
             WebkitBackdropFilter: 'blur(18px) saturate(140%)',
           }}>
-            <div style={{ padding: '20px 18px 14px' }}>
-              <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: T.text.muted, textTransform: 'uppercase', marginBottom: 4 }}>
-                ORCA OS
-              </div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: T.text.primary, letterSpacing: '-0.01em' }}>
-                {t('הגדרות', 'Settings')}
+            {/* macOS profile card */}
+            <div style={{
+              margin: '14px 12px 10px', padding: '10px 12px',
+              borderRadius: 10, background: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)',
+              border: `1px solid ${T.border.subtle}`,
+              display: 'flex', alignItems: 'center', gap: 10, minWidth: 0,
+            }}>
+              <div style={{
+                width: 38, height: 38, borderRadius: '50%',
+                background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.purple})`,
+                display: 'grid', placeItems: 'center', fontSize: 15, fontWeight: 800,
+                color: T.bg.primary, flexShrink: 0,
+              }}>{(auth.user?.email || '?').charAt(0).toUpperCase()}</div>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: T.text.primary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} dir="ltr">
+                  {auth.user?.email ?? '—'}
+                </div>
+                <div style={{ fontSize: 10, color: T.text.muted, fontFamily: mono }}>
+                  Apple ID · iCloud
+                </div>
               </div>
             </div>
 
-            <div style={{ padding: '0 14px 12px' }}>
+            <div style={{ padding: '0 12px 10px' }}>
               <div style={{ position: 'relative' }}>
-                <Search size={13} style={{ position: 'absolute', top: '50%', insetInlineStart: 11, transform: 'translateY(-50%)', color: T.text.muted, pointerEvents: 'none' }} />
+                <Search size={13} style={{ position: 'absolute', top: '50%', insetInlineStart: 10, transform: 'translateY(-50%)', color: T.text.muted, pointerEvents: 'none' }} />
                 <input
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  placeholder={t('חיפוש בהגדרות', 'Search settings')}
+                  placeholder={t('חיפוש', 'Search')}
                   style={{
-                    width: '100%', padding: `8px 12px 8px ${isRTL ? '12px' : '32px'}`, paddingInlineStart: 32,
-                    borderRadius: T.radius.sm, background: T.bg.tertiary,
+                    width: '100%', padding: '7px 12px 7px 30px', paddingInlineStart: 30,
+                    borderRadius: 8, background: isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.06)',
                     border: `1px solid ${T.border.subtle}`, color: T.text.primary,
                     fontSize: 12, outline: 'none', fontFamily: sans, boxSizing: 'border-box',
                   }}
@@ -320,12 +334,12 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
               </div>
             </div>
 
-            <nav style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '4px 10px 16px', WebkitOverflowScrolling: 'touch' }}>
+            <nav style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '4px 8px 16px', WebkitOverflowScrolling: 'touch' }}>
               {groups.map(group => (
-                <div key={group} style={{ marginBottom: 14 }}>
+                <div key={group} style={{ marginBottom: 12 }}>
                   <div style={{
-                    fontSize: 9.5, fontWeight: 800, letterSpacing: 1.8, color: T.text.dim,
-                    textTransform: 'uppercase', padding: '6px 10px 8px',
+                    fontSize: 9.5, fontWeight: 800, letterSpacing: 1.6, color: T.text.dim,
+                    textTransform: 'uppercase', padding: '6px 12px 6px',
                   }}>{group}</div>
                   {filteredNav.filter(n => n.group[isRTL ? 'he' : 'en'] === group).map(item => {
                     const Icon = item.icon;
@@ -336,20 +350,24 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                         className="orca-nav-item"
                         onClick={() => setTab(item.id)}
                         style={{
-                          display: 'flex', alignItems: 'center', gap: 11, width: '100%',
-                          padding: '9px 11px', marginBottom: 2, borderRadius: T.radius.sm,
-                          background: active ? `${T.accent.cyan}14` : 'transparent',
+                          display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+                          padding: '7px 10px', marginBottom: 1, borderRadius: 8,
+                          background: active ? '#e8463a' : 'transparent',
                           border: 'none', cursor: 'pointer', textAlign: isRTL ? 'right' : 'left' as const,
-                          color: active ? T.accent.cyan : T.text.secondary, fontFamily: sans,
-                          fontSize: 12.5, fontWeight: active ? 700 : 500,
+                          color: active ? '#fff' : T.text.secondary, fontFamily: sans,
+                          fontSize: 13, fontWeight: active ? 600 : 500,
                           position: 'relative', transition: 'background .12s, color .12s',
+                          boxShadow: active ? '0 1px 2px rgba(232,70,58,0.45), inset 0 1px 0 rgba(255,255,255,0.18)' : 'none',
                         }}
                       >
-                        {active && <span style={{
-                          position: 'absolute', insetInlineStart: 0, top: 6, bottom: 6, width: 3,
-                          borderRadius: 3, background: T.accent.cyan,
-                        }} />}
-                        <Icon size={15} strokeWidth={2.2} />
+                        <span style={{
+                          width: 22, height: 22, borderRadius: 6,
+                          display: 'grid', placeItems: 'center', flexShrink: 0,
+                          background: active ? 'rgba(255,255,255,0.18)' : (isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)'),
+                          color: active ? '#fff' : T.text.secondary,
+                        }}>
+                          <Icon size={13} strokeWidth={2.2} />
+                        </span>
                         <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {item.label[isRTL ? 'he' : 'en']}
                         </span>
@@ -366,32 +384,21 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
             </nav>
 
             <div style={{
-              padding: '12px 14px', borderTop: `1px solid ${T.border.subtle}`,
-              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '10px 14px', borderTop: `1px solid ${T.border.subtle}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
             }}>
-              <div style={{
-                width: 32, height: 32, borderRadius: '50%',
-                background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.purple})`,
-                display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 800,
-                color: T.bg.primary, flexShrink: 0,
-              }}>{(auth.user?.email || '?').charAt(0).toUpperCase()}</div>
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: T.text.primary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} dir="ltr">
-                  {auth.user?.email ?? '—'}
-                </div>
-                <div style={{ fontSize: 9.5, color: T.text.muted, fontFamily: mono }}>
-                  {t('מחובר/ת', 'Signed in')}
-                </div>
+              <div style={{ fontSize: 10, color: T.text.muted, fontFamily: mono }}>
+                {t('מחובר/ת', 'Signed in')}
               </div>
               <button
                 onClick={async () => { await auth.signOut(); }}
                 title={t('התנתק', 'Sign out')}
                 style={{
-                  width: 30, height: 30, borderRadius: T.radius.sm,
+                  padding: '6px 10px', borderRadius: 6, display: 'inline-flex', alignItems: 'center', gap: 6,
                   background: 'transparent', border: `1px solid ${T.border.medium}`,
-                  color: T.accent.orange, cursor: 'pointer', display: 'grid', placeItems: 'center',
+                  color: T.accent.orange, cursor: 'pointer', fontSize: 11, fontWeight: 600, fontFamily: sans,
                 }}
-              ><LogOut size={14} /></button>
+              ><LogOut size={12} /> {t('התנתק', 'Sign out')}</button>
             </div>
           </aside>
         )}
