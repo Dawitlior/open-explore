@@ -65,7 +65,15 @@ const TOKEN_LIST = [
 
 export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, lang, setLang, privacyMode, setPrivacyMode, trades }: SettingsHubProps) {
   const [tab, setTab] = useState<TabId>('account');
-  const isMobile = useIsMobile();
+  const isMobileHook = useIsMobile();
+  // Settings uses a stricter breakpoint: macOS dual-column on ≥1024px, iOS layout below.
+  const [isMobile, setIsMobile] = useState<boolean>(() => typeof window !== 'undefined' ? window.innerWidth < 1024 : false);
+  useEffect(() => {
+    const onR = () => setIsMobile(window.innerWidth < 1024);
+    onR();
+    window.addEventListener('resize', onR);
+    return () => window.removeEventListener('resize', onR);
+  }, [isMobileHook]);
   // iOS-style drill-down: on mobile, the panel opens to the master list.
   // Tapping a row drills into the detail view; the back chevron returns.
   const [mobileDrilled, setMobileDrilled] = useState(false);
