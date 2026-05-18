@@ -217,6 +217,107 @@ export function ExchangesPanel({ T, isRTL }: Props) {
         })}
       </div>
 
+      {/* ============ CSV Import Brokers ============ */}
+      <div style={{
+        marginTop: 28, marginBottom: 14, padding: '14px 18px',
+        borderRadius: 14,
+        background: 'linear-gradient(135deg, rgba(168,85,247,0.06), rgba(168,85,247,0.01))',
+        border: `1px solid ${T.border.subtle}`,
+        backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+          <FileSpreadsheet size={15} color="#a855f7" />
+          <h3 style={{ margin: 0, fontFamily: sans, fontWeight: 700, fontSize: 13.5, color: T.text.primary, letterSpacing: 0.3 }}>
+            {t('ייבוא מברוקרים (CSV)', 'Broker CSV Import')}
+          </h3>
+        </div>
+        <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.55, color: T.text.muted, fontFamily: sans }}>
+          {t(
+            'ברוקרים ופלטפורמות ללא גישת API — גרור קובץ היסטוריית מסחר כדי לטעון אותו אל היומן.',
+            'Brokers and platforms without API access — drag a trade history file to import into the journal.'
+          )}
+        </p>
+      </div>
+
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+        gap: 12,
+      }}>
+        {CSV_BROKERS.map(b => {
+          const active = csvBrokerId === b.id;
+          return (
+            <button
+              key={b.id}
+              onClick={() => setCsvBrokerId(active ? null : b.id)}
+              style={{
+                position: 'relative', textAlign: isRTL ? 'right' : 'left',
+                padding: 14, borderRadius: 14,
+                background: active
+                  ? `linear-gradient(135deg, ${b.accent}22, ${b.accent}08), rgba(11,23,48,0.6)`
+                  : 'rgba(11,23,48,0.4)',
+                border: `1px solid ${active ? b.accent + '66' : T.border.subtle}`,
+                backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
+                cursor: 'pointer',
+                filter: active ? 'none' : 'saturate(0.55)',
+                opacity: active ? 1 : 0.78,
+                transition: 'transform .2s ease, filter .2s ease, opacity .2s ease, border-color .2s ease, box-shadow .2s ease',
+                boxShadow: active ? `0 10px 28px -18px ${b.accent}cc, 0 0 0 1px ${b.accent}33` : 'none',
+                display: 'flex', flexDirection: 'column', gap: 10,
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLButtonElement).style.filter = 'saturate(1)';
+                (e.currentTarget as HTMLButtonElement).style.opacity = '1';
+                (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={e => {
+                if (!active) {
+                  (e.currentTarget as HTMLButtonElement).style.filter = 'saturate(0.55)';
+                  (e.currentTarget as HTMLButtonElement).style.opacity = '0.78';
+                }
+                (e.currentTarget as HTMLButtonElement).style.transform = 'none';
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 10,
+                  background: `linear-gradient(135deg, ${b.accent}, ${b.accent}99)`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#0b1730', fontFamily: mono, fontWeight: 800, fontSize: 12, letterSpacing: 0.5,
+                  boxShadow: `0 6px 16px -8px ${b.accent}cc`,
+                }}>{b.glyph}</div>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontFamily: sans, fontWeight: 700, fontSize: 13, color: T.text.primary, lineHeight: 1.2 }}>
+                    {b.name}
+                  </div>
+                  <div style={{ fontFamily: sans, fontSize: 10.5, color: T.text.muted, marginTop: 2, lineHeight: 1.3 }}>
+                    {b.tagline[isRTL ? 'he' : 'en']}
+                  </div>
+                </div>
+              </div>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                fontSize: 9.5, fontFamily: mono, color: active ? b.accent : T.text.muted,
+                letterSpacing: 0.5, textTransform: 'uppercase', fontWeight: 700,
+              }}>
+                <UploadCloud size={11} />
+                {active ? t('פתוח לטעינה', 'Ready to import') : t('CSV', 'CSV')}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {csvBrokerId && (
+        <CsvDropZone
+          T={T}
+          isRTL={isRTL}
+          broker={CSV_BROKERS.find(b => b.id === csvBrokerId)!}
+          onClose={() => setCsvBrokerId(null)}
+        />
+      )}
+
+
       {openProvider && openProvider !== 'ibkr' && (
         <CredentialModal
           T={T}
