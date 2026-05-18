@@ -251,17 +251,17 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
           fontFamily: sans, animation: 'orcaSettingsRise .25s ease-out',
         }}
       >
-        {/* SIDEBAR */}
-        <aside className="orca-settings-sidebar" style={{
-          background: T.bg.primary,
-          borderInlineEnd: isMobile ? 'none' : `1px solid ${T.border.subtle}`,
-          borderBottom: isMobile ? `1px solid ${T.border.subtle}` : 'none',
-          display: 'flex',
-          flexDirection: isMobile ? 'row' : 'column',
-          overflow: 'hidden',
-          maxHeight: isMobile ? 140 : 'none',
-        }}>
-          {!isMobile && (
+        {/* ════════════ SIDEBAR — macOS master pane (desktop) ════════════ */}
+        {!isMobile && (
+          <aside className="orca-settings-sidebar" style={{
+            background: T.bg.primary,
+            borderInlineEnd: `1px solid ${T.border.subtle}`,
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            backdropFilter: 'blur(18px) saturate(140%)',
+            WebkitBackdropFilter: 'blur(18px) saturate(140%)',
+          }}>
             <div style={{ padding: '20px 18px 14px' }}>
               <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: T.text.muted, textTransform: 'uppercase', marginBottom: 4 }}>
                 ORCA OS
@@ -270,9 +270,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                 {t('הגדרות', 'Settings')}
               </div>
             </div>
-          )}
 
-          {!isMobile && (
             <div style={{ padding: '0 14px 12px' }}>
               <div style={{ position: 'relative' }}>
                 <Search size={13} style={{ position: 'absolute', top: '50%', insetInlineStart: 11, transform: 'translateY(-50%)', color: T.text.muted, pointerEvents: 'none' }} />
@@ -290,85 +288,52 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                 />
               </div>
             </div>
-          )}
 
-          <nav style={{
-            flex: 1,
-            overflowY: isMobile ? 'hidden' : 'auto',
-            overflowX: isMobile ? 'auto' : 'hidden',
-            padding: isMobile ? '10px 10px' : '4px 10px 16px',
-            display: isMobile ? 'flex' : 'block',
-            gap: isMobile ? 6 : 0,
-            WebkitOverflowScrolling: 'touch',
-          }}>
-            {isMobile ? (
-              filteredNav.map(item => {
-                const Icon = item.icon;
-                const active = tab === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setTab(item.id)}
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 6,
-                      padding: '8px 12px', borderRadius: T.radius.sm,
-                      background: active ? `${T.accent.cyan}18` : T.bg.tertiary,
-                      border: `1px solid ${active ? T.accent.cyan : T.border.subtle}`,
-                      color: active ? T.accent.cyan : T.text.secondary,
-                      fontFamily: sans, fontSize: 12, fontWeight: active ? 700 : 500,
-                      whiteSpace: 'nowrap', cursor: 'pointer', flex: '0 0 auto',
-                    }}
-                  >
-                    <Icon size={13} strokeWidth={2.2} />
-                    {item.label[isRTL ? 'he' : 'en']}
-                  </button>
-                );
-              })
-            ) : groups.map(group => (
-              <div key={group} style={{ marginBottom: 14 }}>
-                <div style={{
-                  fontSize: 9.5, fontWeight: 800, letterSpacing: 1.8, color: T.text.dim,
-                  textTransform: 'uppercase', padding: '6px 10px 8px',
-                }}>{group}</div>
-                {filteredNav.filter(n => n.group[isRTL ? 'he' : 'en'] === group).map(item => {
-                  const Icon = item.icon;
-                  const active = tab === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      className="orca-nav-item"
-                      onClick={() => setTab(item.id)}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 11, width: '100%',
-                        padding: '9px 11px', marginBottom: 2, borderRadius: T.radius.sm,
-                        background: active ? `${T.accent.cyan}14` : 'transparent',
-                        border: 'none', cursor: 'pointer', textAlign: isRTL ? 'right' : 'left' as const,
-                        color: active ? T.accent.cyan : T.text.secondary, fontFamily: sans,
-                        fontSize: 12.5, fontWeight: active ? 700 : 500,
-                        position: 'relative', transition: 'background .12s, color .12s',
-                      }}
-                    >
-                      {active && <span style={{
-                        position: 'absolute', insetInlineStart: 0, top: 6, bottom: 6, width: 3,
-                        borderRadius: 3, background: T.accent.cyan,
-                      }} />}
-                      <Icon size={15} strokeWidth={2.2} />
-                      <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {item.label[isRTL ? 'he' : 'en']}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            ))}
-            {filteredNav.length === 0 && (
-              <div style={{ padding: 16, fontSize: 11, color: T.text.muted, textAlign: 'center' }}>
-                {t('לא נמצאו תוצאות', 'No matches')}
-              </div>
-            )}
-          </nav>
+            <nav style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '4px 10px 16px', WebkitOverflowScrolling: 'touch' }}>
+              {groups.map(group => (
+                <div key={group} style={{ marginBottom: 14 }}>
+                  <div style={{
+                    fontSize: 9.5, fontWeight: 800, letterSpacing: 1.8, color: T.text.dim,
+                    textTransform: 'uppercase', padding: '6px 10px 8px',
+                  }}>{group}</div>
+                  {filteredNav.filter(n => n.group[isRTL ? 'he' : 'en'] === group).map(item => {
+                    const Icon = item.icon;
+                    const active = tab === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        className="orca-nav-item"
+                        onClick={() => setTab(item.id)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 11, width: '100%',
+                          padding: '9px 11px', marginBottom: 2, borderRadius: T.radius.sm,
+                          background: active ? `${T.accent.cyan}14` : 'transparent',
+                          border: 'none', cursor: 'pointer', textAlign: isRTL ? 'right' : 'left' as const,
+                          color: active ? T.accent.cyan : T.text.secondary, fontFamily: sans,
+                          fontSize: 12.5, fontWeight: active ? 700 : 500,
+                          position: 'relative', transition: 'background .12s, color .12s',
+                        }}
+                      >
+                        {active && <span style={{
+                          position: 'absolute', insetInlineStart: 0, top: 6, bottom: 6, width: 3,
+                          borderRadius: 3, background: T.accent.cyan,
+                        }} />}
+                        <Icon size={15} strokeWidth={2.2} />
+                        <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {item.label[isRTL ? 'he' : 'en']}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ))}
+              {filteredNav.length === 0 && (
+                <div style={{ padding: 16, fontSize: 11, color: T.text.muted, textAlign: 'center' }}>
+                  {t('לא נמצאו תוצאות', 'No matches')}
+                </div>
+              )}
+            </nav>
 
-          {!isMobile && (
             <div style={{
               padding: '12px 14px', borderTop: `1px solid ${T.border.subtle}`,
               display: 'flex', alignItems: 'center', gap: 10,
@@ -397,8 +362,115 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                 }}
               ><LogOut size={14} /></button>
             </div>
-          )}
-        </aside>
+          </aside>
+        )}
+
+        {/* ════════════ MOBILE — iOS master list (Settings.app style) ════════════ */}
+        {isMobile && !mobileDrilled && (
+          <aside className="orca-ios-master" style={{
+            background: '#000', color: T.text.primary, overflowX: 'hidden', overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch', display: 'flex', flexDirection: 'column',
+            animation: 'orcaSettingsFade .18s ease-out',
+          }}>
+            <div style={{
+              padding: '14px 16px 10px', display: 'flex', alignItems: 'center',
+              justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 2,
+              background: '#000', borderBottom: `1px solid ${T.border.subtle}`,
+            }}>
+              <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>{t('הגדרות', 'Settings')}</div>
+              <button onClick={onClose} aria-label="Close" style={{
+                width: 32, height: 32, borderRadius: 16, background: 'rgba(255,255,255,0.08)',
+                border: 'none', color: T.text.primary, display: 'grid', placeItems: 'center', cursor: 'pointer',
+              }}><X size={16} /></button>
+            </div>
+
+            <div style={{ padding: '14px 16px 4px' }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
+                background: 'rgba(255,255,255,0.06)', borderRadius: 12,
+                border: `1px solid ${T.border.subtle}`,
+              }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} dir="ltr">
+                    {auth.user?.email ?? '—'}
+                  </div>
+                  <div style={{ fontSize: 11, color: T.text.muted, marginTop: 2, fontFamily: mono }}>
+                    {t('מחובר/ת • Orca ID', 'Signed in • Orca ID')}
+                  </div>
+                </div>
+                <div style={{
+                  width: 48, height: 48, borderRadius: '50%', flexShrink: 0,
+                  background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.purple})`,
+                  display: 'grid', placeItems: 'center', fontSize: 18, fontWeight: 800, color: '#000',
+                }}>{(auth.user?.email || '?').charAt(0).toUpperCase()}</div>
+              </div>
+            </div>
+
+            <div style={{ padding: '8px 16px 28px' }}>
+              {groups.map(group => {
+                const rows = filteredNav.filter(n => n.group[isRTL ? 'he' : 'en'] === group);
+                if (!rows.length) return null;
+                return (
+                  <div key={group} style={{ marginBottom: 22 }}>
+                    <div style={{
+                      fontSize: 11, fontWeight: 700, color: T.text.muted, textTransform: 'uppercase',
+                      letterSpacing: 1.2, padding: '4px 6px 8px',
+                    }}>{group}</div>
+                    <div style={{
+                      background: 'rgba(255,255,255,0.05)', borderRadius: 12, overflow: 'hidden',
+                      border: `1px solid ${T.border.subtle}`,
+                    }}>
+                      {rows.map((item, i) => {
+                        const Icon = item.icon;
+                        const palette = [T.accent.cyan, T.accent.purple, T.accent.orange, T.accent.green || T.accent.cyan];
+                        const tint = palette[i % palette.length];
+                        return (
+                          <button
+                            key={item.id}
+                            className="orca-ios-row-btn"
+                            onClick={() => { setTab(item.id); setMobileDrilled(true); }}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 12, width: '100%',
+                              padding: '11px 12px', background: 'transparent', border: 'none',
+                              borderBottom: i < rows.length - 1 ? `1px solid ${T.border.subtle}` : 'none',
+                              color: T.text.primary, fontFamily: sans, textAlign: isRTL ? 'right' : 'left' as const,
+                              cursor: 'pointer', transition: 'background .12s',
+                            }}
+                          >
+                            <span style={{
+                              width: 30, height: 30, borderRadius: 7, flexShrink: 0,
+                              display: 'grid', placeItems: 'center',
+                              background: `linear-gradient(160deg, ${tint}, ${tint}aa)`,
+                              boxShadow: `inset 0 0 0 1px rgba(255,255,255,0.15)`,
+                              color: '#000',
+                            }}><Icon size={16} strokeWidth={2.4} /></span>
+                            <span style={{ flex: 1, fontSize: 14.5, fontWeight: 500, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {item.label[isRTL ? 'he' : 'en']}
+                            </span>
+                            <span style={{
+                              color: T.text.muted, fontSize: 18, lineHeight: 1,
+                              transform: isRTL ? 'scaleX(-1)' : 'none',
+                            }}>›</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+
+              <button
+                onClick={async () => { await auth.signOut(); }}
+                style={{
+                  width: '100%', marginTop: 4, padding: '13px 14px',
+                  background: 'rgba(255,255,255,0.05)', border: `1px solid ${T.border.subtle}`,
+                  borderRadius: 12, color: T.accent.orange, fontFamily: sans, fontSize: 14.5, fontWeight: 600,
+                  cursor: 'pointer', textAlign: 'center',
+                }}
+              >{t('התנתקות', 'Sign out')}</button>
+            </div>
+          </aside>
+        )}
 
         {/* CONTENT */}
         <section className="orca-settings-content" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', background: T.bg.secondary }}>
