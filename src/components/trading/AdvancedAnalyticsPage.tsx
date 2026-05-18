@@ -443,7 +443,7 @@ export const AdvancedAnalyticsPage = ({ T, trades: _allTrades, stats, privacyMod
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700 }}>{t('עקומת הון מול נסיגה','Equity vs Drawdown')}</div>
           <div style={{ display: 'flex', gap: 14, fontSize: 10, color: T.text.muted }}>
-            <span>● <span style={{ color: T.accent.cyan }}>{t('R מצטבר','Cumulative R')}</span></span>
+            <span>● <span style={{ color: T.accent.cyan }}>{isMoney ? t('הון מצטבר ($)','Cumulative P&L ($)') : t('R מצטבר','Cumulative R')}</span></span>
             <span>● <span style={{ color: T.accent.red }}>{t('נסיגה (%)','Drawdown (%)')}</span></span>
           </div>
         </div>
@@ -461,14 +461,15 @@ export const AdvancedAnalyticsPage = ({ T, trades: _allTrades, stats, privacyMod
             </defs>
             <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
             <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 10 }} />
-            <YAxis yAxisId="L" tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => `${v}R`} />
+            <YAxis yAxisId="L" tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => fmtAxis(v)} />
             <YAxis yAxisId="R" orientation="right" tick={{ fill: T.text.muted, fontSize: 10 }} domain={['dataMin', 0]} />
-            <Tooltip contentStyle={tt} formatter={(v: number, n: string) => n === 'equity' ? `${v.toFixed(2)}R` : `${v.toFixed(2)}%`} />
-            <Area yAxisId="L" type="monotone" dataKey="equity" stroke={T.accent.cyan} strokeWidth={2.5} fill="url(#equityG)" />
-            <Area yAxisId="R" type="monotone" dataKey="dd" stroke={T.accent.red} strokeWidth={1.5} fill="url(#ddG)" />
+            <Tooltip contentStyle={tt} formatter={(v: number, n: string) => n === 'dd' || n === 'ddMoney' ? `${v.toFixed(2)}%` : fmtVal(v)} />
+            <Area yAxisId="L" type="monotone" dataKey={isMoney ? 'equityMoney' : 'equity'} stroke={T.accent.cyan} strokeWidth={2.5} fill="url(#equityG)" />
+            <Area yAxisId="R" type="monotone" dataKey={isMoney ? 'ddMoney' : 'dd'} stroke={T.accent.red} strokeWidth={1.5} fill="url(#ddG)" />
           </ComposedChart>
         </ResponsiveContainer>
       </GlassCard>}
+
 
       {/* ═══ ROW: R Distribution + Direction Radial ═══ */}
       {showCore && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12, marginBottom: 16 }}>
