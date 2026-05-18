@@ -291,13 +291,38 @@ export const AdvancedAnalyticsPage = ({ T, trades: _allTrades, stats, privacyMod
     return Object.values(m).sort((a, b) => a.key.localeCompare(b.key));
   }, [trades]);
 
-  // 10. Hero KPIs
+  // 10. Hero KPIs (R-side)
   const wins = trades.filter(t => t.winLoss === 'Win');
   const losses = trades.filter(t => t.winLoss === 'Loss');
   const payoff = losses.length && wins.length
     ? (wins.reduce((s, t) => s + Math.abs(getEffectiveR(t)), 0) / wins.length) /
       (losses.reduce((s, t) => s + Math.abs(getEffectiveR(t)), 0) / losses.length)
     : 0;
+
+  // 10b. Hero KPIs (Money-side) — safe against zero-division / NaN
+  const moneyStats = useMemo(() => {
+    if (!trades.length) {
+      return { avgWin: 0, avgLoss: 0, payoff: 0, profitFactor: 0, maxDDMoney: 0, maxDDPct: 0, grossProfit: 0, grossLoss: 0 };
+    }
+    const w$ = wins.map(t => t.pnl).filter(n => isFinite(n));
+    const l$ = losses.map(t => Math.abs(t.pnl)).filter(n => isFinite(n));
+    const avgWin = w$.length ? w$.reduce((s, v) => s + v, 0) / w$.length : 0;
+    const avgLoss = l$.length ? l$.reduce((s, v) => s + v, 0) / l$.length : 0;
+    const grossProfit = w$.reduce((s, v) => s + v, 0);
+    const grossLoss = l$.reduce((s, v) => s + v, 0);
+    const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : (grossProfit > 0 ? Infinity : 0);
+    const payoff$ = avgLoss > 0 ? avgWin / avgLoss : 0;
+    let cum = 0, peak = 0, maxDD = 0;
+    trades.forEach(t => {
+      cum += t.pnl;
+      if (cum > peak) peak = cum;
+      const dd = peak - cum;
+      if (dd > maxDD) maxDD = dd;
+    });
+    const maxDDPct = peak > 0 ? (maxDD / peak) * 100 : 0;
+    return { avgWin, avgLoss, payoff: payoff$, profitFactor, maxDDMoney: maxDD, maxDDPct, grossProfit, grossLoss };
+  }, [trades, wins, losses]);
+
 
   /* ─────────── ADVANCED (PRO/MAX) DATASETS ─────────── */
 
@@ -412,20 +437,29 @@ export const AdvancedAnalyticsPage = ({ T, trades: _allTrades, stats, privacyMod
         </div>
       </motion.div>
 
-      {/* ═══ HERO KPI GRID — 8 tiles ═══ */}
+      {/* ═══ HERO KPI GRID — 8 tiles · adapts to displayMode ═══ */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, marginBottom: 16 }}>
-        {[
-          { label: t('תוחלת R','Expectancy R'), value: `${effectiveStats.expectancyR >= 0 ? '+' : ''}${effectiveStats.expectancyR.toFixed(3)}R`, color: effectiveStats.expectancyR >= 0 ? T.accent.cyan : T.accent.red },
-          { label: t('פקטור רווח','Profit Factor'), value: `${stats.profitFactor.toFixed(2)}x`, color: stats.profitFactor >= 1.5 ? T.accent.green : stats.profitFactor >= 1 ? T.accent.orange : T.accent.red },
+        {(isMoney ? [
+          { label: t('ניצחון ממוצע ($)','Avg Win ($)'), value: <PV>{fmtVal(moneyStats.avgWin)}</PV>, color: T.accent.green },
+          { label: t('הפסד ממוצע ($)','Avg Loss ($)'), value: <PV>{fmtVal(-moneyStats.avgLoss)}</PV>, color: T.accent.red },
+          { label: t('פקטור רווח','Profit Factor'), value: isFinite(moneyStats.profitFactor) ? `${moneyStats.profitFactor.toFixed(2)}x` : '∞', color: moneyStats.profitFactor >= 1.5 ? T.accent.green : moneyStats.profitFactor >= 1 ? T.accent.orange : T.accent.red },
           { label: t('אחוז הצלחה','Win Rate'), value: `${stats.winRate.toFixed(1)}%`, color: stats.winRate >= 50 ? T.accent.green : T.accent.orange },
-          { label: t('יחס תשלום','Payoff Ratio'), value: `${payoff.toFixed(2)}`, color: T.accent.blue },
+          { label: t('יחס תשלום ($)','Payoff Ratio ($)'), value: moneyStats.payoff > 0 ? moneyStats.payoff.toFixed(2) : '—', color: T.accent.blue },
+          { label: t('P&L מצטבר','Cumulative P&L'), value: <PV>{fmtVal(stats.totalPnl)}</PV>, color: stats.totalPnl >= 0 ? T.accent.green : T.accent.red },
+          { label: t('נסיגה מקס ($)','Max Drawdown ($)'), value: <PV>{fmtVal(-moneyStats.maxDDMoney)}</PV>, color: T.accent.orange },
+          { label: t('נסיגה מקס (%)','Max Drawdown (%)'), value: `${moneyStats.maxDDPct.toFixed(1)}%`, color: T.accent.orange },
+        ] : [
+          { label: t('תוחלת R','Expectancy R'), value: `${effectiveStats.expectancyR >= 0 ? '+' : ''}${effectiveStats.expectancyR.toFixed(3)}R`, color: effectiveStats.expectancyR >= 0 ? T.accent.cyan : T.accent.red },
+          { label: t('פקטור רווח','Profit Factor'), value: isFinite(stats.profitFactor) ? `${stats.profitFactor.toFixed(2)}x` : '∞', color: stats.profitFactor >= 1.5 ? T.accent.green : stats.profitFactor >= 1 ? T.accent.orange : T.accent.red },
+          { label: t('אחוז הצלחה','Win Rate'), value: `${stats.winRate.toFixed(1)}%`, color: stats.winRate >= 50 ? T.accent.green : T.accent.orange },
+          { label: t('יחס תשלום','Payoff Ratio'), value: payoff > 0 ? payoff.toFixed(2) : '—', color: T.accent.blue },
           { label: t('P&L מצטבר','Cumulative P&L'), value: <PV>{`${stats.totalPnl >= 0 ? '+' : ''}$${stats.totalPnl.toFixed(2)}`}</PV>, color: stats.totalPnl >= 0 ? T.accent.green : T.accent.red },
           { label: t('נסיגה מקס','Max Drawdown'), value: `${stats.maxDrawdown.toFixed(1)}%`, color: T.accent.orange },
           { label: t('קלי אופטימלי','Optimal Kelly'), value: `${effectiveStats.kelly.toFixed(1)}%`, color: T.accent.purple },
           { label: t('שארפ','Sharpe'), value: effectiveStats.volAdjExpectancy.toFixed(2), color: T.accent.cyan },
-        ].map((k, i) => (
+        ]).map((k, i) => (
           <motion.div
-            key={k.label}
+            key={`${isMoney ? 'm' : 'r'}-${k.label}`}
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: i * 0.04 }}
@@ -437,6 +471,7 @@ export const AdvancedAnalyticsPage = ({ T, trades: _allTrades, stats, privacyMod
           </motion.div>
         ))}
       </div>
+
 
       {/* ═══ EQUITY + DRAWDOWN OVERLAY ═══ */}
       {showCore && <GlassCard T={T} style={{ marginBottom: 16 }}>

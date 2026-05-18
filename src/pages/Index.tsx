@@ -8,6 +8,7 @@ import { computeAnalytics, getCalDays } from '@/lib/trading-analytics';
 import { i18n } from '@/lib/trading-i18n';
 import { getTheme, tintTheme, ttStyle, modeColors, type TradingTheme } from '@/lib/trading-theme';
 import { GlassCard, MetricCard, ScoreGauge, TradingBadge, Ico } from '@/components/trading/TradingUI';
+import { AdaptiveExpectancyCard, AdaptiveQuickStats } from '@/components/trading/AdaptiveKpiCards';
 import { ChartWrapper, EXPLANATIONS, type ChartExplanation } from '@/components/trading/ChartWrapper';
 import { ChartExplanationModal } from '@/components/trading/ChartExplanationModal';
 import { CalendarModal } from '@/components/trading/CalendarModal';
@@ -705,19 +706,21 @@ const Index = () => {
           <div style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
             <MetricCard T={T} label={t.netPnl} value={stats.totalPnl} color={stats.totalPnl >= 0 ? T.accent.cyan : T.accent.red} onInfoClick={() => handleExplainClick(t.netPnl, EXPLANATIONS.netPnl)} />
             <MetricCard T={T} label={t.winRate} value={stats.winRate} suffix="%" color={T.accent.green} onInfoClick={() => handleExplainClick(t.winRate, EXPLANATIONS.winRate)} />
-            <GlassCard T={T} glow={T.accent.cyanGlow} style={{ flex: 1, minWidth: isMobile ? 0 : 170, width: isMobile ? '100%' : undefined }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{t.expectancy}</div>
-                  <span style={{ fontSize: 7, padding: '1px 4px', borderRadius: 3, background: `${T.accent.purple}15`, color: T.accent.purple, fontWeight: 700 }}>R</span>
-                </div>
-                <button onClick={() => handleExplainClick(t.expectancy, EXPLANATIONS.expectancy)} style={{ width: 16, height: 16, borderRadius: '50%', border: `1px solid ${T.border.medium}`, background: 'transparent', color: T.text.muted, cursor: 'pointer', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1 }}>i</button>
-              </div>
-              <PV><div style={{ fontSize: 26, fontWeight: 700, color: stats.expectancyR >= 0 ? T.accent.cyan : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{stats.expectancyR >= 0 ? '+' : ''}{stats.expectancyR.toFixed(3)}R</div></PV>
-              <div style={{ fontSize: 9, color: T.text.muted, marginTop: 4 }}>
-                {isRTL ? 'תוחלת לעסקה ביחידות סיכון' : 'Expected return per trade in risk units'}
-              </div>
-            </GlassCard>
+            <AdaptiveExpectancyCard
+              T={T}
+              trades={trades}
+              stats={stats}
+              isRTL={isRTL}
+              isMobile={isMobile}
+              privacyMode={settings.privacyMode}
+              onInfoClick={() => handleExplainClick(t.expectancy, EXPLANATIONS.expectancy)}
+              labels={{
+                expectancy: t.expectancy,
+                avgPnl: isRTL ? 'תוחלת ($)' : 'Avg P&L ($)',
+                tooltipR: isRTL ? 'תוחלת לעסקה ביחידות סיכון' : 'Expected return per trade in risk units',
+                tooltipMoney: isRTL ? 'רווח/הפסד ממוצע לעסקה' : 'Average profit/loss per trade',
+              }}
+            />
             <MetricCard T={T} label={t.maxDrawdown} value={`${stats.maxDrawdown.toFixed(1)}%`} color={T.accent.orange} onInfoClick={() => handleExplainClick(t.maxDrawdown, EXPLANATIONS.maxDrawdownMetric)} />
           </div>
         </div>
@@ -810,25 +813,25 @@ const Index = () => {
                   </div>
                 </ChartWrapper>
               </div>
-              {/* Quick Stats */}
-              <GlassCard T={T} style={{ marginBottom: 18 }}>
-                <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>{isRTL ? 'סטטיסטיקות מהירות' : 'Quick Stats'}</div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 0 }}>
-                  {[
-                    { l: `${t.avgWin} (R)`, v: `+${stats.avgWinR.toFixed(2)}R`, c: T.accent.green },
-                    { l: `${t.avgLoss} (R)`, v: `-${stats.avgLossR.toFixed(2)}R`, c: T.accent.red },
-                    { l: t.bestTrade, v: `+${stats.bestTradeR.toFixed(2)}R`, c: T.accent.cyan },
-                    { l: t.worstTrade, v: `${stats.worstTradeR.toFixed(2)}R`, c: T.accent.red },
-                    { l: t.profitFactor, v: `${stats.profitFactor.toFixed(2)}x`, c: T.accent.blue },
-                    { l: t.currentStreak, v: `${stats.currentStreak} ${stats.streakType === 'Loss' ? '🔴' : '🟢'}`, c: T.text.primary },
-                  ].map((s, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 12px', borderBottom: `1px solid ${T.border.subtle}` }}>
-                      <span style={{ color: T.text.muted, fontSize: 12 }}>{s.l}</span>
-                      <PV><span style={{ color: s.c, fontSize: 13, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace" }}>{s.v}</span></PV>
-                    </div>
-                  ))}
-                </div>
-              </GlassCard>
+              {/* Quick Stats — adaptive (R / $) */}
+              <AdaptiveQuickStats
+                T={T}
+                trades={trades}
+                stats={stats}
+                isRTL={isRTL}
+                privacyMode={settings.privacyMode}
+                streakDisplay={`${stats.currentStreak} ${stats.streakType === 'Loss' ? '🔴' : '🟢'}`}
+                streakColor={T.text.primary}
+                labels={{
+                  title: isRTL ? 'סטטיסטיקות מהירות' : 'Quick Stats',
+                  avgWin: t.avgWin,
+                  avgLoss: t.avgLoss,
+                  bestTrade: t.bestTrade,
+                  worstTrade: t.worstTrade,
+                  profitFactor: t.profitFactor,
+                  currentStreak: t.currentStreak,
+                }}
+              />
               {/* Alpha additions */}
               {isAlpha && <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                 <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.riskEvolution} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ flex: 1, minWidth: isMobile ? 0 : 300, width: isMobile ? '100%' : undefined }}>
