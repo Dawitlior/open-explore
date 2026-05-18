@@ -295,28 +295,24 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
             backdropFilter: 'blur(18px) saturate(140%)',
             WebkitBackdropFilter: 'blur(18px) saturate(140%)',
           }}>
-            {/* macOS profile card */}
+            {/* Profile card — dynamic email + Pepe frog avatar */}
             <div style={{
               margin: '14px 12px 10px', padding: '10px 12px',
               borderRadius: 10, background: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)',
               border: `1px solid ${T.border.subtle}`,
               display: 'flex', alignItems: 'center', gap: 10, minWidth: 0,
             }}>
-              <div style={{
-                width: 38, height: 38, borderRadius: '50%',
-                background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.purple})`,
-                display: 'grid', placeItems: 'center', fontSize: 15, fontWeight: 800,
-                color: T.bg.primary, flexShrink: 0,
-              }}>{(auth.user?.email || '?').charAt(0).toUpperCase()}</div>
+              <FrogAvatar size={38} borderColor={isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.18)'} />
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: T.text.primary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} dir="ltr">
-                  {auth.user?.email ?? '—'}
+                  {auth.user?.email ?? t('משתמש', 'User')}
                 </div>
-                <div style={{ fontSize: 10, color: T.text.muted, fontFamily: mono }}>
-                  Apple ID · iCloud
+                <div style={{ fontSize: 10, color: T.text.muted, fontFamily: mono, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {t('חשבון Orca', 'Orca Account')}
                 </div>
               </div>
             </div>
+
 
             <div style={{ padding: '0 12px 10px' }}>
               <div style={{ position: 'relative' }}>
