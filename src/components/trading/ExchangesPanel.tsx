@@ -1863,7 +1863,9 @@ function CsvDropZone({
             </div>
           </>
         )}
+        </div>
       </div>
     </div>
+
   );
 }
