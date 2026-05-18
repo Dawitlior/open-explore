@@ -34,6 +34,7 @@ import type { ChartExplanation } from './ChartWrapper';
 import { useLang } from '@/hooks/use-lang';
 import { RProxyBanner } from './RProxyBanner';
 import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
+import { useVisibleTrades } from '@/lib/display-mode-format';
 const AnalyticsQuantLab = lazy(() => import('./AnalyticsQuantLab').then(m => ({ default: m.AnalyticsQuantLab })));
 
 interface AdvancedAnalyticsPageProps {
