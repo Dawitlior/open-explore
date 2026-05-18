@@ -303,7 +303,7 @@ const LowTradesPopup: React.FC<{ count: number; T: TradingTheme; isRTL: boolean;
 /* MAIN PAGE                                                        */
 /* ──────────────────────────────────────────────────────────────── */
 
-export const AIInsightsPage: React.FC<AIInsightsPageProps> = ({ T, trades: _allTrades }) => {
+const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTrades }) => {
   const { visibleTrades: trades } = useVisibleTrades(_allTrades);
   const { t, isRTL } = useLang();
   const [loading, setLoading] = useState(false);
