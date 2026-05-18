@@ -31,6 +31,7 @@ import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { GlassCard } from './TradingUI';
 import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
+import { useVisibleTrades } from '@/lib/display-mode-format';
 
 type DayRPoint = { i: number; day: string; total: number; cum: number; trades: Trade[] };
 
