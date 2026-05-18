@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Plug, Shield, ShieldCheck, X, Trash2, Sparkles, Lock, ChevronDown, BookOpen, AlertTriangle, RefreshCw } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Plug, Shield, ShieldCheck, X, Trash2, Sparkles, Lock, ChevronDown, BookOpen, AlertTriangle, RefreshCw, FileSpreadsheet, UploadCloud, CheckCircle2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
@@ -42,14 +42,26 @@ const PROVIDERS: ProviderMeta[] = [
     accent: '#f3ba2f',
     enabled: true,
   },
-  {
-    id: 'ibkr',
-    name: 'Interactive Brokers',
-    tagline: { he: 'מניות, אופציות וחוזים • Flex Query', en: 'Stocks, Options & Futures \u2022 Flex Query' },
-    gradient: 'linear-gradient(135deg, rgba(220,38,38,0.16), rgba(220,38,38,0.04))',
-    accent: '#dc2626',
-    enabled: false,
-  },
+];
+
+/* ============= CSV Import Brokers (no API, journal import via file) ============= */
+interface CsvBrokerMeta {
+  id: string;
+  name: string;
+  tagline: { he: string; en: string };
+  accent: string;
+  glyph: string; // short text mark for the logo tile
+}
+const CSV_BROKERS: CsvBrokerMeta[] = [
+  { id: 'ibkr',         name: 'Interactive Brokers', tagline: { he: 'מניות, אופציות וחוזים',  en: 'Stocks, Options & Futures' }, accent: '#dc2626', glyph: 'IB' },
+  { id: 'ninjatrader',  name: 'NinjaTrader',         tagline: { he: 'פלטפורמת חוזים עתידיים',   en: 'Futures trading platform'   }, accent: '#22c55e', glyph: 'NT' },
+  { id: 'tradovate',    name: 'Tradovate',           tagline: { he: 'חוזים עתידיים בענן',         en: 'Cloud-based futures'        }, accent: '#3b82f6', glyph: 'TV' },
+  { id: 'topstepx',     name: 'TopstepX',            tagline: { he: 'חשבונות פרופ של Topstep',    en: 'Topstep prop accounts'      }, accent: '#f97316', glyph: 'TX' },
+  { id: 'tradelocker',  name: 'TradeLocker',         tagline: { he: 'מולטי־אסט מודרני',           en: 'Modern multi-asset'         }, accent: '#a855f7', glyph: 'TL' },
+  { id: 'mt5',          name: 'MetaTrader 5',        tagline: { he: 'הסטנדרט החדש של פורקס',      en: 'Modern FX standard'         }, accent: '#0ea5e9', glyph: 'M5' },
+  { id: 'mt4',          name: 'MetaTrader 4',        tagline: { he: 'קלאסיקה של פורקס',           en: 'Classic FX terminal'        }, accent: '#06b6d4', glyph: 'M4' },
+  { id: 'sierra',       name: 'Sierra Chart',        tagline: { he: 'גרפים מקצועיים DOM',         en: 'Professional DOM charting'  }, accent: '#eab308', glyph: 'SC' },
+  { id: 'colmexpro',    name: 'ColmexPro',           tagline: { he: 'מניות אמריקאיות לטרייד יום', en: 'US equities day-trading'    }, accent: '#ef4444', glyph: 'CP' },
 ];
 
 interface ConnectionRow {
@@ -75,6 +87,7 @@ export function ExchangesPanel({ T, isRTL }: Props) {
   const [rows, setRows] = useState<ConnectionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [openProvider, setOpenProvider] = useState<ProviderId | null>(null);
+  const [csvBrokerId, setCsvBrokerId] = useState<string | null>(null);
 
   const refresh = async () => {
     if (!user) return;
@@ -203,6 +216,107 @@ export function ExchangesPanel({ T, isRTL }: Props) {
           );
         })}
       </div>
+
+      {/* ============ CSV Import Brokers ============ */}
+      <div style={{
+        marginTop: 28, marginBottom: 14, padding: '14px 18px',
+        borderRadius: 14,
+        background: 'linear-gradient(135deg, rgba(168,85,247,0.06), rgba(168,85,247,0.01))',
+        border: `1px solid ${T.border.subtle}`,
+        backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+          <FileSpreadsheet size={15} color="#a855f7" />
+          <h3 style={{ margin: 0, fontFamily: sans, fontWeight: 700, fontSize: 13.5, color: T.text.primary, letterSpacing: 0.3 }}>
+            {t('ייבוא מברוקרים (CSV)', 'Broker CSV Import')}
+          </h3>
+        </div>
+        <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.55, color: T.text.muted, fontFamily: sans }}>
+          {t(
+            'ברוקרים ופלטפורמות ללא גישת API — גרור קובץ היסטוריית מסחר כדי לטעון אותו אל היומן.',
+            'Brokers and platforms without API access — drag a trade history file to import into the journal.'
+          )}
+        </p>
+      </div>
+
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+        gap: 12,
+      }}>
+        {CSV_BROKERS.map(b => {
+          const active = csvBrokerId === b.id;
+          return (
+            <button
+              key={b.id}
+              onClick={() => setCsvBrokerId(active ? null : b.id)}
+              style={{
+                position: 'relative', textAlign: isRTL ? 'right' : 'left',
+                padding: 14, borderRadius: 14,
+                background: active
+                  ? `linear-gradient(135deg, ${b.accent}22, ${b.accent}08), rgba(11,23,48,0.6)`
+                  : 'rgba(11,23,48,0.4)',
+                border: `1px solid ${active ? b.accent + '66' : T.border.subtle}`,
+                backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
+                cursor: 'pointer',
+                filter: active ? 'none' : 'saturate(0.55)',
+                opacity: active ? 1 : 0.78,
+                transition: 'transform .2s ease, filter .2s ease, opacity .2s ease, border-color .2s ease, box-shadow .2s ease',
+                boxShadow: active ? `0 10px 28px -18px ${b.accent}cc, 0 0 0 1px ${b.accent}33` : 'none',
+                display: 'flex', flexDirection: 'column', gap: 10,
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLButtonElement).style.filter = 'saturate(1)';
+                (e.currentTarget as HTMLButtonElement).style.opacity = '1';
+                (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={e => {
+                if (!active) {
+                  (e.currentTarget as HTMLButtonElement).style.filter = 'saturate(0.55)';
+                  (e.currentTarget as HTMLButtonElement).style.opacity = '0.78';
+                }
+                (e.currentTarget as HTMLButtonElement).style.transform = 'none';
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 10,
+                  background: `linear-gradient(135deg, ${b.accent}, ${b.accent}99)`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#0b1730', fontFamily: mono, fontWeight: 800, fontSize: 12, letterSpacing: 0.5,
+                  boxShadow: `0 6px 16px -8px ${b.accent}cc`,
+                }}>{b.glyph}</div>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontFamily: sans, fontWeight: 700, fontSize: 13, color: T.text.primary, lineHeight: 1.2 }}>
+                    {b.name}
+                  </div>
+                  <div style={{ fontFamily: sans, fontSize: 10.5, color: T.text.muted, marginTop: 2, lineHeight: 1.3 }}>
+                    {b.tagline[isRTL ? 'he' : 'en']}
+                  </div>
+                </div>
+              </div>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                fontSize: 9.5, fontFamily: mono, color: active ? b.accent : T.text.muted,
+                letterSpacing: 0.5, textTransform: 'uppercase', fontWeight: 700,
+              }}>
+                <UploadCloud size={11} />
+                {active ? t('פתוח לטעינה', 'Ready to import') : t('CSV', 'CSV')}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {csvBrokerId && (
+        <CsvDropZone
+          T={T}
+          isRTL={isRTL}
+          broker={CSV_BROKERS.find(b => b.id === csvBrokerId)!}
+          onClose={() => setCsvBrokerId(null)}
+        />
+      )}
+
 
       {openProvider && openProvider !== 'ibkr' && (
         <CredentialModal
@@ -1478,3 +1592,176 @@ function KeyGuide({ T, isRTL, provider }: { T: TradingTheme; isRTL: boolean; pro
   );
 }
 
+
+/* ============================ CSV DROP ZONE ============================ */
+function CsvDropZone({
+  T, isRTL, broker, onClose,
+}: {
+  T: TradingTheme;
+  isRTL: boolean;
+  broker: CsvBrokerMeta;
+  onClose: () => void;
+}) {
+  const t = (he: string, en: string) => (isRTL ? he : en);
+  const sans = "'Poppins', sans-serif";
+  const mono = "'IBM Plex Mono', monospace";
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const [doneFile, setDoneFile] = useState<string | null>(null);
+
+  // STUB: parsed CSV trades from this zone MUST be tagged with `stop_loss: null`.
+  // This is the contract the future adaptive chart engine relies on to know that
+  // the stop-loss is missing and should be inferred — do NOT build the engine here.
+  const handleFiles = async (files: FileList | File[]) => {
+    const f = files[0];
+    if (!f) return;
+    setProcessing(true);
+    setDoneFile(null);
+    try {
+      // TODO: real parser will live in src/lib/csv-import/<broker>.ts and
+      // every produced trade row must be created with `stop_loss: null`.
+      await new Promise(res => setTimeout(res, 1400));
+      setDoneFile(f.name);
+      toast.success(t('הקובץ התקבל ועובד', 'File received and processed'));
+    } catch (e) {
+      toast.error(t('נכשל בעיבוד הקובץ', 'Failed to process file'));
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  return (
+    <div
+      style={{
+        marginTop: 16,
+        borderRadius: 18,
+        padding: 22,
+        background: `linear-gradient(135deg, ${broker.accent}11, rgba(11,23,48,0.55))`,
+        border: `1px solid ${broker.accent}44`,
+        backdropFilter: 'blur(20px) saturate(150%)', WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+        boxShadow: `0 24px 70px -30px ${broker.accent}66`,
+        direction: isRTL ? 'rtl' : 'ltr',
+        animation: 'orcaDropIn .35s cubic-bezier(.16,1,.3,1)',
+        position: 'relative',
+      }}
+    >
+      <style>{`
+        @keyframes orcaDropIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes orcaDashSpin { to { stroke-dashoffset: -40; } }
+      `}</style>
+
+      <button
+        onClick={onClose}
+        aria-label={t('סגור', 'Close')}
+        style={{
+          position: 'absolute', top: 12, insetInlineEnd: 12,
+          width: 28, height: 28, borderRadius: 8,
+          background: 'rgba(0,0,0,0.25)', border: `1px solid ${T.border.subtle}`,
+          color: T.text.muted, cursor: 'pointer',
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        }}
+      ><X size={14} /></button>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+        <div style={{
+          width: 30, height: 30, borderRadius: 8,
+          background: `linear-gradient(135deg, ${broker.accent}, ${broker.accent}aa)`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: '#0b1730', fontFamily: mono, fontWeight: 800, fontSize: 11,
+        }}>{broker.glyph}</div>
+        <div style={{ fontFamily: sans, fontWeight: 700, fontSize: 13, color: T.text.primary }}>
+          {broker.name}
+        </div>
+      </div>
+
+      <div
+        onClick={() => !processing && inputRef.current?.click()}
+        onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={e => {
+          e.preventDefault(); setDragOver(false);
+          if (processing) return;
+          if (e.dataTransfer.files?.length) void handleFiles(e.dataTransfer.files);
+        }}
+        style={{
+          position: 'relative',
+          borderRadius: 16,
+          padding: '38px 22px',
+          background: dragOver
+            ? `linear-gradient(135deg, ${broker.accent}22, ${broker.accent}08)`
+            : 'rgba(6,12,24,0.45)',
+          border: `2px dashed ${dragOver ? broker.accent : T.border.medium}`,
+          cursor: processing ? 'wait' : 'pointer',
+          transition: 'background .2s ease, border-color .2s ease',
+          textAlign: 'center',
+          minHeight: 180,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10,
+        }}
+      >
+        <input
+          ref={inputRef}
+          type="file"
+          accept=".csv,.txt,.tsv,.xlsx,.xls"
+          style={{ display: 'none' }}
+          onChange={e => { if (e.target.files?.length) void handleFiles(e.target.files); }}
+        />
+
+        {processing ? (
+          <>
+            <Loader2 size={34} color={broker.accent} style={{ animation: 'spin 1s linear infinite' }} />
+            <div style={{ fontFamily: sans, fontWeight: 700, fontSize: 14, color: T.text.primary }}>
+              {t('מעבד נתונים…', 'Processing data…')}
+            </div>
+            <div style={{ fontFamily: mono, fontSize: 11, color: T.text.muted, letterSpacing: 0.4 }}>
+              {t('קורא שורות וחישובי PnL', 'Reading rows & computing PnL')}
+            </div>
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          </>
+        ) : doneFile ? (
+          <>
+            <CheckCircle2 size={36} color="#10b981" />
+            <div style={{ fontFamily: sans, fontWeight: 700, fontSize: 14, color: T.text.primary }}>
+              {t('הקובץ נטען', 'File loaded')}
+            </div>
+            <div style={{ fontFamily: mono, fontSize: 11, color: T.text.muted }}>{doneFile}</div>
+            <button
+              onClick={(e) => { e.stopPropagation(); setDoneFile(null); inputRef.current?.click(); }}
+              style={{
+                marginTop: 6, padding: '8px 14px', borderRadius: 8,
+                background: 'transparent', border: `1px solid ${broker.accent}66`,
+                color: broker.accent, fontFamily: sans, fontWeight: 700, fontSize: 11,
+                cursor: 'pointer', letterSpacing: 0.4,
+              }}
+            >{t('טען קובץ נוסף', 'Load another file')}</button>
+          </>
+        ) : (
+          <>
+            <UploadCloud size={38} color={dragOver ? broker.accent : T.text.muted} />
+            <div style={{
+              fontFamily: sans, fontWeight: 700, fontSize: 14.5, color: T.text.primary, lineHeight: 1.4,
+              maxWidth: 480,
+            }}>
+              {t('גרור ושחרר קובץ CSV או היסטוריית מסחר', 'Drag & drop a CSV or trade history file')}
+            </div>
+            <div style={{
+              fontFamily: sans, fontSize: 11.5, color: T.text.muted, lineHeight: 1.5,
+              maxWidth: 460,
+            }}>
+              {t(
+                'המערכת תשאב את הנתונים הפיננסיים ותחשב אוטומטית שווי דולרי',
+                'The system will extract the financial data and auto-compute the USD value'
+              )}
+            </div>
+            <div style={{
+              marginTop: 6, fontFamily: mono, fontSize: 10, color: T.text.muted,
+              letterSpacing: 0.6, textTransform: 'uppercase',
+            }}>
+              {t('או לחץ לבחירה ידנית', 'or click to browse')}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
