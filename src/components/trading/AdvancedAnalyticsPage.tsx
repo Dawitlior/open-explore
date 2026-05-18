@@ -497,7 +497,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
             <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
             <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 10 }} />
             <YAxis yAxisId="L" tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => fmtAxis(v)} />
-            <YAxis yAxisId="R" orientation="right" tick={{ fill: T.text.muted, fontSize: 10 }} domain={['dataMin', 0]} />
+            <YAxis yAxisId="R" orientation="right" tick={{ fill: T.text.muted, fontSize: 10 }} domain={[(dataMin: number) => Math.min(-1, Math.max(-100, dataMin)), 0]} tickFormatter={(v: number) => `${v.toFixed(0)}%`} allowDataOverflow={false} />
             <Tooltip contentStyle={tt} formatter={(v: number, n: string) => n === 'dd' || n === 'ddMoney' ? `${v.toFixed(2)}%` : fmtVal(v)} />
             <Area yAxisId="L" type="monotone" dataKey={isMoney ? 'equityMoney' : 'equity'} stroke={T.accent.cyan} strokeWidth={2.5} fill="url(#equityG)" />
             <Area yAxisId="R" type="monotone" dataKey={isMoney ? 'ddMoney' : 'dd'} stroke={T.accent.red} strokeWidth={1.5} fill="url(#ddG)" />
