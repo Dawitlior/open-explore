@@ -552,6 +552,68 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
           )}
         </div>
       </div>
+
+      {showExitConfirm && (
+        <div
+          onClick={() => setShowExitConfirm(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 200,
+            background: 'rgba(2, 8, 20, 0.78)', backdropFilter: 'blur(10px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 16, animation: 'tfFadeIn 0.18s ease-out',
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            role="alertdialog"
+            aria-modal="true"
+            dir={isRTL ? 'rtl' : 'ltr'}
+            style={{
+              width: '100%', maxWidth: 420,
+              background: `linear-gradient(165deg, ${T.bg.card} 0%, ${T.bg.secondary} 100%)`,
+              border: `1px solid ${T.border.medium}`, borderRadius: 18,
+              padding: 26, boxShadow: `0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px ${T.accent.orange}25`,
+              animation: 'tfScaleIn 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+            }}
+          >
+            <div style={{ fontSize: 36, marginBottom: 10 }}>⚠️</div>
+            <div style={{ fontSize: 17, fontWeight: 800, color: T.text.primary, marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>
+              {isRTL ? 'שינויים לא נשמרו' : 'Unsaved changes'}
+            </div>
+            <div style={{ fontSize: 13, color: T.text.secondary, lineHeight: 1.6, marginBottom: 22 }}>
+              {isRTL
+                ? 'יש לך נתוני עסקה שלא נשמרו. אם תצא עכשיו, הטיוטה תימחק.'
+                : 'You have unsaved trade data. Leaving now will discard this draft.'}
+            </div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowExitConfirm(false)}
+                style={{
+                  padding: '10px 18px', fontSize: 13, fontWeight: 700,
+                  background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`,
+                  border: 'none', borderRadius: 10, color: T.bg.primary, cursor: 'pointer',
+                }}
+              >
+                {isRTL ? 'המשך עריכה' : 'Keep Editing'}
+              </button>
+              <button
+                onClick={() => { setShowExitConfirm(false); onClose(); }}
+                style={{
+                  padding: '10px 18px', fontSize: 13, fontWeight: 700,
+                  background: `${T.accent.red}15`, border: `1px solid ${T.accent.red}55`,
+                  borderRadius: 10, color: T.accent.red, cursor: 'pointer',
+                }}
+              >
+                {isRTL ? 'מחק טיוטה' : 'Discard Changes'}
+              </button>
+            </div>
+          </div>
+          <style>{`
+            @keyframes tfFadeIn { from { opacity: 0 } to { opacity: 1 } }
+            @keyframes tfScaleIn { from { opacity: 0; transform: scale(0.94) translateY(8px) } to { opacity: 1; transform: scale(1) translateY(0) } }
+          `}</style>
+        </div>
+      )}
     </div>
   );
 };
