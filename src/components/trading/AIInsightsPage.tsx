@@ -1,4 +1,5 @@
 import { getEffectiveR } from "@/lib/r-multiple";
+import { useVisibleTrades } from '@/lib/display-mode-format';
 /**
  * 🧠 AI INSIGHTS PAGE — "The Mainframe"
  * ────────────────────────────────────────────────────────────────
