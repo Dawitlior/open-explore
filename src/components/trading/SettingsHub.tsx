@@ -359,13 +359,13 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                         }}
                       >
                         <span style={{
-                          width: 22, height: 22, borderRadius: 6,
+                          width: 18, height: 18,
                           display: 'grid', placeItems: 'center', flexShrink: 0,
-                          background: active ? 'rgba(255,255,255,0.18)' : (isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)'),
-                          color: active ? '#fff' : T.text.secondary,
+                          color: active ? '#fff' : (isLight ? '#3a3a3c' : T.text.secondary),
                         }}>
-                          <Icon size={13} strokeWidth={2.2} />
+                          <Icon size={16} strokeWidth={1.8} />
                         </span>
+
                         <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {item.label[isRTL ? 'he' : 'en']}
                         </span>
