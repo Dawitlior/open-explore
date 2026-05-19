@@ -482,11 +482,11 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
             <BarChart data={sessions}>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
               <XAxis dataKey="session" tick={{ fill: T.text.muted, fontSize: 11 }} />
-              <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
-              <Tooltip contentStyle={tt} formatter={(v: number, n: string) => n === 'pnl' ? <PV>${v.toFixed(2)}</PV> : `${v}${n === 'wr' ? '%' : ''}`} />
+              <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => fmtAxis(v)} />
+              <Tooltip contentStyle={tt} formatter={(v: number, n: string) => (n === 'pnl' || n === 'r') ? <PV>{fmtVal(v)}</PV> : `${v}${n === 'wr' ? '%' : ''}`} />
               <ReferenceLine y={0} stroke={T.text.muted} />
-              <Bar dataKey="pnl" radius={[4, 4, 0, 0]}>
-                {sessions.map((s, i) => <Cell key={i} fill={s.pnl >= 0 ? T.accent.green : T.accent.red} />)}
+              <Bar dataKey={isMoney ? 'pnl' : 'r'} radius={[4, 4, 0, 0]}>
+                {sessions.map((s, i) => <Cell key={i} fill={(isMoney ? s.pnl : s.r) >= 0 ? T.accent.green : T.accent.red} />)}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
