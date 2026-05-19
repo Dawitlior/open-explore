@@ -648,65 +648,26 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
         </div>
       </GlassCard>}
 
-      {/* ═══ ROW: Risk-vs-PnL Scatter + Edge Decay ═══ */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12, marginBottom: 16 }}>
-        <GlassCard T={T}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('פיזור סיכון מול תוצאה','Risk vs Outcome Scatter')}</div>
-          <ResponsiveContainer width="100%" height={230}>
-            <ScatterChart>
-              <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
-              <XAxis type="number" dataKey="risk" name={t('סיכון','Risk')} tick={{ fill: T.text.muted, fontSize: 10 }} />
-              <YAxis type="number" dataKey={isMoney ? 'pnl' : 'r'} name={isMoney ? 'P&L' : 'R'} tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => fmtAxis(v)} />
-              <ZAxis range={[40, 160]} />
-              <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} formatter={(v: number, n: string) => [n === 'risk' ? `$${v.toFixed(2)}` : fmtVal(v), n === 'risk' ? t('סיכון','Risk') : (isMoney ? 'P&L' : 'R')]} />
-              <Scatter data={rvp}>
-                {rvp.map((d, i) => (
-                  <Cell key={i} fill={d.win ? T.accent.green : T.accent.red} fillOpacity={0.7} />
-                ))}
-              </Scatter>
-            </ScatterChart>
-          </ResponsiveContainer>
-        </GlassCard>
+      {/* ═══ Risk-vs-PnL Scatter (full-width after Edge Evolution removal) ═══ */}
+      <GlassCard T={T} style={{ marginBottom: 16 }}>
+        <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('פיזור סיכון מול תוצאה','Risk vs Outcome Scatter')}</div>
+        <ResponsiveContainer width="100%" height={250}>
+          <ScatterChart>
+            <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+            <XAxis type="number" dataKey="risk" name={t('סיכון','Risk')} tick={{ fill: T.text.muted, fontSize: 10 }} />
+            <YAxis type="number" dataKey={isMoney ? 'pnl' : 'r'} name={isMoney ? 'P&L' : 'R'} tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => fmtAxis(v)} />
+            <ZAxis range={[40, 160]} />
+            <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} formatter={(v: number, n: string) => [n === 'risk' ? `$${v.toFixed(2)}` : fmtVal(v), n === 'risk' ? t('סיכון','Risk') : (isMoney ? 'P&L' : 'R')]} />
+            <Scatter data={rvp}>
+              {rvp.map((d, i) => (
+                <Cell key={i} fill={d.win ? T.accent.green : T.accent.red} fillOpacity={0.7} />
+              ))}
+            </Scatter>
+          </ScatterChart>
+        </ResponsiveContainer>
+      </GlassCard>
 
-        <GlassCard T={T}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t("אבולוציית האדג' (חלונות של 5)",'Edge Evolution (5-trade windows)')}</div>
-          <ResponsiveContainer width="100%" height={230}>
-            <LineChart data={edgeDecay}>
-              <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
-              <XAxis dataKey="period" tick={{ fill: T.text.muted, fontSize: 10 }} />
-              <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
-              <Tooltip contentStyle={tt} formatter={(v: number) => `${v.toFixed(2)}R`} />
-              <Line type="monotone" dataKey="exp" stroke={T.accent.purple} strokeWidth={2.5} dot={{ fill: T.accent.purple, r: 3 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </GlassCard>
-      </div>
 
-      {/* ═══ STREAK LADDER ═══ */}
-      {showPro && <GlassCard T={T} style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>{t('סולם רצפים','Streak Ladder')}</div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-          {streaks.map((s, i) => (
-            <div
-              key={i}
-              title={`${s.type === 'W' ? t('רצף ניצחונות','Win streak') : t('רצף הפסדים','Loss streak')}: ${s.len} ${t('עסקאות','trades')}, ${s.r >= 0 ? '+' : ''}${s.r.toFixed(2)}R`}
-              style={{
-                padding: '6px 10px',
-                background: s.type === 'W' ? `${T.accent.green}18` : `${T.accent.red}18`,
-                border: `1px solid ${s.type === 'W' ? T.accent.green : T.accent.red}40`,
-                borderRadius: 8,
-                minWidth: 60,
-                textAlign: 'center',
-              }}
-            >
-              <div style={{ fontSize: 14, fontWeight: 800, color: s.type === 'W' ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>
-                {s.type === 'W' ? '+' : '−'}{s.len}
-              </div>
-              <div style={{ fontSize: 9, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>{s.r >= 0 ? '+' : ''}{s.r.toFixed(1)}R</div>
-            </div>
-          ))}
-        </div>
-      </GlassCard>}
 
       {/* ═══ MONTHLY DETAIL LIST ═══ */}
       {showPro && stats.monthlyPerf && stats.monthlyPerf.length > 0 && (
