@@ -439,9 +439,9 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
             <ScatterChart>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
               <XAxis type="number" dataKey="size" tick={{ fill: T.text.muted, fontSize: 10 }} />
-              <YAxis type="number" dataKey="pnl" tick={{ fill: T.text.muted, fontSize: 10 }} />
+              <YAxis type="number" dataKey={isMoney ? 'pnl' : 'r'} tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => fmtAxis(v)} />
               <ZAxis range={[40, 140]} />
-              <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} />
+              <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} formatter={(v: number) => fmtVal(v)} />
               <ReferenceLine y={0} stroke={T.text.muted} />
               <Scatter data={sizePnl}>
                 {sizePnl.map((d, i) => (
