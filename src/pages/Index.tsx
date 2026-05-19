@@ -874,6 +874,8 @@ const Index = () => {
           <span style={{ fontSize: 10, color: T.text.muted, marginInlineStart: 'auto' }}>{stats.totalTrades} {isRTL ? 'עסקאות' : 'trades'} | {isRTL ? 'עומק אלפא' : 'Alpha Depth'}: {isAlpha ? 'ON' : 'OFF'}</span>
         </div>
 
+        {hasStrictRData && (
+        <>
         {/* Key R-metrics row */}
         <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
           {[
@@ -894,8 +896,6 @@ const Index = () => {
           ))}
         </div>
 
-        {hasStrictRData && (
-        <>
           {/* Research charts grid — slim quant style on desktop, denser packing in alpha */}
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : (isAlpha ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)'), gap: 10, marginBottom: 14 }}>
             <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'התפלגות R-Multiple' : 'R-Multiple Distribution'} explanation={EXPLANATIONS.rDistribution} unit="R">
@@ -1289,6 +1289,8 @@ const Index = () => {
               </div>
             </GlassCard>
           </div>
+        )}
+        </>
         )}
       </>
     );
