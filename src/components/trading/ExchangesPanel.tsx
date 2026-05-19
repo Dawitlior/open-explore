@@ -874,6 +874,7 @@ function CredentialModal({
         'Key verified as Read-Only and sealed inside the server vault.'),
       code: 'VAULT_SEALED' });
     setApiKey(''); setApiSecret('');
+    try { window.dispatchEvent(new CustomEvent('orca:exchange-credentials-changed', { detail: { provider: provider.id } })); } catch {/*noop*/}
     setTimeout(() => onSaved(), 1600);
   };
 
