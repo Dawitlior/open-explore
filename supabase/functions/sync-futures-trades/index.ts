@@ -268,7 +268,7 @@ Deno.serve(async (req) => {
     }
 
     // ---- Parse body ----
-    let body: { provider?: string; label?: string };
+    let body: { provider?: string; label?: string; mode?: 'bulk' | 'incremental'; symbol?: string; since?: number };
     try { body = await req.json(); }
     catch { return json({ ok: false, error: 'invalid_body', detail: 'json_parse_failed' }, 400); }
 
@@ -277,6 +277,9 @@ Deno.serve(async (req) => {
       return json({ ok: false, error: 'unsupported_provider', detail: 'Only Bybit linear sync is enabled' }, 400);
     }
     const label = typeof body.label === 'string' ? body.label.trim() : '';
+    const mode: 'bulk' | 'incremental' = body.mode === 'incremental' ? 'incremental' : 'bulk';
+    const incSymbol = typeof body.symbol === 'string' ? body.symbol.trim() : '';
+    const incSince = typeof body.since === 'number' && body.since > 0 ? body.since : 0;
 
     // ---- Service-role client ----
     const admin = createClient(
