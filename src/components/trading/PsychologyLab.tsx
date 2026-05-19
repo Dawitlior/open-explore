@@ -236,14 +236,14 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12, marginBottom: 12 }}>
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
-            {t('Expected Value · תוחלת R לפי נכס','Expected Value · Average R per asset')}
+            {t('Expected Value · תוחלת $ לפי נכס','Expected Value · Average $ per asset')}
           </div>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={evPerAsset} layout="vertical" margin={{ left: 60 }}>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
               <XAxis type="number" tick={{ fill: T.text.muted, fontSize: 10 }} />
               <YAxis type="category" dataKey="coin" tick={{ fill: T.text.muted, fontSize: 10 }} width={70} />
-              <Tooltip contentStyle={tt} formatter={(v: number) => `${v}R`} />
+              <Tooltip contentStyle={tt} formatter={(v: number) => `$${v}`} />
               <ReferenceLine x={0} stroke={T.text.muted} />
               <Bar dataKey="ev" radius={[0, 4, 4, 0]}>
                 {evPerAsset.map((d, i) => <Cell key={i} fill={d.ev >= 0 ? T.accent.green : T.accent.red} />)}
@@ -254,17 +254,17 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
 
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
-            {t('Time-of-Day Edge · תוחלת R לפי שעה','Time-of-Day Edge · Average R by hour')}
+            {t('Time-of-Day Edge · תוחלת $ לפי שעה','Time-of-Day Edge · Average $ by hour')}
           </div>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={todEdge}>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
               <XAxis dataKey="hour" tick={{ fill: T.text.muted, fontSize: 9 }} interval={2} />
               <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
-              <Tooltip contentStyle={tt} />
+              <Tooltip contentStyle={tt} formatter={(v: number) => `$${v}`} />
               <ReferenceLine y={0} stroke={T.text.muted} />
-              <Bar dataKey="avgR" radius={[3, 3, 0, 0]}>
-                {todEdge.map((d, i) => <Cell key={i} fill={d.avgR >= 0 ? T.accent.cyan : T.accent.red} fillOpacity={d.n ? 0.85 : 0.15} />)}
+              <Bar dataKey="avgPnl" radius={[3, 3, 0, 0]}>
+                {todEdge.map((d, i) => <Cell key={i} fill={d.avgPnl >= 0 ? T.accent.cyan : T.accent.red} fillOpacity={d.n ? 0.85 : 0.15} />)}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
