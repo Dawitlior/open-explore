@@ -498,47 +498,29 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
       </GlassCard>}
 
 
-      {/* ═══ ROW: R Distribution + Direction Radial ═══ */}
-      {showCore && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12, marginBottom: 16 }}>
-        <GlassCard T={T}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('התפלגות R לפי טווח','R Distribution by Range')}</div>
-          <ResponsiveContainer width="100%" height={230}>
-            <BarChart data={rBuckets} layout="vertical" margin={{ left: 60 }}>
-              <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
-              <XAxis type="number" tick={{ fill: T.text.muted, fontSize: 10 }} />
-              <YAxis type="category" dataKey="bucket" tick={{ fill: T.text.muted, fontSize: 10 }} width={75} />
-              <Tooltip contentStyle={tt} />
-              <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-                {rBuckets.map((b, i) => (
-                  <Cell key={i} fill={b.bucket.includes('-') || b.bucket.startsWith('מתחת') || b.bucket.startsWith('<') ? T.accent.red : T.accent.cyan} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </GlassCard>
+      {/* ═══ Direction Split (Win Rate) — full-width after R Distribution removal ═══ */}
+      {showCore && <GlassCard T={T} style={{ marginBottom: 16 }}>
+        <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('פיצול כיוון (אחוז הצלחה)','Direction Split (Win Rate)')}</div>
+        <ResponsiveContainer width="100%" height={230}>
+          <RadialBarChart innerRadius="30%" outerRadius="100%" data={dirSplit} startAngle={180} endAngle={0}>
+            <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
+            <RadialBar background dataKey="wr" cornerRadius={6}>
+              {dirSplit.map((d, i) => <Cell key={i} fill={d.color} />)}
+            </RadialBar>
+            <Tooltip contentStyle={tt} formatter={(v: number) => `${v.toFixed(1)}%`} />
+          </RadialBarChart>
+        </ResponsiveContainer>
+        <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: 4 }}>
+          {dirSplit.map(d => (
+            <div key={d.name} style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 10, color: T.text.muted }}>{d.name}</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: d.color, fontFamily: "'JetBrains Mono', monospace" }}>{d.wr.toFixed(0)}%</div>
+              <div style={{ fontSize: 9, color: T.text.muted }}>{d.n} {t('עסקאות','trades')}</div>
+            </div>
+          ))}
+        </div>
+      </GlassCard>}
 
-        <GlassCard T={T}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('פיצול כיוון (אחוז הצלחה)','Direction Split (Win Rate)')}</div>
-          <ResponsiveContainer width="100%" height={230}>
-            <RadialBarChart innerRadius="30%" outerRadius="100%" data={dirSplit} startAngle={180} endAngle={0}>
-              <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
-              <RadialBar background dataKey="wr" cornerRadius={6}>
-                {dirSplit.map((d, i) => <Cell key={i} fill={d.color} />)}
-              </RadialBar>
-              <Tooltip contentStyle={tt} formatter={(v: number) => `${v.toFixed(1)}%`} />
-            </RadialBarChart>
-          </ResponsiveContainer>
-          <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: 4 }}>
-            {dirSplit.map(d => (
-              <div key={d.name} style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 10, color: T.text.muted }}>{d.name}</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: d.color, fontFamily: "'JetBrains Mono', monospace" }}>{d.wr.toFixed(0)}%</div>
-                <div style={{ fontSize: 9, color: T.text.muted }}>{d.n} {t('עסקאות','trades')}</div>
-              </div>
-            ))}
-          </div>
-        </GlassCard>
-      </div>}
 
       {/* ═══ DAY × HOUR MATRIX ═══ */}
       {showMax && <GlassCard T={T} style={{ marginBottom: 16 }}>
