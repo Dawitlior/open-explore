@@ -134,26 +134,8 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
     return mdd > 0 ? gp / mdd : gp > 0 ? Infinity : 0;
   }, [trades]);
 
-  /* ── 6. Risk-bucket performance ── */
-  const riskBuckets = useMemo(() => {
-    const buckets = [
-      { label: '<0.5%', min: 0, max: 0.5 },
-      { label: '0.5-1%', min: 0.5, max: 1 },
-      { label: '1-2%', min: 1, max: 2 },
-      { label: '2-3%', min: 2, max: 3 },
-      { label: '>3%', min: 3, max: Infinity },
-    ];
-    return buckets.map(b => {
-      const slice = trades.filter(t => t.riskPct >= b.min && t.riskPct < b.max);
-      const wins = slice.filter(t => t.winLoss === 'Win').length;
-      return {
-        label: b.label,
-        n: slice.length,
-        wr: slice.length ? +((wins / slice.length) * 100).toFixed(1) : 0,
-        avgR: slice.length ? +(slice.reduce((s, t) => s + getEffectiveR(t), 0) / slice.length).toFixed(2) : 0,
-      };
-    });
-  }, [trades]);
+
+
 
   /* ── 7. Streak distribution ── */
   const streakDist = useMemo(() => {
