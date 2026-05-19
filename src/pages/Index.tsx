@@ -1747,7 +1747,8 @@ const Index = () => {
             {!isMobile && settings.privacyMode && <TradingBadge color={T.accent.orange}>🔒</TradingBadge>}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 10, flexWrap: 'nowrap', flexShrink: 0 }}>
-            {(page === 'dashboard' || page === 'analytics' || page === 'calendar') && !isMobile && (
+            {/* Global Dual-Currency Toggle — persistent across every page */}
+            {!isMobile && (
               <DisplayModeToggle T={T} isRTL={isRTL} compact />
             )}
             {/* Prominent Add Trade button */}
