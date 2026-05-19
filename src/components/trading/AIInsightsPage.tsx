@@ -1,5 +1,6 @@
 import { getEffectiveR } from "@/lib/r-multiple";
 import { useVisibleTrades } from '@/lib/display-mode-format';
+import { RProxyBanner } from './RProxyBanner';
 /**
  * 🧠 AI INSIGHTS PAGE — "The Mainframe"
  * ────────────────────────────────────────────────────────────────
@@ -304,7 +305,7 @@ const LowTradesPopup: React.FC<{ count: number; T: TradingTheme; isRTL: boolean;
 /* ──────────────────────────────────────────────────────────────── */
 
 const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTrades }) => {
-  const { visibleTrades: trades, isMoney, formatAxis: fmtAxis, formatValue: fmtVal } = useVisibleTrades(_allTrades);
+  const { visibleTrades: trades, isMoney, formatAxis: fmtAxis, formatValue: fmtVal, rEligibleCount, totalCount } = useVisibleTrades(_allTrades);
   const { t, isRTL } = useLang();
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<ReturnType<typeof analyzeDeep> | null>(null);
@@ -720,6 +721,7 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
 
   return (
     <div dir={t('rtl','ltr')} style={{ fontFamily: "'Heebo', 'Inter', sans-serif" }}>
+      {!isMoney && <RProxyBanner T={T} isRTL={isRTL} rEligibleCount={rEligibleCount} totalCount={totalCount} />}
       {EliteDefs}
       <AnimatePresence>
         {showLowTradesPopup && (

@@ -135,24 +135,35 @@ export function sumDailyR(
 
 /**
  * Per-trade effective R for chart series.
- * Falls back to Tier-3 daily proxy at the single-trade level
- * (pnl / dailyRiskLimit) when explicit per-trade R is unknown,
- * so historical Bybit nodes contribute a real curve instead of 0.
+ *
+ * STRICT NULL POLICY (Executive Directive — Purge of Synthetic R-Logic):
+ *   - Per-trade Tier-3 proxy (pnl / dailyRiskLimit) is DELETED.
+ *     It corrupted Bybit/CSV rows that lacked stop-losses with
+ *     fabricated R values that scaled with user preferences.
+ *   - In strict mode → returns `null` when R is unknown. Callers MUST
+ *     filter nulls before binning/aggregating.
+ *   - In non-strict mode → returns `0` (no synthesis, no proxy). Safe for
+ *     reducers that already pre-filter via `useVisibleTrades` (which
+ *     drops stop-less rows in R mode).
+ *   - Day-level proxy still lives in `sumDailyR` for Calendar aggregation
+ *     where day P&L ÷ risk limit is a meaningful, intentional model.
  */
 export function getEffectiveR(
   t: TradeLike | null | undefined,
-  dailyRiskLimit?: number,
-): number {
-  if (!t) return 0;
+  opts?: { strict?: boolean },
+): number;
+export function getEffectiveR(
+  t: TradeLike | null | undefined,
+  opts: { strict: true },
+): number | null;
+export function getEffectiveR(
+  t: TradeLike | null | undefined,
+  opts?: { strict?: boolean },
+): number | null {
+  if (!t) return opts?.strict ? null : 0;
   const r = getR(t);
   if (r !== null && Number.isFinite(r)) return r;
-  const pnl = toNum(t.pnl);
-  if (!Number.isFinite(pnl)) return 0;
-  const limit = (Number.isFinite(dailyRiskLimit) && (dailyRiskLimit as number) > 0)
-    ? (dailyRiskLimit as number)
-    : getDailyRiskLimit();
-  if (!(limit > 0)) return 0;
-  return pnl / limit;
+  return opts?.strict ? null : 0;
 }
 
 /** Format an R value with sign + fixed decimals. */

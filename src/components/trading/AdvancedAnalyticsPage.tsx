@@ -57,7 +57,7 @@ const ENG_DOW_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'F
 const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode, isAlpha, operatingMode = 'live' }: AdvancedAnalyticsPageProps) => {
   const { t, isRTL: langRTL } = useLang();
   // 🔀 Dual-Currency Engine: filtered dataset + adaptive axis/format helpers
-  const { visibleTrades: trades, isMoney, formatAxis: fmtAxis, formatValue: fmtVal } = useVisibleTrades(_allTrades);
+  const { visibleTrades: trades, isMoney, formatAxis: fmtAxis, formatValue: fmtVal, rEligibleCount, totalCount } = useVisibleTrades(_allTrades);
   const DOW = langRTL ? HEB_DOW : ENG_DOW;
   const DOW_FULL = langRTL ? HEB_DOW_FULL : ENG_DOW_FULL;
   // Tier resolution — controls which chart layers render.
@@ -418,7 +418,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
 
   return (
     <div dir={langRTL ? 'rtl' : 'ltr'} style={{ fontFamily: langRTL ? "'Heebo', 'Inter', sans-serif" : "'Inter', 'Heebo', sans-serif" }}>
-      <RProxyBanner T={T} isRTL={langRTL} />
+      {!isMoney && <RProxyBanner T={T} isRTL={langRTL} rEligibleCount={rEligibleCount} totalCount={totalCount} />}
       {/* HERO HEADER */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}

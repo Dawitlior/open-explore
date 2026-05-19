@@ -11,6 +11,7 @@ import type { ChartExplanation } from './ChartWrapper';
 import { checkRiskLimits, DEFAULT_RISK_LIMITS, type RiskLimits } from '@/lib/risk-limits';
 import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
 import { useVisibleTrades } from '@/lib/display-mode-format';
+import { RProxyBanner } from './RProxyBanner';
 
 type OperatingMode = 'live' | 'review' | 'research' | 'beginner';
 
@@ -77,7 +78,7 @@ const LimitBar = ({ T, label, current, limit, isRTL }: { T: TradingTheme; label:
 };
 
 const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', customLimits, trades: _allTrades, stats, riskData, onExplainClick, riskExplanations }: AdvancedRiskPageProps) => {
-  const { visibleTrades: trades } = useVisibleTrades(_allTrades);
+  const { visibleTrades: trades, isMoney, rEligibleCount, totalCount } = useVisibleTrades(_allTrades);
   const tt = { background: T.bg.card, border: `1px solid ${T.border.medium}`, borderRadius: 10, color: T.text.primary, fontSize: 12, boxShadow: T.shadow.elevated, padding: '8px 12px' };
   const LIMITS_USED = customLimits || DEFAULT_RISK_LIMITS;
 
@@ -267,6 +268,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
 
   return (
     <>
+      {!isMoney && <RProxyBanner T={T} isRTL={isRTL} rEligibleCount={rEligibleCount} totalCount={totalCount} />}
       {/* ═══════════════════════════════════════════════════════════
           HERO COMMAND HEADER — Risk Health + Live Limits
           ═══════════════════════════════════════════════════════════ */}
