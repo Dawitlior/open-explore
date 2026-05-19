@@ -721,6 +721,7 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
 
   return (
     <div dir={t('rtl','ltr')} style={{ fontFamily: "'Heebo', 'Inter', sans-serif" }}>
+      {!isMoney && <RProxyBanner T={T} isRTL={isRTL} rEligibleCount={rEligibleCount} totalCount={totalCount} />}
       {EliteDefs}
       <AnimatePresence>
         {showLowTradesPopup && (
