@@ -351,10 +351,10 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
             <BarChart data={avgWL}>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
               <XAxis dataKey="name" tick={{ fill: T.text.muted, fontSize: 11 }} />
-              <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
-              <Tooltip contentStyle={tt} formatter={(v: number) => <PV>{`$${v.toFixed(2)}`}</PV>} />
+              <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => fmtAxis(v)} />
+              <Tooltip contentStyle={tt} formatter={(v: number) => <PV>{fmtVal(v)}</PV>} />
               <ReferenceLine y={0} stroke={T.text.muted} />
-              <Bar dataKey="val" radius={[6, 6, 0, 0]}>
+              <Bar dataKey={isMoney ? 'money' : 'r'} radius={[6, 6, 0, 0]}>
                 {avgWL.map((d, i) => <Cell key={i} fill={d.color} />)}
               </Bar>
             </BarChart>
