@@ -268,6 +268,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
 
   return (
     <>
+      {!isMoney && <RProxyBanner T={T} isRTL={isRTL} rEligibleCount={rEligibleCount} totalCount={totalCount} />}
       {/* ═══════════════════════════════════════════════════════════
           HERO COMMAND HEADER — Risk Health + Live Limits
           ═══════════════════════════════════════════════════════════ */}
