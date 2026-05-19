@@ -287,6 +287,7 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
 
   return (
     <div dir="rtl" style={{ marginTop: 20 }}>
+      {!isMoney && <RProxyBanner T={T} isRTL compact rEligibleCount={rEligibleCount} totalCount={totalCount} />}
       <div style={sectionStyle}>◆ QUANT LAB · מעבדת מחקר מתקדמת</div>
 
       {/* Recovery factor + simple cards */}
