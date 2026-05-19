@@ -475,7 +475,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead>
               <tr style={{ background: T.bg.tertiary }}>
-                {[isRTL ? 'סטאפ' : 'Setup', isRTL ? 'עסקאות' : 'Trades', isRTL ? 'סיכון ממוצע $' : 'Avg Risk $', isRTL ? 'סיכון ממוצע %' : 'Avg Risk %', isRTL ? 'הצלחה' : 'Win Rate', isRTL ? 'ממוצע R' : 'Avg R'].map((h, i) => (
+                {[isRTL ? 'סטאפ' : 'Setup', isRTL ? 'עסקאות' : 'Trades', isRTL ? 'סיכון ממוצע $' : 'Avg Risk $', isRTL ? 'סיכון ממוצע %' : 'Avg Risk %', isRTL ? 'הצלחה' : 'Win Rate'].map((h, i) => (
                   <th key={i} style={{ padding: '8px 12px', textAlign: isRTL ? 'right' : 'left', color: T.text.muted, fontWeight: 600, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: `1px solid ${T.border.medium}`, whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
@@ -491,7 +491,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
                   <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace" }}>${s.avgRisk.toFixed(2)}</td>
                   <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace" }}>{s.avgRiskPct.toFixed(2)}%</td>
                   <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontWeight: 600, color: s.winRate >= 50 ? T.accent.green : T.accent.red }}>{s.winRate.toFixed(0)}%</td>
-                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", color: s.avgR >= 0 ? T.accent.green : T.accent.red }}>{s.avgR >= 0 ? '+' : ''}{s.avgR.toFixed(2)}R</td>
+                  
                 </tr>
               ))}
             </tbody>
