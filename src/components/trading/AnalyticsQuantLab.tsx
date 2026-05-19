@@ -23,7 +23,7 @@
 
 import { useMemo, memo } from 'react';
 import {
-  Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, ComposedChart,
+  Area, AreaChart, Bar, BarChart, CartesianGrid, Cell,
   Line, LineChart, ResponsiveContainer, Scatter, ScatterChart, Tooltip,
   XAxis, YAxis, ZAxis, ReferenceLine,
 } from 'recharts';
@@ -84,31 +84,7 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
   }, [trades]);
 
 
-  /* ── 1. R-Multiple histogram + bell curve overlay ── */
-  const rHisto = useMemo(() => {
-    if (trades.length === 0) return [] as { bin: string; mid: number; count: number; bell: number }[];
-    const rs = trades.map(t => getEffectiveR(t));
-    const min = Math.floor(Math.min(...rs) * 2) / 2;
-    const max = Math.ceil(Math.max(...rs) * 2) / 2;
-    const step = 0.5;
-    const bins: { bin: string; mid: number; count: number; bell: number }[] = [];
-    for (let v = min; v <= max; v += step) {
-      bins.push({ bin: `${v.toFixed(1)}`, mid: v + step / 2, count: 0, bell: 0 });
-    }
-    rs.forEach(r => {
-      const idx = Math.min(bins.length - 1, Math.max(0, Math.floor((r - min) / step)));
-      bins[idx].count++;
-    });
-    const mean = rs.reduce((s, r) => s + r, 0) / rs.length;
-    const variance = rs.reduce((s, r) => s + (r - mean) ** 2, 0) / rs.length;
-    const sd = Math.sqrt(variance) || 0.001;
-    const peak = Math.max(...bins.map(b => b.count));
-    bins.forEach(b => {
-      const z = (b.mid - mean) / sd;
-      b.bell = peak * Math.exp(-0.5 * z * z);
-    });
-    return bins;
-  }, [trades]);
+
 
   /* ── 2. Avg Win vs Avg Loss (carries BOTH $ and R) ── */
   const avgWL = useMemo(() => {
@@ -158,26 +134,8 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
     return mdd > 0 ? gp / mdd : gp > 0 ? Infinity : 0;
   }, [trades]);
 
-  /* ── 6. Risk-bucket performance ── */
-  const riskBuckets = useMemo(() => {
-    const buckets = [
-      { label: '<0.5%', min: 0, max: 0.5 },
-      { label: '0.5-1%', min: 0.5, max: 1 },
-      { label: '1-2%', min: 1, max: 2 },
-      { label: '2-3%', min: 2, max: 3 },
-      { label: '>3%', min: 3, max: Infinity },
-    ];
-    return buckets.map(b => {
-      const slice = trades.filter(t => t.riskPct >= b.min && t.riskPct < b.max);
-      const wins = slice.filter(t => t.winLoss === 'Win').length;
-      return {
-        label: b.label,
-        n: slice.length,
-        wr: slice.length ? +((wins / slice.length) * 100).toFixed(1) : 0,
-        avgR: slice.length ? +(slice.reduce((s, t) => s + getEffectiveR(t), 0) / slice.length).toFixed(2) : 0,
-      };
-    });
-  }, [trades]);
+
+
 
   /* ── 7. Streak distribution ── */
   const streakDist = useMemo(() => {
@@ -200,41 +158,12 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
     return out;
   }, [trades]);
 
-  /* ── 8. Top winners / losers ── */
-  const topW = useMemo(() => [...trades].sort((a, b) => getEffectiveR(b) - getEffectiveR(a)).slice(0, 5), [trades]);
-  const topL = useMemo(() => [...trades].sort((a, b) => getEffectiveR(a) - getEffectiveR(b)).slice(0, 5), [trades]);
-
   /* ── 9. Position size vs P&L (carries both $ and R) ── */
   const sizePnl = useMemo(() =>
     trades.map(t => ({ size: t.positionSize || 0, pnl: t.pnl, r: getEffectiveR(t), win: t.winLoss === 'Win' })),
   [trades]);
 
-  /* ── 10. Monte-Carlo envelope (shuffled equity paths) ── */
-  const mcEnvelope = useMemo(() => {
-    if (trades.length < 5) return [] as { i: number; p10: number; p50: number; p90: number }[];
-    const N = 60;
-    const rs = trades.map(t => getEffectiveR(t));
-    const paths: number[][] = [];
-    const rand = (seed: number) => { let s = seed; return () => { s = (s * 9301 + 49297) % 233280; return s / 233280; }; };
-    for (let p = 0; p < N; p++) {
-      const r = rand(p + 1);
-      const shuffled = [...rs].sort(() => r() - 0.5);
-      let c = 0; const path: number[] = [];
-      shuffled.forEach(v => { c += v; path.push(c); });
-      paths.push(path);
-    }
-    const out: { i: number; p10: number; p50: number; p90: number }[] = [];
-    for (let i = 0; i < trades.length; i++) {
-      const vals = paths.map(p => p[i]).sort((a, b) => a - b);
-      out.push({
-        i: i + 1,
-        p10: +vals[Math.floor(N * 0.1)].toFixed(2),
-        p50: +vals[Math.floor(N * 0.5)].toFixed(2),
-        p90: +vals[Math.floor(N * 0.9)].toFixed(2),
-      });
-    }
-    return out;
-  }, [trades]);
+
 
   /* ── 11. Session split ── */
   const sessions = useMemo(() => {
@@ -322,48 +251,6 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
         </GlassCard>
       </div>
 
-      {/* Row: R-Histogram + Avg W vs L */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12, marginBottom: 12 }}>
-        <GlassCard T={T}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
-            התפלגות R + עקומת פעמון
-          </div>
-          <ResponsiveContainer width="100%" height={240}>
-            <ComposedChart data={rHisto}>
-              <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
-              <XAxis dataKey="bin" tick={{ fill: T.text.muted, fontSize: 10 }} />
-              <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
-              <Tooltip contentStyle={tt} />
-              <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                {rHisto.map((b, i) => (
-                  <Cell key={i} fill={b.mid >= 0 ? T.accent.green : T.accent.red} fillOpacity={0.75} />
-                ))}
-              </Bar>
-              <Line type="monotone" dataKey="bell" stroke={T.accent.cyan} strokeWidth={2} dot={false} />
-              <ReferenceLine x="0.0" stroke={T.text.muted} strokeDasharray="3 3" />
-            </ComposedChart>
-          </ResponsiveContainer>
-        </GlassCard>
-
-        <GlassCard T={T}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
-            ניצחון ממוצע מול הפסד ממוצע
-          </div>
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={avgWL}>
-              <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
-              <XAxis dataKey="name" tick={{ fill: T.text.muted, fontSize: 11 }} />
-              <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => fmtAxis(v)} />
-              <Tooltip contentStyle={tt} formatter={(v: number) => <PV>{fmtVal(v)}</PV>} />
-              <ReferenceLine y={0} stroke={T.text.muted} />
-              <Bar dataKey={isMoney ? 'money' : 'r'} radius={[6, 6, 0, 0]}>
-                {avgWL.map((d, i) => <Cell key={i} fill={d.color} />)}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </GlassCard>
-      </div>
-
       {/* Row: Cumulative R + Rolling Calmar */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12, marginBottom: 12 }}>
         <GlassCard T={T}>
@@ -401,26 +288,29 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
         </GlassCard>
       </div>
 
-      {/* Row: Risk buckets + Streak distribution */}
+      {/* Row: Avg W vs L + Streak distribution */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12, marginBottom: 12 }}>
         <GlassCard T={T}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>ביצועים לפי דלי סיכון</div>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={riskBuckets}>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
+            ניצחון ממוצע מול הפסד ממוצע
+          </div>
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={avgWL}>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
-              <XAxis dataKey="label" tick={{ fill: T.text.muted, fontSize: 10 }} />
-              <YAxis yAxisId="L" tick={{ fill: T.text.muted, fontSize: 10 }} unit="%" />
-              <YAxis yAxisId="R" orientation="right" tick={{ fill: T.text.muted, fontSize: 10 }} />
-              <Tooltip contentStyle={tt} />
-              <Bar yAxisId="L" dataKey="wr" radius={[4, 4, 0, 0]} fill={T.accent.green} />
-              <Bar yAxisId="R" dataKey="avgR" radius={[4, 4, 0, 0]} fill={T.accent.purple} />
+              <XAxis dataKey="name" tick={{ fill: T.text.muted, fontSize: 11 }} />
+              <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => fmtAxis(v)} />
+              <Tooltip contentStyle={tt} formatter={(v: number) => <PV>{fmtVal(v)}</PV>} />
+              <ReferenceLine y={0} stroke={T.text.muted} />
+              <Bar dataKey={isMoney ? 'money' : 'r'} radius={[6, 6, 0, 0]}>
+                {avgWL.map((d, i) => <Cell key={i} fill={d.color} />)}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </GlassCard>
 
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>התפלגות אורך רצפים</div>
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={240}>
             <BarChart data={streakDist}>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
               <XAxis dataKey="len" tick={{ fill: T.text.muted, fontSize: 10 }} />
@@ -433,11 +323,11 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
         </GlassCard>
       </div>
 
-      {/* Row: Position size vs P&L + Monte Carlo */}
+      {/* Row: Position size vs P&L + Sessions */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12, marginBottom: 12 }}>
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>גודל פוזיציה מול P&L</div>
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={240}>
             <ScatterChart>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
               <XAxis type="number" dataKey="size" tick={{ fill: T.text.muted, fontSize: 10 }} />
@@ -455,32 +345,8 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
         </GlassCard>
 
         <GlassCard T={T}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>Monte-Carlo · מעטפת תרחישים (60 מסלולים)</div>
-          <ResponsiveContainer width="100%" height={220}>
-            <ComposedChart data={mcEnvelope}>
-              <defs>
-                <linearGradient id="mcBand" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.35} />
-                  <stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.04} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
-              <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
-              <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
-              <Tooltip contentStyle={tt} />
-              <Area type="monotone" dataKey="p90" stroke="none" fill="url(#mcBand)" />
-              <Area type="monotone" dataKey="p10" stroke="none" fill={T.bg.primary} />
-              <Line type="monotone" dataKey="p50" stroke={T.accent.cyan} strokeWidth={2} dot={false} />
-            </ComposedChart>
-          </ResponsiveContainer>
-        </GlassCard>
-      </div>
-
-      {/* Row: Sessions + Daily step equity */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12, marginBottom: 12 }}>
-        <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>פיצול לפי סשן (אסיה / לונדון / ניו-יורק)</div>
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={240}>
             <BarChart data={sessions}>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
               <XAxis dataKey="session" tick={{ fill: T.text.muted, fontSize: 11 }} />
@@ -493,61 +359,32 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
             </BarChart>
           </ResponsiveContainer>
         </GlassCard>
-
-        <GlassCard T={T}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>הון יומי מצטבר (מדרגות)</div>
-          <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={dailyEq}>
-              <defs>
-                <linearGradient id="dEq" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={T.accent.green} stopOpacity={0.45} />
-                  <stop offset="100%" stopColor={T.accent.green} stopOpacity={0.04} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
-              <XAxis dataKey="day" tick={{ fill: T.text.muted, fontSize: 9 }} />
-              <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => fmtAxis(v)} />
-              <Tooltip contentStyle={tt} formatter={(v: number) => <PV>{fmtVal(v)}</PV>} />
-              <Area type="stepAfter" dataKey={isMoney ? 'cum' : 'cumR'} stroke={T.accent.green} fill="url(#dEq)" strokeWidth={2.2} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </GlassCard>
       </div>
 
-      {/* Top winners / losers tables */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12, marginBottom: 12 }}>
-        {[
-          { title: '🏆 חמשת הניצחונות הגדולים', data: topW, accent: T.accent.green },
-          { title: '🩸 חמשת ההפסדים הגדולים', data: topL, accent: T.accent.red },
-        ].map((box, bi) => (
-          <GlassCard key={bi} T={T} style={{ padding: 0, overflow: 'hidden' }}>
-            <div style={{ padding: '12px 14px', fontSize: 12, fontWeight: 700, color: box.accent }}>{box.title}</div>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
-              <thead>
-                <tr style={{ background: T.bg.tertiary }}>
-                  {['#', 'נכס', 'תאריך', 'R', 'P&L'].map(h => (
-                    <th key={h} style={{ padding: '6px 10px', textAlign: 'right', color: T.text.muted, fontSize: 10, fontWeight: 600, borderBottom: `1px solid ${T.border.medium}` }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {box.data.map((t, i) => (
-                  <tr key={t.id} style={{ background: i % 2 ? `${T.bg.tertiary}40` : 'transparent' }}>
-                    <td style={{ padding: '6px 10px', borderBottom: `1px solid ${T.border.subtle}`, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>{t.id}</td>
-                    <td style={{ padding: '6px 10px', borderBottom: `1px solid ${T.border.subtle}`, color: T.accent.cyan, fontWeight: 700 }}>{t.coin}</td>
-                    <td style={{ padding: '6px 10px', borderBottom: `1px solid ${T.border.subtle}`, color: T.text.muted, fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>{(t.date || '').slice(0, 10)}</td>
-                    <td style={{ padding: '6px 10px', borderBottom: `1px solid ${T.border.subtle}`, color: getEffectiveR(t) >= 0 ? T.accent.green : T.accent.red, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>{getEffectiveR(t) >= 0 ? '+' : ''}{getEffectiveR(t).toFixed(2)}R</td>
-                    <td style={{ padding: '6px 10px', borderBottom: `1px solid ${T.border.subtle}`, color: t.pnl >= 0 ? T.accent.green : T.accent.red, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}><PV>{t.pnl >= 0 ? '+' : ''}${t.pnl.toFixed(2)}</PV></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </GlassCard>
-        ))}
-      </div>
+      {/* Row: Daily step equity (full-width) */}
+      <GlassCard T={T} style={{ marginBottom: 12 }}>
+        <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>הון יומי מצטבר (מדרגות)</div>
+        <ResponsiveContainer width="100%" height={240}>
+          <AreaChart data={dailyEq}>
+            <defs>
+              <linearGradient id="dEq" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={T.accent.green} stopOpacity={0.45} />
+                <stop offset="100%" stopColor={T.accent.green} stopOpacity={0.04} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+            <XAxis dataKey="day" tick={{ fill: T.text.muted, fontSize: 9 }} />
+            <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => fmtAxis(v)} />
+            <Tooltip contentStyle={tt} formatter={(v: number) => <PV>{fmtVal(v)}</PV>} />
+            <Area type="stepAfter" dataKey={isMoney ? 'cum' : 'cumR'} stroke={T.accent.green} fill="url(#dEq)" strokeWidth={2.2} />
+          </AreaChart>
+        </ResponsiveContainer>
+      </GlassCard>
     </div>
   );
 };
+
+
 
 
 export const AnalyticsQuantLab = memo(AnalyticsQuantLab_Impl);
