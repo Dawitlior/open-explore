@@ -457,12 +457,15 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
   /* ──── NEW DATASETS for advanced packs ──── */
 
   const equityDrawdown = useMemo(() => {
-    let eq = 0, peak = 0;
+    let eq = 0, peak = 0, eqR = 0, peakR = 0;
     return trades.map((t, i) => {
       eq += t.pnl;
+      eqR += getEffectiveR(t);
       if (eq > peak) peak = eq;
+      if (eqR > peakR) peakR = eqR;
       const dd = peak > 0 ? ((eq - peak) / peak) * 100 : 0;
-      return { i: i + 1, equity: +eq.toFixed(2), drawdown: +dd.toFixed(2) };
+      const ddR = peakR > 0 ? ((eqR - peakR) / peakR) * 100 : 0;
+      return { i: i + 1, equity: +eq.toFixed(2), equityR: +eqR.toFixed(3), drawdown: +dd.toFixed(2), drawdownR: +ddR.toFixed(2) };
     });
   }, [trades]);
 
