@@ -11,6 +11,7 @@ import type { ChartExplanation } from './ChartWrapper';
 import { diagnose, type DeepDiagnosis } from '@/lib/psychology-diagnostic';
 import { PsychologyLab } from './PsychologyLab';
 import { useVisibleTrades } from '@/lib/display-mode-format';
+import { RProxyBanner } from './RProxyBanner';
 
 type OperatingMode = 'live' | 'review' | 'research' | 'beginner';
 
