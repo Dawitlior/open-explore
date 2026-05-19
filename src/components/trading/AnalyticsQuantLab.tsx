@@ -203,9 +203,9 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
   const topW = useMemo(() => [...trades].sort((a, b) => getEffectiveR(b) - getEffectiveR(a)).slice(0, 5), [trades]);
   const topL = useMemo(() => [...trades].sort((a, b) => getEffectiveR(a) - getEffectiveR(b)).slice(0, 5), [trades]);
 
-  /* ── 9. Position size vs P&L ── */
+  /* ── 9. Position size vs P&L (carries both $ and R) ── */
   const sizePnl = useMemo(() =>
-    trades.map(t => ({ size: t.positionSize || 0, pnl: t.pnl, win: t.winLoss === 'Win' })),
+    trades.map(t => ({ size: t.positionSize || 0, pnl: t.pnl, r: getEffectiveR(t), win: t.winLoss === 'Win' })),
   [trades]);
 
   /* ── 10. Monte-Carlo envelope (shuffled equity paths) ── */
