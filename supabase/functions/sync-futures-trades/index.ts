@@ -315,6 +315,50 @@ Deno.serve(async (req) => {
       return json({ ok: false, error: 'vault_read_failed', detail: secErr?.message ?? 'no_secret' }, 500);
     }
 
+    // ───────── INCREMENTAL MODE ─────────
+    // Append-only path triggered by the live WS when a position closes.
+    // Fetches a single narrow window for one symbol and upserts — never wipes.
+    if (mode === 'incremental') {
+      if (!incSymbol) return json({ ok: false, error: 'invalid_body', detail: 'symbol required' }, 400);
+      const startTime = incSince > 0 ? incSince : Date.now() - 60 * 60 * 1000;
+      const endTime = Date.now();
+      const params = new URLSearchParams({
+        category: 'linear', symbol: incSymbol, limit: '50',
+        startTime: String(startTime), endTime: String(endTime),
+      });
+      const r = await bybitSignedGet(cred.api_key, apiSecret, '/v5/position/closed-pnl', params.toString());
+      if (!r.ok) return json({ ok: false, error: r.error, detail: r.detail }, r.status);
+      const list = (r.body.result?.list as BybitClosedPnl[] | undefined) ?? [];
+      if (list.length === 0) return json({ ok: true, mode, added: 0, rows: [] });
+
+      const { data: maxRow } = await admin.from('trades')
+        .select('trade_id').eq('user_id', userId)
+        .order('trade_id', { ascending: false }).limit(1).maybeSingle();
+      let nextId = ((maxRow?.trade_id as number | undefined) ?? 0) + 1;
+
+      const sorted = [...list].sort((a, b) =>
+        (Number(a.updatedTime) || 0) - (Number(b.updatedTime) || 0));
+      const rows: Array<{ user_id: string; trade_id: number; data: unknown }> = [];
+      const summary: Array<{ symbol: string; pnl: number }> = [];
+      const seen = new Set<string>();
+      for (const e of sorted) {
+        if (!e?.orderId || seen.has(e.orderId)) continue;
+        seen.add(e.orderId);
+        const t = bybitToTrade(e, provider);
+        const full: Trade = { ...t, id: nextId, balance: 0 };
+        rows.push({ user_id: userId, trade_id: nextId, data: full });
+        summary.push({ symbol: t.coin, pnl: t.pnl });
+        nextId++;
+      }
+      if (rows.length > 0) {
+        const { error: upErr } = await admin.from('trades')
+          .upsert(rows, { onConflict: 'user_id,exchange_exec_id', ignoreDuplicates: true });
+        if (upErr) return json({ ok: false, error: 'persist_failed', detail: upErr.message }, 422);
+      }
+      return json({ ok: true, mode, added: rows.length, rows: summary });
+    }
+
+
     // ---- Fetch consolidated closed-pnl trades (defensively validated) ----
     const fetchResult = await fetchBybitClosedPnl(cred.api_key, apiSecret);
     if (!fetchResult.ok) {
