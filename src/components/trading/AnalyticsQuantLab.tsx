@@ -23,7 +23,7 @@
 
 import { useMemo, memo } from 'react';
 import {
-  Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, ComposedChart,
+  Area, AreaChart, Bar, BarChart, CartesianGrid, Cell,
   Line, LineChart, ResponsiveContainer, Scatter, ScatterChart, Tooltip,
   XAxis, YAxis, ZAxis, ReferenceLine,
 } from 'recharts';
