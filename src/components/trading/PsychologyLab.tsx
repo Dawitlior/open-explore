@@ -1,4 +1,4 @@
-import { getEffectiveR } from "@/lib/r-multiple";
+// (R-multiple import removed — Psychology Lab is now 100% PnL-agnostic)
 /**
  * 🧠 PSYCHOLOGY LAB — Advanced behavioral & quant metrics
  * ─────────────────────────────────────────────────────────
@@ -60,31 +60,31 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
     });
   }, [trades]);
 
-  /* ── Expected Value per asset (proxy for setup) ── */
+  /* ── Avg PnL per asset (proxy for setup) ── */
   const evPerAsset = useMemo(() => {
-    const m = new Map<string, { n: number; r: number; pnl: number }>();
+    const m = new Map<string, { n: number; pnl: number }>();
     trades.forEach(t => {
-      const c = m.get(t.coin) || { n: 0, r: 0, pnl: 0 };
-      c.n++; c.r += getEffectiveR(t); c.pnl += t.pnl;
+      const c = m.get(t.coin) || { n: 0, pnl: 0 };
+      c.n++; c.pnl += t.pnl;
       m.set(t.coin, c);
     });
     return Array.from(m.entries())
-      .map(([coin, v]) => ({ coin, ev: +(v.r / v.n).toFixed(3), n: v.n, pnl: +v.pnl.toFixed(2) }))
+      .map(([coin, v]) => ({ coin, ev: +(v.pnl / v.n).toFixed(2), n: v.n, pnl: +v.pnl.toFixed(2) }))
       .sort((a, b) => b.ev - a.ev)
       .slice(0, 12);
   }, [trades]);
 
-  /* ── Time-of-Day Edge ── */
+  /* ── Time-of-Day Edge (Avg PnL by hour) ── */
   const todEdge = useMemo(() => {
-    const buckets: { hour: number; n: number; r: number }[] = Array.from({ length: 24 }, (_, h) => ({ hour: h, n: 0, r: 0 }));
+    const buckets: { hour: number; n: number; pnl: number }[] = Array.from({ length: 24 }, (_, h) => ({ hour: h, n: 0, pnl: 0 }));
     trades.forEach(t => {
       try {
         const d = new Date(t.date.replace(' ', 'T'));
         const h = d.getHours();
-        buckets[h].n++; buckets[h].r += getEffectiveR(t);
+        buckets[h].n++; buckets[h].pnl += t.pnl;
       } catch { /* skip */ }
     });
-    return buckets.map(b => ({ hour: `${String(b.hour).padStart(2, '0')}:00`, avgR: b.n ? +(b.r / b.n).toFixed(3) : 0, n: b.n }));
+    return buckets.map(b => ({ hour: `${String(b.hour).padStart(2, '0')}:00`, avgPnl: b.n ? +(b.pnl / b.n).toFixed(2) : 0, n: b.n }));
   }, [trades]);
 
   /* ── Tilt Meter timeline ── */
@@ -236,14 +236,14 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12, marginBottom: 12 }}>
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
-            {t('Expected Value · תוחלת R לפי נכס','Expected Value · Average R per asset')}
+            {t('Expected Value · תוחלת $ לפי נכס','Expected Value · Average $ per asset')}
           </div>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={evPerAsset} layout="vertical" margin={{ left: 60 }}>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
               <XAxis type="number" tick={{ fill: T.text.muted, fontSize: 10 }} />
               <YAxis type="category" dataKey="coin" tick={{ fill: T.text.muted, fontSize: 10 }} width={70} />
-              <Tooltip contentStyle={tt} formatter={(v: number) => `${v}R`} />
+              <Tooltip contentStyle={tt} formatter={(v: number) => `$${v}`} />
               <ReferenceLine x={0} stroke={T.text.muted} />
               <Bar dataKey="ev" radius={[0, 4, 4, 0]}>
                 {evPerAsset.map((d, i) => <Cell key={i} fill={d.ev >= 0 ? T.accent.green : T.accent.red} />)}
@@ -254,17 +254,17 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
 
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
-            {t('Time-of-Day Edge · תוחלת R לפי שעה','Time-of-Day Edge · Average R by hour')}
+            {t('Time-of-Day Edge · תוחלת $ לפי שעה','Time-of-Day Edge · Average $ by hour')}
           </div>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={todEdge}>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
               <XAxis dataKey="hour" tick={{ fill: T.text.muted, fontSize: 9 }} interval={2} />
               <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
-              <Tooltip contentStyle={tt} />
+              <Tooltip contentStyle={tt} formatter={(v: number) => `$${v}`} />
               <ReferenceLine y={0} stroke={T.text.muted} />
-              <Bar dataKey="avgR" radius={[3, 3, 0, 0]}>
-                {todEdge.map((d, i) => <Cell key={i} fill={d.avgR >= 0 ? T.accent.cyan : T.accent.red} fillOpacity={d.n ? 0.85 : 0.15} />)}
+              <Bar dataKey="avgPnl" radius={[3, 3, 0, 0]}>
+                {todEdge.map((d, i) => <Cell key={i} fill={d.avgPnl >= 0 ? T.accent.cyan : T.accent.red} fillOpacity={d.n ? 0.85 : 0.15} />)}
               </Bar>
             </BarChart>
           </ResponsiveContainer>

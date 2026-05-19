@@ -59,6 +59,7 @@ export interface DeepDiagnosis {
     holdTimeStable: boolean;
     avgRiskR: number;
     sortino: number;
+    avgPnl: number;
   };
 }
 
@@ -377,6 +378,7 @@ export function diagnose(trades: Trade[]): DeepDiagnosis {
       revengeTrades, overtradingDays, maxLossStreak, maxWinStreak,
       postLossEscalationPct: safe(postLossEscalationPct),
       holdTimeStable, avgRiskR: safe(avgRiskR), sortino: safe(sortino),
+      avgPnl: safe(n ? trades.reduce((s, t) => s + t.pnl, 0) / n : 0),
     },
   };
 }

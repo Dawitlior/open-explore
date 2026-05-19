@@ -1,4 +1,4 @@
-import { getEffectiveR } from "@/lib/r-multiple";
+// (R-multiple import removed — page is now 100% PnL-agnostic)
 import { useMemo, useState, memo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LineChart, Line, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import type { Trade } from '@/data/trades';
@@ -174,21 +174,20 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
   const dayOfWeekStats = useMemo(() => {
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const daysHe = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'];
-    const buckets: Record<number, { trades: Trade[]; pnl: number; r: number }> = {};
+    const buckets: Record<number, { trades: Trade[]; pnl: number }> = {};
     trades.forEach(t => {
       const d = new Date(t.date.replace(' ', 'T'));
       if (isNaN(d.getTime())) return;
       const dow = d.getDay();
-      if (!buckets[dow]) buckets[dow] = { trades: [], pnl: 0, r: 0 };
+      if (!buckets[dow]) buckets[dow] = { trades: [], pnl: 0 };
       buckets[dow].trades.push(t);
       buckets[dow].pnl += t.pnl;
-      buckets[dow].r += getEffectiveR(t);
     });
     return days.map((d, i) => ({
       day: isRTL ? daysHe[i] : d,
       count: buckets[i]?.trades.length || 0,
       pnl: buckets[i]?.pnl || 0,
-      avgR: buckets[i] && buckets[i].trades.length ? buckets[i].r / buckets[i].trades.length : 0,
+      avgPnl: buckets[i] && buckets[i].trades.length ? buckets[i].pnl / buckets[i].trades.length : 0,
       winRate: buckets[i] && buckets[i].trades.length ? (buckets[i].trades.filter(t => t.winLoss === 'Win').length / buckets[i].trades.length) * 100 : 0,
     }));
   }, [trades, isRTL]);
@@ -481,8 +480,8 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8 }}>
           {dayOfWeekStats.map((d, i) => {
-            const intensity = Math.min(1, Math.abs(d.avgR) / 1.5);
-            const bg = d.count === 0 ? T.bg.tertiary : heatColor(d.avgR);
+            const intensity = Math.min(1, Math.abs(d.avgPnl) / 100);
+            const bg = d.count === 0 ? T.bg.tertiary : heatColor(d.avgPnl);
             return (
               <div key={i} style={{
                 padding: 12, borderRadius: 10,
@@ -494,11 +493,10 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
                 <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: "'JetBrains Mono', monospace", marginBottom: 6 }}>{d.day}</div>
                 {d.count > 0 ? (
                   <>
-                    <div style={{ fontSize: 18, fontWeight: 700, color: d.avgR >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace", lineHeight: 1 }}>
-                      {d.avgR >= 0 ? '+' : ''}{d.avgR.toFixed(2)}
+                    <div style={{ fontSize: 18, fontWeight: 700, color: d.avgPnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace", lineHeight: 1 }}>
+                      {d.avgPnl >= 0 ? '+' : ''}${d.avgPnl.toFixed(0)}
                     </div>
-                    <div style={{ fontSize: 8, color: T.text.muted, marginTop: 4, fontFamily: "'JetBrains Mono', monospace" }}>R · {d.count}T</div>
-                    <div style={{ fontSize: 8, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>{d.winRate.toFixed(0)}% WR</div>
+                    <div style={{ fontSize: 8, color: T.text.muted, marginTop: 4, fontFamily: "'JetBrains Mono', monospace" }}>{d.count}T · {d.winRate.toFixed(0)}% WR</div>
                   </>
                 ) : (
                   <div style={{ fontSize: 16, color: T.text.muted, opacity: 0.4 }}>—</div>
@@ -751,7 +749,7 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
                   <div style={{ fontSize: 10, color: T.text.muted, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>{isRTL ? '◆ המטריקה שלא משקרת' : '◆ THE METRIC THAT DOESN’T LIE'}</div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 8 }}>
                     {[
-                      { k: isRTL ? 'תוחלת פוזיציה' : 'Expectancy', v: `${deepDiag.raw.expectancyR >= 0 ? '+' : ''}${deepDiag.raw.expectancyR.toFixed(2)}R`, c: deepDiag.raw.expectancyR >= 0 ? T.accent.green : T.accent.red, sub: isRTL && deepDiag.raw.expectancyR < 0 ? 'אתה משלם לסחור' : (deepDiag.raw.expectancyR < 0 ? 'You pay to trade' : 'Net R per trade') },
+                      { k: isRTL ? 'תוחלת פוזיציה ($)' : 'Avg Trade ($)', v: `${deepDiag.raw.avgPnl >= 0 ? '+' : ''}$${deepDiag.raw.avgPnl.toFixed(2)}`, c: deepDiag.raw.avgPnl >= 0 ? T.accent.green : T.accent.red, sub: isRTL ? (deepDiag.raw.avgPnl < 0 ? 'אתה משלם לסחור' : 'רווח נטו פר עסקה') : (deepDiag.raw.avgPnl < 0 ? 'You pay to trade' : 'Net $ per trade') },
                       { k: isRTL ? 'כאוס סיזינג (CV)' : 'Sizing Chaos (CV)', v: `${deepDiag.raw.riskCV.toFixed(0)}%`, c: deepDiag.raw.riskCV <= 35 ? T.accent.green : deepDiag.raw.riskCV <= 60 ? T.accent.orange : T.accent.red, sub: isRTL ? 'תנודתיות גודל פוזיציה' : 'Position-size volatility' },
                       { k: isRTL ? 'הסלמה אחרי הפסד' : 'Post-Loss Escalation', v: `${deepDiag.raw.postLossEscalationPct.toFixed(0)}%`, c: deepDiag.raw.postLossEscalationPct > 30 ? T.accent.red : T.accent.green, sub: isRTL ? 'אינדיקציה למסחר נקמה' : 'Revenge-trading indicator' },
                       { k: isRTL ? 'רצף הפסדים מקס׳' : 'Max Loss Streak', v: `${deepDiag.raw.maxLossStreak}L`, c: deepDiag.raw.maxLossStreak >= 4 ? T.accent.red : T.accent.green, sub: isRTL ? 'ריצה לתוך הקיר ללא בלמים' : 'No-brakes loss run' },
