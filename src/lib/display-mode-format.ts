@@ -55,9 +55,21 @@ export function useVisibleTrades(trades: Trade[]) {
     () => selectVisibleTrades(trades, displayMode),
     [trades, displayMode],
   );
+  // Trades that pass the strict R-eligibility gate (real stop-loss present
+  // AND `getR` returns a finite number — no Tier-3 proxy). Use this list as
+  // the source-of-truth for any R-based chart series, regardless of mode.
+  const rEligibleTrades = useMemo(
+    () => trades.filter(t => hasValidStop(t) && getEffectiveR(t, { strict: true }) !== null),
+    [trades],
+  );
+  const hiddenFromR = trades.length - rEligibleTrades.length;
   return {
     displayMode,
     visibleTrades,
+    rEligibleTrades,
+    rEligibleCount: rEligibleTrades.length,
+    totalCount: trades.length,
+    hiddenFromR,
     isMoney: displayMode === 'MONEY',
     isR: displayMode === 'R_MULTIPLE',
     field: pickField(displayMode),
