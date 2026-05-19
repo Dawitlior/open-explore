@@ -1020,77 +1020,8 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
                 </>
               )}
 
-              {/* PACK 8 — Kelly optimal vs Actual sizing */}
-              {pack === 'kelly+sizing' && (
-                <>
-                  <GlassCard T={T}>
-                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>{t('Kelly אופטימלי מול גודל פוזיציה בפועל (%)','Optimal Kelly vs actual position size (%)')}</div>
-                    <ResponsiveContainer width="100%" height={250}>
-                      <ComposedChart data={kellyData}>
-                        <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
-                        <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
-                        <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} unit="%" />
-                        <Tooltip contentStyle={tt} />
-                        <Area type="monotone" dataKey="kelly" stroke={T.accent.purple} fill={T.accent.purple} fillOpacity={0.18} strokeWidth={2} />
-                        <Line type="monotone" dataKey="actual" stroke={T.accent.cyan} strokeWidth={2.2} dot={false} />
-                      </ComposedChart>
-                    </ResponsiveContainer>
-                  </GlassCard>
-                  <GlassCard T={T}>
-                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>{t('סחיפת Risk לאורך זמן','Risk drift over time')}</div>
-                    <ResponsiveContainer width="100%" height={250}>
-                      <LineChart data={kellyData}>
-                        <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
-                        <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
-                        <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} unit="%" />
-                        <Tooltip contentStyle={tt} />
-                        <Line type="monotone" dataKey="actual" stroke={T.accent.red} strokeWidth={2} dot={false} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </GlassCard>
-                </>
-              )}
 
-              {/* PACK 9 — Efficiency cloud + R distribution */}
-              {pack === 'efficiency+mae' && (
-                <>
-                  <GlassCard T={T}>
-                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>{t('ענן יעילות (R לTrade)','Efficiency Cloud (R per trade)')}</div>
-                    <ResponsiveContainer width="100%" height={250}>
-                      <ScatterChart>
-                        <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
-                        <XAxis type="number" dataKey="i" name={t('עסקה','Trade')} tick={{ fill: T.text.muted, fontSize: 10 }} />
-                        <YAxis type="number" dataKey="eff" name="R" tick={{ fill: T.text.muted, fontSize: 10 }} />
-                        <ZAxis type="number" dataKey="risk" range={[40, 300]} />
-                        <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} />
-                        <Scatter data={efficiencyCloud}>
-                          {efficiencyCloud.map((d, i) => (
-                            <Cell key={i} fill={d.win ? T.accent.green : T.accent.red} fillOpacity={0.65} />
-                          ))}
-                        </Scatter>
-                      </ScatterChart>
-                    </ResponsiveContainer>
-                  </GlassCard>
-                  <GlassCard T={T}>
-                    <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>{t('מדד חרטה — צבירת הפסדים נמנעים','Regret Index — accumulated avoidable losses')}</div>
-                    <ResponsiveContainer width="100%" height={250}>
-                      <AreaChart data={equityDrawdown.map(d => ({ i: d.i, regret: Math.abs(Math.min(0, d.drawdown)) }))}>
-                        <defs>
-                          <linearGradient id="rgG" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor={T.accent.orange} stopOpacity={0.55} />
-                            <stop offset="100%" stopColor={T.accent.orange} stopOpacity={0.04} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
-                        <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
-                        <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
-                        <Tooltip contentStyle={tt} />
-                        <Area type="monotone" dataKey="regret" stroke={T.accent.orange} fill="url(#rgG)" strokeWidth={2} />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </GlassCard>
-                </>
-              )}
+
 
               {/* PACK 10 — Setup spider + Pareto focus */}
               {pack === 'dna+focus' && (
