@@ -400,7 +400,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
   };
 
   const maxAbsHeat = Math.max(1, ...dhMatrix.map(c => Math.abs(c.pnl)));
-  const maxAbsMonth = Math.max(1, ...monthHeat.map(c => Math.abs(c.pnl)));
+  const maxAbsMonth = Math.max(1, ...monthHeat.map(c => Math.abs(isMoney ? c.pnl : c.r)));
 
   /* ─────────── EMPTY ─────────── */
 
