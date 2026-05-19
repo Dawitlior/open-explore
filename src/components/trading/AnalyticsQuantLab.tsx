@@ -300,7 +300,7 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
         <GlassCard T={T} style={{ padding: 12 }}>
           <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Best Session</div>
           <div style={{ fontSize: 22, fontWeight: 800, color: T.accent.green, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>
-            {sessions.filter(s => s.n).sort((a, b) => b.pnl - a.pnl)[0]?.session || '—'}
+            {sessions.filter(s => s.n).sort((a, b) => (isMoney ? b.pnl - a.pnl : b.r - a.r))[0]?.session || '—'}
           </div>
           <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>סשן הכי רווחי</div>
         </GlassCard>
