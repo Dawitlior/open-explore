@@ -197,7 +197,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
     return grid;
   }, [trades]);
 
-  // 5. Risk vs P&L scatter
+  // 5. Risk vs P&L scatter (carries both $ and R)
   const rvp = useMemo(() =>
     trades.map(t => ({
       risk: t.risk,
@@ -277,15 +277,15 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
     ];
   }, [trades, T, t]);
 
-  // 9. Monthly heat tiles
+  // 9. Monthly heat tiles (carries both $ and R)
   const monthHeat = useMemo(() => {
-    const m: Record<string, { key: string; pnl: number; n: number }> = {};
-    trades.forEach(t => {
+    const m: Record<string, { key: string; pnl: number; r: number; n: number }> = {};
+    trades.forEach(tr => {
       try {
-        const d = new Date(t.date.replace(' ', 'T'));
+        const d = new Date(tr.date.replace(' ', 'T'));
         const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-        if (!m[k]) m[k] = { key: k, pnl: 0, n: 0 };
-        m[k].pnl += t.pnl; m[k].n++;
+        if (!m[k]) m[k] = { key: k, pnl: 0, r: 0, n: 0 };
+        m[k].pnl += tr.pnl; m[k].r += getEffectiveR(tr); m[k].n++;
       } catch { /* skip */ }
     });
     return Object.values(m).sort((a, b) => a.key.localeCompare(b.key));
@@ -400,7 +400,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
   };
 
   const maxAbsHeat = Math.max(1, ...dhMatrix.map(c => Math.abs(c.pnl)));
-  const maxAbsMonth = Math.max(1, ...monthHeat.map(c => Math.abs(c.pnl)));
+  const maxAbsMonth = Math.max(1, ...monthHeat.map(c => Math.abs(isMoney ? c.pnl : c.r)));
 
   /* ─────────── EMPTY ─────────── */
 
@@ -597,7 +597,9 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
         <GlassCard T={T} style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>{t('חום חודשי','Monthly Heat')}</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 8 }}>
-            {monthHeat.map((m, i) => (
+            {monthHeat.map((m, i) => {
+              const v = isMoney ? m.pnl : m.r;
+              return (
               <motion.div
                 key={m.key}
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -605,18 +607,18 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
                 transition={{ duration: 0.25, delay: i * 0.03 }}
                 style={{
                   padding: 12,
-                  background: heatColor(m.pnl, maxAbsMonth),
+                  background: heatColor(v, maxAbsMonth),
                   borderRadius: 10,
                   border: `1px solid ${T.border.subtle}`,
                 }}
               >
                 <div style={{ fontSize: 10, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>{m.key}</div>
                 <div style={{ fontSize: 16, fontWeight: 800, color: T.text.primary, fontFamily: "'JetBrains Mono', monospace", marginTop: 2 }}>
-                  <PV>{m.pnl >= 0 ? '+' : ''}${m.pnl.toFixed(0)}</PV>
+                  <PV>{fmtVal(v)}</PV>
                 </div>
                 <div style={{ fontSize: 9, color: T.text.muted, marginTop: 2 }}>{m.n} {t('עסקאות','trades')}</div>
               </motion.div>
-            ))}
+            );})}
           </div>
         </GlassCard>
       )}
@@ -680,9 +682,9 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
             <ScatterChart>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
               <XAxis type="number" dataKey="risk" name={t('סיכון','Risk')} tick={{ fill: T.text.muted, fontSize: 10 }} />
-              <YAxis type="number" dataKey="pnl" name="P&L" tick={{ fill: T.text.muted, fontSize: 10 }} />
+              <YAxis type="number" dataKey={isMoney ? 'pnl' : 'r'} name={isMoney ? 'P&L' : 'R'} tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => fmtAxis(v)} />
               <ZAxis range={[40, 160]} />
-              <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} formatter={(v: number, n: string) => [`$${v.toFixed(2)}`, n === 'risk' ? t('סיכון','Risk') : 'P&L']} />
+              <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} formatter={(v: number, n: string) => [n === 'risk' ? `$${v.toFixed(2)}` : fmtVal(v), n === 'risk' ? t('סיכון','Risk') : (isMoney ? 'P&L' : 'R')]} />
               <Scatter data={rvp}>
                 {rvp.map((d, i) => (
                   <Cell key={i} fill={d.win ? T.accent.green : T.accent.red} fillOpacity={0.7} />
@@ -758,7 +760,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
                   <span style={{ fontSize: 11, color: T.text.muted }}>{t('הצלחה','Win')} {mp.winRate.toFixed(0)}%</span>
                   <span style={{ fontSize: 11, color: T.accent.purple, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>{t('תוחלת','Exp')} {mp.expectancyR >= 0 ? '+' : ''}{mp.expectancyR.toFixed(2)}R</span>
                   <span style={{ fontSize: 13, color: mp.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace", fontWeight: 800 }}>
-                    <PV>{mp.pnl >= 0 ? '+' : ''}${mp.pnl.toFixed(2)}</PV>
+                    <PV>{isMoney ? `${mp.pnl >= 0 ? '+' : ''}$${mp.pnl.toFixed(2)}` : `${mp.expectancyR >= 0 ? '+' : ''}${(mp.expectancyR * mp.trades).toFixed(2)}R`}</PV>
                   </span>
                 </div>
               </div>

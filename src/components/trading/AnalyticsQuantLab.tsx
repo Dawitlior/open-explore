@@ -109,15 +109,17 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
     return bins;
   }, [trades]);
 
-  /* ── 2. Avg Win vs Avg Loss ── */
+  /* ── 2. Avg Win vs Avg Loss (carries BOTH $ and R) ── */
   const avgWL = useMemo(() => {
     const w = trades.filter(t => t.winLoss === 'Win');
     const l = trades.filter(t => t.winLoss === 'Loss');
-    const aw = w.length ? w.reduce((s, t) => s + t.pnl, 0) / w.length : 0;
-    const al = l.length ? l.reduce((s, t) => s + t.pnl, 0) / l.length : 0;
+    const aw$ = w.length ? w.reduce((s, t) => s + t.pnl, 0) / w.length : 0;
+    const al$ = l.length ? l.reduce((s, t) => s + t.pnl, 0) / l.length : 0;
+    const awR = w.length ? w.reduce((s, t) => s + getEffectiveR(t), 0) / w.length : 0;
+    const alR = l.length ? l.reduce((s, t) => s + getEffectiveR(t), 0) / l.length : 0;
     return [
-      { name: 'ניצחון ממוצע', val: aw, color: T.accent.green },
-      { name: 'הפסד ממוצע', val: al, color: T.accent.red },
+      { name: 'ניצחון ממוצע', money: aw$, r: awR, color: T.accent.green },
+      { name: 'הפסד ממוצע', money: al$, r: alR, color: T.accent.red },
     ];
   }, [trades, T]);
 
@@ -201,9 +203,9 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
   const topW = useMemo(() => [...trades].sort((a, b) => getEffectiveR(b) - getEffectiveR(a)).slice(0, 5), [trades]);
   const topL = useMemo(() => [...trades].sort((a, b) => getEffectiveR(a) - getEffectiveR(b)).slice(0, 5), [trades]);
 
-  /* ── 9. Position size vs P&L ── */
+  /* ── 9. Position size vs P&L (carries both $ and R) ── */
   const sizePnl = useMemo(() =>
-    trades.map(t => ({ size: t.positionSize || 0, pnl: t.pnl, win: t.winLoss === 'Win' })),
+    trades.map(t => ({ size: t.positionSize || 0, pnl: t.pnl, r: getEffectiveR(t), win: t.winLoss === 'Win' })),
   [trades]);
 
   /* ── 10. Monte-Carlo envelope (shuffled equity paths) ── */
@@ -235,37 +237,42 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
 
   /* ── 11. Session split ── */
   const sessions = useMemo(() => {
-    const m: Record<string, { n: number; pnl: number; wins: number }> = {
-      Asia: { n: 0, pnl: 0, wins: 0 }, London: { n: 0, pnl: 0, wins: 0 },
-      NY: { n: 0, pnl: 0, wins: 0 }, Off: { n: 0, pnl: 0, wins: 0 },
+    const m: Record<string, { n: number; pnl: number; r: number; wins: number }> = {
+      Asia: { n: 0, pnl: 0, r: 0, wins: 0 }, London: { n: 0, pnl: 0, r: 0, wins: 0 },
+      NY: { n: 0, pnl: 0, r: 0, wins: 0 }, Off: { n: 0, pnl: 0, r: 0, wins: 0 },
     };
     trades.forEach(t => {
       try {
         const d = new Date(t.date.replace(' ', 'T'));
         const s = sessionOf(d.getHours());
-        m[s].n++; m[s].pnl += t.pnl;
+        m[s].n++; m[s].pnl += t.pnl; m[s].r += getEffectiveR(t);
         if (t.winLoss === 'Win') m[s].wins++;
       } catch { /* skip */ }
     });
     return Object.entries(m).map(([k, v]) => ({
-      session: k, n: v.n, pnl: +v.pnl.toFixed(2),
+      session: k, n: v.n, pnl: +v.pnl.toFixed(2), r: +v.r.toFixed(3),
       wr: v.n ? +((v.wins / v.n) * 100).toFixed(1) : 0,
     }));
   }, [trades]);
 
-  /* ── 12. Day-by-day equity step ── */
+  /* ── 12. Day-by-day equity step (carries both $ and R) ── */
   const dailyEq = useMemo(() => {
-    const m = new Map<string, number>();
+    const m = new Map<string, { p: number; r: number }>();
     trades.forEach(t => {
       try {
         const d = new Date(t.date.replace(' ', 'T'));
         const k = d.toISOString().slice(0, 10);
-        m.set(k, (m.get(k) || 0) + t.pnl);
+        const cur = m.get(k) || { p: 0, r: 0 };
+        cur.p += t.pnl; cur.r += getEffectiveR(t);
+        m.set(k, cur);
       } catch { /* skip */ }
     });
     const arr = Array.from(m.entries()).sort(([a], [b]) => a.localeCompare(b));
-    let cum = 0;
-    return arr.map(([day, p]) => { cum += p; return { day: day.slice(5), cum: +cum.toFixed(2), daily: +p.toFixed(2) }; });
+    let cum = 0, cumR = 0;
+    return arr.map(([day, v]) => {
+      cum += v.p; cumR += v.r;
+      return { day: day.slice(5), cum: +cum.toFixed(2), cumR: +cumR.toFixed(3), daily: +v.p.toFixed(2), dailyR: +v.r.toFixed(3) };
+    });
   }, [trades]);
 
   if (trades.length === 0) return null;
@@ -293,7 +300,7 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
         <GlassCard T={T} style={{ padding: 12 }}>
           <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Best Session</div>
           <div style={{ fontSize: 22, fontWeight: 800, color: T.accent.green, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>
-            {sessions.filter(s => s.n).sort((a, b) => b.pnl - a.pnl)[0]?.session || '—'}
+            {sessions.filter(s => s.n).sort((a, b) => (isMoney ? b.pnl - a.pnl : b.r - a.r))[0]?.session || '—'}
           </div>
           <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>סשן הכי רווחי</div>
         </GlassCard>
@@ -344,10 +351,10 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
             <BarChart data={avgWL}>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
               <XAxis dataKey="name" tick={{ fill: T.text.muted, fontSize: 11 }} />
-              <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
-              <Tooltip contentStyle={tt} formatter={(v: number) => <PV>{`$${v.toFixed(2)}`}</PV>} />
+              <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => fmtAxis(v)} />
+              <Tooltip contentStyle={tt} formatter={(v: number) => <PV>{fmtVal(v)}</PV>} />
               <ReferenceLine y={0} stroke={T.text.muted} />
-              <Bar dataKey="val" radius={[6, 6, 0, 0]}>
+              <Bar dataKey={isMoney ? 'money' : 'r'} radius={[6, 6, 0, 0]}>
                 {avgWL.map((d, i) => <Cell key={i} fill={d.color} />)}
               </Bar>
             </BarChart>
@@ -432,9 +439,9 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
             <ScatterChart>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
               <XAxis type="number" dataKey="size" tick={{ fill: T.text.muted, fontSize: 10 }} />
-              <YAxis type="number" dataKey="pnl" tick={{ fill: T.text.muted, fontSize: 10 }} />
+              <YAxis type="number" dataKey={isMoney ? 'pnl' : 'r'} tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => fmtAxis(v)} />
               <ZAxis range={[40, 140]} />
-              <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} />
+              <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} formatter={(v: number) => fmtVal(v)} />
               <ReferenceLine y={0} stroke={T.text.muted} />
               <Scatter data={sizePnl}>
                 {sizePnl.map((d, i) => (
@@ -475,11 +482,11 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
             <BarChart data={sessions}>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
               <XAxis dataKey="session" tick={{ fill: T.text.muted, fontSize: 11 }} />
-              <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
-              <Tooltip contentStyle={tt} formatter={(v: number, n: string) => n === 'pnl' ? <PV>${v.toFixed(2)}</PV> : `${v}${n === 'wr' ? '%' : ''}`} />
+              <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => fmtAxis(v)} />
+              <Tooltip contentStyle={tt} formatter={(v: number, n: string) => (n === 'pnl' || n === 'r') ? <PV>{fmtVal(v)}</PV> : `${v}${n === 'wr' ? '%' : ''}`} />
               <ReferenceLine y={0} stroke={T.text.muted} />
-              <Bar dataKey="pnl" radius={[4, 4, 0, 0]}>
-                {sessions.map((s, i) => <Cell key={i} fill={s.pnl >= 0 ? T.accent.green : T.accent.red} />)}
+              <Bar dataKey={isMoney ? 'pnl' : 'r'} radius={[4, 4, 0, 0]}>
+                {sessions.map((s, i) => <Cell key={i} fill={(isMoney ? s.pnl : s.r) >= 0 ? T.accent.green : T.accent.red} />)}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -497,9 +504,9 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
               </defs>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
               <XAxis dataKey="day" tick={{ fill: T.text.muted, fontSize: 9 }} />
-              <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
-              <Tooltip contentStyle={tt} formatter={(v: number) => <PV>${v.toFixed(2)}</PV>} />
-              <Area type="stepAfter" dataKey="cum" stroke={T.accent.green} fill="url(#dEq)" strokeWidth={2.2} />
+              <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => fmtAxis(v)} />
+              <Tooltip contentStyle={tt} formatter={(v: number) => <PV>{fmtVal(v)}</PV>} />
+              <Area type="stepAfter" dataKey={isMoney ? 'cum' : 'cumR'} stroke={T.accent.green} fill="url(#dEq)" strokeWidth={2.2} />
             </AreaChart>
           </ResponsiveContainer>
         </GlassCard>

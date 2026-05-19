@@ -304,7 +304,7 @@ const LowTradesPopup: React.FC<{ count: number; T: TradingTheme; isRTL: boolean;
 /* ──────────────────────────────────────────────────────────────── */
 
 const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTrades }) => {
-  const { visibleTrades: trades } = useVisibleTrades(_allTrades);
+  const { visibleTrades: trades, isMoney, formatAxis: fmtAxis, formatValue: fmtVal } = useVisibleTrades(_allTrades);
   const { t, isRTL } = useLang();
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<ReturnType<typeof analyzeDeep> | null>(null);
@@ -457,12 +457,15 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
   /* ──── NEW DATASETS for advanced packs ──── */
 
   const equityDrawdown = useMemo(() => {
-    let eq = 0, peak = 0;
+    let eq = 0, peak = 0, eqR = 0, peakR = 0;
     return trades.map((t, i) => {
       eq += t.pnl;
+      eqR += getEffectiveR(t);
       if (eq > peak) peak = eq;
+      if (eqR > peakR) peakR = eqR;
       const dd = peak > 0 ? ((eq - peak) / peak) * 100 : 0;
-      return { i: i + 1, equity: +eq.toFixed(2), drawdown: +dd.toFixed(2) };
+      const ddR = peakR > 0 ? ((eqR - peakR) / peakR) * 100 : 0;
+      return { i: i + 1, equity: +eq.toFixed(2), equityR: +eqR.toFixed(3), drawdown: +dd.toFixed(2), drawdownR: +ddR.toFixed(2) };
     });
   }, [trades]);
 
@@ -948,9 +951,9 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
                         </defs>
                         <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
                         <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
-                        <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => { const a = Math.abs(v); return a >= 1000 ? `${v < 0 ? '-' : ''}$${(a / 1000).toFixed(a >= 10000 ? 0 : 1)}k` : `${v < 0 ? '-' : ''}$${a.toFixed(0)}`; }} />
-                        <Tooltip contentStyle={tt} formatter={(v: number) => `$${Number(v).toFixed(2)}`} />
-                        <Area type="monotone" dataKey="equity" stroke={T.accent.green} fill="url(#eqG)" strokeWidth={2.4} />
+                        <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => fmtAxis(v)} />
+                        <Tooltip contentStyle={tt} formatter={(v: number) => fmtVal(Number(v))} />
+                        <Area type="monotone" dataKey={isMoney ? 'equity' : 'equityR'} stroke={T.accent.green} fill="url(#eqG)" strokeWidth={2.4} />
                       </AreaChart>
                     </ResponsiveContainer>
                   </GlassCard>
