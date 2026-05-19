@@ -20,7 +20,7 @@ import { PrivacyMask, usePrivacyShortcut } from '@/components/trading/PrivacyMas
 import { TradeForm } from '@/components/trading/TradeForm';
 import { ResetModal } from '@/components/trading/ResetModal';
 import { SettingsHub } from '@/components/trading/SettingsHub';
-import { AlphaLiveConsole } from '@/components/trading/AlphaLiveConsole';
+
 import { IdleTimeoutModal } from '@/components/IdleTimeoutModal';
 import { NavAvatar } from '@/components/trading/NavAvatar';
 import { DeploymentToast } from '@/components/DeploymentToast';
@@ -1320,7 +1320,6 @@ const Index = () => {
 
     return (
       <>
-        <AlphaLiveConsole T={T} isRTL={isRTL} enabled={isAlpha} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
           <div style={{ fontSize: 13, color: T.text.muted }}>
             {stats.totalTrades} {isRTL ? 'עסקאות' : 'trades'}
