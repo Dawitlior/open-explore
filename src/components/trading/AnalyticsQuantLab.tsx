@@ -237,37 +237,42 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
 
   /* ── 11. Session split ── */
   const sessions = useMemo(() => {
-    const m: Record<string, { n: number; pnl: number; wins: number }> = {
-      Asia: { n: 0, pnl: 0, wins: 0 }, London: { n: 0, pnl: 0, wins: 0 },
-      NY: { n: 0, pnl: 0, wins: 0 }, Off: { n: 0, pnl: 0, wins: 0 },
+    const m: Record<string, { n: number; pnl: number; r: number; wins: number }> = {
+      Asia: { n: 0, pnl: 0, r: 0, wins: 0 }, London: { n: 0, pnl: 0, r: 0, wins: 0 },
+      NY: { n: 0, pnl: 0, r: 0, wins: 0 }, Off: { n: 0, pnl: 0, r: 0, wins: 0 },
     };
     trades.forEach(t => {
       try {
         const d = new Date(t.date.replace(' ', 'T'));
         const s = sessionOf(d.getHours());
-        m[s].n++; m[s].pnl += t.pnl;
+        m[s].n++; m[s].pnl += t.pnl; m[s].r += getEffectiveR(t);
         if (t.winLoss === 'Win') m[s].wins++;
       } catch { /* skip */ }
     });
     return Object.entries(m).map(([k, v]) => ({
-      session: k, n: v.n, pnl: +v.pnl.toFixed(2),
+      session: k, n: v.n, pnl: +v.pnl.toFixed(2), r: +v.r.toFixed(3),
       wr: v.n ? +((v.wins / v.n) * 100).toFixed(1) : 0,
     }));
   }, [trades]);
 
-  /* ── 12. Day-by-day equity step ── */
+  /* ── 12. Day-by-day equity step (carries both $ and R) ── */
   const dailyEq = useMemo(() => {
-    const m = new Map<string, number>();
+    const m = new Map<string, { p: number; r: number }>();
     trades.forEach(t => {
       try {
         const d = new Date(t.date.replace(' ', 'T'));
         const k = d.toISOString().slice(0, 10);
-        m.set(k, (m.get(k) || 0) + t.pnl);
+        const cur = m.get(k) || { p: 0, r: 0 };
+        cur.p += t.pnl; cur.r += getEffectiveR(t);
+        m.set(k, cur);
       } catch { /* skip */ }
     });
     const arr = Array.from(m.entries()).sort(([a], [b]) => a.localeCompare(b));
-    let cum = 0;
-    return arr.map(([day, p]) => { cum += p; return { day: day.slice(5), cum: +cum.toFixed(2), daily: +p.toFixed(2) }; });
+    let cum = 0, cumR = 0;
+    return arr.map(([day, v]) => {
+      cum += v.p; cumR += v.r;
+      return { day: day.slice(5), cum: +cum.toFixed(2), cumR: +cumR.toFixed(3), daily: +v.p.toFixed(2), dailyR: +v.r.toFixed(3) };
+    });
   }, [trades]);
 
   if (trades.length === 0) return null;
