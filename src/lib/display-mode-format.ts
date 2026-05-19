@@ -3,8 +3,7 @@
  * between fiat money ($) and R-Multiple (R) without duplicating charts. */
 import { useMemo } from 'react';
 import type { Trade } from '@/data/trades';
-import { useDisplayMode, selectVisibleTrades, hasValidStop, type DisplayMode } from './display-mode';
-import { getEffectiveR } from './r-multiple';
+import { useDisplayMode, selectVisibleTrades, hasStrictR, type DisplayMode } from './display-mode';
 
 /** Returns the active dataset field to plot for cumulative/aggregate charts. */
 export function pickField(mode: DisplayMode): 'pnl' | 'r' {
@@ -59,7 +58,7 @@ export function useVisibleTrades(trades: Trade[]) {
   // AND `getR` returns a finite number — no Tier-3 proxy). Use this list as
   // the source-of-truth for any R-based chart series, regardless of mode.
   const rEligibleTrades = useMemo(
-    () => trades.filter(t => hasValidStop(t) && getEffectiveR(t, { strict: true }) !== null),
+    () => trades.filter(hasStrictR),
     [trades],
   );
   const hiddenFromR = trades.length - rEligibleTrades.length;

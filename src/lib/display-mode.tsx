@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Trade } from '@/data/trades';
+import { getEffectiveR } from '@/lib/r-multiple';
 
 /* ============================================================
  *  DUAL-CURRENCY ENGINE — Global displayMode state
@@ -34,16 +35,21 @@ export function hasValidStop(t: Trade): boolean {
   return t != null && typeof t.stopLoss === 'number' && isFinite(t.stopLoss) && t.stopLoss !== 0;
 }
 
+/** Strict R eligibility: real stop-loss plus a non-synthetic R result. */
+export function hasStrictR(t: Trade): boolean {
+  return hasValidStop(t) && getEffectiveR(t, { strict: true }) !== null;
+}
+
 /** Pure selector — apply the active displayMode filter to an arbitrary list. */
 export function selectVisibleTrades(trades: Trade[], mode: DisplayMode): Trade[] {
   if (mode === 'MONEY') return trades;
-  return trades.filter(hasValidStop);
+  return trades.filter(hasStrictR);
 }
 
 const STORAGE_KEY = 'orca:displayMode';
 
 export function DisplayModeProvider({ trades, children }: { trades: Trade[]; children: ReactNode }) {
-  const hasAnyR = useMemo(() => trades.some(hasValidStop), [trades]);
+  const hasAnyR = useMemo(() => trades.some(hasStrictR), [trades]);
   const locked = !hasAnyR;
 
   const [displayMode, setDisplayModeState] = useState<DisplayMode>(() => {
