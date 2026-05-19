@@ -304,7 +304,7 @@ const LowTradesPopup: React.FC<{ count: number; T: TradingTheme; isRTL: boolean;
 /* ──────────────────────────────────────────────────────────────── */
 
 const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTrades }) => {
-  const { visibleTrades: trades } = useVisibleTrades(_allTrades);
+  const { visibleTrades: trades, isMoney, formatAxis: fmtAxis, formatValue: fmtVal } = useVisibleTrades(_allTrades);
   const { t, isRTL } = useLang();
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<ReturnType<typeof analyzeDeep> | null>(null);
