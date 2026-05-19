@@ -214,9 +214,24 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
     fontFamily: "'JetBrains Mono', monospace",
   };
 
+  // R-mode guard: if no R-eligible trades exist, the entire chart grid is suppressed
+  // (charts driven by R-series would render as flat/empty). Banner explains, no empty gaps.
+  const rModeBlocked = !isMoney && rEligibleCount === 0;
+
   return (
     <div dir="rtl" style={{ marginTop: 20 }}>
       {!isMoney && <RProxyBanner T={T} isRTL compact rEligibleCount={rEligibleCount} totalCount={totalCount} />}
+      {rModeBlocked ? (
+        <GlassCard T={T} style={{ padding: 24, textAlign: 'center', marginTop: 12 }}>
+          <div style={{ fontSize: 13, color: T.text.primary, fontWeight: 700, marginBottom: 6 }}>
+            אין נתוני R זמינים — כל הוויג׳טים מוסתרים
+          </div>
+          <div style={{ fontSize: 11, color: T.text.muted, lineHeight: 1.55 }}>
+            אף עסקה לא כוללת Stop Loss תקף. עבור למצב MONEY (כפתור $) כדי לראות את כל הוויג׳טים מבוססי P&L.
+          </div>
+        </GlassCard>
+      ) : (
+        <>
       <div style={sectionStyle}>◆ QUANT LAB · מעבדת מחקר מתקדמת</div>
 
       {/* Recovery factor + simple cards */}
