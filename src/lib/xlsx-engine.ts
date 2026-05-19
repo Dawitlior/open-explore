@@ -542,12 +542,15 @@ export function importFromBrokerCsv(file: File, brokerId: string): Promise<Broke
             const sanitized = sanitizeTrade(mapped, trades.length + 1);
             if (!sanitized) { skipped++; if (errors.length < 10) errors.push(`Row ${headerRowIdx + 2 + idx}: invalid`); return; }
 
-            // 🔒 Golden Rule: CSV-imported broker trades NEVER carry a stop-loss.
-            // The Dual-Currency Engine reads this null to hide the row from
-            // R-Multiple charts and force MONEY display mode.
+            // 🔒 Data-Integrity Rule: preserve a real stop-loss when the file
+            // provides one (pro CSVs / Excel exports). Only fall back to null
+            // when the broker file truly has no risk column — that keeps the
+            // Dual-Currency Engine honest about which rows are R-eligible.
+            const incomingSL = sanitized.stopLoss;
+            const hasRealSL = typeof incomingSL === 'number' && isFinite(incomingSL) && incomingSL !== 0;
             const enforced: Trade = {
               ...sanitized,
-              stopLoss: null,
+              stopLoss: hasRealSL ? incomingSL : null,
               comments: [`Broker:${brokerId}`, sanitized.comments].filter(Boolean).join(' | '),
             };
 
