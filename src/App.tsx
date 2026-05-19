@@ -15,6 +15,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 import { LegalGate } from "@/components/LegalGate";
+import { BybitLiveProvider } from "@/providers/BybitLiveProvider";
 
 const queryClient = new QueryClient();
 
@@ -70,7 +71,9 @@ const App = () => (
                 path="/"
                 element={
                   <RequireAuth>
-                    <Index />
+                    <BybitLiveProvider>
+                      <Index />
+                    </BybitLiveProvider>
                   </RequireAuth>
                 }
               />
