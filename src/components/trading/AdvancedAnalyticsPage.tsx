@@ -597,7 +597,9 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
         <GlassCard T={T} style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>{t('חום חודשי','Monthly Heat')}</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 8 }}>
-            {monthHeat.map((m, i) => (
+            {monthHeat.map((m, i) => {
+              const v = isMoney ? m.pnl : m.r;
+              return (
               <motion.div
                 key={m.key}
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -605,18 +607,18 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
                 transition={{ duration: 0.25, delay: i * 0.03 }}
                 style={{
                   padding: 12,
-                  background: heatColor(m.pnl, maxAbsMonth),
+                  background: heatColor(v, maxAbsMonth),
                   borderRadius: 10,
                   border: `1px solid ${T.border.subtle}`,
                 }}
               >
                 <div style={{ fontSize: 10, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>{m.key}</div>
                 <div style={{ fontSize: 16, fontWeight: 800, color: T.text.primary, fontFamily: "'JetBrains Mono', monospace", marginTop: 2 }}>
-                  <PV>{m.pnl >= 0 ? '+' : ''}${m.pnl.toFixed(0)}</PV>
+                  <PV>{fmtVal(v)}</PV>
                 </div>
                 <div style={{ fontSize: 9, color: T.text.muted, marginTop: 2 }}>{m.n} {t('עסקאות','trades')}</div>
               </motion.div>
-            ))}
+            );})}
           </div>
         </GlassCard>
       )}
