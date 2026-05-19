@@ -1,4 +1,4 @@
-import { getEffectiveR } from "@/lib/r-multiple";
+// (R-multiple import removed — Psychology Lab is now 100% PnL-agnostic)
 /**
  * 🧠 PSYCHOLOGY LAB — Advanced behavioral & quant metrics
  * ─────────────────────────────────────────────────────────
@@ -60,31 +60,31 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
     });
   }, [trades]);
 
-  /* ── Expected Value per asset (proxy for setup) ── */
+  /* ── Avg PnL per asset (proxy for setup) ── */
   const evPerAsset = useMemo(() => {
-    const m = new Map<string, { n: number; r: number; pnl: number }>();
+    const m = new Map<string, { n: number; pnl: number }>();
     trades.forEach(t => {
-      const c = m.get(t.coin) || { n: 0, r: 0, pnl: 0 };
-      c.n++; c.r += getEffectiveR(t); c.pnl += t.pnl;
+      const c = m.get(t.coin) || { n: 0, pnl: 0 };
+      c.n++; c.pnl += t.pnl;
       m.set(t.coin, c);
     });
     return Array.from(m.entries())
-      .map(([coin, v]) => ({ coin, ev: +(v.r / v.n).toFixed(3), n: v.n, pnl: +v.pnl.toFixed(2) }))
+      .map(([coin, v]) => ({ coin, ev: +(v.pnl / v.n).toFixed(2), n: v.n, pnl: +v.pnl.toFixed(2) }))
       .sort((a, b) => b.ev - a.ev)
       .slice(0, 12);
   }, [trades]);
 
-  /* ── Time-of-Day Edge ── */
+  /* ── Time-of-Day Edge (Avg PnL by hour) ── */
   const todEdge = useMemo(() => {
-    const buckets: { hour: number; n: number; r: number }[] = Array.from({ length: 24 }, (_, h) => ({ hour: h, n: 0, r: 0 }));
+    const buckets: { hour: number; n: number; pnl: number }[] = Array.from({ length: 24 }, (_, h) => ({ hour: h, n: 0, pnl: 0 }));
     trades.forEach(t => {
       try {
         const d = new Date(t.date.replace(' ', 'T'));
         const h = d.getHours();
-        buckets[h].n++; buckets[h].r += getEffectiveR(t);
+        buckets[h].n++; buckets[h].pnl += t.pnl;
       } catch { /* skip */ }
     });
-    return buckets.map(b => ({ hour: `${String(b.hour).padStart(2, '0')}:00`, avgR: b.n ? +(b.r / b.n).toFixed(3) : 0, n: b.n }));
+    return buckets.map(b => ({ hour: `${String(b.hour).padStart(2, '0')}:00`, avgPnl: b.n ? +(b.pnl / b.n).toFixed(2) : 0, n: b.n }));
   }, [trades]);
 
   /* ── Tilt Meter timeline ── */
