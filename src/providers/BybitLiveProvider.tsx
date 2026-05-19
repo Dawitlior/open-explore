@@ -249,6 +249,8 @@ export function BybitLiveProvider({ children }: { children: ReactNode }) {
     }, 10_000);
   }, [handlePositionFrame, handleExecutionFrame, scheduleReconnect]);
 
+  const [credEpoch, setCredEpoch] = useState(0);
+
   // ── Boot ────────────────────────────────────────────────────────────────
   useEffect(() => {
     aliveRef.current = true;
@@ -276,6 +278,8 @@ export function BybitLiveProvider({ children }: { children: ReactNode }) {
       if (sErr || !secret) { setLastError('secret_unavailable'); setStatus('no_creds'); setHasCreds(false); return; }
       credRef.current = { apiKey: row.api_key, apiSecret: String(secret), userId: u.user.id };
       setHasCreds(true);
+      authFailRef.current = 0;
+      attemptRef.current = 0;
       void connect();
     })();
 
@@ -291,7 +295,20 @@ export function BybitLiveProvider({ children }: { children: ReactNode }) {
         credRef.current = null;
       }
     };
-  }, [connect, teardown]);
+  }, [connect, teardown, credEpoch]);
+
+  // ── React to credential changes & auth changes ──────────────────────────
+  useEffect(() => {
+    const bump = () => setCredEpoch(e => e + 1);
+    window.addEventListener('orca:exchange-credentials-changed', bump);
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') bump();
+    });
+    return () => {
+      window.removeEventListener('orca:exchange-credentials-changed', bump);
+      sub.subscription.unsubscribe();
+    };
+  }, []);
 
   const value = useMemo<Ctx>(() => ({
     positions: Object.values(positions).sort((a, b) => a.symbol.localeCompare(b.symbol)),

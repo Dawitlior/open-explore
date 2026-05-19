@@ -123,6 +123,7 @@ export function ExchangesPanel({ T, isRTL }: Props) {
     const { error } = await supabase.from('exchange_credentials').delete().eq('id', id);
     if (error) { toast.error(t('שגיאה בניתוק', 'Disconnect failed')); return; }
     toast.success(t('החיבור הוסר מהכספת', 'Connection removed from vault'));
+    try { window.dispatchEvent(new CustomEvent('orca:exchange-credentials-changed')); } catch {/*noop*/}
     void refresh();
   };
 
@@ -874,6 +875,7 @@ function CredentialModal({
         'Key verified as Read-Only and sealed inside the server vault.'),
       code: 'VAULT_SEALED' });
     setApiKey(''); setApiSecret('');
+    try { window.dispatchEvent(new CustomEvent('orca:exchange-credentials-changed', { detail: { provider: provider.id } })); } catch {/*noop*/}
     setTimeout(() => onSaved(), 1600);
   };
 
