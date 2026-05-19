@@ -527,7 +527,7 @@ export function importFromBrokerCsv(file: File, brokerId: string): Promise<Broke
             for (const { idx: ci, field } of colMap) {
               const val = row[ci];
               if (field === 'date') mapped.date = parseFlexibleDate(val);
-              else if (field === 'pnl' || field === 'entry' || field === 'exit' || field === 'positionSize' || field === 'leverage' || field === 'risk' || field === 'expectedLoss' || field === 'returnR' || field === 'riskPct') {
+              else if (field === 'pnl' || field === 'entry' || field === 'exit' || field === 'stopLoss' || field === 'positionSize' || field === 'leverage' || field === 'risk' || field === 'expectedLoss' || field === 'returnR' || field === 'riskPct') {
                 mapped[field] = parseNumericValue(val);
               } else if (field === 'deviation') mapped.deviation = parseDeviationValue(val);
               else if (field === 'direction') {
