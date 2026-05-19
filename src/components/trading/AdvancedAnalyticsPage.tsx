@@ -197,7 +197,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
     return grid;
   }, [trades]);
 
-  // 5. Risk vs P&L scatter
+  // 5. Risk vs P&L scatter (carries both $ and R)
   const rvp = useMemo(() =>
     trades.map(t => ({
       risk: t.risk,
