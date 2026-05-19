@@ -760,7 +760,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
                   <span style={{ fontSize: 11, color: T.text.muted }}>{t('הצלחה','Win')} {mp.winRate.toFixed(0)}%</span>
                   <span style={{ fontSize: 11, color: T.accent.purple, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>{t('תוחלת','Exp')} {mp.expectancyR >= 0 ? '+' : ''}{mp.expectancyR.toFixed(2)}R</span>
                   <span style={{ fontSize: 13, color: mp.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace", fontWeight: 800 }}>
-                    <PV>{mp.pnl >= 0 ? '+' : ''}${mp.pnl.toFixed(2)}</PV>
+                    <PV>{isMoney ? `${mp.pnl >= 0 ? '+' : ''}$${mp.pnl.toFixed(2)}` : `${mp.expectancyR >= 0 ? '+' : ''}${(mp.expectancyR * mp.trades).toFixed(2)}R`}</PV>
                   </span>
                 </div>
               </div>
