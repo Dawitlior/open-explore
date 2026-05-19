@@ -84,31 +84,7 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
   }, [trades]);
 
 
-  /* ── 1. R-Multiple histogram + bell curve overlay ── */
-  const rHisto = useMemo(() => {
-    if (trades.length === 0) return [] as { bin: string; mid: number; count: number; bell: number }[];
-    const rs = trades.map(t => getEffectiveR(t));
-    const min = Math.floor(Math.min(...rs) * 2) / 2;
-    const max = Math.ceil(Math.max(...rs) * 2) / 2;
-    const step = 0.5;
-    const bins: { bin: string; mid: number; count: number; bell: number }[] = [];
-    for (let v = min; v <= max; v += step) {
-      bins.push({ bin: `${v.toFixed(1)}`, mid: v + step / 2, count: 0, bell: 0 });
-    }
-    rs.forEach(r => {
-      const idx = Math.min(bins.length - 1, Math.max(0, Math.floor((r - min) / step)));
-      bins[idx].count++;
-    });
-    const mean = rs.reduce((s, r) => s + r, 0) / rs.length;
-    const variance = rs.reduce((s, r) => s + (r - mean) ** 2, 0) / rs.length;
-    const sd = Math.sqrt(variance) || 0.001;
-    const peak = Math.max(...bins.map(b => b.count));
-    bins.forEach(b => {
-      const z = (b.mid - mean) / sd;
-      b.bell = peak * Math.exp(-0.5 * z * z);
-    });
-    return bins;
-  }, [trades]);
+
 
   /* ── 2. Avg Win vs Avg Loss (carries BOTH $ and R) ── */
   const avgWL = useMemo(() => {
