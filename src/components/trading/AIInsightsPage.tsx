@@ -951,9 +951,9 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
                         </defs>
                         <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
                         <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
-                        <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => { const a = Math.abs(v); return a >= 1000 ? `${v < 0 ? '-' : ''}$${(a / 1000).toFixed(a >= 10000 ? 0 : 1)}k` : `${v < 0 ? '-' : ''}$${a.toFixed(0)}`; }} />
-                        <Tooltip contentStyle={tt} formatter={(v: number) => `$${Number(v).toFixed(2)}`} />
-                        <Area type="monotone" dataKey="equity" stroke={T.accent.green} fill="url(#eqG)" strokeWidth={2.4} />
+                        <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => fmtAxis(v)} />
+                        <Tooltip contentStyle={tt} formatter={(v: number) => fmtVal(Number(v))} />
+                        <Area type="monotone" dataKey={isMoney ? 'equity' : 'equityR'} stroke={T.accent.green} fill="url(#eqG)" strokeWidth={2.4} />
                       </AreaChart>
                     </ResponsiveContainer>
                   </GlassCard>
