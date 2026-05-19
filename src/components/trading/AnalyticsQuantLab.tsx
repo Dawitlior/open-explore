@@ -158,41 +158,12 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
     return out;
   }, [trades]);
 
-  /* ── 8. Top winners / losers ── */
-  const topW = useMemo(() => [...trades].sort((a, b) => getEffectiveR(b) - getEffectiveR(a)).slice(0, 5), [trades]);
-  const topL = useMemo(() => [...trades].sort((a, b) => getEffectiveR(a) - getEffectiveR(b)).slice(0, 5), [trades]);
-
   /* ── 9. Position size vs P&L (carries both $ and R) ── */
   const sizePnl = useMemo(() =>
     trades.map(t => ({ size: t.positionSize || 0, pnl: t.pnl, r: getEffectiveR(t), win: t.winLoss === 'Win' })),
   [trades]);
 
-  /* ── 10. Monte-Carlo envelope (shuffled equity paths) ── */
-  const mcEnvelope = useMemo(() => {
-    if (trades.length < 5) return [] as { i: number; p10: number; p50: number; p90: number }[];
-    const N = 60;
-    const rs = trades.map(t => getEffectiveR(t));
-    const paths: number[][] = [];
-    const rand = (seed: number) => { let s = seed; return () => { s = (s * 9301 + 49297) % 233280; return s / 233280; }; };
-    for (let p = 0; p < N; p++) {
-      const r = rand(p + 1);
-      const shuffled = [...rs].sort(() => r() - 0.5);
-      let c = 0; const path: number[] = [];
-      shuffled.forEach(v => { c += v; path.push(c); });
-      paths.push(path);
-    }
-    const out: { i: number; p10: number; p50: number; p90: number }[] = [];
-    for (let i = 0; i < trades.length; i++) {
-      const vals = paths.map(p => p[i]).sort((a, b) => a - b);
-      out.push({
-        i: i + 1,
-        p10: +vals[Math.floor(N * 0.1)].toFixed(2),
-        p50: +vals[Math.floor(N * 0.5)].toFixed(2),
-        p90: +vals[Math.floor(N * 0.9)].toFixed(2),
-      });
-    }
-    return out;
-  }, [trades]);
+
 
   /* ── 11. Session split ── */
   const sessions = useMemo(() => {
