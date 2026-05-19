@@ -894,13 +894,15 @@ const Index = () => {
           ))}
         </div>
 
-        {/* Research charts grid — slim quant style on desktop, denser packing in alpha */}
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : (isAlpha ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)'), gap: 10, marginBottom: 14 }}>
-          <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'התפלגות R-Multiple' : 'R-Multiple Distribution'} explanation={EXPLANATIONS.rDistribution} unit="R">
-            <ResponsiveContainer width="100%" height={isAlpha ? 120 : 200}>
-              <BarChart data={stats.rDist}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 9 }} /><Tooltip contentStyle={tt} /><Bar dataKey="r" radius={[3,3,0,0]}>{stats.rDist.map((d, i) => <Cell key={i} fill={d.r >= 0 ? T.accent.cyan : T.accent.red} />)}</Bar></BarChart>
-            </ResponsiveContainer>
-          </ChartWrapper>
+        {hasStrictRData && (
+        <>
+          {/* Research charts grid — slim quant style on desktop, denser packing in alpha */}
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : (isAlpha ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)'), gap: 10, marginBottom: 14 }}>
+            <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'התפלגות R-Multiple' : 'R-Multiple Distribution'} explanation={EXPLANATIONS.rDistribution} unit="R">
+              <ResponsiveContainer width="100%" height={isAlpha ? 120 : 200}>
+                <BarChart data={stats.rDist}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 9 }} /><Tooltip contentStyle={tt} /><Bar dataKey="r" radius={[3,3,0,0]}>{stats.rDist.map((d, i) => <Cell key={i} fill={d.r >= 0 ? T.accent.cyan : T.accent.red} />)}</Bar></BarChart>
+              </ResponsiveContainer>
+            </ChartWrapper>
 
           <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'שארפ מתגלגל' : 'Rolling Sharpe Ratio'} explanation={EXPLANATIONS.rollingSharpe} unit="R/σ">
             <ResponsiveContainer width="100%" height={isAlpha?120:200}>
@@ -951,10 +953,10 @@ const Index = () => {
               <BarChart data={stats.dayPerf}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="day" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 9 }} /><Tooltip contentStyle={tt} /><Bar dataKey="avgR" radius={[4,4,0,0]}>{stats.dayPerf.map((d, i) => <Cell key={i} fill={d.avgR >= 0 ? T.accent.green : T.accent.red} />)}</Bar></BarChart>
             </ResponsiveContainer>
           </ChartWrapper>
-        </div>
+          </div>
 
-        {/* Alpha: additional research panels */}
-        {isAlpha && <>
+          {/* Alpha: additional research panels */}
+          {isAlpha && <>
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
             <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'סיכון/רוויה' : 'Risk of Ruin Curve'} explanation={EXPLANATIONS.riskOfRuin} unit="%">
               <div style={{ textAlign: 'center', padding: 20 }}>
