@@ -292,6 +292,7 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
 
   return (
     <>
+      {!isMoney && <RProxyBanner T={T} isRTL={isRTL} rEligibleCount={rEligibleCount} totalCount={totalCount} />}
       {/* ═══════════════════════════════════════════════════════════
           HERO — Behavioral Health Index
           ═══════════════════════════════════════════════════════════ */}
