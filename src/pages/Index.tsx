@@ -44,7 +44,7 @@ import { DimensionController, PortalButton, BacktestPortalButton } from '@/compo
 const JournalDimension = lazy(() => import('@/components/trading/JournalDimension').then(m => ({ default: m.JournalDimension })));
 const BacktestDimension = lazy(() => import('@/components/trading/BacktestDimension').then(m => ({ default: m.BacktestDimension })));
 import { useTrades } from '@/hooks/use-trades';
-import { DisplayModeProvider, hasValidStop } from '@/lib/display-mode';
+import { DisplayModeProvider, hasStrictR } from '@/lib/display-mode';
 import { DisplayModeToggle } from '@/components/trading/DisplayModeToggle';
 import { useSettings, type ThemeId } from '@/hooks/use-settings';
 import { useUserPreferences } from '@/hooks/use-user-preferences';
@@ -106,7 +106,7 @@ const Index = () => {
     [baseTheme, uiPrefs.customAccentEnabled, uiPrefs.customAccent],
   );
   const rEligibleTrades = useMemo(
-    () => trades.filter(tr => hasValidStop(tr) && getEffectiveR(tr, { strict: true }) !== null),
+    () => trades.filter(hasStrictR),
     [trades],
   );
   const hasStrictRData = rEligibleTrades.length > 0;
