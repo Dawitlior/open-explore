@@ -707,18 +707,6 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
       {/* ═══ ADVANCED LAYER (PRO/MAX modes) ═══ */}
       {showPro && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12, marginBottom: 12 }}>
-          <GlassCard T={T} glow={`${T.accent.purple}18`}>
-            <div style={{ fontSize: 11, color: T.accent.purple, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>● PRO · {t('יחס שארפ מתגלגל','Rolling Sharpe Ratio')}</div>
-            <ResponsiveContainer width="100%" height={220}>
-              <LineChart data={sharpeRoll}>
-                <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
-                <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
-                <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
-                <Tooltip contentStyle={tt} />
-                <Line type="monotone" dataKey="sharpe" stroke={T.accent.purple} strokeWidth={2.4} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </GlassCard>
           <GlassCard T={T} glow={`${T.accent.red}18`}>
             <div style={{ fontSize: 11, color: T.accent.red, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>● PRO · {t('עקומת תת-מים (Underwater)','Underwater Curve')}</div>
             <ResponsiveContainer width="100%" height={220}>
