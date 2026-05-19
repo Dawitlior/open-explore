@@ -3,7 +3,8 @@
  * between fiat money ($) and R-Multiple (R) without duplicating charts. */
 import { useMemo } from 'react';
 import type { Trade } from '@/data/trades';
-import { useDisplayMode, selectVisibleTrades, type DisplayMode } from './display-mode';
+import { useDisplayMode, selectVisibleTrades, hasValidStop, type DisplayMode } from './display-mode';
+import { getEffectiveR } from './r-multiple';
 
 /** Returns the active dataset field to plot for cumulative/aggregate charts. */
 export function pickField(mode: DisplayMode): 'pnl' | 'r' {
