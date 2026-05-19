@@ -395,6 +395,8 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
           </AreaChart>
         </ResponsiveContainer>
       </GlassCard>
+        </>
+      )}
     </div>
   );
 };
