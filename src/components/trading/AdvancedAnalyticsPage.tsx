@@ -746,48 +746,6 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
         </div>
       )}
 
-      {showMax && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12, marginBottom: 12 }}>
-          <GlassCard T={T} glow={`${T.accent.cyan}22`}>
-            <div style={{ fontSize: 11, color: T.accent.cyan, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>★ MAX · {t('רביעון אסטרטגי (WR × R)','Strategic Quadrant (WR × R)')}</div>
-            <ResponsiveContainer width="100%" height={260}>
-              <ScatterChart>
-                <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
-                <XAxis type="number" dataKey="wr" name={t("ניצחונות","Wins")} unit="%" domain={[0, 100]} tick={{ fill: T.text.muted, fontSize: 10 }} />
-                <YAxis type="number" dataKey="avgR" name={t("תוחלת R","Expectancy R")} tick={{ fill: T.text.muted, fontSize: 10 }} />
-                <ZAxis type="number" dataKey="n" range={[60, 380]} />
-                <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} formatter={(v: number | string, _n: string, p: { payload?: { coin?: string } }) => [v, p.payload?.coin ?? '']} />
-                <Scatter data={quadrant}>
-                  {quadrant.map((d, i) => (
-                    <Cell key={i} fill={d.pnl >= 0 ? T.accent.green : T.accent.red} fillOpacity={0.75} />
-                  ))}
-                </Scatter>
-              </ScatterChart>
-            </ResponsiveContainer>
-          </GlassCard>
-          <GlassCard T={T} glow={`${T.accent.orange}22`}>
-            <div style={{ fontSize: 11, color: T.accent.orange, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>★ MAX · {t('סרט-חום 60 עסקאות אחרונות','Heat tape · last 60 trades')}</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(20, 1fr)', gap: 3, padding: 8 }}>
-              {heatTape.map((c, i) => {
-                const intensity = Math.min(1, Math.abs(c.r) / 3);
-                const bg = c.r >= 0
-                  ? `rgba(0,255,163,${0.15 + intensity * 0.7})`
-                  : `rgba(255,77,77,${0.15 + intensity * 0.7})`;
-                return (
-                  <div key={i} title={`R: ${c.r.toFixed(2)}`} style={{
-                    aspectRatio: '1', borderRadius: 4, background: bg,
-                    border: `1px solid ${T.border.subtle}`,
-                    boxShadow: `inset 0 0 4px ${bg}`,
-                  }} />
-                );
-              })}
-            </div>
-            <div style={{ fontSize: 10, color: T.text.muted, textAlign: 'center', marginTop: 8, fontFamily: "'JetBrains Mono', monospace" }}>
-              {t('ירוק = רווח · אדום = הפסד · עוצמה = |R|','Green = profit · Red = loss · Intensity = |R|')}
-            </div>
-          </GlassCard>
-        </div>
-      )}
 
       {/* Tier badge */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
