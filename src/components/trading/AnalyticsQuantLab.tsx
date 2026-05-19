@@ -109,15 +109,17 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
     return bins;
   }, [trades]);
 
-  /* ── 2. Avg Win vs Avg Loss ── */
+  /* ── 2. Avg Win vs Avg Loss (carries BOTH $ and R) ── */
   const avgWL = useMemo(() => {
     const w = trades.filter(t => t.winLoss === 'Win');
     const l = trades.filter(t => t.winLoss === 'Loss');
-    const aw = w.length ? w.reduce((s, t) => s + t.pnl, 0) / w.length : 0;
-    const al = l.length ? l.reduce((s, t) => s + t.pnl, 0) / l.length : 0;
+    const aw$ = w.length ? w.reduce((s, t) => s + t.pnl, 0) / w.length : 0;
+    const al$ = l.length ? l.reduce((s, t) => s + t.pnl, 0) / l.length : 0;
+    const awR = w.length ? w.reduce((s, t) => s + getEffectiveR(t), 0) / w.length : 0;
+    const alR = l.length ? l.reduce((s, t) => s + getEffectiveR(t), 0) / l.length : 0;
     return [
-      { name: 'ניצחון ממוצע', val: aw, color: T.accent.green },
-      { name: 'הפסד ממוצע', val: al, color: T.accent.red },
+      { name: 'ניצחון ממוצע', money: aw$, r: awR, color: T.accent.green },
+      { name: 'הפסד ממוצע', money: al$, r: alR, color: T.accent.red },
     ];
   }, [trades, T]);
 
