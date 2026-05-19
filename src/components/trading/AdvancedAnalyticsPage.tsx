@@ -418,7 +418,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
 
   return (
     <div dir={langRTL ? 'rtl' : 'ltr'} style={{ fontFamily: langRTL ? "'Heebo', 'Inter', sans-serif" : "'Inter', 'Heebo', sans-serif" }}>
-      <RProxyBanner T={T} isRTL={langRTL} />
+      {!isMoney && <RProxyBanner T={T} isRTL={langRTL} rEligibleCount={rEligibleCount} totalCount={totalCount} />}
       {/* HERO HEADER */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
