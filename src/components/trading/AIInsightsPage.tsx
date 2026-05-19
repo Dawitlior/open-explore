@@ -1,5 +1,6 @@
 import { getEffectiveR } from "@/lib/r-multiple";
 import { useVisibleTrades } from '@/lib/display-mode-format';
+import { RProxyBanner } from './RProxyBanner';
 /**
  * 🧠 AI INSIGHTS PAGE — "The Mainframe"
  * ────────────────────────────────────────────────────────────────
