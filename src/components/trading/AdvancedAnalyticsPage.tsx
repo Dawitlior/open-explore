@@ -437,9 +437,9 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
         </div>
       </motion.div>
 
-      {/* ═══ HERO KPI GRID — 8 tiles · adapts to displayMode ═══ */}
+      {/* ═══ HERO KPI GRID — 8 fiat-based tiles (R-only KPIs removed) ═══ */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, marginBottom: 16 }}>
-        {(isMoney ? [
+        {[
           { label: t('ניצחון ממוצע ($)','Avg Win ($)'), value: <PV>{fmtVal(moneyStats.avgWin)}</PV>, color: T.accent.green },
           { label: t('הפסד ממוצע ($)','Avg Loss ($)'), value: <PV>{fmtVal(-moneyStats.avgLoss)}</PV>, color: T.accent.red },
           { label: t('פקטור רווח','Profit Factor'), value: isFinite(moneyStats.profitFactor) ? `${moneyStats.profitFactor.toFixed(2)}x` : '∞', color: moneyStats.profitFactor >= 1.5 ? T.accent.green : moneyStats.profitFactor >= 1 ? T.accent.orange : T.accent.red },
@@ -448,18 +448,9 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
           { label: t('P&L מצטבר','Cumulative P&L'), value: <PV>{fmtVal(stats.totalPnl)}</PV>, color: stats.totalPnl >= 0 ? T.accent.green : T.accent.red },
           { label: t('נסיגה מקס ($)','Max Drawdown ($)'), value: <PV>{fmtVal(-moneyStats.maxDDMoney)}</PV>, color: T.accent.orange },
           { label: t('נסיגה מקס (%)','Max Drawdown (%)'), value: `${moneyStats.maxDDPct.toFixed(1)}%`, color: T.accent.orange },
-        ] : [
-          { label: t('תוחלת R','Expectancy R'), value: `${effectiveStats.expectancyR >= 0 ? '+' : ''}${effectiveStats.expectancyR.toFixed(3)}R`, color: effectiveStats.expectancyR >= 0 ? T.accent.cyan : T.accent.red },
-          { label: t('פקטור רווח','Profit Factor'), value: isFinite(stats.profitFactor) ? `${stats.profitFactor.toFixed(2)}x` : '∞', color: stats.profitFactor >= 1.5 ? T.accent.green : stats.profitFactor >= 1 ? T.accent.orange : T.accent.red },
-          { label: t('אחוז הצלחה','Win Rate'), value: `${stats.winRate.toFixed(1)}%`, color: stats.winRate >= 50 ? T.accent.green : T.accent.orange },
-          { label: t('יחס תשלום','Payoff Ratio'), value: payoff > 0 ? payoff.toFixed(2) : '—', color: T.accent.blue },
-          { label: t('P&L מצטבר','Cumulative P&L'), value: <PV>{`${stats.totalPnl >= 0 ? '+' : ''}$${stats.totalPnl.toFixed(2)}`}</PV>, color: stats.totalPnl >= 0 ? T.accent.green : T.accent.red },
-          { label: t('נסיגה מקס','Max Drawdown'), value: `${stats.maxDrawdown.toFixed(1)}%`, color: T.accent.orange },
-          { label: t('קלי אופטימלי','Optimal Kelly'), value: `${effectiveStats.kelly.toFixed(1)}%`, color: T.accent.purple },
-          { label: t('שארפ','Sharpe'), value: effectiveStats.volAdjExpectancy.toFixed(2), color: T.accent.cyan },
-        ]).map((k, i) => (
+        ].map((k, i) => (
           <motion.div
-            key={`${isMoney ? 'm' : 'r'}-${k.label}`}
+            key={k.label}
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: i * 0.04 }}
@@ -471,6 +462,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
           </motion.div>
         ))}
       </div>
+
 
 
       {/* ═══ EQUITY + DRAWDOWN OVERLAY ═══ */}
