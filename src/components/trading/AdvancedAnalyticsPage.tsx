@@ -277,15 +277,15 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
     ];
   }, [trades, T, t]);
 
-  // 9. Monthly heat tiles
+  // 9. Monthly heat tiles (carries both $ and R)
   const monthHeat = useMemo(() => {
-    const m: Record<string, { key: string; pnl: number; n: number }> = {};
-    trades.forEach(t => {
+    const m: Record<string, { key: string; pnl: number; r: number; n: number }> = {};
+    trades.forEach(tr => {
       try {
-        const d = new Date(t.date.replace(' ', 'T'));
+        const d = new Date(tr.date.replace(' ', 'T'));
         const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-        if (!m[k]) m[k] = { key: k, pnl: 0, n: 0 };
-        m[k].pnl += t.pnl; m[k].n++;
+        if (!m[k]) m[k] = { key: k, pnl: 0, r: 0, n: 0 };
+        m[k].pnl += tr.pnl; m[k].r += getEffectiveR(tr); m[k].n++;
       } catch { /* skip */ }
     });
     return Object.values(m).sort((a, b) => a.key.localeCompare(b.key));
