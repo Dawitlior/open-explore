@@ -208,7 +208,6 @@ export function ExchangesPanel({ T, isRTL }: Props) {
         {PROVIDERS.map(p => {
           const conns = byProvider.get(p.id) ?? [];
           const connected = conns.length > 0 && p.enabled;
-          const supportsSync = p.id === 'bybit';
           return (
             <ExchangeCard
               key={p.id}
@@ -220,12 +219,16 @@ export function ExchangesPanel({ T, isRTL }: Props) {
               isRTL={isRTL}
               onConnect={() => p.enabled && setOpenProvider(p.id)}
               onDisconnect={connected ? () => onDisconnect(conns[0].id) : undefined}
-              onSync={connected && supportsSync ? () => onSync(p.id, conns[0].label) : undefined}
+              onSync={connected ? () => onSync(p.id, conns[0].label) : undefined}
               syncing={syncingProvider === p.id}
             />
           );
         })}
       </div>
+
+      {/* ========== Accounts summary (Phase 3) ========== */}
+      <AccountsSummaryStrip T={T} isRTL={isRTL} />
+
 
       {/* ============ CSV Import Brokers ============ */}
       <div style={{
