@@ -76,7 +76,7 @@ describe('Oracle engine.nextNode', () => {
     ];
     const r = nextNode({ session: s, nodesByCode: ORACLE_NODES_BY_CODE, vector: {}, depthProbeForDimension });
     expect(r.reason).toBe('reapproach_skip');
-    expect(r.nextNodeCode).toBe('IMP_02_TRAP'); // trap pair of IMP_01
+    expect(r.nextNodeCode).toBe('PROBE_IMPULSIVITY_QUANT'); // skipped IMP_01 → re-probe its primary dim
   });
 
   it('respects hard cap', () => {
