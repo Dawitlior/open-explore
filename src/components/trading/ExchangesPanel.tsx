@@ -207,20 +207,29 @@ export function ExchangesPanel({ T, isRTL }: Props) {
         </p>
       </div>
 
-      {/* Grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-        gap: 14,
-      }}>
-        {PROVIDERS.map(p => {
+      {/* Bento Grid — Glass-Tech broker cards (Bloomberg/TradingView control-center aesthetic) */}
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={{
+          hidden: {},
+          visible: { transition: { staggerChildren: 0.06, delayChildren: 0.05 } },
+        }}
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+          gap: 16,
+        }}
+      >
+        {PROVIDERS.map((p, idx) => {
           const conns = byProvider.get(p.id) ?? [];
           const connected = conns.length > 0 && p.enabled;
           return (
-            <ExchangeCard
+            <GlassTechExchangeCard
               key={p.id}
               T={T}
               meta={p}
+              index={idx}
               connected={connected}
               loading={loading}
               connectionLabel={connected ? conns[0].label || t('מחובר', 'Connected') : null}
@@ -232,7 +241,7 @@ export function ExchangesPanel({ T, isRTL }: Props) {
             />
           );
         })}
-      </div>
+      </motion.div>
 
       {/* ========== Accounts summary (Phase 3) ========== */}
       <AccountsSummaryStrip T={T} isRTL={isRTL} />
