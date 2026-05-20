@@ -15,6 +15,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 import { LegalGate } from "@/components/LegalGate";
+import { EconomicAlertBanner } from "@/components/economic/EconomicAlertBanner";
 // Side-effect import: registers every BrokerAdapter into BrokerRegistry at boot.
 import "@/lib/brokers";
 
@@ -65,6 +66,7 @@ const App = () => (
             <OrcaUXLayer />
             <LiquidSweep />
             <LegalGate />
+            <EconomicAlertBanner />
             <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
