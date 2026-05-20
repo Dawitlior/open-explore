@@ -473,6 +473,7 @@ function BacktestApp({ onReturn }: { onReturn: () => void }) {
         {has&&<span style={{fontSize:10,color:rc(allStats.totR),fontWeight:700}}>{fm(allStats.totR)}R</span>}
       </div>
       <div style={{display:"flex",gap:4,alignItems:"center",flexWrap:"wrap"}}>
+        <button onClick={()=>setTab("chart")} style={{background:tab==="chart"?BL:"none",border:`1px solid ${tab==="chart"?BL:BRD}`,borderRadius:8,padding:"6px 12px",color:tab==="chart"?"#fff":BL2,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>📈 גרף</button>
         <SBtn onClick={imp}>ייבוא</SBtn><SBtn onClick={jsonX}>JSON</SBtn><SBtn onClick={csvX}>CSV</SBtn>
         <button onClick={()=>setLocked(true)} style={{background:"none",border:`1px solid ${BRD}`,borderRadius:8,padding:"6px 10px",color:T3,cursor:"pointer",fontSize:13}} onMouseEnter={(e:any)=>{e.currentTarget.style.color=BL;}} onMouseLeave={(e:any)=>{e.currentTarget.style.color=T3;}}>🔒</button>
       </div>
