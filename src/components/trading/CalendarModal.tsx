@@ -431,13 +431,27 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
             </div>
           )}
 
+          {/* Macro events */}
+          {dayMacros.length > 0 && (
+            <div style={{ padding: '0 16px 14px' }}>
+              <MacroSection />
+            </div>
+          )}
+
           {/* Trade list */}
           <div style={{ padding: '0 16px' }}>
             <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, fontWeight: 700 }}>
               {isRTL ? 'פירוט עסקאות' : 'Trade Details'}
             </div>
-            {dayTrades.map(tr => <TradeRow key={tr.id} tr={tr} />)}
+            {dayTrades.length === 0 ? (
+              <div style={{ padding: '20px', textAlign: 'center', color: T.text.muted, fontSize: 12 }}>
+                {isRTL ? 'אין עסקאות ביום זה' : 'No trades this day'}
+              </div>
+            ) : (
+              dayTrades.map(tr => <TradeRow key={tr.id} tr={tr} />)
+            )}
           </div>
+
 
           {/* AI */}
           <div style={{ padding: '8px 16px 32px' }}>
