@@ -326,22 +326,25 @@ const CalendarHubPage_Impl = ({ T, isRTL, trades, t, isMobile, onGenerateInsight
                 const riskColor = d ? getDayRiskColor(trades, d, calMonth, calYear) : 'neutral';
                 const isDarkRed = riskColor === 'darkred';
                 const isToday = isCurrentMonth && d === todayN;
+                const macros = d ? macroByDay.get(d) ?? [] : [];
+                const dayPast = !!d && new Date(calYear, calMonth, d) < new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const hasContent = !!dd || macros.length > 0;
                 return (
                   <div key={i}
                     onMouseEnter={() => d && setCalHoverDay(d)}
                     onMouseLeave={() => setCalHoverDay(null)}
-                    onClick={() => dd && d && setCalModalDay(d)}
+                    onClick={() => hasContent && d && setCalModalDay(d)}
                     style={{
-                      minHeight: isHovered && dd ? 160 : 130,
+                      minHeight: isHovered && hasContent ? 160 : 130,
                       borderRadius: T.radius.md,
                       border: `1px solid ${isToday ? T.accent.cyan : isDarkRed ? `${T.accent.red}60` : dd ? (dd.pnl > 0 ? `${T.accent.green}${Math.round(40 + intensity * 60).toString(16)}` : dd.pnl < 0 ? `${T.accent.red}${Math.round(40 + intensity * 60).toString(16)}` : `${T.accent.orange}30`) : T.border.subtle}`,
                       background: isDarkRed ? `${T.accent.red}25` : dd ? (dd.pnl > 0 ? `${T.accent.green}${Math.round(15 + intensity * 25).toString(16).padStart(2, '0')}` : dd.pnl < 0 ? `${T.accent.red}${Math.round(12 + intensity * 20).toString(16).padStart(2, '0')}` : `${T.accent.orange}12`) : 'transparent',
                       padding: '10px 12px',
                       transition: 'all 0.2s ease',
-                      cursor: dd ? 'pointer' : 'default',
+                      cursor: hasContent ? 'pointer' : 'default',
                       display: 'flex',
                       flexDirection: 'column',
-                      transform: isHovered && dd ? 'translateY(-2px)' : 'translateY(0)',
+                      transform: isHovered && hasContent ? 'translateY(-2px)' : 'translateY(0)',
                       boxShadow: isHovered && dd ? `0 8px 24px ${(dd.pnl >= 0 ? T.accent.green : T.accent.red)}20` : 'none',
                     }}>
                     {d && (
@@ -367,11 +370,16 @@ const CalendarHubPage_Impl = ({ T, isRTL, trades, t, isMobile, onGenerateInsight
                             )}
                           </>
                         )}
+                        {/* Macro economic events strip — bottom of cell */}
+                        <div style={{ marginTop: 'auto', paddingTop: dd ? 6 : 4 }}>
+                          <MacroEventStrip events={macros} isPast={dayPast} />
+                        </div>
                       </>
                     )}
                   </div>
                 );
               })}
+
             </div>
           </GlassCard>
         </div>
