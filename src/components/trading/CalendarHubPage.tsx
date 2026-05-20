@@ -60,7 +60,11 @@ const CalendarHubPage_Impl = ({ T, isRTL, trades, t, isMobile, onGenerateInsight
 
   const calDays = useMemo(() => getCalDays(calYear, calMonth), [calYear, calMonth]);
 
+  // Macro economic events overlay (T1+T2 only; one query per month)
+  const { byDay: macroByDay } = useMonthEconomicEvents({ year: calYear, month: calMonth, impacts: ['t1', 't2'] });
+
   const weekStats = useMemo(() => {
+
     const w: { week: number; pnl: number; trades: number; days: number }[] = [];
     let wp = 0, wt = 0, wd = 0, wn = 1;
     calDays.forEach((d, i) => {
