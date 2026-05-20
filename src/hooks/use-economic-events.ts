@@ -43,8 +43,9 @@ export function useEconomicEvents(opts: Options = {}) {
     }
     load();
 
+    const channelName = `economic_events_live_${Math.random().toString(36).slice(2, 10)}`;
     const channel = supabase
-      .channel('economic_events_live')
+      .channel(channelName)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'economic_events' },
