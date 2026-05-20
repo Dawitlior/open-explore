@@ -30,6 +30,14 @@ export interface BrokerMeta {
   /** Brand accent (HSL token name or hex). UI only. */
   accent: string;
   tagline: { he: string; en: string };
+  /** Optional CSS gradient used by API exchange cards. UI only. */
+  gradient?: string;
+  /** Short 2-character mark rendered on the CSV tile logo. UI only. */
+  glyph?: string;
+  /** Whether this adapter supports server-side API sync (vault credentials). */
+  supportsSync?: boolean;
+  /** Hide this adapter from the Exchanges panel. */
+  hidden?: boolean;
 }
 
 export type RawFill = Record<string, unknown>;
