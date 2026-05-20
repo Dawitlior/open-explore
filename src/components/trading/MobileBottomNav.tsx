@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { haptics } from '@/lib/haptics';
 
 export interface MobileBottomNavProps {
   T: any;

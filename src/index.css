@@ -995,3 +995,43 @@ html[data-theme="platinum"] .orca-chart-skeleton {
 @supports (height: 100dvh) {
   .orca-app-shell { height: 100dvh !important; }
 }
+
+/* ═══ MOBILE NATIVE-FEEL UTILITIES ═══ */
+@keyframes orca-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* iOS-style horizontal snap-carousel — apply on mobile only.
+   Children become 86% width, center-snap, with momentum scroll. */
+@media (max-width: 768px) {
+  .orca-snap-h {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 10px !important;
+    margin-inline: -10px;
+    padding: 2px 10px 10px;
+    overscroll-behavior-x: contain;
+  }
+  .orca-snap-h::-webkit-scrollbar { display: none; }
+  .orca-snap-h > * {
+    scroll-snap-align: center;
+    flex: 0 0 86% !important;
+    min-width: 0 !important;
+    width: 86% !important;
+  }
+  /* Tactile press feedback for any .orca-press surface */
+  .orca-press {
+    transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.12s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .orca-press:active {
+    transform: scale(0.96);
+    opacity: 0.88;
+  }
+}
