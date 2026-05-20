@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
 import { Plug, Shield, ShieldCheck, X, Trash2, Sparkles, Lock, ChevronDown, BookOpen, AlertTriangle, RefreshCw, FileSpreadsheet, UploadCloud, CheckCircle2, Loader2, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,6 +10,7 @@ import { ingestFileToTrades } from '@/lib/ingestion/file-import';
 import { BrokerRegistry } from '@/lib/brokers';
 import type { BrokerMeta } from '@/lib/brokers/types';
 import { useBrokerAccounts } from '@/hooks/use-broker-accounts';
+import { GlassTechExchangeCard } from './exchanges/GlassTechExchangeCard';
 
 type ProviderId = string;
 
