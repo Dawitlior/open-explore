@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-
 import { Plug, Shield, ShieldCheck, X, Trash2, Sparkles, Lock, ChevronDown, BookOpen, AlertTriangle, RefreshCw, FileSpreadsheet, UploadCloud, CheckCircle2, Loader2, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,7 +9,6 @@ import { ingestFileToTrades } from '@/lib/ingestion/file-import';
 import { BrokerRegistry } from '@/lib/brokers';
 import type { BrokerMeta } from '@/lib/brokers/types';
 import { useBrokerAccounts } from '@/hooks/use-broker-accounts';
-import { GlassTechExchangeCard } from './exchanges/GlassTechExchangeCard';
 
 type ProviderId = string;
 
@@ -140,12 +138,6 @@ export function ExchangesPanel({ T, isRTL }: Props) {
   const onSync = async (providerId: ProviderId, label: string | null) => {
     if (!user) return;
     setSyncingProvider(providerId);
-    // Optimistic UX — confirm the action lands before the network round-trip
-    const providerName = PROVIDERS.find(p => p.id === providerId)?.name ?? providerId;
-    const optimisticToastId = toast.loading(
-      t(`מתחיל סנכרון • ${providerName}`, `Initiating sync • ${providerName}`),
-      { description: t('מאחזר היסטוריית עסקאות מהבורסה…', 'Pulling trade history from the exchange…') }
-    );
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
@@ -165,18 +157,18 @@ export function ExchangesPanel({ T, isRTL }: Props) {
         toast.success(t(
           `סנכרון הושלם • ${payload.inserted ?? 0} חדשות, ${payload.skipped ?? 0} קיימות`,
           `Sync complete • ${payload.inserted ?? 0} new, ${payload.skipped ?? 0} existing`
-        ), { id: optimisticToastId });
+        ));
         // Notify any listeners (useTrades, journal) that data changed
         window.dispatchEvent(new CustomEvent('orca:trades-synced', { detail: payload }));
       } else if (res.status === 404 || payload.error === 'no_credential') {
-        toast.error(t('לא נמצא חיבור פעיל לבורסה.', 'No active exchange connection found.'), { id: optimisticToastId });
+        toast.error(t('לא נמצא חיבור פעיל לבורסה.', 'No active exchange connection found.'));
       } else if (res.status === 502 || res.status === 503 || payload.error === 'exchange_error') {
-        toast.error(t('הבורסה לא הגיבה. נסה שוב מאוחר יותר.', 'Exchange unavailable. Try again later.'), { id: optimisticToastId });
+        toast.error(t('הבורסה לא הגיבה. נסה שוב מאוחר יותר.', 'Exchange unavailable. Try again later.'));
       } else {
-        toast.error(t('סנכרון נכשל.', 'Sync failed.') + (payload.detail ? ` (${payload.detail})` : ''), { id: optimisticToastId });
+        toast.error(t('סנכרון נכשל.', 'Sync failed.') + (payload.detail ? ` (${payload.detail})` : ''));
       }
     } catch (e) {
-      toast.error(t('שגיאת רשת בסנכרון.', 'Network error during sync.'), { id: optimisticToastId });
+      toast.error(t('שגיאת רשת בסנכרון.', 'Network error during sync.'));
     } finally {
       setSyncingProvider(null);
     }
@@ -207,21 +199,20 @@ export function ExchangesPanel({ T, isRTL }: Props) {
         </p>
       </div>
 
-      {/* Minimalist broker grid — flat surfaces, sharp borders, no motion cascade */}
+      {/* Grid */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-        gap: 16,
+        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+        gap: 14,
       }}>
-        {PROVIDERS.map((p, idx) => {
+        {PROVIDERS.map(p => {
           const conns = byProvider.get(p.id) ?? [];
           const connected = conns.length > 0 && p.enabled;
           return (
-            <GlassTechExchangeCard
+            <ExchangeCard
               key={p.id}
               T={T}
               meta={p}
-              index={idx}
               connected={connected}
               loading={loading}
               connectionLabel={connected ? conns[0].label || t('מחובר', 'Connected') : null}

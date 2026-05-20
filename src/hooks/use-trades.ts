@@ -7,28 +7,18 @@ import { checkRiskLimits, type RiskLimitStatus } from '@/lib/risk-limits';
 import { useUserPreferences } from '@/hooks/use-user-preferences';
 import { setManualRMultiple } from '@/lib/manual-r';
 
-/**
- * Module-level trade cache — survives component unmounts so that switching
- * tabs/dimensions returns instantly with the previously-loaded data while a
- * background revalidation runs. Eliminates the layout flicker that the old
- * "loading → render" cycle caused on every mount.
- */
-let __tradesCache: Trade[] | null = null;
-
 export function useTrades() {
   const { prefs } = useUserPreferences();
-  const [trades, setTrades] = useState<Trade[]>(() => __tradesCache ?? []);
-  const [loading, setLoading] = useState(__tradesCache === null);
-  const [initialized, setInitialized] = useState(__tradesCache !== null);
+  const [trades, setTrades] = useState<Trade[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
   const [riskAlert, setRiskAlert] = useState<RiskLimitStatus | null>(null);
-  const tradesRef = useRef<Trade[]>(__tradesCache ?? []);
+  const tradesRef = useRef<Trade[]>([]);
   const mutationQueueRef = useRef<Promise<void>>(Promise.resolve());
 
   useEffect(() => {
     tradesRef.current = trades;
-    // Keep the module-level cache in sync so the next mount renders instantly.
-    if (initialized) __tradesCache = trades;
-  }, [trades, initialized, prefs.daily_risk_limit]);
+  }, [trades, prefs.daily_risk_limit]);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,7 +35,6 @@ export function useTrades() {
           return true;
         });
         const sorted = unique.sort((a, b) => a.id - b.id);
-        __tradesCache = sorted;
         tradesRef.current = sorted;
         setTrades(sorted);
         setLoading(false);
@@ -53,7 +42,7 @@ export function useTrades() {
       }).catch((err) => {
         if (cancelled) return;
         console.error('Failed to load trades:', err);
-        if (__tradesCache === null) setTrades([]);
+        setTrades([]);
         setLoading(false);
         setInitialized(true);
       });
@@ -234,7 +223,6 @@ export function useTrades() {
 
   const resetAll = useCallback(async () => {
     await clearAllData();
-    __tradesCache = [];
     tradesRef.current = [];
     setTrades([]);
   }, []);
