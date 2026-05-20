@@ -11,9 +11,9 @@
  */
 
 import "./bybit";
+import "./binance";
 import "./manual";
 import "./csv-brokers";
-// import "./binance";   // Phase 4
 // import "./ibkr";      // Phase 6 — fill-level adapter overrides the CSV factory entry
 
 export { BrokerRegistry } from "./registry";
