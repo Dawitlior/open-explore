@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Plug, Shield, ShieldCheck, X, Trash2, Sparkles, Lock, ChevronDown, BookOpen, AlertTriangle, RefreshCw, FileSpreadsheet, UploadCloud, CheckCircle2, Loader2 } from 'lucide-react';
+import { Plug, Shield, ShieldCheck, X, Trash2, Sparkles, Lock, ChevronDown, BookOpen, AlertTriangle, RefreshCw, FileSpreadsheet, UploadCloud, CheckCircle2, Loader2, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { useTrades } from '@/hooks/use-trades';
 import { ingestFileToTrades } from '@/lib/ingestion/file-import';
+import { BrokerRegistry } from '@/lib/brokers';
+import type { BrokerMeta } from '@/lib/brokers/types';
+import { useBrokerAccounts } from '@/hooks/use-broker-accounts';
 
-type ProviderId = 'bybit' | 'binance' | 'ibkr';
+type ProviderId = string;
 
 /* Cooldown formatter: "2.0s" / "32.0s" / "1m 02s" */
 function formatCooldown(ms: number): string {
@@ -18,6 +21,11 @@ function formatCooldown(ms: number): string {
   return `${m}m ${String(s).padStart(2, '0')}s`;
 }
 
+/* ============= Registry-derived adapter lists =============
+ * Phase 3: PROVIDERS and CSV_BROKERS come from BrokerRegistry instead of
+ * hardcoded constants. Adding a broker = registering an adapter; tiles
+ * appear automatically. */
+
 interface ProviderMeta {
   id: ProviderId;
   name: string;
@@ -27,44 +35,43 @@ interface ProviderMeta {
   enabled: boolean;
 }
 
-const PROVIDERS: ProviderMeta[] = [
-  {
-    id: 'bybit',
-    name: 'Bybit',
-    tagline: { he: 'נגזרים וספוט • API v5', en: 'Derivatives & Spot • API v5' },
-    gradient: 'linear-gradient(135deg, rgba(247,164,29,0.18), rgba(247,164,29,0.04))',
-    accent: '#f7a41d',
+function metaToProvider(m: BrokerMeta): ProviderMeta {
+  return {
+    id: m.id,
+    name: m.name,
+    tagline: m.tagline,
+    gradient: m.gradient ?? `linear-gradient(135deg, ${m.accent}2e, ${m.accent}0a)`,
+    accent: m.accent,
     enabled: true,
-  },
-  {
-    id: 'binance',
-    name: 'Binance',
-    tagline: { he: 'הבורסה הגדולה בעולם • Spot & Futures', en: 'World\u2019s largest exchange \u2022 Spot & Futures' },
-    gradient: 'linear-gradient(135deg, rgba(243,186,47,0.18), rgba(243,186,47,0.04))',
-    accent: '#f3ba2f',
-    enabled: true,
-  },
-];
+  };
+}
 
-/* ============= CSV Import Brokers (no API, journal import via file) ============= */
 interface CsvBrokerMeta {
   id: string;
   name: string;
   tagline: { he: string; en: string };
   accent: string;
-  glyph: string; // short text mark for the logo tile
+  glyph: string;
 }
-const CSV_BROKERS: CsvBrokerMeta[] = [
-  { id: 'ibkr',         name: 'Interactive Brokers', tagline: { he: 'מניות, אופציות וחוזים',  en: 'Stocks, Options & Futures' }, accent: '#dc2626', glyph: 'IB' },
-  { id: 'ninjatrader',  name: 'NinjaTrader',         tagline: { he: 'פלטפורמת חוזים עתידיים',   en: 'Futures trading platform'   }, accent: '#22c55e', glyph: 'NT' },
-  { id: 'tradovate',    name: 'Tradovate',           tagline: { he: 'חוזים עתידיים בענן',         en: 'Cloud-based futures'        }, accent: '#3b82f6', glyph: 'TV' },
-  { id: 'topstepx',     name: 'TopstepX',            tagline: { he: 'חשבונות פרופ של Topstep',    en: 'Topstep prop accounts'      }, accent: '#f97316', glyph: 'TX' },
-  { id: 'tradelocker',  name: 'TradeLocker',         tagline: { he: 'מולטי־אסט מודרני',           en: 'Modern multi-asset'         }, accent: '#a855f7', glyph: 'TL' },
-  { id: 'mt5',          name: 'MetaTrader 5',        tagline: { he: 'הסטנדרט החדש של פורקס',      en: 'Modern FX standard'         }, accent: '#0ea5e9', glyph: 'M5' },
-  { id: 'mt4',          name: 'MetaTrader 4',        tagline: { he: 'קלאסיקה של פורקס',           en: 'Classic FX terminal'        }, accent: '#06b6d4', glyph: 'M4' },
-  { id: 'sierra',       name: 'Sierra Chart',        tagline: { he: 'גרפים מקצועיים DOM',         en: 'Professional DOM charting'  }, accent: '#eab308', glyph: 'SC' },
-  { id: 'colmexpro',    name: 'ColmexPro',           tagline: { he: 'מניות אמריקאיות לטרייד יום', en: 'US equities day-trading'    }, accent: '#ef4444', glyph: 'CP' },
-];
+
+function metaToCsvBroker(m: BrokerMeta): CsvBrokerMeta {
+  return {
+    id: m.id,
+    name: m.name,
+    tagline: m.tagline,
+    accent: m.accent,
+    glyph: m.glyph ?? m.name.slice(0, 2).toUpperCase(),
+  };
+}
+
+const PROVIDERS: ProviderMeta[] = BrokerRegistry.apiCapable()
+  .filter(a => !a.meta.hidden && a.meta.supportsSync)
+  .map(a => metaToProvider(a.meta));
+
+const CSV_BROKERS: CsvBrokerMeta[] = BrokerRegistry.fileCapable()
+  .filter(a => !a.meta.hidden && a.meta.kind === 'file')
+  .map(a => metaToCsvBroker(a.meta));
+
 
 interface ConnectionRow {
   id: string;
