@@ -102,7 +102,7 @@ function useTick(intervalMs = 1000): number {
   return t;
 }
 
-function formatCountdown(ms: number, t: typeof COPY['en']): string {
+function formatCountdown(ms: number, t: (typeof COPY)[keyof typeof COPY]): string {
   if (ms <= 0) return t.live;
   const totalMin = Math.floor(ms / 60_000);
   const days = Math.floor(totalMin / 1440);
