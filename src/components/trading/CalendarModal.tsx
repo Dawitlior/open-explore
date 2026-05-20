@@ -5,6 +5,10 @@ import type { I18nStrings } from '@/lib/trading-i18n';
 import { TradingBadge } from './TradingUI';
 import { generateDayInsights, generateDaySummary } from '@/lib/ai-engine';
 import { getR, sumR, formatR } from '@/lib/r-multiple';
+import { useMonthEconomicEvents } from '@/hooks/use-month-economic-events';
+import { MACRO_TIER_COLOR, CURRENCY_FLAG } from '@/components/economic/MacroEventStrip';
+import { formatISTTime } from '@/lib/economic';
+
 
 interface CalendarModalProps {
   T: TradingTheme;
