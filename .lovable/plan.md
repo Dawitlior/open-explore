@@ -1,129 +1,344 @@
 
-# Money-Mode Bybit Live-Pipe — Premium Refactor
+# Orca OS — Broker-Agnostic Adapter Architecture
 
-Re-architects the Bybit live integration into a globally-mounted, Money-Mode-only data service with a premium glassmorphic UI, incremental sync, and zero R-residue.
-
----
-
-## 1. Data Sanitation Layer
-
-**New file:** `src/lib/bybit-sanitize.ts`
-
-- Export `sanitizeLiveBybitData(raw)` — strips `stopLoss`, `liqPrice`, `takeProfit`, any `r*` field; returns a strict `LiveMoneyPosition`:
-  ```ts
-  { symbol, side, size, entryPrice, markPrice, unrealizedPnl, leverage, positionIdx, updatedAt }
-  ```
-- Export type `LiveMoneyPosition`. No SL field on the type — compile-time guarantee that R cannot leak.
-- Export `sanitizeClosedPnlRow(raw)` for REST `/v5/position/closed-pnl` rows used by incremental sync.
+A professional, scalable refactor that turns every data source (Bybit, Binance, IBKR, MT5, NinjaTrader, …) into a swappable module behind one unified pipeline. Adding a new broker becomes "drop a file in `src/lib/brokers/`" — no edits to storage, no edits to the dispatcher.
 
 ---
 
-## 2. Global WebSocket Provider
+## 1. The BrokerAdapter Interface
 
-**New file:** `src/providers/BybitLiveProvider.tsx`
+A single TypeScript contract every broker must implement — works identically for REST/WebSocket exchanges and CSV/XLSX file imports. The discriminator (`kind`) tells the dispatcher which entry points the adapter supports; everything else is symmetric.
 
-- React Context provider mounted **once** in `src/App.tsx` (inside `RequireAuth`) so the WS runs for every authenticated user regardless of mode.
-- Internally re-uses the connection lifecycle currently in `use-live-positions.ts`:
-  - Bybit V5 private WS, HMAC-SHA256 auth, `position` topic.
-  - Heartbeat ping (20 s), exp backoff (cap 30 s), max-attempts kill-switch on `auth_failed` (new — prevents the infinite retry the audit flagged).
-  - Frame staleness watchdog (60 s) → exposes `isStale` flag.
-- **New subscription:** also subscribes to the `execution` topic. When `execType === 'Trade'` and `closedSize > 0` for the full position, fires the incremental-sync trigger (see §3). Pure side-channel — never touches position state.
-- All inbound `position` frames pass through `sanitizeLiveBybitData` **before** entering React state. `live_risk_locks` upsert (SL snapshot) stays inside the provider but is invisible to consumers.
-- Context value:
-  ```ts
-  { positions: LiveMoneyPosition[], status, lastError, lastFrameAt, isStale, hasCreds }
-  ```
-- **New hook:** `useBybitLive()` — thin selector around the context. Replaces `useLivePositions` call sites.
-- **Delete:** `src/hooks/use-live-positions.ts` (logic absorbed into provider).
+```text
+src/lib/brokers/types.ts
+```
+
+```ts
+export type BrokerKind = 'api' | 'file' | 'hybrid';
+export type SourceType = 'api_sync' | 'csv_import' | 'manual';
+
+export interface BrokerMeta {
+  id: string;              // 'bybit' | 'binance' | 'ibkr' | 'mt5' | …
+  name: string;            // 'Bybit'
+  kind: BrokerKind;
+  assetClasses: ('crypto'|'fx'|'equities'|'futures'|'options')[];
+  accent: string;          // brand color (UI)
+  tagline: { he: string; en: string };
+}
+
+export interface RawFill {
+  // Whatever the broker hands us — kept as `unknown` per-adapter shape.
+  // Adapters cast internally; the dispatcher never inspects this.
+  [k: string]: unknown;
+}
+
+export interface NormalizedTrade {
+  // Pure broker-agnostic shape — the canonical Orca Trade plus provenance.
+  // Persisted 1:1 into public.trades (see §3 schema).
+  external_id: string;        // exchange_exec_id / row hash for CSV
+  broker_id: string;
+  account_label: string | null;
+  source_type: SourceType;
+  asset_class: 'crypto'|'fx'|'equities'|'futures'|'options'|'other';
+  symbol: string;
+  direction: 'Long' | 'Short';
+  entry: number;
+  exit: number;
+  stop_loss: number | null;   // null = R-Multiples not computable
+  size: number;
+  leverage: number;
+  pnl: number;                // net of fees
+  fees: number;
+  opened_at: string;          // ISO
+  closed_at: string;          // ISO
+  raw: RawFill;               // verbatim payload for forensic replay
+}
+
+export interface DetectResult {
+  matches: boolean;
+  confidence: 0 | 1 | 2 | 3; // 0=no, 3=signature columns present
+  reason?: string;
+}
+
+// CSV/file path
+export interface FileAdapterInput {
+  file: File;
+  parsedRows?: unknown[];     // pre-parsed by XLSX engine (optional shortcut)
+  headers?: string[];
+}
+
+// API path
+export interface ApiAdapterInput {
+  apiKey: string;
+  apiSecret: string;
+  mode: 'bulk' | 'incremental';
+  since?: number;             // epoch ms
+  symbol?: string;            // incremental only
+}
+
+export interface OpenPosition {
+  broker_id: string;
+  account_label: string | null;
+  symbol: string;
+  side: 'Long' | 'Short';
+  size: number;
+  entry_price: number;
+  unrealized_pnl: number;
+  captured_at: string;
+}
+
+export interface BrokerAdapter {
+  readonly meta: BrokerMeta;
+
+  // 1. Identify whether THIS adapter can handle a given file/payload.
+  //    For API adapters, called with brokerId hint only.
+  detectFormat(input: FileAdapterInput | { brokerHint: string }): Promise<DetectResult>;
+
+  // 2. Pull or read raw fills, then map each one into the canonical shape.
+  //    File adapters parse the file. API adapters do signed HTTP + paginate.
+  //    Returns an iterable so huge datasets stream instead of buffering.
+  normalizeTrades(
+    input: FileAdapterInput | ApiAdapterInput,
+  ): AsyncIterable<NormalizedTrade>;
+
+  // 3. Optional — fold execution-level fills into closed positions when
+  //    the source only exports fills (IBKR, MT5). API adapters that already
+  //    return aggregated trades (Bybit closed-pnl) can return the input as-is.
+  aggregatePositions(fills: NormalizedTrade[]): NormalizedTrade[];
+
+  // 4. Optional — for live exchanges, mirror open positions.
+  fetchOpenPositions?(input: ApiAdapterInput): Promise<OpenPosition[]>;
+}
+```
+
+**Key design choices**
+- `normalizeTrades` returns an **AsyncIterable** so the dispatcher can stream-upsert in batches — important for IBKR Flex Reports that can hold 10k+ fills.
+- `raw` is kept on every NormalizedTrade for forensic replay & re-normalization without a re-sync.
+- `external_id` replaces today's scattered `exchange_exec_id` + comment-tag hacks. For CSVs, the adapter computes a deterministic hash (`broker|account|symbol|opened_at|size|pnl`) so re-imports are idempotent.
 
 ---
 
-## 3. Incremental Sync ("Invisible Pipeline")
+## 2. The Broker Registry
 
-**Edge function:** `supabase/functions/sync-futures-trades/index.ts`
+Centralized auto-registration. Adding a broker = create one file, export the adapter, done.
 
-- Add a new mode: `{ mode: 'incremental', symbol, since }` (defaults retain current bulk behaviour for back-compat with the manual button).
-- Incremental path:
-  1. Fetch `/v5/position/closed-pnl?symbol=X&startTime=since` (single window, ≤ 5 rows expected).
-  2. For each row, `upsert` into `trades` keyed by `exchange_exec_id` (column already exists) — **never wipes**.
-  3. Returns `{ added: n, rows: [...] }`.
-- Existing manual "Sync 180d" path stays but is no longer the primary feed.
+```text
+src/lib/brokers/
+  ├─ types.ts
+  ├─ registry.ts          ← single source of truth
+  ├─ bybit.ts             ← existing logic, refactored behind the interface
+  ├─ binance.ts
+  ├─ ibkr.ts
+  ├─ mt5.ts
+  ├─ ninjatrader.ts
+  └─ … one file per broker
+```
 
-**New client helper:** `src/lib/incremental-sync.ts`
+```ts
+// registry.ts
+import type { BrokerAdapter } from './types';
+import { bybitAdapter } from './bybit';
+import { binanceAdapter } from './binance';
+import { ibkrAdapter } from './ibkr';
+// …
 
-- `triggerIncrementalSync(symbol, sinceMs)` — `supabase.functions.invoke('sync-futures-trades', { body: { mode:'incremental', symbol, since } })`.
-- On success: dispatch `orca:trades-synced` (existing listener in `use-trades.ts` auto-refreshes) **and** show premium toast (see §4).
-- Debounced per symbol (3 s) to coalesce partial-fill bursts.
+const ADAPTERS: BrokerAdapter[] = [bybitAdapter, binanceAdapter, ibkrAdapter /*…*/];
 
-**Wired in `BybitLiveProvider`:** on `execution` close event → `triggerIncrementalSync(symbol, executionFrame.execTime - 5000)`.
+export const BrokerRegistry = {
+  all: () => ADAPTERS,
+  byId: (id: string) => ADAPTERS.find(a => a.meta.id === id) ?? null,
+  apiCapable: () => ADAPTERS.filter(a => a.meta.kind !== 'file'),
+  fileCapable: () => ADAPTERS.filter(a => a.meta.kind !== 'api'),
 
----
+  // Auto-detect best file adapter for an unknown CSV/XLSX upload.
+  async detectFile(input: FileAdapterInput): Promise<BrokerAdapter | null> {
+    const scored = await Promise.all(
+      BrokerRegistry.fileCapable().map(async a => ({
+        a, r: await a.detectFormat(input),
+      })),
+    );
+    const best = scored
+      .filter(s => s.r.matches)
+      .sort((x, y) => y.r.confidence - x.r.confidence)[0];
+    return best?.a ?? null;
+  },
+};
+```
 
-## 4. Premium Glassmorphic UI
+**Same registry runs in both worlds**: the React client imports it for file uploads, and the edge function imports a Deno-compatible mirror (`supabase/functions/_shared/brokers/`) for API syncs. Adapter logic stays pure (no DOM, no Deno-only APIs) so the file is literally shared via a thin re-export.
 
-**New components** (folder `src/components/live/`):
-
-- `LiveDeckBento.tsx` — top-level Bento grid (uses `OrcaBento` + `OrcaCard`). Replaces the chart-heavy guts of `AlphaLiveConsole`. Layout:
-
-  ```text
-  ┌────────────────────┬──────────────┐
-  │ ConnectionPulse    │ TotalPnLCard │   row 1 (status + aggregate)
-  ├────────────────────┴──────────────┤
-  │ PositionsGrid (LivePositionCard×N)│   row 2 (dense bento of positions)
-  └───────────────────────────────────┘
-  ```
-
-- `ConnectionPulse.tsx` — glass card showing WS status with an animated cyan pulse dot; degrades to amber when `isStale`, ruby on `error`. Uses `OrcaMetric` for "Last frame" / "Symbols tracked".
-
-- `LivePositionCard.tsx` — single position tile, `OrcaCard span={4}`:
-  - Header: symbol + side chip (emerald/ruby).
-  - Body: `OrcaMetric` rows for Mark, Entry, Size, Leverage, Unrealized PnL.
-  - **Flash animation on PnL change:** `useFlashOnChange(pnl)` hook diffs prev vs next; applies a `framer-motion` background flash (`bg-emerald-500/15` up, `bg-ruby-500/15` down) over 600 ms. No layout shift.
-  - Tabular-nums mono throughout (already in `OrcaMetric`).
-  - Strictly Money-Mode — no SL row, no R column, no risk badge.
-
-- `useFlashOnChange.ts` — tiny hook returning a key that bumps when value changes; consumed by `AnimatePresence` overlay inside the card.
-
-**New file:** `src/components/live/PremiumSyncToast.tsx`
-
-- Custom sonner `toast.custom()` renderer. Glass panel + grain, cyan accent bar, "Trade Synced → Journal" title, symbol + PnL line, auto-dismiss 4 s. Triggered by `triggerIncrementalSync` success.
-
----
-
-## 5. Refactor Call Sites
-
-- **`src/App.tsx`** — wrap routes in `<BybitLiveProvider>` inside `RequireAuth`.
-- **`src/pages/Index.tsx`** — replace `<AlphaLiveConsole T isRTL enabled={isAlpha} />` with `<LiveDeckBento T isRTL />`. Render unconditionally (no `enabled={isAlpha}` gate) so all users see the live deck when creds are configured. `ConnectionPulse` handles the `no_creds` empty state gracefully (CTA → `/settings#exchanges`).
-- **`src/components/trading/AlphaLiveConsole.tsx`** — delete (or shrink to a thin re-export of `LiveDeckBento` to avoid breaking any stale import).
-- **`src/components/trading/ExchangesPanel.tsx`** — manual "Sync 180d" button keeps working (passes `mode:'bulk'` explicitly).
+The UI's `PROVIDERS` and `CSV_BROKERS` arrays in `ExchangesPanel.tsx` are deleted — replaced by `BrokerRegistry.all().filter(a => a.meta.kind === …)`.
 
 ---
 
-## 6. Constraints Honoured
+## 3. Schema Refactor — Killing Source Leakage
 
-- ✅ `Trade` table schema untouched (upsert uses existing `exchange_exec_id`).
-- ✅ Zero R-Multiple math on live data — sanitizer strips SL at the boundary, type system prevents reintroduction.
-- ✅ All UI uses `OrcaCard` / `OrcaBento` / `OrcaMetric` design tokens — no raw shadcn cards, no browser `alert()`.
-- ✅ Premium toast via sonner `toast.custom` (already wired globally).
+Today provenance lives in three messy places:
+- `data.exchange_provider` (jsonb, Bybit only)
+- `data.exchange_exec_id` (jsonb, promoted to a generated column)
+- `comments` text prefix `"Broker:ibkr"` (CSV path)
+
+Move it to **first-class columns**.
+
+### Target `public.trades` shape
+
+```sql
+ALTER TABLE public.trades
+  ADD COLUMN broker_id      text,
+  ADD COLUMN account_label  text,
+  ADD COLUMN source_type    text CHECK (source_type IN ('api_sync','csv_import','manual')),
+  ADD COLUMN asset_class    text,
+  ADD COLUMN external_id    text,
+  ADD COLUMN opened_at      timestamptz,
+  ADD COLUMN closed_at      timestamptz;
+
+-- Indexes for the queries we'll actually run
+CREATE INDEX trades_user_broker_idx       ON public.trades(user_id, broker_id);
+CREATE INDEX trades_user_closedat_idx     ON public.trades(user_id, closed_at DESC);
+CREATE UNIQUE INDEX trades_user_external_uidx
+  ON public.trades(user_id, broker_id, account_label, external_id)
+  WHERE external_id IS NOT NULL;
+```
+
+`data` jsonb **stays** — it remains the canonical shape for client analytics. The new columns are a queryable projection.
+
+### Safe data migration (zero data loss)
+
+Run in **three reversible steps**, each in its own migration:
+
+1. **Additive**: add the columns nullable, no constraints. Deploy.
+2. **Backfill** with a single `UPDATE` derived from existing `data` jsonb + `comments`:
+   ```sql
+   UPDATE public.trades SET
+     broker_id    = COALESCE(data->>'exchange_provider',
+                             substring(data->>'comments' from 'Broker:([a-z0-9_]+)'),
+                             'manual'),
+     source_type  = CASE
+                      WHEN data->>'exchange_provider' IS NOT NULL THEN 'api_sync'
+                      WHEN data->>'comments' LIKE 'Broker:%'      THEN 'csv_import'
+                      ELSE 'manual'
+                    END,
+     external_id  = data->>'exchange_exec_id',
+     opened_at    = NULLIF(data->>'date','')::timestamptz,
+     closed_at    = NULLIF(data->>'date','')::timestamptz,
+     account_label = NULL,
+     asset_class   = NULL
+   WHERE broker_id IS NULL;
+   ```
+3. **Enforce** (after a release of dual-write): `ALTER COLUMN broker_id SET NOT NULL`, `ALTER COLUMN source_type SET NOT NULL`, drop the old generated `exchange_exec_id` column once nothing references it.
+
+The wipe-by-provider logic in the Bybit edge fn changes from `filter('data->>exchange_provider', 'eq', 'bybit')` to `eq('broker_id','bybit').eq('account_label', label)` — and now correctly supports **multiple Bybit accounts per user**.
+
+`open_positions` gets the same `account_label` treatment.
 
 ---
 
-## Technical Notes
+## 4. Pipeline Flow — The Dispatcher
 
-- WS auth backoff: track `consecutiveAuthFailures`; after 2, stop reconnect and surface `lastError = 'auth_invalid'` so `ConnectionPulse` can CTA the user to rotate keys.
-- Provider cleanup wipes the in-memory `apiSecret` (preserved from current implementation).
-- `live_risk_locks` writes remain server-side state for future R-recovery — UI never reads them in Money-Mode.
-- `useFlashOnChange` keyed by `${symbol}:${pnl.toFixed(2)}` to avoid sub-cent jitter triggering animations.
+No code path writes directly to `trades` anymore. Everything funnels through one Dispatcher → one StorageManager.
+
+```text
+                       ┌──────────────────────────────┐
+  File drop ──────────▶│         Dispatcher           │
+  API sync click ─────▶│  (src/lib/ingestion/         │
+  Manual entry ───────▶│   dispatch.ts)               │
+                       └─────────┬────────────────────┘
+                                 │
+                  ┌──────────────┼──────────────┐
+                  ▼              ▼              ▼
+            BrokerRegistry  Adapter.detect  Adapter.normalize
+                                                │
+                                                ▼  AsyncIterable<NormalizedTrade>
+                                       ┌──────────────────┐
+                                       │  StorageManager  │
+                                       │  (single writer) │
+                                       └─────────┬────────┘
+                                                 ▼
+                                          public.trades
+                                          public.open_positions
+```
+
+### Dispatcher contract
+
+```ts
+// src/lib/ingestion/dispatch.ts
+export async function ingest(source:
+  | { kind: 'file'; file: File; brokerIdHint?: string; accountLabel?: string }
+  | { kind: 'api'; brokerId: string; accountLabel: string; mode: 'bulk'|'incremental'; since?: number; symbol?: string }
+): Promise<IngestReport> {
+
+  const adapter = source.kind === 'file'
+    ? (source.brokerIdHint ? BrokerRegistry.byId(source.brokerIdHint)
+                            : await BrokerRegistry.detectFile({ file: source.file }))
+    : BrokerRegistry.byId(source.brokerId);
+
+  if (!adapter) return { ok: false, reason: 'no_adapter_matched' };
+
+  const stream = adapter.normalizeTrades(/* mapped input */);
+  return StorageManager.persist(stream, {
+    broker_id: adapter.meta.id,
+    account_label: source.accountLabel ?? null,
+    source_type: source.kind === 'file' ? 'csv_import' : 'api_sync',
+  });
+}
+```
+
+### StorageManager
+
+One module owns **every** Supabase write to `trades`. It enforces:
+- Batch upserts of 500 rows
+- ON CONFLICT on `(user_id, broker_id, account_label, external_id)` — idempotent forever
+- Optional pre-write hook (`onBeforePersist`) for sanitization (the old `sanitizeTrade`)
+- Emits `orca:trades-synced` once, after the stream drains
+- Returns a structured `IngestReport { inserted, updated, skipped, errors[] }`
+
+The Bybit edge function shrinks to ~40 lines: auth → vault read → `await ingest({ kind:'api', brokerId:'bybit', … })`. All HTTP, HMAC, pagination, and field mapping live in `brokers/bybit.ts`.
 
 ---
 
-## Files Touched
+## 5. Execution Roadmap
 
-**New (8):**
-`src/lib/bybit-sanitize.ts`, `src/lib/incremental-sync.ts`, `src/providers/BybitLiveProvider.tsx`, `src/components/live/LiveDeckBento.tsx`, `src/components/live/ConnectionPulse.tsx`, `src/components/live/LivePositionCard.tsx`, `src/components/live/useFlashOnChange.ts`, `src/components/live/PremiumSyncToast.tsx`
+Phased, each phase shippable and reversible. Bybit keeps working the entire time.
 
-**Edited (3):** `src/App.tsx`, `src/pages/Index.tsx`, `supabase/functions/sync-futures-trades/index.ts`
+### Phase 0 — Foundation (no behavior change)
+- Create `src/lib/brokers/{types.ts, registry.ts}` and `src/lib/ingestion/{dispatch.ts, storage-manager.ts}` as empty/stub files.
+- Create `supabase/functions/_shared/brokers/` mirror dir.
+- Add migration **Step 1** (additive columns only).
 
-**Deleted (1):** `src/hooks/use-live-positions.ts` (logic moved into provider)
+### Phase 1 — Extract Bybit into the new shape
+- Port `bybitToTrade` + the closed-pnl fetcher into `brokers/bybit.ts` implementing `BrokerAdapter`.
+- Wire `sync-futures-trades` to call the Dispatcher → StorageManager.
+- StorageManager dual-writes: new columns **and** keeps writing `data` jsonb identically. No client change required.
+- Run migration **Step 2** (backfill) — existing Bybit rows now have populated `broker_id` etc.
 
-**Shrunk (1):** `src/components/trading/AlphaLiveConsole.tsx` → re-export shim
+### Phase 2 — Migrate CSV/XLSX paths
+- Port `importFromBrokerCsv` into per-broker adapters under `brokers/` (start with a generic `genericCsvAdapter` that wraps today's `HEADER_MAP`, then peel off IBKR / NinjaTrader / MT5 one at a time with real signature detection).
+- `ExchangesPanel` file upload calls `ingest({ kind:'file', … })` instead of `importFromBrokerCsv` directly.
+- Manual journal trades also flow through the Dispatcher with a `manualAdapter` (source_type='manual').
+
+### Phase 3 — Multi-account & registry-driven UI
+- Replace the hard-coded `PROVIDERS` / `CSV_BROKERS` arrays in `ExchangesPanel.tsx` with `BrokerRegistry.all()`.
+- Surface `account_label` on credential rows; allow multiple Bybit accounts. Wipe logic in `bybitAdapter` keys on `(broker_id, account_label)`.
+
+### Phase 4 — Add second API broker (Binance) end-to-end
+- Sole task: `brokers/binance.ts`. No edge-function changes, no schema changes, no UI changes. This is the validation that the architecture works.
+
+### Phase 5 — Enforce & cleanup
+- Migration **Step 3**: `NOT NULL` constraints on `broker_id` / `source_type`, drop the old generated `exchange_exec_id` column, drop comment-prefix parsing.
+- Delete the legacy `importFromBrokerCsv` and the `provider !== 'bybit'` guard.
+- Add `tests/brokers/<broker>.spec.ts` with golden-file fixtures for every adapter.
+
+### Phase 6 — IBKR & fill-aggregation
+- `brokers/ibkr.ts` implements `aggregatePositions()` for the first time — folds fill-level rows into closed positions before yielding NormalizedTrades.
+- Same pattern unlocks MT5, NinjaTrader, Sierra without further core changes.
+
+---
+
+## Outcome
+
+After Phase 5, the answer to *"How do I add Kraken?"* is exactly one PR:
+1. Create `src/lib/brokers/kraken.ts` (≈150 LOC) implementing `BrokerAdapter`.
+2. Add it to the `ADAPTERS` array in `registry.ts`.
+3. Ship.
+
+No storage code touched. No dispatcher touched. No schema migration. No UI hardcoding. Every broker — API or CSV, crypto or equities — is a first-class citizen behind the same interface.
