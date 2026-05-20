@@ -252,6 +252,184 @@ function bybitToTrade(e: BybitClosedPnl, provider: string): BybitNormalized {
   };
 }
 
+// ============== Binance USDT-M Futures (income-based) ==============
+// Binance has no "closed-pnl" endpoint. We use /fapi/v1/income filtered by
+// incomeType=REALIZED_PNL — each row is one fully-realised PnL event with
+// symbol + signed income amount + tranId. Entry/exit prices are not exposed
+// here (enrichment via /fapi/v1/userTrades is a Phase 4.5 follow-up); we
+// persist pnl-only rows so the journal stays in sync with the exchange.
+
+interface BinanceIncome {
+  symbol: string;
+  incomeType: string;
+  income: string;      // signed, USDT
+  asset: string;
+  time: number;        // ms
+  info?: string;
+  tranId: string | number;
+  tradeId?: string;
+}
+
+interface BinanceFetchResult {
+  ok: true;
+  list: BinanceIncome[];
+}
+
+async function binanceSignedGet(
+  apiKey: string,
+  apiSecret: string,
+  path: string,
+  params: URLSearchParams,
+): Promise<{ ok: true; body: unknown } | BybitFetchError> {
+  params.set('timestamp', Date.now().toString());
+  params.set('recvWindow', '5000');
+  const query = params.toString();
+  const sig = await hmacSha256Hex(apiSecret, query);
+  let res: Response;
+  try {
+    res = await fetch(`https://fapi.binance.com${path}?${query}&signature=${sig}`, {
+      method: 'GET',
+      headers: { 'X-MBX-APIKEY': apiKey },
+    });
+  } catch (e) {
+    return { ok: false, status: 503, error: 'exchange_unreachable', detail: (e as Error).message || 'fetch_failed' };
+  }
+  const text = await res.text();
+  if (res.status === 401 || res.status === 403) {
+    return { ok: false, status: 401, error: 'binance_rejected', detail: text.slice(0, 240) };
+  }
+  if (res.status >= 500) {
+    return { ok: false, status: 503, error: 'exchange_unreachable', detail: `binance_http_${res.status}` };
+  }
+  if (res.status >= 400) {
+    return { ok: false, status: 422, error: 'binance_rejected', detail: text.slice(0, 240) };
+  }
+  let body: unknown;
+  try { body = JSON.parse(text); } catch { body = []; }
+  return { ok: true, body };
+}
+
+async function fetchBinanceRealizedPnl(
+  apiKey: string,
+  apiSecret: string,
+): Promise<BinanceFetchResult | BybitFetchError> {
+  const DAY_MS = 86_400_000;
+  const WINDOW_MS = 7 * DAY_MS;
+  const endTime = Date.now();
+  const startTime = endTime - 180 * DAY_MS;
+  const all: BinanceIncome[] = [];
+  const MAX_PAGES = 400;
+
+  for (let wEnd = endTime; wEnd > startTime; wEnd -= WINDOW_MS) {
+    const wStart = Math.max(startTime, wEnd - WINDOW_MS);
+    let cursorTime = wStart;
+    let pages = 0;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const params = new URLSearchParams({
+        incomeType: 'REALIZED_PNL',
+        startTime: String(cursorTime),
+        endTime: String(wEnd),
+        limit: '1000',
+      });
+      const r = await binanceSignedGet(apiKey, apiSecret, '/fapi/v1/income', params);
+      if (!r.ok) return r;
+      const list = Array.isArray(r.body) ? (r.body as BinanceIncome[]) : [];
+      if (list.length === 0) break;
+      all.push(...list);
+      pages++;
+      if (list.length < 1000 || pages > MAX_PAGES) break;
+      // Advance past the last event to avoid re-fetching the same page.
+      const lastTime = list[list.length - 1].time;
+      if (lastTime <= cursorTime) break;
+      cursorTime = lastTime + 1;
+    }
+  }
+  return { ok: true, list: all };
+}
+
+function binanceToTrade(e: BinanceIncome, provider: string): BybitNormalized {
+  const pnl = Number(e.income) || 0;
+  const closeMs = Number(e.time) || Date.now();
+  const d = new Date(closeMs);
+  const iso = d.toISOString().slice(0, 19).replace('T', ' ');
+  const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
+  const direction: 'Long' | 'Short' = pnl >= 0 ? 'Long' : 'Short'; // unknown — placeholder
+  const winLoss: 'Win' | 'Loss' | 'Break Even' =
+    pnl > 0 ? 'Win' : pnl < 0 ? 'Loss' : 'Break Even';
+  const externalId = `binance:${e.symbol}:${e.tranId}`;
+  return {
+    legacy: {
+      date: iso,
+      day: dayName,
+      coin: e.symbol,
+      direction,
+      orderType: 'Market',
+      entry: 0,
+      stopLoss: 0,
+      exit: 0,
+      returnR: 0,
+      winLoss,
+      risk: 0,
+      expectedLoss: 0,
+      pnl,
+      deviation: 0,
+      positionSize: 0,
+      leverage: 1,
+      riskPct: 0,
+      rules: true,
+      comments: `__CLOSED:${externalId}__ ${provider} income`,
+      exchange_provider: provider,
+      exchange_exec_id: externalId,
+    },
+    provenance: {
+      broker_id: provider,
+      source_type: 'api_sync',
+      asset_class: 'crypto',
+      external_id: externalId,
+      opened_at: new Date(closeMs).toISOString(),
+      closed_at: new Date(closeMs).toISOString(),
+    },
+  };
+}
+
+// Provider dispatch table — used by the handler's bulk path.
+type ProviderId = 'bybit' | 'binance';
+async function fetchProviderClosedTrades(
+  provider: ProviderId,
+  apiKey: string,
+  apiSecret: string,
+): Promise<
+  | { ok: true; list: Array<{ legacy: BybitNormalized['legacy']; provenance: BybitNormalized['provenance']; key: string }> }
+  | BybitFetchError
+> {
+  if (provider === 'bybit') {
+    const r = await fetchBybitClosedPnl(apiKey, apiSecret);
+    if (!r.ok) return r;
+    return {
+      ok: true,
+      list: r.list
+        .filter(e => !!e?.orderId)
+        .map(e => {
+          const n = bybitToTrade(e, provider);
+          return { ...n, key: e.orderId };
+        }),
+    };
+  }
+  if (provider === 'binance') {
+    const r = await fetchBinanceRealizedPnl(apiKey, apiSecret);
+    if (!r.ok) return r;
+    return {
+      ok: true,
+      list: r.list.map(e => {
+        const n = binanceToTrade(e, provider);
+        return { ...n, key: n.provenance.external_id };
+      }),
+    };
+  }
+  return { ok: false, status: 400, error: 'unsupported_provider', detail: provider };
+}
+
 // ---------- Handler ----------
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
