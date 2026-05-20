@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { AreaChart, Area, BarChart, Bar, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from "recharts";
+import BacktestChartPanel from "./backtest/BacktestChartPanel";
+import CommitBacktestModal from "./backtest/CommitBacktestModal";
+import type { DraftBacktestTrade } from "./backtest/tv-mapping";
 
 // ─── Engine (compact) ───
 const calcR=(e:number,sl:number,ex:number)=>(!e||!sl||ex==null||e===sl)?null:(ex-e)/(e-sl);
@@ -395,6 +398,12 @@ function BacktestApp({ onReturn }: { onReturn: () => void }) {
 
   useEffect(()=>{css();loadS().then((t:any)=>{setTrades(t);setLoading(false);});},[]);
   const save=useCallback(async (n:any)=>{setTrades(n);await persist(n);},[]);
+  const commitDraft=useCallback((d:DraftBacktestTrade)=>{
+    // Reuse the existing engine path — `recalc` derives dir/r/mfeR/maeR/dur.
+    const row=recalc({...emptyRow(),coin:d.coin,entryDT:d.entryDT,exitDT:d.exitDT,entry:d.entry,sl:d.sl,exit:d.exit,mfeP:d.mfeP,maeP:d.maeP,notes:d.notes,chartE:d.chartE,chartX:d.chartX});
+    setTrades(prev=>{const next=[...prev,row];persist(next);return next;});
+    setShowTut(false);
+  },[]);
   const addTrade=(t:any)=>{save([...trades,t]);setShowForm(false);setShowTut(false);};
   const updateTrade=(t:any)=>{save(trades.map((x:any)=>x.id===t.id?t:x));setEditModal(null);};
   const del=(id:string)=>{save(trades.filter((t:any)=>t.id!==id));setConfirmDel(null);};
@@ -464,6 +473,7 @@ function BacktestApp({ onReturn }: { onReturn: () => void }) {
         {has&&<span style={{fontSize:10,color:rc(allStats.totR),fontWeight:700}}>{fm(allStats.totR)}R</span>}
       </div>
       <div style={{display:"flex",gap:4,alignItems:"center",flexWrap:"wrap"}}>
+        <button onClick={()=>setTab("chart")} style={{background:tab==="chart"?BL:"none",border:`1px solid ${tab==="chart"?BL:BRD}`,borderRadius:8,padding:"6px 12px",color:tab==="chart"?"#fff":BL2,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>📈 גרף</button>
         <SBtn onClick={imp}>ייבוא</SBtn><SBtn onClick={jsonX}>JSON</SBtn><SBtn onClick={csvX}>CSV</SBtn>
         <button onClick={()=>setLocked(true)} style={{background:"none",border:`1px solid ${BRD}`,borderRadius:8,padding:"6px 10px",color:T3,cursor:"pointer",fontSize:13}} onMouseEnter={(e:any)=>{e.currentTarget.style.color=BL;}} onMouseLeave={(e:any)=>{e.currentTarget.style.color=T3;}}>🔒</button>
       </div>
@@ -471,7 +481,7 @@ function BacktestApp({ onReturn }: { onReturn: () => void }) {
 
     {!has&&tab==="trades"&&<div className="fi" style={{padding:"clamp(20px,4vw,40px) 16px",maxWidth:580,margin:"0 auto"}}>{showTut?<Tutorial onClose={()=>setShowTut(false)} onStart={()=>{setShowTut(false);setShowForm(true);}}/>:<div style={{textAlign:"center",padding:"clamp(20px,6vw,40px) 0"}}><div style={{width:56,height:56,borderRadius:14,background:`${BL}12`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px"}}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={BL} strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg></div><div style={{fontSize:"clamp(18px,4vw,22px)",fontWeight:700,color:T1,marginBottom:20}}>מוכן להתחיל</div><button onClick={()=>setShowForm(true)} style={{background:BL,border:"none",borderRadius:10,padding:"12px 32px",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"}}>+ עסקה ראשונה</button><div style={{marginTop:12}}><button onClick={()=>setShowTut(true)} style={{background:"none",border:"none",color:BL2,fontSize:11,cursor:"pointer",textDecoration:"underline"}}>הדגמה</button><span style={{color:T4,margin:"0 8px"}}>·</span><button onClick={imp} style={{background:"none",border:"none",color:T3,fontSize:11,cursor:"pointer",textDecoration:"underline"}}>ייבוא</button></div></div>}</div>}
 
-    {has&&<><nav style={{display:"flex",background:BG2,borderBottom:`1px solid ${BRD}`,padding:"0 clamp(8px,2vw,16px)",overflowX:"auto"}}>{[["trades","עסקאות"],["analytics","ניתוח"],["macro","מאקרו"],["equity","עקומה"]].map(([k,l])=><button key={k} onClick={()=>setTab(k)} style={{padding:"10px 16px",border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600,background:"transparent",whiteSpace:"nowrap",color:tab===k?BL:T3,borderBottom:tab===k?`2px solid ${BL}`:"2px solid transparent",transition:"all .15s"}}>{l}</button>)}</nav>
+    {has&&<><nav style={{display:"flex",background:BG2,borderBottom:`1px solid ${BRD}`,padding:"0 clamp(8px,2vw,16px)",overflowX:"auto"}}>{[["chart","גרף"],["trades","עסקאות"],["analytics","ניתוח"],["macro","מאקרו"],["equity","עקומה"]].map(([k,l])=><button key={k} onClick={()=>setTab(k)} style={{padding:"10px 16px",border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600,background:"transparent",whiteSpace:"nowrap",color:tab===k?BL:T3,borderBottom:tab===k?`2px solid ${BL}`:"2px solid transparent",transition:"all .15s"}}>{l}</button>)}</nav>
 
     {tab==="trades"&&<div style={{padding:"clamp(12px,2vw,20px)",maxWidth:1100,margin:"0 auto"}}>
       <div className="ox-qa-row" style={{display:"flex",gap:6,marginBottom:14,alignItems:"center",background:BG3,borderRadius:10,padding:"8px 12px",border:`1px solid ${BRD}`}}><span style={{fontSize:10,color:T3,fontWeight:600,whiteSpace:"nowrap"}}>מהיר</span><QI v={qa.coin} set={(v:string)=>setQa(p=>({...p,coin:v}))} ph="מטבע" w={60}/><QI v={qa.entry} set={(v:string)=>setQa(p=>({...p,entry:v}))} ph="כניסה" num/><QI v={qa.sl} set={(v:string)=>setQa(p=>({...p,sl:v}))} ph="סטופ" num/><QI v={qa.exit} set={(v:string)=>setQa(p=>({...p,exit:v}))} ph="יציאה" num/><button onClick={quickAdd} style={{background:BL,border:"none",borderRadius:6,padding:"7px 14px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",opacity:(!qa.coin||!qa.entry||!qa.sl||!qa.exit)?.35:1}}>+</button><div style={{flex:1}}/><button onClick={()=>setShowForm(true)} style={{background:"none",border:`1px solid ${BRD}`,borderRadius:6,padding:"6px 12px",color:BL2,fontSize:10,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>טופס מלא</button></div>
@@ -488,6 +498,12 @@ function BacktestApp({ onReturn }: { onReturn: () => void }) {
 
     {tab==="equity"&&<div className="fi" style={{padding:"clamp(12px,2vw,20px)",maxWidth:900,margin:"0 auto"}}><Crd t="עקומת הון">{stats.eq.length>1?<ResponsiveContainer width="100%" height={250}><AreaChart data={stats.eq}><defs><linearGradient id="eG2" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={BL} stopOpacity={.15}/><stop offset="95%" stopColor={BL} stopOpacity={0}/></linearGradient></defs><CartesianGrid strokeDasharray="3 3" stroke={BRD}/><XAxis dataKey="x" tick={{fill:T3,fontSize:9}} axisLine={false} tickLine={false}/><YAxis tick={{fill:T3,fontSize:9}} axisLine={false} tickLine={false}/><ReferenceLine y={0} stroke={T4} strokeDasharray="3 3"/><Tooltip contentStyle={{background:SURF,border:`1px solid ${BRD}`,borderRadius:8,color:T1,fontSize:11}} formatter={(v:any)=>[fm(v),"R"]}/><Area type="monotone" dataKey="c" stroke={BL} strokeWidth={1.5} fill="url(#eG2)" dot={false}/></AreaChart></ResponsiveContainer>:<div style={{textAlign:"center",padding:40,color:T3}}>הוסף עסקאות</div>}</Crd>{stats.eq.length>1&&<><Crd t="R לכל עסקה" s={{marginTop:10}}><ResponsiveContainer width="100%" height={160}><BarChart data={stats.eq}><CartesianGrid strokeDasharray="3 3" stroke={BRD}/><XAxis dataKey="x" tick={{fill:T3,fontSize:9}} axisLine={false} tickLine={false}/><YAxis tick={{fill:T3,fontSize:9}} axisLine={false} tickLine={false}/><ReferenceLine y={0} stroke={T4}/><Bar dataKey="r" radius={[3,3,0,0]}>{stats.eq.map((d:any,i:number)=><Cell key={i} fill={d.r>=0?G:RD} fillOpacity={.65}/>)}</Bar></BarChart></ResponsiveContainer></Crd><Crd t="Drawdown" s={{marginTop:10}}>{(()=>{let pk=0,mx=0;const dd=stats.eq.map((d:any)=>{pk=Math.max(pk,d.c);const v=d.c-pk;mx=Math.min(mx,v);return{x:d.x,dd:+v.toFixed(2)};});return <><div style={{fontSize:10,color:RD,fontWeight:700,marginBottom:6}}>מקסימלי: {fm(mx)}R</div><ResponsiveContainer width="100%" height={120}><AreaChart data={dd}><defs><linearGradient id="dG2" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={RD} stopOpacity={.12}/><stop offset="95%" stopColor={RD} stopOpacity={0}/></linearGradient></defs><CartesianGrid strokeDasharray="3 3" stroke={BRD}/><XAxis dataKey="x" tick={{fill:T3,fontSize:9}} axisLine={false} tickLine={false}/><YAxis tick={{fill:T3,fontSize:9}} axisLine={false} tickLine={false}/><ReferenceLine y={0} stroke={T4}/><Area type="monotone" dataKey="dd" stroke={RD} strokeWidth={1} fill="url(#dG2)" dot={false}/></AreaChart></ResponsiveContainer></>;})()}</Crd></>}</div>}
     </>}
+
+    {/* TradingView ⇄ Backtest Journal bridge — always mounted, chart state survives tab switches */}
+    <div style={{position:"relative",height:tab==="chart"?"calc(100vh - 60px)":0,overflow:"hidden",transition:"height .25s ease"}}>
+      <BacktestChartPanel visible={tab==="chart"} />
+    </div>
+    <CommitBacktestModal onCommit={commitDraft} />
   </div>;
 }
 
