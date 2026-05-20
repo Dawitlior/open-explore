@@ -221,6 +221,197 @@ export type Database = {
         }
         Relationships: []
       }
+      oracle_nodes: {
+        Row: {
+          branches: Json
+          category: string
+          code: string
+          created_at: string
+          id: string
+          options: Json
+          prompt_en: string
+          prompt_he: string
+          tier: number
+          trap: boolean
+          trap_pair: string | null
+          updated_at: string
+        }
+        Insert: {
+          branches?: Json
+          category: string
+          code: string
+          created_at?: string
+          id?: string
+          options?: Json
+          prompt_en: string
+          prompt_he: string
+          tier?: number
+          trap?: boolean
+          trap_pair?: string | null
+          updated_at?: string
+        }
+        Update: {
+          branches?: Json
+          category?: string
+          code?: string
+          created_at?: string
+          id?: string
+          options?: Json
+          prompt_en?: string
+          prompt_he?: string
+          tier?: number
+          trap?: boolean
+          trap_pair?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      oracle_recalibration_queue: {
+        Row: {
+          dismissed_at: string | null
+          reason: string
+          suggested_at: string
+          user_id: string
+        }
+        Insert: {
+          dismissed_at?: string | null
+          reason: string
+          suggested_at?: string
+          user_id?: string
+        }
+        Update: {
+          dismissed_at?: string | null
+          reason?: string
+          suggested_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      oracle_sessions: {
+        Row: {
+          completed_at: string | null
+          current_node_code: string | null
+          depth_score: number
+          dissonance_log: Json
+          id: string
+          started_at: string
+          state: string
+          updated_at: string
+          user_id: string
+          visited_path: Json
+        }
+        Insert: {
+          completed_at?: string | null
+          current_node_code?: string | null
+          depth_score?: number
+          dissonance_log?: Json
+          id?: string
+          started_at?: string
+          state?: string
+          updated_at?: string
+          user_id?: string
+          visited_path?: Json
+        }
+        Update: {
+          completed_at?: string | null
+          current_node_code?: string | null
+          depth_score?: number
+          dissonance_log?: Json
+          id?: string
+          started_at?: string
+          state?: string
+          updated_at?: string
+          user_id?: string
+          visited_path?: Json
+        }
+        Relationships: []
+      }
+      oracle_telemetry: {
+        Row: {
+          changed_mind: number
+          created_at: string
+          hover_count: number
+          id: string
+          latency_ms: number | null
+          node_code: string
+          option_id: string | null
+          scroll_jitter: number | null
+          session_id: string
+          skipped: boolean
+          user_id: string
+        }
+        Insert: {
+          changed_mind?: number
+          created_at?: string
+          hover_count?: number
+          id?: string
+          latency_ms?: number | null
+          node_code: string
+          option_id?: string | null
+          scroll_jitter?: number | null
+          session_id: string
+          skipped?: boolean
+          user_id?: string
+        }
+        Update: {
+          changed_mind?: number
+          created_at?: string
+          hover_count?: number
+          id?: string
+          latency_ms?: number | null
+          node_code?: string
+          option_id?: string | null
+          scroll_jitter?: number | null
+          session_id?: string
+          skipped?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oracle_telemetry_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "oracle_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oracle_vectors: {
+        Row: {
+          archetype: string | null
+          blueprint_md: string | null
+          coach_system_prompt: string | null
+          computed_at: string
+          shadow_patterns: Json
+          updated_at: string
+          user_id: string
+          vector: Json
+          version: number
+        }
+        Insert: {
+          archetype?: string | null
+          blueprint_md?: string | null
+          coach_system_prompt?: string | null
+          computed_at?: string
+          shadow_patterns?: Json
+          updated_at?: string
+          user_id?: string
+          vector?: Json
+          version?: number
+        }
+        Update: {
+          archetype?: string | null
+          blueprint_md?: string | null
+          coach_system_prompt?: string | null
+          computed_at?: string
+          shadow_patterns?: Json
+          updated_at?: string
+          user_id?: string
+          vector?: Json
+          version?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
