@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { AreaChart, Area, BarChart, Bar, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from "recharts";
+import BacktestChartPanel from "./backtest/BacktestChartPanel";
+import CommitBacktestModal from "./backtest/CommitBacktestModal";
+import type { DraftBacktestTrade } from "./backtest/tv-mapping";
 
 // ─── Engine (compact) ───
 const calcR=(e:number,sl:number,ex:number)=>(!e||!sl||ex==null||e===sl)?null:(ex-e)/(e-sl);
