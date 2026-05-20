@@ -597,6 +597,8 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
           overflowY: 'auto',
           display: 'flex', flexDirection: 'column', gap: 18,
         }}>
+          {dayMacros.length > 0 && <MacroSection />}
+
           <div>
             <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, marginBottom: 14 }}>
               {isRTL ? 'פירוט עסקאות' : 'Trade Log'} · {dayTrades.length}
@@ -609,6 +611,7 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
               dayTrades.map(tr => <TradeRow key={tr.id} tr={tr} />)
             )}
           </div>
+
 
           <div>
             <AISection />
