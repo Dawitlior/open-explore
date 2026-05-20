@@ -5,6 +5,10 @@ import type { I18nStrings } from '@/lib/trading-i18n';
 import { TradingBadge } from './TradingUI';
 import { generateDayInsights, generateDaySummary } from '@/lib/ai-engine';
 import { getR, sumR, formatR } from '@/lib/r-multiple';
+import { useMonthEconomicEvents } from '@/hooks/use-month-economic-events';
+import { MACRO_TIER_COLOR, CURRENCY_FLAG } from '@/components/economic/MacroEventStrip';
+import { formatISTTime } from '@/lib/economic';
+
 
 interface CalendarModalProps {
   T: TradingTheme;
@@ -32,6 +36,14 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
   const [dayInsights, setDayInsights] = useState<DayAIInsight[]>([]);
   const [aiLoading, setAiLoading] = useState(false);
   const [showAI, setShowAI] = useState(false);
+
+  // Macro events for the visible month (single query, cached). Pick this day.
+  const { byDay: macroByDay } = useMonthEconomicEvents({ year, month, impacts: ['t1', 't2', 't3'] });
+  const dayMacros = (macroByDay.get(day) ?? []).slice().sort(
+    (a, b) => new Date(a.release_at).getTime() - new Date(b.release_at).getTime()
+  );
+  const lang: 'he' | 'en' = isRTL ? 'he' : 'en';
+
 
   // Lock body scroll while open
   useEffect(() => {
@@ -202,7 +214,64 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
     );
   };
 
-  /* ============= Shared AI section ============= */
+  /* ============= Macro economic events for the day ============= */
+  const MacroSection = () => {
+    if (dayMacros.length === 0) return null;
+    const nowMs = Date.now();
+    return (
+      <div style={{
+        background: 'linear-gradient(135deg, rgba(244,63,94,0.06), rgba(245,158,11,0.04))',
+        border: `1px solid ${T.border.subtle}`,
+        borderRadius: T.radius.md,
+        padding: 14,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+          <span style={{ fontSize: 14 }}>📡</span>
+          <span style={{ fontSize: 11, fontWeight: 800, color: T.text.primary, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            {isRTL ? 'אירועי מאקרו' : 'Macro Events'}
+          </span>
+          <span style={{ fontSize: 10, color: T.text.muted, marginInlineStart: 4 }}>· {dayMacros.length}</span>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {dayMacros.map((e) => {
+            const past = new Date(e.release_at).getTime() < nowMs - 60_000;
+            const color = MACRO_TIER_COLOR[e.impact];
+            const flag = e.currency ? CURRENCY_FLAG[e.currency] : null;
+            return (
+              <div key={e.id} style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '8px 10px',
+                background: T.bg.tertiary,
+                borderRadius: T.radius.sm,
+                borderInlineStart: `3px solid ${color}`,
+                opacity: past ? 0.5 : 1,
+              }}>
+                <span style={{
+                  fontSize: 10, fontWeight: 800, color, minWidth: 22,
+                  fontFamily: "'IBM Plex Mono', monospace",
+                }}>
+                  {e.impact.toUpperCase()}
+                </span>
+                <span style={{ fontSize: 11, color: T.text.muted, fontFamily: "'IBM Plex Mono', monospace", minWidth: 48 }}>
+                  {formatISTTime(e.release_at, lang)}
+                </span>
+                {flag && <span style={{ fontSize: 13 }}>{flag}</span>}
+                <span style={{ fontSize: 11, color: T.text.muted, minWidth: 30 }}>{e.currency || ''}</span>
+                <span style={{ fontSize: 12, color: T.text.primary, fontWeight: 600, flex: 1 }}>{e.event_name}</span>
+                {e.actual && (
+                  <span style={{ fontSize: 11, color, fontWeight: 700, fontFamily: "'IBM Plex Mono', monospace" }}>
+                    {e.actual}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+
   const AISection = () => (
     !showAI ? (
       <button onClick={handleDayAI} disabled={dayTrades.length === 0} style={{
@@ -362,13 +431,27 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
             </div>
           )}
 
+          {/* Macro events */}
+          {dayMacros.length > 0 && (
+            <div style={{ padding: '0 16px 14px' }}>
+              <MacroSection />
+            </div>
+          )}
+
           {/* Trade list */}
           <div style={{ padding: '0 16px' }}>
             <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, fontWeight: 700 }}>
               {isRTL ? 'פירוט עסקאות' : 'Trade Details'}
             </div>
-            {dayTrades.map(tr => <TradeRow key={tr.id} tr={tr} />)}
+            {dayTrades.length === 0 ? (
+              <div style={{ padding: '20px', textAlign: 'center', color: T.text.muted, fontSize: 12 }}>
+                {isRTL ? 'אין עסקאות ביום זה' : 'No trades this day'}
+              </div>
+            ) : (
+              dayTrades.map(tr => <TradeRow key={tr.id} tr={tr} />)
+            )}
           </div>
+
 
           {/* AI */}
           <div style={{ padding: '8px 16px 32px' }}>
@@ -514,6 +597,8 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
           overflowY: 'auto',
           display: 'flex', flexDirection: 'column', gap: 18,
         }}>
+          {dayMacros.length > 0 && <MacroSection />}
+
           <div>
             <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, marginBottom: 14 }}>
               {isRTL ? 'פירוט עסקאות' : 'Trade Log'} · {dayTrades.length}
@@ -526,6 +611,7 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
               dayTrades.map(tr => <TradeRow key={tr.id} tr={tr} />)
             )}
           </div>
+
 
           <div>
             <AISection />

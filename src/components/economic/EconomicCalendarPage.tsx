@@ -1,80 +1,82 @@
 import { useMemo, useState, useEffect } from 'react';
-import { X, Filter, AlertCircle, Activity, Circle } from 'lucide-react';
+import { X, Filter, AlertCircle, Activity, Search } from 'lucide-react';
 import { useEconomicEvents } from '@/hooks/use-economic-events';
 import { useLang } from '@/hooks/use-lang';
-import { formatIST, formatISTTime, computeSurprise, surpriseTone } from '@/lib/economic';
+import { formatISTTime, computeSurprise, surpriseTone } from '@/lib/economic';
 import type { EconomicEvent, EconomicImpact } from '@/lib/economic';
 import { getSetting, setSetting } from '@/lib/storage';
+import { CURRENCY_FLAG, MACRO_TIER_COLOR } from './MacroEventStrip';
 
 const COPY = {
   he: {
     title: 'מכ״ם כלכלי',
-    subtitle: 'יומן אירועי מאקרו · 14 ימים קדימה',
+    subtitle: 'יומן אירועי מאקרו · ForexFactory-style',
     close: 'סגור',
-    filters: 'מסננים',
-    impact: 'דרגת השפעה',
+    impact: 'דרגה',
     currency: 'מטבע',
-    search: 'חיפוש אירוע…',
-    empty: 'אין אירועים בטווח שנבחר',
+    search: 'חיפוש…',
+    empty: 'אין אירועים תואמים',
     actual: 'בפועל',
     forecast: 'תחזית',
     previous: 'קודם',
     today: 'היום',
+    week: { prev: 'שבוע שעבר', now: 'שבוע נוכחי', next: 'שבוע הבא' },
     tier: { t1: 'קריטי', t2: 'משמעותי', t3: 'רקע' },
-    columns: { time: 'שעה (IST)', impact: 'דרגה', currency: 'מטבע', event: 'אירוע', actual: 'בפועל', forecast: 'תחזית', previous: 'קודם' },
+    columns: { time: 'זמן', currency: 'מטבע', impact: 'השפעה', event: 'אירוע', actual: 'בפועל', forecast: 'תחזית', previous: 'קודם' },
+    all: 'הכל',
   },
   en: {
     title: 'Economic Radar',
-    subtitle: 'Macro calendar · 14 days ahead',
+    subtitle: 'Macro calendar · ForexFactory-style',
     close: 'Close',
-    filters: 'Filters',
-    impact: 'Impact tier',
+    impact: 'Tier',
     currency: 'Currency',
-    search: 'Search event…',
-    empty: 'No events in the selected range',
+    search: 'Search…',
+    empty: 'No matching events',
     actual: 'Actual',
     forecast: 'Forecast',
     previous: 'Previous',
     today: 'Today',
+    week: { prev: 'Last week', now: 'This week', next: 'Next week' },
     tier: { t1: 'Critical', t2: 'Material', t3: 'Background' },
-    columns: { time: 'Time (IST)', impact: 'Tier', currency: 'CCY', event: 'Event', actual: 'Actual', forecast: 'Forecast', previous: 'Previous' },
+    columns: { time: 'Time', currency: 'CCY', impact: 'Impact', event: 'Event', actual: 'Actual', forecast: 'Forecast', previous: 'Previous' },
+    all: 'All',
   },
 } as const;
 
-const TIER_STYLE: Record<EconomicImpact, { color: string; label: string; ring: string }> = {
-  t1: { color: '#f43f5e', label: 'T1', ring: 'rgba(244,63,94,0.4)' },
-  t2: { color: '#f59e0b', label: 'T2', ring: 'rgba(245,158,11,0.35)' },
-  t3: { color: '#64748b', label: 'T3', ring: 'rgba(100,116,139,0.25)' },
-};
-
+const MAJOR_CURRENCIES = ['USD', 'EUR', 'GBP', 'AUD', 'JPY', 'CAD', 'CHF', 'NZD'] as const;
 const FILTER_KEY = 'economic_calendar_filters';
+
+type WeekTab = 'prev' | 'now' | 'next';
 
 interface Filters {
   impacts: EconomicImpact[];
-  currency: string;
+  currencies: string[]; // empty = all
   search: string;
 }
 
-const DEFAULT_FILTERS: Filters = { impacts: ['t1', 't2'], currency: '', search: '' };
+const DEFAULT_FILTERS: Filters = { impacts: ['t1', 't2', 't3'], currencies: [], search: '' };
 
-function groupByDay(events: EconomicEvent[]) {
-  const map = new Map<string, EconomicEvent[]>();
-  for (const e of events) {
-    const day = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Asia/Jerusalem',
-      year: 'numeric', month: '2-digit', day: '2-digit',
-    }).format(new Date(e.release_at));
-    if (!map.has(day)) map.set(day, []);
-    map.get(day)!.push(e);
-  }
-  return Array.from(map.entries());
+/** Returns [Mon 00:00, Sun 23:59:59.999] of week relative to today, in local time. */
+function weekRange(offsetWeeks: number): { start: Date; end: Date } {
+  const now = new Date();
+  const day = now.getDay(); // 0..6 (Sun..Sat)
+  const diffToMonday = (day + 6) % 7; // Mon=0
+  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - diffToMonday + offsetWeeks * 7);
+  const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6, 23, 59, 59, 999);
+  return { start: monday, end: sunday };
 }
 
-function todayIST(): string {
+function dayKey(d: Date): string {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Jerusalem',
     year: 'numeric', month: '2-digit', day: '2-digit',
-  }).format(new Date());
+  }).format(d);
+}
+
+
+function isSameDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
 interface Props {
@@ -87,9 +89,8 @@ export function EconomicCalendarPage({ onClose }: Props) {
   const t = COPY[lang];
 
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [expanded, setExpanded] = useState<string | null>(null);
-  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 768);
+  const [week, setWeek] = useState<WeekTab>('now');
+  const [searchOpen, setSearchOpen] = useState(false);
 
   // Persist filters
   useEffect(() => {
@@ -102,31 +103,49 @@ export function EconomicCalendarPage({ onClose }: Props) {
   useEffect(() => { setSetting(FILTER_KEY, filters).catch(() => {}); }, [filters]);
 
   useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-
-  useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  // Window: -14d to +14d covers prev/now/next week with margin
   const { events, loading } = useEconomicEvents({ hoursAhead: 14 * 24, impacts: filters.impacts });
+
+  const { start: weekStart, end: weekEnd } = useMemo(() => weekRange(week === 'prev' ? -1 : week === 'next' ? 1 : 0), [week]);
 
   const filtered = useMemo(() => {
     const q = filters.search.trim().toLowerCase();
-    const cur = filters.currency.trim().toUpperCase();
+    const curs = new Set(filters.currencies.map((c) => c.toUpperCase()));
     return events.filter((e) => {
-      if (cur && !(e.currency || '').toUpperCase().includes(cur)) return false;
+      const ts = new Date(e.release_at).getTime();
+      if (ts < weekStart.getTime() || ts > weekEnd.getTime()) return false;
+      if (curs.size > 0 && !curs.has((e.currency || '').toUpperCase())) return false;
       if (q && !e.event_name.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [events, filters.currency, filters.search]);
+  }, [events, weekStart, weekEnd, filters.currencies, filters.search]);
 
-  const grouped = useMemo(() => groupByDay(filtered), [filtered]);
-  const today = todayIST();
+  const grouped = useMemo(() => {
+    const m = new Map<string, EconomicEvent[]>();
+    for (const e of filtered) m.set(dayKey(new Date(e.release_at)), [...(m.get(dayKey(new Date(e.release_at))) ?? []), e]);
+    return Array.from(m.entries()).sort(([a], [b]) => a.localeCompare(b));
+  }, [filtered]);
+
+  const today = new Date();
+
+  function toggleCurrency(c: string) {
+    setFilters((f) => ({
+      ...f,
+      currencies: f.currencies.includes(c) ? f.currencies.filter((x) => x !== c) : [...f.currencies, c],
+    }));
+  }
+
+  function toggleImpact(i: EconomicImpact) {
+    setFilters((f) => ({
+      ...f,
+      impacts: f.impacts.includes(i) ? f.impacts.filter((x) => x !== i) : [...f.impacts, i],
+    }));
+  }
 
   return (
     <div
@@ -134,119 +153,196 @@ export function EconomicCalendarPage({ onClose }: Props) {
       aria-label={t.title}
       dir={isRTL ? 'rtl' : 'ltr'}
       className="fixed inset-0 z-[150] backdrop-blur-sm"
-      style={{ background: 'rgba(6,19,38,0.85)', fontFamily: "'Poppins', sans-serif" }}
+      style={{ background: 'rgba(6,19,38,0.92)', fontFamily: "'Poppins', sans-serif" }}
     >
-      <div className="absolute inset-2 md:inset-6 rounded-2xl border border-cyan-500/20 bg-[#061326] shadow-[0_0_60px_rgba(0,242,255,0.08)] flex flex-col overflow-hidden">
+      <div className="absolute inset-2 md:inset-6 rounded-2xl border border-cyan-500/20 bg-[#061326] shadow-[0_0_80px_rgba(0,242,255,0.1)] flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="flex items-center gap-3 px-4 md:px-6 py-3 border-b border-cyan-500/15">
-          <Activity className="w-5 h-5 text-cyan-400" />
+        <header className="flex items-center gap-3 px-4 md:px-6 py-3.5 border-b border-cyan-500/15 bg-gradient-to-b from-cyan-500/[0.04] to-transparent">
+          <div className="relative">
+            <Activity className="w-5 h-5 text-cyan-400" />
+            <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+          </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-base md:text-lg font-bold text-cyan-200 truncate" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+            <h1 className="text-base md:text-lg font-bold text-cyan-100 truncate tracking-tight" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
               {t.title}
             </h1>
-            <div className="text-[10px] md:text-xs text-cyan-100/50 truncate">{t.subtitle}</div>
+            <div className="text-[10px] md:text-xs text-cyan-100/40 truncate uppercase tracking-wider">{t.subtitle}</div>
           </div>
           <button
-            onClick={() => setFiltersOpen((v) => !v)}
-            className="px-3 py-1.5 text-xs rounded-md border border-cyan-500/30 text-cyan-200 hover:bg-cyan-500/10 transition flex items-center gap-1.5"
+            onClick={() => setSearchOpen((v) => !v)}
+            className="p-2 rounded-md text-cyan-100/60 hover:text-cyan-100 hover:bg-cyan-500/10 transition"
+            aria-label={t.search}
           >
-            <Filter className="w-3.5 h-3.5" /> {t.filters}
+            <Search className="w-4 h-4" />
           </button>
           <button
             onClick={onClose}
             aria-label={t.close}
-            className="p-1.5 rounded-md text-cyan-100/70 hover:text-cyan-100 hover:bg-cyan-500/10 transition"
+            className="p-2 rounded-md text-cyan-100/60 hover:text-cyan-100 hover:bg-cyan-500/10 transition"
           >
             <X className="w-5 h-5" />
           </button>
         </header>
 
-        {/* Filters Drawer */}
-        {filtersOpen && (
-          <div className="px-4 md:px-6 py-3 border-b border-cyan-500/10 bg-cyan-500/[0.02] flex flex-wrap gap-3 items-center">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] uppercase tracking-wider text-cyan-100/50">{t.impact}:</span>
-              {(['t1', 't2', 't3'] as EconomicImpact[]).map((tier) => {
-                const on = filters.impacts.includes(tier);
-                const s = TIER_STYLE[tier];
-                return (
-                  <button
-                    key={tier}
-                    onClick={() => setFilters((f) => ({
-                      ...f,
-                      impacts: on ? f.impacts.filter((x) => x !== tier) : [...f.impacts, tier],
-                    }))}
-                    className="px-2 py-1 text-[10px] font-bold rounded border transition"
-                    style={{
-                      borderColor: on ? s.color : 'rgba(100,116,139,0.3)',
-                      background: on ? `${s.color}20` : 'transparent',
-                      color: on ? s.color : '#64748b',
-                    }}
-                  >
-                    {s.label} · {t.tier[tier]}
-                  </button>
-                );
-              })}
-            </div>
+        {/* Currency + Impact filter row */}
+        <div className="px-3 md:px-6 py-3 border-b border-cyan-500/10 flex flex-wrap items-center gap-2 md:gap-3 bg-cyan-500/[0.015]">
+          {/* Currency chips */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <button
+              onClick={() => setFilters((f) => ({ ...f, currencies: [] }))}
+              className="px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md border transition"
+              style={{
+                borderColor: filters.currencies.length === 0 ? '#00f2ff' : 'rgba(100,116,139,0.25)',
+                background: filters.currencies.length === 0 ? 'rgba(0,242,255,0.1)' : 'transparent',
+                color: filters.currencies.length === 0 ? '#00f2ff' : 'rgba(207,222,236,0.5)',
+              }}
+            >
+              {t.all}
+            </button>
+            {MAJOR_CURRENCIES.map((c) => {
+              const on = filters.currencies.includes(c);
+              return (
+                <button
+                  key={c}
+                  onClick={() => toggleCurrency(c)}
+                  className="px-2.5 py-1.5 text-[11px] font-bold rounded-md border transition flex items-center gap-1.5"
+                  style={{
+                    borderColor: on ? '#00f2ff' : 'rgba(100,116,139,0.25)',
+                    background: on ? 'rgba(0,242,255,0.08)' : 'transparent',
+                    color: on ? '#cffeff' : 'rgba(207,222,236,0.65)',
+                    fontFamily: "'IBM Plex Mono', monospace",
+                  }}
+                >
+                  <span style={{ fontSize: 13 }}>{CURRENCY_FLAG[c] ?? '🏳️'}</span>
+                  {c}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Spacer */}
+          <div className="flex-1 min-w-0" />
+
+          {/* Impact toggles */}
+          <div className="flex items-center gap-1">
+            {(['t1', 't2', 't3'] as EconomicImpact[]).map((i) => {
+              const on = filters.impacts.includes(i);
+              const color = MACRO_TIER_COLOR[i];
+              return (
+                <button
+                  key={i}
+                  onClick={() => toggleImpact(i)}
+                  title={t.tier[i]}
+                  className="w-7 h-7 rounded-md border transition flex items-center justify-center"
+                  style={{
+                    borderColor: on ? color : 'rgba(100,116,139,0.25)',
+                    background: on ? `${color}22` : 'transparent',
+                  }}
+                >
+                  <span style={{ width: 12, height: 8, borderRadius: 1, background: on ? color : 'rgba(100,116,139,0.4)', display: 'inline-block', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 35% 100%, 35% 70%, 0 70%)' }} />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Search drawer */}
+        {searchOpen && (
+          <div className="px-4 md:px-6 py-2.5 border-b border-cyan-500/10 bg-cyan-500/[0.03]">
             <input
-              type="text"
-              placeholder={t.currency}
-              value={filters.currency}
-              onChange={(e) => setFilters((f) => ({ ...f, currency: e.target.value }))}
-              className="px-2 py-1 text-xs rounded border border-cyan-500/30 bg-transparent text-cyan-100 placeholder:text-cyan-100/30 w-20 focus:outline-none focus:border-cyan-400/60"
-            />
-            <input
+              autoFocus
               type="text"
               placeholder={t.search}
               value={filters.search}
               onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
-              className="px-2 py-1 text-xs rounded border border-cyan-500/30 bg-transparent text-cyan-100 placeholder:text-cyan-100/30 flex-1 min-w-[160px] focus:outline-none focus:border-cyan-400/60"
+              className="w-full px-3 py-1.5 text-sm rounded border border-cyan-500/30 bg-transparent text-cyan-100 placeholder:text-cyan-100/30 focus:outline-none focus:border-cyan-400/60"
             />
           </div>
         )}
 
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto px-2 md:px-6 py-3">
+        {/* Week tabs */}
+        <div className="flex items-center justify-center px-4 md:px-6 py-3 border-b border-cyan-500/10">
+          <div className="inline-flex rounded-lg border border-cyan-500/20 bg-[#0a1c33] p-0.5">
+            {(['prev', 'now', 'next'] as WeekTab[]).map((w) => (
+              <button
+                key={w}
+                onClick={() => setWeek(w)}
+                className="px-5 py-1.5 text-xs font-bold rounded-md transition"
+                style={{
+                  background: week === w ? '#0d2542' : 'transparent',
+                  color: week === w ? '#00f2ff' : 'rgba(207,222,236,0.55)',
+                  boxShadow: week === w ? 'inset 0 0 0 1px rgba(0,242,255,0.3)' : 'none',
+                  fontFamily: "'IBM Plex Mono', monospace",
+                }}
+              >
+                {t.week[w]}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Body — table */}
+        <div className="flex-1 overflow-y-auto">
+          {/* Column headers (sticky) */}
+          <div
+            className="sticky top-0 z-20 backdrop-blur-md grid items-center text-[10px] uppercase tracking-wider font-bold text-cyan-100/40 border-b border-cyan-500/10"
+            style={{
+              gridTemplateColumns: '90px 90px 90px 1fr 110px 110px 110px',
+              background: 'rgba(6,19,38,0.94)',
+              fontFamily: "'IBM Plex Mono', monospace",
+            }}
+          >
+            <div className="px-3 py-2.5 text-end">{t.columns.time}</div>
+            <div className="px-3 py-2.5">{t.columns.currency}</div>
+            <div className="px-3 py-2.5">{t.columns.impact}</div>
+            <div className="px-3 py-2.5">{t.columns.event}</div>
+            <div className="px-3 py-2.5 text-end">{t.columns.actual}</div>
+            <div className="px-3 py-2.5 text-end">{t.columns.forecast}</div>
+            <div className="px-3 py-2.5 text-end">{t.columns.previous}</div>
+          </div>
+
           {loading && (
-            <div className="text-center py-12 text-cyan-100/40 text-sm">…</div>
+            <div className="text-center py-16 text-cyan-100/40 text-sm">…</div>
           )}
           {!loading && grouped.length === 0 && (
-            <div className="text-center py-16 text-cyan-100/40 text-sm flex flex-col items-center gap-2">
+            <div className="text-center py-20 text-cyan-100/40 text-sm flex flex-col items-center gap-2">
               <AlertCircle className="w-8 h-8 opacity-40" />
               {t.empty}
             </div>
           )}
+
           {!loading && grouped.map(([day, list]) => {
-            const isToday = day === today;
+            const dayDate = new Date(day);
+            const isToday = isSameDay(dayDate, today);
             const dayLabel = new Intl.DateTimeFormat(isRTL ? 'he-IL' : 'en-US', {
-              timeZone: 'Asia/Jerusalem',
-              weekday: 'long', day: '2-digit', month: 'short',
-            }).format(new Date(day));
+              weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric',
+            }).format(dayDate);
             return (
-              <section key={day} className="mb-4">
+              <div key={day}>
+                {/* Day separator row */}
                 <div
-                  className="sticky top-0 z-10 backdrop-blur-md py-1.5 px-3 mb-1 rounded text-xs font-bold tracking-wide"
+                  className="grid items-center text-xs font-bold text-cyan-100/70 border-y border-cyan-500/10"
                   style={{
-                    background: isToday ? 'rgba(0,242,255,0.12)' : 'rgba(6,19,38,0.92)',
-                    color: isToday ? '#00f2ff' : 'rgba(207,222,236,0.7)',
+                    gridTemplateColumns: '1fr',
+                    background: isToday ? 'linear-gradient(90deg, rgba(0,242,255,0.12), rgba(0,242,255,0.02))' : 'rgba(13,37,66,0.55)',
                     borderInlineStart: isToday ? '3px solid #00f2ff' : '3px solid transparent',
+                    fontFamily: "'IBM Plex Mono', monospace",
                   }}
                 >
-                  {dayLabel} {isToday && <span className="ms-2 text-[9px] uppercase opacity-70">· {t.today}</span>}
-                </div>
-
-                {isMobile ? (
-                  <div className="space-y-1.5">
-                    {list.map((e) => <EventCard key={e.id} e={e} expanded={expanded === e.id} onToggle={() => setExpanded(expanded === e.id ? null : e.id)} t={t} lang={lang} />)}
+                  <div className="px-4 py-2 flex items-center gap-2">
+                    <span style={{ color: isToday ? '#00f2ff' : 'rgba(207,222,236,0.75)' }}>{dayLabel}</span>
+                    {isToday && (
+                      <span className="ms-1 px-1.5 py-0.5 text-[9px] uppercase tracking-wider rounded bg-cyan-400/15 text-cyan-300">
+                        {t.today}
+                      </span>
+                    )}
+                    <span className="ms-auto text-[10px] opacity-50">{list.length}</span>
                   </div>
-                ) : (
-                  <table className="w-full text-xs" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
-                    <tbody>
-                      {list.map((e) => <EventRow key={e.id} e={e} expanded={expanded === e.id} onToggle={() => setExpanded(expanded === e.id ? null : e.id)} t={t} lang={lang} />)}
-                    </tbody>
-                  </table>
-                )}
-              </section>
+                </div>
+                {list.map((e) => (
+                  <EventRow key={e.id} e={e} lang={lang} />
+                ))}
+              </div>
             );
           })}
         </div>
@@ -255,79 +351,59 @@ export function EconomicCalendarPage({ onClose }: Props) {
   );
 }
 
-function ImpactDot({ impact }: { impact: EconomicImpact }) {
-  const s = TIER_STYLE[impact];
+function ImpactBars({ impact }: { impact: EconomicImpact }) {
+  // Mimic ForexFactory's 3-bar impact icon
+  const color = MACRO_TIER_COLOR[impact];
+  const filled = impact === 't1' ? 3 : impact === 't2' ? 2 : 1;
   return (
-    <span className="inline-flex items-center gap-1" style={{ color: s.color }}>
-      <Circle className="w-2 h-2 fill-current" />
-      <span className="text-[10px] font-bold">{s.label}</span>
-    </span>
+    <div className="inline-flex items-end gap-0.5" aria-label={impact.toUpperCase()}>
+      {[1, 2, 3].map((i) => (
+        <span
+          key={i}
+          style={{
+            width: 5,
+            height: 5 + i * 3,
+            background: i <= filled ? color : 'rgba(100,116,139,0.25)',
+            borderRadius: 1,
+          }}
+        />
+      ))}
+    </div>
   );
 }
 
-function ValueCell({ value, surprise }: { value: string | null; surprise?: 'positive' | 'negative' | 'inline' | 'unknown' }) {
-  if (!value) return <span className="opacity-30">—</span>;
-  const tone =
-    surprise === 'positive' ? 'text-emerald-400' :
-    surprise === 'negative' ? 'text-rose-400' :
-    'text-cyan-100';
-  return <span className={`font-bold ${tone}`}>{value}</span>;
-}
-
-function EventRow({ e, expanded, onToggle, t, lang }: { e: EconomicEvent; expanded: boolean; onToggle: () => void; t: any; lang: 'he' | 'en' }) {
+function EventRow({ e, lang }: { e: EconomicEvent; lang: 'he' | 'en' }) {
   const past = new Date(e.release_at).getTime() < Date.now() - 60_000;
   const surprise = past ? surpriseTone(computeSurprise(e.actual, e.forecast)) : undefined;
-  return (
-    <>
-      <tr
-        onClick={onToggle}
-        className="border-b border-cyan-500/[0.06] hover:bg-cyan-500/[0.04] cursor-pointer transition"
-        style={{ opacity: past ? 0.6 : 1 }}
-      >
-        <td className="py-2 px-3 text-cyan-100/80 w-20">{formatISTTime(e.release_at, lang)}</td>
-        <td className="py-2 px-2 w-14"><ImpactDot impact={e.impact} /></td>
-        <td className="py-2 px-2 text-cyan-100/70 w-14">{e.currency || '—'}</td>
-        <td className="py-2 px-2 text-cyan-100 font-semibold">{e.event_name}</td>
-        <td className="py-2 px-2 text-right w-24"><ValueCell value={e.actual} surprise={surprise} /></td>
-        <td className="py-2 px-2 text-right w-24 text-cyan-100/60">{e.forecast || <span className="opacity-30">—</span>}</td>
-        <td className="py-2 px-2 text-right w-24 text-cyan-100/40">{e.previous || <span className="opacity-30">—</span>}</td>
-      </tr>
-      {expanded && (
-        <tr><td colSpan={7} className="px-3 py-3 bg-cyan-500/[0.03] text-[11px] text-cyan-100/70 border-b border-cyan-500/10">
-          <div className="grid grid-cols-3 gap-4">
-            <div><div className="opacity-50 text-[9px] uppercase mb-0.5">{t.actual}</div><ValueCell value={e.actual} surprise={surprise} /></div>
-            <div><div className="opacity-50 text-[9px] uppercase mb-0.5">{t.forecast}</div>{e.forecast || '—'}</div>
-            <div><div className="opacity-50 text-[9px] uppercase mb-0.5">{t.previous}</div>{e.previous || '—'}</div>
-          </div>
-          {e.description && <div className="mt-2 opacity-80">{e.description}</div>}
-        </td></tr>
-      )}
-    </>
-  );
-}
+  const actualColor =
+    surprise === 'positive' ? '#10b981' :
+    surprise === 'negative' ? '#f43f5e' :
+    '#e0f2fe';
+  const flag = e.currency ? CURRENCY_FLAG[e.currency] : null;
 
-function EventCard({ e, expanded, onToggle, t, lang }: { e: EconomicEvent; expanded: boolean; onToggle: () => void; t: any; lang: 'he' | 'en' }) {
-  const past = new Date(e.release_at).getTime() < Date.now() - 60_000;
-  const surprise = past ? surpriseTone(computeSurprise(e.actual, e.forecast)) : undefined;
   return (
-    <button
-      onClick={onToggle}
-      className="w-full text-start p-3 rounded-lg border border-cyan-500/10 bg-cyan-500/[0.03] hover:bg-cyan-500/[0.06] transition"
-      style={{ opacity: past ? 0.6 : 1 }}
+    <div
+      className="grid items-center text-[12px] border-b border-cyan-500/[0.05] hover:bg-cyan-500/[0.04] transition"
+      style={{
+        gridTemplateColumns: '90px 90px 90px 1fr 110px 110px 110px',
+        opacity: past ? 0.45 : 1,
+        fontFamily: "'IBM Plex Mono', monospace",
+      }}
     >
-      <div className="flex items-center gap-2 mb-1">
-        <span className="text-[11px] font-mono text-cyan-100/80">{formatISTTime(e.release_at, lang)}</span>
-        <ImpactDot impact={e.impact} />
-        {e.currency && <span className="text-[10px] text-cyan-100/50">· {e.currency}</span>}
+      <div className="px-3 py-2.5 text-end text-cyan-100/70 tabular-nums">{formatISTTime(e.release_at, lang)}</div>
+      <div className="px-3 py-2.5 flex items-center gap-1.5">
+        {flag && <span style={{ fontSize: 14 }}>{flag}</span>}
+        <span className="text-cyan-100/85 font-bold text-[11px]">{e.currency || '—'}</span>
       </div>
-      <div className="text-sm font-semibold text-cyan-100">{e.event_name}</div>
-      {(e.actual || e.forecast) && (
-        <div className="text-[11px] mt-1 flex gap-3 font-mono">
-          <span>{t.actual}: <ValueCell value={e.actual} surprise={surprise} /></span>
-          <span className="text-cyan-100/50">{t.forecast}: {e.forecast || '—'}</span>
-        </div>
-      )}
-      {expanded && e.description && <div className="mt-2 text-[11px] text-cyan-100/60">{e.description}</div>}
-    </button>
+      <div className="px-3 py-2.5"><ImpactBars impact={e.impact} /></div>
+      <div className="px-3 py-2.5 text-cyan-50 font-semibold truncate" style={{ fontFamily: "'Poppins', sans-serif" }} title={e.event_name}>
+        {e.event_name}
+      </div>
+      <div className="px-3 py-2.5 text-end font-bold tabular-nums" style={{ color: actualColor }}>
+        {e.actual || <span className="opacity-30">—</span>}
+      </div>
+      <div className="px-3 py-2.5 text-end text-cyan-100/55 tabular-nums">{e.forecast || <span className="opacity-30">—</span>}</div>
+      <div className="px-3 py-2.5 text-end text-cyan-100/35 tabular-nums">{e.previous || <span className="opacity-30">—</span>}</div>
+    </div>
   );
 }
