@@ -493,6 +493,7 @@ Deno.serve(async (req) => {
           const posRows = active.map(p => ({
             user_id: userId,
             provider,
+            account_label: label || null,
             symbol: p.symbol,
             side: p.side,
             size: Number(p.size) || 0,
