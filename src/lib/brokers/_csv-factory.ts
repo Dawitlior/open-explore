@@ -79,6 +79,7 @@ export function createCsvAdapter(cfg: CsvAdapterConfig): BrokerAdapter {
     kind: "file",
     assetClasses: cfg.assetClasses ?? ["other"],
     accent: cfg.accent,
+    glyph: cfg.glyph ?? cfg.name.slice(0, 2).toUpperCase(),
     tagline: cfg.tagline,
   };
 
