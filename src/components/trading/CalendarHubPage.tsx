@@ -154,17 +154,20 @@ const CalendarHubPage_Impl = ({ T, isRTL, trades, t, isMobile, onGenerateInsight
             const riskColor = d ? getDayRiskColor(trades, d, calMonth, calYear) : 'neutral';
             const isDarkRed = riskColor === 'darkred';
             const dotColor = dd ? (isDarkRed ? T.accent.red : dd.pnl > 0 ? T.accent.green : dd.pnl < 0 ? T.accent.red : T.accent.orange) : null;
+            const macros = d ? macroByDay.get(d) ?? [] : [];
+            const dayPast = !!d && new Date(calYear, calMonth, d) < new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const hasContent = !!dd || macros.length > 0;
 
             return (
               <button
                 key={i}
                 disabled={!d}
-                onClick={() => dd && d && setCalModalDay(d)}
+                onClick={() => hasContent && d && setCalModalDay(d)}
                 style={{
                   aspectRatio: '1',
                   border: 'none',
                   background: 'transparent',
-                  cursor: dd ? 'pointer' : 'default',
+                  cursor: hasContent ? 'pointer' : 'default',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
@@ -193,11 +196,13 @@ const CalendarHubPage_Impl = ({ T, isRTL, trades, t, isMobile, onGenerateInsight
                         boxShadow: `0 0 6px ${dotColor}80`,
                       }} />
                     )}
+                    <MacroDot events={macros} isPast={dayPast} />
                   </>
                 )}
               </button>
             );
           })}
+
         </div>
 
         {/* Active-day list (mini chips below grid) */}
