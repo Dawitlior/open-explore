@@ -63,16 +63,17 @@ const CalendarHubPage_Impl = ({ T, isRTL, trades, t, isMobile, onGenerateInsight
   // Strategic Calendar overlay — T1 only, USA + China only (zero noise).
   const { byDay: macroByDayRaw } = useMonthEconomicEvents({ year: calYear, month: calMonth, impacts: ['t1'] });
   const macroByDay = useMemo(() => {
-    const filtered: typeof macroByDayRaw = {};
-    for (const k of Object.keys(macroByDayRaw)) {
-      const list = macroByDayRaw[k].filter((e) => {
+    const m = new Map<number, typeof macroByDayRaw extends Map<number, infer V> ? V : never>();
+    macroByDayRaw.forEach((list, day) => {
+      const filtered = list.filter((e) => {
         const c = (e.currency || '').toUpperCase();
         return c === 'USD' || c === 'CNY';
       });
-      if (list.length) filtered[k] = list;
-    }
-    return filtered;
+      if (filtered.length) m.set(day, filtered);
+    });
+    return m;
   }, [macroByDayRaw]);
+
 
 
   const weekStats = useMemo(() => {
