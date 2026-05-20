@@ -3,6 +3,8 @@ import { AreaChart, Area, BarChart, Bar, Cell, XAxis, YAxis, Tooltip, Responsive
 import BacktestChartPanel from "./backtest/BacktestChartPanel";
 import CommitBacktestModal from "./backtest/CommitBacktestModal";
 import type { DraftBacktestTrade } from "./backtest/tv-mapping";
+import { backtestDraftStore } from "./backtest/backtest-draft-store";
+import { setCaptureAdapter, manualCaptureAdapter } from "./backtest/capture-adapter";
 
 // ─── Engine (compact) ───
 const calcR=(e:number,sl:number,ex:number)=>(!e||!sl||ex==null||e===sl)?null:(ex-e)/(e-sl);
