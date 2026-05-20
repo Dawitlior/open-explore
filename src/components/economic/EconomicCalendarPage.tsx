@@ -60,7 +60,7 @@ const COPY = {
   },
 } as const;
 
-const CURRENCY_FILTER = ['USD', 'JPY'] as const;
+// Radar Terminal — unfiltered: every region, every impact tier.
 const IST_TZ = 'Asia/Jerusalem';
 
 function istDateKey(d: Date | string): string {
