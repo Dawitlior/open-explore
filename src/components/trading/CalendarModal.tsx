@@ -507,10 +507,11 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
       >
         {/* LEFT: hero panel */}
         <div style={{
-          padding: '40px 36px',
+          padding: isMobile ? '18px 18px 14px' : '40px 36px',
           background: `linear-gradient(165deg, ${accent}10, transparent 60%)`,
-          borderInlineEnd: `1px solid ${T.border.subtle}`,
-          display: 'flex', flexDirection: 'column', gap: 22,
+          borderInlineEnd: isMobile ? 'none' : `1px solid ${T.border.subtle}`,
+          borderBottom: isMobile ? `1px solid ${T.border.subtle}` : 'none',
+          display: 'flex', flexDirection: 'column', gap: isMobile ? 14 : 22,
           overflowY: 'auto',
         }}>
           {/* Top bar */}
