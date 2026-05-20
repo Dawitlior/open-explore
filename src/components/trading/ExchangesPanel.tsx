@@ -1900,3 +1900,59 @@ function CsvDropZone({
 
   );
 }
+
+/* =============== AccountsSummaryStrip (Phase 3) ===============
+ * Shows distinct (broker_id, account_label) combinations the user already
+ * has trades for. Renders nothing when empty so the UI stays calm for new users.
+ */
+function AccountsSummaryStrip({ T, isRTL }: { T: TradingTheme; isRTL: boolean }) {
+  const t = (he: string, en: string) => (isRTL ? he : en);
+  const sans = "'Poppins', sans-serif";
+  const mono = "'IBM Plex Mono', monospace";
+  const { accounts, loading } = useBrokerAccounts();
+  if (loading || accounts.length === 0) return null;
+  return (
+    <div style={{
+      marginTop: 18, padding: '12px 16px',
+      borderRadius: 12,
+      background: 'linear-gradient(135deg, rgba(34,197,94,0.06), rgba(34,197,94,0.01))',
+      border: `1px solid ${T.border.subtle}`,
+      backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+        <Users size={14} color="#22c55e" />
+        <h4 style={{ margin: 0, fontFamily: sans, fontWeight: 700, fontSize: 12.5, color: T.text.primary, letterSpacing: 0.3 }}>
+          {t('חשבונות עם נתונים', 'Accounts with data')}
+        </h4>
+        <span style={{ fontFamily: mono, fontSize: 10, color: T.text.muted, letterSpacing: 0.5 }}>
+          {accounts.length}
+        </span>
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {accounts.map(a => {
+          const adapter = BrokerRegistry.byId(a.broker_id);
+          const accent = adapter?.meta.accent ?? '#94a3b8';
+          const name = adapter?.meta.name ?? a.broker_id;
+          return (
+            <div key={`${a.broker_id}::${a.account_label ?? ''}`} style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '5px 10px', borderRadius: 999,
+              background: `${accent}14`,
+              border: `1px solid ${accent}44`,
+              fontFamily: mono, fontSize: 10.5, color: T.text.primary,
+              letterSpacing: 0.4,
+            }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: accent, boxShadow: `0 0 6px ${accent}` }} />
+              <span style={{ fontWeight: 700 }}>{name}</span>
+              {a.account_label && (
+                <span style={{ color: T.text.muted }}>· {a.account_label}</span>
+              )}
+              <span style={{ color: T.text.muted }}>· {a.trade_count}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
