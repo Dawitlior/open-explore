@@ -42,9 +42,10 @@ export const MobileBottomNav = ({
 
   const handlePressStart = (id: string) => {
     setPressed(id);
+    haptics.selection();
     if (id === 'add' && onLongPressCenter) {
       longPressTimer.current = window.setTimeout(() => {
-        try { (navigator as any).vibrate?.(15); } catch { /* noop */ }
+        haptics.longPress();
         onLongPressCenter();
       }, 500);
     }

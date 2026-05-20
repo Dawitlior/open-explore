@@ -1,4 +1,5 @@
 import { useState, useRef, ReactNode } from 'react';
+import { haptics } from '@/lib/haptics';
 
 export interface SwipeAction {
   label: string;
@@ -27,6 +28,7 @@ export const SwipeableRow = ({
   const startX = useRef<number | null>(null);
   const startOffset = useRef(0);
   const dragging = useRef(false);
+  const crossed = useRef(false);
 
   // In RTL, the gesture directions are mirrored.
   const flip = isRTL ? -1 : 1;
@@ -49,6 +51,10 @@ export const SwipeableRow = ({
     const lower = Math.min(maxRight, 0);
     if (next > upper) next = upper + (next - upper) * 0.25;
     if (next < lower) next = lower + (next - lower) * 0.25;
+    // Threshold haptic — fires once when user crosses the action threshold
+    const past = Math.abs(next) > threshold;
+    if (past && !crossed.current) { crossed.current = true; haptics.light(); }
+    else if (!past && crossed.current) { crossed.current = false; }
     setOffset(next);
   };
 
