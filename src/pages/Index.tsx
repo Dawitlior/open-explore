@@ -1893,7 +1893,7 @@ const Index = () => {
             </div>
           )}
         </div>
-      </main>
+      </MainPullToRefresh>
 
       {/* OVERLAYS */}
       {showTradeForm && <TradeForm T={T} t={t} isRTL={isRTL} trade={editingTrade} currentBalance={currentBalance} onSave={handleSaveTrade} onClose={() => { setShowTradeForm(false); setEditingTrade(null); }} />}
