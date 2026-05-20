@@ -122,14 +122,10 @@ export function EconomicCalendarPage({ onClose }: Props) {
   const isRTL = lang === 'he';
   const t = COPY[lang];
 
-  // 30-day horizon, T1 only — minimal payload reaches the client
-  const { events: rawEvents, loading } = useEconomicEvents({ hoursAhead: 30 * 24, impacts: ['t1'] });
+  // Radar Terminal — full unfiltered macro feed: all impacts, all regions.
+  const { events: rawEvents, loading } = useEconomicEvents({ hoursAhead: 30 * 24 });
+  const events = rawEvents;
 
-  // Defensive client-side filter: USD + JPY only
-  const events = useMemo<EconomicEvent[]>(
-    () => rawEvents.filter((e) => e.currency && CURRENCY_FILTER.includes(e.currency.toUpperCase() as 'USD' | 'JPY')),
-    [rawEvents],
-  );
 
   // Group events by IST day key
   const eventsByDay = useMemo(() => {
