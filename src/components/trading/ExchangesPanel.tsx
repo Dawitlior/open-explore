@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+
 import { Plug, Shield, ShieldCheck, X, Trash2, Sparkles, Lock, ChevronDown, BookOpen, AlertTriangle, RefreshCw, FileSpreadsheet, UploadCloud, CheckCircle2, Loader2, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -207,20 +207,12 @@ export function ExchangesPanel({ T, isRTL }: Props) {
         </p>
       </div>
 
-      {/* Bento Grid — Glass-Tech broker cards (Bloomberg/TradingView control-center aesthetic) */}
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={{
-          hidden: {},
-          visible: { transition: { staggerChildren: 0.06, delayChildren: 0.05 } },
-        }}
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-          gap: 16,
-        }}
-      >
+      {/* Minimalist broker grid — flat surfaces, sharp borders, no motion cascade */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+        gap: 16,
+      }}>
         {PROVIDERS.map((p, idx) => {
           const conns = byProvider.get(p.id) ?? [];
           const connected = conns.length > 0 && p.enabled;
@@ -241,7 +233,7 @@ export function ExchangesPanel({ T, isRTL }: Props) {
             />
           );
         })}
-      </motion.div>
+      </div>
 
       {/* ========== Accounts summary (Phase 3) ========== */}
       <AccountsSummaryStrip T={T} isRTL={isRTL} />
