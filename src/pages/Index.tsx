@@ -2010,6 +2010,19 @@ const Index = () => {
       {showRiskOnboarding && (
         <RiskOnboardingWizard isRTL={isRTL} onDismiss={() => setShowRiskOnboarding(false)} />
       )}
+      {/* MOBILE BOTTOM NAVIGATION — thumb-reachable, persistent */}
+      {isMobile && activeDimension === 'orca' && (
+        <MobileBottomNav
+          T={T}
+          isRTL={isRTL}
+          page={page}
+          onNavigate={(id) => { setPage(id); }}
+          onOpenRadar={() => setShowEconomicCalendar(true)}
+          onOpenMore={() => setSbOpen(true)}
+          onAddTrade={() => { setEditingTrade(null); setShowTradeForm(true); }}
+          onLongPressCenter={() => setShowCmdPalette(true)}
+        />
+      )}
       
     </div>
     </DisplayModeProvider>
