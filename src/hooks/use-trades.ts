@@ -234,6 +234,7 @@ export function useTrades() {
 
   const resetAll = useCallback(async () => {
     await clearAllData();
+    __tradesCache = [];
     tradesRef.current = [];
     setTrades([]);
   }, []);
