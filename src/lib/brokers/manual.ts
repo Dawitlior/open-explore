@@ -20,6 +20,7 @@ export const manualAdapter: BrokerAdapter = {
     kind: "hybrid",
     assetClasses: ["crypto", "fx", "equities", "futures", "options", "other"],
     accent: "#94a3b8",
+    hidden: true,
     tagline: {
       he: "רישום ידני של עסקאות",
       en: "Hand-entered trades",

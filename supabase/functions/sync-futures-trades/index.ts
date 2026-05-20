@@ -252,6 +252,184 @@ function bybitToTrade(e: BybitClosedPnl, provider: string): BybitNormalized {
   };
 }
 
+// ============== Binance USDT-M Futures (income-based) ==============
+// Binance has no "closed-pnl" endpoint. We use /fapi/v1/income filtered by
+// incomeType=REALIZED_PNL — each row is one fully-realised PnL event with
+// symbol + signed income amount + tranId. Entry/exit prices are not exposed
+// here (enrichment via /fapi/v1/userTrades is a Phase 4.5 follow-up); we
+// persist pnl-only rows so the journal stays in sync with the exchange.
+
+interface BinanceIncome {
+  symbol: string;
+  incomeType: string;
+  income: string;      // signed, USDT
+  asset: string;
+  time: number;        // ms
+  info?: string;
+  tranId: string | number;
+  tradeId?: string;
+}
+
+interface BinanceFetchResult {
+  ok: true;
+  list: BinanceIncome[];
+}
+
+async function binanceSignedGet(
+  apiKey: string,
+  apiSecret: string,
+  path: string,
+  params: URLSearchParams,
+): Promise<{ ok: true; body: unknown } | BybitFetchError> {
+  params.set('timestamp', Date.now().toString());
+  params.set('recvWindow', '5000');
+  const query = params.toString();
+  const sig = await hmacSha256Hex(apiSecret, query);
+  let res: Response;
+  try {
+    res = await fetch(`https://fapi.binance.com${path}?${query}&signature=${sig}`, {
+      method: 'GET',
+      headers: { 'X-MBX-APIKEY': apiKey },
+    });
+  } catch (e) {
+    return { ok: false, status: 503, error: 'exchange_unreachable', detail: (e as Error).message || 'fetch_failed' };
+  }
+  const text = await res.text();
+  if (res.status === 401 || res.status === 403) {
+    return { ok: false, status: 401, error: 'binance_rejected', detail: text.slice(0, 240) };
+  }
+  if (res.status >= 500) {
+    return { ok: false, status: 503, error: 'exchange_unreachable', detail: `binance_http_${res.status}` };
+  }
+  if (res.status >= 400) {
+    return { ok: false, status: 422, error: 'binance_rejected', detail: text.slice(0, 240) };
+  }
+  let body: unknown;
+  try { body = JSON.parse(text); } catch { body = []; }
+  return { ok: true, body };
+}
+
+async function fetchBinanceRealizedPnl(
+  apiKey: string,
+  apiSecret: string,
+): Promise<BinanceFetchResult | BybitFetchError> {
+  const DAY_MS = 86_400_000;
+  const WINDOW_MS = 7 * DAY_MS;
+  const endTime = Date.now();
+  const startTime = endTime - 180 * DAY_MS;
+  const all: BinanceIncome[] = [];
+  const MAX_PAGES = 400;
+
+  for (let wEnd = endTime; wEnd > startTime; wEnd -= WINDOW_MS) {
+    const wStart = Math.max(startTime, wEnd - WINDOW_MS);
+    let cursorTime = wStart;
+    let pages = 0;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const params = new URLSearchParams({
+        incomeType: 'REALIZED_PNL',
+        startTime: String(cursorTime),
+        endTime: String(wEnd),
+        limit: '1000',
+      });
+      const r = await binanceSignedGet(apiKey, apiSecret, '/fapi/v1/income', params);
+      if (!r.ok) return r;
+      const list = Array.isArray(r.body) ? (r.body as BinanceIncome[]) : [];
+      if (list.length === 0) break;
+      all.push(...list);
+      pages++;
+      if (list.length < 1000 || pages > MAX_PAGES) break;
+      // Advance past the last event to avoid re-fetching the same page.
+      const lastTime = list[list.length - 1].time;
+      if (lastTime <= cursorTime) break;
+      cursorTime = lastTime + 1;
+    }
+  }
+  return { ok: true, list: all };
+}
+
+function binanceToTrade(e: BinanceIncome, provider: string): BybitNormalized {
+  const pnl = Number(e.income) || 0;
+  const closeMs = Number(e.time) || Date.now();
+  const d = new Date(closeMs);
+  const iso = d.toISOString().slice(0, 19).replace('T', ' ');
+  const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
+  const direction: 'Long' | 'Short' = pnl >= 0 ? 'Long' : 'Short'; // unknown — placeholder
+  const winLoss: 'Win' | 'Loss' | 'Break Even' =
+    pnl > 0 ? 'Win' : pnl < 0 ? 'Loss' : 'Break Even';
+  const externalId = `binance:${e.symbol}:${e.tranId}`;
+  return {
+    legacy: {
+      date: iso,
+      day: dayName,
+      coin: e.symbol,
+      direction,
+      orderType: 'Market',
+      entry: 0,
+      stopLoss: 0,
+      exit: 0,
+      returnR: 0,
+      winLoss,
+      risk: 0,
+      expectedLoss: 0,
+      pnl,
+      deviation: 0,
+      positionSize: 0,
+      leverage: 1,
+      riskPct: 0,
+      rules: true,
+      comments: `__CLOSED:${externalId}__ ${provider} income`,
+      exchange_provider: provider,
+      exchange_exec_id: externalId,
+    },
+    provenance: {
+      broker_id: provider,
+      source_type: 'api_sync',
+      asset_class: 'crypto',
+      external_id: externalId,
+      opened_at: new Date(closeMs).toISOString(),
+      closed_at: new Date(closeMs).toISOString(),
+    },
+  };
+}
+
+// Provider dispatch table — used by the handler's bulk path.
+type ProviderId = 'bybit' | 'binance';
+async function fetchProviderClosedTrades(
+  provider: ProviderId,
+  apiKey: string,
+  apiSecret: string,
+): Promise<
+  | { ok: true; list: Array<{ legacy: BybitNormalized['legacy']; provenance: BybitNormalized['provenance']; key: string }> }
+  | BybitFetchError
+> {
+  if (provider === 'bybit') {
+    const r = await fetchBybitClosedPnl(apiKey, apiSecret);
+    if (!r.ok) return r;
+    return {
+      ok: true,
+      list: r.list
+        .filter(e => !!e?.orderId)
+        .map(e => {
+          const n = bybitToTrade(e, provider);
+          return { ...n, key: e.orderId };
+        }),
+    };
+  }
+  if (provider === 'binance') {
+    const r = await fetchBinanceRealizedPnl(apiKey, apiSecret);
+    if (!r.ok) return r;
+    return {
+      ok: true,
+      list: r.list.map(e => {
+        const n = binanceToTrade(e, provider);
+        return { ...n, key: n.provenance.external_id };
+      }),
+    };
+  }
+  return { ok: false, status: 400, error: 'unsupported_provider', detail: provider };
+}
+
 // ---------- Handler ----------
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
@@ -295,9 +473,9 @@ Deno.serve(async (req) => {
     try { body = await req.json(); }
     catch { return json({ ok: false, error: 'invalid_body', detail: 'json_parse_failed' }, 400); }
 
-    const provider = String(body.provider || '').toLowerCase().trim();
-    if (provider !== 'bybit') {
-      return json({ ok: false, error: 'unsupported_provider', detail: 'Only Bybit linear sync is enabled' }, 400);
+    const provider = String(body.provider || '').toLowerCase().trim() as ProviderId;
+    if (provider !== 'bybit' && provider !== 'binance') {
+      return json({ ok: false, error: 'unsupported_provider', detail: `Provider '${provider}' is not supported yet` }, 400);
     }
     const label = typeof body.label === 'string' ? body.label.trim() : '';
     const mode: 'bulk' | 'incremental' = body.mode === 'incremental' ? 'incremental' : 'bulk';
@@ -338,10 +516,13 @@ Deno.serve(async (req) => {
       return json({ ok: false, error: 'vault_read_failed', detail: secErr?.message ?? 'no_secret' }, 500);
     }
 
-    // ───────── INCREMENTAL MODE ─────────
+    // ───────── INCREMENTAL MODE (Bybit-only) ─────────
     // Append-only path triggered by the live WS when a position closes.
     // Fetches a single narrow window for one symbol and upserts — never wipes.
     if (mode === 'incremental') {
+      if (provider !== 'bybit') {
+        return json({ ok: false, error: 'unsupported_mode', detail: 'incremental sync is only available for Bybit' }, 400);
+      }
       if (!incSymbol) return json({ ok: false, error: 'invalid_body', detail: 'symbol required' }, 400);
       const startTime = incSince > 0 ? incSince : Date.now() - 60 * 60 * 1000;
       const endTime = Date.now();
@@ -394,17 +575,16 @@ Deno.serve(async (req) => {
     }
 
 
-    // ---- Fetch consolidated closed-pnl trades (defensively validated) ----
-    const fetchResult = await fetchBybitClosedPnl(cred.api_key, apiSecret);
+    // ---- Fetch consolidated closed trades via the provider dispatcher ----
+    const fetchResult = await fetchProviderClosedTrades(provider, cred.api_key, apiSecret);
     if (!fetchResult.ok) {
       return json({ ok: false, error: fetchResult.error, detail: fetchResult.detail }, fetchResult.status);
     }
-    const closed = fetchResult.list;
+    const closedEntries = fetchResult.list;
 
-    // ---- WIPE corrupted execution-level rows for this user/provider ----
-    // The previous pipeline persisted raw fills as standalone trades, which
-    // inflated counts + fragmented PnL. We start clean every sync — closed-pnl
-    // is itself idempotent + bounded by the 180-day window.
+    // ---- WIPE prior api_sync rows for this user/provider ----
+    // Closed-pnl is itself idempotent + bounded by the 180-day window, so we
+    // re-derive from scratch on every bulk sync.
     let wiped = 0;
     {
       const { data: wipedRows, error: wipeErr } = await admin
@@ -420,7 +600,7 @@ Deno.serve(async (req) => {
     }
 
     // Zero-trade fast path — legitimate (new account / no 180d activity)
-    if (closed.length === 0) {
+    if (closedEntries.length === 0) {
       return json({ ok: true, fetched: 0, inserted: 0, skipped: 0, wiped, syncedCount: 0 });
     }
 
@@ -435,28 +615,26 @@ Deno.serve(async (req) => {
     if (maxErr) return json({ ok: false, error: 'max_id_lookup_failed', detail: maxErr.message }, 500);
     let nextId = ((maxRow?.trade_id as number | undefined) ?? 0) + 1;
 
-    // ---- Build rows from closed-pnl, deduped by orderId across paginated windows ----
+    // ---- Build rows, deduped by adapter key ----
     const localSeen = new Set<string>();
     const rows: Array<Record<string, unknown>> = [];
     let inserted = 0;
     let skipped = 0;
     let runningBalance = 0;
-    // Sort chronologically so running balance is meaningful.
-    const sorted = [...closed].sort((a, b) =>
-      (Number(a.updatedTime) || 0) - (Number(b.updatedTime) || 0),
+    const sorted = [...closedEntries].sort((a, b) =>
+      Date.parse(a.provenance.closed_at) - Date.parse(b.provenance.closed_at),
     );
-    for (const e of sorted) {
-      if (!e?.orderId) { skipped++; continue; }
-      if (localSeen.has(e.orderId)) { skipped++; continue; }
-      localSeen.add(e.orderId);
-      const { legacy, provenance } = bybitToTrade(e, provider);
+    for (const entry of sorted) {
+      if (!entry.key) { skipped++; continue; }
+      if (localSeen.has(entry.key)) { skipped++; continue; }
+      localSeen.add(entry.key);
+      const { legacy, provenance } = entry;
       runningBalance += legacy.pnl;
       const full: Trade = { ...legacy, id: nextId, balance: Math.round(runningBalance * 10000) / 10000 };
       rows.push({
         user_id: userId,
         trade_id: nextId,
         data: full,
-        // Phase 1 dual-write
         broker_id: provenance.broker_id,
         account_label: label || null,
         source_type: provenance.source_type,
@@ -468,6 +646,7 @@ Deno.serve(async (req) => {
       nextId++;
       inserted++;
     }
+
 
     if (rows.length > 0) {
       // Idempotency tier 3 (DB layer): conflict on the unique partial index
@@ -481,50 +660,52 @@ Deno.serve(async (req) => {
       }
     }
 
-    // ---- Sync live open positions ----
+    // ---- Sync live open positions (Bybit-only for now) ----
     let positionsSynced = 0;
-    try {
-      const posResult = await fetchBybitOpenPositions(cred.api_key, apiSecret);
-      if (posResult.ok) {
-        const active = posResult.list.filter(p => Number(p.size) > 0);
-        const activeSymbols = new Set(active.map(p => p.symbol));
+    if (provider === 'bybit') {
+      try {
+        const posResult = await fetchBybitOpenPositions(cred.api_key, apiSecret);
+        if (posResult.ok) {
+          const active = posResult.list.filter(p => Number(p.size) > 0);
+          const activeSymbols = new Set(active.map(p => p.symbol));
 
-        if (active.length > 0) {
-          const posRows = active.map(p => ({
-            user_id: userId,
-            provider,
-            account_label: label || null,
-            symbol: p.symbol,
-            side: p.side,
-            size: Number(p.size) || 0,
-            entry_price: Number(p.avgPrice ?? p.entryPrice ?? 0) || 0,
-            unrealized_pnl: Number(p.unrealisedPnl ?? p.unrealizedPnl ?? 0) || 0,
-            updated_at: new Date().toISOString(),
-          }));
-          const { error: posUpErr } = await admin
+          if (active.length > 0) {
+            const posRows = active.map(p => ({
+              user_id: userId,
+              provider,
+              account_label: label || null,
+              symbol: p.symbol,
+              side: p.side,
+              size: Number(p.size) || 0,
+              entry_price: Number(p.avgPrice ?? p.entryPrice ?? 0) || 0,
+              unrealized_pnl: Number(p.unrealisedPnl ?? p.unrealizedPnl ?? 0) || 0,
+              updated_at: new Date().toISOString(),
+            }));
+            const { error: posUpErr } = await admin
+              .from('open_positions')
+              .upsert(posRows, { onConflict: 'user_id,provider,symbol' });
+            if (posUpErr) console.error('[sync-futures-trades] open_positions upsert', posUpErr.message);
+            else positionsSynced = posRows.length;
+          }
+
+          // Remove stale rows for this user/provider not in the current active set
+          const { data: existingPos } = await admin
             .from('open_positions')
-            .upsert(posRows, { onConflict: 'user_id,provider,symbol' });
-          if (posUpErr) console.error('[sync-futures-trades] open_positions upsert', posUpErr.message);
-          else positionsSynced = posRows.length;
+            .select('id, symbol')
+            .eq('user_id', userId)
+            .eq('provider', provider);
+          const staleIds = (existingPos ?? [])
+            .filter(r => !activeSymbols.has(r.symbol as string))
+            .map(r => r.id);
+          if (staleIds.length > 0) {
+            await admin.from('open_positions').delete().in('id', staleIds);
+          }
+        } else {
+          console.error('[sync-futures-trades] positions fetch failed', posResult.detail);
         }
-
-        // Remove stale rows for this user/provider not in the current active set
-        const { data: existingPos } = await admin
-          .from('open_positions')
-          .select('id, symbol')
-          .eq('user_id', userId)
-          .eq('provider', provider);
-        const staleIds = (existingPos ?? [])
-          .filter(r => !activeSymbols.has(r.symbol as string))
-          .map(r => r.id);
-        if (staleIds.length > 0) {
-          await admin.from('open_positions').delete().in('id', staleIds);
-        }
-      } else {
-        console.error('[sync-futures-trades] positions fetch failed', posResult.detail);
+      } catch (e) {
+        console.error('[sync-futures-trades] positions sync threw', (e as Error).message);
       }
-    } catch (e) {
-      console.error('[sync-futures-trades] positions sync threw', (e as Error).message);
     }
 
     // Stamp last_validated_at as a successful-sync marker (non-fatal)
@@ -536,7 +717,7 @@ Deno.serve(async (req) => {
 
     return json({
       ok: true,
-      fetched: closed.length,
+      fetched: closedEntries.length,
       inserted,
       skipped,
       wiped,

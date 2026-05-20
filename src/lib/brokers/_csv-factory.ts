@@ -25,6 +25,7 @@ export interface CsvAdapterConfig {
   id: string;
   name: string;
   accent: string;
+  glyph?: string;
   tagline: { he: string; en: string };
   assetClasses?: AssetClass[];
   /** Broker-specific header signature for confident auto-detection. */
@@ -78,6 +79,7 @@ export function createCsvAdapter(cfg: CsvAdapterConfig): BrokerAdapter {
     kind: "file",
     assetClasses: cfg.assetClasses ?? ["other"],
     accent: cfg.accent,
+    glyph: cfg.glyph ?? cfg.name.slice(0, 2).toUpperCase(),
     tagline: cfg.tagline,
   };
 
