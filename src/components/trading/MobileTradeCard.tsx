@@ -18,8 +18,11 @@ interface MobileTradeCardProps {
  * Card-stack pattern with swipe-to-edit (right) and swipe-to-delete (left).
  */
 export const MobileTradeCard = ({
-  T, isRTL, trade, effectiveR, onOpen, onEdit, onDelete,
+  T, isRTL, trade, effectiveR, privacyMode, onOpen, onEdit, onDelete,
 }: MobileTradeCardProps) => {
+  const PV = ({ children }: { children: React.ReactNode }) => (
+    <PrivacyMask enabled={privacyMode} type="dollar">{children}</PrivacyMask>
+  );
   const isWin = trade.pnl >= 0;
   const pnlColor = isWin ? T.accent.green : T.accent.red;
   const dirColor = trade.direction === 'Long' ? T.accent.green : T.accent.red;
