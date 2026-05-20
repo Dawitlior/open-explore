@@ -481,13 +481,23 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
 // CONTRACT: every produced trade MUST carry `stopLoss: null` so the
 // Dual-Currency Engine knows R-Multiples are not computable for these rows
 // and locks the dashboard into MONEY mode.
+//
+// As of Phase 2 (Broker-Agnostic engine), the raw parsing is exposed via
+// `parseBrokerCsvRaw()` so per-broker adapters can consume it under the
+// BrokerAdapter contract. `importFromBrokerCsv()` is kept as a thin
+// backward-compatibility wrapper.
 // ═══════════════════════════════════════════════════
 
 export interface BrokerImportResult extends ImportResult {
   broker: string;
 }
 
-export function importFromBrokerCsv(file: File, brokerId: string): Promise<BrokerImportResult> {
+/**
+ * Phase 2: low-level CSV parser — returns raw sanitized trades with NO
+ * broker-specific tagging, NO stopLoss normalization. Used by the per-broker
+ * adapters in `src/lib/brokers/` to feed the dispatcher pipeline.
+ */
+export function parseBrokerCsvRaw(file: File): Promise<Trade[]> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -495,33 +505,23 @@ export function importFromBrokerCsv(file: File, brokerId: string): Promise<Broke
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const wb = XLSX.read(data, { type: 'array', cellDates: true, raw: true });
         const sheetName = wb.SheetNames[0];
-        if (!sheetName) { resolve({ trades: [], errors: ['Empty file'], skipped: 0, imported: 0, broker: brokerId }); return; }
+        if (!sheetName) { resolve([]); return; }
         const ws = wb.Sheets[sheetName];
 
         const headerRowIdx = findHeaderRow(ws);
         const rows = XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1, raw: false, blankrows: false, defval: '' });
-        if (rows.length <= headerRowIdx + 1) {
-          resolve({ trades: [], errors: ['No data rows detected'], skipped: 0, imported: 0, broker: brokerId });
-          return;
-        }
+        if (rows.length <= headerRowIdx + 1) { resolve([]); return; }
 
-        // Build column → internal field map from the detected header row.
         const headerRow = rows[headerRowIdx] || [];
         const colMap: Array<{ idx: number; field: keyof Trade | '_ignore' }> = [];
         headerRow.forEach((h, i) => {
           const field = mapHeaderToField(String(h ?? ''));
           if (field && field !== '_ignore') colMap.push({ idx: i, field });
         });
-        if (colMap.length === 0) {
-          resolve({ trades: [], errors: ['No recognizable columns'], skipped: 0, imported: 0, broker: brokerId });
-          return;
-        }
+        if (colMap.length === 0) { resolve([]); return; }
 
         const trades: Trade[] = [];
-        const errors: string[] = [];
-        let skipped = 0;
-
-        rows.slice(headerRowIdx + 1).forEach((row, idx) => {
+        rows.slice(headerRowIdx + 1).forEach((row) => {
           try {
             const mapped: Record<string, unknown> = {};
             for (const { idx: ci, field } of colMap) {
@@ -536,32 +536,13 @@ export function importFromBrokerCsv(file: File, brokerId: string): Promise<Broke
               } else if (field === 'rules') mapped.rules = true;
               else mapped[field] = val;
             }
-
-            if (isEmptyRow(mapped)) { skipped++; return; }
-
+            if (isEmptyRow(mapped)) return;
             const sanitized = sanitizeTrade(mapped, trades.length + 1);
-            if (!sanitized) { skipped++; if (errors.length < 10) errors.push(`Row ${headerRowIdx + 2 + idx}: invalid`); return; }
-
-            // 🔒 Data-Integrity Rule: preserve a real stop-loss when the file
-            // provides one (pro CSVs / Excel exports). Only fall back to null
-            // when the broker file truly has no risk column — that keeps the
-            // Dual-Currency Engine honest about which rows are R-eligible.
-            const incomingSL = sanitized.stopLoss;
-            const hasRealSL = typeof incomingSL === 'number' && isFinite(incomingSL) && incomingSL !== 0;
-            const enforced: Trade = {
-              ...sanitized,
-              stopLoss: hasRealSL ? incomingSL : null,
-              comments: [`Broker:${brokerId}`, sanitized.comments].filter(Boolean).join(' | '),
-            };
-
-            trades.push(enforced);
-          } catch (err) {
-            skipped++;
-            if (errors.length < 10) errors.push(`Row ${headerRowIdx + 2 + idx}: ${err instanceof Error ? err.message : 'Parse error'}`);
-          }
+            if (sanitized) trades.push(sanitized);
+          } catch { /* skip bad rows */ }
         });
 
-        resolve({ trades, errors, skipped, imported: trades.length, broker: brokerId });
+        resolve(trades);
       } catch (err) {
         reject(err);
       }
@@ -569,5 +550,26 @@ export function importFromBrokerCsv(file: File, brokerId: string): Promise<Broke
     reader.onerror = () => reject(new Error('File read failed'));
     reader.readAsArrayBuffer(file);
   });
+}
+
+/**
+ * Backwards-compatible wrapper. New ingestion paths should go through the
+ * dispatcher (`ingestFileToTrades` in `src/lib/ingestion/file-import.ts`).
+ */
+export async function importFromBrokerCsv(file: File, brokerId: string): Promise<BrokerImportResult> {
+  try {
+    const raw = await parseBrokerCsvRaw(file);
+    const trades: Trade[] = raw.map(t => {
+      const hasRealSL = typeof t.stopLoss === 'number' && isFinite(t.stopLoss) && t.stopLoss !== 0;
+      return {
+        ...t,
+        stopLoss: hasRealSL ? t.stopLoss : null,
+        comments: [`Broker:${brokerId}`, t.comments].filter(Boolean).join(' | '),
+      };
+    });
+    return { trades, errors: [], skipped: 0, imported: trades.length, broker: brokerId };
+  } catch (err) {
+    return { trades: [], errors: [err instanceof Error ? err.message : 'parse_failed'], skipped: 0, imported: 0, broker: brokerId };
+  }
 }
 

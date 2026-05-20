@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { useTrades } from '@/hooks/use-trades';
-import { importFromBrokerCsv } from '@/lib/xlsx-engine';
+import { ingestFileToTrades } from '@/lib/ingestion/file-import';
 
 type ProviderId = 'bybit' | 'binance' | 'ibkr';
 
@@ -1655,9 +1655,11 @@ function CsvDropZone({
   const [processing, setProcessing] = useState(false);
   const [doneFile, setDoneFile] = useState<string | null>(null);
 
-  // CSV pipeline: parse the broker file with the generic XLSX/CSV engine,
-  // force `stopLoss: null` on every row (handled inside importFromBrokerCsv),
-  // then push to the global trade store via useTrades.importTrades.
+  // CSV pipeline (Phase 2 Broker-Agnostic): parse via the registered adapter
+  // for `broker.id`, which yields NormalizedTrades that carry full provenance
+  // (broker_id, source_type, external_id, etc.). The file-import bridge maps
+  // them onto legacy Trade objects + `__provenance` so `useTrades.importTrades`
+  // → `saveTrades` populates the new first-class DB columns automatically.
   const { importTrades } = useTrades();
   const handleFiles = async (files: FileList | File[]) => {
     const f = files[0];
@@ -1665,8 +1667,8 @@ function CsvDropZone({
     setProcessing(true);
     setDoneFile(null);
     try {
-      const result = await importFromBrokerCsv(f, broker.id);
-      if (result.trades.length === 0) {
+      const result = await ingestFileToTrades(f, { brokerIdHint: broker.id });
+      if (!result.ok || result.trades.length === 0) {
         toast.error(t('לא נמצאו עסקאות תקפות בקובץ', 'No valid trades found in file'));
         setProcessing(false);
         return;
@@ -1678,8 +1680,8 @@ function CsvDropZone({
       setDoneFile(f.name);
       toast.success(t('הנתונים נטענו בהצלחה', 'Data loaded successfully'), {
         description: t(
-          `${result.imported} עסקאות יובאו · מצב תצוגה ננעל ל-Money`,
-          `${result.imported} trades imported · display locked to Money`,
+          `${result.trades.length} עסקאות יובאו · מצב תצוגה ננעל ל-Money`,
+          `${result.trades.length} trades imported · display locked to Money`,
         ),
       });
     } catch (e) {

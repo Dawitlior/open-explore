@@ -54,30 +54,63 @@ export async function getAllTrades(): Promise<Trade[]> {
   return out;
 }
 
+/**
+ * Lift `__provenance` (attached by file-import bridge / future adapters)
+ * onto the row payload so Phase 2 first-class columns are populated, and
+ * strip it from the `data` jsonb so the blob stays clean.
+ */
+function buildRow(uid: string, t: Trade) {
+  const withProv = t as Trade & {
+    __provenance?: {
+      broker_id: string;
+      account_label: string | null;
+      source_type: 'api_sync' | 'csv_import' | 'manual';
+      asset_class: string;
+      external_id: string;
+      opened_at: string | null;
+      closed_at: string | null;
+    };
+  };
+  const prov = withProv.__provenance;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { __provenance, ...clean } = withProv as Trade & Record<string, unknown>;
+  const row: Record<string, unknown> = {
+    user_id: uid,
+    trade_id: t.id,
+    data: clean,
+  };
+  if (prov) {
+    row.broker_id = prov.broker_id;
+    row.account_label = prov.account_label;
+    row.source_type = prov.source_type;
+    row.asset_class = prov.asset_class;
+    row.external_id = prov.external_id;
+    row.opened_at = prov.opened_at;
+    row.closed_at = prov.closed_at;
+  }
+  return row;
+}
+
 export async function saveTrade(trade: Trade): Promise<void> {
   const uid = await currentUserId();
   if (!uid) return;
   const { error } = await supabase
     .from('trades')
-    .upsert({ user_id: uid, trade_id: trade.id, data: trade as any }, { onConflict: 'user_id,trade_id' });
+    .upsert(buildRow(uid, trade) as never, { onConflict: 'user_id,trade_id' });
   if (error) reportStorageError('saveTrade', error);
 }
 
 export async function saveTrades(trades: Trade[]): Promise<void> {
   const uid = await currentUserId();
   if (!uid || trades.length === 0) return;
-  const rows = trades.map(t => ({
-    user_id: uid,
-    trade_id: t.id,
-    data: t as any,
-  }));
+  const rows = trades.map(t => buildRow(uid, t));
   // Chunk to stay polite with payload size
   const CHUNK = 200;
   for (let i = 0; i < rows.length; i += CHUNK) {
     const slice = rows.slice(i, i + CHUNK);
     const { error } = await supabase
       .from('trades')
-      .upsert(slice, { onConflict: 'user_id,trade_id' });
+      .upsert(slice as never, { onConflict: 'user_id,trade_id' });
     if (error) { reportStorageError('saveTrades', error); throw error; }
   }
 }
