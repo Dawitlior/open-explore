@@ -5,6 +5,7 @@ import type { I18nStrings } from '@/lib/trading-i18n';
 import { GlassCard } from './TradingUI';
 import { FeatureHint } from './FeatureHint';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { haptics } from '@/lib/haptics';
 
 interface TradeFormProps {
   T: TradingTheme;
@@ -431,6 +432,62 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
 
               <div style={sectionCard}>
                 <label style={bigLabel}>{isRTL ? 'כמה הסתכנת? (בדולרים)' : 'How much did you risk? ($)'}</label>
+
+                {/* R-Multiple chips — pick risk as % of balance with one tap */}
+                {currentBalance > 0 && (
+                  <div
+                    role="radiogroup"
+                    aria-label={isRTL ? 'אחוז סיכון מהירים' : 'Quick risk percentage'}
+                    style={{
+                      display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap',
+                    }}
+                  >
+                    {[0.25, 0.5, 1, 1.5, 2].map(pct => {
+                      const dollar = +((currentBalance * pct) / 100).toFixed(2);
+                      const active = Math.abs(equivPercent - pct) < 0.05;
+                      return (
+                        <button
+                          key={pct}
+                          type="button"
+                          role="radio"
+                          aria-checked={active}
+                          onClick={() => { haptics.selection(); handleRiskChange(dollar); }}
+                          className="orca-press"
+                          style={{
+                            flex: '1 1 auto',
+                            minWidth: 56,
+                            minHeight: 44,
+                            padding: '8px 10px',
+                            borderRadius: T.radius.md,
+                            border: `1px solid ${active ? T.accent.cyan : T.border.medium}`,
+                            background: active
+                              ? `linear-gradient(135deg, ${T.accent.cyan}22, ${T.accent.teal}18)`
+                              : T.bg.tertiary,
+                            color: active ? T.accent.cyan : T.text.secondary,
+                            cursor: 'pointer',
+                            fontFamily: "'JetBrains Mono', monospace",
+                            fontWeight: 700,
+                            fontSize: 13,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 2,
+                            boxShadow: active ? `0 0 0 1px ${T.accent.cyan}55, 0 0 14px ${T.accent.cyan}25` : 'none',
+                            WebkitTapHighlightColor: 'transparent',
+                            transition: 'border-color 0.18s, background 0.18s, color 0.18s, box-shadow 0.18s',
+                          }}
+                        >
+                          <span>{pct}%</span>
+                          <span style={{ fontSize: 9, fontWeight: 500, opacity: 0.75 }}>
+                            ${dollar.toLocaleString()}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
                 <input
                   type="number" step="any" inputMode="decimal"
                   value={form.risk || ''}

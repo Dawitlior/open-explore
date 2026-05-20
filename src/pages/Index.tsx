@@ -31,6 +31,7 @@ import { FeatureHint } from '@/components/trading/FeatureHint';
 import { EntryGate } from '@/components/trading/EntryGate';
 import { RiskLimitAlert } from '@/components/trading/RiskLimitAlert';
 import { MobileBottomNav } from '@/components/trading/MobileBottomNav';
+import { MainPullToRefresh } from '@/components/trading/MainPullToRefresh';
 import { MobileTradeCard } from '@/components/trading/MobileTradeCard';
 import { RiskExplanationModal, type RiskExplanation } from '@/components/trading/RiskExplanationModal';
 import { lazy, Suspense } from 'react';
@@ -612,7 +613,7 @@ const Index = () => {
     if (opMode === 'live') return (
       <>
         {/* Session Focus Panel */}
-        <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+        <div className={isMobile ? 'orca-snap-h' : ''} style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: isMobile ? 'nowrap' : 'wrap' }}>
           <GlassCard T={T} glow={T.accent.cyanGlow} style={{ flex: 2, minWidth: isMobile ? 0 : 300, width: isMobile ? '100%' : undefined }}>
             <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>{isRTL ? '🔴 מצב חי — פוקוס ביצוע' : '🔴 LIVE — Execution Focus'}</div>
             <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
@@ -642,7 +643,7 @@ const Index = () => {
           </GlassCard>
         </div>
         {/* Streak Pressure + Emotional Deviation */}
-        <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+        <div className={isMobile ? 'orca-snap-h' : ''} style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: isMobile ? 'nowrap' : 'wrap' }}>
           <GlassCard T={T} style={{ flex: 1, minWidth: isMobile ? 0 : 200, width: isMobile ? '100%' : undefined }}>
             <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{isRTL ? 'לחץ רצף' : 'Streak Pressure'}</div>
             <div style={{ padding: 14, borderRadius: T.radius.md, textAlign: 'center', background: stats.maxConsecLosses >= 3 ? `${T.accent.red}10` : stats.currentStreak >= 3 && stats.streakType === 'Win' ? `${T.accent.green}10` : `${T.accent.blue}08`, border: `1px solid ${stats.maxConsecLosses >= 3 ? T.accent.red : T.accent.green}20` }}>
@@ -714,7 +715,7 @@ const Index = () => {
             <span style={{ width: 18, height: 1, background: T.accent.cyan, display: 'inline-block' }} />
             {isRTL ? 'בריאות מסחר' : 'TRADING HEALTH'}
           </div>
-          <div style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
+          <div className={isMobile ? 'orca-snap-h' : ''} style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: isMobile ? 'nowrap' : 'wrap' }}>
             <MetricCard T={T} label={t.netPnl} value={stats.totalPnl} color={stats.totalPnl >= 0 ? T.accent.cyan : T.accent.red} onInfoClick={() => handleExplainClick(t.netPnl, EXPLANATIONS.netPnl)} />
             <MetricCard T={T} label={t.winRate} value={stats.winRate} suffix="%" color={T.accent.green} onInfoClick={() => handleExplainClick(t.winRate, EXPLANATIONS.winRate)} />
             <AdaptiveExpectancyCard
@@ -1765,7 +1766,7 @@ const Index = () => {
       )}
 
       {/* MAIN */}
-      <main style={{ flex: 1, overflow: 'auto', transition: 'background 0.4s ease' }}>
+      <MainPullToRefresh isMobile={isMobile} accent={T.accent.cyan}>
         <header style={{ padding: isMobile ? '8px 10px' : '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${T.border.subtle}`, background: `${T.bg.secondary}cc`, backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 5, gap: 8, flexWrap: 'nowrap', minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 14, minWidth: 0, flex: '1 1 auto', overflow: 'hidden' }}>
             {/* Mobile hamburger */}
@@ -1891,7 +1892,7 @@ const Index = () => {
             </div>
           )}
         </div>
-      </main>
+      </MainPullToRefresh>
 
       {/* OVERLAYS */}
       {showTradeForm && <TradeForm T={T} t={t} isRTL={isRTL} trade={editingTrade} currentBalance={currentBalance} onSave={handleSaveTrade} onClose={() => { setShowTradeForm(false); setEditingTrade(null); }} />}
