@@ -1,344 +1,217 @@
 
-# Orca OS — Broker-Agnostic Adapter Architecture
+# Master Plan — TradingView ⇄ Backtest Journal Bridge
 
-A professional, scalable refactor that turns every data source (Bybit, Binance, IBKR, MT5, NinjaTrader, …) into a swappable module behind one unified pipeline. Adding a new broker becomes "drop a file in `src/lib/brokers/`" — no edits to storage, no edits to the dispatcher.
+This is a **bridge**, not a new system. Your existing engine stays the source of truth:
+
+- **Store:** `scopedStorage` key `orca-bt-v13` (see `BacktestDimension.tsx`)
+- **Row schema:** `{id, coin, entryDT, exitDT, entry, sl, exit, mfeP, maeP, notes, chartE, chartX, dir, r, mfeR, maeR, dur}`
+- **Engine:** `recalc()` derives `dir`, `r`, `mfeR`, `maeR`, `dur` automatically once price + time fields exist
+- **UI host:** `BacktestDimension` (reached via the Backtest Portal in the sidebar)
+
+Everything below plugs *into* that — no parallel journal, no Supabase migration, no schema change.
 
 ---
 
-## 1. The BrokerAdapter Interface
-
-A single TypeScript contract every broker must implement — works identically for REST/WebSocket exchanges and CSV/XLSX file imports. The discriminator (`kind`) tells the dispatcher which entry points the adapter supports; everything else is symmetric.
+## 1. High-Level Roadmap (architecture first)
 
 ```text
-src/lib/brokers/types.ts
+ ┌──────────────────────────────────────────────────────────┐
+ │              BACKTEST WORKSPACE  (single page)           │
+ │                                                          │
+ │  ┌───────────────────────┐   ┌───────────────────────┐   │
+ │  │  TradingView Widget   │   │  Backtest Journal     │   │
+ │  │  (Advanced Chart)     │   │  (existing table)     │   │
+ │  │                       │   │                       │   │
+ │  │  Long/Short tool ─┐   │   │  rows = orca-bt-v13   │   │
+ │  └───────────────────┼───┘   └───────────▲───────────┘   │
+ │                      │                   │               │
+ │           drawing_event_*                │ append/update │
+ │                      ▼                   │               │
+ │            ┌──────────────────┐          │               │
+ │            │  TV-Bridge Hook  │──draft──►│               │
+ │            │  (useTvCapture)  │          │               │
+ │            └────────┬─────────┘          │               │
+ │                     │                    │               │
+ │                     ▼                    │               │
+ │            ┌──────────────────┐          │               │
+ │            │  Commit Modal    │──Save────┘               │
+ │            │  (one click)     │                          │
+ │            └──────────────────┘                          │
+ │                                                          │
+ │  Tabs:  [ Chart+Capture ]  [ Journal ]   (state shared)  │
+ └──────────────────────────────────────────────────────────┘
 ```
 
-```ts
-export type BrokerKind = 'api' | 'file' | 'hybrid';
-export type SourceType = 'api_sync' | 'csv_import' | 'manual';
+Five layers, each isolated and replaceable:
 
-export interface BrokerMeta {
-  id: string;              // 'bybit' | 'binance' | 'ibkr' | 'mt5' | …
-  name: string;            // 'Bybit'
-  kind: BrokerKind;
-  assetClasses: ('crypto'|'fx'|'equities'|'futures'|'options')[];
-  accent: string;          // brand color (UI)
-  tagline: { he: string; en: string };
-}
+| Layer | File | Job |
+|---|---|---|
+| Widget host | `BacktestChartPanel.tsx` (new) | Mounts TradingView Advanced Chart, exposes the `widget` ref |
+| Capture hook | `useTvCapture.ts` (new) | Subscribes to drawing events, builds a `DraftBacktestTrade` |
+| Draft store | `backtest-draft-store.ts` (new) | Tiny zustand/atom — holds the pending draft + open/close modal |
+| Commit modal | `CommitBacktestModal.tsx` (new) | One-click approval; on Save → `recalc()` + push into `orca-bt-v13` |
+| Workspace shell | edit `BacktestDimension.tsx` | Two-tab layout (Chart / Journal), shared state, no remount |
 
-export interface RawFill {
-  // Whatever the broker hands us — kept as `unknown` per-adapter shape.
-  // Adapters cast internally; the dispatcher never inspects this.
-  [k: string]: unknown;
-}
-
-export interface NormalizedTrade {
-  // Pure broker-agnostic shape — the canonical Orca Trade plus provenance.
-  // Persisted 1:1 into public.trades (see §3 schema).
-  external_id: string;        // exchange_exec_id / row hash for CSV
-  broker_id: string;
-  account_label: string | null;
-  source_type: SourceType;
-  asset_class: 'crypto'|'fx'|'equities'|'futures'|'options'|'other';
-  symbol: string;
-  direction: 'Long' | 'Short';
-  entry: number;
-  exit: number;
-  stop_loss: number | null;   // null = R-Multiples not computable
-  size: number;
-  leverage: number;
-  pnl: number;                // net of fees
-  fees: number;
-  opened_at: string;          // ISO
-  closed_at: string;          // ISO
-  raw: RawFill;               // verbatim payload for forensic replay
-}
-
-export interface DetectResult {
-  matches: boolean;
-  confidence: 0 | 1 | 2 | 3; // 0=no, 3=signature columns present
-  reason?: string;
-}
-
-// CSV/file path
-export interface FileAdapterInput {
-  file: File;
-  parsedRows?: unknown[];     // pre-parsed by XLSX engine (optional shortcut)
-  headers?: string[];
-}
-
-// API path
-export interface ApiAdapterInput {
-  apiKey: string;
-  apiSecret: string;
-  mode: 'bulk' | 'incremental';
-  since?: number;             // epoch ms
-  symbol?: string;            // incremental only
-}
-
-export interface OpenPosition {
-  broker_id: string;
-  account_label: string | null;
-  symbol: string;
-  side: 'Long' | 'Short';
-  size: number;
-  entry_price: number;
-  unrealized_pnl: number;
-  captured_at: string;
-}
-
-export interface BrokerAdapter {
-  readonly meta: BrokerMeta;
-
-  // 1. Identify whether THIS adapter can handle a given file/payload.
-  //    For API adapters, called with brokerId hint only.
-  detectFormat(input: FileAdapterInput | { brokerHint: string }): Promise<DetectResult>;
-
-  // 2. Pull or read raw fills, then map each one into the canonical shape.
-  //    File adapters parse the file. API adapters do signed HTTP + paginate.
-  //    Returns an iterable so huge datasets stream instead of buffering.
-  normalizeTrades(
-    input: FileAdapterInput | ApiAdapterInput,
-  ): AsyncIterable<NormalizedTrade>;
-
-  // 3. Optional — fold execution-level fills into closed positions when
-  //    the source only exports fills (IBKR, MT5). API adapters that already
-  //    return aggregated trades (Bybit closed-pnl) can return the input as-is.
-  aggregatePositions(fills: NormalizedTrade[]): NormalizedTrade[];
-
-  // 4. Optional — for live exchanges, mirror open positions.
-  fetchOpenPositions?(input: ApiAdapterInput): Promise<OpenPosition[]>;
-}
-```
-
-**Key design choices**
-- `normalizeTrades` returns an **AsyncIterable** so the dispatcher can stream-upsert in batches — important for IBKR Flex Reports that can hold 10k+ fills.
-- `raw` is kept on every NormalizedTrade for forensic replay & re-normalization without a re-sync.
-- `external_id` replaces today's scattered `exchange_exec_id` + comment-tag hacks. For CSVs, the adapter computes a deterministic hash (`broker|account|symbol|opened_at|size|pnl`) so re-imports are idempotent.
+No Supabase work. No new tables. The journal already persists via `scopedStorage`.
 
 ---
 
-## 2. The Broker Registry
+## 2. Backtest-to-Chart Hook (how we extract a closed position)
 
-Centralized auto-registration. Adding a broker = create one file, export the adapter, done.
-
-```text
-src/lib/brokers/
-  ├─ types.ts
-  ├─ registry.ts          ← single source of truth
-  ├─ bybit.ts             ← existing logic, refactored behind the interface
-  ├─ binance.ts
-  ├─ ibkr.ts
-  ├─ mt5.ts
-  ├─ ninjatrader.ts
-  └─ … one file per broker
-```
+TradingView's Advanced Charting Library exposes a drawing-event API on the widget instance:
 
 ```ts
-// registry.ts
-import type { BrokerAdapter } from './types';
-import { bybitAdapter } from './bybit';
-import { binanceAdapter } from './binance';
-import { ibkrAdapter } from './ibkr';
-// …
+widget.onChartReady(() => {
+  const chart = widget.activeChart();
+  chart.onDataLoaded().subscribe(null, () => {/* ready */});
 
-const ADAPTERS: BrokerAdapter[] = [bybitAdapter, binanceAdapter, ibkrAdapter /*…*/];
+  // Fires for every drawing add / move / remove
+  chart.subscribe('drawing_event', (lineId, eventType) => {
+    if (eventType !== 'create' && eventType !== 'properties_changed' &&
+        eventType !== 'points_changed' && eventType !== 'remove') return;
 
-export const BrokerRegistry = {
-  all: () => ADAPTERS,
-  byId: (id: string) => ADAPTERS.find(a => a.meta.id === id) ?? null,
-  apiCapable: () => ADAPTERS.filter(a => a.meta.kind !== 'file'),
-  fileCapable: () => ADAPTERS.filter(a => a.meta.kind !== 'api'),
+    const shape = chart.getShapeById(lineId);
+    const name  = shape.getProperties()?.name; // 'LineToolRiskRewardLong' | 'LineToolRiskRewardShort'
+    if (!name?.startsWith('LineToolRiskReward')) return;
 
-  // Auto-detect best file adapter for an unknown CSV/XLSX upload.
-  async detectFile(input: FileAdapterInput): Promise<BrokerAdapter | null> {
-    const scored = await Promise.all(
-      BrokerRegistry.fileCapable().map(async a => ({
-        a, r: await a.detectFormat(input),
-      })),
-    );
-    const best = scored
-      .filter(s => s.r.matches)
-      .sort((x, y) => y.r.confidence - x.r.confidence)[0];
-    return best?.a ?? null;
-  },
-};
-```
-
-**Same registry runs in both worlds**: the React client imports it for file uploads, and the edge function imports a Deno-compatible mirror (`supabase/functions/_shared/brokers/`) for API syncs. Adapter logic stays pure (no DOM, no Deno-only APIs) so the file is literally shared via a thin re-export.
-
-The UI's `PROVIDERS` and `CSV_BROKERS` arrays in `ExchangesPanel.tsx` are deleted — replaced by `BrokerRegistry.all().filter(a => a.meta.kind === …)`.
-
----
-
-## 3. Schema Refactor — Killing Source Leakage
-
-Today provenance lives in three messy places:
-- `data.exchange_provider` (jsonb, Bybit only)
-- `data.exchange_exec_id` (jsonb, promoted to a generated column)
-- `comments` text prefix `"Broker:ibkr"` (CSV path)
-
-Move it to **first-class columns**.
-
-### Target `public.trades` shape
-
-```sql
-ALTER TABLE public.trades
-  ADD COLUMN broker_id      text,
-  ADD COLUMN account_label  text,
-  ADD COLUMN source_type    text CHECK (source_type IN ('api_sync','csv_import','manual')),
-  ADD COLUMN asset_class    text,
-  ADD COLUMN external_id    text,
-  ADD COLUMN opened_at      timestamptz,
-  ADD COLUMN closed_at      timestamptz;
-
--- Indexes for the queries we'll actually run
-CREATE INDEX trades_user_broker_idx       ON public.trades(user_id, broker_id);
-CREATE INDEX trades_user_closedat_idx     ON public.trades(user_id, closed_at DESC);
-CREATE UNIQUE INDEX trades_user_external_uidx
-  ON public.trades(user_id, broker_id, account_label, external_id)
-  WHERE external_id IS NOT NULL;
-```
-
-`data` jsonb **stays** — it remains the canonical shape for client analytics. The new columns are a queryable projection.
-
-### Safe data migration (zero data loss)
-
-Run in **three reversible steps**, each in its own migration:
-
-1. **Additive**: add the columns nullable, no constraints. Deploy.
-2. **Backfill** with a single `UPDATE` derived from existing `data` jsonb + `comments`:
-   ```sql
-   UPDATE public.trades SET
-     broker_id    = COALESCE(data->>'exchange_provider',
-                             substring(data->>'comments' from 'Broker:([a-z0-9_]+)'),
-                             'manual'),
-     source_type  = CASE
-                      WHEN data->>'exchange_provider' IS NOT NULL THEN 'api_sync'
-                      WHEN data->>'comments' LIKE 'Broker:%'      THEN 'csv_import'
-                      ELSE 'manual'
-                    END,
-     external_id  = data->>'exchange_exec_id',
-     opened_at    = NULLIF(data->>'date','')::timestamptz,
-     closed_at    = NULLIF(data->>'date','')::timestamptz,
-     account_label = NULL,
-     asset_class   = NULL
-   WHERE broker_id IS NULL;
-   ```
-3. **Enforce** (after a release of dual-write): `ALTER COLUMN broker_id SET NOT NULL`, `ALTER COLUMN source_type SET NOT NULL`, drop the old generated `exchange_exec_id` column once nothing references it.
-
-The wipe-by-provider logic in the Bybit edge fn changes from `filter('data->>exchange_provider', 'eq', 'bybit')` to `eq('broker_id','bybit').eq('account_label', label)` — and now correctly supports **multiple Bybit accounts per user**.
-
-`open_positions` gets the same `account_label` treatment.
-
----
-
-## 4. Pipeline Flow — The Dispatcher
-
-No code path writes directly to `trades` anymore. Everything funnels through one Dispatcher → one StorageManager.
-
-```text
-                       ┌──────────────────────────────┐
-  File drop ──────────▶│         Dispatcher           │
-  API sync click ─────▶│  (src/lib/ingestion/         │
-  Manual entry ───────▶│   dispatch.ts)               │
-                       └─────────┬────────────────────┘
-                                 │
-                  ┌──────────────┼──────────────┐
-                  ▼              ▼              ▼
-            BrokerRegistry  Adapter.detect  Adapter.normalize
-                                                │
-                                                ▼  AsyncIterable<NormalizedTrade>
-                                       ┌──────────────────┐
-                                       │  StorageManager  │
-                                       │  (single writer) │
-                                       └─────────┬────────┘
-                                                 ▼
-                                          public.trades
-                                          public.open_positions
-```
-
-### Dispatcher contract
-
-```ts
-// src/lib/ingestion/dispatch.ts
-export async function ingest(source:
-  | { kind: 'file'; file: File; brokerIdHint?: string; accountLabel?: string }
-  | { kind: 'api'; brokerId: string; accountLabel: string; mode: 'bulk'|'incremental'; since?: number; symbol?: string }
-): Promise<IngestReport> {
-
-  const adapter = source.kind === 'file'
-    ? (source.brokerIdHint ? BrokerRegistry.byId(source.brokerIdHint)
-                            : await BrokerRegistry.detectFile({ file: source.file }))
-    : BrokerRegistry.byId(source.brokerId);
-
-  if (!adapter) return { ok: false, reason: 'no_adapter_matched' };
-
-  const stream = adapter.normalizeTrades(/* mapped input */);
-  return StorageManager.persist(stream, {
-    broker_id: adapter.meta.id,
-    account_label: source.accountLabel ?? null,
-    source_type: source.kind === 'file' ? 'csv_import' : 'api_sync',
+    const pts = shape.getPoints(); // [entry, target, stop] — TV's R/R tool
+    draftStore.upsert(lineToolToDraft(name, pts, chart.symbol(), chart.resolution()));
   });
-}
+});
 ```
 
-### StorageManager
+The **Long Position / Short Position tool** (TV's native R/R tool) already encodes everything we need:
 
-One module owns **every** Supabase write to `trades`. It enforces:
-- Batch upserts of 500 rows
-- ON CONFLICT on `(user_id, broker_id, account_label, external_id)` — idempotent forever
-- Optional pre-write hook (`onBeforePersist`) for sanitization (the old `sanitizeTrade`)
-- Emits `orca:trades-synced` once, after the stream drains
-- Returns a structured `IngestReport { inserted, updated, skipped, errors[] }`
+| TV point | Maps to backtest field |
+|---|---|
+| `points[0]` price + time | `entry`, `entryDT` |
+| `points[1]` price + time | `exit` (TP target — moved on close) |
+| `points[2]` price | `sl` |
+| Tool variant | `dir` (Long/Short) — also derivable from `entry` vs `sl` |
+| Active symbol | `coin` |
+| Chart screenshot | `chartE` via `widget.takeClientScreenshot()` |
 
-The Bybit edge function shrinks to ~40 lines: auth → vault read → `await ingest({ kind:'api', brokerId:'bybit', … })`. All HTTP, HMAC, pagination, and field mapping live in `brokers/bybit.ts`.
+**"Closed" detection** (two complementary signals — we accept either):
+1. **Manual close:** user drags the target/exit endpoint onto a new bar → `points_changed` fires with `points[1].time > now-ish` → draft is marked `ready_to_commit` and the Commit Modal opens.
+2. **TP/SL touch:** lightweight tick-watcher inside the hook compares the latest bar high/low to `sl` / `exit`; the first cross flips the draft to `ready_to_commit` with `exitDT = bar.time` and `exit = sl|tp`.
 
----
-
-## 5. Execution Roadmap
-
-Phased, each phase shippable and reversible. Bybit keeps working the entire time.
-
-### Phase 0 — Foundation (no behavior change)
-- Create `src/lib/brokers/{types.ts, registry.ts}` and `src/lib/ingestion/{dispatch.ts, storage-manager.ts}` as empty/stub files.
-- Create `supabase/functions/_shared/brokers/` mirror dir.
-- Add migration **Step 1** (additive columns only).
-
-### Phase 1 — Extract Bybit into the new shape
-- Port `bybitToTrade` + the closed-pnl fetcher into `brokers/bybit.ts` implementing `BrokerAdapter`.
-- Wire `sync-futures-trades` to call the Dispatcher → StorageManager.
-- StorageManager dual-writes: new columns **and** keeps writing `data` jsonb identically. No client change required.
-- Run migration **Step 2** (backfill) — existing Bybit rows now have populated `broker_id` etc.
-
-### Phase 2 — Migrate CSV/XLSX paths
-- Port `importFromBrokerCsv` into per-broker adapters under `brokers/` (start with a generic `genericCsvAdapter` that wraps today's `HEADER_MAP`, then peel off IBKR / NinjaTrader / MT5 one at a time with real signature detection).
-- `ExchangesPanel` file upload calls `ingest({ kind:'file', … })` instead of `importFromBrokerCsv` directly.
-- Manual journal trades also flow through the Dispatcher with a `manualAdapter` (source_type='manual').
-
-### Phase 3 — Multi-account & registry-driven UI
-- Replace the hard-coded `PROVIDERS` / `CSV_BROKERS` arrays in `ExchangesPanel.tsx` with `BrokerRegistry.all()`.
-- Surface `account_label` on credential rows; allow multiple Bybit accounts. Wipe logic in `bybitAdapter` keys on `(broker_id, account_label)`.
-
-### Phase 4 — Add second API broker (Binance) end-to-end
-- Sole task: `brokers/binance.ts`. No edge-function changes, no schema changes, no UI changes. This is the validation that the architecture works.
-
-### Phase 5 — Enforce & cleanup
-- Migration **Step 3**: `NOT NULL` constraints on `broker_id` / `source_type`, drop the old generated `exchange_exec_id` column, drop comment-prefix parsing.
-- Delete the legacy `importFromBrokerCsv` and the `provider !== 'bybit'` guard.
-- Add `tests/brokers/<broker>.spec.ts` with golden-file fixtures for every adapter.
-
-### Phase 6 — IBKR & fill-aggregation
-- `brokers/ibkr.ts` implements `aggregatePositions()` for the first time — folds fill-level rows into closed positions before yielding NormalizedTrades.
-- Same pattern unlocks MT5, NinjaTrader, Sierra without further core changes.
+Removing the drawing = "discard draft" (modal closes silently).
 
 ---
 
-## Outcome
+## 3. Injection Logic (zero manual steps)
 
-After Phase 5, the answer to *"How do I add Kraken?"* is exactly one PR:
-1. Create `src/lib/brokers/kraken.ts` (≈150 LOC) implementing `BrokerAdapter`.
-2. Add it to the `ADAPTERS` array in `registry.ts`.
-3. Ship.
+```text
+TV drawing event
+   → useTvCapture builds DraftBacktestTrade
+   → draftStore.upsert(draft)               // in-memory, throttled
+   → CommitBacktestModal listens, opens when status='ready_to_commit'
+   → user clicks Save
+   → recalc(draft) (existing engine — auto fills dir, r, mfeR, maeR, dur)
+   → setRows(prev => [...prev, draft])     // existing Backtest state
+   → persist(rows)                          // scopedStorage 'orca-bt-v13'
+   → draftStore.clear()
+```
 
-No storage code touched. No dispatcher touched. No schema migration. No UI hardcoding. Every broker — API or CSV, crypto or equities — is a first-class citizen behind the same interface.
+No edge function, no Supabase call, no new table. We reuse the **exact** path that the manual "Add row" button already uses — we just pre-fill it from TV. That guarantees stats, MAE/MFE histograms, equity curve, day/week/month matrices all update instantly because they're already memoized off `rows`.
+
+---
+
+## 4. The "Superman" Commit Modal (one click)
+
+A single `<Dialog>` over the chart. Pre-filled, editable, keyboard-driven:
+
+```text
+┌─ Commit Backtest Trade ─────────────────────── ⎋ ┐
+│  BTCUSDT · 15m · LONG                            │
+│                                                  │
+│  Entry  64,250        Exit  65,700               │
+│  SL     63,800        Time  15/03 09:30→16:45    │
+│  MFE    66,100        MAE   63,900               │
+│                                                  │
+│  R = +3.22   Dur = 7h 15m                        │
+│                                                  │
+│  Notes ___________________________________       │
+│  ☐ Open snapshot in journal after save           │
+│                                                  │
+│         [ Discard ]      [ Save  ↵ ]             │
+└──────────────────────────────────────────────────┘
+```
+
+- Opens automatically when `status='ready_to_commit'` (or via floating "Commit (1)" badge if user is mid-drawing).
+- Enter = Save, Esc = Discard. Save shows a 600 ms toast `+3.22R saved` and **does not navigate away**.
+- MFE/MAE fields are optional — if blank, the hook samples the bar range between entryDT and exitDT and fills them automatically.
+
+---
+
+## 5. Backtest Continuity (chart stays alive)
+
+Three rules enforce "Superman mode":
+
+1. **Single mount.** The TradingView widget is mounted **once** at workspace entry and lives inside `BacktestChartPanel`. The Journal tab is rendered as a sibling with `display:none` toggling — *not* unmounted — so chart state, drawings, zoom, and replay position survive tab switches.
+2. **Modal, never route.** Save closes the modal in place; nothing navigates. The chart keeps the user's last drawing visible (faded) for 2s as a "saved" confirmation, then cleans it.
+3. **Symbol sync.** When the user changes symbol on TV, we set the draft default `coin`. When they create a *new* R/R drawing without committing the previous one, the older draft is discarded with a toast `Previous draft discarded`.
+
+---
+
+## 6. Zero-Dead-End Navigation
+
+Two entry points, both preserve state:
+
+- **Inside the Backtest Workspace:** a segmented control `[ Chart ] [ Journal ]` at the top. Switching is CSS-only (the widget stays mounted). State for `rows`, `selection`, scroll position, and the TV widget are all held in `BacktestDimension`'s top-level state — no remount.
+- **From elsewhere in the app:** the existing `BacktestPortalButton` already routes to the workspace. We add a return shortcut from `JournalDimension` ("Open in Backtest Chart") so any historic backtest row jumps back to the chart with that row's `coin` + `entryDT` loaded into TV via `widget.setSymbol()` and `widget.activeChart().setVisibleRange()`.
+
+Keyboard:
+- `g c` → Chart tab
+- `g j` → Journal tab
+- `⌘/Ctrl + Enter` → commit current draft
+
+---
+
+## 7. File-Level Plan
+
+**New:**
+- `src/components/trading/backtest/BacktestChartPanel.tsx` — TV widget host
+- `src/components/trading/backtest/CommitBacktestModal.tsx` — the one-click modal
+- `src/components/trading/backtest/useTvCapture.ts` — drawing-event subscription + draft builder
+- `src/components/trading/backtest/backtest-draft-store.ts` — tiny zustand store (draft + open state)
+- `src/components/trading/backtest/tv-mapping.ts` — `lineToolToDraft()` + symbol/time helpers
+
+**Edited:**
+- `src/components/trading/BacktestDimension.tsx` — add `[Chart | Journal]` tabs, mount `BacktestChartPanel`, expose `appendRow(draft)` to the modal. **No engine change.** `recalc()`, `computeAll()`, `persist()` all reused as-is.
+
+**Not touched:** Supabase schema, broker adapters, journal storage, calendar, risk engine.
+
+---
+
+## 8. Risks & Mitigations
+
+| Risk | Mitigation |
+|---|---|
+| TradingView script not loaded (network blocked) | Lazy load via `<script>` injection with retry + "Open in TV.com" fallback CTA |
+| `drawing_event` API changes between TV versions | Pin a specific `charting_library` version; mapping isolated in `tv-mapping.ts` |
+| Drawings fire bursts of events on drag | `requestAnimationFrame`-throttle inside `useTvCapture` |
+| User commits the same draft twice | Draft has a `lineId`; on Save we clear it from the store before persisting |
+| Symbol mismatch (e.g. perp vs spot) | Normalize symbol in `tv-mapping.ts` (`BINANCE:BTCUSDT.P` → `BTCUSDT`) |
+
+---
+
+## 9. What I'm explicitly **not** doing
+
+- Not creating a new journal, table, route, or Supabase migration.
+- Not changing `BacktestDimension`'s engine, stats, or storage key.
+- Not adding live-trading wiring — this stays scoped to backtest.
+- Not replacing TradingView with a custom chart.
+
+---
+
+## 10. Build Order (when you approve)
+
+1. `backtest-draft-store.ts` + `tv-mapping.ts` (pure logic, unit-testable)
+2. `BacktestChartPanel.tsx` (TV widget mount only, no events yet)
+3. `useTvCapture.ts` (wire the drawing events → draft)
+4. `CommitBacktestModal.tsx` (UI + Save → `appendRow`)
+5. Tab integration in `BacktestDimension.tsx` (zero-dead-end nav)
+6. Polish: keyboard shortcuts, snapshot capture, "Open in chart" from Journal rows
+
+Reply **"Proceed"** and I'll start at step 1.
