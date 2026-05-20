@@ -444,7 +444,7 @@ const Index = () => {
     setReviewReminderTick(t => t + 1);
   }, []);
 
-  const nav = [
+  const nav: Array<{ id: string; icon: any; label: string; color?: string; action?: () => void }> = [
     { id: 'dashboard', icon: Ico.dash, label: isRTL ? 'דשבורד' : 'Dashboard' },
     { id: 'calendar', icon: '📅', label: isRTL ? 'לוח שנה' : 'Calendar' },
     { id: 'journal', icon: Ico.book, label: t.journal },
@@ -452,6 +452,7 @@ const Index = () => {
     { id: 'risk', icon: Ico.shield, label: t.risk },
     { id: 'psychology', icon: Ico.brain, label: t.psychology },
     { id: 'ai', icon: Ico.star, label: t.ai },
+    { id: 'economic-radar', icon: '📡', label: isRTL ? 'מכ״ם כלכלי' : 'Economic Radar', action: () => setShowEconomicCalendar(true) },
     { id: 'weekly-review', icon: '📋', label: isRTL ? 'סקירה שבועית' : 'Weekly Review', color: '#FFD700' },
   ];
 
