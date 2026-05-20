@@ -473,9 +473,9 @@ Deno.serve(async (req) => {
     try { body = await req.json(); }
     catch { return json({ ok: false, error: 'invalid_body', detail: 'json_parse_failed' }, 400); }
 
-    const provider = String(body.provider || '').toLowerCase().trim();
-    if (provider !== 'bybit') {
-      return json({ ok: false, error: 'unsupported_provider', detail: 'Only Bybit linear sync is enabled' }, 400);
+    const provider = String(body.provider || '').toLowerCase().trim() as ProviderId;
+    if (provider !== 'bybit' && provider !== 'binance') {
+      return json({ ok: false, error: 'unsupported_provider', detail: `Provider '${provider}' is not supported yet` }, 400);
     }
     const label = typeof body.label === 'string' ? body.label.trim() : '';
     const mode: 'bulk' | 'incremental' = body.mode === 'incremental' ? 'incremental' : 'bulk';
