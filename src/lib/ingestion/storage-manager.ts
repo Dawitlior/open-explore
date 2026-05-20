@@ -107,7 +107,7 @@ function toRow(
   return {
     user_id: userId,
     trade_id: tradeId,
-    data,
+    data: data as unknown as Record<string, unknown>,
     broker_id: t.broker_id,
     account_label: t.account_label,
     source_type: t.source_type,
