@@ -274,7 +274,7 @@ function ValueCell({ value, surprise }: { value: string | null; surprise?: 'posi
   return <span className={`font-bold ${tone}`}>{value}</span>;
 }
 
-function EventRow({ e, expanded, onToggle, t, lang }: { e: EconomicEvent; expanded: boolean; onToggle: () => void; t: typeof COPY['he']; lang: 'he' | 'en' }) {
+function EventRow({ e, expanded, onToggle, t, lang }: { e: EconomicEvent; expanded: boolean; onToggle: () => void; t: any; lang: 'he' | 'en' }) {
   const past = new Date(e.release_at).getTime() < Date.now() - 60_000;
   const surprise = past ? surpriseTone(computeSurprise(e.actual, e.forecast)) : undefined;
   return (
@@ -306,7 +306,7 @@ function EventRow({ e, expanded, onToggle, t, lang }: { e: EconomicEvent; expand
   );
 }
 
-function EventCard({ e, expanded, onToggle, t, lang }: { e: EconomicEvent; expanded: boolean; onToggle: () => void; t: typeof COPY['he']; lang: 'he' | 'en' }) {
+function EventCard({ e, expanded, onToggle, t, lang }: { e: EconomicEvent; expanded: boolean; onToggle: () => void; t: any; lang: 'he' | 'en' }) {
   const past = new Date(e.release_at).getTime() < Date.now() - 60_000;
   const surprise = past ? surpriseTone(computeSurprise(e.actual, e.forecast)) : undefined;
   return (
