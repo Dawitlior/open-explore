@@ -31,7 +31,7 @@ import { FeatureHint } from '@/components/trading/FeatureHint';
 import { EntryGate } from '@/components/trading/EntryGate';
 import { RiskLimitAlert } from '@/components/trading/RiskLimitAlert';
 import { RiskExplanationModal, type RiskExplanation } from '@/components/trading/RiskExplanationModal';
-import { lazy } from 'react';
+import { lazy, Suspense } from 'react';
 import { LazyShell } from '@/components/LazyShell';
 const AdvancedRiskPage = lazy(() => import('@/components/trading/AdvancedRiskPage').then(m => ({ default: m.AdvancedRiskPage })));
 const AdvancedAnalyticsPage = lazy(() => import('@/components/trading/AdvancedAnalyticsPage').then(m => ({ default: m.AdvancedAnalyticsPage })));
