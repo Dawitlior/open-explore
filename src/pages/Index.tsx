@@ -39,6 +39,7 @@ const AdvancedPsychologyPage = lazy(() => import('@/components/trading/AdvancedP
 const AIInsightsPage = lazy(() => import('@/components/trading/AIInsightsPage').then(m => ({ default: m.AIInsightsPage })));
 const WeeklyReviewPage = lazy(() => import('@/components/trading/WeeklyReviewPage').then(m => ({ default: m.WeeklyReviewPage })));
 const CalendarHubPage = lazy(() => import('@/components/trading/CalendarHubPage').then(m => ({ default: m.CalendarHubPage })));
+const EconomicCalendarPage = lazy(() => import('@/components/economic/EconomicCalendarPage').then(m => ({ default: m.EconomicCalendarPage })));
 import { InstallPrompt } from '@/components/trading/InstallPrompt';
 import { DimensionController, PortalButton, BacktestPortalButton } from '@/components/trading/DimensionController';
 const JournalDimension = lazy(() => import('@/components/trading/JournalDimension').then(m => ({ default: m.JournalDimension })));
@@ -95,6 +96,7 @@ const Index = () => {
   const [entered, setEntered] = useState(() => sessionStorage.getItem('orca-entered') === '1');
   const [onboardingDone, setOnboardingDone] = useState(() => !shouldShowOnboarding());
   const [activeDimension, setActiveDimension] = useState<'orca' | 'journal' | 'backtest'>('orca');
+  const [showEconomicCalendar, setShowEconomicCalendar] = useState(false);
   const baseTheme = getTheme(settings.theme);
   const t = i18n[settings.lang];
   const isRTL = settings.isRTL;
@@ -415,6 +417,7 @@ const Index = () => {
     { id: 'alpha', label: isRTL ? 'הפעל Alpha' : 'Toggle Alpha Mode', icon: '⚡', category: isRTL ? 'מצבים' : 'Modes', action: () => settings.setSystemMode(isAlpha ? 'standard' : 'alpha') },
     { id: 'journal-sanctuary', label: isRTL ? 'יומן מסע לסוחר' : 'Trader Journey', icon: '🏛️', category: isRTL ? 'ממדים' : 'Dimensions', action: () => setActiveDimension('journal') },
     { id: 'backtest-journal', label: isRTL ? 'יומן באק-טסט' : 'Backtest Journal', icon: '📊', category: isRTL ? 'ממדים' : 'Dimensions', action: () => setActiveDimension('backtest') },
+    { id: 'economic-radar', label: isRTL ? 'מכ״ם כלכלי' : 'Economic Radar', icon: '📡', category: isRTL ? 'כלים' : 'Tools', action: () => setShowEconomicCalendar(true) },
   ], [isRTL, handleExport, handleImport, handleGenerateInsights, isAlpha, settings]);
 
   // ─── Weekly Review reminder badge (Friday or 1st of month) ───
@@ -1723,6 +1726,24 @@ const Index = () => {
         {/* Dimension Portal Buttons */}
         {sbOpen && <div style={{ padding: '4px 6px' }}><PortalButton onClick={() => setActiveDimension('journal')} isRTL={isRTL} expanded={true} /></div>}
         {sbOpen && <div style={{ padding: '4px 6px' }}><BacktestPortalButton onClick={() => setActiveDimension('backtest')} isRTL={isRTL} expanded={true} /></div>}
+        {sbOpen && (
+          <div style={{ padding: '4px 6px' }}>
+            <button
+              onClick={() => setShowEconomicCalendar(true)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+                padding: '10px 12px',
+                background: 'linear-gradient(135deg, rgba(244,63,94,0.08), rgba(245,158,11,0.08))',
+                border: '1px solid rgba(244,63,94,0.2)',
+                borderRadius: 10, cursor: 'pointer', fontSize: 12, fontWeight: 700,
+                color: '#f59e0b', transition: 'all 0.3s ease',
+              }}
+            >
+              <span style={{ fontSize: 18 }}>📡</span>
+              <span style={{ letterSpacing: '0.02em' }}>{isRTL ? 'מכ״ם כלכלי' : 'Economic Radar'}</span>
+            </button>
+          </div>
+        )}
         {sbOpen && <div style={{ padding: '4px 6px' }}><InstallPrompt T={T} isRTL={isRTL} compact /></div>}
         <div style={{ padding: 10, borderTop: `1px solid ${T.border.subtle}`, display: 'flex', flexDirection: 'column', gap: 4 }}>
           {sbOpen && <button onClick={() => setShowSettings(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '9px 10px', background: `${T.accent.cyan}10`, border: `1px solid ${T.accent.cyan}30`, borderRadius: T.radius.md, color: T.accent.cyan, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
