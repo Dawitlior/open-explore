@@ -186,7 +186,19 @@ interface Trade {
   exchange_exec_id?: string;
 }
 
-function bybitToTrade(e: BybitClosedPnl, provider: string): Omit<Trade, 'id' | 'balance'> {
+interface BybitNormalized {
+  legacy: Omit<Trade, 'id' | 'balance'>;
+  provenance: {
+    broker_id: string;
+    source_type: 'api_sync';
+    asset_class: 'crypto';
+    external_id: string;
+    opened_at: string; // ISO
+    closed_at: string; // ISO
+  };
+}
+
+function bybitToTrade(e: BybitClosedPnl, provider: string): BybitNormalized {
   const entryPx = Number(e.avgEntryPrice) || 0;
   const exitPx = Number(e.avgExitPrice) || 0;
   const qty = Number(e.closedSize) || Number(e.qty) || 0;
@@ -195,8 +207,9 @@ function bybitToTrade(e: BybitClosedPnl, provider: string): Omit<Trade, 'id' | '
   const realizedPnl = parseFloat(e.closedPnl ?? '0') || 0;
   // Bybit closed-pnl `closedPnl` is ALREADY net of fees, so we don't subtract again.
   const netPnl = realizedPnl;
-  const tsMs = Number(e.updatedTime) || Number(e.createdTime) || Date.now();
-  const d = new Date(tsMs);
+  const openMs = Number(e.createdTime) || Number(e.updatedTime) || Date.now();
+  const closeMs = Number(e.updatedTime) || Number(e.createdTime) || openMs;
+  const d = new Date(closeMs);
   const iso = d.toISOString().slice(0, 19).replace('T', ' ');
   const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
   // `side` on closed-pnl is the CLOSING side. Position direction is the opposite.
@@ -205,27 +218,37 @@ function bybitToTrade(e: BybitClosedPnl, provider: string): Omit<Trade, 'id' | '
     netPnl > 0 ? 'Win' : netPnl < 0 ? 'Loss' : 'Break Even';
   const lev = Number(e.leverage) || 1;
   return {
-    date: iso,
-    day: dayName,
-    coin: e.symbol,
-    direction,
-    orderType: e.execType || 'Market',
-    entry: entryPx,
-    stopLoss: 0,
-    exit: exitPx,
-    returnR: 0,
-    winLoss,
-    risk: 0,
-    expectedLoss: 0,
-    pnl: netPnl,
-    deviation: 0,
-    positionSize: qty * entryPx,
-    leverage: lev,
-    riskPct: 0,
-    rules: true,
-    comments: `__CLOSED:${e.orderId}__ ${provider} fees:${(openFee + closeFee).toFixed(4)}`,
-    exchange_provider: provider,
-    exchange_exec_id: e.orderId,
+    legacy: {
+      date: iso,
+      day: dayName,
+      coin: e.symbol,
+      direction,
+      orderType: e.execType || 'Market',
+      entry: entryPx,
+      stopLoss: 0,
+      exit: exitPx,
+      returnR: 0,
+      winLoss,
+      risk: 0,
+      expectedLoss: 0,
+      pnl: netPnl,
+      deviation: 0,
+      positionSize: qty * entryPx,
+      leverage: lev,
+      riskPct: 0,
+      rules: true,
+      comments: `__CLOSED:${e.orderId}__ ${provider} fees:${(openFee + closeFee).toFixed(4)}`,
+      exchange_provider: provider,
+      exchange_exec_id: e.orderId,
+    },
+    provenance: {
+      broker_id: provider,
+      source_type: 'api_sync',
+      asset_class: 'crypto',
+      external_id: e.orderId,
+      opened_at: new Date(openMs).toISOString(),
+      closed_at: new Date(closeMs).toISOString(),
+    },
   };
 }
 
