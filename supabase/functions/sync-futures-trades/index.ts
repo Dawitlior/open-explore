@@ -437,7 +437,7 @@ Deno.serve(async (req) => {
 
     // ---- Build rows from closed-pnl, deduped by orderId across paginated windows ----
     const localSeen = new Set<string>();
-    const rows: Array<{ user_id: string; trade_id: number; data: unknown }> = [];
+    const rows: Array<Record<string, unknown>> = [];
     let inserted = 0;
     let skipped = 0;
     let runningBalance = 0;
@@ -449,10 +449,22 @@ Deno.serve(async (req) => {
       if (!e?.orderId) { skipped++; continue; }
       if (localSeen.has(e.orderId)) { skipped++; continue; }
       localSeen.add(e.orderId);
-      const t = bybitToTrade(e, provider);
-      runningBalance += t.pnl;
-      const full: Trade = { ...t, id: nextId, balance: Math.round(runningBalance * 10000) / 10000 };
-      rows.push({ user_id: userId, trade_id: nextId, data: full });
+      const { legacy, provenance } = bybitToTrade(e, provider);
+      runningBalance += legacy.pnl;
+      const full: Trade = { ...legacy, id: nextId, balance: Math.round(runningBalance * 10000) / 10000 };
+      rows.push({
+        user_id: userId,
+        trade_id: nextId,
+        data: full,
+        // Phase 1 dual-write
+        broker_id: provenance.broker_id,
+        account_label: label || null,
+        source_type: provenance.source_type,
+        asset_class: provenance.asset_class,
+        external_id: provenance.external_id,
+        opened_at: provenance.opened_at,
+        closed_at: provenance.closed_at,
+      });
       nextId++;
       inserted++;
     }
