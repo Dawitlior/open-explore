@@ -37,6 +37,14 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
   const [aiLoading, setAiLoading] = useState(false);
   const [showAI, setShowAI] = useState(false);
 
+  // Macro events for the visible month (single query, cached). Pick this day.
+  const { byDay: macroByDay } = useMonthEconomicEvents({ year, month, impacts: ['t1', 't2', 't3'] });
+  const dayMacros = (macroByDay.get(day) ?? []).slice().sort(
+    (a, b) => new Date(a.release_at).getTime() - new Date(b.release_at).getTime()
+  );
+  const lang: 'he' | 'en' = isRTL ? 'he' : 'en';
+
+
   // Lock body scroll while open
   useEffect(() => {
     const prev = document.body.style.overflow;
