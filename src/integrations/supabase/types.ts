@@ -127,6 +127,7 @@ export type Database = {
       }
       open_positions: {
         Row: {
+          account_label: string | null
           entry_price: number
           id: string
           provider: string
@@ -138,6 +139,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          account_label?: string | null
           entry_price?: number
           id?: string
           provider?: string
@@ -149,6 +151,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          account_label?: string | null
           entry_price?: number
           id?: string
           provider?: string
@@ -190,31 +193,52 @@ export type Database = {
       }
       trades: {
         Row: {
+          account_label: string | null
+          asset_class: string | null
+          broker_id: string | null
+          closed_at: string | null
           created_at: string
           data: Json
           exchange_exec_id: string | null
+          external_id: string | null
           id: string
           manual_r_multiple: number | null
+          opened_at: string | null
+          source_type: string | null
           trade_id: number
           updated_at: string
           user_id: string
         }
         Insert: {
+          account_label?: string | null
+          asset_class?: string | null
+          broker_id?: string | null
+          closed_at?: string | null
           created_at?: string
           data: Json
           exchange_exec_id?: string | null
+          external_id?: string | null
           id?: string
           manual_r_multiple?: number | null
+          opened_at?: string | null
+          source_type?: string | null
           trade_id: number
           updated_at?: string
           user_id: string
         }
         Update: {
+          account_label?: string | null
+          asset_class?: string | null
+          broker_id?: string | null
+          closed_at?: string | null
           created_at?: string
           data?: Json
           exchange_exec_id?: string | null
+          external_id?: string | null
           id?: string
           manual_r_multiple?: number | null
+          opened_at?: string | null
+          source_type?: string | null
           trade_id?: number
           updated_at?: string
           user_id?: string
