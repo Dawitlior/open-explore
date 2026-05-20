@@ -398,6 +398,12 @@ function BacktestApp({ onReturn }: { onReturn: () => void }) {
 
   useEffect(()=>{css();loadS().then((t:any)=>{setTrades(t);setLoading(false);});},[]);
   const save=useCallback(async (n:any)=>{setTrades(n);await persist(n);},[]);
+  const commitDraft=useCallback((d:DraftBacktestTrade)=>{
+    // Reuse the existing engine path — `recalc` derives dir/r/mfeR/maeR/dur.
+    const row=recalc({...emptyRow(),coin:d.coin,entryDT:d.entryDT,exitDT:d.exitDT,entry:d.entry,sl:d.sl,exit:d.exit,mfeP:d.mfeP,maeP:d.maeP,notes:d.notes,chartE:d.chartE,chartX:d.chartX});
+    setTrades(prev=>{const next=[...prev,row];persist(next);return next;});
+    setShowTut(false);
+  },[]);
   const addTrade=(t:any)=>{save([...trades,t]);setShowForm(false);setShowTut(false);};
   const updateTrade=(t:any)=>{save(trades.map((x:any)=>x.id===t.id?t:x));setEditModal(null);};
   const del=(id:string)=>{save(trades.filter((t:any)=>t.id!==id));setConfirmDel(null);};
