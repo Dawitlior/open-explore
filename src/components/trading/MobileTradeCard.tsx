@@ -7,6 +7,7 @@ interface MobileTradeCardProps {
   isRTL: boolean;
   trade: Trade;
   effectiveR: number;
+  privacyMode: boolean;
   onOpen: () => void;
   onEdit: () => void;
   onDelete: () => void;
