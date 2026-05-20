@@ -43,6 +43,7 @@ export function useTrades() {
           return true;
         });
         const sorted = unique.sort((a, b) => a.id - b.id);
+        __tradesCache = sorted;
         tradesRef.current = sorted;
         setTrades(sorted);
         setLoading(false);
@@ -50,7 +51,7 @@ export function useTrades() {
       }).catch((err) => {
         if (cancelled) return;
         console.error('Failed to load trades:', err);
-        setTrades([]);
+        if (__tradesCache === null) setTrades([]);
         setLoading(false);
         setInitialized(true);
       });
