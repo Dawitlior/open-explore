@@ -26,7 +26,9 @@ export function useTrades() {
 
   useEffect(() => {
     tradesRef.current = trades;
-  }, [trades, prefs.daily_risk_limit]);
+    // Keep the module-level cache in sync so the next mount renders instantly.
+    if (initialized) __tradesCache = trades;
+  }, [trades, initialized, prefs.daily_risk_limit]);
 
   useEffect(() => {
     let cancelled = false;
