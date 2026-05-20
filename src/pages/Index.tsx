@@ -30,6 +30,7 @@ import ImportLoadingOverlay from '@/components/trading/ImportLoadingOverlay';
 import { FeatureHint } from '@/components/trading/FeatureHint';
 import { EntryGate } from '@/components/trading/EntryGate';
 import { RiskLimitAlert } from '@/components/trading/RiskLimitAlert';
+import { MobileBottomNav } from '@/components/trading/MobileBottomNav';
 import { RiskExplanationModal, type RiskExplanation } from '@/components/trading/RiskExplanationModal';
 import { lazy, Suspense } from 'react';
 import { LazyShell } from '@/components/LazyShell';
@@ -1617,7 +1618,7 @@ const Index = () => {
 
   return (
     <DisplayModeProvider trades={trades}>
-    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden', background: T.bg.primary, color: T.text.primary, fontFamily: "'Inter', system-ui, -apple-system, sans-serif", fontSize: 14, transition: 'background 0.5s ease, color 0.5s ease, filter 0.5s ease, opacity 0.5s ease', opacity: exiting ? 0 : 1, filter: exiting ? 'blur(8px)' : 'none' }}>
+    <div dir={isRTL ? 'rtl' : 'ltr'} className="orca-app-shell" style={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden', background: T.bg.primary, color: T.text.primary, fontFamily: "'Inter', system-ui, -apple-system, sans-serif", fontSize: 14, transition: 'background 0.5s ease, color 0.5s ease, filter 0.5s ease, opacity 0.5s ease', opacity: exiting ? 0 : 1, filter: exiting ? 'blur(8px)' : 'none' }}>
 
       <style>{portalCSS}</style>
       {/* Exit animation overlay */}
@@ -1824,7 +1825,7 @@ const Index = () => {
           </div>
         </header>
 
-        <div style={{ padding: isMobile ? '12px 10px' : '20px 24px', maxWidth: 1400, margin: '0 auto' }}>
+        <div className={isMobile ? 'orca-mobile-pad-bottom' : ''} style={{ padding: isMobile ? '12px 10px' : '20px 24px', maxWidth: 1400, margin: '0 auto' }}>
           {trades.length === 0 && page !== 'weekly-review' && (
             <div style={{ textAlign: 'center', padding: isMobile ? 30 : 60 }}>
               <div style={{ fontSize: 48, marginBottom: 16 }}>🐋</div>
@@ -2008,6 +2009,19 @@ const Index = () => {
       <DeploymentToast isRTL={isRTL} />
       {showRiskOnboarding && (
         <RiskOnboardingWizard isRTL={isRTL} onDismiss={() => setShowRiskOnboarding(false)} />
+      )}
+      {/* MOBILE BOTTOM NAVIGATION — thumb-reachable, persistent */}
+      {isMobile && activeDimension === 'orca' && (
+        <MobileBottomNav
+          T={T}
+          isRTL={isRTL}
+          page={page}
+          onNavigate={(id) => { setPage(id); }}
+          onOpenRadar={() => setShowEconomicCalendar(true)}
+          onOpenMore={() => setSbOpen(true)}
+          onAddTrade={() => { setEditingTrade(null); setShowTradeForm(true); }}
+          onLongPressCenter={() => setShowCmdPalette(true)}
+        />
       )}
       
     </div>
