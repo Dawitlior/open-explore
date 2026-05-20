@@ -478,23 +478,31 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
         position: 'fixed', inset: 0, zIndex: 200,
         background: 'rgba(2, 8, 20, 0.72)',
         backdropFilter: 'blur(14px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: 24,
+        display: 'flex',
+        alignItems: isMobile ? 'flex-end' : 'center',
+        justifyContent: 'center',
+        padding: isMobile ? 0 : 24,
         animation: 'fadeIn 0.2s ease',
       }}
     >
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          width: '100%', height: '100%', maxWidth: 1600, maxHeight: '95vh',
+          width: '100%',
+          height: isMobile ? '92dvh' : '100%',
+          maxWidth: 1600,
+          maxHeight: isMobile ? '92dvh' : '95vh',
           background: `radial-gradient(circle at top ${isRTL ? 'right' : 'left'}, ${accent}10, transparent 50%), linear-gradient(165deg, ${T.bg.card} 0%, ${T.bg.secondary} 100%)`,
           border: `1px solid ${T.border.medium}`,
-          borderRadius: 24,
+          borderRadius: isMobile ? '20px 20px 0 0' : 24,
           boxShadow: `0 40px 120px rgba(0,0,0,0.6), 0 0 0 1px ${accent}20`,
           overflow: 'hidden',
           display: 'grid',
-          gridTemplateColumns: '1fr 1.4fr',
-          animation: 'scaleIn 0.32s cubic-bezier(0.16, 1, 0.3, 1)',
+          gridTemplateColumns: isMobile ? '1fr' : '1fr 1.4fr',
+          paddingBottom: isMobile ? 'env(safe-area-inset-bottom, 0px)' : 0,
+          animation: isMobile
+            ? 'slideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1)'
+            : 'scaleIn 0.32s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
       >
         {/* LEFT: hero panel */}
