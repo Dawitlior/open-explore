@@ -660,50 +660,52 @@ Deno.serve(async (req) => {
       }
     }
 
-    // ---- Sync live open positions ----
+    // ---- Sync live open positions (Bybit-only for now) ----
     let positionsSynced = 0;
-    try {
-      const posResult = await fetchBybitOpenPositions(cred.api_key, apiSecret);
-      if (posResult.ok) {
-        const active = posResult.list.filter(p => Number(p.size) > 0);
-        const activeSymbols = new Set(active.map(p => p.symbol));
+    if (provider === 'bybit') {
+      try {
+        const posResult = await fetchBybitOpenPositions(cred.api_key, apiSecret);
+        if (posResult.ok) {
+          const active = posResult.list.filter(p => Number(p.size) > 0);
+          const activeSymbols = new Set(active.map(p => p.symbol));
 
-        if (active.length > 0) {
-          const posRows = active.map(p => ({
-            user_id: userId,
-            provider,
-            account_label: label || null,
-            symbol: p.symbol,
-            side: p.side,
-            size: Number(p.size) || 0,
-            entry_price: Number(p.avgPrice ?? p.entryPrice ?? 0) || 0,
-            unrealized_pnl: Number(p.unrealisedPnl ?? p.unrealizedPnl ?? 0) || 0,
-            updated_at: new Date().toISOString(),
-          }));
-          const { error: posUpErr } = await admin
+          if (active.length > 0) {
+            const posRows = active.map(p => ({
+              user_id: userId,
+              provider,
+              account_label: label || null,
+              symbol: p.symbol,
+              side: p.side,
+              size: Number(p.size) || 0,
+              entry_price: Number(p.avgPrice ?? p.entryPrice ?? 0) || 0,
+              unrealized_pnl: Number(p.unrealisedPnl ?? p.unrealizedPnl ?? 0) || 0,
+              updated_at: new Date().toISOString(),
+            }));
+            const { error: posUpErr } = await admin
+              .from('open_positions')
+              .upsert(posRows, { onConflict: 'user_id,provider,symbol' });
+            if (posUpErr) console.error('[sync-futures-trades] open_positions upsert', posUpErr.message);
+            else positionsSynced = posRows.length;
+          }
+
+          // Remove stale rows for this user/provider not in the current active set
+          const { data: existingPos } = await admin
             .from('open_positions')
-            .upsert(posRows, { onConflict: 'user_id,provider,symbol' });
-          if (posUpErr) console.error('[sync-futures-trades] open_positions upsert', posUpErr.message);
-          else positionsSynced = posRows.length;
+            .select('id, symbol')
+            .eq('user_id', userId)
+            .eq('provider', provider);
+          const staleIds = (existingPos ?? [])
+            .filter(r => !activeSymbols.has(r.symbol as string))
+            .map(r => r.id);
+          if (staleIds.length > 0) {
+            await admin.from('open_positions').delete().in('id', staleIds);
+          }
+        } else {
+          console.error('[sync-futures-trades] positions fetch failed', posResult.detail);
         }
-
-        // Remove stale rows for this user/provider not in the current active set
-        const { data: existingPos } = await admin
-          .from('open_positions')
-          .select('id, symbol')
-          .eq('user_id', userId)
-          .eq('provider', provider);
-        const staleIds = (existingPos ?? [])
-          .filter(r => !activeSymbols.has(r.symbol as string))
-          .map(r => r.id);
-        if (staleIds.length > 0) {
-          await admin.from('open_positions').delete().in('id', staleIds);
-        }
-      } else {
-        console.error('[sync-futures-trades] positions fetch failed', posResult.detail);
+      } catch (e) {
+        console.error('[sync-futures-trades] positions sync threw', (e as Error).message);
       }
-    } catch (e) {
-      console.error('[sync-futures-trades] positions sync threw', (e as Error).message);
     }
 
     // Stamp last_validated_at as a successful-sync marker (non-fatal)
@@ -715,7 +717,7 @@ Deno.serve(async (req) => {
 
     return json({
       ok: true,
-      fetched: closed.length,
+      fetched: closedEntries.length,
       inserted,
       skipped,
       wiped,
