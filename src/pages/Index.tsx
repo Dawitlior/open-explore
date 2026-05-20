@@ -1343,6 +1343,23 @@ const Index = () => {
         </div>
         {/* Mode-specific journal header */}
         {isLive && <div style={{ padding: '8px 12px', background: `${modeColors.live}08`, border: `1px solid ${modeColors.live}20`, borderRadius: T.radius.md, marginBottom: 12, fontSize: 11, color: modeColors.live }}>🔴 {isRTL ? 'תצוגה חיה — עסקאות אחרונות בלבד' : 'Live View — Recent trades only'}</div>}
+        {isMobile ? (
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {pageRows.map(tr => (
+              <MobileTradeCard
+                key={tr.id}
+                T={T}
+                isRTL={isRTL}
+                trade={tr}
+                effectiveR={getEffectiveR(tr)}
+                privacyMode={settings.privacyMode}
+                onOpen={() => setSelTrade(tr)}
+                onEdit={() => { setEditingTrade(tr); setShowTradeForm(true); }}
+                onDelete={() => handleDeleteTrade(tr.id)}
+              />
+            ))}
+          </div>
+        ) : (
         <GlassCard T={T} style={{ padding: 0, overflow: 'hidden' }} className="orca-no-hover">
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
