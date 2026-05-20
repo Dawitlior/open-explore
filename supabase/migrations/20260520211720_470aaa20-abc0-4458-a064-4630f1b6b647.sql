@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS oracle_vectors_user_unique ON public.oracle_vectors(user_id);
