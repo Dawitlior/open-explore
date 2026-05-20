@@ -573,10 +573,3 @@ export async function importFromBrokerCsv(file: File, brokerId: string): Promise
   }
 }
 
-      }
-    };
-    reader.onerror = () => reject(new Error('File read failed'));
-    reader.readAsArrayBuffer(file);
-  });
-}
-
