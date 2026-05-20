@@ -186,7 +186,19 @@ interface Trade {
   exchange_exec_id?: string;
 }
 
-function bybitToTrade(e: BybitClosedPnl, provider: string): Omit<Trade, 'id' | 'balance'> {
+interface BybitNormalized {
+  legacy: Omit<Trade, 'id' | 'balance'>;
+  provenance: {
+    broker_id: string;
+    source_type: 'api_sync';
+    asset_class: 'crypto';
+    external_id: string;
+    opened_at: string; // ISO
+    closed_at: string; // ISO
+  };
+}
+
+function bybitToTrade(e: BybitClosedPnl, provider: string): BybitNormalized {
   const entryPx = Number(e.avgEntryPrice) || 0;
   const exitPx = Number(e.avgExitPrice) || 0;
   const qty = Number(e.closedSize) || Number(e.qty) || 0;
@@ -195,8 +207,9 @@ function bybitToTrade(e: BybitClosedPnl, provider: string): Omit<Trade, 'id' | '
   const realizedPnl = parseFloat(e.closedPnl ?? '0') || 0;
   // Bybit closed-pnl `closedPnl` is ALREADY net of fees, so we don't subtract again.
   const netPnl = realizedPnl;
-  const tsMs = Number(e.updatedTime) || Number(e.createdTime) || Date.now();
-  const d = new Date(tsMs);
+  const openMs = Number(e.createdTime) || Number(e.updatedTime) || Date.now();
+  const closeMs = Number(e.updatedTime) || Number(e.createdTime) || openMs;
+  const d = new Date(closeMs);
   const iso = d.toISOString().slice(0, 19).replace('T', ' ');
   const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
   // `side` on closed-pnl is the CLOSING side. Position direction is the opposite.
@@ -205,27 +218,37 @@ function bybitToTrade(e: BybitClosedPnl, provider: string): Omit<Trade, 'id' | '
     netPnl > 0 ? 'Win' : netPnl < 0 ? 'Loss' : 'Break Even';
   const lev = Number(e.leverage) || 1;
   return {
-    date: iso,
-    day: dayName,
-    coin: e.symbol,
-    direction,
-    orderType: e.execType || 'Market',
-    entry: entryPx,
-    stopLoss: 0,
-    exit: exitPx,
-    returnR: 0,
-    winLoss,
-    risk: 0,
-    expectedLoss: 0,
-    pnl: netPnl,
-    deviation: 0,
-    positionSize: qty * entryPx,
-    leverage: lev,
-    riskPct: 0,
-    rules: true,
-    comments: `__CLOSED:${e.orderId}__ ${provider} fees:${(openFee + closeFee).toFixed(4)}`,
-    exchange_provider: provider,
-    exchange_exec_id: e.orderId,
+    legacy: {
+      date: iso,
+      day: dayName,
+      coin: e.symbol,
+      direction,
+      orderType: e.execType || 'Market',
+      entry: entryPx,
+      stopLoss: 0,
+      exit: exitPx,
+      returnR: 0,
+      winLoss,
+      risk: 0,
+      expectedLoss: 0,
+      pnl: netPnl,
+      deviation: 0,
+      positionSize: qty * entryPx,
+      leverage: lev,
+      riskPct: 0,
+      rules: true,
+      comments: `__CLOSED:${e.orderId}__ ${provider} fees:${(openFee + closeFee).toFixed(4)}`,
+      exchange_provider: provider,
+      exchange_exec_id: e.orderId,
+    },
+    provenance: {
+      broker_id: provider,
+      source_type: 'api_sync',
+      asset_class: 'crypto',
+      external_id: e.orderId,
+      opened_at: new Date(openMs).toISOString(),
+      closed_at: new Date(closeMs).toISOString(),
+    },
   };
 }
 
@@ -338,16 +361,28 @@ Deno.serve(async (req) => {
 
       const sorted = [...list].sort((a, b) =>
         (Number(a.updatedTime) || 0) - (Number(b.updatedTime) || 0));
-      const rows: Array<{ user_id: string; trade_id: number; data: unknown }> = [];
+      const rows: Array<Record<string, unknown>> = [];
       const summary: Array<{ symbol: string; pnl: number }> = [];
       const seen = new Set<string>();
       for (const e of sorted) {
         if (!e?.orderId || seen.has(e.orderId)) continue;
         seen.add(e.orderId);
-        const t = bybitToTrade(e, provider);
-        const full: Trade = { ...t, id: nextId, balance: 0 };
-        rows.push({ user_id: userId, trade_id: nextId, data: full });
-        summary.push({ symbol: t.coin, pnl: t.pnl });
+        const { legacy, provenance } = bybitToTrade(e, provider);
+        const full: Trade = { ...legacy, id: nextId, balance: 0 };
+        rows.push({
+          user_id: userId,
+          trade_id: nextId,
+          data: full,
+          // Phase 1 dual-write: provenance columns alongside legacy `data` blob.
+          broker_id: provenance.broker_id,
+          account_label: label || null,
+          source_type: provenance.source_type,
+          asset_class: provenance.asset_class,
+          external_id: provenance.external_id,
+          opened_at: provenance.opened_at,
+          closed_at: provenance.closed_at,
+        });
+        summary.push({ symbol: legacy.coin, pnl: legacy.pnl });
         nextId++;
       }
       if (rows.length > 0) {
@@ -402,7 +437,7 @@ Deno.serve(async (req) => {
 
     // ---- Build rows from closed-pnl, deduped by orderId across paginated windows ----
     const localSeen = new Set<string>();
-    const rows: Array<{ user_id: string; trade_id: number; data: unknown }> = [];
+    const rows: Array<Record<string, unknown>> = [];
     let inserted = 0;
     let skipped = 0;
     let runningBalance = 0;
@@ -414,10 +449,22 @@ Deno.serve(async (req) => {
       if (!e?.orderId) { skipped++; continue; }
       if (localSeen.has(e.orderId)) { skipped++; continue; }
       localSeen.add(e.orderId);
-      const t = bybitToTrade(e, provider);
-      runningBalance += t.pnl;
-      const full: Trade = { ...t, id: nextId, balance: Math.round(runningBalance * 10000) / 10000 };
-      rows.push({ user_id: userId, trade_id: nextId, data: full });
+      const { legacy, provenance } = bybitToTrade(e, provider);
+      runningBalance += legacy.pnl;
+      const full: Trade = { ...legacy, id: nextId, balance: Math.round(runningBalance * 10000) / 10000 };
+      rows.push({
+        user_id: userId,
+        trade_id: nextId,
+        data: full,
+        // Phase 1 dual-write
+        broker_id: provenance.broker_id,
+        account_label: label || null,
+        source_type: provenance.source_type,
+        asset_class: provenance.asset_class,
+        external_id: provenance.external_id,
+        opened_at: provenance.opened_at,
+        closed_at: provenance.closed_at,
+      });
       nextId++;
       inserted++;
     }
@@ -446,6 +493,7 @@ Deno.serve(async (req) => {
           const posRows = active.map(p => ({
             user_id: userId,
             provider,
+            account_label: label || null,
             symbol: p.symbol,
             side: p.side,
             size: Number(p.size) || 0,

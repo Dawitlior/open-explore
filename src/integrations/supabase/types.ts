@@ -310,6 +310,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      backfill_trade_provenance: { Args: { p_batch?: number }; Returns: number }
       read_exchange_secret: {
         Args: { p_cred_id: string; p_user_id: string }
         Returns: string
