@@ -28,6 +28,8 @@ export const bybitAdapter: BrokerAdapter = {
     kind: "api",
     assetClasses: ["crypto"],
     accent: "#f7a600",
+    gradient: "linear-gradient(135deg, rgba(247,164,29,0.18), rgba(247,164,29,0.04))",
+    supportsSync: true,
     tagline: {
       he: "סנכרון אוטומטי של עסקאות סגורות (180 יום)",
       en: "Auto-sync of closed positions (180-day window)",
