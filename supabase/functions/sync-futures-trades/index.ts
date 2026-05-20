@@ -516,10 +516,13 @@ Deno.serve(async (req) => {
       return json({ ok: false, error: 'vault_read_failed', detail: secErr?.message ?? 'no_secret' }, 500);
     }
 
-    // ───────── INCREMENTAL MODE ─────────
+    // ───────── INCREMENTAL MODE (Bybit-only) ─────────
     // Append-only path triggered by the live WS when a position closes.
     // Fetches a single narrow window for one symbol and upserts — never wipes.
     if (mode === 'incremental') {
+      if (provider !== 'bybit') {
+        return json({ ok: false, error: 'unsupported_mode', detail: 'incremental sync is only available for Bybit' }, 400);
+      }
       if (!incSymbol) return json({ ok: false, error: 'invalid_body', detail: 'symbol required' }, 400);
       const startTime = incSince > 0 ? incSince : Date.now() - 60 * 60 * 1000;
       const endTime = Date.now();
