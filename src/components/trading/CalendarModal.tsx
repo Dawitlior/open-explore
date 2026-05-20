@@ -214,7 +214,64 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
     );
   };
 
-  /* ============= Shared AI section ============= */
+  /* ============= Macro economic events for the day ============= */
+  const MacroSection = () => {
+    if (dayMacros.length === 0) return null;
+    const nowMs = Date.now();
+    return (
+      <div style={{
+        background: 'linear-gradient(135deg, rgba(244,63,94,0.06), rgba(245,158,11,0.04))',
+        border: `1px solid ${T.border.subtle}`,
+        borderRadius: T.radius.md,
+        padding: 14,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+          <span style={{ fontSize: 14 }}>📡</span>
+          <span style={{ fontSize: 11, fontWeight: 800, color: T.text.primary, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            {isRTL ? 'אירועי מאקרו' : 'Macro Events'}
+          </span>
+          <span style={{ fontSize: 10, color: T.text.muted, marginInlineStart: 4 }}>· {dayMacros.length}</span>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {dayMacros.map((e) => {
+            const past = new Date(e.release_at).getTime() < nowMs - 60_000;
+            const color = MACRO_TIER_COLOR[e.impact];
+            const flag = e.currency ? CURRENCY_FLAG[e.currency] : null;
+            return (
+              <div key={e.id} style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '8px 10px',
+                background: T.bg.tertiary,
+                borderRadius: T.radius.sm,
+                borderInlineStart: `3px solid ${color}`,
+                opacity: past ? 0.5 : 1,
+              }}>
+                <span style={{
+                  fontSize: 10, fontWeight: 800, color, minWidth: 22,
+                  fontFamily: "'IBM Plex Mono', monospace",
+                }}>
+                  {e.impact.toUpperCase()}
+                </span>
+                <span style={{ fontSize: 11, color: T.text.muted, fontFamily: "'IBM Plex Mono', monospace", minWidth: 48 }}>
+                  {formatISTTime(e.release_at, lang)}
+                </span>
+                {flag && <span style={{ fontSize: 13 }}>{flag}</span>}
+                <span style={{ fontSize: 11, color: T.text.muted, minWidth: 30 }}>{e.currency || ''}</span>
+                <span style={{ fontSize: 12, color: T.text.primary, fontWeight: 600, flex: 1 }}>{e.event_name}</span>
+                {e.actual && (
+                  <span style={{ fontSize: 11, color, fontWeight: 700, fontFamily: "'IBM Plex Mono', monospace" }}>
+                    {e.actual}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+
   const AISection = () => (
     !showAI ? (
       <button onClick={handleDayAI} disabled={dayTrades.length === 0} style={{
