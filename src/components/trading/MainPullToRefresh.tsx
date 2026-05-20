@@ -9,16 +9,34 @@ interface Props {
 }
 
 /**
- * MainPullToRefresh — wraps the dashboard <main> scroll container and
- * adds an iOS-style pull-to-refresh gesture on mobile only.
- * Desktop renders a plain <main> with no listeners attached.
+ * MainPullToRefresh — adds iOS pull-to-refresh on mobile only.
+ *
+ * Critical rules to avoid breaking native scroll and dimension transitions:
+ *  - On desktop, render a plain <main> with NO extra wrapper div or transform.
+ *  - On mobile, only apply transform/transition to the inner wrapper when
+ *    the user is actively pulling or refreshing. When idle, the inner div
+ *    has no transform (no stacking-context trap), so iOS momentum scroll
+ *    and `position: sticky` work normally.
  */
 export const MainPullToRefresh = ({ isMobile, accent, children }: Props) => {
+  // ── Desktop: pure passthrough, no listeners, no wrappers ──────────────
+  if (!isMobile) {
+    return (
+      <main style={{ flex: 1, overflow: 'auto', transition: 'background 0.4s ease' }}>
+        {children}
+      </main>
+    );
+  }
+
+  // ── Mobile: gesture-enabled main ──────────────────────────────────────
   const { ref, pull, progress, refreshing } = usePullToRefresh({
-    enabled: isMobile,
+    enabled: true,
     threshold: 64,
-    onRefresh: () => new Promise<void>(r => setTimeout(r, 650)),
+    onRefresh: () => new Promise<void>(r => setTimeout(r, 600)),
   });
+
+  const active = pull > 0 || refreshing;
+
   return (
     <main
       ref={ref as any}
@@ -30,15 +48,17 @@ export const MainPullToRefresh = ({ isMobile, accent, children }: Props) => {
         WebkitOverflowScrolling: 'touch',
       } as any}
     >
-      {isMobile && (
-        <PullToRefreshIndicator pull={pull} progress={progress} refreshing={refreshing} color={accent} />
-      )}
+      <PullToRefreshIndicator pull={pull} progress={progress} refreshing={refreshing} color={accent} />
       <div
-        style={{
-          transform: pull ? `translateY(${pull}px)` : undefined,
-          transition: pull && !refreshing ? 'none' : 'transform 0.28s cubic-bezier(0.16, 1, 0.3, 1)',
-          willChange: 'transform',
-        }}
+        style={
+          active
+            ? {
+                transform: `translate3d(0, ${pull}px, 0)`,
+                transition: refreshing ? 'transform 0.28s cubic-bezier(0.16, 1, 0.3, 1)' : 'none',
+                willChange: 'transform',
+              }
+            : undefined
+        }
       >
         {children}
       </div>
