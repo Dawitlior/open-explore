@@ -7,13 +7,21 @@ import { checkRiskLimits, type RiskLimitStatus } from '@/lib/risk-limits';
 import { useUserPreferences } from '@/hooks/use-user-preferences';
 import { setManualRMultiple } from '@/lib/manual-r';
 
+/**
+ * Module-level trade cache — survives component unmounts so that switching
+ * tabs/dimensions returns instantly with the previously-loaded data while a
+ * background revalidation runs. Eliminates the layout flicker that the old
+ * "loading → render" cycle caused on every mount.
+ */
+let __tradesCache: Trade[] | null = null;
+
 export function useTrades() {
   const { prefs } = useUserPreferences();
-  const [trades, setTrades] = useState<Trade[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [initialized, setInitialized] = useState(false);
+  const [trades, setTrades] = useState<Trade[]>(() => __tradesCache ?? []);
+  const [loading, setLoading] = useState(__tradesCache === null);
+  const [initialized, setInitialized] = useState(__tradesCache !== null);
   const [riskAlert, setRiskAlert] = useState<RiskLimitStatus | null>(null);
-  const tradesRef = useRef<Trade[]>([]);
+  const tradesRef = useRef<Trade[]>(__tradesCache ?? []);
   const mutationQueueRef = useRef<Promise<void>>(Promise.resolve());
 
   useEffect(() => {
