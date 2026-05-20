@@ -183,7 +183,7 @@ export const StorageManager = {
       if (!buf.length) return;
       const { error, count } = await supabase
         .from("trades")
-        .upsert(buf, {
+        .upsert(buf as never, {
           onConflict: "user_id,broker_id,account_label,external_id",
           ignoreDuplicates: false,
           count: "exact",
