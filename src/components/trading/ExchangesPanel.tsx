@@ -140,6 +140,12 @@ export function ExchangesPanel({ T, isRTL }: Props) {
   const onSync = async (providerId: ProviderId, label: string | null) => {
     if (!user) return;
     setSyncingProvider(providerId);
+    // Optimistic UX — confirm the action lands before the network round-trip
+    const providerName = PROVIDERS.find(p => p.id === providerId)?.name ?? providerId;
+    const optimisticToastId = toast.loading(
+      t(`מתחיל סנכרון • ${providerName}`, `Initiating sync • ${providerName}`),
+      { description: t('מאחזר היסטוריית עסקאות מהבורסה…', 'Pulling trade history from the exchange…') }
+    );
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
