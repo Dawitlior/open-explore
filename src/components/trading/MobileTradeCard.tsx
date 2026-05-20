@@ -1,6 +1,6 @@
 import type { Trade } from '@/data/trades';
 import { SwipeableRow } from './SwipeableRow';
-import { PrivacyMask as PV } from './PrivacyMask';
+import { PrivacyMask } from './PrivacyMask';
 
 interface MobileTradeCardProps {
   T: any;
