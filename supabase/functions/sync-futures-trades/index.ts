@@ -575,17 +575,16 @@ Deno.serve(async (req) => {
     }
 
 
-    // ---- Fetch consolidated closed-pnl trades (defensively validated) ----
-    const fetchResult = await fetchBybitClosedPnl(cred.api_key, apiSecret);
+    // ---- Fetch consolidated closed trades via the provider dispatcher ----
+    const fetchResult = await fetchProviderClosedTrades(provider, cred.api_key, apiSecret);
     if (!fetchResult.ok) {
       return json({ ok: false, error: fetchResult.error, detail: fetchResult.detail }, fetchResult.status);
     }
-    const closed = fetchResult.list;
+    const closedEntries = fetchResult.list;
 
-    // ---- WIPE corrupted execution-level rows for this user/provider ----
-    // The previous pipeline persisted raw fills as standalone trades, which
-    // inflated counts + fragmented PnL. We start clean every sync — closed-pnl
-    // is itself idempotent + bounded by the 180-day window.
+    // ---- WIPE prior api_sync rows for this user/provider ----
+    // Closed-pnl is itself idempotent + bounded by the 180-day window, so we
+    // re-derive from scratch on every bulk sync.
     let wiped = 0;
     {
       const { data: wipedRows, error: wipeErr } = await admin
@@ -601,7 +600,7 @@ Deno.serve(async (req) => {
     }
 
     // Zero-trade fast path — legitimate (new account / no 180d activity)
-    if (closed.length === 0) {
+    if (closedEntries.length === 0) {
       return json({ ok: true, fetched: 0, inserted: 0, skipped: 0, wiped, syncedCount: 0 });
     }
 
@@ -616,28 +615,26 @@ Deno.serve(async (req) => {
     if (maxErr) return json({ ok: false, error: 'max_id_lookup_failed', detail: maxErr.message }, 500);
     let nextId = ((maxRow?.trade_id as number | undefined) ?? 0) + 1;
 
-    // ---- Build rows from closed-pnl, deduped by orderId across paginated windows ----
+    // ---- Build rows, deduped by adapter key ----
     const localSeen = new Set<string>();
     const rows: Array<Record<string, unknown>> = [];
     let inserted = 0;
     let skipped = 0;
     let runningBalance = 0;
-    // Sort chronologically so running balance is meaningful.
-    const sorted = [...closed].sort((a, b) =>
-      (Number(a.updatedTime) || 0) - (Number(b.updatedTime) || 0),
+    const sorted = [...closedEntries].sort((a, b) =>
+      Date.parse(a.provenance.closed_at) - Date.parse(b.provenance.closed_at),
     );
-    for (const e of sorted) {
-      if (!e?.orderId) { skipped++; continue; }
-      if (localSeen.has(e.orderId)) { skipped++; continue; }
-      localSeen.add(e.orderId);
-      const { legacy, provenance } = bybitToTrade(e, provider);
+    for (const entry of sorted) {
+      if (!entry.key) { skipped++; continue; }
+      if (localSeen.has(entry.key)) { skipped++; continue; }
+      localSeen.add(entry.key);
+      const { legacy, provenance } = entry;
       runningBalance += legacy.pnl;
       const full: Trade = { ...legacy, id: nextId, balance: Math.round(runningBalance * 10000) / 10000 };
       rows.push({
         user_id: userId,
         trade_id: nextId,
         data: full,
-        // Phase 1 dual-write
         broker_id: provenance.broker_id,
         account_label: label || null,
         source_type: provenance.source_type,
@@ -649,6 +646,7 @@ Deno.serve(async (req) => {
       nextId++;
       inserted++;
     }
+
 
     if (rows.length > 0) {
       // Idempotency tier 3 (DB layer): conflict on the unique partial index
