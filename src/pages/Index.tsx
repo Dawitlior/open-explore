@@ -30,6 +30,7 @@ import ImportLoadingOverlay from '@/components/trading/ImportLoadingOverlay';
 import { FeatureHint } from '@/components/trading/FeatureHint';
 import { EntryGate } from '@/components/trading/EntryGate';
 import { RiskLimitAlert } from '@/components/trading/RiskLimitAlert';
+import { MobileBottomNav } from '@/components/trading/MobileBottomNav';
 import { RiskExplanationModal, type RiskExplanation } from '@/components/trading/RiskExplanationModal';
 import { lazy, Suspense } from 'react';
 import { LazyShell } from '@/components/LazyShell';
