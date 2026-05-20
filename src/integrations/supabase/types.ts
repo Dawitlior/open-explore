@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      economic_events: {
+        Row: {
+          actual: string | null
+          category: string | null
+          country: string | null
+          created_at: string
+          currency: string | null
+          description: string | null
+          event_name: string
+          external_id: string
+          forecast: string | null
+          id: string
+          impact: string
+          previous: string | null
+          provider: string
+          release_at: string
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          actual?: string | null
+          category?: string | null
+          country?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          event_name: string
+          external_id: string
+          forecast?: string | null
+          id?: string
+          impact?: string
+          previous?: string | null
+          provider: string
+          release_at: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          actual?: string | null
+          category?: string | null
+          country?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          event_name?: string
+          external_id?: string
+          forecast?: string | null
+          id?: string
+          impact?: string
+          previous?: string | null
+          provider?: string
+          release_at?: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       exchange_credentials: {
         Row: {
           api_key: string
