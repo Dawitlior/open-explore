@@ -1727,24 +1727,7 @@ const Index = () => {
         {/* Dimension Portal Buttons */}
         {sbOpen && <div style={{ padding: '4px 6px' }}><PortalButton onClick={() => setActiveDimension('journal')} isRTL={isRTL} expanded={true} /></div>}
         {sbOpen && <div style={{ padding: '4px 6px' }}><BacktestPortalButton onClick={() => setActiveDimension('backtest')} isRTL={isRTL} expanded={true} /></div>}
-        {sbOpen && (
-          <div style={{ padding: '4px 6px' }}>
-            <button
-              onClick={() => setShowEconomicCalendar(true)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 10, width: '100%',
-                padding: '10px 12px',
-                background: 'linear-gradient(135deg, rgba(244,63,94,0.08), rgba(245,158,11,0.08))',
-                border: '1px solid rgba(244,63,94,0.2)',
-                borderRadius: 10, cursor: 'pointer', fontSize: 12, fontWeight: 700,
-                color: '#f59e0b', transition: 'all 0.3s ease',
-              }}
-            >
-              <span style={{ fontSize: 18 }}>📡</span>
-              <span style={{ letterSpacing: '0.02em' }}>{isRTL ? 'מכ״ם כלכלי' : 'Economic Radar'}</span>
-            </button>
-          </div>
-        )}
+        {/* Economic Radar promoted into main nav above */}
         {sbOpen && <div style={{ padding: '4px 6px' }}><InstallPrompt T={T} isRTL={isRTL} compact /></div>}
         <div style={{ padding: 10, borderTop: `1px solid ${T.border.subtle}`, display: 'flex', flexDirection: 'column', gap: 4 }}>
           {sbOpen && <button onClick={() => setShowSettings(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '9px 10px', background: `${T.accent.cyan}10`, border: `1px solid ${T.accent.cyan}30`, borderRadius: T.radius.md, color: T.accent.cyan, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
