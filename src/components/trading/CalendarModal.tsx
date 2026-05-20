@@ -629,6 +629,7 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
         <style>{`
           @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
           @keyframes scaleIn { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+          @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         `}</style>
       </div>
     </div>
