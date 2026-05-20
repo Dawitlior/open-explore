@@ -500,7 +500,7 @@ function EventRow({ e, lang, now }: { e: EconomicEvent; lang: 'he' | 'en'; now: 
 
 /* ───── Countdown Widget (right column) ───── */
 
-function CountdownWidget({ e, now, t }: { e: EconomicEvent; now: number; t: typeof COPY['en'] }) {
+function CountdownWidget({ e, now, t }: { e: EconomicEvent; now: number; t: (typeof COPY)[keyof typeof COPY] }) {
   const release = +new Date(e.release_at);
   const ms = release - now;
   const imminent = ms > 0 && ms < 15 * 60_000;
