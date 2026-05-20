@@ -1392,6 +1392,7 @@ const Index = () => {
             </table>
           </div>
         </GlassCard>
+        )}
         {!isLive && totalPages > 1 && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
             {navBtn('«', () => setJournalPage(0), safePage === 0)}
