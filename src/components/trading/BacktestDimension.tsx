@@ -3,8 +3,6 @@ import { AreaChart, Area, BarChart, Bar, Cell, XAxis, YAxis, Tooltip, Responsive
 import BacktestChartPanel from "./backtest/BacktestChartPanel";
 import CommitBacktestModal from "./backtest/CommitBacktestModal";
 import type { DraftBacktestTrade } from "./backtest/tv-mapping";
-import { backtestDraftStore } from "./backtest/backtest-draft-store";
-import { setCaptureAdapter, manualCaptureAdapter } from "./backtest/capture-adapter";
 
 // ─── Engine (compact) ───
 const calcR=(e:number,sl:number,ex:number)=>(!e||!sl||ex==null||e===sl)?null:(ex-e)/(e-sl);
@@ -399,33 +397,6 @@ function BacktestApp({ onReturn }: { onReturn: () => void }) {
   const[exitingToOrca,setExitingToOrca]=useState(false);
 
   useEffect(()=>{css();loadS().then((t:any)=>{setTrades(t);setLoading(false);});},[]);
-
-  // Register the capture adapter (manual today, TV-Library tomorrow — one-line swap).
-  useEffect(()=>{
-    setCaptureAdapter(manualCaptureAdapter);
-    const detach=manualCaptureAdapter.attach((d)=>backtestDraftStore.upsert(d));
-    return detach;
-  },[]);
-
-  // Global keyboard shortcuts: c=capture, g+c=chart, g+j=journal, ⌘/Ctrl+K=quick
-  useEffect(()=>{
-    let lastG=0;
-    const onKey=(e:KeyboardEvent)=>{
-      const tgt=e.target as HTMLElement;
-      if(tgt?.tagName==="INPUT"||tgt?.tagName==="TEXTAREA"||tgt?.isContentEditable)return;
-      if(e.metaKey||e.ctrlKey||e.altKey)return;
-      const now=Date.now();
-      if(e.key==="g"){lastG=now;return;}
-      if(now-lastG<800){
-        if(e.key==="c"){e.preventDefault();setTab("chart");lastG=0;return;}
-        if(e.key==="j"){e.preventDefault();setTab("trades");lastG=0;return;}
-      }
-      if(e.key==="c"&&tab==="chart"){e.preventDefault();backtestDraftStore.openSheet();}
-    };
-    window.addEventListener("keydown",onKey);
-    return()=>window.removeEventListener("keydown",onKey);
-  },[tab]);
-
   const save=useCallback(async (n:any)=>{setTrades(n);await persist(n);},[]);
   const commitDraft=useCallback((d:DraftBacktestTrade)=>{
     // Reuse the existing engine path — `recalc` derives dir/r/mfeR/maeR/dur.
