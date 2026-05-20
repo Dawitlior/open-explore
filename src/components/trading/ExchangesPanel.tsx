@@ -165,18 +165,18 @@ export function ExchangesPanel({ T, isRTL }: Props) {
         toast.success(t(
           `סנכרון הושלם • ${payload.inserted ?? 0} חדשות, ${payload.skipped ?? 0} קיימות`,
           `Sync complete • ${payload.inserted ?? 0} new, ${payload.skipped ?? 0} existing`
-        ));
+        ), { id: optimisticToastId });
         // Notify any listeners (useTrades, journal) that data changed
         window.dispatchEvent(new CustomEvent('orca:trades-synced', { detail: payload }));
       } else if (res.status === 404 || payload.error === 'no_credential') {
-        toast.error(t('לא נמצא חיבור פעיל לבורסה.', 'No active exchange connection found.'));
+        toast.error(t('לא נמצא חיבור פעיל לבורסה.', 'No active exchange connection found.'), { id: optimisticToastId });
       } else if (res.status === 502 || res.status === 503 || payload.error === 'exchange_error') {
-        toast.error(t('הבורסה לא הגיבה. נסה שוב מאוחר יותר.', 'Exchange unavailable. Try again later.'));
+        toast.error(t('הבורסה לא הגיבה. נסה שוב מאוחר יותר.', 'Exchange unavailable. Try again later.'), { id: optimisticToastId });
       } else {
-        toast.error(t('סנכרון נכשל.', 'Sync failed.') + (payload.detail ? ` (${payload.detail})` : ''));
+        toast.error(t('סנכרון נכשל.', 'Sync failed.') + (payload.detail ? ` (${payload.detail})` : ''), { id: optimisticToastId });
       }
     } catch (e) {
-      toast.error(t('שגיאת רשת בסנכרון.', 'Network error during sync.'));
+      toast.error(t('שגיאת רשת בסנכרון.', 'Network error during sync.'), { id: optimisticToastId });
     } finally {
       setSyncingProvider(null);
     }
