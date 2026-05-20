@@ -69,9 +69,11 @@ function weekRange(offsetWeeks: number): { start: Date; end: Date } {
 
 function dayKey(d: Date): string {
   return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Jerusalem',
     year: 'numeric', month: '2-digit', day: '2-digit',
   }).format(d);
 }
+
 
 function isSameDay(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
