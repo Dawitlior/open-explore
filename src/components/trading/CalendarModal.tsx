@@ -37,11 +37,13 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
   const [aiLoading, setAiLoading] = useState(false);
   const [showAI, setShowAI] = useState(false);
 
-  // Macro events for the visible month (single query, cached). Pick this day.
-  const { byDay: macroByDay } = useMonthEconomicEvents({ year, month, impacts: ['t1', 't2', 't3'] });
-  const dayMacros = (macroByDay.get(day) ?? []).slice().sort(
-    (a, b) => new Date(a.release_at).getTime() - new Date(b.release_at).getTime()
-  );
+  // Strategic Calendar — T1 only, USA + China only (zero noise).
+  const { byDay: macroByDay } = useMonthEconomicEvents({ year, month, impacts: ['t1'] });
+  const dayMacros = (macroByDay.get(day) ?? [])
+    .filter((e) => { const c = (e.currency || '').toUpperCase(); return c === 'USD' || c === 'CNY'; })
+    .slice()
+    .sort((a, b) => new Date(a.release_at).getTime() - new Date(b.release_at).getTime());
+
   const lang: 'he' | 'en' = isRTL ? 'he' : 'en';
 
 
