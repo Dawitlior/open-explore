@@ -16,15 +16,15 @@ import { CURRENCY_FLAG } from './MacroEventStrip';
 
 const COPY = {
   he: {
-    title: 'מכ״ם כלכלי',
-    subtitle: 'אות נקי · USD · JPY · קריטי בלבד',
+    title: 'טרמינל מאקרו',
+    subtitle: 'כל הדיווחים · כל האזורים · כל הרמות',
     close: 'סגור',
     today: 'היום',
     selected: 'יום נבחר',
     feed: 'אירועים',
-    empty: 'אין אירועי מאקרו קריטיים ביום זה',
+    empty: 'אין אירועי מאקרו ביום זה',
     upcoming: 'קאונטדאון לאירוע הבא',
-    noUpcoming: 'אין אירועים קריטיים בטווח הקרוב',
+    noUpcoming: 'אין אירועים בטווח הקרוב',
     actual: 'בפועל',
     forecast: 'תחזית',
     previous: 'קודם',
@@ -37,15 +37,16 @@ const COPY = {
     weekdays: ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'],
   },
   en: {
-    title: 'Economic Radar',
-    subtitle: 'Pure Signal · USD · JPY · Critical only',
+    title: 'Macro Terminal',
+    subtitle: 'All releases · All regions · All tiers',
     close: 'Close',
     today: 'Today',
     selected: 'Selected',
     feed: 'Events',
-    empty: 'No critical macro events on this day',
+    empty: 'No macro events on this day',
     upcoming: 'Next Release Countdown',
-    noUpcoming: 'No critical events in the near horizon',
+    noUpcoming: 'No events in the near horizon',
+
     actual: 'Actual',
     forecast: 'Forecast',
     previous: 'Previous',
@@ -59,7 +60,7 @@ const COPY = {
   },
 } as const;
 
-const CURRENCY_FILTER = ['USD', 'JPY'] as const;
+// Radar Terminal — unfiltered: every region, every impact tier.
 const IST_TZ = 'Asia/Jerusalem';
 
 function istDateKey(d: Date | string): string {
@@ -121,14 +122,10 @@ export function EconomicCalendarPage({ onClose }: Props) {
   const isRTL = lang === 'he';
   const t = COPY[lang];
 
-  // 30-day horizon, T1 only — minimal payload reaches the client
-  const { events: rawEvents, loading } = useEconomicEvents({ hoursAhead: 30 * 24, impacts: ['t1'] });
+  // Radar Terminal — full unfiltered macro feed: all impacts, all regions.
+  const { events: rawEvents, loading } = useEconomicEvents({ hoursAhead: 30 * 24 });
+  const events = rawEvents;
 
-  // Defensive client-side filter: USD + JPY only
-  const events = useMemo<EconomicEvent[]>(
-    () => rawEvents.filter((e) => e.currency && CURRENCY_FILTER.includes(e.currency.toUpperCase() as 'USD' | 'JPY')),
-    [rawEvents],
-  );
 
   // Group events by IST day key
   const eventsByDay = useMemo(() => {

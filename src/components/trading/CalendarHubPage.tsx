@@ -60,8 +60,21 @@ const CalendarHubPage_Impl = ({ T, isRTL, trades, t, isMobile, onGenerateInsight
 
   const calDays = useMemo(() => getCalDays(calYear, calMonth), [calYear, calMonth]);
 
-  // Macro economic events overlay (T1+T2 only; one query per month)
-  const { byDay: macroByDay } = useMonthEconomicEvents({ year: calYear, month: calMonth, impacts: ['t1', 't2'] });
+  // Strategic Calendar overlay — T1 only, USA + China only (zero noise).
+  const { byDay: macroByDayRaw } = useMonthEconomicEvents({ year: calYear, month: calMonth, impacts: ['t1'] });
+  const macroByDay = useMemo(() => {
+    const m = new Map<number, typeof macroByDayRaw extends Map<number, infer V> ? V : never>();
+    macroByDayRaw.forEach((list, day) => {
+      const filtered = list.filter((e) => {
+        const c = (e.currency || '').toUpperCase();
+        return c === 'USD' || c === 'CNY';
+      });
+      if (filtered.length) m.set(day, filtered);
+    });
+    return m;
+  }, [macroByDayRaw]);
+
+
 
   const weekStats = useMemo(() => {
 
