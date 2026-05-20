@@ -1897,6 +1897,11 @@ const Index = () => {
       {riskAlert && <RiskLimitAlert T={T} isRTL={isRTL} status={riskAlert} onClose={dismissRiskAlert} />}
       {showRiskExplanation && <RiskExplanationModal T={T} isRTL={isRTL} tradeId={showRiskExplanation.tradeId} riskChange={showRiskExplanation.riskChange} onSave={handleSaveRiskExplanation} onClose={() => setShowRiskExplanation(null)} />}
       {showFeatureModal && <FeatureManifestModal T={T} isRTL={isRTL} onClose={() => setShowFeatureModal(false)} />}
+      {showEconomicCalendar && (
+        <Suspense fallback={null}>
+          <EconomicCalendarPage onClose={() => setShowEconomicCalendar(false)} />
+        </Suspense>
+      )}
       <CommandPalette T={T} commands={commands} isOpen={showCmdPalette} onClose={() => setShowCmdPalette(false)} />
       {/* Import Warning Modal — with format guide + template link */}
       {showImportWarning && (
