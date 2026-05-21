@@ -137,6 +137,17 @@ const Index = () => {
     window.addEventListener('orca:open-oracle', onOpen);
     return () => window.removeEventListener('orca:open-oracle', onOpen);
   }, []);
+  // Post-onboarding nudge: auto-open Oracle once after first onboarding completes.
+  useEffect(() => {
+    void (async () => {
+      const { scopedStorage } = await import('@/lib/scoped-storage');
+      const pending = await scopedStorage.getItem('orca-oracle-prompt-pending');
+      if (pending === '1' && !oracleCalibrated) {
+        setTimeout(() => setShowOracle(true), 1200);
+        void scopedStorage.removeItem('orca-oracle-prompt-pending');
+      }
+    })();
+  }, [oracleCalibrated]);
   const [aiInsights, setAiInsights] = useState<ReturnType<typeof generateInsights>>([]);
   const [aiLoading, setAiLoading] = useState(false);
   const [showThemeMenu, setShowThemeMenu] = useState(false);
