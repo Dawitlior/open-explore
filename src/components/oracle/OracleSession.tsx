@@ -120,22 +120,33 @@ export function OracleSession({ open, onClose, lang }: Props) {
         )}
 
         {!loading && session && isLocked && (
-          <div className="text-center max-w-md">
-            <OracleProgressArc confidence={Math.max(confidence, 0.92)} depthScore={session.depth_score} answered={totalAnswered} />
-            <h1 className="mt-6 text-3xl font-medium text-foreground">
-              {isRTL ? 'הכיול נעול' : 'Calibration Locked'}
-            </h1>
-            <p className="mt-3 text-sm text-foreground/60 leading-relaxed">
-              {isRTL
-                ? 'ה-DNA שלך מסונתז. ה-Coach יכויל מחדש בעוד רגע.'
-                : 'Your DNA is synthesizing. The Coach will recalibrate momentarily.'}
-            </p>
-            <button
-              onClick={onClose}
-              className="mt-8 px-8 py-3 rounded-md bg-foreground text-background font-mono text-[11px] uppercase tracking-[0.25em] hover:opacity-90 transition"
-            >
-              {isRTL ? 'סיום' : 'Close'}
-            </button>
+          <div className="w-full max-w-3xl mx-auto overflow-y-auto max-h-[80vh] px-4 py-8">
+            {blueprint?.archetype ? (
+              <OracleBlueprintReport blueprint={blueprint} lang={lang} />
+            ) : (
+              <div className="text-center">
+                <OracleProgressArc confidence={Math.max(confidence, 0.92)} depthScore={session.depth_score} answered={totalAnswered} />
+                <h1 className="mt-6 text-3xl font-medium text-foreground">
+                  {isRTL ? 'מסנתז DNA…' : 'Synthesizing DNA…'}
+                </h1>
+                <p className="mt-3 text-sm text-foreground/60 leading-relaxed">
+                  {isRTL
+                    ? 'ה-Coach שלך מקבל כיול חדש. זה לוקח כ-15 שניות.'
+                    : 'Your Coach is being recalibrated. ~15 seconds.'}
+                </p>
+                <div className="mt-6 font-mono text-[10px] uppercase tracking-[0.3em] text-foreground/30 animate-pulse">
+                  {'•'.repeat((pollTick % 4) + 1)}
+                </div>
+              </div>
+            )}
+            <div className="mt-10 flex justify-center">
+              <button
+                onClick={onClose}
+                className="px-8 py-3 rounded-md bg-foreground text-background font-mono text-[11px] uppercase tracking-[0.25em] hover:opacity-90 transition"
+              >
+                {isRTL ? 'סיום' : 'Close'}
+              </button>
+            </div>
           </div>
         )}
       </div>
