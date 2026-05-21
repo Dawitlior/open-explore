@@ -21,7 +21,9 @@ export function OracleSession({ open, onClose, lang }: Props) {
     loading, starting, session, currentNode, confidence, totalAnswered,
     start, answer, skip, isLocked,
   } = useOracleSession();
+  const { blueprint, refresh } = useOracleVector();
   const isRTL = lang === 'he';
+  const [pollTick, setPollTick] = useState(0);
 
   useEffect(() => {
     if (!open) return;
@@ -29,6 +31,24 @@ export function OracleSession({ open, onClose, lang }: Props) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
+
+  // After lock, poll for synthesis output for up to ~45s, then broadcast.
+  useEffect(() => {
+    if (!isLocked || !open) return;
+    let n = 0;
+    const id = setInterval(() => {
+      n += 1;
+      setPollTick((t) => t + 1);
+      void refresh();
+      if (blueprint?.archetype || n >= 15) {
+        clearInterval(id);
+        if (blueprint?.archetype) {
+          window.dispatchEvent(new CustomEvent('orca:oracle-updated'));
+        }
+      }
+    }, 3000);
+    return () => clearInterval(id);
+  }, [isLocked, open, refresh, blueprint?.archetype]);
 
   if (!open) return null;
 
