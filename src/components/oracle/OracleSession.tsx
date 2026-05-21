@@ -1,12 +1,14 @@
 /**
  * OracleSession — full-screen calibration modal.
- * Glass terminal aesthetic, ESC to abandon, lock state shows blueprint stub.
+ * Glass terminal aesthetic, ESC to abandon, lock state shows full blueprint.
  */
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { useOracleSession } from '@/hooks/use-oracle-session';
+import { useOracleVector } from '@/hooks/use-oracle-vector';
 import { OracleNodeCard } from './OracleNodeCard';
 import { OracleProgressArc } from './OracleProgressArc';
+import { OracleBlueprintReport } from './OracleBlueprintReport';
 
 interface Props {
   open: boolean;
