@@ -30,6 +30,8 @@ const CalendarHubPage_Impl = ({ T, isRTL, trades, t, isMobile, onGenerateInsight
   const [calYear, setCalYear] = useState(now.getFullYear());
   const [calHoverDay, setCalHoverDay] = useState<number | null>(null);
   const [calModalDay, setCalModalDay] = useState<number | null>(null);
+  const recalSignal = useRecalibrationTrigger(trades);
+  const openOracle = () => window.dispatchEvent(new CustomEvent('orca:open-oracle'));
 
   const months = isRTL ? monthsHe : monthsEn;
   const dayNames = isRTL ? ['א','ב','ג','ד','ה','ו','ש'] : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
