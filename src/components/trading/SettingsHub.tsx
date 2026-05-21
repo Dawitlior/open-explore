@@ -1758,6 +1758,10 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
               <InstallGuide T={T} t={t} isRTL={isRTL} />
             )}
 
+            {tab === 'oracle' && (
+              <OracleDiagnosticsTab T={T} isRTL={isRTL} t={t} card={card} sectionTitle={sectionTitle} sectionHint={sectionHint} />
+            )}
+
             {tab === 'legal' && (
               <div style={card}>
                 <h3 style={sectionTitle}><Scale size={14} /> {t('משפטי ונגישות', 'Legal & Accessibility')}</h3>
