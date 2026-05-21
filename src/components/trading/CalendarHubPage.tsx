@@ -286,6 +286,7 @@ const CalendarHubPage_Impl = ({ T, isRTL, trades, t, isMobile, onGenerateInsight
   return (
     <div style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
       <RProxyBanner T={T} isRTL={isRTL} />
+      <RecalibrationBanner signal={recalSignal} lang={isRTL ? 'he' : 'en'} onCalibrate={openOracle} />
       <FeatureHint
         T={T}
         id="calendar-hub-page-fullscreen"
