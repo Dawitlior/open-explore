@@ -2046,3 +2046,77 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
     </div>
   );
 }
+
+// =============================================================
+// Oracle Diagnostics tab — surfaces calibration state + blueprint
+// =============================================================
+import { useOracleVector } from '@/hooks/use-oracle-vector';
+import { OracleBlueprintReport } from '@/components/oracle/OracleBlueprintReport';
+
+function OracleDiagnosticsTab({
+  T, isRTL, t, card, sectionTitle, sectionHint,
+}: {
+  T: TradingTheme; isRTL: boolean; t: (he: string, en: string) => string;
+  card: React.CSSProperties; sectionTitle: React.CSSProperties; sectionHint: React.CSSProperties;
+}) {
+  const { blueprint, isCalibrated, ageDays, loading } = useOracleVector();
+  const openOracle = () => window.dispatchEvent(new CustomEvent('orca:open-oracle'));
+
+  return (
+    <div style={card}>
+      <h3 style={sectionTitle}>◈ {t('Oracle Core — אבחון התנהגותי', 'Oracle Core — Behavioral Diagnostics')}</h3>
+      <p style={sectionHint}>
+        {t(
+          'מנוע ה-DNA שבונה את הפרופיל הפסיכולוגי שלך ומכייל את ה-AI Coach.',
+          'The DNA engine that builds your psychological profile and calibrates your AI Coach.',
+        )}
+      </p>
+
+      <div style={{
+        marginTop: 14, padding: 14, borderRadius: 12,
+        background: isCalibrated ? `${T.accent.cyan}10` : '#fbbf2410',
+        border: `1px solid ${isCalibrated ? `${T.accent.cyan}40` : '#fbbf2440'}`,
+        display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+      }}>
+        <span style={{ fontSize: 22 }}>{isCalibrated ? '◈' : '⚠'}</span>
+        <div style={{ flex: 1, minWidth: 200 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: T.text.muted, textTransform: 'uppercase', letterSpacing: 1 }}>
+            {t('סטטוס', 'Status')}
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: T.text.primary, marginTop: 2 }}>
+            {loading
+              ? t('טוען…', 'Loading…')
+              : isCalibrated
+                ? blueprint?.archetype ?? t('מכויל', 'Calibrated')
+                : t('לא מכויל — כייל עכשיו', 'Uncalibrated — calibrate now')}
+          </div>
+          {isCalibrated && ageDays != null && (
+            <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>
+              {t(`גיל DNA: ${ageDays} ימים`, `DNA age: ${ageDays} days`)}
+            </div>
+          )}
+        </div>
+        <button
+          onClick={openOracle}
+          style={{
+            padding: '10px 18px', borderRadius: 10,
+            background: isCalibrated ? 'transparent' : T.accent.cyan,
+            color: isCalibrated ? T.accent.cyan : '#0a0e1a',
+            border: `1px solid ${T.accent.cyan}`,
+            fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase',
+            cursor: 'pointer',
+          }}
+        >
+          {isCalibrated ? t('כייל מחדש', 'Recalibrate') : t('התחל כיול', 'Begin Calibration')}
+        </button>
+      </div>
+
+      {isCalibrated && blueprint && (
+        <div style={{ marginTop: 18 }}>
+          <OracleBlueprintReport blueprint={blueprint} lang={isRTL ? 'he' : 'en'} />
+        </div>
+      )}
+    </div>
+  );
+}
+
