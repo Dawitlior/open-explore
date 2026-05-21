@@ -9,6 +9,8 @@ import { sumR, formatR } from '@/lib/r-multiple';
 import { RProxyBanner } from './RProxyBanner';
 import { useMonthEconomicEvents } from '@/hooks/use-month-economic-events';
 import { MacroEventStrip, MacroDot } from '@/components/economic/MacroEventStrip';
+import { RecalibrationBanner } from '@/components/oracle/RecalibrationBanner';
+import { useRecalibrationTrigger } from '@/hooks/use-recalibration-trigger';
 
 
 type Props = {
@@ -28,6 +30,8 @@ const CalendarHubPage_Impl = ({ T, isRTL, trades, t, isMobile, onGenerateInsight
   const [calYear, setCalYear] = useState(now.getFullYear());
   const [calHoverDay, setCalHoverDay] = useState<number | null>(null);
   const [calModalDay, setCalModalDay] = useState<number | null>(null);
+  const recalSignal = useRecalibrationTrigger(trades);
+  const openOracle = () => window.dispatchEvent(new CustomEvent('orca:open-oracle'));
 
   const months = isRTL ? monthsHe : monthsEn;
   const dayNames = isRTL ? ['א','ב','ג','ד','ה','ו','ש'] : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -107,6 +111,7 @@ const CalendarHubPage_Impl = ({ T, isRTL, trades, t, isMobile, onGenerateInsight
     return (
       <div style={{ direction: isRTL ? 'rtl' : 'ltr', padding: '4px 2px 24px' }}>
         <RProxyBanner T={T} isRTL={isRTL} compact />
+        <RecalibrationBanner signal={recalSignal} lang={isRTL ? 'he' : 'en'} onCalibrate={openOracle} />
         {calRiskStatus.monthlyBreached && (
           <div style={{ padding: '10px 14px', background: `${T.accent.red}15`, border: `1px solid ${T.accent.red}40`, borderRadius: 14, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 18 }}>🚨</span>
@@ -281,6 +286,7 @@ const CalendarHubPage_Impl = ({ T, isRTL, trades, t, isMobile, onGenerateInsight
   return (
     <div style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
       <RProxyBanner T={T} isRTL={isRTL} />
+      <RecalibrationBanner signal={recalSignal} lang={isRTL ? 'he' : 'en'} onCalibrate={openOracle} />
       <FeatureHint
         T={T}
         id="calendar-hub-page-fullscreen"

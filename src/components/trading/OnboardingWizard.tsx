@@ -49,6 +49,8 @@ export const OnboardingWizard = ({ onComplete }: { onComplete: () => void }) => 
     void scopedStorage.setItem(STORAGE_KEY, '1');
     void scopedStorage.setItem(NAME_KEY, name.trim());
     if (profile) void scopedStorage.setItem(PROFILE_KEY, profile);
+    // Signal that Oracle calibration is the next recommended action.
+    void scopedStorage.setItem('orca-oracle-prompt-pending', '1');
     onComplete();
   };
 

@@ -46,7 +46,7 @@ interface SettingsHubProps {
   trades: Trade[];
 }
 
-type TabId = 'account' | 'appearance' | 'theme-studio' | 'dashboard' | 'kpis' | 'risk' | 'interface' | 'sounds' | 'trading' | 'exchanges' | 'data' | 'install' | 'legal';
+type TabId = 'account' | 'appearance' | 'theme-studio' | 'dashboard' | 'kpis' | 'risk' | 'interface' | 'sounds' | 'trading' | 'exchanges' | 'data' | 'oracle' | 'install' | 'legal';
 
 const ACCENT_PRESETS = [
   '#00f2ff', '#06d6a0', '#3b82f6', '#8b5cf6',
@@ -186,6 +186,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
     { id: 'trading', icon: Target, label: { he: 'ברירות מחדל למסחר', en: 'Trading Defaults' }, group: { he: 'מסחר', en: 'Trading' }, desc: { he: 'אחוז סיכון ברירת מחדל ויעד R לעסקה חדשה', en: 'Default risk percent and R target for new trades' } },
     { id: 'exchanges', icon: Plug, label: { he: 'בורסות מחוברות', en: 'Connected Exchanges' }, group: { he: 'מסחר', en: 'Trading' }, desc: { he: 'חבר Bybit, Binance ו־IBKR לכספת מאובטחת', en: 'Connect Bybit, Binance and IBKR to the secure vault' } },
     { id: 'data', icon: Database, label: { he: 'נתונים וגיבוי', en: 'Data & Backup' }, group: { he: 'מסחר', en: 'Trading' }, desc: { he: 'יצוא, סטטיסטיקות וניהול אחסון', en: 'Export, stats and storage management' } },
+    { id: 'oracle', icon: Brush, label: { he: 'Oracle — אבחון', en: 'Oracle — Diagnostics' }, group: { he: 'מסחר', en: 'Trading' }, desc: { he: 'DNA התנהגותי וכיול ה-Coach', en: 'Behavioral DNA and Coach calibration' } },
     { id: 'install', icon: Download, label: { he: 'הורד אפליקציה', en: 'Download App' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'התקן את אורקה על הטלפון או המחשב', en: 'Install Orca on your phone or desktop' } },
     { id: 'legal', icon: Scale, label: { he: 'משפטי ונגישות', en: 'Legal & Accessibility' }, group: { he: 'אישי', en: 'Personal' }, desc: { he: 'תנאי שימוש, פרטיות, נגישות והסרת אחריות', en: 'Terms, privacy, accessibility and disclaimers' } },
   ];
@@ -1757,6 +1758,10 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
               <InstallGuide T={T} t={t} isRTL={isRTL} />
             )}
 
+            {tab === 'oracle' && (
+              <OracleDiagnosticsTab T={T} isRTL={isRTL} t={t} card={card} sectionTitle={sectionTitle} sectionHint={sectionHint} />
+            )}
+
             {tab === 'legal' && (
               <div style={card}>
                 <h3 style={sectionTitle}><Scale size={14} /> {t('משפטי ונגישות', 'Legal & Accessibility')}</h3>
@@ -2041,3 +2046,77 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
     </div>
   );
 }
+
+// =============================================================
+// Oracle Diagnostics tab — surfaces calibration state + blueprint
+// =============================================================
+import { useOracleVector } from '@/hooks/use-oracle-vector';
+import { OracleBlueprintReport } from '@/components/oracle/OracleBlueprintReport';
+
+function OracleDiagnosticsTab({
+  T, isRTL, t, card, sectionTitle, sectionHint,
+}: {
+  T: TradingTheme; isRTL: boolean; t: (he: string, en: string) => string;
+  card: React.CSSProperties; sectionTitle: React.CSSProperties; sectionHint: React.CSSProperties;
+}) {
+  const { blueprint, isCalibrated, ageDays, loading } = useOracleVector();
+  const openOracle = () => window.dispatchEvent(new CustomEvent('orca:open-oracle'));
+
+  return (
+    <div style={card}>
+      <h3 style={sectionTitle}>◈ {t('Oracle Core — אבחון התנהגותי', 'Oracle Core — Behavioral Diagnostics')}</h3>
+      <p style={sectionHint}>
+        {t(
+          'מנוע ה-DNA שבונה את הפרופיל הפסיכולוגי שלך ומכייל את ה-AI Coach.',
+          'The DNA engine that builds your psychological profile and calibrates your AI Coach.',
+        )}
+      </p>
+
+      <div style={{
+        marginTop: 14, padding: 14, borderRadius: 12,
+        background: isCalibrated ? `${T.accent.cyan}10` : '#fbbf2410',
+        border: `1px solid ${isCalibrated ? `${T.accent.cyan}40` : '#fbbf2440'}`,
+        display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+      }}>
+        <span style={{ fontSize: 22 }}>{isCalibrated ? '◈' : '⚠'}</span>
+        <div style={{ flex: 1, minWidth: 200 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: T.text.muted, textTransform: 'uppercase', letterSpacing: 1 }}>
+            {t('סטטוס', 'Status')}
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: T.text.primary, marginTop: 2 }}>
+            {loading
+              ? t('טוען…', 'Loading…')
+              : isCalibrated
+                ? blueprint?.archetype ?? t('מכויל', 'Calibrated')
+                : t('לא מכויל — כייל עכשיו', 'Uncalibrated — calibrate now')}
+          </div>
+          {isCalibrated && ageDays != null && (
+            <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>
+              {t(`גיל DNA: ${ageDays} ימים`, `DNA age: ${ageDays} days`)}
+            </div>
+          )}
+        </div>
+        <button
+          onClick={openOracle}
+          style={{
+            padding: '10px 18px', borderRadius: 10,
+            background: isCalibrated ? 'transparent' : T.accent.cyan,
+            color: isCalibrated ? T.accent.cyan : '#0a0e1a',
+            border: `1px solid ${T.accent.cyan}`,
+            fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase',
+            cursor: 'pointer',
+          }}
+        >
+          {isCalibrated ? t('כייל מחדש', 'Recalibrate') : t('התחל כיול', 'Begin Calibration')}
+        </button>
+      </div>
+
+      {isCalibrated && blueprint && (
+        <div style={{ marginTop: 18 }}>
+          <OracleBlueprintReport blueprint={blueprint} lang={isRTL ? 'he' : 'en'} />
+        </div>
+      )}
+    </div>
+  );
+}
+

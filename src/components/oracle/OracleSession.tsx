@@ -1,12 +1,14 @@
 /**
  * OracleSession — full-screen calibration modal.
- * Glass terminal aesthetic, ESC to abandon, lock state shows blueprint stub.
+ * Glass terminal aesthetic, ESC to abandon, lock state shows full blueprint.
  */
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { useOracleSession } from '@/hooks/use-oracle-session';
+import { useOracleVector } from '@/hooks/use-oracle-vector';
 import { OracleNodeCard } from './OracleNodeCard';
 import { OracleProgressArc } from './OracleProgressArc';
+import { OracleBlueprintReport } from './OracleBlueprintReport';
 
 interface Props {
   open: boolean;
@@ -19,7 +21,9 @@ export function OracleSession({ open, onClose, lang }: Props) {
     loading, starting, session, currentNode, confidence, totalAnswered,
     start, answer, skip, isLocked,
   } = useOracleSession();
+  const { blueprint, refresh } = useOracleVector();
   const isRTL = lang === 'he';
+  const [pollTick, setPollTick] = useState(0);
 
   useEffect(() => {
     if (!open) return;
@@ -27,6 +31,24 @@ export function OracleSession({ open, onClose, lang }: Props) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
+
+  // After lock, poll for synthesis output for up to ~45s, then broadcast.
+  useEffect(() => {
+    if (!isLocked || !open) return;
+    let n = 0;
+    const id = setInterval(() => {
+      n += 1;
+      setPollTick((t) => t + 1);
+      void refresh();
+      if (blueprint?.archetype || n >= 15) {
+        clearInterval(id);
+        if (blueprint?.archetype) {
+          window.dispatchEvent(new CustomEvent('orca:oracle-updated'));
+        }
+      }
+    }, 3000);
+    return () => clearInterval(id);
+  }, [isLocked, open, refresh, blueprint?.archetype]);
 
   if (!open) return null;
 
@@ -98,22 +120,33 @@ export function OracleSession({ open, onClose, lang }: Props) {
         )}
 
         {!loading && session && isLocked && (
-          <div className="text-center max-w-md">
-            <OracleProgressArc confidence={Math.max(confidence, 0.92)} depthScore={session.depth_score} answered={totalAnswered} />
-            <h1 className="mt-6 text-3xl font-medium text-foreground">
-              {isRTL ? 'הכיול נעול' : 'Calibration Locked'}
-            </h1>
-            <p className="mt-3 text-sm text-foreground/60 leading-relaxed">
-              {isRTL
-                ? 'ה-DNA שלך מסונתז. ה-Coach יכויל מחדש בעוד רגע.'
-                : 'Your DNA is synthesizing. The Coach will recalibrate momentarily.'}
-            </p>
-            <button
-              onClick={onClose}
-              className="mt-8 px-8 py-3 rounded-md bg-foreground text-background font-mono text-[11px] uppercase tracking-[0.25em] hover:opacity-90 transition"
-            >
-              {isRTL ? 'סיום' : 'Close'}
-            </button>
+          <div className="w-full max-w-3xl mx-auto overflow-y-auto max-h-[80vh] px-4 py-8">
+            {blueprint?.archetype ? (
+              <OracleBlueprintReport blueprint={blueprint} lang={lang} />
+            ) : (
+              <div className="text-center">
+                <OracleProgressArc confidence={Math.max(confidence, 0.92)} depthScore={session.depth_score} answered={totalAnswered} />
+                <h1 className="mt-6 text-3xl font-medium text-foreground">
+                  {isRTL ? 'מסנתז DNA…' : 'Synthesizing DNA…'}
+                </h1>
+                <p className="mt-3 text-sm text-foreground/60 leading-relaxed">
+                  {isRTL
+                    ? 'ה-Coach שלך מקבל כיול חדש. זה לוקח כ-15 שניות.'
+                    : 'Your Coach is being recalibrated. ~15 seconds.'}
+                </p>
+                <div className="mt-6 font-mono text-[10px] uppercase tracking-[0.3em] text-foreground/30 animate-pulse">
+                  {'•'.repeat((pollTick % 4) + 1)}
+                </div>
+              </div>
+            )}
+            <div className="mt-10 flex justify-center">
+              <button
+                onClick={onClose}
+                className="px-8 py-3 rounded-md bg-foreground text-background font-mono text-[11px] uppercase tracking-[0.25em] hover:opacity-90 transition"
+              >
+                {isRTL ? 'סיום' : 'Close'}
+              </button>
+            </div>
           </div>
         )}
       </div>

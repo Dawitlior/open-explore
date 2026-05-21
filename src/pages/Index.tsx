@@ -21,6 +21,7 @@ import { TradeForm } from '@/components/trading/TradeForm';
 import { ResetModal } from '@/components/trading/ResetModal';
 import { SettingsHub } from '@/components/trading/SettingsHub';
 import { OracleSession } from '@/components/oracle/OracleSession';
+import { useOracleVector } from '@/hooks/use-oracle-vector';
 
 import { IdleTimeoutModal } from '@/components/IdleTimeoutModal';
 import { NavAvatar } from '@/components/trading/NavAvatar';
@@ -130,6 +131,23 @@ const Index = () => {
   const [showReset, setShowReset] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showOracle, setShowOracle] = useState(false);
+  const { isCalibrated: oracleCalibrated, blueprint: oracleBlueprint } = useOracleVector();
+  useEffect(() => {
+    const onOpen = () => setShowOracle(true);
+    window.addEventListener('orca:open-oracle', onOpen);
+    return () => window.removeEventListener('orca:open-oracle', onOpen);
+  }, []);
+  // Post-onboarding nudge: auto-open Oracle once after first onboarding completes.
+  useEffect(() => {
+    void (async () => {
+      const { scopedStorage } = await import('@/lib/scoped-storage');
+      const pending = await scopedStorage.getItem('orca-oracle-prompt-pending');
+      if (pending === '1' && !oracleCalibrated) {
+        setTimeout(() => setShowOracle(true), 1200);
+        void scopedStorage.removeItem('orca-oracle-prompt-pending');
+      }
+    })();
+  }, [oracleCalibrated]);
   const [aiInsights, setAiInsights] = useState<ReturnType<typeof generateInsights>>([]);
   const [aiLoading, setAiLoading] = useState(false);
   const [showThemeMenu, setShowThemeMenu] = useState(false);
@@ -1760,20 +1778,29 @@ const Index = () => {
             >
               <span style={{ fontSize: 14 }}>◈</span>
               <span>Oracle</span>
-              <span style={{ marginInlineStart: 'auto', fontSize: 8, color: T.text.muted, fontWeight: 400, opacity: 0.75 }}>
-                {isRTL ? 'כיול DNA' : 'DNA calibration'}
-              </span>
+              {oracleCalibrated ? (
+                <span style={{ marginInlineStart: 'auto', fontSize: 8, color: T.accent.cyan, fontWeight: 700, opacity: 0.9, letterSpacing: 0.5, textTransform: 'uppercase' }}>
+                  {oracleBlueprint?.archetype?.slice(0, 18) ?? (isRTL ? 'מכויל' : 'Calibrated')}
+                </span>
+              ) : (
+                <span style={{ marginInlineStart: 'auto', fontSize: 8, color: '#fbbf24', fontWeight: 700, opacity: 0.95, letterSpacing: 0.5 }}>
+                  ⚠ {isRTL ? 'לא מכויל' : 'Uncalibrated'}
+                </span>
+              )}
             </button>
           </div>
         )}
         {!sbOpen && (
-          <div style={{ padding: '4px 6px', display: 'flex', justifyContent: 'center' }}>
+          <div style={{ padding: '4px 6px', display: 'flex', justifyContent: 'center', position: 'relative' }}>
             <button
               onClick={() => setShowOracle(true)}
               title="Oracle Core"
-              style={{ background: 'transparent', border: 'none', color: T.accent.purple ?? T.accent.cyan, cursor: 'pointer', fontSize: 16 }}
+              style={{ background: 'transparent', border: 'none', color: T.accent.purple ?? T.accent.cyan, cursor: 'pointer', fontSize: 16, position: 'relative' }}
             >
               ◈
+              {!oracleCalibrated && (
+                <span style={{ position: 'absolute', top: -2, right: -4, width: 6, height: 6, borderRadius: '50%', background: '#fbbf24', boxShadow: '0 0 6px #fbbf24aa' }} />
+              )}
             </button>
           </div>
         )}
