@@ -21,6 +21,7 @@ import { TradeForm } from '@/components/trading/TradeForm';
 import { ResetModal } from '@/components/trading/ResetModal';
 import { SettingsHub } from '@/components/trading/SettingsHub';
 import { OracleSession } from '@/components/oracle/OracleSession';
+import { useOracleVector } from '@/hooks/use-oracle-vector';
 
 import { IdleTimeoutModal } from '@/components/IdleTimeoutModal';
 import { NavAvatar } from '@/components/trading/NavAvatar';
