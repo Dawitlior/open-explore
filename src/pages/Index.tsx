@@ -131,6 +131,12 @@ const Index = () => {
   const [showReset, setShowReset] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showOracle, setShowOracle] = useState(false);
+  const { isCalibrated: oracleCalibrated, blueprint: oracleBlueprint } = useOracleVector();
+  useEffect(() => {
+    const onOpen = () => setShowOracle(true);
+    window.addEventListener('orca:open-oracle', onOpen);
+    return () => window.removeEventListener('orca:open-oracle', onOpen);
+  }, []);
   const [aiInsights, setAiInsights] = useState<ReturnType<typeof generateInsights>>([]);
   const [aiLoading, setAiLoading] = useState(false);
   const [showThemeMenu, setShowThemeMenu] = useState(false);
