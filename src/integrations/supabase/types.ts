@@ -225,12 +225,15 @@ export type Database = {
         Row: {
           branches: Json
           category: string
+          claim_token: string | null
           code: string
+          counter_for: string | null
           created_at: string
           id: string
           options: Json
           prompt_en: string
           prompt_he: string
+          stratum: string
           tier: number
           trap: boolean
           trap_pair: string | null
@@ -239,12 +242,15 @@ export type Database = {
         Insert: {
           branches?: Json
           category: string
+          claim_token?: string | null
           code: string
+          counter_for?: string | null
           created_at?: string
           id?: string
           options?: Json
           prompt_en: string
           prompt_he: string
+          stratum?: string
           tier?: number
           trap?: boolean
           trap_pair?: string | null
@@ -253,12 +259,15 @@ export type Database = {
         Update: {
           branches?: Json
           category?: string
+          claim_token?: string | null
           code?: string
+          counter_for?: string | null
           created_at?: string
           id?: string
           options?: Json
           prompt_en?: string
           prompt_he?: string
+          stratum?: string
           tier?: number
           trap?: boolean
           trap_pair?: string | null
@@ -289,11 +298,13 @@ export type Database = {
       }
       oracle_sessions: {
         Row: {
+          claim_ledger: Json
           completed_at: string | null
           current_node_code: string | null
           depth_score: number
           dissonance_log: Json
           id: string
+          instability_index: number
           started_at: string
           state: string
           updated_at: string
@@ -301,11 +312,13 @@ export type Database = {
           visited_path: Json
         }
         Insert: {
+          claim_ledger?: Json
           completed_at?: string | null
           current_node_code?: string | null
           depth_score?: number
           dissonance_log?: Json
           id?: string
+          instability_index?: number
           started_at?: string
           state?: string
           updated_at?: string
@@ -313,11 +326,13 @@ export type Database = {
           visited_path?: Json
         }
         Update: {
+          claim_ledger?: Json
           completed_at?: string | null
           current_node_code?: string | null
           depth_score?: number
           dissonance_log?: Json
           id?: string
+          instability_index?: number
           started_at?: string
           state?: string
           updated_at?: string
@@ -328,39 +343,48 @@ export type Database = {
       }
       oracle_telemetry: {
         Row: {
+          abandon_flag: boolean
           changed_mind: number
           created_at: string
           hover_count: number
           id: string
+          idle_pause_ms: number | null
           latency_ms: number | null
           node_code: string
           option_id: string | null
+          re_read_count: number
           scroll_jitter: number | null
           session_id: string
           skipped: boolean
           user_id: string
         }
         Insert: {
+          abandon_flag?: boolean
           changed_mind?: number
           created_at?: string
           hover_count?: number
           id?: string
+          idle_pause_ms?: number | null
           latency_ms?: number | null
           node_code: string
           option_id?: string | null
+          re_read_count?: number
           scroll_jitter?: number | null
           session_id: string
           skipped?: boolean
           user_id?: string
         }
         Update: {
+          abandon_flag?: boolean
           changed_mind?: number
           created_at?: string
           hover_count?: number
           id?: string
+          idle_pause_ms?: number | null
           latency_ms?: number | null
           node_code?: string
           option_id?: string | null
+          re_read_count?: number
           scroll_jitter?: number | null
           session_id?: string
           skipped?: boolean
