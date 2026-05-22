@@ -47,6 +47,9 @@ export function useOracleSession(): UseOracleSession {
       for (const r of data as any[]) {
         map[r.code] = {
           code: r.code, category: r.category, tier: r.tier,
+          stratum: (r.stratum ?? 'S5') as OracleNode['stratum'],
+          claim_token: r.claim_token ?? undefined,
+          counter_for: r.counter_for ?? undefined,
           prompt_he: r.prompt_he, prompt_en: r.prompt_en,
           options: r.options ?? [], branches: r.branches ?? {},
           trap: !!r.trap, trap_pair: r.trap_pair ?? undefined,
@@ -77,6 +80,8 @@ export function useOracleSession(): UseOracleSession {
           visited_path: (data.visited_path as any) ?? [],
           dissonance_log: (data.dissonance_log as any) ?? [],
           depth_score: data.depth_score ?? 0,
+          claim_ledger: ((data as any).claim_ledger as any) ?? {},
+          instability_index: Number((data as any).instability_index ?? 0),
         };
         setSession(s);
       }
@@ -106,6 +111,7 @@ export function useOracleSession(): UseOracleSession {
         id: '', user_id: user.id, state: 'in_progress',
         current_node_code: first?.code ?? null,
         visited_path: [], dissonance_log: [], depth_score: 0,
+        claim_ledger: {}, instability_index: 0,
       };
       const { data, error } = await supabase
         .from('oracle_sessions')
