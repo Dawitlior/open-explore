@@ -1,17 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { nextNode } from '@/lib/oracle/engine';
+import { nextNode, claimDebt } from '@/lib/oracle/engine';
 import { ORACLE_NODES_BY_CODE, depthProbeForDimension } from '@/lib/oracle/nodes.seed';
 import { vectorizePath, hesitationIndex, signalAmplifier } from '@/lib/oracle/vectorize';
 import type { OracleSessionState, VisitedStep } from '@/lib/oracle/types';
 
 const baseSession = (): OracleSessionState => ({
-  id: 's1',
-  user_id: 'u1',
-  state: 'in_progress',
-  current_node_code: 'IMP_01_BREAKOUT',
-  visited_path: [],
-  dissonance_log: [],
-  depth_score: 0,
+  id: 's1', user_id: 'u1', state: 'in_progress',
+  current_node_code: 'S1_SLEEP_WINDOW',
+  visited_path: [], dissonance_log: [], depth_score: 0,
+  claim_ledger: {}, instability_index: 0,
 });
 
 describe('Oracle vectorize', () => {
@@ -31,58 +28,41 @@ describe('Oracle vectorize', () => {
   it('vectorizePath ignores skipped steps', () => {
     const v = vectorizePath(
       [
-        { node: 'IMP_01_BREAKOUT', optionId: 'enter_market', t_ms: 800, skipped: false, revisit: false },
-        { node: 'NAR_01_STORY',    optionId: null,           t_ms: 0,   skipped: true,  revisit: false },
+        { node: 'S5_BREAKOUT_TEST', optionId: 'enter_market', t_ms: 800, skipped: false, revisit: false },
+        { node: 'S5_GURU_TEST',     optionId: null,           t_ms: 0,   skipped: true,  revisit: false },
       ],
       ORACLE_NODES_BY_CODE,
     );
-    expect(v.impulsivity).toBeGreaterThan(0);
+    expect((v.impulsivity ?? 0)).toBeGreaterThan(0);
     expect(v.story_dependency ?? 0).toBe(0);
   });
 });
 
-describe('Oracle engine.nextNode', () => {
-  it('follows static branch on first answer', () => {
+describe('Oracle engine v2', () => {
+  it('routes to claim-test owed after an S4 claim', () => {
     const s = baseSession();
-    s.visited_path = [{ node: 'IMP_01_BREAKOUT', optionId: 'wait_retest', t_ms: 1000, skipped: false, revisit: false }];
-    const r = nextNode({ session: s, nodesByCode: ORACLE_NODES_BY_CODE, vector: {}, depthProbeForDimension });
-    expect(r.nextNodeCode).toBe('NAR_01_STORY');
-    expect(r.reason).toBe('static_branch');
-  });
-
-  it('triggers depth-probe on trap contradiction', () => {
-    const s = baseSession();
-    s.current_node_code = 'IMP_02_TRAP';
+    s.current_node_code = 'S4_CLAIM_PATIENT';
     s.visited_path = [
-      // First answer: low impulsivity
-      { node: 'IMP_01_BREAKOUT', optionId: 'skip_setup', t_ms: 1500, skipped: false, revisit: false },
-      // Trap pair answer: high impulsivity → contradiction on `impulsivity` dim
-      { node: 'IMP_02_TRAP',     optionId: 'chase',      t_ms: 900,  skipped: false, revisit: false },
+      { node: 'S4_CLAIM_PATIENT', optionId: 'patient', t_ms: 1200, skipped: false, revisit: false },
     ];
     const r = nextNode({ session: s, nodesByCode: ORACLE_NODES_BY_CODE, vector: {}, depthProbeForDimension });
-    expect(r.reason).toBe('trap_contradiction');
-    expect(r.nextNodeCode).toBe('PROBE_IMPULSIVITY_QUANT');
-    expect(r.dissonance_log.length).toBe(1);
-    expect(r.depth_score).toBe(1);
+    expect(r.reason).toBe('claim_test_owed');
+    expect(r.nextNodeCode).toBe('S5_BREAKOUT_TEST');
   });
 
-  it('re-approaches a stale skip', () => {
+  it('claimDebt clears once a counter is answered', () => {
     const s = baseSession();
-    s.current_node_code = 'EGO_01_BLAME';
     s.visited_path = [
-      { node: 'IMP_01_BREAKOUT', optionId: null, t_ms: 0, skipped: true, revisit: false },
-      { node: 'NAR_01_STORY',    optionId: 'verify_data', t_ms: 1200, skipped: false, revisit: false },
-      { node: 'EGO_01_BLAME',    optionId: 'me_fault',    t_ms: 1100, skipped: false, revisit: false },
+      { node: 'S4_CLAIM_PATIENT', optionId: 'patient', t_ms: 800, skipped: false, revisit: false },
+      { node: 'S5_BREAKOUT_TEST', optionId: 'wait_retest', t_ms: 900, skipped: false, revisit: false },
     ];
-    const r = nextNode({ session: s, nodesByCode: ORACLE_NODES_BY_CODE, vector: {}, depthProbeForDimension });
-    expect(r.reason).toBe('reapproach_skip');
-    expect(r.nextNodeCode).toBe('PROBE_IMPULSIVITY_QUANT'); // skipped IMP_01 → re-probe its primary dim
+    expect(claimDebt(s, ORACLE_NODES_BY_CODE)).not.toContain('claim:patient');
   });
 
   it('respects hard cap', () => {
     const s = baseSession();
-    s.visited_path = Array.from({ length: 60 }, (_, i) => ({
-      node: 'IMP_01_BREAKOUT', optionId: 'wait_retest', t_ms: 1000, skipped: false, revisit: false,
+    s.visited_path = Array.from({ length: 48 }, () => ({
+      node: 'S1_SLEEP_WINDOW', optionId: 'before_23', t_ms: 1000, skipped: false, revisit: false,
     }));
     const r = nextNode({ session: s, nodesByCode: ORACLE_NODES_BY_CODE, vector: {}, depthProbeForDimension });
     expect(r.nextNodeCode).toBeNull();

@@ -1,43 +1,51 @@
 /**
- * Oracle Core — Vectorization layer.
- * Converts a session's visited path + telemetry into a partial DNA vector.
- *
- * Hesitation amplifies the signal — the "Telemetry of Silence" doctrine:
- * a slow, deliberated answer is louder than a snap one.
+ * Oracle v2 — Vectorization with per-metric amplifier caps.
+ * No single telemetry signal can dominate the vector.
  */
 
 import type { OracleNode, PartialVector, VisitedStep } from './types';
 
-const LATENCY_BASELINE_MS = 900;     // Considered "quick instinct" below this.
-const LATENCY_CEILING_MS = 4500;     // Above this, we cap the amplifier.
+const LATENCY_BASELINE_MS = 900;
+const LATENCY_CEILING_MS  = 4500;
 
-/**
- * 0..1 score: how much this answer was hesitated over.
- * Saturates above LATENCY_CEILING_MS, returns 0 below baseline.
- */
+const CAP_HESITATION = 0.45;  // ≤45% boost from latency
+const CAP_FLIP       = 0.25;  // ≤25% boost from changed_mind
+const CAP_HOVER      = 0.15;  // ≤15% boost from hover_count
+const CAP_REREAD     = 0.15;  // ≤15% boost from re_read_count
+const CAP_IDLE       = 0.25;  // ≤25% boost from idle pauses
+
 export function hesitationIndex(latency_ms: number | null | undefined): number {
   if (!latency_ms || latency_ms < LATENCY_BASELINE_MS) return 0;
   const span = LATENCY_CEILING_MS - LATENCY_BASELINE_MS;
-  const v = (latency_ms - LATENCY_BASELINE_MS) / span;
-  return Math.max(0, Math.min(1, v));
+  return Math.max(0, Math.min(1, (latency_ms - LATENCY_BASELINE_MS) / span));
 }
 
-/**
- * Amplifier applied to the raw dimensional weight of the chosen option.
- * 1.0 baseline; up to ~1.6 on heavy hesitation; +0.1 per changed mind, capped.
- */
 export function signalAmplifier(step: VisitedStep): number {
-  const hes = hesitationIndex(step.t_ms);
-  const flip = Math.min(0.3, (step.changed_mind ?? 0) * 0.1);
-  const hover = Math.min(0.2, Math.log1p(step.hover_count ?? 0) * 0.1);
-  return 1 + hes * 0.6 + flip + hover;
+  const hes    = Math.min(CAP_HESITATION, hesitationIndex(step.t_ms) * CAP_HESITATION);
+  const flip   = Math.min(CAP_FLIP,   (step.changed_mind ?? 0) * 0.1);
+  const hover  = Math.min(CAP_HOVER,  Math.log1p(step.hover_count ?? 0) * 0.08);
+  const reread = Math.min(CAP_REREAD, (step.re_read_count ?? 0) * 0.05);
+  const idle   = Math.min(CAP_IDLE,   ((step.idle_pause_ms ?? 0) > 2500 ? 0.25 : (step.idle_pause_ms ?? 0) / 10000));
+  return 1 + hes + flip + hover + reread + idle;
 }
 
 /**
- * Apply a single answered step's contribution into the running vector.
- * Skipped steps are NOT zeros — they're handled by the engine as dissonance
- * triggers and do not update the vector here.
+ * Instability index ∈ [0, 1] — derived from telemetry, surfaced to coach.
+ * High = elevated hesitation / mind-changing / abandonment.
  */
+export function computeInstabilityIndex(path: VisitedStep[]): number {
+  if (path.length === 0) return 0;
+  let sum = 0;
+  for (const s of path) {
+    const h = hesitationIndex(s.t_ms);
+    const f = Math.min(1, (s.changed_mind ?? 0) / 3);
+    const sk = s.skipped ? 0.6 : 0;
+    const ab = s.abandon_flag ? 1 : 0;
+    sum += Math.min(1, 0.4 * h + 0.25 * f + sk + ab);
+  }
+  return Math.min(1, sum / path.length);
+}
+
 export function applyStep(
   vector: PartialVector,
   step: VisitedStep,
@@ -49,17 +57,11 @@ export function applyStep(
   const amp = signalAmplifier(step);
   const next = { ...vector };
   for (const [dim, w] of Object.entries(opt.weights)) {
-    const prev = next[dim] ?? 0;
-    // Exponential moving update: bias toward recent, but never erase prior signal.
-    next[dim] = prev + w * amp;
+    next[dim] = (next[dim] ?? 0) + w * amp;
   }
   return next;
 }
 
-/**
- * Build a vector from scratch given the full path and node catalog.
- * Pure, deterministic — safe for unit tests.
- */
 export function vectorizePath(
   path: VisitedStep[],
   nodesByCode: Record<string, OracleNode>,
@@ -73,12 +75,35 @@ export function vectorizePath(
   return v;
 }
 
-/**
- * Confidence (0..1) the vector has stabilised across its touched dimensions.
- * Heuristic: how many dimensions have accumulated |value| ≥ 1.5.
- * Used by the engine to decide when to LOCK the session early.
- */
-export function vectorConfidence(v: PartialVector, expectedDims = 24): number {
+export function vectorConfidence(v: PartialVector, expectedDims = 28): number {
   const stable = Object.values(v).filter((x) => Math.abs(x) >= 1.5).length;
   return Math.min(1, stable / expectedDims);
+}
+
+/**
+ * Score a claim against a counter-scenario answer.
+ * Returns delta ∈ [-1, +1] to apply to claim_ledger[token].
+ */
+export function scoreClaimTest(
+  claimToken: string,
+  counterOption: { weights: Record<string, number> } | null,
+): number {
+  if (!counterOption) return 0;
+  // Heuristic: claim:patient → impulsivity should be negative; positive impulsivity = failed claim
+  const map: Record<string, { dim: string; bad_sign: 1 | -1 }> = {
+    'claim:patient':      { dim: 'impulsivity',     bad_sign: 1 },
+    'claim:disciplined':  { dim: 'rule_adherence',  bad_sign: -1 },
+    'claim:contrarian':   { dim: 'story_dependency', bad_sign: 1 },
+    'claim:risk_aware':   { dim: 'leverage_hubris', bad_sign: 1 },
+    'claim:objective':    { dim: 'loss_attribution_external', bad_sign: 1 },
+  };
+  const cfg = map[claimToken];
+  if (!cfg) return 0;
+  const w = counterOption.weights[cfg.dim] ?? 0;
+  // If "bad" direction is positive, then positive w = claim failed (-1 integrity).
+  const failed = (cfg.bad_sign === 1 && w > 0.3) || (cfg.bad_sign === -1 && w < -0.3);
+  const upheld = (cfg.bad_sign === 1 && w < -0.3) || (cfg.bad_sign === -1 && w > 0.3);
+  if (failed) return -Math.min(1, Math.abs(w));
+  if (upheld) return  Math.min(1, Math.abs(w));
+  return 0;
 }
