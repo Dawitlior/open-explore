@@ -598,17 +598,29 @@ Deno.serve(async (req) => {
     // new provenance column (`broker_id`) so neither old nor new rows leak
     // into the next upsert and trip `trades_user_external_uidx`.
     let wiped = 0;
+    for (const ids of chunk(closedEntries.map(e => e.provenance.external_id).filter(Boolean), 250)) {
+      const { data: wipedRows, error: wipeErr } = await admin
+        .from('trades')
+        .delete()
+        .eq('user_id', userId)
+        .or(`external_id.in.(${ids.map(id => `"${String(id).replace(/"/g, '\\"')}"`).join(',')}),exchange_exec_id.in.(${ids.map(id => `"${String(id).replace(/"/g, '\\"')}"`).join(',')})`)
+        .select('trade_id');
+      if (wipeErr) {
+        return json({ ok: false, error: 'wipe_failed', detail: wipeErr.message }, 500);
+      }
+      wiped += wipedRows?.length ?? 0;
+    }
     {
       const { data: wipedRows, error: wipeErr } = await admin
         .from('trades')
         .delete()
         .eq('user_id', userId)
-        .or(`broker_id.eq.${provider},data->>exchange_provider.eq.${provider}`)
+        .eq('broker_id', provider)
         .select('trade_id');
       if (wipeErr) {
         return json({ ok: false, error: 'wipe_failed', detail: wipeErr.message }, 500);
       }
-      wiped = wipedRows?.length ?? 0;
+      wiped += wipedRows?.length ?? 0;
     }
 
     // Zero-trade fast path — legitimate (new account / no 180d activity)
