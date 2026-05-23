@@ -603,7 +603,7 @@ Deno.serve(async (req) => {
         .from('trades')
         .delete()
         .eq('user_id', userId)
-        .or(`external_id.in.(${ids.map(id => `"${String(id).replace(/"/g, '\\"')}"`).join(',')}),exchange_exec_id.in.(${ids.map(id => `"${String(id).replace(/"/g, '\\"')}"`).join(',')})`)
+        .in('external_id', ids)
         .select('trade_id');
       if (wipeErr) {
         return json({ ok: false, error: 'wipe_failed', detail: wipeErr.message }, 500);
