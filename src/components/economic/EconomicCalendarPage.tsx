@@ -430,13 +430,16 @@ function EventRow({ e, lang, now }: { e: EconomicEvent; lang: 'he' | 'en'; now: 
     'rgba(231,243,255,0.9)';
   const flag = e.currency ? CURRENCY_FLAG[e.currency] : null;
 
+  const tierColor = MACRO_TIER_COLOR[e.impact] ?? MACRO_TIER_COLOR.t3;
+
   return (
     <div
-      className="grid items-center px-4 py-3 border-b transition hover:bg-white/[0.025]"
+      className="grid items-center px-4 py-3 border-b transition hover:bg-white/[0.025] relative"
       style={{
         gridTemplateColumns: '64px 1fr auto',
         borderColor: 'rgba(255,255,255,0.04)',
         opacity: past ? 0.55 : 1,
+        borderInlineStart: `2px solid ${tierColor}${e.impact === 't1' ? 'cc' : e.impact === 't2' ? '80' : '40'}`,
       }}
     >
       <div className="flex flex-col items-start gap-0.5">
