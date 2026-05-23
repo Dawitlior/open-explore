@@ -26,6 +26,8 @@ interface AdvancedRiskPageProps {
   riskData: RiskAssessment;
   onExplainClick: (title: string, explanation: ChartExplanation, chartId?: string) => void;
   riskExplanations: Array<{ tradeId: number; reason: string; customNote?: string; timestamp: string }>;
+  /** Phase 2 — registry allowlist for `risk` surface. Optional. */
+  registryCharts?: import('@/lib/chart-registry').ChartSpec[];
 }
 
 // ─── Section header (Orca terminal style) ───────────────────────────
@@ -77,7 +79,9 @@ const LimitBar = ({ T, label, current, limit, isRTL }: { T: TradingTheme; label:
   );
 };
 
-const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', customLimits, trades: _allTrades, stats, riskData, onExplainClick, riskExplanations }: AdvancedRiskPageProps) => {
+const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', customLimits, trades: _allTrades, stats, riskData, onExplainClick, riskExplanations, registryCharts }: AdvancedRiskPageProps) => {
+  const registryAllows = (id: string) => !registryCharts || registryCharts.some(c => c.id === id);
+  void registryAllows; // adopted chart-by-chart in subsequent slices
   const { visibleTrades: trades, isMoney, rEligibleCount, totalCount } = useVisibleTrades(_allTrades);
   const tt = { background: T.bg.card, border: `1px solid ${T.border.medium}`, borderRadius: 10, color: T.text.primary, fontSize: 12, boxShadow: T.shadow.elevated, padding: '8px 12px' };
   const LIMITS_USED = customLimits || DEFAULT_RISK_LIMITS;

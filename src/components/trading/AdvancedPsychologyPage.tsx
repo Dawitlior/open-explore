@@ -23,6 +23,8 @@ interface AdvancedPsychologyPageProps {
   trades: Trade[];
   stats: TradingStats;
   onExplainClick: (title: string, explanation: ChartExplanation, chartId?: string) => void;
+  /** Phase 2 — registry allowlist for `psychology` surface. Optional. */
+  registryCharts?: import('@/lib/chart-registry').ChartSpec[];
 }
 
 // ─── Section header (matches Risk page) ──────────────────────────
@@ -41,7 +43,9 @@ const SectionHeader = ({ T, label, accent, isRTL }: { T: TradingTheme; label: st
   </div>
 );
 
-const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', trades: _allTrades, stats, onExplainClick }: AdvancedPsychologyPageProps) => {
+const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', trades: _allTrades, stats, onExplainClick, registryCharts }: AdvancedPsychologyPageProps) => {
+  const registryAllows = (id: string) => !registryCharts || registryCharts.some(c => c.id === id);
+  void registryAllows; // adopted chart-by-chart in subsequent slices
   const { visibleTrades: trades, isMoney, rEligibleCount, totalCount } = useVisibleTrades(_allTrades);
   const [diagnosisOpen, setDiagnosisOpen] = useState(false);
   const [diagLoading, setDiagLoading] = useState(false);
