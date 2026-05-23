@@ -23,7 +23,7 @@ import { SettingsHub } from '@/components/trading/SettingsHub';
 import { OracleSession } from '@/components/oracle/OracleSession';
 import { useOracleVector } from '@/hooks/use-oracle-vector';
 
-import { IdleTimeoutModal } from '@/components/IdleTimeoutModal';
+import { DesktopOnlyGate } from '@/components/trading/DesktopOnlyGate';
 import { NavAvatar } from '@/components/trading/NavAvatar';
 import { DeploymentToast } from '@/components/DeploymentToast';
 
@@ -1647,12 +1647,18 @@ const Index = () => {
 
   if (activeDimension === 'backtest') {
     return (
-      <DimensionController
-        activeDimension="backtest"
-        orcaUI={<div />}
-        journalUI={<div />}
-        backtestUI={<LazyShell><BacktestDimension onReturn={() => setActiveDimension('orca')} /></LazyShell>}
-      />
+      <DesktopOnlyGate
+        onReturn={() => setActiveDimension('orca')}
+        minWidth={1024}
+        featureLabel={{ he: 'בקטסטינג', en: 'Backtesting' }}
+      >
+        <DimensionController
+          activeDimension="backtest"
+          orcaUI={<div />}
+          journalUI={<div />}
+          backtestUI={<LazyShell><BacktestDimension onReturn={() => setActiveDimension('orca')} /></LazyShell>}
+        />
+      </DesktopOnlyGate>
     );
   }
 
@@ -1955,7 +1961,7 @@ const Index = () => {
       {showSettings && <SettingsHub T={T} isRTL={isRTL} open={showSettings} onClose={() => setShowSettings(false)} theme={settings.theme} setTheme={settings.setTheme} stats={stats} lang={settings.lang} setLang={settings.setLang} privacyMode={settings.privacyMode} setPrivacyMode={settings.setPrivacyMode} trades={trades} />}
       <OracleSession open={showOracle} onClose={() => setShowOracle(false)} lang={settings.lang} />
       
-      <IdleTimeoutModal isRTL={isRTL} lang={settings.lang as 'he' | 'en'} />
+      {/* Screen Lock removed in Phase 1 architectural cleanup */}
       {riskAlert && <RiskLimitAlert T={T} isRTL={isRTL} status={riskAlert} onClose={dismissRiskAlert} />}
       {showRiskExplanation && <RiskExplanationModal T={T} isRTL={isRTL} tradeId={showRiskExplanation.tradeId} riskChange={showRiskExplanation.riskChange} onSave={handleSaveRiskExplanation} onClose={() => setShowRiskExplanation(null)} />}
       {showFeatureModal && <FeatureManifestModal T={T} isRTL={isRTL} onClose={() => setShowFeatureModal(false)} />}

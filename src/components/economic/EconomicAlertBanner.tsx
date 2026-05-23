@@ -3,7 +3,12 @@ import { AlertTriangle, Activity, Radio, X } from 'lucide-react';
 import { useEconomicRadar } from '@/hooks/use-economic-radar';
 import { useLang } from '@/hooks/use-lang';
 import { formatISTTime } from '@/lib/economic';
-import { playRiskAlert } from '@/lib/apex-sounds';
+
+/**
+ * Orca-native macro alert banner.
+ * - Uses semantic theme tokens (works in every theme: Midnight/Snow/etc.)
+ * - Audio disabled (Phase 1 mandate). Silent visual pulse on the phase chip.
+ */
 
 const COPY = {
   he: {
@@ -24,10 +29,10 @@ const COPY = {
   },
 } as const;
 
-const PHASE_TONE = {
-  't-5min': { bg: 'bg-amber-500/10', border: 'border-amber-500/40', text: 'text-amber-300', icon: AlertTriangle },
-  't-1min': { bg: 'bg-rose-500/15',  border: 'border-rose-500/50',  text: 'text-rose-300',  icon: Radio },
-  'live':   { bg: 'bg-rose-500/20',  border: 'border-rose-500/60',  text: 'text-rose-200',  icon: Activity },
+const PHASE_ICON = {
+  't-5min': AlertTriangle,
+  't-1min': Radio,
+  'live':   Activity,
 } as const;
 
 export function EconomicAlertBanner() {
@@ -37,35 +42,50 @@ export function EconomicAlertBanner() {
 
   useEffect(() => {
     if (!active) return;
-    if (active.phase !== 't-5min') {
-      try { playRiskAlert(); } catch { /* noop */ }
-    }
+    // Audio disabled — visual-only alert.
     const timeout = window.setTimeout(dismiss, 90_000);
     return () => window.clearTimeout(timeout);
   }, [active, dismiss]);
 
   if (!active) return null;
 
-  const tone = PHASE_TONE[active.phase];
-  const Icon = tone.icon;
+  const Icon = PHASE_ICON[active.phase];
   const ev = active.event;
+  const isLive = active.phase !== 't-5min';
 
   return (
     <div
       role="alert"
-      className={`fixed z-[200] top-4 ${lang === 'he' ? 'left-4' : 'right-4'} w-[360px] max-w-[calc(100vw-2rem)] ${tone.bg} ${tone.border} ${tone.text} border backdrop-blur-md rounded-lg shadow-2xl px-4 py-3 animate-in slide-in-from-top-2 fade-in duration-300`}
-      style={{ fontFamily: 'Poppins, sans-serif' }}
+      className={[
+        'fixed z-[200] top-4 w-[360px] max-w-[calc(100vw-2rem)]',
+        lang === 'he' ? 'left-4' : 'right-4',
+        'bg-card text-foreground border border-border rounded-lg shadow-2xl',
+        'px-4 py-3 animate-in slide-in-from-top-2 fade-in duration-300',
+        'font-sans',
+      ].join(' ')}
     >
       <div className="flex items-start gap-3">
-        <Icon className={`w-5 h-5 mt-0.5 flex-shrink-0 ${active.phase !== 't-5min' ? 'animate-pulse' : ''}`} />
+        <span
+          className={[
+            'mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md border',
+            isLive
+              ? 'border-destructive/40 bg-destructive/10 text-destructive animate-pulse'
+              : 'border-amber-500/40 bg-amber-500/10 text-amber-400',
+          ].join(' ')}
+        >
+          <Icon className="h-4 w-4" />
+        </span>
         <div className="flex-1 min-w-0">
-          <div className="text-[10px] uppercase tracking-wider opacity-70 font-mono">
-            {t[active.phase]} · {formatISTTime(ev.release_at, lang)} {ev.currency ? `· ${ev.currency}` : ''}
+          <div className="text-[10px] uppercase tracking-wider font-mono text-muted-foreground">
+            {t[active.phase]} · {formatISTTime(ev.release_at, lang)}
+            {ev.currency ? ` · ${ev.currency}` : ''}
           </div>
-          <div className="text-sm font-semibold truncate mt-0.5">{ev.event_name}</div>
+          <div className="text-sm font-semibold truncate mt-0.5 text-foreground">
+            {ev.event_name}
+          </div>
           {(ev.actual || ev.forecast) && (
-            <div className="text-xs opacity-80 mt-1 font-mono">
-              {ev.actual && <span>{t.actual}: <b>{ev.actual}</b></span>}
+            <div className="text-xs mt-1 font-mono text-muted-foreground tabular-nums">
+              {ev.actual && <span>{t.actual}: <b className="text-foreground">{ev.actual}</b></span>}
               {ev.actual && ev.forecast && <span className="opacity-50"> · </span>}
               {ev.forecast && <span>{t.forecast}: {ev.forecast}</span>}
             </div>
@@ -74,7 +94,7 @@ export function EconomicAlertBanner() {
         <button
           onClick={dismiss}
           aria-label={t.dismiss}
-          className="p-1 rounded hover:bg-white/10 transition-colors opacity-70 hover:opacity-100"
+          className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
         >
           <X className="w-4 h-4" />
         </button>
