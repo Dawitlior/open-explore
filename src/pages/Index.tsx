@@ -62,6 +62,7 @@ import { useRiskLimits } from '@/hooks/use-risk-limits';
 import { scopedStorage } from '@/lib/scoped-storage';
 import { useAuth } from '@/hooks/use-auth';
 import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
+import { useWidgetVisibility } from '@/hooks/use-widget-visibility';
 
 // ─── Facebook-style red notification badge with "1" ───
 const ReminderBadge = () => (
@@ -107,6 +108,10 @@ const Index = () => {
   const isRTL = settings.isRTL;
   const isAlpha = settings.isAlpha;
   const opMode = settings.operatingMode;
+  // Dashboard matrix — single source of truth for widget visibility.
+  // Stage 1 wiring: only the alpha extras in the `live` cell consume it.
+  // Future stages will migrate the rest of renderDashboard to `show(id)`.
+  const widgetVis = useWidgetVisibility();
   const { prefs: uiPrefs, setPrefs: setUIPrefs, toggleHiddenMode, reset: resetUIPrefs } = useUIPrefs();
   const T = useMemo(
     () => (uiPrefs.customAccentEnabled ? tintTheme(baseTheme, uiPrefs.customAccent) : baseTheme),
@@ -710,7 +715,7 @@ const Index = () => {
             ))}
           </div>
         </GlassCard>
-        {isAlpha && <>
+        {widgetVis.show('research_volatility_clus') && <>
           <ScoreGauge T={T} score={stats.orcaScore} label={isRTL ? 'ציון משמעת חי' : 'Live Discipline Score'} color={T.accent.cyan} />
         </>}
       </>
