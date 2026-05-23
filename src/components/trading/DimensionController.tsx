@@ -1,7 +1,14 @@
-import { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+// Pure-CSS crossfade — no framer-motion AnimatePresence GPU layer churn.
+// Memory rule: dimensions unmount completely during transitions to prevent
+// theme leakage. We render exactly one subtree, keyed by activeDimension,
+// and let a CSS keyframe handle the fade-in. ~0 JS animation cost.
 
-const shimmerCSS = `@keyframes orcaReturnShimmer { 0% { transform: translateX(-100%); } 50% { transform: translateX(100%); } 100% { transform: translateX(100%); } }`;
+const dimensionCSS = `
+@keyframes orcaReturnShimmer { 0% { transform: translateX(-100%); } 50% { transform: translateX(100%); } 100% { transform: translateX(100%); } }
+@keyframes orcaDimFadeIn { from { opacity: 0; transform: scale(0.985); filter: blur(6px); } to { opacity: 1; transform: scale(1); filter: blur(0); } }
+.orca-dim-layer { width: 100%; height: 100%; animation: orcaDimFadeIn 360ms cubic-bezier(0.16,1,0.3,1) both; will-change: opacity, transform, filter; }
+@media (prefers-reduced-motion: reduce) { .orca-dim-layer { animation: none; } }
+`;
 
 interface DimensionControllerProps {
   orcaUI: React.ReactNode;
@@ -11,45 +18,17 @@ interface DimensionControllerProps {
 }
 
 export const DimensionController = ({ orcaUI, journalUI, backtestUI, activeDimension }: DimensionControllerProps) => {
+  const child =
+    activeDimension === 'orca' ? orcaUI :
+    activeDimension === 'journal' ? journalUI :
+    backtestUI;
+
   return (
     <>
-    <style>{shimmerCSS}</style>
-    <AnimatePresence mode="wait">
-      {activeDimension === 'orca' ? (
-        <motion.div
-          key="orca"
-          initial={{ opacity: 0, scale: 0.96, filter: 'blur(12px)' }}
-          animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-          exit={{ opacity: 0, scale: 0.92, filter: 'blur(20px)' }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          style={{ width: '100%', height: '100%' }}
-        >
-          {orcaUI}
-        </motion.div>
-      ) : activeDimension === 'journal' ? (
-        <motion.div
-          key="journal"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          style={{ width: '100%', height: '100%' }}
-        >
-          {journalUI}
-        </motion.div>
-      ) : (
-        <motion.div
-          key="backtest"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          style={{ width: '100%', height: '100%' }}
-        >
-          {backtestUI}
-        </motion.div>
-      )}
-    </AnimatePresence>
+      <style>{dimensionCSS}</style>
+      <div key={activeDimension} className="orca-dim-layer">
+        {child}
+      </div>
     </>
   );
 };
