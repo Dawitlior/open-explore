@@ -116,9 +116,7 @@ const Index = () => {
   const analyticsCharts = useRegistryCharts('analytics');
   const riskCharts = useRegistryCharts('risk');
   const psychologyCharts = useRegistryCharts('psychology');
-  // `analyticsCharts` flows into AdvancedAnalyticsPage; risk/psychology will
-  // adopt in subsequent slices. Void the others to keep the registry live.
-  void riskCharts; void psychologyCharts;
+  // All three registry chart lists are now consumed by their respective pages.
   const { prefs: uiPrefs, setPrefs: setUIPrefs, toggleHiddenMode, reset: resetUIPrefs } = useUIPrefs();
   const T = useMemo(
     () => (uiPrefs.customAccentEnabled ? tintTheme(baseTheme, uiPrefs.customAccent) : baseTheme),
@@ -1636,6 +1634,7 @@ const Index = () => {
 
   const renderRisk = () => {
     if (trades.length === 0) return null;
+    if (opMode === 'beginner') return <BeginnerUpsell surface="risk" />;
     return (
       <LazyShell>
         <AdvancedRiskPage
@@ -1657,6 +1656,7 @@ const Index = () => {
 
   const renderPsychology = () => {
     if (trades.length === 0) return null;
+    if (opMode === 'beginner') return <BeginnerUpsell surface="psychology" />;
     return (
       <LazyShell>
         <AdvancedPsychologyPage
@@ -1667,6 +1667,7 @@ const Index = () => {
           trades={trades}
           stats={stats}
           onExplainClick={handleExplainClick}
+          registryCharts={psychologyCharts}
         />
       </LazyShell>
     );
