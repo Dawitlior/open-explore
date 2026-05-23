@@ -608,7 +608,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
       )}
 
       {/* ═══ SETUP LEADERBOARD ═══ */}
-      {showPro && <GlassCard T={T} style={{ marginBottom: 16, padding: 0, overflow: 'hidden' }}>
+      {showPro && registryAllows('strategyExpectancy') && <GlassCard T={T} style={{ marginBottom: 16, padding: 0, overflow: 'hidden' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px 8px' }}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700 }}>{t('טבלת מובילים — לפי נכס','Leaderboard — by asset')}</div>
           <div style={{ display: 'flex', gap: 4 }}>
@@ -659,7 +659,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
       </GlassCard>}
 
       {/* ═══ Risk-vs-PnL Scatter (full-width after Edge Evolution removal) ═══ */}
-      <GlassCard T={T} style={{ marginBottom: 16 }}>
+      {registryAllows('winRateVsRR') && <GlassCard T={T} style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('פיזור סיכון מול תוצאה','Risk vs Outcome Scatter')}</div>
         <ResponsiveContainer width="100%" height={250}>
           <ScatterChart>
@@ -675,7 +675,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
             </Scatter>
           </ScatterChart>
         </ResponsiveContainer>
-      </GlassCard>
+      </GlassCard>}
 
 
 
