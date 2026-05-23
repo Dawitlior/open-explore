@@ -114,7 +114,6 @@ const Index = () => {
   const widgetVis = useWidgetVisibility();
   // Phase 2 — registry-driven chart lists per page (tier-filtered).
   const analyticsCharts = useRegistryCharts('analytics');
-  const analyticsCharts = useRegistryCharts('analytics');
   const riskCharts = useRegistryCharts('risk');
   const psychologyCharts = useRegistryCharts('psychology');
   // Phase 2 staging: consumers (AdvancedAnalyticsPage etc.) will adopt these
