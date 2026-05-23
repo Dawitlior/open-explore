@@ -21,6 +21,12 @@ const json = (body: unknown, status = 200) =>
     headers: { ...CORS, 'Content-Type': 'application/json' },
   });
 
+const chunk = <T,>(items: T[], size = 250): T[][] => {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
+};
+
 async function hmacSha256Hex(secret: string, message: string): Promise<string> {
   const key = await crypto.subtle.importKey(
     'raw', new TextEncoder().encode(secret),
@@ -560,6 +566,7 @@ Deno.serve(async (req) => {
           source_type: provenance.source_type,
           asset_class: provenance.asset_class,
           external_id: provenance.external_id,
+          exchange_exec_id: provenance.external_id,
           opened_at: provenance.opened_at,
           closed_at: provenance.closed_at,
         });
@@ -567,9 +574,14 @@ Deno.serve(async (req) => {
         nextId++;
       }
       if (rows.length > 0) {
+        for (const ids of chunk(rows.map(r => r.external_id).filter(Boolean), 250)) {
+          await admin.from('trades').delete().eq('user_id', userId).in('external_id', ids);
+        }
         const { error: upErr } = await admin.from('trades')
-          .upsert(rows, { onConflict: 'user_id,exchange_exec_id', ignoreDuplicates: true });
-        if (upErr) return json({ ok: false, error: 'persist_failed', detail: upErr.message }, 422);
+          .insert(rows);
+        if (upErr && !(upErr.code === '23505' || /duplicate key/i.test(upErr.message))) {
+          return json({ ok: false, error: 'persist_failed', detail: upErr.message }, 422);
+        }
       }
       return json({ ok: true, mode, added: rows.length, rows: summary });
     }
@@ -589,17 +601,29 @@ Deno.serve(async (req) => {
     // new provenance column (`broker_id`) so neither old nor new rows leak
     // into the next upsert and trip `trades_user_external_uidx`.
     let wiped = 0;
+    for (const ids of chunk(closedEntries.map(e => e.provenance.external_id).filter(Boolean), 250)) {
+      const { data: wipedRows, error: wipeErr } = await admin
+        .from('trades')
+        .delete()
+        .eq('user_id', userId)
+        .in('external_id', ids)
+        .select('trade_id');
+      if (wipeErr) {
+        return json({ ok: false, error: 'wipe_failed', detail: wipeErr.message }, 500);
+      }
+      wiped += wipedRows?.length ?? 0;
+    }
     {
       const { data: wipedRows, error: wipeErr } = await admin
         .from('trades')
         .delete()
         .eq('user_id', userId)
-        .or(`broker_id.eq.${provider},data->>exchange_provider.eq.${provider}`)
+        .eq('broker_id', provider)
         .select('trade_id');
       if (wipeErr) {
         return json({ ok: false, error: 'wipe_failed', detail: wipeErr.message }, 500);
       }
-      wiped = wipedRows?.length ?? 0;
+      wiped += wipedRows?.length ?? 0;
     }
 
     // Zero-trade fast path — legitimate (new account / no 180d activity)
@@ -643,6 +667,7 @@ Deno.serve(async (req) => {
         source_type: provenance.source_type,
         asset_class: provenance.asset_class,
         external_id: provenance.external_id,
+        exchange_exec_id: provenance.external_id,
         opened_at: provenance.opened_at,
         closed_at: provenance.closed_at,
       });
@@ -668,12 +693,14 @@ Deno.serve(async (req) => {
       });
       const { error: upErr } = await admin
         .from('trades')
-        .upsert(deduped, { onConflict: 'user_id,exchange_exec_id', ignoreDuplicates: true });
+        .insert(deduped);
       if (upErr) {
         // Pg duplicate-key (23505) on the OTHER unique index — treat as benign
         // idempotent collision rather than a hard failure.
         if (upErr.code === '23505' || /duplicate key/i.test(upErr.message)) {
           console.warn('[sync-futures-trades] swallowed dup-key:', upErr.message);
+          skipped += deduped.length;
+          inserted = 0;
         } else {
           return json({ ok: false, error: 'persist_failed', detail: upErr.message }, 422);
         }

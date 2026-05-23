@@ -45,7 +45,6 @@ const SectionHeader = ({ T, label, accent, isRTL }: { T: TradingTheme; label: st
 
 const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', trades: _allTrades, stats, onExplainClick, registryCharts }: AdvancedPsychologyPageProps) => {
   const registryAllows = (id: string) => !registryCharts || registryCharts.some(c => c.id === id);
-  void registryAllows; // adopted chart-by-chart in subsequent slices
   const { visibleTrades: trades, isMoney, rEligibleCount, totalCount } = useVisibleTrades(_allTrades);
   const [diagnosisOpen, setDiagnosisOpen] = useState(false);
   const [diagLoading, setDiagLoading] = useState(false);
@@ -554,7 +553,7 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
       )}
 
       {/* ═══ DISCIPLINE TIMELINE — Review/Research/Alpha ═══ */}
-      {showDisciplineTL && disciplineTimeline.length > 0 && (
+      {showDisciplineTL && registryAllows('disciplineTrend') && disciplineTimeline.length > 0 && (
         <>
           <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'מגמות לאורך זמן' : 'TRENDS OVER TIME'} />
           <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'מגמת משמעת לאורך זמן' : 'Discipline Trend Over Time'} explanation={EXPLANATIONS.disciplineMetric} unit="%" style={{ marginBottom: 4 }}>
@@ -575,7 +574,7 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
       )}
 
       {/* ═══ LOSS PRESSURE TIMELINE — non-Beginner ═══ */}
-      {showLossPressure && lossPressure.length > 0 && (
+      {showLossPressure && registryAllows('lossStreakPressure') && lossPressure.length > 0 && (
         <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'לחץ רצף הפסדים' : 'Loss Streak Pressure'} explanation={EXPLANATIONS.rDistribution} unit="%" style={{ marginBottom: 4 }}>
           <LazyChart height={160}>
             <ResponsiveContainer width="100%" height={160}>
@@ -594,7 +593,7 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
       )}
 
       {/* ═══ DEVIATION CHART (ALPHA + Live/Review/Research) ═══ */}
-      {showAlphaDeviation && (
+      {showAlphaDeviation && registryAllows('deviationDistribution') && (
         <>
           <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'ביצוע מתקדם (ALPHA)' : 'EXECUTION (ALPHA)'} />
           <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'התפלגות סטייה (R)' : 'Deviation Distribution (R)'} explanation={EXPLANATIONS.rDistribution} unit="R">

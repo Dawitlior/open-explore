@@ -476,7 +476,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
 
 
       {/* ═══ EQUITY + DRAWDOWN OVERLAY ═══ */}
-      {showCore && <GlassCard T={T} style={{ marginBottom: 16 }}>
+      {showCore && registryAllows('equityCurve') && <GlassCard T={T} style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700 }}>{t('עקומת הון מול נסיגה','Equity vs Drawdown')}</div>
           <div style={{ display: 'flex', gap: 14, fontSize: 10, color: T.text.muted }}>
@@ -509,7 +509,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
 
 
       {/* ═══ Direction Split (Win Rate) — full-width after R Distribution removal ═══ */}
-      {showCore && <GlassCard T={T} style={{ marginBottom: 16 }}>
+      {showCore && registryAllows('directionAnalysis') && <GlassCard T={T} style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('פיצול כיוון (אחוז הצלחה)','Direction Split (Win Rate)')}</div>
         <ResponsiveContainer width="100%" height={230}>
           <RadialBarChart innerRadius="30%" outerRadius="100%" data={dirSplit} startAngle={180} endAngle={0}>
@@ -577,7 +577,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
       </GlassCard>}
 
       {/* ═══ MONTHLY HEAT TILES ═══ */}
-      {showPro && monthHeat.length > 1 && (
+      {showPro && registryAllows('monthlyPerformance') && monthHeat.length > 1 && (
         <GlassCard T={T} style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>{t('חום חודשי','Monthly Heat')}</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 8 }}>
@@ -608,7 +608,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
       )}
 
       {/* ═══ SETUP LEADERBOARD ═══ */}
-      {showPro && <GlassCard T={T} style={{ marginBottom: 16, padding: 0, overflow: 'hidden' }}>
+      {showPro && registryAllows('strategyExpectancy') && <GlassCard T={T} style={{ marginBottom: 16, padding: 0, overflow: 'hidden' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px 8px' }}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700 }}>{t('טבלת מובילים — לפי נכס','Leaderboard — by asset')}</div>
           <div style={{ display: 'flex', gap: 4 }}>
@@ -659,7 +659,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
       </GlassCard>}
 
       {/* ═══ Risk-vs-PnL Scatter (full-width after Edge Evolution removal) ═══ */}
-      <GlassCard T={T} style={{ marginBottom: 16 }}>
+      {registryAllows('winRateVsRR') && <GlassCard T={T} style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('פיזור סיכון מול תוצאה','Risk vs Outcome Scatter')}</div>
         <ResponsiveContainer width="100%" height={250}>
           <ScatterChart>
@@ -675,12 +675,12 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
             </Scatter>
           </ScatterChart>
         </ResponsiveContainer>
-      </GlassCard>
+      </GlassCard>}
 
 
 
       {/* ═══ MONTHLY DETAIL LIST ═══ */}
-      {showPro && stats.monthlyPerf && stats.monthlyPerf.length > 0 && (
+      {showPro && registryAllows('cumWinLossRatio') && stats.monthlyPerf && stats.monthlyPerf.length > 0 && (
         <GlassCard T={T} style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>{t('פירוט ביצועים חודשיים','Monthly Performance Detail')}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -715,9 +715,9 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
       )}
 
       {/* ═══ ADVANCED LAYER (PRO/MAX modes) ═══ */}
-      {showPro && (
+      {showPro && (registryAllows('rDistribution') || registryAllows('edgeDecay')) && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12, marginBottom: 12 }}>
-          <GlassCard T={T} glow={`${T.accent.red}18`}>
+          {registryAllows('rDistribution') && <GlassCard T={T} glow={`${T.accent.red}18`}>
             <div style={{ fontSize: 11, color: T.accent.red, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>● PRO · {t('עקומת תת-מים (Underwater)','Underwater Curve')}</div>
             <ResponsiveContainer width="100%" height={220}>
               <AreaChart data={underwater}>
@@ -734,8 +734,8 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
                 <Area type="monotone" dataKey="uw" stroke={T.accent.red} fill="url(#uwG)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
-          </GlassCard>
-          <GlassCard T={T} glow={`${T.accent.green}18`}>
+          </GlassCard>}
+          {registryAllows('edgeDecay') && <GlassCard T={T} glow={`${T.accent.green}18`}>
             <div style={{ fontSize: 11, color: T.accent.green, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>● PRO · {t('אבולוציית Profit Factor','Profit Factor Evolution')}</div>
             <ResponsiveContainer width="100%" height={220}>
               <AreaChart data={pfEvolution}>
@@ -752,7 +752,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
                 <Area type="monotone" dataKey="pf" stroke={T.accent.green} fill="url(#pfG)" strokeWidth={2.2} />
               </AreaChart>
             </ResponsiveContainer>
-          </GlassCard>
+          </GlassCard>}
         </div>
       )}
 
@@ -771,7 +771,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
       </div>
 
       {/* ═══ QUANT LAB — appears in review/research/alpha ═══ */}
-      {showPro && (
+      {showPro && registryAllows('rollingSharpe') && (
         <Suspense fallback={<div style={{ padding: 18, fontSize: 11, color: T.text.muted, opacity: 0.7 }}>Loading Quant Lab…</div>}>
           <AnalyticsQuantLab T={T} trades={trades} privacyMode={privacyMode} />
         </Suspense>

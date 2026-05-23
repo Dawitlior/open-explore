@@ -81,7 +81,6 @@ const LimitBar = ({ T, label, current, limit, isRTL }: { T: TradingTheme; label:
 
 const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', customLimits, trades: _allTrades, stats, riskData, onExplainClick, riskExplanations, registryCharts }: AdvancedRiskPageProps) => {
   const registryAllows = (id: string) => !registryCharts || registryCharts.some(c => c.id === id);
-  void registryAllows; // adopted chart-by-chart in subsequent slices
   const { visibleTrades: trades, isMoney, rEligibleCount, totalCount } = useVisibleTrades(_allTrades);
   const tt = { background: T.bg.card, border: `1px solid ${T.border.medium}`, borderRadius: 10, color: T.text.primary, fontSize: 12, boxShadow: T.shadow.elevated, padding: '8px 12px' };
   const LIMITS_USED = customLimits || DEFAULT_RISK_LIMITS;
@@ -429,10 +428,10 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
       )}
 
       {/* ═══ RISK BEHAVIOR TIMELINE — Review/Research/Alpha only ═══ */}
-      {showRiskTimeline && (<>
+      {showRiskTimeline && (registryAllows('riskEvolution') || registryAllows('riskChangePct')) && (<>
       <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'התפתחות סיכון' : 'RISK EVOLUTION'} />
       <div style={{ display: 'flex', gap: 12, marginBottom: 4, flexWrap: 'wrap' }}>
-        <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'התפתחות סיכון לאורך זמן' : 'Risk Evolution Over Time'} explanation={EXPLANATIONS.riskAllocation} unit="$" style={{ flex: 2, minWidth: 340 }}>
+        {registryAllows('riskEvolution') && <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'התפתחות סיכון לאורך זמן' : 'Risk Evolution Over Time'} explanation={EXPLANATIONS.riskAllocation} unit="$" style={{ flex: 2, minWidth: 340 }}>
           <LazyChart height={200}>
             <ResponsiveContainer width="100%" height={200}>
               <ComposedChart data={riskTimeline}>
@@ -449,9 +448,9 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
               </ComposedChart>
             </ResponsiveContainer>
           </LazyChart>
-        </ChartWrapper>
+        </ChartWrapper>}
 
-        <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'שינוי סיכון (%)' : 'Risk Change %'} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ flex: 1, minWidth: 260 }}>
+        {registryAllows('riskChangePct') && <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'שינוי סיכון (%)' : 'Risk Change %'} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ flex: 1, minWidth: 260 }}>
           <LazyChart height={200}>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={riskTimeline.slice(1).map((d, i) => ({ ...d, idx: i + 1 }))}>
@@ -467,7 +466,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
               </BarChart>
             </ResponsiveContainer>
           </LazyChart>
-        </ChartWrapper>
+        </ChartWrapper>}
       </div>
       </>)}
 
@@ -507,7 +506,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
       {/* ═══ RISK ALLOCATION + DRAWDOWN — Beginner sees DD only ═══ */}
       <SectionHeader T={T} isRTL={isRTL} label={isBeginner ? (isRTL ? 'נסיגה' : 'DRAWDOWN') : (isRTL ? 'הקצאה ונסיגה' : 'ALLOCATION & DRAWDOWN')} />
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 4 }}>
-        {showAllocChart && (
+        {showAllocChart && registryAllows('riskAllocation') && (
         <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'הקצאת סיכון' : 'Risk Allocation'} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ flex: 1, minWidth: 280 }}>
           <LazyChart height={190}>
             <ResponsiveContainer width="100%" height={190}>
@@ -522,7 +521,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
           </LazyChart>
         </ChartWrapper>
         )}
-        <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'ניתוח נסיגה' : 'Drawdown Analysis'} explanation={EXPLANATIONS.drawdown} unit="%" style={{ flex: 1, minWidth: 280 }}>
+        {registryAllows('drawdownAnalysis') && <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'ניתוח נסיגה' : 'Drawdown Analysis'} explanation={EXPLANATIONS.drawdown} unit="%" style={{ flex: 1, minWidth: 280 }}>
           <LazyChart height={190}>
             <ResponsiveContainer width="100%" height={190}>
               <AreaChart data={rDrawdownCurve}>
@@ -535,11 +534,11 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
               </AreaChart>
             </ResponsiveContainer>
           </LazyChart>
-        </ChartWrapper>
+        </ChartWrapper>}
       </div>
 
       {/* ═══ RISK EVOLUTION CHART (ALPHA, Live/Review/Research) ═══ */}
-      {showAlphaEvolution && (
+      {showAlphaEvolution && registryAllows('capitalEfficiency') && (
         <>
           <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'אבולוציה (ALPHA)' : 'EVOLUTION (ALPHA)'} />
           <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'אבולוציית סיכון מלאה' : 'Full Risk Evolution'} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ marginBottom: 4 }}>
