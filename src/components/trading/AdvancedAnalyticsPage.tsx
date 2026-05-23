@@ -476,7 +476,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
 
 
       {/* ═══ EQUITY + DRAWDOWN OVERLAY ═══ */}
-      {showCore && <GlassCard T={T} style={{ marginBottom: 16 }}>
+      {showCore && registryAllows('rollingExpectancy') && <GlassCard T={T} style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700 }}>{t('עקומת הון מול נסיגה','Equity vs Drawdown')}</div>
           <div style={{ display: 'flex', gap: 14, fontSize: 10, color: T.text.muted }}>
@@ -509,7 +509,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
 
 
       {/* ═══ Direction Split (Win Rate) — full-width after R Distribution removal ═══ */}
-      {showCore && <GlassCard T={T} style={{ marginBottom: 16 }}>
+      {showCore && registryAllows('confidenceVsOutcome') && <GlassCard T={T} style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('פיצול כיוון (אחוז הצלחה)','Direction Split (Win Rate)')}</div>
         <ResponsiveContainer width="100%" height={230}>
           <RadialBarChart innerRadius="30%" outerRadius="100%" data={dirSplit} startAngle={180} endAngle={0}>
@@ -577,7 +577,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
       </GlassCard>}
 
       {/* ═══ MONTHLY HEAT TILES ═══ */}
-      {showPro && monthHeat.length > 1 && (
+      {showPro && registryAllows('monthlyPerformance') && monthHeat.length > 1 && (
         <GlassCard T={T} style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>{t('חום חודשי','Monthly Heat')}</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 8 }}>
