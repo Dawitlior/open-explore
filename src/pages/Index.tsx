@@ -114,8 +114,12 @@ const Index = () => {
   const widgetVis = useWidgetVisibility();
   // Phase 2 — registry-driven chart lists per page (tier-filtered).
   const analyticsCharts = useRegistryCharts('analytics');
+  const analyticsCharts = useRegistryCharts('analytics');
   const riskCharts = useRegistryCharts('risk');
   const psychologyCharts = useRegistryCharts('psychology');
+  // Phase 2 staging: consumers (AdvancedAnalyticsPage etc.) will adopt these
+  // lists incrementally. Keep them live so the registry stays in the dep graph.
+  void analyticsCharts; void riskCharts; void psychologyCharts;
   const { prefs: uiPrefs, setPrefs: setUIPrefs, toggleHiddenMode, reset: resetUIPrefs } = useUIPrefs();
   const T = useMemo(
     () => (uiPrefs.customAccentEnabled ? tintTheme(baseTheme, uiPrefs.customAccent) : baseTheme),
