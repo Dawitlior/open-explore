@@ -680,7 +680,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
 
 
       {/* ═══ MONTHLY DETAIL LIST ═══ */}
-      {showPro && stats.monthlyPerf && stats.monthlyPerf.length > 0 && (
+      {showPro && registryAllows('cumWinLossRatio') && stats.monthlyPerf && stats.monthlyPerf.length > 0 && (
         <GlassCard T={T} style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>{t('פירוט ביצועים חודשיים','Monthly Performance Detail')}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -715,9 +715,9 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
       )}
 
       {/* ═══ ADVANCED LAYER (PRO/MAX modes) ═══ */}
-      {showPro && (
+      {showPro && (registryAllows('rDistribution') || registryAllows('edgeDecay')) && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12, marginBottom: 12 }}>
-          <GlassCard T={T} glow={`${T.accent.red}18`}>
+          {registryAllows('rDistribution') && <GlassCard T={T} glow={`${T.accent.red}18`}>
             <div style={{ fontSize: 11, color: T.accent.red, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>● PRO · {t('עקומת תת-מים (Underwater)','Underwater Curve')}</div>
             <ResponsiveContainer width="100%" height={220}>
               <AreaChart data={underwater}>
@@ -734,8 +734,8 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
                 <Area type="monotone" dataKey="uw" stroke={T.accent.red} fill="url(#uwG)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
-          </GlassCard>
-          <GlassCard T={T} glow={`${T.accent.green}18`}>
+          </GlassCard>}
+          {registryAllows('edgeDecay') && <GlassCard T={T} glow={`${T.accent.green}18`}>
             <div style={{ fontSize: 11, color: T.accent.green, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>● PRO · {t('אבולוציית Profit Factor','Profit Factor Evolution')}</div>
             <ResponsiveContainer width="100%" height={220}>
               <AreaChart data={pfEvolution}>
@@ -752,7 +752,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
                 <Area type="monotone" dataKey="pf" stroke={T.accent.green} fill="url(#pfG)" strokeWidth={2.2} />
               </AreaChart>
             </ResponsiveContainer>
-          </GlassCard>
+          </GlassCard>}
         </div>
       )}
 
