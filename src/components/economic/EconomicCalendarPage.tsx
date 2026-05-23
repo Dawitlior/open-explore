@@ -4,7 +4,7 @@ import { useEconomicEvents } from '@/hooks/use-economic-events';
 import { useLang } from '@/hooks/use-lang';
 import { formatISTTime, computeSurprise, surpriseTone } from '@/lib/economic';
 import type { EconomicEvent } from '@/lib/economic';
-import { CURRENCY_FLAG } from './MacroEventStrip';
+import { CURRENCY_FLAG, MACRO_TIER_COLOR } from './MacroEventStrip';
 
 /* ─────────────────────────────────────────────────────────────
  * Pure Signal Economic Radar
@@ -372,12 +372,27 @@ export function EconomicCalendarPage({ onClose }: Props) {
                         }}
                       >
                         {cell.day}
-                        {has && !isSelected && (
-                          <span
-                            className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full"
-                            style={{ background: '#f43f5e', boxShadow: '0 0 6px rgba(244,63,94,0.7)' }}
-                          />
-                        )}
+                        {has && !isSelected && (() => {
+                          const dayEvents = eventsByDay.get(cell.key) ?? [];
+                          const hasT1 = dayEvents.some(e => e.impact === 't1');
+                          const hasT2 = dayEvents.some(e => e.impact === 't2');
+                          const hasT3 = dayEvents.some(e => e.impact === 't3');
+                          const dots: string[] = [];
+                          if (hasT1) dots.push(MACRO_TIER_COLOR.t1);
+                          if (hasT2) dots.push(MACRO_TIER_COLOR.t2);
+                          if (hasT3 && dots.length < 3) dots.push(MACRO_TIER_COLOR.t3);
+                          return (
+                            <span className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-[2px]">
+                              {dots.map((c, i) => (
+                                <span
+                                  key={i}
+                                  className="w-1 h-1 rounded-full"
+                                  style={{ background: c, boxShadow: `0 0 4px ${c}b3` }}
+                                />
+                              ))}
+                            </span>
+                          );
+                        })()}
                       </button>
                     );
                   })}
@@ -430,13 +445,16 @@ function EventRow({ e, lang, now }: { e: EconomicEvent; lang: 'he' | 'en'; now: 
     'rgba(231,243,255,0.9)';
   const flag = e.currency ? CURRENCY_FLAG[e.currency] : null;
 
+  const tierColor = MACRO_TIER_COLOR[e.impact] ?? MACRO_TIER_COLOR.t3;
+
   return (
     <div
-      className="grid items-center px-4 py-3 border-b transition hover:bg-white/[0.025]"
+      className="grid items-center px-4 py-3 border-b transition hover:bg-white/[0.025] relative"
       style={{
         gridTemplateColumns: '64px 1fr auto',
         borderColor: 'rgba(255,255,255,0.04)',
         opacity: past ? 0.55 : 1,
+        borderInlineStart: `2px solid ${tierColor}${e.impact === 't1' ? 'cc' : e.impact === 't2' ? '80' : '40'}`,
       }}
     >
       <div className="flex flex-col items-start gap-0.5">
@@ -519,6 +537,14 @@ function CountdownWidget({ e, now, t }: { e: EconomicEvent; now: number; t: (typ
     >
       <div className="flex items-center justify-between gap-2 mb-1">
         <div className="flex items-center gap-1.5 min-w-0">
+          <span
+            aria-hidden
+            className="inline-block w-1.5 h-1.5 rounded-full"
+            style={{
+              background: MACRO_TIER_COLOR[e.impact] ?? MACRO_TIER_COLOR.t3,
+              boxShadow: `0 0 6px ${MACRO_TIER_COLOR[e.impact] ?? MACRO_TIER_COLOR.t3}b3`,
+            }}
+          />
           {flag && <span style={{ fontSize: 11 }}>{flag}</span>}
           <span
             className="text-[9px] font-bold tracking-wider"
