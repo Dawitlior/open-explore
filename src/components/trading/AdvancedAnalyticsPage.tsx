@@ -476,7 +476,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
 
 
       {/* ═══ EQUITY + DRAWDOWN OVERLAY ═══ */}
-      {showCore && registryAllows('rollingExpectancy') && <GlassCard T={T} style={{ marginBottom: 16 }}>
+      {showCore && registryAllows('equityCurve') && <GlassCard T={T} style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700 }}>{t('עקומת הון מול נסיגה','Equity vs Drawdown')}</div>
           <div style={{ display: 'flex', gap: 14, fontSize: 10, color: T.text.muted }}>
@@ -509,7 +509,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
 
 
       {/* ═══ Direction Split (Win Rate) — full-width after R Distribution removal ═══ */}
-      {showCore && registryAllows('confidenceVsOutcome') && <GlassCard T={T} style={{ marginBottom: 16 }}>
+      {showCore && registryAllows('directionAnalysis') && <GlassCard T={T} style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('פיצול כיוון (אחוז הצלחה)','Direction Split (Win Rate)')}</div>
         <ResponsiveContainer width="100%" height={230}>
           <RadialBarChart innerRadius="30%" outerRadius="100%" data={dirSplit} startAngle={180} endAngle={0}>
