@@ -677,12 +677,10 @@ Deno.serve(async (req) => {
 
 
     if (rows.length > 0) {
-      // Two unique constraints can fire here:
-      //   1. trades_user_exchange_exec_unique   (user_id, exchange_exec_id)
-      //   2. trades_user_external_uidx          (user_id, broker_id, account_label, external_id) partial
-      // We can only declare ONE onConflict per upsert. Pre-dedupe the batch by
-      // the strictest key (constraint #2), then upsert with ignoreDuplicates
-      // against the legacy index. Any residual collision is swallowed.
+      // Pre-dedupe the batch by the strictest unique key. Then try a bulk
+      // insert; if it fails with 23505 (duplicate on EITHER unique index),
+      // fall back to per-row inserts that swallow only dup-key errors so the
+      // rest of the batch still lands.
       const seenKey = new Set<string>();
       const deduped = rows.filter(r => {
         const k = `${r.broker_id ?? ''}|${r.account_label ?? ''}|${r.external_id ?? ''}`;
@@ -691,19 +689,26 @@ Deno.serve(async (req) => {
         seenKey.add(k);
         return true;
       });
-      const { error: upErr } = await admin
-        .from('trades')
-        .insert(deduped);
-      if (upErr) {
-        // Pg duplicate-key (23505) on the OTHER unique index — treat as benign
-        // idempotent collision rather than a hard failure.
-        if (upErr.code === '23505' || /duplicate key/i.test(upErr.message)) {
-          console.warn('[sync-futures-trades] swallowed dup-key:', upErr.message);
-          skipped += deduped.length;
-          inserted = 0;
-        } else {
-          return json({ ok: false, error: 'persist_failed', detail: upErr.message }, 422);
+
+      const bulk = await admin.from('trades').insert(deduped);
+      if (bulk.error) {
+        const isDup = bulk.error.code === '23505' || /duplicate key/i.test(bulk.error.message);
+        if (!isDup) {
+          return json({ ok: false, error: 'persist_failed', detail: bulk.error.message }, 422);
         }
+        console.warn('[sync-futures-trades] bulk dup-key, per-row fallback:', bulk.error.message);
+        let okCount = 0;
+        let dupCount = 0;
+        for (const r of deduped) {
+          const one = await admin.from('trades').insert(r);
+          if (!one.error) { okCount++; continue; }
+          if (one.error.code === '23505' || /duplicate key/i.test(one.error.message)) {
+            dupCount++; continue;
+          }
+          return json({ ok: false, error: 'persist_failed', detail: one.error.message }, 422);
+        }
+        inserted = okCount;
+        skipped += dupCount;
       }
     }
 
