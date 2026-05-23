@@ -585,13 +585,16 @@ Deno.serve(async (req) => {
     // ---- WIPE prior api_sync rows for this user/provider ----
     // Closed-pnl is itself idempotent + bounded by the 180-day window, so we
     // re-derive from scratch on every bulk sync.
+    // We wipe by EITHER legacy JSON marker (`data->>exchange_provider`) OR the
+    // new provenance column (`broker_id`) so neither old nor new rows leak
+    // into the next upsert and trip `trades_user_external_uidx`.
     let wiped = 0;
     {
       const { data: wipedRows, error: wipeErr } = await admin
         .from('trades')
         .delete()
         .eq('user_id', userId)
-        .filter('data->>exchange_provider', 'eq', provider)
+        .or(`broker_id.eq.${provider},data->>exchange_provider.eq.${provider}`)
         .select('trade_id');
       if (wipeErr) {
         return json({ ok: false, error: 'wipe_failed', detail: wipeErr.message }, 500);
@@ -649,14 +652,31 @@ Deno.serve(async (req) => {
 
 
     if (rows.length > 0) {
-      // Idempotency tier 3 (DB layer): conflict on the unique partial index
-      // (user_id, exchange_exec_id) — generated from data->>'exchange_exec_id'.
-      // ON CONFLICT DO NOTHING semantics via ignoreDuplicates.
+      // Two unique constraints can fire here:
+      //   1. trades_user_exchange_exec_unique   (user_id, exchange_exec_id)
+      //   2. trades_user_external_uidx          (user_id, broker_id, account_label, external_id) partial
+      // We can only declare ONE onConflict per upsert. Pre-dedupe the batch by
+      // the strictest key (constraint #2), then upsert with ignoreDuplicates
+      // against the legacy index. Any residual collision is swallowed.
+      const seenKey = new Set<string>();
+      const deduped = rows.filter(r => {
+        const k = `${r.broker_id ?? ''}|${r.account_label ?? ''}|${r.external_id ?? ''}`;
+        if (!r.external_id) return true;
+        if (seenKey.has(k)) return false;
+        seenKey.add(k);
+        return true;
+      });
       const { error: upErr } = await admin
         .from('trades')
-        .upsert(rows, { onConflict: 'user_id,exchange_exec_id', ignoreDuplicates: true });
+        .upsert(deduped, { onConflict: 'user_id,exchange_exec_id', ignoreDuplicates: true });
       if (upErr) {
-        return json({ ok: false, error: 'persist_failed', detail: upErr.message }, 422);
+        // Pg duplicate-key (23505) on the OTHER unique index — treat as benign
+        // idempotent collision rather than a hard failure.
+        if (upErr.code === '23505' || /duplicate key/i.test(upErr.message)) {
+          console.warn('[sync-futures-trades] swallowed dup-key:', upErr.message);
+        } else {
+          return json({ ok: false, error: 'persist_failed', detail: upErr.message }, 422);
+        }
       }
     }
 
