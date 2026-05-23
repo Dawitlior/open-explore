@@ -506,7 +506,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
       {/* ═══ RISK ALLOCATION + DRAWDOWN — Beginner sees DD only ═══ */}
       <SectionHeader T={T} isRTL={isRTL} label={isBeginner ? (isRTL ? 'נסיגה' : 'DRAWDOWN') : (isRTL ? 'הקצאה ונסיגה' : 'ALLOCATION & DRAWDOWN')} />
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 4 }}>
-        {showAllocChart && (
+        {showAllocChart && registryAllows('riskAllocation') && (
         <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'הקצאת סיכון' : 'Risk Allocation'} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ flex: 1, minWidth: 280 }}>
           <LazyChart height={190}>
             <ResponsiveContainer width="100%" height={190}>
@@ -521,7 +521,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
           </LazyChart>
         </ChartWrapper>
         )}
-        <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'ניתוח נסיגה' : 'Drawdown Analysis'} explanation={EXPLANATIONS.drawdown} unit="%" style={{ flex: 1, minWidth: 280 }}>
+        {registryAllows('drawdownAnalysis') && <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'ניתוח נסיגה' : 'Drawdown Analysis'} explanation={EXPLANATIONS.drawdown} unit="%" style={{ flex: 1, minWidth: 280 }}>
           <LazyChart height={190}>
             <ResponsiveContainer width="100%" height={190}>
               <AreaChart data={rDrawdownCurve}>
@@ -534,11 +534,11 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
               </AreaChart>
             </ResponsiveContainer>
           </LazyChart>
-        </ChartWrapper>
+        </ChartWrapper>}
       </div>
 
       {/* ═══ RISK EVOLUTION CHART (ALPHA, Live/Review/Research) ═══ */}
-      {showAlphaEvolution && (
+      {showAlphaEvolution && registryAllows('capitalEfficiency') && (
         <>
           <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'אבולוציה (ALPHA)' : 'EVOLUTION (ALPHA)'} />
           <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'אבולוציית סיכון מלאה' : 'Full Risk Evolution'} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ marginBottom: 4 }}>
