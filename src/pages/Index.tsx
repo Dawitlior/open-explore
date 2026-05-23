@@ -116,9 +116,7 @@ const Index = () => {
   const analyticsCharts = useRegistryCharts('analytics');
   const riskCharts = useRegistryCharts('risk');
   const psychologyCharts = useRegistryCharts('psychology');
-  // `analyticsCharts` flows into AdvancedAnalyticsPage; risk/psychology will
-  // adopt in subsequent slices. Void the others to keep the registry live.
-  void riskCharts; void psychologyCharts;
+  // All three registry chart lists are now consumed by their respective pages.
   const { prefs: uiPrefs, setPrefs: setUIPrefs, toggleHiddenMode, reset: resetUIPrefs } = useUIPrefs();
   const T = useMemo(
     () => (uiPrefs.customAccentEnabled ? tintTheme(baseTheme, uiPrefs.customAccent) : baseTheme),
@@ -1585,8 +1583,30 @@ const Index = () => {
     );
   };
 
+  // Beginner upsell card — shown when a deep-analytics surface is locked.
+  const BeginnerUpsell = ({ surface }: { surface: 'analytics' | 'risk' | 'psychology' }) => {
+    const labels = {
+      analytics: { he: 'אנליטיקה מתקדמת', en: 'Advanced Analytics' },
+      risk: { he: 'פאנל סיכון מתקדם', en: 'Advanced Risk Panel' },
+      psychology: { he: 'מעבדת פסיכולוגיה', en: 'Psychology Lab' },
+    }[surface];
+    return (
+      <div style={{ maxWidth: 520, margin: '64px auto', padding: 28, borderRadius: T.radius.lg, background: `linear-gradient(135deg, ${T.bg.secondary}, ${T.bg.tertiary})`, border: `1px solid ${T.border.medium}`, textAlign: 'center' }}>
+        <div style={{ fontSize: 32, marginBottom: 12 }}>🔒</div>
+        <h3 style={{ fontSize: 16, fontWeight: 700, color: T.text.primary, marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>{isRTL ? labels.he : labels.en}</h3>
+        <p style={{ fontSize: 12, color: T.text.muted, lineHeight: 1.6, marginBottom: 16 }}>
+          {isRTL
+            ? 'מצב מתחיל מציג רק את העיקר. עבור ל-Standard או Alpha כדי לפתוח ניתוחים מתקדמים.'
+            : 'Beginner mode keeps it minimal. Switch to Standard or Alpha to unlock advanced analytics.'}
+        </p>
+        <div style={{ fontSize: 11, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>{isRTL ? 'הגדרות → מצב הפעלה' : 'Settings → Operating Mode'}</div>
+      </div>
+    );
+  };
+
   const renderAnalytics = () => {
     if (trades.length === 0) return null;
+    if (opMode === 'beginner') return <BeginnerUpsell surface="analytics" />;
     return (
       <LazyShell>
         <AdvancedAnalyticsPage
@@ -1604,6 +1624,7 @@ const Index = () => {
     );
   };
 
+
   const handleSaveRiskExplanation = (explanation: RiskExplanation) => {
     const updated = [...riskExplanations, explanation];
     setRiskExplanations(updated);
@@ -1613,6 +1634,7 @@ const Index = () => {
 
   const renderRisk = () => {
     if (trades.length === 0) return null;
+    if (opMode === 'beginner') return <BeginnerUpsell surface="risk" />;
     return (
       <LazyShell>
         <AdvancedRiskPage
@@ -1626,6 +1648,7 @@ const Index = () => {
           riskData={riskData}
           onExplainClick={handleExplainClick}
           riskExplanations={riskExplanations}
+          registryCharts={riskCharts}
         />
       </LazyShell>
     );
@@ -1633,6 +1656,7 @@ const Index = () => {
 
   const renderPsychology = () => {
     if (trades.length === 0) return null;
+    if (opMode === 'beginner') return <BeginnerUpsell surface="psychology" />;
     return (
       <LazyShell>
         <AdvancedPsychologyPage
@@ -1643,6 +1667,7 @@ const Index = () => {
           trades={trades}
           stats={stats}
           onExplainClick={handleExplainClick}
+          registryCharts={psychologyCharts}
         />
       </LazyShell>
     );
@@ -1847,7 +1872,9 @@ const Index = () => {
 
       {/* MAIN */}
       <MainPullToRefresh isMobile={isMobile} accent={T.accent.cyan}>
-        <header style={{ padding: isMobile ? '6px 10px' : '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${T.border.subtle}`, background: isMobile ? T.bg.secondary : `${T.bg.secondary}cc`, backdropFilter: isMobile ? 'none' : 'blur(12px)', WebkitBackdropFilter: isMobile ? 'none' : 'blur(12px)', position: 'sticky', top: 0, zIndex: 5, gap: 8, flexWrap: 'nowrap', minWidth: 0 } as any}>
+        {/* Mobile: bottom-nav handles everything, so the top header is hidden entirely. */}
+        {!isMobile && (
+        <header style={{ padding: '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${T.border.subtle}`, background: `${T.bg.secondary}cc`, backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 5, gap: 8, flexWrap: 'nowrap', minWidth: 0 } as any}>
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 14, minWidth: 0, flex: '1 1 auto', overflow: 'hidden' }}>
             {/* Mobile hamburger */}
             {isMobile && (
@@ -1924,6 +1951,7 @@ const Index = () => {
             {!isMobile && <span onClick={() => setShowFeatureModal(true)} style={{ fontSize: 13, fontWeight: 800, letterSpacing: '-0.02em', color: T.text.primary, fontFamily: "'JetBrains Mono', monospace", cursor: 'pointer', transition: 'opacity 0.2s' }}>Orca<span style={{ fontWeight: 300, color: T.text.muted, marginLeft: 4 }}>Investment</span></span>}
           </div>
         </header>
+        )}
 
         <div className={isMobile ? 'orca-mobile-pad-bottom' : ''} style={{ padding: isMobile ? '12px 10px' : '20px 24px', maxWidth: 1400, margin: '0 auto' }}>
           {trades.length === 0 && page !== 'weekly-review' && (
