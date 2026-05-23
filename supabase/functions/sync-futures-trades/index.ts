@@ -575,7 +575,7 @@ Deno.serve(async (req) => {
       }
       if (rows.length > 0) {
         const { error: upErr } = await admin.from('trades')
-          .upsert(rows, { onConflict: 'user_id,exchange_exec_id', ignoreDuplicates: true });
+          .upsert(rows, { onConflict: 'user_id,broker_id,account_label,external_id', ignoreDuplicates: true });
         if (upErr && !(upErr.code === '23505' || /duplicate key/i.test(upErr.message))) {
           return json({ ok: false, error: 'persist_failed', detail: upErr.message }, 422);
         }
@@ -690,7 +690,7 @@ Deno.serve(async (req) => {
       });
       const { error: upErr } = await admin
         .from('trades')
-        .upsert(deduped, { onConflict: 'user_id,exchange_exec_id', ignoreDuplicates: true });
+        .upsert(deduped, { onConflict: 'user_id,broker_id,account_label,external_id', ignoreDuplicates: true });
       if (upErr) {
         // Pg duplicate-key (23505) on the OTHER unique index — treat as benign
         // idempotent collision rather than a hard failure.
