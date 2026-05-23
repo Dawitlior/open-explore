@@ -18,6 +18,16 @@ import { LegalGate } from "@/components/LegalGate";
 import { EconomicAlertBanner } from "@/components/economic/EconomicAlertBanner";
 // Side-effect import: registers every BrokerAdapter into BrokerRegistry at boot.
 import "@/lib/brokers";
+import { lazy, Suspense } from "react";
+import { assertRegistryIntegrity } from "@/lib/chart-registry";
+
+// Dev-only registry/matrix audit panel — lazy so it never ships in normal flow.
+const RegistryAuditPanel = lazy(() => import("@/components/trading/dev/RegistryAuditPanel"));
+
+// Bootstrap-time invariant check (no-op in production unless issues exist).
+if (typeof window !== 'undefined') {
+  try { assertRegistryIntegrity(); } catch { /* ignore */ }
+}
 
 
 const queryClient = new QueryClient();
@@ -76,6 +86,17 @@ const App = () => (
                 element={
                   <RequireAuth>
                     <Index />
+                  </RequireAuth>
+                }
+              />
+              {/* Hidden dev-only audit surface — not linked in any menu. */}
+              <Route
+                path="/dev/audit"
+                element={
+                  <RequireAuth>
+                    <Suspense fallback={<div style={{ padding: 24, color: '#94a3b8', fontFamily: 'monospace' }}>Loading audit…</div>}>
+                      <RegistryAuditPanel />
+                    </Suspense>
                   </RequireAuth>
                 }
               />

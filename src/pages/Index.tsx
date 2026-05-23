@@ -63,6 +63,7 @@ import { scopedStorage } from '@/lib/scoped-storage';
 import { useAuth } from '@/hooks/use-auth';
 import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
 import { useWidgetVisibility } from '@/hooks/use-widget-visibility';
+import { useRegistryCharts } from '@/hooks/use-registry-charts';
 
 // ─── Facebook-style red notification badge with "1" ───
 const ReminderBadge = () => (
@@ -109,9 +110,15 @@ const Index = () => {
   const isAlpha = settings.isAlpha;
   const opMode = settings.operatingMode;
   // Dashboard matrix — single source of truth for widget visibility.
-  // Stage 1 wiring: only the alpha extras in the `live` cell consume it.
-  // Future stages will migrate the rest of renderDashboard to `show(id)`.
+  // Stage 2 wiring: live cell widgets consume `show(id)` directly.
   const widgetVis = useWidgetVisibility();
+  // Phase 2 — registry-driven chart lists per page (tier-filtered).
+  const analyticsCharts = useRegistryCharts('analytics');
+  const riskCharts = useRegistryCharts('risk');
+  const psychologyCharts = useRegistryCharts('psychology');
+  // Phase 2 staging: consumers (AdvancedAnalyticsPage etc.) will adopt these
+  // lists incrementally. Keep them live so the registry stays in the dep graph.
+  void analyticsCharts; void riskCharts; void psychologyCharts;
   const { prefs: uiPrefs, setPrefs: setUIPrefs, toggleHiddenMode, reset: resetUIPrefs } = useUIPrefs();
   const T = useMemo(
     () => (uiPrefs.customAccentEnabled ? tintTheme(baseTheme, uiPrefs.customAccent) : baseTheme),
@@ -656,7 +663,8 @@ const Index = () => {
               </div>
             </div>
           </GlassCard>
-          {/* Risk Exposure Meter */}
+          {/* Risk Exposure Meter — matrix: live_risk_meter */}
+          {widgetVis.show('live_risk_meter') && (
           <GlassCard T={T} style={{ flex: 1, minWidth: isMobile ? 0 : 200, width: isMobile ? '100%' : undefined, textAlign: 'center' }}>
             <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>{isRTL ? 'חשיפת סיכון' : 'Risk Exposure'}</div>
             <svg width="100" height="55" viewBox="0 0 200 110" style={{ margin: '0 auto', display: 'block' }}>
@@ -666,9 +674,11 @@ const Index = () => {
               <text x="100" y="82" textAnchor="middle" fill={riskLevel === 'critical' ? T.accent.red : riskLevel === 'warning' ? T.accent.orange : T.accent.green} fontSize="22" fontWeight="700" fontFamily="'JetBrains Mono', monospace">{riskPct.toFixed(0)}%</text>
             </svg>
           </GlassCard>
+          )}
         </div>
         {/* Streak Pressure + Emotional Deviation */}
         <div className={isMobile ? 'orca-snap-h' : ''} style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: isMobile ? 'nowrap' : 'wrap' }}>
+          {widgetVis.show('kpi_streak') && (
           <GlassCard T={T} style={{ flex: 1, minWidth: isMobile ? 0 : 200, width: isMobile ? '100%' : undefined }}>
             <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{isRTL ? 'לחץ רצף' : 'Streak Pressure'}</div>
             <div style={{ padding: 14, borderRadius: T.radius.md, textAlign: 'center', background: stats.maxConsecLosses >= 3 ? `${T.accent.red}10` : stats.currentStreak >= 3 && stats.streakType === 'Win' ? `${T.accent.green}10` : `${T.accent.blue}08`, border: `1px solid ${stats.maxConsecLosses >= 3 ? T.accent.red : T.accent.green}20` }}>
@@ -676,6 +686,7 @@ const Index = () => {
               <div style={{ fontSize: 12, fontWeight: 600, color: T.text.primary }}>{stats.maxConsecLosses >= 3 ? (isRTL ? 'צינון מומלץ' : 'Cool-Off Recommended') : stats.currentStreak >= 3 ? (isRTL ? 'מומנטום חיובי' : 'Positive Momentum') : (isRTL ? 'ניטרלי' : 'Neutral')}</div>
             </div>
           </GlassCard>
+          )}
           <GlassCard T={T} style={{ flex: 1, minWidth: isMobile ? 0 : 200, width: isMobile ? '100%' : undefined }}>
             <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{isRTL ? 'סטייה רגשית' : 'Emotional Deviation'}</div>
             {trades.slice(-5).map(tr => (
@@ -700,7 +711,8 @@ const Index = () => {
             </div>
           </GlassCard>
         </div>
-        {/* Position vs Plan */}
+        {/* Position vs Plan — matrix: live_open_positions */}
+        {widgetVis.show('live_open_positions') && (
         <GlassCard T={T} style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>{isRTL ? 'סיכון מול תוכנית' : 'Position Risk vs Plan'}</div>
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
@@ -715,6 +727,7 @@ const Index = () => {
             ))}
           </div>
         </GlassCard>
+        )}
         {widgetVis.show('research_volatility_clus') && <>
           <ScoreGauge T={T} score={stats.orcaScore} label={isRTL ? 'ציון משמעת חי' : 'Live Discipline Score'} color={T.accent.cyan} />
         </>}
