@@ -1598,6 +1598,7 @@ const Index = () => {
           stats={stats}
           privacyMode={settings.privacyMode}
           onExplainClick={handleExplainClick}
+          registryCharts={analyticsCharts}
         />
       </LazyShell>
     );
