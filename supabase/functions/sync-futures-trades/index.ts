@@ -574,8 +574,11 @@ Deno.serve(async (req) => {
         nextId++;
       }
       if (rows.length > 0) {
+        for (const ids of chunk(rows.map(r => r.external_id).filter(Boolean), 250)) {
+          await admin.from('trades').delete().eq('user_id', userId).in('external_id', ids);
+        }
         const { error: upErr } = await admin.from('trades')
-          .upsert(rows, { onConflict: 'user_id,broker_id,account_label,external_id', ignoreDuplicates: true });
+          .insert(rows);
         if (upErr && !(upErr.code === '23505' || /duplicate key/i.test(upErr.message))) {
           return json({ ok: false, error: 'persist_failed', detail: upErr.message }, 422);
         }
@@ -690,7 +693,7 @@ Deno.serve(async (req) => {
       });
       const { error: upErr } = await admin
         .from('trades')
-        .upsert(deduped, { onConflict: 'user_id,broker_id,account_label,external_id', ignoreDuplicates: true });
+        .insert(deduped);
       if (upErr) {
         // Pg duplicate-key (23505) on the OTHER unique index — treat as benign
         // idempotent collision rather than a hard failure.
