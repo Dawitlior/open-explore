@@ -4,7 +4,7 @@ import { useEconomicEvents } from '@/hooks/use-economic-events';
 import { useLang } from '@/hooks/use-lang';
 import { formatISTTime, computeSurprise, surpriseTone } from '@/lib/economic';
 import type { EconomicEvent } from '@/lib/economic';
-import { CURRENCY_FLAG } from './MacroEventStrip';
+import { CURRENCY_FLAG, MACRO_TIER_COLOR } from './MacroEventStrip';
 
 /* ─────────────────────────────────────────────────────────────
  * Pure Signal Economic Radar
