@@ -372,12 +372,27 @@ export function EconomicCalendarPage({ onClose }: Props) {
                         }}
                       >
                         {cell.day}
-                        {has && !isSelected && (
-                          <span
-                            className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full"
-                            style={{ background: '#f43f5e', boxShadow: '0 0 6px rgba(244,63,94,0.7)' }}
-                          />
-                        )}
+                        {has && !isSelected && (() => {
+                          const dayEvents = eventsByDay.get(cell.key) ?? [];
+                          const hasT1 = dayEvents.some(e => e.impact === 't1');
+                          const hasT2 = dayEvents.some(e => e.impact === 't2');
+                          const hasT3 = dayEvents.some(e => e.impact === 't3');
+                          const dots: string[] = [];
+                          if (hasT1) dots.push(MACRO_TIER_COLOR.t1);
+                          if (hasT2) dots.push(MACRO_TIER_COLOR.t2);
+                          if (hasT3 && dots.length < 3) dots.push(MACRO_TIER_COLOR.t3);
+                          return (
+                            <span className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-[2px]">
+                              {dots.map((c, i) => (
+                                <span
+                                  key={i}
+                                  className="w-1 h-1 rounded-full"
+                                  style={{ background: c, boxShadow: `0 0 4px ${c}b3` }}
+                                />
+                              ))}
+                            </span>
+                          );
+                        })()}
                       </button>
                     );
                   })}
