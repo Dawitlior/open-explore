@@ -59,19 +59,41 @@ Deno.serve(async (req) => {
       }
     }
 
+    // v2: instability index from telemetry
+    const path = (session.visited_path ?? []) as Step[];
+    let instSum = 0;
+    for (const s of path) {
+      const baseline = 900, ceiling = 4500;
+      const h = !s.t_ms || s.t_ms < baseline ? 0
+        : Math.min(1, (s.t_ms - baseline) / (ceiling - baseline));
+      const f = Math.min(1, ((s.changed_mind ?? 0)) / 3);
+      const sk = s.skipped ? 0.6 : 0;
+      instSum += Math.min(1, 0.4 * h + 0.25 * f + sk);
+    }
+    const instability_index = path.length ? Math.min(1, instSum / path.length) : 0;
+    const claim_ledger = (session.claim_ledger ?? {}) as Record<string, number>;
+
     // Ask Lovable AI
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY missing");
 
     const prompt = `You are Oracle Core, a behavioral diagnostic engine for traders.
 Given this 128-dim partial trader DNA vector (signed dim → magnitude),
+PLUS a claim-integrity ledger (identity claims stress-tested against scenario answers, range -1..+1; negative = claim failed)
+AND an instability index from telemetry (0=steady, 1=volatile),
 emit a JSON object with: archetype (short title, e.g. "The Patient Predator"),
-summary_md (3 short paragraphs, second-person), shadow_patterns (array of {name, weight 0..1, evidence: short string}),
+summary_md (3 short paragraphs, second-person; explicitly call out any claim/behavior gap),
+shadow_patterns (array of {name, weight 0..1, evidence: short string}),
 coaching_directives (array of 5 short imperative strings),
-coach_system_prompt (a paragraph the trader's AI coach should prepend on every reply, calibrating tone, blind spots, and pressure points).
+coach_system_prompt (a paragraph the trader's AI coach should prepend on every reply, calibrating tone, blind spots, pressure points, and how to handle the trader's claim gaps + instability).
 
 VECTOR:
 ${JSON.stringify(vec, null, 2)}
+
+CLAIM_LEDGER:
+${JSON.stringify(claim_ledger, null, 2)}
+
+INSTABILITY_INDEX: ${instability_index.toFixed(3)}
 
 Return ONLY valid JSON, no markdown fences.`;
 
@@ -115,7 +137,11 @@ Return ONLY valid JSON, no markdown fences.`;
 
     await supabase
       .from("oracle_sessions")
-      .update({ state: "completed", completed_at: new Date().toISOString() })
+      .update({
+        state: "completed",
+        completed_at: new Date().toISOString(),
+        instability_index,
+      })
       .eq("id", session_id);
 
     return new Response(JSON.stringify({ ok: true, archetype: parsed.archetype }), {
