@@ -1847,7 +1847,9 @@ const Index = () => {
 
       {/* MAIN */}
       <MainPullToRefresh isMobile={isMobile} accent={T.accent.cyan}>
-        <header style={{ padding: isMobile ? '6px 10px' : '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${T.border.subtle}`, background: isMobile ? T.bg.secondary : `${T.bg.secondary}cc`, backdropFilter: isMobile ? 'none' : 'blur(12px)', WebkitBackdropFilter: isMobile ? 'none' : 'blur(12px)', position: 'sticky', top: 0, zIndex: 5, gap: 8, flexWrap: 'nowrap', minWidth: 0 } as any}>
+        {/* Mobile: bottom-nav handles everything, so the top header is hidden entirely. */}
+        {!isMobile && (
+        <header style={{ padding: '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${T.border.subtle}`, background: `${T.bg.secondary}cc`, backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 5, gap: 8, flexWrap: 'nowrap', minWidth: 0 } as any}>
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 14, minWidth: 0, flex: '1 1 auto', overflow: 'hidden' }}>
             {/* Mobile hamburger */}
             {isMobile && (
@@ -1924,6 +1926,7 @@ const Index = () => {
             {!isMobile && <span onClick={() => setShowFeatureModal(true)} style={{ fontSize: 13, fontWeight: 800, letterSpacing: '-0.02em', color: T.text.primary, fontFamily: "'JetBrains Mono', monospace", cursor: 'pointer', transition: 'opacity 0.2s' }}>Orca<span style={{ fontWeight: 300, color: T.text.muted, marginLeft: 4 }}>Investment</span></span>}
           </div>
         </header>
+        )}
 
         <div className={isMobile ? 'orca-mobile-pad-bottom' : ''} style={{ padding: isMobile ? '12px 10px' : '20px 24px', maxWidth: 1400, margin: '0 auto' }}>
           {trades.length === 0 && page !== 'weekly-review' && (
