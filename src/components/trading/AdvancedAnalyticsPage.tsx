@@ -31,6 +31,7 @@ import type { TradingStats } from '@/lib/trading-analytics';
 import type { OperatingMode } from '@/hooks/use-settings';
 import { GlassCard } from './TradingUI';
 import type { ChartExplanation } from './ChartWrapper';
+import type { ChartSpec } from '@/lib/chart-registry';
 import { useLang } from '@/hooks/use-lang';
 import { RProxyBanner } from './RProxyBanner';
 import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
@@ -47,6 +48,12 @@ interface AdvancedAnalyticsPageProps {
   stats: TradingStats;
   privacyMode: boolean;
   onExplainClick: (title: string, explanation: ChartExplanation, chartId?: string) => void;
+  /**
+   * Phase 2 — registry-driven allowlist for this surface.
+   * When provided, only charts whose `id` is in the list are rendered.
+   * Absent ⇒ legacy behavior (all charts that pass the local tier gates).
+   */
+  registryCharts?: ChartSpec[];
 }
 
 const HEB_DOW = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
@@ -54,7 +61,10 @@ const ENG_DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 const HEB_DOW_FULL = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 const ENG_DOW_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode, isAlpha, operatingMode = 'live' }: AdvancedAnalyticsPageProps) => {
+const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode, isAlpha, operatingMode = 'live', registryCharts }: AdvancedAnalyticsPageProps) => {
+  // Registry guard — permissive when prop absent (legacy callers).
+  const registryAllows = (id: string) =>
+    !registryCharts || registryCharts.some(c => c.id === id);
   const { t, isRTL: langRTL } = useLang();
   // 🔀 Dual-Currency Engine: filtered dataset + adaptive axis/format helpers
   const { visibleTrades: trades, isMoney, formatAxis: fmtAxis, formatValue: fmtVal, rEligibleCount, totalCount } = useVisibleTrades(_allTrades);
@@ -522,8 +532,8 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
       </GlassCard>}
 
 
-      {/* ═══ DAY × HOUR MATRIX ═══ */}
-      {showMax && <GlassCard T={T} style={{ marginBottom: 16 }}>
+      {/* ═══ DAY × HOUR MATRIX ═══  (registry: performanceByDay) */}
+      {showMax && registryAllows('performanceByDay') && <GlassCard T={T} style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>{t('מפת ביצועים — יום × שעה','Performance Heatmap — Day × Hour')}</div>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ borderCollapse: 'separate', borderSpacing: 2, fontSize: 10, fontFamily: "'JetBrains Mono', monospace", margin: '0 auto' }}>
