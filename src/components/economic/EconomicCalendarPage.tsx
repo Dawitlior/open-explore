@@ -537,6 +537,14 @@ function CountdownWidget({ e, now, t }: { e: EconomicEvent; now: number; t: (typ
     >
       <div className="flex items-center justify-between gap-2 mb-1">
         <div className="flex items-center gap-1.5 min-w-0">
+          <span
+            aria-hidden
+            className="inline-block w-1.5 h-1.5 rounded-full"
+            style={{
+              background: MACRO_TIER_COLOR[e.impact] ?? MACRO_TIER_COLOR.t3,
+              boxShadow: `0 0 6px ${MACRO_TIER_COLOR[e.impact] ?? MACRO_TIER_COLOR.t3}b3`,
+            }}
+          />
           {flag && <span style={{ fontSize: 11 }}>{flag}</span>}
           <span
             className="text-[9px] font-bold tracking-wider"
