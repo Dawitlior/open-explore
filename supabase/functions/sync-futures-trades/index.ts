@@ -566,7 +566,6 @@ Deno.serve(async (req) => {
           source_type: provenance.source_type,
           asset_class: provenance.asset_class,
           external_id: provenance.external_id,
-          exchange_exec_id: provenance.external_id,
           opened_at: provenance.opened_at,
           closed_at: provenance.closed_at,
         });
@@ -667,7 +666,6 @@ Deno.serve(async (req) => {
         source_type: provenance.source_type,
         asset_class: provenance.asset_class,
         external_id: provenance.external_id,
-        exchange_exec_id: provenance.external_id,
         opened_at: provenance.opened_at,
         closed_at: provenance.closed_at,
       });
