@@ -21,6 +21,12 @@ const json = (body: unknown, status = 200) =>
     headers: { ...CORS, 'Content-Type': 'application/json' },
   });
 
+const chunk = <T,>(items: T[], size = 250): T[][] => {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
+};
+
 async function hmacSha256Hex(secret: string, message: string): Promise<string> {
   const key = await crypto.subtle.importKey(
     'raw', new TextEncoder().encode(secret),
@@ -560,6 +566,7 @@ Deno.serve(async (req) => {
           source_type: provenance.source_type,
           asset_class: provenance.asset_class,
           external_id: provenance.external_id,
+          exchange_exec_id: provenance.external_id,
           opened_at: provenance.opened_at,
           closed_at: provenance.closed_at,
         });
@@ -569,7 +576,9 @@ Deno.serve(async (req) => {
       if (rows.length > 0) {
         const { error: upErr } = await admin.from('trades')
           .upsert(rows, { onConflict: 'user_id,exchange_exec_id', ignoreDuplicates: true });
-        if (upErr) return json({ ok: false, error: 'persist_failed', detail: upErr.message }, 422);
+        if (upErr && !(upErr.code === '23505' || /duplicate key/i.test(upErr.message))) {
+          return json({ ok: false, error: 'persist_failed', detail: upErr.message }, 422);
+        }
       }
       return json({ ok: true, mode, added: rows.length, rows: summary });
     }
