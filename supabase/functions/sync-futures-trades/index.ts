@@ -699,6 +699,8 @@ Deno.serve(async (req) => {
         // idempotent collision rather than a hard failure.
         if (upErr.code === '23505' || /duplicate key/i.test(upErr.message)) {
           console.warn('[sync-futures-trades] swallowed dup-key:', upErr.message);
+          skipped += deduped.length;
+          inserted = 0;
         } else {
           return json({ ok: false, error: 'persist_failed', detail: upErr.message }, 422);
         }
