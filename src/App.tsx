@@ -89,6 +89,17 @@ const App = () => (
                   </RequireAuth>
                 }
               />
+              {/* Hidden dev-only audit surface — not linked in any menu. */}
+              <Route
+                path="/dev/audit"
+                element={
+                  <RequireAuth>
+                    <Suspense fallback={<div style={{ padding: 24, color: '#94a3b8', fontFamily: 'monospace' }}>Loading audit…</div>}>
+                      <RegistryAuditPanel />
+                    </Suspense>
+                  </RequireAuth>
+                }
+              />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

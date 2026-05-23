@@ -63,6 +63,7 @@ import { scopedStorage } from '@/lib/scoped-storage';
 import { useAuth } from '@/hooks/use-auth';
 import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
 import { useWidgetVisibility } from '@/hooks/use-widget-visibility';
+import { useRegistryCharts } from '@/hooks/use-registry-charts';
 
 // ─── Facebook-style red notification badge with "1" ───
 const ReminderBadge = () => (
@@ -109,9 +110,12 @@ const Index = () => {
   const isAlpha = settings.isAlpha;
   const opMode = settings.operatingMode;
   // Dashboard matrix — single source of truth for widget visibility.
-  // Stage 1 wiring: only the alpha extras in the `live` cell consume it.
-  // Future stages will migrate the rest of renderDashboard to `show(id)`.
+  // Stage 2 wiring: live cell widgets consume `show(id)` directly.
   const widgetVis = useWidgetVisibility();
+  // Phase 2 — registry-driven chart lists per page (tier-filtered).
+  const analyticsCharts = useRegistryCharts('analytics');
+  const riskCharts = useRegistryCharts('risk');
+  const psychologyCharts = useRegistryCharts('psychology');
   const { prefs: uiPrefs, setPrefs: setUIPrefs, toggleHiddenMode, reset: resetUIPrefs } = useUIPrefs();
   const T = useMemo(
     () => (uiPrefs.customAccentEnabled ? tintTheme(baseTheme, uiPrefs.customAccent) : baseTheme),
