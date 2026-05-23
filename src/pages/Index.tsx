@@ -1828,7 +1828,7 @@ const Index = () => {
 
       {/* MAIN */}
       <MainPullToRefresh isMobile={isMobile} accent={T.accent.cyan}>
-        <header style={{ padding: isMobile ? '8px 10px' : '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${T.border.subtle}`, background: `${T.bg.secondary}cc`, backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 5, gap: 8, flexWrap: 'nowrap', minWidth: 0 }}>
+        <header style={{ padding: isMobile ? '6px 10px' : '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${T.border.subtle}`, background: isMobile ? T.bg.secondary : `${T.bg.secondary}cc`, backdropFilter: isMobile ? 'none' : 'blur(12px)', WebkitBackdropFilter: isMobile ? 'none' : 'blur(12px)', position: 'sticky', top: 0, zIndex: 5, gap: 8, flexWrap: 'nowrap', minWidth: 0 } as any}>
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 14, minWidth: 0, flex: '1 1 auto', overflow: 'hidden' }}>
             {/* Mobile hamburger */}
             {isMobile && (
