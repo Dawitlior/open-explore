@@ -771,7 +771,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
       </div>
 
       {/* ═══ QUANT LAB — appears in review/research/alpha ═══ */}
-      {showPro && (
+      {showPro && registryAllows('rollingSharpe') && (
         <Suspense fallback={<div style={{ padding: 18, fontSize: 11, color: T.text.muted, opacity: 0.7 }}>Loading Quant Lab…</div>}>
           <AnalyticsQuantLab T={T} trades={trades} privacyMode={privacyMode} />
         </Suspense>
