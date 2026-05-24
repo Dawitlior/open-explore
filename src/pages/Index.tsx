@@ -127,7 +127,10 @@ const Index = () => {
     () => trades.filter(hasStrictR),
     [trades],
   );
-  const hasStrictRData = rEligibleTrades.length > 0;
+  // Phase 4 — single source of truth for R vs $ surface mode.
+  const expectancyState = useExpectancyMode(trades);
+  const hasStrictRData = expectancyState.mode === 'R' || rEligibleTrades.length > 0;
+
 
   const [page, setPage] = useState('dashboard');
   const [sbOpen, setSbOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth > 768);
