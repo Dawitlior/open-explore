@@ -64,6 +64,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
 import { useWidgetVisibility } from '@/hooks/use-widget-visibility';
 import { useRegistryCharts } from '@/hooks/use-registry-charts';
+import { useExpectancyMode } from '@/lib/dashboard-engine';
 
 // ─── Facebook-style red notification badge with "1" ───
 const ReminderBadge = () => (
