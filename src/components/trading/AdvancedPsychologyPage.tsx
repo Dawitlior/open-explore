@@ -45,6 +45,7 @@ const SectionHeader = ({ T, label, accent, isRTL }: { T: TradingTheme; label: st
 );
 
 const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', trades: _allTrades, stats, onExplainClick, registryCharts }: AdvancedPsychologyPageProps) => {
+  useChartGuard('psychology');
   const registryAllows = (id: string) => !registryCharts || registryCharts.some(c => c.id === id);
   const { visibleTrades: trades, isMoney, rEligibleCount, totalCount } = useVisibleTrades(_allTrades);
   const [diagnosisOpen, setDiagnosisOpen] = useState(false);
