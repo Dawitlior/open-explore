@@ -65,6 +65,8 @@ import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
 import { useWidgetVisibility } from '@/hooks/use-widget-visibility';
 import { useRegistryCharts } from '@/hooks/use-registry-charts';
 import { useExpectancyMode } from '@/lib/dashboard-engine';
+import { tierAllows, type Feature } from '@/lib/tier-access';
+import { TierLockCard } from '@/components/trading/TierLockCard';
 
 // ─── Facebook-style red notification badge with "1" ───
 const ReminderBadge = () => (
