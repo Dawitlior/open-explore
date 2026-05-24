@@ -65,8 +65,6 @@ import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
 import { useWidgetVisibility } from '@/hooks/use-widget-visibility';
 import { useRegistryCharts } from '@/hooks/use-registry-charts';
 import { useExpectancyMode } from '@/lib/dashboard-engine';
-import { tierAllows, type Feature } from '@/lib/tier-access';
-import { TierLockCard } from '@/components/trading/TierLockCard';
 
 // ─── Facebook-style red notification badge with "1" ───
 const ReminderBadge = () => (
@@ -135,32 +133,6 @@ const Index = () => {
 
 
   const [page, setPage] = useState('dashboard');
-  // Tier-gating ───────────────────────────────────────────────
-  const [lockedFeature, setLockedFeature] = useState<Feature | null>(null);
-  const tier = settings.tier;
-  /** Map nav-item id → required feature (null = always free). */
-  const featureForNav: Record<string, Feature | null> = {
-    dashboard: null, calendar: null, journal: null,
-    analytics: 'analytics', risk: 'risk_advanced', psychology: 'psychology',
-    ai: 'ai_insights',
-    'economic-radar': 'economic_radar_alerts',
-    'weekly-review': 'weekly_review',
-  };
-  const isNavLocked = (id: string) => {
-    const f = featureForNav[id]; return !!f && !tierAllows(tier, f);
-  };
-  const handleNavClick = (item: { id: string; action?: () => void }) => {
-    const f = featureForNav[item.id];
-    if (f && !tierAllows(tier, f)) {
-      setLockedFeature(f); setPage('tier-lock'); return;
-    }
-    if (item.action) { item.action(); return; }
-    setPage(item.id);
-  };
-  const handleGatedAction = (f: Feature, run: () => void) => {
-    if (!tierAllows(tier, f)) { setLockedFeature(f); setPage('tier-lock'); return; }
-    run();
-  };
   const [sbOpen, setSbOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth > 768);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [calMonth, setCalMonth] = useState(() => new Date().getMonth());
@@ -1617,16 +1589,22 @@ const Index = () => {
 
   // Beginner upsell card — shown when a deep-analytics surface is locked.
   const BeginnerUpsell = ({ surface }: { surface: 'analytics' | 'risk' | 'psychology' }) => {
-    const featureMap: Record<typeof surface, Feature> = {
-      analytics: 'analytics', risk: 'risk_advanced', psychology: 'psychology',
-    };
+    const labels = {
+      analytics: { he: 'אנליטיקה מתקדמת', en: 'Advanced Analytics' },
+      risk: { he: 'פאנל סיכון מתקדם', en: 'Advanced Risk Panel' },
+      psychology: { he: 'מעבדת פסיכולוגיה', en: 'Psychology Lab' },
+    }[surface];
     return (
-      <TierLockCard
-        T={T} isRTL={isRTL}
-        currentTier={settings.tier}
-        feature={featureMap[surface]}
-        onUpgrade={() => setShowSettings(true)}
-      />
+      <div style={{ maxWidth: 520, margin: '64px auto', padding: 28, borderRadius: T.radius.lg, background: `linear-gradient(135deg, ${T.bg.secondary}, ${T.bg.tertiary})`, border: `1px solid ${T.border.medium}`, textAlign: 'center' }}>
+        <div style={{ fontSize: 32, marginBottom: 12 }}>🔒</div>
+        <h3 style={{ fontSize: 16, fontWeight: 700, color: T.text.primary, marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>{isRTL ? labels.he : labels.en}</h3>
+        <p style={{ fontSize: 12, color: T.text.muted, lineHeight: 1.6, marginBottom: 16 }}>
+          {isRTL
+            ? 'מצב מתחיל מציג רק את העיקר. עבור ל-Standard או Alpha כדי לפתוח ניתוחים מתקדמים.'
+            : 'Beginner mode keeps it minimal. Switch to Standard or Alpha to unlock advanced analytics.'}
+        </p>
+        <div style={{ fontSize: 11, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>{isRTL ? 'הגדרות → מצב הפעלה' : 'Settings → Operating Mode'}</div>
+      </div>
     );
   };
 
@@ -1699,12 +1677,7 @@ const Index = () => {
     );
   };
 
-  const renderAI = () => {
-    if (!tierAllows(settings.tier, 'ai_insights')) {
-      return <TierLockCard T={T} isRTL={isRTL} currentTier={settings.tier} feature="ai_insights" onUpgrade={() => setShowSettings(true)} />;
-    }
-    return <LazyShell><AIInsightsPage T={T} trades={trades} /></LazyShell>;
-  };
+  const renderAI = () => <LazyShell><AIInsightsPage T={T} trades={trades} /></LazyShell>;
 
 
   // Portal pulse animation
@@ -1775,22 +1748,20 @@ const Index = () => {
               const isWeekly = item.id === 'weekly-review';
               const activeColor = isWeekly ? '#FFD700' : T.accent.cyan;
               const showBadge = isWeekly && showWeeklyReminder;
-              const locked = isNavLocked(item.id);
               return (
-                <button key={item.id} onClick={() => { handleNavClick(item); setSbOpen(false); if (isWeekly && !locked) dismissWeeklyReminder(); }} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: page === item.id ? `${activeColor}10` : 'transparent', color: page === item.id ? activeColor : (isWeekly ? '#FFD700' : (locked ? T.text.muted : T.text.secondary)), border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: page === item.id ? 600 : 400, width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: page === item.id ? `2px solid ${activeColor}` : '2px solid transparent', opacity: locked ? 0.65 : 1 }}>
+                <button key={item.id} onClick={() => { setPage(item.id); setSbOpen(false); if (isWeekly) dismissWeeklyReminder(); }} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: page === item.id ? `${activeColor}10` : 'transparent', color: page === item.id ? activeColor : (isWeekly ? '#FFD700' : T.text.secondary), border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: page === item.id ? 600 : 400, width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: page === item.id ? `2px solid ${activeColor}` : '2px solid transparent' }}>
                   <span style={{ position: 'relative', display: 'inline-flex' }}>
                     {typeof item.icon === 'string' ? <span style={{ fontSize: 18 }}>{item.icon}</span> : item.icon}
                     {showBadge && <ReminderBadge />}
                   </span>
                   <span>{item.label}</span>
-                  {locked && <span title={isRTL ? 'דרוש שדרוג' : 'Upgrade required'} style={{ marginInlineStart: 'auto', fontSize: 11, opacity: 0.8 }}>🔒</span>}
                 </button>
               );
             })}
             {/* Dimensions */}
             <div style={{ padding: '4px 0', borderTop: `1px solid ${T.border.subtle}`, marginTop: 4 }}>
               <PortalButton onClick={() => { setSbOpen(false); setActiveDimension('journal'); }} isRTL={isRTL} expanded={true} />
-              <BacktestPortalButton onClick={() => { setSbOpen(false); handleGatedAction('backtest', () => setActiveDimension('backtest')); }} isRTL={isRTL} expanded={true} />
+              <BacktestPortalButton onClick={() => { setSbOpen(false); setActiveDimension('backtest'); }} isRTL={isRTL} expanded={true} />
             </div>
             {/* Bottom actions */}
             <div style={{ padding: '4px 0', borderTop: `1px solid ${T.border.subtle}`, marginTop: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -1833,15 +1804,13 @@ const Index = () => {
             const isWeekly = item.id === 'weekly-review';
             const activeColor = isWeekly ? '#FFD700' : T.accent.cyan;
             const showBadge = isWeekly && showWeeklyReminder;
-            const locked = isNavLocked(item.id);
             return (
-            <button key={item.id} onClick={() => { handleNavClick(item); if (isWeekly && !locked) dismissWeeklyReminder(); }} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10, padding: sbOpen ? '9px 10px' : '9px 0', justifyContent: sbOpen ? 'flex-start' : 'center', background: page === item.id ? `${activeColor}10` : 'transparent', color: page === item.id ? activeColor : (isWeekly ? '#FFD700' : (locked ? T.text.muted : T.text.secondary)), border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: page === item.id ? 600 : (isWeekly ? 600 : 400), transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: page === item.id ? `2px solid ${activeColor}` : '2px solid transparent', opacity: locked ? 0.65 : 1 }}>
+            <button key={item.id} onClick={() => { if (item.action) { item.action(); return; } setPage(item.id); if (isWeekly) dismissWeeklyReminder(); }} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10, padding: sbOpen ? '9px 10px' : '9px 0', justifyContent: sbOpen ? 'flex-start' : 'center', background: page === item.id ? `${activeColor}10` : 'transparent', color: page === item.id ? activeColor : (isWeekly ? '#FFD700' : T.text.secondary), border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: page === item.id ? 600 : (isWeekly ? 600 : 400), transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: page === item.id ? `2px solid ${activeColor}` : '2px solid transparent' }}>
               <span style={{ position: 'relative', display: 'inline-flex' }}>
                 {typeof item.icon === 'string' ? <span style={{ fontSize: 18 }}>{item.icon}</span> : item.icon}
                 {showBadge && <ReminderBadge />}
               </span>
               {sbOpen && <span>{item.label}</span>}
-              {sbOpen && locked && <span title={isRTL ? 'דרוש שדרוג' : 'Upgrade required'} style={{ marginInlineStart: 'auto', fontSize: 11, opacity: 0.8 }}>🔒</span>}
             </button>
             );
           })}
@@ -1852,12 +1821,12 @@ const Index = () => {
         </nav>
         {/* Dimension Portal Buttons */}
         {sbOpen && <div style={{ padding: '4px 6px' }}><PortalButton onClick={() => setActiveDimension('journal')} isRTL={isRTL} expanded={true} /></div>}
-        {sbOpen && <div style={{ padding: '4px 6px' }}><BacktestPortalButton onClick={() => handleGatedAction('backtest', () => setActiveDimension('backtest'))} isRTL={isRTL} expanded={true} /></div>}
+        {sbOpen && <div style={{ padding: '4px 6px' }}><BacktestPortalButton onClick={() => setActiveDimension('backtest')} isRTL={isRTL} expanded={true} /></div>}
         {/* Economic Radar promoted into main nav above */}
         {sbOpen && (
           <div style={{ padding: '4px 6px' }}>
             <button
-              onClick={() => handleGatedAction('oracle', () => setShowOracle(true))}
+              onClick={() => setShowOracle(true)}
               title={isRTL ? 'Oracle Core — כיול התנהגותי' : 'Oracle Core — behavioral calibration'}
               style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '9px 10px', background: `${T.accent.purple ?? T.accent.cyan}10`, border: `1px solid ${T.accent.purple ?? T.accent.cyan}30`, borderRadius: T.radius.md, color: T.accent.purple ?? T.accent.cyan, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}
             >
@@ -1878,7 +1847,7 @@ const Index = () => {
         {!sbOpen && (
           <div style={{ padding: '4px 6px', display: 'flex', justifyContent: 'center', position: 'relative' }}>
             <button
-              onClick={() => handleGatedAction('oracle', () => setShowOracle(true))}
+              onClick={() => setShowOracle(true)}
               title="Oracle Core"
               style={{ background: 'transparent', border: 'none', color: T.accent.purple ?? T.accent.cyan, cursor: 'pointer', fontSize: 16, position: 'relative' }}
             >
@@ -1989,15 +1958,7 @@ const Index = () => {
         )}
 
         <div className={isMobile ? 'orca-mobile-pad-bottom' : ''} style={{ padding: isMobile ? '12px 10px' : '20px 24px', maxWidth: 1400, margin: '0 auto' }}>
-          {page === 'tier-lock' && lockedFeature && (
-            <TierLockCard
-              T={T} isRTL={isRTL}
-              currentTier={settings.tier}
-              feature={lockedFeature}
-              onUpgrade={() => { setShowSettings(true); setPage('dashboard'); setLockedFeature(null); }}
-            />
-          )}
-          {trades.length === 0 && page !== 'weekly-review' && page !== 'tier-lock' && (
+          {trades.length === 0 && page !== 'weekly-review' && (
             <div style={{ textAlign: 'center', padding: isMobile ? 30 : 60 }}>
               <div style={{ fontSize: 48, marginBottom: 16 }}>🐋</div>
               <div style={{ fontSize: 16, color: T.text.secondary, marginBottom: 20 }}>{t.noTrades}</div>
@@ -2039,9 +2000,7 @@ const Index = () => {
                 <span style={{ fontSize: 14, lineHeight: 1, transform: isRTL ? 'none' : 'scaleX(-1)' }}>⟵</span>
                 {isRTL ? 'חזרה לאורקה OS' : 'Back to Orca OS'}
               </button>
-              {tierAllows(settings.tier, 'weekly_review')
-                ? <LazyShell><WeeklyReviewPage T={T} isRTL={isRTL} trades={trades} themeId={settings.theme} stats={stats} riskData={riskData} /></LazyShell>
-                : <TierLockCard T={T} isRTL={isRTL} currentTier={settings.tier} feature="weekly_review" onUpgrade={() => setShowSettings(true)} />}
+              <LazyShell><WeeklyReviewPage T={T} isRTL={isRTL} trades={trades} themeId={settings.theme} stats={stats} riskData={riskData} /></LazyShell>
             </div>
           )}
         </div>
