@@ -36,6 +36,7 @@ import { useLang } from '@/hooks/use-lang';
 import { RProxyBanner } from './RProxyBanner';
 import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
 import { useVisibleTrades } from '@/lib/display-mode-format';
+import { useChartGuard } from '@/lib/dashboard-engine';
 const AnalyticsQuantLab = lazy(() => import('./AnalyticsQuantLab').then(m => ({ default: m.AnalyticsQuantLab })));
 
 interface AdvancedAnalyticsPageProps {
@@ -62,6 +63,8 @@ const HEB_DOW_FULL = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמ�
 const ENG_DOW_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode, isAlpha, operatingMode = 'live', registryCharts }: AdvancedAnalyticsPageProps) => {
+  // Phase 3 dev-only invariant — warns if a non-canonical chart is rendered here.
+  useChartGuard('analytics');
   // Registry guard — permissive when prop absent (legacy callers).
   const registryAllows = (id: string) =>
     !registryCharts || registryCharts.some(c => c.id === id);

@@ -64,6 +64,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
 import { useWidgetVisibility } from '@/hooks/use-widget-visibility';
 import { useRegistryCharts } from '@/hooks/use-registry-charts';
+import { useExpectancyMode } from '@/lib/dashboard-engine';
 
 // ─── Facebook-style red notification badge with "1" ───
 const ReminderBadge = () => (
@@ -126,7 +127,10 @@ const Index = () => {
     () => trades.filter(hasStrictR),
     [trades],
   );
-  const hasStrictRData = rEligibleTrades.length > 0;
+  // Phase 4 — single source of truth for R vs $ surface mode.
+  const expectancyState = useExpectancyMode(trades);
+  const hasStrictRData = expectancyState.mode === 'R' || rEligibleTrades.length > 0;
+
 
   const [page, setPage] = useState('dashboard');
   const [sbOpen, setSbOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth > 768);
