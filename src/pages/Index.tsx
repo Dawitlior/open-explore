@@ -135,6 +135,32 @@ const Index = () => {
 
 
   const [page, setPage] = useState('dashboard');
+  // Tier-gating ───────────────────────────────────────────────
+  const [lockedFeature, setLockedFeature] = useState<Feature | null>(null);
+  const tier = settings.tier;
+  /** Map nav-item id → required feature (null = always free). */
+  const featureForNav: Record<string, Feature | null> = {
+    dashboard: null, calendar: null, journal: null,
+    analytics: 'analytics', risk: 'risk_advanced', psychology: 'psychology',
+    ai: 'ai_insights',
+    'economic-radar': 'economic_radar_alerts',
+    'weekly-review': 'weekly_review',
+  };
+  const isNavLocked = (id: string) => {
+    const f = featureForNav[id]; return !!f && !tierAllows(tier, f);
+  };
+  const handleNavClick = (item: { id: string; action?: () => void }) => {
+    const f = featureForNav[item.id];
+    if (f && !tierAllows(tier, f)) {
+      setLockedFeature(f); setPage('tier-lock'); return;
+    }
+    if (item.action) { item.action(); return; }
+    setPage(item.id);
+  };
+  const handleGatedAction = (f: Feature, run: () => void) => {
+    if (!tierAllows(tier, f)) { setLockedFeature(f); setPage('tier-lock'); return; }
+    run();
+  };
   const [sbOpen, setSbOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth > 768);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [calMonth, setCalMonth] = useState(() => new Date().getMonth());
