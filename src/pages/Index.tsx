@@ -1617,22 +1617,16 @@ const Index = () => {
 
   // Beginner upsell card — shown when a deep-analytics surface is locked.
   const BeginnerUpsell = ({ surface }: { surface: 'analytics' | 'risk' | 'psychology' }) => {
-    const labels = {
-      analytics: { he: 'אנליטיקה מתקדמת', en: 'Advanced Analytics' },
-      risk: { he: 'פאנל סיכון מתקדם', en: 'Advanced Risk Panel' },
-      psychology: { he: 'מעבדת פסיכולוגיה', en: 'Psychology Lab' },
-    }[surface];
+    const featureMap: Record<typeof surface, Feature> = {
+      analytics: 'analytics', risk: 'risk_advanced', psychology: 'psychology',
+    };
     return (
-      <div style={{ maxWidth: 520, margin: '64px auto', padding: 28, borderRadius: T.radius.lg, background: `linear-gradient(135deg, ${T.bg.secondary}, ${T.bg.tertiary})`, border: `1px solid ${T.border.medium}`, textAlign: 'center' }}>
-        <div style={{ fontSize: 32, marginBottom: 12 }}>🔒</div>
-        <h3 style={{ fontSize: 16, fontWeight: 700, color: T.text.primary, marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>{isRTL ? labels.he : labels.en}</h3>
-        <p style={{ fontSize: 12, color: T.text.muted, lineHeight: 1.6, marginBottom: 16 }}>
-          {isRTL
-            ? 'מצב מתחיל מציג רק את העיקר. עבור ל-Standard או Alpha כדי לפתוח ניתוחים מתקדמים.'
-            : 'Beginner mode keeps it minimal. Switch to Standard or Alpha to unlock advanced analytics.'}
-        </p>
-        <div style={{ fontSize: 11, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>{isRTL ? 'הגדרות → מצב הפעלה' : 'Settings → Operating Mode'}</div>
-      </div>
+      <TierLockCard
+        T={T} isRTL={isRTL}
+        currentTier={settings.tier}
+        feature={featureMap[surface]}
+        onUpgrade={() => setShowSettings(true)}
+      />
     );
   };
 
