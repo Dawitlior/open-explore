@@ -2039,7 +2039,9 @@ const Index = () => {
                 <span style={{ fontSize: 14, lineHeight: 1, transform: isRTL ? 'none' : 'scaleX(-1)' }}>⟵</span>
                 {isRTL ? 'חזרה לאורקה OS' : 'Back to Orca OS'}
               </button>
-              <LazyShell><WeeklyReviewPage T={T} isRTL={isRTL} trades={trades} themeId={settings.theme} stats={stats} riskData={riskData} /></LazyShell>
+              {tierAllows(settings.tier, 'weekly_review')
+                ? <LazyShell><WeeklyReviewPage T={T} isRTL={isRTL} trades={trades} themeId={settings.theme} stats={stats} riskData={riskData} /></LazyShell>
+                : <TierLockCard T={T} isRTL={isRTL} currentTier={settings.tier} feature="weekly_review" onUpgrade={() => setShowSettings(true)} />}
             </div>
           )}
         </div>
