@@ -1852,7 +1852,7 @@ const Index = () => {
         {sbOpen && (
           <div style={{ padding: '4px 6px' }}>
             <button
-              onClick={() => setShowOracle(true)}
+              onClick={() => handleGatedAction('oracle', () => setShowOracle(true))}
               title={isRTL ? 'Oracle Core — כיול התנהגותי' : 'Oracle Core — behavioral calibration'}
               style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '9px 10px', background: `${T.accent.purple ?? T.accent.cyan}10`, border: `1px solid ${T.accent.purple ?? T.accent.cyan}30`, borderRadius: T.radius.md, color: T.accent.purple ?? T.accent.cyan, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}
             >
@@ -1873,7 +1873,7 @@ const Index = () => {
         {!sbOpen && (
           <div style={{ padding: '4px 6px', display: 'flex', justifyContent: 'center', position: 'relative' }}>
             <button
-              onClick={() => setShowOracle(true)}
+              onClick={() => handleGatedAction('oracle', () => setShowOracle(true))}
               title="Oracle Core"
               style={{ background: 'transparent', border: 'none', color: T.accent.purple ?? T.accent.cyan, cursor: 'pointer', fontSize: 16, position: 'relative' }}
             >
