@@ -1984,7 +1984,15 @@ const Index = () => {
         )}
 
         <div className={isMobile ? 'orca-mobile-pad-bottom' : ''} style={{ padding: isMobile ? '12px 10px' : '20px 24px', maxWidth: 1400, margin: '0 auto' }}>
-          {trades.length === 0 && page !== 'weekly-review' && (
+          {page === 'tier-lock' && lockedFeature && (
+            <TierLockCard
+              T={T} isRTL={isRTL}
+              currentTier={settings.tier}
+              feature={lockedFeature}
+              onUpgrade={() => { setShowSettings(true); setPage('dashboard'); setLockedFeature(null); }}
+            />
+          )}
+          {trades.length === 0 && page !== 'weekly-review' && page !== 'tier-lock' && (
             <div style={{ textAlign: 'center', padding: isMobile ? 30 : 60 }}>
               <div style={{ fontSize: 48, marginBottom: 16 }}>🐋</div>
               <div style={{ fontSize: 16, color: T.text.secondary, marginBottom: 20 }}>{t.noTrades}</div>
