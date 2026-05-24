@@ -63,6 +63,8 @@ const HEB_DOW_FULL = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמ�
 const ENG_DOW_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode, isAlpha, operatingMode = 'live', registryCharts }: AdvancedAnalyticsPageProps) => {
+  // Phase 3 dev-only invariant — warns if a non-canonical chart is rendered here.
+  useChartGuard('analytics');
   // Registry guard — permissive when prop absent (legacy callers).
   const registryAllows = (id: string) =>
     !registryCharts || registryCharts.some(c => c.id === id);
