@@ -1699,7 +1699,12 @@ const Index = () => {
     );
   };
 
-  const renderAI = () => <LazyShell><AIInsightsPage T={T} trades={trades} /></LazyShell>;
+  const renderAI = () => {
+    if (!tierAllows(settings.tier, 'ai_insights')) {
+      return <TierLockCard T={T} isRTL={isRTL} currentTier={settings.tier} feature="ai_insights" onUpgrade={() => setShowSettings(true)} />;
+    }
+    return <LazyShell><AIInsightsPage T={T} trades={trades} /></LazyShell>;
+  };
 
 
   // Portal pulse animation
