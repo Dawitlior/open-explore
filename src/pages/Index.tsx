@@ -1770,20 +1770,22 @@ const Index = () => {
               const isWeekly = item.id === 'weekly-review';
               const activeColor = isWeekly ? '#FFD700' : T.accent.cyan;
               const showBadge = isWeekly && showWeeklyReminder;
+              const locked = isNavLocked(item.id);
               return (
-                <button key={item.id} onClick={() => { setPage(item.id); setSbOpen(false); if (isWeekly) dismissWeeklyReminder(); }} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: page === item.id ? `${activeColor}10` : 'transparent', color: page === item.id ? activeColor : (isWeekly ? '#FFD700' : T.text.secondary), border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: page === item.id ? 600 : 400, width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: page === item.id ? `2px solid ${activeColor}` : '2px solid transparent' }}>
+                <button key={item.id} onClick={() => { handleNavClick(item); setSbOpen(false); if (isWeekly && !locked) dismissWeeklyReminder(); }} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: page === item.id ? `${activeColor}10` : 'transparent', color: page === item.id ? activeColor : (isWeekly ? '#FFD700' : (locked ? T.text.muted : T.text.secondary)), border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: page === item.id ? 600 : 400, width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: page === item.id ? `2px solid ${activeColor}` : '2px solid transparent', opacity: locked ? 0.65 : 1 }}>
                   <span style={{ position: 'relative', display: 'inline-flex' }}>
                     {typeof item.icon === 'string' ? <span style={{ fontSize: 18 }}>{item.icon}</span> : item.icon}
                     {showBadge && <ReminderBadge />}
                   </span>
                   <span>{item.label}</span>
+                  {locked && <span title={isRTL ? 'דרוש שדרוג' : 'Upgrade required'} style={{ marginInlineStart: 'auto', fontSize: 11, opacity: 0.8 }}>🔒</span>}
                 </button>
               );
             })}
             {/* Dimensions */}
             <div style={{ padding: '4px 0', borderTop: `1px solid ${T.border.subtle}`, marginTop: 4 }}>
               <PortalButton onClick={() => { setSbOpen(false); setActiveDimension('journal'); }} isRTL={isRTL} expanded={true} />
-              <BacktestPortalButton onClick={() => { setSbOpen(false); setActiveDimension('backtest'); }} isRTL={isRTL} expanded={true} />
+              <BacktestPortalButton onClick={() => { setSbOpen(false); handleGatedAction('backtest', () => setActiveDimension('backtest')); }} isRTL={isRTL} expanded={true} />
             </div>
             {/* Bottom actions */}
             <div style={{ padding: '4px 0', borderTop: `1px solid ${T.border.subtle}`, marginTop: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
