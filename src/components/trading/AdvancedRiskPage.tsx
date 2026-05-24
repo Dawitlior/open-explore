@@ -12,6 +12,7 @@ import { checkRiskLimits, DEFAULT_RISK_LIMITS, type RiskLimits } from '@/lib/ris
 import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
 import { useVisibleTrades } from '@/lib/display-mode-format';
 import { RProxyBanner } from './RProxyBanner';
+import { useChartGuard } from '@/lib/dashboard-engine';
 
 type OperatingMode = 'live' | 'review' | 'research' | 'beginner';
 
