@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      billing_events: {
+        Row: {
+          event_id: string
+          event_type: string
+          id: string
+          invoice_url: string | null
+          payload: Json
+          processed_at: string | null
+          provider: string
+          received_at: string
+          user_id: string | null
+        }
+        Insert: {
+          event_id: string
+          event_type: string
+          id?: string
+          invoice_url?: string | null
+          payload: Json
+          processed_at?: string | null
+          provider: string
+          received_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          event_id?: string
+          event_type?: string
+          id?: string
+          invoice_url?: string | null
+          payload?: Json
+          processed_at?: string | null
+          provider?: string
+          received_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       economic_events: {
         Row: {
           actual: string | null
@@ -112,6 +148,27 @@ export type Database = {
           scope?: string
           secret_id?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      feature_flags: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          flag: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          flag: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          flag?: string
           user_id?: string
         }
         Relationships: []
@@ -463,6 +520,54 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean
+          created_at: string
+          current_period_end: string | null
+          grandfathered: boolean
+          provider: string | null
+          provider_customer_id: string | null
+          provider_subscription_id: string | null
+          status: Database["public"]["Enums"]["sub_status"]
+          tier: Database["public"]["Enums"]["app_tier"]
+          trial_ends_at: string
+          trial_started_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          current_period_end?: string | null
+          grandfathered?: boolean
+          provider?: string | null
+          provider_customer_id?: string | null
+          provider_subscription_id?: string | null
+          status?: Database["public"]["Enums"]["sub_status"]
+          tier?: Database["public"]["Enums"]["app_tier"]
+          trial_ends_at?: string
+          trial_started_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          current_period_end?: string | null
+          grandfathered?: boolean
+          provider?: string | null
+          provider_customer_id?: string | null
+          provider_subscription_id?: string | null
+          status?: Database["public"]["Enums"]["sub_status"]
+          tier?: Database["public"]["Enums"]["app_tier"]
+          trial_ends_at?: string
+          trial_started_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       trades: {
         Row: {
           account_label: string | null
@@ -583,13 +688,18 @@ export type Database = {
     }
     Functions: {
       backfill_trade_provenance: { Args: { p_batch?: number }; Returns: number }
+      current_entitlement: {
+        Args: { p_user: string }
+        Returns: Database["public"]["Enums"]["app_tier"]
+      }
       read_exchange_secret: {
         Args: { p_cred_id: string; p_user_id: string }
         Returns: string
       }
     }
     Enums: {
-      [_ in never]: never
+      app_tier: "standard" | "advanced" | "ultimate"
+      sub_status: "trialing" | "active" | "past_due" | "canceled" | "expired"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -716,6 +826,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_tier: ["standard", "advanced", "ultimate"],
+      sub_status: ["trialing", "active", "past_due", "canceled", "expired"],
+    },
   },
 } as const
