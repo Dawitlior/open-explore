@@ -1,16 +1,20 @@
 /**
  * useRegistryCharts — registry-driven chart filtering for a given page.
  *
- * Phase 2 foundation. Page components (renderAnalytics, renderRisk, etc.)
- * call this to receive ONLY the charts that:
+ * Returns ONLY the charts that:
  *   (a) are canonically homed (or mirrored) on this page, AND
  *   (b) are allowed for the current experience tier (beginner/standard/alpha).
  *
- * Consumers iterate the returned list and render via the chart's `id`,
- * eliminating inline `if (isAlpha)` branches.
+ * Charts gated by SaaS `tierAccess` are NOT filtered out here — the page
+ * wraps them in <TierGate> so locked tiers see an upsell card instead of
+ * the chart silently disappearing. This preserves discoverability.
  *
  *   const charts = useRegistryCharts('analytics');
- *   {charts.map(c => <ChartFor id={c.id} key={c.id} />)}
+ *   {charts.map(c => (
+ *     <TierGate key={c.id} required={c.tierAccess ?? 'standard'} label={c.title.en}>
+ *       <ChartFor id={c.id} />
+ *     </TierGate>
+ *   ))}
  */
 import { useMemo } from 'react';
 import { chartsFor, type ChartHome, type ChartSpec } from '@/lib/chart-registry';
