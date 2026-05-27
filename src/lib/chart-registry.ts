@@ -58,6 +58,13 @@ export interface ChartSpec {
   minTrades?: number;
   /** Which experience tiers may see it (matrix-aware) */
   tiers?: Array<'beginner' | 'standard' | 'alpha'>;
+  /**
+   * Minimum SaaS subscription tier required to render this chart.
+   * Defaults to 'standard' (visible to all paying/trialing users).
+   * Charts marked 'advanced' or 'ultimate' will render via <TierGate>
+   * as an upsell card when the user's entitlement is below this level.
+   */
+  tierAccess?: 'standard' | 'advanced' | 'ultimate';
 }
 
 // ──────────────────────────────────────────────────────────────────────
