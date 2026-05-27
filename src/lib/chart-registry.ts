@@ -60,11 +60,16 @@ export interface ChartSpec {
   tiers?: Array<'beginner' | 'standard' | 'alpha'>;
   /**
    * Minimum SaaS subscription tier required to render this chart.
-   * Defaults to 'standard' (visible to all paying/trialing users).
-   * Charts marked 'advanced' or 'ultimate' will render via <TierGate>
-   * as an upsell card when the user's entitlement is below this level.
+   * Defaults to 'standard'. Charts marked 'advanced' or 'ultimate' will
+   * render via <TierGate> as an upsell (or with a lock badge in soft mode).
    */
   tierAccess?: 'standard' | 'advanced' | 'ultimate';
+  /**
+   * When true, this chart exposes a per-chart R/$ toggle chip in its header
+   * (overrides the global displayMode locally). Auto-disabled if the
+   * R-coverage of the dataset falls below 80%.
+   */
+  dualMode?: boolean;
 }
 
 // ──────────────────────────────────────────────────────────────────────
