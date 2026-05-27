@@ -58,6 +58,13 @@ export interface ChartSpec {
   minTrades?: number;
   /** Which experience tiers may see it (matrix-aware) */
   tiers?: Array<'beginner' | 'standard' | 'alpha'>;
+  /**
+   * Minimum SaaS subscription tier required to render this chart.
+   * Defaults to 'standard' (visible to all paying/trialing users).
+   * Charts marked 'advanced' or 'ultimate' will render via <TierGate>
+   * as an upsell card when the user's entitlement is below this level.
+   */
+  tierAccess?: 'standard' | 'advanced' | 'ultimate';
 }
 
 // ──────────────────────────────────────────────────────────────────────
@@ -208,6 +215,7 @@ export const CHART_REGISTRY: readonly ChartSpec[] = [
     unit: 'R',
     explanationKey: 'rDistribution',
     tiers: ['alpha'],
+    tierAccess: 'ultimate',
   },
   {
     id: 'interTradeInterval',
@@ -217,6 +225,7 @@ export const CHART_REGISTRY: readonly ChartSpec[] = [
     unit: 'h',
     explanationKey: 'rDistribution',
     tiers: ['alpha'],
+    tierAccess: 'ultimate',
   },
 
   // ── RISK ─────────────────────────────────────────────────────────
@@ -268,6 +277,7 @@ export const CHART_REGISTRY: readonly ChartSpec[] = [
     unit: '%',
     explanationKey: 'drawdownStructure',
     tiers: ['alpha'],
+    tierAccess: 'ultimate',
   },
   {
     id: 'riskOfRuin',
@@ -285,6 +295,7 @@ export const CHART_REGISTRY: readonly ChartSpec[] = [
     unit: '%',
     explanationKey: 'kellyOptimal',
     tiers: ['alpha'],
+    tierAccess: 'ultimate',
   },
   {
     id: 'capitalEfficiency',
@@ -294,6 +305,7 @@ export const CHART_REGISTRY: readonly ChartSpec[] = [
     unit: 'R/σ',
     explanationKey: 'volatilityAdjusted',
     tiers: ['alpha'],
+    tierAccess: 'ultimate',
   },
   {
     id: 'cumulativeMAR',
@@ -303,6 +315,7 @@ export const CHART_REGISTRY: readonly ChartSpec[] = [
     unit: 'x',
     explanationKey: 'kellyOptimal',
     tiers: ['alpha'],
+    tierAccess: 'ultimate',
   },
 
   // ── PSYCHOLOGY ───────────────────────────────────────────────────
