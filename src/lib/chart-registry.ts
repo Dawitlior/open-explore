@@ -215,6 +215,7 @@ export const CHART_REGISTRY: readonly ChartSpec[] = [
     unit: 'R',
     explanationKey: 'rDistribution',
     tiers: ['alpha'],
+    tierAccess: 'ultimate',
   },
   {
     id: 'interTradeInterval',
@@ -224,6 +225,7 @@ export const CHART_REGISTRY: readonly ChartSpec[] = [
     unit: 'h',
     explanationKey: 'rDistribution',
     tiers: ['alpha'],
+    tierAccess: 'ultimate',
   },
 
   // ── RISK ─────────────────────────────────────────────────────────
@@ -275,6 +277,7 @@ export const CHART_REGISTRY: readonly ChartSpec[] = [
     unit: '%',
     explanationKey: 'drawdownStructure',
     tiers: ['alpha'],
+    tierAccess: 'ultimate',
   },
   {
     id: 'riskOfRuin',
@@ -292,6 +295,7 @@ export const CHART_REGISTRY: readonly ChartSpec[] = [
     unit: '%',
     explanationKey: 'kellyOptimal',
     tiers: ['alpha'],
+    tierAccess: 'ultimate',
   },
   {
     id: 'capitalEfficiency',
@@ -301,6 +305,7 @@ export const CHART_REGISTRY: readonly ChartSpec[] = [
     unit: 'R/σ',
     explanationKey: 'volatilityAdjusted',
     tiers: ['alpha'],
+    tierAccess: 'ultimate',
   },
   {
     id: 'cumulativeMAR',
@@ -310,6 +315,7 @@ export const CHART_REGISTRY: readonly ChartSpec[] = [
     unit: 'x',
     explanationKey: 'kellyOptimal',
     tiers: ['alpha'],
+    tierAccess: 'ultimate',
   },
 
   // ── PSYCHOLOGY ───────────────────────────────────────────────────
