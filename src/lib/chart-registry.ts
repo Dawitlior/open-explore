@@ -250,7 +250,6 @@ export const CHART_REGISTRY: readonly ChartSpec[] = [
     unit: '$',
     explanationKey: 'feeDrag',
     tierAccess: 'advanced',
-    dualMode: true,
   },
   {
     id: 'lag1Autocorr',
