@@ -38,6 +38,7 @@ import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
 import { useVisibleTrades } from '@/lib/display-mode-format';
 import { useChartGuard } from '@/lib/dashboard-engine';
 const AnalyticsQuantLab = lazy(() => import('./AnalyticsQuantLab').then(m => ({ default: m.AnalyticsQuantLab })));
+import { AdvancedDeckCharts } from './AdvancedDeckCharts';
 
 interface AdvancedAnalyticsPageProps {
   T: TradingTheme;
