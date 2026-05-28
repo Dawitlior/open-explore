@@ -781,6 +781,15 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
         </Suspense>
       )}
 
+      {/* ═══ ADVANCED-TIER DECK (Phase 3) ═══ */}
+      <AdvancedDeckCharts
+        T={T}
+        trades={trades}
+        privacyMode={privacyMode}
+        onExplainClick={onExplainClick}
+        registryAllows={registryAllows}
+      />
+
       {/* ═══ KEY OBSERVATIONS ═══ */}
       <GlassCard T={T} glow={`${T.accent.cyan}18`}>
         <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('תצפיות מרכזיות','Key Observations')}</div>
