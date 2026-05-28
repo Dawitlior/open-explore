@@ -38,6 +38,7 @@ import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
 import { useVisibleTrades } from '@/lib/display-mode-format';
 import { useChartGuard } from '@/lib/dashboard-engine';
 const AnalyticsQuantLab = lazy(() => import('./AnalyticsQuantLab').then(m => ({ default: m.AnalyticsQuantLab })));
+import { AdvancedDeckCharts } from './AdvancedDeckCharts';
 
 interface AdvancedAnalyticsPageProps {
   T: TradingTheme;
@@ -62,7 +63,7 @@ const ENG_DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 const HEB_DOW_FULL = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 const ENG_DOW_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode, isAlpha, operatingMode = 'live', registryCharts }: AdvancedAnalyticsPageProps) => {
+const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode, isAlpha, operatingMode = 'live', registryCharts, onExplainClick }: AdvancedAnalyticsPageProps) => {
   // Phase 3 dev-only invariant — warns if a non-canonical chart is rendered here.
   useChartGuard('analytics');
   // Registry guard — permissive when prop absent (legacy callers).
@@ -779,6 +780,15 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
           <AnalyticsQuantLab T={T} trades={trades} privacyMode={privacyMode} />
         </Suspense>
       )}
+
+      {/* ═══ ADVANCED-TIER DECK (Phase 3) ═══ */}
+      <AdvancedDeckCharts
+        T={T}
+        trades={trades}
+        privacyMode={privacyMode}
+        onExplainClick={onExplainClick}
+        registryAllows={registryAllows}
+      />
 
       {/* ═══ KEY OBSERVATIONS ═══ */}
       <GlassCard T={T} glow={`${T.accent.cyan}18`}>
