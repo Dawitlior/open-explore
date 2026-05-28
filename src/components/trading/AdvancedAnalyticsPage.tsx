@@ -63,7 +63,7 @@ const ENG_DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 const HEB_DOW_FULL = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 const ENG_DOW_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode, isAlpha, operatingMode = 'live', registryCharts }: AdvancedAnalyticsPageProps) => {
+const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode, isAlpha, operatingMode = 'live', registryCharts, onExplainClick }: AdvancedAnalyticsPageProps) => {
   // Phase 3 dev-only invariant — warns if a non-canonical chart is rendered here.
   useChartGuard('analytics');
   // Registry guard — permissive when prop absent (legacy callers).
