@@ -13,6 +13,8 @@ import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
 import { useVisibleTrades } from '@/lib/display-mode-format';
 import { RProxyBanner } from './RProxyBanner';
 import { useChartGuard } from '@/lib/dashboard-engine';
+import { UltimateRiskDeck } from './UltimateDeckCharts';
+
 
 type OperatingMode = 'live' | 'review' | 'research' | 'beginner';
 
@@ -560,8 +562,18 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
         </>
       )}
 
+      {/* ═══ ULTIMATE-TIER RISK DECK (Phase 4) ═══ */}
+      <UltimateRiskDeck
+        T={T}
+        trades={trades}
+        privacyMode={false}
+        onExplainClick={onExplainClick}
+        registryAllows={registryAllows}
+      />
+
       {/* ═══ COOL OFF + WARNINGS ═══ */}
       <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'מצב והתראות' : 'STATUS & WARNINGS'} />
+
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
         <GlassCard T={T} style={{ flex: 1, minWidth: 240 }}>
           <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>{isRTL ? 'מצב צינון' : 'Cool-Off Status'}</div>

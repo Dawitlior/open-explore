@@ -256,8 +256,8 @@ export const CHART_REGISTRY: readonly ChartSpec[] = [
     title: { he: 'אוטוקורלציה Lag-1', en: 'Lag-1 Autocorrelation' },
     home: 'analytics',
     category: 'correlation',
-    unit: 'R',
-    explanationKey: 'rDistribution',
+    unit: 'ρ',
+    explanationKey: 'lag1Autocorr',
     tiers: ['alpha'],
     tierAccess: 'ultimate',
   },
@@ -267,10 +267,11 @@ export const CHART_REGISTRY: readonly ChartSpec[] = [
     home: 'analytics',
     category: 'timing',
     unit: 'h',
-    explanationKey: 'rDistribution',
+    explanationKey: 'interTradeInterval',
     tiers: ['alpha'],
     tierAccess: 'ultimate',
   },
+
 
   // ── RISK ─────────────────────────────────────────────────────────
   {
@@ -347,7 +348,7 @@ export const CHART_REGISTRY: readonly ChartSpec[] = [
     home: 'risk',
     category: 'sizing',
     unit: 'R/σ',
-    explanationKey: 'volatilityAdjusted',
+    explanationKey: 'capitalEfficiency',
     tiers: ['alpha'],
     tierAccess: 'ultimate',
   },
@@ -357,10 +358,11 @@ export const CHART_REGISTRY: readonly ChartSpec[] = [
     home: 'risk',
     category: 'drawdown',
     unit: 'x',
-    explanationKey: 'kellyOptimal',
+    explanationKey: 'cumulativeMAR',
     tiers: ['alpha'],
     tierAccess: 'ultimate',
   },
+
 
   // ── PSYCHOLOGY ───────────────────────────────────────────────────
   {
