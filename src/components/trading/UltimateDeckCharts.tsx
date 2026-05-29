@@ -63,7 +63,7 @@ export function UltimateAnalyticsDeck({ T, trades, onExplainClick, registryAllow
 
   // ── 1. Lag-1 Autocorrelation ────────────────────────────────
   const lag = useMemo(() => {
-    const rs = trades.map(getEffectiveR);
+    const rs = trades.map(tr => getEffectiveR(tr));
     const pairs: Array<{ prev: number; cur: number; idx: number }> = [];
     for (let i = 1; i < rs.length; i++) pairs.push({ prev: +rs[i - 1].toFixed(3), cur: +rs[i].toFixed(3), idx: i });
     if (pairs.length < 5) return { pairs, rho: 0 };
@@ -191,7 +191,7 @@ export function UltimateRiskDeck({ T, trades, privacyMode, onExplainClick, regis
 
   // ── 4. Capital Efficiency (rolling mean R / σ R, w=20) ────
   const capEff = useMemo(() => {
-    const rs = trades.map(getEffectiveR);
+    const rs = trades.map(tr => getEffectiveR(tr));
     const W = 20;
     return rs.map((_, i) => {
       const start = Math.max(0, i - W + 1);
