@@ -39,6 +39,8 @@ import { useVisibleTrades } from '@/lib/display-mode-format';
 import { useChartGuard } from '@/lib/dashboard-engine';
 const AnalyticsQuantLab = lazy(() => import('./AnalyticsQuantLab').then(m => ({ default: m.AnalyticsQuantLab })));
 import { AdvancedDeckCharts } from './AdvancedDeckCharts';
+import { UltimateAnalyticsDeck } from './UltimateDeckCharts';
+
 
 interface AdvancedAnalyticsPageProps {
   T: TradingTheme;
@@ -789,6 +791,15 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
         onExplainClick={onExplainClick}
         registryAllows={registryAllows}
       />
+
+      {/* ═══ ULTIMATE-TIER DECK (Phase 4) ═══ */}
+      <UltimateAnalyticsDeck
+        T={T}
+        trades={trades}
+        onExplainClick={onExplainClick}
+        registryAllows={registryAllows}
+      />
+
 
       {/* ═══ KEY OBSERVATIONS ═══ */}
       <GlassCard T={T} glow={`${T.accent.cyan}18`}>

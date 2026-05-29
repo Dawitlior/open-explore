@@ -13,6 +13,8 @@ import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
 import { useVisibleTrades } from '@/lib/display-mode-format';
 import { RProxyBanner } from './RProxyBanner';
 import { useChartGuard } from '@/lib/dashboard-engine';
+import { UltimateRiskDeck } from './UltimateDeckCharts';
+
 
 type OperatingMode = 'live' | 'review' | 'research' | 'beginner';
 
