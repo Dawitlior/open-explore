@@ -16,6 +16,7 @@ import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 import { LegalGate } from "@/components/LegalGate";
 import { EconomicAlertBanner } from "@/components/economic/EconomicAlertBanner";
+import { UpgradeModal } from "@/components/billing/UpgradeModal";
 // Side-effect import: registers every BrokerAdapter into BrokerRegistry at boot.
 import "@/lib/brokers";
 import { lazy, Suspense } from "react";
@@ -77,6 +78,7 @@ const App = () => (
             <LiquidSweep />
             <LegalGate />
             <EconomicAlertBanner />
+            <UpgradeModal />
             <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
