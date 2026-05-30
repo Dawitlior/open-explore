@@ -258,7 +258,6 @@ export const CHART_REGISTRY: readonly ChartSpec[] = [
     category: 'correlation',
     unit: 'ρ',
     explanationKey: 'lag1Autocorr',
-    tiers: ['alpha'],
     tierAccess: 'ultimate',
   },
   {
@@ -268,7 +267,6 @@ export const CHART_REGISTRY: readonly ChartSpec[] = [
     category: 'timing',
     unit: 'h',
     explanationKey: 'interTradeInterval',
-    tiers: ['alpha'],
     tierAccess: 'ultimate',
   },
 
@@ -321,7 +319,6 @@ export const CHART_REGISTRY: readonly ChartSpec[] = [
     category: 'drawdown',
     unit: '%',
     explanationKey: 'drawdownStructure',
-    tiers: ['alpha'],
     tierAccess: 'ultimate',
   },
   {
@@ -339,7 +336,6 @@ export const CHART_REGISTRY: readonly ChartSpec[] = [
     category: 'sizing',
     unit: '%',
     explanationKey: 'kellyOptimal',
-    tiers: ['alpha'],
     tierAccess: 'ultimate',
   },
   {
@@ -349,7 +345,6 @@ export const CHART_REGISTRY: readonly ChartSpec[] = [
     category: 'sizing',
     unit: 'R/σ',
     explanationKey: 'capitalEfficiency',
-    tiers: ['alpha'],
     tierAccess: 'ultimate',
   },
   {
@@ -359,7 +354,6 @@ export const CHART_REGISTRY: readonly ChartSpec[] = [
     category: 'drawdown',
     unit: 'x',
     explanationKey: 'cumulativeMAR',
-    tiers: ['alpha'],
     tierAccess: 'ultimate',
   },
 
