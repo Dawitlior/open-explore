@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { X, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Search } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Calendar as CalendarIcon, Search } from 'lucide-react';
 import { useEconomicEvents } from '@/hooks/use-economic-events';
 import { useLang } from '@/hooks/use-lang';
 import { formatISTTime, computeSurprise, surpriseTone } from '@/lib/economic';
