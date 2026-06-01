@@ -1,13 +1,11 @@
 /**
  * useRegistryCharts — registry-driven chart filtering for a given page.
  *
- * Returns ONLY the charts that:
- *   (a) are canonically homed (or mirrored) on this page, AND
- *   (b) are allowed for the current experience tier (beginner/standard/alpha).
+ * Returns the charts that are canonically homed (or mirrored) on this page.
  *
- * Charts gated by SaaS `tierAccess` are NOT filtered out here — the page
- * wraps them in <TierGate> so locked tiers see an upsell card instead of
- * the chart silently disappearing. This preserves discoverability.
+ * SaaS `tierAccess` is handled by <TierGate>; old Beginner/Live/Review/
+ * Research filtering is intentionally removed so charts never disappear
+ * behind the legacy mode matrix.
  *
  *   const charts = useRegistryCharts('analytics');
  *   {charts.map(c => (
@@ -18,12 +16,10 @@
  */
 import { useMemo } from 'react';
 import { chartsFor, type ChartHome, type ChartSpec } from '@/lib/chart-registry';
-import { useWidgetVisibility } from '@/hooks/use-widget-visibility';
 
 export function useRegistryCharts(page: ChartHome): ChartSpec[] {
-  const { exp } = useWidgetVisibility();
   return useMemo(
-    () => chartsFor(page).filter(c => !c.tiers || c.tiers.includes(exp)),
-    [page, exp],
+    () => chartsFor(page),
+    [page],
   );
 }
