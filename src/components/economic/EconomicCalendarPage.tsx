@@ -118,7 +118,7 @@ const IMPACT_FILTERS: Array<{ key: 'all' | EconomicImpact; copyKey: 'all' | 'hig
 
 const COMMON_CURRENCIES = ['USD', 'EUR', 'GBP', 'JPY', 'CNY', 'CAD', 'AUD', 'CHF'];
 
-export function EconomicCalendarPage({ onClose }: Props) {
+export function EconomicCalendarPage({ onClose, T }: Props) {
   const { lang } = useLang();
   const isRTL = lang === 'he';
   const t = COPY[lang];
