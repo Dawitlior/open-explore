@@ -6,6 +6,8 @@
 const dimensionCSS = `
 @keyframes orcaReturnShimmer { 0% { transform: translateX(-100%); } 50% { transform: translateX(100%); } 100% { transform: translateX(100%); } }
 @keyframes orcaDimFadeIn { from { opacity: 0; transform: scale(0.985); filter: blur(6px); } to { opacity: 1; transform: scale(1); filter: blur(0); } }
+.orca-dim-shell { position: fixed; inset: 0; width: 100vw; height: 100vh; overflow: hidden; z-index: 100; }
+@supports (height: 100dvh) { .orca-dim-shell { height: 100dvh; } }
 .orca-dim-layer { width: 100%; height: 100%; animation: orcaDimFadeIn 360ms cubic-bezier(0.16,1,0.3,1) both; will-change: opacity, transform, filter; }
 @media (prefers-reduced-motion: reduce) { .orca-dim-layer { animation: none; } }
 `;
@@ -26,8 +28,10 @@ export const DimensionController = ({ orcaUI, journalUI, backtestUI, activeDimen
   return (
     <>
       <style>{dimensionCSS}</style>
-      <div key={activeDimension} className="orca-dim-layer">
-        {child}
+      <div className="orca-dim-shell">
+        <div key={activeDimension} className="orca-dim-layer">
+          {child}
+        </div>
       </div>
     </>
   );
