@@ -62,9 +62,9 @@ import { useRiskLimits } from '@/hooks/use-risk-limits';
 import { scopedStorage } from '@/lib/scoped-storage';
 import { useAuth } from '@/hooks/use-auth';
 import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
-import { useWidgetVisibility } from '@/hooks/use-widget-visibility';
 import { useRegistryCharts } from '@/hooks/use-registry-charts';
 import { useExpectancyMode } from '@/lib/dashboard-engine';
+import { useEntitlement } from '@/hooks/use-entitlement';
 
 // ─── Facebook-style red notification badge with "1" ───
 const ReminderBadge = () => (
@@ -108,17 +108,17 @@ const Index = () => {
   const baseTheme = getTheme(settings.theme);
   const t = i18n[settings.lang];
   const isRTL = settings.isRTL;
-  const isAlpha = settings.isAlpha;
-  const opMode = settings.operatingMode;
-  // Dashboard matrix — single source of truth for widget visibility.
-  // Stage 2 wiring: live cell widgets consume `show(id)` directly.
-  const widgetVis = useWidgetVisibility();
+  const { tier: appTier, allows: tierAllows } = useEntitlement();
+  const isAdvancedTier = tierAllows('advanced');
+  const isUltimateTier = tierAllows('ultimate');
+  const isAlpha = isUltimateTier;
+  const opMode = 'review' as 'live' | 'review' | 'research' | 'beginner';
   // Phase 2 — registry-driven chart lists per page (tier-filtered).
   const analyticsCharts = useRegistryCharts('analytics');
   const riskCharts = useRegistryCharts('risk');
   const psychologyCharts = useRegistryCharts('psychology');
   // All three registry chart lists are now consumed by their respective pages.
-  const { prefs: uiPrefs, setPrefs: setUIPrefs, toggleHiddenMode, reset: resetUIPrefs } = useUIPrefs();
+  const { prefs: uiPrefs } = useUIPrefs();
   const T = useMemo(
     () => (uiPrefs.customAccentEnabled ? tintTheme(baseTheme, uiPrefs.customAccent) : baseTheme),
     [baseTheme, uiPrefs.customAccentEnabled, uiPrefs.customAccent],
@@ -447,15 +447,10 @@ const Index = () => {
       id: `nav-${p}`, label: `Go to ${p.charAt(0).toUpperCase() + p.slice(1)}`, icon: '📄', category: isRTL ? 'ניווט' : 'Navigation', action: () => setPage(p)
     })),
     { id: 'feature-info', label: isRTL ? 'אודות המערכת' : 'About Orca System', icon: 'ℹ️', category: isRTL ? 'מערכת' : 'System', action: () => setShowFeatureModal(true) },
-    { id: 'beginner', label: isRTL ? 'מצב מתחיל' : 'Switch to Beginner Mode', icon: '🎓', category: isRTL ? 'מצבים' : 'Modes', action: () => settings.setOperatingMode('beginner') },
-    { id: 'live', label: isRTL ? 'מצב חי' : 'Switch to Live Mode', icon: '🔴', category: isRTL ? 'מצבים' : 'Modes', action: () => settings.setOperatingMode('live') },
-    { id: 'review', label: isRTL ? 'מצב סקירה' : 'Switch to Review Mode', icon: '🔵', category: isRTL ? 'מצבים' : 'Modes', action: () => settings.setOperatingMode('review') },
-    { id: 'research', label: isRTL ? 'מצב מחקר' : 'Switch to Research Mode', icon: '🟣', category: isRTL ? 'מצבים' : 'Modes', action: () => settings.setOperatingMode('research') },
-    { id: 'alpha', label: isRTL ? 'הפעל Alpha' : 'Toggle Alpha Mode', icon: '⚡', category: isRTL ? 'מצבים' : 'Modes', action: () => settings.setSystemMode(isAlpha ? 'standard' : 'alpha') },
     { id: 'journal-sanctuary', label: isRTL ? 'יומן מסע לסוחר' : 'Trader Journey', icon: '🏛️', category: isRTL ? 'ממדים' : 'Dimensions', action: () => setActiveDimension('journal') },
     { id: 'backtest-journal', label: isRTL ? 'יומן באק-טסט' : 'Backtest Journal', icon: '📊', category: isRTL ? 'ממדים' : 'Dimensions', action: () => setActiveDimension('backtest') },
     { id: 'economic-radar', label: isRTL ? 'מכ״ם כלכלי' : 'Economic Radar', icon: '📡', category: isRTL ? 'כלים' : 'Tools', action: () => setShowEconomicCalendar(true) },
-  ], [isRTL, handleExport, handleImport, handleGenerateInsights, isAlpha, settings]);
+  ], [isRTL, handleExport, handleImport, handleGenerateInsights, settings]);
 
   // ─── Weekly Review reminder badge (Friday or 1st of month) ───
   const [reviewReminderTick, setReviewReminderTick] = useState(0);
@@ -666,7 +661,7 @@ const Index = () => {
             </div>
           </GlassCard>
           {/* Risk Exposure Meter — matrix: live_risk_meter */}
-          {widgetVis.show('live_risk_meter') && (
+          {true && (
           <GlassCard T={T} style={{ flex: 1, minWidth: isMobile ? 0 : 200, width: isMobile ? '100%' : undefined, textAlign: 'center' }}>
             <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>{isRTL ? 'חשיפת סיכון' : 'Risk Exposure'}</div>
             <svg width="100" height="55" viewBox="0 0 200 110" style={{ margin: '0 auto', display: 'block' }}>
@@ -680,7 +675,7 @@ const Index = () => {
         </div>
         {/* Streak Pressure + Emotional Deviation */}
         <div className={isMobile ? 'orca-snap-h' : ''} style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: isMobile ? 'nowrap' : 'wrap' }}>
-          {widgetVis.show('kpi_streak') && (
+          {true && (
           <GlassCard T={T} style={{ flex: 1, minWidth: isMobile ? 0 : 200, width: isMobile ? '100%' : undefined }}>
             <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{isRTL ? 'לחץ רצף' : 'Streak Pressure'}</div>
             <div style={{ padding: 14, borderRadius: T.radius.md, textAlign: 'center', background: stats.maxConsecLosses >= 3 ? `${T.accent.red}10` : stats.currentStreak >= 3 && stats.streakType === 'Win' ? `${T.accent.green}10` : `${T.accent.blue}08`, border: `1px solid ${stats.maxConsecLosses >= 3 ? T.accent.red : T.accent.green}20` }}>
@@ -714,7 +709,7 @@ const Index = () => {
           </GlassCard>
         </div>
         {/* Position vs Plan — matrix: live_open_positions */}
-        {widgetVis.show('live_open_positions') && (
+        {isAdvancedTier && (
         <GlassCard T={T} style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>{isRTL ? 'סיכון מול תוכנית' : 'Position Risk vs Plan'}</div>
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
@@ -730,7 +725,7 @@ const Index = () => {
           </div>
         </GlassCard>
         )}
-        {widgetVis.show('research_volatility_clus') && <>
+        {isUltimateTier && <>
           <ScoreGauge T={T} score={stats.orcaScore} label={isRTL ? 'ציון משמעת חי' : 'Live Discipline Score'} color={T.accent.cyan} />
         </>}
       </>
@@ -1742,7 +1737,7 @@ const Index = () => {
               </div>
               <button onClick={() => setSbOpen(false)} style={{ background: 'none', border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.sm, color: T.text.muted, cursor: 'pointer', padding: '4px 8px', fontSize: 16 }}>✕</button>
             </div>
-            <ModeSwitch T={T} isRTL={isRTL} operatingMode={settings.operatingMode} systemMode={settings.systemMode} onOperatingModeChange={settings.setOperatingMode} onSystemModeChange={settings.setSystemMode} hiddenModes={uiPrefs.hiddenOperatingModes} hideDepthSwitch={uiPrefs.hideDepthSwitch} />
+            <ModeSwitch T={T} isRTL={isRTL} />
             {/* Nav items */}
             {nav.map(item => {
               const isWeekly = item.id === 'weekly-review';
@@ -1798,7 +1793,7 @@ const Index = () => {
           {sbOpen && <button onClick={() => setSbOpen(false)} style={{ marginInlineStart: 'auto', background: 'none', border: 'none', color: T.text.muted, cursor: 'pointer', fontSize: 14, padding: 4, lineHeight: 1, transition: 'color 0.2s' }}>‹</button>}
         </div>
         {!sbOpen && <button onClick={() => setSbOpen(true)} style={{ background: 'none', border: 'none', color: T.text.muted, cursor: 'pointer', fontSize: 14, padding: '6px 0', lineHeight: 1, transition: 'color 0.2s' }}>›</button>}
-        {sbOpen && <ModeSwitch T={T} isRTL={isRTL} operatingMode={settings.operatingMode} systemMode={settings.systemMode} onOperatingModeChange={settings.setOperatingMode} onSystemModeChange={settings.setSystemMode} hiddenModes={uiPrefs.hiddenOperatingModes} hideDepthSwitch={uiPrefs.hideDepthSwitch} />}
+        {sbOpen && <ModeSwitch T={T} isRTL={isRTL} />}
         <nav style={{ flex: 1, padding: '0 6px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
           {nav.map(item => {
             const isWeekly = item.id === 'weekly-review';
@@ -1887,8 +1882,7 @@ const Index = () => {
               </button>
             )}
             <h1 style={{ fontSize: isMobile ? 13 : 17, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{nav.find(n => n.id === page)?.label}</h1>
-            {!isMobile && !uiPrefs.hideHeaderBadges && <TradingBadge color={modeColors[opMode]}>{opMode === 'beginner' ? (isRTL ? '🎓 מתחיל' : '🎓 BEGINNER') : opMode === 'live' ? (isRTL ? '🔴 חי' : '🔴 LIVE') : opMode === 'review' ? (isRTL ? '🔵 סקירה' : '🔵 REVIEW') : (isRTL ? '🟣 מחקר' : '🟣 RESEARCH')}</TradingBadge>}
-            {!isMobile && isAlpha && !uiPrefs.hideHeaderBadges && <TradingBadge color={T.accent.purple}>⚡ ALPHA</TradingBadge>}
+            {!isMobile && !uiPrefs.hideHeaderBadges && <TradingBadge color={appTier === 'ultimate' ? T.accent.purple : appTier === 'advanced' ? T.accent.cyan : T.accent.blue}>{appTier.toUpperCase()}</TradingBadge>}
             {!isMobile && settings.privacyMode && <TradingBadge color={T.accent.orange}>🔒</TradingBadge>}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 10, flexWrap: 'nowrap', flexShrink: 0 }}>

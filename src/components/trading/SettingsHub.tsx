@@ -10,7 +10,7 @@ import { ExchangesPanel } from './ExchangesPanel';
 import { playMorningLock } from '@/lib/apex-sounds';
 import type { TradingTheme, CustomTheme, BaseMood } from '@/lib/trading-theme';
 import { deriveFullPalette, deriveFromCustomTheme, CUSTOM_THEME_DEFAULT } from '@/lib/trading-theme';
-import type { ThemeId, OperatingMode, Lang } from '@/hooks/use-settings';
+import type { ThemeId, Lang } from '@/hooks/use-settings';
 import { useDashboardConfig, WIDGET_LABELS, evalCustomKPI, type CustomKPI } from '@/hooks/use-dashboard-config';
 import type { TradingStats } from '@/lib/trading-analytics';
 import { useRiskLimits } from '@/hooks/use-risk-limits';
@@ -180,7 +180,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
     { id: 'theme-studio', icon: Brush, label: { he: 'אולפן צבע', en: 'Theme Studio' }, group: { he: 'אישי', en: 'Personal' }, desc: { he: 'בחר צבע מבטא משלך והתאם את כל אורקה אליו', en: 'Pick your own accent and re-tint all of Orca live' } },
     { id: 'dashboard', icon: LayoutDashboard, label: { he: 'סידור דאשבורד', en: 'Dashboard Layout' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'גרור, הסתר וסדר ווידג׳טים', en: 'Drag, hide and arrange widgets' } },
     { id: 'kpis', icon: Calculator, label: { he: 'מדדים מותאמים', en: 'Custom KPIs' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'בנה נוסחאות מתמטיות משלך', en: 'Build your own math formulas' } },
-    { id: 'interface', icon: SlidersHorizontal, label: { he: 'ממשק, צפיפות ותנועה', en: 'Interface, Density & Motion' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'מצבי תפעול, צפיפות, גודל גופן ואנימציות', en: 'Operating modes, density, font scale, motion' } },
+    { id: 'interface', icon: SlidersHorizontal, label: { he: 'ממשק, צפיפות ותנועה', en: 'Interface, Density & Motion' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'צפיפות, גודל גופן, אנימציות ואלמנטים', en: 'Density, font scale, motion and elements' } },
     { id: 'sounds', icon: Volume2, label: { he: 'צלילים והתראות', en: 'Sounds & Alerts' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'הפעלה, ווליום ותצוגת אפקטים אקוסטיים', en: 'Enable, volume and acoustic feedback preview' } },
     { id: 'risk', icon: Shield, label: { he: 'מגבלות סיכון', en: 'Risk Limits' }, group: { he: 'מסחר', en: 'Trading' }, desc: { he: 'מערכת ה־R המותרת ביום/שבוע/חודש', en: 'Allowed R-budget per day/week/month' } },
     { id: 'trading', icon: Target, label: { he: 'ברירות מחדל למסחר', en: 'Trading Defaults' }, group: { he: 'מסחר', en: 'Trading' }, desc: { he: 'אחוז סיכון ברירת מחדל ויעד R לעסקה חדשה', en: 'Default risk percent and R target for new trades' } },
@@ -1085,12 +1085,6 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
             {/* ============ INTERFACE ============ */}
             {tab === 'interface' && (() => {
               const p = ui.prefs;
-              const modes: { id: OperatingMode; label: string }[] = [
-                { id: 'beginner', label: t('🎓 מתחיל', '🎓 Beginner') },
-                { id: 'live', label: t('🔴 חי', '🔴 Live') },
-                { id: 'review', label: t('🔵 סקירה', '🔵 Review') },
-                { id: 'research', label: t('🟣 מחקר', '🟣 Research') },
-              ];
               const Toggle = ({ on, onClick, label, hint }: { on: boolean; onClick: () => void; label: string; hint?: string }) => (
                 <button onClick={onClick} style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
@@ -1110,34 +1104,9 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
               return (
                 <div>
                   <div style={card}>
-                    <h3 style={sectionTitle}><LayoutDashboard size={14} /> {t('מצבי תפעול בנאב-בר', 'Operating modes in nav')}</h3>
-                    <p style={sectionHint}>{t('בחר אילו מצבי תפעול יוצגו במעבר המהיר.', 'Choose which operating modes appear in the quick switcher.')}</p>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6 }}>
-                      {modes.map(m => {
-                        const hidden = p.hiddenOperatingModes.includes(m.id);
-                        return (
-                          <button key={m.id} onClick={() => ui.toggleHiddenMode(m.id)} style={{
-                            padding: '10px 12px', borderRadius: T.radius.md,
-                            background: hidden ? T.bg.tertiary : `${T.accent.cyan}10`,
-                            border: `1px solid ${hidden ? T.border.subtle : T.accent.cyan}`,
-                            color: hidden ? T.text.muted : T.accent.cyan,
-                            cursor: 'pointer', fontSize: 12, fontWeight: 700,
-                            textAlign: isRTL ? 'right' : 'left' as const, fontFamily: sans,
-                            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
-                          }}>
-                            <span>{m.label}</span>
-                            {hidden ? <EyeOff size={13} /> : <Eye size={13} />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div style={card}>
                     <h3 style={sectionTitle}><SlidersHorizontal size={14} /> {t('הסתרת אלמנטים', 'Hide UI elements')}</h3>
                     <p style={sectionHint}>{t('צמצום הממשק לפעולות הליבה שלך.', 'Reduce the interface to your core actions.')}</p>
                     <Toggle on={p.hideQuickActions} onClick={() => ui.setPrefs({ hideQuickActions: !p.hideQuickActions })} label={t('הסתר Quick Actions', 'Hide Quick Actions')} />
-                    <Toggle on={p.hideDepthSwitch} onClick={() => ui.setPrefs({ hideDepthSwitch: !p.hideDepthSwitch })} label={t('הסתר מתג Standard/Alpha', 'Hide Standard/Alpha switch')} />
                   </div>
 
                   <div style={card}>

@@ -14,6 +14,7 @@ import { useVisibleTrades } from '@/lib/display-mode-format';
 import { RProxyBanner } from './RProxyBanner';
 import { useChartGuard } from '@/lib/dashboard-engine';
 import { UltimateRiskDeck } from './UltimateDeckCharts';
+import { useEntitlement } from '@/hooks/use-entitlement';
 
 
 type OperatingMode = 'live' | 'review' | 'research' | 'beginner';
@@ -86,6 +87,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
   useChartGuard('risk');
   const registryAllows = (id: string) => !registryCharts || registryCharts.some(c => c.id === id);
   const { visibleTrades: trades, isMoney, rEligibleCount, totalCount } = useVisibleTrades(_allTrades);
+  const { tier: appTier, allows: tierAllows } = useEntitlement();
   const tt = { background: T.bg.card, border: `1px solid ${T.border.medium}`, borderRadius: 10, color: T.text.primary, fontSize: 12, boxShadow: T.shadow.elevated, padding: '8px 12px' };
   const LIMITS_USED = customLimits || DEFAULT_RISK_LIMITS;
 
@@ -111,25 +113,28 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
     });
   }, [trades]);
 
-  // ─── Composition matrix: Standard/Alpha × Beginner/Live/Review/Research ───
-  const isBeginner = operatingMode === 'beginner';
-  const isLive     = operatingMode === 'live';
-  const isReview   = operatingMode === 'review';
-  const isResearch = operatingMode === 'research';
+  // SaaS tier composition: Standard / Advanced / Ultimate.
+  const isAdvancedPlan = tierAllows('advanced');
+  const isUltimatePlan = tierAllows('ultimate');
+  const tierMeta = appTier === 'ultimate'
+    ? { he: 'אולטימייט', en: 'Ultimate', sub: { he: 'מנוע סיכון כמותי מלא', en: 'Full quantitative risk engine' }, color: T.accent.purple }
+    : appTier === 'advanced'
+      ? { he: 'מתקדם', en: 'Advanced', sub: { he: 'דיאגנוסטיקה מקצועית ואנומליות סיכון', en: 'Professional diagnostics and risk anomalies' }, color: T.accent.cyan }
+      : { he: 'סטנדרט', en: 'Standard', sub: { he: 'מגבלות סיכון, Drawdown והקצאה בסיסית', en: 'Risk limits, drawdown, and baseline allocation' }, color: T.accent.blue };
 
-  // What each mode shows on the Risk page
-  const showLimitBars      = !isBeginner || isAlpha; // Beginner Standard: hide live limit bars
+  // What each SaaS tier shows on the Risk page
+  const showLimitBars      = true;
   const showKpiStrip       = true;
-  const showGaugesRow      = !isBeginner;
-  const showAnomalies      = !isBeginner && (isAlpha || isReview); // Standard+Live hides anomalies
-  const showRiskTimeline   = !isBeginner && (isAlpha || isReview || isResearch);
-  const showSetupTable     = !isBeginner;
+  const showGaugesRow      = true;
+  const showAnomalies      = isAdvancedPlan;
+  const showRiskTimeline   = isAdvancedPlan;
+  const showSetupTable     = true;
   const showAllocAndDD     = true; // everyone gets DD; beginner only DD
-  const showAllocChart     = !isBeginner;
-  const showAlphaEvolution = isAlpha && (isResearch || isReview || isLive);
+  const showAllocChart     = true;
+  const showAlphaEvolution = isUltimatePlan;
   const showStatusWarnings = true;
-  const showExplanationLog = isAlpha && (isReview || isResearch);
-  const showResearchDeepRisk = isAlpha && isResearch;
+  const showExplanationLog = isUltimatePlan;
+  const showResearchDeepRisk = isUltimatePlan;
 
   // Risk behavior over time
   const riskTimeline = useMemo(() => {
@@ -262,17 +267,6 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
   const healthColor = riskHealth >= 75 ? T.accent.green : riskHealth >= 50 ? T.accent.orange : T.accent.red;
   const healthLabel = riskHealth >= 75 ? (isRTL ? 'בריא' : 'HEALTHY') : riskHealth >= 50 ? (isRTL ? 'מתון' : 'MODERATE') : (isRTL ? 'קריטי' : 'CRITICAL');
 
-  // Mode banner content
-  const modeMeta = (() => {
-    const map: Record<OperatingMode, { he: string; en: string; sub: { he: string; en: string }; color: string }> = {
-      beginner: { he: 'מתחיל', en: 'Beginner', sub: { he: 'תצוגה מפושטת — מגבלות וסיכון בסיסי בלבד', en: 'Simplified — limits & basic risk only' }, color: T.accent.cyan },
-      live:     { he: 'חי',     en: 'Live',     sub: { he: 'מעקב חי אחרי מגבלות + התראות סטייה',     en: 'Live limit tracking + drift alerts' },    color: T.accent.green },
-      review:   { he: 'סקירה',  en: 'Review',   sub: { he: 'ניתוח רטרוספקטיבי + חיפוש אנומליות',     en: 'Retrospective + anomaly hunting' },        color: T.accent.blue },
-      research: { he: 'מחקר',   en: 'Research', sub: { he: 'שכבות מחקר עומק וטיימליין סיכון מלא',    en: 'Deep research & full risk timeline' },     color: T.accent.purple },
-    };
-    return map[operatingMode];
-  })();
-
   return (
     <>
       {!isMoney && <RProxyBanner T={T} isRTL={isRTL} rEligibleCount={rEligibleCount} totalCount={totalCount} />}
@@ -315,7 +309,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
           </div>
         </div>
 
-        {/* Live Risk Limit Bars (hidden in Beginner-Standard) */}
+        {/* Risk Limit Bars */}
         {showLimitBars && (
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', position: 'relative' }}>
             <LimitBar T={T} isRTL={isRTL} label={isRTL ? 'יומי' : 'Daily'} current={limitStatus.dailyNegR} limit={LIMITS_USED.day} />
@@ -325,19 +319,19 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
         )}
       </div>
 
-      {/* ═══ MODE BANNER — shows current operating context ═══ */}
+      {/* ═══ TIER BANNER — shows current SaaS tier ═══ */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 12,
         padding: '10px 14px', marginTop: 8, marginBottom: 4,
-        background: `linear-gradient(${isRTL ? '270deg' : '90deg'}, ${modeMeta.color}14, transparent)`,
-        border: `1px solid ${modeMeta.color}30`,
-        borderInlineStart: `3px solid ${modeMeta.color}`,
+        background: `linear-gradient(${isRTL ? '270deg' : '90deg'}, ${tierMeta.color}14, transparent)`,
+        border: `1px solid ${tierMeta.color}30`,
+        borderInlineStart: `3px solid ${tierMeta.color}`,
         borderRadius: 10,
       }}>
-        <div style={{ fontSize: 9, padding: '3px 8px', background: `${modeMeta.color}25`, color: modeMeta.color, borderRadius: 4, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.16em', fontWeight: 700 }}>
-          {(isAlpha ? (isRTL ? 'אלפא · ' : 'ALPHA · ') : (isRTL ? 'סטנדרט · ' : 'STANDARD · ')) + (isRTL ? modeMeta.he : modeMeta.en).toUpperCase()}
+        <div style={{ fontSize: 9, padding: '3px 8px', background: `${tierMeta.color}25`, color: tierMeta.color, borderRadius: 4, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.16em', fontWeight: 700 }}>
+          {(isRTL ? tierMeta.he : tierMeta.en).toUpperCase()}
         </div>
-        <div style={{ fontSize: 11, color: T.text.secondary, flex: 1 }}>{isRTL ? modeMeta.sub.he : modeMeta.sub.en}</div>
+        <div style={{ fontSize: 11, color: T.text.secondary, flex: 1 }}>{isRTL ? tierMeta.sub.he : tierMeta.sub.en}</div>
       </div>
 
       {/* ═══════════════════════════════════════════════════════════
@@ -366,7 +360,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
       </div>
 
       {/* ═══════════════════════════════════════════════════════════
-          GAUGES & GUARDRAILS — hidden in Beginner
+          GAUGES & GUARDRAILS
           ═══════════════════════════════════════════════════════════ */}
       {showGaugesRow && (<>
       <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'מדים ומגבלות' : 'GAUGES & GUARDRAILS'} />
@@ -431,7 +425,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
         </>
       )}
 
-      {/* ═══ RISK BEHAVIOR TIMELINE — Review/Research/Alpha only ═══ */}
+      {/* ═══ RISK BEHAVIOR TIMELINE — Advanced+ ═══ */}
       {showRiskTimeline && (registryAllows('riskEvolution') || registryAllows('riskChangePct')) && (<>
       <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'התפתחות סיכון' : 'RISK EVOLUTION'} />
       <div style={{ display: 'flex', gap: 12, marginBottom: 4, flexWrap: 'wrap' }}>
@@ -474,7 +468,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
       </div>
       </>)}
 
-      {/* ═══ SETUP RISK COMPARISON TABLE — hidden in Beginner ═══ */}
+      {/* ═══ SETUP RISK COMPARISON TABLE ═══ */}
       {showSetupTable && (<>
       <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'השוואת סטאפים' : 'SETUP COMPARISON'} />
       <GlassCard T={T} style={{ marginBottom: 4, padding: 0, overflow: 'hidden' }}>
@@ -507,8 +501,8 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
       </GlassCard>
       </>)}
 
-      {/* ═══ RISK ALLOCATION + DRAWDOWN — Beginner sees DD only ═══ */}
-      <SectionHeader T={T} isRTL={isRTL} label={isBeginner ? (isRTL ? 'נסיגה' : 'DRAWDOWN') : (isRTL ? 'הקצאה ונסיגה' : 'ALLOCATION & DRAWDOWN')} />
+      {/* ═══ RISK ALLOCATION + DRAWDOWN ═══ */}
+      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'הקצאה ונסיגה' : 'ALLOCATION & DRAWDOWN'} />
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 4 }}>
         {showAllocChart && registryAllows('riskAllocation') && (
         <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'הקצאת סיכון' : 'Risk Allocation'} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ flex: 1, minWidth: 280 }}>
@@ -541,10 +535,10 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
         </ChartWrapper>}
       </div>
 
-      {/* ═══ RISK EVOLUTION CHART (ALPHA, Live/Review/Research) ═══ */}
+      {/* ═══ RISK EVOLUTION CHART (Ultimate) ═══ */}
       {showAlphaEvolution && registryAllows('capitalEfficiency') && (
         <>
-          <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'אבולוציה (ALPHA)' : 'EVOLUTION (ALPHA)'} />
+          <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'אבולוציה (ULTIMATE)' : 'EVOLUTION (ULTIMATE)'} />
           <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'אבולוציית סיכון מלאה' : 'Full Risk Evolution'} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ marginBottom: 4 }}>
             <LazyChart height={180}>
               <ResponsiveContainer width="100%" height={180}>

@@ -7,6 +7,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
+import { ENFORCE_TIER_GATES } from '@/lib/billing-flags';
 
 export type AppTier = 'standard' | 'advanced' | 'ultimate';
 
@@ -23,15 +24,35 @@ export interface EntitlementState {
   allows: (required: AppTier) => boolean;
 }
 
+const PREVIEW_TIER_KEY = 'orca:tier-preview';
+
+function readPreviewTier(): AppTier | null {
+  if (typeof window === 'undefined') return null;
+  const value = window.localStorage.getItem(PREVIEW_TIER_KEY);
+  return value === 'standard' || value === 'advanced' || value === 'ultimate' ? value : null;
+}
+
 export function useEntitlement(): EntitlementState {
   const { user } = useAuth();
-  const [tier, setTier] = useState<AppTier>('standard');
+  const [entitlementTier, setEntitlementTier] = useState<AppTier>('standard');
+  const [previewTier, setPreviewTier] = useState<AppTier | null>(() => readPreviewTier());
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (ENFORCE_TIER_GATES || typeof window === 'undefined') return;
+    const onPreviewChange = () => setPreviewTier(readPreviewTier());
+    window.addEventListener('orca:tier-preview-changed', onPreviewChange);
+    window.addEventListener('storage', onPreviewChange);
+    return () => {
+      window.removeEventListener('orca:tier-preview-changed', onPreviewChange);
+      window.removeEventListener('storage', onPreviewChange);
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
     if (!user?.id) {
-      setTier('standard');
+      setEntitlementTier('standard');
       setLoading(false);
       return;
     }
@@ -40,11 +61,13 @@ export function useEntitlement(): EntitlementState {
       .rpc('current_entitlement', { p_user: user.id })
       .then(({ data, error }) => {
         if (cancelled) return;
-        if (!error && data) setTier(data as AppTier);
+        if (!error && data) setEntitlementTier(data as AppTier);
         setLoading(false);
       });
     return () => { cancelled = true; };
   }, [user?.id]);
+
+  const tier = !ENFORCE_TIER_GATES && previewTier ? previewTier : entitlementTier;
 
   return {
     tier,

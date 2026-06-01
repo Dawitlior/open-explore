@@ -13,6 +13,7 @@ import { PsychologyLab } from './PsychologyLab';
 import { useVisibleTrades } from '@/lib/display-mode-format';
 import { RProxyBanner } from './RProxyBanner';
 import { useChartGuard } from '@/lib/dashboard-engine';
+import { useEntitlement } from '@/hooks/use-entitlement';
 
 type OperatingMode = 'live' | 'review' | 'research' | 'beginner';
 
@@ -48,6 +49,7 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
   useChartGuard('psychology');
   const registryAllows = (id: string) => !registryCharts || registryCharts.some(c => c.id === id);
   const { visibleTrades: trades, isMoney, rEligibleCount, totalCount } = useVisibleTrades(_allTrades);
+  const { tier: appTier, allows: tierAllows } = useEntitlement();
   const [diagnosisOpen, setDiagnosisOpen] = useState(false);
   const [diagLoading, setDiagLoading] = useState(false);
   const MIN_DIAG_TRADES = 8;
@@ -57,32 +59,24 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
     setDiagLoading(true);
     setTimeout(() => { setDiagLoading(false); setDiagnosisOpen(true); }, 1500);
   };
-  // ─── Composition matrix: Standard/Alpha × Beginner/Live/Review/Research ───
-  const isBeginner = operatingMode === 'beginner';
-  const isLive     = operatingMode === 'live';
-  const isReview   = operatingMode === 'review';
-  const isResearch = operatingMode === 'research';
+  // SaaS tier composition: Standard / Advanced / Ultimate.
+  const isAdvancedPlan = tierAllows('advanced');
+  const isUltimatePlan = tierAllows('ultimate');
+  const tierMeta = appTier === 'ultimate'
+    ? { he: 'אולטימייט', en: 'Ultimate', sub: { he: 'מנוע פסיכולוגיה כמותי מלא', en: 'Full quantitative psychology engine' }, color: T.accent.purple }
+    : appTier === 'advanced'
+      ? { he: 'מתקדם', en: 'Advanced', sub: { he: 'דפוסי התנהגות, Tilt ולחץ לאחר הפסד', en: 'Behavior patterns, tilt, and post-loss pressure' }, color: T.accent.cyan }
+      : { he: 'סטנדרט', en: 'Standard', sub: { he: 'אותות פסיכולוגיים בסיסיים ומשמעת', en: 'Baseline psychology and discipline signals' }, color: T.accent.blue };
 
-  // What sections each mode shows
-  const showRadar          = isAlpha || isReview || isResearch;
-  const showHeatmap        = isAlpha || isResearch;
+  // What sections each SaaS tier shows
+  const showRadar          = isAdvancedPlan;
+  const showHeatmap        = isUltimatePlan;
   const showSignals        = true; // everyone sees behavioral signals (truncated for beginner)
-  const maxSignals         = isBeginner ? 3 : isAlpha ? 99 : 6;
-  const showPostLoss       = !isBeginner && (isAlpha || isReview);
-  const showDisciplineTL   = !isBeginner && (isAlpha || isReview || isResearch);
-  const showLossPressure   = isAlpha || isReview || isResearch;
-  const showAlphaDeviation = isAlpha && (isLive || isReview || isResearch);
-
-  // Mode banner meta
-  const modeMeta = (() => {
-    const map: Record<OperatingMode, { he: string; en: string; sub: { he: string; en: string }; color: string }> = {
-      beginner: { he: 'מתחיל', en: 'Beginner', sub: { he: 'תצוגה מפושטת — אותות פסיכולוגיים בסיסיים בלבד', en: 'Simplified — core psychology signals only' }, color: T.accent.cyan },
-      live:     { he: 'חי',     en: 'Live',    sub: { he: 'מצב חי — אינדקס בריאות + Tilt בזמן אמת',         en: 'Live — health index + real-time tilt' }, color: T.accent.green },
-      review:   { he: 'סקירה',  en: 'Review',  sub: { he: 'סקירה רטרוספקטיבית של דפוסים והתנהגות לאחר הפסד', en: 'Retrospective of patterns & post-loss behavior' }, color: T.accent.blue },
-      research: { he: 'מחקר',   en: 'Research',sub: { he: 'מחקר עומק — מגמות, לחץ ושכבות אלפא',              en: 'Deep research — trends, pressure & alpha layers' }, color: T.accent.purple },
-    };
-    return map[operatingMode];
-  })();
+  const maxSignals         = isUltimatePlan ? 99 : isAdvancedPlan ? 6 : 3;
+  const showPostLoss       = isAdvancedPlan;
+  const showDisciplineTL   = isAdvancedPlan;
+  const showLossPressure   = isAdvancedPlan;
+  const showAlphaDeviation = isUltimatePlan;
 
   const tt = { background: T.bg.card, border: `1px solid ${T.border.medium}`, borderRadius: 10, color: T.text.primary, fontSize: 12, boxShadow: T.shadow.elevated, padding: '8px 12px' };
 
@@ -369,19 +363,19 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
         )}
       </div>
 
-      {/* ═══ MODE BANNER ═══ */}
+      {/* ═══ TIER BANNER ═══ */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 12,
         padding: '10px 14px', marginTop: 8, marginBottom: 4,
-        background: `linear-gradient(${isRTL ? '270deg' : '90deg'}, ${modeMeta.color}14, transparent)`,
-        border: `1px solid ${modeMeta.color}30`,
-        borderInlineStart: `3px solid ${modeMeta.color}`,
+        background: `linear-gradient(${isRTL ? '270deg' : '90deg'}, ${tierMeta.color}14, transparent)`,
+        border: `1px solid ${tierMeta.color}30`,
+        borderInlineStart: `3px solid ${tierMeta.color}`,
         borderRadius: 10,
       }}>
-        <div style={{ fontSize: 9, padding: '3px 8px', background: `${modeMeta.color}25`, color: modeMeta.color, borderRadius: 4, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.16em', fontWeight: 700 }}>
-          {(isAlpha ? (isRTL ? 'אלפא · ' : 'ALPHA · ') : (isRTL ? 'סטנדרט · ' : 'STANDARD · ')) + (isRTL ? modeMeta.he : modeMeta.en).toUpperCase()}
+        <div style={{ fontSize: 9, padding: '3px 8px', background: `${tierMeta.color}25`, color: tierMeta.color, borderRadius: 4, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.16em', fontWeight: 700 }}>
+          {(isRTL ? tierMeta.he : tierMeta.en).toUpperCase()}
         </div>
-        <div style={{ fontSize: 11, color: T.text.secondary, flex: 1 }}>{isRTL ? modeMeta.sub.he : modeMeta.sub.en}</div>
+        <div style={{ fontSize: 11, color: T.text.secondary, flex: 1 }}>{isRTL ? tierMeta.sub.he : tierMeta.sub.en}</div>
         <button
           onClick={startDiagnosis}
           disabled={diagLoading}
@@ -594,10 +588,10 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
         </ChartWrapper>
       )}
 
-      {/* ═══ DEVIATION CHART (ALPHA + Live/Review/Research) ═══ */}
+      {/* ═══ DEVIATION CHART (Ultimate) ═══ */}
       {showAlphaDeviation && registryAllows('deviationDistribution') && (
         <>
-          <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'ביצוע מתקדם (ALPHA)' : 'EXECUTION (ALPHA)'} />
+          <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'ביצוע מתקדם (ULTIMATE)' : 'EXECUTION (ULTIMATE)'} />
           <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'התפלגות סטייה (R)' : 'Deviation Distribution (R)'} explanation={EXPLANATIONS.rDistribution} unit="R">
             <LazyChart height={160}>
               <ResponsiveContainer width="100%" height={160}>
@@ -635,7 +629,7 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
       )}
 
       {/* ═══ PSYCHOLOGY LAB · advanced behavioral metrics ═══ */}
-      {!isBeginner && <PsychologyLab T={T} trades={trades} isRTL={isRTL} />}
+      {isAdvancedPlan && <PsychologyLab T={T} trades={trades} isRTL={isRTL} />}
 
       {diagnosisOpen && (
         <div onClick={() => setDiagnosisOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(16px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18, animation: 'fadeIn .25s ease' }}>
