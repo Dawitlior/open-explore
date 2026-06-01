@@ -1077,24 +1077,6 @@ html[data-theme="platinum"] .orca-chart-skeleton {
     overflow-x: hidden !important;
     display: block !important;
   }
-  [data-orca-dashboard="true"] [style*="display:flex"]:not(.orca-snap-h):not(.orca-keep-row),
-  [data-orca-dashboard="true"] [style*="display: flex"]:not(.orca-snap-h):not(.orca-keep-row),
-  [data-orca-dashboard="true"] [style*="flex-wrap:wrap"]:not(.orca-snap-h):not(.orca-keep-row),
-  [data-orca-dashboard="true"] [style*="flex-wrap: wrap"]:not(.orca-snap-h):not(.orca-keep-row) {
-    flex-direction: column !important;
-    flex-wrap: nowrap !important;
-    width: 100% !important;
-    gap: 14px !important;
-    margin-bottom: 14px !important;
-  }
-  [data-orca-dashboard="true"] [style*="flex-wrap"]:not(.orca-snap-h):not(.orca-keep-row) > * {
-    width: 100% !important;
-    min-width: 0 !important;
-    flex-basis: auto !important;
-    max-width: 100% !important;
-  }
-  [data-orca-dashboard="true"] [style*="grid-template-columns"]:not(.orca-keep-grid) { grid-template-columns: 1fr !important; }
-
   [data-orca-dashboard="true"] .orca-glass {
     width: 100% !important;
     max-width: 100% !important;
