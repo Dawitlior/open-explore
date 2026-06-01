@@ -185,56 +185,43 @@ export function EconomicCalendarPage({ onClose }: Props) {
   const TEXT_DIM = 'rgba(255,255,255,0.35)';
   const ACCENT = '#00f2ff';
 
-  const BackIcon = isRTL ? ArrowRight : ArrowLeft;
-
   return (
     <div
       role="region"
       aria-label={t.title}
       dir={isRTL ? 'rtl' : 'ltr'}
-      className="fixed inset-0 z-[150] flex flex-col overflow-hidden"
+      className="flex flex-col rounded-xl overflow-hidden"
       style={{
         background: BG,
+        border: `1px solid ${BORDER}`,
         fontFamily: "'Poppins', sans-serif",
+        minHeight: 'calc(100vh - 140px)',
       }}
     >
-      <div className="flex-1 min-h-0 flex flex-col">
-        {/* Page Header */}
-        <header
-          className="flex items-center gap-3 px-4 md:px-8 py-4 border-b"
-          style={{ borderColor: BORDER, background: PANEL }}
-        >
-          <button
-            onClick={onClose}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition hover:bg-white/5"
-            style={{ color: TEXT_MUTED, border: `1px solid ${BORDER}` }}
-          >
-            <BackIcon className="w-3.5 h-3.5" />
-            {isRTL ? 'חזרה לאורקה' : 'Back to Orca'}
-          </button>
-
-          <div className="flex items-center gap-2.5 ms-2">
-            <CalendarIcon className="w-5 h-5" style={{ color: ACCENT }} />
-            <div className="min-w-0">
-              <h1 className="text-[16px] font-semibold leading-tight" style={{ color: TEXT }}>
-                {t.title}
-              </h1>
-              <div className="text-[11px] mt-0.5" style={{ color: TEXT_DIM }}>
-                {t.subtitle}
-              </div>
-            </div>
+      {/* Page Header */}
+      <header
+        className="flex items-center gap-3 px-4 md:px-6 py-4 border-b"
+        style={{ borderColor: BORDER, background: PANEL }}
+      >
+        <CalendarIcon className="w-5 h-5" style={{ color: ACCENT }} />
+        <div className="min-w-0 flex-1">
+          <h1 className="text-[16px] font-semibold leading-tight" style={{ color: TEXT }}>
+            {t.title}
+          </h1>
+          <div className="text-[11px] mt-0.5" style={{ color: TEXT_DIM }}>
+            {t.subtitle}
           </div>
+        </div>
 
-          <div className="flex-1" />
+        <div className="text-[11px] tabular-nums px-2.5 py-1 rounded-md" style={{
+          background: 'rgba(0,242,255,0.08)',
+          color: ACCENT,
+          border: `1px solid rgba(0,242,255,0.18)`,
+        }}>
+          {filtered.length} {t.results}
+        </div>
+      </header>
 
-          <div className="text-[11px] tabular-nums px-2.5 py-1 rounded-md" style={{
-            background: 'rgba(0,242,255,0.08)',
-            color: ACCENT,
-            border: `1px solid rgba(0,242,255,0.18)`,
-          }}>
-            {filtered.length} {t.results}
-          </div>
-        </header>
 
 
         {/* Toolbar: range + search */}
@@ -398,7 +385,6 @@ export function EconomicCalendarPage({ onClose }: Props) {
               </tbody>
             </table>
           )}
-        </div>
       </div>
     </div>
   );

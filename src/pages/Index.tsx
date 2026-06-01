@@ -104,7 +104,7 @@ const Index = () => {
   const [entered, setEntered] = useState(() => sessionStorage.getItem('orca-entered') === '1');
   const [onboardingDone, setOnboardingDone] = useState(() => !shouldShowOnboarding());
   const [activeDimension, setActiveDimension] = useState<'orca' | 'journal' | 'backtest'>('orca');
-  const [showEconomicCalendar, setShowEconomicCalendar] = useState(false);
+  // economic-radar is now a regular page (page === 'economic-radar'); no overlay state needed
   const baseTheme = getTheme(settings.theme);
   const t = i18n[settings.lang];
   const isRTL = settings.isRTL;
@@ -449,7 +449,7 @@ const Index = () => {
     { id: 'feature-info', label: isRTL ? 'אודות המערכת' : 'About Orca System', icon: 'ℹ️', category: isRTL ? 'מערכת' : 'System', action: () => setShowFeatureModal(true) },
     { id: 'journal-sanctuary', label: isRTL ? 'יומן מסע לסוחר' : 'Trader Journey', icon: '🏛️', category: isRTL ? 'ממדים' : 'Dimensions', action: () => setActiveDimension('journal') },
     { id: 'backtest-journal', label: isRTL ? 'יומן באק-טסט' : 'Backtest Journal', icon: '📊', category: isRTL ? 'ממדים' : 'Dimensions', action: () => setActiveDimension('backtest') },
-    { id: 'economic-radar', label: isRTL ? 'מכ״ם כלכלי' : 'Economic Radar', icon: '📡', category: isRTL ? 'כלים' : 'Tools', action: () => setShowEconomicCalendar(true) },
+    { id: 'economic-radar', label: isRTL ? 'מכ״ם כלכלי' : 'Economic Radar', icon: '📡', category: isRTL ? 'כלים' : 'Tools', action: () => setPage('economic-radar') },
   ], [isRTL, handleExport, handleImport, handleGenerateInsights, settings]);
 
   // ─── Weekly Review reminder badge (Friday or 1st of month) ───
@@ -484,7 +484,7 @@ const Index = () => {
     { id: 'risk', icon: Ico.shield, label: t.risk },
     { id: 'psychology', icon: Ico.brain, label: t.psychology },
     { id: 'ai', icon: Ico.star, label: t.ai },
-    { id: 'economic-radar', icon: '📡', label: isRTL ? 'מכ״ם כלכלי' : 'Economic Radar', action: () => setShowEconomicCalendar(true) },
+    { id: 'economic-radar', icon: '📡', label: isRTL ? 'מכ״ם כלכלי' : 'Economic Radar' },
     { id: 'weekly-review', icon: '📋', label: isRTL ? 'סקירה שבועית' : 'Weekly Review', color: '#FFD700' },
   ];
 
@@ -1969,6 +1969,11 @@ const Index = () => {
           {page === 'risk' && renderRisk()}
           {page === 'psychology' && renderPsychology()}
           {page === 'ai' && renderAI()}
+          {page === 'economic-radar' && (
+            <Suspense fallback={null}>
+              <EconomicCalendarPage onClose={() => setPage('dashboard')} />
+            </Suspense>
+          )}
           {page === 'weekly-review' && (
             <div style={{ position: 'relative' }}>
               {/* Anti-trap escape — sits outside the iframe context, always clickable
@@ -2011,11 +2016,7 @@ const Index = () => {
       {riskAlert && <RiskLimitAlert T={T} isRTL={isRTL} status={riskAlert} onClose={dismissRiskAlert} />}
       {showRiskExplanation && <RiskExplanationModal T={T} isRTL={isRTL} tradeId={showRiskExplanation.tradeId} riskChange={showRiskExplanation.riskChange} onSave={handleSaveRiskExplanation} onClose={() => setShowRiskExplanation(null)} />}
       {showFeatureModal && <FeatureManifestModal T={T} isRTL={isRTL} onClose={() => setShowFeatureModal(false)} />}
-      {showEconomicCalendar && (
-        <Suspense fallback={null}>
-          <EconomicCalendarPage onClose={() => setShowEconomicCalendar(false)} />
-        </Suspense>
-      )}
+      {/* Economic Calendar is rendered inline as a normal page (see page === 'economic-radar' above) */}
       <CommandPalette T={T} commands={commands} isOpen={showCmdPalette} onClose={() => setShowCmdPalette(false)} />
       {/* Import Warning Modal — with format guide + template link */}
       {showImportWarning && (
@@ -2146,7 +2147,7 @@ const Index = () => {
           isRTL={isRTL}
           page={page}
           onNavigate={(id) => { setPage(id); }}
-          onOpenRadar={() => setShowEconomicCalendar(true)}
+          onOpenRadar={() => setPage('economic-radar')}
           onOpenMore={() => setSbOpen(true)}
           onAddTrade={() => { setEditingTrade(null); setShowTradeForm(true); }}
           onLongPressCenter={() => setShowCmdPalette(true)}
