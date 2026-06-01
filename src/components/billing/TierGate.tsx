@@ -45,27 +45,12 @@ export function TierGate({ required, children, label, silent }: TierGateProps) {
   if (loading) return <>{children}</>;
   const hasAccess = allows(required) || required === 'standard';
 
-  // SOFT MODE — render children always, overlay a lock badge if locked
+  // SOFT MODE — hide locked charts entirely so each tier shows a
+  // visibly distinct deck. Users can switch tiers via ModeSwitch to
+  // preview every plan's content.
   if (!ENFORCE_TIER_GATES) {
     if (hasAccess) return <>{children}</>;
-    const tierName = TIER_LABEL[required][lang === 'he' ? 'he' : 'en'];
-    const tip =
-      lang === 'he'
-        ? `נדרש ${tierName} (תצוגה מקדימה — לא חסום)`
-        : `${tierName} required (preview mode — not blocked)`;
-    return (
-      <div className="relative">
-        {children}
-        <div
-          className={`pointer-events-none absolute top-2 ${lang === 'he' ? 'left-2' : 'right-2'} z-20 flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-medium backdrop-blur-sm ${TIER_BADGE_COLOR[required]}`}
-          title={tip}
-          aria-label={tip}
-        >
-          <Lock className="h-3 w-3" />
-          <span className="uppercase tracking-wide">{tierName}</span>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   // HARD MODE — block & upsell
