@@ -553,6 +553,9 @@ const Index = () => {
     <PrivacyMask enabled={settings.privacyMode} type={type}>{children}</PrivacyMask>
   );
 
+  const dashboardMobileChartHeight = isMobile ? 250 : undefined;
+  const dashboardCompactChartHeight = isMobile ? 220 : undefined;
+
   // ═══════════════════════════════════════════════════
   // RENDER PAGES WITH MODE AWARENESS
   // ═══════════════════════════════════════════════════
@@ -750,7 +753,7 @@ const Index = () => {
             <span style={{ width: 18, height: 1, background: T.accent.cyan, display: 'inline-block' }} />
             {isRTL ? 'בריאות מסחר' : 'TRADING HEALTH'}
           </div>
-          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 12, marginBottom: 18, flexWrap: isMobile ? 'nowrap' : 'wrap', width: '100%', minWidth: 0 }}>
+          <div className={isMobile ? 'orca-dashboard-kpi-grid' : undefined} style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 12, marginBottom: 18, flexWrap: isMobile ? 'nowrap' : 'wrap', width: '100%', minWidth: 0 }}>
             <MetricCard T={T} label={t.netPnl} value={stats.totalPnl} color={stats.totalPnl >= 0 ? T.accent.cyan : T.accent.red} onInfoClick={() => handleExplainClick(t.netPnl, EXPLANATIONS.netPnl)} />
             <MetricCard T={T} label={t.winRate} value={stats.winRate} suffix="%" color={T.accent.green} onInfoClick={() => handleExplainClick(t.winRate, EXPLANATIONS.winRate)} />
             <AdaptiveExpectancyCard
@@ -778,7 +781,7 @@ const Index = () => {
             <span style={{ width: 18, height: 1, background: T.accent.purple, display: 'inline-block' }} />
             {isRTL ? 'בריאות מערכת' : 'SYSTEM HEALTH'}
           </div>
-          <div style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
+          <div className={isMobile ? 'orca-dashboard-kpi-grid' : undefined} style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
             <ScoreGauge T={T} score={stats.orcaScore} label={t.orcaScore} color={T.accent.cyan}
               description={isRTL ? 'ציון משולב של משמעת, סיכון ועקביות' : 'Combined discipline, risk & consistency score'}
               onInfoClick={() => handleExplainClick(t.orcaScore, EXPLANATIONS.orcaScore)} />
@@ -815,9 +818,9 @@ const Index = () => {
           {advancedOpen && (
             <div style={{ marginTop: 14, animation: 'fadeIn 0.3s ease' }}>
               {/* Equity + P&L */}
-              <div style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
+              <div className={isMobile ? 'orca-dashboard-chart-stack' : undefined} style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
                 {isChartVisible('equityCurve') && <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.equityCurve} explanation={EXPLANATIONS.equityCurve} unit="$" chartId="equityCurve" onRemove={handleHideChart} style={{ flex: 2, minWidth: isMobile ? 0 : 380, width: isMobile ? '100%' : undefined }}>
-                  <ResponsiveContainer width="100%" height={190}>
+                  <ResponsiveContainer width="100%" height={dashboardMobileChartHeight ?? 190}>
                     <AreaChart data={stats.equityCurve}>
                       <defs><linearGradient id="eqGAdv" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.6}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.25}/></linearGradient></defs>
                       <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="trade" tick={{ fill: T.text.muted, fontSize: 10 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 10 }} domain={[(d: number) => Math.floor(d * 0.98), (d: number) => Math.ceil(d * 1.02)]} />
@@ -826,7 +829,7 @@ const Index = () => {
                   </ResponsiveContainer>
                 </ChartWrapper>}
                 {isChartVisible('pnlDistribution') && <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.pnlDistribution} explanation={EXPLANATIONS.pnlDistribution} unit="$" chartId="pnlDistribution" onRemove={handleHideChart} style={{ flex: 1, minWidth: isMobile ? 0 : 260, width: isMobile ? '100%' : undefined }}>
-                  <ResponsiveContainer width="100%" height={190}>
+                  <ResponsiveContainer width="100%" height={dashboardMobileChartHeight ?? 190}>
                     <BarChart data={trades.map(tr => ({ id: tr.id, pnl: tr.pnl }))}>
                       <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 10 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
                       <Tooltip contentStyle={tt} /><Bar dataKey="pnl" radius={[4,4,0,0]}>{trades.map((tr, i) => <Cell key={i} fill={tr.pnl >= 0 ? T.accent.green : T.accent.red} />)}</Bar>
@@ -835,9 +838,9 @@ const Index = () => {
                 </ChartWrapper>}
               </div>
               {/* Radar + Direction + Quick Stats */}
-              <div style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
+              <div className={isMobile ? 'orca-dashboard-chart-stack' : undefined} style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
                 {isAdvancedTier && isChartVisible('radarScore') && <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ציון Orca — פירוט' : 'Orca Score — Breakdown'} explanation={EXPLANATIONS.radarScore} chartId="radarScore" onRemove={handleHideChart} style={{ flex: 1, minWidth: isMobile ? 0 : 260, width: isMobile ? '100%' : undefined }}>
-                  <ResponsiveContainer width="100%" height={170}>
+                  <ResponsiveContainer width="100%" height={dashboardCompactChartHeight ?? 170}>
                     <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="68%">
                       <PolarGrid stroke={T.border.medium} /><PolarAngleAxis dataKey="m" tick={{ fill: T.text.muted, fontSize: 9 }} /><PolarRadiusAxis tick={false} domain={[0, 100]} axisLine={false} />
                       <Radar dataKey="v" stroke={T.accent.cyan} fill={T.accent.cyan} fillOpacity={0.55} strokeWidth={2.5} dot={{ r: 4, fill: T.accent.cyan, stroke: T.bg.card, strokeWidth: 1 }} />
@@ -845,7 +848,7 @@ const Index = () => {
                   </ResponsiveContainer>
                 </ChartWrapper>}
                 {isAdvancedTier && isChartVisible('coinPerformance') && <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.coinPerformance} explanation={EXPLANATIONS.coinPerformance} unit="$" chartId="coinPerformance" onRemove={handleHideChart} style={{ flex: 1, minWidth: isMobile ? 0 : 280, width: isMobile ? '100%' : undefined }}>
-                  <ResponsiveContainer width="100%" height={190}>
+                  <ResponsiveContainer width="100%" height={dashboardMobileChartHeight ?? 190}>
                     <BarChart data={stats.coinPerf} layout="vertical"><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis type="number" tick={{ fill: T.text.muted, fontSize: 10 }} /><YAxis dataKey="coin" type="category" tick={{ fill: T.text.secondary, fontSize: 11 }} width={45} />
                       <Tooltip contentStyle={tt} /><Bar dataKey="pnl" radius={[0,4,4,0]}>{stats.coinPerf.map((c, i) => <Cell key={i} fill={c.pnl >= 0 ? T.accent.green : T.accent.red} />)}</Bar>
                     </BarChart>

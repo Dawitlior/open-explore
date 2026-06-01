@@ -46,7 +46,7 @@ export const ChartWrapper = ({ T, title, explanation, children, style, unit, cha
   };
 
   return (
-    <GlassCard T={T} style={{ position: 'relative', minWidth: 0, maxWidth: '100%', ...style }}>
+    <GlassCard T={T} className="orca-chart-card" style={{ position: 'relative', minWidth: 0, maxWidth: '100%', ...style }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, gap: 8, minWidth: 0 }}>
         <div
           style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', minWidth: 0 }}

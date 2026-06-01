@@ -1062,10 +1062,9 @@ html[data-theme="platinum"] .orca-chart-skeleton {
 }
 
 /* ═══ DASHBOARD MOBILE RESPONSIVENESS ═══
-   Force every chart/card row inside the dashboard into a single-column
-   vertical stack on phones — matches the Analytics page behaviour.
-   NOTE: React serializes inline styles without spaces (e.g. "display:flex"),
-   so attribute selectors must NOT include a space after the colon. */
+   Real phone layout, not a squeezed desktop: KPI tiles become a 2-up native
+   grid, charts stack as full-width app panels, and inline desktop flex widths
+   are neutralized only inside the dashboard surface. */
 @media (max-width: 768px) {
   [data-orca-dashboard="true"],
   [data-orca-dashboard="true"] * {
@@ -1075,108 +1074,71 @@ html[data-theme="platinum"] .orca-chart-skeleton {
   [data-orca-dashboard="true"] {
     width: 100% !important;
     min-width: 0 !important;
-    overflow-x: clip !important;
+    overflow-x: hidden !important;
+    display: block !important;
   }
-  [data-orca-dashboard="true"] .orca-snap-h {
-    margin-inline: 0 !important;
-    padding-inline: 0 !important;
-  }
-  [data-orca-dashboard="true"] .orca-snap-h > * {
-    flex-basis: 100% !important;
+  [data-orca-dashboard="true"] .orca-glass {
     width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    border-radius: 18px !important;
+    padding: 16px !important;
   }
-  [data-orca-dashboard="true"] [style*="display:flex"]:not(.orca-snap-h):not(.orca-keep-row),
-  [data-orca-dashboard="true"] [style*="display: flex"]:not(.orca-snap-h):not(.orca-keep-row),
-  [data-orca-dashboard="true"] [style*="flex-wrap:wrap"]:not(.orca-snap-h):not(.orca-keep-row),
-  [data-orca-dashboard="true"] [style*="flex-wrap: wrap"]:not(.orca-snap-h):not(.orca-keep-row) {
-    flex-direction: column !important;
-    flex-wrap: nowrap !important;
-    width: 100% !important;
+  [data-orca-dashboard="true"] .orca-dashboard-kpi-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    align-items: stretch !important;
   }
-  [data-orca-dashboard="true"] [style*="flex-wrap"]:not(.orca-snap-h):not(.orca-keep-row) > * {
+  [data-orca-dashboard="true"] .orca-metric-card,
+  [data-orca-dashboard="true"] .orca-score-gauge,
+  [data-orca-dashboard="true"] .orca-dashboard-stat-card {
     width: 100% !important;
     min-width: 0 !important;
-    flex-basis: auto !important;
-    max-width: 100% !important;
+    height: 128px !important;
+    min-height: 128px !important;
+    display: flex !important;
+    align-items: stretch !important;
   }
-  [data-orca-dashboard="true"] [style*="grid-template-columns"]:not(.orca-keep-grid) {
+  [data-orca-dashboard="true"] .orca-metric-card > .relative,
+  [data-orca-dashboard="true"] .orca-score-gauge > .relative,
+  [data-orca-dashboard="true"] .orca-dashboard-stat-card > .relative {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+  }
+  [data-orca-dashboard="true"] .orca-adaptive-expectancy-card { height: 128px !important; }
+  [data-orca-dashboard="true"] .orca-metric-label { font-size: 9px !important; letter-spacing: 0.08em !important; line-height: 1.35 !important; }
+  [data-orca-dashboard="true"] .orca-metric-value { font-size: clamp(18px, 6vw, 24px) !important; letter-spacing: 0 !important; }
+
+  [data-orca-dashboard="true"] .orca-dashboard-chart-stack {
+    display: grid !important;
     grid-template-columns: 1fr !important;
+    gap: 14px !important;
   }
-  /* Prevent horizontal overflow inside dashboard charts/cards */
-  [data-orca-dashboard="true"] .recharts-responsive-container,
+  [data-orca-dashboard="true"] .orca-chart-card { padding: 14px !important; border-radius: 18px !important; }
+  [data-orca-dashboard="true"] .orca-chart-card .recharts-responsive-container {
+    width: 100% !important;
+    height: 250px !important;
+    min-height: 250px !important;
+    max-height: none !important;
+  }
   [data-orca-dashboard="true"] .recharts-wrapper,
   [data-orca-dashboard="true"] .recharts-surface {
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
   }
-  /* Ensure chart cards never force horizontal scroll */
-  [data-orca-dashboard="true"] {
-    overflow-x: hidden !important;
-  }
-
-  /* ═══ MOBILE-APP-GRADE POLISH for dashboard charts ═══
-     Mirror the Analytics page feel: each chart = full-width GlassCard with
-     comfortable padding, generous height, and breathing room between cards. */
-
-  /* Comfortable phone gap between stacked siblings inside flex rows */
-  [data-orca-dashboard="true"] [style*="display:flex"]:not(.orca-snap-h):not(.orca-keep-row),
-  [data-orca-dashboard="true"] [style*="display: flex"]:not(.orca-snap-h):not(.orca-keep-row),
-  [data-orca-dashboard="true"] [style*="flex-wrap:wrap"]:not(.orca-snap-h):not(.orca-keep-row),
-  [data-orca-dashboard="true"] [style*="flex-wrap: wrap"]:not(.orca-snap-h):not(.orca-keep-row) {
-    gap: 14px !important;
-    margin-bottom: 14px !important;
-  }
-
-  /* Each chart card is full-width on phone */
-  [data-orca-dashboard="true"] .orca-glass {
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-  }
-
-  /* Charts breathe — give every chart card the same height as Analytics (~250px) */
-  [data-orca-dashboard="true"] .orca-glass .recharts-responsive-container {
-    height: 240px !important;
-    min-height: 240px !important;
-  }
-  /* Compact gauges & KPI mini-cards stay short */
-  [data-orca-dashboard="true"] .orca-score-gauge .recharts-responsive-container,
-  [data-orca-dashboard="true"] .orca-metric-card .recharts-responsive-container {
-    height: 160px !important;
-    min-height: 160px !important;
-  }
-
-  /* Readable axis ticks on phone */
   [data-orca-dashboard="true"] .recharts-cartesian-axis-tick text,
   [data-orca-dashboard="true"] .recharts-polar-angle-axis-tick text,
-  [data-orca-dashboard="true"] .recharts-polar-radius-axis-tick text {
-    font-size: 11px !important;
-  }
-  /* Title row inside ChartWrapper — bump for thumb-readability */
-  [data-orca-dashboard="true"] .orca-chart-title {
-    font-size: 11px !important;
-    letter-spacing: 0.06em !important;
-  }
-  /* Larger info button for touch */
+  [data-orca-dashboard="true"] .recharts-polar-radius-axis-tick text { font-size: 10.5px !important; }
+  [data-orca-dashboard="true"] .orca-chart-title { font-size: 11px !important; letter-spacing: 0.04em !important; }
   [data-orca-dashboard="true"] .orca-glass button[style*="border-radius: 50%"] {
-    width: 22px !important;
-    height: 22px !important;
-    min-width: 22px !important;
-    min-height: 22px !important;
-  }
-
-  /* MetricCards: 2-column grid feels like a native dashboard tile bank */
-  [data-orca-dashboard="true"] .orca-metric-card {
-    flex: 1 1 calc(50% - 7px) !important;
-    width: calc(50% - 7px) !important;
-    min-width: 0 !important;
-  }
-  /* Their parent row should re-enable row layout for the 2-up tile grid */
-  [data-orca-dashboard="true"] [style*="display:flex"]:has(> .orca-metric-card),
-  [data-orca-dashboard="true"] [style*="display: flex"]:has(> .orca-metric-card) {
-    flex-direction: row !important;
-    flex-wrap: wrap !important;
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+    min-height: 24px !important;
   }
 }
 

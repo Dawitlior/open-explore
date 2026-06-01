@@ -52,7 +52,7 @@ export const AdaptiveExpectancyCard = ({
   );
 
   return (
-    <GlassCard T={T} glow={T.accent.cyanGlow} style={{ flex: 1, minWidth: isMobile ? 0 : 170, width: isMobile ? '100%' : undefined }}>
+    <GlassCard T={T} glow={T.accent.cyanGlow} className="orca-metric-card orca-adaptive-expectancy-card" style={{ flex: 1, minWidth: isMobile ? 0 : 170, width: isMobile ? '100%' : undefined }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</div>
