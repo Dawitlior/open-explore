@@ -4,15 +4,24 @@
  * visitors. Split-screen hero with live interactive demo on the left,
  * pitch + CTAs on the right (RTL primary side).
  */
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft, Sparkles, Shield, Brain, LineChart, Radar, Lock,
   Check, Zap, Crown, Star,
 } from 'lucide-react';
+import {
+  AreaChart, Area, LineChart as RLineChart, Line, XAxis, YAxis,
+  CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine,
+} from 'recharts';
 import { useAuth } from '@/hooks/use-auth';
 import { LandingDemo } from '@/components/landing/LandingDemo';
+import {
+  generateMockTrades, rBuckets, drawdownCurve,
+  rollingExpectancy, disciplineTrend,
+} from '@/components/landing/landing-mock-data';
+
 
 const PRIMARY = '#4f46e5';
 const PRIMARY_2 = '#a78bfa';
