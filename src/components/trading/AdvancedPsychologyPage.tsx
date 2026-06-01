@@ -363,19 +363,19 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
         )}
       </div>
 
-      {/* ═══ MODE BANNER ═══ */}
+      {/* ═══ TIER BANNER ═══ */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 12,
         padding: '10px 14px', marginTop: 8, marginBottom: 4,
-        background: `linear-gradient(${isRTL ? '270deg' : '90deg'}, ${modeMeta.color}14, transparent)`,
-        border: `1px solid ${modeMeta.color}30`,
-        borderInlineStart: `3px solid ${modeMeta.color}`,
+        background: `linear-gradient(${isRTL ? '270deg' : '90deg'}, ${tierMeta.color}14, transparent)`,
+        border: `1px solid ${tierMeta.color}30`,
+        borderInlineStart: `3px solid ${tierMeta.color}`,
         borderRadius: 10,
       }}>
-        <div style={{ fontSize: 9, padding: '3px 8px', background: `${modeMeta.color}25`, color: modeMeta.color, borderRadius: 4, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.16em', fontWeight: 700 }}>
-          {(isAlpha ? (isRTL ? 'אלפא · ' : 'ALPHA · ') : (isRTL ? 'סטנדרט · ' : 'STANDARD · ')) + (isRTL ? modeMeta.he : modeMeta.en).toUpperCase()}
+        <div style={{ fontSize: 9, padding: '3px 8px', background: `${tierMeta.color}25`, color: tierMeta.color, borderRadius: 4, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.16em', fontWeight: 700 }}>
+          {(isRTL ? tierMeta.he : tierMeta.en).toUpperCase()}
         </div>
-        <div style={{ fontSize: 11, color: T.text.secondary, flex: 1 }}>{isRTL ? modeMeta.sub.he : modeMeta.sub.en}</div>
+        <div style={{ fontSize: 11, color: T.text.secondary, flex: 1 }}>{isRTL ? tierMeta.sub.he : tierMeta.sub.en}</div>
         <button
           onClick={startDiagnosis}
           disabled={diagLoading}
@@ -629,7 +629,7 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
       )}
 
       {/* ═══ PSYCHOLOGY LAB · advanced behavioral metrics ═══ */}
-      {!isBeginner && <PsychologyLab T={T} trades={trades} isRTL={isRTL} />}
+      {isAdvancedPlan && <PsychologyLab T={T} trades={trades} isRTL={isRTL} />}
 
       {diagnosisOpen && (
         <div onClick={() => setDiagnosisOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(16px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18, animation: 'fadeIn .25s ease' }}>
