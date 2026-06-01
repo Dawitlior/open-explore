@@ -111,6 +111,8 @@ const Index = () => {
   const { tier: appTier, allows: tierAllows } = useEntitlement();
   const isAdvancedTier = tierAllows('advanced');
   const isUltimateTier = tierAllows('ultimate');
+  const isAlpha = isUltimateTier;
+  const opMode: 'live' | 'review' | 'research' | 'beginner' = isUltimateTier ? 'research' : 'review';
   // Phase 2 — registry-driven chart lists per page (tier-filtered).
   const analyticsCharts = useRegistryCharts('analytics');
   const riskCharts = useRegistryCharts('risk');
