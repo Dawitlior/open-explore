@@ -112,7 +112,7 @@ const Index = () => {
   const isAdvancedTier = tierAllows('advanced');
   const isUltimateTier = tierAllows('ultimate');
   const isAlpha = isUltimateTier;
-  const opMode = (isUltimateTier ? 'research' : isAdvancedTier ? 'review' : 'live') as 'live' | 'review' | 'research' | 'beginner';
+  const opMode = (isUltimateTier ? 'research' : 'review') as 'live' | 'review' | 'research' | 'beginner';
   // Phase 2 — registry-driven chart lists per page (tier-filtered).
   const analyticsCharts = useRegistryCharts('analytics');
   const riskCharts = useRegistryCharts('risk');
@@ -661,7 +661,7 @@ const Index = () => {
             </div>
           </GlassCard>
           {/* Risk Exposure Meter — matrix: live_risk_meter */}
-          {widgetVis.show('live_risk_meter') && (
+          {true && (
           <GlassCard T={T} style={{ flex: 1, minWidth: isMobile ? 0 : 200, width: isMobile ? '100%' : undefined, textAlign: 'center' }}>
             <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>{isRTL ? 'חשיפת סיכון' : 'Risk Exposure'}</div>
             <svg width="100" height="55" viewBox="0 0 200 110" style={{ margin: '0 auto', display: 'block' }}>
@@ -675,7 +675,7 @@ const Index = () => {
         </div>
         {/* Streak Pressure + Emotional Deviation */}
         <div className={isMobile ? 'orca-snap-h' : ''} style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: isMobile ? 'nowrap' : 'wrap' }}>
-          {widgetVis.show('kpi_streak') && (
+          {true && (
           <GlassCard T={T} style={{ flex: 1, minWidth: isMobile ? 0 : 200, width: isMobile ? '100%' : undefined }}>
             <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{isRTL ? 'לחץ רצף' : 'Streak Pressure'}</div>
             <div style={{ padding: 14, borderRadius: T.radius.md, textAlign: 'center', background: stats.maxConsecLosses >= 3 ? `${T.accent.red}10` : stats.currentStreak >= 3 && stats.streakType === 'Win' ? `${T.accent.green}10` : `${T.accent.blue}08`, border: `1px solid ${stats.maxConsecLosses >= 3 ? T.accent.red : T.accent.green}20` }}>
@@ -709,7 +709,7 @@ const Index = () => {
           </GlassCard>
         </div>
         {/* Position vs Plan — matrix: live_open_positions */}
-        {widgetVis.show('live_open_positions') && (
+        {isAdvancedTier && (
         <GlassCard T={T} style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>{isRTL ? 'סיכון מול תוכנית' : 'Position Risk vs Plan'}</div>
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
@@ -725,7 +725,7 @@ const Index = () => {
           </div>
         </GlassCard>
         )}
-        {widgetVis.show('research_volatility_clus') && <>
+        {isUltimateTier && <>
           <ScoreGauge T={T} score={stats.orcaScore} label={isRTL ? 'ציון משמעת חי' : 'Live Discipline Score'} color={T.accent.cyan} />
         </>}
       </>
