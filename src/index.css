@@ -738,12 +738,12 @@ html, body, .orca-glass, .orca-panel, [class*="bg-"], [class*="text-"] {
 
   /* — Dashboard: keep cards readable and charts inside the viewport — */
   [data-orca-dashboard="true"] { width: 100%; max-width: 100%; overflow-x: hidden; }
-  [data-orca-dashboard="true"] .orca-glass { min-width: 0 !important; max-width: 100%; box-sizing: border-box; }
+  [data-orca-dashboard="true"] .orca-glass { min-width: 0 !important; width: 100% !important; max-width: 100%; box-sizing: border-box; }
   [data-orca-dashboard="true"] .orca-metric-card,
   [data-orca-dashboard="true"] .orca-score-gauge,
   [data-orca-dashboard="true"] .orca-dashboard-stat-card {
-    flex: 1 1 calc(50% - 6px) !important;
-    width: auto !important;
+    flex: 0 1 auto !important;
+    width: 100% !important;
     min-width: 0 !important;
   }
   [data-orca-dashboard="true"] .orca-dashboard-metric-grid {
@@ -1070,6 +1070,20 @@ html[data-theme="platinum"] .orca-chart-skeleton {
   [data-orca-dashboard="true"],
   [data-orca-dashboard="true"] * {
     max-width: 100% !important;
+    box-sizing: border-box;
+  }
+  [data-orca-dashboard="true"] {
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: clip !important;
+  }
+  [data-orca-dashboard="true"] .orca-snap-h {
+    margin-inline: 0 !important;
+    padding-inline: 0 !important;
+  }
+  [data-orca-dashboard="true"] .orca-snap-h > * {
+    flex-basis: 100% !important;
+    width: 100% !important;
   }
   [data-orca-dashboard="true"] [style*="display:flex"]:not(.orca-snap-h):not(.orca-keep-row),
   [data-orca-dashboard="true"] [style*="display: flex"]:not(.orca-snap-h):not(.orca-keep-row),
@@ -1092,6 +1106,7 @@ html[data-theme="platinum"] .orca-chart-skeleton {
   [data-orca-dashboard="true"] .recharts-responsive-container,
   [data-orca-dashboard="true"] .recharts-wrapper,
   [data-orca-dashboard="true"] .recharts-surface {
+    width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
   }
