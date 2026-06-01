@@ -1085,12 +1085,6 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
             {/* ============ INTERFACE ============ */}
             {tab === 'interface' && (() => {
               const p = ui.prefs;
-              const modes: { id: OperatingMode; label: string }[] = [
-                { id: 'beginner', label: t('🎓 מתחיל', '🎓 Beginner') },
-                { id: 'live', label: t('🔴 חי', '🔴 Live') },
-                { id: 'review', label: t('🔵 סקירה', '🔵 Review') },
-                { id: 'research', label: t('🟣 מחקר', '🟣 Research') },
-              ];
               const Toggle = ({ on, onClick, label, hint }: { on: boolean; onClick: () => void; label: string; hint?: string }) => (
                 <button onClick={onClick} style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
@@ -1110,34 +1104,9 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
               return (
                 <div>
                   <div style={card}>
-                    <h3 style={sectionTitle}><LayoutDashboard size={14} /> {t('מצבי תפעול בנאב-בר', 'Operating modes in nav')}</h3>
-                    <p style={sectionHint}>{t('בחר אילו מצבי תפעול יוצגו במעבר המהיר.', 'Choose which operating modes appear in the quick switcher.')}</p>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6 }}>
-                      {modes.map(m => {
-                        const hidden = p.hiddenOperatingModes.includes(m.id);
-                        return (
-                          <button key={m.id} onClick={() => ui.toggleHiddenMode(m.id)} style={{
-                            padding: '10px 12px', borderRadius: T.radius.md,
-                            background: hidden ? T.bg.tertiary : `${T.accent.cyan}10`,
-                            border: `1px solid ${hidden ? T.border.subtle : T.accent.cyan}`,
-                            color: hidden ? T.text.muted : T.accent.cyan,
-                            cursor: 'pointer', fontSize: 12, fontWeight: 700,
-                            textAlign: isRTL ? 'right' : 'left' as const, fontFamily: sans,
-                            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
-                          }}>
-                            <span>{m.label}</span>
-                            {hidden ? <EyeOff size={13} /> : <Eye size={13} />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div style={card}>
                     <h3 style={sectionTitle}><SlidersHorizontal size={14} /> {t('הסתרת אלמנטים', 'Hide UI elements')}</h3>
                     <p style={sectionHint}>{t('צמצום הממשק לפעולות הליבה שלך.', 'Reduce the interface to your core actions.')}</p>
                     <Toggle on={p.hideQuickActions} onClick={() => ui.setPrefs({ hideQuickActions: !p.hideQuickActions })} label={t('הסתר Quick Actions', 'Hide Quick Actions')} />
-                    <Toggle on={p.hideDepthSwitch} onClick={() => ui.setPrefs({ hideDepthSwitch: !p.hideDepthSwitch })} label={t('הסתר מתג Standard/Alpha', 'Hide Standard/Alpha switch')} />
                   </div>
 
                   <div style={card}>
