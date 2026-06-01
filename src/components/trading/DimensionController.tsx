@@ -28,8 +28,10 @@ export const DimensionController = ({ orcaUI, journalUI, backtestUI, activeDimen
   return (
     <>
       <style>{dimensionCSS}</style>
-      <div key={activeDimension} className="orca-dim-layer">
-        {child}
+      <div className="orca-dim-shell">
+        <div key={activeDimension} className="orca-dim-layer">
+          {child}
+        </div>
       </div>
     </>
   );
