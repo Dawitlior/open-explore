@@ -1969,6 +1969,11 @@ const Index = () => {
           {page === 'risk' && renderRisk()}
           {page === 'psychology' && renderPsychology()}
           {page === 'ai' && renderAI()}
+          {page === 'economic-radar' && (
+            <Suspense fallback={null}>
+              <EconomicCalendarPage onClose={() => setPage('dashboard')} />
+            </Suspense>
+          )}
           {page === 'weekly-review' && (
             <div style={{ position: 'relative' }}>
               {/* Anti-trap escape — sits outside the iframe context, always clickable
