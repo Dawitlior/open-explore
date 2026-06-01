@@ -176,15 +176,17 @@ export function EconomicCalendarPage({ onClose, T }: Props) {
     });
   }
 
-  // Orca palette
-  const BG = '#061326';
-  const PANEL = '#0a1d36';
-  const BORDER = 'rgba(255,255,255,0.08)';
-  const BORDER_SOFT = 'rgba(255,255,255,0.05)';
-  const TEXT = 'rgba(231,243,255,0.95)';
-  const TEXT_MUTED = 'rgba(255,255,255,0.55)';
-  const TEXT_DIM = 'rgba(255,255,255,0.35)';
-  const ACCENT = '#00f2ff';
+  // Theme-aware palette (falls back to midnight defaults if T not provided)
+  const BG = T?.bg?.primary ?? '#020202';
+  const PANEL = T?.bg?.card ?? '#0a0a0a';
+  const BORDER = T?.border?.medium ?? 'rgba(255,255,255,0.10)';
+  const BORDER_SOFT = T?.border?.subtle ?? 'rgba(255,255,255,0.05)';
+  const TEXT = T?.text?.primary ?? '#f1f5f9';
+  const TEXT_MUTED = T?.text?.secondary ?? '#94a3b8';
+  const TEXT_DIM = T?.text?.muted ?? '#64748b';
+  const ACCENT = T?.accent?.cyan ?? '#00f2ff';
+  const ACCENT_GLOW = T?.accent?.cyanGlow ?? 'rgba(0,242,255,0.18)';
+
 
   return (
     <div
