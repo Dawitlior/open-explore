@@ -10,7 +10,7 @@ import { ExchangesPanel } from './ExchangesPanel';
 import { playMorningLock } from '@/lib/apex-sounds';
 import type { TradingTheme, CustomTheme, BaseMood } from '@/lib/trading-theme';
 import { deriveFullPalette, deriveFromCustomTheme, CUSTOM_THEME_DEFAULT } from '@/lib/trading-theme';
-import type { ThemeId, OperatingMode, Lang } from '@/hooks/use-settings';
+import type { ThemeId, Lang } from '@/hooks/use-settings';
 import { useDashboardConfig, WIDGET_LABELS, evalCustomKPI, type CustomKPI } from '@/hooks/use-dashboard-config';
 import type { TradingStats } from '@/lib/trading-analytics';
 import { useRiskLimits } from '@/hooks/use-risk-limits';
@@ -180,7 +180,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
     { id: 'theme-studio', icon: Brush, label: { he: 'אולפן צבע', en: 'Theme Studio' }, group: { he: 'אישי', en: 'Personal' }, desc: { he: 'בחר צבע מבטא משלך והתאם את כל אורקה אליו', en: 'Pick your own accent and re-tint all of Orca live' } },
     { id: 'dashboard', icon: LayoutDashboard, label: { he: 'סידור דאשבורד', en: 'Dashboard Layout' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'גרור, הסתר וסדר ווידג׳טים', en: 'Drag, hide and arrange widgets' } },
     { id: 'kpis', icon: Calculator, label: { he: 'מדדים מותאמים', en: 'Custom KPIs' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'בנה נוסחאות מתמטיות משלך', en: 'Build your own math formulas' } },
-    { id: 'interface', icon: SlidersHorizontal, label: { he: 'ממשק, צפיפות ותנועה', en: 'Interface, Density & Motion' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'מצבי תפעול, צפיפות, גודל גופן ואנימציות', en: 'Operating modes, density, font scale, motion' } },
+    { id: 'interface', icon: SlidersHorizontal, label: { he: 'ממשק, צפיפות ותנועה', en: 'Interface, Density & Motion' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'צפיפות, גודל גופן, אנימציות ואלמנטים', en: 'Density, font scale, motion and elements' } },
     { id: 'sounds', icon: Volume2, label: { he: 'צלילים והתראות', en: 'Sounds & Alerts' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'הפעלה, ווליום ותצוגת אפקטים אקוסטיים', en: 'Enable, volume and acoustic feedback preview' } },
     { id: 'risk', icon: Shield, label: { he: 'מגבלות סיכון', en: 'Risk Limits' }, group: { he: 'מסחר', en: 'Trading' }, desc: { he: 'מערכת ה־R המותרת ביום/שבוע/חודש', en: 'Allowed R-budget per day/week/month' } },
     { id: 'trading', icon: Target, label: { he: 'ברירות מחדל למסחר', en: 'Trading Defaults' }, group: { he: 'מסחר', en: 'Trading' }, desc: { he: 'אחוז סיכון ברירת מחדל ויעד R לעסקה חדשה', en: 'Default risk percent and R target for new trades' } },
