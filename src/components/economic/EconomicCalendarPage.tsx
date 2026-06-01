@@ -385,7 +385,6 @@ export function EconomicCalendarPage({ onClose }: Props) {
               </tbody>
             </table>
           )}
-        </div>
       </div>
     </div>
   );
