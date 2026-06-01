@@ -1126,7 +1126,7 @@ html[data-theme="platinum"] .orca-chart-skeleton {
     flex-direction: column !important;
     justify-content: space-between !important;
   }
-  [data-orca-dashboard="true"] .orca-adaptive-expectancy-card { grid-column: span 2 !important; height: 138px !important; }
+  [data-orca-dashboard="true"] .orca-adaptive-expectancy-card { height: 128px !important; }
   [data-orca-dashboard="true"] .orca-metric-label { font-size: 9px !important; letter-spacing: 0.08em !important; line-height: 1.35 !important; }
   [data-orca-dashboard="true"] .orca-metric-value { font-size: clamp(18px, 6vw, 24px) !important; letter-spacing: 0 !important; }
 
