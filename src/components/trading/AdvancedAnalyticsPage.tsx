@@ -40,6 +40,7 @@ import { useChartGuard } from '@/lib/dashboard-engine';
 const AnalyticsQuantLab = lazy(() => import('./AnalyticsQuantLab').then(m => ({ default: m.AnalyticsQuantLab })));
 import { AdvancedDeckCharts } from './AdvancedDeckCharts';
 import { UltimateAnalyticsDeck } from './UltimateDeckCharts';
+import { useEntitlement } from '@/hooks/use-entitlement';
 
 
 interface AdvancedAnalyticsPageProps {
@@ -74,18 +75,14 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
   const { t, isRTL: langRTL } = useLang();
   // 🔀 Dual-Currency Engine: filtered dataset + adaptive axis/format helpers
   const { visibleTrades: trades, isMoney, formatAxis: fmtAxis, formatValue: fmtVal, rEligibleCount, totalCount } = useVisibleTrades(_allTrades);
+  const { tier: appTier } = useEntitlement();
   const DOW = langRTL ? HEB_DOW : ENG_DOW;
   const DOW_FULL = langRTL ? HEB_DOW_FULL : ENG_DOW_FULL;
-  // Tier resolution — controls which chart layers render.
-  // beginner → minimal · live (standard) → core · review → +pro · research/alpha → +everything
-  const tier: 'minimal' | 'core' | 'pro' | 'max' =
-    isAlpha || operatingMode === 'research' ? 'max'
-    : operatingMode === 'review' ? 'pro'
-    : operatingMode === 'beginner' ? 'minimal'
-    : 'core';
+  // SaaS tier resolution — Standard → core · Advanced → pro · Ultimate → max.
+  const tier: 'core' | 'pro' | 'max' = appTier === 'ultimate' ? 'max' : appTier === 'advanced' ? 'pro' : 'core';
   const showPro = tier === 'pro' || tier === 'max';
   const showMax = tier === 'max';
-  const showCore = tier !== 'minimal';
+  const showCore = true;
   const tt = {
     background: T.bg.card,
     border: `1px solid ${T.border.medium}`,
