@@ -750,7 +750,7 @@ const Index = () => {
             <span style={{ width: 18, height: 1, background: T.accent.cyan, display: 'inline-block' }} />
             {isRTL ? 'בריאות מסחר' : 'TRADING HEALTH'}
           </div>
-          <div className={isMobile ? 'orca-snap-h' : ''} style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: isMobile ? 'nowrap' : 'wrap' }}>
+          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 12, marginBottom: 18, flexWrap: isMobile ? 'nowrap' : 'wrap', width: '100%', minWidth: 0 }}>
             <MetricCard T={T} label={t.netPnl} value={stats.totalPnl} color={stats.totalPnl >= 0 ? T.accent.cyan : T.accent.red} onInfoClick={() => handleExplainClick(t.netPnl, EXPLANATIONS.netPnl)} />
             <MetricCard T={T} label={t.winRate} value={stats.winRate} suffix="%" color={T.accent.green} onInfoClick={() => handleExplainClick(t.winRate, EXPLANATIONS.winRate)} />
             <AdaptiveExpectancyCard
