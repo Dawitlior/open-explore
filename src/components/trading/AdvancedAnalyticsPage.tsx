@@ -769,7 +769,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
           fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.12em', fontWeight: 700,
           border: `1px solid ${showMax ? T.accent.cyan : showPro ? T.accent.purple : T.border.subtle}33`,
         }}>
-          {t('רמה','Tier')}: {showMax ? t('MAX · מחקר/אלפא','MAX · Research/Alpha') : showPro ? t('PRO · סקירה','PRO · Review') : tier === 'minimal' ? t('BASIC · מתחיל','BASIC · Beginner') : t('CORE · סטנדרט','CORE · Standard')}
+          {t('רמה','Tier')}: {showMax ? t('ULTIMATE','ULTIMATE') : showPro ? t('ADVANCED','ADVANCED') : t('STANDARD','STANDARD')}
         </span>
       </div>
 
