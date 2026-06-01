@@ -1815,9 +1815,9 @@ const Index = () => {
             {sbOpen && <span>{isRTL ? 'אודות המערכת' : 'About System'}</span>}
           </button>
         </nav>
-        {/* Dimension Portal Buttons */}
-        {sbOpen && <div style={{ padding: '4px 6px' }}><PortalButton onClick={() => setActiveDimension('journal')} isRTL={isRTL} expanded={true} /></div>}
-        {sbOpen && <div style={{ padding: '4px 6px' }}><BacktestPortalButton onClick={() => setActiveDimension('backtest')} isRTL={isRTL} expanded={true} /></div>}
+        {/* Dimension Portal Buttons — visible in both expanded and collapsed sidebar */}
+        <div style={{ padding: '4px 6px' }}><PortalButton onClick={() => setActiveDimension('journal')} isRTL={isRTL} expanded={sbOpen} /></div>
+        <div style={{ padding: '4px 6px' }}><BacktestPortalButton onClick={() => setActiveDimension('backtest')} isRTL={isRTL} expanded={sbOpen} /></div>
         {/* Economic Radar promoted into main nav above */}
         {sbOpen && (
           <div style={{ padding: '4px 6px' }}>
