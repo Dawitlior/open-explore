@@ -1971,7 +1971,7 @@ const Index = () => {
           {page === 'ai' && renderAI()}
           {page === 'economic-radar' && (
             <Suspense fallback={null}>
-              <EconomicCalendarPage onClose={() => setPage('dashboard')} />
+              <EconomicCalendarPage onClose={() => setPage('dashboard')} T={T} />
             </Suspense>
           )}
           {page === 'weekly-review' && (
