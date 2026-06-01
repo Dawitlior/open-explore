@@ -42,7 +42,13 @@ export function TierGate({ required, children, label, silent }: TierGateProps) {
   const { allows, loading } = useEntitlement();
   const { lang } = useLang();
 
-  if (loading) return <>{children}</>;
+  // While entitlement resolves, render nothing for any non-standard gate.
+  // This prevents the "all charts flash then collapse" flicker on tier-aware
+  // pages. Standard charts always render immediately.
+  if (loading) {
+    if (required === 'standard') return <>{children}</>;
+    return null;
+  }
   const hasAccess = allows(required) || required === 'standard';
 
   // SOFT MODE — hide locked charts entirely so each tier shows a
@@ -52,6 +58,7 @@ export function TierGate({ required, children, label, silent }: TierGateProps) {
     if (hasAccess) return <>{children}</>;
     return null;
   }
+
 
   // HARD MODE — block & upsell
   if (hasAccess) return <>{children}</>;
