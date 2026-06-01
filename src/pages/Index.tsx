@@ -1882,8 +1882,7 @@ const Index = () => {
               </button>
             )}
             <h1 style={{ fontSize: isMobile ? 13 : 17, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{nav.find(n => n.id === page)?.label}</h1>
-            {!isMobile && !uiPrefs.hideHeaderBadges && <TradingBadge color={modeColors[opMode]}>{opMode === 'beginner' ? (isRTL ? '🎓 מתחיל' : '🎓 BEGINNER') : opMode === 'live' ? (isRTL ? '🔴 חי' : '🔴 LIVE') : opMode === 'review' ? (isRTL ? '🔵 סקירה' : '🔵 REVIEW') : (isRTL ? '🟣 מחקר' : '🟣 RESEARCH')}</TradingBadge>}
-            {!isMobile && isAlpha && !uiPrefs.hideHeaderBadges && <TradingBadge color={T.accent.purple}>⚡ ALPHA</TradingBadge>}
+            {!isMobile && !uiPrefs.hideHeaderBadges && <TradingBadge color={appTier === 'ultimate' ? T.accent.purple : appTier === 'advanced' ? T.accent.cyan : T.accent.blue}>{appTier.toUpperCase()}</TradingBadge>}
             {!isMobile && settings.privacyMode && <TradingBadge color={T.accent.orange}>🔒</TradingBadge>}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 10, flexWrap: 'nowrap', flexShrink: 0 }}>
