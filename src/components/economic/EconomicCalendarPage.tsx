@@ -106,7 +106,8 @@ function rangeKeys(range: RangeKey, base: Date): string[] {
   return keys;
 }
 
-interface Props { onClose: () => void; }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface Props { onClose: () => void; T?: any; }
 
 const IMPACT_FILTERS: Array<{ key: 'all' | EconomicImpact; copyKey: 'all' | 'high' | 'medium' | 'low' }> = [
   { key: 'all', copyKey: 'all' },
