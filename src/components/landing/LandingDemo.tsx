@@ -250,7 +250,7 @@ function buildChartList(page: Page, tier: Tier): DemoChart[] {
 
 interface RenderCtx {
   equity: { i: number; balance: number }[];
-  rDist: { label: string; n: number }[];
+  rDist: { label: string; from: number; to: number; n: number }[];
   coins: { coin: string; pnl: number }[];
   dd: { i: number; dd: number }[];
   rollExp: { i: number; exp: number }[];
