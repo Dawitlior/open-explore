@@ -1102,10 +1102,7 @@ html[data-theme="platinum"] .orca-chart-skeleton {
     border-radius: 18px !important;
     padding: 16px !important;
   }
-  [data-orca-dashboard="true"] [style*="display:flex"]:has(> .orca-metric-card),
-  [data-orca-dashboard="true"] [style*="display: flex"]:has(> .orca-metric-card),
-  [data-orca-dashboard="true"] [style*="display:flex"]:has(> .orca-score-gauge),
-  [data-orca-dashboard="true"] [style*="display: flex"]:has(> .orca-score-gauge) {
+  [data-orca-dashboard="true"] .orca-dashboard-kpi-grid {
     display: grid !important;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 10px !important;
