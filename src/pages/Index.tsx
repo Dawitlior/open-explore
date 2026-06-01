@@ -2147,7 +2147,7 @@ const Index = () => {
           isRTL={isRTL}
           page={page}
           onNavigate={(id) => { setPage(id); }}
-          onOpenRadar={() => setShowEconomicCalendar(true)}
+          onOpenRadar={() => setPage('economic-radar')}
           onOpenMore={() => setSbOpen(true)}
           onAddTrade={() => { setEditingTrade(null); setShowTradeForm(true); }}
           onLongPressCenter={() => setShowCmdPalette(true)}
