@@ -588,10 +588,10 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
         </ChartWrapper>
       )}
 
-      {/* ═══ DEVIATION CHART (ALPHA + Live/Review/Research) ═══ */}
+      {/* ═══ DEVIATION CHART (Ultimate) ═══ */}
       {showAlphaDeviation && registryAllows('deviationDistribution') && (
         <>
-          <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'ביצוע מתקדם (ALPHA)' : 'EXECUTION (ALPHA)'} />
+          <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'ביצוע מתקדם (ULTIMATE)' : 'EXECUTION (ULTIMATE)'} />
           <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'התפלגות סטייה (R)' : 'Deviation Distribution (R)'} explanation={EXPLANATIONS.rDistribution} unit="R">
             <LazyChart height={160}>
               <ResponsiveContainer width="100%" height={160}>
