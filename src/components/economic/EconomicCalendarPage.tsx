@@ -217,9 +217,9 @@ export function EconomicCalendarPage({ onClose, T }: Props) {
         </div>
 
         <div className="text-[11px] tabular-nums px-2.5 py-1 rounded-md" style={{
-          background: 'rgba(0,242,255,0.08)',
+          background: ACCENT_GLOW,
           color: ACCENT,
-          border: `1px solid rgba(0,242,255,0.18)`,
+          border: `1px solid ${ACCENT_GLOW}`,
         }}>
           {filtered.length} {t.results}
         </div>
@@ -242,7 +242,7 @@ export function EconomicCalendarPage({ onClose, T }: Props) {
                   className="px-3 py-1.5 text-[12px] font-medium transition"
                   style={{
                     background: active ? ACCENT : 'transparent',
-                    color: active ? '#061326' : TEXT_MUTED,
+                    color: active ? (T?.bg?.primary ?? '#000') : TEXT_MUTED,
                     borderInlineEnd: i < arr.length - 1 ? `1px solid ${BORDER_SOFT}` : 'none',
                     fontWeight: active ? 700 : 500,
                   }}
@@ -289,9 +289,9 @@ export function EconomicCalendarPage({ onClose, T }: Props) {
                   onClick={() => setImpactFilter(key)}
                   className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition"
                   style={{
-                    background: active ? 'rgba(0,242,255,0.1)' : 'transparent',
+                    background: active ? ACCENT_GLOW : 'transparent',
                     color: active ? ACCENT : TEXT_MUTED,
-                    border: `1px solid ${active ? 'rgba(0,242,255,0.3)' : BORDER}`,
+                    border: `1px solid ${active ? ACCENT : BORDER}`,
                   }}
                 >
                   {key !== 'all' && (
@@ -314,9 +314,9 @@ export function EconomicCalendarPage({ onClose, T }: Props) {
                   onClick={() => toggleCurrency(c)}
                   className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition"
                   style={{
-                    background: active ? 'rgba(0,242,255,0.1)' : 'transparent',
+                    background: active ? ACCENT_GLOW : 'transparent',
                     color: active ? ACCENT : TEXT_MUTED,
-                    border: `1px solid ${active ? 'rgba(0,242,255,0.3)' : BORDER}`,
+                    border: `1px solid ${active ? ACCENT : BORDER}`,
                   }}
                 >
                   <span>{CURRENCY_FLAG[c] ?? '🏳'}</span>
