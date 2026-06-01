@@ -380,7 +380,7 @@ export function EconomicCalendarPage({ onClose, T }: Props) {
                         </td>
                       </tr>
                       {dayEvents.map(e => (
-                        <EventRow key={e.id} e={e} lang={lang} />
+                        <EventRow key={e.id} e={e} lang={lang} T={T} />
                       ))}
                     </>
                   );
