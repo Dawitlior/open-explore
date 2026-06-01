@@ -14,6 +14,7 @@ import { useVisibleTrades } from '@/lib/display-mode-format';
 import { RProxyBanner } from './RProxyBanner';
 import { useChartGuard } from '@/lib/dashboard-engine';
 import { UltimateRiskDeck } from './UltimateDeckCharts';
+import { useEntitlement } from '@/hooks/use-entitlement';
 
 
 type OperatingMode = 'live' | 'review' | 'research' | 'beginner';
@@ -86,6 +87,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
   useChartGuard('risk');
   const registryAllows = (id: string) => !registryCharts || registryCharts.some(c => c.id === id);
   const { visibleTrades: trades, isMoney, rEligibleCount, totalCount } = useVisibleTrades(_allTrades);
+  const { tier: appTier, allows: tierAllows } = useEntitlement();
   const tt = { background: T.bg.card, border: `1px solid ${T.border.medium}`, borderRadius: 10, color: T.text.primary, fontSize: 12, boxShadow: T.shadow.elevated, padding: '8px 12px' };
   const LIMITS_USED = customLimits || DEFAULT_RISK_LIMITS;
 
@@ -111,25 +113,28 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
     });
   }, [trades]);
 
-  // ─── Composition matrix: Standard/Alpha × Beginner/Live/Review/Research ───
-  const isBeginner = operatingMode === 'beginner';
-  const isLive     = operatingMode === 'live';
-  const isReview   = operatingMode === 'review';
-  const isResearch = operatingMode === 'research';
+  // SaaS tier composition: Standard / Advanced / Ultimate.
+  const isAdvancedPlan = tierAllows('advanced');
+  const isUltimatePlan = tierAllows('ultimate');
+  const tierMeta = appTier === 'ultimate'
+    ? { he: 'אולטימייט', en: 'Ultimate', sub: { he: 'מנוע סיכון כמותי מלא', en: 'Full quantitative risk engine' }, color: T.accent.purple }
+    : appTier === 'advanced'
+      ? { he: 'מתקדם', en: 'Advanced', sub: { he: 'דיאגנוסטיקה מקצועית ואנומליות סיכון', en: 'Professional diagnostics and risk anomalies' }, color: T.accent.cyan }
+      : { he: 'סטנדרט', en: 'Standard', sub: { he: 'מגבלות סיכון, Drawdown והקצאה בסיסית', en: 'Risk limits, drawdown, and baseline allocation' }, color: T.accent.blue };
 
-  // What each mode shows on the Risk page
-  const showLimitBars      = !isBeginner || isAlpha; // Beginner Standard: hide live limit bars
+  // What each SaaS tier shows on the Risk page
+  const showLimitBars      = true;
   const showKpiStrip       = true;
-  const showGaugesRow      = !isBeginner;
-  const showAnomalies      = !isBeginner && (isAlpha || isReview); // Standard+Live hides anomalies
-  const showRiskTimeline   = !isBeginner && (isAlpha || isReview || isResearch);
-  const showSetupTable     = !isBeginner;
+  const showGaugesRow      = true;
+  const showAnomalies      = isAdvancedPlan;
+  const showRiskTimeline   = isAdvancedPlan;
+  const showSetupTable     = true;
   const showAllocAndDD     = true; // everyone gets DD; beginner only DD
-  const showAllocChart     = !isBeginner;
-  const showAlphaEvolution = isAlpha && (isResearch || isReview || isLive);
+  const showAllocChart     = true;
+  const showAlphaEvolution = isUltimatePlan;
   const showStatusWarnings = true;
-  const showExplanationLog = isAlpha && (isReview || isResearch);
-  const showResearchDeepRisk = isAlpha && isResearch;
+  const showExplanationLog = isUltimatePlan;
+  const showResearchDeepRisk = isUltimatePlan;
 
   // Risk behavior over time
   const riskTimeline = useMemo(() => {
