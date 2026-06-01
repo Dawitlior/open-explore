@@ -104,7 +104,7 @@ const Index = () => {
   const [entered, setEntered] = useState(() => sessionStorage.getItem('orca-entered') === '1');
   const [onboardingDone, setOnboardingDone] = useState(() => !shouldShowOnboarding());
   const [activeDimension, setActiveDimension] = useState<'orca' | 'journal' | 'backtest'>('orca');
-  const [showEconomicCalendar, setShowEconomicCalendar] = useState(false);
+  // economic-radar is now a regular page (page === 'economic-radar'); no overlay state needed
   const baseTheme = getTheme(settings.theme);
   const t = i18n[settings.lang];
   const isRTL = settings.isRTL;
