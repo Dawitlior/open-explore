@@ -112,7 +112,7 @@ const Index = () => {
   const isAdvancedTier = tierAllows('advanced');
   const isUltimateTier = tierAllows('ultimate');
   const isAlpha = isUltimateTier;
-  const opMode: 'live' | 'review' | 'research' | 'beginner' = isUltimateTier ? 'research' : 'review';
+  const opMode = (isUltimateTier ? 'research' : isAdvancedTier ? 'review' : 'live') as 'live' | 'review' | 'research' | 'beginner';
   // Phase 2 — registry-driven chart lists per page (tier-filtered).
   const analyticsCharts = useRegistryCharts('analytics');
   const riskCharts = useRegistryCharts('risk');
@@ -447,15 +447,10 @@ const Index = () => {
       id: `nav-${p}`, label: `Go to ${p.charAt(0).toUpperCase() + p.slice(1)}`, icon: '📄', category: isRTL ? 'ניווט' : 'Navigation', action: () => setPage(p)
     })),
     { id: 'feature-info', label: isRTL ? 'אודות המערכת' : 'About Orca System', icon: 'ℹ️', category: isRTL ? 'מערכת' : 'System', action: () => setShowFeatureModal(true) },
-    { id: 'beginner', label: isRTL ? 'מצב מתחיל' : 'Switch to Beginner Mode', icon: '🎓', category: isRTL ? 'מצבים' : 'Modes', action: () => settings.setOperatingMode('beginner') },
-    { id: 'live', label: isRTL ? 'מצב חי' : 'Switch to Live Mode', icon: '🔴', category: isRTL ? 'מצבים' : 'Modes', action: () => settings.setOperatingMode('live') },
-    { id: 'review', label: isRTL ? 'מצב סקירה' : 'Switch to Review Mode', icon: '🔵', category: isRTL ? 'מצבים' : 'Modes', action: () => settings.setOperatingMode('review') },
-    { id: 'research', label: isRTL ? 'מצב מחקר' : 'Switch to Research Mode', icon: '🟣', category: isRTL ? 'מצבים' : 'Modes', action: () => settings.setOperatingMode('research') },
-    { id: 'alpha', label: isRTL ? 'הפעל Alpha' : 'Toggle Alpha Mode', icon: '⚡', category: isRTL ? 'מצבים' : 'Modes', action: () => settings.setSystemMode(isAlpha ? 'standard' : 'alpha') },
     { id: 'journal-sanctuary', label: isRTL ? 'יומן מסע לסוחר' : 'Trader Journey', icon: '🏛️', category: isRTL ? 'ממדים' : 'Dimensions', action: () => setActiveDimension('journal') },
     { id: 'backtest-journal', label: isRTL ? 'יומן באק-טסט' : 'Backtest Journal', icon: '📊', category: isRTL ? 'ממדים' : 'Dimensions', action: () => setActiveDimension('backtest') },
     { id: 'economic-radar', label: isRTL ? 'מכ״ם כלכלי' : 'Economic Radar', icon: '📡', category: isRTL ? 'כלים' : 'Tools', action: () => setShowEconomicCalendar(true) },
-  ], [isRTL, handleExport, handleImport, handleGenerateInsights, isAlpha, settings]);
+  ], [isRTL, handleExport, handleImport, handleGenerateInsights, settings]);
 
   // ─── Weekly Review reminder badge (Friday or 1st of month) ───
   const [reviewReminderTick, setReviewReminderTick] = useState(0);
