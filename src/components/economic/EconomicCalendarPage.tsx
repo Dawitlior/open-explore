@@ -395,12 +395,20 @@ export function EconomicCalendarPage({ onClose, T }: Props) {
 
 /* ───── Standard table row ───── */
 
-function EventRow({ e, lang }: { e: EconomicEvent; lang: 'he' | 'en' }) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function EventRow({ e, lang, T }: { e: EconomicEvent; lang: 'he' | 'en'; T?: any }) {
+  const textPrimary = T?.text?.primary ?? '#f1f5f9';
+  const textSecondary = T?.text?.secondary ?? '#94a3b8';
+  const textMuted = T?.text?.muted ?? '#64748b';
+  const textDim = T?.text?.dim ?? '#475569';
+  const green = T?.accent?.green ?? '#10b981';
+  const red = T?.accent?.red ?? '#f43f5e';
+
   const surprise = e.actual ? surpriseTone(computeSurprise(e.actual, e.forecast)) : undefined;
   const actualColor =
-    surprise === 'positive' ? '#10b981' :
-    surprise === 'negative' ? '#f43f5e' :
-    'rgba(231,243,255,0.95)';
+    surprise === 'positive' ? green :
+    surprise === 'negative' ? red :
+    textPrimary;
   const flag = e.currency ? CURRENCY_FLAG[e.currency] : null;
   const tierColor = MACRO_TIER_COLOR[e.impact] ?? MACRO_TIER_COLOR.t3;
   const dots = e.impact === 't1' ? 3 : e.impact === 't2' ? 2 : 1;
@@ -408,15 +416,15 @@ function EventRow({ e, lang }: { e: EconomicEvent; lang: 'he' | 'en' }) {
   return (
     <tr
       className="transition hover:bg-white/[0.03]"
-      style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+      style={{ borderBottom: `1px solid ${T?.border?.subtle ?? 'rgba(255,255,255,0.04)'}` }}
     >
-      <td className="px-4 py-2.5 tabular-nums text-[12px] font-medium" style={{ color: 'rgba(231,243,255,0.85)' }}>
+      <td className="px-4 py-2.5 tabular-nums text-[12px] font-medium" style={{ color: textPrimary }}>
         {formatISTTime(e.release_at, lang)}
       </td>
       <td className="px-2 py-2.5">
         <div className="flex items-center gap-1.5">
           {flag && <span style={{ fontSize: 13 }}>{flag}</span>}
-          <span className="text-[11px] font-semibold" style={{ color: 'rgba(231,243,255,0.75)' }}>
+          <span className="text-[11px] font-semibold" style={{ color: textSecondary }}>
             {e.currency}
           </span>
         </div>
@@ -428,24 +436,25 @@ function EventRow({ e, lang }: { e: EconomicEvent; lang: 'he' | 'en' }) {
               key={i}
               className="w-1.5 h-3 rounded-sm"
               style={{
-                background: i <= dots ? tierColor : 'rgba(255,255,255,0.08)',
+                background: i <= dots ? tierColor : (T?.border?.medium ?? 'rgba(255,255,255,0.08)'),
               }}
             />
           ))}
         </div>
       </td>
-      <td className="px-3 py-2.5 text-[12px]" style={{ color: 'rgba(231,243,255,0.92)' }}>
+      <td className="px-3 py-2.5 text-[12px]" style={{ color: textPrimary }}>
         {e.event_name}
       </td>
       <td className="px-3 py-2.5 text-end tabular-nums text-[12px] font-semibold" style={{ color: actualColor }}>
         {e.actual || <span className="opacity-30">—</span>}
       </td>
-      <td className="px-3 py-2.5 text-end tabular-nums text-[12px]" style={{ color: 'rgba(231,243,255,0.6)' }}>
+      <td className="px-3 py-2.5 text-end tabular-nums text-[12px]" style={{ color: textMuted }}>
         {e.forecast || <span className="opacity-30">—</span>}
       </td>
-      <td className="px-3 py-2.5 text-end tabular-nums text-[12px]" style={{ color: 'rgba(231,243,255,0.45)' }}>
+      <td className="px-3 py-2.5 text-end tabular-nums text-[12px]" style={{ color: textDim }}>
         {e.previous || <span className="opacity-30">—</span>}
       </td>
     </tr>
   );
+
 }
