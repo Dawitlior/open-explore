@@ -106,7 +106,8 @@ function rangeKeys(range: RangeKey, base: Date): string[] {
   return keys;
 }
 
-interface Props { onClose: () => void; }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface Props { onClose: () => void; T?: any; }
 
 const IMPACT_FILTERS: Array<{ key: 'all' | EconomicImpact; copyKey: 'all' | 'high' | 'medium' | 'low' }> = [
   { key: 'all', copyKey: 'all' },
@@ -117,7 +118,7 @@ const IMPACT_FILTERS: Array<{ key: 'all' | EconomicImpact; copyKey: 'all' | 'hig
 
 const COMMON_CURRENCIES = ['USD', 'EUR', 'GBP', 'JPY', 'CNY', 'CAD', 'AUD', 'CHF'];
 
-export function EconomicCalendarPage({ onClose }: Props) {
+export function EconomicCalendarPage({ onClose, T }: Props) {
   const { lang } = useLang();
   const isRTL = lang === 'he';
   const t = COPY[lang];
@@ -175,15 +176,17 @@ export function EconomicCalendarPage({ onClose }: Props) {
     });
   }
 
-  // Orca palette
-  const BG = '#061326';
-  const PANEL = '#0a1d36';
-  const BORDER = 'rgba(255,255,255,0.08)';
-  const BORDER_SOFT = 'rgba(255,255,255,0.05)';
-  const TEXT = 'rgba(231,243,255,0.95)';
-  const TEXT_MUTED = 'rgba(255,255,255,0.55)';
-  const TEXT_DIM = 'rgba(255,255,255,0.35)';
-  const ACCENT = '#00f2ff';
+  // Theme-aware palette (falls back to midnight defaults if T not provided)
+  const BG = T?.bg?.primary ?? '#020202';
+  const PANEL = T?.bg?.card ?? '#0a0a0a';
+  const BORDER = T?.border?.medium ?? 'rgba(255,255,255,0.10)';
+  const BORDER_SOFT = T?.border?.subtle ?? 'rgba(255,255,255,0.05)';
+  const TEXT = T?.text?.primary ?? '#f1f5f9';
+  const TEXT_MUTED = T?.text?.secondary ?? '#94a3b8';
+  const TEXT_DIM = T?.text?.muted ?? '#64748b';
+  const ACCENT = T?.accent?.cyan ?? '#00f2ff';
+  const ACCENT_GLOW = T?.accent?.cyanGlow ?? 'rgba(0,242,255,0.18)';
+
 
   return (
     <div
@@ -214,9 +217,9 @@ export function EconomicCalendarPage({ onClose }: Props) {
         </div>
 
         <div className="text-[11px] tabular-nums px-2.5 py-1 rounded-md" style={{
-          background: 'rgba(0,242,255,0.08)',
+          background: ACCENT_GLOW,
           color: ACCENT,
-          border: `1px solid rgba(0,242,255,0.18)`,
+          border: `1px solid ${ACCENT_GLOW}`,
         }}>
           {filtered.length} {t.results}
         </div>
@@ -239,7 +242,7 @@ export function EconomicCalendarPage({ onClose }: Props) {
                   className="px-3 py-1.5 text-[12px] font-medium transition"
                   style={{
                     background: active ? ACCENT : 'transparent',
-                    color: active ? '#061326' : TEXT_MUTED,
+                    color: active ? (T?.bg?.primary ?? '#000') : TEXT_MUTED,
                     borderInlineEnd: i < arr.length - 1 ? `1px solid ${BORDER_SOFT}` : 'none',
                     fontWeight: active ? 700 : 500,
                   }}
@@ -286,9 +289,9 @@ export function EconomicCalendarPage({ onClose }: Props) {
                   onClick={() => setImpactFilter(key)}
                   className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition"
                   style={{
-                    background: active ? 'rgba(0,242,255,0.1)' : 'transparent',
+                    background: active ? ACCENT_GLOW : 'transparent',
                     color: active ? ACCENT : TEXT_MUTED,
-                    border: `1px solid ${active ? 'rgba(0,242,255,0.3)' : BORDER}`,
+                    border: `1px solid ${active ? ACCENT : BORDER}`,
                   }}
                 >
                   {key !== 'all' && (
@@ -311,9 +314,9 @@ export function EconomicCalendarPage({ onClose }: Props) {
                   onClick={() => toggleCurrency(c)}
                   className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition"
                   style={{
-                    background: active ? 'rgba(0,242,255,0.1)' : 'transparent',
+                    background: active ? ACCENT_GLOW : 'transparent',
                     color: active ? ACCENT : TEXT_MUTED,
-                    border: `1px solid ${active ? 'rgba(0,242,255,0.3)' : BORDER}`,
+                    border: `1px solid ${active ? ACCENT : BORDER}`,
                   }}
                 >
                   <span>{CURRENCY_FLAG[c] ?? '🏳'}</span>
@@ -377,7 +380,7 @@ export function EconomicCalendarPage({ onClose }: Props) {
                         </td>
                       </tr>
                       {dayEvents.map(e => (
-                        <EventRow key={e.id} e={e} lang={lang} />
+                        <EventRow key={e.id} e={e} lang={lang} T={T} />
                       ))}
                     </>
                   );
@@ -392,12 +395,20 @@ export function EconomicCalendarPage({ onClose }: Props) {
 
 /* ───── Standard table row ───── */
 
-function EventRow({ e, lang }: { e: EconomicEvent; lang: 'he' | 'en' }) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function EventRow({ e, lang, T }: { e: EconomicEvent; lang: 'he' | 'en'; T?: any }) {
+  const textPrimary = T?.text?.primary ?? '#f1f5f9';
+  const textSecondary = T?.text?.secondary ?? '#94a3b8';
+  const textMuted = T?.text?.muted ?? '#64748b';
+  const textDim = T?.text?.dim ?? '#475569';
+  const green = T?.accent?.green ?? '#10b981';
+  const red = T?.accent?.red ?? '#f43f5e';
+
   const surprise = e.actual ? surpriseTone(computeSurprise(e.actual, e.forecast)) : undefined;
   const actualColor =
-    surprise === 'positive' ? '#10b981' :
-    surprise === 'negative' ? '#f43f5e' :
-    'rgba(231,243,255,0.95)';
+    surprise === 'positive' ? green :
+    surprise === 'negative' ? red :
+    textPrimary;
   const flag = e.currency ? CURRENCY_FLAG[e.currency] : null;
   const tierColor = MACRO_TIER_COLOR[e.impact] ?? MACRO_TIER_COLOR.t3;
   const dots = e.impact === 't1' ? 3 : e.impact === 't2' ? 2 : 1;
@@ -405,15 +416,15 @@ function EventRow({ e, lang }: { e: EconomicEvent; lang: 'he' | 'en' }) {
   return (
     <tr
       className="transition hover:bg-white/[0.03]"
-      style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+      style={{ borderBottom: `1px solid ${T?.border?.subtle ?? 'rgba(255,255,255,0.04)'}` }}
     >
-      <td className="px-4 py-2.5 tabular-nums text-[12px] font-medium" style={{ color: 'rgba(231,243,255,0.85)' }}>
+      <td className="px-4 py-2.5 tabular-nums text-[12px] font-medium" style={{ color: textPrimary }}>
         {formatISTTime(e.release_at, lang)}
       </td>
       <td className="px-2 py-2.5">
         <div className="flex items-center gap-1.5">
           {flag && <span style={{ fontSize: 13 }}>{flag}</span>}
-          <span className="text-[11px] font-semibold" style={{ color: 'rgba(231,243,255,0.75)' }}>
+          <span className="text-[11px] font-semibold" style={{ color: textSecondary }}>
             {e.currency}
           </span>
         </div>
@@ -425,24 +436,25 @@ function EventRow({ e, lang }: { e: EconomicEvent; lang: 'he' | 'en' }) {
               key={i}
               className="w-1.5 h-3 rounded-sm"
               style={{
-                background: i <= dots ? tierColor : 'rgba(255,255,255,0.08)',
+                background: i <= dots ? tierColor : (T?.border?.medium ?? 'rgba(255,255,255,0.08)'),
               }}
             />
           ))}
         </div>
       </td>
-      <td className="px-3 py-2.5 text-[12px]" style={{ color: 'rgba(231,243,255,0.92)' }}>
+      <td className="px-3 py-2.5 text-[12px]" style={{ color: textPrimary }}>
         {e.event_name}
       </td>
       <td className="px-3 py-2.5 text-end tabular-nums text-[12px] font-semibold" style={{ color: actualColor }}>
         {e.actual || <span className="opacity-30">—</span>}
       </td>
-      <td className="px-3 py-2.5 text-end tabular-nums text-[12px]" style={{ color: 'rgba(231,243,255,0.6)' }}>
+      <td className="px-3 py-2.5 text-end tabular-nums text-[12px]" style={{ color: textMuted }}>
         {e.forecast || <span className="opacity-30">—</span>}
       </td>
-      <td className="px-3 py-2.5 text-end tabular-nums text-[12px]" style={{ color: 'rgba(231,243,255,0.45)' }}>
+      <td className="px-3 py-2.5 text-end tabular-nums text-[12px]" style={{ color: textDim }}>
         {e.previous || <span className="opacity-30">—</span>}
       </td>
     </tr>
   );
+
 }
