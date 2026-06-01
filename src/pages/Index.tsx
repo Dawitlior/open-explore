@@ -112,13 +112,13 @@ const Index = () => {
   const isAdvancedTier = tierAllows('advanced');
   const isUltimateTier = tierAllows('ultimate');
   const isAlpha = isUltimateTier;
-  const opMode = (isUltimateTier ? 'research' : 'review') as 'live' | 'review' | 'research' | 'beginner';
+  const opMode = 'review' as 'live' | 'review' | 'research' | 'beginner';
   // Phase 2 — registry-driven chart lists per page (tier-filtered).
   const analyticsCharts = useRegistryCharts('analytics');
   const riskCharts = useRegistryCharts('risk');
   const psychologyCharts = useRegistryCharts('psychology');
   // All three registry chart lists are now consumed by their respective pages.
-  const { prefs: uiPrefs, setPrefs: setUIPrefs, toggleHiddenMode, reset: resetUIPrefs } = useUIPrefs();
+  const { prefs: uiPrefs } = useUIPrefs();
   const T = useMemo(
     () => (uiPrefs.customAccentEnabled ? tintTheme(baseTheme, uiPrefs.customAccent) : baseTheme),
     [baseTheme, uiPrefs.customAccentEnabled, uiPrefs.customAccent],
