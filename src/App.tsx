@@ -11,6 +11,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { StorageErrorListener } from "@/components/StorageErrorListener";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import Landing from "./pages/Landing";
 import ResetPassword from "./pages/ResetPassword";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
@@ -80,6 +81,7 @@ const App = () => (
             <EconomicAlertBanner />
             <UpgradeModal />
             <Routes>
+              <Route path="/welcome" element={<Landing />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/terms" element={<Terms />} />
