@@ -62,9 +62,9 @@ import { useRiskLimits } from '@/hooks/use-risk-limits';
 import { scopedStorage } from '@/lib/scoped-storage';
 import { useAuth } from '@/hooks/use-auth';
 import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
-import { useWidgetVisibility } from '@/hooks/use-widget-visibility';
 import { useRegistryCharts } from '@/hooks/use-registry-charts';
 import { useExpectancyMode } from '@/lib/dashboard-engine';
+import { useEntitlement } from '@/hooks/use-entitlement';
 
 // ─── Facebook-style red notification badge with "1" ───
 const ReminderBadge = () => (
@@ -108,11 +108,9 @@ const Index = () => {
   const baseTheme = getTheme(settings.theme);
   const t = i18n[settings.lang];
   const isRTL = settings.isRTL;
-  const isAlpha = settings.isAlpha;
-  const opMode = settings.operatingMode;
-  // Dashboard matrix — single source of truth for widget visibility.
-  // Stage 2 wiring: live cell widgets consume `show(id)` directly.
-  const widgetVis = useWidgetVisibility();
+  const { tier: appTier, allows: tierAllows } = useEntitlement();
+  const isAdvancedTier = tierAllows('advanced');
+  const isUltimateTier = tierAllows('ultimate');
   // Phase 2 — registry-driven chart lists per page (tier-filtered).
   const analyticsCharts = useRegistryCharts('analytics');
   const riskCharts = useRegistryCharts('risk');
