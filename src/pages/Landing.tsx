@@ -237,24 +237,87 @@ function Features() {
 }
 
 /* ──────────────── DEEP DIVE ──────────────── */
+const landingTooltip: React.CSSProperties = {
+  background: '#0a0a1a',
+  border: '1px solid #1e1e5a',
+  borderRadius: 8,
+  color: '#e2e8f0',
+  fontSize: 11,
+  padding: '6px 10px',
+  fontFamily: "'DM Sans', sans-serif",
+};
+
 function DeepDive() {
-  const blocks = [
+  const trades = React.useMemo(() => generateMockTrades(60, 7), []);
+  const dd = React.useMemo(() => drawdownCurve(trades), [trades]);
+  const rollExp = React.useMemo(() => rollingExpectancy(trades), [trades]);
+  const discipline = React.useMemo(() => disciplineTrend(trades), [trades]);
+  void rBuckets;
+
+  const blocks: { tag: string; title: string; body: string; chart: React.ReactNode }[] = [
     {
       tag: 'ניתוח',
       title: 'תוחלת מתגלגלת. דעיכת יתרון. Sortino.',
       body: 'הסטטיסטיקות שמדמים מקצועיים משתמשים בהן — בלי לפתוח קוד פייתון. רואים מתי האדג׳ שלך מתחיל לדעוך, רגעים לפני שזה פוגע בחשבון.',
+      chart: (
+        <ResponsiveContainer>
+          <RLineChart data={rollExp} margin={{ left: -16, right: 8, top: 8, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="2 4" stroke="#1e1e5a55" />
+            <XAxis dataKey="i" tick={{ fill: '#94a3b8', fontSize: 9 }} tickLine={false} axisLine={false} />
+            <YAxis tick={{ fill: '#94a3b8', fontSize: 9 }} tickLine={false} axisLine={false} />
+            <Tooltip contentStyle={landingTooltip} />
+            <ReferenceLine y={0} stroke="#1e1e5a" />
+            <Line type="monotone" dataKey="exp" stroke="#a78bfa" strokeWidth={2.2} dot={false} />
+          </RLineChart>
+        </ResponsiveContainer>
+      ),
     },
     {
       tag: 'סיכון',
       title: 'אזעקות לפני שאתה שובר את החוקים שלך.',
       body: '4 שכבות מגבלות. עוקבות אחריך אוטומטית. כשאתה מתקרב לקיר — המערכת שולחת התראה. כשאתה חוצה — היא עוצרת אותך לפני העסקה הבאה.',
+      chart: (
+        <ResponsiveContainer>
+          <AreaChart data={dd} margin={{ left: -16, right: 8, top: 8, bottom: 0 }}>
+            <defs>
+              <linearGradient id="lp-dd" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#ef4444" stopOpacity={0.55} />
+                <stop offset="100%" stopColor="#ef4444" stopOpacity={0.05} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="2 4" stroke="#1e1e5a55" />
+            <XAxis dataKey="i" tick={{ fill: '#94a3b8', fontSize: 9 }} tickLine={false} axisLine={false} />
+            <YAxis tick={{ fill: '#94a3b8', fontSize: 9 }} tickLine={false} axisLine={false} />
+            <Tooltip contentStyle={landingTooltip} />
+            <Area type="monotone" dataKey="dd" stroke="#ef4444" fill="url(#lp-dd)" strokeWidth={2} />
+          </AreaChart>
+        </ResponsiveContainer>
+      ),
     },
     {
       tag: 'פסיכולוגיה',
       title: 'Oracle יודע איך אתה מפסיד.',
       body: 'אבחון התנהגותי בן 37 צמתים מזהה את הדפוסים הנסתרים שלך: revenge trading, overtrading אחרי רצף הפסדים, FOMO. ואז מציע מה לעשות.',
+      chart: (
+        <ResponsiveContainer>
+          <AreaChart data={discipline} margin={{ left: -16, right: 8, top: 8, bottom: 0 }}>
+            <defs>
+              <linearGradient id="lp-ds" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#10b981" stopOpacity={0.5} />
+                <stop offset="100%" stopColor="#10b981" stopOpacity={0.05} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="2 4" stroke="#1e1e5a55" />
+            <XAxis dataKey="i" tick={{ fill: '#94a3b8', fontSize: 9 }} tickLine={false} axisLine={false} />
+            <YAxis tick={{ fill: '#94a3b8', fontSize: 9 }} tickLine={false} axisLine={false} domain={[0, 100]} />
+            <Tooltip contentStyle={landingTooltip} />
+            <Area type="monotone" dataKey="pct" stroke="#10b981" fill="url(#lp-ds)" strokeWidth={2} />
+          </AreaChart>
+        </ResponsiveContainer>
+      ),
     },
   ];
+
   return (
     <section className="bg-gradient-to-b from-transparent via-[#141432]/30 to-transparent py-20 lg:py-28">
       <div className="max-w-6xl mx-auto px-5 lg:px-8 space-y-20">
@@ -273,8 +336,12 @@ function DeepDive() {
               <p className="text-slate-400 text-base leading-relaxed">{b.body}</p>
             </div>
             <div dir="rtl" className="aspect-[5/3] rounded-2xl bg-gradient-to-br from-[#4f46e5]/15 to-[#a78bfa]/5 border border-white/10 p-1.5">
-              <div className="w-full h-full rounded-xl bg-[#0a0a1a]/80 flex items-center justify-center text-slate-600 text-xs font-mono tracking-widest" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                ◆ {b.tag.toUpperCase()} VIEW
+              <div className="w-full h-full rounded-xl bg-[#0a0a1a]/80 p-3 pt-7 relative overflow-hidden">
+                <div className="absolute top-2 right-3 text-[9px] tracking-[0.2em] text-slate-500 font-mono z-10 flex items-center gap-1.5" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  ◆ {b.tag.toUpperCase()} · LIVE
+                </div>
+                <div className="w-full h-full">{b.chart}</div>
               </div>
             </div>
           </motion.div>
