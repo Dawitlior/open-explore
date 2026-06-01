@@ -1060,3 +1060,30 @@ html[data-theme="platinum"] .orca-chart-skeleton {
     opacity: 0.88;
   }
 }
+
+/* ═══ DASHBOARD MOBILE RESPONSIVENESS ═══
+   On mobile, force every direct chart/card row inside the dashboard into
+   a single-column vertical stack — matches the Analytics page behaviour. */
+@media (max-width: 768px) {
+  [data-orca-dashboard="true"] > div > div[style*="display: flex"]:not(.orca-snap-h),
+  [data-orca-dashboard="true"] > div > div > div[style*="display: flex"]:not(.orca-snap-h),
+  [data-orca-dashboard="true"] div[style*="flex-wrap: wrap"]:not(.orca-snap-h) {
+    flex-direction: column !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
+  }
+  [data-orca-dashboard="true"] div[style*="flex-wrap: wrap"]:not(.orca-snap-h) > * {
+    width: 100% !important;
+    min-width: 0 !important;
+    flex-basis: auto !important;
+    max-width: 100% !important;
+  }
+  [data-orca-dashboard="true"] div[style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+  /* Prevent any horizontal overflow inside dashboard charts/cards */
+  [data-orca-dashboard="true"] .recharts-responsive-container {
+    max-width: 100% !important;
+  }
+}
+
