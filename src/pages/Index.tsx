@@ -753,7 +753,7 @@ const Index = () => {
             <span style={{ width: 18, height: 1, background: T.accent.cyan, display: 'inline-block' }} />
             {isRTL ? 'בריאות מסחר' : 'TRADING HEALTH'}
           </div>
-          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 12, marginBottom: 18, flexWrap: isMobile ? 'nowrap' : 'wrap', width: '100%', minWidth: 0 }}>
+          <div className={isMobile ? 'orca-dashboard-kpi-grid' : undefined} style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 12, marginBottom: 18, flexWrap: isMobile ? 'nowrap' : 'wrap', width: '100%', minWidth: 0 }}>
             <MetricCard T={T} label={t.netPnl} value={stats.totalPnl} color={stats.totalPnl >= 0 ? T.accent.cyan : T.accent.red} onInfoClick={() => handleExplainClick(t.netPnl, EXPLANATIONS.netPnl)} />
             <MetricCard T={T} label={t.winRate} value={stats.winRate} suffix="%" color={T.accent.green} onInfoClick={() => handleExplainClick(t.winRate, EXPLANATIONS.winRate)} />
             <AdaptiveExpectancyCard
@@ -781,7 +781,7 @@ const Index = () => {
             <span style={{ width: 18, height: 1, background: T.accent.purple, display: 'inline-block' }} />
             {isRTL ? 'בריאות מערכת' : 'SYSTEM HEALTH'}
           </div>
-          <div style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
+          <div className={isMobile ? 'orca-dashboard-kpi-grid' : undefined} style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
             <ScoreGauge T={T} score={stats.orcaScore} label={t.orcaScore} color={T.accent.cyan}
               description={isRTL ? 'ציון משולב של משמעת, סיכון ועקביות' : 'Combined discipline, risk & consistency score'}
               onInfoClick={() => handleExplainClick(t.orcaScore, EXPLANATIONS.orcaScore)} />
