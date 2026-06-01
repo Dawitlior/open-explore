@@ -836,7 +836,7 @@ const Index = () => {
               </div>
               {/* Radar + Direction + Quick Stats */}
               <div style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
-                {isChartVisible('radarScore') && <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ציון Orca — פירוט' : 'Orca Score — Breakdown'} explanation={EXPLANATIONS.radarScore} chartId="radarScore" onRemove={handleHideChart} style={{ flex: 1, minWidth: isMobile ? 0 : 260, width: isMobile ? '100%' : undefined }}>
+                {isAdvancedTier && isChartVisible('radarScore') && <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ציון Orca — פירוט' : 'Orca Score — Breakdown'} explanation={EXPLANATIONS.radarScore} chartId="radarScore" onRemove={handleHideChart} style={{ flex: 1, minWidth: isMobile ? 0 : 260, width: isMobile ? '100%' : undefined }}>
                   <ResponsiveContainer width="100%" height={170}>
                     <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="68%">
                       <PolarGrid stroke={T.border.medium} /><PolarAngleAxis dataKey="m" tick={{ fill: T.text.muted, fontSize: 9 }} /><PolarRadiusAxis tick={false} domain={[0, 100]} axisLine={false} />
@@ -844,21 +844,22 @@ const Index = () => {
                     </RadarChart>
                   </ResponsiveContainer>
                 </ChartWrapper>}
-                {isChartVisible('coinPerformance') && <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.coinPerformance} explanation={EXPLANATIONS.coinPerformance} unit="$" chartId="coinPerformance" onRemove={handleHideChart} style={{ flex: 1, minWidth: isMobile ? 0 : 280, width: isMobile ? '100%' : undefined }}>
+                {isAdvancedTier && isChartVisible('coinPerformance') && <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.coinPerformance} explanation={EXPLANATIONS.coinPerformance} unit="$" chartId="coinPerformance" onRemove={handleHideChart} style={{ flex: 1, minWidth: isMobile ? 0 : 280, width: isMobile ? '100%' : undefined }}>
                   <ResponsiveContainer width="100%" height={190}>
                     <BarChart data={stats.coinPerf} layout="vertical"><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis type="number" tick={{ fill: T.text.muted, fontSize: 10 }} /><YAxis dataKey="coin" type="category" tick={{ fill: T.text.secondary, fontSize: 11 }} width={45} />
                       <Tooltip contentStyle={tt} /><Bar dataKey="pnl" radius={[0,4,4,0]}>{stats.coinPerf.map((c, i) => <Cell key={i} fill={c.pnl >= 0 ? T.accent.green : T.accent.red} />)}</Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </ChartWrapper>}
-                <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.directionAnalysis} explanation={EXPLANATIONS.directionAnalysis} style={{ flex: 1, minWidth: isMobile ? 0 : 240, width: isMobile ? '100%' : undefined }}>
+                {isUltimateTier && <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.directionAnalysis} explanation={EXPLANATIONS.directionAnalysis} style={{ flex: 1, minWidth: isMobile ? 0 : 240, width: isMobile ? '100%' : undefined }}>
                   <ResponsiveContainer width="100%" height={140}>
                     <PieChart><Pie data={stats.directionData} dataKey="trades" nameKey="name" cx="50%" cy="50%" innerRadius={38} outerRadius={60} paddingAngle={4} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}><Cell fill={T.accent.green} /><Cell fill={T.accent.red} /></Pie><Tooltip contentStyle={tt} /></PieChart>
                   </ResponsiveContainer>
                   <div style={{ display: 'flex', justifyContent: 'center', gap: 20, marginTop: 2 }}>
                     {stats.directionData.map((d, i) => (<div key={i} style={{ textAlign: 'center' }}><div style={{ fontSize: 10, color: T.text.muted }}>{d.name}</div><PV><div style={{ fontSize: 11, fontWeight: 600, color: d.expectancyR >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{d.expectancyR.toFixed(2)}R</div></PV><div style={{ fontSize: 9, color: T.text.muted }}>WR: {d.winRate.toFixed(0)}%</div></div>))}
                   </div>
-                </ChartWrapper>
+                </ChartWrapper>}
+
               </div>
               {/* Quick Stats — adaptive (R / $) */}
               <AdaptiveQuickStats

@@ -122,19 +122,23 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
       ? { he: 'מתקדם', en: 'Advanced', sub: { he: 'דיאגנוסטיקה מקצועית ואנומליות סיכון', en: 'Professional diagnostics and risk anomalies' }, color: T.accent.cyan }
       : { he: 'סטנדרט', en: 'Standard', sub: { he: 'מגבלות סיכון, Drawdown והקצאה בסיסית', en: 'Risk limits, drawdown, and baseline allocation' }, color: T.accent.blue };
 
-  // What each SaaS tier shows on the Risk page
+  // What each SaaS tier shows on the Risk page.
+  // Standard ships a minimal deck: limit bars + KPI strip + drawdown card only.
+  // Advanced adds gauges, anomalies, risk timeline, allocation chart, setup table.
+  // Ultimate adds the deep research modules.
   const showLimitBars      = true;
   const showKpiStrip       = true;
-  const showGaugesRow      = true;
+  const showGaugesRow      = isAdvancedPlan;
   const showAnomalies      = isAdvancedPlan;
   const showRiskTimeline   = isAdvancedPlan;
-  const showSetupTable     = true;
-  const showAllocAndDD     = true; // everyone gets DD; beginner only DD
-  const showAllocChart     = true;
+  const showSetupTable     = isAdvancedPlan;
+  const showAllocAndDD     = true; // DD card stays in all tiers
+  const showAllocChart     = isAdvancedPlan;
   const showAlphaEvolution = isUltimatePlan;
   const showStatusWarnings = true;
   const showExplanationLog = isUltimatePlan;
   const showResearchDeepRisk = isUltimatePlan;
+
 
   // Risk behavior over time
   const riskTimeline = useMemo(() => {

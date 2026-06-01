@@ -67,11 +67,13 @@ export function useEntitlement(): EntitlementState {
     return () => { cancelled = true; };
   }, [user?.id]);
 
-  const tier = !ENFORCE_TIER_GATES && previewTier ? previewTier : entitlementTier;
+  const usingPreview = !ENFORCE_TIER_GATES && previewTier !== null;
+  const tier = usingPreview ? (previewTier as AppTier) : entitlementTier;
 
   return {
     tier,
-    loading,
+    loading: usingPreview ? false : loading,
     allows: (required) => TIER_RANK[tier] >= TIER_RANK[required],
   };
+
 }

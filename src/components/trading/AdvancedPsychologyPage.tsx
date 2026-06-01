@@ -628,8 +628,9 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
         </>
       )}
 
-      {/* ═══ PSYCHOLOGY LAB · advanced behavioral metrics ═══ */}
-      {isAdvancedPlan && <PsychologyLab T={T} trades={trades} isRTL={isRTL} />}
+      {/* ═══ PSYCHOLOGY LAB · Ultimate only ═══ */}
+      {isUltimatePlan && <PsychologyLab T={T} trades={trades} isRTL={isRTL} />}
+
 
       {diagnosisOpen && (
         <div onClick={() => setDiagnosisOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(16px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18, animation: 'fadeIn .25s ease' }}>

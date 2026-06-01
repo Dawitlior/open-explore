@@ -773,12 +773,13 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
         </span>
       </div>
 
-      {/* ═══ QUANT LAB — appears in review/research/alpha ═══ */}
-      {showPro && registryAllows('rollingSharpe') && (
+      {/* ═══ QUANT LAB — Ultimate only ═══ */}
+      {showMax && registryAllows('rollingSharpe') && (
         <Suspense fallback={<div style={{ padding: 18, fontSize: 11, color: T.text.muted, opacity: 0.7 }}>Loading Quant Lab…</div>}>
           <AnalyticsQuantLab T={T} trades={trades} privacyMode={privacyMode} />
         </Suspense>
       )}
+
 
       {/* ═══ ADVANCED-TIER DECK (Phase 3) ═══ */}
       <AdvancedDeckCharts
