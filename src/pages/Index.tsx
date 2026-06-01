@@ -1737,7 +1737,7 @@ const Index = () => {
               </div>
               <button onClick={() => setSbOpen(false)} style={{ background: 'none', border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.sm, color: T.text.muted, cursor: 'pointer', padding: '4px 8px', fontSize: 16 }}>✕</button>
             </div>
-            <ModeSwitch T={T} isRTL={isRTL} operatingMode={settings.operatingMode} systemMode={settings.systemMode} onOperatingModeChange={settings.setOperatingMode} onSystemModeChange={settings.setSystemMode} hiddenModes={uiPrefs.hiddenOperatingModes} hideDepthSwitch={uiPrefs.hideDepthSwitch} />
+            <ModeSwitch T={T} isRTL={isRTL} />
             {/* Nav items */}
             {nav.map(item => {
               const isWeekly = item.id === 'weekly-review';
@@ -1793,7 +1793,7 @@ const Index = () => {
           {sbOpen && <button onClick={() => setSbOpen(false)} style={{ marginInlineStart: 'auto', background: 'none', border: 'none', color: T.text.muted, cursor: 'pointer', fontSize: 14, padding: 4, lineHeight: 1, transition: 'color 0.2s' }}>‹</button>}
         </div>
         {!sbOpen && <button onClick={() => setSbOpen(true)} style={{ background: 'none', border: 'none', color: T.text.muted, cursor: 'pointer', fontSize: 14, padding: '6px 0', lineHeight: 1, transition: 'color 0.2s' }}>›</button>}
-        {sbOpen && <ModeSwitch T={T} isRTL={isRTL} operatingMode={settings.operatingMode} systemMode={settings.systemMode} onOperatingModeChange={settings.setOperatingMode} onSystemModeChange={settings.setSystemMode} hiddenModes={uiPrefs.hiddenOperatingModes} hideDepthSwitch={uiPrefs.hideDepthSwitch} />}
+        {sbOpen && <ModeSwitch T={T} isRTL={isRTL} />}
         <nav style={{ flex: 1, padding: '0 6px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
           {nav.map(item => {
             const isWeekly = item.id === 'weekly-review';
