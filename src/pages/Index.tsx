@@ -750,7 +750,7 @@ const Index = () => {
             <span style={{ width: 18, height: 1, background: T.accent.cyan, display: 'inline-block' }} />
             {isRTL ? 'בריאות מסחר' : 'TRADING HEALTH'}
           </div>
-          <div className={isMobile ? 'orca-snap-h' : ''} style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: isMobile ? 'nowrap' : 'wrap' }}>
+          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 12, marginBottom: 18, flexWrap: isMobile ? 'nowrap' : 'wrap', width: '100%', minWidth: 0 }}>
             <MetricCard T={T} label={t.netPnl} value={stats.totalPnl} color={stats.totalPnl >= 0 ? T.accent.cyan : T.accent.red} onInfoClick={() => handleExplainClick(t.netPnl, EXPLANATIONS.netPnl)} />
             <MetricCard T={T} label={t.winRate} value={stats.winRate} suffix="%" color={T.accent.green} onInfoClick={() => handleExplainClick(t.winRate, EXPLANATIONS.winRate)} />
             <AdaptiveExpectancyCard
@@ -1708,7 +1708,7 @@ const Index = () => {
 
   return (
     <DisplayModeProvider trades={trades}>
-    <div dir={isRTL ? 'rtl' : 'ltr'} className="orca-app-shell" style={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden', background: T.bg.primary, color: T.text.primary, fontFamily: "'Inter', system-ui, -apple-system, sans-serif", fontSize: 14, transition: 'background 0.5s ease, color 0.5s ease, filter 0.5s ease, opacity 0.5s ease', opacity: exiting ? 0 : 1, filter: exiting ? 'blur(8px)' : 'none' }}>
+    <div dir={isRTL ? 'rtl' : 'ltr'} className="orca-app-shell" style={{ display: 'flex', height: '100vh', width: '100%', minWidth: 0, overflow: 'hidden', background: T.bg.primary, color: T.text.primary, fontFamily: "'Inter', system-ui, -apple-system, sans-serif", fontSize: 14, transition: 'background 0.5s ease, color 0.5s ease, filter 0.5s ease, opacity 0.5s ease', opacity: exiting ? 0 : 1, filter: exiting ? 'blur(8px)' : 'none' }}>
 
       <style>{portalCSS}</style>
       {/* Exit animation overlay */}
@@ -1952,7 +1952,7 @@ const Index = () => {
         </header>
         )}
 
-        <div className={isMobile ? 'orca-mobile-pad-bottom' : ''} style={{ padding: isMobile ? '12px 10px' : '20px 24px', maxWidth: 1400, margin: '0 auto' }}>
+        <div className={isMobile ? 'orca-mobile-pad-bottom' : ''} style={{ padding: isMobile ? '12px 10px' : '20px 24px', maxWidth: 1400, width: '100%', minWidth: 0, boxSizing: 'border-box', overflowX: 'hidden', margin: '0 auto' }}>
           {trades.length === 0 && page !== 'weekly-review' && (
             <div style={{ textAlign: 'center', padding: isMobile ? 30 : 60 }}>
               <div style={{ fontSize: 48, marginBottom: 16 }}>🐋</div>

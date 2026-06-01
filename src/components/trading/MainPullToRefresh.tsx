@@ -22,7 +22,7 @@ export const MainPullToRefresh = ({ isMobile, accent, children }: Props) => {
   // ── Desktop: pure passthrough, no listeners, no wrappers ──────────────
   if (!isMobile) {
     return (
-      <main style={{ flex: 1, overflow: 'auto', transition: 'background 0.4s ease' }}>
+      <main style={{ flex: 1, minWidth: 0, overflow: 'auto', transition: 'background 0.4s ease' }}>
         {children}
       </main>
     );
@@ -42,6 +42,7 @@ export const MainPullToRefresh = ({ isMobile, accent, children }: Props) => {
       ref={ref as any}
       style={{
         flex: 1,
+        minWidth: 0,
         overflow: 'auto',
         transition: 'background 0.4s ease',
         position: 'relative',
@@ -53,11 +54,14 @@ export const MainPullToRefresh = ({ isMobile, accent, children }: Props) => {
         style={
           active
             ? {
+                width: '100%',
+                minWidth: 0,
+                boxSizing: 'border-box',
                 transform: `translate3d(0, ${pull}px, 0)`,
                 transition: refreshing ? 'transform 0.28s cubic-bezier(0.16, 1, 0.3, 1)' : 'none',
                 willChange: 'transform',
               }
-            : undefined
+            : { width: '100%', minWidth: 0, boxSizing: 'border-box' }
         }
       >
         {children}
