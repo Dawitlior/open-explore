@@ -1116,35 +1116,38 @@ html[data-theme="platinum"] .orca-chart-skeleton {
   }
 
   /* ═══ MOBILE-APP-GRADE POLISH for dashboard charts ═══
-     Match the premium feel of the Analytics page on phone:
-     - Taller chart containers so they breathe
-     - Generous card padding, native-app rounded corners
-     - Readable axis ticks (mobile tick density was 10px → 11px)
-     - Comfortable spacing between stacked cards */
-  [data-orca-dashboard="true"] .orca-glass {
-    padding: 14px !important;
-    border-radius: 16px !important;
-    margin-bottom: 0 !important;
-  }
+     Mirror the Analytics page feel: each chart = full-width GlassCard with
+     comfortable padding, generous height, and breathing room between cards. */
+
+  /* Comfortable phone gap between stacked siblings inside flex rows */
   [data-orca-dashboard="true"] [style*="display:flex"]:not(.orca-snap-h):not(.orca-keep-row),
   [data-orca-dashboard="true"] [style*="display: flex"]:not(.orca-snap-h):not(.orca-keep-row),
   [data-orca-dashboard="true"] [style*="flex-wrap:wrap"]:not(.orca-snap-h):not(.orca-keep-row),
   [data-orca-dashboard="true"] [style*="flex-wrap: wrap"]:not(.orca-snap-h):not(.orca-keep-row) {
     gap: 14px !important;
+    margin-bottom: 14px !important;
   }
-  /* Force ResponsiveContainer to a comfortable phone height,
-     overriding the inline height the recharts wrapper sets. */
+
+  /* Each chart card is full-width on phone */
+  [data-orca-dashboard="true"] .orca-glass {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  /* Charts breathe — give every chart card the same height as Analytics (~250px) */
   [data-orca-dashboard="true"] .orca-glass .recharts-responsive-container {
     height: 240px !important;
     min-height: 240px !important;
   }
-  /* Compact cards (gauges, KPIs) shouldn't grow */
+  /* Compact gauges & KPI mini-cards stay short */
   [data-orca-dashboard="true"] .orca-score-gauge .recharts-responsive-container,
   [data-orca-dashboard="true"] .orca-metric-card .recharts-responsive-container {
-    height: 170px !important;
-    min-height: 170px !important;
+    height: 160px !important;
+    min-height: 160px !important;
   }
-  /* Larger, more legible axis ticks on phone */
+
+  /* Readable axis ticks on phone */
   [data-orca-dashboard="true"] .recharts-cartesian-axis-tick text,
   [data-orca-dashboard="true"] .recharts-polar-angle-axis-tick text,
   [data-orca-dashboard="true"] .recharts-polar-radius-axis-tick text {
@@ -1155,13 +1158,27 @@ html[data-theme="platinum"] .orca-chart-skeleton {
     font-size: 11px !important;
     letter-spacing: 0.06em !important;
   }
-  /* Slightly larger info button — easier to tap */
+  /* Larger info button for touch */
   [data-orca-dashboard="true"] .orca-glass button[style*="border-radius: 50%"] {
     width: 22px !important;
     height: 22px !important;
     min-width: 22px !important;
     min-height: 22px !important;
   }
+
+  /* MetricCards: 2-column grid feels like a native dashboard tile bank */
+  [data-orca-dashboard="true"] .orca-metric-card {
+    flex: 1 1 calc(50% - 7px) !important;
+    width: calc(50% - 7px) !important;
+    min-width: 0 !important;
+  }
+  /* Their parent row should re-enable row layout for the 2-up tile grid */
+  [data-orca-dashboard="true"] [style*="display:flex"]:has(> .orca-metric-card),
+  [data-orca-dashboard="true"] [style*="display: flex"]:has(> .orca-metric-card) {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+  }
 }
+
 
 
