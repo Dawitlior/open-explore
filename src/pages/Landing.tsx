@@ -1,41 +1,45 @@
 /**
- * Landing — public Hebrew-first marketing page for the Israeli trading
- * community. Lives at `/welcome` and is rendered for unauthenticated
- * visitors. Split-screen hero with live interactive demo on the left,
- * pitch + CTAs on the right (RTL primary side).
+ * Landing — Orca Investment public marketing page.
+ * Midnight (#061326) + Gold (#c9a84c) premium aesthetic. RTL Hebrew-first.
+ * Structure mirrors top-tier competitors: Hero → Stats → Brokers ticker →
+ * Feature showcase → Interactive Demo → Brokers grid → Tools → Pricing →
+ * Testimonials → FAQ → Footer.
  */
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  ArrowLeft, Sparkles, Shield, Brain, LineChart, Radar, Lock,
-  Check, Zap, Crown, Star,
+  ArrowLeft, Shield, Brain, Radar, Lock, Check, Zap, Crown, Star,
+  RefreshCw, Smartphone, BarChart3, LineChart as LineIcon, Settings2,
+  HeartPulse, Menu, X, Mail, MessageCircle,
 } from 'lucide-react';
-import {
-  AreaChart, Area, LineChart as RLineChart, Line, XAxis, YAxis,
-  CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine,
-} from 'recharts';
 import { useAuth } from '@/hooks/use-auth';
 import { LandingDemo } from '@/components/landing/LandingDemo';
-import {
-  generateMockTrades, rBuckets, drawdownCurve,
-  rollingExpectancy, disciplineTrend,
-} from '@/components/landing/landing-mock-data';
+import orcaLogoAsset from '@/assets/orca-logo.png.asset.json';
 
+/* ── Palette ──────────────────────────────────────────────── */
+const BG = '#061326';
+const BG_2 = '#0a1f3d';
+const BG_3 = '#0f2a4d';
+const GOLD = '#c9a84c';
+const GOLD_2 = '#e8b84a';
+const GOLD_SOFT = '#f0d78c';
+const LINE = 'rgba(201,168,76,0.18)';
+const TXT = '#f5f3ee';
+const TXT_2 = '#9aa8bc';
+const TXT_3 = '#6b7990';
 
-const PRIMARY = '#4f46e5';
-const PRIMARY_2 = '#a78bfa';
+const FONT_DISPLAY = "'Heebo', 'Space Grotesk', sans-serif";
+const FONT_BODY = "'Heebo', 'DM Sans', sans-serif";
 
 export default function Landing() {
   const { session, loading } = useAuth();
   const navigate = useNavigate();
 
-  // Authed visitors don't need the marketing page — bounce to the app.
   useEffect(() => {
     if (!loading && session) navigate('/', { replace: true });
   }, [loading, session, navigate]);
 
-  // Lock document direction to RTL while this page is mounted
   useEffect(() => {
     const prevDir = document.documentElement.dir;
     const prevLang = document.documentElement.lang;
@@ -50,18 +54,25 @@ export default function Landing() {
   return (
     <div
       dir="rtl"
-      className="min-h-screen text-slate-100 antialiased overflow-x-hidden"
+      className="min-h-screen antialiased overflow-x-hidden"
       style={{
-        background:
-          'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(79,70,229,0.25), transparent 60%), radial-gradient(ellipse 60% 40% at 100% 0%, rgba(167,139,250,0.18), transparent 60%), linear-gradient(180deg, #0a0a1a 0%, #06061a 100%)',
-        fontFamily: "'DM Sans', 'Heebo', sans-serif",
+        color: TXT,
+        background: `
+          radial-gradient(ellipse 90% 60% at 50% -10%, rgba(201,168,76,0.16), transparent 60%),
+          radial-gradient(ellipse 60% 40% at 0% 20%, rgba(201,168,76,0.06), transparent 60%),
+          linear-gradient(180deg, ${BG} 0%, #04101f 100%)
+        `,
+        fontFamily: FONT_BODY,
       }}
     >
       <Nav />
       <Hero />
-      <SocialProof />
-      <Features />
-      <DeepDive />
+      <Stats />
+      <BrokerTicker />
+      <FeatureShowcase />
+      <TryItDemo />
+      <BrokersGrid />
+      <Tools />
       <Pricing />
       <Testimonials />
       <Faq />
@@ -71,33 +82,89 @@ export default function Landing() {
   );
 }
 
+/* ──────────────── BRAND ──────────────── */
+function Logo({ size = 36 }: { size?: number }) {
+  return (
+    <Link to="/welcome" className="flex items-center gap-3 group">
+      <img
+        src={orcaLogoAsset.url}
+        alt="Orca Investment"
+        width={size}
+        height={size}
+        className="object-contain drop-shadow-[0_0_12px_rgba(201,168,76,0.35)] group-hover:drop-shadow-[0_0_18px_rgba(201,168,76,0.6)] transition-all"
+        style={{ width: size, height: size }}
+      />
+      <div className="flex flex-col leading-none">
+        <span
+          className="font-bold tracking-[0.18em] text-base"
+          style={{ fontFamily: FONT_DISPLAY, color: TXT, letterSpacing: '0.18em' }}
+        >
+          ORCA
+        </span>
+        <span
+          className="text-[9px] tracking-[0.32em] mt-0.5"
+          style={{ color: GOLD, fontFamily: FONT_DISPLAY }}
+        >
+          INVESTMENT
+        </span>
+      </div>
+    </Link>
+  );
+}
+
 /* ──────────────── NAV ──────────────── */
 function Nav() {
+  const [open, setOpen] = useState(false);
+  const link = "text-sm transition hover:text-[color:var(--gold)]";
   return (
-    <header className="sticky top-0 z-40 backdrop-blur-xl bg-[#0a0a1a]/60 border-b border-[#1e1e5a]/40">
-      <div className="max-w-7xl mx-auto px-5 lg:px-8 py-3.5 flex items-center gap-6">
-        <Link to="/welcome" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#4f46e5] to-[#a78bfa] flex items-center justify-center shadow-lg shadow-[#4f46e5]/30">
-            <span className="text-white font-bold text-sm" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>O</span>
-          </div>
-          <span className="text-white font-semibold tracking-tight text-lg" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Orca</span>
-        </Link>
-        <nav className="hidden md:flex items-center gap-6 text-sm text-slate-400 mr-auto">
-          <a href="#features" className="hover:text-white transition">תכונות</a>
-          <a href="#pricing" className="hover:text-white transition">מחירים</a>
-          <a href="#faq" className="hover:text-white transition">שאלות נפוצות</a>
+    <header
+      className="sticky top-0 z-50 backdrop-blur-xl border-b"
+      style={{ background: 'rgba(6,19,38,0.78)', borderColor: LINE, ['--gold' as any]: GOLD }}
+    >
+      <div className="max-w-7xl mx-auto px-5 lg:px-8 h-16 flex items-center justify-between">
+        <Logo />
+        <nav className="hidden lg:flex items-center gap-7 text-[color:var(--txt2)]" style={{ ['--txt2' as any]: TXT_2 }}>
+          <a href="#features" className={link} style={{ color: TXT_2 }}>פיצ'רים</a>
+          <a href="#brokers" className={link} style={{ color: TXT_2 }}>פלטפורמות וברוקרים</a>
+          <a href="#pricing" className={link} style={{ color: TXT_2 }}>מחירים</a>
+          <a href="#faq" className={link} style={{ color: TXT_2 }}>שאלות ותשובות</a>
+          <a href="#contact" className={link} style={{ color: TXT_2 }}>צור קשר</a>
         </nav>
-        <div className="flex items-center gap-2 ml-auto md:mr-0">
-          <Link to="/auth" className="text-sm text-slate-300 hover:text-white px-3 py-2 transition">התחברות</Link>
+        <div className="flex items-center gap-2">
           <Link
-            to="/auth?signup=1"
-            className="text-sm font-medium text-white px-4 py-2 rounded-lg bg-gradient-to-l from-[#4f46e5] to-[#7c3aed] shadow-lg shadow-[#4f46e5]/30 hover:shadow-[#4f46e5]/50 transition-all hover:scale-105"
-            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            to="/auth"
+            className="hidden sm:inline-flex items-center px-5 py-2.5 rounded-full text-sm font-semibold transition-all hover:scale-[1.03]"
+            style={{
+              background: `linear-gradient(135deg, ${GOLD} 0%, ${GOLD_2} 100%)`,
+              color: BG,
+              fontFamily: FONT_DISPLAY,
+              boxShadow: '0 10px 30px rgba(201,168,76,0.35)',
+            }}
           >
-            התחל ניסיון חינם
+            כניסה למערכת
           </Link>
+          <button
+            className="lg:hidden p-2 rounded-lg border"
+            style={{ borderColor: LINE, color: TXT }}
+            onClick={() => setOpen(v => !v)}
+            aria-label="menu"
+          >
+            {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
         </div>
       </div>
+      {open && (
+        <div className="lg:hidden border-t" style={{ borderColor: LINE, background: BG }}>
+          <div className="px-5 py-4 flex flex-col gap-3 text-sm">
+            {[['פיצ\'רים', '#features'], ['פלטפורמות', '#brokers'], ['מחירים', '#pricing'], ['שאלות', '#faq'], ['צור קשר', '#contact']].map(([l, h]) => (
+              <a key={h} href={h} onClick={() => setOpen(false)} className="py-2" style={{ color: TXT_2 }}>{l}</a>
+            ))}
+            <Link to="/auth" className="mt-2 text-center py-3 rounded-full font-semibold" style={{ background: GOLD, color: BG, fontFamily: FONT_DISPLAY }}>
+              כניסה למערכת
+            </Link>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
@@ -105,72 +172,116 @@ function Nav() {
 /* ──────────────── HERO ──────────────── */
 function Hero() {
   return (
-    <section className="relative max-w-7xl mx-auto px-5 lg:px-8 pt-14 lg:pt-20 pb-16 lg:pb-24">
-      <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-        {/* RTL primary side — pitch */}
+    <section className="relative max-w-7xl mx-auto px-5 lg:px-8 pt-12 lg:pt-20 pb-16">
+      <div className="grid lg:grid-cols-[1fr_1.05fr] gap-10 lg:gap-14 items-center">
+        {/* RTL primary — pitch (right side) */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
-          className="text-right"
+          transition={{ duration: 0.6 }}
+          className="text-right order-2 lg:order-1"
         >
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#4f46e5]/10 border border-[#4f46e5]/30 text-xs text-[#a78bfa] mb-6">
-            <Sparkles className="w-3 h-3" />
-            <span style={{ fontFamily: "'Space Grotesk', sans-serif" }}>הראשון בעברית · נבנה לסוחרים ישראלים</span>
+          <div
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] mb-6"
+            style={{
+              background: 'rgba(201,168,76,0.08)',
+              border: `1px solid ${LINE}`,
+              color: GOLD_SOFT,
+              fontFamily: FONT_DISPLAY,
+            }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: GOLD }} />
+            יומן המסחר המקצועי של ישראל
           </div>
           <h1
-            className="text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.05] tracking-tight text-white mb-6"
-            style={{ fontFamily: "'Space Grotesk', 'Heebo', sans-serif" }}
+            className="text-4xl md:text-5xl lg:text-[58px] font-extrabold leading-[1.08] tracking-tight mb-6"
+            style={{ fontFamily: FONT_DISPLAY, color: TXT }}
           >
-            היומן שמלמד אותך{' '}
-            <span className="bg-gradient-to-l from-[#a78bfa] via-[#4f46e5] to-[#06b6d4] bg-clip-text text-transparent">
-              לנצח
+            הדרך החכמה לנהל את{' '}
+            <span
+              style={{
+                background: `linear-gradient(135deg, ${GOLD_SOFT} 0%, ${GOLD} 50%, ${GOLD_2} 100%)`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
+              המסחר שלך
             </span>
-            <br />
-            לפני שהשוק יעניש אותך.
           </h1>
-          <p className="text-lg text-slate-400 leading-relaxed mb-8 max-w-xl mr-0 ml-auto">
-            Orca הוא יומן מסחר מקצועי עם מנוע סיכון בזמן אמת, אבחון פסיכולוגי AI ודשבורד שמתאים את עצמו לרמה שלך —
-            הכל בעברית, מתוכנן מאפס לקהילת הסוחרים בישראל.
+          <p className="text-base md:text-lg leading-relaxed mb-8 max-w-xl mr-0 ml-auto" style={{ color: TXT_2 }}>
+            Orca Investment הוא יומן מסחר חכם ואוטומטי שמרכז עבורך את כל המידע על העסקאות שלך, מנתח אותן ונותן לך
+            סטטיסטיקות מדויקות כדי לקבל החלטות טובות יותר במסחר.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3 mb-8">
+          <div className="flex flex-col sm:flex-row gap-3 mb-10">
             <Link
-              to="/auth?signup=1"
-              className="group inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-l from-[#4f46e5] to-[#7c3aed] text-white font-semibold shadow-xl shadow-[#4f46e5]/40 hover:shadow-[#4f46e5]/60 hover:scale-[1.02] transition-all"
-              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+              to="/auth"
+              className="group inline-flex items-center justify-center gap-2 px-7 py-4 rounded-full font-bold text-sm transition-all hover:scale-[1.03]"
+              style={{
+                background: `linear-gradient(135deg, ${GOLD} 0%, ${GOLD_2} 100%)`,
+                color: BG,
+                fontFamily: FONT_DISPLAY,
+                boxShadow: '0 18px 40px rgba(201,168,76,0.4)',
+              }}
             >
-              התחל ניסיון חינם · 7 ימים
+              התחילו תקופת ניסיון בחינם!
               <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             </Link>
             <a
               href="#demo"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-white/5 border border-white/10 text-slate-200 font-medium hover:bg-white/10 transition-all"
-              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+              className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-full font-semibold text-sm transition-all"
+              style={{
+                background: 'rgba(255,255,255,0.04)',
+                border: `1px solid ${LINE}`,
+                color: TXT,
+                fontFamily: FONT_DISPLAY,
+              }}
             >
-              שחק עם הדמו ←
+              נסה את המערכת ←
             </a>
           </div>
 
-          <div className="flex items-center gap-5 text-xs text-slate-500">
-            <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-400" /> ללא כרטיס אשראי</span>
-            <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-400" /> ביטול בכל רגע</span>
-            <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-400" /> RTL מלא</span>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs" style={{ color: TXT_3 }}>
+            <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5" style={{ color: GOLD }} /> ללא כרטיס אשראי</span>
+            <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5" style={{ color: GOLD }} /> ביטול בכל רגע</span>
+            <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5" style={{ color: GOLD }} /> RTL מלא בעברית</span>
           </div>
         </motion.div>
 
-        {/* Left — live interactive demo */}
+        {/* Hero visual — dashboard mock framed */}
         <motion.div
-          id="demo"
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.7, delay: 0.1, ease: 'easeOut' }}
-          className="relative"
+          transition={{ duration: 0.7, delay: 0.1 }}
+          className="relative order-1 lg:order-2"
         >
-          <div className="absolute -inset-6 bg-gradient-to-br from-[#4f46e5]/20 to-[#a78bfa]/10 blur-3xl rounded-full pointer-events-none" />
-          <LandingDemo />
-          <div className="text-center text-[11px] text-slate-500 mt-3" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-            ← לחץ על הטאבים ועל התוכניות. זה אינטראקטיבי.
+          <div
+            className="absolute -inset-8 blur-3xl rounded-full pointer-events-none opacity-70"
+            style={{ background: `radial-gradient(circle, ${GOLD}33, transparent 60%)` }}
+          />
+          <HeroMock />
+
+          {/* Floating chips */}
+          <div
+            className="absolute -top-4 right-4 lg:right-8 px-4 py-2.5 rounded-2xl backdrop-blur-md flex items-center gap-2.5 shadow-2xl"
+            style={{ background: 'rgba(6,19,38,0.85)', border: `1px solid ${LINE}` }}
+          >
+            <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#10b981' }} />
+            <div className="text-right">
+              <div className="text-[9px] tracking-wider" style={{ color: TXT_3, fontFamily: FONT_DISPLAY }}>רווח יומי</div>
+              <div className="text-sm font-bold" style={{ color: '#10b981', fontFamily: FONT_DISPLAY }}>+$1,520</div>
+            </div>
+          </div>
+          <div
+            className="absolute -bottom-4 left-4 lg:left-8 px-4 py-2.5 rounded-2xl backdrop-blur-md flex items-center gap-2.5 shadow-2xl"
+            style={{ background: 'rgba(6,19,38,0.85)', border: `1px solid ${LINE}` }}
+          >
+            <BarChart3 className="w-4 h-4" style={{ color: GOLD }} />
+            <div className="text-right">
+              <div className="text-[9px] tracking-wider" style={{ color: TXT_3, fontFamily: FONT_DISPLAY }}>סה"כ עסקאות</div>
+              <div className="text-sm font-bold" style={{ color: TXT, fontFamily: FONT_DISPLAY }}>12</div>
+            </div>
           </div>
         </motion.div>
       </div>
@@ -178,57 +289,111 @@ function Hero() {
   );
 }
 
-/* ──────────────── SOCIAL PROOF ──────────────── */
-function SocialProof() {
-  const items = ['Crypto IL', 'Trading TLV', 'VWAP Brothers', 'הסוחרים', 'Day-Trading.co.il', 'StockGuru'];
+function HeroMock() {
+  // Stylized static dashboard preview matching the app's aesthetic
   return (
-    <section className="border-y border-[#1e1e5a]/40 bg-[#0a0a1a]/40 py-6">
-      <div className="max-w-7xl mx-auto px-5 lg:px-8">
-        <div className="text-center text-[10px] text-slate-500 tracking-[0.25em] uppercase mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-          סוחרים מקהילות מובילות בישראל משתמשים ב-Orca
+    <div
+      className="relative rounded-3xl overflow-hidden p-3 lg:p-4"
+      style={{
+        background: `linear-gradient(135deg, ${BG_2} 0%, ${BG} 100%)`,
+        border: `1px solid ${LINE}`,
+        boxShadow: '0 40px 100px rgba(0,0,0,0.5), 0 0 0 1px rgba(201,168,76,0.05)',
+      }}
+    >
+      <div className="rounded-2xl overflow-hidden" style={{ background: BG, border: `1px solid ${LINE}` }}>
+        {/* Top bar */}
+        <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: LINE }}>
+          <div className="flex items-center gap-2">
+            <img src={orcaLogoAsset.url} alt="" className="w-5 h-5" />
+            <span className="text-xs font-bold tracking-wider" style={{ color: TXT, fontFamily: FONT_DISPLAY }}>ORCA</span>
+          </div>
+          <div className="flex gap-1.5">
+            <span className="w-2 h-2 rounded-full" style={{ background: '#ef4444' }} />
+            <span className="w-2 h-2 rounded-full" style={{ background: GOLD }} />
+            <span className="w-2 h-2 rounded-full" style={{ background: '#10b981' }} />
+          </div>
         </div>
-        <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-slate-500 text-sm" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-          {items.map(x => <span key={x} className="hover:text-slate-300 transition">{x}</span>)}
+        {/* KPI row */}
+        <div className="grid grid-cols-4 gap-2 p-3">
+          {[
+            { l: 'ימים רווחיים', v: '85.71%', c: '#10b981' },
+            { l: 'אחוז הצלחה', v: '56.82%', c: GOLD },
+            { l: 'יחס ר/ה ממוצע', v: '1.81', c: TXT },
+            { l: 'P&L', v: '+$5,002', c: '#10b981' },
+          ].map(k => (
+            <div key={k.l} className="rounded-xl p-2.5" style={{ background: 'rgba(255,255,255,0.025)', border: `1px solid ${LINE}` }}>
+              <div className="text-[8px] mb-1" style={{ color: TXT_3 }}>{k.l}</div>
+              <div className="text-xs font-bold" style={{ color: k.c, fontFamily: FONT_DISPLAY }}>{k.v}</div>
+            </div>
+          ))}
+        </div>
+        {/* Chart row */}
+        <div className="grid grid-cols-3 gap-2 px-3 pb-3">
+          <div className="rounded-xl p-2.5 h-32" style={{ background: 'rgba(255,255,255,0.025)', border: `1px solid ${LINE}` }}>
+            <div className="text-[8px] mb-1" style={{ color: TXT_3 }}>Radar</div>
+            <svg viewBox="0 0 100 70" className="w-full h-full">
+              <polygon points="50,8 85,28 78,60 22,60 15,28" fill="none" stroke={LINE} />
+              <polygon points="50,18 78,32 73,55 27,55 22,32" fill={`${GOLD}33`} stroke={GOLD} strokeWidth="1.2" />
+            </svg>
+          </div>
+          <div className="rounded-xl p-2.5 h-32" style={{ background: 'rgba(255,255,255,0.025)', border: `1px solid ${LINE}` }}>
+            <div className="text-[8px] mb-1" style={{ color: TXT_3 }}>P&L יומי</div>
+            <svg viewBox="0 0 120 60" className="w-full h-full">
+              {[12, 28, 18, 42, 8, 35, 22, 48, 30, 38].map((h, i) => (
+                <rect key={i} x={i * 12 + 2} y={55 - h} width="9" height={h} fill={h > 25 ? '#10b981' : i === 4 ? '#ef4444' : GOLD} opacity={0.85} rx="1.5" />
+              ))}
+            </svg>
+          </div>
+          <div className="rounded-xl p-2.5 h-32" style={{ background: 'rgba(255,255,255,0.025)', border: `1px solid ${LINE}` }}>
+            <div className="text-[8px] mb-1" style={{ color: TXT_3 }}>Equity Curve</div>
+            <svg viewBox="0 0 120 60" className="w-full h-full">
+              <defs>
+                <linearGradient id="hg" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={GOLD} stopOpacity="0.5" />
+                  <stop offset="100%" stopColor={GOLD} stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              <path d="M0,50 L15,42 L30,46 L45,32 L60,28 L75,18 L90,22 L105,10 L120,8 L120,60 L0,60 Z" fill="url(#hg)" />
+              <path d="M0,50 L15,42 L30,46 L45,32 L60,28 L75,18 L90,22 L105,10 L120,8" fill="none" stroke={GOLD} strokeWidth="1.5" />
+            </svg>
+          </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
 
-/* ──────────────── FEATURES ──────────────── */
-function Features() {
-  const features = [
-    { icon: LineChart, title: 'R-Multiples ברירת מחדל', body: 'כל תוחלת ביחידות סיכון. לא דולרים. לא אחוזים. רק האמת.' },
-    { icon: Shield, title: 'מנוע סיכון 4 שכבות', body: 'מגבלות אוטומטיות: -1R לעסקה, -2R ליום, -5R לשבוע, -10R לחודש.' },
-    { icon: Brain, title: 'Oracle · אבחון התנהגותי', body: '7 שכבות עומק, 37 צמתים — דיוקן פסיכולוגי שמתעדכן עם הסחר שלך.' },
-    { icon: Sparkles, title: 'AI Weekly Review', body: 'דה-בריף יום שישי אוטומטי שמסכם לך את השבוע ומראה מה לעבוד עליו.' },
-    { icon: Radar, title: 'Economic Radar', body: 'התראות T-5 ו-T-1 לפני אירועים מאקרו. בלי רעש מיותר.' },
-    { icon: Lock, title: 'RTL · פרטיות מלאה', body: 'הנתונים שלך אצלך. הצפנה ברמת שורה. מסכת פרטיות מובנית.' },
+/* ──────────────── STATS STRIP ──────────────── */
+function Stats() {
+  const stats = [
+    { v: '2,000+', l: 'חשבונות מסחר' },
+    { v: '100+', l: 'ברוקרים נתמכים' },
+    { v: '50k+', l: 'עסקאות מתועדות' },
+    { v: '99.9%', l: 'זמינות מערכת' },
   ];
   return (
-    <section id="features" className="max-w-7xl mx-auto px-5 lg:px-8 py-20 lg:py-28">
-      <div className="text-center mb-14">
-        <div className="text-[10px] tracking-[0.25em] text-[#a78bfa] uppercase mb-3" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>תכונות</div>
-        <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-          הכל מה שסוחר רציני צריך.
-        </h2>
-        <p className="text-slate-400 mt-3 max-w-2xl mx-auto">לא עוד גוגל-שיט. לא עוד אקסל. מערכת בנויה ספציפית לאופן שבו סוחרים חושבים.</p>
-      </div>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {features.map((f, i) => (
+    <section className="py-12 border-y" style={{ borderColor: LINE, background: 'rgba(10,31,61,0.4)' }}>
+      <div className="max-w-7xl mx-auto px-5 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+        {stats.map((s, i) => (
           <motion.div
-            key={f.title}
+            key={s.l}
             initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-50px' }}
-            transition={{ duration: 0.4, delay: i * 0.05 }}
-            className="group relative p-6 rounded-2xl bg-gradient-to-br from-white/[0.04] to-white/[0.01] border border-white/10 hover:border-[#4f46e5]/40 hover:from-[#4f46e5]/10 transition-all"
+            viewport={{ once: true }}
+            transition={{ duration: 0.4, delay: i * 0.06 }}
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#4f46e5]/20 to-[#a78bfa]/10 border border-[#4f46e5]/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-              <f.icon className="w-5 h-5 text-[#a78bfa]" />
+            <div
+              className="text-3xl md:text-4xl font-extrabold mb-1"
+              style={{
+                fontFamily: FONT_DISPLAY,
+                background: `linear-gradient(135deg, ${GOLD_SOFT}, ${GOLD})`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              {s.v}
             </div>
-            <h3 className="text-base font-semibold text-white mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{f.title}</h3>
-            <p className="text-sm text-slate-400 leading-relaxed">{f.body}</p>
+            <div className="text-xs tracking-wider" style={{ color: TXT_2, fontFamily: FONT_DISPLAY }}>{s.l}</div>
           </motion.div>
         ))}
       </div>
@@ -236,114 +401,253 @@ function Features() {
   );
 }
 
-/* ──────────────── DEEP DIVE ──────────────── */
-const landingTooltip: React.CSSProperties = {
-  background: '#0a0a1a',
-  border: '1px solid #1e1e5a',
-  borderRadius: 8,
-  color: '#e2e8f0',
-  fontSize: 11,
-  padding: '6px 10px',
-  fontFamily: "'DM Sans', sans-serif",
-};
-
-function DeepDive() {
-  const trades = React.useMemo(() => generateMockTrades(60, 7), []);
-  const dd = React.useMemo(() => drawdownCurve(trades), [trades]);
-  const rollExp = React.useMemo(() => rollingExpectancy(trades), [trades]);
-  const discipline = React.useMemo(() => disciplineTrend(trades), [trades]);
-  void rBuckets;
-
-  const blocks: { tag: string; title: string; body: string; chart: React.ReactNode }[] = [
-    {
-      tag: 'ניתוח',
-      title: 'תוחלת מתגלגלת. דעיכת יתרון. Sortino.',
-      body: 'הסטטיסטיקות שמדמים מקצועיים משתמשים בהן — בלי לפתוח קוד פייתון. רואים מתי האדג׳ שלך מתחיל לדעוך, רגעים לפני שזה פוגע בחשבון.',
-      chart: (
-        <ResponsiveContainer>
-          <RLineChart data={rollExp} margin={{ left: -16, right: 8, top: 8, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="2 4" stroke="#1e1e5a55" />
-            <XAxis dataKey="i" tick={{ fill: '#94a3b8', fontSize: 9 }} tickLine={false} axisLine={false} />
-            <YAxis tick={{ fill: '#94a3b8', fontSize: 9 }} tickLine={false} axisLine={false} />
-            <Tooltip contentStyle={landingTooltip} />
-            <ReferenceLine y={0} stroke="#1e1e5a" />
-            <Line type="monotone" dataKey="exp" stroke="#a78bfa" strokeWidth={2.2} dot={false} />
-          </RLineChart>
-        </ResponsiveContainer>
-      ),
-    },
-    {
-      tag: 'סיכון',
-      title: 'אזעקות לפני שאתה שובר את החוקים שלך.',
-      body: '4 שכבות מגבלות. עוקבות אחריך אוטומטית. כשאתה מתקרב לקיר — המערכת שולחת התראה. כשאתה חוצה — היא עוצרת אותך לפני העסקה הבאה.',
-      chart: (
-        <ResponsiveContainer>
-          <AreaChart data={dd} margin={{ left: -16, right: 8, top: 8, bottom: 0 }}>
-            <defs>
-              <linearGradient id="lp-dd" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#ef4444" stopOpacity={0.55} />
-                <stop offset="100%" stopColor="#ef4444" stopOpacity={0.05} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="2 4" stroke="#1e1e5a55" />
-            <XAxis dataKey="i" tick={{ fill: '#94a3b8', fontSize: 9 }} tickLine={false} axisLine={false} />
-            <YAxis tick={{ fill: '#94a3b8', fontSize: 9 }} tickLine={false} axisLine={false} />
-            <Tooltip contentStyle={landingTooltip} />
-            <Area type="monotone" dataKey="dd" stroke="#ef4444" fill="url(#lp-dd)" strokeWidth={2} />
-          </AreaChart>
-        </ResponsiveContainer>
-      ),
-    },
-    {
-      tag: 'פסיכולוגיה',
-      title: 'Oracle יודע איך אתה מפסיד.',
-      body: 'אבחון התנהגותי בן 37 צמתים מזהה את הדפוסים הנסתרים שלך: revenge trading, overtrading אחרי רצף הפסדים, FOMO. ואז מציע מה לעשות.',
-      chart: (
-        <ResponsiveContainer>
-          <AreaChart data={discipline} margin={{ left: -16, right: 8, top: 8, bottom: 0 }}>
-            <defs>
-              <linearGradient id="lp-ds" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#10b981" stopOpacity={0.5} />
-                <stop offset="100%" stopColor="#10b981" stopOpacity={0.05} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="2 4" stroke="#1e1e5a55" />
-            <XAxis dataKey="i" tick={{ fill: '#94a3b8', fontSize: 9 }} tickLine={false} axisLine={false} />
-            <YAxis tick={{ fill: '#94a3b8', fontSize: 9 }} tickLine={false} axisLine={false} domain={[0, 100]} />
-            <Tooltip contentStyle={landingTooltip} />
-            <Area type="monotone" dataKey="pct" stroke="#10b981" fill="url(#lp-ds)" strokeWidth={2} />
-          </AreaChart>
-        </ResponsiveContainer>
-      ),
-    },
+/* ──────────────── BROKER TICKER ──────────────── */
+function BrokerTicker() {
+  const brokers = [
+    'MetaTrader 5', 'MetaTrader 4', 'TradingView', 'NinjaTrader', 'Tradovate',
+    'Bybit', 'Binance', 'TopstepX', 'Rithmic', 'Sierra Chart',
+    'Interactive Brokers', 'DXTrade', 'Tradezella', 'ColmexPro', 'TradeLocker',
   ];
+  const row = [...brokers, ...brokers];
+  return (
+    <section className="py-8 overflow-hidden" style={{ background: 'rgba(6,19,38,0.6)' }}>
+      <div className="text-center text-[10px] tracking-[0.3em] mb-5" style={{ color: TXT_3, fontFamily: FONT_DISPLAY }}>
+        משתלב עם הפלטפורמות המובילות בעולם
+      </div>
+      <div className="relative">
+        <div
+          className="flex gap-10 animate-[ticker_45s_linear_infinite] whitespace-nowrap"
+          style={{ width: 'max-content' }}
+        >
+          {row.map((b, i) => (
+            <span
+              key={i}
+              className="text-base font-semibold tracking-wide opacity-50 hover:opacity-100 transition-opacity"
+              style={{ color: TXT_2, fontFamily: FONT_DISPLAY }}
+            >
+              {b}
+            </span>
+          ))}
+        </div>
+      </div>
+      <style>{`@keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }`}</style>
+    </section>
+  );
+}
+
+/* ──────────────── FEATURE SHOWCASE (tabs) ──────────────── */
+function FeatureShowcase() {
+  const tabs = [
+    { id: 'dashboard', label: 'דף ראשי', title: 'מבט שוטף על המסחר שלך', body: 'העמוד הראשי מרכז עבורך את כל מה שחשוב לדעת: רווחים, הפסדים, אחוזי הצלחה וביצועים – הכל במקום אחד ברור ונוח. במבט אחד תדע בדיוק איפה אתה עומד, איך אתה מתקדם, ואיפה יש מקום לשיפור.' },
+    { id: 'journal', label: 'יומן חודשי', title: 'כל יום מסחר תחת זכוכית מגדלת', body: 'יומן חודשי אינטראקטיבי עם P&L יומי, תיוג רגשי וסיכומים שבועיים אוטומטיים. רואים את הסיפור של כל שבוע.' },
+    { id: 'trades', label: 'כל העסקאות', title: 'מסד נתונים מקצועי לכל עסקה', body: 'כל עסקה — עם כניסה, יציאה, R-Multiple, סטופ, סטאפ, רגש וצילום מסך. סינון, חיפוש ומיון בלי הגבלה.' },
+    { id: 'stats', label: 'סטטיסטיקה', title: 'אנליטיקה ברמת קרן גידור', body: 'Sharpe, Sortino, Profit Factor, תוחלת מתגלגלת, התפלגות R. הכלים המקצועיים שאתה צריך — בלי לכתוב שורת קוד.' },
+    { id: 'setups', label: 'הסטאפים שלי', title: 'הגדר. מדוד. שפר.', body: 'הגדירו סטאפים אישיים ותתחילו לקבל ניתוח אוטומטי של הביצועים של כל אחד. דעו מה עובד באמת.' },
+    { id: 'ai', label: 'AI Mentor', title: 'מנטור AI שלומד אותך', body: 'Oracle בן 7 שכבות ו-37 צמתים מזהה את הדפוסים ההתנהגותיים שלך. revenge trading, FOMO, overtrading — והכי חשוב: מה לעשות.' },
+    { id: 'risk', label: 'ניהול סיכונים', title: 'מנוע סיכון 4 שכבות', body: '-1R לעסקה, -2R ליום, -5R לשבוע, -10R לחודש. המערכת עוצרת אותך לפני שאתה שובר את עצמך.' },
+    { id: 'backtest', label: 'בקטסטינג', title: 'בדוק רעיונות בלי לסכן הון', body: 'יומן בקטסטינג עצמאי עם חיבור TradingView. רעיון → ביצוע → סטטיסטיקות. בלי לערבב עם החשבון האמיתי.' },
+  ];
+  const [active, setActive] = useState(0);
+  const cur = tabs[active];
 
   return (
-    <section className="bg-gradient-to-b from-transparent via-[#141432]/30 to-transparent py-20 lg:py-28">
-      <div className="max-w-6xl mx-auto px-5 lg:px-8 space-y-20">
-        {blocks.map((b, i) => (
-          <motion.div
-            key={b.title}
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-80px' }}
-            transition={{ duration: 0.5 }}
-            className={`grid md:grid-cols-2 gap-8 items-center ${i % 2 ? 'md:[direction:ltr]' : ''}`}
+    <section id="features" className="max-w-7xl mx-auto px-5 lg:px-8 py-20 lg:py-28">
+      <div className="text-center mb-12">
+        <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight" style={{ fontFamily: FONT_DISPLAY, color: TXT }}>
+          מה מחכה לכם במערכת שלנו?
+        </h2>
+        <div className="mx-auto mt-4 w-24 h-[3px] rounded-full" style={{ background: `linear-gradient(90deg, transparent, ${GOLD}, transparent)` }} />
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-2 overflow-x-auto pb-3 mb-10 justify-start lg:justify-center scrollbar-thin" style={{ scrollbarWidth: 'thin' }}>
+        {tabs.map((t, i) => (
+          <button
+            key={t.id}
+            onClick={() => setActive(i)}
+            className="flex-shrink-0 px-4 py-2.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap"
+            style={{
+              background: active === i
+                ? `linear-gradient(135deg, ${GOLD}, ${GOLD_2})`
+                : 'rgba(255,255,255,0.04)',
+              color: active === i ? BG : TXT_2,
+              border: `1px solid ${active === i ? GOLD : LINE}`,
+              fontFamily: FONT_DISPLAY,
+              boxShadow: active === i ? '0 10px 25px rgba(201,168,76,0.3)' : 'none',
+            }}
           >
-            <div dir="rtl" className="text-right">
-              <div className="text-[10px] tracking-[0.25em] text-[#a78bfa] uppercase mb-3" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{b.tag}</div>
-              <h3 className="text-2xl md:text-3xl font-bold text-white tracking-tight mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{b.title}</h3>
-              <p className="text-slate-400 text-base leading-relaxed">{b.body}</p>
-            </div>
-            <div dir="rtl" className="aspect-[5/3] rounded-2xl bg-gradient-to-br from-[#4f46e5]/15 to-[#a78bfa]/5 border border-white/10 p-1.5">
-              <div className="w-full h-full rounded-xl bg-[#0a0a1a]/80 p-3 pt-7 relative overflow-hidden">
-                <div className="absolute top-2 right-3 text-[9px] tracking-[0.2em] text-slate-500 font-mono z-10 flex items-center gap-1.5" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  ◆ {b.tag.toUpperCase()} · LIVE
-                </div>
-                <div className="w-full h-full">{b.chart}</div>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Active panel */}
+      <motion.div
+        key={cur.id}
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="text-center max-w-3xl mx-auto mb-10"
+      >
+        <h3 className="text-2xl md:text-4xl font-bold mb-4" style={{ fontFamily: FONT_DISPLAY, color: TXT }}>
+          {cur.title}
+        </h3>
+        <p className="text-base md:text-lg leading-relaxed" style={{ color: TXT_2 }}>{cur.body}</p>
+      </motion.div>
+
+      <div className="text-center">
+        <Link
+          to="/auth"
+          className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full font-bold text-sm transition-all hover:scale-105"
+          style={{
+            background: `linear-gradient(135deg, ${GOLD}, ${GOLD_2})`,
+            color: BG,
+            fontFamily: FONT_DISPLAY,
+            boxShadow: '0 12px 30px rgba(201,168,76,0.35)',
+          }}
+        >
+          הצג בהרחבה
+          <ArrowLeft className="w-4 h-4" />
+        </Link>
+      </div>
+
+      <motion.div
+        key={`mock-${cur.id}`}
+        initial={{ opacity: 0, scale: 0.97 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+        className="mt-12"
+      >
+        <HeroMock />
+      </motion.div>
+    </section>
+  );
+}
+
+/* ──────────────── TRY IT — INTERACTIVE DEMO ──────────────── */
+function TryItDemo() {
+  return (
+    <section id="demo" className="max-w-7xl mx-auto px-5 lg:px-8 py-20 lg:py-24">
+      <div className="text-center mb-10">
+        <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4" style={{ fontFamily: FONT_DISPLAY, color: TXT }}>
+          נסו את המערכת בעצמכם
+        </h2>
+        <div className="mx-auto w-24 h-[3px] rounded-full mb-5" style={{ background: `linear-gradient(90deg, transparent, ${GOLD}, transparent)` }} />
+        <p className="text-base md:text-lg" style={{ color: TXT_2 }}>
+          גלו איך נראה יומן מסחר חכם מבפנים — בלי להירשם, בלי כרטיס אשראי.
+        </p>
+      </div>
+      <div
+        className="relative rounded-3xl p-2 lg:p-3"
+        style={{
+          background: `linear-gradient(135deg, ${BG_2}, ${BG})`,
+          border: `1px solid ${LINE}`,
+          boxShadow: '0 40px 100px rgba(0,0,0,0.5)',
+        }}
+      >
+        <LandingDemo />
+      </div>
+    </section>
+  );
+}
+
+/* ──────────────── BROKERS GRID ──────────────── */
+function BrokersGrid() {
+  const brokers = [
+    'TopstepX', 'NinjaTrader', 'Tradovate', 'MetaTrader 5', 'MetaTrader 4',
+    'Bybit', 'Binance', 'Sierra Chart', 'TradingView', 'Rithmic',
+    'DXTrade', 'Interactive Brokers', 'ColmexPro', 'Tradezella', 'TradeLocker',
+  ];
+  return (
+    <section id="brokers" className="py-20 lg:py-28" style={{ background: 'rgba(10,31,61,0.3)' }}>
+      <div className="max-w-7xl mx-auto px-5 lg:px-8">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4" style={{ fontFamily: FONT_DISPLAY, color: TXT }}>
+            פלטפורמות וברוקרים שאנחנו עובדים איתם
+          </h2>
+          <div className="mx-auto w-24 h-[3px] rounded-full mb-5" style={{ background: `linear-gradient(90deg, transparent, ${GOLD}, transparent)` }} />
+          <p style={{ color: TXT_2 }}>אנו תומכים ברוב הפלטפורמות המובילות בשוק.</p>
+        </div>
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+          {brokers.map((b, i) => (
+            <motion.div
+              key={b}
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.3, delay: (i % 5) * 0.04 }}
+              className="aspect-square rounded-2xl flex flex-col items-center justify-center p-3 transition-all hover:-translate-y-1 group"
+              style={{
+                background: 'rgba(255,255,255,0.025)',
+                border: `1px solid ${LINE}`,
+              }}
+            >
+              <div
+                className="w-12 h-12 rounded-xl mb-2 flex items-center justify-center font-bold text-lg group-hover:scale-110 transition-transform"
+                style={{
+                  background: `linear-gradient(135deg, ${GOLD}22, ${GOLD}08)`,
+                  border: `1px solid ${LINE}`,
+                  color: GOLD,
+                  fontFamily: FONT_DISPLAY,
+                }}
+              >
+                {b[0]}
+              </div>
+              <div className="text-[11px] text-center font-medium" style={{ color: TXT_2, fontFamily: FONT_DISPLAY }}>{b}</div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ──────────────── TOOLS (6 cards) ──────────────── */
+function Tools() {
+  const tools = [
+    { icon: RefreshCw, title: 'תיעוד אוטומטי', body: 'שכחו מאקסלים מבולגנים או מהקלדות ידניות — המערכת מתעדת עבורך כל עסקה באופן מלא ומדויק.' },
+    { icon: Smartphone, title: 'גישה מכל מקום', body: 'יומן המסחר שלך תמיד איתך — במחשב, טאבלט או סמארטפון. הכל בענן, בכל זמן.' },
+    { icon: BarChart3, title: 'סטטיסטיקות מתקדמות', body: 'ניתוח חכם של כל העסקאות שלכם עם גרפים ברורים ותובנות שמבליטות את מה שבאמת חשוב.' },
+    { icon: LineIcon, title: 'גרפים אינטראקטיביים', body: 'באמצעות שיתוף פעולה עם TradingView — תראו גרף חי של כל עסקה שביצעתם, כולל כניסות ויציאות.' },
+    { icon: Settings2, title: 'הגדרת סטאפים', body: 'הגדירו סטאפים מותאמים אישית ונתחו אותם מול התוצאות בפועל — כדי לדעת בדיוק מה עובד.' },
+    { icon: HeartPulse, title: 'תיעוד רגשי', body: 'תעדו את התחושות שלכם בזמן אמת כדי לזהות דפוסים רגשיים, לשלוט טוב יותר בהחלטות ולהשתפר.' },
+  ];
+  return (
+    <section className="max-w-7xl mx-auto px-5 lg:px-8 py-20 lg:py-28">
+      <div className="text-center mb-14">
+        <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4" style={{ fontFamily: FONT_DISPLAY, color: TXT }}>
+          הכלים המתקדמים ביותר לסוחרים
+        </h2>
+        <div className="mx-auto w-24 h-[3px] rounded-full mb-5" style={{ background: `linear-gradient(90deg, transparent, ${GOLD}, transparent)` }} />
+        <p style={{ color: TXT_2 }}>פתרונות חכמים שיעזרו לך לנהל, לנתח ולשפר את הביצועים שלך.</p>
+      </div>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {tools.map((t, i) => (
+          <motion.div
+            key={t.title}
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-50px' }}
+            transition={{ duration: 0.4, delay: i * 0.05 }}
+            className="group p-7 rounded-3xl transition-all hover:-translate-y-1"
+            style={{
+              background: `linear-gradient(135deg, rgba(10,31,61,0.6), rgba(6,19,38,0.4))`,
+              border: `1px solid ${LINE}`,
+            }}
+          >
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-bold" style={{ color: TXT, fontFamily: FONT_DISPLAY }}>{t.title}</h3>
+              <div
+                className="w-11 h-11 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform"
+                style={{
+                  background: `linear-gradient(135deg, ${GOLD}22, ${GOLD}08)`,
+                  border: `1px solid ${LINE}`,
+                }}
+              >
+                <t.icon className="w-5 h-5" style={{ color: GOLD }} />
               </div>
             </div>
+            <p className="text-sm leading-relaxed" style={{ color: TXT_2 }}>{t.body}</p>
           </motion.div>
         ))}
       </div>
@@ -353,75 +657,137 @@ function DeepDive() {
 
 /* ──────────────── PRICING ──────────────── */
 function Pricing() {
+  const [yearly, setYearly] = useState(true);
+
   const tiers = [
     {
-      name: 'Standard', price: 'חינם', sub: 'לתמיד', icon: Star, tint: '#64748b',
-      features: ['יומן עסקאות מלא', 'מגבלות סיכון בסיסיות', 'דשבורד עיקרי', 'התפלגות R', 'עד 100 עסקאות / חודש'],
-      cta: 'התחל חינם', highlight: false,
+      name: 'Basic', icon: Star, sub: 'מתאים לסוחרים בתחילת דרכם',
+      monthly: 60, yearly: 54,
+      features: ['2 חשבונות מסחר', 'עד 5 סטאפים', 'ייבוא עסקאות אוטומטי וידני', 'יומן כלכלי', 'ניתוחים ודוחות אוטומטיים', 'אפליקציה לטלפון', 'מערכת ניהול סיכונים'],
+      cta: 'התחילו 5 ימי ניסיון', highlight: false,
     },
     {
-      name: 'Advanced', price: '₪79', sub: '/חודש', icon: Zap, tint: '#4f46e5',
-      features: ['כל מה שב-Standard', 'אנליטיקה מקצועית מלאה', 'AI Weekly Review', 'Economic Radar', 'מנוע סיכון 4 שכבות', 'ייצוא XLSX/JSON', 'עסקאות ללא הגבלה'],
-      cta: 'התחל ניסיון 7 ימים', highlight: true,
-    },
-    {
-      name: 'Ultimate', price: '₪149', sub: '/חודש', icon: Crown, tint: '#a78bfa',
-      features: ['כל מה שב-Advanced', 'Oracle · אבחון התנהגותי', 'Quant Lab', 'Psychology Lab', 'Kelly Optimal Sizing', 'תמיכה עדיפות'],
-      cta: 'התחל ניסיון 7 ימים', highlight: false,
+      name: 'Pro', icon: Crown, sub: 'מתאים לסוחרים מנוסים עם מספר תיקי מסחר',
+      monthly: 80, yearly: 72,
+      features: ['חשבונות מסחר ללא הגבלה', 'סטאפים ללא הגבלה', 'ייבוא עסקאות אוטומטי וידני', 'יומן כלכלי', 'ניתוחים ודוחות אוטומטיים', 'אפליקציה לטלפון', 'מערכת ניהול סיכונים', 'מנטורים ללא הגבלה', 'מערכת בקטסטינג מתקדמת'],
+      cta: 'התחילו 5 ימי ניסיון', highlight: true,
     },
   ];
+
   return (
-    <section id="pricing" className="max-w-7xl mx-auto px-5 lg:px-8 py-20 lg:py-28">
-      <div className="text-center mb-14">
-        <div className="text-[10px] tracking-[0.25em] text-[#a78bfa] uppercase mb-3" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>מחירים</div>
-        <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>בחר תוכנית. שדרג מתי שתרצה.</h2>
-        <p className="text-slate-400 mt-3">7 ימי ניסיון על כל תוכנית בתשלום. בלי כרטיס אשראי. בלי טריקים.</p>
-      </div>
-      <div className="grid md:grid-cols-3 gap-5">
-        {tiers.map(t => (
+    <section id="pricing" className="py-20 lg:py-28" style={{ background: 'rgba(10,31,61,0.3)' }}>
+      <div className="max-w-6xl mx-auto px-5 lg:px-8">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4" style={{ fontFamily: FONT_DISPLAY, color: TXT }}>
+            מחירים שמתאימים לכל סוג סוחר
+          </h2>
+          <div className="mx-auto w-24 h-[3px] rounded-full mb-5" style={{ background: `linear-gradient(90deg, transparent, ${GOLD}, transparent)` }} />
+          <p style={{ color: TXT_2 }}>מתאים לסוחרים בכל הרמות שרוצים לקחת את עצמם צעד קדימה.</p>
+        </div>
+
+        {/* Toggle */}
+        <div className="flex justify-center mb-12">
           <div
-            key={t.name}
-            className={`relative rounded-2xl p-7 border transition-all ${
-              t.highlight
-                ? 'bg-gradient-to-br from-[#4f46e5]/15 to-[#a78bfa]/5 border-[#4f46e5]/60 shadow-2xl shadow-[#4f46e5]/20 scale-[1.02]'
-                : 'bg-white/[0.03] border-white/10 hover:border-white/20'
-            }`}
+            className="inline-flex p-1 rounded-full"
+            style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${LINE}` }}
           >
-            {t.highlight && (
-              <div className="absolute -top-3 right-6 px-3 py-1 text-[10px] tracking-[0.2em] uppercase rounded-full bg-gradient-to-l from-[#4f46e5] to-[#7c3aed] text-white font-semibold" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                הכי פופולרי
-              </div>
-            )}
-            <div className="flex items-center gap-2 mb-3">
-              <t.icon className="w-4 h-4" style={{ color: t.tint }} />
-              <div className="text-sm tracking-wider text-slate-300" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{t.name}</div>
-            </div>
-            <div className="flex items-baseline gap-1 mb-1">
-              <span className="text-4xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{t.price}</span>
-              <span className="text-sm text-slate-500">{t.sub}</span>
-            </div>
-            <div className="text-xs text-slate-500 mb-6">חשבונית מס/קבלה ישראלית</div>
-            <ul className="space-y-2.5 mb-7">
-              {t.features.map(f => (
-                <li key={f} className="flex items-start gap-2 text-sm text-slate-300">
-                  <Check className="w-4 h-4 mt-0.5 text-emerald-400 flex-shrink-0" />
-                  <span>{f}</span>
-                </li>
-              ))}
-            </ul>
-            <Link
-              to="/auth?signup=1"
-              className={`block text-center px-5 py-3 rounded-xl font-semibold transition-all ${
-                t.highlight
-                  ? 'bg-gradient-to-l from-[#4f46e5] to-[#7c3aed] text-white shadow-lg shadow-[#4f46e5]/30 hover:shadow-[#4f46e5]/50'
-                  : 'bg-white/10 text-white hover:bg-white/20'
-              }`}
-              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            <button
+              onClick={() => setYearly(false)}
+              className="px-6 py-2 rounded-full text-xs font-bold transition-all"
+              style={{
+                background: !yearly ? `linear-gradient(135deg, ${GOLD}, ${GOLD_2})` : 'transparent',
+                color: !yearly ? BG : TXT_2,
+                fontFamily: FONT_DISPLAY,
+              }}
             >
-              {t.cta}
-            </Link>
+              חודשי
+            </button>
+            <button
+              onClick={() => setYearly(true)}
+              className="px-6 py-2 rounded-full text-xs font-bold transition-all relative"
+              style={{
+                background: yearly ? `linear-gradient(135deg, ${GOLD}, ${GOLD_2})` : 'transparent',
+                color: yearly ? BG : TXT_2,
+                fontFamily: FONT_DISPLAY,
+              }}
+            >
+              שנתי
+              <span className="absolute -top-2 -left-2 text-[8px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: '#10b981', color: '#fff' }}>
+                -10%
+              </span>
+            </button>
           </div>
-        ))}
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          {tiers.map(t => {
+            const price = yearly ? t.yearly : t.monthly;
+            return (
+              <div
+                key={t.name}
+                className="relative rounded-3xl p-8 transition-all"
+                style={{
+                  background: t.highlight
+                    ? `linear-gradient(135deg, rgba(201,168,76,0.12), rgba(201,168,76,0.03))`
+                    : 'rgba(10,31,61,0.4)',
+                  border: t.highlight ? `1.5px solid ${GOLD}` : `1px solid ${LINE}`,
+                  boxShadow: t.highlight ? '0 30px 70px rgba(201,168,76,0.15)' : 'none',
+                  transform: t.highlight ? 'scale(1.02)' : 'none',
+                }}
+              >
+                {t.highlight && (
+                  <div
+                    className="absolute -top-3 right-6 px-3 py-1 text-[10px] tracking-[0.2em] uppercase rounded-full font-bold"
+                    style={{
+                      background: `linear-gradient(135deg, ${GOLD}, ${GOLD_2})`,
+                      color: BG,
+                      fontFamily: FONT_DISPLAY,
+                    }}
+                  >
+                    הכי פופולרי
+                  </div>
+                )}
+                <div className="flex items-center gap-2 mb-2">
+                  <t.icon className="w-5 h-5" style={{ color: GOLD }} />
+                  <div className="text-xl font-bold" style={{ color: TXT, fontFamily: FONT_DISPLAY }}>מסלול {t.name}</div>
+                </div>
+                <div className="text-sm mb-6" style={{ color: TXT_2 }}>{t.sub}</div>
+                <div className="flex items-baseline gap-2 mb-6">
+                  <span className="text-5xl font-extrabold" style={{ color: TXT, fontFamily: FONT_DISPLAY }}>₪{price}</span>
+                  <span className="text-sm" style={{ color: TXT_3 }}>/ חודש</span>
+                  {yearly && (
+                    <span className="text-xs px-2 py-0.5 rounded-full mr-2" style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981' }}>
+                      10% הנחה
+                    </span>
+                  )}
+                </div>
+                <ul className="space-y-3 mb-8">
+                  {t.features.map(f => (
+                    <li key={f} className="flex items-start gap-2.5 text-sm" style={{ color: TXT_2 }}>
+                      <Check className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: GOLD }} />
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  to="/auth"
+                  className="block text-center px-6 py-3.5 rounded-full font-bold text-sm transition-all hover:scale-[1.02]"
+                  style={{
+                    background: t.highlight
+                      ? `linear-gradient(135deg, ${GOLD}, ${GOLD_2})`
+                      : 'rgba(255,255,255,0.06)',
+                    color: t.highlight ? BG : TXT,
+                    border: t.highlight ? 'none' : `1px solid ${LINE}`,
+                    fontFamily: FONT_DISPLAY,
+                    boxShadow: t.highlight ? '0 14px 30px rgba(201,168,76,0.35)' : 'none',
+                  }}
+                >
+                  {t.cta}
+                </Link>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
@@ -431,11 +797,17 @@ function Pricing() {
 function Testimonials() {
   const quotes = [
     { name: 'יואב מ.', role: 'סוחר קריפטו · 3 שנים', body: 'הפסקתי להחזיק את היומן באקסל אחרי שבוע. ה-Oracle תפס לי דפוס של overtrading שלא ידעתי שיש לי.' },
-    { name: 'נועה ל.', role: 'Day Trader · S&P', body: 'מנוע הסיכון פשוט עצר אותי באמצע יום אדום. מנע ממני להמשיך לרדוף. שווה את הכסף בעסקה אחת.' },
-    { name: 'דניאל ק.', role: 'סוחר עצמאי', body: 'הפעם הראשונה שיש לי באמת תמונה ברורה של ה-edge שלי. ה-R-Multiples עשו לי סדר אחרי שנתיים של ערפל.' },
+    { name: 'נועה ל.', role: 'Day Trader · S&P', body: 'מנוע הסיכון עצר אותי באמצע יום אדום. מנע ממני להמשיך לרדוף. שווה את הכסף בעסקה אחת.' },
+    { name: 'דניאל ק.', role: 'סוחר עצמאי', body: 'הפעם הראשונה שיש לי תמונה ברורה של ה-edge שלי. ה-R-Multiples עשו לי סדר אחרי שנתיים של ערפל.' },
   ];
   return (
     <section className="max-w-7xl mx-auto px-5 lg:px-8 py-20 lg:py-24">
+      <div className="text-center mb-12">
+        <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4" style={{ fontFamily: FONT_DISPLAY, color: TXT }}>
+          מה אומרים סוחרים שלנו
+        </h2>
+        <div className="mx-auto w-24 h-[3px] rounded-full" style={{ background: `linear-gradient(90deg, transparent, ${GOLD}, transparent)` }} />
+      </div>
       <div className="grid md:grid-cols-3 gap-5">
         {quotes.map((q, i) => (
           <motion.div
@@ -444,15 +816,28 @@ function Testimonials() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.4, delay: i * 0.08 }}
-            className="p-6 rounded-2xl bg-white/[0.03] border border-white/10"
+            className="p-7 rounded-3xl"
+            style={{ background: 'rgba(10,31,61,0.5)', border: `1px solid ${LINE}` }}
           >
-            <div className="flex gap-0.5 mb-3">
-              {[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-[#a78bfa] text-[#a78bfa]" />)}
+            <div className="flex gap-0.5 mb-4">
+              {[...Array(5)].map((_, j) => <Star key={j} className="w-4 h-4" style={{ fill: GOLD, color: GOLD }} />)}
             </div>
-            <p className="text-slate-200 text-sm leading-relaxed mb-4">"{q.body}"</p>
-            <div className="text-xs">
-              <div className="text-white font-medium" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{q.name}</div>
-              <div className="text-slate-500">{q.role}</div>
+            <p className="text-base leading-relaxed mb-5" style={{ color: TXT }}>"{q.body}"</p>
+            <div className="flex items-center gap-3 pt-4 border-t" style={{ borderColor: LINE }}>
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center font-bold"
+                style={{
+                  background: `linear-gradient(135deg, ${GOLD}, ${GOLD_2})`,
+                  color: BG,
+                  fontFamily: FONT_DISPLAY,
+                }}
+              >
+                {q.name[0]}
+              </div>
+              <div>
+                <div className="text-sm font-bold" style={{ color: TXT, fontFamily: FONT_DISPLAY }}>{q.name}</div>
+                <div className="text-xs" style={{ color: TXT_3 }}>{q.role}</div>
+              </div>
             </div>
           </motion.div>
         ))}
@@ -464,27 +849,37 @@ function Testimonials() {
 /* ──────────────── FAQ ──────────────── */
 function Faq() {
   const items = [
-    { q: 'האם אני באמת מקבל 7 ימים חינם?', a: 'כן. בלי כרטיס אשראי, בלי התחייבות. אחרי 7 ימים אתה יכול לבחור תוכנית — או להישאר ב-Standard החינמי לתמיד.' },
-    { q: 'אילו ברוקרים נתמכים?', a: 'Bybit, Binance, OKX, Bitget, Coinbase, Kraken — דרך API קריאה בלבד, או ייבוא קובץ CSV/XLSX מכל פלטפורמה.' },
-    { q: 'האם הנתונים שלי מוגנים?', a: 'הצפנה ברמת שורה (RLS), אחסון בענן Lovable Cloud, ומסכת פרטיות שמסתירה מספרים במסך עם קליק אחד. הנתונים שלך אצלך בלבד.' },
-    { q: 'יש תמיכה בעברית?', a: 'כל המערכת RTL מלא. תפריטים, גרפים, AI, הכל. גם אנגלית זמינה במעבר כפתור.' },
-    { q: 'אפשר לבטל בכל רגע?', a: 'כן. ביטול בקליק אחד מ-/account/billing. תשמור את הגישה עד סוף תקופת החיוב.' },
-    { q: 'מה ההבדל בין Advanced ל-Ultimate?', a: 'Advanced נותן לך אנליטיקה מקצועית מלאה. Ultimate מוסיף את Oracle (אבחון התנהגותי בן 37 צמתים), Quant Lab ו-Kelly Sizing — כלים ברמה של קרנות.' },
+    { q: 'האם יש אפליקציה לטלפון?', a: 'כן. PWA מלאה — נכנסים מהטלפון, מוסיפים למסך הבית, ויש לכם את כל המערכת כמו אפליקציה רגילה. iOS ו-Android.' },
+    { q: 'למי האפליקציה מתאימה?', a: 'לסוחרים בכל הרמות — מתחילים שצריכים מסגרת, ועד פרופים שצריכים אנליטיקה רצינית. עובד עם קריפטו, מניות, פיוצ׳רס ופורקס.' },
+    { q: 'למה לא פשוט לתעד באקסל?', a: 'אקסל לא יודע לחשב לך תוחלת מתגלגלת, לזהות דפוסים התנהגותיים, או לעצור אותך כשאתה חוצה מגבלות סיכון. Orca הוא כלי מקצועי — לא טבלה.' },
+    { q: 'אני משתמש בכמה תיקי מסחר — זה מתאים לי?', a: 'מסלול Pro תומך בחשבונות ללא הגבלה. כל חשבון עם נתונים, מגבלות ויעדים נפרדים — ועם ניתוח מצרפי מעל הכל.' },
+    { q: 'יש לי מנטור — הוא יכול לעקוב אחרי העסקאות שלי?', a: 'כן. אפשר להזמין מנטור לצפייה בחשבון שלך עם הרשאות מותאמות — והוא יכול לראות הכל ולהשאיר הערות בזמן אמת.' },
+    { q: 'מה עם פרטיות? זה בטוח?', a: 'הצפנה ברמת שורה (RLS), אחסון בענן בטוח, מסכת פרטיות מובנית בקליק. הנתונים שלך — אצלך בלבד.' },
   ];
   return (
-    <section id="faq" className="max-w-3xl mx-auto px-5 lg:px-8 py-20 lg:py-28">
+    <section id="faq" className="max-w-5xl mx-auto px-5 lg:px-8 py-20 lg:py-28">
       <div className="text-center mb-12">
-        <div className="text-[10px] tracking-[0.25em] text-[#a78bfa] uppercase mb-3" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>שאלות נפוצות</div>
-        <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>שאלות שכבר שאלו אותנו.</h2>
+        <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4" style={{ fontFamily: FONT_DISPLAY, color: TXT }}>
+          שאלות נפוצות
+        </h2>
+        <div className="mx-auto w-24 h-[3px] rounded-full mb-5" style={{ background: `linear-gradient(90deg, transparent, ${GOLD}, transparent)` }} />
+        <p style={{ color: TXT_2 }}>תשובות לשאלות הנפוצות ביותר על השירות שלנו.</p>
       </div>
-      <div className="space-y-3">
+      <div className="grid md:grid-cols-2 gap-3">
         {items.map(item => (
-          <details key={item.q} className="group rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition-all overflow-hidden">
-            <summary className="cursor-pointer list-none flex items-center justify-between gap-3 px-5 py-4 text-white font-medium text-sm" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+          <details
+            key={item.q}
+            className="group rounded-2xl overflow-hidden transition-all"
+            style={{ background: 'rgba(10,31,61,0.5)', border: `1px solid ${LINE}` }}
+          >
+            <summary
+              className="cursor-pointer list-none flex items-center justify-between gap-3 px-5 py-4 text-sm font-semibold"
+              style={{ color: TXT, fontFamily: FONT_DISPLAY }}
+            >
               <span>{item.q}</span>
-              <span className="text-[#a78bfa] group-open:rotate-45 transition-transform text-lg leading-none">+</span>
+              <span className="group-open:rotate-45 transition-transform text-xl leading-none" style={{ color: GOLD }}>+</span>
             </summary>
-            <div className="px-5 pb-5 text-sm text-slate-400 leading-relaxed">{item.a}</div>
+            <div className="px-5 pb-5 text-sm leading-relaxed" style={{ color: TXT_2 }}>{item.a}</div>
           </details>
         ))}
       </div>
@@ -496,20 +891,41 @@ function Faq() {
 function FinalCta() {
   return (
     <section className="relative max-w-5xl mx-auto px-5 lg:px-8 py-20">
-      <div className="relative rounded-3xl bg-gradient-to-br from-[#4f46e5] via-[#6366f1] to-[#7c3aed] p-12 md:p-16 text-center overflow-hidden">
-        <div className="absolute -top-20 -right-20 w-60 h-60 bg-white/10 blur-3xl rounded-full" />
-        <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-black/20 blur-3xl rounded-full" />
+      <div
+        className="relative rounded-[2rem] p-12 md:p-16 text-center overflow-hidden"
+        style={{
+          background: `linear-gradient(135deg, ${BG_2} 0%, ${BG_3} 50%, ${BG_2} 100%)`,
+          border: `1.5px solid ${GOLD}`,
+          boxShadow: `0 40px 100px rgba(201,168,76,0.2), inset 0 0 80px rgba(201,168,76,0.04)`,
+        }}
+      >
+        <div
+          className="absolute -top-20 -right-20 w-64 h-64 blur-3xl rounded-full"
+          style={{ background: `${GOLD}33` }}
+        />
+        <div
+          className="absolute -bottom-20 -left-20 w-64 h-64 blur-3xl rounded-full"
+          style={{ background: `${GOLD}22` }}
+        />
         <div className="relative">
-          <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+          <img src={orcaLogoAsset.url} alt="" className="w-16 h-16 mx-auto mb-5 drop-shadow-[0_0_20px_rgba(201,168,76,0.5)]" />
+          <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4" style={{ fontFamily: FONT_DISPLAY, color: TXT }}>
             תפסיק לתעד. תתחיל להבין.
           </h2>
-          <p className="text-white/80 max-w-xl mx-auto mb-8">7 ימים חינם. בלי כרטיס אשראי. רק יומן אחד שיכול לשנות את שנת המסחר שלך.</p>
+          <p className="max-w-xl mx-auto mb-8" style={{ color: TXT_2 }}>
+            5 ימי ניסיון. בלי כרטיס אשראי. רק יומן אחד שיכול לשנות את שנת המסחר שלך.
+          </p>
           <Link
-            to="/auth?signup=1"
-            className="inline-flex items-center gap-2 px-7 py-4 rounded-xl bg-white text-[#4f46e5] font-bold shadow-2xl shadow-black/30 hover:scale-105 transition-all"
-            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            to="/auth"
+            className="inline-flex items-center gap-2 px-8 py-4 rounded-full font-bold text-sm transition-all hover:scale-105"
+            style={{
+              background: `linear-gradient(135deg, ${GOLD}, ${GOLD_2})`,
+              color: BG,
+              fontFamily: FONT_DISPLAY,
+              boxShadow: '0 20px 50px rgba(201,168,76,0.45)',
+            }}
           >
-            התחל עכשיו — חינם
+            התחילו ניסיון בחינם!
             <ArrowLeft className="w-4 h-4" />
           </Link>
         </div>
@@ -521,18 +937,64 @@ function FinalCta() {
 /* ──────────────── FOOTER ──────────────── */
 function Footer() {
   return (
-    <footer className="border-t border-[#1e1e5a]/40 py-10 mt-10">
-      <div className="max-w-7xl mx-auto px-5 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-gradient-to-br from-[#4f46e5] to-[#a78bfa] flex items-center justify-center">
-            <span className="text-white text-[10px] font-bold">O</span>
+    <footer id="contact" className="border-t mt-10 pt-16 pb-8" style={{ borderColor: LINE, background: 'rgba(6,19,38,0.7)' }}>
+      <div className="max-w-7xl mx-auto px-5 lg:px-8">
+        <div className="grid md:grid-cols-4 gap-10 mb-12">
+          {/* Brand */}
+          <div className="md:col-span-1">
+            <Logo size={40} />
+            <p className="text-sm mt-4 leading-relaxed" style={{ color: TXT_2 }}>
+              יומן המסחר המקצועי לסוחרים ישראלים. נבנה בישראל, בעברית, מאפס.
+            </p>
           </div>
-          <span>© {new Date().getFullYear()} Orca · נבנה בישראל לסוחרים ישראלים</span>
+
+          {/* Quick links */}
+          <div>
+            <h4 className="text-xs tracking-[0.2em] mb-4 font-bold" style={{ color: GOLD, fontFamily: FONT_DISPLAY }}>קישורים מהירים</h4>
+            <ul className="space-y-2.5 text-sm" style={{ color: TXT_2 }}>
+              <li><a href="#features" className="hover:text-white transition">פיצ'רים</a></li>
+              <li><a href="#brokers" className="hover:text-white transition">פלטפורמות וברוקרים</a></li>
+              <li><a href="#pricing" className="hover:text-white transition">מחירים</a></li>
+              <li><a href="#faq" className="hover:text-white transition">שאלות ותשובות</a></li>
+            </ul>
+          </div>
+
+          {/* Legal */}
+          <div>
+            <h4 className="text-xs tracking-[0.2em] mb-4 font-bold" style={{ color: GOLD, fontFamily: FONT_DISPLAY }}>משפטי</h4>
+            <ul className="space-y-2.5 text-sm" style={{ color: TXT_2 }}>
+              <li><Link to="/terms" className="hover:text-white transition">תנאי שימוש</Link></li>
+              <li><Link to="/terms" className="hover:text-white transition">מדיניות פרטיות</Link></li>
+              <li><Link to="/terms" className="hover:text-white transition">Risk Disclosure</Link></li>
+            </ul>
+          </div>
+
+          {/* Contact */}
+          <div>
+            <h4 className="text-xs tracking-[0.2em] mb-4 font-bold" style={{ color: GOLD, fontFamily: FONT_DISPLAY }}>צור קשר</h4>
+            <ul className="space-y-3 text-sm" style={{ color: TXT_2 }}>
+              <li className="flex items-center gap-2.5">
+                <MessageCircle className="w-4 h-4" style={{ color: GOLD }} />
+                <span>054-615-0818</span>
+              </li>
+              <li className="flex items-center gap-2.5">
+                <Mail className="w-4 h-4" style={{ color: GOLD }} />
+                <a href="mailto:support@orca-investment.co.il" className="hover:text-white transition">support@orca-investment.co.il</a>
+              </li>
+            </ul>
+          </div>
         </div>
-        <div className="flex items-center gap-5">
-          <Link to="/terms" className="hover:text-slate-300 transition">תנאי שימוש</Link>
-          <Link to="/terms" className="hover:text-slate-300 transition">פרטיות</Link>
-          <Link to="/auth" className="hover:text-slate-300 transition">התחברות</Link>
+
+        {/* Risk disclosure */}
+        <div className="text-[11px] leading-relaxed pt-6 border-t" style={{ borderColor: LINE, color: TXT_3 }}>
+          <strong style={{ color: TXT_2 }}>Risk Disclosure:</strong> Futures and forex trading contains substantial risk and is not for every investor.
+          An investor could potentially lose all or more than the initial investment. Risk capital is money that can be lost without jeopardizing
+          one's financial security or lifestyle. Only risk capital should be used for trading. Past performance is not necessarily indicative of future results.
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 mt-6 border-t text-xs" style={{ borderColor: LINE, color: TXT_3 }}>
+          <span>© {new Date().getFullYear()} Orca Investment · כל הזכויות שמורות</span>
+          <span>נבנה בישראל לסוחרים ישראלים 🇮🇱</span>
         </div>
       </div>
     </footer>
