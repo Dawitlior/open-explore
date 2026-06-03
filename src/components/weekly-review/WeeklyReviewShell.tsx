@@ -52,8 +52,15 @@ export const WeeklyReviewShell = ({ T, isRTL, trades }: Props) => {
         paddingInline: 'clamp(12px, 3vw, 24px)',
         fontFamily: "'Poppins', system-ui, sans-serif",
         boxSizing: 'border-box',
+        direction: isRTL ? 'rtl' : 'ltr',
+        textAlign: isRTL ? 'right' : 'left',
       }}
     >
+      {/* ── Reminder + month-over + auto-trade sync banner ── */}
+      <div style={{ marginTop: 12 }}>
+        <WeeklyReviewBanner T={T} isRTL={isRTL} trades={trades} />
+      </div>
+
       {/* Tab bar */}
       <div
         role="tablist"
