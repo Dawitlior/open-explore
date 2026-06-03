@@ -195,11 +195,29 @@ function fmtR(n: number) {
   const v = Number.isFinite(n) ? n : 0;
   return `${v >= 0 ? '+' : ''}${v.toFixed(2)}R`;
 }
+function fmtUSD(n: number) {
+  const v = Number.isFinite(n) ? n : 0;
+  const abs = Math.abs(v);
+  const formatted = abs >= 1000 ? abs.toLocaleString(undefined, { maximumFractionDigits: 0 })
+                                 : abs.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  return `${v < 0 ? '-' : v > 0 ? '+' : ''}$${formatted}`;
+}
+const th: React.CSSProperties = { padding: '8px 10px', fontWeight: 600, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' };
+const td: React.CSSProperties = { padding: '8px 10px' };
 function Stat({ l, v, tone, card, muted, fg }: { l: string; v: string; tone?: string; card: React.CSSProperties; muted: string; fg: string }) {
   return (
     <div style={card}>
       <div style={{ color: muted, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', fontWeight: 600 }}>{l}</div>
       <div style={{ color: tone || fg, fontFamily: "'IBM Plex Mono', monospace", fontSize: 20, fontWeight: 700, marginTop: 4 }}>{v}</div>
+    </div>
+  );
+}
+function DualStat({ l, r, d, tone, card, muted, fg }: { l: string; r: string; d: string; tone?: string; card: React.CSSProperties; muted: string; fg: string }) {
+  return (
+    <div style={card}>
+      <div style={{ color: muted, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', fontWeight: 600 }}>{l}</div>
+      <div style={{ color: tone || fg, fontFamily: "'IBM Plex Mono', monospace", fontSize: 20, fontWeight: 700, marginTop: 4 }}>{r}</div>
+      <div style={{ color: muted, fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, fontWeight: 600, marginTop: 2, opacity: 0.85 }}>{d}</div>
     </div>
   );
 }
