@@ -69,7 +69,8 @@ export const MetricCard = ({ label, value, suffix, color, small, T, onInfoClick 
         {onInfoClick && (
           <button
             onClick={onInfoClick}
-            className="w-4 h-4 rounded-full border border-white/10 bg-transparent text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors text-[9px] font-bold flex items-center justify-center p-0 leading-none"
+            aria-label="info"
+            className="w-3 h-3 sm:w-4 sm:h-4 shrink-0 rounded-full border border-white/10 bg-transparent text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors text-[7px] sm:text-[9px] font-bold flex items-center justify-center p-0 leading-none"
           >
             i
           </button>
