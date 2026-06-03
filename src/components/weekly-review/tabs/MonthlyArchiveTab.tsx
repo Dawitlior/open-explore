@@ -120,9 +120,46 @@ export default function MonthlyArchiveTab({ T, isRTL, trades, state }: Props) {
         <div style={{ color: muted, fontSize: 12, marginTop: 4 }}>{L.sub}</div>
       </div>
 
+      {/* ── Live journal months (pulls every trade, R + $) ── */}
+      {liveMonths.length > 0 && (
+        <div style={card}>
+          <div style={{ ...label, marginBottom: 10 }}>
+            {isRTL ? 'נתוני יומן חיים — כל חודש מהמסחר שלך' : 'Live journal months — every trade, every month'}
+          </div>
+          <div style={{ overflowX: 'auto', border: `1px solid ${border}`, borderRadius: 10 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'IBM Plex Mono', monospace", fontSize: 12 }}>
+              <thead>
+                <tr style={{ color: muted, background: 'rgba(0,0,0,0.18)', textAlign: isRTL ? 'right' : 'left' }}>
+                  <th style={{ padding: '8px 10px', fontWeight: 600, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' }}>{isRTL ? 'חודש' : 'Month'}</th>
+                  <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 600, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' }}>{L.trades}</th>
+                  <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 600, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' }}>{L.netR}</th>
+                  <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 600, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' }}>$ P&amp;L</th>
+                  <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 600, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' }}>WR</th>
+                </tr>
+              </thead>
+              <tbody>
+                {liveMonths.map(m => {
+                  const wr = m.wins + m.losses ? m.wins / (m.wins + m.losses) : 0;
+                  return (
+                    <tr key={m.mk} style={{ borderTop: `1px solid ${border}`, color: fg }}>
+                      <td style={{ padding: '8px 10px' }}>{m.mk}</td>
+                      <td style={{ padding: '8px 10px', textAlign: 'right' }}>{m.trades}</td>
+                      <td style={{ padding: '8px 10px', textAlign: 'right', color: m.netR >= 0 ? win : loss, fontWeight: 700 }}>{fmtR(m.netR)}</td>
+                      <td style={{ padding: '8px 10px', textAlign: 'right', color: m.netUSD >= 0 ? win : loss, fontWeight: 700 }}>{fmtUSD(m.netUSD)}</td>
+                      <td style={{ padding: '8px 10px', textAlign: 'right' }}>{Math.round(wr * 100)}%</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {groups.length === 0 && (
         <div style={{ ...card, textAlign: 'center', color: muted, padding: 32 }}>{L.empty}</div>
       )}
+
 
       {groups.map(g => {
         const wr = g.wins + g.losses ? g.wins / (g.wins + g.losses) : 0;
