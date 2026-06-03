@@ -89,57 +89,20 @@ export default function PeriodDashboard({ trades, months, T, isRTL, titleHE, tit
         </h2>
       </div>
 
-      {/* Stat strip */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10 }}>
-        <Stat l={L.netR}    v={fmtR(a.netR)} tone={a.netR >= 0 ? win : loss} card={card} muted={muted} fg={fg} />
-        <Stat l={L.trades}  v={String(a.totalTrades)} card={card} muted={muted} fg={fg} />
-        <Stat l={L.winRate} v={`${Math.round(a.winRate * 100)}%`} card={card} muted={muted} fg={fg} />
-        <Stat l={L.pf}      v={pfStr(a.profitFactor)} card={card} muted={muted} fg={fg} />
-        <Stat l={L.exp}     v={fmtR(a.expectancyR)} tone={a.expectancyR >= 0 ? win : loss} card={card} muted={muted} fg={fg} />
-        <Stat l={L.avgWin}  v={fmtR(a.avgWinR)}  tone={win}  card={card} muted={muted} fg={fg} />
-        <Stat l={L.avgLoss} v={fmtR(a.avgLossR)} tone={loss} card={card} muted={muted} fg={fg} />
-        <Stat l={L.dd}      v={`-${a.maxDrawdownR.toFixed(2)}R`} tone={loss} card={card} muted={muted} fg={fg} />
+      {/* Stat strip — every metric shown as R AND $ (auto-summed from journal pnl) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
+        <DualStat l={L.netR}    r={fmtR(a.netR)}    d={fmtUSD(a.netUSD)}    tone={a.netR >= 0 ? win : loss}        card={card} muted={muted} fg={fg} />
+        <Stat     l={L.trades}  v={String(a.totalTrades)}                                                          card={card} muted={muted} fg={fg} />
+        <Stat     l={L.winRate} v={`${Math.round(a.winRate * 100)}%`}                                              card={card} muted={muted} fg={fg} />
+        <Stat     l={L.pf}      v={pfStr(a.profitFactor)}                                                          card={card} muted={muted} fg={fg} />
+        <DualStat l={L.exp}     r={fmtR(a.expectancyR)} d={fmtUSD(a.expectancyUSD)} tone={a.expectancyR >= 0 ? win : loss} card={card} muted={muted} fg={fg} />
+        <DualStat l={L.avgWin}  r={fmtR(a.avgWinR)}  d={fmtUSD(a.avgWinUSD)}  tone={win}                          card={card} muted={muted} fg={fg} />
+        <DualStat l={L.avgLoss} r={fmtR(a.avgLossR)} d={fmtUSD(a.avgLossUSD)} tone={loss}                         card={card} muted={muted} fg={fg} />
+        <DualStat l={L.dd}      r={`-${a.maxDrawdownR.toFixed(2)}R`} d={fmtUSD(-Math.abs(a.maxDrawdownUSD))} tone={loss} card={card} muted={muted} fg={fg} />
       </div>
 
-      {/* Equity curve */}
-      <ChartCard title={L.equity} card={card} labelStyle={labelStyle}>
-        <ResponsiveContainer width="100%" height={260}>
-          <AreaChart data={a.equity} margin={{ top: 10, right: 16, bottom: 8, left: 8 }}>
-            <defs>
-              <linearGradient id="eqGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%"  stopColor={accent} stopOpacity={0.55} />
-                <stop offset="100%" stopColor={accent} stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid stroke={border} strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="i" hide />
-            <YAxis stroke={muted} fontSize={10} width={36} tickFormatter={v => `${v}R`} />
-            <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`${v.toFixed(2)}R`, 'Equity']} labelFormatter={() => ''} />
-            <ReferenceLine y={0} stroke={border} />
-            <Area type="monotone" dataKey="equityR" stroke={accent} strokeWidth={2} fill="url(#eqGrad)" />
-          </AreaChart>
-        </ResponsiveContainer>
-      </ChartCard>
-
-      {/* Waterfall + Radar */}
+      {/* Trader DNA + Monthly PF + Monthly WR — currency-agnostic, kept */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
-        <ChartCard title={L.waterfall} card={card} labelStyle={labelStyle}>
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={monthsData} margin={{ top: 10, right: 16, bottom: 8, left: 8 }}>
-              <CartesianGrid stroke={border} strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="label" stroke={muted} fontSize={10} />
-              <YAxis stroke={muted} fontSize={10} width={36} tickFormatter={v => `${v}R`} />
-              <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`${v}R`, 'Net']} />
-              <ReferenceLine y={0} stroke={border} />
-              <Bar dataKey="netR" radius={[4, 4, 0, 0]}>
-                {monthsData.map((m, i) => (
-                  <Cell key={i} fill={m.netR >= 0 ? win : loss} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
         <ChartCard title={L.radar} card={card} labelStyle={labelStyle}>
           <ResponsiveContainer width="100%" height={260}>
             <RadarChart data={a.radar} margin={{ top: 16, right: 28, bottom: 16, left: 28 }} outerRadius="62%">
@@ -151,12 +114,9 @@ export default function PeriodDashboard({ trades, months, T, isRTL, titleHE, tit
             </RadarChart>
           </ResponsiveContainer>
         </ChartCard>
-      </div>
 
-      {/* PF + Win rate trends */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
         <ChartCard title={L.pf2} card={card} labelStyle={labelStyle}>
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={260}>
             <LineChart data={monthsData} margin={{ top: 10, right: 16, bottom: 8, left: 8 }}>
               <CartesianGrid stroke={border} strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="label" stroke={muted} fontSize={10} />
@@ -169,7 +129,7 @@ export default function PeriodDashboard({ trades, months, T, isRTL, titleHE, tit
         </ChartCard>
 
         <ChartCard title={L.wr} card={card} labelStyle={labelStyle}>
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={260}>
             <LineChart data={monthsData} margin={{ top: 10, right: 16, bottom: 8, left: 8 }}>
               <CartesianGrid stroke={border} strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="label" stroke={muted} fontSize={10} />
@@ -182,43 +142,40 @@ export default function PeriodDashboard({ trades, months, T, isRTL, titleHE, tit
         </ChartCard>
       </div>
 
-      {/* R-distribution + Setup pie */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
-        <ChartCard title={L.rdist} card={card} labelStyle={labelStyle}>
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={a.rDistribution} margin={{ top: 10, right: 16, bottom: 8, left: 8 }}>
-              <CartesianGrid stroke={border} strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="bucket" stroke={muted} fontSize={10} />
-              <YAxis stroke={muted} fontSize={10} width={36} />
-              <Tooltip contentStyle={tooltipStyle} />
-              <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                {a.rDistribution.map((b, i) => (
-                  <Cell key={i} fill={b.bucket.includes('-') && !b.bucket.startsWith('-1..0') ? loss : b.bucket === '0R' || b.bucket === '-1..0R' ? muted : win} />
+      {/* Monthly breakdown table — shows BOTH R and $ for every month (live from journal) */}
+      <ChartCard title={isRTL ? 'פירוט חודשי' : 'Monthly breakdown'} card={card} labelStyle={labelStyle}>
+        {a.months.length === 0 ? (
+          <div style={{ color: muted, fontSize: 13, padding: 24, textAlign: 'center' }}>—</div>
+        ) : (
+          <div style={{ overflowX: 'auto', borderRadius: 10, border: `1px solid ${border}` }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'IBM Plex Mono', monospace", fontSize: 12 }}>
+              <thead>
+                <tr style={{ color: muted, background: 'rgba(0,0,0,0.18)', textAlign: isRTL ? 'right' : 'left' }}>
+                  <th style={th}>{isRTL ? 'חודש' : 'Month'}</th>
+                  <th style={{ ...th, textAlign: 'right' }}>{L.trades}</th>
+                  <th style={{ ...th, textAlign: 'right' }}>{L.netR}</th>
+                  <th style={{ ...th, textAlign: 'right' }}>$ P&amp;L</th>
+                  <th style={{ ...th, textAlign: 'right' }}>WR</th>
+                  <th style={{ ...th, textAlign: 'right' }}>PF</th>
+                </tr>
+              </thead>
+              <tbody>
+                {a.months.map(m => (
+                  <tr key={m.monthKey} style={{ borderTop: `1px solid ${border}`, color: fg }}>
+                    <td style={td}>{m.monthKey}</td>
+                    <td style={{ ...td, textAlign: 'right' }}>{m.trades}</td>
+                    <td style={{ ...td, textAlign: 'right', color: m.netR >= 0 ? win : loss, fontWeight: 700 }}>{fmtR(m.netR)}</td>
+                    <td style={{ ...td, textAlign: 'right', color: m.netUSD >= 0 ? win : loss, fontWeight: 700 }}>{fmtUSD(m.netUSD)}</td>
+                    <td style={{ ...td, textAlign: 'right' }}>{Math.round(m.winRate * 100)}%</td>
+                    <td style={{ ...td, textAlign: 'right' }}>{pfStr(m.profitFactor)}</td>
+                  </tr>
                 ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
+              </tbody>
+            </table>
+          </div>
+        )}
+      </ChartCard>
 
-        <ChartCard title={L.setups} card={card} labelStyle={labelStyle}>
-          <ResponsiveContainer width="100%" height={240}>
-            <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
-              <Pie
-                data={a.setupBreakdown.map(s => ({ ...s, abs: Math.abs(s.netR) || 0.0001 }))}
-                dataKey="abs" nameKey="name"
-                innerRadius={48} outerRadius={84}
-                stroke={panel}
-              >
-                {a.setupBreakdown.map((s, i) => (
-                  <Cell key={s.name} fill={s.netR >= 0 ? PIE_COLORS[i % PIE_COLORS.length] : loss} />
-                ))}
-              </Pie>
-              <Tooltip contentStyle={tooltipStyle} formatter={(_v: number, _n, p: any) => [`${(p.payload.netR as number).toFixed(2)}R · ${p.payload.count}`, p.payload.name]} />
-              <Legend wrapperStyle={{ fontSize: 10, color: muted }} />
-            </PieChart>
-          </ResponsiveContainer>
-        </ChartCard>
-      </div>
 
       {/* Highlights */}
       <ChartCard title={L.highlights} card={card} labelStyle={labelStyle}>
