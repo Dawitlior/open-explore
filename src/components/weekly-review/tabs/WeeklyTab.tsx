@@ -285,13 +285,16 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
           <SectionTitle title={L.trades} emoji="📓" T={T} isRTL={isRTL} accent={cyan} />
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10, marginBottom: 14 }}>
-          <Stat label={L.rr}      value={rr.rr ? rr.rr.toFixed(2) : '0.00'} card={cardSubtle} sl={statLabel} sv={statValue} color={fg} />
-          <Stat label={L.winR}    value={fmtR(rr.avgWin)}                     card={cardSubtle} sl={statLabel} sv={statValue} color={win} />
-          <Stat label={L.avgR}    value={fmtR(wk.avgR)}                       card={cardSubtle} sl={statLabel} sv={statValue} color={wk.avgR >= 0 ? win : loss} />
-          <Stat label={L.winRate} value={`${Math.round(wk.winRate * 100)}%`}  card={cardSubtle} sl={statLabel} sv={statValue} color={wk.winRate >= 0.5 ? win : loss} />
-          <Stat label={L.tradesK} value={String(n)}                           card={cardSubtle} sl={statLabel} sv={statValue} color={fg} />
-          <Stat label={L.netR}    value={fmtR(wk.netR)}                       card={cardSubtle} sl={statLabel} sv={statValue} color={wk.netR >= 0 ? win : loss} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, marginBottom: 14 }}>
+          <Stat label={L.rr}      value={rr.rr ? rr.rr.toFixed(2) : '0.00'}         card={cardSubtle} sl={statLabel} sv={statValue} color={fg} />
+          <DualStat label={L.winR}    r={fmtR(rr.avgWin)}   d={fmtUSD(wk.avgWinUSD)}  isUSD={isUSD}
+                    card={cardSubtle} sl={statLabel} sv={statValue} color={win} muted={muted} />
+          <DualStat label={L.avgR}    r={fmtR(wk.avgR)}     d={fmtUSD(wk.avgUSD)}     isUSD={isUSD}
+                    card={cardSubtle} sl={statLabel} sv={statValue} color={wk.avgR >= 0 ? win : loss} muted={muted} />
+          <Stat label={L.winRate} value={`${Math.round(wk.winRate * 100)}%`}        card={cardSubtle} sl={statLabel} sv={statValue} color={wk.winRate >= 0.5 ? win : loss} />
+          <Stat label={L.tradesK} value={String(n)}                                  card={cardSubtle} sl={statLabel} sv={statValue} color={fg} />
+          <DualStat label={L.netR}    r={fmtR(wk.netR)}     d={fmtUSD(wk.netUSD)}     isUSD={isUSD}
+                    card={cardSubtle} sl={statLabel} sv={statValue} color={wk.netR >= 0 ? win : loss} muted={muted} />
         </div>
 
         {/* Trade log preview */}
@@ -312,19 +315,25 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
                   <Th>{isRTL ? 'נכס' : 'Asset'}</Th>
                   <Th>{isRTL ? 'כיוון' : 'Side'}</Th>
                   <Th align="right">R</Th>
+                  <Th align="right">$ P&amp;L</Th>
                   <Th>{isRTL ? 'תוצאה' : 'Result'}</Th>
                 </tr>
               </thead>
               <tbody>
-                {tradesArr.map(t => (
-                  <tr key={t.id} style={{ borderTop: `1px solid ${border}`, color: fg }}>
-                    <Td>{t.date}</Td>
-                    <Td>{t.coin}</Td>
-                    <Td style={{ color: t.direction === 'Long' ? win : loss }}>{t.direction}</Td>
-                    <Td align="right" style={{ color: (t.returnR || 0) >= 0 ? win : loss, fontWeight: 700 }}>{fmtR(t.returnR)}</Td>
-                    <Td style={{ color: t.winLoss === 'Win' ? win : t.winLoss === 'Loss' ? loss : muted }}>{t.winLoss}</Td>
-                  </tr>
-                ))}
+                {tradesArr.map(t => {
+                  const r = Number(t.returnR) || 0;
+                  const usd = Number(t.pnl) || 0;
+                  return (
+                    <tr key={t.id} style={{ borderTop: `1px solid ${border}`, color: fg }}>
+                      <Td>{t.date}</Td>
+                      <Td>{t.coin}</Td>
+                      <Td style={{ color: t.direction === 'Long' ? win : loss }}>{t.direction}</Td>
+                      <Td align="right" style={{ color: r >= 0 ? win : loss, fontWeight: 700 }}>{fmtR(r)}</Td>
+                      <Td align="right" style={{ color: usd >= 0 ? win : loss, fontWeight: 700 }}>{fmtUSD(usd)}</Td>
+                      <Td style={{ color: t.winLoss === 'Win' ? win : t.winLoss === 'Loss' ? loss : muted }}>{t.winLoss}</Td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -334,9 +343,15 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
       {/* === RISK LIMITS === */}
       <section>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
-          <RiskCard label={L.daily}   limit={LIMITS.daily}   value={0} T={T} isRTL={isRTL} />
-          <RiskCard label={L.weekly}  limit={LIMITS.weekly}  value={wk.netR < 0 ? wk.netR : 0} T={T} isRTL={isRTL} />
-          <RiskCard label={L.monthly} limit={LIMITS.monthly} value={0} T={T} isRTL={isRTL} />
+          <RiskCard label={L.daily}   limitR={LIMITS.daily}   limitUSD={-risk.dailyUSD}
+                    valueR={0}                          valueUSD={0}
+                    isUSD={isUSD} T={T} isRTL={isRTL} />
+          <RiskCard label={L.weekly}  limitR={LIMITS.weekly}  limitUSD={-risk.weeklyUSD}
+                    valueR={wk.netR  < 0 ? wk.netR  : 0} valueUSD={wk.netUSD < 0 ? wk.netUSD : 0}
+                    isUSD={isUSD} T={T} isRTL={isRTL} />
+          <RiskCard label={L.monthly} limitR={LIMITS.monthly} limitUSD={-risk.monthlyUSD}
+                    valueR={0}                          valueUSD={0}
+                    isUSD={isUSD} T={T} isRTL={isRTL} />
         </div>
       </section>
 
