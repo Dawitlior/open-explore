@@ -56,7 +56,7 @@ export default function PeriodDashboard({ trades, months, T, isRTL, titleHE, tit
   const HE = {
     netR: 'נטו R', trades: 'עסקאות', winRate: 'אחוז זכייה', pf: 'פקטור רווח',
     exp: 'תוחלת', avgWin: 'זכייה ממוצעת', avgLoss: 'הפסד ממוצע', dd: 'דרורדאון מקסימלי',
-    equity: 'עקומת הון (R)', waterfall: 'ביצוע חודשי', radar: 'דנ"א סוחר',
+    equity: 'עקומת הון', waterfall: 'ביצוע חודשי', radar: 'דנ"א סוחר',
     pf2: 'פקטור רווח חודשי', wr: 'אחוז זכייה חודשי',
     rdist: 'התפלגות R', setups: 'תרומת סטאפים', highlights: 'נקודות שיא',
     best: 'השבוע הטוב ביותר', worst: 'השבוע הגרוע ביותר',
@@ -65,7 +65,7 @@ export default function PeriodDashboard({ trades, months, T, isRTL, titleHE, tit
   const EN = {
     netR: 'Net R', trades: 'Trades', winRate: 'Win rate', pf: 'Profit factor',
     exp: 'Expectancy', avgWin: 'Avg win', avgLoss: 'Avg loss', dd: 'Max drawdown',
-    equity: 'Equity curve (R)', waterfall: 'Monthly performance', radar: 'Trader DNA',
+    equity: 'Equity curve', waterfall: 'Monthly performance', radar: 'Trader DNA',
     pf2: 'Monthly profit factor', wr: 'Monthly win rate',
     rdist: 'R distribution', setups: 'Setup contribution', highlights: 'Highlights',
     best: 'Best week', worst: 'Worst week',
