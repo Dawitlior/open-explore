@@ -14,6 +14,8 @@ import type { Trade } from '@/data/trades';
 import type { useWeeklyReviewState } from '../hooks/use-weekly-review-state';
 import { useWeekAggregates } from '../hooks/use-week-aggregates';
 import { useWeekDraft, type WeekDraft } from '../hooks/use-week-draft';
+import { useReviewUnit, fmtR, fmtUSD } from '../hooks/use-review-unit';
+import { useRiskPrefs } from '../hooks/use-risk-prefs';
 import { gradeWeek, GRADE_COLORS } from '../lib/grading';
 import { isFriday } from '../lib/week-key';
 import type { WeekRecord } from '../lib/types';
