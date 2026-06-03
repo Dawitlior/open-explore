@@ -4,9 +4,9 @@
 import { useMemo } from 'react';
 import type { Trade } from '@/data/trades';
 import {
-  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
-  BarChart, Bar, ReferenceLine, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
-  LineChart, Line, PieChart, Pie, Cell, Legend,
+  ResponsiveContainer, CartesianGrid, Tooltip,
+  RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
+  LineChart, Line, XAxis, YAxis, ReferenceLine,
 } from 'recharts';
 import { computeAggregates, shortMonth } from './lib/period-aggregates';
 
