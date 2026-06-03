@@ -729,29 +729,48 @@ function ratingBtn(active: boolean, accent: string, fg: string, muted: string, b
   };
 }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function RiskCard({ label, limit, value, T, isRTL }: { label: string; limit: number; value: number; T: any; isRTL: boolean }) {
-  const fg = T?.text?.primary || '#e9eef7';
+function RiskCard({ label, limitR, limitUSD, valueR, valueUSD, isUSD, T, isRTL }: {
+  label: string;
+  limitR: number;     // negative R (e.g. -5)
+  limitUSD: number;   // negative $ (e.g. -400)
+  valueR: number;     // 0 or negative R used so far
+  valueUSD: number;   // 0 or negative $ used so far
+  isUSD: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  T: any; isRTL: boolean;
+}) {
   const muted = T?.text?.muted || '#7a8aa3';
   const border = T?.border?.subtle || 'rgba(255,255,255,0.08)';
   const panel = T?.bg?.surface || 'rgba(255,255,255,0.04)';
   const win = T?.status?.success || '#39FF14';
   const loss = T?.status?.danger || '#ff3b3b';
   const warn = T?.status?.warning || '#ffb830';
-  const pct = Math.min(100, Math.max(0, (Math.abs(value) / Math.abs(limit)) * 100));
+  const limit = isUSD ? limitUSD : limitR;
+  const value = isUSD ? valueUSD : valueR;
+  const pct = Math.min(100, Math.max(0, (Math.abs(value) / Math.max(1e-9, Math.abs(limit))) * 100));
   const tone = pct >= 80 ? loss : pct >= 50 ? warn : win;
+  const mainStr = isUSD
+    ? (value === 0 ? '$0' : fmtUSD(value))
+    : (value === 0 ? '0.0R' : fmtR(value));
+  const subStr = isUSD ? (valueR === 0 ? '0.0R' : fmtR(valueR))
+                       : (valueUSD === 0 ? '$0' : fmtUSD(valueUSD));
+  const limitStr = isUSD ? `${fmtUSD(limitUSD)}` : `${limitR}R`;
   return (
     <div style={{ padding: 14, background: panel, border: `1px solid ${border}`, borderRadius: 12 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', flexDirection: isRTL ? 'row-reverse' : 'row' }}>
         <div style={{ color: muted, fontSize: 10, letterSpacing: 2, fontWeight: 700, textTransform: 'uppercase' }}>{label}</div>
       </div>
       <div style={{ marginTop: 8, color: value < 0 ? loss : win, fontFamily: "'IBM Plex Mono', monospace", fontSize: 22, fontWeight: 800, textAlign: isRTL ? 'right' : 'left' }}>
-        {value === 0 ? '0.0R' : fmtR(value)}
+        {mainStr}
+      </div>
+      <div style={{ color: muted, fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, fontWeight: 600, marginTop: 2, opacity: 0.8, textAlign: isRTL ? 'right' : 'left' }}>
+        {subStr}
       </div>
       <div style={{ marginTop: 10, height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden' }}>
         <div style={{ width: `${pct}%`, height: '100%', background: tone, transition: 'width 240ms ease' }} />
       </div>
       <div style={{ marginTop: 6, color: muted, fontSize: 10, textAlign: isRTL ? 'left' : 'right' }}>
-        {isRTL ? 'מגבלה:' : 'Limit:'} {limit}R
+        {isRTL ? 'מגבלה:' : 'Limit:'} {limitStr}
       </div>
     </div>
   );
