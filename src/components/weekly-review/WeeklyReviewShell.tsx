@@ -5,6 +5,7 @@
 import { lazy, Suspense, useState } from 'react';
 import type { Trade } from '@/data/trades';
 import { useWeeklyReviewState } from './hooks/use-weekly-review-state';
+import WeeklyReviewBanner from './widgets/WeeklyReviewBanner';
 
 const WeeklyTab        = lazy(() => import('./tabs/WeeklyTab'));
 const SetupsTab        = lazy(() => import('./tabs/SetupsTab'));
