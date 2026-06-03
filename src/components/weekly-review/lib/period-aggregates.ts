@@ -89,42 +89,45 @@ const R_BUCKET_ORDER = ['≤-3R','-3..-2R','-2..-1R','-1..0R','0R','0..1R','1..2
 export function computeAggregates(trades: Trade[], months: number, anchor: Date = new Date()): PeriodAggregates {
   const sliced = slicePeriod(trades, months, anchor);
 
-  let netR = 0, wins = 0, losses = 0, grossWin = 0, grossLoss = 0;
-  let sumWinR = 0, sumLossR = 0;
+  let netR = 0, netUSD = 0, wins = 0, losses = 0;
+  let grossWin = 0, grossLoss = 0;
+  let sumWinR = 0, sumLossR = 0, sumWinUSD = 0, sumLossUSD = 0;
   const monthMap = new Map<string, MonthBucket>();
   const weekMap = new Map<string, WeekBucket>();
   const equity: EquityPoint[] = [];
   const distMap = new Map<string, number>();
-  const setupMap = new Map<string, { netR: number; count: number }>();
+  const setupMap = new Map<string, { netR: number; netUSD: number; count: number }>();
 
   for (let i = 0; i < sliced.length; i++) {
     const t = sliced[i];
     const r = Number(t.returnR) || 0;
+    const usd = Number(t.pnl) || 0;
     netR += r;
-    if (r > 0) { wins += 1; grossWin += r; sumWinR += r; }
-    else if (r < 0) { losses += 1; grossLoss += Math.abs(r); sumLossR += r; }
+    netUSD += usd;
+    if (r > 0) { wins += 1; grossWin += r; sumWinR += r; sumWinUSD += usd; }
+    else if (r < 0) { losses += 1; grossLoss += Math.abs(r); sumLossR += r; sumLossUSD += usd; }
 
     const d = parseTradeDate(t.date)!;
     const mk = monthKeyOf(d);
     const wk = isoWeekKey(d);
 
-    if (!monthMap.has(mk)) monthMap.set(mk, { monthKey: mk, netR: 0, trades: 0, wins: 0, losses: 0, winRate: 0, profitFactor: 0 });
+    if (!monthMap.has(mk)) monthMap.set(mk, { monthKey: mk, netR: 0, netUSD: 0, trades: 0, wins: 0, losses: 0, winRate: 0, profitFactor: 0 });
     const mb = monthMap.get(mk)!;
-    mb.netR += r; mb.trades += 1;
+    mb.netR += r; mb.netUSD += usd; mb.trades += 1;
     if (r > 0) mb.wins += 1; else if (r < 0) mb.losses += 1;
 
-    if (!weekMap.has(wk)) weekMap.set(wk, { weekKey: wk, netR: 0, trades: 0, wins: 0, losses: 0, winRate: 0 });
+    if (!weekMap.has(wk)) weekMap.set(wk, { weekKey: wk, netR: 0, netUSD: 0, trades: 0, wins: 0, losses: 0, winRate: 0 });
     const wb = weekMap.get(wk)!;
-    wb.netR += r; wb.trades += 1;
+    wb.netR += r; wb.netUSD += usd; wb.trades += 1;
     if (r > 0) wb.wins += 1; else if (r < 0) wb.losses += 1;
 
-    equity.push({ i, date: t.date, equityR: netR });
+    equity.push({ i, date: t.date, equityR: netR, equityUSD: netUSD });
     distMap.set(bucketize(r), (distMap.get(bucketize(r)) || 0) + 1);
 
     const sn = getSetupName(t);
-    if (!setupMap.has(sn)) setupMap.set(sn, { netR: 0, count: 0 });
+    if (!setupMap.has(sn)) setupMap.set(sn, { netR: 0, netUSD: 0, count: 0 });
     const sm = setupMap.get(sn)!;
-    sm.netR += r; sm.count += 1;
+    sm.netR += r; sm.netUSD += usd; sm.count += 1;
   }
 
   // Finalize derived fields
@@ -159,15 +162,16 @@ export function computeAggregates(trades: Trade[], months: number, anchor: Date 
   const rDistribution: RDistBucket[] = R_BUCKET_ORDER.map(b => ({ bucket: b, count: distMap.get(b) || 0 }));
 
   const setupBreakdown: SetupSlice[] = Array.from(setupMap.entries())
-    .map(([name, v]) => ({ name, netR: v.netR, count: v.count }))
+    .map(([name, v]) => ({ name, netR: v.netR, netUSD: v.netUSD, count: v.count }))
     .sort((a, b) => b.netR - a.netR);
 
-  // Drawdown
-  let peak = 0, dd = 0;
+  // Drawdown — both R and $
+  let peakR = 0, ddR = 0, peakUSD = 0, ddUSD = 0;
   for (const p of equity) {
-    if (p.equityR > peak) peak = p.equityR;
-    const cur = peak - p.equityR;
-    if (cur > dd) dd = cur;
+    if (p.equityR > peakR) peakR = p.equityR;
+    if (peakR - p.equityR > ddR) ddR = peakR - p.equityR;
+    if (p.equityUSD > peakUSD) peakUSD = p.equityUSD;
+    if (peakUSD - p.equityUSD > ddUSD) ddUSD = peakUSD - p.equityUSD;
   }
 
   const totalTrades = sliced.length;
@@ -175,7 +179,10 @@ export function computeAggregates(trades: Trade[], months: number, anchor: Date 
   const profitFactor = grossLoss > 0 ? grossWin / grossLoss : (grossWin > 0 ? Infinity : 0);
   const avgWinR = wins ? sumWinR / wins : 0;
   const avgLossR = losses ? sumLossR / losses : 0;
+  const avgWinUSD = wins ? sumWinUSD / wins : 0;
+  const avgLossUSD = losses ? sumLossUSD / losses : 0;
   const expectancyR = totalTrades ? netR / totalTrades : 0;
+  const expectancyUSD = totalTrades ? netUSD / totalTrades : 0;
 
   const bestWeek = weeks_.length ? weeks_.reduce((a, b) => (b.netR > a.netR ? b : a)) : undefined;
   const worstWeek = weeks_.length ? weeks_.reduce((a, b) => (b.netR < a.netR ? b : a)) : undefined;
@@ -192,8 +199,10 @@ export function computeAggregates(trades: Trade[], months: number, anchor: Date 
   ];
 
   return {
-    trades: sliced, netR, totalTrades, wins, losses, winRate, profitFactor,
-    expectancyR, avgWinR, avgLossR, maxDrawdownR: dd,
+    trades: sliced, netR, netUSD, totalTrades, wins, losses, winRate, profitFactor,
+    expectancyR, expectancyUSD,
+    avgWinR, avgWinUSD, avgLossR, avgLossUSD,
+    maxDrawdownR: ddR, maxDrawdownUSD: ddUSD,
     months: months_, weeks: weeks_, equity, rDistribution, setupBreakdown,
     bestWeek, worstWeek, bestMonth, worstMonth, radar,
   };
