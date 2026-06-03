@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { Trade } from '@/data/trades';
 import { useAuth } from '@/hooks/use-auth';
+import WeeklyReviewShell from '@/components/weekly-review/WeeklyReviewShell';
 
 // ═══════════════════════════════════════════════════
-// WeeklyReviewPage — wraps the standalone Trading
-// Journal HTML app (public/weekly-review/index.html)
-// inside an isolated iframe and bridges Orca trades
-// into it via postMessage. The iframe URL carries the
-// authenticated user id so its localStorage is fully
-// isolated per user (see top of /weekly-review/index.html).
+// WeeklyReviewPage — native rebuild in progress.
+// Default: renders the new Orca-native <WeeklyReviewShell />.
+// Fallback: legacy iframe app at /weekly-review/index.html.
+// Switch back to legacy by adding ?legacy=1 to the URL OR
+// localStorage.setItem('weekly_review_legacy','1').
 // ═══════════════════════════════════════════════════
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -29,6 +29,15 @@ const THEME_MAP: Record<OrcaThemeId, 'night' | 'snow'> = {
   indigo: 'night',
   platinum: 'snow',
 };
+
+function isLegacyRequested(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    if (new URLSearchParams(window.location.search).get('legacy') === '1') return true;
+    if (window.localStorage.getItem('weekly_review_legacy') === '1') return true;
+  } catch { /* noop */ }
+  return false;
+}
 
 export const WeeklyReviewPage = ({ T, isRTL, trades, themeId }: Props) => {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
