@@ -70,7 +70,7 @@ export const WeeklyReviewShell = ({ T, isRTL, trades }: Props) => {
           flexWrap: 'wrap',
           gap: 6,
           padding: 6,
-          margin: '12px 0 16px',
+          margin: '0 0 16px',
           background: panel,
           border: `1px solid ${border}`,
           borderRadius: 14,
