@@ -8,6 +8,7 @@ import { getSetupName } from './setup-breakdown';
 export interface MonthBucket {
   monthKey: string;
   netR: number;
+  netUSD: number;          // ← $ equivalent from t.pnl
   trades: number;
   wins: number;
   losses: number;
@@ -17,27 +18,33 @@ export interface MonthBucket {
 export interface WeekBucket {
   weekKey: string;
   netR: number;
+  netUSD: number;          // ← $ equivalent
   trades: number;
   wins: number;
   losses: number;
   winRate: number;
 }
-export interface EquityPoint { i: number; date: string; equityR: number; }
+export interface EquityPoint { i: number; date: string; equityR: number; equityUSD: number; }
 export interface RDistBucket { bucket: string; count: number; }
-export interface SetupSlice { name: string; netR: number; count: number; color?: string; }
+export interface SetupSlice { name: string; netR: number; netUSD: number; count: number; color?: string; }
 export interface RadarPoint { axis: string; value: number; }
 export interface PeriodAggregates {
   trades: Trade[];
   netR: number;
+  netUSD: number;          // ← total $ for the period
   totalTrades: number;
   wins: number;
   losses: number;
   winRate: number;
   profitFactor: number;
   expectancyR: number;
+  expectancyUSD: number;   // ← $/trade
   avgWinR: number;
+  avgWinUSD: number;
   avgLossR: number;
+  avgLossUSD: number;
   maxDrawdownR: number;
+  maxDrawdownUSD: number;
   months: MonthBucket[];
   weeks: WeekBucket[];
   equity: EquityPoint[];
