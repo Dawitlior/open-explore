@@ -192,10 +192,10 @@ export const ReviewDashboard = ({
               {isUltimateTier && (
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.directionAnalysis} explanation={EXPLANATIONS.directionAnalysis}>
-                    <div style={{ height: 140, width: '100%' }}>
+                    <div style={{ height: 180, width: '100%' }}>
                       <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie data={stats.directionData} dataKey="trades" nameKey="name" cx="50%" cy="50%" innerRadius={38} outerRadius={60} paddingAngle={4} label={({ name, percent }: any) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
+                        <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+                          <Pie data={stats.directionData} dataKey="trades" nameKey="name" cx="50%" cy="50%" innerRadius={42} outerRadius={66} paddingAngle={4} label={({ name, percent }: any) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
                             <Cell fill={T.accent.green} /><Cell fill={T.accent.red} />
                           </Pie>
                           <Tooltip contentStyle={tt} />
