@@ -180,10 +180,11 @@ export default function PeriodDashboard({ trades, months, T, isRTL, titleHE, tit
       {/* Highlights */}
       <ChartCard title={L.highlights} card={card} labelStyle={labelStyle}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
-          <Highlight l={L.best}       v={a.bestWeek ? `${a.bestWeek.weekKey} · ${fmtR(a.bestWeek.netR)}` : '—'} tone={win}  border={border} fg={fg} muted={muted} />
-          <Highlight l={L.worst}      v={a.worstWeek ? `${a.worstWeek.weekKey} · ${fmtR(a.worstWeek.netR)}` : '—'} tone={loss} border={border} fg={fg} muted={muted} />
-          <Highlight l={L.bestMonth}  v={a.bestMonth ? `${a.bestMonth.monthKey} · ${fmtR(a.bestMonth.netR)}` : '—'} tone={win}  border={border} fg={fg} muted={muted} />
-          <Highlight l={L.worstMonth} v={a.worstMonth ? `${a.worstMonth.monthKey} · ${fmtR(a.worstMonth.netR)}` : '—'} tone={loss} border={border} fg={fg} muted={muted} />
+          <Highlight l={L.best}       v={a.bestWeek  ? `${a.bestWeek.weekKey}  · ${fmtR(a.bestWeek.netR)}  · ${fmtUSD(a.bestWeek.netUSD)}`   : '—'} tone={win}  border={border} fg={fg} muted={muted} />
+          <Highlight l={L.worst}      v={a.worstWeek ? `${a.worstWeek.weekKey} · ${fmtR(a.worstWeek.netR)} · ${fmtUSD(a.worstWeek.netUSD)}`  : '—'} tone={loss} border={border} fg={fg} muted={muted} />
+          <Highlight l={L.bestMonth}  v={a.bestMonth ? `${a.bestMonth.monthKey} · ${fmtR(a.bestMonth.netR)} · ${fmtUSD(a.bestMonth.netUSD)}` : '—'} tone={win}  border={border} fg={fg} muted={muted} />
+          <Highlight l={L.worstMonth} v={a.worstMonth? `${a.worstMonth.monthKey}· ${fmtR(a.worstMonth.netR)}· ${fmtUSD(a.worstMonth.netUSD)}`: '—'} tone={loss} border={border} fg={fg} muted={muted} />
+
         </div>
       </ChartCard>
     </div>
