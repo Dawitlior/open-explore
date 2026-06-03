@@ -33,7 +33,7 @@ const EN = {
 
 function monthKey(weekEnding: string) { return weekEnding.slice(0, 7); }
 
-export default function MonthlyArchiveTab({ T, isRTL, state }: Props) {
+export default function MonthlyArchiveTab({ T, isRTL, trades, state }: Props) {
   const L = isRTL ? HE : EN;
   const fg = T?.text?.primary || '#e9eef7';
   const muted = T?.text?.muted || '#7a8aa3';
