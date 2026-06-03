@@ -128,7 +128,7 @@ export default function MonthlyArchiveTab({ T, isRTL, state }: Props) {
                     const wkWR = w.wins + w.losses ? w.wins / (w.wins + w.losses) : 0;
                     const isOpen = expanded === w.weekKey;
                     return (
-                      <>
+                      <RowFragment key={w.weekKey}>
                         <tr key={w.weekKey} style={{ borderTop: `1px solid ${border}`, color: fg, cursor: 'pointer' }}
                             onClick={() => setExpanded(isOpen ? null : w.weekKey)}>
                           <Td>{w.weekKey} <span style={{ color: muted }}>({w.weekEndingISO})</span></Td>
