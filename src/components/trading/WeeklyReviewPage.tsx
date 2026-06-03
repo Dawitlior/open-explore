@@ -39,19 +39,16 @@ function isLegacyRequested(): boolean {
   return false;
 }
 
-export const WeeklyReviewPage = ({ T, isRTL, trades, themeId }: Props) => {
+export const WeeklyReviewPage = (props: Props) => {
   // Native shell is now the default. Opt-in legacy via ?legacy=1.
-  const useLegacy = isLegacyRequested();
-  if (!useLegacy) return <WeeklyReviewShell T={T} isRTL={isRTL} trades={trades} />;
+  if (!isLegacyRequested()) return <WeeklyReviewShell T={props.T} isRTL={props.isRTL} trades={props.trades} />;
+  return <LegacyIframePage {...props} />;
+};
 
-  // ────────── legacy iframe fallback ──────────
-  // eslint-disable-next-line react-hooks/rules-of-hooks
+const LegacyIframePage = ({ T, isRTL, trades, themeId }: Props) => {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [ready, setReady] = useState(false);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [loadError, setLoadError] = useState(false);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const { user } = useAuth();
   const uid = user?.id || 'anon';
   const initialTheme = themeId ? (THEME_MAP[themeId] || 'night') : 'night';
