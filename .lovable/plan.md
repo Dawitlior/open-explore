@@ -1,112 +1,147 @@
 
-# Dashboard Rebuild — Mobile-First, PWA-Ready
+# Weekly Review — Native Rebuild (Kill the iframe)
 
-## Why it's broken today
+## Why rebuild
 
-`src/pages/Index.tsx` is 2,165 lines. The `renderDashboard()` function alone spans ~1,400 lines and contains 3 separate modes (Beginner / Live / Standard) all written with:
+The current `WeeklyReviewPage` is an iframe wrapper around `/public/weekly-review/index.html` — a 10k-line standalone HTML app with its own React UMD, Recharts UMD, Poppins font, and isolated localStorage. Consequences:
 
-- **Inline styles everywhere** — `style={{ display: 'flex', minWidth: isMobile ? 0 : 380 }}` repeated dozens of times
-- **`isMobile` ternaries** instead of CSS breakpoints — JS-driven layout, no fluid behavior between 360px and 768px
-- **Hard-coded `minWidth` on chart cards** (260/280/300/380) — even with `isMobile ? 0`, flex containers still overflow because Recharts' `ResponsiveContainer` needs an explicit parent width
-- **No CSS Grid** — everything is `flex-wrap`, which doesn't give equal columns and breaks unpredictably
-- **Chart fonts/heights not scaled** for narrow screens (10px axis ticks on a 360px screen = unreadable)
-- **No safe-area / viewport-fit handling** for PWA notch & home-indicator
-- **No container queries** — components don't know their own width, only the window's
+- Two design systems on one screen (Orca tokens outside, ad-hoc inline styles inside)
+- Two state stores (Supabase trades outside, postMessage-synced copy inside)
+- No PWA / safe-area / RTL parity with the rest of the platform
+- ~3MB of duplicated JS shipped on every visit
+- Breaks Orca theme switching, privacy mask, locale, sound engine, AI coach hooks
 
-Patching this incrementally is what's been wasting your money. Rebuild is the right call.
+This module should be a **first-class page**, not an embedded app.
 
-## What we keep, what we rebuild
+## What we keep (the user's product, intact)
 
-**Keep (no changes):**
-- All data hooks (`useTrades`, `useStats`, `useRiskData`, `useSettings`)
-- All business logic (calculations, R-multiples, gating)
-- The 3 operating modes (Beginner / Standard / Live) — same content, new layout
-- `MetricCard` / `ScoreGauge` / `GlassCard` components (already responsive)
-- Other pages (Journal, Calendar, Analytics, Risk, etc.) — **untouched**
-
-**Rebuild:**
-- The `renderDashboard()` function only
-- Layout system: mobile-first CSS Grid + container queries
-- Chart responsiveness layer
-
-## Architecture
-
-Extract the dashboard into a dedicated module so `Index.tsx` shrinks back to a router shell:
+From the inlined app, every feature and the underlying "thinking" stays. The 5 tabs are:
 
 ```text
-src/components/dashboard/
-  DashboardPage.tsx           — entry, picks mode, ~80 lines
-  modes/
-    BeginnerDashboard.tsx     — ~120 lines
-    StandardDashboard.tsx     — ~250 lines (current default)
-    LiveDashboard.tsx         — ~150 lines
-  layout/
-    DashboardGrid.tsx         — Responsive CSS Grid wrapper
-    KpiRow.tsx                — Mobile-first KPI grid (2 cols → 4 cols)
-    SystemHealthRow.tsx       — Same pattern for gauges
-    ChartCard.tsx             — Replaces ChartWrapper usage on dashboard
-  charts/
-    EquityChart.tsx           — Self-contained, responsive
-    PnlDistributionChart.tsx
-    RadarBreakdownChart.tsx
-    MonthlyPerformanceChart.tsx
-  dashboard.css               — Single stylesheet, all breakpoints
+0. סיכום שבועי ⚡   Weekly Summary    — current-week close, mindset, focus, trade log, "close week" lock
+1. ניהול סטאפים ⚙️  Setup Manager     — CRUD setups, per-setup NetR breakdown
+2. ארכיון חודשי 📅  Monthly Archive   — historical weeks, edit/expand rows, monthly recap modal
+3. חצי-שנתי 📊      Semi-Annual (6mo) — equity curve, radar DNA, waterfall, PF trend, win-rate trend,
+                                       momentum, setup evolution, profit pie, heatmap, psych correlation,
+                                       ticker breakdown, highlights, best/worst week, R-distribution,
+                                       compliance score, setup dominance, MoM compare, trade ledger
+4. שנתי 🗓️         Annual            — same modules over 12 months
 ```
 
-`src/pages/Index.tsx` will just call `<DashboardPage />` (one line replacing 1,400).
+Plus: lock/unlock-on-Friday rule, week grading, monthly recap modal, theme presets (midnight/snow), bilingual labels.
 
-## Responsive system
-
-Three breakpoints, mobile-first, **CSS only — no `isMobile` JS branching for layout**:
+## Architecture (native, modular)
 
 ```text
-< 480px   — phone portrait  → 1 col KPIs stack, charts 200px tall, font 14/10
-480-768   — phone landscape / small tablet → 2 col KPIs, charts 240px
-768-1024  — tablet → 2-3 col, charts 280px
-> 1024    — desktop → current 4-col layout
+src/components/weekly-review/
+  WeeklyReviewPage.tsx          — entry, replaces the iframe wrapper
+  WeeklyReviewShell.tsx         — tab bar + RTL + safe-area + suspense
+  tabs/
+    WeeklyTab.tsx               — close-week flow, mindset, focus, current trades
+    SetupsTab.tsx               — setup CRUD + per-setup breakdown grid
+    MonthlyArchiveTab.tsx       — archive table, inline edit, expand, monthly recap modal
+    SemiAnnualTab.tsx           — 6-month dashboard, composes /modules
+    AnnualTab.tsx               — 12-month dashboard, composes /modules
+  modules/                      — reusable analytics blocks shared by Semi/Annual
+    EquityCurve.tsx
+    TraderDnaRadar.tsx
+    MonthlyWaterfall.tsx
+    ProfitFactorTrend.tsx
+    WinRateTrend.tsx
+    MomentumChart.tsx
+    SetupEvolution.tsx
+    SetupProfitPie.tsx
+    TimeDayHeatmap.tsx
+    PsychCorrelation.tsx
+    TickerBreakdown.tsx
+    HighlightsStrip.tsx
+    BestWorstWeek.tsx
+    RDistribution.tsx
+    ComplianceScore.tsx
+    SetupDominance.tsx
+    MoMCompare.tsx
+    TradeLedger.tsx
+    SectionTitle.tsx           — Orca-themed replacement for inline sectionTitle()
+  modals/
+    MonthlyRecapModal.tsx
+    CloseWeekModal.tsx
+  hooks/
+    use-weekly-review-state.ts — archive, setups, monthSummaries, recaps in Cloud
+    use-week-aggregates.ts     — derives R, focus, grade, best/worst, etc. from trades
+    use-period-aggregates.ts   — 6mo / 12mo slicers feeding all /modules
+  lib/
+    grading.ts                 — week grade A/B/C/D/F formula (port verbatim)
+    setup-breakdown.ts         — getSetupBreakdown(trades) (port verbatim)
+    week-key.ts                — ISO week key, Friday-lock check
+    types.ts
 ```
 
-Layout uses CSS Grid + `clamp()` for fluid sizing:
-```css
-.dash-kpi-grid { grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr)); }
-.dash-chart   { height: clamp(180px, 38vw, 320px); }
-```
+`WeeklyReviewPage.tsx` becomes 30 lines: pulls trades + risk + settings via existing hooks, hands them down, no iframe, no postMessage, no localStorage.
 
-Container queries on `ChartCard` so a card knows its own width and hides legends / axis labels when narrow — no window-listener gymnastics.
+## Data: Cloud-backed, no iframe storage
 
-## PWA hardening
+Three new Cloud rows (per user) replace the iframe's localStorage:
 
-- Add `viewport-fit=cover` + `env(safe-area-inset-*)` padding on the dashboard root
-- Touch targets ≥ 44×44 (current "i" buttons are 12px — keep them small for info, but bump primary CTAs)
-- Charts: replace `ResponsiveContainer` width=100% pattern with explicit `width="100%" height="100%"` inside an `aspect-ratio` parent — fixes the Safari iOS shrink bug
-- Horizontal scroll prevention: `overflow-x: hidden` on dashboard root + `min-width: 0` on every grid child
-- Test under standalone PWA mode (display-mode: standalone) — fix any header overlap with status bar
+| key | shape | source |
+|---|---|---|
+| `weekly_review.archive` | `WeekRecord[]` | written on close-week |
+| `weekly_review.setups`  | `Setup[]`      | setup manager CRUD |
+| `weekly_review.recaps`  | `Record<MonthKey, MarkdownRecap>` | monthly recap modal |
 
-## Build order (single session, no follow-ups)
+Stored in the existing `user_settings` table (key/value JSONB — already in use by the platform), so **no migration needed**. RLS already scopes per `auth.uid()`.
 
-1. **Scaffold** `src/components/dashboard/` + `dashboard.css` with breakpoint tokens
-2. **Layout primitives** — `DashboardGrid`, `KpiRow`, `SystemHealthRow`, `ChartCard`
-3. **Extract charts** — move the 4 main charts into self-contained components
-4. **Build `StandardDashboard`** first (it's the default, most used)
-5. **Build `BeginnerDashboard`** + **`LiveDashboard`**
-6. **Replace** `renderDashboard()` call in `Index.tsx` with `<DashboardPage />`
-7. **Delete** the old 1,400 lines from `Index.tsx`
-8. **QA pass** at 360 / 414 / 768 / 1024 widths using preview viewport tool — screenshot each, verify zero horizontal scroll, readable chart axes, gauges fit
+Trades themselves come from `useTrades()` — the iframe was syncing a copy of them; we just use the real source.
 
-## What you'll see when done
+## Design system mapping (Orca identity)
 
-- Dashboard renders cleanly from 320px up — no overflow, no clipped charts
-- Adding a future card means writing one component, not editing a 2,000-line file
-- Works as installed PWA on iOS/Android with proper safe-area handling
-- All other pages untouched, all data/calculations unchanged
+Replace every inline `s.title / s.tabs / s.statCard / s.sectionTitle` from the HTML with platform primitives:
 
-## Risks / scope guardrails
+| Old (iframe) | New (Orca) |
+|---|---|
+| Poppins everywhere | Poppins headers + IBM Plex Mono numerics (platform standard) |
+| `#0a0a0f` / `#39FF14` ad-hoc | `--background`, `--accent-cyan`, theme tokens via `useTradingTheme` |
+| Inline `s.tabs` | `OrcaPanel` + segmented tab control matching `SettingsHub` |
+| Inline `s.statCard` | `OrcaMetric` / `OrcaCard` |
+| Section title function | `<SectionTitle icon title infoId />` component, info-button hooked into existing `ChartExplanationModal` |
+| Custom Recharts colors | `lib/trading-theme.ts` palette + tooltip style (already standardized) |
+| RTL by `dir="rtl"` only | Full `useLang()` + i18n strings, both HE and EN |
+| `position: fixed` close-week dialog | shadcn `Dialog` |
 
-- **No business logic changes** — pure presentation rebuild
-- **No backend changes** — no migrations, no new tables
-- **Behind a feature flag** for one commit (`USE_NEW_DASHBOARD=true`) so we can A/B against the old version if something looks off; flag deleted after verification
-- Estimated 1 build cycle (no back-and-forth needed if the plan is approved as-is)
+Charts use the existing `ChartWrapper` + `LazyChart` infra so they participate in the dashboard's container-query/safe-area system.
+
+## Port strategy (most efficient path)
+
+The standalone is minified inline JSX (`React.createElement`). Reading it byte-by-byte is the slow path. Instead:
+
+1. **Spec-extract per tab** — grep the inlined source for each module's identifiers (`getSetupBreakdown`, `gradeColors`, `bestWeek/worstWeek`, `monthSummaries`, `rData`, `allTrades`, `pfTrend`, `winRateTrend`, `radar`, `momentum`, `waterfall`, `setupEvolution`, `pie`, `heatmap`, `psych`, `ticker`, `highlights`, `RDistribution`, `compliance`, `dominance`, `mom`, `ledger`) and pull out their pure-math bodies into `lib/`. These functions are dependency-free — they take `trades[]` and return numbers. Direct port.
+2. **Re-render with Recharts + Orca tokens** — chart components rebuilt cleanly; we already have Recharts as a real dep, so no UMD needed.
+3. **Layout from scratch** — using `dashboard.css` patterns (CSS Grid + container queries) we just shipped. No inline ternaries on `isMobile`.
+4. **Single-pass build, behind feature flag `WEEKLY_REVIEW_NATIVE`** for one commit so you can A/B against the iframe; flag removed after sign-off.
+
+## Build order
+
+1. Scaffold folder + types + `use-weekly-review-state` (Cloud read/write) + `WeeklyReviewShell` with 5 empty tabs
+2. Port `lib/grading.ts`, `lib/setup-breakdown.ts`, `lib/week-key.ts` (pure math, unit-testable)
+3. `WeeklyTab` (close-week, mindset, current trades) — most-used surface, ship first
+4. `SetupsTab` + `MonthlyArchiveTab` + `MonthlyRecapModal`
+5. Build `/modules` charts one-by-one; compose `SemiAnnualTab` then `AnnualTab`
+6. Flip `WeeklyReviewPage` from iframe to `<WeeklyReviewShell />`, delete `public/weekly-review/`
+7. QA at 360 / 414 / 768 / 1024, HE + EN, midnight + platinum themes, PWA standalone mode
+
+## What we delete when done
+
+- `public/weekly-review/index.html` (10k lines, 3MB of bundled UMD)
+- `src/components/trading/WeeklyReviewPage.tsx` postMessage bridge
+- All `ORCA_TRADES_SYNC` / `ORCA_THEME_SYNC` / `WEEKLY_REVIEW_READY` plumbing
+
+## Guardrails
+
+- No business-logic changes to grading, R-calc, or setup math — verbatim ports
+- No DB migrations (reuses `user_settings`)
+- No new dependencies (Recharts, framer-motion, shadcn already present)
+- Other pages untouched
+- Estimated 1 build pass for steps 1–4, second pass for steps 5–7
 
 ## Approve to build?
 
-If yes, I start with step 1 immediately and ship straight through to step 8 in one pass.
+If yes, I start immediately at step 1 and ship through step 4 in this session, then steps 5–7 in the next.
