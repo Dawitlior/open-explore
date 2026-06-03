@@ -1,234 +1,318 @@
-// Weekly Summary tab — native rebuild of the legacy "סיכום שבועי ⚡".
-// Shows the running totals for the current ISO week, a mindset capture,
-// a weekly reflection field, and the close-week action that snapshots
-// the result into the cloud-backed archive.
+// Weekly Summary — native, full-fidelity port of the legacy iframe app.
+// Mirrors the layout from the user's screenshots:
+//   Header → Prep Checklist → Week Trades cards → Risk Limit gauges →
+//   Execution Quality (score + 5 tri-state) → Strategy Adherence (4 edges) →
+//   Mistake count + pattern → Market Context (env + position) →
+//   Mindset (emotion, focus, big mistake, repeat, tags, free reflection) →
+//   Decision Quality (D/C/B/+A) → Final Grade → AI Insights → Close Week.
+//
+// All form state is persisted per-week into Cloud (`weekly_review.draft.*`)
+// so the user can resume on any device. Close-week snapshots into archive.
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import type { Trade } from '@/data/trades';
 import type { useWeeklyReviewState } from '../hooks/use-weekly-review-state';
 import { useWeekAggregates } from '../hooks/use-week-aggregates';
+import { useWeekDraft, type WeekDraft } from '../hooks/use-week-draft';
 import { gradeWeek, GRADE_COLORS } from '../lib/grading';
 import { isFriday } from '../lib/week-key';
-import type { MindsetSnapshot, WeekRecord } from '../lib/types';
+import type { WeekRecord } from '../lib/types';
+import { TriState } from '../widgets/TriState';
+import { SectionTitle } from '../widgets/SectionTitle';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-interface Props { T: any; isRTL: boolean; trades: Trade[]; state: ReturnType<typeof useWeeklyReviewState>; }
+type Theme = any;
+interface Props { T: Theme; isRTL: boolean; trades: Trade[]; state: ReturnType<typeof useWeeklyReviewState>; }
 
+// ── Static config — pulled verbatim from the legacy iframe app ──
+const PREP_LABELS_HE = ['הכנת קפה ☕', 'פתיחת לוג סטטיסטי (Statistical Trade Log)', 'פתיחת יומן קלנדרי (Weekly Calendar)', 'פתיחת Market Journal'];
+const PREP_LABELS_EN = ['Coffee ready ☕', 'Open Statistical Trade Log', 'Open Weekly Calendar', 'Open Market Journal'];
+const EDGE_LABELS_HE = [
+  { text: 'האם ה-Primary Setup התנהג כצפוי?', tag: 'P', goodIs: 1 as const },
+  { text: 'האם זה היה שבוע סטטיסטי נורמלי לסטאפ?', tag: 'P', goodIs: 1 as const },
+  { text: 'האם כפיתי עסקאות לא נקיות (Forced Trades)?', tag: 'P', goodIs: 2 as const },
+  { text: 'האם כל העסקאות עקבו אחרי החוקים?', tag: 'P', goodIs: 1 as const },
+];
+const EDGE_LABELS_EN = [
+  { text: 'Did the Primary Setup behave as expected?', tag: 'P', goodIs: 1 as const },
+  { text: 'Was this a statistically normal week for the setup?', tag: 'P', goodIs: 1 as const },
+  { text: 'Did I force any non-clean trades?', tag: 'P', goodIs: 2 as const },
+  { text: 'Did every trade follow the rules?', tag: 'P', goodIs: 1 as const },
+];
+const EXEC_LABELS_HE: { key: keyof WeekDraft['executionChecklist']; label: string }[] = [
+  { key: 'entryFollowedPlan', label: 'כניסה עקבה אחרי התוכנית' },
+  { key: 'stopLossRespected', label: 'Stop Loss נשמר' },
+  { key: 'noChasingPrice', label: 'לא רדפתי אחרי מחיר' },
+  { key: 'correctPositionSize', label: 'גודל פוזיציה נכון' },
+  { key: 'noRevengeTrade', label: 'ללא מסחר נקמה' },
+];
+const EXEC_LABELS_EN: { key: keyof WeekDraft['executionChecklist']; label: string }[] = [
+  { key: 'entryFollowedPlan', label: 'Entry followed the plan' },
+  { key: 'stopLossRespected', label: 'Stop Loss respected' },
+  { key: 'noChasingPrice', label: 'Did not chase price' },
+  { key: 'correctPositionSize', label: 'Correct position size' },
+  { key: 'noRevengeTrade', label: 'No revenge trade' },
+];
+const EMOTIONS = [
+  { e: '🔥', l: 'In the Zone' }, { e: '🧊', l: 'Neutral' }, { e: '😨', l: 'Fearful' },
+  { e: '💪', l: 'Confident' }, { e: '😤', l: 'Frustrated' }, { e: '😌', l: 'Calm' },
+];
+const MINDSET_TAGS = ['Tired', 'Sharp', 'Overconfident', 'Hesitant', 'Disciplined', 'Patient', 'Revenge', 'FOMO'];
+const MISTAKE_OPTIONS = ['None', 'Chasing', 'No SL', 'Oversize', 'FOMO'];
+const ENV_OPTIONS = ['Trending', 'Ranging', 'Low Vol', 'High Vol', 'Choppy'];
+const POS_OPTIONS = ['Aggressive', 'Passive', 'Balanced'];
+const DECISION_QUALITY = [
+  { v: 'D' as const,  he: 'מסחר רגשי',     en: 'Emotional trading' },
+  { v: 'C' as const,  he: 'מספר טעויות',   en: 'Several mistakes' },
+  { v: 'B' as const,  he: 'משמעת טובה',    en: 'Good discipline' },
+  { v: 'A+' as const, he: 'ביצוע מושלם',   en: 'Perfect execution' },
+];
+
+// 4-tier R limits (memory)
+const LIMITS = { daily: -2, weekly: -5, monthly: -10 };
+
+// ── i18n bundles ──
 const HE = {
-  header: 'סיכום שבועי',
-  sub: 'שבוע נוכחי — מסתגר ביום שישי',
-  weekKey: 'מפתח שבוע',
-  netR: 'נטו R',
-  trades: 'עסקאות',
-  winRate: 'אחוז זכייה',
-  compliance: 'משמעת',
-  grade: 'דירוג',
-  best: 'הטוב ביותר',
-  worst: 'הגרוע ביותר',
-  mindset: 'מצב מנטלי',
-  focus: 'מיקוד',
-  confidence: 'ביטחון',
-  discipline: 'משמעת',
-  emotion: 'רגש דומיננטי',
-  notes: 'הערות',
-  reflection: 'רפלקציה שבועית',
-  reflectionPh: 'מה עבד השבוע? מה הסיט אותך? איפה לדייק בשבוע הבא?',
-  emotionPh: 'מרוכז / חרד / טריגר־הפסד / בטוח…',
-  log: 'יומן עסקאות',
-  empty: 'אין עסקאות השבוע עדיין.',
-  close: 'סגור שבוע',
-  closeNotFriday: 'סגירה מתאפשרת רק ביום שישי',
-  saved: 'השבוע נשמר בארכיון',
-  date: 'תאריך', coin: 'נכס', dir: 'כיוון', r: 'R', wl: 'תוצאה',
+  pageTitle: 'יומן מסחר — שבועי', lock: 'נעל יומן',
+  notFriday: 'היום אינו שישי',
+  prep: 'הכנה', prepCue: 'לחץ: — → ✅ בוצע → ❌ לא בוצע',
+  trades: 'עסקאות השבוע', addTrade: '+ הוסף עסקה',
+  rr: 'R:R', winR: 'WIN R', avgR: 'AVG R', winRate: 'WIN RATE', tradesK: 'עסקאות', netR: 'NET R',
+  noTrades: 'אין עסקאות השבוע — לחץ "הוסף עסקה" להתחיל',
+  riskLimits: 'מגבלות סיכון', daily: 'יומי', weekly: 'שבועי', monthly: 'חודשי', limit: 'מגבלה',
+  execQ: 'איכות ביצוע', execScore: 'Execution Score', execCue: 'ציון מבוסס צ׳קליסט (לחץ: — → ❌ → ✅)',
+  strategy: 'איכות אסטרטגיה',
+  mistakes: 'מספר הפרות משמעת', mistakesPh: '0',
+  pattern: 'דפוס חוזר של הפרה?', patternPh: 'תאר...',
+  market: 'הקשר שוק', env: 'סביבת שוק', envPh: '— בחר —',
+  pos: 'Execution Positioning',
+  mindset: 'פסיכולוגיה וניהול עצמי',
+  feel: 'איך הרגשת השבוע?', feelCue: 'בחר את המצב הרגשי הדומיננטי שלך',
+  focus: 'דירוג פוקוס השבוע', focusCue: 'Low · 5 = Excellent | 1',
+  none: 'לא נבחר',
+  bigMistake: 'הטעות הגדולה ביותר השבוע', bigMistakeCue: 'אם לא הייתה טעות — בחר None',
+  repeat: 'חזרת על טעות מהשבוע הקודם?', repeatCue: 'כנות עם עצמך היא הצעד הראשון לשיפור',
+  yes: 'כן, חזרתי', no: 'לא, שיפרתי',
+  tags: 'תגיות מסחר', tagsCue: 'בחר כמה שרוצה',
+  reflection: 'סיכום מחשבות חופשי', reflectionCue: 'מה עבד? מה לא? מה לוקח לשבוע הבא?',
+  reflectionPh: 'כתוב כאן בחופשיות...',
+  decision: 'איכות החלטות',
+  finalGrade: 'ציון סופי',
+  insights: 'תובנות מערכת', noInsights: 'אין מספיק נתונים לתובנות — המשך לתעד',
+  closeWeek: 'סגור שבוע (שישי בלבד)', closed: 'נסגר', saved: '✅ נשמר',
+  empty: '—',
 };
-
 const EN = {
-  header: 'Weekly Summary',
-  sub: 'Live week — locks on Friday',
-  weekKey: 'Week',
-  netR: 'Net R',
-  trades: 'Trades',
-  winRate: 'Win rate',
-  compliance: 'Compliance',
-  grade: 'Grade',
-  best: 'Best',
-  worst: 'Worst',
-  mindset: 'Mindset',
-  focus: 'Focus',
-  confidence: 'Confidence',
-  discipline: 'Discipline',
-  emotion: 'Dominant emotion',
-  notes: 'Notes',
-  reflection: 'Weekly reflection',
-  reflectionPh: 'What worked? What threw you off? Where to sharpen next week?',
-  emotionPh: 'Focused / anxious / loss-tilt / confident…',
-  log: 'Trade log',
-  empty: 'No trades for this week yet.',
-  close: 'Close week',
-  closeNotFriday: 'Closing is only allowed on Friday',
-  saved: 'Week saved to archive',
-  date: 'Date', coin: 'Asset', dir: 'Side', r: 'R', wl: 'Result',
+  pageTitle: 'Trading Journal — Weekly', lock: 'Lock journal',
+  notFriday: 'Today is not Friday',
+  prep: 'Prep checklist', prepCue: 'Tap to cycle: — → ✅ done → ❌ missed',
+  trades: 'Week trades', addTrade: '+ Add trade',
+  rr: 'R:R', winR: 'WIN R', avgR: 'AVG R', winRate: 'WIN RATE', tradesK: 'TRADES', netR: 'NET R',
+  noTrades: 'No trades this week — press "Add trade" to begin',
+  riskLimits: 'Risk limits', daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly', limit: 'Limit',
+  execQ: 'Execution quality', execScore: 'Execution Score', execCue: 'Score from the checklist (tap: — → ❌ → ✅)',
+  strategy: 'Strategy adherence',
+  mistakes: 'Discipline violations count', mistakesPh: '0',
+  pattern: 'Recurring violation pattern?', patternPh: 'Describe…',
+  market: 'Market context', env: 'Market environment', envPh: '— choose —',
+  pos: 'Execution positioning',
+  mindset: 'Mindset & self-management',
+  feel: 'How did the week feel?', feelCue: 'Pick your dominant emotion',
+  focus: 'Focus rating', focusCue: 'Low · 5 = Excellent | 1',
+  none: 'Not set',
+  bigMistake: 'Biggest mistake of the week', bigMistakeCue: 'If none — choose "None"',
+  repeat: 'Repeated last week\'s mistake?', repeatCue: 'Honesty is the first step to improvement',
+  yes: 'Yes, repeated', no: 'No, improved',
+  tags: 'Trader tags', tagsCue: 'Pick as many as fit',
+  reflection: 'Free reflection', reflectionCue: 'What worked? What didn\'t? What to bring next week?',
+  reflectionPh: 'Write freely…',
+  decision: 'Decision quality',
+  finalGrade: 'Final grade',
+  insights: 'System insights', noInsights: 'Not enough data for insights — keep journaling',
+  closeWeek: 'Close week (Friday only)', closed: 'Closed', saved: '✅ Saved',
+  empty: '—',
 };
 
 export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
   const L = isRTL ? HE : EN;
-  const wk = useWeekAggregates(trades);
-  const grade = gradeWeek({
-    netR: wk.netR, wins: wk.wins, losses: wk.losses, rulesComplianceRatio: wk.rulesCompliance,
-  });
-  const gradeColor = GRADE_COLORS[grade];
 
+  // Tokens
   const fg = T?.text?.primary || '#e9eef7';
   const muted = T?.text?.muted || '#7a8aa3';
-  const accent = T?.accent?.cyan || '#00f2ff';
+  const accent = T?.accent?.cyan || '#39FF14';
+  const cyan = T?.accent?.cyan || '#00f2ff';
   const panel = T?.bg?.surface || 'rgba(255,255,255,0.04)';
   const border = T?.border?.subtle || 'rgba(255,255,255,0.08)';
-  const win = T?.status?.success || '#00ff88';
+  const win = T?.status?.success || '#39FF14';
   const loss = T?.status?.danger || '#ff3b3b';
+  const warn = T?.status?.warning || '#ffb830';
 
-  const [mind, setMind] = useState<MindsetSnapshot>({ focus: 7, confidence: 7, discipline: 7, emotion: '', notes: '' });
-  const [reflection, setReflection] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [savedKey, setSavedKey] = useState<string | null>(null);
-
+  const wk = useWeekAggregates(trades);
+  const { draft, update } = useWeekDraft(wk.weekKey);
   const alreadyClosed = useMemo(
     () => state.archive.some(w => w.weekKey === wk.weekKey),
     [state.archive, wk.weekKey],
   );
   const friday = isFriday();
 
+  // Derived: aggregates
+  const tradesArr = wk.trades;
+  const n = tradesArr.length;
+  const rr = useMemo(() => {
+    let totalWin = 0, totalLoss = 0, wins = 0, losses = 0;
+    for (const t of tradesArr) {
+      const r = Number(t.returnR) || 0;
+      if (r > 0) { totalWin += r; wins += 1; }
+      else if (r < 0) { totalLoss += Math.abs(r); losses += 1; }
+    }
+    const avgWin = wins ? totalWin / wins : 0;
+    const avgLoss = losses ? totalLoss / losses : 0;
+    return {
+      rr: avgLoss ? avgWin / avgLoss : 0,
+      avgWin, avgLoss,
+    };
+  }, [tradesArr]);
+
+  // Execution score: % of true items in checklist (nulls neutral)
+  const execScore = useMemo(() => {
+    const vals = Object.values(draft.executionChecklist);
+    const set = vals.filter(v => v !== null);
+    const goods = set.filter(v => v === true).length;
+    return set.length ? Math.round((goods / set.length) * 100) : 0;
+  }, [draft.executionChecklist]);
+
+  const computedGrade = gradeWeek({
+    netR: wk.netR, wins: wk.wins, losses: wk.losses,
+    rulesComplianceRatio: execScore / 100,
+  });
+  const gradeColor = GRADE_COLORS[computedGrade];
+
+  // ── handlers ──
+  const cyclePrep = (i: number) => {
+    const next = [...draft.preps]; next[i] = (next[i] + 1) % 3; update({ preps: next });
+  };
+  const cycleEdge = (i: number) => {
+    const next = [...draft.edges]; next[i] = (next[i] + 1) % 3; update({ edges: next });
+  };
+  const cycleExec = (key: keyof WeekDraft['executionChecklist']) => {
+    const cur = draft.executionChecklist[key];
+    const next = cur === null ? false : cur === false ? true : null;
+    update({ executionChecklist: { ...draft.executionChecklist, [key]: next } });
+  };
+  const toggleTag = (tag: string) => {
+    const has = draft.mindsetTags.includes(tag);
+    update({ mindsetTags: has ? draft.mindsetTags.filter(t => t !== tag) : [...draft.mindsetTags, tag] });
+  };
+
   async function closeWeek() {
-    if (saving || alreadyClosed) return;
-    setSaving(true);
+    if (!friday || alreadyClosed) return;
     const record: WeekRecord = {
       weekEndingISO: wk.weekEndISO,
       weekKey: wk.weekKey,
-      tradeLog: wk.trades,
+      tradeLog: tradesArr,
       netR: wk.netR,
       wins: wk.wins,
       losses: wk.losses,
-      grade,
-      mindset: mind,
-      reflection,
+      grade: computedGrade,
+      mindset: {
+        focus: draft.focusRating || 0,
+        confidence: 5,
+        discipline: Math.round(execScore / 10),
+        emotion: draft.emotion,
+        notes: [draft.mindsetTags.join(' · '), draft.bigMistake && `Big mistake: ${draft.bigMistake}`].filter(Boolean).join(' | '),
+      },
+      reflection: draft.mindset,
       closedAt: new Date().toISOString(),
     };
     await state.saveArchive([...state.archive, record]);
-    setSavedKey(wk.weekKey);
-    setSaving(false);
   }
 
-  // ── styles ────────────────────────────────────────────────────────────
-  const card = {
-    padding: 'clamp(14px, 2vw, 20px)',
-    background: panel,
-    border: `1px solid ${border}`,
-    borderRadius: 14,
-    boxSizing: 'border-box' as const,
+  // ── styles ──
+  const card: React.CSSProperties = {
+    padding: 'clamp(14px, 2vw, 20px)', background: panel,
+    border: `1px solid ${border}`, borderRadius: 14, boxSizing: 'border-box',
   };
-  const label = { color: muted, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' as const, fontWeight: 600 };
-  const value = { color: fg, fontFamily: "'IBM Plex Mono', monospace", fontSize: 22, fontWeight: 700, marginTop: 4 };
-
-  const closeDisabled = saving || alreadyClosed || !friday;
+  const cardSubtle: React.CSSProperties = {
+    padding: 14, background: 'rgba(255,255,255,0.025)',
+    border: `1px solid ${border}`, borderRadius: 12,
+  };
+  const statLabel: React.CSSProperties = { color: muted, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', fontWeight: 600 };
+  const statValue: React.CSSProperties = { color: fg, fontFamily: "'IBM Plex Mono', monospace", fontSize: 22, fontWeight: 800, marginTop: 6 };
+  const input: React.CSSProperties = {
+    width: '100%', background: 'transparent', color: fg, textAlign: isRTL ? 'right' : 'left',
+    border: `1px solid ${border}`, borderRadius: 10, padding: '12px 14px',
+    fontFamily: 'inherit', fontSize: 13, outline: 'none', boxSizing: 'border-box', minHeight: 44,
+  };
 
   return (
-    <div style={{ display: 'grid', gap: 16, paddingBottom: 32 }}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <div style={{ color: accent, fontSize: 10, letterSpacing: 3, fontWeight: 700 }}>{L.weekKey} · {wk.weekKey}</div>
-          <h2 style={{ margin: '4px 0 0', color: fg, fontSize: 'clamp(20px, 2.6vw, 28px)', fontWeight: 700 }}>{L.header}</h2>
-          <div style={{ color: muted, fontSize: 12, marginTop: 4 }}>{L.sub} · {wk.weekStartISO} → {wk.weekEndISO}</div>
+    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'grid', gap: 18, paddingBottom: 48 }}>
+      {/* === Header bar === */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        flexWrap: 'wrap', gap: 12,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <Pill color={warn} label={`🔒 ${L.lock}`} />
+          <Pill color={muted} label={`📅 ${formatDate(wk.weekEndISO)}`} solid />
+          {!friday && <Pill color={warn} label={`⚠️ ${L.notFriday}`} />}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ ...label }}>{L.grade}</div>
+        <h1 style={{ margin: 0, color: accent, fontSize: 'clamp(20px, 2.6vw, 26px)', fontWeight: 800, letterSpacing: 0.5 }}>
+          {L.pageTitle} ⚡
+        </h1>
+      </div>
+
+      {/* === PREP CHECKLIST === */}
+      <section style={card}>
+        <SectionTitle title={L.prep} emoji="✅" T={T} isRTL={isRTL} />
+        <div style={{ color: muted, fontSize: 11, marginBottom: 10, textAlign: isRTL ? 'right' : 'left' }}>{L.prepCue}</div>
+        <div style={{ display: 'grid', gap: 8 }}>
+          {(isRTL ? PREP_LABELS_HE : PREP_LABELS_EN).map((lbl, i) => (
+            <TriState key={i} state={draft.preps[i]} label={lbl} T={T} isRTL={isRTL} goodIs={1} onCycle={() => cyclePrep(i)} />
+          ))}
+        </div>
+      </section>
+
+      {/* === WEEK TRADES === */}
+      <section style={card}>
+        <div style={{
+          display: 'flex', flexDirection: isRTL ? 'row-reverse' : 'row',
+          justifyContent: 'space-between', alignItems: 'center', marginBottom: 8,
+        }}>
+          <SectionTitle title={L.trades} emoji="📓" T={T} isRTL={isRTL} accent={cyan} />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10, marginBottom: 14 }}>
+          <Stat label={L.rr}      value={rr.rr ? rr.rr.toFixed(2) : '0.00'} card={cardSubtle} sl={statLabel} sv={statValue} color={fg} />
+          <Stat label={L.winR}    value={fmtR(rr.avgWin)}                     card={cardSubtle} sl={statLabel} sv={statValue} color={win} />
+          <Stat label={L.avgR}    value={fmtR(wk.avgR)}                       card={cardSubtle} sl={statLabel} sv={statValue} color={wk.avgR >= 0 ? win : loss} />
+          <Stat label={L.winRate} value={`${Math.round(wk.winRate * 100)}%`}  card={cardSubtle} sl={statLabel} sv={statValue} color={wk.winRate >= 0.5 ? win : loss} />
+          <Stat label={L.tradesK} value={String(n)}                           card={cardSubtle} sl={statLabel} sv={statValue} color={fg} />
+          <Stat label={L.netR}    value={fmtR(wk.netR)}                       card={cardSubtle} sl={statLabel} sv={statValue} color={wk.netR >= 0 ? win : loss} />
+        </div>
+
+        {/* Trade log preview */}
+        {n === 0 ? (
           <div style={{
-            width: 56, height: 56, borderRadius: 14,
-            display: 'grid', placeItems: 'center',
-            background: `${gradeColor}1a`, border: `1.5px solid ${gradeColor}aa`,
-            color: gradeColor, fontFamily: "'IBM Plex Mono', monospace",
-            fontWeight: 800, fontSize: 22,
-          }}>{grade}</div>
-        </div>
-      </div>
-
-      {/* Stat grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10 }}>
-        <Stat label={L.netR}      val={fmtR(wk.netR)}   tone={wk.netR >= 0 ? win : loss} style={{ card, label, value }} />
-        <Stat label={L.trades}    val={String(wk.trades.length)} style={{ card, label, value }} />
-        <Stat label={L.winRate}   val={`${Math.round(wk.winRate * 100)}%`} style={{ card, label, value }} />
-        <Stat label={L.compliance} val={`${Math.round(wk.rulesCompliance * 100)}%`} style={{ card, label, value }} />
-        <Stat label={L.best}      val={fmtR(wk.bestR)}  tone={win}  style={{ card, label, value }} />
-        <Stat label={L.worst}     val={fmtR(wk.worstR)} tone={loss} style={{ card, label, value }} />
-      </div>
-
-      {/* Mindset + reflection */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
-        <div style={card}>
-          <div style={{ ...label, marginBottom: 12 }}>{L.mindset}</div>
-          <Slider label={L.focus}      v={mind.focus}      on={v => setMind({ ...mind, focus: v })}      T={T} />
-          <Slider label={L.confidence} v={mind.confidence} on={v => setMind({ ...mind, confidence: v })} T={T} />
-          <Slider label={L.discipline} v={mind.discipline} on={v => setMind({ ...mind, discipline: v })} T={T} />
-          <Field label={L.emotion} ph={L.emotionPh} v={mind.emotion || ''} on={v => setMind({ ...mind, emotion: v })} T={T} />
-          <Field label={L.notes}   ph=""             v={mind.notes || ''}   on={v => setMind({ ...mind, notes: v })}   T={T} multi />
-        </div>
-
-        <div style={card}>
-          <div style={{ ...label, marginBottom: 12 }}>{L.reflection}</div>
-          <textarea
-            value={reflection}
-            onChange={e => setReflection(e.target.value)}
-            placeholder={L.reflectionPh}
-            rows={10}
-            style={{
-              width: '100%', minHeight: 220, resize: 'vertical',
-              background: 'transparent', color: fg,
-              border: `1px solid ${border}`, borderRadius: 10,
-              padding: 12, fontFamily: 'inherit', fontSize: 13, lineHeight: 1.6,
-              outline: 'none', boxSizing: 'border-box',
-            }}
-          />
-          <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 12 }}>
-            {savedKey === wk.weekKey && <span style={{ color: win, fontSize: 11, letterSpacing: 1 }}>✓ {L.saved}</span>}
-            <button
-              onClick={closeWeek}
-              disabled={closeDisabled}
-              style={{
-                padding: '12px 18px', minHeight: 44, borderRadius: 10,
-                background: closeDisabled ? 'transparent' : `linear-gradient(135deg, ${accent}, ${accent}aa)`,
-                color: closeDisabled ? muted : '#03121f',
-                border: `1px solid ${closeDisabled ? border : accent}`,
-                fontFamily: 'inherit', fontWeight: 700, fontSize: 12, letterSpacing: 1.5,
-                cursor: closeDisabled ? 'not-allowed' : 'pointer',
-                textTransform: 'uppercase',
-              }}
-              title={!friday ? L.closeNotFriday : undefined}
-            >
-              {alreadyClosed ? (isRTL ? 'נסגר' : 'Closed') : L.close}
-            </button>
+            padding: '40px 16px', textAlign: 'center', color: muted, fontSize: 13,
+            border: `1px solid ${border}`, borderRadius: 12, background: 'rgba(0,0,0,0.18)',
+          }}>
+            <div style={{ fontSize: 24, marginBottom: 8 }}>📊</div>
+            {L.noTrades}
           </div>
-          {!friday && !alreadyClosed && (
-            <div style={{ marginTop: 8, color: muted, fontSize: 11, textAlign: isRTL ? 'right' : 'left' }}>
-              {L.closeNotFriday}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Trade log */}
-      <div style={card}>
-        <div style={{ ...label, marginBottom: 12 }}>{L.log}</div>
-        {wk.trades.length === 0 ? (
-          <div style={{ color: muted, fontSize: 13, padding: '24px 0', textAlign: 'center' }}>{L.empty}</div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
+          <div style={{ overflowX: 'auto', border: `1px solid ${border}`, borderRadius: 12 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'IBM Plex Mono', monospace", fontSize: 12 }}>
               <thead>
-                <tr style={{ color: muted, textAlign: isRTL ? 'right' : 'left' }}>
-                  <Th>{L.date}</Th><Th>{L.coin}</Th><Th>{L.dir}</Th><Th align="right">{L.r}</Th><Th>{L.wl}</Th>
+                <tr style={{ color: muted, background: 'rgba(0,0,0,0.18)', textAlign: isRTL ? 'right' : 'left' }}>
+                  <Th>{isRTL ? 'תאריך' : 'Date'}</Th>
+                  <Th>{isRTL ? 'נכס' : 'Asset'}</Th>
+                  <Th>{isRTL ? 'כיוון' : 'Side'}</Th>
+                  <Th align="right">R</Th>
+                  <Th>{isRTL ? 'תוצאה' : 'Result'}</Th>
                 </tr>
               </thead>
               <tbody>
-                {wk.trades.map(t => (
+                {tradesArr.map(t => (
                   <tr key={t.id} style={{ borderTop: `1px solid ${border}`, color: fg }}>
                     <Td>{t.date}</Td>
                     <Td>{t.coin}</Td>
@@ -241,71 +325,423 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
             </table>
           </div>
         )}
+      </section>
+
+      {/* === RISK LIMITS === */}
+      <section>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+          <RiskCard label={L.daily}   limit={LIMITS.daily}   value={0} T={T} isRTL={isRTL} />
+          <RiskCard label={L.weekly}  limit={LIMITS.weekly}  value={wk.netR < 0 ? wk.netR : 0} T={T} isRTL={isRTL} />
+          <RiskCard label={L.monthly} limit={LIMITS.monthly} value={0} T={T} isRTL={isRTL} />
+        </div>
+      </section>
+
+      {/* === EXECUTION QUALITY === */}
+      <section style={card}>
+        <SectionTitle title={L.execQ} emoji="🎯" T={T} isRTL={isRTL} />
+        <div style={{
+          display: 'flex', flexDirection: isRTL ? 'row-reverse' : 'row',
+          gap: 18, alignItems: 'center', flexWrap: 'wrap',
+          padding: 14, background: 'rgba(0,0,0,0.18)', borderRadius: 12, marginBottom: 14,
+          border: `1px solid ${border}`,
+        }}>
+          <ScoreRing value={execScore} color={execScore >= 80 ? win : execScore >= 50 ? warn : loss} />
+          <div style={{ flex: 1, minWidth: 200, textAlign: isRTL ? 'right' : 'left' }}>
+            <div style={{ color: fg, fontWeight: 700, fontSize: 15 }}>{L.execScore}</div>
+            <div style={{ color: muted, fontSize: 11, marginTop: 4 }}>{L.execCue}</div>
+          </div>
+        </div>
+        <div style={{ display: 'grid', gap: 8 }}>
+          {(isRTL ? EXEC_LABELS_HE : EXEC_LABELS_EN).map(({ key, label }) => {
+            const v = draft.executionChecklist[key];
+            const state = v === null ? 0 : v === true ? 1 : 2;
+            return <TriState key={key} state={state} label={label} T={T} isRTL={isRTL} goodIs={1} onCycle={() => cycleExec(key)} />;
+          })}
+        </div>
+      </section>
+
+      {/* === STRATEGY ADHERENCE === */}
+      <section style={card}>
+        <SectionTitle title={L.strategy} emoji="🎯" T={T} isRTL={isRTL} />
+        <div style={{ display: 'grid', gap: 8 }}>
+          {(isRTL ? EDGE_LABELS_HE : EDGE_LABELS_EN).map((e, i) => (
+            <TriState key={i} state={draft.edges[i]} label={e.text} tag={e.tag} goodIs={e.goodIs} T={T} isRTL={isRTL} onCycle={() => cycleEdge(i)} />
+          ))}
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginTop: 14 }}>
+          <Labeled label={L.mistakes} muted={muted} isRTL={isRTL}>
+            <input
+              type="number" min={0} value={draft.violations}
+              placeholder={L.mistakesPh}
+              onChange={e => update({ violations: e.target.value })}
+              style={input}
+            />
+          </Labeled>
+          <Labeled label={L.pattern} muted={muted} isRTL={isRTL}>
+            <input
+              type="text" value={draft.violationPattern}
+              placeholder={L.patternPh}
+              onChange={e => update({ violationPattern: e.target.value })}
+              style={input}
+            />
+          </Labeled>
+        </div>
+      </section>
+
+      {/* === MARKET CONTEXT === */}
+      <section style={card}>
+        <SectionTitle title={L.market} emoji="🌍" T={T} isRTL={isRTL} accent={cyan} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+          <Labeled label={L.env} muted={muted} isRTL={isRTL}>
+            <SelectField value={draft.env} options={ENV_OPTIONS} placeholder={L.envPh} onChange={v => update({ env: v })} input={input} fg={fg} />
+          </Labeled>
+          <Labeled label={L.pos} muted={muted} isRTL={isRTL}>
+            <SelectField value={draft.pos} options={POS_OPTIONS} placeholder={L.envPh} onChange={v => update({ pos: v })} input={input} fg={fg} />
+          </Labeled>
+        </div>
+      </section>
+
+      {/* === MINDSET === */}
+      <section style={card}>
+        <SectionTitle title={L.mindset} emoji="🧠" T={T} isRTL={isRTL} accent={cyan} />
+
+        {/* Emotion */}
+        <div style={cardSubtle}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4, flexDirection: isRTL ? 'row-reverse' : 'row' }}>
+            <div style={{ color: fg, fontWeight: 700, fontSize: 14 }}>{L.feel} 🎭</div>
+          </div>
+          <div style={{ color: muted, fontSize: 11, marginBottom: 12, textAlign: isRTL ? 'right' : 'left' }}>{L.feelCue}</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: isRTL ? 'flex-end' : 'flex-start' }}>
+            {EMOTIONS.map(e => {
+              const active = draft.emotion === e.l;
+              return (
+                <Chip key={e.l} active={active} onClick={() => update({ emotion: active ? '' : e.l })} T={T}>
+                  {e.l} {e.e}
+                </Chip>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Focus rating */}
+        <div style={{ ...cardSubtle, marginTop: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexDirection: isRTL ? 'row-reverse' : 'row' }}>
+            <div style={{ color: fg, fontWeight: 700, fontSize: 14 }}>{L.focus} 🎯</div>
+            <div style={{ color: muted, fontSize: 10 }}>{L.focusCue}</div>
+          </div>
+          <div style={{ display: 'flex', gap: 8, marginTop: 12, justifyContent: isRTL ? 'flex-end' : 'flex-start', flexWrap: 'wrap' }}>
+            {[5, 4, 3, 2, 1].map(n => {
+              const active = draft.focusRating === n;
+              return (
+                <button key={n} onClick={() => update({ focusRating: active ? 0 : n })}
+                        style={ratingBtn(active, accent, fg, muted, border)}>
+                  {n}
+                </button>
+              );
+            })}
+            <span style={{ color: muted, fontSize: 12, alignSelf: 'center' }}>
+              {draft.focusRating ? '' : L.none}
+            </span>
+          </div>
+        </div>
+
+        {/* Biggest mistake */}
+        <div style={{ ...cardSubtle, marginTop: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexDirection: isRTL ? 'row-reverse' : 'row' }}>
+            <div style={{ color: fg, fontWeight: 700, fontSize: 14 }}>{L.bigMistake} ⚠️</div>
+          </div>
+          <div style={{ color: muted, fontSize: 11, marginTop: 4, marginBottom: 10, textAlign: isRTL ? 'right' : 'left' }}>{L.bigMistakeCue}</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: isRTL ? 'flex-end' : 'flex-start' }}>
+            {MISTAKE_OPTIONS.map(m => {
+              const active = draft.bigMistake === m;
+              const isNone = m === 'None';
+              return (
+                <Chip key={m} active={active} onClick={() => update({ bigMistake: active ? '' : m })} T={T}
+                      activeBg={isNone ? win : loss}>
+                  {m} {active ? (isNone ? '✅' : '') : ''}
+                </Chip>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Repeat mistake */}
+        <div style={{ ...cardSubtle, marginTop: 12 }}>
+          <div style={{ color: fg, fontWeight: 700, fontSize: 14 }}>{L.repeat} ♻️</div>
+          <div style={{ color: muted, fontSize: 11, marginTop: 4, marginBottom: 10, textAlign: isRTL ? 'right' : 'left' }}>{L.repeatCue}</div>
+          <div style={{ display: 'flex', gap: 10, justifyContent: isRTL ? 'flex-end' : 'flex-start' }}>
+            <Chip active={draft.repeatMistake === false} onClick={() => update({ repeatMistake: draft.repeatMistake === false ? null : false })} T={T} activeBg={win}>
+              {L.no} ✅
+            </Chip>
+            <Chip active={draft.repeatMistake === true} onClick={() => update({ repeatMistake: draft.repeatMistake === true ? null : true })} T={T} activeBg={loss}>
+              {L.yes} ❌
+            </Chip>
+          </div>
+        </div>
+
+        {/* Trader tags */}
+        <div style={{ ...cardSubtle, marginTop: 12 }}>
+          <div style={{ color: fg, fontWeight: 700, fontSize: 14 }}>{L.tags} 🏷️</div>
+          <div style={{ color: muted, fontSize: 11, marginTop: 4, marginBottom: 10, textAlign: isRTL ? 'right' : 'left' }}>{L.tagsCue}</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: isRTL ? 'flex-end' : 'flex-start' }}>
+            {MINDSET_TAGS.map(tag => {
+              const active = draft.mindsetTags.includes(tag);
+              return <Chip key={tag} active={active} onClick={() => toggleTag(tag)} T={T}>{tag}</Chip>;
+            })}
+          </div>
+        </div>
+
+        {/* Free reflection */}
+        <div style={{ ...cardSubtle, marginTop: 12 }}>
+          <div style={{ color: fg, fontWeight: 700, fontSize: 14 }}>{L.reflection} ✍️</div>
+          <div style={{ color: muted, fontSize: 11, marginTop: 4, marginBottom: 10, textAlign: isRTL ? 'right' : 'left' }}>{L.reflectionCue}</div>
+          <textarea
+            rows={6} value={draft.mindset} placeholder={L.reflectionPh}
+            onChange={e => update({ mindset: e.target.value })}
+            style={{ ...input, minHeight: 140, resize: 'vertical' }}
+          />
+        </div>
+      </section>
+
+      {/* === DECISION QUALITY === */}
+      <section style={card}>
+        <SectionTitle title={L.decision} emoji="📊" T={T} isRTL={isRTL} accent={cyan} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10 }}>
+          {DECISION_QUALITY.map(d => {
+            const active = draft.decisionQuality === d.v;
+            return (
+              <button key={d.v} onClick={() => update({ decisionQuality: active ? '' : d.v })}
+                      style={{
+                        all: 'unset', cursor: 'pointer', padding: 16, textAlign: 'center',
+                        background: active ? `${win}14` : 'rgba(255,255,255,0.025)',
+                        border: `1.5px solid ${active ? win : border}`, borderRadius: 12,
+                        boxSizing: 'border-box', transition: 'all 180ms ease',
+                      }}>
+                <div style={{ fontSize: 28, fontWeight: 800, color: active ? win : muted, fontFamily: "'IBM Plex Mono', monospace" }}>{d.v}</div>
+                <div style={{ color: muted, fontSize: 11, marginTop: 6 }}>{isRTL ? d.he : d.en}</div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* === FINAL GRADE === */}
+      <section style={card}>
+        <SectionTitle title={L.finalGrade} emoji="🏆" T={T} isRTL={isRTL} accent={cyan} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+          {(['A+', 'B', 'C'] as const).map(g => {
+            const active = computedGrade === g || (g === 'C' && (computedGrade === 'D' || computedGrade === 'F'));
+            return (
+              <div key={g} style={{
+                padding: 16, textAlign: 'center',
+                background: active ? `${GRADE_COLORS[g]}14` : 'rgba(255,255,255,0.025)',
+                border: `1px solid ${active ? GRADE_COLORS[g] + '88' : border}`,
+                borderRadius: 12,
+              }}>
+                <div style={{
+                  color: active ? GRADE_COLORS[g] : muted,
+                  fontFamily: "'IBM Plex Mono', monospace", fontWeight: 700, fontSize: 14,
+                }}>
+                  {gradeLabel(g, isRTL)}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div style={{ marginTop: 12, display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'center' }}>
+          <span style={{ color: muted, fontSize: 11 }}>{isRTL ? 'מחושב:' : 'Computed:'}</span>
+          <span style={{
+            padding: '4px 12px', borderRadius: 8, fontFamily: "'IBM Plex Mono', monospace",
+            fontWeight: 800, color: gradeColor, background: `${gradeColor}1a`,
+            border: `1px solid ${gradeColor}66`,
+          }}>{computedGrade}</span>
+        </div>
+      </section>
+
+      {/* === AI INSIGHTS === */}
+      <section style={card}>
+        <SectionTitle title={L.insights} emoji="🧊" T={T} isRTL={isRTL} accent={cyan} />
+        <div style={{
+          padding: 16, border: `1px solid ${border}`, borderRadius: 12,
+          background: 'rgba(57,255,20,0.04)',
+          display: 'flex', alignItems: 'center', gap: 12,
+          flexDirection: isRTL ? 'row-reverse' : 'row',
+          color: fg, fontSize: 13,
+        }}>
+          <span style={{ fontSize: 18 }}>💡</span>
+          <span>{L.noInsights}</span>
+        </div>
+      </section>
+
+      {/* === CLOSE WEEK === */}
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', flexDirection: isRTL ? 'row-reverse' : 'row' }}>
+        <button
+          onClick={closeWeek}
+          disabled={!friday || alreadyClosed}
+          style={{
+            flex: '1 1 320px', minHeight: 56, padding: '14px 18px',
+            background: alreadyClosed
+              ? `${muted}22`
+              : friday ? `linear-gradient(135deg, ${win}, ${win}cc)` : `${win}14`,
+            color: alreadyClosed ? muted : friday ? '#03121f' : win,
+            border: `1.5px solid ${alreadyClosed ? border : win}${friday ? '' : '88'}`,
+            borderRadius: 12, fontFamily: 'inherit', fontWeight: 800, fontSize: 13,
+            letterSpacing: 1.5, textTransform: 'uppercase',
+            cursor: (!friday || alreadyClosed) ? 'not-allowed' : 'pointer',
+          }}>
+          🔒 {alreadyClosed ? L.closed : L.closeWeek}
+        </button>
+        <button
+          onClick={() => { /* visual placeholder — Lock Journal mirrors header pill */ }}
+          style={{
+            minHeight: 56, padding: '14px 22px',
+            background: 'transparent', color: warn,
+            border: `1.5px solid ${warn}88`, borderRadius: 12,
+            fontFamily: 'inherit', fontWeight: 700, fontSize: 12,
+            letterSpacing: 1.5, textTransform: 'uppercase', cursor: 'pointer',
+          }}>
+          🔒 {isRTL ? 'נעל שבוע' : 'Lock week'}
+        </button>
       </div>
     </div>
   );
 }
 
-// ── small primitives ─────────────────────────────────────────────────────
+// ── pure helpers ────────────────────────────────────────────────────────
 function fmtR(n: number) {
   const v = Number.isFinite(n) ? n : 0;
   return `${v >= 0 ? '+' : ''}${v.toFixed(2)}R`;
 }
+function formatDate(iso: string) {
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+function gradeLabel(g: 'A+' | 'B' | 'C', isRTL: boolean) {
+  const he: Record<string, string> = { 'A+': 'מעולה (A+)', B: 'עמדתי בחוקים (B)', C: 'טעון שיפור (C)' };
+  const en: Record<string, string> = { 'A+': 'Excellent (A+)', B: 'Within rules (B)', C: 'Needs work (C)' };
+  return isRTL ? he[g] : en[g];
+}
 
-function Stat({ label, val, tone, style }: {
-  label: string; val: string; tone?: string;
-  style: { card: React.CSSProperties; label: React.CSSProperties; value: React.CSSProperties };
+// ── tiny primitives ─────────────────────────────────────────────────────
+function Pill({ color, label, solid }: { color: string; label: string; solid?: boolean }) {
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 6,
+      padding: '8px 12px', minHeight: 36, boxSizing: 'border-box',
+      background: solid ? 'rgba(255,255,255,0.04)' : `${color}10`,
+      border: `1px solid ${color}66`, borderRadius: 8,
+      color, fontSize: 12, fontWeight: 700, letterSpacing: 0.5,
+      fontFamily: "'IBM Plex Mono', monospace",
+    }}>{label}</span>
+  );
+}
+function Stat({ label, value, color, card, sl, sv }: {
+  label: string; value: string; color: string;
+  card: React.CSSProperties; sl: React.CSSProperties; sv: React.CSSProperties;
 }) {
   return (
-    <div style={style.card}>
-      <div style={style.label}>{label}</div>
-      <div style={{ ...style.value, color: tone || style.value.color }}>{val}</div>
+    <div style={card}>
+      <div style={sl}>{label}</div>
+      <div style={{ ...sv, color }}>{value}</div>
     </div>
   );
 }
-
-function Slider({ label, v, on, T }: { label: string; v: number; on: (n: number) => void; T: any }) {
-  const accent = T?.accent?.cyan || '#00f2ff';
-  const muted = T?.text?.muted || '#7a8aa3';
+function Th({ children, align }: { children: React.ReactNode; align?: 'right' | 'left' }) {
+  return <th style={{ padding: '10px 12px', fontWeight: 600, fontSize: 10, letterSpacing: 1.5, textAlign: align || 'inherit', textTransform: 'uppercase' }}>{children}</th>;
+}
+function Td({ children, align, style }: { children: React.ReactNode; align?: 'right' | 'left'; style?: React.CSSProperties }) {
+  return <td style={{ padding: '10px 12px', textAlign: align || 'inherit', ...style }}>{children}</td>;
+}
+function Labeled({ label, children, muted, isRTL }: { label: string; children: React.ReactNode; muted: string; isRTL: boolean }) {
   return (
-    <div style={{ marginBottom: 12 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: muted, marginBottom: 6 }}>
-        <span>{label}</span><span style={{ color: accent, fontFamily: "'IBM Plex Mono', monospace" }}>{v}/10</span>
-      </div>
-      <input
-        type="range" min={1} max={10} value={v} onChange={e => on(Number(e.target.value))}
-        style={{ width: '100%', accentColor: accent }}
-      />
+    <div>
+      <div style={{ color: muted, fontSize: 11, marginBottom: 6, textAlign: isRTL ? 'right' : 'left' }}>{label}</div>
+      {children}
     </div>
   );
 }
-
-function Field({ label, ph, v, on, T, multi }: {
-  label: string; ph: string; v: string; on: (s: string) => void; T: any; multi?: boolean;
+function SelectField({ value, options, placeholder, onChange, input, fg }: {
+  value: string; options: string[]; placeholder: string; onChange: (v: string) => void;
+  input: React.CSSProperties; fg: string;
 }) {
+  return (
+    <select value={value} onChange={e => onChange(e.target.value)} style={{ ...input, color: value ? fg : 'rgba(255,255,255,0.4)' }}>
+      <option value="">{placeholder}</option>
+      {options.map(o => <option key={o} value={o} style={{ background: '#061326', color: fg }}>{o}</option>)}
+    </select>
+  );
+}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function Chip({ children, active, onClick, T, activeBg }: { children: React.ReactNode; active: boolean; onClick: () => void; T: any; activeBg?: string }) {
   const fg = T?.text?.primary || '#e9eef7';
   const muted = T?.text?.muted || '#7a8aa3';
   const border = T?.border?.subtle || 'rgba(255,255,255,0.08)';
-  const baseStyle: React.CSSProperties = {
-    width: '100%', background: 'transparent', color: fg,
-    border: `1px solid ${border}`, borderRadius: 8, padding: 10,
-    fontFamily: 'inherit', fontSize: 12, outline: 'none', boxSizing: 'border-box',
-  };
+  const bgColor = activeBg || T?.accent?.cyan || '#39FF14';
   return (
-    <div style={{ marginBottom: 12 }}>
-      <div style={{ fontSize: 11, color: muted, marginBottom: 6 }}>{label}</div>
-      {multi ? (
-        <textarea rows={2} value={v} placeholder={ph} onChange={e => on(e.target.value)} style={baseStyle} />
-      ) : (
-        <input type="text" value={v} placeholder={ph} onChange={e => on(e.target.value)} style={baseStyle} />
-      )}
+    <button type="button" onClick={onClick} style={{
+      all: 'unset', cursor: 'pointer', padding: '8px 14px', minHeight: 36, boxSizing: 'border-box',
+      background: active ? `${bgColor}1c` : 'transparent',
+      border: `1px solid ${active ? bgColor : border}`,
+      color: active ? bgColor : muted,
+      borderRadius: 999, fontSize: 12, fontWeight: 600,
+      transition: 'all 180ms ease',
+    }}>{children}</button>
+  );
+}
+function ratingBtn(active: boolean, accent: string, fg: string, muted: string, border: string): React.CSSProperties {
+  return {
+    width: 48, height: 48, borderRadius: 12,
+    background: active ? `${accent}14` : 'rgba(255,255,255,0.03)',
+    border: `1.5px solid ${active ? accent : border}`,
+    color: active ? accent : muted, fontWeight: 800, fontSize: 16,
+    fontFamily: "'IBM Plex Mono', monospace", cursor: 'pointer',
+    display: 'grid', placeItems: 'center', transition: 'all 180ms ease',
+  };
+}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function RiskCard({ label, limit, value, T, isRTL }: { label: string; limit: number; value: number; T: any; isRTL: boolean }) {
+  const fg = T?.text?.primary || '#e9eef7';
+  const muted = T?.text?.muted || '#7a8aa3';
+  const border = T?.border?.subtle || 'rgba(255,255,255,0.08)';
+  const panel = T?.bg?.surface || 'rgba(255,255,255,0.04)';
+  const win = T?.status?.success || '#39FF14';
+  const loss = T?.status?.danger || '#ff3b3b';
+  const warn = T?.status?.warning || '#ffb830';
+  const pct = Math.min(100, Math.max(0, (Math.abs(value) / Math.abs(limit)) * 100));
+  const tone = pct >= 80 ? loss : pct >= 50 ? warn : win;
+  return (
+    <div style={{ padding: 14, background: panel, border: `1px solid ${border}`, borderRadius: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', flexDirection: isRTL ? 'row-reverse' : 'row' }}>
+        <div style={{ color: muted, fontSize: 10, letterSpacing: 2, fontWeight: 700, textTransform: 'uppercase' }}>{label}</div>
+      </div>
+      <div style={{ marginTop: 8, color: value < 0 ? loss : win, fontFamily: "'IBM Plex Mono', monospace", fontSize: 22, fontWeight: 800, textAlign: isRTL ? 'right' : 'left' }}>
+        {value === 0 ? '0.0R' : fmtR(value)}
+      </div>
+      <div style={{ marginTop: 10, height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden' }}>
+        <div style={{ width: `${pct}%`, height: '100%', background: tone, transition: 'width 240ms ease' }} />
+      </div>
+      <div style={{ marginTop: 6, color: muted, fontSize: 10, textAlign: isRTL ? 'left' : 'right' }}>
+        {isRTL ? 'מגבלה:' : 'Limit:'} {limit}R
+      </div>
     </div>
   );
 }
-
-function Th({ children, align }: { children: React.ReactNode; align?: 'right' | 'left' }) {
-  return <th style={{ padding: '8px 10px', fontWeight: 600, fontSize: 10, letterSpacing: 1.5, textAlign: align || 'inherit', textTransform: 'uppercase' }}>{children}</th>;
-}
-function Td({ children, align, style }: { children: React.ReactNode; align?: 'right' | 'left'; style?: React.CSSProperties }) {
-  return <td style={{ padding: '8px 10px', textAlign: align || 'inherit', ...style }}>{children}</td>;
+function ScoreRing({ value, color }: { value: number; color: string }) {
+  const size = 64, stroke = 4;
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const dash = (value / 100) * c;
+  return (
+    <svg width={size} height={size} style={{ flexShrink: 0 }}>
+      <circle cx={size / 2} cy={size / 2} r={r} stroke="rgba(255,255,255,0.08)" strokeWidth={stroke} fill="none" />
+      <circle cx={size / 2} cy={size / 2} r={r} stroke={color} strokeWidth={stroke} fill="none"
+              strokeDasharray={`${dash} ${c}`} strokeLinecap="round"
+              transform={`rotate(-90 ${size / 2} ${size / 2})`} />
+      <text x="50%" y="50%" textAnchor="middle" dominantBaseline="central"
+            fill={color} fontFamily="'IBM Plex Mono', monospace" fontWeight={800} fontSize={16}>
+        {value}
+      </text>
+    </svg>
+  );
 }
