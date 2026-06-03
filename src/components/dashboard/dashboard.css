@@ -130,15 +130,32 @@
   overflow: visible;
 }
 
-/* Fluid chart heights */
-.dash-chart-h-md { height: clamp(180px, 38vw, 240px); width: 100%; }
-.dash-chart-h-sm { height: clamp(160px, 32vw, 200px); width: 100%; }
-.dash-chart-h-xs { height: clamp(140px, 28vw, 170px); width: 100%; }
+/* Fluid chart heights — generous bottom space so labels/axes aren't clipped */
+.dash-chart-h-md { height: clamp(240px, 56vw, 300px); width: 100%; padding-bottom: 8px; box-sizing: border-box; }
+.dash-chart-h-sm { height: clamp(220px, 50vw, 260px); width: 100%; padding-bottom: 8px; box-sizing: border-box; }
+.dash-chart-h-xs { height: clamp(220px, 52vw, 260px); width: 100%; padding-bottom: 8px; box-sizing: border-box; }
+
+/* Recharts tick text — keep horizontal, tabular, never stretched */
+.dash-chart-card .recharts-cartesian-axis-tick text,
+.dash-chart-card .recharts-polar-angle-axis-tick text {
+  font-size: 10px !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-variant-numeric: tabular-nums;
+}
+.dash-chart-card .recharts-text { text-anchor: middle; }
 
 /* Hide chart axis labels on very narrow screens to declutter */
 @container dash (max-width: 380px) {
   .dash-chart-card .recharts-cartesian-axis-tick text {
     font-size: 9px !important;
+  }
+}
+
+/* Hide the info ("i") button on mobile to free space for numbers */
+@media (max-width: 640px) {
+  .dash-root button[aria-label="info"],
+  .dash-root .orca-chart-card > div:first-child > button {
+    display: none !important;
   }
 }
 

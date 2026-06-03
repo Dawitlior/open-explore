@@ -108,6 +108,11 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: hsl(0 0% 100% / 0.06); border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: hsl(184 100% 50% / 0.4); }
+  /* Hide scrollbar on mobile (the vertical line on the left in RTL was distracting) */
+  @media (max-width: 768px) {
+    ::-webkit-scrollbar { width: 0 !important; height: 0 !important; display: none; }
+    * { scrollbar-width: none; -ms-overflow-style: none; }
+  }
 
   ::selection { background: hsl(184 100% 50% / 0.25); color: hsl(184 100% 90%); }
 
