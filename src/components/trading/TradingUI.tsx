@@ -69,7 +69,8 @@ export const MetricCard = ({ label, value, suffix, color, small, T, onInfoClick 
         {onInfoClick && (
           <button
             onClick={onInfoClick}
-            className="w-4 h-4 rounded-full border border-white/10 bg-transparent text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors text-[9px] font-bold flex items-center justify-center p-0 leading-none"
+            aria-label="info"
+            className="w-3 h-3 sm:w-4 sm:h-4 shrink-0 rounded-full border border-white/10 bg-transparent text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors text-[7px] sm:text-[9px] font-bold flex items-center justify-center p-0 leading-none"
           >
             i
           </button>
@@ -115,19 +116,20 @@ export const ScoreGauge = ({ score, label, color, T, description, onInfoClick }:
   const off = c - (score / 100) * c;
   return (
     <GlassCard T={T} className="orca-score-gauge" style={{ textAlign: 'center', minWidth: 140, flex: 1 }}>
-      <div className="flex items-center justify-center gap-1.5" style={{ marginBottom: description ? 4 : 10 }}>
+      <div className="flex items-center justify-center gap-1.5" style={{ marginBottom: 6 }}>
         <div className="orca-metric-label text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-medium leading-snug">{label}</div>
         {onInfoClick && (
           <button
             onClick={onInfoClick}
-            className="w-4 h-4 rounded-full border border-white/10 bg-transparent text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors text-[9px] font-bold flex items-center justify-center p-0 leading-none"
+            aria-label="info"
+            className="w-3 h-3 sm:w-4 sm:h-4 shrink-0 rounded-full border border-white/10 bg-transparent text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors text-[7px] sm:text-[9px] font-bold flex items-center justify-center p-0 leading-none"
           >
             i
           </button>
         )}
       </div>
       {description && (
-        <div className="text-[9px] text-muted-foreground mb-2 leading-snug max-w-[180px] mx-auto">{description}</div>
+        <div className="hidden sm:block text-[9px] text-muted-foreground mb-2 leading-snug max-w-[180px] mx-auto">{description}</div>
       )}
       <svg width="92" height="92" viewBox="0 0 96 96" className="block mx-auto">
         <circle cx="48" cy="48" r="40" fill="none" stroke="hsl(0 0% 100% / 0.06)" strokeWidth="6"/>
