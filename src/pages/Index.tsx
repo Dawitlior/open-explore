@@ -34,6 +34,7 @@ import { EntryGate } from '@/components/trading/EntryGate';
 import { RiskLimitAlert } from '@/components/trading/RiskLimitAlert';
 import { MobileBottomNav } from '@/components/trading/MobileBottomNav';
 import { MainPullToRefresh } from '@/components/trading/MainPullToRefresh';
+import { ReviewDashboard } from '@/components/dashboard/ReviewDashboard';
 import { MobileTradeCard } from '@/components/trading/MobileTradeCard';
 import { RiskExplanationModal, type RiskExplanation } from '@/components/trading/RiskExplanationModal';
 import { lazy, Suspense } from 'react';
