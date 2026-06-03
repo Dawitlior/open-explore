@@ -117,11 +117,11 @@ export const ReviewDashboard = ({
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.equityCurve} explanation={EXPLANATIONS.equityCurve} unit="$" chartId="equityCurve" onRemove={handleHideChart}>
                     <div className="dash-chart-h-md">
                       <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={stats.equityCurve}>
+                        <AreaChart data={stats.equityCurve} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
                           <defs><linearGradient id="eqGAdvNew" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.6}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.25}/></linearGradient></defs>
                           <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                          <XAxis dataKey="trade" tick={{ fill: T.text.muted, fontSize: 10 }} />
-                          <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} domain={[(d: number) => Math.floor(d * 0.98), (d: number) => Math.ceil(d * 1.02)]} />
+                          <XAxis dataKey="trade" tick={{ fill: T.text.muted, fontSize: 10 }} interval="preserveStartEnd" minTickGap={28} />
+                          <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} width={40} domain={[(d: number) => Math.floor(d * 0.98), (d: number) => Math.ceil(d * 1.02)]} />
                           <Tooltip contentStyle={tt} />
                           <ReferenceLine y={0} stroke={T.border.medium} strokeDasharray="2 2" />
                           <Area type="monotone" dataKey="balance" stroke={T.accent.cyan} fill="url(#eqGAdvNew)" strokeWidth={2.5} dot={trades.length <= 50 ? { fill: T.accent.cyan, r: 3 } : false} activeDot={{ r: 5, fill: T.accent.cyan }} />
@@ -136,10 +136,10 @@ export const ReviewDashboard = ({
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.pnlDistribution} explanation={EXPLANATIONS.pnlDistribution} unit="$" chartId="pnlDistribution" onRemove={handleHideChart}>
                     <div className="dash-chart-h-sm">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={trades.map((tr: Trade) => ({ id: tr.id, pnl: tr.pnl }))}>
+                        <BarChart data={trades.map((tr: Trade) => ({ id: tr.id, pnl: tr.pnl }))} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                          <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 10 }} />
-                          <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
+                          <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 10 }} interval="preserveStartEnd" minTickGap={24} />
+                          <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} width={40} />
                           <Tooltip contentStyle={tt} />
                           <Bar dataKey="pnl" radius={[4,4,0,0]}>
                             {trades.map((tr: Trade, i: number) => <Cell key={i} fill={tr.pnl >= 0 ? T.accent.green : T.accent.red} />)}
