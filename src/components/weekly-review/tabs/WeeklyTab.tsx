@@ -662,6 +662,20 @@ function Stat({ label, value, color, card, sl, sv }: {
     </div>
   );
 }
+function DualStat({ label, r, d, isUSD, color, card, sl, sv, muted }: {
+  label: string; r: string; d: string; isUSD: boolean; color: string;
+  card: React.CSSProperties; sl: React.CSSProperties; sv: React.CSSProperties; muted: string;
+}) {
+  const main = isUSD ? d : r;
+  const sub  = isUSD ? r : d;
+  return (
+    <div style={card}>
+      <div style={sl}>{label}</div>
+      <div style={{ ...sv, color }}>{main}</div>
+      <div style={{ color: muted, fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, fontWeight: 600, marginTop: 2, opacity: 0.85 }}>{sub}</div>
+    </div>
+  );
+}
 function Th({ children, align }: { children: React.ReactNode; align?: 'right' | 'left' }) {
   return <th style={{ padding: '10px 12px', fontWeight: 600, fontSize: 10, letterSpacing: 1.5, textAlign: align || 'inherit', textTransform: 'uppercase' }}>{children}</th>;
 }
