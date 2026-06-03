@@ -611,10 +611,6 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
 }
 
 // ── pure helpers ────────────────────────────────────────────────────────
-function fmtR(n: number) {
-  const v = Number.isFinite(n) ? n : 0;
-  return `${v >= 0 ? '+' : ''}${v.toFixed(2)}R`;
-}
 function formatDate(iso: string) {
   const [y, m, d] = iso.split('-');
   return `${d}/${m}/${y}`;
