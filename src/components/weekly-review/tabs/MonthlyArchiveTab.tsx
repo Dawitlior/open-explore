@@ -65,6 +65,33 @@ export default function MonthlyArchiveTab({ T, isRTL, trades, state }: Props) {
       .sort((a, b) => b.monthKey.localeCompare(a.monthKey));
   }, [state.archive]);
 
+  // Live monthly aggregates — pulls EVERY trade from the journal (not only
+  // closed-week snapshots) so the user always sees full reality with R + $.
+  const liveMonths = useMemo(() => {
+    const map = new Map<string, { mk: string; trades: number; wins: number; losses: number; netR: number; netUSD: number }>();
+    for (const t of trades) {
+      const d = t.date ? new Date(t.date.replace(' ', 'T')) : null;
+      if (!d || isNaN(d.getTime())) continue;
+      const mk = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      if (!map.has(mk)) map.set(mk, { mk, trades: 0, wins: 0, losses: 0, netR: 0, netUSD: 0 });
+      const m = map.get(mk)!;
+      m.trades += 1;
+      m.netR += Number(t.returnR) || 0;
+      m.netUSD += Number(t.pnl) || 0;
+      if (t.winLoss === 'Win') m.wins += 1;
+      else if (t.winLoss === 'Loss') m.losses += 1;
+    }
+    return Array.from(map.values()).sort((a, b) => b.mk.localeCompare(a.mk));
+  }, [trades]);
+
+  const fmtUSD = (n: number) => {
+    const v = Number.isFinite(n) ? n : 0;
+    const abs = Math.abs(v);
+    const s = abs >= 1000 ? abs.toLocaleString(undefined, { maximumFractionDigits: 0 }) : abs.toFixed(2);
+    return `${v < 0 ? '-' : v > 0 ? '+' : ''}$${s}`;
+  };
+  const fmtR = (n: number) => `${n >= 0 ? '+' : ''}${(Number(n) || 0).toFixed(2)}R`;
+
   async function removeWeek(weekKey: string) {
     if (!window.confirm(L.confirm)) return;
     await state.saveArchive(state.archive.filter(w => w.weekKey !== weekKey));
