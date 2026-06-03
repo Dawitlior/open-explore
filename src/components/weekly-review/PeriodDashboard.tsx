@@ -1,5 +1,6 @@
 // Shared period dashboard rendered by both Semi-Annual (6mo) and Annual (12mo)
 // tabs. Pure presentation — math comes from `lib/period-aggregates.ts`.
+// Dual-unit aware: every chart respects the global R | $ toggle.
 
 import { useMemo } from 'react';
 import type { Trade } from '@/data/trades';
@@ -7,8 +8,10 @@ import {
   ResponsiveContainer, CartesianGrid, Tooltip,
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
   LineChart, Line, XAxis, YAxis, ReferenceLine,
+  BarChart, Bar, Cell, PieChart, Pie, Legend,
 } from 'recharts';
 import { computeAggregates, shortMonth } from './lib/period-aggregates';
+import { useReviewUnit } from './hooks/use-review-unit';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type T = any;
