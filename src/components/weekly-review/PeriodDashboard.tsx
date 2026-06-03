@@ -167,6 +167,102 @@ export default function PeriodDashboard({ trades, months, T, isRTL, titleHE, tit
         </ChartCard>
       </div>
 
+      {/* ===== Rebuilt dual-unit charts ===== */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
+        {/* 1) Equity curve */}
+        <ChartCard title={`${L.equity} (${unitSymbol})`} card={card} labelStyle={labelStyle}>
+          <ResponsiveContainer width="100%" height={260}>
+            <LineChart data={equityData} margin={{ top: 10, right: 16, bottom: 8, left: 8 }}>
+              <CartesianGrid stroke={border} strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="i" stroke={muted} fontSize={10} hide />
+              <YAxis stroke={muted} fontSize={10} width={48} tickFormatter={fmtAxis} />
+              <Tooltip
+                contentStyle={tooltipStyle}
+                labelFormatter={(_v, p) => (p?.[0]?.payload?.label || '')}
+                formatter={(v: number) => [isUSD ? fmtUSD(v) : fmtR(v), L.equity]}
+              />
+              <ReferenceLine y={0} stroke={border} strokeDasharray="4 4" />
+              <Line type="monotone" dataKey="equity" stroke={accent} strokeWidth={2} dot={false} isAnimationActive={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        {/* 2) Monthly waterfall — bars colored by sign */}
+        <ChartCard title={`${L.waterfall} (${unitSymbol})`} card={card} labelStyle={labelStyle}>
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={monthsData} margin={{ top: 10, right: 16, bottom: 8, left: 8 }}>
+              <CartesianGrid stroke={border} strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="label" stroke={muted} fontSize={10} />
+              <YAxis stroke={muted} fontSize={10} width={48} tickFormatter={fmtAxis} />
+              <Tooltip
+                contentStyle={tooltipStyle}
+                formatter={(v: number) => [isUSD ? fmtUSD(v) : fmtR(v), L.waterfall]}
+              />
+              <ReferenceLine y={0} stroke={border} />
+              <Bar dataKey="net" radius={[4, 4, 0, 0]}>
+                {monthsData.map((m, i) => (
+                  <Cell key={i} fill={m.net >= 0 ? win : loss} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        {/* 3) R distribution (bucketed on R — unit-agnostic) */}
+        <ChartCard title={L.rdist} card={card} labelStyle={labelStyle}>
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={rDistData} margin={{ top: 10, right: 16, bottom: 8, left: 8 }}>
+              <CartesianGrid stroke={border} strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="bucket" stroke={muted} fontSize={9} interval={0} angle={-20} textAnchor="end" height={50} />
+              <YAxis stroke={muted} fontSize={10} width={32} allowDecimals={false} />
+              <Tooltip contentStyle={tooltipStyle} />
+              <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                {rDistData.map((d, i) => {
+                  const isNeg = d.bucket.startsWith('-') || d.bucket.startsWith('≤-');
+                  return <Cell key={i} fill={d.bucket === '0R' ? muted : isNeg ? loss : win} />;
+                })}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        {/* 4) Setup contribution — donut, signed slices */}
+        <ChartCard title={`${L.setups} (${unitSymbol})`} card={card} labelStyle={labelStyle}>
+          {setupData.length === 0 ? (
+            <div style={{ color: muted, fontSize: 13, padding: 24, textAlign: 'center' }}>—</div>
+          ) : (
+            <ResponsiveContainer width="100%" height={260}>
+              <PieChart>
+                <Pie
+                  data={setupData.map(s => ({ ...s, value: Math.abs(s.value) }))}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%" cy="50%"
+                  innerRadius={50} outerRadius={90}
+                  paddingAngle={2}
+                  stroke={panel}
+                >
+                  {setupData.map((s, i) => (
+                    <Cell key={s.name} fill={s.value >= 0 ? PIE_COLORS[i % PIE_COLORS.length] : loss} />
+                  ))}
+                </Pie>
+                <Legend wrapperStyle={{ fontSize: 10, color: muted }} />
+                <Tooltip
+                  contentStyle={tooltipStyle}
+                  formatter={(_v: number, _n: string, p) => {
+                    const item = p?.payload as { netR: number; netUSD: number; count: number };
+                    if (!item) return [_v, _n];
+                    return [isUSD ? fmtUSD(item.netUSD) : fmtR(item.netR), `${item.count}× ${_n}`];
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
+        </ChartCard>
+      </div>
+
+
+
       {/* Monthly breakdown table — shows BOTH R and $ for every month (live from journal) */}
       <ChartCard title={isRTL ? 'פירוט חודשי' : 'Monthly breakdown'} card={card} labelStyle={labelStyle}>
         {a.months.length === 0 ? (
