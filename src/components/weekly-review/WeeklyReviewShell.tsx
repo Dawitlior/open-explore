@@ -5,6 +5,7 @@
 import { lazy, Suspense, useState } from 'react';
 import type { Trade } from '@/data/trades';
 import { useWeeklyReviewState } from './hooks/use-weekly-review-state';
+import WeeklyReviewBanner from './widgets/WeeklyReviewBanner';
 
 const WeeklyTab        = lazy(() => import('./tabs/WeeklyTab'));
 const SetupsTab        = lazy(() => import('./tabs/SetupsTab'));
@@ -51,8 +52,15 @@ export const WeeklyReviewShell = ({ T, isRTL, trades }: Props) => {
         paddingInline: 'clamp(12px, 3vw, 24px)',
         fontFamily: "'Poppins', system-ui, sans-serif",
         boxSizing: 'border-box',
+        direction: isRTL ? 'rtl' : 'ltr',
+        textAlign: isRTL ? 'right' : 'left',
       }}
     >
+      {/* ── Reminder + month-over + auto-trade sync banner ── */}
+      <div style={{ marginTop: 12 }}>
+        <WeeklyReviewBanner T={T} isRTL={isRTL} trades={trades} />
+      </div>
+
       {/* Tab bar */}
       <div
         role="tablist"
@@ -62,7 +70,7 @@ export const WeeklyReviewShell = ({ T, isRTL, trades }: Props) => {
           flexWrap: 'wrap',
           gap: 6,
           padding: 6,
-          margin: '12px 0 16px',
+          margin: '0 0 16px',
           background: panel,
           border: `1px solid ${border}`,
           borderRadius: 14,
