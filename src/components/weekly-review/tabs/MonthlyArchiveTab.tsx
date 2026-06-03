@@ -1,7 +1,7 @@
 // Monthly Archive — historical weeks grouped by month with an inline
 // expand/edit row plus an AI-free recap field per month (free-form markdown).
 
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import type { Trade } from '@/data/trades';
 import type { useWeeklyReviewState } from '../hooks/use-weekly-review-state';
 import type { MonthlyRecap, WeekRecord } from '../lib/types';
@@ -128,7 +128,7 @@ export default function MonthlyArchiveTab({ T, isRTL, state }: Props) {
                     const wkWR = w.wins + w.losses ? w.wins / (w.wins + w.losses) : 0;
                     const isOpen = expanded === w.weekKey;
                     return (
-                      <RowFragment key={w.weekKey}>
+                      <Fragment key={w.weekKey}>
                         <tr key={w.weekKey} style={{ borderTop: `1px solid ${border}`, color: fg, cursor: 'pointer' }}
                             onClick={() => setExpanded(isOpen ? null : w.weekKey)}>
                           <Td>{w.weekKey} <span style={{ color: muted }}>({w.weekEndingISO})</span></Td>
@@ -164,7 +164,7 @@ export default function MonthlyArchiveTab({ T, isRTL, state }: Props) {
                             </td>
                           </tr>
                         )}
-                      </>
+                      </Fragment>
                     );
                   })}
                 </tbody>
