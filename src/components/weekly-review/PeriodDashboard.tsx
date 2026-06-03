@@ -75,12 +75,33 @@ export default function PeriodDashboard({ trades, months, T, isRTL, titleHE, tit
 
   const monthsData = a.months.map(m => ({
     label: shortMonth(m.monthKey),
-    netR: +m.netR.toFixed(2),
+    netR:  +m.netR.toFixed(2),
+    netUSD:+m.netUSD.toFixed(2),
+    net:   +(isUSD ? m.netUSD : m.netR).toFixed(2),
     winRate: Math.round(m.winRate * 100),
     pf: Number.isFinite(m.profitFactor) ? +m.profitFactor.toFixed(2) : 0,
   }));
 
+  // Equity curve points — pick equity field per active unit
+  const equityData = a.equity.map(p => ({
+    i: p.i,
+    label: p.date,
+    equity: +(isUSD ? p.equityUSD : p.equityR).toFixed(2),
+  }));
+
+  // R distribution always bucketed on R (conceptual buckets); chart is unit-agnostic
+  const rDistData = a.rDistribution;
+
+  // Setup contribution — sort by active unit, drop empty buckets
+  const setupData = a.setupBreakdown
+    .map(s => ({ name: s.name, value: +(isUSD ? s.netUSD : s.netR).toFixed(2), count: s.count, netR: s.netR, netUSD: s.netUSD }))
+    .filter(s => s.value !== 0)
+    .sort((x, y) => Math.abs(y.value) - Math.abs(x.value));
+
+  const unitSymbol = isUSD ? '$' : 'R';
   const pfStr = (n: number) => (Number.isFinite(n) ? n.toFixed(2) : '∞');
+  const fmtAxis = (v: number) => (isUSD ? `$${shortNum(v)}` : `${v}R`);
+  void unit; // suppress unused warn — kept for downstream use
 
   return (
     <div style={{ display: 'grid', gap: 16, paddingBottom: 32 }}>
