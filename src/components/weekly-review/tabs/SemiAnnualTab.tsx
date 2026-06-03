@@ -1,12 +1,15 @@
 import type { Trade } from '@/data/trades';
 import type { useWeeklyReviewState } from '../hooks/use-weekly-review-state';
-import { TabPlaceholder } from './_placeholder';
+import PeriodDashboard from '../PeriodDashboard';
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface Props { T: any; isRTL: boolean; trades: Trade[]; state: ReturnType<typeof useWeeklyReviewState>; }
-export default function SemiAnnualTab(p: Props) {
+
+export default function SemiAnnualTab({ T, isRTL, trades }: Props) {
   return (
-    <TabPlaceholder T={p.T} isRTL={p.isRTL}
-      he={{ title: 'חצי-שנתי', body: '18 מודולי אנליטיקה (Equity, DNA Radar, Waterfall, PF Trend…) — בבנייה בעיצוב המקומי.' }}
-      en={{ title: 'Semi-Annual', body: '18 analytics modules (Equity, DNA Radar, Waterfall, PF Trend, …) being rebuilt natively.' }} />
+    <PeriodDashboard
+      trades={trades} months={6} T={T} isRTL={isRTL}
+      titleHE="חצי-שנתי" titleEN="Semi-Annual Review"
+    />
   );
 }
