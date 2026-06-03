@@ -1,5 +1,6 @@
 // Shared period dashboard rendered by both Semi-Annual (6mo) and Annual (12mo)
 // tabs. Pure presentation — math comes from `lib/period-aggregates.ts`.
+// Dual-unit aware: every chart respects the global R | $ toggle.
 
 import { useMemo } from 'react';
 import type { Trade } from '@/data/trades';
@@ -7,8 +8,10 @@ import {
   ResponsiveContainer, CartesianGrid, Tooltip,
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
   LineChart, Line, XAxis, YAxis, ReferenceLine,
+  BarChart, Bar, Cell, PieChart, Pie, Legend,
 } from 'recharts';
 import { computeAggregates, shortMonth } from './lib/period-aggregates';
+import { useReviewUnit } from './hooks/use-review-unit';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type T = any;
@@ -32,6 +35,7 @@ export default function PeriodDashboard({ trades, months, T, isRTL, titleHE, tit
   const win = T?.status?.success || '#00ff88';
   const loss = T?.status?.danger || '#ff3b3b';
 
+  const { isUSD, unit } = useReviewUnit();
   const a = useMemo(() => computeAggregates(trades, months), [trades, months]);
 
   const tooltipStyle = {
@@ -52,7 +56,7 @@ export default function PeriodDashboard({ trades, months, T, isRTL, titleHE, tit
   const HE = {
     netR: 'נטו R', trades: 'עסקאות', winRate: 'אחוז זכייה', pf: 'פקטור רווח',
     exp: 'תוחלת', avgWin: 'זכייה ממוצעת', avgLoss: 'הפסד ממוצע', dd: 'דרורדאון מקסימלי',
-    equity: 'עקומת הון (R)', waterfall: 'ביצוע חודשי', radar: 'דנ"א סוחר',
+    equity: 'עקומת הון', waterfall: 'ביצוע חודשי', radar: 'דנ"א סוחר',
     pf2: 'פקטור רווח חודשי', wr: 'אחוז זכייה חודשי',
     rdist: 'התפלגות R', setups: 'תרומת סטאפים', highlights: 'נקודות שיא',
     best: 'השבוע הטוב ביותר', worst: 'השבוע הגרוע ביותר',
@@ -61,7 +65,7 @@ export default function PeriodDashboard({ trades, months, T, isRTL, titleHE, tit
   const EN = {
     netR: 'Net R', trades: 'Trades', winRate: 'Win rate', pf: 'Profit factor',
     exp: 'Expectancy', avgWin: 'Avg win', avgLoss: 'Avg loss', dd: 'Max drawdown',
-    equity: 'Equity curve (R)', waterfall: 'Monthly performance', radar: 'Trader DNA',
+    equity: 'Equity curve', waterfall: 'Monthly performance', radar: 'Trader DNA',
     pf2: 'Monthly profit factor', wr: 'Monthly win rate',
     rdist: 'R distribution', setups: 'Setup contribution', highlights: 'Highlights',
     best: 'Best week', worst: 'Worst week',
@@ -71,12 +75,33 @@ export default function PeriodDashboard({ trades, months, T, isRTL, titleHE, tit
 
   const monthsData = a.months.map(m => ({
     label: shortMonth(m.monthKey),
-    netR: +m.netR.toFixed(2),
+    netR:  +m.netR.toFixed(2),
+    netUSD:+m.netUSD.toFixed(2),
+    net:   +(isUSD ? m.netUSD : m.netR).toFixed(2),
     winRate: Math.round(m.winRate * 100),
     pf: Number.isFinite(m.profitFactor) ? +m.profitFactor.toFixed(2) : 0,
   }));
 
+  // Equity curve points — pick equity field per active unit
+  const equityData = a.equity.map(p => ({
+    i: p.i,
+    label: p.date,
+    equity: +(isUSD ? p.equityUSD : p.equityR).toFixed(2),
+  }));
+
+  // R distribution always bucketed on R (conceptual buckets); chart is unit-agnostic
+  const rDistData = a.rDistribution;
+
+  // Setup contribution — sort by active unit, drop empty buckets
+  const setupData = a.setupBreakdown
+    .map(s => ({ name: s.name, value: +(isUSD ? s.netUSD : s.netR).toFixed(2), count: s.count, netR: s.netR, netUSD: s.netUSD }))
+    .filter(s => s.value !== 0)
+    .sort((x, y) => Math.abs(y.value) - Math.abs(x.value));
+
+  const unitSymbol = isUSD ? '$' : 'R';
   const pfStr = (n: number) => (Number.isFinite(n) ? n.toFixed(2) : '∞');
+  const fmtAxis = (v: number) => (isUSD ? `$${shortNum(v)}` : `${v}R`);
+  void unit; // suppress unused warn — kept for downstream use
 
   return (
     <div style={{ display: 'grid', gap: 16, paddingBottom: 32 }}>
@@ -141,6 +166,102 @@ export default function PeriodDashboard({ trades, months, T, isRTL, titleHE, tit
           </ResponsiveContainer>
         </ChartCard>
       </div>
+
+      {/* ===== Rebuilt dual-unit charts ===== */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
+        {/* 1) Equity curve */}
+        <ChartCard title={`${L.equity} (${unitSymbol})`} card={card} labelStyle={labelStyle}>
+          <ResponsiveContainer width="100%" height={260}>
+            <LineChart data={equityData} margin={{ top: 10, right: 16, bottom: 8, left: 8 }}>
+              <CartesianGrid stroke={border} strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="i" stroke={muted} fontSize={10} hide />
+              <YAxis stroke={muted} fontSize={10} width={48} tickFormatter={fmtAxis} />
+              <Tooltip
+                contentStyle={tooltipStyle}
+                labelFormatter={(_v, p) => (p?.[0]?.payload?.label || '')}
+                formatter={(v: number) => [isUSD ? fmtUSD(v) : fmtR(v), L.equity]}
+              />
+              <ReferenceLine y={0} stroke={border} strokeDasharray="4 4" />
+              <Line type="monotone" dataKey="equity" stroke={accent} strokeWidth={2} dot={false} isAnimationActive={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        {/* 2) Monthly waterfall — bars colored by sign */}
+        <ChartCard title={`${L.waterfall} (${unitSymbol})`} card={card} labelStyle={labelStyle}>
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={monthsData} margin={{ top: 10, right: 16, bottom: 8, left: 8 }}>
+              <CartesianGrid stroke={border} strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="label" stroke={muted} fontSize={10} />
+              <YAxis stroke={muted} fontSize={10} width={48} tickFormatter={fmtAxis} />
+              <Tooltip
+                contentStyle={tooltipStyle}
+                formatter={(v: number) => [isUSD ? fmtUSD(v) : fmtR(v), L.waterfall]}
+              />
+              <ReferenceLine y={0} stroke={border} />
+              <Bar dataKey="net" radius={[4, 4, 0, 0]}>
+                {monthsData.map((m, i) => (
+                  <Cell key={i} fill={m.net >= 0 ? win : loss} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        {/* 3) R distribution (bucketed on R — unit-agnostic) */}
+        <ChartCard title={L.rdist} card={card} labelStyle={labelStyle}>
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={rDistData} margin={{ top: 10, right: 16, bottom: 8, left: 8 }}>
+              <CartesianGrid stroke={border} strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="bucket" stroke={muted} fontSize={9} interval={0} angle={-20} textAnchor="end" height={50} />
+              <YAxis stroke={muted} fontSize={10} width={32} allowDecimals={false} />
+              <Tooltip contentStyle={tooltipStyle} />
+              <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                {rDistData.map((d, i) => {
+                  const isNeg = d.bucket.startsWith('-') || d.bucket.startsWith('≤-');
+                  return <Cell key={i} fill={d.bucket === '0R' ? muted : isNeg ? loss : win} />;
+                })}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        {/* 4) Setup contribution — donut, signed slices */}
+        <ChartCard title={`${L.setups} (${unitSymbol})`} card={card} labelStyle={labelStyle}>
+          {setupData.length === 0 ? (
+            <div style={{ color: muted, fontSize: 13, padding: 24, textAlign: 'center' }}>—</div>
+          ) : (
+            <ResponsiveContainer width="100%" height={260}>
+              <PieChart>
+                <Pie
+                  data={setupData.map(s => ({ ...s, value: Math.abs(s.value) }))}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%" cy="50%"
+                  innerRadius={50} outerRadius={90}
+                  paddingAngle={2}
+                  stroke={panel}
+                >
+                  {setupData.map((s, i) => (
+                    <Cell key={s.name} fill={s.value >= 0 ? PIE_COLORS[i % PIE_COLORS.length] : loss} />
+                  ))}
+                </Pie>
+                <Legend wrapperStyle={{ fontSize: 10, color: muted }} />
+                <Tooltip
+                  contentStyle={tooltipStyle}
+                  formatter={(_v: number, _n: string, p) => {
+                    const item = p?.payload as { netR: number; netUSD: number; count: number };
+                    if (!item) return [_v, _n];
+                    return [isUSD ? fmtUSD(item.netUSD) : fmtR(item.netR), `${item.count}× ${_n}`];
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
+        </ChartCard>
+      </div>
+
+
 
       {/* Monthly breakdown table — shows BOTH R and $ for every month (live from journal) */}
       <ChartCard title={isRTL ? 'פירוט חודשי' : 'Monthly breakdown'} card={card} labelStyle={labelStyle}>
@@ -236,4 +357,12 @@ function Highlight({ l, v, tone, border, fg, muted }: { l: string; v: string; to
       <div style={{ color: fg, fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, fontWeight: 700, marginTop: 4 }}>{v}</div>
     </div>
   );
+}
+
+function shortNum(n: number): string {
+  const abs = Math.abs(n);
+  const sign = n < 0 ? '-' : '';
+  if (abs >= 1_000_000) return `${sign}${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000)     return `${sign}${(abs / 1_000).toFixed(1)}k`;
+  return `${sign}${abs.toFixed(0)}`;
 }

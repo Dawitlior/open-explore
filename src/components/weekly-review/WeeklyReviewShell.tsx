@@ -6,6 +6,7 @@ import { lazy, Suspense, useState } from 'react';
 import type { Trade } from '@/data/trades';
 import { useWeeklyReviewState } from './hooks/use-weekly-review-state';
 import WeeklyReviewBanner from './widgets/WeeklyReviewBanner';
+import { ReviewUnitProvider, useReviewUnit } from './hooks/use-review-unit';
 
 const WeeklyTab        = lazy(() => import('./tabs/WeeklyTab'));
 const SetupsTab        = lazy(() => import('./tabs/SetupsTab'));
@@ -25,10 +26,17 @@ interface Props {
 const TABS_HE = ['סיכום שבועי ⚡', 'ניהול סטאפים ⚙️', 'ארכיון חודשי 📅', 'חצי-שנתי 📊', 'שנתי 🗓️'];
 const TABS_EN = ['Weekly Summary ⚡', 'Setups ⚙️', 'Monthly Archive 📅', 'Semi-Annual 📊', 'Annual 🗓️'];
 
-export const WeeklyReviewShell = ({ T, isRTL, trades }: Props) => {
+export const WeeklyReviewShell = (props: Props) => (
+  <ReviewUnitProvider>
+    <WeeklyReviewShellInner {...props} />
+  </ReviewUnitProvider>
+);
+
+const WeeklyReviewShellInner = ({ T, isRTL, trades }: Props) => {
   const [tab, setTab] = useState(0);
   const state = useWeeklyReviewState();
   const labels = isRTL ? TABS_HE : TABS_EN;
+  const { unit, setUnit } = useReviewUnit();
 
   const bg = T?.bg?.primary || '#061326';
   const fg = T?.text?.primary || '#e9eef7';
@@ -59,6 +67,43 @@ export const WeeklyReviewShell = ({ T, isRTL, trades }: Props) => {
       {/* ── Reminder + month-over + auto-trade sync banner ── */}
       <div style={{ marginTop: 12 }}>
         <WeeklyReviewBanner T={T} isRTL={isRTL} trades={trades} />
+      </div>
+
+      {/* ── Unit toggle (R | $) ── */}
+      <div style={{
+        display: 'flex', justifyContent: isRTL ? 'flex-start' : 'flex-end',
+        margin: '8px 0 12px',
+      }}>
+        <div role="radiogroup" aria-label="Display unit" style={{
+          display: 'inline-flex', padding: 4, background: panel,
+          border: `1px solid ${border}`, borderRadius: 999,
+        }}>
+          {(['R', 'USD'] as const).map(u => {
+            const active = unit === u;
+            const label = u === 'USD' ? '$' : 'R';
+            return (
+              <button
+                key={u}
+                role="radio"
+                aria-checked={active}
+                onClick={() => setUnit(u)}
+                style={{
+                  all: 'unset', cursor: 'pointer',
+                  minWidth: 44, minHeight: 32, padding: '4px 14px',
+                  borderRadius: 999, textAlign: 'center',
+                  background: active ? `${accent}22` : 'transparent',
+                  border: `1px solid ${active ? accent + '88' : 'transparent'}`,
+                  color: active ? accent : muted,
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontWeight: 800, fontSize: 13, letterSpacing: 1,
+                  transition: 'all 180ms ease',
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Tab bar */}
