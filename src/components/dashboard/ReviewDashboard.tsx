@@ -159,11 +159,11 @@ export const ReviewDashboard = ({
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ציון Orca — פירוט' : 'Orca Score — Breakdown'} explanation={EXPLANATIONS.radarScore} chartId="radarScore" onRemove={handleHideChart}>
                     <div className="dash-chart-h-xs">
                       <ResponsiveContainer width="100%" height="100%">
-                        <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="68%">
+                        <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="58%" margin={{ top: 16, right: 28, bottom: 16, left: 28 }}>
                           <PolarGrid stroke={T.border.medium} />
-                          <PolarAngleAxis dataKey="m" tick={{ fill: T.text.muted, fontSize: 9 }} />
+                          <PolarAngleAxis dataKey="m" tick={{ fill: T.text.secondary, fontSize: 10 }} />
                           <PolarRadiusAxis tick={false} domain={[0, 100]} axisLine={false} />
-                          <Radar dataKey="v" stroke={T.accent.cyan} fill={T.accent.cyan} fillOpacity={0.55} strokeWidth={2.5} dot={{ r: 4, fill: T.accent.cyan, stroke: T.bg.card, strokeWidth: 1 }} />
+                          <Radar dataKey="v" stroke={T.accent.cyan} fill={T.accent.cyan} fillOpacity={0.55} strokeWidth={2.5} dot={{ r: 3, fill: T.accent.cyan, stroke: T.bg.card, strokeWidth: 1 }} />
                         </RadarChart>
                       </ResponsiveContainer>
                     </div>
@@ -241,15 +241,22 @@ export const ReviewDashboard = ({
               <div className="dash-charts-alpha">
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.riskEvolution} explanation={EXPLANATIONS.riskAllocation} unit="%">
-                    <div className="dash-chart-h-xs">
+                    <div className="dash-chart-h-sm">
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={riskData.riskGrowthEvolution}>
+                        <AreaChart data={riskData.riskGrowthEvolution} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
+                          <defs>
+                            <linearGradient id="riskEvoGrad" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor={T.accent.orange} stopOpacity={0.5} />
+                              <stop offset="100%" stopColor={T.accent.orange} stopOpacity={0.05} />
+                            </linearGradient>
+                          </defs>
                           <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                          <XAxis dataKey="tradeId" tick={{ fill: T.text.muted, fontSize: 10 }} />
-                          <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
-                          <Tooltip contentStyle={tt} />
-                          <Line type="monotone" dataKey="pctOfAccount" stroke={T.accent.orange} strokeWidth={2} dot={{ fill: T.accent.orange, r: 3 }} />
-                        </LineChart>
+                          <XAxis dataKey="tradeId" tick={{ fill: T.text.muted, fontSize: 10 }} interval="preserveStartEnd" minTickGap={24} />
+                          <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} width={32} tickFormatter={(v: number) => `${v.toFixed(1)}%`} />
+                          <Tooltip contentStyle={tt} formatter={(v: any) => [`${Number(v).toFixed(2)}%`, isRTL ? 'סיכון' : 'Risk']} />
+                          <ReferenceLine y={2} stroke={T.accent.green} strokeDasharray="2 2" strokeOpacity={0.4} />
+                          <Area type="monotone" dataKey="pctOfAccount" stroke={T.accent.orange} strokeWidth={2.2} fill="url(#riskEvoGrad)" dot={false} activeDot={{ r: 4, fill: T.accent.orange }} />
+                        </AreaChart>
                       </ResponsiveContainer>
                     </div>
                   </ChartWrapper>
