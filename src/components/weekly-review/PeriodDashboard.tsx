@@ -35,6 +35,7 @@ export default function PeriodDashboard({ trades, months, T, isRTL, titleHE, tit
   const win = T?.status?.success || '#00ff88';
   const loss = T?.status?.danger || '#ff3b3b';
 
+  const { isUSD, unit } = useReviewUnit();
   const a = useMemo(() => computeAggregates(trades, months), [trades, months]);
 
   const tooltipStyle = {
