@@ -47,6 +47,7 @@ export default function MonthlyArchiveTab({ T, isRTL, trades, state }: Props) {
 
   const [expanded, setExpanded] = useState<string | null>(null);
   const [recapDraft, setRecapDraft] = useState<Record<string, string>>({});
+  const [openMonth, setOpenMonth] = useState<string | null>(null);
 
   const groups = useMemo(() => {
     const map = new Map<string, WeekRecord[]>();
