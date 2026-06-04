@@ -1,11 +1,13 @@
 // Monthly Archive — historical weeks grouped by month with an inline
 // expand/edit row plus an AI-free recap field per month (free-form markdown).
+// Each live month now opens a full 11-chart Monthly Dashboard.
 
 import { Fragment, useMemo, useState } from 'react';
 import type { Trade } from '@/data/trades';
 import type { useWeeklyReviewState } from '../hooks/use-weekly-review-state';
 import type { MonthlyRecap, WeekRecord } from '../lib/types';
 import { GRADE_COLORS } from '../lib/grading';
+import MonthlyDashboard from '../MonthlyDashboard';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface Props { T: any; isRTL: boolean; trades: Trade[]; state: ReturnType<typeof useWeeklyReviewState>; }
