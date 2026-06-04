@@ -284,3 +284,18 @@ export default function YearlyDashboard({ T, isRTL, trades }: Props) {
     </div>
   );
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function TreemapCell(props: any) {
+  const { x, y, width, height, payload, P, fmtTip } = props;
+  if (width === undefined || height === undefined || !payload) return null;
+  const v = payload.value as number;
+  const fill = v >= 0 ? P.win : P.loss;
+  return (
+    <g>
+      <rect x={x} y={y} width={width} height={height} fill={fill} fillOpacity={0.55} stroke={P.bg}/>
+      {width > 50 && height > 30 && <text x={x + 6} y={y + 16} fill="#fff" fontSize={11} fontWeight={700}>{payload.name}</text>}
+      {width > 50 && height > 50 && <text x={x + 6} y={y + 30} fill="#fff" fontSize={10}>{fmtTip(v)}</text>}
+    </g>
+  );
+}
