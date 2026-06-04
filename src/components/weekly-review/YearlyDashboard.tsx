@@ -217,22 +217,7 @@ export default function YearlyDashboard({ T, isRTL, trades }: Props) {
             <div style={{ color: P.muted, fontSize: 13, padding: 24, textAlign: 'center' }}>—</div>
           ) : (
             <ResponsiveContainer width="100%" height={260}>
-              <Treemap data={tm} dataKey="size" stroke={P.bg}
-                       content={({ x, y, width, height, payload }: { x?: number; y?: number; width?: number; height?: number; payload?: { value: number; name: string; count: number } }) => {
-                         if (width === undefined || height === undefined || x === undefined || y === undefined || !payload) return null as never;
-                         const fill = payload.value >= 0 ? P.win : P.loss;
-                         return (
-                           <g>
-                             <rect x={x} y={y} width={width} height={height} fill={fill} fillOpacity={0.55} stroke={P.bg}/>
-                             {width > 50 && height > 30 && (
-                               <text x={x + 6} y={y + 16} fill="#fff" fontSize={11} fontWeight={700}>{payload.name}</text>
-                             )}
-                             {width > 50 && height > 50 && (
-                               <text x={x + 6} y={y + 30} fill="#fff" fontSize={10}>{fmtTip(payload.value)}</text>
-                             )}
-                           </g>
-                         );
-                       }}/>
+              <Treemap data={tm} dataKey="size" stroke={P.bg} content={<TreemapCell P={P} fmtTip={fmtTip}/>}/>
             </ResponsiveContainer>
           )}
         </ChartCard>
