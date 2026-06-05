@@ -263,7 +263,7 @@ export default function HalfYearDashboard({ T, isRTL, trades, months = 6 }: Prop
 
 function HCard({ P, label, v, tone }: { P: ReturnType<typeof getPalette>; label: string; v: string; tone: string }) {
   return (
-    <div style={{ padding: 14, borderRadius: 10, border: `1px solid ${P.border}`, background: 'rgba(0,0,0,0.18)' }}>
+    <div style={{ padding: 14, borderRadius: 10, border: `1px solid ${P.border}`, background: P.subtleBg }}>
       <div style={labelStyle(P)}>{label}</div>
       <div style={{ color: tone, fontFamily: "'IBM Plex Mono', monospace", fontWeight: 700, fontSize: 14, marginTop: 6, whiteSpace: 'pre-line' }}>{v}</div>
     </div>
