@@ -164,12 +164,12 @@ export default function YearlyDashboard({ T, isRTL, trades }: Props) {
                 <ReferenceLine y={0} stroke={P.border}/>
                 <Scatter data={hold}>
                   {hold.map((p, i) => <Cell key={i} fill={p.isWin ? P.win : P.loss}/>)}
-
                 </Scatter>
               </ScatterChart>
             </ResponsiveContainer>
-          )}
-        </ChartCard>
+          </ChartCard>
+        )}
+
       </div>
 
       {/* 5.C.6 — Asset correlation matrix */}
