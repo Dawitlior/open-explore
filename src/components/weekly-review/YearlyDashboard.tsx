@@ -134,11 +134,9 @@ export default function YearlyDashboard({ T, isRTL, trades }: Props) {
           </ResponsiveContainer>
         </ChartCard>
 
-        {/* 5.C.4 — MAE vs MFE scatter */}
-        <ChartCard P={P} title={L.mae}>
-          {mae.length === 0 ? (
-            <div style={{ color: P.muted, fontSize: 12, padding: 24, textAlign: 'center' }}>{L.noMae}</div>
-          ) : (
+        {/* 5.C.4 — MAE vs MFE scatter (only when real data) */}
+        {mae.length > 0 && (
+          <ChartCard P={P} title={L.mae}>
             <ResponsiveContainer width="100%" height={260}>
               <ScatterChart margin={{ top: 10, right: 12, bottom: 8, left: 8 }}>
                 <CartesianGrid stroke={P.border} strokeDasharray="3 3"/>
@@ -151,14 +149,12 @@ export default function YearlyDashboard({ T, isRTL, trades }: Props) {
                 </Scatter>
               </ScatterChart>
             </ResponsiveContainer>
-          )}
-        </ChartCard>
+          </ChartCard>
+        )}
 
-        {/* 5.C.5 — Holding time vs R */}
-        <ChartCard P={P} title={L.hold}>
-          {hold.length === 0 ? (
-            <div style={{ color: P.muted, fontSize: 12, padding: 24, textAlign: 'center' }}>{L.noHold}</div>
-          ) : (
+        {/* 5.C.5 — Holding time vs R (only when real data) */}
+        {hold.length > 0 && (
+          <ChartCard P={P} title={L.hold}>
             <ResponsiveContainer width="100%" height={260}>
               <ScatterChart margin={{ top: 10, right: 12, bottom: 8, left: 8 }}>
                 <CartesianGrid stroke={P.border} strokeDasharray="3 3"/>
@@ -168,6 +164,7 @@ export default function YearlyDashboard({ T, isRTL, trades }: Props) {
                 <ReferenceLine y={0} stroke={P.border}/>
                 <Scatter data={hold}>
                   {hold.map((p, i) => <Cell key={i} fill={p.isWin ? P.win : P.loss}/>)}
+
                 </Scatter>
               </ScatterChart>
             </ResponsiveContainer>
