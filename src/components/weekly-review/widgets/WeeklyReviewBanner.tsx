@@ -1,3 +1,4 @@
+import { themeBgs } from '../lib/theme-bg';
 // Top-of-page banner for the native Weekly Review.
 // Three states (stackable):
 //   1. Friday red-pulse reminder ("close your week")
@@ -164,7 +165,7 @@ export default function WeeklyReviewBanner({ T, isRTL, trades }: Props) {
           alignItems: 'center',
           gap: 10,
           padding: '10px 14px',
-          background: 'rgba(255,255,255,0.025)',
+          background: themeBgs(T).overlay,
           border: `1px solid ${border}`,
           borderRadius: 10,
           flexWrap: 'wrap',

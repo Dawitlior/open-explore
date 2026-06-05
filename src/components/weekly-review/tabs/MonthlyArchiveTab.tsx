@@ -1,3 +1,4 @@
+import { themeBgs } from '../lib/theme-bg';
 // Monthly Archive — historical weeks grouped by month with an inline
 // expand/edit row plus an AI-free recap field per month (free-form markdown).
 // Each live month now opens a full 11-chart Monthly Dashboard.
@@ -132,7 +133,7 @@ export default function MonthlyArchiveTab({ T, isRTL, trades, state }: Props) {
           <div style={{ overflowX: 'auto', border: `1px solid ${border}`, borderRadius: 10 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'IBM Plex Mono', monospace", fontSize: 12 }}>
               <thead>
-                <tr style={{ color: muted, background: 'rgba(0,0,0,0.18)', textAlign: isRTL ? 'right' : 'left' }}>
+                <tr style={{ color: muted, background: themeBgs(T).subtle, textAlign: isRTL ? 'right' : 'left' }}>
                   <th style={{ padding: '8px 10px', fontWeight: 600, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' }}>{isRTL ? 'חודש' : 'Month'}</th>
                   <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 600, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' }}>{L.trades}</th>
                   <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 600, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' }}>{L.netR}</th>
@@ -158,7 +159,7 @@ export default function MonthlyArchiveTab({ T, isRTL, trades, state }: Props) {
                       </tr>
                       {isOpen && (
                         <tr>
-                          <td colSpan={6} style={{ padding: '16px 4px', background: 'rgba(0,0,0,0.22)' }}>
+                          <td colSpan={6} style={{ padding: '16px 4px', background: themeBgs(T).header }}>
                             <MonthlyDashboard T={T} isRTL={isRTL} trades={trades} monthKey={m.mk}/>
                           </td>
                         </tr>
@@ -231,7 +232,7 @@ export default function MonthlyArchiveTab({ T, isRTL, trades, state }: Props) {
                           </Td>
                         </tr>
                         {isOpen && (
-                          <tr style={{ background: 'rgba(0,0,0,0.18)' }}>
+                          <tr style={{ background: themeBgs(T).subtle }}>
                             <td colSpan={6} style={{ padding: 16 }}>
                               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
                                 <Block label={L.reflection} body={w.reflection || '—'} fg={fg} muted={muted} border={border} />
