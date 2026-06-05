@@ -176,7 +176,7 @@ export default function MonthlyDashboard({ T, isRTL, trades, monthKey }: Props) 
         <div style={{ overflowX: 'auto', borderRadius: 10, border: `1px solid ${P.border}` }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'IBM Plex Mono', monospace", fontSize: 12 }}>
             <thead>
-              <tr style={{ color: P.muted, background: 'rgba(0,0,0,0.18)', textAlign: isRTL ? 'right' : 'left' }}>
+              <tr style={{ color: P.muted, background: P.subtleBg, textAlign: isRTL ? 'right' : 'left' }}>
                 <Th>{isRTL ? 'נכס' : 'Asset'}</Th>
                 <Th align="right">{L.trades}</Th>
                 <Th align="right">{isUSD ? '$ Net' : 'Net R'}</Th>
@@ -310,7 +310,7 @@ export default function MonthlyDashboard({ T, isRTL, trades, monthKey }: Props) 
 
 function BWCard({ P, label, v, tone }: { P: ReturnType<typeof getPalette>; label: string; v: string; tone: string }) {
   return (
-    <div style={{ padding: 14, borderRadius: 10, border: `1px solid ${P.border}`, background: 'rgba(0,0,0,0.18)' }}>
+    <div style={{ padding: 14, borderRadius: 10, border: `1px solid ${P.border}`, background: P.subtleBg }}>
       <div style={labelStyle(P)}>{label}</div>
       <div style={{ color: tone, fontFamily: "'IBM Plex Mono', monospace", fontWeight: 700, fontSize: 14, marginTop: 6, whiteSpace: 'pre-line' }}>{v}</div>
     </div>

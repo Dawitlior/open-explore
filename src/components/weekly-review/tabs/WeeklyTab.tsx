@@ -1,3 +1,4 @@
+import { themeBgs } from '../lib/theme-bg';
 // Weekly Summary — native, full-fidelity port of the legacy iframe app.
 // Mirrors the layout from the user's screenshots:
 //   Header → Prep Checklist → Week Trades cards → Risk Limit gauges →
@@ -237,7 +238,7 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
     border: `1px solid ${border}`, borderRadius: 14, boxSizing: 'border-box',
   };
   const cardSubtle: React.CSSProperties = {
-    padding: 14, background: 'rgba(255,255,255,0.025)',
+    padding: 14, background: themeBgs(T).overlay,
     border: `1px solid ${border}`, borderRadius: 12,
   };
   const statLabel: React.CSSProperties = { color: muted, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', fontWeight: 600 };
@@ -301,7 +302,7 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
         {n === 0 ? (
           <div style={{
             padding: '40px 16px', textAlign: 'center', color: muted, fontSize: 13,
-            border: `1px solid ${border}`, borderRadius: 12, background: 'rgba(0,0,0,0.18)',
+            border: `1px solid ${border}`, borderRadius: 12, background: themeBgs(T).subtle,
           }}>
             <div style={{ fontSize: 24, marginBottom: 8 }}>📊</div>
             {L.noTrades}
@@ -310,7 +311,7 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
           <div style={{ overflowX: 'auto', border: `1px solid ${border}`, borderRadius: 12 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'IBM Plex Mono', monospace", fontSize: 12 }}>
               <thead>
-                <tr style={{ color: muted, background: 'rgba(0,0,0,0.18)', textAlign: isRTL ? 'right' : 'left' }}>
+                <tr style={{ color: muted, background: themeBgs(T).subtle, textAlign: isRTL ? 'right' : 'left' }}>
                   <Th>{isRTL ? 'תאריך' : 'Date'}</Th>
                   <Th>{isRTL ? 'נכס' : 'Asset'}</Th>
                   <Th>{isRTL ? 'כיוון' : 'Side'}</Th>
@@ -361,7 +362,7 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
         <div style={{
           display: 'flex', flexDirection: isRTL ? 'row-reverse' : 'row',
           gap: 18, alignItems: 'center', flexWrap: 'wrap',
-          padding: 14, background: 'rgba(0,0,0,0.18)', borderRadius: 12, marginBottom: 14,
+          padding: 14, background: themeBgs(T).subtle, borderRadius: 12, marginBottom: 14,
           border: `1px solid ${border}`,
         }}>
           <ScoreRing value={execScore} color={execScore >= 80 ? win : execScore >= 50 ? warn : loss} />
@@ -533,7 +534,7 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
               <button key={d.v} onClick={() => update({ decisionQuality: active ? '' : d.v })}
                       style={{
                         all: 'unset', cursor: 'pointer', padding: 16, textAlign: 'center',
-                        background: active ? `${win}14` : 'rgba(255,255,255,0.025)',
+                        background: active ? `${win}14` : themeBgs(T).overlay,
                         border: `1.5px solid ${active ? win : border}`, borderRadius: 12,
                         boxSizing: 'border-box', transition: 'all 180ms ease',
                       }}>
@@ -554,7 +555,7 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
             return (
               <div key={g} style={{
                 padding: 16, textAlign: 'center',
-                background: active ? `${GRADE_COLORS[g]}14` : 'rgba(255,255,255,0.025)',
+                background: active ? `${GRADE_COLORS[g]}14` : themeBgs(T).overlay,
                 border: `1px solid ${active ? GRADE_COLORS[g] + '88' : border}`,
                 borderRadius: 12,
               }}>

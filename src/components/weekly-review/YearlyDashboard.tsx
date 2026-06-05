@@ -50,15 +50,12 @@ export default function YearlyDashboard({ T, isRTL, trades }: Props) {
     cal: 'יומן יומי', equity: 'הון + דרורדאון שנתי', box: 'התפלגות חודשית (Box)',
     mae: 'MAE מול MFE', hold: 'משך החזקה מול R', corr: 'מתאם נכסים', tm: 'מפת נכסים',
     mc: 'סימולציית מונטה קרלו', edge: 'דעיכת אדג׳ (20)', exp: 'התפתחות תוחלת',
-    noMae: 'אין שדות MAE/MFE — נוסיף אוטומטית כאשר תוסיף לעסקה',
-    noHold: 'אין שדה משך החזקה',
   } : {
     cal: 'Daily PnL Calendar', equity: 'Annual Equity + Drawdown', box: 'Monthly Box Plot',
     mae: 'MAE vs MFE', hold: 'Holding Time vs R', corr: 'Asset Correlation', tm: 'Asset Treemap',
     mc: 'Monte Carlo Simulation', edge: 'Rolling Edge Decay (20)', exp: 'Expectancy Evolution',
-    noMae: 'No MAE/MFE fields — chart will populate once trades capture them',
-    noHold: 'No holding-time field',
   };
+
 
   const fmtAxis = (v: number) => fmtShort(v, unit);
   const fmtTip = (v: number) => fmtValue(v, unit);
@@ -137,11 +134,9 @@ export default function YearlyDashboard({ T, isRTL, trades }: Props) {
           </ResponsiveContainer>
         </ChartCard>
 
-        {/* 5.C.4 — MAE vs MFE scatter */}
-        <ChartCard P={P} title={L.mae}>
-          {mae.length === 0 ? (
-            <div style={{ color: P.muted, fontSize: 12, padding: 24, textAlign: 'center' }}>{L.noMae}</div>
-          ) : (
+        {/* 5.C.4 — MAE vs MFE scatter (only when real data) */}
+        {mae.length > 0 && (
+          <ChartCard P={P} title={L.mae}>
             <ResponsiveContainer width="100%" height={260}>
               <ScatterChart margin={{ top: 10, right: 12, bottom: 8, left: 8 }}>
                 <CartesianGrid stroke={P.border} strokeDasharray="3 3"/>
@@ -154,14 +149,12 @@ export default function YearlyDashboard({ T, isRTL, trades }: Props) {
                 </Scatter>
               </ScatterChart>
             </ResponsiveContainer>
-          )}
-        </ChartCard>
+          </ChartCard>
+        )}
 
-        {/* 5.C.5 — Holding time vs R */}
-        <ChartCard P={P} title={L.hold}>
-          {hold.length === 0 ? (
-            <div style={{ color: P.muted, fontSize: 12, padding: 24, textAlign: 'center' }}>{L.noHold}</div>
-          ) : (
+        {/* 5.C.5 — Holding time vs R (only when real data) */}
+        {hold.length > 0 && (
+          <ChartCard P={P} title={L.hold}>
             <ResponsiveContainer width="100%" height={260}>
               <ScatterChart margin={{ top: 10, right: 12, bottom: 8, left: 8 }}>
                 <CartesianGrid stroke={P.border} strokeDasharray="3 3"/>
@@ -174,17 +167,14 @@ export default function YearlyDashboard({ T, isRTL, trades }: Props) {
                 </Scatter>
               </ScatterChart>
             </ResponsiveContainer>
-          )}
-        </ChartCard>
+          </ChartCard>
+        )}
+
       </div>
 
-      {/* 5.C.6 — Asset correlation matrix */}
-      <ChartCard P={P} title={L.corr}>
-        {corr.assets.length < 2 ? (
-          <div style={{ color: P.muted, fontSize: 12, padding: 24, textAlign: 'center' }}>
-            {isRTL ? 'דרושים לפחות 2 נכסים' : 'Need ≥ 2 assets'}
-          </div>
-        ) : (
+      {/* 5.C.6 — Asset correlation matrix (only when ≥ 2 assets) */}
+      {corr.assets.length >= 2 && (
+        <ChartCard P={P} title={L.corr}>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ borderCollapse: 'separate', borderSpacing: 2, fontSize: 10, fontFamily: "'IBM Plex Mono', monospace" }}>
               <thead>
@@ -199,28 +189,31 @@ export default function YearlyDashboard({ T, isRTL, trades }: Props) {
                     <th style={{ color: P.muted, padding: '4px 8px', textAlign: 'right' }}>{a}</th>
                     {corr.matrix[i].map((v, j) => {
                       const alpha = Math.abs(v);
-                      const fill = v >= 0 ? `rgba(0,255,136,${alpha})` : `rgba(255,59,59,${alpha})`;
-                      return <td key={j} title={`${a}↔${corr.assets[j]} = ${v}`} style={{ background: fill, color: alpha > 0.5 ? '#000' : P.fg, padding: '6px 8px', minWidth: 36, textAlign: 'center', borderRadius: 4 }}>{v.toFixed(2)}</td>;
+                      // Theme-aware: use accent rgba so text stays readable in both light/dark.
+                      const fill = v >= 0
+                        ? (P.isLight ? `rgba(0,168,107,${alpha * 0.85})` : `rgba(0,255,136,${alpha})`)
+                        : (P.isLight ? `rgba(214,51,108,${alpha * 0.85})` : `rgba(255,59,59,${alpha})`);
+                      const textColor = alpha > 0.55 ? (P.isLight ? '#fff' : '#000') : P.fg;
+                      return <td key={j} title={`${a}↔${corr.assets[j]} = ${v}`} style={{ background: fill, color: textColor, padding: '6px 8px', minWidth: 36, textAlign: 'center', borderRadius: 4, fontWeight: 600 }}>{v.toFixed(2)}</td>;
                     })}
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        )}
-      </ChartCard>
+        </ChartCard>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
-        {/* 5.C.7 — Treemap */}
-        <ChartCard P={P} title={L.tm}>
-          {tm.length === 0 ? (
-            <div style={{ color: P.muted, fontSize: 13, padding: 24, textAlign: 'center' }}>—</div>
-          ) : (
+        {/* 5.C.7 — Treemap (only when there is data) */}
+        {tm.length > 0 && (
+          <ChartCard P={P} title={L.tm}>
             <ResponsiveContainer width="100%" height={260}>
               <Treemap data={tm} dataKey="size" stroke={P.bg} content={<TreemapCell P={P} fmtTip={fmtTip}/>}/>
             </ResponsiveContainer>
-          )}
-        </ChartCard>
+          </ChartCard>
+        )}
+
 
         {/* 5.C.8 — Monte Carlo */}
         <ChartCard P={P} title={`${L.mc} · n=${mcLength}`} hint="p5 · p25 · median · p75 · p95">

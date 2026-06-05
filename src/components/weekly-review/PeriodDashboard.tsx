@@ -1,3 +1,4 @@
+import { themeBgs } from './lib/theme-bg';
 // Shared period dashboard rendered by both Semi-Annual (6mo) and Annual (12mo)
 // tabs. Pure presentation — math comes from `lib/period-aggregates.ts`.
 // Dual-unit aware: every chart respects the global R | $ toggle.
@@ -271,7 +272,7 @@ export default function PeriodDashboard({ trades, months, T, isRTL, titleHE, tit
           <div style={{ overflowX: 'auto', borderRadius: 10, border: `1px solid ${border}` }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'IBM Plex Mono', monospace", fontSize: 12 }}>
               <thead>
-                <tr style={{ color: muted, background: 'rgba(0,0,0,0.18)', textAlign: isRTL ? 'right' : 'left' }}>
+                <tr style={{ color: muted, background: themeBgs(T).subtle, textAlign: isRTL ? 'right' : 'left' }}>
                   <th style={th}>{isRTL ? 'חודש' : 'Month'}</th>
                   <th style={{ ...th, textAlign: 'right' }}>{L.trades}</th>
                   <th style={{ ...th, textAlign: 'right' }}>{L.netR}</th>

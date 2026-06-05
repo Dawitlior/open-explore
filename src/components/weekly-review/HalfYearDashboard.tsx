@@ -176,35 +176,76 @@ export default function HalfYearDashboard({ T, isRTL, trades, months = 6 }: Prop
           )}
         </ChartCard>
 
-        {/* 5.B.7 — WR trend */}
-        <ChartCard P={P} title={L.wr}>
-          <ResponsiveContainer width="100%" height={260}>
-            <LineChart data={trends} margin={{ top: 10, right: 12, bottom: 8, left: 8 }}>
-              <CartesianGrid stroke={P.border} strokeDasharray="3 3" vertical={false}/>
-              <XAxis dataKey="month" stroke={P.muted} fontSize={10}/>
-              <YAxis domain={[0, 100]} stroke={P.muted} fontSize={10} width={36} unit="%"/>
-              <Tooltip contentStyle={tooltipStyle(P)}/>
-              <ReferenceLine y={50} stroke={P.border} strokeDasharray="4 4"/>
-              <Line type="monotone" dataKey="winRate" stroke={P.accent} strokeWidth={2} dot={{ r: 3 }}/>
-            </LineChart>
-          </ResponsiveContainer>
+        {/* 5.B.7 — Monthly Win Rate trend */}
+        <ChartCard P={P} title={`${L.wr} (%)`} hint={isRTL ? 'יעד = 50%' : 'target = 50%'}>
+          {trends.length === 0 ? (
+            <div style={{ color: P.muted, fontSize: 12, padding: 32, textAlign: 'center' }}>
+              {isRTL ? 'אין נתונים חודשיים' : 'No monthly data yet'}
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={260}>
+              <ComposedChart data={trends} margin={{ top: 14, right: 16, bottom: 8, left: 8 }}>
+                <defs>
+                  <linearGradient id="wrFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={P.accent} stopOpacity={0.35}/>
+                    <stop offset="100%" stopColor={P.accent} stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid stroke={P.border} strokeDasharray="3 3" vertical={false}/>
+                <XAxis dataKey="month" stroke={P.muted} fontSize={10}/>
+                <YAxis domain={[0, 100]} stroke={P.muted} fontSize={10} width={40} tickFormatter={v => `${v}%`}/>
+                <Tooltip contentStyle={tooltipStyle(P)} formatter={(v: number) => [`${v}%`, isRTL ? 'אחוז זכייה' : 'Win Rate']}/>
+                <ReferenceLine y={50} stroke={P.gold} strokeDasharray="4 4" label={{ value: '50%', position: 'right', fill: P.gold, fontSize: 10 }}/>
+                <Area type="monotone" dataKey="winRate" fill="url(#wrFill)" stroke="none"/>
+                <Line type="monotone" dataKey="winRate" stroke={P.accent} strokeWidth={2.5}
+                      dot={{ r: 4, strokeWidth: 2, stroke: P.bg, fill: P.accent }}
+                      activeDot={{ r: 6 }}/>
+              </ComposedChart>
+            </ResponsiveContainer>
+          )}
         </ChartCard>
 
-        {/* 5.B.8 — PF trend */}
-        <ChartCard P={P} title={L.pf}>
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={trends} margin={{ top: 10, right: 12, bottom: 8, left: 8 }}>
-              <CartesianGrid stroke={P.border} strokeDasharray="3 3" vertical={false}/>
-              <XAxis dataKey="month" stroke={P.muted} fontSize={10}/>
-              <YAxis stroke={P.muted} fontSize={10} width={36}/>
-              <Tooltip contentStyle={tooltipStyle(P)}/>
-              <ReferenceLine y={1} stroke={P.border} strokeDasharray="4 4"/>
-              <Bar dataKey="pf" radius={[4, 4, 0, 0]}>
-                {trends.map((m, i) => <Cell key={i} fill={m.pf >= 1 ? P.win : P.loss}/>)}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+        {/* 5.B.8 — Monthly Profit Factor trend (cap ∞ for display, label visually) */}
+        <ChartCard P={P} title={L.pf} hint={isRTL ? 'יעד ≥ 1.0' : 'target ≥ 1.0'}>
+          {trends.length === 0 ? (
+            <div style={{ color: P.muted, fontSize: 12, padding: 32, textAlign: 'center' }}>
+              {isRTL ? 'אין נתונים חודשיים' : 'No monthly data yet'}
+            </div>
+          ) : (
+            (() => {
+              // Cap PF for display (∞ would blow the axis); record uncapped for tooltip.
+              const display = trends.map(r => ({
+                ...r,
+                pfDisplay: r.pf >= 999 ? 5 : Math.min(5, r.pf),
+                pfRaw: r.pf,
+                isInf: r.pf >= 999,
+              }));
+              return (
+                <ResponsiveContainer width="100%" height={260}>
+                  <BarChart data={display} margin={{ top: 14, right: 16, bottom: 8, left: 8 }}>
+                    <CartesianGrid stroke={P.border} strokeDasharray="3 3" vertical={false}/>
+                    <XAxis dataKey="month" stroke={P.muted} fontSize={10}/>
+                    <YAxis domain={[0, 5]} stroke={P.muted} fontSize={10} width={36}
+                           ticks={[0, 1, 2, 3, 5]} tickFormatter={v => v === 5 ? '5+' : String(v)}/>
+                    <Tooltip contentStyle={tooltipStyle(P)}
+                             formatter={(_v: number, _n, p) => {
+                               // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                               const row = (p as any)?.payload;
+                               const raw = row?.pfRaw;
+                               if (row?.isInf) return [isRTL ? 'ללא הפסדים' : 'No losses', 'PF'];
+                               return [Number(raw).toFixed(2), 'PF'];
+                             }}/>
+                    <ReferenceLine y={1} stroke={P.gold} strokeDasharray="4 4" label={{ value: '1.0', position: 'right', fill: P.gold, fontSize: 10 }}/>
+                    <Bar dataKey="pfDisplay" radius={[6, 6, 0, 0]}>
+                      {display.map((m, i) => <Cell key={i} fill={m.isInf ? P.gold : (m.pfRaw >= 1 ? P.win : P.loss)}/>)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              );
+            })()
+          )}
         </ChartCard>
+
       </div>
 
       {/* 5.B.9 — Highlights */}
@@ -222,7 +263,7 @@ export default function HalfYearDashboard({ T, isRTL, trades, months = 6 }: Prop
 
 function HCard({ P, label, v, tone }: { P: ReturnType<typeof getPalette>; label: string; v: string; tone: string }) {
   return (
-    <div style={{ padding: 14, borderRadius: 10, border: `1px solid ${P.border}`, background: 'rgba(0,0,0,0.18)' }}>
+    <div style={{ padding: 14, borderRadius: 10, border: `1px solid ${P.border}`, background: P.subtleBg }}>
       <div style={labelStyle(P)}>{label}</div>
       <div style={{ color: tone, fontFamily: "'IBM Plex Mono', monospace", fontWeight: 700, fontSize: 14, marginTop: 6, whiteSpace: 'pre-line' }}>{v}</div>
     </div>
