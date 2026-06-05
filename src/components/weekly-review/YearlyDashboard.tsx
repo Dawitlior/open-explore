@@ -50,15 +50,12 @@ export default function YearlyDashboard({ T, isRTL, trades }: Props) {
     cal: 'יומן יומי', equity: 'הון + דרורדאון שנתי', box: 'התפלגות חודשית (Box)',
     mae: 'MAE מול MFE', hold: 'משך החזקה מול R', corr: 'מתאם נכסים', tm: 'מפת נכסים',
     mc: 'סימולציית מונטה קרלו', edge: 'דעיכת אדג׳ (20)', exp: 'התפתחות תוחלת',
-    noMae: 'אין שדות MAE/MFE — נוסיף אוטומטית כאשר תוסיף לעסקה',
-    noHold: 'אין שדה משך החזקה',
   } : {
     cal: 'Daily PnL Calendar', equity: 'Annual Equity + Drawdown', box: 'Monthly Box Plot',
     mae: 'MAE vs MFE', hold: 'Holding Time vs R', corr: 'Asset Correlation', tm: 'Asset Treemap',
     mc: 'Monte Carlo Simulation', edge: 'Rolling Edge Decay (20)', exp: 'Expectancy Evolution',
-    noMae: 'No MAE/MFE fields — chart will populate once trades capture them',
-    noHold: 'No holding-time field',
   };
+
 
   const fmtAxis = (v: number) => fmtShort(v, unit);
   const fmtTip = (v: number) => fmtValue(v, unit);
