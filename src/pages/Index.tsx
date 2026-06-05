@@ -453,29 +453,50 @@ const Index = () => {
     { id: 'economic-radar', label: isRTL ? 'מכ״ם כלכלי' : 'Economic Radar', icon: '📡', category: isRTL ? 'כלים' : 'Tools', action: () => setPage('economic-radar') },
   ], [isRTL, handleExport, handleImport, handleGenerateInsights, settings]);
 
-  // ─── Weekly Review reminder badge (Friday or 1st of month) ───
+  // ─── Weekly Review reminder badge ───
+  // Shows whenever the CURRENT week / month has not yet been archived (closed).
+  // Stays visible — does NOT dismiss on click — until the user actually closes the period.
   const [reviewReminderTick, setReviewReminderTick] = useState(0);
+  const [reviewArchive, setReviewArchive] = useState<Array<{ weekKey?: string; closedAt?: string }>>([]);
+  const [reviewRecaps, setReviewRecaps] = useState<Record<string, unknown>>({});
   useEffect(() => {
-    // Re-evaluate every 5 min so the badge appears/disappears on date roll-over
     const id = window.setInterval(() => setReviewReminderTick(t => t + 1), 5 * 60 * 1000);
     return () => window.clearInterval(id);
   }, []);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { getSetting } = await import('@/lib/storage');
+        const [a, r] = await Promise.all([
+          getSetting<Array<{ weekKey?: string; closedAt?: string }>>('weekly_review.archive'),
+          getSetting<Record<string, unknown>>('weekly_review.recaps'),
+        ]);
+        if (cancelled) return;
+        setReviewArchive(Array.isArray(a) ? a : []);
+        setReviewRecaps((r && typeof r === 'object') ? r : {});
+      } catch { /* noop */ }
+    })();
+    return () => { cancelled = true; };
+  }, [page, reviewReminderTick]);
   const showWeeklyReminder = useMemo(() => {
     void reviewReminderTick;
     const now = new Date();
-    const isFri = now.getDay() === 5;
-    const isFirst = now.getDate() === 1;
-    if (!isFri && !isFirst) return false;
-    // Dismissal key: per-day per-user so it re-appears each Friday / each 1st-of-month
-    const key = `orca-weekly-reminder-dismissed-${now.toISOString().slice(0, 10)}`;
-    try { if (scopedStorage.getSync(key) === '1') return false; } catch { /* noop */ }
-    return true;
-  }, [reviewReminderTick, page]); // eslint-disable-line react-hooks/exhaustive-deps
-  const dismissWeeklyReminder = useCallback(() => {
-    const key = `orca-weekly-reminder-dismissed-${new Date().toISOString().slice(0, 10)}`;
-    try { scopedStorage.setSync(key, '1'); } catch { /* noop */ }
-    setReviewReminderTick(t => t + 1);
-  }, []);
+    // Current ISO week key (matches lib/week-key.ts isoWeekKey)
+    const tmp = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+    const day = tmp.getUTCDay() || 7;
+    tmp.setUTCDate(tmp.getUTCDate() + 4 - day);
+    const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil((((tmp.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+    const wkKey = `${tmp.getUTCFullYear()}-W${weekNo < 10 ? '0' : ''}${weekNo}`;
+    const weekClosed = reviewArchive.some(w => w?.weekKey === wkKey);
+    const mKey = `${now.getFullYear()}-${now.getMonth() + 1 < 10 ? '0' : ''}${now.getMonth() + 1}`;
+    const monthRecapped = !!reviewRecaps[mKey];
+    // Badge persists whenever the current period isn't archived/recapped.
+    return !weekClosed || !monthRecapped;
+  }, [reviewReminderTick, reviewArchive, reviewRecaps]);
+  const dismissWeeklyReminder = useCallback(() => { /* no-op: badge persists until close-week */ }, []);
+
 
   const nav: Array<{ id: string; icon: any; label: string; color?: string; action?: () => void }> = [
     { id: 'dashboard', icon: Ico.dash, label: isRTL ? 'דשבורד' : 'Dashboard' },
