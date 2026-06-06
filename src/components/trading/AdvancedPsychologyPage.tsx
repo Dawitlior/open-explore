@@ -470,6 +470,10 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
       </div>
       </>)}
 
+      {/* ═══ PSYCHOLOGY LAB · Ultimate only — moved directly under Behavioral Profile ═══ */}
+      {isUltimatePlan && <PsychologyLab T={T} trades={trades} isRTL={isRTL} />}
+
+
       {/* ═══ DAY-OF-WEEK PERFORMANCE HEATMAP — hidden in Beginner ═══ */}
       {showHeatmap && (<>
       <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'מפת חום שבועית' : 'WEEKLY HEATMAP'} />
@@ -628,8 +632,9 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
         </>
       )}
 
-      {/* ═══ PSYCHOLOGY LAB · Ultimate only ═══ */}
-      {isUltimatePlan && <PsychologyLab T={T} trades={trades} isRTL={isRTL} />}
+      {/* PsychologyLab moved up to render directly under "Behavioral Profile". */}
+
+
 
 
       {diagnosisOpen && (
