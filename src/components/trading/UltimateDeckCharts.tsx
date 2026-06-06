@@ -42,6 +42,23 @@ interface RiskProps extends AnalyticsProps {
 
 /* ───────────────────────── helpers ───────────────────────── */
 
+/**
+ * Return a unit-agnostic "value" for every trade so the Risk deck keeps
+ * working when the journal lacks stop-loss data (R-multiple is 0).
+ *   1) Prefer the effective R-multiple when non-zero.
+ *   2) Otherwise derive R from pnl / risk (pnl-based pseudo R).
+ *   3) Last resort — sign of pnl scaled to ±1 so streak / DD logic still runs.
+ */
+const tradeValue = (t: Trade): number => {
+  const r = getEffectiveR(t);
+  if (Number.isFinite(r) && r !== 0) return r;
+  const pnl = Number(t.pnl) || 0;
+  const risk = Number(t.risk) || 0;
+  if (risk > 0 && pnl !== 0) return +(pnl / risk).toFixed(4);
+  if (pnl !== 0) return pnl > 0 ? 1 : -1;
+  return 0;
+};
+
 const tradeTime = (t: Trade): number | null => {
   try {
     const d = new Date((t.date || '').replace(' ', 'T'));
