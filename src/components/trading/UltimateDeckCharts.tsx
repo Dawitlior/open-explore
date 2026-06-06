@@ -42,6 +42,23 @@ interface RiskProps extends AnalyticsProps {
 
 /* ───────────────────────── helpers ───────────────────────── */
 
+/**
+ * Return a unit-agnostic "value" for every trade so the Risk deck keeps
+ * working when the journal lacks stop-loss data (R-multiple is 0).
+ *   1) Prefer the effective R-multiple when non-zero.
+ *   2) Otherwise derive R from pnl / risk (pnl-based pseudo R).
+ *   3) Last resort — sign of pnl scaled to ±1 so streak / DD logic still runs.
+ */
+const tradeValue = (t: Trade): number => {
+  const r = getEffectiveR(t);
+  if (Number.isFinite(r) && r !== 0) return r;
+  const pnl = Number(t.pnl) || 0;
+  const risk = Number(t.risk) || 0;
+  if (risk > 0 && pnl !== 0) return +(pnl / risk).toFixed(4);
+  if (pnl !== 0) return pnl > 0 ? 1 : -1;
+  return 0;
+};
+
 const tradeTime = (t: Trade): number | null => {
   try {
     const d = new Date((t.date || '').replace(' ', 'T'));
@@ -180,8 +197,8 @@ export function UltimateRiskDeck({ T, trades, privacyMode, onExplainClick, regis
     const n = wins.length + losses.length;
     if (n === 0) return { full: 0, half: 0, p: 0, b: 0 };
     const p = wins.length / n;
-    const avgWin  = wins.length   ? wins.reduce((s, tr) => s + Math.max(0, getEffectiveR(tr)), 0) / wins.length     : 0;
-    const avgLoss = losses.length ? Math.abs(losses.reduce((s, tr) => s + Math.min(0, getEffectiveR(tr)), 0) / losses.length) : 0;
+    const avgWin  = wins.length   ? wins.reduce((s, tr) => s + Math.max(0, tradeValue(tr)), 0) / wins.length     : 0;
+    const avgLoss = losses.length ? Math.abs(losses.reduce((s, tr) => s + Math.min(0, tradeValue(tr)), 0) / losses.length) : 0;
     const b = avgLoss > 0 ? avgWin / avgLoss : 0;
     const full = b > 0 ? Math.max(-100, Math.min(100, (p - (1 - p) / b) * 100)) : 0;
     return { full: +full.toFixed(2), half: +(full / 2).toFixed(2), p: +(p * 100).toFixed(1), b: +b.toFixed(2) };
@@ -191,7 +208,7 @@ export function UltimateRiskDeck({ T, trades, privacyMode, onExplainClick, regis
 
   // ── 4. Capital Efficiency (rolling mean R / σ R, w=20) ────
   const capEff = useMemo(() => {
-    const rs = trades.map(tr => getEffectiveR(tr));
+    const rs = trades.map(tr => tradeValue(tr));
     const W = 20;
     return rs.map((_, i) => {
       const start = Math.max(0, i - W + 1);
@@ -208,7 +225,7 @@ export function UltimateRiskDeck({ T, trades, privacyMode, onExplainClick, regis
   const marSeries = useMemo(() => {
     let cum = 0, peak = 0, mdd = 0;
     return trades.map((tr, i) => {
-      cum += getEffectiveR(tr);
+      cum += tradeValue(tr);
       if (cum > peak) peak = cum;
       const dd = peak - cum;
       if (dd > mdd) mdd = dd;
@@ -221,7 +238,7 @@ export function UltimateRiskDeck({ T, trades, privacyMode, onExplainClick, regis
     let cum = 0, peak = 0, inDD = false, depth = 0, durationN = 0, startIdx = 0;
     const events: Array<{ id: number; depth: number; duration: number; recovered: boolean }> = [];
     trades.forEach((tr, i) => {
-      cum += getEffectiveR(tr);
+      cum += tradeValue(tr);
       if (cum >= peak) {
         if (inDD) {
           events.push({ id: events.length + 1, depth: +depth.toFixed(2), duration: durationN, recovered: true });

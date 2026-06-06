@@ -579,6 +579,14 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
         </div>
       </GlassCard>}
 
+      {/* ═══ QUANT LAB — moved directly below Day × Hour heatmap ═══ */}
+      {showMax && registryAllows('rollingSharpe') && (
+        <Suspense fallback={<div style={{ padding: 18, fontSize: 11, color: T.text.muted, opacity: 0.7 }}>Loading Quant Lab…</div>}>
+          <AnalyticsQuantLab T={T} trades={trades} privacyMode={privacyMode} />
+        </Suspense>
+      )}
+
+
       {/* ═══ MONTHLY HEAT TILES ═══ */}
       {showPro && registryAllows('monthlyPerformance') && monthHeat.length > 1 && (
         <GlassCard T={T} style={{ marginBottom: 16 }}>
@@ -773,12 +781,8 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
         </span>
       </div>
 
-      {/* ═══ QUANT LAB — Ultimate only ═══ */}
-      {showMax && registryAllows('rollingSharpe') && (
-        <Suspense fallback={<div style={{ padding: 18, fontSize: 11, color: T.text.muted, opacity: 0.7 }}>Loading Quant Lab…</div>}>
-          <AnalyticsQuantLab T={T} trades={trades} privacyMode={privacyMode} />
-        </Suspense>
-      )}
+      {/* Quant Lab moved up to render directly under Day × Hour heatmap. */}
+
 
 
       {/* ═══ ADVANCED-TIER DECK (Phase 3) ═══ */}

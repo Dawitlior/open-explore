@@ -13,21 +13,25 @@ export function SectionTitle({ title, emoji, T, isRTL, accent }: Props) {
   const a = accent || T?.accent?.cyan || '#39FF14';
   const border = T?.border?.subtle || 'rgba(255,255,255,0.08)';
   return (
-    <div style={{ marginTop: 8, marginBottom: 14 }}>
+    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ marginTop: 8, marginBottom: 14, textAlign: isRTL ? 'right' : 'left' }}>
       <div style={{
-        display: 'flex', flexDirection: isRTL ? 'row-reverse' : 'row',
-        alignItems: 'center', justifyContent: 'space-between',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: isRTL ? 'flex-start' : 'flex-start',
         gap: 8,
+        color: a, fontSize: 12, fontWeight: 700, letterSpacing: 2,
+        textTransform: 'uppercase',
       }}>
-        <div style={{
-          color: a, fontSize: 12, fontWeight: 700, letterSpacing: 2,
-          textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6,
-        }}>
-          {emoji && <span style={{ fontSize: 14 }}>{emoji}</span>}
-          <span>{title}</span>
-        </div>
+        {emoji && <span style={{ fontSize: 14 }}>{emoji}</span>}
+        <span>{title}</span>
       </div>
-      <div style={{ height: 1, background: `linear-gradient(90deg, ${a}66, ${border})`, marginTop: 6 }} />
+      <div style={{
+        height: 1,
+        background: isRTL
+          ? `linear-gradient(270deg, ${a}66, ${border})`
+          : `linear-gradient(90deg, ${a}66, ${border})`,
+        marginTop: 6,
+      }} />
     </div>
   );
 }

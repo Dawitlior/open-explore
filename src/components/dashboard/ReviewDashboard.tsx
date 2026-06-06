@@ -7,6 +7,7 @@ import { MetricCard, ScoreGauge } from '@/components/trading/TradingUI';
 import { AdaptiveExpectancyCard, AdaptiveQuickStats } from '@/components/trading/AdaptiveKpiCards';
 import { ChartWrapper, EXPLANATIONS, type ChartExplanation } from '@/components/trading/ChartWrapper';
 import { FeatureHint } from '@/components/trading/FeatureHint';
+import DashboardAdvancedLab from './DashboardAdvancedLab';
 
 interface ReviewDashboardProps {
   T: TradingTheme;
@@ -279,6 +280,9 @@ export const ReviewDashboard = ({
           </div>
         )}
       </div>
+
+      {/* ═══ ADVANCED ANALYTICS LAB — Monte Carlo, Box Plot + 4 new dual-unit charts ═══ */}
+      <DashboardAdvancedLab T={T} isRTL={isRTL} trades={trades} />
     </div>
   );
 };
