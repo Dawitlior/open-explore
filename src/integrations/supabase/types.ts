@@ -24,7 +24,7 @@ export type Database = {
           processed_at: string | null
           provider: string
           received_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           event_id: string
@@ -35,7 +35,7 @@ export type Database = {
           processed_at?: string | null
           provider: string
           received_at?: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           event_id?: string
@@ -46,7 +46,7 @@ export type Database = {
           processed_at?: string | null
           provider?: string
           received_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
