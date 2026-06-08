@@ -22,7 +22,7 @@ export const MainPullToRefresh = ({ isMobile, accent, children }: Props) => {
   // ── Desktop: pure passthrough, no listeners, no wrappers ──────────────
   if (!isMobile) {
     return (
-      <main style={{ flex: 1, minWidth: 0, overflow: 'auto', transition: 'background 0.4s ease' }}>
+      <main id="main" style={{ flex: 1, minWidth: 0, overflow: 'auto', transition: 'background 0.4s ease' }}>
         {children}
       </main>
     );
@@ -39,6 +39,7 @@ export const MainPullToRefresh = ({ isMobile, accent, children }: Props) => {
 
   return (
     <main
+      id="main"
       ref={ref as any}
       style={{
         flex: 1,
