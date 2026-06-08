@@ -1148,4 +1148,54 @@ html[data-theme="platinum"] .orca-chart-skeleton {
 }
 
 
+/* ═══════════════════════════════════════════════════════════
+   WCAG 2.1 AA — Accessibility primitives
+   Visible focus + reduced-motion + skip-link.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Skip-to-content link: hidden until keyboard-focused */
+.orca-skip-link {
+  position: fixed;
+  top: -100px;
+  inset-inline-start: 8px;
+  z-index: 9999;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 0.15s ease;
+}
+.orca-skip-link:focus,
+.orca-skip-link:focus-visible {
+  top: 8px;
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Global visible focus ring — keyboard users only */
+*:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+/* Disable native focus ring on pointer interactions to avoid double rings */
+*:focus:not(:focus-visible) { outline: none; }
+
+/* Honor user's motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+
+
 

@@ -74,6 +74,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
+            <a href="#main" className="orca-skip-link">דלג לתוכן · Skip to content</a>
             <SourceProtection />
             <StorageErrorListener />
             <OrcaUXLayer />
