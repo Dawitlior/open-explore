@@ -50,6 +50,36 @@ export type Database = {
         }
         Relationships: []
       }
+      consent_log: {
+        Row: {
+          choices: Json
+          created_at: string
+          id: string
+          ip_hash: string | null
+          user_agent: string | null
+          user_id: string | null
+          version: string
+        }
+        Insert: {
+          choices: Json
+          created_at?: string
+          id?: string
+          ip_hash?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          version: string
+        }
+        Update: {
+          choices?: Json
+          created_at?: string
+          id?: string
+          ip_hash?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          version?: string
+        }
+        Relationships: []
+      }
       economic_events: {
         Row: {
           actual: string | null
@@ -624,6 +654,7 @@ export type Database = {
       }
       user_preferences: {
         Row: {
+          consent: Json | null
           created_at: string
           daily_risk_limit: number
           legal_accepted: boolean
@@ -636,6 +667,7 @@ export type Database = {
           weekly_risk_limit: number
         }
         Insert: {
+          consent?: Json | null
           created_at?: string
           daily_risk_limit?: number
           legal_accepted?: boolean
@@ -648,6 +680,7 @@ export type Database = {
           weekly_risk_limit?: number
         }
         Update: {
+          consent?: Json | null
           created_at?: string
           daily_risk_limit?: number
           legal_accepted?: boolean

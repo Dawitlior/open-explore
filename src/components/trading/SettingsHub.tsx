@@ -816,6 +816,17 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                     </div>
                   </button>
                 </div>
+
+                <div style={card}>
+                  <h3 style={sectionTitle}><Eye size={14} /> {t('עוגיות ופרטיות', 'Cookies & privacy')}</h3>
+                  <p style={sectionHint}>{t('נהל אילו עוגיות הפלטפורמה אוספת. ניתן לשנות בכל עת.', 'Manage which cookies the platform collects. You can change anytime.')}</p>
+                  <button
+                    onClick={() => window.dispatchEvent(new CustomEvent('orca:open-cookie-prefs'))}
+                    style={ghostBtn}
+                  >
+                    {t('פתח העדפות עוגיות', 'Open cookie preferences')}
+                  </button>
+                </div>
               </div>
             )}
 
