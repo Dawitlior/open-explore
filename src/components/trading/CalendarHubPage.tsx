@@ -110,7 +110,7 @@ const CalendarHubPage_Impl = ({ T, isRTL, trades, t, isMobile, onGenerateInsight
   if (isMobile) {
     return (
       <div style={{ direction: isRTL ? 'rtl' : 'ltr', padding: '4px 2px 24px' }}>
-        <RProxyBanner T={T} isRTL={isRTL} compact />
+        
         <RecalibrationBanner signal={recalSignal} lang={isRTL ? 'he' : 'en'} onCalibrate={openTraderMind} />
         {calRiskStatus.monthlyBreached && (
           <div style={{ padding: '10px 14px', background: `${T.accent.red}15`, border: `1px solid ${T.accent.red}40`, borderRadius: 14, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
