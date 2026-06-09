@@ -15,7 +15,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { LandingDemo } from '@/components/landing/LandingDemo';
-import orcaLogoAsset from '@/assets/orca-logo.png.asset.json';
+
+const ORCA_LOGO_SRC = '/orca-logo.png';
 
 /* ── Palette ──────────────────────────────────────────────── */
 const BG = '#061326';
@@ -140,31 +141,71 @@ function FreeAccessBanner() {
 
 /* ──────────────── BRAND ──────────────── */
 function Logo({ size = 36 }: { size?: number }) {
+  const logoWidth = Math.round(size * 0.68);
+  const logoHeight = size;
   return (
-    <Link to="/welcome" className="flex items-center gap-3 group">
-      <img
-        src={orcaLogoAsset.url}
-        alt="Orca Investment"
-        width={size}
-        height={size}
-        className="object-contain drop-shadow-[0_0_12px_rgba(201,168,76,0.35)] group-hover:drop-shadow-[0_0_18px_rgba(201,168,76,0.6)] transition-all"
-        style={{ width: size, height: size }}
-      />
+    <Link to="/welcome" className="flex items-center gap-3 group" aria-label="Orca Investment">
+      <span
+        className="shrink-0 overflow-hidden rounded-[7px] border transition-all group-hover:scale-[1.03]"
+        style={{
+          width: logoWidth,
+          height: logoHeight,
+          borderColor: 'rgba(201,168,76,0.32)',
+          background: '#050505',
+          boxShadow: '0 0 16px rgba(201,168,76,0.26)',
+        }}
+      >
+        <img
+          src={ORCA_LOGO_SRC}
+          alt="Orca Investment"
+          width={logoWidth}
+          height={logoHeight}
+          loading="eager"
+          decoding="async"
+          className="block h-full w-full object-contain"
+        />
+      </span>
       <div className="flex flex-col leading-none">
         <span
-          className="font-bold tracking-[0.18em] text-base"
+          className="font-bold text-base"
           style={{ fontFamily: FONT_DISPLAY, color: TXT, letterSpacing: '0.18em' }}
         >
           ORCA
         </span>
         <span
-          className="text-[9px] tracking-[0.32em] mt-0.5"
-          style={{ color: GOLD, fontFamily: FONT_DISPLAY }}
+          className="text-[9px] mt-0.5"
+          style={{ color: GOLD, fontFamily: FONT_DISPLAY, letterSpacing: '0.32em' }}
         >
           INVESTMENT
         </span>
       </div>
     </Link>
+  );
+}
+
+function BrandMark({ height = 52, className = '' }: { height?: number; className?: string }) {
+  const width = Math.round(height * 0.68);
+  return (
+    <span
+      className={`inline-flex shrink-0 overflow-hidden rounded-[8px] border ${className}`}
+      style={{
+        width,
+        height,
+        borderColor: 'rgba(201,168,76,0.28)',
+        background: '#050505',
+        boxShadow: '0 0 18px rgba(201,168,76,0.26)',
+      }}
+    >
+      <img
+        src={ORCA_LOGO_SRC}
+        alt="Orca Investment"
+        width={width}
+        height={height}
+        loading="eager"
+        decoding="async"
+        className="block h-full w-full object-contain"
+      />
+    </span>
   );
 }
 
