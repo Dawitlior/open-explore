@@ -230,21 +230,31 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
           )}
         </div>
 
-        {/* 3 · NEW Hour-of-Day Radar */}
+        {/* 3 · Hour-of-Day Performance (24h bars) */}
         <div style={cardStyle}>
           <div style={{ fontSize: 11, color: muted, marginBottom: 8, letterSpacing: 1.5, textTransform: 'uppercase' }}>{L.hour}</div>
-          <ResponsiveContainer width="100%" height={220}>
-            <RadialBarChart innerRadius={20} outerRadius={100} data={hourRadar} startAngle={90} endAngle={-270}>
-              <PolarAngleAxis type="category" dataKey="hour" tick={{ fill: muted, fontSize: 8 }}/>
-              <Tooltip contentStyle={tt} formatter={(v: number, _n, p: any) => [fmtTip(v), `${p.payload.hour} · ${p.payload.n}t`]}/>
-              <RadialBar dataKey="avg" cornerRadius={3}>
-                {hourRadar.map((d, i) => (
-                  <Cell key={i} fill={d.avg >= 0 ? win : loss} fillOpacity={d.n ? 0.85 : 0.15}/>
-                ))}
-              </RadialBar>
-            </RadialBarChart>
-          </ResponsiveContainer>
+          {hourRadar.every(d => d.n === 0) ? <Empty muted={muted}/> : (
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={hourRadar} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                <CartesianGrid stroke={border} strokeDasharray="3 3" vertical={false}/>
+                <XAxis dataKey="hour" stroke={muted} fontSize={9} interval={1}/>
+                <YAxis tickFormatter={fmtAxis} stroke={muted} fontSize={10} width={48}/>
+                <ReferenceLine y={0} stroke={border}/>
+                <Tooltip
+                  contentStyle={tt}
+                  formatter={(v: number, _n, p: any) => [fmtTip(v), `${p.payload.hour} · ${p.payload.n}t`]}
+                  labelFormatter={() => ''}
+                />
+                <Bar dataKey="avg" radius={[3, 3, 0, 0]}>
+                  {hourRadar.map((d, i) => (
+                    <Cell key={i} fill={d.avg >= 0 ? win : loss} fillOpacity={d.n ? 0.9 : 0.15}/>
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
+
 
         {/* 4 · NEW Win Probability Cone */}
         <div style={cardStyle}>

@@ -2043,7 +2043,7 @@ function TraderMindDiagnosticsTab({
   T: TradingTheme; isRTL: boolean; t: (he: string, en: string) => string;
   card: React.CSSProperties; sectionTitle: React.CSSProperties; sectionHint: React.CSSProperties;
 }) {
-  const { archetype, isCalibrated, ageDays, loading } = useTraderMind();
+  const { session, archetype, isCalibrated, ageDays, loading } = useTraderMind();
   const open = () => window.dispatchEvent(new CustomEvent('orca:open-trader-mind'));
 
   return (
@@ -2094,6 +2094,85 @@ function TraderMindDiagnosticsTab({
           {isCalibrated ? t('כייל מחדש', 'Recalibrate') : t('התחל אבחון', 'Begin Diagnostic')}
         </button>
       </div>
+
+      {session && <TraderMindSummary session={session} T={T} isRTL={isRTL} t={t} />}
     </div>
   );
 }
+
+function TraderMindSummary({
+  session, T, isRTL, t,
+}: {
+  session: { archetype: string | null; completed_at: string; payload: Record<string, unknown> };
+  T: TradingTheme; isRTL: boolean; t: (he: string, en: string) => string;
+}) {
+  const p = session.payload || {};
+  const persona = (p.persona as Record<string, unknown> | undefined) ?? {};
+  const scoresRaw = (p.scores as Record<string, unknown> | undefined) ?? {};
+  const scores = Object.fromEntries(
+    Object.entries(scoresRaw).filter(([, v]) => typeof v === 'number'),
+  ) as Record<string, number>;
+  const toArr = (v: unknown): string[] =>
+    Array.isArray(v) ? v.map(x => (typeof x === 'string' ? x : (x as { text?: string })?.text ?? JSON.stringify(x))) : [];
+  const traits = toArr(p.traits);
+  const strengths = toArr(p.strengths);
+  const weaknesses = toArr(p.weaknesses);
+  const recommendations = toArr(p.recommendations ?? p.actions);
+  const summary = (p.summary as string | undefined) ?? (persona.description as string | undefined);
+  const completed = new Date(session.completed_at).toLocaleString(isRTL ? 'he-IL' : 'en-US');
+
+  const subCard: React.CSSProperties = {
+    padding: 14, borderRadius: 12, background: T.bg.tertiary,
+    border: `1px solid ${T.border.subtle}`, marginTop: 12,
+  };
+  const heading: React.CSSProperties = {
+    fontSize: 11, fontWeight: 700, color: T.accent.cyan, letterSpacing: 1.5,
+    textTransform: 'uppercase', marginBottom: 8,
+  };
+
+  return (
+    <div dir={isRTL ? 'rtl' : 'ltr'}>
+      <div style={subCard}>
+        <div style={heading}>{t('סיכום אבחון', 'Diagnostic Summary')}</div>
+        <div style={{ fontSize: 13, color: T.text.primary, fontWeight: 600 }}>
+          {session.archetype ?? (persona.name as string) ?? t('פרופיל סוחר', 'Trader Profile')}
+        </div>
+        {summary && (
+          <p style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.7, marginTop: 8 }}>{summary}</p>
+        )}
+        <div style={{ fontSize: 10, color: T.text.muted, marginTop: 8 }}>
+          {t('הושלם:', 'Completed:')} {completed}
+        </div>
+      </div>
+
+      {Object.keys(scores).length > 0 && (
+        <div style={subCard}>
+          <div style={heading}>{t('ציוני התנהגות', 'Behavioral Scores')}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 8 }}>
+            {Object.entries(scores).map(([k, v]) => (
+              <div key={k} style={{ padding: '8px 10px', borderRadius: 8, background: T.bg.card, border: `1px solid ${T.border.subtle}` }}>
+                <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: 1 }}>{k}</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: T.text.primary, marginTop: 2 }}>{v.toFixed(1)}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {[
+        { title: t('תכונות מפתח', 'Key Traits'), items: traits },
+        { title: t('חוזקות', 'Strengths'), items: strengths },
+        { title: t('חולשות', 'Weaknesses'), items: weaknesses },
+        { title: t('המלצות', 'Recommendations'), items: recommendations },
+      ].filter(g => g.items.length > 0).map(g => (
+        <div key={g.title} style={subCard}>
+          <div style={heading}>{g.title}</div>
+          <ul style={{ margin: 0, paddingInlineStart: 18, color: T.text.secondary, fontSize: 12, lineHeight: 1.8 }}>
+            {g.items.map((it, i) => <li key={i}>{it}</li>)}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+}
+

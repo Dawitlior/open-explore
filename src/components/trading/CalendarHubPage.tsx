@@ -6,7 +6,7 @@ import { FeatureHint } from '@/components/trading/FeatureHint';
 import { getCalDays } from '@/lib/trading-analytics';
 import { getDayRiskColor, checkRiskLimits } from '@/lib/risk-limits';
 import { sumR, formatR } from '@/lib/r-multiple';
-import { RProxyBanner } from './RProxyBanner';
+
 import { useMonthEconomicEvents } from '@/hooks/use-month-economic-events';
 import { MacroEventStrip, MacroDot } from '@/components/economic/MacroEventStrip';
 import { RecalibrationBanner } from '@/components/trader-mind/RecalibrationBanner';
@@ -110,7 +110,7 @@ const CalendarHubPage_Impl = ({ T, isRTL, trades, t, isMobile, onGenerateInsight
   if (isMobile) {
     return (
       <div style={{ direction: isRTL ? 'rtl' : 'ltr', padding: '4px 2px 24px' }}>
-        <RProxyBanner T={T} isRTL={isRTL} compact />
+        
         <RecalibrationBanner signal={recalSignal} lang={isRTL ? 'he' : 'en'} onCalibrate={openTraderMind} />
         {calRiskStatus.monthlyBreached && (
           <div style={{ padding: '10px 14px', background: `${T.accent.red}15`, border: `1px solid ${T.accent.red}40`, borderRadius: 14, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -285,7 +285,7 @@ const CalendarHubPage_Impl = ({ T, isRTL, trades, t, isMobile, onGenerateInsight
      ========================================================= */
   return (
     <div style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
-      <RProxyBanner T={T} isRTL={isRTL} />
+      
       <RecalibrationBanner signal={recalSignal} lang={isRTL ? 'he' : 'en'} onCalibrate={openTraderMind} />
       
       <FeatureHint
