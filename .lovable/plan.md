@@ -1,111 +1,92 @@
-# 🛡️ Orca — Master Plan: אבטחה, נגישות, פרטיות ו-Cookie Consent
+# ORCA Landing v2 — תוכנית ביצוע (גרסה 2)
 
-מטרה: לסגור את כל הממצאים הקריטיים מהדוח, להוסיף שכבת Cookie Consent מקצועית, ולשפר נגישות (WCAG AA) — **בלי לשבור פיצ׳ר קיים ובלי לפגוע בביצועים**.
+מטרה: להחליף את `src/pages/Landing.tsx` הקיים (1046 שורות, single-file) במבנה מודולרי לפי ה-Build Spec, תוך כיבוד §0.0 (אל תמציא) והעדכונים שלך: **אפס הוכחה חברתית, אפס Testimonials, אפס פונטים חדשים, דמו אמיתי מוקדם, אפס fallback שקט**.
 
-הביצוע מחולק ל-5 גלים. כל גל קטן, עצמאי, וניתן לבדיקה לפני המעבר הבא.
-
----
-
-## 🌊 Wave 1 — P0 Security (חובה, מיידי)
-
-תיקונים שאינם נראים למשתמש אך סוגרים פרצות אמיתיות.
-
-1. **Avatars bucket** — להסיר את ה-policy הציבורי על `storage.objects`. הקריאה תמשיך לעבוד דרך Signed URLs שכבר בנויים ב-`src/lib/avatar.ts`. אפס שינוי UI.
-2. **`oracle_nodes.claim_token`** — להחליף את ה-policy `USING true` ב-policy שמחזיר token רק לבעלים (`auth.uid() = user_id`). מי שאין לו user_id (seed nodes גלובליים) — לחשוף רק את ה-metadata, לא את ה-token.
-3. **`billing_events`** — להוסיף `NOT NULL` ל-`user_id` + policy שמונע יתומים, ו-INSERT policy שמחייב `auth.uid() = user_id`.
-4. **Realtime hardening** — להוסיף RLS ל-`realtime.messages` עבור `economic_events` כך שרק authenticated יוכלו להאזין.
-5. **HIBP (Have I Been Pwned)** — להפעיל בדיקת סיסמאות שדלפו דרך `configure_auth`.
-6. **Security scan** — להריץ סריקה אחרי כל מיגרציה ולוודא אפס P0.
-
-**בדיקה**: התחברות, העלאת אווטאר, סשן Oracle, אירועי כלכלה — כולם חייבים לעבוד כרגיל.
+תשתית האפליקציה נשמרת. שינויים מבודדים ל-`/welcome` בלבד.
 
 ---
 
-## 🌊 Wave 2 — Cookie Consent + Privacy Layer
+## כללי-עולם לתוכנית הזו
 
-בניית מערכת הסכמה לעוגיות ברמה מקצועית (GDPR/CCPA-friendly), בלי להאט את האפליקציה.
-
-**Frontend:**
-- `src/components/privacy/CookieConsentBanner.tsx` — באנר תחתון, RTL/LTR, theme-aware (תואם Midnight/Platinum), נטען Lazy אחרי first paint כדי לא לפגוע ב-LCP.
-- `src/components/privacy/CookiePreferencesModal.tsx` — בחירה גרנולרית: Essential (תמיד פעיל), Analytics, Functional, Marketing.
-- `src/hooks/use-cookie-consent.ts` — hook גלובלי, persists ב-`user_settings` (cloud) + cache מקומי לטעינה מיידית.
-- כפתור "ניהול עוגיות" קבוע ב-`SettingsHub` ובפוטר של `Landing`.
-
-**Backend:**
-- שדה `consent` ב-`user_preferences` (jsonb) — `{essential, analytics, functional, marketing, version, accepted_at}`.
-- טבלה חדשה `consent_log` (user_id, version, choices, ip_hash, user_agent, created_at) — מסלול ביקורת לרגולציה.
-- כל "טעינה מותנית" (analytics, sentry, וכו') תתבצע רק אם הצרכן אישר.
-
-**Performance**: הבאנר נטען עם `lazy()` + `requestIdleCallback`, אפס JS חוסם.
+1. **אפס פונטים חדשים.** הדף משתמש ב-Poppins (כותרות) + IBM Plex Mono (מספרים) + מה שכבר רץ בפרויקט לגוף. לא טוענים Heebo, לא Assistant, לא JetBrains Mono — לא globally ולא scoped. הסקשן "פונטים" במסמך המקור מבוטל.
+2. **דמו אמיתי או עצירה.** אם הטמעת `TradingUI` עם `demoMode={true}` נתקלת בבעיה — **עוצרים ומדווחים**. אסור ליפול ל-`LandingDemo` הישן או לכל חיקוי בלי אישור מפורש ממך.
+3. **אפס הוכחה חברתית.** אין testimonials, אין "X+ סוחרים", אין מספרי שימוש.
 
 ---
 
-## 🌊 Wave 3 — Accessibility (WCAG 2.1 AA)
+## עיקרי השינוי
 
-עבודה ממוקדת בלי לשנות עיצוב.
-
-1. **HTML lang/dir דינמי** — `index.html` נטען עם `lang="he"`, ו-`useLang` כבר מעדכן בזמן ריצה. נסיר את `maximum-scale=1.0` מה-viewport (חוסם זום — כשל WCAG 1.4.4).
-2. **Landmarks** — לעטוף את ה-content הראשי בכל עמוד עם `<main id="main">`, להוסיף "Skip to content" link.
-3. **aria-label sweep** — סקריפט שמזהה כפתורי icon-only ללא label (`SettingsHub`, `MobileBottomNav`, `TradeForm`, `NavAvatar` וכו'), ומוסיף labels דו-לשוניים.
-4. **Alt text** — לכל `<img>` להוסיף `alt` משמעותי (או `alt=""` לדקורטיביים).
-5. **Focus visible** — תוספת CSS גלובלית ב-`index.css`: `:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }`.
-6. **`prefers-reduced-motion`** — wrapper ב-`OrcaUXLayer` שמכבה אנימציות כבדות אם המשתמש ביקש.
-7. **Contrast audit** — מעבר על Platinum theme (שכבר תוקן בסקירה השבועית) ולוודא טוקנים תקינים.
-
-**ללא רגרסיה ויזואלית**: אפס שינוי לפלטה, לטיפוגרפיה, או לפריסה.
+- מבנה תיקיות חדש: `src/marketing/sections/*` + `src/marketing/LandingPage.tsx` + `src/marketing/i18n.ts` + `src/marketing/UIContext.tsx`.
+- `src/pages/Landing.tsx` יהפוך ל-shell דק שמרנדר את `<LandingPage/>` (הקובץ הישן נמחק; היסטוריה ב-git).
+- טיפוגרפיה: `.marketing-root` יורש את הפונטים הגלובליים של האפליקציה. אם דרושה שליטה ספציפית — דרך `--font-display: var(--font-poppins)` ו-`--font-mono: var(--font-ibm-plex)` שכבר מוגדרים ב-`index.css`.
+- 3 ערכות נושא (Midnight / Indigo / Platinum) כ-CSS variables על `.marketing-root.theme-*` — לא נוגעות ב-tokens הגלובליים.
+- `UIContext` מקומי לדף: lang (HE/EN) + theme. ברירת מחדל HE/RTL.
 
 ---
 
-## 🌊 Wave 4 — Observability & Hardening (P1)
+## סדר ביצוע (דמו מוקדם)
 
-שכבת תצפית בסיסית בלי תלות חיצונית.
+```text
+1. תשתית: marketing/ tree, UIContext, i18n.ts, .marketing-root + 3 ערכות נושא
+   (ללא פונטים חדשים)
 
-1. **Error boundary טלמטריה** — `ErrorBoundary` כבר קיים; נוסיף שליחה לטבלת `client_errors` (user_id, route, message, stack_hash, ua, created_at) עם דה-דופליקציה לפי hash.
-2. **CSP headers** — להוסיף `<meta http-equiv="Content-Security-Policy">` ל-`index.html` עם whitelist (Supabase, Google Fonts, Lovable). מצב report-only קודם, להפעיל אכיפה אחרי 48 שעות בדיקה.
-3. **Rate limiting בסיסי** — בכל edge function: counter ב-memory לפי IP (10 req/min). לא מצריך תשתית חדשה.
-4. **Dependabot/Snyk קונפיג** — קובץ `.github/dependabot.yml` (גם אם לא מופעל כעת — מוכן לרגע ההפעלה).
+2. ★ LiveDemo POC (Option B) — לפני כל סקשן ויזואלי
+   • DemoModeContext: seed data + no-op writes + טוסט
+   • הטמעת TradingUI אמיתי בתוך container עם chrome
+   • אם נכשל → עוצרים, מדווחים, מחכים להחלטה. אין fallback.
 
----
+3. Skeleton: Nav + Hero + Footer דק (דף עולה end-to-end)
 
-## 🌊 Wave 5 — Responsive & Mobile Polish
+4. Modules (Tabs) + Features (6) + Pricing + FAQ
 
-1. **Tablet breakpoints** — מעבר על Dashboard / Weekly Review / Analytics ב-768-1024px ובדיקה ש-`DesktopOnlyGate` לא חוסם מסכים חוקיים.
-2. **`h-dvh` במקום `h-screen`** במסכים מובייליים שעדיין משתמשים ב-`100vh`.
-3. **Touch targets** — לוודא 44×44 לכפתורי ניווט תחתון ופעולות קריטיות.
+5. ליטוש: reveal-on-scroll, prefers-reduced-motion, logical
+   properties (ms/me), SEO meta+OG, mobile QA, Lighthouse
 
----
+6. החלפה סופית: Landing.tsx → shell דק שמייבא LandingPage
+```
 
-## ✅ פרוטוקול בדיקה אחרי כל גל
-
-לפני המעבר לגל הבא:
-- [ ] Login + Logout עובדים
-- [ ] יומן מסחר נטען (Trade Journal)
-- [ ] סקירה שבועית נפתחת ושומרת
-- [ ] Oracle session רץ ללא שגיאות
-- [ ] Console נקי משגיאות חדשות
-- [ ] `security_scan` — אפס P0
-- [ ] Lighthouse Performance ≥ 85, Accessibility ≥ 95
+כל שלב נבדק על `/welcome` לפני המעבר הבא.
 
 ---
 
-## 📊 השפעת ביצועים — מה עושים כדי שלא תהיה האטה
+## פירוט הסקשנים (קופי מילה-במילה מ-§המסמך)
 
-| איום | פתרון |
-|---|---|
-| Cookie banner חוסם render | `lazy()` + `requestIdleCallback`, אפס CSS-in-JS |
-| RLS חדשות מאיטות שאילתות | אינדקסים על `user_id` (כבר קיימים), policies פשוטות בלבד |
-| CSP שובר משאבים | תחילה במצב `report-only` עם logging |
-| Telemetry של errors | דה-דופליקציה לפי hash + throttle של 1/10 שניות |
-| a11y CSS תוספת | בלבד `:focus-visible` ו-`prefers-reduced-motion` — מילישניות |
+- **Nav דביק** — לוגו ימין; ניווט+טוגלים+CTA שמאל; backdrop-blur; drawer במובייל.
+- **Hero** — כותרת 3-שורות בסטאגר, תת-כותרת, 2 CTA, ו-**3 כרטיסי הוכחה טכניים**:
+  - "4 שכבות הגנה — מנוע סיכונים −1R עד −10R"
+  - "ORCA Score 0–100 — ציון אחד לכל הביצועים שלך"
+  - "Monte Carlo · Sortino · Calmar — ניתוח כמותי ברמה מוסדית"
+  - ללא count-up של "X+ סוחרים".
+- **LiveDemo (Option B)** — TradingUI אמיתי, demoMode, תווית "נתוני דוגמה", כפתור "מסך מלא ↗".
+- **טיזר מודולים** — Tabs של shadcn, 7 טאבים בדיוק: דף ראשי · קלנדר P&L · ניהול סיכונים · מעבדת פסיכולוגיה · QuantLab · Oracle/AI · בקטסטינג. מובייל → אקורדיון.
+- **רצועת פלטפורמות** — `«BROKERS_LIST»` placeholder. אם ריק → הסקשן מוסתר.
+- **רשת יתרונות (6)** — הקופי המדויק מ-§7.
+- **תמחור** — 3 מסלולים, טוגל חודשי/שנתי, טוגל ₪/$, מחירים כ-placeholders גלויים, דיסקליימר "לא איתותים/לא ייעוץ".
+- **(מבוטל)** — אין סקשן Testimonials.
+- **FAQ + Footer** — אקורדיון shadcn, Risk Disclosure מלא, פרטי קשר כ-placeholders.
 
 ---
 
-## 🗓️ סדר עבודה מוצע (אם תאשר)
+## פרטים טכניים
 
-1. **היום**: Wave 1 (P0 security) + סריקת אבטחה.
-2. **מחר**: Wave 2 (Cookie Consent) — UI + טבלת `consent_log`.
-3. **לאחר מכן**: Wave 3 (a11y), 4 (observability), 5 (responsive) — כל אחד בנפרד.
+- **Routing**: `/welcome` נשאר. `RequireAuth` ב-`/` ממשיך לעבוד. `/demo` ציבורי **לא** נוסף — Option B מרנדר את הדמו inline.
+- **Backend (פאזה 11 של המסמך)**: מחוץ לטווח התוכנית הזו. Stripe/iCount/edge functions בפאזה נפרדת. Auth כבר קיים; CTAs יחווטו ל-`/auth?mode=register` ו-`/auth?mode=login`.
+- **Cookie banner, ErrorBoundary, LegalGate** — לא נוגעים, ממשיכים לעטוף את הדף דרך `App.tsx`.
+- **גלילה במובייל** — תיקוני `overflow-x: clip; max-width: 100vw` שהוספנו יישמרו.
+- **באנר "התחברות חינמית בתקופה הקרובה"** שהוספנו לפני שני סבבים — יועבר ל-Hero החדש.
 
-לכל גל אעצור, אריץ בדיקות, ואדווח לפני המעבר לגל הבא — כדי שתוכל לאשר בכל שלב.
+---
 
-**אשר את התוכנית ואני מתחיל מ-Wave 1 מיד.**
+## Placeholders שיישארו גלויים (לפי §0.0)
+
+`«BROKERS_LIST»` (סקשן יוסתר אם ריק) · `«PRICE_STANDARD/ADVANCED/ULTIMATE»` · `«STRIPE_PRICE_ID_*»` · `«WHATSAPP»` · `«SUPPORT_EMAIL»` · `«DOMAIN»`.
+
+כל אחד ייכתב במפורש בקוד עם `data-placeholder="true"` והדגשה ויזואלית בפיתוח (outline צהוב + tooltip), כך שלא יישכח לפני השקה.
+
+---
+
+## DoD סופי
+
+- /welcome עולה ב-RTL, 3 ערכות נושא עובדות, HE↔EN מתחלף, כל הסקשנים בסדר הנכון.
+- **LiveDemo מציג את TradingUI האמיתי** עם תווית "נתוני דוגמה" וטוסט "פעולה מושבתת בדמו" על כל כתיבה. **אם נכשל — עוצרים, לא חיקוי.**
+- אפס פונטים חדשים נטענ
