@@ -14,7 +14,7 @@ import {
 } from 'recharts';
 import {
   LayoutDashboard, CalendarDays, BookOpen, BarChart3, ShieldAlert, Brain,
-  Sparkles, Satellite, ClipboardCheck, Bot, Settings, ChevronLeft, Plus,
+  Sparkles, Satellite, ClipboardCheck, Settings, ChevronLeft, Plus,
 } from 'lucide-react';
 
 /* ── Real platform palette ─────────────────────────── */
@@ -38,7 +38,7 @@ const RED = '#ef4444';
 const FONT = "'Heebo', 'Space Grotesk', sans-serif";
 const FONT_MONO = "'JetBrains Mono', 'IBM Plex Mono', monospace";
 
-type Page = 'dashboard' | 'calendar' | 'risk' | 'psychology' | 'ai' | 'review' | 'oracle';
+type Page = 'dashboard' | 'calendar' | 'risk' | 'psychology' | 'ai' | 'review';
 
 const NAV: { id: Page; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: 'dashboard',  label: 'דשבורד',         icon: LayoutDashboard },
@@ -47,7 +47,6 @@ const NAV: { id: Page; label: string; icon: React.ComponentType<{ className?: st
   { id: 'psychology', label: 'פסיכולוגיה',     icon: Brain },
   { id: 'ai',         label: 'תובנות AI',      icon: Sparkles },
   { id: 'review',     label: 'סקירה שבועית',   icon: ClipboardCheck },
-  { id: 'oracle',     label: 'Oracle',         icon: Bot },
 ];
 
 const tooltipStyle: React.CSSProperties = {
@@ -121,7 +120,7 @@ export function LandingDemo() {
               {page === 'psychology' && <PsychologyPage />}
               {page === 'ai'         && <AiPage />}
               {page === 'review'     && <ReviewPage />}
-              {page === 'oracle'     && <OraclePage />}
+              
             </motion.div>
           </AnimatePresence>
         </div>
@@ -439,46 +438,6 @@ function ReviewPage() {
   );
 }
 
-function OraclePage() {
-  return (
-    <div className="space-y-3">
-      <div className="text-right">
-        <div className="text-[9px] tracking-[0.25em]" style={{ color: GOLD, fontFamily: FONT_MONO }}>♦ ORACLE CORE</div>
-        <div className="text-base md:text-lg font-bold mt-0.5" style={{ color: TXT }}>בוט Oracle — אבחון אישיות</div>
-        <div className="text-[10px] mt-1" style={{ color: TXT_2 }}>30+ שאלות לאורך 7 שכבות התנהגותיות. מגלה איפה אתה חזק, איפה אתה דולף.</div>
-      </div>
-      <div className="rounded-2xl p-3 relative" style={{ background: 'radial-gradient(circle at 30% 40%, rgba(167,139,250,0.18), transparent 60%)', border: `1px solid ${PURPLE}44` }}>
-        <div className="flex items-start gap-2.5 mb-2">
-          <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: `linear-gradient(135deg, ${PURPLE}, ${CYAN})` }}>
-            <Bot className="w-4 h-4 text-white" />
-          </div>
-          <div className="flex-1 rounded-xl px-2.5 py-1.5 text-[10.5px] leading-relaxed" style={{ background: PANEL, border: `1px solid ${LINE_SOFT}`, color: TXT }}>
-            כשעסקה פתוחה הולכת לאן שאתה מצפה — האם נוטה לסגור מוקדם מדי, או נשאר עד היעד?
-            <div className="text-[8px] mt-1" style={{ color: TXT_3, fontFamily: FONT_MONO }}>שאלה 12 / 37 · S3: Execution</div>
-          </div>
-        </div>
-        <div className="space-y-1 pl-9">
-          {['סוגר מוקדם — אני חי בפחד שיחזור', 'מחזיק עד היעד אבל בלחץ', 'נצמד לתכנית — היעד = היעד'].map((opt, i) => (
-            <button key={opt} className="w-full text-right text-[10px] px-2.5 py-1.5 rounded-md transition-all hover:translate-x-[-2px]" style={{ background: PANEL, border: `1px solid ${i === 2 ? PURPLE : LINE_SOFT}`, color: TXT }}>
-              <span style={{ color: PURPLE, fontFamily: FONT_MONO, marginLeft: 6 }}>{String.fromCharCode(1488 + i)}.</span>
-              {opt}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div className="grid grid-cols-7 gap-1">
-        {Array.from({ length: 7 }).map((_, i) => (
-          <div key={i} className="rounded-md py-1 text-center text-[8px]" style={{
-            background: i < 3 ? `${PURPLE}33` : PANEL,
-            border: `1px solid ${i < 3 ? PURPLE : LINE_SOFT}`,
-            color: i < 3 ? PURPLE : TXT_3,
-            fontFamily: FONT_MONO,
-          }}>S{i+1}</div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 /* ─────────── building blocks ─────────── */
 

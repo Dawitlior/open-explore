@@ -20,8 +20,6 @@ import { PrivacyMask, usePrivacyShortcut } from '@/components/trading/PrivacyMas
 import { TradeForm } from '@/components/trading/TradeForm';
 import { ResetModal } from '@/components/trading/ResetModal';
 import { SettingsHub } from '@/components/trading/SettingsHub';
-import { OracleSession } from '@/components/oracle/OracleSession';
-import { useOracleVector } from '@/hooks/use-oracle-vector';
 
 import { DesktopOnlyGate } from '@/components/trading/DesktopOnlyGate';
 import { NavAvatar } from '@/components/trading/NavAvatar';
@@ -145,24 +143,6 @@ const Index = () => {
   const [editingTrade, setEditingTrade] = useState<Trade | null>(null);
   const [showReset, setShowReset] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [showOracle, setShowOracle] = useState(false);
-  const { isCalibrated: oracleCalibrated, blueprint: oracleBlueprint } = useOracleVector();
-  useEffect(() => {
-    const onOpen = () => setShowOracle(true);
-    window.addEventListener('orca:open-oracle', onOpen);
-    return () => window.removeEventListener('orca:open-oracle', onOpen);
-  }, []);
-  // Post-onboarding nudge: auto-open Oracle once after first onboarding completes.
-  useEffect(() => {
-    void (async () => {
-      const { scopedStorage } = await import('@/lib/scoped-storage');
-      const pending = await scopedStorage.getItem('orca-oracle-prompt-pending');
-      if (pending === '1' && !oracleCalibrated) {
-        setTimeout(() => setShowOracle(true), 1200);
-        void scopedStorage.removeItem('orca-oracle-prompt-pending');
-      }
-    })();
-  }, [oracleCalibrated]);
   const [aiInsights, setAiInsights] = useState<ReturnType<typeof generateInsights>>([]);
   const [aiLoading, setAiLoading] = useState(false);
   const [showThemeMenu, setShowThemeMenu] = useState(false);
@@ -1691,41 +1671,6 @@ const Index = () => {
         <div style={{ padding: '4px 6px' }}><PortalButton onClick={() => setActiveDimension('journal')} isRTL={isRTL} expanded={sbOpen} /></div>
         <div style={{ padding: '4px 6px' }}><BacktestPortalButton onClick={() => setActiveDimension('backtest')} isRTL={isRTL} expanded={sbOpen} /></div>
         {/* Economic Radar promoted into main nav above */}
-        {sbOpen && (
-          <div style={{ padding: '4px 6px' }}>
-            <button
-              onClick={() => setShowOracle(true)}
-              title={isRTL ? 'Oracle Core — כיול התנהגותי' : 'Oracle Core — behavioral calibration'}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '9px 10px', background: `${T.accent.purple ?? T.accent.cyan}10`, border: `1px solid ${T.accent.purple ?? T.accent.cyan}30`, borderRadius: T.radius.md, color: T.accent.purple ?? T.accent.cyan, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}
-            >
-              <span style={{ fontSize: 14 }}>◈</span>
-              <span>Oracle</span>
-              {oracleCalibrated ? (
-                <span style={{ marginInlineStart: 'auto', fontSize: 8, color: T.accent.cyan, fontWeight: 700, opacity: 0.9, letterSpacing: 0.5, textTransform: 'uppercase' }}>
-                  {oracleBlueprint?.archetype?.slice(0, 18) ?? (isRTL ? 'מכויל' : 'Calibrated')}
-                </span>
-              ) : (
-                <span style={{ marginInlineStart: 'auto', fontSize: 8, color: '#fbbf24', fontWeight: 700, opacity: 0.95, letterSpacing: 0.5 }}>
-                  ⚠ {isRTL ? 'לא מכויל' : 'Uncalibrated'}
-                </span>
-              )}
-            </button>
-          </div>
-        )}
-        {!sbOpen && (
-          <div style={{ padding: '4px 6px', display: 'flex', justifyContent: 'center', position: 'relative' }}>
-            <button
-              onClick={() => setShowOracle(true)}
-              title="Oracle Core"
-              style={{ background: 'transparent', border: 'none', color: T.accent.purple ?? T.accent.cyan, cursor: 'pointer', fontSize: 16, position: 'relative' }}
-            >
-              ◈
-              {!oracleCalibrated && (
-                <span style={{ position: 'absolute', top: -2, right: -4, width: 6, height: 6, borderRadius: '50%', background: '#fbbf24', boxShadow: '0 0 6px #fbbf24aa' }} />
-              )}
-            </button>
-          </div>
-        )}
         {sbOpen && <div style={{ padding: '4px 6px' }}><InstallPrompt T={T} isRTL={isRTL} compact /></div>}
         <div style={{ padding: 10, borderTop: `1px solid ${T.border.subtle}`, display: 'flex', flexDirection: 'column', gap: 4 }}>
           {sbOpen && <button onClick={() => setShowSettings(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '9px 10px', background: `${T.accent.cyan}10`, border: `1px solid ${T.accent.cyan}30`, borderRadius: T.radius.md, color: T.accent.cyan, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
@@ -1856,7 +1801,7 @@ const Index = () => {
       {showTradeForm && <TradeForm T={T} t={t} isRTL={isRTL} trade={editingTrade} currentBalance={currentBalance} onSave={handleSaveTrade} onClose={() => { setShowTradeForm(false); setEditingTrade(null); }} />}
       {showReset && <ResetModal T={T} t={t} isRTL={isRTL} onConfirm={handleReset} onClose={() => setShowReset(false)} />}
       {showSettings && <SettingsHub T={T} isRTL={isRTL} open={showSettings} onClose={() => setShowSettings(false)} theme={settings.theme} setTheme={settings.setTheme} stats={stats} lang={settings.lang} setLang={settings.setLang} privacyMode={settings.privacyMode} setPrivacyMode={settings.setPrivacyMode} trades={trades} />}
-      <OracleSession open={showOracle} onClose={() => setShowOracle(false)} lang={settings.lang} />
+      
       
       {/* Screen Lock removed in Phase 1 architectural cleanup */}
       {riskAlert && <RiskLimitAlert T={T} isRTL={isRTL} status={riskAlert} onClose={dismissRiskAlert} />}

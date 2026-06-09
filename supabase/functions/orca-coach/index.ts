@@ -1,5 +1,4 @@
-// Orca Coach — authenticated AI chat that auto-injects the user's Oracle DNA
-// coach_system_prompt before every reply. Uses Lovable AI Gateway.
+// Orca Coach — authenticated AI chat. Uses Lovable AI Gateway.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const cors = {
@@ -36,39 +35,8 @@ Deno.serve(async (req) => {
       throw new Error("messages required");
     }
 
-    // Inject Oracle DNA system prompt if calibrated
-    const { data: vec } = await supabase
-      .from("oracle_vectors")
-      .select("archetype, coach_system_prompt")
-      .eq("user_id", u.user.id)
-      .maybeSingle();
-
-    // Pull latest locked session for live v2 signals (claim_ledger + instability_index)
-    const { data: sess } = await supabase
-      .from("oracle_sessions")
-      .select("claim_ledger, instability_index, completed_at")
-      .eq("user_id", u.user.id)
-      .in("state", ["locked", "completed"])
-      .order("completed_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    let oracleLine: string;
-    if (vec?.coach_system_prompt) {
-      const claimLine = sess?.claim_ledger && Object.keys(sess.claim_ledger).length
-        ? `\n[CLAIM-INTEGRITY] ${Object.entries(sess.claim_ledger as Record<string, number>)
-            .map(([k, v]) => `${k}:${(v as number).toFixed(2)}`).join(", ")}`
-        : "";
-      const instLine = typeof sess?.instability_index === "number"
-        ? `\n[INSTABILITY-INDEX] ${Number(sess.instability_index).toFixed(2)} (0=steady, 1=volatile)`
-        : "";
-      oracleLine = `\n\n[ORACLE DNA — ${vec.archetype ?? "Uncalibrated"}]\n${vec.coach_system_prompt}${claimLine}${instLine}\n\nUse CLAIM-INTEGRITY to detect when the trader's stated identity diverges from behavior — call it out gently. Use INSTABILITY-INDEX to calibrate tone: high → slow down, ground them; low → push for precision.`;
-    } else {
-      oracleLine = "\n\n[ORACLE DNA] Trader has not yet calibrated. Recommend calibration when relevant.";
-    }
-
     const finalMessages: ChatMsg[] = [
-      { role: "system", content: BASE_PROMPT + oracleLine },
+      { role: "system", content: BASE_PROMPT },
       ...messages.filter((m) => m.role !== "system"),
     ];
 
@@ -101,11 +69,9 @@ Deno.serve(async (req) => {
     const aiJson = await aiRes.json();
     const reply: string = aiJson.choices?.[0]?.message?.content ?? "";
 
-    return new Response(JSON.stringify({
-      reply,
-      archetype: vec?.archetype ?? null,
-      calibrated: !!vec?.coach_system_prompt,
-    }), { headers: { ...cors, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ reply }), {
+      headers: { ...cors, "Content-Type": "application/json" },
+    });
   } catch (e) {
     return new Response(JSON.stringify({ error: String((e as Error).message ?? e) }), {
       status: 500, headers: { ...cors, "Content-Type": "application/json" },
