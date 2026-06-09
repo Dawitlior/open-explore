@@ -285,7 +285,7 @@ const CalendarHubPage_Impl = ({ T, isRTL, trades, t, isMobile, onGenerateInsight
      ========================================================= */
   return (
     <div style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
-      <RProxyBanner T={T} isRTL={isRTL} />
+      
       <RecalibrationBanner signal={recalSignal} lang={isRTL ? 'he' : 'en'} onCalibrate={openTraderMind} />
       
       <FeatureHint
