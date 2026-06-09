@@ -324,7 +324,7 @@ function BacktestEntryScreen({ onEnter, onSkip }: { onEnter: () => void; onSkip:
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: BG, overflow: 'hidden', width: '100vw', height: '100vh', maxWidth: '100vw' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: BG, overflow: 'hidden', width: '100vw', height: '100dvh', maxWidth: '100vw' }}>
       <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: phase === 'portal' ? 0 : 0.9, transition: 'opacity 0.8s' }} />
 
       {/* Overlay vignette */}
@@ -425,13 +425,13 @@ function BacktestApp({ onReturn }: { onReturn: () => void }) {
   // Lock screen
   const Lock=({onUnlock}:{onUnlock:()=>void})=>{const[ph,setPh]=useState(0);const go=()=>{setPh(1);setTimeout(()=>setPh(2),600);setTimeout(onUnlock,1100);};return <div style={{position:"fixed",inset:0,zIndex:9000,background:"rgba(12,15,20,.94)",backdropFilter:"blur(10px)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",transition:"opacity .4s",opacity:ph===2?0:1,pointerEvents:ph===2?"none":"auto"}}><div style={{width:64,height:64,borderRadius:"50%",border:`2px solid ${ph>=1?BL:T4}`,display:"flex",alignItems:"center",justifyContent:"center",animation:ph===1?"lockGlow .3s":"none"}}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={ph>=1?BL:T3} strokeWidth="2" strokeLinecap="round">{ph>=1?<><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 019.9-1"/></>:<><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></>}</svg></div>{ph===0&&<><div style={{marginTop:12,fontSize:13,color:T3}}>המערכת נעולה</div><button onClick={go} style={{marginTop:16,background:"none",border:`1px solid ${T4}`,borderRadius:10,padding:"10px 28px",color:T2,fontSize:13,fontWeight:600,cursor:"pointer"}} onMouseEnter={(e:any)=>{e.currentTarget.style.borderColor=BL;e.currentTarget.style.color=BL;}} onMouseLeave={(e:any)=>{e.currentTarget.style.borderColor=T4;e.currentTarget.style.color=T2;}}>פתח נעילה</button></>}</div>;};
 
-  if(loading)return <div className="ox" style={{minHeight:"100vh",background:BG,display:"flex",alignItems:"center",justifyContent:"center",color:BL}}>טוען...</div>;
+  if(loading)return <div className="ox" style={{minHeight:"100dvh",background:BG,display:"flex",alignItems:"center",justifyContent:"center",color:BL}}>טוען...</div>;
 
   const has=trades.length>0;
   const cols=[{k:"coin",l:"מטבע",w:"9%"},{k:"dir",l:"כיוון",w:"7%"},{k:"entry",l:"כניסה",w:"10%"},{k:"sl",l:"סטופ",w:"10%"},{k:"exit",l:"יציאה",w:"10%"},{k:"r",l:"R",w:"8%"},{k:"entryDT",l:"זמן",w:"14%"},{k:"dur",l:"משך",w:"10%"},{k:"mfeR",l:"MFE",w:"7%"},{k:"maeR",l:"MAE",w:"7%"}];
 
   return <div className="ox" style={{
-    minHeight:"100vh",background:BG,color:T1,direction:"rtl",fontSize:13,
+    minHeight:"100dvh",background:BG,color:T1,direction:"rtl",fontSize:13,
     opacity: exitingToOrca ? 0 : 1,
     transform: exitingToOrca ? 'scale(0.92)' : 'scale(1)',
     filter: exitingToOrca ? 'blur(12px)' : 'none',
