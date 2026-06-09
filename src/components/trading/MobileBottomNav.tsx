@@ -178,4 +178,7 @@ export const MobileBottomNav = ({
       })}
     </nav>
   );
+
+  return createPortal(nav, document.body);
 };
+
