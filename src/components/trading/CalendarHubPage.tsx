@@ -6,7 +6,7 @@ import { FeatureHint } from '@/components/trading/FeatureHint';
 import { getCalDays } from '@/lib/trading-analytics';
 import { getDayRiskColor, checkRiskLimits } from '@/lib/risk-limits';
 import { sumR, formatR } from '@/lib/r-multiple';
-import { RProxyBanner } from './RProxyBanner';
+
 import { useMonthEconomicEvents } from '@/hooks/use-month-economic-events';
 import { MacroEventStrip, MacroDot } from '@/components/economic/MacroEventStrip';
 import { RecalibrationBanner } from '@/components/trader-mind/RecalibrationBanner';
