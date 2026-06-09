@@ -5,7 +5,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { evaluatePassword, isValidEmail, translateAuthError } from '@/lib/auth-utils';
 import { toast } from 'sonner';
-import orcaBrandLogo from '@/assets/orca-brand-logo.png.asset.json';
+
+const ORCA_LOGO_SRC = '/orca-logo.png';
 
 // Brand palette — Orca Investment (black/gold)
 const GOLD = '#d4af5a';
@@ -287,10 +288,12 @@ export default function AuthPage() {
             filter: 'drop-shadow(0 12px 28px rgba(212,175,90,0.32))',
           }}>
             <img
-              src={orcaBrandLogo.url}
+              src={ORCA_LOGO_SRC}
               alt="Orca Investment"
               width={96}
               height={96}
+              loading="eager"
+              decoding="async"
               style={{ width: '100%', height: '100%', objectFit: 'contain' }}
             />
           </div>
@@ -467,10 +470,12 @@ export default function AuthPage() {
             }}
           >
             <img
-              src={orcaBrandLogo.url}
+              src={ORCA_LOGO_SRC}
               alt="Orca Investment"
               width={80}
               height={80}
+              loading="eager"
+              decoding="async"
               style={{ width: 80, height: 80, objectFit: 'contain', margin: '0 auto 14px', display: 'block', filter: 'drop-shadow(0 12px 28px rgba(212,175,90,0.4))' }}
             />
             <div style={{
