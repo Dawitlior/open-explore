@@ -5,6 +5,19 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { evaluatePassword, isValidEmail, translateAuthError } from '@/lib/auth-utils';
 import { toast } from 'sonner';
+import orcaBrandLogo from '@/assets/orca-brand-logo.png.asset.json';
+
+// Brand palette — Orca Investment (black/gold)
+const GOLD = '#d4af5a';
+const GOLD_BRIGHT = '#f0d78c';
+const GOLD_DEEP = '#a8862d';
+const INK = '#050505';
+const INK_2 = '#0d0d0f';
+const INK_3 = '#16161a';
+const TEXT = '#f5ecd6';
+const TEXT_MUTED = '#9a9381';
+const BORDER = 'rgba(212,175,90,0.22)';
+const BORDER_SOFT = 'rgba(212,175,90,0.12)';
 
 type Mode = 'sign-in' | 'sign-up';
 type Lang = 'he' | 'en';
