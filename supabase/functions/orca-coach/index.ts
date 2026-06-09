@@ -1,4 +1,5 @@
-// Orca Coach — authenticated AI chat. Uses Lovable AI Gateway.
+// Orca Coach — authenticated AI chat that injects the trader's latest
+// Trader Mind diagnostic (archetype + result payload) as system context.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const cors = {
@@ -35,8 +36,26 @@ Deno.serve(async (req) => {
       throw new Error("messages required");
     }
 
+    // Inject latest Trader Mind diagnostic (archetype + brief payload summary).
+    const { data: tm } = await supabase
+      .from("trader_mind_sessions")
+      .select("archetype, payload, completed_at")
+      .eq("user_id", u.user.id)
+      .order("completed_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    let mindLine = "\n\n[TRADER MIND] Diagnostic not yet completed — recommend running it when relevant.";
+    if (tm?.archetype || tm?.payload) {
+      const summary = (() => {
+        try { return JSON.stringify(tm.payload ?? {}).slice(0, 1200); }
+        catch { return ""; }
+      })();
+      mindLine = `\n\n[TRADER MIND — ${tm.archetype ?? "Unlabeled"}]\nLatest behavioral diagnostic snapshot for this trader:\n${summary}\n\nUse this profile to calibrate tone and coaching focus. Reference it gently; never read it back verbatim.`;
+    }
+
     const finalMessages: ChatMsg[] = [
-      { role: "system", content: BASE_PROMPT },
+      { role: "system", content: BASE_PROMPT + mindLine },
       ...messages.filter((m) => m.role !== "system"),
     ];
 
