@@ -8,6 +8,7 @@ import { AdaptiveExpectancyCard, AdaptiveQuickStats } from '@/components/trading
 import { ChartWrapper, EXPLANATIONS, type ChartExplanation } from '@/components/trading/ChartWrapper';
 import { FeatureHint } from '@/components/trading/FeatureHint';
 import DashboardAdvancedLab from './DashboardAdvancedLab';
+import { TierGate } from '@/components/billing/TierGate';
 
 interface ReviewDashboardProps {
   T: TradingTheme;
@@ -281,8 +282,10 @@ export const ReviewDashboard = ({
         )}
       </div>
 
-      {/* ═══ ADVANCED ANALYTICS LAB — Monte Carlo, Box Plot + 4 new dual-unit charts ═══ */}
-      <DashboardAdvancedLab T={T} isRTL={isRTL} trades={trades} />
+      {/* ═══ ADVANCED ANALYTICS LAB — Ultimate-tier · follows global $/R mode ═══ */}
+      <TierGate required="ultimate" label="Advanced Analytics Lab" silent>
+        <DashboardAdvancedLab T={T} isRTL={isRTL} trades={trades} />
+      </TierGate>
     </div>
   );
 };
