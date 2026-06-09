@@ -2,7 +2,7 @@
  * LandingDemo — pixel-faithful preview of the real Orca platform.
  * Mirrors the actual app shell: Midnight + Gold palette, ULTIMATE chip,
  * right-side RTL nav, gauge-ring KPIs, calendar grid with economic events,
- * risk health bars, psychology radar, AI insights mainframe and Oracle bot.
+ * risk health bars, psychology radar and AI insights mainframe.
  * Visitors switch pages from the same sidebar the real app uses.
  */
 import { useMemo, useState } from 'react';
