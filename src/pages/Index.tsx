@@ -1689,7 +1689,42 @@ const Index = () => {
         {/* Dimension Portal Buttons — visible in both expanded and collapsed sidebar */}
         <div style={{ padding: '4px 6px' }}><PortalButton onClick={() => setActiveDimension('journal')} isRTL={isRTL} expanded={sbOpen} /></div>
         <div style={{ padding: '4px 6px' }}><BacktestPortalButton onClick={() => setActiveDimension('backtest')} isRTL={isRTL} expanded={sbOpen} /></div>
-        {/* Economic Radar promoted into main nav above */}
+        {/* Trader Mind — behavioral diagnostic (replaces legacy Oracle slot) */}
+        {sbOpen && (
+          <div style={{ padding: '4px 6px' }}>
+            <button
+              onClick={() => setShowTraderMind(true)}
+              title={isRTL ? 'תודעת הסוחר — אבחון התנהגותי' : 'Trader Mind — behavioral diagnostic'}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '9px 10px', background: `${T.accent.purple ?? T.accent.cyan}10`, border: `1px solid ${T.accent.purple ?? T.accent.cyan}30`, borderRadius: T.radius.md, color: T.accent.purple ?? T.accent.cyan, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}
+            >
+              <span style={{ fontSize: 14 }}>◈</span>
+              <span>{isRTL ? 'תודעת הסוחר' : 'Trader Mind'}</span>
+              {tmCalibrated ? (
+                <span style={{ marginInlineStart: 'auto', fontSize: 8, color: T.accent.cyan, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase' }}>
+                  {tmArchetype?.slice(0, 18) ?? (isRTL ? 'הושלם' : 'Complete')}
+                </span>
+              ) : (
+                <span style={{ marginInlineStart: 'auto', fontSize: 8, color: '#fbbf24', fontWeight: 700, letterSpacing: 0.5 }}>
+                  ⚠ {isRTL ? 'לא הושלם' : 'Pending'}
+                </span>
+              )}
+            </button>
+          </div>
+        )}
+        {!sbOpen && (
+          <div style={{ padding: '4px 6px', display: 'flex', justifyContent: 'center', position: 'relative' }}>
+            <button
+              onClick={() => setShowTraderMind(true)}
+              title="Trader Mind"
+              style={{ background: 'transparent', border: 'none', color: T.accent.purple ?? T.accent.cyan, cursor: 'pointer', fontSize: 16, position: 'relative' }}
+            >
+              ◈
+              {!tmCalibrated && (
+                <span style={{ position: 'absolute', top: -2, right: -4, width: 6, height: 6, borderRadius: '50%', background: '#fbbf24', boxShadow: '0 0 6px #fbbf24aa' }} />
+              )}
+            </button>
+          </div>
+        )}
         {sbOpen && <div style={{ padding: '4px 6px' }}><InstallPrompt T={T} isRTL={isRTL} compact /></div>}
         <div style={{ padding: 10, borderTop: `1px solid ${T.border.subtle}`, display: 'flex', flexDirection: 'column', gap: 4 }}>
           {sbOpen && <button onClick={() => setShowSettings(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '9px 10px', background: `${T.accent.cyan}10`, border: `1px solid ${T.accent.cyan}30`, borderRadius: T.radius.md, color: T.accent.cyan, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
