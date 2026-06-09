@@ -214,29 +214,34 @@ export default function AuthPage() {
         minHeight: '100dvh',
         display: 'grid',
         placeItems: 'center',
-        background: '#06080f',
-        color: '#e8eef9',
+        background: INK,
+        color: TEXT,
         fontFamily: "'Poppins', system-ui, sans-serif",
         position: 'relative',
         overflow: 'hidden',
         padding: '24px 16px',
       }}
     >
-      {/* Aurora background */}
+      {/* Gold aurora */}
       <div style={{
         position: 'absolute', inset: 0, pointerEvents: 'none',
         background: `
-          radial-gradient(800px 600px at 18% 22%, rgba(56,189,248,0.18), transparent 60%),
-          radial-gradient(700px 600px at 82% 78%, rgba(167,139,250,0.16), transparent 65%),
-          radial-gradient(500px 400px at 50% 100%, rgba(6,214,160,0.10), transparent 70%)
+          radial-gradient(900px 700px at 20% 18%, rgba(212,175,90,0.10), transparent 62%),
+          radial-gradient(700px 600px at 82% 82%, rgba(168,134,45,0.10), transparent 65%),
+          radial-gradient(500px 400px at 50% 110%, rgba(240,215,140,0.06), transparent 70%)
         `,
       }} />
-      {/* Mesh grid */}
+      {/* Subtle gold mesh */}
       <div style={{
-        position: 'absolute', inset: 0, opacity: 0.05, pointerEvents: 'none',
-        backgroundImage: 'linear-gradient(rgba(125,160,220,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(125,160,220,0.5) 1px, transparent 1px)',
-        backgroundSize: '56px 56px',
-        maskImage: 'radial-gradient(ellipse at center, #000 35%, transparent 78%)',
+        position: 'absolute', inset: 0, opacity: 0.04, pointerEvents: 'none',
+        backgroundImage: 'linear-gradient(rgba(212,175,90,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(212,175,90,0.6) 1px, transparent 1px)',
+        backgroundSize: '64px 64px',
+        maskImage: 'radial-gradient(ellipse at center, #000 30%, transparent 78%)',
+      }} />
+      {/* Vignette */}
+      <div style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none',
+        background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.55) 100%)',
       }} />
 
       {/* Top-right language toggle */}
@@ -246,8 +251,8 @@ export default function AuthPage() {
           position: 'absolute', top: 20, insetInlineEnd: 20, zIndex: 5,
           display: 'inline-flex', alignItems: 'center', gap: 6,
           padding: '8px 12px', borderRadius: 999,
-          background: 'rgba(15,28,52,0.7)', border: '1px solid rgba(125,160,220,0.18)',
-          color: '#cbd5e1', cursor: 'pointer', fontSize: 12, fontWeight: 600,
+          background: 'rgba(15,15,18,0.75)', border: `1px solid ${BORDER}`,
+          color: GOLD_BRIGHT, cursor: 'pointer', fontSize: 12, fontWeight: 600,
           backdropFilter: 'blur(10px)',
         }}
       >
@@ -258,52 +263,66 @@ export default function AuthPage() {
       <section
         style={{
           width: '100%', maxWidth: 440,
-          background: 'linear-gradient(180deg, rgba(15,24,44,0.85), rgba(8,14,26,0.95))',
-          border: '1px solid rgba(125,160,220,0.16)',
-          borderRadius: 28,
-          padding: 'clamp(24px, 4vw, 36px)',
-          boxShadow: '0 30px 80px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.04)',
+          background: `linear-gradient(180deg, ${INK_2} 0%, ${INK} 100%)`,
+          border: `1px solid ${BORDER}`,
+          borderRadius: 24,
+          padding: 'clamp(28px, 4vw, 40px)',
+          boxShadow: '0 30px 90px rgba(0,0,0,0.7), inset 0 1px 0 rgba(240,215,140,0.08)',
           backdropFilter: 'blur(20px)',
           position: 'relative',
           zIndex: 1,
         }}
       >
-        {/* Top gradient line */}
+        {/* Top gold line */}
         <div style={{
-          position: 'absolute', top: 0, insetInlineStart: 24, insetInlineEnd: 24, height: 1,
-          background: 'linear-gradient(90deg, transparent, rgba(56,189,248,0.7), transparent)',
+          position: 'absolute', top: 0, insetInlineStart: 32, insetInlineEnd: 32, height: 1,
+          background: `linear-gradient(90deg, transparent, ${GOLD}, transparent)`,
         }} />
 
-        {/* Brand */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24, direction: 'ltr', justifyContent: 'center' }}>
+        {/* Brand — real logo */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, marginBottom: 22 }}>
           <div style={{
-            width: 44, height: 44, borderRadius: 14,
-            background: 'linear-gradient(135deg, #38bdf8, #a78bfa)',
+            width: 96, height: 96, position: 'relative',
             display: 'grid', placeItems: 'center',
-            boxShadow: '0 10px 28px rgba(56,189,248,0.35)',
-            fontSize: 22,
-          }}>🐋</div>
-          <div style={{ textAlign: 'start' }}>
-            <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-0.01em', lineHeight: 1 }}>
-              Orca<span style={{ color: '#38bdf8' }}>Investment</span>
+            filter: 'drop-shadow(0 12px 28px rgba(212,175,90,0.32))',
+          }}>
+            <img
+              src={orcaBrandLogo.url}
+              alt="Orca Investment"
+              width={96}
+              height={96}
+              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+            />
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{
+              fontSize: 20, fontWeight: 800, letterSpacing: '0.18em',
+              color: GOLD_BRIGHT,
+              fontFamily: "'Poppins', system-ui, sans-serif",
+              lineHeight: 1,
+            }}>
+              ORCA
             </div>
-            <div style={{ fontSize: 9, color: '#6b7c99', letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: 4 }}>
-              {c.tagline}
+            <div style={{
+              fontSize: 9, color: TEXT_MUTED, letterSpacing: '0.36em',
+              textTransform: 'uppercase', marginTop: 6, fontWeight: 600,
+            }}>
+              Investment
             </div>
           </div>
         </div>
 
         <header style={{ marginBottom: 22, textAlign: 'center' }}>
           <div style={{
-            fontSize: 10, color: '#38bdf8', fontWeight: 800, letterSpacing: '0.24em',
+            fontSize: 10, color: GOLD, fontWeight: 700, letterSpacing: '0.28em',
             textTransform: 'uppercase', marginBottom: 8,
           }}>
             {mode === 'sign-in' ? c.welcomeBack : c.getStarted}
           </div>
-          <h1 style={{ fontSize: 22, margin: 0, fontWeight: 800, letterSpacing: '-0.01em' }}>
+          <h1 style={{ fontSize: 22, margin: 0, fontWeight: 700, letterSpacing: '-0.01em', color: TEXT }}>
             {mode === 'sign-in' ? c.signIn : c.signUp}
           </h1>
-          <p style={{ marginTop: 6, color: '#7a8aa3', fontSize: 12 }}>
+          <p style={{ marginTop: 6, color: TEXT_MUTED, fontSize: 12 }}>
             {mode === 'sign-in' ? c.signInSub : c.signUpSub}
           </p>
         </header>
@@ -312,14 +331,14 @@ export default function AuthPage() {
           onClick={handleGoogle}
           disabled={busy}
           style={{
-            width: '100%', padding: '13px 16px', borderRadius: 14,
-            border: '1px solid rgba(255,255,255,0.12)',
-            background: 'rgba(255,255,255,0.97)', color: '#0f172a',
+            width: '100%', padding: '13px 16px', borderRadius: 12,
+            border: `1px solid ${BORDER}`,
+            background: 'rgba(245,236,214,0.97)', color: '#0a0a0a',
             fontWeight: 600, fontSize: 14, cursor: busy ? 'wait' : 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
             opacity: busy ? 0.6 : 1, transition: 'transform .15s, box-shadow .15s',
           }}
-          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(0,0,0,0.35)'; }}
+          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = `0 12px 28px rgba(212,175,90,0.25)`; }}
           onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
         >
           <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.4 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.3 35.4 26.8 36 24 36c-5.3 0-9.7-3.3-11.3-8l-6.5 5C9.5 39.5 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.6l6.2 5.2c-.4.4 6.6-4.8 6.6-14.8 0-1.3-.1-2.3-.4-3.5z"/></svg>
@@ -327,9 +346,9 @@ export default function AuthPage() {
         </button>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0' }}>
-          <div style={{ flex: 1, height: 1, background: 'rgba(125,160,220,0.15)' }} />
-          <span style={{ color: '#5d7090', fontSize: 11, letterSpacing: '0.2em' }}>{c.or}</span>
-          <div style={{ flex: 1, height: 1, background: 'rgba(125,160,220,0.15)' }} />
+          <div style={{ flex: 1, height: 1, background: BORDER_SOFT }} />
+          <span style={{ color: TEXT_MUTED, fontSize: 11, letterSpacing: '0.24em' }}>{c.or}</span>
+          <div style={{ flex: 1, height: 1, background: BORDER_SOFT }} />
         </div>
 
         <form onSubmit={handleEmailSubmit} style={{ display: 'grid', gap: 10 }}>
@@ -355,7 +374,7 @@ export default function AuthPage() {
             <button type="button" onClick={() => setShowPassword(v => !v)}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
               style={{
-                background: 'none', border: 'none', color: '#90a3c0', cursor: 'pointer',
+                background: 'none', border: 'none', color: TEXT_MUTED, cursor: 'pointer',
                 padding: 6, display: 'inline-flex', alignItems: 'center',
               }}
             >
@@ -365,7 +384,7 @@ export default function AuthPage() {
 
           {mode === 'sign-up' && password.length > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} dir="ltr">
-              <div style={{ flex: 1, height: 4, background: 'rgba(125,160,220,0.12)', borderRadius: 999, overflow: 'hidden' }}>
+              <div style={{ flex: 1, height: 4, background: 'rgba(212,175,90,0.12)', borderRadius: 999, overflow: 'hidden' }}>
                 <div style={{
                   width: `${(strength.score / 4) * 100}%`, height: '100%',
                   background: strength.color, transition: 'width .25s ease, background .25s ease',
@@ -379,17 +398,18 @@ export default function AuthPage() {
 
           <button type="submit" disabled={busy}
             style={{
-              marginTop: 6, padding: '14px 16px', borderRadius: 14, border: 'none',
-              background: 'linear-gradient(135deg, #38bdf8, #818cf8)',
-              color: '#001023', fontWeight: 800, fontSize: 14, letterSpacing: '0.02em',
+              marginTop: 8, padding: '14px 16px', borderRadius: 12, border: `1px solid ${GOLD_DEEP}`,
+              background: `linear-gradient(135deg, ${GOLD_BRIGHT} 0%, ${GOLD} 50%, ${GOLD_DEEP} 100%)`,
+              color: '#1a1300', fontWeight: 800, fontSize: 14, letterSpacing: '0.04em',
+              textTransform: 'uppercase',
               cursor: busy ? 'wait' : 'pointer',
-              boxShadow: '0 12px 28px rgba(56,189,248,0.32)',
+              boxShadow: '0 12px 28px rgba(212,175,90,0.32), inset 0 1px 0 rgba(255,255,255,0.35)',
               opacity: busy ? 0.65 : 1,
               transition: 'transform .15s, box-shadow .15s',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}
-            onMouseEnter={e => { if (!busy) { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 16px 34px rgba(56,189,248,0.45)'; } }}
-            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(56,189,248,0.32)'; }}
+            onMouseEnter={e => { if (!busy) { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 16px 36px rgba(212,175,90,0.45), inset 0 1px 0 rgba(255,255,255,0.4)'; } }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(212,175,90,0.32), inset 0 1px 0 rgba(255,255,255,0.35)'; }}
           >
             {busy ? '…' : (mode === 'sign-in' ? c.submitSignIn : c.submitSignUp)}
             {!busy && <ArrowRight size={15} style={{ transform: isRTL ? 'scaleX(-1)' : undefined }} />}
@@ -397,23 +417,23 @@ export default function AuthPage() {
 
           {mode === 'sign-in' && (
             <button type="button" onClick={handleForgotPassword} disabled={busy}
-              style={{ background: 'none', border: 'none', color: '#90a3c0', cursor: 'pointer', fontSize: 12, padding: 4, marginTop: 2 }}>
+              style={{ background: 'none', border: 'none', color: TEXT_MUTED, cursor: 'pointer', fontSize: 12, padding: 4, marginTop: 2 }}>
               {c.forgot}
             </button>
           )}
         </form>
 
-        <p style={{ textAlign: 'center', marginTop: 18, fontSize: 12, color: '#90a3c0' }}>
+        <p style={{ textAlign: 'center', marginTop: 18, fontSize: 12, color: TEXT_MUTED }}>
           {mode === 'sign-in' ? c.noAccount : c.haveAccount}{' '}
           <button type="button"
             onClick={() => { setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in'); setPassword(''); }}
-            style={{ background: 'none', border: 'none', color: '#38bdf8', cursor: 'pointer', fontWeight: 700 }}>
+            style={{ background: 'none', border: 'none', color: GOLD_BRIGHT, cursor: 'pointer', fontWeight: 700 }}>
             {mode === 'sign-in' ? c.signUpCta : c.signInCta}
           </button>
         </p>
 
-        <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid rgba(125,160,220,0.1)', textAlign: 'center' }}>
-          <div style={{ fontSize: 10, color: '#5d7090', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+        <div style={{ marginTop: 16, paddingTop: 14, borderTop: `1px solid ${BORDER_SOFT}`, textAlign: 'center' }}>
+          <div style={{ fontSize: 10, color: TEXT_MUTED, letterSpacing: '0.18em', textTransform: 'uppercase' }}>
             🔒 {c.secured}
           </div>
         </div>
@@ -424,7 +444,7 @@ export default function AuthPage() {
           onClick={() => { setIdleGate(false); try { window.history.replaceState({}, '', '/auth'); } catch { /* noop */ } }}
           style={{
             position: 'fixed', inset: 0, zIndex: 50,
-            background: 'radial-gradient(circle at 50% 40%, rgba(8,14,26,0.92), rgba(0,0,0,0.96))',
+            background: 'radial-gradient(circle at 50% 40%, rgba(10,10,10,0.94), rgba(0,0,0,0.98))',
             backdropFilter: 'blur(14px)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             direction: isRTL ? 'rtl' : 'ltr',
@@ -440,28 +460,29 @@ export default function AuthPage() {
             onClick={e => e.stopPropagation()}
             style={{
               width: 'min(440px, 92vw)', textAlign: 'center', padding: '40px 28px',
-              background: 'linear-gradient(180deg, rgba(15,24,44,0.92), rgba(8,14,26,0.98))',
-              border: '1px solid rgba(125,160,220,0.22)', borderRadius: 28,
-              boxShadow: '0 40px 100px rgba(0,0,0,0.7)',
+              background: `linear-gradient(180deg, ${INK_2} 0%, ${INK} 100%)`,
+              border: `1px solid ${BORDER}`, borderRadius: 24,
+              boxShadow: '0 40px 100px rgba(0,0,0,0.8)',
               animation: 'orca-auth-rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
             }}
           >
+            <img
+              src={orcaBrandLogo.url}
+              alt="Orca Investment"
+              width={80}
+              height={80}
+              style={{ width: 80, height: 80, objectFit: 'contain', margin: '0 auto 14px', display: 'block', filter: 'drop-shadow(0 12px 28px rgba(212,175,90,0.4))' }}
+            />
             <div style={{
-              width: 72, height: 72, borderRadius: 22, margin: '0 auto 18px',
-              background: 'linear-gradient(135deg, #38bdf8, #a78bfa)',
-              display: 'grid', placeItems: 'center', fontSize: 34,
-              boxShadow: '0 18px 44px rgba(56,189,248,0.45)',
-            }}>🐋</div>
-            <div style={{
-              fontSize: 10, letterSpacing: '0.28em', color: '#38bdf8',
-              fontWeight: 800, textTransform: 'uppercase', marginBottom: 8,
+              fontSize: 10, letterSpacing: '0.32em', color: GOLD,
+              fontWeight: 700, textTransform: 'uppercase', marginBottom: 8,
             }}>
               {lang === 'he' ? 'הפלטפורמה ננעלה' : 'Session locked'}
             </div>
-            <h2 style={{ fontSize: 24, margin: '0 0 10px', fontWeight: 800, letterSpacing: '-0.01em', color: '#e8eef9' }}>
-              {lang === 'he' ? 'ברוך שובך ל-OrcaInvestment' : 'Welcome back to OrcaInvestment'}
+            <h2 style={{ fontSize: 22, margin: '0 0 10px', fontWeight: 700, letterSpacing: '-0.01em', color: TEXT }}>
+              {lang === 'he' ? 'ברוך שובך ל-Orca Investment' : 'Welcome back to Orca Investment'}
             </h2>
-            <p style={{ fontSize: 13, color: '#7a8aa3', lineHeight: 1.7, margin: '0 0 24px' }}>
+            <p style={{ fontSize: 13, color: TEXT_MUTED, lineHeight: 1.7, margin: '0 0 24px' }}>
               {lang === 'he'
                 ? 'לאבטחתך, ננעלת המערכת לאחר חוסר פעילות. לחץ להמשיך לכניסה לחשבון שלך.'
                 : "For your security, the session was locked after inactivity. Tap to continue and sign back in."}
@@ -469,13 +490,13 @@ export default function AuthPage() {
             <button
               onClick={() => { setIdleGate(false); try { window.history.replaceState({}, '', '/auth'); } catch { /* noop */ } }}
               style={{
-                width: '100%', padding: '14px 18px', borderRadius: 16,
-                border: 'none', cursor: 'pointer',
-                background: 'linear-gradient(135deg, #38bdf8, #a78bfa)',
-                color: '#04101f', fontSize: 15, fontWeight: 800,
-                boxShadow: '0 14px 36px rgba(56,189,248,0.45)',
+                width: '100%', padding: '14px 18px', borderRadius: 14,
+                border: `1px solid ${GOLD_DEEP}`, cursor: 'pointer',
+                background: `linear-gradient(135deg, ${GOLD_BRIGHT}, ${GOLD}, ${GOLD_DEEP})`,
+                color: '#1a1300', fontSize: 15, fontWeight: 800,
+                boxShadow: '0 14px 36px rgba(212,175,90,0.42), inset 0 1px 0 rgba(255,255,255,0.35)',
                 fontFamily: "'Poppins', system-ui, sans-serif",
-                letterSpacing: '0.02em',
+                letterSpacing: '0.04em', textTransform: 'uppercase',
               }}
             >
               {lang === 'he' ? 'המשך לכניסה →' : 'Continue to sign in →'}
