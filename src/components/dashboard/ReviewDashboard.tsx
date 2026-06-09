@@ -8,6 +8,7 @@ import { AdaptiveExpectancyCard, AdaptiveQuickStats } from '@/components/trading
 import { ChartWrapper, EXPLANATIONS, type ChartExplanation } from '@/components/trading/ChartWrapper';
 import { FeatureHint } from '@/components/trading/FeatureHint';
 import DashboardAdvancedLab from './DashboardAdvancedLab';
+import { TierGate } from '@/components/billing/TierGate';
 
 interface ReviewDashboardProps {
   T: TradingTheme;
