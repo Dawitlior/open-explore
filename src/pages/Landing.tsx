@@ -401,7 +401,7 @@ function HeroMock() {
         {/* Top bar */}
         <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: LINE }}>
           <div className="flex items-center gap-2">
-            <img src={orcaLogoAsset.url} alt="" className="w-5 h-5" />
+            <BrandMark height={28} />
             <span className="text-xs font-bold tracking-wider" style={{ color: TXT, fontFamily: FONT_DISPLAY }}>ORCA</span>
           </div>
           <div className="flex gap-1.5">
@@ -1004,7 +1004,7 @@ function FinalCta() {
           style={{ background: `${GOLD}22` }}
         />
         <div className="relative">
-          <img src={orcaLogoAsset.url} alt="" className="w-16 h-16 mx-auto mb-5 drop-shadow-[0_0_20px_rgba(201,168,76,0.5)]" />
+          <BrandMark height={82} className="mx-auto mb-5" />
           <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4" style={{ fontFamily: FONT_DISPLAY, color: TXT }}>
             תפסיק לתעד. תתחיל להבין.
           </h2>
