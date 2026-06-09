@@ -54,7 +54,7 @@ export default function Landing() {
   return (
     <div
       dir="rtl"
-      className="min-h-screen antialiased overflow-x-hidden"
+      className="min-h-screen antialiased"
       style={{
         color: TXT,
         background: `
@@ -63,9 +63,20 @@ export default function Landing() {
           linear-gradient(180deg, ${BG} 0%, #04101f 100%)
         `,
         fontFamily: FONT_BODY,
+        // hard-stop any rogue horizontal scroll on mobile (floating chips, gradients)
+        overflowX: 'clip',
+        maxWidth: '100vw',
       }}
     >
+      {/* Mobile-only scroll/overflow hardening (root, body, html) */}
+      <style>{`
+        html, body { overflow-x: clip !important; max-width: 100vw; overscroll-behavior-x: none; }
+        @media (max-width: 767px) {
+          body { -webkit-text-size-adjust: 100%; }
+        }
+      `}</style>
       <Nav />
+      <FreeAccessBanner />
       <Hero />
       <Stats />
       <BrokerTicker />
@@ -81,6 +92,40 @@ export default function Landing() {
     </div>
   );
 }
+
+/* ──────────────── FREE ACCESS BANNER ──────────────── */
+function FreeAccessBanner() {
+  return (
+    <div
+      style={{
+        position: 'relative',
+        zIndex: 40,
+        background: `linear-gradient(90deg, rgba(16,185,129,0.18), rgba(201,168,76,0.18))`,
+        borderBottom: `1px solid ${LINE}`,
+        padding: '10px 16px',
+        textAlign: 'center',
+        fontFamily: FONT_DISPLAY,
+        fontSize: 12.5,
+        color: TXT,
+        lineHeight: 1.45,
+        letterSpacing: '0.01em',
+      }}
+    >
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+        <span
+          style={{
+            display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
+            background: '#10b981', boxShadow: '0 0 10px #10b981',
+            animation: 'pulse 2s ease-in-out infinite',
+          }}
+        />
+        <strong style={{ color: GOLD_SOFT, fontWeight: 800 }}>חינמי לתקופה מוגבלת</strong>
+        <span style={{ color: TXT_2 }}>· ההתחברות והשימוש בפלטפורמה ללא עלות בתקופה הקרובה</span>
+      </span>
+    </div>
+  );
+}
+
 
 /* ──────────────── BRAND ──────────────── */
 function Logo({ size = 36 }: { size?: number }) {
