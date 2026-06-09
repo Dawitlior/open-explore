@@ -9,6 +9,8 @@ import { sumR, formatR } from '@/lib/r-multiple';
 import { RProxyBanner } from './RProxyBanner';
 import { useMonthEconomicEvents } from '@/hooks/use-month-economic-events';
 import { MacroEventStrip, MacroDot } from '@/components/economic/MacroEventStrip';
+import { RecalibrationBanner } from '@/components/trader-mind/RecalibrationBanner';
+import { useRecalibrationTrigger } from '@/hooks/use-recalibration-trigger';
 
 
 type Props = {
