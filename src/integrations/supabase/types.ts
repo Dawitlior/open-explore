@@ -50,6 +50,42 @@ export type Database = {
         }
         Relationships: []
       }
+      client_errors: {
+        Row: {
+          created_at: string
+          id: string
+          last_seen_at: string
+          message: string
+          occurrences: number
+          route: string | null
+          stack_hash: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_seen_at?: string
+          message: string
+          occurrences?: number
+          route?: string | null
+          stack_hash: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_seen_at?: string
+          message?: string
+          occurrences?: number
+          route?: string | null
+          stack_hash?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       consent_log: {
         Row: {
           choices: Json
