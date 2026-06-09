@@ -1,6 +1,9 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import { installGlobalErrorTelemetry } from "./lib/telemetry";
+
+installGlobalErrorTelemetry();
 
 // Capture beforeinstallprompt globally so the SettingsHub "Install Now"
 // button can trigger the native PWA install dialog at any time.

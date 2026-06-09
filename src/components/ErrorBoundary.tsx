@@ -1,4 +1,5 @@
 import { Component, type ReactNode } from 'react';
+import { reportClientError } from '@/lib/telemetry';
 
 interface Props { children: ReactNode; }
 interface State { error: Error | null; }
@@ -12,6 +13,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: unknown) {
     console.error('[ErrorBoundary]', error, info);
+    reportClientError(error);
   }
 
   reset = () => this.setState({ error: null });

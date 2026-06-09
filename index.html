@@ -3,6 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
+    <!-- CSP — report-only first; tighten to enforcing after telemetry confirms no breakage. -->
+    <meta http-equiv="Content-Security-Policy-Report-Only" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.lovable.dev https://*.lovableproject.com https://cdn.gpteng.co; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.lovable.dev https://*.lovableproject.com https://fonts.googleapis.com https://fonts.gstatic.com; frame-ancestors 'self' https://*.lovable.dev https://*.lovableproject.com; base-uri 'self'; form-action 'self';" />
     <link rel="icon" type="image/png" href="/orca-logo.png" />
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#06d6a0" />
