@@ -3746,7 +3746,7 @@ const MorningLockOverlay = ({ onDone, isRTL }: { onDone: () => void; isRTL: bool
     <div style={{
       position: 'fixed', inset: 0, zIndex: 9998, pointerEvents: 'none',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      overflow: 'hidden', width: '100vw', height: '100vh',
+      overflow: 'hidden', width: '100vw', height: '100dvh',
     }}>
       <div style={{
         position: 'absolute', inset: 0,
@@ -3877,7 +3877,7 @@ const EODLockOverlay = ({ onDone, isRTL }: { onDone: () => void; isRTL: boolean 
   }, []);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 9998, pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', width: '100vw', height: '100vh', maxWidth: '100vw' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9998, pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', width: '100vw', height: '100dvh', maxWidth: '100vw' }}>
       <div style={{ position: 'absolute', inset: 0, background: 'rgba(5,8,20,0.92)', opacity: step >= 1 ? 1 : 0, transition: 'opacity 0.5s ease', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }} />
       <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: step >= 2 && step < 5 ? 0.25 : 0, transition: 'opacity 0.6s ease' }} />
       <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', width: '85%', maxWidth: 360, opacity: step >= 3 ? 1 : 0, transform: step >= 3 ? 'scale(1)' : 'scale(0.85)', transition: 'all 0.5s cubic-bezier(0.16,1,0.3,1)' }}>

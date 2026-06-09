@@ -12,7 +12,7 @@ const Terms = () => {
       dir="rtl"
       lang="he"
       style={{
-        minHeight: '100vh',
+        minHeight: '100dvh',
         background:
           'radial-gradient(1200px 600px at 50% -10%, rgba(0,242,255,0.08), transparent 60%), #061326',
         color: '#e6f4ff',

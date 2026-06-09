@@ -40,7 +40,7 @@ export default function ResetPassword() {
   };
 
   return (
-    <main dir="rtl" style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#061326', color: '#e8eef9', padding: 24, fontFamily: "'Poppins', system-ui, sans-serif" }}>
+    <main dir="rtl" style={{ minHeight: '100dvh', display: 'grid', placeItems: 'center', background: '#061326', color: '#e8eef9', padding: 24, fontFamily: "'Poppins', system-ui, sans-serif" }}>
       <section style={{ width: '100%', maxWidth: 420, background: 'linear-gradient(180deg, rgba(13,28,50,0.85), rgba(8,18,36,0.92))', border: '1px solid rgba(120,160,220,0.18)', borderRadius: 20, padding: 32, boxShadow: '0 30px 80px rgba(0,0,0,0.5)' }}>
         <h1 style={{ margin: 0, fontSize: 24, textAlign: 'center' }}>איפוס סיסמה</h1>
         <p style={{ color: '#90a3c0', fontSize: 13, textAlign: 'center' }}>בחר/י סיסמה חדשה לחשבון שלך</p>

@@ -198,7 +198,7 @@ export default function AuthPage() {
     <main
       dir={isRTL ? 'rtl' : 'ltr'}
       style={{
-        minHeight: '100vh',
+        minHeight: '100dvh',
         display: 'grid',
         placeItems: 'center',
         background: '#06080f',
