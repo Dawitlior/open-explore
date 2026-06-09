@@ -1,5 +1,7 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { haptics } from '@/lib/haptics';
+
 
 export interface MobileBottomNavProps {
   T: any;
@@ -58,7 +60,12 @@ export const MobileBottomNav = ({
     }
   };
 
-  return (
+  // Mount only on client so createPortal has a target.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  if (!mounted) return null;
+
+  const nav = (
     <nav
       dir={isRTL ? 'rtl' : 'ltr'}
       aria-label={isRTL ? 'ניווט תחתון' : 'Bottom navigation'}
@@ -82,6 +89,7 @@ export const MobileBottomNav = ({
         fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
       }}
     >
+
       {slots.map(slot => {
         const isActive = slot.active;
         const isCenter = slot.highlight;
