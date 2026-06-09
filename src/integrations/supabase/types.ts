@@ -419,6 +419,39 @@ export type Database = {
         }
         Relationships: []
       }
+      trader_mind_sessions: {
+        Row: {
+          archetype: string | null
+          completed_at: string
+          created_at: string
+          id: string
+          payload: Json
+          updated_at: string
+          user_id: string
+          version: string
+        }
+        Insert: {
+          archetype?: string | null
+          completed_at?: string
+          created_at?: string
+          id?: string
+          payload?: Json
+          updated_at?: string
+          user_id: string
+          version?: string
+        }
+        Update: {
+          archetype?: string | null
+          completed_at?: string
+          created_at?: string
+          id?: string
+          payload?: Json
+          updated_at?: string
+          user_id?: string
+          version?: string
+        }
+        Relationships: []
+      }
       trades: {
         Row: {
           account_label: string | null
