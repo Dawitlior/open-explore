@@ -3,7 +3,7 @@
  * ─────────────────────────────────────────────────────────────
  * Single aggregator for the dashboard data layer. Children should
  * consume sliced data via this hook (or selectors on top) instead
- * of calling useTrades / useRiskLimits / useOracleVector directly.
+ * of calling useTrades / useRiskLimits directly.
  *
  * This is the *engine half* of the engine/renderer split:
  *   engine: pure data, no JSX, fully testable
