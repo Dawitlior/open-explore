@@ -2129,9 +2129,10 @@ function TraderMindSummary({
     : '';
 
   // Auto-fit iframe height to its content (it's same-origin via srcDoc).
-  const iframeRef = React.useRef<HTMLIFrameElement | null>(null);
-  const [iframeH, setIframeH] = React.useState(900);
-  React.useEffect(() => {
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const [iframeH, setIframeH] = useState(900);
+  useEffect(() => {
+
     if (!srcDoc) return;
     const fit = () => {
       const f = iframeRef.current;
