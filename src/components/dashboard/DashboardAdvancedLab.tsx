@@ -10,7 +10,7 @@
 //
 // Reuses computeMonteCarlo / computeMonthlyBox / fmt helpers from weekly-review.
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar, ComposedChart,
   CartesianGrid, XAxis, YAxis, Tooltip, ReferenceLine, Cell, Area,
@@ -22,6 +22,7 @@ import {
   computeMonteCarlo, computeMonthlyBox, fmtValue, fmtShort, type Unit,
 } from '@/components/weekly-review/lib/chart-compute';
 import { parseTradeDate } from '@/components/weekly-review/lib/week-key';
+import { useDisplayMode } from '@/lib/display-mode';
 
 interface Props {
   T: TradingTheme;
@@ -33,7 +34,9 @@ const valueOf = (t: Trade, unit: Unit) =>
   unit === 'USD' ? (Number(t.pnl) || 0) : (Number(t.returnR) || 0);
 
 export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
-  const [unit, setUnit] = useState<Unit>('R');
+  // Follow the global Dual-Currency Engine — no per-chart override.
+  const { displayMode } = useDisplayMode();
+  const unit: Unit = displayMode === 'MONEY' ? 'USD' : 'R';
   const isUSD = unit === 'USD';
   const accent = T.accent.cyan;
   const muted  = T.text.muted;
