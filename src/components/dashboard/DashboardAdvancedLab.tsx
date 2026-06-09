@@ -134,7 +134,7 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
 
   // Pull labels
   const L = isRTL ? {
-    title: '◆ מעבדת אנליטיקה מתקדמת', sub: 'גרפים כמותיים — תואמים R ודולר',
+    title: '◆ מעבדת אנליטיקה מתקדמת', sub: `גרפים כמותיים — יחידה: ${isUSD ? 'דולר ($)' : 'R-Multiple'}`,
     mc: 'סימולציית מונטה קרלו · n=100',
     box: 'התפלגות חודשית (Box Plot)',
     hour: 'ביצוע לפי שעת יום',
@@ -144,7 +144,7 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
     iqr: 'IQR', median: 'חציון', equity: 'הון', prob2: 'הסתברות חיובי %',
     avgRisk: 'סיכון ממוצע %', avgOut: 'תשואה ממוצעת', noVel: 'אין נתונים',
   } : {
-    title: '◆ ADVANCED ANALYTICS LAB', sub: 'Quant charts — R & $ aware',
+    title: '◆ ADVANCED ANALYTICS LAB', sub: `Quant charts — unit: ${isUSD ? 'USD ($)' : 'R-Multiple'}`,
     mc: 'Monte Carlo · n=100',
     box: 'Monthly Box Plot',
     hour: 'Hour-of-Day Performance',
@@ -157,7 +157,7 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
 
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} style={{ marginTop: 20, display: 'grid', gap: 14 }}>
-      {/* Header + R/$ toggle */}
+      {/* Header — unit is locked to the global Dual-Currency Engine */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         flexWrap: 'wrap', gap: 8,
@@ -168,23 +168,21 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
           </div>
           <div style={{ fontSize: 13, color: fg, fontWeight: 600, marginTop: 2 }}>{L.sub}</div>
         </div>
-        <div style={{ display: 'inline-flex', padding: 3, background: T.bg.tertiary,
-                      border: `1px solid ${border}`, borderRadius: 999 }}>
-          {(['R', 'USD'] as const).map(u => {
-            const active = u === unit;
-            return (
-              <button key={u} onClick={() => setUnit(u)} style={{
-                all: 'unset', cursor: 'pointer',
-                minWidth: 42, padding: '4px 14px', borderRadius: 999, textAlign: 'center',
-                background: active ? `${accent}22` : 'transparent',
-                border: `1px solid ${active ? accent + '88' : 'transparent'}`,
-                color: active ? accent : muted,
-                fontFamily: "'JetBrains Mono', monospace", fontWeight: 800, fontSize: 12,
-              }}>{u === 'USD' ? '$' : 'R'}</button>
-            );
-          })}
+        <div
+          title={isRTL ? 'יחידת התצוגה נקבעת על-ידי מתג ה-$/R הראשי' : 'Display unit is controlled by the main $/R toggle'}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            padding: '4px 12px', background: T.bg.tertiary,
+            border: `1px solid ${border}`, borderRadius: 999,
+            color: accent, fontFamily: "'JetBrains Mono', monospace",
+            fontWeight: 800, fontSize: 11, letterSpacing: 1,
+          }}
+        >
+          <span style={{ opacity: 0.55, fontSize: 9 }}>{isRTL ? 'יחידה' : 'UNIT'}</span>
+          <span>{isUSD ? '$' : 'R'}</span>
         </div>
       </div>
+
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 14 }}>
         {/* 1 · Monte Carlo */}
