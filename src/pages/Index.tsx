@@ -145,6 +145,23 @@ const Index = () => {
   const [editingTrade, setEditingTrade] = useState<Trade | null>(null);
   const [showReset, setShowReset] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showTraderMind, setShowTraderMind] = useState(false);
+  const { isCalibrated: tmCalibrated, archetype: tmArchetype } = useTraderMind();
+  useEffect(() => {
+    const onOpen = () => setShowTraderMind(true);
+    window.addEventListener('orca:open-trader-mind', onOpen);
+    return () => window.removeEventListener('orca:open-trader-mind', onOpen);
+  }, []);
+  useEffect(() => {
+    void (async () => {
+      const { scopedStorage } = await import('@/lib/scoped-storage');
+      const pending = await scopedStorage.getItem('orca-trader-mind-prompt-pending');
+      if (pending === '1' && !tmCalibrated) {
+        setTimeout(() => setShowTraderMind(true), 1200);
+        void scopedStorage.removeItem('orca-trader-mind-prompt-pending');
+      }
+    })();
+  }, [tmCalibrated]);
   const [aiInsights, setAiInsights] = useState<ReturnType<typeof generateInsights>>([]);
   const [aiLoading, setAiLoading] = useState(false);
   const [showThemeMenu, setShowThemeMenu] = useState(false);
