@@ -608,22 +608,14 @@ html, body, .orca-glass, .orca-panel, [class*="bg-"], [class*="text-"] {
   .orca-mobile-fullh { min-height: 100dvh; }
 }
 
-/* ─── Mobile viewport lock — prevents double scrollbars & iOS rubber-band drift ─── */
+/* ─── App-shell viewport lock — prevents double scrollbars & iOS rubber-band drift
+   without clipping public long pages like /welcome on mobile/tablet. ─── */
 @media (max-width: 1024px) {
-  html, body {
-    height: 100dvh;
-    max-height: 100dvh;
-    overflow: hidden;
-    overscroll-behavior: none;
-  }
-  #root {
-    height: 100dvh;
-    max-height: 100dvh;
-    overflow: hidden;
-  }
+  html, body { overscroll-behavior-x: none; }
   .orca-app-shell {
     height: 100dvh !important;
     max-height: 100dvh !important;
+    overflow: hidden !important;
   }
   /* The single scroll surface lives inside the main column */
   .orca-app-shell > main,

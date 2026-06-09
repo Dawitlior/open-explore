@@ -53,6 +53,7 @@ export default function Landing() {
 
   return (
     <div
+      data-public-landing="true"
       dir="rtl"
       className="min-h-screen antialiased"
       style={{
@@ -65,12 +66,22 @@ export default function Landing() {
         fontFamily: FONT_BODY,
         // hard-stop any rogue horizontal scroll on mobile (floating chips, gradients)
         overflowX: 'clip',
+        overflowY: 'visible',
         maxWidth: '100vw',
       }}
     >
-      {/* Mobile-only scroll/overflow hardening (root, body, html) */}
+      {/* Public page must use document scroll, not the locked app-shell scroll model. */}
       <style>{`
-        html, body { overflow-x: clip !important; max-width: 100vw; overscroll-behavior-x: none; }
+        html, body, #root {
+          height: auto !important;
+          min-height: 100% !important;
+          max-height: none !important;
+          overflow-y: auto !important;
+          overflow-x: clip !important;
+          max-width: 100vw;
+          overscroll-behavior-x: none;
+        }
+        body { position: static !important; }
         @media (max-width: 767px) {
           body { -webkit-text-size-adjust: 100%; }
         }
