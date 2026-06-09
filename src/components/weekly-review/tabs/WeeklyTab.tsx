@@ -414,11 +414,12 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
         <SectionTitle title={L.market} emoji="🌍" T={T} isRTL={isRTL} accent={cyan} />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
           <Labeled label={L.env} muted={muted} isRTL={isRTL}>
-            <SelectField value={draft.env} options={ENV_OPTIONS} placeholder={L.envPh} onChange={v => update({ env: v })} input={input} fg={fg} />
+            <SelectField value={draft.env} options={ENV_OPTIONS} placeholder={L.envPh} onChange={v => update({ env: v })} input={input} fg={fg} optionBg={T?.bg?.secondary || T?.bg?.primary} muted={muted} />
           </Labeled>
           <Labeled label={L.pos} muted={muted} isRTL={isRTL}>
-            <SelectField value={draft.pos} options={POS_OPTIONS} placeholder={L.envPh} onChange={v => update({ pos: v })} input={input} fg={fg} />
+            <SelectField value={draft.pos} options={POS_OPTIONS} placeholder={L.envPh} onChange={v => update({ pos: v })} input={input} fg={fg} optionBg={T?.bg?.secondary || T?.bg?.primary} muted={muted} />
           </Labeled>
+
         </div>
       </section>
 
