@@ -1,0 +1,166 @@
+/**
+ * Marketing-scoped styles. Live ONLY under `.marketing-root`.
+ * Zero impact on the gated app.
+ *
+ * Font policy (per approved plan v2):
+ *   --font-display = Poppins (already loaded in index.html)
+ *   --font-mono    = IBM Plex Mono (already loaded)
+ *   --font-body    = Heebo (already loaded, RTL-first)
+ * No new font loads.
+ */
+
+.marketing-root {
+  --font-display: 'Poppins', 'Heebo', system-ui, sans-serif;
+  --font-body:    'Heebo', 'Poppins', system-ui, sans-serif;
+  --font-mono:    'IBM Plex Mono', 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Midnight (default) */
+  --mk-bg:       #060b14;
+  --mk-bg-elev:  #0b1426;
+  --mk-surface:  #0f1b30;
+  --mk-border:   #1c2b45;
+  --mk-text:     #e8f0fb;
+  --mk-muted:    #8aa0bf;
+  --mk-primary:  #19d4c8;
+  --mk-primary-2:#0fa3a3;
+  --mk-accent:   #f2c14e;
+  --mk-good:     #22c98a;
+  --mk-bad:      #f0556b;
+  --mk-grid:     #11203a;
+
+  color: var(--mk-text);
+  background: var(--mk-bg);
+  font-family: var(--font-body);
+  font-feature-settings: 'kern' 1, 'liga' 1;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.marketing-root.theme-indigo {
+  --mk-bg: #0a0a16; --mk-bg-elev: #12122a; --mk-surface: #181838; --mk-border: #272752;
+  --mk-text: #ecebff; --mk-muted: #9a98c8; --mk-primary: #7c6cff; --mk-primary-2: #5a44e0;
+  --mk-accent: #f2c14e; --mk-good: #4ad6a0; --mk-bad: #ff6480; --mk-grid: #1c1c3e;
+}
+
+.marketing-root.theme-platinum {
+  --mk-bg: #f4f6fb; --mk-bg-elev: #ffffff; --mk-surface: #ffffff; --mk-border: #dde3ee;
+  --mk-text: #0d1626; --mk-muted: #5a6478; --mk-primary: #0fa3a3; --mk-primary-2: #0d8a8a;
+  --mk-accent: #c8932a; --mk-good: #109e6e; --mk-bad: #d84459; --mk-grid: #e6ebf3;
+}
+
+.marketing-root h1,
+.marketing-root h2,
+.marketing-root h3,
+.marketing-root .mk-display {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.marketing-root .mk-mono,
+.marketing-root .mk-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Surfaces */
+.marketing-root .mk-card {
+  background: color-mix(in srgb, var(--mk-surface) 92%, transparent);
+  border: 1px solid var(--mk-border);
+  border-radius: 16px;
+  backdrop-filter: blur(8px);
+}
+
+/* Buttons */
+.marketing-root .mk-btn-primary {
+  background: linear-gradient(135deg, var(--mk-primary), var(--mk-primary-2));
+  color: #00171a;
+  font-weight: 700;
+  border-radius: 12px;
+  padding: 12px 22px;
+  position: relative;
+  overflow: hidden;
+  transition: transform .15s ease, box-shadow .25s ease;
+  box-shadow: 0 8px 28px -10px color-mix(in srgb, var(--mk-primary) 55%, transparent);
+}
+.marketing-root .mk-btn-primary:hover { transform: translateY(-1px); }
+.marketing-root .mk-btn-primary::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.35) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform .9s ease;
+}
+.marketing-root .mk-btn-primary:hover::after { transform: translateX(120%); }
+
+.marketing-root .mk-btn-ghost {
+  background: transparent;
+  color: var(--mk-text);
+  border: 1px solid var(--mk-border);
+  border-radius: 12px;
+  padding: 12px 22px;
+  transition: background .15s ease, border-color .15s ease;
+}
+.marketing-root .mk-btn-ghost:hover {
+  background: color-mix(in srgb, var(--mk-surface) 70%, transparent);
+  border-color: var(--mk-primary);
+}
+
+/* Visible placeholder highlight (per plan: outline so it's never missed pre-launch) */
+.marketing-root [data-placeholder='true'] {
+  outline: 1px dashed var(--mk-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+  padding: 0 4px;
+  color: var(--mk-accent);
+  font-family: var(--font-mono);
+}
+
+/* Aurora hero background */
+.marketing-root .mk-aurora {
+  position: absolute; inset: 0; pointer-events: none; overflow: hidden;
+}
+.marketing-root .mk-aurora::before {
+  content: '';
+  position: absolute; inset: -40%;
+  background:
+    radial-gradient(40% 30% at 30% 30%, color-mix(in srgb, var(--mk-primary) 35%, transparent), transparent 70%),
+    radial-gradient(35% 28% at 70% 60%, color-mix(in srgb, var(--mk-primary-2) 30%, transparent), transparent 70%),
+    radial-gradient(30% 25% at 50% 90%, color-mix(in srgb, var(--mk-accent) 18%, transparent), transparent 70%);
+  filter: blur(40px);
+  animation: mkAurora 18s ease-in-out infinite alternate;
+}
+@keyframes mkAurora {
+  0%   { transform: translate3d(0,0,0) scale(1); }
+  100% { transform: translate3d(2%, -1%, 0) scale(1.06); }
+}
+
+/* Subtle grid overlay */
+.marketing-root .mk-grid-bg {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    linear-gradient(var(--mk-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--mk-grid) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(circle at center, black 30%, transparent 75%);
+  opacity: .35;
+}
+
+/* Reveal-on-scroll */
+.marketing-root .mk-reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity .6s cubic-bezier(.16,1,.3,1), transform .6s cubic-bezier(.16,1,.3,1);
+}
+.marketing-root .mk-reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marketing-root .mk-aurora::before { animation: none; }
+  .marketing-root .mk-reveal { transition: none; opacity: 1; transform: none; }
+}
+
+/* Anchor offset for sticky nav */
+.marketing-root section[id] { scroll-margin-top: 88px; }
