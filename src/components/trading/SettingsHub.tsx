@@ -46,7 +46,7 @@ interface SettingsHubProps {
   trades: Trade[];
 }
 
-type TabId = 'account' | 'appearance' | 'theme-studio' | 'dashboard' | 'kpis' | 'risk' | 'interface' | 'sounds' | 'trading' | 'exchanges' | 'data' | 'install' | 'legal';
+type TabId = 'account' | 'appearance' | 'theme-studio' | 'dashboard' | 'kpis' | 'risk' | 'interface' | 'sounds' | 'trading' | 'exchanges' | 'data' | 'trader-mind' | 'install' | 'legal';
 
 const ACCENT_PRESETS = [
   '#00f2ff', '#06d6a0', '#3b82f6', '#8b5cf6',
@@ -186,6 +186,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
     { id: 'trading', icon: Target, label: { he: 'ברירות מחדל למסחר', en: 'Trading Defaults' }, group: { he: 'מסחר', en: 'Trading' }, desc: { he: 'אחוז סיכון ברירת מחדל ויעד R לעסקה חדשה', en: 'Default risk percent and R target for new trades' } },
     { id: 'exchanges', icon: Plug, label: { he: 'בורסות מחוברות', en: 'Connected Exchanges' }, group: { he: 'מסחר', en: 'Trading' }, desc: { he: 'חבר Bybit, Binance ו־IBKR לכספת מאובטחת', en: 'Connect Bybit, Binance and IBKR to the secure vault' } },
     { id: 'data', icon: Database, label: { he: 'נתונים וגיבוי', en: 'Data & Backup' }, group: { he: 'מסחר', en: 'Trading' }, desc: { he: 'יצוא, סטטיסטיקות וניהול אחסון', en: 'Export, stats and storage management' } },
+    { id: 'trader-mind', icon: Brush, label: { he: 'תודעת הסוחר', en: 'Trader Mind' }, group: { he: 'מסחר', en: 'Trading' }, desc: { he: 'אבחון התנהגותי וכיול ה-Coach', en: 'Behavioral diagnostic and Coach calibration' } },
     
     { id: 'install', icon: Download, label: { he: 'הורד אפליקציה', en: 'Download App' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'התקן את אורקה על הטלפון או המחשב', en: 'Install Orca on your phone or desktop' } },
     { id: 'legal', icon: Scale, label: { he: 'משפטי ונגישות', en: 'Legal & Accessibility' }, group: { he: 'אישי', en: 'Personal' }, desc: { he: 'תנאי שימוש, פרטיות, נגישות והסרת אחריות', en: 'Terms, privacy, accessibility and disclaimers' } },
@@ -1737,6 +1738,11 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
             {tab === 'install' && (
               <InstallGuide T={T} t={t} isRTL={isRTL} />
             )}
+
+            {tab === 'trader-mind' && (
+              <TraderMindDiagnosticsTab T={T} isRTL={isRTL} t={t} card={card} sectionTitle={sectionTitle} sectionHint={sectionHint} />
+            )}
+
 
 
             {tab === 'legal' && (
