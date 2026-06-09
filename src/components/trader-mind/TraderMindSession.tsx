@@ -131,8 +131,9 @@ async function persistComplete(payload: unknown) {
       user_id: u.user.id,
       archetype,
       version: 'v1',
-      payload: (payload ?? {}) as Record<string, unknown>,
+      payload: (payload ?? {}) as never,
     });
+    try { window.dispatchEvent(new CustomEvent('orca:trader-mind-complete')); } catch { /* noop */ }
   } catch (e) {
     console.warn('[trader-mind] failed to persist session', e);
   }
