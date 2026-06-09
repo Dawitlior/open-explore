@@ -9,8 +9,7 @@ import { sumR, formatR } from '@/lib/r-multiple';
 
 import { useMonthEconomicEvents } from '@/hooks/use-month-economic-events';
 import { MacroEventStrip, MacroDot } from '@/components/economic/MacroEventStrip';
-import { RecalibrationBanner } from '@/components/trader-mind/RecalibrationBanner';
-import { useRecalibrationTrigger } from '@/hooks/use-recalibration-trigger';
+
 
 
 type Props = {
@@ -28,10 +27,8 @@ const CalendarHubPage_Impl = ({ T, isRTL, trades, t, isMobile, onGenerateInsight
   const now = new Date();
   const [calMonth, setCalMonth] = useState(now.getMonth());
   const [calYear, setCalYear] = useState(now.getFullYear());
-  const [calHoverDay, setCalHoverDay] = useState<number | null>(null);
   const [calModalDay, setCalModalDay] = useState<number | null>(null);
-  const recalSignal = useRecalibrationTrigger(trades);
-  const openTraderMind = () => window.dispatchEvent(new CustomEvent('orca:open-trader-mind'));
+
 
   const months = isRTL ? monthsHe : monthsEn;
   const dayNames = isRTL ? ['א','ב','ג','ד','ה','ו','ש'] : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -110,8 +107,6 @@ const CalendarHubPage_Impl = ({ T, isRTL, trades, t, isMobile, onGenerateInsight
   if (isMobile) {
     return (
       <div style={{ direction: isRTL ? 'rtl' : 'ltr', padding: '4px 2px 24px' }}>
-        
-        <RecalibrationBanner signal={recalSignal} lang={isRTL ? 'he' : 'en'} onCalibrate={openTraderMind} />
         {calRiskStatus.monthlyBreached && (
           <div style={{ padding: '10px 14px', background: `${T.accent.red}15`, border: `1px solid ${T.accent.red}40`, borderRadius: 14, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 18 }}>🚨</span>
@@ -285,9 +280,6 @@ const CalendarHubPage_Impl = ({ T, isRTL, trades, t, isMobile, onGenerateInsight
      ========================================================= */
   return (
     <div style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
-      
-      <RecalibrationBanner signal={recalSignal} lang={isRTL ? 'he' : 'en'} onCalibrate={openTraderMind} />
-      
       <FeatureHint
         T={T}
         id="calendar-hub-page-fullscreen"
@@ -341,7 +333,6 @@ const CalendarHubPage_Impl = ({ T, isRTL, trades, t, isMobile, onGenerateInsight
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8 }}>
               {calDays.map((d, i) => {
                 const dd = d ? calDayPnl[d] : null;
-                const isHovered = d === calHoverDay;
                 const intensity = dd ? Math.min(1, Math.abs(dd.pnl) / 10) : 0;
                 const riskColor = d ? getDayRiskColor(trades, d, calMonth, calYear) : 'neutral';
                 const isDarkRed = riskColor === 'darkred';
@@ -351,21 +342,16 @@ const CalendarHubPage_Impl = ({ T, isRTL, trades, t, isMobile, onGenerateInsight
                 const hasContent = !!dd || macros.length > 0;
                 return (
                   <div key={i}
-                    onMouseEnter={() => d && setCalHoverDay(d)}
-                    onMouseLeave={() => setCalHoverDay(null)}
                     onClick={() => hasContent && d && setCalModalDay(d)}
                     style={{
-                      minHeight: isHovered && hasContent ? 160 : 130,
+                      minHeight: 130,
                       borderRadius: T.radius.md,
                       border: `1px solid ${isToday ? T.accent.cyan : isDarkRed ? `${T.accent.red}60` : dd ? (dd.pnl > 0 ? `${T.accent.green}${Math.round(40 + intensity * 60).toString(16)}` : dd.pnl < 0 ? `${T.accent.red}${Math.round(40 + intensity * 60).toString(16)}` : `${T.accent.orange}30`) : T.border.subtle}`,
                       background: isDarkRed ? `${T.accent.red}25` : dd ? (dd.pnl > 0 ? `${T.accent.green}${Math.round(15 + intensity * 25).toString(16).padStart(2, '0')}` : dd.pnl < 0 ? `${T.accent.red}${Math.round(12 + intensity * 20).toString(16).padStart(2, '0')}` : `${T.accent.orange}12`) : 'transparent',
                       padding: '10px 12px',
-                      transition: 'all 0.2s ease',
                       cursor: hasContent ? 'pointer' : 'default',
                       display: 'flex',
                       flexDirection: 'column',
-                      transform: isHovered && hasContent ? 'translateY(-2px)' : 'translateY(0)',
-                      boxShadow: isHovered && dd ? `0 8px 24px ${(dd.pnl >= 0 ? T.accent.green : T.accent.red)}20` : 'none',
                     }}>
                     {d && (
                       <>
@@ -383,11 +369,6 @@ const CalendarHubPage_Impl = ({ T, isRTL, trades, t, isMobile, onGenerateInsight
                                 {dd.rValid === 0 ? 'N/A' : `${dd.rTotal >= 0 ? '+' : ''}${dd.rTotal.toFixed(1)}R`}
                               </span>
                             </div>
-                            {isHovered && (
-                              <div style={{ fontSize: 10, color: T.text.secondary, marginTop: 6, lineHeight: 1.3, overflow: 'hidden' }}>
-                                {dd.details.slice(0, 4).map(det => det.coin).join(', ')}
-                              </div>
-                            )}
                           </>
                         )}
                         {/* Macro economic events strip — bottom of cell */}

@@ -134,6 +134,7 @@ export function TraderMindSession({ open, onClose, lang = 'he' }: Props) {
             ? (he ? 'סיום · חזרה לפלטפורמה' : 'Finish · Return')
             : (he ? 'סגור' : 'Close')}
         </button>
+
       </div>
 
       <div style={{ flex: 1, position: 'relative' }}>
