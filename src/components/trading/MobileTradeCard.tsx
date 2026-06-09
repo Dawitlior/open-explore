@@ -36,7 +36,7 @@ export const MobileTradeCard = ({
   });
 
   return (
-    <div style={{ marginBottom: 8, borderRadius: T.radius.lg, overflow: 'hidden', background: T.bg.card }}>
+    <div style={{ marginBottom: 6, borderRadius: T.radius.lg, overflow: 'hidden', background: T.bg.card }}>
       <SwipeableRow
         isRTL={isRTL}
         leftActions={[{
@@ -58,14 +58,14 @@ export const MobileTradeCard = ({
           onClick={onOpen}
           style={{
             width: '100%',
-            padding: 14,
+            padding: '10px 12px',
             background: `linear-gradient(135deg, ${T.bg.card}, ${T.bg.secondary})`,
             border: `1px solid ${T.border.subtle}`,
             borderInlineStart: `3px solid ${dirColor}`,
             borderRadius: T.radius.lg,
             display: 'flex',
             flexDirection: 'column',
-            gap: 8,
+            gap: 5,
             textAlign: isRTL ? 'right' : 'left',
             cursor: 'pointer',
             fontFamily: 'inherit',

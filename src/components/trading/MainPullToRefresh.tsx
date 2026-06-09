@@ -48,6 +48,9 @@ export const MainPullToRefresh = ({ isMobile, accent, children }: Props) => {
         transition: 'background 0.4s ease',
         position: 'relative',
         WebkitOverflowScrolling: 'touch',
+        // iOS notch / Dynamic Island guard — keep first row of content
+        // below the system status bar on mobile chromeless layouts.
+        paddingTop: 'env(safe-area-inset-top, 0px)',
       } as any}
     >
       <PullToRefreshIndicator pull={pull} progress={progress} refreshing={refreshing} color={accent} />

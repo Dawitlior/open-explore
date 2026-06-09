@@ -4358,9 +4358,12 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
 
       {/* TOPBAR */}
       <nav className="j-topbar" style={{
-        height: 54, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px',
+        flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px',
         background: th.navBg, borderBottom: `1px solid ${th.br}`, zIndex: 100,
         backdropFilter: 'blur(20px)',
+        // iOS notch / Dynamic Island guard
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        minHeight: 'calc(54px + env(safe-area-inset-top, 0px))',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button onClick={() => setMobileMenu(true)} style={{ background: th.inputBg, border: `1px solid ${th.inputBr}`, color: th.tx2, padding: '6px 10px', fontSize: 13, borderRadius: 8, cursor: 'pointer', fontWeight: 600, transition: 'all .2s' }}>☰</button>
