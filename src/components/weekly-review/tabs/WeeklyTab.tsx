@@ -645,7 +645,7 @@ function Pill({ color, label, solid }: { color: string; label: string; solid?: b
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 6,
       padding: '8px 12px', minHeight: 36, boxSizing: 'border-box',
-      background: solid ? 'rgba(255,255,255,0.04)' : `${color}10`,
+      background: solid ? `${color}14` : `${color}10`,
       border: `1px solid ${color}66`, borderRadius: 8,
       color, fontSize: 12, fontWeight: 700, letterSpacing: 0.5,
       fontFamily: "'IBM Plex Mono', monospace",
@@ -691,17 +691,18 @@ function Labeled({ label, children, muted, isRTL }: { label: string; children: R
     </div>
   );
 }
-function SelectField({ value, options, placeholder, onChange, input, fg }: {
+function SelectField({ value, options, placeholder, onChange, input, fg, optionBg, muted }: {
   value: string; options: string[]; placeholder: string; onChange: (v: string) => void;
-  input: React.CSSProperties; fg: string;
+  input: React.CSSProperties; fg: string; optionBg?: string; muted?: string;
 }) {
   return (
-    <select value={value} onChange={e => onChange(e.target.value)} style={{ ...input, color: value ? fg : 'rgba(255,255,255,0.4)' }}>
+    <select value={value} onChange={e => onChange(e.target.value)} style={{ ...input, color: value ? fg : (muted || 'rgba(127,127,127,0.7)') }}>
       <option value="">{placeholder}</option>
-      {options.map(o => <option key={o} value={o} style={{ background: '#061326', color: fg }}>{o}</option>)}
+      {options.map(o => <option key={o} value={o} style={{ background: optionBg || '#061326', color: fg }}>{o}</option>)}
     </select>
   );
 }
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function Chip({ children, active, onClick, T, activeBg }: { children: React.ReactNode; active: boolean; onClick: () => void; T: any; activeBg?: string }) {
   const fg = T?.text?.primary || '#e9eef7';
