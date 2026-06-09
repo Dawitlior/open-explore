@@ -278,6 +278,23 @@ function Hero() {
           transition={{ duration: 0.6 }}
           className="text-right order-2 lg:order-1"
         >
+          <div className="mb-6 flex justify-start lg:justify-end">
+            <div
+              className="flex items-center gap-4 rounded-2xl border px-4 py-3"
+              style={{
+                background: 'rgba(5,5,5,0.72)',
+                borderColor: 'rgba(201,168,76,0.24)',
+                boxShadow: '0 20px 55px rgba(0,0,0,0.34), 0 0 32px rgba(201,168,76,0.14)',
+                backdropFilter: 'blur(14px)',
+              }}
+            >
+              <BrandMark height={86} />
+              <div className="leading-none">
+                <div className="text-2xl font-extrabold" style={{ color: GOLD_SOFT, fontFamily: FONT_DISPLAY, letterSpacing: '0.16em' }}>ORCA</div>
+                <div className="mt-1 text-[10px] font-semibold" style={{ color: TXT_2, fontFamily: FONT_DISPLAY, letterSpacing: '0.34em' }}>INVESTMENT</div>
+              </div>
+            </div>
+          </div>
           <div
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] mb-6"
             style={{
