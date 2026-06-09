@@ -513,7 +513,7 @@ const baseInput: React.CSSProperties = {
   padding: '12px 4px',
   border: 'none',
   background: 'transparent',
-  color: '#e8eef9',
+  color: TEXT,
   fontSize: 14,
   outline: 'none',
   fontFamily: "'IBM Plex Mono', monospace",
@@ -523,12 +523,12 @@ const baseInput: React.CSSProperties = {
 const IconInput = ({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) => (
   <div style={{
     display: 'flex', alignItems: 'center', gap: 10,
-    padding: '2px 14px', borderRadius: 14,
-    border: '1px solid rgba(125,160,220,0.2)',
-    background: 'rgba(8,14,26,0.6)',
+    padding: '2px 14px', borderRadius: 12,
+    border: `1px solid ${BORDER}`,
+    background: 'rgba(5,5,5,0.65)',
     transition: 'border-color .15s, background .15s',
   }}>
-    <span style={{ color: '#7a8aa3', display: 'inline-flex' }}>{icon}</span>
+    <span style={{ color: GOLD, display: 'inline-flex' }}>{icon}</span>
     {children}
   </div>
 );
