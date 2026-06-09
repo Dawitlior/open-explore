@@ -281,8 +281,10 @@ export const ReviewDashboard = ({
         )}
       </div>
 
-      {/* ═══ ADVANCED ANALYTICS LAB — Monte Carlo, Box Plot + 4 new dual-unit charts ═══ */}
-      <DashboardAdvancedLab T={T} isRTL={isRTL} trades={trades} />
+      {/* ═══ ADVANCED ANALYTICS LAB — Ultimate-tier · follows global $/R mode ═══ */}
+      <TierGate required="ultimate" label="Advanced Analytics Lab" silent>
+        <DashboardAdvancedLab T={T} isRTL={isRTL} trades={trades} />
+      </TierGate>
     </div>
   );
 };
