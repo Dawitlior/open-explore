@@ -281,14 +281,42 @@
 html[dir="rtl"] .dash-kpi-grid .orca-metric-value,
 html[dir="rtl"] .dash-kpi-grid [data-numeric],
 html[dir="rtl"] .dash-kpi-grid .font-mono,
+html[dir="rtl"] .dash-kpi-grid .orca-metric-sub,
 html[dir="rtl"] .dash-kpi-grid .orca-adaptive-expectancy-card div[style*="JetBrains"] {
   text-align: right !important;
 }
 html[dir="ltr"] .dash-kpi-grid .orca-metric-value,
 html[dir="ltr"] .dash-kpi-grid [data-numeric],
-html[dir="ltr"] .dash-kpi-grid .font-mono {
+html[dir="ltr"] .dash-kpi-grid .font-mono,
+html[dir="ltr"] .dash-kpi-grid .orca-metric-sub {
   text-align: left !important;
 }
+
+/* KPI cards — identical inner rhythm so the description sits in the
+   exact same vertical position across all 4 cards (matches Expectancy). */
+.dash-kpi-grid .orca-metric-card {
+  display: flex !important;
+  flex-direction: column;
+}
+.dash-kpi-grid .orca-metric-card > .relative.z-10 {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.dash-kpi-grid .orca-metric-value,
+.dash-kpi-grid .orca-adaptive-expectancy-card div[style*="JetBrains"] {
+  font-size: 26px !important;
+  line-height: 1.1 !important;
+  min-height: 30px;
+}
+.dash-kpi-grid .orca-metric-sub,
+.dash-kpi-grid .orca-adaptive-expectancy-card div[style*="font-size: 9"] {
+  font-size: 9px !important;
+  margin-top: 4px !important;
+  line-height: 1.3 !important;
+  min-height: 14px;
+}
+
 
 /* ─── Advanced section grid uniformity ─────────────────────── */
 .dash-advanced-body .dash-charts-2 > .dash-chart-card,
