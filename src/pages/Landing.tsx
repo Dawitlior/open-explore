@@ -13,6 +13,7 @@ import journalEntry from '@/assets/landing/journal_entry.png.asset.json';
 import analyticsDeck from '@/assets/landing/analytics_deck.png.asset.json';
 import quantLab from '@/assets/landing/quant_lab.png.asset.json';
 import calendarHub from '@/assets/landing/calendar.png.asset.json';
+import radarImg from '@/assets/landing/radar.png.asset.json';
 
 const APP_URL = 'https://orcainvestment.co.il';
 
