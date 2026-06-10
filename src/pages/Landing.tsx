@@ -169,6 +169,100 @@ const orcaCss = `
 .orca-mobile-menu { background: var(--bg-2); border-top: 1px solid var(--border); }
 .orca-mobile-menu a { padding: 14px 20px; display: block; color: var(--text); border-bottom: 1px solid var(--border); }
 
+/* Section helpers */
+.orca-section { padding: clamp(60px, 9vw, 120px) 0; position: relative; }
+.orca-section-title { font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; font-size: clamp(2rem, 4.4vw, 3.4rem); text-align: center; margin: 14px 0 14px; }
+.orca-section-sub { color: var(--text-muted); font-size: clamp(15px, 1.4vw, 18px); text-align: center; max-width: 680px; margin: 0 auto; line-height: 1.7; }
+.orca-divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 0; }
+
+/* Stats bar */
+.orca-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
+.orca-stats > div { padding: 24px 16px; text-align: center; border-inline-end: 1px solid var(--border); }
+.orca-stats > div:last-child { border-inline-end: none; }
+@media (max-width: 768px) { .orca-stats { grid-template-columns: repeat(2, 1fr); } .orca-stats > div:nth-child(2) { border-inline-end: none; } .orca-stats > div:nth-child(-n+2) { border-bottom: 1px solid var(--border); } }
+.orca-stat-num { font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; letter-spacing: -0.02em; }
+.orca-stat-label { color: var(--text-muted); font-size: 13px; margin-top: 6px; }
+
+/* Integrations */
+.orca-int-row { display: flex; align-items: center; justify-content: center; gap: clamp(20px, 5vw, 60px); flex-wrap: wrap; padding: 20px 0; }
+.orca-int-row .item { font-weight: 700; color: var(--text-muted); font-size: clamp(18px, 2.2vw, 26px); letter-spacing: -0.01em; opacity: 0.85; transition: color .2s, opacity .2s; }
+.orca-int-row .item:hover { color: var(--text); opacity: 1; }
+
+/* Tabs */
+.orca-tabs { display: flex; gap: 8px; overflow-x: auto; padding: 6px 4px; scrollbar-width: none; justify-content: center; flex-wrap: wrap; }
+.orca-tabs::-webkit-scrollbar { display: none; }
+.orca-tab { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all .2s; min-height: 40px; }
+.orca-tab:hover { color: var(--text); border-color: rgba(34,211,238,0.3); }
+.orca-tab.active { color: var(--cyan); border-color: rgba(34,211,238,0.5); background: rgba(34,211,238,0.08); box-shadow: 0 0 18px rgba(34,211,238,0.2); }
+
+/* Feature card grid */
+.orca-feature-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 36px; align-items: center; margin-top: 36px; }
+@media (max-width: 900px) { .orca-feature-grid { grid-template-columns: 1fr; gap: 28px; } }
+.orca-bullets { list-style: none; padding: 0; margin: 18px 0 22px; display: grid; gap: 12px; }
+.orca-bullets li { display: flex; gap: 10px; align-items: flex-start; color: var(--text-muted); font-size: 15px; line-height: 1.6; }
+.orca-bullets li::before { content: '✓'; color: var(--mint); font-weight: 700; margin-top: 1px; }
+
+/* Gradient card 3-up */
+.orca-grad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-top: 40px; }
+@media (max-width: 900px) { .orca-grad-grid { grid-template-columns: 1fr; } }
+.orca-grad-card { position: relative; padding: 28px; border-radius: 22px; border: 1px solid var(--border); background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)); overflow: hidden; transition: transform .25s, box-shadow .25s, border-color .25s; }
+.orca-grad-card:hover { transform: translateY(-4px); }
+.orca-grad-card .accent-line { position: absolute; top: 0; inset-inline-start: 0; inset-inline-end: 0; height: 2px; }
+.orca-grad-card .num-badge { position: absolute; top: 18px; inset-inline-end: 20px; font-family: 'JetBrains Mono', monospace; font-size: 64px; font-weight: 800; color: rgba(255,255,255,0.04); line-height: 1; }
+
+/* 2-up big cards */
+.orca-two-up { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 40px; }
+@media (max-width: 900px) { .orca-two-up { grid-template-columns: 1fr; } }
+.orca-big-card { padding: 32px; border-radius: 22px; border: 1px solid var(--border); background: linear-gradient(160deg, rgba(34,211,238,0.06), rgba(7,9,15,0)); }
+
+/* Pricing */
+.orca-pricing { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-top: 40px; }
+@media (max-width: 900px) { .orca-pricing { grid-template-columns: 1fr; } }
+.orca-price-card { padding: 32px 26px; border-radius: 22px; border: 1px solid var(--border); background: var(--surface); display: flex; flex-direction: column; gap: 18px; position: relative; transition: transform .25s; }
+.orca-price-card:hover { transform: translateY(-4px); }
+.orca-price-card.popular { border-color: rgba(139,92,246,0.4); box-shadow: 0 0 40px -10px rgba(139,92,246,0.4); background: linear-gradient(180deg, rgba(139,92,246,0.08), var(--surface)); }
+.orca-price-card .badge-pop { position: absolute; top: -12px; inset-inline-start: 50%; transform: translateX(50%); background: linear-gradient(90deg, #8B5CF6, #22D3EE); color: white; font-size: 11px; font-weight: 700; padding: 4px 14px; border-radius: 999px; letter-spacing: 0.08em; }
+.orca-price-card ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; flex: 1; }
+.orca-price-card ul li { display: flex; gap: 8px; align-items: flex-start; color: var(--text-muted); font-size: 14px; }
+.orca-price-card ul li::before { content: '✓'; color: var(--mint); }
+
+/* Trader Mind special bg */
+.orca-mind-bg {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(139,92,246,0.18), transparent 55%),
+    radial-gradient(ellipse at 80% 100%, rgba(34,211,238,0.10), transparent 50%),
+    var(--bg-2);
+}
+
+/* Final CTA */
+.orca-final {
+  background:
+    radial-gradient(ellipse at 50% 50%, rgba(52,211,153,0.18), transparent 60%),
+    radial-gradient(ellipse at 20% 0%, rgba(34,211,238,0.14), transparent 55%),
+    var(--bg);
+  text-align: center;
+}
+
+/* Footer */
+.orca-footer { background: var(--bg-2); border-top: 1px solid var(--border); padding: 56px 0 36px; }
+.orca-footer-grid { display: grid; grid-template-columns: 1.5fr repeat(3, 1fr); gap: 36px; }
+@media (max-width: 768px) { .orca-footer-grid { grid-template-columns: 1fr 1fr; gap: 28px; } }
+.orca-footer-col h4 { color: var(--text); font-size: 13px; font-weight: 700; margin-bottom: 14px; letter-spacing: 0.04em; }
+.orca-footer-col a { display: block; color: var(--text-muted); font-size: 14px; padding: 5px 0; transition: color .15s; }
+.orca-footer-col a:hover { color: var(--text); }
+.orca-legal { background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.18); border-radius: 14px; padding: 18px 22px; color: var(--text-muted); font-size: 13px; line-height: 1.7; margin-top: 32px; }
+
+/* Video frame */
+.orca-video-wrap { position: relative; aspect-ratio: 16/9; border-radius: 22px; overflow: hidden; border: 1px solid var(--border); background: var(--surface); box-shadow: 0 0 80px -20px rgba(34,211,238,0.4); }
+.orca-video-play { position: absolute; inset: 0; display: grid; place-items: center; cursor: pointer; background: radial-gradient(ellipse at center, rgba(34,211,238,0.18), transparent 60%); }
+.orca-video-play .btn { width: 88px; height: 88px; border-radius: 50%; background: linear-gradient(135deg, #34D399, #22D3EE); display: grid; place-items: center; color: #07090F; box-shadow: 0 0 50px rgba(34,211,238,0.6); transition: transform .25s; }
+.orca-video-play:hover .btn { transform: scale(1.06); }
+
+/* Community constellation */
+.orca-constellation { position: relative; aspect-ratio: 16/9; max-width: 720px; margin: 40px auto 0; }
+.orca-constellation .center { position: absolute; inset-inline-start: 50%; top: 50%; transform: translate(50%, -50%); width: 90px; height: 90px; border-radius: 50%; background: linear-gradient(135deg, #22D3EE, #34D399); display: grid; place-items: center; font-size: 36px; box-shadow: 0 0 60px rgba(34,211,238,0.6); z-index: 2; }
+.orca-avatar { position: absolute; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface-2); display: grid; place-items: center; font-size: 14px; font-weight: 700; color: var(--text-muted); }
+
 @media (prefers-reduced-motion: reduce) {
   .orca-landing *, .orca-landing *::before, .orca-landing *::after {
     animation-duration: 0.01ms !important; transition-duration: 0.01ms !important;
