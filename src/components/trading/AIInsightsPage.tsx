@@ -618,7 +618,7 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
   }, [trades]);
 
   /* ── BEST-OF EDGE — golden card data ── */
-  const bestEdge = useMemo(() => findBestEdge(trades), [trades]);
+  const bestEdge = useMemo(() => findBestEdge(trades, { lang: isRTL ? 'he' : 'en', isMoney }), [trades, isRTL, isMoney]);
 
 
   if (trades.length === 0) {
