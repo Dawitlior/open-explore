@@ -27,6 +27,7 @@ import type { TradingTheme } from '@/lib/trading-theme';
 import { TierGate } from '@/components/billing/TierGate';
 import { ChartWrapper, EXPLANATIONS, type ChartExplanation } from './ChartWrapper';
 import { useLang } from '@/hooks/use-lang';
+import { useDisplayMode } from '@/lib/display-mode';
 import { getEffectiveR } from '@/lib/r-multiple';
 
 interface AnalyticsProps {
