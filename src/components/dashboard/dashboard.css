@@ -305,3 +305,12 @@ html[dir="ltr"] .dash-kpi-grid .font-mono {
   display: flex;
   flex-direction: column;
 }
+
+/* BestWorstWindowChart — let content size itself; never clip on mobile */
+.bw-window-root { flex: 0 0 auto !important; height: auto !important; min-height: 0 !important; }
+.bw-window-chart-cell { min-width: 0; }
+@media (max-width: 640px) {
+  .dash-advanced-body .dash-charts-alpha > .dash-chart-card { min-height: 0; height: auto; }
+  .dash-advanced-body .dash-charts-alpha > .dash-chart-card > * { flex: 0 0 auto; }
+}
+

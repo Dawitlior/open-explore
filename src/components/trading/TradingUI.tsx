@@ -49,9 +49,10 @@ interface MetricCardProps {
   small?: boolean;
   T: TradingTheme;
   onInfoClick?: () => void;
+  description?: string;
 }
 
-export const MetricCard = ({ label, value, suffix, color, small, T, onInfoClick }: MetricCardProps) => {
+export const MetricCard = ({ label, value, suffix, color, small, T, onInfoClick, description }: MetricCardProps) => {
   const isPos = typeof value === 'number' && value >= 0;
   const isNeg = typeof value === 'number' && value < 0;
   const tone =
@@ -98,6 +99,9 @@ export const MetricCard = ({ label, value, suffix, color, small, T, onInfoClick 
                   : `-$${Math.abs(value).toFixed(2)}`)
           : value}
       </div>
+      {description && (
+        <div style={{ fontSize: 9, color: T.text.muted, marginTop: 4 }}>{description}</div>
+      )}
     </GlassCard>
   );
 };

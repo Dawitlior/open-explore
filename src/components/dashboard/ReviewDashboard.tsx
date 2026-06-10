@@ -61,8 +61,8 @@ export const ReviewDashboard = ({
           {isRTL ? 'בריאות מסחר' : 'TRADING HEALTH'}
         </div>
         <div className="dash-kpi-grid">
-          <MetricCard T={T} label={t.netPnl} value={stats.totalPnl} color={stats.totalPnl >= 0 ? T.accent.cyan : T.accent.red} onInfoClick={() => handleExplainClick(t.netPnl, EXPLANATIONS.netPnl)} />
-          <MetricCard T={T} label={t.winRate} value={stats.winRate} suffix="%" color={T.accent.green} onInfoClick={() => handleExplainClick(t.winRate, EXPLANATIONS.winRate)} />
+          <MetricCard T={T} label={t.netPnl} value={stats.totalPnl} color={stats.totalPnl >= 0 ? T.accent.cyan : T.accent.red} onInfoClick={() => handleExplainClick(t.netPnl, EXPLANATIONS.netPnl)} description={isRTL ? 'סך רווח והפסד מצטבר' : 'Cumulative net profit/loss'} />
+          <MetricCard T={T} label={t.winRate} value={stats.winRate} suffix="%" color={T.accent.green} onInfoClick={() => handleExplainClick(t.winRate, EXPLANATIONS.winRate)} description={isRTL ? 'אחוז עסקאות מנצחות' : 'Percent of winning trades'} />
           <AdaptiveExpectancyCard
             T={T}
             trades={trades}
@@ -78,7 +78,8 @@ export const ReviewDashboard = ({
               tooltipMoney: isRTL ? 'רווח/הפסד ממוצע לעסקה' : 'Average profit/loss per trade',
             }}
           />
-          <MetricCard T={T} label={t.maxDrawdown} value={`${stats.maxDrawdown.toFixed(1)}%`} color={T.accent.orange} onInfoClick={() => handleExplainClick(t.maxDrawdown, EXPLANATIONS.maxDrawdownMetric)} />
+          <MetricCard T={T} label={t.maxDrawdown} value={`${stats.maxDrawdown.toFixed(1)}%`} color={T.accent.orange} onInfoClick={() => handleExplainClick(t.maxDrawdown, EXPLANATIONS.maxDrawdownMetric)} description={isRTL ? 'ירידה מקסימלית מהשיא' : 'Maximum drop from peak'} />
+
         </div>
       </div>
 
@@ -183,10 +184,10 @@ export const ReviewDashboard = ({
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.coinPerformance} explanation={EXPLANATIONS.coinPerformance} unit="$" chartId="coinPerformance" onRemove={handleHideChart}>
                     <div className="dash-chart-h-sm">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={stats.coinPerf} layout="vertical">
+                        <BarChart data={stats.coinPerf} layout="vertical" margin={{ top: 8, right: 12, bottom: 8, left: 8 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
                           <XAxis type="number" tick={{ fill: T.text.muted, fontSize: 10 }} />
-                          <YAxis dataKey="coin" type="category" tick={{ fill: T.text.secondary, fontSize: 11 }} width={45} />
+                          <YAxis dataKey="coin" type="category" tick={{ fill: T.text.secondary, fontSize: 10 }} width={78} tickMargin={6} interval={0} />
                           <Tooltip contentStyle={tt} />
                           <Bar dataKey="pnl" radius={[0,4,4,0]}>
                             {stats.coinPerf.map((c: any, i: number) => <Cell key={i} fill={c.pnl >= 0 ? T.accent.green : T.accent.red} />)}
