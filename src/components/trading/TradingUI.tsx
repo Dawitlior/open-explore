@@ -85,7 +85,9 @@ export const MetricCard = ({ label, value, suffix, color, small, T, onInfoClick,
           tone,
         )}
         style={{
-          fontSize: small ? 'clamp(16px, 5vw, 20px)' : 'clamp(18px, 6.4vw, 26px)',
+          fontSize: small ? 'clamp(16px, 5vw, 20px)' : 26,
+          fontFamily: "'JetBrains Mono', monospace",
+          fontWeight: 700,
           ...(color && !['cyan','red','green'].some(k => color === (T.accent as any)[k]) ? { color } : {}),
         }}
       >
@@ -100,7 +102,7 @@ export const MetricCard = ({ label, value, suffix, color, small, T, onInfoClick,
           : value}
       </div>
       {description && (
-        <div style={{ fontSize: 9, color: T.text.muted, marginTop: 4 }}>{description}</div>
+        <div className="orca-metric-sub" style={{ fontSize: 9, color: T.text.muted, marginTop: 4 }}>{description}</div>
       )}
     </GlassCard>
   );
