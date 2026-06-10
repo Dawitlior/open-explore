@@ -605,7 +605,7 @@ const Landing: React.FC = () => {
                 { num: '100%', label: 'אוטומטי' },
               ].map((s, i) => (
                 <div key={i}>
-                  <div className="orca-stat-num grad-text text-glow">{s.num}</div>
+                  <div className="orca-stat-num grad-text text-glow"><CountUp value={s.num} /></div>
                   <div className="orca-stat-label mono">{s.label}</div>
                 </div>
               ))}
