@@ -99,25 +99,25 @@ export const BestWorstWindowChart = ({ T, trades, isRTL, tt }: Props) => {
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 6 }}>
+    <div className="bw-window-root" style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
+      <div className="bw-window-highlights" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 6 }}>
         <Highlight label={isRTL ? 'יום הכי טוב' : 'Best day'} win={data.bestDay?.name} val={data.bestDay?.value} />
         <Highlight label={isRTL ? 'יום הכי גרוע' : 'Worst day'} win={data.worstDay?.name} val={data.worstDay?.value} />
         <Highlight label={isRTL ? 'שעה הכי טובה' : 'Best hour'} win={data.bestHour?.name} val={data.bestHour?.value} />
         <Highlight label={isRTL ? 'שעה הכי גרועה' : 'Worst hour'} win={data.worstHour?.name} val={data.worstHour?.value} />
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
-        <div style={{ height: 140 }}>
+      <div className="bw-window-charts" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 8 }}>
+        <div className="bw-window-chart-cell">
           <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 2 }}>
             {isRTL ? 'לפי יום' : 'By day'}
           </div>
-          {renderBars(data.days)}
+          <div style={{ height: 150, width: '100%' }}>{renderBars(data.days)}</div>
         </div>
-        <div style={{ height: 140 }}>
+        <div className="bw-window-chart-cell">
           <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 2 }}>
             {isRTL ? 'לפי שעה' : 'By hour'}
           </div>
-          {renderBars(data.hours)}
+          <div style={{ height: 150, width: '100%' }}>{renderBars(data.hours)}</div>
         </div>
       </div>
     </div>
