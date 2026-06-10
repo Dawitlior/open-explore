@@ -363,46 +363,55 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
         )}
       </div>
 
-      {/* ═══ TIER BANNER ═══ */}
+      {/* ═══ TIER BANNER + Diagnose CTA ═══ */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 12,
         padding: '10px 14px', marginTop: 8, marginBottom: 4,
         background: `linear-gradient(${isRTL ? '270deg' : '90deg'}, ${tierMeta.color}14, transparent)`,
         border: `1px solid ${tierMeta.color}30`,
         borderInlineStart: `3px solid ${tierMeta.color}`,
-        borderRadius: 10,
+        borderRadius: 10, flexWrap: 'wrap',
       }}>
         <div style={{ fontSize: 9, padding: '3px 8px', background: `${tierMeta.color}25`, color: tierMeta.color, borderRadius: 4, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.16em', fontWeight: 700 }}>
           {(isRTL ? tierMeta.he : tierMeta.en).toUpperCase()}
         </div>
-        <div style={{ fontSize: 11, color: T.text.secondary, flex: 1 }}>{isRTL ? tierMeta.sub.he : tierMeta.sub.en}</div>
+        <div style={{ fontSize: 11, color: T.text.secondary, flex: 1, minWidth: 180 }}>
+          <div>{isRTL ? tierMeta.sub.he : tierMeta.sub.en}</div>
+          <div style={{ fontSize: 9.5, color: T.text.muted, marginTop: 2, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.06em' }}>
+            {isMoney
+              ? (isRTL ? '◆ הסבר ערכים יוצג ב-$ (מצב כסף)' : '◆ Values explained in $ (money mode)')
+              : (isRTL ? '◆ הסבר ערכים יוצג ב-R (יחידות סיכון)' : '◆ Values explained in R (risk units)')}
+          </div>
+        </div>
+        {/* ─── Fresh CTA ─── */}
         <button
           onClick={startDiagnosis}
           disabled={diagLoading}
+          className="orca-diagnose-cta"
           style={{
             position: 'relative', overflow: 'hidden',
-            padding: '12px 22px 12px 18px', borderRadius: 14,
-            border: `1px solid ${T.accent.cyan}66`,
-            background: `linear-gradient(135deg, ${T.accent.cyan}1f, ${T.accent.purple}22 60%, ${T.accent.cyan}1a)`,
-            color: T.accent.cyan, fontSize: 13, fontWeight: 900, cursor: diagLoading ? 'wait' : 'pointer',
-            boxShadow: `0 0 28px ${T.accent.cyan}33, inset 0 0 18px ${T.accent.cyan}10`,
-            display: 'inline-flex', alignItems: 'center', gap: 10, letterSpacing: '0.04em',
+            padding: '11px 22px', borderRadius: 999,
+            border: 'none',
+            background: `linear-gradient(120deg, #00E5FF 0%, #7C5BFF 55%, #FF4ED8 100%)`,
+            color: '#0a0a16', fontSize: 13, fontWeight: 900, cursor: diagLoading ? 'wait' : 'pointer',
+            boxShadow: `0 10px 28px rgba(0,229,255,0.35), 0 0 0 1px rgba(255,255,255,0.12) inset`,
+            display: 'inline-flex', alignItems: 'center', gap: 10, letterSpacing: '0.02em',
+            transition: 'transform .25s cubic-bezier(0.16,1,0.3,1), box-shadow .25s',
           }}
+          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px) scale(1.03)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0) scale(1)'; }}
         >
-          {/* Motherboard glyph */}
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ filter: `drop-shadow(0 0 4px ${T.accent.cyan})` }}>
-            <rect x="6" y="6" width="12" height="12" rx="2" stroke={T.accent.cyan} strokeWidth="1.4" />
-            <rect x="9.5" y="9.5" width="5" height="5" rx="1" fill={T.accent.cyan} fillOpacity="0.35" stroke={T.accent.cyan} strokeWidth="1" />
-            {[3, 7, 11, 15, 19].map(y => <line key={'l' + y} x1="2" y1={y} x2="6" y2={y} stroke={T.accent.cyan} strokeWidth="1" opacity="0.7" />)}
-            {[3, 7, 11, 15, 19].map(y => <line key={'r' + y} x1="18" y1={y} x2="22" y2={y} stroke={T.accent.cyan} strokeWidth="1" opacity="0.7" />)}
-            {[5, 9, 13, 17].map(x => <line key={'t' + x} x1={x} y1="2" x2={x} y2="6" stroke={T.accent.cyan} strokeWidth="1" opacity="0.7" />)}
-            {[5, 9, 13, 17].map(x => <line key={'b' + x} x1={x} y1="18" x2={x} y2="22" stroke={T.accent.cyan} strokeWidth="1" opacity="0.7" />)}
-          </svg>
-          <span>{diagLoading ? (isRTL ? 'מאבחן...' : 'Diagnosing...') : (isRTL ? 'אבחן אותי' : 'Diagnose Me')}</span>
+          {/* Pulsing dot */}
+          <span style={{ position: 'relative', width: 10, height: 10 }}>
+            <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#0a0a16', opacity: 0.85 }} />
+            <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#0a0a16', animation: 'pulse 1.6s ease-in-out infinite' }} />
+          </span>
+          <span>{diagLoading ? (isRTL ? 'מאבחן...' : 'Diagnosing...') : (isRTL ? '⚡ אבחן אותי' : '⚡ Diagnose Me')}</span>
           {/* Shimmer sweep */}
-          <span style={{ position: 'absolute', inset: 0, background: `linear-gradient(110deg, transparent 35%, ${T.accent.cyan}55 50%, transparent 65%)`, backgroundSize: '200% 100%', animation: diagLoading ? 'none' : 'shimmer 3.4s ease-in-out infinite', pointerEvents: 'none' }} />
+          <span style={{ position: 'absolute', inset: 0, background: `linear-gradient(110deg, transparent 35%, rgba(255,255,255,0.55) 50%, transparent 65%)`, backgroundSize: '220% 100%', animation: diagLoading ? 'none' : 'shimmer 2.6s ease-in-out infinite', pointerEvents: 'none' }} />
         </button>
       </div>
+
 
       {/* Cinematic loading overlay — motherboard pulse */}
       {diagLoading && (
