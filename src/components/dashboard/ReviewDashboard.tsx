@@ -255,27 +255,11 @@ export const ReviewDashboard = ({
             {isAlpha && (
               <div className="dash-charts-alpha">
                 <div className="dash-chart-card">
-                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.riskEvolution} explanation={EXPLANATIONS.riskAllocation} unit="%">
-                    <div className="dash-chart-h-sm">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={riskData.riskGrowthEvolution} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
-                          <defs>
-                            <linearGradient id="riskEvoGrad" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor={T.accent.orange} stopOpacity={0.5} />
-                              <stop offset="100%" stopColor={T.accent.orange} stopOpacity={0.05} />
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                          <XAxis dataKey="tradeId" tick={{ fill: T.text.muted, fontSize: 10 }} interval="preserveStartEnd" minTickGap={24} />
-                          <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} width={32} tickFormatter={(v: number) => `${v.toFixed(1)}%`} />
-                          <Tooltip contentStyle={tt} formatter={(v: any) => [`${Number(v).toFixed(2)}%`, isRTL ? 'סיכון' : 'Risk']} />
-                          <ReferenceLine y={2} stroke={T.accent.green} strokeDasharray="2 2" strokeOpacity={0.4} />
-                          <Area type="monotone" dataKey="pctOfAccount" stroke={T.accent.orange} strokeWidth={2.2} fill="url(#riskEvoGrad)" dot={false} activeDot={{ r: 4, fill: T.accent.orange }} />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </div>
+                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'חלונות הזדמנות — יום ושעה' : 'Opportunity Windows — Day & Hour'} explanation={EXPLANATIONS.riskAllocation}>
+                    <BestWorstWindowChart T={T} trades={trades} isRTL={isRTL} tt={tt} />
                   </ChartWrapper>
                 </div>
+
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ביצועים חודשיים (R)' : 'Monthly Performance (R)'} explanation={EXPLANATIONS.monthlyPerformance} unit="R">
                     {stats.monthlyPerf.map((mp: any, i: number) => (
