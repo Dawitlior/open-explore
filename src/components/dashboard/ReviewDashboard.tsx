@@ -9,6 +9,9 @@ import { ChartWrapper, EXPLANATIONS, type ChartExplanation } from '@/components/
 import { FeatureHint } from '@/components/trading/FeatureHint';
 import DashboardAdvancedLab from './DashboardAdvancedLab';
 import { TierGate } from '@/components/billing/TierGate';
+import { BestWorstWindowChart } from './BestWorstWindowChart';
+import { useDisplayMode } from '@/lib/display-mode';
+
 
 interface ReviewDashboardProps {
   T: TradingTheme;
