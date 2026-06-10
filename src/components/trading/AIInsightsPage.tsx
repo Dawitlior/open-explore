@@ -331,10 +331,10 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
     const next = CHART_PACKS[runCount.current % CHART_PACKS.length];
     setPack(next);
     setTimeout(() => {
-      setAnalysis(analyzeDeep(trades));
+      setAnalysis(analyzeDeep(trades, { lang: isRTL ? 'he' : 'en', isMoney }));
       setLoading(false);
     }, 1900);
-  }, [loading, trades]);
+  }, [loading, trades, isRTL, isMoney]);
 
   /* ──── Chart data ──── */
 
@@ -618,7 +618,7 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
   }, [trades]);
 
   /* ── BEST-OF EDGE — golden card data ── */
-  const bestEdge = useMemo(() => findBestEdge(trades), [trades]);
+  const bestEdge = useMemo(() => findBestEdge(trades, { lang: isRTL ? 'he' : 'en', isMoney }), [trades, isRTL, isMoney]);
 
 
   if (trades.length === 0) {
