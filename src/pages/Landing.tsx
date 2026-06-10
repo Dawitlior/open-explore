@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/use-auth';
 import dashboardMain from '@/assets/landing/dashboard_main.png.asset.json';
 import journalEntry from '@/assets/landing/journal_entry.png.asset.json';
 import analyticsDeck from '@/assets/landing/analytics_deck.png.asset.json';
+import quantLab from '@/assets/landing/quant_lab.png.asset.json';
 
 const APP_URL = 'https://orcainvestment.co.il';
 
