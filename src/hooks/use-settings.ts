@@ -99,6 +99,7 @@ export function useSettings() {
   }, []);
   const setLang = useCallback((l: Lang) => {
     setLangState(l); setSetting('lang', l); writeCachedLang(l);
+    try { window.localStorage.setItem(AUTH_LANG_OVERRIDE_KEY, l); } catch { /* noop */ }
     if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('orca:lang-changed', { detail: { lang: l } }));
   }, []);
   const setPrivacyMode = useCallback((p: boolean) => { setPrivacyModeState(p); setSetting('privacyMode', p); }, []);
