@@ -736,15 +736,6 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
 
 
 
-      {/* ═══ ADVANCED-TIER DECK (Phase 3) ═══ */}
-      <AdvancedDeckCharts
-        T={T}
-        trades={trades}
-        privacyMode={privacyMode}
-        onExplainClick={onExplainClick}
-        registryAllows={registryAllows}
-      />
-
       {/* ═══ ULTIMATE-TIER DECK (Phase 4) ═══ */}
       <UltimateAnalyticsDeck
         T={T}
@@ -753,26 +744,56 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
         registryAllows={registryAllows}
       />
 
-
-      {/* ═══ KEY OBSERVATIONS ═══ */}
-      <GlassCard T={T} glow={`${T.accent.cyan}18`}>
-        <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('תצפיות מרכזיות','Key Observations')}</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 8 }}>
-          {[
-            { l: t('רצף ניצחונות הארוך ביותר','Longest win streak'), v: `${Math.max(0, ...streaks.filter(s => s.type === 'W').map(s => s.len))} ${t('עסקאות','trades')}`, c: T.accent.green },
-            { l: t('רצף הפסדים הארוך ביותר','Longest loss streak'), v: `${Math.max(0, ...streaks.filter(s => s.type === 'L').map(s => s.len))} ${t('עסקאות','trades')}`, c: T.accent.red },
-            { l: t('עסקה הכי טובה','Best trade'), v: `+${stats.bestTradeR.toFixed(2)}R`, c: T.accent.green },
-            { l: t('עסקה הכי גרועה','Worst trade'), v: `${stats.worstTradeR.toFixed(2)}R`, c: T.accent.red },
-            { l: t('נכסים פעילים','Active assets'), v: String(setupBoard.length), c: T.accent.blue },
-            { l: t('סיכון קריסה','Risk of Ruin'), v: `${effectiveStats.riskOfRuin.toFixed(1)}%`, c: effectiveStats.riskOfRuin > 50 ? T.accent.red : T.accent.green },
-          ].map((o, i) => (
-            <div key={i} style={{ padding: 10, background: T.bg.tertiary, borderRadius: 8, borderInlineStart: `2px solid ${o.c}` }}>
-              <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 3 }}>{o.l}</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: o.c, fontFamily: "'JetBrains Mono', monospace" }}>{o.v}</div>
-            </div>
-          ))}
+      {/* ═══ SETUP LEADERBOARD — bottom of page ═══ */}
+      {showPro && registryAllows('strategyExpectancy') && <GlassCard T={T} style={{ marginBottom: 16, padding: 0, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px 8px', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700 }}>{t('טבלת מובילים — לפי נכס','Leaderboard — by asset')}</div>
+          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+            {([
+              { k: 'pnl', l: 'P&L' }, { k: 'exp', l: t('תוחלת','Expectancy') }, { k: 'wr', l: t('הצלחה','Win %') }, { k: 'n', l: t('עסקאות','Trades') },
+            ] as const).map(o => (
+              <button
+                key={o.k}
+                onClick={() => setSortKey(o.k)}
+                style={{
+                  padding: '4px 10px', fontSize: 10, fontWeight: 700,
+                  background: sortKey === o.k ? T.accent.cyan : 'transparent',
+                  color: sortKey === o.k ? T.bg.primary : T.text.muted,
+                  border: `1px solid ${sortKey === o.k ? T.accent.cyan : T.border.subtle}`,
+                  borderRadius: 6, cursor: 'pointer',
+                }}
+              >
+                {o.l}
+              </button>
+            ))}
+          </div>
         </div>
-      </GlassCard>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+            <thead>
+              <tr style={{ background: T.bg.tertiary }}>
+                {[t('נכס','Asset'), t('עסקאות','Trades'), t('הצלחה','Win %'), 'P&L', t('תוחלת R','Expectancy R'), t('סיכון ממוצע','Avg Risk')].map(h => (
+                  <th key={h} style={{ padding: '8px 12px', textAlign: 'right', color: T.text.muted, fontWeight: 600, fontSize: 10, borderBottom: `1px solid ${T.border.medium}` }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {setupBoard.map((s, i) => (
+                <tr key={s.coin} style={{ background: i % 2 ? `${T.bg.tertiary}40` : 'transparent' }}>
+                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontWeight: 700, color: T.accent.cyan }}>{s.coin}</td>
+                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace" }}>{s.n}</td>
+                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontWeight: 700, color: s.wr >= 50 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{s.wr.toFixed(0)}%</td>
+                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: s.pnl >= 0 ? T.accent.green : T.accent.red }}>
+                    <PV>{s.pnl >= 0 ? '+' : ''}${s.pnl.toFixed(2)}</PV>
+                  </td>
+                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", color: s.exp >= 0 ? T.accent.cyan : T.accent.red, fontWeight: 600 }}>{s.exp >= 0 ? '+' : ''}{s.exp.toFixed(2)}R</td>
+                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace" }}><PV>${s.avgRisk.toFixed(2)}</PV></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </GlassCard>}
     </div>
   );
 };
