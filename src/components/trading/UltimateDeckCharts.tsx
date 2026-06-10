@@ -143,12 +143,12 @@ export function UltimateAnalyticsDeck({ T, trades, onExplainClick, registryAllow
               <ResponsiveContainer width="100%" height={220}>
                 <ScatterChart>
                   <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
-                  <XAxis type="number" dataKey="prev" name="R[i-1]" tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => `${v}R`} />
-                  <YAxis type="number" dataKey="cur" name="R[i]" tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => `${v}R`} />
+                  <XAxis type="number" dataKey="prev" name={isMoney ? '$[i-1]' : 'R[i-1]'} tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={unitFmt} />
+                  <YAxis type="number" dataKey="cur" name={isMoney ? '$[i]' : 'R[i]'} tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={unitFmt} />
                   <ZAxis range={[50, 120]} />
                   <ReferenceLine x={0} stroke={T.text.muted} />
                   <ReferenceLine y={0} stroke={T.text.muted} />
-                  <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} formatter={(v: number) => `${v}R`} />
+                  <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} formatter={(v: number) => unitFmt(v)} />
                   <Scatter data={lag.pairs}>
                     {lag.pairs.map((p, i) => (
                       <Cell key={i} fill={p.cur >= 0 ? T.accent.green : T.accent.red} fillOpacity={0.7} />
