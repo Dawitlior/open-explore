@@ -40,8 +40,11 @@ export const ReviewDashboard = ({
   isAdvancedTier, isUltimateTier, isAlpha,
   advancedOpen, setAdvancedOpen, isChartVisible, handleHideChart, handleExplainClick,
 }: ReviewDashboardProps) => {
+  const { displayMode } = useDisplayMode();
+  const isMoney = displayMode === 'MONEY';
   return (
     <div className="dash-root" dir={isRTL ? 'rtl' : 'ltr'}>
+
       <h2 className="dash-greeting">{t.goodMorning} 👋</h2>
 
       <FeatureHint
