@@ -15,6 +15,8 @@ import quantLab from '@/assets/landing/quant_lab.png.asset.json';
 import calendarHub from '@/assets/landing/calendar.png.asset.json';
 import radarImg from '@/assets/landing/radar.png.asset.json';
 import traderMindImg from '@/assets/landing/trader_mind.png.asset.json';
+import backtestJournal from '@/assets/landing/backtest_journal.png.asset.json';
+import backtestAnalytics from '@/assets/landing/backtest_analytics.png.asset.json';
 
 const APP_URL = 'https://orcainvestment.co.il';
 
@@ -450,7 +452,7 @@ const Landing: React.FC = () => {
     return () => { document.title = prevTitle; meta?.setAttribute('content', prevDesc); };
   }, []);
 
-  const goApp = () => { if (user) navigate('/'); else window.location.href = APP_URL; };
+  const goApp = () => { navigate('/auth'); };
 
   const navLinks = [
     { href: '#features', label: 'פיצ׳רים' },
@@ -656,7 +658,7 @@ const Landing: React.FC = () => {
             <div className="orca-grad-grid">
               <GradCard accent="#22D3EE" title="יומן בוקר וערב" desc="ניתוח לפני השוק + רפלקציה אחרי, עם הזרמה אוטומטית של עסקאות היום." />
               <GradCard accent="#34D399" title="Calendar Hub" desc="מרכז ה-P&L: לוח שנה אינטראקטיבי עם סיכומי שבוע וחודש." image={calendarHub.url} />
-              <GradCard accent="#8B5CF6" title="יומן Backtest" desc="דימנשן נפרד לתיעוד אסטרטגיות, סטטיסטיקות והשוואה לחי." />
+              <GradCard accent="#8B5CF6" title="יומן Backtest" desc="דימנשן נפרד לתיעוד אסטרטגיות, סטטיסטיקות והשוואה לחי." image={backtestJournal.url} />
             </div>
           </div>
         </section>
@@ -693,7 +695,7 @@ const Landing: React.FC = () => {
             </div>
             <div className="orca-grad-grid">
               <GradCard accent="#22D3EE" title="צלול עמוק לאסטרטגיה" desc="Monte Carlo, Box Plot, Risk-Reward Frontier ועוד בלוח Quant Lab." num="01" image={quantLab.url} />
-              <GradCard accent="#8B5CF6" title="הבן את ההתנהגות שלך" desc="ניתוח רב-ממדי של 145+ עסקאות וזיהוי דפוסים פסיכולוגיים." num="02" />
+              <GradCard accent="#8B5CF6" title="הבן את ההתנהגות שלך" desc="ניתוח רב-ממדי של 145+ עסקאות וזיהוי דפוסים פסיכולוגיים." num="02" image={backtestAnalytics.url} />
               <GradCard accent="#34D399" title="מה עובד בשבילך" desc="חוזקות, שעות זהב, נכסים מנצחים — והיכן ה-Edge האמיתי שלך." num="03" />
             </div>
           </div>
