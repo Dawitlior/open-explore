@@ -650,7 +650,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
 
       {/* ═══ Risk-vs-PnL Scatter (full-width after Edge Evolution removal) ═══ */}
       {registryAllows('winRateVsRR') && <GlassCard T={T} style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('פיזור סיכון מול תוצאה','Risk vs Outcome Scatter')}</div>
+        <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('פיזור סיכון מול תוצאה','Risk vs Outcome Scatter')} <span style={{ fontSize: 10, color: T.text.muted, fontWeight: 500, marginInlineStart: 6 }}>({isMoney ? t('יחידות: $','units: $') : t('יחידות: R','units: R')})</span></div>
         <ResponsiveContainer width="100%" height={250}>
           <ScatterChart>
             <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
