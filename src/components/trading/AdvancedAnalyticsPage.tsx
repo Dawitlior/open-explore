@@ -478,6 +478,34 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
 
 
 
+      {/* ═══ KEY OBSERVATIONS — promoted to top for instant signal ═══ */}
+      <GlassCard T={T} glow={`${T.accent.cyan}22`} style={{ marginBottom: 16, borderInlineStart: `3px solid ${T.accent.cyan}` }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+          <div style={{ fontSize: 10, color: T.accent.cyan, textTransform: 'uppercase', letterSpacing: '0.22em', fontWeight: 800 }}>● {t('תקציר','Snapshot')}</div>
+          <div style={{ fontSize: 13, color: T.text.primary, fontWeight: 800 }}>{t('תצפיות מרכזיות','Key Observations')}</div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10 }}>
+          {[
+            { l: t('רצף ניצחונות הארוך ביותר','Longest win streak'), v: `${Math.max(0, ...streaks.filter(s => s.type === 'W').map(s => s.len))} ${t('עסקאות','trades')}`, c: T.accent.green },
+            { l: t('רצף הפסדים הארוך ביותר','Longest loss streak'), v: `${Math.max(0, ...streaks.filter(s => s.type === 'L').map(s => s.len))} ${t('עסקאות','trades')}`, c: T.accent.red },
+            { l: t('עסקה הכי טובה','Best trade'), v: isMoney ? fmtVal(Math.max(...trades.map(tr => tr.pnl), 0)) : `+${stats.bestTradeR.toFixed(2)}R`, c: T.accent.green },
+            { l: t('עסקה הכי גרועה','Worst trade'), v: isMoney ? fmtVal(Math.min(...trades.map(tr => tr.pnl), 0)) : `${stats.worstTradeR.toFixed(2)}R`, c: T.accent.red },
+            { l: t('נכסים פעילים','Active assets'), v: String(setupBoard.length), c: T.accent.blue },
+            { l: t('סיכון קריסה','Risk of Ruin'), v: `${effectiveStats.riskOfRuin.toFixed(1)}%`, c: effectiveStats.riskOfRuin > 50 ? T.accent.red : T.accent.green },
+          ].map((o, i) => (
+            <div key={i} style={{ padding: 12, background: T.bg.tertiary, borderRadius: 10, borderInlineStart: `3px solid ${o.c}` }}>
+              <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 4, letterSpacing: '0.05em' }}>{o.l}</div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: o.c, fontFamily: "'JetBrains Mono', monospace" }}>{o.v}</div>
+            </div>
+          ))}
+        </div>
+      </GlassCard>
+
+      {/* ═══ TIME-SERIES PERFORMANCE DISTRIBUTION MATRIX — Advanced only ═══ */}
+      {showPro && !showMax && registryAllows('tsPerfMatrix') && (
+        <TimeSeriesPerfMatrix T={T} trades={trades} />
+      )}
+
       {/* ═══ EQUITY + DRAWDOWN OVERLAY ═══ */}
       {showCore && registryAllows('equityCurve') && <GlassCard T={T} style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
