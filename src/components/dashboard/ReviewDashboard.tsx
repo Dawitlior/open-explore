@@ -211,14 +211,21 @@ export const ReviewDashboard = ({
                       </ResponsiveContainer>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'center', gap: 20, marginTop: 2 }}>
-                      {stats.directionData.map((d: any, i: number) => (
-                        <div key={i} style={{ textAlign: 'center' }}>
-                          <div style={{ fontSize: 10, color: T.text.muted }}>{d.name}</div>
-                          <PV><div style={{ fontSize: 11, fontWeight: 600, color: d.expectancyR >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{d.expectancyR.toFixed(2)}R</div></PV>
-                          <div style={{ fontSize: 9, color: T.text.muted }}>WR: {d.winRate.toFixed(0)}%</div>
-                        </div>
-                      ))}
+                      {stats.directionData.map((d: any, i: number) => {
+                        const displayVal = isMoney
+                          ? `${d.pnl >= 0 ? '+' : '-'}$${Math.abs(d.pnl).toFixed(2)}`
+                          : `${d.expectancyR >= 0 ? '+' : ''}${d.expectancyR.toFixed(2)}R`;
+                        const tone = isMoney ? d.pnl : d.expectancyR;
+                        return (
+                          <div key={i} style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: 10, color: T.text.muted }}>{d.name}</div>
+                            <PV><div style={{ fontSize: 11, fontWeight: 600, color: tone >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{displayVal}</div></PV>
+                            <div style={{ fontSize: 9, color: T.text.muted }}>WR: {d.winRate.toFixed(0)}%</div>
+                          </div>
+                        );
+                      })}
                     </div>
+
                   </ChartWrapper>
                 </div>
               )}
