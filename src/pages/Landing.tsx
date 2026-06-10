@@ -382,7 +382,7 @@ const CountUp: React.FC<{ value: string }> = ({ value }) => {
 };
 
 
-const GradCard: React.FC<{ accent: string; title: string; desc: string; num?: string }> = ({ accent, title, desc, num }) => (
+const GradCard: React.FC<{ accent: string; title: string; desc: string; num?: string; image?: string }> = ({ accent, title, desc, num, image }) => (
   <motion.div className="orca-grad-card"
     whileHover={{ borderColor: `${accent}66` }}
     style={{ boxShadow: `0 0 0 1px transparent, 0 20px 60px -20px ${accent}33` }}
@@ -392,7 +392,7 @@ const GradCard: React.FC<{ accent: string; title: string; desc: string; num?: st
     <div style={{ width: 40, height: 40, borderRadius: 10, background: `${accent}22`, border: `1px solid ${accent}44`, display: 'grid', placeItems: 'center', marginBottom: 16, color: accent, fontSize: 20 }}>◆</div>
     <h3 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 10px' }}>{title}</h3>
     <p style={{ color: 'var(--text-muted)', fontSize: 14, lineHeight: 1.7, margin: '0 0 18px' }}>{desc}</p>
-    <ScreenshotFrame />
+    <ScreenshotFrame src={image} alt={title} />
   </motion.div>
 );
 
