@@ -130,7 +130,8 @@ export function UltimateAnalyticsDeck({ T, trades, onExplainClick, registryAllow
   const medianColor = intervals.median < 1 ? T.accent.red : intervals.median < 4 ? T.accent.orange : T.accent.green;
 
   return (
-    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 12, marginTop: 16 }}>
+    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 12, marginTop: 16, marginBottom: 28 }}>
+
       {registryAllows('lag1Autocorr') && (
         <TierGate required="ultimate" label={t('אוטוקורלציה Lag-1', 'Lag-1 Autocorrelation')}>
           <ChartWrapper T={T} title={t('אוטוקורלציה Lag-1', 'Lag-1 Autocorrelation')} explanation={EXPLANATIONS.lag1Autocorr} unit="ρ" chartId="lag1Autocorr" onExplainClick={onExplainClick}>
