@@ -8,6 +8,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Menu, X, ArrowLeft, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import dashboardMain from '@/assets/landing/dashboard_main.png.asset.json';
 
 const APP_URL = 'https://orcainvestment.co.il';
 
@@ -282,41 +283,36 @@ const Notif: React.FC<{ icon: string; text: string; accent?: string }> = ({ icon
   </div>
 );
 
-const ScreenshotFrame: React.FC<{ children?: React.ReactNode }> = ({ children }) => (
+/**
+ * ScreenshotFrame
+ * - `src`: real uploaded screenshot URL (from a .asset.json). When provided, renders the image.
+ * - Otherwise: renders a neutral grey "SCREENSHOT" placeholder (no fake/invented UI).
+ * Do NOT add stock/Unsplash/AI-generated artwork here.
+ */
+const ScreenshotFrame: React.FC<{ src?: string; alt?: string; children?: React.ReactNode }> = ({ src, alt, children }) => (
   <div className="orca-frame">
     <div className="orca-frame-inner">
-      {children ?? (
-        <div className="orca-frame-skeleton" style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <div className="mono" style={{ fontSize: 10, color: 'var(--text-dim)' }}>ORCA · DASHBOARD</div>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#34D399', boxShadow: '0 0 8px #34D399' }} />
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#FBBF24' }} />
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#EF4444' }} />
-            </div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
-            {['86','+$115','28%','294%'].map((v,i)=>(
-              <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: 10, padding: 10 }}>
-                <div className="mono" style={{ fontSize: 8, color: 'var(--text-dim)' }}>KPI {i+1}</div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: ['#22D3EE','#34D399','#F59E0B','#8B5CF6'][i], textShadow: `0 0 14px ${['#22D3EE','#34D399','#F59E0B','#8B5CF6'][i]}66` }}>{v}</div>
-              </div>
-            ))}
-          </div>
-          <div style={{ flex: 1, position: 'relative', marginTop: 6, background: 'rgba(255,255,255,0.02)', borderRadius: 10, border: '1px solid var(--border)', overflow: 'hidden' }}>
-            <svg viewBox="0 0 400 140" preserveAspectRatio="none" style={{ width: '100%', height: '100%' }}>
-              <defs>
-                <linearGradient id="eqg" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="0%" stopColor="#22D3EE" stopOpacity="0.5" />
-                  <stop offset="100%" stopColor="#22D3EE" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              <path d="M0,110 C40,100 70,95 100,90 S160,70 200,75 260,55 300,40 360,30 400,20 L400,140 L0,140 Z" fill="url(#eqg)" />
-              <path d="M0,110 C40,100 70,95 100,90 S160,70 200,75 260,55 300,40 360,30 400,20" stroke="#22D3EE" strokeWidth="2" fill="none" style={{ filter: 'drop-shadow(0 0 6px #22D3EE)' }} />
-            </svg>
-          </div>
+      {children ?? (src ? (
+        <img
+          src={src}
+          alt={alt ?? 'ORCA screenshot'}
+          loading="lazy"
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+        />
+      ) : (
+        <div
+          style={{
+            position: 'absolute', inset: 0,
+            display: 'grid', placeItems: 'center',
+            background: '#11151c',
+            color: 'rgba(255,255,255,0.35)',
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: 12, letterSpacing: '0.3em',
+          }}
+        >
+          SCREENSHOT
         </div>
-      )}
+      ))}
     </div>
   </div>
 );
@@ -577,7 +573,8 @@ const Landing: React.FC = () => {
                 initial={{ opacity: 0, y: 30, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.9, ease: 'easeOut', delay: 0.15 }}
                 style={{ position: 'relative', order: 2 }}
               >
-                <ScreenshotFrame />
+                <ScreenshotFrame src={dashboardMain.url} alt="ORCA Dashboard" />
+
 
                 {/* Floating notifs */}
                 <motion.div
