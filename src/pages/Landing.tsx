@@ -573,7 +573,8 @@ const Landing: React.FC = () => {
                 initial={{ opacity: 0, y: 30, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.9, ease: 'easeOut', delay: 0.15 }}
                 style={{ position: 'relative', order: 2 }}
               >
-                <ScreenshotFrame />
+                <ScreenshotFrame src={dashboardMain.url} alt="ORCA Dashboard" />
+
 
                 {/* Floating notifs */}
                 <motion.div
