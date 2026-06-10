@@ -334,7 +334,7 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
       setAnalysis(analyzeDeep(trades, { lang: isRTL ? 'he' : 'en', isMoney }));
       setLoading(false);
     }, 1900);
-  }, [loading, trades]);
+  }, [loading, trades, isRTL, isMoney]);
 
   /* ──── Chart data ──── */
 
