@@ -179,25 +179,44 @@ export const ReviewDashboard = ({
                   </ChartWrapper>
                 </div>
               )}
-              {isAdvancedTier && isChartVisible('coinPerformance') && (
-                <div className="dash-chart-card">
-                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.coinPerformance} explanation={EXPLANATIONS.coinPerformance} unit="$" chartId="coinPerformance" onRemove={handleHideChart}>
-                    <div className="dash-chart-h-sm">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={[...stats.coinPerf].sort((a:any,b:any)=>Math.abs(b.pnl)-Math.abs(a.pnl)).slice(0,6)} layout="vertical" margin={{ top: 8, right: 12, bottom: 8, left: 8 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                          <XAxis type="number" tick={{ fill: T.text.muted, fontSize: 10 }} />
-                          <YAxis dataKey="coin" type="category" tick={{ fill: T.text.secondary, fontSize: 10 }} width={78} tickMargin={6} interval={0} />
-                          <Tooltip contentStyle={tt} />
-                          <Bar dataKey="pnl" radius={[0,4,4,0]}>
-                            {[...stats.coinPerf].sort((a:any,b:any)=>Math.abs(b.pnl)-Math.abs(a.pnl)).slice(0,6).map((c: any, i: number) => <Cell key={i} fill={c.pnl >= 0 ? T.accent.green : T.accent.red} />)}
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </ChartWrapper>
-                </div>
-              )}
+              {isAdvancedTier && isChartVisible('coinPerformance') && (() => {
+                const sorted = [...(stats.coinPerf || [])].sort((a:any,b:any)=> b.pnl - a.pnl);
+                const winner = sorted[0];
+                const loser = sorted[sorted.length - 1];
+                const hasData = winner && loser && winner.coin !== loser.coin;
+                const winnerLabel = isRTL ? 'מנצח גדול' : 'Top Winner';
+                const loserLabel = isRTL ? 'מפסיד גדול' : 'Top Loser';
+                const noData = isRTL ? 'אין מספיק נתונים' : 'Not enough data';
+                const title = isRTL ? 'מנצח גדול מול מפסיד גדול' : 'Top Winner vs Top Loser';
+                const data = hasData ? [
+                  { label: winnerLabel, coin: winner.coin, pnl: winner.pnl, fill: T.accent.green },
+                  { label: loserLabel, coin: loser.coin, pnl: loser.pnl, fill: T.accent.red },
+                ] : [];
+                return (
+                  <div className="dash-chart-card">
+                    <ChartWrapper T={T} onExplainClick={handleExplainClick} title={title} explanation={EXPLANATIONS.coinPerformance} unit="$" chartId="coinPerformance" onRemove={handleHideChart}>
+                      <div className="dash-chart-h-sm">
+                        {hasData ? (
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={data} layout="vertical" margin={{ top: 8, right: 16, bottom: 8, left: 8 }}>
+                              <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
+                              <XAxis type="number" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                              <YAxis dataKey="coin" type="category" tick={{ fill: T.text.secondary, fontSize: 11, fontWeight: 600 }} width={86} tickMargin={6} interval={0} />
+                              <Tooltip contentStyle={tt} formatter={(v:any, _n:any, p:any)=>[`${Number(v).toFixed(2)}$`, p?.payload?.label]} />
+                              <ReferenceLine x={0} stroke={T.border.subtle} />
+                              <Bar dataKey="pnl" radius={[0,6,6,0]} barSize={36}>
+                                {data.map((c:any, i:number) => <Cell key={i} fill={c.fill} />)}
+                              </Bar>
+                            </BarChart>
+                          </ResponsiveContainer>
+                        ) : (
+                          <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%', color: T.text.muted, fontSize: 12 }}>{noData}</div>
+                        )}
+                      </div>
+                    </ChartWrapper>
+                  </div>
+                );
+              })()}
               {isUltimateTier && (
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.directionAnalysis} explanation={EXPLANATIONS.directionAnalysis}>
