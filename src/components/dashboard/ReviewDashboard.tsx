@@ -184,10 +184,10 @@ export const ReviewDashboard = ({
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.coinPerformance} explanation={EXPLANATIONS.coinPerformance} unit="$" chartId="coinPerformance" onRemove={handleHideChart}>
                     <div className="dash-chart-h-sm">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={stats.coinPerf} layout="vertical">
+                        <BarChart data={stats.coinPerf} layout="vertical" margin={{ top: 8, right: 12, bottom: 8, left: 8 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
                           <XAxis type="number" tick={{ fill: T.text.muted, fontSize: 10 }} />
-                          <YAxis dataKey="coin" type="category" tick={{ fill: T.text.secondary, fontSize: 11 }} width={45} />
+                          <YAxis dataKey="coin" type="category" tick={{ fill: T.text.secondary, fontSize: 10 }} width={78} tickMargin={6} interval={0} />
                           <Tooltip contentStyle={tt} />
                           <Bar dataKey="pnl" radius={[0,4,4,0]}>
                             {stats.coinPerf.map((c: any, i: number) => <Cell key={i} fill={c.pnl >= 0 ? T.accent.green : T.accent.red} />)}
