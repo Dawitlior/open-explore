@@ -221,7 +221,7 @@ const orcaCss = `
 .orca-price-card { padding: 32px 26px; border-radius: 22px; border: 1px solid var(--border); background: var(--surface); display: flex; flex-direction: column; gap: 18px; position: relative; transition: transform .25s; }
 .orca-price-card:hover { transform: translateY(-4px); }
 .orca-price-card.popular { border-color: rgba(139,92,246,0.4); box-shadow: 0 0 40px -10px rgba(139,92,246,0.4); background: linear-gradient(180deg, rgba(139,92,246,0.08), var(--surface)); }
-.orca-price-card .badge-pop { position: absolute; top: -12px; inset-inline-start: 50%; transform: translateX(50%); background: linear-gradient(90deg, #8B5CF6, #22D3EE); color: white; font-size: 11px; font-weight: 700; padding: 4px 14px; border-radius: 999px; letter-spacing: 0.08em; }
+.orca-price-card .badge-pop { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: linear-gradient(90deg, #8B5CF6, #22D3EE); color: white; font-size: 11px; font-weight: 700; padding: 4px 14px; border-radius: 999px; letter-spacing: 0.08em; }
 .orca-price-card ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; flex: 1; }
 .orca-price-card ul li { display: flex; gap: 8px; align-items: flex-start; color: var(--text-muted); font-size: 14px; }
 .orca-price-card ul li::before { content: '✓'; color: var(--mint); }
