@@ -331,7 +331,7 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
     const next = CHART_PACKS[runCount.current % CHART_PACKS.length];
     setPack(next);
     setTimeout(() => {
-      setAnalysis(analyzeDeep(trades));
+      setAnalysis(analyzeDeep(trades, { lang: isRTL ? 'he' : 'en', isMoney }));
       setLoading(false);
     }, 1900);
   }, [loading, trades]);
