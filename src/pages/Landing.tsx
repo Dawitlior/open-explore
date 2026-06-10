@@ -321,6 +321,68 @@ const ScreenshotFrame: React.FC<{ children?: React.ReactNode }> = ({ children })
   </div>
 );
 
+/* Section title block */
+const SectionHeader: React.FC<{ label: string; title: React.ReactNode; sub?: string; labelColor?: string }> = ({ label, title, sub, labelColor }) => (
+  <div style={{ textAlign: 'center', maxWidth: 760, margin: '0 auto 8px' }}>
+    <SectionLabel color={labelColor}>{label}</SectionLabel>
+    <h2 className="orca-section-title">{title}</h2>
+    {sub && <p className="orca-section-sub">{sub}</p>}
+  </div>
+);
+
+/* Gradient card with screenshot */
+const GradCard: React.FC<{ accent: string; title: string; desc: string; num?: string }> = ({ accent, title, desc, num }) => (
+  <motion.div className="orca-grad-card"
+    whileHover={{ borderColor: `${accent}66` }}
+    style={{ boxShadow: `0 0 0 1px transparent, 0 20px 60px -20px ${accent}33` }}
+  >
+    <div className="accent-line" style={{ background: `linear-gradient(90deg, ${accent}, transparent)` }} />
+    {num && <div className="num-badge">{num}</div>}
+    <div style={{ width: 40, height: 40, borderRadius: 10, background: `${accent}22`, border: `1px solid ${accent}44`, display: 'grid', placeItems: 'center', marginBottom: 16, color: accent, fontSize: 20 }}>◆</div>
+    <h3 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 10px' }}>{title}</h3>
+    <p style={{ color: 'var(--text-muted)', fontSize: 14, lineHeight: 1.7, margin: '0 0 18px' }}>{desc}</p>
+    <ScreenshotFrame />
+  </motion.div>
+);
+
+/* Feature Tabs */
+const TABS: { key: string; label: string; icon: string; title: string; desc: string; bullets: string[] }[] = [
+  { key: 'journal', label: 'יומן אוטומטי', icon: '📓', title: 'יומן מסחר אוטומטי', desc: 'חבר את הברוקר פעם אחת, ועסקאות נכנסות אוטומטית — מתויגות ומוכנות לניתוח.', bullets: ['סנכרון מ-Bybit / Binance', 'יומן בוקר וערב', 'צילומי גרפים', 'ארכיון מלא לחיפוש'] },
+  { key: 'analytics', label: 'אנליטיקה', icon: '📊', title: 'לוח אנליטיקה מתקדם', desc: 'עשרות מטריקות כמותיות שחושפות את ה-Edge האמיתי שלך.', bullets: ['Equity Curve מתקדמת', 'Profit Factor & R-Multiples', 'ניתוח לפי נכס / שעה / יום', 'סיכומים שבועי, חודשי, שנתי'] },
+  { key: 'risk', label: 'ניהול סיכונים', icon: '🛡️', title: 'מנוע סיכונים 4-שכבתי', desc: 'הגנה אוטומטית מפני over-trading עם מנגנון משמעת חכם.', bullets: ['מגבלות -1R / -2R / -5R / -10R', 'חישוב גודל פוזיציה אוטומטי', 'התראות Risk Drift', 'מצב צינון (Cool-Off)'] },
+  { key: 'ai', label: 'תובנות AI', icon: '🧠', title: 'מנוע תובנות עמוק', desc: 'מזהה דפוסים סמויים שאף סוחר לא היה רואה לבד.', bullets: ['זיהוי דפוסים נסתרים', 'חוזקות וחולשות אישיות', 'Orca Coach מבוסס נתונים', 'גרפים ברמת Awwwards'] },
+  { key: 'mind', label: 'תודעת הסוחר', icon: '🐋', title: 'אבחון תודעת הסוחר', desc: 'פרופיל Archetype אישי שמכייל את ה-AI Coach לפי הסוחר שאתה.', bullets: ['אבחון אישיות סוחר', 'פרופיל Archetype', 'כיול AI Coach', 'כיול-מחדש כל 45 יום'] },
+  { key: 'radar', label: 'מכ״ם כלכלי', icon: '📡', title: 'מכ״ם אירועים כלכליים', desc: 'רדאר אירועים גלובלי עם חישוב Surprise בזמן אמת.', bullets: ['רדאר אירועים עולמי', 'Tier 1 / 2 / 3', 'עדכוני T-5 / T-1 / Live', 'חישוב Surprise אוטומטי'] },
+];
+
+const FeatureTabs: React.FC = () => {
+  const [active, setActive] = useState(TABS[0].key);
+  const tab = TABS.find(t => t.key === active) || TABS[0];
+  return (
+    <>
+      <div className="orca-tabs" style={{ marginTop: 32 }}>
+        {TABS.map(t => (
+          <button key={t.key} className={`orca-tab ${active === t.key ? 'active' : ''}`} onClick={() => setActive(t.key)}>
+            <span>{t.icon}</span>{t.label}
+          </button>
+        ))}
+      </div>
+      <motion.div key={tab.key} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="orca-feature-grid glass-card" style={{ padding: 32 }}>
+        <div>
+          <SectionLabel>{tab.icon} {tab.label.toUpperCase()}</SectionLabel>
+          <h3 style={{ fontSize: 'clamp(1.6rem, 3vw, 2.2rem)', fontWeight: 800, margin: '12px 0 10px', letterSpacing: '-0.01em' }}>{tab.title}</h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: 16, lineHeight: 1.7 }}>{tab.desc}</p>
+          <ul className="orca-bullets">{tab.bullets.map(b => <li key={b}>{b}</li>)}</ul>
+          <a href="#" style={{ color: 'var(--cyan)', fontSize: 14, fontWeight: 600 }}>עוד ←</a>
+        </div>
+        <ScreenshotFrame />
+      </motion.div>
+    </>
+  );
+};
+
+
+
 /* ─────────── Page ─────────── */
 const Landing: React.FC = () => {
   const navigate = useNavigate();
