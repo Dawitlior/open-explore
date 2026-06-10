@@ -24,6 +24,7 @@ type Mode = 'sign-in' | 'sign-up';
 type Lang = 'he' | 'en';
 
 const LANG_KEY = 'orca:lang-cache';
+const AUTH_LANG_OVERRIDE_KEY = 'orca:auth-lang-override';
 
 const COPY = {
   he: {
@@ -105,6 +106,9 @@ function readLang(): Lang {
 function writeLang(l: Lang) {
   try { localStorage.setItem(LANG_KEY, l); } catch { /* noop */ }
 }
+function writeAuthLangIntent(l: Lang) {
+  try { localStorage.setItem(AUTH_LANG_OVERRIDE_KEY, l); } catch { /* noop */ }
+}
 
 export default function AuthPage() {
   const navigate = useNavigate();
@@ -145,6 +149,7 @@ export default function AuthPage() {
     const next: Lang = lang === 'he' ? 'en' : 'he';
     setLang(next);
     writeLang(next);
+    writeAuthLangIntent(next);
   };
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
@@ -176,6 +181,8 @@ export default function AuthPage() {
 
   const handleGoogle = async () => {
     setBusy(true);
+    writeLang(lang);
+    writeAuthLangIntent(lang);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
