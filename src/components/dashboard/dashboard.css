@@ -273,6 +273,23 @@
   font-family: 'JetBrains Mono', monospace !important;
 }
 
+/* Keep numeric values aligned under the label (same side as the label),
+   matching the Expectancy card. The global RTL rule forces data-numeric /
+   font-mono elements to LTR + text-align:start (= left), which made values
+   drift to the opposite side of their Hebrew labels. Numbers stay LTR for
+   correct rendering — only the alignment is corrected. */
+html[dir="rtl"] .dash-kpi-grid .orca-metric-value,
+html[dir="rtl"] .dash-kpi-grid [data-numeric],
+html[dir="rtl"] .dash-kpi-grid .font-mono,
+html[dir="rtl"] .dash-kpi-grid .orca-adaptive-expectancy-card div[style*="JetBrains"] {
+  text-align: right !important;
+}
+html[dir="ltr"] .dash-kpi-grid .orca-metric-value,
+html[dir="ltr"] .dash-kpi-grid [data-numeric],
+html[dir="ltr"] .dash-kpi-grid .font-mono {
+  text-align: left !important;
+}
+
 /* ─── Advanced section grid uniformity ─────────────────────── */
 .dash-advanced-body .dash-charts-2 > .dash-chart-card,
 .dash-advanced-body .dash-charts-3 > .dash-chart-card,
