@@ -232,3 +232,59 @@
   animation: dashFadeIn 0.3s ease;
   margin-top: 14px;
 }
+
+/* ─── Trading Health KPI uniformity ─────────────────────────
+   All cards inside .dash-kpi-grid follow the same skeleton:
+   compact label row at the top, large numeric value below,
+   identical heights so the row reads as one balanced strip. */
+.dash-kpi-grid .orca-metric-card,
+.dash-kpi-grid .orca-adaptive-expectancy-card {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  align-items: stretch !important;
+  min-height: 96px !important;
+  padding: 12px 14px !important;
+  text-align: start !important;
+  gap: 6px !important;
+}
+.dash-kpi-grid .orca-metric-card > div:first-child,
+.dash-kpi-grid .orca-adaptive-expectancy-card > div:first-child {
+  margin-bottom: 0 !important;
+  min-height: 14px !important;
+}
+.dash-kpi-grid .orca-metric-label {
+  font-size: 10px !important;
+  letter-spacing: 0.08em !important;
+  line-height: 1.15 !important;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dash-kpi-grid .orca-metric-value,
+.dash-kpi-grid .orca-adaptive-expectancy-card [data-numeric="true"],
+.dash-kpi-grid .orca-adaptive-expectancy-card > div:nth-child(2) > div:nth-child(1),
+.dash-kpi-grid .orca-adaptive-expectancy-card div[style*="fontSize: 26"] {
+  font-size: clamp(18px, 5.6vw, 24px) !important;
+  font-weight: 700 !important;
+  line-height: 1.1 !important;
+  margin: 0 !important;
+  font-family: 'JetBrains Mono', monospace !important;
+}
+
+/* ─── Advanced section grid uniformity ─────────────────────── */
+.dash-advanced-body .dash-charts-2 > .dash-chart-card,
+.dash-advanced-body .dash-charts-3 > .dash-chart-card,
+.dash-advanced-body .dash-charts-alpha > .dash-chart-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 320px;
+}
+.dash-advanced-body .dash-charts-2 > .dash-chart-card > *,
+.dash-advanced-body .dash-charts-3 > .dash-chart-card > *,
+.dash-advanced-body .dash-charts-alpha > .dash-chart-card > * {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}

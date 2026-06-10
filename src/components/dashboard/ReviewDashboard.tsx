@@ -9,6 +9,9 @@ import { ChartWrapper, EXPLANATIONS, type ChartExplanation } from '@/components/
 import { FeatureHint } from '@/components/trading/FeatureHint';
 import DashboardAdvancedLab from './DashboardAdvancedLab';
 import { TierGate } from '@/components/billing/TierGate';
+import { BestWorstWindowChart } from './BestWorstWindowChart';
+import { useDisplayMode } from '@/lib/display-mode';
+
 
 interface ReviewDashboardProps {
   T: TradingTheme;
@@ -37,8 +40,11 @@ export const ReviewDashboard = ({
   isAdvancedTier, isUltimateTier, isAlpha,
   advancedOpen, setAdvancedOpen, isChartVisible, handleHideChart, handleExplainClick,
 }: ReviewDashboardProps) => {
+  const { displayMode } = useDisplayMode();
+  const isMoney = displayMode === 'MONEY';
   return (
     <div className="dash-root" dir={isRTL ? 'rtl' : 'ltr'}>
+
       <h2 className="dash-greeting">{t.goodMorning} 👋</h2>
 
       <FeatureHint
@@ -205,14 +211,21 @@ export const ReviewDashboard = ({
                       </ResponsiveContainer>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'center', gap: 20, marginTop: 2 }}>
-                      {stats.directionData.map((d: any, i: number) => (
-                        <div key={i} style={{ textAlign: 'center' }}>
-                          <div style={{ fontSize: 10, color: T.text.muted }}>{d.name}</div>
-                          <PV><div style={{ fontSize: 11, fontWeight: 600, color: d.expectancyR >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{d.expectancyR.toFixed(2)}R</div></PV>
-                          <div style={{ fontSize: 9, color: T.text.muted }}>WR: {d.winRate.toFixed(0)}%</div>
-                        </div>
-                      ))}
+                      {stats.directionData.map((d: any, i: number) => {
+                        const displayVal = isMoney
+                          ? `${d.pnl >= 0 ? '+' : '-'}$${Math.abs(d.pnl).toFixed(2)}`
+                          : `${d.expectancyR >= 0 ? '+' : ''}${d.expectancyR.toFixed(2)}R`;
+                        const tone = isMoney ? d.pnl : d.expectancyR;
+                        return (
+                          <div key={i} style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: 10, color: T.text.muted }}>{d.name}</div>
+                            <PV><div style={{ fontSize: 11, fontWeight: 600, color: tone >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{displayVal}</div></PV>
+                            <div style={{ fontSize: 9, color: T.text.muted }}>WR: {d.winRate.toFixed(0)}%</div>
+                          </div>
+                        );
+                      })}
                     </div>
+
                   </ChartWrapper>
                 </div>
               )}
@@ -242,27 +255,11 @@ export const ReviewDashboard = ({
             {isAlpha && (
               <div className="dash-charts-alpha">
                 <div className="dash-chart-card">
-                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.riskEvolution} explanation={EXPLANATIONS.riskAllocation} unit="%">
-                    <div className="dash-chart-h-sm">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={riskData.riskGrowthEvolution} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
-                          <defs>
-                            <linearGradient id="riskEvoGrad" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor={T.accent.orange} stopOpacity={0.5} />
-                              <stop offset="100%" stopColor={T.accent.orange} stopOpacity={0.05} />
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                          <XAxis dataKey="tradeId" tick={{ fill: T.text.muted, fontSize: 10 }} interval="preserveStartEnd" minTickGap={24} />
-                          <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} width={32} tickFormatter={(v: number) => `${v.toFixed(1)}%`} />
-                          <Tooltip contentStyle={tt} formatter={(v: any) => [`${Number(v).toFixed(2)}%`, isRTL ? 'סיכון' : 'Risk']} />
-                          <ReferenceLine y={2} stroke={T.accent.green} strokeDasharray="2 2" strokeOpacity={0.4} />
-                          <Area type="monotone" dataKey="pctOfAccount" stroke={T.accent.orange} strokeWidth={2.2} fill="url(#riskEvoGrad)" dot={false} activeDot={{ r: 4, fill: T.accent.orange }} />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </div>
+                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'חלונות הזדמנות — יום ושעה' : 'Opportunity Windows — Day & Hour'} explanation={EXPLANATIONS.riskAllocation}>
+                    <BestWorstWindowChart T={T} trades={trades} isRTL={isRTL} tt={tt} />
                   </ChartWrapper>
                 </div>
+
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ביצועים חודשיים (R)' : 'Monthly Performance (R)'} explanation={EXPLANATIONS.monthlyPerformance} unit="R">
                     {stats.monthlyPerf.map((mp: any, i: number) => (
