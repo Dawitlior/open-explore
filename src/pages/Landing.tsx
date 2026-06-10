@@ -450,6 +450,15 @@ const Landing: React.FC = () => {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  useEffect(() => {
+    const prevTitle = document.title;
+    document.title = 'Orca Investment — יומן מסחר חכם ואוטומטי';
+    const meta = document.querySelector('meta[name="description"]');
+    const prevDesc = meta?.getAttribute('content') ?? '';
+    meta?.setAttribute('content', 'Orca Investment — יומן מסחר חכם שמרכז, מנתח ונותן סטטיסטיקות מדויקות לסוחר. חינם בתקופת ההשקה.');
+    return () => { document.title = prevTitle; meta?.setAttribute('content', prevDesc); };
+  }, []);
+
   const goApp = () => { if (user) navigate('/'); else window.location.href = APP_URL; };
 
   const navLinks = [
