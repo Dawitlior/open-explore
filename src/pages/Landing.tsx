@@ -541,7 +541,311 @@ const Landing: React.FC = () => {
           </div>
         </section>
 
+        {/* ───── 3. STATS BAR ───── */}
+        <section className="orca-section" style={{ paddingTop: 0, paddingBottom: 'clamp(40px, 6vw, 70px)' }}>
+          <div className="max-w-7xl mx-auto px-5 sm:px-8">
+            <div className="glass-card orca-stats">
+              {[
+                { num: '120K+', label: 'עסקאות תועדו' },
+                { num: '3,200+', label: 'חברי קהילה' },
+                { num: '40+', label: 'מדדים מנותחים' },
+                { num: '100%', label: 'אוטומטי' },
+              ].map((s, i) => (
+                <div key={i}>
+                  <div className="orca-stat-num grad-text text-glow">{s.num}</div>
+                  <div className="orca-stat-label mono">{s.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ───── 4. INTEGRATIONS ───── */}
+        <section className="orca-section" style={{ paddingTop: 0, paddingBottom: 'clamp(40px, 6vw, 70px)' }}>
+          <div className="max-w-7xl mx-auto px-5 sm:px-8">
+            <div style={{ textAlign: 'center', marginBottom: 16 }}>
+              <SectionLabel>מסתנכרן אוטומטית עם</SectionLabel>
+            </div>
+            <div className="orca-int-row">
+              <div className="item">Bybit</div>
+              <div className="item">Binance</div>
+              <div className="item">ייבוא CSV אוניברסלי</div>
+            </div>
+            <div className="mono" style={{ textAlign: 'center', color: 'var(--text-dim)', fontSize: 11, marginTop: 12 }}>
+              API READ-ONLY · מאובטח צד-שרת
+            </div>
+          </div>
+        </section>
+
+        <div className="orca-divider" />
+
+        {/* ───── 5. FEATURE TABS ───── */}
+        <section id="features" className="orca-section">
+          <div className="max-w-7xl mx-auto px-5 sm:px-8">
+            <SectionHeader
+              label="הפלטפורמה"
+              title={<>מערכת אחת. <span className="grad-text">כל הכלים.</span></>}
+              sub="כל מה שהופך אותך לסוחר טוב יותר — במקום אחד."
+            />
+            <FeatureTabs />
+          </div>
+        </section>
+
+        {/* ───── 6. JOURNALING ───── */}
+        <section id="journal" className="orca-section" style={{ background: 'var(--bg-2)' }}>
+          <div className="max-w-7xl mx-auto px-5 sm:px-8">
+            <SectionHeader
+              label="יומן אוטומטי"
+              title={<>כל טרייד, <span className="grad-text">מתועד אוטומטית.</span></>}
+              sub="חבר פעם אחת — והעסקאות זורמות פנימה, מתויגות ומוכנות לניתוח. לא עוד תיעוד ידני."
+            />
+            <div className="orca-grad-grid">
+              <GradCard accent="#22D3EE" title="יומן בוקר וערב" desc="ניתוח לפני השוק + רפלקציה אחרי, עם הזרמה אוטומטית של עסקאות היום." />
+              <GradCard accent="#34D399" title="Calendar Hub" desc="מרכז ה-P&L: לוח שנה אינטראקטיבי עם סיכומי שבוע וחודש." />
+              <GradCard accent="#8B5CF6" title="יומן Backtest" desc="דימנשן נפרד לתיעוד אסטרטגיות, סטטיסטיקות והשוואה לחי." />
+            </div>
+          </div>
+        </section>
+
+        {/* ───── 7. VIDEO ───── */}
+        <section className="orca-section">
+          <div className="max-w-5xl mx-auto px-5 sm:px-8">
+            <SectionHeader
+              label="DEMO"
+              title={<>ראה את <span className="grad-text">Orca בפעולה.</span></>}
+              sub="סיור קצר במערכת — מהזנת טרייד ועד תובנת AI."
+            />
+            <div className="orca-video-wrap" style={{ marginTop: 36 }}>
+              <div className="orca-frame-skeleton" style={{ position: 'absolute', inset: 0 }} />
+              <div className="orca-video-play">
+                <div className="btn">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ───── 8. INSIGHTS ───── */}
+        <section className="orca-section" style={{ background: 'var(--bg-2)' }}>
+          <div className="max-w-7xl mx-auto px-5 sm:px-8">
+            <SectionHeader
+              label="דוחות מבוססי-נתונים"
+              title={<>קבל תובנות <span className="grad-text">שלא ראית.</span></>}
+              sub="עשרות מודולים כמותיים שחושפים את ה-Edge האמיתי שלך."
+            />
+            <div style={{ textAlign: 'center', marginTop: 24 }}>
+              <button className="grad-btn" onClick={goApp}>התחל בחינם <ArrowLeft size={16} /></button>
+            </div>
+            <div className="orca-grad-grid">
+              <GradCard accent="#22D3EE" title="צלול עמוק לאסטרטגיה" desc="Monte Carlo, Box Plot, Risk-Reward Frontier ועוד בלוח Quant Lab." num="01" />
+              <GradCard accent="#8B5CF6" title="הבן את ההתנהגות שלך" desc="ניתוח רב-ממדי של 145+ עסקאות וזיהוי דפוסים פסיכולוגיים." num="02" />
+              <GradCard accent="#34D399" title="מה עובד בשבילך" desc="חוזקות, שעות זהב, נכסים מנצחים — והיכן ה-Edge האמיתי שלך." num="03" />
+            </div>
+          </div>
+        </section>
+
+        {/* ───── 9. EDGE / RISK ───── */}
+        <section className="orca-section">
+          <div className="max-w-7xl mx-auto px-5 sm:px-8">
+            <SectionHeader
+              label="EDGE & RISK"
+              title={<>האם יש לך <span className="grad-text">Edge רווחי?</span></>}
+              sub="מדדי ORCA וניהול סיכונים שומרים אותך משמעתי ורווחי לאורך זמן."
+            />
+            <div className="orca-two-up">
+              <div className="orca-big-card" style={{ background: 'linear-gradient(160deg, rgba(34,211,238,0.10), rgba(7,9,15,0))' }}>
+                <SectionLabel>מדדי ORCA</SectionLabel>
+                <h3 style={{ fontSize: 'clamp(1.5rem, 2.6vw, 2rem)', fontWeight: 800, margin: '10px 0 12px' }}>ORCA Score — 0 עד 100</h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: 15, lineHeight: 1.7, marginBottom: 18 }}>
+                  ציון משולב של משמעת, עקביות סיכון והתאמת משטר. הכי קרוב שיש לתעודת זהות לסוחר.
+                </p>
+                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center', marginTop: 12 }}>
+                  {[{ v: 86, c: '#22D3EE' }, { v: 81, c: '#F59E0B' }, { v: 56, c: '#8B5CF6' }, { v: 100, c: '#34D399' }].map((g, i) => (
+                    <div key={i} style={{ width: 86, height: 86, borderRadius: '50%', border: `4px solid ${g.c}`, display: 'grid', placeItems: 'center', boxShadow: `0 0 24px ${g.c}55`, background: 'var(--surface)' }}>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: g.c, textShadow: `0 0 12px ${g.c}` }}>{g.v}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="orca-big-card" style={{ background: 'linear-gradient(160deg, rgba(245,158,11,0.10), rgba(7,9,15,0))' }}>
+                <SectionLabel color="#F59E0B">מנוע סיכונים</SectionLabel>
+                <h3 style={{ fontSize: 'clamp(1.5rem, 2.6vw, 2rem)', fontWeight: 800, margin: '10px 0 12px' }}>הגנה 4-שכבתית</h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: 15, lineHeight: 1.7, marginBottom: 18 }}>
+                  מגבלות -1R לעסקה, -2R יומי, -5R שבועי, -10R חודשי. מד סיכון חי, התראות Risk Drift ומצב צינון.
+                </p>
+                <div style={{ display: 'grid', gap: 12 }}>
+                  {[{ k: '-1R', v: 'עסקה', c: '#22D3EE' }, { k: '-2R', v: 'יומי', c: '#34D399' }, { k: '-5R', v: 'שבועי', c: '#F59E0B' }, { k: '-10R', v: 'חודשי', c: '#EF4444' }].map(l => (
+                    <div key={l.k} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)' }}>
+                      <div className="mono" style={{ color: l.c, fontWeight: 700, fontSize: 14, minWidth: 48 }}>{l.k}</div>
+                      <div style={{ color: 'var(--text)', fontSize: 14 }}>{l.v}</div>
+                      <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,0.05)', borderRadius: 2, overflow: 'hidden' }}>
+                        <div style={{ width: `${[35, 55, 70, 88][['-1R', '-2R', '-5R', '-10R'].indexOf(l.k)]}%`, height: '100%', background: l.c, boxShadow: `0 0 8px ${l.c}` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ───── 10. TRADER MIND ───── */}
+        <section className="orca-section orca-mind-bg">
+          <div className="max-w-5xl mx-auto px-5 sm:px-8">
+            <SectionHeader
+              label="ORCA · MAINFRAME"
+              title={<>תודעת הסוחר — <span className="grad-text">המנוע שמכיר אותך.</span></>}
+              sub="אבחון התנהגותי שבונה לך פרופיל אישי (Archetype), ומכייל את ה-AI Coach בדיוק לחולשות ולחוזקות שלך."
+              labelColor="#8B5CF6"
+            />
+            <div style={{ maxWidth: 720, margin: '36px auto 0' }}>
+              <ScreenshotFrame />
+            </div>
+            <div style={{ textAlign: 'center', marginTop: 28 }}>
+              <button className="grad-btn" onClick={goApp}>גלה את פרופיל הסוחר שלך <ArrowLeft size={16} /></button>
+            </div>
+          </div>
+        </section>
+
+        {/* ───── 11. COMMUNITY ───── */}
+        <section id="community" className="orca-section">
+          <div className="max-w-5xl mx-auto px-5 sm:px-8" style={{ textAlign: 'center' }}>
+            <SectionHeader
+              label="קהילה"
+              title={<>אלפי סוחרים <span className="grad-text">בקהילת Orca.</span></>}
+              sub="הצטרף לקהילת סוחרים פעילה — שתף, למד והשתפר ביחד."
+            />
+            <div className="orca-constellation">
+              <svg viewBox="0 0 600 340" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
+                <defs>
+                  <linearGradient id="conn" x1="0" x2="1">
+                    <stop offset="0%" stopColor="#22D3EE" stopOpacity="0.5" />
+                    <stop offset="100%" stopColor="#34D399" stopOpacity="0.1" />
+                  </linearGradient>
+                </defs>
+                {[[300, 170, 80, 60], [300, 170, 500, 70], [300, 170, 100, 270], [300, 170, 520, 280], [300, 170, 60, 170], [300, 170, 540, 170]].map((l, i) => (
+                  <line key={i} x1={l[0]} y1={l[1]} x2={l[2]} y2={l[3]} stroke="url(#conn)" strokeWidth="1" />
+                ))}
+              </svg>
+              <div className="center">🐋</div>
+              {[{ x: 60, y: 40, n: 'AR' }, { x: 480, y: 50, n: 'DM' }, { x: 80, y: 250, n: 'YS' }, { x: 500, y: 260, n: 'NL' }, { x: 30, y: 150, n: 'OK' }, { x: 520, y: 150, n: 'TH' }].map((a, i) => (
+                <div key={i} className="orca-avatar" style={{ insetInlineStart: `${(a.x / 600) * 100}%`, top: `${(a.y / 340) * 100}%` }}>{a.n}</div>
+              ))}
+            </div>
+            <div style={{ marginTop: 36 }}>
+              <button className="grad-btn" onClick={() => window.open('https://discord.gg', '_blank')}>הצטרף לקהילה <ArrowLeft size={16} /></button>
+            </div>
+          </div>
+        </section>
+
+        {/* ───── 12. PRICING ───── */}
+        <section id="pricing" className="orca-section" style={{ background: 'var(--bg-2)' }}>
+          <div className="max-w-7xl mx-auto px-5 sm:px-8">
+            <SectionHeader label="מחירים" title={<>מסלול <span className="grad-text">לכל סוחר.</span></>} />
+            <div style={{ textAlign: 'center', marginTop: 20 }}>
+              <div className="orca-pill-free" style={{ fontSize: 14, padding: '10px 20px' }}>
+                🎉 בתקופת ההשקה — כל המסלולים פתוחים בחינם!
+              </div>
+            </div>
+            <div className="orca-pricing">
+              {[
+                { name: 'Standard', desc: 'יומן + אנליטיקה בסיסית.', feats: ['יומן מסחר אוטומטי', 'KPIs ליבה', 'Calendar Hub', 'ייבוא CSV'] },
+                { name: 'Pro', desc: 'ניהול סיכונים, תובנות AI, תודעת סוחר.', feats: ['כל מה ש-Standard', 'מנוע סיכונים 4-שכבתי', 'תובנות AI עמוקות', 'אבחון תודעת הסוחר'], popular: true },
+                { name: 'Ultimate', desc: 'מעבדת אנליטיקה מתקדמת.', feats: ['כל מה ש-Pro', 'Quant Lab מלא', 'Monte Carlo + Box Plot', 'Risk-Reward Frontier'] },
+              ].map((p) => (
+                <div key={p.name} className={`orca-price-card ${p.popular ? 'popular' : ''}`}>
+                  {p.popular && <div className="badge-pop">המומלץ</div>}
+                  <div>
+                    <div className="mono" style={{ fontSize: 11, color: 'var(--text-muted)' }}>מסלול</div>
+                    <h3 style={{ fontSize: 26, fontWeight: 800, margin: '6px 0 6px', color: p.popular ? '#8B5CF6' : 'var(--text)' }}>{p.name}</h3>
+                    <p style={{ color: 'var(--text-muted)', fontSize: 14, lineHeight: 1.6 }}>{p.desc}</p>
+                  </div>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                      <span className="mono" style={{ fontSize: 11, color: 'var(--text-muted)' }}>מחיר</span>
+                      <span style={{ fontSize: 24, fontWeight: 800, color: p.popular ? '#8B5CF6' : 'var(--cyan)' }}>בקרוב</span>
+                    </div>
+                    <div className="mono" style={{ fontSize: 11, color: 'var(--mint)', marginTop: 4 }}>חינם בתקופת ההשקה</div>
+                  </div>
+                  <ul>{p.feats.map(f => <li key={f}>{f}</li>)}</ul>
+                  <button className="grad-btn" onClick={goApp} style={{ width: '100%', justifyContent: 'center' }}>
+                    התחל בחינם
+                  </button>
+                  <div className="mono" style={{ fontSize: 10, color: 'var(--text-dim)', textAlign: 'center' }}>
+                    ללא כרטיס אשראי · גישה מלאה עכשיו
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ───── 13. FINAL CTA ───── */}
+        <section className="orca-section orca-final">
+          <div className="max-w-4xl mx-auto px-5 sm:px-8">
+            <h2 className="orca-section-title">
+              התחל לנהל את המסחר שלך — <span className="grad-text">בחינם.</span>
+            </h2>
+            <div style={{ marginTop: 28 }}>
+              <button className="grad-btn" onClick={goApp} style={{ fontSize: 17, padding: '18px 32px' }}>
+                כניסה למערכת <ArrowLeft size={18} />
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* ───── 14. FOOTER ───── */}
+        <footer id="about" className="orca-footer">
+          <div className="max-w-7xl mx-auto px-5 sm:px-8">
+            <div className="orca-footer-grid">
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                  <div className="orca-hex"><TrendingUp size={16} /></div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                    <span style={{ fontWeight: 800, fontSize: 18 }}>Orca</span>
+                    <span style={{ fontWeight: 300, fontSize: 15, color: 'var(--text-muted)' }}>Investment</span>
+                  </div>
+                </div>
+                <p style={{ color: 'var(--text-muted)', fontSize: 14, lineHeight: 1.7, maxWidth: 320 }}>
+                  יומן מסחר חכם ואוטומטי. כל טרייד, כל סטטיסטיקה, החלטה אחת טובה יותר.
+                </p>
+              </div>
+              <div className="orca-footer-col">
+                <h4>מוצר</h4>
+                <a href="#features">פיצ׳רים</a>
+                <a href="#journal">היומן</a>
+                <a href="#pricing">מחירים</a>
+              </div>
+              <div className="orca-footer-col">
+                <h4>קהילה</h4>
+                <a href="#community">Discord</a>
+                <a href="#">Telegram</a>
+                <a href="#">YouTube</a>
+              </div>
+              <div className="orca-footer-col">
+                <h4>משפטי</h4>
+                <Link to="/terms">תנאי שימוש</Link>
+                <a href="#">פרטיות</a>
+                <a href="#">נגישות</a>
+              </div>
+            </div>
+
+            <div className="orca-legal">
+              ⚠️ <strong style={{ color: 'var(--text)' }}>Orca Investment</strong> אינה מערכת איתותים ואינה מספקת המלצות השקעה.
+              הנתונים מבוססים על פעילות המסחר האישית של המשתמש ונועדו ללמידה, שיפור תהליך ופיתוח משמעת.
+              מסחר בשווקים פיננסיים כרוך בסיכון; כל משתמש פועל לפי שיקול דעתו.
+            </div>
+
+            <div style={{ marginTop: 28, paddingTop: 20, borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+              <div className="mono" style={{ fontSize: 11, color: 'var(--text-dim)' }}>© 2026 ORCA INVESTMENT. ALL RIGHTS RESERVED.</div>
+              <div className="mono" style={{ fontSize: 11, color: 'var(--text-dim)' }}>BUILT WITH 🐋 IN TEL AVIV</div>
+            </div>
+          </div>
+        </footer>
+
         {/* Command bar signature */}
+
         <div className="orca-cmd-bar hidden sm:block">
           PRESS <kbd>⌘K</kbd> FOR COMMAND · <kbd>?</kbd> HELP
         </div>
