@@ -330,7 +330,60 @@ const SectionHeader: React.FC<{ label: string; title: React.ReactNode; sub?: str
   </div>
 );
 
-/* Gradient card with screenshot */
+/* Reveal on scroll */
+const Reveal: React.FC<{ children: React.ReactNode; delay?: number; y?: number }> = ({ children, delay = 0, y = 24 }) => (
+  <motion.div
+    initial={{ opacity: 0, y }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true, margin: '-60px' }}
+    transition={{ duration: 0.7, ease: 'easeOut', delay }}
+  >
+    {children}
+  </motion.div>
+);
+
+/* Count-up animation for stats */
+const CountUp: React.FC<{ value: string }> = ({ value }) => {
+  // Parse "120K+", "3,200+", "40+", "100%" → numeric + suffix
+  const match = value.match(/^([0-9.,]+)(.*)$/);
+  const target = match ? parseFloat(match[1].replace(/,/g, '')) : 0;
+  const suffix = match ? match[2] : '';
+  const prefix = match ? '' : value;
+  const [n, setN] = useState(0);
+  const [started, setStarted] = useState(false);
+  const ref = React.useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (!ref.current || started) return;
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { setStarted(true); obs.disconnect(); }
+    }, { threshold: 0.4 });
+    obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, [started]);
+  useEffect(() => {
+    if (!started) return;
+    const dur = 1400;
+    const t0 = performance.now();
+    let raf = 0;
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - t0) / dur);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setN(target * eased);
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [started, target]);
+  const display = (() => {
+    if (target >= 1000) return Math.round(n).toLocaleString('en-US');
+    if (target % 1 !== 0) return n.toFixed(1);
+    return Math.round(n).toString();
+  })();
+  // Handle "120K+" — keep the K in suffix
+  return <span ref={ref}>{prefix}{display}{suffix}</span>;
+};
+
+
 const GradCard: React.FC<{ accent: string; title: string; desc: string; num?: string }> = ({ accent, title, desc, num }) => (
   <motion.div className="orca-grad-card"
     whileHover={{ borderColor: `${accent}66` }}
