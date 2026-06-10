@@ -27,6 +27,7 @@ import type { TradingTheme } from '@/lib/trading-theme';
 import { TierGate } from '@/components/billing/TierGate';
 import { ChartWrapper, EXPLANATIONS, type ChartExplanation } from './ChartWrapper';
 import { useLang } from '@/hooks/use-lang';
+import { useDisplayMode } from '@/lib/display-mode';
 import { getEffectiveR } from '@/lib/r-multiple';
 
 interface AnalyticsProps {
@@ -76,11 +77,17 @@ const EmptyNote = ({ T, children }: { T: TradingTheme; children: React.ReactNode
 export function UltimateAnalyticsDeck({ T, trades, onExplainClick, registryAllows }: AnalyticsProps) {
   const { t, lang } = useLang();
   const isRTL = lang === 'he';
+  const { displayMode } = useDisplayMode();
+  const isMoney = displayMode === 'MONEY';
   const tt = { background: T.bg.card, border: `1px solid ${T.border.medium}`, borderRadius: 10, color: T.text.primary, fontSize: 12, boxShadow: T.shadow.elevated, padding: '8px 12px' };
+
+  // Unit-aware sample value for autocorrelation: $ in MONEY mode, R in R mode.
+  const sampleValue = (tr: Trade): number => isMoney ? (Number(tr.pnl) || 0) : getEffectiveR(tr);
+  const unitFmt = (v: number) => isMoney ? `$${v.toFixed(2)}` : `${v.toFixed(2)}R`;
 
   // ── 1. Lag-1 Autocorrelation ────────────────────────────────
   const lag = useMemo(() => {
-    const rs = trades.map(tr => getEffectiveR(tr));
+    const rs = trades.map(sampleValue);
     const pairs: Array<{ prev: number; cur: number; idx: number }> = [];
     for (let i = 1; i < rs.length; i++) pairs.push({ prev: +rs[i - 1].toFixed(3), cur: +rs[i].toFixed(3), idx: i });
     if (pairs.length < 5) return { pairs, rho: 0 };
@@ -94,7 +101,7 @@ export function UltimateAnalyticsDeck({ T, trades, onExplainClick, registryAllow
     }
     const rho = (dP > 0 && dC > 0) ? num / Math.sqrt(dP * dC) : 0;
     return { pairs, rho: +rho.toFixed(3) };
-  }, [trades]);
+  }, [trades, isMoney]);
 
   const rhoColor = Math.abs(lag.rho) > 0.3 ? T.accent.red : Math.abs(lag.rho) > 0.15 ? T.accent.orange : T.accent.green;
 
@@ -123,7 +130,7 @@ export function UltimateAnalyticsDeck({ T, trades, onExplainClick, registryAllow
   const medianColor = intervals.median < 1 ? T.accent.red : intervals.median < 4 ? T.accent.orange : T.accent.green;
 
   return (
-    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12, marginTop: 16 }}>
+    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 12, marginTop: 16 }}>
       {registryAllows('lag1Autocorr') && (
         <TierGate required="ultimate" label={t('אוטוקורלציה Lag-1', 'Lag-1 Autocorrelation')}>
           <ChartWrapper T={T} title={t('אוטוקורלציה Lag-1', 'Lag-1 Autocorrelation')} explanation={EXPLANATIONS.lag1Autocorr} unit="ρ" chartId="lag1Autocorr" onExplainClick={onExplainClick}>
@@ -136,12 +143,12 @@ export function UltimateAnalyticsDeck({ T, trades, onExplainClick, registryAllow
               <ResponsiveContainer width="100%" height={220}>
                 <ScatterChart>
                   <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
-                  <XAxis type="number" dataKey="prev" name="R[i-1]" tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => `${v}R`} />
-                  <YAxis type="number" dataKey="cur" name="R[i]" tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => `${v}R`} />
+                  <XAxis type="number" dataKey="prev" name={isMoney ? '$[i-1]' : 'R[i-1]'} tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={unitFmt} />
+                  <YAxis type="number" dataKey="cur" name={isMoney ? '$[i]' : 'R[i]'} tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={unitFmt} />
                   <ZAxis range={[50, 120]} />
                   <ReferenceLine x={0} stroke={T.text.muted} />
                   <ReferenceLine y={0} stroke={T.text.muted} />
-                  <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} formatter={(v: number) => `${v}R`} />
+                  <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} formatter={(v: number) => unitFmt(v)} />
                   <Scatter data={lag.pairs}>
                     {lag.pairs.map((p, i) => (
                       <Cell key={i} fill={p.cur >= 0 ? T.accent.green : T.accent.red} fillOpacity={0.7} />
@@ -256,7 +263,7 @@ export function UltimateRiskDeck({ T, trades, privacyMode, onExplainClick, regis
   }, [trades]);
 
   return (
-    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12, marginTop: 16 }}>
+    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 12, marginTop: 16 }}>
       {/* 3 — Kelly */}
       {registryAllows('kellyOptimal') && (
         <TierGate required="ultimate" label={t('אופטימום קלי', 'Kelly Optimal')}>
