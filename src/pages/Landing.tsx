@@ -348,7 +348,7 @@ function Hero() {
                 fontFamily: FONT_DISPLAY,
               }}
             >
-              נסה את המערכת ←
+              צפו במערכת ←
             </a>
           </div>
 
@@ -639,11 +639,11 @@ function TryItDemo() {
     <section id="demo" className="max-w-7xl mx-auto px-5 lg:px-8 py-20 lg:py-24">
       <div className="text-center mb-10">
         <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4" style={{ fontFamily: FONT_DISPLAY, color: TXT }}>
-          נסו את המערכת בעצמכם
+          הצצה למערכת מבפנים
         </h2>
         <div className="mx-auto w-24 h-[3px] rounded-full mb-5" style={{ background: `linear-gradient(90deg, transparent, ${GOLD}, transparent)` }} />
         <p className="text-base md:text-lg" style={{ color: TXT_2 }}>
-          גלו איך נראה יומן מסחר חכם מבפנים — בלי להירשם, בלי כרטיס אשראי.
+          כך נראה יומן מסחר חכם בפעולה — ללא התחייבות וללא כרטיס אשראי.
         </p>
       </div>
       <div
