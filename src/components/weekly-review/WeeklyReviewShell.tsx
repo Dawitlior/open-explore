@@ -50,20 +50,57 @@ const WeeklyReviewShellInner = ({ T, isRTL, trades }: Props) => {
   return (
     <div
       dir={isRTL ? 'rtl' : 'ltr'}
+      data-weekly-review
       style={{
         width: '100%',
+        maxWidth: '100vw',
         minHeight: 'calc(100dvh - 60px)',
         background: bg,
         color: fg,
         paddingTop: 'env(safe-area-inset-top)',
-        paddingBottom: 'env(safe-area-inset-bottom)',
-        paddingInline: 'clamp(12px, 3vw, 24px)',
+        // Reserve room for the mobile bottom-nav (~60px + safe-area).
+        paddingBottom: 'calc(env(safe-area-inset-bottom) + 96px)',
+        paddingInline: 'clamp(10px, 3vw, 24px)',
         fontFamily: "'Poppins', system-ui, sans-serif",
         boxSizing: 'border-box',
         direction: isRTL ? 'rtl' : 'ltr',
         textAlign: isRTL ? 'right' : 'left',
+        overflowX: 'hidden',
       }}
     >
+      {/* ── Mobile-first responsive overrides for inline-styled grids ── */}
+      <style>{`
+        @media (max-width: 640px) {
+          [data-weekly-review] { padding-inline: 10px !important; }
+          [data-weekly-review] h1 { font-size: 18px !important; }
+          [data-weekly-review] section { padding: 12px !important; }
+          [data-weekly-review] [role="tablist"] button {
+            flex: 1 1 calc(50% - 6px) !important;
+            font-size: 11px !important;
+            padding: 9px 8px !important;
+            min-height: 40px !important;
+          }
+          /* Collapse every multi-column grid to a single column on mobile */
+          [data-weekly-review] section > div[style*="grid-template-columns"],
+          [data-weekly-review] section div[style*="grid-template-columns: repeat(auto-fit"],
+          [data-weekly-review] section div[style*="grid-template-columns: repeat(3"],
+          [data-weekly-review] section div[style*="grid-template-columns: repeat(4"] {
+            grid-template-columns: 1fr !important;
+          }
+          /* 2-up stat grids keep 2 columns to stay info-dense */
+          [data-weekly-review] section div[style*="minmax(140px"] {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
+          [data-weekly-review] table { font-size: 11px !important; }
+          [data-weekly-review] table th, [data-weekly-review] table td { padding: 8px 6px !important; }
+          [data-weekly-review] textarea,
+          [data-weekly-review] input,
+          [data-weekly-review] select {
+            font-size: 16px !important; /* prevents iOS zoom-on-focus */
+          }
+          [data-weekly-review] button { min-height: 44px; }
+        }
+      `}</style>
       {/* ── Reminder + month-over + auto-trade sync banner ── */}
       <div style={{ marginTop: 12 }}>
         <WeeklyReviewBanner T={T} isRTL={isRTL} trades={trades} />

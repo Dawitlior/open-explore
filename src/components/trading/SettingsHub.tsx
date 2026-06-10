@@ -411,10 +411,12 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
             animation: 'orcaSettingsFade .18s ease-out',
           }}>
             <div style={{
-              padding: '14px 16px 10px', display: 'flex', alignItems: 'center',
+              padding: 'calc(14px + env(safe-area-inset-top)) 16px 10px',
+              display: 'flex', alignItems: 'center',
               justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 2,
               background: iosChromeBg, borderBottom: `1px solid ${T.border.subtle}`,
               backdropFilter: 'blur(18px) saturate(160%)', WebkitBackdropFilter: 'blur(18px) saturate(160%)',
+              minHeight: 'calc(48px + env(safe-area-inset-top))',
             }}>
               <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', color: T.text.primary }}>{t('הגדרות', 'Settings')}</div>
               <button onClick={onClose} aria-label="Close" style={{
@@ -523,7 +525,8 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
           {/* iOS-style back header on mobile drill */}
           {isMobile && mobileDrilled && (
             <header className="orca-ios-back" style={{
-              padding: '12px 14px', borderBottom: `1px solid ${T.border.subtle}`,
+              padding: 'calc(10px + env(safe-area-inset-top)) 14px 10px',
+              borderBottom: `1px solid ${T.border.subtle}`,
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               background: iosChromeBg, position: 'sticky', top: 0, zIndex: 3,
               backdropFilter: 'blur(18px) saturate(160%)', WebkitBackdropFilter: 'blur(18px) saturate(160%)',
