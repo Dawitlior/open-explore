@@ -618,56 +618,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
         </GlassCard>
       )}
 
-      {/* ═══ SETUP LEADERBOARD ═══ */}
-      {showPro && registryAllows('strategyExpectancy') && <GlassCard T={T} style={{ marginBottom: 16, padding: 0, overflow: 'hidden' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px 8px' }}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700 }}>{t('טבלת מובילים — לפי נכס','Leaderboard — by asset')}</div>
-          <div style={{ display: 'flex', gap: 4 }}>
-            {([
-              { k: 'pnl', l: 'P&L' }, { k: 'exp', l: t('תוחלת','Expectancy') }, { k: 'wr', l: t('הצלחה','Win %') }, { k: 'n', l: t('עסקאות','Trades') },
-            ] as const).map(o => (
-              <button
-                key={o.k}
-                onClick={() => setSortKey(o.k)}
-                style={{
-                  padding: '4px 10px', fontSize: 10, fontWeight: 700,
-                  background: sortKey === o.k ? T.accent.cyan : 'transparent',
-                  color: sortKey === o.k ? T.bg.primary : T.text.muted,
-                  border: `1px solid ${sortKey === o.k ? T.accent.cyan : T.border.subtle}`,
-                  borderRadius: 6, cursor: 'pointer',
-                }}
-              >
-                {o.l}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-            <thead>
-              <tr style={{ background: T.bg.tertiary }}>
-                {[t('נכס','Asset'), t('עסקאות','Trades'), t('הצלחה','Win %'), 'P&L', t('תוחלת R','Expectancy R'), t('סיכון ממוצע','Avg Risk')].map(h => (
-                  <th key={h} style={{ padding: '8px 12px', textAlign: 'right', color: T.text.muted, fontWeight: 600, fontSize: 10, borderBottom: `1px solid ${T.border.medium}` }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {setupBoard.map((s, i) => (
-                <tr key={s.coin} style={{ background: i % 2 ? `${T.bg.tertiary}40` : 'transparent' }}>
-                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontWeight: 700, color: T.accent.cyan }}>{s.coin}</td>
-                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace" }}>{s.n}</td>
-                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontWeight: 700, color: s.wr >= 50 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{s.wr.toFixed(0)}%</td>
-                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: s.pnl >= 0 ? T.accent.green : T.accent.red }}>
-                    <PV>{s.pnl >= 0 ? '+' : ''}${s.pnl.toFixed(2)}</PV>
-                  </td>
-                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", color: s.exp >= 0 ? T.accent.cyan : T.accent.red, fontWeight: 600 }}>{s.exp >= 0 ? '+' : ''}{s.exp.toFixed(2)}R</td>
-                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace" }}><PV>${s.avgRisk.toFixed(2)}</PV></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </GlassCard>}
+      {/* Leaderboard moved to bottom — see end of page */}
 
       {/* ═══ Risk-vs-PnL Scatter (full-width after Edge Evolution removal) ═══ */}
       {registryAllows('winRateVsRR') && <GlassCard T={T} style={{ marginBottom: 16 }}>
