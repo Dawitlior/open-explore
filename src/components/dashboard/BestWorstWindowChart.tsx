@@ -87,7 +87,7 @@ export const BestWorstWindowChart = ({ T, trades, isRTL, tt }: Props) => {
   );
 
   const Highlight = ({ label, win, val }: { label: string; win: string | undefined; val: number | undefined }) => (
-    <div style={{ flex: 1, padding: '6px 10px', borderRadius: 8, background: `${T.bg.elevated}80`, border: `1px solid ${T.border.subtle}` }}>
+    <div style={{ flex: 1, padding: '6px 10px', borderRadius: 8, background: `${T.bg.surface}80`, border: `1px solid ${T.border.subtle}` }}>
       <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 2 }}>
         <span style={{ fontSize: 12, fontWeight: 600, color: T.text.primary }}>{win ?? '—'}</span>
