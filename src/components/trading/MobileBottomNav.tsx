@@ -32,6 +32,7 @@ export const MobileBottomNav = ({
   T, isRTL, page, onNavigate, onOpenRadar, onOpenMore, onAddTrade, onLongPressCenter,
 }: MobileBottomNavProps) => {
   const [pressed, setPressed] = useState<string | null>(null);
+  const [viewportBottomOffset, setViewportBottomOffset] = useState(0);
   const longPressTimer = useRef<number | null>(null);
 
   const slots: Slot[] = [
@@ -63,6 +64,24 @@ export const MobileBottomNav = ({
   // Mount only on client so createPortal has a target.
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    if (!mounted || typeof window === 'undefined') return;
+    const updateViewportOffset = () => {
+      const vv = window.visualViewport;
+      if (!vv) { setViewportBottomOffset(0); return; }
+      const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      setViewportBottomOffset(Math.round(offset));
+    };
+    updateViewportOffset();
+    window.visualViewport?.addEventListener('resize', updateViewportOffset);
+    window.visualViewport?.addEventListener('scroll', updateViewportOffset);
+    window.addEventListener('orientationchange', updateViewportOffset);
+    return () => {
+      window.visualViewport?.removeEventListener('resize', updateViewportOffset);
+      window.visualViewport?.removeEventListener('scroll', updateViewportOffset);
+      window.removeEventListener('orientationchange', updateViewportOffset);
+    };
+  }, [mounted]);
   if (!mounted) return null;
 
   const nav = (
@@ -71,7 +90,7 @@ export const MobileBottomNav = ({
       aria-label={isRTL ? 'ניווט תחתון' : 'Bottom navigation'}
       style={{
         position: 'fixed',
-        bottom: 0,
+        bottom: viewportBottomOffset,
         left: 0,
         right: 0,
         zIndex: 90,
@@ -87,6 +106,10 @@ export const MobileBottomNav = ({
         justifyContent: 'space-around',
         height: 'calc(60px + env(safe-area-inset-bottom, 0px))',
         fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+        transform: 'translateZ(0)',
+        willChange: 'transform',
+        contain: 'layout paint',
+        touchAction: 'manipulation',
       }}
     >
 
