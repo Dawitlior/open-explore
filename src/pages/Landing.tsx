@@ -336,7 +336,7 @@ function Hero() {
                 boxShadow: '0 18px 40px rgba(201,168,76,0.4)',
               }}
             >
-              התחילו תקופת ניסיון בחינם!
+              התחילו להשתמש ללא תשלום
               <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             </Link>
             <a
@@ -355,7 +355,7 @@ function Hero() {
 
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs" style={{ color: TXT_3 }}>
             <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5" style={{ color: GOLD }} /> ללא כרטיס אשראי</span>
-            <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5" style={{ color: GOLD }} /> ביטול בכל רגע</span>
+            <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5" style={{ color: GOLD }} /> שימוש ללא תשלום כרגע</span>
             <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5" style={{ color: GOLD }} /> RTL מלא בעברית</span>
           </div>
         </motion.div>
@@ -771,7 +771,7 @@ function Faq() {
     { q: 'האם יש אפליקציה לטלפון?', a: 'כן. PWA מלאה — נכנסים מהטלפון, מוסיפים למסך הבית, ויש לכם את כל המערכת כמו אפליקציה רגילה. iOS ו-Android.' },
     { q: 'למי האפליקציה מתאימה?', a: 'לסוחרים בכל הרמות — מתחילים שצריכים מסגרת, ועד פרופים שצריכים אנליטיקה רצינית. עובד עם קריפטו, מניות, פיוצ׳רס ופורקס.' },
     { q: 'למה לא פשוט לתעד באקסל?', a: 'אקסל לא יודע לחשב לך תוחלת מתגלגלת, לזהות דפוסים התנהגותיים, או לעצור אותך כשאתה חוצה מגבלות סיכון. Orca הוא כלי מקצועי — לא טבלה.' },
-    { q: 'אני משתמש בכמה תיקי מסחר — זה מתאים לי?', a: 'מסלול Pro תומך בחשבונות ללא הגבלה. כל חשבון עם נתונים, מגבלות ויעדים נפרדים — ועם ניתוח מצרפי מעל הכל.' },
+    { q: 'אני משתמש בכמה תיקי מסחר — זה מתאים לי?', a: 'כן. המערכת נבנתה כדי לרכז כמה מקורות מסחר, לנתח אותם בנפרד וביחד, ולשמור על תמונת ביצועים אחידה.' },
     { q: 'יש לי מנטור — הוא יכול לעקוב אחרי העסקאות שלי?', a: 'כן. אפשר להזמין מנטור לצפייה בחשבון שלך עם הרשאות מותאמות — והוא יכול לראות הכל ולהשאיר הערות בזמן אמת.' },
     { q: 'מה עם פרטיות? זה בטוח?', a: 'הצפנה ברמת שורה (RLS), אחסון בענן בטוח, מסכת פרטיות מובנית בקליק. הנתונים שלך — אצלך בלבד.' },
   ];
@@ -832,7 +832,7 @@ function FinalCta() {
             תפסיק לתעד. תתחיל להבין.
           </h2>
           <p className="max-w-xl mx-auto mb-8" style={{ color: TXT_2 }}>
-            5 ימי ניסיון. בלי כרטיס אשראי. רק יומן אחד שיכול לשנות את שנת המסחר שלך.
+            כרגע הפלטפורמה פתוחה לשימוש ללא תשלום וללא כרטיס אשראי — פשוט מתחברים ומתחילים לנהל את המסחר.
           </p>
           <Link
             to="/auth"
@@ -844,7 +844,7 @@ function FinalCta() {
               boxShadow: '0 20px 50px rgba(201,168,76,0.45)',
             }}
           >
-            התחילו ניסיון בחינם!
+            כניסה לפלטפורמה ללא תשלום
             <ArrowLeft className="w-4 h-4" />
           </Link>
         </div>
@@ -873,7 +873,6 @@ function Footer() {
             <ul className="space-y-2.5 text-sm" style={{ color: TXT_2 }}>
               <li><a href="#features" className="hover:text-white transition">פיצ'רים</a></li>
               <li><a href="#brokers" className="hover:text-white transition">פלטפורמות וברוקרים</a></li>
-              <li><a href="#pricing" className="hover:text-white transition">מחירים</a></li>
               <li><a href="#faq" className="hover:text-white transition">שאלות ותשובות</a></li>
             </ul>
           </div>
