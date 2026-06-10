@@ -525,7 +525,8 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
           {/* iOS-style back header on mobile drill */}
           {isMobile && mobileDrilled && (
             <header className="orca-ios-back" style={{
-              padding: '12px 14px', borderBottom: `1px solid ${T.border.subtle}`,
+              padding: 'calc(10px + env(safe-area-inset-top)) 14px 10px',
+              borderBottom: `1px solid ${T.border.subtle}`,
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               background: iosChromeBg, position: 'sticky', top: 0, zIndex: 3,
               backdropFilter: 'blur(18px) saturate(160%)', WebkitBackdropFilter: 'blur(18px) saturate(160%)',
