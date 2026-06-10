@@ -306,18 +306,7 @@ const ScreenshotFrame: React.FC<{ src?: string; alt?: string; children?: React.R
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
         />
       ) : (
-        <div
-          style={{
-            position: 'absolute', inset: 0,
-            display: 'grid', placeItems: 'center',
-            background: '#11151c',
-            color: 'rgba(255,255,255,0.35)',
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: 12, letterSpacing: '0.3em',
-          }}
-        >
-          SCREENSHOT
-        </div>
+        <div className="orca-frame-skeleton" />
       ))}
     </div>
   </div>
