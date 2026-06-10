@@ -61,9 +61,12 @@ export function DisplayModeProvider({ trades, children }: { trades: Trade[]; chi
     return 'R_MULTIPLE';
   });
 
-  // Auto-reconcile when data eligibility changes:
-  //  - no R-eligible trades  -> force MONEY (locked)
-  //  - first R-eligible appears & no cached pref -> default R_MULTIPLE
+  // Derive effective mode synchronously — prevents a one-frame flicker on
+  // first paint when an effect would otherwise downgrade R_MULTIPLE → MONEY.
+  const effectiveMode: DisplayMode = locked ? 'MONEY' : displayMode;
+
+  // Persist the reconciled state back to React state so consumers that read
+  // `displayMode` (rather than the derived value) eventually converge.
   useEffect(() => {
     if (locked && displayMode !== 'MONEY') setDisplayModeState('MONEY');
   }, [locked, displayMode]);
@@ -75,12 +78,12 @@ export function DisplayModeProvider({ trades, children }: { trades: Trade[]; chi
   };
 
   const visibleTrades = useMemo(
-    () => selectVisibleTrades(trades, displayMode),
-    [trades, displayMode],
+    () => selectVisibleTrades(trades, effectiveMode),
+    [trades, effectiveMode],
   );
 
   const value: DisplayModeCtx = {
-    displayMode,
+    displayMode: effectiveMode,
     setDisplayMode,
     hasAnyR,
     locked,
