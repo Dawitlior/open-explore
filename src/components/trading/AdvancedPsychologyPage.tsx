@@ -277,7 +277,7 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
   const tiltColor = tiltScore.status === 'calm' ? T.accent.green : tiltScore.status === 'elevated' ? T.accent.orange : T.accent.red;
   const tiltLabel = tiltScore.status === 'calm' ? (isRTL ? 'רגוע' : 'CALM') : tiltScore.status === 'elevated' ? (isRTL ? 'מוגבר' : 'ELEVATED') : (isRTL ? 'מוטה' : 'TILTED');
 
-  const deepDiag: DeepDiagnosis = useMemo(() => diagnose(trades), [trades]);
+  const deepDiag: DeepDiagnosis = useMemo(() => diagnose(trades, { lang: isRTL ? 'he' : 'en', isMoney }), [trades, isRTL, isMoney]);
 
   // Heatmap color helper
   const heatColor = (r: number) => {
