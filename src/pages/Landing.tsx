@@ -700,7 +700,7 @@ const Landing: React.FC = () => {
               <button className="grad-btn" onClick={goApp}>התחל בחינם <ArrowLeft size={16} /></button>
             </div>
             <div className="orca-grad-grid">
-              <GradCard accent="#22D3EE" title="צלול עמוק לאסטרטגיה" desc="Monte Carlo, Box Plot, Risk-Reward Frontier ועוד בלוח Quant Lab." num="01" />
+              <GradCard accent="#22D3EE" title="צלול עמוק לאסטרטגיה" desc="Monte Carlo, Box Plot, Risk-Reward Frontier ועוד בלוח Quant Lab." num="01" image={quantLab.url} />
               <GradCard accent="#8B5CF6" title="הבן את ההתנהגות שלך" desc="ניתוח רב-ממדי של 145+ עסקאות וזיהוי דפוסים פסיכולוגיים." num="02" />
               <GradCard accent="#34D399" title="מה עובד בשבילך" desc="חוזקות, שעות זהב, נכסים מנצחים — והיכן ה-Edge האמיתי שלך." num="03" />
             </div>
