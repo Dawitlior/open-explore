@@ -64,10 +64,12 @@ export function card(P: Palette): React.CSSProperties {
   return {
     padding: 'clamp(14px, 2vw, 20px)', background: P.panel,
     border: `1px solid ${P.border}`, borderRadius: 14, boxSizing: 'border-box',
+    width: '100%', maxWidth: '100%', minWidth: 0,
+    overflowWrap: 'break-word', wordWrap: 'break-word',
   };
 }
 export function labelStyle(P: Palette): React.CSSProperties {
-  return { color: P.muted, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', fontWeight: 600 };
+  return { color: P.muted, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', fontWeight: 600, overflowWrap: 'break-word', wordWrap: 'break-word' };
 }
 export function tooltipStyle(P: Palette): React.CSSProperties {
   return {
@@ -82,14 +84,14 @@ export function StatCard({ P, label, value, tone }: { P: Palette; label: string;
   return (
     <div style={card(P)}>
       <div style={labelStyle(P)}>{label}</div>
-      <div style={{ color: tone || P.fg, fontFamily: "'IBM Plex Mono', monospace", fontSize: 20, fontWeight: 700, marginTop: 4 }}>{value}</div>
+      <div style={{ color: tone || P.fg, fontFamily: "'IBM Plex Mono', monospace", fontSize: 20, fontWeight: 700, marginTop: 4, overflowWrap: 'break-word', wordWrap: 'break-word' }}>{value}</div>
     </div>
   );
 }
 export function ChartCard({ P, title, children, hint }: { P: Palette; title: string; children: React.ReactNode; hint?: string }) {
   return (
     <div style={card(P)}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10, gap: 8, flexWrap: 'wrap', minWidth: 0 }}>
         <div style={labelStyle(P)}>{title}</div>
         {hint && <div style={{ color: P.muted, fontSize: 9, letterSpacing: 1 }}>{hint}</div>}
       </div>
