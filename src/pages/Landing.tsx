@@ -128,8 +128,8 @@ function FreeAccessBanner() {
             animation: 'pulse 2s ease-in-out infinite',
           }}
         />
-        <strong style={{ color: GOLD_SOFT, fontWeight: 800 }}>הפלטפורמה זמינה כרגע ללא תשלום</strong>
-        <span style={{ color: TXT_2 }}>· אפשר להתחבר ולהשתמש בכלי המסחר ללא עלות בשלב הנוכחי</span>
+        <strong style={{ color: GOLD_SOFT, fontWeight: 800 }}>הפלטפורמה זמינה ללא תשלום</strong>
+        <span style={{ color: TXT_2 }}>· אפשר להתחבר ולהשתמש בכלי המסחר ללא עלות</span>
       </span>
     </div>
   );
@@ -354,7 +354,7 @@ function Hero() {
 
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs" style={{ color: TXT_3 }}>
             <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5" style={{ color: GOLD }} /> ללא כרטיס אשראי</span>
-            <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5" style={{ color: GOLD }} /> שימוש ללא תשלום כרגע</span>
+            <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5" style={{ color: GOLD }} /> שימוש ללא תשלום</span>
             <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5" style={{ color: GOLD }} /> RTL מלא בעברית</span>
           </div>
         </motion.div>
@@ -831,7 +831,7 @@ function FinalCta() {
             תפסיק לתעד. תתחיל להבין.
           </h2>
           <p className="max-w-xl mx-auto mb-8" style={{ color: TXT_2 }}>
-            כרגע הפלטפורמה פתוחה לשימוש ללא תשלום וללא כרטיס אשראי — פשוט מתחברים ומתחילים לנהל את המסחר.
+            הפלטפורמה פתוחה לשימוש ללא תשלום וללא כרטיס אשראי — פשוט מתחברים ומתחילים לנהל את המסחר.
           </p>
           <Link
             to="/auth"
