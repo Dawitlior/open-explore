@@ -14,6 +14,7 @@ import analyticsDeck from '@/assets/landing/analytics_deck.png.asset.json';
 import quantLab from '@/assets/landing/quant_lab.png.asset.json';
 import calendarHub from '@/assets/landing/calendar.png.asset.json';
 import radarImg from '@/assets/landing/radar.png.asset.json';
+import traderMindImg from '@/assets/landing/trader_mind.png.asset.json';
 
 const APP_URL = 'https://orcainvestment.co.il';
 
@@ -405,7 +406,7 @@ const TABS: { key: string; label: string; icon: string; title: string; desc: str
   { key: 'analytics', label: 'אנליטיקה', icon: '📊', title: 'לוח אנליטיקה מתקדם', desc: 'עשרות מטריקות כמותיות שחושפות את ה-Edge האמיתי שלך.', bullets: ['Equity Curve מתקדמת', 'Profit Factor & R-Multiples', 'ניתוח לפי נכס / שעה / יום', 'סיכומים שבועי, חודשי, שנתי'], image: analyticsDeck.url },
   { key: 'risk', label: 'ניהול סיכונים', icon: '🛡️', title: 'מנוע סיכונים 4-שכבתי', desc: 'הגנה אוטומטית מפני over-trading עם מנגנון משמעת חכם.', bullets: ['מגבלות -1R / -2R / -5R / -10R', 'חישוב גודל פוזיציה אוטומטי', 'התראות Risk Drift', 'מצב צינון (Cool-Off)'] },
   { key: 'ai', label: 'תובנות AI', icon: '🧠', title: 'מנוע תובנות עמוק', desc: 'מזהה דפוסים סמויים שאף סוחר לא היה רואה לבד.', bullets: ['זיהוי דפוסים נסתרים', 'חוזקות וחולשות אישיות', 'Orca Coach מבוסס נתונים', 'גרפים ברמת Awwwards'] },
-  { key: 'mind', label: 'תודעת הסוחר', icon: '🐋', title: 'אבחון תודעת הסוחר', desc: 'פרופיל Archetype אישי שמכייל את ה-AI Coach לפי הסוחר שאתה.', bullets: ['אבחון אישיות סוחר', 'פרופיל Archetype', 'כיול AI Coach', 'כיול-מחדש כל 45 יום'] },
+  { key: 'mind', label: 'תודעת הסוחר', icon: '🐋', title: 'אבחון תודעת הסוחר', desc: 'פרופיל Archetype אישי שמכייל את ה-AI Coach לפי הסוחר שאתה.', bullets: ['אבחון אישיות סוחר', 'פרופיל Archetype', 'כיול AI Coach', 'כיול-מחדש כל 45 יום'], image: traderMindImg.url },
   { key: 'radar', label: 'מכ״ם כלכלי', icon: '📡', title: 'מכ״ם אירועים כלכליים', desc: 'רדאר אירועים גלובלי עם חישוב Surprise בזמן אמת.', bullets: ['רדאר אירועים עולמי', 'Tier 1 / 2 / 3', 'עדכוני T-5 / T-1 / Live', 'חישוב Surprise אוטומטי'], image: radarImg.url },
 ];
 
@@ -764,7 +765,7 @@ const Landing: React.FC = () => {
               labelColor="#8B5CF6"
             />
             <div style={{ maxWidth: 720, margin: '36px auto 0' }}>
-              <ScreenshotFrame />
+              <ScreenshotFrame src={traderMindImg.url} />
             </div>
             <div style={{ textAlign: 'center', marginTop: 28 }}>
               <button className="grad-btn" onClick={goApp}>גלה את פרופיל הסוחר שלך <ArrowLeft size={16} /></button>
