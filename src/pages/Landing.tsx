@@ -8,6 +8,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Menu, X, ArrowLeft, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import dashboardMain from '@/assets/landing/dashboard_main.png.asset.json';
 
 const APP_URL = 'https://orcainvestment.co.il';
 
