@@ -9,7 +9,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  ArrowLeft, Shield, Brain, Radar, Lock, Check, Zap, Crown, Star,
+  ArrowLeft, Check,
   RefreshCw, Smartphone, BarChart3, LineChart as LineIcon, Settings2,
   HeartPulse, Menu, X, Mail, MessageCircle,
 } from 'lucide-react';
@@ -96,8 +96,6 @@ export default function Landing() {
       <TryItDemo />
       <BrokersGrid />
       <Tools />
-      <Pricing />
-      <Testimonials />
       <Faq />
       <FinalCta />
       <Footer />
@@ -131,8 +129,8 @@ function FreeAccessBanner() {
             animation: 'pulse 2s ease-in-out infinite',
           }}
         />
-        <strong style={{ color: GOLD_SOFT, fontWeight: 800 }}>חינמי לתקופה מוגבלת</strong>
-        <span style={{ color: TXT_2 }}>· ההתחברות והשימוש בפלטפורמה ללא עלות בתקופה הקרובה</span>
+        <strong style={{ color: GOLD_SOFT, fontWeight: 800 }}>הפלטפורמה זמינה כרגע ללא תשלום</strong>
+        <span style={{ color: TXT_2 }}>· אפשר להתחבר ולהשתמש בכלי המסחר ללא עלות בשלב הנוכחי</span>
       </span>
     </div>
   );
@@ -223,7 +221,6 @@ function Nav() {
         <nav className="hidden lg:flex items-center gap-7 text-[color:var(--txt2)]" style={{ ['--txt2' as any]: TXT_2 }}>
           <a href="#features" className={link} style={{ color: TXT_2 }}>פיצ'רים</a>
           <a href="#brokers" className={link} style={{ color: TXT_2 }}>פלטפורמות וברוקרים</a>
-          <a href="#pricing" className={link} style={{ color: TXT_2 }}>מחירים</a>
           <a href="#faq" className={link} style={{ color: TXT_2 }}>שאלות ותשובות</a>
           <a href="#contact" className={link} style={{ color: TXT_2 }}>צור קשר</a>
         </nav>
@@ -253,7 +250,7 @@ function Nav() {
       {open && (
         <div className="lg:hidden border-t" style={{ borderColor: LINE, background: BG }}>
           <div className="px-5 py-4 flex flex-col gap-3 text-sm">
-            {[['פיצ\'רים', '#features'], ['פלטפורמות', '#brokers'], ['מחירים', '#pricing'], ['שאלות', '#faq'], ['צור קשר', '#contact']].map(([l, h]) => (
+            {[['פיצ\'רים', '#features'], ['פלטפורמות', '#brokers'], ['שאלות', '#faq'], ['צור קשר', '#contact']].map(([l, h]) => (
               <a key={h} href={h} onClick={() => setOpen(false)} className="py-2" style={{ color: TXT_2 }}>{l}</a>
             ))}
             <Link to="/auth" className="mt-2 text-center py-3 rounded-full font-semibold" style={{ background: GOLD, color: BG, fontFamily: FONT_DISPLAY }}>
