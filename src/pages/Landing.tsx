@@ -2,8 +2,7 @@
  * Landing — Orca Investment public marketing page.
  * Midnight (#061326) + Gold (#c9a84c) premium aesthetic. RTL Hebrew-first.
  * Structure mirrors top-tier competitors: Hero → Stats → Brokers ticker →
- * Feature showcase → Interactive Demo → Brokers grid → Tools → Pricing →
- * Testimonials → FAQ → Footer.
+ * Feature showcase → Interactive Demo → Brokers grid → Tools → FAQ → Footer.
  */
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
