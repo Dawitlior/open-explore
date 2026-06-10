@@ -648,61 +648,68 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
 
       {/* Leaderboard moved to bottom — see end of page */}
 
-      {/* ═══ Risk-vs-PnL Scatter (full-width after Edge Evolution removal) ═══ */}
-      {registryAllows('winRateVsRR') && <GlassCard T={T} style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('פיזור סיכון מול תוצאה','Risk vs Outcome Scatter')} <span style={{ fontSize: 10, color: T.text.muted, fontWeight: 500, marginInlineStart: 6 }}>({isMoney ? t('יחידות: $','units: $') : t('יחידות: R','units: R')})</span></div>
-        <ResponsiveContainer width="100%" height={250}>
-          <ScatterChart>
-            <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
-            <XAxis type="number" dataKey="risk" name={t('סיכון','Risk')} tick={{ fill: T.text.muted, fontSize: 10 }} />
-            <YAxis type="number" dataKey={isMoney ? 'pnl' : 'r'} name={isMoney ? 'P&L' : 'R'} tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => fmtAxis(v)} />
-            <ZAxis range={[40, 160]} />
-            <Tooltip contentStyle={tt} cursor={{ stroke: T.border.medium }} formatter={(v: number, n: string) => [n === 'risk' ? `$${v.toFixed(2)}` : fmtVal(v), n === 'risk' ? t('סיכון','Risk') : (isMoney ? 'P&L' : 'R')]} />
-            <Scatter data={rvp}>
-              {rvp.map((d, i) => (
-                <Cell key={i} fill={d.win ? T.accent.green : T.accent.red} fillOpacity={0.7} />
-              ))}
-            </Scatter>
-          </ScatterChart>
-        </ResponsiveContainer>
-      </GlassCard>}
+      {/* ═══ MONTHLY PERFORMANCE — redesigned cards ═══ */}
+      {showPro && registryAllows('cumWinLossRatio') && stats.monthlyPerf && stats.monthlyPerf.length > 0 && (() => {
+        const maxAbs = Math.max(1, ...stats.monthlyPerf.map((m: any) => Math.abs(isMoney ? m.pnl : (m.expectancyR * m.trades))));
+        return (
+          <GlassCard T={T} style={{ marginBottom: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, gap: 8, flexWrap: 'wrap' }}>
+              <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700 }}>{t('פירוט ביצועים חודשיים','Monthly Performance Detail')}</div>
+              <span style={{ fontSize: 10, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.1em' }}>
+                {stats.monthlyPerf.length} {t('חודשים','months')} · {isMoney ? '$' : 'R'}
+              </span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 10 }}>
+              {stats.monthlyPerf.map((mp: any, i: number) => {
+                const val = isMoney ? mp.pnl : (mp.expectancyR * mp.trades);
+                const positive = val >= 0;
+                const color = positive ? T.accent.green : T.accent.red;
+                const intensity = Math.min(1, Math.abs(val) / maxAbs);
+                const displayVal = isMoney
+                  ? `${positive ? '+' : ''}$${mp.pnl.toFixed(2)}`
+                  : `${val >= 0 ? '+' : ''}${val.toFixed(2)}R`;
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25, delay: i * 0.025 }}
+                    style={{
+                      position: 'relative',
+                      padding: '14px 16px',
+                      borderRadius: 12,
+                      background: `linear-gradient(135deg, ${color}14 0%, ${T.bg.tertiary}40 100%)`,
+                      border: `1px solid ${color}33`,
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div style={{ position: 'absolute', insetInlineStart: 0, top: 0, bottom: 0, width: 3, background: color, opacity: 0.7 }} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+                      <span style={{ fontSize: 11, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em' }}>{mp.month}</span>
+                      <span style={{ fontSize: 9, padding: '2px 7px', borderRadius: 6, background: `${T.bg.tertiary}`, color: T.text.muted, fontWeight: 600 }}>{mp.trades}{t(' עס׳',' tr')}</span>
+                    </div>
+                    <div style={{ fontSize: 18, fontWeight: 800, color, fontFamily: "'JetBrains Mono', monospace", marginBottom: 8, letterSpacing: '-0.02em' }}>
+                      <PV>{displayVal}</PV>
+                    </div>
+                    <div style={{ height: 4, background: `${T.bg.tertiary}`, borderRadius: 4, overflow: 'hidden', marginBottom: 8 }}>
+                      <div style={{ width: `${intensity * 100}%`, height: '100%', background: color, borderRadius: 4, transition: 'width 0.4s ease' }} />
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10 }}>
+                      <span style={{ color: T.text.muted }}>
+                        {t('הצלחה','Win')} <span style={{ color: mp.winRate >= 50 ? T.accent.green : T.accent.orange, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>{mp.winRate.toFixed(0)}%</span>
+                      </span>
+                      <span style={{ color: T.text.muted }}>
+                        {t('תוחלת','Exp')} <span style={{ color: mp.expectancyR >= 0 ? T.accent.purple : T.accent.red, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>{mp.expectancyR >= 0 ? '+' : ''}{mp.expectancyR.toFixed(2)}R</span>
+                      </span>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </GlassCard>
+        );
+      })()}
 
-
-
-      {/* ═══ MONTHLY DETAIL LIST ═══ */}
-      {showPro && registryAllows('cumWinLossRatio') && stats.monthlyPerf && stats.monthlyPerf.length > 0 && (
-        <GlassCard T={T} style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>{t('פירוט ביצועים חודשיים','Monthly Performance Detail')}</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {stats.monthlyPerf.map((mp, i) => (
-              <div
-                key={i}
-                style={{
-                  padding: '10px 14px',
-                  borderRadius: 8,
-                  background: mp.pnl >= 0 ? `${T.accent.green}0a` : `${T.accent.red}0a`,
-                  border: `1px solid ${mp.pnl >= 0 ? T.accent.green : T.accent.red}20`,
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: 8,
-                }}
-              >
-                <span style={{ fontSize: 12, color: T.text.primary, fontWeight: 600 }}>{mp.month}</span>
-                <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 11, color: T.text.muted }}>{mp.trades} {t('עסקאות','trades')}</span>
-                  <span style={{ fontSize: 11, color: T.text.muted }}>{t('הצלחה','Win')} {mp.winRate.toFixed(0)}%</span>
-                  <span style={{ fontSize: 11, color: T.accent.purple, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>{t('תוחלת','Exp')} {mp.expectancyR >= 0 ? '+' : ''}{mp.expectancyR.toFixed(2)}R</span>
-                  <span style={{ fontSize: 13, color: mp.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace", fontWeight: 800 }}>
-                    <PV>{isMoney ? `${mp.pnl >= 0 ? '+' : ''}$${mp.pnl.toFixed(2)}` : `${mp.expectancyR >= 0 ? '+' : ''}${(mp.expectancyR * mp.trades).toFixed(2)}R`}</PV>
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </GlassCard>
-      )}
 
       {/* ═══ ADVANCED LAYER (PRO/MAX modes) ═══ */}
       {showPro && (registryAllows('rDistribution') || registryAllows('edgeDecay')) && (
