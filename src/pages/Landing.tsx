@@ -2,14 +2,13 @@
  * Landing — Orca Investment public marketing page.
  * Midnight (#061326) + Gold (#c9a84c) premium aesthetic. RTL Hebrew-first.
  * Structure mirrors top-tier competitors: Hero → Stats → Brokers ticker →
- * Feature showcase → Interactive Demo → Brokers grid → Tools → Pricing →
- * Testimonials → FAQ → Footer.
+ * Feature showcase → Interactive Demo → Brokers grid → Tools → FAQ → Footer.
  */
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  ArrowLeft, Shield, Brain, Radar, Lock, Check, Zap, Crown, Star,
+  ArrowLeft, Check,
   RefreshCw, Smartphone, BarChart3, LineChart as LineIcon, Settings2,
   HeartPulse, Menu, X, Mail, MessageCircle,
 } from 'lucide-react';
@@ -96,8 +95,6 @@ export default function Landing() {
       <TryItDemo />
       <BrokersGrid />
       <Tools />
-      <Pricing />
-      <Testimonials />
       <Faq />
       <FinalCta />
       <Footer />
@@ -131,8 +128,8 @@ function FreeAccessBanner() {
             animation: 'pulse 2s ease-in-out infinite',
           }}
         />
-        <strong style={{ color: GOLD_SOFT, fontWeight: 800 }}>חינמי לתקופה מוגבלת</strong>
-        <span style={{ color: TXT_2 }}>· ההתחברות והשימוש בפלטפורמה ללא עלות בתקופה הקרובה</span>
+        <strong style={{ color: GOLD_SOFT, fontWeight: 800 }}>הפלטפורמה זמינה ללא תשלום</strong>
+        <span style={{ color: TXT_2 }}>· אפשר להתחבר ולהשתמש בכלי המסחר ללא עלות</span>
       </span>
     </div>
   );
@@ -223,7 +220,6 @@ function Nav() {
         <nav className="hidden lg:flex items-center gap-7 text-[color:var(--txt2)]" style={{ ['--txt2' as any]: TXT_2 }}>
           <a href="#features" className={link} style={{ color: TXT_2 }}>פיצ'רים</a>
           <a href="#brokers" className={link} style={{ color: TXT_2 }}>פלטפורמות וברוקרים</a>
-          <a href="#pricing" className={link} style={{ color: TXT_2 }}>מחירים</a>
           <a href="#faq" className={link} style={{ color: TXT_2 }}>שאלות ותשובות</a>
           <a href="#contact" className={link} style={{ color: TXT_2 }}>צור קשר</a>
         </nav>
@@ -253,7 +249,7 @@ function Nav() {
       {open && (
         <div className="lg:hidden border-t" style={{ borderColor: LINE, background: BG }}>
           <div className="px-5 py-4 flex flex-col gap-3 text-sm">
-            {[['פיצ\'רים', '#features'], ['פלטפורמות', '#brokers'], ['מחירים', '#pricing'], ['שאלות', '#faq'], ['צור קשר', '#contact']].map(([l, h]) => (
+            {[['פיצ\'רים', '#features'], ['פלטפורמות', '#brokers'], ['שאלות', '#faq'], ['צור קשר', '#contact']].map(([l, h]) => (
               <a key={h} href={h} onClick={() => setOpen(false)} className="py-2" style={{ color: TXT_2 }}>{l}</a>
             ))}
             <Link to="/auth" className="mt-2 text-center py-3 rounded-full font-semibold" style={{ background: GOLD, color: BG, fontFamily: FONT_DISPLAY }}>
@@ -339,7 +335,7 @@ function Hero() {
                 boxShadow: '0 18px 40px rgba(201,168,76,0.4)',
               }}
             >
-              התחילו תקופת ניסיון בחינם!
+              התחילו להשתמש ללא תשלום
               <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             </Link>
             <a
@@ -352,13 +348,13 @@ function Hero() {
                 fontFamily: FONT_DISPLAY,
               }}
             >
-              נסה את המערכת ←
+              צפו במערכת ←
             </a>
           </div>
 
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs" style={{ color: TXT_3 }}>
             <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5" style={{ color: GOLD }} /> ללא כרטיס אשראי</span>
-            <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5" style={{ color: GOLD }} /> ביטול בכל רגע</span>
+            <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5" style={{ color: GOLD }} /> שימוש ללא תשלום</span>
             <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5" style={{ color: GOLD }} /> RTL מלא בעברית</span>
           </div>
         </motion.div>
@@ -643,11 +639,11 @@ function TryItDemo() {
     <section id="demo" className="max-w-7xl mx-auto px-5 lg:px-8 py-20 lg:py-24">
       <div className="text-center mb-10">
         <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4" style={{ fontFamily: FONT_DISPLAY, color: TXT }}>
-          נסו את המערכת בעצמכם
+          הצצה למערכת מבפנים
         </h2>
         <div className="mx-auto w-24 h-[3px] rounded-full mb-5" style={{ background: `linear-gradient(90deg, transparent, ${GOLD}, transparent)` }} />
         <p className="text-base md:text-lg" style={{ color: TXT_2 }}>
-          גלו איך נראה יומן מסחר חכם מבפנים — בלי להירשם, בלי כרטיס אשראי.
+          כך נראה יומן מסחר חכם בפעולה — ללא התחייבות וללא כרטיס אשראי.
         </p>
       </div>
       <div
@@ -768,204 +764,13 @@ function Tools() {
   );
 }
 
-/* ──────────────── PRICING ──────────────── */
-function Pricing() {
-  const [yearly, setYearly] = useState(true);
-
-  const tiers = [
-    {
-      name: 'Basic', icon: Star, sub: 'מתאים לסוחרים בתחילת דרכם',
-      monthly: 60, yearly: 54,
-      features: ['2 חשבונות מסחר', 'עד 5 סטאפים', 'ייבוא עסקאות אוטומטי וידני', 'יומן כלכלי', 'ניתוחים ודוחות אוטומטיים', 'אפליקציה לטלפון', 'מערכת ניהול סיכונים'],
-      cta: 'התחילו 5 ימי ניסיון', highlight: false,
-    },
-    {
-      name: 'Pro', icon: Crown, sub: 'מתאים לסוחרים מנוסים עם מספר תיקי מסחר',
-      monthly: 80, yearly: 72,
-      features: ['חשבונות מסחר ללא הגבלה', 'סטאפים ללא הגבלה', 'ייבוא עסקאות אוטומטי וידני', 'יומן כלכלי', 'ניתוחים ודוחות אוטומטיים', 'אפליקציה לטלפון', 'מערכת ניהול סיכונים', 'מנטורים ללא הגבלה', 'מערכת בקטסטינג מתקדמת'],
-      cta: 'התחילו 5 ימי ניסיון', highlight: true,
-    },
-  ];
-
-  return (
-    <section id="pricing" className="py-20 lg:py-28" style={{ background: 'rgba(10,31,61,0.3)' }}>
-      <div className="max-w-6xl mx-auto px-5 lg:px-8">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4" style={{ fontFamily: FONT_DISPLAY, color: TXT }}>
-            מחירים שמתאימים לכל סוג סוחר
-          </h2>
-          <div className="mx-auto w-24 h-[3px] rounded-full mb-5" style={{ background: `linear-gradient(90deg, transparent, ${GOLD}, transparent)` }} />
-          <p style={{ color: TXT_2 }}>מתאים לסוחרים בכל הרמות שרוצים לקחת את עצמם צעד קדימה.</p>
-        </div>
-
-        {/* Toggle */}
-        <div className="flex justify-center mb-12">
-          <div
-            className="inline-flex p-1 rounded-full"
-            style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${LINE}` }}
-          >
-            <button
-              onClick={() => setYearly(false)}
-              className="px-6 py-2 rounded-full text-xs font-bold transition-all"
-              style={{
-                background: !yearly ? `linear-gradient(135deg, ${GOLD}, ${GOLD_2})` : 'transparent',
-                color: !yearly ? BG : TXT_2,
-                fontFamily: FONT_DISPLAY,
-              }}
-            >
-              חודשי
-            </button>
-            <button
-              onClick={() => setYearly(true)}
-              className="px-6 py-2 rounded-full text-xs font-bold transition-all relative"
-              style={{
-                background: yearly ? `linear-gradient(135deg, ${GOLD}, ${GOLD_2})` : 'transparent',
-                color: yearly ? BG : TXT_2,
-                fontFamily: FONT_DISPLAY,
-              }}
-            >
-              שנתי
-              <span className="absolute -top-2 -left-2 text-[8px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: '#10b981', color: '#fff' }}>
-                -10%
-              </span>
-            </button>
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          {tiers.map(t => {
-            const price = yearly ? t.yearly : t.monthly;
-            return (
-              <div
-                key={t.name}
-                className="relative rounded-3xl p-8 transition-all"
-                style={{
-                  background: t.highlight
-                    ? `linear-gradient(135deg, rgba(201,168,76,0.12), rgba(201,168,76,0.03))`
-                    : 'rgba(10,31,61,0.4)',
-                  border: t.highlight ? `1.5px solid ${GOLD}` : `1px solid ${LINE}`,
-                  boxShadow: t.highlight ? '0 30px 70px rgba(201,168,76,0.15)' : 'none',
-                  transform: t.highlight ? 'scale(1.02)' : 'none',
-                }}
-              >
-                {t.highlight && (
-                  <div
-                    className="absolute -top-3 right-6 px-3 py-1 text-[10px] tracking-[0.2em] uppercase rounded-full font-bold"
-                    style={{
-                      background: `linear-gradient(135deg, ${GOLD}, ${GOLD_2})`,
-                      color: BG,
-                      fontFamily: FONT_DISPLAY,
-                    }}
-                  >
-                    הכי פופולרי
-                  </div>
-                )}
-                <div className="flex items-center gap-2 mb-2">
-                  <t.icon className="w-5 h-5" style={{ color: GOLD }} />
-                  <div className="text-xl font-bold" style={{ color: TXT, fontFamily: FONT_DISPLAY }}>מסלול {t.name}</div>
-                </div>
-                <div className="text-sm mb-6" style={{ color: TXT_2 }}>{t.sub}</div>
-                <div className="flex items-baseline gap-2 mb-6">
-                  <span className="text-5xl font-extrabold" style={{ color: TXT, fontFamily: FONT_DISPLAY }}>₪{price}</span>
-                  <span className="text-sm" style={{ color: TXT_3 }}>/ חודש</span>
-                  {yearly && (
-                    <span className="text-xs px-2 py-0.5 rounded-full mr-2" style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981' }}>
-                      10% הנחה
-                    </span>
-                  )}
-                </div>
-                <ul className="space-y-3 mb-8">
-                  {t.features.map(f => (
-                    <li key={f} className="flex items-start gap-2.5 text-sm" style={{ color: TXT_2 }}>
-                      <Check className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: GOLD }} />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  to="/auth"
-                  className="block text-center px-6 py-3.5 rounded-full font-bold text-sm transition-all hover:scale-[1.02]"
-                  style={{
-                    background: t.highlight
-                      ? `linear-gradient(135deg, ${GOLD}, ${GOLD_2})`
-                      : 'rgba(255,255,255,0.06)',
-                    color: t.highlight ? BG : TXT,
-                    border: t.highlight ? 'none' : `1px solid ${LINE}`,
-                    fontFamily: FONT_DISPLAY,
-                    boxShadow: t.highlight ? '0 14px 30px rgba(201,168,76,0.35)' : 'none',
-                  }}
-                >
-                  {t.cta}
-                </Link>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ──────────────── TESTIMONIALS ──────────────── */
-function Testimonials() {
-  const quotes = [
-    { name: 'יואב מ.', role: 'סוחר קריפטו · 3 שנים', body: 'הפסקתי להחזיק את היומן באקסל אחרי שבוע. המערכת תפסה לי דפוס של overtrading שלא ידעתי שיש לי.' },
-    { name: 'נועה ל.', role: 'Day Trader · S&P', body: 'מנוע הסיכון עצר אותי באמצע יום אדום. מנע ממני להמשיך לרדוף. שווה את הכסף בעסקה אחת.' },
-    { name: 'דניאל ק.', role: 'סוחר עצמאי', body: 'הפעם הראשונה שיש לי תמונה ברורה של ה-edge שלי. ה-R-Multiples עשו לי סדר אחרי שנתיים של ערפל.' },
-  ];
-  return (
-    <section className="max-w-7xl mx-auto px-5 lg:px-8 py-20 lg:py-24">
-      <div className="text-center mb-12">
-        <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4" style={{ fontFamily: FONT_DISPLAY, color: TXT }}>
-          מה אומרים סוחרים שלנו
-        </h2>
-        <div className="mx-auto w-24 h-[3px] rounded-full" style={{ background: `linear-gradient(90deg, transparent, ${GOLD}, transparent)` }} />
-      </div>
-      <div className="grid md:grid-cols-3 gap-5">
-        {quotes.map((q, i) => (
-          <motion.div
-            key={q.name}
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: i * 0.08 }}
-            className="p-7 rounded-3xl"
-            style={{ background: 'rgba(10,31,61,0.5)', border: `1px solid ${LINE}` }}
-          >
-            <div className="flex gap-0.5 mb-4">
-              {[...Array(5)].map((_, j) => <Star key={j} className="w-4 h-4" style={{ fill: GOLD, color: GOLD }} />)}
-            </div>
-            <p className="text-base leading-relaxed mb-5" style={{ color: TXT }}>"{q.body}"</p>
-            <div className="flex items-center gap-3 pt-4 border-t" style={{ borderColor: LINE }}>
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center font-bold"
-                style={{
-                  background: `linear-gradient(135deg, ${GOLD}, ${GOLD_2})`,
-                  color: BG,
-                  fontFamily: FONT_DISPLAY,
-                }}
-              >
-                {q.name[0]}
-              </div>
-              <div>
-                <div className="text-sm font-bold" style={{ color: TXT, fontFamily: FONT_DISPLAY }}>{q.name}</div>
-                <div className="text-xs" style={{ color: TXT_3 }}>{q.role}</div>
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 /* ──────────────── FAQ ──────────────── */
 function Faq() {
   const items = [
     { q: 'האם יש אפליקציה לטלפון?', a: 'כן. PWA מלאה — נכנסים מהטלפון, מוסיפים למסך הבית, ויש לכם את כל המערכת כמו אפליקציה רגילה. iOS ו-Android.' },
     { q: 'למי האפליקציה מתאימה?', a: 'לסוחרים בכל הרמות — מתחילים שצריכים מסגרת, ועד פרופים שצריכים אנליטיקה רצינית. עובד עם קריפטו, מניות, פיוצ׳רס ופורקס.' },
     { q: 'למה לא פשוט לתעד באקסל?', a: 'אקסל לא יודע לחשב לך תוחלת מתגלגלת, לזהות דפוסים התנהגותיים, או לעצור אותך כשאתה חוצה מגבלות סיכון. Orca הוא כלי מקצועי — לא טבלה.' },
-    { q: 'אני משתמש בכמה תיקי מסחר — זה מתאים לי?', a: 'מסלול Pro תומך בחשבונות ללא הגבלה. כל חשבון עם נתונים, מגבלות ויעדים נפרדים — ועם ניתוח מצרפי מעל הכל.' },
+    { q: 'אני משתמש בכמה תיקי מסחר — זה מתאים לי?', a: 'כן. המערכת נבנתה כדי לרכז כמה מקורות מסחר, לנתח אותם בנפרד וביחד, ולשמור על תמונת ביצועים אחידה.' },
     { q: 'יש לי מנטור — הוא יכול לעקוב אחרי העסקאות שלי?', a: 'כן. אפשר להזמין מנטור לצפייה בחשבון שלך עם הרשאות מותאמות — והוא יכול לראות הכל ולהשאיר הערות בזמן אמת.' },
     { q: 'מה עם פרטיות? זה בטוח?', a: 'הצפנה ברמת שורה (RLS), אחסון בענן בטוח, מסכת פרטיות מובנית בקליק. הנתונים שלך — אצלך בלבד.' },
   ];
@@ -1026,7 +831,7 @@ function FinalCta() {
             תפסיק לתעד. תתחיל להבין.
           </h2>
           <p className="max-w-xl mx-auto mb-8" style={{ color: TXT_2 }}>
-            5 ימי ניסיון. בלי כרטיס אשראי. רק יומן אחד שיכול לשנות את שנת המסחר שלך.
+            הפלטפורמה פתוחה לשימוש ללא תשלום וללא כרטיס אשראי — פשוט מתחברים ומתחילים לנהל את המסחר.
           </p>
           <Link
             to="/auth"
@@ -1038,7 +843,7 @@ function FinalCta() {
               boxShadow: '0 20px 50px rgba(201,168,76,0.45)',
             }}
           >
-            התחילו ניסיון בחינם!
+            כניסה לפלטפורמה ללא תשלום
             <ArrowLeft className="w-4 h-4" />
           </Link>
         </div>
@@ -1067,7 +872,6 @@ function Footer() {
             <ul className="space-y-2.5 text-sm" style={{ color: TXT_2 }}>
               <li><a href="#features" className="hover:text-white transition">פיצ'רים</a></li>
               <li><a href="#brokers" className="hover:text-white transition">פלטפורמות וברוקרים</a></li>
-              <li><a href="#pricing" className="hover:text-white transition">מחירים</a></li>
               <li><a href="#faq" className="hover:text-white transition">שאלות ותשובות</a></li>
             </ul>
           </div>

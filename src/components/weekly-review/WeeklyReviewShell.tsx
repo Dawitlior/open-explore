@@ -60,7 +60,7 @@ const WeeklyReviewShellInner = ({ T, isRTL, trades }: Props) => {
         paddingTop: 'env(safe-area-inset-top)',
         // Reserve room for the mobile bottom-nav (~60px + safe-area).
         paddingBottom: 'calc(env(safe-area-inset-bottom) + 96px)',
-        paddingInline: 'clamp(10px, 3vw, 24px)',
+        paddingInline: 'clamp(15px, 3vw, 24px)',
         fontFamily: "'Poppins', system-ui, sans-serif",
         boxSizing: 'border-box',
         direction: isRTL ? 'rtl' : 'ltr',
@@ -70,10 +70,41 @@ const WeeklyReviewShellInner = ({ T, isRTL, trades }: Props) => {
     >
       {/* ── Mobile-first responsive overrides for inline-styled grids ── */}
       <style>{`
+        [data-weekly-review],
+        [data-weekly-review] * {
+          box-sizing: border-box;
+          min-width: 0;
+          max-width: 100%;
+          overflow-wrap: break-word;
+          word-wrap: break-word;
+        }
+        [data-weekly-review] img,
+        [data-weekly-review] svg,
+        [data-weekly-review] canvas,
+        [data-weekly-review] .recharts-wrapper,
+        [data-weekly-review] .recharts-surface,
+        [data-weekly-review] .recharts-responsive-container {
+          max-width: 100% !important;
+        }
+        [data-weekly-review] table {
+          max-width: 100%;
+          table-layout: fixed;
+          overflow-wrap: break-word;
+        }
         @media (max-width: 640px) {
-          [data-weekly-review] { padding-inline: 10px !important; }
+          [data-weekly-review] {
+            width: 100% !important;
+            max-width: 100vw !important;
+            overflow-x: hidden !important;
+            padding-inline: 15px !important;
+          }
           [data-weekly-review] h1 { font-size: 18px !important; }
-          [data-weekly-review] section { padding: 12px !important; }
+          [data-weekly-review] section {
+            width: 100% !important;
+            max-width: 100% !important;
+            overflow: hidden !important;
+            padding: 15px !important;
+          }
           [data-weekly-review] [role="tablist"] button {
             flex: 1 1 calc(50% - 6px) !important;
             font-size: 11px !important;
@@ -84,15 +115,55 @@ const WeeklyReviewShellInner = ({ T, isRTL, trades }: Props) => {
           [data-weekly-review] section > div[style*="grid-template-columns"],
           [data-weekly-review] section div[style*="grid-template-columns: repeat(auto-fit"],
           [data-weekly-review] section div[style*="grid-template-columns: repeat(3"],
-          [data-weekly-review] section div[style*="grid-template-columns: repeat(4"] {
+          [data-weekly-review] section div[style*="grid-template-columns: repeat(4"],
+          [data-weekly-review] div[style*="minmax(320px"],
+          [data-weekly-review] div[style*="minmax(240px"],
+          [data-weekly-review] div[style*="minmax(220px"],
+          [data-weekly-review] div[style*="minmax(180px"],
+          [data-weekly-review] div[style*="minmax(160px"] {
             grid-template-columns: 1fr !important;
           }
           /* 2-up stat grids keep 2 columns to stay info-dense */
           [data-weekly-review] section div[style*="minmax(140px"] {
             grid-template-columns: repeat(2, 1fr) !important;
           }
-          [data-weekly-review] table { font-size: 11px !important; }
-          [data-weekly-review] table th, [data-weekly-review] table td { padding: 8px 6px !important; }
+          [data-weekly-review] div[style*="overflow-x: auto"] {
+            overflow-x: hidden !important;
+            max-width: 100% !important;
+          }
+          [data-weekly-review] table,
+          [data-weekly-review] thead,
+          [data-weekly-review] tbody,
+          [data-weekly-review] tr,
+          [data-weekly-review] th,
+          [data-weekly-review] td {
+            display: block !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            white-space: normal !important;
+            text-align: inherit !important;
+          }
+          [data-weekly-review] thead { display: none !important; }
+          [data-weekly-review] tbody { display: grid !important; gap: 8px !important; }
+          [data-weekly-review] tr {
+            border: 1px solid ${border} !important;
+            border-radius: 10px !important;
+            padding: 6px !important;
+            background: ${panel} !important;
+          }
+          [data-weekly-review] table { font-size: 11px !important; border-collapse: separate !important; }
+          [data-weekly-review] table th, [data-weekly-review] table td { padding: 6px 4px !important; }
+          [data-weekly-review] [style*="min-width: 480px"] {
+            min-width: 0 !important;
+            grid-template-columns: 30px repeat(24, minmax(6px, 1fr)) !important;
+            gap: 1px !important;
+            font-size: 8px !important;
+          }
+          [data-weekly-review] [style*="min-width: 200px"],
+          [data-weekly-review] [style*="flex: 1 1 320px"] {
+            min-width: 0 !important;
+            flex-basis: 100% !important;
+          }
           [data-weekly-review] textarea,
           [data-weekly-review] input,
           [data-weekly-review] select {

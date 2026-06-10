@@ -7,6 +7,7 @@ export type ThemeId = 'midnight' | 'indigo' | 'platinum';
 export type SystemMode = 'standard' | 'alpha';
 export type OperatingMode = 'live' | 'review' | 'research' | 'beginner';
 export type Lang = 'he' | 'en';
+const AUTH_LANG_OVERRIDE_KEY = 'orca:auth-lang-override';
 
 export interface ModeCombo {
   operating: OperatingMode;
@@ -25,6 +26,14 @@ export const ModeSwitchEvents = {
 };
 
 export function useSettings() {
+  const readAuthLangOverride = useCallback((): Lang | null => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const v = window.localStorage.getItem(AUTH_LANG_OVERRIDE_KEY);
+      return v === 'he' || v === 'en' ? v : null;
+    } catch { return null; }
+  }, []);
+
   const [theme, setThemeState] = useState<ThemeId>('midnight');
   const [systemMode, setSystemModeState] = useState<SystemMode>('standard');
   const [operatingMode, setOperatingModeState] = useState<OperatingMode>('beginner');
@@ -49,7 +58,14 @@ export function useSettings() {
       setThemeState(migrated);
       if (m) setSystemModeState(m);
       if (o) setOperatingModeState(o);
-      if (l) { setLangState(l); writeCachedLang(l); }
+      const authLangOverride = readAuthLangOverride();
+      const resolvedLang = authLangOverride || l;
+      if (resolvedLang) {
+        setLangState(resolvedLang);
+        writeCachedLang(resolvedLang);
+        if (authLangOverride && authLangOverride !== l) void setSetting('lang', authLangOverride);
+        if (authLangOverride && typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('orca:lang-changed', { detail: { lang: authLangOverride } }));
+      }
       if (p !== undefined) setPrivacyModeState(p);
       applyThemeToDOM(migrated);
       prev.current = { theme: migrated, systemMode: m || 'standard', operatingMode: o || 'beginner' };
@@ -83,6 +99,7 @@ export function useSettings() {
   }, []);
   const setLang = useCallback((l: Lang) => {
     setLangState(l); setSetting('lang', l); writeCachedLang(l);
+    try { window.localStorage.setItem(AUTH_LANG_OVERRIDE_KEY, l); } catch { /* noop */ }
     if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('orca:lang-changed', { detail: { lang: l } }));
   }, []);
   const setPrivacyMode = useCallback((p: boolean) => { setPrivacyModeState(p); setSetting('privacyMode', p); }, []);
