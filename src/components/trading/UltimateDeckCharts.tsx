@@ -77,11 +77,17 @@ const EmptyNote = ({ T, children }: { T: TradingTheme; children: React.ReactNode
 export function UltimateAnalyticsDeck({ T, trades, onExplainClick, registryAllows }: AnalyticsProps) {
   const { t, lang } = useLang();
   const isRTL = lang === 'he';
+  const { displayMode } = useDisplayMode();
+  const isMoney = displayMode === 'MONEY';
   const tt = { background: T.bg.card, border: `1px solid ${T.border.medium}`, borderRadius: 10, color: T.text.primary, fontSize: 12, boxShadow: T.shadow.elevated, padding: '8px 12px' };
+
+  // Unit-aware sample value for autocorrelation: $ in MONEY mode, R in R mode.
+  const sampleValue = (tr: Trade): number => isMoney ? (Number(tr.pnl) || 0) : getEffectiveR(tr);
+  const unitFmt = (v: number) => isMoney ? `$${v.toFixed(2)}` : `${v.toFixed(2)}R`;
 
   // ── 1. Lag-1 Autocorrelation ────────────────────────────────
   const lag = useMemo(() => {
-    const rs = trades.map(tr => getEffectiveR(tr));
+    const rs = trades.map(sampleValue);
     const pairs: Array<{ prev: number; cur: number; idx: number }> = [];
     for (let i = 1; i < rs.length; i++) pairs.push({ prev: +rs[i - 1].toFixed(3), cur: +rs[i].toFixed(3), idx: i });
     if (pairs.length < 5) return { pairs, rho: 0 };
@@ -95,7 +101,7 @@ export function UltimateAnalyticsDeck({ T, trades, onExplainClick, registryAllow
     }
     const rho = (dP > 0 && dC > 0) ? num / Math.sqrt(dP * dC) : 0;
     return { pairs, rho: +rho.toFixed(3) };
-  }, [trades]);
+  }, [trades, isMoney]);
 
   const rhoColor = Math.abs(lag.rho) > 0.3 ? T.accent.red : Math.abs(lag.rho) > 0.15 ? T.accent.orange : T.accent.green;
 
