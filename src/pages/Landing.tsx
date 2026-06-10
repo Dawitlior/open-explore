@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/use-auth';
 import dashboardMain from '@/assets/landing/dashboard_main.png.asset.json';
 import journalEntry from '@/assets/landing/journal_entry.png.asset.json';
 import analyticsDeck from '@/assets/landing/analytics_deck.png.asset.json';
+import quantLab from '@/assets/landing/quant_lab.png.asset.json';
 
 const APP_URL = 'https://orcainvestment.co.il';
 
@@ -382,7 +383,7 @@ const CountUp: React.FC<{ value: string }> = ({ value }) => {
 };
 
 
-const GradCard: React.FC<{ accent: string; title: string; desc: string; num?: string }> = ({ accent, title, desc, num }) => (
+const GradCard: React.FC<{ accent: string; title: string; desc: string; num?: string; image?: string }> = ({ accent, title, desc, num, image }) => (
   <motion.div className="orca-grad-card"
     whileHover={{ borderColor: `${accent}66` }}
     style={{ boxShadow: `0 0 0 1px transparent, 0 20px 60px -20px ${accent}33` }}
@@ -392,7 +393,7 @@ const GradCard: React.FC<{ accent: string; title: string; desc: string; num?: st
     <div style={{ width: 40, height: 40, borderRadius: 10, background: `${accent}22`, border: `1px solid ${accent}44`, display: 'grid', placeItems: 'center', marginBottom: 16, color: accent, fontSize: 20 }}>◆</div>
     <h3 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 10px' }}>{title}</h3>
     <p style={{ color: 'var(--text-muted)', fontSize: 14, lineHeight: 1.7, margin: '0 0 18px' }}>{desc}</p>
-    <ScreenshotFrame />
+    <ScreenshotFrame src={image} alt={title} />
   </motion.div>
 );
 
@@ -699,7 +700,7 @@ const Landing: React.FC = () => {
               <button className="grad-btn" onClick={goApp}>התחל בחינם <ArrowLeft size={16} /></button>
             </div>
             <div className="orca-grad-grid">
-              <GradCard accent="#22D3EE" title="צלול עמוק לאסטרטגיה" desc="Monte Carlo, Box Plot, Risk-Reward Frontier ועוד בלוח Quant Lab." num="01" />
+              <GradCard accent="#22D3EE" title="צלול עמוק לאסטרטגיה" desc="Monte Carlo, Box Plot, Risk-Reward Frontier ועוד בלוח Quant Lab." num="01" image={quantLab.url} />
               <GradCard accent="#8B5CF6" title="הבן את ההתנהגות שלך" desc="ניתוח רב-ממדי של 145+ עסקאות וזיהוי דפוסים פסיכולוגיים." num="02" />
               <GradCard accent="#34D399" title="מה עובד בשבילך" desc="חוזקות, שעות זהב, נכסים מנצחים — והיכן ה-Edge האמיתי שלך." num="03" />
             </div>
