@@ -26,7 +26,7 @@ import behaviorAnalysis from '@/assets/landing/behavior_analysis.png';
 import whatWorks from '@/assets/landing/what_works.png';
 import tomorrowMorning from '@/assets/landing/tomorrow_morning.png';
 import saidVsReal from '@/assets/landing/said_vs_real.png';
-import ImportLoadingOverlay from '@/components/trading/ImportLoadingOverlay';
+
 
 const APP_URL = 'https://orcainvestment.co.il';
 
@@ -281,10 +281,25 @@ const orcaCss = `
 .orca-video-play .btn { width: 88px; height: 88px; border-radius: 50%; background: linear-gradient(135deg, #34D399, #22D3EE); display: grid; place-items: center; color: #07090F; box-shadow: 0 0 50px rgba(34,211,238,0.6); transition: transform .25s; }
 .orca-video-play:hover .btn { transform: scale(1.06); }
 
-/* Community constellation */
-.orca-constellation { position: relative; aspect-ratio: 16/9; max-width: 720px; margin: 40px auto 0; }
-.orca-constellation .center { position: absolute; inset-inline-start: 50%; top: 50%; transform: translate(50%, -50%); width: 90px; height: 90px; border-radius: 50%; background: linear-gradient(135deg, #22D3EE, #34D399); display: grid; place-items: center; font-size: 36px; box-shadow: 0 0 60px rgba(34,211,238,0.6); z-index: 2; }
-.orca-avatar { position: absolute; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface-2); display: grid; place-items: center; font-size: 14px; font-weight: 700; color: var(--text-muted); }
+/* Community constellation — animated orbits around Orca logo */
+.orca-constellation { position: relative; aspect-ratio: 1/1; max-width: 560px; margin: 40px auto 0; }
+.orca-constellation .center {
+  position: absolute; inset-inline-start: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 140px; height: 140px; border-radius: 50%;
+  display: grid; place-items: center; z-index: 5;
+  background: radial-gradient(circle at center, rgba(34,211,238,0.22), rgba(52,211,153,0.08) 60%, transparent 75%);
+  filter: drop-shadow(0 0 30px rgba(34,211,238,0.55));
+}
+.orca-constellation .center img { width: 100%; height: 100%; object-fit: contain; animation: orca-float 6s ease-in-out infinite; }
+@keyframes orca-float { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-8px) } }
+.orca-orbit { position: absolute; inset: 0; border-radius: 50%; border: 1px dashed rgba(34,211,238,0.18); animation: orca-spin 40s linear infinite; }
+.orca-orbit.mid { inset: 14%; border-color: rgba(52,211,153,0.22); animation-duration: 28s; animation-direction: reverse; }
+.orca-orbit.inner { inset: 28%; border-color: rgba(139,92,246,0.22); animation-duration: 18s; }
+@keyframes orca-spin { from { transform: rotate(0) } to { transform: rotate(360deg) } }
+.orca-orbit-dot { position: absolute; top: -6px; left: 50%; width: 12px; height: 12px; border-radius: 50%; background: linear-gradient(135deg,#22D3EE,#34D399); box-shadow: 0 0 12px rgba(34,211,238,0.7); transform: translateX(-50%); }
+.orca-orbit.mid .orca-orbit-dot { background: linear-gradient(135deg,#34D399,#22D3EE); }
+.orca-orbit.inner .orca-orbit-dot { background: linear-gradient(135deg,#8B5CF6,#22D3EE); }
+.orca-avatar { position: absolute; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface-2); display: grid; place-items: center; font-size: 13px; font-weight: 700; color: var(--text); backdrop-filter: blur(6px); box-shadow: 0 6px 18px rgba(0,0,0,0.4); animation: orca-float 7s ease-in-out infinite; z-index: 3; }
 
 @media (prefers-reduced-motion: reduce) {
   .orca-landing *, .orca-landing *::before, .orca-landing *::after {
@@ -319,6 +334,7 @@ const ScreenshotFrame: React.FC<{ src?: string; alt?: string; children?: React.R
           src={src}
           alt={alt ?? 'ORCA screenshot'}
           loading="lazy"
+          decoding="async"
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
         />
       ) : (
@@ -344,7 +360,9 @@ const TraderMindRotator: React.FC<{ slides: { src: string; caption: string }[] }
               key={s.src}
               src={s.src}
               alt={s.caption}
-              loading="lazy"
+              loading={idx === 0 ? 'eager' : 'lazy'}
+              fetchPriority={idx === 0 ? 'high' : 'auto'}
+              decoding="async"
               style={{
                 position: 'absolute', inset: 0, width: '100%', height: '100%',
                 objectFit: 'cover', display: 'block',
@@ -520,40 +538,10 @@ const Landing: React.FC = () => {
       return v === 'en' ? 'en' : 'he';
     } catch { return 'he'; }
   });
-  const [langSwitching, setLangSwitching] = useState<null | 'he' | 'en'>(null);
   const isRTL = lang === 'he';
   const t = (he: string, en: string) => (isRTL ? he : en);
-
-  const setLang = (l: 'he' | 'en') => {
-    setLangState(l);
-    try {
-      window.localStorage.setItem(LANG_OVERRIDE_KEY, l);
-      window.localStorage.setItem(LANG_CACHE_KEY, l);
-    } catch { /* noop */ }
-    if (typeof document !== 'undefined') {
-      document.documentElement.setAttribute('lang', l);
-      document.documentElement.setAttribute('dir', l === 'he' ? 'rtl' : 'ltr');
-    }
-    window.dispatchEvent(new CustomEvent('orca:lang-changed', { detail: { lang: l } }));
-  };
-
-  // Cinematic language switch — show the same loading overlay the platform uses
-  // on refresh, persist the choice, then hard-reload so every component re-renders
-  // in the new language.
-  const switchLanguageWithLoader = (target: 'he' | 'en') => {
-    if (langSwitching) return;
-    setLangSwitching(target);
-    try {
-      window.localStorage.setItem(LANG_OVERRIDE_KEY, target);
-      window.localStorage.setItem(LANG_CACHE_KEY, target);
-    } catch { /* noop */ }
-    if (typeof document !== 'undefined') {
-      document.documentElement.setAttribute('lang', target);
-      document.documentElement.setAttribute('dir', target === 'he' ? 'rtl' : 'ltr');
-    }
-    window.dispatchEvent(new CustomEvent('orca:lang-changed', { detail: { lang: target } }));
-    window.setTimeout(() => { window.location.reload(); }, 1500);
-  };
+  // Keep setLangState referenced (no UI toggle on landing per request).
+  void setLangState;
 
 
 
@@ -589,13 +577,6 @@ const Landing: React.FC = () => {
     <>
       <style>{orcaCss}</style>
       <div className="orca-landing orca-bg-grid">
-        {langSwitching && (
-          <ImportLoadingOverlay
-            isRTL={langSwitching === 'he'}
-            fileName={langSwitching === 'en' ? 'Switching to English…' : 'מעבר לעברית…'}
-            phase="saving"
-          />
-        )}
         {/* ───── NAVBAR ───── */}
         <nav className={`orca-nav ${scrolled ? 'scrolled' : ''}`}>
           <div className="max-w-7xl mx-auto px-5 sm:px-8" style={{ height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -604,30 +585,8 @@ const Landing: React.FC = () => {
               <img src={orcaLogo} alt="Orca Investment" style={{ height: 44, width: 'auto', display: 'block' }} />
             </Link>
 
-            {/* Right (desktop) — nav links removed per request */}
+            {/* Right (desktop) — nav links + language toggle removed per request */}
             <div className="hidden lg:flex items-center" style={{ gap: 14, marginInlineStart: 'auto' }}>
-              <button
-                onClick={() => switchLanguageWithLoader(isRTL ? 'en' : 'he')}
-                className="mono"
-                aria-label={t('Switch to English', 'עבור לעברית')}
-                style={{
-                  fontSize: 11,
-                  color: '#0A0D14',
-                  background: 'linear-gradient(135deg, #22D3EE, #34D399)',
-                  border: '1px solid rgba(34,211,238,0.55)',
-                  padding: '7px 14px',
-                  borderRadius: 999,
-                  fontWeight: 800,
-                  letterSpacing: '0.12em',
-                  cursor: 'pointer',
-                  boxShadow: '0 0 18px rgba(34,211,238,0.35)',
-                  transition: 'transform .15s ease, filter .15s ease',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.1)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-                onMouseLeave={e => { e.currentTarget.style.filter = 'none'; e.currentTarget.style.transform = 'none'; }}
-              >
-                {isRTL ? '🌐 EN' : '🌐 עב'}
-              </button>
               <button className="grad-btn" onClick={goApp} style={{ padding: '10px 18px', fontSize: 14 }}>
                 {t('כניסה למערכת', 'Enter app')}
               </button>
@@ -642,16 +601,6 @@ const Landing: React.FC = () => {
 
           {menuOpen && (
             <div className="orca-mobile-menu lg:hidden">
-              <button
-                onClick={() => { setMenuOpen(false); switchLanguageWithLoader(isRTL ? 'en' : 'he'); }}
-                style={{
-                  width: '100%', textAlign: 'center', padding: '14px 20px',
-                  background: 'transparent', border: 'none', borderBottom: '1px solid var(--border)',
-                  color: 'var(--cyan)', fontWeight: 700, letterSpacing: '0.12em', cursor: 'pointer',
-                }}
-              >
-                {isRTL ? '🌐 Switch to English' : '🌐 עבור לעברית'}
-              </button>
               <div style={{ padding: 16 }}>
                 <button className="grad-btn" onClick={() => { setMenuOpen(false); goApp(); }} style={{ width: '100%', justifyContent: 'center' }}>
                   {t('כניסה למערכת', 'Enter app')}
@@ -976,20 +925,18 @@ const Landing: React.FC = () => {
               sub="הצטרף לקהילת סוחרים פעילה — שתף, למד והשתפר ביחד."
             />
             <div className="orca-constellation">
-              <svg viewBox="0 0 600 340" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
-                <defs>
-                  <linearGradient id="conn" x1="0" x2="1">
-                    <stop offset="0%" stopColor="#22D3EE" stopOpacity="0.5" />
-                    <stop offset="100%" stopColor="#34D399" stopOpacity="0.1" />
-                  </linearGradient>
-                </defs>
-                {[[300, 170, 80, 60], [300, 170, 500, 70], [300, 170, 100, 270], [300, 170, 520, 280], [300, 170, 60, 170], [300, 170, 540, 170]].map((l, i) => (
-                  <line key={i} x1={l[0]} y1={l[1]} x2={l[2]} y2={l[3]} stroke="url(#conn)" strokeWidth="1" />
-                ))}
-              </svg>
-              <div className="center">🐋</div>
-              {[{ x: 60, y: 40, n: 'AR' }, { x: 480, y: 50, n: 'DM' }, { x: 80, y: 250, n: 'YS' }, { x: 500, y: 260, n: 'NL' }, { x: 30, y: 150, n: 'OK' }, { x: 520, y: 150, n: 'TH' }].map((a, i) => (
-                <div key={i} className="orca-avatar" style={{ insetInlineStart: `${(a.x / 600) * 100}%`, top: `${(a.y / 340) * 100}%` }}>{a.n}</div>
+              <div className="orca-orbit"><div className="orca-orbit-dot" /></div>
+              <div className="orca-orbit mid"><div className="orca-orbit-dot" /></div>
+              <div className="orca-orbit inner"><div className="orca-orbit-dot" /></div>
+              <div className="center">
+                <img src={orcaLogo} alt="Orca" fetchPriority="high" />
+              </div>
+              {[
+                { x: 8,  y: 18, n: 'AR' }, { x: 86, y: 14, n: 'DM' },
+                { x: 4,  y: 72, n: 'YS' }, { x: 90, y: 78, n: 'NL' },
+                { x: 50, y: 2,  n: 'OK' }, { x: 50, y: 94, n: 'TH' },
+              ].map((a, i) => (
+                <div key={i} className="orca-avatar" style={{ insetInlineStart: `${a.x}%`, top: `${a.y}%`, animationDelay: `${i * 0.4}s` }}>{a.n}</div>
               ))}
             </div>
             <div style={{ marginTop: 36 }}>
