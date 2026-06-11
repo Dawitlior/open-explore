@@ -65,7 +65,23 @@ export function TraderMindSession({ open, onClose, lang = 'he' }: Props) {
       if (data.type === 'ready') { void sendInit(); return; }
       if (data.type === 'complete') {
         setDone('saving');
-        void persistComplete(data.payload).then((res) => {
+        // Capture a full HTML snapshot of the rendered diagnostic so the user
+        // can revisit the complete report from Settings → Trader Mind.
+        let htmlSnapshot = '';
+        try {
+          const doc = iframeRef.current?.contentDocument;
+          if (doc) {
+            // Inline the <head> styles + body so the snapshot is self-contained.
+            const headHTML = doc.head?.innerHTML ?? '';
+            const bodyHTML = doc.body?.innerHTML ?? '';
+            htmlSnapshot = `<style>${Array.from(doc.querySelectorAll('style'))
+              .map((s) => s.textContent ?? '').join('\n')}</style>${bodyHTML || headHTML}`;
+          }
+        } catch { /* cross-origin safety */ }
+        const payloadWithHtml = (data.payload && typeof data.payload === 'object')
+          ? { ...(data.payload as Record<string, unknown>), __html: htmlSnapshot }
+          : { __html: htmlSnapshot };
+        void persistComplete(payloadWithHtml).then((res) => {
           setArchetype(res.archetype);
           setDone(res.ok ? 'saved' : 'error');
         });
