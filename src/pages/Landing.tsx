@@ -328,6 +328,58 @@ const ScreenshotFrame: React.FC<{ src?: string; alt?: string; children?: React.R
   </div>
 );
 
+/* TraderMindRotator — single device frame fading between real result screens. */
+const TraderMindRotator: React.FC<{ slides: { src: string; caption: string }[] }> = ({ slides }) => {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    const id = window.setInterval(() => setI(v => (v + 1) % slides.length), 4200);
+    return () => window.clearInterval(id);
+  }, [slides.length]);
+  return (
+    <div style={{ maxWidth: 760, margin: '40px auto 0' }}>
+      <div className="orca-frame">
+        <div className="orca-frame-inner" style={{ aspectRatio: '16 / 10' }}>
+          {slides.map((s, idx) => (
+            <img
+              key={s.src}
+              src={s.src}
+              alt={s.caption}
+              loading="lazy"
+              style={{
+                position: 'absolute', inset: 0, width: '100%', height: '100%',
+                objectFit: 'cover', display: 'block',
+                opacity: idx === i ? 1 : 0,
+                transform: idx === i ? 'scale(1)' : 'scale(1.02)',
+                transition: 'opacity 1.1s ease, transform 6s ease-out',
+              }}
+            />
+          ))}
+        </div>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 14, marginTop: 14 }}>
+        <div style={{ color: 'var(--text-muted)', fontSize: 13, minHeight: 18, transition: 'opacity .3s' }}>
+          {slides[i].caption}
+        </div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {slides.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setI(idx)}
+              aria-label={`slide ${idx + 1}`}
+              style={{
+                width: idx === i ? 22 : 8, height: 8, padding: 0, borderRadius: 999,
+                border: 'none', cursor: 'pointer',
+                background: idx === i ? 'linear-gradient(90deg,#22D3EE,#8B5CF6)' : 'rgba(255,255,255,0.18)',
+                transition: 'width .3s ease, background .3s ease',
+              }}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 /* Section title block */
 const SectionHeader: React.FC<{ label: string; title: React.ReactNode; sub?: string; labelColor?: string }> = ({ label, title, sub, labelColor }) => (
   <div style={{ textAlign: 'center', maxWidth: 760, margin: '0 auto 8px' }}>
