@@ -23,15 +23,19 @@ export function TriState({ state, label, onCycle, tag, T, goodIs = 1, isRTL }: P
 
   const isGood = state === goodIs;
   const isBad = state !== 0 && state !== goodIs;
+  // Soft tint background — same restrained look as the "None" chip in
+  // the Biggest-Mistake row (subtle fill + matching outline + tinted icon),
+  // never a solid neon-green box that looks garish next to dark UI.
   const tint = state === 0
     ? panel
-    : isGood ? `${win}1a` : `${loss}1a`;
+    : isGood ? `${win}1c` : `${loss}1c`;
   const tintBorder = state === 0
     ? border
-    : isGood ? `${win}55` : `${loss}55`;
+    : isGood ? `${win}88` : `${loss}88`;
   const labelColor = state === 0 ? fg : isGood ? win : loss;
-  const boxBg = state === 0 ? 'rgba(255,255,255,0.06)' : isGood ? win : loss;
-  const boxColor = state === 0 ? muted : '#03121f';
+  const boxBg = state === 0 ? 'rgba(255,255,255,0.06)' : isGood ? `${win}26` : `${loss}26`;
+  const boxColor = state === 0 ? muted : isGood ? win : loss;
+  const boxBorder = state === 0 ? 'transparent' : isGood ? `${win}66` : `${loss}66`;
 
   return (
     <button
