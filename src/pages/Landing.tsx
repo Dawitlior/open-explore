@@ -468,8 +468,40 @@ const Landing: React.FC = () => {
       return v === 'en' ? 'en' : 'he';
     } catch { return 'he'; }
   });
+  const [langSwitching, setLangSwitching] = useState<null | 'he' | 'en'>(null);
   const isRTL = lang === 'he';
   const t = (he: string, en: string) => (isRTL ? he : en);
+
+  const setLang = (l: 'he' | 'en') => {
+    setLangState(l);
+    try {
+      window.localStorage.setItem(LANG_OVERRIDE_KEY, l);
+      window.localStorage.setItem(LANG_CACHE_KEY, l);
+    } catch { /* noop */ }
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('lang', l);
+      document.documentElement.setAttribute('dir', l === 'he' ? 'rtl' : 'ltr');
+    }
+    window.dispatchEvent(new CustomEvent('orca:lang-changed', { detail: { lang: l } }));
+  };
+
+  // Cinematic language switch — show the same loading overlay the platform uses
+  // on refresh, persist the choice, then hard-reload so every component re-renders
+  // in the new language.
+  const switchLanguageWithLoader = (target: 'he' | 'en') => {
+    if (langSwitching) return;
+    setLangSwitching(target);
+    try {
+      window.localStorage.setItem(LANG_OVERRIDE_KEY, target);
+      window.localStorage.setItem(LANG_CACHE_KEY, target);
+    } catch { /* noop */ }
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('lang', target);
+      document.documentElement.setAttribute('dir', target === 'he' ? 'rtl' : 'ltr');
+    }
+    window.dispatchEvent(new CustomEvent('orca:lang-changed', { detail: { lang: target } }));
+    window.setTimeout(() => { window.location.reload(); }, 1500);
+  };
 
   const setLang = (l: 'he' | 'en') => {
     setLangState(l);
