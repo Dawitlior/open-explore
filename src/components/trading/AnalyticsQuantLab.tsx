@@ -223,20 +223,20 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
   const rModeBlocked = !isMoney && rEligibleCount === 0;
 
   return (
-    <div dir="rtl" style={{ marginTop: 20 }}>
-      {!isMoney && <RProxyBanner T={T} isRTL compact rEligibleCount={rEligibleCount} totalCount={totalCount} />}
+    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ marginTop: 20 }}>
+      {!isMoney && <RProxyBanner T={T} isRTL={isRTL} compact rEligibleCount={rEligibleCount} totalCount={totalCount} />}
       {rModeBlocked ? (
         <GlassCard T={T} style={{ padding: 24, textAlign: 'center', marginTop: 12 }}>
           <div style={{ fontSize: 13, color: T.text.primary, fontWeight: 700, marginBottom: 6 }}>
-            אין נתוני R זמינים — כל הוויג׳טים מוסתרים
+            {t('אין נתוני R זמינים — כל הוויג׳טים מוסתרים', 'No R data available — all widgets hidden')}
           </div>
           <div style={{ fontSize: 11, color: T.text.muted, lineHeight: 1.55 }}>
-            אף עסקה לא כוללת Stop Loss תקף. עבור למצב MONEY (כפתור $) כדי לראות את כל הוויג׳טים מבוססי P&L.
+            {t('אף עסקה לא כוללת Stop Loss תקף. עבור למצב MONEY (כפתור $) כדי לראות את כל הוויג׳טים מבוססי P&L.', 'No trade includes a valid Stop Loss. Switch to MONEY mode ($ button) to view all P&L-based widgets.')}
           </div>
         </GlassCard>
       ) : (
         <>
-      <div style={sectionStyle}>◆ QUANT LAB · מעבדת מחקר מתקדמת</div>
+      <div style={sectionStyle}>{t('◆ QUANT LAB · מעבדת מחקר מתקדמת', '◆ QUANT LAB · Advanced Research Lab')}</div>
 
       {/* Recovery factor + simple cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginBottom: 12 }}>
