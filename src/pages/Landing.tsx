@@ -588,26 +588,63 @@ const Landing: React.FC = () => {
               >
                 <ScreenshotFrame src={dashboardMain} alt="ORCA Dashboard" />
 
+                {/* Zoom-in callout — magnified crop of the dashboard image */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ delay: 0.55, duration: 0.6, ease: 'easeOut' }}
+                  style={{
+                    position: 'absolute',
+                    top: '-6%',
+                    insetInlineEnd: '-6%',
+                    width: 'min(320px, 62%)',
+                    borderRadius: 18,
+                    padding: 14,
+                    background: 'linear-gradient(160deg, rgba(10,14,22,0.92), rgba(8,12,20,0.85))',
+                    border: '1px solid rgba(34,211,238,0.35)',
+                    boxShadow: '0 0 60px -10px rgba(34,211,238,0.45), 0 20px 50px -20px rgba(0,0,0,0.8)',
+                    backdropFilter: 'blur(12px)',
+                    zIndex: 3,
+                  }}
+                >
+                  <div style={{
+                    width: '100%', aspectRatio: '16/9', borderRadius: 10, overflow: 'hidden',
+                    border: '1px solid rgba(255,255,255,0.06)',
+                    backgroundImage: `url(${dashboardMain})`,
+                    backgroundSize: '320%',
+                    backgroundPosition: '22% 38%',
+                    backgroundRepeat: 'no-repeat',
+                  }} />
+                  <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{
+                      width: 34, height: 34, borderRadius: 10,
+                      background: 'linear-gradient(135deg,#22D3EE,#34D399)',
+                      display: 'grid', placeItems: 'center', fontSize: 16,
+                      boxShadow: '0 0 14px rgba(34,211,238,0.5)',
+                    }}>🐋</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: '#34D399' }}>+$2,140</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                        תובנת AI · שני סטאפים מובילים אחראיים ל-127% מהרווח
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
 
                 {/* Floating notifs */}
                 <motion.div
-                  initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.7, duration: 0.5 }}
-                  style={{ position: 'absolute', top: -14, insetInlineStart: -10 }}
-                >
-                  <Notif icon="🐋" text="ציון ORCA: 86 — GREAT" accent="#22D3EE" />
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.95, duration: 0.5 }}
+                  initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.85, duration: 0.5 }}
                   style={{ position: 'absolute', insetBlockEnd: 30, insetInlineEnd: -14 }}
                 >
                   <Notif icon="✅" text="סנכרון אוטומטי · 32 עסקאות מ-Bybit" accent="#34D399" />
                 </motion.div>
                 <motion.div
-                  initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.2, duration: 0.5 }}
+                  initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.1, duration: 0.5 }}
                   style={{ position: 'absolute', bottom: -18, insetInlineStart: '18%' }}
                 >
                   <Notif icon="🧠" text="תובנת AI חדשה זוהתה" accent="#8B5CF6" />
                 </motion.div>
+
               </motion.div>
             </div>
           </div>
