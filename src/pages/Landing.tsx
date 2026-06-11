@@ -18,6 +18,8 @@ import radarImg from '@/assets/landing/radar.png';
 import traderMindImg from '@/assets/landing/trader_mind.png';
 import backtestJournal from '@/assets/landing/backtest_journal.png';
 import backtestAnalytics from '@/assets/landing/backtest_analytics.png';
+import behaviorAnalysis from '@/assets/landing/behavior_analysis.png';
+import whatWorks from '@/assets/landing/what_works.png';
 
 const APP_URL = 'https://orcainvestment.co.il';
 
@@ -696,8 +698,8 @@ const Landing: React.FC = () => {
             </div>
             <div className="orca-grad-grid">
               <GradCard accent="#22D3EE" title="צלול עמוק לאסטרטגיה" desc="Monte Carlo, Box Plot, Risk-Reward Frontier ועוד בלוח Quant Lab." num="01" image={quantLab} />
-              <GradCard accent="#8B5CF6" title="הבן את ההתנהגות שלך" desc="ניתוח רב-ממדי של 145+ עסקאות וזיהוי דפוסים פסיכולוגיים." num="02" image={backtestAnalytics} />
-              <GradCard accent="#34D399" title="מה עובד בשבילך" desc="חוזקות, שעות זהב, נכסים מנצחים — והיכן ה-Edge האמיתי שלך." num="03" />
+              <GradCard accent="#8B5CF6" title="הבן את ההתנהגות שלך" desc="ניתוח רב-ממדי של 145+ עסקאות וזיהוי דפוסים פסיכולוגיים." num="02" image={behaviorAnalysis} />
+              <GradCard accent="#34D399" title="מה עובד בשבילך" desc="חוזקות, שעות זהב, נכסים מנצחים — והיכן ה-Edge האמיתי שלך." num="03" image={whatWorks} />
             </div>
           </div>
         </section>
