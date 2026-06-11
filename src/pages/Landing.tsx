@@ -589,13 +589,6 @@ const Landing: React.FC = () => {
     <>
       <style>{orcaCss}</style>
       <div className="orca-landing orca-bg-grid">
-        {langSwitching && (
-          <ImportLoadingOverlay
-            isRTL={langSwitching === 'he'}
-            fileName={langSwitching === 'en' ? 'Switching to English…' : 'מעבר לעברית…'}
-            phase="saving"
-          />
-        )}
         {/* ───── NAVBAR ───── */}
         <nav className={`orca-nav ${scrolled ? 'scrolled' : ''}`}>
           <div className="max-w-7xl mx-auto px-5 sm:px-8" style={{ height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -604,30 +597,8 @@ const Landing: React.FC = () => {
               <img src={orcaLogo} alt="Orca Investment" style={{ height: 44, width: 'auto', display: 'block' }} />
             </Link>
 
-            {/* Right (desktop) — nav links removed per request */}
+            {/* Right (desktop) — nav links + language toggle removed per request */}
             <div className="hidden lg:flex items-center" style={{ gap: 14, marginInlineStart: 'auto' }}>
-              <button
-                onClick={() => switchLanguageWithLoader(isRTL ? 'en' : 'he')}
-                className="mono"
-                aria-label={t('Switch to English', 'עבור לעברית')}
-                style={{
-                  fontSize: 11,
-                  color: '#0A0D14',
-                  background: 'linear-gradient(135deg, #22D3EE, #34D399)',
-                  border: '1px solid rgba(34,211,238,0.55)',
-                  padding: '7px 14px',
-                  borderRadius: 999,
-                  fontWeight: 800,
-                  letterSpacing: '0.12em',
-                  cursor: 'pointer',
-                  boxShadow: '0 0 18px rgba(34,211,238,0.35)',
-                  transition: 'transform .15s ease, filter .15s ease',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.1)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-                onMouseLeave={e => { e.currentTarget.style.filter = 'none'; e.currentTarget.style.transform = 'none'; }}
-              >
-                {isRTL ? '🌐 EN' : '🌐 עב'}
-              </button>
               <button className="grad-btn" onClick={goApp} style={{ padding: '10px 18px', fontSize: 14 }}>
                 {t('כניסה למערכת', 'Enter app')}
               </button>
@@ -642,16 +613,6 @@ const Landing: React.FC = () => {
 
           {menuOpen && (
             <div className="orca-mobile-menu lg:hidden">
-              <button
-                onClick={() => { setMenuOpen(false); switchLanguageWithLoader(isRTL ? 'en' : 'he'); }}
-                style={{
-                  width: '100%', textAlign: 'center', padding: '14px 20px',
-                  background: 'transparent', border: 'none', borderBottom: '1px solid var(--border)',
-                  color: 'var(--cyan)', fontWeight: 700, letterSpacing: '0.12em', cursor: 'pointer',
-                }}
-              >
-                {isRTL ? '🌐 Switch to English' : '🌐 עבור לעברית'}
-              </button>
               <div style={{ padding: 16 }}>
                 <button className="grad-btn" onClick={() => { setMenuOpen(false); goApp(); }} style={{ width: '100%', justifyContent: 'center' }}>
                   {t('כניסה למערכת', 'Enter app')}
