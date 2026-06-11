@@ -54,6 +54,7 @@ export function TriState({ state, label, onCycle, tag, T, goodIs = 1, isRTL }: P
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexDirection: isRTL ? 'row-reverse' : 'row' }}>
         <span style={{
           width: 26, height: 26, borderRadius: 6, background: boxBg, color: boxColor,
+          border: `1px solid ${boxBorder}`,
           display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 700,
         }}>{ICON[state]}</span>
         {tag && (
