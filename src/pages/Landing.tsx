@@ -32,12 +32,12 @@ const orcaCss = `
 @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 .orca-landing {
-  --bg:        #07090F;
-  --bg-2:      #0B0E16;
-  --surface:   #0E131C;
-  --surface-2: #131926;
-  --border:    rgba(255,255,255,0.07);
-  --glass:     rgba(14,19,28,0.55);
+  --bg:        #000000;
+  --bg-2:      #050609;
+  --surface:   #0A0D14;
+  --surface-2: #0F131C;
+  --border:    rgba(34,211,238,0.10);
+  --glass:     rgba(8,12,20,0.55);
   --text:       #F5F7FA;
   --text-muted: #8A93A6;
   --text-dim:   #5A6477;
@@ -51,7 +51,11 @@ const orcaCss = `
   --purple: #8B5CF6;
   --blue:   #3B82F6;
 
-  background: var(--bg);
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 0%, rgba(34,211,238,0.12), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 90% 20%, rgba(52,211,153,0.10), transparent 60%),
+    radial-gradient(ellipse 60% 50% at 50% 100%, rgba(139,92,246,0.08), transparent 60%),
+    var(--bg);
   color: var(--text);
   font-family: 'Heebo', system-ui, -apple-system, sans-serif;
   direction: rtl;
