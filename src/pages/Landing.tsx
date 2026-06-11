@@ -548,7 +548,7 @@ const Landing: React.FC = () => {
             {/* Right (desktop) — nav links removed per request */}
             <div className="hidden lg:flex items-center" style={{ gap: 14, marginInlineStart: 'auto' }}>
               <button
-                onClick={() => setLang(isRTL ? 'en' : 'he')}
+                onClick={() => switchLanguageWithLoader(isRTL ? 'en' : 'he')}
                 className="mono"
                 aria-label={t('Switch to English', 'עבור לעברית')}
                 style={{
