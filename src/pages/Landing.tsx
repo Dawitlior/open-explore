@@ -24,6 +24,9 @@ import aiMainframe from '@/assets/landing/ai_mainframe.png';
 import aiGoldEdge from '@/assets/landing/ai_gold_edge.png';
 import behaviorAnalysis from '@/assets/landing/behavior_analysis.png';
 import whatWorks from '@/assets/landing/what_works.png';
+import tomorrowMorning from '@/assets/landing/tomorrow_morning.png';
+import saidVsReal from '@/assets/landing/said_vs_real.png';
+import ImportLoadingOverlay from '@/components/trading/ImportLoadingOverlay';
 
 const APP_URL = 'https://orcainvestment.co.il';
 
@@ -325,6 +328,58 @@ const ScreenshotFrame: React.FC<{ src?: string; alt?: string; children?: React.R
   </div>
 );
 
+/* TraderMindRotator — single device frame fading between real result screens. */
+const TraderMindRotator: React.FC<{ slides: { src: string; caption: string }[] }> = ({ slides }) => {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    const id = window.setInterval(() => setI(v => (v + 1) % slides.length), 4200);
+    return () => window.clearInterval(id);
+  }, [slides.length]);
+  return (
+    <div style={{ maxWidth: 760, margin: '40px auto 0' }}>
+      <div className="orca-frame">
+        <div className="orca-frame-inner" style={{ aspectRatio: '16 / 10' }}>
+          {slides.map((s, idx) => (
+            <img
+              key={s.src}
+              src={s.src}
+              alt={s.caption}
+              loading="lazy"
+              style={{
+                position: 'absolute', inset: 0, width: '100%', height: '100%',
+                objectFit: 'cover', display: 'block',
+                opacity: idx === i ? 1 : 0,
+                transform: idx === i ? 'scale(1)' : 'scale(1.02)',
+                transition: 'opacity 1.1s ease, transform 6s ease-out',
+              }}
+            />
+          ))}
+        </div>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 14, marginTop: 14 }}>
+        <div style={{ color: 'var(--text-muted)', fontSize: 13, minHeight: 18, transition: 'opacity .3s' }}>
+          {slides[i].caption}
+        </div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {slides.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setI(idx)}
+              aria-label={`slide ${idx + 1}`}
+              style={{
+                width: idx === i ? 22 : 8, height: 8, padding: 0, borderRadius: 999,
+                border: 'none', cursor: 'pointer',
+                background: idx === i ? 'linear-gradient(90deg,#22D3EE,#8B5CF6)' : 'rgba(255,255,255,0.18)',
+                transition: 'width .3s ease, background .3s ease',
+              }}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 /* Section title block */
 const SectionHeader: React.FC<{ label: string; title: React.ReactNode; sub?: string; labelColor?: string }> = ({ label, title, sub, labelColor }) => (
   <div style={{ textAlign: 'center', maxWidth: 760, margin: '0 auto 8px' }}>
@@ -465,6 +520,7 @@ const Landing: React.FC = () => {
       return v === 'en' ? 'en' : 'he';
     } catch { return 'he'; }
   });
+  const [langSwitching, setLangSwitching] = useState<null | 'he' | 'en'>(null);
   const isRTL = lang === 'he';
   const t = (he: string, en: string) => (isRTL ? he : en);
 
@@ -480,6 +536,26 @@ const Landing: React.FC = () => {
     }
     window.dispatchEvent(new CustomEvent('orca:lang-changed', { detail: { lang: l } }));
   };
+
+  // Cinematic language switch — show the same loading overlay the platform uses
+  // on refresh, persist the choice, then hard-reload so every component re-renders
+  // in the new language.
+  const switchLanguageWithLoader = (target: 'he' | 'en') => {
+    if (langSwitching) return;
+    setLangSwitching(target);
+    try {
+      window.localStorage.setItem(LANG_OVERRIDE_KEY, target);
+      window.localStorage.setItem(LANG_CACHE_KEY, target);
+    } catch { /* noop */ }
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('lang', target);
+      document.documentElement.setAttribute('dir', target === 'he' ? 'rtl' : 'ltr');
+    }
+    window.dispatchEvent(new CustomEvent('orca:lang-changed', { detail: { lang: target } }));
+    window.setTimeout(() => { window.location.reload(); }, 1500);
+  };
+
+
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -513,6 +589,13 @@ const Landing: React.FC = () => {
     <>
       <style>{orcaCss}</style>
       <div className="orca-landing orca-bg-grid">
+        {langSwitching && (
+          <ImportLoadingOverlay
+            isRTL={langSwitching === 'he'}
+            fileName={langSwitching === 'en' ? 'Switching to English…' : 'מעבר לעברית…'}
+            phase="saving"
+          />
+        )}
         {/* ───── NAVBAR ───── */}
         <nav className={`orca-nav ${scrolled ? 'scrolled' : ''}`}>
           <div className="max-w-7xl mx-auto px-5 sm:px-8" style={{ height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -524,7 +607,7 @@ const Landing: React.FC = () => {
             {/* Right (desktop) — nav links removed per request */}
             <div className="hidden lg:flex items-center" style={{ gap: 14, marginInlineStart: 'auto' }}>
               <button
-                onClick={() => setLang(isRTL ? 'en' : 'he')}
+                onClick={() => switchLanguageWithLoader(isRTL ? 'en' : 'he')}
                 className="mono"
                 aria-label={t('Switch to English', 'עבור לעברית')}
                 style={{
@@ -560,7 +643,7 @@ const Landing: React.FC = () => {
           {menuOpen && (
             <div className="orca-mobile-menu lg:hidden">
               <button
-                onClick={() => { setLang(isRTL ? 'en' : 'he'); setMenuOpen(false); }}
+                onClick={() => { setMenuOpen(false); switchLanguageWithLoader(isRTL ? 'en' : 'he'); }}
                 style={{
                   width: '100%', textAlign: 'center', padding: '14px 20px',
                   background: 'transparent', border: 'none', borderBottom: '1px solid var(--border)',
@@ -845,13 +928,40 @@ const Landing: React.FC = () => {
             <SectionHeader
               label="ORCA · MAINFRAME"
               title={<>תודעת הסוחר — <span className="grad-text">המנוע שמכיר אותך.</span></>}
-              sub="אבחון התנהגותי שבונה לך פרופיל אישי (Archetype), ומכייל את ה-AI Coach בדיוק לחולשות ולחוזקות שלך."
+              sub="מבחן התנהגותי קצר שמראה לך את הפער בין איך שנדמה לך שאתה סוחר לבין איך שאתה באמת פועל — ונותן לך 3 דברים לעשות מחר בבוקר."
               labelColor="#8B5CF6"
             />
-            <div style={{ maxWidth: 720, margin: '36px auto 0' }}>
-              <ScreenshotFrame src={traderMindImg} />
+
+            {/* Result-screen rotator — device frame fading between real outputs */}
+            <TraderMindRotator slides={[
+              { src: tomorrowMorning, caption: 'מחר בבוקר · 3 צעדים פרקטיים' },
+              { src: saidVsReal,      caption: 'אמרת · בפועל — המראה ההתנהגותית' },
+              { src: traderMindImg,   caption: 'פרופיל הסוחר שלך' },
+            ]} />
+
+            {/* How it works — 3 calm steps */}
+            <div style={{
+              display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 18,
+              maxWidth: 880, margin: '44px auto 0',
+            }} className="orca-mind-steps">
+              {[
+                { n: '01', t: 'עונה', d: 'מענה קצר על 12 שאלות התנהגותיות — 3 דקות.' },
+                { n: '02', t: 'המנוע מצליב', d: 'מצליב בין מה שאמרת לקצב, ההיסוסים והעסקאות שלך בפועל.' },
+                { n: '03', t: '3 צעדים', d: 'מקבל פרופיל אישי + 3 פעולות קונקרטיות למחר בבוקר.' },
+              ].map(s => (
+                <div key={s.n} style={{
+                  padding: '20px 18px', borderRadius: 16, border: '1px solid var(--border)',
+                  background: 'linear-gradient(180deg, rgba(139,92,246,0.06), rgba(255,255,255,0.01))',
+                }}>
+                  <div className="mono" style={{ fontSize: 11, color: '#8B5CF6', letterSpacing: '0.18em' }}>STEP {s.n}</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, margin: '8px 0 6px', color: 'var(--text)' }}>{s.t}</div>
+                  <div style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--text-muted)' }}>{s.d}</div>
+                </div>
+              ))}
             </div>
-            <div style={{ textAlign: 'center', marginTop: 28 }}>
+            <style>{`@media (max-width: 720px){ .orca-mind-steps{ grid-template-columns: 1fr !important; } }`}</style>
+
+            <div style={{ textAlign: 'center', marginTop: 32 }}>
               <button className="grad-btn" onClick={goApp}>גלה את פרופיל הסוחר שלך <ArrowLeft size={16} /></button>
             </div>
           </div>
