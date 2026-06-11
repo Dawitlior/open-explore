@@ -677,18 +677,30 @@ const Landing: React.FC = () => {
                   </div>
                 </motion.div>
 
-                {/* Floating notifs */}
+                {/* Small floating snapshot — Trader Mind preview */}
                 <motion.div
-                  initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.85, duration: 0.5 }}
-                  style={{ position: 'absolute', insetBlockEnd: 30, insetInlineEnd: -14 }}
+                  initial={{ opacity: 0, y: 18, scale: 0.92 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ delay: 0.95, duration: 0.6, ease: 'easeOut' }}
+                  style={{
+                    position: 'absolute',
+                    bottom: -22,
+                    insetInlineStart: '8%',
+                    width: 'min(220px, 42%)',
+                    borderRadius: 14,
+                    overflow: 'hidden',
+                    border: '1px solid rgba(139,92,246,0.45)',
+                    background: '#0A0D14',
+                    boxShadow: '0 0 50px -10px rgba(139,92,246,0.55), 0 20px 50px -20px rgba(0,0,0,0.85)',
+                    zIndex: 3,
+                  }}
                 >
-                  <Notif icon="✅" text="סנכרון אוטומטי · 32 עסקאות מ-Bybit" accent="#34D399" />
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.1, duration: 0.5 }}
-                  style={{ position: 'absolute', bottom: -18, insetInlineStart: '18%' }}
-                >
-                  <Notif icon="🧠" text="תובנת AI חדשה זוהתה" accent="#8B5CF6" />
+                  <img
+                    src={traderMindImg}
+                    alt={t('תודעת הסוחר', 'Trader Mind')}
+                    loading="lazy"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  />
                 </motion.div>
 
               </motion.div>
