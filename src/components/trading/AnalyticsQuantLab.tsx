@@ -293,7 +293,7 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
         </GlassCard>
 
         <GlassCard T={T}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>Calmar מתגלגל (חלון 20)</div>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('Calmar מתגלגל (חלון 20)', 'Rolling Calmar (window 20)')}</div>
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={rollingCalmar}>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
