@@ -337,8 +337,17 @@ html[dir="ltr"] .dash-kpi-grid .orca-metric-sub {
 /* BestWorstWindowChart — let content size itself; never clip on mobile */
 .bw-window-root { flex: 0 0 auto !important; height: auto !important; min-height: 0 !important; }
 .bw-window-chart-cell { min-width: 0; }
-@media (max-width: 640px) {
-  .dash-advanced-body .dash-charts-alpha > .dash-chart-card { min-height: 0; height: auto; }
+/* On mobile, index.css forces every .orca-chart-card ResponsiveContainer to
+   250px which overflows the BestWorst sub-cells (150px each) and clips the
+   bottom. Restore natural sizing for this specific chart. */
+@media (max-width: 768px) {
+  .dash-advanced-body .dash-charts-alpha > .dash-chart-card { min-height: 0; height: auto; overflow: visible; }
   .dash-advanced-body .dash-charts-alpha > .dash-chart-card > * { flex: 0 0 auto; }
+  .bw-window-chart-cell { min-height: 170px; }
+  .bw-window-chart-cell .recharts-responsive-container {
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
+  }
 }
 
