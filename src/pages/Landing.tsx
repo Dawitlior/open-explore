@@ -585,22 +585,22 @@ const Landing: React.FC = () => {
               <img src={orcaLogo} alt="Orca Investment" style={{ height: 44, width: 'auto', display: 'block' }} />
             </Link>
 
-            {/* Right (desktop) — nav links + language toggle removed per request */}
-            <div className="hidden lg:flex items-center" style={{ gap: 14, marginInlineStart: 'auto' }}>
+            {/* Right (desktop ≥768) — only the CTA, no menu button on desktop */}
+            <div className="hidden md:flex items-center" style={{ gap: 14, marginInlineStart: 'auto' }}>
               <button className="grad-btn" onClick={goApp} style={{ padding: '10px 18px', fontSize: 14 }}>
                 {t('כניסה למערכת', 'Enter app')}
               </button>
             </div>
 
-            {/* Mobile toggle */}
-            <button className="lg:hidden" onClick={() => setMenuOpen(o => !o)} aria-label={t('תפריט', 'Menu')}
+            {/* Mobile-only toggle (<768px) */}
+            <button className="md:hidden" onClick={() => setMenuOpen(o => !o)} aria-label={t('תפריט', 'Menu')}
               style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: 10, width: 44, height: 44, display: 'grid', placeItems: 'center', color: 'var(--text)' }}>
               {menuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
 
           {menuOpen && (
-            <div className="orca-mobile-menu lg:hidden">
+            <div className="orca-mobile-menu md:hidden">
               <div style={{ padding: 16 }}>
                 <button className="grad-btn" onClick={() => { setMenuOpen(false); goApp(); }} style={{ width: '100%', justifyContent: 'center' }}>
                   {t('כניסה למערכת', 'Enter app')}
