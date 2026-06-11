@@ -328,7 +328,7 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
         </GlassCard>
 
         <GlassCard T={T}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>התפלגות אורך רצפים</div>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('התפלגות אורך רצפים', 'Streak Length Distribution')}</div>
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={streakDist}>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
