@@ -382,7 +382,7 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
 
       {/* Row: Daily step equity (full-width) */}
       <GlassCard T={T} style={{ marginBottom: 12 }}>
-        <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>הון יומי מצטבר (מדרגות)</div>
+        <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('הון יומי מצטבר (מדרגות)', 'Daily Cumulative Equity (Steps)')}</div>
         <ResponsiveContainer width="100%" height={240}>
           <AreaChart data={dailyEq}>
             <defs>
