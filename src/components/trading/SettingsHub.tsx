@@ -321,7 +321,19 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
               border: `1px solid ${T.border.subtle}`,
               display: 'flex', alignItems: 'center', gap: 10, minWidth: 0,
             }}>
-              <FrogAvatar size={38} borderColor={isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.18)'} />
+              {sidebarAvatar ? (
+                <img
+                  src={sidebarAvatar}
+                  alt=""
+                  style={{
+                    width: 38, height: 38, borderRadius: '50%', objectFit: 'cover',
+                    border: `1px solid ${isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.18)'}`,
+                    flexShrink: 0,
+                  }}
+                />
+              ) : (
+                <FrogAvatar size={38} borderColor={isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.18)'} />
+              )}
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: T.text.primary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} dir="ltr">
                   {auth.user?.email ?? t('משתמש', 'User')}
