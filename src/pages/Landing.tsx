@@ -876,13 +876,40 @@ const Landing: React.FC = () => {
             <SectionHeader
               label="ORCA · MAINFRAME"
               title={<>תודעת הסוחר — <span className="grad-text">המנוע שמכיר אותך.</span></>}
-              sub="אבחון התנהגותי שבונה לך פרופיל אישי (Archetype), ומכייל את ה-AI Coach בדיוק לחולשות ולחוזקות שלך."
+              sub="מבחן התנהגותי קצר שמראה לך את הפער בין איך שנדמה לך שאתה סוחר לבין איך שאתה באמת פועל — ונותן לך 3 דברים לעשות מחר בבוקר."
               labelColor="#8B5CF6"
             />
-            <div style={{ maxWidth: 720, margin: '36px auto 0' }}>
-              <ScreenshotFrame src={traderMindImg} />
+
+            {/* Result-screen rotator — device frame fading between real outputs */}
+            <TraderMindRotator slides={[
+              { src: tomorrowMorning, caption: 'מחר בבוקר · 3 צעדים פרקטיים' },
+              { src: saidVsReal,      caption: 'אמרת · בפועל — המראה ההתנהגותית' },
+              { src: traderMindImg,   caption: 'פרופיל הסוחר שלך' },
+            ]} />
+
+            {/* How it works — 3 calm steps */}
+            <div style={{
+              display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 18,
+              maxWidth: 880, margin: '44px auto 0',
+            }} className="orca-mind-steps">
+              {[
+                { n: '01', t: 'עונה', d: 'מענה קצר על 12 שאלות התנהגותיות — 3 דקות.' },
+                { n: '02', t: 'המנוע מצליב', d: 'מצליב בין מה שאמרת לקצב, ההיסוסים והעסקאות שלך בפועל.' },
+                { n: '03', t: '3 צעדים', d: 'מקבל פרופיל אישי + 3 פעולות קונקרטיות למחר בבוקר.' },
+              ].map(s => (
+                <div key={s.n} style={{
+                  padding: '20px 18px', borderRadius: 16, border: '1px solid var(--border)',
+                  background: 'linear-gradient(180deg, rgba(139,92,246,0.06), rgba(255,255,255,0.01))',
+                }}>
+                  <div className="mono" style={{ fontSize: 11, color: '#8B5CF6', letterSpacing: '0.18em' }}>STEP {s.n}</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, margin: '8px 0 6px', color: 'var(--text)' }}>{s.t}</div>
+                  <div style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--text-muted)' }}>{s.d}</div>
+                </div>
+              ))}
             </div>
-            <div style={{ textAlign: 'center', marginTop: 28 }}>
+            <style>{`@media (max-width: 720px){ .orca-mind-steps{ grid-template-columns: 1fr !important; } }`}</style>
+
+            <div style={{ textAlign: 'center', marginTop: 32 }}>
               <button className="grad-btn" onClick={goApp}>גלה את פרופיל הסוחר שלך <ArrowLeft size={16} /></button>
             </div>
           </div>
