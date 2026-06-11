@@ -2174,9 +2174,6 @@ function TraderMindSummary({
   };
   const listText: React.CSSProperties = { color: T.text.primary, fontSize: 13, lineHeight: 1.7, margin: 0 };
 
-  // Auto-fit iframe height for the full HTML snapshot (when present).
-  const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  const [iframeH, setIframeH] = useState(900);
   const srcDoc = html
     ? `<!doctype html><html dir="${isRTL ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -2187,18 +2184,6 @@ function TraderMindSummary({
   button{pointer-events:none}
 </style></head><body><div id="root">${html}</div></body></html>`
     : '';
-  useEffect(() => {
-    if (!srcDoc) return;
-    const fit = () => {
-      const f = iframeRef.current;
-      const doc = f?.contentDocument;
-      if (!doc) return;
-      const h = Math.max(doc.documentElement.scrollHeight, doc.body?.scrollHeight ?? 0);
-      if (h && Math.abs(h - iframeH) > 4) setIframeH(h);
-    };
-    const id = window.setInterval(fit, 600);
-    return () => window.clearInterval(id);
-  }, [srcDoc, iframeH]);
 
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} style={{ textAlign: isRTL ? 'right' : 'left' }}>
