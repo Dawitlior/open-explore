@@ -311,7 +311,7 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 12, marginBottom: 12 }}>
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
-            ניצחון ממוצע מול הפסד ממוצע
+            {t('ניצחון ממוצע מול הפסד ממוצע', 'Avg Win vs Avg Loss')}
           </div>
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={avgWL}>
