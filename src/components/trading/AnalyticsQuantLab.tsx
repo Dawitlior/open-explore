@@ -245,28 +245,28 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
           <div style={{ fontSize: 22, fontWeight: 800, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>
             {isFinite(recovery) ? recovery.toFixed(2) : '∞'}
           </div>
-          <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>רווח ברוטו / נסיגה מקס</div>
+          <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>{t('רווח ברוטו / נסיגה מקס', 'Gross profit / max drawdown')}</div>
         </GlassCard>
         <GlassCard T={T} style={{ padding: 12 }}>
           <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Best Session</div>
           <div style={{ fontSize: 22, fontWeight: 800, color: T.accent.green, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>
             {sessions.filter(s => s.n).sort((a, b) => (isMoney ? b.pnl - a.pnl : b.r - a.r))[0]?.session || '—'}
           </div>
-          <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>סשן הכי רווחי</div>
+          <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>{t('סשן הכי רווחי', 'Most profitable session')}</div>
         </GlassCard>
         <GlassCard T={T} style={{ padding: 12 }}>
           <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Trades / Day</div>
           <div style={{ fontSize: 22, fontWeight: 800, color: T.accent.blue, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>
             {dailyEq.length ? (trades.length / dailyEq.length).toFixed(1) : '0'}
           </div>
-          <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>תדירות יומית</div>
+          <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>{t('תדירות יומית', 'Daily frequency')}</div>
         </GlassCard>
         <GlassCard T={T} style={{ padding: 12 }}>
           <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Active Days</div>
           <div style={{ fontSize: 22, fontWeight: 800, color: T.accent.purple, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>
             {dailyEq.length}
           </div>
-          <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>ימי מסחר פעילים</div>
+          <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>{t('ימי מסחר פעילים', 'Active trading days')}</div>
         </GlassCard>
       </div>
 
