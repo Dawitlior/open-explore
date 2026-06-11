@@ -294,6 +294,24 @@ export const ReviewDashboard = ({
                     ))}
                   </ChartWrapper>
                 </div>
+
+                <div className="dash-chart-card">
+                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ניצחונות לפי חודש — לונג / שורט' : 'Wins by Month — Long / Short'} explanation={EXPLANATIONS.monthlyPerformance}>
+                    <WinsByMonthChart T={T} trades={trades} isRTL={isRTL} tt={tt} />
+                  </ChartWrapper>
+                </div>
+
+                <div className="dash-chart-card">
+                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ניצחונות לפי רבעון — לונג / שורט' : 'Wins by Quarter — Long / Short'} explanation={EXPLANATIONS.monthlyPerformance}>
+                    <WinsByQuarterChart T={T} trades={trades} isRTL={isRTL} tt={tt} />
+                  </ChartWrapper>
+                </div>
+
+                <div className="dash-chart-card">
+                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'תשואה ממוצעת לשעת החזקה' : 'Return / Time Held — avg'} explanation={EXPLANATIONS.expectancy}>
+                    <ReturnPerTimeChart T={T} trades={trades} isRTL={isRTL} tt={tt} />
+                  </ChartWrapper>
+                </div>
               </div>
             )}
           </div>
