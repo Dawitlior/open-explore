@@ -24,6 +24,9 @@ import aiMainframe from '@/assets/landing/ai_mainframe.png';
 import aiGoldEdge from '@/assets/landing/ai_gold_edge.png';
 import behaviorAnalysis from '@/assets/landing/behavior_analysis.png';
 import whatWorks from '@/assets/landing/what_works.png';
+import tomorrowMorning from '@/assets/landing/tomorrow_morning.png';
+import saidVsReal from '@/assets/landing/said_vs_real.png';
+import ImportLoadingOverlay from '@/components/trading/ImportLoadingOverlay';
 
 const APP_URL = 'https://orcainvestment.co.il';
 
