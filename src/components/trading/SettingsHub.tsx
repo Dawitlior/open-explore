@@ -123,6 +123,22 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
   const [showStudioConfirm, setShowStudioConfirm] = useState(false);
   const [unlockStep, setUnlockStep] = useState<0 | 1 | 2>(0);
   const [showWipeModal, setShowWipeModal] = useState(false);
+  const [sidebarAvatar, setSidebarAvatar] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    if (!auth.user?.id) { setSidebarAvatar(null); return; }
+    (async () => {
+      const { data } = await supabase.from('profiles').select('avatar_url').eq('id', auth.user!.id).maybeSingle();
+      const signed = await resolveAvatarUrl(data?.avatar_url);
+      if (!cancelled) setSidebarAvatar(signed);
+    })();
+    const onChange = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail && 'url' in detail) setSidebarAvatar(detail.url ?? null);
+    };
+    window.addEventListener('orca:avatar-changed', onChange);
+    return () => { cancelled = true; window.removeEventListener('orca:avatar-changed', onChange); };
+  }, [auth.user?.id]);
   useEffect(() => { if (ui.prefs.customAccent) setDraftAccent(ui.prefs.customAccent); }, [ui.prefs.customAccent]);
   useEffect(() => { if (ui.prefs.customTheme) setDraftTheme(ui.prefs.customTheme); }, [ui.prefs.customTheme]);
   // Light-mode aware token helpers — flip iOS native chrome between premium dark and Apple light gray.
