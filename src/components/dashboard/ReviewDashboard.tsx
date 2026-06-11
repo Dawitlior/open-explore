@@ -10,6 +10,7 @@ import { FeatureHint } from '@/components/trading/FeatureHint';
 import DashboardAdvancedLab from './DashboardAdvancedLab';
 import { TierGate } from '@/components/billing/TierGate';
 import { BestWorstWindowChart } from './BestWorstWindowChart';
+import { WinsByMonthChart, WinsByQuarterChart, ReturnPerTimeChart } from './SimpleExtraCharts';
 import { useDisplayMode } from '@/lib/display-mode';
 
 
