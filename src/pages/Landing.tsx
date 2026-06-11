@@ -450,11 +450,42 @@ const FeatureTabs: React.FC = () => {
 
 
 /* ─────────── Page ─────────── */
+const LANG_OVERRIDE_KEY = 'orca:auth-lang-override';
+const LANG_CACHE_KEY = 'orca:lang-cache';
+
 const Landing: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [lang, setLangState] = useState<'he' | 'en'>(() => {
+    if (typeof window === 'undefined') return 'he';
+    try {
+      const v = window.localStorage.getItem(LANG_OVERRIDE_KEY) || window.localStorage.getItem(LANG_CACHE_KEY);
+      return v === 'en' ? 'en' : 'he';
+    } catch { return 'he'; }
+  });
+  const isRTL = lang === 'he';
+  const t = (he: string, en: string) => (isRTL ? he : en);
+
+  const setLang = (l: 'he' | 'en') => {
+    setLangState(l);
+    try {
+      window.localStorage.setItem(LANG_OVERRIDE_KEY, l);
+      window.localStorage.setItem(LANG_CACHE_KEY, l);
+    } catch { /* noop */ }
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('lang', l);
+      document.documentElement.setAttribute('dir', l === 'he' ? 'rtl' : 'ltr');
+    }
+    window.dispatchEvent(new CustomEvent('orca:lang-changed', { detail: { lang: l } }));
+  };
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    document.documentElement.setAttribute('lang', lang);
+    document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
+  }, [lang, isRTL]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -465,22 +496,18 @@ const Landing: React.FC = () => {
 
   useEffect(() => {
     const prevTitle = document.title;
-    document.title = 'Orca Investment — יומן מסחר חכם ואוטומטי';
+    document.title = isRTL
+      ? 'Orca Investment — יומן מסחר חכם ואוטומטי'
+      : 'Orca Investment — Smart, Automated Trading Journal';
     const meta = document.querySelector('meta[name="description"]');
     const prevDesc = meta?.getAttribute('content') ?? '';
-    meta?.setAttribute('content', 'Orca Investment — יומן מסחר חכם שמרכז, מנתח ונותן סטטיסטיקות מדויקות לסוחר. חינם בתקופת ההשקה.');
+    meta?.setAttribute('content', isRTL
+      ? 'Orca Investment — יומן מסחר חכם שמרכז, מנתח ונותן סטטיסטיקות מדויקות לסוחר. חינם בתקופת ההשקה.'
+      : 'Orca Investment — a smart trading journal that centralizes, analyzes and delivers precise statistics for traders. Free during launch.');
     return () => { document.title = prevTitle; meta?.setAttribute('content', prevDesc); };
-  }, []);
+  }, [isRTL]);
 
   const goApp = () => { navigate('/auth'); };
-
-  const navLinks = [
-    { href: '#features', label: 'פיצ׳רים' },
-    { href: '#journal', label: 'היומן' },
-    { href: '#community', label: 'הקהילה' },
-    { href: '#pricing', label: 'מחירים' },
-    { href: '#about', label: 'אודות' },
-  ];
 
   return (
     <>
@@ -494,25 +521,37 @@ const Landing: React.FC = () => {
               <img src={orcaLogo} alt="Orca Investment" style={{ height: 44, width: 'auto', display: 'block' }} />
             </Link>
 
-            {/* Center nav (desktop) */}
-            <div className="hidden lg:flex items-center" style={{ gap: 28 }}>
-              {navLinks.map(l => (
-                <a key={l.href} href={l.href} className="nav-link">{l.label}</a>
-              ))}
-            </div>
-
-            {/* Right (desktop) */}
-            <div className="hidden lg:flex items-center" style={{ gap: 14 }}>
-              <button className="mono" style={{ fontSize: 11, color: 'var(--text-muted)', background: 'transparent', border: '1px solid var(--border)', padding: '6px 10px', borderRadius: 8 }}>
-                עב / EN
+            {/* Right (desktop) — nav links removed per request */}
+            <div className="hidden lg:flex items-center" style={{ gap: 14, marginInlineStart: 'auto' }}>
+              <button
+                onClick={() => setLang(isRTL ? 'en' : 'he')}
+                className="mono"
+                aria-label={t('Switch to English', 'עבור לעברית')}
+                style={{
+                  fontSize: 11,
+                  color: '#0A0D14',
+                  background: 'linear-gradient(135deg, #22D3EE, #34D399)',
+                  border: '1px solid rgba(34,211,238,0.55)',
+                  padding: '7px 14px',
+                  borderRadius: 999,
+                  fontWeight: 800,
+                  letterSpacing: '0.12em',
+                  cursor: 'pointer',
+                  boxShadow: '0 0 18px rgba(34,211,238,0.35)',
+                  transition: 'transform .15s ease, filter .15s ease',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.1)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                onMouseLeave={e => { e.currentTarget.style.filter = 'none'; e.currentTarget.style.transform = 'none'; }}
+              >
+                {isRTL ? '🌐 EN' : '🌐 עב'}
               </button>
               <button className="grad-btn" onClick={goApp} style={{ padding: '10px 18px', fontSize: 14 }}>
-                כניסה למערכת
+                {t('כניסה למערכת', 'Enter app')}
               </button>
             </div>
 
             {/* Mobile toggle */}
-            <button className="lg:hidden" onClick={() => setMenuOpen(o => !o)} aria-label="תפריט"
+            <button className="lg:hidden" onClick={() => setMenuOpen(o => !o)} aria-label={t('תפריט', 'Menu')}
               style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: 10, width: 44, height: 44, display: 'grid', placeItems: 'center', color: 'var(--text)' }}>
               {menuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
@@ -520,12 +559,19 @@ const Landing: React.FC = () => {
 
           {menuOpen && (
             <div className="orca-mobile-menu lg:hidden">
-              {navLinks.map(l => (
-                <a key={l.href} href={l.href} onClick={() => setMenuOpen(false)}>{l.label}</a>
-              ))}
+              <button
+                onClick={() => { setLang(isRTL ? 'en' : 'he'); setMenuOpen(false); }}
+                style={{
+                  width: '100%', textAlign: 'center', padding: '14px 20px',
+                  background: 'transparent', border: 'none', borderBottom: '1px solid var(--border)',
+                  color: 'var(--cyan)', fontWeight: 700, letterSpacing: '0.12em', cursor: 'pointer',
+                }}
+              >
+                {isRTL ? '🌐 Switch to English' : '🌐 עבור לעברית'}
+              </button>
               <div style={{ padding: 16 }}>
                 <button className="grad-btn" onClick={() => { setMenuOpen(false); goApp(); }} style={{ width: '100%', justifyContent: 'center' }}>
-                  כניסה למערכת
+                  {t('כניסה למערכת', 'Enter app')}
                 </button>
               </div>
             </div>
@@ -631,18 +677,30 @@ const Landing: React.FC = () => {
                   </div>
                 </motion.div>
 
-                {/* Floating notifs */}
+                {/* Small floating snapshot — Trader Mind preview */}
                 <motion.div
-                  initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.85, duration: 0.5 }}
-                  style={{ position: 'absolute', insetBlockEnd: 30, insetInlineEnd: -14 }}
+                  initial={{ opacity: 0, y: 18, scale: 0.92 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ delay: 0.95, duration: 0.6, ease: 'easeOut' }}
+                  style={{
+                    position: 'absolute',
+                    bottom: -22,
+                    insetInlineStart: '8%',
+                    width: 'min(220px, 42%)',
+                    borderRadius: 14,
+                    overflow: 'hidden',
+                    border: '1px solid rgba(139,92,246,0.45)',
+                    background: '#0A0D14',
+                    boxShadow: '0 0 50px -10px rgba(139,92,246,0.55), 0 20px 50px -20px rgba(0,0,0,0.85)',
+                    zIndex: 3,
+                  }}
                 >
-                  <Notif icon="✅" text="סנכרון אוטומטי · 32 עסקאות מ-Bybit" accent="#34D399" />
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.1, duration: 0.5 }}
-                  style={{ position: 'absolute', bottom: -18, insetInlineStart: '18%' }}
-                >
-                  <Notif icon="🧠" text="תובנת AI חדשה זוהתה" accent="#8B5CF6" />
+                  <img
+                    src={traderMindImg}
+                    alt={t('תודעת הסוחר', 'Trader Mind')}
+                    loading="lazy"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  />
                 </motion.div>
 
               </motion.div>
