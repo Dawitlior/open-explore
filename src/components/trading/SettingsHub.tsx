@@ -24,6 +24,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import type { Trade } from '@/data/trades';
 import { AvatarUploader } from './AvatarUploader';
 import { FrogAvatar } from './FrogAvatar';
+import { resolveAvatarUrl } from '@/lib/avatar';
 import { ChevronLeft } from 'lucide-react';
 import { InstallGuide } from './InstallGuide';
 import { ResetModal } from './ResetModal';
