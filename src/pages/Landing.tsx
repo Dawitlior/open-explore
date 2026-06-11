@@ -334,6 +334,7 @@ const ScreenshotFrame: React.FC<{ src?: string; alt?: string; children?: React.R
           src={src}
           alt={alt ?? 'ORCA screenshot'}
           loading="lazy"
+          decoding="async"
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
         />
       ) : (
@@ -359,7 +360,9 @@ const TraderMindRotator: React.FC<{ slides: { src: string; caption: string }[] }
               key={s.src}
               src={s.src}
               alt={s.caption}
-              loading="lazy"
+              loading={idx === 0 ? 'eager' : 'lazy'}
+              fetchPriority={idx === 0 ? 'high' : 'auto'}
+              decoding="async"
               style={{
                 position: 'absolute', inset: 0, width: '100%', height: '100%',
                 objectFit: 'cover', display: 'block',
