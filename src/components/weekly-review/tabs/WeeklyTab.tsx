@@ -426,16 +426,16 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
       </section>
 
       {/* === MINDSET === */}
-      <section style={card}>
+      <section style={card} dir={isRTL ? 'rtl' : 'ltr'}>
         <SectionTitle title={L.mindset} emoji="🧠" T={T} isRTL={isRTL} accent={cyan} />
 
         {/* Emotion */}
         <div style={cardSubtle}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4, flexDirection: isRTL ? 'row-reverse' : 'row' }}>
-            <div style={{ color: fg, fontWeight: 700, fontSize: 14 }}>{L.feel} 🎭</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
+            <div style={{ color: fg, fontWeight: 700, fontSize: 14, textAlign: isRTL ? 'right' : 'left' }}>{L.feel} 🎭</div>
           </div>
           <div style={{ color: muted, fontSize: 11, marginBottom: 12, textAlign: isRTL ? 'right' : 'left' }}>{L.feelCue}</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: isRTL ? 'flex-end' : 'flex-start' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {EMOTIONS.map(e => {
               const active = draft.emotion === e.l;
               return (
@@ -449,11 +449,11 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
 
         {/* Focus rating */}
         <div style={{ ...cardSubtle, marginTop: 12 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexDirection: isRTL ? 'row-reverse' : 'row' }}>
-            <div style={{ color: fg, fontWeight: 700, fontSize: 14 }}>{L.focus} 🎯</div>
-            <div style={{ color: muted, fontSize: 10 }}>{L.focusCue}</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
+            <div style={{ color: fg, fontWeight: 700, fontSize: 14, textAlign: isRTL ? 'right' : 'left' }}>{L.focus} 🎯</div>
+            <div style={{ color: muted, fontSize: 10, textAlign: isRTL ? 'left' : 'right' }}>{L.focusCue}</div>
           </div>
-          <div style={{ display: 'flex', gap: 8, marginTop: 12, justifyContent: isRTL ? 'flex-end' : 'flex-start', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
             {[5, 4, 3, 2, 1].map(n => {
               const active = draft.focusRating === n;
               return (
@@ -471,11 +471,11 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
 
         {/* Biggest mistake */}
         <div style={{ ...cardSubtle, marginTop: 12 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexDirection: isRTL ? 'row-reverse' : 'row' }}>
-            <div style={{ color: fg, fontWeight: 700, fontSize: 14 }}>{L.bigMistake} ⚠️</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <div style={{ color: fg, fontWeight: 700, fontSize: 14, textAlign: isRTL ? 'right' : 'left' }}>{L.bigMistake} ⚠️</div>
           </div>
           <div style={{ color: muted, fontSize: 11, marginTop: 4, marginBottom: 10, textAlign: isRTL ? 'right' : 'left' }}>{L.bigMistakeCue}</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: isRTL ? 'flex-end' : 'flex-start' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {MISTAKE_OPTIONS.map(m => {
               const active = draft.bigMistake === m;
               const isNone = m === 'None';
@@ -491,9 +491,9 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
 
         {/* Repeat mistake */}
         <div style={{ ...cardSubtle, marginTop: 12 }}>
-          <div style={{ color: fg, fontWeight: 700, fontSize: 14 }}>{L.repeat} ♻️</div>
+          <div style={{ color: fg, fontWeight: 700, fontSize: 14, textAlign: isRTL ? 'right' : 'left' }}>{L.repeat} ♻️</div>
           <div style={{ color: muted, fontSize: 11, marginTop: 4, marginBottom: 10, textAlign: isRTL ? 'right' : 'left' }}>{L.repeatCue}</div>
-          <div style={{ display: 'flex', gap: 10, justifyContent: isRTL ? 'flex-end' : 'flex-start' }}>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <Chip active={draft.repeatMistake === false} onClick={() => update({ repeatMistake: draft.repeatMistake === false ? null : false })} T={T} activeBg={win}>
               {L.no} ✅
             </Chip>
@@ -505,9 +505,9 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
 
         {/* Trader tags */}
         <div style={{ ...cardSubtle, marginTop: 12 }}>
-          <div style={{ color: fg, fontWeight: 700, fontSize: 14 }}>{L.tags} 🏷️</div>
+          <div style={{ color: fg, fontWeight: 700, fontSize: 14, textAlign: isRTL ? 'right' : 'left' }}>{L.tags} 🏷️</div>
           <div style={{ color: muted, fontSize: 11, marginTop: 4, marginBottom: 10, textAlign: isRTL ? 'right' : 'left' }}>{L.tagsCue}</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: isRTL ? 'flex-end' : 'flex-start' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {MINDSET_TAGS.map(tag => {
               const active = draft.mindsetTags.includes(tag);
               return <Chip key={tag} active={active} onClick={() => toggleTag(tag)} T={T}>{tag}</Chip>;
@@ -517,12 +517,13 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
 
         {/* Free reflection */}
         <div style={{ ...cardSubtle, marginTop: 12 }}>
-          <div style={{ color: fg, fontWeight: 700, fontSize: 14 }}>{L.reflection} ✍️</div>
+          <div style={{ color: fg, fontWeight: 700, fontSize: 14, textAlign: isRTL ? 'right' : 'left' }}>{L.reflection} ✍️</div>
           <div style={{ color: muted, fontSize: 11, marginTop: 4, marginBottom: 10, textAlign: isRTL ? 'right' : 'left' }}>{L.reflectionCue}</div>
           <textarea
             rows={6} value={draft.mindset} placeholder={L.reflectionPh}
             onChange={e => update({ mindset: e.target.value })}
             style={{ ...input, minHeight: 140, resize: 'vertical' }}
+            dir={isRTL ? 'rtl' : 'ltr'}
           />
         </div>
       </section>
