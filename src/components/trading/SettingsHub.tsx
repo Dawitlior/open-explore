@@ -2174,9 +2174,6 @@ function TraderMindSummary({
   };
   const listText: React.CSSProperties = { color: T.text.primary, fontSize: 13, lineHeight: 1.7, margin: 0 };
 
-  // Auto-fit iframe height for the full HTML snapshot (when present).
-  const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  const [iframeH, setIframeH] = useState(900);
   const srcDoc = html
     ? `<!doctype html><html dir="${isRTL ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -2187,18 +2184,6 @@ function TraderMindSummary({
   button{pointer-events:none}
 </style></head><body><div id="root">${html}</div></body></html>`
     : '';
-  useEffect(() => {
-    if (!srcDoc) return;
-    const fit = () => {
-      const f = iframeRef.current;
-      const doc = f?.contentDocument;
-      if (!doc) return;
-      const h = Math.max(doc.documentElement.scrollHeight, doc.body?.scrollHeight ?? 0);
-      if (h && Math.abs(h - iframeH) > 4) setIframeH(h);
-    };
-    const id = window.setInterval(fit, 600);
-    return () => window.clearInterval(id);
-  }, [srcDoc, iframeH]);
 
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} style={{ textAlign: isRTL ? 'right' : 'left' }}>
@@ -2335,30 +2320,101 @@ function TraderMindSummary({
 
       {/* ── Full visual report (snapshot from the diagnostic) ── */}
       {srcDoc ? (
-        <div style={{ marginTop: 14 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: T.text.muted, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 8 }}>
-            {t('דוח מלא', 'Full Report')}
-          </div>
-          <div style={{ borderRadius: 14, overflow: 'hidden', border: `1px solid ${T.border.subtle}`, background: '#FBFAF6' }}>
-            <iframe
-              ref={iframeRef}
-              title="Trader Mind Summary"
-              srcDoc={srcDoc}
-              sandbox="allow-same-origin"
-              style={{ width: '100%', height: iframeH, border: 'none', display: 'block', background: '#FBFAF6' }}
-            />
-          </div>
-        </div>
-      ) : !hasStructured ? (
-        <div style={{ ...headerCard, color: T.text.muted, fontSize: 12, lineHeight: 1.7 }}>
+        <FullReportBlock srcDoc={srcDoc} T={T} t={t} isRTL={isRTL} />
+      ) : (
+        <div style={{ ...headerCard, marginTop: 14, color: T.text.muted, fontSize: 12, lineHeight: 1.7 }}>
           {t(
-            'הסיכום המלא יוצג כאן אחרי אבחון הבא — לחץ "כייל מחדש" כדי לרענן את הפרופיל.',
-            'The full diagnostic summary will appear here after your next session — press "Recalibrate" to refresh the profile.',
+            'הדוח המלא נשמר רק מאבחונים חדשים. לחץ "כייל מחדש" כדי לבצע אבחון חדש — לאחר סיומו הדוח המלא יוצג כאן.',
+            'The full visual report is captured only from new diagnostics. Click "Recalibrate" to run a fresh session — the full report will appear here once it completes.',
           )}
         </div>
-      ) : null}
+      )}
     </div>
   );
 }
+
+function FullReportBlock({
+  srcDoc, T, t, isRTL,
+}: {
+  srcDoc: string; T: TradingTheme; t: (he: string, en: string) => string; isRTL: boolean;
+}) {
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const [iframeH, setIframeH] = useState(1100);
+  const [expanded, setExpanded] = useState(false);
+  useEffect(() => {
+    const fit = () => {
+      const f = iframeRef.current;
+      const doc = f?.contentDocument;
+      if (!doc) return;
+      const h = Math.max(doc.documentElement.scrollHeight, doc.body?.scrollHeight ?? 0);
+      if (h && Math.abs(h - iframeH) > 4) setIframeH(h);
+    };
+    const id = window.setInterval(fit, 600);
+    return () => window.clearInterval(id);
+  }, [srcDoc, iframeH]);
+
+  const openInNewTab = () => {
+    const w = window.open('', '_blank');
+    if (w) { w.document.open(); w.document.write(srcDoc); w.document.close(); }
+  };
+
+  return (
+    <div style={{ marginTop: 18 }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        marginBottom: 10, gap: 8, flexWrap: 'wrap',
+      }}>
+        <div style={{ fontSize: 11, fontWeight: 800, color: T.accent.cyan, letterSpacing: 1.4, textTransform: 'uppercase' }}>
+          📄 {t('דוח מלא', 'Full Report')}
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={() => setExpanded((x) => !x)}
+            style={{
+              padding: '6px 12px', borderRadius: 8, background: 'transparent',
+              border: `1px solid ${T.border.subtle}`, color: T.text.secondary,
+              fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', cursor: 'pointer',
+            }}
+          >
+            {expanded ? t('כווץ', 'Collapse') : t('הרחב', 'Expand')}
+          </button>
+          <button
+            onClick={openInNewTab}
+            style={{
+              padding: '6px 12px', borderRadius: 8, background: T.accent.cyan,
+              border: `1px solid ${T.accent.cyan}`, color: '#0a0e1a',
+              fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', cursor: 'pointer',
+            }}
+          >
+            ↗ {t('פתח בחלון חדש', 'Open in new tab')}
+          </button>
+        </div>
+      </div>
+      <div style={{
+        borderRadius: 14, overflow: 'hidden', border: `1px solid ${T.border.subtle}`,
+        background: '#FBFAF6', boxShadow: '0 4px 18px rgba(0,0,0,0.25)',
+      }}>
+        <iframe
+          ref={iframeRef}
+          title="Trader Mind Full Report"
+          srcDoc={srcDoc}
+          sandbox="allow-same-origin"
+          dir={isRTL ? 'rtl' : 'ltr'}
+          style={{
+            width: '100%',
+            height: expanded ? Math.max(iframeH, 1400) : Math.min(iframeH, 720),
+            border: 'none', display: 'block', background: '#FBFAF6',
+          }}
+        />
+      </div>
+      {!expanded && iframeH > 720 && (
+        <div style={{ fontSize: 10, color: T.text.muted, marginTop: 6, textAlign: 'center' }}>
+          {t('לחץ "הרחב" כדי לראות את הדוח המלא', 'Click "Expand" to see the full report')}
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 
