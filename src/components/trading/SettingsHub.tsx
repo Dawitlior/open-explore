@@ -2430,7 +2430,6 @@ function FullReportBlock({
     </div>
   );
 }
-  );
-}
+
 
 
