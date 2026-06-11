@@ -2138,17 +2138,45 @@ function TraderMindSummary({
   session: { archetype: string | null; completed_at: string; payload: Record<string, unknown> };
   T: TradingTheme; isRTL: boolean; t: (he: string, en: string) => string;
 }) {
-  const p = session.payload || {};
+  const p = (session.payload || {}) as Record<string, unknown>;
   const html = typeof p.__html === 'string' ? (p.__html as string) : '';
   const completed = new Date(session.completed_at).toLocaleString(isRTL ? 'he-IL' : 'en-US');
+
+  // ── Extract structured highlights from the payload (defensive) ──
+  const asStr = (v: unknown): string => (typeof v === 'string' ? v : '');
+  const asArr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
+  const focus = (p.focus && typeof p.focus === 'object' ? p.focus : {}) as Record<string, unknown>;
+  const focusHeadline = asStr(focus.headline);
+  const focusBody = asStr(focus.body);
+  const focusCards = asArr(focus.cards).filter((c): c is Record<string, unknown> => !!c && typeof c === 'object');
+  const strengths = asArr(p.strengths).map(asStr).filter(Boolean);
+  const weaknesses = asArr(p.weaknesses).map(asStr).filter(Boolean);
+  const blindspots = asArr(p.blindspots).map(asStr).filter(Boolean);
+  const tomorrow = asArr(p.tomorrow).map(asStr).filter(Boolean);
+  const synthesis = asStr(p.synthesis);
+  const sharpen = asStr(p.sharpen);
+  const summary = asStr(p.summary);
+  const fingerprint = asStr(p.fingerprint);
+  const scores = (p.scores && typeof p.scores === 'object' ? p.scores : null) as Record<string, unknown> | null;
+  const hasStructured = !!(focusHeadline || focusBody || strengths.length || weaknesses.length || blindspots.length || tomorrow.length || synthesis || summary);
 
   const headerCard: React.CSSProperties = {
     padding: 14, borderRadius: 12, background: T.bg.tertiary,
     border: `1px solid ${T.border.subtle}`, marginTop: 12,
   };
+  const block: React.CSSProperties = {
+    padding: 14, borderRadius: 12, background: T.bg.secondary,
+    border: `1px solid ${T.border.subtle}`, marginTop: 10,
+  };
+  const blockTitle: React.CSSProperties = {
+    fontSize: 11, fontWeight: 800, color: T.accent.cyan, letterSpacing: 1.4,
+    textTransform: 'uppercase', marginBottom: 8,
+  };
+  const listText: React.CSSProperties = { color: T.text.primary, fontSize: 13, lineHeight: 1.7, margin: 0 };
 
-  // Build a self-contained HTML document that renders the snapshot exactly
-  // as it appeared inside the diagnostic, on the same beige background.
+  // Auto-fit iframe height for the full HTML snapshot (when present).
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const [iframeH, setIframeH] = useState(900);
   const srcDoc = html
     ? `<!doctype html><html dir="${isRTL ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -2159,12 +2187,7 @@ function TraderMindSummary({
   button{pointer-events:none}
 </style></head><body><div id="root">${html}</div></body></html>`
     : '';
-
-  // Auto-fit iframe height to its content (it's same-origin via srcDoc).
-  const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  const [iframeH, setIframeH] = useState(900);
   useEffect(() => {
-
     if (!srcDoc) return;
     const fit = () => {
       const f = iframeRef.current;
@@ -2178,37 +2201,162 @@ function TraderMindSummary({
   }, [srcDoc, iframeH]);
 
   return (
-    <div dir={isRTL ? 'rtl' : 'ltr'}>
+    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ textAlign: isRTL ? 'right' : 'left' }}>
+      {/* ── Header ── */}
       <div style={headerCard}>
         <div style={{ fontSize: 11, fontWeight: 700, color: T.accent.cyan, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 6 }}>
           {t('סיכום אבחון', 'Diagnostic Summary')}
         </div>
-        <div style={{ fontSize: 14, color: T.text.primary, fontWeight: 700 }}>
-          {session.archetype ?? t('פרופיל סוחר', 'Trader Profile')}
+        <div style={{ fontSize: 16, color: T.text.primary, fontWeight: 800 }}>
+          {session.archetype ?? fingerprint ?? t('פרופיל סוחר', 'Trader Profile')}
         </div>
         <div style={{ fontSize: 10, color: T.text.muted, marginTop: 6 }}>
           {t('הושלם:', 'Completed:')} {completed}
         </div>
       </div>
 
+      {/* ── Structured highlights ── */}
+      {hasStructured && (
+        <>
+          {(focusHeadline || focusBody) && (
+            <div style={block}>
+              <div style={blockTitle}>🎯 {t('הצעד הבא', 'Your Next Step')}</div>
+              {focusHeadline && (
+                <div style={{ color: T.text.primary, fontSize: 14, fontWeight: 700, marginBottom: 6 }}>
+                  {focusHeadline}
+                </div>
+              )}
+              {focusBody && <p style={listText}>{focusBody}</p>}
+              {focusCards.length > 0 && (
+                <div style={{ display: 'grid', gap: 8, marginTop: 10 }}>
+                  {focusCards.map((c, i) => (
+                    <div key={i} style={{
+                      padding: 10, borderRadius: 10, background: T.bg.tertiary,
+                      border: `1px solid ${T.border.subtle}`,
+                    }}>
+                      {asStr(c.title) && (
+                        <div style={{ fontSize: 12, fontWeight: 700, color: T.text.primary, marginBottom: 4 }}>
+                          {asStr(c.title)}
+                        </div>
+                      )}
+                      {asStr(c.body) && (
+                        <div style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.6 }}>
+                          {asStr(c.body)}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {summary && (
+            <div style={block}>
+              <div style={blockTitle}>📋 {t('סקירה', 'Overview')}</div>
+              <p style={listText}>{summary}</p>
+            </div>
+          )}
+
+          {synthesis && (
+            <div style={block}>
+              <div style={blockTitle}>🧬 {t('סינתזה', 'Synthesis')}</div>
+              <p style={listText}>{synthesis}</p>
+            </div>
+          )}
+
+          {strengths.length > 0 && (
+            <div style={block}>
+              <div style={blockTitle}>✅ {t('חוזקות', 'Strengths')}</div>
+              <ul style={{ ...listText, paddingInlineStart: 20, margin: 0 }}>
+                {strengths.map((s, i) => <li key={i} style={{ marginBottom: 4 }}>{s}</li>)}
+              </ul>
+            </div>
+          )}
+
+          {weaknesses.length > 0 && (
+            <div style={block}>
+              <div style={blockTitle}>⚠️ {t('נקודות לחיזוק', 'Weaknesses')}</div>
+              <ul style={{ ...listText, paddingInlineStart: 20, margin: 0 }}>
+                {weaknesses.map((w, i) => <li key={i} style={{ marginBottom: 4 }}>{w}</li>)}
+              </ul>
+            </div>
+          )}
+
+          {blindspots.length > 0 && (
+            <div style={block}>
+              <div style={blockTitle}>👁 {t('נקודות עיוורות', 'Blind Spots')}</div>
+              <ul style={{ ...listText, paddingInlineStart: 20, margin: 0 }}>
+                {blindspots.map((b, i) => <li key={i} style={{ marginBottom: 4 }}>{b}</li>)}
+              </ul>
+            </div>
+          )}
+
+          {tomorrow.length > 0 && (
+            <div style={block}>
+              <div style={blockTitle}>📌 {t('פעולות למחר', 'Action Items')}</div>
+              <ul style={{ ...listText, paddingInlineStart: 20, margin: 0 }}>
+                {tomorrow.map((tm, i) => <li key={i} style={{ marginBottom: 4 }}>{tm}</li>)}
+              </ul>
+            </div>
+          )}
+
+          {sharpen && (
+            <div style={block}>
+              <div style={blockTitle}>🪒 {t('חידוד', 'Sharpen')}</div>
+              <p style={listText}>{sharpen}</p>
+            </div>
+          )}
+
+          {scores && Object.keys(scores).length > 0 && (
+            <div style={block}>
+              <div style={blockTitle}>📊 {t('ציונים', 'Scores')}</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 8 }}>
+                {Object.entries(scores).map(([k, v]) => {
+                  const num = typeof v === 'number' ? v : Number(v);
+                  if (!Number.isFinite(num)) return null;
+                  return (
+                    <div key={k} style={{
+                      padding: 10, borderRadius: 10, background: T.bg.tertiary,
+                      border: `1px solid ${T.border.subtle}`, textAlign: 'center',
+                    }}>
+                      <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>{k}</div>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: T.accent.cyan, fontFamily: "'IBM Plex Mono', monospace" }}>
+                        {Number.isInteger(num) ? num : num.toFixed(2)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ── Full visual report (snapshot from the diagnostic) ── */}
       {srcDoc ? (
-        <div style={{ marginTop: 12, borderRadius: 14, overflow: 'hidden', border: `1px solid ${T.border.subtle}`, background: '#FBFAF6' }}>
-          <iframe
-            ref={iframeRef}
-            title="Trader Mind Summary"
-            srcDoc={srcDoc}
-            sandbox="allow-same-origin"
-            style={{ width: '100%', height: iframeH, border: 'none', display: 'block', background: '#FBFAF6' }}
-          />
+        <div style={{ marginTop: 14 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: T.text.muted, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 8 }}>
+            {t('דוח מלא', 'Full Report')}
+          </div>
+          <div style={{ borderRadius: 14, overflow: 'hidden', border: `1px solid ${T.border.subtle}`, background: '#FBFAF6' }}>
+            <iframe
+              ref={iframeRef}
+              title="Trader Mind Summary"
+              srcDoc={srcDoc}
+              sandbox="allow-same-origin"
+              style={{ width: '100%', height: iframeH, border: 'none', display: 'block', background: '#FBFAF6' }}
+            />
+          </div>
         </div>
-      ) : (
+      ) : !hasStructured ? (
         <div style={{ ...headerCard, color: T.text.muted, fontSize: 12, lineHeight: 1.7 }}>
           {t(
             'הסיכום המלא יוצג כאן אחרי אבחון הבא — לחץ "כייל מחדש" כדי לרענן את הפרופיל.',
             'The full diagnostic summary will appear here after your next session — press "Recalibrate" to refresh the profile.',
           )}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
