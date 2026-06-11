@@ -364,7 +364,7 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
         </GlassCard>
 
         <GlassCard T={T}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>פיצול לפי סשן (אסיה / לונדון / ניו-יורק)</div>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('פיצול לפי סשן (אסיה / לונדון / ניו-יורק)', 'Session Split (Asia / London / NY)')}</div>
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={sessions}>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
