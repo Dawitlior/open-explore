@@ -63,7 +63,26 @@ export const MobileBottomNav = ({
 
   // Mount only on client so createPortal has a target.
   const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+    // iOS Safari sometimes paints fixed-bottom elements offset from the
+    // visual viewport on initial load — they appear floating slightly above
+    // the real bottom until a scroll/interaction settles them. A few no-op
+    // scrolls + a visualViewport listener force the browser to recompute
+    // the position against the actual visible viewport.
+    const settle = () => {
+      requestAnimationFrame(() => window.scrollTo(window.scrollX, window.scrollY));
+    };
+    settle();
+    const t1 = window.setTimeout(settle, 60);
+    const t2 = window.setTimeout(settle, 350);
+    const vv = window.visualViewport;
+    vv?.addEventListener('resize', settle);
+    return () => {
+      clearTimeout(t1); clearTimeout(t2);
+      vv?.removeEventListener('resize', settle);
+    };
+  }, []);
   if (!mounted) return null;
 
   const nav = (
