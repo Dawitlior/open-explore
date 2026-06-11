@@ -139,16 +139,18 @@ const EN = {
 export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
   const L = isRTL ? HE : EN;
 
-  // Tokens
-  const fg = T?.text?.primary || '#e9eef7';
-  const muted = T?.text?.muted || '#7a8aa3';
-  const accent = T?.accent?.cyan || '#39FF14';
-  const cyan = T?.accent?.cyan || '#00f2ff';
-  const panel = T?.bg?.surface || 'rgba(255,255,255,0.04)';
-  const border = T?.border?.subtle || 'rgba(255,255,255,0.08)';
-  const win = T?.status?.success || '#39FF14';
+  // Tokens — theme-aware so light mode stays readable
+  const isLight = (T as { id?: string })?.id === 'platinum';
+  const fg = T?.text?.primary || (isLight ? '#0a0e1a' : '#e9eef7');
+  const muted = T?.text?.muted || (isLight ? '#4b5566' : '#7a8aa3');
+  // In light mode swap the bright cyan/green accent for a deep, readable blue
+  const accent = isLight ? '#1d4ed8' : (T?.accent?.cyan || '#39FF14');
+  const cyan = isLight ? '#1d4ed8' : (T?.accent?.cyan || '#00f2ff');
+  const panel = T?.bg?.surface || (isLight ? '#ffffff' : 'rgba(255,255,255,0.04)');
+  const border = T?.border?.subtle || (isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.08)');
+  const win = isLight ? '#0a8a4a' : (T?.status?.success || '#39FF14');
   const loss = T?.status?.danger || '#ff3b3b';
-  const warn = T?.status?.warning || '#ffb830';
+  const warn = T?.status?.warning || (isLight ? '#b86e00' : '#ffb830');
 
   const wk = useWeekAggregates(trades);
   const { draft, update } = useWeekDraft(wk.weekKey);
