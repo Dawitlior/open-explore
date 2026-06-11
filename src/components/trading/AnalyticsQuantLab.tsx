@@ -51,6 +51,9 @@ const sessionOf = (h: number): 'Asia' | 'London' | 'NY' | 'Off' => {
 };
 
 const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) => {
+  const { lang } = useLang();
+  const isRTL = lang === 'he';
+  const t = (he: string, en: string) => (isRTL ? he : en);
   // 🔀 Dual-Currency Engine: filtered dataset + adaptive helpers
   const { visibleTrades: trades, isMoney, formatValue: fmtVal, formatAxis: fmtAxis, rEligibleCount, totalCount } = useVisibleTrades(_allTrades);
   const tt = {
