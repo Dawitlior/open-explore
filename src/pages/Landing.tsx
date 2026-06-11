@@ -503,18 +503,7 @@ const Landing: React.FC = () => {
     window.setTimeout(() => { window.location.reload(); }, 1500);
   };
 
-  const setLang = (l: 'he' | 'en') => {
-    setLangState(l);
-    try {
-      window.localStorage.setItem(LANG_OVERRIDE_KEY, l);
-      window.localStorage.setItem(LANG_CACHE_KEY, l);
-    } catch { /* noop */ }
-    if (typeof document !== 'undefined') {
-      document.documentElement.setAttribute('lang', l);
-      document.documentElement.setAttribute('dir', l === 'he' ? 'rtl' : 'ltr');
-    }
-    window.dispatchEvent(new CustomEvent('orca:lang-changed', { detail: { lang: l } }));
-  };
+
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
