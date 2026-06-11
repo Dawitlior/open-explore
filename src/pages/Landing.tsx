@@ -18,6 +18,7 @@ import radarImg from '@/assets/landing/radar.png';
 import traderMindImg from '@/assets/landing/trader_mind.png';
 import backtestJournal from '@/assets/landing/backtest_journal.png';
 import backtestAnalytics from '@/assets/landing/backtest_analytics.png';
+import orcaLogo from '@/assets/landing/orca_logo.png';
 import behaviorAnalysis from '@/assets/landing/behavior_analysis.png';
 import whatWorks from '@/assets/landing/what_works.png';
 
@@ -474,11 +475,7 @@ const Landing: React.FC = () => {
           <div className="max-w-7xl mx-auto px-5 sm:px-8" style={{ height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             {/* Logo */}
             <Link to="/welcome" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div className="orca-hex"><TrendingUp size={16} /></div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                <span style={{ fontWeight: 800, fontSize: 18, letterSpacing: '-0.01em' }}>Orca</span>
-                <span style={{ fontWeight: 300, fontSize: 15, color: 'var(--text-muted)' }}>Investment</span>
-              </div>
+              <img src={orcaLogo} alt="Orca Investment" style={{ height: 44, width: 'auto', display: 'block' }} />
             </Link>
 
             {/* Center nav (desktop) */}
@@ -600,24 +597,6 @@ const Landing: React.FC = () => {
           </div>
         </section>
 
-        {/* ───── 3. STATS BAR ───── */}
-        <section className="orca-section" style={{ paddingTop: 0, paddingBottom: 'clamp(40px, 6vw, 70px)' }}>
-          <div className="max-w-7xl mx-auto px-5 sm:px-8">
-            <div className="glass-card orca-stats">
-              {[
-                { num: '120K+', label: 'עסקאות תועדו' },
-                { num: '3,200+', label: 'חברי קהילה' },
-                { num: '40+', label: 'מדדים מנותחים' },
-                { num: '100%', label: 'אוטומטי' },
-              ].map((s, i) => (
-                <div key={i}>
-                  <div className="orca-stat-num grad-text text-glow"><CountUp value={s.num} /></div>
-                  <div className="orca-stat-label mono">{s.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
 
         {/* ───── 4. INTEGRATIONS ───── */}
         <section className="orca-section" style={{ paddingTop: 0, paddingBottom: 'clamp(40px, 6vw, 70px)' }}>
