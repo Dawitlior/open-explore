@@ -450,11 +450,42 @@ const FeatureTabs: React.FC = () => {
 
 
 /* ─────────── Page ─────────── */
+const LANG_OVERRIDE_KEY = 'orca:auth-lang-override';
+const LANG_CACHE_KEY = 'orca:lang-cache';
+
 const Landing: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [lang, setLangState] = useState<'he' | 'en'>(() => {
+    if (typeof window === 'undefined') return 'he';
+    try {
+      const v = window.localStorage.getItem(LANG_OVERRIDE_KEY) || window.localStorage.getItem(LANG_CACHE_KEY);
+      return v === 'en' ? 'en' : 'he';
+    } catch { return 'he'; }
+  });
+  const isRTL = lang === 'he';
+  const t = (he: string, en: string) => (isRTL ? he : en);
+
+  const setLang = (l: 'he' | 'en') => {
+    setLangState(l);
+    try {
+      window.localStorage.setItem(LANG_OVERRIDE_KEY, l);
+      window.localStorage.setItem(LANG_CACHE_KEY, l);
+    } catch { /* noop */ }
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('lang', l);
+      document.documentElement.setAttribute('dir', l === 'he' ? 'rtl' : 'ltr');
+    }
+    window.dispatchEvent(new CustomEvent('orca:lang-changed', { detail: { lang: l } }));
+  };
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    document.documentElement.setAttribute('lang', lang);
+    document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
+  }, [lang, isRTL]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -465,22 +496,18 @@ const Landing: React.FC = () => {
 
   useEffect(() => {
     const prevTitle = document.title;
-    document.title = 'Orca Investment — יומן מסחר חכם ואוטומטי';
+    document.title = isRTL
+      ? 'Orca Investment — יומן מסחר חכם ואוטומטי'
+      : 'Orca Investment — Smart, Automated Trading Journal';
     const meta = document.querySelector('meta[name="description"]');
     const prevDesc = meta?.getAttribute('content') ?? '';
-    meta?.setAttribute('content', 'Orca Investment — יומן מסחר חכם שמרכז, מנתח ונותן סטטיסטיקות מדויקות לסוחר. חינם בתקופת ההשקה.');
+    meta?.setAttribute('content', isRTL
+      ? 'Orca Investment — יומן מסחר חכם שמרכז, מנתח ונותן סטטיסטיקות מדויקות לסוחר. חינם בתקופת ההשקה.'
+      : 'Orca Investment — a smart trading journal that centralizes, analyzes and delivers precise statistics for traders. Free during launch.');
     return () => { document.title = prevTitle; meta?.setAttribute('content', prevDesc); };
-  }, []);
+  }, [isRTL]);
 
   const goApp = () => { navigate('/auth'); };
-
-  const navLinks = [
-    { href: '#features', label: 'פיצ׳רים' },
-    { href: '#journal', label: 'היומן' },
-    { href: '#community', label: 'הקהילה' },
-    { href: '#pricing', label: 'מחירים' },
-    { href: '#about', label: 'אודות' },
-  ];
 
   return (
     <>
