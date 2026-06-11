@@ -273,7 +273,7 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
       {/* Row: Cumulative R + Rolling Calmar */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 12, marginBottom: 12 }}>
         <GlassCard T={T}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{isMoney ? 'עקומת הון מצטבר ($)' : 'עקומת R מצטברת'}</div>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{isMoney ? t('עקומת הון מצטבר ($)', 'Cumulative Equity Curve ($)') : t('עקומת R מצטברת', 'Cumulative R Curve')}</div>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={cumR}>
               <defs>
