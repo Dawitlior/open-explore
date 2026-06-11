@@ -8,15 +8,15 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Menu, X, ArrowLeft, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
-import dashboardMain from '@/assets/landing/dashboard_main.png.asset.json';
-import journalEntry from '@/assets/landing/journal_entry.png.asset.json';
-import analyticsDeck from '@/assets/landing/analytics_deck.png.asset.json';
-import quantLab from '@/assets/landing/quant_lab.png.asset.json';
-import calendarHub from '@/assets/landing/calendar.png.asset.json';
-import radarImg from '@/assets/landing/radar.png.asset.json';
-import traderMindImg from '@/assets/landing/trader_mind.png.asset.json';
-import backtestJournal from '@/assets/landing/backtest_journal.png.asset.json';
-import backtestAnalytics from '@/assets/landing/backtest_analytics.png.asset.json';
+import dashboardMain from '@/assets/landing/dashboard_main.png';
+import journalEntry from '@/assets/landing/journal_entry.png';
+import analyticsDeck from '@/assets/landing/analytics_deck.png';
+import quantLab from '@/assets/landing/quant_lab.png';
+import calendarHub from '@/assets/landing/calendar.png';
+import radarImg from '@/assets/landing/radar.png';
+import traderMindImg from '@/assets/landing/trader_mind.png';
+import backtestJournal from '@/assets/landing/backtest_journal.png';
+import backtestAnalytics from '@/assets/landing/backtest_analytics.png';
 
 const APP_URL = 'https://orcainvestment.co.il';
 
@@ -393,12 +393,12 @@ const GradCard: React.FC<{ accent: string; title: string; desc: string; num?: st
 
 /* Feature Tabs — `image` is the real uploaded screenshot URL (omit for grey "SCREENSHOT" placeholder) */
 const TABS: { key: string; label: string; icon: string; title: string; desc: string; bullets: string[]; image?: string }[] = [
-  { key: 'journal', label: 'יומן אוטומטי', icon: '📓', title: 'יומן מסחר אוטומטי', desc: 'חבר את הברוקר פעם אחת, ועסקאות נכנסות אוטומטית — מתויגות ומוכנות לניתוח.', bullets: ['סנכרון מ-Bybit / Binance', 'יומן בוקר וערב', 'צילומי גרפים', 'ארכיון מלא לחיפוש'], image: journalEntry.url },
-  { key: 'analytics', label: 'אנליטיקה', icon: '📊', title: 'לוח אנליטיקה מתקדם', desc: 'עשרות מטריקות כמותיות שחושפות את ה-Edge האמיתי שלך.', bullets: ['Equity Curve מתקדמת', 'Profit Factor & R-Multiples', 'ניתוח לפי נכס / שעה / יום', 'סיכומים שבועי, חודשי, שנתי'], image: analyticsDeck.url },
+  { key: 'journal', label: 'יומן אוטומטי', icon: '📓', title: 'יומן מסחר אוטומטי', desc: 'חבר את הברוקר פעם אחת, ועסקאות נכנסות אוטומטית — מתויגות ומוכנות לניתוח.', bullets: ['סנכרון מ-Bybit / Binance', 'יומן בוקר וערב', 'צילומי גרפים', 'ארכיון מלא לחיפוש'], image: journalEntry },
+  { key: 'analytics', label: 'אנליטיקה', icon: '📊', title: 'לוח אנליטיקה מתקדם', desc: 'עשרות מטריקות כמותיות שחושפות את ה-Edge האמיתי שלך.', bullets: ['Equity Curve מתקדמת', 'Profit Factor & R-Multiples', 'ניתוח לפי נכס / שעה / יום', 'סיכומים שבועי, חודשי, שנתי'], image: analyticsDeck },
   { key: 'risk', label: 'ניהול סיכונים', icon: '🛡️', title: 'מנוע סיכונים 4-שכבתי', desc: 'הגנה אוטומטית מפני over-trading עם מנגנון משמעת חכם.', bullets: ['מגבלות -1R / -2R / -5R / -10R', 'חישוב גודל פוזיציה אוטומטי', 'התראות Risk Drift', 'מצב צינון (Cool-Off)'] },
   { key: 'ai', label: 'תובנות AI', icon: '🧠', title: 'מנוע תובנות עמוק', desc: 'מזהה דפוסים סמויים שאף סוחר לא היה רואה לבד.', bullets: ['זיהוי דפוסים נסתרים', 'חוזקות וחולשות אישיות', 'Orca Coach מבוסס נתונים', 'גרפים ברמת Awwwards'] },
-  { key: 'mind', label: 'תודעת הסוחר', icon: '🐋', title: 'אבחון תודעת הסוחר', desc: 'פרופיל Archetype אישי שמכייל את ה-AI Coach לפי הסוחר שאתה.', bullets: ['אבחון אישיות סוחר', 'פרופיל Archetype', 'כיול AI Coach', 'כיול-מחדש כל 45 יום'], image: traderMindImg.url },
-  { key: 'radar', label: 'מכ״ם כלכלי', icon: '📡', title: 'מכ״ם אירועים כלכליים', desc: 'רדאר אירועים גלובלי עם חישוב Surprise בזמן אמת.', bullets: ['רדאר אירועים עולמי', 'Tier 1 / 2 / 3', 'עדכוני T-5 / T-1 / Live', 'חישוב Surprise אוטומטי'], image: radarImg.url },
+  { key: 'mind', label: 'תודעת הסוחר', icon: '🐋', title: 'אבחון תודעת הסוחר', desc: 'פרופיל Archetype אישי שמכייל את ה-AI Coach לפי הסוחר שאתה.', bullets: ['אבחון אישיות סוחר', 'פרופיל Archetype', 'כיול AI Coach', 'כיול-מחדש כל 45 יום'], image: traderMindImg },
+  { key: 'radar', label: 'מכ״ם כלכלי', icon: '📡', title: 'מכ״ם אירועים כלכליים', desc: 'רדאר אירועים גלובלי עם חישוב Surprise בזמן אמת.', bullets: ['רדאר אירועים עולמי', 'Tier 1 / 2 / 3', 'עדכוני T-5 / T-1 / Live', 'חישוב Surprise אוטומטי'], image: radarImg },
 ];
 
 const FeatureTabs: React.FC = () => {
@@ -570,7 +570,7 @@ const Landing: React.FC = () => {
                 initial={{ opacity: 0, y: 30, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.9, ease: 'easeOut', delay: 0.15 }}
                 style={{ position: 'relative', order: 2 }}
               >
-                <ScreenshotFrame src={dashboardMain.url} alt="ORCA Dashboard" />
+                <ScreenshotFrame src={dashboardMain} alt="ORCA Dashboard" />
 
 
                 {/* Floating notifs */}
@@ -657,8 +657,8 @@ const Landing: React.FC = () => {
             />
             <div className="orca-grad-grid">
               <GradCard accent="#22D3EE" title="יומן בוקר וערב" desc="ניתוח לפני השוק + רפלקציה אחרי, עם הזרמה אוטומטית של עסקאות היום." />
-              <GradCard accent="#34D399" title="Calendar Hub" desc="מרכז ה-P&L: לוח שנה אינטראקטיבי עם סיכומי שבוע וחודש." image={calendarHub.url} />
-              <GradCard accent="#8B5CF6" title="יומן Backtest" desc="דימנשן נפרד לתיעוד אסטרטגיות, סטטיסטיקות והשוואה לחי." image={backtestJournal.url} />
+              <GradCard accent="#34D399" title="Calendar Hub" desc="מרכז ה-P&L: לוח שנה אינטראקטיבי עם סיכומי שבוע וחודש." image={calendarHub} />
+              <GradCard accent="#8B5CF6" title="יומן Backtest" desc="דימנשן נפרד לתיעוד אסטרטגיות, סטטיסטיקות והשוואה לחי." image={backtestJournal} />
             </div>
           </div>
         </section>
@@ -694,8 +694,8 @@ const Landing: React.FC = () => {
               <button className="grad-btn" onClick={goApp}>התחל בחינם <ArrowLeft size={16} /></button>
             </div>
             <div className="orca-grad-grid">
-              <GradCard accent="#22D3EE" title="צלול עמוק לאסטרטגיה" desc="Monte Carlo, Box Plot, Risk-Reward Frontier ועוד בלוח Quant Lab." num="01" image={quantLab.url} />
-              <GradCard accent="#8B5CF6" title="הבן את ההתנהגות שלך" desc="ניתוח רב-ממדי של 145+ עסקאות וזיהוי דפוסים פסיכולוגיים." num="02" image={backtestAnalytics.url} />
+              <GradCard accent="#22D3EE" title="צלול עמוק לאסטרטגיה" desc="Monte Carlo, Box Plot, Risk-Reward Frontier ועוד בלוח Quant Lab." num="01" image={quantLab} />
+              <GradCard accent="#8B5CF6" title="הבן את ההתנהגות שלך" desc="ניתוח רב-ממדי של 145+ עסקאות וזיהוי דפוסים פסיכולוגיים." num="02" image={backtestAnalytics} />
               <GradCard accent="#34D399" title="מה עובד בשבילך" desc="חוזקות, שעות זהב, נכסים מנצחים — והיכן ה-Edge האמיתי שלך." num="03" />
             </div>
           </div>
@@ -756,7 +756,7 @@ const Landing: React.FC = () => {
               labelColor="#8B5CF6"
             />
             <div style={{ maxWidth: 720, margin: '36px auto 0' }}>
-              <ScreenshotFrame src={traderMindImg.url} />
+              <ScreenshotFrame src={traderMindImg} />
             </div>
             <div style={{ textAlign: 'center', marginTop: 28 }}>
               <button className="grad-btn" onClick={goApp}>גלה את פרופיל הסוחר שלך <ArrowLeft size={16} /></button>
