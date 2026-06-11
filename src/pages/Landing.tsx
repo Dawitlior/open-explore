@@ -537,6 +537,13 @@ const Landing: React.FC = () => {
     <>
       <style>{orcaCss}</style>
       <div className="orca-landing orca-bg-grid">
+        {langSwitching && (
+          <ImportLoadingOverlay
+            isRTL={langSwitching === 'he'}
+            fileName={langSwitching === 'en' ? 'Switching to English…' : 'מעבר לעברית…'}
+            phase="saving"
+          />
+        )}
         {/* ───── NAVBAR ───── */}
         <nav className={`orca-nav ${scrolled ? 'scrolled' : ''}`}>
           <div className="max-w-7xl mx-auto px-5 sm:px-8" style={{ height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
