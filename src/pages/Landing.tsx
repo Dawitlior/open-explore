@@ -20,6 +20,8 @@ import backtestJournal from '@/assets/landing/backtest_journal.png';
 import backtestAnalytics from '@/assets/landing/backtest_analytics.png';
 import orcaLogo from '@/assets/landing/orca_logo.png';
 import riskManagement from '@/assets/landing/risk_management.png';
+import aiMainframe from '@/assets/landing/ai_mainframe.png';
+import aiGoldEdge from '@/assets/landing/ai_gold_edge.png';
 import behaviorAnalysis from '@/assets/landing/behavior_analysis.png';
 import whatWorks from '@/assets/landing/what_works.png';
 
@@ -397,11 +399,11 @@ const GradCard: React.FC<{ accent: string; title: string; desc: string; num?: st
 );
 
 /* Feature Tabs — `image` is the real uploaded screenshot URL (omit for grey "SCREENSHOT" placeholder) */
-const TABS: { key: string; label: string; icon: string; title: string; desc: string; bullets: string[]; image?: string }[] = [
+const TABS: { key: string; label: string; icon: string; title: string; desc: string; bullets: string[]; image?: string; extraImage?: string }[] = [
   { key: 'journal', label: 'יומן אוטומטי', icon: '📓', title: 'יומן מסחר אוטומטי', desc: 'חבר את הברוקר פעם אחת, ועסקאות נכנסות אוטומטית — מתויגות ומוכנות לניתוח.', bullets: ['סנכרון מ-Bybit / Binance', 'יומן בוקר וערב', 'צילומי גרפים', 'ארכיון מלא לחיפוש'], image: autoJournal },
   { key: 'analytics', label: 'אנליטיקה', icon: '📊', title: 'לוח אנליטיקה מתקדם', desc: 'עשרות מטריקות כמותיות שחושפות את ה-Edge האמיתי שלך.', bullets: ['Equity Curve מתקדמת', 'Profit Factor & R-Multiples', 'ניתוח לפי נכס / שעה / יום', 'סיכומים שבועי, חודשי, שנתי'], image: analyticsDeck },
   { key: 'risk', label: 'ניהול סיכונים', icon: '🛡️', title: 'מנוע סיכונים 4-שכבתי', desc: 'הגנה אוטומטית מפני over-trading עם מנגנון משמעת חכם.', bullets: ['מגבלות -1R / -2R / -5R / -10R', 'חישוב גודל פוזיציה אוטומטי', 'התראות Risk Drift', 'מצב צינון (Cool-Off)'], image: riskManagement },
-  { key: 'ai', label: 'תובנות AI', icon: '🧠', title: 'מנוע תובנות עמוק', desc: 'מזהה דפוסים סמויים שאף סוחר לא היה רואה לבד.', bullets: ['זיהוי דפוסים נסתרים', 'חוזקות וחולשות אישיות', 'Orca Coach מבוסס נתונים', 'גרפים ברמת Awwwards'] },
+  { key: 'ai', label: 'תובנות AI', icon: '🧠', title: 'מנוע תובנות עמוק', desc: 'מזהה דפוסים סמויים שאף סוחר לא היה רואה לבד.', bullets: ['זיהוי דפוסים נסתרים', 'חוזקות וחולשות אישיות', 'Orca Coach מבוסס נתונים', 'גרפים ברמת Awwwards'], image: aiMainframe, extraImage: aiGoldEdge },
   { key: 'mind', label: 'תודעת הסוחר', icon: '🐋', title: 'אבחון תודעת הסוחר', desc: 'פרופיל Archetype אישי שמכייל את ה-AI Coach לפי הסוחר שאתה.', bullets: ['אבחון אישיות סוחר', 'פרופיל Archetype', 'כיול AI Coach', 'כיול-מחדש כל 45 יום'], image: traderMindImg },
   { key: 'radar', label: 'מכ״ם כלכלי', icon: '📡', title: 'מכ״ם אירועים כלכליים', desc: 'רדאר אירועים גלובלי עם חישוב Surprise בזמן אמת.', bullets: ['רדאר אירועים עולמי', 'Tier 1 / 2 / 3', 'עדכוני T-5 / T-1 / Live', 'חישוב Surprise אוטומטי'], image: radarImg },
 ];
@@ -426,7 +428,16 @@ const FeatureTabs: React.FC = () => {
           <ul className="orca-bullets">{tab.bullets.map(b => <li key={b}>{b}</li>)}</ul>
           <a href="#" style={{ color: 'var(--cyan)', fontSize: 14, fontWeight: 600 }}>עוד ←</a>
         </div>
-        <ScreenshotFrame src={tab.image} alt={tab.title} />
+        {tab.extraImage ? (
+          <ScreenshotFrame alt={tab.title}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', height: '100%', padding: 8, background: 'var(--bg-2)' }}>
+              <img src={tab.image} alt={tab.title} loading="lazy" style={{ width: '100%', flex: 1, objectFit: 'cover', borderRadius: 8, minHeight: 0 }} />
+              <img src={tab.extraImage} alt={tab.title} loading="lazy" style={{ width: '100%', flex: 1, objectFit: 'cover', borderRadius: 8, minHeight: 0 }} />
+            </div>
+          </ScreenshotFrame>
+        ) : (
+          <ScreenshotFrame src={tab.image} alt={tab.title} />
+        )}
       </motion.div>
     </>
   );
