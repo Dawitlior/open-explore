@@ -33,6 +33,7 @@ import { GlassCard } from './TradingUI';
 import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
 import { useVisibleTrades } from '@/lib/display-mode-format';
 import { RProxyBanner } from './RProxyBanner';
+import { useLang } from '@/hooks/use-lang';
 
 type DayRPoint = { i: number; day: string; total: number; cum: number; trades: Trade[] };
 
