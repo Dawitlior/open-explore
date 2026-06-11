@@ -585,22 +585,22 @@ const Landing: React.FC = () => {
               <img src={orcaLogo} alt="Orca Investment" style={{ height: 44, width: 'auto', display: 'block' }} />
             </Link>
 
-            {/* Right (desktop) — nav links + language toggle removed per request */}
-            <div className="hidden lg:flex items-center" style={{ gap: 14, marginInlineStart: 'auto' }}>
+            {/* Right (desktop ≥768) — only the CTA, no menu button on desktop */}
+            <div className="hidden md:flex items-center" style={{ gap: 14, marginInlineStart: 'auto' }}>
               <button className="grad-btn" onClick={goApp} style={{ padding: '10px 18px', fontSize: 14 }}>
                 {t('כניסה למערכת', 'Enter app')}
               </button>
             </div>
 
-            {/* Mobile toggle */}
-            <button className="lg:hidden" onClick={() => setMenuOpen(o => !o)} aria-label={t('תפריט', 'Menu')}
+            {/* Mobile-only toggle (<768px) */}
+            <button className="md:hidden" onClick={() => setMenuOpen(o => !o)} aria-label={t('תפריט', 'Menu')}
               style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: 10, width: 44, height: 44, display: 'grid', placeItems: 'center', color: 'var(--text)' }}>
               {menuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
 
           {menuOpen && (
-            <div className="orca-mobile-menu lg:hidden">
+            <div className="orca-mobile-menu md:hidden">
               <div style={{ padding: 16 }}>
                 <button className="grad-btn" onClick={() => { setMenuOpen(false); goApp(); }} style={{ width: '100%', justifyContent: 'center' }}>
                   {t('כניסה למערכת', 'Enter app')}
@@ -928,9 +928,6 @@ const Landing: React.FC = () => {
               <div className="orca-orbit"><div className="orca-orbit-dot" /></div>
               <div className="orca-orbit mid"><div className="orca-orbit-dot" /></div>
               <div className="orca-orbit inner"><div className="orca-orbit-dot" /></div>
-              <div className="center">
-                <img src={orcaLogo} alt="Orca" fetchPriority="high" />
-              </div>
               {[
                 { x: 8,  y: 18, n: 'AR' }, { x: 86, y: 14, n: 'DM' },
                 { x: 4,  y: 72, n: 'YS' }, { x: 90, y: 78, n: 'NL' },
@@ -1007,11 +1004,7 @@ const Landing: React.FC = () => {
             <div className="orca-footer-grid">
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                  <div className="orca-hex"><TrendingUp size={16} /></div>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                    <span style={{ fontWeight: 800, fontSize: 18 }}>Orca</span>
-                    <span style={{ fontWeight: 300, fontSize: 15, color: 'var(--text-muted)' }}>Investment</span>
-                  </div>
+                  <img src={orcaLogo} alt="Orca Investment" style={{ height: 44, width: 'auto', display: 'block' }} />
                 </div>
                 <p style={{ color: 'var(--text-muted)', fontSize: 14, lineHeight: 1.7, maxWidth: 320 }}>
                   יומן מסחר חכם ואוטומטי. כל טרייד, כל סטטיסטיקה, החלטה אחת טובה יותר.
