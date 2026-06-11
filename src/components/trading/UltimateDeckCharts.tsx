@@ -264,7 +264,7 @@ export function UltimateRiskDeck({ T, trades, privacyMode, onExplainClick, regis
   }, [trades]);
 
   return (
-    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 12, marginTop: 16 }}>
+    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))', gap: 16, marginTop: 16 }}>
       {/* 3 — Kelly */}
       {registryAllows('kellyOptimal') && (
         <TierGate required="ultimate" label={t('אופטימום קלי', 'Kelly Optimal')}>

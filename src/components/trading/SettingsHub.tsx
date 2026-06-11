@@ -24,6 +24,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import type { Trade } from '@/data/trades';
 import { AvatarUploader } from './AvatarUploader';
 import { FrogAvatar } from './FrogAvatar';
+import { resolveAvatarUrl } from '@/lib/avatar';
 import { ChevronLeft } from 'lucide-react';
 import { InstallGuide } from './InstallGuide';
 import { ResetModal } from './ResetModal';
@@ -122,6 +123,22 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
   const [showStudioConfirm, setShowStudioConfirm] = useState(false);
   const [unlockStep, setUnlockStep] = useState<0 | 1 | 2>(0);
   const [showWipeModal, setShowWipeModal] = useState(false);
+  const [sidebarAvatar, setSidebarAvatar] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    if (!auth.user?.id) { setSidebarAvatar(null); return; }
+    (async () => {
+      const { data } = await supabase.from('profiles').select('avatar_url').eq('id', auth.user!.id).maybeSingle();
+      const signed = await resolveAvatarUrl(data?.avatar_url);
+      if (!cancelled) setSidebarAvatar(signed);
+    })();
+    const onChange = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail && 'url' in detail) setSidebarAvatar(detail.url ?? null);
+    };
+    window.addEventListener('orca:avatar-changed', onChange);
+    return () => { cancelled = true; window.removeEventListener('orca:avatar-changed', onChange); };
+  }, [auth.user?.id]);
   useEffect(() => { if (ui.prefs.customAccent) setDraftAccent(ui.prefs.customAccent); }, [ui.prefs.customAccent]);
   useEffect(() => { if (ui.prefs.customTheme) setDraftTheme(ui.prefs.customTheme); }, [ui.prefs.customTheme]);
   // Light-mode aware token helpers — flip iOS native chrome between premium dark and Apple light gray.
@@ -304,7 +321,19 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
               border: `1px solid ${T.border.subtle}`,
               display: 'flex', alignItems: 'center', gap: 10, minWidth: 0,
             }}>
-              <FrogAvatar size={38} borderColor={isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.18)'} />
+              {sidebarAvatar ? (
+                <img
+                  src={sidebarAvatar}
+                  alt=""
+                  style={{
+                    width: 38, height: 38, borderRadius: '50%', objectFit: 'cover',
+                    border: `1px solid ${isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.18)'}`,
+                    flexShrink: 0,
+                  }}
+                />
+              ) : (
+                <FrogAvatar size={38} borderColor={isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.18)'} />
+              )}
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: T.text.primary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} dir="ltr">
                   {auth.user?.email ?? t('משתמש', 'User')}

@@ -33,6 +33,7 @@ import { GlassCard } from './TradingUI';
 import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
 import { useVisibleTrades } from '@/lib/display-mode-format';
 import { RProxyBanner } from './RProxyBanner';
+import { useLang } from '@/hooks/use-lang';
 
 type DayRPoint = { i: number; day: string; total: number; cum: number; trades: Trade[] };
 
@@ -50,6 +51,9 @@ const sessionOf = (h: number): 'Asia' | 'London' | 'NY' | 'Off' => {
 };
 
 const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) => {
+  const { lang } = useLang();
+  const isRTL = lang === 'he';
+  const t = (he: string, en: string) => (isRTL ? he : en);
   // 🔀 Dual-Currency Engine: filtered dataset + adaptive helpers
   const { visibleTrades: trades, isMoney, formatValue: fmtVal, formatAxis: fmtAxis, rEligibleCount, totalCount } = useVisibleTrades(_allTrades);
   const tt = {
@@ -219,20 +223,20 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
   const rModeBlocked = !isMoney && rEligibleCount === 0;
 
   return (
-    <div dir="rtl" style={{ marginTop: 20 }}>
-      {!isMoney && <RProxyBanner T={T} isRTL compact rEligibleCount={rEligibleCount} totalCount={totalCount} />}
+    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ marginTop: 20 }}>
+      {!isMoney && <RProxyBanner T={T} isRTL={isRTL} compact rEligibleCount={rEligibleCount} totalCount={totalCount} />}
       {rModeBlocked ? (
         <GlassCard T={T} style={{ padding: 24, textAlign: 'center', marginTop: 12 }}>
           <div style={{ fontSize: 13, color: T.text.primary, fontWeight: 700, marginBottom: 6 }}>
-            אין נתוני R זמינים — כל הוויג׳טים מוסתרים
+            {t('אין נתוני R זמינים — כל הוויג׳טים מוסתרים', 'No R data available — all widgets hidden')}
           </div>
           <div style={{ fontSize: 11, color: T.text.muted, lineHeight: 1.55 }}>
-            אף עסקה לא כוללת Stop Loss תקף. עבור למצב MONEY (כפתור $) כדי לראות את כל הוויג׳טים מבוססי P&L.
+            {t('אף עסקה לא כוללת Stop Loss תקף. עבור למצב MONEY (כפתור $) כדי לראות את כל הוויג׳טים מבוססי P&L.', 'No trade includes a valid Stop Loss. Switch to MONEY mode ($ button) to view all P&L-based widgets.')}
           </div>
         </GlassCard>
       ) : (
         <>
-      <div style={sectionStyle}>◆ QUANT LAB · מעבדת מחקר מתקדמת</div>
+      <div style={sectionStyle}>{t('◆ QUANT LAB · מעבדת מחקר מתקדמת', '◆ QUANT LAB · Advanced Research Lab')}</div>
 
       {/* Recovery factor + simple cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginBottom: 12 }}>
@@ -241,35 +245,35 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
           <div style={{ fontSize: 22, fontWeight: 800, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>
             {isFinite(recovery) ? recovery.toFixed(2) : '∞'}
           </div>
-          <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>רווח ברוטו / נסיגה מקס</div>
+          <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>{t('רווח ברוטו / נסיגה מקס', 'Gross profit / max drawdown')}</div>
         </GlassCard>
         <GlassCard T={T} style={{ padding: 12 }}>
           <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Best Session</div>
           <div style={{ fontSize: 22, fontWeight: 800, color: T.accent.green, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>
             {sessions.filter(s => s.n).sort((a, b) => (isMoney ? b.pnl - a.pnl : b.r - a.r))[0]?.session || '—'}
           </div>
-          <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>סשן הכי רווחי</div>
+          <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>{t('סשן הכי רווחי', 'Most profitable session')}</div>
         </GlassCard>
         <GlassCard T={T} style={{ padding: 12 }}>
           <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Trades / Day</div>
           <div style={{ fontSize: 22, fontWeight: 800, color: T.accent.blue, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>
             {dailyEq.length ? (trades.length / dailyEq.length).toFixed(1) : '0'}
           </div>
-          <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>תדירות יומית</div>
+          <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>{t('תדירות יומית', 'Daily frequency')}</div>
         </GlassCard>
         <GlassCard T={T} style={{ padding: 12 }}>
           <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Active Days</div>
           <div style={{ fontSize: 22, fontWeight: 800, color: T.accent.purple, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>
             {dailyEq.length}
           </div>
-          <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>ימי מסחר פעילים</div>
+          <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>{t('ימי מסחר פעילים', 'Active trading days')}</div>
         </GlassCard>
       </div>
 
       {/* Row: Cumulative R + Rolling Calmar */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 12, marginBottom: 12 }}>
         <GlassCard T={T}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{isMoney ? 'עקומת הון מצטבר ($)' : 'עקומת R מצטברת'}</div>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{isMoney ? t('עקומת הון מצטבר ($)', 'Cumulative Equity Curve ($)') : t('עקומת R מצטברת', 'Cumulative R Curve')}</div>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={cumR}>
               <defs>
@@ -289,7 +293,7 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
         </GlassCard>
 
         <GlassCard T={T}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>Calmar מתגלגל (חלון 20)</div>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('Calmar מתגלגל (חלון 20)', 'Rolling Calmar (window 20)')}</div>
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={rollingCalmar}>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
@@ -307,7 +311,7 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 12, marginBottom: 12 }}>
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
-            ניצחון ממוצע מול הפסד ממוצע
+            {t('ניצחון ממוצע מול הפסד ממוצע', 'Avg Win vs Avg Loss')}
           </div>
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={avgWL}>
@@ -324,7 +328,7 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
         </GlassCard>
 
         <GlassCard T={T}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>התפלגות אורך רצפים</div>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('התפלגות אורך רצפים', 'Streak Length Distribution')}</div>
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={streakDist}>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
@@ -341,7 +345,7 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
       {/* Row: Position size vs P&L + Sessions */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 12, marginBottom: 12 }}>
         <GlassCard T={T}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>גודל פוזיציה מול P&L</div>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('גודל פוזיציה מול P&L', 'Position Size vs P&L')}</div>
           <ResponsiveContainer width="100%" height={240}>
             <ScatterChart>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
@@ -360,7 +364,7 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
         </GlassCard>
 
         <GlassCard T={T}>
-          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>פיצול לפי סשן (אסיה / לונדון / ניו-יורק)</div>
+          <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('פיצול לפי סשן (אסיה / לונדון / ניו-יורק)', 'Session Split (Asia / London / NY)')}</div>
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={sessions}>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
@@ -378,7 +382,7 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
 
       {/* Row: Daily step equity (full-width) */}
       <GlassCard T={T} style={{ marginBottom: 12 }}>
-        <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>הון יומי מצטבר (מדרגות)</div>
+        <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('הון יומי מצטבר (מדרגות)', 'Daily Cumulative Equity (Steps)')}</div>
         <ResponsiveContainer width="100%" height={240}>
           <AreaChart data={dailyEq}>
             <defs>
