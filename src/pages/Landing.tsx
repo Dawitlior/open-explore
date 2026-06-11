@@ -584,7 +584,7 @@ const Landing: React.FC = () => {
           {menuOpen && (
             <div className="orca-mobile-menu lg:hidden">
               <button
-                onClick={() => { setLang(isRTL ? 'en' : 'he'); setMenuOpen(false); }}
+                onClick={() => { setMenuOpen(false); switchLanguageWithLoader(isRTL ? 'en' : 'he'); }}
                 style={{
                   width: '100%', textAlign: 'center', padding: '14px 20px',
                   background: 'transparent', border: 'none', borderBottom: '1px solid var(--border)',
