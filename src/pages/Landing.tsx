@@ -521,25 +521,37 @@ const Landing: React.FC = () => {
               <img src={orcaLogo} alt="Orca Investment" style={{ height: 44, width: 'auto', display: 'block' }} />
             </Link>
 
-            {/* Center nav (desktop) */}
-            <div className="hidden lg:flex items-center" style={{ gap: 28 }}>
-              {navLinks.map(l => (
-                <a key={l.href} href={l.href} className="nav-link">{l.label}</a>
-              ))}
-            </div>
-
-            {/* Right (desktop) */}
-            <div className="hidden lg:flex items-center" style={{ gap: 14 }}>
-              <button className="mono" style={{ fontSize: 11, color: 'var(--text-muted)', background: 'transparent', border: '1px solid var(--border)', padding: '6px 10px', borderRadius: 8 }}>
-                עב / EN
+            {/* Right (desktop) — nav links removed per request */}
+            <div className="hidden lg:flex items-center" style={{ gap: 14, marginInlineStart: 'auto' }}>
+              <button
+                onClick={() => setLang(isRTL ? 'en' : 'he')}
+                className="mono"
+                aria-label={t('Switch to English', 'עבור לעברית')}
+                style={{
+                  fontSize: 11,
+                  color: '#0A0D14',
+                  background: 'linear-gradient(135deg, #22D3EE, #34D399)',
+                  border: '1px solid rgba(34,211,238,0.55)',
+                  padding: '7px 14px',
+                  borderRadius: 999,
+                  fontWeight: 800,
+                  letterSpacing: '0.12em',
+                  cursor: 'pointer',
+                  boxShadow: '0 0 18px rgba(34,211,238,0.35)',
+                  transition: 'transform .15s ease, filter .15s ease',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.1)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                onMouseLeave={e => { e.currentTarget.style.filter = 'none'; e.currentTarget.style.transform = 'none'; }}
+              >
+                {isRTL ? '🌐 EN' : '🌐 עב'}
               </button>
               <button className="grad-btn" onClick={goApp} style={{ padding: '10px 18px', fontSize: 14 }}>
-                כניסה למערכת
+                {t('כניסה למערכת', 'Enter app')}
               </button>
             </div>
 
             {/* Mobile toggle */}
-            <button className="lg:hidden" onClick={() => setMenuOpen(o => !o)} aria-label="תפריט"
+            <button className="lg:hidden" onClick={() => setMenuOpen(o => !o)} aria-label={t('תפריט', 'Menu')}
               style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: 10, width: 44, height: 44, display: 'grid', placeItems: 'center', color: 'var(--text)' }}>
               {menuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
@@ -547,12 +559,19 @@ const Landing: React.FC = () => {
 
           {menuOpen && (
             <div className="orca-mobile-menu lg:hidden">
-              {navLinks.map(l => (
-                <a key={l.href} href={l.href} onClick={() => setMenuOpen(false)}>{l.label}</a>
-              ))}
+              <button
+                onClick={() => { setLang(isRTL ? 'en' : 'he'); setMenuOpen(false); }}
+                style={{
+                  width: '100%', textAlign: 'center', padding: '14px 20px',
+                  background: 'transparent', border: 'none', borderBottom: '1px solid var(--border)',
+                  color: 'var(--cyan)', fontWeight: 700, letterSpacing: '0.12em', cursor: 'pointer',
+                }}
+              >
+                {isRTL ? '🌐 Switch to English' : '🌐 עבור לעברית'}
+              </button>
               <div style={{ padding: 16 }}>
                 <button className="grad-btn" onClick={() => { setMenuOpen(false); goApp(); }} style={{ width: '100%', justifyContent: 'center' }}>
-                  כניסה למערכת
+                  {t('כניסה למערכת', 'Enter app')}
                 </button>
               </div>
             </div>
