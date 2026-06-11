@@ -708,29 +708,41 @@ function SelectField({ value, options, placeholder, onChange, input, fg, optionB
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function Chip({ children, active, onClick, T, activeBg }: { children: React.ReactNode; active: boolean; onClick: () => void; T: any; activeBg?: string }) {
-  const fg = T?.text?.primary || '#e9eef7';
-  const muted = T?.text?.muted || '#7a8aa3';
-  const border = T?.border?.subtle || 'rgba(255,255,255,0.08)';
-  const bgColor = activeBg || T?.accent?.cyan || '#39FF14';
+  const isLight = (T as { id?: string })?.id === 'platinum';
+  const fg = T?.text?.primary || (isLight ? '#0a0e1a' : '#e9eef7');
+  const muted = T?.text?.muted || (isLight ? '#4b5566' : '#7a8aa3');
+  const border = T?.border?.subtle || (isLight ? 'rgba(0,0,0,0.18)' : 'rgba(255,255,255,0.08)');
+  // Light mode: use a deep blue for active so it's clearly distinguishable from
+  // the bright green default; dark mode keeps the cyan/green accent.
+  const bgColor = activeBg || (isLight ? '#1d4ed8' : (T?.accent?.cyan || '#39FF14'));
+  const idleBg = isLight ? '#ffffff' : 'transparent';
+  const idleColor = isLight ? '#1a2230' : muted;
+  const activeBackground = isLight ? bgColor : `${bgColor}1c`;
+  const activeColor = isLight ? '#ffffff' : bgColor;
   return (
     <button type="button" onClick={onClick} style={{
       all: 'unset', cursor: 'pointer', padding: '8px 14px', minHeight: 36, boxSizing: 'border-box',
-      background: active ? `${bgColor}1c` : 'transparent',
+      background: active ? activeBackground : idleBg,
       border: `1px solid ${active ? bgColor : border}`,
-      color: active ? bgColor : muted,
+      color: active ? activeColor : idleColor,
       borderRadius: 999, fontSize: 12, fontWeight: 600,
       transition: 'all 180ms ease',
+      boxShadow: active && isLight ? `0 1px 3px ${bgColor}55` : 'none',
     }}>{children}</button>
   );
 }
 function ratingBtn(active: boolean, accent: string, fg: string, muted: string, border: string): React.CSSProperties {
+  // `accent` is already theme-resolved by the caller (deep blue in light mode).
+  const looksLight = accent === '#1d4ed8';
   return {
     width: 48, height: 48, borderRadius: 12,
-    background: active ? `${accent}14` : 'rgba(255,255,255,0.03)',
+    background: active ? (looksLight ? accent : `${accent}14`) : (looksLight ? '#ffffff' : 'rgba(255,255,255,0.03)'),
     border: `1.5px solid ${active ? accent : border}`,
-    color: active ? accent : muted, fontWeight: 800, fontSize: 16,
+    color: active ? (looksLight ? '#ffffff' : accent) : (looksLight ? '#1a2230' : muted),
+    fontWeight: 800, fontSize: 16,
     fontFamily: "'IBM Plex Mono', monospace", cursor: 'pointer',
     display: 'grid', placeItems: 'center', transition: 'all 180ms ease',
+    boxShadow: active && looksLight ? `0 1px 3px ${accent}55` : 'none',
   };
 }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
