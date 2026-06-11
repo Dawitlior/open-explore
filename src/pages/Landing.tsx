@@ -928,9 +928,6 @@ const Landing: React.FC = () => {
               <div className="orca-orbit"><div className="orca-orbit-dot" /></div>
               <div className="orca-orbit mid"><div className="orca-orbit-dot" /></div>
               <div className="orca-orbit inner"><div className="orca-orbit-dot" /></div>
-              <div className="center">
-                <img src={orcaLogo} alt="Orca" fetchPriority="high" />
-              </div>
               {[
                 { x: 8,  y: 18, n: 'AR' }, { x: 86, y: 14, n: 'DM' },
                 { x: 4,  y: 72, n: 'YS' }, { x: 90, y: 78, n: 'NL' },
