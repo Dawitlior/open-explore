@@ -290,7 +290,7 @@ export const OrcaUXLayer = () => {
         style={{ padding: 0 }}
       >
         ⌘K
-      </div>
+      </button>
 
       {/* 10. Help overlay */}
       <AnimatePresence>
