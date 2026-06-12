@@ -77,7 +77,7 @@ const LIMITS = { daily: -2, weekly: -5, monthly: -10 };
 // ── i18n bundles ──
 const HE = {
   pageTitle: 'יומן מסחר — שבועי', lock: 'נעל יומן',
-  notFriday: 'היום אינו שישי',
+  notFriday: 'יומן השבוע נעול עד שישי/שבת',
   prep: 'הכנה', prepCue: 'לחץ: — → ✅ בוצע → ❌ לא בוצע',
   trades: 'עסקאות השבוע', addTrade: '+ הוסף עסקה',
   rr: 'R:R', winR: 'WIN R', avgR: 'AVG R', winRate: 'WIN RATE', tradesK: 'עסקאות', netR: 'NET R',
@@ -102,12 +102,12 @@ const HE = {
   decision: 'איכות החלטות',
   finalGrade: 'ציון סופי',
   insights: 'תובנות מערכת', noInsights: 'אין מספיק נתונים לתובנות — המשך לתעד',
-  closeWeek: 'סגור שבוע (שישי בלבד)', closed: 'נסגר', saved: '✅ נשמר',
+  closeWeek: 'סגור שבוע (שישי / שבת)', closed: 'נסגר', saved: '✅ נשמר',
   empty: '—',
 };
 const EN = {
   pageTitle: 'Trading Journal — Weekly', lock: 'Lock journal',
-  notFriday: 'Today is not Friday',
+  notFriday: 'Locked until Friday / Saturday',
   prep: 'Prep checklist', prepCue: 'Tap to cycle: — → ✅ done → ❌ missed',
   trades: 'Week trades', addTrade: '+ Add trade',
   rr: 'R:R', winR: 'WIN R', avgR: 'AVG R', winRate: 'WIN RATE', tradesK: 'TRADES', netR: 'NET R',
@@ -132,7 +132,7 @@ const EN = {
   decision: 'Decision quality',
   finalGrade: 'Final grade',
   insights: 'System insights', noInsights: 'Not enough data for insights — keep journaling',
-  closeWeek: 'Close week (Friday only)', closed: 'Closed', saved: '✅ Saved',
+  closeWeek: 'Close week (Fri / Sat)', closed: 'Closed', saved: '✅ Saved',
   empty: '—',
 };
 
@@ -160,7 +160,7 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
     () => state.archive.some(w => w.weekKey === wk.weekKey),
     [state.archive, wk.weekKey],
   );
-  const friday = isFriday();
+  const friday = isCloseWeekAllowed();
 
   // Derived: aggregates
   const tradesArr = wk.trades;
