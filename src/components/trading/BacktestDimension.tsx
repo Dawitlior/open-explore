@@ -64,7 +64,9 @@ const BT_STR = {
     fldChartE: 'צילום כניסה', fldChartX: 'צילום יציאה', fldNotes: 'הערות',
     // Table cols
     colDir: 'כיוון', colTime: 'זמן', colDur: 'משך',
+    strategy: 'אסטרטגיה', allStrategies: 'כל האסטרטגיות', strategyPh: 'שם אסטרטגיה',
   },
+
   en: {
     appName: 'Backtest Journal', enter: 'Enter System', skip: 'Skip', back: 'Back to OrcaInvestment',
     locked: 'System Locked', unlock: 'Unlock', loading: 'Loading...',
@@ -101,7 +103,9 @@ const BT_STR = {
     fldEntryDT: 'Entry time', fldExitDT: 'Exit time',
     fldChartE: 'Entry chart', fldChartX: 'Exit chart', fldNotes: 'Notes',
     colDir: 'Dir', colTime: 'Time', colDur: 'Duration',
+    strategy: 'Strategy', allStrategies: 'All strategies', strategyPh: 'Strategy name',
   },
+
 } as const;
 
 const BL="#2563eb",BL2="#3b82f6",G="#0ecb81",RD="#f6465d",CY="#06b6d4",PU="#a855f7";
