@@ -649,6 +649,27 @@ function BacktestApp({ onReturn }: { onReturn: () => void }) {
       </div>
     </header>
 
+    {/* Strategy Switcher — each strategy is a fully isolated workbook */}
+    <div style={{display:"flex",alignItems:"center",gap:6,padding:"8px clamp(12px,3vw,20px)",background:BG2,borderBottom:`1px solid ${BRD}`,overflowX:"auto",flexWrap:"nowrap"}}>
+      <span style={{fontSize:10,fontWeight:700,color:T3,letterSpacing:.5,whiteSpace:"nowrap",textTransform:"uppercase"}}>📐 {L==='he'?'אסטרטגיה':'Strategy'}</span>
+      <div style={{display:"flex",gap:4,flexWrap:"nowrap"}}>
+        {state.strategies.map(st=>{
+          const isActive=st.id===state.activeId;
+          return <button key={st.id} onClick={()=>switchStrategy(st.id)} title={`${st.trades.length} ${L==='he'?'עסקאות':'trades'}`} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"5px 12px",borderRadius:7,border:`1px solid ${isActive?BL:BRD}`,background:isActive?`${BL}18`:"transparent",color:isActive?BL:T2,fontSize:11,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",fontFamily:"inherit",transition:"all .15s"}}>
+            <span>{st.name}</span>
+            <span style={{fontSize:9,fontWeight:600,color:isActive?BL:T3,opacity:.7}}>{st.trades.length}</span>
+          </button>;
+        })}
+      </div>
+      <button onClick={addStrategy} title={L==='he'?'אסטרטגיה חדשה':'New strategy'} style={{padding:"5px 10px",borderRadius:7,border:`1px dashed ${BRDH}`,background:"transparent",color:G,fontSize:11,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",fontFamily:"inherit"}}>+ {L==='he'?'חדש':'New'}</button>
+      <div style={{flex:1,minWidth:0}}/>
+      <button onClick={renameStrategy} title={L==='he'?'שינוי שם':'Rename'} style={{padding:"5px 10px",borderRadius:7,border:`1px solid ${BRD}`,background:"transparent",color:T3,fontSize:11,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>✎</button>
+      <button onClick={()=>setConfirmDelStrat(true)} title={L==='he'?'מחיקת אסטרטגיה':'Delete strategy'} style={{padding:"5px 10px",borderRadius:7,border:`1px solid ${BRD}`,background:"transparent",color:RD,fontSize:11,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>🗑</button>
+    </div>
+
+    {confirmDelStrat&&<div style={{position:"fixed",inset:0,zIndex:8500,background:"rgba(0,0,0,.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setConfirmDelStrat(false)}><div className="pop" onClick={(e:any)=>e.stopPropagation()} style={{background:BG3,borderRadius:12,padding:24,textAlign:"center",border:`1px solid ${BRD}`,maxWidth:340}}><div style={{fontSize:14,fontWeight:700,color:T1,marginBottom:6}}>{L==='he'?'למחוק אסטרטגיה?':'Delete strategy?'}</div><div style={{fontSize:11,color:T3,marginBottom:14}}>{state.strategies.length<=1?(L==='he'?'זו האסטרטגיה האחרונה — כל העסקאות יימחקו':'Last strategy — all trades will be cleared'):(L==='he'?`כל ${trades.length} העסקאות של "${activeStrat?.name}" יימחקו`:`All ${trades.length} trades in "${activeStrat?.name}" will be removed`)}</div><div style={{display:"flex",gap:8,justifyContent:"center"}}><button onClick={deleteStrategy} style={{background:RD,border:"none",borderRadius:8,padding:"8px 24px",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}}>{S.del}</button><button onClick={()=>setConfirmDelStrat(false)} style={{background:"none",border:`1px solid ${BRD}`,borderRadius:8,padding:"8px 20px",color:T2,fontSize:12,cursor:"pointer"}}>{S.cancel}</button></div></div></div>}
+
+
     {!has&&tab==="trades"&&<div className="fi" style={{padding:"clamp(20px,4vw,40px) 16px",maxWidth:580,margin:"0 auto"}}>{showTut?<Tutorial L={L} onClose={()=>setShowTut(false)} onStart={()=>{setShowTut(false);setShowForm(true);}}/>:<div style={{textAlign:"center",padding:"clamp(20px,6vw,40px) 0"}}><div style={{width:56,height:56,borderRadius:14,background:`${BL}12`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px"}}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={BL} strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg></div><div style={{fontSize:"clamp(18px,4vw,22px)",fontWeight:700,color:T1,marginBottom:20}}>{S.ready}</div><button onClick={()=>setShowForm(true)} style={{background:BL,border:"none",borderRadius:10,padding:"12px 32px",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"}}>{S.firstTradeBtn}</button><div style={{marginTop:12}}><button onClick={()=>setShowTut(true)} style={{background:"none",border:"none",color:BL2,fontSize:11,cursor:"pointer",textDecoration:"underline"}}>{S.demoLink}</button><span style={{color:T4,margin:"0 8px"}}>·</span><button onClick={imp} style={{background:"none",border:"none",color:T3,fontSize:11,cursor:"pointer",textDecoration:"underline"}}>{S.import}</button></div></div>}</div>}
 
     {has&&<><nav style={{display:"flex",background:BG2,borderBottom:`1px solid ${BRD}`,padding:"0 clamp(8px,2vw,16px)",overflowX:"auto"}}>{[["chart",S.tabs.chart],["trades",S.tabs.trades],["analytics",S.tabs.analytics],["macro",S.tabs.macro],["equity",S.tabs.equity]].map(([k,l])=><button key={k} onClick={()=>setTab(k)} style={{padding:"10px 16px",border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600,background:"transparent",whiteSpace:"nowrap",color:tab===k?BL:T3,borderBottom:tab===k?`2px solid ${BL}`:"2px solid transparent",transition:"all .15s"}}>{l}</button>)}</nav>
