@@ -634,13 +634,6 @@ const Landing: React.FC = () => {
                   </Link>
                 </div>
 
-                {/* Live ticker */}
-                <div className="orca-ticker">
-                  <span>BTC/USD <span className="pos">+1.21%</span></span>
-                  <span>ETH/USD <span className="pos">+4.30%</span></span>
-                  <span>SOL/USD <span className="neg">-2.85%</span></span>
-                  <span>BNB/USD <span className="neg">-0.41%</span></span>
-                </div>
               </motion.div>
 
               {/* Mockup */}
