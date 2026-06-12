@@ -433,7 +433,7 @@ function BacktestEntryScreen({ onEnter, onSkip, L }: { onEnter: () => void; onSk
           BACKTEST JOURNAL
         </div>
         <div style={{ fontSize: 'clamp(24px,7vw,48px)', fontWeight: 900, color: BL, letterSpacing: -2, textShadow: `0 0 60px ${CY}44, 0 0 30px ${BL}33`, opacity: phase === 'ready' ? 1 : 0, transition: 'opacity 0.5s 0.4s' }}>
-          יומן באק-טסט
+          {BT_STR[L].appName}
         </div>
         <div style={{ fontSize: 'clamp(11px,2.5vw,14px)', color: T2, marginTop: 8, letterSpacing: 3, opacity: phase === 'ready' ? 1 : 0, transition: 'opacity 0.5s 0.6s' }}>
           OrcaInvestment
