@@ -597,7 +597,7 @@ function BacktestApp({ onReturn }: { onReturn: () => void }) {
   if(loading)return <div className="ox" style={{minHeight:"100dvh",background:BG,display:"flex",alignItems:"center",justifyContent:"center",color:BL}}>{S.loading}</div>;
 
   const has=trades.length>0;
-  const cols=[{k:"coin",l:S.coin,w:"8%"},{k:"strategy",l:S.strategy,w:"10%"},{k:"dir",l:S.colDir,w:"6%"},{k:"entry",l:S.entry,w:"9%"},{k:"sl",l:S.sl,w:"9%"},{k:"exit",l:S.exit,w:"9%"},{k:"r",l:"R",w:"7%"},{k:"entryDT",l:S.colTime,w:"13%"},{k:"dur",l:S.colDur,w:"9%"},{k:"mfeR",l:"MFE",w:"6%"},{k:"maeR",l:"MAE",w:"6%"}];
+  const cols=[{k:"coin",l:S.coin,w:"9%"},{k:"dir",l:S.colDir,w:"6%"},{k:"entry",l:S.entry,w:"10%"},{k:"sl",l:S.sl,w:"10%"},{k:"exit",l:S.exit,w:"10%"},{k:"r",l:"R",w:"7%"},{k:"entryDT",l:S.colTime,w:"14%"},{k:"dur",l:S.colDur,w:"9%"},{k:"mfeR",l:"MFE",w:"6%"},{k:"maeR",l:"MAE",w:"6%"}];
 
   return <div className="ox" style={{
     minHeight:"100dvh",background:BG,color:T1,direction:isRTL?"rtl":"ltr",fontSize:13,
