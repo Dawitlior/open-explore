@@ -276,17 +276,8 @@ export const OrcaUXLayer = () => {
         )}
       </AnimatePresence>
 
-      {/* 11. ⌘K hint — compact circular button */}
-      <button
-        type="button"
-        aria-label="Open command palette (⌘K)"
-        title="⌘K — Command palette"
-        onClick={() => window.dispatchEvent(new CustomEvent('orca:open-command-palette'))}
-        className="hidden md:flex fixed bottom-5 left-5 z-[9993] w-8 h-8 rounded-full orca-glass orca-glass-hover items-center justify-center text-[10px] font-mono font-bold text-muted-foreground/80 hover:text-foreground transition-colors"
-        style={{ padding: 0 }}
-      >
-        ⌘K
-      </button>
+      {/* 11. ⌘K hint — REMOVED. Header "Quick Actions" button next to Add Trade is the single trigger. */}
+
 
       {/* 10. Help overlay */}
       <AnimatePresence>
