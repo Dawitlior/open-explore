@@ -10,7 +10,7 @@ import { themeBgs } from '../lib/theme-bg';
 // All form state is persisted per-week into Cloud (`weekly_review.draft.*`)
 // so the user can resume on any device. Close-week snapshots into archive.
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { Trade } from '@/data/trades';
 import type { useWeeklyReviewState } from '../hooks/use-weekly-review-state';
 import { useWeekAggregates } from '../hooks/use-week-aggregates';
