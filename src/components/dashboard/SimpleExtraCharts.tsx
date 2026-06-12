@@ -24,6 +24,22 @@ interface BaseProps {
 
 const MONTH_KEY = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 const QUARTER_KEY = (d: Date) => `${d.getFullYear()}-Q${Math.floor(d.getMonth() / 3) + 1}`;
+const SHORT_MONTH = (k: string) => {
+  const [y, m] = k.split('-');
+  const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${names[Number(m) - 1] || m} ${y.slice(2)}`;
+};
+const useIsMobile = () => {
+  const [m, setM] = (require('react') as typeof import('react')).useState(
+    typeof window !== 'undefined' && window.innerWidth < 640,
+  );
+  (require('react') as typeof import('react')).useEffect(() => {
+    const on = () => setM(window.innerWidth < 640);
+    window.addEventListener('resize', on);
+    return () => window.removeEventListener('resize', on);
+  }, []);
+  return m;
+};
 
 const tradeDate = (t: Trade): Date | null => {
   const raw = (t as any).exitTime || (t as any).date || (t as any).timestamp;
