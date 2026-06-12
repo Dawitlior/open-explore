@@ -8,7 +8,7 @@
  * relevant (chart #3). Charts #1/#2 count wins which is mode-agnostic but the
  * unit chip on ChartWrapper reflects the active mode.
  */
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
@@ -30,10 +30,8 @@ const SHORT_MONTH = (k: string) => {
   return `${names[Number(m) - 1] || m} ${y.slice(2)}`;
 };
 const useIsMobile = () => {
-  const [m, setM] = (require('react') as typeof import('react')).useState(
-    typeof window !== 'undefined' && window.innerWidth < 640,
-  );
-  (require('react') as typeof import('react')).useEffect(() => {
+  const [m, setM] = useState(typeof window !== 'undefined' && window.innerWidth < 640);
+  useEffect(() => {
     const on = () => setM(window.innerWidth < 640);
     window.addEventListener('resize', on);
     return () => window.removeEventListener('resize', on);
