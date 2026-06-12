@@ -252,7 +252,7 @@ function Tutorial({onClose,onStart,L}:{onClose:()=>void;onStart:()=>void;L:BTLan
 // PREMIUM FORM
 // ═══════════════════════════════════════════
 const makeSections=(L:BTLang)=>{const S=BT_STR[L];return [
-  {title:S.secTrade,icon:"◆",fields:[{k:"coin",l:S.coin,ph:"BTC"},{k:"strategy",l:S.strategy,ph:S.strategyPh},{k:"entry",l:S.fldEntryPrice,ph:"64250",num:true},{k:"sl",l:S.fldSl,ph:"63800",num:true},{k:"exit",l:S.fldExitPrice,ph:"65700",num:true}]},
+  {title:S.secTrade,icon:"◆",fields:[{k:"coin",l:S.coin,ph:"BTC"},{k:"entry",l:S.fldEntryPrice,ph:"64250",num:true},{k:"sl",l:S.fldSl,ph:"63800",num:true},{k:"exit",l:S.fldExitPrice,ph:"65700",num:true}]},
   {title:S.secDates,icon:"◷",fields:[{k:"entryDT",l:S.fldEntryDT,ph:"15/03/2025 09:30"},{k:"exitDT",l:S.fldExitDT,ph:"15/03/2025 16:45"}]},
   {title:S.secMfeMae,icon:"◈",desc:S.optional,fields:[{k:"mfeP",l:"MFE",ph:"66100",num:true},{k:"maeP",l:"MAE",ph:"63900",num:true}]},
   {title:S.secMedia,icon:"◫",fields:[{k:"chartE",l:S.fldChartE,ph:"https://..."},{k:"chartX",l:S.fldChartX,ph:"https://..."},{k:"notes",l:S.fldNotes,ph:"",full:true}]},
