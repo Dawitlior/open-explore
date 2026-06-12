@@ -206,7 +206,7 @@ export default function WeeklyReviewBanner({ T, isRTL, trades }: Props) {
                 ? 'אין עסקאות סגורות השבוע עדיין — כל עסקה חדשה תופיע כאן אוטומטית'
                 : 'No closed trades this week yet — every new trade will show here automatically')}
         </span>
-        {!isFri && (
+        {!inCloseWindow && (
           <span
             style={{
               marginInlineStart: 'auto',
