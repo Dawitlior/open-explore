@@ -20,7 +20,39 @@ const emptyRow=()=>({id:uid(),coin:"",strategy:"",entryDT:"",exitDT:"",entry:"",
 const recalc=(t:any)=>{const e=parseFloat(t.entry),sl=parseFloat(t.sl),ex=parseFloat(t.exit),mfe=parseFloat(t.mfeP),mae=parseFloat(t.maeP);t.dir=autoDir(e,sl);t.r=(e&&sl&&ex)?calcR(e,sl,ex):null;t.mfeR=(e&&sl&&mfe)?calcR(e,sl,mfe):null;t.maeR=(e&&sl&&mae)?calcR(e,sl,mae):null;const d=durCalc(t.entryDT,t.exitDT);t.dur=d?d.t:"";return t;};
 import { scopedStorage } from '@/lib/scoped-storage';
 import { useLang } from '@/hooks/use-lang';
-const SK="orca-bt-v13";const loadS=async()=>{try{const r=await scopedStorage.getItem(SK);return r?JSON.parse(r):[];}catch{return[];}};const persist=async (t:any)=>{try{await scopedStorage.setItem(SK,JSON.stringify(t));}catch{}};
+// ─── Multi-strategy storage ───
+// Each strategy is a fully isolated workbook with its own trades, analytics & equity.
+// v14 schema: {strategies:[{id,name,trades:[]}], activeId}. v13 (flat array) migrates
+// into a single "Default" strategy automatically on first load.
+type BTStrategy = { id: string; name: string; trades: any[] };
+type BTState = { strategies: BTStrategy[]; activeId: string };
+const SK = "orca-bt-v14";
+const SK_OLD = "orca-bt-v13";
+const makeDefaultState = (seedTrades: any[] = []): BTState => {
+  const id = uid();
+  return { strategies: [{ id, name: 'Default', trades: seedTrades }], activeId: id };
+};
+const loadState = async (): Promise<BTState> => {
+  try {
+    const r = await scopedStorage.getItem(SK);
+    if (r) {
+      const parsed = JSON.parse(r);
+      if (parsed && Array.isArray(parsed.strategies) && parsed.strategies.length) {
+        if (!parsed.strategies.find((s: BTStrategy) => s.id === parsed.activeId)) {
+          parsed.activeId = parsed.strategies[0].id;
+        }
+        return parsed as BTState;
+      }
+    }
+    // Migrate v13 flat array → single "Default" strategy.
+    const old = await scopedStorage.getItem(SK_OLD);
+    const arr = old ? JSON.parse(old) : [];
+    return makeDefaultState(Array.isArray(arr) ? arr : []);
+  } catch {
+    return makeDefaultState();
+  }
+};
+const persistState = async (s: BTState) => { try { await scopedStorage.setItem(SK, JSON.stringify(s)); } catch {} };
 
 // ─── Bilingual labels ───
 type BTLang = 'he' | 'en';
