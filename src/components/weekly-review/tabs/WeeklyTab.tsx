@@ -153,7 +153,7 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
   const warn = T?.status?.warning || (isLight ? '#b86e00' : '#ffb830');
 
   const wk = useWeekAggregates(trades);
-  const { draft, update, reset: resetDraft } = useWeekDraft(wk.weekKey);
+  const { draft, update, hardReset } = useWeekDraft(wk.weekKey);
   const { isUSD } = useReviewUnit();
   const risk = useRiskPrefs();
   const alreadyClosed = useMemo(
@@ -233,7 +233,15 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
     };
     await state.saveArchive([...state.archive, record]);
     // After closing the week, wipe ALL inputs so the new week starts clean.
-    await resetDraft();
+    await hardReset();
+  }
+
+  async function resetAllInputs() {
+    const msg = isRTL
+      ? 'לאפס את כל האינפוטים של הסקירה השבועית? פעולה זו לא תשפיע על שבועות שכבר נסגרו בארכיון.'
+      : 'Reset every input in this Weekly Review? Already-archived weeks are not affected.';
+    if (!window.confirm(msg)) return;
+    await hardReset();
   }
 
 
@@ -629,6 +637,18 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
             letterSpacing: 1.5, textTransform: 'uppercase', cursor: 'pointer',
           }}>
           🔒 {isRTL ? 'נעל שבוע' : 'Lock week'}
+        </button>
+        <button
+          onClick={resetAllInputs}
+          title={isRTL ? 'איפוס כל האינפוטים' : 'Reset all inputs'}
+          style={{
+            minHeight: 56, padding: '14px 22px',
+            background: 'transparent', color: loss,
+            border: `1.5px solid ${loss}88`, borderRadius: 12,
+            fontFamily: 'inherit', fontWeight: 800, fontSize: 12,
+            letterSpacing: 1.5, textTransform: 'uppercase', cursor: 'pointer',
+          }}>
+          🧹 {isRTL ? 'אפס אינפוטים' : 'Reset inputs'}
         </button>
       </div>
     </div>
