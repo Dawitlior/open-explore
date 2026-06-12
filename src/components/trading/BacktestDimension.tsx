@@ -519,34 +519,72 @@ function BacktestApp({ onReturn }: { onReturn: () => void }) {
   const { isRTL } = useLang();
   const L: BTLang = isRTL ? 'he' : 'en';
   const S = BT_STR[L];
-  const[trades,setTrades]=useState<any[]>([]);const[loading,setLoading]=useState(true);const[tab,setTab]=useState("trades");const[showForm,setShowForm]=useState(false);const[editModal,setEditModal]=useState<any>(null);const[macDir,setMacDir]=useState("all");const[macDim,setMacDim]=useState("wd");const[search,setSearch]=useState("");const[filterDir,setFilterDir]=useState("all");const[filterCoin,setFilterCoin]=useState("all");const[filterStrategy,setFilterStrategy]=useState("all");const[sortBy,setSortBy]=useState("date_d");const[qa,setQa]=useState({coin:"",strategy:"",entry:"",sl:"",exit:""});const[lastX,setLastX]=useState(0);const[showFilters,setShowFilters]=useState(false);const[confirmDel,setConfirmDel]=useState<string|null>(null);const[showTut,setShowTut]=useState(true);const[locked,setLocked]=useState(false);
+  // Multi-strategy state: each strategy is its own isolated workbook.
+  const[state,setState]=useState<BTState>(()=>makeDefaultState());
+  const[loading,setLoading]=useState(true);
+  const[tab,setTab]=useState("trades");const[showForm,setShowForm]=useState(false);const[editModal,setEditModal]=useState<any>(null);const[macDir,setMacDir]=useState("all");const[macDim,setMacDim]=useState("wd");const[search,setSearch]=useState("");const[filterDir,setFilterDir]=useState("all");const[filterCoin,setFilterCoin]=useState("all");const[sortBy,setSortBy]=useState("date_d");const[qa,setQa]=useState({coin:"",entry:"",sl:"",exit:""});const[lastX,setLastX]=useState(0);const[showFilters,setShowFilters]=useState(false);const[confirmDel,setConfirmDel]=useState<string|null>(null);const[showTut,setShowTut]=useState(true);const[locked,setLocked]=useState(false);
   const[exitingToOrca,setExitingToOrca]=useState(false);
+  const[renamingStrat,setRenamingStrat]=useState(false);
+  const[confirmDelStrat,setConfirmDelStrat]=useState(false);
 
-  useEffect(()=>{css();loadS().then((t:any)=>{setTrades(t);setLoading(false);});},[]);
-  const save=useCallback(async (n:any)=>{setTrades(n);await persist(n);},[]);
-  const commitDraft=useCallback((d:DraftBacktestTrade)=>{
-    // Reuse the existing engine path — `recalc` derives dir/r/mfeR/maeR/dur.
-    const row=recalc({...emptyRow(),coin:d.coin,entryDT:d.entryDT,exitDT:d.exitDT,entry:d.entry,sl:d.sl,exit:d.exit,mfeP:d.mfeP,maeP:d.maeP,notes:d.notes,chartE:d.chartE,chartX:d.chartX});
-    setTrades(prev=>{const next=[...prev,row];persist(next);return next;});
-    setShowTut(false);
+  useEffect(()=>{css();loadState().then((s)=>{setState(s);setLoading(false);});},[]);
+
+  const activeStrat = useMemo(()=>state.strategies.find(s=>s.id===state.activeId)||state.strategies[0],[state]);
+  const trades = activeStrat?.trades||[];
+
+  const updateState=useCallback((updater:(s:BTState)=>BTState)=>{
+    setState(prev=>{const next=updater(prev);persistState(next);return next;});
   },[]);
+  const save=useCallback(async (n:any[])=>{
+    updateState(s=>({...s,strategies:s.strategies.map(st=>st.id===s.activeId?{...st,trades:n}:st)}));
+  },[updateState]);
+
+  // Strategy CRUD
+  const addStrategy=()=>{
+    const name=prompt(L==='he'?'שם האסטרטגיה החדשה':'New strategy name','');
+    if(!name||!name.trim())return;
+    const id=uid();
+    updateState(s=>({strategies:[...s.strategies,{id,name:name.trim(),trades:[]}],activeId:id}));
+    setShowTut(true);
+  };
+  const switchStrategy=(id:string)=>updateState(s=>({...s,activeId:id}));
+  const renameStrategy=()=>{
+    const name=prompt(L==='he'?'שם חדש לאסטרטגיה':'Rename strategy',activeStrat?.name||'');
+    if(!name||!name.trim())return;
+    updateState(s=>({...s,strategies:s.strategies.map(st=>st.id===s.activeId?{...st,name:name.trim()}:st)}));
+  };
+  const deleteStrategy=()=>{
+    updateState(s=>{
+      if(s.strategies.length<=1){
+        // Don't delete the last one; just clear its trades.
+        return {...s,strategies:s.strategies.map(st=>st.id===s.activeId?{...st,trades:[]}:st)};
+      }
+      const remaining=s.strategies.filter(st=>st.id!==s.activeId);
+      return {strategies:remaining,activeId:remaining[0].id};
+    });
+    setConfirmDelStrat(false);
+  };
+
+  const commitDraft=useCallback((d:DraftBacktestTrade)=>{
+    const row=recalc({...emptyRow(),coin:d.coin,entryDT:d.entryDT,exitDT:d.exitDT,entry:d.entry,sl:d.sl,exit:d.exit,mfeP:d.mfeP,maeP:d.maeP,notes:d.notes,chartE:d.chartE,chartX:d.chartX});
+    updateState(s=>({...s,strategies:s.strategies.map(st=>st.id===s.activeId?{...st,trades:[...st.trades,row]}:st)}));
+    setShowTut(false);
+  },[updateState]);
   const addTrade=(t:any)=>{save([...trades,t]);setShowForm(false);setShowTut(false);};
   const updateTrade=(t:any)=>{save(trades.map((x:any)=>x.id===t.id?t:x));setEditModal(null);};
   const del=(id:string)=>{save(trades.filter((t:any)=>t.id!==id));setConfirmDel(null);};
-  const quickAdd=()=>{if(!qa.coin||!qa.entry||!qa.sl||!qa.exit)return;save([...trades,recalc({...emptyRow(),...qa})]);setQa({coin:"",strategy:qa.strategy,entry:"",sl:"",exit:""});setShowTut(false);};
-  // Apply the strategy filter to stats too, so each analytics view is per-strategy.
-  const stratFiltered=useMemo(()=>filterStrategy==="all"?trades:trades.filter((t:any)=>(t.strategy||"")===filterStrategy),[trades,filterStrategy]);
-  const statsIn=useMemo(()=>lastX>0?stratFiltered.slice(-lastX):stratFiltered,[stratFiltered,lastX]);
+  const quickAdd=()=>{if(!qa.coin||!qa.entry||!qa.sl||!qa.exit)return;save([...trades,recalc({...emptyRow(),...qa})]);setQa({coin:"",entry:"",sl:"",exit:""});setShowTut(false);};
 
+  const statsIn=useMemo(()=>lastX>0?trades.slice(-lastX):trades,[trades,lastX]);
   const stats=useMemo(()=>computeAll(statsIn),[statsIn]);
   const allStats=useMemo(()=>computeAll(trades),[trades]);
-  const displayed=useMemo(()=>{let a=[...trades];if(search)a=a.filter((t:any)=>(t.coin||"").toLowerCase().includes(search.toLowerCase())||(t.strategy||"").toLowerCase().includes(search.toLowerCase()));if(filterDir!=="all")a=a.filter((t:any)=>t.dir===filterDir);if(filterCoin!=="all")a=a.filter((t:any)=>t.coin===filterCoin);if(filterStrategy!=="all")a=a.filter((t:any)=>(t.strategy||"")===filterStrategy);const[f,d]=sortBy.split("_");a.sort((x:any,y:any)=>{if(f==="r")return d==="d"?(y.r||0)-(x.r||0):(x.r||0)-(y.r||0);if(f==="coin")return d==="a"?(x.coin||"").localeCompare(y.coin||""):(y.coin||"").localeCompare(x.coin||"");return d==="d"?trades.indexOf(y)-trades.indexOf(x):trades.indexOf(x)-trades.indexOf(y);});return a;},[trades,search,filterDir,filterCoin,filterStrategy,sortBy]);
+  const displayed=useMemo(()=>{let a=[...trades];if(search)a=a.filter((t:any)=>(t.coin||"").toLowerCase().includes(search.toLowerCase()));if(filterDir!=="all")a=a.filter((t:any)=>t.dir===filterDir);if(filterCoin!=="all")a=a.filter((t:any)=>t.coin===filterCoin);const[f,d]=sortBy.split("_");a.sort((x:any,y:any)=>{if(f==="r")return d==="d"?(y.r||0)-(x.r||0):(x.r||0)-(y.r||0);if(f==="coin")return d==="a"?(x.coin||"").localeCompare(y.coin||""):(y.coin||"").localeCompare(x.coin||"");return d==="d"?trades.indexOf(y)-trades.indexOf(x):trades.indexOf(x)-trades.indexOf(y);});return a;},[trades,search,filterDir,filterCoin,sortBy]);
   const uCoins=useMemo(()=>[...new Set(trades.map((t:any)=>t.coin).filter(Boolean))],[trades]);
-  const uStrategies=useMemo(()=>[...new Set(trades.map((t:any)=>t.strategy).filter(Boolean))] as string[],[trades]);
 
-  const csvX=()=>{const h="Coin,Dir,Entry,SL,Exit,R,Time,Dur,Notes";const r=trades.map((t:any)=>[t.coin,t.dir,t.entry,t.sl,t.exit,t.r!=null?fm(t.r):"",t.entryDT,t.dur,`"${(t.notes||"").replace(/"/g,'""')}"`].join(","));const b=new Blob([h+"\n"+r.join("\n")],{type:"text/csv"});Object.assign(document.createElement("a"),{href:URL.createObjectURL(b),download:`orca-bt_${Date.now()}.csv`}).click();};
-  const jsonX=()=>{const b=new Blob([JSON.stringify(trades,null,2)],{type:"application/json"});Object.assign(document.createElement("a"),{href:URL.createObjectURL(b),download:`orca-bt_${Date.now()}.json`}).click();};
+  const csvX=()=>{const h="Coin,Dir,Entry,SL,Exit,R,Time,Dur,Notes";const r=trades.map((t:any)=>[t.coin,t.dir,t.entry,t.sl,t.exit,t.r!=null?fm(t.r):"",t.entryDT,t.dur,`"${(t.notes||"").replace(/"/g,'""')}"`].join(","));const b=new Blob([h+"\n"+r.join("\n")],{type:"text/csv"});Object.assign(document.createElement("a"),{href:URL.createObjectURL(b),download:`orca-bt_${(activeStrat?.name||'strategy').replace(/[^a-z0-9]+/gi,'-')}_${Date.now()}.csv`}).click();};
+  const jsonX=()=>{const b=new Blob([JSON.stringify(trades,null,2)],{type:"application/json"});Object.assign(document.createElement("a"),{href:URL.createObjectURL(b),download:`orca-bt_${(activeStrat?.name||'strategy').replace(/[^a-z0-9]+/gi,'-')}_${Date.now()}.json`}).click();};
   const imp=()=>{const i=document.createElement("input");i.type="file";i.accept=".json";i.onchange=async (e:any)=>{try{const d=JSON.parse(await e.target.files[0].text());if(Array.isArray(d)){const m=[...trades];d.forEach((t:any)=>{if(!m.find((x:any)=>x.id===t.id))m.push(recalc({...emptyRow(),...t,id:t.id||uid()}));});save(m);}}catch{}};i.click();};
+
 
   const handleReturn = useCallback(() => {
     setExitingToOrca(true);
