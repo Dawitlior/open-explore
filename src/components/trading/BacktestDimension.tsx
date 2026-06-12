@@ -541,18 +541,21 @@ function BacktestApp({ onReturn }: { onReturn: () => void }) {
   },[updateState]);
 
   // Strategy CRUD
-  const addStrategy=()=>{
-    const name=prompt(L==='he'?'שם האסטרטגיה החדשה':'New strategy name','');
-    if(!name||!name.trim())return;
-    const id=uid();
-    updateState(s=>({strategies:[...s.strategies,{id,name:name.trim(),trades:[]}],activeId:id}));
-    setShowTut(true);
-  };
+  const addStrategy=()=>setStratPrompt({mode:'add',value:''});
   const switchStrategy=(id:string)=>updateState(s=>({...s,activeId:id}));
-  const renameStrategy=()=>{
-    const name=prompt(L==='he'?'שם חדש לאסטרטגיה':'Rename strategy',activeStrat?.name||'');
-    if(!name||!name.trim())return;
-    updateState(s=>({...s,strategies:s.strategies.map(st=>st.id===s.activeId?{...st,name:name.trim()}:st)}));
+  const renameStrategy=()=>setStratPrompt({mode:'rename',value:activeStrat?.name||''});
+  const submitStratPrompt=()=>{
+    if(!stratPrompt)return;
+    const name=stratPrompt.value.trim();
+    if(!name){setStratPrompt(null);return;}
+    if(stratPrompt.mode==='add'){
+      const id=uid();
+      updateState(s=>({strategies:[...s.strategies,{id,name,trades:[]}],activeId:id}));
+      setShowTut(true);
+    } else {
+      updateState(s=>({...s,strategies:s.strategies.map(st=>st.id===s.activeId?{...st,name}:st)}));
+    }
+    setStratPrompt(null);
   };
   const deleteStrategy=()=>{
     updateState(s=>{
