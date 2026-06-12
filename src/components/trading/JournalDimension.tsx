@@ -3276,6 +3276,22 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
     });
   };
 
+  const clearMorning = () => {
+    upd({
+      mood: '', plan: '', btcThoughts: '',
+      bias: '', mktStruct: '', mentalTags: [],
+      btcNote: '', t3Note: '', domNote: '', macroNote: '',
+      levels: [], setups: [], emotionScore: null,
+      fearGreed: '', psychAnswers: {},
+      tasks: (day.tasks || []).map((tk: any) => ({ ...tk, done: false })),
+      goals: (day.goals || []).map((g: any) => ({ ...g, done: false })),
+      disciplineCommitments: [], disciplineConfirmed: false,
+      morningImages: [],
+      sectionLocks: {},
+    });
+  };
+
+
   return (
     <div>
       <MarketStrip day={day} dir={dir} th={th} />
