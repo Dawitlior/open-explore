@@ -451,7 +451,7 @@ function BacktestEntryScreen({ onEnter, onSkip, L }: { onEnter: () => void; onSk
             onMouseEnter={(e: any) => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = `0 8px 40px ${BL}66`; }}
             onMouseLeave={(e: any) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = `0 4px 30px ${BL}44`; }}
           >
-            כניסה למערכת
+            {BT_STR[L].enter}
           </button>
         )}
       </div>
