@@ -3284,6 +3284,7 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
           <PDiv label={dir === 'rtl' ? 'תדריך טרום-שוק' : 'PRE-MARKET BRIEFING'} color="#5AA9FF" icon="☀️" th={th} />
         </div>
         <AutoFillButton onClick={fillMorning} dir={dir} th={th} label={dir === 'rtl' ? 'מילוי דוגמה' : 'Demo Fill'} />
+        <ClearDemoButton onClick={clearMorning} dir={dir} label={dir === 'rtl' ? 'מחק דוגמה' : 'Clear Demo'} />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }} className="j-grid-2col">
@@ -3649,6 +3650,7 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
           <PDiv label={dir === 'rtl' ? 'תחקיר אחרי-שוק' : 'POST-MARKET DEBRIEF'} color="#b794f6" icon="🌙" th={th} />
         </div>
         {!fullLocked && <AutoFillButton onClick={fillEod} dir={dir} th={th} label={dir === 'rtl' ? 'מילוי דוגמה' : 'Demo Fill'} />}
+        {!fullLocked && <ClearDemoButton onClick={clearEod} dir={dir} label={dir === 'rtl' ? 'מחק דוגמה' : 'Clear Demo'} />}
       </div>
 
       {/* Trade Log */}
