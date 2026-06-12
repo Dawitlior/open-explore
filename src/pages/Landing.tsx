@@ -36,7 +36,7 @@ const orcaCss = `
 
 .orca-landing {
   --bg:        #000000;
-  --bg-2:      #050609;
+  --bg-2:      transparent;
   --surface:   #0A0D14;
   --surface-2: #0F131C;
   --border:    rgba(34,211,238,0.10);
