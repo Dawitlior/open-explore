@@ -139,7 +139,9 @@ const makeDemo=(L:BTLang)=>{const S=BT_STR[L];return [
   {k:"chartX",l:S.demoChartX.l,v:"tradingview.com/x/xYz99",d:S.demoChartX.d},
 ];};
 
-function Tutorial({onClose,onStart}:{onClose:()=>void;onStart:()=>void}){
+function Tutorial({onClose,onStart,L}:{onClose:()=>void;onStart:()=>void;L:BTLang}){
+  const S=BT_STR[L];
+  const DEMO=useMemo(()=>makeDemo(L),[L]);
   const[step,setStep]=useState(-1);
   const[typed,setTyped]=useState("");
   const[filled,setFilled]=useState<any>({});
@@ -164,7 +166,7 @@ function Tutorial({onClose,onStart}:{onClose:()=>void;onStart:()=>void}){
       },45);
     },800);
     return()=>{cancelled=true;clearTimeout(pt);};
-  },[step]);
+  },[step,DEMO]);
 
   const liveR=useMemo(()=>{const e=parseFloat((filled.entry||"").replace(/,/g,"")),sl=parseFloat((filled.sl||"").replace(/,/g,"")),ex=parseFloat((filled.exit||"").replace(/,/g,""));return(e&&sl&&ex&&e!==sl)?calcR(e,sl,ex):null;},[filled]);
   const liveDir=useMemo(()=>autoDir(parseFloat((filled.entry||"").replace(/,/g,"")),parseFloat((filled.sl||"").replace(/,/g,""))),[filled]);
@@ -175,7 +177,7 @@ function Tutorial({onClose,onStart}:{onClose:()=>void;onStart:()=>void}){
       <svg width="18" height="18" viewBox="0 0 24 24" style={{filter:`drop-shadow(0 2px 6px rgba(0,0,0,.6))`}}><path d="M5 3l14 8-6 2-4 6z" fill={BL} stroke="#fff" strokeWidth="1.5"/></svg>
     </div>}
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-      <div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:8,height:8,borderRadius:"50%",background:BL,animation:"pulse 1.5s infinite"}}/><span style={{fontSize:13,fontWeight:700,color:T1}}>הדגמה חיה — מילוי עסקה</span></div>
+      <div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:8,height:8,borderRadius:"50%",background:BL,animation:"pulse 1.5s infinite"}}/><span style={{fontSize:13,fontWeight:700,color:T1}}>{S.liveDemo}</span></div>
       <button onClick={onClose} style={{background:"none",border:"none",color:T3,fontSize:16,cursor:"pointer"}}>×</button>
     </div>
     <div style={{display:"flex",gap:2,marginBottom:12}}>{DEMO.map((_,i)=><div key={i} style={{flex:1,height:3,borderRadius:2,background:i<=step?BL:T4,transition:"background .3s"}}/>)}</div>
@@ -197,15 +199,15 @@ function Tutorial({onClose,onStart}:{onClose:()=>void;onStart:()=>void}){
       })}
     </div>
     {liveR!=null&&<div className="popBig" style={{display:"flex",gap:12,justifyContent:"center",padding:"12px 16px",background:`linear-gradient(135deg, ${BL}0a, ${G}08)`,borderRadius:10,marginBottom:14,border:`1px solid ${BL}22`}}>
-      <div style={{textAlign:"center"}}><div style={{fontSize:8,color:T3,fontWeight:700}}>כיוון</div><div style={{fontSize:16,fontWeight:800,color:liveDir==="Long"?G:RD}}>{liveDir==="Long"?"LONG ↑":"SHORT ↓"}</div></div>
+      <div style={{textAlign:"center"}}><div style={{fontSize:8,color:T3,fontWeight:700}}>{S.direction}</div><div style={{fontSize:16,fontWeight:800,color:liveDir==="Long"?G:RD}}>{liveDir==="Long"?"LONG ↑":"SHORT ↓"}</div></div>
       <div style={{width:1,background:T4}}/>
       <div style={{textAlign:"center"}}><div style={{fontSize:8,color:T3,fontWeight:700}}>R</div><div style={{fontSize:16,fontWeight:800,color:rc(liveR)}}>{fm(liveR)}</div></div>
       <div style={{width:1,background:T4}}/>
-      <div style={{textAlign:"center"}}><div style={{fontSize:8,color:T3,fontWeight:700}}>סטטוס</div><div style={{fontSize:12,fontWeight:700,color:BL}}>⚡ אוטומטי</div></div>
+      <div style={{textAlign:"center"}}><div style={{fontSize:8,color:T3,fontWeight:700}}>{S.status}</div><div style={{fontSize:12,fontWeight:700,color:BL}}>{S.auto}</div></div>
     </div>}
     {done&&<div className="popBig" style={{textAlign:"center",paddingTop:8}}>
-      <div style={{fontSize:15,fontWeight:700,color:G,marginBottom:14}}>ככה פשוט! עכשיו תורך 🚀</div>
-      <button onClick={onStart} style={{background:BL,border:"none",borderRadius:10,padding:"12px 32px",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:`0 4px 24px ${BL}44`}}>+ הוסף עסקה ראשונה</button>
+      <div style={{fontSize:15,fontWeight:700,color:G,marginBottom:14}}>{S.soSimple}</div>
+      <button onClick={onStart} style={{background:BL,border:"none",borderRadius:10,padding:"12px 32px",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:`0 4px 24px ${BL}44`}}>{S.firstTrade}</button>
     </div>}
   </div>;
 }
