@@ -126,18 +126,18 @@ const css=()=>{if(document.getElementById("o13"))return;const s=document.createE
 // ═══════════════════════════════════════════
 // TUTORIAL
 // ═══════════════════════════════════════════
-const DEMO=[
-  {k:"coin",l:"מטבע",v:"BTC",d:"שם המטבע שנסחר"},
-  {k:"entry",l:"כניסה $",v:"64,250",d:"מחיר הכניסה לעסקה"},
-  {k:"sl",l:"סטופ $",v:"63,800",d:"מחיר הסטופ לוס"},
-  {k:"exit",l:"יציאה $",v:"65,700",d:"מחיר היציאה בפועל"},
-  {k:"entryDT",l:"זמן כניסה",v:"15/03/2025 09:30",d:"מתי נכנסת לעסקה"},
-  {k:"exitDT",l:"זמן יציאה",v:"15/03/2025 16:45",d:"מתי סגרת"},
-  {k:"mfeP",l:"MFE $",v:"66,100",d:"המחיר הכי טוב לטובתך"},
-  {k:"maeP",l:"MAE $",v:"63,900",d:"המחיר הכי גרוע נגדך"},
-  {k:"chartE",l:"צילום כניסה",v:"tradingview.com/x/aBc12",d:"לינק לצילום TradingView"},
-  {k:"chartX",l:"צילום יציאה",v:"tradingview.com/x/xYz99",d:"צילום מסך יציאה"},
-];
+const makeDemo=(L:BTLang)=>{const S=BT_STR[L];return [
+  {k:"coin",l:S.demoCoin.l,v:"BTC",d:S.demoCoin.d},
+  {k:"entry",l:S.demoEntry.l,v:"64,250",d:S.demoEntry.d},
+  {k:"sl",l:S.demoSl.l,v:"63,800",d:S.demoSl.d},
+  {k:"exit",l:S.demoExit.l,v:"65,700",d:S.demoExit.d},
+  {k:"entryDT",l:S.demoEntryDT.l,v:"15/03/2025 09:30",d:S.demoEntryDT.d},
+  {k:"exitDT",l:S.demoExitDT.l,v:"15/03/2025 16:45",d:S.demoExitDT.d},
+  {k:"mfeP",l:S.demoMfeP.l,v:"66,100",d:S.demoMfeP.d},
+  {k:"maeP",l:S.demoMaeP.l,v:"63,900",d:S.demoMaeP.d},
+  {k:"chartE",l:S.demoChartE.l,v:"tradingview.com/x/aBc12",d:S.demoChartE.d},
+  {k:"chartX",l:S.demoChartX.l,v:"tradingview.com/x/xYz99",d:S.demoChartX.d},
+];};
 
 function Tutorial({onClose,onStart}:{onClose:()=>void;onStart:()=>void}){
   const[step,setStep]=useState(-1);
