@@ -1677,7 +1677,20 @@ const Index = () => {
             const activeColor = isWeekly ? '#FFD700' : T.accent.cyan;
             const showBadge = isWeekly && showWeeklyReminder;
             return (
-            <button key={item.id} onClick={() => { if (item.action) { item.action(); return; } setPage(item.id); if (isWeekly) dismissWeeklyReminder(); }} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10, padding: sbOpen ? '9px 10px' : '9px 0', justifyContent: sbOpen ? 'flex-start' : 'center', background: page === item.id ? `${activeColor}10` : 'transparent', color: page === item.id ? activeColor : (isWeekly ? '#FFD700' : T.text.secondary), border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: page === item.id ? 600 : (isWeekly ? 600 : 400), transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: page === item.id ? `2px solid ${activeColor}` : '2px solid transparent' }}>
+            <button key={item.id} onClick={() => { if (item.action) { item.action(); return; } setPage(item.id); if (isWeekly) dismissWeeklyReminder(); }}
+              onMouseEnter={e => {
+                if (page === item.id) return;
+                e.currentTarget.style.background = `linear-gradient(110deg, transparent 0%, ${activeColor}18 50%, transparent 100%)`;
+                e.currentTarget.style.boxShadow = `inset 0 0 0 1px ${activeColor}30, 0 0 22px -6px ${activeColor}55`;
+                e.currentTarget.style.color = activeColor;
+              }}
+              onMouseLeave={e => {
+                if (page === item.id) return;
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.color = isWeekly ? '#FFD700' : T.text.secondary;
+              }}
+              style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10, padding: sbOpen ? '9px 10px' : '9px 0', justifyContent: sbOpen ? 'flex-start' : 'center', background: page === item.id ? `linear-gradient(110deg, transparent 0%, ${activeColor}22 50%, transparent 100%)` : 'transparent', color: page === item.id ? activeColor : (isWeekly ? '#FFD700' : T.text.secondary), border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: page === item.id ? 600 : (isWeekly ? 600 : 400), transition: 'background 0.25s ease, box-shadow 0.25s ease, color 0.2s ease', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: page === item.id ? `2px solid ${activeColor}` : '2px solid transparent', boxShadow: page === item.id ? `inset 0 0 0 1px ${activeColor}25, 0 0 18px -8px ${activeColor}66` : 'none' }}>
               <span style={{ position: 'relative', display: 'inline-flex' }}>
                 {typeof item.icon === 'string' ? <span style={{ fontSize: 18 }}>{item.icon}</span> : item.icon}
                 {showBadge && <ReminderBadge />}
