@@ -487,7 +487,7 @@ function BacktestApp({ onReturn }: { onReturn: () => void }) {
   const { isRTL } = useLang();
   const L: BTLang = isRTL ? 'he' : 'en';
   const S = BT_STR[L];
-  const[trades,setTrades]=useState<any[]>([]);const[loading,setLoading]=useState(true);const[tab,setTab]=useState("trades");const[showForm,setShowForm]=useState(false);const[editModal,setEditModal]=useState<any>(null);const[macDir,setMacDir]=useState("all");const[macDim,setMacDim]=useState("wd");const[search,setSearch]=useState("");const[filterDir,setFilterDir]=useState("all");const[filterCoin,setFilterCoin]=useState("all");const[sortBy,setSortBy]=useState("date_d");const[qa,setQa]=useState({coin:"",entry:"",sl:"",exit:""});const[lastX,setLastX]=useState(0);const[showFilters,setShowFilters]=useState(false);const[confirmDel,setConfirmDel]=useState<string|null>(null);const[showTut,setShowTut]=useState(true);const[locked,setLocked]=useState(false);
+  const[trades,setTrades]=useState<any[]>([]);const[loading,setLoading]=useState(true);const[tab,setTab]=useState("trades");const[showForm,setShowForm]=useState(false);const[editModal,setEditModal]=useState<any>(null);const[macDir,setMacDir]=useState("all");const[macDim,setMacDim]=useState("wd");const[search,setSearch]=useState("");const[filterDir,setFilterDir]=useState("all");const[filterCoin,setFilterCoin]=useState("all");const[filterStrategy,setFilterStrategy]=useState("all");const[sortBy,setSortBy]=useState("date_d");const[qa,setQa]=useState({coin:"",strategy:"",entry:"",sl:"",exit:""});const[lastX,setLastX]=useState(0);const[showFilters,setShowFilters]=useState(false);const[confirmDel,setConfirmDel]=useState<string|null>(null);const[showTut,setShowTut]=useState(true);const[locked,setLocked]=useState(false);
   const[exitingToOrca,setExitingToOrca]=useState(false);
 
   useEffect(()=>{css();loadS().then((t:any)=>{setTrades(t);setLoading(false);});},[]);
@@ -501,8 +501,11 @@ function BacktestApp({ onReturn }: { onReturn: () => void }) {
   const addTrade=(t:any)=>{save([...trades,t]);setShowForm(false);setShowTut(false);};
   const updateTrade=(t:any)=>{save(trades.map((x:any)=>x.id===t.id?t:x));setEditModal(null);};
   const del=(id:string)=>{save(trades.filter((t:any)=>t.id!==id));setConfirmDel(null);};
-  const quickAdd=()=>{if(!qa.coin||!qa.entry||!qa.sl||!qa.exit)return;save([...trades,recalc({...emptyRow(),...qa})]);setQa({coin:"",entry:"",sl:"",exit:""});setShowTut(false);};
-  const statsIn=useMemo(()=>lastX>0?trades.slice(-lastX):trades,[trades,lastX]);
+  const quickAdd=()=>{if(!qa.coin||!qa.entry||!qa.sl||!qa.exit)return;save([...trades,recalc({...emptyRow(),...qa})]);setQa({coin:"",strategy:qa.strategy,entry:"",sl:"",exit:""});setShowTut(false);};
+  // Apply the strategy filter to stats too, so each analytics view is per-strategy.
+  const stratFiltered=useMemo(()=>filterStrategy==="all"?trades:trades.filter((t:any)=>(t.strategy||"")===filterStrategy),[trades,filterStrategy]);
+  const statsIn=useMemo(()=>lastX>0?stratFiltered.slice(-lastX):stratFiltered,[stratFiltered,lastX]);
+
   const stats=useMemo(()=>computeAll(statsIn),[statsIn]);
   const allStats=useMemo(()=>computeAll(trades),[trades]);
   const displayed=useMemo(()=>{let a=[...trades];if(search)a=a.filter((t:any)=>(t.coin||"").toLowerCase().includes(search.toLowerCase()));if(filterDir!=="all")a=a.filter((t:any)=>t.dir===filterDir);if(filterCoin!=="all")a=a.filter((t:any)=>t.coin===filterCoin);const[f,d]=sortBy.split("_");a.sort((x:any,y:any)=>{if(f==="r")return d==="d"?(y.r||0)-(x.r||0):(x.r||0)-(y.r||0);if(f==="coin")return d==="a"?(x.coin||"").localeCompare(y.coin||""):(y.coin||"").localeCompare(x.coin||"");return d==="d"?trades.indexOf(y)-trades.indexOf(x):trades.indexOf(x)-trades.indexOf(y);});return a;},[trades,search,filterDir,filterCoin,sortBy]);
