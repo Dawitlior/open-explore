@@ -49,8 +49,8 @@ export default function WeeklyReviewBanner({ T, isRTL, trades }: Props) {
 
   const now = new Date();
   const isFri = now.getDay() === 5;
-  const isSat = now.getDay() === 6;
   const inCloseWindow = isCloseWindow(now);
+
   const isFirstOfMonth = now.getDate() === 1;
   const isMonthEnd = isLastDayOfMonth(now);
   const showMonthOver = isFirstOfMonth || isMonthEnd;
