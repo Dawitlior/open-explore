@@ -3567,6 +3567,18 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
     });
   };
 
+  const clearEod = () => {
+    upd({
+      hasOpen: null,
+      trades: [],
+      actualMove: '', dayScore: null,
+      wins: '', lessons: '', mistakes: '',
+      solutions: '', closing: '',
+      eodImages: [],
+    });
+  };
+
+
   return (
     <div>
       {/* Morning Locked Recap */}
