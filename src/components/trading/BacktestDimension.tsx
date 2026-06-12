@@ -19,7 +19,90 @@ const fm=(v:any,d=2)=>v!=null&&!isNaN(v)?Number(v).toFixed(d):"—";const fp=(v:
 const emptyRow=()=>({id:uid(),coin:"",entryDT:"",exitDT:"",entry:"",sl:"",exit:"",mfeP:"",maeP:"",notes:"",chartE:"",chartX:"",dir:"",r:null as number|null,mfeR:null as number|null,maeR:null as number|null,dur:""});
 const recalc=(t:any)=>{const e=parseFloat(t.entry),sl=parseFloat(t.sl),ex=parseFloat(t.exit),mfe=parseFloat(t.mfeP),mae=parseFloat(t.maeP);t.dir=autoDir(e,sl);t.r=(e&&sl&&ex)?calcR(e,sl,ex):null;t.mfeR=(e&&sl&&mfe)?calcR(e,sl,mfe):null;t.maeR=(e&&sl&&mae)?calcR(e,sl,mae):null;const d=durCalc(t.entryDT,t.exitDT);t.dur=d?d.t:"";return t;};
 import { scopedStorage } from '@/lib/scoped-storage';
+import { useLang } from '@/hooks/use-lang';
 const SK="orca-bt-v13";const loadS=async()=>{try{const r=await scopedStorage.getItem(SK);return r?JSON.parse(r):[];}catch{return[];}};const persist=async (t:any)=>{try{await scopedStorage.setItem(SK,JSON.stringify(t));}catch{}};
+
+// ─── Bilingual labels ───
+type BTLang = 'he' | 'en';
+const BT_STR = {
+  he: {
+    appName: 'יומן באק-טסט', enter: 'כניסה למערכת', skip: 'דלג', back: 'חזרה ל-OrcaInvestment',
+    locked: 'המערכת נעולה', unlock: 'פתח נעילה', loading: 'טוען...',
+    deleteQ: 'למחוק?', del: 'מחק', cancel: 'ביטול', saveTrade: 'שמור עסקה',
+    editTrade: 'עריכת עסקה', newTrade: 'עסקה חדשה',
+    chart: 'גרף', import: 'ייבוא', exportJson: 'JSON', exportCsv: 'CSV',
+    tabs: { chart: 'גרף', trades: 'עסקאות', analytics: 'ניתוח', macro: 'מאקרו', equity: 'עקומה' },
+    quick: 'מהיר', coin: 'מטבע', entry: 'כניסה', sl: 'סטופ', exit: 'יציאה',
+    fullForm: 'טופס מלא', filter: 'סינון', all: 'הכל', long: 'לונג', short: 'שורט',
+    allCoins: 'כל המטבעות', search: 'חיפוש...', newToOld: 'חדש→ישן', oldToNew: 'ישן→חדש',
+    direction: 'כיוון', status: 'סטטוס', auto: '⚡ אוטומטי',
+    liveDemo: 'הדגמה חיה — מילוי עסקה', soSimple: 'ככה פשוט! עכשיו תורך 🚀', firstTrade: '+ הוסף עסקה ראשונה',
+    ready: 'מוכן להתחיל', firstTradeBtn: '+ עסקה ראשונה', demoLink: 'הדגמה',
+    win: 'ניצחון', ev: 'תוחלת', totalR: 'סה״כ R', avg: 'ממוצע', median: 'חציון', maxLbl: 'מקסימלי', streak: 'רצף',
+    noResults: 'אין תוצאות', totalReturn: 'תשואה כוללת', trades: 'עסקאות',
+    byCoin: 'לפי מטבע', averages: 'ממוצעים', general: 'כללי', loss: 'הפסד', total: 'סה״כ',
+    returnTime: 'תשואה/זמן', daily: 'יומי', weekly: 'שבועי', monthly: 'חודשי', quarterly: 'רבעוני', yearly: 'שנתי',
+    day: 'יום', quarter: 'רבע', month: 'חודש',
+    equityCurve: 'עקומת הון', rPerTrade: 'R לכל עסקה', drawdown: 'Drawdown', maxDd: 'מקסימלי',
+    addTrades: 'הוסף עסקאות',
+    // Tutorial demo rows
+    demoCoin: { l: 'מטבע', d: 'שם המטבע שנסחר' },
+    demoEntry: { l: 'כניסה $', d: 'מחיר הכניסה לעסקה' },
+    demoSl: { l: 'סטופ $', d: 'מחיר הסטופ לוס' },
+    demoExit: { l: 'יציאה $', d: 'מחיר היציאה בפועל' },
+    demoEntryDT: { l: 'זמן כניסה', d: 'מתי נכנסת לעסקה' },
+    demoExitDT: { l: 'זמן יציאה', d: 'מתי סגרת' },
+    demoMfeP: { l: 'MFE $', d: 'המחיר הכי טוב לטובתך' },
+    demoMaeP: { l: 'MAE $', d: 'המחיר הכי גרוע נגדך' },
+    demoChartE: { l: 'צילום כניסה', d: 'לינק לצילום TradingView' },
+    demoChartX: { l: 'צילום יציאה', d: 'צילום מסך יציאה' },
+    // Form sections
+    secTrade: 'פרטי העסקה', secDates: 'תאריכים', secMfeMae: 'MFE / MAE', optional: 'אופציונלי',
+    secMedia: 'צילומים והערות',
+    fldEntryPrice: 'מחיר כניסה', fldSl: 'סטופ לוס', fldExitPrice: 'מחיר יציאה',
+    fldEntryDT: 'זמן כניסה', fldExitDT: 'זמן יציאה',
+    fldChartE: 'צילום כניסה', fldChartX: 'צילום יציאה', fldNotes: 'הערות',
+    // Table cols
+    colDir: 'כיוון', colTime: 'זמן', colDur: 'משך',
+  },
+  en: {
+    appName: 'Backtest Journal', enter: 'Enter System', skip: 'Skip', back: 'Back to OrcaInvestment',
+    locked: 'System Locked', unlock: 'Unlock', loading: 'Loading...',
+    deleteQ: 'Delete?', del: 'Delete', cancel: 'Cancel', saveTrade: 'Save Trade',
+    editTrade: 'Edit Trade', newTrade: 'New Trade',
+    chart: 'Chart', import: 'Import', exportJson: 'JSON', exportCsv: 'CSV',
+    tabs: { chart: 'Chart', trades: 'Trades', analytics: 'Analytics', macro: 'Macro', equity: 'Equity' },
+    quick: 'Quick', coin: 'Coin', entry: 'Entry', sl: 'Stop', exit: 'Exit',
+    fullForm: 'Full form', filter: 'Filter', all: 'All', long: 'Long', short: 'Short',
+    allCoins: 'All coins', search: 'Search...', newToOld: 'New→Old', oldToNew: 'Old→New',
+    direction: 'Direction', status: 'Status', auto: '⚡ Auto',
+    liveDemo: 'Live demo — filling a trade', soSimple: "That's it! Your turn 🚀", firstTrade: '+ Add first trade',
+    ready: 'Ready to start', firstTradeBtn: '+ First trade', demoLink: 'Demo',
+    win: 'Win', ev: 'EV', totalR: 'Total R', avg: 'Avg', median: 'Median', maxLbl: 'Max', streak: 'Streak',
+    noResults: 'No results', totalReturn: 'Total Return', trades: 'trades',
+    byCoin: 'By Coin', averages: 'Averages', general: 'All', loss: 'Loss', total: 'Total',
+    returnTime: 'Return/Time', daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly', quarterly: 'Quarterly', yearly: 'Yearly',
+    day: 'Day', quarter: 'Quarter', month: 'Month',
+    equityCurve: 'Equity Curve', rPerTrade: 'R per trade', drawdown: 'Drawdown', maxDd: 'Max',
+    addTrades: 'Add trades',
+    demoCoin: { l: 'Coin', d: 'Traded asset symbol' },
+    demoEntry: { l: 'Entry $', d: 'Entry price' },
+    demoSl: { l: 'Stop $', d: 'Stop loss price' },
+    demoExit: { l: 'Exit $', d: 'Actual exit price' },
+    demoEntryDT: { l: 'Entry time', d: 'When you entered' },
+    demoExitDT: { l: 'Exit time', d: 'When you closed' },
+    demoMfeP: { l: 'MFE $', d: 'Best price in your favor' },
+    demoMaeP: { l: 'MAE $', d: 'Worst price against you' },
+    demoChartE: { l: 'Entry chart', d: 'TradingView snapshot link' },
+    demoChartX: { l: 'Exit chart', d: 'Exit screenshot link' },
+    secTrade: 'Trade Details', secDates: 'Dates', secMfeMae: 'MFE / MAE', optional: 'optional',
+    secMedia: 'Charts & Notes',
+    fldEntryPrice: 'Entry price', fldSl: 'Stop loss', fldExitPrice: 'Exit price',
+    fldEntryDT: 'Entry time', fldExitDT: 'Exit time',
+    fldChartE: 'Entry chart', fldChartX: 'Exit chart', fldNotes: 'Notes',
+    colDir: 'Dir', colTime: 'Time', colDur: 'Duration',
+  },
+} as const;
 
 const BL="#2563eb",BL2="#3b82f6",G="#0ecb81",RD="#f6465d",CY="#06b6d4",PU="#a855f7";
 const BG="#0c0f14",BG2="#10141b",BG3="#161c26",SURF="#1e2535",BRD="#1e2736",BRDH="#2a3548";
@@ -43,20 +126,22 @@ const css=()=>{if(document.getElementById("o13"))return;const s=document.createE
 // ═══════════════════════════════════════════
 // TUTORIAL
 // ═══════════════════════════════════════════
-const DEMO=[
-  {k:"coin",l:"מטבע",v:"BTC",d:"שם המטבע שנסחר"},
-  {k:"entry",l:"כניסה $",v:"64,250",d:"מחיר הכניסה לעסקה"},
-  {k:"sl",l:"סטופ $",v:"63,800",d:"מחיר הסטופ לוס"},
-  {k:"exit",l:"יציאה $",v:"65,700",d:"מחיר היציאה בפועל"},
-  {k:"entryDT",l:"זמן כניסה",v:"15/03/2025 09:30",d:"מתי נכנסת לעסקה"},
-  {k:"exitDT",l:"זמן יציאה",v:"15/03/2025 16:45",d:"מתי סגרת"},
-  {k:"mfeP",l:"MFE $",v:"66,100",d:"המחיר הכי טוב לטובתך"},
-  {k:"maeP",l:"MAE $",v:"63,900",d:"המחיר הכי גרוע נגדך"},
-  {k:"chartE",l:"צילום כניסה",v:"tradingview.com/x/aBc12",d:"לינק לצילום TradingView"},
-  {k:"chartX",l:"צילום יציאה",v:"tradingview.com/x/xYz99",d:"צילום מסך יציאה"},
-];
+const makeDemo=(L:BTLang)=>{const S=BT_STR[L];return [
+  {k:"coin",l:S.demoCoin.l,v:"BTC",d:S.demoCoin.d},
+  {k:"entry",l:S.demoEntry.l,v:"64,250",d:S.demoEntry.d},
+  {k:"sl",l:S.demoSl.l,v:"63,800",d:S.demoSl.d},
+  {k:"exit",l:S.demoExit.l,v:"65,700",d:S.demoExit.d},
+  {k:"entryDT",l:S.demoEntryDT.l,v:"15/03/2025 09:30",d:S.demoEntryDT.d},
+  {k:"exitDT",l:S.demoExitDT.l,v:"15/03/2025 16:45",d:S.demoExitDT.d},
+  {k:"mfeP",l:S.demoMfeP.l,v:"66,100",d:S.demoMfeP.d},
+  {k:"maeP",l:S.demoMaeP.l,v:"63,900",d:S.demoMaeP.d},
+  {k:"chartE",l:S.demoChartE.l,v:"tradingview.com/x/aBc12",d:S.demoChartE.d},
+  {k:"chartX",l:S.demoChartX.l,v:"tradingview.com/x/xYz99",d:S.demoChartX.d},
+];};
 
-function Tutorial({onClose,onStart}:{onClose:()=>void;onStart:()=>void}){
+function Tutorial({onClose,onStart,L}:{onClose:()=>void;onStart:()=>void;L:BTLang}){
+  const S=BT_STR[L];
+  const DEMO=useMemo(()=>makeDemo(L),[L]);
   const[step,setStep]=useState(-1);
   const[typed,setTyped]=useState("");
   const[filled,setFilled]=useState<any>({});
@@ -81,7 +166,7 @@ function Tutorial({onClose,onStart}:{onClose:()=>void;onStart:()=>void}){
       },45);
     },800);
     return()=>{cancelled=true;clearTimeout(pt);};
-  },[step]);
+  },[step,DEMO]);
 
   const liveR=useMemo(()=>{const e=parseFloat((filled.entry||"").replace(/,/g,"")),sl=parseFloat((filled.sl||"").replace(/,/g,"")),ex=parseFloat((filled.exit||"").replace(/,/g,""));return(e&&sl&&ex&&e!==sl)?calcR(e,sl,ex):null;},[filled]);
   const liveDir=useMemo(()=>autoDir(parseFloat((filled.entry||"").replace(/,/g,"")),parseFloat((filled.sl||"").replace(/,/g,""))),[filled]);
@@ -92,7 +177,7 @@ function Tutorial({onClose,onStart}:{onClose:()=>void;onStart:()=>void}){
       <svg width="18" height="18" viewBox="0 0 24 24" style={{filter:`drop-shadow(0 2px 6px rgba(0,0,0,.6))`}}><path d="M5 3l14 8-6 2-4 6z" fill={BL} stroke="#fff" strokeWidth="1.5"/></svg>
     </div>}
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-      <div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:8,height:8,borderRadius:"50%",background:BL,animation:"pulse 1.5s infinite"}}/><span style={{fontSize:13,fontWeight:700,color:T1}}>הדגמה חיה — מילוי עסקה</span></div>
+      <div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:8,height:8,borderRadius:"50%",background:BL,animation:"pulse 1.5s infinite"}}/><span style={{fontSize:13,fontWeight:700,color:T1}}>{S.liveDemo}</span></div>
       <button onClick={onClose} style={{background:"none",border:"none",color:T3,fontSize:16,cursor:"pointer"}}>×</button>
     </div>
     <div style={{display:"flex",gap:2,marginBottom:12}}>{DEMO.map((_,i)=><div key={i} style={{flex:1,height:3,borderRadius:2,background:i<=step?BL:T4,transition:"background .3s"}}/>)}</div>
@@ -114,15 +199,15 @@ function Tutorial({onClose,onStart}:{onClose:()=>void;onStart:()=>void}){
       })}
     </div>
     {liveR!=null&&<div className="popBig" style={{display:"flex",gap:12,justifyContent:"center",padding:"12px 16px",background:`linear-gradient(135deg, ${BL}0a, ${G}08)`,borderRadius:10,marginBottom:14,border:`1px solid ${BL}22`}}>
-      <div style={{textAlign:"center"}}><div style={{fontSize:8,color:T3,fontWeight:700}}>כיוון</div><div style={{fontSize:16,fontWeight:800,color:liveDir==="Long"?G:RD}}>{liveDir==="Long"?"LONG ↑":"SHORT ↓"}</div></div>
+      <div style={{textAlign:"center"}}><div style={{fontSize:8,color:T3,fontWeight:700}}>{S.direction}</div><div style={{fontSize:16,fontWeight:800,color:liveDir==="Long"?G:RD}}>{liveDir==="Long"?"LONG ↑":"SHORT ↓"}</div></div>
       <div style={{width:1,background:T4}}/>
       <div style={{textAlign:"center"}}><div style={{fontSize:8,color:T3,fontWeight:700}}>R</div><div style={{fontSize:16,fontWeight:800,color:rc(liveR)}}>{fm(liveR)}</div></div>
       <div style={{width:1,background:T4}}/>
-      <div style={{textAlign:"center"}}><div style={{fontSize:8,color:T3,fontWeight:700}}>סטטוס</div><div style={{fontSize:12,fontWeight:700,color:BL}}>⚡ אוטומטי</div></div>
+      <div style={{textAlign:"center"}}><div style={{fontSize:8,color:T3,fontWeight:700}}>{S.status}</div><div style={{fontSize:12,fontWeight:700,color:BL}}>{S.auto}</div></div>
     </div>}
     {done&&<div className="popBig" style={{textAlign:"center",paddingTop:8}}>
-      <div style={{fontSize:15,fontWeight:700,color:G,marginBottom:14}}>ככה פשוט! עכשיו תורך 🚀</div>
-      <button onClick={onStart} style={{background:BL,border:"none",borderRadius:10,padding:"12px 32px",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:`0 4px 24px ${BL}44`}}>+ הוסף עסקה ראשונה</button>
+      <div style={{fontSize:15,fontWeight:700,color:G,marginBottom:14}}>{S.soSimple}</div>
+      <button onClick={onStart} style={{background:BL,border:"none",borderRadius:10,padding:"12px 32px",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:`0 4px 24px ${BL}44`}}>{S.firstTrade}</button>
     </div>}
   </div>;
 }
@@ -130,19 +215,21 @@ function Tutorial({onClose,onStart}:{onClose:()=>void;onStart:()=>void}){
 // ═══════════════════════════════════════════
 // PREMIUM FORM
 // ═══════════════════════════════════════════
-const SECTIONS=[
-  {title:"פרטי העסקה",icon:"◆",fields:[{k:"coin",l:"מטבע",ph:"BTC"},{k:"entry",l:"מחיר כניסה",ph:"64250",num:true},{k:"sl",l:"סטופ לוס",ph:"63800",num:true},{k:"exit",l:"מחיר יציאה",ph:"65700",num:true}]},
-  {title:"תאריכים",icon:"◷",fields:[{k:"entryDT",l:"זמן כניסה",ph:"15/03/2025 09:30"},{k:"exitDT",l:"זמן יציאה",ph:"15/03/2025 16:45"}]},
-  {title:"MFE / MAE",icon:"◈",desc:"אופציונלי",fields:[{k:"mfeP",l:"MFE",ph:"66100",num:true},{k:"maeP",l:"MAE",ph:"63900",num:true}]},
-  {title:"צילומים והערות",icon:"◫",fields:[{k:"chartE",l:"צילום כניסה",ph:"https://..."},{k:"chartX",l:"צילום יציאה",ph:"https://..."},{k:"notes",l:"הערות",ph:"",full:true}]},
-];
+const makeSections=(L:BTLang)=>{const S=BT_STR[L];return [
+  {title:S.secTrade,icon:"◆",fields:[{k:"coin",l:S.coin,ph:"BTC"},{k:"entry",l:S.fldEntryPrice,ph:"64250",num:true},{k:"sl",l:S.fldSl,ph:"63800",num:true},{k:"exit",l:S.fldExitPrice,ph:"65700",num:true}]},
+  {title:S.secDates,icon:"◷",fields:[{k:"entryDT",l:S.fldEntryDT,ph:"15/03/2025 09:30"},{k:"exitDT",l:S.fldExitDT,ph:"15/03/2025 16:45"}]},
+  {title:S.secMfeMae,icon:"◈",desc:S.optional,fields:[{k:"mfeP",l:"MFE",ph:"66100",num:true},{k:"maeP",l:"MAE",ph:"63900",num:true}]},
+  {title:S.secMedia,icon:"◫",fields:[{k:"chartE",l:S.fldChartE,ph:"https://..."},{k:"chartX",l:S.fldChartX,ph:"https://..."},{k:"notes",l:S.fldNotes,ph:"",full:true}]},
+];};
 
-function BTTradeForm({onSave,onClose,initial}:{onSave:(t:any)=>void;onClose:()=>void;initial?:any}){
+function BTTradeForm({onSave,onClose,initial,L}:{onSave:(t:any)=>void;onClose:()=>void;initial?:any;L:BTLang}){
+  const S=BT_STR[L];
+  const SECTIONS=useMemo(()=>makeSections(L),[L]);
   const[t,setT]=useState(initial||emptyRow());const set=(k:string,v:string)=>setT((p:any)=>recalc({...p,[k]:v}));
   return <div style={{position:"fixed",inset:0,zIndex:8000,background:"rgba(0,0,0,.6)",backdropFilter:"blur(6px)",display:"flex",alignItems:"center",justifyContent:"center",padding:12}} onClick={(e:any)=>e.target===e.currentTarget&&onClose()}>
-    <div style={{background:BG3,borderRadius:16,width:"100%",maxWidth:520,maxHeight:"92vh",overflowY:"auto",border:`1px solid ${BRD}`,direction:"rtl",animation:"formSlideUp .4s cubic-bezier(.16,1,.3,1)"}}>
+    <div style={{background:BG3,borderRadius:16,width:"100%",maxWidth:520,maxHeight:"92vh",overflowY:"auto",border:`1px solid ${BRD}`,direction:L==='he'?"rtl":"ltr",animation:"formSlideUp .4s cubic-bezier(.16,1,.3,1)"}}>
       <div style={{padding:"14px 20px",borderBottom:`1px solid ${BRD}`,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,background:BG3,zIndex:2,borderRadius:"16px 16px 0 0"}}>
-        <span style={{fontSize:15,fontWeight:700,color:T1}}>{initial?"עריכת עסקה":"עסקה חדשה"}</span>
+        <span style={{fontSize:15,fontWeight:700,color:T1}}>{initial?S.editTrade:S.newTrade}</span>
         <div style={{display:"flex",alignItems:"center",gap:10}}>{t.r!=null&&<div style={{display:"flex",gap:8,alignItems:"center",background:`${BL}0a`,padding:"4px 12px",borderRadius:8}}><span style={{fontSize:12,fontWeight:800,color:t.dir==="Long"?G:RD}}>{t.dir==="Long"?"L↑":"S↓"}</span><span style={{fontSize:12,fontWeight:800,color:rc(t.r)}}>{fm(t.r)}R</span></div>}<button onClick={onClose} style={{background:"none",border:"none",color:T3,fontSize:18,cursor:"pointer"}}>×</button></div>
       </div>
       <div style={{padding:"12px 20px 20px"}}>{SECTIONS.map((sec:any,si:number)=><div key={si} style={{marginBottom:si<SECTIONS.length-1?14:0}}>
@@ -151,7 +238,7 @@ function BTTradeForm({onSave,onClose,initial}:{onSave:(t:any)=>void;onClose:()=>
           {sec.fields.map((f:any)=><div key={f.k} style={{gridColumn:f.full?"1/-1":"auto"}}><label style={{fontSize:10,fontWeight:600,color:T3,marginBottom:2,display:"block"}}>{f.l}</label><input value={t[f.k]||""} onChange={(e:any)=>set(f.k,e.target.value)} placeholder={f.ph} dir="ltr" type={f.num?"number":"text"} style={{width:"100%",padding:"10px 12px",borderRadius:8,border:`1.5px solid ${BRD}`,background:BG,fontSize:13,color:T1,transition:"border-color .2s,box-shadow .2s"}} onFocus={(e:any)=>{e.target.style.borderColor=BL;e.target.style.boxShadow=`0 0 0 3px ${BL}15`;}} onBlur={(e:any)=>{e.target.style.borderColor=BRD;e.target.style.boxShadow="none";}}/></div>)}
         </div>
       </div>)}</div>
-      <div style={{padding:"12px 20px 16px",borderTop:`1px solid ${BRD}`,display:"flex",gap:8,position:"sticky",bottom:0,background:BG3,borderRadius:"0 0 16px 16px"}}><button onClick={()=>{if(t.coin&&t.entry&&t.sl)onSave(recalc(t));}} style={{flex:1,padding:"12px",borderRadius:10,border:"none",cursor:"pointer",background:(!t.coin||!t.entry||!t.sl)?T4:BL,color:"#fff",fontSize:14,fontWeight:700,opacity:(!t.coin||!t.entry||!t.sl)?.35:1}}>שמור עסקה</button><button onClick={onClose} style={{padding:"12px 20px",borderRadius:10,border:`1.5px solid ${BRD}`,background:"transparent",color:T2,fontSize:13,fontWeight:600,cursor:"pointer"}}>ביטול</button></div>
+      <div style={{padding:"12px 20px 16px",borderTop:`1px solid ${BRD}`,display:"flex",gap:8,position:"sticky",bottom:0,background:BG3,borderRadius:"0 0 16px 16px"}}><button onClick={()=>{if(t.coin&&t.entry&&t.sl)onSave(recalc(t));}} style={{flex:1,padding:"12px",borderRadius:10,border:"none",cursor:"pointer",background:(!t.coin||!t.entry||!t.sl)?T4:BL,color:"#fff",fontSize:14,fontWeight:700,opacity:(!t.coin||!t.entry||!t.sl)?.35:1}}>{S.saveTrade}</button><button onClick={onClose} style={{padding:"12px 20px",borderRadius:10,border:`1.5px solid ${BRD}`,background:"transparent",color:T2,fontSize:13,fontWeight:600,cursor:"pointer"}}>{S.cancel}</button></div>
     </div>
   </div>;
 }
@@ -164,14 +251,14 @@ function QI({v,set,ph,num,w}:{v:string;set:(v:string)=>void;ph:string;num?:boole
 function SBtn({onClick,children}:{onClick:()=>void;children:React.ReactNode}){return <button onClick={onClick} style={{background:BG3,border:`1px solid ${BRD}`,borderRadius:8,padding:"6px 14px",color:T2,fontSize:11,fontWeight:600,cursor:"pointer",transition:"all .15s"}} onMouseEnter={(e:any)=>{e.target.style.borderColor=BRDH;e.target.style.color=T1;}} onMouseLeave={(e:any)=>{e.target.style.borderColor=BRD;e.target.style.color=T2;}}>{children}</button>;}
 function Crd({t,children,s}:{t:string;children:React.ReactNode;s?:any}){return <div style={{background:BG3,border:`1px solid ${BRD}`,borderRadius:10,padding:"clamp(12px,2vw,16px)",...s}}>{t&&<div style={{fontSize:10,fontWeight:700,color:T3,letterSpacing:.5,marginBottom:10}}>{t}</div>}{children}</div>;}
 function TT({head,rows}:{head:string[];rows:string[][]}){return <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}><thead><tr>{head.map((h:string,i:number)=><th key={i} style={{padding:"3px 4px",textAlign:i?"center" as const:"right" as const,color:T3,fontWeight:600,fontSize:9}}>{h}</th>)}</tr></thead><tbody>{rows.map((r:string[],i:number)=><tr key={i} style={{borderBottom:`1px solid ${BRD}`}}>{r.map((c:string,j:number)=><td key={j} style={{padding:"5px 4px",textAlign:j?"center" as const:"right" as const,color:j?rc(parseFloat(c)):T2,fontWeight:j?700:400}}>{c}</td>)}</tr>)}</tbody></table>;}
-function DirC({l,d,c}:{l:string;d:any;c:string}){return <div style={{background:BG3,border:`1px solid ${BRD}`,borderRadius:10,padding:14}}><div style={{fontSize:10,fontWeight:700,color:c,marginBottom:8,display:"flex",alignItems:"center",gap:5}}><span style={{width:6,height:6,borderRadius:"50%",background:c,display:"inline-block"}}/>{l}</div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"4px 14px",fontSize:11}}>{[["עסקאות",d.n,T1],["ניצחון",fp(d.wp),c],["סה״כ R",fm(d.totR),rc(d.totR)],["ממוצע",fm(d.avgR),rc(d.avgR)]].map(([k,v,vc]:any)=><div key={k} style={{color:T3}}>{k}: <span style={{color:vc,fontWeight:700}}>{v}</span></div>)}</div></div>;}
+function DirC({l,d,c,L}:{l:string;d:any;c:string;L?:BTLang}){const S=BT_STR[L||'en'];return <div style={{background:BG3,border:`1px solid ${BRD}`,borderRadius:10,padding:14}}><div style={{fontSize:10,fontWeight:700,color:c,marginBottom:8,display:"flex",alignItems:"center",gap:5}}><span style={{width:6,height:6,borderRadius:"50%",background:c,display:"inline-block"}}/>{l}</div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"4px 14px",fontSize:11}}>{[[S.trades,d.n,T1],[S.win,fp(d.wp),c],[S.totalR,fm(d.totR),rc(d.totR)],[S.avg,fm(d.avgR),rc(d.avgR)]].map(([k,v,vc]:any)=><div key={k} style={{color:T3}}>{k}: <span style={{color:vc,fontWeight:700}}>{v}</span></div>)}</div></div>;}
 function Seg({opts,v,s}:{opts:string[][];v:string;s:(v:string)=>void}){return <div style={{display:"flex",gap:2,background:BG,borderRadius:8,padding:3,border:`1px solid ${BRD}`}}>{opts.map(([k,l])=><button key={k} onClick={()=>s(k)} style={{padding:"6px 12px",borderRadius:6,border:"none",cursor:"pointer",fontSize:11,fontWeight:600,fontFamily:"inherit",background:v===k?BL:"transparent",color:v===k?"#fff":T3,transition:"all .15s"}}>{l}</button>)}</div>;}
 
 
 // ═══════════════════════════════════════════
 // ENTRY ANIMATION — Discretionary Trading Portal
 // ═══════════════════════════════════════════
-function BacktestEntryScreen({ onEnter, onSkip }: { onEnter: () => void; onSkip: () => void }) {
+function BacktestEntryScreen({ onEnter, onSkip, L }: { onEnter: () => void; onSkip: () => void; L: BTLang }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [phase, setPhase] = useState<'boot' | 'ready' | 'portal' | 'done'>('boot');
 
@@ -346,7 +433,7 @@ function BacktestEntryScreen({ onEnter, onSkip }: { onEnter: () => void; onSkip:
           BACKTEST JOURNAL
         </div>
         <div style={{ fontSize: 'clamp(24px,7vw,48px)', fontWeight: 900, color: BL, letterSpacing: -2, textShadow: `0 0 60px ${CY}44, 0 0 30px ${BL}33`, opacity: phase === 'ready' ? 1 : 0, transition: 'opacity 0.5s 0.4s' }}>
-          יומן באק-טסט
+          {BT_STR[L].appName}
         </div>
         <div style={{ fontSize: 'clamp(11px,2.5vw,14px)', color: T2, marginTop: 8, letterSpacing: 3, opacity: phase === 'ready' ? 1 : 0, transition: 'opacity 0.5s 0.6s' }}>
           OrcaInvestment
@@ -364,7 +451,7 @@ function BacktestEntryScreen({ onEnter, onSkip }: { onEnter: () => void; onSkip:
             onMouseEnter={(e: any) => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = `0 8px 40px ${BL}66`; }}
             onMouseLeave={(e: any) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = `0 4px 30px ${BL}44`; }}
           >
-            כניסה למערכת
+            {BT_STR[L].enter}
           </button>
         )}
       </div>
@@ -383,7 +470,7 @@ function BacktestEntryScreen({ onEnter, onSkip }: { onEnter: () => void; onSkip:
         position: 'absolute', bottom: 'max(24px, env(safe-area-inset-bottom, 24px))', left: '50%', transform: 'translateX(-50%)',
         background: 'none', border: `1px solid ${T4}`, borderRadius: 6,
         padding: '6px 16px', color: T3, fontSize: 11, cursor: 'pointer', zIndex: 30,
-      }}>דלג</button>
+      }}>{BT_STR[L].skip}</button>
     </div>
   );
 }
@@ -393,6 +480,9 @@ function BacktestEntryScreen({ onEnter, onSkip }: { onEnter: () => void; onSkip:
 // MAIN BACKTEST COMPONENT (wrapped for dimension)
 // ═══════════════════════════════════════════
 function BacktestApp({ onReturn }: { onReturn: () => void }) {
+  const { isRTL } = useLang();
+  const L: BTLang = isRTL ? 'he' : 'en';
+  const S = BT_STR[L];
   const[trades,setTrades]=useState<any[]>([]);const[loading,setLoading]=useState(true);const[tab,setTab]=useState("trades");const[showForm,setShowForm]=useState(false);const[editModal,setEditModal]=useState<any>(null);const[macDir,setMacDir]=useState("all");const[macDim,setMacDim]=useState("wd");const[search,setSearch]=useState("");const[filterDir,setFilterDir]=useState("all");const[filterCoin,setFilterCoin]=useState("all");const[sortBy,setSortBy]=useState("date_d");const[qa,setQa]=useState({coin:"",entry:"",sl:"",exit:""});const[lastX,setLastX]=useState(0);const[showFilters,setShowFilters]=useState(false);const[confirmDel,setConfirmDel]=useState<string|null>(null);const[showTut,setShowTut]=useState(true);const[locked,setLocked]=useState(false);
   const[exitingToOrca,setExitingToOrca]=useState(false);
 
@@ -423,15 +513,15 @@ function BacktestApp({ onReturn }: { onReturn: () => void }) {
   }, [onReturn]);
 
   // Lock screen
-  const Lock=({onUnlock}:{onUnlock:()=>void})=>{const[ph,setPh]=useState(0);const go=()=>{setPh(1);setTimeout(()=>setPh(2),600);setTimeout(onUnlock,1100);};return <div style={{position:"fixed",inset:0,zIndex:9000,background:"rgba(12,15,20,.94)",backdropFilter:"blur(10px)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",transition:"opacity .4s",opacity:ph===2?0:1,pointerEvents:ph===2?"none":"auto"}}><div style={{width:64,height:64,borderRadius:"50%",border:`2px solid ${ph>=1?BL:T4}`,display:"flex",alignItems:"center",justifyContent:"center",animation:ph===1?"lockGlow .3s":"none"}}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={ph>=1?BL:T3} strokeWidth="2" strokeLinecap="round">{ph>=1?<><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 019.9-1"/></>:<><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></>}</svg></div>{ph===0&&<><div style={{marginTop:12,fontSize:13,color:T3}}>המערכת נעולה</div><button onClick={go} style={{marginTop:16,background:"none",border:`1px solid ${T4}`,borderRadius:10,padding:"10px 28px",color:T2,fontSize:13,fontWeight:600,cursor:"pointer"}} onMouseEnter={(e:any)=>{e.currentTarget.style.borderColor=BL;e.currentTarget.style.color=BL;}} onMouseLeave={(e:any)=>{e.currentTarget.style.borderColor=T4;e.currentTarget.style.color=T2;}}>פתח נעילה</button></>}</div>;};
+  const Lock=({onUnlock}:{onUnlock:()=>void})=>{const[ph,setPh]=useState(0);const go=()=>{setPh(1);setTimeout(()=>setPh(2),600);setTimeout(onUnlock,1100);};return <div style={{position:"fixed",inset:0,zIndex:9000,background:"rgba(12,15,20,.94)",backdropFilter:"blur(10px)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",transition:"opacity .4s",opacity:ph===2?0:1,pointerEvents:ph===2?"none":"auto"}}><div style={{width:64,height:64,borderRadius:"50%",border:`2px solid ${ph>=1?BL:T4}`,display:"flex",alignItems:"center",justifyContent:"center",animation:ph===1?"lockGlow .3s":"none"}}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={ph>=1?BL:T3} strokeWidth="2" strokeLinecap="round">{ph>=1?<><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 019.9-1"/></>:<><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></>}</svg></div>{ph===0&&<><div style={{marginTop:12,fontSize:13,color:T3}}>{S.locked}</div><button onClick={go} style={{marginTop:16,background:"none",border:`1px solid ${T4}`,borderRadius:10,padding:"10px 28px",color:T2,fontSize:13,fontWeight:600,cursor:"pointer"}} onMouseEnter={(e:any)=>{e.currentTarget.style.borderColor=BL;e.currentTarget.style.color=BL;}} onMouseLeave={(e:any)=>{e.currentTarget.style.borderColor=T4;e.currentTarget.style.color=T2;}}>{S.unlock}</button></>}</div>;};
 
-  if(loading)return <div className="ox" style={{minHeight:"100dvh",background:BG,display:"flex",alignItems:"center",justifyContent:"center",color:BL}}>טוען...</div>;
+  if(loading)return <div className="ox" style={{minHeight:"100dvh",background:BG,display:"flex",alignItems:"center",justifyContent:"center",color:BL}}>{S.loading}</div>;
 
   const has=trades.length>0;
-  const cols=[{k:"coin",l:"מטבע",w:"9%"},{k:"dir",l:"כיוון",w:"7%"},{k:"entry",l:"כניסה",w:"10%"},{k:"sl",l:"סטופ",w:"10%"},{k:"exit",l:"יציאה",w:"10%"},{k:"r",l:"R",w:"8%"},{k:"entryDT",l:"זמן",w:"14%"},{k:"dur",l:"משך",w:"10%"},{k:"mfeR",l:"MFE",w:"7%"},{k:"maeR",l:"MAE",w:"7%"}];
+  const cols=[{k:"coin",l:S.coin,w:"9%"},{k:"dir",l:S.colDir,w:"7%"},{k:"entry",l:S.entry,w:"10%"},{k:"sl",l:S.sl,w:"10%"},{k:"exit",l:S.exit,w:"10%"},{k:"r",l:"R",w:"8%"},{k:"entryDT",l:S.colTime,w:"14%"},{k:"dur",l:S.colDur,w:"10%"},{k:"mfeR",l:"MFE",w:"7%"},{k:"maeR",l:"MAE",w:"7%"}];
 
   return <div className="ox" style={{
-    minHeight:"100dvh",background:BG,color:T1,direction:"rtl",fontSize:13,
+    minHeight:"100dvh",background:BG,color:T1,direction:isRTL?"rtl":"ltr",fontSize:13,
     opacity: exitingToOrca ? 0 : 1,
     transform: exitingToOrca ? 'scale(0.92)' : 'scale(1)',
     filter: exitingToOrca ? 'blur(12px)' : 'none',
@@ -453,9 +543,9 @@ function BacktestApp({ onReturn }: { onReturn: () => void }) {
     )}
 
     {locked&&<Lock onUnlock={()=>setLocked(false)}/>}
-    {showForm&&<BTTradeForm onSave={addTrade} onClose={()=>setShowForm(false)}/>}
-    {editModal&&<BTTradeForm initial={editModal} onSave={updateTrade} onClose={()=>setEditModal(null)}/>}
-    {confirmDel&&<div style={{position:"fixed",inset:0,zIndex:8500,background:"rgba(0,0,0,.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setConfirmDel(null)}><div className="pop" onClick={(e:any)=>e.stopPropagation()} style={{background:BG3,borderRadius:12,padding:24,textAlign:"center",border:`1px solid ${BRD}`,maxWidth:320}}><div style={{fontSize:14,fontWeight:600,color:T1,marginBottom:12}}>למחוק?</div><div style={{display:"flex",gap:8,justifyContent:"center"}}><button onClick={()=>del(confirmDel)} style={{background:RD,border:"none",borderRadius:8,padding:"8px 24px",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}}>מחק</button><button onClick={()=>setConfirmDel(null)} style={{background:"none",border:`1px solid ${BRD}`,borderRadius:8,padding:"8px 20px",color:T2,fontSize:12,cursor:"pointer"}}>ביטול</button></div></div></div>}
+    {showForm&&<BTTradeForm L={L} onSave={addTrade} onClose={()=>setShowForm(false)}/>}
+    {editModal&&<BTTradeForm L={L} initial={editModal} onSave={updateTrade} onClose={()=>setEditModal(null)}/>}
+    {confirmDel&&<div style={{position:"fixed",inset:0,zIndex:8500,background:"rgba(0,0,0,.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setConfirmDel(null)}><div className="pop" onClick={(e:any)=>e.stopPropagation()} style={{background:BG3,borderRadius:12,padding:24,textAlign:"center",border:`1px solid ${BRD}`,maxWidth:320}}><div style={{fontSize:14,fontWeight:600,color:T1,marginBottom:12}}>{S.deleteQ}</div><div style={{display:"flex",gap:8,justifyContent:"center"}}><button onClick={()=>del(confirmDel)} style={{background:RD,border:"none",borderRadius:8,padding:"8px 24px",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}}>{S.del}</button><button onClick={()=>setConfirmDel(null)} style={{background:"none",border:`1px solid ${BRD}`,borderRadius:8,padding:"8px 20px",color:T2,fontSize:12,cursor:"pointer"}}>{S.cancel}</button></div></div></div>}
 
     <header style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px clamp(12px,3vw,20px)",background:BG2,borderBottom:`1px solid ${BRD}`,gap:8,flexWrap:"wrap"}}>
       <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -467,36 +557,36 @@ function BacktestApp({ onReturn }: { onReturn: () => void }) {
           onMouseEnter={(e:any)=>{e.currentTarget.style.borderColor=BL;e.currentTarget.style.boxShadow=`0 0 12px ${BL}20`;}}
           onMouseLeave={(e:any)=>{e.currentTarget.style.borderColor=T4;e.currentTarget.style.boxShadow='none';}}
         >
-          <span>⚔️</span> חזרה ל-OrcaInvestment
+          <span>⚔️</span> {S.back}
         </button>
-        <span style={{fontSize:"clamp(14px,2.5vw,16px)",fontWeight:800,color:BL}}>יומן באק-טסט</span>
+        <span style={{fontSize:"clamp(14px,2.5vw,16px)",fontWeight:800,color:BL}}>{S.appName}</span>
         {has&&<span style={{fontSize:10,color:rc(allStats.totR),fontWeight:700}}>{fm(allStats.totR)}R</span>}
       </div>
       <div style={{display:"flex",gap:4,alignItems:"center",flexWrap:"wrap"}}>
-        <button onClick={()=>setTab("chart")} style={{background:tab==="chart"?BL:"none",border:`1px solid ${tab==="chart"?BL:BRD}`,borderRadius:8,padding:"6px 12px",color:tab==="chart"?"#fff":BL2,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>📈 גרף</button>
-        <SBtn onClick={imp}>ייבוא</SBtn><SBtn onClick={jsonX}>JSON</SBtn><SBtn onClick={csvX}>CSV</SBtn>
+        <button onClick={()=>setTab("chart")} style={{background:tab==="chart"?BL:"none",border:`1px solid ${tab==="chart"?BL:BRD}`,borderRadius:8,padding:"6px 12px",color:tab==="chart"?"#fff":BL2,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>📈 {S.chart}</button>
+        <SBtn onClick={imp}>{S.import}</SBtn><SBtn onClick={jsonX}>{S.exportJson}</SBtn><SBtn onClick={csvX}>{S.exportCsv}</SBtn>
         <button onClick={()=>setLocked(true)} style={{background:"none",border:`1px solid ${BRD}`,borderRadius:8,padding:"6px 10px",color:T3,cursor:"pointer",fontSize:13}} onMouseEnter={(e:any)=>{e.currentTarget.style.color=BL;}} onMouseLeave={(e:any)=>{e.currentTarget.style.color=T3;}}>🔒</button>
       </div>
     </header>
 
-    {!has&&tab==="trades"&&<div className="fi" style={{padding:"clamp(20px,4vw,40px) 16px",maxWidth:580,margin:"0 auto"}}>{showTut?<Tutorial onClose={()=>setShowTut(false)} onStart={()=>{setShowTut(false);setShowForm(true);}}/>:<div style={{textAlign:"center",padding:"clamp(20px,6vw,40px) 0"}}><div style={{width:56,height:56,borderRadius:14,background:`${BL}12`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px"}}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={BL} strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg></div><div style={{fontSize:"clamp(18px,4vw,22px)",fontWeight:700,color:T1,marginBottom:20}}>מוכן להתחיל</div><button onClick={()=>setShowForm(true)} style={{background:BL,border:"none",borderRadius:10,padding:"12px 32px",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"}}>+ עסקה ראשונה</button><div style={{marginTop:12}}><button onClick={()=>setShowTut(true)} style={{background:"none",border:"none",color:BL2,fontSize:11,cursor:"pointer",textDecoration:"underline"}}>הדגמה</button><span style={{color:T4,margin:"0 8px"}}>·</span><button onClick={imp} style={{background:"none",border:"none",color:T3,fontSize:11,cursor:"pointer",textDecoration:"underline"}}>ייבוא</button></div></div>}</div>}
+    {!has&&tab==="trades"&&<div className="fi" style={{padding:"clamp(20px,4vw,40px) 16px",maxWidth:580,margin:"0 auto"}}>{showTut?<Tutorial L={L} onClose={()=>setShowTut(false)} onStart={()=>{setShowTut(false);setShowForm(true);}}/>:<div style={{textAlign:"center",padding:"clamp(20px,6vw,40px) 0"}}><div style={{width:56,height:56,borderRadius:14,background:`${BL}12`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px"}}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={BL} strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg></div><div style={{fontSize:"clamp(18px,4vw,22px)",fontWeight:700,color:T1,marginBottom:20}}>{S.ready}</div><button onClick={()=>setShowForm(true)} style={{background:BL,border:"none",borderRadius:10,padding:"12px 32px",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"}}>{S.firstTradeBtn}</button><div style={{marginTop:12}}><button onClick={()=>setShowTut(true)} style={{background:"none",border:"none",color:BL2,fontSize:11,cursor:"pointer",textDecoration:"underline"}}>{S.demoLink}</button><span style={{color:T4,margin:"0 8px"}}>·</span><button onClick={imp} style={{background:"none",border:"none",color:T3,fontSize:11,cursor:"pointer",textDecoration:"underline"}}>{S.import}</button></div></div>}</div>}
 
-    {has&&<><nav style={{display:"flex",background:BG2,borderBottom:`1px solid ${BRD}`,padding:"0 clamp(8px,2vw,16px)",overflowX:"auto"}}>{[["chart","גרף"],["trades","עסקאות"],["analytics","ניתוח"],["macro","מאקרו"],["equity","עקומה"]].map(([k,l])=><button key={k} onClick={()=>setTab(k)} style={{padding:"10px 16px",border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600,background:"transparent",whiteSpace:"nowrap",color:tab===k?BL:T3,borderBottom:tab===k?`2px solid ${BL}`:"2px solid transparent",transition:"all .15s"}}>{l}</button>)}</nav>
+    {has&&<><nav style={{display:"flex",background:BG2,borderBottom:`1px solid ${BRD}`,padding:"0 clamp(8px,2vw,16px)",overflowX:"auto"}}>{[["chart",S.tabs.chart],["trades",S.tabs.trades],["analytics",S.tabs.analytics],["macro",S.tabs.macro],["equity",S.tabs.equity]].map(([k,l])=><button key={k} onClick={()=>setTab(k)} style={{padding:"10px 16px",border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600,background:"transparent",whiteSpace:"nowrap",color:tab===k?BL:T3,borderBottom:tab===k?`2px solid ${BL}`:"2px solid transparent",transition:"all .15s"}}>{l}</button>)}</nav>
 
     {tab==="trades"&&<div style={{padding:"clamp(12px,2vw,20px)",maxWidth:1100,margin:"0 auto"}}>
-      <div className="ox-qa-row" style={{display:"flex",gap:6,marginBottom:14,alignItems:"center",background:BG3,borderRadius:10,padding:"8px 12px",border:`1px solid ${BRD}`}}><span style={{fontSize:10,color:T3,fontWeight:600,whiteSpace:"nowrap"}}>מהיר</span><QI v={qa.coin} set={(v:string)=>setQa(p=>({...p,coin:v}))} ph="מטבע" w={60}/><QI v={qa.entry} set={(v:string)=>setQa(p=>({...p,entry:v}))} ph="כניסה" num/><QI v={qa.sl} set={(v:string)=>setQa(p=>({...p,sl:v}))} ph="סטופ" num/><QI v={qa.exit} set={(v:string)=>setQa(p=>({...p,exit:v}))} ph="יציאה" num/><button onClick={quickAdd} style={{background:BL,border:"none",borderRadius:6,padding:"7px 14px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",opacity:(!qa.coin||!qa.entry||!qa.sl||!qa.exit)?.35:1}}>+</button><div style={{flex:1}}/><button onClick={()=>setShowForm(true)} style={{background:"none",border:`1px solid ${BRD}`,borderRadius:6,padding:"6px 12px",color:BL2,fontSize:10,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>טופס מלא</button></div>
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}><button onClick={()=>setShowFilters(!showFilters)} style={{background:"none",border:`1px solid ${showFilters?BL:BRD}`,borderRadius:6,padding:"5px 10px",color:showFilters?BL:T3,fontSize:10,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:4}}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>סינון</button><span style={{fontSize:10,color:T3}}>{displayed.length}/{trades.length}</span><div style={{flex:1}}/><div style={{display:"flex",gap:2}}>{[0,10,20,50].map(n=><button key={n} onClick={()=>setLastX(n)} style={{padding:"4px 8px",borderRadius:5,border:"none",cursor:"pointer",fontSize:9,fontWeight:600,background:lastX===n?BL:"transparent",color:lastX===n?"#fff":T3}}>{n===0?"הכל":n}</button>)}</div></div>
-      {showFilters&&<div className="fi" style={{display:"flex",gap:6,marginBottom:10,flexWrap:"wrap",background:BG3,borderRadius:8,padding:"8px 10px",border:`1px solid ${BRD}`}}><input value={search} onChange={(e:any)=>setSearch(e.target.value)} placeholder="חיפוש..." dir="rtl" style={{...inp,flex:1,minWidth:80}}/><select value={filterDir} onChange={(e:any)=>setFilterDir(e.target.value)} style={{...inp,width:"auto"}}><option value="all">הכל</option><option value="Long">לונג</option><option value="Short">שורט</option></select>{uCoins.length>1&&<select value={filterCoin} onChange={(e:any)=>setFilterCoin(e.target.value)} style={{...inp,width:"auto"}}><option value="all">כל המטבעות</option>{uCoins.map((c:string)=><option key={c} value={c}>{c}</option>)}</select>}<select value={sortBy} onChange={(e:any)=>setSortBy(e.target.value)} style={{...inp,width:"auto"}}><option value="date_d">חדש→ישן</option><option value="date_a">ישן→חדש</option><option value="r_d">R↓</option><option value="r_a">R↑</option></select></div>}
+      <div className="ox-qa-row" style={{display:"flex",gap:6,marginBottom:14,alignItems:"center",background:BG3,borderRadius:10,padding:"8px 12px",border:`1px solid ${BRD}`}}><span style={{fontSize:10,color:T3,fontWeight:600,whiteSpace:"nowrap"}}>{S.quick}</span><QI v={qa.coin} set={(v:string)=>setQa(p=>({...p,coin:v}))} ph={S.coin} w={60}/><QI v={qa.entry} set={(v:string)=>setQa(p=>({...p,entry:v}))} ph={S.entry} num/><QI v={qa.sl} set={(v:string)=>setQa(p=>({...p,sl:v}))} ph={S.sl} num/><QI v={qa.exit} set={(v:string)=>setQa(p=>({...p,exit:v}))} ph={S.exit} num/><button onClick={quickAdd} style={{background:BL,border:"none",borderRadius:6,padding:"7px 14px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",opacity:(!qa.coin||!qa.entry||!qa.sl||!qa.exit)?.35:1}}>+</button><div style={{flex:1}}/><button onClick={()=>setShowForm(true)} style={{background:"none",border:`1px solid ${BRD}`,borderRadius:6,padding:"6px 12px",color:BL2,fontSize:10,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>{S.fullForm}</button></div>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}><button onClick={()=>setShowFilters(!showFilters)} style={{background:"none",border:`1px solid ${showFilters?BL:BRD}`,borderRadius:6,padding:"5px 10px",color:showFilters?BL:T3,fontSize:10,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:4}}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>{S.filter}</button><span style={{fontSize:10,color:T3}}>{displayed.length}/{trades.length}</span><div style={{flex:1}}/><div style={{display:"flex",gap:2}}>{[0,10,20,50].map(n=><button key={n} onClick={()=>setLastX(n)} style={{padding:"4px 8px",borderRadius:5,border:"none",cursor:"pointer",fontSize:9,fontWeight:600,background:lastX===n?BL:"transparent",color:lastX===n?"#fff":T3}}>{n===0?S.all:n}</button>)}</div></div>
+      {showFilters&&<div className="fi" style={{display:"flex",gap:6,marginBottom:10,flexWrap:"wrap",background:BG3,borderRadius:8,padding:"8px 10px",border:`1px solid ${BRD}`}}><input value={search} onChange={(e:any)=>setSearch(e.target.value)} placeholder={S.search} dir={isRTL?"rtl":"ltr"} style={{...inp,flex:1,minWidth:80}}/><select value={filterDir} onChange={(e:any)=>setFilterDir(e.target.value)} style={{...inp,width:"auto"}}><option value="all">{S.all}</option><option value="Long">{S.long}</option><option value="Short">{S.short}</option></select>{uCoins.length>1&&<select value={filterCoin} onChange={(e:any)=>setFilterCoin(e.target.value)} style={{...inp,width:"auto"}}><option value="all">{S.allCoins}</option>{uCoins.map((c:string)=><option key={c} value={c}>{c}</option>)}</select>}<select value={sortBy} onChange={(e:any)=>setSortBy(e.target.value)} style={{...inp,width:"auto"}}><option value="date_d">{S.newToOld}</option><option value="date_a">{S.oldToNew}</option><option value="r_d">R↓</option><option value="r_a">R↑</option></select></div>}
       {stats.eq.length>2&&<div style={{borderRadius:8,overflow:"hidden",marginBottom:12,height:50,background:BG3,border:`1px solid ${BRD}`}}><ResponsiveContainer width="100%" height={50}><AreaChart data={stats.eq} margin={{top:0,right:0,bottom:0,left:0}}><defs><linearGradient id="me" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={BL} stopOpacity={.15}/><stop offset="100%" stopColor={BL} stopOpacity={0}/></linearGradient></defs><Area type="monotone" dataKey="c" stroke={BL} strokeWidth={1.5} fill="url(#me)" dot={false}/></AreaChart></ResponsiveContainer></div>}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:5,marginBottom:14}}>{[["ניצחון",fp(stats.wp),stats.wp>.5?G:RD],["תוחלת",fm(stats.ev),rc(stats.ev)],["סה״כ R",fm(stats.totR),rc(stats.totR)],["ממוצע",fm(stats.avgR),rc(stats.avgR)]].map(([l,v,c]:any)=><div key={l} style={{background:BG3,borderRadius:8,padding:"7px 8px",textAlign:"center",border:`1px solid ${BRD}`}}><div style={{fontSize:8,color:T3,fontWeight:700}}>{l}</div><div style={{fontSize:14,fontWeight:800,color:c}}>{v}</div></div>)}</div>
-      <div style={{background:BG3,borderRadius:10,border:`1px solid ${BRD}`,overflow:"hidden"}}><div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",minWidth:700}}><thead><tr style={{borderBottom:`1px solid ${BRDH}`}}><th style={{...th,width:32}}>#</th>{cols.map((c:any)=><th key={c.k} style={{...th,width:c.w}}>{c.l}</th>)}<th style={{...th,width:32}}/></tr></thead><tbody>{displayed.map((t:any,i:number)=><tr key={t.id} className="notion-row" style={{borderBottom:`1px solid ${BRD}18`}}><td style={td}><span style={{color:T4,fontSize:10}}>{i+1}</span></td><td style={td}><span style={{fontWeight:700}}>{t.coin||"—"}</span></td><td style={td}>{t.dir?<span style={{padding:"2px 7px",borderRadius:4,fontSize:10,fontWeight:700,background:t.dir==="Long"?G+"15":RD+"15",color:t.dir==="Long"?G:RD}}>{t.dir==="Long"?"L":"S"}</span>:<span style={{color:T4}}>—</span>}</td><td style={{...td,direction:"ltr",textAlign:"right" as const}}>{t.entry||"—"}</td><td style={{...td,direction:"ltr",textAlign:"right" as const,color:T3}}>{t.sl||"—"}</td><td style={{...td,direction:"ltr",textAlign:"right" as const}}>{t.exit||"—"}</td><td style={td}><span style={{fontWeight:700,color:rc(t.r)}}>{t.r!=null?fm(t.r):"—"}</span></td><td style={{...td,fontSize:11,color:T3,direction:"ltr",textAlign:"right" as const}}>{t.entryDT||"—"}</td><td style={{...td,fontSize:11,color:T3}}>{t.dur||"—"}</td><td style={td}><span style={{color:t.mfeR!=null?G:T4,fontSize:11}}>{t.mfeR!=null?fm(t.mfeR):"—"}</span></td><td style={td}><span style={{color:t.maeR!=null?RD:T4,fontSize:11}}>{t.maeR!=null?fm(t.maeR):"—"}</span></td><td style={{...td,textAlign:"center" as const}}><div style={{display:"flex",gap:4,justifyContent:"center",opacity:.4,transition:"opacity .15s"}} onMouseEnter={(e:any)=>{e.currentTarget.style.opacity="1";}} onMouseLeave={(e:any)=>{e.currentTarget.style.opacity=".4";}}><button onClick={()=>setEditModal(t)} style={{background:"none",border:"none",color:BL2,cursor:"pointer",fontSize:11,padding:2}}>✎</button><button onClick={()=>setConfirmDel(t.id)} style={{background:"none",border:"none",color:RD,cursor:"pointer",fontSize:11,padding:2}}>×</button></div></td></tr>)}{displayed.length===0&&<tr><td colSpan={12} style={{padding:24,textAlign:"center",color:T3}}>אין תוצאות</td></tr>}</tbody></table></div></div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:5,marginBottom:14}}>{[[S.win,fp(stats.wp),stats.wp>.5?G:RD],[S.ev,fm(stats.ev),rc(stats.ev)],[S.totalR,fm(stats.totR),rc(stats.totR)],[S.avg,fm(stats.avgR),rc(stats.avgR)]].map(([l,v,c]:any)=><div key={l} style={{background:BG3,borderRadius:8,padding:"7px 8px",textAlign:"center",border:`1px solid ${BRD}`}}><div style={{fontSize:8,color:T3,fontWeight:700}}>{l}</div><div style={{fontSize:14,fontWeight:800,color:c}}>{v}</div></div>)}</div>
+      <div style={{background:BG3,borderRadius:10,border:`1px solid ${BRD}`,overflow:"hidden"}}><div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",minWidth:700}}><thead><tr style={{borderBottom:`1px solid ${BRDH}`}}><th style={{...th,width:32}}>#</th>{cols.map((c:any)=><th key={c.k} style={{...th,width:c.w}}>{c.l}</th>)}<th style={{...th,width:32}}/></tr></thead><tbody>{displayed.map((t:any,i:number)=><tr key={t.id} className="notion-row" style={{borderBottom:`1px solid ${BRD}18`}}><td style={td}><span style={{color:T4,fontSize:10}}>{i+1}</span></td><td style={td}><span style={{fontWeight:700}}>{t.coin||"—"}</span></td><td style={td}>{t.dir?<span style={{padding:"2px 7px",borderRadius:4,fontSize:10,fontWeight:700,background:t.dir==="Long"?G+"15":RD+"15",color:t.dir==="Long"?G:RD}}>{t.dir==="Long"?"L":"S"}</span>:<span style={{color:T4}}>—</span>}</td><td style={{...td,direction:"ltr",textAlign:"right" as const}}>{t.entry||"—"}</td><td style={{...td,direction:"ltr",textAlign:"right" as const,color:T3}}>{t.sl||"—"}</td><td style={{...td,direction:"ltr",textAlign:"right" as const}}>{t.exit||"—"}</td><td style={td}><span style={{fontWeight:700,color:rc(t.r)}}>{t.r!=null?fm(t.r):"—"}</span></td><td style={{...td,fontSize:11,color:T3,direction:"ltr",textAlign:"right" as const}}>{t.entryDT||"—"}</td><td style={{...td,fontSize:11,color:T3}}>{t.dur||"—"}</td><td style={td}><span style={{color:t.mfeR!=null?G:T4,fontSize:11}}>{t.mfeR!=null?fm(t.mfeR):"—"}</span></td><td style={td}><span style={{color:t.maeR!=null?RD:T4,fontSize:11}}>{t.maeR!=null?fm(t.maeR):"—"}</span></td><td style={{...td,textAlign:"center" as const}}><div style={{display:"flex",gap:4,justifyContent:"center",opacity:.4,transition:"opacity .15s"}} onMouseEnter={(e:any)=>{e.currentTarget.style.opacity="1";}} onMouseLeave={(e:any)=>{e.currentTarget.style.opacity=".4";}}><button onClick={()=>setEditModal(t)} style={{background:"none",border:"none",color:BL2,cursor:"pointer",fontSize:11,padding:2}}>✎</button><button onClick={()=>setConfirmDel(t.id)} style={{background:"none",border:"none",color:RD,cursor:"pointer",fontSize:11,padding:2}}>×</button></div></td></tr>)}{displayed.length===0&&<tr><td colSpan={12} style={{padding:24,textAlign:"center",color:T3}}>{S.noResults}</td></tr>}</tbody></table></div></div>
     </div>}
 
-    {tab==="analytics"&&<div className="fi" style={{padding:"clamp(12px,2vw,20px)",maxWidth:900,margin:"0 auto"}}><div style={{textAlign:"center",marginBottom:20}}><div style={{fontSize:10,color:T3,fontWeight:700,letterSpacing:2}}>תשואה כוללת</div><div style={{fontSize:"clamp(24px,5vw,38px)",fontWeight:900,color:rc(stats.totR),letterSpacing:-2,lineHeight:1}}>{fm(stats.totR)}R</div><div style={{fontSize:10,color:T3,marginTop:4}}>{stats.n} עסקאות</div></div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(100px,1fr))",gap:6,marginBottom:16}}>{[["ניצחון",fp(stats.wp),stats.wp>.5?G:RD],["תוחלת",fm(stats.ev),rc(stats.ev)],["ממוצע",fm(stats.avgR),rc(stats.avgR)],["חציון",fm(stats.medR),rc(stats.medR)],["מקסימלי",fm(stats.maxWR),G],["רצף",`${stats.mxW}W/${stats.mxL}L`,T2]].map(([l,v,c]:any,i:number)=><div key={i} style={{background:BG3,border:`1px solid ${BRD}`,borderRadius:10,padding:12}}><div style={{fontSize:8,color:T3,fontWeight:700,marginBottom:3}}>{l}</div><div style={{fontSize:"clamp(14px,2vw,18px)",fontWeight:800,color:c}}>{v}</div></div>)}</div>{Object.keys(stats.coins).length>1&&<Crd t="לפי מטבע" s={{marginBottom:12}}><div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{Object.entries(stats.coins).sort((a:any,b:any)=>b[1].totR-a[1].totR).map(([c,d]:any)=><div key={c} style={{flex:"1 1 75px",minWidth:65,background:BG2,borderRadius:8,padding:"8px 6px",textAlign:"center",border:`1px solid ${BRD}`,borderBottom:`3px solid ${rc(d.totR)}`}}><div style={{fontSize:12,fontWeight:800}}>{c}</div><div style={{fontSize:13,fontWeight:800,color:rc(d.totR)}}>{fm(d.totR)}R</div><div style={{fontSize:9,color:T3}}>{d.n}·{fp(d.wp)}</div></div>)}</div></Crd>}<div className="ox-2col" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}><Crd t="ממוצעים"><TT head={["","כללי","לונג","שורט"]} rows={[["ממוצע",fm(stats.avgR),fm(stats.lo.avgR),fm(stats.sh.avgR)],["ניצחון",fm(stats.avgWR),fm(stats.lo.avgWR),fm(stats.sh.avgWR)],["הפסד",fm(stats.avgLR),fm(stats.lo.avgLR),fm(stats.sh.avgLR)],["סה״כ",fm(stats.totR),fm(stats.lo.totR),fm(stats.sh.totR)]]}/></Crd><Crd t="תשואה/זמן">{[["יומי",stats.rtr.d],["שבועי",stats.rtr.w],["חודשי",stats.rtr.m],["רבעוני",stats.rtr.q],["שנתי",stats.rtr.y]].map(([l,v]:any)=><div key={l} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:`1px solid ${BRD}`}}><span style={{color:T3,fontSize:11}}>{l}</span><span style={{fontWeight:700,color:rc(v),fontSize:12}}>{fm(v)}</span></div>)}</Crd></div><Crd t="MAE" s={{marginBottom:12}}><div style={{display:"flex",gap:8}}>{stats.maeDist.map((d:any)=><div key={d.th} style={{flex:1,textAlign:"center",padding:12,background:BG2,borderRadius:8,border:`1px solid ${BRD}`}}><div style={{fontSize:9,color:T3}}>≤{d.th}R</div><div style={{fontSize:"clamp(16px,3vw,22px)",fontWeight:800,color:BL}}>{fp(d.pct)}</div></div>)}</div></Crd><div className="ox-2col" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}><DirC l="לונג" d={stats.lo} c={G}/><DirC l="שורט" d={stats.sh} c={RD}/></div></div>}
+    {tab==="analytics"&&<div className="fi" style={{padding:"clamp(12px,2vw,20px)",maxWidth:900,margin:"0 auto"}}><div style={{textAlign:"center",marginBottom:20}}><div style={{fontSize:10,color:T3,fontWeight:700,letterSpacing:2}}>{S.totalReturn}</div><div style={{fontSize:"clamp(24px,5vw,38px)",fontWeight:900,color:rc(stats.totR),letterSpacing:-2,lineHeight:1}}>{fm(stats.totR)}R</div><div style={{fontSize:10,color:T3,marginTop:4}}>{stats.n} {S.trades}</div></div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(100px,1fr))",gap:6,marginBottom:16}}>{[[S.win,fp(stats.wp),stats.wp>.5?G:RD],[S.ev,fm(stats.ev),rc(stats.ev)],[S.avg,fm(stats.avgR),rc(stats.avgR)],[S.median,fm(stats.medR),rc(stats.medR)],[S.maxLbl,fm(stats.maxWR),G],[S.streak,`${stats.mxW}W/${stats.mxL}L`,T2]].map(([l,v,c]:any,i:number)=><div key={i} style={{background:BG3,border:`1px solid ${BRD}`,borderRadius:10,padding:12}}><div style={{fontSize:8,color:T3,fontWeight:700,marginBottom:3}}>{l}</div><div style={{fontSize:"clamp(14px,2vw,18px)",fontWeight:800,color:c}}>{v}</div></div>)}</div>{Object.keys(stats.coins).length>1&&<Crd t={S.byCoin} s={{marginBottom:12}}><div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{Object.entries(stats.coins).sort((a:any,b:any)=>b[1].totR-a[1].totR).map(([c,d]:any)=><div key={c} style={{flex:"1 1 75px",minWidth:65,background:BG2,borderRadius:8,padding:"8px 6px",textAlign:"center",border:`1px solid ${BRD}`,borderBottom:`3px solid ${rc(d.totR)}`}}><div style={{fontSize:12,fontWeight:800}}>{c}</div><div style={{fontSize:13,fontWeight:800,color:rc(d.totR)}}>{fm(d.totR)}R</div><div style={{fontSize:9,color:T3}}>{d.n}·{fp(d.wp)}</div></div>)}</div></Crd>}<div className="ox-2col" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}><Crd t={S.averages}><TT head={["",S.general,S.long,S.short]} rows={[[S.avg,fm(stats.avgR),fm(stats.lo.avgR),fm(stats.sh.avgR)],[S.win,fm(stats.avgWR),fm(stats.lo.avgWR),fm(stats.sh.avgWR)],[S.loss,fm(stats.avgLR),fm(stats.lo.avgLR),fm(stats.sh.avgLR)],[S.total,fm(stats.totR),fm(stats.lo.totR),fm(stats.sh.totR)]]}/></Crd><Crd t={S.returnTime}>{[[S.daily,stats.rtr.d],[S.weekly,stats.rtr.w],[S.monthly,stats.rtr.m],[S.quarterly,stats.rtr.q],[S.yearly,stats.rtr.y]].map(([l,v]:any)=><div key={l} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:`1px solid ${BRD}`}}><span style={{color:T3,fontSize:11}}>{l}</span><span style={{fontWeight:700,color:rc(v),fontSize:12}}>{fm(v)}</span></div>)}</Crd></div><Crd t="MAE" s={{marginBottom:12}}><div style={{display:"flex",gap:8}}>{stats.maeDist.map((d:any)=><div key={d.th} style={{flex:1,textAlign:"center",padding:12,background:BG2,borderRadius:8,border:`1px solid ${BRD}`}}><div style={{fontSize:9,color:T3}}>≤{d.th}R</div><div style={{fontSize:"clamp(16px,3vw,22px)",fontWeight:800,color:BL}}>{fp(d.pct)}</div></div>)}</div></Crd><div className="ox-2col" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}><DirC L={L} l={S.long} d={stats.lo} c={G}/><DirC L={L} l={S.short} d={stats.sh} c={RD}/></div></div>}
 
-    {tab==="macro"&&<div className="fi" style={{padding:"clamp(12px,2vw,20px)",maxWidth:900,margin:"0 auto"}}><div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap"}}><Seg opts={[["all","כללי"],["lo","לונג"],["sh","שורט"]]} v={macDir} s={setMacDir}/><Seg opts={[["wd","יום"],["qm","רבע"],["mo","חודש"]]} v={macDim} s={setMacDim}/></div><Crd t="">{(()=>{const d=stats.macro[macDir][macDim],keys=Object.keys(d).map(Number),labs=macDim==="wd"?stats.dayN:macDim==="qm"?stats.qmN:stats.monN;return <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>{keys.map((k:number)=>{const v=d[k],wr=v.n?v.w/v.n:0;return <div key={k} style={{flex:"1 1 55px",minWidth:48,textAlign:"center",padding:"10px 4px",background:BG2,borderRadius:8,borderBottom:v.n?`3px solid ${wr>=.5?G:RD}`:`3px solid ${T4}`}}><div style={{fontSize:9,fontWeight:700,color:T3}}>{labs[k]}</div><div style={{fontSize:14,fontWeight:800,color:v.n?T1:T4}}>{v.n||"—"}</div>{v.n>0&&<div style={{fontSize:9,color:wr>=.5?G:RD,fontWeight:600}}>{fp(wr)}</div>}{v.n>0&&<div style={{fontSize:9,color:rc(v.totR)}}>{fm(v.totR)}R</div>}</div>;})}</div>;})()}</Crd><Crd t="" s={{marginTop:10}}><ResponsiveContainer width="100%" height={200}><BarChart data={(()=>{const d=stats.macro[macDir][macDim],labs=macDim==="wd"?stats.dayN:macDim==="qm"?stats.qmN:stats.monN;return Object.keys(d).map((k:string)=>({n:labs[+k],r:+(d[k]?.totR||0).toFixed(2)}));})()}><CartesianGrid strokeDasharray="3 3" stroke={BRD}/><XAxis dataKey="n" tick={{fill:T3,fontSize:9}} axisLine={false} tickLine={false}/><YAxis tick={{fill:T3,fontSize:9}} axisLine={false} tickLine={false}/><ReferenceLine y={0} stroke={T4}/><Tooltip contentStyle={{background:SURF,border:`1px solid ${BRD}`,borderRadius:8,color:T1,fontSize:11}}/><Bar dataKey="r" radius={[4,4,0,0]}>{Object.keys(stats.macro[macDir][macDim]).map((_:string,i:number)=><Cell key={i} fill={(stats.macro[macDir][macDim] as any)[Object.keys(stats.macro[macDir][macDim])[i]]?.totR>=0?G:RD} fillOpacity={.7}/>)}</Bar></BarChart></ResponsiveContainer></Crd></div>}
+    {tab==="macro"&&<div className="fi" style={{padding:"clamp(12px,2vw,20px)",maxWidth:900,margin:"0 auto"}}><div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap"}}><Seg opts={[["all",S.general],["lo",S.long],["sh",S.short]]} v={macDir} s={setMacDir}/><Seg opts={[["wd",S.day],["qm",S.quarter],["mo",S.month]]} v={macDim} s={setMacDim}/></div><Crd t="">{(()=>{const d=stats.macro[macDir][macDim],keys=Object.keys(d).map(Number),labs=macDim==="wd"?(isRTL?stats.dayN:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]):macDim==="qm"?stats.qmN:(isRTL?stats.monN:["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]);return <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>{keys.map((k:number)=>{const v=d[k],wr=v.n?v.w/v.n:0;return <div key={k} style={{flex:"1 1 55px",minWidth:48,textAlign:"center",padding:"10px 4px",background:BG2,borderRadius:8,borderBottom:v.n?`3px solid ${wr>=.5?G:RD}`:`3px solid ${T4}`}}><div style={{fontSize:9,fontWeight:700,color:T3}}>{labs[k]}</div><div style={{fontSize:14,fontWeight:800,color:v.n?T1:T4}}>{v.n||"—"}</div>{v.n>0&&<div style={{fontSize:9,color:wr>=.5?G:RD,fontWeight:600}}>{fp(wr)}</div>}{v.n>0&&<div style={{fontSize:9,color:rc(v.totR)}}>{fm(v.totR)}R</div>}</div>;})}</div>;})()}</Crd><Crd t="" s={{marginTop:10}}><ResponsiveContainer width="100%" height={200}><BarChart data={(()=>{const d=stats.macro[macDir][macDim],labs=macDim==="wd"?(isRTL?stats.dayN:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]):macDim==="qm"?stats.qmN:(isRTL?stats.monN:["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]);return Object.keys(d).map((k:string)=>({n:labs[+k],r:+(d[k]?.totR||0).toFixed(2)}));})()}><CartesianGrid strokeDasharray="3 3" stroke={BRD}/><XAxis dataKey="n" tick={{fill:T3,fontSize:9}} axisLine={false} tickLine={false}/><YAxis tick={{fill:T3,fontSize:9}} axisLine={false} tickLine={false}/><ReferenceLine y={0} stroke={T4}/><Tooltip contentStyle={{background:SURF,border:`1px solid ${BRD}`,borderRadius:8,color:T1,fontSize:11}}/><Bar dataKey="r" radius={[4,4,0,0]}>{Object.keys(stats.macro[macDir][macDim]).map((_:string,i:number)=><Cell key={i} fill={(stats.macro[macDir][macDim] as any)[Object.keys(stats.macro[macDir][macDim])[i]]?.totR>=0?G:RD} fillOpacity={.7}/>)}</Bar></BarChart></ResponsiveContainer></Crd></div>}
 
-    {tab==="equity"&&<div className="fi" style={{padding:"clamp(12px,2vw,20px)",maxWidth:900,margin:"0 auto"}}><Crd t="עקומת הון">{stats.eq.length>1?<ResponsiveContainer width="100%" height={250}><AreaChart data={stats.eq}><defs><linearGradient id="eG2" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={BL} stopOpacity={.15}/><stop offset="95%" stopColor={BL} stopOpacity={0}/></linearGradient></defs><CartesianGrid strokeDasharray="3 3" stroke={BRD}/><XAxis dataKey="x" tick={{fill:T3,fontSize:9}} axisLine={false} tickLine={false}/><YAxis tick={{fill:T3,fontSize:9}} axisLine={false} tickLine={false}/><ReferenceLine y={0} stroke={T4} strokeDasharray="3 3"/><Tooltip contentStyle={{background:SURF,border:`1px solid ${BRD}`,borderRadius:8,color:T1,fontSize:11}} formatter={(v:any)=>[fm(v),"R"]}/><Area type="monotone" dataKey="c" stroke={BL} strokeWidth={1.5} fill="url(#eG2)" dot={false}/></AreaChart></ResponsiveContainer>:<div style={{textAlign:"center",padding:40,color:T3}}>הוסף עסקאות</div>}</Crd>{stats.eq.length>1&&<><Crd t="R לכל עסקה" s={{marginTop:10}}><ResponsiveContainer width="100%" height={160}><BarChart data={stats.eq}><CartesianGrid strokeDasharray="3 3" stroke={BRD}/><XAxis dataKey="x" tick={{fill:T3,fontSize:9}} axisLine={false} tickLine={false}/><YAxis tick={{fill:T3,fontSize:9}} axisLine={false} tickLine={false}/><ReferenceLine y={0} stroke={T4}/><Bar dataKey="r" radius={[3,3,0,0]}>{stats.eq.map((d:any,i:number)=><Cell key={i} fill={d.r>=0?G:RD} fillOpacity={.65}/>)}</Bar></BarChart></ResponsiveContainer></Crd><Crd t="Drawdown" s={{marginTop:10}}>{(()=>{let pk=0,mx=0;const dd=stats.eq.map((d:any)=>{pk=Math.max(pk,d.c);const v=d.c-pk;mx=Math.min(mx,v);return{x:d.x,dd:+v.toFixed(2)};});return <><div style={{fontSize:10,color:RD,fontWeight:700,marginBottom:6}}>מקסימלי: {fm(mx)}R</div><ResponsiveContainer width="100%" height={120}><AreaChart data={dd}><defs><linearGradient id="dG2" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={RD} stopOpacity={.12}/><stop offset="95%" stopColor={RD} stopOpacity={0}/></linearGradient></defs><CartesianGrid strokeDasharray="3 3" stroke={BRD}/><XAxis dataKey="x" tick={{fill:T3,fontSize:9}} axisLine={false} tickLine={false}/><YAxis tick={{fill:T3,fontSize:9}} axisLine={false} tickLine={false}/><ReferenceLine y={0} stroke={T4}/><Area type="monotone" dataKey="dd" stroke={RD} strokeWidth={1} fill="url(#dG2)" dot={false}/></AreaChart></ResponsiveContainer></>;})()}</Crd></>}</div>}
+    {tab==="equity"&&<div className="fi" style={{padding:"clamp(12px,2vw,20px)",maxWidth:900,margin:"0 auto"}}><Crd t={S.equityCurve}>{stats.eq.length>1?<ResponsiveContainer width="100%" height={250}><AreaChart data={stats.eq}><defs><linearGradient id="eG2" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={BL} stopOpacity={.15}/><stop offset="95%" stopColor={BL} stopOpacity={0}/></linearGradient></defs><CartesianGrid strokeDasharray="3 3" stroke={BRD}/><XAxis dataKey="x" tick={{fill:T3,fontSize:9}} axisLine={false} tickLine={false}/><YAxis tick={{fill:T3,fontSize:9}} axisLine={false} tickLine={false}/><ReferenceLine y={0} stroke={T4} strokeDasharray="3 3"/><Tooltip contentStyle={{background:SURF,border:`1px solid ${BRD}`,borderRadius:8,color:T1,fontSize:11}} formatter={(v:any)=>[fm(v),"R"]}/><Area type="monotone" dataKey="c" stroke={BL} strokeWidth={1.5} fill="url(#eG2)" dot={false}/></AreaChart></ResponsiveContainer>:<div style={{textAlign:"center",padding:40,color:T3}}>{S.addTrades}</div>}</Crd>{stats.eq.length>1&&<><Crd t={S.rPerTrade} s={{marginTop:10}}><ResponsiveContainer width="100%" height={160}><BarChart data={stats.eq}><CartesianGrid strokeDasharray="3 3" stroke={BRD}/><XAxis dataKey="x" tick={{fill:T3,fontSize:9}} axisLine={false} tickLine={false}/><YAxis tick={{fill:T3,fontSize:9}} axisLine={false} tickLine={false}/><ReferenceLine y={0} stroke={T4}/><Bar dataKey="r" radius={[3,3,0,0]}>{stats.eq.map((d:any,i:number)=><Cell key={i} fill={d.r>=0?G:RD} fillOpacity={.65}/>)}</Bar></BarChart></ResponsiveContainer></Crd><Crd t={S.drawdown} s={{marginTop:10}}>{(()=>{let pk=0,mx=0;const dd=stats.eq.map((d:any)=>{pk=Math.max(pk,d.c);const v=d.c-pk;mx=Math.min(mx,v);return{x:d.x,dd:+v.toFixed(2)};});return <><div style={{fontSize:10,color:RD,fontWeight:700,marginBottom:6}}>{S.maxDd}: {fm(mx)}R</div><ResponsiveContainer width="100%" height={120}><AreaChart data={dd}><defs><linearGradient id="dG2" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={RD} stopOpacity={.12}/><stop offset="95%" stopColor={RD} stopOpacity={0}/></linearGradient></defs><CartesianGrid strokeDasharray="3 3" stroke={BRD}/><XAxis dataKey="x" tick={{fill:T3,fontSize:9}} axisLine={false} tickLine={false}/><YAxis tick={{fill:T3,fontSize:9}} axisLine={false} tickLine={false}/><ReferenceLine y={0} stroke={T4}/><Area type="monotone" dataKey="dd" stroke={RD} strokeWidth={1} fill="url(#dG2)" dot={false}/></AreaChart></ResponsiveContainer></>;})()}</Crd></>}</div>}
     </>}
 
     {/* TradingView ⇄ Backtest Journal bridge — always mounted, chart state survives tab switches */}
@@ -517,9 +607,11 @@ interface BacktestDimensionProps {
 
 export const BacktestDimension = ({ onReturn }: BacktestDimensionProps) => {
   const [showEntry, setShowEntry] = useState(true);
+  const { isRTL } = useLang();
+  const L: BTLang = isRTL ? 'he' : 'en';
 
   if (showEntry) {
-    return <BacktestEntryScreen onEnter={() => setShowEntry(false)} onSkip={() => setShowEntry(false)} />;
+    return <BacktestEntryScreen L={L} onEnter={() => setShowEntry(false)} onSkip={() => setShowEntry(false)} />;
   }
 
   return <BacktestApp onReturn={onReturn} />;
