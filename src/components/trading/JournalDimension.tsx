@@ -3220,6 +3220,20 @@ const AutoFillButton = ({ onClick, dir, th, label }: { onClick: () => void; dir:
   </button>
 );
 
+const ClearDemoButton = ({ onClick, dir, label }: { onClick: () => void; dir: string; label: string }) => (
+  <button onClick={onClick} style={{
+    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20,
+    background: 'linear-gradient(135deg, rgba(255,77,77,0.10), rgba(255,77,77,0.05))',
+    border: '1px solid rgba(255,77,77,0.28)', color: '#FF6B6B', cursor: 'pointer',
+    fontFamily: "'Poppins',sans-serif", fontSize: 10.5, fontWeight: 700, letterSpacing: '.3px',
+    transition: 'all .25s', direction: dir as 'ltr' | 'rtl',
+  }}
+    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, rgba(255,77,77,0.20), rgba(255,77,77,0.10))'; (e.currentTarget as HTMLElement).style.boxShadow = '0 0 16px rgba(255,77,77,0.18)'; }}
+    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, rgba(255,77,77,0.10), rgba(255,77,77,0.05))'; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}>
+    <span style={{ fontSize: 13 }}>🗑️</span> {label}
+  </button>
+);
+
 const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) => {
   const f = t.f;
   const U = (k: string) => (v: any) => upd({ [k]: v });
@@ -3262,6 +3276,22 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
     });
   };
 
+  const clearMorning = () => {
+    upd({
+      mood: '', plan: '', btcThoughts: '',
+      bias: '', mktStruct: '', mentalTags: [],
+      btcNote: '', t3Note: '', domNote: '', macroNote: '',
+      levels: [], setups: [], emotionScore: null,
+      fearGreed: '', psychAnswers: {},
+      tasks: (day.tasks || []).map((tk: any) => ({ ...tk, done: false })),
+      goals: (day.goals || []).map((g: any) => ({ ...g, done: false })),
+      disciplineCommitments: [], disciplineConfirmed: false,
+      morningImages: [],
+      sectionLocks: {},
+    });
+  };
+
+
   return (
     <div>
       <MarketStrip day={day} dir={dir} th={th} />
@@ -3270,6 +3300,7 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
           <PDiv label={dir === 'rtl' ? 'תדריך טרום-שוק' : 'PRE-MARKET BRIEFING'} color="#5AA9FF" icon="☀️" th={th} />
         </div>
         <AutoFillButton onClick={fillMorning} dir={dir} th={th} label={dir === 'rtl' ? 'מילוי דוגמה' : 'Demo Fill'} />
+        <ClearDemoButton onClick={clearMorning} dir={dir} label={dir === 'rtl' ? 'מחק דוגמה' : 'Clear Demo'} />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }} className="j-grid-2col">
@@ -3536,6 +3567,18 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
     });
   };
 
+  const clearEod = () => {
+    upd({
+      hasOpen: null,
+      trades: [],
+      actualMove: '', dayScore: null,
+      wins: '', lessons: '', mistakes: '',
+      solutions: '', closing: '',
+      eodImages: [],
+    });
+  };
+
+
   return (
     <div>
       {/* Morning Locked Recap */}
@@ -3635,6 +3678,7 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
           <PDiv label={dir === 'rtl' ? 'תחקיר אחרי-שוק' : 'POST-MARKET DEBRIEF'} color="#b794f6" icon="🌙" th={th} />
         </div>
         {!fullLocked && <AutoFillButton onClick={fillEod} dir={dir} th={th} label={dir === 'rtl' ? 'מילוי דוגמה' : 'Demo Fill'} />}
+        {!fullLocked && <ClearDemoButton onClick={clearEod} dir={dir} label={dir === 'rtl' ? 'מחק דוגמה' : 'Clear Demo'} />}
       </div>
 
       {/* Trade Log */}

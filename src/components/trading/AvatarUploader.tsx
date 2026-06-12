@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { Camera, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { resolveAvatarUrl } from '@/lib/avatar';
+import { resolveAvatarUrl, getCachedAvatarUrl, invalidateAvatarCache } from '@/lib/avatar';
 
 interface Props {
   T: any; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -18,7 +18,13 @@ interface Props {
  */
 export const AvatarUploader = ({ T, size = 72, isRTL }: Props) => {
   const { user } = useAuth();
-  const [url, setUrl] = useState<string | null>(null);
+  const [url, setUrl] = useState<string | null>(() => {
+    try {
+      const cachedPath = sessionStorage.getItem('orca:avatar-path');
+      return cachedPath ? getCachedAvatarUrl(cachedPath) : null;
+    } catch { return null; }
+  });
+  const [imgLoaded, setImgLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -27,6 +33,9 @@ export const AvatarUploader = ({ T, size = 72, isRTL }: Props) => {
     if (!user?.id) return;
     (async () => {
       const { data } = await supabase.from('profiles').select('avatar_url').eq('id', user.id).maybeSingle();
+      if (data?.avatar_url) {
+        try { sessionStorage.setItem('orca:avatar-path', data.avatar_url); } catch { /* noop */ }
+      }
       const signed = await resolveAvatarUrl(data?.avatar_url);
       if (!cancelled) setUrl(signed);
     })();
@@ -52,8 +61,11 @@ export const AvatarUploader = ({ T, size = 72, isRTL }: Props) => {
       if (upErr) throw upErr;
       const { error: dbErr } = await supabase.from('profiles').update({ avatar_url: path }).eq('id', user.id);
       if (dbErr) throw dbErr;
+      invalidateAvatarCache(path);
+      try { sessionStorage.setItem('orca:avatar-path', path); } catch { /* noop */ }
       const signed = await resolveAvatarUrl(path);
       const finalUrl = signed ? `${signed}${signed.includes('?') ? '&' : '?'}v=${Date.now()}` : null;
+      setImgLoaded(false);
       setUrl(finalUrl);
       window.dispatchEvent(new CustomEvent('orca:avatar-changed', { detail: { url: finalUrl } }));
       toast.success(isRTL ? 'תמונת פרופיל עודכנה' : 'Profile photo updated', { id: tId });
@@ -83,7 +95,19 @@ export const AvatarUploader = ({ T, size = 72, isRTL }: Props) => {
         }}
       >
         {url ? (
-          <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img
+            src={url}
+            alt=""
+            loading="eager"
+            decoding="async"
+            onLoad={() => setImgLoaded(true)}
+            style={{
+              width: '100%', height: '100%', objectFit: 'cover',
+              filter: imgLoaded ? 'none' : 'blur(10px)',
+              transform: imgLoaded ? 'scale(1)' : 'scale(1.05)',
+              transition: 'filter 0.35s ease, transform 0.35s ease',
+            }}
+          />
         ) : (
           <span style={{ fontSize: Math.round(size * 0.4), fontWeight: 800, color: T.bg.primary }}>{initial}</span>
         )}

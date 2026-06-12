@@ -57,7 +57,7 @@ export const WinsByMonthChart = ({ T, trades, isRTL, tt }: BaseProps) => {
   }
 
   return (
-    <div style={{ height: 240, width: '100%' }}>
+    <div style={{ height: 260, width: '100%' }}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 8, right: 8, bottom: 4, left: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
@@ -95,7 +95,7 @@ export const WinsByQuarterChart = ({ T, trades, isRTL, tt }: BaseProps) => {
   }
 
   return (
-    <div style={{ height: 240, width: '100%' }}>
+    <div style={{ height: 260, width: '100%' }}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 8, right: 8, bottom: 4, left: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
@@ -153,7 +153,7 @@ export const ReturnPerTimeChart = ({ T, trades, isRTL, tt }: BaseProps) => {
   }
 
   return (
-    <div style={{ height: 240, width: '100%' }}>
+    <div style={{ height: 260, width: '100%' }}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 8, right: 8, bottom: 4, left: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />

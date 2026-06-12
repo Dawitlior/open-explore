@@ -222,13 +222,18 @@ const Index = () => {
   // Privacy mode shortcut
   usePrivacyShortcut(() => settings.setPrivacyMode(!settings.privacyMode));
 
-  // Command-K shortcut
+  // Command-K shortcut + `orca:open-command-palette` event
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setShowCmdPalette(p => !p); }
     };
+    const openEvt = () => setShowCmdPalette(true);
     window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    window.addEventListener('orca:open-command-palette', openEvt);
+    return () => {
+      window.removeEventListener('keydown', handler);
+      window.removeEventListener('orca:open-command-palette', openEvt);
+    };
   }, []);
 
   // No demo seed — dashboard starts empty, user adds their own trades
@@ -1818,7 +1823,7 @@ const Index = () => {
             <PV><div style={{ fontSize: 11, color: T.accent.cyan, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace" }}>${currentBalance.toFixed(2)}</div></PV>
             
             <NavAvatar T={T} size={isMobile ? 28 : 32} onClick={() => setShowSettings(true)} />
-            {!isMobile && <span onClick={() => setShowFeatureModal(true)} style={{ fontSize: 13, fontWeight: 800, letterSpacing: '-0.02em', color: T.text.primary, fontFamily: "'JetBrains Mono', monospace", cursor: 'pointer', transition: 'opacity 0.2s' }}>Orca<span style={{ fontWeight: 300, color: T.text.muted, marginLeft: 4 }}>Investment</span></span>}
+            
           </div>
         </header>
         )}
