@@ -215,19 +215,21 @@ function Tutorial({onClose,onStart,L}:{onClose:()=>void;onStart:()=>void;L:BTLan
 // ═══════════════════════════════════════════
 // PREMIUM FORM
 // ═══════════════════════════════════════════
-const SECTIONS=[
-  {title:"פרטי העסקה",icon:"◆",fields:[{k:"coin",l:"מטבע",ph:"BTC"},{k:"entry",l:"מחיר כניסה",ph:"64250",num:true},{k:"sl",l:"סטופ לוס",ph:"63800",num:true},{k:"exit",l:"מחיר יציאה",ph:"65700",num:true}]},
-  {title:"תאריכים",icon:"◷",fields:[{k:"entryDT",l:"זמן כניסה",ph:"15/03/2025 09:30"},{k:"exitDT",l:"זמן יציאה",ph:"15/03/2025 16:45"}]},
-  {title:"MFE / MAE",icon:"◈",desc:"אופציונלי",fields:[{k:"mfeP",l:"MFE",ph:"66100",num:true},{k:"maeP",l:"MAE",ph:"63900",num:true}]},
-  {title:"צילומים והערות",icon:"◫",fields:[{k:"chartE",l:"צילום כניסה",ph:"https://..."},{k:"chartX",l:"צילום יציאה",ph:"https://..."},{k:"notes",l:"הערות",ph:"",full:true}]},
-];
+const makeSections=(L:BTLang)=>{const S=BT_STR[L];return [
+  {title:S.secTrade,icon:"◆",fields:[{k:"coin",l:S.coin,ph:"BTC"},{k:"entry",l:S.fldEntryPrice,ph:"64250",num:true},{k:"sl",l:S.fldSl,ph:"63800",num:true},{k:"exit",l:S.fldExitPrice,ph:"65700",num:true}]},
+  {title:S.secDates,icon:"◷",fields:[{k:"entryDT",l:S.fldEntryDT,ph:"15/03/2025 09:30"},{k:"exitDT",l:S.fldExitDT,ph:"15/03/2025 16:45"}]},
+  {title:S.secMfeMae,icon:"◈",desc:S.optional,fields:[{k:"mfeP",l:"MFE",ph:"66100",num:true},{k:"maeP",l:"MAE",ph:"63900",num:true}]},
+  {title:S.secMedia,icon:"◫",fields:[{k:"chartE",l:S.fldChartE,ph:"https://..."},{k:"chartX",l:S.fldChartX,ph:"https://..."},{k:"notes",l:S.fldNotes,ph:"",full:true}]},
+];};
 
-function BTTradeForm({onSave,onClose,initial}:{onSave:(t:any)=>void;onClose:()=>void;initial?:any}){
+function BTTradeForm({onSave,onClose,initial,L}:{onSave:(t:any)=>void;onClose:()=>void;initial?:any;L:BTLang}){
+  const S=BT_STR[L];
+  const SECTIONS=useMemo(()=>makeSections(L),[L]);
   const[t,setT]=useState(initial||emptyRow());const set=(k:string,v:string)=>setT((p:any)=>recalc({...p,[k]:v}));
   return <div style={{position:"fixed",inset:0,zIndex:8000,background:"rgba(0,0,0,.6)",backdropFilter:"blur(6px)",display:"flex",alignItems:"center",justifyContent:"center",padding:12}} onClick={(e:any)=>e.target===e.currentTarget&&onClose()}>
-    <div style={{background:BG3,borderRadius:16,width:"100%",maxWidth:520,maxHeight:"92vh",overflowY:"auto",border:`1px solid ${BRD}`,direction:"rtl",animation:"formSlideUp .4s cubic-bezier(.16,1,.3,1)"}}>
+    <div style={{background:BG3,borderRadius:16,width:"100%",maxWidth:520,maxHeight:"92vh",overflowY:"auto",border:`1px solid ${BRD}`,direction:L==='he'?"rtl":"ltr",animation:"formSlideUp .4s cubic-bezier(.16,1,.3,1)"}}>
       <div style={{padding:"14px 20px",borderBottom:`1px solid ${BRD}`,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,background:BG3,zIndex:2,borderRadius:"16px 16px 0 0"}}>
-        <span style={{fontSize:15,fontWeight:700,color:T1}}>{initial?"עריכת עסקה":"עסקה חדשה"}</span>
+        <span style={{fontSize:15,fontWeight:700,color:T1}}>{initial?S.editTrade:S.newTrade}</span>
         <div style={{display:"flex",alignItems:"center",gap:10}}>{t.r!=null&&<div style={{display:"flex",gap:8,alignItems:"center",background:`${BL}0a`,padding:"4px 12px",borderRadius:8}}><span style={{fontSize:12,fontWeight:800,color:t.dir==="Long"?G:RD}}>{t.dir==="Long"?"L↑":"S↓"}</span><span style={{fontSize:12,fontWeight:800,color:rc(t.r)}}>{fm(t.r)}R</span></div>}<button onClick={onClose} style={{background:"none",border:"none",color:T3,fontSize:18,cursor:"pointer"}}>×</button></div>
       </div>
       <div style={{padding:"12px 20px 20px"}}>{SECTIONS.map((sec:any,si:number)=><div key={si} style={{marginBottom:si<SECTIONS.length-1?14:0}}>
@@ -236,7 +238,7 @@ function BTTradeForm({onSave,onClose,initial}:{onSave:(t:any)=>void;onClose:()=>
           {sec.fields.map((f:any)=><div key={f.k} style={{gridColumn:f.full?"1/-1":"auto"}}><label style={{fontSize:10,fontWeight:600,color:T3,marginBottom:2,display:"block"}}>{f.l}</label><input value={t[f.k]||""} onChange={(e:any)=>set(f.k,e.target.value)} placeholder={f.ph} dir="ltr" type={f.num?"number":"text"} style={{width:"100%",padding:"10px 12px",borderRadius:8,border:`1.5px solid ${BRD}`,background:BG,fontSize:13,color:T1,transition:"border-color .2s,box-shadow .2s"}} onFocus={(e:any)=>{e.target.style.borderColor=BL;e.target.style.boxShadow=`0 0 0 3px ${BL}15`;}} onBlur={(e:any)=>{e.target.style.borderColor=BRD;e.target.style.boxShadow="none";}}/></div>)}
         </div>
       </div>)}</div>
-      <div style={{padding:"12px 20px 16px",borderTop:`1px solid ${BRD}`,display:"flex",gap:8,position:"sticky",bottom:0,background:BG3,borderRadius:"0 0 16px 16px"}}><button onClick={()=>{if(t.coin&&t.entry&&t.sl)onSave(recalc(t));}} style={{flex:1,padding:"12px",borderRadius:10,border:"none",cursor:"pointer",background:(!t.coin||!t.entry||!t.sl)?T4:BL,color:"#fff",fontSize:14,fontWeight:700,opacity:(!t.coin||!t.entry||!t.sl)?.35:1}}>שמור עסקה</button><button onClick={onClose} style={{padding:"12px 20px",borderRadius:10,border:`1.5px solid ${BRD}`,background:"transparent",color:T2,fontSize:13,fontWeight:600,cursor:"pointer"}}>ביטול</button></div>
+      <div style={{padding:"12px 20px 16px",borderTop:`1px solid ${BRD}`,display:"flex",gap:8,position:"sticky",bottom:0,background:BG3,borderRadius:"0 0 16px 16px"}}><button onClick={()=>{if(t.coin&&t.entry&&t.sl)onSave(recalc(t));}} style={{flex:1,padding:"12px",borderRadius:10,border:"none",cursor:"pointer",background:(!t.coin||!t.entry||!t.sl)?T4:BL,color:"#fff",fontSize:14,fontWeight:700,opacity:(!t.coin||!t.entry||!t.sl)?.35:1}}>{S.saveTrade}</button><button onClick={onClose} style={{padding:"12px 20px",borderRadius:10,border:`1.5px solid ${BRD}`,background:"transparent",color:T2,fontSize:13,fontWeight:600,cursor:"pointer"}}>{S.cancel}</button></div>
     </div>
   </div>;
 }
