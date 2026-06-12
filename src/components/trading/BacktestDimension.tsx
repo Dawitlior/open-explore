@@ -526,6 +526,7 @@ function BacktestApp({ onReturn }: { onReturn: () => void }) {
   const[exitingToOrca,setExitingToOrca]=useState(false);
   const[renamingStrat,setRenamingStrat]=useState(false);
   const[confirmDelStrat,setConfirmDelStrat]=useState(false);
+  const[stratPrompt,setStratPrompt]=useState<{mode:'add'|'rename';value:string}|null>(null);
 
   useEffect(()=>{css();loadState().then((s)=>{setState(s);setLoading(false);});},[]);
 
