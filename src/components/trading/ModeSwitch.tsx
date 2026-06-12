@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Sparkles, Zap, Crown, Check, X } from 'lucide-react';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { AppTier } from '@/hooks/use-entitlement';
 import { useEntitlement } from '@/hooks/use-entitlement';
@@ -8,27 +10,100 @@ interface ModeSwitchProps {
   isRTL: boolean;
 }
 
-const TIER_OPTIONS: { id: AppTier; label: string; labelHe: string; color: (T: TradingTheme) => string; desc: string; descHe: string }[] = [
-  { id: 'standard', label: 'STANDARD', labelHe: 'סטנדרט', color: (T) => T.accent.blue, desc: 'Core journal, risk limits, calendar, and baseline analytics', descHe: 'יומן, מגבלות סיכון, קלנדר ואנליטיקה בסיסית' },
-  { id: 'advanced', label: 'ADVANCED', labelHe: 'מתקדם', color: (T) => T.accent.cyan, desc: 'Professional analytics, R/$ chart controls, and deeper diagnostics', descHe: 'אנליטיקה מקצועית, בקרות R/$ ודיאגנוסטיקה עמוקה' },
-  { id: 'ultimate', label: 'ULTIMATE', labelHe: 'אולטימייט', color: (T) => T.accent.purple, desc: 'Full quant engine, Kelly, MAR, autocorrelation, and drawdown structure', descHe: 'מנוע כמותי מלא, Kelly, MAR, אוטוקורלציה ומבנה Drawdown' },
+type TierMeta = {
+  id: AppTier;
+  label: string;
+  labelHe: string;
+  color: (T: TradingTheme) => string;
+  glow: string;
+  icon: typeof Zap;
+  desc: string;
+  descHe: string;
+  tagline: string;
+  taglineHe: string;
+};
+
+const TIER_OPTIONS: TierMeta[] = [
+  { id: 'standard', label: 'STANDARD', labelHe: 'סטנדרט', color: (T) => T.accent.blue, glow: 'rgba(59,130,246,0.55)', icon: Zap,
+    desc: 'Core journal, risk limits, calendar, and baseline analytics', descHe: 'יומן, מגבלות סיכון, קלנדר ואנליטיקה בסיסית',
+    tagline: 'The disciplined baseline', taglineHe: 'הבסיס למסחר ממושמע' },
+  { id: 'advanced', label: 'ADVANCED', labelHe: 'מתקדם', color: (T) => T.accent.cyan, glow: 'rgba(34,211,238,0.6)', icon: Sparkles,
+    desc: 'Professional analytics, R/$ chart controls, and deeper diagnostics', descHe: 'אנליטיקה מקצועית, בקרות R/$ ודיאגנוסטיקה עמוקה',
+    tagline: 'Pro-grade analytics', taglineHe: 'אנליטיקה ברמת פרו' },
+  { id: 'ultimate', label: 'ULTIMATE', labelHe: 'אולטימייט', color: (T) => T.accent.purple, glow: 'rgba(168,85,247,0.6)', icon: Crown,
+    desc: 'Full quant engine, Kelly, MAR, autocorrelation, and drawdown structure', descHe: 'מנוע כמותי מלא, Kelly, MAR, אוטוקורלציה ומבנה Drawdown',
+    tagline: 'Full quant engine', taglineHe: 'מנוע כמותי מלא' },
 ];
+
+const cinematicCSS = `
+@keyframes msAurora {
+  0%   { transform: translate(-12%, -8%) rotate(0deg);   opacity: .55; }
+  50%  { transform: translate( 10%, 12%) rotate(180deg); opacity: .9;  }
+  100% { transform: translate(-12%, -8%) rotate(360deg); opacity: .55; }
+}
+@keyframes msStar {
+  0%,100% { opacity: 0; transform: scale(.5) rotate(0); }
+  50%     { opacity: 1; transform: scale(1)  rotate(180deg); }
+}
+@keyframes msOrbit {
+  from { transform: rotate(0deg)   translateX(64px) rotate(0deg); }
+  to   { transform: rotate(360deg) translateX(64px) rotate(-360deg); }
+}
+@keyframes msOrbitRev {
+  from { transform: rotate(0deg)   translateX(80px) rotate(0deg); }
+  to   { transform: rotate(-360deg) translateX(80px) rotate(360deg); }
+}
+@keyframes msPulseRing {
+  0%   { transform: scale(.85); opacity: .9; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+@keyframes msShimmer {
+  0%   { transform: translateX(-120%); }
+  100% { transform: translateX(120%); }
+}
+@keyframes msScan {
+  0%   { transform: translateY(-100%); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+@keyframes msIconFloat {
+  0%,100% { transform: translateY(0) rotate(-2deg); }
+  50%     { transform: translateY(-6px) rotate(2deg); }
+}
+@keyframes msCheckPop {
+  0%   { transform: scale(0) rotate(-90deg); opacity: 0; }
+  60%  { transform: scale(1.2) rotate(10deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+@keyframes msSpark {
+  0%   { transform: translate(0,0) scale(0); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(1); opacity: 0; }
+}
+`;
 
 export const ModeSwitch = ({ T, isRTL }: ModeSwitchProps) => {
   const { tier } = useEntitlement();
   const [pendingTier, setPendingTier] = useState<AppTier | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [phase, setPhase] = useState<'ask' | 'transmuting' | 'done'>('ask');
+
+  const close = () => { setPendingTier(null); setPhase('ask'); };
 
   const handleTierConfirm = () => {
     if (!pendingTier) return;
-    setLoading(true);
+    setPhase('transmuting');
     setTimeout(() => {
       window.localStorage.setItem('orca:tier-preview', pendingTier);
       window.dispatchEvent(new CustomEvent('orca:tier-preview-changed', { detail: { tier: pendingTier } }));
-      setLoading(false);
-      setPendingTier(null);
-    }, 600);
+      setPhase('done');
+      setTimeout(close, 1100);
+    }, 1200);
   };
+
+  const meta = TIER_OPTIONS.find(m => m.id === pendingTier);
+  const accent = meta ? meta.color(T) : T.accent.cyan;
+  const glow = meta?.glow ?? 'rgba(34,211,238,0.55)';
+  const Icon = meta?.icon ?? Sparkles;
 
   return (
     <>
@@ -39,9 +114,7 @@ export const ModeSwitch = ({ T, isRTL }: ModeSwitchProps) => {
             return (
             <button
               key={m.id}
-              onClick={() => {
-                if (m.id !== tier) setPendingTier(m.id);
-              }}
+              onClick={() => { if (m.id !== tier) { setPhase('ask'); setPendingTier(m.id); } }}
               style={{
                 flex: 1, padding: '5px 2px', fontSize: 8, fontWeight: 600, letterSpacing: '0.04em',
                 textTransform: 'uppercase', border: 'none', borderRadius: T.radius.sm, cursor: 'pointer',
@@ -57,55 +130,242 @@ export const ModeSwitch = ({ T, isRTL }: ModeSwitchProps) => {
         </div>
       </div>
 
-      {/* Confirmation Modal */}
-      {pendingTier && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(6px)' }} onClick={() => !loading && setPendingTier(null)}>
-          <div onClick={e => e.stopPropagation()} style={{
-            background: T.bg.card, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.xl,
-            padding: 32, maxWidth: 400, width: '90%', textAlign: 'center', boxShadow: T.shadow.elevated,
-          }}>
-            {loading ? (
-              <div>
-                <div style={{ fontSize: 36, marginBottom: 12, animation: 'pulse 1s ease infinite' }}>⚡</div>
-                <div style={{ fontSize: 14, color: T.accent.cyan, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace" }}>
-                  {isRTL ? 'טוען תוכנית...' : 'Loading tier...'}
-                </div>
-                <div style={{ marginTop: 16, height: 3, background: T.bg.tertiary, borderRadius: 2, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: '70%', background: `linear-gradient(90deg, ${T.accent.cyan}, ${T.accent.purple})`, borderRadius: 2, animation: 'slideRight 0.6s ease infinite' }} />
+      <AnimatePresence>
+        {pendingTier && meta && (
+          <>
+            <style>{cinematicCSS}</style>
+            <motion.div
+              key="ms-backdrop"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              onClick={() => phase === 'ask' && close()}
+              style={{
+                position: 'fixed', inset: 0, zIndex: 9600,
+                background: 'radial-gradient(ellipse at center, rgba(6,10,22,0.82), rgba(2,4,10,0.96))',
+                backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
+              }}
+              dir={isRTL ? 'rtl' : 'ltr'}
+            />
+
+            <motion.div
+              key="ms-modal"
+              initial={{ opacity: 0, scale: 0.86, y: 30, rotateX: -8 }}
+              animate={{ opacity: 1, scale: 1, y: 0, rotateX: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: 'spring', stiffness: 240, damping: 24, mass: 0.9 }}
+              style={{
+                position: 'fixed', inset: 0, zIndex: 9601,
+                display: 'grid', placeItems: 'center', padding: 20,
+                pointerEvents: 'none', perspective: 1200,
+              }}
+              dir={isRTL ? 'rtl' : 'ltr'}
+            >
+              <div
+                onClick={e => e.stopPropagation()}
+                style={{
+                  pointerEvents: 'auto',
+                  position: 'relative',
+                  width: 'min(460px, 100%)',
+                  borderRadius: 24,
+                  padding: '34px 28px 26px',
+                  background: `linear-gradient(165deg, rgba(14,20,36,0.94), rgba(6,10,20,0.98))`,
+                  border: `1px solid ${accent}55`,
+                  boxShadow: `0 50px 140px -20px rgba(0,0,0,0.8), 0 0 90px -10px ${glow}`,
+                  overflow: 'hidden',
+                }}
+              >
+                {/* Aurora */}
+                <div aria-hidden style={{
+                  position: 'absolute', inset: '-40%', zIndex: 0,
+                  background:
+                    `radial-gradient(ellipse 45% 35% at 30% 25%, ${glow.replace(/[\d.]+\)$/, '0.32)')}, transparent 60%),` +
+                    `radial-gradient(ellipse 40% 30% at 75% 80%, ${glow.replace(/[\d.]+\)$/, '0.22)')}, transparent 60%)`,
+                  animation: 'msAurora 14s ease-in-out infinite',
+                  filter: 'blur(22px)', pointerEvents: 'none',
+                }} />
+
+                {/* Sparkle stars */}
+                {[
+                  { top: '10%', left: '8%', d: 0,   s: 5, c: accent },
+                  { top: '18%', left: '88%', d: 0.7, s: 4, c: '#fff' },
+                  { top: '70%', left: '6%', d: 1.2, s: 3, c: '#fff' },
+                  { top: '82%', left: '90%', d: 1.9, s: 5, c: accent },
+                ].map((s, i) => (
+                  <span key={i} aria-hidden style={{
+                    position: 'absolute', top: s.top, left: s.left,
+                    width: s.s, height: s.s, borderRadius: '50%',
+                    background: s.c, boxShadow: `0 0 10px ${s.c}, 0 0 20px ${s.c}88`,
+                    animation: `msStar 3.4s ease-in-out ${s.d}s infinite`,
+                    zIndex: 1, pointerEvents: 'none',
+                  }} />
+                ))}
+
+                {/* Scanline during transmute */}
+                {phase === 'transmuting' && (
+                  <div aria-hidden style={{
+                    position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none', overflow: 'hidden',
+                  }}>
+                    <div style={{
+                      position: 'absolute', left: 0, right: 0, height: '40%',
+                      background: `linear-gradient(180deg, transparent, ${accent}33 45%, ${accent}aa 50%, ${accent}33 55%, transparent)`,
+                      animation: 'msScan 1.2s ease-in-out forwards',
+                    }} />
+                  </div>
+                )}
+
+                {/* Close */}
+                {phase === 'ask' && (
+                  <button onClick={close} aria-label="Close" style={{
+                    position: 'absolute', top: 12, insetInlineEnd: 12, zIndex: 5,
+                    width: 30, height: 30, borderRadius: 9,
+                    background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)',
+                    color: '#cbd5e1', display: 'grid', placeItems: 'center', cursor: 'pointer',
+                  }}>
+                    <X size={14} />
+                  </button>
+                )}
+
+                {/* Content */}
+                <div style={{ position: 'relative', zIndex: 2, textAlign: 'center' }}>
+                  {/* Icon halo */}
+                  <div style={{ position: 'relative', width: 96, height: 96, margin: '0 auto 14px' }}>
+                    {/* orbiting dots */}
+                    <span aria-hidden style={{
+                      position: 'absolute', top: '50%', left: '50%', width: 8, height: 8,
+                      marginLeft: -4, marginTop: -4, borderRadius: '50%', background: accent,
+                      boxShadow: `0 0 12px ${accent}, 0 0 24px ${glow}`,
+                      animation: 'msOrbit 4s linear infinite',
+                    }} />
+                    <span aria-hidden style={{
+                      position: 'absolute', top: '50%', left: '50%', width: 5, height: 5,
+                      marginLeft: -2.5, marginTop: -2.5, borderRadius: '50%', background: '#fff',
+                      boxShadow: `0 0 10px #fff, 0 0 22px ${accent}`,
+                      animation: 'msOrbitRev 6s linear infinite',
+                    }} />
+                    {/* pulsing rings */}
+                    {phase === 'transmuting' && [0, 0.4, 0.8].map((d, i) => (
+                      <span key={i} aria-hidden style={{
+                        position: 'absolute', inset: 12, borderRadius: '50%',
+                        border: `2px solid ${accent}`,
+                        animation: `msPulseRing 1.4s ease-out ${d}s infinite`,
+                      }} />
+                    ))}
+                    {/* core */}
+                    <div style={{
+                      position: 'absolute', inset: 18, borderRadius: '50%',
+                      background: `radial-gradient(circle at 30% 30%, ${accent}, ${accent}44 60%, transparent 75%)`,
+                      display: 'grid', placeItems: 'center',
+                      boxShadow: `inset 0 0 30px ${glow}, 0 0 40px ${glow}`,
+                      animation: phase === 'ask' ? 'msIconFloat 3.6s ease-in-out infinite' : undefined,
+                    }}>
+                      {phase === 'done'
+                        ? <Check size={34} style={{ color: '#fff', filter: `drop-shadow(0 0 8px ${accent})`, animation: 'msCheckPop .6s cubic-bezier(.34,1.56,.64,1) forwards' }} />
+                        : <Icon size={32} style={{ color: '#fff', filter: `drop-shadow(0 0 8px ${accent})` }} />}
+                    </div>
+                  </div>
+
+                  {phase === 'done' && (
+                    <>
+                      {Array.from({ length: 10 }).map((_, i) => {
+                        const angle = (i / 10) * Math.PI * 2;
+                        const dx = Math.cos(angle) * 80;
+                        const dy = Math.sin(angle) * 80;
+                        return (
+                          <span key={i} aria-hidden style={{
+                            position: 'absolute', top: 60, left: '50%',
+                            width: 6, height: 6, borderRadius: '50%',
+                            background: accent, boxShadow: `0 0 10px ${accent}`,
+                            ['--dx' as any]: `${dx}px`, ['--dy' as any]: `${dy}px`,
+                            animation: 'msSpark .9s ease-out forwards',
+                          }} />
+                        );
+                      })}
+                    </>
+                  )}
+
+                  {/* Tier label chip */}
+                  <div style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    padding: '4px 12px', borderRadius: 999, marginBottom: 10,
+                    background: `${accent}1c`, border: `1px solid ${accent}55`,
+                    fontSize: 10, fontWeight: 800, letterSpacing: '0.18em',
+                    color: accent, textTransform: 'uppercase',
+                    fontFamily: "'JetBrains Mono', monospace",
+                  }}>
+                    <Sparkles size={11} /> {isRTL ? meta.labelHe : meta.label}
+                  </div>
+
+                  <h3 style={{
+                    margin: 0, marginBottom: 6, fontSize: 20, fontWeight: 800,
+                    background: `linear-gradient(90deg, #fff, ${accent})`,
+                    WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
+                    fontFamily: "'JetBrains Mono', monospace",
+                  }}>
+                    {phase === 'done'
+                      ? (isRTL ? 'התוכנית הוחלפה' : 'Tier activated')
+                      : phase === 'transmuting'
+                        ? (isRTL ? 'מבצע החלפה…' : 'Switching…')
+                        : (isRTL ? 'החלפת תוכנית' : 'Switch Tier')}
+                  </h3>
+
+                  <div style={{ fontSize: 12, color: '#cbd5e1', lineHeight: 1.6, marginBottom: 4 }}>
+                    {isRTL ? meta.taglineHe : meta.tagline}
+                  </div>
+                  <div style={{ fontSize: 11, color: '#94a3b8', lineHeight: 1.6, marginBottom: 18, padding: '0 8px' }}>
+                    {isRTL ? meta.descHe : meta.desc}
+                  </div>
+
+                  {phase === 'ask' && (
+                    <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+                      <button onClick={close} style={{
+                        padding: '10px 22px', background: 'rgba(255,255,255,0.04)',
+                        border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12,
+                        color: '#cbd5e1', cursor: 'pointer', fontSize: 12, fontWeight: 600,
+                        transition: 'all .2s',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.14)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.45)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; }}
+                      >{isRTL ? 'ביטול' : 'Cancel'}</button>
+                      <button onClick={handleTierConfirm} style={{
+                        position: 'relative', overflow: 'hidden',
+                        padding: '10px 28px', border: 'none', borderRadius: 12,
+                        color: '#0a0e1a', cursor: 'pointer', fontSize: 12, fontWeight: 800,
+                        letterSpacing: '0.06em',
+                        background: `linear-gradient(135deg, ${accent}, ${accent}cc)`,
+                        boxShadow: `0 10px 28px -8px ${glow}, inset 0 1px 0 rgba(255,255,255,0.3)`,
+                        transition: 'all .2s',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.12)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                      >
+                        <span aria-hidden style={{
+                          position: 'absolute', top: 0, bottom: 0, width: '40%',
+                          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent)',
+                          animation: 'msShimmer 2.2s ease-in-out infinite',
+                        }} />
+                        <span style={{ position: 'relative' }}>{isRTL ? 'אישור החלפה' : 'Confirm Switch'}</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {phase === 'transmuting' && (
+                    <div style={{
+                      marginTop: 4, height: 4, borderRadius: 999, overflow: 'hidden',
+                      background: 'rgba(255,255,255,0.06)',
+                    }}>
+                      <div style={{
+                        height: '100%', width: '45%', borderRadius: 999,
+                        background: `linear-gradient(90deg, transparent, ${accent}, transparent)`,
+                        animation: 'msShimmer 1.1s ease-in-out infinite',
+                      }} />
+                    </div>
+                  )}
                 </div>
               </div>
-            ) : (
-              <>
-                <div style={{ fontSize: 36, marginBottom: 12 }}>🔓</div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: T.text.primary, marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>
-                  {isRTL ? 'החלפת תוכנית' : 'Switch Tier'}
-                </div>
-                <div style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.6, marginBottom: 6 }}>
-                  {TIER_OPTIONS.find(m => m.id === pendingTier)?.[isRTL ? 'descHe' : 'desc']}
-                </div>
-                <div style={{ fontSize: 11, color: T.text.muted, marginBottom: 20 }}>
-                  {isRTL ? 'המערכת תציג שכבות Standard / Advanced / Ultimate בלבד.' : 'The app will show Standard / Advanced / Ultimate layers only.'}
-                </div>
-                <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-                  <button onClick={() => setPendingTier(null)} style={{
-                    padding: '9px 20px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`,
-                    borderRadius: T.radius.md, color: T.text.secondary, cursor: 'pointer', fontSize: 12
-                  }}>{isRTL ? 'ביטול' : 'Cancel'}</button>
-                  <button onClick={handleTierConfirm} style={{
-                    padding: '9px 24px', border: 'none', borderRadius: T.radius.md, color: T.bg.primary,
-                    cursor: 'pointer', fontSize: 12, fontWeight: 700,
-                    background: pendingTier === 'ultimate'
-                      ? `linear-gradient(135deg, ${T.accent.purple}, ${T.accent.blue})`
-                      : pendingTier === 'advanced'
-                        ? `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`
-                        : `linear-gradient(135deg, ${T.accent.blue}, ${T.accent.cyan})`
-                  }}>{isRTL ? 'אשר' : 'Confirm'}</button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </>
   );
 };
