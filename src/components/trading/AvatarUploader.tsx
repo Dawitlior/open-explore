@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { Camera, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { resolveAvatarUrl } from '@/lib/avatar';
+import { resolveAvatarUrl, getCachedAvatarUrl, invalidateAvatarCache } from '@/lib/avatar';
 
 interface Props {
   T: any; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -21,11 +21,7 @@ export const AvatarUploader = ({ T, size = 72, isRTL }: Props) => {
   const [url, setUrl] = useState<string | null>(() => {
     try {
       const cachedPath = sessionStorage.getItem('orca:avatar-path');
-      if (!cachedPath) return null;
-      // Lazy-import to avoid bundle changes — use the sync cache helper directly.
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { getCachedAvatarUrl } = require('@/lib/avatar') as typeof import('@/lib/avatar');
-      return getCachedAvatarUrl(cachedPath);
+      return cachedPath ? getCachedAvatarUrl(cachedPath) : null;
     } catch { return null; }
   });
   const [imgLoaded, setImgLoaded] = useState(false);
@@ -96,7 +92,19 @@ export const AvatarUploader = ({ T, size = 72, isRTL }: Props) => {
         }}
       >
         {url ? (
-          <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img
+            src={url}
+            alt=""
+            loading="eager"
+            decoding="async"
+            onLoad={() => setImgLoaded(true)}
+            style={{
+              width: '100%', height: '100%', objectFit: 'cover',
+              filter: imgLoaded ? 'none' : 'blur(10px)',
+              transform: imgLoaded ? 'scale(1)' : 'scale(1.05)',
+              transition: 'filter 0.35s ease, transform 0.35s ease',
+            }}
+          />
         ) : (
           <span style={{ fontSize: Math.round(size * 0.4), fontWeight: 800, color: T.bg.primary }}>{initial}</span>
         )}
