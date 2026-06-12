@@ -640,7 +640,6 @@ function BacktestApp({ onReturn }: { onReturn: () => void }) {
         </button>
         <span style={{fontSize:"clamp(14px,2.5vw,16px)",fontWeight:800,color:BL}}>{S.appName}</span>
         {has&&<span style={{fontSize:10,color:rc(allStats.totR),fontWeight:700}}>{fm(allStats.totR)}R</span>}
-        {filterStrategy!=="all"&&<span title={S.strategy} style={{display:"inline-flex",alignItems:"center",gap:4,padding:"2px 8px",borderRadius:6,fontSize:10,fontWeight:700,background:`${CY}18`,color:CY,border:`1px solid ${CY}44`,maxWidth:140,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>📐 {filterStrategy}<button onClick={()=>setFilterStrategy("all")} style={{background:"none",border:"none",color:CY,cursor:"pointer",fontSize:11,padding:0,marginInlineStart:2,lineHeight:1}}>×</button></span>}
 
       </div>
       <div style={{display:"flex",gap:4,alignItems:"center",flexWrap:"wrap"}}>
