@@ -4001,7 +4001,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
         const sanitized = s.days.map(d => ({ ...d, date: safeDateStr(d.date) }));
         setDays(sanitized);
         setActiveId(s.activeDayId || sanitized[sanitized.length - 1].id);
-        if (s.lang) setLang(s.lang);
+        // Note: ignore s.lang on purpose — language now follows the platform setting.
       } else {
         const d = makeDay(isRTL ? 'he' : 'en'); d.dayNum = '1'; d.weekNum = '1';
         setDays([d]);
