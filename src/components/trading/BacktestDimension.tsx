@@ -16,7 +16,7 @@ const computeAll=(trades:any[])=>{const v=trades.filter((t:any)=>t.r!=null);cons
 
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const fm=(v:any,d=2)=>v!=null&&!isNaN(v)?Number(v).toFixed(d):"—";const fp=(v:any)=>v!=null?(v*100).toFixed(1)+"%":"—";const rc=(v:number)=>v>0?"#0ecb81":v<0?"#f6465d":"#6b7280";
-const emptyRow=()=>({id:uid(),coin:"",strategy:"",entryDT:"",exitDT:"",entry:"",sl:"",exit:"",mfeP:"",maeP:"",notes:"",chartE:"",chartX:"",dir:"",r:null as number|null,mfeR:null as number|null,maeR:null as number|null,dur:""});
+const emptyRow=()=>({id:uid(),coin:"",entryDT:"",exitDT:"",entry:"",sl:"",exit:"",mfeP:"",maeP:"",notes:"",chartE:"",chartX:"",dir:"",r:null as number|null,mfeR:null as number|null,maeR:null as number|null,dur:""});
 const recalc=(t:any)=>{const e=parseFloat(t.entry),sl=parseFloat(t.sl),ex=parseFloat(t.exit),mfe=parseFloat(t.mfeP),mae=parseFloat(t.maeP);t.dir=autoDir(e,sl);t.r=(e&&sl&&ex)?calcR(e,sl,ex):null;t.mfeR=(e&&sl&&mfe)?calcR(e,sl,mfe):null;t.maeR=(e&&sl&&mae)?calcR(e,sl,mae):null;const d=durCalc(t.entryDT,t.exitDT);t.dur=d?d.t:"";return t;};
 import { scopedStorage } from '@/lib/scoped-storage';
 import { useLang } from '@/hooks/use-lang';
