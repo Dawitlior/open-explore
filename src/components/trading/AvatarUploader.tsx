@@ -18,7 +18,17 @@ interface Props {
  */
 export const AvatarUploader = ({ T, size = 72, isRTL }: Props) => {
   const { user } = useAuth();
-  const [url, setUrl] = useState<string | null>(null);
+  const [url, setUrl] = useState<string | null>(() => {
+    try {
+      const cachedPath = sessionStorage.getItem('orca:avatar-path');
+      if (!cachedPath) return null;
+      // Lazy-import to avoid bundle changes — use the sync cache helper directly.
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { getCachedAvatarUrl } = require('@/lib/avatar') as typeof import('@/lib/avatar');
+      return getCachedAvatarUrl(cachedPath);
+    } catch { return null; }
+  });
+  const [imgLoaded, setImgLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -27,6 +37,9 @@ export const AvatarUploader = ({ T, size = 72, isRTL }: Props) => {
     if (!user?.id) return;
     (async () => {
       const { data } = await supabase.from('profiles').select('avatar_url').eq('id', user.id).maybeSingle();
+      if (data?.avatar_url) {
+        try { sessionStorage.setItem('orca:avatar-path', data.avatar_url); } catch { /* noop */ }
+      }
       const signed = await resolveAvatarUrl(data?.avatar_url);
       if (!cancelled) setUrl(signed);
     })();
