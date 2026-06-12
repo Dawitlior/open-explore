@@ -26,10 +26,17 @@ function daysUntilFriday(d: Date): number {
   return dow === 5 ? 0 : (5 - dow + 7) % 7;
 }
 
+/** Window in which the user is encouraged to close the week. */
+function isCloseWindow(d: Date): boolean {
+  const dow = d.getDay();
+  return dow === 5 || dow === 6; // Fri or Sat
+}
+
 function isLastDayOfMonth(d: Date): boolean {
   const t = new Date(d); t.setDate(t.getDate() + 1);
   return t.getDate() === 1;
 }
+
 
 export default function WeeklyReviewBanner({ T, isRTL, trades }: Props) {
   // Live tick to flip states across midnight without reload
@@ -42,10 +49,13 @@ export default function WeeklyReviewBanner({ T, isRTL, trades }: Props) {
 
   const now = new Date();
   const isFri = now.getDay() === 5;
+  const inCloseWindow = isCloseWindow(now);
+
   const isFirstOfMonth = now.getDate() === 1;
   const isMonthEnd = isLastDayOfMonth(now);
   const showMonthOver = isFirstOfMonth || isMonthEnd;
   const dLeft = daysUntilFriday(now);
+
 
   const wk = useMemo(() => aggregateWeek(trades, now), [trades, now]);
   const tradesSynced = wk.trades.length;
@@ -79,8 +89,8 @@ export default function WeeklyReviewBanner({ T, isRTL, trades }: Props) {
         @keyframes wrbFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
       `}</style>
 
-      {/* ── Friday reminder ───────────────────────────────── */}
-      {isFri && (
+      {/* ── Fri / Sat close-week reminder ─────────────────── */}
+      {inCloseWindow && (
         <div
           role="status"
           style={{
@@ -105,8 +115,11 @@ export default function WeeklyReviewBanner({ T, isRTL, trades }: Props) {
           />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 800, fontSize: 14, letterSpacing: 0.3 }}>
-              {isRTL ? '📋 שישי — זמן לסקור את השבוע' : '📋 It\'s Friday — time to review the week'}
+              {isRTL
+                ? (isFri ? '📋 שישי — זמן לסקור את השבוע' : '📋 שבת — עדיין אפשר לסגור את השבוע')
+                : (isFri ? '📋 It\'s Friday — time to review the week' : '📋 Saturday — you can still close the week')}
             </div>
+
             <div style={{ color: muted, fontSize: 11 }}>
               {isRTL
                 ? 'מלא את היומן השבועי ולחץ "סגור שבוע" כדי לארכב.'
@@ -193,7 +206,7 @@ export default function WeeklyReviewBanner({ T, isRTL, trades }: Props) {
                 ? 'אין עסקאות סגורות השבוע עדיין — כל עסקה חדשה תופיע כאן אוטומטית'
                 : 'No closed trades this week yet — every new trade will show here automatically')}
         </span>
-        {!isFri && (
+        {!inCloseWindow && (
           <span
             style={{
               marginInlineStart: 'auto',

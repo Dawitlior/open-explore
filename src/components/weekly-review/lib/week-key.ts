@@ -32,6 +32,14 @@ export function isFriday(d: Date = new Date()): boolean {
   return d.getDay() === 5;
 }
 
+/** Weekly review close-week is allowed on Friday OR Saturday.
+ *  Many traders prefer doing the review on Saturday. */
+export function isCloseWeekAllowed(d: Date = new Date()): boolean {
+  const dow = d.getDay();
+  return dow === 5 || dow === 6;
+}
+
+
 export function monthKeyOf(d: Date): string {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
 }

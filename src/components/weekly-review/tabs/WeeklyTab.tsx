@@ -18,7 +18,7 @@ import { useWeekDraft, type WeekDraft } from '../hooks/use-week-draft';
 import { useReviewUnit, fmtR, fmtUSD } from '../hooks/use-review-unit';
 import { useRiskPrefs } from '../hooks/use-risk-prefs';
 import { gradeWeek, GRADE_COLORS } from '../lib/grading';
-import { isFriday } from '../lib/week-key';
+import { isCloseWeekAllowed } from '../lib/week-key';
 import type { WeekRecord } from '../lib/types';
 import { TriState } from '../widgets/TriState';
 import { SectionTitle } from '../widgets/SectionTitle';
@@ -77,7 +77,7 @@ const LIMITS = { daily: -2, weekly: -5, monthly: -10 };
 // ── i18n bundles ──
 const HE = {
   pageTitle: 'יומן מסחר — שבועי', lock: 'נעל יומן',
-  notFriday: 'היום אינו שישי',
+  notFriday: 'יומן השבוע נעול עד שישי/שבת',
   prep: 'הכנה', prepCue: 'לחץ: — → ✅ בוצע → ❌ לא בוצע',
   trades: 'עסקאות השבוע', addTrade: '+ הוסף עסקה',
   rr: 'R:R', winR: 'WIN R', avgR: 'AVG R', winRate: 'WIN RATE', tradesK: 'עסקאות', netR: 'NET R',
@@ -102,12 +102,12 @@ const HE = {
   decision: 'איכות החלטות',
   finalGrade: 'ציון סופי',
   insights: 'תובנות מערכת', noInsights: 'אין מספיק נתונים לתובנות — המשך לתעד',
-  closeWeek: 'סגור שבוע (שישי בלבד)', closed: 'נסגר', saved: '✅ נשמר',
+  closeWeek: 'סגור שבוע (שישי / שבת)', closed: 'נסגר', saved: '✅ נשמר',
   empty: '—',
 };
 const EN = {
   pageTitle: 'Trading Journal — Weekly', lock: 'Lock journal',
-  notFriday: 'Today is not Friday',
+  notFriday: 'Locked until Friday / Saturday',
   prep: 'Prep checklist', prepCue: 'Tap to cycle: — → ✅ done → ❌ missed',
   trades: 'Week trades', addTrade: '+ Add trade',
   rr: 'R:R', winR: 'WIN R', avgR: 'AVG R', winRate: 'WIN RATE', tradesK: 'TRADES', netR: 'NET R',
@@ -132,7 +132,7 @@ const EN = {
   decision: 'Decision quality',
   finalGrade: 'Final grade',
   insights: 'System insights', noInsights: 'Not enough data for insights — keep journaling',
-  closeWeek: 'Close week (Friday only)', closed: 'Closed', saved: '✅ Saved',
+  closeWeek: 'Close week (Fri / Sat)', closed: 'Closed', saved: '✅ Saved',
   empty: '—',
 };
 
@@ -153,14 +153,14 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
   const warn = T?.status?.warning || (isLight ? '#b86e00' : '#ffb830');
 
   const wk = useWeekAggregates(trades);
-  const { draft, update } = useWeekDraft(wk.weekKey);
+  const { draft, update, reset: resetDraft } = useWeekDraft(wk.weekKey);
   const { isUSD } = useReviewUnit();
   const risk = useRiskPrefs();
   const alreadyClosed = useMemo(
     () => state.archive.some(w => w.weekKey === wk.weekKey),
     [state.archive, wk.weekKey],
   );
-  const friday = isFriday();
+  const friday = isCloseWeekAllowed();
 
   // Derived: aggregates
   const tradesArr = wk.trades;
@@ -232,7 +232,10 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
       closedAt: new Date().toISOString(),
     };
     await state.saveArchive([...state.archive, record]);
+    // After closing the week, wipe ALL inputs so the new week starts clean.
+    await resetDraft();
   }
+
 
   // ── styles ──
   const card: React.CSSProperties = {

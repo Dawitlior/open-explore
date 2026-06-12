@@ -374,3 +374,16 @@ html[dir="ltr"] .dash-kpi-grid .orca-metric-sub {
 }
 
 
+
+/* Smooth chart fade-in to mask the recharts initial measurement flash
+   (visible right after pull-to-refresh and on first mount). */
+@keyframes orca-chart-fade-in {
+  from { opacity: 0; transform: translateY(2px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.recharts-responsive-container {
+  animation: orca-chart-fade-in 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.recharts-responsive-container .recharts-wrapper {
+  will-change: transform;
+}
