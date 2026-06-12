@@ -530,7 +530,7 @@ const Landing: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [scrolled, setScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  
   const [lang, setLangState] = useState<'he' | 'en'>(() => {
     if (typeof window === 'undefined') return 'he';
     try {
