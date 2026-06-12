@@ -222,13 +222,18 @@ const Index = () => {
   // Privacy mode shortcut
   usePrivacyShortcut(() => settings.setPrivacyMode(!settings.privacyMode));
 
-  // Command-K shortcut
+  // Command-K shortcut + `orca:open-command-palette` event
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setShowCmdPalette(p => !p); }
     };
+    const openEvt = () => setShowCmdPalette(true);
     window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    window.addEventListener('orca:open-command-palette', openEvt);
+    return () => {
+      window.removeEventListener('keydown', handler);
+      window.removeEventListener('orca:open-command-palette', openEvt);
+    };
   }, []);
 
   // No demo seed — dashboard starts empty, user adds their own trades
