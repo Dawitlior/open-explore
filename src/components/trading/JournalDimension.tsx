@@ -3952,7 +3952,12 @@ interface JournalDimensionProps {
 }
 
 export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, onUpdateOrcaTrade, onUpsertJournalTrade }: JournalDimensionProps) => {
-  const [lang, setLang] = useState(isRTL ? 'he' : 'en');
+  // Language strictly follows the platform language (isRTL prop). Do NOT keep
+  // local state for this — it caused HE/EN to desync when the user toggled
+  // language while inside the journal and on subsequent loads (we used to
+  // restore a stale `s.lang` from storage, overriding the platform setting).
+  const lang = isRTL ? 'he' : 'en';
+  const setLang = (_v: string) => { /* no-op — language is owned by the platform */ };
   const [days, setDays] = useState<JournalDay[]>(() => {
     const d = makeDay(isRTL ? 'he' : 'en'); d.dayNum = '1'; d.weekNum = '1';
     return [d];
