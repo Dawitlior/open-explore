@@ -638,6 +638,18 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
           }}>
           🔒 {isRTL ? 'נעל שבוע' : 'Lock week'}
         </button>
+        <button
+          onClick={resetAllInputs}
+          title={isRTL ? 'איפוס כל האינפוטים' : 'Reset all inputs'}
+          style={{
+            minHeight: 56, padding: '14px 22px',
+            background: 'transparent', color: loss,
+            border: `1.5px solid ${loss}88`, borderRadius: 12,
+            fontFamily: 'inherit', fontWeight: 800, fontSize: 12,
+            letterSpacing: 1.5, textTransform: 'uppercase', cursor: 'pointer',
+          }}>
+          🧹 {isRTL ? 'אפס אינפוטים' : 'Reset inputs'}
+        </button>
       </div>
     </div>
   );
