@@ -1859,7 +1859,7 @@ const Index = () => {
               <button onClick={() => setShowTradeForm(true)} style={{ padding: '10px 24px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 700, cursor: 'pointer', fontSize: 14 }}>+ {t.addTrade}</button>
             </div>
           )}
-          {page === 'dashboard' && <div data-orca-dashboard="true">{renderDashboard()}</div>}
+          {page === 'dashboard' && <div data-orca-dashboard="true">{trades.length > 0 && <CustomKPIPanel T={T} isRTL={isRTL} stats={stats as any} />}{renderDashboard()}</div>}
           {page === 'calendar' && (
             <LazyShell><CalendarHubPage T={T} isRTL={isRTL} t={t} trades={trades} isMobile={isMobile} onGenerateInsight={handleGenerateInsights} onSetManualR={setManualR} /></LazyShell>
           )}
