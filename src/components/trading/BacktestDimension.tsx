@@ -470,7 +470,7 @@ function BacktestEntryScreen({ onEnter, onSkip, L }: { onEnter: () => void; onSk
         position: 'absolute', bottom: 'max(24px, env(safe-area-inset-bottom, 24px))', left: '50%', transform: 'translateX(-50%)',
         background: 'none', border: `1px solid ${T4}`, borderRadius: 6,
         padding: '6px 16px', color: T3, fontSize: 11, cursor: 'pointer', zIndex: 30,
-      }}>דלג</button>
+      }}>{BT_STR[L].skip}</button>
     </div>
   );
 }
