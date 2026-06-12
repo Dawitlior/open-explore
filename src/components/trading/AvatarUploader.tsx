@@ -61,8 +61,11 @@ export const AvatarUploader = ({ T, size = 72, isRTL }: Props) => {
       if (upErr) throw upErr;
       const { error: dbErr } = await supabase.from('profiles').update({ avatar_url: path }).eq('id', user.id);
       if (dbErr) throw dbErr;
+      invalidateAvatarCache(path);
+      try { sessionStorage.setItem('orca:avatar-path', path); } catch { /* noop */ }
       const signed = await resolveAvatarUrl(path);
       const finalUrl = signed ? `${signed}${signed.includes('?') ? '&' : '?'}v=${Date.now()}` : null;
+      setImgLoaded(false);
       setUrl(finalUrl);
       window.dispatchEvent(new CustomEvent('orca:avatar-changed', { detail: { url: finalUrl } }));
       toast.success(isRTL ? 'תמונת פרופיל עודכנה' : 'Profile photo updated', { id: tId });
