@@ -3220,6 +3220,20 @@ const AutoFillButton = ({ onClick, dir, th, label }: { onClick: () => void; dir:
   </button>
 );
 
+const ClearDemoButton = ({ onClick, dir, label }: { onClick: () => void; dir: string; label: string }) => (
+  <button onClick={onClick} style={{
+    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20,
+    background: 'linear-gradient(135deg, rgba(255,77,77,0.10), rgba(255,77,77,0.05))',
+    border: '1px solid rgba(255,77,77,0.28)', color: '#FF6B6B', cursor: 'pointer',
+    fontFamily: "'Poppins',sans-serif", fontSize: 10.5, fontWeight: 700, letterSpacing: '.3px',
+    transition: 'all .25s', direction: dir as 'ltr' | 'rtl',
+  }}
+    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, rgba(255,77,77,0.20), rgba(255,77,77,0.10))'; (e.currentTarget as HTMLElement).style.boxShadow = '0 0 16px rgba(255,77,77,0.18)'; }}
+    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, rgba(255,77,77,0.10), rgba(255,77,77,0.05))'; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}>
+    <span style={{ fontSize: 13 }}>🗑️</span> {label}
+  </button>
+);
+
 const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) => {
   const f = t.f;
   const U = (k: string) => (v: any) => upd({ [k]: v });
