@@ -153,7 +153,7 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
   const warn = T?.status?.warning || (isLight ? '#b86e00' : '#ffb830');
 
   const wk = useWeekAggregates(trades);
-  const { draft, update, reset: resetDraft, hardReset } = useWeekDraft(wk.weekKey);
+  const { draft, update, hardReset } = useWeekDraft(wk.weekKey);
   const { isUSD } = useReviewUnit();
   const risk = useRiskPrefs();
   const alreadyClosed = useMemo(
