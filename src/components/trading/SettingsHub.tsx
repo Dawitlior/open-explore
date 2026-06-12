@@ -757,6 +757,22 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                     </button>
                   </div>
 
+                  <div style={card}>
+                    <h3 style={sectionTitle}><HelpCircle size={14} /> {t('הדרכת מערכת', 'Take a Tour')}</h3>
+                    <p style={sectionHint}>{t('הפעלה מחדש של ההדרכה המודרכת לדף הנוכחי.', 'Replay the guided onboarding tour for the current page.')}</p>
+                    <button
+                      onClick={() => {
+                        const og = (window as unknown as { OrcaGuide?: { replay?: () => void; init?: (o: { appName: string }) => void } }).OrcaGuide;
+                        if (og?.replay) og.replay();
+                        else if (og?.init) og.init({ appName: 'Apex OS' });
+                        else toast.error(t('מנוע ההדרכה לא נטען עדיין', 'Guide engine not loaded yet'));
+                      }}
+                      style={ghostBtn}
+                    >
+                      <HelpCircle size={13} /> {t('הפעל הדרכה', 'Start tour')}
+                    </button>
+                  </div>
+
                   <div style={{ ...card, borderColor: `${T.accent.orange}40`, background: `linear-gradient(135deg, ${T.accent.orange}08, transparent)` }}>
                     <h3 style={{ ...sectionTitle, color: T.accent.orange }}><AlertTriangle size={14} /> {t('יציאה מהמערכת', 'Sign out')}</h3>
                     <p style={sectionHint}>{t('יציאה תנתק אותך מהמכשיר הזה. הנתונים שלך נשמרים בענן ויהיו זמינים בכניסה הבאה.', 'Signs you out from this device. Your data stays in the cloud and will be available next sign-in.')}</p>
