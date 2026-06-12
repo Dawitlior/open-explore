@@ -233,7 +233,15 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
     };
     await state.saveArchive([...state.archive, record]);
     // After closing the week, wipe ALL inputs so the new week starts clean.
-    await resetDraft();
+    await hardReset();
+  }
+
+  async function resetAllInputs() {
+    const msg = isRTL
+      ? 'לאפס את כל האינפוטים של הסקירה השבועית? פעולה זו לא תשפיע על שבועות שכבר נסגרו בארכיון.'
+      : 'Reset every input in this Weekly Review? Already-archived weeks are not affected.';
+    if (!window.confirm(msg)) return;
+    await hardReset();
   }
 
 
