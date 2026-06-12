@@ -1553,7 +1553,7 @@ const Index = () => {
 
 
   // Portal pulse animation
-  const portalCSS = `@keyframes portalPulse { 0%,100% { opacity: 0.3; } 50% { opacity: 0.8; } }`;
+  const portalCSS = `@keyframes portalPulse { 0%,100% { opacity: 0.3; } 50% { opacity: 0.8; } } @keyframes portalShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`;
 
   if (activeDimension === 'journal') {
     return (
