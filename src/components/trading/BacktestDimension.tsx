@@ -258,7 +258,7 @@ function Seg({opts,v,s}:{opts:string[][];v:string;s:(v:string)=>void}){return <d
 // ═══════════════════════════════════════════
 // ENTRY ANIMATION — Discretionary Trading Portal
 // ═══════════════════════════════════════════
-function BacktestEntryScreen({ onEnter, onSkip }: { onEnter: () => void; onSkip: () => void }) {
+function BacktestEntryScreen({ onEnter, onSkip, L }: { onEnter: () => void; onSkip: () => void; L: BTLang }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [phase, setPhase] = useState<'boot' | 'ready' | 'portal' | 'done'>('boot');
 
