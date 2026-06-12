@@ -26,10 +26,17 @@ function daysUntilFriday(d: Date): number {
   return dow === 5 ? 0 : (5 - dow + 7) % 7;
 }
 
+/** Window in which the user is encouraged to close the week. */
+function isCloseWindow(d: Date): boolean {
+  const dow = d.getDay();
+  return dow === 5 || dow === 6; // Fri or Sat
+}
+
 function isLastDayOfMonth(d: Date): boolean {
   const t = new Date(d); t.setDate(t.getDate() + 1);
   return t.getDate() === 1;
 }
+
 
 export default function WeeklyReviewBanner({ T, isRTL, trades }: Props) {
   // Live tick to flip states across midnight without reload
@@ -42,10 +49,13 @@ export default function WeeklyReviewBanner({ T, isRTL, trades }: Props) {
 
   const now = new Date();
   const isFri = now.getDay() === 5;
+  const isSat = now.getDay() === 6;
+  const inCloseWindow = isCloseWindow(now);
   const isFirstOfMonth = now.getDate() === 1;
   const isMonthEnd = isLastDayOfMonth(now);
   const showMonthOver = isFirstOfMonth || isMonthEnd;
   const dLeft = daysUntilFriday(now);
+
 
   const wk = useMemo(() => aggregateWeek(trades, now), [trades, now]);
   const tradesSynced = wk.trades.length;
