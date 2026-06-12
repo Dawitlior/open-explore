@@ -236,12 +236,20 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
     await hardReset();
   }
 
-  async function resetAllInputs() {
-    const msg = isRTL
-      ? 'לאפס את כל האינפוטים של הסקירה השבועית? פעולה זו לא תשפיע על שבועות שכבר נסגרו בארכיון.'
-      : 'Reset every input in this Weekly Review? Already-archived weeks are not affected.';
-    if (!window.confirm(msg)) return;
+  // Reset confirmation modal state: 'idle' | 'ask' | 'sweeping' | 'done'
+  const [resetPhase, setResetPhase] = useState<'idle' | 'ask' | 'sweeping' | 'done'>('idle');
+
+  function resetAllInputs() {
+    setResetPhase('ask');
+  }
+
+  async function confirmReset() {
+    setResetPhase('sweeping');
+    // Hold the sweep animation a beat so it feels deliberate.
+    await new Promise(r => setTimeout(r, 850));
     await hardReset();
+    setResetPhase('done');
+    setTimeout(() => setResetPhase('idle'), 900);
   }
 
 
