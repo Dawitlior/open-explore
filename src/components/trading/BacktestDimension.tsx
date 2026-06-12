@@ -19,7 +19,90 @@ const fm=(v:any,d=2)=>v!=null&&!isNaN(v)?Number(v).toFixed(d):"—";const fp=(v:
 const emptyRow=()=>({id:uid(),coin:"",entryDT:"",exitDT:"",entry:"",sl:"",exit:"",mfeP:"",maeP:"",notes:"",chartE:"",chartX:"",dir:"",r:null as number|null,mfeR:null as number|null,maeR:null as number|null,dur:""});
 const recalc=(t:any)=>{const e=parseFloat(t.entry),sl=parseFloat(t.sl),ex=parseFloat(t.exit),mfe=parseFloat(t.mfeP),mae=parseFloat(t.maeP);t.dir=autoDir(e,sl);t.r=(e&&sl&&ex)?calcR(e,sl,ex):null;t.mfeR=(e&&sl&&mfe)?calcR(e,sl,mfe):null;t.maeR=(e&&sl&&mae)?calcR(e,sl,mae):null;const d=durCalc(t.entryDT,t.exitDT);t.dur=d?d.t:"";return t;};
 import { scopedStorage } from '@/lib/scoped-storage';
+import { useLang } from '@/hooks/use-lang';
 const SK="orca-bt-v13";const loadS=async()=>{try{const r=await scopedStorage.getItem(SK);return r?JSON.parse(r):[];}catch{return[];}};const persist=async (t:any)=>{try{await scopedStorage.setItem(SK,JSON.stringify(t));}catch{}};
+
+// ─── Bilingual labels ───
+type BTLang = 'he' | 'en';
+const BT_STR = {
+  he: {
+    appName: 'יומן באק-טסט', enter: 'כניסה למערכת', skip: 'דלג', back: 'חזרה ל-OrcaInvestment',
+    locked: 'המערכת נעולה', unlock: 'פתח נעילה', loading: 'טוען...',
+    deleteQ: 'למחוק?', del: 'מחק', cancel: 'ביטול', saveTrade: 'שמור עסקה',
+    editTrade: 'עריכת עסקה', newTrade: 'עסקה חדשה',
+    chart: 'גרף', import: 'ייבוא', exportJson: 'JSON', exportCsv: 'CSV',
+    tabs: { chart: 'גרף', trades: 'עסקאות', analytics: 'ניתוח', macro: 'מאקרו', equity: 'עקומה' },
+    quick: 'מהיר', coin: 'מטבע', entry: 'כניסה', sl: 'סטופ', exit: 'יציאה',
+    fullForm: 'טופס מלא', filter: 'סינון', all: 'הכל', long: 'לונג', short: 'שורט',
+    allCoins: 'כל המטבעות', search: 'חיפוש...', newToOld: 'חדש→ישן', oldToNew: 'ישן→חדש',
+    direction: 'כיוון', status: 'סטטוס', auto: '⚡ אוטומטי',
+    liveDemo: 'הדגמה חיה — מילוי עסקה', soSimple: 'ככה פשוט! עכשיו תורך 🚀', firstTrade: '+ הוסף עסקה ראשונה',
+    ready: 'מוכן להתחיל', firstTradeBtn: '+ עסקה ראשונה', demoLink: 'הדגמה',
+    win: 'ניצחון', ev: 'תוחלת', totalR: 'סה״כ R', avg: 'ממוצע', median: 'חציון', maxLbl: 'מקסימלי', streak: 'רצף',
+    noResults: 'אין תוצאות', totalReturn: 'תשואה כוללת', trades: 'עסקאות',
+    byCoin: 'לפי מטבע', averages: 'ממוצעים', general: 'כללי', loss: 'הפסד', total: 'סה״כ',
+    returnTime: 'תשואה/זמן', daily: 'יומי', weekly: 'שבועי', monthly: 'חודשי', quarterly: 'רבעוני', yearly: 'שנתי',
+    day: 'יום', quarter: 'רבע', month: 'חודש',
+    equityCurve: 'עקומת הון', rPerTrade: 'R לכל עסקה', drawdown: 'Drawdown', maxDd: 'מקסימלי',
+    addTrades: 'הוסף עסקאות',
+    // Tutorial demo rows
+    demoCoin: { l: 'מטבע', d: 'שם המטבע שנסחר' },
+    demoEntry: { l: 'כניסה $', d: 'מחיר הכניסה לעסקה' },
+    demoSl: { l: 'סטופ $', d: 'מחיר הסטופ לוס' },
+    demoExit: { l: 'יציאה $', d: 'מחיר היציאה בפועל' },
+    demoEntryDT: { l: 'זמן כניסה', d: 'מתי נכנסת לעסקה' },
+    demoExitDT: { l: 'זמן יציאה', d: 'מתי סגרת' },
+    demoMfeP: { l: 'MFE $', d: 'המחיר הכי טוב לטובתך' },
+    demoMaeP: { l: 'MAE $', d: 'המחיר הכי גרוע נגדך' },
+    demoChartE: { l: 'צילום כניסה', d: 'לינק לצילום TradingView' },
+    demoChartX: { l: 'צילום יציאה', d: 'צילום מסך יציאה' },
+    // Form sections
+    secTrade: 'פרטי העסקה', secDates: 'תאריכים', secMfeMae: 'MFE / MAE', optional: 'אופציונלי',
+    secMedia: 'צילומים והערות',
+    fldEntryPrice: 'מחיר כניסה', fldSl: 'סטופ לוס', fldExitPrice: 'מחיר יציאה',
+    fldEntryDT: 'זמן כניסה', fldExitDT: 'זמן יציאה',
+    fldChartE: 'צילום כניסה', fldChartX: 'צילום יציאה', fldNotes: 'הערות',
+    // Table cols
+    colDir: 'כיוון', colTime: 'זמן', colDur: 'משך',
+  },
+  en: {
+    appName: 'Backtest Journal', enter: 'Enter System', skip: 'Skip', back: 'Back to OrcaInvestment',
+    locked: 'System Locked', unlock: 'Unlock', loading: 'Loading...',
+    deleteQ: 'Delete?', del: 'Delete', cancel: 'Cancel', saveTrade: 'Save Trade',
+    editTrade: 'Edit Trade', newTrade: 'New Trade',
+    chart: 'Chart', import: 'Import', exportJson: 'JSON', exportCsv: 'CSV',
+    tabs: { chart: 'Chart', trades: 'Trades', analytics: 'Analytics', macro: 'Macro', equity: 'Equity' },
+    quick: 'Quick', coin: 'Coin', entry: 'Entry', sl: 'Stop', exit: 'Exit',
+    fullForm: 'Full form', filter: 'Filter', all: 'All', long: 'Long', short: 'Short',
+    allCoins: 'All coins', search: 'Search...', newToOld: 'New→Old', oldToNew: 'Old→New',
+    direction: 'Direction', status: 'Status', auto: '⚡ Auto',
+    liveDemo: 'Live demo — filling a trade', soSimple: "That's it! Your turn 🚀", firstTrade: '+ Add first trade',
+    ready: 'Ready to start', firstTradeBtn: '+ First trade', demoLink: 'Demo',
+    win: 'Win', ev: 'EV', totalR: 'Total R', avg: 'Avg', median: 'Median', maxLbl: 'Max', streak: 'Streak',
+    noResults: 'No results', totalReturn: 'Total Return', trades: 'trades',
+    byCoin: 'By Coin', averages: 'Averages', general: 'All', loss: 'Loss', total: 'Total',
+    returnTime: 'Return/Time', daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly', quarterly: 'Quarterly', yearly: 'Yearly',
+    day: 'Day', quarter: 'Quarter', month: 'Month',
+    equityCurve: 'Equity Curve', rPerTrade: 'R per trade', drawdown: 'Drawdown', maxDd: 'Max',
+    addTrades: 'Add trades',
+    demoCoin: { l: 'Coin', d: 'Traded asset symbol' },
+    demoEntry: { l: 'Entry $', d: 'Entry price' },
+    demoSl: { l: 'Stop $', d: 'Stop loss price' },
+    demoExit: { l: 'Exit $', d: 'Actual exit price' },
+    demoEntryDT: { l: 'Entry time', d: 'When you entered' },
+    demoExitDT: { l: 'Exit time', d: 'When you closed' },
+    demoMfeP: { l: 'MFE $', d: 'Best price in your favor' },
+    demoMaeP: { l: 'MAE $', d: 'Worst price against you' },
+    demoChartE: { l: 'Entry chart', d: 'TradingView snapshot link' },
+    demoChartX: { l: 'Exit chart', d: 'Exit screenshot link' },
+    secTrade: 'Trade Details', secDates: 'Dates', secMfeMae: 'MFE / MAE', optional: 'optional',
+    secMedia: 'Charts & Notes',
+    fldEntryPrice: 'Entry price', fldSl: 'Stop loss', fldExitPrice: 'Exit price',
+    fldEntryDT: 'Entry time', fldExitDT: 'Exit time',
+    fldChartE: 'Entry chart', fldChartX: 'Exit chart', fldNotes: 'Notes',
+    colDir: 'Dir', colTime: 'Time', colDur: 'Duration',
+  },
+} as const;
 
 const BL="#2563eb",BL2="#3b82f6",G="#0ecb81",RD="#f6465d",CY="#06b6d4",PU="#a855f7";
 const BG="#0c0f14",BG2="#10141b",BG3="#161c26",SURF="#1e2535",BRD="#1e2736",BRDH="#2a3548";
