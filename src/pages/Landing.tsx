@@ -6,7 +6,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Menu, X, ArrowLeft, TrendingUp } from 'lucide-react';
+import { ArrowLeft, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import dashboardMain from '@/assets/landing/dashboard_main.png';
 import journalEntry from '@/assets/landing/journal_entry.png';
@@ -36,7 +36,7 @@ const orcaCss = `
 
 .orca-landing {
   --bg:        #000000;
-  --bg-2:      #050609;
+  --bg-2:      transparent;
   --surface:   #0A0D14;
   --surface-2: #0F131C;
   --border:    rgba(34,211,238,0.10);
@@ -530,7 +530,7 @@ const Landing: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [scrolled, setScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  
   const [lang, setLangState] = useState<'he' | 'en'>(() => {
     if (typeof window === 'undefined') return 'he';
     try {
@@ -585,29 +585,13 @@ const Landing: React.FC = () => {
               <img src={orcaLogo} alt="Orca Investment" style={{ height: 44, width: 'auto', display: 'block' }} />
             </Link>
 
-            {/* Right (desktop ≥768) — only the CTA, no menu button on desktop */}
-            <div className="hidden md:flex items-center" style={{ gap: 14, marginInlineStart: 'auto' }}>
+            {/* Right — CTA only, always visible */}
+            <div className="flex items-center" style={{ gap: 14, marginInlineStart: 'auto' }}>
               <button className="grad-btn" onClick={goApp} style={{ padding: '10px 18px', fontSize: 14 }}>
                 {t('כניסה למערכת', 'Enter app')}
               </button>
             </div>
-
-            {/* Mobile-only toggle (<768px) */}
-            <button className="md:hidden" onClick={() => setMenuOpen(o => !o)} aria-label={t('תפריט', 'Menu')}
-              style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: 10, width: 44, height: 44, display: 'grid', placeItems: 'center', color: 'var(--text)' }}>
-              {menuOpen ? <X size={20} /> : <Menu size={20} />}
-            </button>
           </div>
-
-          {menuOpen && (
-            <div className="orca-mobile-menu md:hidden">
-              <div style={{ padding: 16 }}>
-                <button className="grad-btn" onClick={() => { setMenuOpen(false); goApp(); }} style={{ width: '100%', justifyContent: 'center' }}>
-                  {t('כניסה למערכת', 'Enter app')}
-                </button>
-              </div>
-            </div>
-          )}
         </nav>
 
         {/* ───── HERO ───── */}
@@ -650,13 +634,6 @@ const Landing: React.FC = () => {
                   </Link>
                 </div>
 
-                {/* Live ticker */}
-                <div className="orca-ticker">
-                  <span>BTC/USD <span className="pos">+1.21%</span></span>
-                  <span>ETH/USD <span className="pos">+4.30%</span></span>
-                  <span>SOL/USD <span className="neg">-2.85%</span></span>
-                  <span>BNB/USD <span className="neg">-0.41%</span></span>
-                </div>
               </motion.div>
 
               {/* Mockup */}

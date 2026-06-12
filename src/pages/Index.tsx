@@ -48,6 +48,7 @@ const CalendarHubPage = lazy(() => import('@/components/trading/CalendarHubPage'
 const EconomicCalendarPage = lazy(() => import('@/components/economic/EconomicCalendarPage').then(m => ({ default: m.EconomicCalendarPage })));
 import { InstallPrompt } from '@/components/trading/InstallPrompt';
 import { DimensionController, PortalButton, BacktestPortalButton } from '@/components/trading/DimensionController';
+import { CustomKPIPanel } from '@/components/trading/CustomKPIPanel';
 const JournalDimension = lazy(() => import('@/components/trading/JournalDimension').then(m => ({ default: m.JournalDimension })));
 const BacktestDimension = lazy(() => import('@/components/trading/BacktestDimension').then(m => ({ default: m.BacktestDimension })));
 import { useTrades } from '@/hooks/use-trades';
@@ -1553,7 +1554,7 @@ const Index = () => {
 
 
   // Portal pulse animation
-  const portalCSS = `@keyframes portalPulse { 0%,100% { opacity: 0.3; } 50% { opacity: 0.8; } }`;
+  const portalCSS = `@keyframes portalPulse { 0%,100% { opacity: 0.3; } 50% { opacity: 0.8; } } @keyframes portalShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`;
 
   if (activeDimension === 'journal') {
     return (
@@ -1677,7 +1678,20 @@ const Index = () => {
             const activeColor = isWeekly ? '#FFD700' : T.accent.cyan;
             const showBadge = isWeekly && showWeeklyReminder;
             return (
-            <button key={item.id} onClick={() => { if (item.action) { item.action(); return; } setPage(item.id); if (isWeekly) dismissWeeklyReminder(); }} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10, padding: sbOpen ? '9px 10px' : '9px 0', justifyContent: sbOpen ? 'flex-start' : 'center', background: page === item.id ? `${activeColor}10` : 'transparent', color: page === item.id ? activeColor : (isWeekly ? '#FFD700' : T.text.secondary), border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: page === item.id ? 600 : (isWeekly ? 600 : 400), transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: page === item.id ? `2px solid ${activeColor}` : '2px solid transparent' }}>
+            <button key={item.id} onClick={() => { if (item.action) { item.action(); return; } setPage(item.id); if (isWeekly) dismissWeeklyReminder(); }}
+              onMouseEnter={e => {
+                if (page === item.id) return;
+                e.currentTarget.style.background = `linear-gradient(110deg, transparent 0%, ${activeColor}18 50%, transparent 100%)`;
+                e.currentTarget.style.boxShadow = `inset 0 0 0 1px ${activeColor}30, 0 0 22px -6px ${activeColor}55`;
+                e.currentTarget.style.color = activeColor;
+              }}
+              onMouseLeave={e => {
+                if (page === item.id) return;
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.color = isWeekly ? '#FFD700' : T.text.secondary;
+              }}
+              style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10, padding: sbOpen ? '9px 10px' : '9px 0', justifyContent: sbOpen ? 'flex-start' : 'center', background: page === item.id ? `linear-gradient(110deg, transparent 0%, ${activeColor}22 50%, transparent 100%)` : 'transparent', color: page === item.id ? activeColor : (isWeekly ? '#FFD700' : T.text.secondary), border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: page === item.id ? 600 : (isWeekly ? 600 : 400), transition: 'background 0.25s ease, box-shadow 0.25s ease, color 0.2s ease', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: page === item.id ? `2px solid ${activeColor}` : '2px solid transparent', boxShadow: page === item.id ? `inset 0 0 0 1px ${activeColor}25, 0 0 18px -8px ${activeColor}66` : 'none' }}>
               <span style={{ position: 'relative', display: 'inline-flex' }}>
                 {typeof item.icon === 'string' ? <span style={{ fontSize: 18 }}>{item.icon}</span> : item.icon}
                 {showBadge && <ReminderBadge />}
@@ -1700,9 +1714,19 @@ const Index = () => {
             <button
               onClick={() => setShowTraderMind(true)}
               title={isRTL ? 'תודעת הסוחר — אבחון התנהגותי' : 'Trader Mind — behavioral diagnostic'}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '9px 10px', background: `${T.accent.purple ?? T.accent.cyan}10`, border: `1px solid ${T.accent.purple ?? T.accent.cyan}30`, borderRadius: T.radius.md, color: T.accent.purple ?? T.accent.cyan, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = `0 0 26px -6px ${T.accent.purple ?? T.accent.cyan}cc, inset 0 0 0 1px ${T.accent.purple ?? T.accent.cyan}66`;
+                e.currentTarget.style.background = `linear-gradient(135deg, ${T.accent.purple ?? T.accent.cyan}22, ${T.accent.cyan}18)`;
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.background = `linear-gradient(135deg, ${T.accent.purple ?? T.accent.cyan}15, transparent)`;
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 12px', background: `linear-gradient(135deg, ${T.accent.purple ?? T.accent.cyan}15, transparent)`, border: `1px solid ${T.accent.purple ?? T.accent.cyan}40`, borderRadius: T.radius.md, color: T.accent.purple ?? T.accent.cyan, cursor: 'pointer', fontSize: 12, fontWeight: 700, letterSpacing: 0.3, transition: 'all 0.25s ease' }}
             >
-              <span style={{ fontSize: 14 }}>◈</span>
+              <span style={{ fontSize: 15, filter: `drop-shadow(0 0 6px ${T.accent.purple ?? T.accent.cyan}aa)` }}>◈</span>
               <span>{isRTL ? 'תודעת הסוחר' : 'Trader Mind'}</span>
               {tmCalibrated ? (
                 <span style={{ marginInlineStart: 'auto', fontSize: 8, color: T.accent.cyan, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase' }}>
@@ -1836,7 +1860,7 @@ const Index = () => {
               <button onClick={() => setShowTradeForm(true)} style={{ padding: '10px 24px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 700, cursor: 'pointer', fontSize: 14 }}>+ {t.addTrade}</button>
             </div>
           )}
-          {page === 'dashboard' && <div data-orca-dashboard="true">{renderDashboard()}</div>}
+          {page === 'dashboard' && <div data-orca-dashboard="true">{trades.length > 0 && <CustomKPIPanel T={T} isRTL={isRTL} stats={stats as any} />}{renderDashboard()}</div>}
           {page === 'calendar' && (
             <LazyShell><CalendarHubPage T={T} isRTL={isRTL} t={t} trades={trades} isMobile={isMobile} onGenerateInsight={handleGenerateInsights} onSetManualR={setManualR} /></LazyShell>
           )}

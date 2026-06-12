@@ -37,7 +37,7 @@ export const DimensionController = ({ orcaUI, journalUI, backtestUI, activeDimen
   );
 };
 
-// Portal button for the sidebar
+// Portal button for the sidebar — Trader Journey
 export const PortalButton = ({ onClick, isRTL, expanded }: { onClick: () => void; isRTL: boolean; expanded: boolean }) => {
   return (
     <button
@@ -47,44 +47,45 @@ export const PortalButton = ({ onClick, isRTL, expanded }: { onClick: () => void
         alignItems: 'center',
         gap: 10,
         width: '100%',
-        padding: expanded ? '10px 12px' : '10px 0',
+        padding: expanded ? '11px 13px' : '11px 0',
         justifyContent: expanded ? 'flex-start' : 'center',
-        background: 'linear-gradient(135deg, rgba(0,242,255,0.08), rgba(168,85,247,0.08))',
-        border: '1px solid rgba(0,242,255,0.2)',
-        borderRadius: 10,
+        background: 'linear-gradient(135deg, rgba(212,175,55,0.10), rgba(168,85,247,0.06) 60%, transparent)',
+        border: '1px solid rgba(212,175,55,0.28)',
+        borderRadius: 12,
         cursor: 'pointer',
         fontSize: 12,
         fontWeight: 700,
-        color: '#D4AF37',
+        color: '#E6C667',
         transition: 'all 0.3s ease',
         position: 'relative',
         overflow: 'hidden',
         marginTop: 4,
+        letterSpacing: '0.04em',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
       }}
       onMouseEnter={e => {
-        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0,242,255,0.15), rgba(168,85,247,0.15))';
-        e.currentTarget.style.borderColor = 'rgba(212,175,55,0.4)';
-        e.currentTarget.style.boxShadow = '0 0 20px rgba(212,175,55,0.15), 0 0 40px rgba(0,242,255,0.08)';
-        e.currentTarget.style.transform = 'scale(0.98)';
+        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(212,175,55,0.20), rgba(168,85,247,0.14) 60%, rgba(0,242,255,0.06))';
+        e.currentTarget.style.borderColor = 'rgba(212,175,55,0.55)';
+        e.currentTarget.style.boxShadow = '0 0 28px -6px rgba(212,175,55,0.55), inset 0 1px 0 rgba(255,255,255,0.10)';
+        e.currentTarget.style.transform = 'translateY(-1px)';
       }}
       onMouseLeave={e => {
-        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0,242,255,0.08), rgba(168,85,247,0.08))';
-        e.currentTarget.style.borderColor = 'rgba(0,242,255,0.2)';
-        e.currentTarget.style.boxShadow = 'none';
-        e.currentTarget.style.transform = 'scale(1)';
+        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(212,175,55,0.10), rgba(168,85,247,0.06) 60%, transparent)';
+        e.currentTarget.style.borderColor = 'rgba(212,175,55,0.28)';
+        e.currentTarget.style.boxShadow = 'inset 0 1px 0 rgba(255,255,255,0.04)';
+        e.currentTarget.style.transform = 'translateY(0)';
       }}
     >
-      {/* Glow pulse */}
       <span style={{
-        position: 'absolute',
-        inset: 0,
-        background: 'linear-gradient(135deg, rgba(0,242,255,0.05), rgba(168,85,247,0.05))',
-        animation: 'portalPulse 3s ease-in-out infinite',
-        borderRadius: 10,
+        position: 'absolute', inset: 0,
+        background: 'linear-gradient(120deg, transparent 30%, rgba(212,175,55,0.10) 50%, transparent 70%)',
+        backgroundSize: '200% 100%',
+        animation: 'portalShimmer 4.5s linear infinite',
+        pointerEvents: 'none',
       }} />
-      <span style={{ fontSize: 18, position: 'relative', zIndex: 1 }}>🏛️</span>
+      <span style={{ fontSize: 17, position: 'relative', zIndex: 1, filter: 'drop-shadow(0 0 6px rgba(212,175,55,0.55))' }}>🏛️</span>
       {expanded && (
-        <span style={{ position: 'relative', zIndex: 1, letterSpacing: '0.02em' }}>
+        <span style={{ position: 'relative', zIndex: 1 }}>
           {isRTL ? 'יומן מסע לסוחר' : 'Trader Journey'}
         </span>
       )}
@@ -102,43 +103,45 @@ export const BacktestPortalButton = ({ onClick, isRTL, expanded }: { onClick: ()
         alignItems: 'center',
         gap: 10,
         width: '100%',
-        padding: expanded ? '10px 12px' : '10px 0',
+        padding: expanded ? '11px 13px' : '11px 0',
         justifyContent: expanded ? 'flex-start' : 'center',
-        background: 'linear-gradient(135deg, rgba(37,99,235,0.08), rgba(6,182,212,0.08))',
-        border: '1px solid rgba(37,99,235,0.2)',
-        borderRadius: 10,
+        background: 'linear-gradient(135deg, rgba(6,182,212,0.10), rgba(59,130,246,0.06) 60%, transparent)',
+        border: '1px solid rgba(6,182,212,0.28)',
+        borderRadius: 12,
         cursor: 'pointer',
         fontSize: 12,
         fontWeight: 700,
-        color: '#3b82f6',
+        color: '#7DD3FC',
         transition: 'all 0.3s ease',
         position: 'relative',
         overflow: 'hidden',
         marginTop: 4,
+        letterSpacing: '0.04em',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
       }}
       onMouseEnter={e => {
-        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(37,99,235,0.15), rgba(6,182,212,0.15))';
-        e.currentTarget.style.borderColor = 'rgba(37,99,235,0.4)';
-        e.currentTarget.style.boxShadow = '0 0 20px rgba(37,99,235,0.15)';
-        e.currentTarget.style.transform = 'scale(0.98)';
+        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(6,182,212,0.22), rgba(59,130,246,0.14) 60%, rgba(168,85,247,0.06))';
+        e.currentTarget.style.borderColor = 'rgba(6,182,212,0.55)';
+        e.currentTarget.style.boxShadow = '0 0 28px -6px rgba(6,182,212,0.55), inset 0 1px 0 rgba(255,255,255,0.10)';
+        e.currentTarget.style.transform = 'translateY(-1px)';
       }}
       onMouseLeave={e => {
-        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(37,99,235,0.08), rgba(6,182,212,0.08))';
-        e.currentTarget.style.borderColor = 'rgba(37,99,235,0.2)';
-        e.currentTarget.style.boxShadow = 'none';
-        e.currentTarget.style.transform = 'scale(1)';
+        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(6,182,212,0.10), rgba(59,130,246,0.06) 60%, transparent)';
+        e.currentTarget.style.borderColor = 'rgba(6,182,212,0.28)';
+        e.currentTarget.style.boxShadow = 'inset 0 1px 0 rgba(255,255,255,0.04)';
+        e.currentTarget.style.transform = 'translateY(0)';
       }}
     >
       <span style={{
-        position: 'absolute',
-        inset: 0,
-        background: 'linear-gradient(135deg, rgba(37,99,235,0.05), rgba(6,182,212,0.05))',
-        animation: 'portalPulse 3s ease-in-out infinite',
-        borderRadius: 10,
+        position: 'absolute', inset: 0,
+        background: 'linear-gradient(120deg, transparent 30%, rgba(6,182,212,0.10) 50%, transparent 70%)',
+        backgroundSize: '200% 100%',
+        animation: 'portalShimmer 4.5s linear infinite',
+        pointerEvents: 'none',
       }} />
-      <span style={{ fontSize: 18, position: 'relative', zIndex: 1 }}>📊</span>
+      <span style={{ fontSize: 17, position: 'relative', zIndex: 1, filter: 'drop-shadow(0 0 6px rgba(6,182,212,0.55))' }}>📊</span>
       {expanded && (
-        <span style={{ position: 'relative', zIndex: 1, letterSpacing: '0.02em' }}>
+        <span style={{ position: 'relative', zIndex: 1 }}>
           {isRTL ? 'יומן באק-טסט' : 'Backtest Journal'}
         </span>
       )}

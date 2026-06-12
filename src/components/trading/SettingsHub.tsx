@@ -2318,17 +2318,7 @@ function TraderMindSummary({
         </>
       )}
 
-      {/* ── Full visual report (snapshot from the diagnostic) ── */}
-      {srcDoc ? (
-        <FullReportBlock srcDoc={srcDoc} T={T} t={t} isRTL={isRTL} />
-      ) : (
-        <div style={{ ...headerCard, marginTop: 14, color: T.text.muted, fontSize: 12, lineHeight: 1.7 }}>
-          {t(
-            'הדוח המלא נשמר רק מאבחונים חדשים. לחץ "כייל מחדש" כדי לבצע אבחון חדש — לאחר סיומו הדוח המלא יוצג כאן.',
-            'The full visual report is captured only from new diagnostics. Click "Recalibrate" to run a fresh session — the full report will appear here once it completes.',
-          )}
-        </div>
-      )}
+      {/* Full visual report has been removed — the structured Diagnostic Summary above is the canonical, comprehensive report. */}
     </div>
   );
 }
