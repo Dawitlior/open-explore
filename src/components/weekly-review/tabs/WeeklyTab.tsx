@@ -153,7 +153,7 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
   const warn = T?.status?.warning || (isLight ? '#b86e00' : '#ffb830');
 
   const wk = useWeekAggregates(trades);
-  const { draft, update } = useWeekDraft(wk.weekKey);
+  const { draft, update, reset: resetDraft } = useWeekDraft(wk.weekKey);
   const { isUSD } = useReviewUnit();
   const risk = useRiskPrefs();
   const alreadyClosed = useMemo(
@@ -232,7 +232,10 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
       closedAt: new Date().toISOString(),
     };
     await state.saveArchive([...state.archive, record]);
+    // After closing the week, wipe ALL inputs so the new week starts clean.
+    await resetDraft();
   }
+
 
   // ── styles ──
   const card: React.CSSProperties = {
