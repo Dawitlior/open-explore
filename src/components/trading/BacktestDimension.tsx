@@ -607,9 +607,11 @@ interface BacktestDimensionProps {
 
 export const BacktestDimension = ({ onReturn }: BacktestDimensionProps) => {
   const [showEntry, setShowEntry] = useState(true);
+  const { isRTL } = useLang();
+  const L: BTLang = isRTL ? 'he' : 'en';
 
   if (showEntry) {
-    return <BacktestEntryScreen onEnter={() => setShowEntry(false)} onSkip={() => setShowEntry(false)} />;
+    return <BacktestEntryScreen L={L} onEnter={() => setShowEntry(false)} onSkip={() => setShowEntry(false)} />;
   }
 
   return <BacktestApp onReturn={onReturn} />;
