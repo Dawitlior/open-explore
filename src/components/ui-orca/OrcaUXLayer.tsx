@@ -280,14 +280,16 @@ export const OrcaUXLayer = () => {
         )}
       </AnimatePresence>
 
-      {/* 11. ⌘K hint (bottom-right, secondary) */}
-      <div className="hidden md:flex fixed bottom-5 left-5 z-[9993] orca-chip px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider text-muted-foreground/70 items-center gap-1.5 pointer-events-none">
-        Press
-        <kbd className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-foreground/90">⌘K</kbd>
-        for command
-        <span className="text-muted-foreground/40">·</span>
-        <kbd className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-foreground/90">?</kbd>
-        help
+      {/* 11. ⌘K hint — compact circular button */}
+      <button
+        type="button"
+        aria-label="Open command palette (⌘K)"
+        title="⌘K — Command palette"
+        onClick={() => window.dispatchEvent(new CustomEvent('orca:open-command-palette'))}
+        className="hidden md:flex fixed bottom-5 left-5 z-[9993] w-8 h-8 rounded-full orca-glass orca-glass-hover items-center justify-center text-[10px] font-mono font-bold text-muted-foreground/80 hover:text-foreground transition-colors"
+        style={{ padding: 0 }}
+      >
+        ⌘K
       </div>
 
       {/* 10. Help overlay */}
