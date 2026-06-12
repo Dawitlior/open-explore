@@ -80,5 +80,35 @@ export function useWeekDraft(weekKey: string) {
     await setSetting(KEY(weekKey), EMPTY_DRAFT);
   }, [weekKey]);
 
-  return { draft, update, reset, loaded };
+  // Field-by-field hard reset. Writes EMPTY_DRAFT and sweeps any legacy
+  // per-week keys that earlier versions of the form persisted separately.
+  const hardReset = useCallback(async () => {
+    const empty: WeekDraft = {
+      ...EMPTY_DRAFT,
+      preps: [0, 0, 0, 0],
+      edges: [0, 0, 0, 0],
+      mindsetTags: [],
+      executionChecklist: { ...EMPTY_EXEC },
+    };
+    setDraft(empty);
+    await setSetting(KEY(weekKey), empty);
+    // Sweep legacy per-week keys (no-ops if absent).
+    const legacy = [
+      `weekly_review.prep.${weekKey}`,
+      `weekly_review.edges.${weekKey}`,
+      `weekly_review.exec.${weekKey}`,
+      `weekly_review.mindset.${weekKey}`,
+      `weekly_review.reflection.${weekKey}`,
+      `weekly_review.tags.${weekKey}`,
+      `weekly_review.violations.${weekKey}`,
+      `weekly_review.env.${weekKey}`,
+      `weekly_review.pos.${weekKey}`,
+      `weekly_review.emotion.${weekKey}`,
+      `weekly_review.focus.${weekKey}`,
+      `weekly_review.bigMistake.${weekKey}`,
+    ];
+    await Promise.all(legacy.map(k => setSetting(k, null).catch(() => {})));
+  }, [weekKey]);
+
+  return { draft, update, reset, hardReset, loaded };
 }
