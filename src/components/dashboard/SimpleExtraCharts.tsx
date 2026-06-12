@@ -8,7 +8,7 @@
  * relevant (chart #3). Charts #1/#2 count wins which is mode-agnostic but the
  * unit chip on ChartWrapper reflects the active mode.
  */
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
@@ -24,6 +24,20 @@ interface BaseProps {
 
 const MONTH_KEY = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 const QUARTER_KEY = (d: Date) => `${d.getFullYear()}-Q${Math.floor(d.getMonth() / 3) + 1}`;
+const SHORT_MONTH = (k: string) => {
+  const [y, m] = k.split('-');
+  const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${names[Number(m) - 1] || m} ${y.slice(2)}`;
+};
+const useIsMobile = () => {
+  const [m, setM] = useState(typeof window !== 'undefined' && window.innerWidth < 640);
+  useEffect(() => {
+    const on = () => setM(window.innerWidth < 640);
+    window.addEventListener('resize', on);
+    return () => window.removeEventListener('resize', on);
+  }, []);
+  return m;
+};
 
 const tradeDate = (t: Trade): Date | null => {
   const raw = (t as any).exitTime || (t as any).date || (t as any).timestamp;
@@ -37,6 +51,7 @@ const isWin = (t: Trade): boolean =>
 
 /* ────────── #1 wins by month ────────── */
 export const WinsByMonthChart = ({ T, trades, isRTL, tt }: BaseProps) => {
+  const isMobile = useIsMobile();
   const data = useMemo(() => {
     const map = new Map<string, { name: string; Long: number; Short: number }>();
     for (const t of trades) {
@@ -49,23 +64,30 @@ export const WinsByMonthChart = ({ T, trades, isRTL, tt }: BaseProps) => {
       if (t.direction === 'Long') row.Long += 1;
       else if (t.direction === 'Short') row.Short += 1;
     }
-    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [trades]);
+    return Array.from(map.values())
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map(r => ({ ...r, name: isMobile ? SHORT_MONTH(r.name) : r.name }));
+  }, [trades, isMobile]);
 
-  if (!data.length) {
-    return <Empty T={T} isRTL={isRTL} />;
-  }
+  if (!data.length) return <Empty T={T} isRTL={isRTL} />;
 
   return (
-    <div style={{ height: 260, width: '100%' }}>
+    <div style={{ height: isMobile ? 300 : 260, width: '100%' }}>
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 8, right: 8, bottom: 4, left: 0 }}>
+        <BarChart data={data} margin={{ top: 8, right: 8, bottom: isMobile ? 40 : 4, left: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-          <XAxis dataKey="name" tick={{ fill: T.text.muted, fontSize: 10 }} />
+          <XAxis
+            dataKey="name"
+            tick={{ fill: T.text.muted, fontSize: isMobile ? 9 : 10 }}
+            interval={0}
+            angle={isMobile ? -45 : 0}
+            textAnchor={isMobile ? 'end' : 'middle'}
+            height={isMobile ? 50 : 30}
+          />
           <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} width={32} allowDecimals={false} />
           <Tooltip contentStyle={tt} />
           <Legend wrapperStyle={{ fontSize: 11, color: T.text.muted }} />
-          <Bar dataKey="Long" stackId="w" fill={T.accent.green} radius={[0, 0, 0, 0]} name={isRTL ? 'לונג' : 'Long'} />
+          <Bar dataKey="Long" stackId="w" fill={T.accent.green} name={isRTL ? 'לונג' : 'Long'} />
           <Bar dataKey="Short" stackId="w" fill={T.accent.red} radius={[4, 4, 0, 0]} name={isRTL ? 'שורט' : 'Short'} />
         </BarChart>
       </ResponsiveContainer>
