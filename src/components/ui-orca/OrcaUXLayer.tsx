@@ -216,13 +216,9 @@ export const OrcaUXLayer = () => {
 
   return (
     <>
-      {/* 17. Skip-to-content (accessibility) */}
-      <a
-        href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[10000] focus:px-3 focus:py-2 focus:rounded-md focus:bg-primary focus:text-primary-foreground focus:font-semibold focus:text-xs"
-      >
-        Skip to content
-      </a>
+      {/* Skip-to-content removed per user request — no accessibility chip in navbar. */}
+
+
 
       {/* 19. Page-load veil */}
       <AnimatePresence>
