@@ -1713,9 +1713,19 @@ const Index = () => {
             <button
               onClick={() => setShowTraderMind(true)}
               title={isRTL ? 'תודעת הסוחר — אבחון התנהגותי' : 'Trader Mind — behavioral diagnostic'}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '9px 10px', background: `${T.accent.purple ?? T.accent.cyan}10`, border: `1px solid ${T.accent.purple ?? T.accent.cyan}30`, borderRadius: T.radius.md, color: T.accent.purple ?? T.accent.cyan, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = `0 0 26px -6px ${T.accent.purple ?? T.accent.cyan}cc, inset 0 0 0 1px ${T.accent.purple ?? T.accent.cyan}66`;
+                e.currentTarget.style.background = `linear-gradient(135deg, ${T.accent.purple ?? T.accent.cyan}22, ${T.accent.cyan}18)`;
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.background = `linear-gradient(135deg, ${T.accent.purple ?? T.accent.cyan}15, transparent)`;
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 12px', background: `linear-gradient(135deg, ${T.accent.purple ?? T.accent.cyan}15, transparent)`, border: `1px solid ${T.accent.purple ?? T.accent.cyan}40`, borderRadius: T.radius.md, color: T.accent.purple ?? T.accent.cyan, cursor: 'pointer', fontSize: 12, fontWeight: 700, letterSpacing: 0.3, transition: 'all 0.25s ease' }}
             >
-              <span style={{ fontSize: 14 }}>◈</span>
+              <span style={{ fontSize: 15, filter: `drop-shadow(0 0 6px ${T.accent.purple ?? T.accent.cyan}aa)` }}>◈</span>
               <span>{isRTL ? 'תודעת הסוחר' : 'Trader Mind'}</span>
               {tmCalibrated ? (
                 <span style={{ marginInlineStart: 'auto', fontSize: 8, color: T.accent.cyan, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase' }}>
