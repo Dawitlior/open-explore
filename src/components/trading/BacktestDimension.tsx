@@ -526,6 +526,7 @@ function BacktestApp({ onReturn }: { onReturn: () => void }) {
   const[exitingToOrca,setExitingToOrca]=useState(false);
   const[renamingStrat,setRenamingStrat]=useState(false);
   const[confirmDelStrat,setConfirmDelStrat]=useState(false);
+  const[stratPrompt,setStratPrompt]=useState<{mode:'add'|'rename';value:string}|null>(null);
 
   useEffect(()=>{css();loadState().then((s)=>{setState(s);setLoading(false);});},[]);
 
@@ -540,18 +541,21 @@ function BacktestApp({ onReturn }: { onReturn: () => void }) {
   },[updateState]);
 
   // Strategy CRUD
-  const addStrategy=()=>{
-    const name=prompt(L==='he'?'שם האסטרטגיה החדשה':'New strategy name','');
-    if(!name||!name.trim())return;
-    const id=uid();
-    updateState(s=>({strategies:[...s.strategies,{id,name:name.trim(),trades:[]}],activeId:id}));
-    setShowTut(true);
-  };
+  const addStrategy=()=>setStratPrompt({mode:'add',value:''});
   const switchStrategy=(id:string)=>updateState(s=>({...s,activeId:id}));
-  const renameStrategy=()=>{
-    const name=prompt(L==='he'?'שם חדש לאסטרטגיה':'Rename strategy',activeStrat?.name||'');
-    if(!name||!name.trim())return;
-    updateState(s=>({...s,strategies:s.strategies.map(st=>st.id===s.activeId?{...st,name:name.trim()}:st)}));
+  const renameStrategy=()=>setStratPrompt({mode:'rename',value:activeStrat?.name||''});
+  const submitStratPrompt=()=>{
+    if(!stratPrompt)return;
+    const name=stratPrompt.value.trim();
+    if(!name){setStratPrompt(null);return;}
+    if(stratPrompt.mode==='add'){
+      const id=uid();
+      updateState(s=>({strategies:[...s.strategies,{id,name,trades:[]}],activeId:id}));
+      setShowTut(true);
+    } else {
+      updateState(s=>({...s,strategies:s.strategies.map(st=>st.id===s.activeId?{...st,name}:st)}));
+    }
+    setStratPrompt(null);
   };
   const deleteStrategy=()=>{
     updateState(s=>{
@@ -668,6 +672,31 @@ function BacktestApp({ onReturn }: { onReturn: () => void }) {
     </div>
 
     {confirmDelStrat&&<div style={{position:"fixed",inset:0,zIndex:8500,background:"rgba(0,0,0,.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setConfirmDelStrat(false)}><div className="pop" onClick={(e:any)=>e.stopPropagation()} style={{background:BG3,borderRadius:12,padding:24,textAlign:"center",border:`1px solid ${BRD}`,maxWidth:340}}><div style={{fontSize:14,fontWeight:700,color:T1,marginBottom:6}}>{L==='he'?'למחוק אסטרטגיה?':'Delete strategy?'}</div><div style={{fontSize:11,color:T3,marginBottom:14}}>{state.strategies.length<=1?(L==='he'?'זו האסטרטגיה האחרונה — כל העסקאות יימחקו':'Last strategy — all trades will be cleared'):(L==='he'?`כל ${trades.length} העסקאות של "${activeStrat?.name}" יימחקו`:`All ${trades.length} trades in "${activeStrat?.name}" will be removed`)}</div><div style={{display:"flex",gap:8,justifyContent:"center"}}><button onClick={deleteStrategy} style={{background:RD,border:"none",borderRadius:8,padding:"8px 24px",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}}>{S.del}</button><button onClick={()=>setConfirmDelStrat(false)} style={{background:"none",border:`1px solid ${BRD}`,borderRadius:8,padding:"8px 20px",color:T2,fontSize:12,cursor:"pointer"}}>{S.cancel}</button></div></div></div>}
+
+    {stratPrompt&&<div style={{position:"fixed",inset:0,zIndex:8600,background:"rgba(2,8,20,.65)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,}} onClick={()=>setStratPrompt(null)}>
+      <div className="pop" onClick={(e:any)=>e.stopPropagation()} dir={L==='he'?'rtl':'ltr'} style={{background:BG3,borderRadius:16,padding:24,border:`1px solid ${BRD}`,width:"min(440px,96vw)",boxShadow:"0 30px 80px rgba(0,0,0,.55)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
+          <div style={{width:44,height:44,borderRadius:12,background:`${BL}1f`,border:`1px solid ${BL}55`,display:"grid",placeItems:"center",fontSize:22}}>{stratPrompt.mode==='add'?'📐':'✎'}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:15,fontWeight:800,color:T1}}>{stratPrompt.mode==='add'?(L==='he'?'אסטרטגיה חדשה':'New strategy'):(L==='he'?'שינוי שם אסטרטגיה':'Rename strategy')}</div>
+            <div style={{fontSize:11.5,color:T3,marginTop:3}}>{L==='he'?'תן שם ברור — תוכל לעבור בין אסטרטגיות בכל רגע.':'Give it a clear name — you can switch between strategies anytime.'}</div>
+          </div>
+        </div>
+        <input
+          autoFocus
+          value={stratPrompt.value}
+          onChange={(e:any)=>setStratPrompt(p=>p?{...p,value:e.target.value}:p)}
+          onKeyDown={(e:any)=>{if(e.key==='Enter')submitStratPrompt();if(e.key==='Escape')setStratPrompt(null);}}
+          placeholder={L==='he'?'למשל: ORB · Breakout · Mean Reversion':'e.g. ORB · Breakout · Mean Reversion'}
+          style={{width:"100%",boxSizing:"border-box",background:"transparent",color:T1,border:`1px solid ${BRD}`,borderRadius:10,padding:"12px 14px",fontFamily:"inherit",fontSize:14,outline:"none",textAlign:L==='he'?'right':'left'}}
+        />
+        <div style={{display:"flex",gap:10,marginTop:16,justifyContent:"flex-end",flexDirection:L==='he'?'row-reverse':'row'}}>
+          <button onClick={()=>setStratPrompt(null)} style={{background:"none",border:`1px solid ${BRD}`,borderRadius:10,padding:"10px 18px",color:T2,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>{S.cancel}</button>
+          <button onClick={submitStratPrompt} disabled={!stratPrompt.value.trim()} style={{background:stratPrompt.value.trim()?`linear-gradient(135deg, ${BL}, ${BL}cc)`:`${BL}33`,border:"none",borderRadius:10,padding:"10px 22px",color:"#fff",fontSize:13,fontWeight:800,letterSpacing:.3,cursor:stratPrompt.value.trim()?"pointer":"not-allowed",fontFamily:"inherit",boxShadow:stratPrompt.value.trim()?`0 8px 24px ${BL}55`:"none"}}>{stratPrompt.mode==='add'?(L==='he'?'➕ צור':'➕ Create'):(L==='he'?'שמור':'Save')}</button>
+        </div>
+      </div>
+    </div>}
+
 
 
     {!has&&tab==="trades"&&<div className="fi" style={{padding:"clamp(20px,4vw,40px) 16px",maxWidth:580,margin:"0 auto"}}>{showTut?<Tutorial L={L} onClose={()=>setShowTut(false)} onStart={()=>{setShowTut(false);setShowForm(true);}}/>:<div style={{textAlign:"center",padding:"clamp(20px,6vw,40px) 0"}}><div style={{width:56,height:56,borderRadius:14,background:`${BL}12`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px"}}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={BL} strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg></div><div style={{fontSize:"clamp(18px,4vw,22px)",fontWeight:700,color:T1,marginBottom:20}}>{S.ready}</div><button onClick={()=>setShowForm(true)} style={{background:BL,border:"none",borderRadius:10,padding:"12px 32px",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"}}>{S.firstTradeBtn}</button><div style={{marginTop:12}}><button onClick={()=>setShowTut(true)} style={{background:"none",border:"none",color:BL2,fontSize:11,cursor:"pointer",textDecoration:"underline"}}>{S.demoLink}</button><span style={{color:T4,margin:"0 8px"}}>·</span><button onClick={imp} style={{background:"none",border:"none",color:T3,fontSize:11,cursor:"pointer",textDecoration:"underline"}}>{S.import}</button></div></div>}</div>}
