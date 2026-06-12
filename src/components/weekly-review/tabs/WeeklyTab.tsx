@@ -10,7 +10,7 @@ import { themeBgs } from '../lib/theme-bg';
 // All form state is persisted per-week into Cloud (`weekly_review.draft.*`)
 // so the user can resume on any device. Close-week snapshots into archive.
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { Trade } from '@/data/trades';
 import type { useWeeklyReviewState } from '../hooks/use-weekly-review-state';
 import { useWeekAggregates } from '../hooks/use-week-aggregates';
@@ -236,12 +236,20 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
     await hardReset();
   }
 
-  async function resetAllInputs() {
-    const msg = isRTL
-      ? 'לאפס את כל האינפוטים של הסקירה השבועית? פעולה זו לא תשפיע על שבועות שכבר נסגרו בארכיון.'
-      : 'Reset every input in this Weekly Review? Already-archived weeks are not affected.';
-    if (!window.confirm(msg)) return;
+  // Reset confirmation modal state: 'idle' | 'ask' | 'sweeping' | 'done'
+  const [resetPhase, setResetPhase] = useState<'idle' | 'ask' | 'sweeping' | 'done'>('idle');
+
+  function resetAllInputs() {
+    setResetPhase('ask');
+  }
+
+  async function confirmReset() {
+    setResetPhase('sweeping');
+    // Hold the sweep animation a beat so it feels deliberate.
+    await new Promise(r => setTimeout(r, 850));
     await hardReset();
+    setResetPhase('done');
+    setTimeout(() => setResetPhase('idle'), 900);
   }
 
 
@@ -651,7 +659,177 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
           🧹 {isRTL ? 'אפס אינפוטים' : 'Reset inputs'}
         </button>
       </div>
+
+      {/* === RESET CONFIRM MODAL === */}
+      {resetPhase !== 'idle' && (
+        <ResetConfirmModal
+          phase={resetPhase}
+          isRTL={isRTL}
+          T={T}
+          onConfirm={confirmReset}
+          onCancel={() => setResetPhase('idle')}
+        />
+      )}
     </div>
+  );
+}
+
+// ── Reset confirm modal ────────────────────────────────────────────────
+function ResetConfirmModal({
+  phase, isRTL, T, onConfirm, onCancel,
+}: {
+  phase: 'ask' | 'sweeping' | 'done';
+  isRTL: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  T: any;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const isLight = (T as { id?: string })?.id === 'platinum';
+  const fg = T?.text?.primary || (isLight ? '#0a0e1a' : '#e9eef7');
+  const muted = T?.text?.muted || (isLight ? '#4b5566' : '#7a8aa3');
+  const panel = T?.bg?.surface || (isLight ? '#ffffff' : '#0e1726');
+  const border = T?.border?.subtle || (isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.10)');
+  const loss = T?.status?.danger || '#ff3b3b';
+  const win = isLight ? '#0a8a4a' : (T?.status?.success || '#39FF14');
+
+  const L = isRTL ? {
+    title: 'איפוס כל האינפוטים?',
+    body: 'כל השדות בסקירה השבועית הנוכחית יתאפסו. שבועות שכבר נסגרו בארכיון לא יושפעו.',
+    confirm: 'כן, אפס הכל',
+    cancel: 'ביטול',
+    sweeping: 'מאפס שדה אחר שדה…',
+    done: 'הכל נקי ✨',
+  } : {
+    title: 'Reset all inputs?',
+    body: 'Every field in the current Weekly Review will be cleared. Already-archived weeks stay intact.',
+    confirm: 'Yes, reset all',
+    cancel: 'Cancel',
+    sweeping: 'Sweeping field by field…',
+    done: 'All clean ✨',
+  };
+
+  return (
+    <>
+      <style>{`
+        @keyframes wr-reset-fade { from { opacity: 0 } to { opacity: 1 } }
+        @keyframes wr-reset-pop {
+          0% { transform: scale(.92) translateY(8px); opacity: 0 }
+          60% { transform: scale(1.01) translateY(0); opacity: 1 }
+          100% { transform: scale(1) translateY(0); opacity: 1 }
+        }
+        @keyframes wr-sweep {
+          0% { transform: translateX(-110%); opacity: .0 }
+          20% { opacity: 1 }
+          100% { transform: translateX(110%); opacity: .0 }
+        }
+        @keyframes wr-ring {
+          0% { transform: scale(.6); opacity: .8 }
+          100% { transform: scale(1.6); opacity: 0 }
+        }
+        @keyframes wr-check-pop {
+          0% { transform: scale(.4); opacity: 0 }
+          70% { transform: scale(1.15); opacity: 1 }
+          100% { transform: scale(1); opacity: 1 }
+        }
+      `}</style>
+      <div
+        role="dialog"
+        aria-modal="true"
+        dir={isRTL ? 'rtl' : 'ltr'}
+        onClick={phase === 'ask' ? onCancel : undefined}
+        style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(2, 8, 20, 0.65)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 16, animation: 'wr-reset-fade .18s ease-out',
+        }}
+      >
+        <div
+          onClick={e => e.stopPropagation()}
+          style={{
+            width: 'min(460px, 96vw)', background: panel, color: fg,
+            border: `1px solid ${border}`, borderRadius: 18,
+            boxShadow: '0 30px 80px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.02) inset',
+            padding: 22, position: 'relative', overflow: 'hidden',
+            animation: 'wr-reset-pop .28s cubic-bezier(.2,.9,.25,1.15)',
+            fontFamily: 'inherit',
+          }}
+        >
+          {/* Sweeping shimmer during reset */}
+          {phase === 'sweeping' && (
+            <div style={{
+              position: 'absolute', inset: 0, pointerEvents: 'none',
+              background: `linear-gradient(90deg, transparent, ${loss}33, transparent)`,
+              animation: 'wr-sweep .85s ease-in-out',
+            }} />
+          )}
+
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+            <div style={{
+              width: 44, height: 44, borderRadius: 12,
+              background: phase === 'done' ? `${win}22` : `${loss}1f`,
+              border: `1px solid ${phase === 'done' ? win : loss}55`,
+              display: 'grid', placeItems: 'center', fontSize: 22,
+              position: 'relative',
+            }}>
+              {phase === 'done' ? (
+                <span style={{ color: win, animation: 'wr-check-pop .35s cubic-bezier(.2,.9,.25,1.4)' }}>✓</span>
+              ) : phase === 'sweeping' ? (
+                <>
+                  <span style={{ position: 'absolute', inset: 0, borderRadius: 12, border: `2px solid ${loss}`, animation: 'wr-ring .9s ease-out infinite' }} />
+                  <span>🧹</span>
+                </>
+              ) : '🧹'}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 800, fontSize: 16, letterSpacing: .2 }}>
+                {phase === 'done' ? L.done : phase === 'sweeping' ? L.sweeping : L.title}
+              </div>
+              {phase === 'ask' && (
+                <div style={{ color: muted, fontSize: 12.5, marginTop: 4, lineHeight: 1.5 }}>
+                  {L.body}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Actions */}
+          {phase === 'ask' && (
+            <div style={{
+              display: 'flex', gap: 10, marginTop: 18,
+              flexDirection: isRTL ? 'row-reverse' : 'row', justifyContent: 'flex-end',
+            }}>
+              <button
+                onClick={onCancel}
+                style={{
+                  minHeight: 44, padding: '10px 18px',
+                  background: 'transparent', color: fg,
+                  border: `1px solid ${border}`, borderRadius: 10,
+                  fontFamily: 'inherit', fontWeight: 700, fontSize: 13, cursor: 'pointer',
+                }}
+              >{L.cancel}</button>
+              <button
+                onClick={onConfirm}
+                autoFocus
+                style={{
+                  minHeight: 44, padding: '10px 20px',
+                  background: `linear-gradient(135deg, ${loss}, ${loss}cc)`,
+                  color: '#fff',
+                  border: `1px solid ${loss}`, borderRadius: 10,
+                  fontFamily: 'inherit', fontWeight: 800, fontSize: 13, letterSpacing: .4,
+                  cursor: 'pointer',
+                  boxShadow: `0 8px 24px ${loss}55`,
+                }}
+              >🧹 {L.confirm}</button>
+            </div>
+          )}
+        </div>
+      </div>
+    </>
   );
 }
 
