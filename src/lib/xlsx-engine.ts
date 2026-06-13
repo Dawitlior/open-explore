@@ -155,7 +155,7 @@ function parseNumericValue(value: unknown): number | null {
 
   let cleaned = String(value).trim();
   if (!cleaned || cleaned === '—' || cleaned === '-') return null;
-  if (/^[=+]/.test(cleaned)) return null;
+  if (/^=/.test(cleaned) || /^\+\s*[A-Z(]/i.test(cleaned)) return null;
   const negative = /^\(.*\)$/.test(cleaned) || /^-/.test(cleaned);
   cleaned = cleaned
     .replace(/[\u200e\u200f\u202a-\u202e]/g, '')
