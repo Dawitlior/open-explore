@@ -126,11 +126,46 @@ function normalizeHeader(h: string): string {
   return h.trim().toLowerCase().replace(/\s+/g, ' ').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
+// UIE v1.2 — Phase 1: try the new canonical engine FIRST, fall back to the
+// legacy HEADER_MAP if it returns null. Backward-compatible by design.
+import { uieMapHeader } from './uie';
+
+const UIE_TO_TRADE: Partial<Record<string, keyof Trade | '_ignore'>> = {
+  date: 'date',
+  entryDate: 'date',
+  symbol: 'coin',
+  direction: 'direction',
+  orderType: 'orderType',
+  entry: 'entry',
+  avgEntry: 'entry',
+  exit: 'exit',
+  avgExit: 'exit',
+  stopLoss: 'stopLoss',
+  positionSize: 'positionSize',
+  pnl: 'pnl',
+  realizedPnl: 'pnl',
+  leverage: 'leverage',
+  balance: 'balance',
+  comments: 'comments',
+  riskAmount: 'risk',
+  riskPct: 'riskPct',
+};
+
 function mapHeaderToField(header: string): keyof Trade | '_ignore' | null {
+  // Phase 1: new engine. Only accept mapped (not pending-content) so content
+  // rules from Phase 2 stay authoritative for ambiguous semantic columns.
+  try {
+    const uie = uieMapHeader(header);
+    if (uie.status === 'mapped' && uie.field) {
+      const mapped = UIE_TO_TRADE[uie.field];
+      if (mapped) return mapped;
+    }
+  } catch {
+    // never let the new engine block legacy import
+  }
+  // Legacy fallback (Zero-Destruction)
   const norm = normalizeHeader(header);
-  // Direct match
   if (HEADER_MAP[norm]) return HEADER_MAP[norm];
-  // Partial match — check if any key is contained in the header
   for (const [key, field] of Object.entries(HEADER_MAP)) {
     if (norm.includes(key) || key.includes(norm)) return field;
   }
