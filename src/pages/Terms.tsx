@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
 import { ArrowLeft } from 'lucide-react';
 import {
   LEGAL_TITLE_HE,
@@ -9,14 +8,6 @@ import {
 
 const Terms = () => {
   return (
-    <>
-    <Helmet>
-      <title>תנאי שימוש · Orca Investment</title>
-      <meta name="description" content="תנאי השימוש ומדיניות הפלטפורמה של Orca Investment — יומן מסחר וניהול סיכונים." />
-      <link rel="canonical" href="/terms" />
-      <meta property="og:title" content="תנאי שימוש · Orca Investment" />
-      <meta property="og:url" content="/terms" />
-    </Helmet>
     <main
       dir="rtl"
       lang="he"
@@ -118,7 +109,6 @@ const Terms = () => {
         </p>
       </article>
     </main>
-    </>
   );
 };
 

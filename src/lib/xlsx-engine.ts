@@ -126,46 +126,11 @@ function normalizeHeader(h: string): string {
   return h.trim().toLowerCase().replace(/\s+/g, ' ').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
-// UIE v1.2 — Phase 1: try the new canonical engine FIRST, fall back to the
-// legacy HEADER_MAP if it returns null. Backward-compatible by design.
-import { uieMapHeader, runUIE, type CanonicalTrade } from './uie';
-
-const UIE_TO_TRADE: Partial<Record<string, keyof Trade | '_ignore'>> = {
-  date: 'date',
-  entryDate: 'date',
-  symbol: 'coin',
-  direction: 'direction',
-  orderType: 'orderType',
-  entry: 'entry',
-  avgEntry: 'entry',
-  exit: 'exit',
-  avgExit: 'exit',
-  stopLoss: 'stopLoss',
-  positionSize: 'positionSize',
-  pnl: 'pnl',
-  realizedPnl: 'pnl',
-  leverage: 'leverage',
-  balance: 'balance',
-  comments: 'comments',
-  riskAmount: 'risk',
-  riskPct: 'riskPct',
-};
-
 function mapHeaderToField(header: string): keyof Trade | '_ignore' | null {
-  // Phase 1: new engine. Only accept mapped (not pending-content) so content
-  // rules from Phase 2 stay authoritative for ambiguous semantic columns.
-  try {
-    const uie = uieMapHeader(header);
-    if (uie.status === 'mapped' && uie.field) {
-      const mapped = UIE_TO_TRADE[uie.field];
-      if (mapped) return mapped;
-    }
-  } catch {
-    // never let the new engine block legacy import
-  }
-  // Legacy fallback (Zero-Destruction)
   const norm = normalizeHeader(header);
+  // Direct match
   if (HEADER_MAP[norm]) return HEADER_MAP[norm];
+  // Partial match — check if any key is contained in the header
   for (const [key, field] of Object.entries(HEADER_MAP)) {
     if (norm.includes(key) || key.includes(norm)) return field;
   }
@@ -424,21 +389,6 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
     reader.onload = (e) => {
       try {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
-
-        // Detect Apple Numbers (.numbers) files renamed to .xlsx — they're ZIPs containing Index/*.iwa, not real Excel.
-        const head = new TextDecoder('latin1').decode(data.slice(0, 4096));
-        if (head.startsWith('PK') && (head.includes('Index/Document.iwa') || head.includes('.iwa'))) {
-          resolve({
-            trades: [],
-            errors: [
-              'הקובץ הוא Apple Numbers ולא Excel אמיתי. ב-Numbers: File → Export To → Excel (.xlsx) ואז העלה שוב. / File looks like Apple Numbers, not a real .xlsx. In Numbers: File → Export To → Excel (.xlsx), then re-upload.'
-            ],
-            skipped: 0,
-            imported: 0,
-          });
-          return;
-        }
-
         const wb = XLSX.read(data, { type: 'array', cellDates: true, dateNF: 'dd/mm/yyyy hh:mm', raw: true });
         const ws = pickMainSheet(wb);
         if (!ws) { resolve({ trades: [], errors: ['Main Sheet not found'], skipped: 0, imported: 0 }); return; }
@@ -449,18 +399,7 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
         const headers: Record<string, number> = {};
         (rows[0] || []).forEach((h, i) => { if (String(h).trim()) headers[normalizeHeader(String(h))] = i; });
         const nrIndex = headers['#'] ?? headers['nr.'] ?? headers['nr'];
-        if (nrIndex === undefined) {
-          const found = Object.keys(headers).slice(0, 12).join(', ') || '(אין כותרות / no headers)';
-          resolve({
-            trades: [],
-            errors: [
-              `חסרה עמודת "# / Nr." ב-Main Sheet. ודא שהשורה הראשונה היא הכותרות (לא טייטל ממוזג) וכוללת עמודה בשם "#" או "Nr.". כותרות שזוהו: ${found}. / Missing required "# / Nr." column in Main Sheet. Make sure row 1 is the header row (not a merged title) and includes a column named "#" or "Nr.". Detected headers: ${found}.`
-            ],
-            skipped: 0,
-            imported: 0,
-          });
-          return;
-        }
+        if (nrIndex === undefined) { resolve({ trades: [], errors: ['Missing required # / Nr. column in Main Sheet'], skipped: 0, imported: 0 }); return; }
 
         const trades: Trade[] = [];
         const errors: string[] = [];
@@ -579,12 +518,7 @@ export function parseBrokerCsvRaw(file: File): Promise<Trade[]> {
           const field = mapHeaderToField(String(h ?? ''));
           if (field && field !== '_ignore') colMap.push({ idx: i, field });
         });
-        if (colMap.length === 0) {
-          // Phase 2 fallback: legacy header map found nothing — try UIE end-to-end.
-          const uie = tryUIEBrokerImport(headerRow, rows.slice(headerRowIdx + 1));
-          resolve(uie);
-          return;
-        }
+        if (colMap.length === 0) { resolve([]); return; }
 
         const trades: Trade[] = [];
         rows.slice(headerRowIdx + 1).forEach((row) => {
@@ -608,12 +542,6 @@ export function parseBrokerCsvRaw(file: File): Promise<Trade[]> {
           } catch { /* skip bad rows */ }
         });
 
-        // Phase 2 Zero-Destruction fallback: if legacy produced nothing, try UIE.
-        if (trades.length === 0) {
-          const uie = tryUIEBrokerImport(headerRow, rows.slice(headerRowIdx + 1));
-          if (uie.length) { resolve(uie); return; }
-        }
-
         resolve(trades);
       } catch (err) {
         reject(err);
@@ -622,39 +550,6 @@ export function parseBrokerCsvRaw(file: File): Promise<Trade[]> {
     reader.onerror = () => reject(new Error('File read failed'));
     reader.readAsArrayBuffer(file);
   });
-}
-
-// ─── Phase 2 · UIE end-to-end fallback ─────────────────────────────────────
-// CanonicalTrade → legacy Trade via the shared UIE_TO_TRADE map + sanitizer.
-function canonicalToLegacy(ct: CanonicalTrade, idx: number): Trade | null {
-  const mapped: Record<string, unknown> = { id: idx + 1 };
-  for (const [uieField, tradeField] of Object.entries(UIE_TO_TRADE)) {
-    if (tradeField === '_ignore' || !tradeField) continue;
-    const v = (ct as Record<string, unknown>)[uieField];
-    if (v == null) continue;
-    if (mapped[tradeField] == null) mapped[tradeField] = v;
-  }
-  // direction normalization (UIE already normalizes to 'Long'/'Short')
-  if (mapped.direction !== 'Long' && mapped.direction !== 'Short') {
-    const s = String(mapped.direction ?? '').toLowerCase();
-    mapped.direction = s.includes('short') || s.includes('sell') ? 'Short' : 'Long';
-  }
-  return sanitizeTrade(mapped, idx + 1);
-}
-
-function tryUIEBrokerImport(headerRow: unknown[], dataRows: unknown[][]): Trade[] {
-  try {
-    const headers = headerRow.map((h) => String(h ?? ''));
-    const res = runUIE(headers, dataRows);
-    const out: Trade[] = [];
-    res.trades.forEach((ct, i) => {
-      const t = canonicalToLegacy(ct, i);
-      if (t) out.push(t);
-    });
-    return out;
-  } catch {
-    return [];
-  }
 }
 
 /**

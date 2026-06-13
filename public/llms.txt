@@ -1,9 +1,0 @@
-# Orca Investment
-
-> Orca Investment is a professional trading journal and risk-management platform for active traders, featuring automated journaling, behavioral analytics, an economic radar, and a weekly AI review — bilingual (Hebrew/English).
-
-## Pages
-
-- [Landing](/welcome): Product overview, features, pricing, and free launch access.
-- [Sign in / Sign up](/auth): Account access (email + password, Google sign-in).
-- [Terms of Service](/terms): Legal terms and platform usage policy.
