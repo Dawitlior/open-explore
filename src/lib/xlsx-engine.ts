@@ -120,6 +120,20 @@ const HEADER_MAP: Record<string, keyof Trade | '_ignore'> = {
   'הערות': 'comments',
   'מספר מערכת': '_ignore',
   'מינוף': 'leverage',
+  // Israeli broker/account statements
+  'תאריך': 'date',
+  'סוג פעולה': 'direction',
+  'פעולה': 'direction',
+  'שם הנייר': 'coin',
+  'שם נכס': 'coin',
+  'נכס': 'coin',
+  'סימול': 'coin',
+  'כמות': 'positionSize',
+  'מחיר ממוצע': 'entry',
+  'מחיר': 'entry',
+  'סכום הפעולה': '_ignore',
+  'עמלה': '_ignore',
+  'יתרת מזומן': 'balance',
 };
 
 function normalizeHeader(h: string): string {
