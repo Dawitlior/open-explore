@@ -205,10 +205,11 @@ export default function AuthPage() {
       });
       if (error || !data?.ok) {
         const code = data?.error;
-        if (code === 'not_registered') { toast.error(c.notReg); return; }
         if (code === 'invalid_email') { toast.error(c.invalidEmail); return; }
         throw new Error(code || error?.message || 'reset_failed');
       }
+      // Always show the same neutral success message — never reveal whether
+      // the email is registered (prevents account enumeration).
       toast.success(c.resetSent);
     } catch (err) {
       toast.error(translateAuthError(err instanceof Error ? err.message : 'Password reset failed'));
