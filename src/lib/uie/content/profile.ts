@@ -72,6 +72,8 @@ function tryParseNumber(raw: string): { ok: true; value: number; european: boole
 
   s = stripCurrency(s);
   s = s.replace(PERCENT_SUFFIX, '').trim();
+  // strip trailing R / x suffix for R-multiple values ("1.2R", "2x")
+  s = s.replace(/\s*[rRxX]\s*$/, '').trim();
   s = s.replace(/\s+/g, '');
 
   // European: "1.234,56" → "1234.56"
