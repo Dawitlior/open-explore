@@ -26,14 +26,25 @@ Deno.serve(async (req) => {
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const ADMIN_SECRET = Deno.env.get('ADMIN_SECRET');
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_SERVICE_ROLE_KEY) {
       return json({ ok: false, error: 'server_misconfigured' }, 500);
     }
+    if (!ADMIN_SECRET) {
+      // Refuse to run a table-wide UPDATE unless an admin secret is configured.
+      return json({ ok: false, error: 'admin_secret_not_configured' }, 503);
+    }
 
-    // Require a logged-in user (any user — the backfill is global).
+    // Require a logged-in user AND the shared admin secret. The function does
+    // a SECURITY DEFINER UPDATE across every user's trades, so a stale session
+    // must not be enough on its own.
     const authHeader = req.headers.get('Authorization') ?? '';
+    const adminHeader = req.headers.get('x-admin-secret') ?? '';
     if (!authHeader.startsWith('Bearer ')) {
       return json({ ok: false, error: 'unauthorized' }, 401);
+    }
+    if (adminHeader !== ADMIN_SECRET) {
+      return json({ ok: false, error: 'forbidden' }, 403);
     }
     const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
