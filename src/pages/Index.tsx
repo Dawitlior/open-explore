@@ -418,10 +418,27 @@ const Index = () => {
             setImportPhase('saving');
             await importTrades(result.trades);
             console.log('[XLSX Import] Successfully imported', result.trades.length, 'trades');
+            // Show partial-import report if there were skipped rows / warnings
+            if (result.skipped > 0 || result.errors.length > 0) {
+              setImportReport({
+                open: true,
+                severity: 'partial',
+                fileName: file.name,
+                imported: result.trades.length,
+                skipped: result.skipped,
+                errors: result.errors,
+              });
+            }
           } else {
-            const errMsg = result.errors.length > 0 ? result.errors.join('; ') : 'No valid trades found in file';
-            console.error('[XLSX Import] No trades imported:', errMsg);
-            alert(isRTL ? `ייבוא נכשל: ${errMsg}` : `Import failed: ${errMsg}`);
+            console.error('[XLSX Import] No trades imported');
+            setImportReport({
+              open: true,
+              severity: 'error',
+              fileName: file.name,
+              imported: 0,
+              skipped: result.skipped,
+              errors: result.errors.length > 0 ? result.errors : ['No valid trades found in file'],
+            });
           }
         }
         setImportPhase('done');
@@ -429,7 +446,15 @@ const Index = () => {
         sessionStorage.setItem('orca-seeded', '1');
       } catch (err) {
         console.error('[XLSX Import] Error:', err);
-        alert(isRTL ? `שגיאת ייבוא: ${err instanceof Error ? err.message : 'Unknown error'}` : `Import error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        setImportReport({
+          open: true,
+          severity: 'error',
+          fileName: undefined,
+          imported: 0,
+          skipped: 0,
+          errors: [err instanceof Error ? err.message : 'Unknown error'],
+          hint: isRTL ? 'שגיאה כללית בקריאת הקובץ. ודא שזה קובץ Excel/JSON תקין.' : 'General read error. Make sure the file is a valid Excel/JSON file.',
+        });
       }
       finally { setImportLoading(false); }
     };
