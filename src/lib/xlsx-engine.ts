@@ -128,7 +128,7 @@ function normalizeHeader(h: string): string {
 
 // UIE v1.2 — Phase 1: try the new canonical engine FIRST, fall back to the
 // legacy HEADER_MAP if it returns null. Backward-compatible by design.
-import { uieMapHeader } from './uie';
+import { uieMapHeader, runUIE, type CanonicalTrade } from './uie';
 
 const UIE_TO_TRADE: Partial<Record<string, keyof Trade | '_ignore'>> = {
   date: 'date',
@@ -553,7 +553,12 @@ export function parseBrokerCsvRaw(file: File): Promise<Trade[]> {
           const field = mapHeaderToField(String(h ?? ''));
           if (field && field !== '_ignore') colMap.push({ idx: i, field });
         });
-        if (colMap.length === 0) { resolve([]); return; }
+        if (colMap.length === 0) {
+          // Phase 2 fallback: legacy header map found nothing — try UIE end-to-end.
+          const uie = tryUIEBrokerImport(headerRow, rows.slice(headerRowIdx + 1));
+          resolve(uie);
+          return;
+        }
 
         const trades: Trade[] = [];
         rows.slice(headerRowIdx + 1).forEach((row) => {
@@ -577,6 +582,12 @@ export function parseBrokerCsvRaw(file: File): Promise<Trade[]> {
           } catch { /* skip bad rows */ }
         });
 
+        // Phase 2 Zero-Destruction fallback: if legacy produced nothing, try UIE.
+        if (trades.length === 0) {
+          const uie = tryUIEBrokerImport(headerRow, rows.slice(headerRowIdx + 1));
+          if (uie.length) { resolve(uie); return; }
+        }
+
         resolve(trades);
       } catch (err) {
         reject(err);
@@ -585,6 +596,39 @@ export function parseBrokerCsvRaw(file: File): Promise<Trade[]> {
     reader.onerror = () => reject(new Error('File read failed'));
     reader.readAsArrayBuffer(file);
   });
+}
+
+// ─── Phase 2 · UIE end-to-end fallback ─────────────────────────────────────
+// CanonicalTrade → legacy Trade via the shared UIE_TO_TRADE map + sanitizer.
+function canonicalToLegacy(ct: CanonicalTrade, idx: number): Trade | null {
+  const mapped: Record<string, unknown> = { id: idx + 1 };
+  for (const [uieField, tradeField] of Object.entries(UIE_TO_TRADE)) {
+    if (tradeField === '_ignore' || !tradeField) continue;
+    const v = (ct as Record<string, unknown>)[uieField];
+    if (v == null) continue;
+    if (mapped[tradeField] == null) mapped[tradeField] = v;
+  }
+  // direction normalization (UIE already normalizes to 'Long'/'Short')
+  if (mapped.direction !== 'Long' && mapped.direction !== 'Short') {
+    const s = String(mapped.direction ?? '').toLowerCase();
+    mapped.direction = s.includes('short') || s.includes('sell') ? 'Short' : 'Long';
+  }
+  return sanitizeTrade(mapped, idx + 1);
+}
+
+function tryUIEBrokerImport(headerRow: unknown[], dataRows: unknown[][]): Trade[] {
+  try {
+    const headers = headerRow.map((h) => String(h ?? ''));
+    const res = runUIE(headers, dataRows);
+    const out: Trade[] = [];
+    res.trades.forEach((ct, i) => {
+      const t = canonicalToLegacy(ct, i);
+      if (t) out.push(t);
+    });
+    return out;
+  } catch {
+    return [];
+  }
 }
 
 /**
