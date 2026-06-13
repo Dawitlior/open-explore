@@ -111,6 +111,24 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
+    // Require a shared cron secret. Without this, any internet user could
+    // burn the Finnhub quota and write rows into economic_events.
+    const CRON_SECRET = Deno.env.get('CRON_SECRET');
+    if (!CRON_SECRET) {
+      return new Response(JSON.stringify({ error: 'cron_secret_not_configured' }), {
+        status: 503,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const auth = req.headers.get('Authorization') ?? '';
+    const provided = auth.startsWith('Bearer ') ? auth.slice(7) : (req.headers.get('x-cron-secret') ?? '');
+    if (provided !== CRON_SECRET) {
+      return new Response(JSON.stringify({ error: 'unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
