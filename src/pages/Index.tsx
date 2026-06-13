@@ -59,6 +59,7 @@ import { useUserPreferences } from '@/hooks/use-user-preferences';
 import { assessRisk } from '@/lib/risk-engine';
 import { generateInsights, generateSummary } from '@/lib/ai-engine';
 import { exportToXlsx, importFromXlsx } from '@/lib/xlsx-engine';
+import { ImportReportModal, type ImportReportSeverity } from '@/components/trading/ImportReportModal';
 import { getDayRiskColor, checkRiskLimits, DEFAULT_RISK_LIMITS } from '@/lib/risk-limits';
 import { useRiskLimits } from '@/hooks/use-risk-limits';
 import { scopedStorage } from '@/lib/scoped-storage';
@@ -176,6 +177,15 @@ const Index = () => {
   const [importFileName, setImportFileName] = useState<string>('');
   const [importedCount, setImportedCount] = useState(0);
   const [importPhase, setImportPhase] = useState<'reading' | 'parsing' | 'validating' | 'saving' | 'done'>('reading');
+  const [importReport, setImportReport] = useState<{
+    open: boolean;
+    severity: ImportReportSeverity;
+    fileName?: string;
+    imported: number;
+    skipped: number;
+    errors: string[];
+    hint?: string;
+  }>({ open: false, severity: 'success', imported: 0, skipped: 0, errors: [] });
   const [explainModal, setExplainModal] = useState<{ title: string; explanation: ChartExplanation; chartId?: string } | null>(null);
   const [riskExplanations, setRiskExplanations] = useState<RiskExplanation[]>([]);
   const [showRiskExplanation, setShowRiskExplanation] = useState<{ tradeId: number; riskChange: string } | null>(null);
@@ -408,10 +418,27 @@ const Index = () => {
             setImportPhase('saving');
             await importTrades(result.trades);
             console.log('[XLSX Import] Successfully imported', result.trades.length, 'trades');
+            // Show partial-import report if there were skipped rows / warnings
+            if (result.skipped > 0 || result.errors.length > 0) {
+              setImportReport({
+                open: true,
+                severity: 'partial',
+                fileName: file.name,
+                imported: result.trades.length,
+                skipped: result.skipped,
+                errors: result.errors,
+              });
+            }
           } else {
-            const errMsg = result.errors.length > 0 ? result.errors.join('; ') : 'No valid trades found in file';
-            console.error('[XLSX Import] No trades imported:', errMsg);
-            alert(isRTL ? `ייבוא נכשל: ${errMsg}` : `Import failed: ${errMsg}`);
+            console.error('[XLSX Import] No trades imported');
+            setImportReport({
+              open: true,
+              severity: 'error',
+              fileName: file.name,
+              imported: 0,
+              skipped: result.skipped,
+              errors: result.errors.length > 0 ? result.errors : ['No valid trades found in file'],
+            });
           }
         }
         setImportPhase('done');
@@ -419,7 +446,15 @@ const Index = () => {
         sessionStorage.setItem('orca-seeded', '1');
       } catch (err) {
         console.error('[XLSX Import] Error:', err);
-        alert(isRTL ? `שגיאת ייבוא: ${err instanceof Error ? err.message : 'Unknown error'}` : `Import error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        setImportReport({
+          open: true,
+          severity: 'error',
+          fileName: undefined,
+          imported: 0,
+          skipped: 0,
+          errors: [err instanceof Error ? err.message : 'Unknown error'],
+          hint: isRTL ? 'שגיאה כללית בקריאת הקובץ. ודא שזה קובץ Excel/JSON תקין.' : 'General read error. Make sure the file is a valid Excel/JSON file.',
+        });
       }
       finally { setImportLoading(false); }
     };
@@ -1998,6 +2033,18 @@ const Index = () => {
           phase={importPhase}
         />
       )}
+      {/* Import Report Modal — Orca-styled, replaces native browser alerts */}
+      <ImportReportModal
+        open={importReport.open}
+        onClose={() => setImportReport(p => ({ ...p, open: false }))}
+        isRTL={isRTL}
+        severity={importReport.severity}
+        fileName={importReport.fileName}
+        imported={importReport.imported}
+        skipped={importReport.skipped}
+        errors={importReport.errors}
+        hint={importReport.hint}
+      />
       {/* Chart Explanation Modal */}
       {explainModal && (
         <ChartExplanationModal
