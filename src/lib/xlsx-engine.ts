@@ -540,50 +540,55 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
         }
 
         const trades: Trade[] = [];
-        const errors: string[] = [];
+        const errors: string[] = columnWarnings(headerDetection, nrIndex);
         let skipped = 0;
-        rows.slice(2).forEach((row, idx) => {
+        rows.slice(headerDetection.index + 1).forEach((row, idx) => {
           try {
-            const nr = String(row[nrIndex] ?? '').trim();
-            if (!nr) { skipped++; return; }
+            const excelRow = headerDetection.index + idx + 2;
+            const nr = nrIndex !== undefined ? String(row[nrIndex] ?? '').trim() : String(excelRow);
 
-            const entryDate = parseFlexibleDate(cellAt(row, headers, ['ENTRY DATE/TIME', 'Entry Date', 'Date']));
-            if (!entryDate) { skipped++; if (errors.length < 10) errors.push(`Row ${idx + 3}: invalid ENTRY DATE/TIME`); return; }
+            const entryDate = parseFlexibleDate(cellAt(row, headers, ['ENTRY DATE/TIME', 'Entry Date', 'Date', 'תאריך כניסה', 'תאריך']));
+            if (!entryDate) { skipped++; if (errors.length < 14) errors.push(`Row ${excelRow}: invalid or missing date`); return; }
 
             const status = String(cellAt(row, headers, ['TRADE STATUS', 'Result', 'Win/Loss', 'Outcome']) ?? '').toLowerCase().trim();
-            const directionRaw = String(cellAt(row, headers, ['DIRECTION', 'Side', 'Type']) ?? '').toLowerCase().trim();
+            const directionRaw = cellAt(row, headers, ['DIRECTION', 'Side', 'Type', 'כיוון', 'סוג פעולה', 'פעולה']);
             const realisedLoss = Math.abs(parseNumericValue(cellAt(row, headers, ['REALISED LOSS', 'Realized Loss'])) ?? 0);
             const realisedWin = Math.abs(parseNumericValue(cellAt(row, headers, ['REALISED WIN', 'Realized Win'])) ?? 0);
             const returnR = parseNumericValue(cellAt(row, headers, ['R+/-', 'R', 'R Multiple'])) ?? 0;
-            const risk = Math.abs(parseNumericValue(cellAt(row, headers, ['DESIRED RISK (USD)', 'Risk USD', 'Risk'])) ?? 0);
-            const pnl = realisedWin > 0 ? realisedWin : realisedLoss > 0 ? -realisedLoss : returnR * (risk || 1);
-            const deviation = parseDeviationValue(cellAt(row, headers, ['DEVIATION', 'Deviation']));
+            const risk = Math.abs(parseNumericValue(cellAt(row, headers, ['DESIRED RISK (USD)', 'Risk USD', 'Risk', 'סיכון רצוי (דולר)', 'סיכון'])) ?? 0);
+            const directPnl = parseNumericValue(cellAt(row, headers, ['P&L', 'PNL', 'Profit/Loss', 'Profit', 'רווח/הפסד', 'תוצאה']));
+            const pnl = directPnl ?? (realisedWin > 0 ? realisedWin : realisedLoss > 0 ? -realisedLoss : returnR * (risk || 0));
+            const deviation = parseDeviationValue(cellAt(row, headers, ['DEVIATION', 'Deviation', 'סטייה']));
             const durationMin = parseTimespanMinutes(cellAt(row, headers, ['TRADE DURATION', 'Trade Duration']));
             const mfeR = parseNumericValue(cellAt(row, headers, ['MFE R+/-', 'MFE R'])) ?? 0;
             const maeR = parseNumericValue(cellAt(row, headers, ['MAE R+/-', 'MAE R'])) ?? 0;
+            const stopLoss = parseNumericValue(cellAt(row, headers, ['STOP LOSS', 'SL', 'Stoploss', 'סטופ לוס']));
 
             const mapped: Record<string, unknown> = {
               id: parseNumericValue(nr) || idx + 1,
               date: entryDate,
-              coin: String(cellAt(row, headers, ['COIN', 'Symbol', 'Ticker', 'Pair']) || 'UNKNOWN').trim().toUpperCase(),
-              direction: directionRaw.includes('short') || directionRaw === 's' || directionRaw.includes('sell') ? 'Short' : 'Long',
-              orderType: String(cellAt(row, headers, ['ENTRY ORDER TYPE', 'Order Type']) || 'Market').trim() || 'Market',
-              entry: parseNumericValue(cellAt(row, headers, ['ENTRY', 'Entry Price'])) ?? 0,
-              stopLoss: parseNumericValue(cellAt(row, headers, ['STOP LOSS', 'SL', 'Stoploss'])) ?? 0,
-              exit: parseNumericValue(cellAt(row, headers, ['AVG EXIT', 'Exit', 'Exit Price', 'Close Price'])) ?? 0,
-              riskPct: parseDeviationValue(cellAt(row, headers, ['DESIRED RISK (%)', 'Risk %', 'Risk Pct'])) * 100 || 1,
+              coin: String(cellAt(row, headers, ['COIN', 'Symbol', 'Ticker', 'Pair', 'מטבע', 'שם הנייר', 'שם נכס', 'נכס', 'סימול']) || 'UNKNOWN').trim().toUpperCase(),
+              direction: normalizeDirectionValue(directionRaw),
+              orderType: String(cellAt(row, headers, ['ENTRY ORDER TYPE', 'Order Type', 'סוג פקודת כניסה']) || 'Market').trim() || 'Market',
+              entry: parseNumericValue(cellAt(row, headers, ['ENTRY', 'Entry Price', 'כניסה', 'מחיר ממוצע', 'מחיר'])) ?? 0,
+              stopLoss,
+              exit: parseNumericValue(cellAt(row, headers, ['AVG EXIT', 'Exit', 'Exit Price', 'Close Price', 'יציאה ממוצעת', 'יציאה'])) ?? 0,
+              riskPct: parseDeviationValue(cellAt(row, headers, ['DESIRED RISK (%)', 'Risk %', 'Risk Pct', 'סיכון רצוי (%)'])) * 100 || 1,
               risk,
-              expectedLoss: parseNumericValue(cellAt(row, headers, ['EXPECTED LOSS', 'Expected Loss'])) ?? risk,
+              expectedLoss: parseNumericValue(cellAt(row, headers, ['EXPECTED LOSS', 'Expected Loss', 'הפסד צפוי'])) ?? risk,
               returnR,
               deviation,
               pnl,
-              positionSize: parseNumericValue(cellAt(row, headers, ['POSITION SIZE', 'Size', 'Quantity', 'Qty'])) ?? 0,
-              leverage: parseNumericValue(cellAt(row, headers, ['LEVERAGE', 'Lev'])) ?? 1,
+              positionSize: parseNumericValue(cellAt(row, headers, ['POSITION SIZE', 'Size', 'Quantity', 'Qty', 'גודל פוזיציה', 'כמות'])) ?? 0,
+              leverage: parseNumericValue(cellAt(row, headers, ['LEVERAGE', 'Lev', 'מינוף'])) ?? 1,
+              balance: parseNumericValue(cellAt(row, headers, ['Account Size', 'Balance', 'יתרת מזומן', 'גודל חשבון'])) ?? 0,
               rules: true,
               winLoss: status.includes('loss') || status === 'l' ? 'Loss' : status.includes('be') || status.includes('break') ? 'Break Even' : status.includes('win') || status === 'w' ? 'Win' : pnl > 0.05 ? 'Win' : pnl < -0.05 ? 'Loss' : 'Break Even',
               comments: [
                 `Nr:${nr}`,
+                headerDetection.index > 0 ? `Header row:${headerDetection.index + 1}` : '',
                 String(cellAt(row, headers, ['SYSTEM NO.', 'SYSTEM NO', 'System']) || '').trim(),
+                String(cellAt(row, headers, ['סוג פעולה', 'פעולה']) || '').trim(),
                 durationMin ? `Duration:${durationMin}m` : '',
                 mfeR || maeR ? `MFE:${mfeR}R MAE:${maeR}R` : '',
                 deviation > 0.1 ? 'Red Flag: Deviation > 10%' : '',
@@ -596,11 +601,11 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
               trades.push(sanitized);
             } else {
               skipped++;
-              if (errors.length < 10) errors.push(`Row ${idx + 3}: Invalid data`);
+              if (errors.length < 14) errors.push(`Row ${excelRow}: Invalid data`);
             }
           } catch (err) {
             skipped++;
-            if (errors.length < 10) errors.push(`Row ${idx + 3}: ${err instanceof Error ? err.message : 'Parse error'}`);
+            if (errors.length < 14) errors.push(`Row ${headerDetection.index + idx + 2}: ${err instanceof Error ? err.message : 'Parse error'}`);
           }
         });
 
