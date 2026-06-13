@@ -1,0 +1,10 @@
+# Orca
+
+> Professional trading OS for Israeli traders — risk management, behavioral analytics, and an AI-powered trading journal. Bilingual (Hebrew RTL / English).
+
+Orca is a trading platform that combines a structured trade journal, a 4-tier risk-limits engine, an economic radar, and AI-driven behavioral coaching. The app is account-based and most surfaces require authentication.
+
+## Pages
+
+- [Welcome](/welcome): Landing page — product overview, features, and sign-up.
+- [Terms](/terms): Terms of service and legal information (Hebrew).
