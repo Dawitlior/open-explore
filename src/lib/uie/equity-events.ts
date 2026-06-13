@@ -2,7 +2,7 @@
 // Aggregates EquityEvent[] into a chronological ledger and provides helpers
 // to compute running balance changes from non-trade events.
 
-import type { EquityEvent, EquityEventKind } from '../archetypes/archetype-d';
+import type { EquityEvent, EquityEventKind } from './archetypes/archetype-d';
 
 export interface EquityLedgerEntry extends EquityEvent {
   cumulativeDelta: number;

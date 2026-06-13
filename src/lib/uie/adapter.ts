@@ -52,7 +52,7 @@ export function canonicalToNormalized(
     external_id: externalId,
     broker_id: opts.brokerId,
     account_label: opts.accountLabel ?? null,
-    source_type: opts.sourceType ?? 'file',
+    source_type: opts.sourceType ?? 'csv_import',
     asset_class: opts.defaultAssetClass ?? 'crypto',
     symbol: symbol || 'UNKNOWN',
     direction,
