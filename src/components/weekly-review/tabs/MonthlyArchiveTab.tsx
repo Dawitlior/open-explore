@@ -9,6 +9,7 @@ import type { useWeeklyReviewState } from '../hooks/use-weekly-review-state';
 import type { MonthlyRecap, WeekRecord } from '../lib/types';
 import { GRADE_COLORS } from '../lib/grading';
 import MonthlyDashboard from '../MonthlyDashboard';
+import { orcaConfirm } from '@/lib/orca-confirm';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface Props { T: any; isRTL: boolean; trades: Trade[]; state: ReturnType<typeof useWeeklyReviewState>; }
@@ -97,7 +98,14 @@ export default function MonthlyArchiveTab({ T, isRTL, trades, state }: Props) {
   const fmtR = (n: number) => `${n >= 0 ? '+' : ''}${(Number(n) || 0).toFixed(2)}R`;
 
   async function removeWeek(weekKey: string) {
-    if (!window.confirm(L.confirm)) return;
+    const ok = await orcaConfirm({
+      title: L.confirm,
+      confirmLabel: L.delete,
+      cancelLabel: isRTL ? 'ביטול' : 'Cancel',
+      tone: 'danger',
+      isRTL,
+    });
+    if (!ok) return;
     await state.saveArchive(state.archive.filter(w => w.weekKey !== weekKey));
   }
 

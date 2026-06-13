@@ -6,6 +6,7 @@ import type { Trade } from '@/data/trades';
 import type { useWeeklyReviewState } from '../hooks/use-weekly-review-state';
 import type { Setup } from '../lib/types';
 import { getSetupBreakdown } from '../lib/setup-breakdown';
+import { orcaConfirm } from '@/lib/orca-confirm';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface Props { T: any; isRTL: boolean; trades: Trade[]; state: ReturnType<typeof useWeeklyReviewState>; }
@@ -90,7 +91,14 @@ export default function SetupsTab({ T, isRTL, trades, state }: Props) {
   }
 
   async function remove(id: string) {
-    if (!window.confirm(L.confirm)) return;
+    const ok = await orcaConfirm({
+      title: L.confirm,
+      confirmLabel: L.delete,
+      cancelLabel: L.cancel,
+      tone: 'danger',
+      isRTL,
+    });
+    if (!ok) return;
     await state.saveSetups(state.setups.filter(s => s.id !== id));
   }
 
