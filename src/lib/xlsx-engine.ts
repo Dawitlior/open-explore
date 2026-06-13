@@ -521,17 +521,17 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
         if (!ws) { resolve({ trades: [], errors: ['Main Sheet not found'], skipped: 0, imported: 0 }); return; }
 
         const rows = XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1, raw: false, dateNF: 'dd/mm/yyyy hh:mm', blankrows: false, defval: '' });
-        if (rows.length < 3) { resolve({ trades: [], errors: ['Main Sheet must include headers, description row, and data rows'], skipped: 0, imported: 0 }); return; }
+        if (rows.length < 2) { resolve({ trades: [], errors: ['Main Sheet must include headers and data rows'], skipped: 0, imported: 0 }); return; }
 
-        const headers: Record<string, number> = {};
-        (rows[0] || []).forEach((h, i) => { if (String(h).trim()) headers[normalizeHeader(String(h))] = i; });
+        const headerDetection = detectHeaderRowFromRows(rows);
+        const headers = headerDetection.headers;
         const nrIndex = headers['#'] ?? headers['nr.'] ?? headers['nr'];
-        if (nrIndex === undefined) {
-          const found = Object.keys(headers).slice(0, 12).join(', ') || '(אין כותרות / no headers)';
+        if (headerDetection.score < 6 || headerDetection.mappedFields.size < 2) {
+          const found = formatHeaderList(headerDetection.rawHeaders);
           resolve({
             trades: [],
             errors: [
-              `חסרה עמודת "# / Nr." ב-Main Sheet. ודא שהשורה הראשונה היא הכותרות (לא טייטל ממוזג) וכוללת עמודה בשם "#" או "Nr.". כותרות שזוהו: ${found}. / Missing required "# / Nr." column in Main Sheet. Make sure row 1 is the header row (not a merged title) and includes a column named "#" or "Nr.". Detected headers: ${found}.`
+              `לא זוהתה שורת כותרות אמיתית בקובץ. אורקה סורקת את השורות הראשונות ומחפשת עמודות כמו תאריך, שם הנכס, כיוון, כניסה, יציאה או P&L. כותרות שזוהו: ${found}. / Could not detect a real header row. Orca scans the first rows for columns like Date, Symbol, Direction, Entry, Exit or P&L. Detected headers: ${found}.`
             ],
             skipped: 0,
             imported: 0,
