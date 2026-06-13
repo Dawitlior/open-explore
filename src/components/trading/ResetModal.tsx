@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { I18nStrings } from '@/lib/trading-i18n';
 
@@ -42,7 +43,7 @@ export const ResetModal = ({ T, t, isRTL, onConfirm, onClose }: ResetModalProps)
       }, 600);
     } catch (err) {
       console.error('[Reset] Failed:', err);
-      alert(isRTL ? 'איפוס נכשל. נסה שוב.' : 'Reset failed. Please try again.');
+      toast.error(isRTL ? 'איפוס נכשל. נסה שוב.' : 'Reset failed. Please try again.');
       setStep(1);
     }
   };

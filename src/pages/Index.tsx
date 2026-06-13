@@ -38,6 +38,7 @@ import { ReviewDashboard } from '@/components/dashboard/ReviewDashboard';
 import { MobileTradeCard } from '@/components/trading/MobileTradeCard';
 import { RiskExplanationModal, type RiskExplanation } from '@/components/trading/RiskExplanationModal';
 import { lazy, Suspense } from 'react';
+import { toast } from 'sonner';
 import { LazyShell } from '@/components/LazyShell';
 const AdvancedRiskPage = lazy(() => import('@/components/trading/AdvancedRiskPage').then(m => ({ default: m.AdvancedRiskPage })));
 const AdvancedAnalyticsPage = lazy(() => import('@/components/trading/AdvancedAnalyticsPage').then(m => ({ default: m.AdvancedAnalyticsPage })));
@@ -411,7 +412,7 @@ const Index = () => {
           } else {
             const errMsg = result.errors.length > 0 ? result.errors.join('; ') : 'No valid trades found in file';
             console.error('[XLSX Import] No trades imported:', errMsg);
-            alert(isRTL ? `ייבוא נכשל: ${errMsg}` : `Import failed: ${errMsg}`);
+            toast.error(isRTL ? 'ייבוא נכשל' : 'Import failed', { description: errMsg });
           }
         }
         setImportPhase('done');
@@ -419,7 +420,7 @@ const Index = () => {
         sessionStorage.setItem('orca-seeded', '1');
       } catch (err) {
         console.error('[XLSX Import] Error:', err);
-        alert(isRTL ? `שגיאת ייבוא: ${err instanceof Error ? err.message : 'Unknown error'}` : `Import error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        toast.error(isRTL ? 'שגיאת ייבוא' : 'Import error', { description: err instanceof Error ? err.message : 'Unknown error' });
       }
       finally { setImportLoading(false); }
     };

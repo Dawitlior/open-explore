@@ -9,6 +9,7 @@ import { ingestFileToTrades } from '@/lib/ingestion/file-import';
 import { BrokerRegistry } from '@/lib/brokers';
 import type { BrokerMeta } from '@/lib/brokers/types';
 import { useBrokerAccounts } from '@/hooks/use-broker-accounts';
+import { orcaConfirm } from '@/lib/orca-confirm';
 
 type ProviderId = string;
 
@@ -628,7 +629,18 @@ function ExchangeCard({
             </button>
             {onDisconnect && (
               <button
-                onClick={(e) => { e.stopPropagation(); if (confirm(t('לנתק את החיבור?', 'Disconnect this account?'))) onDisconnect(); }}
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  const ok = await orcaConfirm({
+                    title: t('לנתק את החיבור?', 'Disconnect this account?'),
+                    description: t('פעולה זו תסיר את החיבור מהחשבון.', 'This will remove the connection from this account.'),
+                    confirmLabel: t('נתק', 'Disconnect'),
+                    cancelLabel: t('ביטול', 'Cancel'),
+                    tone: 'danger',
+                    isRTL,
+                  });
+                  if (ok) onDisconnect();
+                }}
                 style={{
                   padding: '9px 11px', borderRadius: 10,
                   background: 'transparent',

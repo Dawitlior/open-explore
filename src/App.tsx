@@ -19,6 +19,7 @@ import { LegalGate } from "@/components/LegalGate";
 import { EconomicAlertBanner } from "@/components/economic/EconomicAlertBanner";
 import { UpgradeModal } from "@/components/billing/UpgradeModal";
 import { CookieConsentRoot } from "@/components/privacy/CookieConsentRoot";
+import { OrcaConfirmRoot } from "@/lib/orca-confirm";
 // Side-effect import: registers every BrokerAdapter into BrokerRegistry at boot.
 import "@/lib/brokers";
 import { lazy, Suspense } from "react";
@@ -83,6 +84,7 @@ const App = () => (
             <EconomicAlertBanner />
             <UpgradeModal />
             <CookieConsentRoot />
+            <OrcaConfirmRoot />
             <Routes>
               <Route path="/welcome" element={<Landing />} />
               <Route path="/auth" element={<Auth />} />
