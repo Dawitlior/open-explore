@@ -155,6 +155,7 @@ function parseNumericValue(value: unknown): number | null {
 
   let cleaned = String(value).trim();
   if (!cleaned || cleaned === '—' || cleaned === '-') return null;
+  if (/^[=+]/.test(cleaned)) return null;
   const negative = /^\(.*\)$/.test(cleaned) || /^-/.test(cleaned);
   cleaned = cleaned
     .replace(/[\u200e\u200f\u202a-\u202e]/g, '')
@@ -404,27 +405,34 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
         const rows = XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1, raw: false, dateNF: 'dd/mm/yyyy hh:mm', blankrows: false, defval: '' });
         if (rows.length < 3) { resolve({ trades: [], errors: ['Main Sheet must include headers, description row, and data rows'], skipped: 0, imported: 0 }); return; }
 
+        const headerRowIdx = findHeaderRow(ws);
         const headers: Record<string, number> = {};
-        (rows[0] || []).forEach((h, i) => { if (String(h).trim()) headers[normalizeHeader(String(h))] = i; });
+        (rows[headerRowIdx] || []).forEach((h, i) => { if (String(h).trim()) headers[normalizeHeader(String(h))] = i; });
         const nrIndex = headers['#'] ?? headers['nr.'] ?? headers['nr'];
-        if (nrIndex === undefined) { resolve({ trades: [], errors: ['Missing required # / Nr. column in Main Sheet'], skipped: 0, imported: 0 }); return; }
 
         const trades: Trade[] = [];
         const errors: string[] = [];
         let skipped = 0;
         let previousBalance: number | null = null;
-        rows.slice(2).forEach((row, idx) => {
+        rows.slice(headerRowIdx + 1).forEach((row, idx) => {
           try {
-            const nr = String(row[nrIndex] ?? '').trim();
+            const actualRow = headerRowIdx + idx + 2;
+            const nr = nrIndex !== undefined ? String(row[nrIndex] ?? '').trim() : String(idx + 1);
             const rowBalance = parseNumericValue(cellAt(row, headers, ['Balance', 'Account Balance', 'Equity']));
-            if (!nr) {
+            if (nrIndex !== undefined && !nr) {
               if (rowBalance !== null) previousBalance = rowBalance;
               skipped++;
               return;
             }
 
             const entryDate = parseFlexibleDate(cellAt(row, headers, ['ENTRY DATE/TIME', 'Entry Date', 'Date']));
-            if (!entryDate) { skipped++; if (errors.length < 10) errors.push(`Row ${idx + 3}: invalid ENTRY DATE/TIME`); return; }
+            if (!entryDate) {
+              if (rowBalance !== null) previousBalance = rowBalance;
+              const hasTradeNumbers = ['ENTRY', 'STOP LOSS', 'AVG EXIT', 'Exit', 'P&L', 'PNL'].some(name => parseNumericValue(cellAt(row, headers, [name])) !== null);
+              skipped++;
+              if (hasTradeNumbers && errors.length < 10) errors.push(`Row ${actualRow}: invalid ENTRY DATE/TIME`);
+              return;
+            }
 
             const status = String(cellAt(row, headers, ['TRADE STATUS', 'Result', 'Win/Loss', 'Outcome']) ?? '').toLowerCase().trim();
             const directionRaw = String(cellAt(row, headers, ['DIRECTION', 'Side', 'Type']) ?? '').toLowerCase().trim();
