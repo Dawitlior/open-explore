@@ -60,7 +60,9 @@ const HEADER_MAP: Record<string, keyof Trade | '_ignore'> = {
   'return': 'returnR',
   'return %': 'returnR',
   'r multiple': 'returnR',
-  'balance': '_ignore',
+  'balance': 'balance',
+  'account balance': 'balance',
+  'equity': 'balance',
   'day': '_ignore',
   'duration': '_ignore',
   'links': '_ignore',
@@ -410,10 +412,16 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
         const trades: Trade[] = [];
         const errors: string[] = [];
         let skipped = 0;
+        let previousBalance: number | null = null;
         rows.slice(2).forEach((row, idx) => {
           try {
             const nr = String(row[nrIndex] ?? '').trim();
-            if (!nr) { skipped++; return; }
+            const rowBalance = parseNumericValue(cellAt(row, headers, ['Balance', 'Account Balance', 'Equity']));
+            if (!nr) {
+              if (rowBalance !== null) previousBalance = rowBalance;
+              skipped++;
+              return;
+            }
 
             const entryDate = parseFlexibleDate(cellAt(row, headers, ['ENTRY DATE/TIME', 'Entry Date', 'Date']));
             if (!entryDate) { skipped++; if (errors.length < 10) errors.push(`Row ${idx + 3}: invalid ENTRY DATE/TIME`); return; }
@@ -428,11 +436,16 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
             // (including the Orca template) export realized P&L directly and do
             // NOT split it into Realised Win / Realised Loss columns.
             const directPnl = parseNumericValue(cellAt(row, headers, ['P&L', 'PNL', 'Profit', 'Profit/Loss']));
+            const balanceDeltaPnl = rowBalance !== null && previousBalance !== null
+              ? Math.round((rowBalance - previousBalance) * 10000) / 10000
+              : null;
             const pnl = directPnl !== null
               ? directPnl
+              : balanceDeltaPnl !== null ? balanceDeltaPnl
               : realisedWin > 0 ? realisedWin
               : realisedLoss > 0 ? -realisedLoss
               : returnR * (risk || 1);
+            if (rowBalance !== null) previousBalance = rowBalance;
             const deviation = parseDeviationValue(cellAt(row, headers, ['DEVIATION', 'Deviation']));
             const durationMin = parseTimespanMinutes(cellAt(row, headers, ['TRADE DURATION', 'Trade Duration']));
             const mfeR = parseNumericValue(cellAt(row, headers, ['MFE R+/-', 'MFE R'])) ?? 0;
@@ -453,6 +466,7 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
               returnR,
               deviation,
               pnl,
+              balance: rowBalance ?? 0,
               positionSize: parseNumericValue(cellAt(row, headers, ['POSITION SIZE', 'Size', 'Quantity', 'Qty'])) ?? 0,
               leverage: parseNumericValue(cellAt(row, headers, ['LEVERAGE', 'Lev'])) ?? 1,
               rules: true,
