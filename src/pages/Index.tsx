@@ -2033,6 +2033,18 @@ const Index = () => {
           phase={importPhase}
         />
       )}
+      {/* Import Report Modal — Orca-styled, replaces native browser alerts */}
+      <ImportReportModal
+        open={importReport.open}
+        onClose={() => setImportReport(p => ({ ...p, open: false }))}
+        isRTL={isRTL}
+        severity={importReport.severity}
+        fileName={importReport.fileName}
+        imported={importReport.imported}
+        skipped={importReport.skipped}
+        errors={importReport.errors}
+        hint={importReport.hint}
+      />
       {/* Chart Explanation Modal */}
       {explainModal && (
         <ChartExplanationModal
