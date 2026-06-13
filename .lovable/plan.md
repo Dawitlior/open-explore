@@ -1,48 +1,33 @@
-# 🎯 UIE v1.2 — Phase 3 (in progress)
+# 🎯 UIE v1.2 — Complete ✅
 
-Phases 1 & 2 ✅ נמסרו (61 בדיקות גולדן עוברות).
-Phase 3 = Archetype C (fills aggregation) + Link-files (trades.csv + fills.csv).
+All phases delivered. 87/87 golden tests passing.
 
-## Phase 2 — סיכום הושלם ✅
-- Step 1 · Content Profiler (`content/profile.ts`) — 14 tests
-- Step 2 · Value Normalizer (`content/normalize-values.ts`) — 17 tests
-- Step 3 · Archetype A (`archetypes/archetype-a.ts`) — 8 tests
-- Step 4 · Archetype B Open/Close pair (`archetypes/archetype-b.ts`) — 7 tests
-- Step 5 · Detector + runner (`archetypes/detect.ts`) — 5 tests
-- Step 6 · Zero-Destruction fallback ב-`xlsx-engine.ts` (parseBrokerCsvRaw)
-- Step 7 · 61/61 גולדן ✅
+## Phase 1 — Header Matching ✅
+Tier-based header → canonical field mapper (`matching/`).
 
-## Phase 3 — שלבי בנייה
+## Phase 2 — Content Profiling + Archetypes A & B ✅
+- Content profiler & value normalizers (`content/`)
+- Archetype A (single-row trades), Archetype B (open/close pairs)
+- Detector + runner, Zero-Destruction fallback in `xlsx-engine.ts`
 
-### Step 1 · Fill row classifier (`src/lib/uie/archetypes/fill-classify.ts`)
-מזהה אם טבלה היא "fills" (הרבה שורות זעירות לכל orderId): סימנים = `fill id`/`exec id`, `order id` עם חזרות, `qty` קטן יחסית, ו-`price` משתנה בתוך אותו order.
+## Phase 3 — Archetype C + Link-files ✅
+- Fill classifier, Archetype C (VWAP aggregation by orderId)
+- Link-files (trades.csv + fills.csv), field derivation
 
-### Step 2 · Archetype C (`archetypes/archetype-c.ts`)
-Aggregation: קיבוץ לפי `orderId`/`externalId`. חישוב VWAP entry/exit, sum qty, sum fees, net realized PnL. תומך ב-partial fills בשני הכיוונים (build → unwind).
+## Phase 4 — Archetype D + Adapter (D1) ✅
+- Archetype D partitions equity statements → trades + EquityEvent[]
+- `equity-events.ts` ledger & per-kind summaries
+- `adapter.ts` translates CanonicalTrade → NormalizedTrade
 
-### Step 3 · Link-files (`src/lib/uie/link-files/link.ts`)
-מחבר זוג קבצים: `trades.csv` (one row per trade) + `fills.csv` (many rows per order). מצמיד fills לעסקאות לפי tradeId/orderId. אם קיים רק fills.csv → derive trades דרך Archetype C.
+## Phase 4.5 — Delivery Layer ✅
+- `delivery/gap-analysis.ts` — coverage & critical/warning/info gaps
+- `delivery/fix-actions.ts` — deterministic fix suggestions per gap
+- `delivery/dedup.ts` — externalId-first, composite fallback, field-merging
+- `delivery/notes-overflow.ts` — folds non-canonical fields into `comments`
 
-### Step 4 · Derive (`src/lib/uie/link-files/derive.ts`)
-מסיק שדות חסרים: `entry` ← VWAP מ-fills של פתיחה, `exit` ← VWAP סגירה, `positionSize` ← max signed cumulative qty, `pnl` ← Σ realized.
+## Golden tests
+headers 10 · profile 14 · normalize 17 · archetype-A 8 · archetype-B 7 ·
+detect 5 · phase3 8 · phase4 9 · phase4.5 9 → **87 ✅**
 
-### Step 5 · Detector update + Integration
-מרחיב `detectArchetype` עם זיהוי C. אינטגרציה נוספת ב-xlsx-engine: אם UIE זיהה C → להפעיל aggregation לפני המרה ל-Trade.
-
-### Step 6 · Golden tests
-- fills-only file → derive trades
-- trades + fills → enriched VWAP
-- partial fills (build → unwind) → נכון
-- mixed currencies/symbols → segregation
-
-## נדחה ל-Phase 4 / 4.5
-- Archetype D (equity statements) + `equity-events.ts`
-- delivery/ (gap-analysis, messages, fix-actions, dedup, notes-overflow)
-- Adapter שלם ל-NormalizedTrade (D1)
-
-## Definition of Done · Phase 3
-- [ ] 5 קבצים חדשים תחת `src/lib/uie/archetypes/` ו-`src/lib/uie/link-files/`.
-- [ ] אפס תלויות חדשות.
-- [ ] Detector מחזיר 'C' כשמזהים fills.
-- [ ] VWAP מדויק ב-6 ספרות.
-- [ ] בנייה ירוקה.
+## Public API
+All Phase 1-4.5 exports live in `src/lib/uie/index.ts`.
