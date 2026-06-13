@@ -422,9 +422,17 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
             const directionRaw = String(cellAt(row, headers, ['DIRECTION', 'Side', 'Type']) ?? '').toLowerCase().trim();
             const realisedLoss = Math.abs(parseNumericValue(cellAt(row, headers, ['REALISED LOSS', 'Realized Loss'])) ?? 0);
             const realisedWin = Math.abs(parseNumericValue(cellAt(row, headers, ['REALISED WIN', 'Realized Win'])) ?? 0);
-            const returnR = parseNumericValue(cellAt(row, headers, ['R+/-', 'R', 'R Multiple'])) ?? 0;
+            const returnR = parseNumericValue(cellAt(row, headers, ['R+/-', 'R', 'R Multiple', 'Return', 'Return %'])) ?? 0;
             const risk = Math.abs(parseNumericValue(cellAt(row, headers, ['DESIRED RISK (USD)', 'Risk USD', 'Risk'])) ?? 0);
-            const pnl = realisedWin > 0 ? realisedWin : realisedLoss > 0 ? -realisedLoss : returnR * (risk || 1);
+            // Prefer the file's explicit P&L column when present — many journals
+            // (including the Orca template) export realized P&L directly and do
+            // NOT split it into Realised Win / Realised Loss columns.
+            const directPnl = parseNumericValue(cellAt(row, headers, ['P&L', 'PNL', 'Profit', 'Profit/Loss']));
+            const pnl = directPnl !== null
+              ? directPnl
+              : realisedWin > 0 ? realisedWin
+              : realisedLoss > 0 ? -realisedLoss
+              : returnR * (risk || 1);
             const deviation = parseDeviationValue(cellAt(row, headers, ['DEVIATION', 'Deviation']));
             const durationMin = parseTimespanMinutes(cellAt(row, headers, ['TRADE DURATION', 'Trade Duration']));
             const mfeR = parseNumericValue(cellAt(row, headers, ['MFE R+/-', 'MFE R'])) ?? 0;
