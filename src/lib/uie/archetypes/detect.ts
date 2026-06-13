@@ -6,6 +6,8 @@
 import type { CanonicalTrade } from '../canonical-trade';
 import { archetypeA, type ArchetypeAResult } from './archetype-a';
 import { archetypeB, looksLikeArchetypeB, type ArchetypeBResult } from './archetype-b';
+import { archetypeC, type ArchetypeCResult } from './archetype-c';
+import { classifyFills } from './fill-classify';
 
 export type ArchetypeKind = 'A' | 'B' | 'C' | 'D' | 'unknown';
 
@@ -19,7 +21,7 @@ export interface RunResult {
   detection: DetectResult;
   trades: CanonicalTrade[];
   warnings: string[];
-  source: ArchetypeAResult | ArchetypeBResult;
+  source: ArchetypeAResult | ArchetypeBResult | ArchetypeCResult;
 }
 
 /**
@@ -28,13 +30,18 @@ export interface RunResult {
 export function detectArchetype(headers: string[], rows: unknown[][]): DetectResult {
   if (!rows.length) return { archetype: 'unknown', confidence: 0, reason: 'empty input' };
 
+  // Archetype C signal: fills classifier returns true.
+  const cls = classifyFills(headers, rows);
+  if (cls.isFills) {
+    return { archetype: 'C', confidence: Math.max(0.7, cls.confidence), reason: `fills detected: ${cls.signals.join(',')}` };
+  }
+
   // Archetype B signal: explicit Open/Close action column with both tokens.
   if (looksLikeArchetypeB(headers, rows)) {
     return { archetype: 'B', confidence: 0.9, reason: 'open/close action column present' };
   }
 
-  // Archetype A default: a single-row trade table has at least one of
-  // entry/exit/symbol/pnl in its headers (we just check the raw header text).
+  // Archetype A default.
   const joined = headers.join(' ').toLowerCase();
   const aHints = ['entry', 'exit', 'pnl', 'symbol', 'ticker', 'מטבע', 'תאריך', 'side', 'r multiple'];
   const hits = aHints.filter((h) => joined.includes(h)).length;
@@ -54,11 +61,14 @@ export function detectArchetype(headers: string[], rows: unknown[][]): DetectRes
 export function runUIE(headers: string[], rows: unknown[][]): RunResult {
   const detection = detectArchetype(headers, rows);
 
+  if (detection.archetype === 'C') {
+    const res = archetypeC(headers, rows);
+    return { detection, trades: res.trades, warnings: res.warnings, source: res };
+  }
   if (detection.archetype === 'B') {
     const res = archetypeB(headers, rows);
     return { detection, trades: res.trades, warnings: res.warnings, source: res };
   }
-  // default → A
   const res = archetypeA(headers, rows);
   return { detection, trades: res.trades, warnings: res.warnings, source: res };
 }
