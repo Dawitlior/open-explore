@@ -177,6 +177,15 @@ const Index = () => {
   const [importFileName, setImportFileName] = useState<string>('');
   const [importedCount, setImportedCount] = useState(0);
   const [importPhase, setImportPhase] = useState<'reading' | 'parsing' | 'validating' | 'saving' | 'done'>('reading');
+  const [importReport, setImportReport] = useState<{
+    open: boolean;
+    severity: ImportReportSeverity;
+    fileName?: string;
+    imported: number;
+    skipped: number;
+    errors: string[];
+    hint?: string;
+  }>({ open: false, severity: 'success', imported: 0, skipped: 0, errors: [] });
   const [explainModal, setExplainModal] = useState<{ title: string; explanation: ChartExplanation; chartId?: string } | null>(null);
   const [riskExplanations, setRiskExplanations] = useState<RiskExplanation[]>([]);
   const [showRiskExplanation, setShowRiskExplanation] = useState<{ tradeId: number; riskChange: string } | null>(null);
