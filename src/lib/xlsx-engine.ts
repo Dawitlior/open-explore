@@ -580,11 +580,21 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
         rows.slice(headerDetection.index + 1).forEach((row, idx) => {
           try {
             const excelRow = headerDetection.index + idx + 2;
-            const nr = nrIndex !== undefined ? String(row[nrIndex] ?? '').trim() : String(excelRow);
-            if (nrIndex !== undefined && !nr) { skipped++; return; }
+            const nrRaw = nrIndex !== undefined ? String(row[nrIndex] ?? '').trim() : '';
+            const nr = nrRaw || String(excelRow);
+            // Silently skip the first 1-2 non-data rows after the header
+            // (description row, "eg." example row commonly bundled in templates).
+            const isNonNumericNr = nrRaw && !/^\d+(\.\d+)?$/.test(nrRaw);
+            if (isNonNumericNr && idx < 3) { skipped++; return; }
 
             const entryDate = parseFlexibleDate(cellAt(row, headers, ['ENTRY DATE/TIME', 'Entry Date', 'Date', 'תאריך כניסה', 'תאריך']));
-            if (!entryDate) { skipped++; if (errors.length < 14) errors.push(`Row ${excelRow}: invalid or missing date`); return; }
+            if (!entryDate) {
+              skipped++;
+              // Don't report invalid-date errors for the header-adjacent rows
+              // (description / "eg." rows) — they are template noise, not user data.
+              if (idx >= 3 && errors.length < 14) errors.push(`Row ${excelRow}: invalid or missing date`);
+              return;
+            }
 
             const status = String(cellAt(row, headers, ['TRADE STATUS', 'Result', 'Win/Loss', 'Outcome']) ?? '').toLowerCase().trim();
             const directionRaw = cellAt(row, headers, ['DIRECTION', 'Side', 'Type', 'כיוון', 'סוג פעולה', 'פעולה']);
