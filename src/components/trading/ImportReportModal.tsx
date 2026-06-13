@@ -85,7 +85,43 @@ function explainError(raw: string, isRTL: boolean): { title: string; body: strin
     };
   }
 
-  if (r.includes('invalid entry date')) {
+  if (r.includes('missing stop loss') || raw.includes('חסרה עמודת Stop Loss')) {
+    return {
+      title: T(isRTL, 'חסר Stop Loss', 'Stop Loss is missing'),
+      body: T(isRTL,
+        'הקובץ נטען, אבל אין בו עמודת סטופ. אורקה תשמור את העסקאות בלי חישוב R-Multiple מלא.',
+        'The file can import, but it has no stop-loss column. Orca will save the trades without full R-Multiple calculations.'),
+      fix: T(isRTL,
+        'אם יש לך סטופים — הוסף עמודה בשם Stop Loss / SL / סטופ לוס. אם זה דוח ברוקר רגיל, אפשר להשלים ידנית אחר כך.',
+        'If you have stops, add a Stop Loss / SL column. If this is a broker statement, you can complete it manually later.'),
+    };
+  }
+
+  if (r.includes('missing p&l') || raw.includes('חסרה עמודת P&L')) {
+    return {
+      title: T(isRTL, 'חסר רווח/הפסד', 'P&L is missing'),
+      body: T(isRTL,
+        'הקובץ לא כולל עמודת רווח/הפסד סופית. העסקאות ייטענו, אבל התוצאה הכספית תהיה 0 אם אין נתון אחר שמאפשר לחשב אותה.',
+        'The file has no final profit/loss column. Trades will import, but monetary result will be 0 unless another value can calculate it.'),
+      fix: T(isRTL,
+        'הוסף עמודת P&L / Profit / רווח/הפסד, או ערוך את העסקאות לאחר הייבוא.',
+        'Add a P&L / Profit column, or edit the trades after import.'),
+    };
+  }
+
+  if (r.includes('missing exit') || raw.includes('חסרה עמודת יציאה')) {
+    return {
+      title: T(isRTL, 'חסר מחיר יציאה', 'Exit price is missing'),
+      body: T(isRTL,
+        'הייבוא יכול להמשיך, אבל בלי מחיר יציאה העסקה לא מייצגת טרייד סגור מלא.',
+        'Import can continue, but without an exit price the row is not a complete closed trade.'),
+      fix: T(isRTL,
+        'הוסף עמודת Exit / AVG Exit / יציאה אם הקובץ מייצג עסקאות סגורות.',
+        'Add an Exit / AVG Exit column if the file represents closed trades.'),
+    };
+  }
+
+  if (r.includes('invalid entry date') || r.includes('invalid or missing date')) {
     return {
       title: T(isRTL, 'תאריכי כניסה לא חוקיים', 'Invalid entry dates'),
       body: T(isRTL,
