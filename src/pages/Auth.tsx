@@ -527,6 +527,7 @@ export default function AuthPage() {
         </div>
       )}
     </main>
+    </>
   );
 }
 
