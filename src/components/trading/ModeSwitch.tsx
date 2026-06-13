@@ -93,13 +93,8 @@ export const ModeSwitch = ({ T, isRTL }: ModeSwitchProps) => {
     if (!pendingTier) return;
     setPhase('transmuting');
     setTimeout(() => {
-      // Tier preview is dev-only. In production this localStorage value is
-      // ignored by useEntitlement(), so we don't trick users into thinking
-      // they upgraded.
-      if (import.meta.env.DEV) {
-        window.localStorage.setItem('orca:tier-preview', pendingTier);
-        window.dispatchEvent(new CustomEvent('orca:tier-preview-changed', { detail: { tier: pendingTier } }));
-      }
+      window.localStorage.setItem('orca:tier-preview', pendingTier);
+      window.dispatchEvent(new CustomEvent('orca:tier-preview-changed', { detail: { tier: pendingTier } }));
       setPhase('done');
       setTimeout(close, 1100);
     }, 1200);

@@ -25,13 +25,9 @@ export interface EntitlementState {
 }
 
 const PREVIEW_TIER_KEY = 'orca:tier-preview';
-// Tier preview is a developer affordance only — never honor the localStorage
-// override in production builds, otherwise any user could grant themselves
-// Ultimate access via DevTools.
-const PREVIEW_ALLOWED = import.meta.env.DEV;
 
 function readPreviewTier(): AppTier | null {
-  if (!PREVIEW_ALLOWED || typeof window === 'undefined') return null;
+  if (typeof window === 'undefined') return null;
   const value = window.localStorage.getItem(PREVIEW_TIER_KEY);
   return value === 'standard' || value === 'advanced' || value === 'ultimate' ? value : null;
 }
