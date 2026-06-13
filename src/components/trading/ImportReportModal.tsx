@@ -37,15 +37,27 @@ function explainError(raw: string, isRTL: boolean): { title: string; body: strin
     };
   }
 
+  if (r.includes('could not detect a real header row') || r.includes('לא זוהתה שורת כותרות')) {
+    return {
+      title: T(isRTL, 'לא זוהתה שורת כותרות', 'Header row was not detected'),
+      body: T(isRTL,
+        'אורקה דילגה על שורות ריקות/כותרות דוח, אבל לא מצאה שורה שמכילה עמודות נתונים מוכרות כמו תאריך, שם הנכס, כיוון, כניסה, יציאה או P&L.',
+        'Orca skipped blank/report-title rows, but could not find a row with recognizable data columns such as Date, Symbol, Direction, Entry, Exit or P&L.'),
+      fix: T(isRTL,
+        'ודא שיש בקובץ שורת כותרות ברורה מעל הנתונים, או השתמש בתבנית הרשמית של אורקה.',
+        'Make sure the file has a clear header row above the data, or use Orca’s official template.'),
+    };
+  }
+
   if (r.includes('# / nr.') || r.includes('missing required "# / nr.')) {
     return {
       title: T(isRTL, 'חסרה עמודת מזהה (# / Nr.)', 'Missing identifier column (# / Nr.)'),
       body: T(isRTL,
-        'אורקה מזהה כל עסקה לפי עמודת "#" או "Nr." בשורת הכותרות הראשונה של Main Sheet. בלעדיה אי אפשר לקרוא את השורות.',
-        'Orca identifies each trade by a "#" or "Nr." column in the first header row of the Main Sheet. Without it the rows cannot be read.'),
+        'בקובץ אין עמודת מזהה עסקה. זה לא חייב להפיל את הייבוא — אורקה יכולה ליצור מזהים אוטומטיים, אבל עדיף שתהיה עמודת # / Nr. כדי למנוע כפילויות.',
+        'The file has no trade identifier column. This does not have to block import — Orca can generate IDs automatically, but # / Nr. is recommended to prevent duplicates.'),
       fix: T(isRTL,
-        'ודא שהשורה הראשונה ב-Main Sheet היא שורת כותרות (ולא טייטל ממוזג) וכוללת עמודה בשם "#" או "Nr.".',
-        'Make sure row 1 of the Main Sheet is the header row (not a merged title) and includes a column named "#" or "Nr.".'),
+        'אם זה קובץ יומן של אורקה, הוסף # או Nr. אם זה דוח ברוקר, אפשר להמשיך ולתקן כפילויות ידנית במידת הצורך.',
+        'If this is an Orca journal file, add # or Nr. If this is a broker statement, you can continue and handle duplicates manually if needed.'),
     };
   }
 
