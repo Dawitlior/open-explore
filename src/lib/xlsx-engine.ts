@@ -364,6 +364,69 @@ function findHeaderRow(sheet: XLSX.WorkSheet): number {
   return bestRow;
 }
 
+interface HeaderDetection {
+  index: number;
+  headers: Record<string, number>;
+  rawHeaders: string[];
+  mappedFields: Set<keyof Trade>;
+  score: number;
+}
+
+function detectHeaderRowFromRows(rows: unknown[][]): HeaderDetection {
+  let best: HeaderDetection = { index: 0, headers: {}, rawHeaders: [], mappedFields: new Set(), score: 0 };
+  const maxScan = Math.min(rows.length, 25);
+
+  for (let r = 0; r < maxScan; r++) {
+    const headers: Record<string, number> = {};
+    const rawHeaders: string[] = [];
+    const mappedFields = new Set<keyof Trade>();
+    let score = 0;
+
+    (rows[r] || []).forEach((h, i) => {
+      const raw = String(h ?? '').trim();
+      if (!raw) return;
+      const norm = normalizeHeader(raw);
+      headers[norm] = i;
+      rawHeaders.push(raw);
+      const field = mapHeaderToField(raw);
+      if (field) {
+        score += field === '_ignore' ? 1 : 3;
+        if (field !== '_ignore') mappedFields.add(field);
+      }
+    });
+
+    if (headers['#'] !== undefined || headers['nr.'] !== undefined || headers['nr'] !== undefined) score += 4;
+    if (mappedFields.has('date')) score += 3;
+    if (mappedFields.has('coin')) score += 3;
+    if (score > best.score) best = { index: r, headers, rawHeaders, mappedFields, score };
+  }
+
+  return best;
+}
+
+function formatHeaderList(headers: string[]): string {
+  return headers.slice(0, 14).join(', ') || '(אין כותרות / no headers)';
+}
+
+function columnWarnings(d: HeaderDetection, nrIndex: number | undefined): string[] {
+  const missing: string[] = [];
+  if (nrIndex === undefined) missing.push('עמודת # / Nr. חסרה — אורקה יצרה מזהה אוטומטי לכל שורה. / Missing # / Nr. column — Orca generated row IDs automatically.');
+  if (!d.mappedFields.has('date')) missing.push('חסרה עמודת תאריך / Date — שורות בלי תאריך תקין ידולגו. / Missing Date column — rows without a valid date will be skipped.');
+  if (!d.mappedFields.has('coin')) missing.push('חסרה עמודת שם נכס / Symbol — שורות ייטענו כ-UNKNOWN. / Missing asset name / Symbol column — rows will import as UNKNOWN.');
+  if (!d.mappedFields.has('direction')) missing.push('חסרה עמודת כיוון / Direction — ברירת המחדל תהיה Long. / Missing Direction column — default will be Long.');
+  if (!d.mappedFields.has('entry')) missing.push('חסרה עמודת מחיר כניסה / Entry — ערך הכניסה יהיה 0. / Missing Entry column — entry price will be 0.');
+  if (!d.mappedFields.has('exit')) missing.push('חסרה עמודת יציאה / Exit — הייבוא יצליח, אבל R-Multiple לא יהיה אמין עד השלמה ידנית. / Missing Exit column — import can continue, but R-Multiple will not be reliable until completed manually.');
+  if (!d.mappedFields.has('stopLoss')) missing.push('חסרה עמודת Stop Loss — העסקאות ייטענו ללא חישוב R-Multiple מלא. / Missing Stop Loss column — trades import without full R-Multiple calculation.');
+  if (!d.mappedFields.has('pnl')) missing.push('חסרה עמודת P&L — רווח/הפסד יישמר כ-0 אם אין נתון אחר לחישוב. / Missing P&L column — profit/loss will be 0 unless another calculable value exists.');
+  return missing;
+}
+
+function normalizeDirectionValue(value: unknown): Trade['direction'] {
+  const s = String(value ?? '').toLowerCase().trim();
+  if (s.includes('short') || s === 's' || s.includes('sell') || s.includes('מכירה') || s.includes('שורט')) return 'Short';
+  return 'Long';
+}
+
 function pickMainSheet(wb: XLSX.WorkBook): XLSX.WorkSheet | null {
   const name = wb.SheetNames.find(n => normalizeHeader(n) === 'main sheet')
     || wb.SheetNames.find(n => normalizeHeader(n).includes('main'))
