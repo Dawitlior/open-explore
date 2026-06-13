@@ -553,6 +553,7 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
           try {
             const excelRow = headerDetection.index + idx + 2;
             const nr = nrIndex !== undefined ? String(row[nrIndex] ?? '').trim() : String(excelRow);
+            if (nrIndex !== undefined && !nr) { skipped++; return; }
 
             const entryDate = parseFlexibleDate(cellAt(row, headers, ['ENTRY DATE/TIME', 'Entry Date', 'Date', 'תאריך כניסה', 'תאריך']));
             if (!entryDate) { skipped++; if (errors.length < 14) errors.push(`Row ${excelRow}: invalid or missing date`); return; }
