@@ -68,7 +68,9 @@ function findActionColumn(headers: string[], rows: unknown[][]): number {
       if (k === 'open') opens++;
       else if (k === 'close') closes++;
     }
-    if (opens && closes) return c;
+    // Trigger archetype-B if header matches AND we see at least one open/close
+    // token (handles single-row open-only inputs).
+    if (opens || closes) return c;
   }
   return -1;
 }
