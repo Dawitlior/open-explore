@@ -424,6 +424,21 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
     reader.onload = (e) => {
       try {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
+
+        // Detect Apple Numbers (.numbers) files renamed to .xlsx — they're ZIPs containing Index/*.iwa, not real Excel.
+        const head = new TextDecoder('latin1').decode(data.slice(0, 4096));
+        if (head.startsWith('PK') && (head.includes('Index/Document.iwa') || head.includes('.iwa'))) {
+          resolve({
+            trades: [],
+            errors: [
+              'הקובץ הוא Apple Numbers ולא Excel אמיתי. ב-Numbers: File → Export To → Excel (.xlsx) ואז העלה שוב. / File looks like Apple Numbers, not a real .xlsx. In Numbers: File → Export To → Excel (.xlsx), then re-upload.'
+            ],
+            skipped: 0,
+            imported: 0,
+          });
+          return;
+        }
+
         const wb = XLSX.read(data, { type: 'array', cellDates: true, dateNF: 'dd/mm/yyyy hh:mm', raw: true });
         const ws = pickMainSheet(wb);
         if (!ws) { resolve({ trades: [], errors: ['Main Sheet not found'], skipped: 0, imported: 0 }); return; }
@@ -434,7 +449,18 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
         const headers: Record<string, number> = {};
         (rows[0] || []).forEach((h, i) => { if (String(h).trim()) headers[normalizeHeader(String(h))] = i; });
         const nrIndex = headers['#'] ?? headers['nr.'] ?? headers['nr'];
-        if (nrIndex === undefined) { resolve({ trades: [], errors: ['Missing required # / Nr. column in Main Sheet'], skipped: 0, imported: 0 }); return; }
+        if (nrIndex === undefined) {
+          const found = Object.keys(headers).slice(0, 12).join(', ') || '(אין כותרות / no headers)';
+          resolve({
+            trades: [],
+            errors: [
+              `חסרה עמודת "# / Nr." ב-Main Sheet. ודא שהשורה הראשונה היא הכותרות (לא טייטל ממוזג) וכוללת עמודה בשם "#" או "Nr.". כותרות שזוהו: ${found}. / Missing required "# / Nr." column in Main Sheet. Make sure row 1 is the header row (not a merged title) and includes a column named "#" or "Nr.". Detected headers: ${found}.`
+            ],
+            skipped: 0,
+            imported: 0,
+          });
+          return;
+        }
 
         const trades: Trade[] = [];
         const errors: string[] = [];
