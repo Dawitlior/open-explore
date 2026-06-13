@@ -70,7 +70,7 @@ export function sanitizeTrade(t: unknown, fallbackId: number): Trade | null {
   const direction: 'Long' | 'Short' = raw.direction === 'Short' ? 'Short' : 'Long';
   const orderType = typeof raw.orderType === 'string' ? raw.orderType : 'Market';
   const entry = safeNum(raw.entry);
-  const stopLoss = raw.stopLoss === null ? null : safeNum(raw.stopLoss);
+  const stopLoss = safeNum(raw.stopLoss);
   const exit = safeNum(raw.exit);
   const returnR = safeNum(raw.returnR);
   const risk = safeNum(raw.risk, 2);

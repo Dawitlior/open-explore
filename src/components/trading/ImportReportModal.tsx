@@ -37,27 +37,15 @@ function explainError(raw: string, isRTL: boolean): { title: string; body: strin
     };
   }
 
-  if (r.includes('could not detect a real header row') || r.includes('לא זוהתה שורת כותרות')) {
-    return {
-      title: T(isRTL, 'לא זוהתה שורת כותרות', 'Header row was not detected'),
-      body: T(isRTL,
-        'אורקה דילגה על שורות ריקות/כותרות דוח, אבל לא מצאה שורה שמכילה עמודות נתונים מוכרות כמו תאריך, שם הנכס, כיוון, כניסה, יציאה או P&L.',
-        'Orca skipped blank/report-title rows, but could not find a row with recognizable data columns such as Date, Symbol, Direction, Entry, Exit or P&L.'),
-      fix: T(isRTL,
-        'ודא שיש בקובץ שורת כותרות ברורה מעל הנתונים, או השתמש בתבנית הרשמית של אורקה.',
-        'Make sure the file has a clear header row above the data, or use Orca’s official template.'),
-    };
-  }
-
   if (r.includes('# / nr.') || r.includes('missing required "# / nr.')) {
     return {
       title: T(isRTL, 'חסרה עמודת מזהה (# / Nr.)', 'Missing identifier column (# / Nr.)'),
       body: T(isRTL,
-        'בקובץ אין עמודת מזהה עסקה. זה לא חייב להפיל את הייבוא — אורקה יכולה ליצור מזהים אוטומטיים, אבל עדיף שתהיה עמודת # / Nr. כדי למנוע כפילויות.',
-        'The file has no trade identifier column. This does not have to block import — Orca can generate IDs automatically, but # / Nr. is recommended to prevent duplicates.'),
+        'אורקה מזהה כל עסקה לפי עמודת "#" או "Nr." בשורת הכותרות הראשונה של Main Sheet. בלעדיה אי אפשר לקרוא את השורות.',
+        'Orca identifies each trade by a "#" or "Nr." column in the first header row of the Main Sheet. Without it the rows cannot be read.'),
       fix: T(isRTL,
-        'אם זה קובץ יומן של אורקה, הוסף # או Nr. אם זה דוח ברוקר, אפשר להמשיך ולתקן כפילויות ידנית במידת הצורך.',
-        'If this is an Orca journal file, add # or Nr. If this is a broker statement, you can continue and handle duplicates manually if needed.'),
+        'ודא שהשורה הראשונה ב-Main Sheet היא שורת כותרות (ולא טייטל ממוזג) וכוללת עמודה בשם "#" או "Nr.".',
+        'Make sure row 1 of the Main Sheet is the header row (not a merged title) and includes a column named "#" or "Nr.".'),
     };
   }
 
@@ -85,43 +73,7 @@ function explainError(raw: string, isRTL: boolean): { title: string; body: strin
     };
   }
 
-  if (r.includes('missing stop loss') || raw.includes('חסרה עמודת Stop Loss')) {
-    return {
-      title: T(isRTL, 'חסר Stop Loss', 'Stop Loss is missing'),
-      body: T(isRTL,
-        'הקובץ נטען, אבל אין בו עמודת סטופ. אורקה תשמור את העסקאות בלי חישוב R-Multiple מלא.',
-        'The file can import, but it has no stop-loss column. Orca will save the trades without full R-Multiple calculations.'),
-      fix: T(isRTL,
-        'אם יש לך סטופים — הוסף עמודה בשם Stop Loss / SL / סטופ לוס. אם זה דוח ברוקר רגיל, אפשר להשלים ידנית אחר כך.',
-        'If you have stops, add a Stop Loss / SL column. If this is a broker statement, you can complete it manually later.'),
-    };
-  }
-
-  if (r.includes('missing p&l') || raw.includes('חסרה עמודת P&L')) {
-    return {
-      title: T(isRTL, 'חסר רווח/הפסד', 'P&L is missing'),
-      body: T(isRTL,
-        'הקובץ לא כולל עמודת רווח/הפסד סופית. העסקאות ייטענו, אבל התוצאה הכספית תהיה 0 אם אין נתון אחר שמאפשר לחשב אותה.',
-        'The file has no final profit/loss column. Trades will import, but monetary result will be 0 unless another value can calculate it.'),
-      fix: T(isRTL,
-        'הוסף עמודת P&L / Profit / רווח/הפסד, או ערוך את העסקאות לאחר הייבוא.',
-        'Add a P&L / Profit column, or edit the trades after import.'),
-    };
-  }
-
-  if (r.includes('missing exit') || raw.includes('חסרה עמודת יציאה')) {
-    return {
-      title: T(isRTL, 'חסר מחיר יציאה', 'Exit price is missing'),
-      body: T(isRTL,
-        'הייבוא יכול להמשיך, אבל בלי מחיר יציאה העסקה לא מייצגת טרייד סגור מלא.',
-        'Import can continue, but without an exit price the row is not a complete closed trade.'),
-      fix: T(isRTL,
-        'הוסף עמודת Exit / AVG Exit / יציאה אם הקובץ מייצג עסקאות סגורות.',
-        'Add an Exit / AVG Exit column if the file represents closed trades.'),
-    };
-  }
-
-  if (r.includes('invalid entry date') || r.includes('invalid or missing date')) {
+  if (r.includes('invalid entry date')) {
     return {
       title: T(isRTL, 'תאריכי כניסה לא חוקיים', 'Invalid entry dates'),
       body: T(isRTL,
