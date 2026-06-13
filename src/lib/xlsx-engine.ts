@@ -590,6 +590,9 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
             const entryDate = parseFlexibleDate(cellAt(row, headers, ['ENTRY DATE/TIME', 'Entry Date', 'Date', 'תאריך כניסה', 'תאריך']));
             if (!entryDate) {
               skipped++;
+              // Silently skip empty template rows (only Nr filled, everything else blank)
+              const nonNrCellsFilled = row.some((c, i) => i !== nrIndex && c != null && String(c).trim() !== '');
+              if (!nonNrCellsFilled) return;
               // Don't report invalid-date errors for the header-adjacent rows
               // (description / "eg." rows) — they are template noise, not user data.
               if (idx >= 3 && errors.length < 14) errors.push(`Row ${excelRow}: invalid or missing date`);
