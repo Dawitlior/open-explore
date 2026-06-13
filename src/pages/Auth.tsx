@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Navigate, useLocation } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { Eye, EyeOff, ArrowRight, Lock, Mail, User, Languages } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
@@ -216,6 +217,14 @@ export default function AuthPage() {
   };
 
   return (
+    <>
+    <Helmet>
+      <title>{lang === 'he' ? 'התחברות · Orca Investment' : 'Sign in · Orca Investment'}</title>
+      <meta name="description" content={lang === 'he' ? 'התחבר או הירשם ל-Orca Investment — יומן מסחר חכם וניהול סיכונים.' : 'Sign in or sign up to Orca Investment — a smart trading journal and risk-management platform.'} />
+      <link rel="canonical" href="/auth" />
+      <meta property="og:title" content={lang === 'he' ? 'התחברות · Orca Investment' : 'Sign in · Orca Investment'} />
+      <meta property="og:url" content="/auth" />
+    </Helmet>
     <main
       dir={isRTL ? 'rtl' : 'ltr'}
       style={{
@@ -255,6 +264,7 @@ export default function AuthPage() {
       {/* Top-right language toggle */}
       <button
         onClick={toggleLang}
+        aria-label={lang === 'he' ? 'Switch language to English' : 'החלף שפה לעברית'}
         style={{
           position: 'absolute', top: 20, insetInlineEnd: 20, zIndex: 5,
           display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -517,6 +527,7 @@ export default function AuthPage() {
         </div>
       )}
     </main>
+    </>
   );
 }
 

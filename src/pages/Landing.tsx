@@ -4,6 +4,7 @@
  * Hebrew RTL, Dark Mode only. Mobile-first.
  */
 import React, { useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, TrendingUp } from 'lucide-react';
@@ -558,23 +559,35 @@ const Landing: React.FC = () => {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  useEffect(() => {
-    const prevTitle = document.title;
-    document.title = isRTL
-      ? 'Orca Investment — יומן מסחר חכם ואוטומטי'
-      : 'Orca Investment — Smart, Automated Trading Journal';
-    const meta = document.querySelector('meta[name="description"]');
-    const prevDesc = meta?.getAttribute('content') ?? '';
-    meta?.setAttribute('content', isRTL
-      ? 'Orca Investment — יומן מסחר חכם שמרכז, מנתח ונותן סטטיסטיקות מדויקות לסוחר. חינם בתקופת ההשקה.'
-      : 'Orca Investment — a smart trading journal that centralizes, analyzes and delivers precise statistics for traders. Free during launch.');
-    return () => { document.title = prevTitle; meta?.setAttribute('content', prevDesc); };
-  }, [isRTL]);
+  const pageTitle = isRTL
+    ? 'Orca Investment — יומן מסחר חכם ואוטומטי'
+    : 'Orca Investment — Smart, Automated Trading Journal';
+  const pageDesc = isRTL
+    ? 'Orca Investment — יומן מסחר חכם שמרכז, מנתח ונותן סטטיסטיקות מדויקות לסוחר. חינם בתקופת ההשקה.'
+    : 'Orca Investment — a smart trading journal that centralizes, analyzes and delivers precise statistics for traders. Free during launch.';
 
   const goApp = () => { navigate('/auth'); };
 
   return (
     <>
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDesc} />
+        <link rel="canonical" href="/welcome" />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDesc} />
+        <meta property="og:url" content="/welcome" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="/orca-logo.png" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Service",
+          "name": "Orca Investment",
+          "serviceType": "Trading journal and risk management platform",
+          "provider": { "@type": "Organization", "name": "Orca Investment", "url": "/" },
+          "url": "/welcome"
+        })}</script>
+      </Helmet>
       <style>{orcaCss}</style>
       <div className="orca-landing orca-bg-grid">
         {/* ───── NAVBAR ───── */}
@@ -610,8 +623,8 @@ const Landing: React.FC = () => {
                   fontSize: 'clamp(2.4rem, 6vw, 4.8rem)',
                   margin: '18px 0 22px',
                 }}>
-                  הדרך החכמה לנהל את{' '}
-                  <span className="grad-text">המסחר שלך</span>
+                  Orca Investment — יומן מסחר חכם{' '}
+                  <span className="grad-text">לניהול סיכונים ואנליטיקה התנהגותית</span>
                 </h1>
 
                 <p style={{ fontSize: 'clamp(16px, 1.6vw, 19px)', lineHeight: 1.7, color: 'var(--text-muted)', maxWidth: 560, marginBottom: 24 }}>
