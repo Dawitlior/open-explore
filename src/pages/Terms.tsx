@@ -118,6 +118,7 @@ const Terms = () => {
         </p>
       </article>
     </main>
+    </>
   );
 };
 
