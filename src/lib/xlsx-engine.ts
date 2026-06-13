@@ -394,19 +394,34 @@ function detectHeaderRowFromRows(rows: unknown[][]): HeaderDetection {
     const rawHeaders: string[] = [];
     const mappedFields = new Set<keyof Trade>();
     let score = 0;
+    let headerLikeCount = 0;
+    let nonHeaderLikeCount = 0;
 
     (rows[r] || []).forEach((h, i) => {
       const raw = String(h ?? '').trim();
       if (!raw) return;
+      const isHeaderLike = looksLikeHeaderCell(raw);
+      if (isHeaderLike) headerLikeCount++; else nonHeaderLikeCount++;
       const norm = normalizeHeader(raw);
+      // Only register/score cells that look like headers (short, no sentence text)
+      if (!isHeaderLike) return;
       headers[norm] = i;
       rawHeaders.push(raw);
       const field = mapHeaderToField(raw);
       if (field) {
-        score += field === '_ignore' ? 1 : 3;
-        if (field !== '_ignore') mappedFields.add(field);
+        // Count each unique field only once to avoid description rows
+        // racking up score by repeating the same matched key.
+        if (field === '_ignore') {
+          score += 1;
+        } else if (!mappedFields.has(field)) {
+          score += 3;
+          mappedFields.add(field);
+        }
       }
     });
+
+    // Penalize rows that contain mostly long sentence cells (description rows)
+    if (nonHeaderLikeCount > headerLikeCount && headerLikeCount < 4) score = Math.max(0, score - 5);
 
     if (headers['#'] !== undefined || headers['nr.'] !== undefined || headers['nr'] !== undefined) score += 4;
     if (mappedFields.has('date')) score += 3;
