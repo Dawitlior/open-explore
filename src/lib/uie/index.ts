@@ -27,3 +27,11 @@ export type { FileInput, LinkResult } from './link-files/link';
 export { deriveFields, deriveAll } from './link-files/derive';
 
 export type { MatchResult, CanonicalField, MatchTier, MatchStatus, CanonicalTrade } from './canonical-trade';
+
+// Phase 4
+export { archetypeD, looksLikeArchetypeD } from './archetypes/archetype-d';
+export type { ArchetypeDResult, EquityEvent, EquityEventKind } from './archetypes/archetype-d';
+export { buildLedger, summarizeByKind } from './equity-events';
+export type { EquityLedgerEntry } from './equity-events';
+export { canonicalToNormalized, canonicalBatchToNormalized } from './adapter';
+export type { AdapterOptions } from './adapter';
