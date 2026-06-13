@@ -1,40 +1,36 @@
-## Goal
-Make sure that closing a week actually wipes every input in the Weekly Review, and give the user an explicit, always-available "Reset all inputs" button they can press at any time.
+# 🎯 UIE v1.2 — פייזה 1 (מאושרת לבנייה)
 
-## Why it currently feels broken
-`closeWeek()` already calls `resetDraft()` after `saveArchive()`, and `resetDraft()` writes `EMPTY_DRAFT` to Cloud and sets local state to `EMPTY_DRAFT`. But:
-- `useWeekDraft(weekKey)` is keyed by the current ISO week. After closing Friday's week the user typically still sees the same `weekKey` until the new week starts, so the form re-mounts with the just-reset draft — that part should work.
-- However, several visible inputs are not part of `WeekDraft` and therefore are *not* touched by `resetDraft()` (e.g. they may live in sibling widgets / per-week settings). That is why some fields appear "sticky" after close.
-- There is no manual escape hatch, so if anything is left behind the user has to clear fields one by one.
+מקפל את הערה #1 פנימה (כלל התאריך עם דגל קונפליקט). הערות #2 ו-#3 מסומנות כ-TODO לפייזה 4/4.5 ולא דורשות סבב נוסף.
 
-## Changes (frontend only, `src/components/weekly-review/tabs/WeeklyTab.tsx` + draft hook)
+## פייזה 1 — היקף הבנייה
+1. **`src/lib/uie/dictionary/canonical-fields.ts`** — 19 שדות קנוניים חדשים + עדכוני aliases לקיימים (orderType, direction, positionSize, entryDate/exitDate). הסרת `#` מ-externalId → `rowIndex` עם פרופיל `sequential_integer`.
+2. **`src/lib/uie/matching/normalize.ts`** — 8 שלבי נרמול:
+   lower · trim · NFD · ניקוי RTL marks · פיצול camelCase `(?<=[a-z])(?=[A-Z])` · הסרת תוכן סוגריים · הסרת ה"א הידיעה לטוקנים עבריים >2 (משווים גם מקור גם מנורמל, לוקחים גבוה) · null-tokens מורחב (`ー`, `—`, `N/A`, `-`).
+3. **`src/lib/uie/matching/fuzzy.ts`** — Damerau-Levenshtein פנימי (~30 שורות, אפס תלות; הערת `// zero-dependency by design — see master-plan §14.1`).
+4. **`src/lib/uie/matching/tiers.ts`** — מנוע 4-שלבי: P1 exact · P2 containment (כיסוי ≥0.5) · P3 token-subset (כיסוי ≥0.5) · P4 fuzzy (סף 60). מחזיר `{ field | null, score, tier, evidenceLayers, status: 'mapped' | 'pending-content' }`.
+5. **`src/lib/uie/matching/date-detect.ts`** — הכרעת פורמט תאריך **פר-עמודה, ראייתית**:
+   - סורק את כל הערכים של העמודה.
+   - `firstGt12` = קיים ערך עם רכיב ראשון > 12.
+   - `secondGt12` = קיים ערך עם רכיב שני > 12.
+   - `firstGt12 && !secondGt12` → DD/MM ירוק.
+   - `secondGt12 && !firstGt12` → MM/DD ירוק.
+   - **`firstGt12 && secondGt12` → דגל 🟡 `date_conflict`** (עמודה מעורבת — לא לבחור בשקט; #1).
+   - `!firstGt12 && !secondGt12` → 🟡 `date_ambiguous` עם שתי הצעות.
+   - שום ערך לא מנחש. **אסור דיפולט שפה.**
+6. **`src/lib/uie/canonical-trade.ts`** — סכל הטיפוסים הפנימי (D1). שדה אופציונלי.
+7. **שילוב ב-`xlsx-engine.ts`**: קריאה ל-`mapHeaderToField()` החדש לפני המפה הישנה; fallback מלא למפה הקיימת אם החדש מחזיר `null` (Zero-Destruction).
+8. **`src/lib/uie/golden-tests/`** — fixtures מ-GF-1..5 (כותרות בלבד בשלב זה). Snapshot כולל את הסטטוס; עמודות שתלויות בכללי תוכן (R_VS_PERCENT, QTY_CROSS_PRODUCT, DUPLICATE_FEE, AMOUNT_RULE) מוחזרות כ-`pending-content` ולא נועלות `field` (D3).
+9. **`vitest`** — בדיקה ש-≥95% מ-76 הכותרות מקבלות 🟢/pending-content נכון, ושאף עמודה לא קופצת לדגל לא-תואם.
 
-1. **Hard, field-by-field reset helper** in `src/components/weekly-review/hooks/use-week-draft.ts`
-   - Keep `EMPTY_DRAFT` as the single source of truth.
-   - Add `hardReset()` that:
-     a. Sets local state to `EMPTY_DRAFT`.
-     b. Writes `EMPTY_DRAFT` to `weekly_review.draft.<weekKey>` in Cloud.
-     c. Also deletes any *legacy* per-week keys that older versions of the form may still read from (sweep a known list: `weekly_review.prep.*`, `weekly_review.edges.*`, `weekly_review.exec.*`, `weekly_review.mindset.*`, `weekly_review.reflection.*`, `weekly_review.tags.*` for the current `weekKey`).
-   - Export `hardReset` alongside `reset`.
+## הערות שתלכנה לתוכנית פייזה 4/4.5 (לא משפיע על פייזה 1)
+- **#2** — בתוך פייזה 4.5, סדר ריצה: `derive` רץ **לפני** `gap-analysis`, כדי שכמות נגזרת (סכום/מחיר בקובץ בלינק) לא תיספר כ-Tier-1 חסר.
+- **#3** — `equity-events.ts` ייכתב **בפייזה 4** (לצד `archetype-c/d` שמייצרים אותו), לא ב-`delivery/`. תיקיית `delivery/` תכיל רק את gap-analysis/messages/fix-actions/dedup/derive/notes-overflow.
 
-2. **Global "Reset all inputs" button** in `WeeklyTab.tsx` header bar
-   - Place next to the existing "Close week" / grade chip area.
-   - Label: HE `איפוס כל האינפוטים` · EN `Reset all inputs`. Icon: 🧹.
-   - Style: danger-outline button (red border, transparent bg), matches existing header chips.
-   - On click → `confirm()` dialog (HE/EN) → call `hardReset()`.
-   - Always enabled, regardless of Friday/Saturday gating or `alreadyClosed`.
+## Definition of Done לפייזה 1
+- [ ] כל 5 הקבצים החדשים נכתבו תחת `src/lib/uie/` בלבד.
+- [ ] אפס תלויות חיצוניות חדשות (`package.json` ללא שינוי).
+- [ ] `xlsx-engine.ts` הישן ממשיך לעבוד 100% (fallback מאומת).
+- [ ] golden-tests מציגים ≥95% התאמה ראשונית, 0 נעילות שגויות.
+- [ ] בנייה ירוקה.
 
-3. **Close-week flow uses the same hard reset**
-   - In `closeWeek()` replace `await resetDraft()` with `await hardReset()` so the on-close path and the manual button are byte-identical. Guarantees every input field — including the legacy ones — is cleared after `saveArchive`.
-
-4. **Loader respects empty draft**
-   - The existing `useEffect` already replaces state with `EMPTY_DRAFT` when nothing is stored — no change needed, but verify after `hardReset()` the component re-renders with empty values for: preps, edges, executionChecklist, violations, violationPattern, env, pos, emotion, focusRating, bigMistake, repeatMistake, mindsetTags, mindset, decisionQuality, grade.
-
-## Out of scope
-- No backend / RLS changes.
-- No change to archive records — archived weeks remain intact.
-- No change to Saturday/Friday close-week gating (handled in a previous turn).
-
-## Acceptance
-- Pressing "🧹 Reset all inputs" instantly clears every visible field in the Weekly Review form and persists empty state across refresh.
-- Closing a week (Friday or Saturday) leaves the form completely empty without a refresh.
+ברגע שאתה מאשר — מתחיל ביצוע מלא של פייזה 1, ועוצר לסקירה לפני פייזה 2.
