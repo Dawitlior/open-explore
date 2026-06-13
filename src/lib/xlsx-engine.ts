@@ -165,6 +165,15 @@ const UIE_TO_TRADE: Partial<Record<string, keyof Trade | '_ignore'>> = {
   riskPct: 'riskPct',
 };
 
+function looksLikeHeaderCell(raw: string): boolean {
+  if (!raw) return false;
+  if (raw.length > 40) return false;
+  if (/[\n\r]/.test(raw)) return false;
+  // descriptions tend to contain sentence punctuation mid-text
+  if (/[.!?]\s/.test(raw)) return false;
+  return true;
+}
+
 function mapHeaderToField(header: string): keyof Trade | '_ignore' | null {
   // Phase 1: new engine. Only accept mapped (not pending-content) so content
   // rules from Phase 2 stay authoritative for ambiguous semantic columns.
@@ -180,7 +189,11 @@ function mapHeaderToField(header: string): keyof Trade | '_ignore' | null {
   // Legacy fallback (Zero-Destruction)
   const norm = normalizeHeader(header);
   if (HEADER_MAP[norm]) return HEADER_MAP[norm];
+  // Loose substring match — ONLY for short header-like strings to avoid
+  // false positives from long description text ("Where your stop loss was set").
+  if (norm.length > 30) return null;
   for (const [key, field] of Object.entries(HEADER_MAP)) {
+    if (key.length < 3) continue; // avoid 'r', 'sl', 'nr' matching random letters
     if (norm.includes(key) || key.includes(norm)) return field;
   }
   return null;
