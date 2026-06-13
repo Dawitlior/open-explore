@@ -72,10 +72,19 @@ export function useTrades() {
   }, [trades]);
 
   const recalcBalances = useCallback((tradeList: Trade[]): Trade[] => {
-    const startBalance = 0;
-    let balance = startBalance;
-    return tradeList.map(t => {
-      balance += (typeof t.pnl === 'number' && isFinite(t.pnl) ? t.pnl : 0);
+    const hasImportedBalance = tradeList.some(t => typeof t.balance === 'number' && isFinite(t.balance) && t.balance !== 0);
+    let balance = hasImportedBalance
+      ? tradeList.find(t => typeof t.balance === 'number' && isFinite(t.balance) && t.balance !== 0)?.balance ?? 0
+      : 0;
+
+    return tradeList.map((t, index) => {
+      const fileBalance = typeof t.balance === 'number' && isFinite(t.balance) && t.balance !== 0 ? t.balance : null;
+      if (fileBalance !== null) {
+        balance = fileBalance;
+        return { ...t, balance: Math.round(balance * 10000) / 10000 };
+      }
+
+      if (index > 0 || !hasImportedBalance) balance += (typeof t.pnl === 'number' && isFinite(t.pnl) ? t.pnl : 0);
       return { ...t, balance: Math.round(balance * 10000) / 10000 };
     });
   }, []);
@@ -191,7 +200,7 @@ export function useTrades() {
         const key = fp(raw as Trade);
         if (seen.has(key)) continue;
         seen.add(key);
-        additions.push({ ...(raw as Trade), id: nextId++, balance: 0 });
+        additions.push({ ...(raw as Trade), id: nextId++ });
       }
 
       if (additions.length === 0) {
