@@ -428,10 +428,17 @@ function normalizeDirectionValue(value: unknown): Trade['direction'] {
 }
 
 function pickMainSheet(wb: XLSX.WorkBook): XLSX.WorkSheet | null {
-  const name = wb.SheetNames.find(n => normalizeHeader(n) === 'main sheet')
-    || wb.SheetNames.find(n => normalizeHeader(n).includes('main'))
-    || wb.SheetNames.find(n => !['calculations', 'statistics'].includes(normalizeHeader(n)));
-  return name ? wb.Sheets[name] : null;
+  const candidates = wb.SheetNames
+    .filter(n => !['calculations', 'statistics'].includes(normalizeHeader(n)))
+    .map((name) => {
+      const sheet = wb.Sheets[name];
+      const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, raw: false, blankrows: false, defval: '' });
+      const detected = detectHeaderRowFromRows(rows);
+      const nameBoost = normalizeHeader(name).includes('main') || normalizeHeader(name).includes('trade') || normalizeHeader(name).includes('תנועות') ? 2 : 0;
+      return { name, sheet, score: detected.score + nameBoost };
+    })
+    .sort((a, b) => b.score - a.score);
+  return candidates[0]?.sheet ?? null;
 }
 
 function cellAt(row: unknown[], headers: Record<string, number>, names: string[]): unknown {
