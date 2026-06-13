@@ -1,44 +1,48 @@
-# 🎯 UIE v1.2 — Phase 2 (in progress)
+# 🎯 UIE v1.2 — Phase 3 (in progress)
 
-Phase 1 ✅ נמסרה. Phase 2 = זיהוי תוכן + archetypes + link-files. בונים שלב-שלב, עוצרים לסקירה אחרי כל שלב.
+Phases 1 & 2 ✅ נמסרו (61 בדיקות גולדן עוברות).
+Phase 3 = Archetype C (fills aggregation) + Link-files (trades.csv + fills.csv).
 
-## Phase 2 — שלבי בנייה
+## Phase 2 — סיכום הושלם ✅
+- Step 1 · Content Profiler (`content/profile.ts`) — 14 tests
+- Step 2 · Value Normalizer (`content/normalize-values.ts`) — 17 tests
+- Step 3 · Archetype A (`archetypes/archetype-a.ts`) — 8 tests
+- Step 4 · Archetype B Open/Close pair (`archetypes/archetype-b.ts`) — 7 tests
+- Step 5 · Detector + runner (`archetypes/detect.ts`) — 5 tests
+- Step 6 · Zero-Destruction fallback ב-`xlsx-engine.ts` (parseBrokerCsvRaw)
+- Step 7 · 61/61 גולדן ✅
 
-### Step 1 · Content Profiler (`src/lib/uie/content/profile.ts`)
-פרופיל סטטיסטי לכל עמודה: `numeric | date | enum | currency | percent | r-multiple | string | mixed`.
-- דגימה עד 200 ערכים לא-ריקים.
-- זיהוי currency (סימנים $€₪¥/ISO 3 אותיות), percent (`%` בסיומת או טווח 0..1 עם header רמז), r-multiple (`R`/`x` בסיומת או טווח קטן ±10).
-- מחזיר `{ type, confidence, sampleValues, flags[] }`.
-- נועל `pending-content` שדות מ-Phase 1: r/risk/return/riskPct.
+## Phase 3 — שלבי בנייה
 
-### Step 2 · Value Normalizer (`src/lib/uie/content/normalize-values.ts`)
-המרת ערך גולמי → ערך קנוני: מספרים (פסיק/נקודה אירופית), תאריכים (לפי `date-detect`), enums (Long/Short, Buy/Sell, ל/ש בעברית), null-tokens.
+### Step 1 · Fill row classifier (`src/lib/uie/archetypes/fill-classify.ts`)
+מזהה אם טבלה היא "fills" (הרבה שורות זעירות לכל orderId): סימנים = `fill id`/`exec id`, `order id` עם חזרות, `qty` קטן יחסית, ו-`price` משתנה בתוך אותו order.
 
-### Step 3 · Archetype A (Single-row trade) (`src/lib/uie/archetypes/archetype-a.ts`)
-כל שורה = עסקה סגורה. הזיהוי הפשוט והנפוץ ביותר.
+### Step 2 · Archetype C (`archetypes/archetype-c.ts`)
+Aggregation: קיבוץ לפי `orderId`/`externalId`. חישוב VWAP entry/exit, sum qty, sum fees, net realized PnL. תומך ב-partial fills בשני הכיוונים (build → unwind).
 
-### Step 4 · Archetype B (Open/Close pair) (`src/lib/uie/archetypes/archetype-b.ts`)
-שתי שורות לעסקה (Action=Open/Close). מצמד לפי externalId/symbol+time.
+### Step 3 · Link-files (`src/lib/uie/link-files/link.ts`)
+מחבר זוג קבצים: `trades.csv` (one row per trade) + `fills.csv` (many rows per order). מצמיד fills לעסקאות לפי tradeId/orderId. אם קיים רק fills.csv → derive trades דרך Archetype C.
 
-### Step 5 · Archetype Detector (`src/lib/uie/archetypes/detect.ts`)
-בוחר archetype לפי headers + תוכן.
+### Step 4 · Derive (`src/lib/uie/link-files/derive.ts`)
+מסיק שדות חסרים: `entry` ← VWAP מ-fills של פתיחה, `exit` ← VWAP סגירה, `positionSize` ← max signed cumulative qty, `pnl` ← Σ realized.
 
-### Step 6 · Integration ב-`xlsx-engine.ts`
-תזרים: detect → profile → normalize-values → archetype → CanonicalTrade[].
-Fallback מלא לישן אם UIE לא בטוח (Zero-Destruction).
+### Step 5 · Detector update + Integration
+מרחיב `detectArchetype` עם זיהוי C. אינטגרציה נוספת ב-xlsx-engine: אם UIE זיהה C → להפעיל aggregation לפני המרה ל-Trade.
 
-### Step 7 · Golden tests תוכן
-הרחבת `headers.test.ts` עם בדיקות פרופיל ו-archetype A.
+### Step 6 · Golden tests
+- fills-only file → derive trades
+- trades + fills → enriched VWAP
+- partial fills (build → unwind) → נכון
+- mixed currencies/symbols → segregation
 
-## נדחה ל-Phase 3/4
-- Archetype C (fills aggregation) — Phase 3.
-- Archetype D (equity statements) + `equity-events.ts` — Phase 4.
-- Link-files (trades.csv + fills.csv) + derive — Phase 3.
-- delivery/ (gap-analysis, messages, fix-actions, dedup, notes-overflow) — Phase 4.5.
+## נדחה ל-Phase 4 / 4.5
+- Archetype D (equity statements) + `equity-events.ts`
+- delivery/ (gap-analysis, messages, fix-actions, dedup, notes-overflow)
+- Adapter שלם ל-NormalizedTrade (D1)
 
-## Definition of Done · Phase 2
-- [ ] 5 קבצים חדשים תחת `src/lib/uie/content/` ו-`src/lib/uie/archetypes/`.
+## Definition of Done · Phase 3
+- [ ] 5 קבצים חדשים תחת `src/lib/uie/archetypes/` ו-`src/lib/uie/link-files/`.
 - [ ] אפס תלויות חדשות.
-- [ ] `xlsx-engine.ts` ממשיך לעבוד 100% עם fallback.
-- [ ] Archetype A מזהה ≥90% מ-GF-1/GF-2.
+- [ ] Detector מחזיר 'C' כשמזהים fills.
+- [ ] VWAP מדויק ב-6 ספרות.
 - [ ] בנייה ירוקה.
