@@ -35,3 +35,13 @@ export { buildLedger, summarizeByKind } from './equity-events';
 export type { EquityLedgerEntry } from './equity-events';
 export { canonicalToNormalized, canonicalBatchToNormalized } from './adapter';
 export type { AdapterOptions } from './adapter';
+
+// Phase 4.5 — Delivery
+export { analyzeGaps } from './delivery/gap-analysis';
+export type { GapReport, RowGap, GapSeverity } from './delivery/gap-analysis';
+export { suggestFixes } from './delivery/fix-actions';
+export type { FixAction, FixActionKind } from './delivery/fix-actions';
+export { dedupTrades } from './delivery/dedup';
+export type { DedupResult } from './delivery/dedup';
+export { foldOverflowIntoComments, foldOverflowBatch } from './delivery/notes-overflow';
+export type { OverflowOptions } from './delivery/notes-overflow';
