@@ -120,6 +120,20 @@ const HEADER_MAP: Record<string, keyof Trade | '_ignore'> = {
   'הערות': 'comments',
   'מספר מערכת': '_ignore',
   'מינוף': 'leverage',
+  // Israeli broker/account statements
+  'תאריך': 'date',
+  'סוג פעולה': 'direction',
+  'פעולה': 'direction',
+  'שם הנייר': 'coin',
+  'שם נכס': 'coin',
+  'נכס': 'coin',
+  'סימול': 'coin',
+  'כמות': 'positionSize',
+  'מחיר ממוצע': 'entry',
+  'מחיר': 'entry',
+  'סכום הפעולה': '_ignore',
+  'עמלה': '_ignore',
+  'יתרת מזומן': 'balance',
 };
 
 function normalizeHeader(h: string): string {
@@ -350,11 +364,81 @@ function findHeaderRow(sheet: XLSX.WorkSheet): number {
   return bestRow;
 }
 
+interface HeaderDetection {
+  index: number;
+  headers: Record<string, number>;
+  rawHeaders: string[];
+  mappedFields: Set<keyof Trade>;
+  score: number;
+}
+
+function detectHeaderRowFromRows(rows: unknown[][]): HeaderDetection {
+  let best: HeaderDetection = { index: 0, headers: {}, rawHeaders: [], mappedFields: new Set(), score: 0 };
+  const maxScan = Math.min(rows.length, 25);
+
+  for (let r = 0; r < maxScan; r++) {
+    const headers: Record<string, number> = {};
+    const rawHeaders: string[] = [];
+    const mappedFields = new Set<keyof Trade>();
+    let score = 0;
+
+    (rows[r] || []).forEach((h, i) => {
+      const raw = String(h ?? '').trim();
+      if (!raw) return;
+      const norm = normalizeHeader(raw);
+      headers[norm] = i;
+      rawHeaders.push(raw);
+      const field = mapHeaderToField(raw);
+      if (field) {
+        score += field === '_ignore' ? 1 : 3;
+        if (field !== '_ignore') mappedFields.add(field);
+      }
+    });
+
+    if (headers['#'] !== undefined || headers['nr.'] !== undefined || headers['nr'] !== undefined) score += 4;
+    if (mappedFields.has('date')) score += 3;
+    if (mappedFields.has('coin')) score += 3;
+    if (score > best.score) best = { index: r, headers, rawHeaders, mappedFields, score };
+  }
+
+  return best;
+}
+
+function formatHeaderList(headers: string[]): string {
+  return headers.slice(0, 14).join(', ') || '(אין כותרות / no headers)';
+}
+
+function columnWarnings(d: HeaderDetection, nrIndex: number | undefined): string[] {
+  const missing: string[] = [];
+  if (nrIndex === undefined) missing.push('עמודת # / Nr. חסרה — אורקה יצרה מזהה אוטומטי לכל שורה. / Missing # / Nr. column — Orca generated row IDs automatically.');
+  if (!d.mappedFields.has('date')) missing.push('חסרה עמודת תאריך / Date — שורות בלי תאריך תקין ידולגו. / Missing Date column — rows without a valid date will be skipped.');
+  if (!d.mappedFields.has('coin')) missing.push('חסרה עמודת שם נכס / Symbol — שורות ייטענו כ-UNKNOWN. / Missing asset name / Symbol column — rows will import as UNKNOWN.');
+  if (!d.mappedFields.has('direction')) missing.push('חסרה עמודת כיוון / Direction — ברירת המחדל תהיה Long. / Missing Direction column — default will be Long.');
+  if (!d.mappedFields.has('entry')) missing.push('חסרה עמודת מחיר כניסה / Entry — ערך הכניסה יהיה 0. / Missing Entry column — entry price will be 0.');
+  if (!d.mappedFields.has('exit')) missing.push('חסרה עמודת יציאה / Exit — הייבוא יצליח, אבל R-Multiple לא יהיה אמין עד השלמה ידנית. / Missing Exit column — import can continue, but R-Multiple will not be reliable until completed manually.');
+  if (!d.mappedFields.has('stopLoss')) missing.push('חסרה עמודת Stop Loss — העסקאות ייטענו ללא חישוב R-Multiple מלא. / Missing Stop Loss column — trades import without full R-Multiple calculation.');
+  if (!d.mappedFields.has('pnl')) missing.push('חסרה עמודת P&L — רווח/הפסד יישמר כ-0 אם אין נתון אחר לחישוב. / Missing P&L column — profit/loss will be 0 unless another calculable value exists.');
+  return missing;
+}
+
+function normalizeDirectionValue(value: unknown): Trade['direction'] {
+  const s = String(value ?? '').toLowerCase().trim();
+  if (s.includes('short') || s === 's' || s.includes('sell') || s.includes('מכירה') || s.includes('שורט')) return 'Short';
+  return 'Long';
+}
+
 function pickMainSheet(wb: XLSX.WorkBook): XLSX.WorkSheet | null {
-  const name = wb.SheetNames.find(n => normalizeHeader(n) === 'main sheet')
-    || wb.SheetNames.find(n => normalizeHeader(n).includes('main'))
-    || wb.SheetNames.find(n => !['calculations', 'statistics'].includes(normalizeHeader(n)));
-  return name ? wb.Sheets[name] : null;
+  const candidates = wb.SheetNames
+    .filter(n => !['calculations', 'statistics'].includes(normalizeHeader(n)))
+    .map((name) => {
+      const sheet = wb.Sheets[name];
+      const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, raw: false, blankrows: false, defval: '' });
+      const detected = detectHeaderRowFromRows(rows);
+      const nameBoost = normalizeHeader(name).includes('main') || normalizeHeader(name).includes('trade') || normalizeHeader(name).includes('תנועות') ? 2 : 0;
+      return { name, sheet, score: detected.score + nameBoost };
+    })
+    .sort((a, b) => b.score - a.score);
+  return candidates[0]?.sheet ?? null;
 }
 
 function cellAt(row: unknown[], headers: Record<string, number>, names: string[]): unknown {
@@ -444,17 +528,17 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
         if (!ws) { resolve({ trades: [], errors: ['Main Sheet not found'], skipped: 0, imported: 0 }); return; }
 
         const rows = XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1, raw: false, dateNF: 'dd/mm/yyyy hh:mm', blankrows: false, defval: '' });
-        if (rows.length < 3) { resolve({ trades: [], errors: ['Main Sheet must include headers, description row, and data rows'], skipped: 0, imported: 0 }); return; }
+        if (rows.length < 2) { resolve({ trades: [], errors: ['Main Sheet must include headers and data rows'], skipped: 0, imported: 0 }); return; }
 
-        const headers: Record<string, number> = {};
-        (rows[0] || []).forEach((h, i) => { if (String(h).trim()) headers[normalizeHeader(String(h))] = i; });
+        const headerDetection = detectHeaderRowFromRows(rows);
+        const headers = headerDetection.headers;
         const nrIndex = headers['#'] ?? headers['nr.'] ?? headers['nr'];
-        if (nrIndex === undefined) {
-          const found = Object.keys(headers).slice(0, 12).join(', ') || '(אין כותרות / no headers)';
+        if (headerDetection.score < 6 || headerDetection.mappedFields.size < 2) {
+          const found = formatHeaderList(headerDetection.rawHeaders);
           resolve({
             trades: [],
             errors: [
-              `חסרה עמודת "# / Nr." ב-Main Sheet. ודא שהשורה הראשונה היא הכותרות (לא טייטל ממוזג) וכוללת עמודה בשם "#" או "Nr.". כותרות שזוהו: ${found}. / Missing required "# / Nr." column in Main Sheet. Make sure row 1 is the header row (not a merged title) and includes a column named "#" or "Nr.". Detected headers: ${found}.`
+              `לא זוהתה שורת כותרות אמיתית בקובץ. אורקה סורקת את השורות הראשונות ומחפשת עמודות כמו תאריך, שם הנכס, כיוון, כניסה, יציאה או P&L. כותרות שזוהו: ${found}. / Could not detect a real header row. Orca scans the first rows for columns like Date, Symbol, Direction, Entry, Exit or P&L. Detected headers: ${found}.`
             ],
             skipped: 0,
             imported: 0,
@@ -463,50 +547,56 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
         }
 
         const trades: Trade[] = [];
-        const errors: string[] = [];
+        const errors: string[] = columnWarnings(headerDetection, nrIndex);
         let skipped = 0;
-        rows.slice(2).forEach((row, idx) => {
+        rows.slice(headerDetection.index + 1).forEach((row, idx) => {
           try {
-            const nr = String(row[nrIndex] ?? '').trim();
-            if (!nr) { skipped++; return; }
+            const excelRow = headerDetection.index + idx + 2;
+            const nr = nrIndex !== undefined ? String(row[nrIndex] ?? '').trim() : String(excelRow);
+            if (nrIndex !== undefined && !nr) { skipped++; return; }
 
-            const entryDate = parseFlexibleDate(cellAt(row, headers, ['ENTRY DATE/TIME', 'Entry Date', 'Date']));
-            if (!entryDate) { skipped++; if (errors.length < 10) errors.push(`Row ${idx + 3}: invalid ENTRY DATE/TIME`); return; }
+            const entryDate = parseFlexibleDate(cellAt(row, headers, ['ENTRY DATE/TIME', 'Entry Date', 'Date', 'תאריך כניסה', 'תאריך']));
+            if (!entryDate) { skipped++; if (errors.length < 14) errors.push(`Row ${excelRow}: invalid or missing date`); return; }
 
             const status = String(cellAt(row, headers, ['TRADE STATUS', 'Result', 'Win/Loss', 'Outcome']) ?? '').toLowerCase().trim();
-            const directionRaw = String(cellAt(row, headers, ['DIRECTION', 'Side', 'Type']) ?? '').toLowerCase().trim();
+            const directionRaw = cellAt(row, headers, ['DIRECTION', 'Side', 'Type', 'כיוון', 'סוג פעולה', 'פעולה']);
             const realisedLoss = Math.abs(parseNumericValue(cellAt(row, headers, ['REALISED LOSS', 'Realized Loss'])) ?? 0);
             const realisedWin = Math.abs(parseNumericValue(cellAt(row, headers, ['REALISED WIN', 'Realized Win'])) ?? 0);
             const returnR = parseNumericValue(cellAt(row, headers, ['R+/-', 'R', 'R Multiple'])) ?? 0;
-            const risk = Math.abs(parseNumericValue(cellAt(row, headers, ['DESIRED RISK (USD)', 'Risk USD', 'Risk'])) ?? 0);
-            const pnl = realisedWin > 0 ? realisedWin : realisedLoss > 0 ? -realisedLoss : returnR * (risk || 1);
-            const deviation = parseDeviationValue(cellAt(row, headers, ['DEVIATION', 'Deviation']));
+            const risk = Math.abs(parseNumericValue(cellAt(row, headers, ['DESIRED RISK (USD)', 'Risk USD', 'Risk', 'סיכון רצוי (דולר)', 'סיכון'])) ?? 0);
+            const directPnl = parseNumericValue(cellAt(row, headers, ['P&L', 'PNL', 'Profit/Loss', 'Profit', 'רווח/הפסד', 'תוצאה']));
+            const pnl = directPnl ?? (realisedWin > 0 ? realisedWin : realisedLoss > 0 ? -realisedLoss : returnR * (risk || 0));
+            const deviation = parseDeviationValue(cellAt(row, headers, ['DEVIATION', 'Deviation', 'סטייה']));
             const durationMin = parseTimespanMinutes(cellAt(row, headers, ['TRADE DURATION', 'Trade Duration']));
             const mfeR = parseNumericValue(cellAt(row, headers, ['MFE R+/-', 'MFE R'])) ?? 0;
             const maeR = parseNumericValue(cellAt(row, headers, ['MAE R+/-', 'MAE R'])) ?? 0;
+            const stopLoss = parseNumericValue(cellAt(row, headers, ['STOP LOSS', 'SL', 'Stoploss', 'סטופ לוס']));
 
             const mapped: Record<string, unknown> = {
               id: parseNumericValue(nr) || idx + 1,
               date: entryDate,
-              coin: String(cellAt(row, headers, ['COIN', 'Symbol', 'Ticker', 'Pair']) || 'UNKNOWN').trim().toUpperCase(),
-              direction: directionRaw.includes('short') || directionRaw === 's' || directionRaw.includes('sell') ? 'Short' : 'Long',
-              orderType: String(cellAt(row, headers, ['ENTRY ORDER TYPE', 'Order Type']) || 'Market').trim() || 'Market',
-              entry: parseNumericValue(cellAt(row, headers, ['ENTRY', 'Entry Price'])) ?? 0,
-              stopLoss: parseNumericValue(cellAt(row, headers, ['STOP LOSS', 'SL', 'Stoploss'])) ?? 0,
-              exit: parseNumericValue(cellAt(row, headers, ['AVG EXIT', 'Exit', 'Exit Price', 'Close Price'])) ?? 0,
-              riskPct: parseDeviationValue(cellAt(row, headers, ['DESIRED RISK (%)', 'Risk %', 'Risk Pct'])) * 100 || 1,
+              coin: String(cellAt(row, headers, ['COIN', 'Symbol', 'Ticker', 'Pair', 'מטבע', 'שם הנייר', 'שם נכס', 'נכס', 'סימול']) || 'UNKNOWN').trim().toUpperCase(),
+              direction: normalizeDirectionValue(directionRaw),
+              orderType: String(cellAt(row, headers, ['ENTRY ORDER TYPE', 'Order Type', 'סוג פקודת כניסה']) || 'Market').trim() || 'Market',
+              entry: parseNumericValue(cellAt(row, headers, ['ENTRY', 'Entry Price', 'כניסה', 'מחיר ממוצע', 'מחיר'])) ?? 0,
+              stopLoss,
+              exit: parseNumericValue(cellAt(row, headers, ['AVG EXIT', 'Exit', 'Exit Price', 'Close Price', 'יציאה ממוצעת', 'יציאה'])) ?? 0,
+              riskPct: parseDeviationValue(cellAt(row, headers, ['DESIRED RISK (%)', 'Risk %', 'Risk Pct', 'סיכון רצוי (%)'])) * 100 || 1,
               risk,
-              expectedLoss: parseNumericValue(cellAt(row, headers, ['EXPECTED LOSS', 'Expected Loss'])) ?? risk,
+              expectedLoss: parseNumericValue(cellAt(row, headers, ['EXPECTED LOSS', 'Expected Loss', 'הפסד צפוי'])) ?? risk,
               returnR,
               deviation,
               pnl,
-              positionSize: parseNumericValue(cellAt(row, headers, ['POSITION SIZE', 'Size', 'Quantity', 'Qty'])) ?? 0,
-              leverage: parseNumericValue(cellAt(row, headers, ['LEVERAGE', 'Lev'])) ?? 1,
+              positionSize: parseNumericValue(cellAt(row, headers, ['POSITION SIZE', 'Size', 'Quantity', 'Qty', 'גודל פוזיציה', 'כמות'])) ?? 0,
+              leverage: parseNumericValue(cellAt(row, headers, ['LEVERAGE', 'Lev', 'מינוף'])) ?? 1,
+              balance: parseNumericValue(cellAt(row, headers, ['Account Size', 'Balance', 'יתרת מזומן', 'גודל חשבון'])) ?? 0,
               rules: true,
               winLoss: status.includes('loss') || status === 'l' ? 'Loss' : status.includes('be') || status.includes('break') ? 'Break Even' : status.includes('win') || status === 'w' ? 'Win' : pnl > 0.05 ? 'Win' : pnl < -0.05 ? 'Loss' : 'Break Even',
               comments: [
                 `Nr:${nr}`,
+                headerDetection.index > 0 ? `Header row:${headerDetection.index + 1}` : '',
                 String(cellAt(row, headers, ['SYSTEM NO.', 'SYSTEM NO', 'System']) || '').trim(),
+                String(cellAt(row, headers, ['סוג פעולה', 'פעולה']) || '').trim(),
                 durationMin ? `Duration:${durationMin}m` : '',
                 mfeR || maeR ? `MFE:${mfeR}R MAE:${maeR}R` : '',
                 deviation > 0.1 ? 'Red Flag: Deviation > 10%' : '',
@@ -519,11 +609,11 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
               trades.push(sanitized);
             } else {
               skipped++;
-              if (errors.length < 10) errors.push(`Row ${idx + 3}: Invalid data`);
+              if (errors.length < 14) errors.push(`Row ${excelRow}: Invalid data`);
             }
           } catch (err) {
             skipped++;
-            if (errors.length < 10) errors.push(`Row ${idx + 3}: ${err instanceof Error ? err.message : 'Parse error'}`);
+            if (errors.length < 14) errors.push(`Row ${headerDetection.index + idx + 2}: ${err instanceof Error ? err.message : 'Parse error'}`);
           }
         });
 
