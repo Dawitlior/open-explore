@@ -165,6 +165,15 @@ const UIE_TO_TRADE: Partial<Record<string, keyof Trade | '_ignore'>> = {
   riskPct: 'riskPct',
 };
 
+function looksLikeHeaderCell(raw: string): boolean {
+  if (!raw) return false;
+  if (raw.length > 40) return false;
+  if (/[\n\r]/.test(raw)) return false;
+  // descriptions tend to contain sentence punctuation mid-text
+  if (/[.!?]\s/.test(raw)) return false;
+  return true;
+}
+
 function mapHeaderToField(header: string): keyof Trade | '_ignore' | null {
   // Phase 1: new engine. Only accept mapped (not pending-content) so content
   // rules from Phase 2 stay authoritative for ambiguous semantic columns.
@@ -180,7 +189,11 @@ function mapHeaderToField(header: string): keyof Trade | '_ignore' | null {
   // Legacy fallback (Zero-Destruction)
   const norm = normalizeHeader(header);
   if (HEADER_MAP[norm]) return HEADER_MAP[norm];
+  // Loose substring match — ONLY for short header-like strings to avoid
+  // false positives from long description text ("Where your stop loss was set").
+  if (norm.length > 30) return null;
   for (const [key, field] of Object.entries(HEADER_MAP)) {
+    if (key.length < 3) continue; // avoid 'r', 'sl', 'nr' matching random letters
     if (norm.includes(key) || key.includes(norm)) return field;
   }
   return null;
@@ -381,19 +394,34 @@ function detectHeaderRowFromRows(rows: unknown[][]): HeaderDetection {
     const rawHeaders: string[] = [];
     const mappedFields = new Set<keyof Trade>();
     let score = 0;
+    let headerLikeCount = 0;
+    let nonHeaderLikeCount = 0;
 
     (rows[r] || []).forEach((h, i) => {
       const raw = String(h ?? '').trim();
       if (!raw) return;
+      const isHeaderLike = looksLikeHeaderCell(raw);
+      if (isHeaderLike) headerLikeCount++; else nonHeaderLikeCount++;
       const norm = normalizeHeader(raw);
+      // Only register/score cells that look like headers (short, no sentence text)
+      if (!isHeaderLike) return;
       headers[norm] = i;
       rawHeaders.push(raw);
       const field = mapHeaderToField(raw);
       if (field) {
-        score += field === '_ignore' ? 1 : 3;
-        if (field !== '_ignore') mappedFields.add(field);
+        // Count each unique field only once to avoid description rows
+        // racking up score by repeating the same matched key.
+        if (field === '_ignore') {
+          score += 1;
+        } else if (!mappedFields.has(field)) {
+          score += 3;
+          mappedFields.add(field);
+        }
       }
     });
+
+    // Penalize rows that contain mostly long sentence cells (description rows)
+    if (nonHeaderLikeCount > headerLikeCount && headerLikeCount < 4) score = Math.max(0, score - 5);
 
     if (headers['#'] !== undefined || headers['nr.'] !== undefined || headers['nr'] !== undefined) score += 4;
     if (mappedFields.has('date')) score += 3;
@@ -552,11 +580,24 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
         rows.slice(headerDetection.index + 1).forEach((row, idx) => {
           try {
             const excelRow = headerDetection.index + idx + 2;
-            const nr = nrIndex !== undefined ? String(row[nrIndex] ?? '').trim() : String(excelRow);
-            if (nrIndex !== undefined && !nr) { skipped++; return; }
+            const nrRaw = nrIndex !== undefined ? String(row[nrIndex] ?? '').trim() : '';
+            const nr = nrRaw || String(excelRow);
+            // Silently skip the first 1-2 non-data rows after the header
+            // (description row, "eg." example row commonly bundled in templates).
+            const isNonNumericNr = nrRaw && !/^\d+(\.\d+)?$/.test(nrRaw);
+            if (isNonNumericNr && idx < 3) { skipped++; return; }
 
             const entryDate = parseFlexibleDate(cellAt(row, headers, ['ENTRY DATE/TIME', 'Entry Date', 'Date', 'תאריך כניסה', 'תאריך']));
-            if (!entryDate) { skipped++; if (errors.length < 14) errors.push(`Row ${excelRow}: invalid or missing date`); return; }
+            if (!entryDate) {
+              skipped++;
+              // Silently skip empty template rows (only Nr filled, everything else blank)
+              const nonNrCellsFilled = row.some((c, i) => i !== nrIndex && c != null && String(c).trim() !== '');
+              if (!nonNrCellsFilled) return;
+              // Don't report invalid-date errors for the header-adjacent rows
+              // (description / "eg." rows) — they are template noise, not user data.
+              if (idx >= 3 && errors.length < 14) errors.push(`Row ${excelRow}: invalid or missing date`);
+              return;
+            }
 
             const status = String(cellAt(row, headers, ['TRADE STATUS', 'Result', 'Win/Loss', 'Outcome']) ?? '').toLowerCase().trim();
             const directionRaw = cellAt(row, headers, ['DIRECTION', 'Side', 'Type', 'כיוון', 'סוג פעולה', 'פעולה']);
