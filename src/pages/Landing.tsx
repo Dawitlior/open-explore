@@ -610,8 +610,8 @@ const Landing: React.FC = () => {
                   fontSize: 'clamp(2.4rem, 6vw, 4.8rem)',
                   margin: '18px 0 22px',
                 }}>
-                  הדרך החכמה לנהל את{' '}
-                  <span className="grad-text">המסחר שלך</span>
+                  Orca Investment — יומן מסחר חכם{' '}
+                  <span className="grad-text">לניהול סיכונים ואנליטיקה התנהגותית</span>
                 </h1>
 
                 <p style={{ fontSize: 'clamp(16px, 1.6vw, 19px)', lineHeight: 1.7, color: 'var(--text-muted)', maxWidth: 560, marginBottom: 24 }}>

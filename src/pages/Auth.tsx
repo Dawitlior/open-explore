@@ -255,6 +255,7 @@ export default function AuthPage() {
       {/* Top-right language toggle */}
       <button
         onClick={toggleLang}
+        aria-label={lang === 'he' ? 'Switch language to English' : 'החלף שפה לעברית'}
         style={{
           position: 'absolute', top: 20, insetInlineEnd: 20, zIndex: 5,
           display: 'inline-flex', alignItems: 'center', gap: 6,
