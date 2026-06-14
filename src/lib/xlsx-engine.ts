@@ -57,15 +57,7 @@ const HEADER_MAP: Record<string, keyof Trade | '_ignore'> = {
   'r+/-': 'returnR',
   'r': 'returnR',
   'return r': 'returnR',
-  'return': 'returnR',
-  'return %': 'returnR',
   'r multiple': 'returnR',
-  'balance': 'balance',
-  'account balance': 'balance',
-  'equity': 'balance',
-  'day': '_ignore',
-  'duration': '_ignore',
-  'links': '_ignore',
   'deviation': 'deviation',
   'fees': '_ignore',
   'fee': '_ignore',
@@ -155,7 +147,6 @@ function parseNumericValue(value: unknown): number | null {
 
   let cleaned = String(value).trim();
   if (!cleaned || cleaned === '—' || cleaned === '-') return null;
-  if (/^=/.test(cleaned) || /^\+\s*[A-Z(]/i.test(cleaned)) return null;
   const negative = /^\(.*\)$/.test(cleaned) || /^-/.test(cleaned);
   cleaned = cleaned
     .replace(/[\u200e\u200f\u202a-\u202e]/g, '')
@@ -405,55 +396,29 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
         const rows = XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1, raw: false, dateNF: 'dd/mm/yyyy hh:mm', blankrows: false, defval: '' });
         if (rows.length < 3) { resolve({ trades: [], errors: ['Main Sheet must include headers, description row, and data rows'], skipped: 0, imported: 0 }); return; }
 
-        const headerRowIdx = findHeaderRow(ws);
         const headers: Record<string, number> = {};
-        (rows[headerRowIdx] || []).forEach((h, i) => { if (String(h).trim()) headers[normalizeHeader(String(h))] = i; });
+        (rows[0] || []).forEach((h, i) => { if (String(h).trim()) headers[normalizeHeader(String(h))] = i; });
         const nrIndex = headers['#'] ?? headers['nr.'] ?? headers['nr'];
+        if (nrIndex === undefined) { resolve({ trades: [], errors: ['Missing required # / Nr. column in Main Sheet'], skipped: 0, imported: 0 }); return; }
 
         const trades: Trade[] = [];
         const errors: string[] = [];
         let skipped = 0;
-        let previousBalance: number | null = null;
-        rows.slice(headerRowIdx + 1).forEach((row, idx) => {
+        rows.slice(2).forEach((row, idx) => {
           try {
-            const actualRow = headerRowIdx + idx + 2;
-            const nr = nrIndex !== undefined ? String(row[nrIndex] ?? '').trim() : String(idx + 1);
-            const rowBalance = parseNumericValue(cellAt(row, headers, ['Balance', 'Account Balance', 'Equity']));
-            if (nrIndex !== undefined && !nr) {
-              if (rowBalance !== null) previousBalance = rowBalance;
-              skipped++;
-              return;
-            }
+            const nr = String(row[nrIndex] ?? '').trim();
+            if (!nr) { skipped++; return; }
 
             const entryDate = parseFlexibleDate(cellAt(row, headers, ['ENTRY DATE/TIME', 'Entry Date', 'Date']));
-            if (!entryDate) {
-              if (rowBalance !== null) previousBalance = rowBalance;
-              const hasTradeNumbers = ['ENTRY', 'STOP LOSS', 'AVG EXIT', 'Exit', 'P&L', 'PNL'].some(name => parseNumericValue(cellAt(row, headers, [name])) !== null);
-              skipped++;
-              if (hasTradeNumbers && errors.length < 10) errors.push(`Row ${actualRow}: invalid ENTRY DATE/TIME`);
-              return;
-            }
+            if (!entryDate) { skipped++; if (errors.length < 10) errors.push(`Row ${idx + 3}: invalid ENTRY DATE/TIME`); return; }
 
             const status = String(cellAt(row, headers, ['TRADE STATUS', 'Result', 'Win/Loss', 'Outcome']) ?? '').toLowerCase().trim();
             const directionRaw = String(cellAt(row, headers, ['DIRECTION', 'Side', 'Type']) ?? '').toLowerCase().trim();
             const realisedLoss = Math.abs(parseNumericValue(cellAt(row, headers, ['REALISED LOSS', 'Realized Loss'])) ?? 0);
             const realisedWin = Math.abs(parseNumericValue(cellAt(row, headers, ['REALISED WIN', 'Realized Win'])) ?? 0);
-            const returnR = parseNumericValue(cellAt(row, headers, ['R+/-', 'R', 'R Multiple', 'Return', 'Return %'])) ?? 0;
+            const returnR = parseNumericValue(cellAt(row, headers, ['R+/-', 'R', 'R Multiple'])) ?? 0;
             const risk = Math.abs(parseNumericValue(cellAt(row, headers, ['DESIRED RISK (USD)', 'Risk USD', 'Risk'])) ?? 0);
-            // Prefer the file's explicit P&L column when present — many journals
-            // (including the Orca template) export realized P&L directly and do
-            // NOT split it into Realised Win / Realised Loss columns.
-            const directPnl = parseNumericValue(cellAt(row, headers, ['P&L', 'PNL', 'Profit', 'Profit/Loss']));
-            const balanceDeltaPnl = rowBalance !== null && previousBalance !== null
-              ? Math.round((rowBalance - previousBalance) * 10000) / 10000
-              : null;
-            const pnl = directPnl !== null
-              ? directPnl
-              : balanceDeltaPnl !== null ? balanceDeltaPnl
-              : realisedWin > 0 ? realisedWin
-              : realisedLoss > 0 ? -realisedLoss
-              : returnR * (risk || 1);
-            if (rowBalance !== null) previousBalance = rowBalance;
+            const pnl = realisedWin > 0 ? realisedWin : realisedLoss > 0 ? -realisedLoss : returnR * (risk || 1);
             const deviation = parseDeviationValue(cellAt(row, headers, ['DEVIATION', 'Deviation']));
             const durationMin = parseTimespanMinutes(cellAt(row, headers, ['TRADE DURATION', 'Trade Duration']));
             const mfeR = parseNumericValue(cellAt(row, headers, ['MFE R+/-', 'MFE R'])) ?? 0;
@@ -474,7 +439,6 @@ export function importFromXlsx(file: File): Promise<ImportResult> {
               returnR,
               deviation,
               pnl,
-              balance: rowBalance ?? 0,
               positionSize: parseNumericValue(cellAt(row, headers, ['POSITION SIZE', 'Size', 'Quantity', 'Qty'])) ?? 0,
               leverage: parseNumericValue(cellAt(row, headers, ['LEVERAGE', 'Lev'])) ?? 1,
               rules: true,
@@ -563,7 +527,7 @@ export function parseBrokerCsvRaw(file: File): Promise<Trade[]> {
             for (const { idx: ci, field } of colMap) {
               const val = row[ci];
               if (field === 'date') mapped.date = parseFlexibleDate(val);
-              else if (field === 'pnl' || field === 'balance' || field === 'entry' || field === 'exit' || field === 'stopLoss' || field === 'positionSize' || field === 'leverage' || field === 'risk' || field === 'expectedLoss' || field === 'returnR' || field === 'riskPct') {
+              else if (field === 'pnl' || field === 'entry' || field === 'exit' || field === 'stopLoss' || field === 'positionSize' || field === 'leverage' || field === 'risk' || field === 'expectedLoss' || field === 'returnR' || field === 'riskPct') {
                 mapped[field] = parseNumericValue(val);
               } else if (field === 'deviation') mapped.deviation = parseDeviationValue(val);
               else if (field === 'direction') {
