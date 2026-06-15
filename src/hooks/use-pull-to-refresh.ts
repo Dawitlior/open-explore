@@ -27,6 +27,15 @@ export const usePullToRefresh = ({ onRefresh, threshold = 64, max = 110, enabled
     const onTouchStart = (e: TouchEvent) => {
       if (refreshing) return;
       if ((el.scrollTop || 0) > 2) return;
+      // Skip when a modal/dialog/sheet is open above the page — touches there
+      // should never trigger a page refresh. CalendarModal & co. set body
+      // overflow:hidden while open; also bail if the touch originated inside
+      // a dialog/portal that has its own scroll container.
+      if (typeof document !== 'undefined') {
+        if (document.body.style.overflow === 'hidden') return;
+        const tgt = e.target as Element | null;
+        if (tgt && tgt.closest?.('[role="dialog"], [data-no-ptr], [data-radix-portal]')) return;
+      }
       startY.current = e.touches[0].clientY;
       pulling.current = true;
       armed.current = false;
