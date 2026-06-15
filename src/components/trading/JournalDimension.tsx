@@ -3083,6 +3083,7 @@ const CalendarView = ({ days, dir, th, t, risk, onSelectDay }: { days: JournalDa
   const [month, setMonth] = useState(() => new Date().getMonth());
   const [year, setYear] = useState(() => new Date().getFullYear());
   const [intelDay, setIntelDay] = useState<JournalDay | null>(null);
+  const isR = useJournalIsR();
   const today = new Date();
 
   const firstDay = new Date(year, month, 1).getDay();
