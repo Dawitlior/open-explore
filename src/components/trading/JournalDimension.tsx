@@ -3996,6 +3996,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
   // language while inside the journal and on subsequent loads (we used to
   // restore a stale `s.lang` from storage, overriding the platform setting).
   const lang = isRTL ? 'he' : 'en';
+  const isR = useJournalIsR();
   const setLang = (_v: string) => { /* no-op — language is owned by the platform */ };
   const [days, setDays] = useState<JournalDay[]>(() => {
     const d = makeDay(isRTL ? 'he' : 'en'); d.dayNum = '1'; d.weekNum = '1';
