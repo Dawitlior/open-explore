@@ -47,8 +47,10 @@ export interface RollingMetric {
 
 export interface TradingStats {
   totalPnl: number;
+  totalR: number;
   winRate: number;
   profitFactor: number;
+  profitFactorR: number;
   expectancyR: number;
   avgWinR: number;
   avgLossR: number;
