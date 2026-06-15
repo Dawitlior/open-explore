@@ -282,7 +282,7 @@ const Index = () => {
       }
     });
     return m;
-  }, [calMonth, calYear, trades]);
+  }, [calMonth, calYear, trades, isR]);
   const calDays = useMemo(() => getCalDays(calYear, calMonth), [calYear, calMonth]);
   const weekStats = useMemo(() => {
     const w: { week: number; pnl: number; trades: number; days: number }[] = [];
@@ -543,7 +543,7 @@ const Index = () => {
       } catch { /* noop */ }
     })();
     return () => { cancelled = true; };
-  }, [page, reviewReminderTick]);
+  }, [page]); // intentionally NOT depending on reviewReminderTick — the tick only re-evaluates `showWeeklyReminder` via local date math; refetching weekly_review.archive/recaps every 5 minutes is wasteful network noise.
   const showWeeklyReminder = useMemo(() => {
     void reviewReminderTick;
     const now = new Date();

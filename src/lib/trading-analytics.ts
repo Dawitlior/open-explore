@@ -212,18 +212,23 @@ function _computeAnalyticsInternal(trades: Trade[]): TradingStats {
     equityCurve.push({ trade: i + 1, balance: +equityR.toFixed(3), pnl: d.pnl });
   });
 
-  // Coin performance
-  const coinMap: Record<string, { coin: string; pnl: number; trades: number; wins: number; totalR: number }> = {};
+  // Coin performance — extended with wins/losses/totalWinR/totalLossR so we
+  // can compute per-coin expectancy below WITHOUT re-filtering the entire
+  // trades array per coin (was O(coins × trades), now O(trades)).
+  const coinMap: Record<string, { coin: string; pnl: number; trades: number; wins: number; losses: number; totalR: number; totalWinR: number; totalLossR: number }> = {};
   trades.forEach(t => {
     const c = t.coin || 'UNKNOWN';
-    if (!coinMap[c]) coinMap[c] = { coin: c, pnl: 0, trades: 0, wins: 0, totalR: 0 };
+    if (!coinMap[c]) coinMap[c] = { coin: c, pnl: 0, trades: 0, wins: 0, losses: 0, totalR: 0, totalWinR: 0, totalLossR: 0 };
+    const r = getEffectiveR(t);
     coinMap[c].pnl += safeNum(t.pnl);
     coinMap[c].trades++;
-    coinMap[c].totalR += getEffectiveR(t);
-    if (t.winLoss === 'Win') coinMap[c].wins++;
+    coinMap[c].totalR += r;
+    if (t.winLoss === 'Win') { coinMap[c].wins++; coinMap[c].totalWinR += Math.abs(r); }
+    else if (t.winLoss === 'Loss') { coinMap[c].losses++; coinMap[c].totalLossR += Math.abs(r); }
   });
   const coinPerf: CoinPerf[] = Object.values(coinMap).map(c => ({
-    ...c, winRate: (c.wins / c.trades * 100).toFixed(0), avgR: c.totalR / c.trades
+    coin: c.coin, pnl: c.pnl, trades: c.trades, wins: c.wins, totalR: c.totalR,
+    winRate: (c.wins / c.trades * 100).toFixed(0), avgR: c.totalR / c.trades
   }));
 
   // Direction analysis
@@ -324,10 +329,14 @@ function _computeAnalyticsInternal(trades: Trade[]): TradingStats {
     });
   }
 
-  // Strategy expectancy
-  const strategyExpectancyR = Object.entries(coinMap).map(([coin]) => {
-    const coinTrades = trades.filter(t => t.coin === coin);
-    return { coin, expectancyR: computeExpectancyR(coinTrades), trades: coinTrades.length };
+  // Strategy expectancy — derived directly from coinMap (O(coins)) instead
+  // of re-filtering all trades per coin (was O(coins × trades)).
+  const strategyExpectancyR = Object.values(coinMap).map(c => {
+    const winRate = c.trades > 0 ? c.wins / c.trades : 0;
+    const lossRate = c.trades > 0 ? c.losses / c.trades : 0;
+    const avgWinR = c.wins > 0 ? c.totalWinR / c.wins : 0;
+    const avgLossR = c.losses > 0 ? c.totalLossR / c.losses : 0;
+    return { coin: c.coin, expectancyR: (winRate * avgWinR) - (lossRate * avgLossR), trades: c.trades };
   });
 
   // MAE/MFE approximation
