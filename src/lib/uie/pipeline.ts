@@ -23,7 +23,7 @@ function classifyActivity(v: string): string | null {
   return null;
 }
 
-export function runImport(sheets: SheetInput[]): ImportResult {
+export function runImport(sheets: SheetInput[], opts?: RunImportOptions): ImportResult {
   const sheet = pickSheet(sheets);
   const st = detectStructure(sheet);
   const m = sheet.matrix;
