@@ -421,7 +421,7 @@ function _computeAnalyticsInternal(trades: Trade[]): TradingStats {
   }
 
   return {
-    totalPnl, winRate, profitFactor, expectancyR, avgWinR, avgLossR, expectancyDollar,
+    totalPnl, totalR, winRate, profitFactor, profitFactorR, expectancyR, avgWinR, avgLossR, expectancyDollar,
     avgWin, avgLoss, bestTrade, worstTrade, bestTradeR, worstTradeR,
     currentStreak, streakType, maxDrawdown: maxDD, equityCurve, coinPerf, directionData,
     orcaScore, edgeHealth, regimeFit, rulesFollowed, maxConsecLosses, rDist,
