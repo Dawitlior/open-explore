@@ -166,6 +166,11 @@ function _computeAnalyticsInternal(trades: Trade[]): TradingStats {
 
   const avgWinR = wins.length > 0 ? wins.reduce((s, t) => s + Math.abs(getEffectiveR(t)), 0) / wins.length : 0;
   const avgLossR = losses.length > 0 ? losses.reduce((s, t) => s + Math.abs(getEffectiveR(t)), 0) / losses.length : 0;
+  // Gross R wins/losses for R-mode profit factor (works on R-only portfolios).
+  const grossWinR = wins.reduce((s, t) => s + Math.abs(getEffectiveR(t)), 0);
+  const grossLossR = losses.reduce((s, t) => s + Math.abs(getEffectiveR(t)), 0);
+  const profitFactorR = grossLossR > 0 ? grossWinR / grossLossR : (grossWinR > 0 ? Infinity : 0);
+  const totalR = trades.reduce((s, t) => s + getEffectiveR(t), 0);
   const expectancyR = computeExpectancyR(trades);
   const expectancyDollar = trades.length > 0 ? totalPnl / trades.length : 0;
 
