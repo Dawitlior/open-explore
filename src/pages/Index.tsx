@@ -104,6 +104,25 @@ const Index = () => {
   const settings = useSettings();
   const { prefs: userPrefs, loaded: userPrefsLoaded } = useUserPreferences(); // warm cache for centralized R-multiple Tier-3 proxy
   const { trades, stats, loading, initialized, addTrade, updateTrade, upsertJournalTrade, removeTrade, resetAll, importTrades, riskAlert, dismissRiskAlert, setManualR } = useTrades();
+  // Active display mode (R-Multiple or MONEY) — used to switch KPI cards,
+  // calendar heatmap, weekly strip, journal P&L column and the Monthly Stats
+  // card between $ and R so R-only portfolios stop showing fake $0.00.
+  const dm = useEffectiveDisplayMode(trades);
+  const isR = dm.isR;
+  // Per-trade headline number: R when in R mode (and the trade is R-eligible), $ otherwise.
+  const tradeHeadline = (tr: Trade): { v: number; unit: 'R' | '$' } => {
+    if (isR && hasStrictR(tr)) return { v: getEffectiveR(tr), unit: 'R' };
+    return { v: tr.pnl, unit: '$' };
+  };
+  const fmtHeadline = (v: number, unit: 'R' | '$', signed = true): string => {
+    const sign = signed && v > 0 ? '+' : '';
+    return unit === 'R' ? `${sign}${v.toFixed(2)}R` : `${sign}$${Math.abs(v).toFixed(2)}${v < 0 ? '' : ''}`.replace('$-', '-$');
+  };
+  // Bucket aggregator (calendar/weekly/day-of-week) — sums R or $ per bucket.
+  const bucketValue = (tr: Trade): number => {
+    if (isR && hasStrictR(tr)) return getEffectiveR(tr);
+    return safeNumber(tr.pnl);
+  };
   const { limits: customRiskLimits } = useRiskLimits();
   const [entered, setEntered] = useState(() => sessionStorage.getItem('orca-entered') === '1');
   const [onboardingDone, setOnboardingDone] = useState(() => !shouldShowOnboarding());
