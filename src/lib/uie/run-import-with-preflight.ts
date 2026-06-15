@@ -15,6 +15,7 @@ import { runImport } from './pipeline';
 import { fileToSheets } from './io';
 import { toLegacyTrade, toEquityPoints, type LegacyTradeDraft } from './adapters/to-journal';
 import { mergeEquityPoints } from './equity-store';
+import { computeFingerprint, loadFingerprint, saveFingerprint } from './fingerprint';
 import type { ImportResult } from './types';
 
 export interface PreflightOpenDetail {
@@ -23,7 +24,10 @@ export interface PreflightOpenDetail {
   result: ImportResult;
   /** Stage 2: re-run the engine with user mapping overrides (columnIndex → field|null). */
   rerun: (overrides: Record<number, string | null>) => Promise<ImportResult>;
-  resolve: (decision: { confirm: boolean; result?: ImportResult }) => void;
+  /** Stage 3: overrides remembered from a previous import of the same file shape. */
+  initialOverrides?: Record<number, string | null>;
+  fromMemory?: boolean;
+  resolve: (decision: { confirm: boolean; result?: ImportResult; overrides?: Record<number, string | null> }) => void;
 }
 
 export interface PreflightOutcome {
@@ -74,6 +78,26 @@ export async function runImportWithPreflight(
     return { ok: false, drafts: [], equityPointsAdded: 0, result: null, reason: e instanceof Error ? e.message : 'engine_failed' };
   }
 
+  // Stage 3: fingerprint lookup — if we've seen this shape before, re-run with the
+  // remembered overrides automatically and show the modal with those choices applied.
+  const fingerprint = computeFingerprint(result.structure.headers, brokerId);
+  const remembered = loadFingerprint(fingerprint);
+  let initialOverrides: Record<number, string | null> | undefined;
+  if (remembered && remembered.overrides && Object.keys(remembered.overrides).length > 0) {
+    try {
+      result = runImport(sheets, { mappingOverrides: remembered.overrides });
+      initialOverrides = remembered.overrides;
+      console.info('[UIE] fingerprint match → re-ran with remembered overrides', {
+        fp: fingerprint,
+        overrides: Object.keys(remembered.overrides).length,
+        savedAt: remembered.savedAt,
+      });
+    } catch (e) {
+      console.warn('[UIE] remembered overrides re-run failed; falling back to auto-mapping', e);
+    }
+  }
+
+
   // Open the modal and await user decision.
   console.info('[UIE] dispatching orca:uie:preflight — awaiting user decision');
   // Signal the caller's loading overlay can step aside so the modal is visible.
@@ -90,8 +114,16 @@ export async function runImportWithPreflight(
     return next;
   };
 
-  const decision = await new Promise<{ confirm: boolean; result?: ImportResult }>((resolve) => {
-    const detail: PreflightOpenDetail = { fileName: file.name, brokerId, result, rerun, resolve };
+  const decision = await new Promise<{ confirm: boolean; result?: ImportResult; overrides?: Record<number, string | null> }>((resolve) => {
+    const detail: PreflightOpenDetail = {
+      fileName: file.name,
+      brokerId,
+      result,
+      rerun,
+      initialOverrides,
+      fromMemory: !!initialOverrides,
+      resolve,
+    };
     if (typeof window !== 'undefined') {
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent<PreflightOpenDetail>('orca:uie:preflight', { detail }));
@@ -100,12 +132,27 @@ export async function runImportWithPreflight(
       resolve({ confirm: false });
     }
   });
-  console.info('[UIE] preflight resolved', { confirm: decision.confirm, hasResult: !!decision.result });
+  console.info('[UIE] preflight resolved', { confirm: decision.confirm, hasResult: !!decision.result, hasOverrides: !!decision.overrides });
   if (decision.result) currentResult = decision.result;
 
   if (!decision.confirm) {
     return { ok: false, drafts: [], equityPointsAdded: 0, result: currentResult, reason: 'user_cancelled' };
   }
+
+  // Stage 3: persist the user's final overrides under this file fingerprint.
+  try {
+    const finalOverrides = decision.overrides || initialOverrides || {};
+    saveFingerprint(fingerprint, {
+      overrides: finalOverrides,
+      savedAt: Date.now(),
+      fileName: file.name,
+      brokerId,
+    });
+    console.info('[UIE] fingerprint saved', { fp: fingerprint, count: Object.keys(finalOverrides).length });
+  } catch (e) {
+    console.warn('[UIE] failed to save fingerprint', e);
+  }
+
 
 
   const finalResult = currentResult;
