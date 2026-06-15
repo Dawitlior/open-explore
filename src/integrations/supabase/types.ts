@@ -344,6 +344,48 @@ export type Database = {
         }
         Relationships: []
       }
+      portfolios: {
+        Row: {
+          color: string | null
+          created_at: string
+          currency: string
+          icon: string | null
+          id: string
+          is_default: boolean
+          name: string
+          sort_order: number
+          starting_balance: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          currency?: string
+          icon?: string | null
+          id?: string
+          is_default?: boolean
+          name: string
+          sort_order?: number
+          starting_balance?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          currency?: string
+          icon?: string | null
+          id?: string
+          is_default?: boolean
+          name?: string
+          sort_order?: number
+          starting_balance?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
