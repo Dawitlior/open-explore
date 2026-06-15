@@ -101,6 +101,11 @@ const COPY = {
     needEmail: 'Enter a valid email to reset your password',
     notReg: 'This email is not registered',
     verified: 'Email verified — you can sign in now',
+    consentPrefix: 'I agree to the',
+    consentTerms: 'Terms of Service',
+    consentAnd: 'and the',
+    consentPrivacy: 'Privacy Policy',
+    consentRequired: 'You must agree to the Terms of Service and Privacy Policy to continue',
   },
 } as const;
 
