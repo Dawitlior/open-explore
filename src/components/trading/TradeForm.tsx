@@ -51,7 +51,7 @@ const detectCategory = (symbol: string): AssetCategory => {
   return 'Crypto';
 };
 
-export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose }: TradeFormProps) => {
+export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onSave, onClose }: TradeFormProps) => {
   const isMobile = useIsMobile();
   const [step, setStep] = useState(0); // 0,1,2
   const [assetCategory, setAssetCategory] = useState<AssetCategory>(() => trade?.coin ? detectCategory(trade.coin) : 'Crypto');
@@ -60,6 +60,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
   const [stopPips, setStopPips] = useState(0);
   const [stopPercent, setStopPercent] = useState(0);
   const [stopDollar, setStopDollar] = useState(0);
+  const [contracts, setContracts] = useState<number>(trade?.positionSize || 1);
 
   const [form, setForm] = useState({
     date: trade?.date || new Date().toISOString().slice(0, 16),
@@ -78,6 +79,26 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
     comments: trade?.comments || '',
   });
   const [errors, setErrors] = useState<string[]>([]);
+  const [overrideLimit, setOverrideLimit] = useState(false);
+
+  // ── Futures tick economics ────────────────────────────────────────
+  const tickInfo = assetCategory === 'Futures' ? TICK_VALUES[form.coin] : undefined;
+  const isFutures = !!tickInfo;
+
+  /** $ value of 1 contract per unit price-move (e.g. MNQ = $0.50 / 0.25pt = $2/pt). */
+  const dollarPerPoint = tickInfo ? tickInfo.value / tickInfo.tick : 0;
+
+  /** Auto-derive $ risk from contracts × stop-distance for futures. */
+  useEffect(() => {
+    if (!isFutures) return;
+    if (!form.entry || !form.stopLoss || !contracts) return;
+    const stopPts = Math.abs(form.entry - form.stopLoss);
+    const dollarRisk = +(contracts * stopPts * dollarPerPoint).toFixed(2);
+    if (Math.abs(dollarRisk - form.risk) > 0.005) {
+      setForm(f => ({ ...f, risk: dollarRisk, riskPct: currentBalance > 0 ? (dollarRisk / currentBalance) * 100 : 0, positionSize: contracts }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFutures, form.entry, form.stopLoss, contracts, dollarPerPoint]);
 
   const STEPS = [
     { title: isRTL ? 'מה סחרת ומתי' : 'What & When', sub: isRTL ? 'בחר את הנכס, הכיוון והזמן' : 'Pick asset, direction and time' },
