@@ -2539,7 +2539,7 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
               {cell.day !== null && (
                 <>
                   <span style={{ fontSize: 8, fontWeight: 700, color: cell.hasTrades ? '#fff' : th.tx3, opacity: cell.hasTrades ? 0.9 : 0.4 }}>{cell.day}</span>
-                  {cell.pnl !== null && <span style={{ fontSize: 6, fontWeight: 800, color: '#fff', opacity: 0.8 }}>{cell.pnl >= 0 ? '+' : ''}{cell.pnl.toFixed(0)}$</span>}
+                  {!isR && cell.pnl !== null && <span style={{ fontSize: 6, fontWeight: 800, color: '#fff', opacity: 0.8 }}>{cell.pnl >= 0 ? '+' : ''}{cell.pnl.toFixed(0)}$</span>}
                 </>
               )}
             </div>
