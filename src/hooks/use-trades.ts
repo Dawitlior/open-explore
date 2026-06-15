@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { Trade } from '@/data/trades';
-import { getAllTrades, saveTrades, deleteTrade as dbDelete, clearAllData, getMaxTradeId } from '@/lib/storage';
+import { getAllTrades, saveTrade, saveTrades, deleteTrade as dbDelete, clearAllData, getMaxTradeId } from '@/lib/storage';
 import { getActivePortfolioIdGlobal } from '@/lib/active-portfolio-store';
 import { computeAnalytics, type TradingStats } from '@/lib/trading-analytics';
 import { sanitizeTrades } from '@/lib/trade-sanitizer';
@@ -128,11 +128,16 @@ export function useTrades() {
       const pid = getActivePortfolioIdGlobal();
       const newTrade: Trade = { ...trade, id, balance: 0, ...(pid ? { __portfolio_id: pid } : {}) } as Trade;
       const updated = recalcBalances([...currentTrades, newTrade]);
-      await saveTrades(updated);
+      // Single-row upsert: appending a new trade only changes the LAST row's
+      // balance — previous trades' balances are unaffected. saving just the
+      // new row is O(1) network instead of O(N) (was upserting all 700 rows
+      // on every add).
+      const newlyAdded = updated[updated.length - 1];
+      await saveTrade(newlyAdded);
       tradesRef.current = updated;
       setTrades(updated);
       checkAndAlertRisk(updated);
-      return updated[updated.length - 1];
+      return newlyAdded;
     });
   }, [enqueueTradeMutation, recalcBalances, checkAndAlertRisk, nextGlobalId]);
 
@@ -147,18 +152,31 @@ export function useTrades() {
 
       const updated = [...currentTrades];
       let saved: Trade;
+      let isNew = false;
+      let pnlChanged = false;
       if (existingIdx >= 0) {
-        saved = { ...updated[existingIdx], ...trade, id: updated[existingIdx].id, comments: cleanComments } as Trade;
+        const prev = updated[existingIdx];
+        pnlChanged = Number(prev.pnl) !== Number(trade.pnl);
+        saved = { ...prev, ...trade, id: prev.id, comments: cleanComments } as Trade;
         updated[existingIdx] = saved;
       } else {
         const id = await nextGlobalId();
         const pid = getActivePortfolioIdGlobal();
         saved = { ...trade, id, balance: 0, comments: cleanComments, ...(pid ? { __portfolio_id: pid } : {}) } as Trade;
         updated.push(saved);
+        isNew = true;
       }
 
       const rebalanced = recalcBalances(updated);
-      await saveTrades(rebalanced);
+      // If this is a brand-new trade appended at the end, OR an in-place edit
+      // that didn't change pnl, downstream balances don't shift → single-row
+      // upsert is safe. Otherwise fall back to bulk to keep DB balances in sync.
+      if (isNew || !pnlChanged) {
+        const row = rebalanced.find(t => t.id === saved.id);
+        if (row) await saveTrade(row);
+      } else {
+        await saveTrades(rebalanced);
+      }
       tradesRef.current = rebalanced;
       setTrades(rebalanced);
       checkAndAlertRisk(rebalanced);
@@ -171,10 +189,22 @@ export function useTrades() {
       const currentTrades = tradesRef.current;
       const idx = currentTrades.findIndex(t => t.id === trade.id);
       if (idx === -1) return;
+      const prevPnl = Number(currentTrades[idx].pnl);
+      const nextPnl = Number(trade.pnl);
+      const pnlChanged = prevPnl !== nextPnl;
       const updated = [...currentTrades];
       updated[idx] = trade;
       const rebalanced = recalcBalances(updated);
-      await saveTrades(rebalanced);
+      // Editing fields that don't change pnl (notes, tags, mood, etc.) is the
+      // common case — no downstream balance shift → single-row upsert.
+      // If pnl changed, every subsequent trade's running balance shifts so we
+      // must still bulk-upsert to keep the DB balance column truthful.
+      if (!pnlChanged) {
+        const row = rebalanced[idx];
+        await saveTrade(row);
+      } else {
+        await saveTrades(rebalanced);
+      }
       tradesRef.current = rebalanced;
       setTrades(rebalanced);
       checkAndAlertRisk(rebalanced);

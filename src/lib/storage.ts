@@ -47,9 +47,32 @@ function reportStorageError(op: string, error: unknown) {
   window.dispatchEvent(new CustomEvent('orca:storage-error', { detail: { op, message } }));
 }
 
+// ─── Module-level UID cache ───
+// auth.getUser() does a round-trip to Supabase on every call. Since every
+// storage operation needs the UID, that's 10+ unnecessary network calls per
+// session. We cache the UID and refresh it via onAuthStateChange (the only
+// way it can change). Cold start: lazily resolve via getSession() (local,
+// no network) on the first call.
+let _cachedUid: string | null = null;
+let _uidInitPromise: Promise<string | null> | null = null;
+
+if (typeof window !== 'undefined') {
+  // Subscribe once — onAuthStateChange fires for SIGNED_IN, SIGNED_OUT,
+  // TOKEN_REFRESHED, USER_UPDATED. Keeps the cached UID accurate.
+  supabase.auth.onAuthStateChange((_evt, session) => {
+    _cachedUid = session?.user?.id ?? null;
+  });
+}
+
 async function currentUserId(): Promise<string | null> {
-  const { data } = await supabase.auth.getUser();
-  return data.user?.id ?? null;
+  if (_cachedUid) return _cachedUid;
+  if (!_uidInitPromise) {
+    _uidInitPromise = supabase.auth.getSession().then(({ data }) => {
+      _cachedUid = data.session?.user?.id ?? null;
+      return _cachedUid;
+    }).catch(() => null);
+  }
+  return _uidInitPromise;
 }
 
 /**
