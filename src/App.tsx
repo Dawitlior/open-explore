@@ -4,7 +4,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { OrcaUXLayer, LiquidSweep } from "@/components/ui-orca";
+import { LiquidSweep } from "@/components/ui-orca";
+// OrcaUXLayer bundles framer-motion + 20 ambient-UX effects that aren't
+// needed for the first paint. Lazy-loaded so it never blocks LCP.
+const OrcaUXLayer = lazy(() => import("@/components/ui-orca/OrcaUXLayer").then(m => ({ default: m.OrcaUXLayer })));
 import { AuthProvider } from "@/hooks/use-auth";
 import { ActivePortfolioProvider } from "@/hooks/use-active-portfolio";
 import { RequireAuth } from "@/components/RequireAuth";
@@ -81,7 +84,7 @@ const App = () => (
             <a href="#main" className="orca-skip-link">דלג לתוכן · Skip to content</a>
             <SourceProtection />
             <StorageErrorListener />
-            <OrcaUXLayer />
+            <Suspense fallback={null}><OrcaUXLayer /></Suspense>
             <LiquidSweep />
             <LegalGate />
             <EconomicAlertBanner />
