@@ -75,6 +75,7 @@ export function DisplayModeProvider({ trades, children }: { trades: Trade[]; chi
     if (locked && m === 'R_MULTIPLE') return; // can't enter R without eligible data
     setDisplayModeState(m);
     try { window.localStorage.setItem(STORAGE_KEY, m); } catch { /* ignore */ }
+    try { window.dispatchEvent(new CustomEvent('orca:displayMode-changed', { detail: m })); } catch { /* noop */ }
   };
 
   const visibleTrades = useMemo(
