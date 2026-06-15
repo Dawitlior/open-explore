@@ -112,30 +112,48 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
     return out;
   }, [trades]);
 
-  /* ── Post-Win overconfidence: risk delta after win streaks
-        Falls back to riskPct when risk ($) is not journaled, so it works for
-        every user regardless of whether they log $ risk or % risk. ── */
+  /* ── Post-Win overconfidence: risk delta after win streaks.
+        Sorts chronologically, derives wins from the active $/R mode, and only
+        compares like-for-like risk units (risk%↔risk% or $risk↔$risk). ── */
   const postWin = useMemo(() => {
     let streak = 0;
-    const samples: { i: number; deltaPct: number; streak: number }[] = [];
-    const riskOf = (tr: Trade) => {
-      const r = Number(tr.risk) || 0;
-      if (r > 0) return r;
-      const rp = Number(tr.riskPct) || 0;
-      return rp > 0 ? rp : 0;
+    const samples: { i: number; deltaPct: number; streak: number; from: number; to: number; unit: '$' | '%' }[] = [];
+    const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : Number.isFinite(Number(v)) ? Number(v) : 0);
+    const timeOf = (tr: Trade) => {
+      const ms = new Date(String(tr.date || '').replace(' ', 'T')).getTime();
+      return Number.isFinite(ms) ? ms : 0;
     };
-    for (let i = 1; i < trades.length; i++) {
-      const prev = trades[i - 1];
-      if (prev.winLoss === 'Win') streak++; else streak = 0;
+    const outcomeOf = (tr: Trade): Trade['winLoss'] => {
+      const v = isRMode ? getEffectiveR(tr, { strict: true }) : tr.pnl;
+      if (v !== null && Number.isFinite(v) && Math.abs(v) > 0.000001) return v > 0 ? 'Win' : 'Loss';
+      return tr.winLoss;
+    };
+    const riskPair = (prev: Trade, cur: Trade) => {
+      const prevPct = num(prev.riskPct), curPct = num(cur.riskPct);
+      if (prevPct > 0 && curPct > 0) return { prevRisk: prevPct, curRisk: curPct, unit: '%' as const };
+      const prevRisk = num(prev.risk), curRisk = num(cur.risk);
+      if (prevRisk > 0 && curRisk > 0) return { prevRisk, curRisk, unit: '$' as const };
+      return null;
+    };
+    const chronological = [...trades].sort((a, b) => timeOf(a) - timeOf(b) || a.id - b.id);
+    for (let i = 0; i < chronological.length - 1; i++) {
+      const prev = chronological[i];
+      if (outcomeOf(prev) === 'Win') streak++; else streak = 0;
       if (streak >= 1) {
-        const cur = trades[i];
-        const prevR = riskOf(prev);
-        const curR = riskOf(cur);
-        if (prevR > 0) samples.push({ i: i + 1, streak, deltaPct: +(((curR - prevR) / prevR) * 100).toFixed(1) });
+        const cur = chronological[i + 1];
+        const pair = riskPair(prev, cur);
+        if (pair) samples.push({
+          i: samples.length + 1,
+          streak,
+          from: +pair.prevRisk.toFixed(2),
+          to: +pair.curRisk.toFixed(2),
+          unit: pair.unit,
+          deltaPct: +(((pair.curRisk - pair.prevRisk) / pair.prevRisk) * 100).toFixed(1),
+        });
       }
     }
     return samples;
-  }, [trades]);
+  }, [trades, isRMode]);
 
   /* ── Rolling Profit Factor (window 30) ── */
   const rollingPF = useMemo(() => {
@@ -320,20 +338,27 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
           </div>
           {postWin.length === 0 ? (
             <div style={{ fontSize: 12, color: T.text.muted, textAlign: 'center', padding: 60 }}>
-              {t('עדיין אין רצפי ניצחון של 2+ במדגם הזה.','No 2+ winning streaks in this sample yet.')}
+              {t('עדיין אין עסקאות אחרי ניצחון עם נתוני סיכון תקינים במדגם הזה.','No post-win trades with valid risk data in this sample yet.')}
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={postWin}>
+              <ComposedChart data={postWin}>
                 <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
                 <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
-                <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} unit="%" />
-                <Tooltip contentStyle={tt} />
+                <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} unit="%" domain={['dataMin - 5', 'dataMax + 5']} />
+                <Tooltip
+                  contentStyle={tt}
+                  formatter={(v: number, name: string, item: { payload?: typeof postWin[number] }) => [
+                    `${Number(v).toFixed(1)}% (${item.payload?.from}${item.payload?.unit} → ${item.payload?.to}${item.payload?.unit})`,
+                    name === 'deltaPct' ? t('שינוי סיכון', 'Risk change') : name,
+                  ]}
+                />
                 <ReferenceLine y={0} stroke={T.text.muted} />
-                <Bar dataKey="deltaPct" radius={[4, 4, 0, 0]}>
+                <Bar dataKey="deltaPct" radius={[4, 4, 0, 0]} minPointSize={3}>
                   {postWin.map((d, i) => <Cell key={i} fill={d.deltaPct > 15 ? T.accent.red : d.deltaPct > 0 ? T.accent.orange : T.accent.green} />)}
                 </Bar>
-              </BarChart>
+                <Line type="monotone" dataKey="deltaPct" stroke={T.accent.orange} strokeWidth={1.8} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+              </ComposedChart>
             </ResponsiveContainer>
           )}
         </GlassCard>
