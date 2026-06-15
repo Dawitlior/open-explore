@@ -2638,7 +2638,7 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
                     <span>{yr.wins}W/{yr.losses}L/{yr.be}BE</span>
                     <span style={{ color: yr.wr >= 40 ? '#00FFA3' : '#FF4D4D' }}>{yr.wr.toFixed(0)}%</span>
                     <span>EV {yr.ev >= 0 ? '+' : ''}{yr.ev.toFixed(2)}R</span>
-                    <span>{yr.pnl >= 0 ? '+' : ''}{yr.pnl.toFixed(0)}$</span>
+                    {!isR && <span>{yr.pnl >= 0 ? '+' : ''}{yr.pnl.toFixed(0)}$</span>}
                   </div>
                 </div>
               );
