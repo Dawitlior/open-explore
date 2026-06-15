@@ -190,22 +190,24 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
     });
   }, [trades, sortKey]);
 
-  // 4. Day × Hour matrix (cells)
+  // 4. Day × Hour matrix (cells) — accumulates both $ and R so it respects displayMode
   const dhMatrix = useMemo(() => {
-    const grid: { day: number; hour: number; pnl: number; n: number }[] = [];
-    const m = new Map<string, { pnl: number; n: number }>();
+    const grid: { day: number; hour: number; pnl: number; r: number; n: number }[] = [];
+    const m = new Map<string, { pnl: number; r: number; n: number }>();
     trades.forEach(t => {
       try {
         const d = new Date(t.date.replace(' ', 'T'));
         const k = `${d.getDay()}-${d.getHours()}`;
-        const cur = m.get(k) || { pnl: 0, n: 0 };
-        cur.pnl += t.pnl; cur.n++;
+        const cur = m.get(k) || { pnl: 0, r: 0, n: 0 };
+        cur.pnl += Number(t.pnl) || 0;
+        cur.r += Number(getEffectiveR(t)) || 0;
+        cur.n++;
         m.set(k, cur);
       } catch { /* skip */ }
     });
     m.forEach((v, k) => {
       const [day, hour] = k.split('-').map(Number);
-      grid.push({ day, hour, pnl: v.pnl, n: v.n });
+      grid.push({ day, hour, pnl: v.pnl, r: v.r, n: v.n });
     });
     return grid;
   }, [trades]);
@@ -412,7 +414,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
     }
   };
 
-  const maxAbsHeat = Math.max(1, ...dhMatrix.map(c => Math.abs(c.pnl)));
+  const maxAbsHeat = Math.max(isMoney ? 1 : 0.01, ...dhMatrix.map(c => Math.abs(isMoney ? c.pnl : c.r)));
   const maxAbsMonth = Math.max(1, ...monthHeat.map(c => Math.abs(isMoney ? c.pnl : c.r)));
 
   /* ─────────── EMPTY ─────────── */
@@ -594,11 +596,15 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
                   <td style={{ padding: 2, color: T.text.muted, fontWeight: 600, fontSize: 10, textAlign: 'center' }}>{DOW[day]}</td>
                   {Array.from({ length: 24 }, (_, h) => {
                     const cell = dhMatrix.find(c => c.day === day && c.hour === h);
-                    const bg = cell ? heatColor(cell.pnl, maxAbsHeat) : T.bg.tertiary;
+                    const value = cell ? (isMoney ? cell.pnl : cell.r) : 0;
+                    const bg = cell ? heatColor(value, maxAbsHeat) : T.bg.tertiary;
+                    const valueStr = isMoney
+                      ? `${value >= 0 ? '+' : ''}$${value.toFixed(0)}`
+                      : `${value >= 0 ? '+' : ''}${value.toFixed(2)}R`;
                     return (
                       <td
                         key={h}
-                        title={cell ? `${DOW_FULL[day]} ${String(h).padStart(2, '0')}:00 — ${cell.n} ${t('עסקאות','trades')}, ${cell.pnl >= 0 ? '+' : ''}$${cell.pnl.toFixed(0)}` : ''}
+                        title={cell ? `${DOW_FULL[day]} ${String(h).padStart(2, '0')}:00 — ${cell.n} ${t('עסקאות','trades')}, ${valueStr}` : ''}
                         style={{ width: 22, height: 22, background: bg, borderRadius: 3, border: cell ? `1px solid ${T.border.subtle}` : 'none' }}
                       />
                     );

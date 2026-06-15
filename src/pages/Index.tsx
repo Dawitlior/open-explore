@@ -1684,6 +1684,21 @@ const Index = () => {
               </div>
               <button onClick={() => setSbOpen(false)} style={{ background: 'none', border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.sm, color: T.text.muted, cursor: 'pointer', padding: '4px 8px', fontSize: 16 }}>✕</button>
             </div>
+            {/* Mobile-only: portfolio switcher + $/R toggle (desktop shows these in the header) */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '4px 2px 8px', borderBottom: `1px solid ${T.border.subtle}`, marginBottom: 4 }}>
+              <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '0 6px' }}>
+                {isRTL ? 'תיק פעיל' : 'Active Portfolio'}
+              </div>
+              <div style={{ padding: '0 4px' }}>
+                <PortfolioSwitcher isRTL={isRTL} />
+              </div>
+              <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '6px 6px 0' }}>
+                {isRTL ? 'תצוגת תוחלת' : 'Expectancy Display'}
+              </div>
+              <div style={{ padding: '0 4px' }}>
+                <DisplayModeToggle T={T} isRTL={isRTL} />
+              </div>
+            </div>
             <ModeSwitch T={T} isRTL={isRTL} />
             {/* Nav items */}
             {nav.map(item => {
