@@ -119,14 +119,14 @@ export default function PeriodDashboard({ trades, months, T, isRTL, titleHE, tit
 
       {/* Stat strip — every metric shown as R AND $ (auto-summed from journal pnl) */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
-        <DualStat l={L.netR}    r={fmtR(a.netR)}    d={fmtUSD(a.netUSD)}    tone={a.netR >= 0 ? win : loss}        card={card} muted={muted} fg={fg} />
+        <DualStat l={L.netR}    r={fmtR(a.netR)}    d={hasMoney ? fmtUSD(a.netUSD) : ''}    tone={a.netR >= 0 ? win : loss}        card={card} muted={muted} fg={fg} />
         <Stat     l={L.trades}  v={String(a.totalTrades)}                                                          card={card} muted={muted} fg={fg} />
         <Stat     l={L.winRate} v={`${Math.round(a.winRate * 100)}%`}                                              card={card} muted={muted} fg={fg} />
         <Stat     l={L.pf}      v={pfStr(a.profitFactor)}                                                          card={card} muted={muted} fg={fg} />
-        <DualStat l={L.exp}     r={fmtR(a.expectancyR)} d={fmtUSD(a.expectancyUSD)} tone={a.expectancyR >= 0 ? win : loss} card={card} muted={muted} fg={fg} />
-        <DualStat l={L.avgWin}  r={fmtR(a.avgWinR)}  d={fmtUSD(a.avgWinUSD)}  tone={win}                          card={card} muted={muted} fg={fg} />
-        <DualStat l={L.avgLoss} r={fmtR(a.avgLossR)} d={fmtUSD(a.avgLossUSD)} tone={loss}                         card={card} muted={muted} fg={fg} />
-        <DualStat l={L.dd}      r={`-${a.maxDrawdownR.toFixed(2)}R`} d={fmtUSD(-Math.abs(a.maxDrawdownUSD))} tone={loss} card={card} muted={muted} fg={fg} />
+        <DualStat l={L.exp}     r={fmtR(a.expectancyR)} d={hasMoney ? fmtUSD(a.expectancyUSD) : ''} tone={a.expectancyR >= 0 ? win : loss} card={card} muted={muted} fg={fg} />
+        <DualStat l={L.avgWin}  r={fmtR(a.avgWinR)}  d={hasMoney ? fmtUSD(a.avgWinUSD) : ''}  tone={win}                          card={card} muted={muted} fg={fg} />
+        <DualStat l={L.avgLoss} r={fmtR(a.avgLossR)} d={hasMoney ? fmtUSD(a.avgLossUSD) : ''} tone={loss}                         card={card} muted={muted} fg={fg} />
+        <DualStat l={L.dd}      r={`-${a.maxDrawdownR.toFixed(2)}R`} d={hasMoney ? fmtUSD(-Math.abs(a.maxDrawdownUSD)) : ''} tone={loss} card={card} muted={muted} fg={fg} />
       </div>
 
       {/* Trader DNA + Monthly PF + Monthly WR — currency-agnostic, kept */}
