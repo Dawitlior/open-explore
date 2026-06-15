@@ -3751,7 +3751,7 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
             {(day.trades || []).length > 0 && (
               <div style={{ display: 'flex', gap: 20, marginTop: 12, padding: '12px 16px', background: th.cardBg, borderRadius: 10, border: `1px solid ${th.cardBr}` }}>
                 {[
-                  { l: 'P&L', v: `${dp >= 0 ? '+' : ''}${dp.toFixed(2)}$`, c: dp >= 0 ? '#00FFA3' : '#FF4D4D' },
+                  { l: isR ? 'NET R' : 'P&L', v: isR ? `${dr >= 0 ? '+' : ''}${dr.toFixed(2)}R` : `${dp >= 0 ? '+' : ''}${dp.toFixed(2)}$`, c: (isR ? dr : dp) >= 0 ? '#00FFA3' : '#FF4D4D' },
                   { l: 'TRADES', v: String(day.trades.length), c: th.tx2 },
                   { l: 'WIN %', v: `${((dw / Math.max(day.trades.length, 1)) * 100).toFixed(0)}%`, c: '#FFC857' },
                 ].map(s => (
