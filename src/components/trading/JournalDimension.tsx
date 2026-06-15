@@ -1207,6 +1207,7 @@ const RiskCommandCenter = ({ risk, days, dir, th }: { risk: JRiskStatus; days: J
 // ═══════════════════════════════════════════════════════════════
 const KnowledgePanel = ({ type, days, dir, th, onClose, onOpenDay }: { type: 'morning' | 'eod'; days: JournalDay[]; dir: string; th: typeof THEMES.dark; onClose: () => void; onOpenDay: (id: string) => void }) => {
   const isMorning = type === 'morning';
+  const isR = useJournalIsR();
   const accent = isMorning ? '#5AA9FF' : '#b794f6';
 
   const purposes = isMorning
