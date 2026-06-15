@@ -38,6 +38,28 @@ export function runImport(sheets: SheetInput[], opts?: RunImportOptions): Import
   let mapping = assign(profiles, ranked);
   mapping = resolve(mapping, profiles);
 
+  // STAGE 2: user mapping overrides (forced by the Preflight editor).
+  if (opts?.mappingOverrides) {
+    const ov = opts.mappingOverrides;
+    for (const fm of mapping) {
+      if (!Object.prototype.hasOwnProperty.call(ov, fm.columnIndex)) continue;
+      const forced = ov[fm.columnIndex];
+      if (forced) {
+        fm.field = forced;
+        fm.destination = byCanonical[forced]?.destination;
+        fm.status = 'auto';
+        fm.score = 100;
+        fm.evidence = [`USER override → ${forced}`, ...fm.evidence];
+      } else {
+        fm.field = null;
+        fm.destination = undefined;
+        fm.status = 'unmapped';
+        fm.score = 0;
+        fm.evidence = ['USER ignored', ...fm.evidence];
+      }
+    }
+  }
+
   const archetype = classifyArchetype(mapping, profiles);
   const unitsMode = detectUnitsMode(mapping);
 
