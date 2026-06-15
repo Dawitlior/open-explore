@@ -114,8 +114,16 @@ export async function runImportWithPreflight(
     return next;
   };
 
-  const decision = await new Promise<{ confirm: boolean; result?: ImportResult }>((resolve) => {
-    const detail: PreflightOpenDetail = { fileName: file.name, brokerId, result, rerun, resolve };
+  const decision = await new Promise<{ confirm: boolean; result?: ImportResult; overrides?: Record<number, string | null> }>((resolve) => {
+    const detail: PreflightOpenDetail = {
+      fileName: file.name,
+      brokerId,
+      result,
+      rerun,
+      initialOverrides,
+      fromMemory: !!initialOverrides,
+      resolve,
+    };
     if (typeof window !== 'undefined') {
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent<PreflightOpenDetail>('orca:uie:preflight', { detail }));
@@ -124,12 +132,27 @@ export async function runImportWithPreflight(
       resolve({ confirm: false });
     }
   });
-  console.info('[UIE] preflight resolved', { confirm: decision.confirm, hasResult: !!decision.result });
+  console.info('[UIE] preflight resolved', { confirm: decision.confirm, hasResult: !!decision.result, hasOverrides: !!decision.overrides });
   if (decision.result) currentResult = decision.result;
 
   if (!decision.confirm) {
     return { ok: false, drafts: [], equityPointsAdded: 0, result: currentResult, reason: 'user_cancelled' };
   }
+
+  // Stage 3: persist the user's final overrides under this file fingerprint.
+  try {
+    const finalOverrides = decision.overrides || initialOverrides || {};
+    saveFingerprint(fingerprint, {
+      overrides: finalOverrides,
+      savedAt: Date.now(),
+      fileName: file.name,
+      brokerId,
+    });
+    console.info('[UIE] fingerprint saved', { fp: fingerprint, count: Object.keys(finalOverrides).length });
+  } catch (e) {
+    console.warn('[UIE] failed to save fingerprint', e);
+  }
+
 
 
   const finalResult = currentResult;
