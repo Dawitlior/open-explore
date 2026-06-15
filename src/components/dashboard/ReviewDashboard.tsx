@@ -185,7 +185,7 @@ export const ReviewDashboard = ({
                 </div>
               )}
               {isAdvancedTier && isChartVisible('coinPerformance') && (() => {
-                const coinKey = (c: any) => (isMoney ? c.pnl : (c.totalR ?? c.avgR * c.trades ?? 0));
+                const coinKey = (c: any) => (isMoney ? c.pnl : (typeof c.totalR === 'number' ? c.totalR : (Number(c.avgR) || 0) * (Number(c.trades) || 0)));
                 const sorted = [...(stats.coinPerf || [])].sort((a:any,b:any)=> coinKey(b) - coinKey(a));
                 const winner = sorted[0];
                 const loser = sorted[sorted.length - 1];
