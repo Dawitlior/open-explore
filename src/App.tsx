@@ -77,6 +77,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
+            <ActivePortfolioProvider>
             <a href="#main" className="orca-skip-link">דלג לתוכן · Skip to content</a>
             <SourceProtection />
             <StorageErrorListener />
@@ -115,6 +116,7 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </ActivePortfolioProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
