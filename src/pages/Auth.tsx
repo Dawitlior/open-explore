@@ -486,7 +486,7 @@ export default function AuthPage() {
             </div>
           )}
 
-          <button type="submit" disabled={busy}
+          <button type="submit" disabled={busy || !consent} title={!consent ? c.consentRequired : undefined}
             style={{
               marginTop: 8, padding: '14px 16px', borderRadius: 12, border: `1px solid ${GOLD_DEEP}`,
               background: `linear-gradient(135deg, ${GOLD_BRIGHT} 0%, ${GOLD} 50%, ${GOLD_DEEP} 100%)`,
