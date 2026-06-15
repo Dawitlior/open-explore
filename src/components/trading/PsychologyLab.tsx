@@ -128,12 +128,22 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
       if (v !== null && Number.isFinite(v) && Math.abs(v) > 0.000001) return v > 0 ? 'Win' : 'Loss';
       return tr.winLoss;
     };
-    const riskPair = (prev: Trade, cur: Trade) => {
-      const prevPct = num(prev.riskPct), curPct = num(cur.riskPct);
-      if (prevPct > 0 && curPct > 0) return { prevRisk: prevPct, curRisk: curPct, unit: '%' as const };
-      const prevRisk = num(prev.risk), curRisk = num(cur.risk);
-      if (prevRisk > 0 && curRisk > 0) return { prevRisk, curRisk, unit: '$' as const };
+    // Pick whichever risk value the trade has (prefer risk% as the most
+    // unit-stable signal; fall back to $ risk). Mixed units across two
+    // trades is acceptable here — deltaPct is a *ratio* so the unit
+    // cancels out as long as each side is internally consistent.
+    const riskOf = (tr: Trade): { value: number; unit: '%' | '$' } | null => {
+      const pct = num(tr.riskPct);
+      if (pct > 0) return { value: pct, unit: '%' };
+      const dollars = num(tr.risk);
+      if (dollars > 0) return { value: dollars, unit: '$' };
       return null;
+    };
+    const riskPair = (prev: Trade, cur: Trade) => {
+      const p = riskOf(prev), c = riskOf(cur);
+      if (!p || !c) return null;
+      // Display the cur unit (what the next trade actually used).
+      return { prevRisk: p.value, curRisk: c.value, unit: c.unit };
     };
     const chronological = [...trades].sort((a, b) => timeOf(a) - timeOf(b) || a.id - b.id);
     for (let i = 0; i < chronological.length - 1; i++) {
