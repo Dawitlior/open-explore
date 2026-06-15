@@ -26,6 +26,7 @@ import { SettingsHub } from '@/components/trading/SettingsHub';
 import { DesktopOnlyGate } from '@/components/trading/DesktopOnlyGate';
 import { NavAvatar } from '@/components/trading/NavAvatar';
 import { PortfolioSwitcher } from '@/components/trading/PortfolioSwitcher';
+import { useActivePortfolio } from '@/hooks/use-active-portfolio';
 import { DeploymentToast } from '@/components/DeploymentToast';
 
 import { RiskOnboardingWizard, shouldShowRiskOnboarding } from '@/components/trading/RiskOnboardingWizard';
@@ -105,6 +106,7 @@ const Index = () => {
   const settings = useSettings();
   const { prefs: userPrefs, loaded: userPrefsLoaded } = useUserPreferences(); // warm cache for centralized R-multiple Tier-3 proxy
   const { trades, stats, loading, initialized, addTrade, updateTrade, upsertJournalTrade, removeTrade, resetAll, importTrades, riskAlert, dismissRiskAlert, setManualR } = useTrades();
+  const { activePortfolio, isActivePortfolioLocked } = useActivePortfolio();
   // Active display mode (R-Multiple or MONEY) — used to switch KPI cards,
   // calendar heatmap, weekly strip, journal P&L column and the Monthly Stats
   // card between $ and R so R-only portfolios stop showing fake $0.00.
@@ -400,6 +402,15 @@ const Index = () => {
     const input = document.createElement('input'); input.type = 'file'; input.accept = '.xlsx,.xls,.csv,.txt,.tsv,.json';
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]; if (!file) return;
+      // Stage 6 (Multi-Portfolio): hard-stop if active portfolio is locked or missing.
+      if (!activePortfolio) {
+        toast.error(isRTL ? 'אין תיק פעיל' : 'No active portfolio', { description: isRTL ? 'בחר תיק לפני ייבוא נתונים.' : 'Pick a portfolio before importing data.' });
+        return;
+      }
+      if (isActivePortfolioLocked) {
+        toast.error(isRTL ? 'התיק נעול לקריאה־בלבד' : 'Portfolio is read-only', { description: isRTL ? 'שדרג את המסלול או החלף לתיק פעיל אחר.' : 'Upgrade your plan or switch to an unlocked portfolio.' });
+        return;
+      }
       setImportFileName(file.name);
       setImportedCount(0);
       setImportPhase('reading');
@@ -424,9 +435,28 @@ const Index = () => {
           // The Preflight modal blocks on user confirmation. Hide the loading
           // overlay so it isn't covering the modal (both at z-index 9999).
           setImportLoading(false);
-          const outcome = await runImportWithPreflight(file, { brokerId: 'orca' });
+          const outcome = await runImportWithPreflight(file, {
+            brokerId: 'orca',
+            targetPortfolio: activePortfolio
+              ? { id: activePortfolio.id, name: activePortfolio.name, color: activePortfolio.color, currency: activePortfolio.currency }
+              : null,
+          });
           if (!outcome.ok) {
             if (outcome.reason === 'user_cancelled') {
+              return;
+            }
+            if (outcome.reason === 'portfolio_locked') {
+              toast.error(
+                isRTL ? 'התיק נעול לקריאה־בלבד' : 'Portfolio is read-only',
+                { description: isRTL ? 'שדרג את המסלול או החלף לתיק פעיל אחר.' : 'Upgrade your plan or switch to an unlocked portfolio.' },
+              );
+              return;
+            }
+            if (outcome.reason === 'no_active_portfolio') {
+              toast.error(
+                isRTL ? 'אין תיק פעיל' : 'No active portfolio',
+                { description: isRTL ? 'בחר תיק לפני ייבוא נתונים.' : 'Pick a portfolio before importing data.' },
+              );
               return;
             }
             toast.error(isRTL ? 'ייבוא נכשל' : 'Import failed', { description: outcome.reason || 'unknown' });
@@ -453,7 +483,7 @@ const Index = () => {
       finally { setImportLoading(false); }
     };
     input.click();
-  }, [importTrades, isRTL]);
+  }, [importTrades, isRTL, activePortfolio, isActivePortfolioLocked]);
   const [exiting, setExiting] = useState(false);
   const handleLogout = useCallback(() => {
     setExiting(true);
