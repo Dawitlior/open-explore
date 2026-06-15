@@ -144,7 +144,9 @@ export function UltimateAnalyticsDeck({ T, trades, onExplainClick, registryAllow
                 ρ = {lag.rho.toFixed(3)}
               </span>
             </div>
-            {lag.pairs.length >= 5 ? (
+            {moneyBlocked ? (
+              <EmptyNote T={T}>{t('אין נתוני $ — מצב R-only', 'No $ data — R-only portfolio')}</EmptyNote>
+            ) : lag.pairs.length >= 5 ? (
               <ResponsiveContainer width="100%" height={220}>
                 <ScatterChart>
                   <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
