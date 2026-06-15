@@ -61,6 +61,11 @@ const COPY = {
     needEmail: 'הכנס/י אימייל תקין כדי לאפס סיסמה',
     notReg: 'כתובת אימייל זו לא רשומה במערכת',
     verified: 'האימייל אושר — אפשר להתחבר עכשיו',
+    consentPrefix: 'אני מאשר/ת את',
+    consentTerms: 'תנאי השימוש',
+    consentAnd: 'ואת',
+    consentPrivacy: 'מדיניות הפרטיות',
+    consentRequired: 'יש לאשר את תנאי השימוש ומדיניות הפרטיות כדי להמשיך',
   },
   en: {
     brand: 'OrcaInvestment',
