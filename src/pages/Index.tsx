@@ -106,7 +106,7 @@ const Index = () => {
   const settings = useSettings();
   const { prefs: userPrefs, loaded: userPrefsLoaded } = useUserPreferences(); // warm cache for centralized R-multiple Tier-3 proxy
   const { trades, stats, loading, initialized, addTrade, updateTrade, upsertJournalTrade, removeTrade, resetAll, importTrades, riskAlert, dismissRiskAlert, setManualR } = useTrades();
-  const { activePortfolio, isActivePortfolioLocked } = useActivePortfolio();
+  const { activePortfolio, activePortfolioId, isActivePortfolioLocked, loading: portfoliosLoading, portfolios } = useActivePortfolio();
   // Active display mode (R-Multiple or MONEY) — used to switch KPI cards,
   // calendar heatmap, weekly strip, journal P&L column and the Monthly Stats
   // card between $ and R so R-only portfolios stop showing fake $0.00.
@@ -282,7 +282,7 @@ const Index = () => {
       }
     });
     return m;
-  }, [calMonth, calYear, trades]);
+  }, [calMonth, calYear, trades, isR]);
   const calDays = useMemo(() => getCalDays(calYear, calMonth), [calYear, calMonth]);
   const weekStats = useMemo(() => {
     const w: { week: number; pnl: number; trades: number; days: number }[] = [];
@@ -543,7 +543,7 @@ const Index = () => {
       } catch { /* noop */ }
     })();
     return () => { cancelled = true; };
-  }, [page, reviewReminderTick]);
+  }, [page]); // intentionally NOT depending on reviewReminderTick — the tick only re-evaluates `showWeeklyReminder` via local date math; refetching weekly_review.archive/recaps every 5 minutes is wasteful network noise.
   const showWeeklyReminder = useMemo(() => {
     void reviewReminderTick;
     const now = new Date();
@@ -580,7 +580,13 @@ const Index = () => {
     return <EntryGate onEnter={() => setEntered(true)} lang={settings.lang} />;
   }
 
-  if (loading) {
+  // Keep the loader visible until BOTH the trade list and the portfolio
+  // resolution have finished. Without this we briefly paint an empty
+  // dashboard during the race between useTrades's first fetch (which returns
+  // [] when activePortfolioId is still null) and the ActivePortfolioProvider
+  // assigning an id → reload event. The user reported this flash explicitly.
+  const stillBootstrapping = loading || !initialized || portfoliosLoading || (!activePortfolioId && portfolios.length > 0);
+  if (stillBootstrapping) {
     return (
       <div style={{
         position: 'fixed', inset: 0,
