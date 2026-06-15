@@ -178,20 +178,38 @@ export function useTrades() {
       const sanitized = sanitizeTrades(newTrades);
       const existing = tradesRef.current;
 
-      // Build a fingerprint of existing trades so we can dedupe safely:
-      // an imported row that matches an existing one (date+coin+entry+exit+pnl)
-      // is skipped instead of duplicated.
+      // Idempotency layer 1 (strong): per-broker external_id.
+      // If a new trade carries `__provenance.external_id` AND that id already
+      // exists in the journal, it's the SAME trade re-imported — skip it,
+      // never duplicate. This works even when the user edited the cell values
+      // (date format / pnl rounding) between imports.
+      const existingExtIds = new Set(
+        existing
+          .map((t) => (t as Trade & { __external_id?: string | null }).__external_id)
+          .filter((x): x is string => !!x),
+      );
+
+      // Idempotency layer 2 (legacy fallback): fingerprint by date+coin+entry+exit+pnl.
+      // Used only when the incoming row has no external_id (e.g. manual rows).
       const fp = (t: Trade) =>
         [String(t.date || ''), String(t.coin || '').toUpperCase(), String(t.entry ?? ''), String(t.exit ?? ''), String(t.pnl ?? '')].join('|');
-      const seen = new Set(existing.map(fp));
+      const seenFp = new Set(existing.map(fp));
+      const seenExt = new Set<string>();
 
       let nextId = existing.length === 0 ? 1 : Math.max(...existing.map(t => t.id || 0)) + 1;
       const additions: Trade[] = [];
       for (const raw of sanitized) {
-        const key = fp(raw as Trade);
-        if (seen.has(key)) continue;
-        seen.add(key);
-        additions.push({ ...(raw as Trade), id: nextId++, balance: 0 });
+        const incoming = raw as Trade & { __provenance?: { external_id?: string } };
+        const ext = incoming.__provenance?.external_id;
+        if (ext) {
+          if (existingExtIds.has(ext) || seenExt.has(ext)) continue;
+          seenExt.add(ext);
+        } else {
+          const key = fp(incoming);
+          if (seenFp.has(key)) continue;
+          seenFp.add(key);
+        }
+        additions.push({ ...(incoming as Trade), id: nextId++, balance: 0 });
       }
 
       if (additions.length === 0) {

@@ -31,7 +31,7 @@ export async function getAllTrades(): Promise<Trade[]> {
   for (let i = 0; i < 100; i++) {
     const { data, error } = await supabase
       .from('trades')
-      .select('trade_id, data, manual_r_multiple')
+      .select('trade_id, data, manual_r_multiple, external_id')
       .eq('user_id', uid)
       .order('trade_id', { ascending: true })
       .range(from, from + PAGE - 1);
@@ -42,10 +42,12 @@ export async function getAllTrades(): Promise<Trade[]> {
       // Merge the column-level manual override into the trade object so the
       // centralized R engine (getR / getEffectiveR) sees Tier-1 immediately.
       const manual = r.manual_r_multiple as number | null | undefined;
+      const ext = (r as { external_id?: string | null }).external_id ?? null;
       out.push({
         ...base,
         id: r.trade_id,
         ...(manual !== null && manual !== undefined ? { manual_r_multiple: manual, manualR: manual } : {}),
+        ...(ext ? { __external_id: ext } : {}),
       } as Trade);
     }
     if (rows.length < PAGE) break;
