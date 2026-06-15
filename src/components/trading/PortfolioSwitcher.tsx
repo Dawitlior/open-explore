@@ -30,6 +30,10 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
     deletePortfolio,
     setDefault,
     loading,
+    tier,
+    tierMax,
+    isPortfolioLocked,
+    canCreate,
   } = useActivePortfolio();
 
   const [open, setOpen] = useState(false);
