@@ -43,29 +43,54 @@ export async function runImportWithPreflight(
   const brokerId = opts.brokerId || 'import';
   const accountLabel = opts.accountLabel ?? null;
 
+  console.info('[UIE] runImportWithPreflight: start', { file: file.name, size: file.size, brokerId });
+
   let sheets;
   try {
+    const t0 = performance.now();
     sheets = await fileToSheets(file);
+    console.info('[UIE] fileToSheets: done', { sheets: sheets.length, ms: Math.round(performance.now() - t0), shapes: sheets.map((s) => ({ name: s.name, rows: s.matrix.length, cols: s.matrix[0]?.length || 0 })) });
   } catch (e) {
+    console.error('[UIE] fileToSheets: failed', e);
     return { ok: false, drafts: [], equityPointsAdded: 0, result: null, reason: e instanceof Error ? e.message : 'file_read_failed' };
   }
 
   let result: ImportResult;
   try {
+    const t1 = performance.now();
     result = runImport(sheets);
+    console.info('[UIE] runImport: done', {
+      ms: Math.round(performance.now() - t1),
+      trades: result.trades.length,
+      equityEvents: result.equityEvents.length,
+      readiness: result.gap?.readiness,
+      archetype: result.archetype,
+      sheet: result.sheetName,
+    });
   } catch (e) {
+    console.error('[UIE] runImport: failed', e);
     return { ok: false, drafts: [], equityPointsAdded: 0, result: null, reason: e instanceof Error ? e.message : 'engine_failed' };
   }
 
   // Open the modal and await user decision.
+  console.info('[UIE] dispatching orca:uie:preflight — awaiting user decision');
+  // Signal the caller's loading overlay can step aside so the modal is visible.
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('orca:uie:preflight-will-open'));
+  }
   const decision = await new Promise<{ confirm: boolean }>((resolve) => {
     const detail: PreflightOpenDetail = { fileName: file.name, brokerId, result, resolve };
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent<PreflightOpenDetail>('orca:uie:preflight', { detail }));
+      // Defer one tick so listeners that react to 'will-open' can render first.
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent<PreflightOpenDetail>('orca:uie:preflight', { detail }));
+      }, 0);
     } else {
       resolve({ confirm: false });
     }
   });
+  console.info('[UIE] preflight resolved', decision);
+
 
   if (!decision.confirm) {
     return { ok: false, drafts: [], equityPointsAdded: 0, result, reason: 'user_cancelled' };
