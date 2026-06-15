@@ -311,8 +311,9 @@ function _computeAnalyticsInternal(trades: Trade[]): TradingStats {
     };
   });
 
-  // Rolling expectancy (window of 10)
+  // Rolling expectancy + Sharpe (same 10-trade window, one pass)
   const rollingExpectancyR: RollingMetric[] = [];
+  const rollingSharpe: { tradeId: number; sharpe: number }[] = [];
   const windowSize = Math.min(10, trades.length);
   for (let i = windowSize - 1; i < trades.length; i++) {
     const window = trades.slice(i - windowSize + 1, i + 1);
@@ -327,6 +328,7 @@ function _computeAnalyticsInternal(trades: Trade[]): TradingStats {
       winRate: (wWins.length / window.length) * 100,
       sharpe: std > 0 ? mean / std : 0,
     });
+    rollingSharpe.push({ tradeId: trades[i].id, sharpe: std > 0 ? mean / std : 0 });
   }
 
   // Strategy expectancy — derived directly from coinMap (O(coins)) instead
@@ -382,17 +384,6 @@ function _computeAnalyticsInternal(trades: Trade[]): TradingStats {
   // Kelly criterion
   const payoffRatio = avgLossR > 0 ? avgWinR / avgLossR : 0;
   const kellyOptimal = payoffRatio > 0 ? Math.max(0, Math.min(100, (wr - ((1 - wr) / payoffRatio)) * 100)) : 0;
-
-  // Rolling Sharpe
-  const rollingSharpe: { tradeId: number; sharpe: number }[] = [];
-  for (let i = windowSize - 1; i < trades.length; i++) {
-    const window = trades.slice(i - windowSize + 1, i + 1);
-    const returns = window.map(t => getEffectiveR(t));
-    const mean = returns.reduce((s, r) => s + r, 0) / returns.length;
-    const variance = returns.reduce((s, r) => s + (r - mean) ** 2, 0) / returns.length;
-    const std = Math.sqrt(variance);
-    rollingSharpe.push({ tradeId: trades[i].id, sharpe: std > 0 ? mean / std : 0 });
-  }
 
   // Volatility-adjusted expectancy
   const allReturns = trades.map(t => getEffectiveR(t));
