@@ -129,7 +129,7 @@ export const AdaptiveQuickStats = ({
     { l: `${labels.avgLoss} (R)`, v: `-${stats.avgLossR.toFixed(2)}R`, c: T.accent.red },
     { l: labels.bestTrade, v: `+${stats.bestTradeR.toFixed(2)}R`, c: T.accent.cyan },
     { l: labels.worstTrade, v: `${stats.worstTradeR.toFixed(2)}R`, c: T.accent.red },
-    { l: labels.profitFactor, v: isFinite(stats.profitFactor) ? `${stats.profitFactor.toFixed(2)}x` : '∞', c: T.accent.blue },
+    { l: labels.profitFactor, v: isFinite(stats.profitFactorR) ? `${stats.profitFactorR.toFixed(2)}x` : '∞', c: T.accent.blue },
     { l: labels.currentStreak, v: streakDisplay, c: streakColor },
   ];
 
