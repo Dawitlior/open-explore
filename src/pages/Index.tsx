@@ -60,6 +60,8 @@ import { useUserPreferences } from '@/hooks/use-user-preferences';
 import { assessRisk } from '@/lib/risk-engine';
 import { generateInsights, generateSummary } from '@/lib/ai-engine';
 import { exportToXlsx, importFromXlsx } from '@/lib/xlsx-engine';
+import { isUIEEnabled } from '@/lib/uie/flag';
+import { runImportWithPreflight } from '@/lib/uie/run-import-with-preflight';
 import { getDayRiskColor, checkRiskLimits, DEFAULT_RISK_LIMITS } from '@/lib/risk-limits';
 import { useRiskLimits } from '@/hooks/use-risk-limits';
 import { scopedStorage } from '@/lib/scoped-storage';
@@ -396,7 +398,31 @@ const Index = () => {
           await new Promise(r => setTimeout(r, 350));
           setImportPhase('saving');
           await importTrades(importedTrades);
+        } else if (isUIEEnabled()) {
+          // ── UIE path (Stage 1: read-only Preflight) ──────────────────────
+          setImportPhase('parsing');
+          console.log('[UIE Import] Starting:', file.name, 'size:', file.size);
+          const outcome = await runImportWithPreflight(file, { brokerId: 'orca' });
+          if (!outcome.ok) {
+            if (outcome.reason === 'user_cancelled') {
+              setImportPhase('done');
+              setImportLoading(false);
+              return;
+            }
+            toast.error(isRTL ? 'ייבוא נכשל' : 'Import failed', { description: outcome.reason || 'unknown' });
+            setImportPhase('done');
+            return;
+          }
+          setImportedCount(outcome.drafts.length);
+          setImportPhase('validating');
+          await new Promise(r => setTimeout(r, 250));
+          setImportPhase('saving');
+          // useTrades.importTrades runs sanitizeTrades, which fills the legacy fields
+          // (day, winLoss, returnR, …) from the LegacyTradeDraft we hand it.
+          await importTrades(outcome.drafts as unknown as Parameters<typeof importTrades>[0]);
+          console.log('[UIE Import] Saved', outcome.drafts.length, 'trades; equity points added:', outcome.equityPointsAdded);
         } else {
+          // Legacy fallback (kill-switch via localStorage.uie_enabled='0')
           setImportPhase('parsing');
           console.log('[XLSX Import] Starting import of file:', file.name, 'size:', file.size);
           const result = await importFromXlsx(file);
