@@ -155,6 +155,10 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
   const wk = useWeekAggregates(trades);
   const { draft, update, hardReset } = useWeekDraft(wk.weekKey);
   const { isUSD } = useReviewUnit();
+  // R-only portfolio guard — when no trade carries real $ data, suppress
+  // misleading "0$" in USD-mode columns / dual-stats.
+  const hasMoney = useMemo(() => trades.some(t => Number(t.pnl) !== 0 && Number.isFinite(Number(t.pnl))), [trades]);
+  const showUSD = isUSD && hasMoney;
   const risk = useRiskPrefs();
   const alreadyClosed = useMemo(
     () => state.archive.some(w => w.weekKey === wk.weekKey),
@@ -309,13 +313,13 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, marginBottom: 14 }}>
           <Stat label={L.rr}      value={rr.rr ? rr.rr.toFixed(2) : '0.00'}         card={cardSubtle} sl={statLabel} sv={statValue} color={fg} />
-          <DualStat label={L.winR}    r={fmtR(rr.avgWin)}   d={fmtUSD(wk.avgWinUSD)}  isUSD={isUSD}
+          <DualStat label={L.winR}    r={fmtR(rr.avgWin)}   d={fmtUSD(wk.avgWinUSD)}  isUSD={showUSD}
                     card={cardSubtle} sl={statLabel} sv={statValue} color={win} muted={muted} />
-          <DualStat label={L.avgR}    r={fmtR(wk.avgR)}     d={fmtUSD(wk.avgUSD)}     isUSD={isUSD}
+          <DualStat label={L.avgR}    r={fmtR(wk.avgR)}     d={fmtUSD(wk.avgUSD)}     isUSD={showUSD}
                     card={cardSubtle} sl={statLabel} sv={statValue} color={wk.avgR >= 0 ? win : loss} muted={muted} />
           <Stat label={L.winRate} value={`${Math.round(wk.winRate * 100)}%`}        card={cardSubtle} sl={statLabel} sv={statValue} color={wk.winRate >= 0.5 ? win : loss} />
           <Stat label={L.tradesK} value={String(n)}                                  card={cardSubtle} sl={statLabel} sv={statValue} color={fg} />
-          <DualStat label={L.netR}    r={fmtR(wk.netR)}     d={fmtUSD(wk.netUSD)}     isUSD={isUSD}
+          <DualStat label={L.netR}    r={fmtR(wk.netR)}     d={fmtUSD(wk.netUSD)}     isUSD={showUSD}
                     card={cardSubtle} sl={statLabel} sv={statValue} color={wk.netR >= 0 ? win : loss} muted={muted} />
         </div>
 
@@ -337,7 +341,7 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
                   <Th>{isRTL ? 'נכס' : 'Asset'}</Th>
                   <Th>{isRTL ? 'כיוון' : 'Side'}</Th>
                   <Th align="right">R</Th>
-                  <Th align="right">$ P&amp;L</Th>
+                  {hasMoney && <Th align="right">$ P&amp;L</Th>}
                   <Th>{isRTL ? 'תוצאה' : 'Result'}</Th>
                 </tr>
               </thead>
@@ -351,7 +355,7 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
                       <Td>{t.coin}</Td>
                       <Td style={{ color: t.direction === 'Long' ? win : loss }}>{t.direction}</Td>
                       <Td align="right" style={{ color: r >= 0 ? win : loss, fontWeight: 700 }}>{fmtR(r)}</Td>
-                      <Td align="right" style={{ color: usd >= 0 ? win : loss, fontWeight: 700 }}>{fmtUSD(usd)}</Td>
+                      {hasMoney && <Td align="right" style={{ color: usd >= 0 ? win : loss, fontWeight: 700 }}>{fmtUSD(usd)}</Td>}
                       <Td style={{ color: t.winLoss === 'Win' ? win : t.winLoss === 'Loss' ? loss : muted }}>{t.winLoss}</Td>
                     </tr>
                   );

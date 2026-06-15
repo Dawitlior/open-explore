@@ -24,7 +24,11 @@ const DAY_NAMES_HE = ['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'];
 
 export default function MonthlyDashboard({ T, isRTL, trades, monthKey }: Props) {
   const P = getPalette(T);
-  const { unit, isUSD } = useReviewUnit();
+  const { unit: unitRaw, isUSD: isUSDRaw } = useReviewUnit();
+  const hasMoney = useMemo(() => trades.some(t => Number(t.pnl) !== 0 && Number.isFinite(Number(t.pnl))), [trades]);
+  // Force R when the portfolio has no real money data; prevents "0$" charts.
+  const isUSD = isUSDRaw && hasMoney;
+  const unit = isUSD ? unitRaw : 'R';
 
   const monthTrades = useMemo(() =>
     trades.filter(t => {

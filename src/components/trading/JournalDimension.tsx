@@ -6,6 +6,34 @@ import { playSystemOpen, playMorningLock, playEODLock, playRiskAlert } from '@/l
 import { MORNING_VARIATIONS, EOD_VARIATIONS } from '@/lib/journal-demo-data';
 import { getR, sumR, formatR } from '@/lib/r-multiple';
 
+// ─── Display-mode awareness ────────────────────────────────────
+// Lightweight hook so any sub-component can hide $ amounts when the
+// user is in R-Multiple mode. Mirrors the key used by display-mode.tsx.
+const JDM_KEY = 'orca:displayMode';
+function useJournalIsR(): boolean {
+  const [isR, setIsR] = useState<boolean>(() => {
+    try { return typeof window !== 'undefined' && window.localStorage.getItem(JDM_KEY) === 'R_MULTIPLE'; }
+    catch { return false; }
+  });
+  useEffect(() => {
+    const onChange = (e: Event) => {
+      const ce = e as CustomEvent<string>;
+      if (ce.detail === 'R_MULTIPLE' || ce.detail === 'MONEY') setIsR(ce.detail === 'R_MULTIPLE');
+    };
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === JDM_KEY) setIsR(e.newValue === 'R_MULTIPLE');
+    };
+    window.addEventListener('orca:displayMode-changed', onChange);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener('orca:displayMode-changed', onChange);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, []);
+  return isR;
+}
+
+
 // ═══════════════════════════════════════════════════════════════
 // CINEMATIC ENTRY SCREEN
 // ═══════════════════════════════════════════════════════════════
@@ -1179,6 +1207,7 @@ const RiskCommandCenter = ({ risk, days, dir, th }: { risk: JRiskStatus; days: J
 // ═══════════════════════════════════════════════════════════════
 const KnowledgePanel = ({ type, days, dir, th, onClose, onOpenDay }: { type: 'morning' | 'eod'; days: JournalDay[]; dir: string; th: typeof THEMES.dark; onClose: () => void; onOpenDay: (id: string) => void }) => {
   const isMorning = type === 'morning';
+  const isR = useJournalIsR();
   const accent = isMorning ? '#5AA9FF' : '#b794f6';
 
   const purposes = isMorning
@@ -1290,7 +1319,7 @@ const KnowledgePanel = ({ type, days, dir, th, onClose, onOpenDay }: { type: 'mo
                       <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 700, color: th.tx }}>{fmtShort(d.date, dir === 'rtl' ? 'he-IL' : 'en-US')}</span>
                       <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, fontWeight: 700, color: tagC, background: `${tagC}12`, padding: '2px 8px', borderRadius: 8 }}>{tag}</span>
                     </div>
-                    <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 800, color: dp >= 0 ? '#00FFA3' : '#FF4D4D' }}>{dp >= 0 ? '+' : ''}{dp.toFixed(0)}$</span>
+                    {(() => { const dr = (d.trades || []).reduce((s: number, tr: any) => { try { return s + getR(tr); } catch { return s; } }, 0); const v = isR ? dr : dp; const sfx = isR ? 'R' : '$'; const txt = isR ? dr.toFixed(2) : dp.toFixed(0); return (<span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 800, color: v >= 0 ? '#00FFA3' : '#FF4D4D' }}>{v >= 0 ? '+' : ''}{txt}{sfx}</span>); })()}
                   </div>
                 );
               })}
@@ -1663,6 +1692,8 @@ const MarketSentimentGauge = ({ value, dir, th, onChangeValue, disabled }: { val
 // ═══════════════════════════════════════════════════════════════
 const TCard = ({ trade, idx, onChange, onDel, f, dir, disabled, th }: any) => {
   const p = parseFloat(trade.pnl) || 0;
+  const isR = useJournalIsR();
+  const rVal = (() => { try { return getR(trade as any); } catch { return 0; } })();
   const sc = trade.side === 'LONG' ? '#00FFA3' : trade.side === 'SHORT' ? '#FF4D4D' : '#5AA9FF';
   return (
     <div style={{
@@ -1675,10 +1706,13 @@ const TCard = ({ trade, idx, onChange, onDel, f, dir, disabled, th }: any) => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, direction: dir }}>
         <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, color: th.tx3, letterSpacing: 1.2 }}>{f.tradeN} #{idx + 1}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {p !== 0 && <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 14, fontWeight: 800, color: p > 0 ? '#00FFA3' : '#FF4D4D', textShadow: `0 0 12px ${p > 0 ? 'rgba(0,255,163,0.3)' : 'rgba(255,77,77,0.3)'}` }}>{p > 0 ? '+' : ''}{p.toFixed(2)}$</span>}
+          {isR
+            ? (rVal !== 0 && <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 14, fontWeight: 800, color: rVal > 0 ? '#00FFA3' : '#FF4D4D', textShadow: `0 0 12px ${rVal > 0 ? 'rgba(0,255,163,0.3)' : 'rgba(255,77,77,0.3)'}` }}>{rVal > 0 ? '+' : ''}{rVal.toFixed(2)}R</span>)
+            : (p !== 0 && <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 14, fontWeight: 800, color: p > 0 ? '#00FFA3' : '#FF4D4D', textShadow: `0 0 12px ${p > 0 ? 'rgba(0,255,163,0.3)' : 'rgba(255,77,77,0.3)'}` }}>{p > 0 ? '+' : ''}{p.toFixed(2)}$</span>)}
           {!disabled && <button onClick={onDel} style={{ background: 'rgba(255,77,77,.1)', border: '1px solid rgba(255,77,77,.2)', color: '#FF4D4D', padding: '5px 10px', fontSize: 11, borderRadius: 6, cursor: 'pointer', fontWeight: 600, transition: 'all .15s' }}>✕ {f.del}</button>}
         </div>
       </div>
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginBottom: 10 }}>
         {[['ins','pair','BTC/USDT'],['en','entry','95000'],['ex','exit','97000'],['sz','size','0.1'],['pnl','pnl','+200'],['rr','rr','1:3']].map(([lKey, k, ph]: any) => (
           <div key={k}><Lbl c={f[lKey]} dir={dir} th={th} /><IN val={trade[k] || ''} set={(v: string) => onChange?.({ ...trade, [k]: v })} ph={ph} dir={dir} disabled={disabled} th={th} /></div>
@@ -1855,6 +1889,7 @@ const KPI = ({ label, value, color, sub, th, large }: { label: string; value: st
 
 const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th: typeof THEMES.dark }) => {
   const isRTL = dir === 'rtl';
+  const isR = useJournalIsR();
   const completeDays = useMemo(() => days.filter(d => d.eodSaved && d.trades?.length > 0).sort((a, b) => a.date.localeCompare(b.date)), [days]);
   const allTrades = useMemo(() => completeDays.flatMap(d => (d.trades || []).map(t => ({ ...t, dayDate: d.date, dayScore: d.dayScore, emotionScore: d.emotionScore, plan: d.plan, disciplineConfirmed: d.disciplineConfirmed }))), [completeDays]);
   const [heatMonth, setHeatMonth] = useState(() => { const n = new Date(); return { y: n.getFullYear(), m: n.getMonth() }; });
@@ -2504,7 +2539,7 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
               {cell.day !== null && (
                 <>
                   <span style={{ fontSize: 8, fontWeight: 700, color: cell.hasTrades ? '#fff' : th.tx3, opacity: cell.hasTrades ? 0.9 : 0.4 }}>{cell.day}</span>
-                  {cell.pnl !== null && <span style={{ fontSize: 6, fontWeight: 800, color: '#fff', opacity: 0.8 }}>{cell.pnl >= 0 ? '+' : ''}{cell.pnl.toFixed(0)}$</span>}
+                  {!isR && cell.pnl !== null && <span style={{ fontSize: 6, fontWeight: 800, color: '#fff', opacity: 0.8 }}>{cell.pnl >= 0 ? '+' : ''}{cell.pnl.toFixed(0)}$</span>}
                 </>
               )}
             </div>
@@ -2576,7 +2611,7 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
                     <span style={{ fontSize: 11, fontWeight: 800, color: th.tx }}>{m.label}</span>
                     <div style={{ textAlign: 'right' }}>
                       <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 14, fontWeight: 800, color: c }}>{m.totalR >= 0 ? '+' : ''}{m.totalR.toFixed(1)}R</span>
-                      <span style={{ fontSize: 9, color: c, marginLeft: 6 }}>{m.pnl >= 0 ? '+' : ''}{m.pnl.toFixed(0)}$</span>
+                      {!isR && <span style={{ fontSize: 9, color: c, marginLeft: 6 }}>{m.pnl >= 0 ? '+' : ''}{m.pnl.toFixed(0)}$</span>}
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 8, fontSize: 8, color: th.tx3, flexWrap: 'wrap' as const }}>
@@ -2604,7 +2639,7 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
                     <span>{yr.wins}W/{yr.losses}L/{yr.be}BE</span>
                     <span style={{ color: yr.wr >= 40 ? '#00FFA3' : '#FF4D4D' }}>{yr.wr.toFixed(0)}%</span>
                     <span>EV {yr.ev >= 0 ? '+' : ''}{yr.ev.toFixed(2)}R</span>
-                    <span>{yr.pnl >= 0 ? '+' : ''}{yr.pnl.toFixed(0)}$</span>
+                    {!isR && <span>{yr.pnl >= 0 ? '+' : ''}{yr.pnl.toFixed(0)}$</span>}
                   </div>
                 </div>
               );
@@ -2623,7 +2658,7 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
                 return (
                   <div key={wd.dow} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', background: `${c}04`, borderRadius: 6 }}>
                     <span style={{ fontSize: 10, fontWeight: 700, color: th.tx2, minWidth: 40 }}>{wd.name}</span>
-                    <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, fontWeight: 800, color: c }}>{wd.pnl >= 0 ? '+' : ''}{wd.pnl.toFixed(0)}$</span>
+                    <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, fontWeight: 800, color: c }}>{isR ? `${(wd.r || 0) >= 0 ? '+' : ''}${(wd.r || 0).toFixed(1)}R` : `${wd.pnl >= 0 ? '+' : ''}${wd.pnl.toFixed(0)}$`}</span>
                     <span style={{ fontSize: 8, color: th.tx3 }}>{wd.count}d</span>
                   </div>
                 );
@@ -2664,6 +2699,7 @@ const DailyIntelligencePanel = ({ day, dir, th, onClose, onOpenJournal }: {
   const [tradePage, setTradePage] = useState(0);
   const TRADES_PER_PAGE = 50;
   const isRTL = dir === 'rtl';
+  const isR = useJournalIsR();
   const trades = Array.isArray(day?.trades) ? day.trades : [];
   // Memoise heavy aggregates so re-renders on dense days (1k+ trades) stay snappy.
   const { pnl, wins, totalR, winRate, negR } = useMemo(() => {
@@ -2876,8 +2912,8 @@ const DailyIntelligencePanel = ({ day, dir, th, onClose, onOpenJournal }: {
                           <span style={{ fontSize: 14, fontWeight: 800, color: '#5AA9FF', fontFamily: "'JetBrains Mono',monospace" }}>{tr.pair || '—'}</span>
                           <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 6, fontWeight: 700, background: tr.side === 'Long' ? 'rgba(0,255,163,0.1)' : 'rgba(255,77,77,0.1)', color: tr.side === 'Long' ? '#00FFA3' : '#FF4D4D' }}>{tr.side || '—'}</span>
                         </div>
-                        <span style={{ fontSize: 16, fontWeight: 800, color: isWin ? '#00FFA3' : '#FF4D4D', fontFamily: "'JetBrains Mono',monospace" }}>
-                          {trPnl >= 0 ? '+' : ''}{trPnl.toFixed(2)}$
+                        <span style={{ fontSize: 16, fontWeight: 800, color: (isR ? trR : trPnl) >= 0 ? '#00FFA3' : '#FF4D4D', fontFamily: "'JetBrains Mono',monospace" }}>
+                          {isR ? `${trR >= 0 ? '+' : ''}${trR.toFixed(2)}R` : `${trPnl >= 0 ? '+' : ''}${trPnl.toFixed(2)}$`}
                         </span>
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, fontSize: 10 }}>
@@ -3048,6 +3084,7 @@ const CalendarView = ({ days, dir, th, t, risk, onSelectDay }: { days: JournalDa
   const [month, setMonth] = useState(() => new Date().getMonth());
   const [year, setYear] = useState(() => new Date().getFullYear());
   const [intelDay, setIntelDay] = useState<JournalDay | null>(null);
+  const isR = useJournalIsR();
   const today = new Date();
 
   const firstDay = new Date(year, month, 1).getDay();
@@ -3149,10 +3186,12 @@ const CalendarView = ({ days, dir, th, t, risk, onSelectDay }: { days: JournalDa
           const hasTrades = jDays.some(d => d.trades && d.trades.length > 0);
           const hasMorning = jDays.some(d => d.morningSaved);
           const pnl = jDays.reduce((s, d) => s + sumPnl(d), 0);
+          const rSum = jDays.reduce((s, d) => s + (d.trades || []).reduce((a: number, tr: any) => { try { return a + getR(tr); } catch { return a; } }, 0), 0);
           const negR = sumNegR(jDays.flatMap(d => d.trades || []));
           const dayBreached = negR <= RISK_LIMITS.day;
           const isToday = dayNum === today.getDate() && month === today.getMonth() && year === today.getFullYear();
-          const color = !hasTrades ? 'transparent' : dayBreached ? 'rgba(153,27,27,0.4)' : pnl < 0 ? 'rgba(255,77,77,0.15)' : 'rgba(0,255,163,0.12)';
+          const dispVal = isR ? rSum : pnl;
+          const color = !hasTrades ? 'transparent' : dayBreached ? 'rgba(153,27,27,0.4)' : dispVal < 0 ? 'rgba(255,77,77,0.15)' : 'rgba(0,255,163,0.12)';
           const borderColor = isToday ? '#5AA9FF' : dayBreached ? 'rgba(255,77,77,0.4)' : hasMorning ? th.cardBr : 'transparent';
           const jDay = jDays[0];
 
@@ -3169,8 +3208,8 @@ const CalendarView = ({ days, dir, th, t, risk, onSelectDay }: { days: JournalDa
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; (e.currentTarget as HTMLElement).style.zIndex = '1'; }}>
               <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 13, fontWeight: isToday ? 800 : 600, color: isToday ? '#5AA9FF' : hasTrades ? th.tx : th.tx3 }}>{dayNum}</span>
               {hasTrades && (
-                <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8.5, fontWeight: 700, color: pnl >= 0 ? '#00FFA3' : '#FF4D4D', marginTop: 1 }}>
-                  {pnl >= 0 ? '+' : ''}{pnl.toFixed(0)}$
+                <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8.5, fontWeight: 700, color: dispVal >= 0 ? '#00FFA3' : '#FF4D4D', marginTop: 1 }}>
+                  {isR ? `${rSum >= 0 ? '+' : ''}${rSum.toFixed(1)}R` : `${pnl >= 0 ? '+' : ''}${pnl.toFixed(0)}$`}
                 </span>
               )}
               {dayBreached && <span style={{ position: 'absolute', top: 2, right: 2, fontSize: 8, animation: 'j-pulse 1s ease-in-out infinite' }}>⚠️</span>}
@@ -3452,8 +3491,10 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
 // ═══════════════════════════════════════════════════════════════
 const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, th, risk, onInfoClick, onAddOrcaTrade, onUpdateOrcaTrade, onUpsertJournalTrade }: any) => {
   const f = t.f;
+  const isR = useJournalIsR();
   const U = (k: string) => (v: any) => upd({ [k]: v });
   const dp = sumPnl(day), dw = numWins(day);
+  const dr = (day.trades || []).reduce((s: number, tr: any) => { try { return s + getR(tr); } catch { return s; } }, 0);
   const bridgeTrades = allOrcaTrades || orcaTrades || [];
 
   // Map of Journal-trade-id → Orca-trade-id, kept in a ref so it survives
@@ -3710,7 +3751,7 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
             {(day.trades || []).length > 0 && (
               <div style={{ display: 'flex', gap: 20, marginTop: 12, padding: '12px 16px', background: th.cardBg, borderRadius: 10, border: `1px solid ${th.cardBr}` }}>
                 {[
-                  { l: 'P&L', v: `${dp >= 0 ? '+' : ''}${dp.toFixed(2)}$`, c: dp >= 0 ? '#00FFA3' : '#FF4D4D' },
+                  { l: isR ? 'NET R' : 'P&L', v: isR ? `${dr >= 0 ? '+' : ''}${dr.toFixed(2)}R` : `${dp >= 0 ? '+' : ''}${dp.toFixed(2)}$`, c: (isR ? dr : dp) >= 0 ? '#00FFA3' : '#FF4D4D' },
                   { l: 'TRADES', v: String(day.trades.length), c: th.tx2 },
                   { l: 'WIN %', v: `${((dw / Math.max(day.trades.length, 1)) * 100).toFixed(0)}%`, c: '#FFC857' },
                 ].map(s => (
@@ -3957,6 +3998,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
   // language while inside the journal and on subsequent loads (we used to
   // restore a stale `s.lang` from storage, overriding the platform setting).
   const lang = isRTL ? 'he' : 'en';
+  const isR = useJournalIsR();
   const setLang = (_v: string) => { /* no-op — language is owned by the platform */ };
   const [days, setDays] = useState<JournalDay[]>(() => {
     const d = makeDay(isRTL ? 'he' : 'en'); d.dayNum = '1'; d.weekNum = '1';
@@ -4546,15 +4588,20 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  {(() => { const dp = sumPnl(displayDay); return (
+                  {(() => {
+                    const dp = sumPnl(displayDay);
+                    const dr = (displayDay.trades || []).reduce((s: number, tr: any) => { try { return s + getR(tr); } catch { return s; } }, 0);
+                    const v = isR ? dr : dp;
+                    const txt = isR ? `${v >= 0 ? '+' : ''}${dr.toFixed(2)}R` : `${dp >= 0 ? '+' : ''}${dp.toFixed(0)}$`;
+                    return (
                     <div style={{
                       background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 12, padding: '10px 18px', textAlign: 'center',
                       transition: 'all .3s',
                     }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = `0 0 20px ${dp >= 0 ? 'rgba(0,255,163,0.15)' : 'rgba(255,77,77,0.15)'}`;}}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = `0 0 20px ${v >= 0 ? 'rgba(0,255,163,0.15)' : 'rgba(255,77,77,0.15)'}`;}}
                       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}>
-                      <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 18, fontWeight: 800, color: dp >= 0 ? '#00FFA3' : '#FF4D4D', textShadow: `0 0 15px ${dp >= 0 ? 'rgba(0,255,163,0.3)' : 'rgba(255,77,77,0.3)'}` }}>{dp >= 0 ? '+' : ''}{dp.toFixed(0)}$</div>
-                      <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase' as const, color: th.tx3 }}>SESSION P&L</span>
+                      <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 18, fontWeight: 800, color: v >= 0 ? '#00FFA3' : '#FF4D4D', textShadow: `0 0 15px ${v >= 0 ? 'rgba(0,255,163,0.3)' : 'rgba(255,77,77,0.3)'}` }}>{txt}</div>
+                      <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase' as const, color: th.tx3 }}>SESSION {isR ? 'R' : 'P&L'}</span>
                     </div>
                   ); })()}
                 </div>
@@ -4669,7 +4716,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
                         </div>
                         {/* P&L */}
                         <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 16, fontWeight: 800, color: c, textShadow: `0 0 12px ${c}25` }}>{dp >= 0 ? '+' : ''}{dp.toFixed(0)}$</div>
+                          {!isR && <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 16, fontWeight: 800, color: c, textShadow: `0 0 12px ${c}25` }}>{dp >= 0 ? '+' : ''}{dp.toFixed(0)}$</div>}
                           {day.emotionScore && <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, color: day.emotionScore >= 7 ? '#00FFA3' : day.emotionScore >= 4 ? '#FFC857' : '#FF4D4D', marginTop: 2 }}>😊 {day.emotionScore}/10</div>}
                         </div>
                       </div>

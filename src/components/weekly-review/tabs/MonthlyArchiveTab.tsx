@@ -48,6 +48,7 @@ export default function MonthlyArchiveTab({ T, isRTL, trades, state }: Props) {
   const loss = T?.status?.danger || '#ff3b3b';
 
   const [expanded, setExpanded] = useState<string | null>(null);
+  const hasMoney = useMemo(() => trades.some(t => Number(t.pnl) !== 0 && Number.isFinite(Number(t.pnl))), [trades]);
   const [recapDraft, setRecapDraft] = useState<Record<string, string>>({});
   const [openMonth, setOpenMonth] = useState<string | null>(null);
 
@@ -145,7 +146,7 @@ export default function MonthlyArchiveTab({ T, isRTL, trades, state }: Props) {
                   <th style={{ padding: '8px 10px', fontWeight: 600, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' }}>{isRTL ? 'חודש' : 'Month'}</th>
                   <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 600, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' }}>{L.trades}</th>
                   <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 600, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' }}>{L.netR}</th>
-                  <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 600, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' }}>$ P&amp;L</th>
+                  {hasMoney && <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 600, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' }}>$ P&amp;L</th>}
                   <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 600, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' }}>WR</th>
                   <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 600, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' }}></th>
                 </tr>
@@ -161,13 +162,13 @@ export default function MonthlyArchiveTab({ T, isRTL, trades, state }: Props) {
                         <td style={{ padding: '8px 10px' }}>{m.mk}</td>
                         <td style={{ padding: '8px 10px', textAlign: 'right' }}>{m.trades}</td>
                         <td style={{ padding: '8px 10px', textAlign: 'right', color: m.netR >= 0 ? win : loss, fontWeight: 700 }}>{fmtR(m.netR)}</td>
-                        <td style={{ padding: '8px 10px', textAlign: 'right', color: m.netUSD >= 0 ? win : loss, fontWeight: 700 }}>{fmtUSD(m.netUSD)}</td>
+                        {hasMoney && <td style={{ padding: '8px 10px', textAlign: 'right', color: m.netUSD >= 0 ? win : loss, fontWeight: 700 }}>{fmtUSD(m.netUSD)}</td>}
                         <td style={{ padding: '8px 10px', textAlign: 'right' }}>{Math.round(wr * 100)}%</td>
                         <td style={{ padding: '8px 10px', textAlign: 'right', color: accent, fontWeight: 700 }}>{isOpen ? '▼' : '▶'}</td>
                       </tr>
                       {isOpen && (
                         <tr>
-                          <td colSpan={6} style={{ padding: '16px 4px', background: themeBgs(T).header }}>
+                          <td colSpan={hasMoney ? 6 : 5} style={{ padding: '16px 4px', background: themeBgs(T).header }}>
                             <MonthlyDashboard T={T} isRTL={isRTL} trades={trades} monthKey={m.mk}/>
                           </td>
                         </tr>

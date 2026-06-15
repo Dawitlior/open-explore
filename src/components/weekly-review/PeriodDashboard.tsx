@@ -36,7 +36,9 @@ export default function PeriodDashboard({ trades, months, T, isRTL, titleHE, tit
   const win = T?.status?.success || '#00ff88';
   const loss = T?.status?.danger || '#ff3b3b';
 
-  const { isUSD, unit } = useReviewUnit();
+  const { isUSD: isUSDRaw, unit } = useReviewUnit();
+  const hasMoney = useMemo(() => trades.some(t => Number(t.pnl) !== 0 && Number.isFinite(Number(t.pnl))), [trades]);
+  const isUSD = isUSDRaw && hasMoney;
   const a = useMemo(() => computeAggregates(trades, months), [trades, months]);
 
   const tooltipStyle = {
@@ -117,14 +119,14 @@ export default function PeriodDashboard({ trades, months, T, isRTL, titleHE, tit
 
       {/* Stat strip — every metric shown as R AND $ (auto-summed from journal pnl) */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
-        <DualStat l={L.netR}    r={fmtR(a.netR)}    d={fmtUSD(a.netUSD)}    tone={a.netR >= 0 ? win : loss}        card={card} muted={muted} fg={fg} />
+        <DualStat l={L.netR}    r={fmtR(a.netR)}    d={hasMoney ? fmtUSD(a.netUSD) : ''}    tone={a.netR >= 0 ? win : loss}        card={card} muted={muted} fg={fg} />
         <Stat     l={L.trades}  v={String(a.totalTrades)}                                                          card={card} muted={muted} fg={fg} />
         <Stat     l={L.winRate} v={`${Math.round(a.winRate * 100)}%`}                                              card={card} muted={muted} fg={fg} />
         <Stat     l={L.pf}      v={pfStr(a.profitFactor)}                                                          card={card} muted={muted} fg={fg} />
-        <DualStat l={L.exp}     r={fmtR(a.expectancyR)} d={fmtUSD(a.expectancyUSD)} tone={a.expectancyR >= 0 ? win : loss} card={card} muted={muted} fg={fg} />
-        <DualStat l={L.avgWin}  r={fmtR(a.avgWinR)}  d={fmtUSD(a.avgWinUSD)}  tone={win}                          card={card} muted={muted} fg={fg} />
-        <DualStat l={L.avgLoss} r={fmtR(a.avgLossR)} d={fmtUSD(a.avgLossUSD)} tone={loss}                         card={card} muted={muted} fg={fg} />
-        <DualStat l={L.dd}      r={`-${a.maxDrawdownR.toFixed(2)}R`} d={fmtUSD(-Math.abs(a.maxDrawdownUSD))} tone={loss} card={card} muted={muted} fg={fg} />
+        <DualStat l={L.exp}     r={fmtR(a.expectancyR)} d={hasMoney ? fmtUSD(a.expectancyUSD) : ''} tone={a.expectancyR >= 0 ? win : loss} card={card} muted={muted} fg={fg} />
+        <DualStat l={L.avgWin}  r={fmtR(a.avgWinR)}  d={hasMoney ? fmtUSD(a.avgWinUSD) : ''}  tone={win}                          card={card} muted={muted} fg={fg} />
+        <DualStat l={L.avgLoss} r={fmtR(a.avgLossR)} d={hasMoney ? fmtUSD(a.avgLossUSD) : ''} tone={loss}                         card={card} muted={muted} fg={fg} />
+        <DualStat l={L.dd}      r={`-${a.maxDrawdownR.toFixed(2)}R`} d={hasMoney ? fmtUSD(-Math.abs(a.maxDrawdownUSD)) : ''} tone={loss} card={card} muted={muted} fg={fg} />
       </div>
 
       {/* Trader DNA + Monthly PF + Monthly WR — currency-agnostic, kept */}
@@ -276,7 +278,7 @@ export default function PeriodDashboard({ trades, months, T, isRTL, titleHE, tit
                   <th style={th}>{isRTL ? 'חודש' : 'Month'}</th>
                   <th style={{ ...th, textAlign: 'right' }}>{L.trades}</th>
                   <th style={{ ...th, textAlign: 'right' }}>{L.netR}</th>
-                  <th style={{ ...th, textAlign: 'right' }}>$ P&amp;L</th>
+                  {hasMoney && <th style={{ ...th, textAlign: 'right' }}>$ P&amp;L</th>}
                   <th style={{ ...th, textAlign: 'right' }}>WR</th>
                   <th style={{ ...th, textAlign: 'right' }}>PF</th>
                 </tr>
@@ -287,7 +289,7 @@ export default function PeriodDashboard({ trades, months, T, isRTL, titleHE, tit
                     <td style={td}>{m.monthKey}</td>
                     <td style={{ ...td, textAlign: 'right' }}>{m.trades}</td>
                     <td style={{ ...td, textAlign: 'right', color: m.netR >= 0 ? win : loss, fontWeight: 700 }}>{fmtR(m.netR)}</td>
-                    <td style={{ ...td, textAlign: 'right', color: m.netUSD >= 0 ? win : loss, fontWeight: 700 }}>{fmtUSD(m.netUSD)}</td>
+                    {hasMoney && <td style={{ ...td, textAlign: 'right', color: m.netUSD >= 0 ? win : loss, fontWeight: 700 }}>{fmtUSD(m.netUSD)}</td>}
                     <td style={{ ...td, textAlign: 'right' }}>{Math.round(m.winRate * 100)}%</td>
                     <td style={{ ...td, textAlign: 'right' }}>{pfStr(m.profitFactor)}</td>
                   </tr>
@@ -302,10 +304,10 @@ export default function PeriodDashboard({ trades, months, T, isRTL, titleHE, tit
       {/* Highlights */}
       <ChartCard title={L.highlights} card={card} labelStyle={labelStyle}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
-          <Highlight l={L.best}       v={a.bestWeek  ? `${a.bestWeek.weekKey}  · ${fmtR(a.bestWeek.netR)}  · ${fmtUSD(a.bestWeek.netUSD)}`   : '—'} tone={win}  border={border} fg={fg} muted={muted} />
-          <Highlight l={L.worst}      v={a.worstWeek ? `${a.worstWeek.weekKey} · ${fmtR(a.worstWeek.netR)} · ${fmtUSD(a.worstWeek.netUSD)}`  : '—'} tone={loss} border={border} fg={fg} muted={muted} />
-          <Highlight l={L.bestMonth}  v={a.bestMonth ? `${a.bestMonth.monthKey} · ${fmtR(a.bestMonth.netR)} · ${fmtUSD(a.bestMonth.netUSD)}` : '—'} tone={win}  border={border} fg={fg} muted={muted} />
-          <Highlight l={L.worstMonth} v={a.worstMonth? `${a.worstMonth.monthKey}· ${fmtR(a.worstMonth.netR)}· ${fmtUSD(a.worstMonth.netUSD)}`: '—'} tone={loss} border={border} fg={fg} muted={muted} />
+          <Highlight l={L.best}       v={a.bestWeek  ? `${a.bestWeek.weekKey}  · ${fmtR(a.bestWeek.netR)}${hasMoney  ? `  · ${fmtUSD(a.bestWeek.netUSD)}`  : ''}`   : '—'} tone={win}  border={border} fg={fg} muted={muted} />
+          <Highlight l={L.worst}      v={a.worstWeek ? `${a.worstWeek.weekKey} · ${fmtR(a.worstWeek.netR)}${hasMoney ? ` · ${fmtUSD(a.worstWeek.netUSD)}` : ''}`  : '—'} tone={loss} border={border} fg={fg} muted={muted} />
+          <Highlight l={L.bestMonth}  v={a.bestMonth ? `${a.bestMonth.monthKey} · ${fmtR(a.bestMonth.netR)}${hasMoney ? ` · ${fmtUSD(a.bestMonth.netUSD)}` : ''}` : '—'} tone={win}  border={border} fg={fg} muted={muted} />
+          <Highlight l={L.worstMonth} v={a.worstMonth? `${a.worstMonth.monthKey}· ${fmtR(a.worstMonth.netR)}${hasMoney? `· ${fmtUSD(a.worstMonth.netUSD)}`: ''}`: '—'} tone={loss} border={border} fg={fg} muted={muted} />
 
         </div>
       </ChartCard>
