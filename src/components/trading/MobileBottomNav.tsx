@@ -63,24 +63,31 @@ export const MobileBottomNav = ({
 
   // Mount only on client so createPortal has a target.
   const [mounted, setMounted] = useState(false);
+  // Compensate for iOS PWA standalone visualViewport drift: when the visual
+  // viewport is shorter than the layout viewport (URL bar / keyboard / home
+  // indicator quirks) `bottom: 0` paints below the visible area until the
+  // user scrolls. We track the offset and apply it as a translateY.
+  const [vvOffset, setVvOffset] = useState(0);
   useEffect(() => {
     setMounted(true);
-    // iOS Safari sometimes paints fixed-bottom elements offset from the
-    // visual viewport on initial load — they appear floating slightly above
-    // the real bottom until a scroll/interaction settles them. A few no-op
-    // scrolls + a visualViewport listener force the browser to recompute
-    // the position against the actual visible viewport.
-    const settle = () => {
-      requestAnimationFrame(() => window.scrollTo(window.scrollX, window.scrollY));
-    };
-    settle();
-    const t1 = window.setTimeout(settle, 60);
-    const t2 = window.setTimeout(settle, 350);
     const vv = window.visualViewport;
-    vv?.addEventListener('resize', settle);
+    const recompute = () => {
+      if (!vv) return;
+      // How much of the layout viewport is hidden below the visible area.
+      const hidden = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      setVvOffset(hidden);
+    };
+    recompute();
+    const t1 = window.setTimeout(recompute, 60);
+    const t2 = window.setTimeout(recompute, 350);
+    vv?.addEventListener('resize', recompute);
+    vv?.addEventListener('scroll', recompute);
+    window.addEventListener('orientationchange', recompute);
     return () => {
       clearTimeout(t1); clearTimeout(t2);
-      vv?.removeEventListener('resize', settle);
+      vv?.removeEventListener('resize', recompute);
+      vv?.removeEventListener('scroll', recompute);
+      window.removeEventListener('orientationchange', recompute);
     };
   }, []);
   if (!mounted) return null;
