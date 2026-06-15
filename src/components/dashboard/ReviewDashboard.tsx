@@ -11,7 +11,8 @@ import DashboardAdvancedLab from './DashboardAdvancedLab';
 import { TierGate } from '@/components/billing/TierGate';
 import { BestWorstWindowChart } from './BestWorstWindowChart';
 import { WinsByMonthChart, WinsByQuarterChart, ReturnPerTimeChart } from './SimpleExtraCharts';
-import { useDisplayMode } from '@/lib/display-mode';
+import { useDisplayMode, hasStrictR } from '@/lib/display-mode';
+import { getEffectiveR } from '@/lib/r-multiple';
 
 
 interface ReviewDashboardProps {
