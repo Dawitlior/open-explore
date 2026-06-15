@@ -62,7 +62,7 @@ export const ReviewDashboard = ({
           {isRTL ? 'בריאות מסחר' : 'TRADING HEALTH'}
         </div>
         <div className="dash-kpi-grid">
-          <MetricCard T={T} label={t.netPnl} value={stats.totalPnl} color={stats.totalPnl >= 0 ? T.accent.cyan : T.accent.red} onInfoClick={() => handleExplainClick(t.netPnl, EXPLANATIONS.netPnl)} description={isRTL ? 'סך רווח והפסד מצטבר' : 'Cumulative net profit/loss'} />
+          <MetricCard T={T} label={isMoney ? t.netPnl : (isRTL ? 'תוחלת נטו (R)' : 'Net R')} value={isMoney ? stats.totalPnl : `${stats.totalR >= 0 ? '+' : ''}${(stats.totalR ?? 0).toFixed(2)}R`} color={(isMoney ? stats.totalPnl : (stats.totalR ?? 0)) >= 0 ? T.accent.cyan : T.accent.red} onInfoClick={() => handleExplainClick(t.netPnl, EXPLANATIONS.netPnl)} description={isRTL ? 'סך רווח והפסד מצטבר' : 'Cumulative net profit/loss'} />
           <MetricCard T={T} label={t.winRate} value={stats.winRate} suffix="%" color={T.accent.green} onInfoClick={() => handleExplainClick(t.winRate, EXPLANATIONS.winRate)} description={isRTL ? 'אחוז עסקאות מנצחות' : 'Percent of winning trades'} />
           <AdaptiveExpectancyCard
             T={T}
