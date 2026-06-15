@@ -91,7 +91,7 @@ export interface TradingStats {
 }
 
 const EMPTY_STATS: TradingStats = {
-  totalPnl: 0, winRate: 0, profitFactor: 0, expectancyR: 0, avgWinR: 0, avgLossR: 0,
+  totalPnl: 0, totalR: 0, winRate: 0, profitFactor: 0, profitFactorR: 0, expectancyR: 0, avgWinR: 0, avgLossR: 0,
   expectancyDollar: 0, avgWin: 0, avgLoss: 0, bestTrade: 0, worstTrade: 0, bestTradeR: 0, worstTradeR: 0,
   currentStreak: 0, streakType: '', maxDrawdown: 0,
   equityCurve: [{ trade: 0, balance: 200, pnl: 0 }],
