@@ -1684,16 +1684,33 @@ function CsvDropZone({
   // them onto legacy Trade objects + `__provenance` so `useTrades.importTrades`
   // → `saveTrades` populates the new first-class DB columns automatically.
   const { importTrades } = useTrades();
+  const { activePortfolio, isActivePortfolioLocked } = useActivePortfolio();
   const handleFiles = async (files: FileList | File[]) => {
     const f = files[0];
     if (!f) return;
+    // Stage 6 (Multi-Portfolio): hard-stop if active portfolio is locked or missing.
+    if (!activePortfolio) {
+      toast.error(t('אין תיק פעיל', 'No active portfolio'), { description: t('בחר תיק לפני ייבוא נתונים.', 'Pick a portfolio before importing data.') });
+      return;
+    }
+    if (isActivePortfolioLocked) {
+      toast.error(t('התיק נעול לקריאה־בלבד', 'Portfolio is read-only'), { description: t('שדרג את המסלול או החלף לתיק פעיל אחר.', 'Upgrade your plan or switch to an unlocked portfolio.') });
+      return;
+    }
     setProcessing(true);
     setDoneFile(null);
     try {
       // ── UIE: the SOLE CSV-import path (legacy fallback removed) ───────────
-      const outcome = await runImportWithPreflight(f, { brokerId: broker.id });
+      const outcome = await runImportWithPreflight(f, {
+        brokerId: broker.id,
+        targetPortfolio: { id: activePortfolio.id, name: activePortfolio.name, color: activePortfolio.color, currency: activePortfolio.currency },
+      });
       if (!outcome.ok) {
-        if (outcome.reason && outcome.reason !== 'user_cancelled') {
+        if (outcome.reason === 'portfolio_locked') {
+          toast.error(t('התיק נעול לקריאה־בלבד', 'Portfolio is read-only'));
+        } else if (outcome.reason === 'no_active_portfolio') {
+          toast.error(t('אין תיק פעיל', 'No active portfolio'));
+        } else if (outcome.reason && outcome.reason !== 'user_cancelled') {
           toast.error(t('נכשל בעיבוד הקובץ', 'Failed to process file'), { description: outcome.reason });
         }
         setProcessing(false);
