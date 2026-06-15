@@ -17,6 +17,7 @@ import {
   type PortfolioDraft,
 } from '@/hooks/use-portfolios';
 import { useAuth } from '@/hooks/use-auth';
+import { setActivePortfolioIdGlobal } from '@/lib/active-portfolio-store';
 
 const LS_KEY = 'orca.activePortfolioId';
 
