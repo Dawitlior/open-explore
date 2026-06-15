@@ -60,6 +60,8 @@ import { useUserPreferences } from '@/hooks/use-user-preferences';
 import { assessRisk } from '@/lib/risk-engine';
 import { generateInsights, generateSummary } from '@/lib/ai-engine';
 import { exportToXlsx, importFromXlsx } from '@/lib/xlsx-engine';
+import { isUIEEnabled } from '@/lib/uie/flag';
+import { runImportWithPreflight } from '@/lib/uie/run-import-with-preflight';
 import { getDayRiskColor, checkRiskLimits, DEFAULT_RISK_LIMITS } from '@/lib/risk-limits';
 import { useRiskLimits } from '@/hooks/use-risk-limits';
 import { scopedStorage } from '@/lib/scoped-storage';
