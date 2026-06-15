@@ -386,7 +386,8 @@ const Index = () => {
       throw err;
     }
   }, [resetAll]);
-  const handleExport = useCallback(() => {
+  const handleExport = useCallback(async () => {
+    const { exportToXlsx } = await import('@/lib/xlsx-engine');
     exportToXlsx(trades);
   }, [trades]);
   const handleExportJson = useCallback(() => {
@@ -822,25 +823,27 @@ const Index = () => {
 
     // REVIEW MODE: extracted to mobile-first ReviewDashboard module
     if (opMode === 'review') return (
-      <ReviewDashboard
-        T={T}
-        t={t}
-        isRTL={isRTL}
-        trades={trades}
-        stats={stats}
-        riskData={riskData}
-        radarData={radarData}
-        tt={tt}
-        privacyMode={settings.privacyMode}
-        isAdvancedTier={isAdvancedTier}
-        isUltimateTier={isUltimateTier}
-        isAlpha={isAlpha}
-        advancedOpen={advancedOpen}
-        setAdvancedOpen={setAdvancedOpen}
-        isChartVisible={isChartVisible}
-        handleHideChart={handleHideChart}
-        handleExplainClick={handleExplainClick}
-      />
+      <Suspense fallback={<LazyShell />}>
+        <ReviewDashboard
+          T={T}
+          t={t}
+          isRTL={isRTL}
+          trades={trades}
+          stats={stats}
+          riskData={riskData}
+          radarData={radarData}
+          tt={tt}
+          privacyMode={settings.privacyMode}
+          isAdvancedTier={isAdvancedTier}
+          isUltimateTier={isUltimateTier}
+          isAlpha={isAlpha}
+          advancedOpen={advancedOpen}
+          setAdvancedOpen={setAdvancedOpen}
+          isChartVisible={isChartVisible}
+          handleHideChart={handleHideChart}
+          handleExplainClick={handleExplainClick}
+        />
+      </Suspense>
     );
 
 
