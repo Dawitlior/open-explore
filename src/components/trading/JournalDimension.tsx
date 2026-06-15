@@ -1319,7 +1319,7 @@ const KnowledgePanel = ({ type, days, dir, th, onClose, onOpenDay }: { type: 'mo
                       <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 700, color: th.tx }}>{fmtShort(d.date, dir === 'rtl' ? 'he-IL' : 'en-US')}</span>
                       <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, fontWeight: 700, color: tagC, background: `${tagC}12`, padding: '2px 8px', borderRadius: 8 }}>{tag}</span>
                     </div>
-                    <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 800, color: dp >= 0 ? '#00FFA3' : '#FF4D4D' }}>{dp >= 0 ? '+' : ''}{dp.toFixed(0)}$</span>
+                    {(() => { const dr = (d.trades || []).reduce((s: number, tr: any) => { try { return s + getR(tr); } catch { return s; } }, 0); const v = isR ? dr : dp; const sfx = isR ? 'R' : '$'; const txt = isR ? dr.toFixed(2) : dp.toFixed(0); return (<span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 800, color: v >= 0 ? '#00FFA3' : '#FF4D4D' }}>{v >= 0 ? '+' : ''}{txt}{sfx}</span>); })()}
                   </div>
                 );
               })}
