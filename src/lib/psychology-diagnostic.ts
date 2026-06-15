@@ -100,7 +100,12 @@ export function diagnose(trades: Trade[], opts: DiagOpts = {}): DeepDiagnosis {
 
   const grossWin = wins.reduce((s, tr) => s + Math.max(0, tr.pnl), 0);
   const grossLoss = Math.abs(losses.reduce((s, tr) => s + Math.min(0, tr.pnl), 0));
-  const profitFactor = grossLoss > 0 ? grossWin / grossLoss : grossWin > 0 ? 99 : 0;
+  // R-based gross for portfolios with no $ data (R-only mode).
+  const grossWinR = wins.reduce((s, tr) => s + Math.max(0, getEffectiveR(tr)), 0);
+  const grossLossR = Math.abs(losses.reduce((s, tr) => s + Math.min(0, getEffectiveR(tr)), 0));
+  const profitFactor = isMoney
+    ? (grossLoss > 0 ? grossWin / grossLoss : grossWin > 0 ? 99 : 0)
+    : (grossLossR > 0 ? grossWinR / grossLossR : grossWinR > 0 ? 99 : 0);
 
   const risks = trades.map(tr => Math.abs(tr.risk));
   const avgRisk = risks.reduce((a, b) => a + b, 0) / Math.max(risks.length, 1);

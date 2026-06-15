@@ -13,6 +13,7 @@ import { deriveFullPalette, deriveFromCustomTheme, CUSTOM_THEME_DEFAULT } from '
 import type { ThemeId, Lang } from '@/hooks/use-settings';
 import { useDashboardConfig, WIDGET_LABELS, evalCustomKPI, type CustomKPI } from '@/hooks/use-dashboard-config';
 import type { TradingStats } from '@/lib/trading-analytics';
+import { useDisplayMode } from '@/lib/display-mode';
 import { useRiskLimits } from '@/hooks/use-risk-limits';
 import { DEFAULT_RISK_LIMITS } from '@/lib/risk-limits';
 import { useUIPrefs } from '@/hooks/use-ui-prefs';
@@ -183,12 +184,21 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
   const winRate = stats.winRate || 0;
   const wins = Math.round((winRate / 100) * totalTrades);
   const losses = Math.max(0, totalTrades - wins);
+  const { displayMode } = useDisplayMode();
+  const isR = displayMode === 'R_MULTIPLE';
+  // In R-only mode, swap $ stat keys to their R counterparts so the preview matches what users actually see on the dashboard.
   const ctx: Record<string, number> = {
     totalTrades, wins, losses, breakEven: 0, winRate,
-    totalPnl: stats.totalPnl || 0, avgWin: stats.avgWin || 0, avgLoss: stats.avgLoss || 0,
-    expectancy: stats.expectancyDollar || 0, profitFactor: stats.profitFactor || 0,
-    maxDrawdown: stats.maxDrawdown || 0, totalR: (stats.expectancyR || 0) * totalTrades,
-    avgR: stats.expectancyR || 0, bestTrade: stats.bestTrade || 0, worstTrade: stats.worstTrade || 0,
+    totalPnl: isR ? (stats.totalR || 0) : (stats.totalPnl || 0),
+    avgWin: isR ? (stats.avgWinR || 0) : (stats.avgWin || 0),
+    avgLoss: isR ? (stats.avgLossR || 0) : (stats.avgLoss || 0),
+    expectancy: isR ? (stats.expectancyR || 0) : (stats.expectancyDollar || 0),
+    profitFactor: isR ? (stats.profitFactorR || 0) : (stats.profitFactor || 0),
+    maxDrawdown: stats.maxDrawdown || 0,
+    totalR: stats.totalR || (stats.expectancyR || 0) * totalTrades,
+    avgR: stats.expectancyR || 0,
+    bestTrade: isR ? (stats.bestTradeR || 0) : (stats.bestTrade || 0),
+    worstTrade: isR ? (stats.worstTradeR || 0) : (stats.worstTrade || 0),
   };
 
   const NAV: { id: TabId; icon: typeof User; label: { he: string; en: string }; group: { he: string; en: string }; desc: { he: string; en: string } }[] = [
@@ -944,7 +954,8 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                             </div>
                             <div style={{ fontSize: 16, fontWeight: 800, color: val !== null ? T.accent.cyan : T.accent.red, fontFamily: mono }}>
                               {val !== null
-                                ? (k.format === 'currency' ? `$${val.toFixed(2)}`
+                                ? ((isR && k.format === 'currency') ? `${val >= 0 ? '+' : ''}${val.toFixed(2)}R`
+                                  : k.format === 'currency' ? `$${val.toFixed(2)}`
                                   : k.format === 'percent' ? `${val.toFixed(1)}%`
                                   : k.format === 'r-multiple' ? `${val.toFixed(2)}R`
                                   : val.toFixed(2))

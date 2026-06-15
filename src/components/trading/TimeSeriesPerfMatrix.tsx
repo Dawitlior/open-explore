@@ -90,6 +90,19 @@ export function TimeSeriesPerfMatrix({ T, trades }: Props) {
     return `rgba(255,30,30,${0.18 + -norm * 0.55})`;
   };
 
+  const hasMoneyData = trades.some(tr => Number.isFinite(tr.pnl) && tr.pnl !== 0);
+  const moneyBlocked = isMoney && !hasMoneyData;
+
+  if (moneyBlocked) {
+    return (
+      <GlassCard T={T} style={{ marginBottom: 16, textAlign: 'center', padding: 30 }}>
+        <div style={{ fontSize: 12, color: T.text.muted }}>
+          {t('אין נתוני $ — מצב R-only. עבור למצב R לראות את המטריצה.', 'No $ data — R-only portfolio. Switch to R mode to view the matrix.')}
+        </div>
+      </GlassCard>
+    );
+  }
+
   if (rows.length === 0) {
     return (
       <GlassCard T={T} style={{ marginBottom: 16, textAlign: 'center', padding: 30 }}>

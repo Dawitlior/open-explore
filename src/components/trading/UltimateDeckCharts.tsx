@@ -81,6 +81,10 @@ export function UltimateAnalyticsDeck({ T, trades, onExplainClick, registryAllow
   const isMoney = displayMode === 'MONEY';
   const tt = { background: T.bg.card, border: `1px solid ${T.border.medium}`, borderRadius: 10, color: T.text.primary, fontSize: 12, boxShadow: T.shadow.elevated, padding: '8px 12px' };
 
+  // R-only portfolios: $ axis would be flat zero; warn + zero out money samples.
+  const hasMoneyData = trades.some(tr => Number.isFinite(Number(tr.pnl)) && Number(tr.pnl) !== 0);
+  const moneyBlocked = isMoney && !hasMoneyData;
+
   // Unit-aware sample value for autocorrelation: $ in MONEY mode, R in R mode.
   const sampleValue = (tr: Trade): number => isMoney ? (Number(tr.pnl) || 0) : getEffectiveR(tr);
   const unitFmt = (v: number) => isMoney ? `$${v.toFixed(2)}` : `${v.toFixed(2)}R`;
@@ -140,7 +144,9 @@ export function UltimateAnalyticsDeck({ T, trades, onExplainClick, registryAllow
                 ρ = {lag.rho.toFixed(3)}
               </span>
             </div>
-            {lag.pairs.length >= 5 ? (
+            {moneyBlocked ? (
+              <EmptyNote T={T}>{t('אין נתוני $ — מצב R-only', 'No $ data — R-only portfolio')}</EmptyNote>
+            ) : lag.pairs.length >= 5 ? (
               <ResponsiveContainer width="100%" height={220}>
                 <ScatterChart>
                   <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />

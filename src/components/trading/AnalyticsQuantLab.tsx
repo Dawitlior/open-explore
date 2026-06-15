@@ -221,6 +221,11 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
   // R-mode guard: if no R-eligible trades exist, the entire chart grid is suppressed
   // (charts driven by R-series would render as flat/empty). Banner explains, no empty gaps.
   const rModeBlocked = !isMoney && rEligibleCount === 0;
+  // Money-mode guard: if no real $ P&L exists (R-only portfolio), money-axis charts
+  // would render as flat zero. Per-card empty states explain instead of misleading.
+  const hasMoneyData = trades.some(t => isFinite(t.pnl) && t.pnl !== 0);
+  const moneyBlocked = isMoney && !hasMoneyData;
+  const emptyMoneyMsg = t('אין נתוני $ — מצב R-only', 'No $ data — R-only portfolio');
 
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} style={{ marginTop: 20 }}>
@@ -250,9 +255,9 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
         <GlassCard T={T} style={{ padding: 12 }}>
           <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Best Session</div>
           <div style={{ fontSize: 22, fontWeight: 800, color: T.accent.green, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>
-            {sessions.filter(s => s.n).sort((a, b) => (isMoney ? b.pnl - a.pnl : b.r - a.r))[0]?.session || '—'}
+            {moneyBlocked ? '—' : (sessions.filter(s => s.n).sort((a, b) => (isMoney ? b.pnl - a.pnl : b.r - a.r))[0]?.session || '—')}
           </div>
-          <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>{t('סשן הכי רווחי', 'Most profitable session')}</div>
+          <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>{moneyBlocked ? emptyMoneyMsg : t('סשן הכי רווחי', 'Most profitable session')}</div>
         </GlassCard>
         <GlassCard T={T} style={{ padding: 12 }}>
           <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Trades / Day</div>
@@ -274,6 +279,9 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 12, marginBottom: 12 }}>
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{isMoney ? t('עקומת הון מצטבר ($)', 'Cumulative Equity Curve ($)') : t('עקומת R מצטברת', 'Cumulative R Curve')}</div>
+          {moneyBlocked ? (
+            <div style={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.text.muted, fontSize: 11 }}>{emptyMoneyMsg}</div>
+          ) : (
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={cumR}>
               <defs>
@@ -290,6 +298,7 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
               <Area type="monotone" dataKey={isMoney ? 'money' : 'r'} stroke={T.accent.cyan} fill="url(#cumR)" strokeWidth={2.4} />
             </AreaChart>
           </ResponsiveContainer>
+          )}
         </GlassCard>
 
         <GlassCard T={T}>
@@ -346,6 +355,9 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 12, marginBottom: 12 }}>
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('גודל פוזיציה מול P&L', 'Position Size vs P&L')}</div>
+          {moneyBlocked ? (
+            <div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.text.muted, fontSize: 11 }}>{emptyMoneyMsg}</div>
+          ) : (
           <ResponsiveContainer width="100%" height={240}>
             <ScatterChart>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
@@ -361,10 +373,14 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
               </Scatter>
             </ScatterChart>
           </ResponsiveContainer>
+          )}
         </GlassCard>
 
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('פיצול לפי סשן (אסיה / לונדון / ניו-יורק)', 'Session Split (Asia / London / NY)')}</div>
+          {moneyBlocked ? (
+            <div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.text.muted, fontSize: 11 }}>{emptyMoneyMsg}</div>
+          ) : (
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={sessions}>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
@@ -377,6 +393,7 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
               </Bar>
             </BarChart>
           </ResponsiveContainer>
+          )}
         </GlassCard>
       </div>
 
