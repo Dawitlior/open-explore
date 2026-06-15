@@ -3186,10 +3186,12 @@ const CalendarView = ({ days, dir, th, t, risk, onSelectDay }: { days: JournalDa
           const hasTrades = jDays.some(d => d.trades && d.trades.length > 0);
           const hasMorning = jDays.some(d => d.morningSaved);
           const pnl = jDays.reduce((s, d) => s + sumPnl(d), 0);
+          const rSum = jDays.reduce((s, d) => s + (d.trades || []).reduce((a: number, tr: any) => { try { return a + getR(tr); } catch { return a; } }, 0), 0);
           const negR = sumNegR(jDays.flatMap(d => d.trades || []));
           const dayBreached = negR <= RISK_LIMITS.day;
           const isToday = dayNum === today.getDate() && month === today.getMonth() && year === today.getFullYear();
-          const color = !hasTrades ? 'transparent' : dayBreached ? 'rgba(153,27,27,0.4)' : pnl < 0 ? 'rgba(255,77,77,0.15)' : 'rgba(0,255,163,0.12)';
+          const dispVal = isR ? rSum : pnl;
+          const color = !hasTrades ? 'transparent' : dayBreached ? 'rgba(153,27,27,0.4)' : dispVal < 0 ? 'rgba(255,77,77,0.15)' : 'rgba(0,255,163,0.12)';
           const borderColor = isToday ? '#5AA9FF' : dayBreached ? 'rgba(255,77,77,0.4)' : hasMorning ? th.cardBr : 'transparent';
           const jDay = jDays[0];
 
@@ -3206,8 +3208,8 @@ const CalendarView = ({ days, dir, th, t, risk, onSelectDay }: { days: JournalDa
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; (e.currentTarget as HTMLElement).style.zIndex = '1'; }}>
               <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 13, fontWeight: isToday ? 800 : 600, color: isToday ? '#5AA9FF' : hasTrades ? th.tx : th.tx3 }}>{dayNum}</span>
               {hasTrades && (
-                <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8.5, fontWeight: 700, color: pnl >= 0 ? '#00FFA3' : '#FF4D4D', marginTop: 1 }}>
-                  {pnl >= 0 ? '+' : ''}{pnl.toFixed(0)}$
+                <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8.5, fontWeight: 700, color: dispVal >= 0 ? '#00FFA3' : '#FF4D4D', marginTop: 1 }}>
+                  {isR ? `${rSum >= 0 ? '+' : ''}${rSum.toFixed(1)}R` : `${pnl >= 0 ? '+' : ''}${pnl.toFixed(0)}$`}
                 </span>
               )}
               {dayBreached && <span style={{ position: 'absolute', top: 2, right: 2, fontSize: 8, animation: 'j-pulse 1s ease-in-out infinite' }}>⚠️</span>}
