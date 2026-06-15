@@ -402,6 +402,15 @@ const Index = () => {
     const input = document.createElement('input'); input.type = 'file'; input.accept = '.xlsx,.xls,.csv,.txt,.tsv,.json';
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]; if (!file) return;
+      // Stage 6 (Multi-Portfolio): hard-stop if active portfolio is locked or missing.
+      if (!activePortfolio) {
+        toast.error(isRTL ? 'אין תיק פעיל' : 'No active portfolio', { description: isRTL ? 'בחר תיק לפני ייבוא נתונים.' : 'Pick a portfolio before importing data.' });
+        return;
+      }
+      if (isActivePortfolioLocked) {
+        toast.error(isRTL ? 'התיק נעול לקריאה־בלבד' : 'Portfolio is read-only', { description: isRTL ? 'שדרג את המסלול או החלף לתיק פעיל אחר.' : 'Upgrade your plan or switch to an unlocked portfolio.' });
+        return;
+      }
       setImportFileName(file.name);
       setImportedCount(0);
       setImportPhase('reading');
