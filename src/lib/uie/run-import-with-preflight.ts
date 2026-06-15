@@ -57,12 +57,25 @@ export interface PreflightOutcome {
  */
 export async function runImportWithPreflight(
   file: File,
-  opts: { brokerId?: string; accountLabel?: string | null } = {},
+  opts: { brokerId?: string; accountLabel?: string | null; targetPortfolio?: PreflightTargetPortfolio | null } = {},
 ): Promise<PreflightOutcome> {
   const brokerId = opts.brokerId || 'import';
   const accountLabel = opts.accountLabel ?? null;
 
-  console.info('[UIE] runImportWithPreflight: start', { file: file.name, size: file.size, brokerId });
+  // Stage 6 (Multi-Portfolio): the import always lands in the active portfolio
+  // (set by ActivePortfolioProvider). Refuse early if there's no active one,
+  // or if the active portfolio is read-only after a plan downgrade.
+  const targetPortfolioId = opts.targetPortfolio?.id ?? getActivePortfolioIdGlobal();
+  if (!targetPortfolioId) {
+    console.warn('[UIE] import blocked — no active portfolio');
+    return { ok: false, drafts: [], equityPointsAdded: 0, result: null, reason: 'no_active_portfolio' };
+  }
+  if (isActivePortfolioLockedGlobal()) {
+    console.warn('[UIE] import blocked — active portfolio is locked (read-only)');
+    return { ok: false, drafts: [], equityPointsAdded: 0, result: null, reason: 'portfolio_locked' };
+  }
+
+  console.info('[UIE] runImportWithPreflight: start', { file: file.name, size: file.size, brokerId, portfolio: targetPortfolioId });
 
   let sheets;
   try {
