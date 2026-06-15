@@ -2911,8 +2911,8 @@ const DailyIntelligencePanel = ({ day, dir, th, onClose, onOpenJournal }: {
                           <span style={{ fontSize: 14, fontWeight: 800, color: '#5AA9FF', fontFamily: "'JetBrains Mono',monospace" }}>{tr.pair || '—'}</span>
                           <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 6, fontWeight: 700, background: tr.side === 'Long' ? 'rgba(0,255,163,0.1)' : 'rgba(255,77,77,0.1)', color: tr.side === 'Long' ? '#00FFA3' : '#FF4D4D' }}>{tr.side || '—'}</span>
                         </div>
-                        <span style={{ fontSize: 16, fontWeight: 800, color: isWin ? '#00FFA3' : '#FF4D4D', fontFamily: "'JetBrains Mono',monospace" }}>
-                          {trPnl >= 0 ? '+' : ''}{trPnl.toFixed(2)}$
+                        <span style={{ fontSize: 16, fontWeight: 800, color: (isR ? trR : trPnl) >= 0 ? '#00FFA3' : '#FF4D4D', fontFamily: "'JetBrains Mono',monospace" }}>
+                          {isR ? `${trR >= 0 ? '+' : ''}${trR.toFixed(2)}R` : `${trPnl >= 0 ? '+' : ''}${trPnl.toFixed(2)}$`}
                         </span>
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, fontSize: 10 }}>
