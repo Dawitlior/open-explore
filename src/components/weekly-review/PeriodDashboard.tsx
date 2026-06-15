@@ -278,7 +278,7 @@ export default function PeriodDashboard({ trades, months, T, isRTL, titleHE, tit
                   <th style={th}>{isRTL ? 'חודש' : 'Month'}</th>
                   <th style={{ ...th, textAlign: 'right' }}>{L.trades}</th>
                   <th style={{ ...th, textAlign: 'right' }}>{L.netR}</th>
-                  <th style={{ ...th, textAlign: 'right' }}>$ P&amp;L</th>
+                  {hasMoney && <th style={{ ...th, textAlign: 'right' }}>$ P&amp;L</th>}
                   <th style={{ ...th, textAlign: 'right' }}>WR</th>
                   <th style={{ ...th, textAlign: 'right' }}>PF</th>
                 </tr>
