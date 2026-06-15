@@ -733,6 +733,9 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
             )}
           </div>
 
+          <div>
+            <NoteSection />
+          </div>
 
           <div>
             <AISection />
