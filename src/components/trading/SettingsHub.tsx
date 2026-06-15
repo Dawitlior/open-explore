@@ -13,6 +13,7 @@ import { deriveFullPalette, deriveFromCustomTheme, CUSTOM_THEME_DEFAULT } from '
 import type { ThemeId, Lang } from '@/hooks/use-settings';
 import { useDashboardConfig, WIDGET_LABELS, evalCustomKPI, type CustomKPI } from '@/hooks/use-dashboard-config';
 import type { TradingStats } from '@/lib/trading-analytics';
+import { useDisplayMode } from '@/lib/display-mode';
 import { useRiskLimits } from '@/hooks/use-risk-limits';
 import { DEFAULT_RISK_LIMITS } from '@/lib/risk-limits';
 import { useUIPrefs } from '@/hooks/use-ui-prefs';
