@@ -1469,7 +1469,7 @@ const Index = () => {
             {weekStats.map((w, i) => (
               <GlassCard T={T} key={i} style={{ marginBottom: 7, padding: 12 }}>
                 <div style={{ fontSize: 9, color: T.text.muted, marginBottom: 4 }}>{isRTL ? `שבוע ${w.week}` : `Week ${w.week}`}</div>
-                <PV><div style={{ fontSize: 16, fontWeight: 700, color: w.pnl >= 0 ? T.accent.green : w.pnl < 0 ? T.accent.red : T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>{w.pnl !== 0 ? `${w.pnl >= 0 ? '+' : ''}$${w.pnl.toFixed(2)}` : '$0.00'}</div></PV>
+                <PV><div style={{ fontSize: 16, fontWeight: 700, color: w.pnl >= 0 ? T.accent.green : w.pnl < 0 ? T.accent.red : T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>{w.pnl !== 0 ? (isR ? `${w.pnl >= 0 ? '+' : ''}${w.pnl.toFixed(2)}R` : `${w.pnl >= 0 ? '+' : ''}$${w.pnl.toFixed(2)}`) : (isR ? '0.00R' : '$0.00')}</div></PV>
                 <div style={{ fontSize: 9, color: T.text.muted, marginTop: 1 }}>{w.trades} {isRTL ? 'עסקאות' : 'trades'}</div>
               </GlassCard>
             ))}
