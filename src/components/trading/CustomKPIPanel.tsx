@@ -140,7 +140,7 @@ export function CustomKPIPanel({ T, isRTL, stats }: Props) {
                   textShadow: `0 0 12px ${color}66`,
                   lineHeight: 1.1,
                 }}>
-                  {v === null ? '⚠️' : formatValue(v, k.format)}
+                  {v === null ? '⚠️' : formatValue(v, k.format, isR)}
                 </div>
                 <div style={{
                   fontSize: 9, color: T.text.muted, marginTop: 4,
