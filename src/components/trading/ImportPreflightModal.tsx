@@ -8,9 +8,10 @@
  * Mounted once in App.tsx.
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import type { PreflightOpenDetail } from '@/lib/uie/run-import-with-preflight';
-import type { FieldMatch, GapItem } from '@/lib/uie/types';
+import type { FieldMatch, GapItem, ImportResult } from '@/lib/uie/types';
+import { FIELD_TAXONOMY } from '@/lib/uie/dictionary/canonical-fields';
 
 type Open = PreflightOpenDetail | null;
 
