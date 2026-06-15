@@ -1191,7 +1191,7 @@ const Index = () => {
                           <td style={{ padding: '8px 12px', color: T.text.secondary }}>{dayMap[d].trades}</td>
                           <td style={{ padding: '8px 12px', color: (dayMap[d].wins / dayMap[d].trades * 100) >= 50 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{(dayMap[d].wins / dayMap[d].trades * 100).toFixed(0)}%</td>
                           <td style={{ padding: '8px 12px', color: (dayMap[d].totalR / dayMap[d].trades) >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{(dayMap[d].totalR / dayMap[d].trades).toFixed(2)}R</td>
-                          <td style={{ padding: '8px 12px', color: dayMap[d].totalPnl >= 0 ? T.accent.green : T.accent.red, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}><PV>${dayMap[d].totalPnl.toFixed(2)}</PV></td>
+                          <td style={{ padding: '8px 12px', color: dayMap[d].totalPnl >= 0 ? T.accent.green : T.accent.red, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}><PV>{isR ? `${dayMap[d].totalPnl >= 0 ? '+' : ''}${dayMap[d].totalPnl.toFixed(2)}R` : `$${dayMap[d].totalPnl.toFixed(2)}`}</PV></td>
                         </tr>
                       ));
                     })()}
