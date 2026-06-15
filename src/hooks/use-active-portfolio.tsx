@@ -17,6 +17,7 @@ import {
   type PortfolioDraft,
 } from '@/hooks/use-portfolios';
 import { useAuth } from '@/hooks/use-auth';
+import { setActivePortfolioIdGlobal } from '@/lib/active-portfolio-store';
 
 const LS_KEY = 'orca.activePortfolioId';
 
@@ -90,9 +91,16 @@ export function ActivePortfolioProvider({ children }: { children: ReactNode }) {
     writeStoredId(fallback);
   }, [loading, portfolios, activePortfolioId]);
 
+  // Keep the global singleton in sync with the React state so non-React
+  // code (storage layer) can read it synchronously.
+  useEffect(() => {
+    setActivePortfolioIdGlobal(activePortfolioId);
+  }, [activePortfolioId]);
+
   const setActivePortfolioId = useCallback((id: string) => {
     setActiveState(id);
     writeStoredId(id);
+    setActivePortfolioIdGlobal(id);
     // Stage 4 hook point: anyone caching trades can listen to this and refetch.
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('orca:active-portfolio-changed', { detail: { id } }));

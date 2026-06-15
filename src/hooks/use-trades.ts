@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { Trade } from '@/data/trades';
-import { getAllTrades, saveTrades, deleteTrade as dbDelete, clearAllData } from '@/lib/storage';
+import { getAllTrades, saveTrades, deleteTrade as dbDelete, clearAllData, getMaxTradeId } from '@/lib/storage';
+import { getActivePortfolioIdGlobal } from '@/lib/active-portfolio-store';
 import { computeAnalytics, type TradingStats } from '@/lib/trading-analytics';
 import { sanitizeTrades } from '@/lib/trade-sanitizer';
 import { checkRiskLimits, type RiskLimitStatus } from '@/lib/risk-limits';
@@ -23,6 +24,7 @@ export function useTrades() {
   useEffect(() => {
     let cancelled = false;
     const load = () => {
+      setLoading(true);
       getAllTrades().then(t => {
         if (cancelled) return;
         const sanitized = sanitizeTrades(t);
@@ -49,8 +51,14 @@ export function useTrades() {
     };
     load();
     const onSync = () => load();
+    const onPortfolioChanged = () => load();
     window.addEventListener('orca:trades-synced', onSync);
-    return () => { cancelled = true; window.removeEventListener('orca:trades-synced', onSync); };
+    window.addEventListener('orca:active-portfolio-changed', onPortfolioChanged);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('orca:trades-synced', onSync);
+      window.removeEventListener('orca:active-portfolio-changed', onPortfolioChanged);
+    };
   }, []);
 
   const stats = useMemo<TradingStats>(() => {
@@ -97,11 +105,28 @@ export function useTrades() {
     return run;
   }, []);
 
+  /**
+   * Compute the next global trade_id. trade_id is unique per (user_id, trade_id)
+   * across ALL portfolios, so when running in a multi-portfolio session we
+   * must include trades that live outside the current view. Falls back to the
+   * local max if the DB query fails.
+   */
+  const nextGlobalId = useCallback(async (): Promise<number> => {
+    const localMax = tradesRef.current.reduce((m, t) => (t.id > m ? t.id : m), 0);
+    try {
+      const globalMax = await getMaxTradeId();
+      return Math.max(localMax, globalMax) + 1;
+    } catch {
+      return localMax + 1;
+    }
+  }, []);
+
   const addTrade = useCallback(async (trade: Omit<Trade, 'id' | 'balance'>) => {
     return enqueueTradeMutation(async () => {
       const currentTrades = tradesRef.current;
-      const id = currentTrades.length === 0 ? 1 : Math.max(...currentTrades.map(t => t.id || 0)) + 1;
-      const newTrade: Trade = { ...trade, id, balance: 0 } as Trade;
+      const id = await nextGlobalId();
+      const pid = getActivePortfolioIdGlobal();
+      const newTrade: Trade = { ...trade, id, balance: 0, ...(pid ? { __portfolio_id: pid } : {}) } as Trade;
       const updated = recalcBalances([...currentTrades, newTrade]);
       await saveTrades(updated);
       tradesRef.current = updated;
@@ -109,7 +134,7 @@ export function useTrades() {
       checkAndAlertRisk(updated);
       return updated[updated.length - 1];
     });
-  }, [enqueueTradeMutation, recalcBalances, checkAndAlertRisk]);
+  }, [enqueueTradeMutation, recalcBalances, checkAndAlertRisk, nextGlobalId]);
 
   const upsertJournalTrade = useCallback(async (journalTradeId: number | string, trade: Omit<Trade, 'id' | 'balance'>) => {
     return enqueueTradeMutation(async () => {
@@ -126,8 +151,9 @@ export function useTrades() {
         saved = { ...updated[existingIdx], ...trade, id: updated[existingIdx].id, comments: cleanComments } as Trade;
         updated[existingIdx] = saved;
       } else {
-        const id = currentTrades.length === 0 ? 1 : Math.max(...currentTrades.map(t => t.id || 0)) + 1;
-        saved = { ...trade, id, balance: 0, comments: cleanComments } as Trade;
+        const id = await nextGlobalId();
+        const pid = getActivePortfolioIdGlobal();
+        saved = { ...trade, id, balance: 0, comments: cleanComments, ...(pid ? { __portfolio_id: pid } : {}) } as Trade;
         updated.push(saved);
       }
 
@@ -138,7 +164,7 @@ export function useTrades() {
       checkAndAlertRisk(rebalanced);
       return rebalanced.find(t => t.id === saved.id) || saved;
     });
-  }, [enqueueTradeMutation, recalcBalances, checkAndAlertRisk]);
+  }, [enqueueTradeMutation, recalcBalances, checkAndAlertRisk, nextGlobalId]);
 
   const updateTrade = useCallback(async (trade: Trade) => {
     return enqueueTradeMutation(async () => {
@@ -196,10 +222,17 @@ export function useTrades() {
       const seenFp = new Set(existing.map(fp));
       const seenExt = new Set<string>();
 
-      let nextId = existing.length === 0 ? 1 : Math.max(...existing.map(t => t.id || 0)) + 1;
+      // trade_id is globally unique per user across all portfolios. Start from
+      // the GLOBAL max (DB-side), not the in-memory filtered max, otherwise an
+      // import into portfolio A would collide with rows already in portfolio B.
+      const localMax = existing.reduce((m, t) => (t.id > m ? t.id : m), 0);
+      let globalMax = localMax;
+      try { globalMax = Math.max(localMax, await getMaxTradeId()); } catch { /* fall back to localMax */ }
+      let nextId = globalMax + 1;
+      const activePid = getActivePortfolioIdGlobal();
       const additions: Trade[] = [];
       for (const raw of sanitized) {
-        const incoming = raw as Trade & { __provenance?: { external_id?: string } };
+        const incoming = raw as Trade & { __provenance?: { external_id?: string }; __portfolio_id?: string };
         const ext = incoming.__provenance?.external_id;
         if (ext) {
           if (existingExtIds.has(ext) || seenExt.has(ext)) continue;
@@ -209,7 +242,16 @@ export function useTrades() {
           if (seenFp.has(key)) continue;
           seenFp.add(key);
         }
-        additions.push({ ...(incoming as Trade), id: nextId++, balance: 0 });
+        // Each newly added trade is stamped with the active portfolio so the
+        // storage layer writes the correct portfolio_id. An override on the
+        // incoming row (already-tagged from a future bulk-move tool) wins.
+        const tagged: Trade = {
+          ...(incoming as Trade),
+          id: nextId++,
+          balance: 0,
+          ...(incoming.__portfolio_id || activePid ? { __portfolio_id: incoming.__portfolio_id || activePid } : {}),
+        } as Trade;
+        additions.push(tagged);
       }
 
       if (additions.length === 0) {
