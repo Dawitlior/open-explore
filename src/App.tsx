@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -27,7 +27,6 @@ import { OrcaConfirmRoot } from "@/lib/orca-confirm";
 import { ImportPreflightRoot } from "@/components/trading/ImportPreflightModal";
 // Side-effect import: registers every BrokerAdapter into BrokerRegistry at boot.
 import "@/lib/brokers";
-import { lazy, Suspense } from "react";
 import { assertRegistryIntegrity } from "@/lib/chart-registry";
 
 // Dev-only registry/matrix audit panel — lazy so it never ships in normal flow.
