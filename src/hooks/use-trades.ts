@@ -242,7 +242,16 @@ export function useTrades() {
           if (seenFp.has(key)) continue;
           seenFp.add(key);
         }
-        additions.push({ ...(incoming as Trade), id: nextId++, balance: 0 });
+        // Each newly added trade is stamped with the active portfolio so the
+        // storage layer writes the correct portfolio_id. An override on the
+        // incoming row (already-tagged from a future bulk-move tool) wins.
+        const tagged: Trade = {
+          ...(incoming as Trade),
+          id: nextId++,
+          balance: 0,
+          ...(incoming.__portfolio_id || activePid ? { __portfolio_id: incoming.__portfolio_id || activePid } : {}),
+        } as Trade;
+        additions.push(tagged);
       }
 
       if (additions.length === 0) {
