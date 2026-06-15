@@ -21,7 +21,9 @@ export interface PreflightOpenDetail {
   fileName: string;
   brokerId: string;
   result: ImportResult;
-  resolve: (decision: { confirm: boolean }) => void;
+  /** Stage 2: re-run the engine with user mapping overrides (columnIndex → field|null). */
+  rerun: (overrides: Record<number, string | null>) => Promise<ImportResult>;
+  resolve: (decision: { confirm: boolean; result?: ImportResult }) => void;
 }
 
 export interface PreflightOutcome {
