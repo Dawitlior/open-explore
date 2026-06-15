@@ -272,7 +272,7 @@ const Index = () => {
       if (d.getMonth() === calMonth && d.getFullYear() === calYear) {
         const day = d.getDate();
         if (!m[day]) m[day] = { pnl: 0, trades: 0, wins: 0, details: [] };
-        m[day].pnl += tr.pnl;
+        m[day].pnl += bucketValue(tr);
         m[day].trades++;
         if (tr.winLoss === 'Win') m[day].wins++;
         m[day].details.push(tr);
