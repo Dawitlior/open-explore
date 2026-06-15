@@ -2658,7 +2658,7 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
                 return (
                   <div key={wd.dow} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', background: `${c}04`, borderRadius: 6 }}>
                     <span style={{ fontSize: 10, fontWeight: 700, color: th.tx2, minWidth: 40 }}>{wd.name}</span>
-                    <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, fontWeight: 800, color: c }}>{wd.pnl >= 0 ? '+' : ''}{wd.pnl.toFixed(0)}$</span>
+                    <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, fontWeight: 800, color: c }}>{isR ? `${(wd.r || 0) >= 0 ? '+' : ''}${(wd.r || 0).toFixed(1)}R` : `${wd.pnl >= 0 ? '+' : ''}${wd.pnl.toFixed(0)}$`}</span>
                     <span style={{ fontSize: 8, color: th.tx3 }}>{wd.count}d</span>
                   </div>
                 );
