@@ -34,12 +34,19 @@ function severityColor(s: GapItem['severity']) {
 
 export function ImportPreflightRoot() {
   const [open, setOpen] = useState<Open>(null);
+  const [result, setResult] = useState<ImportResult | null>(null);
+  const [editMode, setEditMode] = useState(false);
+  const [overrides, setOverrides] = useState<Record<number, string | null>>({});
+  const [applying, setApplying] = useState(false);
   const rtl = isRTLDoc();
 
   useEffect(() => {
     const onOpen = (e: Event) => {
       const ce = e as CustomEvent<PreflightOpenDetail>;
       setOpen(ce.detail);
+      setResult(ce.detail.result);
+      setEditMode(false);
+      setOverrides({});
     };
     window.addEventListener('orca:uie:preflight', onOpen as EventListener);
     return () => window.removeEventListener('orca:uie:preflight', onOpen as EventListener);
@@ -47,26 +54,48 @@ export function ImportPreflightRoot() {
 
   const close = useCallback((confirm: boolean) => {
     if (!open) return;
-    try { open.resolve({ confirm }); } catch { /* */ }
+    try { open.resolve({ confirm, result: result || open.result }); } catch { /* */ }
     setOpen(null);
-  }, [open]);
+    setResult(null);
+    setOverrides({});
+    setEditMode(false);
+  }, [open, result]);
 
-  if (!open) return null;
+  const applyOverrides = useCallback(async () => {
+    if (!open) return;
+    setApplying(true);
+    try {
+      const next = await open.rerun(overrides);
+      setResult(next);
+    } catch (err) {
+      console.error('[UIE] rerun failed', err);
+    } finally {
+      setApplying(false);
+    }
+  }, [open, overrides]);
 
-  const r = open.result;
+  // sorted list of canonical fields for the dropdown
+  const fieldOptions = useMemo(
+    () => FIELD_TAXONOMY.map((f) => f.canonical).sort((a, b) => a.localeCompare(b)),
+    [],
+  );
+
+  if (!open || !result) return null;
+
+  const r = result;
   const headers = r.structure.headers;
-  // map FieldMatch[] keyed by columnIndex
   const matchByCol = new Map<number, FieldMatch>();
   for (const m of r.mapping) matchByCol.set(m.columnIndex, m);
 
-  // Build display rows: every header column → matched field (or unmapped)
   const rows = headers.map((h, i) => {
-    const fm = matchByCol.get(i + r.structure.regionCols[0]) || matchByCol.get(i);
-    return { idx: i, header: h || `(${i + 1})`, fm };
+    const absCol = i + r.structure.regionCols[0];
+    const fm = matchByCol.get(absCol) || matchByCol.get(i);
+    return { idx: i, absCol, header: h || `(${i + 1})`, fm };
   });
 
   const readinessColor = r.gap.readiness >= 80 ? '#10b981' : r.gap.readiness >= 50 ? '#f59e0b' : '#ef4444';
   const equityPoints = r.equityEvents.filter((e) => e.type === 'balance_snapshot');
+  const pendingChanges = Object.keys(overrides).length;
 
   return (
     <div
