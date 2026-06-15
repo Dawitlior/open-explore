@@ -151,8 +151,9 @@ export function useTrades() {
         saved = { ...updated[existingIdx], ...trade, id: updated[existingIdx].id, comments: cleanComments } as Trade;
         updated[existingIdx] = saved;
       } else {
-        const id = currentTrades.length === 0 ? 1 : Math.max(...currentTrades.map(t => t.id || 0)) + 1;
-        saved = { ...trade, id, balance: 0, comments: cleanComments } as Trade;
+        const id = await nextGlobalId();
+        const pid = getActivePortfolioIdGlobal();
+        saved = { ...trade, id, balance: 0, comments: cleanComments, ...(pid ? { __portfolio_id: pid } : {}) } as Trade;
         updated.push(saved);
       }
 
