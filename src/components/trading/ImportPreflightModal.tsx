@@ -46,7 +46,7 @@ export function ImportPreflightRoot() {
       setOpen(ce.detail);
       setResult(ce.detail.result);
       setEditMode(false);
-      setOverrides({});
+      setOverrides(ce.detail.initialOverrides ? { ...ce.detail.initialOverrides } : {});
     };
     window.addEventListener('orca:uie:preflight', onOpen as EventListener);
     return () => window.removeEventListener('orca:uie:preflight', onOpen as EventListener);
@@ -54,12 +54,12 @@ export function ImportPreflightRoot() {
 
   const close = useCallback((confirm: boolean) => {
     if (!open) return;
-    try { open.resolve({ confirm, result: result || open.result }); } catch { /* */ }
+    try { open.resolve({ confirm, result: result || open.result, overrides }); } catch { /* */ }
     setOpen(null);
     setResult(null);
     setOverrides({});
     setEditMode(false);
-  }, [open, result]);
+  }, [open, result, overrides]);
 
   const applyOverrides = useCallback(async () => {
     if (!open) return;
