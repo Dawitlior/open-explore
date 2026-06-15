@@ -82,6 +82,7 @@ export function useSettings() {
   const setTheme = useCallback((t: ThemeId) => {
     const from = prev.current.theme;
     setThemeState(t);
+    try { window.localStorage.setItem('orca:theme-cache', t); } catch { /* noop */ }
     setSetting('theme', t);
     if (from !== t) ModeSwitchEvents.emit({ kind: 'theme', from, to: t });
     prev.current.theme = t;
