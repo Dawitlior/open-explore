@@ -121,7 +121,7 @@ const Index = () => {
   // Bucket aggregator (calendar/weekly/day-of-week) — sums R or $ per bucket.
   const bucketValue = (tr: Trade): number => {
     if (isR && hasStrictR(tr)) return getEffectiveR(tr);
-    return safeNumber(tr.pnl);
+    return Number.isFinite(tr.pnl) ? tr.pnl : 0;
   };
   const { limits: customRiskLimits } = useRiskLimits();
   const [entered, setEntered] = useState(() => sessionStorage.getItem('orca-entered') === '1');
