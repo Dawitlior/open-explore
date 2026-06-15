@@ -8,6 +8,8 @@ import { getR, sumR, formatR } from '@/lib/r-multiple';
 import { useMonthEconomicEvents } from '@/hooks/use-month-economic-events';
 import { MACRO_TIER_COLOR, CURRENCY_FLAG } from '@/components/economic/MacroEventStrip';
 import { formatISTTime } from '@/lib/economic';
+import { supabase } from '@/integrations/supabase/client';
+import { useActivePortfolio } from '@/hooks/use-active-portfolio';
 
 
 interface CalendarModalProps {
