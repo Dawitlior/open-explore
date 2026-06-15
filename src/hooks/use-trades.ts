@@ -164,7 +164,7 @@ export function useTrades() {
       checkAndAlertRisk(rebalanced);
       return rebalanced.find(t => t.id === saved.id) || saved;
     });
-  }, [enqueueTradeMutation, recalcBalances, checkAndAlertRisk]);
+  }, [enqueueTradeMutation, recalcBalances, checkAndAlertRisk, nextGlobalId]);
 
   const updateTrade = useCallback(async (trade: Trade) => {
     return enqueueTradeMutation(async () => {
