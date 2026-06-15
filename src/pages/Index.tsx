@@ -1428,7 +1428,7 @@ const Index = () => {
                 {calDays.map((d, i) => {
                   const dd = d ? calDayPnl[d] : null;
                   const isHovered = d === calHoverDay;
-                  const intensity = dd ? Math.min(1, Math.abs(dd.pnl) / 10) : 0;
+                  const intensity = dd ? Math.min(1, Math.abs(dd.pnl) / (isR ? 5 : 10)) : 0;
                   const riskColor = d ? getDayRiskColor(trades, d, calMonth, calYear) : 'neutral';
                   const isDarkRed = riskColor === 'darkred';
                   return (
