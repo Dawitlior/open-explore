@@ -222,10 +222,17 @@ export function useTrades() {
       const seenFp = new Set(existing.map(fp));
       const seenExt = new Set<string>();
 
-      let nextId = existing.length === 0 ? 1 : Math.max(...existing.map(t => t.id || 0)) + 1;
+      // trade_id is globally unique per user across all portfolios. Start from
+      // the GLOBAL max (DB-side), not the in-memory filtered max, otherwise an
+      // import into portfolio A would collide with rows already in portfolio B.
+      const localMax = existing.reduce((m, t) => (t.id > m ? t.id : m), 0);
+      let globalMax = localMax;
+      try { globalMax = Math.max(localMax, await getMaxTradeId()); } catch { /* fall back to localMax */ }
+      let nextId = globalMax + 1;
+      const activePid = getActivePortfolioIdGlobal();
       const additions: Trade[] = [];
       for (const raw of sanitized) {
-        const incoming = raw as Trade & { __provenance?: { external_id?: string } };
+        const incoming = raw as Trade & { __provenance?: { external_id?: string }; __portfolio_id?: string };
         const ext = incoming.__provenance?.external_id;
         if (ext) {
           if (existingExtIds.has(ext) || seenExt.has(ext)) continue;
