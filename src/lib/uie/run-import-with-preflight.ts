@@ -78,6 +78,26 @@ export async function runImportWithPreflight(
     return { ok: false, drafts: [], equityPointsAdded: 0, result: null, reason: e instanceof Error ? e.message : 'engine_failed' };
   }
 
+  // Stage 3: fingerprint lookup — if we've seen this shape before, re-run with the
+  // remembered overrides automatically and show the modal with those choices applied.
+  const fingerprint = computeFingerprint(result.structure.headers, brokerId);
+  const remembered = loadFingerprint(fingerprint);
+  let initialOverrides: Record<number, string | null> | undefined;
+  if (remembered && remembered.overrides && Object.keys(remembered.overrides).length > 0) {
+    try {
+      result = runImport(sheets, { mappingOverrides: remembered.overrides });
+      initialOverrides = remembered.overrides;
+      console.info('[UIE] fingerprint match → re-ran with remembered overrides', {
+        fp: fingerprint,
+        overrides: Object.keys(remembered.overrides).length,
+        savedAt: remembered.savedAt,
+      });
+    } catch (e) {
+      console.warn('[UIE] remembered overrides re-run failed; falling back to auto-mapping', e);
+    }
+  }
+
+
   // Open the modal and await user decision.
   console.info('[UIE] dispatching orca:uie:preflight — awaiting user decision');
   // Signal the caller's loading overlay can step aside so the modal is visible.
