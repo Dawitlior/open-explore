@@ -3,25 +3,72 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
-    <!-- Theme preboot — prevents FOUC/black flash when switching to light theme on refresh. -->
+    <!-- Theme preboot — applies the FULL token map before first paint to prevent FOUC across midnight/indigo/platinum. -->
     <script>
       (function () {
         try {
           var t = localStorage.getItem('orca:theme-cache');
           if (t !== 'midnight' && t !== 'indigo' && t !== 'platinum') t = 'midnight';
-          var BG = { midnight: '0 0% 0.8%', indigo: '255 60% 4%', platinum: '40 30% 96%' };
-          var FG = { midnight: '210 20% 96%', indigo: '210 20% 96%', platinum: '220 25% 14%' };
           var SOLID = { midnight: '#020202', indigo: '#070817', platinum: '#f4efe4' };
+          // Full token maps — MUST stay in sync with src/lib/trading-theme.ts cssVars.
+          var TOKENS = {
+            midnight: {
+              '--background':'0 0% 0.8%','--foreground':'210 20% 96%',
+              '--card':'0 0% 3.1%','--card-foreground':'210 20% 96%',
+              '--popover':'0 0% 3.1%','--popover-foreground':'210 20% 96%',
+              '--primary':'184 100% 50%','--primary-foreground':'0 0% 0%',
+              '--secondary':'0 0% 6%','--secondary-foreground':'210 20% 96%',
+              '--muted':'0 0% 9%','--muted-foreground':'215 12% 55%',
+              '--accent':'184 100% 50%','--accent-foreground':'0 0% 0%',
+              '--destructive':'0 100% 56%','--ring':'184 100% 50%',
+              '--sidebar-background':'0 0% 2%','--sidebar-foreground':'215 12% 55%',
+              '--sidebar-primary':'184 100% 50%','--sidebar-primary-foreground':'0 0% 0%',
+              '--sidebar-accent':'0 0% 6%','--sidebar-accent-foreground':'210 20% 96%','--sidebar-ring':'184 100% 50%',
+              '--orca-aurora-a':'184 100% 50%','--orca-aurora-b':'258 90% 66%',
+              '--orca-glow-spot':'184 100% 50%','--orca-primary-h':'184 100% 50%'
+            },
+            indigo: {
+              '--background':'255 60% 4%','--foreground':'258 90% 95%',
+              '--card':'258 50% 9%','--card-foreground':'258 90% 95%',
+              '--popover':'258 50% 9%','--popover-foreground':'258 90% 95%',
+              '--primary':'258 90% 76%','--primary-foreground':'255 60% 4%',
+              '--secondary':'258 40% 14%','--secondary-foreground':'258 90% 95%',
+              '--muted':'258 30% 16%','--muted-foreground':'258 20% 65%',
+              '--accent':'258 90% 76%','--accent-foreground':'255 60% 4%',
+              '--destructive':'350 90% 60%','--ring':'258 90% 76%',
+              '--sidebar-background':'258 60% 6%','--sidebar-foreground':'258 20% 65%',
+              '--sidebar-primary':'258 90% 76%','--sidebar-primary-foreground':'255 60% 4%',
+              '--sidebar-accent':'258 40% 14%','--sidebar-accent-foreground':'258 90% 95%','--sidebar-ring':'258 90% 76%',
+              '--orca-aurora-a':'258 90% 66%','--orca-aurora-b':'230 90% 60%',
+              '--orca-glow-spot':'258 90% 76%','--orca-primary-h':'258 90% 76%'
+            },
+            platinum: {
+              '--background':'40 30% 96%','--foreground':'222 47% 11%',
+              '--card':'0 0% 100%','--card-foreground':'222 47% 11%',
+              '--popover':'0 0% 100%','--popover-foreground':'222 47% 11%',
+              '--primary':'224 76% 48%','--primary-foreground':'0 0% 100%',
+              '--secondary':'40 25% 92%','--secondary-foreground':'222 47% 11%',
+              '--muted':'40 20% 90%','--muted-foreground':'215 20% 35%',
+              '--accent':'224 76% 48%','--accent-foreground':'0 0% 100%',
+              '--destructive':'0 75% 42%','--ring':'224 76% 48%',
+              '--sidebar-background':'40 30% 94%','--sidebar-foreground':'215 20% 35%',
+              '--sidebar-primary':'224 76% 48%','--sidebar-primary-foreground':'0 0% 100%',
+              '--sidebar-accent':'40 25% 92%','--sidebar-accent-foreground':'222 47% 11%','--sidebar-ring':'224 76% 48%',
+              '--orca-aurora-a':'224 76% 60%','--orca-aurora-b':'38 80% 55%',
+              '--orca-glow-spot':'224 76% 60%','--orca-primary-h':'224 76% 48%'
+            }
+          };
           var r = document.documentElement;
           r.setAttribute('data-theme', t);
-          r.style.setProperty('--background', BG[t]);
-          r.style.setProperty('--foreground', FG[t]);
+          var map = TOKENS[t];
+          for (var k in map) r.style.setProperty(k, map[k]);
           r.style.backgroundColor = SOLID[t];
           var meta = document.querySelector('meta[name="theme-color"]');
           if (meta) meta.setAttribute('content', SOLID[t]);
         } catch (e) {}
       })();
     </script>
+
     <!-- CSP — report-only first; tighten to enforcing after telemetry confirms no breakage. -->
     <meta http-equiv="Content-Security-Policy-Report-Only" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.lovable.dev https://*.lovableproject.com https://cdn.gpteng.co; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.lovable.dev https://*.lovableproject.com https://fonts.googleapis.com https://fonts.gstatic.com; frame-ancestors 'self' https://*.lovable.dev https://*.lovableproject.com; base-uri 'self'; form-action 'self';" />
     <link rel="icon" type="image/png" href="/orca-logo.png" />
