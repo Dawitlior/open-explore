@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { Trade } from '@/data/trades';
-import { getAllTrades, saveTrades, deleteTrade as dbDelete, clearAllData } from '@/lib/storage';
+import { getAllTrades, saveTrades, deleteTrade as dbDelete, clearAllData, getMaxTradeId } from '@/lib/storage';
+import { getActivePortfolioIdGlobal } from '@/lib/active-portfolio-store';
 import { computeAnalytics, type TradingStats } from '@/lib/trading-analytics';
 import { sanitizeTrades } from '@/lib/trade-sanitizer';
 import { checkRiskLimits, type RiskLimitStatus } from '@/lib/risk-limits';
