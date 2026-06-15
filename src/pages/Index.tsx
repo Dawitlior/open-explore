@@ -633,11 +633,11 @@ const Index = () => {
         </h2>
         {/* Core metrics only */}
         <div style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
-          <MetricCard T={T} label={t.netPnl} value={stats.totalPnl} color={stats.totalPnl >= 0 ? T.accent.cyan : T.accent.red} onInfoClick={() => handleExplainClick(t.netPnl, EXPLANATIONS.netPnl)} />
+          <MetricCard T={T} label={isR ? (isRTL ? 'תוחלת נטו (R)' : 'Net R') : t.netPnl} value={isR ? `${stats.totalR >= 0 ? '+' : ''}${stats.totalR.toFixed(2)}R` : stats.totalPnl} color={(isR ? stats.totalR : stats.totalPnl) >= 0 ? T.accent.cyan : T.accent.red} onInfoClick={() => handleExplainClick(t.netPnl, EXPLANATIONS.netPnl)} />
           <MetricCard T={T} label={t.winRate} value={stats.winRate} suffix="%" color={T.accent.green} onInfoClick={() => handleExplainClick(t.winRate, EXPLANATIONS.winRate)} />
           <MetricCard T={T} label={t.totalTrades} value={String(stats.totalTrades)} color={T.text.primary} />
-          <MetricCard T={T} label={t.avgWin} value={stats.avgWin} suffix="$" color={T.accent.green} />
-          <MetricCard T={T} label={t.avgLoss} value={stats.avgLoss} suffix="$" color={T.accent.red} />
+          <MetricCard T={T} label={t.avgWin} value={isR ? `+${stats.avgWinR.toFixed(2)}R` : stats.avgWin} suffix={isR ? undefined : '$'} color={T.accent.green} />
+          <MetricCard T={T} label={t.avgLoss} value={isR ? `-${stats.avgLossR.toFixed(2)}R` : stats.avgLoss} suffix={isR ? undefined : '$'} color={T.accent.red} />
           <MetricCard T={T} label={t.currentStreak} value={`${stats.currentStreak} ${stats.streakType === 'Win' ? '🟢' : stats.streakType === 'Loss' ? '🔴' : '⚪'}`} color={T.text.primary} />
         </div>
         {/* Simple Equity Curve */}
