@@ -954,7 +954,8 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                             </div>
                             <div style={{ fontSize: 16, fontWeight: 800, color: val !== null ? T.accent.cyan : T.accent.red, fontFamily: mono }}>
                               {val !== null
-                                ? (k.format === 'currency' ? `$${val.toFixed(2)}`
+                                ? ((isR && k.format === 'currency') ? `${val >= 0 ? '+' : ''}${val.toFixed(2)}R`
+                                  : k.format === 'currency' ? `$${val.toFixed(2)}`
                                   : k.format === 'percent' ? `${val.toFixed(1)}%`
                                   : k.format === 'r-multiple' ? `${val.toFixed(2)}R`
                                   : val.toFixed(2))
