@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { I18nStrings } from '@/lib/trading-i18n';
@@ -6,6 +6,7 @@ import { GlassCard } from './TradingUI';
 import { FeatureHint } from './FeatureHint';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { haptics } from '@/lib/haptics';
+import { checkRiskLimits, DEFAULT_RISK_LIMITS } from '@/lib/risk-limits';
 
 interface TradeFormProps {
   T: TradingTheme;
@@ -13,6 +14,7 @@ interface TradeFormProps {
   isRTL: boolean;
   trade?: Trade | null;
   currentBalance: number;
+  trades?: Trade[];
   onSave: (trade: Omit<Trade, 'id' | 'balance'>) => void;
   onClose: () => void;
 }
@@ -49,7 +51,7 @@ const detectCategory = (symbol: string): AssetCategory => {
   return 'Crypto';
 };
 
-export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose }: TradeFormProps) => {
+export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onSave, onClose }: TradeFormProps) => {
   const isMobile = useIsMobile();
   const [step, setStep] = useState(0); // 0,1,2
   const [assetCategory, setAssetCategory] = useState<AssetCategory>(() => trade?.coin ? detectCategory(trade.coin) : 'Crypto');
@@ -58,6 +60,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
   const [stopPips, setStopPips] = useState(0);
   const [stopPercent, setStopPercent] = useState(0);
   const [stopDollar, setStopDollar] = useState(0);
+  const [contracts, setContracts] = useState<number>(trade?.positionSize || 1);
 
   const [form, setForm] = useState({
     date: trade?.date || new Date().toISOString().slice(0, 16),
@@ -76,6 +79,26 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
     comments: trade?.comments || '',
   });
   const [errors, setErrors] = useState<string[]>([]);
+  const [overrideLimit, setOverrideLimit] = useState(false);
+
+  // ── Futures tick economics ────────────────────────────────────────
+  const tickInfo = assetCategory === 'Futures' ? TICK_VALUES[form.coin] : undefined;
+  const isFutures = !!tickInfo;
+
+  /** $ value of 1 contract per unit price-move (e.g. MNQ = $0.50 / 0.25pt = $2/pt). */
+  const dollarPerPoint = tickInfo ? tickInfo.value / tickInfo.tick : 0;
+
+  /** Auto-derive $ risk from contracts × stop-distance for futures. */
+  useEffect(() => {
+    if (!isFutures) return;
+    if (!form.entry || !form.stopLoss || !contracts) return;
+    const stopPts = Math.abs(form.entry - form.stopLoss);
+    const dollarRisk = +(contracts * stopPts * dollarPerPoint).toFixed(2);
+    if (Math.abs(dollarRisk - form.risk) > 0.005) {
+      setForm(f => ({ ...f, risk: dollarRisk, riskPct: currentBalance > 0 ? (dollarRisk / currentBalance) * 100 : 0, positionSize: contracts }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFutures, form.entry, form.stopLoss, contracts, dollarPerPoint]);
 
   const STEPS = [
     { title: isRTL ? 'מה סחרת ומתי' : 'What & When', sub: isRTL ? 'בחר את הנכס, הכיוון והזמן' : 'Pick asset, direction and time' },
@@ -162,7 +185,10 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
     const actualMove = direction === 'Long' ? exit - entry : entry - exit;
     const returnR = riskPerUnit > 0 ? actualMove / riskPerUnit : 0;
     const expectedLoss = risk * 0.975;
-    const pnl = returnR * risk;
+    // Futures: P&L = contracts × price-move × $/point. Otherwise: R × $ risked.
+    const pnl = isFutures
+      ? contracts * actualMove * dollarPerPoint
+      : returnR * risk;
     const winLoss: Trade['winLoss'] = pnl > 0.05 ? 'Win' : pnl < -0.05 ? 'Loss' : 'Break Even';
     const deviation = returnR < 0 ? Math.max(0, Math.abs(returnR) - 1) : 0;
     return { returnR, pnl, winLoss, expectedLoss, deviation };
@@ -195,15 +221,45 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
     const errs = validateStep(1);
     if (errs.length) { setErrors(errs); setStep(1); return; }
     const { returnR, pnl, winLoss, expectedLoss, deviation } = calc();
+    // Block save if this trade would breach a tier-limit and user hasn't acknowledged.
+    if (limitProjection?.newlyBreached && !overrideLimit) {
+      setErrors([isRTL
+        ? 'העסקה הזו חוצה מגבלת סיכון. אשר את התיבה למטה כדי לשמור בכל זאת.'
+        : 'This trade breaches a risk limit. Tick the checkbox below to save anyway.']);
+      return;
+    }
     onSave({
       date: form.date, day: form.day, coin: form.coin, direction: form.direction, orderType: form.orderType,
       entry: form.entry, stopLoss: form.stopLoss, exit: form.exit, returnR, winLoss, risk: form.risk,
-      expectedLoss, pnl, deviation, positionSize: form.positionSize || autoCalcPositionSize, leverage: form.leverage,
+      expectedLoss, pnl, deviation, positionSize: isFutures ? contracts : (form.positionSize || autoCalcPositionSize), leverage: form.leverage,
       riskPct: form.riskPct, rules: form.rules, comments: form.comments,
     } as Omit<Trade, 'id' | 'balance'>);
   };
 
   const { returnR, pnl, winLoss } = calc();
+
+  // ── Daily / weekly / monthly limit projection (Step 3 warning) ───
+  const limitProjection = useMemo(() => {
+    if (!form.entry || !form.stopLoss || !form.exit) return null;
+    const refDate = new Date(form.date || Date.now());
+    const simulatedTrade = {
+      ...(trade || {}),
+      date: form.date,
+      returnR,
+      pnl,
+      stopLoss: form.stopLoss,
+      manual_r_multiple: null,
+      manualR: null,
+    } as Trade;
+    const others = trades.filter(t => t.id !== (trade?.id ?? -1));
+    const before = checkRiskLimits(others, refDate, DEFAULT_RISK_LIMITS);
+    const after = checkRiskLimits([...others, simulatedTrade], refDate, DEFAULT_RISK_LIMITS);
+    const newlyBreached =
+      (after.dailyBreached && !before.dailyBreached) ||
+      (after.weeklyBreached && !before.weeklyBreached) ||
+      (after.monthlyBreached && !before.monthlyBreached);
+    return { before, after, newlyBreached, simulatedR: returnR };
+  }, [form.date, form.entry, form.stopLoss, form.exit, returnR, pnl, trades, trade, form.stopLoss]);
 
   // ── Big, friendly styles ──
   const bigInput = {
@@ -500,24 +556,52 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
                 </div>
               </div>
 
-              <div style={sectionCard}>
-                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
-                  <div>
-                    <label style={bigLabel}>{isRTL ? 'מינוף' : 'Leverage'}</label>
-                    <input type="number" inputMode="numeric" value={form.leverage} onChange={e => setForm(f => ({ ...f, leverage: +e.target.value }))} style={bigInput} />
-                  </div>
-                  <div>
-                    <label style={bigLabel}>{isRTL ? 'גודל פוזיציה' : 'Position size'}</label>
-                    <input type="number" step="any" inputMode="decimal" value={form.positionSize || ''} onChange={e => setForm(f => ({ ...f, positionSize: +e.target.value }))} placeholder={isRTL ? 'אופציונלי' : 'Optional'} style={bigInput} />
-                    {autoCalcPositionSize > 0 && !form.positionSize && (
-                      <button onClick={() => setForm(f => ({ ...f, positionSize: +autoCalcPositionSize.toFixed(4) }))}
-                        style={{ fontSize: 12, color: T.accent.cyan, background: 'none', border: 'none', cursor: 'pointer', marginTop: 6, padding: 0, fontWeight: 600 }}>
-                        ✨ {isRTL ? 'חשב אוטומטית:' : 'Auto-fill:'} {autoCalcPositionSize.toFixed(4)}
-                      </button>
+              {isFutures && (
+                <div style={{ ...sectionCard, border: `1.5px solid ${T.accent.orange}50`, background: `${T.accent.orange}08` }}>
+                  <label style={bigLabel}>
+                    {isRTL ? `כמה חוזים סחרת? · ${form.coin}` : `How many contracts? · ${form.coin}`}
+                  </label>
+                  <input
+                    type="number" inputMode="numeric" min={1} step={1}
+                    value={contracts || ''}
+                    onChange={e => setContracts(Math.max(0, +e.target.value || 0))}
+                    placeholder="1"
+                    style={bigInput}
+                  />
+                  <div style={{ marginTop: 10, padding: 10, background: T.bg.tertiary, borderRadius: 10, fontSize: 12, color: T.text.secondary, fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.7 }}>
+                    <div>{isRTL ? 'גודל טיק:' : 'Tick size:'} <span style={{ color: T.text.primary }}>{tickInfo!.tick}</span> · {isRTL ? 'שווי טיק:' : 'Tick value:'} <span style={{ color: T.accent.cyan }}>${tickInfo!.value.toFixed(2)}</span></div>
+                    <div>{isRTL ? '$ לנקודה לחוזה:' : '$/point per contract:'} <span style={{ color: T.accent.cyan }}>${dollarPerPoint.toFixed(2)}</span></div>
+                    {form.entry > 0 && form.stopLoss > 0 && (
+                      <div style={{ color: T.accent.orange }}>
+                        {isRTL ? 'סיכון מחושב:' : 'Computed risk:'} <span style={{ fontWeight: 700 }}>${form.risk.toFixed(2)}</span>
+                        {' · '}({contracts} × {Math.abs(form.entry - form.stopLoss).toFixed(2)}pt × ${dollarPerPoint.toFixed(2)})
+                      </div>
                     )}
                   </div>
+                  <div style={helpText}>{isRTL ? 'בחוזים עתידיים הסיכון בדולרים מחושב אוטומטית מכמות החוזים × מרחק הסטופ × שווי הטיק.' : 'For futures, $ risk is auto-derived from contracts × stop distance × tick value.'}</div>
                 </div>
-              </div>
+              )}
+
+              {!isFutures && (
+                <div style={sectionCard}>
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
+                    <div>
+                      <label style={bigLabel}>{isRTL ? 'מינוף' : 'Leverage'}</label>
+                      <input type="number" inputMode="numeric" value={form.leverage} onChange={e => setForm(f => ({ ...f, leverage: +e.target.value }))} style={bigInput} />
+                    </div>
+                    <div>
+                      <label style={bigLabel}>{isRTL ? 'גודל פוזיציה' : 'Position size'}</label>
+                      <input type="number" step="any" inputMode="decimal" value={form.positionSize || ''} onChange={e => setForm(f => ({ ...f, positionSize: +e.target.value }))} placeholder={isRTL ? 'אופציונלי' : 'Optional'} style={bigInput} />
+                      {autoCalcPositionSize > 0 && !form.positionSize && (
+                        <button onClick={() => setForm(f => ({ ...f, positionSize: +autoCalcPositionSize.toFixed(4) }))}
+                          style={{ fontSize: 12, color: T.accent.cyan, background: 'none', border: 'none', cursor: 'pointer', marginTop: 6, padding: 0, fontWeight: 600 }}>
+                          ✨ {isRTL ? 'חשב אוטומטית:' : 'Auto-fill:'} {autoCalcPositionSize.toFixed(4)}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div style={sectionCard}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 14, color: T.text.primary, fontWeight: 600 }}>
@@ -580,6 +664,41 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, onSave, onClose 
                   <span style={{ color: T.text.primary, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>${(currentBalance + pnl).toFixed(2)}</span>
                 </div>
               </GlassCard>
+
+              {limitProjection?.newlyBreached && (
+                <div style={{
+                  padding: 14, marginBottom: 14,
+                  background: `${T.accent.red}15`,
+                  border: `2px solid ${T.accent.red}`,
+                  borderRadius: 14,
+                  boxShadow: `0 0 18px ${T.accent.red}40`,
+                  animation: 'scaleIn 0.25s ease',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                    <span style={{ fontSize: 22 }}>🛑</span>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: T.accent.red }}>
+                      {isRTL ? 'התראה: חציית מגבלת סיכון' : 'Alert: Risk Limit Breached'}
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 13, color: T.text.primary, lineHeight: 1.6, marginBottom: 10 }}>
+                    {isRTL
+                      ? `שמירת העסקה תביא אותך למגבלת ה${limitProjection.after.breachedLevel === 'daily' ? 'יומית' : limitProjection.after.breachedLevel === 'weekly' ? 'שבועית' : 'חודשית'}. `
+                      : `Saving this trade will hit your ${limitProjection.after.breachedLevel} loss limit. `}
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", color: T.accent.red, fontWeight: 700 }}>
+                      {limitProjection.after.dailyNegR.toFixed(2)}R {isRTL ? 'יומי' : 'daily'} ·{' '}
+                      {limitProjection.after.weeklyNegR.toFixed(2)}R {isRTL ? 'שבועי' : 'weekly'} ·{' '}
+                      {limitProjection.after.monthlyNegR.toFixed(2)}R {isRTL ? 'חודשי' : 'monthly'}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 12, color: T.text.secondary, marginBottom: 10 }}>
+                    {isRTL ? limitProjection.after.messageHe : limitProjection.after.message}
+                  </div>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: T.text.primary, fontWeight: 600 }}>
+                    <input type="checkbox" checked={overrideLimit} onChange={e => setOverrideLimit(e.target.checked)} style={{ accentColor: T.accent.red, width: 18, height: 18 }} />
+                    {isRTL ? 'אני מבין את הסיכון ורוצה לשמור בכל זאת' : 'I understand and want to save anyway'}
+                  </label>
+                </div>
+              )}
 
               <div style={{ fontSize: 12, color: T.text.muted, textAlign: 'center', marginBottom: 6 }}>
                 {isRTL ? 'בדוק את הנתונים. כדי לתקן — חזור אחורה.' : 'Review the details. Hit Back to make changes.'}
