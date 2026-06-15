@@ -146,10 +146,9 @@ function buildRow(uid: string, t: Trade) {
   const prov = withMeta.__provenance;
   const portfolioId = withMeta.__portfolio_id ?? getActivePortfolioIdGlobal();
   if (!portfolioId) {
-    // Hard fail rather than silently write a row with NULL portfolio_id —
-    // the DB will reject it anyway (NOT NULL) and we want a clear stack.
     throw new Error('[storage] cannot save trade: no active portfolio');
   }
+  assertWritable(portfolioId);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { __provenance, __portfolio_id, ...clean } = withMeta as Trade & Record<string, unknown>;
   const row: Record<string, unknown> = {
