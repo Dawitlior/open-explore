@@ -143,16 +143,19 @@ export const ReviewDashboard = ({
               )}
               {isChartVisible('pnlDistribution') && (
                 <div className="dash-chart-card">
-                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.pnlDistribution} explanation={EXPLANATIONS.pnlDistribution} unit="$" chartId="pnlDistribution" onRemove={handleHideChart}>
+                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.pnlDistribution} explanation={EXPLANATIONS.pnlDistribution} unit={isMoney ? '$' : 'R'} chartId="pnlDistribution" onRemove={handleHideChart}>
                     <div className="dash-chart-h-sm">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={trades.map((tr: Trade) => ({ id: tr.id, pnl: tr.pnl }))} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
+                        <BarChart data={trades.map((tr: Trade) => ({ id: tr.id, v: isMoney ? (Number.isFinite(tr.pnl) ? tr.pnl : 0) : (hasStrictR(tr) ? getEffectiveR(tr) : 0) }))} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
                           <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 10 }} interval="preserveStartEnd" minTickGap={24} />
                           <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} width={40} />
-                          <Tooltip contentStyle={tt} />
-                          <Bar dataKey="pnl" radius={[4,4,0,0]}>
-                            {trades.map((tr: Trade, i: number) => <Cell key={i} fill={tr.pnl >= 0 ? T.accent.green : T.accent.red} />)}
+                          <Tooltip contentStyle={tt} formatter={(v: any) => isMoney ? `$${Number(v).toFixed(2)}` : `${Number(v).toFixed(2)}R`} />
+                          <Bar dataKey="v" radius={[4,4,0,0]}>
+                            {trades.map((tr: Trade, i: number) => {
+                              const v = isMoney ? tr.pnl : (hasStrictR(tr) ? getEffectiveR(tr) : 0);
+                              return <Cell key={i} fill={v >= 0 ? T.accent.green : T.accent.red} />;
+                            })}
                           </Bar>
                         </BarChart>
                       </ResponsiveContainer>
