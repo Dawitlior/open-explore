@@ -313,13 +313,13 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, marginBottom: 14 }}>
           <Stat label={L.rr}      value={rr.rr ? rr.rr.toFixed(2) : '0.00'}         card={cardSubtle} sl={statLabel} sv={statValue} color={fg} />
-          <DualStat label={L.winR}    r={fmtR(rr.avgWin)}   d={fmtUSD(wk.avgWinUSD)}  isUSD={isUSD}
+          <DualStat label={L.winR}    r={fmtR(rr.avgWin)}   d={fmtUSD(wk.avgWinUSD)}  isUSD={showUSD}
                     card={cardSubtle} sl={statLabel} sv={statValue} color={win} muted={muted} />
-          <DualStat label={L.avgR}    r={fmtR(wk.avgR)}     d={fmtUSD(wk.avgUSD)}     isUSD={isUSD}
+          <DualStat label={L.avgR}    r={fmtR(wk.avgR)}     d={fmtUSD(wk.avgUSD)}     isUSD={showUSD}
                     card={cardSubtle} sl={statLabel} sv={statValue} color={wk.avgR >= 0 ? win : loss} muted={muted} />
           <Stat label={L.winRate} value={`${Math.round(wk.winRate * 100)}%`}        card={cardSubtle} sl={statLabel} sv={statValue} color={wk.winRate >= 0.5 ? win : loss} />
           <Stat label={L.tradesK} value={String(n)}                                  card={cardSubtle} sl={statLabel} sv={statValue} color={fg} />
-          <DualStat label={L.netR}    r={fmtR(wk.netR)}     d={fmtUSD(wk.netUSD)}     isUSD={isUSD}
+          <DualStat label={L.netR}    r={fmtR(wk.netR)}     d={fmtUSD(wk.netUSD)}     isUSD={showUSD}
                     card={cardSubtle} sl={statLabel} sv={statValue} color={wk.netR >= 0 ? win : loss} muted={muted} />
         </div>
 
