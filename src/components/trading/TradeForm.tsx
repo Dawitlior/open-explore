@@ -556,24 +556,52 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                 </div>
               </div>
 
-              <div style={sectionCard}>
-                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
-                  <div>
-                    <label style={bigLabel}>{isRTL ? 'מינוף' : 'Leverage'}</label>
-                    <input type="number" inputMode="numeric" value={form.leverage} onChange={e => setForm(f => ({ ...f, leverage: +e.target.value }))} style={bigInput} />
-                  </div>
-                  <div>
-                    <label style={bigLabel}>{isRTL ? 'גודל פוזיציה' : 'Position size'}</label>
-                    <input type="number" step="any" inputMode="decimal" value={form.positionSize || ''} onChange={e => setForm(f => ({ ...f, positionSize: +e.target.value }))} placeholder={isRTL ? 'אופציונלי' : 'Optional'} style={bigInput} />
-                    {autoCalcPositionSize > 0 && !form.positionSize && (
-                      <button onClick={() => setForm(f => ({ ...f, positionSize: +autoCalcPositionSize.toFixed(4) }))}
-                        style={{ fontSize: 12, color: T.accent.cyan, background: 'none', border: 'none', cursor: 'pointer', marginTop: 6, padding: 0, fontWeight: 600 }}>
-                        ✨ {isRTL ? 'חשב אוטומטית:' : 'Auto-fill:'} {autoCalcPositionSize.toFixed(4)}
-                      </button>
+              {isFutures && (
+                <div style={{ ...sectionCard, border: `1.5px solid ${T.accent.orange}50`, background: `${T.accent.orange}08` }}>
+                  <label style={bigLabel}>
+                    {isRTL ? `כמה חוזים סחרת? · ${form.coin}` : `How many contracts? · ${form.coin}`}
+                  </label>
+                  <input
+                    type="number" inputMode="numeric" min={1} step={1}
+                    value={contracts || ''}
+                    onChange={e => setContracts(Math.max(0, +e.target.value || 0))}
+                    placeholder="1"
+                    style={bigInput}
+                  />
+                  <div style={{ marginTop: 10, padding: 10, background: T.bg.tertiary, borderRadius: 10, fontSize: 12, color: T.text.secondary, fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.7 }}>
+                    <div>{isRTL ? 'גודל טיק:' : 'Tick size:'} <span style={{ color: T.text.primary }}>{tickInfo!.tick}</span> · {isRTL ? 'שווי טיק:' : 'Tick value:'} <span style={{ color: T.accent.cyan }}>${tickInfo!.value.toFixed(2)}</span></div>
+                    <div>{isRTL ? '$ לנקודה לחוזה:' : '$/point per contract:'} <span style={{ color: T.accent.cyan }}>${dollarPerPoint.toFixed(2)}</span></div>
+                    {form.entry > 0 && form.stopLoss > 0 && (
+                      <div style={{ color: T.accent.orange }}>
+                        {isRTL ? 'סיכון מחושב:' : 'Computed risk:'} <span style={{ fontWeight: 700 }}>${form.risk.toFixed(2)}</span>
+                        {' · '}({contracts} × {Math.abs(form.entry - form.stopLoss).toFixed(2)}pt × ${dollarPerPoint.toFixed(2)})
+                      </div>
                     )}
                   </div>
+                  <div style={helpText}>{isRTL ? 'בחוזים עתידיים הסיכון בדולרים מחושב אוטומטית מכמות החוזים × מרחק הסטופ × שווי הטיק.' : 'For futures, $ risk is auto-derived from contracts × stop distance × tick value.'}</div>
                 </div>
-              </div>
+              )}
+
+              {!isFutures && (
+                <div style={sectionCard}>
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
+                    <div>
+                      <label style={bigLabel}>{isRTL ? 'מינוף' : 'Leverage'}</label>
+                      <input type="number" inputMode="numeric" value={form.leverage} onChange={e => setForm(f => ({ ...f, leverage: +e.target.value }))} style={bigInput} />
+                    </div>
+                    <div>
+                      <label style={bigLabel}>{isRTL ? 'גודל פוזיציה' : 'Position size'}</label>
+                      <input type="number" step="any" inputMode="decimal" value={form.positionSize || ''} onChange={e => setForm(f => ({ ...f, positionSize: +e.target.value }))} placeholder={isRTL ? 'אופציונלי' : 'Optional'} style={bigInput} />
+                      {autoCalcPositionSize > 0 && !form.positionSize && (
+                        <button onClick={() => setForm(f => ({ ...f, positionSize: +autoCalcPositionSize.toFixed(4) }))}
+                          style={{ fontSize: 12, color: T.accent.cyan, background: 'none', border: 'none', cursor: 'pointer', marginTop: 6, padding: 0, fontWeight: 600 }}>
+                          ✨ {isRTL ? 'חשב אוטומטית:' : 'Auto-fill:'} {autoCalcPositionSize.toFixed(4)}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div style={sectionCard}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 14, color: T.text.primary, fontWeight: 600 }}>
