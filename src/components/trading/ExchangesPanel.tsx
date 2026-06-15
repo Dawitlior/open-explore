@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/use-auth';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { useTrades } from '@/hooks/use-trades';
 import { runImportWithPreflight } from '@/lib/uie/run-import-with-preflight';
+import { useActivePortfolio } from '@/hooks/use-active-portfolio';
 import { BrokerRegistry } from '@/lib/brokers';
 import type { BrokerMeta } from '@/lib/brokers/types';
 import { useBrokerAccounts } from '@/hooks/use-broker-accounts';
