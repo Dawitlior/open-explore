@@ -15,6 +15,7 @@ import { runImport } from './pipeline';
 import { fileToSheets } from './io';
 import { toLegacyTrade, toEquityPoints, type LegacyTradeDraft } from './adapters/to-journal';
 import { mergeEquityPoints } from './equity-store';
+import { computeFingerprint, loadFingerprint, saveFingerprint } from './fingerprint';
 import type { ImportResult } from './types';
 
 export interface PreflightOpenDetail {
@@ -23,7 +24,10 @@ export interface PreflightOpenDetail {
   result: ImportResult;
   /** Stage 2: re-run the engine with user mapping overrides (columnIndex → field|null). */
   rerun: (overrides: Record<number, string | null>) => Promise<ImportResult>;
-  resolve: (decision: { confirm: boolean; result?: ImportResult }) => void;
+  /** Stage 3: overrides remembered from a previous import of the same file shape. */
+  initialOverrides?: Record<number, string | null>;
+  fromMemory?: boolean;
+  resolve: (decision: { confirm: boolean; result?: ImportResult; overrides?: Record<number, string | null> }) => void;
 }
 
 export interface PreflightOutcome {
