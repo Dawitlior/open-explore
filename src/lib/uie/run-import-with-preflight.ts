@@ -148,6 +148,7 @@ export async function runImportWithPreflight(
       rerun,
       initialOverrides,
       fromMemory: !!initialOverrides,
+      targetPortfolio: opts.targetPortfolio ?? { id: targetPortfolioId },
       resolve,
     };
     if (typeof window !== 'undefined') {
