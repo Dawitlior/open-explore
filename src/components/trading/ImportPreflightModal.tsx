@@ -193,32 +193,107 @@ export function ImportPreflightRoot() {
 
           {/* Mapping table */}
           <div>
-            <div style={{ fontSize: 12, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 10, fontFamily: 'IBM Plex Mono, monospace' }}>
-              {rtl ? 'מיפוי עמודות' : 'Column Mapping'} · {rows.length}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+              <div style={{ flex: 1, fontSize: 12, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1.2, fontFamily: 'IBM Plex Mono, monospace' }}>
+                {rtl ? 'מיפוי עמודות' : 'Column Mapping'} · {rows.length}
+              </div>
+              {pendingChanges > 0 && (
+                <span style={{ fontSize: 10, padding: '3px 8px', borderRadius: 6, background: 'rgba(245,158,11,0.15)', color: '#f59e0b', fontFamily: 'IBM Plex Mono, monospace' }}>
+                  {pendingChanges} {rtl ? 'שינויים בהמתנה' : 'pending'}
+                </span>
+              )}
+              <button
+                onClick={() => { setEditMode((v) => !v); }}
+                style={{
+                  padding: '6px 12px', borderRadius: 8, fontSize: 11,
+                  background: editMode ? 'rgba(56,189,248,0.15)' : 'transparent',
+                  color: editMode ? '#38bdf8' : '#94a3b8',
+                  border: `1px solid ${editMode ? 'rgba(56,189,248,0.45)' : 'rgba(148,163,184,0.25)'}`,
+                  cursor: 'pointer', fontFamily: 'IBM Plex Mono, monospace', letterSpacing: 0.5,
+                }}
+              >
+                {editMode ? (rtl ? '✓ עריכה פעילה' : '✓ Editing') : (rtl ? '✎ ערוך מיפוי' : '✎ Edit mapping')}
+              </button>
+              {editMode && pendingChanges > 0 && (
+                <button
+                  onClick={applyOverrides}
+                  disabled={applying}
+                  style={{
+                    padding: '6px 14px', borderRadius: 8, fontSize: 11,
+                    background: applying ? 'rgba(148,163,184,0.2)' : 'linear-gradient(135deg, #10b981, #059669)',
+                    color: '#0a1628', border: 'none', cursor: applying ? 'wait' : 'pointer',
+                    fontFamily: 'IBM Plex Mono, monospace', fontWeight: 700, letterSpacing: 0.5,
+                  }}
+                >
+                  {applying ? (rtl ? 'מריץ…' : 'Running…') : (rtl ? 'החל ונתח מחדש' : 'Apply & re-run')}
+                </button>
+              )}
             </div>
             <div style={{ border: '1px solid rgba(148,163,184,0.12)', borderRadius: 12, overflow: 'hidden' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '32px 1fr 1fr 60px 2fr', padding: '10px 14px', background: 'rgba(15,23,42,0.85)', fontSize: 10, color: '#64748b', textTransform: 'uppercase', letterSpacing: 1 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: editMode ? '32px 1fr 1.4fr 60px 1.6fr' : '32px 1fr 1fr 60px 2fr', padding: '10px 14px', background: 'rgba(15,23,42,0.85)', fontSize: 10, color: '#64748b', textTransform: 'uppercase', letterSpacing: 1 }}>
                 <div>#</div>
                 <div>{rtl ? 'עמודה מקור' : 'Source column'}</div>
                 <div>{rtl ? 'שדה קנוני' : 'Canonical field'}</div>
                 <div style={{ textAlign: 'center' }}>{rtl ? 'ודאות' : 'Conf.'}</div>
                 <div>{rtl ? 'ראיות' : 'Evidence'}</div>
               </div>
-              <div style={{ maxHeight: 320, overflowY: 'auto' }}>
+              <div style={{ maxHeight: 360, overflowY: 'auto' }}>
                 {rows.map((row) => {
                   const fm = row.fm;
                   const chip = fm ? statusChip(fm.status) : statusChip('unmapped');
+                  const hasOverride = Object.prototype.hasOwnProperty.call(overrides, row.absCol);
+                  const currentValue = hasOverride
+                    ? (overrides[row.absCol] === null ? '__ignore__' : (overrides[row.absCol] as string))
+                    : (fm?.field || '__unmapped__');
                   return (
                     <div key={row.idx} style={{
-                      display: 'grid', gridTemplateColumns: '32px 1fr 1fr 60px 2fr',
+                      display: 'grid', gridTemplateColumns: editMode ? '32px 1fr 1.4fr 60px 1.6fr' : '32px 1fr 1fr 60px 2fr',
                       padding: '10px 14px', borderTop: '1px solid rgba(148,163,184,0.08)',
                       fontSize: 12, color: '#cbd5e1', alignItems: 'center',
+                      background: hasOverride ? 'rgba(245,158,11,0.05)' : 'transparent',
                     }}>
                       <div style={{ color: '#475569', fontFamily: 'IBM Plex Mono, monospace' }}>{row.idx + 1}</div>
                       <div style={{ fontFamily: 'IBM Plex Mono, monospace', color: '#e2e8f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.header}</div>
-                      <div style={{ color: fm?.field ? '#38bdf8' : '#64748b' }}>
-                        {fm?.field || (rtl ? '— לא ממופה —' : '— unmapped —')}
-                        {fm?.destination ? <span style={{ marginLeft: 6, marginRight: 6, fontSize: 10, color: '#64748b' }}>· {fm.destination}</span> : null}
+                      <div>
+                        {editMode ? (
+                          <select
+                            value={currentValue}
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              setOverrides((prev) => {
+                                const next = { ...prev };
+                                if (v === '__unmapped__') {
+                                  // revert to engine default → clear override
+                                  delete next[row.absCol];
+                                } else if (v === '__ignore__') {
+                                  next[row.absCol] = null;
+                                } else {
+                                  next[row.absCol] = v;
+                                }
+                                return next;
+                              });
+                            }}
+                            style={{
+                              width: '100%', padding: '5px 8px', borderRadius: 6,
+                              background: '#0a1628', color: '#e2e8f0',
+                              border: '1px solid rgba(56,189,248,0.25)',
+                              fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, cursor: 'pointer',
+                            }}
+                          >
+                            <option value="__unmapped__">{rtl ? '— ברירת מחדל —' : '— auto —'}</option>
+                            <option value="__ignore__">{rtl ? '🚫 התעלם מעמודה' : '🚫 Ignore column'}</option>
+                            <optgroup label={rtl ? 'שדות קנוניים' : 'Canonical fields'}>
+                              {fieldOptions.map((f) => (
+                                <option key={f} value={f}>{f}</option>
+                              ))}
+                            </optgroup>
+                          </select>
+                        ) : (
+                          <span style={{ color: fm?.field ? '#38bdf8' : '#64748b' }}>
+                            {fm?.field || (rtl ? '— לא ממופה —' : '— unmapped —')}
+                            {fm?.destination ? <span style={{ marginLeft: 6, marginRight: 6, fontSize: 10, color: '#64748b' }}>· {fm.destination}</span> : null}
+                          </span>
+                        )}
                       </div>
                       <div style={{ textAlign: 'center', color: chip.color, fontSize: 16 }}>{chip.label}</div>
                       <div style={{ color: '#94a3b8', fontSize: 11, fontFamily: 'IBM Plex Mono, monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -229,7 +304,15 @@ export function ImportPreflightRoot() {
                 })}
               </div>
             </div>
+            {editMode && (
+              <div style={{ marginTop: 8, fontSize: 11, color: '#64748b', fontFamily: 'IBM Plex Mono, monospace' }}>
+                {rtl
+                  ? 'שנה מיפוי או בחר "התעלם מעמודה". לחץ "החל ונתח מחדש" כדי שהמנוע יריץ שוב עם השינויים שלך.'
+                  : 'Change a mapping or pick "Ignore column". Click "Apply & re-run" to re-process the file with your overrides.'}
+              </div>
+            )}
           </div>
+
 
           {/* Gap items */}
           {r.gap.items.length > 0 && (
