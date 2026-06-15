@@ -235,6 +235,15 @@ export function ImportPreflightRoot() {
             <div style={{ fontSize: 12, color: T.textMuted, marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {open.fileName}
             </div>
+            {open.targetPortfolio?.name && (
+              <div style={{ marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 8, padding: '4px 10px', borderRadius: 999, background: 'rgba(34,211,238,0.08)', border: '1px solid rgba(34,211,238,0.25)' }}>
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: open.targetPortfolio.color || '#22d3ee', boxShadow: `0 0 6px ${(open.targetPortfolio.color || '#22d3ee')}80`, display: 'inline-block' }} />
+                <span style={{ fontSize: 11, color: '#7dd3fc', fontFamily: T.font, letterSpacing: 0.2 }}>
+                  {rtl ? 'ייובא לתיק:' : 'Importing into:'} <span style={{ color: '#e0f2fe', fontWeight: 600 }}>{open.targetPortfolio.name}</span>
+                  {open.targetPortfolio.currency ? <span style={{ color: T.textMuted, marginInlineStart: 6 }}>· {open.targetPortfolio.currency}</span> : null}
+                </span>
+              </div>
+            )}
           </div>
           {open.fromMemory && (
             <div
