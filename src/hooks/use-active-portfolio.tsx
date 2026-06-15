@@ -70,7 +70,7 @@ function writeStoredId(id: string | null) {
 
 export function ActivePortfolioProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const { tier } = useEntitlement();
+  const { tier, loading: tierLoading } = useEntitlement();
   const {
     portfolios,
     loading,
