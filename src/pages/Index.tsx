@@ -25,6 +25,7 @@ import { SettingsHub } from '@/components/trading/SettingsHub';
 
 import { DesktopOnlyGate } from '@/components/trading/DesktopOnlyGate';
 import { NavAvatar } from '@/components/trading/NavAvatar';
+import { PortfolioSwitcher } from '@/components/trading/PortfolioSwitcher';
 import { DeploymentToast } from '@/components/DeploymentToast';
 
 import { RiskOnboardingWizard, shouldShowRiskOnboarding } from '@/components/trading/RiskOnboardingWizard';
