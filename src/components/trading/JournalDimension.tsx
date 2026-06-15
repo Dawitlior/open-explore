@@ -6,6 +6,34 @@ import { playSystemOpen, playMorningLock, playEODLock, playRiskAlert } from '@/l
 import { MORNING_VARIATIONS, EOD_VARIATIONS } from '@/lib/journal-demo-data';
 import { getR, sumR, formatR } from '@/lib/r-multiple';
 
+// ─── Display-mode awareness ────────────────────────────────────
+// Lightweight hook so any sub-component can hide $ amounts when the
+// user is in R-Multiple mode. Mirrors the key used by display-mode.tsx.
+const JDM_KEY = 'orca:displayMode';
+function useJournalIsR(): boolean {
+  const [isR, setIsR] = useState<boolean>(() => {
+    try { return typeof window !== 'undefined' && window.localStorage.getItem(JDM_KEY) === 'R_MULTIPLE'; }
+    catch { return false; }
+  });
+  useEffect(() => {
+    const onChange = (e: Event) => {
+      const ce = e as CustomEvent<string>;
+      if (ce.detail === 'R_MULTIPLE' || ce.detail === 'MONEY') setIsR(ce.detail === 'R_MULTIPLE');
+    };
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === JDM_KEY) setIsR(e.newValue === 'R_MULTIPLE');
+    };
+    window.addEventListener('orca:displayMode-changed', onChange);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener('orca:displayMode-changed', onChange);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, []);
+  return isR;
+}
+
+
 // ═══════════════════════════════════════════════════════════════
 // CINEMATIC ENTRY SCREEN
 // ═══════════════════════════════════════════════════════════════
