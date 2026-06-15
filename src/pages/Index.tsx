@@ -483,7 +483,7 @@ const Index = () => {
       finally { setImportLoading(false); }
     };
     input.click();
-  }, [importTrades, isRTL]);
+  }, [importTrades, isRTL, activePortfolio, isActivePortfolioLocked]);
   const [exiting, setExiting] = useState(false);
   const handleLogout = useCallback(() => {
     setExiting(true);
