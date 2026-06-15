@@ -7,6 +7,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDashboardConfig, evalCustomKPI } from '@/hooks/use-dashboard-config';
 import type { TradingTheme } from '@/lib/trading-theme';
+import { useDisplayMode } from '@/lib/display-mode';
 
 interface Stats {
   totalTrades: number;
@@ -20,11 +21,16 @@ interface Stats {
   expectancy?: number;
   expectancyR?: number;
   profitFactor: number;
+  profitFactorR?: number;
   maxDrawdown: number;
   totalR?: number;
   avgR?: number;
+  avgWinR?: number;
+  avgLossR?: number;
   bestTrade?: number;
   worstTrade?: number;
+  bestTradeR?: number;
+  worstTradeR?: number;
 }
 
 interface Props {
@@ -33,9 +39,11 @@ interface Props {
   stats: Stats;
 }
 
-const formatValue = (v: number, fmt: 'number' | 'currency' | 'percent' | 'r-multiple'): string => {
+const formatValue = (v: number, fmt: 'number' | 'currency' | 'percent' | 'r-multiple', isR: boolean): string => {
   if (!Number.isFinite(v)) return '—';
-  switch (fmt) {
+  // In R-only mode, swap $ formatting to R so the unit matches the swapped value source.
+  const effectiveFmt = isR && fmt === 'currency' ? 'r-multiple' : fmt;
+  switch (effectiveFmt) {
     case 'currency':   return (v >= 0 ? '$' : '-$') + Math.abs(v).toFixed(2);
     case 'percent':    return v.toFixed(1) + '%';
     case 'r-multiple': return (v >= 0 ? '+' : '') + v.toFixed(2) + 'R';
@@ -45,24 +53,29 @@ const formatValue = (v: number, fmt: 'number' | 'currency' | 'percent' | 'r-mult
 
 export function CustomKPIPanel({ T, isRTL, stats }: Props) {
   const { kpis, loaded } = useDashboardConfig();
+  const { displayMode } = useDisplayMode();
+  const isR = displayMode === 'R_MULTIPLE';
   if (!loaded || kpis.length === 0) return null;
 
+  // In R-only mode, remap $ stat keys to their R counterparts so user-defined
+  // KPIs (Total P&L, Avg Win, Avg Loss, Profit Factor, Best/Worst Trade) show
+  // real values instead of 0.
   const ctx = {
     totalTrades:   stats.totalTrades,
     wins:          stats.wins,
     losses:        stats.losses,
     breakEven:     stats.breakEven ?? 0,
     winRate:       stats.winRate,
-    totalPnl:      stats.totalPnl,
-    avgWin:        stats.avgWin,
-    avgLoss:       stats.avgLoss,
-    expectancy:    stats.expectancy ?? 0,
-    profitFactor:  stats.profitFactor,
+    totalPnl:      isR ? (stats.totalR ?? 0) : stats.totalPnl,
+    avgWin:        isR ? (stats.avgWinR ?? 0) : stats.avgWin,
+    avgLoss:       isR ? (stats.avgLossR ?? 0) : stats.avgLoss,
+    expectancy:    isR ? (stats.expectancyR ?? 0) : (stats.expectancy ?? 0),
+    profitFactor:  isR ? (stats.profitFactorR ?? 0) : stats.profitFactor,
     maxDrawdown:   stats.maxDrawdown,
     totalR:        stats.totalR ?? 0,
     avgR:          stats.avgR ?? 0,
-    bestTrade:     stats.bestTrade ?? 0,
-    worstTrade:    stats.worstTrade ?? 0,
+    bestTrade:     isR ? (stats.bestTradeR ?? 0) : (stats.bestTrade ?? 0),
+    worstTrade:    isR ? (stats.worstTradeR ?? 0) : (stats.worstTrade ?? 0),
   };
 
   return (
