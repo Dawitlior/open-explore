@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, lazy, Suspense } from 'react';
 import { OnboardingWizard, shouldShowOnboarding } from '@/components/trading/OnboardingWizard';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell, ComposedChart, ScatterChart, Scatter, ZAxis, ReferenceLine } from 'recharts';
 import type { Trade } from '@/data/trades';
@@ -39,7 +39,6 @@ import { MainPullToRefresh } from '@/components/trading/MainPullToRefresh';
 const ReviewDashboard = lazy(() => import('@/components/dashboard/ReviewDashboard').then(m => ({ default: m.ReviewDashboard })));
 import { MobileTradeCard } from '@/components/trading/MobileTradeCard';
 import { RiskExplanationModal, type RiskExplanation } from '@/components/trading/RiskExplanationModal';
-import { lazy, Suspense } from 'react';
 import { toast } from 'sonner';
 import { LazyShell } from '@/components/LazyShell';
 const AdvancedRiskPage = lazy(() => import('@/components/trading/AdvancedRiskPage').then(m => ({ default: m.AdvancedRiskPage })));
