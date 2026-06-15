@@ -280,13 +280,7 @@ const CalendarHubPage_Impl = ({ T, isRTL, trades, t, isMobile, onGenerateInsight
      ========================================================= */
   return (
     <div style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
-      <FeatureHint
-        T={T}
-        id="calendar-hub-page-fullscreen"
-        text={isRTL
-          ? 'מרכז לוח השנה — תצוגה מלאה ומסך-מלא של ביצועי החודש. לחץ על יום כדי לראות עסקאות ולהוסיף תובנה.'
-          : 'Calendar Hub — full-screen monthly performance. Click any day to see trades and generate insights.'}
-      />
+
 
       {calRiskStatus.monthlyBreached && (
         <div style={{ padding: '10px 16px', background: `${T.accent.red}15`, border: `2px solid ${T.accent.red}40`, borderRadius: T.radius.md, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
