@@ -6,6 +6,8 @@ import { useAuth } from '@/hooks/use-auth';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { useTrades } from '@/hooks/use-trades';
 import { ingestFileToTrades } from '@/lib/ingestion/file-import';
+import { isUIEEnabled } from '@/lib/uie/flag';
+import { runImportWithPreflight } from '@/lib/uie/run-import-with-preflight';
 import { BrokerRegistry } from '@/lib/brokers';
 import type { BrokerMeta } from '@/lib/brokers/types';
 import { useBrokerAccounts } from '@/hooks/use-broker-accounts';
