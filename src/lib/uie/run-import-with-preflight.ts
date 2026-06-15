@@ -108,15 +108,15 @@ export async function runImportWithPreflight(
   }
 
 
-  const drafts = result.trades.map((t) => toLegacyTrade(t, { brokerId, accountLabel }));
-  const eqPoints = toEquityPoints(result.equityEvents);
+  const finalResult = currentResult;
+  const drafts = finalResult.trades.map((t) => toLegacyTrade(t, { brokerId, accountLabel }));
+  const eqPoints = toEquityPoints(finalResult.equityEvents);
   let added = 0;
   if (eqPoints.length > 0) {
     const merged = mergeEquityPoints(eqPoints);
     added = eqPoints.length;
-    // log for trace; merged length tells the post-merge total
     if (typeof console !== 'undefined') console.info('[UIE] equity points merged:', { added, total: merged.length });
   }
 
-  return { ok: true, drafts, equityPointsAdded: added, result };
+  return { ok: true, drafts, equityPointsAdded: added, result: finalResult };
 }
