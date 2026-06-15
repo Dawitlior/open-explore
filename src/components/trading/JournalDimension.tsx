@@ -3489,8 +3489,10 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
 // ═══════════════════════════════════════════════════════════════
 const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, th, risk, onInfoClick, onAddOrcaTrade, onUpdateOrcaTrade, onUpsertJournalTrade }: any) => {
   const f = t.f;
+  const isR = useJournalIsR();
   const U = (k: string) => (v: any) => upd({ [k]: v });
   const dp = sumPnl(day), dw = numWins(day);
+  const dr = (day.trades || []).reduce((s: number, tr: any) => { try { return s + getR(tr); } catch { return s; } }, 0);
   const bridgeTrades = allOrcaTrades || orcaTrades || [];
 
   // Map of Journal-trade-id → Orca-trade-id, kept in a ref so it survives
