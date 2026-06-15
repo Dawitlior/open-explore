@@ -162,7 +162,7 @@ export default function MonthlyArchiveTab({ T, isRTL, trades, state }: Props) {
                         <td style={{ padding: '8px 10px' }}>{m.mk}</td>
                         <td style={{ padding: '8px 10px', textAlign: 'right' }}>{m.trades}</td>
                         <td style={{ padding: '8px 10px', textAlign: 'right', color: m.netR >= 0 ? win : loss, fontWeight: 700 }}>{fmtR(m.netR)}</td>
-                        <td style={{ padding: '8px 10px', textAlign: 'right', color: m.netUSD >= 0 ? win : loss, fontWeight: 700 }}>{fmtUSD(m.netUSD)}</td>
+                        {hasMoney && <td style={{ padding: '8px 10px', textAlign: 'right', color: m.netUSD >= 0 ? win : loss, fontWeight: 700 }}>{fmtUSD(m.netUSD)}</td>}
                         <td style={{ padding: '8px 10px', textAlign: 'right' }}>{Math.round(wr * 100)}%</td>
                         <td style={{ padding: '8px 10px', textAlign: 'right', color: accent, fontWeight: 700 }}>{isOpen ? '▼' : '▶'}</td>
                       </tr>
