@@ -44,6 +44,13 @@ export interface LegacyTradeDraft {
   leverage: number | null;
   pnl: number | null;
   fees: number;
+  // ── R / outcome (the dashboard reads these for R_MODE) ──
+  returnR: number | null;       // R-multiple of the trade
+  manualR: number | null;       // Tier-1 override mirror (kept in sync with returnR on import)
+  manual_r_multiple: number | null;
+  risk: number | null;          // risk amount ($) if present
+  riskPct: number | null;       // risk %
+  winLoss: 'Win' | 'Loss' | 'Break Even';
   orderType?: string;
   comments?: string;
   rules?: boolean | null;
@@ -126,6 +133,10 @@ export function toNormalizedTrade(t: CanonicalTrade, opts: AdapterOptions = {}):
 export function toLegacyTrade(t: CanonicalTrade, opts: AdapterOptions = {}): LegacyTradeDraft {
   const brokerId = opts.brokerId || 'import';
   const account = opts.accountLabel ?? null;
+  const rMult = t.rMultiple ?? null;
+  const basis = (t.pnl != null && t.pnl !== 0) ? t.pnl : (rMult != null ? rMult : null);
+  const winLoss: 'Win' | 'Loss' | 'Break Even' = basis == null ? 'Break Even' : basis > 0 ? 'Win' : basis < 0 ? 'Loss' : 'Break Even';
+
   return {
     date: toLegacyDate(t.entryDate),
     coin: t.symbol,
@@ -138,6 +149,12 @@ export function toLegacyTrade(t: CanonicalTrade, opts: AdapterOptions = {}): Leg
     leverage: t.leverage ?? null,
     pnl: t.pnl ?? null,
     fees: t.commission ?? 0,
+    returnR: rMult,
+    manualR: rMult,
+    manual_r_multiple: rMult,
+    risk: t.riskAmount ?? null,
+    riskPct: (t as any).riskPercent ?? null,
+    winLoss,
     orderType: undefined,
     comments: t.notes || '',                   // includes the [ייבוא] notes-overflow (commission etc.)
     rules: null,
