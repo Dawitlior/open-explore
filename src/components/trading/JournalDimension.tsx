@@ -2611,7 +2611,7 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
                     <span style={{ fontSize: 11, fontWeight: 800, color: th.tx }}>{m.label}</span>
                     <div style={{ textAlign: 'right' }}>
                       <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 14, fontWeight: 800, color: c }}>{m.totalR >= 0 ? '+' : ''}{m.totalR.toFixed(1)}R</span>
-                      <span style={{ fontSize: 9, color: c, marginLeft: 6 }}>{m.pnl >= 0 ? '+' : ''}{m.pnl.toFixed(0)}$</span>
+                      {!isR && <span style={{ fontSize: 9, color: c, marginLeft: 6 }}>{m.pnl >= 0 ? '+' : ''}{m.pnl.toFixed(0)}$</span>}
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 8, fontSize: 8, color: th.tx3, flexWrap: 'wrap' as const }}>
