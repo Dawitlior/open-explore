@@ -155,6 +155,10 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
   const wk = useWeekAggregates(trades);
   const { draft, update, hardReset } = useWeekDraft(wk.weekKey);
   const { isUSD } = useReviewUnit();
+  // R-only portfolio guard — when no trade carries real $ data, suppress
+  // misleading "0$" in USD-mode columns / dual-stats.
+  const hasMoney = useMemo(() => trades.some(t => Number(t.pnl) !== 0 && Number.isFinite(Number(t.pnl))), [trades]);
+  const showUSD = isUSD && hasMoney;
   const risk = useRiskPrefs();
   const alreadyClosed = useMemo(
     () => state.archive.some(w => w.weekKey === wk.weekKey),
