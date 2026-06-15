@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { I18nStrings } from '@/lib/trading-i18n';
@@ -6,6 +6,7 @@ import { GlassCard } from './TradingUI';
 import { FeatureHint } from './FeatureHint';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { haptics } from '@/lib/haptics';
+import { checkRiskLimits, DEFAULT_RISK_LIMITS } from '@/lib/risk-limits';
 
 interface TradeFormProps {
   T: TradingTheme;
@@ -13,6 +14,7 @@ interface TradeFormProps {
   isRTL: boolean;
   trade?: Trade | null;
   currentBalance: number;
+  trades?: Trade[];
   onSave: (trade: Omit<Trade, 'id' | 'balance'>) => void;
   onClose: () => void;
 }
