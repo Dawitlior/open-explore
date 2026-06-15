@@ -199,14 +199,17 @@ export function useTrades() {
         return;
       }
 
-      // Sort the combined set chronologically by date (oldest → newest),
-      // then renumber ids so the trade list reflects true chronology
-      // instead of pushing imports to the top.
+      // Sort the combined set chronologically by date (oldest → newest).
+      // CRITICAL: do NOT renumber existing trades — their `id` is referenced by
+      // Journal entries via `__JID:<id>__` tags, by manual-R overrides, and by
+      // dashboard memo keys. Existing ids stay frozen; new imports keep the
+      // fresh ids assigned at line 194 (max(existing)+1, ++). Array order
+      // reflects chronology, but `id` is no longer == index+1.
       const combined = [...existing, ...additions].sort((a, b) => {
         const da = new Date(String(a.date || '').replace(' ', 'T')).getTime() || 0;
         const db = new Date(String(b.date || '').replace(' ', 'T')).getTime() || 0;
         return da - db;
-      }).map((t, i) => ({ ...t, id: i + 1 }));
+      });
 
       const rebalanced = recalcBalances(combined);
       try {
