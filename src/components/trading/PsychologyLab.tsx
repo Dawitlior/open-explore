@@ -112,16 +112,26 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
     return out;
   }, [trades]);
 
-  /* ── Post-Win overconfidence: risk delta after win streaks ── */
+  /* ── Post-Win overconfidence: risk delta after win streaks
+        Falls back to riskPct when risk ($) is not journaled, so it works for
+        every user regardless of whether they log $ risk or % risk. ── */
   const postWin = useMemo(() => {
     let streak = 0;
     const samples: { i: number; deltaPct: number; streak: number }[] = [];
+    const riskOf = (tr: Trade) => {
+      const r = Number(tr.risk) || 0;
+      if (r > 0) return r;
+      const rp = Number(tr.riskPct) || 0;
+      return rp > 0 ? rp : 0;
+    };
     for (let i = 1; i < trades.length; i++) {
       const prev = trades[i - 1];
       if (prev.winLoss === 'Win') streak++; else streak = 0;
       if (streak >= 1) {
         const cur = trades[i];
-        if (prev.risk > 0) samples.push({ i: i + 1, streak, deltaPct: +(((cur.risk - prev.risk) / prev.risk) * 100).toFixed(1) });
+        const prevR = riskOf(prev);
+        const curR = riskOf(cur);
+        if (prevR > 0) samples.push({ i: i + 1, streak, deltaPct: +(((curR - prevR) / prevR) * 100).toFixed(1) });
       }
     }
     return samples;
