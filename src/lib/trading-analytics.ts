@@ -8,6 +8,7 @@ export interface CoinPerf {
   wins: number;
   winRate: string;
   avgR: number;
+  totalR: number;
 }
 
 export interface DirectionData {
