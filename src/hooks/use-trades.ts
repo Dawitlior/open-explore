@@ -24,6 +24,7 @@ export function useTrades() {
   useEffect(() => {
     let cancelled = false;
     const load = () => {
+      setLoading(true);
       getAllTrades().then(t => {
         if (cancelled) return;
         const sanitized = sanitizeTrades(t);
@@ -50,8 +51,14 @@ export function useTrades() {
     };
     load();
     const onSync = () => load();
+    const onPortfolioChanged = () => load();
     window.addEventListener('orca:trades-synced', onSync);
-    return () => { cancelled = true; window.removeEventListener('orca:trades-synced', onSync); };
+    window.addEventListener('orca:active-portfolio-changed', onPortfolioChanged);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('orca:trades-synced', onSync);
+      window.removeEventListener('orca:active-portfolio-changed', onPortfolioChanged);
+    };
   }, []);
 
   const stats = useMemo<TradingStats>(() => {
