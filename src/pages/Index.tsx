@@ -396,7 +396,7 @@ const Index = () => {
   }, []);
   const handleImportConfirmed = useCallback(() => {
     setShowImportWarning(false);
-    const input = document.createElement('input'); input.type = 'file'; input.accept = '.xlsx,.xls,.json';
+    const input = document.createElement('input'); input.type = 'file'; input.accept = '.xlsx,.xls,.csv,.txt,.tsv,.json';
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]; if (!file) return;
       setImportFileName(file.name);
