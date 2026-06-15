@@ -114,8 +114,8 @@ export const MobileBottomNav = ({
         justifyContent: 'space-around',
         height: 'calc(60px + env(safe-area-inset-bottom, 0px))',
         fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
-        transform: 'translateZ(0)',
-        willChange: 'auto',
+        transform: vvOffset ? `translate3d(0, -${vvOffset}px, 0)` : 'translateZ(0)',
+        willChange: 'transform',
         contain: 'layout paint',
         touchAction: 'manipulation',
       }}
