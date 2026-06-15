@@ -75,6 +75,7 @@ export function DisplayModeProvider({ trades, children }: { trades: Trade[]; chi
     if (locked && m === 'R_MULTIPLE') return; // can't enter R without eligible data
     setDisplayModeState(m);
     try { window.localStorage.setItem(STORAGE_KEY, m); } catch { /* ignore */ }
+    try { window.dispatchEvent(new CustomEvent('orca:displayMode-changed', { detail: m })); } catch { /* noop */ }
   };
 
   const visibleTrades = useMemo(
@@ -119,4 +120,49 @@ export function buildHiddenHint(hiddenCount: number, totalCount: number, isRTL: 
   return isRTL
     ? `* מציג ${shown} מתוך ${totalCount} עסקאות (עסקאות ללא סיכון מוגדר הוסתרו)`
     : `* Showing ${shown} of ${totalCount} trades (entries without a defined stop are hidden)`;
+}
+
+/**
+ * useEffectiveDisplayMode — context-free reader of the active display mode.
+ * Works in components that render OUTSIDE DisplayModeProvider's subtree
+ * (e.g. Index.tsx body where the provider lives further down). Stays in sync
+ * via the custom `orca:displayMode-changed` event dispatched by setDisplayMode.
+ *
+ * Pass `trades` to enforce the same "lock to MONEY when no R-eligible rows"
+ * rule as the provider, so the two stay aligned.
+ */
+export function useEffectiveDisplayMode(trades: Trade[]): {
+  displayMode: DisplayMode;
+  isR: boolean;
+  isMoney: boolean;
+  locked: boolean;
+} {
+  const hasAnyR = useMemo(() => trades.some(hasStrictR), [trades]);
+  const [stored, setStored] = useState<DisplayMode>(() => {
+    if (typeof window === 'undefined') return 'MONEY';
+    try {
+      const v = window.localStorage.getItem(STORAGE_KEY);
+      return (v === 'MONEY' || v === 'R_MULTIPLE') ? v : 'R_MULTIPLE';
+    } catch { return 'MONEY'; }
+  });
+  useEffect(() => {
+    const onChange = (e: Event) => {
+      const ce = e as CustomEvent<DisplayMode>;
+      if (ce.detail === 'MONEY' || ce.detail === 'R_MULTIPLE') setStored(ce.detail);
+    };
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY && (e.newValue === 'MONEY' || e.newValue === 'R_MULTIPLE')) {
+        setStored(e.newValue);
+      }
+    };
+    window.addEventListener('orca:displayMode-changed', onChange);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener('orca:displayMode-changed', onChange);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, []);
+  const locked = !hasAnyR;
+  const displayMode: DisplayMode = locked ? 'MONEY' : stored;
+  return { displayMode, isR: displayMode === 'R_MULTIPLE', isMoney: displayMode === 'MONEY', locked };
 }

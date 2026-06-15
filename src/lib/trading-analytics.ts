@@ -8,6 +8,7 @@ export interface CoinPerf {
   wins: number;
   winRate: string;
   avgR: number;
+  totalR: number;
 }
 
 export interface DirectionData {
@@ -46,8 +47,10 @@ export interface RollingMetric {
 
 export interface TradingStats {
   totalPnl: number;
+  totalR: number;
   winRate: number;
   profitFactor: number;
+  profitFactorR: number;
   expectancyR: number;
   avgWinR: number;
   avgLossR: number;
@@ -88,7 +91,7 @@ export interface TradingStats {
 }
 
 const EMPTY_STATS: TradingStats = {
-  totalPnl: 0, winRate: 0, profitFactor: 0, expectancyR: 0, avgWinR: 0, avgLossR: 0,
+  totalPnl: 0, totalR: 0, winRate: 0, profitFactor: 0, profitFactorR: 0, expectancyR: 0, avgWinR: 0, avgLossR: 0,
   expectancyDollar: 0, avgWin: 0, avgLoss: 0, bestTrade: 0, worstTrade: 0, bestTradeR: 0, worstTradeR: 0,
   currentStreak: 0, streakType: '', maxDrawdown: 0,
   equityCurve: [{ trade: 0, balance: 200, pnl: 0 }],
@@ -163,6 +166,11 @@ function _computeAnalyticsInternal(trades: Trade[]): TradingStats {
 
   const avgWinR = wins.length > 0 ? wins.reduce((s, t) => s + Math.abs(getEffectiveR(t)), 0) / wins.length : 0;
   const avgLossR = losses.length > 0 ? losses.reduce((s, t) => s + Math.abs(getEffectiveR(t)), 0) / losses.length : 0;
+  // Gross R wins/losses for R-mode profit factor (works on R-only portfolios).
+  const grossWinR = wins.reduce((s, t) => s + Math.abs(getEffectiveR(t)), 0);
+  const grossLossR = losses.reduce((s, t) => s + Math.abs(getEffectiveR(t)), 0);
+  const profitFactorR = grossLossR > 0 ? grossWinR / grossLossR : (grossWinR > 0 ? Infinity : 0);
+  const totalR = trades.reduce((s, t) => s + getEffectiveR(t), 0);
   const expectancyR = computeExpectancyR(trades);
   const expectancyDollar = trades.length > 0 ? totalPnl / trades.length : 0;
 
@@ -413,7 +421,7 @@ function _computeAnalyticsInternal(trades: Trade[]): TradingStats {
   }
 
   return {
-    totalPnl, winRate, profitFactor, expectancyR, avgWinR, avgLossR, expectancyDollar,
+    totalPnl, totalR, winRate, profitFactor, profitFactorR, expectancyR, avgWinR, avgLossR, expectancyDollar,
     avgWin, avgLoss, bestTrade, worstTrade, bestTradeR, worstTradeR,
     currentStreak, streakType, maxDrawdown: maxDD, equityCurve, coinPerf, directionData,
     orcaScore, edgeHealth, regimeFit, rulesFollowed, maxConsecLosses, rDist,

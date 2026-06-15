@@ -11,7 +11,8 @@ import DashboardAdvancedLab from './DashboardAdvancedLab';
 import { TierGate } from '@/components/billing/TierGate';
 import { BestWorstWindowChart } from './BestWorstWindowChart';
 import { WinsByMonthChart, WinsByQuarterChart, ReturnPerTimeChart } from './SimpleExtraCharts';
-import { useDisplayMode } from '@/lib/display-mode';
+import { useDisplayMode, hasStrictR } from '@/lib/display-mode';
+import { getEffectiveR } from '@/lib/r-multiple';
 
 
 interface ReviewDashboardProps {
@@ -62,7 +63,7 @@ export const ReviewDashboard = ({
           {isRTL ? 'בריאות מסחר' : 'TRADING HEALTH'}
         </div>
         <div className="dash-kpi-grid">
-          <MetricCard T={T} label={t.netPnl} value={stats.totalPnl} color={stats.totalPnl >= 0 ? T.accent.cyan : T.accent.red} onInfoClick={() => handleExplainClick(t.netPnl, EXPLANATIONS.netPnl)} description={isRTL ? 'סך רווח והפסד מצטבר' : 'Cumulative net profit/loss'} />
+          <MetricCard T={T} label={isMoney ? t.netPnl : (isRTL ? 'תוחלת נטו (R)' : 'Net R')} value={isMoney ? stats.totalPnl : `${stats.totalR >= 0 ? '+' : ''}${(stats.totalR ?? 0).toFixed(2)}R`} color={(isMoney ? stats.totalPnl : (stats.totalR ?? 0)) >= 0 ? T.accent.cyan : T.accent.red} onInfoClick={() => handleExplainClick(t.netPnl, EXPLANATIONS.netPnl)} description={isRTL ? 'סך רווח והפסד מצטבר' : 'Cumulative net profit/loss'} />
           <MetricCard T={T} label={t.winRate} value={stats.winRate} suffix="%" color={T.accent.green} onInfoClick={() => handleExplainClick(t.winRate, EXPLANATIONS.winRate)} description={isRTL ? 'אחוז עסקאות מנצחות' : 'Percent of winning trades'} />
           <AdaptiveExpectancyCard
             T={T}
@@ -124,7 +125,7 @@ export const ReviewDashboard = ({
             <div className="dash-charts-2">
               {isChartVisible('equityCurve') && (
                 <div className="dash-chart-card">
-                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.equityCurve} explanation={EXPLANATIONS.equityCurve} unit="$" chartId="equityCurve" onRemove={handleHideChart}>
+                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.equityCurve} explanation={EXPLANATIONS.equityCurve} unit={isMoney ? '$' : 'R'} chartId="equityCurve" onRemove={handleHideChart}>
                     <div className="dash-chart-h-md">
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={stats.equityCurve} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
@@ -143,16 +144,19 @@ export const ReviewDashboard = ({
               )}
               {isChartVisible('pnlDistribution') && (
                 <div className="dash-chart-card">
-                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.pnlDistribution} explanation={EXPLANATIONS.pnlDistribution} unit="$" chartId="pnlDistribution" onRemove={handleHideChart}>
+                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.pnlDistribution} explanation={EXPLANATIONS.pnlDistribution} unit={isMoney ? '$' : 'R'} chartId="pnlDistribution" onRemove={handleHideChart}>
                     <div className="dash-chart-h-sm">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={trades.map((tr: Trade) => ({ id: tr.id, pnl: tr.pnl }))} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
+                        <BarChart data={trades.map((tr: Trade) => ({ id: tr.id, v: isMoney ? (Number.isFinite(tr.pnl) ? tr.pnl : 0) : (hasStrictR(tr) ? getEffectiveR(tr) : 0) }))} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
                           <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 10 }} interval="preserveStartEnd" minTickGap={24} />
                           <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} width={40} />
-                          <Tooltip contentStyle={tt} />
-                          <Bar dataKey="pnl" radius={[4,4,0,0]}>
-                            {trades.map((tr: Trade, i: number) => <Cell key={i} fill={tr.pnl >= 0 ? T.accent.green : T.accent.red} />)}
+                          <Tooltip contentStyle={tt} formatter={(v: any) => isMoney ? `$${Number(v).toFixed(2)}` : `${Number(v).toFixed(2)}R`} />
+                          <Bar dataKey="v" radius={[4,4,0,0]}>
+                            {trades.map((tr: Trade, i: number) => {
+                              const v = isMoney ? tr.pnl : (hasStrictR(tr) ? getEffectiveR(tr) : 0);
+                              return <Cell key={i} fill={v >= 0 ? T.accent.green : T.accent.red} />;
+                            })}
                           </Bar>
                         </BarChart>
                       </ResponsiveContainer>
@@ -181,7 +185,8 @@ export const ReviewDashboard = ({
                 </div>
               )}
               {isAdvancedTier && isChartVisible('coinPerformance') && (() => {
-                const sorted = [...(stats.coinPerf || [])].sort((a:any,b:any)=> b.pnl - a.pnl);
+                const coinKey = (c: any) => (isMoney ? c.pnl : (typeof c.totalR === 'number' ? c.totalR : (Number(c.avgR) || 0) * (Number(c.trades) || 0)));
+                const sorted = [...(stats.coinPerf || [])].sort((a:any,b:any)=> coinKey(b) - coinKey(a));
                 const winner = sorted[0];
                 const loser = sorted[sorted.length - 1];
                 const hasData = winner && loser && winner.coin !== loser.coin;
@@ -190,12 +195,12 @@ export const ReviewDashboard = ({
                 const noData = isRTL ? 'אין מספיק נתונים' : 'Not enough data';
                 const title = isRTL ? 'מנצח גדול מול מפסיד גדול' : 'Top Winner vs Top Loser';
                 const data = hasData ? [
-                  { label: winnerLabel, coin: winner.coin, pnl: winner.pnl, fill: T.accent.green },
-                  { label: loserLabel, coin: loser.coin, pnl: loser.pnl, fill: T.accent.red },
+                  { label: winnerLabel, coin: winner.coin, v: coinKey(winner), fill: T.accent.green },
+                  { label: loserLabel, coin: loser.coin, v: coinKey(loser), fill: T.accent.red },
                 ] : [];
                 return (
                   <div className="dash-chart-card">
-                    <ChartWrapper T={T} onExplainClick={handleExplainClick} title={title} explanation={EXPLANATIONS.coinPerformance} unit="$" chartId="coinPerformance" onRemove={handleHideChart}>
+                    <ChartWrapper T={T} onExplainClick={handleExplainClick} title={title} explanation={EXPLANATIONS.coinPerformance} unit={isMoney ? '$' : 'R'} chartId="coinPerformance" onRemove={handleHideChart}>
                       <div className="dash-chart-h-sm">
                         {hasData ? (
                           <ResponsiveContainer width="100%" height="100%">
@@ -203,9 +208,9 @@ export const ReviewDashboard = ({
                               <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
                               <XAxis type="number" tick={{ fill: T.text.muted, fontSize: 10 }} />
                               <YAxis dataKey="coin" type="category" tick={{ fill: T.text.secondary, fontSize: 11, fontWeight: 600 }} width={86} tickMargin={6} interval={0} />
-                              <Tooltip contentStyle={tt} formatter={(v:any, _n:any, p:any)=>[`${Number(v).toFixed(2)}$`, p?.payload?.label]} />
+                              <Tooltip contentStyle={tt} formatter={(v:any, _n:any, p:any)=>[isMoney ? `$${Number(v).toFixed(2)}` : `${Number(v).toFixed(2)}R`, p?.payload?.label]} />
                               <ReferenceLine x={0} stroke={T.border.subtle} />
-                              <Bar dataKey="pnl" radius={[0,6,6,0]} barSize={36}>
+                              <Bar dataKey="v" radius={[0,6,6,0]} barSize={36}>
                                 {data.map((c:any, i:number) => <Cell key={i} fill={c.fill} />)}
                               </Bar>
                             </BarChart>
@@ -287,7 +292,7 @@ export const ReviewDashboard = ({
                       <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px solid ${T.border.subtle}` }}>
                         <span style={{ fontSize: 12, color: T.text.secondary }}>{mp.month}</span>
                         <div style={{ display: 'flex', gap: 12 }}>
-                          <PV><span style={{ fontSize: 11, color: mp.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{mp.pnl >= 0 ? '+' : ''}${mp.pnl.toFixed(2)}</span></PV>
+                          {isMoney && <PV><span style={{ fontSize: 11, color: mp.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{mp.pnl >= 0 ? '+' : ''}${mp.pnl.toFixed(2)}</span></PV>}
                           <span style={{ fontSize: 11, color: T.accent.purple, fontFamily: "'JetBrains Mono', monospace" }}>{mp.expectancyR >= 0 ? '+' : ''}{mp.expectancyR.toFixed(2)}R</span>
                         </div>
                       </div>

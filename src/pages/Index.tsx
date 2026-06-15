@@ -53,7 +53,7 @@ import { CustomKPIPanel } from '@/components/trading/CustomKPIPanel';
 const JournalDimension = lazy(() => import('@/components/trading/JournalDimension').then(m => ({ default: m.JournalDimension })));
 const BacktestDimension = lazy(() => import('@/components/trading/BacktestDimension').then(m => ({ default: m.BacktestDimension })));
 import { useTrades } from '@/hooks/use-trades';
-import { DisplayModeProvider, hasStrictR } from '@/lib/display-mode';
+import { DisplayModeProvider, hasStrictR, useEffectiveDisplayMode } from '@/lib/display-mode';
 import { DisplayModeToggle } from '@/components/trading/DisplayModeToggle';
 import { useSettings, type ThemeId } from '@/hooks/use-settings';
 import { useUserPreferences } from '@/hooks/use-user-preferences';
@@ -104,6 +104,25 @@ const Index = () => {
   const settings = useSettings();
   const { prefs: userPrefs, loaded: userPrefsLoaded } = useUserPreferences(); // warm cache for centralized R-multiple Tier-3 proxy
   const { trades, stats, loading, initialized, addTrade, updateTrade, upsertJournalTrade, removeTrade, resetAll, importTrades, riskAlert, dismissRiskAlert, setManualR } = useTrades();
+  // Active display mode (R-Multiple or MONEY) — used to switch KPI cards,
+  // calendar heatmap, weekly strip, journal P&L column and the Monthly Stats
+  // card between $ and R so R-only portfolios stop showing fake $0.00.
+  const dm = useEffectiveDisplayMode(trades);
+  const isR = dm.isR;
+  // Per-trade headline number: R when in R mode (and the trade is R-eligible), $ otherwise.
+  const tradeHeadline = (tr: Trade): { v: number; unit: 'R' | '$' } => {
+    if (isR && hasStrictR(tr)) return { v: getEffectiveR(tr), unit: 'R' };
+    return { v: tr.pnl, unit: '$' };
+  };
+  const fmtHeadline = (v: number, unit: 'R' | '$', signed = true): string => {
+    const sign = signed && v > 0 ? '+' : '';
+    return unit === 'R' ? `${sign}${v.toFixed(2)}R` : `${sign}$${Math.abs(v).toFixed(2)}${v < 0 ? '' : ''}`.replace('$-', '-$');
+  };
+  // Bucket aggregator (calendar/weekly/day-of-week) — sums R or $ per bucket.
+  const bucketValue = (tr: Trade): number => {
+    if (isR && hasStrictR(tr)) return getEffectiveR(tr);
+    return Number.isFinite(tr.pnl) ? tr.pnl : 0;
+  };
   const { limits: customRiskLimits } = useRiskLimits();
   const [entered, setEntered] = useState(() => sessionStorage.getItem('orca-entered') === '1');
   const [onboardingDone, setOnboardingDone] = useState(() => !shouldShowOnboarding());
@@ -253,7 +272,7 @@ const Index = () => {
       if (d.getMonth() === calMonth && d.getFullYear() === calYear) {
         const day = d.getDate();
         if (!m[day]) m[day] = { pnl: 0, trades: 0, wins: 0, details: [] };
-        m[day].pnl += tr.pnl;
+        m[day].pnl += bucketValue(tr);
         m[day].trades++;
         if (tr.winLoss === 'Win') m[day].wins++;
         m[day].details.push(tr);
@@ -297,7 +316,7 @@ const Index = () => {
   const dayNames = [t.sun, t.mon, t.tue, t.wed, t.thu, t.fri, t.sat];
   const radarData = [
     { m: isRTL ? 'הצלחה' : 'Win %', v: stats.winRate },
-    { m: isRTL ? 'רווח' : 'Profit', v: Math.min(100, stats.profitFactor * 40) },
+    { m: isRTL ? 'רווח' : 'Profit', v: Math.min(100, (isR ? stats.profitFactorR : stats.profitFactor) * 40) },
     { m: isRTL ? 'משמעת' : 'Discipline', v: stats.rulesFollowed },
     { m: isRTL ? 'סיכון' : 'Risk Mgmt', v: riskData.riskConsistencyScore },
     { m: isRTL ? 'עקביות' : 'Consistency', v: Math.min(100, 100 - riskData.riskDrift * 10) },
@@ -614,15 +633,15 @@ const Index = () => {
         </h2>
         {/* Core metrics only */}
         <div style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
-          <MetricCard T={T} label={t.netPnl} value={stats.totalPnl} color={stats.totalPnl >= 0 ? T.accent.cyan : T.accent.red} onInfoClick={() => handleExplainClick(t.netPnl, EXPLANATIONS.netPnl)} />
+          <MetricCard T={T} label={isR ? (isRTL ? 'תוחלת נטו (R)' : 'Net R') : t.netPnl} value={isR ? `${stats.totalR >= 0 ? '+' : ''}${stats.totalR.toFixed(2)}R` : stats.totalPnl} color={(isR ? stats.totalR : stats.totalPnl) >= 0 ? T.accent.cyan : T.accent.red} onInfoClick={() => handleExplainClick(t.netPnl, EXPLANATIONS.netPnl)} />
           <MetricCard T={T} label={t.winRate} value={stats.winRate} suffix="%" color={T.accent.green} onInfoClick={() => handleExplainClick(t.winRate, EXPLANATIONS.winRate)} />
           <MetricCard T={T} label={t.totalTrades} value={String(stats.totalTrades)} color={T.text.primary} />
-          <MetricCard T={T} label={t.avgWin} value={stats.avgWin} suffix="$" color={T.accent.green} />
-          <MetricCard T={T} label={t.avgLoss} value={stats.avgLoss} suffix="$" color={T.accent.red} />
+          <MetricCard T={T} label={t.avgWin} value={isR ? `+${stats.avgWinR.toFixed(2)}R` : stats.avgWin} suffix={isR ? undefined : '$'} color={T.accent.green} />
+          <MetricCard T={T} label={t.avgLoss} value={isR ? `-${stats.avgLossR.toFixed(2)}R` : stats.avgLoss} suffix={isR ? undefined : '$'} color={T.accent.red} />
           <MetricCard T={T} label={t.currentStreak} value={`${stats.currentStreak} ${stats.streakType === 'Win' ? '🟢' : stats.streakType === 'Loss' ? '🔴' : '⚪'}`} color={T.text.primary} />
         </div>
         {/* Simple Equity Curve */}
-        <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.equityCurve} explanation={EXPLANATIONS.equityCurve} unit="$" style={{ marginBottom: 18 }}>
+        <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.equityCurve} explanation={EXPLANATIONS.equityCurve} unit={isR ? 'R' : '$'} style={{ marginBottom: 18 }}>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={stats.equityCurve}>
               <defs><linearGradient id="eqBeg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.6}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.25}/></linearGradient></defs>
@@ -636,15 +655,15 @@ const Index = () => {
           </ResponsiveContainer>
         </ChartWrapper>
         {/* Simple P&L bars */}
-        <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.pnlDistribution} explanation={EXPLANATIONS.pnlDistribution} unit="$" style={{ marginBottom: 18 }}>
+        <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.pnlDistribution} explanation={EXPLANATIONS.pnlDistribution} unit={isR ? 'R' : '$'} style={{ marginBottom: 18 }}>
           <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={trades.map(tr => ({ id: tr.id, pnl: tr.pnl }))}>
+            <BarChart data={trades.map(tr => ({ id: tr.id, v: bucketValue(tr) }))}>
               <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
               <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 10 }} />
               <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
-              <Tooltip contentStyle={tt} />
+              <Tooltip contentStyle={tt} formatter={(v: any) => isR ? `${Number(v).toFixed(2)}R` : `$${Number(v).toFixed(2)}`} />
               <ReferenceLine y={0} stroke={T.border.medium} strokeWidth={1} />
-              <Bar dataKey="pnl" radius={[4,4,0,0]}>{trades.map((tr, i) => <Cell key={i} fill={tr.pnl >= 0 ? T.accent.green : T.accent.red} />)}</Bar>
+              <Bar dataKey="v" radius={[4,4,0,0]}>{trades.map((tr, i) => <Cell key={i} fill={bucketValue(tr) >= 0 ? T.accent.green : T.accent.red} />)}</Bar>
             </BarChart>
           </ResponsiveContainer>
         </ChartWrapper>
@@ -1164,7 +1183,7 @@ const Index = () => {
                         dayMap[day].trades++;
                         if (tr.winLoss === 'Win') dayMap[day].wins++;
                         dayMap[day].totalR += getEffectiveR(tr);
-                        dayMap[day].totalPnl += tr.pnl;
+                        dayMap[day].totalPnl += bucketValue(tr);
                       });
                       return [1, 2, 3, 4, 5].filter(d => dayMap[d]).map(d => (
                         <tr key={d} style={{ borderBottom: `1px solid ${T.border.subtle}` }}>
@@ -1172,7 +1191,7 @@ const Index = () => {
                           <td style={{ padding: '8px 12px', color: T.text.secondary }}>{dayMap[d].trades}</td>
                           <td style={{ padding: '8px 12px', color: (dayMap[d].wins / dayMap[d].trades * 100) >= 50 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{(dayMap[d].wins / dayMap[d].trades * 100).toFixed(0)}%</td>
                           <td style={{ padding: '8px 12px', color: (dayMap[d].totalR / dayMap[d].trades) >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{(dayMap[d].totalR / dayMap[d].trades).toFixed(2)}R</td>
-                          <td style={{ padding: '8px 12px', color: dayMap[d].totalPnl >= 0 ? T.accent.green : T.accent.red, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}><PV>${dayMap[d].totalPnl.toFixed(2)}</PV></td>
+                          <td style={{ padding: '8px 12px', color: dayMap[d].totalPnl >= 0 ? T.accent.green : T.accent.red, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}><PV>{isR ? `${dayMap[d].totalPnl >= 0 ? '+' : ''}${dayMap[d].totalPnl.toFixed(2)}R` : `$${dayMap[d].totalPnl.toFixed(2)}`}</PV></td>
                         </tr>
                       ));
                     })()}
@@ -1302,7 +1321,9 @@ const Index = () => {
                     <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }}>{tr.entry}</td>
                     <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: T.accent.red }}>{tr.stopLoss}</td>
                     <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }}>{tr.exit}</td>
-                    <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: tr.pnl >= 0 ? T.accent.green : T.accent.red }}><PV>{tr.pnl >= 0 ? '+' : ''}{tr.pnl.toFixed(2)}</PV></td>
+                    {(() => { const h = tradeHeadline(tr); return (
+                      <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: h.v >= 0 ? T.accent.green : T.accent.red }}><PV>{fmtHeadline(h.v, h.unit)}</PV></td>
+                    ); })()}
                     {opMode !== 'live' && <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}` }}><TradingBadge color={tr.winLoss === 'Win' ? T.accent.green : tr.winLoss === 'Loss' ? T.accent.red : T.accent.orange}>{tr.winLoss}</TradingBadge></td>}
                     <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }}>{getEffectiveR(tr).toFixed(2)}R</td>
                     {isAlpha && <>
@@ -1342,7 +1363,7 @@ const Index = () => {
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14 }}>
                 {[
                   { l: t.entry, v: selTrade.entry }, { l: t.stopLoss, v: selTrade.stopLoss, c: T.accent.red },
-                  { l: t.exit, v: selTrade.exit }, { l: `${t.pnl} ($)`, v: `${selTrade.pnl >= 0 ? '+' : ''}$${selTrade.pnl.toFixed(4)}`, c: selTrade.pnl >= 0 ? T.accent.green : T.accent.red },
+                  { l: t.exit, v: selTrade.exit }, (() => { const h = tradeHeadline(selTrade); return { l: `${t.pnl} (${h.unit})`, v: fmtHeadline(h.v, h.unit), c: h.v >= 0 ? T.accent.green : T.accent.red }; })(),
                   { l: `${t.riskR} (R)`, v: `${getEffectiveR(selTrade).toFixed(2)}R` }, { l: t.deviation, v: selTrade.deviation ? selTrade.deviation.toFixed(4) + 'R' : '0', c: selTrade.deviation > 0 ? T.accent.orange : T.accent.green },
                   { l: t.leverage, v: `${selTrade.leverage}x` }, { l: `${t.balance} ($)`, v: `$${selTrade.balance.toFixed(2)}` },
                 ].map((item, i) => (<div key={i}><div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{item.l}</div><PV><div style={{ fontSize: 15, fontWeight: 600, color: item.c || T.text.primary, fontFamily: "'JetBrains Mono', monospace", marginTop: 2 }}>{item.v}</div></PV></div>))}
@@ -1407,7 +1428,7 @@ const Index = () => {
                 {calDays.map((d, i) => {
                   const dd = d ? calDayPnl[d] : null;
                   const isHovered = d === calHoverDay;
-                  const intensity = dd ? Math.min(1, Math.abs(dd.pnl) / 10) : 0;
+                  const intensity = dd ? Math.min(1, Math.abs(dd.pnl) / (isR ? 5 : 10)) : 0;
                   const riskColor = d ? getDayRiskColor(trades, d, calMonth, calYear) : 'neutral';
                   const isDarkRed = riskColor === 'darkred';
                   return (
@@ -1416,7 +1437,7 @@ const Index = () => {
                       onMouseLeave={() => setCalHoverDay(null)}
                       onClick={() => dd && d && setCalModalDay(d)}
                       style={{ minHeight: isMobile ? 48 : (isHovered && dd ? 95 : 68), borderRadius: T.radius.md, border: `1px solid ${isDarkRed ? `${T.accent.red}60` : dd ? (dd.pnl > 0 ? `${T.accent.green}${Math.round(40 + intensity * 40).toString(16)}` : dd.pnl < 0 ? `${T.accent.red}${Math.round(35 + intensity * 40).toString(16)}` : `${T.accent.orange}25`) : T.border.subtle}`, background: isDarkRed ? `${T.accent.red}20` : dd ? (dd.pnl > 0 ? `${T.accent.green}${Math.round(10 + intensity * 20).toString(16).padStart(2, '0')}` : dd.pnl < 0 ? `${T.accent.red}${Math.round(10 + intensity * 15).toString(16).padStart(2, '0')}` : `${T.accent.orange}10`) : 'transparent', padding: isMobile ? '3px 3px' : '5px 6px', transition: 'all 0.2s ease', cursor: dd ? 'pointer' : 'default', position: 'relative' }}>
-                      {d && <><div style={{ fontSize: 10, color: T.text.muted, display: 'flex', alignItems: 'center', gap: 3 }}>{d}{isDarkRed && <span title="Risk limit exceeded">⚠️</span>}</div>{dd && <><PV><div style={{ fontSize: 13, fontWeight: 700, color: isDarkRed ? T.accent.red : dd.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace", marginTop: 3 }}>${Math.abs(dd.pnl).toFixed(0)}</div></PV><div style={{ fontSize: 8, color: T.text.muted, marginTop: 1 }}>{dd.trades} {isRTL ? 'עס׳' : 'tr'} • {dd.wins}/{dd.trades}</div>
+                      {d && <><div style={{ fontSize: 10, color: T.text.muted, display: 'flex', alignItems: 'center', gap: 3 }}>{d}{isDarkRed && <span title="Risk limit exceeded">⚠️</span>}</div>{dd && <><PV><div style={{ fontSize: 13, fontWeight: 700, color: isDarkRed ? T.accent.red : dd.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace", marginTop: 3 }}>{isR ? `${dd.pnl >= 0 ? '+' : ''}${dd.pnl.toFixed(1)}R` : `$${Math.abs(dd.pnl).toFixed(0)}`}</div></PV><div style={{ fontSize: 8, color: T.text.muted, marginTop: 1 }}>{dd.trades} {isRTL ? 'עס׳' : 'tr'} • {dd.wins}/{dd.trades}</div>
                         {isHovered && <div style={{ fontSize: 8, color: T.text.muted, marginTop: 2 }}>{dd.details.map(det => det.coin).join(', ')}</div>}
                       </>}</>}
                     </div>
@@ -1448,7 +1469,7 @@ const Index = () => {
             {weekStats.map((w, i) => (
               <GlassCard T={T} key={i} style={{ marginBottom: 7, padding: 12 }}>
                 <div style={{ fontSize: 9, color: T.text.muted, marginBottom: 4 }}>{isRTL ? `שבוע ${w.week}` : `Week ${w.week}`}</div>
-                <PV><div style={{ fontSize: 16, fontWeight: 700, color: w.pnl >= 0 ? T.accent.green : w.pnl < 0 ? T.accent.red : T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>{w.pnl !== 0 ? `${w.pnl >= 0 ? '+' : ''}$${w.pnl.toFixed(2)}` : '$0.00'}</div></PV>
+                <PV><div style={{ fontSize: 16, fontWeight: 700, color: w.pnl >= 0 ? T.accent.green : w.pnl < 0 ? T.accent.red : T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>{w.pnl !== 0 ? (isR ? `${w.pnl >= 0 ? '+' : ''}${w.pnl.toFixed(2)}R` : `${w.pnl >= 0 ? '+' : ''}$${w.pnl.toFixed(2)}`) : (isR ? '0.00R' : '$0.00')}</div></PV>
                 <div style={{ fontSize: 9, color: T.text.muted, marginTop: 1 }}>{w.trades} {isRTL ? 'עסקאות' : 'trades'}</div>
               </GlassCard>
             ))}
@@ -1456,7 +1477,7 @@ const Index = () => {
               {t.monthlyTotal} <span style={{ color: T.text.dim, fontWeight: 500 }}>· {t.month[calMonth]} {calYear}</span>
             </div>
             <GlassCard T={T} glow={T.accent.cyanGlow}>
-              <PV><div style={{ fontSize: 22, fontWeight: 700, color: monthStats.totalPnl >= 0 ? T.accent.cyan : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>${monthStats.totalPnl.toFixed(2)}</div></PV>
+              <PV><div style={{ fontSize: 22, fontWeight: 700, color: (isR ? monthStats.totalR : monthStats.totalPnl) >= 0 ? T.accent.cyan : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{isR ? `${monthStats.totalR >= 0 ? '+' : ''}${monthStats.totalR.toFixed(2)}R` : `$${monthStats.totalPnl.toFixed(2)}`}</div></PV>
               <div style={{ fontSize: 9, color: T.text.muted, marginTop: 3 }}>{monthStats.count} {isRTL ? 'עסקאות' : 'trades'} • {monthStats.winRate.toFixed(0)}% WR</div>
             </GlassCard>
           </div>
