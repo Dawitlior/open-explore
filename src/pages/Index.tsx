@@ -1183,7 +1183,7 @@ const Index = () => {
                         dayMap[day].trades++;
                         if (tr.winLoss === 'Win') dayMap[day].wins++;
                         dayMap[day].totalR += getEffectiveR(tr);
-                        dayMap[day].totalPnl += tr.pnl;
+                        dayMap[day].totalPnl += bucketValue(tr);
                       });
                       return [1, 2, 3, 4, 5].filter(d => dayMap[d]).map(d => (
                         <tr key={d} style={{ borderBottom: `1px solid ${T.border.subtle}` }}>
