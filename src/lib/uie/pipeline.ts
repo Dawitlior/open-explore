@@ -7,7 +7,12 @@ import { resolve } from './matching/resolve';
 import { detectStructure, pickSheet } from './structure/structure';
 import { decideDateFormat, parseDate, parseNumber, normalizeDirection, normalizeSymbol } from './matching/values';
 import { classifyArchetype, reconstructFIFO, StreamItem } from './reconstruction/reconstruction';
-import { ACTIVITY_VALUES } from './dictionary/canonical-fields';
+import { ACTIVITY_VALUES, byCanonical } from './dictionary/canonical-fields';
+
+export interface RunImportOptions {
+  /** Force-set canonical field by absolute columnIndex; null = ignore column. */
+  mappingOverrides?: Record<number, string | null>;
+}
 import { deriveTrade, gapAnalysis, markDuplicates, detectUnitsMode, buildNotesOverflow, appendNotes } from './delivery/delivery';
 
 let _tid = 0; const tid = () => 't' + (++_tid);
@@ -18,7 +23,7 @@ function classifyActivity(v: string): string | null {
   return null;
 }
 
-export function runImport(sheets: SheetInput[]): ImportResult {
+export function runImport(sheets: SheetInput[], opts?: RunImportOptions): ImportResult {
   const sheet = pickSheet(sheets);
   const st = detectStructure(sheet);
   const m = sheet.matrix;
@@ -32,6 +37,28 @@ export function runImport(sheets: SheetInput[]): ImportResult {
   const ranked = buildScoreMatrix(profiles);
   let mapping = assign(profiles, ranked);
   mapping = resolve(mapping, profiles);
+
+  // STAGE 2: user mapping overrides (forced by the Preflight editor).
+  if (opts?.mappingOverrides) {
+    const ov = opts.mappingOverrides;
+    for (const fm of mapping) {
+      if (!Object.prototype.hasOwnProperty.call(ov, fm.columnIndex)) continue;
+      const forced = ov[fm.columnIndex];
+      if (forced) {
+        fm.field = forced;
+        fm.destination = byCanonical[forced]?.destination;
+        fm.status = 'auto';
+        fm.score = 100;
+        fm.evidence = [`USER override → ${forced}`, ...fm.evidence];
+      } else {
+        fm.field = null;
+        fm.destination = undefined;
+        fm.status = 'unmapped';
+        fm.score = 0;
+        fm.evidence = ['USER ignored', ...fm.evidence];
+      }
+    }
+  }
 
   const archetype = classifyArchetype(mapping, profiles);
   const unitsMode = detectUnitsMode(mapping);

@@ -21,7 +21,9 @@ export interface PreflightOpenDetail {
   fileName: string;
   brokerId: string;
   result: ImportResult;
-  resolve: (decision: { confirm: boolean }) => void;
+  /** Stage 2: re-run the engine with user mapping overrides (columnIndex → field|null). */
+  rerun: (overrides: Record<number, string | null>) => Promise<ImportResult>;
+  resolve: (decision: { confirm: boolean; result?: ImportResult }) => void;
 }
 
 export interface PreflightOutcome {
@@ -78,10 +80,19 @@ export async function runImportWithPreflight(
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('orca:uie:preflight-will-open'));
   }
-  const decision = await new Promise<{ confirm: boolean }>((resolve) => {
-    const detail: PreflightOpenDetail = { fileName: file.name, brokerId, result, resolve };
+  // Stage 2: user may re-run engine with mapping overrides; latest result wins.
+  let currentResult: ImportResult = result;
+  const rerun = async (overrides: Record<number, string | null>): Promise<ImportResult> => {
+    const t = performance.now();
+    const next = runImport(sheets, { mappingOverrides: overrides });
+    console.info('[UIE] rerun: done', { ms: Math.round(performance.now() - t), trades: next.trades.length, readiness: next.gap?.readiness });
+    currentResult = next;
+    return next;
+  };
+
+  const decision = await new Promise<{ confirm: boolean; result?: ImportResult }>((resolve) => {
+    const detail: PreflightOpenDetail = { fileName: file.name, brokerId, result, rerun, resolve };
     if (typeof window !== 'undefined') {
-      // Defer one tick so listeners that react to 'will-open' can render first.
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent<PreflightOpenDetail>('orca:uie:preflight', { detail }));
       }, 0);
@@ -89,22 +100,23 @@ export async function runImportWithPreflight(
       resolve({ confirm: false });
     }
   });
-  console.info('[UIE] preflight resolved', decision);
-
+  console.info('[UIE] preflight resolved', { confirm: decision.confirm, hasResult: !!decision.result });
+  if (decision.result) currentResult = decision.result;
 
   if (!decision.confirm) {
-    return { ok: false, drafts: [], equityPointsAdded: 0, result, reason: 'user_cancelled' };
+    return { ok: false, drafts: [], equityPointsAdded: 0, result: currentResult, reason: 'user_cancelled' };
   }
 
-  const drafts = result.trades.map((t) => toLegacyTrade(t, { brokerId, accountLabel }));
-  const eqPoints = toEquityPoints(result.equityEvents);
+
+  const finalResult = currentResult;
+  const drafts = finalResult.trades.map((t) => toLegacyTrade(t, { brokerId, accountLabel }));
+  const eqPoints = toEquityPoints(finalResult.equityEvents);
   let added = 0;
   if (eqPoints.length > 0) {
     const merged = mergeEquityPoints(eqPoints);
     added = eqPoints.length;
-    // log for trace; merged length tells the post-merge total
     if (typeof console !== 'undefined') console.info('[UIE] equity points merged:', { added, total: merged.length });
   }
 
-  return { ok: true, drafts, equityPointsAdded: added, result };
+  return { ok: true, drafts, equityPointsAdded: added, result: finalResult };
 }
