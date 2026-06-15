@@ -25,6 +25,20 @@ type Lang = 'he' | 'en';
 
 const LANG_KEY = 'orca:lang-cache';
 const AUTH_LANG_OVERRIDE_KEY = 'orca:auth-lang-override';
+const PENDING_CONSENT_KEY = 'orca:pending-consent';
+const CONSENT_VERSION = '2026-06-15';
+
+async function logConsent(userId: string) {
+  try {
+    await supabase.from('consent_log').insert({
+      user_id: userId,
+      version: CONSENT_VERSION,
+      choices: { terms: true, privacy: true },
+      user_agent: typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 500) : null,
+    });
+  } catch { /* non-blocking */ }
+}
+
 
 const COPY = {
   he: {
