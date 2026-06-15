@@ -105,14 +105,17 @@ export function ActivePortfolioProvider({ children }: { children: ReactNode }) {
   }, [loading, portfolios, activePortfolioId]);
 
   // Stage 5 — compute locked set whenever tier or portfolios change.
+  // While the tier is still resolving we defer to "no locks" rather than
+  // risk briefly locking portfolios for an Ultimate user (whose tier defaults
+  // to 'standard' for one tick before the RPC returns).
   const lockedIds = useMemo(
-    () => computeLockedPortfolioIds(portfolios, tier),
-    [portfolios, tier],
+    () => (tierLoading ? new Set<string>() : computeLockedPortfolioIds(portfolios, tier)),
+    [portfolios, tier, tierLoading],
   );
   const tierMax = useMemo(() => getPortfolioLimit(tier), [tier]);
   const canCreate = useMemo(
-    () => canCreatePortfolio(portfolios, tier),
-    [portfolios, tier],
+    () => (tierLoading ? false : canCreatePortfolio(portfolios, tier)),
+    [portfolios, tier, tierLoading],
   );
 
   // Push lock state to the non-React singleton so storage can enforce.
