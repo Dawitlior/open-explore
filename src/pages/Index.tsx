@@ -655,15 +655,15 @@ const Index = () => {
           </ResponsiveContainer>
         </ChartWrapper>
         {/* Simple P&L bars */}
-        <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.pnlDistribution} explanation={EXPLANATIONS.pnlDistribution} unit="$" style={{ marginBottom: 18 }}>
+        <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.pnlDistribution} explanation={EXPLANATIONS.pnlDistribution} unit={isR ? 'R' : '$'} style={{ marginBottom: 18 }}>
           <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={trades.map(tr => ({ id: tr.id, pnl: tr.pnl }))}>
+            <BarChart data={trades.map(tr => ({ id: tr.id, v: bucketValue(tr) }))}>
               <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
               <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 10 }} />
               <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
-              <Tooltip contentStyle={tt} />
+              <Tooltip contentStyle={tt} formatter={(v: any) => isR ? `${Number(v).toFixed(2)}R` : `$${Number(v).toFixed(2)}`} />
               <ReferenceLine y={0} stroke={T.border.medium} strokeWidth={1} />
-              <Bar dataKey="pnl" radius={[4,4,0,0]}>{trades.map((tr, i) => <Cell key={i} fill={tr.pnl >= 0 ? T.accent.green : T.accent.red} />)}</Bar>
+              <Bar dataKey="v" radius={[4,4,0,0]}>{trades.map((tr, i) => <Cell key={i} fill={bucketValue(tr) >= 0 ? T.accent.green : T.accent.red} />)}</Bar>
             </BarChart>
           </ResponsiveContainer>
         </ChartWrapper>
