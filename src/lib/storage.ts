@@ -1,6 +1,30 @@
 import type { Trade } from '@/data/trades';
 import { supabase } from '@/integrations/supabase/client';
-import { getActivePortfolioIdGlobal } from '@/lib/active-portfolio-store';
+import {
+  getActivePortfolioIdGlobal,
+  isPortfolioLockedGlobal,
+} from '@/lib/active-portfolio-store';
+
+/**
+ * Stage 5 — read-only lock enforcement.
+ * Locked portfolios (downgrade overflow) reject all write attempts at the
+ * storage layer. UI also disables the affected buttons, but enforcing here
+ * means programmatic / bridge / import paths can't bypass it either.
+ */
+export class PortfolioLockedError extends Error {
+  code = 'PORTFOLIO_LOCKED' as const;
+  constructor(public portfolioId: string) {
+    super(`Portfolio ${portfolioId} is locked (read-only — upgrade plan to unlock).`);
+  }
+}
+
+function assertWritable(portfolioId: string) {
+  if (isPortfolioLockedGlobal(portfolioId)) {
+    const err = new PortfolioLockedError(portfolioId);
+    reportStorageError('portfolio-locked', err);
+    throw err;
+  }
+}
 
 /**
  * Cloud-backed storage. Each user only ever reads/writes their own rows
