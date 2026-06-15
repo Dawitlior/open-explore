@@ -36,7 +36,7 @@ import { EntryGate } from '@/components/trading/EntryGate';
 import { RiskLimitAlert } from '@/components/trading/RiskLimitAlert';
 import { MobileBottomNav } from '@/components/trading/MobileBottomNav';
 import { MainPullToRefresh } from '@/components/trading/MainPullToRefresh';
-import { ReviewDashboard } from '@/components/dashboard/ReviewDashboard';
+const ReviewDashboard = lazy(() => import('@/components/dashboard/ReviewDashboard').then(m => ({ default: m.ReviewDashboard })));
 import { MobileTradeCard } from '@/components/trading/MobileTradeCard';
 import { RiskExplanationModal, type RiskExplanation } from '@/components/trading/RiskExplanationModal';
 import { lazy, Suspense } from 'react';
@@ -61,7 +61,7 @@ import { useSettings, type ThemeId } from '@/hooks/use-settings';
 import { useUserPreferences } from '@/hooks/use-user-preferences';
 import { assessRisk } from '@/lib/risk-engine';
 import { generateInsights, generateSummary } from '@/lib/ai-engine';
-import { exportToXlsx } from '@/lib/xlsx-engine';
+// xlsx-engine is ~300 KB — load it on demand from the export handler only.
 import { runImportWithPreflight } from '@/lib/uie/run-import-with-preflight';
 import { getDayRiskColor, checkRiskLimits, DEFAULT_RISK_LIMITS } from '@/lib/risk-limits';
 import { useRiskLimits } from '@/hooks/use-risk-limits';
@@ -386,7 +386,8 @@ const Index = () => {
       throw err;
     }
   }, [resetAll]);
-  const handleExport = useCallback(() => {
+  const handleExport = useCallback(async () => {
+    const { exportToXlsx } = await import('@/lib/xlsx-engine');
     exportToXlsx(trades);
   }, [trades]);
   const handleExportJson = useCallback(() => {
@@ -822,25 +823,27 @@ const Index = () => {
 
     // REVIEW MODE: extracted to mobile-first ReviewDashboard module
     if (opMode === 'review') return (
-      <ReviewDashboard
-        T={T}
-        t={t}
-        isRTL={isRTL}
-        trades={trades}
-        stats={stats}
-        riskData={riskData}
-        radarData={radarData}
-        tt={tt}
-        privacyMode={settings.privacyMode}
-        isAdvancedTier={isAdvancedTier}
-        isUltimateTier={isUltimateTier}
-        isAlpha={isAlpha}
-        advancedOpen={advancedOpen}
-        setAdvancedOpen={setAdvancedOpen}
-        isChartVisible={isChartVisible}
-        handleHideChart={handleHideChart}
-        handleExplainClick={handleExplainClick}
-      />
+      <LazyShell>
+        <ReviewDashboard
+          T={T}
+          t={t}
+          isRTL={isRTL}
+          trades={trades}
+          stats={stats}
+          riskData={riskData}
+          radarData={radarData}
+          tt={tt}
+          privacyMode={settings.privacyMode}
+          isAdvancedTier={isAdvancedTier}
+          isUltimateTier={isUltimateTier}
+          isAlpha={isAlpha}
+          advancedOpen={advancedOpen}
+          setAdvancedOpen={setAdvancedOpen}
+          isChartVisible={isChartVisible}
+          handleHideChart={handleHideChart}
+          handleExplainClick={handleExplainClick}
+        />
+      </LazyShell>
     );
 
 
