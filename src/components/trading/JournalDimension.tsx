@@ -1691,6 +1691,8 @@ const MarketSentimentGauge = ({ value, dir, th, onChangeValue, disabled }: { val
 // ═══════════════════════════════════════════════════════════════
 const TCard = ({ trade, idx, onChange, onDel, f, dir, disabled, th }: any) => {
   const p = parseFloat(trade.pnl) || 0;
+  const isR = useJournalIsR();
+  const rVal = (() => { try { return getR(trade as any); } catch { return 0; } })();
   const sc = trade.side === 'LONG' ? '#00FFA3' : trade.side === 'SHORT' ? '#FF4D4D' : '#5AA9FF';
   return (
     <div style={{
@@ -1703,10 +1705,13 @@ const TCard = ({ trade, idx, onChange, onDel, f, dir, disabled, th }: any) => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, direction: dir }}>
         <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, color: th.tx3, letterSpacing: 1.2 }}>{f.tradeN} #{idx + 1}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {p !== 0 && <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 14, fontWeight: 800, color: p > 0 ? '#00FFA3' : '#FF4D4D', textShadow: `0 0 12px ${p > 0 ? 'rgba(0,255,163,0.3)' : 'rgba(255,77,77,0.3)'}` }}>{p > 0 ? '+' : ''}{p.toFixed(2)}$</span>}
+          {isR
+            ? (rVal !== 0 && <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 14, fontWeight: 800, color: rVal > 0 ? '#00FFA3' : '#FF4D4D', textShadow: `0 0 12px ${rVal > 0 ? 'rgba(0,255,163,0.3)' : 'rgba(255,77,77,0.3)'}` }}>{rVal > 0 ? '+' : ''}{rVal.toFixed(2)}R</span>)
+            : (p !== 0 && <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 14, fontWeight: 800, color: p > 0 ? '#00FFA3' : '#FF4D4D', textShadow: `0 0 12px ${p > 0 ? 'rgba(0,255,163,0.3)' : 'rgba(255,77,77,0.3)'}` }}>{p > 0 ? '+' : ''}{p.toFixed(2)}$</span>)}
           {!disabled && <button onClick={onDel} style={{ background: 'rgba(255,77,77,.1)', border: '1px solid rgba(255,77,77,.2)', color: '#FF4D4D', padding: '5px 10px', fontSize: 11, borderRadius: 6, cursor: 'pointer', fontWeight: 600, transition: 'all .15s' }}>✕ {f.del}</button>}
         </div>
       </div>
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginBottom: 10 }}>
         {[['ins','pair','BTC/USDT'],['en','entry','95000'],['ex','exit','97000'],['sz','size','0.1'],['pnl','pnl','+200'],['rr','rr','1:3']].map(([lKey, k, ph]: any) => (
           <div key={k}><Lbl c={f[lKey]} dir={dir} th={th} /><IN val={trade[k] || ''} set={(v: string) => onChange?.({ ...trade, [k]: v })} ph={ph} dir={dir} disabled={disabled} th={th} /></div>
