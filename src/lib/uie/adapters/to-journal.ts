@@ -44,6 +44,13 @@ export interface LegacyTradeDraft {
   leverage: number | null;
   pnl: number | null;
   fees: number;
+  // ── R / outcome (the dashboard reads these for R_MODE) ──
+  returnR: number | null;       // R-multiple of the trade
+  manualR: number | null;       // Tier-1 override mirror (kept in sync with returnR on import)
+  manual_r_multiple: number | null;
+  risk: number | null;          // risk amount ($) if present
+  riskPct: number | null;       // risk %
+  winLoss: 'Win' | 'Loss' | 'Break Even';
   orderType?: string;
   comments?: string;
   rules?: boolean | null;
