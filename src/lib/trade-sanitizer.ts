@@ -70,7 +70,16 @@ export function sanitizeTrade(t: unknown, fallbackId: number): Trade | null {
   const direction: 'Long' | 'Short' = raw.direction === 'Short' ? 'Short' : 'Long';
   const orderType = typeof raw.orderType === 'string' ? raw.orderType : 'Market';
   const entry = safeNum(raw.entry);
-  const stopLoss = safeNum(raw.stopLoss);
+  // stopLoss MUST preserve null — many broker CSVs (Bybit Closed P&L etc.)
+  // have no SL column. Coercing to 0 would corrupt R-math and dashboards.
+  const stopLoss: number | null =
+    raw.stopLoss == null || raw.stopLoss === ''
+      ? null
+      : (typeof raw.stopLoss === 'number' && isFinite(raw.stopLoss))
+        ? raw.stopLoss
+        : (typeof raw.stopLoss === 'string' && isFinite(parseFloat(raw.stopLoss)))
+          ? parseFloat(raw.stopLoss)
+          : null;
   const exit = safeNum(raw.exit);
   const returnR = safeNum(raw.returnR);
   const risk = safeNum(raw.risk, 2);
