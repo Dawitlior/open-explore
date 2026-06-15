@@ -665,6 +665,41 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                 </div>
               </GlassCard>
 
+              {limitProjection?.newlyBreached && (
+                <div style={{
+                  padding: 14, marginBottom: 14,
+                  background: `${T.accent.red}15`,
+                  border: `2px solid ${T.accent.red}`,
+                  borderRadius: 14,
+                  boxShadow: `0 0 18px ${T.accent.red}40`,
+                  animation: 'scaleIn 0.25s ease',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                    <span style={{ fontSize: 22 }}>🛑</span>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: T.accent.red }}>
+                      {isRTL ? 'התראה: חציית מגבלת סיכון' : 'Alert: Risk Limit Breached'}
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 13, color: T.text.primary, lineHeight: 1.6, marginBottom: 10 }}>
+                    {isRTL
+                      ? `שמירת העסקה תביא אותך למגבלת ה${limitProjection.after.breachedLevel === 'daily' ? 'יומית' : limitProjection.after.breachedLevel === 'weekly' ? 'שבועית' : 'חודשית'}. `
+                      : `Saving this trade will hit your ${limitProjection.after.breachedLevel} loss limit. `}
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", color: T.accent.red, fontWeight: 700 }}>
+                      {limitProjection.after.dailyNegR.toFixed(2)}R {isRTL ? 'יומי' : 'daily'} ·{' '}
+                      {limitProjection.after.weeklyNegR.toFixed(2)}R {isRTL ? 'שבועי' : 'weekly'} ·{' '}
+                      {limitProjection.after.monthlyNegR.toFixed(2)}R {isRTL ? 'חודשי' : 'monthly'}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 12, color: T.text.secondary, marginBottom: 10 }}>
+                    {isRTL ? limitProjection.after.messageHe : limitProjection.after.message}
+                  </div>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: T.text.primary, fontWeight: 600 }}>
+                    <input type="checkbox" checked={overrideLimit} onChange={e => setOverrideLimit(e.target.checked)} style={{ accentColor: T.accent.red, width: 18, height: 18 }} />
+                    {isRTL ? 'אני מבין את הסיכון ורוצה לשמור בכל זאת' : 'I understand and want to save anyway'}
+                  </label>
+                </div>
+              )}
+
               <div style={{ fontSize: 12, color: T.text.muted, textAlign: 'center', marginBottom: 6 }}>
                 {isRTL ? 'בדוק את הנתונים. כדי לתקן — חזור אחורה.' : 'Review the details. Hit Back to make changes.'}
               </div>
