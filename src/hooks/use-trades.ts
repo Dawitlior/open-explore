@@ -105,11 +105,28 @@ export function useTrades() {
     return run;
   }, []);
 
+  /**
+   * Compute the next global trade_id. trade_id is unique per (user_id, trade_id)
+   * across ALL portfolios, so when running in a multi-portfolio session we
+   * must include trades that live outside the current view. Falls back to the
+   * local max if the DB query fails.
+   */
+  const nextGlobalId = useCallback(async (): Promise<number> => {
+    const localMax = tradesRef.current.reduce((m, t) => (t.id > m ? t.id : m), 0);
+    try {
+      const globalMax = await getMaxTradeId();
+      return Math.max(localMax, globalMax) + 1;
+    } catch {
+      return localMax + 1;
+    }
+  }, []);
+
   const addTrade = useCallback(async (trade: Omit<Trade, 'id' | 'balance'>) => {
     return enqueueTradeMutation(async () => {
       const currentTrades = tradesRef.current;
-      const id = currentTrades.length === 0 ? 1 : Math.max(...currentTrades.map(t => t.id || 0)) + 1;
-      const newTrade: Trade = { ...trade, id, balance: 0 } as Trade;
+      const id = await nextGlobalId();
+      const pid = getActivePortfolioIdGlobal();
+      const newTrade: Trade = { ...trade, id, balance: 0, ...(pid ? { __portfolio_id: pid } : {}) } as Trade;
       const updated = recalcBalances([...currentTrades, newTrade]);
       await saveTrades(updated);
       tradesRef.current = updated;
@@ -117,7 +134,7 @@ export function useTrades() {
       checkAndAlertRisk(updated);
       return updated[updated.length - 1];
     });
-  }, [enqueueTradeMutation, recalcBalances, checkAndAlertRisk]);
+  }, [enqueueTradeMutation, recalcBalances, checkAndAlertRisk, nextGlobalId]);
 
   const upsertJournalTrade = useCallback(async (journalTradeId: number | string, trade: Omit<Trade, 'id' | 'balance'>) => {
     return enqueueTradeMutation(async () => {
