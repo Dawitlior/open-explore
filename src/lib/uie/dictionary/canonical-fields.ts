@@ -26,7 +26,7 @@ export const FIELD_TAXONOMY: FieldDescriptor[] = [
               en:['order type','entry order type','ordertype','order kind'] } },
   { canonical:'entryDate', destination:'journal_column', tier:1, profile:'date',
     aliases:{ he:['תאריך','תאריך פעולה','תאריך עסקה','תאריך ביצוע','תאריך כניסה','מועד','מועד ביצוע','תאריך פתיחה','תאריך ושעה'],
-              en:['date','trade date','execution date','entry date','open date','open time','date/time','datetime','timestamp','created','filled at','transaction time','entry date/time','entry time'] } },
+              en:['date','trade date','trade time','execution date','entry date','open date','open time','date/time','datetime','timestamp','created','filled at','transaction time','entry date/time','entry time','closed time','close time'] } },
   { canonical:'exitDate', destination:'journal_column', tier:2, profile:'date',
     aliases:{ he:['תאריך יציאה','תאריך סגירה','מועד סגירה'],
               en:['exit date','close date','closed at','close time','closing date','exit time','exit date/time'] } },
