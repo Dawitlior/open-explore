@@ -335,26 +335,55 @@ export function ImportPreflightRoot() {
                 {rtl ? 'דוח פערים' : 'Gap Report'} · {r.gap.items.length}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {r.gap.items.map((it, i) => (
-                  <div key={i} style={{
-                    padding: '10px 14px', borderRadius: 10,
-                    background: 'rgba(15,23,42,0.6)', border: `1px solid ${severityColor(it.severity)}33`,
-                    borderLeft: `3px solid ${severityColor(it.severity)}`,
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, color: '#cbd5e1' }}>
-                      <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 4, background: `${severityColor(it.severity)}22`, color: severityColor(it.severity), textTransform: 'uppercase', letterSpacing: 1, fontFamily: 'IBM Plex Mono, monospace' }}>
-                        {it.severity}
-                      </span>
-                      <span style={{ fontSize: 10, color: '#64748b', fontFamily: 'IBM Plex Mono, monospace' }}>{it.code}</span>
-                      <span style={{ flex: 1 }}>{rtl ? it.he : it.en}</span>
-                    </div>
-                    {it.fix && (
-                      <div style={{ marginTop: 6, paddingLeft: 8, fontSize: 11, color: '#64748b' }}>
-                        💡 {rtl ? it.fix.he : it.fix.en}
+                {r.gap.items.map((it, i) => {
+                  // Fix Action: blocker codes T1_* → suggest opening editor & forcing the missing field on a likely column.
+                  const codeToField: Record<string, string> = {
+                    T1_SYMBOL: 'symbol', T1_ENTRYDATE: 'entryDate', T1_ENTRYPRICE: 'entryPrice',
+                    T1_DIRECTION: 'direction', T1_SIZE: 'quantity', T2_EXIT: 'exitPrice', T2_COMMISSION: 'commission',
+                  };
+                  const targetField = codeToField[it.code];
+                  return (
+                    <div key={i} style={{
+                      padding: '10px 14px', borderRadius: 10,
+                      background: 'rgba(15,23,42,0.6)', border: `1px solid ${severityColor(it.severity)}33`,
+                      borderLeft: `3px solid ${severityColor(it.severity)}`,
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, color: '#cbd5e1' }}>
+                        <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 4, background: `${severityColor(it.severity)}22`, color: severityColor(it.severity), textTransform: 'uppercase', letterSpacing: 1, fontFamily: 'IBM Plex Mono, monospace' }}>
+                          {it.severity}
+                        </span>
+                        <span style={{ fontSize: 10, color: '#64748b', fontFamily: 'IBM Plex Mono, monospace' }}>{it.code}</span>
+                        <span style={{ flex: 1 }}>{rtl ? it.he : it.en}</span>
+                        {targetField && (
+                          <button
+                            onClick={() => {
+                              setEditMode(true);
+                              if (typeof document !== 'undefined') {
+                                setTimeout(() => {
+                                  document.getElementById('uie-mapping-table')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }, 50);
+                              }
+                            }}
+                            style={{
+                              padding: '4px 10px', borderRadius: 6, fontSize: 10,
+                              background: 'transparent', color: severityColor(it.severity),
+                              border: `1px solid ${severityColor(it.severity)}55`,
+                              cursor: 'pointer', fontFamily: 'IBM Plex Mono, monospace', letterSpacing: 0.5,
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {rtl ? `✎ מפה ${targetField}` : `✎ Map ${targetField}`}
+                          </button>
+                        )}
                       </div>
-                    )}
-                  </div>
-                ))}
+                      {it.fix && (
+                        <div style={{ marginTop: 6, paddingLeft: 8, fontSize: 11, color: '#64748b' }}>
+                          💡 {rtl ? it.fix.he : it.fix.en}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
