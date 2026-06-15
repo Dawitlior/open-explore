@@ -139,12 +139,26 @@ export function ImportPreflightRoot() {
               {open.fileName} · sheet: {r.sheetName} · archetype: {r.archetype}
             </div>
           </div>
+          {open.fromMemory && (
+            <div
+              title={rtl ? 'מיפוי נטען מזיכרון לקובץ דומה' : 'Mapping loaded from memory for a similar file'}
+              style={{
+                fontSize: 10, padding: '4px 10px', borderRadius: 999,
+                background: 'rgba(168,139,250,0.15)', color: '#c4b5fd',
+                border: '1px solid rgba(168,139,250,0.35)',
+                fontFamily: 'IBM Plex Mono, monospace', letterSpacing: 0.5,
+              }}
+            >
+              🧠 {rtl ? 'מיפוי מהזיכרון' : 'remembered mapping'}
+            </div>
+          )}
           <button
             onClick={() => close(false)}
             aria-label="close"
             style={{ background: 'transparent', border: '1px solid rgba(148,163,184,0.2)', color: '#94a3b8', width: 32, height: 32, borderRadius: 8, cursor: 'pointer', fontSize: 14 }}
           >✕</button>
         </div>
+
 
         {/* Body */}
         <div style={{ overflowY: 'auto', padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: 24 }}>
