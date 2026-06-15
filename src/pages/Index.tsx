@@ -584,7 +584,20 @@ const Index = () => {
   // dashboard during the race between useTrades's first fetch (which returns
   // [] when activePortfolioId is still null) and the ActivePortfolioProvider
   // assigning an id → reload event. The user reported this flash explicitly.
-  const stillBootstrapping = loading || !initialized || portfoliosLoading || (!activePortfolioId && portfolios.length > 0);
+  const dataReady = !loading && initialized && !portfoliosLoading && !(!activePortfolioId && portfolios.length > 0);
+  // After dataReady flips true, wait one paint frame so React has actually
+  // rendered the dashboard before we hide the loader — eliminates the empty
+  // flash users were seeing.
+  const [firstPaintReady, setFirstPaintReady] = useState(false);
+  useEffect(() => {
+    if (!dataReady) { setFirstPaintReady(false); return; }
+    const raf1 = requestAnimationFrame(() => {
+      const raf2 = requestAnimationFrame(() => setFirstPaintReady(true));
+      (raf1 as unknown as { _next?: number })._next = raf2;
+    });
+    return () => cancelAnimationFrame(raf1);
+  }, [dataReady]);
+  const stillBootstrapping = !dataReady || !firstPaintReady;
   if (stillBootstrapping) {
     return (
       <div style={{
