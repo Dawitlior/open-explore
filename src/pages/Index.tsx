@@ -1477,7 +1477,7 @@ const Index = () => {
               {t.monthlyTotal} <span style={{ color: T.text.dim, fontWeight: 500 }}>· {t.month[calMonth]} {calYear}</span>
             </div>
             <GlassCard T={T} glow={T.accent.cyanGlow}>
-              <PV><div style={{ fontSize: 22, fontWeight: 700, color: monthStats.totalPnl >= 0 ? T.accent.cyan : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>${monthStats.totalPnl.toFixed(2)}</div></PV>
+              <PV><div style={{ fontSize: 22, fontWeight: 700, color: (isR ? monthStats.totalR : monthStats.totalPnl) >= 0 ? T.accent.cyan : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{isR ? `${monthStats.totalR >= 0 ? '+' : ''}${monthStats.totalR.toFixed(2)}R` : `$${monthStats.totalPnl.toFixed(2)}`}</div></PV>
               <div style={{ fontSize: 9, color: T.text.muted, marginTop: 3 }}>{monthStats.count} {isRTL ? 'עסקאות' : 'trades'} • {monthStats.winRate.toFixed(0)}% WR</div>
             </GlassCard>
           </div>
