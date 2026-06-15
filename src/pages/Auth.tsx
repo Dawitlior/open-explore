@@ -168,6 +168,17 @@ export default function AuthPage() {
     if (search.get('verified') === '1') toast.success(c.verified);
   }, []); // eslint-disable-line
 
+  // After OAuth redirect lands back with a session, flush any pending consent record.
+  useEffect(() => {
+    if (loading || !session?.user?.id) return;
+    try {
+      if (localStorage.getItem(PENDING_CONSENT_KEY) === '1') {
+        logConsent(session.user.id);
+        localStorage.removeItem(PENDING_CONSENT_KEY);
+      }
+    } catch { /* noop */ }
+  }, [loading, session]);
+
   if (!loading && session) return <Navigate to={redirectTo} replace />;
 
   const toggleLang = () => {
