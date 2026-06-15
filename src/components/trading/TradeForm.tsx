@@ -231,6 +231,29 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
 
   const { returnR, pnl, winLoss } = calc();
 
+  // ── Daily / weekly / monthly limit projection (Step 3 warning) ───
+  const limitProjection = useMemo(() => {
+    if (!form.entry || !form.stopLoss || !form.exit) return null;
+    const refDate = new Date(form.date || Date.now());
+    const simulatedTrade = {
+      ...(trade || {}),
+      date: form.date,
+      returnR,
+      pnl,
+      stopLoss: form.stopLoss,
+      manual_r_multiple: null,
+      manualR: null,
+    } as Trade;
+    const others = trades.filter(t => t.id !== (trade?.id ?? -1));
+    const before = checkRiskLimits(others, refDate, DEFAULT_RISK_LIMITS);
+    const after = checkRiskLimits([...others, simulatedTrade], refDate, DEFAULT_RISK_LIMITS);
+    const newlyBreached =
+      (after.dailyBreached && !before.dailyBreached) ||
+      (after.weeklyBreached && !before.weeklyBreached) ||
+      (after.monthlyBreached && !before.monthlyBreached);
+    return { before, after, newlyBreached, simulatedR: returnR };
+  }, [form.date, form.entry, form.stopLoss, form.exit, returnR, pnl, trades, trade, form.stopLoss]);
+
   // ── Big, friendly styles ──
   const bigInput = {
     width: '100%', padding: isMobile ? '14px 14px' : '13px 14px',
