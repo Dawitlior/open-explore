@@ -316,7 +316,7 @@ const Index = () => {
   const dayNames = [t.sun, t.mon, t.tue, t.wed, t.thu, t.fri, t.sat];
   const radarData = [
     { m: isRTL ? 'הצלחה' : 'Win %', v: stats.winRate },
-    { m: isRTL ? 'רווח' : 'Profit', v: Math.min(100, stats.profitFactor * 40) },
+    { m: isRTL ? 'רווח' : 'Profit', v: Math.min(100, (isR ? stats.profitFactorR : stats.profitFactor) * 40) },
     { m: isRTL ? 'משמעת' : 'Discipline', v: stats.rulesFollowed },
     { m: isRTL ? 'סיכון' : 'Risk Mgmt', v: riskData.riskConsistencyScore },
     { m: isRTL ? 'עקביות' : 'Consistency', v: Math.min(100, 100 - riskData.riskDrift * 10) },
