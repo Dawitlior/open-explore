@@ -34,7 +34,13 @@ export function useSettings() {
     } catch { return null; }
   }, []);
 
-  const [theme, setThemeState] = useState<ThemeId>('midnight');
+  const [theme, setThemeState] = useState<ThemeId>(() => {
+    if (typeof window === 'undefined') return 'midnight';
+    try {
+      const v = window.localStorage.getItem('orca:theme-cache');
+      return (v === 'midnight' || v === 'indigo' || v === 'platinum') ? v : 'midnight';
+    } catch { return 'midnight'; }
+  });
   const [systemMode, setSystemModeState] = useState<SystemMode>('standard');
   const [operatingMode, setOperatingModeState] = useState<OperatingMode>('beginner');
   const [lang, setLangState] = useState<Lang>(() => {
