@@ -378,6 +378,9 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
 
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('פיצול לפי סשן (אסיה / לונדון / ניו-יורק)', 'Session Split (Asia / London / NY)')}</div>
+          {moneyBlocked ? (
+            <div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.text.muted, fontSize: 11 }}>{emptyMoneyMsg}</div>
+          ) : (
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={sessions}>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
@@ -390,6 +393,7 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
               </Bar>
             </BarChart>
           </ResponsiveContainer>
+          )}
         </GlassCard>
       </div>
 
