@@ -99,10 +99,64 @@
     <script type="application/ld+json">
       {"@context":"https://schema.org","@type":"WebSite","name":"Orca","url":"/","inLanguage":["he","en"]}
     </script>
+    <style>
+      #orca-splash{position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:28px;background:var(--orca-splash-bg,#020202);transition:opacity .55s ease;pointer-events:none}
+      #orca-splash.is-hidden{opacity:0}
+      #orca-splash .orca-mark{width:96px;height:96px;border-radius:24px;display:grid;place-items:center;position:relative;animation:orca-breathe 2.4s ease-in-out infinite}
+      #orca-splash .orca-mark img{width:72px;height:72px;object-fit:contain;filter:drop-shadow(0 6px 24px rgba(0,0,0,.45))}
+      #orca-splash .orca-ring{position:absolute;inset:-10px;border-radius:50%;border:1.5px solid transparent;border-top-color:hsl(var(--primary, 184 100% 50%));border-right-color:hsl(var(--primary, 184 100% 50%) / .35);animation:orca-spin 1.4s linear infinite}
+      #orca-splash .orca-ring.outer{inset:-22px;border-top-color:hsl(var(--primary, 184 100% 50%) / .55);border-right-color:transparent;animation-duration:2.2s;animation-direction:reverse}
+      #orca-splash .orca-label{font-family:'IBM Plex Mono','Poppins',ui-monospace,monospace;font-size:11px;letter-spacing:.42em;text-transform:uppercase;color:hsl(var(--muted-foreground, 215 12% 55%));opacity:.85}
+      @keyframes orca-spin{to{transform:rotate(360deg)}}
+      @keyframes orca-breathe{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.04);opacity:.92}}
+      @media (prefers-reduced-motion: reduce){#orca-splash .orca-ring,#orca-splash .orca-mark{animation:none}}
+    </style>
   </head>
 
   <body>
     <div id="root"></div>
+    <div id="orca-splash" aria-hidden="true" role="presentation">
+      <div class="orca-mark">
+        <span class="orca-ring outer"></span>
+        <span class="orca-ring"></span>
+        <img src="/orca-logo.png" alt="" />
+      </div>
+      <div class="orca-label">ORCA · LOADING</div>
+    </div>
+    <script>
+      (function(){
+        try{
+          var t=document.documentElement.getAttribute('data-theme')||'midnight';
+          var SOLID={midnight:'#020202',indigo:'#070817',platinum:'#f4efe4'};
+          document.documentElement.style.setProperty('--orca-splash-bg',SOLID[t]||'#020202');
+        }catch(e){}
+        var start=performance.now();
+        var MIN_MS=1100;       // minimum visible time so it doesn't flicker
+        var MAX_MS=8000;       // safety net
+        var hidden=false;
+        function hide(){
+          if(hidden) return; hidden=true;
+          var el=document.getElementById('orca-splash');
+          if(!el) return;
+          el.classList.add('is-hidden');
+          setTimeout(function(){ if(el && el.parentNode) el.parentNode.removeChild(el); }, 650);
+        }
+        function ready(){
+          var root=document.getElementById('root');
+          var hasContent=root && root.firstElementChild;
+          var elapsed=performance.now()-start;
+          if(hasContent && elapsed>=MIN_MS) return hide();
+          if(elapsed>=MAX_MS) return hide();
+          requestAnimationFrame(ready);
+        }
+        if(document.readyState==='loading'){
+          document.addEventListener('DOMContentLoaded', function(){ requestAnimationFrame(ready); });
+        } else {
+          requestAnimationFrame(ready);
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
+
