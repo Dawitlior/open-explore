@@ -8,7 +8,8 @@
  * No view filtering happens here either. Switching the active portfolio just
  * updates global state; consumers wire themselves up in Stage 4.
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useActivePortfolio } from '@/hooks/use-active-portfolio';
 import type { Portfolio } from '@/hooks/use-portfolios';
 
@@ -46,15 +47,38 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
 
   useEffect(() => {
     if (!open) return;
     const onDoc = (e: MouseEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (rootRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      setOpen(false);
     };
     document.addEventListener('mousedown', onDoc);
     return () => document.removeEventListener('mousedown', onDoc);
   }, [open]);
+
+  useLayoutEffect(() => {
+    if (!open || typeof window === 'undefined') return;
+    const update = () => {
+      const rect = triggerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const width = 300;
+      const left = isRTL ? rect.right - width : rect.left;
+      setMenuPos({ top: rect.bottom + 6, left: Math.max(8, Math.min(left, window.innerWidth - width - 8)) });
+    };
+    update();
+    window.addEventListener('resize', update);
+    window.addEventListener('scroll', update, true);
+    return () => {
+      window.removeEventListener('resize', update);
+      window.removeEventListener('scroll', update, true);
+    };
+  }, [open, isRTL]);
 
   useEffect(() => {
     if (!editing && !creating) return;
@@ -131,6 +155,7 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
   return (
     <div ref={rootRef} style={{ position: 'relative', direction: isRTL ? 'rtl' : 'ltr' }}>
       <button
+        ref={triggerRef}
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="listbox"
         aria-expanded={open}
@@ -157,17 +182,17 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
         </svg>
       </button>
 
-      {open && (
+      {open && typeof document !== 'undefined' && createPortal(
         <div
+          ref={menuRef}
           role="listbox"
           style={{
-            position: 'absolute', top: 'calc(100% + 6px)',
-            [isRTL ? 'right' : 'left']: 0,
+            position: 'fixed', top: menuPos.top, left: menuPos.left,
             minWidth: 280, maxWidth: 340,
             background: 'rgba(6,19,38,0.98)', backdropFilter: 'blur(14px)',
             border: '1px solid rgba(34,211,238,0.2)', borderRadius: 10,
             boxShadow: '0 20px 60px rgba(0,0,0,0.55), 0 0 24px rgba(34,211,238,0.12)',
-            zIndex: 100, padding: 6, fontFamily: "'Poppins', sans-serif",
+            zIndex: 10000, padding: 6, fontFamily: "'Poppins', sans-serif", direction: isRTL ? 'rtl' : 'ltr',
           } as React.CSSProperties}
         >
           {/* List */}
@@ -331,7 +356,8 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
                 : (isRTL ? `הגעת למגבלת המסלול (${tierMax})` : `Plan limit reached (${tierMax})`)}
             </button>
           )}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );

@@ -1,4 +1,5 @@
-// (R-multiple import removed — Psychology Lab is now 100% PnL-agnostic)
+import { getEffectiveR } from '@/lib/r-multiple';
+import { useDisplayMode } from '@/lib/display-mode';
 /**
  * 🧠 PSYCHOLOGY LAB — Advanced behavioral & quant metrics
  * ─────────────────────────────────────────────────────────
@@ -44,6 +45,11 @@ interface Props {
 
 export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
   const { t } = useLang();
+  const { displayMode } = useDisplayMode();
+  const isRMode = displayMode === 'R_MULTIPLE';
+  const metricLabel = isRMode ? 'R' : '$';
+  const valueOf = (trade: Trade) => isRMode ? (getEffectiveR(trade, { strict: true }) ?? 0) : trade.pnl;
+  const formatMetric = (v: number) => isRMode ? `${Number(v).toFixed(2)}R` : `$${Number(v).toFixed(2)}`;
   const tt = {
     background: T.bg.card, border: `1px solid ${T.border.medium}`,
     borderRadius: 10, color: T.text.primary, fontSize: 12,
@@ -60,32 +66,34 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
     });
   }, [trades]);
 
-  /* ── Avg PnL per asset (proxy for setup) ── */
+  /* ── Avg edge per asset (money or R, follows global display mode) ── */
   const evPerAsset = useMemo(() => {
-    const m = new Map<string, { n: number; pnl: number }>();
+    const m = new Map<string, { n: number; total: number }>();
     trades.forEach(t => {
-      const c = m.get(t.coin) || { n: 0, pnl: 0 };
-      c.n++; c.pnl += t.pnl;
-      m.set(t.coin, c);
+      const coin = t.coin || 'UNKNOWN';
+      const c = m.get(coin) || { n: 0, total: 0 };
+      c.n++; c.total += valueOf(t);
+      m.set(coin, c);
     });
     return Array.from(m.entries())
-      .map(([coin, v]) => ({ coin, ev: +(v.pnl / v.n).toFixed(2), n: v.n, pnl: +v.pnl.toFixed(2) }))
+      .map(([coin, v]) => ({ coin, ev: +(v.total / v.n).toFixed(2), n: v.n, total: +v.total.toFixed(2) }))
       .sort((a, b) => b.ev - a.ev)
       .slice(0, 12);
-  }, [trades]);
+  }, [trades, isRMode]);
 
-  /* ── Time-of-Day Edge (Avg PnL by hour) ── */
+  /* ── Time-of-Day Edge (Avg money or R by hour) ── */
   const todEdge = useMemo(() => {
-    const buckets: { hour: number; n: number; pnl: number }[] = Array.from({ length: 24 }, (_, h) => ({ hour: h, n: 0, pnl: 0 }));
+    const buckets: { hour: number; n: number; total: number }[] = Array.from({ length: 24 }, (_, h) => ({ hour: h, n: 0, total: 0 }));
     trades.forEach(t => {
       try {
         const d = new Date(t.date.replace(' ', 'T'));
         const h = d.getHours();
-        buckets[h].n++; buckets[h].pnl += t.pnl;
+        if (Number.isNaN(h)) return;
+        buckets[h].n++; buckets[h].total += valueOf(t);
       } catch { /* skip */ }
     });
-    return buckets.map(b => ({ hour: `${String(b.hour).padStart(2, '0')}:00`, avgPnl: b.n ? +(b.pnl / b.n).toFixed(2) : 0, n: b.n }));
-  }, [trades]);
+    return buckets.map(b => ({ hour: `${String(b.hour).padStart(2, '0')}:00`, avgEdge: b.n ? +(b.total / b.n).toFixed(2) : 0, n: b.n }));
+  }, [trades, isRMode]);
 
   /* ── Tilt Meter timeline ── */
   const tiltTl = useMemo(() => {
@@ -104,16 +112,16 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
     return out;
   }, [trades]);
 
-  /* ── Post-Win overconfidence: risk delta after win streaks of ≥2 ── */
+  /* ── Post-Win overconfidence: risk delta after win streaks ── */
   const postWin = useMemo(() => {
     let streak = 0;
-    const samples: { i: number; deltaPct: number }[] = [];
+    const samples: { i: number; deltaPct: number; streak: number }[] = [];
     for (let i = 1; i < trades.length; i++) {
       const prev = trades[i - 1];
       if (prev.winLoss === 'Win') streak++; else streak = 0;
-      if (streak >= 2) {
+      if (streak >= 1) {
         const cur = trades[i];
-        if (prev.risk > 0) samples.push({ i: i + 1, deltaPct: +(((cur.risk - prev.risk) / prev.risk) * 100).toFixed(1) });
+        if (prev.risk > 0) samples.push({ i: i + 1, streak, deltaPct: +(((cur.risk - prev.risk) / prev.risk) * 100).toFixed(1) });
       }
     }
     return samples;
@@ -124,11 +132,12 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
     const W = 30;
     return trades.map((_, i) => {
       const slice = trades.slice(Math.max(0, i - W + 1), i + 1);
-      const gw = slice.filter(t => t.pnl >= 0).reduce((s, t) => s + t.pnl, 0);
-      const gl = slice.filter(t => t.pnl < 0).reduce((s, t) => s + Math.abs(t.pnl), 0);
+      const values = slice.map(valueOf);
+      const gw = values.filter(v => v >= 0).reduce((s, v) => s + v, 0);
+      const gl = values.filter(v => v < 0).reduce((s, v) => s + Math.abs(v), 0);
       return { i: i + 1, pf: gl > 0 ? +Math.min(5, gw / gl).toFixed(3) : (gw > 0 ? 5 : 0) };
     });
-  }, [trades]);
+  }, [trades, isRMode]);
 
   /* ── Consecutive-loss probability table ── */
   const consecLossProb = useMemo(() => {
@@ -217,7 +226,7 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
 
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
-            {t("Profit Factor מתגלגל · שחיקת אדג' (חלון 30)",'Rolling Profit Factor · Edge decay (window 30)')}
+            {t(`Profit Factor מתגלגל · שחיקת אדג' ב-${metricLabel} (חלון 30)`,`Rolling Profit Factor · ${metricLabel} edge decay (window 30)`)}
           </div>
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={rollingPF}>
@@ -236,14 +245,14 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12, marginBottom: 12 }}>
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
-            {t('Expected Value · תוחלת $ לפי נכס','Expected Value · Average $ per asset')}
+            {t(`Expected Value · תוחלת ${metricLabel} לפי נכס`,`Expected Value · Average ${metricLabel} per asset`)}
           </div>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={evPerAsset} layout="vertical" margin={{ left: 60 }}>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
               <XAxis type="number" tick={{ fill: T.text.muted, fontSize: 10 }} />
               <YAxis type="category" dataKey="coin" tick={{ fill: T.text.muted, fontSize: 10 }} width={70} />
-              <Tooltip contentStyle={tt} formatter={(v: number) => `$${v}`} />
+              <Tooltip contentStyle={tt} formatter={(v: number) => formatMetric(v)} />
               <ReferenceLine x={0} stroke={T.text.muted} />
               <Bar dataKey="ev" radius={[0, 4, 4, 0]}>
                 {evPerAsset.map((d, i) => <Cell key={i} fill={d.ev >= 0 ? T.accent.green : T.accent.red} />)}
@@ -254,17 +263,17 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
 
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
-            {t('Time-of-Day Edge · תוחלת $ לפי שעה','Time-of-Day Edge · Average $ by hour')}
+            {t(`Time-of-Day Edge · תוחלת ${metricLabel} לפי שעה`,`Time-of-Day Edge · Average ${metricLabel} by hour`)}
           </div>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={todEdge}>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
               <XAxis dataKey="hour" tick={{ fill: T.text.muted, fontSize: 9 }} interval={2} />
               <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
-              <Tooltip contentStyle={tt} formatter={(v: number) => `$${v}`} />
+              <Tooltip contentStyle={tt} formatter={(v: number) => formatMetric(v)} />
               <ReferenceLine y={0} stroke={T.text.muted} />
-              <Bar dataKey="avgPnl" radius={[3, 3, 0, 0]}>
-                {todEdge.map((d, i) => <Cell key={i} fill={d.avgPnl >= 0 ? T.accent.cyan : T.accent.red} fillOpacity={d.n ? 0.85 : 0.15} />)}
+              <Bar dataKey="avgEdge" radius={[3, 3, 0, 0]}>
+                {todEdge.map((d, i) => <Cell key={i} fill={d.avgEdge >= 0 ? T.accent.cyan : T.accent.red} fillOpacity={d.n ? 0.85 : 0.15} />)}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
