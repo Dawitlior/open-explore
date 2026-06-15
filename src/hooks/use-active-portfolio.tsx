@@ -1,14 +1,10 @@
 /**
- * ActivePortfolioProvider — Stage 3 of Multi-Portfolio plan.
+ * ActivePortfolioProvider — Stages 3-5 of Multi-Portfolio plan.
  *
- * Owns the global "active portfolio" identity and exposes the portfolios CRUD
- * to every consumer through one context. Persists the active portfolio id to
- * localStorage so the choice survives reload.
- *
- * What this stage does NOT do yet:
- *  - Filter trades/journal/charts by activePortfolioId (Stage 4)
- *  - Enforce plan tier limits when creating portfolios (Stage 5)
- *  - Wire the active portfolio into the UIE import preflight (Stage 6)
+ * Stage 3: owns the global "active portfolio" identity, persists to LS.
+ * Stage 4: keeps the non-React storage layer in sync via a module singleton.
+ * Stage 5: enforces tier limits on create, computes the read-only "locked"
+ *          portfolio set on downgrade, and exposes it to UI + storage layer.
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
@@ -17,7 +13,16 @@ import {
   type PortfolioDraft,
 } from '@/hooks/use-portfolios';
 import { useAuth } from '@/hooks/use-auth';
-import { setActivePortfolioIdGlobal } from '@/lib/active-portfolio-store';
+import { useEntitlement, type AppTier } from '@/hooks/use-entitlement';
+import {
+  setActivePortfolioIdGlobal,
+  setLockedPortfolioIdsGlobal,
+} from '@/lib/active-portfolio-store';
+import {
+  computeLockedPortfolioIds,
+  getPortfolioLimit,
+  canCreatePortfolio,
+} from '@/lib/portfolio-limits';
 
 const LS_KEY = 'orca.activePortfolioId';
 
@@ -33,6 +38,13 @@ interface ActivePortfolioContextValue {
   updatePortfolio: (id: string, patch: Partial<PortfolioDraft>) => Promise<Portfolio | null>;
   deletePortfolio: (id: string) => Promise<boolean>;
   setDefault: (id: string) => Promise<boolean>;
+  // Stage 5 — limits & lock state
+  tier: AppTier;
+  tierMax: number;
+  lockedIds: Set<string>;
+  isPortfolioLocked: (id: string | null | undefined) => boolean;
+  isActivePortfolioLocked: boolean;
+  canCreate: boolean;
 }
 
 const ActivePortfolioContext = createContext<ActivePortfolioContextValue | null>(null);
@@ -58,6 +70,7 @@ function writeStoredId(id: string | null) {
 
 export function ActivePortfolioProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  const { tier, loading: tierLoading } = useEntitlement();
   const {
     portfolios,
     loading,
@@ -91,8 +104,26 @@ export function ActivePortfolioProvider({ children }: { children: ReactNode }) {
     writeStoredId(fallback);
   }, [loading, portfolios, activePortfolioId]);
 
-  // Keep the global singleton in sync with the React state so non-React
-  // code (storage layer) can read it synchronously.
+  // Stage 5 — compute locked set whenever tier or portfolios change.
+  // While the tier is still resolving we defer to "no locks" rather than
+  // risk briefly locking portfolios for an Ultimate user (whose tier defaults
+  // to 'standard' for one tick before the RPC returns).
+  const lockedIds = useMemo(
+    () => (tierLoading ? new Set<string>() : computeLockedPortfolioIds(portfolios, tier)),
+    [portfolios, tier, tierLoading],
+  );
+  const tierMax = useMemo(() => getPortfolioLimit(tier), [tier]);
+  const canCreate = useMemo(
+    () => (tierLoading ? false : canCreatePortfolio(portfolios, tier)),
+    [portfolios, tier, tierLoading],
+  );
+
+  // Push lock state to the non-React singleton so storage can enforce.
+  useEffect(() => {
+    setLockedPortfolioIdsGlobal(lockedIds);
+  }, [lockedIds]);
+
+  // Keep the global active-id singleton in sync.
   useEffect(() => {
     setActivePortfolioIdGlobal(activePortfolioId);
   }, [activePortfolioId]);
@@ -101,7 +132,6 @@ export function ActivePortfolioProvider({ children }: { children: ReactNode }) {
     setActiveState(id);
     writeStoredId(id);
     setActivePortfolioIdGlobal(id);
-    // Stage 4 hook point: anyone caching trades can listen to this and refetch.
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('orca:active-portfolio-changed', { detail: { id } }));
     }
@@ -109,18 +139,22 @@ export function ActivePortfolioProvider({ children }: { children: ReactNode }) {
 
   const wrappedCreate = useCallback(
     async (draft: PortfolioDraft) => {
+      // Hard-stop at tier limit. UI also disables the button, but enforce here too.
+      if (!canCreatePortfolio(portfolios, tier)) {
+        console.warn('[portfolios] create blocked — tier limit reached', { tier, count: portfolios.length });
+        return null;
+      }
       const created = await createPortfolio(draft);
       if (created) setActivePortfolioId(created.id);
       return created;
     },
-    [createPortfolio, setActivePortfolioId],
+    [createPortfolio, setActivePortfolioId, portfolios, tier],
   );
 
   const wrappedDelete = useCallback(
     async (id: string) => {
       const ok = await deletePortfolio(id);
       if (ok && id === activePortfolioId) {
-        // Fall back to default (or first remaining) on next load cycle
         const next = portfolios.find((p) => p.id !== id && p.is_default) ?? portfolios.find((p) => p.id !== id);
         if (next) setActivePortfolioId(next.id);
       }
@@ -132,6 +166,16 @@ export function ActivePortfolioProvider({ children }: { children: ReactNode }) {
   const activePortfolio = useMemo(
     () => portfolios.find((p) => p.id === activePortfolioId) ?? null,
     [portfolios, activePortfolioId],
+  );
+
+  const isPortfolioLocked = useCallback(
+    (id: string | null | undefined) => !!id && lockedIds.has(id),
+    [lockedIds],
+  );
+
+  const isActivePortfolioLocked = useMemo(
+    () => isPortfolioLocked(activePortfolioId),
+    [isPortfolioLocked, activePortfolioId],
   );
 
   const value = useMemo<ActivePortfolioContextValue>(
@@ -147,8 +191,14 @@ export function ActivePortfolioProvider({ children }: { children: ReactNode }) {
       updatePortfolio,
       deletePortfolio: wrappedDelete,
       setDefault,
+      tier,
+      tierMax,
+      lockedIds,
+      isPortfolioLocked,
+      isActivePortfolioLocked,
+      canCreate,
     }),
-    [portfolios, loading, error, activePortfolioId, activePortfolio, setActivePortfolioId, refresh, wrappedCreate, updatePortfolio, wrappedDelete, setDefault],
+    [portfolios, loading, error, activePortfolioId, activePortfolio, setActivePortfolioId, refresh, wrappedCreate, updatePortfolio, wrappedDelete, setDefault, tier, tierMax, lockedIds, isPortfolioLocked, isActivePortfolioLocked, canCreate],
   );
 
   return <ActivePortfolioContext.Provider value={value}>{children}</ActivePortfolioContext.Provider>;
@@ -162,11 +212,6 @@ export function useActivePortfolio(): ActivePortfolioContextValue {
   return ctx;
 }
 
-/**
- * Soft variant — safe to call outside the provider. Returns null when no
- * active portfolio context exists yet (used by components that may render
- * on the landing page before the provider mounts).
- */
 export function useActivePortfolioOptional(): ActivePortfolioContextValue | null {
   return useContext(ActivePortfolioContext);
 }

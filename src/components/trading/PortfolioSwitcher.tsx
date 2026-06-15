@@ -30,6 +30,10 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
     deletePortfolio,
     setDefault,
     loading,
+    tier,
+    tierMax,
+    isPortfolioLocked,
+    canCreate,
   } = useActivePortfolio();
 
   const [open, setOpen] = useState(false);
@@ -170,6 +174,7 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
           <div style={{ maxHeight: 320, overflowY: 'auto', padding: '2px 2px 4px' }}>
             {portfolios.map((p) => {
               const isActive = p.id === activePortfolioId;
+              const locked = isPortfolioLocked(p.id);
               return (
                 <div
                   key={p.id}
@@ -183,6 +188,7 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
                     border: `1px solid ${isActive ? 'rgba(34,211,238,0.35)' : 'transparent'}`,
                     transition: 'background 0.15s',
                     marginBottom: 2,
+                    opacity: locked ? 0.78 : 1,
                   }}
                   onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'rgba(148,163,184,0.06)'; }}
                   onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
@@ -196,13 +202,22 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
                           {isRTL ? 'ברירת מחדל' : 'DEFAULT'}
                         </span>
                       )}
+                      {locked && (
+                        <span
+                          title={isRTL ? 'תיק במצב קריאה־בלבד (חרג ממגבלת המסלול). שדרג כדי לפתוח לעריכה.' : 'Read-only — exceeds plan limit. Upgrade to unlock.'}
+                          style={{ marginInlineStart: 6, fontSize: 9, padding: '1px 5px', background: 'rgba(251,146,60,0.15)', color: '#fb923c', borderRadius: 4, fontWeight: 700, letterSpacing: 0.4, display: 'inline-flex', alignItems: 'center', gap: 3 }}
+                        >
+                          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                          {isRTL ? 'נעול' : 'LOCKED'}
+                        </span>
+                      )}
                     </div>
                     <div style={{ fontSize: 10, color: '#94a3b8', fontFamily: "'IBM Plex Mono', monospace" }}>
                       {p.currency} · {isRTL ? 'הון התחלתי' : 'Start'} {Number(p.starting_balance).toLocaleString()}
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 4 }}>
-                    {!p.is_default && (
+                    {!p.is_default && !locked && (
                       <button
                         onClick={(e) => { e.stopPropagation(); void setDefault(p.id); }}
                         title={isRTL ? 'הפוך לברירת מחדל' : 'Set as default'}
@@ -210,17 +225,18 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
                       >★</button>
                     )}
                     <button
-                      onClick={(e) => { e.stopPropagation(); setEditing(p); setCreating(false); }}
-                      title={isRTL ? 'ערוך' : 'Edit'}
-                      style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', padding: 2 }}
+                      onClick={(e) => { e.stopPropagation(); if (locked) return; setEditing(p); setCreating(false); }}
+                      title={locked ? (isRTL ? 'נעול — לא ניתן לעריכה' : 'Locked — cannot edit') : (isRTL ? 'ערוך' : 'Edit')}
+                      disabled={locked}
+                      style={{ background: 'none', border: 'none', color: locked ? '#334155' : '#64748b', cursor: locked ? 'not-allowed' : 'pointer', padding: 2 }}
                     >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     </button>
                     <button
-                      onClick={(e) => { e.stopPropagation(); void handleDelete(p); }}
-                      title={isRTL ? 'מחק' : 'Delete'}
-                      disabled={portfolios.length <= 1}
-                      style={{ background: 'none', border: 'none', color: portfolios.length <= 1 ? '#334155' : '#f87171', cursor: portfolios.length <= 1 ? 'not-allowed' : 'pointer', padding: 2 }}
+                      onClick={(e) => { e.stopPropagation(); if (locked) return; void handleDelete(p); }}
+                      title={locked ? (isRTL ? 'נעול — לא ניתן למחיקה' : 'Locked — cannot delete') : (isRTL ? 'מחק' : 'Delete')}
+                      disabled={portfolios.length <= 1 || locked}
+                      style={{ background: 'none', border: 'none', color: (portfolios.length <= 1 || locked) ? '#334155' : '#f87171', cursor: (portfolios.length <= 1 || locked) ? 'not-allowed' : 'pointer', padding: 2 }}
                     >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                     </button>
@@ -229,6 +245,17 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
               );
             })}
           </div>
+
+          {/* Tier limit summary */}
+          <div style={{ padding: '4px 8px', fontSize: 10, color: '#64748b', fontFamily: "'IBM Plex Mono', monospace", display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(148,163,184,0.08)' }}>
+            <span>
+              {portfolios.length} / {tierMax} · <span style={{ color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 0.5 }}>{tier}</span>
+            </span>
+            {!canCreate && (
+              <span style={{ color: '#fb923c' }}>{isRTL ? 'הגעת למגבלת המסלול' : 'Plan limit reached'}</span>
+            )}
+          </div>
+
 
           {/* Create / Edit form */}
           {(creating || editing) ? (
@@ -285,16 +312,23 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
             </div>
           ) : (
             <button
-              onClick={() => { setCreating(true); setEditing(null); }}
+              onClick={() => { if (!canCreate) return; setCreating(true); setEditing(null); }}
+              disabled={!canCreate}
+              title={!canCreate ? (isRTL ? `הגעת למגבלת המסלול (${tierMax}). שדרג כדי להוסיף עוד.` : `Plan limit reached (${tierMax}). Upgrade to add more.`) : undefined}
               style={{
                 display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-                background: 'rgba(34,211,238,0.06)', border: '1px dashed rgba(34,211,238,0.35)',
-                color: '#22d3ee', padding: '8px 10px', borderRadius: 7, cursor: 'pointer',
+                background: canCreate ? 'rgba(34,211,238,0.06)' : 'rgba(148,163,184,0.04)',
+                border: `1px dashed ${canCreate ? 'rgba(34,211,238,0.35)' : 'rgba(148,163,184,0.2)'}`,
+                color: canCreate ? '#22d3ee' : '#64748b',
+                padding: '8px 10px', borderRadius: 7,
+                cursor: canCreate ? 'pointer' : 'not-allowed',
                 fontSize: 12, fontWeight: 600, fontFamily: 'inherit', marginTop: 4,
               }}
             >
-              <span style={{ fontSize: 14, lineHeight: 1 }}>+</span>
-              {isRTL ? 'תיק חדש' : 'New portfolio'}
+              <span style={{ fontSize: 14, lineHeight: 1 }}>{canCreate ? '+' : '🔒'}</span>
+              {canCreate
+                ? (isRTL ? 'תיק חדש' : 'New portfolio')
+                : (isRTL ? `הגעת למגבלת המסלול (${tierMax})` : `Plan limit reached (${tierMax})`)}
             </button>
           )}
         </div>

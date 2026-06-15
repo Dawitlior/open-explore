@@ -1,6 +1,30 @@
 import type { Trade } from '@/data/trades';
 import { supabase } from '@/integrations/supabase/client';
-import { getActivePortfolioIdGlobal } from '@/lib/active-portfolio-store';
+import {
+  getActivePortfolioIdGlobal,
+  isPortfolioLockedGlobal,
+} from '@/lib/active-portfolio-store';
+
+/**
+ * Stage 5 — read-only lock enforcement.
+ * Locked portfolios (downgrade overflow) reject all write attempts at the
+ * storage layer. UI also disables the affected buttons, but enforcing here
+ * means programmatic / bridge / import paths can't bypass it either.
+ */
+export class PortfolioLockedError extends Error {
+  code = 'PORTFOLIO_LOCKED' as const;
+  constructor(public portfolioId: string) {
+    super(`Portfolio ${portfolioId} is locked (read-only — upgrade plan to unlock).`);
+  }
+}
+
+function assertWritable(portfolioId: string) {
+  if (isPortfolioLockedGlobal(portfolioId)) {
+    const err = new PortfolioLockedError(portfolioId);
+    reportStorageError('portfolio-locked', err);
+    throw err;
+  }
+}
 
 /**
  * Cloud-backed storage. Each user only ever reads/writes their own rows
@@ -122,10 +146,9 @@ function buildRow(uid: string, t: Trade) {
   const prov = withMeta.__provenance;
   const portfolioId = withMeta.__portfolio_id ?? getActivePortfolioIdGlobal();
   if (!portfolioId) {
-    // Hard fail rather than silently write a row with NULL portfolio_id —
-    // the DB will reject it anyway (NOT NULL) and we want a clear stack.
     throw new Error('[storage] cannot save trade: no active portfolio');
   }
+  assertWritable(portfolioId);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { __provenance, __portfolio_id, ...clean } = withMeta as Trade & Record<string, unknown>;
   const row: Record<string, unknown> = {
@@ -173,6 +196,10 @@ export async function saveTrades(trades: Trade[]): Promise<void> {
 export async function deleteTrade(id: number): Promise<void> {
   const uid = await currentUserId();
   if (!uid) return;
+  // Trades shown in the UI are always scoped to the active portfolio,
+  // so the active portfolio's lock state is the right gate here.
+  const pid = getActivePortfolioIdGlobal();
+  if (pid) assertWritable(pid);
   const { error } = await supabase
     .from('trades')
     .delete()
@@ -183,15 +210,14 @@ export async function deleteTrade(id: number): Promise<void> {
 
 /**
  * Deletes trades from the currently active portfolio only. Other portfolios'
- * trades are preserved. The legacy callers expected a "wipe everything" but
- * post-multi-portfolio that's almost never the intent — a portfolio-scoped
- * wipe is the safe default. To delete all trades across all portfolios, use
- * `clearAllData`.
+ * trades are preserved. To delete all trades across all portfolios, use
+ * `clearAllData`. Locked (read-only) portfolios are rejected.
  */
 export async function deleteAllTrades(): Promise<void> {
   const uid = await currentUserId();
   if (!uid) return;
   const pid = getActivePortfolioIdGlobal();
+  if (pid) assertWritable(pid);
   let q = supabase.from('trades').delete().eq('user_id', uid);
   if (pid) q = q.eq('portfolio_id', pid);
   const { error } = await q;
