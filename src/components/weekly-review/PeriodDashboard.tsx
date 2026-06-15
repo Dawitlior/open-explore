@@ -289,7 +289,7 @@ export default function PeriodDashboard({ trades, months, T, isRTL, titleHE, tit
                     <td style={td}>{m.monthKey}</td>
                     <td style={{ ...td, textAlign: 'right' }}>{m.trades}</td>
                     <td style={{ ...td, textAlign: 'right', color: m.netR >= 0 ? win : loss, fontWeight: 700 }}>{fmtR(m.netR)}</td>
-                    <td style={{ ...td, textAlign: 'right', color: m.netUSD >= 0 ? win : loss, fontWeight: 700 }}>{fmtUSD(m.netUSD)}</td>
+                    {hasMoney && <td style={{ ...td, textAlign: 'right', color: m.netUSD >= 0 ? win : loss, fontWeight: 700 }}>{fmtUSD(m.netUSD)}</td>}
                     <td style={{ ...td, textAlign: 'right' }}>{Math.round(m.winRate * 100)}%</td>
                     <td style={{ ...td, textAlign: 'right' }}>{pfStr(m.profitFactor)}</td>
                   </tr>
