@@ -56,6 +56,7 @@ export function useSettings() {
       // Migrate legacy themes (arctic/ember/crimson) to new ones
       const migrated: ThemeId = (t === 'midnight' || t === 'indigo' || t === 'platinum') ? t : 'midnight';
       setThemeState(migrated);
+      try { window.localStorage.setItem('orca:theme-cache', migrated); } catch { /* noop */ }
       if (m) setSystemModeState(m);
       if (o) setOperatingModeState(o);
       const authLangOverride = readAuthLangOverride();
