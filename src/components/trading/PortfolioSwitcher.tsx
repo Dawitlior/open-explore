@@ -161,23 +161,29 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
         aria-expanded={open}
         title={isRTL ? 'מעבר בין תיקים' : 'Switch portfolio'}
         style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          padding: compact ? '4px 10px' : '6px 12px',
-          background: 'linear-gradient(135deg, rgba(34,211,238,0.06), rgba(15,23,42,0.4))',
-          border: '1px solid rgba(34,211,238,0.25)',
-          borderRadius: 8,
-          color: '#e2e8f0',
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: compact ? '6px 14px' : '8px 16px',
+          background: open
+            ? 'linear-gradient(135deg, rgba(212,175,55,0.18) 0%, rgba(20,28,46,0.95) 60%)'
+            : 'linear-gradient(135deg, rgba(212,175,55,0.08) 0%, rgba(20,28,46,0.85) 70%)',
+          border: '1px solid rgba(212,175,55,0.35)',
+          borderRadius: 999,
+          color: '#f1f5f9',
           cursor: 'pointer',
-          fontSize: compact ? 11 : 12,
+          fontSize: compact ? 11.5 : 12.5,
           fontWeight: 600,
           fontFamily: "'Poppins', sans-serif",
-          maxWidth: 220, minWidth: 0,
-          transition: 'all 0.18s ease',
+          letterSpacing: '0.02em',
+          maxWidth: 240, minWidth: 0, width: '100%',
+          boxShadow: open
+            ? '0 6px 24px rgba(212,175,55,0.22), inset 0 1px 0 rgba(255,255,255,0.06)'
+            : '0 2px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)',
+          transition: 'all 0.22s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
         {dot(activePortfolio?.color)}
-        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{triggerLabel}</span>
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, textAlign: isRTL ? 'right' : 'left' }}>{triggerLabel}</span>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(212,175,55,0.85)" strokeWidth="2.2" aria-hidden="true" style={{ transform: open ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s ease' }}>
           <polyline points="6 9 12 15 18 9" />
         </svg>
       </button>
@@ -189,10 +195,11 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
           style={{
             position: 'fixed', top: menuPos.top, left: menuPos.left,
             minWidth: 280, maxWidth: 340,
-            background: 'rgba(6,19,38,0.98)', backdropFilter: 'blur(14px)',
-            border: '1px solid rgba(34,211,238,0.2)', borderRadius: 10,
-            boxShadow: '0 20px 60px rgba(0,0,0,0.55), 0 0 24px rgba(34,211,238,0.12)',
-            zIndex: 10000, padding: 6, fontFamily: "'Poppins', sans-serif", direction: isRTL ? 'rtl' : 'ltr',
+            background: 'linear-gradient(180deg, rgba(14,22,40,0.98) 0%, rgba(6,19,38,0.99) 100%)',
+            backdropFilter: 'blur(18px)',
+            border: '1px solid rgba(212,175,55,0.28)', borderRadius: 14,
+            boxShadow: '0 24px 70px rgba(0,0,0,0.6), 0 0 30px rgba(212,175,55,0.10), inset 0 1px 0 rgba(255,255,255,0.05)',
+            zIndex: 10000, padding: 8, fontFamily: "'Poppins', sans-serif", direction: isRTL ? 'rtl' : 'ltr',
           } as React.CSSProperties}
         >
           {/* List */}

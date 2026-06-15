@@ -40,10 +40,13 @@ const WeeklyReviewShellInner = ({ T, isRTL, trades }: Props) => {
 
   const bg = T?.bg?.primary || '#061326';
   const fg = T?.text?.primary || '#e9eef7';
-  const muted = T?.text?.muted || '#7a8aa3';
-  const accent = T?.accent?.cyan || '#00f2ff';
-  const panel = T?.bg?.surface || 'rgba(255,255,255,0.04)';
-  const border = T?.border?.subtle || 'rgba(255,255,255,0.08)';
+  const isLight = (T as { id?: string })?.id === 'platinum';
+  // Light theme needs deeper, higher-contrast tokens — the dark cyan and
+  // ghosted muted greys turn into illegible glyphs on white surfaces.
+  const muted = isLight ? '#475569' : (T?.text?.muted || '#7a8aa3');
+  const accent = isLight ? '#1d4ed8' : (T?.accent?.cyan || '#00f2ff');
+  const panel = isLight ? '#ffffff' : (T?.bg?.surface || 'rgba(255,255,255,0.04)');
+  const border = isLight ? 'rgba(15,23,42,0.14)' : (T?.border?.subtle || 'rgba(255,255,255,0.08)');
 
   const shared = { T, isRTL, trades, state };
 

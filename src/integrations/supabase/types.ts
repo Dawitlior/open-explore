@@ -116,6 +116,44 @@ export type Database = {
         }
         Relationships: []
       }
+      day_notes: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          note: string
+          portfolio_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          note?: string
+          portfolio_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          note?: string
+          portfolio_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "day_notes_portfolio_id_fkey"
+            columns: ["portfolio_id"]
+            isOneToOne: false
+            referencedRelation: "portfolios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       economic_events: {
         Row: {
           actual: string | null

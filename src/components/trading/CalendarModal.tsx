@@ -8,6 +8,8 @@ import { getR, sumR, formatR } from '@/lib/r-multiple';
 import { useMonthEconomicEvents } from '@/hooks/use-month-economic-events';
 import { MACRO_TIER_COLOR, CURRENCY_FLAG } from '@/components/economic/MacroEventStrip';
 import { formatISTTime } from '@/lib/economic';
+import { supabase } from '@/integrations/supabase/client';
+import { useActivePortfolio } from '@/hooks/use-active-portfolio';
 
 
 interface CalendarModalProps {
@@ -53,6 +55,56 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = prev; };
   }, []);
+
+  /* ============= Day Note (per-day journal entry) ============= */
+  const { activePortfolioId } = useActivePortfolio();
+  const isoDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  const [note, setNote] = useState('');
+  const [noteLoaded, setNoteLoaded] = useState(false);
+  const [noteSaving, setNoteSaving] = useState(false);
+  const [noteStatus, setNoteStatus] = useState<'idle' | 'saved' | 'error'>('idle');
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setNoteLoaded(false);
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth?.user?.id;
+      if (!uid) { if (!cancelled) { setNote(''); setNoteLoaded(true); } return; }
+      const q = supabase.from('day_notes').select('note').eq('user_id', uid).eq('date', isoDate);
+      const { data } = activePortfolioId
+        ? await q.eq('portfolio_id', activePortfolioId).maybeSingle()
+        : await q.is('portfolio_id', null).maybeSingle();
+      if (cancelled) return;
+      setNote(data?.note ?? '');
+      setNoteLoaded(true);
+    })();
+    return () => { cancelled = true; };
+  }, [isoDate, activePortfolioId]);
+
+  const saveNote = useCallback(async () => {
+    setNoteSaving(true);
+    setNoteStatus('idle');
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth?.user?.id;
+      if (!uid) throw new Error('not_authenticated');
+      const { error } = await supabase
+        .from('day_notes')
+        .upsert(
+          { user_id: uid, portfolio_id: activePortfolioId ?? null, date: isoDate, note: note.trim() },
+          { onConflict: 'user_id,portfolio_id,date' },
+        );
+      if (error) throw error;
+      setNoteStatus('saved');
+      window.setTimeout(() => setNoteStatus('idle'), 2200);
+    } catch {
+      setNoteStatus('error');
+    } finally {
+      setNoteSaving(false);
+    }
+  }, [note, isoDate, activePortfolioId]);
+
 
   const dayTrades = trades.filter(tr => {
     if (!tr.date) return false;
@@ -273,6 +325,59 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
     );
   };
 
+  /* ============= Day-note (persisted journal entry) ============= */
+  const NoteSection = () => (
+    <div style={{
+      background: `linear-gradient(135deg, ${T.accent.cyan}08, ${T.bg.tertiary})`,
+      border: `1px solid ${T.border.subtle}`,
+      borderRadius: T.radius.md, padding: 14,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 14 }}>📝</span>
+          <span style={{ fontSize: 11, fontWeight: 800, color: T.text.primary, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            {isRTL ? 'הערה ליום' : 'Day Note'}
+          </span>
+        </div>
+        {noteStatus === 'saved' && (
+          <span style={{ fontSize: 10, color: T.accent.green, fontWeight: 700 }}>{isRTL ? '✓ נשמר' : '✓ Saved'}</span>
+        )}
+        {noteStatus === 'error' && (
+          <span style={{ fontSize: 10, color: T.accent.red, fontWeight: 700 }}>{isRTL ? 'שגיאת שמירה' : 'Save failed'}</span>
+        )}
+      </div>
+      <textarea
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        disabled={!noteLoaded}
+        placeholder={isRTL ? 'מה קרה היום? תובנות, מצב רוח, החלטות…' : 'What happened today? Insights, mood, decisions…'}
+        rows={4}
+        style={{
+          width: '100%', boxSizing: 'border-box', resize: 'vertical',
+          background: T.bg.secondary, color: T.text.primary,
+          border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.sm,
+          padding: '10px 12px', fontSize: 13, lineHeight: 1.5,
+          fontFamily: "'Poppins', system-ui, sans-serif", outline: 'none',
+          direction: isRTL ? 'rtl' : 'ltr',
+        }}
+      />
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+        <button
+          onClick={() => void saveNote()}
+          disabled={noteSaving || !noteLoaded}
+          style={{
+            fontSize: 11, fontWeight: 800, padding: '7px 16px', borderRadius: 999,
+            background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`,
+            color: T.bg.primary, border: 'none',
+            cursor: (noteSaving || !noteLoaded) ? 'wait' : 'pointer',
+            boxShadow: `0 4px 14px ${T.accent.cyan}40`,
+            letterSpacing: '0.05em',
+          }}
+        >{noteSaving ? '…' : (isRTL ? 'שמור הערה' : 'Save Note')}</button>
+      </div>
+    </div>
+  );
+
 
   const AISection = () => (
     !showAI ? (
@@ -455,6 +560,11 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
           </div>
 
 
+          {/* Day note */}
+          <div style={{ padding: '0 16px 14px' }}>
+            <NoteSection />
+          </div>
+
           {/* AI */}
           <div style={{ padding: '8px 16px 32px' }}>
             <AISection />
@@ -623,6 +733,9 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
             )}
           </div>
 
+          <div>
+            <NoteSection />
+          </div>
 
           <div>
             <AISection />
