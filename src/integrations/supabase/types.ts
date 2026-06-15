@@ -507,6 +507,7 @@ export type Database = {
           id: string
           manual_r_multiple: number | null
           opened_at: string | null
+          portfolio_id: string
           source_type: string | null
           trade_id: number
           updated_at: string
@@ -524,6 +525,7 @@ export type Database = {
           id?: string
           manual_r_multiple?: number | null
           opened_at?: string | null
+          portfolio_id: string
           source_type?: string | null
           trade_id: number
           updated_at?: string
@@ -541,12 +543,21 @@ export type Database = {
           id?: string
           manual_r_multiple?: number | null
           opened_at?: string | null
+          portfolio_id?: string
           source_type?: string | null
           trade_id?: number
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "trades_portfolio_id_fkey"
+            columns: ["portfolio_id"]
+            isOneToOne: false
+            referencedRelation: "portfolios"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_preferences: {
         Row: {
