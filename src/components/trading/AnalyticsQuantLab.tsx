@@ -355,6 +355,9 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 12, marginBottom: 12 }}>
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('גודל פוזיציה מול P&L', 'Position Size vs P&L')}</div>
+          {moneyBlocked ? (
+            <div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.text.muted, fontSize: 11 }}>{emptyMoneyMsg}</div>
+          ) : (
           <ResponsiveContainer width="100%" height={240}>
             <ScatterChart>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
@@ -370,6 +373,7 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
               </Scatter>
             </ScatterChart>
           </ResponsiveContainer>
+          )}
         </GlassCard>
 
         <GlassCard T={T}>
