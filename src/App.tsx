@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { OrcaUXLayer, LiquidSweep } from "@/components/ui-orca";
 import { AuthProvider } from "@/hooks/use-auth";
+import { ActivePortfolioProvider } from "@/hooks/use-active-portfolio";
 import { RequireAuth } from "@/components/RequireAuth";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { StorageErrorListener } from "@/components/StorageErrorListener";
@@ -76,6 +77,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
+            <ActivePortfolioProvider>
             <a href="#main" className="orca-skip-link">דלג לתוכן · Skip to content</a>
             <SourceProtection />
             <StorageErrorListener />
@@ -114,6 +116,7 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </ActivePortfolioProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
