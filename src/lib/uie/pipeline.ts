@@ -7,7 +7,12 @@ import { resolve } from './matching/resolve';
 import { detectStructure, pickSheet } from './structure/structure';
 import { decideDateFormat, parseDate, parseNumber, normalizeDirection, normalizeSymbol } from './matching/values';
 import { classifyArchetype, reconstructFIFO, StreamItem } from './reconstruction/reconstruction';
-import { ACTIVITY_VALUES } from './dictionary/canonical-fields';
+import { ACTIVITY_VALUES, byCanonical } from './dictionary/canonical-fields';
+
+export interface RunImportOptions {
+  /** Force-set canonical field by absolute columnIndex; null = ignore column. */
+  mappingOverrides?: Record<number, string | null>;
+}
 import { deriveTrade, gapAnalysis, markDuplicates, detectUnitsMode, buildNotesOverflow, appendNotes } from './delivery/delivery';
 
 let _tid = 0; const tid = () => 't' + (++_tid);
