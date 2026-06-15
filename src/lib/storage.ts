@@ -196,6 +196,10 @@ export async function saveTrades(trades: Trade[]): Promise<void> {
 export async function deleteTrade(id: number): Promise<void> {
   const uid = await currentUserId();
   if (!uid) return;
+  // Trades shown in the UI are always scoped to the active portfolio,
+  // so the active portfolio's lock state is the right gate here.
+  const pid = getActivePortfolioIdGlobal();
+  if (pid) assertWritable(pid);
   const { error } = await supabase
     .from('trades')
     .delete()
@@ -206,15 +210,14 @@ export async function deleteTrade(id: number): Promise<void> {
 
 /**
  * Deletes trades from the currently active portfolio only. Other portfolios'
- * trades are preserved. The legacy callers expected a "wipe everything" but
- * post-multi-portfolio that's almost never the intent — a portfolio-scoped
- * wipe is the safe default. To delete all trades across all portfolios, use
- * `clearAllData`.
+ * trades are preserved. To delete all trades across all portfolios, use
+ * `clearAllData`. Locked (read-only) portfolios are rejected.
  */
 export async function deleteAllTrades(): Promise<void> {
   const uid = await currentUserId();
   if (!uid) return;
   const pid = getActivePortfolioIdGlobal();
+  if (pid) assertWritable(pid);
   let q = supabase.from('trades').delete().eq('user_id', uid);
   if (pid) q = q.eq('portfolio_id', pid);
   const { error } = await q;
