@@ -25,6 +25,20 @@ type Lang = 'he' | 'en';
 
 const LANG_KEY = 'orca:lang-cache';
 const AUTH_LANG_OVERRIDE_KEY = 'orca:auth-lang-override';
+const PENDING_CONSENT_KEY = 'orca:pending-consent';
+const CONSENT_VERSION = '2026-06-15';
+
+async function logConsent(userId: string) {
+  try {
+    await supabase.from('consent_log').insert({
+      user_id: userId,
+      version: CONSENT_VERSION,
+      choices: { terms: true, privacy: true },
+      user_agent: typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 500) : null,
+    });
+  } catch { /* non-blocking */ }
+}
+
 
 const COPY = {
   he: {
@@ -61,6 +75,11 @@ const COPY = {
     needEmail: 'הכנס/י אימייל תקין כדי לאפס סיסמה',
     notReg: 'כתובת אימייל זו לא רשומה במערכת',
     verified: 'האימייל אושר — אפשר להתחבר עכשיו',
+    consentPrefix: 'אני מאשר/ת את',
+    consentTerms: 'תנאי השימוש',
+    consentAnd: 'ואת',
+    consentPrivacy: 'מדיניות הפרטיות',
+    consentRequired: 'יש לאשר את תנאי השימוש ומדיניות הפרטיות כדי להמשיך',
   },
   en: {
     brand: 'OrcaInvestment',
@@ -96,6 +115,11 @@ const COPY = {
     needEmail: 'Enter a valid email to reset your password',
     notReg: 'This email is not registered',
     verified: 'Email verified — you can sign in now',
+    consentPrefix: 'I agree to the',
+    consentTerms: 'Terms of Service',
+    consentAnd: 'and the',
+    consentPrivacy: 'Privacy Policy',
+    consentRequired: 'You must agree to the Terms of Service and Privacy Policy to continue',
   },
 } as const;
 
@@ -121,6 +145,7 @@ export default function AuthPage() {
   const [displayName, setDisplayName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [consent, setConsent] = useState(false);
   const [idleGate, setIdleGate] = useState(() => {
     if (typeof window === 'undefined') return false;
     return new URLSearchParams(window.location.search).get('idle') === '1';
@@ -143,6 +168,17 @@ export default function AuthPage() {
     if (search.get('verified') === '1') toast.success(c.verified);
   }, []); // eslint-disable-line
 
+  // After OAuth redirect lands back with a session, flush any pending consent record.
+  useEffect(() => {
+    if (loading || !session?.user?.id) return;
+    try {
+      if (localStorage.getItem(PENDING_CONSENT_KEY) === '1') {
+        logConsent(session.user.id);
+        localStorage.removeItem(PENDING_CONSENT_KEY);
+      }
+    } catch { /* noop */ }
+  }, [loading, session]);
+
   if (!loading && session) return <Navigate to={redirectTo} replace />;
 
   const toggleLang = () => {
@@ -155,12 +191,13 @@ export default function AuthPage() {
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanEmail = email.trim();
+    if (!consent) { toast.error(c.consentRequired); return; }
     if (!isValidEmail(cleanEmail)) { toast.error(c.invalidEmail); return; }
     if (mode === 'sign-up' && password.length < 6) { toast.error(c.weakPw); return; }
     setBusy(true);
     try {
       if (mode === 'sign-up') {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email: cleanEmail, password,
           options: {
             emailRedirectTo: `${window.location.origin}/auth?verified=1`,
@@ -168,10 +205,13 @@ export default function AuthPage() {
           },
         });
         if (error) throw error;
+        if (data.user?.id && data.session) await logConsent(data.user.id);
+        else try { localStorage.setItem(PENDING_CONSENT_KEY, '1'); } catch { /* noop */ }
         toast.success(c.emailSent);
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
         if (error) throw error;
+        if (data.user?.id) await logConsent(data.user.id);
         navigate(redirectTo, { replace: true });
       }
     } catch (err) {
@@ -180,10 +220,12 @@ export default function AuthPage() {
   };
 
   const handleGoogle = async () => {
+    if (!consent) { toast.error(c.consentRequired); return; }
     setBusy(true);
     writeLang(lang);
     writeAuthLangIntent(lang);
     try {
+      try { localStorage.setItem(PENDING_CONSENT_KEY, '1'); } catch { /* noop */ }
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo: `${window.location.origin}/auth`, queryParams: { prompt: 'select_account' } },
@@ -337,23 +379,61 @@ export default function AuthPage() {
           </p>
         </header>
 
+        {/* Consent gate — required before any sign-in / sign-up action */}
+        <label
+          htmlFor="orca-consent"
+          style={{
+            display: 'flex', alignItems: 'flex-start', gap: 10,
+            padding: '12px 14px', marginBottom: 14, borderRadius: 12,
+            border: `1px solid ${consent ? GOLD_DEEP : BORDER}`,
+            background: consent ? 'rgba(212,175,90,0.06)' : 'rgba(5,5,5,0.55)',
+            cursor: 'pointer', transition: 'border-color .15s, background .15s',
+            textAlign: isRTL ? 'right' : 'left',
+          }}
+        >
+          <input
+            id="orca-consent"
+            type="checkbox"
+            checked={consent}
+            onChange={e => setConsent(e.target.checked)}
+            style={{
+              marginTop: 2, width: 16, height: 16,
+              accentColor: GOLD, cursor: 'pointer', flexShrink: 0,
+            }}
+          />
+          <span style={{ fontSize: 12, color: TEXT, lineHeight: 1.55 }}>
+            {c.consentPrefix}{' '}
+            <a href="/terms" target="_blank" rel="noopener noreferrer"
+               style={{ color: GOLD_BRIGHT, fontWeight: 700, textDecoration: 'underline' }}>
+              {c.consentTerms}
+            </a>{' '}
+            {c.consentAnd}{' '}
+            <a href="/privacy" target="_blank" rel="noopener noreferrer"
+               style={{ color: GOLD_BRIGHT, fontWeight: 700, textDecoration: 'underline' }}>
+              {c.consentPrivacy}
+            </a>
+          </span>
+        </label>
+
         <button
           onClick={handleGoogle}
-          disabled={busy}
+          disabled={busy || !consent}
+          title={!consent ? c.consentRequired : undefined}
           style={{
             width: '100%', padding: '13px 16px', borderRadius: 12,
             border: `1px solid ${BORDER}`,
             background: 'rgba(245,236,214,0.97)', color: '#0a0a0a',
-            fontWeight: 600, fontSize: 14, cursor: busy ? 'wait' : 'pointer',
+            fontWeight: 600, fontSize: 14, cursor: busy ? 'wait' : (!consent ? 'not-allowed' : 'pointer'),
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-            opacity: busy ? 0.6 : 1, transition: 'transform .15s, box-shadow .15s',
+            opacity: (busy || !consent) ? 0.5 : 1, transition: 'transform .15s, box-shadow .15s',
           }}
-          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = `0 12px 28px rgba(212,175,90,0.25)`; }}
+          onMouseEnter={e => { if (consent && !busy) { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = `0 12px 28px rgba(212,175,90,0.25)`; } }}
           onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
         >
           <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.4 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.3 35.4 26.8 36 24 36c-5.3 0-9.7-3.3-11.3-8l-6.5 5C9.5 39.5 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.6l6.2 5.2c-.4.4 6.6-4.8 6.6-14.8 0-1.3-.1-2.3-.4-3.5z"/></svg>
           {c.continueGoogle}
         </button>
+
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0' }}>
           <div style={{ flex: 1, height: 1, background: BORDER_SOFT }} />
@@ -406,7 +486,7 @@ export default function AuthPage() {
             </div>
           )}
 
-          <button type="submit" disabled={busy}
+          <button type="submit" disabled={busy || !consent} title={!consent ? c.consentRequired : undefined}
             style={{
               marginTop: 8, padding: '14px 16px', borderRadius: 12, border: `1px solid ${GOLD_DEEP}`,
               background: `linear-gradient(135deg, ${GOLD_BRIGHT} 0%, ${GOLD} 50%, ${GOLD_DEEP} 100%)`,
