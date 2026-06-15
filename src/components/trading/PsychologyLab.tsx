@@ -350,6 +350,13 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
             <div style={{ fontSize: 12, color: T.text.muted, textAlign: 'center', padding: 60 }}>
               {t('עדיין אין עסקאות אחרי ניצחון עם נתוני סיכון תקינים במדגם הזה.','No post-win trades with valid risk data in this sample yet.')}
             </div>
+          ) : postWin.every(s => s.deltaPct === 0) ? (
+            <div style={{ fontSize: 12, color: T.text.muted, textAlign: 'center', padding: 60, lineHeight: 1.7 }}>
+              {t(
+                `הסיכון שלך זהה בכל הטריידים (${postWin[0]?.from}${postWin[0]?.unit}). אין שינוי סיכון לאחר ניצחונות — משמעת מצוינת.`,
+                `Your risk is identical across all trades (${postWin[0]?.from}${postWin[0]?.unit}). No post-win risk change — excellent discipline.`
+              )}
+            </div>
           ) : (
             <ResponsiveContainer width="100%" height={200}>
               <ComposedChart data={postWin}>
