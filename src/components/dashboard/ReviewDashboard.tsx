@@ -288,15 +288,24 @@ export const ReviewDashboard = ({
 
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ביצועים חודשיים (R)' : 'Monthly Performance (R)'} explanation={EXPLANATIONS.monthlyPerformance} unit="R">
-                    {stats.monthlyPerf.map((mp: any, i: number) => (
-                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px solid ${T.border.subtle}` }}>
-                        <span style={{ fontSize: 12, color: T.text.secondary }}>{mp.month}</span>
-                        <div style={{ display: 'flex', gap: 12 }}>
-                          {isMoney && <PV><span style={{ fontSize: 11, color: mp.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{mp.pnl >= 0 ? '+' : ''}${mp.pnl.toFixed(2)}</span></PV>}
-                          <span style={{ fontSize: 11, color: T.accent.purple, fontFamily: "'JetBrains Mono', monospace" }}>{mp.expectancyR >= 0 ? '+' : ''}{mp.expectancyR.toFixed(2)}R</span>
+                    <div
+                      className="orca-thin-scroll"
+                      style={{
+                        maxHeight: stats.monthlyPerf.length > 10 ? 320 : 'none',
+                        overflowY: stats.monthlyPerf.length > 10 ? 'auto' : 'visible',
+                        paddingInlineEnd: stats.monthlyPerf.length > 10 ? 6 : 0,
+                      }}
+                    >
+                      {stats.monthlyPerf.map((mp: any, i: number) => (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px solid ${T.border.subtle}` }}>
+                          <span style={{ fontSize: 12, color: T.text.secondary }}>{mp.month}</span>
+                          <div style={{ display: 'flex', gap: 12 }}>
+                            {isMoney && <PV><span style={{ fontSize: 11, color: mp.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{mp.pnl >= 0 ? '+' : ''}${mp.pnl.toFixed(2)}</span></PV>}
+                            <span style={{ fontSize: 11, color: T.accent.purple, fontFamily: "'JetBrains Mono', monospace" }}>{mp.expectancyR >= 0 ? '+' : ''}{mp.expectancyR.toFixed(2)}R</span>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </ChartWrapper>
                 </div>
 
