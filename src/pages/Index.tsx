@@ -106,6 +106,7 @@ const Index = () => {
   const settings = useSettings();
   const { prefs: userPrefs, loaded: userPrefsLoaded } = useUserPreferences(); // warm cache for centralized R-multiple Tier-3 proxy
   const { trades, stats, loading, initialized, addTrade, updateTrade, upsertJournalTrade, removeTrade, resetAll, importTrades, riskAlert, dismissRiskAlert, setManualR } = useTrades();
+  const { activePortfolio, isActivePortfolioLocked } = useActivePortfolio();
   // Active display mode (R-Multiple or MONEY) — used to switch KPI cards,
   // calendar heatmap, weekly strip, journal P&L column and the Monthly Stats
   // card between $ and R so R-only portfolios stop showing fake $0.00.
