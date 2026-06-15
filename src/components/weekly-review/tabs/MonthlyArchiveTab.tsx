@@ -168,7 +168,7 @@ export default function MonthlyArchiveTab({ T, isRTL, trades, state }: Props) {
                       </tr>
                       {isOpen && (
                         <tr>
-                          <td colSpan={6} style={{ padding: '16px 4px', background: themeBgs(T).header }}>
+                          <td colSpan={hasMoney ? 6 : 5} style={{ padding: '16px 4px', background: themeBgs(T).header }}>
                             <MonthlyDashboard T={T} isRTL={isRTL} trades={trades} monthKey={m.mk}/>
                           </td>
                         </tr>
