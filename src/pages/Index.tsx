@@ -59,8 +59,7 @@ import { useSettings, type ThemeId } from '@/hooks/use-settings';
 import { useUserPreferences } from '@/hooks/use-user-preferences';
 import { assessRisk } from '@/lib/risk-engine';
 import { generateInsights, generateSummary } from '@/lib/ai-engine';
-import { exportToXlsx, importFromXlsx } from '@/lib/xlsx-engine';
-import { isUIEEnabled } from '@/lib/uie/flag';
+import { exportToXlsx } from '@/lib/xlsx-engine';
 import { runImportWithPreflight } from '@/lib/uie/run-import-with-preflight';
 import { getDayRiskColor, checkRiskLimits, DEFAULT_RISK_LIMITS } from '@/lib/risk-limits';
 import { useRiskLimits } from '@/hooks/use-risk-limits';
@@ -398,8 +397,8 @@ const Index = () => {
           await new Promise(r => setTimeout(r, 350));
           setImportPhase('saving');
           await importTrades(importedTrades);
-        } else if (isUIEEnabled()) {
-          // ── UIE path (Stage 1: read-only Preflight) ──────────────────────
+        } else {
+          // ── UIE: the SOLE file-import path (legacy fallback removed) ────────
           setImportPhase('parsing');
           console.log('[UIE Import] Starting:', file.name, 'size:', file.size);
           // The Preflight modal blocks on user confirmation. Hide the loading
@@ -423,26 +422,6 @@ const Index = () => {
           // (day, winLoss, returnR, …) from the LegacyTradeDraft we hand it.
           await importTrades(outcome.drafts as unknown as Parameters<typeof importTrades>[0]);
           console.log('[UIE Import] Saved', outcome.drafts.length, 'trades; equity points added:', outcome.equityPointsAdded);
-
-        } else {
-          // Legacy fallback (kill-switch via localStorage.uie_enabled='0')
-          setImportPhase('parsing');
-          console.log('[XLSX Import] Starting import of file:', file.name, 'size:', file.size);
-          const result = await importFromXlsx(file);
-          console.log('[XLSX Import] Result:', { imported: result.imported, skipped: result.skipped, errors: result.errors });
-          if (result.errors.length > 0) console.warn('Import warnings:', result.errors);
-          setImportedCount(result.trades.length);
-          setImportPhase('validating');
-          await new Promise(r => setTimeout(r, 350));
-          if (result.trades.length > 0) {
-            setImportPhase('saving');
-            await importTrades(result.trades);
-            console.log('[XLSX Import] Successfully imported', result.trades.length, 'trades');
-          } else {
-            const errMsg = result.errors.length > 0 ? result.errors.join('; ') : 'No valid trades found in file';
-            console.error('[XLSX Import] No trades imported:', errMsg);
-            toast.error(isRTL ? 'ייבוא נכשל' : 'Import failed', { description: errMsg });
-          }
         }
         setImportPhase('done');
         await new Promise(r => setTimeout(r, 700));

@@ -5,8 +5,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { useTrades } from '@/hooks/use-trades';
-import { ingestFileToTrades } from '@/lib/ingestion/file-import';
-import { isUIEEnabled } from '@/lib/uie/flag';
 import { runImportWithPreflight } from '@/lib/uie/run-import-with-preflight';
 import { BrokerRegistry } from '@/lib/brokers';
 import type { BrokerMeta } from '@/lib/brokers/types';
@@ -1691,43 +1689,24 @@ function CsvDropZone({
     setProcessing(true);
     setDoneFile(null);
     try {
-      if (isUIEEnabled()) {
-        // ── UIE path (Stage 1: read-only Preflight) ─────────────────────────
-        const outcome = await runImportWithPreflight(f, { brokerId: broker.id });
-        if (!outcome.ok) {
-          if (outcome.reason && outcome.reason !== 'user_cancelled') {
-            toast.error(t('נכשל בעיבוד הקובץ', 'Failed to process file'), { description: outcome.reason });
-          }
-          setProcessing(false);
-          return;
+      // ── UIE: the SOLE CSV-import path (legacy fallback removed) ───────────
+      const outcome = await runImportWithPreflight(f, { brokerId: broker.id });
+      if (!outcome.ok) {
+        if (outcome.reason && outcome.reason !== 'user_cancelled') {
+          toast.error(t('נכשל בעיבוד הקובץ', 'Failed to process file'), { description: outcome.reason });
         }
-        await importTrades(outcome.drafts as unknown as Parameters<typeof importTrades>[0]);
-        window.dispatchEvent(new CustomEvent('orca:trades-synced'));
-        setDoneFile(f.name);
-        toast.success(t('הנתונים נטענו בהצלחה', 'Data loaded successfully'), {
-          description: t(
-            `${outcome.drafts.length} עסקאות יובאו · ${outcome.equityPointsAdded} נקודות יתרה`,
-            `${outcome.drafts.length} trades imported · ${outcome.equityPointsAdded} balance points`,
-          ),
-        });
-      } else {
-        // Legacy fallback (kill-switch via localStorage.uie_enabled='0')
-        const result = await ingestFileToTrades(f, { brokerIdHint: broker.id });
-        if (!result.ok || result.trades.length === 0) {
-          toast.error(t('לא נמצאו עסקאות תקפות בקובץ', 'No valid trades found in file'));
-          setProcessing(false);
-          return;
-        }
-        await importTrades(result.trades);
-        window.dispatchEvent(new CustomEvent('orca:trades-synced'));
-        setDoneFile(f.name);
-        toast.success(t('הנתונים נטענו בהצלחה', 'Data loaded successfully'), {
-          description: t(
-            `${result.trades.length} עסקאות יובאו · מצב תצוגה ננעל ל-Money`,
-            `${result.trades.length} trades imported · display locked to Money`,
-          ),
-        });
+        setProcessing(false);
+        return;
       }
+      await importTrades(outcome.drafts as unknown as Parameters<typeof importTrades>[0]);
+      window.dispatchEvent(new CustomEvent('orca:trades-synced'));
+      setDoneFile(f.name);
+      toast.success(t('הנתונים נטענו בהצלחה', 'Data loaded successfully'), {
+        description: t(
+          `${outcome.drafts.length} עסקאות יובאו · ${outcome.equityPointsAdded} נקודות יתרה`,
+          `${outcome.drafts.length} trades imported · ${outcome.equityPointsAdded} balance points`,
+        ),
+      });
     } catch (e) {
       console.error('[CSV Import] failed', e);
       toast.error(t('נכשל בעיבוד הקובץ', 'Failed to process file'));
