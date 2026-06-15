@@ -291,9 +291,9 @@ export const ReviewDashboard = ({
                     <div
                       className="orca-thin-scroll"
                       style={{
-                        maxHeight: stats.monthlyPerf.length > 10 ? 320 : 'none',
-                        overflowY: stats.monthlyPerf.length > 10 ? 'auto' : 'visible',
-                        paddingInlineEnd: stats.monthlyPerf.length > 10 ? 6 : 0,
+                        maxHeight: stats.monthlyPerf.length > 7 ? 260 : 'none',
+                        overflowY: stats.monthlyPerf.length > 7 ? 'auto' : 'visible',
+                        paddingInlineEnd: stats.monthlyPerf.length > 7 ? 6 : 0,
                       }}
                     >
                       {stats.monthlyPerf.map((mp: any, i: number) => (
