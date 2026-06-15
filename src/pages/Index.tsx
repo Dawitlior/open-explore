@@ -823,7 +823,7 @@ const Index = () => {
 
     // REVIEW MODE: extracted to mobile-first ReviewDashboard module
     if (opMode === 'review') return (
-      <Suspense fallback={<LazyShell />}>
+      <LazyShell>
         <ReviewDashboard
           T={T}
           t={t}
@@ -843,7 +843,7 @@ const Index = () => {
           handleHideChart={handleHideChart}
           handleExplainClick={handleExplainClick}
         />
-      </Suspense>
+      </LazyShell>
     );
 
 
