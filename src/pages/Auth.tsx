@@ -191,12 +191,13 @@ export default function AuthPage() {
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanEmail = email.trim();
+    if (!consent) { toast.error(c.consentRequired); return; }
     if (!isValidEmail(cleanEmail)) { toast.error(c.invalidEmail); return; }
     if (mode === 'sign-up' && password.length < 6) { toast.error(c.weakPw); return; }
     setBusy(true);
     try {
       if (mode === 'sign-up') {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email: cleanEmail, password,
           options: {
             emailRedirectTo: `${window.location.origin}/auth?verified=1`,
@@ -204,10 +205,13 @@ export default function AuthPage() {
           },
         });
         if (error) throw error;
+        if (data.user?.id && data.session) await logConsent(data.user.id);
+        else try { localStorage.setItem(PENDING_CONSENT_KEY, '1'); } catch { /* noop */ }
         toast.success(c.emailSent);
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
         if (error) throw error;
+        if (data.user?.id) await logConsent(data.user.id);
         navigate(redirectTo, { replace: true });
       }
     } catch (err) {
@@ -216,10 +220,12 @@ export default function AuthPage() {
   };
 
   const handleGoogle = async () => {
+    if (!consent) { toast.error(c.consentRequired); return; }
     setBusy(true);
     writeLang(lang);
     writeAuthLangIntent(lang);
     try {
+      try { localStorage.setItem(PENDING_CONSENT_KEY, '1'); } catch { /* noop */ }
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo: `${window.location.origin}/auth`, queryParams: { prompt: 'select_account' } },
