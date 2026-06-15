@@ -355,7 +355,7 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
                       <Td>{t.coin}</Td>
                       <Td style={{ color: t.direction === 'Long' ? win : loss }}>{t.direction}</Td>
                       <Td align="right" style={{ color: r >= 0 ? win : loss, fontWeight: 700 }}>{fmtR(r)}</Td>
-                      <Td align="right" style={{ color: usd >= 0 ? win : loss, fontWeight: 700 }}>{fmtUSD(usd)}</Td>
+                      {hasMoney && <Td align="right" style={{ color: usd >= 0 ? win : loss, fontWeight: 700 }}>{fmtUSD(usd)}</Td>}
                       <Td style={{ color: t.winLoss === 'Win' ? win : t.winLoss === 'Loss' ? loss : muted }}>{t.winLoss}</Td>
                     </tr>
                   );
