@@ -185,7 +185,10 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
     const actualMove = direction === 'Long' ? exit - entry : entry - exit;
     const returnR = riskPerUnit > 0 ? actualMove / riskPerUnit : 0;
     const expectedLoss = risk * 0.975;
-    const pnl = returnR * risk;
+    // Futures: P&L = contracts × price-move × $/point. Otherwise: R × $ risked.
+    const pnl = isFutures
+      ? contracts * actualMove * dollarPerPoint
+      : returnR * risk;
     const winLoss: Trade['winLoss'] = pnl > 0.05 ? 'Win' : pnl < -0.05 ? 'Loss' : 'Break Even';
     const deviation = returnR < 0 ? Math.max(0, Math.abs(returnR) - 1) : 0;
     return { returnR, pnl, winLoss, expectedLoss, deviation };
