@@ -4588,15 +4588,20 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  {(() => { const dp = sumPnl(displayDay); return (
+                  {(() => {
+                    const dp = sumPnl(displayDay);
+                    const dr = (displayDay.trades || []).reduce((s: number, tr: any) => { try { return s + getR(tr); } catch { return s; } }, 0);
+                    const v = isR ? dr : dp;
+                    const txt = isR ? `${v >= 0 ? '+' : ''}${dr.toFixed(2)}R` : `${dp >= 0 ? '+' : ''}${dp.toFixed(0)}$`;
+                    return (
                     <div style={{
                       background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 12, padding: '10px 18px', textAlign: 'center',
                       transition: 'all .3s',
                     }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = `0 0 20px ${dp >= 0 ? 'rgba(0,255,163,0.15)' : 'rgba(255,77,77,0.15)'}`;}}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = `0 0 20px ${v >= 0 ? 'rgba(0,255,163,0.15)' : 'rgba(255,77,77,0.15)'}`;}}
                       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}>
-                      <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 18, fontWeight: 800, color: dp >= 0 ? '#00FFA3' : '#FF4D4D', textShadow: `0 0 15px ${dp >= 0 ? 'rgba(0,255,163,0.3)' : 'rgba(255,77,77,0.3)'}` }}>{dp >= 0 ? '+' : ''}{dp.toFixed(0)}$</div>
-                      <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase' as const, color: th.tx3 }}>SESSION P&L</span>
+                      <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 18, fontWeight: 800, color: v >= 0 ? '#00FFA3' : '#FF4D4D', textShadow: `0 0 15px ${v >= 0 ? 'rgba(0,255,163,0.3)' : 'rgba(255,77,77,0.3)'}` }}>{txt}</div>
+                      <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase' as const, color: th.tx3 }}>SESSION {isR ? 'R' : 'P&L'}</span>
                     </div>
                   ); })()}
                 </div>
