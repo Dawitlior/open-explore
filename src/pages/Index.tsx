@@ -426,9 +426,28 @@ const Index = () => {
           // The Preflight modal blocks on user confirmation. Hide the loading
           // overlay so it isn't covering the modal (both at z-index 9999).
           setImportLoading(false);
-          const outcome = await runImportWithPreflight(file, { brokerId: 'orca' });
+          const outcome = await runImportWithPreflight(file, {
+            brokerId: 'orca',
+            targetPortfolio: activePortfolio
+              ? { id: activePortfolio.id, name: activePortfolio.name, color: activePortfolio.color, currency: activePortfolio.currency }
+              : null,
+          });
           if (!outcome.ok) {
             if (outcome.reason === 'user_cancelled') {
+              return;
+            }
+            if (outcome.reason === 'portfolio_locked') {
+              toast.error(
+                isRTL ? 'התיק נעול לקריאה־בלבד' : 'Portfolio is read-only',
+                { description: isRTL ? 'שדרג את המסלול או החלף לתיק פעיל אחר.' : 'Upgrade your plan or switch to an unlocked portfolio.' },
+              );
+              return;
+            }
+            if (outcome.reason === 'no_active_portfolio') {
+              toast.error(
+                isRTL ? 'אין תיק פעיל' : 'No active portfolio',
+                { description: isRTL ? 'בחר תיק לפני ייבוא נתונים.' : 'Pick a portfolio before importing data.' },
+              );
               return;
             }
             toast.error(isRTL ? 'ייבוא נכשל' : 'Import failed', { description: outcome.reason || 'unknown' });
