@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { setScopedUid } from '@/lib/scoped-storage';
@@ -80,7 +80,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     void ensureProfile(session.user);
   }, [session?.user?.id]);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     setSigningOut(true);
     try {
       await supabase.auth.signOut();
@@ -88,10 +88,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       window.location.href = '/welcome';
     }
-  };
+  }, []);
+
+  const value = useMemo<AuthContextValue>(
+    () => ({ session, user: session?.user ?? null, loading, signOut }),
+    [session, loading, signOut],
+  );
 
   return (
-    <AuthContext.Provider value={{ session, user: session?.user ?? null, loading, signOut }}>
+    <AuthContext.Provider value={value}>
       {children}
       {signingOut && <SignOutOverlay />}
     </AuthContext.Provider>
