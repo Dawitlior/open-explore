@@ -8,7 +8,16 @@
  * change; storage reads them synchronously when building / mutating rows.
  */
 
-let activeId: string | null = null;
+// Hydrate synchronously from localStorage so the FIRST call to
+// getAllTrades() (which runs inside useTrades's useEffect, BEFORE the
+// ActivePortfolioProvider's effect can push the id here) already has the
+// right portfolio. Without this, the dashboard briefly reads with pid=null
+// and gets an empty list — which is what made trades "disappear on refresh".
+const LS_KEY = 'orca.activePortfolioId';
+let activeId: string | null = (() => {
+  if (typeof window === 'undefined') return null;
+  try { return window.localStorage.getItem(LS_KEY); } catch { return null; }
+})();
 let lockedIds: Set<string> = new Set();
 
 export function setActivePortfolioIdGlobal(id: string | null) {

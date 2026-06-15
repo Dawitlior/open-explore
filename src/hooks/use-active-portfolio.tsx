@@ -102,6 +102,14 @@ export function ActivePortfolioProvider({ children }: { children: ReactNode }) {
       portfolios[0].id;
     setActiveState(fallback);
     writeStoredId(fallback);
+    // Push to the non-React singleton AND notify consumers (useTrades, etc.)
+    // immediately — otherwise the very first dashboard paint after login on a
+    // fresh device renders with pid=null and shows zero trades until the user
+    // manually switches portfolio.
+    setActivePortfolioIdGlobal(fallback);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('orca:active-portfolio-changed', { detail: { id: fallback } }));
+    }
   }, [loading, portfolios, activePortfolioId]);
 
   // Stage 5 — compute locked set whenever tier or portfolios change.
