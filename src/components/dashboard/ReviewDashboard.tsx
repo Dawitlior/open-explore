@@ -124,7 +124,7 @@ export const ReviewDashboard = ({
             <div className="dash-charts-2">
               {isChartVisible('equityCurve') && (
                 <div className="dash-chart-card">
-                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.equityCurve} explanation={EXPLANATIONS.equityCurve} unit="$" chartId="equityCurve" onRemove={handleHideChart}>
+                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.equityCurve} explanation={EXPLANATIONS.equityCurve} unit={isMoney ? '$' : 'R'} chartId="equityCurve" onRemove={handleHideChart}>
                     <div className="dash-chart-h-md">
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={stats.equityCurve} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
