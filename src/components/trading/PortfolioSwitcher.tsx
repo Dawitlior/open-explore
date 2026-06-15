@@ -195,10 +195,11 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
           style={{
             position: 'fixed', top: menuPos.top, left: menuPos.left,
             minWidth: 280, maxWidth: 340,
-            background: 'rgba(6,19,38,0.98)', backdropFilter: 'blur(14px)',
-            border: '1px solid rgba(34,211,238,0.2)', borderRadius: 10,
-            boxShadow: '0 20px 60px rgba(0,0,0,0.55), 0 0 24px rgba(34,211,238,0.12)',
-            zIndex: 10000, padding: 6, fontFamily: "'Poppins', sans-serif", direction: isRTL ? 'rtl' : 'ltr',
+            background: 'linear-gradient(180deg, rgba(14,22,40,0.98) 0%, rgba(6,19,38,0.99) 100%)',
+            backdropFilter: 'blur(18px)',
+            border: '1px solid rgba(212,175,55,0.28)', borderRadius: 14,
+            boxShadow: '0 24px 70px rgba(0,0,0,0.6), 0 0 30px rgba(212,175,55,0.10), inset 0 1px 0 rgba(255,255,255,0.05)',
+            zIndex: 10000, padding: 8, fontFamily: "'Poppins', sans-serif", direction: isRTL ? 'rtl' : 'ltr',
           } as React.CSSProperties}
         >
           {/* List */}
