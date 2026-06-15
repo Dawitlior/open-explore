@@ -86,6 +86,7 @@ const App = () => (
             <UpgradeModal />
             <CookieConsentRoot />
             <OrcaConfirmRoot />
+            <ImportPreflightRoot />
             <Routes>
               <Route path="/welcome" element={<Landing />} />
               <Route path="/auth" element={<Auth />} />
