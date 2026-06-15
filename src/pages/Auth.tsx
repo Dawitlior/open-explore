@@ -379,23 +379,61 @@ export default function AuthPage() {
           </p>
         </header>
 
+        {/* Consent gate — required before any sign-in / sign-up action */}
+        <label
+          htmlFor="orca-consent"
+          style={{
+            display: 'flex', alignItems: 'flex-start', gap: 10,
+            padding: '12px 14px', marginBottom: 14, borderRadius: 12,
+            border: `1px solid ${consent ? GOLD_DEEP : BORDER}`,
+            background: consent ? 'rgba(212,175,90,0.06)' : 'rgba(5,5,5,0.55)',
+            cursor: 'pointer', transition: 'border-color .15s, background .15s',
+            textAlign: isRTL ? 'right' : 'left',
+          }}
+        >
+          <input
+            id="orca-consent"
+            type="checkbox"
+            checked={consent}
+            onChange={e => setConsent(e.target.checked)}
+            style={{
+              marginTop: 2, width: 16, height: 16,
+              accentColor: GOLD, cursor: 'pointer', flexShrink: 0,
+            }}
+          />
+          <span style={{ fontSize: 12, color: TEXT, lineHeight: 1.55 }}>
+            {c.consentPrefix}{' '}
+            <a href="/terms" target="_blank" rel="noopener noreferrer"
+               style={{ color: GOLD_BRIGHT, fontWeight: 700, textDecoration: 'underline' }}>
+              {c.consentTerms}
+            </a>{' '}
+            {c.consentAnd}{' '}
+            <a href="/privacy" target="_blank" rel="noopener noreferrer"
+               style={{ color: GOLD_BRIGHT, fontWeight: 700, textDecoration: 'underline' }}>
+              {c.consentPrivacy}
+            </a>
+          </span>
+        </label>
+
         <button
           onClick={handleGoogle}
-          disabled={busy}
+          disabled={busy || !consent}
+          title={!consent ? c.consentRequired : undefined}
           style={{
             width: '100%', padding: '13px 16px', borderRadius: 12,
             border: `1px solid ${BORDER}`,
             background: 'rgba(245,236,214,0.97)', color: '#0a0a0a',
-            fontWeight: 600, fontSize: 14, cursor: busy ? 'wait' : 'pointer',
+            fontWeight: 600, fontSize: 14, cursor: busy ? 'wait' : (!consent ? 'not-allowed' : 'pointer'),
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-            opacity: busy ? 0.6 : 1, transition: 'transform .15s, box-shadow .15s',
+            opacity: (busy || !consent) ? 0.5 : 1, transition: 'transform .15s, box-shadow .15s',
           }}
-          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = `0 12px 28px rgba(212,175,90,0.25)`; }}
+          onMouseEnter={e => { if (consent && !busy) { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = `0 12px 28px rgba(212,175,90,0.25)`; } }}
           onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
         >
           <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.4 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.3 35.4 26.8 36 24 36c-5.3 0-9.7-3.3-11.3-8l-6.5 5C9.5 39.5 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.6l6.2 5.2c-.4.4 6.6-4.8 6.6-14.8 0-1.3-.1-2.3-.4-3.5z"/></svg>
           {c.continueGoogle}
         </button>
+
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0' }}>
           <div style={{ flex: 1, height: 1, background: BORDER_SOFT }} />
