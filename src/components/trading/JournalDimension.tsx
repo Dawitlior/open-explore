@@ -4716,7 +4716,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
                         </div>
                         {/* P&L */}
                         <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 16, fontWeight: 800, color: c, textShadow: `0 0 12px ${c}25` }}>{dp >= 0 ? '+' : ''}{dp.toFixed(0)}$</div>
+                          {!isR && <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 16, fontWeight: 800, color: c, textShadow: `0 0 12px ${c}25` }}>{dp >= 0 ? '+' : ''}{dp.toFixed(0)}$</div>}
                           {day.emotionScore && <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, color: day.emotionScore >= 7 ? '#00FFA3' : day.emotionScore >= 4 ? '#FFC857' : '#FF4D4D', marginTop: 2 }}>😊 {day.emotionScore}/10</div>}
                         </div>
                       </div>
