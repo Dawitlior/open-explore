@@ -53,7 +53,7 @@ import { CustomKPIPanel } from '@/components/trading/CustomKPIPanel';
 const JournalDimension = lazy(() => import('@/components/trading/JournalDimension').then(m => ({ default: m.JournalDimension })));
 const BacktestDimension = lazy(() => import('@/components/trading/BacktestDimension').then(m => ({ default: m.BacktestDimension })));
 import { useTrades } from '@/hooks/use-trades';
-import { DisplayModeProvider, hasStrictR } from '@/lib/display-mode';
+import { DisplayModeProvider, hasStrictR, useEffectiveDisplayMode } from '@/lib/display-mode';
 import { DisplayModeToggle } from '@/components/trading/DisplayModeToggle';
 import { useSettings, type ThemeId } from '@/hooks/use-settings';
 import { useUserPreferences } from '@/hooks/use-user-preferences';
