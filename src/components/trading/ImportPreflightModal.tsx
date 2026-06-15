@@ -206,7 +206,8 @@ export function ImportPreflightRoot() {
           </div>
 
           {/* Mapping table */}
-          <div>
+          <div id="uie-mapping-table">
+
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
               <div style={{ flex: 1, fontSize: 12, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1.2, fontFamily: 'IBM Plex Mono, monospace' }}>
                 {rtl ? 'מיפוי עמודות' : 'Column Mapping'} · {rows.length}
