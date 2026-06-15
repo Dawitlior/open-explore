@@ -2698,6 +2698,7 @@ const DailyIntelligencePanel = ({ day, dir, th, onClose, onOpenJournal }: {
   const [tradePage, setTradePage] = useState(0);
   const TRADES_PER_PAGE = 50;
   const isRTL = dir === 'rtl';
+  const isR = useJournalIsR();
   const trades = Array.isArray(day?.trades) ? day.trades : [];
   // Memoise heavy aggregates so re-renders on dense days (1k+ trades) stay snappy.
   const { pnl, wins, totalR, winRate, negR } = useMemo(() => {
