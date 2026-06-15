@@ -341,7 +341,7 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
                   <Th>{isRTL ? 'נכס' : 'Asset'}</Th>
                   <Th>{isRTL ? 'כיוון' : 'Side'}</Th>
                   <Th align="right">R</Th>
-                  <Th align="right">$ P&amp;L</Th>
+                  {hasMoney && <Th align="right">$ P&amp;L</Th>}
                   <Th>{isRTL ? 'תוצאה' : 'Result'}</Th>
                 </tr>
               </thead>
