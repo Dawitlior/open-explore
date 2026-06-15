@@ -312,16 +312,23 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
             </div>
           ) : (
             <button
-              onClick={() => { setCreating(true); setEditing(null); }}
+              onClick={() => { if (!canCreate) return; setCreating(true); setEditing(null); }}
+              disabled={!canCreate}
+              title={!canCreate ? (isRTL ? `הגעת למגבלת המסלול (${tierMax}). שדרג כדי להוסיף עוד.` : `Plan limit reached (${tierMax}). Upgrade to add more.`) : undefined}
               style={{
                 display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-                background: 'rgba(34,211,238,0.06)', border: '1px dashed rgba(34,211,238,0.35)',
-                color: '#22d3ee', padding: '8px 10px', borderRadius: 7, cursor: 'pointer',
+                background: canCreate ? 'rgba(34,211,238,0.06)' : 'rgba(148,163,184,0.04)',
+                border: `1px dashed ${canCreate ? 'rgba(34,211,238,0.35)' : 'rgba(148,163,184,0.2)'}`,
+                color: canCreate ? '#22d3ee' : '#64748b',
+                padding: '8px 10px', borderRadius: 7,
+                cursor: canCreate ? 'pointer' : 'not-allowed',
                 fontSize: 12, fontWeight: 600, fontFamily: 'inherit', marginTop: 4,
               }}
             >
-              <span style={{ fontSize: 14, lineHeight: 1 }}>+</span>
-              {isRTL ? 'תיק חדש' : 'New portfolio'}
+              <span style={{ fontSize: 14, lineHeight: 1 }}>{canCreate ? '+' : '🔒'}</span>
+              {canCreate
+                ? (isRTL ? 'תיק חדש' : 'New portfolio')
+                : (isRTL ? `הגעת למגבלת המסלול (${tierMax})` : `Plan limit reached (${tierMax})`)}
             </button>
           )}
         </div>
