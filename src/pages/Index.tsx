@@ -1362,7 +1362,7 @@ const Index = () => {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14 }}>
                 {[
-                  { l: t.entry, v: selTrade.entry }, { l: t.stopLoss, v: selTrade.stopLoss, c: T.accent.red },
+                  { l: t.entry, v: selTrade.entry }, { l: t.stopLoss, v: selTrade.stopLoss == null ? '—' : selTrade.stopLoss, c: T.accent.red },
                   { l: t.exit, v: selTrade.exit }, (() => { const h = tradeHeadline(selTrade); return { l: `${t.pnl} (${h.unit})`, v: fmtHeadline(h.v, h.unit), c: h.v >= 0 ? T.accent.green : T.accent.red }; })(),
                   { l: `${t.riskR} (R)`, v: `${getEffectiveR(selTrade).toFixed(2)}R` }, { l: t.deviation, v: selTrade.deviation ? selTrade.deviation.toFixed(4) + 'R' : '0', c: selTrade.deviation > 0 ? T.accent.orange : T.accent.green },
                   { l: t.leverage, v: `${selTrade.leverage}x` }, { l: `${t.balance} ($)`, v: `$${selTrade.balance.toFixed(2)}` },
