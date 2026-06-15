@@ -48,6 +48,7 @@ export default function MonthlyArchiveTab({ T, isRTL, trades, state }: Props) {
   const loss = T?.status?.danger || '#ff3b3b';
 
   const [expanded, setExpanded] = useState<string | null>(null);
+  const hasMoney = useMemo(() => trades.some(t => Number(t.pnl) !== 0 && Number.isFinite(Number(t.pnl))), [trades]);
   const [recapDraft, setRecapDraft] = useState<Record<string, string>>({});
   const [openMonth, setOpenMonth] = useState<string | null>(null);
 
