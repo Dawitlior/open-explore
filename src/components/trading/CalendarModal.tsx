@@ -56,6 +56,56 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
     return () => { document.body.style.overflow = prev; };
   }, []);
 
+  /* ============= Day Note (per-day journal entry) ============= */
+  const { activePortfolioId } = useActivePortfolio();
+  const isoDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  const [note, setNote] = useState('');
+  const [noteLoaded, setNoteLoaded] = useState(false);
+  const [noteSaving, setNoteSaving] = useState(false);
+  const [noteStatus, setNoteStatus] = useState<'idle' | 'saved' | 'error'>('idle');
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setNoteLoaded(false);
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth?.user?.id;
+      if (!uid) { if (!cancelled) { setNote(''); setNoteLoaded(true); } return; }
+      const q = supabase.from('day_notes').select('note').eq('user_id', uid).eq('date', isoDate);
+      const { data } = activePortfolioId
+        ? await q.eq('portfolio_id', activePortfolioId).maybeSingle()
+        : await q.is('portfolio_id', null).maybeSingle();
+      if (cancelled) return;
+      setNote(data?.note ?? '');
+      setNoteLoaded(true);
+    })();
+    return () => { cancelled = true; };
+  }, [isoDate, activePortfolioId]);
+
+  const saveNote = useCallback(async () => {
+    setNoteSaving(true);
+    setNoteStatus('idle');
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth?.user?.id;
+      if (!uid) throw new Error('not_authenticated');
+      const { error } = await supabase
+        .from('day_notes')
+        .upsert(
+          { user_id: uid, portfolio_id: activePortfolioId ?? null, date: isoDate, note: note.trim() },
+          { onConflict: 'user_id,portfolio_id,date' },
+        );
+      if (error) throw error;
+      setNoteStatus('saved');
+      window.setTimeout(() => setNoteStatus('idle'), 2200);
+    } catch {
+      setNoteStatus('error');
+    } finally {
+      setNoteSaving(false);
+    }
+  }, [note, isoDate, activePortfolioId]);
+
+
   const dayTrades = trades.filter(tr => {
     if (!tr.date) return false;
     const d = new Date(tr.date.replace(' ', 'T'));
