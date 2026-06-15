@@ -221,10 +221,17 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
     const errs = validateStep(1);
     if (errs.length) { setErrors(errs); setStep(1); return; }
     const { returnR, pnl, winLoss, expectedLoss, deviation } = calc();
+    // Block save if this trade would breach a tier-limit and user hasn't acknowledged.
+    if (limitProjection?.newlyBreached && !overrideLimit) {
+      setErrors([isRTL
+        ? 'העסקה הזו חוצה מגבלת סיכון. אשר את התיבה למטה כדי לשמור בכל זאת.'
+        : 'This trade breaches a risk limit. Tick the checkbox below to save anyway.']);
+      return;
+    }
     onSave({
       date: form.date, day: form.day, coin: form.coin, direction: form.direction, orderType: form.orderType,
       entry: form.entry, stopLoss: form.stopLoss, exit: form.exit, returnR, winLoss, risk: form.risk,
-      expectedLoss, pnl, deviation, positionSize: form.positionSize || autoCalcPositionSize, leverage: form.leverage,
+      expectedLoss, pnl, deviation, positionSize: isFutures ? contracts : (form.positionSize || autoCalcPositionSize), leverage: form.leverage,
       riskPct: form.riskPct, rules: form.rules, comments: form.comments,
     } as Omit<Trade, 'id' | 'balance'>);
   };
