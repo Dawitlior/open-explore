@@ -221,6 +221,11 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
   // R-mode guard: if no R-eligible trades exist, the entire chart grid is suppressed
   // (charts driven by R-series would render as flat/empty). Banner explains, no empty gaps.
   const rModeBlocked = !isMoney && rEligibleCount === 0;
+  // Money-mode guard: if no real $ P&L exists (R-only portfolio), money-axis charts
+  // would render as flat zero. Per-card empty states explain instead of misleading.
+  const hasMoneyData = trades.some(t => isFinite(t.pnl) && t.pnl !== 0);
+  const moneyBlocked = isMoney && !hasMoneyData;
+  const emptyMoneyMsg = t('אין נתוני $ — מצב R-only', 'No $ data — R-only portfolio');
 
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} style={{ marginTop: 20 }}>
