@@ -17,6 +17,17 @@ import { toLegacyTrade, toEquityPoints, type LegacyTradeDraft } from './adapters
 import { mergeEquityPoints } from './equity-store';
 import { computeFingerprint, loadFingerprint, saveFingerprint } from './fingerprint';
 import type { ImportResult } from './types';
+import {
+  getActivePortfolioIdGlobal,
+  isActivePortfolioLockedGlobal,
+} from '@/lib/active-portfolio-store';
+
+export interface PreflightTargetPortfolio {
+  id: string;
+  name?: string | null;
+  color?: string | null;
+  currency?: string | null;
+}
 
 export interface PreflightOpenDetail {
   fileName: string;
@@ -27,6 +38,8 @@ export interface PreflightOpenDetail {
   /** Stage 3: overrides remembered from a previous import of the same file shape. */
   initialOverrides?: Record<number, string | null>;
   fromMemory?: boolean;
+  /** Stage 6 (Multi-Portfolio): the portfolio the trades will land in. */
+  targetPortfolio?: PreflightTargetPortfolio | null;
   resolve: (decision: { confirm: boolean; result?: ImportResult; overrides?: Record<number, string | null> }) => void;
 }
 
