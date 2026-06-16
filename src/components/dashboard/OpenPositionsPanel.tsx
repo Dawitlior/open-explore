@@ -55,12 +55,13 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
   const userId = auth.user?.id;
   const [rows, setRows] = useState<OpenPos[]>([]);
   const [loading, setLoading] = useState(false);
+  const [initialized, setInitialized] = useState(false);
   const [closing, setClosing] = useState<OpenPos | null>(null);
   const [exitPrice, setExitPrice] = useState<string>('');
   const [busy, setBusy] = useState(false);
 
   const fetchRows = useCallback(async () => {
-    if (!userId) { setRows([]); return; }
+    if (!userId) { setRows([]); setInitialized(true); return; }
     setLoading(true);
     const { data, error } = await supabase
       .from('open_positions')
@@ -68,6 +69,7 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
       .eq('user_id', userId);
     if (!error && data) setRows(data as OpenPos[]);
     setLoading(false);
+    setInitialized(true);
   }, [userId]);
 
   useEffect(() => { fetchRows(); }, [fetchRows, refreshKey]);
