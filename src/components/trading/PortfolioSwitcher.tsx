@@ -165,7 +165,7 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
   }, [loading, activePortfolio, isRTL]);
 
   return (
-    <div ref={rootRef} style={{ position: 'relative', direction: isRTL ? 'rtl' : 'ltr' }}>
+    <div ref={rootRef} style={{ position: 'relative', direction: isRTL ? 'rtl' : 'ltr', width: '100%' }}>
       <button
         ref={triggerRef}
         onClick={() => setOpen((v) => !v)}
