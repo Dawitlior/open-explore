@@ -98,13 +98,21 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
   useEffect(() => { fetchRows(); }, [fetchRows, refreshKey]);
 
   // Realtime subscription so the panel stays fresh when other tabs/brokers update.
+  const refetchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!userId) return;
+    const scheduleRefetch = () => {
+      if (refetchTimer.current) clearTimeout(refetchTimer.current);
+      refetchTimer.current = setTimeout(() => { fetchRows(); }, 250);
+    };
     const ch = supabase
       .channel(`open_pos_${userId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'open_positions', filter: `user_id=eq.${userId}` }, fetchRows)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'open_positions', filter: `user_id=eq.${userId}` }, scheduleRefetch)
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    return () => {
+      if (refetchTimer.current) clearTimeout(refetchTimer.current);
+      supabase.removeChannel(ch);
+    };
   }, [userId, fetchRows]);
 
   const openClose = (p: OpenPos) => {
