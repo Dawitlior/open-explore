@@ -51,7 +51,7 @@ export const ReviewDashboard = ({
   return (
     <div className="dash-root" dir={isRTL ? 'rtl' : 'ltr'}>
 
-      <h2 className="dash-greeting">{t.goodMorning} 👋</h2>
+      <h2 className="dash-greeting">{getTimeOfDayGreeting(isRTL)} 👋</h2>
 
       <FeatureHint
         T={T}
