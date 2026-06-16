@@ -841,9 +841,9 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
               {isRTL ? 'המשך →' : 'Continue →'}
             </button>
           ) : (
-            <button onClick={handleSubmit}
-              style={{ padding: isMobile ? '13px 28px' : '12px 28px', background: `linear-gradient(135deg, ${T.accent.green}, ${T.accent.teal})`, border: 'none', borderRadius: 12, color: T.bg.primary, fontWeight: 800, cursor: 'pointer', fontSize: 14 }}>
-              ✓ {isRTL ? 'שמור עסקה' : 'Save Trade'}
+            <button onClick={handleSubmit} disabled={savingOpen}
+              style={{ padding: isMobile ? '13px 28px' : '12px 28px', background: `linear-gradient(135deg, ${isOpenPosition ? T.accent.cyan : T.accent.green}, ${T.accent.teal})`, border: 'none', borderRadius: 12, color: T.bg.primary, fontWeight: 800, cursor: savingOpen ? 'wait' : 'pointer', fontSize: 14, opacity: savingOpen ? 0.7 : 1 }}>
+              {savingOpen ? (isRTL ? 'שומר…' : 'Saving…') : (isOpenPosition ? (isRTL ? '◴ שמור פוזיציה פתוחה' : '◴ Save Open Position') : (isRTL ? '✓ שמור עסקה' : '✓ Save Trade'))}
             </button>
           )}
         </div>
