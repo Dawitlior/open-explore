@@ -137,21 +137,24 @@ export function BugArenaProvider({
 // =====================================================================
 export function BugReportFab() {
   const { capture, accent } = useArena();
+  const { isRTL, t } = useLang();
   const open = capture.stage !== 'idle';
+  const label = t('דווח על באג', 'Report a bug');
   return (
     <button
       data-bug-fab
-      aria-label="דווח על באג"
+      aria-label={label}
       onClick={() => !open && capture.beginCapture()}
-      dir="rtl"
+      dir={isRTL ? 'rtl' : 'ltr'}
       className="fixed z-[1000] bottom-5 left-5 flex items-center gap-2 rounded-full px-4 py-3 font-bold shadow-2xl transition active:scale-95"
       style={{ backgroundColor: accent, color: '#06121f' }}
     >
       <TargetIcon />
-      <span className="text-sm">דווח על באג</span>
+      <span className="text-sm">{label}</span>
     </button>
   );
 }
+
 
 // =====================================================================
 // CaptureFlow — the report modal (rendered by the provider)
