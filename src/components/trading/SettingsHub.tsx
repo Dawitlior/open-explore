@@ -48,7 +48,7 @@ interface SettingsHubProps {
   trades: Trade[];
 }
 
-type TabId = 'account' | 'appearance' | 'theme-studio' | 'dashboard' | 'kpis' | 'risk' | 'interface' | 'sounds' | 'trading' | 'exchanges' | 'data' | 'trader-mind' | 'install' | 'legal';
+type TabId = 'account' | 'appearance' | 'theme-studio' | 'dashboard' | 'kpis' | 'risk' | 'interface' | 'quick-actions' | 'sounds' | 'trading' | 'exchanges' | 'data' | 'trader-mind' | 'install' | 'legal';
 
 const ACCENT_PRESETS = [
   '#00f2ff', '#06d6a0', '#3b82f6', '#8b5cf6',
@@ -212,6 +212,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
     { id: 'dashboard', icon: LayoutDashboard, label: { he: 'סידור דאשבורד', en: 'Dashboard Layout' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'גרור, הסתר וסדר ווידג׳טים', en: 'Drag, hide and arrange widgets' } },
     { id: 'kpis', icon: Calculator, label: { he: 'מדדים מותאמים', en: 'Custom KPIs' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'בנה נוסחאות מתמטיות משלך', en: 'Build your own math formulas' } },
     { id: 'interface', icon: SlidersHorizontal, label: { he: 'ממשק, צפיפות ותנועה', en: 'Interface, Density & Motion' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'צפיפות, גודל גופן, אנימציות ואלמנטים', en: 'Density, font scale, motion and elements' } },
+    { id: 'quick-actions', icon: Zap, label: { he: 'פעולות מהירות', en: 'Quick Actions' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'הפעלה, הסתרה ופתיחת לוח הפעולות המהירות', en: 'Enable, hide and open the Quick Actions palette' } },
     { id: 'sounds', icon: Volume2, label: { he: 'צלילים והתראות', en: 'Sounds & Alerts' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'הפעלה, ווליום ותצוגת אפקטים אקוסטיים', en: 'Enable, volume and acoustic feedback preview' } },
     { id: 'risk', icon: Shield, label: { he: 'מגבלות סיכון', en: 'Risk Limits' }, group: { he: 'מסחר', en: 'Trading' }, desc: { he: 'מערכת ה־R המותרת ביום/שבוע/חודש', en: 'Allowed R-budget per day/week/month' } },
     { id: 'trading', icon: Target, label: { he: 'ברירות מחדל למסחר', en: 'Trading Defaults' }, group: { he: 'מסחר', en: 'Trading' }, desc: { he: 'אחוז סיכון ברירת מחדל ויעד R לעסקה חדשה', en: 'Default risk percent and R target for new trades' } },
@@ -1163,12 +1164,6 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
               return (
                 <div>
                   <div style={card}>
-                    <h3 style={sectionTitle}><SlidersHorizontal size={14} /> {t('הסתרת אלמנטים', 'Hide UI elements')}</h3>
-                    <p style={sectionHint}>{t('צמצום הממשק לפעולות הליבה שלך.', 'Reduce the interface to your core actions.')}</p>
-                    <Toggle on={p.hideQuickActions} onClick={() => ui.setPrefs({ hideQuickActions: !p.hideQuickActions })} label={t('הסתר Quick Actions', 'Hide Quick Actions')} />
-                  </div>
-
-                  <div style={card}>
                     <h3 style={sectionTitle}><Gauge size={14} /> {t('צפיפות תצוגה', 'Display density')}</h3>
                     <p style={sectionHint}>{t('בחר עד כמה הממשק דחוס. משפיע על ריווח גלובלי וטבלאות.', 'How tightly the UI is packed. Affects global spacing and tables.')}</p>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
@@ -1212,7 +1207,109 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
               );
             })()}
 
-            {/* ============ THEME STUDIO ============ */}
+            {/* ============ QUICK ACTIONS ============ */}
+            {tab === 'quick-actions' && (() => {
+              const p = ui.prefs;
+              const hidden = p.hideQuickActions;
+              return (
+                <div>
+                  <div style={card}>
+                    <h3 style={sectionTitle}><Zap size={14} /> {t('כפתור פעולות מהירות', 'Quick Actions button')}</h3>
+                    <p style={sectionHint}>
+                      {t(
+                        'כפתור צף בכותרת שמאפשר גישה מיידית ל־Command Palette — חיפוש, ניווט מהיר ופעולות עם מקלדת בלבד (⌘K / Ctrl+K).',
+                        'A header button that instantly opens the Command Palette — search, jump to any screen, and run actions with the keyboard only (⌘K / Ctrl+K).'
+                      )}
+                    </p>
+
+                    <button
+                      onClick={() => { try { window.dispatchEvent(new Event('orca:open-command-palette')); } catch {} }}
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+                        width: '100%', padding: '14px 16px', borderRadius: T.radius.md,
+                        background: `linear-gradient(135deg, ${T.accent.cyan}22, ${T.accent.cyan}08)`,
+                        border: `1px solid ${T.accent.cyan}66`,
+                        color: T.text.primary, cursor: 'pointer', fontFamily: sans,
+                        marginBottom: 12, textAlign: isRTL ? 'right' : 'left' as const,
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                        <Zap size={16} color={T.accent.cyan} />
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 800 }}>{t('פתח עכשיו', 'Open now')}</div>
+                          <div style={{ fontSize: 10.5, color: T.text.muted, marginTop: 2 }}>
+                            {t('הקפץ את לוח הפעולות המהירות', 'Launch the Quick Actions palette')}
+                          </div>
+                        </div>
+                      </div>
+                      <kbd style={{
+                        fontFamily: mono, fontSize: 10, fontWeight: 800,
+                        padding: '4px 8px', borderRadius: 6,
+                        background: T.bg.tertiary, border: `1px solid ${T.border.subtle}`,
+                        color: T.text.secondary,
+                      }}>⌘K</kbd>
+                    </button>
+
+                    <button
+                      onClick={() => ui.setPrefs({ hideQuickActions: !hidden })}
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+                        width: '100%', padding: '12px 14px', borderRadius: T.radius.md,
+                        background: T.bg.secondary,
+                        border: `1px solid ${!hidden ? T.accent.cyan : T.border.subtle}`,
+                        cursor: 'pointer', textAlign: isRTL ? 'right' : 'left' as const, fontFamily: sans,
+                      }}
+                    >
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: T.text.primary }}>
+                          {t('הצג כפתור פעולות מהירות בכותרת', 'Show Quick Actions button in the header')}
+                        </div>
+                        <div style={{ fontSize: 10.5, color: T.text.muted, marginTop: 2 }}>
+                          {t('כשמושבת, ⌘K עדיין יפתח את לוח הפעולות.', 'When off, ⌘K still opens the palette from the keyboard.')}
+                        </div>
+                      </div>
+                      <div style={{
+                        width: 36, height: 20, borderRadius: 10, position: 'relative',
+                        background: !hidden ? T.accent.cyan : T.bg.tertiary, transition: 'background .15s', flexShrink: 0,
+                      }}>
+                        <div style={{
+                          position: 'absolute', top: 2,
+                          insetInlineStart: !hidden ? 18 : 2,
+                          width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'inset-inline-start .15s',
+                        }} />
+                      </div>
+                    </button>
+                  </div>
+
+                  <div style={card}>
+                    <h3 style={sectionTitle}><SlidersHorizontal size={14} /> {t('קיצורי מקלדת', 'Keyboard shortcuts')}</h3>
+                    <p style={sectionHint}>
+                      {t('הפעולות הבאות זמינות מכל מסך באפליקציה.', 'These shortcuts work from any screen in the app.')}
+                    </p>
+                    {[
+                      { keys: '⌘K / Ctrl+K', label: t('פתיחת לוח פעולות מהירות', 'Open Quick Actions') },
+                      { keys: '?', label: t('הצגת כל הקיצורים', 'Show all shortcuts') },
+                      { keys: 'Esc', label: t('סגירת כל מודאל', 'Close any modal') },
+                    ].map(row => (
+                      <div key={row.keys} style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '10px 0', borderBottom: `1px solid ${T.border.subtle}`,
+                      }}>
+                        <span style={{ fontSize: 12, color: T.text.secondary }}>{row.label}</span>
+                        <kbd style={{
+                          fontFamily: mono, fontSize: 10.5, fontWeight: 700,
+                          padding: '4px 8px', borderRadius: 6,
+                          background: T.bg.tertiary, border: `1px solid ${T.border.subtle}`,
+                          color: T.text.primary,
+                        }}>{row.keys}</kbd>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
+
             {tab === 'theme-studio' && (() => {
               const p = ui.prefs;
               const locked = ui.themeLocked;
