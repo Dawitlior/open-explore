@@ -54,6 +54,7 @@ const detectCategory = (symbol: string): AssetCategory => {
 
 export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onSave, onClose }: TradeFormProps) => {
   const isMobile = useIsMobile();
+  const killSwitch = useKillSwitch();
   const [step, setStep] = useState(0); // 0,1,2
   const [assetCategory, setAssetCategory] = useState<AssetCategory>(() => trade?.coin ? detectCategory(trade.coin) : 'Crypto');
   const [customSymbol, setCustomSymbol] = useState('');
