@@ -1243,6 +1243,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                 ui.commitCustomAccent(draft);
                 playMorningLock();
                 toast.success(t('הפלטה נשמרה ונעולה ליום', 'Palette committed and locked for 1 day'));
+                setThemeRefreshPrompt('custom' as ThemeId);
               };
 
               return (
@@ -2131,6 +2132,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                   ui.commitCustomAccent(draftAccent);
                   playMorningLock();
                   toast.success(t('הפלטה נשמרה ונעולה ליום', 'Palette committed and locked for 1 day'));
+                  setThemeRefreshPrompt('custom' as ThemeId);
                 }}
                 style={{
                   flex: 1.4, padding: '12px 16px', borderRadius: T.radius.md,
