@@ -785,7 +785,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                 </GlassCard>
               )}
 
-              {limitProjection?.newlyBreached && (
+              {!isOpenPosition && limitProjection?.newlyBreached && (
                 <div style={{
                   padding: 14, marginBottom: 14,
                   background: `${T.accent.red}15`,
