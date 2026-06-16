@@ -173,7 +173,7 @@ export function ImportPreflightRoot() {
 
   const rows = headers.map((h, i) => {
     const absCol = i + r.structure.regionCols[0];
-    const fm = matchByCol.get(absCol) || matchByCol.get(i);
+    const fm = matchByCol.get(i) || matchByCol.get(absCol);
     return { idx: i, absCol, header: h || `(${i + 1})`, fm };
   });
 
