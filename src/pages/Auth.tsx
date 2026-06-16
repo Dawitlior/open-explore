@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Navigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff, ArrowRight, Lock, Mail, User, Languages } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { lovable } from '@/integrations/lovable';
 import { useAuth } from '@/hooks/use-auth';
 import { evaluatePassword, isValidEmail, translateAuthError } from '@/lib/auth-utils';
 import { toast } from 'sonner';
@@ -227,11 +226,11 @@ export default function AuthPage() {
     writeAuthLangIntent(lang);
     try {
       try { localStorage.setItem(PENDING_CONSENT_KEY, '1'); } catch { /* noop */ }
-      const result = await lovable.auth.signInWithOAuth('google', {
-        redirect_uri: `${window.location.origin}/auth`,
-        extraParams: { prompt: 'select_account' },
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: `${window.location.origin}/auth`, queryParams: { prompt: 'select_account' } },
       });
-      if ((result as any)?.error) throw (result as any).error;
+      if (error) throw error;
     } catch (err) {
       toast.error(translateAuthError(err instanceof Error ? err.message : 'Google sign-in failed'));
       setBusy(false);
