@@ -78,15 +78,20 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
     if (!userId) return;
     const scheduleRefetch = () => {
       if (refetchTimer.current) clearTimeout(refetchTimer.current);
-      refetchTimer.current = setTimeout(() => { fetchRows(); }, 250);
+      refetchTimer.current = setTimeout(() => { fetchRows(); }, 150);
     };
     const ch = supabase
       .channel(`open_pos_${userId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'open_positions', filter: `user_id=eq.${userId}` }, scheduleRefetch)
       .subscribe();
+    // Instant local signal — dispatched by TradeForm right after upsert so the
+    // panel updates without waiting for the postgres_changes round-trip.
+    const onLocal = () => scheduleRefetch();
+    window.addEventListener('orca:open-position-changed', onLocal);
     return () => {
       if (refetchTimer.current) clearTimeout(refetchTimer.current);
       supabase.removeChannel(ch);
+      window.removeEventListener('orca:open-position-changed', onLocal);
     };
   }, [userId, fetchRows]);
 
@@ -175,11 +180,19 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
         )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
         {rows.map(p => {
           const isLong = String(p.side).toLowerCase().startsWith('l');
           const sideColor = isLong ? T.accent.green : T.accent.red;
           const isManual = p.provider === 'manual';
+          const entry = Number(p.entry_price) || 0;
+          const size = Number(p.size) || 0;
+          const stop = p.stop_loss && p.stop_loss > 0 ? Number(p.stop_loss) : null;
+          // What the trader actually wants to see: how much $ is on the line.
+          const positionUsd = entry * size;                          // notional
+          const riskUsd = stop ? Math.abs(entry - stop) * size : null; // 1R in $
+          const fmtUsd = (n: number) =>
+            `$${n.toLocaleString(undefined, { maximumFractionDigits: n >= 100 ? 0 : 2 })}`;
           return (
             <div key={p.id}
               style={{
@@ -188,53 +201,81 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
                 borderInlineStart: `3px solid ${sideColor}`,
                 borderRadius: 12,
                 padding: 14,
-                display: 'flex', flexDirection: 'column', gap: 10,
+                display: 'flex', flexDirection: 'column', gap: 12,
               }}>
+              {/* Header: symbol + side pill */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                  <span style={{ fontWeight: 800, color: T.text.primary, fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.symbol}</span>
-                  <span style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: 0.4 }}>
-                    {isManual ? (isRTL ? 'ידני' : 'Manual') : p.provider} · {isLong ? (isRTL ? 'לונג' : 'LONG') : (isRTL ? 'שורט' : 'SHORT')}
+                  <span style={{ fontWeight: 800, color: T.text.primary, fontSize: 16, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.symbol}</span>
+                  <span style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: 0.4 }}>
+                    {isManual ? (isRTL ? 'ידני' : 'Manual') : p.provider}
                   </span>
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6, background: `${sideColor}18`, color: sideColor }}>
-                  × {Number(p.size).toLocaleString(undefined, { maximumFractionDigits: 6 })}
+                <span style={{ fontSize: 11, fontWeight: 800, padding: '4px 10px', borderRadius: 6, background: `${sideColor}22`, color: sideColor, letterSpacing: 0.5 }}>
+                  {isLong ? (isRTL ? 'לונג' : 'LONG') : (isRTL ? 'שורט' : 'SHORT')}
                 </span>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontFamily: "'JetBrains Mono', monospace" }}>
+              {/* Money row: position size $ + risk $ — what users actually care about */}
+              <div style={{
+                display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8,
+                background: T.bg.secondary, border: `1px solid ${T.border.subtle}`,
+                borderRadius: 10, padding: '10px 12px',
+              }}>
                 <div>
-                  <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 2 }}>{isRTL ? 'כניסה' : 'Entry'}</div>
-                  <div style={{ fontSize: 14, color: T.text.primary, fontWeight: 600 }}>{Number(p.entry_price).toLocaleString(undefined, { maximumFractionDigits: 6 })}</div>
+                  <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 2, textTransform: 'uppercase', letterSpacing: 0.3 }}>
+                    {isRTL ? 'נכנסת עם' : 'Position'}
+                  </div>
+                  <div style={{ fontSize: 15, color: T.text.primary, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>
+                    {fmtUsd(positionUsd)}
+                  </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 2 }}>{isRTL ? 'סטופ-לוס' : 'Stop Loss'}</div>
-                  <div style={{ fontSize: 14, color: p.stop_loss ? T.accent.red : T.text.muted, fontWeight: 600 }}>
-                    {p.stop_loss ? Number(p.stop_loss).toLocaleString(undefined, { maximumFractionDigits: 6 }) : '—'}
+                  <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 2, textTransform: 'uppercase', letterSpacing: 0.3 }}>
+                    {isRTL ? 'בסיכון' : 'At Risk'}
+                  </div>
+                  <div style={{ fontSize: 15, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: riskUsd ? T.accent.red : T.text.muted }}>
+                    {riskUsd != null ? fmtUsd(riskUsd) : '—'}
                   </div>
                 </div>
               </div>
 
-              {Number(p.unrealized_pnl) !== 0 && (
-                <div style={{ fontSize: 12, color: p.unrealized_pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>
-                  {isRTL ? 'לא ממומש' : 'Unrealized'}: {p.unrealized_pnl >= 0 ? '+' : ''}${Number(p.unrealized_pnl).toFixed(2)}
+              {/* Price row: entry · stop (secondary) */}
+              <div style={{ display: 'flex', gap: 14, fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: 10, color: T.text.muted }}>{isRTL ? 'כניסה' : 'Entry'}</span>
+                  <span style={{ color: T.text.secondary, fontWeight: 600 }}>{entry.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span>
                 </div>
-              )}
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: 10, color: T.text.muted }}>{isRTL ? 'סטופ' : 'Stop'}</span>
+                  <span style={{ color: stop ? T.text.secondary : T.text.muted, fontWeight: 600 }}>
+                    {stop ? stop.toLocaleString(undefined, { maximumFractionDigits: 6 }) : '—'}
+                  </span>
+                </div>
+                {Number(p.unrealized_pnl) !== 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', marginInlineStart: 'auto', textAlign: isRTL ? 'left' : 'right' }}>
+                    <span style={{ fontSize: 10, color: T.text.muted }}>{isRTL ? 'לא ממומש' : 'Unrealized'}</span>
+                    <span style={{ color: p.unrealized_pnl >= 0 ? T.accent.green : T.accent.red, fontWeight: 700 }}>
+                      {p.unrealized_pnl >= 0 ? '+' : ''}${Number(p.unrealized_pnl).toFixed(2)}
+                    </span>
+                  </div>
+                )}
+              </div>
 
               {isManual ? (
                 <button
                   onClick={() => openClose(p)}
                   style={{
-                    marginTop: 4,
-                    padding: '9px 12px',
+                    marginTop: 2,
+                    padding: '10px 12px',
                     background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`,
                     border: 'none', borderRadius: 8,
                     color: T.bg.primary, fontWeight: 800, fontSize: 13, cursor: 'pointer',
                   }}>
-                  {isRTL ? 'נסגרה' : 'Closed'}
+                  {isRTL ? 'סגור פוזיציה' : 'Close position'}
                 </button>
               ) : (
-                <div style={{ fontSize: 11, color: T.text.muted, marginTop: 4 }}>
+                <div style={{ fontSize: 11, color: T.text.muted, marginTop: 2 }}>
                   {isRTL ? 'סגירה אוטומטית בסנכרון הבא מהבורסה' : 'Auto-closes on next broker sync'}
                 </div>
               )}
