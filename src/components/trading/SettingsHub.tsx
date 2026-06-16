@@ -128,6 +128,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [sidebarAvatar, setSidebarAvatar] = useState<string | null>(null);
+  const [themeRefreshPrompt, setThemeRefreshPrompt] = useState<ThemeId | null>(null);
   useEffect(() => {
     let cancelled = false;
     if (!auth.user?.id) { setSidebarAvatar(null); return; }
