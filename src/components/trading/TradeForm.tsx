@@ -746,27 +746,44 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                 </div>
               </GlassCard>
 
-              <GlassCard T={T} style={{ marginBottom: 18, padding: isMobile ? 18 : 22, background: pnl >= 0 ? `${T.accent.green}10` : `${T.accent.red}10`, border: `2px solid ${pnl >= 0 ? T.accent.green : T.accent.red}40` }}>
-                <div style={{ fontSize: 12, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 14, fontWeight: 700 }}>{isRTL ? 'התוצאה' : 'Result'}</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
-                  <div>
-                    <div style={{ fontSize: 11, color: T.text.muted }}>R-Multiple</div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: returnR >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{returnR.toFixed(2)}R</div>
+              {isOpenPosition ? (
+                <GlassCard T={T} style={{ marginBottom: 18, padding: isMobile ? 18 : 22, background: `${T.accent.cyan}10`, border: `2px solid ${T.accent.cyan}40` }}>
+                  <div style={{ fontSize: 12, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 14, fontWeight: 700 }}>{isRTL ? 'פוזיציה פתוחה' : 'Open Position'}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                    <span style={{ fontSize: 28 }}>◴</span>
+                    <div style={{ fontSize: 14, color: T.text.primary, lineHeight: 1.55 }}>
+                      {isRTL
+                        ? 'הפוזיציה תיכנס לספר הפוזיציות הפתוחות. אין R, אין P&L, ואין השפעה על תוחלת/יתרה — עד שתסגור אותה ידנית.'
+                        : 'This will be saved to your open-positions book. No R, no P&L, no impact on expectancy or balance — until you close it manually.'}
+                    </div>
                   </div>
-                  <div>
-                    <div style={{ fontSize: 11, color: T.text.muted }}>P&L</div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}</div>
+                  <div style={{ paddingTop: 12, borderTop: `1px solid ${T.border.subtle}`, fontSize: 12, color: T.text.secondary, fontFamily: "'JetBrains Mono', monospace" }}>
+                    {form.coin} · {form.direction === 'Long' ? '↑ Long' : '↓ Short'} · {isRTL ? 'גודל:' : 'Size:'} <span style={{ color: T.text.primary }}>{(isFutures ? contracts : (form.positionSize || autoCalcPositionSize)).toLocaleString()}</span> · {isRTL ? 'כניסה:' : 'Entry:'} <span style={{ color: T.text.primary }}>{form.entry}</span>
                   </div>
-                  <div>
-                    <div style={{ fontSize: 11, color: T.text.muted }}>{isRTL ? 'תוצאה' : 'Outcome'}</div>
-                    <div style={{ fontSize: 18, fontWeight: 700, color: winLoss === 'Win' ? T.accent.green : winLoss === 'Loss' ? T.accent.red : T.accent.orange }}>{winLoss === 'Win' ? (isRTL ? 'רווח' : 'Win') : winLoss === 'Loss' ? (isRTL ? 'הפסד' : 'Loss') : 'Break-even'}</div>
+                </GlassCard>
+              ) : (
+                <GlassCard T={T} style={{ marginBottom: 18, padding: isMobile ? 18 : 22, background: pnl >= 0 ? `${T.accent.green}10` : `${T.accent.red}10`, border: `2px solid ${pnl >= 0 ? T.accent.green : T.accent.red}40` }}>
+                  <div style={{ fontSize: 12, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 14, fontWeight: 700 }}>{isRTL ? 'התוצאה' : 'Result'}</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
+                    <div>
+                      <div style={{ fontSize: 11, color: T.text.muted }}>R-Multiple</div>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: returnR >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{returnR.toFixed(2)}R</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, color: T.text.muted }}>P&L</div>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, color: T.text.muted }}>{isRTL ? 'תוצאה' : 'Outcome'}</div>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: winLoss === 'Win' ? T.accent.green : winLoss === 'Loss' ? T.accent.red : T.accent.orange }}>{winLoss === 'Win' ? (isRTL ? 'רווח' : 'Win') : winLoss === 'Loss' ? (isRTL ? 'הפסד' : 'Loss') : 'Break-even'}</div>
+                    </div>
                   </div>
-                </div>
-                <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${T.border.subtle}`, fontSize: 12, color: T.text.secondary }}>
-                  {isRTL ? 'יתרה לאחר עסקה זו: ' : 'Balance after this trade: '}
-                  <span style={{ color: T.text.primary, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>${(currentBalance + pnl).toFixed(2)}</span>
-                </div>
-              </GlassCard>
+                  <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${T.border.subtle}`, fontSize: 12, color: T.text.secondary }}>
+                    {isRTL ? 'יתרה לאחר עסקה זו: ' : 'Balance after this trade: '}
+                    <span style={{ color: T.text.primary, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>${(currentBalance + pnl).toFixed(2)}</span>
+                  </div>
+                </GlassCard>
+              )}
 
               {limitProjection?.newlyBreached && (
                 <div style={{
