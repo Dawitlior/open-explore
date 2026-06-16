@@ -41,6 +41,8 @@ import { MobileTradeCard } from '@/components/trading/MobileTradeCard';
 import { RiskExplanationModal, type RiskExplanation } from '@/components/trading/RiskExplanationModal';
 import { toast } from 'sonner';
 import { LazyShell } from '@/components/LazyShell';
+import { useNavigate } from 'react-router-dom';
+import { useArena } from '@/features/bug-arena';
 const AdvancedRiskPage = lazy(() => import('@/components/trading/AdvancedRiskPage').then(m => ({ default: m.AdvancedRiskPage })));
 const AdvancedAnalyticsPage = lazy(() => import('@/components/trading/AdvancedAnalyticsPage').then(m => ({ default: m.AdvancedAnalyticsPage })));
 const AdvancedPsychologyPage = lazy(() => import('@/components/trading/AdvancedPsychologyPage').then(m => ({ default: m.AdvancedPsychologyPage })));
@@ -102,6 +104,10 @@ const ReminderBadge = () => (
 
 const Index = () => {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
+  const arena = useArena();
+  const openBugReport = () => { try { arena.capture.beginCapture(); } catch {} };
+  const goBugBoard = () => navigate('/bugs');
   const settings = useSettings();
   const { prefs: userPrefs, loaded: userPrefsLoaded } = useUserPreferences(); // warm cache for centralized R-multiple Tier-3 proxy
   const { trades, stats, loading, initialized, addTrade, updateTrade, upsertJournalTrade, removeTrade, resetAll, importTrades, riskAlert, dismissRiskAlert, setManualR } = useTrades();
@@ -1740,6 +1746,14 @@ const Index = () => {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                 <span>{isRTL ? 'אודות המערכת' : 'About System'}</span>
               </button>
+              <button onClick={() => { setSbOpen(false); goBugBoard(); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: 'transparent', color: T.text.muted, border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 12, textAlign: isRTL ? 'right' : 'left' }}>
+                <span style={{ fontSize: 14 }}>📋</span>
+                <span>{isRTL ? 'לוח באגים' : 'Bug Board'}</span>
+              </button>
+              <button onClick={() => { setSbOpen(false); openBugReport(); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: 'transparent', color: '#f5c542', border: `1px solid #f5c54233`, borderRadius: T.radius.md, cursor: 'pointer', fontSize: 12, textAlign: isRTL ? 'right' : 'left' }}>
+                <span style={{ fontSize: 14 }}>🐛</span>
+                <span>{isRTL ? 'דווח על באג' : 'Report Bug'}</span>
+              </button>
               <button onClick={() => { setSbOpen(false); setShowSettings(true); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 12px', background: `${T.accent.cyan}10`, border: `1px solid ${T.accent.cyan}30`, borderRadius: T.radius.md, color: T.accent.cyan, cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>
                 <span style={{ fontSize: 16 }}>⚙️</span>
                 <span>{isRTL ? 'הגדרות' : 'Settings'}</span>
@@ -1810,6 +1824,14 @@ const Index = () => {
           <button onClick={() => setShowFeatureModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: sbOpen ? '9px 10px' : '9px 0', justifyContent: sbOpen ? 'flex-start' : 'center', background: 'transparent', color: T.text.muted, border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: 400, transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: '2px solid transparent', marginTop: 4 }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
             {sbOpen && <span>{isRTL ? 'אודות המערכת' : 'About System'}</span>}
+          </button>
+          <button onClick={goBugBoard} title={isRTL ? 'לוח באגים' : 'Bug Board'} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: sbOpen ? '9px 10px' : '9px 0', justifyContent: sbOpen ? 'flex-start' : 'center', background: 'transparent', color: T.text.muted, border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: 400, transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: '2px solid transparent' }}>
+            <span style={{ fontSize: 16, lineHeight: 1 }}>📋</span>
+            {sbOpen && <span>{isRTL ? 'לוח באגים' : 'Bug Board'}</span>}
+          </button>
+          <button onClick={openBugReport} title={isRTL ? 'דווח על באג' : 'Report Bug'} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: sbOpen ? '9px 10px' : '9px 0', justifyContent: sbOpen ? 'flex-start' : 'center', background: 'transparent', color: '#f5c542', border: `1px solid #f5c54226`, borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: 600, transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left' }}>
+            <span style={{ fontSize: 16, lineHeight: 1 }}>🐛</span>
+            {sbOpen && <span>{isRTL ? 'דווח על באג' : 'Report Bug'}</span>}
           </button>
         </nav>
         {/* Dimension Portal Buttons — visible in both expanded and collapsed sidebar */}

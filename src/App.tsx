@@ -62,7 +62,7 @@ const BugArenaMount = ({ children }: { children: React.ReactNode }) => {
       onReported={() => toast.success('הדיווח נשלח, תודה!')}
     >
       {children}
-      {!suppressed && <BugReportFab />}
+      {/* FAB removed — bug report is now in the sidebar navigation */}
     </BugArenaProvider>
   );
 };
