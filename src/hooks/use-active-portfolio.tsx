@@ -37,6 +37,7 @@ interface ActivePortfolioContextValue {
   createPortfolio: (draft: PortfolioDraft) => Promise<Portfolio | null>;
   updatePortfolio: (id: string, patch: Partial<PortfolioDraft>) => Promise<Portfolio | null>;
   deletePortfolio: (id: string) => Promise<boolean>;
+  resetPortfolio: (id: string) => Promise<boolean>;
   setDefault: (id: string) => Promise<boolean>;
   // Stage 5 — limits & lock state
   tier: AppTier;
@@ -79,6 +80,7 @@ export function ActivePortfolioProvider({ children }: { children: ReactNode }) {
     createPortfolio,
     updatePortfolio,
     deletePortfolio,
+    resetPortfolio,
     setDefault,
   } = usePortfolios();
 
@@ -198,6 +200,7 @@ export function ActivePortfolioProvider({ children }: { children: ReactNode }) {
       createPortfolio: wrappedCreate,
       updatePortfolio,
       deletePortfolio: wrappedDelete,
+      resetPortfolio,
       setDefault,
       tier,
       tierMax,
@@ -206,7 +209,7 @@ export function ActivePortfolioProvider({ children }: { children: ReactNode }) {
       isActivePortfolioLocked,
       canCreate,
     }),
-    [portfolios, loading, error, activePortfolioId, activePortfolio, setActivePortfolioId, refresh, wrappedCreate, updatePortfolio, wrappedDelete, setDefault, tier, tierMax, lockedIds, isPortfolioLocked, isActivePortfolioLocked, canCreate],
+    [portfolios, loading, error, activePortfolioId, activePortfolio, setActivePortfolioId, refresh, wrappedCreate, updatePortfolio, wrappedDelete, resetPortfolio, setDefault, tier, tierMax, lockedIds, isPortfolioLocked, isActivePortfolioLocked, canCreate],
   );
 
   return <ActivePortfolioContext.Provider value={value}>{children}</ActivePortfolioContext.Provider>;
