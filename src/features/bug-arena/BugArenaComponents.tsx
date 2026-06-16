@@ -36,9 +36,30 @@ import {
   type BugWithMeta,
 } from './bugArenaTypes';
 import { useLang } from '@/hooks/use-lang';
+import { User } from 'lucide-react';
 
 const ACCENT = '#f5c542'; // ORCA gold
 const CYAN = '#37e0c6';
+
+// Translate the Hebrew section names stored in DB to the active UI language.
+const SECTION_EN: Record<string, string> = {
+  'דשבורד': 'Dashboard',
+  'כללי': 'General',
+  'יומן מסחר': 'Trade Journal',
+  'יומן': 'Journal',
+  'אנליטיקה': 'Analytics',
+  'לוח שנה': 'Calendar',
+  'רדאר': 'Radar',
+  'הגדרות': 'Settings',
+  'סקירה שבועית': 'Weekly Review',
+  'אונבורדינג': 'Onboarding',
+  'התחברות': 'Login',
+  'all': 'all',
+};
+function sectionLabel(s: string, lang: 'he' | 'en'): string {
+  if (lang === 'he') return s;
+  return SECTION_EN[s] || s;
+}
 
 // ---------------------------------------------------------------------
 // helpers
