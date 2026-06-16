@@ -36,9 +36,30 @@ import {
   type BugWithMeta,
 } from './bugArenaTypes';
 import { useLang } from '@/hooks/use-lang';
+import { User } from 'lucide-react';
 
 const ACCENT = '#f5c542'; // ORCA gold
 const CYAN = '#37e0c6';
+
+// Translate the Hebrew section names stored in DB to the active UI language.
+const SECTION_EN: Record<string, string> = {
+  'דשבורד': 'Dashboard',
+  'כללי': 'General',
+  'יומן מסחר': 'Trade Journal',
+  'יומן': 'Journal',
+  'אנליטיקה': 'Analytics',
+  'לוח שנה': 'Calendar',
+  'רדאר': 'Radar',
+  'הגדרות': 'Settings',
+  'סקירה שבועית': 'Weekly Review',
+  'אונבורדינג': 'Onboarding',
+  'התחברות': 'Login',
+  'all': 'all',
+};
+function sectionLabel(s: string, lang: 'he' | 'en'): string {
+  if (lang === 'he') return s;
+  return SECTION_EN[s] || s;
+}
 
 // ---------------------------------------------------------------------
 // helpers
@@ -228,7 +249,7 @@ function CaptureFlow() {
           {/* context chips — section + picked element (auto, no clicks) */}
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className="rounded-full bg-white/10 px-3 py-1 font-semibold">
-              {t('אזור', 'Area')}: {draft.section}
+              {t('אזור', 'Area')}: {sectionLabel(draft.section, lang)}
             </span>
             {draft.pick?.label && (
               <span
@@ -643,7 +664,7 @@ function Chips({
 // =====================================================================
 export function BugBoard() {
   const { supabase, user, accent } = useArena();
-  const { isRTL, t } = useLang();
+  const { lang, isRTL, t } = useLang();
   const board = useBugReports(supabase, user.id);
   const [openBug, setOpenBug] = useState<BugWithMeta | null>(null);
 
@@ -686,7 +707,7 @@ export function BugBoard() {
               color: (board.filter.section || 'all') === s ? '#06121f' : '#cdd6e3',
             }}
           >
-            {s === 'all' ? t('הכל', 'All') : s}
+            {s === 'all' ? t('הכל', 'All') : sectionLabel(s, lang)}
           </button>
         ))}
       </div>
@@ -705,7 +726,7 @@ export function BugBoard() {
         {board.grouped.map((g) => (
           <section key={g.section}>
             <h3 className="mb-2 text-sm font-bold uppercase tracking-wide text-white/40">
-              {g.section} · {g.bugs.length}
+              {sectionLabel(g.section, lang)} · {g.bugs.length}
             </h3>
             <div className="space-y-3">
               {g.bugs.map((b) => (
@@ -862,20 +883,16 @@ function BugCard({
 
 
 function Avatar({ reporter, size = 28 }: { reporter: BugReporter; size?: number }) {
-  const url = reporter.profile?.avatar_url;
-  return url ? (
-    <img
-      src={url}
-      alt={reporter.profile?.display_name || ''}
-      className="rounded-full ring-2 ring-[#0b111b]"
-      style={{ width: size, height: size }}
-    />
-  ) : (
+  // Always render a neutral person icon — avatar_url often points to a broken
+  // image, which looks worse than a clean glyph.
+  return (
     <span
-      className="flex items-center justify-center rounded-full text-[10px] font-bold ring-2 ring-[#0b111b]"
+      className="flex items-center justify-center rounded-full ring-2 ring-[#0b111b]"
       style={{ width: size, height: size, background: '#23324a', color: '#cdd6e3' }}
+      title={reporter.profile?.display_name || ''}
+      aria-label={reporter.profile?.display_name || 'user'}
     >
-      {initials(reporter.profile?.display_name)}
+      <User size={Math.round(size * 0.6)} strokeWidth={2} />
     </span>
   );
 }
@@ -958,7 +975,7 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
               >
                 {statusLabel(bug.status, lang)}
               </span>
-              <span className="rounded-full bg-white/10 px-2 py-0.5">{bug.section}</span>
+              <span className="rounded-full bg-white/10 px-2 py-0.5">{sectionLabel(bug.section, lang)}</span>
               <span className="rounded-full bg-white/10 px-2 py-0.5">{bugTypeLabel(bug.bug_type, lang)}</span>
               <span className="rounded-full bg-white/10 px-2 py-0.5">
                 {t('חומרה', 'Severity')}: {severityLabel(bug.severity, lang)}
