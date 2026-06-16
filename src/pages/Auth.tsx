@@ -364,56 +364,56 @@ export default function AuthPage() {
           </div>
         </div>
 
-        <header style={{ marginBottom: 22, textAlign: 'center' }}>
+        {/* Segmented mode tabs — Sign in / Sign up */}
+        <div
+          role="tablist"
+          aria-label={isRTL ? 'מצב חשבון' : 'Account mode'}
+          style={{
+            display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4,
+            background: 'rgba(5,5,5,0.6)', border: `1px solid ${BORDER}`,
+            borderRadius: 12, padding: 4, marginBottom: 18,
+          }}
+        >
+          {(['sign-in', 'sign-up'] as Mode[]).map(m => {
+            const active = mode === m;
+            const label = m === 'sign-in' ? c.signInCta : c.signUpCta;
+            return (
+              <button
+                key={m}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => { if (mode !== m) { setMode(m); setPassword(''); } }}
+                style={{
+                  padding: '10px 12px', borderRadius: 9,
+                  border: 'none', cursor: 'pointer',
+                  fontWeight: 700, fontSize: 13, letterSpacing: '0.04em',
+                  background: active
+                    ? `linear-gradient(135deg, ${GOLD_BRIGHT} 0%, ${GOLD} 100%)`
+                    : 'transparent',
+                  color: active ? '#1a1300' : TEXT_MUTED,
+                  transition: 'background .2s, color .2s',
+                }}
+              >{label}</button>
+            );
+          })}
+        </div>
+
+        <header style={{ marginBottom: 18, textAlign: 'center' }}>
           <div style={{
             fontSize: 10, color: GOLD, fontWeight: 700, letterSpacing: '0.28em',
-            textTransform: 'uppercase', marginBottom: 8,
+            textTransform: 'uppercase', marginBottom: 6,
           }}>
             {mode === 'sign-in' ? c.welcomeBack : c.getStarted}
           </div>
-          <h1 style={{ fontSize: 22, margin: 0, fontWeight: 700, letterSpacing: '-0.01em', color: TEXT }}>
+          <h1 style={{ fontSize: 20, margin: 0, fontWeight: 700, letterSpacing: '-0.01em', color: TEXT }}>
             {mode === 'sign-in' ? c.signIn : c.signUp}
           </h1>
-          <p style={{ marginTop: 6, color: TEXT_MUTED, fontSize: 12 }}>
+          <p style={{ marginTop: 5, color: TEXT_MUTED, fontSize: 12 }}>
             {mode === 'sign-in' ? c.signInSub : c.signUpSub}
           </p>
         </header>
 
-        {/* Consent gate — required before any sign-in / sign-up action */}
-        <label
-          htmlFor="orca-consent"
-          style={{
-            display: 'flex', alignItems: 'flex-start', gap: 10,
-            padding: '12px 14px', marginBottom: 14, borderRadius: 12,
-            border: `1px solid ${consent ? GOLD_DEEP : BORDER}`,
-            background: consent ? 'rgba(212,175,90,0.06)' : 'rgba(5,5,5,0.55)',
-            cursor: 'pointer', transition: 'border-color .15s, background .15s',
-            textAlign: isRTL ? 'right' : 'left',
-          }}
-        >
-          <input
-            id="orca-consent"
-            type="checkbox"
-            checked={consent}
-            onChange={e => setConsent(e.target.checked)}
-            style={{
-              marginTop: 2, width: 16, height: 16,
-              accentColor: GOLD, cursor: 'pointer', flexShrink: 0,
-            }}
-          />
-          <span style={{ fontSize: 12, color: TEXT, lineHeight: 1.55 }}>
-            {c.consentPrefix}{' '}
-            <a href="/terms" target="_blank" rel="noopener noreferrer"
-               style={{ color: GOLD_BRIGHT, fontWeight: 700, textDecoration: 'underline' }}>
-              {c.consentTerms}
-            </a>{' '}
-            {c.consentAnd}{' '}
-            <a href="/privacy" target="_blank" rel="noopener noreferrer"
-               style={{ color: GOLD_BRIGHT, fontWeight: 700, textDecoration: 'underline' }}>
-              {c.consentPrivacy}
-            </a>
-          </span>
-        </label>
 
         <button
           onClick={handleGoogle}
