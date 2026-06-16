@@ -409,9 +409,9 @@ export function ImportPreflightRoot() {
                 {rows.map((row) => {
                   const fm = row.fm;
                   const chip = statusChip(fm ? fm.status : 'unmapped', rtl);
-                  const hasOverride = Object.prototype.hasOwnProperty.call(overrides, row.absCol);
+                  const hasOverride = Object.prototype.hasOwnProperty.call(overrides, row.idx);
                   const currentValue = hasOverride
-                    ? (overrides[row.absCol] === null ? '__ignore__' : (overrides[row.absCol] as string))
+                    ? (overrides[row.idx] === null ? '__ignore__' : (overrides[row.idx] as string))
                     : (fm?.field || '__unmapped__');
                   const niceName = fm?.field ? fieldHumanName(fm.field, rtl) : (rtl ? 'לא זוהה' : 'Not identified');
                   return (
@@ -433,9 +433,9 @@ export function ImportPreflightRoot() {
                               const v = e.target.value;
                               setOverrides((prev) => {
                                 const next = { ...prev };
-                                if (v === '__unmapped__') delete next[row.absCol];
-                                else if (v === '__ignore__') next[row.absCol] = null;
-                                else next[row.absCol] = v;
+                                if (v === '__unmapped__') delete next[row.idx];
+                                else if (v === '__ignore__') next[row.idx] = null;
+                                else next[row.idx] = v;
                                 return next;
                               });
                             }}
