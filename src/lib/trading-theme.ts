@@ -144,7 +144,52 @@ const platinum: TradingTheme = {
   },
 };
 
-export const themes: Record<ThemeId, TradingTheme> = { midnight, indigo, platinum };
+/* ════════════════════════════════════════════════
+   4) GRAPHITE — Formal institutional gray / green / red
+   Three-color discipline: graphite surfaces, green wins, red losses.
+   Sober, corporate, low-stimulus — designed for serious review work.
+   ════════════════════════════════════════════════ */
+const graphite: TradingTheme = {
+  id: 'graphite',
+  bg: { primary: '#0e1013', secondary: '#161a1f', tertiary: '#1c2128', card: '#161a1f', surface: '#1f242c' },
+  accent: {
+    cyan: '#22c55e', cyanGlow: 'rgba(34,197,94,0.16)',   // primary = green (positive)
+    teal: '#16a34a',
+    blue: '#9aa4b2', blueGlow: 'rgba(154,164,178,0.14)', // neutral gray-blue
+    purple: '#a3a3a3', purpleGlow: 'rgba(163,163,163,0.10)',
+    orange: '#a16207',
+    red: '#ef4444', redGlow: 'rgba(239,68,68,0.16)',     // negative
+    green: '#22c55e', greenGlow: 'rgba(34,197,94,0.16)',
+  },
+  text: { primary: '#e7eaee', secondary: '#a8b0bb', muted: '#7c8694', dim: '#525c6b' },
+  border: { subtle: 'rgba(255,255,255,0.05)', medium: 'rgba(255,255,255,0.10)', active: 'rgba(34,197,94,0.35)' },
+  radius: { sm: 4, md: 8, lg: 12, xl: 16 },
+  shadow: {
+    card: '0 1px 2px rgba(0,0,0,0.45), 0 4px 14px rgba(0,0,0,0.35)',
+    elevated: '0 4px 18px rgba(0,0,0,0.55), 0 10px 32px rgba(0,0,0,0.35)',
+    glow: (c: string) => `0 0 14px ${c}, 0 0 28px ${c}`,
+  },
+  cssVars: {
+    background: '215 14% 7%',
+    foreground: '215 15% 92%',
+    card: '215 14% 11%',
+    popover: '215 14% 11%',
+    primary: '142 71% 45%',
+    primaryFg: '0 0% 100%',
+    secondary: '215 14% 14%',
+    muted: '215 12% 16%',
+    mutedFg: '215 10% 62%',
+    accent: '142 71% 45%',
+    destructive: '0 84% 60%',
+    ring: '142 71% 45%',
+    sidebar: '215 14% 9%',
+    auroraA: '142 71% 45%',
+    auroraB: '215 14% 35%',
+    glowSpot: '142 71% 55%',
+  },
+};
+
+export const themes: Record<ThemeId, TradingTheme> = { midnight, indigo, platinum, graphite };
 
 export function getTheme(id: ThemeId): TradingTheme {
   return themes[id] || midnight;
