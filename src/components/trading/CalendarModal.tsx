@@ -98,6 +98,7 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
         );
       if (error) throw error;
       setNoteStatus('saved');
+      setEditingNote(false);
       window.setTimeout(() => setNoteStatus('idle'), 2200);
     } catch {
       setNoteStatus('error');
