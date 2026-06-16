@@ -205,6 +205,7 @@ const Index = () => {
   const [riskExplanations, setRiskExplanations] = useState<RiskExplanation[]>([]);
   const [showRiskExplanation, setShowRiskExplanation] = useState<{ tradeId: number; riskChange: string } | null>(null);
   const [showRiskOnboarding, setShowRiskOnboarding] = useState(false);
+  const [firstPaintReady, setFirstPaintReady] = useState(false);
 
   useEffect(() => {
     if (shouldShowRiskOnboarding(userPrefs, userPrefsLoaded)) setShowRiskOnboarding(true);
