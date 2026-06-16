@@ -116,9 +116,10 @@ export function useBugCapture(
       const route = getCurrentRoute();
       const section = sectionResolver(route);
 
-      // Capture screenshot FIRST — before the report modal is rendered —
-      // so the form itself never appears in the screenshot and never hides
-      // the element the user just selected.
+      // Show a tiny "capturing" indicator while we grab the screenshot,
+      // BEFORE the report modal appears (so it never blocks the screenshot).
+      setStage('capturing');
+
       const shot = await captureViewport(pick?.rect ?? null, config?.accent);
 
       // Now open the form with the screenshot already in place.
