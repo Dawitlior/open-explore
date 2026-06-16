@@ -351,6 +351,7 @@ export type Database = {
           provider: string
           side: string
           size: number
+          stop_loss: number | null
           symbol: string
           unrealized_pnl: number
           updated_at: string
@@ -363,6 +364,7 @@ export type Database = {
           provider?: string
           side: string
           size?: number
+          stop_loss?: number | null
           symbol: string
           unrealized_pnl?: number
           updated_at?: string
@@ -375,6 +377,7 @@ export type Database = {
           provider?: string
           side?: string
           size?: number
+          stop_loss?: number | null
           symbol?: string
           unrealized_pnl?: number
           updated_at?: string
