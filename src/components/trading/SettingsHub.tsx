@@ -1879,6 +1879,86 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
         </section>
       </div>
 
+      {/* ============ THEME CHANGE REFRESH PROMPT ============ */}
+      {themeRefreshPrompt && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          dir={isRTL ? 'rtl' : 'ltr'}
+          onClick={() => setThemeRefreshPrompt(null)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 100000,
+            background: 'rgba(2,6,15,0.72)', backdropFilter: 'blur(10px)',
+            display: 'grid', placeItems: 'center', padding: 20,
+            animation: 'orcaThemePromptFade 0.25s ease-out',
+          }}
+        >
+          <style>{`
+            @keyframes orcaThemePromptFade { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes orcaThemePromptIn { from { opacity: 0; transform: translateY(12px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+          `}</style>
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: '100%', maxWidth: 420,
+              background: `linear-gradient(180deg, ${T.bg.secondary}, ${T.bg.tertiary})`,
+              border: `1px solid ${T.accent.cyan}40`,
+              borderRadius: 18, padding: 26, textAlign: 'center',
+              boxShadow: `0 28px 80px rgba(0,0,0,0.6), 0 0 40px ${T.accent.cyan}25`,
+              animation: 'orcaThemePromptIn 0.35s cubic-bezier(0.16,1,0.3,1) both',
+              fontFamily: sans,
+            }}
+          >
+            <div style={{
+              width: 56, height: 56, borderRadius: 16, margin: '0 auto 14px',
+              display: 'grid', placeItems: 'center',
+              background: `linear-gradient(135deg, ${T.accent.cyan}22, ${T.accent.green || T.accent.cyan}11)`,
+              border: `1px solid ${T.accent.cyan}55`,
+            }}>
+              <RotateCcw size={26} color={T.accent.cyan} />
+            </div>
+            <div style={{ fontSize: 10.5, letterSpacing: '0.3em', color: T.accent.cyan, fontWeight: 700, marginBottom: 8 }}>
+              {t('ערכת נושא הוחלפה', 'THEME CHANGED')}
+            </div>
+            <h3 style={{ fontSize: 18, fontWeight: 700, color: T.text.primary, margin: '0 0 10px 0' }}>
+              {t('רענן כדי לראות את השינוי במלואו', 'Reload to see the full change')}
+            </h3>
+            <p style={{ fontSize: 13, color: T.text.muted, lineHeight: 1.55, margin: '0 0 20px 0' }}>
+              {t(
+                'חלק מהרכיבים נטענו עם הצבעים הקודמים. רענון מהיר יחיל את הערכה החדשה על כל המסכים.',
+                'Some components rendered with the previous palette. A quick reload applies the new theme everywhere.'
+              )}
+            </p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => window.location.reload()}
+                style={{
+                  padding: '11px 22px', borderRadius: 10, border: 0, cursor: 'pointer',
+                  background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.green || T.accent.cyan})`,
+                  color: '#06131F', fontFamily: 'inherit',
+                  fontSize: 12, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase',
+                  boxShadow: `0 8px 22px ${T.accent.cyan}55`,
+                }}
+              >
+                {t('רענן עכשיו', 'Reload now')}
+              </button>
+              <button
+                onClick={() => setThemeRefreshPrompt(null)}
+                style={{
+                  padding: '11px 22px', borderRadius: 10, cursor: 'pointer',
+                  background: 'transparent',
+                  border: `1px solid ${T.border.subtle}`,
+                  color: T.text.primary, fontFamily: 'inherit',
+                  fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
+                }}
+              >
+                {t('אחר כך', 'Later')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ============ PERSONAL DATA WIPE (keeps Google / auth account) ============ */}
       {showWipeModal && (
         <ResetModal
