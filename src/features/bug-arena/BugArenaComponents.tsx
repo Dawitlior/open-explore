@@ -249,7 +249,7 @@ function CaptureFlow() {
           {/* context chips — section + picked element (auto, no clicks) */}
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className="rounded-full bg-white/10 px-3 py-1 font-semibold">
-              {t('אזור', 'Area')}: {draft.section}
+              {t('אזור', 'Area')}: {sectionLabel(draft.section, lang)}
             </span>
             {draft.pick?.label && (
               <span
