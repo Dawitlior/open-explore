@@ -94,9 +94,10 @@ export function EconomicAlertBanner() {
         <button
           onClick={dismiss}
           aria-label={t.dismiss}
-          className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+          title={t.dismiss}
+          className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-border bg-background/60 text-foreground/80 hover:text-foreground hover:bg-muted hover:border-foreground/40 focus:outline-none focus:ring-2 focus:ring-ring transition-colors"
         >
-          <X className="w-4 h-4" />
+          <X className="w-3.5 h-3.5" strokeWidth={2.5} />
         </button>
       </div>
     </div>
