@@ -103,41 +103,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-const SignOutOverlay = () => (
-  <div
-    style={{
-      position: 'fixed', inset: 0, zIndex: 9999,
-      background: 'radial-gradient(circle at 50% 40%, rgba(8,14,26,0.96), rgba(0,0,0,0.99))',
-      backdropFilter: 'blur(14px)',
-      display: 'grid', placeItems: 'center',
-      fontFamily: "'Poppins', system-ui, sans-serif",
-      color: '#e8eef9',
-      animation: 'orca-signout-fade 0.25s ease forwards',
-    }}
-  >
-    <style>{`
-      @keyframes orca-signout-fade { from { opacity: 0; } to { opacity: 1; } }
-      @keyframes orca-signout-spin { to { transform: rotate(360deg); } }
-      @keyframes orca-signout-pulse { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }
-    `}</style>
-    <div style={{ display: 'grid', placeItems: 'center', gap: 22 }}>
-      <div
-        style={{
-          width: 56, height: 56, borderRadius: '50%',
-          border: '2px solid rgba(56,189,248,0.18)',
-          borderTopColor: '#38bdf8',
-          animation: 'orca-signout-spin 0.9s linear infinite',
-        }}
-      />
-      <div style={{
-        fontSize: 11, letterSpacing: '0.32em', textTransform: 'uppercase',
-        color: '#7a8aa3', fontWeight: 700,
-        animation: 'orca-signout-pulse 1.4s ease-in-out infinite',
-      }}>
-        Signing out…
-      </div>
-    </div>
-  </div>
-);
+const SignOutOverlay = () => {
+  // Lazy import to avoid circular deps at module init
+  const { OrcaBootLoader } = require('@/components/OrcaBootLoader') as typeof import('@/components/OrcaBootLoader');
+  return <OrcaBootLoader label="Signing out" />;
+};
+
 
 export const useAuth = () => useContext(AuthContext);
