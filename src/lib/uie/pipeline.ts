@@ -46,10 +46,10 @@ export function runImport(sheets: SheetInput[], opts?: RunImportOptions): Import
     for (const fm of mapping) {
       const relKey = fm.columnIndex;
       const absKey = fm.columnIndex + c0;
-      const key = Object.prototype.hasOwnProperty.call(ov, absKey)
-        ? absKey
-        : Object.prototype.hasOwnProperty.call(ov, relKey)
-          ? relKey
+      const key = Object.prototype.hasOwnProperty.call(ov, relKey)
+        ? relKey
+        : Object.prototype.hasOwnProperty.call(ov, absKey)
+          ? absKey
           : null;
       if (key === null) continue;
       const forced = ov[key];
