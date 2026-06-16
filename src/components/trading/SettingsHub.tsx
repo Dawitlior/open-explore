@@ -1207,7 +1207,109 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
               );
             })()}
 
-            {/* ============ THEME STUDIO ============ */}
+            {/* ============ QUICK ACTIONS ============ */}
+            {tab === 'quick-actions' && (() => {
+              const p = ui.prefs;
+              const hidden = p.hideQuickActions;
+              return (
+                <div>
+                  <div style={card}>
+                    <h3 style={sectionTitle}><Zap size={14} /> {t('כפתור פעולות מהירות', 'Quick Actions button')}</h3>
+                    <p style={sectionHint}>
+                      {t(
+                        'כפתור צף בכותרת שמאפשר גישה מיידית ל־Command Palette — חיפוש, ניווט מהיר ופעולות עם מקלדת בלבד (⌘K / Ctrl+K).',
+                        'A header button that instantly opens the Command Palette — search, jump to any screen, and run actions with the keyboard only (⌘K / Ctrl+K).'
+                      )}
+                    </p>
+
+                    <button
+                      onClick={() => { try { window.dispatchEvent(new Event('orca:open-command-palette')); } catch {} }}
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+                        width: '100%', padding: '14px 16px', borderRadius: T.radius.md,
+                        background: `linear-gradient(135deg, ${T.accent.cyan}22, ${T.accent.cyan}08)`,
+                        border: `1px solid ${T.accent.cyan}66`,
+                        color: T.text.primary, cursor: 'pointer', fontFamily: sans,
+                        marginBottom: 12, textAlign: isRTL ? 'right' : 'left' as const,
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                        <Zap size={16} color={T.accent.cyan} />
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 800 }}>{t('פתח עכשיו', 'Open now')}</div>
+                          <div style={{ fontSize: 10.5, color: T.text.muted, marginTop: 2 }}>
+                            {t('הקפץ את לוח הפעולות המהירות', 'Launch the Quick Actions palette')}
+                          </div>
+                        </div>
+                      </div>
+                      <kbd style={{
+                        fontFamily: mono, fontSize: 10, fontWeight: 800,
+                        padding: '4px 8px', borderRadius: 6,
+                        background: T.bg.tertiary, border: `1px solid ${T.border.subtle}`,
+                        color: T.text.secondary,
+                      }}>⌘K</kbd>
+                    </button>
+
+                    <button
+                      onClick={() => ui.setPrefs({ hideQuickActions: !hidden })}
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+                        width: '100%', padding: '12px 14px', borderRadius: T.radius.md,
+                        background: T.bg.secondary,
+                        border: `1px solid ${!hidden ? T.accent.cyan : T.border.subtle}`,
+                        cursor: 'pointer', textAlign: isRTL ? 'right' : 'left' as const, fontFamily: sans,
+                      }}
+                    >
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: T.text.primary }}>
+                          {t('הצג כפתור פעולות מהירות בכותרת', 'Show Quick Actions button in the header')}
+                        </div>
+                        <div style={{ fontSize: 10.5, color: T.text.muted, marginTop: 2 }}>
+                          {t('כשמושבת, ⌘K עדיין יפתח את לוח הפעולות.', 'When off, ⌘K still opens the palette from the keyboard.')}
+                        </div>
+                      </div>
+                      <div style={{
+                        width: 36, height: 20, borderRadius: 10, position: 'relative',
+                        background: !hidden ? T.accent.cyan : T.bg.tertiary, transition: 'background .15s', flexShrink: 0,
+                      }}>
+                        <div style={{
+                          position: 'absolute', top: 2,
+                          insetInlineStart: !hidden ? 18 : 2,
+                          width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'inset-inline-start .15s',
+                        }} />
+                      </div>
+                    </button>
+                  </div>
+
+                  <div style={card}>
+                    <h3 style={sectionTitle}><SlidersHorizontal size={14} /> {t('קיצורי מקלדת', 'Keyboard shortcuts')}</h3>
+                    <p style={sectionHint}>
+                      {t('הפעולות הבאות זמינות מכל מסך באפליקציה.', 'These shortcuts work from any screen in the app.')}
+                    </p>
+                    {[
+                      { keys: '⌘K / Ctrl+K', label: t('פתיחת לוח פעולות מהירות', 'Open Quick Actions') },
+                      { keys: '?', label: t('הצגת כל הקיצורים', 'Show all shortcuts') },
+                      { keys: 'Esc', label: t('סגירת כל מודאל', 'Close any modal') },
+                    ].map(row => (
+                      <div key={row.keys} style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '10px 0', borderBottom: `1px solid ${T.border.subtle}`,
+                      }}>
+                        <span style={{ fontSize: 12, color: T.text.secondary }}>{row.label}</span>
+                        <kbd style={{
+                          fontFamily: mono, fontSize: 10.5, fontWeight: 700,
+                          padding: '4px 8px', borderRadius: 6,
+                          background: T.bg.tertiary, border: `1px solid ${T.border.subtle}`,
+                          color: T.text.primary,
+                        }}>{row.keys}</kbd>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
+
             {tab === 'theme-studio' && (() => {
               const p = ui.prefs;
               const locked = ui.themeLocked;
