@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Navigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff, ArrowRight, Lock, Mail, User, Languages } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { lovable } from '@/integrations/lovable';
 import { useAuth } from '@/hooks/use-auth';
 import { evaluatePassword, isValidEmail, translateAuthError } from '@/lib/auth-utils';
 import { toast } from 'sonner';
@@ -226,11 +227,17 @@ export default function AuthPage() {
     writeAuthLangIntent(lang);
     try {
       try { localStorage.setItem(PENDING_CONSENT_KEY, '1'); } catch { /* noop */ }
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: `${window.location.origin}/auth`, queryParams: { prompt: 'select_account' } },
+      // Lovable Cloud Managed OAuth — handles broker + setSession internally.
+      // Using supabase.auth.signInWithOAuth directly caused first-time users to
+      // need two sign-in attempts before the session stuck.
+      const result = await lovable.auth.signInWithOAuth('google', {
+        redirect_uri: `${window.location.origin}/auth`,
+        extraParams: { prompt: 'select_account' },
       });
-      if (error) throw error;
+      if (result.error) throw result.error;
+      if (result.redirected) return; // browser is navigating to Google
+      // Tokens already set on supabase.auth — onAuthStateChange will fire and
+      // the <Navigate> guard at the top of this component will redirect.
     } catch (err) {
       toast.error(translateAuthError(err instanceof Error ? err.message : 'Google sign-in failed'));
       setBusy(false);
