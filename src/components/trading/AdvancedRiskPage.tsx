@@ -344,8 +344,36 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
       </div>
 
       {/* ═══════════════════════════════════════════════════════════
-          KPI STRIP — At-a-glance metrics
+          ZONE 1 EXTENSION — KILL SWITCH (live guardrail)
           ═══════════════════════════════════════════════════════════ */}
+      <SectionHeader T={T} isRTL={isRTL} accent={T.accent.red} label={isRTL ? 'מתג ביטחון' : 'KILL SWITCH'} />
+      <div style={{ marginBottom: 4 }}>
+        <KillSwitchPanel T={T} isRTL={isRTL} />
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════
+          ZONE 2 — PORTFOLIO EXPOSURE (net/gross/leverage + correlation)
+          ═══════════════════════════════════════════════════════════ */}
+      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'חשיפת תיק' : 'PORTFOLIO EXPOSURE'} />
+      <div style={{ display: 'grid', gap: 8, marginBottom: 4 }}>
+        <NetExposurePanel T={T} isRTL={isRTL} trades={trades} />
+        <CorrelationMatrix T={T} isRTL={isRTL} trades={trades} />
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════
+          ZONE 3 — QUALITY OF RETURNS (MAR · Sharpe · Sortino · Calmar)
+          ═══════════════════════════════════════════════════════════ */}
+      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'איכות תשואות' : 'QUALITY OF RETURNS'} />
+      <div style={{ marginBottom: 4 }}>
+        <QualityOfReturnsStrip
+          T={T}
+          isRTL={isRTL}
+          trades={trades}
+          marRatio={stats.maxDrawdown > 0 ? (stats.totalReturn ?? 0) / stats.maxDrawdown : null}
+        />
+      </div>
+
+
       <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'מדדי מפתח' : 'KEY METRICS'} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8, marginBottom: 4 }}>
         {[
