@@ -158,7 +158,9 @@ const Index = () => {
 
 
   const [page, setPage] = useState('dashboard');
-  const [sbOpen, setSbOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth > 768);
+  // Sidebar starts collapsed on every load (both mobile and desktop) — user
+  // explicitly requested no auto-open on refresh.
+  const [sbOpen, setSbOpen] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(true);
   const [calMonth, setCalMonth] = useState(() => new Date().getMonth());
   const [calYear, setCalYear] = useState(() => new Date().getFullYear());

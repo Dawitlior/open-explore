@@ -338,19 +338,19 @@ function localize(entry: LocalizedExplanation): ChartExplanation {
 // Proxy that resolves to the localized explanation on every property access.
 // Consumers can keep writing `EXPLANATIONS.netPnl` — the language updates
 // reactively when the parent component re-renders after a lang switch.
-export const EXPLANATIONS: Record<string, ChartExplanation> = new Proxy(
-  {} as Record<string, ChartExplanation>,
-  {
-    get(_target, key: string) {
+// Getter-based plain object (NOT a Proxy — Proxies trip react-refresh's
+// module-export introspection and crash on synthetic keys like $$typeof).
+// Each property re-evaluates `localize()` on every access, so language
+// switches reflect immediately on the next render.
+export const EXPLANATIONS = {} as Record<string, ChartExplanation>;
+for (const key of Object.keys(EXPLANATIONS_DATA)) {
+  Object.defineProperty(EXPLANATIONS, key, {
+    enumerable: true,
+    configurable: false,
+    get() {
       const entry = EXPLANATIONS_DATA[key];
       return entry ? localize(entry) : undefined;
     },
-    has(_t, key: string) { return key in EXPLANATIONS_DATA; },
-    ownKeys() { return Reflect.ownKeys(EXPLANATIONS_DATA); },
-    getOwnPropertyDescriptor(_t, key: string) {
-      if (!(key in EXPLANATIONS_DATA)) return undefined;
-      return { enumerable: true, configurable: true, value: localize(EXPLANATIONS_DATA[key]) };
-    },
-  },
-);
+  });
+}
 
