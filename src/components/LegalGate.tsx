@@ -14,23 +14,54 @@ import {
  * ticks the consent checkbox, and presses Continue.
  * Persists to public.user_preferences.legal_accepted.
  */
+const cacheKey = (uid: string) => `orca:legal-accepted:${uid}`;
+
 export const LegalGate = () => {
   const { user } = useAuth();
-  const [status, setStatus] = useState<'loading' | 'needs_accept' | 'accepted'>('loading');
+  // Seed from localStorage synchronously so accepted users never see a flash,
+  // and stay protected against transient network failures.
+  const [status, setStatus] = useState<'loading' | 'needs_accept' | 'accepted'>(() => {
+    try {
+      if (user?.id && localStorage.getItem(cacheKey(user.id)) === '1') return 'accepted';
+    } catch {}
+    return 'loading';
+  });
   const [agreed, setAgreed] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     let alive = true;
     if (!user?.id) { setStatus('loading'); return; }
+
+    // Sync seed for this uid (in case user switched)
+    try {
+      if (localStorage.getItem(cacheKey(user.id)) === '1') {
+        setStatus('accepted');
+      }
+    } catch {}
+
     (async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('user_preferences')
         .select('legal_accepted')
         .eq('user_id', user.id)
         .maybeSingle();
       if (!alive) return;
-      setStatus(data?.legal_accepted ? 'accepted' : 'needs_accept');
+      // If the request failed (network/RLS blip), DO NOT downgrade an already-accepted state.
+      if (error) return;
+      if (data?.legal_accepted) {
+        try { localStorage.setItem(cacheKey(user.id), '1'); } catch {}
+        setStatus('accepted');
+      } else {
+        // Only show the gate if no local cache says otherwise.
+        try {
+          if (localStorage.getItem(cacheKey(user.id)) === '1') {
+            setStatus('accepted');
+            return;
+          }
+        } catch {}
+        setStatus('needs_accept');
+      }
     })();
     return () => { alive = false; };
   }, [user?.id]);
@@ -47,7 +78,10 @@ export const LegalGate = () => {
         { onConflict: 'user_id' }
       );
     setSaving(false);
-    if (!error) setStatus('accepted');
+    if (!error) {
+      try { localStorage.setItem(cacheKey(user.id), '1'); } catch {}
+      setStatus('accepted');
+    }
   };
 
   return (
