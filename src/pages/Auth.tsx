@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Navigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff, ArrowRight, Lock, Mail, User, Languages } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { lovable } from '@/integrations/lovable';
 import { useAuth } from '@/hooks/use-auth';
 import { evaluatePassword, isValidEmail, translateAuthError } from '@/lib/auth-utils';
 import { toast } from 'sonner';
