@@ -1746,6 +1746,14 @@ const Index = () => {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                 <span>{isRTL ? 'אודות המערכת' : 'About System'}</span>
               </button>
+              <button onClick={() => { setSbOpen(false); goBugBoard(); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: 'transparent', color: T.text.muted, border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 12, textAlign: isRTL ? 'right' : 'left' }}>
+                <span style={{ fontSize: 14 }}>📋</span>
+                <span>{isRTL ? 'לוח באגים' : 'Bug Board'}</span>
+              </button>
+              <button onClick={() => { setSbOpen(false); openBugReport(); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: 'transparent', color: '#f5c542', border: `1px solid #f5c54233`, borderRadius: T.radius.md, cursor: 'pointer', fontSize: 12, textAlign: isRTL ? 'right' : 'left' }}>
+                <span style={{ fontSize: 14 }}>🐛</span>
+                <span>{isRTL ? 'דווח על באג' : 'Report Bug'}</span>
+              </button>
               <button onClick={() => { setSbOpen(false); setShowSettings(true); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 12px', background: `${T.accent.cyan}10`, border: `1px solid ${T.accent.cyan}30`, borderRadius: T.radius.md, color: T.accent.cyan, cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>
                 <span style={{ fontSize: 16 }}>⚙️</span>
                 <span>{isRTL ? 'הגדרות' : 'Settings'}</span>
