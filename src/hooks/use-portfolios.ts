@@ -13,6 +13,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
+import { deletePortfolioTrades } from '@/lib/storage';
 
 export interface Portfolio {
   id: string;
@@ -59,6 +60,7 @@ interface UsePortfoliosResult {
   createPortfolio: (draft: PortfolioDraft) => Promise<Portfolio | null>;
   updatePortfolio: (id: string, patch: Partial<PortfolioDraft>) => Promise<Portfolio | null>;
   deletePortfolio: (id: string) => Promise<boolean>;
+  resetPortfolio: (id: string) => Promise<boolean>;
   setDefault: (id: string) => Promise<boolean>;
 }
 
@@ -164,6 +166,24 @@ export function usePortfolios(): UsePortfoliosResult {
     [user, fetchAll],
   );
 
+  const resetPortfolio = useCallback(
+    async (id: string): Promise<boolean> => {
+      if (!user) return false;
+      try {
+        await deletePortfolioTrades(id);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('orca:trades-synced', { detail: { portfolioId: id } }));
+        }
+        return true;
+      } catch (err) {
+        console.error('[portfolios] reset failed', err);
+        setError(err instanceof Error ? err.message : 'reset_failed');
+        return false;
+      }
+    },
+    [user],
+  );
+
   const setDefault = useCallback(
     async (id: string): Promise<boolean> => {
       if (!user) return false;
@@ -203,6 +223,7 @@ export function usePortfolios(): UsePortfoliosResult {
     createPortfolio,
     updatePortfolio,
     deletePortfolio,
+    resetPortfolio,
     setDefault,
   };
 }
