@@ -55,12 +55,13 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
   const userId = auth.user?.id;
   const [rows, setRows] = useState<OpenPos[]>([]);
   const [loading, setLoading] = useState(false);
+  const [initialized, setInitialized] = useState(false);
   const [closing, setClosing] = useState<OpenPos | null>(null);
   const [exitPrice, setExitPrice] = useState<string>('');
   const [busy, setBusy] = useState(false);
 
   const fetchRows = useCallback(async () => {
-    if (!userId) { setRows([]); return; }
+    if (!userId) { setRows([]); setInitialized(true); return; }
     setLoading(true);
     const { data, error } = await supabase
       .from('open_positions')
@@ -68,6 +69,7 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
       .eq('user_id', userId);
     if (!error && data) setRows(data as OpenPos[]);
     setLoading(false);
+    setInitialized(true);
   }, [userId]);
 
   useEffect(() => { fetchRows(); }, [fetchRows, refreshKey]);
@@ -167,10 +169,34 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
   const hasRows = rows.length > 0;
   const totalUnreal = useMemo(() => rows.reduce((s, r) => s + (Number(r.unrealized_pnl) || 0), 0), [rows]);
 
-  if (!hasRows && !loading) return null;
+  // Wait for first fetch before deciding what to render — prevents the
+  // "empty flash → pop-in" the user reported.
+  if (!initialized) return null;
+
+  if (!hasRows) {
+    return (
+      <div className="dash-section animate-fade-in" style={{ marginBottom: 18 }}>
+        <div className="dash-section-label" style={{ color: T.accent.orange }}>
+          {isRTL ? '⚡ פוזיציות פתוחות · 0' : '⚡ OPEN POSITIONS · 0'}
+        </div>
+        <div style={{
+          padding: '20px 18px',
+          background: T.bg.tertiary,
+          border: `1px dashed ${T.border.medium}`,
+          borderRadius: 12,
+          color: T.text.muted,
+          fontSize: 13,
+          textAlign: 'center',
+          fontFamily: "'Poppins', system-ui, sans-serif",
+        }}>
+          {isRTL ? 'כרגע אין פוזיציות פתוחות' : 'No open positions right now'}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="dash-section" style={{ marginBottom: 18 }}>
+    <div className="dash-section animate-fade-in" style={{ marginBottom: 18 }}>
       <div className="dash-section-label" style={{ color: T.accent.orange, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
         <span>{isRTL ? '⚡ פוזיציות פתוחות' : '⚡ OPEN POSITIONS'} · {rows.length}</span>
         {totalUnreal !== 0 && (
