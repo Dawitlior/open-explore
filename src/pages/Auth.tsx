@@ -227,11 +227,11 @@ export default function AuthPage() {
     writeAuthLangIntent(lang);
     try {
       try { localStorage.setItem(PENDING_CONSENT_KEY, '1'); } catch { /* noop */ }
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: `${window.location.origin}/auth`, queryParams: { prompt: 'select_account' } },
+      const result = await lovable.auth.signInWithOAuth('google', {
+        redirect_uri: `${window.location.origin}/auth`,
+        extraParams: { prompt: 'select_account' },
       });
-      if (error) throw error;
+      if ((result as any)?.error) throw (result as any).error;
     } catch (err) {
       toast.error(translateAuthError(err instanceof Error ? err.message : 'Google sign-in failed'));
       setBusy(false);
