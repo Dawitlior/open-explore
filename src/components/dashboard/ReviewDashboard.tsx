@@ -35,6 +35,7 @@ interface ReviewDashboardProps {
   isChartVisible: (chartId: string) => boolean;
   handleHideChart: (chartId: string) => void;
   handleExplainClick: (title: string, explanation: ChartExplanation, chartId?: string) => void;
+  onAddTrade?: (trade: Omit<Trade, 'id' | 'balance'>) => Promise<any> | any;
 }
 
 const PV = ({ children }: { children: React.ReactNode }) => <>{children}</>;
