@@ -58,6 +58,7 @@ const detectCategory = (symbol: string): AssetCategory => {
 export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onSave, onClose }: TradeFormProps) => {
   const isMobile = useIsMobile();
   const killSwitch = useKillSwitch();
+  const auth = useAuth();
   const [step, setStep] = useState(0); // 0,1,2
   const [assetCategory, setAssetCategory] = useState<AssetCategory>(() => trade?.coin ? detectCategory(trade.coin) : 'Crypto');
   const [customSymbol, setCustomSymbol] = useState('');
@@ -66,6 +67,11 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
   const [stopPercent, setStopPercent] = useState(0);
   const [stopDollar, setStopDollar] = useState(0);
   const [contracts, setContracts] = useState<number>(trade?.positionSize || 1);
+  // Open-position mode: when true, exit/PnL fields are bypassed and the
+  // record is saved to `open_positions` (tracked separately from closed
+  // trades — never feeds expectancy/equity until closed).
+  const [isOpenPosition, setIsOpenPosition] = useState(false);
+  const [savingOpen, setSavingOpen] = useState(false);
 
   const [form, setForm] = useState({
     date: trade?.date || new Date().toISOString().slice(0, 16),
