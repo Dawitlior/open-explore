@@ -643,6 +643,7 @@ function Chips({
 // =====================================================================
 export function BugBoard() {
   const { supabase, user, accent } = useArena();
+  const { isRTL, t } = useLang();
   const board = useBugReports(supabase, user.id);
   const [openBug, setOpenBug] = useState<BugWithMeta | null>(null);
 
@@ -652,13 +653,13 @@ export function BugBoard() {
   }, [board.bugs]);
 
   return (
-    <div data-bug-board dir="rtl" className="mx-auto max-w-3xl p-4 text-[#e8edf5]">
+    <div data-bug-board dir={isRTL ? 'rtl' : 'ltr'} className="mx-auto max-w-3xl p-4 text-[#e8edf5]">
       {/* filters */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <input
           value={board.filter.search || ''}
           onChange={(e) => board.setFilter({ search: e.target.value })}
-          placeholder="חיפוש…"
+          placeholder={t('חיפוש…', 'Search…')}
           className="flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
         />
         <button
@@ -669,7 +670,7 @@ export function BugBoard() {
             color: board.filter.onlyMine ? '#06121f' : '#cdd6e3',
           }}
         >
-          הדיווחים שלי
+          {t('הדיווחים שלי', 'My reports')}
         </button>
       </div>
 
@@ -685,18 +686,19 @@ export function BugBoard() {
               color: (board.filter.section || 'all') === s ? '#06121f' : '#cdd6e3',
             }}
           >
-            {s === 'all' ? 'הכל' : s}
+            {s === 'all' ? t('הכל', 'All') : s}
           </button>
         ))}
       </div>
 
-      {board.loading && <div className="py-10 text-center text-white/40">טוען…</div>}
+      {board.loading && <div className="py-10 text-center text-white/40">{t('טוען…', 'Loading…')}</div>}
       {board.error && <div className="py-4 text-center text-red-400">{board.error}</div>}
       {!board.loading && board.bugs.length === 0 && (
         <div className="rounded-2xl border border-dashed border-white/15 p-10 text-center text-white/50">
-          אין באגים פתוחים כרגע. מצאת אחד? לחץ על "דווח על באג".
+          {t('אין באגים פתוחים כרגע. מצאת אחד? לחץ על "דווח על באג".', 'No open bugs right now. Found one? Click "Report a bug".')}
         </div>
       )}
+
 
       {/* grouped cards */}
       <div className="space-y-6">
