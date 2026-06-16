@@ -247,6 +247,22 @@ export async function deleteAllTrades(): Promise<void> {
   if (error) reportStorageError('deleteAllTrades', error);
 }
 
+/** Deletes trades from one specific portfolio only; other portfolios are preserved. */
+export async function deletePortfolioTrades(portfolioId: string): Promise<void> {
+  const uid = await currentUserId();
+  if (!uid) return;
+  assertWritable(portfolioId);
+  const { error } = await supabase
+    .from('trades')
+    .delete()
+    .eq('user_id', uid)
+    .eq('portfolio_id', portfolioId);
+  if (error) {
+    reportStorageError('deletePortfolioTrades', error);
+    throw error;
+  }
+}
+
 export async function getSetting<T = unknown>(key: string): Promise<T | undefined> {
   const uid = await currentUserId();
   if (!uid) return undefined;

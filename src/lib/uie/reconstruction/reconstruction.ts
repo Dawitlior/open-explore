@@ -41,15 +41,15 @@ export function reconstructFIFO(stream: StreamItem[]): ReconResult {
     const list = bySym[sym].map((x, i) => ({ x, i }))
       .sort((a, b) => (a.x.date < b.x.date ? -1 : a.x.date > b.x.date ? 1 : a.i - b.i)).map(o => o.x);
     let pos: any = null;
-    const seal = (p: any, exitDate: string): CanonicalTrade => {
-      const entry = p.entryVal / p.entryQty, exit = p.exitVal / p.exitQty;
+    const seal = (p: any, exitDate: string, closeQty = p.exitQty, exitVal = p.exitVal, exitFee = p.exitFee, entryVal = p.entryVal, entryFee = p.entryFee, funding = p.funding, fills = p.fills): CanonicalTrade => {
+      const entry = entryVal / closeQty, exit = exitVal / closeQty;
       const sign = p.dir === 'long' ? 1 : -1;
-      const gross = (exit - entry) * p.exitQty * sign;
-      const fees = p.entryFee + p.exitFee;
+      const gross = (exit - entry) * closeQty * sign;
+      const fees = entryFee + exitFee;
       return { id: uid(), externalIds: p.ids, symbol: sym, symbolRaw: sym, direction: p.dir, status: 'closed',
-        entryDate: p.entryDate, exitDate, entryPrice: entry, exitPrice: exit, quantity: p.entryQty,
-        pnl: gross - fees - p.funding, pnlGross: gross, commission: fees, swapFunding: p.funding,
-        liquidated: p.liq, fills: p.fills, notes: '', derivedFields: ['pnl(reconstructed)'], warnings: [] } as any;
+        entryDate: p.entryDate, exitDate, entryPrice: entry, exitPrice: exit, quantity: closeQty,
+        pnl: gross - fees - funding, pnlGross: gross, commission: fees, swapFunding: funding,
+        liquidated: p.liq, fills, notes: '', derivedFields: ['pnl(reconstructed)'], warnings: [] } as any;
     };
     const fresh = (d: string, q: number, pr: number, fe: number, dt: string, liq: boolean, id?: string): any =>
       ({ dir: d, qty: q, entryVal: pr * q, entryQty: q, entryFee: fe, entryDate: dt,
@@ -64,9 +64,13 @@ export function reconstructFIFO(stream: StreamItem[]): ReconResult {
       if (same) { pos.qty += Math.abs(sq); pos.entryVal += it.price! * Math.abs(sq); pos.entryQty += Math.abs(sq); pos.entryFee += fee; pos.fills.push(it); if (it.externalId) pos.ids.push(it.externalId); }
       else {
         const closeQ = Math.min(Math.abs(sq), pos.qty), rem = Math.abs(sq) - closeQ;
-        pos.exitVal += it.price! * closeQ; pos.exitQty += closeQ; pos.exitFee += fee * (closeQ / Math.abs(sq));
-        if (it.liquidation) pos.liq = true; pos.fills.push(it); pos.qty -= closeQ;
-        if (pos.qty <= 1e-9) { trades.push(seal(pos, it.date)); pos = null; }
+        const ratio = closeQ / pos.qty;
+        const partEntryVal = pos.entryVal * ratio, partEntryFee = pos.entryFee * ratio, partFunding = pos.funding * ratio;
+        const partExitVal = it.price! * closeQ, partExitFee = fee * (closeQ / Math.abs(sq));
+        if (it.liquidation) pos.liq = true; pos.fills.push(it); if (it.externalId) pos.ids.push(it.externalId);
+        trades.push(seal(pos, it.date, closeQ, partExitVal, partExitFee, partEntryVal, partEntryFee, partFunding, pos.fills.slice()));
+        pos.qty -= closeQ; pos.entryQty -= closeQ; pos.entryVal -= partEntryVal; pos.entryFee -= partEntryFee; pos.funding -= partFunding;
+        if (pos.qty <= 1e-9) pos = null;
         if (rem > 1e-9) { pos = fresh(sq > 0 ? 'long' : 'short', rem, it.price!, fee * (rem / Math.abs(sq)), it.date, false, it.externalId); pos.fills.push(it); }
       }
     }

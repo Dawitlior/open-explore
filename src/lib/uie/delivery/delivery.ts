@@ -63,6 +63,7 @@ const MSG: Record<string, GapItem> = {
   T1_DIRECTION: { code:'T1_DIRECTION', severity:'blocker', he:'לא זוהה כיוון (long/short).', en:'No direction detected.' },
   T1_SIZE: { code:'T1_SIZE', severity:'blocker', he:'לא זוהתה כמות/גודל פוזיציה (ולא R להסקה).', en:'No quantity/size (and no R to derive from).' },
   T2_EXIT: { code:'T2_EXIT', severity:'warning', he:'לא נמצא מחיר/תאריך יציאה — עסקאות פתוחות ייובאו כ-open.', en:'No exit — open positions imported as open.' },
+  INFO_FIFO_OPEN: { code:'INFO_FIFO_OPEN', severity:'info', he:'קובץ תנועות: קניות ומכירות של אותו נייר נסגרות אוטומטית לפי FIFO; יתרה שלא נמכרה תיובא כ-open.', en:'Fills file: buys and sells for the same symbol are matched automatically with FIFO; any remaining position imports as open.' },
   T2_COMMISSION: { code:'T2_COMMISSION', severity:'warning', he:'לא זוהתה עמלה — תיכתב הערה "עמלה: לא דווחה".', en:'No commission — a note is appended.' },
   INFO_COMM_NOTES: { code:'INFO_COMM_NOTES', severity:'info', he:'עמלה תיכתב אוטומטית בהערות כל עסקה.', en:'Commission appended to each trade’s notes.' },
   INFO_BALANCE: { code:'INFO_BALANCE', severity:'info', he:'יתרת מזומן תזין את גרפי ה-Equity (לא יומן העסקאות).', en:'Cash balance feeds equity charts.' },
@@ -88,7 +89,10 @@ export function gapAnalysis(mapping: FieldMatch[], trades: CanonicalTrade[], equ
     if (!sizeOk) { items.push(MSG.T1_SIZE); t1++; }
   }
 
-  if (!has('exitPrice') && !has('exitDate')) { items.push(MSG.T2_EXIT); t2++; }
+  if (!has('exitPrice') && !has('exitDate')) {
+    if (archetype === 'B_FILLS_LOG' || archetype === 'C_ACCOUNT_STATEMENT') items.push(MSG.INFO_FIFO_OPEN);
+    else { items.push(MSG.T2_EXIT); t2++; }
+  }
   if (!has('commission')) { items.push(MSG.T2_COMMISSION); t2++; } else items.push(MSG.INFO_COMM_NOTES);
   if (has('cashBalance')) items.push(MSG.INFO_BALANCE);
   if (dateConflict) { items.push(MSG.WARN_DATE_CONFLICT); }
