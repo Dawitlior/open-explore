@@ -3,17 +3,49 @@
  * Used everywhere: initial boot, route/dimension transitions, auth gates,
  * sign-out overlay. Do NOT introduce alternative full-screen spinners.
  *
- * Matches the dual-orbit ring + ORCA · INVESTMENT TERMINAL identity.
+ * Theme contract: the loader's background INHERITS whatever the current page
+ * is using. We read the live `<body>` background-color and mirror it, so
+ * mid-app transitions (theme swap between Orca / Journal / Backtest /
+ * Weekly-Review snow theme etc.) keep the loader visually identical to the
+ * surface beneath it. On the very first boot (no body bg yet) we fall back
+ * to the Orca terminal navy.
  */
+import { useEffect, useState } from 'react';
+
+const FALLBACK_BG = 'radial-gradient(circle at 50% 40%, #08182f 0%, #061326 70%)';
+
+function readCurrentSurface(): string {
+  if (typeof window === 'undefined') return FALLBACK_BG;
+  try {
+    // Prefer an explicit CSS variable set by themed pages, then body color.
+    const root = document.documentElement;
+    const cs = getComputedStyle(root);
+    const themed = cs.getPropertyValue('--orca-surface').trim()
+      || cs.getPropertyValue('--bg').trim()
+      || cs.getPropertyValue('--background').trim();
+    if (themed) return themed;
+    const bodyBg = getComputedStyle(document.body).backgroundColor;
+    if (bodyBg && bodyBg !== 'rgba(0, 0, 0, 0)' && bodyBg !== 'transparent') return bodyBg;
+  } catch { /* noop */ }
+  return FALLBACK_BG;
+}
+
 export const OrcaBootLoader = ({ label = 'Investment Terminal' }: { label?: string }) => {
+  const [bg, setBg] = useState<string>(() => readCurrentSurface());
+  useEffect(() => {
+    // Re-sample after mount in case the themed page rendered just before us.
+    setBg(readCurrentSurface());
+  }, []);
+
   return (
     <div
       style={{
         position: 'fixed', inset: 0, zIndex: 9998,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         flexDirection: 'column', gap: 28,
-        background: 'radial-gradient(circle at 50% 40%, #08182f 0%, #061326 70%)',
+        background: bg,
         color: '#22d3ee',
+        transition: 'background 0.35s ease',
       }}
     >
       <div style={{ position: 'relative', width: 96, height: 96 }}>
