@@ -664,7 +664,7 @@ function Chips({
 // =====================================================================
 export function BugBoard() {
   const { supabase, user, accent } = useArena();
-  const { isRTL, t } = useLang();
+  const { lang, isRTL, t } = useLang();
   const board = useBugReports(supabase, user.id);
   const [openBug, setOpenBug] = useState<BugWithMeta | null>(null);
 
