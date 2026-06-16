@@ -14,16 +14,19 @@ interface Props {
   trades: Trade[];
 }
 
-/** Rolling-window sparkline data — recomputes a metric over a sliding window. */
-function rollingSeries(
+/**
+ * Expanding-window series — recomputes a metric from day 0 up to each point.
+ * This is the *actual* lifetime ratio over time, not a sliding sample, so the
+ * curve shown matches the headline number at the right edge.
+ */
+function expandingSeries(
   series: number[],
-  window: number,
+  minWindow: number,
   compute: (s: number[]) => number | null,
 ): Array<{ i: number; v: number }> {
   const out: Array<{ i: number; v: number }> = [];
-  for (let i = window; i <= series.length; i++) {
-    const w = series.slice(Math.max(0, i - window), i);
-    const v = compute(w);
+  for (let i = minWindow; i <= series.length; i++) {
+    const v = compute(series.slice(0, i));
     if (v !== null && Number.isFinite(v)) out.push({ i, v });
   }
   return out;
