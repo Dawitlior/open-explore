@@ -155,13 +155,22 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
   const showResearchDeepRisk = isUltimatePlan;
 
 
-  // Risk behavior over time
+  // Risk behavior over time — compute change from whichever signal is populated
+  // (riskPct preferred, then risk$, then |R|). Keeps the chart alive even when
+  // one of the fields is missing on imported trades.
   const riskTimeline = useMemo(() => {
     if (trades.length < 2) return [];
+    const fieldOf = (t: Trade) => {
+      if (Number.isFinite(t.riskPct) && t.riskPct > 0) return t.riskPct;
+      if (Number.isFinite(t.risk) && t.risk > 0) return t.risk;
+      const r = Math.abs(getEffectiveR(t));
+      return Number.isFinite(r) && r > 0 ? r : 0;
+    };
     return trades.map((t, i) => {
-      const prevRisk = i > 0 ? trades[i - 1].risk : t.risk;
-      const change = prevRisk > 0 ? ((t.risk - prevRisk) / prevRisk) * 100 : 0;
-      return { id: t.id, risk: t.risk, riskPct: t.riskPct, change, coin: t.coin, wasLoss: i > 0 && trades[i - 1].winLoss === 'Loss' };
+      const cur = fieldOf(t);
+      const prev = i > 0 ? fieldOf(trades[i - 1]) : cur;
+      const change = prev > 0 ? ((cur - prev) / prev) * 100 : 0;
+      return { id: t.id, risk: t.risk || cur, riskPct: t.riskPct || cur, change, coin: t.coin, wasLoss: i > 0 && trades[i - 1].winLoss === 'Loss' };
     });
   }, [trades]);
 
