@@ -372,6 +372,7 @@ function DedupSuggestions({
   busy: boolean;
   onJoin: (b: BugWithMeta) => void;
 }) {
+  const { lang, t } = useLang();
   return (
     <div
       data-bug-dedup
@@ -379,7 +380,7 @@ function DedupSuggestions({
       style={{ borderColor: `${CYAN}55`, background: '#0d1a20' }}
     >
       <div className="mb-2 text-sm font-bold" style={{ color: CYAN }}>
-        אולי זה אותו באג? הצטרף במקום לפתוח חדש:
+        {t('אולי זה אותו באג? הצטרף במקום לפתוח חדש:', 'Maybe it\u2019s the same bug? Join instead of opening a new one:')}
       </div>
       <div className="space-y-2">
         {similar.map((b) => (
@@ -390,7 +391,7 @@ function DedupSuggestions({
             <div className="min-w-0">
               <div className="truncate text-sm">{b.title || b.description}</div>
               <div className="text-xs text-white/40">
-                {b.reporterCount} מדווחים · {timeAgo(b.created_at)}
+                {b.reporterCount} {t('מדווחים', 'reporters')} · {timeAgo(b.created_at, lang)}
               </div>
             </div>
             <button
@@ -399,7 +400,7 @@ function DedupSuggestions({
               className="shrink-0 rounded-full px-3 py-1 text-sm font-bold text-[#06121f]"
               style={{ background: CYAN }}
             >
-              גם לי
+              {t('גם לי', 'Me too')}
             </button>
           </div>
         ))}
@@ -407,6 +408,7 @@ function DedupSuggestions({
     </div>
   );
 }
+
 
 // ---------------------------------------------------------------------
 // Annotation
