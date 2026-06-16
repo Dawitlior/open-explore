@@ -3285,7 +3285,11 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
   const morningIdxRef = useRef(Math.floor(Math.random() * MORNING_VARIATIONS.length));
 
   const fillMorning = () => {
-    const v = MORNING_VARIATIONS[morningIdxRef.current % MORNING_VARIATIONS.length];
+    // Pick the demo set matching the active platform language so the example
+    // is always presented in the user's chosen language (he/en).
+    const isEn = dir === 'ltr';
+    const SOURCE = isEn ? EN_MORNING_VARIATIONS : MORNING_VARIATIONS;
+    const v = SOURCE[morningIdxRef.current % SOURCE.length];
     morningIdxRef.current++;
     // Map English demo values → current language by index in EN reference arrays
     const EN_BIAS = ['Bullish', 'Bearish', 'Neutral', 'Expansion', 'Contraction'];
