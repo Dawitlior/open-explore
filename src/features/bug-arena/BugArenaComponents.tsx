@@ -910,6 +910,7 @@ function ReportersPopover({ reporters }: { reporters: BugReporter[] }) {
 // =====================================================================
 export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => void }) {
   const { supabase, user } = useArena();
+  const { lang, isRTL, t } = useLang();
   const api = useMemo(() => createBugArenaService(supabase), [supabase]);
   const [bug, setBug] = useState<BugWithMeta | null>(null);
   const [comments, setComments] = useState<BugComment[]>([]);
@@ -931,7 +932,7 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
   return (
     <div
       data-bug-detail
-      dir="rtl"
+      dir={isRTL ? 'rtl' : 'ltr'}
       className="fixed inset-0 z-[1002] flex justify-center bg-black/60 backdrop-blur-sm sm:items-center"
       onClick={onClose}
     >
@@ -940,14 +941,14 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-[#0b111b]/95 px-5 py-4 backdrop-blur">
-          <h2 className="text-lg font-extrabold">פרטי באג</h2>
+          <h2 className="text-lg font-extrabold">{t('פרטי באג', 'Bug details')}</h2>
           <button onClick={onClose} className="text-2xl text-white/50 hover:text-white">
             ×
           </button>
         </div>
 
         {!bug ? (
-          <div className="p-10 text-center text-white/40">טוען…</div>
+          <div className="p-10 text-center text-white/40">{t('טוען…', 'Loading…')}</div>
         ) : (
           <div className="space-y-5 p-5">
             <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -955,14 +956,14 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
                 className="rounded-full px-2 py-0.5 font-bold"
                 style={{ background: `${STATUS_COLOR[bug.status]}22`, color: STATUS_COLOR[bug.status] }}
               >
-                {STATUS_LABEL[bug.status]}
+                {statusLabel(bug.status, lang)}
               </span>
               <span className="rounded-full bg-white/10 px-2 py-0.5">{bug.section}</span>
-              <span className="rounded-full bg-white/10 px-2 py-0.5">{BUG_TYPE_LABEL[bug.bug_type]}</span>
+              <span className="rounded-full bg-white/10 px-2 py-0.5">{bugTypeLabel(bug.bug_type, lang)}</span>
               <span className="rounded-full bg-white/10 px-2 py-0.5">
-                חומרה: {SEVERITY_LABEL[bug.severity]}
+                {t('חומרה', 'Severity')}: {severityLabel(bug.severity, lang)}
               </span>
-              <span className="text-white/40">{formatDateTime(bug.created_at)}</span>
+              <span className="text-white/40">{formatDateTime(bug.created_at, lang)}</span>
             </div>
 
             <p className="whitespace-pre-wrap text-sm">{bug.description}</p>
@@ -1000,7 +1001,7 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
             {/* comments */}
             <div data-bug-comments>
               <div className="mb-2 text-sm font-bold text-white/60">
-                דיון ({comments.length})
+                {t('דיון', 'Discussion')} ({comments.length})
               </div>
               <ul className="space-y-3">
                 {comments.map((c) => (
@@ -1014,9 +1015,9 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
                     <div className="min-w-0 flex-1 rounded-xl bg-white/5 px-3 py-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold">
-                          {c.profile?.display_name || 'משתמש'}
+                          {c.profile?.display_name || t('משתמש', 'User')}
                         </span>
-                        <span className="text-[11px] text-white/30">{timeAgo(c.created_at)}</span>
+                        <span className="text-[11px] text-white/30">{timeAgo(c.created_at, lang)}</span>
                       </div>
                       <p className="whitespace-pre-wrap text-sm">{c.body}</p>
                     </div>
@@ -1029,7 +1030,7 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && send()}
-                  placeholder="הוסף תגובה…"
+                  placeholder={t('הוסף תגובה…', 'Add a comment…')}
                   className="flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
                 />
                 <button
@@ -1037,7 +1038,7 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
                   className="rounded-xl px-4 py-2 text-sm font-bold text-[#06121f]"
                   style={{ background: ACCENT }}
                 >
-                  שלח
+                  {t('שלח', 'Send')}
                 </button>
               </div>
             </div>
@@ -1047,6 +1048,7 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
     </div>
   );
 }
+
 
 // ---------------------------------------------------------------------
 // tiny icon
