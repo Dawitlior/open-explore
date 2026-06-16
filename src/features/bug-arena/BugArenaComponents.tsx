@@ -428,6 +428,7 @@ function AnnotationToolbar({
   onUndo: () => void;
   onClear: () => void;
 }) {
+  const { t } = useLang();
   const tools: { t: AnnoTool; label: string }[] = [
     { t: 'rect', label: '▭' },
     { t: 'arrow', label: '↗' },
@@ -456,19 +457,20 @@ function AnnotationToolbar({
           onClick={() => onColor(c)}
           className="h-6 w-6 rounded-full ring-2 ring-offset-2 ring-offset-[#0b111b]"
           style={{ background: c, boxShadow: color === c ? `0 0 0 2px ${c}` : 'none' }}
-          aria-label={`צבע ${c}`}
+          aria-label={`${t('צבע', 'Color')} ${c}`}
         />
       ))}
       <span className="mx-1 h-5 w-px bg-white/15" />
       <button onClick={onUndo} className="rounded-lg bg-white/8 px-2 py-1 text-xs">
-        בטל
+        {t('בטל', 'Undo')}
       </button>
       <button onClick={onClear} className="rounded-lg bg-white/8 px-2 py-1 text-xs">
-        נקה
+        {t('נקה', 'Clear')}
       </button>
     </div>
   );
 }
+
 
 function AnnotationCanvas({
   imageUrl,
