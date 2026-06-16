@@ -26,7 +26,9 @@ export const CorrelationMatrix = ({ T, isRTL, trades: all }: Props) => {
     );
   }
 
-  const cell = 32;
+  const n = matrix.symbols.length;
+  // Header column shows symbol labels; remaining N cells split equally.
+  const gridCols = `minmax(72px, auto) repeat(${n}, minmax(40px, 1fr))`;
 
   return (
     <div style={{
@@ -34,9 +36,11 @@ export const CorrelationMatrix = ({ T, isRTL, trades: all }: Props) => {
       border: `1px solid ${T.border.subtle}`,
       borderRadius: 10,
       padding: 14,
+      width: '100%',
     }}>
       <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10,
+        flexWrap: 'wrap', gap: 8,
       }}>
         <div style={{
           fontSize: 10, color: T.text.muted, textTransform: 'uppercase',
@@ -51,58 +55,65 @@ export const CorrelationMatrix = ({ T, isRTL, trades: all }: Props) => {
         </div>
       </div>
 
-      <div style={{ overflowX: 'auto', direction: 'ltr' }}>
-        <table style={{ borderCollapse: 'separate', borderSpacing: 2, fontFamily: "'JetBrains Mono', monospace" }}>
-          <thead>
-            <tr>
-              <th />
-              {matrix.symbols.map(s => (
-                <th key={s} style={{
-                  fontSize: 9, color: T.text.muted, fontWeight: 600,
-                  padding: '0 4px', writingMode: 'vertical-rl', transform: 'rotate(180deg)',
-                  height: 50,
-                }}>{s}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {matrix.symbols.map((row, i) => (
-              <tr key={row}>
-                <td style={{
-                  fontSize: 10, color: T.text.secondary, padding: '0 8px',
-                  textAlign: 'right', fontWeight: 600,
-                }}>{row}</td>
-                {matrix.symbols.map((_, j) => {
-                  const v = matrix.values[i][j];
-                  const abs = Math.abs(v);
-                  const color = i === j
-                    ? T.border.medium
-                    : abs >= 0.7 ? T.accent.red
-                      : abs >= 0.4 ? T.accent.orange
-                        : T.accent.green;
-                  return (
-                    <td key={j} title={`${matrix.symbols[i]} ↔ ${matrix.symbols[j]} = ${v.toFixed(2)}`}
-                      style={{
-                        width: cell, height: cell,
-                        background: `${color}${abs < 0.4 ? '20' : abs < 0.7 ? '50' : '80'}`,
-                        border: `1px solid ${color}40`,
-                        borderRadius: 4,
-                        color: T.text.primary,
-                        fontSize: 10, fontWeight: 700, textAlign: 'center', verticalAlign: 'middle',
-                      }}>
-                      {v.toFixed(2)}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* Responsive CSS-grid matrix — stretches to fill its container, no awkward side-gap. */}
+      <div style={{ width: '100%', overflowX: 'auto', direction: 'ltr' }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: gridCols,
+          gap: 3,
+          minWidth: Math.max(360, n * 56 + 90),
+          fontFamily: "'JetBrains Mono', monospace",
+        }}>
+          {/* Column header row */}
+          <div />
+          {matrix.symbols.map(s => (
+            <div key={`h-${s}`} style={{
+              fontSize: 9, color: T.text.muted, fontWeight: 600,
+              textAlign: 'center', padding: '4px 2px',
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+            }} title={s}>{s.replace('/USDT', '')}</div>
+          ))}
+
+          {/* Body rows */}
+          {matrix.symbols.map((row, i) => (
+            <>
+              <div key={`r-${row}`} style={{
+                fontSize: 10, color: T.text.secondary, padding: '0 8px',
+                textAlign: 'right', fontWeight: 600, alignSelf: 'center',
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              }} title={row}>{row.replace('/USDT', '')}</div>
+              {matrix.symbols.map((_, j) => {
+                const v = matrix.values[i][j];
+                const abs = Math.abs(v);
+                const color = i === j
+                  ? T.border.medium
+                  : abs >= 0.7 ? T.accent.red
+                    : abs >= 0.4 ? T.accent.orange
+                      : T.accent.green;
+                return (
+                  <div key={`${i}-${j}`} title={`${matrix.symbols[i]} ↔ ${matrix.symbols[j]} = ${v.toFixed(2)}`}
+                    style={{
+                      aspectRatio: '1.4 / 1',
+                      minHeight: 32,
+                      background: `${color}${abs < 0.4 ? '22' : abs < 0.7 ? '55' : '88'}`,
+                      border: `1px solid ${color}55`,
+                      borderRadius: 4,
+                      color: T.text.primary,
+                      fontSize: 11, fontWeight: 700,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                    {v.toFixed(2)}
+                  </div>
+                );
+              })}
+            </>
+          ))}
+        </div>
       </div>
 
       <div style={{
         display: 'flex', gap: 12, marginTop: 10, fontSize: 9, color: T.text.muted,
-        fontFamily: "'JetBrains Mono', monospace",
+        fontFamily: "'JetBrains Mono', monospace", flexWrap: 'wrap',
       }}>
         <Legend color={T.accent.green} label={isRTL ? '<0.4 עצמאי' : '<0.4 independent'} />
         <Legend color={T.accent.orange} label={isRTL ? '0.4–0.7 בינוני' : '0.4–0.7 moderate'} />
