@@ -58,6 +58,31 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
   const [closing, setClosing] = useState<OpenPos | null>(null);
   const [exitPrice, setExitPrice] = useState<string>('');
   const [busy, setBusy] = useState(false);
+  const [editStopId, setEditStopId] = useState<string | null>(null);
+  const [editStopVal, setEditStopVal] = useState<string>('');
+  const [savingStop, setSavingStop] = useState(false);
+
+  const beginEditStop = (p: OpenPos) => {
+    setEditStopId(p.id);
+    setEditStopVal(p.stop_loss ? String(p.stop_loss) : '');
+  };
+  const saveStop = async (p: OpenPos) => {
+    const v = Number(editStopVal);
+    if (!isFinite(v) || v <= 0) {
+      toast.error(isRTL ? 'מחיר סטופ לא תקין' : 'Invalid stop price');
+      return;
+    }
+    setSavingStop(true);
+    const { error } = await supabase
+      .from('open_positions')
+      .update({ stop_loss: v, updated_at: new Date().toISOString() })
+      .eq('id', p.id);
+    setSavingStop(false);
+    if (error) { toast.error(error.message); return; }
+    setRows(prev => prev.map(r => r.id === p.id ? { ...r, stop_loss: v } : r));
+    setEditStopId(null);
+    toast.success(isRTL ? 'סטופ-לוס נשמר' : 'Stop-loss saved');
+  };
 
   const fetchRows = useCallback(async () => {
     if (!userId) { setRows([]); return; }
