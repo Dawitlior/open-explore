@@ -29,6 +29,7 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
     createPortfolio,
     updatePortfolio,
     deletePortfolio,
+    resetPortfolio,
     setDefault,
     loading,
     tier,
@@ -159,6 +160,17 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
     if (!ok) setErr(isRTL ? 'המחיקה נכשלה' : 'Delete failed');
   };
 
+  const handleReset = async (p: Portfolio) => {
+    const confirmMsg = isRTL
+      ? `לאפס את "${p.name}"? רק העסקאות בתיק הזה יימחקו לצמיתות. תיקים אחרים לא ייפגעו.`
+      : `Reset "${p.name}"? Only trades in this portfolio will be permanently deleted. Other portfolios stay untouched.`;
+    if (!window.confirm(confirmMsg)) return;
+    setBusy(true);
+    const ok = await resetPortfolio(p.id);
+    setBusy(false);
+    if (!ok) setErr(isRTL ? 'איפוס התיק נכשל' : 'Portfolio reset failed');
+  };
+
   const triggerLabel = useMemo(() => {
     if (loading) return isRTL ? 'טוען…' : 'Loading…';
     return activePortfolio?.name ?? (isRTL ? 'בחר תיק' : 'Select portfolio');
@@ -277,6 +289,14 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
                       style={{ background: 'none', border: 'none', color: locked ? '#334155' : '#64748b', cursor: locked ? 'not-allowed' : 'pointer', padding: 2 }}
                     >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); if (locked) return; void handleReset(p); }}
+                      title={locked ? (isRTL ? 'נעול — לא ניתן לאיפוס' : 'Locked — cannot reset') : (isRTL ? 'אפס תיק' : 'Reset portfolio')}
+                      disabled={locked || busy}
+                      style={{ background: 'none', border: 'none', color: (locked || busy) ? '#334155' : '#fb923c', cursor: (locked || busy) ? 'not-allowed' : 'pointer', padding: 2 }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); if (locked) return; void handleDelete(p); }}
