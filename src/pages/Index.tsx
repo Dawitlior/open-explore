@@ -862,6 +862,7 @@ const Index = () => {
           isChartVisible={isChartVisible}
           handleHideChart={handleHideChart}
           handleExplainClick={handleExplainClick}
+          onAddTrade={addTrade}
         />
       </LazyShell>
     );
