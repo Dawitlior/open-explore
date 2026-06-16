@@ -35,11 +35,11 @@ export function useSettings() {
   }, []);
 
   const [theme, setThemeState] = useState<ThemeId>(() => {
-    if (typeof window === 'undefined') return 'midnight';
+    if (typeof window === 'undefined') return 'graphite';
     try {
       const v = window.localStorage.getItem('orca:theme-cache');
-      return (v === 'midnight' || v === 'indigo' || v === 'platinum' || v === 'graphite') ? v : 'midnight';
-    } catch { return 'midnight'; }
+      return (v === 'midnight' || v === 'indigo' || v === 'platinum' || v === 'graphite') ? v : 'graphite';
+    } catch { return 'graphite'; }
   });
   const [systemMode, setSystemModeState] = useState<SystemMode>('standard');
   const [operatingMode, setOperatingModeState] = useState<OperatingMode>('beginner');
