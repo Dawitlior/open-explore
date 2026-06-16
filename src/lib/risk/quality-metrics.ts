@@ -81,3 +81,31 @@ export function formatRatio(v: number | null): string {
   if (v === null || !Number.isFinite(v)) return 'N/A';
   return v.toFixed(2);
 }
+
+/**
+ * Omega ratio at threshold `tau` (default 0): sum of gains above tau /
+ * absolute sum of losses below tau. >1 = favorable, <1 = unfavorable.
+ */
+export function computeOmega(dailyReturns: number[], tau = 0): number | null {
+  if (dailyReturns.length < 2) return null;
+  let gains = 0, losses = 0;
+  for (const r of dailyReturns) {
+    const d = r - tau;
+    if (d > 0) gains += d;
+    else losses += -d;
+  }
+  if (losses === 0) return gains > 0 ? Infinity : null;
+  return gains / losses;
+}
+
+/** Max drawdown of the cumulative equity built from `dailyReturns`. Returns absolute magnitude (positive). */
+export function computeMaxDrawdownAbs(dailyReturns: number[]): number {
+  let cum = 0, peak = 0, maxDD = 0;
+  for (const r of dailyReturns) {
+    cum += r;
+    if (cum > peak) peak = cum;
+    const dd = peak - cum;
+    if (dd > maxDD) maxDD = dd;
+  }
+  return maxDD;
+}
