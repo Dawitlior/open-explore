@@ -131,6 +131,7 @@ export const ModeSwitch = ({ T, isRTL }: ModeSwitchProps) => {
         </div>
       </div>
 
+      {createPortal(
       <AnimatePresence>
         {pendingTier && meta && (
           <>
