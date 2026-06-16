@@ -28,7 +28,7 @@ import type {
   CaptureContext,
 } from './bugArenaTypes';
 
-export type CaptureStage = 'idle' | 'picking' | 'capturing' | 'draft' | 'submitting';
+export type CaptureStage = 'idle' | 'picking' | 'draft' | 'submitting';
 
 export interface DraftState {
   pick: PickResult | null;
@@ -116,10 +116,9 @@ export function useBugCapture(
       const route = getCurrentRoute();
       const section = sectionResolver(route);
 
-      // Show a tiny "capturing" indicator while we grab the screenshot,
-      // BEFORE the report modal appears (so it never blocks the screenshot).
-      setStage('capturing');
-
+      // Capture screenshot FIRST — before the report modal is rendered —
+      // so the form itself never appears in the screenshot and never hides
+      // the element the user just selected.
       const shot = await captureViewport(pick?.rect ?? null, config?.accent);
 
       // Now open the form with the screenshot already in place.
