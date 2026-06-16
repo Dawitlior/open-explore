@@ -758,6 +758,7 @@ function BugCard({
   onStatus: (s: BugStatus) => void;
   onOpen: () => void;
 }) {
+  const { lang, isRTL, t } = useLang();
   const [reportersOpen, setReportersOpen] = useState(false);
 
   return (
@@ -781,15 +782,15 @@ function BugCard({
               className="rounded-full px-2 py-0.5 text-[11px] font-bold"
               style={{ background: `${STATUS_COLOR[bug.status]}22`, color: STATUS_COLOR[bug.status] }}
             >
-              {STATUS_LABEL[bug.status]}
+              {statusLabel(bug.status, lang)}
             </span>
-            <span className="text-[11px] text-white/40">{BUG_TYPE_LABEL[bug.bug_type]}</span>
+            <span className="text-[11px] text-white/40">{bugTypeLabel(bug.bug_type, lang)}</span>
           </div>
-          <button onClick={onOpen} className="mt-1 block text-right">
+          <button onClick={onOpen} className={`mt-1 block ${isRTL ? 'text-right' : 'text-left'}`}>
             <p className="line-clamp-2 text-sm font-semibold">{bug.title || bug.description}</p>
           </button>
-          <div className="mt-1 text-[11px] text-white/35" title={formatDateTime(bug.created_at)}>
-            {formatDateTime(bug.created_at)}
+          <div className="mt-1 text-[11px] text-white/35" title={formatDateTime(bug.created_at, lang)}>
+            {formatDateTime(bug.created_at, lang)}
           </div>
         </div>
       </div>
@@ -800,18 +801,18 @@ function BugCard({
           data-bug-reporters
           onClick={() => setReportersOpen((v) => !v)}
           className="relative flex items-center"
-          aria-label="מי דיווח"
+          aria-label={t('מי דיווח', 'Who reported')}
         >
-          <div className="flex -space-x-2 space-x-reverse">
+          <div className={`flex -space-x-2 ${isRTL ? 'space-x-reverse' : ''}`}>
             {bug.reporters.slice(0, 3).map((r) => (
               <Avatar key={r.user_id} reporter={r} />
             ))}
           </div>
           {bug.reporterCount > 3 && (
-            <span className="mr-1 text-xs text-white/50">+{bug.reporterCount - 3}</span>
+            <span className={`${isRTL ? 'mr-1' : 'ml-1'} text-xs text-white/50`}>+{bug.reporterCount - 3}</span>
           )}
-          <span className="mr-2 text-xs font-semibold text-white/60">
-            {bug.reporterCount} מדווחים
+          <span className={`${isRTL ? 'mr-2' : 'ml-2'} text-xs font-semibold text-white/60`}>
+            {bug.reporterCount} {t('מדווחים', 'reporters')}
           </span>
         </button>
 
@@ -825,7 +826,7 @@ function BugCard({
             >
               {(Object.keys(STATUS_LABEL) as BugStatus[]).map((s) => (
                 <option key={s} value={s}>
-                  {STATUS_LABEL[s]}
+                  {statusLabel(s, lang)}
                 </option>
               ))}
             </select>
@@ -837,7 +838,7 @@ function BugCard({
               className="rounded-full px-3 py-1 text-sm font-bold"
               style={{ background: CYAN, color: '#06121f' }}
             >
-              גם לי קורה
+              {t('גם לי קורה', 'Happens to me too')}
             </button>
           ) : (
             <button
@@ -848,7 +849,7 @@ function BugCard({
                 color: canHardDelete ? '#ff5470' : '#cdd6e3',
               }}
             >
-              {canHardDelete ? 'מחק' : 'הסר אותי'}
+              {canHardDelete ? t('מחק', 'Delete') : t('הסר אותי', 'Remove me')}
             </button>
           )}
         </div>
@@ -858,6 +859,7 @@ function BugCard({
     </article>
   );
 }
+
 
 function Avatar({ reporter, size = 28 }: { reporter: BugReporter; size?: number }) {
   const url = reporter.profile?.avatar_url;
