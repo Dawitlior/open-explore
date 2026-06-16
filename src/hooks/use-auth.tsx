@@ -2,6 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { setScopedUid } from '@/lib/scoped-storage';
+import { OrcaBootLoader } from '@/components/OrcaBootLoader';
+
 
 interface AuthContextValue {
   session: Session | null;
