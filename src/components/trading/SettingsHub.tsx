@@ -1164,12 +1164,6 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
               return (
                 <div>
                   <div style={card}>
-                    <h3 style={sectionTitle}><SlidersHorizontal size={14} /> {t('הסתרת אלמנטים', 'Hide UI elements')}</h3>
-                    <p style={sectionHint}>{t('צמצום הממשק לפעולות הליבה שלך.', 'Reduce the interface to your core actions.')}</p>
-                    <Toggle on={p.hideQuickActions} onClick={() => ui.setPrefs({ hideQuickActions: !p.hideQuickActions })} label={t('הסתר Quick Actions', 'Hide Quick Actions')} />
-                  </div>
-
-                  <div style={card}>
                     <h3 style={sectionTitle}><Gauge size={14} /> {t('צפיפות תצוגה', 'Display density')}</h3>
                     <p style={sectionHint}>{t('בחר עד כמה הממשק דחוס. משפיע על ריווח גלובלי וטבלאות.', 'How tightly the UI is packed. Affects global spacing and tables.')}</p>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
