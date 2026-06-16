@@ -15,6 +15,11 @@ import { RProxyBanner } from './RProxyBanner';
 import { useChartGuard } from '@/lib/dashboard-engine';
 import { UltimateRiskDeck } from './UltimateDeckCharts';
 import { useEntitlement } from '@/hooks/use-entitlement';
+import { KillSwitchPanel } from './risk/KillSwitchPanel';
+import { NetExposurePanel } from './risk/NetExposurePanel';
+import { CorrelationMatrix } from './risk/CorrelationMatrix';
+import { QualityOfReturnsStrip } from './risk/QualityOfReturnsStrip';
+import { HourOfDayStrip } from './risk/HourOfDayStrip';
 
 
 type OperatingMode = 'live' | 'review' | 'research' | 'beginner';
@@ -339,8 +344,36 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
       </div>
 
       {/* ═══════════════════════════════════════════════════════════
-          KPI STRIP — At-a-glance metrics
+          ZONE 1 EXTENSION — KILL SWITCH (live guardrail)
           ═══════════════════════════════════════════════════════════ */}
+      <SectionHeader T={T} isRTL={isRTL} accent={T.accent.red} label={isRTL ? 'מתג ביטחון' : 'KILL SWITCH'} />
+      <div style={{ marginBottom: 4 }}>
+        <KillSwitchPanel T={T} isRTL={isRTL} />
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════
+          ZONE 2 — PORTFOLIO EXPOSURE (net/gross/leverage + correlation)
+          ═══════════════════════════════════════════════════════════ */}
+      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'חשיפת תיק' : 'PORTFOLIO EXPOSURE'} />
+      <div style={{ display: 'grid', gap: 8, marginBottom: 4 }}>
+        <NetExposurePanel T={T} isRTL={isRTL} trades={trades} />
+        <CorrelationMatrix T={T} isRTL={isRTL} trades={trades} />
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════
+          ZONE 3 — QUALITY OF RETURNS (MAR · Sharpe · Sortino · Calmar)
+          ═══════════════════════════════════════════════════════════ */}
+      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'איכות תשואות' : 'QUALITY OF RETURNS'} />
+      <div style={{ marginBottom: 4 }}>
+        <QualityOfReturnsStrip
+          T={T}
+          isRTL={isRTL}
+          trades={trades}
+          marRatio={stats.maxDrawdown > 0 ? (stats.totalR ?? 0) / stats.maxDrawdown : null}
+        />
+      </div>
+
+
       <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'מדדי מפתח' : 'KEY METRICS'} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8, marginBottom: 4 }}>
         {[
@@ -504,6 +537,14 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
         </div>
       </GlassCard>
       </>)}
+
+      {/* ═══════════════════════════════════════════════════════════
+          ZONE 4 — TEMPORAL RISK CONTEXT (hour-of-day window)
+          ═══════════════════════════════════════════════════════════ */}
+      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'הקשר זמן' : 'TEMPORAL CONTEXT'} />
+      <div style={{ marginBottom: 4 }}>
+        <HourOfDayStrip T={T} isRTL={isRTL} trades={trades} />
+      </div>
 
       {/* ═══ RISK ALLOCATION + DRAWDOWN ═══ */}
       <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'הקצאה ונסיגה' : 'ALLOCATION & DRAWDOWN'} />

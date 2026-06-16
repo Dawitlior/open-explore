@@ -1,107 +1,90 @@
-
 ## Goal
+Make `AdvancedRiskPage` scannable in 5 seconds, and close the 4 analytical gaps you flagged. Every new metric respects the display mode toggle (R-Multiples vs USD) via `useVisibleTrades` + the existing dual-format helpers — no metric will be R-only.
 
-Drop the canonical UIE (Universal Import Engine) from `ORCA_UIE_COMPLETE.md` into the platform exactly as written, route file uploads through it behind a feature flag, and replace the "balance from 0" lie with the equity points read from the file. Old parsers stay in the code, switched off, until validated. Writer-layer bugs (renumber, dual write paths) are explicitly out of scope for this commit.
-
-## Iron Rules (from the master doc)
-
-- Restore all 13 UIE files verbatim. No "improvements", no shortening, no extra dependencies.
-- Only `src/lib/uie/adapters/to-journal.ts` is editable — it's already targeted at our `Trade`/`NormalizedTrade` schema.
-- Never invent data. If a number isn't in the file and can't be derived, leave it empty and report it.
-- Don't touch `parseBrokerCsvRaw` / `importFromXlsx` in this commit — flag-gate around them.
-- Don't touch `useTrades.importTrades` renumber logic or the dual write paths in this commit.
-
----
-
-## Commit Scope — Three Approval Gates
-
-Work stops at each gate until you say "continue".
-
-### Stage 1 — Engine drop-in + read-only Preflight (this commit's main body)
-
-**1.1 Create `src/lib/uie/` with all 13 files copied verbatim:**
+## New layout (4 zones, top → bottom)
 
 ```text
-src/lib/uie/
-  index.ts
-  types.ts
-  pipeline.ts
-  dictionary/canonical-fields.ts
-  matching/normalize.ts
-  matching/values.ts
-  matching/profiling.ts
-  matching/tiers.ts
-  matching/resolve.ts
-  structure/structure.ts
-  reconstruction/reconstruction.ts
-  delivery/delivery.ts
-  adapters/to-journal.ts
+┌─────────────────────────────────────────────────────────┐
+│ ZONE 1 · LIVE GUARDRAILS                                │
+│  4-tier limit bars (Trade/Day/Week/Month)               │
+│  Cool-Off badge  +  ⛔ KILL SWITCH (new, prominent)     │
+├─────────────────────────────────────────────────────────┤
+│ ZONE 2 · PORTFOLIO EXPOSURE  (new)                      │
+│  Net Exposure $  ·  Gross Exposure $  ·  Leverage ×    │
+│  Open-positions correlation matrix (heatmap)            │
+│  Concentration bar (top symbol % of net risk)           │
+├─────────────────────────────────────────────────────────┤
+│ ZONE 3 · QUALITY OF RETURNS  (new metrics added)        │
+│  MAR  ·  Sharpe  ·  Sortino  ·  Calmar                  │
+│  Equity curve + drawdown shading                        │
+├─────────────────────────────────────────────────────────┤
+│ ZONE 4 · TEMPORAL RISK CONTEXT  (new)                   │
+│  Hour-of-day P&L heatstrip (00→23, user TZ)            │
+│  "Strategy window" badge: in/out of optimal hours       │
+│  Day-of-week strip (existing, moved here)               │
+└─────────────────────────────────────────────────────────┘
 ```
 
-No edits to any file. Zero new npm dependencies (SheetJS + PapaParse are already in the project).
+Section headers reuse the existing `SectionHeader` component so the terminal aesthetic is preserved.
 
-**1.2 Feature flag:** add `UIE_ENABLED` (default `true` in dev, controllable via `localStorage.uie_enabled` for kill-switch). Lives in a tiny `src/lib/uie/flag.ts`.
+## What gets added
 
-**1.3 File→sheets adapter** at `src/lib/uie/io.ts` (thin edge wrapper only, not core):
-- `fileToSheets(file: File): Promise<SheetInput[]>` — branches on extension/MIME: `xlsx`/`xls` → SheetJS `sheet_to_json({header:1, raw:false, defval:''})` over every sheet; `csv` → PapaParse.
+1. **Net Exposure block** (`zone 2`)
+   - `Σ |position_notional|` over `open_positions` table — gross
+   - `Σ signed notional` — net (long − short)
+   - Leverage = gross / account equity
+   - Toggle shows the same three values in R: gross/net risk = `Σ |open_risk_R|`
 
-**1.4 Route the two import entry points** (`src/pages/Index.tsx` XLSX upload, `src/components/trading/ExchangesPanel.tsx` CSV upload) through a new function `runImportWithPreflight(file)`:
-- When flag ON: `fileToSheets` → `runImport(sheets)` → open `ImportPreflightModal` with the `ImportResult`.
-- When flag OFF: fall through to the existing `importFromXlsx` / `parseBrokerCsvRaw` path untouched.
-- Old code is **not** deleted.
+2. **Correlation matrix** (`zone 2`)
+   - 30-day rolling Pearson on daily returns of every symbol with an open position OR ≥5 closed trades
+   - Compact heatmap (≤8 symbols) — red ≥0.7, amber 0.4–0.7, neutral <0.4
+   - Footer line: "Effective independent bets ≈ N" (eigenvalue-based, simple)
 
-**1.5 Read-only `ImportPreflightModal` (Stage 1 UI):**
-- Dark Terminal aesthetic, Hebrew RTL + English, Poppins + IBM Plex Mono.
-- Three panels:
-  1. **Mapping table:** per source column → mapped canonical field → 🟢/🟡/🔴 confidence chip (auto / suggested / unmapped) → evidence list from `FieldMatch.evidence[]`.
-  2. **Gap report:** `readiness` 0-100 ring + `gap.items` (he/en) with severity badges. Counts row underneath: closed / open / equity events / skipped / duplicates.
-  3. **Equity preview:** the `equityEvents` read from the file, labelled "Balance from file — source of truth". If empty, render explicit "No balance data in file — P&L chart will be cumulative-from-0, not real equity."
-- No editing controls in Stage 1. Two buttons: **"Confirm & Import"** and **"Cancel"**.
-- On Confirm: map `result.trades` via existing `toLegacyTrade(...)` from `adapters/to-journal.ts`, push through `useTrades.importTrades` (unchanged), then call `toEquityPoints(result.equityEvents)` and persist those points so the equity chart consumes them.
+3. **Sharpe + Sortino** (`zone 3`)
+   - Daily R-series → annualized (×√252) for the R toggle
+   - Daily $-series (same series × avg risk-per-trade $) for the USD toggle
+   - Sortino uses downside deviation only
+   - Display next to existing MAR + Calmar in one 4-tile strip
 
-**1.6 Balance source-of-truth wiring (no writer refactor):**
-- Add `src/lib/uie/equity-store.ts` — a thin per-user store (Supabase table or local first, decided by what's already wired) that holds `{date, amount, source:'file'}` points.
-- The Balance/Equity chart reads from this store first; if it has points, they override the from-0 cumulative line. If it doesn't, the existing from-0 line stays but is labelled "P&L cumulative (no balance data)".
-- No change to `recalcBalances` inside `useTrades`.
+4. **Hour-of-day strip** (`zone 4`)
+   - Bin trades by `closed_at` hour in user local TZ → bar = sum P&L (or sum R)
+   - Color: green positive, red negative, fade if n<3
+   - "Best window" / "Worst window" tags computed from top/bottom 3-hour rolling sum
+   - "Outside strategy window" warning when last trade's hour is not in top-50% window
 
-**STOP. Wait for your approval before Stage 2.**
+5. **Kill Switch** (`zone 1`)
+   - New panel: big toggle "🛑 Kill Switch — Lock new entries"
+   - Writes to existing `live_risk_locks` table (already in schema) with `reason='manual_kill_switch'` and `locked_until = now() + Xh` (user-chosen: 1h / rest of day / 24h)
+   - `TradeForm` already reads `live_risk_locks` via `useRiskLimits`; will block submit and show the lock reason
+   - Confirm modal (`orcaConfirm`) to prevent accidental clicks
+   - Manual unlock requires typing "UNLOCK" (high-friction, matches reset pattern)
 
----
+## Files
 
-### Stage 2 — Manual mapping editor
+- `src/components/trading/AdvancedRiskPage.tsx` — restructure into the 4 zones; replace current freeform stack
+- `src/components/trading/risk/NetExposurePanel.tsx` *(new)*
+- `src/components/trading/risk/CorrelationMatrix.tsx` *(new)*
+- `src/components/trading/risk/QualityOfReturnsStrip.tsx` *(new)* — MAR/Sharpe/Sortino/Calmar
+- `src/components/trading/risk/HourOfDayStrip.tsx` *(new)*
+- `src/components/trading/risk/KillSwitchPanel.tsx` *(new)*
+- `src/lib/risk/quality-metrics.ts` *(new)* — `computeSharpe`, `computeSortino`, `computeCalmar` (pure, accept `Trade[]` + mode)
+- `src/lib/risk/correlation.ts` *(new)* — daily-returns matrix + Pearson + effective-bets
+- `src/lib/risk/exposure.ts` *(new)* — read `open_positions` for current portfolio, return gross/net/leverage in $ and R
+- `src/hooks/use-risk-limits.ts` — extend to expose `engageKillSwitch(hours)` / `releaseKillSwitch()` writing to `live_risk_locks`
+- `src/components/trading/TradeForm.tsx` — surface the kill-switch lock reason inline (already blocked; just label it)
 
-Only after Stage 1 is approved.
-- Add a dropdown per mapping row in the Preflight modal: change canonical target, or "Ignore column".
-- Re-run downstream derivation locally on edit (call back into `pipeline` helpers — no core edits).
-- "Reset to auto" button. "Re-validate" recomputes the gap report inline.
+## Dual R / USD support
+Every new metric reads the same `displayMode` already used elsewhere:
+- R mode → metric computed on `getEffectiveR(trade)` series
+- USD mode → metric computed on `trade.pnl` series
+- Strip labels switch suffix automatically (`R` ↔ `$`)
+- Sharpe/Sortino are unitless so they show the same number in both modes (correctly)
 
-**STOP. Wait for approval before Stage 3.**
+## Out of scope
+- No DB migrations — `live_risk_locks` already exists with the right columns; no schema changes.
+- No changes to risk-limits engine, scoring, or alerts.
+- No mobile-specific layout pass — existing responsive rules carry over.
+- AI-generated narrative on the new sections — can be added later if you want.
 
----
-
-### Stage 3 — Fix Actions + fingerprint memory
-
-Only after Stage 2 is approved.
-- Fix Actions panel: manual map / set fixed value / mark as open positions / download CSV template / skip.
-- Fingerprint store: hash header signature → save accepted mapping; auto-load on next file with the same signature.
-
----
-
-## Explicitly Out of Scope (separate commit later, on your call)
-
-- Removing/deleting `parseBrokerCsvRaw` / `importFromXlsx`.
-- Fixing `useTrades.importTrades` renumber that overwrites existing `trade_id` and breaks `__JID:xxx__` links.
-- Consolidating the two write paths (legacy `saveTrades` vs unused `StorageManager`).
-- Enforcing idempotency on `external_id` at the writer.
-
-These will be addressed only after the UIE is validated against your real files and you've approved.
-
----
-
-## Acceptance Criteria — Stage 1
-
-- All 13 files exist under `src/lib/uie/` byte-identical to the master doc.
-- `UIE_ENABLED=false` → upload behaviour is identical to today.
-- `UIE_ENABLED=true` → upload opens Preflight modal showing mapping + gap + equity preview, never auto-imports.
-- Confirming Preflight produces trades in the journal AND, when the file has balance data, the equity chart renders the file's points (not the from-0 line).
-- No console errors, no new npm packages, no edits inside `src/lib/uie/matching|structure|reconstruction|delivery|pipeline`.
+## Validation
+- Read the page on `/risk` after changes and verify the 4 zones render in order, dual-mode toggle flips every new number, and Kill Switch actually blocks `TradeForm` submission.
