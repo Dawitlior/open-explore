@@ -8,6 +8,7 @@ import { AdaptiveExpectancyCard, AdaptiveQuickStats } from '@/components/trading
 import { ChartWrapper, EXPLANATIONS, type ChartExplanation } from '@/components/trading/ChartWrapper';
 import { FeatureHint } from '@/components/trading/FeatureHint';
 import DashboardAdvancedLab from './DashboardAdvancedLab';
+import { RiskAdjustedRatiosSection } from './RiskAdjustedRatiosSection';
 import { TierGate } from '@/components/billing/TierGate';
 import { BestWorstWindowChart } from './BestWorstWindowChart';
 import { WinsByMonthChart, WinsByQuarterChart, ReturnPerTimeChart } from './SimpleExtraCharts';
@@ -335,6 +336,11 @@ export const ReviewDashboard = ({
       {/* ═══ ADVANCED ANALYTICS LAB — Ultimate-tier · follows global $/R mode ═══ */}
       <TierGate required="ultimate" label="Advanced Analytics Lab" silent>
         <DashboardAdvancedLab T={T} isRTL={isRTL} trades={trades} />
+      </TierGate>
+
+      {/* ═══ RISK-ADJUSTED PERFORMANCE — Ultimate-tier · Sharpe · Sortino · Omega · Max DD ═══ */}
+      <TierGate required="ultimate" label="Risk-Adjusted Performance" silent>
+        <RiskAdjustedRatiosSection T={T} isRTL={isRTL} trades={trades} />
       </TierGate>
     </div>
   );

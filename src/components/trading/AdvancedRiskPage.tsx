@@ -39,21 +39,31 @@ interface AdvancedRiskPageProps {
   registryCharts?: import('@/lib/chart-registry').ChartSpec[];
 }
 
-// ─── Section header (Orca terminal style) ───────────────────────────
-const SectionHeader = ({ T, label, accent, isRTL }: { T: TradingTheme; label: string; accent?: string; isRTL: boolean }) => (
-  <div style={{
-    display: 'flex', alignItems: 'center', gap: 10,
-    fontSize: 9, color: accent || T.accent.cyan,
-    textTransform: 'uppercase', letterSpacing: '0.16em', fontWeight: 700,
-    fontFamily: "'JetBrains Mono', monospace",
-    margin: '20px 0 12px',
-  }}>
-    <span style={{ width: 6, height: 6, borderRadius: 1, background: accent || T.accent.cyan, boxShadow: `0 0 10px ${accent || T.accent.cyan}` }} />
-    <span style={{ width: 24, height: 1, background: `${accent || T.accent.cyan}50` }} />
-    {label}
-    <span style={{ flex: 1, height: 1, background: `linear-gradient(${isRTL ? '270deg' : '90deg'}, ${accent || T.accent.cyan}30, transparent)` }} />
-  </div>
-);
+// ─── Section header (clear, plain-language with subtitle) ──────────
+const SectionHeader = ({ T, label, accent, isRTL, subtitle }: { T: TradingTheme; label: string; accent?: string; isRTL: boolean; subtitle?: string }) => {
+  const color = accent || T.accent.cyan;
+  return (
+    <div style={{ margin: '24px 0 12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ width: 8, height: 8, borderRadius: 2, background: color, boxShadow: `0 0 10px ${color}` }} />
+        <span style={{
+          fontSize: 14, fontWeight: 700, color: T.text.primary,
+          letterSpacing: '-0.01em',
+        }}>{label}</span>
+        <span style={{ flex: 1, height: 1, background: `linear-gradient(${isRTL ? '270deg' : '90deg'}, ${color}40, transparent)` }} />
+      </div>
+      {subtitle && (
+        <div style={{
+          fontSize: 12, color: T.text.muted, marginTop: 4,
+          marginInlineStart: 18, lineHeight: 1.5,
+        }}>
+          {subtitle}
+        </div>
+      )}
+    </div>
+  );
+};
+
 
 // ─── Risk limit progress bar ────────────────────────────────────────
 const LimitBar = ({ T, label, current, limit, isRTL }: { T: TradingTheme; label: string; current: number; limit: number; isRTL: boolean }) => {
@@ -346,7 +356,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
       {/* ═══════════════════════════════════════════════════════════
           ZONE 1 EXTENSION — KILL SWITCH (live guardrail)
           ═══════════════════════════════════════════════════════════ */}
-      <SectionHeader T={T} isRTL={isRTL} accent={T.accent.red} label={isRTL ? 'מתג ביטחון' : 'KILL SWITCH'} />
+      <SectionHeader T={T} isRTL={isRTL} accent={T.accent.red} label={isRTL ? 'מתג ביטחון' : 'Kill Switch'} subtitle={isRTL ? 'נעילה ידנית של המסחר לפרק זמן קבוע — לעצור עסקת נקמה לפני שהיא קורית.' : 'Manually lock trading for a fixed period — stop a revenge trade before it happens.'} />
       <div style={{ marginBottom: 4 }}>
         <KillSwitchPanel T={T} isRTL={isRTL} />
       </div>
@@ -354,7 +364,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
       {/* ═══════════════════════════════════════════════════════════
           ZONE 2 — PORTFOLIO EXPOSURE (net/gross/leverage + correlation)
           ═══════════════════════════════════════════════════════════ */}
-      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'חשיפת תיק' : 'PORTFOLIO EXPOSURE'} />
+      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'חשיפת תיק' : 'Portfolio Exposure'} subtitle={isRTL ? 'כמה כסף שלך פתוח בשוק כרגע ועד כמה הפוזיציות שלך מתואמות זו לזו.' : 'How much of your capital is live in the market right now and how correlated your open positions are.'} />
       <div style={{ display: 'grid', gap: 8, marginBottom: 4 }}>
         <NetExposurePanel T={T} isRTL={isRTL} trades={trades} />
         <CorrelationMatrix T={T} isRTL={isRTL} trades={trades} />
@@ -363,7 +373,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
       {/* ═══════════════════════════════════════════════════════════
           ZONE 3 — QUALITY OF RETURNS (MAR · Sharpe · Sortino · Calmar)
           ═══════════════════════════════════════════════════════════ */}
-      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'איכות תשואות' : 'QUALITY OF RETURNS'} />
+      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'איכות התשואות' : 'Quality of Returns'} subtitle={isRTL ? 'האם הרווח שלך מגיע ביציבות או בקפיצות גדולות? מדדים שמראים את האיכות, לא רק את הסכום.' : 'Is your profit smooth or jumpy? Ratios that measure the quality of your returns, not just the total.'} />
       <div style={{ marginBottom: 4 }}>
         <QualityOfReturnsStrip
           T={T}
@@ -374,7 +384,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
       </div>
 
 
-      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'מדדי מפתח' : 'KEY METRICS'} />
+      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'מדדי מפתח' : 'Key Metrics'} subtitle={isRTL ? 'מבט מהיר על המספרים החשובים ביותר לניהול הסיכון היומי שלך.' : 'A quick snapshot of the numbers that matter most for daily risk management.'} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8, marginBottom: 4 }}>
         {[
           { l: isRTL ? 'סיכון ממוצע' : 'Avg Risk', v: `${riskData.avgRiskPct.toFixed(2)}%`, c: T.accent.cyan, hint: `$${(riskData.riskGrowthEvolution.reduce((s,e)=>s+e.risk,0)/(riskData.riskGrowthEvolution.length||1)).toFixed(2)}` },
@@ -400,7 +410,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
           GAUGES & GUARDRAILS
           ═══════════════════════════════════════════════════════════ */}
       {showGaugesRow && (<>
-      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'מדים ומגבלות' : 'GAUGES & GUARDRAILS'} />
+      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'מדים ומגבלות' : 'Gauges & Guardrails'} subtitle={isRTL ? 'איפה אתה עומד מול המגבלות שהצבת לעצמך — באדום זה אזור סכנה.' : 'Where you stand against your own preset limits — red means you are entering the danger zone.'} />
       <div style={{ display: 'flex', gap: 12, marginBottom: 4, flexWrap: 'wrap' }}>
         <GlassCard T={T} glow={riskLevel === 'warning' ? 'rgba(245,158,11,0.12)' : T.accent.greenGlow} style={{ flex: 1, minWidth: 220, textAlign: 'center' }}>
           <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>{isRTL ? 'מד סיכון' : 'Risk Meter'}</div>
@@ -436,7 +446,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
       {/* ═══ RISK ANOMALIES ═══ */}
       {showAnomalies && anomalies.length > 0 && (
         <>
-          <SectionHeader T={T} isRTL={isRTL} accent={T.accent.red} label={isRTL ? 'חריגות סיכון שזוהו' : 'RISK ANOMALIES DETECTED'} />
+          <SectionHeader T={T} isRTL={isRTL} accent={T.accent.red} label={isRTL ? 'חריגות סיכון שזוהו' : 'Risk Anomalies Detected'} subtitle={isRTL ? 'דפוסי התנהגות חריגים שהמערכת זיהתה — מסחר נקמה, קפיצות סיכון ועוד.' : 'Behavioral patterns the system has flagged — revenge trades, risk spikes, and sizing drift.'} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 4 }}>
             {anomalies.map((a, i) => (
               <GlassCard T={T} key={i} style={{ borderInlineStart: `3px solid ${a.severity === 'danger' ? T.accent.red : T.accent.orange}`, padding: 16 }}>
@@ -464,7 +474,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
 
       {/* ═══ RISK BEHAVIOR TIMELINE — Advanced+ ═══ */}
       {showRiskTimeline && (registryAllows('riskEvolution') || registryAllows('riskChangePct')) && (<>
-      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'התפתחות סיכון' : 'RISK EVOLUTION'} />
+      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'התפתחות הסיכון לאורך זמן' : 'Risk Evolution Over Time'} subtitle={isRTL ? 'איך גודל הסיכון שלך השתנה מעסקה לעסקה — מאתר חוסר עקביות.' : 'How your position sizing has shifted from trade to trade — spots inconsistency.'} />
       <div style={{ display: 'flex', gap: 12, marginBottom: 4, flexWrap: 'wrap' }}>
         {registryAllows('riskEvolution') && <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'התפתחות סיכון לאורך זמן' : 'Risk Evolution Over Time'} explanation={EXPLANATIONS.riskAllocation} unit="$" style={{ flex: 2, minWidth: 340 }}>
           <LazyChart height={200}>
@@ -507,7 +517,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
 
       {/* ═══ SETUP RISK COMPARISON TABLE ═══ */}
       {showSetupTable && (<>
-      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'השוואת סטאפים' : 'SETUP COMPARISON'} />
+      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'השוואה בין סטאפים' : 'Setup Comparison'} subtitle={isRTL ? 'איזה סטאפ מביא לך הכי הרבה — והאם הסיכון תואם להצלחה שלו.' : 'Which setup pays you the most — and whether your sizing matches its hit rate.'} />
       <GlassCard T={T} style={{ marginBottom: 4, padding: 0, overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
@@ -541,13 +551,13 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
       {/* ═══════════════════════════════════════════════════════════
           ZONE 4 — TEMPORAL RISK CONTEXT (hour-of-day window)
           ═══════════════════════════════════════════════════════════ */}
-      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'הקשר זמן' : 'TEMPORAL CONTEXT'} />
+      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'הקשר של זמן' : 'Time Context'} subtitle={isRTL ? 'באילו שעות אתה מרוויח באמת — והאם אתה סוחר מחוץ לחלון הרווחי שלך.' : 'Which hours actually make you money — and whether you trade outside your profitable window.'} />
       <div style={{ marginBottom: 4 }}>
         <HourOfDayStrip T={T} isRTL={isRTL} trades={trades} />
       </div>
 
       {/* ═══ RISK ALLOCATION + DRAWDOWN ═══ */}
-      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'הקצאה ונסיגה' : 'ALLOCATION & DRAWDOWN'} />
+      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'הקצאה ונסיגה' : 'Allocation & Drawdown'} subtitle={isRTL ? 'איך הסיכון מתחלק בין הנכסים, וכמה ירדת מהשיא ברגעים הקשים.' : 'How risk is distributed across assets, and how far you fell from peak during rough patches.'} />
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 4 }}>
         {showAllocChart && registryAllows('riskAllocation') && (
         <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'הקצאת סיכון' : 'Risk Allocation'} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ flex: 1, minWidth: 280 }}>
@@ -611,7 +621,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
       />
 
       {/* ═══ COOL OFF + WARNINGS ═══ */}
-      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'מצב והתראות' : 'STATUS & WARNINGS'} />
+      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'מצב והתראות' : 'Status & Warnings'} subtitle={isRTL ? 'התראות חיות על המצב הנוכחי שלך — שלום הסיכון במבט אחד.' : 'Live alerts on your current state — risk health at a glance.'} />
 
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
         <GlassCard T={T} style={{ flex: 1, minWidth: 240 }}>
