@@ -1911,6 +1911,66 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
         />
       )}
 
+      {/* ============ ACCOUNT DELETION (fully removes user + data) ============ */}
+      {showDeleteAccountModal && (
+        <div
+          onClick={() => !deletingAccount && setShowDeleteAccountModal(false)}
+          style={{ position: 'fixed', inset: 0, zIndex: 10020, background: 'rgba(2,6,15,0.88)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ width: 'min(460px, 100%)', background: T.bg.card, border: `2px solid ${T.accent.red}`, borderRadius: T.radius.xl, padding: 28, textAlign: 'center', boxShadow: `0 0 60px ${T.accent.redGlow}` }}
+          >
+            <div style={{ fontSize: 44, marginBottom: 12 }}>🛑</div>
+            <h3 style={{ margin: 0, marginBottom: 10, fontSize: 18, fontWeight: 800, color: T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>
+              {t('מחיקת חשבון לצמיתות', 'Delete Account Permanently')}
+            </h3>
+            <p style={{ fontSize: 13, color: T.text.secondary, lineHeight: 1.7, marginBottom: 22 }}>
+              {t(
+                'פעולה זו תמחק את החשבון שלך ואת כל הנתונים שלך מהשרתים שלנו. לא תוכל עוד להיכנס עם אימייל זה. אין דרך לשחזר את החשבון.',
+                'This will delete your account and every byte of your data from our servers. You will no longer be able to sign in with this email. There is no recovery.'
+              )}
+            </p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+              <button
+                onClick={() => setShowDeleteAccountModal(false)}
+                disabled={deletingAccount}
+                style={{ padding: '10px 22px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, cursor: deletingAccount ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 600 }}
+              >
+                {t('ביטול', 'Cancel')}
+              </button>
+              <button
+                disabled={deletingAccount}
+                onClick={async () => {
+                  setDeletingAccount(true);
+                  try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    const token = session?.access_token;
+                    if (!token) throw new Error('not_authenticated');
+                    const { error } = await supabase.functions.invoke('delete-account', {
+                      headers: { Authorization: `Bearer ${token}` },
+                    });
+                    if (error) throw error;
+                    try { await scopedStorage.wipeCurrentUser(); } catch { /* ignore */ }
+                    await supabase.auth.signOut();
+                    toast.success(t('החשבון נמחק לצמיתות', 'Account permanently deleted'));
+                    window.location.href = '/welcome';
+                  } catch (err) {
+                    console.error('[DeleteAccount]', err);
+                    toast.error(t('מחיקת החשבון נכשלה. נסה שוב.', 'Account deletion failed. Please try again.'));
+                    setDeletingAccount(false);
+                  }
+                }}
+                style={{ padding: '10px 24px', background: `linear-gradient(135deg, ${T.accent.red}, #7f1d1d)`, border: 'none', borderRadius: T.radius.md, color: '#fff', cursor: deletingAccount ? 'wait' : 'pointer', fontSize: 13, fontWeight: 800 }}
+              >
+                {deletingAccount ? t('מוחק…', 'Deleting…') : t('כן, מחק את החשבון', 'Yes, delete my account')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
       {/* ============ THEME COMMIT CONFIRMATION ============ */}
       {showThemeConfirm && (
         <div
