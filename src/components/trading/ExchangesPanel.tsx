@@ -66,9 +66,37 @@ function metaToCsvBroker(m: BrokerMeta): CsvBrokerMeta {
   };
 }
 
-const PROVIDERS: ProviderMeta[] = BrokerRegistry.apiCapable()
-  .filter(a => !a.meta.hidden && a.meta.supportsSync)
-  .map(a => metaToProvider(a.meta));
+const PROVIDERS: ProviderMeta[] = [
+  ...BrokerRegistry.apiCapable()
+    .filter(a => !a.meta.hidden && a.meta.supportsSync)
+    .map(a => metaToProvider(a.meta)),
+  // ── UI-only "coming soon" tiles. No registry/sync wiring; these surface as
+  // disabled cards so users see the roadmap without enabling any code path. ──
+  {
+    id: 'mexc',
+    name: 'MEXC',
+    tagline: { he: 'תמיכה מלאה בעבודה — בקרוב', en: 'Full support in the works — coming soon' },
+    gradient: 'linear-gradient(135deg, rgba(45,140,255,0.18), rgba(45,140,255,0.02))',
+    accent: '#2d8cff',
+    enabled: false,
+  },
+  {
+    id: 'gateio',
+    name: 'Gate.io',
+    tagline: { he: 'תמיכה מלאה בעבודה — בקרוב', en: 'Full support in the works — coming soon' },
+    gradient: 'linear-gradient(135deg, rgba(220,38,127,0.18), rgba(220,38,127,0.02))',
+    accent: '#dc267f',
+    enabled: false,
+  },
+  {
+    id: 'kraken',
+    name: 'Kraken',
+    tagline: { he: 'תמיכה מלאה בעבודה — בקרוב', en: 'Full support in the works — coming soon' },
+    gradient: 'linear-gradient(135deg, rgba(92,55,255,0.18), rgba(92,55,255,0.02))',
+    accent: '#5c37ff',
+    enabled: false,
+  },
+];
 
 const CSV_BROKERS: CsvBrokerMeta[] = BrokerRegistry.fileCapable()
   .filter(a => !a.meta.hidden && a.meta.kind === 'file')

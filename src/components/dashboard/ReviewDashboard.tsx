@@ -40,6 +40,28 @@ interface ReviewDashboardProps {
 
 const PV = ({ children }: { children: React.ReactNode }) => <>{children}</>;
 
+/**
+ * Time-of-day greeting (user-local clock). Windows:
+ *   04:00–11:59  → Good morning      / בוקר טוב
+ *   12:00–16:29  → Good afternoon    / צהריים טובים
+ *   16:30–17:59  → Good late afternoon / אחר הצהריים טובים
+ *   18:00–21:59  → Good evening      / ערב טוב
+ *   22:00–03:59  → Good night        / לילה טוב
+ */
+function getTimeOfDayGreeting(isRTL: boolean): string {
+  const now = new Date();
+  const mins = now.getHours() * 60 + now.getMinutes();
+  // 4:00 = 240, 12:00 = 720, 16:30 = 990, 18:00 = 1080, 22:00 = 1320
+  let he: string, en: string;
+  if (mins >= 240 && mins < 720)        { he = 'בוקר טוב, סוחר';            en = 'Good morning, Trader'; }
+  else if (mins >= 720 && mins < 990)   { he = 'צהריים טובים, סוחר';        en = 'Good afternoon, Trader'; }
+  else if (mins >= 990 && mins < 1080)  { he = 'אחר הצהריים טובים, סוחר';   en = 'Good late afternoon, Trader'; }
+  else if (mins >= 1080 && mins < 1320) { he = 'ערב טוב, סוחר';             en = 'Good evening, Trader'; }
+  else                                  { he = 'לילה טוב, סוחר';            en = 'Good night, Trader'; }
+  return isRTL ? he : en;
+}
+
+
 export const ReviewDashboard = ({
   T, t, isRTL, trades, stats, riskData, radarData, tt, privacyMode,
   isAdvancedTier, isUltimateTier, isAlpha,
@@ -51,7 +73,7 @@ export const ReviewDashboard = ({
   return (
     <div className="dash-root" dir={isRTL ? 'rtl' : 'ltr'}>
 
-      <h2 className="dash-greeting">{t.goodMorning} 👋</h2>
+      <h2 className="dash-greeting">{getTimeOfDayGreeting(isRTL)} 👋</h2>
 
       <FeatureHint
         T={T}
