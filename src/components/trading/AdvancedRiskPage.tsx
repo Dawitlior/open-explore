@@ -369,7 +369,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
           T={T}
           isRTL={isRTL}
           trades={trades}
-          marRatio={stats.maxDrawdown > 0 ? (stats.totalReturn ?? 0) / stats.maxDrawdown : null}
+          marRatio={stats.maxDrawdown > 0 ? (stats.totalR ?? 0) / stats.maxDrawdown : null}
         />
       </div>
 
