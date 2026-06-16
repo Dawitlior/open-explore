@@ -262,6 +262,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
             side: form.direction === 'Long' ? 'long' : 'short',
             size,
             entry_price: form.entry,
+            stop_loss: form.stopLoss || null,
             unrealized_pnl: 0,
             account_label: 'Manual',
             updated_at: new Date().toISOString(),
