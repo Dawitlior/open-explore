@@ -75,39 +75,37 @@ export const CorrelationMatrix = ({ T, isRTL, trades: all }: Props) => {
           ))}
 
           {/* Body rows */}
-          {matrix.symbols.map((row, i) => (
-            <>
-              <div key={`r-${row}`} style={{
-                fontSize: 10, color: T.text.secondary, padding: '0 8px',
-                textAlign: 'right', fontWeight: 600, alignSelf: 'center',
-                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-              }} title={row}>{row.replace('/USDT', '')}</div>
-              {matrix.symbols.map((_, j) => {
-                const v = matrix.values[i][j];
-                const abs = Math.abs(v);
-                const color = i === j
-                  ? T.border.medium
-                  : abs >= 0.7 ? T.accent.red
-                    : abs >= 0.4 ? T.accent.orange
-                      : T.accent.green;
-                return (
-                  <div key={`${i}-${j}`} title={`${matrix.symbols[i]} ↔ ${matrix.symbols[j]} = ${v.toFixed(2)}`}
-                    style={{
-                      aspectRatio: '1.4 / 1',
-                      minHeight: 32,
-                      background: `${color}${abs < 0.4 ? '22' : abs < 0.7 ? '55' : '88'}`,
-                      border: `1px solid ${color}55`,
-                      borderRadius: 4,
-                      color: T.text.primary,
-                      fontSize: 11, fontWeight: 700,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                    {v.toFixed(2)}
-                  </div>
-                );
-              })}
-            </>
-          ))}
+          {matrix.symbols.flatMap((row, i) => [
+            <div key={`r-${row}`} style={{
+              fontSize: 10, color: T.text.secondary, padding: '0 8px',
+              textAlign: 'right', fontWeight: 600, alignSelf: 'center',
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+            }} title={row}>{row.replace('/USDT', '')}</div>,
+            ...matrix.symbols.map((_, j) => {
+              const v = matrix.values[i][j];
+              const abs = Math.abs(v);
+              const color = i === j
+                ? T.border.medium
+                : abs >= 0.7 ? T.accent.red
+                  : abs >= 0.4 ? T.accent.orange
+                    : T.accent.green;
+              return (
+                <div key={`${i}-${j}`} title={`${matrix.symbols[i]} ↔ ${matrix.symbols[j]} = ${v.toFixed(2)}`}
+                  style={{
+                    aspectRatio: '1.4 / 1',
+                    minHeight: 32,
+                    background: `${color}${abs < 0.4 ? '22' : abs < 0.7 ? '55' : '88'}`,
+                    border: `1px solid ${color}55`,
+                    borderRadius: 4,
+                    color: T.text.primary,
+                    fontSize: 11, fontWeight: 700,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                  {v.toFixed(2)}
+                </div>
+              );
+            }),
+          ])}
         </div>
       </div>
 
