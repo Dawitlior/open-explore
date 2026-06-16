@@ -883,20 +883,16 @@ function BugCard({
 
 
 function Avatar({ reporter, size = 28 }: { reporter: BugReporter; size?: number }) {
-  const url = reporter.profile?.avatar_url;
-  return url ? (
-    <img
-      src={url}
-      alt={reporter.profile?.display_name || ''}
-      className="rounded-full ring-2 ring-[#0b111b]"
-      style={{ width: size, height: size }}
-    />
-  ) : (
+  // Always render a neutral person icon — avatar_url often points to a broken
+  // image, which looks worse than a clean glyph.
+  return (
     <span
-      className="flex items-center justify-center rounded-full text-[10px] font-bold ring-2 ring-[#0b111b]"
+      className="flex items-center justify-center rounded-full ring-2 ring-[#0b111b]"
       style={{ width: size, height: size, background: '#23324a', color: '#cdd6e3' }}
+      title={reporter.profile?.display_name || ''}
+      aria-label={reporter.profile?.display_name || 'user'}
     >
-      {initials(reporter.profile?.display_name)}
+      <User size={Math.round(size * 0.6)} strokeWidth={2} />
     </span>
   );
 }
