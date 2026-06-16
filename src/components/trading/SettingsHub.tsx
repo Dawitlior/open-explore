@@ -125,6 +125,8 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
   const [showStudioConfirm, setShowStudioConfirm] = useState(false);
   const [unlockStep, setUnlockStep] = useState<0 | 1 | 2>(0);
   const [showWipeModal, setShowWipeModal] = useState(false);
+  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
   const [sidebarAvatar, setSidebarAvatar] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
