@@ -25,6 +25,9 @@ import {
   BUG_TYPE_LABEL,
   SEVERITY_LABEL,
   STATUS_LABEL,
+  bugTypeLabel,
+  severityLabel,
+  statusLabel,
   type BugComment,
   type BugReporter,
   type BugSeverity,
@@ -32,6 +35,7 @@ import {
   type BugType,
   type BugWithMeta,
 } from './bugArenaTypes';
+import { useLang } from '@/hooks/use-lang';
 
 const ACCENT = '#f5c542'; // ORCA gold
 const CYAN = '#37e0c6';
@@ -45,9 +49,9 @@ export interface ArenaUser {
   avatar_url?: string | null;
 }
 
-function formatDateTime(iso: string): string {
+function formatDateTime(iso: string, lang: 'he' | 'en' = 'he'): string {
   try {
-    return new Intl.DateTimeFormat('he-IL', {
+    return new Intl.DateTimeFormat(lang === 'en' ? 'en-GB' : 'he-IL', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -59,13 +63,20 @@ function formatDateTime(iso: string): string {
   }
 }
 
-function timeAgo(iso: string): string {
+function timeAgo(iso: string, lang: 'he' | 'en' = 'he'): string {
   const s = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (lang === 'en') {
+    if (s < 60) return 'just now';
+    if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+    if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+    return `${Math.floor(s / 86400)}d ago`;
+  }
   if (s < 60) return 'הרגע';
   if (s < 3600) return `לפני ${Math.floor(s / 60)} ד׳`;
   if (s < 86400) return `לפני ${Math.floor(s / 3600)} ש׳`;
   return `לפני ${Math.floor(s / 86400)} י׳`;
 }
+
 
 function initials(name?: string | null): string {
   if (!name) return '?';
@@ -126,27 +137,31 @@ export function BugArenaProvider({
 // =====================================================================
 export function BugReportFab() {
   const { capture, accent } = useArena();
+  const { isRTL, t } = useLang();
   const open = capture.stage !== 'idle';
+  const label = t('דווח על באג', 'Report a bug');
   return (
     <button
       data-bug-fab
-      aria-label="דווח על באג"
+      aria-label={label}
       onClick={() => !open && capture.beginCapture()}
-      dir="rtl"
+      dir={isRTL ? 'rtl' : 'ltr'}
       className="fixed z-[1000] bottom-5 left-5 flex items-center gap-2 rounded-full px-4 py-3 font-bold shadow-2xl transition active:scale-95"
       style={{ backgroundColor: accent, color: '#06121f' }}
     >
       <TargetIcon />
-      <span className="text-sm">דווח על באג</span>
+      <span className="text-sm">{label}</span>
     </button>
   );
 }
+
 
 // =====================================================================
 // CaptureFlow — the report modal (rendered by the provider)
 // =====================================================================
 function CaptureFlow() {
   const { capture, user } = useArena();
+  const { lang, isRTL, t } = useLang();
   const { stage, draft, similar, busy, error } = capture;
 
   const [description, setDescription] = useState('');
@@ -186,7 +201,7 @@ function CaptureFlow() {
   return (
     <div
       data-bug-capture-modal
-      dir="rtl"
+      dir={isRTL ? 'rtl' : 'ltr'}
       className="fixed inset-0 z-[1001] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm"
       onClick={capture.cancel}
     >
@@ -198,12 +213,12 @@ function CaptureFlow() {
         <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-white/10 bg-[#0b111b]/95 px-5 py-4 backdrop-blur">
           <div className="flex items-center gap-2">
             <TargetIcon />
-            <h2 className="text-lg font-extrabold">דיווח על באג</h2>
+            <h2 className="text-lg font-extrabold">{t('דיווח על באג', 'Report a bug')}</h2>
           </div>
           <button
             onClick={capture.cancel}
             className="rounded-full px-2 py-1 text-2xl leading-none text-white/50 hover:text-white"
-            aria-label="סגור"
+            aria-label={t('סגור', 'Close')}
           >
             ×
           </button>
@@ -213,7 +228,7 @@ function CaptureFlow() {
           {/* context chips — section + picked element (auto, no clicks) */}
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className="rounded-full bg-white/10 px-3 py-1 font-semibold">
-              אזור: {draft.section}
+              {t('אזור', 'Area')}: {draft.section}
             </span>
             {draft.pick?.label && (
               <span
@@ -229,7 +244,7 @@ function CaptureFlow() {
                 onClick={capture.beginCapture}
                 className="rounded-full border border-dashed border-white/25 px-3 py-1 hover:border-white/50"
               >
-                + סמן את האלמנט הפגום
+                {t('+ סמן את האלמנט הפגום', '+ Mark the broken element')}
               </button>
             )}
           </div>
@@ -262,19 +277,19 @@ function CaptureFlow() {
                 color={color}
               />
               <p className="mt-1 text-xs text-white/40">
-                סמן על הצילום מה שבור — חץ, מסגרת או קו חופשי.
+                {t('סמן על הצילום מה שבור — חץ, מסגרת או קו חופשי.', 'Mark what is broken on the screenshot — arrow, box or freehand.')}
               </p>
             </div>
           ) : (
             <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-center text-sm text-white/50">
-              לוכד צילום מסך…
+              {t('לוכד צילום מסך…', 'Capturing screenshot…')}
             </div>
           )}
 
           {/* description (the only required field) */}
           <div>
             <label className="mb-1 block text-sm font-semibold">
-              מה קרה? <span style={{ color: ACCENT }}>*</span>
+              {t('מה קרה?', 'What happened?')} <span style={{ color: ACCENT }}>*</span>
             </label>
             <textarea
               data-bug-description
@@ -282,7 +297,7 @@ function CaptureFlow() {
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
               autoFocus
-              placeholder="תאר בקצרה את הבאג…"
+              placeholder={t('תאר בקצרה את הבאג…', 'Briefly describe the bug…')}
               className="w-full resize-none rounded-xl border border-white/10 bg-white/5 p-3 text-sm outline-none focus:border-[var(--a)]"
               style={{ ['--a' as any]: ACCENT }}
             />
@@ -291,23 +306,23 @@ function CaptureFlow() {
           {/* type + severity — one tap each, sensible defaults */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Chips
-              label="סוג"
+              label={t('סוג', 'Type')}
               value={bugType}
               onChange={(v) => setBugType(v as BugType)}
-              options={Object.entries(BUG_TYPE_LABEL).map(([v, l]) => ({ v, l }))}
+              options={(Object.keys(BUG_TYPE_LABEL) as BugType[]).map((v) => ({ v, l: bugTypeLabel(v, lang) }))}
             />
             <Chips
-              label="חומרה"
+              label={t('חומרה', 'Severity')}
               value={severity}
               onChange={(v) => setSeverity(v as BugSeverity)}
-              options={Object.entries(SEVERITY_LABEL).map(([v, l]) => ({ v, l }))}
+              options={(Object.keys(SEVERITY_LABEL) as BugSeverity[]).map((v) => ({ v, l: severityLabel(v, lang) }))}
             />
           </div>
 
           {/* optional extra image */}
           <div className="flex items-center gap-3">
             <label className="cursor-pointer rounded-xl border border-white/15 px-3 py-2 text-sm hover:border-white/40">
-              📎 צרף תמונה
+              {t('📎 צרף תמונה', '📎 Attach image')}
               <input
                 type="file"
                 accept="image/*"
@@ -330,15 +345,16 @@ function CaptureFlow() {
             className="flex-1 rounded-xl py-3 font-extrabold text-[#06121f] transition active:scale-[0.98] disabled:opacity-40"
             style={{ background: ACCENT }}
           >
-            {stage === 'submitting' ? 'שולח…' : 'שלח דיווח'}
+            {stage === 'submitting' ? t('שולח…', 'Sending…') : t('שלח דיווח', 'Send report')}
           </button>
           <button
             onClick={capture.cancel}
             className="rounded-xl border border-white/15 px-5 py-3 font-semibold text-white/70 hover:text-white"
           >
-            ביטול
+            {t('ביטול', 'Cancel')}
           </button>
         </div>
+
       </div>
     </div>
   );
@@ -356,6 +372,7 @@ function DedupSuggestions({
   busy: boolean;
   onJoin: (b: BugWithMeta) => void;
 }) {
+  const { lang, t } = useLang();
   return (
     <div
       data-bug-dedup
@@ -363,7 +380,7 @@ function DedupSuggestions({
       style={{ borderColor: `${CYAN}55`, background: '#0d1a20' }}
     >
       <div className="mb-2 text-sm font-bold" style={{ color: CYAN }}>
-        אולי זה אותו באג? הצטרף במקום לפתוח חדש:
+        {t('אולי זה אותו באג? הצטרף במקום לפתוח חדש:', 'Maybe it\u2019s the same bug? Join instead of opening a new one:')}
       </div>
       <div className="space-y-2">
         {similar.map((b) => (
@@ -374,7 +391,7 @@ function DedupSuggestions({
             <div className="min-w-0">
               <div className="truncate text-sm">{b.title || b.description}</div>
               <div className="text-xs text-white/40">
-                {b.reporterCount} מדווחים · {timeAgo(b.created_at)}
+                {b.reporterCount} {t('מדווחים', 'reporters')} · {timeAgo(b.created_at, lang)}
               </div>
             </div>
             <button
@@ -383,7 +400,7 @@ function DedupSuggestions({
               className="shrink-0 rounded-full px-3 py-1 text-sm font-bold text-[#06121f]"
               style={{ background: CYAN }}
             >
-              גם לי
+              {t('גם לי', 'Me too')}
             </button>
           </div>
         ))}
@@ -391,6 +408,7 @@ function DedupSuggestions({
     </div>
   );
 }
+
 
 // ---------------------------------------------------------------------
 // Annotation
@@ -410,6 +428,7 @@ function AnnotationToolbar({
   onUndo: () => void;
   onClear: () => void;
 }) {
+  const { t } = useLang();
   const tools: { t: AnnoTool; label: string }[] = [
     { t: 'rect', label: '▭' },
     { t: 'arrow', label: '↗' },
@@ -438,19 +457,20 @@ function AnnotationToolbar({
           onClick={() => onColor(c)}
           className="h-6 w-6 rounded-full ring-2 ring-offset-2 ring-offset-[#0b111b]"
           style={{ background: c, boxShadow: color === c ? `0 0 0 2px ${c}` : 'none' }}
-          aria-label={`צבע ${c}`}
+          aria-label={`${t('צבע', 'Color')} ${c}`}
         />
       ))}
       <span className="mx-1 h-5 w-px bg-white/15" />
       <button onClick={onUndo} className="rounded-lg bg-white/8 px-2 py-1 text-xs">
-        בטל
+        {t('בטל', 'Undo')}
       </button>
       <button onClick={onClear} className="rounded-lg bg-white/8 px-2 py-1 text-xs">
-        נקה
+        {t('נקה', 'Clear')}
       </button>
     </div>
   );
 }
+
 
 function AnnotationCanvas({
   imageUrl,
@@ -568,7 +588,7 @@ function AnnotationCanvas({
       className="relative w-full overflow-hidden rounded-xl border border-white/10"
       style={{ touchAction: 'none' }}
     >
-      <img src={imageUrl} alt="צילום מסך" className="block w-full select-none" draggable={false} />
+      <img src={imageUrl} alt="screenshot" className="block w-full select-none" draggable={false} />
       <canvas
         ref={canvasRef}
         className="absolute inset-0 h-full w-full cursor-crosshair"
@@ -623,6 +643,7 @@ function Chips({
 // =====================================================================
 export function BugBoard() {
   const { supabase, user, accent } = useArena();
+  const { isRTL, t } = useLang();
   const board = useBugReports(supabase, user.id);
   const [openBug, setOpenBug] = useState<BugWithMeta | null>(null);
 
@@ -632,13 +653,13 @@ export function BugBoard() {
   }, [board.bugs]);
 
   return (
-    <div data-bug-board dir="rtl" className="mx-auto max-w-3xl p-4 text-[#e8edf5]">
+    <div data-bug-board dir={isRTL ? 'rtl' : 'ltr'} className="mx-auto max-w-3xl p-4 text-[#e8edf5]">
       {/* filters */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <input
           value={board.filter.search || ''}
           onChange={(e) => board.setFilter({ search: e.target.value })}
-          placeholder="חיפוש…"
+          placeholder={t('חיפוש…', 'Search…')}
           className="flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
         />
         <button
@@ -649,7 +670,7 @@ export function BugBoard() {
             color: board.filter.onlyMine ? '#06121f' : '#cdd6e3',
           }}
         >
-          הדיווחים שלי
+          {t('הדיווחים שלי', 'My reports')}
         </button>
       </div>
 
@@ -665,18 +686,19 @@ export function BugBoard() {
               color: (board.filter.section || 'all') === s ? '#06121f' : '#cdd6e3',
             }}
           >
-            {s === 'all' ? 'הכל' : s}
+            {s === 'all' ? t('הכל', 'All') : s}
           </button>
         ))}
       </div>
 
-      {board.loading && <div className="py-10 text-center text-white/40">טוען…</div>}
+      {board.loading && <div className="py-10 text-center text-white/40">{t('טוען…', 'Loading…')}</div>}
       {board.error && <div className="py-4 text-center text-red-400">{board.error}</div>}
       {!board.loading && board.bugs.length === 0 && (
         <div className="rounded-2xl border border-dashed border-white/15 p-10 text-center text-white/50">
-          אין באגים פתוחים כרגע. מצאת אחד? לחץ על "דווח על באג".
+          {t('אין באגים פתוחים כרגע. מצאת אחד? לחץ על "דווח על באג".', 'No open bugs right now. Found one? Click "Report a bug".')}
         </div>
       )}
+
 
       {/* grouped cards */}
       <div className="space-y-6">
@@ -736,6 +758,7 @@ function BugCard({
   onStatus: (s: BugStatus) => void;
   onOpen: () => void;
 }) {
+  const { lang, isRTL, t } = useLang();
   const [reportersOpen, setReportersOpen] = useState(false);
 
   return (
@@ -759,15 +782,15 @@ function BugCard({
               className="rounded-full px-2 py-0.5 text-[11px] font-bold"
               style={{ background: `${STATUS_COLOR[bug.status]}22`, color: STATUS_COLOR[bug.status] }}
             >
-              {STATUS_LABEL[bug.status]}
+              {statusLabel(bug.status, lang)}
             </span>
-            <span className="text-[11px] text-white/40">{BUG_TYPE_LABEL[bug.bug_type]}</span>
+            <span className="text-[11px] text-white/40">{bugTypeLabel(bug.bug_type, lang)}</span>
           </div>
-          <button onClick={onOpen} className="mt-1 block text-right">
+          <button onClick={onOpen} className={`mt-1 block ${isRTL ? 'text-right' : 'text-left'}`}>
             <p className="line-clamp-2 text-sm font-semibold">{bug.title || bug.description}</p>
           </button>
-          <div className="mt-1 text-[11px] text-white/35" title={formatDateTime(bug.created_at)}>
-            {formatDateTime(bug.created_at)}
+          <div className="mt-1 text-[11px] text-white/35" title={formatDateTime(bug.created_at, lang)}>
+            {formatDateTime(bug.created_at, lang)}
           </div>
         </div>
       </div>
@@ -778,18 +801,18 @@ function BugCard({
           data-bug-reporters
           onClick={() => setReportersOpen((v) => !v)}
           className="relative flex items-center"
-          aria-label="מי דיווח"
+          aria-label={t('מי דיווח', 'Who reported')}
         >
-          <div className="flex -space-x-2 space-x-reverse">
+          <div className={`flex -space-x-2 ${isRTL ? 'space-x-reverse' : ''}`}>
             {bug.reporters.slice(0, 3).map((r) => (
               <Avatar key={r.user_id} reporter={r} />
             ))}
           </div>
           {bug.reporterCount > 3 && (
-            <span className="mr-1 text-xs text-white/50">+{bug.reporterCount - 3}</span>
+            <span className={`${isRTL ? 'mr-1' : 'ml-1'} text-xs text-white/50`}>+{bug.reporterCount - 3}</span>
           )}
-          <span className="mr-2 text-xs font-semibold text-white/60">
-            {bug.reporterCount} מדווחים
+          <span className={`${isRTL ? 'mr-2' : 'ml-2'} text-xs font-semibold text-white/60`}>
+            {bug.reporterCount} {t('מדווחים', 'reporters')}
           </span>
         </button>
 
@@ -803,7 +826,7 @@ function BugCard({
             >
               {(Object.keys(STATUS_LABEL) as BugStatus[]).map((s) => (
                 <option key={s} value={s}>
-                  {STATUS_LABEL[s]}
+                  {statusLabel(s, lang)}
                 </option>
               ))}
             </select>
@@ -815,7 +838,7 @@ function BugCard({
               className="rounded-full px-3 py-1 text-sm font-bold"
               style={{ background: CYAN, color: '#06121f' }}
             >
-              גם לי קורה
+              {t('גם לי קורה', 'Happens to me too')}
             </button>
           ) : (
             <button
@@ -826,7 +849,7 @@ function BugCard({
                 color: canHardDelete ? '#ff5470' : '#cdd6e3',
               }}
             >
-              {canHardDelete ? 'מחק' : 'הסר אותי'}
+              {canHardDelete ? t('מחק', 'Delete') : t('הסר אותי', 'Remove me')}
             </button>
           )}
         </div>
@@ -836,6 +859,7 @@ function BugCard({
     </article>
   );
 }
+
 
 function Avatar({ reporter, size = 28 }: { reporter: BugReporter; size?: number }) {
   const url = reporter.profile?.avatar_url;
@@ -857,21 +881,22 @@ function Avatar({ reporter, size = 28 }: { reporter: BugReporter; size?: number 
 }
 
 function ReportersPopover({ reporters }: { reporters: BugReporter[] }) {
+  const { lang, isRTL, t } = useLang();
   return (
     <div
       data-bug-reporters-popover
       className="mt-3 rounded-xl border border-white/10 bg-[#0b111b] p-3"
     >
-      <div className="mb-2 text-xs font-bold text-white/50">מי דיווח על הבאג</div>
+      <div className="mb-2 text-xs font-bold text-white/50">{t('מי דיווח על הבאג', 'Who reported this bug')}</div>
       <ul className="space-y-2">
         {reporters.map((r) => (
           <li key={r.user_id} className="flex items-center gap-2">
             <Avatar reporter={r} size={24} />
             <div className="min-w-0">
-              <div className="truncate text-sm">{r.profile?.display_name || 'משתמש'}</div>
+              <div className="truncate text-sm">{r.profile?.display_name || t('משתמש', 'User')}</div>
               {r.note && <div className="truncate text-xs text-white/40">{r.note}</div>}
             </div>
-            <span className="mr-auto text-[11px] text-white/30">{timeAgo(r.created_at)}</span>
+            <span className={`${isRTL ? 'mr-auto' : 'ml-auto'} text-[11px] text-white/30`}>{timeAgo(r.created_at, lang)}</span>
           </li>
         ))}
       </ul>
@@ -879,11 +904,13 @@ function ReportersPopover({ reporters }: { reporters: BugReporter[] }) {
   );
 }
 
+
 // =====================================================================
 // DETAIL  (full view + comments)
 // =====================================================================
 export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => void }) {
   const { supabase, user } = useArena();
+  const { lang, isRTL, t } = useLang();
   const api = useMemo(() => createBugArenaService(supabase), [supabase]);
   const [bug, setBug] = useState<BugWithMeta | null>(null);
   const [comments, setComments] = useState<BugComment[]>([]);
@@ -905,7 +932,7 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
   return (
     <div
       data-bug-detail
-      dir="rtl"
+      dir={isRTL ? 'rtl' : 'ltr'}
       className="fixed inset-0 z-[1002] flex justify-center bg-black/60 backdrop-blur-sm sm:items-center"
       onClick={onClose}
     >
@@ -914,14 +941,14 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-[#0b111b]/95 px-5 py-4 backdrop-blur">
-          <h2 className="text-lg font-extrabold">פרטי באג</h2>
+          <h2 className="text-lg font-extrabold">{t('פרטי באג', 'Bug details')}</h2>
           <button onClick={onClose} className="text-2xl text-white/50 hover:text-white">
             ×
           </button>
         </div>
 
         {!bug ? (
-          <div className="p-10 text-center text-white/40">טוען…</div>
+          <div className="p-10 text-center text-white/40">{t('טוען…', 'Loading…')}</div>
         ) : (
           <div className="space-y-5 p-5">
             <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -929,14 +956,14 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
                 className="rounded-full px-2 py-0.5 font-bold"
                 style={{ background: `${STATUS_COLOR[bug.status]}22`, color: STATUS_COLOR[bug.status] }}
               >
-                {STATUS_LABEL[bug.status]}
+                {statusLabel(bug.status, lang)}
               </span>
               <span className="rounded-full bg-white/10 px-2 py-0.5">{bug.section}</span>
-              <span className="rounded-full bg-white/10 px-2 py-0.5">{BUG_TYPE_LABEL[bug.bug_type]}</span>
+              <span className="rounded-full bg-white/10 px-2 py-0.5">{bugTypeLabel(bug.bug_type, lang)}</span>
               <span className="rounded-full bg-white/10 px-2 py-0.5">
-                חומרה: {SEVERITY_LABEL[bug.severity]}
+                {t('חומרה', 'Severity')}: {severityLabel(bug.severity, lang)}
               </span>
-              <span className="text-white/40">{formatDateTime(bug.created_at)}</span>
+              <span className="text-white/40">{formatDateTime(bug.created_at, lang)}</span>
             </div>
 
             <p className="whitespace-pre-wrap text-sm">{bug.description}</p>
@@ -974,7 +1001,7 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
             {/* comments */}
             <div data-bug-comments>
               <div className="mb-2 text-sm font-bold text-white/60">
-                דיון ({comments.length})
+                {t('דיון', 'Discussion')} ({comments.length})
               </div>
               <ul className="space-y-3">
                 {comments.map((c) => (
@@ -988,9 +1015,9 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
                     <div className="min-w-0 flex-1 rounded-xl bg-white/5 px-3 py-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold">
-                          {c.profile?.display_name || 'משתמש'}
+                          {c.profile?.display_name || t('משתמש', 'User')}
                         </span>
-                        <span className="text-[11px] text-white/30">{timeAgo(c.created_at)}</span>
+                        <span className="text-[11px] text-white/30">{timeAgo(c.created_at, lang)}</span>
                       </div>
                       <p className="whitespace-pre-wrap text-sm">{c.body}</p>
                     </div>
@@ -1003,7 +1030,7 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && send()}
-                  placeholder="הוסף תגובה…"
+                  placeholder={t('הוסף תגובה…', 'Add a comment…')}
                   className="flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
                 />
                 <button
@@ -1011,7 +1038,7 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
                   className="rounded-xl px-4 py-2 text-sm font-bold text-[#06121f]"
                   style={{ background: ACCENT }}
                 >
-                  שלח
+                  {t('שלח', 'Send')}
                 </button>
               </div>
             </div>
@@ -1021,6 +1048,7 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
     </div>
   );
 }
+
 
 // ---------------------------------------------------------------------
 // tiny icon

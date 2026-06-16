@@ -157,3 +157,35 @@ export const STATUS_LABEL: Record<BugStatus, string> = {
   wont_fix: 'לא יטופל',
   duplicate: 'כפילות',
 };
+
+// English mirrors
+export const BUG_TYPE_LABEL_EN: Record<BugType, string> = {
+  visual: 'Visual glitch',
+  crash: 'Crash',
+  data: 'Wrong data',
+  performance: 'Slow / Performance',
+  other: 'Other',
+};
+
+export const SEVERITY_LABEL_EN: Record<BugSeverity, string> = {
+  low: 'Low',
+  medium: 'Medium',
+  high: 'High',
+  critical: 'Critical',
+};
+
+export const STATUS_LABEL_EN: Record<BugStatus, string> = {
+  open: 'Open',
+  in_progress: 'In progress',
+  resolved: 'Resolved',
+  wont_fix: 'Won\u2019t fix',
+  duplicate: 'Duplicate',
+};
+
+export const bugTypeLabel = (v: BugType, lang: 'he' | 'en' = 'he') =>
+  (lang === 'en' ? BUG_TYPE_LABEL_EN : BUG_TYPE_LABEL)[v];
+export const severityLabel = (v: BugSeverity, lang: 'he' | 'en' = 'he') =>
+  (lang === 'en' ? SEVERITY_LABEL_EN : SEVERITY_LABEL)[v];
+export const statusLabel = (v: BugStatus, lang: 'he' | 'en' = 'he') =>
+  (lang === 'en' ? STATUS_LABEL_EN : STATUS_LABEL)[v];
+
