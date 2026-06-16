@@ -104,6 +104,10 @@ const ReminderBadge = () => (
 
 const Index = () => {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
+  const arena = useArena();
+  const openBugReport = () => { try { arena.capture.beginCapture(); } catch {} };
+  const goBugBoard = () => navigate('/bugs');
   const settings = useSettings();
   const { prefs: userPrefs, loaded: userPrefsLoaded } = useUserPreferences(); // warm cache for centralized R-multiple Tier-3 proxy
   const { trades, stats, loading, initialized, addTrade, updateTrade, upsertJournalTrade, removeTrade, resetAll, importTrades, riskAlert, dismissRiskAlert, setManualR } = useTrades();
