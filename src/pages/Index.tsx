@@ -591,7 +591,8 @@ const Index = () => {
   // After dataReady flips true, wait one paint frame so React has actually
   // rendered the dashboard before we hide the loader — eliminates the empty
   // flash users were seeing.
-  const [firstPaintReady, setFirstPaintReady] = useState(false);
+  // rendered the dashboard before we hide the loader — eliminates the empty
+  // flash users were seeing. (state declared above with other hooks)
   useEffect(() => {
     if (!dataReady) { setFirstPaintReady(false); return; }
     const raf1 = requestAnimationFrame(() => {
