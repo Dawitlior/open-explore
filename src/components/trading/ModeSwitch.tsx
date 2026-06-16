@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Zap, Crown, Check, X } from 'lucide-react';
 import type { TradingTheme } from '@/lib/trading-theme';
