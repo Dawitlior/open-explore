@@ -1908,12 +1908,13 @@ const Index = () => {
                 ↩ {isRTL ? 'שחזר גרפים' : 'Restore Charts'} ({hiddenCharts.length})
               </button>
             )}
-            {!isMobile && !uiPrefs.hideQuickActions && (
+            {!uiPrefs.hideQuickActions && (
               <button
                 onClick={() => setShowCmdPalette(true)}
+                aria-label={isRTL ? 'פעולות מהירות' : 'Quick Actions'}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 8,
-                  padding: '6px 14px',
+                  display: 'flex', alignItems: 'center', gap: isMobile ? 4 : 8,
+                  padding: isMobile ? '6px 10px' : '6px 14px',
                   background: `linear-gradient(135deg, ${T.bg.tertiary}, ${T.bg.card})`,
                   border: `1px solid ${T.border.medium}`,
                   borderRadius: T.radius.md,
@@ -1923,6 +1924,7 @@ const Index = () => {
                   fontWeight: 500,
                   transition: 'all 0.2s ease',
                   boxShadow: T.shadow.card,
+                  flexShrink: 0,
                 }}
                 onMouseEnter={e => {
                   e.currentTarget.style.borderColor = T.accent.cyan + '50';
@@ -1940,17 +1942,22 @@ const Index = () => {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
                 </svg>
-                <span style={{ fontFamily: "'Inter', sans-serif" }}>
-                  {isRTL ? 'פעולות מהירות' : 'Quick Actions'}
-                </span>
-                <span style={{
-                  fontSize: 9, padding: '2px 5px',
-                  background: `${T.accent.cyan}12`, border: `1px solid ${T.accent.cyan}20`,
-                  borderRadius: 4, color: T.accent.cyan,
-                  fontFamily: "'JetBrains Mono', monospace", fontWeight: 700
-                }}>⌘K</span>
+                {!isMobile && (
+                  <span style={{ fontFamily: "'Inter', sans-serif" }}>
+                    {isRTL ? 'פעולות מהירות' : 'Quick Actions'}
+                  </span>
+                )}
+                {!isMobile && (
+                  <span style={{
+                    fontSize: 9, padding: '2px 5px',
+                    background: `${T.accent.cyan}12`, border: `1px solid ${T.accent.cyan}20`,
+                    borderRadius: 4, color: T.accent.cyan,
+                    fontFamily: "'JetBrains Mono', monospace", fontWeight: 700
+                  }}>⌘K</span>
+                )}
               </button>
             )}
+
             {!isMobile && !uiPrefs.hideHeaderDate && <div style={{ fontSize: 11, color: T.text.muted }}>{new Date().toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</div>}
             <PV><div style={{ fontSize: 11, color: T.accent.cyan, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace" }}>${currentBalance.toFixed(2)}</div></PV>
             
