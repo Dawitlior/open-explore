@@ -49,9 +49,9 @@ export interface ArenaUser {
   avatar_url?: string | null;
 }
 
-function formatDateTime(iso: string): string {
+function formatDateTime(iso: string, lang: 'he' | 'en' = 'he'): string {
   try {
-    return new Intl.DateTimeFormat('he-IL', {
+    return new Intl.DateTimeFormat(lang === 'en' ? 'en-GB' : 'he-IL', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -63,13 +63,20 @@ function formatDateTime(iso: string): string {
   }
 }
 
-function timeAgo(iso: string): string {
+function timeAgo(iso: string, lang: 'he' | 'en' = 'he'): string {
   const s = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (lang === 'en') {
+    if (s < 60) return 'just now';
+    if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+    if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+    return `${Math.floor(s / 86400)}d ago`;
+  }
   if (s < 60) return 'הרגע';
   if (s < 3600) return `לפני ${Math.floor(s / 60)} ד׳`;
   if (s < 86400) return `לפני ${Math.floor(s / 3600)} ש׳`;
   return `לפני ${Math.floor(s / 86400)} י׳`;
 }
+
 
 function initials(name?: string | null): string {
   if (!name) return '?';
