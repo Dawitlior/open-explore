@@ -270,6 +270,10 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
         if (error) throw error;
         haptics.success();
         toast.success(isRTL ? `פוזיציה פתוחה נשמרה — ${form.coin}` : `Open position saved — ${form.coin}`);
+        // Notify dashboard panels to refetch immediately (don't wait for realtime).
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('orca:open-position-changed', { detail: { symbol: form.coin } }));
+        }
         onClose();
       } catch (e: any) {
         setErrors([isRTL ? `שגיאה בשמירה: ${e.message || e}` : `Save failed: ${e.message || e}`]);
