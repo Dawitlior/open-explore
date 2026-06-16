@@ -38,7 +38,7 @@ export function useSettings() {
     if (typeof window === 'undefined') return 'midnight';
     try {
       const v = window.localStorage.getItem('orca:theme-cache');
-      return (v === 'midnight' || v === 'indigo' || v === 'platinum') ? v : 'midnight';
+      return (v === 'midnight' || v === 'indigo' || v === 'platinum' || v === 'graphite') ? v : 'midnight';
     } catch { return 'midnight'; }
   });
   const [systemMode, setSystemModeState] = useState<SystemMode>('standard');
