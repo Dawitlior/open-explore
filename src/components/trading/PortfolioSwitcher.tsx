@@ -186,7 +186,7 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
           fontWeight: 600,
           fontFamily: "'Poppins', sans-serif",
           letterSpacing: '0.02em',
-          maxWidth: 240, minWidth: 0, width: '100%',
+          maxWidth: compact ? 240 : '100%', minWidth: 0, width: '100%',
           boxShadow: open
             ? '0 6px 24px rgba(212,175,55,0.22), inset 0 1px 0 rgba(255,255,255,0.06)'
             : '0 2px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)',
