@@ -979,7 +979,7 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
               >
                 {statusLabel(bug.status, lang)}
               </span>
-              <span className="rounded-full bg-white/10 px-2 py-0.5">{bug.section}</span>
+              <span className="rounded-full bg-white/10 px-2 py-0.5">{sectionLabel(bug.section, lang)}</span>
               <span className="rounded-full bg-white/10 px-2 py-0.5">{bugTypeLabel(bug.bug_type, lang)}</span>
               <span className="rounded-full bg-white/10 px-2 py-0.5">
                 {t('חומרה', 'Severity')}: {severityLabel(bug.severity, lang)}
