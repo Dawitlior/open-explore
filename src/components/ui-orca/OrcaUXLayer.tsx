@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { AccessibilityWidget } from '@/components/a11y/AccessibilityWidget';
 
 /**
  * OrcaUXLayer — global premium UX layer.
