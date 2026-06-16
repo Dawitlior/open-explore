@@ -116,23 +116,24 @@ export function useBugCapture(
       const route = getCurrentRoute();
       const section = sectionResolver(route);
 
-      // open the form immediately so it feels instant…
-      setDraft({ pick, shot: null, context: collectContext(), section });
+      // Capture screenshot FIRST — before the report modal is rendered —
+      // so the form itself never appears in the screenshot and never hides
+      // the element the user just selected.
+      const shot = await captureViewport(pick?.rect ?? null, config?.accent);
+
+      // Now open the form with the screenshot already in place.
+      setDraft({ pick, shot, context: collectContext(), section });
       setStage('draft');
 
-      // …then fill in screenshot + dedup suggestions in the background
-      const [shot, sims] = await Promise.all([
-        captureViewport(pick?.rect ?? null, config?.accent),
-        api
-          .findSimilarBugs({
-            route,
-            selector: pick?.selector ?? null,
-            section,
-          })
-          .catch(() => [] as BugWithMeta[]),
-      ]);
-      setDraft((d) => (d ? { ...d, shot } : d));
-      setSimilar(sims);
+      // Dedup suggestions can load in the background.
+      api
+        .findSimilarBugs({
+          route,
+          selector: pick?.selector ?? null,
+          section,
+        })
+        .then((sims) => setSimilar(sims))
+        .catch(() => setSimilar([]));
     },
     [api, sectionResolver, config?.accent]
   );
