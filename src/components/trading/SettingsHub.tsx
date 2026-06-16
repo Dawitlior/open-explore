@@ -60,6 +60,7 @@ const THEME_OPTIONS: { id: ThemeId; label: { he: string; en: string }; sub: { he
   { id: 'midnight', label: { he: 'חצות', en: 'Midnight' }, sub: { he: 'כחול עמוק • ברירת מחדל', en: 'Deep blue • Default' }, preview: ['#020202', '#0b1730', '#00f2ff', '#3b82f6'] },
   { id: 'indigo', label: { he: 'אינדיגו ליל', en: 'Indigo Noir' }, sub: { he: 'סגול-ליל יוקרתי', en: 'Premium night purple' }, preview: ['#06030f', '#1a1338', '#a78bfa', '#6366f1'] },
   { id: 'platinum', label: { he: 'לבן יוקרתי', en: 'Platinum White' }, sub: { he: 'מצב יום מינימלי', en: 'Minimal light mode' }, preview: ['#ffffff', '#f1f5f9', '#1d4ed8', '#b45309'] },
+  { id: 'graphite', label: { he: 'גרפיט רשמי', en: 'Graphite Formal' }, sub: { he: 'אפור • ירוק • אדום בלבד', en: 'Gray • Green • Red only' }, preview: ['#0e1013', '#1c2128', '#22c55e', '#ef4444'] },
 ];
 
 const TOKEN_LIST = [

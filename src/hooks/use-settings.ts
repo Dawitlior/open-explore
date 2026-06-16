@@ -3,7 +3,7 @@ import { getSetting, setSetting } from '@/lib/storage';
 import { applyThemeToDOM } from '@/lib/trading-theme';
 import { writeCachedLang } from '@/hooks/use-lang';
 
-export type ThemeId = 'midnight' | 'indigo' | 'platinum';
+export type ThemeId = 'midnight' | 'indigo' | 'platinum' | 'graphite';
 export type SystemMode = 'standard' | 'alpha';
 export type OperatingMode = 'live' | 'review' | 'research' | 'beginner';
 export type Lang = 'he' | 'en';
@@ -38,7 +38,7 @@ export function useSettings() {
     if (typeof window === 'undefined') return 'midnight';
     try {
       const v = window.localStorage.getItem('orca:theme-cache');
-      return (v === 'midnight' || v === 'indigo' || v === 'platinum') ? v : 'midnight';
+      return (v === 'midnight' || v === 'indigo' || v === 'platinum' || v === 'graphite') ? v : 'midnight';
     } catch { return 'midnight'; }
   });
   const [systemMode, setSystemModeState] = useState<SystemMode>('standard');
@@ -60,7 +60,7 @@ export function useSettings() {
       getSetting<boolean>('privacyMode'),
     ]).then(([t, m, o, l, p]) => {
       // Migrate legacy themes (arctic/ember/crimson) to new ones
-      const migrated: ThemeId = (t === 'midnight' || t === 'indigo' || t === 'platinum') ? t : 'midnight';
+      const migrated: ThemeId = (t === 'midnight' || t === 'indigo' || t === 'platinum' || t === 'graphite') ? t : 'midnight';
       setThemeState(migrated);
       try { window.localStorage.setItem('orca:theme-cache', migrated); } catch { /* noop */ }
       if (m) setSystemModeState(m);

@@ -3,7 +3,7 @@ import type { Trade } from '@/data/trades';
 import { readJournalState, writeJournalState, type JournalDay, type JournalTrade, type JournalState, type PsychAnswers } from '@/lib/journal-storage';
 import { ReturnButton } from './DimensionController';
 import { playSystemOpen, playMorningLock, playEODLock, playRiskAlert } from '@/lib/apex-sounds';
-import { MORNING_VARIATIONS, EOD_VARIATIONS } from '@/lib/journal-demo-data';
+import { MORNING_VARIATIONS, EOD_VARIATIONS, EN_MORNING_VARIATIONS, EN_EOD_VARIATIONS } from '@/lib/journal-demo-data';
 import { getR, sumR, formatR } from '@/lib/r-multiple';
 
 // ─── Display-mode awareness ────────────────────────────────────
@@ -3285,7 +3285,11 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
   const morningIdxRef = useRef(Math.floor(Math.random() * MORNING_VARIATIONS.length));
 
   const fillMorning = () => {
-    const v = MORNING_VARIATIONS[morningIdxRef.current % MORNING_VARIATIONS.length];
+    // Pick the demo set matching the active platform language so the example
+    // is always presented in the user's chosen language (he/en).
+    const isEn = dir === 'ltr';
+    const SOURCE = isEn ? EN_MORNING_VARIATIONS : MORNING_VARIATIONS;
+    const v = SOURCE[morningIdxRef.current % SOURCE.length];
     morningIdxRef.current++;
     // Map English demo values → current language by index in EN reference arrays
     const EN_BIAS = ['Bullish', 'Bearish', 'Neutral', 'Expansion', 'Contraction'];
@@ -3593,7 +3597,10 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
   const eodIdxRef = useRef(Math.floor(Math.random() * EOD_VARIATIONS.length));
 
   const fillEod = () => {
-    const v = EOD_VARIATIONS[eodIdxRef.current % EOD_VARIATIONS.length];
+    // Match the demo set to the active platform language.
+    const isEn = dir === 'ltr';
+    const SOURCE = isEn ? EN_EOD_VARIATIONS : EOD_VARIATIONS;
+    const v = SOURCE[eodIdxRef.current % SOURCE.length];
     eodIdxRef.current++;
     // Set hasOpen explicitly (simulates clicking the Yes/No button)
     // Then inject trades with unique IDs (simulates clicking "+ Log Trade" and filling)
