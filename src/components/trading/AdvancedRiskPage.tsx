@@ -39,21 +39,31 @@ interface AdvancedRiskPageProps {
   registryCharts?: import('@/lib/chart-registry').ChartSpec[];
 }
 
-// ─── Section header (Orca terminal style) ───────────────────────────
-const SectionHeader = ({ T, label, accent, isRTL }: { T: TradingTheme; label: string; accent?: string; isRTL: boolean }) => (
-  <div style={{
-    display: 'flex', alignItems: 'center', gap: 10,
-    fontSize: 9, color: accent || T.accent.cyan,
-    textTransform: 'uppercase', letterSpacing: '0.16em', fontWeight: 700,
-    fontFamily: "'JetBrains Mono', monospace",
-    margin: '20px 0 12px',
-  }}>
-    <span style={{ width: 6, height: 6, borderRadius: 1, background: accent || T.accent.cyan, boxShadow: `0 0 10px ${accent || T.accent.cyan}` }} />
-    <span style={{ width: 24, height: 1, background: `${accent || T.accent.cyan}50` }} />
-    {label}
-    <span style={{ flex: 1, height: 1, background: `linear-gradient(${isRTL ? '270deg' : '90deg'}, ${accent || T.accent.cyan}30, transparent)` }} />
-  </div>
-);
+// ─── Section header (clear, plain-language with subtitle) ──────────
+const SectionHeader = ({ T, label, accent, isRTL, subtitle }: { T: TradingTheme; label: string; accent?: string; isRTL: boolean; subtitle?: string }) => {
+  const color = accent || T.accent.cyan;
+  return (
+    <div style={{ margin: '24px 0 12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ width: 8, height: 8, borderRadius: 2, background: color, boxShadow: `0 0 10px ${color}` }} />
+        <span style={{
+          fontSize: 14, fontWeight: 700, color: T.text.primary,
+          letterSpacing: '-0.01em',
+        }}>{label}</span>
+        <span style={{ flex: 1, height: 1, background: `linear-gradient(${isRTL ? '270deg' : '90deg'}, ${color}40, transparent)` }} />
+      </div>
+      {subtitle && (
+        <div style={{
+          fontSize: 12, color: T.text.muted, marginTop: 4,
+          marginInlineStart: 18, lineHeight: 1.5,
+        }}>
+          {subtitle}
+        </div>
+      )}
+    </div>
+  );
+};
+
 
 // ─── Risk limit progress bar ────────────────────────────────────────
 const LimitBar = ({ T, label, current, limit, isRTL }: { T: TradingTheme; label: string; current: number; limit: number; isRTL: boolean }) => {
