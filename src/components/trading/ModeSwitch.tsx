@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Zap, Crown, Check, X } from 'lucide-react';
 import type { TradingTheme } from '@/lib/trading-theme';
@@ -130,6 +131,7 @@ export const ModeSwitch = ({ T, isRTL }: ModeSwitchProps) => {
         </div>
       </div>
 
+      {createPortal(
       <AnimatePresence>
         {pendingTier && meta && (
           <>
@@ -365,7 +367,8 @@ export const ModeSwitch = ({ T, isRTL }: ModeSwitchProps) => {
             </motion.div>
           </>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body)}
     </>
   );
 };

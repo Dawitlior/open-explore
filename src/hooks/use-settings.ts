@@ -35,11 +35,11 @@ export function useSettings() {
   }, []);
 
   const [theme, setThemeState] = useState<ThemeId>(() => {
-    if (typeof window === 'undefined') return 'midnight';
+    if (typeof window === 'undefined') return 'graphite';
     try {
       const v = window.localStorage.getItem('orca:theme-cache');
-      return (v === 'midnight' || v === 'indigo' || v === 'platinum' || v === 'graphite') ? v : 'midnight';
-    } catch { return 'midnight'; }
+      return (v === 'midnight' || v === 'indigo' || v === 'platinum' || v === 'graphite') ? v : 'graphite';
+    } catch { return 'graphite'; }
   });
   const [systemMode, setSystemModeState] = useState<SystemMode>('standard');
   const [operatingMode, setOperatingModeState] = useState<OperatingMode>('beginner');
@@ -60,7 +60,7 @@ export function useSettings() {
       getSetting<boolean>('privacyMode'),
     ]).then(([t, m, o, l, p]) => {
       // Migrate legacy themes (arctic/ember/crimson) to new ones
-      const migrated: ThemeId = (t === 'midnight' || t === 'indigo' || t === 'platinum' || t === 'graphite') ? t : 'midnight';
+      const migrated: ThemeId = (t === 'midnight' || t === 'indigo' || t === 'platinum' || t === 'graphite') ? t : 'graphite';
       setThemeState(migrated);
       try { window.localStorage.setItem('orca:theme-cache', migrated); } catch { /* noop */ }
       if (m) setSystemModeState(m);

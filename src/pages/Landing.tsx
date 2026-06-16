@@ -1002,7 +1002,7 @@ const Landing: React.FC = () => {
               <div className="orca-footer-col">
                 <h4>משפטי</h4>
                 <Link to="/terms">תנאי שימוש</Link>
-                <a href="#">פרטיות</a>
+                <Link to="/privacy">פרטיות</Link>
                 <a href="#">נגישות</a>
               </div>
             </div>

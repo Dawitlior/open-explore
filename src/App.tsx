@@ -18,6 +18,7 @@ import Auth from "./pages/Auth";
 import Landing from "./pages/Landing";
 import ResetPassword from "./pages/ResetPassword";
 import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 import NotFound from "./pages/NotFound";
 import { LegalGate } from "@/components/LegalGate";
 import { EconomicAlertBanner } from "@/components/economic/EconomicAlertBanner";
@@ -96,6 +97,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/terms" element={<Terms />} />
+              <Route path="/privacy" element={<Privacy />} />
               <Route
                 path="/"
                 element={
