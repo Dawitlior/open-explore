@@ -78,15 +78,20 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
     if (!userId) return;
     const scheduleRefetch = () => {
       if (refetchTimer.current) clearTimeout(refetchTimer.current);
-      refetchTimer.current = setTimeout(() => { fetchRows(); }, 250);
+      refetchTimer.current = setTimeout(() => { fetchRows(); }, 150);
     };
     const ch = supabase
       .channel(`open_pos_${userId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'open_positions', filter: `user_id=eq.${userId}` }, scheduleRefetch)
       .subscribe();
+    // Instant local signal — dispatched by TradeForm right after upsert so the
+    // panel updates without waiting for the postgres_changes round-trip.
+    const onLocal = () => scheduleRefetch();
+    window.addEventListener('orca:open-position-changed', onLocal);
     return () => {
       if (refetchTimer.current) clearTimeout(refetchTimer.current);
       supabase.removeChannel(ch);
+      window.removeEventListener('orca:open-position-changed', onLocal);
     };
   }, [userId, fetchRows]);
 
