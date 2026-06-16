@@ -577,20 +577,10 @@ const Index = () => {
     { id: 'weekly-review', icon: '📋', label: isRTL ? 'סקירה שבועית' : 'Weekly Review', color: '#FFD700' },
   ];
 
-  // Entry gate check (after all hooks)
-  if (!entered) {
-    return <EntryGate onEnter={() => setEntered(true)} lang={settings.lang} />;
-  }
-
   // Keep the loader visible until BOTH the trade list and the portfolio
-  // resolution have finished. Without this we briefly paint an empty
-  // dashboard during the race between useTrades's first fetch (which returns
-  // [] when activePortfolioId is still null) and the ActivePortfolioProvider
-  // assigning an id → reload event. The user reported this flash explicitly.
+  // resolution have finished.
   const dataReady = !loading && initialized && !portfoliosLoading && !(!activePortfolioId && portfolios.length > 0);
   // After dataReady flips true, wait one paint frame so React has actually
-  // rendered the dashboard before we hide the loader — eliminates the empty
-  // flash users were seeing.
   // rendered the dashboard before we hide the loader — eliminates the empty
   // flash users were seeing. (state declared above with other hooks)
   useEffect(() => {
@@ -601,6 +591,12 @@ const Index = () => {
     });
     return () => cancelAnimationFrame(raf1);
   }, [dataReady]);
+
+  // Entry gate check (after all hooks — must stay below every hook to avoid React #310)
+  if (!entered) {
+    return <EntryGate onEnter={() => setEntered(true)} lang={settings.lang} />;
+  }
+
   const stillBootstrapping = !dataReady || !firstPaintReady;
   if (stillBootstrapping) {
     return (
