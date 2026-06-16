@@ -29,6 +29,43 @@ import { ImportPreflightRoot } from "@/components/trading/ImportPreflightModal";
 // Side-effect import: registers every BrokerAdapter into BrokerRegistry at boot.
 import "@/lib/brokers";
 import { assertRegistryIntegrity } from "@/lib/chart-registry";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { BugArenaProvider, BugReportFab, mapRouteToHebrewArea } from "@/features/bug-arena";
+import { useLocation } from "react-router-dom";
+import { toast } from "sonner";
+
+const BugBoardPage = lazy(() => import("./pages/BugBoardPage"));
+
+/**
+ * Mounts BugArenaProvider only when the user is signed in.
+ * The FAB is suppressed on /welcome, /auth, /reset-password, /terms, /privacy.
+ */
+const BugArenaMount = ({ children }: { children: React.ReactNode }) => {
+  const { user } = useAuth();
+  const location = useLocation();
+  const suppressedRoutes = ['/welcome', '/auth', '/reset-password', '/terms', '/privacy'];
+  const suppressed = suppressedRoutes.some((p) => location.pathname.startsWith(p));
+
+  if (!user) return <>{children}</>;
+
+  return (
+    <BugArenaProvider
+      supabase={supabase}
+      user={{
+        id: user.id,
+        display_name: (user.user_metadata?.display_name as string | undefined) ?? user.email ?? null,
+        avatar_url: (user.user_metadata?.avatar_url as string | undefined) ?? null,
+      }}
+      accent="#f5c542"
+      sectionResolver={mapRouteToHebrewArea}
+      onReported={() => toast.success('הדיווח נשלח, תודה!')}
+    >
+      {children}
+      {!suppressed && <BugReportFab />}
+    </BugArenaProvider>
+  );
+};
 
 // Dev-only registry/matrix audit panel — lazy so it never ships in normal flow.
 const RegistryAuditPanel = lazy(() => import("@/components/trading/dev/RegistryAuditPanel"));
@@ -97,6 +134,7 @@ const App = () => (
             <CookieConsentRoot />
             <OrcaConfirmRoot />
             <ImportPreflightRoot />
+            <BugArenaMount>
             <Routes>
               <Route path="/welcome" element={<Landing />} />
               <Route path="/auth" element={<Auth />} />
@@ -108,6 +146,16 @@ const App = () => (
                 element={
                   <RequireAuth>
                     <Index />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/bugs"
+                element={
+                  <RequireAuth>
+                    <Suspense fallback={<div style={{ padding: 24, color: '#94a3b8', fontFamily: 'monospace' }}>טוען…</div>}>
+                      <BugBoardPage />
+                    </Suspense>
                   </RequireAuth>
                 }
               />
@@ -125,6 +173,7 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </BugArenaMount>
             </ActivePortfolioProvider>
           </AuthProvider>
         </BrowserRouter>
