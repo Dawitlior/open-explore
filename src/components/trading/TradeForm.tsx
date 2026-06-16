@@ -230,7 +230,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
 
   const handleBack = () => { setErrors([]); setStep(s => Math.max(0, s - 1)); };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Kill switch — hard block, no override.
     if (killSwitch.isLocked) {
       setErrors([isRTL
@@ -240,6 +240,44 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
     }
     const errs = validateStep(1);
     if (errs.length) { setErrors(errs); setStep(1); return; }
+
+    // ── OPEN POSITION PATH ───────────────────────────────────────────
+    // Persist to public.open_positions (manual provider). Closed-trade
+    // analytics, expectancy and equity curve are untouched until the user
+    // closes the position later.
+    if (isOpenPosition) {
+      if (!auth.user?.id) {
+        setErrors([isRTL ? 'חובה להתחבר כדי לשמור פוזיציה פתוחה.' : 'Sign in to save an open position.']);
+        return;
+      }
+      const size = isFutures ? contracts : (form.positionSize || autoCalcPositionSize || 0);
+      setSavingOpen(true);
+      try {
+        const { error } = await supabase
+          .from('open_positions')
+          .upsert({
+            user_id: auth.user.id,
+            provider: 'manual',
+            symbol: form.coin,
+            side: form.direction === 'Long' ? 'long' : 'short',
+            size,
+            entry_price: form.entry,
+            unrealized_pnl: 0,
+            account_label: 'Manual',
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'user_id,provider,symbol' });
+        if (error) throw error;
+        haptics.success();
+        toast.success(isRTL ? `פוזיציה פתוחה נשמרה — ${form.coin}` : `Open position saved — ${form.coin}`);
+        onClose();
+      } catch (e: any) {
+        setErrors([isRTL ? `שגיאה בשמירה: ${e.message || e}` : `Save failed: ${e.message || e}`]);
+      } finally {
+        setSavingOpen(false);
+      }
+      return;
+    }
+
     const { returnR, pnl, winLoss, expectedLoss, deviation } = calc();
     // Block save if this trade would breach a tier-limit and user hasn't acknowledged.
     if (limitProjection?.newlyBreached && !overrideLimit) {
