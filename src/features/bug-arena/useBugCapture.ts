@@ -28,7 +28,7 @@ import type {
   CaptureContext,
 } from './bugArenaTypes';
 
-export type CaptureStage = 'idle' | 'picking' | 'draft' | 'submitting';
+export type CaptureStage = 'idle' | 'picking' | 'capturing' | 'draft' | 'submitting';
 
 export interface DraftState {
   pick: PickResult | null;
