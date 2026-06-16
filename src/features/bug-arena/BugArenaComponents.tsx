@@ -726,7 +726,7 @@ export function BugBoard() {
         {board.grouped.map((g) => (
           <section key={g.section}>
             <h3 className="mb-2 text-sm font-bold uppercase tracking-wide text-white/40">
-              {g.section} · {g.bugs.length}
+              {sectionLabel(g.section, lang)} · {g.bugs.length}
             </h3>
             <div className="space-y-3">
               {g.bugs.map((b) => (
