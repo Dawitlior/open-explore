@@ -161,6 +161,7 @@ export function BugReportFab() {
 // =====================================================================
 function CaptureFlow() {
   const { capture, user } = useArena();
+  const { lang, isRTL, t } = useLang();
   const { stage, draft, similar, busy, error } = capture;
 
   const [description, setDescription] = useState('');
@@ -200,7 +201,7 @@ function CaptureFlow() {
   return (
     <div
       data-bug-capture-modal
-      dir="rtl"
+      dir={isRTL ? 'rtl' : 'ltr'}
       className="fixed inset-0 z-[1001] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm"
       onClick={capture.cancel}
     >
@@ -212,12 +213,12 @@ function CaptureFlow() {
         <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-white/10 bg-[#0b111b]/95 px-5 py-4 backdrop-blur">
           <div className="flex items-center gap-2">
             <TargetIcon />
-            <h2 className="text-lg font-extrabold">דיווח על באג</h2>
+            <h2 className="text-lg font-extrabold">{t('דיווח על באג', 'Report a bug')}</h2>
           </div>
           <button
             onClick={capture.cancel}
             className="rounded-full px-2 py-1 text-2xl leading-none text-white/50 hover:text-white"
-            aria-label="סגור"
+            aria-label={t('סגור', 'Close')}
           >
             ×
           </button>
@@ -227,7 +228,7 @@ function CaptureFlow() {
           {/* context chips — section + picked element (auto, no clicks) */}
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className="rounded-full bg-white/10 px-3 py-1 font-semibold">
-              אזור: {draft.section}
+              {t('אזור', 'Area')}: {draft.section}
             </span>
             {draft.pick?.label && (
               <span
@@ -243,7 +244,7 @@ function CaptureFlow() {
                 onClick={capture.beginCapture}
                 className="rounded-full border border-dashed border-white/25 px-3 py-1 hover:border-white/50"
               >
-                + סמן את האלמנט הפגום
+                {t('+ סמן את האלמנט הפגום', '+ Mark the broken element')}
               </button>
             )}
           </div>
@@ -276,19 +277,19 @@ function CaptureFlow() {
                 color={color}
               />
               <p className="mt-1 text-xs text-white/40">
-                סמן על הצילום מה שבור — חץ, מסגרת או קו חופשי.
+                {t('סמן על הצילום מה שבור — חץ, מסגרת או קו חופשי.', 'Mark what is broken on the screenshot — arrow, box or freehand.')}
               </p>
             </div>
           ) : (
             <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-center text-sm text-white/50">
-              לוכד צילום מסך…
+              {t('לוכד צילום מסך…', 'Capturing screenshot…')}
             </div>
           )}
 
           {/* description (the only required field) */}
           <div>
             <label className="mb-1 block text-sm font-semibold">
-              מה קרה? <span style={{ color: ACCENT }}>*</span>
+              {t('מה קרה?', 'What happened?')} <span style={{ color: ACCENT }}>*</span>
             </label>
             <textarea
               data-bug-description
@@ -296,7 +297,7 @@ function CaptureFlow() {
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
               autoFocus
-              placeholder="תאר בקצרה את הבאג…"
+              placeholder={t('תאר בקצרה את הבאג…', 'Briefly describe the bug…')}
               className="w-full resize-none rounded-xl border border-white/10 bg-white/5 p-3 text-sm outline-none focus:border-[var(--a)]"
               style={{ ['--a' as any]: ACCENT }}
             />
@@ -305,23 +306,23 @@ function CaptureFlow() {
           {/* type + severity — one tap each, sensible defaults */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Chips
-              label="סוג"
+              label={t('סוג', 'Type')}
               value={bugType}
               onChange={(v) => setBugType(v as BugType)}
-              options={Object.entries(BUG_TYPE_LABEL).map(([v, l]) => ({ v, l }))}
+              options={(Object.keys(BUG_TYPE_LABEL) as BugType[]).map((v) => ({ v, l: bugTypeLabel(v, lang) }))}
             />
             <Chips
-              label="חומרה"
+              label={t('חומרה', 'Severity')}
               value={severity}
               onChange={(v) => setSeverity(v as BugSeverity)}
-              options={Object.entries(SEVERITY_LABEL).map(([v, l]) => ({ v, l }))}
+              options={(Object.keys(SEVERITY_LABEL) as BugSeverity[]).map((v) => ({ v, l: severityLabel(v, lang) }))}
             />
           </div>
 
           {/* optional extra image */}
           <div className="flex items-center gap-3">
             <label className="cursor-pointer rounded-xl border border-white/15 px-3 py-2 text-sm hover:border-white/40">
-              📎 צרף תמונה
+              {t('📎 צרף תמונה', '📎 Attach image')}
               <input
                 type="file"
                 accept="image/*"
@@ -344,15 +345,16 @@ function CaptureFlow() {
             className="flex-1 rounded-xl py-3 font-extrabold text-[#06121f] transition active:scale-[0.98] disabled:opacity-40"
             style={{ background: ACCENT }}
           >
-            {stage === 'submitting' ? 'שולח…' : 'שלח דיווח'}
+            {stage === 'submitting' ? t('שולח…', 'Sending…') : t('שלח דיווח', 'Send report')}
           </button>
           <button
             onClick={capture.cancel}
             className="rounded-xl border border-white/15 px-5 py-3 font-semibold text-white/70 hover:text-white"
           >
-            ביטול
+            {t('ביטול', 'Cancel')}
           </button>
         </div>
+
       </div>
     </div>
   );
