@@ -7,6 +7,7 @@ import { FeatureHint } from './FeatureHint';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { haptics } from '@/lib/haptics';
 import { checkRiskLimits, DEFAULT_RISK_LIMITS } from '@/lib/risk-limits';
+import { useKillSwitch, formatKillRemaining } from '@/hooks/use-kill-switch';
 
 interface TradeFormProps {
   T: TradingTheme;
