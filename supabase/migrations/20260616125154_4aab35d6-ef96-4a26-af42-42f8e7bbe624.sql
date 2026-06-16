@@ -1,0 +1,1 @@
+ALTER TABLE public.open_positions ADD COLUMN IF NOT EXISTS stop_loss numeric;

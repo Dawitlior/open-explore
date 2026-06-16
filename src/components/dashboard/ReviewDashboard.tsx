@@ -12,6 +12,7 @@ import { RiskAdjustedRatiosSection } from './RiskAdjustedRatiosSection';
 import { TierGate } from '@/components/billing/TierGate';
 import { BestWorstWindowChart } from './BestWorstWindowChart';
 import { WinsByMonthChart, WinsByQuarterChart, ReturnPerTimeChart } from './SimpleExtraCharts';
+import { OpenPositionsPanel } from './OpenPositionsPanel';
 import { useDisplayMode, hasStrictR } from '@/lib/display-mode';
 import { getEffectiveR } from '@/lib/r-multiple';
 
@@ -34,6 +35,7 @@ interface ReviewDashboardProps {
   isChartVisible: (chartId: string) => boolean;
   handleHideChart: (chartId: string) => void;
   handleExplainClick: (title: string, explanation: ChartExplanation, chartId?: string) => void;
+  onAddTrade?: (trade: Omit<Trade, 'id' | 'balance'>) => Promise<any> | any;
 }
 
 const PV = ({ children }: { children: React.ReactNode }) => <>{children}</>;
@@ -42,6 +44,7 @@ export const ReviewDashboard = ({
   T, t, isRTL, trades, stats, riskData, radarData, tt, privacyMode,
   isAdvancedTier, isUltimateTier, isAlpha,
   advancedOpen, setAdvancedOpen, isChartVisible, handleHideChart, handleExplainClick,
+  onAddTrade,
 }: ReviewDashboardProps) => {
   const { displayMode } = useDisplayMode();
   const isMoney = displayMode === 'MONEY';
@@ -58,9 +61,15 @@ export const ReviewDashboard = ({
           : 'The dashboard is built in 3 layers: Trading Health (KPIs), System Health (Orca Score, Regime Fit, Discipline), and Advanced Analysis (collapsible).'}
       />
 
+      {/* ═══ LIVE — OPEN POSITIONS (above Trading Health) ═══ */}
+      {onAddTrade && (
+        <OpenPositionsPanel T={T} isRTL={isRTL} onAddTrade={onAddTrade} refreshKey={trades.length} />
+      )}
+
       {/* ═══ LAYER 1 — CORE TRADING HEALTH ═══ */}
       <div className="dash-section">
         <div className="dash-section-label" style={{ color: T.accent.cyan }}>
+
           {isRTL ? 'בריאות מסחר' : 'TRADING HEALTH'}
         </div>
         <div className="dash-kpi-grid">
