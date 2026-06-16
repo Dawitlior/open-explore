@@ -3,7 +3,7 @@ import { getSetting, setSetting } from '@/lib/storage';
 import { applyThemeToDOM } from '@/lib/trading-theme';
 import { writeCachedLang } from '@/hooks/use-lang';
 
-export type ThemeId = 'midnight' | 'indigo' | 'platinum';
+export type ThemeId = 'midnight' | 'indigo' | 'platinum' | 'graphite';
 export type SystemMode = 'standard' | 'alpha';
 export type OperatingMode = 'live' | 'review' | 'research' | 'beginner';
 export type Lang = 'he' | 'en';
