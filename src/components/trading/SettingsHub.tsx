@@ -48,7 +48,7 @@ interface SettingsHubProps {
   trades: Trade[];
 }
 
-type TabId = 'account' | 'appearance' | 'theme-studio' | 'dashboard' | 'kpis' | 'risk' | 'interface' | 'sounds' | 'trading' | 'exchanges' | 'data' | 'trader-mind' | 'install' | 'legal';
+type TabId = 'account' | 'appearance' | 'theme-studio' | 'dashboard' | 'kpis' | 'risk' | 'interface' | 'quick-actions' | 'sounds' | 'trading' | 'exchanges' | 'data' | 'trader-mind' | 'install' | 'legal';
 
 const ACCENT_PRESETS = [
   '#00f2ff', '#06d6a0', '#3b82f6', '#8b5cf6',
@@ -212,6 +212,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
     { id: 'dashboard', icon: LayoutDashboard, label: { he: 'סידור דאשבורד', en: 'Dashboard Layout' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'גרור, הסתר וסדר ווידג׳טים', en: 'Drag, hide and arrange widgets' } },
     { id: 'kpis', icon: Calculator, label: { he: 'מדדים מותאמים', en: 'Custom KPIs' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'בנה נוסחאות מתמטיות משלך', en: 'Build your own math formulas' } },
     { id: 'interface', icon: SlidersHorizontal, label: { he: 'ממשק, צפיפות ותנועה', en: 'Interface, Density & Motion' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'צפיפות, גודל גופן, אנימציות ואלמנטים', en: 'Density, font scale, motion and elements' } },
+    { id: 'quick-actions', icon: Zap, label: { he: 'פעולות מהירות', en: 'Quick Actions' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'הפעלה, הסתרה ופתיחת לוח הפעולות המהירות', en: 'Enable, hide and open the Quick Actions palette' } },
     { id: 'sounds', icon: Volume2, label: { he: 'צלילים והתראות', en: 'Sounds & Alerts' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'הפעלה, ווליום ותצוגת אפקטים אקוסטיים', en: 'Enable, volume and acoustic feedback preview' } },
     { id: 'risk', icon: Shield, label: { he: 'מגבלות סיכון', en: 'Risk Limits' }, group: { he: 'מסחר', en: 'Trading' }, desc: { he: 'מערכת ה־R המותרת ביום/שבוע/חודש', en: 'Allowed R-budget per day/week/month' } },
     { id: 'trading', icon: Target, label: { he: 'ברירות מחדל למסחר', en: 'Trading Defaults' }, group: { he: 'מסחר', en: 'Trading' }, desc: { he: 'אחוז סיכון ברירת מחדל ויעד R לעסקה חדשה', en: 'Default risk percent and R target for new trades' } },
