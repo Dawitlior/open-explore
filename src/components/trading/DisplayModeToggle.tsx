@@ -33,14 +33,14 @@ export function DisplayModeToggle({ T, isRTL, compact }: Props) {
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 4, width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: isRTL ? 'flex-end' : 'flex-start', gap: 4 }}>
       <div
         role="tablist"
         aria-label={isRTL ? 'מצב תצוגה' : 'Display mode'}
         style={{
           position: 'relative',
-          width: '100%',
-          maxWidth: compact ? 200 : 260,
+          width: 196,
+          maxWidth: 196,
           height: PILL_H,
           padding: PADDING,
           borderRadius: 999,
