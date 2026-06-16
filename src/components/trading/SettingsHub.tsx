@@ -1773,6 +1773,31 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                       <Trash2 size={14} /> {t('מחק את כל הנתונים האישיים שלי', 'Delete all my personal data')}
                     </button>
                   </div>
+
+                  {/* ============ DELETE ACCOUNT — wipes data AND removes account ============ */}
+                  <div style={{ ...card, border: `2px solid ${T.accent.red}`, background: `linear-gradient(180deg, ${T.bg.secondary} 0%, ${T.accent.red}14 100%)` }}>
+                    <h3 style={{ ...sectionTitle, color: T.accent.red }}>
+                      <AlertTriangle size={14} /> {t('מחיקת חשבון לצמיתות', 'Delete account permanently')}
+                    </h3>
+                    <p style={sectionHint}>
+                      {t(
+                        'מוחק את החשבון שלך לחלוטין — כולל כל הנתונים, ההגדרות, היומנים, חיבורי הבורסות והאפשרות להיכנס שוב עם אותו אימייל. הפעולה בלתי הפיכה.',
+                        'Permanently deletes your account — including all data, settings, journals, exchange connections, and the ability to log in with this email again. This action is irreversible.'
+                      )}
+                    </p>
+                    <button
+                      onClick={() => setShowDeleteAccountModal(true)}
+                      style={{
+                        ...primaryBtn(T.accent.red),
+                        padding: '14px 18px',
+                        fontSize: 13,
+                        background: `linear-gradient(135deg, #991b1b, #7f1d1d)`,
+                        color: '#fff',
+                      }}
+                    >
+                      <Trash2 size={14} /> {t('מחק את החשבון שלי לצמיתות', 'Permanently delete my account')}
+                    </button>
+                  </div>
                 </div>
               );
             })()}
