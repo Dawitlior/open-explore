@@ -3,7 +3,7 @@ import type { Trade } from '@/data/trades';
 import { readJournalState, writeJournalState, type JournalDay, type JournalTrade, type JournalState, type PsychAnswers } from '@/lib/journal-storage';
 import { ReturnButton } from './DimensionController';
 import { playSystemOpen, playMorningLock, playEODLock, playRiskAlert } from '@/lib/apex-sounds';
-import { MORNING_VARIATIONS, EOD_VARIATIONS } from '@/lib/journal-demo-data';
+import { MORNING_VARIATIONS, EOD_VARIATIONS, EN_MORNING_VARIATIONS, EN_EOD_VARIATIONS } from '@/lib/journal-demo-data';
 import { getR, sumR, formatR } from '@/lib/r-multiple';
 
 // ─── Display-mode awareness ────────────────────────────────────
