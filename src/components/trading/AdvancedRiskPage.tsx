@@ -15,6 +15,11 @@ import { RProxyBanner } from './RProxyBanner';
 import { useChartGuard } from '@/lib/dashboard-engine';
 import { UltimateRiskDeck } from './UltimateDeckCharts';
 import { useEntitlement } from '@/hooks/use-entitlement';
+import { KillSwitchPanel } from './risk/KillSwitchPanel';
+import { NetExposurePanel } from './risk/NetExposurePanel';
+import { CorrelationMatrix } from './risk/CorrelationMatrix';
+import { QualityOfReturnsStrip } from './risk/QualityOfReturnsStrip';
+import { HourOfDayStrip } from './risk/HourOfDayStrip';
 
 
 type OperatingMode = 'live' | 'review' | 'research' | 'beginner';
