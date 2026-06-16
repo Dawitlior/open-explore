@@ -588,7 +588,7 @@ function AnnotationCanvas({
       className="relative w-full overflow-hidden rounded-xl border border-white/10"
       style={{ touchAction: 'none' }}
     >
-      <img src={imageUrl} alt="צילום מסך" className="block w-full select-none" draggable={false} />
+      <img src={imageUrl} alt="screenshot" className="block w-full select-none" draggable={false} />
       <canvas
         ref={canvasRef}
         className="absolute inset-0 h-full w-full cursor-crosshair"
