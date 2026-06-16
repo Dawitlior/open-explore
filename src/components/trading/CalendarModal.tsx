@@ -63,6 +63,7 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
   const [noteLoaded, setNoteLoaded] = useState(false);
   const [noteSaving, setNoteSaving] = useState(false);
   const [noteStatus, setNoteStatus] = useState<'idle' | 'saved' | 'error'>('idle');
+  const [editingNote, setEditingNote] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
