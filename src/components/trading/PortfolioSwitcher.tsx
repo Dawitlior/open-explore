@@ -67,9 +67,21 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
     const update = () => {
       const rect = triggerRef.current?.getBoundingClientRect();
       if (!rect) return;
-      const width = 300;
-      const left = isRTL ? rect.right - width : rect.left;
-      setMenuPos({ top: rect.bottom + 6, left: Math.max(8, Math.min(left, window.innerWidth - width - 8)) });
+      const vw = window.innerWidth;
+      const isPhone = vw < 480;
+      const width = isPhone ? Math.min(vw - 16, 380) : 300;
+      let top: number;
+      let left: number;
+      if (isPhone) {
+        // Bottom-sheet style on phones: pin to bottom of viewport, centered horizontally.
+        left = (vw - width) / 2;
+        top = Math.max(rect.bottom + 6, window.innerHeight - 520);
+      } else {
+        left = isRTL ? rect.right - width : rect.left;
+        left = Math.max(8, Math.min(left, vw - width - 8));
+        top = rect.bottom + 6;
+      }
+      setMenuPos({ top, left });
     };
     update();
     window.addEventListener('resize', update);
