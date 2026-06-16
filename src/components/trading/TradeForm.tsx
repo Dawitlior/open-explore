@@ -8,6 +8,9 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { haptics } from '@/lib/haptics';
 import { checkRiskLimits, DEFAULT_RISK_LIMITS } from '@/lib/risk-limits';
 import { useKillSwitch, formatKillRemaining } from '@/hooks/use-kill-switch';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/use-auth';
+import { toast } from 'sonner';
 
 interface TradeFormProps {
   T: TradingTheme;
@@ -55,6 +58,7 @@ const detectCategory = (symbol: string): AssetCategory => {
 export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onSave, onClose }: TradeFormProps) => {
   const isMobile = useIsMobile();
   const killSwitch = useKillSwitch();
+  const auth = useAuth();
   const [step, setStep] = useState(0); // 0,1,2
   const [assetCategory, setAssetCategory] = useState<AssetCategory>(() => trade?.coin ? detectCategory(trade.coin) : 'Crypto');
   const [customSymbol, setCustomSymbol] = useState('');
@@ -63,6 +67,11 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
   const [stopPercent, setStopPercent] = useState(0);
   const [stopDollar, setStopDollar] = useState(0);
   const [contracts, setContracts] = useState<number>(trade?.positionSize || 1);
+  // Open-position mode: when true, exit/PnL fields are bypassed and the
+  // record is saved to `open_positions` (tracked separately from closed
+  // trades — never feeds expectancy/equity until closed).
+  const [isOpenPosition, setIsOpenPosition] = useState(false);
+  const [savingOpen, setSavingOpen] = useState(false);
 
   const [form, setForm] = useState({
     date: trade?.date || new Date().toISOString().slice(0, 16),
@@ -204,8 +213,10 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
     if (s >= 1) {
       if (!form.entry) errs.push(isRTL ? 'מחיר כניסה חסר' : 'Entry price required');
       if (!form.stopLoss) errs.push(isRTL ? 'סטופ לוס חסר' : 'Stop loss required');
-      if (!form.exit) errs.push(isRTL ? 'מחיר יציאה חסר' : 'Exit price required');
-      if (form.risk <= 0) errs.push(isRTL ? 'סכום סיכון חייב להיות גדול מ-0' : 'Risk amount must be greater than 0');
+      if (!isOpenPosition) {
+        if (!form.exit) errs.push(isRTL ? 'מחיר יציאה חסר' : 'Exit price required');
+        if (form.risk <= 0) errs.push(isRTL ? 'סכום סיכון חייב להיות גדול מ-0' : 'Risk amount must be greater than 0');
+      }
     }
     return errs;
   };
@@ -219,7 +230,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
 
   const handleBack = () => { setErrors([]); setStep(s => Math.max(0, s - 1)); };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Kill switch — hard block, no override.
     if (killSwitch.isLocked) {
       setErrors([isRTL
@@ -229,6 +240,44 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
     }
     const errs = validateStep(1);
     if (errs.length) { setErrors(errs); setStep(1); return; }
+
+    // ── OPEN POSITION PATH ───────────────────────────────────────────
+    // Persist to public.open_positions (manual provider). Closed-trade
+    // analytics, expectancy and equity curve are untouched until the user
+    // closes the position later.
+    if (isOpenPosition) {
+      if (!auth.user?.id) {
+        setErrors([isRTL ? 'חובה להתחבר כדי לשמור פוזיציה פתוחה.' : 'Sign in to save an open position.']);
+        return;
+      }
+      const size = isFutures ? contracts : (form.positionSize || autoCalcPositionSize || 0);
+      setSavingOpen(true);
+      try {
+        const { error } = await supabase
+          .from('open_positions')
+          .upsert({
+            user_id: auth.user.id,
+            provider: 'manual',
+            symbol: form.coin,
+            side: form.direction === 'Long' ? 'long' : 'short',
+            size,
+            entry_price: form.entry,
+            unrealized_pnl: 0,
+            account_label: 'Manual',
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'user_id,provider,symbol' });
+        if (error) throw error;
+        haptics.success();
+        toast.success(isRTL ? `פוזיציה פתוחה נשמרה — ${form.coin}` : `Open position saved — ${form.coin}`);
+        onClose();
+      } catch (e: any) {
+        setErrors([isRTL ? `שגיאה בשמירה: ${e.message || e}` : `Save failed: ${e.message || e}`]);
+      } finally {
+        setSavingOpen(false);
+      }
+      return;
+    }
+
     const { returnR, pnl, winLoss, expectedLoss, deviation } = calc();
     // Block save if this trade would breach a tier-limit and user hasn't acknowledged.
     if (limitProjection?.newlyBreached && !overrideLimit) {
@@ -390,6 +439,36 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                   ? 'הוספת עסקה ב-3 שלבים: נכס וזמן → מחירים וסיכון → סקירה ושמירה. הנתונים שלך נשמרים בזיכרון עד שתלחץ "שמור" — לחיצה מחוץ למסך תבקש אישור לפני מחיקת הטיוטה.'
                   : 'Add a trade in 3 steps: Asset & time → Prices & risk → Review & save. Your draft is held in memory until you click Save — clicking outside will ask before discarding.'}
               />
+
+              {/* ─── Closed trade vs Open position toggle ─── */}
+              <div style={{ ...sectionCard, padding: 4, display: 'flex', gap: 4, background: T.bg.tertiary }}>
+                {[
+                  { id: false, icon: '✓', he: 'עסקה סגורה', en: 'Closed trade', subHe: 'יציאה ידועה', subEn: 'Exit known' },
+                  { id: true,  icon: '◴', he: 'פוזיציה פתוחה', en: 'Open position', subHe: 'עדיין רצה — בלי P&L', subEn: 'Still live — no P&L yet' },
+                ].map(opt => {
+                  const active = isOpenPosition === opt.id;
+                  return (
+                    <button
+                      key={String(opt.id)}
+                      type="button"
+                      onClick={() => { haptics.selection(); setIsOpenPosition(opt.id); setErrors([]); }}
+                      style={{
+                        flex: 1, padding: '12px 10px', borderRadius: 12,
+                        border: `1.5px solid ${active ? T.accent.cyan : 'transparent'}`,
+                        background: active ? `${T.accent.cyan}15` : 'transparent',
+                        color: active ? T.accent.cyan : T.text.secondary,
+                        cursor: 'pointer', fontWeight: 700, fontSize: 13,
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+                        transition: 'all 0.18s',
+                      }}
+                    >
+                      <span style={{ fontSize: 18 }}>{opt.icon}</span>
+                      <span>{isRTL ? opt.he : opt.en}</span>
+                      <span style={{ fontSize: 10, fontWeight: 500, opacity: 0.75 }}>{isRTL ? opt.subHe : opt.subEn}</span>
+                    </button>
+                  );
+                })}
+              </div>
               <div style={sectionCard}>
                 <label style={bigLabel}>{isRTL ? '1. איזה סוג נכס סחרת?' : '1. What type of asset did you trade?'}</label>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -489,11 +568,26 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                 <div style={helpText}>{isRTL ? 'המחיר שבו תצא מהעסקה אם השוק הולך נגדך — להגנה על ההון.' : "The price you'll exit if the market moves against you — to protect your capital."}</div>
               </div>
 
-              <div style={sectionCard}>
-                <label style={bigLabel}>{isRTL ? 'מחיר היציאה' : 'Exit price'}</label>
-                <input type="number" step="any" inputMode="decimal" value={form.exit || ''} onChange={e => setForm(f => ({ ...f, exit: +e.target.value }))} placeholder="0.00" style={bigInput} />
-                <div style={helpText}>{isRTL ? 'המחיר שבו סגרת את העסקה בפועל.' : 'The price you actually closed at.'}</div>
-              </div>
+              {!isOpenPosition && (
+                <div style={sectionCard}>
+                  <label style={bigLabel}>{isRTL ? 'מחיר היציאה' : 'Exit price'}</label>
+                  <input type="number" step="any" inputMode="decimal" value={form.exit || ''} onChange={e => setForm(f => ({ ...f, exit: +e.target.value }))} placeholder="0.00" style={bigInput} />
+                  <div style={helpText}>{isRTL ? 'המחיר שבו סגרת את העסקה בפועל.' : 'The price you actually closed at.'}</div>
+                </div>
+              )}
+              {isOpenPosition && (
+                <div style={{ ...sectionCard, border: `1.5px solid ${T.accent.cyan}55`, background: `${T.accent.cyan}10` }}>
+                  <div style={{ fontSize: 13, color: T.accent.cyan, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 18 }}>◴</span>
+                    {isRTL ? 'הפוזיציה עדיין פתוחה' : 'Position is still open'}
+                  </div>
+                  <div style={{ ...helpText, marginTop: 8 }}>
+                    {isRTL
+                      ? 'אין יציאה ולכן אין R או P&L. הפוזיציה תיכנס לספר הפוזיציות הפתוחות ולא תשפיע על תוחלת/עקומת הון עד שתיסגר.'
+                      : 'No exit, so no R or P&L. The position is tracked in the open-positions book and will not touch expectancy or equity curve until it is closed.'}
+                  </div>
+                </div>
+              )}
 
               <div style={sectionCard}>
                 <label style={bigLabel}>{isRTL ? 'כמה הסתכנת? (בדולרים)' : 'How much did you risk? ($)'}</label>
@@ -652,29 +746,46 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                 </div>
               </GlassCard>
 
-              <GlassCard T={T} style={{ marginBottom: 18, padding: isMobile ? 18 : 22, background: pnl >= 0 ? `${T.accent.green}10` : `${T.accent.red}10`, border: `2px solid ${pnl >= 0 ? T.accent.green : T.accent.red}40` }}>
-                <div style={{ fontSize: 12, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 14, fontWeight: 700 }}>{isRTL ? 'התוצאה' : 'Result'}</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
-                  <div>
-                    <div style={{ fontSize: 11, color: T.text.muted }}>R-Multiple</div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: returnR >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{returnR.toFixed(2)}R</div>
+              {isOpenPosition ? (
+                <GlassCard T={T} style={{ marginBottom: 18, padding: isMobile ? 18 : 22, background: `${T.accent.cyan}10`, border: `2px solid ${T.accent.cyan}40` }}>
+                  <div style={{ fontSize: 12, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 14, fontWeight: 700 }}>{isRTL ? 'פוזיציה פתוחה' : 'Open Position'}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                    <span style={{ fontSize: 28 }}>◴</span>
+                    <div style={{ fontSize: 14, color: T.text.primary, lineHeight: 1.55 }}>
+                      {isRTL
+                        ? 'הפוזיציה תיכנס לספר הפוזיציות הפתוחות. אין R, אין P&L, ואין השפעה על תוחלת/יתרה — עד שתסגור אותה ידנית.'
+                        : 'This will be saved to your open-positions book. No R, no P&L, no impact on expectancy or balance — until you close it manually.'}
+                    </div>
                   </div>
-                  <div>
-                    <div style={{ fontSize: 11, color: T.text.muted }}>P&L</div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}</div>
+                  <div style={{ paddingTop: 12, borderTop: `1px solid ${T.border.subtle}`, fontSize: 12, color: T.text.secondary, fontFamily: "'JetBrains Mono', monospace" }}>
+                    {form.coin} · {form.direction === 'Long' ? '↑ Long' : '↓ Short'} · {isRTL ? 'גודל:' : 'Size:'} <span style={{ color: T.text.primary }}>{(isFutures ? contracts : (form.positionSize || autoCalcPositionSize)).toLocaleString()}</span> · {isRTL ? 'כניסה:' : 'Entry:'} <span style={{ color: T.text.primary }}>{form.entry}</span>
                   </div>
-                  <div>
-                    <div style={{ fontSize: 11, color: T.text.muted }}>{isRTL ? 'תוצאה' : 'Outcome'}</div>
-                    <div style={{ fontSize: 18, fontWeight: 700, color: winLoss === 'Win' ? T.accent.green : winLoss === 'Loss' ? T.accent.red : T.accent.orange }}>{winLoss === 'Win' ? (isRTL ? 'רווח' : 'Win') : winLoss === 'Loss' ? (isRTL ? 'הפסד' : 'Loss') : 'Break-even'}</div>
+                </GlassCard>
+              ) : (
+                <GlassCard T={T} style={{ marginBottom: 18, padding: isMobile ? 18 : 22, background: pnl >= 0 ? `${T.accent.green}10` : `${T.accent.red}10`, border: `2px solid ${pnl >= 0 ? T.accent.green : T.accent.red}40` }}>
+                  <div style={{ fontSize: 12, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 14, fontWeight: 700 }}>{isRTL ? 'התוצאה' : 'Result'}</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
+                    <div>
+                      <div style={{ fontSize: 11, color: T.text.muted }}>R-Multiple</div>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: returnR >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{returnR.toFixed(2)}R</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, color: T.text.muted }}>P&L</div>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, color: T.text.muted }}>{isRTL ? 'תוצאה' : 'Outcome'}</div>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: winLoss === 'Win' ? T.accent.green : winLoss === 'Loss' ? T.accent.red : T.accent.orange }}>{winLoss === 'Win' ? (isRTL ? 'רווח' : 'Win') : winLoss === 'Loss' ? (isRTL ? 'הפסד' : 'Loss') : 'Break-even'}</div>
+                    </div>
                   </div>
-                </div>
-                <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${T.border.subtle}`, fontSize: 12, color: T.text.secondary }}>
-                  {isRTL ? 'יתרה לאחר עסקה זו: ' : 'Balance after this trade: '}
-                  <span style={{ color: T.text.primary, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>${(currentBalance + pnl).toFixed(2)}</span>
-                </div>
-              </GlassCard>
+                  <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${T.border.subtle}`, fontSize: 12, color: T.text.secondary }}>
+                    {isRTL ? 'יתרה לאחר עסקה זו: ' : 'Balance after this trade: '}
+                    <span style={{ color: T.text.primary, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>${(currentBalance + pnl).toFixed(2)}</span>
+                  </div>
+                </GlassCard>
+              )}
 
-              {limitProjection?.newlyBreached && (
+              {!isOpenPosition && limitProjection?.newlyBreached && (
                 <div style={{
                   padding: 14, marginBottom: 14,
                   background: `${T.accent.red}15`,
@@ -730,9 +841,9 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
               {isRTL ? 'המשך →' : 'Continue →'}
             </button>
           ) : (
-            <button onClick={handleSubmit}
-              style={{ padding: isMobile ? '13px 28px' : '12px 28px', background: `linear-gradient(135deg, ${T.accent.green}, ${T.accent.teal})`, border: 'none', borderRadius: 12, color: T.bg.primary, fontWeight: 800, cursor: 'pointer', fontSize: 14 }}>
-              ✓ {isRTL ? 'שמור עסקה' : 'Save Trade'}
+            <button onClick={handleSubmit} disabled={savingOpen}
+              style={{ padding: isMobile ? '13px 28px' : '12px 28px', background: `linear-gradient(135deg, ${isOpenPosition ? T.accent.cyan : T.accent.green}, ${T.accent.teal})`, border: 'none', borderRadius: 12, color: T.bg.primary, fontWeight: 800, cursor: savingOpen ? 'wait' : 'pointer', fontSize: 14, opacity: savingOpen ? 0.7 : 1 }}>
+              {savingOpen ? (isRTL ? 'שומר…' : 'Saving…') : (isOpenPosition ? (isRTL ? '◴ שמור פוזיציה פתוחה' : '◴ Save Open Position') : (isRTL ? '✓ שמור עסקה' : '✓ Save Trade'))}
             </button>
           )}
         </div>
