@@ -92,6 +92,12 @@ function hardReload() {
   window.location.replace(url.toString());
 }
 
+// Session-scoped flag: we allow ONE silent auto-recovery per tab lifetime.
+// Prevents the "open in new tab → scary error screen" experience caused by
+// transient module/race errors that disappear on the very next render.
+let didAutoRecoverThisTab = false;
+const BOOT_AT = typeof performance !== 'undefined' ? performance.now() : 0;
+
 export class ErrorBoundary extends Component<Props, State> {
   state: State = { error: null };
 
@@ -102,9 +108,20 @@ export class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, info: unknown) {
     console.error('[ErrorBoundary]', error, info);
     reportClientError(error);
+
+    // First-paint protection: if the error fires within the first 2.5s of the
+    // tab lifecycle and we haven't already used our recovery, silently retry.
+    // Anything later, or a second failure, falls through to the full UI.
+    const now = typeof performance !== 'undefined' ? performance.now() : 0;
+    const earlyBoot = now - BOOT_AT < 2500;
+    if (earlyBoot && !didAutoRecoverThisTab) {
+      didAutoRecoverThisTab = true;
+      setTimeout(() => this.setState({ error: null }), 50);
+    }
   }
 
   reset = () => this.setState({ error: null });
+
 
   render() {
     if (!this.state.error) return this.props.children;
