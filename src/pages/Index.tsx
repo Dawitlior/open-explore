@@ -1750,18 +1750,24 @@ const Index = () => {
           </div>
         </div>
       )}
-      {/* DESKTOP SIDEBAR */}
+      {/* DESKTOP SIDEBAR — fixed overlay; in-flow spacer keeps main content stable */}
+      {!isMobile && <div aria-hidden style={{ width: 62, flexShrink: 0 }} />}
+      {!isMobile && sbOpen && (
+        <div
+          onClick={() => setSbOpen(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(2,6,15,0.45)', backdropFilter: 'blur(2px)', zIndex: 49, animation: 'fadeIn 0.18s ease-out' }}
+        />
+      )}
       {!isMobile && (
       <aside style={{
+        position: 'fixed', top: 0, bottom: 0, insetInlineStart: 0,
         width: sbOpen ? 216 : 62,
-        minWidth: sbOpen ? 216 : 62,
         background: `linear-gradient(180deg, ${T.bg.secondary} 0%, ${T.bg.primary} 100%)`,
         borderInlineEnd: `1px solid ${T.border.subtle}`,
         display: 'flex', flexDirection: 'column',
-        transition: 'width 0.18s cubic-bezier(0.4,0,0.2,1), min-width 0.18s cubic-bezier(0.4,0,0.2,1)',
+        transition: 'width 0.18s cubic-bezier(0.4,0,0.2,1)',
         overflow: 'hidden', zIndex: 50,
         willChange: 'width',
-        contain: 'layout paint',
       }}>
         <div style={{ padding: '18px 14px 6px', display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }} onClick={() => setShowFeatureModal(true)}>
