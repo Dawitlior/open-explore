@@ -82,14 +82,19 @@ export function sanitizeTrade(t: unknown, fallbackId: number): Trade | null {
           : null;
   const exit = safeNum(raw.exit);
   const returnR = safeNum(raw.returnR);
-  const risk = safeNum(raw.risk, 2);
+  // CRITICAL: risk MUST default to 0 (unknown), NOT to a fabricated 2 USD.
+  // A 2-USD default silently makes getR compute fake R = pnl/2 for any broker
+  // CSV (Bybit Closed P&L etc.) that doesn't carry per-trade risk metadata.
+  // 0 lets the R-engine return null → UI shows "N/A" correctly.
+  const risk = safeNum(raw.risk, 0);
   const expectedLoss = safeNum(raw.expectedLoss);
   const pnl = safeNum(raw.pnl);
   const deviation = safeNum(raw.deviation);
   const positionSize = safeNum(raw.positionSize);
   const leverage = safeNum(raw.leverage, 1);
   const balance = safeNum(raw.balance);
-  const riskPct = safeNum(raw.riskPct, 1);
+  // Same reasoning as `risk` above — 0 = unknown, never fabricate 1 %.
+  const riskPct = safeNum(raw.riskPct, 0);
   const rules = typeof raw.rules === 'boolean' ? raw.rules : true;
   const comments = typeof raw.comments === 'string' ? raw.comments : '';
 
