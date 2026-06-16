@@ -25,6 +25,9 @@ import {
   BUG_TYPE_LABEL,
   SEVERITY_LABEL,
   STATUS_LABEL,
+  bugTypeLabel,
+  severityLabel,
+  statusLabel,
   type BugComment,
   type BugReporter,
   type BugSeverity,
@@ -32,6 +35,7 @@ import {
   type BugType,
   type BugWithMeta,
 } from './bugArenaTypes';
+import { useLang } from '@/hooks/use-lang';
 
 const ACCENT = '#f5c542'; // ORCA gold
 const CYAN = '#37e0c6';
