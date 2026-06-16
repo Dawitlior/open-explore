@@ -1758,7 +1758,10 @@ const Index = () => {
         background: `linear-gradient(180deg, ${T.bg.secondary} 0%, ${T.bg.primary} 100%)`,
         borderInlineEnd: `1px solid ${T.border.subtle}`,
         display: 'flex', flexDirection: 'column',
-        transition: 'all 0.3s ease', overflow: 'hidden', zIndex: 50,
+        transition: 'width 0.18s cubic-bezier(0.4,0,0.2,1), min-width 0.18s cubic-bezier(0.4,0,0.2,1)',
+        overflow: 'hidden', zIndex: 50,
+        willChange: 'width',
+        contain: 'layout paint',
       }}>
         <div style={{ padding: '18px 14px 6px', display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }} onClick={() => setShowFeatureModal(true)}>
