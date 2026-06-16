@@ -12,6 +12,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useActivePortfolio } from '@/hooks/use-active-portfolio';
 import type { Portfolio } from '@/hooks/use-portfolios';
+import { orcaConfirm } from '@/lib/orca-confirm';
 
 interface Props {
   isRTL: boolean;
