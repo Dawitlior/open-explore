@@ -204,6 +204,23 @@ function CaptureFlow() {
     }
   }, [stage, draft?.context.capturedAt]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  if (stage === 'capturing') {
+    return (
+      <div
+        dir={isRTL ? 'rtl' : 'ltr'}
+        className="fixed inset-0 z-[1001] flex items-center justify-center bg-black/30 backdrop-blur-[2px] animate-fade-in pointer-events-none"
+      >
+        <div className="flex items-center gap-2 rounded-full border border-white/10 bg-[#0b111b]/90 px-4 py-2 text-xs text-[#e8edf5] shadow-lg">
+          <span
+            className="inline-block h-3 w-3 rounded-full border-2 border-white/20 animate-spin"
+            style={{ borderTopColor: ACCENT }}
+          />
+          {t('לוכד צילום…', 'Capturing…')}
+        </div>
+      </div>
+    );
+  }
+
   if (stage !== 'draft' && stage !== 'submitting') return null;
   if (!draft) return null;
 
