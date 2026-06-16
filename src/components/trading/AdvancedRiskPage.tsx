@@ -538,6 +538,14 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
       </GlassCard>
       </>)}
 
+      {/* ═══════════════════════════════════════════════════════════
+          ZONE 4 — TEMPORAL RISK CONTEXT (hour-of-day window)
+          ═══════════════════════════════════════════════════════════ */}
+      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'הקשר זמן' : 'TEMPORAL CONTEXT'} />
+      <div style={{ marginBottom: 4 }}>
+        <HourOfDayStrip T={T} isRTL={isRTL} trades={trades} />
+      </div>
+
       {/* ═══ RISK ALLOCATION + DRAWDOWN ═══ */}
       <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'הקצאה ונסיגה' : 'ALLOCATION & DRAWDOWN'} />
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 4 }}>
