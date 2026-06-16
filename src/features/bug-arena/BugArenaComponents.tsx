@@ -881,27 +881,29 @@ function Avatar({ reporter, size = 28 }: { reporter: BugReporter; size?: number 
 }
 
 function ReportersPopover({ reporters }: { reporters: BugReporter[] }) {
+  const { lang, isRTL, t } = useLang();
   return (
     <div
       data-bug-reporters-popover
       className="mt-3 rounded-xl border border-white/10 bg-[#0b111b] p-3"
     >
-      <div className="mb-2 text-xs font-bold text-white/50">מי דיווח על הבאג</div>
+      <div className="mb-2 text-xs font-bold text-white/50">{t('מי דיווח על הבאג', 'Who reported this bug')}</div>
       <ul className="space-y-2">
         {reporters.map((r) => (
           <li key={r.user_id} className="flex items-center gap-2">
             <Avatar reporter={r} size={24} />
             <div className="min-w-0">
-              <div className="truncate text-sm">{r.profile?.display_name || 'משתמש'}</div>
+              <div className="truncate text-sm">{r.profile?.display_name || t('משתמש', 'User')}</div>
               {r.note && <div className="truncate text-xs text-white/40">{r.note}</div>}
             </div>
-            <span className="mr-auto text-[11px] text-white/30">{timeAgo(r.created_at)}</span>
+            <span className={`${isRTL ? 'mr-auto' : 'ml-auto'} text-[11px] text-white/30`}>{timeAgo(r.created_at, lang)}</span>
           </li>
         ))}
       </ul>
     </div>
   );
 }
+
 
 // =====================================================================
 // DETAIL  (full view + comments)
