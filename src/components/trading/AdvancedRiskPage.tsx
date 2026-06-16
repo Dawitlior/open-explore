@@ -504,23 +504,42 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
           </LazyChart>
         </ChartWrapper>}
 
-        {registryAllows('riskChangePct') && <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'שינוי סיכון (%)' : 'Risk Change %'} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ flex: 1, minWidth: 260 }}>
-          <LazyChart height={200}>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={riskTimeline.slice(1).map((d, i) => ({ ...d, idx: i + 1 }))}>
-                <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                <XAxis dataKey="idx" tick={{ fill: T.text.muted, fontSize: 9 }} tickFormatter={(v: number) => `#${v}`} />
-                <YAxis tick={{ fill: T.text.muted, fontSize: 9 }} />
-                <Tooltip contentStyle={tt} cursor={false} formatter={(v: number) => `${v.toFixed(1)}%`} />
-                <Bar dataKey="change" radius={[3, 3, 0, 0]}>
-                  {riskTimeline.slice(1).map((d, i) => (
-                    <Cell key={i} fill={Math.abs(d.change) > 50 ? T.accent.red : Math.abs(d.change) > 20 ? T.accent.orange : T.accent.green} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </LazyChart>
-        </ChartWrapper>}
+        {registryAllows('riskChangePct') && (() => {
+          const changeData = riskTimeline.slice(1).map((d, i) => ({ ...d, idx: i + 1 }));
+          const hasSignal = changeData.some(d => Math.abs(d.change) > 0.01);
+          const yMax = Math.max(20, ...changeData.map(d => Math.abs(d.change)));
+          return (
+            <ChartWrapper T={T} onExplainClick={onExplainClick} title={isRTL ? 'שינוי סיכון (%)' : 'Risk Change %'} explanation={EXPLANATIONS.riskAllocation} unit="%" style={{ flex: 1, minWidth: 260 }}>
+              <LazyChart height={200}>
+                {hasSignal ? (
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart data={changeData} margin={{ top: 8, right: 8, bottom: 4, left: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
+                      <XAxis dataKey="idx" tick={{ fill: T.text.muted, fontSize: 9 }} tickFormatter={(v: number) => `#${v}`} />
+                      <YAxis tick={{ fill: T.text.muted, fontSize: 9 }} domain={[-yMax, yMax]} tickFormatter={(v: number) => `${v.toFixed(0)}%`} />
+                      <Tooltip contentStyle={tt} cursor={false} formatter={(v: number) => `${v.toFixed(1)}%`} />
+                      <Bar dataKey="change" radius={[3, 3, 0, 0]}>
+                        {changeData.map((d, i) => (
+                          <Cell key={i} fill={Math.abs(d.change) > 50 ? T.accent.red : Math.abs(d.change) > 20 ? T.accent.orange : T.accent.green} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div style={{
+                    height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    textAlign: 'center', padding: 16, fontSize: 11, color: T.text.muted,
+                    lineHeight: 1.6, fontFamily: "'JetBrains Mono', monospace",
+                  }}>
+                    {isRTL
+                      ? 'אין שונות בסיכון בין עסקאות — הגודל קבוע. (זה דווקא טוב — עקביות מלאה).'
+                      : 'No risk variability between trades — sizing is constant. (Good — perfectly consistent.)'}
+                  </div>
+                )}
+              </LazyChart>
+            </ChartWrapper>
+          );
+        })()}
       </div>
       </>)}
 
