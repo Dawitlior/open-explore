@@ -620,31 +620,179 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
         registryAllows={registryAllows}
       />
 
-      {/* ═══ COOL OFF + WARNINGS ═══ */}
-      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'מצב והתראות' : 'Status & Warnings'} subtitle={isRTL ? 'התראות חיות על המצב הנוכחי שלך — שלום הסיכון במבט אחד.' : 'Live alerts on your current state — risk health at a glance.'} />
+      {/* ═══ LIVE STATUS & COOL-OFF — computed from recent trades ═══ */}
+      <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'מצב חי והתראות' : 'Live Status & Warnings'} subtitle={isRTL ? 'המצב שלך עכשיו, מחושב על העסקאות האחרונות שלך — לא הערכה כללית.' : 'Your current state, computed from your most recent trades — not a generic guess.'} />
 
-      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-        <GlassCard T={T} style={{ flex: 1, minWidth: 240 }}>
-          <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>{isRTL ? 'מצב צינון' : 'Cool-Off Status'}</div>
-          <div style={{ padding: 14, borderRadius: 10, textAlign: 'center', background: stats.maxConsecLosses >= 3 ? `${T.accent.orange}10` : `${T.accent.green}10`, border: `1px solid ${stats.maxConsecLosses >= 3 ? T.accent.orange : T.accent.green}25` }}>
-            <div style={{ fontSize: 28, marginBottom: 6 }}>{stats.maxConsecLosses >= 3 ? '⚠️' : '✅'}</div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: stats.maxConsecLosses >= 3 ? T.accent.orange : T.accent.green }}>
-              {stats.maxConsecLosses >= 3 ? (isRTL ? 'מומלץ: צינון' : 'Recommended: Cool Off') : (isRTL ? 'מותר לסחור' : 'Clear to Trade')}
-            </div>
-          </div>
-        </GlassCard>
-        {riskData.warnings.length > 0 && (
-          <GlassCard T={T} style={{ flex: 2, minWidth: 300, borderInlineStart: `3px solid ${T.accent.orange}` }}>
-            <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>{isRTL ? 'אזהרות סיכון' : 'Risk Warnings'}</div>
-            {riskData.warnings.map((w, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: i < riskData.warnings.length - 1 ? `1px solid ${T.border.subtle}` : 'none' }}>
-                <span style={{ color: T.accent.orange }}>⚠️</span>
-                <span style={{ fontSize: 12, color: T.text.secondary }}>{w}</span>
+      {(() => {
+        const now = Date.now();
+        const parseDate = (s: string) => {
+          const d = new Date((s || '').replace(' ', 'T'));
+          return isNaN(d.getTime()) ? null : d.getTime();
+        };
+        const sorted = [...trades]
+          .map(tr => ({ tr, ts: parseDate(tr.date) }))
+          .filter(x => x.ts !== null)
+          .sort((a, b) => (b.ts! - a.ts!));
+        const last10 = sorted.slice(0, 10).map(x => x.tr);
+        let recentConsecLosses = 0;
+        for (const tr of last10) {
+          if (tr.winLoss === 'Loss') recentConsecLosses++;
+          else break;
+        }
+        const lastLoss = sorted.find(x => x.tr.winLoss === 'Loss');
+        const minutesSinceLoss = lastLoss ? Math.floor((now - lastLoss.ts!) / 60000) : null;
+        const dailyConsumedPct = Math.min(100, (Math.abs(limitStatus.dailyNegR) / Math.abs(LIMITS_USED.day)) * 100);
+        const weeklyConsumedPct = Math.min(100, (Math.abs(limitStatus.weeklyNegR) / Math.abs(LIMITS_USED.week)) * 100);
+
+        let severity = 0;
+        const reasons: Array<{ icon: string; text: string; weight: number; color: string }> = [];
+
+        if (recentConsecLosses >= 3) {
+          severity += 45;
+          reasons.push({ icon: '🔻', weight: 45, color: T.accent.red,
+            text: isRTL ? `${recentConsecLosses} הפסדים רצופים ב-10 העסקאות האחרונות` : `${recentConsecLosses} losses in a row in your last 10 trades` });
+        } else if (recentConsecLosses === 2) {
+          severity += 20;
+          reasons.push({ icon: '🟠', weight: 20, color: T.accent.orange,
+            text: isRTL ? '2 הפסדים רצופים — היזהר מהשלישי' : '2 losses in a row — watch the third' });
+        }
+
+        if (dailyConsumedPct >= 80) {
+          severity += 35;
+          reasons.push({ icon: '📉', weight: 35, color: T.accent.red,
+            text: isRTL ? `נצרכו ${dailyConsumedPct.toFixed(0)}% מהמגבלה היומית (${limitStatus.dailyNegR.toFixed(2)}R / ${LIMITS_USED.day}R)` : `${dailyConsumedPct.toFixed(0)}% of daily limit used (${limitStatus.dailyNegR.toFixed(2)}R / ${LIMITS_USED.day}R)` });
+        } else if (dailyConsumedPct >= 50) {
+          severity += 15;
+          reasons.push({ icon: '📊', weight: 15, color: T.accent.orange,
+            text: isRTL ? `נצרכו ${dailyConsumedPct.toFixed(0)}% מהמגבלה היומית` : `${dailyConsumedPct.toFixed(0)}% of daily limit used` });
+        }
+
+        if (weeklyConsumedPct >= 75) {
+          severity += 20;
+          reasons.push({ icon: '🗓️', weight: 20, color: T.accent.orange,
+            text: isRTL ? `נצרכו ${weeklyConsumedPct.toFixed(0)}% מהמגבלה השבועית` : `${weeklyConsumedPct.toFixed(0)}% of weekly limit used` });
+        }
+
+        if (minutesSinceLoss !== null && minutesSinceLoss < 15 && lastLoss) {
+          severity += 15;
+          reasons.push({ icon: '⏱️', weight: 15, color: T.accent.orange,
+            text: isRTL ? `הפסד אחרון לפני ${minutesSinceLoss} דק׳ — קח רגע לנשום` : `Last loss was ${minutesSinceLoss} min ago — take a breath` });
+        }
+
+        if (riskHealth < 40) {
+          severity += 20;
+          reasons.push({ icon: '💔', weight: 20, color: T.accent.red,
+            text: isRTL ? `ציון בריאות סיכון נמוך (${riskHealth.toFixed(0)}/100)` : `Risk Health score is low (${riskHealth.toFixed(0)}/100)` });
+        }
+
+        severity = Math.min(100, severity);
+        const state = severity >= 60 ? 'cool-off' : severity >= 30 ? 'caution' : 'clear';
+        const stateColor = state === 'cool-off' ? T.accent.red : state === 'caution' ? T.accent.orange : T.accent.green;
+        const stateIcon = state === 'cool-off' ? '🛑' : state === 'caution' ? '⚠️' : '✅';
+        const stateLabel = state === 'cool-off'
+          ? (isRTL ? 'מומלץ: צינון' : 'Recommended: Cool Off')
+          : state === 'caution'
+            ? (isRTL ? 'זהירות — שקול להאט' : 'Caution — consider slowing down')
+            : (isRTL ? 'מותר לסחור' : 'Clear to Trade');
+        const positiveNote = reasons.length === 0
+          ? (isRTL ? 'אין דגלים אדומים בעסקאות האחרונות שלך. תמשיך בשגרה.' : 'No red flags on your recent trades. Continue your routine.')
+          : null;
+
+        return (
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <GlassCard T={T} style={{ flex: 1, minWidth: 280, borderInlineStart: `3px solid ${stateColor}` }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  {isRTL ? 'מצב מסחר עכשיו' : 'Trading State Right Now'}
+                </div>
+                <div style={{ fontSize: 10, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>
+                  {isRTL ? `חומרה ${severity.toFixed(0)}/100` : `Severity ${severity.toFixed(0)}/100`}
+                </div>
               </div>
-            ))}
-          </GlassCard>
-        )}
-      </div>
+              <div style={{
+                padding: 16, borderRadius: 10, textAlign: 'center',
+                background: `${stateColor}10`, border: `1px solid ${stateColor}25`,
+              }}>
+                <div style={{ fontSize: 32, marginBottom: 4 }}>{stateIcon}</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: stateColor, marginBottom: 4 }}>{stateLabel}</div>
+                <div style={{ fontSize: 11, color: T.text.muted }}>
+                  {isRTL ? `מבוסס על ${last10.length} עסקאות אחרונות` : `Based on your last ${last10.length} trades`}
+                </div>
+              </div>
+              <div style={{ marginTop: 12 }}>
+                <div style={{ position: 'relative', height: 6, background: T.bg.tertiary, borderRadius: 3, overflow: 'hidden', border: `1px solid ${T.border.subtle}` }}>
+                  <div style={{
+                    position: 'absolute', insetInlineStart: 0, top: 0, bottom: 0,
+                    width: `${severity}%`,
+                    background: `linear-gradient(${isRTL ? '270deg' : '90deg'}, ${T.accent.green}, ${T.accent.orange}, ${T.accent.red})`,
+                    transition: 'width 0.6s cubic-bezier(0.16,1,0.3,1)',
+                  }} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, fontSize: 9, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>
+                  <span>{isRTL ? 'נקי' : 'Clear'}</span>
+                  <span>{isRTL ? 'זהירות' : 'Caution'}</span>
+                  <span>{isRTL ? 'צינון' : 'Cool-Off'}</span>
+                </div>
+              </div>
+            </GlassCard>
+
+            <GlassCard T={T} style={{ flex: 2, minWidth: 320 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, gap: 8, flexWrap: 'wrap' }}>
+                <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  {isRTL ? 'למה זה המצב? — פירוט החישוב' : 'Why this state? — calculation breakdown'}
+                </div>
+                <div style={{ fontSize: 9, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>
+                  {minutesSinceLoss !== null ? (isRTL ? `הפסד אחרון לפני ${minutesSinceLoss} דק׳` : `Last loss ${minutesSinceLoss}m ago`) : (isRTL ? 'אין הפסד אחרון' : 'No recent loss')}
+                </div>
+              </div>
+
+              {positiveNote ? (
+                <div style={{
+                  padding: 14, borderRadius: 10, textAlign: 'center',
+                  background: `${T.accent.green}08`, border: `1px dashed ${T.accent.green}30`,
+                  color: T.text.secondary, fontSize: 12, lineHeight: 1.6,
+                }}>
+                  ✨ {positiveNote}
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {reasons.map((r, i) => (
+                    <div key={i} style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '8px 10px',
+                      background: `${r.color}08`,
+                      border: `1px solid ${r.color}20`,
+                      borderRadius: 8,
+                    }}>
+                      <span style={{ fontSize: 16 }}>{r.icon}</span>
+                      <span style={{ flex: 1, fontSize: 12, color: T.text.secondary, lineHeight: 1.5 }}>{r.text}</span>
+                      <span style={{
+                        fontSize: 9, padding: '2px 6px', borderRadius: 4,
+                        background: `${r.color}20`, color: r.color,
+                        fontFamily: "'JetBrains Mono', monospace", fontWeight: 700,
+                      }}>+{r.weight}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {riskData.warnings.length > 0 && (
+                <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${T.border.subtle}` }}>
+                  <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
+                    {isRTL ? 'התראות מנוע הסיכון' : 'Risk-engine alerts'}
+                  </div>
+                  {riskData.warnings.map((w, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: T.text.secondary, padding: '3px 0' }}>
+                      <span style={{ color: T.accent.orange }}>⚠️</span>
+                      <span>{w}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </GlassCard>
+          </div>
+        );
+      })()}
 
       {/* ═══ RISK EXPLANATIONS LOG — Alpha + Review/Research ═══ */}
       {showExplanationLog && riskExplanations.length > 0 && (
