@@ -22,7 +22,6 @@ export function DisplayModeToggle({ T, isRTL, compact }: Props) {
 
   const hint = buildHiddenHint(hiddenCount, totalCount, isRTL);
 
-  const PILL_W = 196;
   const PILL_H = 34;
   const PADDING = 3;
 
@@ -34,13 +33,14 @@ export function DisplayModeToggle({ T, isRTL, compact }: Props) {
   ];
 
   return (
-    <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: isRTL ? 'flex-end' : 'flex-start', gap: 4 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 4, width: '100%' }}>
       <div
         role="tablist"
         aria-label={isRTL ? 'מצב תצוגה' : 'Display mode'}
         style={{
           position: 'relative',
-          width: PILL_W,
+          width: '100%',
+          maxWidth: compact ? 200 : 260,
           height: PILL_H,
           padding: PADDING,
           borderRadius: 999,

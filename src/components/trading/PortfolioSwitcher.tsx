@@ -67,9 +67,21 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
     const update = () => {
       const rect = triggerRef.current?.getBoundingClientRect();
       if (!rect) return;
-      const width = 300;
-      const left = isRTL ? rect.right - width : rect.left;
-      setMenuPos({ top: rect.bottom + 6, left: Math.max(8, Math.min(left, window.innerWidth - width - 8)) });
+      const vw = window.innerWidth;
+      const isPhone = vw < 480;
+      const width = isPhone ? Math.min(vw - 16, 380) : 300;
+      let top: number;
+      let left: number;
+      if (isPhone) {
+        // Bottom-sheet style on phones: pin to bottom of viewport, centered horizontally.
+        left = (vw - width) / 2;
+        top = Math.max(rect.bottom + 6, window.innerHeight - 520);
+      } else {
+        left = isRTL ? rect.right - width : rect.left;
+        left = Math.max(8, Math.min(left, vw - width - 8));
+        top = rect.bottom + 6;
+      }
+      setMenuPos({ top, left });
     };
     update();
     window.addEventListener('resize', update);
@@ -153,7 +165,7 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
   }, [loading, activePortfolio, isRTL]);
 
   return (
-    <div ref={rootRef} style={{ position: 'relative', direction: isRTL ? 'rtl' : 'ltr' }}>
+    <div ref={rootRef} style={{ position: 'relative', direction: isRTL ? 'rtl' : 'ltr', width: '100%' }}>
       <button
         ref={triggerRef}
         onClick={() => setOpen((v) => !v)}
@@ -174,7 +186,7 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
           fontWeight: 600,
           fontFamily: "'Poppins', sans-serif",
           letterSpacing: '0.02em',
-          maxWidth: 240, minWidth: 0, width: '100%',
+          maxWidth: compact ? 240 : '100%', minWidth: 0, width: '100%',
           boxShadow: open
             ? '0 6px 24px rgba(212,175,55,0.22), inset 0 1px 0 rgba(255,255,255,0.06)'
             : '0 2px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)',
@@ -194,7 +206,9 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
           role="listbox"
           style={{
             position: 'fixed', top: menuPos.top, left: menuPos.left,
-            minWidth: 280, maxWidth: 340,
+            width: typeof window !== 'undefined' && window.innerWidth < 480 ? Math.min(window.innerWidth - 16, 380) : undefined,
+            minWidth: 280, maxWidth: 380,
+            maxHeight: 'min(80vh, 560px)', overflowY: 'auto',
             background: 'linear-gradient(180deg, rgba(14,22,40,0.98) 0%, rgba(6,19,38,0.99) 100%)',
             backdropFilter: 'blur(18px)',
             border: '1px solid rgba(212,175,55,0.28)', borderRadius: 14,
