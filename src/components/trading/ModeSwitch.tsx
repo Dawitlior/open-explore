@@ -367,7 +367,8 @@ export const ModeSwitch = ({ T, isRTL }: ModeSwitchProps) => {
             </motion.div>
           </>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body)}
     </>
   );
 };
