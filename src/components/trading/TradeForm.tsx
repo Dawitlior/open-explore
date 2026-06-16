@@ -568,11 +568,26 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                 <div style={helpText}>{isRTL ? 'המחיר שבו תצא מהעסקה אם השוק הולך נגדך — להגנה על ההון.' : "The price you'll exit if the market moves against you — to protect your capital."}</div>
               </div>
 
-              <div style={sectionCard}>
-                <label style={bigLabel}>{isRTL ? 'מחיר היציאה' : 'Exit price'}</label>
-                <input type="number" step="any" inputMode="decimal" value={form.exit || ''} onChange={e => setForm(f => ({ ...f, exit: +e.target.value }))} placeholder="0.00" style={bigInput} />
-                <div style={helpText}>{isRTL ? 'המחיר שבו סגרת את העסקה בפועל.' : 'The price you actually closed at.'}</div>
-              </div>
+              {!isOpenPosition && (
+                <div style={sectionCard}>
+                  <label style={bigLabel}>{isRTL ? 'מחיר היציאה' : 'Exit price'}</label>
+                  <input type="number" step="any" inputMode="decimal" value={form.exit || ''} onChange={e => setForm(f => ({ ...f, exit: +e.target.value }))} placeholder="0.00" style={bigInput} />
+                  <div style={helpText}>{isRTL ? 'המחיר שבו סגרת את העסקה בפועל.' : 'The price you actually closed at.'}</div>
+                </div>
+              )}
+              {isOpenPosition && (
+                <div style={{ ...sectionCard, border: `1.5px solid ${T.accent.cyan}55`, background: `${T.accent.cyan}10` }}>
+                  <div style={{ fontSize: 13, color: T.accent.cyan, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 18 }}>◴</span>
+                    {isRTL ? 'הפוזיציה עדיין פתוחה' : 'Position is still open'}
+                  </div>
+                  <div style={{ ...helpText, marginTop: 8 }}>
+                    {isRTL
+                      ? 'אין יציאה ולכן אין R או P&L. הפוזיציה תיכנס לספר הפוזיציות הפתוחות ולא תשפיע על תוחלת/עקומת הון עד שתיסגר.'
+                      : 'No exit, so no R or P&L. The position is tracked in the open-positions book and will not touch expectancy or equity curve until it is closed.'}
+                  </div>
+                </div>
+              )}
 
               <div style={sectionCard}>
                 <label style={bigLabel}>{isRTL ? 'כמה הסתכנת? (בדולרים)' : 'How much did you risk? ($)'}</label>
