@@ -225,10 +225,39 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
                   <div style={{ fontSize: 14, color: T.text.primary, fontWeight: 600 }}>{Number(p.entry_price).toLocaleString(undefined, { maximumFractionDigits: 6 })}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 2 }}>{isRTL ? 'סטופ-לוס' : 'Stop Loss'}</div>
-                  <div style={{ fontSize: 14, color: p.stop_loss ? T.accent.red : T.text.muted, fontWeight: 600 }}>
-                    {p.stop_loss ? Number(p.stop_loss).toLocaleString(undefined, { maximumFractionDigits: 6 }) : '—'}
+                  <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
+                    <span>{isRTL ? 'סטופ-לוס' : 'Stop Loss'}</span>
+                    {isManual && editStopId !== p.id && (
+                      <button
+                        onClick={() => beginEditStop(p)}
+                        style={{ background: 'transparent', border: 'none', color: T.accent.cyan, cursor: 'pointer', fontSize: 10, fontWeight: 700, padding: 0 }}>
+                        {p.stop_loss ? (isRTL ? 'ערוך' : 'Edit') : (isRTL ? '+ הגדר' : '+ Set')}
+                      </button>
+                    )}
                   </div>
+                  {editStopId === p.id ? (
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      <input
+                        type="number" inputMode="decimal" autoFocus
+                        value={editStopVal}
+                        onChange={e => setEditStopVal(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') saveStop(p); if (e.key === 'Escape') setEditStopId(null); }}
+                        style={{ width: '100%', minWidth: 0, padding: '4px 6px', background: T.bg.secondary, border: `1px solid ${T.accent.cyan}55`, borderRadius: 6, color: T.text.primary, fontSize: 13, fontFamily: "'JetBrains Mono', monospace", outline: 'none' }}
+                      />
+                      <button disabled={savingStop} onClick={() => saveStop(p)}
+                        style={{ padding: '4px 8px', background: T.accent.cyan, border: 'none', borderRadius: 6, color: T.bg.primary, fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>
+                        ✓
+                      </button>
+                      <button onClick={() => setEditStopId(null)}
+                        style={{ padding: '4px 6px', background: 'transparent', border: `1px solid ${T.border.medium}`, borderRadius: 6, color: T.text.muted, fontSize: 11, cursor: 'pointer' }}>
+                        ×
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: 14, color: p.stop_loss ? T.accent.red : T.text.muted, fontWeight: 600 }}>
+                      {p.stop_loss ? Number(p.stop_loss).toLocaleString(undefined, { maximumFractionDigits: 6 }) : '—'}
+                    </div>
+                  )}
                 </div>
               </div>
 
