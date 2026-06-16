@@ -615,7 +615,7 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
 
           {/* Day note */}
           <div style={{ padding: '0 16px 14px' }}>
-            <NoteSection />
+            {noteSection}
           </div>
 
           {/* AI */}
@@ -787,7 +787,7 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
           </div>
 
           <div>
-            <NoteSection />
+            {noteSection}
           </div>
 
           <div>
