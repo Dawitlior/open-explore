@@ -104,11 +104,11 @@ export const RiskAdjustedRatiosSection = ({ T, isRTL, trades: all }: Props) => {
       (t) => (isMoney ? (t.pnl || 0) : getEffectiveR(t)),
     );
 
-    // Rolling 20-day window for Sharpe / Sortino / Omega.
-    const W = Math.min(20, Math.max(5, Math.floor(series.length / 4) || 5));
-    const sharpeSpark  = rollingSeries(series, W, computeSharpe);
-    const sortinoSpark = rollingSeries(series, W, computeSortino);
-    const omegaSpark   = rollingSeries(series, W, (s) => computeOmega(s, 0))
+    // Expanding-window evolution — the curve ends exactly on the headline value.
+    const minW = Math.max(5, Math.min(10, Math.floor(series.length / 4) || 5));
+    const sharpeSpark  = expandingSeries(series, minW, computeSharpe);
+    const sortinoSpark = expandingSeries(series, minW, computeSortino);
+    const omegaSpark   = expandingSeries(series, minW, (s) => computeOmega(s, 0))
       .filter(p => Number.isFinite(p.v)); // strip Infinity
 
     // Equity curve + running drawdown (always growing, never recovers in this view).
