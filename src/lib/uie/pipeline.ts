@@ -86,13 +86,18 @@ export function runImport(sheets: SheetInput[], opts?: RunImportOptions): Import
   if (archetype === 'B_FILLS_LOG' || archetype === 'C_ACCOUNT_STATEMENT') {
     const stream: StreamItem[] = []; let seq = 0;
     const actIdx = colIdx('activityType');
+    const dirIdxLocal = colIdx('direction');
     for (const rv of rows) {
       const sym = normalizeSymbol(gStr(rv, 'symbol'));
       const dir = normalizeDirection(gStr(rv, 'direction'));
       const price = gNum(rv, 'entryPrice'); const qty = gNum(rv, 'quantity');
       const dateRaw = gStr(rv, 'entryDate'); const date = parseDate(dateRaw, dateDecision) || dateRaw;
       const fee = gNum(rv, 'commission'); const ext = gStr(rv, 'externalId');
-      const act = actIdx >= 0 ? classifyActivity(rv[actIdx]) : 'trade';
+      // Prefer a dedicated activity column; otherwise try to classify the direction cell
+      // (Israeli broker statements stuff dividend/deposit/fee tokens into "סוג פעולה").
+      let act: string | null = actIdx >= 0 ? classifyActivity(rv[actIdx]) : null;
+      if (!act && dirIdxLocal >= 0) act = classifyActivity(rv[dirIdxLocal]);
+      if (!act) act = 'trade';
       if (act === 'funding') { if (sym && date) stream.push({ symbol: sym, date, seq: seq++, kind: 'funding', amount: fee ?? 0 }); continue; }
       if (['deposit','withdrawal','dividend','interest','tax','transfer','fee'].indexOf(act || '') >= 0) {
         equityEvents.push({ date, type: act as any, amount: gNum(rv, 'positionSize') ?? fee ?? 0 }); continue;

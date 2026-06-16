@@ -142,17 +142,18 @@ export const DIRECTION_VALUES: Record<string, string[]> = {
   short: ['sell','s','sld','sold','short','open short','מכירה','מ','שורט','פתיחת שורט','מכירה בחסר'],
 };
 export const ACTIVITY_VALUES: Record<string, string[]> = {
-  trade:['buy','sell','קניה','קנייה','מכירה','trade','עסקה'],
+  trade:['buy','sell','קניה','קנייה','מכירה','trade','עסקה','קני','מכי','רכישה','מימוש'],
   funding:['funding','מימון','פאנדינג'],
   liquidation:['liquidation','liquidated','חיסול','מימוש כפוי'],
-  deposit:['deposit','הפקדה','זיכוי'],
-  withdrawal:['withdrawal','משיכה','חיוב'],
-  dividend:['dividend','דיבידנד'],
-  interest:['interest','ריבית'],
-  fee:['fee','management fee','דמי ניהול','דמי משמרת'],
-  tax:['tax','מס','ניכוי מס'],
-  transfer:['transfer','העברה'],
+  deposit:['deposit','הפקדה','זיכוי','הפקדת מזומן','העברה נכנסת'],
+  withdrawal:['withdrawal','משיכה','חיוב','משיכת מזומן','העברה יוצאת'],
+  dividend:['dividend','דיבידנד','דיוידנד','קופון','ריבית קופון'],
+  interest:['interest','ריבית','ריבית זכות','ריבית חובה'],
+  fee:['fee','management fee','דמי ניהול','דמי משמרת','דמי טיפול','עמלת חשבון','עמלת ניהול'],
+  tax:['tax','מס','ניכוי מס','ניכוי במקור','מס במקור','מס דיבידנד'],
+  transfer:['transfer','העברה','העברה בין חשבונות','המרת מטבע','המרה'],
 };
+
 export const ORDER_TYPE_VALUES = ['limit','market','stop','lmt','mkt','stp','--'];
 export const OUTCOME_VALUES = ['win','loss','be','breakeven','w','l','רווח','הפסד'];
 export const BOOLEAN_VALUES = ['yes','no','true','false','כן','לא','y','n'];
