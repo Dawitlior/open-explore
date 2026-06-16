@@ -739,38 +739,64 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                     </div>
                   </div>
 
-                  <div style={card}>
-                    <h3 style={sectionTitle}><KeyRound size={14} /> {t('שינוי סיסמה', 'Change password')}</h3>
-                    <p style={sectionHint}>{t('סיסמה חייבת להיות באורך 6 תווים לפחות. השינוי מיידי.', 'Minimum 6 characters. Change applies immediately.')}</p>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
-                      <div>
-                        <label style={fieldLabel}>{t('סיסמה חדשה', 'New password')}</label>
-                        <input className="orca-settings-input" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} autoComplete="new-password" style={input} dir="ltr" />
-                      </div>
-                      <div>
-                        <label style={fieldLabel}>{t('אימות', 'Confirm')}</label>
-                        <input className="orca-settings-input" type="password" value={newPasswordConfirm} onChange={e => setNewPasswordConfirm(e.target.value)} autoComplete="new-password" style={input} dir="ltr" />
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      <button className="orca-cta" onClick={handleChangePassword} disabled={pwBusy || !newPassword || !newPasswordConfirm} style={primaryBtn(T.accent.cyan, pwBusy || !newPassword || !newPasswordConfirm)}>
-                        <Check size={13} /> {pwBusy ? t('מעדכן…', 'Updating…') : t('עדכן סיסמה', 'Update password')}
-                      </button>
-                      <button onClick={handleSendReset} style={ghostBtn}>
-                        <Send size={13} /> {t('שלח מייל איפוס', 'Send reset email')}
-                      </button>
-                    </div>
-                  </div>
+                  {(() => {
+                    const providers: string[] = (auth.user?.app_metadata as { providers?: string[]; provider?: string } | undefined)?.providers
+                      ?? (auth.user?.app_metadata?.provider ? [auth.user.app_metadata.provider as string] : []);
+                    const identities = auth.user?.identities ?? [];
+                    const hasEmailProvider = providers.includes('email') || identities.some(i => i.provider === 'email');
+                    if (!hasEmailProvider) {
+                      const primaryProvider = providers.find(p => p !== 'email') ?? identities[0]?.provider ?? 'OAuth';
+                      const providerLabel = primaryProvider.charAt(0).toUpperCase() + primaryProvider.slice(1);
+                      return (
+                        <div style={card}>
+                          <h3 style={sectionTitle}><KeyRound size={14} /> {t('ניהול חשבון', 'Account management')}</h3>
+                          <p style={sectionHint}>
+                            {t(
+                              `התחברת באמצעות ${providerLabel}. ניהול הסיסמה והאימייל מתבצע ישירות בחשבון ${providerLabel} שלך.`,
+                              `You are signed in with ${providerLabel}. Password and email are managed directly in your ${providerLabel} account.`
+                            )}
+                          </p>
+                        </div>
+                      );
+                    }
+                    return (
+                      <>
+                        <div style={card}>
+                          <h3 style={sectionTitle}><KeyRound size={14} /> {t('שינוי סיסמה', 'Change password')}</h3>
+                          <p style={sectionHint}>{t('סיסמה חייבת להיות באורך 6 תווים לפחות. השינוי מיידי.', 'Minimum 6 characters. Change applies immediately.')}</p>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+                            <div>
+                              <label style={fieldLabel}>{t('סיסמה חדשה', 'New password')}</label>
+                              <input className="orca-settings-input" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} autoComplete="new-password" style={input} dir="ltr" />
+                            </div>
+                            <div>
+                              <label style={fieldLabel}>{t('אימות', 'Confirm')}</label>
+                              <input className="orca-settings-input" type="password" value={newPasswordConfirm} onChange={e => setNewPasswordConfirm(e.target.value)} autoComplete="new-password" style={input} dir="ltr" />
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                            <button className="orca-cta" onClick={handleChangePassword} disabled={pwBusy || !newPassword || !newPasswordConfirm} style={primaryBtn(T.accent.cyan, pwBusy || !newPassword || !newPasswordConfirm)}>
+                              <Check size={13} /> {pwBusy ? t('מעדכן…', 'Updating…') : t('עדכן סיסמה', 'Update password')}
+                            </button>
+                            <button onClick={handleSendReset} style={ghostBtn}>
+                              <Send size={13} /> {t('שלח מייל איפוס', 'Send reset email')}
+                            </button>
+                          </div>
+                        </div>
 
-                  <div style={card}>
-                    <h3 style={sectionTitle}><Mail size={14} /> {t('שינוי כתובת אימייל', 'Change email address')}</h3>
-                    <p style={sectionHint}>{t('יישלח אליך מייל אישור לכתובת החדשה. השינוי ייכנס לתוקף רק לאחר אישור.', 'A confirmation email will be sent to the new address. Change applies after confirmation.')}</p>
-                    <label style={fieldLabel}>{t('אימייל חדש', 'New email')}</label>
-                    <input className="orca-settings-input" type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} autoComplete="email" style={{ ...input, marginBottom: 12 }} dir="ltr" placeholder="name@example.com" />
-                    <button className="orca-cta" onClick={handleChangeEmail} disabled={emailBusy || !newEmail} style={primaryBtn(T.accent.blue, emailBusy || !newEmail)}>
-                      <Check size={13} /> {emailBusy ? t('שולח…', 'Sending…') : t('עדכן אימייל', 'Update email')}
-                    </button>
-                  </div>
+                        <div style={card}>
+                          <h3 style={sectionTitle}><Mail size={14} /> {t('שינוי כתובת אימייל', 'Change email address')}</h3>
+                          <p style={sectionHint}>{t('יישלח אליך מייל אישור לכתובת החדשה. השינוי ייכנס לתוקף רק לאחר אישור.', 'A confirmation email will be sent to the new address. Change applies after confirmation.')}</p>
+                          <label style={fieldLabel}>{t('אימייל חדש', 'New email')}</label>
+                          <input className="orca-settings-input" type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} autoComplete="email" style={{ ...input, marginBottom: 12 }} dir="ltr" placeholder="name@example.com" />
+                          <button className="orca-cta" onClick={handleChangeEmail} disabled={emailBusy || !newEmail} style={primaryBtn(T.accent.blue, emailBusy || !newEmail)}>
+                            <Check size={13} /> {emailBusy ? t('שולח…', 'Sending…') : t('עדכן אימייל', 'Update email')}
+                          </button>
+                        </div>
+                      </>
+                    );
+                  })()}
+
 
                   <div style={{ ...card, borderColor: `${T.accent.orange}40`, background: `linear-gradient(135deg, ${T.accent.orange}08, transparent)` }}>
                     <h3 style={{ ...sectionTitle, color: T.accent.orange }}><AlertTriangle size={14} /> {t('יציאה מהמערכת', 'Sign out')}</h3>
