@@ -707,7 +707,7 @@ export function BugBoard() {
               color: (board.filter.section || 'all') === s ? '#06121f' : '#cdd6e3',
             }}
           >
-            {s === 'all' ? t('הכל', 'All') : s}
+            {s === 'all' ? t('הכל', 'All') : sectionLabel(s, lang)}
           </button>
         ))}
       </div>
