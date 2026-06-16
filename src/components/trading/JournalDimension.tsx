@@ -3597,7 +3597,10 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
   const eodIdxRef = useRef(Math.floor(Math.random() * EOD_VARIATIONS.length));
 
   const fillEod = () => {
-    const v = EOD_VARIATIONS[eodIdxRef.current % EOD_VARIATIONS.length];
+    // Match the demo set to the active platform language.
+    const isEn = dir === 'ltr';
+    const SOURCE = isEn ? EN_EOD_VARIATIONS : EOD_VARIATIONS;
+    const v = SOURCE[eodIdxRef.current % SOURCE.length];
     eodIdxRef.current++;
     // Set hasOpen explicitly (simulates clicking the Yes/No button)
     // Then inject trades with unique IDs (simulates clicking "+ Log Trade" and filling)
