@@ -105,11 +105,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-const SignOutOverlay = () => {
-  // Lazy import to avoid circular deps at module init
-  const { OrcaBootLoader } = require('@/components/OrcaBootLoader') as typeof import('@/components/OrcaBootLoader');
-  return <OrcaBootLoader label="Signing out" />;
-};
+const SignOutOverlay = () => <OrcaBootLoader label="Signing out" />;
+
 
 
 export const useAuth = () => useContext(AuthContext);
