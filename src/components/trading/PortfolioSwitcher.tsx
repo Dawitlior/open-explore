@@ -206,7 +206,9 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
           role="listbox"
           style={{
             position: 'fixed', top: menuPos.top, left: menuPos.left,
-            minWidth: 280, maxWidth: 340,
+            width: typeof window !== 'undefined' && window.innerWidth < 480 ? Math.min(window.innerWidth - 16, 380) : undefined,
+            minWidth: 280, maxWidth: 380,
+            maxHeight: 'min(80vh, 560px)', overflowY: 'auto',
             background: 'linear-gradient(180deg, rgba(14,22,40,0.98) 0%, rgba(6,19,38,0.99) 100%)',
             backdropFilter: 'blur(18px)',
             border: '1px solid rgba(212,175,55,0.28)', borderRadius: 14,
