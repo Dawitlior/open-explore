@@ -513,20 +513,46 @@ export default function AuthPage() {
           )}
         </form>
 
-        <p style={{ textAlign: 'center', marginTop: 18, fontSize: 12, color: TEXT_MUTED }}>
-          {mode === 'sign-in' ? c.noAccount : c.haveAccount}{' '}
-          <button type="button"
-            onClick={() => { setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in'); setPassword(''); }}
-            style={{ background: 'none', border: 'none', color: GOLD_BRIGHT, cursor: 'pointer', fontWeight: 700 }}>
-            {mode === 'sign-in' ? c.signUpCta : c.signInCta}
-          </button>
-        </p>
+        {/* Slim consent row — appears under the form, not above */}
+        <label
+          htmlFor="orca-consent"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            marginTop: 14, padding: '8px 4px',
+            cursor: 'pointer',
+            textAlign: isRTL ? 'right' : 'left',
+          }}
+        >
+          <input
+            id="orca-consent"
+            type="checkbox"
+            checked={consent}
+            onChange={e => setConsent(e.target.checked)}
+            style={{
+              width: 14, height: 14,
+              accentColor: GOLD, cursor: 'pointer', flexShrink: 0,
+            }}
+          />
+          <span style={{ fontSize: 11, color: TEXT_MUTED, lineHeight: 1.5 }}>
+            {c.consentPrefix}{' '}
+            <a href="/terms" target="_blank" rel="noopener noreferrer"
+               style={{ color: GOLD_BRIGHT, fontWeight: 700, textDecoration: 'underline' }}>
+              {c.consentTerms}
+            </a>{' '}
+            {c.consentAnd}{' '}
+            <a href="/privacy" target="_blank" rel="noopener noreferrer"
+               style={{ color: GOLD_BRIGHT, fontWeight: 700, textDecoration: 'underline' }}>
+              {c.consentPrivacy}
+            </a>
+          </span>
+        </label>
 
-        <div style={{ marginTop: 16, paddingTop: 14, borderTop: `1px solid ${BORDER_SOFT}`, textAlign: 'center' }}>
+        <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${BORDER_SOFT}`, textAlign: 'center' }}>
           <div style={{ fontSize: 10, color: TEXT_MUTED, letterSpacing: '0.18em', textTransform: 'uppercase' }}>
             🔒 {c.secured}
           </div>
         </div>
+
       </section>
 
       {idleGate && (
