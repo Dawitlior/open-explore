@@ -327,56 +327,107 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
     );
   };
 
-  /* ============= Day-note (persisted journal entry) ============= */
-  const NoteSection = () => (
+  /* ============= Day-note (persisted journal entry) =============
+     IMPORTANT: keep this as a JSX constant (not a nested component) so the
+     <textarea> stays mounted between renders and does not lose focus on
+     every keystroke. */
+  const hasNote = (note?.trim().length ?? 0) > 0;
+  const showEditor = editingNote || (!hasNote && noteLoaded);
+  const noteSection = (
     <div style={{
       background: `linear-gradient(135deg, ${T.accent.cyan}08, ${T.bg.tertiary})`,
       border: `1px solid ${T.border.subtle}`,
       borderRadius: T.radius.md, padding: 14,
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, gap: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 14 }}>📝</span>
           <span style={{ fontSize: 11, fontWeight: 800, color: T.text.primary, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
             {isRTL ? 'הערה ליום' : 'Day Note'}
           </span>
         </div>
-        {noteStatus === 'saved' && (
-          <span style={{ fontSize: 10, color: T.accent.green, fontWeight: 700 }}>{isRTL ? '✓ נשמר' : '✓ Saved'}</span>
-        )}
-        {noteStatus === 'error' && (
-          <span style={{ fontSize: 10, color: T.accent.red, fontWeight: 700 }}>{isRTL ? 'שגיאת שמירה' : 'Save failed'}</span>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {noteStatus === 'saved' && (
+            <span style={{ fontSize: 10, color: T.accent.green, fontWeight: 700 }}>{isRTL ? '✓ נשמר' : '✓ Saved'}</span>
+          )}
+          {noteStatus === 'error' && (
+            <span style={{ fontSize: 10, color: T.accent.red, fontWeight: 700 }}>{isRTL ? 'שגיאת שמירה' : 'Save failed'}</span>
+          )}
+          {hasNote && !showEditor && noteLoaded && (
+            <button
+              onClick={() => setEditingNote(true)}
+              style={{
+                fontSize: 10, fontWeight: 700, padding: '4px 10px', borderRadius: 999,
+                background: 'transparent', color: T.accent.cyan,
+                border: `1px solid ${T.accent.cyan}55`, cursor: 'pointer', letterSpacing: '0.05em',
+              }}
+            >{isRTL ? '✎ עריכה' : '✎ Edit'}</button>
+          )}
+        </div>
       </div>
-      <textarea
-        value={note}
-        onChange={(e) => setNote(e.target.value)}
-        disabled={!noteLoaded}
-        placeholder={isRTL ? 'מה קרה היום? תובנות, מצב רוח, החלטות…' : 'What happened today? Insights, mood, decisions…'}
-        rows={4}
-        style={{
-          width: '100%', boxSizing: 'border-box', resize: 'vertical',
-          background: T.bg.secondary, color: T.text.primary,
-          border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.sm,
-          padding: '10px 12px', fontSize: 13, lineHeight: 1.5,
-          fontFamily: "'Poppins', system-ui, sans-serif", outline: 'none',
-          direction: isRTL ? 'rtl' : 'ltr',
-        }}
-      />
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
-        <button
-          onClick={() => void saveNote()}
-          disabled={noteSaving || !noteLoaded}
+
+      {showEditor ? (
+        <>
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            disabled={!noteLoaded}
+            autoFocus={editingNote}
+            placeholder={isRTL ? 'מה קרה היום? תובנות, מצב רוח, החלטות…' : 'What happened today? Insights, mood, decisions…'}
+            rows={4}
+            style={{
+              width: '100%', boxSizing: 'border-box', resize: 'vertical',
+              background: T.bg.secondary, color: T.text.primary,
+              border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.sm,
+              padding: '10px 12px', fontSize: 13, lineHeight: 1.5,
+              fontFamily: "'Poppins', system-ui, sans-serif", outline: 'none',
+              direction: isRTL ? 'rtl' : 'ltr',
+            }}
+          />
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+            {hasNote && (
+              <button
+                onClick={() => { setEditingNote(false); setNoteStatus('idle'); }}
+                disabled={noteSaving}
+                style={{
+                  fontSize: 11, fontWeight: 700, padding: '7px 14px', borderRadius: 999,
+                  background: 'transparent', color: T.text.muted,
+                  border: `1px solid ${T.border.medium}`, cursor: 'pointer', letterSpacing: '0.05em',
+                }}
+              >{isRTL ? 'בטל' : 'Cancel'}</button>
+            )}
+            <button
+              onClick={() => void saveNote()}
+              disabled={noteSaving || !noteLoaded}
+              style={{
+                fontSize: 11, fontWeight: 800, padding: '7px 16px', borderRadius: 999,
+                background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`,
+                color: T.bg.primary, border: 'none',
+                cursor: (noteSaving || !noteLoaded) ? 'wait' : 'pointer',
+                boxShadow: `0 4px 14px ${T.accent.cyan}40`,
+                letterSpacing: '0.05em',
+              }}
+            >{noteSaving ? '…' : (isRTL ? 'שמור הערה' : 'Save Note')}</button>
+          </div>
+        </>
+      ) : (
+        <div
           style={{
-            fontSize: 11, fontWeight: 800, padding: '7px 16px', borderRadius: 999,
-            background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`,
-            color: T.bg.primary, border: 'none',
-            cursor: (noteSaving || !noteLoaded) ? 'wait' : 'pointer',
-            boxShadow: `0 4px 14px ${T.accent.cyan}40`,
-            letterSpacing: '0.05em',
+            background: T.bg.secondary, color: T.text.primary,
+            border: `1px dashed ${T.border.subtle}`, borderRadius: T.radius.sm,
+            padding: '10px 12px', fontSize: 13, lineHeight: 1.55,
+            fontFamily: "'Poppins', system-ui, sans-serif",
+            direction: isRTL ? 'rtl' : 'ltr', whiteSpace: 'pre-wrap',
+            minHeight: 44,
           }}
-        >{noteSaving ? '…' : (isRTL ? 'שמור הערה' : 'Save Note')}</button>
-      </div>
+        >
+          {hasNote ? note : (
+            <span style={{ color: T.text.muted, fontStyle: 'italic' }}>
+              {isRTL ? 'אין הערה ליום זה.' : 'No note for this day.'}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 
