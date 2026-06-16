@@ -1243,6 +1243,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                 ui.commitCustomAccent(draft);
                 playMorningLock();
                 toast.success(t('הפלטה נשמרה ונעולה ליום', 'Palette committed and locked for 1 day'));
+                setThemeRefreshPrompt('custom' as ThemeId);
               };
 
               return (
