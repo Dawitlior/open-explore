@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { AccessibilityWidget } from '@/components/a11y/AccessibilityWidget';
 
 /**
  * OrcaUXLayer — global premium UX layer.
@@ -216,7 +217,16 @@ export const OrcaUXLayer = () => {
 
   return (
     <>
-      {/* Skip-to-content removed per user request — no accessibility chip in navbar. */}
+      {/* Accessibility widget — global a11y panel (font size, contrast, links, animations). */}
+      <AccessibilityWidget />
+
+      {/* Skip-to-content link (visible on focus for keyboard users). */}
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[10000] focus:px-3 focus:py-2 focus:rounded-md focus:bg-primary focus:text-primary-foreground focus:font-semibold focus:text-xs"
+      >
+        Skip to content
+      </a>
 
 
 

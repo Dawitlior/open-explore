@@ -1188,6 +1188,61 @@ html[data-theme="platinum"] .orca-chart-skeleton {
   }
 }
 
+/* ═══════════════════════════════════════════════════════════
+   A11y widget — runtime user preferences (toggled via the
+   floating Accessibility button). Applied on <html>.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Font scaling — variable set by the widget (defaults to 1). */
+html { font-size: calc(16px * var(--a11y-font-scale, 1)); }
+
+/* High contrast: push borders/text to maximum contrast. */
+html.a11y-high-contrast {
+  filter: contrast(1.25);
+}
+html.a11y-high-contrast body {
+  background: #000 !important;
+}
+html.a11y-high-contrast *:not(svg):not(path) {
+  text-shadow: none !important;
+}
+
+/* Grayscale: removes all color. */
+html.a11y-grayscale { filter: grayscale(1); }
+html.a11y-grayscale.a11y-high-contrast { filter: grayscale(1) contrast(1.25); }
+
+/* Highlight links — underline + outline every <a>. */
+html.a11y-highlight-links a {
+  text-decoration: underline !important;
+  text-underline-offset: 3px !important;
+  outline: 1px dashed hsl(38 95% 60%) !important;
+  outline-offset: 2px !important;
+  background: hsl(38 95% 60% / 0.08) !important;
+}
+
+/* Pause animations & transitions. */
+html.a11y-pause-anim *,
+html.a11y-pause-anim *::before,
+html.a11y-pause-anim *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Larger custom cursor for low-vision users. */
+html.a11y-big-cursor,
+html.a11y-big-cursor * {
+  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'><path d='M4 2 L4 32 L12 24 L18 36 L24 33 L18 21 L30 21 Z' fill='%23ffffff' stroke='%23000000' stroke-width='2'/></svg>") 2 2, auto !important;
+}
+
+/* Readable font override — neutral sans-serif everywhere. */
+html.a11y-readable-font,
+html.a11y-readable-font * {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif !important;
+  letter-spacing: 0.01em !important;
+}
+
 
 
 
