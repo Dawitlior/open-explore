@@ -39,11 +39,20 @@ export function runImport(sheets: SheetInput[], opts?: RunImportOptions): Import
   mapping = resolve(mapping, profiles);
 
   // STAGE 2: user mapping overrides (forced by the Preflight editor).
+  // Internally mapping indices are relative to the detected table region; older
+  // preflight UI builds stored absolute sheet columns, so accept both safely.
   if (opts?.mappingOverrides) {
     const ov = opts.mappingOverrides;
     for (const fm of mapping) {
-      if (!Object.prototype.hasOwnProperty.call(ov, fm.columnIndex)) continue;
-      const forced = ov[fm.columnIndex];
+      const relKey = fm.columnIndex;
+      const absKey = fm.columnIndex + c0;
+      const key = Object.prototype.hasOwnProperty.call(ov, relKey)
+        ? relKey
+        : Object.prototype.hasOwnProperty.call(ov, absKey)
+          ? absKey
+          : null;
+      if (key === null) continue;
+      const forced = ov[key];
       if (forced) {
         fm.field = forced;
         fm.destination = byCanonical[forced]?.destination;
@@ -69,7 +78,7 @@ export function runImport(sheets: SheetInput[], opts?: RunImportOptions): Import
   // assemble per-row records over the region, only for real data rows
   let rows: string[][] = st.dataRowIndices.map(r => { const slice: string[] = []; for (let c = c0; c <= c1; c++) slice.push(cleanCell((m[r] || [])[c])); return slice; });
 
-  const colIdx = (f: string) => { const i = colByField(mapping, f); return i >= 0 ? i - c0 : -1; }; // index within slice
+  const colIdx = (f: string) => { const i = colByField(mapping, f); return i >= 0 ? i : -1; }; // index within region slice
   const gNum = (rv: string[], f: string) => { const i = colIdx(f); return i >= 0 ? parseNumber(rv[i]) : null; };
   const gStr = (rv: string[], f: string) => { const i = colIdx(f); return i >= 0 ? rv[i] : ''; };
 
@@ -93,6 +102,7 @@ export function runImport(sheets: SheetInput[], opts?: RunImportOptions): Import
       const price = gNum(rv, 'entryPrice'); const qty = gNum(rv, 'quantity');
       const dateRaw = gStr(rv, 'entryDate'); const date = parseDate(dateRaw, dateDecision) || dateRaw;
       const fee = gNum(rv, 'commission'); const ext = gStr(rv, 'externalId');
+      const bal = gNum(rv, 'cashBalance'); if (bal != null) equityEvents.push({ date, type: 'balance_snapshot', amount: bal });
       // Prefer a dedicated activity column; otherwise try to classify the direction cell
       // (Israeli broker statements stuff dividend/deposit/fee tokens into "סוג פעולה").
       let act: string | null = actIdx >= 0 ? classifyActivity(rv[actIdx]) : null;
