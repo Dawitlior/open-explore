@@ -18,7 +18,7 @@
  * Manual provider rows are always closeable. Broker-synced rows are read-only
  * (they close automatically on the next sync) and show a hint instead.
  */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { toast } from 'sonner';
