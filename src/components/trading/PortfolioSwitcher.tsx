@@ -151,25 +151,37 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
       setErr(isRTL ? 'אי אפשר למחוק את התיק האחרון' : 'Cannot delete the only portfolio');
       return;
     }
-    const confirmMsg = isRTL
-      ? `למחוק את "${p.name}"? כל הטריידים שבתיק זה יימחקו לצמיתות. פעולה זו אינה הפיכה.`
-      : `Delete "${p.name}"? All trades in this portfolio will be permanently deleted. This cannot be undone.`;
-    if (!window.confirm(confirmMsg)) return;
+    const ok = await orcaConfirm({
+      isRTL,
+      tone: 'danger',
+      title: isRTL ? `למחוק את "${p.name}"?` : `Delete "${p.name}"?`,
+      description: isRTL
+        ? 'כל הטריידים שבתיק זה יימחקו לצמיתות. פעולה זו אינה הפיכה.'
+        : 'All trades in this portfolio will be permanently deleted. This cannot be undone.',
+      confirmLabel: isRTL ? 'מחק תיק' : 'Delete portfolio',
+    });
+    if (!ok) return;
     setBusy(true);
-    const ok = await deletePortfolio(p.id);
+    const success = await deletePortfolio(p.id);
     setBusy(false);
-    if (!ok) setErr(isRTL ? 'המחיקה נכשלה' : 'Delete failed');
+    if (!success) setErr(isRTL ? 'המחיקה נכשלה' : 'Delete failed');
   };
 
   const handleReset = async (p: Portfolio) => {
-    const confirmMsg = isRTL
-      ? `לאפס את "${p.name}"? רק העסקאות בתיק הזה יימחקו לצמיתות. תיקים אחרים לא ייפגעו.`
-      : `Reset "${p.name}"? Only trades in this portfolio will be permanently deleted. Other portfolios stay untouched.`;
-    if (!window.confirm(confirmMsg)) return;
+    const ok = await orcaConfirm({
+      isRTL,
+      tone: 'danger',
+      title: isRTL ? `לאפס את "${p.name}"?` : `Reset "${p.name}"?`,
+      description: isRTL
+        ? 'רק העסקאות בתיק הזה יימחקו לצמיתות. תיקים אחרים לא ייפגעו.'
+        : 'Only trades in this portfolio will be permanently deleted. Other portfolios stay untouched.',
+      confirmLabel: isRTL ? 'אפס תיק' : 'Reset portfolio',
+    });
+    if (!ok) return;
     setBusy(true);
-    const ok = await resetPortfolio(p.id);
+    const success = await resetPortfolio(p.id);
     setBusy(false);
-    if (!ok) setErr(isRTL ? 'איפוס התיק נכשל' : 'Portfolio reset failed');
+    if (!success) setErr(isRTL ? 'איפוס התיק נכשל' : 'Portfolio reset failed');
   };
 
   const triggerLabel = useMemo(() => {
