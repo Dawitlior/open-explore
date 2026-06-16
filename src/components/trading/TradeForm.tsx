@@ -213,8 +213,10 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
     if (s >= 1) {
       if (!form.entry) errs.push(isRTL ? 'מחיר כניסה חסר' : 'Entry price required');
       if (!form.stopLoss) errs.push(isRTL ? 'סטופ לוס חסר' : 'Stop loss required');
-      if (!form.exit) errs.push(isRTL ? 'מחיר יציאה חסר' : 'Exit price required');
-      if (form.risk <= 0) errs.push(isRTL ? 'סכום סיכון חייב להיות גדול מ-0' : 'Risk amount must be greater than 0');
+      if (!isOpenPosition) {
+        if (!form.exit) errs.push(isRTL ? 'מחיר יציאה חסר' : 'Exit price required');
+        if (form.risk <= 0) errs.push(isRTL ? 'סכום סיכון חייב להיות גדול מ-0' : 'Risk amount must be greater than 0');
+      }
     }
     return errs;
   };
