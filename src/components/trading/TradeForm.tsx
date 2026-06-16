@@ -439,6 +439,36 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                   ? 'הוספת עסקה ב-3 שלבים: נכס וזמן → מחירים וסיכון → סקירה ושמירה. הנתונים שלך נשמרים בזיכרון עד שתלחץ "שמור" — לחיצה מחוץ למסך תבקש אישור לפני מחיקת הטיוטה.'
                   : 'Add a trade in 3 steps: Asset & time → Prices & risk → Review & save. Your draft is held in memory until you click Save — clicking outside will ask before discarding.'}
               />
+
+              {/* ─── Closed trade vs Open position toggle ─── */}
+              <div style={{ ...sectionCard, padding: 4, display: 'flex', gap: 4, background: T.bg.tertiary }}>
+                {[
+                  { id: false, icon: '✓', he: 'עסקה סגורה', en: 'Closed trade', subHe: 'יציאה ידועה', subEn: 'Exit known' },
+                  { id: true,  icon: '◴', he: 'פוזיציה פתוחה', en: 'Open position', subHe: 'עדיין רצה — בלי P&L', subEn: 'Still live — no P&L yet' },
+                ].map(opt => {
+                  const active = isOpenPosition === opt.id;
+                  return (
+                    <button
+                      key={String(opt.id)}
+                      type="button"
+                      onClick={() => { haptics.selection(); setIsOpenPosition(opt.id); setErrors([]); }}
+                      style={{
+                        flex: 1, padding: '12px 10px', borderRadius: 12,
+                        border: `1.5px solid ${active ? T.accent.cyan : 'transparent'}`,
+                        background: active ? `${T.accent.cyan}15` : 'transparent',
+                        color: active ? T.accent.cyan : T.text.secondary,
+                        cursor: 'pointer', fontWeight: 700, fontSize: 13,
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+                        transition: 'all 0.18s',
+                      }}
+                    >
+                      <span style={{ fontSize: 18 }}>{opt.icon}</span>
+                      <span>{isRTL ? opt.he : opt.en}</span>
+                      <span style={{ fontSize: 10, fontWeight: 500, opacity: 0.75 }}>{isRTL ? opt.subHe : opt.subEn}</span>
+                    </button>
+                  );
+                })}
+              </div>
               <div style={sectionCard}>
                 <label style={bigLabel}>{isRTL ? '1. איזה סוג נכס סחרת?' : '1. What type of asset did you trade?'}</label>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
