@@ -84,8 +84,13 @@ const App = () => (
             <a href="#main" className="orca-skip-link">דלג לתוכן · Skip to content</a>
             <SourceProtection />
             <StorageErrorListener />
-            <Suspense fallback={null}><OrcaUXLayer /></Suspense>
+            {/* Ambient UX layer is non-critical; isolate so a chunk-load error
+                here can never tank the entire tab on first paint. */}
+            <ErrorBoundary>
+              <Suspense fallback={null}><OrcaUXLayer /></Suspense>
+            </ErrorBoundary>
             <LiquidSweep />
+
             <LegalGate />
             <EconomicAlertBanner />
             <UpgradeModal />
