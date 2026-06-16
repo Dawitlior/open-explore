@@ -50,6 +50,168 @@ export type Database = {
         }
         Relationships: []
       }
+      bug_attachments: {
+        Row: {
+          bug_id: string
+          created_at: string
+          height: number | null
+          id: string
+          kind: string
+          storage_path: string
+          user_id: string
+          width: number | null
+        }
+        Insert: {
+          bug_id: string
+          created_at?: string
+          height?: number | null
+          id?: string
+          kind?: string
+          storage_path: string
+          user_id: string
+          width?: number | null
+        }
+        Update: {
+          bug_id?: string
+          created_at?: string
+          height?: number | null
+          id?: string
+          kind?: string
+          storage_path?: string
+          user_id?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bug_attachments_bug_id_fkey"
+            columns: ["bug_id"]
+            isOneToOne: false
+            referencedRelation: "bug_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bug_comments: {
+        Row: {
+          body: string
+          bug_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          bug_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          bug_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bug_comments_bug_id_fkey"
+            columns: ["bug_id"]
+            isOneToOne: false
+            referencedRelation: "bug_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bug_reporters: {
+        Row: {
+          bug_id: string
+          created_at: string
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          bug_id: string
+          created_at?: string
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          bug_id?: string
+          created_at?: string
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bug_reporters_bug_id_fkey"
+            columns: ["bug_id"]
+            isOneToOne: false
+            referencedRelation: "bug_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bug_reports: {
+        Row: {
+          bug_type: string
+          created_at: string
+          created_by: string
+          dedup_key: string | null
+          description: string
+          diagnostics: Json | null
+          element_label: string | null
+          element_rect: Json | null
+          element_selector: string | null
+          id: string
+          route: string | null
+          section: string
+          severity: string
+          status: string
+          title: string | null
+          updated_at: string
+          viewport: Json | null
+        }
+        Insert: {
+          bug_type?: string
+          created_at?: string
+          created_by: string
+          dedup_key?: string | null
+          description: string
+          diagnostics?: Json | null
+          element_label?: string | null
+          element_rect?: Json | null
+          element_selector?: string | null
+          id?: string
+          route?: string | null
+          section?: string
+          severity?: string
+          status?: string
+          title?: string | null
+          updated_at?: string
+          viewport?: Json | null
+        }
+        Update: {
+          bug_type?: string
+          created_at?: string
+          created_by?: string
+          dedup_key?: string | null
+          description?: string
+          diagnostics?: Json | null
+          element_label?: string | null
+          element_rect?: Json | null
+          element_selector?: string | null
+          id?: string
+          route?: string | null
+          section?: string
+          severity?: string
+          status?: string
+          title?: string | null
+          updated_at?: string
+          viewport?: Json | null
+        }
+        Relationships: []
+      }
       client_errors: {
         Row: {
           created_at: string
@@ -642,6 +804,24 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_settings: {
         Row: {
           key: string
@@ -669,13 +849,99 @@ export type Database = {
     }
     Functions: {
       backfill_trade_provenance: { Args: { p_batch?: number }; Returns: number }
+      bug_arena_people: {
+        Args: { _ids: string[] }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          id: string
+        }[]
+      }
+      create_bug_report: {
+        Args: {
+          p_bug_type?: string
+          p_description: string
+          p_diagnostics?: Json
+          p_element_label?: string
+          p_element_rect?: Json
+          p_element_selector?: string
+          p_route?: string
+          p_section?: string
+          p_severity?: string
+          p_title?: string
+          p_viewport?: Json
+        }
+        Returns: {
+          bug_type: string
+          created_at: string
+          created_by: string
+          dedup_key: string | null
+          description: string
+          diagnostics: Json | null
+          element_label: string | null
+          element_rect: Json | null
+          element_selector: string | null
+          id: string
+          route: string | null
+          section: string
+          severity: string
+          status: string
+          title: string | null
+          updated_at: string
+          viewport: Json | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "bug_reports"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       current_entitlement: {
         Args: { p_user: string }
         Returns: Database["public"]["Enums"]["app_tier"]
       }
+      has_role: { Args: { _role: string; _user_id: string }; Returns: boolean }
+      is_sole_reporter: {
+        Args: { _bug_id: string; _user_id: string }
+        Returns: boolean
+      }
+      join_bug: {
+        Args: { p_bug_id: string; p_note?: string }
+        Returns: undefined
+      }
       read_exchange_secret: {
         Args: { p_cred_id: string; p_user_id: string }
         Returns: string
+      }
+      reporter_count: { Args: { _bug_id: string }; Returns: number }
+      set_bug_status: {
+        Args: { p_bug_id: string; p_status: string }
+        Returns: {
+          bug_type: string
+          created_at: string
+          created_by: string
+          dedup_key: string | null
+          description: string
+          diagnostics: Json | null
+          element_label: string | null
+          element_rect: Json | null
+          element_selector: string | null
+          id: string
+          route: string | null
+          section: string
+          severity: string
+          status: string
+          title: string | null
+          updated_at: string
+          viewport: Json | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "bug_reports"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
     }
     Enums: {
