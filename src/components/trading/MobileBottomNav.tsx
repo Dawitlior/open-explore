@@ -63,30 +63,25 @@ export const MobileBottomNav = ({
 
   // Mount only on client so createPortal has a target.
   const [mounted, setMounted] = useState(false);
-  // Compensate for iOS PWA standalone visualViewport drift: when the visual
-  // viewport is shorter than the layout viewport (URL bar / keyboard / home
-  // indicator quirks) `bottom: 0` paints below the visible area until the
-  // user scrolls. We track the offset and apply it as a translateY.
-  const [vvOffset, setVvOffset] = useState(0);
+  // Keyboard-only lift: only translate when the on-screen keyboard is open
+  // (visual viewport shrinks by >150px). Plain address-bar collapse on iOS
+  // Safari produces small (~80px) drift — we MUST ignore that, otherwise the
+  // nav lifts off the bottom every time the user scrolls.
+  const [kbOffset, setKbOffset] = useState(0);
   useEffect(() => {
     setMounted(true);
     const vv = window.visualViewport;
+    if (!vv) return;
     const recompute = () => {
-      if (!vv) return;
-      // How much of the layout viewport is hidden below the visible area.
       const hidden = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-      setVvOffset(hidden);
+      // Threshold: only treat as keyboard when >150px of viewport is hidden.
+      setKbOffset(hidden > 150 ? hidden : 0);
     };
     recompute();
-    const t1 = window.setTimeout(recompute, 60);
-    const t2 = window.setTimeout(recompute, 350);
-    vv?.addEventListener('resize', recompute);
-    vv?.addEventListener('scroll', recompute);
+    vv.addEventListener('resize', recompute);
     window.addEventListener('orientationchange', recompute);
     return () => {
-      clearTimeout(t1); clearTimeout(t2);
-      vv?.removeEventListener('resize', recompute);
-      vv?.removeEventListener('scroll', recompute);
+      vv.removeEventListener('resize', recompute);
       window.removeEventListener('orientationchange', recompute);
     };
   }, []);
