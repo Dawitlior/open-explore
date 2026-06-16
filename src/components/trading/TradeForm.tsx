@@ -220,6 +220,13 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
   const handleBack = () => { setErrors([]); setStep(s => Math.max(0, s - 1)); };
 
   const handleSubmit = () => {
+    // Kill switch — hard block, no override.
+    if (killSwitch.isLocked) {
+      setErrors([isRTL
+        ? `🛑 מתג הביטחון פעיל. שמירת עסקה חדשה חסומה למשך ${formatKillRemaining(killSwitch.msRemaining, true)} נוספים. שחרר ידנית בעמוד "סיכון".`
+        : `🛑 Kill Switch is engaged. New trade saves are blocked for ${formatKillRemaining(killSwitch.msRemaining, false)} more. Release manually from the Risk page.`]);
+      return;
+    }
     const errs = validateStep(1);
     if (errs.length) { setErrors(errs); setStep(1); return; }
     const { returnR, pnl, winLoss, expectedLoss, deviation } = calc();
