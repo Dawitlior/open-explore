@@ -173,9 +173,29 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
   // "empty flash → pop-in" the user reported.
   if (!initialized) return null;
 
+  const sectionAnim: React.CSSProperties = {
+    marginBottom: 18,
+    animation: 'orcaOpenPosReveal 720ms cubic-bezier(0.22, 1, 0.36, 1) both',
+  };
+
+  const keyframes = (
+    <style>{`
+      @keyframes orcaOpenPosReveal {
+        0%   { opacity: 0; filter: blur(14px); transform: translateY(10px) scale(0.985); }
+        45%  { opacity: 0.85; filter: blur(4px); transform: translateY(3px) scale(0.995); }
+        100% { opacity: 1; filter: blur(0); transform: translateY(0) scale(1); }
+      }
+      @keyframes orcaOpenPosCardIn {
+        0%   { opacity: 0; filter: blur(8px); transform: translateY(8px); }
+        100% { opacity: 1; filter: blur(0); transform: translateY(0); }
+      }
+    `}</style>
+  );
+
   if (!hasRows) {
     return (
-      <div className="dash-section animate-fade-in" style={{ marginBottom: 18 }}>
+      <div className="dash-section" style={sectionAnim}>
+        {keyframes}
         <div className="dash-section-label" style={{ color: T.accent.orange }}>
           {isRTL ? '⚡ פוזיציות פתוחות · 0' : '⚡ OPEN POSITIONS · 0'}
         </div>
@@ -196,7 +216,8 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
   }
 
   return (
-    <div className="dash-section animate-fade-in" style={{ marginBottom: 18 }}>
+    <div className="dash-section" style={sectionAnim}>
+      {keyframes}
       <div className="dash-section-label" style={{ color: T.accent.orange, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
         <span>{isRTL ? '⚡ פוזיציות פתוחות' : '⚡ OPEN POSITIONS'} · {rows.length}</span>
         {totalUnreal !== 0 && (
@@ -207,7 +228,7 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
-        {rows.map(p => {
+        {rows.map((p, idx) => {
           const isLong = String(p.side).toLowerCase().startsWith('l');
           const sideColor = isLong ? T.accent.green : T.accent.red;
           const isManual = p.provider === 'manual';
