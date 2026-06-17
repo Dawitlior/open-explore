@@ -10,8 +10,8 @@
  */
 import { useEffect, useState } from 'react';
 
-const FALLBACK_BG = 'radial-gradient(circle at 50% 40%, #08182f 0%, #061326 70%)';
-const FALLBACK_ACCENT = '184 100% 50%'; // cyan
+const FALLBACK_BG = 'radial-gradient(circle at 50% 40%, #0e1013 0%, #050607 70%)';
+const FALLBACK_ACCENT = '142 71% 45%'; // graphite green — must match the default platform theme
 
 function readVar(name: string): string {
   if (typeof window === 'undefined') return '';
@@ -83,7 +83,7 @@ export const OrcaBootLoader = ({ label = 'Investment Terminal' }: { label?: stri
         flexDirection: 'column', gap: 28,
         background: bg,
         color: accentColor,
-        transition: 'background 0.35s ease, color 0.35s ease',
+        transition: 'background 0.35s ease',
       }}
     >
       <div style={{ position: 'relative', width: 96, height: 96 }}>
@@ -91,7 +91,6 @@ export const OrcaBootLoader = ({ label = 'Investment Terminal' }: { label?: stri
           position: 'absolute', inset: 0, borderRadius: '50%',
           border: `2px solid ${accentSoft}`,
           borderTopColor: accentColor,
-          transition: 'border-color 0.35s ease',
           animation: 'orca-bl-spin 1.1s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite',
         }} />
         <div style={{
@@ -99,7 +98,6 @@ export const OrcaBootLoader = ({ label = 'Investment Terminal' }: { label?: stri
           border: `2px solid ${accentSoft}`,
           borderBottomColor: accentColor,
           opacity: 0.7,
-          transition: 'border-color 0.35s ease',
           animation: 'orca-bl-spin-rev 1.6s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite',
         }} />
         <div style={{
