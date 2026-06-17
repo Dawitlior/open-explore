@@ -40,12 +40,14 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
   const [showAI, setShowAI] = useState(false);
 
   // Strategic Calendar — HIGH impact (T1) only, across all major macro currencies.
-  // Provider tags many local-country events as T1 with no currency; we keep the
-  // whitelist to the majors traders actually track to avoid noise.
+  // Window: only events from up to 7 days ago and forward (focus on this week + next).
+  // Anything older than a week is noise for forward-looking planning.
   const MAJOR_CCY = new Set(['USD', 'CNY', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'NZD']);
   const { byDay: macroByDay } = useMonthEconomicEvents({ year, month, impacts: ['t1'] });
+  const MACRO_WINDOW_START_MS = (() => { const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - 7); return d.getTime(); })();
   const dayMacros = (macroByDay.get(day) ?? [])
     .filter((e) => MAJOR_CCY.has((e.currency || '').toUpperCase()))
+    .filter((e) => new Date(e.release_at).getTime() >= MACRO_WINDOW_START_MS)
     .slice()
     .sort((a, b) => new Date(a.release_at).getTime() - new Date(b.release_at).getTime());
 
