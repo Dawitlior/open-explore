@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useDeploymentWatcher } from '@/hooks/use-deployment-watcher';
 
 /**
- * Floating bottom-right system update toast.
- * Detects a new deployment and prompts the user to refresh via a sleek
- * glassy card that slides in from the right and pulses with the Orca Neon accent.
+ * Centered "System Update Available" modal.
+ * Replaces the previous side-toast with a branded, centered card that demands
+ * attention without blocking interaction (user can dismiss with the X).
  */
 interface Props {
   isRTL?: boolean;
@@ -12,36 +13,55 @@ interface Props {
 
 type Phase = 'idle' | 'syncing' | 'done';
 
+// Orca gold accent (matches the rest of the platform's premium chrome).
+const ACCENT = '#E9C46A';   // warm gold
+const ACCENT_DEEP = '#D4AF37';
+const BG_DEEP = '#06131F';
+
 export const DeploymentToast = ({ isRTL = false }: Props) => {
   const { hasNewDeployment, reload } = useDeploymentWatcher();
   const [phase, setPhase] = useState<Phase>('idle');
   const [mounted, setMounted] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     if (hasNewDeployment) {
+      setDismissed(false);
       const id = window.setTimeout(() => setMounted(true), 30);
       return () => window.clearTimeout(id);
     }
     setMounted(false);
   }, [hasNewDeployment]);
 
-  if (!hasNewDeployment) return null;
+  // Escape to dismiss (non-blocking).
+  useEffect(() => {
+    if (!hasNewDeployment || dismissed) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setDismissed(true); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [hasNewDeployment, dismissed]);
+
+  if (!hasNewDeployment || dismissed) return null;
+  if (typeof document === 'undefined') return null;
 
   const t = (he: string, en: string) => (isRTL ? he : en);
 
   const titles: Record<Phase, string> = {
-    idle: t('עדכון מערכת זמין', 'System Update Available'),
+    idle: t('גרסה חדשה זמינה!', 'New Version Available!'),
     syncing: t('מסנכרן עדכון…', 'Syncing update…'),
     done: t('הושלם — טוען מחדש', 'Complete — reloading'),
   };
 
   const subtitles: Record<Phase, string> = {
-    idle: t('גרסה חדשה של Orca עלתה לאוויר. לחץ כדי לרענן.', 'A fresh build of Orca is live. Refresh to load it.'),
-    syncing: t('מושך את ה־bundle העדכני…', 'Pulling the latest bundle…'),
+    idle: t(
+      'גרסה חדשה של Orca עלתה לאוויר. רענן כדי לקבל את כל הפיצ\'רים והשיפורים האחרונים.',
+      'A new version of Orca is available. Refresh to get the latest features and improvements.',
+    ),
+    syncing: t('מושך את ה-bundle העדכני…', 'Pulling the latest bundle…'),
     done: t('המערכת עודכנה בהצלחה.', 'System refreshed successfully.'),
   };
 
-  const handleClick = () => {
+  const handleUpdate = () => {
     if (phase !== 'idle') return;
     setPhase('syncing');
     window.setTimeout(() => {
@@ -50,120 +70,165 @@ export const DeploymentToast = ({ isRTL = false }: Props) => {
     }, 700);
   };
 
-  const CYAN = '#00f2ff';
-  const TEAL = '#06d6a0';
-  const GREEN = '#00FFA3';
-  const accent = phase === 'done' ? GREEN : CYAN;
+  const ctaLabel = phase === 'idle'
+    ? t('עדכן', 'Update')
+    : phase === 'syncing'
+      ? t('מעדכן…', 'Updating…')
+      : t('טוען…', 'Loading…');
 
-  return (
+  return createPortal(
     <>
       <style>{`
-        @keyframes orcaToastIn {
-          0% { transform: translate3d(120%, 0, 0) scale(0.92); opacity: 0; }
-          60% { transform: translate3d(-6%, 0, 0) scale(1.02); opacity: 1; }
-          100% { transform: translate3d(0,0,0) scale(1); opacity: 1; }
+        @keyframes orcaUpdateOverlayIn { 0% { opacity: 0; } 100% { opacity: 1; } }
+        @keyframes orcaUpdateCardIn {
+          0%   { opacity: 0; transform: translateY(18px) scale(0.94); filter: blur(8px); }
+          60%  { opacity: 1; transform: translateY(-2px) scale(1.005); filter: blur(0); }
+          100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
         }
-        @keyframes orcaToastGlow {
-          0%, 100% { box-shadow: 0 12px 36px rgba(0,0,0,0.45), 0 0 0 1px ${accent}40, 0 0 22px ${accent}45, 0 0 60px ${accent}25; }
-          50%      { box-shadow: 0 12px 36px rgba(0,0,0,0.45), 0 0 0 1px ${accent}70, 0 0 36px ${accent}80, 0 0 80px ${accent}40; }
+        @keyframes orcaUpdateGlow {
+          0%, 100% { box-shadow: 0 24px 70px rgba(0,0,0,0.6), 0 0 0 1px ${ACCENT}33, 0 0 32px ${ACCENT}25; }
+          50%      { box-shadow: 0 24px 70px rgba(0,0,0,0.6), 0 0 0 1px ${ACCENT}55, 0 0 50px ${ACCENT}48; }
         }
-        @keyframes orcaToastSpin { to { transform: rotate(360deg); } }
-        @keyframes orcaToastPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }
-        @keyframes orcaToastTick {
-          0% { stroke-dashoffset: 28; }
-          100% { stroke-dashoffset: 0; }
-        }
+        @keyframes orcaUpdateSpin { to { transform: rotate(360deg); } }
       `}</style>
+
+      {/* Overlay — non-blocking visually but darkens background for focus */}
       <div
-        role="status"
-        aria-live="polite"
+        role="dialog"
+        aria-modal="false"
+        aria-labelledby="orca-update-title"
         dir={isRTL ? 'rtl' : 'ltr'}
-        onClick={handleClick}
         style={{
-          position: 'fixed',
-          bottom: 24,
-          insetInlineEnd: 24,
-          zIndex: 99998,
-          minWidth: 280,
-          maxWidth: 360,
-          padding: '14px 16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          borderRadius: 16,
-          background: 'linear-gradient(135deg, rgba(6,19,38,0.92), rgba(11,23,48,0.92))',
-          backdropFilter: 'blur(18px)',
-          WebkitBackdropFilter: 'blur(18px)',
-          color: '#f1f5f9',
-          fontFamily: "'Poppins', 'Inter', sans-serif",
-          cursor: phase === 'idle' ? 'pointer' : 'default',
-          transform: mounted ? 'translate3d(0,0,0) scale(1)' : 'translate3d(120%, 0, 0) scale(0.92)',
+          position: 'fixed', inset: 0, zIndex: 99998,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 16,
+          background: 'rgba(3, 9, 18, 0.62)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          animation: mounted ? 'orcaUpdateOverlayIn 280ms ease-out both' : 'none',
           opacity: mounted ? 1 : 0,
-          animation: mounted
-            ? `orcaToastIn 0.55s cubic-bezier(0.16,1,0.3,1) both, orcaToastGlow 2.4s ease-in-out 0.6s infinite`
-            : 'none',
-          transition: 'transform 0.3s ease, opacity 0.3s ease',
+          transition: 'opacity 220ms ease',
+          pointerEvents: 'auto',
         }}
-        onMouseEnter={e => { if (phase === 'idle') (e.currentTarget as HTMLDivElement).style.transform = 'translate3d(0,0,0) scale(1.03)'; }}
-        onMouseLeave={e => { if (phase === 'idle') (e.currentTarget as HTMLDivElement).style.transform = 'translate3d(0,0,0) scale(1)'; }}
+        onClick={(e) => { if (e.target === e.currentTarget) setDismissed(true); }}
       >
         <div
+          onClick={(e) => e.stopPropagation()}
           style={{
-            flexShrink: 0,
-            width: 40, height: 40,
-            borderRadius: 12,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: `linear-gradient(135deg, ${accent}22, ${TEAL}11)`,
-            border: `1px solid ${accent}55`,
-            color: accent,
+            position: 'relative',
+            width: '100%',
+            maxWidth: 460,
+            padding: '32px 28px 28px',
+            borderRadius: 18,
+            background: `linear-gradient(165deg, ${BG_DEEP} 0%, #0b1729 100%)`,
+            border: `1px solid ${ACCENT}33`,
+            fontFamily: "'Poppins', 'Inter', sans-serif",
+            color: '#f1f5f9',
+            animation: mounted
+              ? 'orcaUpdateCardIn 520ms cubic-bezier(0.22, 1, 0.36, 1) both, orcaUpdateGlow 3.2s ease-in-out 0.6s infinite'
+              : 'none',
+            opacity: mounted ? 1 : 0,
           }}
         >
-          {phase === 'syncing' ? (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'orcaToastSpin 1.1s linear infinite' }}>
-              <path d="M21 12a9 9 0 1 1-3-6.7" />
-              <path d="M21 4v5h-5" />
-            </svg>
-          ) : phase === 'done' ? (
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 13l4 4L19 7" strokeDasharray="28" style={{ animation: 'orcaToastTick 0.5s ease-out forwards' }} />
-            </svg>
-          ) : (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'orcaToastPulse 2s ease-in-out infinite' }}>
-              <path d="M12 3v12" />
-              <path d="m6 9 6-6 6 6" />
-              <rect x="3" y="17" width="18" height="4" rx="1" />
-            </svg>
-          )}
-        </div>
-
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 12, fontWeight: 800, color: accent, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 2 }}>
-            {titles[phase]}
-          </div>
-          <div style={{ fontSize: 11.5, color: 'rgba(241,245,249,0.78)', lineHeight: 1.45 }}>
-            {subtitles[phase]}
-          </div>
-        </div>
-
-        {phase === 'idle' && (
-          <div
+          {/* Close (X) */}
+          <button
+            onClick={() => setDismissed(true)}
+            aria-label={t('סגור', 'Close')}
             style={{
-              flexShrink: 0,
-              padding: '6px 11px',
-              borderRadius: 999,
-              background: `linear-gradient(135deg, ${CYAN}, ${TEAL})`,
-              color: '#06131F',
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: 10,
-              fontWeight: 800,
-              letterSpacing: '0.5px',
-              boxShadow: `0 4px 14px ${CYAN}55`,
+              position: 'absolute',
+              top: 12,
+              insetInlineStart: 12,
+              width: 30, height: 30,
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.10)',
+              color: 'rgba(241,245,249,0.78)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer',
+              transition: 'all 0.18s ease',
             }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = '#f1f5f9'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = 'rgba(241,245,249,0.78)'; }}
           >
-            {t('רענן', 'REFRESH')}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+
+          {/* Title row with party icon */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14, marginTop: 6 }}>
+            <span style={{ fontSize: 30, lineHeight: 1, filter: `drop-shadow(0 0 12px ${ACCENT}66)` }} aria-hidden>🎉</span>
+            <h2
+              id="orca-update-title"
+              style={{
+                margin: 0,
+                fontSize: 22,
+                fontWeight: 800,
+                color: '#ffffff',
+                letterSpacing: '-0.01em',
+                lineHeight: 1.2,
+              }}
+            >
+              {titles[phase]}
+            </h2>
           </div>
-        )}
+
+          {/* Subtitle */}
+          <p style={{
+            margin: '0 0 24px',
+            fontSize: 14,
+            lineHeight: 1.6,
+            color: 'rgba(241,245,249,0.72)',
+          }}>
+            {subtitles[phase]}
+          </p>
+
+          {/* CTA */}
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <button
+              onClick={handleUpdate}
+              disabled={phase !== 'idle'}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 10,
+                padding: '13px 32px',
+                borderRadius: 12,
+                background: `linear-gradient(135deg, ${ACCENT} 0%, ${ACCENT_DEEP} 100%)`,
+                border: 'none',
+                color: '#1a1505',
+                fontSize: 15,
+                fontWeight: 800,
+                fontFamily: "'Poppins', sans-serif",
+                letterSpacing: '0.01em',
+                cursor: phase === 'idle' ? 'pointer' : 'wait',
+                boxShadow: `0 10px 30px ${ACCENT}55, inset 0 1px 0 rgba(255,255,255,0.35)`,
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                opacity: phase === 'idle' ? 1 : 0.85,
+              }}
+              onMouseEnter={(e) => { if (phase === 'idle') { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = `0 14px 38px ${ACCENT}80, inset 0 1px 0 rgba(255,255,255,0.4)`; } }}
+              onMouseLeave={(e) => { if (phase === 'idle') { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = `0 10px 30px ${ACCENT}55, inset 0 1px 0 rgba(255,255,255,0.35)`; } }}
+            >
+              <span>{ctaLabel}</span>
+              {phase === 'syncing' ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'orcaUpdateSpin 1s linear infinite' }}>
+                  <path d="M21 12a9 9 0 1 1-3-6.7" />
+                  <path d="M21 4v5h-5" />
+                </svg>
+              ) : phase === 'done' ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 12a9 9 0 1 1-3-6.7" />
+                  <path d="M21 4v5h-5" />
+                </svg>
+              )}
+            </button>
+          </div>
+        </div>
       </div>
-    </>
+    </>,
+    document.body,
   );
 };

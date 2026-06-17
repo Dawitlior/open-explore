@@ -363,7 +363,22 @@ const Index = () => {
     setEditingTrade(null);
   }, [editingTrade, addTrade, updateTrade, trades]);
 
-  const handleDeleteTrade = useCallback(async (id: number) => { await removeTrade(id); setSelTrade(null); }, [removeTrade]);
+  const handleDeleteTrade = useCallback(async (id: number) => {
+    const { orcaConfirm } = await import('@/lib/orca-confirm');
+    const tr = trades.find(t => t.id === id);
+    const ok = await orcaConfirm({
+      isRTL,
+      tone: 'danger',
+      title: isRTL ? 'למחוק עסקה?' : 'Delete trade?',
+      description: isRTL
+        ? `העסקה ${tr ? `${tr.coin} ${tr.direction} ` : ''}תימחק לצמיתות מהיומן ומכל הסטטיסטיקות. אי אפשר לבטל פעולה זו.`
+        : `This trade${tr ? ` (${tr.coin} ${tr.direction})` : ''} will be permanently removed from your journal and all stats. This cannot be undone.`,
+      confirmLabel: isRTL ? 'מחק עסקה' : 'Delete trade',
+    });
+    if (!ok) return;
+    await removeTrade(id);
+    setSelTrade(null);
+  }, [removeTrade, trades, isRTL]);
   const handleReset = useCallback(async () => {
     console.log('[Reset] Starting per-user wipe…');
     try {
