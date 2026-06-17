@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { useLang } from '@/hooks/use-lang';
 
 const SECTIONS: { heading: string; body: string }[] = [
   {
@@ -41,16 +42,18 @@ const SECTIONS: { heading: string; body: string }[] = [
 ];
 
 const Privacy = () => {
+  const { isRTL, t } = useLang();
   useEffect(() => {
+    window.scrollTo(0, 0);
     const prev = document.title;
-    document.title = 'מדיניות פרטיות — Orca';
+    document.title = isRTL ? 'מדיניות פרטיות — Orca' : 'Privacy Policy — Orca';
     return () => { document.title = prev; };
-  }, []);
+  }, [isRTL]);
 
   return (
     <main
-      dir="rtl"
-      lang="he"
+      dir={isRTL ? 'rtl' : 'ltr'}
+      lang={isRTL ? 'he' : 'en'}
       style={{
         minHeight: '100dvh',
         background: 'radial-gradient(1200px 600px at 50% -10%, rgba(0,242,255,0.08), transparent 60%), #061326',
@@ -71,15 +74,21 @@ const Privacy = () => {
         }}
       >
         <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#7fe6ff', fontSize: 13, textDecoration: 'none', marginBottom: 24, opacity: 0.9 }}>
-          <ArrowLeft size={14} /> חזרה לאפליקציה
+          {isRTL ? <ArrowRight size={14} /> : <ArrowLeft size={14} />} {t('חזרה לאפליקציה', 'Back to the app')}
         </Link>
 
         <h1 style={{ fontSize: 'clamp(20px, 2.6vw, 28px)', fontWeight: 800, lineHeight: 1.4, margin: '0 0 8px', background: 'linear-gradient(90deg, #00f2ff, #7fe6ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-          מדיניות פרטיות ותנאי שימוש — Orca Investment
+          {t('מדיניות פרטיות ותנאי שימוש — Orca Investment', 'Privacy Policy & Terms of Use — Orca Investment')}
         </h1>
-        <p style={{ fontSize: 12, opacity: 0.55, margin: '0 0 28px' }}>עדכון אחרון: 16.6.2026</p>
+        <p style={{ fontSize: 12, opacity: 0.55, margin: '0 0 28px' }}>{t('עדכון אחרון:', 'Last updated:')} 16.6.2026</p>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+        {!isRTL && (
+          <div dir="ltr" style={{ marginBottom: 24, padding: '12px 14px', borderRadius: 10, border: '1px solid rgba(0,242,255,0.18)', background: 'rgba(0,242,255,0.06)', fontSize: 12.5, lineHeight: 1.6, color: 'rgba(230,244,255,0.85)' }}>
+            <strong style={{ color: '#7fe6ff' }}>Notice.</strong> The legally binding text of this policy is the Hebrew version below, in accordance with the exclusive jurisdiction of the courts of Tel Aviv-Yafo. An English summary is available on request at <a href="mailto:innovationai@mail.com" style={{ color: '#7fe6ff' }}>innovationai@mail.com</a>.
+          </div>
+        )}
+
+        <div dir="rtl" lang="he" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
           {SECTIONS.map((s) => (
             <section key={s.heading}>
               <h2 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 8px', color: '#00f2ff' }}>{s.heading}</h2>
