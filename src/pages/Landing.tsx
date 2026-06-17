@@ -6,7 +6,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, TrendingUp } from 'lucide-react';
+import { ArrowLeft, ArrowRight, TrendingUp, Languages } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import dashboardMain from '@/assets/landing/dashboard_main.png';
 import journalEntry from '@/assets/landing/journal_entry.png';
@@ -32,7 +32,7 @@ const APP_URL = 'https://orcainvestment.co.il';
 
 /* ─────────── Design System (Master Plan §3) ─────────── */
 const orcaCss = `
-@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 .orca-landing {
   --bg:        #000000;
@@ -61,11 +61,12 @@ const orcaCss = `
     var(--bg);
   color: var(--text);
   font-family: 'Heebo', system-ui, -apple-system, sans-serif;
-  direction: rtl;
   min-height: 100vh;
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
 }
+.orca-landing[dir="rtl"] { direction: rtl; }
+.orca-landing[dir="ltr"] { direction: ltr; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
 .orca-landing .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; letter-spacing: 0.12em; }
 .orca-landing .glass-card {
   background: var(--glass);
@@ -476,24 +477,26 @@ const GradCard: React.FC<{ accent: string; title: string; desc: string; num?: st
 );
 
 /* Feature Tabs — `image` is the real uploaded screenshot URL (omit for grey "SCREENSHOT" placeholder) */
-const TABS: { key: string; label: string; icon: string; title: string; desc: string; bullets: string[]; image?: string; extraImage?: string }[] = [
-  { key: 'journal', label: 'יומן אוטומטי', icon: '📓', title: 'יומן מסחר אוטומטי', desc: 'חבר את הברוקר פעם אחת, ועסקאות נכנסות אוטומטית — מתויגות ומוכנות לניתוח.', bullets: ['סנכרון מ-Bybit / Binance', 'יומן בוקר וערב', 'צילומי גרפים', 'ארכיון מלא לחיפוש'], image: autoJournal },
-  { key: 'analytics', label: 'אנליטיקה', icon: '📊', title: 'לוח אנליטיקה מתקדם', desc: 'עשרות מטריקות כמותיות שחושפות את ה-Edge האמיתי שלך.', bullets: ['Equity Curve מתקדמת', 'Profit Factor & R-Multiples', 'ניתוח לפי נכס / שעה / יום', 'סיכומים שבועי, חודשי, שנתי'], image: analyticsDeck },
-  { key: 'risk', label: 'ניהול סיכונים', icon: '🛡️', title: 'מנוע סיכונים 4-שכבתי', desc: 'הגנה אוטומטית מפני over-trading עם מנגנון משמעת חכם.', bullets: ['מגבלות -1R / -2R / -5R / -10R', 'חישוב גודל פוזיציה אוטומטי', 'התראות Risk Drift', 'מצב צינון (Cool-Off)'], image: riskManagement },
-  { key: 'ai', label: 'תובנות AI', icon: '🧠', title: 'מנוע תובנות עמוק', desc: 'מזהה דפוסים סמויים שאף סוחר לא היה רואה לבד.', bullets: ['זיהוי דפוסים נסתרים', 'חוזקות וחולשות אישיות', 'Orca Coach מבוסס נתונים', 'גרפים ברמת Awwwards'], image: aiMainframe, extraImage: aiGoldEdge },
-  { key: 'mind', label: 'תודעת הסוחר', icon: '🐋', title: 'אבחון תודעת הסוחר', desc: 'פרופיל Archetype אישי שמכייל את ה-AI Coach לפי הסוחר שאתה.', bullets: ['אבחון אישיות סוחר', 'פרופיל Archetype', 'כיול AI Coach', 'כיול-מחדש כל 45 יום'], image: traderMindImg },
-  { key: 'radar', label: 'מכ״ם כלכלי', icon: '📡', title: 'מכ״ם אירועים כלכליים', desc: 'רדאר אירועים גלובלי עם חישוב Surprise בזמן אמת.', bullets: ['רדאר אירועים עולמי', 'Tier 1 / 2 / 3', 'עדכוני T-5 / T-1 / Live', 'חישוב Surprise אוטומטי'], image: radarImg },
+type TabDef = { key: string; label: string; icon: string; title: string; desc: string; bullets: string[]; image?: string; extraImage?: string };
+const getTabs = (t: (he: string, en: string) => string): TabDef[] => [
+  { key: 'journal',   label: t('יומן אוטומטי','Auto Journal'), icon: '📓', title: t('יומן מסחר אוטומטי','Automated Trade Journal'), desc: t('חבר את הברוקר פעם אחת, ועסקאות נכנסות אוטומטית — מתויגות ומוכנות לניתוח.','Connect your broker once. Trades flow in automatically — tagged and ready to analyze.'), bullets: [t('סנכרון מ-Bybit / Binance','Sync from Bybit / Binance'), t('יומן בוקר וערב','Morning & evening journaling'), t('צילומי גרפים','Chart screenshots'), t('ארכיון מלא לחיפוש','Full searchable archive')], image: autoJournal },
+  { key: 'analytics', label: t('אנליטיקה','Analytics'), icon: '📊', title: t('לוח אנליטיקה מתקדם','Advanced Analytics Deck'), desc: t('עשרות מטריקות כמותיות שחושפות את ה-Edge האמיתי שלך.','Dozens of quantitative metrics that expose your real edge.'), bullets: [t('Equity Curve מתקדמת','Advanced equity curve'), t('Profit Factor & R-Multiples','Profit Factor & R-Multiples'), t('ניתוח לפי נכס / שעה / יום','Breakdown by asset / hour / day'), t('סיכומים שבועי, חודשי, שנתי','Weekly, monthly, yearly summaries')], image: analyticsDeck },
+  { key: 'risk',      label: t('ניהול סיכונים','Risk Management'), icon: '🛡️', title: t('מנוע סיכונים 4-שכבתי','4-Tier Risk Engine'), desc: t('הגנה אוטומטית מפני over-trading עם מנגנון משמעת חכם.','Automatic protection against over-trading with an intelligent discipline engine.'), bullets: [t('מגבלות -1R / -2R / -5R / -10R','-1R / -2R / -5R / -10R limits'), t('חישוב גודל פוזיציה אוטומטי','Auto position sizing'), t('התראות Risk Drift','Risk Drift alerts'), t('מצב צינון (Cool-Off)','Cool-Off mode')], image: riskManagement },
+  { key: 'ai',        label: t('תובנות AI','AI Insights'), icon: '🧠', title: t('מנוע תובנות עמוק','Deep Insight Engine'), desc: t('מזהה דפוסים סמויים שאף סוחר לא היה רואה לבד.','Detects hidden patterns no trader would catch alone.'), bullets: [t('זיהוי דפוסים נסתרים','Hidden pattern detection'), t('חוזקות וחולשות אישיות','Personal strengths & weaknesses'), t('Orca Coach מבוסס נתונים','Data-driven Orca Coach'), t('גרפים ברמת Awwwards','Awwwards-grade visualizations')], image: aiMainframe, extraImage: aiGoldEdge },
+  { key: 'mind',      label: t('תודעת הסוחר','Trader Mind'), icon: '🐋', title: t('אבחון תודעת הסוחר','Trader Mind Diagnostic'), desc: t('פרופיל Archetype אישי שמכייל את ה-AI Coach לפי הסוחר שאתה.','A personal Archetype profile that calibrates the AI Coach to who you really are.'), bullets: [t('אבחון אישיות סוחר','Trader personality diagnostic'), t('פרופיל Archetype','Archetype profile'), t('כיול AI Coach','AI Coach calibration'), t('כיול-מחדש כל 45 יום','Re-calibration every 45 days')], image: traderMindImg },
+  { key: 'radar',     label: t('מכ״ם כלכלי','Economic Radar'), icon: '📡', title: t('מכ״ם אירועים כלכליים','Economic Event Radar'), desc: t('רדאר אירועים גלובלי עם חישוב Surprise בזמן אמת.','Global event radar with real-time Surprise scoring.'), bullets: [t('רדאר אירועים עולמי','Global event radar'), t('Tier 1 / 2 / 3','Tier 1 / 2 / 3'), t('עדכוני T-5 / T-1 / Live','T-5 / T-1 / Live updates'), t('חישוב Surprise אוטומטי','Automatic Surprise calculation')], image: radarImg },
 ];
 
-const FeatureTabs: React.FC = () => {
+const FeatureTabs: React.FC<{ t: (he: string, en: string) => string }> = ({ t }) => {
+  const TABS = React.useMemo(() => getTabs(t), [t]);
   const [active, setActive] = useState(TABS[0].key);
-  const tab = TABS.find(t => t.key === active) || TABS[0];
+  const tab = TABS.find(x => x.key === active) || TABS[0];
   return (
     <>
       <div className="orca-tabs" style={{ marginTop: 32 }}>
-        {TABS.map(t => (
-          <button key={t.key} className={`orca-tab ${active === t.key ? 'active' : ''}`} onClick={() => setActive(t.key)}>
-            <span>{t.icon}</span>{t.label}
+        {TABS.map(x => (
+          <button key={x.key} className={`orca-tab ${active === x.key ? 'active' : ''}`} onClick={() => setActive(x.key)}>
+            <span>{x.icon}</span>{x.label}
           </button>
         ))}
       </div>
@@ -503,7 +506,7 @@ const FeatureTabs: React.FC = () => {
           <h3 style={{ fontSize: 'clamp(1.6rem, 3vw, 2.2rem)', fontWeight: 800, margin: '12px 0 10px', letterSpacing: '-0.01em' }}>{tab.title}</h3>
           <p style={{ color: 'var(--text-muted)', fontSize: 16, lineHeight: 1.7 }}>{tab.desc}</p>
           <ul className="orca-bullets">{tab.bullets.map(b => <li key={b}>{b}</li>)}</ul>
-          <a href="#" style={{ color: 'var(--cyan)', fontSize: 14, fontWeight: 600 }}>עוד ←</a>
+          <a href="#" style={{ color: 'var(--cyan)', fontSize: 14, fontWeight: 600 }}>{t('עוד ←','More →')}</a>
         </div>
         {tab.extraImage ? (
           <ScreenshotFrame alt={tab.title}>
@@ -530,29 +533,47 @@ const Landing: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [scrolled, setScrolled] = useState(false);
-  
+
   const [lang, setLangState] = useState<'he' | 'en'>(() => {
-    if (typeof window === 'undefined') return 'he';
+    if (typeof window === 'undefined') return 'en';
     try {
       const override = window.localStorage.getItem(LANG_OVERRIDE_KEY);
       if (override === 'en' || override === 'he') return override;
       const cached = window.localStorage.getItem(LANG_CACHE_KEY);
       if (cached === 'en' || cached === 'he') return cached;
-      // First visit: auto-detect from browser language. Default to English
-      // for everything that isn't Hebrew so international visitors get EN.
+      // First visit: auto-detect from browser language. Israel/Hebrew browsers get HE,
+      // everyone else gets EN by default.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const nav = (window.navigator?.language || (window.navigator as any)?.userLanguage || '').toLowerCase();
       const detected: 'he' | 'en' = (nav.startsWith('he') || nav.startsWith('iw')) ? 'he' : 'en';
       try { window.localStorage.setItem(LANG_CACHE_KEY, detected); } catch { /* noop */ }
       return detected;
-    } catch { return 'he'; }
+    } catch { return 'en'; }
   });
   const isRTL = lang === 'he';
-  const t = (he: string, en: string) => (isRTL ? he : en);
-  // Keep setLangState referenced (no UI toggle on landing per request).
-  void setLangState;
+  const t = React.useCallback((he: string, en: string) => (isRTL ? he : en), [isRTL]);
 
-
+  /**
+   * Persist the user's explicit choice so the rest of the platform (login, app
+   * shell, settings) inherits it. We write BOTH keys:
+   *   - LANG_CACHE_KEY    → read by useLang() on first paint anywhere in the app
+   *   - LANG_OVERRIDE_KEY → read by Auth/Landing on next mount to skip detection
+   * And we broadcast `orca:lang-changed` so any already-mounted component flips
+   * instantly without a reload.
+   */
+  const toggleLang = React.useCallback(() => {
+    setLangState(prev => {
+      const next: 'he' | 'en' = prev === 'he' ? 'en' : 'he';
+      try {
+        window.localStorage.setItem(LANG_OVERRIDE_KEY, next);
+        window.localStorage.setItem(LANG_CACHE_KEY, next);
+      } catch { /* noop */ }
+      try {
+        window.dispatchEvent(new CustomEvent('orca:lang-changed', { detail: { lang: next } }));
+      } catch { /* noop */ }
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -581,11 +602,13 @@ const Landing: React.FC = () => {
   }, [isRTL]);
 
   const goApp = () => { navigate('/auth'); };
+  // Arrow that respects reading direction (LTR shows →, RTL shows ←)
+  const Arrow = isRTL ? ArrowLeft : ArrowRight;
 
   return (
     <>
       <style>{orcaCss}</style>
-      <div className="orca-landing orca-bg-grid">
+      <div className="orca-landing orca-bg-grid" dir={isRTL ? 'rtl' : 'ltr'}>
         {/* ───── NAVBAR ───── */}
         <nav className={`orca-nav ${scrolled ? 'scrolled' : ''}`}>
           <div className="max-w-7xl mx-auto px-5 sm:px-8" style={{ height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -594,8 +617,29 @@ const Landing: React.FC = () => {
               <img src={orcaLogo} alt="Orca Investment" style={{ height: 44, width: 'auto', display: 'block' }} />
             </Link>
 
-            {/* Right — CTA only, always visible */}
-            <div className="flex items-center" style={{ gap: 14, marginInlineStart: 'auto' }}>
+            {/* Right — Language toggle + CTA */}
+            <div className="flex items-center" style={{ gap: 10, marginInlineStart: 'auto' }}>
+              <button
+                onClick={toggleLang}
+                aria-label={t('החלף שפה לאנגלית', 'Switch language to Hebrew')}
+                title={t('English', 'עברית')}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '8px 12px', borderRadius: 10,
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid var(--border)',
+                  color: 'var(--text-muted)',
+                  fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                  fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em',
+                  transition: 'color .15s, border-color .15s, background .15s',
+                  minHeight: 40,
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(34,211,238,0.35)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-muted)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)'; }}
+              >
+                <Languages size={14} />
+                {isRTL ? 'EN' : 'עב'}
+              </button>
               <button className="grad-btn" onClick={goApp} style={{ padding: '10px 18px', fontSize: 14 }}>
                 {t('כניסה למערכת', 'Enter app')}
               </button>
@@ -612,34 +656,39 @@ const Landing: React.FC = () => {
                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: 'easeOut' }}
                 style={{ order: 1 }}
               >
-                <SectionLabel>ORCA INVESTMENT · יומן מסחר חכם</SectionLabel>
+                <SectionLabel>{t('ORCA INVESTMENT · יומן מסחר חכם', 'ORCA INVESTMENT · Smart Trading Journal')}</SectionLabel>
 
                 <h1 style={{
                   fontWeight: 900, lineHeight: 1.05, letterSpacing: '-0.02em',
                   fontSize: 'clamp(2.4rem, 6vw, 4.8rem)',
                   margin: '18px 0 22px',
                 }}>
-                  הדרך החכמה לנהל את{' '}
-                  <span className="grad-text">המסחר שלך</span>
+                  {isRTL ? (
+                    <>הדרך החכמה לנהל את <span className="grad-text">המסחר שלך</span></>
+                  ) : (
+                    <>The smart way to manage <span className="grad-text">your trading</span></>
+                  )}
                 </h1>
 
                 <p style={{ fontSize: 'clamp(16px, 1.6vw, 19px)', lineHeight: 1.7, color: 'var(--text-muted)', maxWidth: 560, marginBottom: 24 }}>
-                  Orca Investment הוא יומן מסחר חכם ואוטומטי שמרכז עבורך את כל המידע על העסקאות שלך,
-                  מנתח אותן ונותן לך סטטיסטיקות מדויקות — כדי לקבל החלטות טובות יותר במסחר.
+                  {t(
+                    'Orca Investment הוא יומן מסחר חכם ואוטומטי שמרכז עבורך את כל המידע על העסקאות שלך, מנתח אותן ונותן לך סטטיסטיקות מדויקות — כדי לקבל החלטות טובות יותר במסחר.',
+                    'Orca Investment is a smart, automated trading journal that centralizes every trade you take, analyzes it and surfaces precise statistics — so you can make better decisions.'
+                  )}
                 </p>
 
                 <div className="orca-pill-free" style={{ marginBottom: 28 }}>
                   <span>🎉</span>
-                  <span>חינם בתקופת ההשקה — כל המסלולים פתוחים</span>
+                  <span>{t('חינם בתקופת ההשקה — כל המסלולים פתוחים', 'Free during launch — every plan unlocked')}</span>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap', marginBottom: 26 }}>
                   <button className="grad-btn" onClick={goApp} style={{ fontSize: 16, padding: '16px 26px' }}>
-                    התחל בחינם
-                    <ArrowLeft size={18} />
+                    {t('התחל בחינם', 'Start free')}
+                    <Arrow size={18} />
                   </button>
                   <Link to="/auth" style={{ color: 'var(--text-muted)', fontSize: 14, fontWeight: 500 }}>
-                    כבר רשום? כניסה ←
+                    {t('כבר רשום? כניסה ←', 'Already registered? Sign in →')}
                   </Link>
                 </div>
 
@@ -689,7 +738,7 @@ const Landing: React.FC = () => {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 800, color: '#34D399' }}>+$2,140</div>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>
-                        תובנת AI · שני סטאפים מובילים אחראיים ל-127% מהרווח
+                        {t('תובנת AI · שני סטאפים מובילים אחראיים ל-127% מהרווח', 'AI insight · Two top setups drive 127% of profit')}
                       </div>
                     </div>
                   </div>
@@ -731,15 +780,15 @@ const Landing: React.FC = () => {
         <section className="orca-section" style={{ paddingTop: 0, paddingBottom: 'clamp(40px, 6vw, 70px)' }}>
           <div className="max-w-7xl mx-auto px-5 sm:px-8">
             <div style={{ textAlign: 'center', marginBottom: 16 }}>
-              <SectionLabel>מסתנכרן אוטומטית עם</SectionLabel>
+              <SectionLabel>{t('מסתנכרן אוטומטית עם', 'Auto-syncs with')}</SectionLabel>
             </div>
             <div className="orca-int-row">
               <div className="item">Bybit</div>
               <div className="item">Binance</div>
-              <div className="item">ייבוא CSV אוניברסלי</div>
+              <div className="item">{t('ייבוא CSV אוניברסלי', 'Universal CSV Import')}</div>
             </div>
             <div className="mono" style={{ textAlign: 'center', color: 'var(--text-dim)', fontSize: 11, marginTop: 12 }}>
-              API READ-ONLY · מאובטח צד-שרת
+              {t('API READ-ONLY · מאובטח צד-שרת', 'API READ-ONLY · Server-side secured')}
             </div>
           </div>
         </section>
@@ -750,11 +799,13 @@ const Landing: React.FC = () => {
         <section id="features" className="orca-section">
           <div className="max-w-7xl mx-auto px-5 sm:px-8">
             <SectionHeader
-              label="הפלטפורמה"
-              title={<>מערכת אחת. <span className="grad-text">כל הכלים.</span></>}
-              sub="כל מה שהופך אותך לסוחר טוב יותר — במקום אחד."
+              label={t('הפלטפורמה', 'The platform')}
+              title={isRTL
+                ? <>מערכת אחת. <span className="grad-text">כל הכלים.</span></>
+                : <>One system. <span className="grad-text">Every tool.</span></>}
+              sub={t('כל מה שהופך אותך לסוחר טוב יותר — במקום אחד.', 'Everything that makes you a better trader — in one place.')}
             />
-            <FeatureTabs />
+            <FeatureTabs t={t} />
           </div>
         </section>
 
@@ -762,14 +813,19 @@ const Landing: React.FC = () => {
         <section id="journal" className="orca-section" style={{ background: 'var(--bg-2)' }}>
           <div className="max-w-7xl mx-auto px-5 sm:px-8">
             <SectionHeader
-              label="יומן אוטומטי"
-              title={<>כל טרייד, <span className="grad-text">מתועד אוטומטית.</span></>}
-              sub="חבר פעם אחת — והעסקאות זורמות פנימה, מתויגות ומוכנות לניתוח. לא עוד תיעוד ידני."
+              label={t('יומן אוטומטי', 'Auto journal')}
+              title={isRTL
+                ? <>כל טרייד, <span className="grad-text">מתועד אוטומטית.</span></>
+                : <>Every trade, <span className="grad-text">logged automatically.</span></>}
+              sub={t(
+                'חבר פעם אחת — והעסקאות זורמות פנימה, מתויגות ומוכנות לניתוח. לא עוד תיעוד ידני.',
+                'Connect once — trades flow in, tagged and ready to analyze. No more manual logging.'
+              )}
             />
             <div className="orca-grad-grid">
-              <GradCard accent="#22D3EE" title="יומן בוקר וערב" desc="ניתוח לפני השוק + רפלקציה אחרי, עם הזרמה אוטומטית של עסקאות היום." image={journalEntry} />
-              <GradCard accent="#34D399" title="Calendar Hub" desc="מרכז ה-P&L: לוח שנה אינטראקטיבי עם סיכומי שבוע וחודש." image={calendarHub} />
-              <GradCard accent="#8B5CF6" title="יומן Backtest" desc="דימנשן נפרד לתיעוד אסטרטגיות, סטטיסטיקות והשוואה לחי." image={backtestJournal} />
+              <GradCard accent="#22D3EE" title={t('יומן בוקר וערב', 'Morning & evening journal')} desc={t('ניתוח לפני השוק + רפלקציה אחרי, עם הזרמה אוטומטית של עסקאות היום.', 'Pre-market analysis + post-market reflection, with automatic streaming of the day\'s trades.')} image={journalEntry} />
+              <GradCard accent="#34D399" title={t('Calendar Hub', 'Calendar Hub')} desc={t('מרכז ה-P&L: לוח שנה אינטראקטיבי עם סיכומי שבוע וחודש.', 'The P&L hub: an interactive calendar with weekly and monthly summaries.')} image={calendarHub} />
+              <GradCard accent="#8B5CF6" title={t('יומן Backtest', 'Backtest Journal')} desc={t('דימנשן נפרד לתיעוד אסטרטגיות, סטטיסטיקות והשוואה לחי.', 'A separate dimension for documenting strategies, stats and live comparison.')} image={backtestJournal} />
             </div>
           </div>
         </section>
@@ -779,8 +835,10 @@ const Landing: React.FC = () => {
           <div className="max-w-5xl mx-auto px-5 sm:px-8">
             <SectionHeader
               label="DEMO"
-              title={<>ראה את <span className="grad-text">Orca בפעולה.</span></>}
-              sub="סיור קצר במערכת — מהזנת טרייד ועד תובנת AI."
+              title={isRTL
+                ? <>ראה את <span className="grad-text">Orca בפעולה.</span></>
+                : <>See <span className="grad-text">Orca in action.</span></>}
+              sub={t('סיור קצר במערכת — מהזנת טרייד ועד תובנת AI.', 'A short tour of the system — from trade entry to AI insight.')}
             />
             <div className="orca-video-wrap" style={{ marginTop: 36 }}>
               <div className="orca-frame-skeleton" style={{ position: 'absolute', inset: 0 }} />
@@ -797,17 +855,19 @@ const Landing: React.FC = () => {
         <section className="orca-section" style={{ background: 'var(--bg-2)' }}>
           <div className="max-w-7xl mx-auto px-5 sm:px-8">
             <SectionHeader
-              label="דוחות מבוססי-נתונים"
-              title={<>קבל תובנות <span className="grad-text">שלא ראית.</span></>}
-              sub="עשרות מודולים כמותיים שחושפים את ה-Edge האמיתי שלך."
+              label={t('דוחות מבוססי-נתונים', 'Data-driven reports')}
+              title={isRTL
+                ? <>קבל תובנות <span className="grad-text">שלא ראית.</span></>
+                : <>Get insights <span className="grad-text">you've never seen.</span></>}
+              sub={t('עשרות מודולים כמותיים שחושפים את ה-Edge האמיתי שלך.', 'Dozens of quantitative modules that expose your real edge.')}
             />
             <div style={{ textAlign: 'center', marginTop: 24 }}>
-              <button className="grad-btn" onClick={goApp}>התחל בחינם <ArrowLeft size={16} /></button>
+              <button className="grad-btn" onClick={goApp}>{t('התחל בחינם', 'Start free')} <Arrow size={16} /></button>
             </div>
             <div className="orca-grad-grid">
-              <GradCard accent="#22D3EE" title="צלול עמוק לאסטרטגיה" desc="Monte Carlo, Box Plot, Risk-Reward Frontier ועוד בלוח Quant Lab." num="01" image={quantLab} />
-              <GradCard accent="#8B5CF6" title="הבן את ההתנהגות שלך" desc="ניתוח רב-ממדי של 145+ עסקאות וזיהוי דפוסים פסיכולוגיים." num="02" image={behaviorAnalysis} />
-              <GradCard accent="#34D399" title="מה עובד בשבילך" desc="חוזקות, שעות זהב, נכסים מנצחים — והיכן ה-Edge האמיתי שלך." num="03" image={whatWorks} />
+              <GradCard accent="#22D3EE" title={t('צלול עמוק לאסטרטגיה', 'Dive deep into strategy')} desc={t('Monte Carlo, Box Plot, Risk-Reward Frontier ועוד בלוח Quant Lab.', 'Monte Carlo, Box Plot, Risk-Reward Frontier and more in the Quant Lab.')} num="01" image={quantLab} />
+              <GradCard accent="#8B5CF6" title={t('הבן את ההתנהגות שלך', 'Understand your behavior')} desc={t('ניתוח רב-ממדי של 145+ עסקאות וזיהוי דפוסים פסיכולוגיים.', 'Multi-dimensional analysis of 145+ trades and detection of psychological patterns.')} num="02" image={behaviorAnalysis} />
+              <GradCard accent="#34D399" title={t('מה עובד בשבילך', 'What works for you')} desc={t('חוזקות, שעות זהב, נכסים מנצחים — והיכן ה-Edge האמיתי שלך.', 'Strengths, golden hours, winning assets — and where your real edge lives.')} num="03" image={whatWorks} />
             </div>
           </div>
         </section>
@@ -817,15 +877,20 @@ const Landing: React.FC = () => {
           <div className="max-w-7xl mx-auto px-5 sm:px-8">
             <SectionHeader
               label="EDGE & RISK"
-              title={<>האם יש לך <span className="grad-text">Edge רווחי?</span></>}
-              sub="מדדי ORCA וניהול סיכונים שומרים אותך משמעתי ורווחי לאורך זמן."
+              title={isRTL
+                ? <>האם יש לך <span className="grad-text">Edge רווחי?</span></>
+                : <>Do you have a <span className="grad-text">profitable edge?</span></>}
+              sub={t('מדדי ORCA וניהול סיכונים שומרים אותך משמעתי ורווחי לאורך זמן.', 'ORCA metrics and risk management keep you disciplined and profitable over time.')}
             />
             <div className="orca-two-up">
               <div className="orca-big-card" style={{ background: 'linear-gradient(160deg, rgba(34,211,238,0.10), rgba(7,9,15,0))' }}>
-                <SectionLabel>מדדי ORCA</SectionLabel>
-                <h3 style={{ fontSize: 'clamp(1.5rem, 2.6vw, 2rem)', fontWeight: 800, margin: '10px 0 12px' }}>ORCA Score — 0 עד 100</h3>
+                <SectionLabel>{t('מדדי ORCA', 'ORCA Metrics')}</SectionLabel>
+                <h3 style={{ fontSize: 'clamp(1.5rem, 2.6vw, 2rem)', fontWeight: 800, margin: '10px 0 12px' }}>{t('ORCA Score — 0 עד 100', 'ORCA Score — 0 to 100')}</h3>
                 <p style={{ color: 'var(--text-muted)', fontSize: 15, lineHeight: 1.7, marginBottom: 18 }}>
-                  ציון משולב של משמעת, עקביות סיכון והתאמת משטר. הכי קרוב שיש לתעודת זהות לסוחר.
+                  {t(
+                    'ציון משולב של משמעת, עקביות סיכון והתאמת משטר. הכי קרוב שיש לתעודת זהות לסוחר.',
+                    'A composite score of discipline, risk consistency and regime adaptation. The closest thing to a trader ID card.'
+                  )}
                 </p>
                 <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center', marginTop: 12 }}>
                   {[{ v: 86, c: '#22D3EE' }, { v: 81, c: '#F59E0B' }, { v: 56, c: '#8B5CF6' }, { v: 100, c: '#34D399' }].map((g, i) => (
@@ -836,13 +901,21 @@ const Landing: React.FC = () => {
                 </div>
               </div>
               <div className="orca-big-card" style={{ background: 'linear-gradient(160deg, rgba(245,158,11,0.10), rgba(7,9,15,0))' }}>
-                <SectionLabel color="#F59E0B">מנוע סיכונים</SectionLabel>
-                <h3 style={{ fontSize: 'clamp(1.5rem, 2.6vw, 2rem)', fontWeight: 800, margin: '10px 0 12px' }}>הגנה 4-שכבתית</h3>
+                <SectionLabel color="#F59E0B">{t('מנוע סיכונים', 'Risk engine')}</SectionLabel>
+                <h3 style={{ fontSize: 'clamp(1.5rem, 2.6vw, 2rem)', fontWeight: 800, margin: '10px 0 12px' }}>{t('הגנה 4-שכבתית', '4-tier protection')}</h3>
                 <p style={{ color: 'var(--text-muted)', fontSize: 15, lineHeight: 1.7, marginBottom: 18 }}>
-                  מגבלות -1R לעסקה, -2R יומי, -5R שבועי, -10R חודשי. מד סיכון חי, התראות Risk Drift ומצב צינון.
+                  {t(
+                    'מגבלות -1R לעסקה, -2R יומי, -5R שבועי, -10R חודשי. מד סיכון חי, התראות Risk Drift ומצב צינון.',
+                    '-1R per trade, -2R daily, -5R weekly, -10R monthly. Live risk meter, Risk Drift alerts and a cool-off mode.'
+                  )}
                 </p>
                 <div style={{ display: 'grid', gap: 12 }}>
-                  {[{ k: '-1R', v: 'עסקה', c: '#22D3EE' }, { k: '-2R', v: 'יומי', c: '#34D399' }, { k: '-5R', v: 'שבועי', c: '#F59E0B' }, { k: '-10R', v: 'חודשי', c: '#EF4444' }].map(l => (
+                  {[
+                    { k: '-1R', v: t('עסקה', 'Trade'), c: '#22D3EE' },
+                    { k: '-2R', v: t('יומי', 'Daily'),  c: '#34D399' },
+                    { k: '-5R', v: t('שבועי', 'Weekly'), c: '#F59E0B' },
+                    { k: '-10R', v: t('חודשי', 'Monthly'), c: '#EF4444' },
+                  ].map(l => (
                     <div key={l.k} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)' }}>
                       <div className="mono" style={{ color: l.c, fontWeight: 700, fontSize: 14, minWidth: 48 }}>{l.k}</div>
                       <div style={{ color: 'var(--text)', fontSize: 14 }}>{l.v}</div>
@@ -862,16 +935,21 @@ const Landing: React.FC = () => {
           <div className="max-w-5xl mx-auto px-5 sm:px-8">
             <SectionHeader
               label="ORCA · MAINFRAME"
-              title={<>תודעת הסוחר — <span className="grad-text">המנוע שמכיר אותך.</span></>}
-              sub="מבחן התנהגותי קצר שמראה לך את הפער בין איך שנדמה לך שאתה סוחר לבין איך שאתה באמת פועל — ונותן לך 3 דברים לעשות מחר בבוקר."
+              title={isRTL
+                ? <>תודעת הסוחר — <span className="grad-text">המנוע שמכיר אותך.</span></>
+                : <>Trader Mind — <span className="grad-text">the engine that knows you.</span></>}
+              sub={t(
+                'מבחן התנהגותי קצר שמראה לך את הפער בין איך שנדמה לך שאתה סוחר לבין איך שאתה באמת פועל — ונותן לך 3 דברים לעשות מחר בבוקר.',
+                'A short behavioral test that surfaces the gap between how you think you trade and how you actually trade — and hands you 3 concrete things to do tomorrow morning.'
+              )}
               labelColor="#8B5CF6"
             />
 
             {/* Result-screen rotator — device frame fading between real outputs */}
             <TraderMindRotator slides={[
-              { src: tomorrowMorning, caption: 'מחר בבוקר · 3 צעדים פרקטיים' },
-              { src: saidVsReal,      caption: 'אמרת · בפועל — המראה ההתנהגותית' },
-              { src: traderMindImg,   caption: 'פרופיל הסוחר שלך' },
+              { src: tomorrowMorning, caption: t('מחר בבוקר · 3 צעדים פרקטיים', 'Tomorrow morning · 3 practical steps') },
+              { src: saidVsReal,      caption: t('אמרת · בפועל — המראה ההתנהגותית', 'Said · Actually — the behavioral mirror') },
+              { src: traderMindImg,   caption: t('פרופיל הסוחר שלך', 'Your trader profile') },
             ]} />
 
             {/* How it works — 3 calm steps */}
@@ -880,9 +958,9 @@ const Landing: React.FC = () => {
               maxWidth: 880, margin: '44px auto 0',
             }} className="orca-mind-steps">
               {[
-                { n: '01', t: 'עונה', d: 'מענה קצר על 12 שאלות התנהגותיות — 3 דקות.' },
-                { n: '02', t: 'המנוע מצליב', d: 'מצליב בין מה שאמרת לקצב, ההיסוסים והעסקאות שלך בפועל.' },
-                { n: '03', t: '3 צעדים', d: 'מקבל פרופיל אישי + 3 פעולות קונקרטיות למחר בבוקר.' },
+                { n: '01', t: t('עונה', 'Answer'),         d: t('מענה קצר על 12 שאלות התנהגותיות — 3 דקות.', 'A short answer to 12 behavioral questions — 3 minutes.') },
+                { n: '02', t: t('המנוע מצליב', 'The engine cross-checks'), d: t('מצליב בין מה שאמרת לקצב, ההיסוסים והעסקאות שלך בפועל.', 'Cross-checks what you said against your real cadence, hesitations and trades.') },
+                { n: '03', t: t('3 צעדים', '3 steps'),     d: t('מקבל פרופיל אישי + 3 פעולות קונקרטיות למחר בבוקר.', 'Get a personal profile + 3 concrete actions for tomorrow morning.') },
               ].map(s => (
                 <div key={s.n} style={{
                   padding: '20px 18px', borderRadius: 16, border: '1px solid var(--border)',
@@ -897,7 +975,7 @@ const Landing: React.FC = () => {
             <style>{`@media (max-width: 720px){ .orca-mind-steps{ grid-template-columns: 1fr !important; } }`}</style>
 
             <div style={{ textAlign: 'center', marginTop: 32 }}>
-              <button className="grad-btn" onClick={goApp}>גלה את פרופיל הסוחר שלך <ArrowLeft size={16} /></button>
+              <button className="grad-btn" onClick={goApp}>{t('גלה את פרופיל הסוחר שלך', 'Discover your trader profile')} <Arrow size={16} /></button>
             </div>
           </div>
         </section>
@@ -906,9 +984,11 @@ const Landing: React.FC = () => {
         <section id="community" className="orca-section">
           <div className="max-w-5xl mx-auto px-5 sm:px-8" style={{ textAlign: 'center' }}>
             <SectionHeader
-              label="קהילה"
-              title={<>אלפי סוחרים <span className="grad-text">בקהילת Orca.</span></>}
-              sub="הצטרף לקהילת סוחרים פעילה — שתף, למד והשתפר ביחד."
+              label={t('קהילה', 'Community')}
+              title={isRTL
+                ? <>אלפי סוחרים <span className="grad-text">בקהילת Orca.</span></>
+                : <>Thousands of traders <span className="grad-text">in the Orca community.</span></>}
+              sub={t('הצטרף לקהילת סוחרים פעילה — שתף, למד והשתפר ביחד.', 'Join an active trader community — share, learn and improve together.')}
             />
             <div className="orca-constellation">
               <div className="orca-orbit"><div className="orca-orbit-dot" /></div>
@@ -923,7 +1003,7 @@ const Landing: React.FC = () => {
               ))}
             </div>
             <div style={{ marginTop: 36 }}>
-              <button className="grad-btn" onClick={() => window.open('https://discord.gg', '_blank')}>הצטרף לקהילה <ArrowLeft size={16} /></button>
+              <button className="grad-btn" onClick={() => window.open('https://discord.gg', '_blank')}>{t('הצטרף לקהילה', 'Join the community')} <Arrow size={16} /></button>
             </div>
           </div>
         </section>
@@ -931,38 +1011,49 @@ const Landing: React.FC = () => {
         {/* ───── 12. PRICING ───── */}
         <section id="pricing" className="orca-section" style={{ background: 'var(--bg-2)' }}>
           <div className="max-w-7xl mx-auto px-5 sm:px-8">
-            <SectionHeader label="מחירים" title={<>מסלול <span className="grad-text">לכל סוחר.</span></>} />
+            <SectionHeader
+              label={t('מחירים', 'Pricing')}
+              title={isRTL
+                ? <>מסלול <span className="grad-text">לכל סוחר.</span></>
+                : <>A plan <span className="grad-text">for every trader.</span></>}
+            />
             <div style={{ textAlign: 'center', marginTop: 20 }}>
               <div className="orca-pill-free" style={{ fontSize: 14, padding: '10px 20px' }}>
-                🎉 בתקופת ההשקה — כל המסלולים פתוחים בחינם!
+                🎉 {t('בתקופת ההשקה — כל המסלולים פתוחים בחינם!', 'During launch — every plan is unlocked free!')}
               </div>
             </div>
             <div className="orca-pricing">
               {[
-                { name: 'Standard', desc: 'יומן + אנליטיקה בסיסית.', feats: ['יומן מסחר אוטומטי', 'KPIs ליבה', 'Calendar Hub', 'ייבוא CSV'] },
-                { name: 'Pro', desc: 'ניהול סיכונים, תובנות AI, תודעת סוחר.', feats: ['כל מה ש-Standard', 'מנוע סיכונים 4-שכבתי', 'תובנות AI עמוקות', 'אבחון תודעת הסוחר'], popular: true },
-                { name: 'Ultimate', desc: 'מעבדת אנליטיקה מתקדמת.', feats: ['כל מה ש-Pro', 'Quant Lab מלא', 'Monte Carlo + Box Plot', 'Risk-Reward Frontier'] },
+                { name: 'Standard',
+                  desc: t('יומן + אנליטיקה בסיסית.', 'Journal + core analytics.'),
+                  feats: [t('יומן מסחר אוטומטי','Automated trade journal'), t('KPIs ליבה','Core KPIs'), t('Calendar Hub','Calendar Hub'), t('ייבוא CSV','CSV import')] },
+                { name: 'Pro',
+                  desc: t('ניהול סיכונים, תובנות AI, תודעת סוחר.', 'Risk management, AI insights, trader mind.'),
+                  feats: [t('כל מה ש-Standard','Everything in Standard'), t('מנוע סיכונים 4-שכבתי','4-tier risk engine'), t('תובנות AI עמוקות','Deep AI insights'), t('אבחון תודעת הסוחר','Trader Mind diagnostic')], popular: true },
+                { name: 'Ultimate',
+                  desc: t('מעבדת אנליטיקה מתקדמת.', 'Advanced analytics lab.'),
+                  feats: [t('כל מה ש-Pro','Everything in Pro'), t('Quant Lab מלא','Full Quant Lab'), t('Monte Carlo + Box Plot','Monte Carlo + Box Plot'), t('Risk-Reward Frontier','Risk-Reward Frontier')] },
               ].map((p) => (
                 <div key={p.name} className={`orca-price-card ${p.popular ? 'popular' : ''}`}>
-                  {p.popular && <div className="badge-pop">המומלץ</div>}
+                  {p.popular && <div className="badge-pop">{t('המומלץ', 'Most popular')}</div>}
                   <div>
-                    <div className="mono" style={{ fontSize: 11, color: 'var(--text-muted)' }}>מסלול</div>
+                    <div className="mono" style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('מסלול', 'Plan')}</div>
                     <h3 style={{ fontSize: 26, fontWeight: 800, margin: '6px 0 6px', color: p.popular ? '#8B5CF6' : 'var(--text)' }}>{p.name}</h3>
                     <p style={{ color: 'var(--text-muted)', fontSize: 14, lineHeight: 1.6 }}>{p.desc}</p>
                   </div>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                      <span className="mono" style={{ fontSize: 11, color: 'var(--text-muted)' }}>מחיר</span>
-                      <span style={{ fontSize: 24, fontWeight: 800, color: p.popular ? '#8B5CF6' : 'var(--cyan)' }}>בקרוב</span>
+                      <span className="mono" style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('מחיר', 'Price')}</span>
+                      <span style={{ fontSize: 24, fontWeight: 800, color: p.popular ? '#8B5CF6' : 'var(--cyan)' }}>{t('בקרוב', 'Coming soon')}</span>
                     </div>
-                    <div className="mono" style={{ fontSize: 11, color: 'var(--mint)', marginTop: 4 }}>חינם בתקופת ההשקה</div>
+                    <div className="mono" style={{ fontSize: 11, color: 'var(--mint)', marginTop: 4 }}>{t('חינם בתקופת ההשקה', 'Free during launch')}</div>
                   </div>
                   <ul>{p.feats.map(f => <li key={f}>{f}</li>)}</ul>
                   <button className="grad-btn" onClick={goApp} style={{ width: '100%', justifyContent: 'center' }}>
-                    התחל בחינם
+                    {t('התחל בחינם', 'Start free')}
                   </button>
                   <div className="mono" style={{ fontSize: 10, color: 'var(--text-dim)', textAlign: 'center' }}>
-                    ללא כרטיס אשראי · גישה מלאה עכשיו
+                    {t('ללא כרטיס אשראי · גישה מלאה עכשיו', 'No credit card · Full access now')}
                   </div>
                 </div>
               ))}
@@ -974,11 +1065,13 @@ const Landing: React.FC = () => {
         <section className="orca-section orca-final">
           <div className="max-w-4xl mx-auto px-5 sm:px-8">
             <h2 className="orca-section-title">
-              התחל לנהל את המסחר שלך — <span className="grad-text">בחינם.</span>
+              {isRTL
+                ? <>התחל לנהל את המסחר שלך — <span className="grad-text">בחינם.</span></>
+                : <>Start managing your trading — <span className="grad-text">for free.</span></>}
             </h2>
             <div style={{ marginTop: 28 }}>
               <button className="grad-btn" onClick={goApp} style={{ fontSize: 17, padding: '18px 32px' }}>
-                כניסה למערכת <ArrowLeft size={18} />
+                {t('כניסה למערכת', 'Enter app')} <Arrow size={18} />
               </button>
             </div>
           </div>
@@ -993,33 +1086,38 @@ const Landing: React.FC = () => {
                   <img src={orcaLogo} alt="Orca Investment" style={{ height: 44, width: 'auto', display: 'block' }} />
                 </div>
                 <p style={{ color: 'var(--text-muted)', fontSize: 14, lineHeight: 1.7, maxWidth: 320 }}>
-                  יומן מסחר חכם ואוטומטי. כל טרייד, כל סטטיסטיקה, החלטה אחת טובה יותר.
+                  {t(
+                    'יומן מסחר חכם ואוטומטי. כל טרייד, כל סטטיסטיקה, החלטה אחת טובה יותר.',
+                    'A smart, automated trading journal. Every trade, every stat, one better decision.'
+                  )}
                 </p>
               </div>
               <div className="orca-footer-col">
-                <h4>מוצר</h4>
-                <a href="#features">פיצ׳רים</a>
-                <a href="#journal">היומן</a>
-                <a href="#pricing">מחירים</a>
+                <h4>{t('מוצר', 'Product')}</h4>
+                <a href="#features">{t('פיצ׳רים', 'Features')}</a>
+                <a href="#journal">{t('היומן', 'The journal')}</a>
+                <a href="#pricing">{t('מחירים', 'Pricing')}</a>
               </div>
               <div className="orca-footer-col">
-                <h4>קהילה</h4>
+                <h4>{t('קהילה', 'Community')}</h4>
                 <a href="#community">Discord</a>
                 <a href="#">Telegram</a>
                 <a href="#">YouTube</a>
               </div>
               <div className="orca-footer-col">
-                <h4>משפטי</h4>
-                <Link to="/terms">תנאי שימוש</Link>
-                <Link to="/privacy">פרטיות</Link>
-                <a href="#">נגישות</a>
+                <h4>{t('משפטי', 'Legal')}</h4>
+                <Link to="/terms">{t('תנאי שימוש', 'Terms of service')}</Link>
+                <Link to="/privacy">{t('פרטיות', 'Privacy')}</Link>
+                <a href="#">{t('נגישות', 'Accessibility')}</a>
               </div>
             </div>
 
             <div className="orca-legal">
-              ⚠️ <strong style={{ color: 'var(--text)' }}>Orca Investment</strong> אינה מערכת איתותים ואינה מספקת המלצות השקעה.
-              הנתונים מבוססים על פעילות המסחר האישית של המשתמש ונועדו ללמידה, שיפור תהליך ופיתוח משמעת.
-              מסחר בשווקים פיננסיים כרוך בסיכון; כל משתמש פועל לפי שיקול דעתו.
+              ⚠️ <strong style={{ color: 'var(--text)' }}>Orca Investment</strong>{' '}
+              {t(
+                'אינה מערכת איתותים ואינה מספקת המלצות השקעה. הנתונים מבוססים על פעילות המסחר האישית של המשתמש ונועדו ללמידה, שיפור תהליך ופיתוח משמעת. מסחר בשווקים פיננסיים כרוך בסיכון; כל משתמש פועל לפי שיקול דעתו.',
+                'is not a signals service and does not provide investment advice. The data is based on the user\'s own trading activity and is intended for learning, process improvement and discipline. Trading financial markets involves risk; every user acts at their own discretion.'
+              )}
             </div>
 
             <div style={{ marginTop: 28, paddingTop: 20, borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
@@ -1032,7 +1130,7 @@ const Landing: React.FC = () => {
         {/* Command bar signature */}
 
         <div className="orca-cmd-bar hidden sm:block">
-          PRESS <kbd>⌘K</kbd> FOR COMMAND · <kbd>?</kbd> HELP
+          {t('לחץ', 'PRESS')} <kbd>⌘K</kbd> {t('לפקודות', 'FOR COMMAND')} · <kbd>?</kbd> {t('עזרה', 'HELP')}
         </div>
       </div>
     </>
