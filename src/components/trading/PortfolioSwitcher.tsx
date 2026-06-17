@@ -287,7 +287,7 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
                       {p.currency} · {isRTL ? 'הון התחלתי' : 'Start'} {Number(p.starting_balance).toLocaleString()}
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: 4 }}>
+                  <div style={{ display: 'flex', gap: 4, flexShrink: 0, alignItems: 'center' }}>
                     {!p.is_default && !locked && (
                       <button
                         onClick={(e) => { e.stopPropagation(); void setDefault(p.id); }}
