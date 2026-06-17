@@ -64,7 +64,29 @@ const DEFAULTS: UIPrefs = {
 };
 
 const KEY = 'uiPrefs';
+const CACHE_KEY = 'orca:ui-prefs-cache';
 export const THEME_LOCK_MS = 24 * 60 * 60 * 1000; // 1 day
+
+function normalizePrefs(p?: Partial<UIPrefs> | null): UIPrefs {
+  return {
+    ...DEFAULTS,
+    ...(p || {}),
+    customTheme: { ...CUSTOM_THEME_DEFAULT, ...(p?.customTheme || {}) },
+  };
+}
+
+function readCachedPrefs(): UIPrefs {
+  if (typeof window === 'undefined') return DEFAULTS;
+  try {
+    const raw = window.localStorage.getItem(CACHE_KEY);
+    return raw ? normalizePrefs(JSON.parse(raw) as Partial<UIPrefs>) : DEFAULTS;
+  } catch { return DEFAULTS; }
+}
+
+function persistPrefs(next: UIPrefs) {
+  try { window.localStorage.setItem(CACHE_KEY, JSON.stringify(next)); } catch { /* noop */ }
+  setSetting(KEY, next);
+}
 
 declare global {
   interface Window {
@@ -73,12 +95,16 @@ declare global {
 }
 
 export function useUIPrefs() {
-  const [prefs, setPrefsState] = useState<UIPrefs>(DEFAULTS);
+  const [prefs, setPrefsState] = useState<UIPrefs>(() => readCachedPrefs());
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     getSetting<Partial<UIPrefs>>(KEY).then(p => {
-      if (p && typeof p === 'object') setPrefsState({ ...DEFAULTS, ...p });
+      if (p && typeof p === 'object') {
+        const next = normalizePrefs(p);
+        setPrefsState(next);
+        try { window.localStorage.setItem(CACHE_KEY, JSON.stringify(next)); } catch { /* noop */ }
+      }
       setLoaded(true);
     });
   }, []);
@@ -109,7 +135,7 @@ export function useUIPrefs() {
   const setPrefs = useCallback((patch: Partial<UIPrefs>) => {
     setPrefsState(prev => {
       const next = { ...prev, ...patch };
-      setSetting(KEY, next);
+      persistPrefs(next);
       return next;
     });
   }, []);
@@ -123,14 +149,14 @@ export function useUIPrefs() {
           ? prev.hiddenOperatingModes.filter(x => x !== m)
           : [...prev.hiddenOperatingModes, m],
       };
-      setSetting(KEY, next);
+      persistPrefs(next);
       return next;
     });
   }, []);
 
   const reset = useCallback(() => {
     setPrefsState(DEFAULTS);
-    setSetting(KEY, DEFAULTS);
+    persistPrefs(DEFAULTS);
   }, []);
 
   /** Commit a new custom accent and lock it for 7 days. */
@@ -144,7 +170,7 @@ export function useUIPrefs() {
         customAccentEnabled: true,
         customAccentLockedUntil: now + THEME_LOCK_MS,
       };
-      setSetting(KEY, next);
+      persistPrefs(next);
       return next;
     });
   }, []);
@@ -157,7 +183,7 @@ export function useUIPrefs() {
         customAccentEnabled: false,
         customAccentLockedUntil: 0,
       };
-      setSetting(KEY, next);
+      persistPrefs(next);
       return next;
     });
   }, []);
@@ -174,7 +200,7 @@ export function useUIPrefs() {
         customAccentEnabled: false, // theme studio supersedes single-accent mode
         customAccentLockedUntil: now + THEME_LOCK_MS,
       };
-      setSetting(KEY, next);
+      persistPrefs(next);
       return next;
     });
   }, []);
@@ -187,7 +213,7 @@ export function useUIPrefs() {
         customThemeEnabled: false,
         customAccentLockedUntil: 0,
       };
-      setSetting(KEY, next);
+      persistPrefs(next);
       return next;
     });
   }, []);
@@ -196,7 +222,7 @@ export function useUIPrefs() {
   const unlockTheme = useCallback(() => {
     setPrefsState(prev => {
       const next: UIPrefs = { ...prev, customAccentLockedUntil: 0 };
-      setSetting(KEY, next);
+      persistPrefs(next);
       return next;
     });
   }, []);

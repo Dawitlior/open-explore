@@ -8,8 +8,8 @@
       (function () {
         try {
           var t = localStorage.getItem('orca:theme-cache');
-          if (t !== 'midnight' && t !== 'indigo' && t !== 'platinum') t = 'midnight';
-          var SOLID = { midnight: '#020202', indigo: '#070817', platinum: '#f4efe4' };
+          if (t !== 'midnight' && t !== 'indigo' && t !== 'platinum' && t !== 'graphite') t = 'graphite';
+          var SOLID = { midnight: '#020202', indigo: '#070817', platinum: '#f4efe4', graphite: '#0e1013' };
           // Full token maps — MUST stay in sync with src/lib/trading-theme.ts cssVars.
           var TOKENS = {
             midnight: {
@@ -56,12 +56,55 @@
               '--sidebar-accent':'40 25% 92%','--sidebar-accent-foreground':'222 47% 11%','--sidebar-ring':'224 76% 48%',
               '--orca-aurora-a':'224 76% 60%','--orca-aurora-b':'38 80% 55%',
               '--orca-glow-spot':'224 76% 60%','--orca-primary-h':'224 76% 48%'
+            },
+            graphite: {
+              '--background':'215 14% 7%','--foreground':'215 15% 92%',
+              '--card':'215 14% 11%','--card-foreground':'215 15% 92%',
+              '--popover':'215 14% 11%','--popover-foreground':'215 15% 92%',
+              '--primary':'142 71% 45%','--primary-foreground':'0 0% 100%',
+              '--secondary':'215 14% 14%','--secondary-foreground':'215 15% 92%',
+              '--muted':'215 12% 16%','--muted-foreground':'215 10% 62%',
+              '--accent':'142 71% 45%','--accent-foreground':'0 0% 100%',
+              '--destructive':'0 84% 60%','--ring':'142 71% 45%',
+              '--sidebar-background':'215 14% 9%','--sidebar-foreground':'215 10% 62%',
+              '--sidebar-primary':'142 71% 45%','--sidebar-primary-foreground':'0 0% 100%',
+              '--sidebar-accent':'215 14% 14%','--sidebar-accent-foreground':'215 15% 92%','--sidebar-ring':'142 71% 45%',
+              '--orca-aurora-a':'142 71% 45%','--orca-aurora-b':'215 14% 35%',
+              '--orca-glow-spot':'142 71% 55%','--orca-primary-h':'142 71% 45%'
             }
           };
           var r = document.documentElement;
           r.setAttribute('data-theme', t);
           var map = TOKENS[t];
           for (var k in map) r.style.setProperty(k, map[k]);
+          var prefsRaw = localStorage.getItem('orca:ui-prefs-cache');
+          if (prefsRaw) {
+            var prefs = JSON.parse(prefsRaw);
+            var hex = prefs && prefs.customAccentEnabled && typeof prefs.customAccent === 'string' ? prefs.customAccent.trim() : '';
+            if (/^#[0-9a-f]{6}$/i.test(hex)) {
+              var n = parseInt(hex.slice(1), 16), rr = (n >> 16) & 255, gg = (n >> 8) & 255, bb = n & 255;
+              rr /= 255; gg /= 255; bb /= 255;
+              var max = Math.max(rr, gg, bb), min = Math.min(rr, gg, bb), h = 0, s = 0, l = (max + min) / 2;
+              if (max !== min) {
+                var d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                h = max === rr ? (gg - bb) / d + (gg < bb ? 6 : 0) : max === gg ? (bb - rr) / d + 2 : (rr - gg) / d + 4;
+                h *= 60;
+              }
+              h = Math.round(h); s = Math.max(60, Math.min(92, Math.round(s * 100)));
+              var light = t === 'platinum';
+              var primary = h + ' ' + s + '% ' + (light ? '48%' : '60%');
+              r.style.setProperty('--primary', primary);
+              r.style.setProperty('--primary-foreground', light ? '0 0% 100%' : '0 0% 4%');
+              r.style.setProperty('--accent', primary);
+              r.style.setProperty('--ring', primary);
+              r.style.setProperty('--sidebar-primary', primary);
+              r.style.setProperty('--sidebar-ring', primary);
+              r.style.setProperty('--orca-aurora-a', primary);
+              r.style.setProperty('--orca-glow-spot', h + ' ' + Math.min(100, s + 5) + '% ' + (light ? '60%' : '70%'));
+              r.style.setProperty('--orca-primary-h', primary);
+            }
+          }
           r.style.backgroundColor = SOLID[t];
           var meta = document.querySelector('meta[name="theme-color"]');
           if (meta) meta.setAttribute('content', SOLID[t]);
