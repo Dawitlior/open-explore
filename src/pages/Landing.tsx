@@ -61,11 +61,12 @@ const orcaCss = `
     var(--bg);
   color: var(--text);
   font-family: 'Heebo', system-ui, -apple-system, sans-serif;
-  direction: rtl;
   min-height: 100vh;
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
 }
+.orca-landing[dir="rtl"] { direction: rtl; }
+.orca-landing[dir="ltr"] { direction: ltr; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
 .orca-landing .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; letter-spacing: 0.12em; }
 .orca-landing .glass-card {
   background: var(--glass);
