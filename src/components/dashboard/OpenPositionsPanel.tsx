@@ -249,6 +249,7 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
                 borderRadius: 12,
                 padding: 14,
                 display: 'flex', flexDirection: 'column', gap: 12,
+                animation: `orcaOpenPosCardIn 520ms cubic-bezier(0.22, 1, 0.36, 1) ${180 + idx * 80}ms both`,
               }}>
               {/* Header: symbol + side pill */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
