@@ -170,7 +170,7 @@ export function useUIPrefs() {
         customAccentEnabled: true,
         customAccentLockedUntil: now + THEME_LOCK_MS,
       };
-      setSetting(KEY, next);
+      persistPrefs(next);
       return next;
     });
   }, []);
@@ -183,7 +183,7 @@ export function useUIPrefs() {
         customAccentEnabled: false,
         customAccentLockedUntil: 0,
       };
-      setSetting(KEY, next);
+      persistPrefs(next);
       return next;
     });
   }, []);
@@ -200,7 +200,7 @@ export function useUIPrefs() {
         customAccentEnabled: false, // theme studio supersedes single-accent mode
         customAccentLockedUntil: now + THEME_LOCK_MS,
       };
-      setSetting(KEY, next);
+      persistPrefs(next);
       return next;
     });
   }, []);
@@ -213,7 +213,7 @@ export function useUIPrefs() {
         customThemeEnabled: false,
         customAccentLockedUntil: 0,
       };
-      setSetting(KEY, next);
+      persistPrefs(next);
       return next;
     });
   }, []);
@@ -222,7 +222,7 @@ export function useUIPrefs() {
   const unlockTheme = useCallback(() => {
     setPrefsState(prev => {
       const next: UIPrefs = { ...prev, customAccentLockedUntil: 0 };
-      setSetting(KEY, next);
+      persistPrefs(next);
       return next;
     });
   }, []);
