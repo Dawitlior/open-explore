@@ -111,7 +111,29 @@ const Terms = () => {
           {t('עדכון אחרון:', 'Last updated:')} {new Date().toLocaleDateString(isRTL ? 'he-IL' : 'en-US')}
         </p>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+        {!isRTL && (
+          <div
+            dir="ltr"
+            style={{
+              marginBottom: 24,
+              padding: '12px 14px',
+              borderRadius: 10,
+              border: '1px solid rgba(0,242,255,0.18)',
+              background: 'rgba(0,242,255,0.06)',
+              fontSize: 12.5,
+              lineHeight: 1.6,
+              color: 'rgba(230,244,255,0.85)',
+            }}
+          >
+            <strong style={{ color: '#7fe6ff' }}>Notice.</strong> The legally
+            binding text of this agreement is the Hebrew version below, in
+            accordance with the exclusive jurisdiction of the courts of
+            Tel Aviv-Yafo (section 6). An English summary is available on
+            request at <a href="mailto:innovationai@mail.com" style={{ color: '#7fe6ff' }}>innovationai@mail.com</a>.
+          </div>
+        )}
+
+        <div dir="rtl" lang="he" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
           {LEGAL_SECTIONS_HE.map((s) => (
             <section key={s.heading}>
               <h2
