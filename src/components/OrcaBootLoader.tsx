@@ -39,7 +39,37 @@ function readAccent(): string {
 export const OrcaBootLoader = ({ label = 'Investment Terminal' }: { label?: string }) => {
   const [bg, setBg] = useState<string>(() => readCurrentSurface());
   const [accent, setAccent] = useState<string>(() => readAccent());
-  useEffect(() => { setBg(readCurrentSurface()); setAccent(readAccent()); }, []);
+
+  // Re-read theme tokens reactively. On a hard refresh the auth loader paints
+  // before useSettings has resolved the user's saved theme from the cloud, so
+  // we must update the accent in-place rather than letting a later remount
+  // create a second, differently-colored loader flash.
+  useEffect(() => {
+    let raf = 0;
+    const sync = () => {
+      raf = requestAnimationFrame(() => {
+        setBg(readCurrentSurface());
+        setAccent(readAccent());
+      });
+    };
+    sync();
+    // 1) Mode/theme switches dispatched by useSettings.
+    const onSwitch = () => sync();
+    window.addEventListener('orca:mode-switch', onSwitch);
+    // 2) Any direct mutation of <html> attributes (data-theme / inline vars).
+    const mo = new MutationObserver(sync);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'style', 'class'] });
+    // 3) Safety net for the first ~1.5s while async settings resolve.
+    const poll = window.setInterval(sync, 250);
+    const stop = window.setTimeout(() => window.clearInterval(poll), 2000);
+    return () => {
+      window.removeEventListener('orca:mode-switch', onSwitch);
+      mo.disconnect();
+      window.clearInterval(poll);
+      window.clearTimeout(stop);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
 
   const accentColor = `hsl(${accent})`;
   const accentSoft  = `hsl(${accent} / 0.13)`;
@@ -53,7 +83,7 @@ export const OrcaBootLoader = ({ label = 'Investment Terminal' }: { label?: stri
         flexDirection: 'column', gap: 28,
         background: bg,
         color: accentColor,
-        transition: 'background 0.35s ease',
+        transition: 'background 0.35s ease, color 0.35s ease',
       }}
     >
       <div style={{ position: 'relative', width: 96, height: 96 }}>
@@ -61,6 +91,7 @@ export const OrcaBootLoader = ({ label = 'Investment Terminal' }: { label?: stri
           position: 'absolute', inset: 0, borderRadius: '50%',
           border: `2px solid ${accentSoft}`,
           borderTopColor: accentColor,
+          transition: 'border-color 0.35s ease',
           animation: 'orca-bl-spin 1.1s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite',
         }} />
         <div style={{
@@ -68,6 +99,7 @@ export const OrcaBootLoader = ({ label = 'Investment Terminal' }: { label?: stri
           border: `2px solid ${accentSoft}`,
           borderBottomColor: accentColor,
           opacity: 0.7,
+          transition: 'border-color 0.35s ease',
           animation: 'orca-bl-spin-rev 1.6s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite',
         }} />
         <div style={{
