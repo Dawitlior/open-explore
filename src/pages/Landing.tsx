@@ -477,24 +477,26 @@ const GradCard: React.FC<{ accent: string; title: string; desc: string; num?: st
 );
 
 /* Feature Tabs — `image` is the real uploaded screenshot URL (omit for grey "SCREENSHOT" placeholder) */
-const TABS: { key: string; label: string; icon: string; title: string; desc: string; bullets: string[]; image?: string; extraImage?: string }[] = [
-  { key: 'journal', label: 'יומן אוטומטי', icon: '📓', title: 'יומן מסחר אוטומטי', desc: 'חבר את הברוקר פעם אחת, ועסקאות נכנסות אוטומטית — מתויגות ומוכנות לניתוח.', bullets: ['סנכרון מ-Bybit / Binance', 'יומן בוקר וערב', 'צילומי גרפים', 'ארכיון מלא לחיפוש'], image: autoJournal },
-  { key: 'analytics', label: 'אנליטיקה', icon: '📊', title: 'לוח אנליטיקה מתקדם', desc: 'עשרות מטריקות כמותיות שחושפות את ה-Edge האמיתי שלך.', bullets: ['Equity Curve מתקדמת', 'Profit Factor & R-Multiples', 'ניתוח לפי נכס / שעה / יום', 'סיכומים שבועי, חודשי, שנתי'], image: analyticsDeck },
-  { key: 'risk', label: 'ניהול סיכונים', icon: '🛡️', title: 'מנוע סיכונים 4-שכבתי', desc: 'הגנה אוטומטית מפני over-trading עם מנגנון משמעת חכם.', bullets: ['מגבלות -1R / -2R / -5R / -10R', 'חישוב גודל פוזיציה אוטומטי', 'התראות Risk Drift', 'מצב צינון (Cool-Off)'], image: riskManagement },
-  { key: 'ai', label: 'תובנות AI', icon: '🧠', title: 'מנוע תובנות עמוק', desc: 'מזהה דפוסים סמויים שאף סוחר לא היה רואה לבד.', bullets: ['זיהוי דפוסים נסתרים', 'חוזקות וחולשות אישיות', 'Orca Coach מבוסס נתונים', 'גרפים ברמת Awwwards'], image: aiMainframe, extraImage: aiGoldEdge },
-  { key: 'mind', label: 'תודעת הסוחר', icon: '🐋', title: 'אבחון תודעת הסוחר', desc: 'פרופיל Archetype אישי שמכייל את ה-AI Coach לפי הסוחר שאתה.', bullets: ['אבחון אישיות סוחר', 'פרופיל Archetype', 'כיול AI Coach', 'כיול-מחדש כל 45 יום'], image: traderMindImg },
-  { key: 'radar', label: 'מכ״ם כלכלי', icon: '📡', title: 'מכ״ם אירועים כלכליים', desc: 'רדאר אירועים גלובלי עם חישוב Surprise בזמן אמת.', bullets: ['רדאר אירועים עולמי', 'Tier 1 / 2 / 3', 'עדכוני T-5 / T-1 / Live', 'חישוב Surprise אוטומטי'], image: radarImg },
+type TabDef = { key: string; label: string; icon: string; title: string; desc: string; bullets: string[]; image?: string; extraImage?: string };
+const getTabs = (t: (he: string, en: string) => string): TabDef[] => [
+  { key: 'journal',   label: t('יומן אוטומטי','Auto Journal'), icon: '📓', title: t('יומן מסחר אוטומטי','Automated Trade Journal'), desc: t('חבר את הברוקר פעם אחת, ועסקאות נכנסות אוטומטית — מתויגות ומוכנות לניתוח.','Connect your broker once. Trades flow in automatically — tagged and ready to analyze.'), bullets: [t('סנכרון מ-Bybit / Binance','Sync from Bybit / Binance'), t('יומן בוקר וערב','Morning & evening journaling'), t('צילומי גרפים','Chart screenshots'), t('ארכיון מלא לחיפוש','Full searchable archive')], image: autoJournal },
+  { key: 'analytics', label: t('אנליטיקה','Analytics'), icon: '📊', title: t('לוח אנליטיקה מתקדם','Advanced Analytics Deck'), desc: t('עשרות מטריקות כמותיות שחושפות את ה-Edge האמיתי שלך.','Dozens of quantitative metrics that expose your real edge.'), bullets: [t('Equity Curve מתקדמת','Advanced equity curve'), t('Profit Factor & R-Multiples','Profit Factor & R-Multiples'), t('ניתוח לפי נכס / שעה / יום','Breakdown by asset / hour / day'), t('סיכומים שבועי, חודשי, שנתי','Weekly, monthly, yearly summaries')], image: analyticsDeck },
+  { key: 'risk',      label: t('ניהול סיכונים','Risk Management'), icon: '🛡️', title: t('מנוע סיכונים 4-שכבתי','4-Tier Risk Engine'), desc: t('הגנה אוטומטית מפני over-trading עם מנגנון משמעת חכם.','Automatic protection against over-trading with an intelligent discipline engine.'), bullets: [t('מגבלות -1R / -2R / -5R / -10R','-1R / -2R / -5R / -10R limits'), t('חישוב גודל פוזיציה אוטומטי','Auto position sizing'), t('התראות Risk Drift','Risk Drift alerts'), t('מצב צינון (Cool-Off)','Cool-Off mode')], image: riskManagement },
+  { key: 'ai',        label: t('תובנות AI','AI Insights'), icon: '🧠', title: t('מנוע תובנות עמוק','Deep Insight Engine'), desc: t('מזהה דפוסים סמויים שאף סוחר לא היה רואה לבד.','Detects hidden patterns no trader would catch alone.'), bullets: [t('זיהוי דפוסים נסתרים','Hidden pattern detection'), t('חוזקות וחולשות אישיות','Personal strengths & weaknesses'), t('Orca Coach מבוסס נתונים','Data-driven Orca Coach'), t('גרפים ברמת Awwwards','Awwwards-grade visualizations')], image: aiMainframe, extraImage: aiGoldEdge },
+  { key: 'mind',      label: t('תודעת הסוחר','Trader Mind'), icon: '🐋', title: t('אבחון תודעת הסוחר','Trader Mind Diagnostic'), desc: t('פרופיל Archetype אישי שמכייל את ה-AI Coach לפי הסוחר שאתה.','A personal Archetype profile that calibrates the AI Coach to who you really are.'), bullets: [t('אבחון אישיות סוחר','Trader personality diagnostic'), t('פרופיל Archetype','Archetype profile'), t('כיול AI Coach','AI Coach calibration'), t('כיול-מחדש כל 45 יום','Re-calibration every 45 days')], image: traderMindImg },
+  { key: 'radar',     label: t('מכ״ם כלכלי','Economic Radar'), icon: '📡', title: t('מכ״ם אירועים כלכליים','Economic Event Radar'), desc: t('רדאר אירועים גלובלי עם חישוב Surprise בזמן אמת.','Global event radar with real-time Surprise scoring.'), bullets: [t('רדאר אירועים עולמי','Global event radar'), t('Tier 1 / 2 / 3','Tier 1 / 2 / 3'), t('עדכוני T-5 / T-1 / Live','T-5 / T-1 / Live updates'), t('חישוב Surprise אוטומטי','Automatic Surprise calculation')], image: radarImg },
 ];
 
-const FeatureTabs: React.FC = () => {
+const FeatureTabs: React.FC<{ t: (he: string, en: string) => string }> = ({ t }) => {
+  const TABS = React.useMemo(() => getTabs(t), [t]);
   const [active, setActive] = useState(TABS[0].key);
-  const tab = TABS.find(t => t.key === active) || TABS[0];
+  const tab = TABS.find(x => x.key === active) || TABS[0];
   return (
     <>
       <div className="orca-tabs" style={{ marginTop: 32 }}>
-        {TABS.map(t => (
-          <button key={t.key} className={`orca-tab ${active === t.key ? 'active' : ''}`} onClick={() => setActive(t.key)}>
-            <span>{t.icon}</span>{t.label}
+        {TABS.map(x => (
+          <button key={x.key} className={`orca-tab ${active === x.key ? 'active' : ''}`} onClick={() => setActive(x.key)}>
+            <span>{x.icon}</span>{x.label}
           </button>
         ))}
       </div>
@@ -504,7 +506,7 @@ const FeatureTabs: React.FC = () => {
           <h3 style={{ fontSize: 'clamp(1.6rem, 3vw, 2.2rem)', fontWeight: 800, margin: '12px 0 10px', letterSpacing: '-0.01em' }}>{tab.title}</h3>
           <p style={{ color: 'var(--text-muted)', fontSize: 16, lineHeight: 1.7 }}>{tab.desc}</p>
           <ul className="orca-bullets">{tab.bullets.map(b => <li key={b}>{b}</li>)}</ul>
-          <a href="#" style={{ color: 'var(--cyan)', fontSize: 14, fontWeight: 600 }}>עוד ←</a>
+          <a href="#" style={{ color: 'var(--cyan)', fontSize: 14, fontWeight: 600 }}>{t('עוד ←','More →')}</a>
         </div>
         {tab.extraImage ? (
           <ScreenshotFrame alt={tab.title}>
