@@ -19,6 +19,7 @@ import Landing from "./pages/Landing";
 import ResetPassword from "./pages/ResetPassword";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
+import Accessibility from "./pages/Accessibility";
 import NotFound from "./pages/NotFound";
 import { LegalGate } from "@/components/LegalGate";
 import { EconomicAlertBanner } from "@/components/economic/EconomicAlertBanner";
@@ -44,7 +45,7 @@ const BugBoardPage = lazy(() => import("./pages/BugBoardPage"));
 const BugArenaMount = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
   const location = useLocation();
-  const suppressedRoutes = ['/welcome', '/auth', '/reset-password', '/terms', '/privacy'];
+  const suppressedRoutes = ['/welcome', '/auth', '/reset-password', '/terms', '/privacy', '/accessibility'];
   const suppressed = suppressedRoutes.some((p) => location.pathname.startsWith(p));
 
   if (!user) return <>{children}</>;
@@ -141,6 +142,7 @@ const App = () => (
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
+              <Route path="/accessibility" element={<Accessibility />} />
               <Route
                 path="/"
                 element={

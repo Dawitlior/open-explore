@@ -1108,7 +1108,7 @@ const Landing: React.FC = () => {
                 <h4>{t('משפטי', 'Legal')}</h4>
                 <Link to="/terms">{t('תנאי שימוש', 'Terms of service')}</Link>
                 <Link to="/privacy">{t('פרטיות', 'Privacy')}</Link>
-                <a href="#">{t('נגישות', 'Accessibility')}</a>
+                <Link to="/accessibility">{t('נגישות', 'Accessibility')}</Link>
               </div>
             </div>
 
