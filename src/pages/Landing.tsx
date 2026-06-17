@@ -32,7 +32,7 @@ const APP_URL = 'https://orcainvestment.co.il';
 
 /* ─────────── Design System (Master Plan §3) ─────────── */
 const orcaCss = `
-@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 .orca-landing {
   --bg:        #000000;
