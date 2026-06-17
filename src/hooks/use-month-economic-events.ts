@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { EconomicEvent, EconomicImpact } from '@/lib/economic';
+import { getCached, setCached, dedupe } from '@/lib/economic/cache';
 
 interface Options {
   year: number;
@@ -12,7 +13,7 @@ interface Options {
 
 /**
  * Fetches all economic events for a calendar month, grouped by day-of-month.
- * One query per month-change. RLS = authenticated only.
+ * One query per month-change, shared across mounts via a 5-min TTL cache.
  */
 export function useMonthEconomicEvents({ year, month, impacts = ['t1', 't2'], enabled = true }: Options) {
   const [events, setEvents] = useState<EconomicEvent[]>([]);
@@ -23,21 +24,38 @@ export function useMonthEconomicEvents({ year, month, impacts = ['t1', 't2'], en
     let cancelled = false;
     setLoading(true);
 
-    const from = new Date(year, month, 1).toISOString();
-    const to = new Date(year, month + 1, 1).toISOString();
+    const impactsKey = impacts.length ? [...impacts].sort().join(',') : 'all';
+    const cacheKey = `month:${year}-${month}:${impactsKey}`;
+
+    const cached = getCached<EconomicEvent[]>(cacheKey);
+    if (cached) {
+      setEvents(cached);
+      setLoading(false);
+      return () => { cancelled = true; };
+    }
 
     (async () => {
-      let q = supabase
-        .from('economic_events')
-        .select('*')
-        .gte('release_at', from)
-        .lt('release_at', to)
-        .order('release_at', { ascending: true })
-        .limit(1000);
-      if (impacts.length) q = q.in('impact', impacts);
-      const { data, error } = await q;
+      const from = new Date(year, month, 1).toISOString();
+      const to = new Date(year, month + 1, 1).toISOString();
+
+      const list = await dedupe(cacheKey, async () => {
+        let q = supabase
+          .from('economic_events')
+          .select('*')
+          .gte('release_at', from)
+          .lt('release_at', to)
+          .order('release_at', { ascending: true })
+          .limit(1000);
+        if (impacts.length) q = q.in('impact', impacts);
+        const { data, error } = await q;
+        if (error || !data) return [] as EconomicEvent[];
+        const out = data as EconomicEvent[];
+        setCached(cacheKey, out, 5 * 60_000);
+        return out;
+      });
+
       if (cancelled) return;
-      if (!error && data) setEvents(data as EconomicEvent[]);
+      setEvents(list);
       setLoading(false);
     })();
 
