@@ -1,7 +1,7 @@
 // Minimal service worker for PWA installability.
 // Bumped cache name to force eviction of stale shells after a project revert.
 
-const CACHE = 'orca-shell-v7';
+const CACHE = 'orca-shell-v8';
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();
