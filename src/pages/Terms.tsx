@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { useLang } from '@/hooks/use-lang';
 import {
   LEGAL_TITLE_HE,
   LEGAL_SECTIONS_HE,
@@ -8,7 +9,9 @@ import {
 } from '@/lib/legal-text';
 
 const Terms = () => {
+  const { isRTL, t } = useLang();
   useEffect(() => {
+    window.scrollTo(0, 0);
     const prevTitle = document.title;
     document.title = 'תנאי שימוש — Orca';
     const upsertMeta = (selector: string, create: () => HTMLElement) => {
@@ -51,8 +54,8 @@ const Terms = () => {
 
   return (
     <main
-      dir="rtl"
-      lang="he"
+      dir={isRTL ? 'rtl' : 'ltr'}
+      lang={isRTL ? 'he' : 'en'}
       style={{
         minHeight: '100dvh',
         background:
@@ -87,8 +90,8 @@ const Terms = () => {
             opacity: 0.9,
           }}
         >
-          <ArrowLeft size={14} />
-          חזרה לאפליקציה
+          {isRTL ? <ArrowRight size={14} /> : <ArrowLeft size={14} />}
+          {t('חזרה לאפליקציה', 'Back to the app')}
         </Link>
 
         <h1
@@ -102,10 +105,10 @@ const Terms = () => {
             WebkitTextFillColor: 'transparent',
           }}
         >
-          {LEGAL_TITLE_HE}
+          {t(LEGAL_TITLE_HE, 'Terms of Service, Confidentiality, Privacy & Full Financial Disclaimer — Orca Investment')}
         </h1>
         <p style={{ fontSize: 12, opacity: 0.55, margin: '0 0 28px' }}>
-          עדכון אחרון: {new Date().toLocaleDateString('he-IL')}
+          {t('עדכון אחרון:', 'Last updated:')} {new Date().toLocaleDateString(isRTL ? 'he-IL' : 'en-US')}
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
