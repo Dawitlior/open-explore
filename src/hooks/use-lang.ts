@@ -18,7 +18,14 @@ function readCachedLang(): Lang {
   if (typeof window === 'undefined') return 'he';
   try {
     const v = window.localStorage.getItem(LANG_CACHE_KEY);
-    return v === 'en' ? 'en' : 'he';
+    if (v === 'en' || v === 'he') return v;
+    // First visit: auto-detect from browser language. Anything non-Hebrew
+    // defaults to English so international visitors don't land in RTL.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const nav = (window.navigator?.language || (window.navigator as any)?.userLanguage || '').toLowerCase();
+    const detected: Lang = (nav.startsWith('he') || nav.startsWith('iw')) ? 'he' : 'en';
+    try { window.localStorage.setItem(LANG_CACHE_KEY, detected); } catch { /* noop */ }
+    return detected;
   } catch { return 'he'; }
 }
 export function writeCachedLang(v: Lang) {
