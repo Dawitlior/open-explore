@@ -241,8 +241,28 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
             zIndex: 10000, padding: 8, fontFamily: "'Poppins', sans-serif", direction: isRTL ? 'rtl' : 'ltr',
           } as React.CSSProperties}
         >
+          {/* Header */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '8px 10px 10px', marginBottom: 4,
+            borderBottom: '1px solid rgba(212,175,55,0.14)',
+          }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', color: 'rgba(212,175,55,0.85)', textTransform: 'uppercase', fontFamily: "'IBM Plex Mono', monospace" }}>
+                {isRTL ? 'תיקי מסחר' : 'Portfolios'}
+              </span>
+              <span style={{ fontSize: 11, color: '#94a3b8' }}>
+                {isRTL ? 'בחר תיק או נהל את הקיימים' : 'Select or manage a portfolio'}
+              </span>
+            </div>
+            <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 999, background: 'rgba(212,175,55,0.10)', border: '1px solid rgba(212,175,55,0.28)', color: 'rgba(212,175,55,0.95)', fontFamily: "'IBM Plex Mono', monospace", letterSpacing: '0.06em' }}>
+              {portfolios.length}/{tierMax}
+            </span>
+          </div>
+
           {/* List */}
           <div style={{ maxHeight: 320, overflowY: 'auto', padding: '2px 2px 4px' }}>
+
             {portfolios.map((p) => {
               const isActive = p.id === activePortfolioId;
               const locked = isPortfolioLocked(p.id);
