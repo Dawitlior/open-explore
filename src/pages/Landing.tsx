@@ -534,8 +534,17 @@ const Landing: React.FC = () => {
   const [lang, setLangState] = useState<'he' | 'en'>(() => {
     if (typeof window === 'undefined') return 'he';
     try {
-      const v = window.localStorage.getItem(LANG_OVERRIDE_KEY) || window.localStorage.getItem(LANG_CACHE_KEY);
-      return v === 'en' ? 'en' : 'he';
+      const override = window.localStorage.getItem(LANG_OVERRIDE_KEY);
+      if (override === 'en' || override === 'he') return override;
+      const cached = window.localStorage.getItem(LANG_CACHE_KEY);
+      if (cached === 'en' || cached === 'he') return cached;
+      // First visit: auto-detect from browser language. Default to English
+      // for everything that isn't Hebrew so international visitors get EN.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const nav = (window.navigator?.language || (window.navigator as any)?.userLanguage || '').toLowerCase();
+      const detected: 'he' | 'en' = (nav.startsWith('he') || nav.startsWith('iw')) ? 'he' : 'en';
+      try { window.localStorage.setItem(LANG_CACHE_KEY, detected); } catch { /* noop */ }
+      return detected;
     } catch { return 'he'; }
   });
   const isRTL = lang === 'he';
