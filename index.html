@@ -77,6 +77,34 @@
           r.setAttribute('data-theme', t);
           var map = TOKENS[t];
           for (var k in map) r.style.setProperty(k, map[k]);
+          var prefsRaw = localStorage.getItem('orca:ui-prefs-cache');
+          if (prefsRaw) {
+            var prefs = JSON.parse(prefsRaw);
+            var hex = prefs && prefs.customAccentEnabled && typeof prefs.customAccent === 'string' ? prefs.customAccent.trim() : '';
+            if (/^#[0-9a-f]{6}$/i.test(hex)) {
+              var n = parseInt(hex.slice(1), 16), rr = (n >> 16) & 255, gg = (n >> 8) & 255, bb = n & 255;
+              rr /= 255; gg /= 255; bb /= 255;
+              var max = Math.max(rr, gg, bb), min = Math.min(rr, gg, bb), h = 0, s = 0, l = (max + min) / 2;
+              if (max !== min) {
+                var d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                h = max === rr ? (gg - bb) / d + (gg < bb ? 6 : 0) : max === gg ? (bb - rr) / d + 2 : (rr - gg) / d + 4;
+                h *= 60;
+              }
+              h = Math.round(h); s = Math.max(60, Math.min(92, Math.round(s * 100)));
+              var light = t === 'platinum';
+              var primary = h + ' ' + s + '% ' + (light ? '48%' : '60%');
+              r.style.setProperty('--primary', primary);
+              r.style.setProperty('--primary-foreground', light ? '0 0% 100%' : '0 0% 4%');
+              r.style.setProperty('--accent', primary);
+              r.style.setProperty('--ring', primary);
+              r.style.setProperty('--sidebar-primary', primary);
+              r.style.setProperty('--sidebar-ring', primary);
+              r.style.setProperty('--orca-aurora-a', primary);
+              r.style.setProperty('--orca-glow-spot', h + ' ' + Math.min(100, s + 5) + '% ' + (light ? '60%' : '70%'));
+              r.style.setProperty('--orca-primary-h', primary);
+            }
+          }
           r.style.backgroundColor = SOLID[t];
           var meta = document.querySelector('meta[name="theme-color"]');
           if (meta) meta.setAttribute('content', SOLID[t]);
