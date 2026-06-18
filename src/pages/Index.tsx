@@ -1768,21 +1768,9 @@ const Index = () => {
 
             {/* Scroll area */}
             <div style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '0 12px 8px', overscrollBehavior: 'contain' }} data-modal-body>
-              {/* Contextual controls — portfolio + R/$ + mode */}
-              <div style={{ padding: '4px 6px 8px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div>
-                  <div className="mm-section-label" style={{ padding: '0 6px 8px' }}>{isRTL ? 'תיק פעיל' : 'Active Portfolio'}</div>
-                  <PortfolioSwitcher isRTL={isRTL} />
-                </div>
-                <div>
-                  <div className="mm-section-label" style={{ padding: '0 6px 8px' }}>{isRTL ? 'תצוגת תוחלת' : 'Expectancy Display'}</div>
-                  <DisplayModeToggle T={T} isRTL={isRTL} />
-                </div>
-                <div>
-                  <div className="mm-section-label" style={{ padding: '0 6px 8px' }}>{isRTL ? 'מצב מערכת' : 'Operating Mode'}</div>
-                  <ModeSwitch T={T} isRTL={isRTL} />
-                </div>
-              </div>
+              {/* Note: Active Portfolio, Expectancy Display and Operating Mode moved
+                  to Settings → "Mobile Controls" (they rendered cramped here). */}
+
 
               {/* Nav */}
               <div className="mm-section-label">{isRTL ? 'ניווט' : 'Navigation'}</div>
