@@ -430,7 +430,7 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
                 );
               })()}
 
-              {p.updated_at && (
+              {isExpanded && p.updated_at && (
                 <div style={{ fontSize: 10, color: T.text.muted, textAlign: isRTL ? 'right' : 'left', fontFamily: "'JetBrains Mono', monospace", letterSpacing: 0.3 }}>
                   {isRTL ? 'עדכון אחרון' : 'Last update'}: {new Date(p.updated_at).toLocaleString(isRTL ? 'he-IL' : 'en-US', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}
                 </div>
