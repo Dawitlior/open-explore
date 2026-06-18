@@ -1,136 +1,159 @@
-# ORCA Bug Arena — Integration Plan (v2, schema verified)
+# 📱 ORCA Mobile Master Plan — גרסה מאושרת לביצוע
 
-Integrate the supplied community bug-reporting board into ORCA: backend schema, drop-in modules, route + global FAB, and a full reskin of the reference UI to match the ORCA dark/gold/cyan instrument aesthetic. **No existing logic, prop contracts, or `data-bug-*` hooks will be changed.**
-
-## Pre-flight checks (done)
-
-- **`public.profiles` columns verified**: `id, email, display_name, avatar_url, created_at, updated_at`. The "BETTER DISPLAY NAMES" variant of `bug_arena_people` referencing `p.display_name` and `p.avatar_url` will compile cleanly.
-- **Updated schema file `01_orca_bug_arena_schema-2.sql`**: the Realtime block is now wrapped per-table in `IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname='supabase_realtime' AND schemaname='public' AND tablename=…)`, so re-runs no longer fail on `ALTER PUBLICATION … ADD TABLE`. Genuinely idempotent.
-- **No naming collision**: project has no existing `user_roles` table; the additive Bug-Arena `user_roles(user_id, role text)` is safe.
+**מטרה:** PWA שמרגישה native על מכשיר אמיתי, בלי לגעת בדסקטופ.
+**שיטה:** גל־גל. כל גל עובר קריטריון קבלה לפני שעוברים הלאה.
+**כללי ברזל:** כל שינוי מאחורי `@media (max-width:768px)` או `useIsMobile()`. אסור לפבריק safe-area/גבהים — לקרוא מ־env/viewport. string-replace כירורגי, לא rewrite.
 
 ---
 
-## 1. Backend migration
+## גל 0 — תשתית גלובלית (`index.html`, `index.css`)
 
-Run **`01_orca_bug_arena_schema-2.sql`** (the v2 file) as a single migration, with **one** modification: replace the default `bug_arena_people` function (lines ~426–444) with the "BETTER DISPLAY NAMES" variant, pointing at `public.profiles.display_name` / `public.profiles.avatar_url`:
-
-```sql
-create or replace function public.bug_arena_people(_ids uuid[])
-returns table (id uuid, display_name text, avatar_url text)
-language sql stable security definer set search_path = public, auth as $$
-  select
-    u.id,
-    coalesce(p.display_name, nullif(u.raw_user_meta_data->>'name',''),
-             nullif(u.raw_user_meta_data->>'full_name',''), 'משתמש') as display_name,
-    coalesce(p.avatar_url, u.raw_user_meta_data->>'avatar_url',
-             u.raw_user_meta_data->>'picture') as avatar_url
-  from auth.users u
-  left join public.profiles p on p.id = u.id
-  where u.id = any(_ids);
-$$;
-grant execute on function public.bug_arena_people(uuid[]) to authenticated;
+**0.1** השארת `interactive-widget=resizes-content` ב־viewport meta (החלטה: לתקן ב־4.1 במקום).
+**0.2** הוספת `<meta name="format-detection" content="telephone=no, date=no, address=no, email=no">` — מונע המרת מספרי PnL לקישורי טלפון ב־iOS.
+**0.3** כלל גלובלי ב־`index.css`:
+```css
+@media (max-width:768px){
+  input,textarea,select{ font-size:16px !important; }
+}
 ```
+מבטל iOS auto-zoom-on-focus בבת אחת — מנקה 300+ inline styles ב־Journal/Settings/WeeklyReview.
 
-The migration creates: `bug_reports`, `bug_reporters`, `bug_attachments`, `bug_comments`, `user_roles`; trigger `bug_reports_before_update`; RPCs `create_bug_report`, `join_bug`, `set_bug_status`, `has_role`, `reporter_count`, `is_sole_reporter`, `bug_arena_people`; all RLS policies (read-all to authenticated, DB-enforced deletion rule); GRANTS on every function; private storage bucket `bug-attachments` + object policies; guarded Realtime publication for the four tables.
-
-### Admin seeding (manual step after migration)
-
-I will not insert an admin row blindly. After the migration succeeds I'll ask for the owner email and run a single insert via the data tool:
-
-```sql
-INSERT INTO public.user_roles (user_id, role)
-SELECT id, 'admin' FROM auth.users WHERE email = '<OWNER_EMAIL>'
-ON CONFLICT DO NOTHING;
+**0.4** טוקני safe-area ב־`:root`:
+```css
+--safe-top: env(safe-area-inset-top,0px);
+--safe-bottom: env(safe-area-inset-bottom,0px);
+--nav-h: 60px;
+--nav-total: calc(var(--nav-h) + var(--safe-bottom));
 ```
-
-Without this step, status dropdowns (open/in_progress/resolved/wont_fix/duplicate) will not appear for anyone. This is the only post-migration manual action.
-
----
-
-## 2. Drop-in modules (verbatim)
-
-Copy the supplied files into `src/features/bug-arena/`:
-
-- `bugArenaTypes.ts`, `bugCaptureEngine.ts`, `bugArenaService.ts`, `useBugCapture.ts`, `useBugReports.ts`, `BugArenaComponents.tsx`
-- New barrel `index.ts` exporting `BugArenaProvider`, `BugReportFab`, `BugBoard`
-- New `section-resolver.ts` mapping ORCA routes → Hebrew section names
-
-Dependency: `bun add html2canvas` (optional; engine degrades gracefully without it).
-
----
-
-## 3. Mount
-
-In `src/App.tsx`, inside the authenticated tree:
-
-```tsx
-<BugArenaProvider
-  supabase={supabase}
-  user={{ id: user.id, display_name: profile?.display_name, avatar_url: profile?.avatar_url }}
-  accent="#f5c542"
-  sectionResolver={mapRouteToHebrewArea}
-  onReported={() => toast.success('הדיווח נשלח, תודה!')}
->
-  {/* existing app */}
-  <BugReportFab />
-</BugArenaProvider>
+**0.5** ⏭️ **מדלגים** (החלטה: לשמור על shell-scroll הקיים — DimensionController + MainPullToRefresh מסתמכים עליו).
+**0.6** סוויפ `100vw` → `100%` ב־`JournalDimension.tsx:3841,3972` וב־`DimensionController` (מסיר ~17px דחיפה ימינה).
+**0.7** היררכיית z-index רשמית (מחליפה 14 ערכים מפוזרים 9000–99997):
+```css
+--z-dropdown:100; --z-sticky:200; --z-bottom-nav:300;
+--z-overlay:1000; --z-modal:1100; --z-toast:1200; --z-critical-alert:1300;
 ```
+**0.8** במובייל: `backdrop-filter: blur(8px)` בלי `saturate` (מבטל drop ל־30fps ב־iPhone 12+).
+**0.9** מצמצמים `transition: background-color 480ms` הגלובלי ל־selector ייעודי `[data-theme-transition]`.
+**0.10** ניקוי פונטים ב־`index.html`: מסירים Syne, Playfair, Space Grotesk, DM Sans. **שומרים:** Poppins, IBM Plex Mono, IBM Plex Sans, Heebo (עברית — קריטי).
+**0.11** `html{ scroll-padding-bottom:120px }` במובייל.
+**0.12** (תוספת) `* { -webkit-tap-highlight-color: transparent; }` + `button,a{ -webkit-touch-callout:none }` — מסיר ריבוע אפור ו־context-menu לא־רצוי ב־iOS.
 
-- Add route `/bugs` → `<BugBoardPage />` (lazy-loaded).
-- Add "באג ארנה" entry in the main nav (authenticated routes only).
-- FAB suppressed on `/auth`, `/welcome`, legal pages, and when not authenticated.
-- `mapRouteToHebrewArea` mirrors real ORCA routes (דשבורד, יומן מסחר, גרפים, הגדרות, יומן שבועי, רדאר מאקרו, וכו').
-
----
-
-## 4. Reskin
-
-Restyle **markup + Tailwind classes only** in `BugArenaComponents.tsx`; the inline reticle/label styles in `bugCaptureEngine.ts` may be retouched visually but logic, props and all `data-bug-*` hooks stay byte-identical.
-
-- Surfaces: `#070b12` page → `#0b111b` panel → `#0f1622` raised; hairline `border-white/8`.
-- Accent gold `#f5c542` (FAB, reticle, primary submit, required marker).
-- Cyan `#37e0c6` strictly for join / dedup ("גם לי") actions.
-- Status colors: open `#ff5470`, in_progress `#f5c542`, resolved `#37e0c6`, wont_fix/duplicate `#7c8aa0`.
-- Type: Heebo (Hebrew), Poppins (Latin), `ui-monospace` for selector chip (`dir="ltr"`).
-- Motion: subtle gold breathing on FAB; slide-up sheet on mobile / fade-scale on desktop; dedup reveals via height/opacity; honor `prefers-reduced-motion`.
-
-Component-level treatments per the integration brief: gold reticle FAB with breathing glow; reticle with corner ticks + navy scrim; report modal with screenshot hero + quiet metadata chips; analyst-style annotation toolbar; cyan-edged dedup panel; board with section tabs + search + "הדיווחים שלי" toggle; cards with cover/status/type/title/timestamp/reporter cluster/contextual action (`גם לי קורה` / `הסר אותי` / `מחק`) + admin-only status `<select>`; reporters popover; detail drawer with mono LTR selector block, gallery, and realtime comments thread.
-
-Accessibility floor: ≥44px tap targets, visible focus, preserved `touch-action: none` on inspect mode, preserved `safe-area-inset-bottom`.
+**✅ קבלה:** iPhone אמיתי — אין סקרולבר אופקי; הקלקה על שדה לא מזמזמת; טאפ על status-bar קופץ לראש; אין קפיצה ב־768px.
 
 ---
 
-## 5. i18n & RTL
+## גל 1 — Recharts × RTL (התלונה המרכזית של המשתמש)
 
-The Bug Arena ships Hebrew-only by spec. The Bug Arena root will force `dir="rtl"` regardless of app language. No changes to ORCA's bilingual system elsewhere.
+קבצים: `AdvancedAnalyticsPage` שורות 456,501,680,704,734 + שאר דפי Advanced.
 
----
+**1.1** עטיפת כל `<ResponsiveContainer>` ב־`<div dir="ltr" style={{width:'100%'}}>` — recharts לא תומך RTL טבעית, ה־SVG מיושר לפי dir של ההורה.
+**1.2** במובייל: `border-inline-start:3px` → `border-top:3px` על `[data-accent-border]` (מסיר 3px אסימטריה שדוחפת ימינה ב־RTL).
+**1.3** מחליפים `padding:'14px 16px'` קשיח ב־`padding-inline: clamp(10px,3vw,16px)`.
 
-## 6. Smoke tests (after build)
-
-1. Migration applies cleanly; `supabase--linter` reports no new errors.
-2. `/bugs` renders; FAB visible only when authenticated.
-3. FAB → inspect → tap element → modal opens pre-filled with section, element chip, screenshot.
-4. Second report on the same route+element surfaces dedup; "גם לי" attaches without a new row.
-5. With two reporters, the owner's button flips from `מחק` to `הסר אותי`; last remaining reporter can delete (cascades attachments + comments).
-6. Reporter cluster + popover render; counts update across two tabs (Realtime).
-7. Seeded admin can change status; non-admin attempt fails at DB layer.
-8. Image-only upload enforced (`accept="image/*"`).
-9. Mobile bottom-sheet renders with safe-area padding.
-10. Existing build + typecheck still pass.
+**✅ קבלה:** גרפים ב־Analytics ממורכזים, ציר X לא נחתך, דסקטופ זהה.
 
 ---
 
-## Files touched
+## גל 2 — דפי Advanced (Analytics / Risk / Psychology / AI)
 
-**New:**
-- Migration via `supabase--migration` (the v2 file with the profiles-based `bug_arena_people`).
-- `src/features/bug-arena/{bugArenaTypes,bugCaptureEngine,bugArenaService,useBugCapture,useBugReports,BugArenaComponents,section-resolver,index}.ts(x)`
-- `src/pages/BugBoardPage.tsx`
+**2.1** Search & replace ל־`minWidth` שגדולים מ־320px:
+- `minWidth:280` → `minWidth:'min(100%,280px)'`
+- `minWidth:320` (ImportPreflightModal:313) → `min(100%,320px)`
+- `minWidth:240/220/160` → אותו דפוס
+- מוקדים: `AdvancedPsychologyPage:455,469`, `AdvancedRiskPage:424`, `HourOfDayStrip:133`, `ImportPreflightModal:282,313`.
 
-**Edited (mount + nav only):**
-- `src/App.tsx` — wrap with `BugArenaProvider`, mount `<BugReportFab />`, add `/bugs` route.
-- Main nav component — add "באג ארנה" link.
-- `package.json` — add `html2canvas`.
+**2.2** הוספת `useIsMobile()` לכל ארבעת הדפים + `gridTemplateColumns:'1fr'` במובייל.
 
-No edits to trading, import, journal, calendar, weekly review, settings, or any other existing module.
+**2.3** טבלות אופקיות — utility class:
+```css
+.scroll-x{ overflow-x:auto; -webkit-overflow-scrolling:touch; scroll-snap-type:x proximity; }
+.scroll-x-wrap{ position:relative; }
+.scroll-x-wrap::after{
+  content:''; position:absolute; top:0; inset-inline-end:0;
+  width:24px; height:100%; pointer-events:none;
+  background:linear-gradient(to left, var(--background), transparent);
+}
+```
+החלה: Analytics 583/824, Risk 550, TimeSeriesPerfMatrix (להסיר `minWidth:360` קשיח), CorrelationMatrix (להסיר `direction:ltr` הקשיח — לעטוף רק את ה־SVG כמו 1.1), Journal ×3.
+
+**2.4** עטיפת Analytics/Risk/Psychology/AI ב־`MainPullToRefresh` (כרגע רק Dashboard).
+
+**✅ קבלה:** ב־320px וב־390px אפס גלילה אופקית בגוף; טבלאות עם fade indicator ומומנטום; pull-to-refresh עובד בכל ארבעת הדפים.
+
+---
+
+## גל 3 — JournalDimension (4,773 שורות, הכי שבור)
+
+**3.1** הוספת `useIsMobile()`; החלפת `repeat(3,1fr)` ו־`minWidth:160` (שורות 3054,3064) ב־`1fr` במובייל.
+**3.2** גלריית תמונות: `width:140;height:100` קשיח (שורה 868) → `width: min(140px,40vw)` + `aspect-ratio:3/2`.
+**3.3** מעטפת הדף: `padding-bottom: var(--nav-total)` במובייל.
+**3.4** כפתורים ≥44×44: חיצי חודש (2521-2523), טוגלים (3054,3064), "X" של מודאלים (4314). הסרת width/height inline שדורסים את כלל ה־44px ב־`index.css:637`.
+**3.5** ודא שאין override inline על fontSize ב־Journal (777,783) — אחרי שגל 0.3 פעיל.
+**3.6** הוספת "Trader Journey / חזרה" כקיצור ב־MobileBottomNav More-sheet.
+
+**✅ קבלה:** Journal עמודה אחת, אפס גלילה אופקית, כל כפתור באגודל, אין zoom, תוכן תחתון לא מוסתר.
+
+---
+
+## גל 4 — ניווט ומודלים (חוויית native)
+
+**4.1** `MobileBottomNav.tsx`: כש־`kbOffset>0` (מקלדת פתוחה) → `transform:translateY(100%); pointer-events:none` (לא `display:none` שיגרום layout shift ויקטוע fade).
+**4.2** ביטול sidebar במובייל — להשאיר רק MobileBottomNav + More-sheet (היום שניהם חופפים).
+**4.3** מודאלים מרכזיים → bottom-sheet במובייל (Settings, CommandPalette, FeatureManifestModal, ChartExplanationModal). TradeForm כבר עושה את זה — להעתיק דפוס.
+**4.4** `.modal-body{ overscroll-behavior:contain; touch-action:pan-y; }` — מונע גרירת רקע.
+**4.5** מצמצמים את `[role="dialog"]{ touch-action:pan-y }` ב־`index.css:779` — selector ספציפי בלבד, כדי לא לחסום drag אופקי בגלריות/carousel/TraderMind.
+
+**✅ קבלה:** מקלדת לא מסתירה כפתורי שמירה; ניווט יחיד; מודאלים מלמטה; גרירה אופקית בגלריות עובדת.
+
+---
+
+## גל 5 — PWA & פוליש סופי
+
+**5.1** Landing & Auth — `paddingTop:'var(--safe-top)'` על ה־header (לוגו מתחת ל־Dynamic Island).
+**5.2** `manifest.json` — להוסיף splash icons מותאמים. ServiceWorker כבר קיים (`public/sw.js`) ומקושר ב־`main.tsx` עם guard מול Lovable preview — לאמת cache strategy, לא להוסיף חדש.
+**5.3** haptics על swipe בלוח השנה ובטבלאות + מעבר טאבים.
+**5.4** `prefers-color-scheme` listener — תגובה להחלפת dark/light מערכתי.
+**5.5** ניקיון:
+- `#orca-cursor-halo{ display:none }` במובייל.
+- `will-change:transform` על MobileBottomNav.
+- חיווט `onLongPressCenter` של כפתור + ב־`Index.tsx` (כרגע רדום).
+- בדיקת `window.navigator.standalone` — סטיילים שונים ב־PWA מותקן.
+
+**✅ קבלה:** מותקן כ־PWA — לוגו מתחת ל־notch; פתיחה מהירה; haptics על gestures; תגובה ל־theme מערכתי.
+
+---
+
+## 🧪 הארנס בדיקות אוטומטי
+
+יצירת `tests/mobile-audit.spec.ts` (Playwright) שרץ אחרי כל גל. סורק 10 routes ב־320px ו־390px ומאמת 3 כללי ברזל:
+1. אפס גלילה אופקית (`scrollWidth - clientWidth ≤ 1`)
+2. כל `input/textarea/select` ≥ 16px
+3. כל `button/a/[role=button]` ≥ 44×44
+
+מה שלא נתפס אוטומטית (חייב מכשיר אמיתי 🔧REAL): מקלדת, notch, home-indicator, rubber-band, momentum, PWA-installed mode.
+
+---
+
+## 🎯 סדר ביצוע
+
+| גל | למה ראשון | זמן גס |
+|----|----------|--------|
+| **0** | תשתית — מסיר ~70% מהבעיות גלובלית | 1–2ש׳ |
+| **1** | Recharts RTL — התלונה המוצהרת, win מהיר | 30–60ד׳ |
+| **2** | דפי Advanced — רוב המסכים הכבדים | 3–4ש׳ |
+| **3** | Journal — הכי שבור והכי גדול | 2–3ש׳ |
+| **4** | ניווט + מודלים — חוויית native | 2ש׳ |
+| **5** | PWA + פוליש | 2ש׳ |
+
+**פרוטוקול:** מבצעים גל במלואו → רצים `mobile-audit.spec.ts` → מדווחים → ממתינים לאישור → גל הבא. דסקטופ לא נוגעים בשום שלב.
+
+---
+
+## 🔧 התאמות שביצעתי מול המאסטר־פלאן המקורי
+
+1. **דילוג על 0.5** (body-scroll) — DimensionController + MainPullToRefresh מסתמכים על shell-scroll הקיים; שינוי המודל ישבור את האנימציות הקולנועיות.
+2. **השארת `interactive-widget=resizes-content`** — ה־`visualViewport` listener ב־MobileBottomNav כבר מסתמך עליו; 4.1 לבד מספיק.
+3. **4.1: `translateY(100%)` במקום `display:none`** — מונע layout shift וקטיעת fade transition.
+4. **0.10: שמירה על Heebo** — קריטי לעברית (לא בפלאן המקורי במפורש).
+5. **תוספת 0.12** — `-webkit-tap-highlight-color` + `touch-callout` (חסר במקור, גורם לריבוע אפור ב־iOS).
+6. **5.2: ServiceWorker כבר קיים** — רק לאמת cache strategy, לא לבנות מחדש.
