@@ -193,7 +193,7 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
         {/* 1 · Monte Carlo */}
         <div style={cardStyle}>
           <div style={{ fontSize: 11, color: muted, marginBottom: 8, letterSpacing: 1.5, textTransform: 'uppercase' }}>{L.mc}</div>
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={chartH}>
             <LineChart data={mc}>
               <CartesianGrid stroke={border} strokeDasharray="3 3" vertical={false}/>
               <XAxis dataKey="idx" stroke={muted} fontSize={10}/>
@@ -213,7 +213,7 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
         <div style={cardStyle}>
           <div style={{ fontSize: 11, color: muted, marginBottom: 8, letterSpacing: 1.5, textTransform: 'uppercase' }}>{L.box}</div>
           {box.length === 0 ? <Empty muted={muted}/> : (
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={chartH}>
               <ComposedChart data={box.map(b => ({
                 month: b.month, low: b.min, q1q3: [b.q1, b.q3], median: b.median, hi: b.max,
               }))}>
@@ -239,7 +239,7 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
         <div style={cardStyle}>
           <div style={{ fontSize: 11, color: muted, marginBottom: 8, letterSpacing: 1.5, textTransform: 'uppercase' }}>{L.hour}</div>
           {hourRadar.every(d => d.n === 0) ? <Empty muted={muted}/> : (
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={chartH}>
               <BarChart data={hourRadar} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                 <CartesianGrid stroke={border} strokeDasharray="3 3" vertical={false}/>
                 <XAxis dataKey="hour" stroke={muted} fontSize={9} interval={1}/>
@@ -264,7 +264,7 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
         {/* 4 · NEW Win Probability Cone */}
         <div style={cardStyle}>
           <div style={{ fontSize: 11, color: muted, marginBottom: 8, letterSpacing: 1.5, textTransform: 'uppercase' }}>{L.prob}</div>
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={chartH}>
             <ComposedChart data={probCone}>
               <defs>
                 <linearGradient id="probGrad" x1="0" y1="0" x2="0" y2="1">
@@ -290,7 +290,7 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
         <div style={cardStyle}>
           <div style={{ fontSize: 11, color: muted, marginBottom: 8, letterSpacing: 1.5, textTransform: 'uppercase' }}>{L.front}</div>
           {frontier.length === 0 ? <Empty muted={muted}/> : (
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={chartH}>
               <ScatterChart>
                 <CartesianGrid stroke={border} strokeDasharray="3 3"/>
                 <XAxis dataKey="x" name={L.avgRisk} stroke={muted} fontSize={10} tickFormatter={(v: number) => `${v.toFixed(1)}%`}/>
@@ -334,7 +334,7 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
                         const alpha = v / velocity.max;
                         return (
                           <td key={w} title={`${w} · ${(isRTL ? ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'] : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'])[d]} · ${v}t`} style={{
-                            width: 16, height: 16, borderRadius: 3,
+                            width: heatCell, height: heatCell, borderRadius: 3,
                             background: v ? `rgba(0, 242, 255, ${0.18 + alpha * 0.7})` : T.bg.tertiary,
                             border: `1px solid ${border}`,
                             color: alpha > 0.5 ? T.bg.primary : fg, textAlign: 'center',
