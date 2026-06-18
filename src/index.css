@@ -490,8 +490,13 @@
   100% { opacity: 0; transform: translate(-50%, -50%) scale(1.1); filter: blur(4px); }
 }
 
-/* Theme transition — smoothly morph everything when active theme switches */
-html, body, .orca-glass, .orca-panel, [class*="bg-"], [class*="text-"] {
+/* Theme transition — only applied while a theme switch is in progress.
+   The previous unscoped rule attached a 480ms transition to every element in
+   the DOM, causing scroll jank on mobile. Toggle [data-theme-transition] on
+   <html> during the switch instead. */
+html[data-theme-transition], html[data-theme-transition] body,
+html[data-theme-transition] .orca-glass, html[data-theme-transition] .orca-panel,
+html[data-theme-transition] [class*="bg-"], html[data-theme-transition] [class*="text-"] {
   transition: background-color 480ms ease, color 320ms ease, border-color 320ms ease;
 }
 
@@ -596,17 +601,37 @@ html, body, .orca-glass, .orca-panel, [class*="bg-"], [class*="text-"] {
    tables, charts, typography, journals, settings dialog.
    ════════════════════════════════════════════════════════════════ */
 
-/* iOS safe-area + native viewport units */
+/* iOS safe-area + native viewport units + global z-index scale */
 :root {
   --orca-sa-top:    env(safe-area-inset-top, 0px);
   --orca-sa-bottom: env(safe-area-inset-bottom, 0px);
   --orca-sa-left:   env(safe-area-inset-left, 0px);
   --orca-sa-right:  env(safe-area-inset-right, 0px);
+  /* Generic safe-area aliases (Wave 0.4) */
+  --safe-top:    env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left:   env(safe-area-inset-left, 0px);
+  --safe-right:  env(safe-area-inset-right, 0px);
+  /* MobileBottomNav geometry — single source of truth */
+  --nav-h: 60px;
+  --nav-total: calc(var(--nav-h) + var(--safe-bottom));
+  /* Z-index scale (Wave 0.7) — replaces 14 scattered magic numbers */
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-bottom-nav: 300;
+  --z-overlay: 1000;
+  --z-modal: 1100;
+  --z-toast: 1200;
+  --z-critical-alert: 1300;
 }
 
 @supports (height: 100dvh) {
   .orca-mobile-fullh { min-height: 100dvh; }
 }
+
+/* Wave 0.12 — kill iOS grey tap-highlight + long-press context menu on UI chrome */
+* { -webkit-tap-highlight-color: transparent; }
+button, a, [role="button"] { -webkit-touch-callout: none; }
 
 /* ─── App-shell viewport lock — prevents double scrollbars & iOS rubber-band drift
    without clipping public long pages like /welcome on mobile/tablet. ─── */
@@ -627,7 +652,7 @@ html, body, .orca-glass, .orca-panel, [class*="bg-"], [class*="text-"] {
 
 @media (max-width: 768px) {
   /* — Base typography rhythm — */
-  html { font-size: 15px; }
+  html { font-size: 15px; scroll-padding-bottom: 120px; }
   h1 { font-size: clamp(22px, 6vw, 30px) !important; line-height: 1.18 !important; }
   h2 { font-size: clamp(18px, 5vw, 24px) !important; line-height: 1.25 !important; }
   h3 { font-size: clamp(15px, 4.2vw, 18px) !important; }
@@ -638,7 +663,7 @@ html, body, .orca-glass, .orca-panel, [class*="bg-"], [class*="text-"] {
     min-width: 44px;
     touch-action: manipulation;
   }
-  /* Prevent iOS auto-zoom on focus */
+  /* Prevent iOS auto-zoom on focus (Wave 0.3 — global, replaces 300+ inline fontSize:13/14) */
   input, textarea, select {
     font-size: 16px !important;
   }
@@ -647,12 +672,12 @@ html, body, .orca-glass, .orca-panel, [class*="bg-"], [class*="text-"] {
   body { -webkit-tap-highlight-color: transparent; overscroll-behavior-y: contain; }
   .orca-page { padding-left: max(12px, var(--orca-sa-left)) !important; padding-right: max(12px, var(--orca-sa-right)) !important; }
 
-  /* — Cards & glass — tighter rhythm, less blur for perf — */
-  .orca-glass, .orca-panel {
+  /* — Cards & glass — tighter rhythm, lighter blur (Wave 0.8 — no saturate, drop to 8px) — */
+  .orca-glass, .orca-panel, [data-glass] {
     border-radius: 14px !important;
     padding: 14px !important;
-    backdrop-filter: blur(14px) saturate(130%) !important;
-    -webkit-backdrop-filter: blur(14px) saturate(130%) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
   }
   .orca-bento { gap: 10px !important; }
 
