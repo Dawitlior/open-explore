@@ -407,7 +407,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.78)', zIndex: 100, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', backdropFilter: 'blur(14px)', padding: isMobile ? 0 : 18 }} onClick={safeClose}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.78)', zIndex: 100, display: 'flex', alignItems: isMobile ? 'flex-start' : 'center', justifyContent: 'center', backdropFilter: 'blur(14px)', padding: isMobile ? 0 : 18, overflowY: isMobile ? 'auto' : 'visible' }} onClick={safeClose}>
       <div onClick={e => e.stopPropagation()} style={panelStyle}>
 
         {/* Header */}
