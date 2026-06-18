@@ -1720,7 +1720,7 @@ const Index = () => {
             style={{
               width: '100%',
               maxWidth: 520,
-              maxHeight: '92dvh',
+              maxHeight: 'calc(100dvh - env(safe-area-inset-top, 0px) - 20px)',
               background: `linear-gradient(180deg, ${T.bg.secondary} 0%, ${T.bg.primary} 100%)`,
               borderTop: `1px solid ${T.border.medium}`,
               borderInline: `1px solid ${T.border.subtle}`,
@@ -1729,6 +1729,7 @@ const Index = () => {
               animation: 'mm-rise 0.36s cubic-bezier(0.16, 1, 0.3, 1)',
               display: 'flex', flexDirection: 'column',
               overflow: 'hidden',
+              paddingTop: 'env(safe-area-inset-top, 0px)',
               paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
             }}
           >
