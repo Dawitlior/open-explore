@@ -5,7 +5,7 @@ import {
   Plus, Trash2, RotateCcw, Check, AlertTriangle, Sparkles, Search,
   Volume2, VolumeX, Zap, Type, Brush, Target, Gauge, Plug, Scale,
 } from 'lucide-react';
-import { LEGAL_TITLE_HE, LEGAL_SECTIONS_HE, LEGAL_FOOTER_HE } from '@/lib/legal-text';
+import { LEGAL_TITLE_HE, LEGAL_SECTIONS_HE, LEGAL_FOOTER_HE, PRIVACY_TITLE_HE, PRIVACY_SECTIONS_HE, LEGAL_VERSION, LEGAL_VERSION_DATE } from '@/lib/legal-text';
 import { ExchangesPanel } from './ExchangesPanel';
 import { playMorningLock } from '@/lib/apex-sounds';
 import type { TradingTheme, CustomTheme, BaseMood } from '@/lib/trading-theme';
