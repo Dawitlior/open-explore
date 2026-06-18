@@ -413,6 +413,9 @@
     min-width: 28px !important;
     min-height: 28px !important;
   }
+
+  /* ═══ Wave 4.2 — hide desktop sidebar on mobile (MobileBottomNav handles nav) ═══ */
+  aside[data-app-sidebar] { display: none !important; }
 }
 @media (min-width: 769px) and (max-width: 1024px) {
   .orca-grid-2col { grid-template-columns: 1fr 1fr !important; }
