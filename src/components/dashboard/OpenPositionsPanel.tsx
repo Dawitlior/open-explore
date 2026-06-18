@@ -313,9 +313,27 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
                     {leverage > 1 && <span style={{ marginInlineStart: 6, color: T.accent.orange, fontWeight: 700 }}>· {leverage}x</span>}
                   </span>
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 800, padding: '4px 10px', borderRadius: 6, background: `${sideColor}22`, color: sideColor, letterSpacing: 0.5 }}>
-                  {isLong ? (isRTL ? 'לונג' : 'LONG') : (isRTL ? 'שורט' : 'SHORT')}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 11, fontWeight: 800, padding: '4px 10px', borderRadius: 6, background: `${sideColor}22`, color: sideColor, letterSpacing: 0.5 }}>
+                    {isLong ? (isRTL ? 'לונג' : 'LONG') : (isRTL ? 'שורט' : 'SHORT')}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => toggleExpanded(p.id)}
+                    aria-expanded={isExpanded}
+                    aria-label={isExpanded ? (isRTL ? 'כווץ' : 'Collapse') : (isRTL ? 'הרחב' : 'Expand')}
+                    style={{
+                      width: 32, height: 32, borderRadius: 8,
+                      background: T.bg.secondary, border: `1px solid ${T.border.subtle}`,
+                      color: T.text.secondary, cursor: 'pointer',
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 13, fontWeight: 800,
+                      transition: 'transform 220ms cubic-bezier(0.34,1.56,0.64,1), background 180ms',
+                      transform: isExpanded ? 'rotate(180deg)' : 'rotate(0)',
+                    }}>
+                    ▾
+                  </button>
+                </div>
               </div>
 
               {/* Money row: margin (what user put in) + risk $ */}
