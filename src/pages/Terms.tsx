@@ -108,10 +108,10 @@ const Terms = () => {
             WebkitTextFillColor: 'transparent',
           }}
         >
-          {t(LEGAL_TITLE_HE, 'Terms of Service, Confidentiality, Privacy & Full Financial Disclaimer — Orca Investment')}
+          {t(LEGAL_TITLE_HE, LEGAL_TITLE_EN)}
         </h1>
         <p style={{ fontSize: 12, opacity: 0.55, margin: '0 0 28px' }}>
-          {t('עדכון אחרון:', 'Last updated:')} {new Date().toLocaleDateString(isRTL ? 'he-IL' : 'en-US')}
+          {t('גרסה', 'Version')} {LEGAL_VERSION} · {t('עדכון אחרון:', 'Last updated:')} {LEGAL_VERSION_DATE}
         </p>
 
         {!isRTL && (
