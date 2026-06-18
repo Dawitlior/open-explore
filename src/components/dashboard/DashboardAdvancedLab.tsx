@@ -161,7 +161,7 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
   };
 
   return (
-    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ marginTop: 20, display: 'grid', gap: 14 }}>
+    <div data-advanced-lab dir={isRTL ? 'rtl' : 'ltr'} style={{ marginTop: 20, display: 'grid', gap: 14, width: '100%', minWidth: 0 }}>
       {/* Header — unit is locked to the global Dual-Currency Engine */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
