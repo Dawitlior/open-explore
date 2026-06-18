@@ -382,6 +382,23 @@
 
 .recharts-wrapper { max-width: 100%; }
 
+/* ═══ Wave 1 — Recharts × RTL fix ═══
+   Recharts internally positions absolute SVG elements based on LTR layout.
+   When the page is RTL the chart visually shifts right and tooltips drift.
+   Force LTR direction on every chart container and its responsive wrapper.
+   This affects layout only; axis tick text remains readable in both langs. */
+[dir="rtl"] .recharts-responsive-container,
+[dir="rtl"] .recharts-wrapper,
+[dir="rtl"] .recharts-surface {
+  direction: ltr !important;
+}
+[dir="rtl"] .recharts-tooltip-wrapper {
+  direction: ltr !important;
+}
+[dir="rtl"] .recharts-legend-wrapper {
+  direction: rtl;
+}
+
 /* ═══ KILL the white hover rectangle on every Recharts chart ═══
    Recharts renders a default <Rectangle> cursor (fill: rgba(206,206,206,...))
    for Bar/Area/Line. We make the cursor invisible globally — Tooltip still shows. */
