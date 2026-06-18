@@ -394,7 +394,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
 
 
       <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'מדדי מפתח' : 'Key Metrics'} subtitle={isRTL ? 'מבט מהיר על המספרים החשובים ביותר לניהול הסיכון היומי שלך.' : 'A quick snapshot of the numbers that matter most for daily risk management.'} />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8, marginBottom: 4 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: 8, marginBottom: 4 }}>
         {[
           { l: isRTL ? 'סיכון ממוצע' : 'Avg Risk', v: `${riskData.avgRiskPct.toFixed(2)}%`, c: T.accent.cyan, hint: `$${(riskData.riskGrowthEvolution.reduce((s,e)=>s+e.risk,0)/(riskData.riskGrowthEvolution.length||1)).toFixed(2)}` },
           { l: isRTL ? 'סחיפת סיכון' : 'Risk Drift', v: `${riskData.riskDrift.toFixed(2)}%`, c: riskData.riskDrift > 0.5 ? T.accent.orange : T.accent.green, hint: isRTL ? 'מהבסיס' : 'from baseline' },

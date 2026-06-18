@@ -813,7 +813,7 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
             </GlassCard>
 
             {/* CHART PACK — rotates each click */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12, marginBottom: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: 12, marginBottom: 16 }}>
               {pack === 'radar+heat' && (
                 <>
                   <Frame title={t('ראדאר ה-DNA הסוחר','Trader DNA Radar')} subtitle={t('ארבעה מימדים: Edge, Discipline, Consistency, Behavior','Four axes: Edge, Discipline, Consistency, Behavior')} tone="cyan" badge={`${analysis.dna.overall}/100`}>
@@ -1108,7 +1108,7 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
                 <div style={{ fontSize: 14, color: T.text.secondary }}>{t('לא נמצאו דפוסים מובהקים. המשך לצבור עסקאות כדי לקבל תובנות חזקות יותר.','No significant patterns yet. Keep logging trades for stronger insights.')}</div>
               </GlassCard>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: 12 }}>
                 {analysis.insights.map((ins, i) => (
                   <DeepInsightCard key={ins.id} ins={ins} T={T} delay={i * 0.06} />
                 ))}
@@ -1150,7 +1150,7 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
                     💡 {bestEdge.edgeStatement}
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: 10 }}>
                     {[
                       bestEdge.bestAsset && { icon: '💎', label: t('הנכס הכי טוב','Best Asset'), value: bestEdge.bestAsset.name, sub: `${bestEdge.bestAsset.pnl >= 0 ? '+' : ''}$${bestEdge.bestAsset.pnl} · ${bestEdge.bestAsset.wr}% WR · ${bestEdge.bestAsset.expR >= 0 ? '+' : ''}${bestEdge.bestAsset.expR}R` },
                       bestEdge.bestDay && { icon: '📅', label: t('היום הכי טוב','Best Day'), value: bestEdge.bestDay.name, sub: `${bestEdge.bestDay.pnl >= 0 ? '+' : ''}$${bestEdge.bestDay.pnl} · ${bestEdge.bestDay.wr}% WR · ${bestEdge.bestDay.n} trades` },
