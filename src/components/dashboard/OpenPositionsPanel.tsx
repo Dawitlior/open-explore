@@ -21,6 +21,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { Trade } from '@/data/trades';
