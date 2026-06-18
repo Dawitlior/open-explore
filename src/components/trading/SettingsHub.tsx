@@ -208,8 +208,9 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
     worstTrade: isR ? (stats.worstTradeR || 0) : (stats.worstTrade || 0),
   };
 
-  const NAV: { id: TabId; icon: typeof User; label: { he: string; en: string }; group: { he: string; en: string }; desc: { he: string; en: string } }[] = [
+  const NAV: { id: TabId; icon: typeof User; label: { he: string; en: string }; group: { he: string; en: string }; desc: { he: string; en: string }; mobileOnly?: boolean }[] = [
     { id: 'account', icon: User, label: { he: 'חשבון ופרופיל', en: 'Account & Profile' }, group: { he: 'אישי', en: 'Personal' }, desc: { he: 'ניהול פרטי החשבון, סיסמה ואימייל', en: 'Manage account details, password and email' } },
+    { id: 'mobile-controls', icon: SlidersHorizontal, label: { he: 'בקרות מובייל', en: 'Mobile Controls' }, group: { he: 'אישי', en: 'Personal' }, desc: { he: 'תיק פעיל, תצוגת תוחלת ומצב מערכת — בגישה מהירה במובייל', en: 'Active portfolio, expectancy display and mode — quick access on mobile' }, mobileOnly: true },
     { id: 'appearance', icon: Palette, label: { he: 'מראה ושפה', en: 'Appearance' }, group: { he: 'אישי', en: 'Personal' }, desc: { he: 'ערכת נושא, שפה ופרטיות', en: 'Theme, language and privacy' } },
     { id: 'theme-studio', icon: Brush, label: { he: 'אולפן צבע', en: 'Theme Studio' }, group: { he: 'אישי', en: 'Personal' }, desc: { he: 'בחר צבע מבטא משלך והתאם את כל אורקה אליו', en: 'Pick your own accent and re-tint all of Orca live' } },
     { id: 'dashboard', icon: LayoutDashboard, label: { he: 'סידור דאשבורד', en: 'Dashboard Layout' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'גרור, הסתר וסדר ווידג׳טים', en: 'Drag, hide and arrange widgets' } },
@@ -228,13 +229,14 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
   ];
 
   const filteredNav = useMemo(() => {
-    if (!search.trim()) return NAV;
+    const visible = NAV.filter(n => !n.mobileOnly || isMobile);
+    if (!search.trim()) return visible;
     const q = search.toLowerCase();
-    return NAV.filter(n =>
+    return visible.filter(n =>
       n.label[isRTL ? 'he' : 'en'].toLowerCase().includes(q) ||
       n.desc[isRTL ? 'he' : 'en'].toLowerCase().includes(q)
     );
-  }, [search, isRTL]);
+  }, [search, isRTL, isMobile]);
 
   const groups = Array.from(new Set(filteredNav.map(n => n.group[isRTL ? 'he' : 'en'])));
   const activeMeta = NAV.find(n => n.id === tab)!;
