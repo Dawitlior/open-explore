@@ -54,9 +54,12 @@ export default function ImportLoadingOverlay({ isRTL, fileName, imported = 0, ph
     <div
       style={{
         position: 'fixed', inset: 0, zIndex: 9999,
-        background: 'rgba(6, 12, 24, 0.78)',
-        backdropFilter: 'blur(24px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+        // Soft frosted backdrop — the previous near-opaque scrim looked like a
+        // black flash before the Preflight UI mounted. We now blur the page
+        // behind the loader instead of blacking it out.
+        background: 'rgba(6, 12, 24, 0.32)',
+        backdropFilter: 'blur(28px) saturate(160%)',
+        WebkitBackdropFilter: 'blur(28px) saturate(160%)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: 24, direction: isRTL ? 'rtl' : 'ltr',
         animation: 'orcaOverlayIn 0.4s cubic-bezier(0.16, 1, 0.3, 1)',

@@ -35,6 +35,8 @@ interface OpenPos {
   unrealized_pnl: number;
   provider: string;
   leverage?: number | null;
+  account_label?: string | null;
+  updated_at?: string | null;
 }
 
 interface Props {
@@ -51,6 +53,30 @@ const fmtDateTime = (d: Date) => {
 };
 const DAY_EN = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
+/** Compact "label · value" cell for the open-position technical-details grid. */
+const DetailField = ({
+  label, value, color, mono, T,
+}: {
+  label: string;
+  value: string;
+  color?: string;
+  mono?: boolean;
+  T: TradingTheme;
+}) => (
+  <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+    <span style={{
+      fontSize: 9, color: T.text.muted, marginBottom: 2,
+      textTransform: 'uppercase', letterSpacing: 0.4, fontWeight: 600,
+    }}>{label}</span>
+    <span style={{
+      fontSize: 13, fontWeight: 700,
+      color: color ?? T.text.primary,
+      fontFamily: mono ? "'JetBrains Mono', monospace" : "'Poppins', system-ui, sans-serif",
+      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+    }}>{value}</span>
+  </div>
+);
+
 export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) => {
   const auth = useAuth();
   const userId = auth.user?.id;
@@ -66,7 +92,7 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
     setLoading(true);
     const { data, error } = await supabase
       .from('open_positions')
-      .select('id, symbol, side, size, entry_price, stop_loss, unrealized_pnl, provider, leverage')
+      .select('id, symbol, side, size, entry_price, stop_loss, unrealized_pnl, provider, leverage, account_label, updated_at')
       .eq('user_id', userId);
     if (!error && data) setRows(data as OpenPos[]);
     setLoading(false);
@@ -298,27 +324,74 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
               </div>
 
 
-              {/* Price row: entry · stop (secondary) */}
-              <div style={{ display: 'flex', gap: 14, fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: 10, color: T.text.muted }}>{isRTL ? 'כניסה' : 'Entry'}</span>
-                  <span style={{ color: T.text.secondary, fontWeight: 600 }}>{entry.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: 10, color: T.text.muted }}>{isRTL ? 'סטופ' : 'Stop'}</span>
-                  <span style={{ color: stop ? T.text.secondary : T.text.muted, fontWeight: 600 }}>
-                    {stop ? stop.toLocaleString(undefined, { maximumFractionDigits: 6 }) : '—'}
-                  </span>
-                </div>
-                {Number(p.unrealized_pnl) !== 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', marginInlineStart: 'auto', textAlign: isRTL ? 'left' : 'right' }}>
-                    <span style={{ fontSize: 10, color: T.text.muted }}>{isRTL ? 'לא ממומש' : 'Unrealized'}</span>
-                    <span style={{ color: p.unrealized_pnl >= 0 ? T.accent.green : T.accent.red, fontWeight: 700 }}>
-                      {p.unrealized_pnl >= 0 ? '+' : ''}${Number(p.unrealized_pnl).toFixed(2)}
-                    </span>
-                  </div>
+              {/* Technical details grid — all the fields that actually exist in
+                  `public.open_positions` for an open trade (no exit price, no
+                  realized R, no AI-projected target — we only show what's real). */}
+              <div style={{
+                display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8,
+                border: `1px solid ${T.border.subtle}`, borderRadius: 10,
+                padding: '10px 12px', background: `${T.bg.secondary}66`,
+              }}>
+                <DetailField label={isRTL ? 'סוג' : 'Side'} value={isLong ? (isRTL ? 'לונג' : 'Long') : (isRTL ? 'שורט' : 'Short')} color={sideColor} T={T} />
+                <DetailField label={isRTL ? 'כמות' : 'Quantity'} value={size.toLocaleString(undefined, { maximumFractionDigits: 6 })} mono T={T} />
+                <DetailField label={isRTL ? 'מחיר כניסה' : 'Entry Price'} value={entry.toLocaleString(undefined, { maximumFractionDigits: 6 })} mono T={T} />
+                <DetailField
+                  label={isRTL ? 'מחיר סטופ' : 'Stop Price'}
+                  value={stop ? stop.toLocaleString(undefined, { maximumFractionDigits: 6 }) : '—'}
+                  mono color={stop ? T.accent.red : T.text.muted} T={T}
+                />
+                <DetailField label={isRTL ? 'מינוף' : 'Leverage'} value={`${leverage}x`} mono color={leverage > 1 ? T.accent.orange : T.text.secondary} T={T} />
+                <DetailField
+                  label={isRTL ? 'מרחק לסטופ' : 'Stop Distance'}
+                  value={stop ? `${(Math.abs((entry - stop) / entry) * 100).toFixed(2)}%` : '—'}
+                  mono T={T}
+                />
+                {p.account_label && (
+                  <DetailField label={isRTL ? 'חשבון' : 'Account'} value={p.account_label} T={T} />
                 )}
+                <DetailField
+                  label={isRTL ? 'סטטוס' : 'Status'}
+                  value={isRTL ? 'פוזיציה פתוחה' : 'Open'}
+                  color={T.accent.cyan} T={T}
+                />
               </div>
+
+              {/* Live P&L row — only when broker reports an unrealized value */}
+              {Number(p.unrealized_pnl) !== 0 && (() => {
+                const pnl = Number(p.unrealized_pnl);
+                const pnlPct = marginUsd > 0 ? (pnl / marginUsd) * 100 : 0;
+                const rRealized = riskUsd && riskUsd > 0 ? pnl / riskUsd : null;
+                const pnlColor = pnl >= 0 ? T.accent.green : T.accent.red;
+                return (
+                  <div style={{
+                    display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'baseline',
+                    padding: '10px 12px', borderRadius: 10,
+                    background: `${pnlColor}10`, border: `1px solid ${pnlColor}30`,
+                  }}>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: 0.3 }}>{isRTL ? 'תוצאה כרגע' : 'Live P&L'}</span>
+                      <span style={{ color: pnlColor, fontWeight: 800, fontFamily: "'JetBrains Mono', monospace", fontSize: 16 }}>
+                        {pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}
+                        <span style={{ fontSize: 11, marginInlineStart: 6, opacity: 0.85 }}>({pnl >= 0 ? '+' : ''}{pnlPct.toFixed(2)}%)</span>
+                      </span>
+                    </div>
+                    {rRealized != null && (
+                      <div style={{ display: 'flex', flexDirection: 'column', marginInlineStart: 'auto' }}>
+                        <span style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: 0.3 }}>{isRTL ? 'R ממומש' : 'Realized R'}</span>
+                        <span style={{ color: pnlColor, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", fontSize: 14 }}>
+                          {rRealized >= 0 ? '+' : ''}{rRealized.toFixed(2)}R
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {p.updated_at && (
+                <div style={{ fontSize: 10, color: T.text.muted, textAlign: isRTL ? 'right' : 'left', fontFamily: "'JetBrains Mono', monospace", letterSpacing: 0.3 }}>
+                  {isRTL ? 'עדכון אחרון' : 'Last update'}: {new Date(p.updated_at).toLocaleString(isRTL ? 'he-IL' : 'en-US', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}
+                </div>
+              )}
 
               {isManual ? (
                 <button

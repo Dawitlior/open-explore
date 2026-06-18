@@ -6,7 +6,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, ArrowRight, TrendingUp, Languages } from 'lucide-react';
+import { ArrowLeft, ArrowRight, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import dashboardMain from '@/assets/landing/dashboard_main.png';
 import journalEntry from '@/assets/landing/journal_entry.png';
@@ -617,33 +617,36 @@ const Landing: React.FC = () => {
               <img src={orcaLogo} alt="Orca Investment" style={{ height: 44, width: 'auto', display: 'block' }} />
             </Link>
 
-            {/* Right — Language toggle + CTA */}
+            {/* Right — Language toggle + CTA.
+                The toggle is intentionally a tiny icon-pill: browser language
+                detection in `useLang` already chooses HE/EN automatically on
+                first visit, so this only exists as a manual override. */}
             <div className="flex items-center" style={{ gap: 10, marginInlineStart: 'auto' }}>
               <button
                 onClick={toggleLang}
                 aria-label={t('החלף שפה לאנגלית', 'Switch language to Hebrew')}
                 title={t('English', 'עברית')}
                 style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  padding: '8px 12px', borderRadius: 10,
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--text-muted)',
-                  fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                  fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em',
-                  transition: 'color .15s, border-color .15s, background .15s',
-                  minHeight: 40,
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+                  padding: '4px 8px', borderRadius: 999,
+                  background: 'transparent',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  color: 'var(--text-dim)',
+                  fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                  fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.06em',
+                  transition: 'color .15s, border-color .15s',
+                  height: 26, minWidth: 42,
                 }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(34,211,238,0.35)'; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-muted)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)'; }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(34,211,238,0.4)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-dim)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.12)'; }}
               >
-                <Languages size={14} />
                 {isRTL ? 'EN' : 'עב'}
               </button>
               <button className="grad-btn" onClick={goApp} style={{ padding: '10px 18px', fontSize: 14 }}>
                 {t('כניסה למערכת', 'Enter app')}
               </button>
             </div>
+
           </div>
         </nav>
 
@@ -1008,58 +1011,8 @@ const Landing: React.FC = () => {
           </div>
         </section>
 
-        {/* ───── 12. PRICING ───── */}
-        <section id="pricing" className="orca-section" style={{ background: 'var(--bg-2)' }}>
-          <div className="max-w-7xl mx-auto px-5 sm:px-8">
-            <SectionHeader
-              label={t('מחירים', 'Pricing')}
-              title={isRTL
-                ? <>מסלול <span className="grad-text">לכל סוחר.</span></>
-                : <>A plan <span className="grad-text">for every trader.</span></>}
-            />
-            <div style={{ textAlign: 'center', marginTop: 20 }}>
-              <div className="orca-pill-free" style={{ fontSize: 14, padding: '10px 20px' }}>
-                🎉 {t('בתקופת ההשקה — כל המסלולים פתוחים בחינם!', 'During launch — every plan is unlocked free!')}
-              </div>
-            </div>
-            <div className="orca-pricing">
-              {[
-                { name: 'Standard',
-                  desc: t('יומן + אנליטיקה בסיסית.', 'Journal + core analytics.'),
-                  feats: [t('יומן מסחר אוטומטי','Automated trade journal'), t('KPIs ליבה','Core KPIs'), t('Calendar Hub','Calendar Hub'), t('ייבוא CSV','CSV import')] },
-                { name: 'Pro',
-                  desc: t('ניהול סיכונים, תובנות AI, תודעת סוחר.', 'Risk management, AI insights, trader mind.'),
-                  feats: [t('כל מה ש-Standard','Everything in Standard'), t('מנוע סיכונים 4-שכבתי','4-tier risk engine'), t('תובנות AI עמוקות','Deep AI insights'), t('אבחון תודעת הסוחר','Trader Mind diagnostic')], popular: true },
-                { name: 'Ultimate',
-                  desc: t('מעבדת אנליטיקה מתקדמת.', 'Advanced analytics lab.'),
-                  feats: [t('כל מה ש-Pro','Everything in Pro'), t('Quant Lab מלא','Full Quant Lab'), t('Monte Carlo + Box Plot','Monte Carlo + Box Plot'), t('Risk-Reward Frontier','Risk-Reward Frontier')] },
-              ].map((p) => (
-                <div key={p.name} className={`orca-price-card ${p.popular ? 'popular' : ''}`}>
-                  {p.popular && <div className="badge-pop">{t('המומלץ', 'Most popular')}</div>}
-                  <div>
-                    <div className="mono" style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('מסלול', 'Plan')}</div>
-                    <h3 style={{ fontSize: 26, fontWeight: 800, margin: '6px 0 6px', color: p.popular ? '#8B5CF6' : 'var(--text)' }}>{p.name}</h3>
-                    <p style={{ color: 'var(--text-muted)', fontSize: 14, lineHeight: 1.6 }}>{p.desc}</p>
-                  </div>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                      <span className="mono" style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('מחיר', 'Price')}</span>
-                      <span style={{ fontSize: 24, fontWeight: 800, color: p.popular ? '#8B5CF6' : 'var(--cyan)' }}>{t('בקרוב', 'Coming soon')}</span>
-                    </div>
-                    <div className="mono" style={{ fontSize: 11, color: 'var(--mint)', marginTop: 4 }}>{t('חינם בתקופת ההשקה', 'Free during launch')}</div>
-                  </div>
-                  <ul>{p.feats.map(f => <li key={f}>{f}</li>)}</ul>
-                  <button className="grad-btn" onClick={goApp} style={{ width: '100%', justifyContent: 'center' }}>
-                    {t('התחל בחינם', 'Start free')}
-                  </button>
-                  <div className="mono" style={{ fontSize: 10, color: 'var(--text-dim)', textAlign: 'center' }}>
-                    {t('ללא כרטיס אשראי · גישה מלאה עכשיו', 'No credit card · Full access now')}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        {/* Pricing section intentionally removed — all plans free during launch. */}
+
 
         {/* ───── 13. FINAL CTA ───── */}
         <section className="orca-section orca-final">
@@ -1096,7 +1049,7 @@ const Landing: React.FC = () => {
                 <h4>{t('מוצר', 'Product')}</h4>
                 <a href="#features">{t('פיצ׳רים', 'Features')}</a>
                 <a href="#journal">{t('היומן', 'The journal')}</a>
-                <a href="#pricing">{t('מחירים', 'Pricing')}</a>
+
               </div>
               <div className="orca-footer-col">
                 <h4>{t('קהילה', 'Community')}</h4>
