@@ -258,7 +258,24 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
         )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+      {isMobile && rows.length > 1 && (
+        <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 6, textAlign: isRTL ? 'right' : 'left', letterSpacing: 0.3 }}>
+          {isRTL ? `← החלק להחלפת פוזיציות (${rows.length})` : `Swipe → to browse (${rows.length})`}
+        </div>
+      )}
+      <div
+        className={isMobile && rows.length > 1 ? 'orca-openpos-carousel' : undefined}
+        style={
+          isMobile && rows.length > 1
+            ? {
+                display: 'flex', gap: 12, overflowX: 'auto', overflowY: 'hidden',
+                scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch',
+                paddingBottom: 8, marginInline: -4, paddingInline: 4,
+                scrollbarWidth: 'none',
+              }
+            : { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }
+        }>
+        <style>{`.orca-openpos-carousel::-webkit-scrollbar{display:none}`}</style>
         {rows.map((p, idx) => {
           const isLong = String(p.side).toLowerCase().startsWith('l');
           const sideColor = isLong ? T.accent.green : T.accent.red;
