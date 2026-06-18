@@ -111,12 +111,20 @@ export const LegalGate = () => {
     if (!agreed || saving) return;
     setSaving(true);
     const nowIso = new Date().toISOString();
-    const patch = isTerms
-      ? { user_id: user.id, legal_accepted: true, legal_accepted_at: nowIso, legal_version: LEGAL_VERSION }
-      : { user_id: user.id, privacy_accepted: true, privacy_accepted_at: nowIso, privacy_version: LEGAL_VERSION };
+    const patch: Record<string, unknown> = { user_id: user.id };
+    if (isTerms) {
+      patch.legal_accepted = true;
+      patch.legal_accepted_at = nowIso;
+      patch.legal_version = LEGAL_VERSION;
+    } else {
+      patch.privacy_accepted = true;
+      patch.privacy_accepted_at = nowIso;
+      patch.privacy_version = LEGAL_VERSION;
+    }
     const { error } = await supabase
       .from('user_preferences')
-      .upsert(patch, { onConflict: 'user_id' });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .upsert(patch as any, { onConflict: 'user_id' });
     setSaving(false);
     if (!error) {
       try { localStorage.setItem(cacheKey(user.id, isTerms ? 'legal' : 'privacy'), '1'); } catch {}
