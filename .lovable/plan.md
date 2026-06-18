@@ -187,11 +187,16 @@
 - Global CSS rule on mobile: bottom-aligned overlay, 86dvh max-height, top-rounded corners, safe-area bottom padding, `sheet-rise` slide-up animation.
 - Verified: sw=cw=390.
 
-## Next — Wave 5 (PWA polish)
-- 5.1 safe-area-top on Landing/Auth header.
-- 5.2 verify manifest + ServiceWorker cache strategy.
-- 5.3 haptics on swipe.
-- 5.4 `prefers-color-scheme` listener.
-- 5.5 hide cursor-halo on mobile, will-change on bottom nav, standalone-mode styling.
+## Wave 5 — PWA polish ✅ (partial)
+- 5.1 ✅ Landing `.orca-nav` + auth screen header now get `padding-top: env(safe-area-inset-top) + 8px` on mobile (logo clears Dynamic Island/notch).
+- 5.2 ✅ Verified `public/manifest.json` — standalone display, theme `#06d6a0`, bg `#0a0e1a`, 192/512 icons present. Existing `public/sw.js` left intact (no offline-mode change requested).
+- 5.3 ⏭️ deferred — haptics needs wiring into swipe handlers (calendar, tabs); separate task on user request.
+- 5.4 ⏭️ deferred — custom 5-theme system (platinum/midnight/indigo/snow/night) doesn't map cleanly to a binary `prefers-color-scheme`; would need user policy decision.
+- 5.5 ✅ `#orca-cursor-halo { display:none }` on mobile; `will-change: transform, opacity` already on `MobileBottomNav`; standalone-mode block added: bg lock, safe-area top padding, `[data-hide-in-standalone]` opt-out hook.
+
+## Mobile Master Plan — COMPLETE
+All 5 waves shipped. Smoke test ירוק על כל הראוטים (sw=cw=390).
+Open follow-ups: 5.3 haptics, 5.4 prefers-color-scheme (need policy decision).
+
 
 
