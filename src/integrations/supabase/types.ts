@@ -772,7 +772,11 @@ export type Database = {
           daily_risk_limit: number
           legal_accepted: boolean
           legal_accepted_at: string | null
+          legal_version: string | null
           monthly_risk_limit: number
+          privacy_accepted: boolean
+          privacy_accepted_at: string | null
+          privacy_version: string | null
           risk_per_trade_default: number
           theme: string
           updated_at: string
@@ -785,7 +789,11 @@ export type Database = {
           daily_risk_limit?: number
           legal_accepted?: boolean
           legal_accepted_at?: string | null
+          legal_version?: string | null
           monthly_risk_limit?: number
+          privacy_accepted?: boolean
+          privacy_accepted_at?: string | null
+          privacy_version?: string | null
           risk_per_trade_default?: number
           theme?: string
           updated_at?: string
@@ -798,7 +806,11 @@ export type Database = {
           daily_risk_limit?: number
           legal_accepted?: boolean
           legal_accepted_at?: string | null
+          legal_version?: string | null
           monthly_risk_limit?: number
+          privacy_accepted?: boolean
+          privacy_accepted_at?: string | null
+          privacy_version?: string | null
           risk_per_trade_default?: number
           theme?: string
           updated_at?: string
