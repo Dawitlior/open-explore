@@ -21,6 +21,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { Trade } from '@/data/trades';
@@ -80,12 +81,15 @@ const DetailField = ({
 export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) => {
   const auth = useAuth();
   const userId = auth.user?.id;
+  const isMobile = useIsMobile();
   const [rows, setRows] = useState<OpenPos[]>([]);
   const [loading, setLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
   const [closing, setClosing] = useState<OpenPos | null>(null);
   const [exitPrice, setExitPrice] = useState<string>('');
   const [busy, setBusy] = useState(false);
+  const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({});
+  const toggleExpanded = (id: string) => setExpandedIds(prev => ({ ...prev, [id]: !prev[id] }));
 
   const fetchRows = useCallback(async () => {
     if (!userId) { setRows([]); setInitialized(true); return; }
@@ -254,7 +258,24 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
         )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+      {isMobile && rows.length > 1 && (
+        <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 6, textAlign: isRTL ? 'right' : 'left', letterSpacing: 0.3 }}>
+          {isRTL ? `← החלק להחלפת פוזיציות (${rows.length})` : `Swipe → to browse (${rows.length})`}
+        </div>
+      )}
+      <div
+        className={isMobile && rows.length > 1 ? 'orca-openpos-carousel' : undefined}
+        style={
+          isMobile && rows.length > 1
+            ? {
+                display: 'flex', gap: 12, overflowX: 'auto', overflowY: 'hidden',
+                scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch',
+                paddingBottom: 8, marginInline: -4, paddingInline: 4,
+                scrollbarWidth: 'none',
+              }
+            : { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }
+        }>
+        <style>{`.orca-openpos-carousel::-webkit-scrollbar{display:none}`}</style>
         {rows.map((p, idx) => {
           const isLong = String(p.side).toLowerCase().startsWith('l');
           const sideColor = isLong ? T.accent.green : T.accent.red;
@@ -269,6 +290,8 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
           const riskUsd     = stop ? Math.abs(entry - stop) * size : null; // 1R in $
           const fmtUsd = (n: number) =>
             `$${n.toLocaleString(undefined, { maximumFractionDigits: n >= 100 ? 0 : 2 })}`;
+          const isExpanded = !!expandedIds[p.id];
+          const isCarousel = isMobile && rows.length > 1;
           return (
             <div key={p.id}
               style={{
@@ -279,19 +302,38 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
                 padding: 14,
                 display: 'flex', flexDirection: 'column', gap: 12,
                 animation: `orcaOpenPosCardIn 520ms cubic-bezier(0.22, 1, 0.36, 1) ${180 + idx * 80}ms both`,
+                ...(isCarousel ? { flex: '0 0 88%', scrollSnapAlign: 'center', minWidth: 0 } : {}),
               }}>
-              {/* Header: symbol + side pill */}
+              {/* Header: symbol + side pill + expand toggle */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
                   <span style={{ fontWeight: 800, color: T.text.primary, fontSize: 16, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.symbol}</span>
                   <span style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: 0.4 }}>
                     {isManual ? (isRTL ? 'ידני' : 'Manual') : p.provider}
                     {leverage > 1 && <span style={{ marginInlineStart: 6, color: T.accent.orange, fontWeight: 700 }}>· {leverage}x</span>}
                   </span>
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 800, padding: '4px 10px', borderRadius: 6, background: `${sideColor}22`, color: sideColor, letterSpacing: 0.5 }}>
-                  {isLong ? (isRTL ? 'לונג' : 'LONG') : (isRTL ? 'שורט' : 'SHORT')}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 11, fontWeight: 800, padding: '4px 10px', borderRadius: 6, background: `${sideColor}22`, color: sideColor, letterSpacing: 0.5 }}>
+                    {isLong ? (isRTL ? 'לונג' : 'LONG') : (isRTL ? 'שורט' : 'SHORT')}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => toggleExpanded(p.id)}
+                    aria-expanded={isExpanded}
+                    aria-label={isExpanded ? (isRTL ? 'כווץ' : 'Collapse') : (isRTL ? 'הרחב' : 'Expand')}
+                    style={{
+                      width: 32, height: 32, borderRadius: 8,
+                      background: T.bg.secondary, border: `1px solid ${T.border.subtle}`,
+                      color: T.text.secondary, cursor: 'pointer',
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 13, fontWeight: 800,
+                      transition: 'transform 220ms cubic-bezier(0.34,1.56,0.64,1), background 180ms',
+                      transform: isExpanded ? 'rotate(180deg)' : 'rotate(0)',
+                    }}>
+                    ▾
+                  </button>
+                </div>
               </div>
 
               {/* Money row: margin (what user put in) + risk $ */}
@@ -324,13 +366,13 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
               </div>
 
 
-              {/* Technical details grid — all the fields that actually exist in
-                  `public.open_positions` for an open trade (no exit price, no
-                  realized R, no AI-projected target — we only show what's real). */}
+              {/* Technical details grid — collapsed by default; expand via ▾ toggle. */}
+              {isExpanded && (
               <div style={{
                 display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8,
                 border: `1px solid ${T.border.subtle}`, borderRadius: 10,
                 padding: '10px 12px', background: `${T.bg.secondary}66`,
+                animation: 'orcaOpenPosCardIn 360ms cubic-bezier(0.22, 1, 0.36, 1) both',
               }}>
                 <DetailField label={isRTL ? 'סוג' : 'Side'} value={isLong ? (isRTL ? 'לונג' : 'Long') : (isRTL ? 'שורט' : 'Short')} color={sideColor} T={T} />
                 <DetailField label={isRTL ? 'כמות' : 'Quantity'} value={size.toLocaleString(undefined, { maximumFractionDigits: 6 })} mono T={T} />
@@ -355,6 +397,7 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
                   color={T.accent.cyan} T={T}
                 />
               </div>
+              )}
 
               {/* Live P&L row — only when broker reports an unrealized value */}
               {Number(p.unrealized_pnl) !== 0 && (() => {
@@ -387,7 +430,7 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
                 );
               })()}
 
-              {p.updated_at && (
+              {isExpanded && p.updated_at && (
                 <div style={{ fontSize: 10, color: T.text.muted, textAlign: isRTL ? 'right' : 'left', fontFamily: "'JetBrains Mono', monospace", letterSpacing: 0.3 }}>
                   {isRTL ? 'עדכון אחרון' : 'Last update'}: {new Date(p.updated_at).toLocaleString(isRTL ? 'he-IL' : 'en-US', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}
                 </div>
