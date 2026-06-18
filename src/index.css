@@ -376,8 +376,9 @@
   .orca-grid-2col { grid-template-columns: 1fr !important; }
   table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .orca-metric-value { font-size: 18px !important; }
-  /* Slim charts on phone — reduce vertical real estate */
-  .recharts-responsive-container { max-height: 180px !important; }
+  /* Wave 2.2 — DO NOT cap recharts height. The previous 180px cap clipped
+     legends/axes and made charts feel "missing". Each chart sets its own
+     height via the height={N} prop; trust it on mobile too. */
   .recharts-cartesian-axis-tick text { font-size: 9px !important; }
 }
 @media (min-width: 769px) and (max-width: 1024px) {
