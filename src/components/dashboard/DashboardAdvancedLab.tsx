@@ -189,7 +189,7 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
       </div>
 
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, ${minCard}px), 1fr))', gap: 14 }}>
         {/* 1 · Monte Carlo */}
         <div style={cardStyle}>
           <div style={{ fontSize: 11, color: muted, marginBottom: 8, letterSpacing: 1.5, textTransform: 'uppercase' }}>{L.mc}</div>
