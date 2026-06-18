@@ -54,7 +54,7 @@ export function TraderMindSession({ open, onClose, lang = 'he' }: Props) {
       const winRate = closed.length ? Math.round((wins / closed.length) * 100) : 0;
       const tradeData = { sampleSize: closed.length, winRate };
       iframe.contentWindow.postMessage(
-        { source: 'trader-mind-host', type: 'init', payload: { tradeData, userName } },
+        { source: 'trader-mind-host', type: 'init', payload: { tradeData, userName, lang } },
         '*',
       );
     };
@@ -156,7 +156,12 @@ export function TraderMindSession({ open, onClose, lang = 'he' }: Props) {
       <div style={{ flex: 1, position: 'relative' }}>
         <iframe
           ref={iframeRef}
-          src="/trader-mind/index.html"
+          // Language-specific static bundle. Both files self-seed
+          // `localStorage['orca:lang-cache']` so the first paint is correct
+          // before our `init` postMessage arrives. The `?lang=` query is a
+          // belt-and-braces signal the engine can also read on boot.
+          src={`/trader-mind/${lang === 'en' ? 'index.en.html' : 'index.he.html'}?lang=${lang}`}
+          key={lang}
           title="Trader Mind"
           style={{ width: '100%', height: '100%', border: 'none', background: '#FBFAF6' }}
           sandbox="allow-scripts allow-same-origin"
