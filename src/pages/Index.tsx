@@ -457,15 +457,21 @@ const Index = () => {
           // ── UIE: the SOLE file-import path (legacy fallback removed) ────────
           setImportPhase('parsing');
           console.log('[UIE Import] Starting:', file.name, 'size:', file.size);
-          // The Preflight modal blocks on user confirmation. Hide the loading
-          // overlay so it isn't covering the modal (both at z-index 9999).
-          setImportLoading(false);
+          // Keep the (now soft-blur) loading overlay visible through the
+          // file-read + engine phase so the user doesn't see a black flash
+          // before the Preflight UI mounts. We auto-dismiss the overlay the
+          // moment the engine fires `orca:uie:preflight-will-open` (right
+          // before the modal renders), then re-open it after the modal closes
+          // for the save phase below.
+          const dismissForModal = () => setImportLoading(false);
+          window.addEventListener('orca:uie:preflight-will-open', dismissForModal, { once: true });
           const outcome = await runImportWithPreflight(file, {
             brokerId: 'orca',
             targetPortfolio: activePortfolio
               ? { id: activePortfolio.id, name: activePortfolio.name, color: activePortfolio.color, currency: activePortfolio.currency }
               : null,
           });
+          window.removeEventListener('orca:uie:preflight-will-open', dismissForModal);
           if (!outcome.ok) {
             if (outcome.reason === 'user_cancelled') {
               return;
