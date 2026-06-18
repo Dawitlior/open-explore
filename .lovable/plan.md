@@ -194,9 +194,28 @@
 - 5.4 ⏭️ deferred — custom 5-theme system (platinum/midnight/indigo/snow/night) doesn't map cleanly to a binary `prefers-color-scheme`; would need user policy decision.
 - 5.5 ✅ `#orca-cursor-halo { display:none }` on mobile; `will-change: transform, opacity` already on `MobileBottomNav`; standalone-mode block added: bg lock, safe-area top padding, `[data-hide-in-standalone]` opt-out hook.
 
-## Mobile Master Plan — COMPLETE
-All 5 waves shipped. Smoke test ירוק על כל הראוטים (sw=cw=390).
-Open follow-ups: 5.3 haptics, 5.4 prefers-color-scheme (need policy decision).
+## Mobile Master Plan — COMPLETE (waves 0–5)
+
+---
+
+## Wave 6 — MobileBottomNav full redesign ✅
+Triggered by user feedback: "התפריט במצב מובייל ו-PWA פשוט לא מותאם".
+
+**Visual rewrite of `src/components/trading/MobileBottomNav.tsx`:**
+- Edge-to-edge bar → **floating capsule "island"** (10px insets, 8px lift above safe-area, 22px radius).
+- Emoji icons → **inline vector SVG** (Icon component: calendar / journal / radar / more / plus) — theme-aware, sharper.
+- Static top-bar indicator → **sliding active pill** (cubic-bezier spring 0.34,1.56,0.64,1), animates between slots, RTL-aware via `left`/`right` swap.
+- Center FAB upgraded: 54px conic-gradient ring, double-ring shadow (bg + accent), idle `mn-pulse` ring animation, press rotates 45° + scale(0.92).
+- Soft radial glow puddle under bar — sells the floating effect over content.
+- Stronger blur (`22px sat 160%`), layered shadow (drop + accent halo + inset highlight).
+- Press scale 0.92 → 0.9 with spring easing; haptics retained.
+- Keyboard slide-out distance increased to `calc(100% + 24px)` so the floating bar fully exits.
+
+**Layout follow-up:**
+- `--nav-h: 60px → 64px`; `--nav-total` now includes the +24px lift (8px gap + 16px breathing room) so page content padding (`[data-journal-root]` etc.) clears the floating bar.
+
+**Smoke test:** sw=cw=390, no overflow.
+
 
 
 
