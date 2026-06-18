@@ -855,8 +855,16 @@ button, a, [role="button"] { -webkit-touch-callout: none; }
     z-index: 30;
   }
 
-  /* — Fix iOS rubber-band on fixed overlays — */
-  [role="dialog"] { position: fixed !important; touch-action: pan-y; }
+  /* — Wave 4.5: dialogs are fixed but only the modal BODY locks pan-y.
+     Top-level pan-y on the dialog itself blocked horizontal gestures inside
+     galleries/carousels/TraderMind. Scope to scrollable body containers only. */
+  [role="dialog"] { position: fixed !important; }
+  [role="dialog"] .modal-body,
+  [role="dialog"] [data-modal-body] {
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
 
   /* — Remove tilt 3d on touch (no hover) — */
   .orca-tilt { transform: none !important; }
