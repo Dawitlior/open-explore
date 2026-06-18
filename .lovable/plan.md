@@ -157,3 +157,11 @@
 4. **0.10: שמירה על Heebo** — קריטי לעברית (לא בפלאן המקורי במפורש).
 5. **תוספת 0.12** — `-webkit-tap-highlight-color` + `touch-callout` (חסר במקור, גורם לריבוע אפור ב־iOS).
 6. **5.2: ServiceWorker כבר קיים** — רק לאמת cache strategy, לא לבנות מחדש.
+
+## Wave 2.2 — DashboardAdvancedLab mobile fix (hotfix on user feedback)
+- Removed global `.recharts-responsive-container { max-height: 180px !important }` from `src/index.css` mobile block — it was clipping legends/axes site-wide and made charts feel "missing" inside the Lab.
+- `DashboardAdvancedLab.tsx` now consumes `useIsMobile()`:
+  - `minCard` grid threshold: 320 → 260 on mobile (better fit on 360–390px screens).
+  - Chart height: 220 → 200 on mobile (denser, full content visible).
+  - Heatmap cell: 16 → 14 on mobile.
+- Verified: smoke test green, sw=cw=390 on all routes.
