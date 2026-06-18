@@ -1713,7 +1713,7 @@ const TCard = ({ trade, idx, onChange, onDel, f, dir, disabled, th }: any) => {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginBottom: 10 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginBottom: 10 }} className="j-grid-2col">
         {[['ins','pair','BTC/USDT'],['en','entry','95000'],['ex','exit','97000'],['sz','size','0.1'],['pnl','pnl','+200'],['rr','rr','1:3']].map(([lKey, k, ph]: any) => (
           <div key={k}><Lbl c={f[lKey]} dir={dir} th={th} /><IN val={trade[k] || ''} set={(v: string) => onChange?.({ ...trade, [k]: v })} ph={ph} dir={dir} disabled={disabled} th={th} /></div>
         ))}
@@ -2916,7 +2916,7 @@ const DailyIntelligencePanel = ({ day, dir, th, onClose, onOpenJournal }: {
                           {isR ? `${trR >= 0 ? '+' : ''}${trR.toFixed(2)}R` : `${trPnl >= 0 ? '+' : ''}${trPnl.toFixed(2)}$`}
                         </span>
                       </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, fontSize: 10 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, fontSize: 10 }} className="j-grid-2col">
                         {[
                           { l: 'Entry', v: tr.entry || '—' },
                           { l: 'Exit', v: tr.exit || '—' },
