@@ -81,12 +81,15 @@ const DetailField = ({
 export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) => {
   const auth = useAuth();
   const userId = auth.user?.id;
+  const isMobile = useIsMobile();
   const [rows, setRows] = useState<OpenPos[]>([]);
   const [loading, setLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
   const [closing, setClosing] = useState<OpenPos | null>(null);
   const [exitPrice, setExitPrice] = useState<string>('');
   const [busy, setBusy] = useState(false);
+  const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({});
+  const toggleExpanded = (id: string) => setExpandedIds(prev => ({ ...prev, [id]: !prev[id] }));
 
   const fetchRows = useCallback(async () => {
     if (!userId) { setRows([]); setInitialized(true); return; }
