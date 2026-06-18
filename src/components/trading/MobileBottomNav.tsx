@@ -109,8 +109,15 @@ export const MobileBottomNav = ({
         justifyContent: 'space-around',
         height: 'calc(60px + env(safe-area-inset-bottom, 0px))',
         fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
-        transform: kbOffset ? `translate3d(0, -${kbOffset}px, 0)` : 'translateZ(0)',
-        willChange: 'transform',
+        // Wave 4.1 — when the on-screen keyboard is open, slide the nav OUT
+        // (translateY(100%) + pointer-events:none). This frees the save
+        // buttons under it and avoids the layout shift `display:none` would
+        // cause. Fade transition preserved.
+        transform: kbOffset ? 'translate3d(0, 100%, 0)' : 'translateZ(0)',
+        opacity: kbOffset ? 0 : 1,
+        pointerEvents: kbOffset ? 'none' : 'auto',
+        transition: 'transform 0.22s cubic-bezier(0.16,1,0.3,1), opacity 0.18s ease',
+        willChange: 'transform, opacity',
         contain: 'layout paint',
         touchAction: 'manipulation',
       }}
