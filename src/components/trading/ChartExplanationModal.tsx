@@ -27,6 +27,7 @@ export const ChartExplanationModal = ({ T, isRTL, title, explanation, chartId, o
 
   return (
     <div
+      data-bottom-sheet-overlay
       style={{
         position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 200,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -36,6 +37,7 @@ export const ChartExplanationModal = ({ T, isRTL, title, explanation, chartId, o
     >
       <div
         onClick={e => e.stopPropagation()}
+        data-bottom-sheet
         style={{
           background: `linear-gradient(165deg, ${T.bg.card} 0%, ${T.bg.secondary} 100%)`,
           border: `1px solid ${T.border.medium}`, borderRadius: T.radius.xl,

@@ -1739,7 +1739,7 @@ const Index = () => {
         />
       )}
       {!isMobile && (
-      <aside style={{
+      <aside data-app-sidebar style={{
         position: 'fixed', top: 0, bottom: 0, insetInlineStart: 0,
         width: sbOpen ? 216 : 62,
         background: `linear-gradient(180deg, ${T.bg.secondary} 0%, ${T.bg.primary} 100%)`,

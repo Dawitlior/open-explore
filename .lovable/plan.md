@@ -177,7 +177,21 @@
 - Removed top-level `touch-action:pan-y` on `[role="dialog"]` (was blocking horizontal swipes in galleries/TraderMind).
 - Pan-y + `overscroll-behavior:contain` now scoped to `.modal-body` / `[data-modal-body]` containers.
 
-## Wave 4 remaining (requires bigger structural work)
-- 4.2 sidebar removal on mobile (audit which screens still render sidebar+bottom-nav).
-- 4.3 bottom-sheet for Settings/CommandPalette/FeatureManifest/ChartExplanation modals.
+## Wave 4.2 — Hide desktop sidebar on mobile ✅
+- Tagged `<aside>` in `src/pages/Index.tsx` with `data-app-sidebar`.
+- CSS: `@media (max-width:768px) { aside[data-app-sidebar] { display:none } }` — MobileBottomNav (+ More-sheet) is the sole nav surface.
+
+## Wave 4.3 — Bottom-sheet modals on mobile ✅
+- Tagged overlays + shells with `data-bottom-sheet-overlay` / `data-bottom-sheet` in CommandPalette and ChartExplanationModal.
+- FeatureManifestModal already has a fullscreen mobile shell; left untouched.
+- Global CSS rule on mobile: bottom-aligned overlay, 86dvh max-height, top-rounded corners, safe-area bottom padding, `sheet-rise` slide-up animation.
+- Verified: sw=cw=390.
+
+## Next — Wave 5 (PWA polish)
+- 5.1 safe-area-top on Landing/Auth header.
+- 5.2 verify manifest + ServiceWorker cache strategy.
+- 5.3 haptics on swipe.
+- 5.4 `prefers-color-scheme` listener.
+- 5.5 hide cursor-halo on mobile, will-change on bottom nav, standalone-mode styling.
+
 
