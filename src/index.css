@@ -416,6 +416,24 @@
 
   /* ═══ Wave 4.2 — hide desktop sidebar on mobile (MobileBottomNav handles nav) ═══ */
   aside[data-app-sidebar] { display: none !important; }
+
+  /* ═══ Wave 4.3 — bottom-sheet for centered modals on mobile ═══ */
+  [data-bottom-sheet-overlay] {
+    align-items: flex-end !important;
+    padding-top: 0 !important;
+  }
+  [data-bottom-sheet] {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 86dvh !important;
+    border-radius: 18px 18px 0 0 !important;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px) !important;
+    animation: sheet-rise 0.28s cubic-bezier(0.16,1,0.3,1) !important;
+  }
+  @keyframes sheet-rise {
+    from { transform: translateY(100%); opacity: 0.5; }
+    to { transform: translateY(0); opacity: 1; }
+  }
 }
 @media (min-width: 769px) and (max-width: 1024px) {
   .orca-grid-2col { grid-template-columns: 1fr 1fr !important; }
