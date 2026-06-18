@@ -4,8 +4,11 @@ import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useLang } from '@/hooks/use-lang';
 import {
   LEGAL_TITLE_HE,
+  LEGAL_TITLE_EN,
   LEGAL_SECTIONS_HE,
   LEGAL_FOOTER_HE,
+  LEGAL_VERSION,
+  LEGAL_VERSION_DATE,
 } from '@/lib/legal-text';
 
 const Terms = () => {
@@ -13,7 +16,7 @@ const Terms = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
     const prevTitle = document.title;
-    document.title = 'תנאי שימוש — Orca';
+    document.title = isRTL ? `${LEGAL_TITLE_HE} — APEX OS` : `${LEGAL_TITLE_EN} — APEX OS`;
     const upsertMeta = (selector: string, create: () => HTMLElement) => {
       let el = document.head.querySelector(selector) as HTMLElement | null;
       if (!el) { el = create(); document.head.appendChild(el); }
