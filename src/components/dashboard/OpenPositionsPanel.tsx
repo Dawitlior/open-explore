@@ -34,6 +34,7 @@ interface OpenPos {
   stop_loss: number | null;
   unrealized_pnl: number;
   provider: string;
+  leverage?: number | null;
 }
 
 interface Props {
