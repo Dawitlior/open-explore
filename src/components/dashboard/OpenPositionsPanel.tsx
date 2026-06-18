@@ -366,13 +366,13 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
               </div>
 
 
-              {/* Technical details grid — all the fields that actually exist in
-                  `public.open_positions` for an open trade (no exit price, no
-                  realized R, no AI-projected target — we only show what's real). */}
+              {/* Technical details grid — collapsed by default; expand via ▾ toggle. */}
+              {isExpanded && (
               <div style={{
                 display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8,
                 border: `1px solid ${T.border.subtle}`, borderRadius: 10,
                 padding: '10px 12px', background: `${T.bg.secondary}66`,
+                animation: 'orcaOpenPosCardIn 360ms cubic-bezier(0.22, 1, 0.36, 1) both',
               }}>
                 <DetailField label={isRTL ? 'סוג' : 'Side'} value={isLong ? (isRTL ? 'לונג' : 'Long') : (isRTL ? 'שורט' : 'Short')} color={sideColor} T={T} />
                 <DetailField label={isRTL ? 'כמות' : 'Quantity'} value={size.toLocaleString(undefined, { maximumFractionDigits: 6 })} mono T={T} />
@@ -397,6 +397,7 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
                   color={T.accent.cyan} T={T}
                 />
               </div>
+              )}
 
               {/* Live P&L row — only when broker reports an unrealized value */}
               {Number(p.unrealized_pnl) !== 0 && (() => {
