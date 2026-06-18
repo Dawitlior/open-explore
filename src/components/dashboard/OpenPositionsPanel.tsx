@@ -53,6 +53,30 @@ const fmtDateTime = (d: Date) => {
 };
 const DAY_EN = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
+/** Compact "label · value" cell for the open-position technical-details grid. */
+const DetailField = ({
+  label, value, color, mono, T,
+}: {
+  label: string;
+  value: string;
+  color?: string;
+  mono?: boolean;
+  T: TradingTheme;
+}) => (
+  <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+    <span style={{
+      fontSize: 9, color: T.text.muted, marginBottom: 2,
+      textTransform: 'uppercase', letterSpacing: 0.4, fontWeight: 600,
+    }}>{label}</span>
+    <span style={{
+      fontSize: 13, fontWeight: 700,
+      color: color ?? T.text.primary,
+      fontFamily: mono ? "'JetBrains Mono', monospace" : "'Poppins', system-ui, sans-serif",
+      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+    }}>{value}</span>
+  </div>
+);
+
 export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) => {
   const auth = useAuth();
   const userId = auth.user?.id;
