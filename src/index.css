@@ -434,6 +434,26 @@
     from { transform: translateY(100%); opacity: 0.5; }
     to { transform: translateY(0); opacity: 1; }
   }
+
+  /* ═══ Wave 5.1 — Landing & Auth header sits below the notch/Dynamic Island ═══ */
+  .orca-nav,
+  [data-auth-screen] > :first-child,
+  header[data-public-header] {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 8px) !important;
+  }
+
+  /* ═══ Wave 5.5 — mobile polish ═══ */
+  /* Cursor halo is a desktop pointer affordance — pure waste on touch. */
+  #orca-cursor-halo { display: none !important; }
+
+  /* PWA installed (standalone) — pin content to safe-areas, kill any leftover
+     browser-chrome offsets, give the app a more "native" feel. */
+  @media (display-mode: standalone) {
+    html, body { background: var(--background, #0a0e1a); }
+    body { padding-top: env(safe-area-inset-top, 0px); }
+    /* Hide elements explicitly opted out of standalone mode. */
+    [data-hide-in-standalone] { display: none !important; }
+  }
 }
 @media (min-width: 769px) and (max-width: 1024px) {
   .orca-grid-2col { grid-template-columns: 1fr 1fr !important; }
