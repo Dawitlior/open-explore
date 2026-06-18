@@ -4,83 +4,124 @@ import { useAuth } from '@/hooks/use-auth';
 import {
   LEGAL_TITLE_HE,
   LEGAL_SECTIONS_HE,
-  LEGAL_FOOTER_HE,
   LEGAL_ACCEPT_LABEL_HE,
+  PRIVACY_TITLE_HE,
+  PRIVACY_SECTIONS_HE,
+  PRIVACY_ACCEPT_LABEL_HE,
+  LEGAL_VERSION,
+  LEGAL_VERSION_DATE,
+  LEGAL_FOOTER_HE,
 } from '@/lib/legal-text';
 
 /**
- * Iron-clad legal gatekeeper.
- * Mounts after auth. Blocks the entire app until the user scrolls,
- * ticks the consent checkbox, and presses Continue.
- * Persists to public.user_preferences.legal_accepted.
+ * Iron-clad two-step legal gatekeeper for APEX OS.
+ * Mounts after auth. Blocks the entire app until the user:
+ *   1) Reads & ticks Terms of Service → continues
+ *   2) Reads & ticks Privacy Policy → continues
+ * Persists separate signatures (legal_accepted_at, privacy_accepted_at)
+ * plus the version string to public.user_preferences, and writes one
+ * audit row per acceptance into public.consent_log.
+ *
+ * Formal black/gold styling — institutional, no neon.
  */
-const cacheKey = (uid: string) => `orca:legal-accepted:${uid}`;
+
+const GOLD = '#d4af5a';
+const GOLD_BRIGHT = '#f0d78c';
+const GOLD_DEEP = '#a8862d';
+const INK = '#000000';
+const INK_2 = '#07090f';
+const INK_3 = '#0e131c';
+const TEXT = '#f5ecd6';
+const TEXT_MUTED = '#9a9381';
+const BORDER = 'rgba(212,175,90,0.22)';
+const BORDER_STRONG = 'rgba(212,175,90,0.45)';
+
+const cacheKey = (uid: string, kind: 'legal' | 'privacy') =>
+  `orca:${kind}-accepted:${uid}`;
+
+type Stage = 'loading' | 'terms' | 'privacy' | 'done';
+
+async function writeConsentRow(userId: string, kind: 'terms' | 'privacy') {
+  try {
+    await supabase.from('consent_log').insert({
+      user_id: userId,
+      version: LEGAL_VERSION,
+      choices: { [kind]: true } as Record<string, boolean>,
+      user_agent: typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 500) : null,
+    });
+  } catch { /* non-blocking */ }
+}
 
 export const LegalGate = () => {
   const { user } = useAuth();
-  // Seed from localStorage synchronously so accepted users never see a flash,
-  // and stay protected against transient network failures.
-  const [status, setStatus] = useState<'loading' | 'needs_accept' | 'accepted'>(() => {
-    try {
-      if (user?.id && localStorage.getItem(cacheKey(user.id)) === '1') return 'accepted';
-    } catch {}
-    return 'loading';
-  });
+  const [stage, setStage] = useState<Stage>('loading');
   const [agreed, setAgreed] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Resolve initial stage from cache + DB
   useEffect(() => {
     let alive = true;
-    if (!user?.id) { setStatus('loading'); return; }
+    if (!user?.id) { setStage('loading'); return; }
 
-    // Sync seed for this uid (in case user switched)
-    try {
-      if (localStorage.getItem(cacheKey(user.id)) === '1') {
-        setStatus('accepted');
-      }
-    } catch {}
+    const seedFromCache = (): Stage | null => {
+      try {
+        const t = localStorage.getItem(cacheKey(user.id, 'legal')) === '1';
+        const p = localStorage.getItem(cacheKey(user.id, 'privacy')) === '1';
+        if (t && p) return 'done';
+        if (t && !p) return 'privacy';
+      } catch {}
+      return null;
+    };
+    const cached = seedFromCache();
+    if (cached) setStage(cached);
 
     (async () => {
       const { data, error } = await supabase
         .from('user_preferences')
-        .select('legal_accepted')
+        .select('legal_accepted, privacy_accepted')
         .eq('user_id', user.id)
         .maybeSingle();
       if (!alive) return;
-      // If the request failed (network/RLS blip), DO NOT downgrade an already-accepted state.
-      if (error) return;
-      if (data?.legal_accepted) {
-        try { localStorage.setItem(cacheKey(user.id), '1'); } catch {}
-        setStatus('accepted');
-      } else {
-        // Only show the gate if no local cache says otherwise.
-        try {
-          if (localStorage.getItem(cacheKey(user.id)) === '1') {
-            setStatus('accepted');
-            return;
-          }
-        } catch {}
-        setStatus('needs_accept');
-      }
+      if (error) return; // do not downgrade
+      const termsOk = !!data?.legal_accepted;
+      const privOk = !!data?.privacy_accepted;
+      try {
+        if (termsOk) localStorage.setItem(cacheKey(user.id, 'legal'), '1');
+        if (privOk) localStorage.setItem(cacheKey(user.id, 'privacy'), '1');
+      } catch {}
+      if (termsOk && privOk) setStage('done');
+      else if (termsOk && !privOk) setStage('privacy');
+      else setStage('terms');
     })();
     return () => { alive = false; };
   }, [user?.id]);
 
-  if (status !== 'needs_accept' || !user?.id) return null;
+  // Reset checkbox between stages
+  useEffect(() => { setAgreed(false); }, [stage]);
+
+  if (stage === 'loading' || stage === 'done' || !user?.id) return null;
+
+  const isTerms = stage === 'terms';
+  const sections = isTerms ? LEGAL_SECTIONS_HE : PRIVACY_SECTIONS_HE;
+  const title = isTerms ? LEGAL_TITLE_HE : PRIVACY_TITLE_HE;
+  const acceptLabel = isTerms ? LEGAL_ACCEPT_LABEL_HE : PRIVACY_ACCEPT_LABEL_HE;
+  const stepNum = isTerms ? 1 : 2;
 
   const handleAccept = async () => {
     if (!agreed || saving) return;
     setSaving(true);
+    const nowIso = new Date().toISOString();
+    const patch = isTerms
+      ? { user_id: user.id, legal_accepted: true, legal_accepted_at: nowIso, legal_version: LEGAL_VERSION }
+      : { user_id: user.id, privacy_accepted: true, privacy_accepted_at: nowIso, privacy_version: LEGAL_VERSION };
     const { error } = await supabase
       .from('user_preferences')
-      .upsert(
-        { user_id: user.id, legal_accepted: true, legal_accepted_at: new Date().toISOString() },
-        { onConflict: 'user_id' }
-      );
+      .upsert(patch, { onConflict: 'user_id' });
     setSaving(false);
     if (!error) {
-      try { localStorage.setItem(cacheKey(user.id), '1'); } catch {}
-      setStatus('accepted');
+      try { localStorage.setItem(cacheKey(user.id, isTerms ? 'legal' : 'privacy'), '1'); } catch {}
+      void writeConsentRow(user.id, isTerms ? 'terms' : 'privacy');
+      setStage(isTerms ? 'privacy' : 'done');
     }
   };
 
@@ -93,66 +134,109 @@ export const LegalGate = () => {
       lang="he"
       style={{
         position: 'fixed', inset: 0, zIndex: 100000,
-        background: 'rgba(2,8,20,0.92)',
-        backdropFilter: 'blur(12px)',
+        background: 'rgba(0,0,0,0.94)',
+        backdropFilter: 'blur(14px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: 16, fontFamily: "'Poppins', sans-serif",
+        padding: 16,
+        fontFamily: "'Poppins', system-ui, sans-serif",
       }}
     >
       <div
         style={{
-          width: 'min(720px, 100%)',
-          background: 'linear-gradient(180deg, #08182f, #061326)',
-          border: '1px solid rgba(0,242,255,0.25)',
-          borderRadius: 16,
-          boxShadow: '0 0 0 1px rgba(0,242,255,0.08), 0 30px 100px rgba(0,0,0,0.7), 0 0 60px rgba(0,242,255,0.15)',
-          color: '#e6f4ff',
+          width: 'min(760px, 100%)',
+          background: `linear-gradient(180deg, ${INK_2} 0%, ${INK} 100%)`,
+          border: `1px solid ${BORDER}`,
+          borderRadius: 18,
+          boxShadow: '0 30px 100px rgba(0,0,0,0.85), inset 0 1px 0 rgba(240,215,140,0.08)',
+          color: TEXT,
           display: 'flex', flexDirection: 'column',
           maxHeight: 'calc(100vh - 32px)',
           overflow: 'hidden',
+          position: 'relative',
         }}
       >
-        <header style={{ padding: '20px 24px 14px', borderBottom: '1px solid rgba(0,242,255,0.12)' }}>
+        {/* Top gold hairline */}
+        <div style={{
+          position: 'absolute', top: 0, insetInlineStart: 40, insetInlineEnd: 40, height: 1,
+          background: `linear-gradient(90deg, transparent, ${GOLD}, transparent)`,
+        }} />
+
+        {/* Step indicator */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '18px 28px 0',
+        }}>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 10,
+          }}>
+            <span style={{
+              fontSize: 10, color: GOLD, fontWeight: 700,
+              letterSpacing: '0.28em', textTransform: 'uppercase',
+            }}>APEX OS · Legal</span>
+            <span style={{ color: TEXT_MUTED, fontSize: 10, letterSpacing: '0.18em' }}>
+              · {LEGAL_VERSION}
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {[1, 2].map(n => (
+              <span key={n} style={{
+                width: 28, height: 4, borderRadius: 2,
+                background: n <= stepNum ? GOLD_BRIGHT : 'rgba(212,175,90,0.18)',
+                transition: 'background .25s',
+              }} />
+            ))}
+          </div>
+        </div>
+
+        <header style={{ padding: '14px 28px 16px', borderBottom: `1px solid ${BORDER}` }}>
+          <div style={{
+            fontSize: 10, color: TEXT_MUTED, letterSpacing: '0.22em',
+            textTransform: 'uppercase', marginBottom: 6, fontWeight: 600,
+          }}>
+            שלב {stepNum} מתוך 2 · {isTerms ? 'תנאי שימוש' : 'מדיניות פרטיות'}
+          </div>
           <h2
             id="legal-gate-title"
             style={{
-              margin: 0, fontSize: 16, fontWeight: 800, lineHeight: 1.45,
-              background: 'linear-gradient(90deg, #00f2ff, #7fe6ff)',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+              margin: 0, fontSize: 18, fontWeight: 700, lineHeight: 1.4,
+              color: TEXT, letterSpacing: '-0.005em',
             }}
           >
-            {LEGAL_TITLE_HE}
+            {title}
           </h2>
         </header>
 
         <div
           style={{
-            maxHeight: 400,
-            overflowY: 'auto',
-            padding: '18px 24px',
-            background: 'rgba(0,0,0,0.18)',
-            borderBottom: '1px solid rgba(0,242,255,0.1)',
-            scrollbarColor: '#00f2ff66 transparent',
+            maxHeight: 440, overflowY: 'auto',
+            padding: '20px 28px',
+            background: 'rgba(0,0,0,0.4)',
+            borderBottom: `1px solid ${BORDER}`,
+            scrollbarColor: `${GOLD_DEEP} transparent`,
             scrollbarWidth: 'thin',
           }}
         >
-          {LEGAL_SECTIONS_HE.map((s) => (
-            <section key={s.heading} style={{ marginBottom: 18 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, color: '#00f2ff', margin: '0 0 6px' }}>
+          {sections.map((s) => (
+            <section key={s.heading} style={{ marginBottom: 20 }}>
+              <h3 style={{
+                fontSize: 13, fontWeight: 700, color: GOLD_BRIGHT,
+                margin: '0 0 8px', letterSpacing: '0.01em',
+              }}>
                 {s.heading}
               </h3>
               <p style={{
-                fontSize: 13, lineHeight: 1.8, margin: 0,
-                color: 'rgba(230,244,255,0.85)', whiteSpace: 'pre-line',
+                fontSize: 13, lineHeight: 1.85, margin: 0,
+                color: 'rgba(245,236,214,0.86)', whiteSpace: 'pre-line',
               }}>
                 {s.body}
               </p>
             </section>
           ))}
           <p style={{
-            marginTop: 10, paddingTop: 12,
-            borderTop: '1px solid rgba(0,242,255,0.1)',
-            fontSize: 12, fontWeight: 600, color: '#7fe6ff', textAlign: 'center',
+            marginTop: 16, paddingTop: 14,
+            borderTop: `1px solid ${BORDER}`,
+            fontSize: 11, fontWeight: 600, color: TEXT_MUTED, textAlign: 'center',
+            letterSpacing: '0.04em',
           }}>
             {LEGAL_FOOTER_HE}
           </p>
@@ -160,10 +244,11 @@ export const LegalGate = () => {
 
         <label
           style={{
-            display: 'flex', gap: 10, alignItems: 'flex-start',
-            padding: '16px 24px', cursor: 'pointer', userSelect: 'none',
-            background: agreed ? 'rgba(0,242,255,0.06)' : 'transparent',
+            display: 'flex', gap: 12, alignItems: 'flex-start',
+            padding: '18px 28px', cursor: 'pointer', userSelect: 'none',
+            background: agreed ? 'rgba(212,175,90,0.06)' : 'transparent',
             transition: 'background 0.2s',
+            borderBottom: `1px solid ${BORDER}`,
           }}
         >
           <input
@@ -171,37 +256,41 @@ export const LegalGate = () => {
             checked={agreed}
             onChange={(e) => setAgreed(e.target.checked)}
             style={{
-              width: 18, height: 18, accentColor: '#00f2ff',
+              width: 18, height: 18, accentColor: GOLD,
               marginTop: 2, flexShrink: 0, cursor: 'pointer',
             }}
           />
-          <span style={{ fontSize: 13, lineHeight: 1.55, color: '#e6f4ff' }}>
-            {LEGAL_ACCEPT_LABEL_HE}
+          <span style={{ fontSize: 13, lineHeight: 1.6, color: TEXT }}>
+            {acceptLabel}
           </span>
         </label>
 
         <footer style={{
-          padding: '14px 24px 20px', display: 'flex', justifyContent: 'flex-start',
-          borderTop: '1px solid rgba(0,242,255,0.1)',
+          padding: '16px 28px 22px',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
         }}>
+          <span style={{ fontSize: 11, color: TEXT_MUTED, letterSpacing: '0.04em' }}>
+            חתימה אלקטרונית · {new Date().toLocaleDateString('he-IL')}
+          </span>
           <button
             type="button"
             onClick={handleAccept}
             disabled={!agreed || saving}
             style={{
               padding: '12px 28px', borderRadius: 10, border: 'none',
-              fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14,
+              fontFamily: "'Poppins', system-ui, sans-serif", fontWeight: 700, fontSize: 13,
+              letterSpacing: '0.04em',
               cursor: agreed && !saving ? 'pointer' : 'not-allowed',
               background: agreed
-                ? 'linear-gradient(90deg, #00f2ff, #06d6a0)'
-                : 'rgba(255,255,255,0.08)',
-              color: agreed ? '#061326' : 'rgba(230,244,255,0.4)',
-              boxShadow: agreed ? '0 0 24px rgba(0,242,255,0.4)' : 'none',
+                ? `linear-gradient(135deg, ${GOLD_BRIGHT} 0%, ${GOLD} 100%)`
+                : 'rgba(255,255,255,0.04)',
+              color: agreed ? '#1a1300' : 'rgba(245,236,214,0.35)',
+              boxShadow: agreed ? '0 12px 30px rgba(212,175,90,0.32)' : 'none',
               transition: 'all 0.2s',
               opacity: saving ? 0.7 : 1,
             }}
           >
-            {saving ? 'שומר…' : 'אישור והמשך'}
+            {saving ? 'שומר…' : (isTerms ? 'אישור והמשך למדיניות פרטיות' : 'אישור והכניסה לפלטפורמה')}
           </button>
         </footer>
       </div>
