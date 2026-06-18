@@ -380,6 +380,39 @@
      legends/axes and made charts feel "missing". Each chart sets its own
      height via the height={N} prop; trust it on mobile too. */
   .recharts-cartesian-axis-tick text { font-size: 9px !important; }
+
+  /* ═══ Wave 3 — JournalDimension mobile polish (CSS-only, no rerender) ═══ */
+  [data-journal-root] {
+    padding-bottom: calc(var(--nav-total, 80px) + 16px) !important;
+  }
+  /* Gallery thumbs: fixed 140×100 → responsive cards. */
+  [data-journal-root] [style*="width: 140px"][style*="height: 100px"],
+  [data-journal-root] [style*="width:140px"][style*="height:100px"] {
+    width: min(140px, 42vw) !important;
+    height: auto !important;
+    aspect-ratio: 3 / 2 !important;
+  }
+  /* Quick-action buttons stretch full-width instead of 160px floor. */
+  [data-journal-root] [style*="min-width: 160px"],
+  [data-journal-root] [style*="minWidth: 160"],
+  [data-journal-root] [style*="min-width:160px"] {
+    min-width: 100% !important;
+    flex-basis: 100% !important;
+  }
+  /* Month-nav chevrons → ≥44×44 tap area. */
+  [data-journal-root] button[style*="width: 22px"][style*="height: 22px"],
+  [data-journal-root] button[style*="width:22px"][style*="height:22px"] {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    width: 44px !important;
+    height: 44px !important;
+    font-size: 16px !important;
+  }
+  /* Image delete "✕" button on each thumb. */
+  [data-journal-root] button[style*="width: 20px"][style*="height: 20px"] {
+    min-width: 28px !important;
+    min-height: 28px !important;
+  }
 }
 @media (min-width: 769px) and (max-width: 1024px) {
   .orca-grid-2col { grid-template-columns: 1fr 1fr !important; }
@@ -822,8 +855,16 @@ button, a, [role="button"] { -webkit-touch-callout: none; }
     z-index: 30;
   }
 
-  /* — Fix iOS rubber-band on fixed overlays — */
-  [role="dialog"] { position: fixed !important; touch-action: pan-y; }
+  /* — Wave 4.5: dialogs are fixed but only the modal BODY locks pan-y.
+     Top-level pan-y on the dialog itself blocked horizontal gestures inside
+     galleries/carousels/TraderMind. Scope to scrollable body containers only. */
+  [role="dialog"] { position: fixed !important; }
+  [role="dialog"] .modal-body,
+  [role="dialog"] [data-modal-body] {
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
 
   /* — Remove tilt 3d on touch (no hover) — */
   .orca-tilt { transform: none !important; }

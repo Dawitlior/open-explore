@@ -159,9 +159,25 @@
 6. **5.2: ServiceWorker כבר קיים** — רק לאמת cache strategy, לא לבנות מחדש.
 
 ## Wave 2.2 — DashboardAdvancedLab mobile fix (hotfix on user feedback)
-- Removed global `.recharts-responsive-container { max-height: 180px !important }` from `src/index.css` mobile block — it was clipping legends/axes site-wide and made charts feel "missing" inside the Lab.
-- `DashboardAdvancedLab.tsx` now consumes `useIsMobile()`:
-  - `minCard` grid threshold: 320 → 260 on mobile (better fit on 360–390px screens).
-  - Chart height: 220 → 200 on mobile (denser, full content visible).
-  - Heatmap cell: 16 → 14 on mobile.
-- Verified: smoke test green, sw=cw=390 on all routes.
+- Removed global recharts max-height cap (was clipping legends/axes).
+- `DashboardAdvancedLab.tsx`: useIsMobile → minCard 320→260, chartH 220→200, heatmap 16→14.
+- Verified: sw=cw=390 on all routes.
+
+## Wave 3 — JournalDimension mobile polish (CSS-only, no rerender) ✅
+- Already had `data-journal-root` on the root container.
+- Added scoped `@media (max-width:768px)` block in `src/index.css`:
+  - `padding-bottom: var(--nav-total) + 16px` — last section no longer hidden under bottom nav.
+  - Gallery thumbs `140×100` → `width:min(140px,42vw)` + `aspect-ratio:3/2`.
+  - Quick-action buttons `min-width:160` → `100%` / `flex-basis:100%` (single column).
+  - Month-nav chevrons `22×22` → `44×44` tap area, `font-size:16px`.
+  - Image delete `✕` `20×20` → `28×28`.
+- Smoke test: sw=cw=390 on Journal.
+
+## Wave 4.4 + 4.5 — Modal gesture polish ✅
+- Removed top-level `touch-action:pan-y` on `[role="dialog"]` (was blocking horizontal swipes in galleries/TraderMind).
+- Pan-y + `overscroll-behavior:contain` now scoped to `.modal-body` / `[data-modal-body]` containers.
+
+## Wave 4 remaining (requires bigger structural work)
+- 4.2 sidebar removal on mobile (audit which screens still render sidebar+bottom-nav).
+- 4.3 bottom-sheet for Settings/CommandPalette/FeatureManifest/ChartExplanation modals.
+
