@@ -68,7 +68,7 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
     setLoading(true);
     const { data, error } = await supabase
       .from('open_positions')
-      .select('id, symbol, side, size, entry_price, stop_loss, unrealized_pnl, provider, leverage')
+      .select('id, symbol, side, size, entry_price, stop_loss, unrealized_pnl, provider, leverage, account_label, updated_at')
       .eq('user_id', userId);
     if (!error && data) setRows(data as OpenPos[]);
     setLoading(false);
