@@ -510,6 +510,7 @@ export type Database = {
           account_label: string | null
           entry_price: number
           id: string
+          leverage: number
           provider: string
           side: string
           size: number
@@ -523,6 +524,7 @@ export type Database = {
           account_label?: string | null
           entry_price?: number
           id?: string
+          leverage?: number
           provider?: string
           side: string
           size?: number
@@ -536,6 +538,7 @@ export type Database = {
           account_label?: string | null
           entry_price?: number
           id?: string
+          leverage?: number
           provider?: string
           side?: string
           size?: number
