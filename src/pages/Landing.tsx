@@ -1008,58 +1008,8 @@ const Landing: React.FC = () => {
           </div>
         </section>
 
-        {/* ───── 12. PRICING ───── */}
-        <section id="pricing" className="orca-section" style={{ background: 'var(--bg-2)' }}>
-          <div className="max-w-7xl mx-auto px-5 sm:px-8">
-            <SectionHeader
-              label={t('מחירים', 'Pricing')}
-              title={isRTL
-                ? <>מסלול <span className="grad-text">לכל סוחר.</span></>
-                : <>A plan <span className="grad-text">for every trader.</span></>}
-            />
-            <div style={{ textAlign: 'center', marginTop: 20 }}>
-              <div className="orca-pill-free" style={{ fontSize: 14, padding: '10px 20px' }}>
-                🎉 {t('בתקופת ההשקה — כל המסלולים פתוחים בחינם!', 'During launch — every plan is unlocked free!')}
-              </div>
-            </div>
-            <div className="orca-pricing">
-              {[
-                { name: 'Standard',
-                  desc: t('יומן + אנליטיקה בסיסית.', 'Journal + core analytics.'),
-                  feats: [t('יומן מסחר אוטומטי','Automated trade journal'), t('KPIs ליבה','Core KPIs'), t('Calendar Hub','Calendar Hub'), t('ייבוא CSV','CSV import')] },
-                { name: 'Pro',
-                  desc: t('ניהול סיכונים, תובנות AI, תודעת סוחר.', 'Risk management, AI insights, trader mind.'),
-                  feats: [t('כל מה ש-Standard','Everything in Standard'), t('מנוע סיכונים 4-שכבתי','4-tier risk engine'), t('תובנות AI עמוקות','Deep AI insights'), t('אבחון תודעת הסוחר','Trader Mind diagnostic')], popular: true },
-                { name: 'Ultimate',
-                  desc: t('מעבדת אנליטיקה מתקדמת.', 'Advanced analytics lab.'),
-                  feats: [t('כל מה ש-Pro','Everything in Pro'), t('Quant Lab מלא','Full Quant Lab'), t('Monte Carlo + Box Plot','Monte Carlo + Box Plot'), t('Risk-Reward Frontier','Risk-Reward Frontier')] },
-              ].map((p) => (
-                <div key={p.name} className={`orca-price-card ${p.popular ? 'popular' : ''}`}>
-                  {p.popular && <div className="badge-pop">{t('המומלץ', 'Most popular')}</div>}
-                  <div>
-                    <div className="mono" style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('מסלול', 'Plan')}</div>
-                    <h3 style={{ fontSize: 26, fontWeight: 800, margin: '6px 0 6px', color: p.popular ? '#8B5CF6' : 'var(--text)' }}>{p.name}</h3>
-                    <p style={{ color: 'var(--text-muted)', fontSize: 14, lineHeight: 1.6 }}>{p.desc}</p>
-                  </div>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                      <span className="mono" style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('מחיר', 'Price')}</span>
-                      <span style={{ fontSize: 24, fontWeight: 800, color: p.popular ? '#8B5CF6' : 'var(--cyan)' }}>{t('בקרוב', 'Coming soon')}</span>
-                    </div>
-                    <div className="mono" style={{ fontSize: 11, color: 'var(--mint)', marginTop: 4 }}>{t('חינם בתקופת ההשקה', 'Free during launch')}</div>
-                  </div>
-                  <ul>{p.feats.map(f => <li key={f}>{f}</li>)}</ul>
-                  <button className="grad-btn" onClick={goApp} style={{ width: '100%', justifyContent: 'center' }}>
-                    {t('התחל בחינם', 'Start free')}
-                  </button>
-                  <div className="mono" style={{ fontSize: 10, color: 'var(--text-dim)', textAlign: 'center' }}>
-                    {t('ללא כרטיס אשראי · גישה מלאה עכשיו', 'No credit card · Full access now')}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        {/* Pricing section intentionally removed — all plans free during launch. */}
+
 
         {/* ───── 13. FINAL CTA ───── */}
         <section className="orca-section orca-final">
