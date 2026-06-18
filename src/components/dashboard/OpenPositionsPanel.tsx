@@ -35,6 +35,8 @@ interface OpenPos {
   unrealized_pnl: number;
   provider: string;
   leverage?: number | null;
+  account_label?: string | null;
+  updated_at?: string | null;
 }
 
 interface Props {
