@@ -712,6 +712,20 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                           ✨ {isRTL ? 'חשב אוטומטית:' : 'Auto-fill:'} {autoCalcPositionSize.toFixed(4)}
                         </button>
                       )}
+                      {(() => {
+                        const sz = form.positionSize || autoCalcPositionSize;
+                        const lev = Math.max(1, Number(form.leverage) || 1);
+                        const entry = Number(form.entry) || 0;
+                        if (!sz || !entry) return null;
+                        const notional = sz * entry;
+                        const margin = notional / lev;
+                        return (
+                          <div style={{ fontSize: 11, color: T.text.muted, marginTop: 6, fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.5 }}>
+                            {isRTL ? `נומינלי: $${notional.toLocaleString(undefined,{maximumFractionDigits:2})} · מרג׳ין נדרש (×${lev}): ` : `Notional: $${notional.toLocaleString(undefined,{maximumFractionDigits:2})} · Margin (×${lev}): `}
+                            <span style={{ color: T.accent.cyan, fontWeight: 700 }}>${margin.toLocaleString(undefined,{maximumFractionDigits:2})}</span>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
