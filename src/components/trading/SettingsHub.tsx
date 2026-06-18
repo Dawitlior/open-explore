@@ -1944,6 +1944,34 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
               <TraderMindDiagnosticsTab T={T} isRTL={isRTL} t={t} card={card} sectionTitle={sectionTitle} sectionHint={sectionHint} />
             )}
 
+            {tab === 'mobile-controls' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div style={card}>
+                  <h3 style={sectionTitle}><SlidersHorizontal size={14} /> {t('תיק פעיל', 'Active Portfolio')}</h3>
+                  <p style={sectionHint}>
+                    {t('בחר את תיק המסחר שאתה רוצה לראות בכל המסכים.', 'Pick which portfolio to view across every screen.')}
+                  </p>
+                  <PortfolioSwitcher isRTL={isRTL} />
+                </div>
+                <div style={card}>
+                  <h3 style={sectionTitle}><Calculator size={14} /> {t('תצוגת תוחלת', 'Expectancy Display')}</h3>
+                  <p style={sectionHint}>
+                    {t('עבור בין תצוגת כסף ($) ל-R-Multiple בכל הדאשבורד והדוחות.', 'Switch the whole dashboard between Money ($) and R-Multiple.')}
+                  </p>
+                  <DisplayModeToggle T={T} isRTL={isRTL} />
+                </div>
+                <div style={card}>
+                  <h3 style={sectionTitle}><Gauge size={14} /> {t('מצב מערכת', 'Operating Mode')}</h3>
+                  <p style={sectionHint}>
+                    {t('Beginner · Standard · Alpha — שולט בעומק המידע והכלים שמוצגים.', 'Beginner · Standard · Alpha — controls how much depth and tooling is exposed.')}
+                  </p>
+                  <ModeSwitch T={T} isRTL={isRTL} />
+                </div>
+              </div>
+            )}
+
+
+
 
 
             {tab === 'legal' && (
