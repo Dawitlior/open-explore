@@ -290,6 +290,8 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
           const riskUsd     = stop ? Math.abs(entry - stop) * size : null; // 1R in $
           const fmtUsd = (n: number) =>
             `$${n.toLocaleString(undefined, { maximumFractionDigits: n >= 100 ? 0 : 2 })}`;
+          const isExpanded = !!expandedIds[p.id];
+          const isCarousel = isMobile && rows.length > 1;
           return (
             <div key={p.id}
               style={{
@@ -300,10 +302,11 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
                 padding: 14,
                 display: 'flex', flexDirection: 'column', gap: 12,
                 animation: `orcaOpenPosCardIn 520ms cubic-bezier(0.22, 1, 0.36, 1) ${180 + idx * 80}ms both`,
+                ...(isCarousel ? { flex: '0 0 88%', scrollSnapAlign: 'center', minWidth: 0 } : {}),
               }}>
-              {/* Header: symbol + side pill */}
+              {/* Header: symbol + side pill + expand toggle */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
                   <span style={{ fontWeight: 800, color: T.text.primary, fontSize: 16, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.symbol}</span>
                   <span style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: 0.4 }}>
                     {isManual ? (isRTL ? 'ידני' : 'Manual') : p.provider}
