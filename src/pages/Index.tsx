@@ -1720,7 +1720,7 @@ const Index = () => {
             style={{
               width: '100%',
               maxWidth: 520,
-              maxHeight: '92dvh',
+              maxHeight: 'calc(100dvh - env(safe-area-inset-top, 0px) - 20px)',
               background: `linear-gradient(180deg, ${T.bg.secondary} 0%, ${T.bg.primary} 100%)`,
               borderTop: `1px solid ${T.border.medium}`,
               borderInline: `1px solid ${T.border.subtle}`,
@@ -1729,6 +1729,7 @@ const Index = () => {
               animation: 'mm-rise 0.36s cubic-bezier(0.16, 1, 0.3, 1)',
               display: 'flex', flexDirection: 'column',
               overflow: 'hidden',
+              paddingTop: 'env(safe-area-inset-top, 0px)',
               paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
             }}
           >
@@ -1767,21 +1768,9 @@ const Index = () => {
 
             {/* Scroll area */}
             <div style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '0 12px 8px', overscrollBehavior: 'contain' }} data-modal-body>
-              {/* Contextual controls — portfolio + R/$ + mode */}
-              <div style={{ padding: '4px 6px 8px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div>
-                  <div className="mm-section-label" style={{ padding: '0 6px 8px' }}>{isRTL ? 'תיק פעיל' : 'Active Portfolio'}</div>
-                  <PortfolioSwitcher isRTL={isRTL} />
-                </div>
-                <div>
-                  <div className="mm-section-label" style={{ padding: '0 6px 8px' }}>{isRTL ? 'תצוגת תוחלת' : 'Expectancy Display'}</div>
-                  <DisplayModeToggle T={T} isRTL={isRTL} />
-                </div>
-                <div>
-                  <div className="mm-section-label" style={{ padding: '0 6px 8px' }}>{isRTL ? 'מצב מערכת' : 'Operating Mode'}</div>
-                  <ModeSwitch T={T} isRTL={isRTL} />
-                </div>
-              </div>
+              {/* Note: Active Portfolio, Expectancy Display and Operating Mode moved
+                  to Settings → "Mobile Controls" (they rendered cramped here). */}
+
 
               {/* Nav */}
               <div className="mm-section-label">{isRTL ? 'ניווט' : 'Navigation'}</div>

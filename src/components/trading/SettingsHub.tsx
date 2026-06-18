@@ -32,6 +32,9 @@ import { ResetModal } from './ResetModal';
 import { scopedStorage } from '@/lib/scoped-storage';
 import { useUserPreferences } from '@/hooks/use-user-preferences';
 import { i18n as i18nStrings } from '@/lib/trading-i18n';
+import { PortfolioSwitcher } from './PortfolioSwitcher';
+import { DisplayModeToggle } from './DisplayModeToggle';
+import { ModeSwitch } from './ModeSwitch';
 
 interface SettingsHubProps {
   T: TradingTheme;
@@ -48,7 +51,7 @@ interface SettingsHubProps {
   trades: Trade[];
 }
 
-type TabId = 'account' | 'appearance' | 'theme-studio' | 'dashboard' | 'kpis' | 'risk' | 'interface' | 'quick-actions' | 'sounds' | 'trading' | 'exchanges' | 'data' | 'trader-mind' | 'install' | 'legal';
+type TabId = 'account' | 'appearance' | 'theme-studio' | 'dashboard' | 'kpis' | 'risk' | 'interface' | 'quick-actions' | 'sounds' | 'trading' | 'exchanges' | 'data' | 'trader-mind' | 'install' | 'legal' | 'mobile-controls';
 
 const ACCENT_PRESETS = [
   '#00f2ff', '#06d6a0', '#3b82f6', '#8b5cf6',
@@ -205,8 +208,9 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
     worstTrade: isR ? (stats.worstTradeR || 0) : (stats.worstTrade || 0),
   };
 
-  const NAV: { id: TabId; icon: typeof User; label: { he: string; en: string }; group: { he: string; en: string }; desc: { he: string; en: string } }[] = [
+  const NAV: { id: TabId; icon: typeof User; label: { he: string; en: string }; group: { he: string; en: string }; desc: { he: string; en: string }; mobileOnly?: boolean }[] = [
     { id: 'account', icon: User, label: { he: 'חשבון ופרופיל', en: 'Account & Profile' }, group: { he: 'אישי', en: 'Personal' }, desc: { he: 'ניהול פרטי החשבון, סיסמה ואימייל', en: 'Manage account details, password and email' } },
+    { id: 'mobile-controls', icon: SlidersHorizontal, label: { he: 'בקרות מובייל', en: 'Mobile Controls' }, group: { he: 'אישי', en: 'Personal' }, desc: { he: 'תיק פעיל, תצוגת תוחלת ומצב מערכת — בגישה מהירה במובייל', en: 'Active portfolio, expectancy display and mode — quick access on mobile' }, mobileOnly: true },
     { id: 'appearance', icon: Palette, label: { he: 'מראה ושפה', en: 'Appearance' }, group: { he: 'אישי', en: 'Personal' }, desc: { he: 'ערכת נושא, שפה ופרטיות', en: 'Theme, language and privacy' } },
     { id: 'theme-studio', icon: Brush, label: { he: 'אולפן צבע', en: 'Theme Studio' }, group: { he: 'אישי', en: 'Personal' }, desc: { he: 'בחר צבע מבטא משלך והתאם את כל אורקה אליו', en: 'Pick your own accent and re-tint all of Orca live' } },
     { id: 'dashboard', icon: LayoutDashboard, label: { he: 'סידור דאשבורד', en: 'Dashboard Layout' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'גרור, הסתר וסדר ווידג׳טים', en: 'Drag, hide and arrange widgets' } },
@@ -225,13 +229,14 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
   ];
 
   const filteredNav = useMemo(() => {
-    if (!search.trim()) return NAV;
+    const visible = NAV.filter(n => !n.mobileOnly || isMobile);
+    if (!search.trim()) return visible;
     const q = search.toLowerCase();
-    return NAV.filter(n =>
+    return visible.filter(n =>
       n.label[isRTL ? 'he' : 'en'].toLowerCase().includes(q) ||
       n.desc[isRTL ? 'he' : 'en'].toLowerCase().includes(q)
     );
-  }, [search, isRTL]);
+  }, [search, isRTL, isMobile]);
 
   const groups = Array.from(new Set(filteredNav.map(n => n.group[isRTL ? 'he' : 'en'])));
   const activeMeta = NAV.find(n => n.id === tab)!;
@@ -1938,6 +1943,34 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
             {tab === 'trader-mind' && (
               <TraderMindDiagnosticsTab T={T} isRTL={isRTL} t={t} card={card} sectionTitle={sectionTitle} sectionHint={sectionHint} />
             )}
+
+            {tab === 'mobile-controls' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div style={card}>
+                  <h3 style={sectionTitle}><SlidersHorizontal size={14} /> {t('תיק פעיל', 'Active Portfolio')}</h3>
+                  <p style={sectionHint}>
+                    {t('בחר את תיק המסחר שאתה רוצה לראות בכל המסכים.', 'Pick which portfolio to view across every screen.')}
+                  </p>
+                  <PortfolioSwitcher isRTL={isRTL} />
+                </div>
+                <div style={card}>
+                  <h3 style={sectionTitle}><Calculator size={14} /> {t('תצוגת תוחלת', 'Expectancy Display')}</h3>
+                  <p style={sectionHint}>
+                    {t('עבור בין תצוגת כסף ($) ל-R-Multiple בכל הדאשבורד והדוחות.', 'Switch the whole dashboard between Money ($) and R-Multiple.')}
+                  </p>
+                  <DisplayModeToggle T={T} isRTL={isRTL} />
+                </div>
+                <div style={card}>
+                  <h3 style={sectionTitle}><Gauge size={14} /> {t('מצב מערכת', 'Operating Mode')}</h3>
+                  <p style={sectionHint}>
+                    {t('Beginner · Standard · Alpha — שולט בעומק המידע והכלים שמוצגים.', 'Beginner · Standard · Alpha — controls how much depth and tooling is exposed.')}
+                  </p>
+                  <ModeSwitch T={T} isRTL={isRTL} />
+                </div>
+              </div>
+            )}
+
+
 
 
 

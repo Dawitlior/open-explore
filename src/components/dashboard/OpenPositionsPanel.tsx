@@ -34,6 +34,7 @@ interface OpenPos {
   stop_loss: number | null;
   unrealized_pnl: number;
   provider: string;
+  leverage?: number | null;
 }
 
 interface Props {
@@ -65,7 +66,7 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
     setLoading(true);
     const { data, error } = await supabase
       .from('open_positions')
-      .select('id, symbol, side, size, entry_price, stop_loss, unrealized_pnl, provider')
+      .select('id, symbol, side, size, entry_price, stop_loss, unrealized_pnl, provider, leverage')
       .eq('user_id', userId);
     if (!error && data) setRows(data as OpenPos[]);
     setLoading(false);
@@ -235,9 +236,11 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
           const entry = Number(p.entry_price) || 0;
           const size = Number(p.size) || 0;
           const stop = p.stop_loss && p.stop_loss > 0 ? Number(p.stop_loss) : null;
-          // What the trader actually wants to see: how much $ is on the line.
-          const positionUsd = entry * size;                          // notional
-          const riskUsd = stop ? Math.abs(entry - stop) * size : null; // 1R in $
+          const leverage = Math.max(1, Number(p.leverage) || 1);
+          // Notional = full position value. Margin = what the trader actually put up.
+          const notionalUsd = entry * size;
+          const marginUsd   = notionalUsd / leverage;
+          const riskUsd     = stop ? Math.abs(entry - stop) * size : null; // 1R in $
           const fmtUsd = (n: number) =>
             `$${n.toLocaleString(undefined, { maximumFractionDigits: n >= 100 ? 0 : 2 })}`;
           return (
@@ -257,6 +260,7 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
                   <span style={{ fontWeight: 800, color: T.text.primary, fontSize: 16, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.symbol}</span>
                   <span style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: 0.4 }}>
                     {isManual ? (isRTL ? 'ידני' : 'Manual') : p.provider}
+                    {leverage > 1 && <span style={{ marginInlineStart: 6, color: T.accent.orange, fontWeight: 700 }}>· {leverage}x</span>}
                   </span>
                 </div>
                 <span style={{ fontSize: 11, fontWeight: 800, padding: '4px 10px', borderRadius: 6, background: `${sideColor}22`, color: sideColor, letterSpacing: 0.5 }}>
@@ -264,7 +268,7 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
                 </span>
               </div>
 
-              {/* Money row: position size $ + risk $ — what users actually care about */}
+              {/* Money row: margin (what user put in) + risk $ */}
               <div style={{
                 display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8,
                 background: T.bg.secondary, border: `1px solid ${T.border.subtle}`,
@@ -272,11 +276,16 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
               }}>
                 <div>
                   <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 2, textTransform: 'uppercase', letterSpacing: 0.3 }}>
-                    {isRTL ? 'נכנסת עם' : 'Position'}
+                    {isRTL ? 'נכנסת עם' : 'Entered With'}
                   </div>
                   <div style={{ fontSize: 15, color: T.text.primary, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>
-                    {fmtUsd(positionUsd)}
+                    {fmtUsd(marginUsd)}
                   </div>
+                  {leverage > 1 && (
+                    <div style={{ fontSize: 9, color: T.text.muted, marginTop: 2, fontFamily: "'JetBrains Mono', monospace" }}>
+                      {isRTL ? `נומינלי ${fmtUsd(notionalUsd)}` : `Notional ${fmtUsd(notionalUsd)}`}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 2, textTransform: 'uppercase', letterSpacing: 0.3 }}>
@@ -287,6 +296,7 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
                   </div>
                 </div>
               </div>
+
 
               {/* Price row: entry · stop (secondary) */}
               <div style={{ display: 'flex', gap: 14, fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>
