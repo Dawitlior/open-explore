@@ -32,6 +32,9 @@ import { ResetModal } from './ResetModal';
 import { scopedStorage } from '@/lib/scoped-storage';
 import { useUserPreferences } from '@/hooks/use-user-preferences';
 import { i18n as i18nStrings } from '@/lib/trading-i18n';
+import { PortfolioSwitcher } from './PortfolioSwitcher';
+import { DisplayModeToggle } from './DisplayModeToggle';
+import { ModeSwitch } from './ModeSwitch';
 
 interface SettingsHubProps {
   T: TradingTheme;
