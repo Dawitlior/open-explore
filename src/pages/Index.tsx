@@ -1651,81 +1651,219 @@ const Index = () => {
           </div>
         </div>
       )}
-      {/* MOBILE MENU POPUP */}
+      {/* ═══ MOBILE MENU — Wave 7 native-grade bottom sheet ═══
+          Slides up from the bottom like iOS / Material You. Drag-handle,
+          identity header, contextual controls, sectioned nav rows with
+          leading icon + active pill + trailing chevron. Tapping a row
+          navigates + closes; safe-area aware; backdrop blur + dismiss. */}
       {isMobile && sbOpen && (
-        <div onClick={() => setSbOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 100, backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 'max(20px, env(safe-area-inset-top, 20px))', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)' }}>
-          <div onClick={e => e.stopPropagation()} style={{
-            width: 'min(400px, 92vw)', maxHeight: 'calc(100dvh - 140px - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px))', overflowY: 'auto',
-            background: `linear-gradient(180deg, ${T.bg.secondary} 0%, ${T.bg.primary} 100%)`,
-            border: `1px solid ${T.border.medium}`, borderRadius: T.radius.xl,
-            boxShadow: T.shadow.elevated, animation: 'scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-            padding: 12, display: 'flex', flexDirection: 'column', gap: 4,
-          }}>
+        <div
+          onClick={() => setSbOpen(false)}
+          data-mobile-menu-overlay
+          style={{
+            position: 'fixed', inset: 0, zIndex: 100,
+            background: 'rgba(2,6,15,0.62)',
+            backdropFilter: 'blur(14px) saturate(140%)',
+            WebkitBackdropFilter: 'blur(14px) saturate(140%)',
+            display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+            animation: 'mm-fade 0.22s ease-out',
+          }}
+        >
+          <style>{`
+            @keyframes mm-fade { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes mm-rise {
+              from { transform: translateY(100%); opacity: 0.4; }
+              to   { transform: translateY(0);   opacity: 1;   }
+            }
+            .mm-row {
+              position: relative; display: flex; align-items: center;
+              gap: 14px; width: 100%; padding: 14px 16px;
+              background: transparent; border: none; cursor: pointer;
+              border-radius: 16px; text-align: ${isRTL ? 'right' : 'left'};
+              transition: background 0.18s ease, transform 0.12s ease;
+              -webkit-tap-highlight-color: transparent;
+              min-height: 56px;
+            }
+            .mm-row:active { transform: scale(0.985); background: ${T.bg.tertiary || T.bg.secondary}; }
+            .mm-row[data-active="true"] {
+              background: linear-gradient(${isRTL ? '270deg' : '90deg'}, ${T.accent.cyan}1c, ${T.accent.cyan}08 80%, transparent);
+              box-shadow: inset 0 0 0 1px ${T.accent.cyan}30;
+            }
+            .mm-icon {
+              width: 36px; height: 36px; border-radius: 10px;
+              display: inline-flex; align-items: center; justify-content: center;
+              background: ${T.bg.tertiary || T.bg.secondary};
+              border: 1px solid ${T.border.subtle};
+              flex-shrink: 0; font-size: 18px;
+              color: ${T.text.secondary};
+            }
+            .mm-row[data-active="true"] .mm-icon {
+              background: linear-gradient(135deg, ${T.accent.cyan}28, ${T.accent.cyan}10);
+              border-color: ${T.accent.cyan}55;
+              color: ${T.accent.cyan};
+              box-shadow: 0 0 16px -4px ${T.accent.cyan}66;
+            }
+            .mm-label { flex: 1; font-size: 15px; font-weight: 500; color: ${T.text.primary}; letter-spacing: 0.01em; min-width: 0; }
+            .mm-row[data-active="true"] .mm-label { color: ${T.accent.cyan}; font-weight: 700; }
+            .mm-chev { color: ${T.text.muted}; opacity: 0.55; flex-shrink: 0; transform: ${isRTL ? 'scaleX(-1)' : 'none'}; }
+            .mm-section-label {
+              font-size: 10px; font-weight: 700; letter-spacing: 0.18em;
+              text-transform: uppercase; color: ${T.text.muted};
+              padding: 18px 18px 8px;
+            }
+          `}</style>
+          <div
+            onClick={e => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label={isRTL ? 'תפריט ראשי' : 'Main menu'}
+            style={{
+              width: '100%',
+              maxWidth: 520,
+              maxHeight: '92dvh',
+              background: `linear-gradient(180deg, ${T.bg.secondary} 0%, ${T.bg.primary} 100%)`,
+              borderTop: `1px solid ${T.border.medium}`,
+              borderInline: `1px solid ${T.border.subtle}`,
+              borderRadius: '24px 24px 0 0',
+              boxShadow: '0 -24px 60px -10px rgba(0,0,0,0.6), 0 -1px 0 rgba(255,255,255,0.04) inset',
+              animation: 'mm-rise 0.36s cubic-bezier(0.16, 1, 0.3, 1)',
+              display: 'flex', flexDirection: 'column',
+              overflow: 'hidden',
+              paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
+            }}
+          >
+            {/* Drag handle */}
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 4px', flexShrink: 0 }}>
+              <div style={{ width: 44, height: 5, borderRadius: 999, background: T.border.medium, opacity: 0.7 }} />
+            </div>
+
             {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 6px 12px', borderBottom: `1px solid ${T.border.subtle}`, marginBottom: 4 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                {Ico.orca}
-                <div><div style={{ fontSize: 15, fontWeight: 700, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>ORCA</div><div style={{ fontSize: 8, color: T.text.muted, letterSpacing: '0.15em', textTransform: 'uppercase' }}>Investment</div></div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 18px 14px', flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 12, background: `linear-gradient(135deg, ${T.accent.cyan}22, ${T.accent.teal || T.accent.cyan}10)`, border: `1px solid ${T.accent.cyan}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 0 16px -4px ${T.accent.cyan}55` }}>
+                  {Ico.orca}
+                </div>
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace", lineHeight: 1 }}>ORCA</div>
+                  <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: 3 }}>Investment</div>
+                </div>
               </div>
-              <button onClick={() => setSbOpen(false)} style={{ background: 'none', border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.sm, color: T.text.muted, cursor: 'pointer', padding: '4px 8px', fontSize: 16 }}>✕</button>
+              <button
+                onClick={() => setSbOpen(false)}
+                aria-label={isRTL ? 'סגור תפריט' : 'Close menu'}
+                style={{
+                  width: 36, height: 36, borderRadius: '50%',
+                  background: T.bg.tertiary || T.bg.secondary,
+                  border: `1px solid ${T.border.subtle}`,
+                  color: T.text.secondary, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 16, lineHeight: 1,
+                  WebkitTapHighlightColor: 'transparent',
+                }}
+              >
+                ✕
+              </button>
             </div>
-            {/* Mobile-only: portfolio switcher + $/R toggle (desktop shows these in the header) */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '4px 2px 8px', borderBottom: `1px solid ${T.border.subtle}`, marginBottom: 4 }}>
-              <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '0 6px' }}>
-                {isRTL ? 'תיק פעיל' : 'Active Portfolio'}
+
+            {/* Scroll area */}
+            <div style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '0 12px 8px', overscrollBehavior: 'contain' }} data-modal-body>
+              {/* Contextual controls — portfolio + R/$ + mode */}
+              <div style={{ padding: '4px 6px 8px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div>
+                  <div className="mm-section-label" style={{ padding: '0 6px 8px' }}>{isRTL ? 'תיק פעיל' : 'Active Portfolio'}</div>
+                  <PortfolioSwitcher isRTL={isRTL} />
+                </div>
+                <div>
+                  <div className="mm-section-label" style={{ padding: '0 6px 8px' }}>{isRTL ? 'תצוגת תוחלת' : 'Expectancy Display'}</div>
+                  <DisplayModeToggle T={T} isRTL={isRTL} />
+                </div>
+                <div>
+                  <div className="mm-section-label" style={{ padding: '0 6px 8px' }}>{isRTL ? 'מצב מערכת' : 'Operating Mode'}</div>
+                  <ModeSwitch T={T} isRTL={isRTL} />
+                </div>
               </div>
-              <div style={{ padding: '0 4px' }}>
-                <PortfolioSwitcher isRTL={isRTL} />
+
+              {/* Nav */}
+              <div className="mm-section-label">{isRTL ? 'ניווט' : 'Navigation'}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {nav.map(item => {
+                  const isWeekly = item.id === 'weekly-review';
+                  const isActive = page === item.id;
+                  const showBadge = isWeekly && showWeeklyReminder;
+                  return (
+                    <button
+                      key={item.id}
+                      className="mm-row"
+                      data-active={isActive ? 'true' : 'false'}
+                      onClick={() => { setPage(item.id); setSbOpen(false); if (isWeekly) dismissWeeklyReminder(); }}
+                    >
+                      <span className="mm-icon" style={isWeekly ? { color: '#FFD700', borderColor: '#FFD70044', background: 'rgba(255,215,0,0.08)' } : undefined}>
+                        {typeof item.icon === 'string' ? <span>{item.icon}</span> : item.icon}
+                        {showBadge && <ReminderBadge />}
+                      </span>
+                      <span className="mm-label" style={isWeekly && !isActive ? { color: '#FFD700' } : undefined}>{item.label}</span>
+                      <svg className="mm-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                  );
+                })}
               </div>
-              <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '6px 6px 0' }}>
-                {isRTL ? 'תצוגת תוחלת' : 'Expectancy Display'}
+
+              {/* Dimensions */}
+              <div className="mm-section-label">{isRTL ? 'מרחבים' : 'Dimensions'}</div>
+              <div style={{ padding: '0 4px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <PortalButton onClick={() => { setSbOpen(false); setActiveDimension('journal'); }} isRTL={isRTL} expanded={true} />
+                <BacktestPortalButton onClick={() => { setSbOpen(false); setActiveDimension('backtest'); }} isRTL={isRTL} expanded={true} />
               </div>
-              <div style={{ padding: '0 4px' }}>
-                <DisplayModeToggle T={T} isRTL={isRTL} />
-              </div>
-            </div>
-            <ModeSwitch T={T} isRTL={isRTL} />
-            {/* Nav items */}
-            {nav.map(item => {
-              const isWeekly = item.id === 'weekly-review';
-              const activeColor = isWeekly ? '#FFD700' : T.accent.cyan;
-              const showBadge = isWeekly && showWeeklyReminder;
-              return (
-                <button key={item.id} onClick={() => { setPage(item.id); setSbOpen(false); if (isWeekly) dismissWeeklyReminder(); }} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: page === item.id ? `${activeColor}10` : 'transparent', color: page === item.id ? activeColor : (isWeekly ? '#FFD700' : T.text.secondary), border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: page === item.id ? 600 : 400, width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: page === item.id ? `2px solid ${activeColor}` : '2px solid transparent' }}>
-                  <span style={{ position: 'relative', display: 'inline-flex' }}>
-                    {typeof item.icon === 'string' ? <span style={{ fontSize: 18 }}>{item.icon}</span> : item.icon}
-                    {showBadge && <ReminderBadge />}
+
+              {/* Quick actions */}
+              <div className="mm-section-label">{isRTL ? 'פעולות' : 'Actions'}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <button className="mm-row" onClick={() => { setSbOpen(false); setShowFeatureModal(true); }}>
+                  <span className="mm-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                   </span>
-                  <span>{item.label}</span>
+                  <span className="mm-label">{isRTL ? 'אודות המערכת' : 'About System'}</span>
+                  <svg className="mm-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                 </button>
-              );
-            })}
-            {/* Dimensions */}
-            <div style={{ padding: '4px 0', borderTop: `1px solid ${T.border.subtle}`, marginTop: 4 }}>
-              <PortalButton onClick={() => { setSbOpen(false); setActiveDimension('journal'); }} isRTL={isRTL} expanded={true} />
-              <BacktestPortalButton onClick={() => { setSbOpen(false); setActiveDimension('backtest'); }} isRTL={isRTL} expanded={true} />
-            </div>
-            {/* Bottom actions */}
-            <div style={{ padding: '4px 0', borderTop: `1px solid ${T.border.subtle}`, marginTop: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <button onClick={() => { setSbOpen(false); setShowFeatureModal(true); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: 'transparent', color: T.text.muted, border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 12 }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                <span>{isRTL ? 'אודות המערכת' : 'About System'}</span>
-              </button>
-              <button onClick={() => { setSbOpen(false); goBugBoard(); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: 'transparent', color: T.text.muted, border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 12, textAlign: isRTL ? 'right' : 'left' }}>
-                <span style={{ fontSize: 14 }}>📋</span>
-                <span>{isRTL ? 'לוח באגים' : 'Bug Board'}</span>
-              </button>
-              <button onClick={() => { setSbOpen(false); openBugReport(); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: 'transparent', color: '#f5c542', border: `1px solid #f5c54233`, borderRadius: T.radius.md, cursor: 'pointer', fontSize: 12, textAlign: isRTL ? 'right' : 'left' }}>
-                <span style={{ fontSize: 14 }}>🐛</span>
-                <span>{isRTL ? 'דווח על באג' : 'Report Bug'}</span>
-              </button>
-              <button onClick={() => { setSbOpen(false); setShowSettings(true); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 12px', background: `${T.accent.cyan}10`, border: `1px solid ${T.accent.cyan}30`, borderRadius: T.radius.md, color: T.accent.cyan, cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>
-                <span style={{ fontSize: 16 }}>⚙️</span>
-                <span>{isRTL ? 'הגדרות' : 'Settings'}</span>
-                <span style={{ marginInlineStart: 'auto', fontSize: 9, color: T.text.muted, fontWeight: 400, opacity: 0.8 }}>
-                  {isRTL ? 'נושא · שפה · פרטיות · יציאה' : 'Theme · Lang · Privacy · Logout'}
-                </span>
-              </button>
+                <button className="mm-row" onClick={() => { setSbOpen(false); goBugBoard(); }}>
+                  <span className="mm-icon">📋</span>
+                  <span className="mm-label">{isRTL ? 'לוח באגים' : 'Bug Board'}</span>
+                  <svg className="mm-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+                <button className="mm-row" onClick={() => { setSbOpen(false); openBugReport(); }}>
+                  <span className="mm-icon" style={{ color: '#f5c542', borderColor: '#f5c54244', background: 'rgba(245,197,66,0.08)' }}>🐛</span>
+                  <span className="mm-label" style={{ color: '#f5c542' }}>{isRTL ? 'דווח על באג' : 'Report Bug'}</span>
+                  <svg className="mm-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+              </div>
+
+              {/* Settings — primary CTA */}
+              <div style={{ padding: '16px 4px 8px' }}>
+                <button
+                  onClick={() => { setSbOpen(false); setShowSettings(true); }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 12, width: '100%',
+                    padding: '14px 16px', minHeight: 56,
+                    background: `linear-gradient(${isRTL ? '270deg' : '90deg'}, ${T.accent.cyan}22, ${T.accent.cyan}0a)`,
+                    border: `1px solid ${T.accent.cyan}55`,
+                    borderRadius: 16,
+                    color: T.accent.cyan, cursor: 'pointer',
+                    fontSize: 15, fontWeight: 700,
+                    boxShadow: `0 6px 22px -8px ${T.accent.cyan}66, inset 0 1px 0 rgba(255,255,255,0.04)`,
+                    textAlign: isRTL ? 'right' : 'left',
+                    WebkitTapHighlightColor: 'transparent',
+                  }}
+                >
+                  <span className="mm-icon" style={{ color: T.accent.cyan, borderColor: `${T.accent.cyan}55`, background: `${T.accent.cyan}18` }}>⚙</span>
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ display: 'block', lineHeight: 1.2 }}>{isRTL ? 'הגדרות' : 'Settings'}</span>
+                    <span style={{ display: 'block', fontSize: 10, color: T.text.muted, fontWeight: 400, marginTop: 3, letterSpacing: '0.04em' }}>
+                      {isRTL ? 'נושא · שפה · פרטיות · יציאה' : 'Theme · Lang · Privacy · Logout'}
+                    </span>
+                  </span>
+                  <svg className="mm-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>
