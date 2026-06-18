@@ -39,6 +39,10 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
   const { displayMode } = useDisplayMode();
   const unit: Unit = displayMode === 'MONEY' ? 'USD' : 'R';
   const isUSD = unit === 'USD';
+  const isMobile = useIsMobile();
+  const chartH = isMobile ? 200 : 220;
+  const minCard = isMobile ? 260 : 320;
+  const heatCell = isMobile ? 14 : 16;
   const accent = T.accent.cyan;
   const muted  = T.text.muted;
   const border = T.border.subtle;
