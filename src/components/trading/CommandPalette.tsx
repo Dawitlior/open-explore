@@ -62,6 +62,7 @@ export const CommandPalette = ({ T, commands, isOpen, onClose }: CommandPaletteP
   return (
     <div
       onClick={onClose}
+      data-bottom-sheet-overlay
       style={{
         position: 'fixed', inset: 0, zIndex: 300,
         display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '14vh',
@@ -76,7 +77,7 @@ export const CommandPalette = ({ T, commands, isOpen, onClose }: CommandPaletteP
         @keyframes cp-rise { from { opacity: 0; transform: translateY(-8px) scale(0.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
         @keyframes cp-shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
       `}</style>
-      <div onClick={e => e.stopPropagation()} style={{
+      <div onClick={e => e.stopPropagation()} data-bottom-sheet style={{
         width: '100%', maxWidth: 560,
         background: `linear-gradient(180deg, ${T.bg.card} 0%, ${T.bg.tertiary || T.bg.card} 100%)`,
         border: `1px solid ${T.accent.cyan}33`,
