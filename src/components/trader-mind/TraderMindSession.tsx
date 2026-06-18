@@ -54,7 +54,7 @@ export function TraderMindSession({ open, onClose, lang = 'he' }: Props) {
       const winRate = closed.length ? Math.round((wins / closed.length) * 100) : 0;
       const tradeData = { sampleSize: closed.length, winRate };
       iframe.contentWindow.postMessage(
-        { source: 'trader-mind-host', type: 'init', payload: { tradeData, userName } },
+        { source: 'trader-mind-host', type: 'init', payload: { tradeData, userName, lang } },
         '*',
       );
     };
