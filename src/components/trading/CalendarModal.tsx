@@ -375,7 +375,16 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
         <>
           <textarea
             value={note}
-            onChange={(e) => setNote(e.target.value)}
+            onChange={(e) => {
+              // Bug fix: when the auto-editor opened because the day had no note,
+              // `editingNote` is false. The moment the user types one character
+              // `hasNote` flips true → `showEditor` becomes false → textarea
+              // unmounts and loses focus. Promote to explicit edit mode on the
+              // first keystroke so the editor stays mounted.
+              if (!editingNote) setEditingNote(true);
+              setNote(e.target.value);
+            }}
+            onFocus={() => { if (!editingNote) setEditingNote(true); }}
             disabled={!noteLoaded}
             autoFocus={editingNote}
             placeholder={isRTL ? 'מה קרה היום? תובנות, מצב רוח, החלטות…' : 'What happened today? Insights, mood, decisions…'}
