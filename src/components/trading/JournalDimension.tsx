@@ -2916,7 +2916,7 @@ const DailyIntelligencePanel = ({ day, dir, th, onClose, onOpenJournal }: {
                           {isR ? `${trR >= 0 ? '+' : ''}${trR.toFixed(2)}R` : `${trPnl >= 0 ? '+' : ''}${trPnl.toFixed(2)}$`}
                         </span>
                       </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, fontSize: 10 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, fontSize: 10 }} className="j-grid-2col">
                         {[
                           { l: 'Entry', v: tr.entry || '—' },
                           { l: 'Exit', v: tr.exit || '—' },
