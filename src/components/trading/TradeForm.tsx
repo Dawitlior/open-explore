@@ -353,16 +353,21 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
   const panelStyle = {
     background: `linear-gradient(145deg, ${T.bg.card} 0%, ${T.bg.secondary} 52%, ${T.bg.tertiary} 100%)`,
     border: `1px solid ${T.border.medium}`,
-    borderRadius: isMobile ? `20px 20px 0 0` : `20px`,
+    // On mobile we now anchor to the TOP of the viewport (instead of bottom)
+    // so each step starts in view and users don't have to scroll up to keep
+    // entering data after focusing a field above the keyboard.
+    borderRadius: isMobile ? `0 0 20px 20px` : `20px`,
     padding: 0,
     maxWidth: isMobile ? '100%' : 720,
     width: isMobile ? '100%' : '95%',
-    maxHeight: isMobile ? '94vh' : '92vh',
+    maxHeight: isMobile ? 'calc(100dvh - env(safe-area-inset-top, 0px))' : '92vh',
     overflow: 'hidden',
     boxShadow: `0 28px 90px rgba(0,0,0,0.6), 0 0 0 1px ${T.accent.cyan}18 inset`,
     animation: 'scaleIn 0.18s ease',
     display: 'flex', flexDirection: 'column' as const,
+    marginTop: isMobile ? 'env(safe-area-inset-top, 0px)' : undefined,
   };
+
 
   // Step indicator pill
   const StepDot = ({ idx }: { idx: number }) => {
