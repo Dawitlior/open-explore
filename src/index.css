@@ -708,9 +708,9 @@ html[data-theme-transition] [class*="bg-"], html[data-theme-transition] [class*=
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left:   env(safe-area-inset-left, 0px);
   --safe-right:  env(safe-area-inset-right, 0px);
-  /* MobileBottomNav geometry — single source of truth */
-  --nav-h: 60px;
-  --nav-total: calc(var(--nav-h) + var(--safe-bottom));
+  /* MobileBottomNav geometry — Wave 6 floating capsule: 64px bar + 8px lift + 16px breathing */
+  --nav-h: 64px;
+  --nav-total: calc(var(--nav-h) + var(--safe-bottom) + 24px);
   /* Z-index scale (Wave 0.7) — replaces 14 scattered magic numbers */
   --z-dropdown: 100;
   --z-sticky: 200;
