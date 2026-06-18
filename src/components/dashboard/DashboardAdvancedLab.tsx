@@ -23,6 +23,7 @@ import {
 } from '@/components/weekly-review/lib/chart-compute';
 import { parseTradeDate } from '@/components/weekly-review/lib/week-key';
 import { useDisplayMode } from '@/lib/display-mode';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Props {
   T: TradingTheme;
