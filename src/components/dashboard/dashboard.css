@@ -387,3 +387,38 @@ html[dir="ltr"] .dash-kpi-grid .orca-metric-sub {
 .recharts-responsive-container .recharts-wrapper {
   will-change: transform;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   ADVANCED ANALYTICS LAB — mobile-safe, scoped (Wave 2.3)
+   The Lab uses inline-style cards (no .orca-chart-card class), so the
+   global recharts max-height caps in index.css (240px / 200px / 160px)
+   were clipping charts and making them appear "missing". Scoped overrides
+   restore full visibility, lock card sizing, and tighten paddings on phone.
+   ═══════════════════════════════════════════════════════════ */
+[data-advanced-lab] { width: 100%; min-width: 0; box-sizing: border-box; }
+[data-advanced-lab] > div[style*="grid"] > div { min-width: 0; }
+[data-advanced-lab] .recharts-responsive-container,
+[data-advanced-lab] .recharts-wrapper,
+[data-advanced-lab] .recharts-surface {
+  max-height: none !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+
+@media (max-width: 768px) {
+  /* Tighter card padding + denser chart titles */
+  [data-advanced-lab] > div[style*="grid"] { gap: 10px !important; }
+  [data-advanced-lab] > div[style*="grid"] > div {
+    padding: 12px !important;
+    border-radius: 12px !important;
+    overflow: hidden;
+  }
+  /* Lock chart container heights so recharts measures correctly */
+  [data-advanced-lab] .recharts-responsive-container {
+    height: 200px !important;
+    min-height: 200px !important;
+    max-height: 200px !important;
+  }
+  /* Horizontal heatmap scroll container — never bleed past card */
+  [data-advanced-lab] [style*="overflowX"] { max-width: 100%; }
+}
