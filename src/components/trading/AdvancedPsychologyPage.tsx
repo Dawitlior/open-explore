@@ -522,7 +522,7 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
 
       {/* ═══ BEHAVIORAL SIGNALS — truncated for Beginner ═══ */}
       <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'אותות התנהגותיים' : 'BEHAVIORAL SIGNALS'} />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 8, marginBottom: 4 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 8, marginBottom: 4 }}>
         {signals.slice(0, maxSignals).map((sig, i) => (
           <GlassCard T={T} key={i} style={{ borderInlineStart: `3px solid ${severityColor(sig.severity)}`, padding: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
@@ -761,7 +761,7 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
                 {/* ── DATA PROOFS — “The Metric That Doesn’t Lie” ──── */}
                 <div style={{ marginBottom: 14 }}>
                   <div style={{ fontSize: 10, color: T.text.muted, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>{isRTL ? '◆ המטריקה שלא משקרת' : '◆ THE METRIC THAT DOESN’T LIE'}</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 8 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: 8 }}>
                     {[
                       { k: isRTL ? 'תוחלת פוזיציה ($)' : 'Avg Trade ($)', v: `${deepDiag.raw.avgPnl >= 0 ? '+' : ''}$${deepDiag.raw.avgPnl.toFixed(2)}`, c: deepDiag.raw.avgPnl >= 0 ? T.accent.green : T.accent.red, sub: isRTL ? (deepDiag.raw.avgPnl < 0 ? 'אתה משלם לסחור' : 'רווח נטו פר עסקה') : (deepDiag.raw.avgPnl < 0 ? 'You pay to trade' : 'Net $ per trade') },
                       { k: isRTL ? 'כאוס סיזינג (CV)' : 'Sizing Chaos (CV)', v: `${deepDiag.raw.riskCV.toFixed(0)}%`, c: deepDiag.raw.riskCV <= 35 ? T.accent.green : deepDiag.raw.riskCV <= 60 ? T.accent.orange : T.accent.red, sub: isRTL ? 'תנודתיות גודל פוזיציה' : 'Position-size volatility' },

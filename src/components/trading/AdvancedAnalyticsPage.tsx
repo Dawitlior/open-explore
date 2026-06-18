@@ -453,7 +453,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
       </motion.div>
 
       {/* ═══ HERO KPI GRID — 8 fiat-based tiles (R-only KPIs removed) ═══ */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, marginBottom: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: 10, marginBottom: 16 }}>
         {[
           { label: isMoney ? t('ניצחון ממוצע ($)','Avg Win ($)') : t('ניצחון ממוצע (R)','Avg Win (R)'),
             value: isMoney ? <PV>{fmtVal(moneyStats.avgWin)}</PV> : <PV>{`+${stats.avgWinR.toFixed(2)}R`}</PV>,
@@ -498,7 +498,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
           <div style={{ fontSize: 10, color: T.accent.cyan, textTransform: 'uppercase', letterSpacing: '0.22em', fontWeight: 800 }}>● {t('תקציר','Snapshot')}</div>
           <div style={{ fontSize: 13, color: T.text.primary, fontWeight: 800 }}>{t('תצפיות מרכזיות','Key Observations')}</div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 160px), 1fr))', gap: 10 }}>
           {[
             { l: t('רצף ניצחונות הארוך ביותר','Longest win streak'), v: `${Math.max(0, ...streaks.filter(s => s.type === 'W').map(s => s.len))} ${t('עסקאות','trades')}`, c: T.accent.green },
             { l: t('רצף הפסדים הארוך ביותר','Longest loss streak'), v: `${Math.max(0, ...streaks.filter(s => s.type === 'L').map(s => s.len))} ${t('עסקאות','trades')}`, c: T.accent.red },
@@ -637,7 +637,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
       {showPro && registryAllows('monthlyPerformance') && monthHeat.length > 1 && (
         <GlassCard T={T} style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>{t('חום חודשי','Monthly Heat')}</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 110px), 1fr))', gap: 8 }}>
             {monthHeat.map((m, i) => {
               const v = isMoney ? m.pnl : m.r;
               return (
