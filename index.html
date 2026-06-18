@@ -3,6 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
+    <!-- iOS: prevent auto-linking of PnL numbers/dates into blue telephone links inside tables. -->
+    <meta name="format-detection" content="telephone=no, date=no, address=no, email=no" />
     <!-- Theme preboot — applies the FULL token map before first paint to prevent FOUC across midnight/indigo/platinum. -->
     <script>
       (function () {
@@ -122,7 +124,8 @@
     <link rel="apple-touch-icon" href="/orca-logo.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=Syne:wght@700;800&family=Playfair+Display:wght@600;700;800&family=Poppins:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <!-- Reduced font payload: removed unused Syne/Playfair/Space Grotesk/DM Sans (~120KB saved). Heebo kept for Hebrew. -->
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700;800&family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <title>Orca — פלטפורמת המסחר המקצועית לסוחרים ישראלים</title>
     <meta name="description" content="Orca — מערכת ניהול סיכונים, אנליטיקה התנהגותית ויומן מסחר חכם. נסה חינם 7 ימים." />
     <link rel="canonical" href="/" />
