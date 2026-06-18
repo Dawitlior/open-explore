@@ -1046,7 +1046,7 @@ const Landing: React.FC = () => {
                 <h4>{t('מוצר', 'Product')}</h4>
                 <a href="#features">{t('פיצ׳רים', 'Features')}</a>
                 <a href="#journal">{t('היומן', 'The journal')}</a>
-                <a href="#pricing">{t('מחירים', 'Pricing')}</a>
+
               </div>
               <div className="orca-footer-col">
                 <h4>{t('קהילה', 'Community')}</h4>
