@@ -26,7 +26,7 @@ type Lang = 'he' | 'en';
 const LANG_KEY = 'orca:lang-cache';
 const AUTH_LANG_OVERRIDE_KEY = 'orca:auth-lang-override';
 const PENDING_CONSENT_KEY = 'orca:pending-consent';
-const CONSENT_VERSION = '2026-06-15';
+const CONSENT_VERSION = 'v1.2_telemetry_indie';
 
 async function logConsent(userId: string) {
   try {
