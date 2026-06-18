@@ -617,33 +617,36 @@ const Landing: React.FC = () => {
               <img src={orcaLogo} alt="Orca Investment" style={{ height: 44, width: 'auto', display: 'block' }} />
             </Link>
 
-            {/* Right — Language toggle + CTA */}
+            {/* Right — Language toggle + CTA.
+                The toggle is intentionally a tiny icon-pill: browser language
+                detection in `useLang` already chooses HE/EN automatically on
+                first visit, so this only exists as a manual override. */}
             <div className="flex items-center" style={{ gap: 10, marginInlineStart: 'auto' }}>
               <button
                 onClick={toggleLang}
                 aria-label={t('החלף שפה לאנגלית', 'Switch language to Hebrew')}
                 title={t('English', 'עברית')}
                 style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  padding: '8px 12px', borderRadius: 10,
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--text-muted)',
-                  fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                  fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em',
-                  transition: 'color .15s, border-color .15s, background .15s',
-                  minHeight: 40,
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+                  padding: '4px 8px', borderRadius: 999,
+                  background: 'transparent',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  color: 'var(--text-dim)',
+                  fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                  fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.06em',
+                  transition: 'color .15s, border-color .15s',
+                  height: 26, minWidth: 42,
                 }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(34,211,238,0.35)'; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-muted)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)'; }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(34,211,238,0.4)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-dim)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.12)'; }}
               >
-                <Languages size={14} />
                 {isRTL ? 'EN' : 'עב'}
               </button>
               <button className="grad-btn" onClick={goApp} style={{ padding: '10px 18px', fontSize: 14 }}>
                 {t('כניסה למערכת', 'Enter app')}
               </button>
             </div>
+
           </div>
         </nav>
 
