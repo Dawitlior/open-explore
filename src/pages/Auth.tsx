@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Navigate, useLocation } from 'react-router-dom';
-import { Eye, EyeOff, ArrowRight, Lock, Mail, User, Languages } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, Lock, Mail, User, Languages, ShieldCheck, Sparkles, LineChart, Database } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { evaluatePassword, isValidEmail, translateAuthError } from '@/lib/auth-utils';
@@ -80,6 +80,13 @@ const COPY = {
     consentAnd: 'ואת',
     consentPrivacy: 'מדיניות הפרטיות',
     consentRequired: 'יש לאשר את תנאי השימוש ומדיניות הפרטיות כדי להמשיך',
+    typewriter: [
+      'תוחלת אמיתית במכפלות R.',
+      'ארבע שכבות הגנת סיכון.',
+      'תובנות AI מהמסחר שלך.',
+      'יומן מסחר בילינגוואלי מלא.',
+    ],
+    poweredBy: 'מופעל ע״י Orca Cloud',
   },
   en: {
     brand: 'OrcaInvestment',
@@ -120,6 +127,13 @@ const COPY = {
     consentAnd: 'and the',
     consentPrivacy: 'Privacy Policy',
     consentRequired: 'You must agree to the Terms of Service and Privacy Policy to continue',
+    typewriter: [
+      'Real expectancy in R-multiples.',
+      'Four-tier risk protection.',
+      'AI insights from your own trades.',
+      'Fully bilingual trading journal.',
+    ],
+    poweredBy: 'Powered by Orca Cloud',
   },
 } as const;
 
@@ -132,6 +146,40 @@ function writeLang(l: Lang) {
 }
 function writeAuthLangIntent(l: Lang) {
   try { localStorage.setItem(AUTH_LANG_OVERRIDE_KEY, l); } catch { /* noop */ }
+}
+
+/** Typewriter — cycles through a list of phrases with type/erase animation. */
+function useTypewriter(phrases: readonly string[], opts?: { type?: number; erase?: number; hold?: number }) {
+  const typeSpeed = opts?.type ?? 55;
+  const eraseSpeed = opts?.erase ?? 28;
+  const holdTime = opts?.hold ?? 1600;
+  const [text, setText] = useState('');
+  const [i, setI] = useState(0);
+  const [phase, setPhase] = useState<'typing' | 'holding' | 'erasing'>('typing');
+
+  useEffect(() => {
+    if (!phrases.length) return;
+    const current = phrases[i % phrases.length];
+    let to: ReturnType<typeof setTimeout>;
+    if (phase === 'typing') {
+      if (text.length < current.length) {
+        to = setTimeout(() => setText(current.slice(0, text.length + 1)), typeSpeed);
+      } else {
+        to = setTimeout(() => setPhase('holding'), 0);
+      }
+    } else if (phase === 'holding') {
+      to = setTimeout(() => setPhase('erasing'), holdTime);
+    } else {
+      if (text.length > 0) {
+        to = setTimeout(() => setText(current.slice(0, text.length - 1)), eraseSpeed);
+      } else {
+        to = setTimeout(() => { setI(v => v + 1); setPhase('typing'); }, 120);
+      }
+    }
+    return () => clearTimeout(to);
+  }, [text, phase, i, phrases, typeSpeed, eraseSpeed, holdTime]);
+
+  return text;
 }
 
 export default function AuthPage() {
@@ -152,6 +200,7 @@ export default function AuthPage() {
   });
   const c = COPY[lang];
   const isRTL = lang === 'he';
+  const typed = useTypewriter(c.typewriter);
 
   useEffect(() => {
     document.title = `${mode === 'sign-in' ? c.signIn : c.signUp} · ${c.brand}`;
@@ -257,29 +306,43 @@ export default function AuthPage() {
     } finally { setBusy(false); }
   };
 
+  const featureList = [
+    { icon: <LineChart size={14} />, label: c.feature1 },
+    { icon: <ShieldCheck size={14} />, label: c.feature2 },
+    { icon: <Sparkles size={14} />, label: c.feature3 },
+    { icon: <Database size={14} />, label: c.feature4 },
+  ];
+
   return (
     <main
       dir={isRTL ? 'rtl' : 'ltr'}
       style={{
         minHeight: '100dvh',
-        display: 'grid',
-        placeItems: 'center',
         background: INK,
         color: TEXT,
         fontFamily: "'Poppins', system-ui, sans-serif",
         position: 'relative',
         overflow: 'hidden',
-        padding: '24px 16px',
       }}
     >
-      {/* Gold aurora */}
+      <style>{`
+        @keyframes orca-idle-fadebg { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes orca-auth-rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes orca-caret-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+        @keyframes orca-aurora-drift { 0% { transform: translate(0,0); } 50% { transform: translate(-2%, 2%); } 100% { transform: translate(0,0); } }
+        .orca-caret { display:inline-block; width:2px; height:0.95em; background:${GOLD_BRIGHT}; margin-inline-start:4px; vertical-align:-2px; animation: orca-caret-blink 1s steps(1) infinite; box-shadow: 0 0 8px rgba(240,215,140,0.6); }
+        .orca-auth-grid { display:grid; grid-template-columns: 1fr; min-height:100dvh; }
+        @media (min-width: 980px) { .orca-auth-grid { grid-template-columns: 1.05fr 1fr; } }
+      `}</style>
+
+      {/* Gold aurora — global */}
       <div style={{
         position: 'absolute', inset: 0, pointerEvents: 'none',
         background: `
-          radial-gradient(900px 700px at 20% 18%, rgba(212,175,90,0.10), transparent 62%),
-          radial-gradient(700px 600px at 82% 82%, rgba(168,134,45,0.10), transparent 65%),
-          radial-gradient(500px 400px at 50% 110%, rgba(240,215,140,0.06), transparent 70%)
+          radial-gradient(900px 700px at 18% 22%, rgba(212,175,90,0.12), transparent 62%),
+          radial-gradient(700px 600px at 82% 78%, rgba(168,134,45,0.10), transparent 65%)
         `,
+        animation: 'orca-aurora-drift 18s ease-in-out infinite',
       }} />
       {/* Subtle gold mesh */}
       <div style={{
@@ -287,11 +350,6 @@ export default function AuthPage() {
         backgroundImage: 'linear-gradient(rgba(212,175,90,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(212,175,90,0.6) 1px, transparent 1px)',
         backgroundSize: '64px 64px',
         maskImage: 'radial-gradient(ellipse at center, #000 30%, transparent 78%)',
-      }} />
-      {/* Vignette */}
-      <div style={{
-        position: 'absolute', inset: 0, pointerEvents: 'none',
-        background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.55) 100%)',
       }} />
 
       {/* Top-right language toggle */}
@@ -310,250 +368,309 @@ export default function AuthPage() {
         {lang === 'he' ? 'English' : 'עברית'}
       </button>
 
-      <section
-        style={{
-          width: '100%', maxWidth: 440,
-          background: `linear-gradient(180deg, ${INK_2} 0%, ${INK} 100%)`,
-          border: `1px solid ${BORDER}`,
-          borderRadius: 24,
-          padding: 'clamp(28px, 4vw, 40px)',
-          boxShadow: '0 30px 90px rgba(0,0,0,0.7), inset 0 1px 0 rgba(240,215,140,0.08)',
-          backdropFilter: 'blur(20px)',
-          position: 'relative',
-          zIndex: 1,
-        }}
-      >
-        {/* Top gold line */}
-        <div style={{
-          position: 'absolute', top: 0, insetInlineStart: 32, insetInlineEnd: 32, height: 1,
-          background: `linear-gradient(90deg, transparent, ${GOLD}, transparent)`,
-        }} />
+      <div className="orca-auth-grid">
+        {/* ── LEFT COLUMN — Brand / Typewriter / Features (hidden on mobile) ── */}
+        <aside
+          style={{
+            display: 'none',
+            position: 'relative',
+            zIndex: 1,
+            padding: 'clamp(40px, 6vw, 72px)',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            background: `
+              linear-gradient(${isRTL ? '270deg' : '90deg'}, ${INK_3} 0%, ${INK_2} 60%, ${INK} 100%)
+            `,
+            borderInlineEnd: `1px solid ${BORDER_SOFT}`,
+          }}
+          className="orca-auth-aside"
+        >
+          <style>{`@media (min-width: 980px) { .orca-auth-aside { display: flex !important; } }`}</style>
 
-        {/* Brand — real logo */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, marginBottom: 22 }}>
-          <div style={{
-            width: 96, height: 96, position: 'relative',
-            display: 'grid', placeItems: 'center',
-            filter: 'drop-shadow(0 12px 28px rgba(212,175,90,0.32))',
-          }}>
-            <img
-              src={ORCA_LOGO_SRC}
-              alt="Orca Investment"
-              width={96}
-              height={96}
-              loading="eager"
-              decoding="async"
-              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-            />
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{
-              fontSize: 20, fontWeight: 800, letterSpacing: '0.18em',
-              color: GOLD_BRIGHT,
-              fontFamily: "'Poppins', system-ui, sans-serif",
-              lineHeight: 1,
-            }}>
-              ORCA
-            </div>
-            <div style={{
-              fontSize: 9, color: TEXT_MUTED, letterSpacing: '0.36em',
-              textTransform: 'uppercase', marginTop: 6, fontWeight: 600,
-            }}>
-              Investment
+          {/* Brand mark */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <img src={ORCA_LOGO_SRC} alt="Orca" width={56} height={56}
+              style={{ width: 56, height: 56, objectFit: 'contain', filter: 'drop-shadow(0 8px 20px rgba(212,175,90,0.35))' }} />
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '0.22em', color: GOLD_BRIGHT, lineHeight: 1 }}>ORCA</div>
+              <div style={{ fontSize: 9, color: TEXT_MUTED, letterSpacing: '0.36em', textTransform: 'uppercase', marginTop: 6, fontWeight: 600 }}>Investment</div>
             </div>
           </div>
-        </div>
 
-        {/* Segmented mode tabs — Sign in / Sign up */}
-        <div
-          role="tablist"
-          aria-label={isRTL ? 'מצב חשבון' : 'Account mode'}
-          style={{
-            display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4,
-            background: 'rgba(5,5,5,0.6)', border: `1px solid ${BORDER}`,
-            borderRadius: 12, padding: 4, marginBottom: 18,
-          }}
-        >
-          {(['sign-in', 'sign-up'] as Mode[]).map(m => {
-            const active = mode === m;
-            const label = m === 'sign-in' ? c.signInCta : c.signUpCta;
-            return (
-              <button
-                key={m}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                onClick={() => { if (mode !== m) { setMode(m); setPassword(''); } }}
-                style={{
-                  padding: '10px 12px', borderRadius: 9,
-                  border: 'none', cursor: 'pointer',
-                  fontWeight: 700, fontSize: 13, letterSpacing: '0.04em',
-                  background: active
-                    ? `linear-gradient(135deg, ${GOLD_BRIGHT} 0%, ${GOLD} 100%)`
-                    : 'transparent',
-                  color: active ? '#1a1300' : TEXT_MUTED,
-                  transition: 'background .2s, color .2s',
-                }}
-              >{label}</button>
-            );
-          })}
-        </div>
+          {/* Typewriter hero */}
+          <div style={{ display: 'grid', gap: 22, maxWidth: 520 }}>
+            <div style={{
+              fontSize: 10, letterSpacing: '0.32em', color: GOLD, fontWeight: 700,
+              textTransform: 'uppercase',
+            }}>
+              {c.tagline}
+            </div>
+            <h2 style={{
+              fontSize: 'clamp(28px, 3.6vw, 44px)',
+              lineHeight: 1.15,
+              margin: 0, fontWeight: 700, letterSpacing: '-0.02em',
+              color: TEXT,
+              minHeight: '2.6em',
+            }}>
+              <span style={{
+                background: `linear-gradient(135deg, ${GOLD_BRIGHT}, ${GOLD})`,
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}>{typed}</span>
+              <span className="orca-caret" />
+            </h2>
 
-        <header style={{ marginBottom: 18, textAlign: 'center' }}>
-          <div style={{
-            fontSize: 10, color: GOLD, fontWeight: 700, letterSpacing: '0.28em',
-            textTransform: 'uppercase', marginBottom: 6,
-          }}>
-            {mode === 'sign-in' ? c.welcomeBack : c.getStarted}
+            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 12 }}>
+              {featureList.map((f, idx) => (
+                <li key={idx} style={{
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '10px 14px', borderRadius: 12,
+                  border: `1px solid ${BORDER_SOFT}`,
+                  background: 'rgba(7,9,15,0.55)',
+                  fontSize: 13, color: TEXT,
+                }}>
+                  <span style={{
+                    width: 28, height: 28, borderRadius: 8,
+                    display: 'grid', placeItems: 'center', color: GOLD_BRIGHT,
+                    background: 'rgba(212,175,90,0.10)', border: `1px solid ${BORDER_SOFT}`,
+                  }}>{f.icon}</span>
+                  <span style={{ fontWeight: 500 }}>{f.label}</span>
+                </li>
+              ))}
+            </ul>
           </div>
-          <h1 style={{ fontSize: 20, margin: 0, fontWeight: 700, letterSpacing: '-0.01em', color: TEXT }}>
-            {mode === 'sign-in' ? c.signIn : c.signUp}
-          </h1>
-          <p style={{ marginTop: 5, color: TEXT_MUTED, fontSize: 12 }}>
-            {mode === 'sign-in' ? c.signInSub : c.signUpSub}
-          </p>
-        </header>
 
+          {/* Footer signature */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            fontSize: 10, color: TEXT_MUTED, letterSpacing: '0.22em', textTransform: 'uppercase',
+          }}>
+            <span>🔒 {c.secured}</span>
+            <span>{c.poweredBy}</span>
+          </div>
+        </aside>
 
-        <button
-          onClick={handleGoogle}
-          disabled={busy || !consent}
-          title={!consent ? c.consentRequired : undefined}
-          style={{
-            width: '100%', padding: '13px 16px', borderRadius: 12,
-            border: `1px solid ${BORDER}`,
-            background: 'rgba(245,236,214,0.97)', color: '#0a0a0a',
-            fontWeight: 600, fontSize: 14, cursor: busy ? 'wait' : (!consent ? 'not-allowed' : 'pointer'),
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-            opacity: (busy || !consent) ? 0.5 : 1, transition: 'transform .15s, box-shadow .15s',
-          }}
-          onMouseEnter={e => { if (consent && !busy) { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = `0 12px 28px rgba(212,175,90,0.25)`; } }}
-          onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
-        >
-          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.4 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.3 35.4 26.8 36 24 36c-5.3 0-9.7-3.3-11.3-8l-6.5 5C9.5 39.5 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.6l6.2 5.2c-.4.4 6.6-4.8 6.6-14.8 0-1.3-.1-2.3-.4-3.5z"/></svg>
-          {c.continueGoogle}
-        </button>
+        {/* ── RIGHT COLUMN — Form ── */}
+        <section style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 'clamp(20px, 4vw, 48px)',
+          position: 'relative', zIndex: 1,
+        }}>
+          <div
+            style={{
+              width: '100%', maxWidth: 440,
+              background: `linear-gradient(180deg, ${INK_2} 0%, ${INK} 100%)`,
+              border: `1px solid ${BORDER}`,
+              borderRadius: 24,
+              padding: 'clamp(24px, 4vw, 36px)',
+              boxShadow: '0 30px 90px rgba(0,0,0,0.7), inset 0 1px 0 rgba(240,215,140,0.08)',
+              backdropFilter: 'blur(20px)',
+              position: 'relative',
+            }}
+          >
+            {/* Top gold line */}
+            <div style={{
+              position: 'absolute', top: 0, insetInlineStart: 32, insetInlineEnd: 32, height: 1,
+              background: `linear-gradient(90deg, transparent, ${GOLD}, transparent)`,
+            }} />
 
+            {/* Mobile-only brand strip (the left column is hidden under 980px) */}
+            <div className="orca-auth-mobilebrand" style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginBottom: 18,
+            }}>
+              <style>{`@media (min-width: 980px) { .orca-auth-mobilebrand { display: none !important; } }`}</style>
+              <img src={ORCA_LOGO_SRC} alt="Orca Investment" width={64} height={64}
+                style={{ width: 64, height: 64, objectFit: 'contain', filter: 'drop-shadow(0 10px 22px rgba(212,175,90,0.35))' }} />
+              <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '0.22em', color: GOLD_BRIGHT, lineHeight: 1 }}>ORCA</div>
+              <div style={{ fontSize: 8.5, color: TEXT_MUTED, letterSpacing: '0.36em', textTransform: 'uppercase', fontWeight: 600 }}>Investment</div>
+            </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0' }}>
-          <div style={{ flex: 1, height: 1, background: BORDER_SOFT }} />
-          <span style={{ color: TEXT_MUTED, fontSize: 11, letterSpacing: '0.24em' }}>{c.or}</span>
-          <div style={{ flex: 1, height: 1, background: BORDER_SOFT }} />
-        </div>
-
-        <form onSubmit={handleEmailSubmit} style={{ display: 'grid', gap: 10 }}>
-          {mode === 'sign-up' && (
-            <IconInput icon={<User size={16} />}>
-              <input type="text" value={displayName} onChange={e => setDisplayName(e.target.value)}
-                placeholder={c.displayName} autoComplete="name" style={baseInput} />
-            </IconInput>
-          )}
-          <IconInput icon={<Mail size={16} />}>
-            <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
-              placeholder={c.email} autoComplete="email" dir="ltr" style={baseInput} />
-          </IconInput>
-
-          <IconInput icon={<Lock size={16} />}>
-            <input
-              type={showPassword ? 'text' : 'password'} required minLength={6}
-              value={password} onChange={e => setPassword(e.target.value)}
-              placeholder={mode === 'sign-up' ? c.passwordHint : c.password}
-              autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'}
-              dir="ltr" style={baseInput}
-            />
-            <button type="button" onClick={() => setShowPassword(v => !v)}
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            {/* Segmented mode tabs */}
+            <div
+              role="tablist"
+              aria-label={isRTL ? 'מצב חשבון' : 'Account mode'}
               style={{
-                background: 'none', border: 'none', color: TEXT_MUTED, cursor: 'pointer',
-                padding: 6, display: 'inline-flex', alignItems: 'center',
+                display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4,
+                background: 'rgba(5,5,5,0.6)', border: `1px solid ${BORDER}`,
+                borderRadius: 12, padding: 4, marginBottom: 18,
               }}
             >
-              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-            </button>
-          </IconInput>
-
-          {mode === 'sign-up' && password.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} dir="ltr">
-              <div style={{ flex: 1, height: 4, background: 'rgba(212,175,90,0.12)', borderRadius: 999, overflow: 'hidden' }}>
-                <div style={{
-                  width: `${(strength.score / 4) * 100}%`, height: '100%',
-                  background: strength.color, transition: 'width .25s ease, background .25s ease',
-                }} />
-              </div>
-              <span style={{ fontSize: 11, color: strength.color, fontFamily: "'IBM Plex Mono', monospace", minWidth: 70, textAlign: 'right' }}>
-                {strength.label}
-              </span>
+              {(['sign-in', 'sign-up'] as Mode[]).map(m => {
+                const active = mode === m;
+                const label = m === 'sign-in' ? c.signInCta : c.signUpCta;
+                return (
+                  <button
+                    key={m}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => { if (mode !== m) { setMode(m); setPassword(''); } }}
+                    style={{
+                      padding: '10px 12px', borderRadius: 9,
+                      border: 'none', cursor: 'pointer',
+                      fontWeight: 700, fontSize: 13, letterSpacing: '0.04em',
+                      background: active
+                        ? `linear-gradient(135deg, ${GOLD_BRIGHT} 0%, ${GOLD} 100%)`
+                        : 'transparent',
+                      color: active ? '#1a1300' : TEXT_MUTED,
+                      transition: 'background .2s, color .2s',
+                    }}
+                  >{label}</button>
+                );
+              })}
             </div>
-          )}
 
-          <button type="submit" disabled={busy || !consent} title={!consent ? c.consentRequired : undefined}
-            style={{
-              marginTop: 8, padding: '14px 16px', borderRadius: 12, border: `1px solid ${GOLD_DEEP}`,
-              background: `linear-gradient(135deg, ${GOLD_BRIGHT} 0%, ${GOLD} 50%, ${GOLD_DEEP} 100%)`,
-              color: '#1a1300', fontWeight: 800, fontSize: 14, letterSpacing: '0.04em',
-              textTransform: 'uppercase',
-              cursor: busy ? 'wait' : 'pointer',
-              boxShadow: '0 12px 28px rgba(212,175,90,0.32), inset 0 1px 0 rgba(255,255,255,0.35)',
-              opacity: busy ? 0.65 : 1,
-              transition: 'transform .15s, box-shadow .15s',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            }}
-            onMouseEnter={e => { if (!busy) { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 16px 36px rgba(212,175,90,0.45), inset 0 1px 0 rgba(255,255,255,0.4)'; } }}
-            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(212,175,90,0.32), inset 0 1px 0 rgba(255,255,255,0.35)'; }}
-          >
-            {busy ? '…' : (mode === 'sign-in' ? c.submitSignIn : c.submitSignUp)}
-            {!busy && <ArrowRight size={15} style={{ transform: isRTL ? 'scaleX(-1)' : undefined }} />}
-          </button>
+            <header style={{ marginBottom: 18, textAlign: 'center' }}>
+              <div style={{
+                fontSize: 10, color: GOLD, fontWeight: 700, letterSpacing: '0.28em',
+                textTransform: 'uppercase', marginBottom: 6,
+              }}>
+                {mode === 'sign-in' ? c.welcomeBack : c.getStarted}
+              </div>
+              <h1 style={{ fontSize: 20, margin: 0, fontWeight: 700, letterSpacing: '-0.01em', color: TEXT }}>
+                {mode === 'sign-in' ? c.signIn : c.signUp}
+              </h1>
+              <p style={{ marginTop: 5, color: TEXT_MUTED, fontSize: 12 }}>
+                {mode === 'sign-in' ? c.signInSub : c.signUpSub}
+              </p>
+            </header>
 
-          {mode === 'sign-in' && (
-            <button type="button" onClick={handleForgotPassword} disabled={busy}
-              style={{ background: 'none', border: 'none', color: TEXT_MUTED, cursor: 'pointer', fontSize: 12, padding: 4, marginTop: 2 }}>
-              {c.forgot}
+            <button
+              onClick={handleGoogle}
+              disabled={busy || !consent}
+              title={!consent ? c.consentRequired : undefined}
+              style={{
+                width: '100%', padding: '13px 16px', borderRadius: 12,
+                border: `1px solid ${BORDER}`,
+                background: 'rgba(245,236,214,0.97)', color: '#0a0a0a',
+                fontWeight: 600, fontSize: 14, cursor: busy ? 'wait' : (!consent ? 'not-allowed' : 'pointer'),
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                opacity: (busy || !consent) ? 0.5 : 1, transition: 'transform .15s, box-shadow .15s',
+              }}
+              onMouseEnter={e => { if (consent && !busy) { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = `0 12px 28px rgba(212,175,90,0.25)`; } }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
+            >
+              <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.4 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.3 35.4 26.8 36 24 36c-5.3 0-9.7-3.3-11.3-8l-6.5 5C9.5 39.5 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.6l6.2 5.2c-.4.4 6.6-4.8 6.6-14.8 0-1.3-.1-2.3-.4-3.5z"/></svg>
+              {c.continueGoogle}
             </button>
-          )}
-        </form>
 
-        {/* Slim consent row — appears under the form, not above */}
-        <label
-          htmlFor="orca-consent"
-          style={{
-            display: 'flex', alignItems: 'center', gap: 8,
-            marginTop: 14, padding: '8px 4px',
-            cursor: 'pointer',
-            textAlign: isRTL ? 'right' : 'left',
-          }}
-        >
-          <input
-            id="orca-consent"
-            type="checkbox"
-            checked={consent}
-            onChange={e => setConsent(e.target.checked)}
-            style={{
-              width: 14, height: 14,
-              accentColor: GOLD, cursor: 'pointer', flexShrink: 0,
-            }}
-          />
-          <span style={{ fontSize: 11, color: TEXT_MUTED, lineHeight: 1.5 }}>
-            {c.consentPrefix}{' '}
-            <a href="/terms" target="_blank" rel="noopener noreferrer"
-               style={{ color: GOLD_BRIGHT, fontWeight: 700, textDecoration: 'underline' }}>
-              {c.consentTerms}
-            </a>{' '}
-            {c.consentAnd}{' '}
-            <a href="/privacy" target="_blank" rel="noopener noreferrer"
-               style={{ color: GOLD_BRIGHT, fontWeight: 700, textDecoration: 'underline' }}>
-              {c.consentPrivacy}
-            </a>
-          </span>
-        </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0' }}>
+              <div style={{ flex: 1, height: 1, background: BORDER_SOFT }} />
+              <span style={{ color: TEXT_MUTED, fontSize: 11, letterSpacing: '0.24em' }}>{c.or}</span>
+              <div style={{ flex: 1, height: 1, background: BORDER_SOFT }} />
+            </div>
 
-        <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${BORDER_SOFT}`, textAlign: 'center' }}>
-          <div style={{ fontSize: 10, color: TEXT_MUTED, letterSpacing: '0.18em', textTransform: 'uppercase' }}>
-            🔒 {c.secured}
+            <form onSubmit={handleEmailSubmit} style={{ display: 'grid', gap: 10 }}>
+              {mode === 'sign-up' && (
+                <IconInput icon={<User size={16} />}>
+                  <input type="text" value={displayName} onChange={e => setDisplayName(e.target.value)}
+                    placeholder={c.displayName} autoComplete="name" style={baseInput} />
+                </IconInput>
+              )}
+              <IconInput icon={<Mail size={16} />}>
+                <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
+                  placeholder={c.email} autoComplete="email" dir="ltr" style={baseInput} />
+              </IconInput>
+
+              <IconInput icon={<Lock size={16} />}>
+                <input
+                  type={showPassword ? 'text' : 'password'} required minLength={6}
+                  value={password} onChange={e => setPassword(e.target.value)}
+                  placeholder={mode === 'sign-up' ? c.passwordHint : c.password}
+                  autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'}
+                  dir="ltr" style={baseInput}
+                />
+                <button type="button" onClick={() => setShowPassword(v => !v)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  style={{
+                    background: 'none', border: 'none', color: TEXT_MUTED, cursor: 'pointer',
+                    padding: 6, display: 'inline-flex', alignItems: 'center',
+                  }}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </IconInput>
+
+              {mode === 'sign-up' && password.length > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} dir="ltr">
+                  <div style={{ flex: 1, height: 4, background: 'rgba(212,175,90,0.12)', borderRadius: 999, overflow: 'hidden' }}>
+                    <div style={{
+                      width: `${(strength.score / 4) * 100}%`, height: '100%',
+                      background: strength.color, transition: 'width .25s ease, background .25s ease',
+                    }} />
+                  </div>
+                  <span style={{ fontSize: 11, color: strength.color, fontFamily: "'IBM Plex Mono', monospace", minWidth: 70, textAlign: 'right' }}>
+                    {strength.label}
+                  </span>
+                </div>
+              )}
+
+              <button type="submit" disabled={busy || !consent} title={!consent ? c.consentRequired : undefined}
+                style={{
+                  marginTop: 8, padding: '14px 16px', borderRadius: 12, border: `1px solid ${GOLD_DEEP}`,
+                  background: `linear-gradient(135deg, ${GOLD_BRIGHT} 0%, ${GOLD} 50%, ${GOLD_DEEP} 100%)`,
+                  color: '#1a1300', fontWeight: 800, fontSize: 14, letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
+                  cursor: busy ? 'wait' : 'pointer',
+                  boxShadow: '0 12px 28px rgba(212,175,90,0.32), inset 0 1px 0 rgba(255,255,255,0.35)',
+                  opacity: busy ? 0.65 : 1,
+                  transition: 'transform .15s, box-shadow .15s',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                }}
+                onMouseEnter={e => { if (!busy) { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 16px 36px rgba(212,175,90,0.45), inset 0 1px 0 rgba(255,255,255,0.4)'; } }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(212,175,90,0.32), inset 0 1px 0 rgba(255,255,255,0.35)'; }}
+              >
+                {busy ? '…' : (mode === 'sign-in' ? c.submitSignIn : c.submitSignUp)}
+                {!busy && <ArrowRight size={15} style={{ transform: isRTL ? 'scaleX(-1)' : undefined }} />}
+              </button>
+
+              {mode === 'sign-in' && (
+                <button type="button" onClick={handleForgotPassword} disabled={busy}
+                  style={{ background: 'none', border: 'none', color: TEXT_MUTED, cursor: 'pointer', fontSize: 12, padding: 4, marginTop: 2 }}>
+                  {c.forgot}
+                </button>
+              )}
+            </form>
+
+            {/* Slim consent row */}
+            <label
+              htmlFor="orca-consent"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                marginTop: 14, padding: '8px 4px',
+                cursor: 'pointer',
+                textAlign: isRTL ? 'right' : 'left',
+              }}
+            >
+              <input
+                id="orca-consent"
+                type="checkbox"
+                checked={consent}
+                onChange={e => setConsent(e.target.checked)}
+                style={{ width: 14, height: 14, accentColor: GOLD, cursor: 'pointer', flexShrink: 0 }}
+              />
+              <span style={{ fontSize: 11, color: TEXT_MUTED, lineHeight: 1.5 }}>
+                {c.consentPrefix}{' '}
+                <a href="/terms" target="_blank" rel="noopener noreferrer"
+                   style={{ color: GOLD_BRIGHT, fontWeight: 700, textDecoration: 'underline' }}>
+                  {c.consentTerms}
+                </a>{' '}
+                {c.consentAnd}{' '}
+                <a href="/privacy" target="_blank" rel="noopener noreferrer"
+                   style={{ color: GOLD_BRIGHT, fontWeight: 700, textDecoration: 'underline' }}>
+                  {c.consentPrivacy}
+                </a>
+              </span>
+            </label>
+
+            <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${BORDER_SOFT}`, textAlign: 'center' }}>
+              <div style={{ fontSize: 10, color: TEXT_MUTED, letterSpacing: '0.18em', textTransform: 'uppercase' }}>
+                🔒 {c.secured}
+              </div>
+            </div>
           </div>
-        </div>
-
-      </section>
+        </section>
+      </div>
 
       {idleGate && (
         <div
@@ -568,10 +685,6 @@ export default function AuthPage() {
             animation: 'orca-idle-fadebg 0.35s ease forwards',
           }}
         >
-          <style>{`
-            @keyframes orca-idle-fadebg { from { opacity: 0; } to { opacity: 1; } }
-            @keyframes orca-auth-rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-          `}</style>
           <div
             onClick={e => e.stopPropagation()}
             style={{
