@@ -270,12 +270,16 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
             ? {
                 display: 'flex', gap: 12, overflowX: 'auto', overflowY: 'hidden',
                 scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch',
+                touchAction: 'pan-x',
+                overscrollBehaviorX: 'contain',
+                scrollBehavior: 'smooth',
                 paddingBottom: 8, marginInline: -4, paddingInline: 4,
                 scrollbarWidth: 'none',
               }
             : { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }
         }>
-        <style>{`.orca-openpos-carousel::-webkit-scrollbar{display:none}`}</style>
+        <style>{`.orca-openpos-carousel::-webkit-scrollbar{display:none}.orca-openpos-carousel>*{will-change:transform}`}</style>
+
         {rows.map((p, idx) => {
           const isLong = String(p.side).toLowerCase().startsWith('l');
           const sideColor = isLong ? T.accent.green : T.accent.red;
