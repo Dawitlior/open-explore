@@ -15,8 +15,8 @@ export const ConsoleBackButton = () => {
       aria-label="Back to Orca"
       style={{
         position: "fixed",
-        top: "calc(12px + env(safe-area-inset-top))",
-        insetInlineStart: 12,
+        bottom: "calc(16px + env(safe-area-inset-bottom))",
+        insetInlineStart: 16,
         zIndex: 100000,
         display: "inline-flex",
         alignItems: "center",
