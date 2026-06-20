@@ -1226,7 +1226,7 @@ function RKPI({ label, value, suffix }) {
 function RSection({ n, title, lead, children }) {
   return (<section style={{ marginTop: 26, breakInside: "avoid" }}><div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><div style={{ width: 26, height: 26, borderRadius: 7, background: C.accent, color: C.chipFg, display: "grid", placeItems: "center", fontFamily: MONO, fontWeight: 700, fontSize: 12, flexShrink: 0 }}>{n}</div><h2 style={{ margin: 0, fontFamily: SANS, fontWeight: 700, fontSize: 16, color: C.ink }}>{title}</h2></div>{lead && <p style={{ margin: "0 0 12px", fontFamily: SANS, fontSize: 12.8, lineHeight: 1.62, color: C.ink2, maxWidth: 780 }}>{lead}</p>}{children}</section>);
 }
-function BoardReport({ t, lang, traders, eng, onClose }) {
+function BoardReport({ t, lang, traders, eng, aiUsage, funnel, onClose }) {
   const he = lang === "he";
   const n = Math.max(traders.length, 1);
   const [seed, setSeed] = useState(() => Math.floor(Math.random() * 1e6));
