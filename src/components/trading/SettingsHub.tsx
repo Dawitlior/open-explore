@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useEffect } from 'react';
+import { useState, useRef, useMemo, useEffect, type CSSProperties } from 'react';
 import {
   User, Palette, LayoutDashboard, Calculator, Shield, SlidersHorizontal, Database,
   X, LogOut, Mail, KeyRound, Send, Download, Eye, EyeOff, Globe, GripVertical,
