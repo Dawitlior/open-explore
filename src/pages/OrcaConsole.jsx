@@ -1588,7 +1588,7 @@ export default function OrcaConsole() {
   };
 
   return (
-    <div key={theme} dir={rtl ? "rtl" : "ltr"} style={{ minHeight: "100vh", background: C.appBg, fontFamily: SANS, color: C.ink, display: "grid", gridTemplateColumns: collapsed ? "62px 1fr" : "62px 234px 1fr" }} className="orca-shell">
+    <div key={theme} dir={rtl ? "rtl" : "ltr"} lang={lang} style={{ direction: rtl ? "rtl" : "ltr", unicodeBidi: "isolate", minHeight: "100vh", background: C.appBg, fontFamily: SANS, color: C.ink, display: "grid", gridTemplateColumns: collapsed ? "62px 1fr" : "62px 234px 1fr" }} className="orca-shell">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Heebo:wght@400;500;600;700&display=swap');
         @media (max-width: 1080px){ .orca-shell{ grid-template-columns: 210px 1fr !important; } .orca-rail{ display:none !important; } }
