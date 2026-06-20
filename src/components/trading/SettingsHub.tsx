@@ -981,6 +981,21 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                     {t('פתח העדפות עוגיות', 'Open cookie preferences')}
                   </button>
                 </div>
+
+                <BenchmarkOptInCard
+                  T={T}
+                  isRTL={isRTL}
+                  t={t}
+                  userId={auth.user?.id}
+                  card={card}
+                  sectionTitle={sectionTitle}
+                  sectionHint={sectionHint}
+                  sans={sans}
+                />
+              </div>
+            )}
+            {false && (
+              <div>
               </div>
             )}
 
