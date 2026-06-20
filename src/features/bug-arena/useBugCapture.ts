@@ -29,6 +29,7 @@ import type {
   CaptureContext,
 } from './bugArenaTypes';
 
+export type CaptureStage = 'idle' | 'picking' | 'draft' | 'submitting';
 export type CaptureMode = 'region' | 'full';
 export type CaptureStatus = 'idle' | 'capturing' | 'ready' | 'skipped' | 'error';
 
