@@ -1411,18 +1411,93 @@ const EN_LABEL = {
 };
 const groupOfPage = (pid) => GROUPS.find((g) => g.pages.some((p) => p[0] === pid)) || GROUPS[0];
 
+/* ── live → UI shape mappers (RPC payloads → DATA seed shape) ── */
+function tierByDb(s) {
+  const k = String(s || "").toLowerCase();
+  if (k === "standard") return TIER[0];
+  if (k === "advanced") return TIER[1];
+  if (k === "ultimate") return TIER[2];
+  return TIER.find((t) => t.id.toLowerCase() === k) || TIER[0];
+}
+function archByDb(s) {
+  const k = String(s || "").toLowerCase();
+  if (!k || k === "unprofiled") return UNPROF;
+  return ARCH.find((a) => a.id === k) || UNPROF;
+}
+function mapMatrixTraders(rows) {
+  return rows.map((r, i) => ({
+    id: i, code: r.code, arch: archByDb(r.archetype), tier: tierByDb(r.tier),
+    subState: SUBSTATE[1], asset: { id: "unknown", en: "—", he: "—" },
+    tenure: 0, lastActive: Number(r.last_active_days || 0),
+    tradesTotal: 0, sessionsWk: Number(r.sessions_wk || 0),
+    winRate: 0, rulesRate: 0, overrideRate: 0, journal: 0,
+    revenge: 0, overZ: 0, riskDrift: 0,
+    expectancy: Number(r.expectancy || 0), expSlope: 0, expTrend: Array(12).fill(0),
+    breaches: { trade: 0, daily: 0, weekly: 0, monthly: 0 },
+    recovery: 0, kill: 0, readiness: 100,
+    prov: { manual: 0.34, import: 0.33, sync: 0.33 },
+    discipline: Number(r.discipline || 0), edgeHealth: 0, regimeFit: 0, orca: 0,
+    retentionRisk: Number(r.retention_risk || 0),
+    behaviouralRisk: Number(r.behavioural_risk || 0),
+    valuePotential: Number(r.value_potential || 0),
+    ltv: 0,
+  }));
+}
+function mapEngagement(rows) {
+  return rows.map((r, i) => ({
+    w: i, dau: 0, wau: 0, mau: 0, stickiness: 0,
+    signups: Number(r.signups || 0), deletions: 0, churn: 0,
+    trades: Number(r.trades || 0), active: Number(r.active || 0),
+    breachT: 0, breachD: 0, breachW: 0, breachM: 0,
+    kill: 0, recovery: 0, conv: 0,
+    tStd: 0, tAdv: 0, tPro: 0, tUlt: 0,
+  }));
+}
+function mapHeat(rows) {
+  return rows.map((r) => ({ d: Number(r.dow || 0), h: Number(r.hour || 0), v: Number(r.n || 0) }));
+}
+function mapCohorts(rows) {
+  // RPC returns [{cohort,size,avg_alive_weeks}]; UI expects {c, start, curve[8]}
+  // Approximate curve via exponential decay anchored at avg_alive_weeks.
+  return (rows || []).slice(0, 8).map((r, i) => {
+    const size = Number(r.size || 0);
+    const aw = Math.max(0.5, Number(r.avg_alive_weeks || 1));
+    const k = 1 / aw;
+    return { c: i, start: size, curve: Array.from({ length: 8 }, (_, w) => Math.round(size * Math.exp(-w * k))) };
+  });
+}
+function mapFunnel(rows) {
+  const labels = {
+    signup: { en: "Sign-up", he: "הרשמה" },
+    profiled: { en: "Profiled", he: "פרופיילינג" },
+    first_trade: { en: "First trade", he: "טרייד ראשון" },
+    active_30d: { en: "Active at 30d", he: "פעיל ב-30 יום" },
+  };
+  return (rows || []).map((r) => ({
+    id: r.stage, en: labels[r.stage]?.en || r.stage, he: labels[r.stage]?.he || r.stage,
+    n: Number(r.n || 0),
+  }));
+}
+
 export default function OrcaConsole() {
   const live = useAdminLive();
   const D = useMemo(() => {
     const base = DATA;
+    const traders = live.traderMatrix && live.traderMatrix.length ? mapMatrixTraders(live.traderMatrix) : base.traders;
+    const engagement = live.engagementWeekly && live.engagementWeekly.length ? mapEngagement(live.engagementWeekly) : base.engagement;
+    const heatRaw = live.activityHeatmap && live.activityHeatmap.length ? mapHeat(live.activityHeatmap) : base.heat;
+    const hmax = heatRaw.length ? Math.max(...heatRaw.map((c) => c.v)) || 1 : base.hmax;
+    const cohorts = live.retentionCohorts && live.retentionCohorts.length ? mapCohorts(live.retentionCohorts) : base.cohorts;
+    const funnel = live.activationFunnel && live.activationFunnel.length ? mapFunnel(live.activationFunnel) : base.funnel;
     return {
       ...base,
+      traders, engagement, heat: heatRaw, hmax, cohorts, funnel,
       storage: live.storage?.storage?.length ? live.storage.storage : base.storage,
       storageTrend: live.storage?.storageTrend?.length ? live.storage.storageTrend : base.storageTrend,
       dbStats: live.storage?.dbStats ? live.storage.dbStats : base.dbStats,
       aiUsage: live.aiUsage && live.aiUsage.length ? live.aiUsage : base.aiUsage,
     };
-  }, [live.storage, live.aiUsage]);
+  }, [live]);
   const [lang, setLang] = useState("en");
   const [active, setActive] = useState("overview");
   const [picked, setPicked] = useState(null);
