@@ -29,13 +29,17 @@ import type {
   CaptureContext,
 } from './bugArenaTypes';
 
-export type CaptureStage = 'idle' | 'picking' | 'draft' | 'submitting';
+export type CaptureMode = 'region' | 'full';
+export type CaptureStatus = 'idle' | 'capturing' | 'ready' | 'skipped' | 'error';
 
 export interface DraftState {
   pick: PickResult | null;
   shot: Shot | null;
   context: CaptureContext;
   section: string;
+  /** Live status of the screenshot job (modal opens immediately). */
+  captureStatus: CaptureStatus;
+  captureMode: CaptureMode;
 }
 
 export interface SubmitArgs {
@@ -68,6 +72,11 @@ export interface UseBugCapture {
 
   /** One-click "this is my bug too" from the dedup suggestions. */
   joinSimilar: (bug: BugWithMeta) => Promise<void>;
+
+  /** Re-capture using a different mode (region vs. full-screen). */
+  recapture: (mode: CaptureMode) => Promise<void>;
+  /** User chose to skip the image entirely; text-only submit. */
+  skipCapture: () => void;
 
   /** Final submit -> creates bug + uploads images. Returns the new bug id. */
   submit: (args: SubmitArgs) => Promise<string | null>;
