@@ -1312,7 +1312,7 @@ function BoardReport({ t, lang, traders, eng, aiUsage, funnel, onClose }) {
     : `Methodology: all figures are aggregated across consented traders and fully anonymized (k-anonymity ≥ 25); no identities, accounts or PII are included. Headline behavioural scores (discipline, edge-health, retention/behavioural risk, value potential) are modeled composites derived from trade-level signals, not raw fields. Generated ${new Date().toLocaleString("en-US")}.`;
 
   return (
-    <div className="orca-report" dir={he ? "rtl" : "ltr"} style={{ position: "fixed", inset: 0, zIndex: 200, background: C.appBg, overflowY: "auto" }}>
+    <div className="orca-report" dir={he ? "rtl" : "ltr"} lang={lang} style={{ direction: he ? "rtl" : "ltr", unicodeBidi: "isolate", position: "fixed", inset: 0, zIndex: 200, background: C.appBg, overflowY: "auto" }}>
       <div className="orca-report-bar" style={{ position: "sticky", top: 0, zIndex: 5, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "12px 20px", background: C.panel, borderBottom: `1px solid ${C.border}` }}>
         <span style={{ fontFamily: SANS, fontWeight: 600, fontSize: 13, color: C.ink2 }}>{he ? "מחולל דוח · נתונים מצרפיים" : "Report generator · aggregate data"}</span>
         <div style={{ display: "flex", gap: 8 }}>
