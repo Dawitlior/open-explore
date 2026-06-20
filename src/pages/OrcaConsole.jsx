@@ -1425,23 +1425,34 @@ function archByDb(s) {
   return ARCH.find((a) => a.id === k) || UNPROF;
 }
 function mapMatrixTraders(rows) {
-  return rows.map((r, i) => ({
-    id: i, code: r.code, arch: archByDb(r.archetype), tier: tierByDb(r.tier),
-    subState: SUBSTATE[1], asset: { id: "unknown", en: "—", he: "—" },
-    tenure: 0, lastActive: Number(r.last_active_days || 0),
-    tradesTotal: 0, sessionsWk: Number(r.sessions_wk || 0),
-    winRate: 0, rulesRate: 0, overrideRate: 0, journal: 0,
-    revenge: 0, overZ: 0, riskDrift: 0,
-    expectancy: Number(r.expectancy || 0), expSlope: 0, expTrend: Array(12).fill(0),
-    breaches: { trade: 0, daily: 0, weekly: 0, monthly: 0 },
-    recovery: 0, kill: 0, readiness: 100,
-    prov: { manual: 0.34, import: 0.33, sync: 0.33 },
-    discipline: Number(r.discipline || 0), edgeHealth: 0, regimeFit: 0, orca: 0,
-    retentionRisk: Number(r.retention_risk || 0),
-    behaviouralRisk: Number(r.behavioural_risk || 0),
-    valuePotential: Number(r.value_potential || 0),
-    ltv: 0,
-  }));
+  return rows.map((r, i) => {
+    const assetId = String(r.asset_class || "unknown").toLowerCase();
+    const ASSET_LABEL = { crypto: { en: "Crypto", he: "קריפטו" }, fx: { en: "FX", he: "מט\"ח" }, equities: { en: "Equities", he: "מניות" }, futures: { en: "Futures", he: "פיוצ׳רס" }, options: { en: "Options", he: "אופציות" }, other: { en: "Other", he: "אחר" }, unknown: { en: "—", he: "—" } };
+    const al = ASSET_LABEL[assetId] || ASSET_LABEL.unknown;
+    const provId = String(r.source_type || "manual").toLowerCase();
+    const provMix = provId === "api_sync" ? { manual: 0, import: 0, sync: 1 } : provId === "csv_import" ? { manual: 0, import: 1, sync: 0 } : { manual: 1, import: 0, sync: 0 };
+    const subId = String(r.sub_status || "active").toLowerCase();
+    const subState = SUBSTATE.find((s) => s.id === subId) || SUBSTATE[1];
+    const trend = Array.isArray(r.exp_trend) && r.exp_trend.length ? r.exp_trend.map(Number) : Array(12).fill(0);
+    const expTrend = trend.length >= 12 ? trend.slice(-12) : [...Array(12 - trend.length).fill(0), ...trend];
+    return {
+      id: i, code: r.code, arch: archByDb(r.archetype), tier: tierByDb(r.tier),
+      subState, asset: { id: assetId, en: al.en, he: al.he },
+      tenure: 0, lastActive: Number(r.last_active_days || 0),
+      tradesTotal: 0, sessionsWk: Number(r.sessions_wk || 0),
+      winRate: Number(r.win_rate || 0), rulesRate: 0, overrideRate: 0, journal: 0,
+      revenge: Number(r.revenge_rate || 0), overZ: Number(r.over_z || 0), riskDrift: 0,
+      expectancy: Number(r.expectancy || 0), expSlope: Number(r.exp_slope || 0), expTrend,
+      breaches: { trade: Number(r.breach_trade || 0), daily: Number(r.breach_daily || 0), weekly: Number(r.breach_weekly || 0), monthly: Number(r.breach_monthly || 0) },
+      recovery: 0, kill: 0, readiness: Number(r.readiness ?? 100),
+      prov: provMix,
+      discipline: Number(r.discipline || 0), edgeHealth: 0, regimeFit: 0, orca: 0,
+      retentionRisk: Number(r.retention_risk || 0),
+      behaviouralRisk: Number(r.behavioural_risk || 0),
+      valuePotential: Number(r.value_potential || 0),
+      ltv: 0,
+    };
+  });
 }
 function mapEngagement(rows) {
   return rows.map((r, i) => ({
