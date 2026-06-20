@@ -12,6 +12,7 @@ import {
   Globe, Users, Target, Flame, Clock, Database, KeyRound, CheckCircle2, Zap,
   Terminal, Play, Copy, Check, Filter, Sun, Moon, PanelLeft, FileText,
 } from "lucide-react";
+import { useAdminLive } from "@/hooks/use-admin-live";
 
 /* ══════════════════════════════════════════════════════════════════════════
    ORCA CONSOLE · Administrative Command Centre for OrcaInvestment OS
@@ -1401,7 +1402,17 @@ const GROUPS = [
 const groupOfPage = (pid) => GROUPS.find((g) => g.pages.some((p) => p[0] === pid)) || GROUPS[0];
 
 export default function OrcaConsole() {
-  const D = DATA;
+  const live = useAdminLive();
+  const D = useMemo(() => {
+    const base = DATA;
+    return {
+      ...base,
+      storage: live.storage?.storage?.length ? live.storage.storage : base.storage,
+      storageTrend: live.storage?.storageTrend?.length ? live.storage.storageTrend : base.storageTrend,
+      dbStats: live.storage?.dbStats ? live.storage.dbStats : base.dbStats,
+      aiUsage: live.aiUsage && live.aiUsage.length ? live.aiUsage : base.aiUsage,
+    };
+  }, [live.storage, live.aiUsage]);
   const [lang, setLang] = useState("en");
   const [active, setActive] = useState("overview");
   const [picked, setPicked] = useState(null);
@@ -1423,7 +1434,7 @@ export default function OrcaConsole() {
   const weeks = { "7": 2, "30": 5, "90": 13, "12": 24 }[F.range] || 24;
   const eng = useMemo(() => D.engagement.slice(-weeks), [D.engagement, weeks]);
 
-  const props = { t, lang, traders: filtered, eng, heat: D.heat, hmax: D.hmax, cohorts: D.cohorts, funnel: D.funnel, diagTier: D.diagTier, ttft: D.ttft, aiUsage: D.aiUsage, storage: D.storage, storageTrend: D.storageTrend, dbStats: D.dbStats, jumpFn, onPick: setPicked };
+  const props = { t, lang, traders: filtered, eng, heat: D.heat, hmax: D.hmax, cohorts: D.cohorts, funnel: D.funnel, diagTier: D.diagTier, ttft: D.ttft, aiUsage: D.aiUsage, storage: D.storage, storageTrend: D.storageTrend, dbStats: D.dbStats, jumpFn, onPick: setPicked, live };
   const SECTION = {
     overview: <Overview {...props} />, activity: <CommunityActivity {...props} />, retention: <Retention {...props} />,
     activation: <Activation {...props} />, subs: <Subscriptions {...props} />, mind: <Mind {...props} />,
@@ -1593,6 +1604,10 @@ export default function OrcaConsole() {
             <Select lang={lang} value={F.tier} onChange={(v) => setF({ ...F, tier: v })} options={tierOpts} />
           </div>
           <span style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: SANS, fontSize: 11.5, color: C.ink3 }}><RefreshCw size={12} />{t("updated")} {new Date().toLocaleTimeString(rtl ? "he-IL" : "en-US", { hour: "2-digit", minute: "2-digit" })}</span>
+          <span title={live.error || ""} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 8px", borderRadius: 99, border: `1px solid ${live.loading ? C.borderStrong : (live.error ? C.neg : C.pos)}`, background: live.loading ? C.panelAlt : (live.error ? "#FEE2E2" : "#ECFDF5"), color: live.loading ? C.ink3 : (live.error ? C.neg : C.pos), fontFamily: MONO, fontSize: 10.5, fontWeight: 600 }}>
+            <span style={{ width: 6, height: 6, borderRadius: 99, background: live.loading ? C.ink3 : (live.error ? C.neg : C.pos) }} />
+            {live.loading ? "LIVE…" : `LIVE 2/13 · ${(live.storage ? 1 : 0) + (live.aiUsage ? 1 : 0)}/2 RPC OK`}
+          </span>
         </div>
 
         <main style={{ padding: "22px", maxWidth: 1340, width: "100%" }}>
