@@ -17,6 +17,7 @@ interface Props {
  */
 export function DisplayModeToggle({ T, isRTL, compact }: Props) {
   const { displayMode, setDisplayMode, locked, hiddenCount, totalCount } = useDisplayMode();
+  const isMobile = useIsMobile();
   const sans = "'Poppins', sans-serif";
   const mono = "'IBM Plex Mono', monospace";
   const isMoney = displayMode === 'MONEY';
