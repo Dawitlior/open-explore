@@ -66,11 +66,18 @@ export const BestWorstWindowChart = ({ T, trades, isRTL, tt }: Props) => {
     );
   }
 
-  const renderBars = (rows: { name: string; value: number }[]) => (
+  const renderBars = (rows: { name: string; value: number }[], xKind: 'day' | 'hour') => (
     <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={rows} margin={{ top: 8, right: 8, bottom: 4, left: 0 }}>
+      <BarChart data={rows} margin={{ top: 8, right: 8, bottom: 28, left: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-        <XAxis dataKey="name" tick={{ fill: T.text.muted, fontSize: 10 }} />
+        <XAxis
+          dataKey="name"
+          tick={{ fill: T.text.muted, fontSize: 10 }}
+          interval={0}
+          height={36}
+          angle={xKind === 'hour' ? -35 : 0}
+          textAnchor={xKind === 'hour' ? 'end' : 'middle'}
+        />
         <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} width={42} tickFormatter={formatAxis} />
         <Tooltip
           contentStyle={tt}
@@ -100,6 +107,12 @@ export const BestWorstWindowChart = ({ T, trades, isRTL, tt }: Props) => {
 
   return (
     <div className="bw-window-root" style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
+      <style>{`
+        @media (max-width: 640px) {
+          .bw-window-chart-cell { min-height: 220px; }
+          .bw-window-chart-cell .bw-window-chart-canvas { height: 200px !important; }
+        }
+      `}</style>
       <div className="bw-window-highlights" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 6 }}>
         <Highlight label={isRTL ? 'יום הכי טוב' : 'Best day'} win={data.bestDay?.name} val={data.bestDay?.value} />
         <Highlight label={isRTL ? 'יום הכי גרוע' : 'Worst day'} win={data.worstDay?.name} val={data.worstDay?.value} />
@@ -111,15 +124,16 @@ export const BestWorstWindowChart = ({ T, trades, isRTL, tt }: Props) => {
           <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 2 }}>
             {isRTL ? 'לפי יום' : 'By day'}
           </div>
-          <div style={{ height: 150, width: '100%' }}>{renderBars(data.days)}</div>
+          <div className="bw-window-chart-canvas" style={{ height: 180, width: '100%' }}>{renderBars(data.days, 'day')}</div>
         </div>
         <div className="bw-window-chart-cell">
           <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 2 }}>
             {isRTL ? 'לפי שעה' : 'By hour'}
           </div>
-          <div style={{ height: 150, width: '100%' }}>{renderBars(data.hours)}</div>
+          <div className="bw-window-chart-canvas" style={{ height: 180, width: '100%' }}>{renderBars(data.hours, 'hour')}</div>
         </div>
       </div>
     </div>
   );
 };
+
