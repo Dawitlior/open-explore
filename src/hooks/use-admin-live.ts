@@ -44,8 +44,22 @@ export type TraderMatrixRow = {
   behavioural_risk: number;
   value_potential: number;
   expectancy: number;
+  win_rate?: number;
   sessions_wk: number;
   last_active_days: number;
+  // Wave-3 deep fields
+  asset_class?: string;
+  source_type?: string;
+  readiness?: number;
+  sub_status?: string;
+  breach_trade?: number;
+  breach_daily?: number;
+  breach_weekly?: number;
+  breach_monthly?: number;
+  exp_slope?: number;
+  revenge_rate?: number;
+  over_z?: number;
+  exp_trend?: number[];
 };
 
 export type EngagementWeek = { week: string; active: number; signups: number; trades: number };
