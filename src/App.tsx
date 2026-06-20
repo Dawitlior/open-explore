@@ -37,6 +37,8 @@ import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
 
 const BugBoardPage = lazy(() => import("./pages/BugBoardPage"));
+const OrcaConsolePage = lazy(() => import("./pages/OrcaConsole"));
+import { RequireAdmin } from "@/components/RequireAdmin";
 
 /**
  * Mounts BugArenaProvider only when the user is signed in.
@@ -45,7 +47,7 @@ const BugBoardPage = lazy(() => import("./pages/BugBoardPage"));
 const BugArenaMount = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
   const location = useLocation();
-  const suppressedRoutes = ['/welcome', '/auth', '/reset-password', '/terms', '/privacy', '/accessibility'];
+  const suppressedRoutes = ['/welcome', '/auth', '/reset-password', '/terms', '/privacy', '/accessibility', '/console'];
   const suppressed = suppressedRoutes.some((p) => location.pathname.startsWith(p));
 
   if (!user) return <>{children}</>;
@@ -169,6 +171,18 @@ const App = () => (
                     <Suspense fallback={<div style={{ padding: 24, color: '#94a3b8', fontFamily: 'monospace' }}>Loading audit…</div>}>
                       <RegistryAuditPanel />
                     </Suspense>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/console"
+                element={
+                  <RequireAuth>
+                    <RequireAdmin>
+                      <Suspense fallback={<div style={{ padding: 24, color: '#94a3b8', fontFamily: 'monospace' }}>Loading console…</div>}>
+                        <OrcaConsolePage />
+                      </Suspense>
+                    </RequireAdmin>
                   </RequireAuth>
                 }
               />
