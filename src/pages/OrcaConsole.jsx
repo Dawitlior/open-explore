@@ -1710,7 +1710,7 @@ export default function OrcaConsole() {
       </div>
 
       <Drawer t={t} lang={lang} x={picked} onClose={() => setPicked(null)} />
-      {reportOpen && <BoardReport t={t} lang={lang} traders={filtered} eng={D.engagement} onClose={() => setReportOpen(false)} />}
+      {reportOpen && <BoardReport t={t} lang={lang} traders={filtered} eng={D.engagement} aiUsage={D.aiUsage} funnel={D.funnel} onClose={() => setReportOpen(false)} />}
     </div>
   );
 }
