@@ -1402,7 +1402,17 @@ const GROUPS = [
 const groupOfPage = (pid) => GROUPS.find((g) => g.pages.some((p) => p[0] === pid)) || GROUPS[0];
 
 export default function OrcaConsole() {
-  const D = DATA;
+  const live = useAdminLive();
+  const D = useMemo(() => {
+    const base = DATA;
+    return {
+      ...base,
+      storage: live.storage?.storage?.length ? live.storage.storage : base.storage,
+      storageTrend: live.storage?.storageTrend?.length ? live.storage.storageTrend : base.storageTrend,
+      dbStats: live.storage?.dbStats ? live.storage.dbStats : base.dbStats,
+      aiUsage: live.aiUsage && live.aiUsage.length ? live.aiUsage : base.aiUsage,
+    };
+  }, [live.storage, live.aiUsage]);
   const [lang, setLang] = useState("en");
   const [active, setActive] = useState("overview");
   const [picked, setPicked] = useState(null);
@@ -1424,7 +1434,7 @@ export default function OrcaConsole() {
   const weeks = { "7": 2, "30": 5, "90": 13, "12": 24 }[F.range] || 24;
   const eng = useMemo(() => D.engagement.slice(-weeks), [D.engagement, weeks]);
 
-  const props = { t, lang, traders: filtered, eng, heat: D.heat, hmax: D.hmax, cohorts: D.cohorts, funnel: D.funnel, diagTier: D.diagTier, ttft: D.ttft, aiUsage: D.aiUsage, storage: D.storage, storageTrend: D.storageTrend, dbStats: D.dbStats, jumpFn, onPick: setPicked };
+  const props = { t, lang, traders: filtered, eng, heat: D.heat, hmax: D.hmax, cohorts: D.cohorts, funnel: D.funnel, diagTier: D.diagTier, ttft: D.ttft, aiUsage: D.aiUsage, storage: D.storage, storageTrend: D.storageTrend, dbStats: D.dbStats, jumpFn, onPick: setPicked, live };
   const SECTION = {
     overview: <Overview {...props} />, activity: <CommunityActivity {...props} />, retention: <Retention {...props} />,
     activation: <Activation {...props} />, subs: <Subscriptions {...props} />, mind: <Mind {...props} />,
