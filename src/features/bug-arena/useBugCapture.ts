@@ -308,6 +308,19 @@ export function useBugCapture(
     [api, draft, currentUserId, cancel, config]
   );
 
+  const recapture = useCallback(
+    async (mode: CaptureMode) => {
+      const d = draft;
+      if (!d) return;
+      await runCapture(d.pick, mode);
+    },
+    [draft, runCapture],
+  );
+
+  const skipCapture = useCallback(() => {
+    setDraft((d) => (d ? { ...d, shot: null, captureStatus: 'skipped' } : d));
+  }, []);
+
   return {
     stage,
     draft,
@@ -319,6 +332,8 @@ export function useBugCapture(
     quickCapture,
     cancel,
     joinSimilar,
+    recapture,
+    skipCapture,
     submit,
   };
 }
