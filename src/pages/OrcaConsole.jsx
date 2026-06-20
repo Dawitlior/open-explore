@@ -1399,6 +1399,16 @@ const GROUPS = [
   { id: "data", label: "grpData", icon: Terminal, pages: [["queries", "navQueries", Terminal]] },
   { id: "ops", label: "grpOps", icon: FileCheck, pages: [["quality", "navQuality", FileCheck], ["system", "navSystem", Server]] },
 ];
+/* Sidebar labels stay in English regardless of UI language (admin convention). */
+const EN_LABEL = {
+  grpEngage: "Engagement", grpLifecycle: "Lifecycle", grpBehavior: "Behaviour & Risk",
+  grpIntel: "Intelligence", grpInfra: "AI & Infrastructure", grpData: "Data", grpOps: "Operations",
+  navOverview: "Command Overview", navActivity: "Community Activity", navRetention: "Retention & Cohorts",
+  navActivation: "Activation", navSubs: "Subscriptions", navMind: "Behavioural Diagnostics",
+  navRisk: "Risk Engine", navPerf: "Performance & Edge", navMatrix: "Trader Matrix",
+  navBench: "Aggregate Benchmarks", navAI: "AI Usage", navStorage: "Database & Storage",
+  navQueries: "Query Console", navQuality: "Data Quality", navSystem: "System & Access",
+};
 const groupOfPage = (pid) => GROUPS.find((g) => g.pages.some((p) => p[0] === pid)) || GROUPS[0];
 
 export default function OrcaConsole() {
