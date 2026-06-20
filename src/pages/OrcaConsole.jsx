@@ -12,6 +12,7 @@ import {
   Globe, Users, Target, Flame, Clock, Database, KeyRound, CheckCircle2, Zap,
   Terminal, Play, Copy, Check, Filter, Sun, Moon, PanelLeft, FileText,
 } from "lucide-react";
+import { useAdminLive } from "@/hooks/use-admin-live";
 
 /* ══════════════════════════════════════════════════════════════════════════
    ORCA CONSOLE · Administrative Command Centre for OrcaInvestment OS
