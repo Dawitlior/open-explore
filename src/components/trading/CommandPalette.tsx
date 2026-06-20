@@ -65,7 +65,8 @@ export const CommandPalette = ({ T, commands, isOpen, onClose }: CommandPaletteP
       data-bottom-sheet-overlay
       style={{
         position: 'fixed', inset: 0, zIndex: 300,
-        display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '14vh',
+        display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+        padding: '14vh 12px 0',
         background: 'radial-gradient(ellipse at top, rgba(8,14,28,0.65) 0%, rgba(0,0,0,0.78) 80%)',
         backdropFilter: 'blur(18px) saturate(140%)',
         WebkitBackdropFilter: 'blur(18px) saturate(140%)',

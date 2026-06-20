@@ -1254,7 +1254,17 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                     </p>
 
                     <button
-                      onClick={() => { try { window.dispatchEvent(new Event('orca:open-command-palette')); } catch {} }}
+                      onClick={() => {
+                        // On mobile (and desktop) close SettingsHub first so the palette
+                        // gets the full viewport — otherwise the modal stacks behind the
+                        // settings drawer and the user sees a clipped, non-responsive layout.
+                        onClose();
+                        // Defer one frame so the close animation can start before the
+                        // palette mounts on top — keeps the transition smooth.
+                        requestAnimationFrame(() => {
+                          try { window.dispatchEvent(new Event('orca:open-command-palette')); } catch { /* noop */ }
+                        });
+                      }}
                       style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
                         width: '100%', padding: '14px 16px', borderRadius: T.radius.md,
@@ -1946,27 +1956,93 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
 
             {tab === 'mobile-controls' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div style={card}>
-                  <h3 style={sectionTitle}><SlidersHorizontal size={14} /> {t('תיק פעיל', 'Active Portfolio')}</h3>
-                  <p style={sectionHint}>
-                    {t('בחר את תיק המסחר שאתה רוצה לראות בכל המסכים.', 'Pick which portfolio to view across every screen.')}
-                  </p>
-                  <PortfolioSwitcher isRTL={isRTL} />
+                {/* Hero header */}
+                <div style={{
+                  padding: '16px 18px', borderRadius: T.radius.md,
+                  background: `linear-gradient(135deg, ${T.accent.cyan}1a, ${T.bg.secondary})`,
+                  border: `1px solid ${T.accent.cyan}33`,
+                  display: 'flex', alignItems: 'center', gap: 12,
+                }}>
+                  <div style={{
+                    width: 40, height: 40, borderRadius: 10,
+                    background: `linear-gradient(135deg, ${T.accent.cyan}33, ${T.accent.cyan}11)`,
+                    border: `1px solid ${T.accent.cyan}55`,
+                    display: 'grid', placeItems: 'center', flexShrink: 0,
+                  }}>
+                    <SlidersHorizontal size={18} color={T.accent.cyan} />
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: T.accent.cyan, letterSpacing: '0.18em', textTransform: 'uppercase' }}>
+                      {t('בקרות מובייל', 'Mobile Controls')}
+                    </div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: T.text.primary, marginTop: 2 }}>
+                      {t('כל המתגים הקריטיים בלחיצה אחת', 'Every critical switch, one tap away')}
+                    </div>
+                    <div style={{ fontSize: 11, color: T.text.muted, marginTop: 2, lineHeight: 1.5 }}>
+                      {t('שלוט בתיק הפעיל, יחידת התצוגה ועומק המערכת — ישירות מההגדרות.', 'Switch portfolio, display unit and operating depth — straight from settings.')}
+                    </div>
+                  </div>
                 </div>
-                <div style={card}>
-                  <h3 style={sectionTitle}><Calculator size={14} /> {t('תצוגת תוחלת', 'Expectancy Display')}</h3>
-                  <p style={sectionHint}>
-                    {t('עבור בין תצוגת כסף ($) ל-R-Multiple בכל הדאשבורד והדוחות.', 'Switch the whole dashboard between Money ($) and R-Multiple.')}
-                  </p>
-                  <DisplayModeToggle T={T} isRTL={isRTL} />
-                </div>
-                <div style={card}>
-                  <h3 style={sectionTitle}><Gauge size={14} /> {t('מצב מערכת', 'Operating Mode')}</h3>
-                  <p style={sectionHint}>
-                    {t('Beginner · Standard · Alpha — שולט בעומק המידע והכלים שמוצגים.', 'Beginner · Standard · Alpha — controls how much depth and tooling is exposed.')}
-                  </p>
-                  <ModeSwitch T={T} isRTL={isRTL} />
-                </div>
+
+                {/* Sectioned control rows */}
+                {[
+                  {
+                    icon: SlidersHorizontal,
+                    title: t('תיק פעיל', 'Active Portfolio'),
+                    hint: t('בחר את תיק המסחר שאתה רוצה לראות בכל המסכים.', 'Pick which portfolio to view across every screen.'),
+                    body: <PortfolioSwitcher isRTL={isRTL} />,
+                  },
+                  {
+                    icon: Calculator,
+                    title: t('תצוגת תוחלת', 'Expectancy Display'),
+                    hint: t('עבור בין תצוגת כסף ($) ל-R-Multiple בכל הדאשבורד והדוחות.', 'Switch the whole dashboard between Money ($) and R-Multiple.'),
+                    body: <DisplayModeToggle T={T} isRTL={isRTL} />,
+                  },
+                  {
+                    icon: Gauge,
+                    title: t('מצב מערכת', 'Operating Mode'),
+                    hint: t('Beginner · Standard · Alpha — שולט בעומק המידע והכלים שמוצגים.', 'Beginner · Standard · Alpha — controls how much depth and tooling is exposed.'),
+                    body: <ModeSwitch T={T} isRTL={isRTL} />,
+                  },
+                ].map((row, i) => {
+                  const Icon = row.icon;
+                  return (
+                    <div key={i} style={{
+                      ...card,
+                      padding: 0, overflow: 'hidden',
+                    }}>
+                      <div style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '12px 14px',
+                        borderBottom: `1px solid ${T.border.subtle}`,
+                        background: T.bg.secondary,
+                      }}>
+                        <div style={{
+                          width: 28, height: 28, borderRadius: 7,
+                          background: T.bg.tertiary, border: `1px solid ${T.border.subtle}`,
+                          display: 'grid', placeItems: 'center', flexShrink: 0,
+                        }}>
+                          <Icon size={14} color={T.accent.cyan} />
+                        </div>
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: T.text.primary }}>{row.title}</div>
+                          <div style={{ fontSize: 10.5, color: T.text.muted, marginTop: 1, lineHeight: 1.45 }}>{row.hint}</div>
+                        </div>
+                        <div style={{
+                          fontFamily: mono, fontSize: 9, fontWeight: 700, color: T.text.muted,
+                          padding: '2px 7px', borderRadius: 6,
+                          background: T.bg.tertiary, border: `1px solid ${T.border.subtle}`,
+                          letterSpacing: '0.14em',
+                        }}>
+                          {String(i + 1).padStart(2, '0')}
+                        </div>
+                      </div>
+                      <div style={{ padding: 14 }}>
+                        {row.body}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
 
