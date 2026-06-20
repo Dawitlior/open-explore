@@ -417,9 +417,8 @@ export interface Shot {
   height: number;
 }
 
-/** Capture the current viewport. If `highlight` is given, a ring is drawn
- *  on the screenshot around that rect. Returns null if html2canvas is
- *  unavailable or capture fails (caller should degrade gracefully). */
+/** Capture the current viewport (used only when the user explicitly chooses
+ *  "צלם מסך מלא"). Default flow uses {@link captureElementRegion} instead. */
 export async function captureViewport(
   highlight?: ElementRect | null,
   accent = '#f5c542'
@@ -429,14 +428,15 @@ export async function captureViewport(
   try {
     html2canvas = (await import('html2canvas')).default;
   } catch {
-    // dependency not installed — graceful no-op
     return null;
   }
 
   try {
-    const scale = Math.min(2, window.devicePixelRatio || 1);
+    const isMobile = window.innerWidth < 768;
+    // Cap scale on mobile to avoid OOM on long pages.
+    const scale = isMobile ? 1.5 : Math.min(2, window.devicePixelRatio || 1);
     const canvas = await html2canvas(document.body, {
-      backgroundColor: null,
+      backgroundColor: '#0b111b',
       scale,
       useCORS: true,
       logging: false,
@@ -477,6 +477,92 @@ export async function captureViewport(
     return null;
   }
 }
+
+/** Walk up until we find an ancestor whose computed background is opaque.
+ *  Falls back to the original element. Used so element-region captures
+ *  don't look like floating text on transparent. */
+function nearestOpaqueAncestor(el: Element): Element {
+  let node: Element | null = el;
+  while (node && node !== document.body) {
+    const cs = getComputedStyle(node);
+    const bg = cs.backgroundColor;
+    if (bg && bg !== 'transparent' && !/rgba\([^)]+,\s*0(\.0+)?\s*\)/.test(bg)) {
+      return node;
+    }
+    node = node.parentElement;
+  }
+  return el;
+}
+
+/** Capture the selected element + small padding only. Smaller render = no OOM
+ *  on mobile, and no full-page relayout = the image is guaranteed to be the
+ *  element the user picked. */
+export async function captureElementRegion(
+  el: Element,
+  opts: { padding?: number; accent?: string } = {}
+): Promise<Shot | null> {
+  if (typeof window === 'undefined' || !el) return null;
+  let html2canvas: typeof import('html2canvas').default;
+  try {
+    html2canvas = (await import('html2canvas')).default;
+  } catch {
+    return null;
+  }
+
+  try {
+    const padding = opts.padding ?? 28;
+    // Scroll the element fully into view, then re-measure after a frame.
+    try { (el as HTMLElement).scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' as ScrollBehavior }); } catch { (el as HTMLElement).scrollIntoView(); }
+    await new Promise((r) => requestAnimationFrame(() => r(null)));
+
+    // Render the nearest opaque ancestor so the image has a real background.
+    const target = nearestOpaqueAncestor(el) as HTMLElement;
+    const rect = target.getBoundingClientRect();
+
+    const isMobile = window.innerWidth < 768;
+    const scale = Math.min(isMobile ? 1.75 : 2, window.devicePixelRatio || 1);
+
+    const canvas = await html2canvas(target, {
+      backgroundColor: '#0b111b',
+      scale,
+      useCORS: true,
+      logging: false,
+      ignoreElements: (n) => n.hasAttribute(OVERLAY_ATTR),
+    });
+
+    // Pad: render onto a slightly larger canvas with theme background.
+    const padPx = Math.round(padding * scale);
+    const outW = canvas.width + padPx * 2;
+    const outH = canvas.height + padPx * 2;
+    const out = document.createElement('canvas');
+    out.width = outW;
+    out.height = outH;
+    const ctx = out.getContext('2d')!;
+    ctx.fillStyle = '#0b111b';
+    ctx.fillRect(0, 0, outW, outH);
+    ctx.drawImage(canvas, padPx, padPx);
+
+    // Subtle gold frame around the captured element, so the user sees what was selected.
+    const accent = opts.accent ?? '#f5c542';
+    ctx.save();
+    ctx.strokeStyle = accent;
+    ctx.lineWidth = 2 * scale;
+    ctx.shadowColor = accent;
+    ctx.shadowBlur = 10 * scale;
+    ctx.strokeRect(padPx - 1, padPx - 1, canvas.width + 2, canvas.height + 2);
+    ctx.restore();
+    void rect; // measurements were taken for future inspection if needed
+
+    const dataUrl = out.toDataURL('image/png');
+    const blob: Blob = await new Promise((res) =>
+      out.toBlob((b) => res(b as Blob), 'image/png', 0.92)
+    );
+    return { blob, dataUrl, width: outW, height: outH };
+  } catch {
+    return null;
+  }
+}
+
 
 // =====================================================================
 //  Annotation — burn drawings onto a base image
