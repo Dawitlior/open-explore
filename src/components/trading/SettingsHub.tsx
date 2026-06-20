@@ -3,8 +3,9 @@ import {
   User, Palette, LayoutDashboard, Calculator, Shield, SlidersHorizontal, Database,
   X, LogOut, Mail, KeyRound, Send, Download, Eye, EyeOff, Globe, GripVertical,
   Plus, Trash2, RotateCcw, Check, AlertTriangle, Sparkles, Search,
-  Volume2, VolumeX, Zap, Type, Brush, Target, Gauge, Plug, Scale,
+  Volume2, VolumeX, Zap, Type, Brush, Target, Gauge, Plug, Scale, Terminal,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { LEGAL_TITLE_HE, LEGAL_SECTIONS_HE, LEGAL_FOOTER_HE, PRIVACY_TITLE_HE, PRIVACY_SECTIONS_HE, LEGAL_VERSION, LEGAL_VERSION_DATE } from '@/lib/legal-text';
 import { ExchangesPanel } from './ExchangesPanel';
 import { playMorningLock } from '@/lib/apex-sounds';
@@ -112,6 +113,11 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
   const [usdDraft, setUsdDraft] = useState<{ perTrade: string; daily: string; weekly: string; monthly: string } | null>(null);
   const [usdSaving, setUsdSaving] = useState(false);
   const auth = useAuth();
+  const navigate = useNavigate();
+  // Hard-gated to a single allow-listed email. The /console route itself is
+  // also guarded by RequireAdmin (server-side has_role check) — this is UI only.
+  const isOwner = (auth.user?.email || '').toLowerCase() === 'dawitlior777@gmail.com';
+  const openConsole = () => { onClose(); navigate('/console'); };
   const [pendingLimits, setPendingLimits] = useState<{ trade: string; day: string; week: string; month: string } | null>(null);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
@@ -384,6 +390,40 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
             </div>
 
             <nav style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '4px 8px 16px', WebkitOverflowScrolling: 'touch' }}>
+              {/* ═══ Owner-only section · ORCA Console (admin command centre) ═══ */}
+              {isOwner && (
+                <div style={{ marginBottom: 14, padding: '0 4px' }}>
+                  <div style={{
+                    fontSize: 9.5, fontWeight: 800, letterSpacing: 1.6, color: T.accent.orange,
+                    textTransform: 'uppercase', padding: '6px 8px 6px',
+                  }}>{t('ניהול מערכת', 'System Admin')}</div>
+                  <button
+                    onClick={openConsole}
+                    className="orca-nav-item"
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+                      padding: '9px 10px', borderRadius: 8,
+                      background: `linear-gradient(135deg, ${T.accent.orange}22, ${T.accent.orange}11)`,
+                      border: `1px solid ${T.accent.orange}55`,
+                      cursor: 'pointer', textAlign: isRTL ? 'right' : 'left' as const,
+                      color: T.text.primary, fontFamily: sans,
+                      fontSize: 13, fontWeight: 700,
+                      boxShadow: `0 0 0 1px ${T.accent.orange}22 inset`,
+                    }}
+                  >
+                    <span style={{
+                      width: 22, height: 22, borderRadius: 6, flexShrink: 0,
+                      display: 'grid', placeItems: 'center',
+                      background: T.accent.orange, color: '#fff',
+                    }}><Terminal size={13} strokeWidth={2.4} /></span>
+                    <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {t('מסוף ORCA — אדמין', 'ORCA Console — Admin')}
+                    </span>
+                    <span style={{ fontSize: 10, color: T.accent.orange, fontFamily: mono, opacity: 0.85 }}>↗</span>
+                  </button>
+                </div>
+              )}
+
               {groups.map(group => (
                 <div key={group} style={{ marginBottom: 12 }}>
                   <div style={{
@@ -497,6 +537,41 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
             </div>
 
             <div style={{ padding: '8px 16px 28px' }}>
+              {/* ═══ Owner-only section · ORCA Console (admin command centre) ═══ */}
+              {isOwner && (
+                <div style={{ marginBottom: 22 }}>
+                  <div style={{
+                    fontSize: 11, fontWeight: 700, color: T.accent.orange, textTransform: 'uppercase',
+                    letterSpacing: 1.2, padding: '4px 6px 8px',
+                  }}>{t('ניהול מערכת', 'System Admin')}</div>
+                  <button
+                    onClick={openConsole}
+                    className="orca-ios-row-btn"
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 12, width: '100%',
+                      padding: '13px 12px',
+                      background: `linear-gradient(135deg, ${T.accent.orange}22, ${T.accent.orange}11)`,
+                      border: `1px solid ${T.accent.orange}66`, borderRadius: 12,
+                      color: T.text.primary, fontFamily: sans,
+                      textAlign: isRTL ? 'right' : 'left' as const, cursor: 'pointer',
+                    }}
+                  >
+                    <span style={{
+                      width: 30, height: 30, borderRadius: 7, flexShrink: 0,
+                      display: 'grid', placeItems: 'center',
+                      background: `linear-gradient(160deg, ${T.accent.orange}, ${T.accent.orange}aa)`,
+                      color: '#fff',
+                    }}><Terminal size={16} strokeWidth={2.4} /></span>
+                    <span style={{ flex: 1, fontSize: 14.5, fontWeight: 600, color: T.text.primary, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {t('מסוף ORCA — אדמין', 'ORCA Console — Admin')}
+                    </span>
+                    <span style={{
+                      color: T.accent.orange, fontSize: 18, lineHeight: 1,
+                      transform: isRTL ? 'scaleX(-1)' : 'none',
+                    }}>›</span>
+                  </button>
+                </div>
+              )}
               {groups.map(group => {
                 const rows = filteredNav.filter(n => n.group[isRTL ? 'he' : 'en'] === group);
                 if (!rows.length) return null;
