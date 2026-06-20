@@ -2933,3 +2933,92 @@ function FullReportBlock({
 
 
 
+
+// ─── Benchmark opt-in (aggregate dataset consent) ──────────────────────────
+function BenchmarkOptInCard(props: {
+  T: TradingTheme;
+  isRTL: boolean;
+  t: (he: string, en: string) => string;
+  userId: string | undefined;
+  card: React.CSSProperties;
+  sectionTitle: React.CSSProperties;
+  sectionHint: React.CSSProperties;
+  sans: string;
+}) {
+  const { T, isRTL, t, userId, card, sectionTitle, sectionHint, sans } = props;
+  const [optedIn, setOptedIn] = useState<boolean>(false);
+  const [loaded, setLoaded] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!userId) return;
+    let alive = true;
+    (async () => {
+      const { data } = await supabase
+        .from('user_preferences')
+        .select('benchmark_opt_in')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (!alive) return;
+      setOptedIn(Boolean((data as { benchmark_opt_in?: boolean } | null)?.benchmark_opt_in));
+      setLoaded(true);
+    })();
+    return () => { alive = false; };
+  }, [userId]);
+
+  const toggle = async () => {
+    if (!userId || saving) return;
+    const next = !optedIn;
+    setSaving(true);
+    setOptedIn(next);
+    const { error } = await supabase
+      .from('user_preferences')
+      .upsert({ user_id: userId, benchmark_opt_in: next } as never, { onConflict: 'user_id' });
+    setSaving(false);
+    if (error) {
+      setOptedIn(!next);
+      toast.error(t('שמירת ההעדפה נכשלה', 'Failed to save preference'));
+    } else {
+      toast.success(next
+        ? t('הצטרפת למאגר המדדים האנונימי', 'Joined the anonymous benchmarks dataset')
+        : t('יצאת ממאגר המדדים', 'Left the benchmarks dataset'));
+    }
+  };
+
+  return (
+    <div style={card}>
+      <h3 style={sectionTitle}><Sparkles size={14} /> {t('הצטרפות למדדים אגרגטיביים', 'Aggregate benchmarks opt-in')}</h3>
+      <p style={sectionHint}>
+        {t(
+          'אישור פרטני להכללת נתוני המסחר האנונימיים שלך במאגר המדדים הקבוצתי. נשאר תחת מזהה מקודד (TRD-XXXX) ללא חשיפת זהות. ניתן לבטל בכל עת.',
+          'Granular consent to include your anonymised trading data in the aggregate benchmarks dataset. You appear only under a coded ID (TRD-XXXX) — never your identity. Revocable any time.'
+        )}
+      </p>
+      <button
+        onClick={toggle}
+        disabled={!loaded || !userId || saving}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+          width: '100%', padding: '14px 16px', borderRadius: T.radius.md,
+          background: T.bg.primary, border: `1px solid ${optedIn ? T.accent.green : T.border.subtle}`,
+          cursor: loaded ? 'pointer' : 'wait', textAlign: isRTL ? 'right' : 'left' as const, fontFamily: sans,
+          opacity: loaded ? 1 : 0.6,
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.text.primary }}>
+            {optedIn ? t('הצטרפת למאגר', 'Opted in') : t('לא הצטרפת', 'Opted out')}
+          </div>
+          <div style={{ fontSize: 11, color: T.text.muted, marginTop: 2 }}>
+            {optedIn
+              ? t('הנתונים האנונימיים שלך מוזרמים למדדים הקבוצתיים', 'Your anonymised data contributes to group benchmarks')
+              : t('המדדים הקבוצתיים לא רואים את הנתונים שלך', 'Group benchmarks do not see your data')}
+          </div>
+        </div>
+        <div style={{ width: 40, height: 22, borderRadius: 11, position: 'relative', background: optedIn ? T.accent.green : T.bg.tertiary, transition: 'background .15s' }}>
+          <div style={{ position: 'absolute', top: 2, insetInlineStart: optedIn ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'inset-inline-start .15s' }} />
+        </div>
+      </button>
+    </div>
+  );
+}
