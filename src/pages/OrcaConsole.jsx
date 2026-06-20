@@ -1226,7 +1226,7 @@ function RKPI({ label, value, suffix }) {
 function RSection({ n, title, lead, children }) {
   return (<section style={{ marginTop: 26, breakInside: "avoid" }}><div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><div style={{ width: 26, height: 26, borderRadius: 7, background: C.accent, color: C.chipFg, display: "grid", placeItems: "center", fontFamily: MONO, fontWeight: 700, fontSize: 12, flexShrink: 0 }}>{n}</div><h2 style={{ margin: 0, fontFamily: SANS, fontWeight: 700, fontSize: 16, color: C.ink }}>{title}</h2></div>{lead && <p style={{ margin: "0 0 12px", fontFamily: SANS, fontSize: 12.8, lineHeight: 1.62, color: C.ink2, maxWidth: 780 }}>{lead}</p>}{children}</section>);
 }
-function BoardReport({ t, lang, traders, eng, onClose }) {
+function BoardReport({ t, lang, traders, eng, aiUsage, funnel, onClose }) {
   const he = lang === "he";
   const n = Math.max(traders.length, 1);
   const [seed, setSeed] = useState(() => Math.floor(Math.random() * 1e6));
@@ -1257,7 +1257,7 @@ function BoardReport({ t, lang, traders, eng, onClose }) {
   const revengePct = Math.round((traders.filter((x) => x.revenge > 0.12).length / n) * 100);
   const readyAvg = Math.round(traders.reduce((s, x) => s + x.readiness, 0) / n);
   const provMix = PROV.map((pv) => { const c = traders.filter((x) => x.prov === pv).length; return { pv, c, pct: Math.round((c / n) * 100) }; });
-  const aiLast = DATA.aiUsage[DATA.aiUsage.length - 1];
+  const aiLast = (aiUsage && aiUsage.length ? aiUsage : DATA.aiUsage)[ (aiUsage && aiUsage.length ? aiUsage : DATA.aiUsage).length - 1 ];
   const dateStr = new Date().toLocaleDateString(he ? "he-IL" : "en-US", { year: "numeric", month: "long", day: "numeric" });
   const card = { background: C.panel, border: `1px solid ${C.border}`, borderRadius: 12, padding: 12 };
   const cc = (el, h = 210) => <div style={{ ...card, height: h }}>{el}</div>;
@@ -1365,7 +1365,7 @@ function BoardReport({ t, lang, traders, eng, onClose }) {
         </RSection>
 
         <RSection n="6" title={he ? "הפעלה וקליטה" : "Activation"} lead={actLead}>
-          {cc(<ResponsiveContainer width="100%" height="100%"><BarChart data={DATA.funnel.map((s) => ({ name: loc(lang, s), v: s.n }))} layout="vertical" margin={{ top: 4, right: 12, left: 8, bottom: 0 }}>{grid}<XAxis type="number" {...axis} /><YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: C.ink2, fontFamily: SANS }} width={104} axisLine={false} tickLine={false} /><Tooltip contentStyle={tipStyle} cursor={{ fill: C.blueSoft }} /><Bar dataKey="v" fill={C.blue} radius={[0, 3, 3, 0]} isAnimationActive={false} /></BarChart></ResponsiveContainer>, 230)}
+          {cc(<ResponsiveContainer width="100%" height="100%"><BarChart data={(funnel && funnel.length ? funnel : DATA.funnel).map((s) => ({ name: loc(lang, s), v: s.n }))} layout="vertical" margin={{ top: 4, right: 12, left: 8, bottom: 0 }}>{grid}<XAxis type="number" {...axis} /><YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: C.ink2, fontFamily: SANS }} width={104} axisLine={false} tickLine={false} /><Tooltip contentStyle={tipStyle} cursor={{ fill: C.blueSoft }} /><Bar dataKey="v" fill={C.blue} radius={[0, 3, 3, 0]} isAnimationActive={false} /></BarChart></ResponsiveContainer>, 230)}
         </RSection>
 
         <RSection n="7" title={he ? "איכות נתונים ומקור" : "Data quality & provenance"} lead={dqLead}>
@@ -1411,18 +1411,93 @@ const EN_LABEL = {
 };
 const groupOfPage = (pid) => GROUPS.find((g) => g.pages.some((p) => p[0] === pid)) || GROUPS[0];
 
+/* ── live → UI shape mappers (RPC payloads → DATA seed shape) ── */
+function tierByDb(s) {
+  const k = String(s || "").toLowerCase();
+  if (k === "standard") return TIER[0];
+  if (k === "advanced") return TIER[1];
+  if (k === "ultimate") return TIER[2];
+  return TIER.find((t) => t.id.toLowerCase() === k) || TIER[0];
+}
+function archByDb(s) {
+  const k = String(s || "").toLowerCase();
+  if (!k || k === "unprofiled") return UNPROF;
+  return ARCH.find((a) => a.id === k) || UNPROF;
+}
+function mapMatrixTraders(rows) {
+  return rows.map((r, i) => ({
+    id: i, code: r.code, arch: archByDb(r.archetype), tier: tierByDb(r.tier),
+    subState: SUBSTATE[1], asset: { id: "unknown", en: "—", he: "—" },
+    tenure: 0, lastActive: Number(r.last_active_days || 0),
+    tradesTotal: 0, sessionsWk: Number(r.sessions_wk || 0),
+    winRate: 0, rulesRate: 0, overrideRate: 0, journal: 0,
+    revenge: 0, overZ: 0, riskDrift: 0,
+    expectancy: Number(r.expectancy || 0), expSlope: 0, expTrend: Array(12).fill(0),
+    breaches: { trade: 0, daily: 0, weekly: 0, monthly: 0 },
+    recovery: 0, kill: 0, readiness: 100,
+    prov: { manual: 0.34, import: 0.33, sync: 0.33 },
+    discipline: Number(r.discipline || 0), edgeHealth: 0, regimeFit: 0, orca: 0,
+    retentionRisk: Number(r.retention_risk || 0),
+    behaviouralRisk: Number(r.behavioural_risk || 0),
+    valuePotential: Number(r.value_potential || 0),
+    ltv: 0,
+  }));
+}
+function mapEngagement(rows) {
+  return rows.map((r, i) => ({
+    w: i, dau: 0, wau: 0, mau: 0, stickiness: 0,
+    signups: Number(r.signups || 0), deletions: 0, churn: 0,
+    trades: Number(r.trades || 0), active: Number(r.active || 0),
+    breachT: 0, breachD: 0, breachW: 0, breachM: 0,
+    kill: 0, recovery: 0, conv: 0,
+    tStd: 0, tAdv: 0, tPro: 0, tUlt: 0,
+  }));
+}
+function mapHeat(rows) {
+  return rows.map((r) => ({ d: Number(r.dow || 0), h: Number(r.hour || 0), v: Number(r.n || 0) }));
+}
+function mapCohorts(rows) {
+  // RPC returns [{cohort,size,avg_alive_weeks}]; UI expects {c, start, curve[8]}
+  // Approximate curve via exponential decay anchored at avg_alive_weeks.
+  return (rows || []).slice(0, 8).map((r, i) => {
+    const size = Number(r.size || 0);
+    const aw = Math.max(0.5, Number(r.avg_alive_weeks || 1));
+    const k = 1 / aw;
+    return { c: i, start: size, curve: Array.from({ length: 8 }, (_, w) => Math.round(size * Math.exp(-w * k))) };
+  });
+}
+function mapFunnel(rows) {
+  const labels = {
+    signup: { en: "Sign-up", he: "הרשמה" },
+    profiled: { en: "Profiled", he: "פרופיילינג" },
+    first_trade: { en: "First trade", he: "טרייד ראשון" },
+    active_30d: { en: "Active at 30d", he: "פעיל ב-30 יום" },
+  };
+  return (rows || []).map((r) => ({
+    id: r.stage, en: labels[r.stage]?.en || r.stage, he: labels[r.stage]?.he || r.stage,
+    n: Number(r.n || 0),
+  }));
+}
+
 export default function OrcaConsole() {
   const live = useAdminLive();
   const D = useMemo(() => {
     const base = DATA;
+    const traders = live.traderMatrix && live.traderMatrix.length ? mapMatrixTraders(live.traderMatrix) : base.traders;
+    const engagement = live.engagementWeekly && live.engagementWeekly.length ? mapEngagement(live.engagementWeekly) : base.engagement;
+    const heatRaw = live.activityHeatmap && live.activityHeatmap.length ? mapHeat(live.activityHeatmap) : base.heat;
+    const hmax = heatRaw.length ? Math.max(...heatRaw.map((c) => c.v)) || 1 : base.hmax;
+    const cohorts = live.retentionCohorts && live.retentionCohorts.length ? mapCohorts(live.retentionCohorts) : base.cohorts;
+    const funnel = live.activationFunnel && live.activationFunnel.length ? mapFunnel(live.activationFunnel) : base.funnel;
     return {
       ...base,
+      traders, engagement, heat: heatRaw, hmax, cohorts, funnel,
       storage: live.storage?.storage?.length ? live.storage.storage : base.storage,
       storageTrend: live.storage?.storageTrend?.length ? live.storage.storageTrend : base.storageTrend,
       dbStats: live.storage?.dbStats ? live.storage.dbStats : base.dbStats,
       aiUsage: live.aiUsage && live.aiUsage.length ? live.aiUsage : base.aiUsage,
     };
-  }, [live.storage, live.aiUsage]);
+  }, [live]);
   const [lang, setLang] = useState("en");
   const [active, setActive] = useState("overview");
   const [picked, setPicked] = useState(null);
@@ -1635,7 +1710,7 @@ export default function OrcaConsole() {
       </div>
 
       <Drawer t={t} lang={lang} x={picked} onClose={() => setPicked(null)} />
-      {reportOpen && <BoardReport t={t} lang={lang} traders={filtered} eng={D.engagement} onClose={() => setReportOpen(false)} />}
+      {reportOpen && <BoardReport t={t} lang={lang} traders={filtered} eng={D.engagement} aiUsage={D.aiUsage} funnel={D.funnel} onClose={() => setReportOpen(false)} />}
     </div>
   );
 }
