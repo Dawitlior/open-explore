@@ -902,7 +902,51 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _orca_trader_rollup: {
+        Args: never
+        Returns: {
+          archetype: string
+          behavioural_risk: number
+          breach_m: number
+          breach_w: number
+          code: string
+          discipline: number
+          edge_health: number
+          expectancy: number
+          journal_completion: number
+          last_active_days: number
+          orca: number
+          prov: string
+          readiness: number
+          regime_fit: number
+          retention_risk: number
+          rules_rate: number
+          sessions_wk: number
+          tenure_days: number
+          tier: string
+          tier_weight: number
+          trades_total: number
+          uid: string
+          value_potential: number
+          win_rate: number
+        }[]
+      }
+      admin_activation_funnel: {
+        Args: never
+        Returns: {
+          n: number
+          stage: string
+        }[]
+      }
       admin_active_count: { Args: { p_window?: number }; Returns: number }
+      admin_activity_heatmap: {
+        Args: { p_period?: number }
+        Returns: {
+          dow: number
+          hour: number
+          n: number
+        }[]
+      }
       admin_ai_usage: {
         Args: { p_feature?: string; p_period?: number }
         Returns: {
@@ -914,6 +958,8 @@ export type Database = {
           week: string
         }[]
       }
+      admin_benchmarks: { Args: { p_kmin?: number }; Returns: Json }
+      admin_data_quality: { Args: never; Returns: Json }
       admin_db_storage: {
         Args: never
         Returns: {
@@ -925,7 +971,44 @@ export type Database = {
           table_name: string
         }[]
       }
+      admin_engagement_weekly: {
+        Args: { p_period?: number }
+        Returns: {
+          active: number
+          signups: number
+          trades: number
+          week: string
+        }[]
+      }
+      admin_performance: {
+        Args: { p_archetype?: string; p_tier?: string }
+        Returns: Json
+      }
+      admin_retention_cohorts: { Args: { p_cohorts?: number }; Returns: Json }
+      admin_risk_engine: { Args: { p_tier?: string }; Returns: Json }
       admin_subscriptions: { Args: never; Returns: Json }
+      admin_trader_matrix: {
+        Args: {
+          p_archetype?: string
+          p_dir?: string
+          p_limit?: number
+          p_sort?: string
+          p_tier?: string
+        }
+        Returns: {
+          archetype: string
+          behavioural_risk: number
+          code: string
+          discipline: number
+          expectancy: number
+          last_active_days: number
+          retention_risk: number
+          sessions_wk: number
+          tier: string
+          value_potential: number
+        }[]
+      }
+      admin_trader_mind: { Args: never; Returns: Json }
       backfill_trade_provenance: { Args: { p_batch?: number }; Returns: number }
       bug_arena_people: {
         Args: { _ids: string[] }
