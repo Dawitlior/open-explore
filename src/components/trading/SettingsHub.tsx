@@ -113,6 +113,11 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
   const [usdDraft, setUsdDraft] = useState<{ perTrade: string; daily: string; weekly: string; monthly: string } | null>(null);
   const [usdSaving, setUsdSaving] = useState(false);
   const auth = useAuth();
+  const navigate = useNavigate();
+  // Hard-gated to a single allow-listed email. The /console route itself is
+  // also guarded by RequireAdmin (server-side has_role check) — this is UI only.
+  const isOwner = (auth.user?.email || '').toLowerCase() === 'dawitlior777@gmail.com';
+  const openConsole = () => { onClose(); navigate('/console'); };
   const [pendingLimits, setPendingLimits] = useState<{ trade: string; day: string; week: string; month: string } | null>(null);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
