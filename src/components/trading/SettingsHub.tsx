@@ -248,35 +248,35 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
   const activeMeta = NAV.find(n => n.id === tab)!;
 
   // Shared style helpers
-  const card: React.CSSProperties = {
+  const card: CSSProperties = {
     background: T.bg.primary, border: `1px solid ${T.border.subtle}`,
     borderRadius: T.radius.lg, padding: 20, marginBottom: 16,
   };
-  const sectionTitle: React.CSSProperties = {
+  const sectionTitle: CSSProperties = {
     fontSize: 13, fontWeight: 700, color: T.text.primary, margin: '0 0 4px',
     display: 'flex', alignItems: 'center', gap: 8,
   };
-  const sectionHint: React.CSSProperties = {
+  const sectionHint: CSSProperties = {
     fontSize: 11.5, color: T.text.muted, margin: '0 0 14px', lineHeight: 1.55,
   };
-  const fieldLabel: React.CSSProperties = {
+  const fieldLabel: CSSProperties = {
     fontSize: 10.5, fontWeight: 700, color: T.text.muted, textTransform: 'uppercase',
     letterSpacing: '0.08em', marginBottom: 6, display: 'block',
   };
-  const input: React.CSSProperties = {
+  const input: CSSProperties = {
     width: '100%', padding: '11px 13px', borderRadius: T.radius.sm,
     background: T.bg.tertiary, border: `1px solid ${T.border.subtle}`,
     color: T.text.primary, fontSize: 13, outline: 'none',
     fontFamily: mono, boxSizing: 'border-box', transition: 'border-color .15s, background .15s',
   };
-  const primaryBtn = (color = T.accent.cyan, disabled = false): React.CSSProperties => ({
+  const primaryBtn = (color = T.accent.cyan, disabled = false): CSSProperties => ({
     padding: '10px 18px', borderRadius: T.radius.sm, border: 'none',
     background: disabled ? T.bg.tertiary : color, color: disabled ? T.text.muted : T.bg.primary,
     cursor: disabled ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 800,
     letterSpacing: 0.5, fontFamily: sans, display: 'inline-flex', alignItems: 'center', gap: 6,
     transition: 'transform .12s, opacity .15s', opacity: disabled ? 0.6 : 1,
   });
-  const ghostBtn: React.CSSProperties = {
+  const ghostBtn: CSSProperties = {
     padding: '10px 14px', borderRadius: T.radius.sm,
     background: 'transparent', border: `1px solid ${T.border.medium}`,
     color: T.text.secondary, cursor: 'pointer', fontSize: 11.5, fontWeight: 700,
@@ -687,7 +687,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   {(() => {
-                    const chevStyle = (enabled: boolean): React.CSSProperties => ({
+                    const chevStyle = (enabled: boolean): CSSProperties => ({
                       width: 28, height: 28, borderRadius: 14,
                       background: enabled ? (isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)') : 'transparent',
                       border: 'none', color: enabled ? T.text.primary : T.text.dim,
@@ -718,7 +718,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                 {(() => {
                   const iconColor = isLight ? '#1D1D1F' : '#FFFFFF';
                   const hoverBg = isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)';
-                  const baseBtn: React.CSSProperties = {
+                  const baseBtn: CSSProperties = {
                     width: 34, height: 34, borderRadius: 17,
                     background: 'transparent', border: 'none',
                     color: iconColor, cursor: 'pointer',
@@ -2598,7 +2598,7 @@ function TraderMindDiagnosticsTab({
   T, isRTL, t, card, sectionTitle, sectionHint,
 }: {
   T: TradingTheme; isRTL: boolean; t: (he: string, en: string) => string;
-  card: React.CSSProperties; sectionTitle: React.CSSProperties; sectionHint: React.CSSProperties;
+  card: CSSProperties; sectionTitle: CSSProperties; sectionHint: CSSProperties;
 }) {
   const { session, archetype, isCalibrated, ageDays, loading } = useTraderMind();
   const open = () => window.dispatchEvent(new CustomEvent('orca:open-trader-mind'));
@@ -2685,19 +2685,19 @@ function TraderMindSummary({
   const scores = (p.scores && typeof p.scores === 'object' ? p.scores : null) as Record<string, unknown> | null;
   const hasStructured = !!(focusHeadline || focusBody || strengths.length || weaknesses.length || blindspots.length || tomorrow.length || synthesis || summary);
 
-  const headerCard: React.CSSProperties = {
+  const headerCard: CSSProperties = {
     padding: 14, borderRadius: 12, background: T.bg.tertiary,
     border: `1px solid ${T.border.subtle}`, marginTop: 12,
   };
-  const block: React.CSSProperties = {
+  const block: CSSProperties = {
     padding: 14, borderRadius: 12, background: T.bg.secondary,
     border: `1px solid ${T.border.subtle}`, marginTop: 10,
   };
-  const blockTitle: React.CSSProperties = {
+  const blockTitle: CSSProperties = {
     fontSize: 11, fontWeight: 800, color: T.accent.cyan, letterSpacing: 1.4,
     textTransform: 'uppercase', marginBottom: 8,
   };
-  const listText: React.CSSProperties = { color: T.text.primary, fontSize: 13, lineHeight: 1.7, margin: 0 };
+  const listText: CSSProperties = { color: T.text.primary, fontSize: 13, lineHeight: 1.7, margin: 0 };
 
   const srcDoc = html
     ? `<!doctype html><html dir="${isRTL ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"/>
@@ -2940,9 +2940,9 @@ function BenchmarkOptInCard(props: {
   isRTL: boolean;
   t: (he: string, en: string) => string;
   userId: string | undefined;
-  card: React.CSSProperties;
-  sectionTitle: React.CSSProperties;
-  sectionHint: React.CSSProperties;
+  card: CSSProperties;
+  sectionTitle: CSSProperties;
+  sectionHint: CSSProperties;
   sans: string;
 }) {
   const { T, isRTL, t, userId, card, sectionTitle, sectionHint, sans } = props;
