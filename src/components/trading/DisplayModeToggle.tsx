@@ -1,6 +1,7 @@
 import { useDisplayMode, buildHiddenHint } from '@/lib/display-mode';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { Lock } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Props {
   T: TradingTheme;
