@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useEffect } from 'react';
+import { useState, useRef, useMemo, useEffect, type CSSProperties } from 'react';
 import {
   User, Palette, LayoutDashboard, Calculator, Shield, SlidersHorizontal, Database,
   X, LogOut, Mail, KeyRound, Send, Download, Eye, EyeOff, Globe, GripVertical,
@@ -248,35 +248,35 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
   const activeMeta = NAV.find(n => n.id === tab)!;
 
   // Shared style helpers
-  const card: React.CSSProperties = {
+  const card: CSSProperties = {
     background: T.bg.primary, border: `1px solid ${T.border.subtle}`,
     borderRadius: T.radius.lg, padding: 20, marginBottom: 16,
   };
-  const sectionTitle: React.CSSProperties = {
+  const sectionTitle: CSSProperties = {
     fontSize: 13, fontWeight: 700, color: T.text.primary, margin: '0 0 4px',
     display: 'flex', alignItems: 'center', gap: 8,
   };
-  const sectionHint: React.CSSProperties = {
+  const sectionHint: CSSProperties = {
     fontSize: 11.5, color: T.text.muted, margin: '0 0 14px', lineHeight: 1.55,
   };
-  const fieldLabel: React.CSSProperties = {
+  const fieldLabel: CSSProperties = {
     fontSize: 10.5, fontWeight: 700, color: T.text.muted, textTransform: 'uppercase',
     letterSpacing: '0.08em', marginBottom: 6, display: 'block',
   };
-  const input: React.CSSProperties = {
+  const input: CSSProperties = {
     width: '100%', padding: '11px 13px', borderRadius: T.radius.sm,
     background: T.bg.tertiary, border: `1px solid ${T.border.subtle}`,
     color: T.text.primary, fontSize: 13, outline: 'none',
     fontFamily: mono, boxSizing: 'border-box', transition: 'border-color .15s, background .15s',
   };
-  const primaryBtn = (color = T.accent.cyan, disabled = false): React.CSSProperties => ({
+  const primaryBtn = (color = T.accent.cyan, disabled = false): CSSProperties => ({
     padding: '10px 18px', borderRadius: T.radius.sm, border: 'none',
     background: disabled ? T.bg.tertiary : color, color: disabled ? T.text.muted : T.bg.primary,
     cursor: disabled ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 800,
     letterSpacing: 0.5, fontFamily: sans, display: 'inline-flex', alignItems: 'center', gap: 6,
     transition: 'transform .12s, opacity .15s', opacity: disabled ? 0.6 : 1,
   });
-  const ghostBtn: React.CSSProperties = {
+  const ghostBtn: CSSProperties = {
     padding: '10px 14px', borderRadius: T.radius.sm,
     background: 'transparent', border: `1px solid ${T.border.medium}`,
     color: T.text.secondary, cursor: 'pointer', fontSize: 11.5, fontWeight: 700,
@@ -687,7 +687,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   {(() => {
-                    const chevStyle = (enabled: boolean): React.CSSProperties => ({
+                    const chevStyle = (enabled: boolean): CSSProperties => ({
                       width: 28, height: 28, borderRadius: 14,
                       background: enabled ? (isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)') : 'transparent',
                       border: 'none', color: enabled ? T.text.primary : T.text.dim,
@@ -718,7 +718,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                 {(() => {
                   const iconColor = isLight ? '#1D1D1F' : '#FFFFFF';
                   const hoverBg = isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)';
-                  const baseBtn: React.CSSProperties = {
+                  const baseBtn: CSSProperties = {
                     width: 34, height: 34, borderRadius: 17,
                     background: 'transparent', border: 'none',
                     color: iconColor, cursor: 'pointer',
@@ -981,6 +981,21 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                     {t('פתח העדפות עוגיות', 'Open cookie preferences')}
                   </button>
                 </div>
+
+                <BenchmarkOptInCard
+                  T={T}
+                  isRTL={isRTL}
+                  t={t}
+                  userId={auth.user?.id}
+                  card={card}
+                  sectionTitle={sectionTitle}
+                  sectionHint={sectionHint}
+                  sans={sans}
+                />
+              </div>
+            )}
+            {false && (
+              <div>
               </div>
             )}
 
@@ -2583,7 +2598,7 @@ function TraderMindDiagnosticsTab({
   T, isRTL, t, card, sectionTitle, sectionHint,
 }: {
   T: TradingTheme; isRTL: boolean; t: (he: string, en: string) => string;
-  card: React.CSSProperties; sectionTitle: React.CSSProperties; sectionHint: React.CSSProperties;
+  card: CSSProperties; sectionTitle: CSSProperties; sectionHint: CSSProperties;
 }) {
   const { session, archetype, isCalibrated, ageDays, loading } = useTraderMind();
   const open = () => window.dispatchEvent(new CustomEvent('orca:open-trader-mind'));
@@ -2670,19 +2685,19 @@ function TraderMindSummary({
   const scores = (p.scores && typeof p.scores === 'object' ? p.scores : null) as Record<string, unknown> | null;
   const hasStructured = !!(focusHeadline || focusBody || strengths.length || weaknesses.length || blindspots.length || tomorrow.length || synthesis || summary);
 
-  const headerCard: React.CSSProperties = {
+  const headerCard: CSSProperties = {
     padding: 14, borderRadius: 12, background: T.bg.tertiary,
     border: `1px solid ${T.border.subtle}`, marginTop: 12,
   };
-  const block: React.CSSProperties = {
+  const block: CSSProperties = {
     padding: 14, borderRadius: 12, background: T.bg.secondary,
     border: `1px solid ${T.border.subtle}`, marginTop: 10,
   };
-  const blockTitle: React.CSSProperties = {
+  const blockTitle: CSSProperties = {
     fontSize: 11, fontWeight: 800, color: T.accent.cyan, letterSpacing: 1.4,
     textTransform: 'uppercase', marginBottom: 8,
   };
-  const listText: React.CSSProperties = { color: T.text.primary, fontSize: 13, lineHeight: 1.7, margin: 0 };
+  const listText: CSSProperties = { color: T.text.primary, fontSize: 13, lineHeight: 1.7, margin: 0 };
 
   const srcDoc = html
     ? `<!doctype html><html dir="${isRTL ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"/>
@@ -2918,3 +2933,92 @@ function FullReportBlock({
 
 
 
+
+// ─── Benchmark opt-in (aggregate dataset consent) ──────────────────────────
+function BenchmarkOptInCard(props: {
+  T: TradingTheme;
+  isRTL: boolean;
+  t: (he: string, en: string) => string;
+  userId: string | undefined;
+  card: CSSProperties;
+  sectionTitle: CSSProperties;
+  sectionHint: CSSProperties;
+  sans: string;
+}) {
+  const { T, isRTL, t, userId, card, sectionTitle, sectionHint, sans } = props;
+  const [optedIn, setOptedIn] = useState<boolean>(false);
+  const [loaded, setLoaded] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!userId) return;
+    let alive = true;
+    (async () => {
+      const { data } = await supabase
+        .from('user_preferences')
+        .select('benchmark_opt_in')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (!alive) return;
+      setOptedIn(Boolean((data as { benchmark_opt_in?: boolean } | null)?.benchmark_opt_in));
+      setLoaded(true);
+    })();
+    return () => { alive = false; };
+  }, [userId]);
+
+  const toggle = async () => {
+    if (!userId || saving) return;
+    const next = !optedIn;
+    setSaving(true);
+    setOptedIn(next);
+    const { error } = await supabase
+      .from('user_preferences')
+      .upsert({ user_id: userId, benchmark_opt_in: next } as never, { onConflict: 'user_id' });
+    setSaving(false);
+    if (error) {
+      setOptedIn(!next);
+      toast.error(t('שמירת ההעדפה נכשלה', 'Failed to save preference'));
+    } else {
+      toast.success(next
+        ? t('הצטרפת למאגר המדדים האנונימי', 'Joined the anonymous benchmarks dataset')
+        : t('יצאת ממאגר המדדים', 'Left the benchmarks dataset'));
+    }
+  };
+
+  return (
+    <div style={card}>
+      <h3 style={sectionTitle}><Sparkles size={14} /> {t('הצטרפות למדדים אגרגטיביים', 'Aggregate benchmarks opt-in')}</h3>
+      <p style={sectionHint}>
+        {t(
+          'אישור פרטני להכללת נתוני המסחר האנונימיים שלך במאגר המדדים הקבוצתי. נשאר תחת מזהה מקודד (TRD-XXXX) ללא חשיפת זהות. ניתן לבטל בכל עת.',
+          'Granular consent to include your anonymised trading data in the aggregate benchmarks dataset. You appear only under a coded ID (TRD-XXXX) — never your identity. Revocable any time.'
+        )}
+      </p>
+      <button
+        onClick={toggle}
+        disabled={!loaded || !userId || saving}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+          width: '100%', padding: '14px 16px', borderRadius: T.radius.md,
+          background: T.bg.primary, border: `1px solid ${optedIn ? T.accent.green : T.border.subtle}`,
+          cursor: loaded ? 'pointer' : 'wait', textAlign: isRTL ? 'right' : 'left' as const, fontFamily: sans,
+          opacity: loaded ? 1 : 0.6,
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.text.primary }}>
+            {optedIn ? t('הצטרפת למאגר', 'Opted in') : t('לא הצטרפת', 'Opted out')}
+          </div>
+          <div style={{ fontSize: 11, color: T.text.muted, marginTop: 2 }}>
+            {optedIn
+              ? t('הנתונים האנונימיים שלך מוזרמים למדדים הקבוצתיים', 'Your anonymised data contributes to group benchmarks')
+              : t('המדדים הקבוצתיים לא רואים את הנתונים שלך', 'Group benchmarks do not see your data')}
+          </div>
+        </div>
+        <div style={{ width: 40, height: 22, borderRadius: 11, position: 'relative', background: optedIn ? T.accent.green : T.bg.tertiary, transition: 'background .15s' }}>
+          <div style={{ position: 'absolute', top: 2, insetInlineStart: optedIn ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'inset-inline-start .15s' }} />
+        </div>
+      </button>
+    </div>
+  );
+}

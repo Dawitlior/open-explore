@@ -1008,6 +1008,40 @@ export type Database = {
           value_potential: number
         }[]
       }
+      admin_trader_matrix_full: {
+        Args: {
+          p_archetype?: string
+          p_dir?: string
+          p_limit?: number
+          p_sort?: string
+          p_tier?: string
+        }
+        Returns: {
+          archetype: string
+          asset_class: string
+          behavioural_risk: number
+          breach_daily: number
+          breach_monthly: number
+          breach_trade: number
+          breach_weekly: number
+          code: string
+          discipline: number
+          exp_slope: number
+          exp_trend: number[]
+          expectancy: number
+          last_active_days: number
+          over_z: number
+          readiness: number
+          retention_risk: number
+          revenge_rate: number
+          sessions_wk: number
+          source_type: string
+          sub_status: string
+          tier: string
+          value_potential: number
+          win_rate: number
+        }[]
+      }
       admin_trader_mind: { Args: never; Returns: Json }
       backfill_trade_provenance: { Args: { p_batch?: number }; Returns: number }
       bug_arena_people: {
