@@ -11,6 +11,7 @@ import { createBugArenaService } from './bugArenaService';
 import {
   ElementPicker,
   captureViewport,
+  captureElementRegion,
   collectContext,
   getCurrentRoute,
   getViewport,
