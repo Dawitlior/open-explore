@@ -1254,7 +1254,17 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                     </p>
 
                     <button
-                      onClick={() => { try { window.dispatchEvent(new Event('orca:open-command-palette')); } catch {} }}
+                      onClick={() => {
+                        // On mobile (and desktop) close SettingsHub first so the palette
+                        // gets the full viewport — otherwise the modal stacks behind the
+                        // settings drawer and the user sees a clipped, non-responsive layout.
+                        onClose();
+                        // Defer one frame so the close animation can start before the
+                        // palette mounts on top — keeps the transition smooth.
+                        requestAnimationFrame(() => {
+                          try { window.dispatchEvent(new Event('orca:open-command-palette')); } catch { /* noop */ }
+                        });
+                      }}
                       style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
                         width: '100%', padding: '14px 16px', borderRadius: T.radius.md,
