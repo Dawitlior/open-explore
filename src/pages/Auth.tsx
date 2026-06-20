@@ -436,14 +436,6 @@ export default function AuthPage() {
             </ul>
           </div>
 
-          {/* Footer signature */}
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            fontSize: 10, color: TEXT_MUTED, letterSpacing: '0.22em', textTransform: 'uppercase',
-          }}>
-            <span>🔒 {c.secured}</span>
-            <span>{c.poweredBy}</span>
-          </div>
         </aside>
 
         {/* ── RIGHT COLUMN — Form ── */}
@@ -659,11 +651,6 @@ export default function AuthPage() {
               </span>
             </label>
 
-            <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${BORDER_SOFT}`, textAlign: 'center' }}>
-              <div style={{ fontSize: 10, color: TEXT_MUTED, letterSpacing: '0.18em', textTransform: 'uppercase' }}>
-                🔒 {c.secured}
-              </div>
-            </div>
           </div>
         </section>
       </div>
