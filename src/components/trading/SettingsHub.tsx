@@ -390,6 +390,40 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
             </div>
 
             <nav style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '4px 8px 16px', WebkitOverflowScrolling: 'touch' }}>
+              {/* ═══ Owner-only section · ORCA Console (admin command centre) ═══ */}
+              {isOwner && (
+                <div style={{ marginBottom: 14, padding: '0 4px' }}>
+                  <div style={{
+                    fontSize: 9.5, fontWeight: 800, letterSpacing: 1.6, color: T.accent.orange,
+                    textTransform: 'uppercase', padding: '6px 8px 6px',
+                  }}>{t('ניהול מערכת', 'System Admin')}</div>
+                  <button
+                    onClick={openConsole}
+                    className="orca-nav-item"
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+                      padding: '9px 10px', borderRadius: 8,
+                      background: `linear-gradient(135deg, ${T.accent.orange}22, ${T.accent.orange}11)`,
+                      border: `1px solid ${T.accent.orange}55`,
+                      cursor: 'pointer', textAlign: isRTL ? 'right' : 'left' as const,
+                      color: T.text.primary, fontFamily: sans,
+                      fontSize: 13, fontWeight: 700,
+                      boxShadow: `0 0 0 1px ${T.accent.orange}22 inset`,
+                    }}
+                  >
+                    <span style={{
+                      width: 22, height: 22, borderRadius: 6, flexShrink: 0,
+                      display: 'grid', placeItems: 'center',
+                      background: T.accent.orange, color: '#fff',
+                    }}><Terminal size={13} strokeWidth={2.4} /></span>
+                    <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {t('מסוף ORCA — אדמין', 'ORCA Console — Admin')}
+                    </span>
+                    <span style={{ fontSize: 10, color: T.accent.orange, fontFamily: mono, opacity: 0.85 }}>↗</span>
+                  </button>
+                </div>
+              )}
+
               {groups.map(group => (
                 <div key={group} style={{ marginBottom: 12 }}>
                   <div style={{
