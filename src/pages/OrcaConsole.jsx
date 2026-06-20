@@ -1365,7 +1365,7 @@ function BoardReport({ t, lang, traders, eng, aiUsage, funnel, onClose }) {
         </RSection>
 
         <RSection n="6" title={he ? "הפעלה וקליטה" : "Activation"} lead={actLead}>
-          {cc(<ResponsiveContainer width="100%" height="100%"><BarChart data={DATA.funnel.map((s) => ({ name: loc(lang, s), v: s.n }))} layout="vertical" margin={{ top: 4, right: 12, left: 8, bottom: 0 }}>{grid}<XAxis type="number" {...axis} /><YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: C.ink2, fontFamily: SANS }} width={104} axisLine={false} tickLine={false} /><Tooltip contentStyle={tipStyle} cursor={{ fill: C.blueSoft }} /><Bar dataKey="v" fill={C.blue} radius={[0, 3, 3, 0]} isAnimationActive={false} /></BarChart></ResponsiveContainer>, 230)}
+          {cc(<ResponsiveContainer width="100%" height="100%"><BarChart data={(funnel && funnel.length ? funnel : DATA.funnel).map((s) => ({ name: loc(lang, s), v: s.n }))} layout="vertical" margin={{ top: 4, right: 12, left: 8, bottom: 0 }}>{grid}<XAxis type="number" {...axis} /><YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: C.ink2, fontFamily: SANS }} width={104} axisLine={false} tickLine={false} /><Tooltip contentStyle={tipStyle} cursor={{ fill: C.blueSoft }} /><Bar dataKey="v" fill={C.blue} radius={[0, 3, 3, 0]} isAnimationActive={false} /></BarChart></ResponsiveContainer>, 230)}
         </RSection>
 
         <RSection n="7" title={he ? "איכות נתונים ומקור" : "Data quality & provenance"} lead={dqLead}>
