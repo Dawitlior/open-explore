@@ -168,7 +168,7 @@ export function useAdminLive(): AdminLive {
           rpc("admin_ai_usage", { p_period: 120, p_feature: null }),
           rpc("admin_active_count", { p_window: 7 }),
           rpc("admin_subscriptions"),
-          rpc("admin_trader_matrix", { p_sort: "behavioural_risk", p_dir: "desc", p_limit: 50, p_tier: null, p_archetype: null }),
+          rpc("admin_trader_matrix", { p_sort: "behavioural_risk", p_dir: "desc", p_limit: 500, p_tier: null, p_archetype: null }),
           rpc("admin_trader_mind"),
           rpc("admin_performance", { p_archetype: null, p_tier: null }),
           rpc("admin_risk_engine", { p_tier: null }),
