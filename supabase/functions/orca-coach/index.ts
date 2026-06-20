@@ -62,11 +62,14 @@ Deno.serve(async (req) => {
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY missing");
 
+    const modelName = model ?? "google/gemini-2.5-flash";
+    const startedAt = Date.now();
+
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
-        model: model ?? "google/gemini-2.5-flash",
+        model: modelName,
         messages: finalMessages,
       }),
     });
@@ -87,6 +90,31 @@ Deno.serve(async (req) => {
     }
     const aiJson = await aiRes.json();
     const reply: string = aiJson.choices?.[0]?.message?.content ?? "";
+    const latencyMs = Date.now() - startedAt;
+
+    // ── Admin Console telemetry · ai_runs ──
+    // Fire-and-forget: a failed insert must never break the chat response.
+    // Service-role client bypasses RLS, so the row lands with user_id = the
+    // authenticated trader. Costs are estimates (gateway doesn't return $).
+    try {
+      const usage = aiJson.usage ?? {};
+      const promptTokens = Number(usage.prompt_tokens ?? 0) | 0;
+      const completionTokens = Number(usage.completion_tokens ?? 0) | 0;
+      // Rough Gemini-Flash pricing: $0.075 / 1M input, $0.30 / 1M output.
+      const costUsd =
+        (promptTokens * 0.075 + completionTokens * 0.30) / 1_000_000;
+      await supabase.from("ai_runs").insert({
+        user_id: u.user.id,
+        feature: "coach",
+        model: modelName,
+        prompt_tokens: promptTokens,
+        completion_tokens: completionTokens,
+        cost_usd: Number(costUsd.toFixed(4)),
+        latency_ms: latencyMs,
+      });
+    } catch (logErr) {
+      console.warn("ai_runs insert failed", logErr);
+    }
 
     return new Response(JSON.stringify({ reply }), {
       headers: { ...cors, "Content-Type": "application/json" },

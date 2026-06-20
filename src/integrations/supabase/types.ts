@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_runs: {
+        Row: {
+          completion_tokens: number
+          cost_usd: number
+          created_at: string
+          feature: string
+          id: number
+          latency_ms: number | null
+          model: string | null
+          prompt_tokens: number
+          user_id: string | null
+        }
+        Insert: {
+          completion_tokens?: number
+          cost_usd?: number
+          created_at?: string
+          feature: string
+          id?: never
+          latency_ms?: number | null
+          model?: string | null
+          prompt_tokens?: number
+          user_id?: string | null
+        }
+        Update: {
+          completion_tokens?: number
+          cost_usd?: number
+          created_at?: string
+          feature?: string
+          id?: never
+          latency_ms?: number | null
+          model?: string | null
+          prompt_tokens?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       billing_events: {
         Row: {
           event_id: string
@@ -767,6 +803,7 @@ export type Database = {
       }
       user_preferences: {
         Row: {
+          benchmark_opt_in: boolean
           consent: Json | null
           created_at: string
           daily_risk_limit: number
@@ -784,6 +821,7 @@ export type Database = {
           weekly_risk_limit: number
         }
         Insert: {
+          benchmark_opt_in?: boolean
           consent?: Json | null
           created_at?: string
           daily_risk_limit?: number
@@ -801,6 +839,7 @@ export type Database = {
           weekly_risk_limit?: number
         }
         Update: {
+          benchmark_opt_in?: boolean
           consent?: Json | null
           created_at?: string
           daily_risk_limit?: number
@@ -863,6 +902,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_active_count: { Args: { p_window?: number }; Returns: number }
+      admin_ai_usage: {
+        Args: { p_feature?: string; p_period?: number }
+        Returns: {
+          avg_latency_ms: number
+          calls: number
+          cost_usd: number
+          feature: string
+          tokens: number
+          week: string
+        }[]
+      }
+      admin_db_storage: {
+        Args: never
+        Returns: {
+          cache_hit_ratio: number
+          connections: number
+          db_size_bytes: number
+          row_estimate: number
+          size_bytes: number
+          table_name: string
+        }[]
+      }
+      admin_subscriptions: { Args: never; Returns: Json }
       backfill_trade_provenance: { Args: { p_batch?: number }; Returns: number }
       bug_arena_people: {
         Args: { _ids: string[] }
@@ -958,6 +1021,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      trader_code: { Args: { uid: string }; Returns: string }
     }
     Enums: {
       app_tier: "standard" | "advanced" | "ultimate"

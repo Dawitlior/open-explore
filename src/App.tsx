@@ -39,6 +39,7 @@ import { toast } from "sonner";
 const BugBoardPage = lazy(() => import("./pages/BugBoardPage"));
 const OrcaConsolePage = lazy(() => import("./pages/OrcaConsole"));
 import { RequireAdmin } from "@/components/RequireAdmin";
+import { ConsoleBackButton } from "@/components/ConsoleBackButton";
 
 /**
  * Mounts BugArenaProvider only when the user is signed in.
@@ -181,6 +182,7 @@ const App = () => (
                     <RequireAdmin>
                       <Suspense fallback={<div style={{ padding: 24, color: '#94a3b8', fontFamily: 'monospace' }}>Loading console…</div>}>
                         <OrcaConsolePage />
+                        <ConsoleBackButton />
                       </Suspense>
                     </RequireAdmin>
                   </RequireAuth>
