@@ -167,8 +167,13 @@ export function BugReportFab() {
       aria-label={label}
       onClick={() => !open && capture.beginCapture()}
       dir={isRTL ? 'rtl' : 'ltr'}
-      className="fixed z-[1000] bottom-5 left-5 flex items-center gap-2 rounded-full px-4 py-3 font-bold shadow-2xl transition active:scale-95"
-      style={{ backgroundColor: accent, color: '#06121f' }}
+      className="fixed z-[1000] flex items-center gap-2 rounded-full px-4 py-3 font-bold shadow-2xl transition active:scale-95"
+      style={{
+        backgroundColor: accent,
+        color: '#06121f',
+        bottom: 'max(20px, env(safe-area-inset-bottom))',
+        left: 'max(20px, env(safe-area-inset-left))',
+      }}
     >
       <TargetIcon />
       <span className="text-sm">{label}</span>
