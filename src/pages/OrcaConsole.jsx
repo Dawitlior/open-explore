@@ -1563,10 +1563,10 @@ export default function OrcaConsole() {
         <div className="orca-topnav" style={{ display: "none", gap: 8, overflowX: "auto", padding: "10px 14px", background: C.panel, borderBottom: `1px solid ${C.border}`, alignItems: "center" }}>
           {GROUPS.map((g) => (
             <React.Fragment key={g.id}>
-              <span style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: C.ink3, textTransform: "uppercase", whiteSpace: "nowrap", letterSpacing: 0.3 }}>{t(g.label)}</span>
+              <span dir="ltr" style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: C.ink3, textTransform: "uppercase", whiteSpace: "nowrap", letterSpacing: 0.3 }}>{EN_LABEL[g.label]}</span>
               {g.pages.map(([id, label, Icon]) => {
                 const on = active === id;
-                return <button key={id} onClick={() => setActive(id)} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 10px", borderRadius: 8, border: `1px solid ${on ? C.accent : C.borderStrong}`, background: on ? C.blueSoft : C.panel, color: on ? C.accent : C.ink2, fontFamily: SANS, fontSize: 11.5, fontWeight: on ? 650 : 500, whiteSpace: "nowrap", cursor: "pointer" }}><Icon size={13} />{t(label)}</button>;
+                return <button key={id} dir="ltr" onClick={() => setActive(id)} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 10px", borderRadius: 8, border: `1px solid ${on ? C.accent : C.borderStrong}`, background: on ? C.blueSoft : C.panel, color: on ? C.accent : C.ink2, fontFamily: SANS, fontSize: 11.5, fontWeight: on ? 650 : 500, whiteSpace: "nowrap", cursor: "pointer" }}><Icon size={13} />{EN_LABEL[label]}</button>;
               })}
             </React.Fragment>
           ))}
