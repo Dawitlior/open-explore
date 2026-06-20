@@ -107,6 +107,48 @@ async function fetchForexFactory(): Promise<UpsertRow[]> {
     });
 }
 
+async function fetchTradingView(fromISO: string, toISO: string): Promise<UpsertRow[]> {
+  const countries = ['US','CN','EU','GB','JP','DE','FR','IT','CA','AU','NZ','CH'].join(',');
+  const url = `https://economic-calendar.tradingview.com/events?from=${fromISO}&to=${toISO}&countries=${countries}`;
+  const res = await fetch(url, {
+    headers: {
+      'Origin': 'https://www.tradingview.com',
+      'Referer': 'https://www.tradingview.com/',
+      'User-Agent': 'Mozilla/5.0',
+    },
+  });
+  if (!res.ok) throw new Error(`TradingView ${res.status}`);
+  const json = await res.json();
+  const events: any[] = json?.result ?? [];
+  return events
+    .filter((e) => e?.title && e?.date)
+    .map((e) => {
+      const release_at = new Date(e.date).toISOString();
+      const eventName = String(e.title);
+      const external_id = `tv-${e.id ?? `${e.country ?? ''}-${eventName}-${release_at}`}`.slice(0, 200);
+      const imp = Number(e.importance ?? 0); // 1=high, 0=medium, -1=low
+      const impact: 't1' | 't2' | 't3' =
+        imp >= 1 ? classifyImpact(eventName, 'high')
+        : imp === 0 ? classifyImpact(eventName, 'medium')
+        : classifyImpact(eventName, 'low');
+      return {
+        provider: 'tradingview',
+        external_id,
+        release_at,
+        currency: e.currency ?? null,
+        country: e.country ?? null,
+        event_name: eventName,
+        category: e.category ?? null,
+        impact,
+        actual: e.actual != null ? String(e.actual) : null,
+        forecast: e.forecast != null ? String(e.forecast) : null,
+        previous: e.previous != null ? String(e.previous) : null,
+        unit: e.unit ?? null,
+        description: e.comment ?? null,
+      };
+    });
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
@@ -123,6 +165,15 @@ Deno.serve(async (req) => {
     const rows: UpsertRow[] = [];
     const errors: string[] = [];
 
+    // Primary: TradingView free calendar (35-day window, no API key required)
+    try {
+      const fromISO = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString();
+      const toISO = new Date(now.getTime() + 35 * 24 * 60 * 60 * 1000).toISOString();
+      rows.push(...(await fetchTradingView(fromISO, toISO)));
+    } catch (e) {
+      errors.push(`tradingview: ${(e as Error).message}`);
+    }
+
     const finnhubKey = Deno.env.get('FINNHUB_API_KEY');
     if (finnhubKey) {
       try {
@@ -130,8 +181,6 @@ Deno.serve(async (req) => {
       } catch (e) {
         errors.push(`finnhub: ${(e as Error).message}`);
       }
-    } else {
-      errors.push('finnhub: FINNHUB_API_KEY missing');
     }
 
     try {
