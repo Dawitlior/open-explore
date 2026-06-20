@@ -135,10 +135,17 @@ export class ElementPicker {
   private overlay: HTMLDivElement | null = null;
   private ring: HTMLDivElement | null = null;
   private tag: HTMLDivElement | null = null;
+  private hintEl: HTMLDivElement | null = null;
+  private scrollToggleBtn: HTMLButtonElement | null = null;
   private last: Element | null = null;
+  /** The element the ring is currently locked to — same source for capture. */
+  private locked: Element | null = null;
   private onPick?: (r: PickResult) => void;
   private onCancel?: () => void;
   private opts: Required<PickerOptions>;
+  private moveScheduled = false;
+  private pendingPoint: { x: number; y: number } | null = null;
+  private scrollMode = false;
 
   constructor(options: PickerOptions = {}) {
     this.opts = {
@@ -167,7 +174,10 @@ export class ElementPicker {
       this.overlay = null;
       this.ring = null;
       this.tag = null;
+      this.hintEl = null;
+      this.scrollToggleBtn = null;
       this.last = null;
+      this.locked = null;
     }
   }
 
@@ -222,7 +232,7 @@ export class ElementPicker {
       textOverflow: 'ellipsis',
     } as CSSStyleDeclaration);
 
-    // hint pill + cancel
+    // hint pill + scroll toggle + cancel
     const hint = document.createElement('div');
     hint.setAttribute(OVERLAY_ATTR, 'hint');
     Object.assign(hint.style, {
@@ -246,8 +256,30 @@ export class ElementPicker {
     const label = document.createElement('span');
     label.textContent = this.opts.hintText;
 
+    // scroll-mode toggle — lets the user scroll the page on mobile to reach
+    // off-screen elements, then tap again to lock-and-pick.
+    const scrollBtn = document.createElement('button');
+    scrollBtn.setAttribute(OVERLAY_ATTR, 'scroll-toggle');
+    scrollBtn.type = 'button';
+    scrollBtn.textContent = 'גלול';
+    Object.assign(scrollBtn.style, {
+      cursor: 'pointer',
+      border: '1px solid rgba(255,255,255,0.18)',
+      background: 'transparent',
+      color: '#9fb0c5',
+      borderRadius: '999px',
+      padding: '5px 12px',
+      font: '600 13px/1 Heebo,system-ui,sans-serif',
+    } as CSSStyleDeclaration);
+    scrollBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.setScrollMode(!this.scrollMode);
+    });
+
     const cancel = document.createElement('button');
     cancel.setAttribute(OVERLAY_ATTR, 'cancel');
+    cancel.type = 'button';
     cancel.textContent = this.opts.cancelText;
     Object.assign(cancel.style, {
       cursor: 'pointer',
@@ -265,16 +297,39 @@ export class ElementPicker {
       this.onCancel?.();
     });
 
-    hint.append(label, cancel);
+    hint.append(label, scrollBtn, cancel);
     o.append(ring, tag, hint);
     document.body.appendChild(o);
 
     this.overlay = o;
     this.ring = ring;
     this.tag = tag;
+    this.hintEl = hint;
+    this.scrollToggleBtn = scrollBtn;
 
     o.addEventListener('pointermove', this.onMove);
     o.addEventListener('pointerdown', this.onDown);
+  }
+
+  private setScrollMode(on: boolean) {
+    this.scrollMode = on;
+    if (!this.overlay || !this.scrollToggleBtn) return;
+    if (on) {
+      // Release pointer interception so the page can scroll under the overlay.
+      this.overlay.style.touchAction = 'auto';
+      this.overlay.style.pointerEvents = 'none';
+      this.scrollToggleBtn.textContent = 'בחר';
+      this.scrollToggleBtn.style.background = this.opts.accent;
+      this.scrollToggleBtn.style.color = '#06121f';
+      // Hint pill stays interactive (it's a child).
+      if (this.hintEl) this.hintEl.style.pointerEvents = 'auto';
+    } else {
+      this.overlay.style.touchAction = 'none';
+      this.overlay.style.pointerEvents = 'auto';
+      this.scrollToggleBtn.textContent = 'גלול';
+      this.scrollToggleBtn.style.background = 'transparent';
+      this.scrollToggleBtn.style.color = '#9fb0c5';
+    }
   }
 
   /** elementFromPoint, ignoring our own overlay. */
@@ -289,39 +344,53 @@ export class ElementPicker {
   }
 
   private onMove = (e: PointerEvent) => {
-    const el = this.elementUnder(e.clientX, e.clientY);
-    if (!el || !this.ring || !this.tag) return;
-    this.last = el;
-    const r = el.getBoundingClientRect();
-    Object.assign(this.ring.style, {
-      left: `${r.left}px`,
-      top: `${r.top}px`,
-      width: `${r.width}px`,
-      height: `${r.height}px`,
-      opacity: '1',
-    });
-    this.tag.textContent = `${el.tagName.toLowerCase()} · ${Math.round(
-      r.width
-    )}×${Math.round(r.height)}`;
-    const tagTop = Math.max(28, r.top);
-    Object.assign(this.tag.style, {
-      left: `${r.left}px`,
-      top: `${tagTop}px`,
-      opacity: '1',
+    this.pendingPoint = { x: e.clientX, y: e.clientY };
+    if (this.moveScheduled) return;
+    this.moveScheduled = true;
+    requestAnimationFrame(() => {
+      this.moveScheduled = false;
+      const p = this.pendingPoint;
+      if (!p) return;
+      const el = this.elementUnder(p.x, p.y);
+      if (!el || !this.ring || !this.tag) return;
+      this.last = el;
+      const r = el.getBoundingClientRect();
+      Object.assign(this.ring.style, {
+        left: `${r.left}px`,
+        top: `${r.top}px`,
+        width: `${r.width}px`,
+        height: `${r.height}px`,
+        opacity: '1',
+      });
+      this.tag.textContent = `${el.tagName.toLowerCase()} · ${Math.round(
+        r.width
+      )}×${Math.round(r.height)}`;
+      const tagTop = Math.max(28, r.top);
+      Object.assign(this.tag.style, {
+        left: `${r.left}px`,
+        top: `${tagTop}px`,
+        opacity: '1',
+      });
     });
   };
 
   private onDown = (e: PointerEvent) => {
     // let clicks on our own hint/cancel pass through to their handlers
     if ((e.target as HTMLElement)?.closest?.(`[${OVERLAY_ATTR}="hint"]`)) return;
+    if (this.scrollMode) return; // page is scrolling; ignore
     e.preventDefault();
     e.stopPropagation();
-    const el = this.elementUnder(e.clientX, e.clientY) || this.last;
+    // Capture-source = the element the ring was last drawn around (touch has
+    // no hover; the move handler ran on pointerdown's coalesced move events).
+    // Fall back to a fresh hit-test only if we somehow have nothing locked.
+    const el = this.last || this.elementUnder(e.clientX, e.clientY);
     if (!el) return;
+    this.locked = el;
+    const rect = rectOf(el); // measurements locked BEFORE any mutation
     const result: PickResult = {
       selector: buildSelector(el),
       label: buildLabel(el),
-      rect: rectOf(el),
+      rect,
       element: el,
     };
     this.stop();
@@ -336,6 +405,7 @@ export class ElementPicker {
     }
   };
 }
+
 
 // =====================================================================
 //  Screenshot
