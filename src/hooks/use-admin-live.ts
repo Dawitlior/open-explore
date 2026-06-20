@@ -35,13 +35,44 @@ export type LiveAi = Array<{
   errors: number;
 }>;
 
+export type TraderMatrixRow = {
+  code: string;
+  archetype: string;
+  tier: string;
+  discipline: number;
+  retention_risk: number;
+  behavioural_risk: number;
+  value_potential: number;
+  expectancy: number;
+  sessions_wk: number;
+  last_active_days: number;
+};
+
+export type EngagementWeek = { week: string; active: number; signups: number; trades: number };
+export type HeatmapCell = { dow: number; hour: number; n: number };
+export type FunnelStage = { stage: string; n: number };
+
 export type AdminLive = {
   loading: boolean;
   error: string | null;
+  okCount: number;
+  totalCount: number;
+  // wave 1
   storage: LiveStorage | null;
   aiUsage: LiveAi | null;
   activeCount: number | null;
   subs: { tierMix: Array<{ tier: string; n: number }>; stateMix: Array<{ status: string; n: number }> } | null;
+  // wave 2
+  traderMatrix: TraderMatrixRow[] | null;
+  traderMind: any | null;
+  performance: any | null;
+  riskEngine: any | null;
+  benchmarks: any | null;
+  engagementWeekly: EngagementWeek[] | null;
+  activityHeatmap: HeatmapCell[] | null;
+  retentionCohorts: any[] | null;
+  activationFunnel: FunnelStage[] | null;
+  dataQuality: any | null;
 };
 
 const FEATURE_BUCKETS: Record<string, "coach" | "review" | "insights"> = {
@@ -62,7 +93,6 @@ function shapeStorage(rows: StorageRow[]): LiveStorage {
   }));
   const dbSizeMb = Math.round((head.db_size_bytes || 0) / (1024 * 1024));
   const totalRows = storage.reduce((s, t) => s + t.rows, 0);
-  // No historical storage series available yet — render a flat single point so the area chart doesn't break.
   const storageTrend = Array.from({ length: 16 }, (_, w) => ({ w, mb: dbSizeMb }));
   return {
     storage,
@@ -77,7 +107,6 @@ function shapeStorage(rows: StorageRow[]): LiveStorage {
 }
 
 function shapeAi(rows: AiRow[]): LiveAi {
-  // Group by week, pivot features into coach/review/insights buckets.
   const byWeek = new Map<string, { coach: number; review: number; insights: number; tokens: number; calls: number; cost: number; latency: number; latencyN: number }>();
   for (const r of rows) {
     const wk = String(r.week);
@@ -105,39 +134,91 @@ function shapeAi(rows: AiRow[]): LiveAi {
   }));
 }
 
+const INITIAL: AdminLive = {
+  loading: true,
+  error: null,
+  okCount: 0,
+  totalCount: 13,
+  storage: null,
+  aiUsage: null,
+  activeCount: null,
+  subs: null,
+  traderMatrix: null,
+  traderMind: null,
+  performance: null,
+  riskEngine: null,
+  benchmarks: null,
+  engagementWeekly: null,
+  activityHeatmap: null,
+  retentionCohorts: null,
+  activationFunnel: null,
+  dataQuality: null,
+};
+
 export function useAdminLive(): AdminLive {
-  const [state, setState] = useState<AdminLive>({
-    loading: true,
-    error: null,
-    storage: null,
-    aiUsage: null,
-    activeCount: null,
-    subs: null,
-  });
+  const [state, setState] = useState<AdminLive>(INITIAL);
 
   useEffect(() => {
     let cancelled = false;
+    const rpc = (name: string, args?: any) => (supabase as any).rpc(name, args);
     (async () => {
       try {
-        const [storageRes, aiRes, activeRes, subsRes] = await Promise.all([
-          (supabase as any).rpc("admin_db_storage"),
-          (supabase as any).rpc("admin_ai_usage", { p_period: 120, p_feature: null }),
-          (supabase as any).rpc("admin_active_count", { p_window: 7 }),
-          (supabase as any).rpc("admin_subscriptions"),
-        ]);
+        const calls = [
+          rpc("admin_db_storage"),
+          rpc("admin_ai_usage", { p_period: 120, p_feature: null }),
+          rpc("admin_active_count", { p_window: 7 }),
+          rpc("admin_subscriptions"),
+          rpc("admin_trader_matrix", { p_sort: "behavioural_risk", p_dir: "desc", p_limit: 50, p_tier: null, p_archetype: null }),
+          rpc("admin_trader_mind"),
+          rpc("admin_performance", { p_archetype: null, p_tier: null }),
+          rpc("admin_risk_engine", { p_tier: null }),
+          rpc("admin_benchmarks", { p_kmin: 25 }),
+          rpc("admin_engagement_weekly", { p_period: 90 }),
+          rpc("admin_activity_heatmap", { p_period: 90 }),
+          rpc("admin_retention_cohorts", { p_cohorts: 8 }),
+          rpc("admin_activation_funnel"),
+          rpc("admin_data_quality"),
+        ];
+        const results = await Promise.all(calls);
         if (cancelled) return;
+        const [
+          storageRes, aiRes, activeRes, subsRes,
+          matrixRes, mindRes, perfRes, riskRes, benchRes,
+          engRes, heatRes, cohortRes, funnelRes, dqRes,
+        ] = results;
+
         const liveStorage = storageRes.error ? null : shapeStorage((storageRes.data || []) as StorageRow[]);
         const liveAi = aiRes.error ? null : shapeAi((aiRes.data || []) as AiRow[]);
         const liveActive = activeRes.error ? null : Number(activeRes.data ?? 0);
         const liveSubs = subsRes.error ? null : (subsRes.data as AdminLive["subs"]);
-        const firstError = storageRes.error?.message || aiRes.error?.message || activeRes.error?.message || subsRes.error?.message || null;
+
+        const firstError =
+          storageRes.error?.message || aiRes.error?.message || activeRes.error?.message || subsRes.error?.message ||
+          matrixRes.error?.message || mindRes.error?.message || perfRes.error?.message || riskRes.error?.message ||
+          benchRes.error?.message || engRes.error?.message || heatRes.error?.message || cohortRes.error?.message ||
+          funnelRes.error?.message || dqRes.error?.message || null;
+
+        const okCount = results.filter((r: any) => !r.error).length;
+
         setState({
           loading: false,
           error: firstError,
+          okCount,
+          totalCount: results.length,
           storage: liveStorage,
           aiUsage: liveAi && liveAi.length ? liveAi : null,
           activeCount: liveActive,
           subs: liveSubs,
+          traderMatrix: matrixRes.error ? null : ((matrixRes.data || []) as TraderMatrixRow[]),
+          traderMind: mindRes.error ? null : mindRes.data,
+          performance: perfRes.error ? null : perfRes.data,
+          riskEngine: riskRes.error ? null : riskRes.data,
+          benchmarks: benchRes.error ? null : benchRes.data,
+          engagementWeekly: engRes.error ? null : ((engRes.data || []) as EngagementWeek[]),
+          activityHeatmap: heatRes.error ? null : ((heatRes.data || []) as HeatmapCell[]),
+          retentionCohorts: cohortRes.error ? null : ((cohortRes.data || []) as any[]),
+          activationFunnel: funnelRes.error ? null : ((funnelRes.data || []) as FunnelStage[]),
+          dataQuality: dqRes.error ? null : dqRes.data,
         });
       } catch (e: any) {
         if (cancelled) return;

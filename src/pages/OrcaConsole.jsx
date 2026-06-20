@@ -1616,7 +1616,7 @@ export default function OrcaConsole() {
           <span style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: SANS, fontSize: 11.5, color: C.ink3 }}><RefreshCw size={12} />{t("updated")} {new Date().toLocaleTimeString(rtl ? "he-IL" : "en-US", { hour: "2-digit", minute: "2-digit" })}</span>
           <span title={live.error || ""} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 8px", borderRadius: 99, border: `1px solid ${live.loading ? C.borderStrong : (live.error ? C.neg : C.pos)}`, background: live.loading ? C.panelAlt : (live.error ? "#FEE2E2" : "#ECFDF5"), color: live.loading ? C.ink3 : (live.error ? C.neg : C.pos), fontFamily: MONO, fontSize: 10.5, fontWeight: 600 }}>
             <span style={{ width: 6, height: 6, borderRadius: 99, background: live.loading ? C.ink3 : (live.error ? C.neg : C.pos) }} />
-            {live.loading ? "LIVE…" : `LIVE 2/13 · ${(live.storage ? 1 : 0) + (live.aiUsage ? 1 : 0)}/2 RPC OK`}
+            {live.loading ? "LIVE…" : `LIVE ${live.okCount}/${live.totalCount} RPC OK`}
           </span>
         </div>
 
