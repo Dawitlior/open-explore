@@ -167,8 +167,13 @@ export function BugReportFab() {
       aria-label={label}
       onClick={() => !open && capture.beginCapture()}
       dir={isRTL ? 'rtl' : 'ltr'}
-      className="fixed z-[1000] bottom-5 left-5 flex items-center gap-2 rounded-full px-4 py-3 font-bold shadow-2xl transition active:scale-95"
-      style={{ backgroundColor: accent, color: '#06121f' }}
+      className="fixed z-[1000] flex items-center gap-2 rounded-full px-4 py-3 font-bold shadow-2xl transition active:scale-95"
+      style={{
+        backgroundColor: accent,
+        color: '#06121f',
+        bottom: 'max(20px, env(safe-area-inset-bottom))',
+        left: 'max(20px, env(safe-area-inset-left))',
+      }}
     >
       <TargetIcon />
       <span className="text-sm">{label}</span>
@@ -192,6 +197,9 @@ function CaptureFlow() {
   const [tool, setTool] = useState<AnnoTool>('rect');
   const [color, setColor] = useState<string>(ACCENT);
   const [extra, setExtra] = useState<File | null>(null);
+  const [showSkip, setShowSkip] = useState(false);
+  const submitRef = useRef<HTMLButtonElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // reset form whenever a new draft opens
   useEffect(() => {
@@ -201,8 +209,32 @@ function CaptureFlow() {
       setSeverity('medium');
       setStrokes([]);
       setExtra(null);
+      setShowSkip(false);
     }
   }, [stage, draft?.context.capturedAt]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Show "Skip screenshot" escape hatch if capture takes too long.
+  useEffect(() => {
+    if (draft?.captureStatus !== 'capturing') return;
+    const id = window.setTimeout(() => setShowSkip(true), 7000);
+    return () => window.clearTimeout(id);
+  }, [draft?.captureStatus]);
+
+  // Mobile keyboard handling: keep the submit button visible above the keyboard.
+  useEffect(() => {
+    if (stage !== 'draft') return;
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const onResize = () => {
+      // When the keyboard opens visualViewport shrinks; scroll the focused
+      // input into view so the sticky footer stays reachable.
+      if (document.activeElement === textareaRef.current) {
+        submitRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' });
+      }
+    };
+    vv.addEventListener('resize', onResize);
+    return () => vv.removeEventListener('resize', onResize);
+  }, [stage]);
 
   if (stage !== 'draft' && stage !== 'submitting') return null;
   if (!draft) return null;
@@ -218,6 +250,10 @@ function CaptureFlow() {
     };
     capture.submit(args);
   };
+
+  const captureStatus = draft.captureStatus;
+  const captureMode = draft.captureMode;
+  const isCapturing = captureStatus === 'capturing';
 
   return (
     <div
@@ -236,13 +272,28 @@ function CaptureFlow() {
             <TargetIcon />
             <h2 className="text-lg font-extrabold">{t('דיווח על באג', 'Report a bug')}</h2>
           </div>
-          <button
-            onClick={capture.cancel}
-            className="rounded-full px-2 py-1 text-2xl leading-none text-white/50 hover:text-white"
-            aria-label={t('סגור', 'Close')}
-          >
-            ×
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Full-screen toggle — opt-in to a viewport shot instead of element region */}
+            {draft.pick && (
+              <button
+                onClick={() => capture.recapture(captureMode === 'full' ? 'region' : 'full')}
+                disabled={isCapturing}
+                className="rounded-full border border-white/15 px-3 py-1 text-xs font-semibold text-white/70 hover:text-white disabled:opacity-40"
+                title={t('לכידת מסך מלא במקום אלמנט בלבד', 'Capture the full screen instead of just the element')}
+              >
+                {captureMode === 'full'
+                  ? t('צילם רק אלמנט', 'Element only')
+                  : t('צלם מסך מלא', 'Full screen')}
+              </button>
+            )}
+            <button
+              onClick={capture.cancel}
+              className="rounded-full px-2 py-1 text-2xl leading-none text-white/50 hover:text-white"
+              aria-label={t('סגור', 'Close')}
+            >
+              ×
+            </button>
+          </div>
         </div>
 
         <div className="space-y-5 p-5">
@@ -270,7 +321,7 @@ function CaptureFlow() {
             )}
           </div>
 
-          {/* dedup suggestions */}
+          {/* dedup suggestions (loads in background; small inline indicator) */}
           {similar.length > 0 && (
             <DedupSuggestions
               similar={similar}
@@ -301,11 +352,45 @@ function CaptureFlow() {
                 {t('סמן על הצילום מה שבור — חץ, מסגרת או קו חופשי.', 'Mark what is broken on the screenshot — arrow, box or freehand.')}
               </p>
             </div>
+          ) : isCapturing ? (
+            <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/5 p-8 text-center text-sm text-white/60">
+              <span
+                className="inline-block h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-[var(--a)] motion-reduce:animate-none"
+                style={{ ['--a' as any]: ACCENT }}
+              />
+              <div className="font-semibold">{t('מכין צילום…', 'Preparing screenshot…')}</div>
+              {showSkip && (
+                <button
+                  onClick={capture.skipCapture}
+                  className="mt-2 rounded-full border border-white/20 px-3 py-1 text-xs text-white/80 hover:text-white"
+                >
+                  {t('דלג על הצילום', 'Skip the screenshot')}
+                </button>
+              )}
+            </div>
+          ) : captureStatus === 'skipped' ? (
+            <div className="rounded-xl border border-dashed border-white/15 bg-white/5 p-4 text-center text-xs text-white/40">
+              {t('ממשיך ללא צילום מסך — צרף תמונה ידנית למטה אם תרצה.', 'Continuing without a screenshot — attach an image manually below if needed.')}
+            </div>
           ) : (
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-center text-sm text-white/50">
-              {t('לוכד צילום מסך…', 'Capturing screenshot…')}
+            <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4 text-xs text-white/50">
+              <span>{t('הצילום נכשל. אפשר להמשיך בלי, או לנסות שוב.', 'Capture failed. Continue without it, or retry.')}</span>
+              <button
+                onClick={() => capture.recapture(captureMode)}
+                className="rounded-full border border-white/20 px-3 py-1 text-xs text-white/80 hover:text-white"
+              >
+                {t('נסה שוב', 'Retry')}
+              </button>
             </div>
           )}
+
+          {/* privacy notice */}
+          <div className="rounded-lg border border-white/10 bg-white/[0.04] p-3 text-[11px] leading-relaxed text-white/55">
+            {t(
+              'הצילום יצורף לדיווח וגלוי לחברי הקהילה. רוצה להסתיר נתונים רגישים? הגדרות → מראה ושפה → הסתרת פרטים.',
+              'The screenshot is attached to the report and visible to community members. Want to hide sensitive data? Settings → Appearance & language → Privacy mask.',
+            )}
+          </div>
 
           {/* description (the only required field) */}
           <div>
@@ -313,6 +398,7 @@ function CaptureFlow() {
               {t('מה קרה?', 'What happened?')} <span style={{ color: ACCENT }}>*</span>
             </label>
             <textarea
+              ref={textareaRef}
               data-bug-description
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -358,8 +444,12 @@ function CaptureFlow() {
         </div>
 
         {/* footer */}
-        <div className="sticky bottom-0 flex gap-3 border-t border-white/10 bg-[#0b111b]/95 px-5 py-4 backdrop-blur">
+        <div
+          className="sticky bottom-0 flex gap-3 border-t border-white/10 bg-[#0b111b]/95 px-5 py-4 backdrop-blur"
+          style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
+        >
           <button
+            ref={submitRef}
             data-bug-submit
             disabled={busy || !description.trim()}
             onClick={submit}

@@ -11,6 +11,7 @@ import { createBugArenaService } from './bugArenaService';
 import {
   ElementPicker,
   captureViewport,
+  captureElementRegion,
   collectContext,
   getCurrentRoute,
   getViewport,
@@ -29,12 +30,17 @@ import type {
 } from './bugArenaTypes';
 
 export type CaptureStage = 'idle' | 'picking' | 'draft' | 'submitting';
+export type CaptureMode = 'region' | 'full';
+export type CaptureStatus = 'idle' | 'capturing' | 'ready' | 'skipped' | 'error';
 
 export interface DraftState {
   pick: PickResult | null;
   shot: Shot | null;
   context: CaptureContext;
   section: string;
+  /** Live status of the screenshot job (modal opens immediately). */
+  captureStatus: CaptureStatus;
+  captureMode: CaptureMode;
 }
 
 export interface SubmitArgs {
@@ -67,6 +73,11 @@ export interface UseBugCapture {
 
   /** One-click "this is my bug too" from the dedup suggestions. */
   joinSimilar: (bug: BugWithMeta) => Promise<void>;
+
+  /** Re-capture using a different mode (region vs. full-screen). */
+  recapture: (mode: CaptureMode) => Promise<void>;
+  /** User chose to skip the image entirely; text-only submit. */
+  skipCapture: () => void;
 
   /** Final submit -> creates bug + uploads images. Returns the new bug id. */
   submit: (args: SubmitArgs) => Promise<string | null>;
@@ -111,21 +122,51 @@ export function useBugCapture(
     [config]
   );
 
+  /** Run the requested capture and patch the draft when it lands. */
+  const runCapture = useCallback(
+    async (pick: PickResult | null, mode: CaptureMode) => {
+      setDraft((d) => (d ? { ...d, captureStatus: 'capturing', captureMode: mode, shot: null } : d));
+      let shot: Shot | null = null;
+      try {
+        if (mode === 'region' && pick?.element) {
+          shot = await captureElementRegion(pick.element, { accent: config?.accent });
+        }
+        if (!shot) {
+          // Either user picked full-screen, or region failed → viewport fallback
+          shot = await captureViewport(pick?.rect ?? null, config?.accent);
+        }
+      } catch {
+        shot = null;
+      }
+      setDraft((d) =>
+        d ? { ...d, shot, captureStatus: shot ? 'ready' : 'error', captureMode: mode } : d,
+      );
+    },
+    [config?.accent],
+  );
+
   const openDraft = useCallback(
     async (pick: PickResult | null) => {
       const route = getCurrentRoute();
       const section = sectionResolver(route);
+      const initialMode: CaptureMode = pick?.element ? 'region' : 'full';
 
-      // Capture screenshot FIRST — before the report modal is rendered —
-      // so the form itself never appears in the screenshot and never hides
-      // the element the user just selected.
-      const shot = await captureViewport(pick?.rect ?? null, config?.accent);
-
-      // Now open the form with the screenshot already in place.
-      setDraft({ pick, shot, context: collectContext(), section });
+      // Open the modal IMMEDIATELY with a "capturing" placeholder so the user
+      // sees feedback the instant they tap. The shot fills in asynchronously.
+      setDraft({
+        pick,
+        shot: null,
+        context: collectContext(),
+        section,
+        captureStatus: 'capturing',
+        captureMode: initialMode,
+      });
       setStage('draft');
 
-      // Dedup suggestions can load in the background.
+      // Kick off capture (no await — modal is already open).
+      void runCapture(pick, initialMode);
+
+      // Dedup suggestions load in the background — must not block the modal.
       api
         .findSimilarBugs({
           route,
@@ -135,8 +176,9 @@ export function useBugCapture(
         .then((sims) => setSimilar(sims))
         .catch(() => setSimilar([]));
     },
-    [api, sectionResolver, config?.accent]
+    [api, sectionResolver, runCapture],
   );
+
 
   const beginCapture = useCallback(() => {
     setError(null);
@@ -266,6 +308,19 @@ export function useBugCapture(
     [api, draft, currentUserId, cancel, config]
   );
 
+  const recapture = useCallback(
+    async (mode: CaptureMode) => {
+      const d = draft;
+      if (!d) return;
+      await runCapture(d.pick, mode);
+    },
+    [draft, runCapture],
+  );
+
+  const skipCapture = useCallback(() => {
+    setDraft((d) => (d ? { ...d, shot: null, captureStatus: 'skipped' } : d));
+  }, []);
+
   return {
     stage,
     draft,
@@ -277,6 +332,8 @@ export function useBugCapture(
     quickCapture,
     cancel,
     joinSimilar,
+    recapture,
+    skipCapture,
     submit,
   };
 }

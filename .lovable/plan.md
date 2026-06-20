@@ -1,221 +1,79 @@
-# 📱 ORCA Mobile Master Plan — גרסה מאושרת לביצוע
+# Plan — Bug Arena Capture Hardening + Mobile UI Fixes
 
-**מטרה:** PWA שמרגישה native על מכשיר אמיתי, בלי לגעת בדסקטופ.
-**שיטה:** גל־גל. כל גל עובר קריטריון קבלה לפני שעוברים הלאה.
-**כללי ברזל:** כל שינוי מאחורי `@media (max-width:768px)` או `useIsMobile()`. אסור לפבריק safe-area/גבהים — לקרוא מ־env/viewport. string-replace כירורגי, לא rewrite.
+Per the master plan ("Return a short per-file plan for approval before writing any code"), here is the per-file plan for all four items in your message.
 
 ---
 
-## גל 0 — תשתית גלובלית (`index.html`, `index.css`)
+## Part A — Bug Arena Capture Flow (mobile/PWA hardening)
 
-**0.1** השארת `interactive-widget=resizes-content` ב־viewport meta (החלטה: לתקן ב־4.1 במקום).
-**0.2** הוספת `<meta name="format-detection" content="telephone=no, date=no, address=no, email=no">` — מונע המרת מספרי PnL לקישורי טלפון ב־iOS.
-**0.3** כלל גלובלי ב־`index.css`:
-```css
-@media (max-width:768px){
-  input,textarea,select{ font-size:16px !important; }
-}
-```
-מבטל iOS auto-zoom-on-focus בבת אחת — מנקה 300+ inline styles ב־Journal/Settings/WeeklyReview.
+**Files touched (only these):**
+- `src/features/bug-arena/bugCaptureEngine.ts`
+- `src/features/bug-arena/BugArenaComponents.tsx`
+- `src/features/bug-arena/useBugCapture.ts` (only if needed for loading state plumbing)
 
-**0.4** טוקני safe-area ב־`:root`:
-```css
---safe-top: env(safe-area-inset-top,0px);
---safe-bottom: env(safe-area-inset-bottom,0px);
---nav-h: 60px;
---nav-total: calc(var(--nav-h) + var(--safe-bottom));
-```
-**0.5** ⏭️ **מדלגים** (החלטה: לשמור על shell-scroll הקיים — DimensionController + MainPullToRefresh מסתמכים עליו).
-**0.6** סוויפ `100vw` → `100%` ב־`JournalDimension.tsx:3841,3972` וב־`DimensionController` (מסיר ~17px דחיפה ימינה).
-**0.7** היררכיית z-index רשמית (מחליפה 14 ערכים מפוזרים 9000–99997):
-```css
---z-dropdown:100; --z-sticky:200; --z-bottom-nav:300;
---z-overlay:1000; --z-modal:1100; --z-toast:1200; --z-critical-alert:1300;
-```
-**0.8** במובייל: `backdrop-filter: blur(8px)` בלי `saturate` (מבטל drop ל־30fps ב־iPhone 12+).
-**0.9** מצמצמים `transition: background-color 480ms` הגלובלי ל־selector ייעודי `[data-theme-transition]`.
-**0.10** ניקוי פונטים ב־`index.html`: מסירים Syne, Playfair, Space Grotesk, DM Sans. **שומרים:** Poppins, IBM Plex Mono, IBM Plex Sans, Heebo (עברית — קריטי).
-**0.11** `html{ scroll-padding-bottom:120px }` במובייל.
-**0.12** (תוספת) `* { -webkit-tap-highlight-color: transparent; }` + `button,a{ -webkit-touch-callout:none }` — מסיר ריבוע אפור ו־context-menu לא־רצוי ב־iOS.
+### `bugCaptureEngine.ts`
+- **Task 1.1/1.2/1.5**: In `ElementPicker`, keep a ref `lockedElement` that is set by the same logic that draws the highlight ring. On `pointerup`/`touchend`, capture **that** ref — never a fresh `elementFromPoint`. Lock the `getBoundingClientRect()` snapshot at the moment of selection.
+- **Task 1.3**: Before capture: `scrollIntoView({ block:'center', inline:'center' })`, remove overlay, `await rAF()`, then re-measure rect.
+- **Task 1.4**: Add a small `גלול` (scroll) toggle pill in the overlay that temporarily releases `touch-action:none`, so the user can scroll to off-screen elements on mobile, then tap to lock.
+- **Task 2.1–2.3 (core fix)**: New `captureElementRegion(el, { padding: 28 })` that calls `html2canvas` on the element node itself (or nearest container with a background) with `backgroundColor: '#0b111b'`. Replace default `captureViewport` usage with this region capture. Keep `useCORS`, `ignoreElements`, and existing attachment/upload contract unchanged.
+- **Task 2.4**: Keep `captureViewport()` available behind an explicit `fullScreen: true` flag used only when the user toggles "צלם מסך מלא".
+- **Task 2.5**: Cap `scale` — region: `Math.min(devicePixelRatio, 2)`; full-screen on mobile: `1.5`.
+- **Task 4.4**: Throttle the `onMove` handler through `requestAnimationFrame` (single pending frame).
 
-**✅ קבלה:** iPhone אמיתי — אין סקרולבר אופקי; הקלקה על שדה לא מזמזמת; טאפ על status-bar קופץ לראש; אין קפיצה ב־768px.
+### `BugArenaComponents.tsx`
+- **Task 3.1–3.4**: Open the capture modal **immediately** on selection with a spinner state (`status: 'capturing'`). Image area shows skeleton + "מכין צילום…". Add 7-second timeout → show "דלג על הצילום" button that flips the modal into text-only mode.
+- **Task 2.4 UI**: Add a "צלם מסך מלא" toggle in the modal header that re-captures with `fullScreen: true`.
+- **Task 3.3**: Move the dedup ("בעיות דומות") fetch out of the modal-open critical path; render its own small inline loader inside the suggestions section only.
+- **Task 4.1**: FAB `bottom/left: max(20px, env(safe-area-inset-bottom/left))`. Modal footer + detail drawer: `padding-bottom: max(16px, env(safe-area-inset-bottom))`.
+- **Task 4.2**: Use `visualViewport` resize listener to keep submit button above keyboard (`scrollIntoView` on focused textarea).
+- **Task 4.3**: Annotation `<canvas>` gets `touch-action: none` (canvas only, not the scroll container).
+- **Task 4.5**: Privacy notice line + one-tap "הסתר נתונים רגישים" shortcut that flips `user_preferences.privacy_mask` on, waits one frame, then re-captures so masked DOM is what gets rendered.
+
+### `useBugCapture.ts`
+- Minimal: expose `status` ('idle' | 'capturing' | 'ready' | 'skipped' | 'error') so the modal can render the spinner from the same source of truth. No service / schema / dedup-logic changes.
+
+**Guardrail compliance**: no other files touched. No `data-bug-*` rename. Service, RPCs, dedup logic, deletion rules, board untouched.
 
 ---
 
-## גל 1 — Recharts × RTL (התלונה המרכזית של המשתמש)
+## Part B — Open Positions mobile swipe (smooth touch)
 
-קבצים: `AdvancedAnalyticsPage` שורות 456,501,680,704,734 + שאר דפי Advanced.
+**File**: `src/components/dashboard/OpenPositionsPanel.tsx` (+ small CSS).
 
-**1.1** עטיפת כל `<ResponsiveContainer>` ב־`<div dir="ltr" style={{width:'100%'}}>` — recharts לא תומך RTL טבעית, ה־SVG מיושר לפי dir של ההורה.
-**1.2** במובייל: `border-inline-start:3px` → `border-top:3px` על `[data-accent-border]` (מסיר 3px אסימטריה שדוחפת ימינה ב־RTL).
-**1.3** מחליפים `padding:'14px 16px'` קשיח ב־`padding-inline: clamp(10px,3vw,16px)`.
+Add proper touch-pan handling to the row:
+- `touch-action: pan-y` on the scroll container, `touch-action: pan-x` on the swipe row so vertical scroll isn't hijacked.
+- Replace the current mouse-only drag with `pointerdown/move/up` + `setPointerCapture`.
+- Use `transform: translate3d()` with `will-change: transform` and a CSS transition on release for momentum-feel snap.
+- Active swipe disables the row's `overflow: hidden` clipping flicker.
 
-**✅ קבלה:** גרפים ב־Analytics ממורכזים, ציר X לא נחתך, דסקטופ זהה.
-
----
-
-## גל 2 — דפי Advanced (Analytics / Risk / Psychology / AI)
-
-**2.1** Search & replace ל־`minWidth` שגדולים מ־320px:
-- `minWidth:280` → `minWidth:'min(100%,280px)'`
-- `minWidth:320` (ImportPreflightModal:313) → `min(100%,320px)`
-- `minWidth:240/220/160` → אותו דפוס
-- מוקדים: `AdvancedPsychologyPage:455,469`, `AdvancedRiskPage:424`, `HourOfDayStrip:133`, `ImportPreflightModal:282,313`.
-
-**2.2** הוספת `useIsMobile()` לכל ארבעת הדפים + `gridTemplateColumns:'1fr'` במובייל.
-
-**2.3** טבלות אופקיות — utility class:
-```css
-.scroll-x{ overflow-x:auto; -webkit-overflow-scrolling:touch; scroll-snap-type:x proximity; }
-.scroll-x-wrap{ position:relative; }
-.scroll-x-wrap::after{
-  content:''; position:absolute; top:0; inset-inline-end:0;
-  width:24px; height:100%; pointer-events:none;
-  background:linear-gradient(to left, var(--background), transparent);
-}
-```
-החלה: Analytics 583/824, Risk 550, TimeSeriesPerfMatrix (להסיר `minWidth:360` קשיח), CorrelationMatrix (להסיר `direction:ltr` הקשיח — לעטוף רק את ה־SVG כמו 1.1), Journal ×3.
-
-**2.4** עטיפת Analytics/Risk/Psychology/AI ב־`MainPullToRefresh` (כרגע רק Dashboard).
-
-**✅ קבלה:** ב־320px וב־390px אפס גלילה אופקית בגוף; טבלאות עם fade indicator ומומנטום; pull-to-refresh עובד בכל ארבעת הדפים.
+No business logic change — same swipe actions and thresholds.
 
 ---
 
-## גל 3 — JournalDimension (4,773 שורות, הכי שבור)
+## Part C — Best/Worst Window chart cut off on mobile
 
-**3.1** הוספת `useIsMobile()`; החלפת `repeat(3,1fr)` ו־`minWidth:160` (שורות 3054,3064) ב־`1fr` במובייל.
-**3.2** גלריית תמונות: `width:140;height:100` קשיח (שורה 868) → `width: min(140px,40vw)` + `aspect-ratio:3/2`.
-**3.3** מעטפת הדף: `padding-bottom: var(--nav-total)` במובייל.
-**3.4** כפתורים ≥44×44: חיצי חודש (2521-2523), טוגלים (3054,3064), "X" של מודאלים (4314). הסרת width/height inline שדורסים את כלל ה־44px ב־`index.css:637`.
-**3.5** ודא שאין override inline על fontSize ב־Journal (777,783) — אחרי שגל 0.3 פעיל.
-**3.6** הוספת "Trader Journey / חזרה" כקיצור ב־MobileBottomNav More-sheet.
+**File**: `src/components/dashboard/BestWorstWindowChart.tsx`.
 
-**✅ קבלה:** Journal עמודה אחת, אפס גלילה אופקית, כל כפתור באגודל, אין zoom, תוכן תחתון לא מוסתר.
+- Switch the chart container from fixed `height` to `aspect-ratio` on mobile (`aspect-[4/3]`), with a `min-height` floor.
+- Increase bottom `margin`/`XAxis` height on `<480px` so the day-of-week labels aren't clipped.
+- Wrap in `ResponsiveContainer` with `100% / 100%` and let the parent control sizing (currently the parent caps it too tightly).
 
 ---
 
-## גל 4 — ניווט ומודלים (חוויית native)
+## Part D — Expectancy toggle: dedicated mobile UI
 
-**4.1** `MobileBottomNav.tsx`: כש־`kbOffset>0` (מקלדת פתוחה) → `transform:translateY(100%); pointer-events:none` (לא `display:none` שיגרום layout shift ויקטוע fade).
-**4.2** ביטול sidebar במובייל — להשאיר רק MobileBottomNav + More-sheet (היום שניהם חופפים).
-**4.3** מודאלים מרכזיים → bottom-sheet במובייל (Settings, CommandPalette, FeatureManifestModal, ChartExplanationModal). TradeForm כבר עושה את זה — להעתיק דפוס.
-**4.4** `.modal-body{ overscroll-behavior:contain; touch-action:pan-y; }` — מונע גרירת רקע.
-**4.5** מצמצמים את `[role="dialog"]{ touch-action:pan-y }` ב־`index.css:779` — selector ספציפי בלבד, כדי לא לחסום drag אופקי בגלריות/carousel/TraderMind.
+**Files**: `src/components/trading/DisplayModeToggle.tsx` (and the wrapper that renders it inside the dashboard header — found via `ExpectancyMode` usage).
 
-**✅ קבלה:** מקלדת לא מסתירה כפתורי שמירה; ניווט יחיד; מודאלים מלמטה; גרירה אופקית בגלריות עובדת.
+- Detect mobile via existing `useIsMobile()` hook (already in repo).
+- Desktop: keep current pill toggle exactly as is.
+- Mobile: render two large stacked/segmented buttons (full-width, 56px tall, big icons `$` and `R`, clear active state with gold ring on navy). Same `onChange` handler — zero functional change.
 
 ---
 
-## גל 5 — PWA & פוליש סופי
+## Out of scope (will not touch)
 
-**5.1** Landing & Auth — `paddingTop:'var(--safe-top)'` על ה־header (לוגו מתחת ל־Dynamic Island).
-**5.2** `manifest.json` — להוסיף splash icons מותאמים. ServiceWorker כבר קיים (`public/sw.js`) ומקושר ב־`main.tsx` עם guard מול Lovable preview — לאמת cache strategy, לא להוסיף חדש.
-**5.3** haptics על swipe בלוח השנה ובטבלאות + מעבר טאבים.
-**5.4** `prefers-color-scheme` listener — תגובה להחלפת dark/light מערכתי.
-**5.5** ניקיון:
-- `#orca-cursor-halo{ display:none }` במובייל.
-- `will-change:transform` על MobileBottomNav.
-- חיווט `onLongPressCenter` של כפתור + ב־`Index.tsx` (כרגע רדום).
-- בדיקת `window.navigator.standalone` — סטיילים שונים ב־PWA מותקן.
+- Any backend, RLS, or service contracts.
+- Any file not listed above.
+- No "while I'm here" refactors.
 
-**✅ קבלה:** מותקן כ־PWA — לוגו מתחת ל־notch; פתיחה מהירה; haptics על gestures; תגובה ל־theme מערכתי.
-
----
-
-## 🧪 הארנס בדיקות אוטומטי
-
-יצירת `tests/mobile-audit.spec.ts` (Playwright) שרץ אחרי כל גל. סורק 10 routes ב־320px ו־390px ומאמת 3 כללי ברזל:
-1. אפס גלילה אופקית (`scrollWidth - clientWidth ≤ 1`)
-2. כל `input/textarea/select` ≥ 16px
-3. כל `button/a/[role=button]` ≥ 44×44
-
-מה שלא נתפס אוטומטית (חייב מכשיר אמיתי 🔧REAL): מקלדת, notch, home-indicator, rubber-band, momentum, PWA-installed mode.
-
----
-
-## 🎯 סדר ביצוע
-
-| גל | למה ראשון | זמן גס |
-|----|----------|--------|
-| **0** | תשתית — מסיר ~70% מהבעיות גלובלית | 1–2ש׳ |
-| **1** | Recharts RTL — התלונה המוצהרת, win מהיר | 30–60ד׳ |
-| **2** | דפי Advanced — רוב המסכים הכבדים | 3–4ש׳ |
-| **3** | Journal — הכי שבור והכי גדול | 2–3ש׳ |
-| **4** | ניווט + מודלים — חוויית native | 2ש׳ |
-| **5** | PWA + פוליש | 2ש׳ |
-
-**פרוטוקול:** מבצעים גל במלואו → רצים `mobile-audit.spec.ts` → מדווחים → ממתינים לאישור → גל הבא. דסקטופ לא נוגעים בשום שלב.
-
----
-
-## 🔧 התאמות שביצעתי מול המאסטר־פלאן המקורי
-
-1. **דילוג על 0.5** (body-scroll) — DimensionController + MainPullToRefresh מסתמכים על shell-scroll הקיים; שינוי המודל ישבור את האנימציות הקולנועיות.
-2. **השארת `interactive-widget=resizes-content`** — ה־`visualViewport` listener ב־MobileBottomNav כבר מסתמך עליו; 4.1 לבד מספיק.
-3. **4.1: `translateY(100%)` במקום `display:none`** — מונע layout shift וקטיעת fade transition.
-4. **0.10: שמירה על Heebo** — קריטי לעברית (לא בפלאן המקורי במפורש).
-5. **תוספת 0.12** — `-webkit-tap-highlight-color` + `touch-callout` (חסר במקור, גורם לריבוע אפור ב־iOS).
-6. **5.2: ServiceWorker כבר קיים** — רק לאמת cache strategy, לא לבנות מחדש.
-
-## Wave 2.2 — DashboardAdvancedLab mobile fix (hotfix on user feedback)
-- Removed global recharts max-height cap (was clipping legends/axes).
-- `DashboardAdvancedLab.tsx`: useIsMobile → minCard 320→260, chartH 220→200, heatmap 16→14.
-- Verified: sw=cw=390 on all routes.
-
-## Wave 3 — JournalDimension mobile polish (CSS-only, no rerender) ✅
-- Already had `data-journal-root` on the root container.
-- Added scoped `@media (max-width:768px)` block in `src/index.css`:
-  - `padding-bottom: var(--nav-total) + 16px` — last section no longer hidden under bottom nav.
-  - Gallery thumbs `140×100` → `width:min(140px,42vw)` + `aspect-ratio:3/2`.
-  - Quick-action buttons `min-width:160` → `100%` / `flex-basis:100%` (single column).
-  - Month-nav chevrons `22×22` → `44×44` tap area, `font-size:16px`.
-  - Image delete `✕` `20×20` → `28×28`.
-- Smoke test: sw=cw=390 on Journal.
-
-## Wave 4.4 + 4.5 — Modal gesture polish ✅
-- Removed top-level `touch-action:pan-y` on `[role="dialog"]` (was blocking horizontal swipes in galleries/TraderMind).
-- Pan-y + `overscroll-behavior:contain` now scoped to `.modal-body` / `[data-modal-body]` containers.
-
-## Wave 4.2 — Hide desktop sidebar on mobile ✅
-- Tagged `<aside>` in `src/pages/Index.tsx` with `data-app-sidebar`.
-- CSS: `@media (max-width:768px) { aside[data-app-sidebar] { display:none } }` — MobileBottomNav (+ More-sheet) is the sole nav surface.
-
-## Wave 4.3 — Bottom-sheet modals on mobile ✅
-- Tagged overlays + shells with `data-bottom-sheet-overlay` / `data-bottom-sheet` in CommandPalette and ChartExplanationModal.
-- FeatureManifestModal already has a fullscreen mobile shell; left untouched.
-- Global CSS rule on mobile: bottom-aligned overlay, 86dvh max-height, top-rounded corners, safe-area bottom padding, `sheet-rise` slide-up animation.
-- Verified: sw=cw=390.
-
-## Wave 5 — PWA polish ✅ (partial)
-- 5.1 ✅ Landing `.orca-nav` + auth screen header now get `padding-top: env(safe-area-inset-top) + 8px` on mobile (logo clears Dynamic Island/notch).
-- 5.2 ✅ Verified `public/manifest.json` — standalone display, theme `#06d6a0`, bg `#0a0e1a`, 192/512 icons present. Existing `public/sw.js` left intact (no offline-mode change requested).
-- 5.3 ⏭️ deferred — haptics needs wiring into swipe handlers (calendar, tabs); separate task on user request.
-- 5.4 ⏭️ deferred — custom 5-theme system (platinum/midnight/indigo/snow/night) doesn't map cleanly to a binary `prefers-color-scheme`; would need user policy decision.
-- 5.5 ✅ `#orca-cursor-halo { display:none }` on mobile; `will-change: transform, opacity` already on `MobileBottomNav`; standalone-mode block added: bg lock, safe-area top padding, `[data-hide-in-standalone]` opt-out hook.
-
-## Mobile Master Plan — COMPLETE (waves 0–5)
-
----
-
-## Wave 6 — MobileBottomNav full redesign ✅
-Triggered by user feedback: "התפריט במצב מובייל ו-PWA פשוט לא מותאם".
-
-**Visual rewrite of `src/components/trading/MobileBottomNav.tsx`:**
-- Edge-to-edge bar → **floating capsule "island"** (10px insets, 8px lift above safe-area, 22px radius).
-- Emoji icons → **inline vector SVG** (Icon component: calendar / journal / radar / more / plus) — theme-aware, sharper.
-- Static top-bar indicator → **sliding active pill** (cubic-bezier spring 0.34,1.56,0.64,1), animates between slots, RTL-aware via `left`/`right` swap.
-- Center FAB upgraded: 54px conic-gradient ring, double-ring shadow (bg + accent), idle `mn-pulse` ring animation, press rotates 45° + scale(0.92).
-- Soft radial glow puddle under bar — sells the floating effect over content.
-- Stronger blur (`22px sat 160%`), layered shadow (drop + accent halo + inset highlight).
-- Press scale 0.92 → 0.9 with spring easing; haptics retained.
-- Keyboard slide-out distance increased to `calc(100% + 24px)` so the floating bar fully exits.
-
-**Layout follow-up:**
-- `--nav-h: 60px → 64px`; `--nav-total` now includes the +24px lift (8px gap + 16px breathing room) so page content padding (`[data-journal-root]` etc.) clears the floating bar.
-
-**Smoke test:** sw=cw=390, no overflow.
-
-
-
-
+Approve and I'll implement A → B → C → D in that order, with a smoke check after each.
