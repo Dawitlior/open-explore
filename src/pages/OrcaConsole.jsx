@@ -1666,7 +1666,9 @@ export default function OrcaConsole() {
         @media (max-width: 860px){ .orca-shell [style*="repeat(4,"]{ grid-template-columns: repeat(2,minmax(0,1fr)) !important; } .orca-shell [style*="repeat(3,"], .orca-shell [style*="repeat(2,"], .qc-grid{ grid-template-columns: 1fr !important; } }
         .navitem{ transition: background .14s ease, box-shadow .14s ease; }
         .navitem:hover{ background:${C.blueSoft} !important; box-shadow: inset 0 0 0 1px ${C.border}; }
+        .recharts-default-tooltip { background:${C.panel} !important; border:1px solid ${C.borderStrong} !important; box-shadow:${theme === "dark" ? "0 8px 24px rgba(0,0,0,0.45)" : "0 6px 20px rgba(16,27,45,0.12)"} !important; color:${C.ink} !important; }
         .recharts-default-tooltip .recharts-tooltip-label, .recharts-default-tooltip .recharts-tooltip-item, .recharts-default-tooltip .recharts-tooltip-item-name, .recharts-default-tooltip .recharts-tooltip-item-value { color:${C.ink} !important; }
+        .recharts-cursor, .recharts-rectangle.recharts-tooltip-cursor { fill:${C.blueSoft} !important; stroke:${C.borderStrong} !important; }
         ::selection{ background:${C.blueSoft}; }
         *{ scrollbar-width: thin; scrollbar-color:${C.borderStrong} transparent; }
         @media print { .orca-shell { display: block !important; } .orca-shell > *:not(.orca-report) { display: none !important; } .orca-report { position: static !important; height: auto !important; overflow: visible !important; background: #fff !important; } .orca-report-bar { display: none !important; } }
