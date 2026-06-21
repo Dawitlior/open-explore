@@ -399,8 +399,280 @@ function binanceToTrade(e: BinanceIncome, provider: string): BybitNormalized {
   };
 }
 
+// ============== MEXC Futures (history_orders → round-trip by positionId) ==============
+// MEXC does NOT expose per-key permission introspection. Read-only intent
+// is enforced via the guided key flow + ORCA's structural no-write posture.
+// MEXC keys without IP-binding expire after 90 days — Supabase Edge has no
+// fixed egress IP, so we instruct users not to bind. Sync failures from
+// expired keys should surface to the user via the "needs renewal" UX.
+
+const MEXC_FUTURES_BASE = 'https://contract.mexc.com';
+const MEXC_SPOT_BASE = 'https://api.mexc.com';
+
+interface MexcFuturesOrder {
+  orderId: string;
+  symbol: string;
+  positionId: number;
+  side: number; // 1=open long, 2=close short, 3=open short, 4=close long
+  dealAvgPrice: string | number;
+  dealVol: string | number;
+  profit?: string | number;
+  takerFee?: string | number;
+  makerFee?: string | number;
+  leverage?: string | number;
+  createTime: number;
+  updateTime?: number;
+}
+
+async function mexcFuturesGet(
+  apiKey: string, apiSecret: string, path: string, params: Record<string, string> = {},
+): Promise<{ ok: true; body: { success?: boolean; data?: unknown; message?: string } } | BybitFetchError> {
+  const ts = Date.now().toString();
+  const sorted = Object.keys(params).sort().map((k) => `${k}=${params[k]}`).join('&');
+  const signature = await hmacSha256Hex(apiSecret, apiKey + ts + sorted);
+  const url = sorted ? `${MEXC_FUTURES_BASE}${path}?${sorted}` : `${MEXC_FUTURES_BASE}${path}`;
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'ApiKey': apiKey,
+        'Request-Time': ts,
+        'Signature': signature,
+        'Content-Type': 'application/json',
+      },
+    });
+  } catch (e) {
+    return { ok: false, status: 503, error: 'exchange_unreachable', detail: (e as Error).message || 'fetch_failed' };
+  }
+  if (res.status >= 500) return { ok: false, status: 503, error: 'exchange_unreachable', detail: `mexc_http_${res.status}` };
+  let body: { success?: boolean; data?: unknown; message?: string } = {};
+  try { body = await res.json(); } catch { /* keep {} */ }
+  if (res.status === 401 || res.status === 403) {
+    return { ok: false, status: 401, error: 'mexc_futures_rejected', detail: body?.message || `status ${res.status}` };
+  }
+  if (!res.ok || body.success === false) {
+    return { ok: false, status: 422, error: 'mexc_futures_rejected', detail: body?.message || `status ${res.status}` };
+  }
+  return { ok: true, body };
+}
+
+async function fetchMexcFuturesOrders(
+  apiKey: string, apiSecret: string,
+): Promise<{ ok: true; list: MexcFuturesOrder[] } | BybitFetchError> {
+  const all: MexcFuturesOrder[] = [];
+  const MAX_PAGES = 50;
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    const r = await mexcFuturesGet(apiKey, apiSecret, '/api/v1/private/order/list/history_orders', {
+      page_num: String(page),
+      page_size: '100',
+      states: '3', // 3 = filled/completed (MEXC contract API)
+    });
+    if (!r.ok) return r;
+    const data = Array.isArray(r.body.data) ? (r.body.data as MexcFuturesOrder[]) : [];
+    all.push(...data);
+    if (data.length < 100) break;
+  }
+  return { ok: true, list: all };
+}
+
+function weightedAvg(rows: MexcFuturesOrder[], priceKey: 'dealAvgPrice', volKey: 'dealVol'): number {
+  const totalVol = rows.reduce((s, r) => s + Number(r[volKey] || 0), 0);
+  if (totalVol === 0) return 0;
+  return rows.reduce((s, r) => s + Number(r[priceKey] || 0) * Number(r[volKey] || 0), 0) / totalVol;
+}
+
+function mexcFuturesToTrades(orders: MexcFuturesOrder[], provider: string): BybitNormalized[] {
+  const byPos = new Map<number, MexcFuturesOrder[]>();
+  for (const o of orders) {
+    if (o.positionId == null) continue;
+    if (!byPos.has(o.positionId)) byPos.set(o.positionId, []);
+    byPos.get(o.positionId)!.push(o);
+  }
+  const out: BybitNormalized[] = [];
+  for (const [positionId, group] of byPos) {
+    const opens = group.filter((o) => o.side === 1 || o.side === 3);
+    const closes = group.filter((o) => o.side === 2 || o.side === 4);
+    if (opens.length === 0 || closes.length === 0) continue; // not a completed round-trip
+
+    const direction: 'Long' | 'Short' = opens[0].side === 1 ? 'Long' : 'Short';
+    const symbol = group[0].symbol;
+    const entry = weightedAvg(opens, 'dealAvgPrice', 'dealVol');
+    const exit = weightedAvg(closes, 'dealAvgPrice', 'dealVol');
+    const size = closes.reduce((s, o) => s + Number(o.dealVol || 0), 0);
+    const pnl = closes.reduce((s, o) => s + Number(o.profit || 0), 0);
+    const fees = group.reduce((s, o) => s + Number(o.takerFee || 0) + Number(o.makerFee || 0), 0);
+    const lev = Number(opens[0].leverage) || 1;
+    const openMs = Math.min(...opens.map((o) => Number(o.createTime) || Date.now()));
+    const closeMs = Math.max(...closes.map((o) => Number(o.updateTime) || Number(o.createTime) || openMs));
+    const d = new Date(closeMs);
+    const iso = d.toISOString().slice(0, 19).replace('T', ' ');
+    const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
+    const winLoss: 'Win' | 'Loss' | 'Break Even' = pnl > 0 ? 'Win' : pnl < 0 ? 'Loss' : 'Break Even';
+    const externalId = `mexc:${symbol}:pos${positionId}`;
+    out.push({
+      legacy: {
+        date: iso, day: dayName, coin: symbol, direction,
+        orderType: 'Market',
+        entry, stopLoss: 0, exit,
+        returnR: 0, winLoss, risk: 0, expectedLoss: 0,
+        pnl, deviation: 0,
+        positionSize: size * entry,
+        leverage: lev, riskPct: 0, rules: true,
+        comments: `__CLOSED:${externalId}__ ${provider} fees:${fees.toFixed(6)} orders:${group.map((o) => o.orderId).join(',')}`,
+        exchange_provider: provider,
+        exchange_exec_id: externalId,
+      },
+      provenance: {
+        broker_id: provider,
+        source_type: 'api_sync',
+        asset_class: 'crypto',
+        external_id: externalId,
+        opened_at: new Date(openMs).toISOString(),
+        closed_at: new Date(closeMs).toISOString(),
+      },
+    });
+  }
+  return out;
+}
+
+// ============== MEXC Spot (myTrades per symbol → FIFO closed lots) ==============
+interface MexcSpotFill {
+  id: string | number;
+  symbol: string;
+  price: string | number;
+  qty: string | number;
+  commission?: string | number;
+  time: number;
+  isBuyer: boolean;
+}
+
+async function mexcSpotSignedGet(
+  apiKey: string, apiSecret: string, path: string, params: Record<string, string> = {},
+): Promise<{ ok: true; body: unknown } | BybitFetchError> {
+  const qs = new URLSearchParams({ ...params, timestamp: Date.now().toString(), recvWindow: '5000' }).toString();
+  const signature = await hmacSha256Hex(apiSecret, qs);
+  let res: Response;
+  try {
+    res = await fetch(`${MEXC_SPOT_BASE}${path}?${qs}&signature=${signature}`, {
+      method: 'GET',
+      headers: { 'X-MEXC-APIKEY': apiKey },
+    });
+  } catch (e) {
+    return { ok: false, status: 503, error: 'exchange_unreachable', detail: (e as Error).message || 'fetch_failed' };
+  }
+  if (res.status >= 500) return { ok: false, status: 503, error: 'exchange_unreachable', detail: `mexc_http_${res.status}` };
+  const text = await res.text();
+  if (res.status === 401 || res.status === 403) {
+    return { ok: false, status: 401, error: 'mexc_spot_rejected', detail: text.slice(0, 240) };
+  }
+  if (res.status >= 400) {
+    return { ok: false, status: 422, error: 'mexc_spot_rejected', detail: text.slice(0, 240) };
+  }
+  let body: unknown;
+  try { body = JSON.parse(text); } catch { body = null; }
+  return { ok: true, body };
+}
+
+async function discoverMexcSpotSymbols(
+  apiKey: string, apiSecret: string,
+): Promise<{ ok: true; symbols: string[] } | BybitFetchError> {
+  const r = await mexcSpotSignedGet(apiKey, apiSecret, '/api/v3/account');
+  if (!r.ok) return r;
+  const balances = ((r.body as { balances?: Array<{ asset: string; free?: string; locked?: string }> })?.balances) ?? [];
+  const set = new Set<string>();
+  for (const b of balances) {
+    const free = Number(b.free || 0), locked = Number(b.locked || 0);
+    if ((free + locked) > 0 && b.asset && b.asset !== 'USDT') set.add(`${b.asset}USDT`);
+  }
+  return { ok: true, symbols: [...set] };
+}
+
+async function fetchMexcSpotFills(
+  apiKey: string, apiSecret: string, symbol: string,
+): Promise<{ ok: true; list: MexcSpotFill[] } | BybitFetchError> {
+  const fills: MexcSpotFill[] = [];
+  let fromId: string | undefined;
+  const MAX_PAGES = 50;
+  for (let i = 0; i < MAX_PAGES; i++) {
+    const params: Record<string, string> = { symbol, limit: '1000' };
+    if (fromId) params.fromId = fromId;
+    const r = await mexcSpotSignedGet(apiKey, apiSecret, '/api/v3/myTrades', params);
+    if (!r.ok) return r;
+    const rows = Array.isArray(r.body) ? (r.body as MexcSpotFill[]) : [];
+    if (rows.length === 0) break;
+    fills.push(...rows);
+    const lastId = Number(rows[rows.length - 1].id);
+    if (!Number.isFinite(lastId)) break;
+    fromId = String(lastId + 1);
+    if (rows.length < 1000) break;
+  }
+  return { ok: true, list: fills };
+}
+
+function mexcSpotToTrades(symbol: string, fills: MexcSpotFill[], provider: string): BybitNormalized[] {
+  const sorted = [...fills].sort((a, b) =>
+    (Number(a.time) - Number(b.time)) || (Number(a.id) - Number(b.id)),
+  );
+  const buyQueue: { price: number; qty: number; fee: number; time: number }[] = [];
+  const out: BybitNormalized[] = [];
+
+  for (const f of sorted) {
+    const price = Number(f.price) || 0;
+    const qty = Number(f.qty) || 0;
+    const fee = Number(f.commission || 0);
+    if (f.isBuyer) {
+      buyQueue.push({ price, qty, fee, time: Number(f.time) });
+      continue;
+    }
+    let remaining = qty;
+    let matchIndex = 0;
+    while (remaining > 1e-12 && buyQueue.length > 0) {
+      const lot = buyQueue[0];
+      const matched = Math.min(remaining, lot.qty);
+      const buyFeePortion = lot.qty > 0 ? lot.fee * (matched / lot.qty) : 0;
+      const sellFeePortion = qty > 0 ? fee * (matched / qty) : 0;
+      const pnl = (price - lot.price) * matched - buyFeePortion - sellFeePortion;
+      const externalId = `mexc:${symbol}:spot:${f.id}:${matchIndex}`;
+      const closeMs = Number(f.time);
+      const d = new Date(closeMs);
+      const iso = d.toISOString().slice(0, 19).replace('T', ' ');
+      const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
+      const winLoss: 'Win' | 'Loss' | 'Break Even' = pnl > 0 ? 'Win' : pnl < 0 ? 'Loss' : 'Break Even';
+      out.push({
+        legacy: {
+          date: iso, day: dayName, coin: symbol, direction: 'Long',
+          orderType: 'Market',
+          entry: lot.price, stopLoss: 0, exit: price,
+          returnR: 0, winLoss, risk: 0, expectedLoss: 0,
+          pnl, deviation: 0,
+          positionSize: matched * lot.price,
+          leverage: 1, riskPct: 0, rules: true,
+          comments: `__CLOSED:${externalId}__ ${provider} fees:${(buyFeePortion + sellFeePortion).toFixed(8)}`,
+          exchange_provider: provider,
+          exchange_exec_id: externalId,
+        },
+        provenance: {
+          broker_id: provider,
+          source_type: 'api_sync',
+          asset_class: 'crypto',
+          external_id: externalId,
+          opened_at: new Date(lot.time).toISOString(),
+          closed_at: new Date(closeMs).toISOString(),
+        },
+      });
+      lot.qty -= matched;
+      remaining -= matched;
+      matchIndex++;
+      if (lot.qty <= 1e-12) buyQueue.shift();
+    }
+    // remaining > 0 with empty queue → honest: skip (sell with no prior buy in window)
+  }
+  return out;
+}
+
 // Provider dispatch table — used by the handler's bulk path.
-type ProviderId = 'bybit' | 'binance';
+type ProviderId = 'bybit' | 'binance' | 'mexc_futures' | 'mexc_spot';
 async function fetchProviderClosedTrades(
   provider: ProviderId,
   apiKey: string,
@@ -432,6 +704,25 @@ async function fetchProviderClosedTrades(
         return { ...n, key: n.provenance.external_id };
       }),
     };
+  }
+  if (provider === 'mexc_futures') {
+    const r = await fetchMexcFuturesOrders(apiKey, apiSecret);
+    if (!r.ok) return r;
+    return {
+      ok: true,
+      list: mexcFuturesToTrades(r.list, provider).map(n => ({ ...n, key: n.provenance.external_id })),
+    };
+  }
+  if (provider === 'mexc_spot') {
+    const sym = await discoverMexcSpotSymbols(apiKey, apiSecret);
+    if (!sym.ok) return sym;
+    const all: BybitNormalized[] = [];
+    for (const s of sym.symbols) {
+      const f = await fetchMexcSpotFills(apiKey, apiSecret, s);
+      if (!f.ok) return f;
+      all.push(...mexcSpotToTrades(s, f.list, provider));
+    }
+    return { ok: true, list: all.map(n => ({ ...n, key: n.provenance.external_id })) };
   }
   return { ok: false, status: 400, error: 'unsupported_provider', detail: provider };
 }
