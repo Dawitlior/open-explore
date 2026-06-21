@@ -1072,7 +1072,7 @@ Deno.serve(async (req) => {
     catch { return json({ ok: false, error: 'invalid_body', detail: 'json_parse_failed' }, 400); }
 
     const provider = String(body.provider || '').toLowerCase().trim() as ProviderId;
-    const ALLOWED_PROVIDERS: ProviderId[] = ['bybit', 'binance', 'mexc_futures', 'mexc_spot'];
+    const ALLOWED_PROVIDERS: ProviderId[] = ['bybit', 'binance', 'mexc_futures', 'mexc_spot', 'gate_futures', 'kraken_futures'];
     if (!ALLOWED_PROVIDERS.includes(provider)) {
       return json({ ok: false, error: 'unsupported_provider', detail: `Provider '${provider}' is not supported yet` }, 400);
     }
