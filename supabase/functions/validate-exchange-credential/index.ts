@@ -280,7 +280,11 @@ export async function handler(req: Request, deps: HandlerDeps): Promise<Response
   const { provider, api_key, api_secret, label } = v.value;
   const verdict = provider === 'bybit'
     ? await verifyBybit(api_key, api_secret, deps.fetchImpl)
-    : await verifyBinance(api_key, api_secret, deps.fetchImpl);
+    : provider === 'binance'
+      ? await verifyBinance(api_key, api_secret, deps.fetchImpl)
+      : provider === 'mexc_futures'
+        ? await verifyMexcFutures(api_key, api_secret, deps.fetchImpl)
+        : await verifyMexcSpot(api_key, api_secret, deps.fetchImpl);
 
   if (!verdict.ok) {
     if (verdict.reason === 'connection_error') {
