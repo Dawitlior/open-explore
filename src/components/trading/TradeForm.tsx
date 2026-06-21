@@ -719,7 +719,9 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                   style={bigInput}
                 />
                 <div style={helpText}>
-                  {`${isRTL ? 'שווה ערך ל-' : 'Equivalent to '}${equivPercent.toFixed(2)}% ${isRTL ? 'מההון' : 'of your balance'} ${currentBalance > 0 ? `($${currentBalance.toFixed(0)})` : ''}`}
+                  {equivPercent == null
+                    ? (isRTL ? 'יתרת חשבון לא הוגדרה — אחוז סיכון אינו זמין.' : 'Account balance not set — risk % unavailable.')
+                    : `${isRTL ? 'שווה ערך ל-' : 'Equivalent to '}${equivPercent.toFixed(2)}% ${isRTL ? 'מההון' : 'of your balance'} ($${currentBalance.toFixed(0)})`}
                 </div>
               </div>
 
