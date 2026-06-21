@@ -1439,7 +1439,7 @@ function KeyGuide({ T, isRTL, provider }: { T: TradingTheme; isRTL: boolean; pro
   const mono = "'IBM Plex Mono', monospace";
 
   type Step = { he: { title: string; body: string }; en: { title: string; body: string } };
-  const steps: Step[] = provider.id === 'bybit' ? [
+  const bybitSteps: Step[] = [
     {
       he: { title: 'התחבר לחשבון Bybit שלך', body: 'פתח את האתר bybit.com ולחץ "Log In" בפינה הימנית. אם אין לך חשבון — צור אחד והשלם את אימות הזהות.' },
       en: { title: 'Log in to your Bybit account', body: 'Open bybit.com and click "Log In" at the top right. If you do not have an account, create one and complete identity verification first.' },
@@ -1464,7 +1464,8 @@ function KeyGuide({ T, isRTL, provider }: { T: TradingTheme; isRTL: boolean; pro
       he: { title: 'הדבק כאן את שני הקודים', body: 'חזור לחלון הזה והדבק את ה-API Key ואת ה-API Secret בשדות למטה. לחץ "אמת ושמור". זה הכל — Orca יבדוק שהמפתח באמת לקריאה בלבד וישמור אותו בכספת מוצפנת.' },
       en: { title: 'Paste both keys here', body: 'Return to this window and paste the API Key and API Secret into the fields below. Click "Verify & Save". Orca will confirm the key is truly read-only and seal it inside an encrypted vault.' },
     },
-  ] : [
+  ];
+  const binanceSteps: Step[] = [
     {
       he: { title: 'התחבר ל-Binance', body: 'פתח את binance.com ולחץ "Log In". אם אין לך חשבון, צור אחד והשלם את אימות הזהות (KYC) לפני שתמשיך.' },
       en: { title: 'Log in to Binance', body: 'Open binance.com and click "Log In". If you do not have an account, create one and complete identity verification (KYC) before continuing.' },
@@ -1490,6 +1491,64 @@ function KeyGuide({ T, isRTL, provider }: { T: TradingTheme; isRTL: boolean; pro
       en: { title: 'Paste both keys here', body: 'Copy the API Key and Secret Key, return to this window, and paste them into the fields below. Click "Verify & Save" — we will confirm the key is truly read-only.' },
     },
   ];
+  const mexcFuturesSteps: Step[] = [
+    {
+      he: { title: 'היכנס ל-MEXC', body: 'פתח את האתר mexc.com והתחבר לחשבון. השלם אימות זהות (KYC) אם עוד לא עשית.' },
+      en: { title: 'Sign in to MEXC', body: 'Open mexc.com and sign in. Complete identity verification (KYC) first if you have not yet.' },
+    },
+    {
+      he: { title: 'פתח את ניהול ה-API', body: 'לחץ על תמונת הפרופיל → "Account" → "API Management". זה הדף ליצירת מפתחות.' },
+      en: { title: 'Open API Management', body: 'Click your profile picture → "Account" → "API Management". This is where new keys are created.' },
+    },
+    {
+      he: { title: 'צור API חדש', body: 'לחץ "Create API", תן שם כמו "ORCA Read Only".' },
+      en: { title: 'Create a new API', body: 'Click "Create API" and give it a name like "ORCA Read Only".' },
+    },
+    {
+      he: { title: 'הרשאות — קריאה בלבד לפיוצ\'רס', body: 'אפשר אך ורק גישת קריאה/שאילתה ל-Futures. אל תאפשר שליחת פקודות (Trade), משיכה (Withdraw), העברה (Transfer) או מרג\'ין. לעולם!' },
+      en: { title: 'Permissions — Futures Read ONLY', body: 'Enable ONLY read/query access for Futures. Never enable order placement (Trade), Withdraw, Transfer, or Margin.' },
+    },
+    {
+      he: { title: 'אל תקשר כתובת IP', body: 'השאר את שדה ה-IP ריק. שרתי הסנכרון של ORCA לא משתמשים ב-IP קבוע, ולכן מפתח מוגבל ל-IP יפסיק לעבוד. שים לב: מפתח בלי קישור IP פג אחרי 90 יום — נזכיר לך לחדש.' },
+      en: { title: 'Do NOT bind an IP address', body: 'Leave the IP field empty. ORCA sync servers do not use a fixed IP, so an IP-bound key will stop working. Note: keys without IP binding expire after 90 days — we will remind you to renew.' },
+    },
+    {
+      he: { title: 'אשר עם 2FA והדבק כאן', body: 'השלם אימות דו-שלבי. העתק את Access Key ואת Secret Key (ה-Secret מוצג פעם אחת!) והדבק כאן למטה. לחץ "אמת ושמור".' },
+      en: { title: 'Confirm with 2FA and paste here', body: 'Complete 2FA. Copy the Access Key and Secret Key (the Secret is shown ONCE!) and paste them below. Click "Verify & Save".' },
+    },
+  ];
+  const mexcSpotSteps: Step[] = [
+    {
+      he: { title: 'היכנס ל-MEXC', body: 'פתח את האתר mexc.com והתחבר לחשבון. השלם אימות זהות (KYC) אם עוד לא עשית.' },
+      en: { title: 'Sign in to MEXC', body: 'Open mexc.com and sign in. Complete identity verification (KYC) first if you have not yet.' },
+    },
+    {
+      he: { title: 'פתח את ניהול ה-API', body: 'לחץ על תמונת הפרופיל → "Account" → "API Management".' },
+      en: { title: 'Open API Management', body: 'Click your profile picture → "Account" → "API Management".' },
+    },
+    {
+      he: { title: 'צור API חדש', body: 'לחץ "Create API", תן שם "ORCA Read Only".' },
+      en: { title: 'Create a new API', body: 'Click "Create API" and name it "ORCA Read Only".' },
+    },
+    {
+      he: { title: 'הרשאות — קריאה בלבד לספוט', body: 'תחת הרשאות ספוט, אפשר אך ורק גישת קריאה/שאילתה. אל תאפשר מסחר ספוט (Spot Trading), משיכה או העברה.' },
+      en: { title: 'Permissions — Spot Read ONLY', body: 'Under Spot permissions, enable ONLY read/query access. Do not enable Spot Trading, Withdraw, or Transfer.' },
+    },
+    {
+      he: { title: 'אל תקשר כתובת IP', body: 'השאר את ה-IP ריק (אותה סיבה כמו בפיוצ\'רס). מפתח בלי IP יפג אחרי 90 יום — נזכיר לחדש.' },
+      en: { title: 'Do NOT bind an IP address', body: 'Leave the IP empty (same reason as Futures). Keys without IP binding expire after 90 days — we will remind you to renew.' },
+    },
+    {
+      he: { title: 'אשר עם 2FA והדבק כאן', body: 'השלם אימות דו-שלבי. העתק את Access Key ואת Secret Key והדבק כאן. נזהה את הצמדים מהיתרות הנוכחיות שלך אוטומטית.' },
+      en: { title: 'Confirm with 2FA and paste here', body: 'Complete 2FA. Copy the Access Key and Secret Key and paste them here. We will auto-detect the pairs you trade from your current balances.' },
+    },
+  ];
+  const steps: Step[] =
+    provider.id === 'bybit' ? bybitSteps
+    : provider.id === 'binance' ? binanceSteps
+    : provider.id === 'mexc_futures' ? mexcFuturesSteps
+    : provider.id === 'mexc_spot' ? mexcSpotSteps
+    : binanceSteps;
 
   return (
     <>
