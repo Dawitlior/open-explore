@@ -1490,23 +1490,35 @@ function mapFunnel(rows) {
   }));
 }
 
+function EmptyShell({ title, subtitle, hint }) {
+  return (
+    <div style={{ padding: "60px 24px", textAlign: "center", background: C.panel, border: `1px dashed ${C.borderStrong}`, borderRadius: 12 }}>
+      <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 650, color: C.ink, marginBottom: 6 }}>{title}</div>
+      {subtitle && <div style={{ fontFamily: SANS, fontSize: 12.5, color: C.ink2, marginBottom: 10 }}>{subtitle}</div>}
+      {hint && <div style={{ fontFamily: MONO, fontSize: 11, color: C.ink3 }}>{hint}</div>}
+    </div>
+  );
+}
+
 export default function OrcaConsole() {
   const live = useAdminLive();
   const D = useMemo(() => {
-    const base = DATA;
-    const traders = live.traderMatrix && live.traderMatrix.length ? mapMatrixTraders(live.traderMatrix) : base.traders;
-    const engagement = live.engagementWeekly && live.engagementWeekly.length ? mapEngagement(live.engagementWeekly) : base.engagement;
-    const heatRaw = live.activityHeatmap && live.activityHeatmap.length ? mapHeat(live.activityHeatmap) : base.heat;
-    const hmax = heatRaw.length ? Math.max(...heatRaw.map((c) => c.v)) || 1 : base.hmax;
-    const cohorts = live.retentionCohorts && live.retentionCohorts.length ? mapCohorts(live.retentionCohorts) : base.cohorts;
-    const funnel = live.activationFunnel && live.activationFunnel.length ? mapFunnel(live.activationFunnel) : base.funnel;
+    // ZERO-SEED: live data only. Empty arrays when RPCs return nothing.
+    // Sections must render EmptyShell rather than fabricated demo data.
+    const traders = live.traderMatrix ? mapMatrixTraders(live.traderMatrix) : [];
+    const engagement = live.engagementWeekly ? mapEngagement(live.engagementWeekly) : [];
+    const heat = live.activityHeatmap ? mapHeat(live.activityHeatmap) : [];
+    const hmax = heat.length ? Math.max(...heat.map((c) => c.v)) || 1 : 1;
+    const cohorts = live.retentionCohorts ? mapCohorts(live.retentionCohorts) : [];
+    const funnel = live.activationFunnel ? mapFunnel(live.activationFunnel) : [];
     return {
-      ...base,
-      traders, engagement, heat: heatRaw, hmax, cohorts, funnel,
-      storage: live.storage?.storage?.length ? live.storage.storage : base.storage,
-      storageTrend: live.storage?.storageTrend?.length ? live.storage.storageTrend : base.storageTrend,
-      dbStats: live.storage?.dbStats ? live.storage.dbStats : base.dbStats,
-      aiUsage: live.aiUsage && live.aiUsage.length ? live.aiUsage : base.aiUsage,
+      traders, engagement, heat, hmax, cohorts, funnel,
+      // Derived UI dimensions not yet served by RPCs — explicitly empty (no seed).
+      diagTier: [], ttft: [],
+      storage: live.storage?.storage || [],
+      storageTrend: live.storage?.storageTrend || [],
+      dbStats: live.storage?.dbStats || { sizeMb: 0, rows: 0, connections: 0, cacheHit: 0 },
+      aiUsage: live.aiUsage || [],
     };
   }, [live]);
   const [lang, setLang] = useState("en");
@@ -1531,12 +1543,30 @@ export default function OrcaConsole() {
   const eng = useMemo(() => D.engagement.slice(-weeks), [D.engagement, weeks]);
 
   const props = { t, lang, traders: filtered, eng, heat: D.heat, hmax: D.hmax, cohorts: D.cohorts, funnel: D.funnel, diagTier: D.diagTier, ttft: D.ttft, aiUsage: D.aiUsage, storage: D.storage, storageTrend: D.storageTrend, dbStats: D.dbStats, jumpFn, onPick: setPicked, live };
-  const SECTION = {
-    overview: <Overview {...props} />, activity: <CommunityActivity {...props} />, retention: <Retention {...props} />,
-    activation: <Activation {...props} />, subs: <Subscriptions {...props} />, mind: <Mind {...props} />,
-    risk: <RiskEngine {...props} />, perf: <Performance {...props} />, matrix: <TraderMatrix {...props} />,
-    bench: <Benchmarks {...props} />, ai: <AIUsage {...props} />, storage: <Storage {...props} />, queries: <QueryConsole {...props} />, quality: <DataQuality {...props} />, system: <SystemAccess {...props} />,
-  }[active];
+
+  // ZERO-SEED guards: render EmptyShell when the section's primary data is empty.
+  const empty = (title, subtitle) => <EmptyShell title={title} subtitle={subtitle} hint={lang === "he" ? "ראה /console/diagnostics לבדיקת RPCs" : "See /console/diagnostics for RPC health"} />;
+  const need = (arr, sectionKey) => arr.length > 0
+    ? null
+    : empty(lang === "he" ? "אין נתונים חיים עדיין" : "No live data yet", `${sectionKey}`);
+  const SECTION_MAP = {
+    overview: eng.length ? <Overview {...props} /> : need(eng, "engagement_weekly"),
+    activity: D.heat.length ? <CommunityActivity {...props} /> : need(D.heat, "activity_heatmap"),
+    retention: D.cohorts.length && eng.length ? <Retention {...props} /> : need([], "retention_cohorts"),
+    activation: D.funnel.length >= 4 ? <Activation {...props} /> : need([], "activation_funnel"),
+    subs: filtered.length && eng.length ? <Subscriptions {...props} /> : need([], "trader_matrix + engagement"),
+    mind: filtered.length ? <Mind {...props} /> : need(filtered, "trader_matrix"),
+    risk: filtered.length && eng.length ? <RiskEngine {...props} /> : need([], "risk_engine"),
+    perf: filtered.length ? <Performance {...props} /> : need(filtered, "performance"),
+    matrix: filtered.length ? <TraderMatrix {...props} /> : need(filtered, "trader_matrix"),
+    bench: filtered.length && eng.length ? <Benchmarks {...props} /> : need([], "benchmarks"),
+    ai: D.aiUsage.length ? <AIUsage {...props} /> : need(D.aiUsage, "ai_usage"),
+    storage: D.storage.length ? <Storage {...props} /> : need(D.storage, "db_storage"),
+    queries: <QueryConsole {...props} />,
+    quality: filtered.length ? <DataQuality {...props} /> : need(filtered, "data_quality"),
+    system: <SystemAccess {...props} />,
+  };
+  const SECTION = SECTION_MAP[active];
 
   const rangeOpts = [{ v: "7", l: t("d7") }, { v: "30", l: t("d30") }, { v: "90", l: t("d90") }, { v: "12", l: t("m12") }];
   const assetOpts = [{ v: "all", l: t("allAssets") }, ...ASSET.map((a) => ({ v: a.id, l: loc(lang, a) }))];
