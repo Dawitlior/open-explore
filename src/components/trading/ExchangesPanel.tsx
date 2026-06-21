@@ -72,21 +72,21 @@ const PROVIDERS: ProviderMeta[] = [
     .map(a => metaToProvider(a.meta)),
   // ── UI-only "coming soon" tiles. No registry/sync wiring; these surface as
   // disabled cards so users see the roadmap without enabling any code path. ──
-  // (MEXC is now a real, registered provider — see src/lib/brokers/mexc_*.ts)
+  // (MEXC, Gate.io and Kraken are real, registered providers — see src/lib/brokers/) 
   {
-    id: 'gateio',
-    name: 'Gate.io',
+    id: 'coinbase',
+    name: 'Coinbase',
     tagline: { he: 'תמיכה מלאה בעבודה — בקרוב', en: 'Full support in the works — coming soon' },
-    gradient: 'linear-gradient(135deg, rgba(220,38,127,0.18), rgba(220,38,127,0.02))',
-    accent: '#dc267f',
+    gradient: 'linear-gradient(135deg, rgba(0,82,255,0.18), rgba(0,82,255,0.02))',
+    accent: '#0052ff',
     enabled: false,
   },
   {
-    id: 'kraken',
-    name: 'Kraken',
+    id: 'crypto_com',
+    name: 'Crypto.com',
     tagline: { he: 'תמיכה מלאה בעבודה — בקרוב', en: 'Full support in the works — coming soon' },
-    gradient: 'linear-gradient(135deg, rgba(92,55,255,0.18), rgba(92,55,255,0.02))',
-    accent: '#5c37ff',
+    gradient: 'linear-gradient(135deg, rgba(0,52,153,0.18), rgba(0,52,153,0.02))',
+    accent: '#003399',
     enabled: false,
   },
 ];
