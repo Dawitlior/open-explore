@@ -266,6 +266,16 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
     if (s >= 1) {
       if (!form.entry) errs.push(isRTL ? 'מחיר כניסה חסר' : 'Entry price required');
       if (!form.stopLoss) errs.push(isRTL ? 'סטופ לוס חסר' : 'Stop loss required');
+      // Direction sanity: Long → stop must be BELOW entry; Short → ABOVE.
+      if (form.entry && form.stopLoss) {
+        if (form.entry === form.stopLoss) {
+          errs.push(isRTL ? 'סטופ זהה לכניסה — מרחק סטופ חייב להיות גדול מ-0' : 'Stop equals entry — distance must be > 0');
+        } else if (form.direction === 'Long' && form.stopLoss >= form.entry) {
+          errs.push(isRTL ? 'בלונג, הסטופ חייב להיות מתחת למחיר הכניסה' : 'For a Long, stop must be below entry');
+        } else if (form.direction === 'Short' && form.stopLoss <= form.entry) {
+          errs.push(isRTL ? 'בשורט, הסטופ חייב להיות מעל מחיר הכניסה' : 'For a Short, stop must be above entry');
+        }
+      }
       if (!isOpenPosition) {
         if (!form.exit) errs.push(isRTL ? 'מחיר יציאה חסר' : 'Exit price required');
         if (form.risk <= 0) errs.push(isRTL ? 'סכום סיכון חייב להיות גדול מ-0' : 'Risk amount must be greater than 0');
