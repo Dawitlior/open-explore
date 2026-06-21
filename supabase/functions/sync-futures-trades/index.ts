@@ -630,7 +630,12 @@ function mexcSpotToTrades(symbol: string, fills: MexcSpotFill[], provider: strin
     while (remaining > 1e-12 && buyQueue.length > 0) {
       const lot = buyQueue[0];
       const matched = Math.min(remaining, lot.qty);
-      const buyFeePortion = lot.qty > 0 ? lot.fee * (matched / lot.qty) : 0;
+      // §3.1 fee-allocation fix: consume the lot's remaining fee proportionally
+      // as we consume its qty, so a lot split across multiple sells does NOT
+      // get its full fee charged twice.
+      const portion = lot.qty > 0 ? matched / lot.qty : 0;
+      const buyFeePortion = lot.fee * portion;
+      lot.fee -= buyFeePortion;
       const sellFeePortion = qty > 0 ? fee * (matched / qty) : 0;
       const pnl = (price - lot.price) * matched - buyFeePortion - sellFeePortion;
       const externalId = `mexc:${symbol}:spot:${f.id}:${matchIndex}`;
