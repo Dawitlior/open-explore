@@ -154,8 +154,8 @@ export const LegalGate = () => {
       role="dialog"
       aria-modal="true"
       aria-labelledby="legal-gate-title"
-      dir="rtl"
-      lang="he"
+      dir={isRTL ? 'rtl' : 'ltr'}
+      lang={isRTL ? 'he' : 'en'}
       style={{
         position: 'fixed', inset: 0, zIndex: 100000,
         background: 'rgba(0,0,0,0.94)',
