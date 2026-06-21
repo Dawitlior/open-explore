@@ -6,7 +6,7 @@ import {
   Volume2, VolumeX, Zap, Type, Brush, Target, Gauge, Plug, Scale, Terminal,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { LEGAL_TITLE_HE, LEGAL_SECTIONS_HE, LEGAL_FOOTER_HE, PRIVACY_TITLE_HE, PRIVACY_SECTIONS_HE, LEGAL_VERSION, LEGAL_VERSION_DATE } from '@/lib/legal-text';
+import { LEGAL_TITLE_HE, LEGAL_TITLE_EN, LEGAL_SECTIONS_HE, LEGAL_SECTIONS_EN, LEGAL_FOOTER_HE, LEGAL_FOOTER_EN, PRIVACY_TITLE_HE, PRIVACY_TITLE_EN, PRIVACY_SECTIONS_HE, PRIVACY_SECTIONS_EN, LEGAL_VERSION, LEGAL_VERSION_DATE } from '@/lib/legal-text';
 import { ExchangesPanel } from './ExchangesPanel';
 import { playMorningLock } from '@/lib/apex-sounds';
 import type { TradingTheme, CustomTheme, BaseMood } from '@/lib/trading-theme';
