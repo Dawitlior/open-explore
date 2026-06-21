@@ -667,7 +667,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                   >
                     {[0.25, 0.5, 1, 1.5, 2].map(pct => {
                       const dollar = +((currentBalance * pct) / 100).toFixed(2);
-                      const active = Math.abs(equivPercent - pct) < 0.05;
+                      const active = equivPercent != null && Math.abs(equivPercent - pct) < 0.05;
                       return (
                         <button
                           key={pct}
