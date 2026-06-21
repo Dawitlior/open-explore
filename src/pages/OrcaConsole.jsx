@@ -716,24 +716,26 @@ function Retention({ t, lang, traders, cohorts, eng }) {
 
 /* 4 · Activation */
 function Activation({ t, lang, traders, funnel, diagTier, ttft }) {
-  const max = funnel[0].n;
-  const drops = funnel.slice(1).map((s, i) => ({ code: `${i + 1}→${i + 2}`, v: Math.round((1 - s.n / funnel[i].n) * 100), label: `${Math.round((1 - s.n / funnel[i].n) * 100)}%` })).sort((a, b) => b.v - a.v).slice(0, 5);
-  const commitRate = Math.round((funnel[4].n / funnel[3].n) * 100);
+  const max = funnel[0]?.n || 1;
+  const drops = funnel.slice(1).map((s, i) => ({ code: `${i + 1}→${i + 2}`, v: Math.round((1 - s.n / Math.max(funnel[i].n, 1)) * 100), label: `${Math.round((1 - s.n / Math.max(funnel[i].n, 1)) * 100)}%` })).sort((a, b) => b.v - a.v).slice(0, 5);
+  const lastIdx = funnel.length - 1;
+  const commitRate = funnel.length >= 2 ? Math.round((funnel[lastIdx].n / Math.max(funnel[0].n, 1)) * 100) : 0;
   const presets = [{ fn: "admin_activation_funnel", params: { period: "90" } }, { fn: "admin_activation_funnel", params: { period: "30" } }, { fn: "admin_subscriptions", params: { period: "90" } }, { fn: "admin_engagement_weekly", params: { period: "30" } }];
+  const tile2 = funnel[2], tile3 = funnel[3];
   return (
     <>
       <SectionHead n="04" title={t("navActivation")} subtitle={t("subActivation")} />
       <div style={{ ...gridCols(4), marginBottom: 14 }}>
-        <StatTile label={t("kSignups")} value={nf.format(funnel[0].n)} icon={Users} bg={C.tintBlue} tint={C.blue} />
+        <StatTile label={t("kSignups")} value={nf.format(funnel[0]?.n || 0)} icon={Users} bg={C.tintBlue} tint={C.blue} />
         <StatTile label={t("gCommit")} value={commitRate} suffix="%" icon={CheckCircle2} bg={C.tintMint} tint={C.pos} />
-        <StatTile label={funnel[5][lang]} value={nf.format(funnel[5].n)} icon={Target} bg={C.tintIndigo} tint={PAL[1]} />
-        <StatTile label={funnel[6][lang]} value={nf.format(funnel[6].n)} icon={Activity} bg={C.tintAmber} tint={C.warn} />
+        {tile2 && <StatTile label={tile2[lang]} value={nf.format(tile2.n)} icon={Target} bg={C.tintIndigo} tint={PAL[1]} />}
+        {tile3 && <StatTile label={tile3[lang]} value={nf.format(tile3.n)} icon={Activity} bg={C.tintAmber} tint={C.warn} />}
       </div>
       <div style={{ marginBottom: 14 }}><QueryStrip t={t} lang={lang} traders={traders} presets={presets} /></div>
-      <Card title={t("cFunnel")}><div style={{ display: "grid", gap: 9 }}>{funnel.map((s, i) => { const w = (s.n / max) * 100, drop = i > 0 ? Math.round((1 - s.n / funnel[i - 1].n) * 100) : 0, c = i >= 5 ? PAL[6] : i >= 4 ? PAL[1] : C.blue; return (<div key={s.id}><div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}><span style={{ fontFamily: SANS, fontSize: 12, color: C.ink }}>{i + 1}. {loc(lang, s)}</span><span style={{ display: "flex", gap: 10, alignItems: "center" }}><span style={{ fontFamily: MONO, fontSize: 12, fontWeight: 600, color: C.ink }}>{nf.format(s.n)}</span>{drop > 0 && <span style={{ fontFamily: MONO, fontSize: 10.5, color: drop > 25 ? C.neg : C.ink3 }}>−{drop}%</span>}</span></div><div style={{ height: 16, background: C.appBg, borderRadius: 5, overflow: "hidden" }}><div style={{ height: "100%", width: `${w}%`, background: c, borderRadius: 5 }} /></div></div>); })}</div></Card>
+      <Card title={t("cFunnel")}><div style={{ display: "grid", gap: 9 }}>{funnel.map((s, i) => { const w = (s.n / max) * 100, drop = i > 0 ? Math.round((1 - s.n / Math.max(funnel[i - 1].n, 1)) * 100) : 0, c = i >= 5 ? PAL[6] : i >= 4 ? PAL[1] : C.blue; return (<div key={s.id}><div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}><span style={{ fontFamily: SANS, fontSize: 12, color: C.ink }}>{i + 1}. {loc(lang, s)}</span><span style={{ display: "flex", gap: 10, alignItems: "center" }}><span style={{ fontFamily: MONO, fontSize: 12, fontWeight: 600, color: C.ink }}>{nf.format(s.n)}</span>{drop > 0 && <span style={{ fontFamily: MONO, fontSize: 10.5, color: drop > 25 ? C.neg : C.ink3 }}>−{drop}%</span>}</span></div><div style={{ height: 16, background: C.appBg, borderRadius: 5, overflow: "hidden" }}><div style={{ height: "100%", width: `${w}%`, background: c, borderRadius: 5 }} /></div></div>); })}</div></Card>
       <div style={{ ...gridCols(3), marginTop: 14 }}>
-        <Card title={t("cDiagnostic")}><ResponsiveContainer width="100%" height={190}><BarChart data={diagTier.map((x) => ({ name: loc(lang, TIER.find((tr) => tr.id === x.id)), v: x.n }))} margin={{ top: 6, right: 6, left: -24, bottom: 0 }}>{grid}<XAxis dataKey="name" {...axis} /><YAxis {...axis} /><Tooltip contentStyle={tipStyle} cursor={{ fill: C.blueSoft }} /><Bar dataKey="v" radius={[3, 3, 0, 0]} isAnimationActive={false}>{diagTier.map((_, i) => <Cell key={i} fill={PAL[i]} />)}</Bar></BarChart></ResponsiveContainer></Card>
-        <Card title={t("cTimeToTrade")}><ResponsiveContainer width="100%" height={190}><BarChart data={ttft.map((x) => ({ name: loc(lang, x), v: x.n }))} margin={{ top: 6, right: 6, left: -24, bottom: 0 }}>{grid}<XAxis dataKey="name" {...axis} /><YAxis {...axis} /><Tooltip contentStyle={tipStyle} cursor={{ fill: C.blueSoft }} /><Bar dataKey="v" fill={PAL[2]} radius={[3, 3, 0, 0]} isAnimationActive={false} /></BarChart></ResponsiveContainer></Card>
+        {diagTier.length > 0 && <Card title={t("cDiagnostic")}><ResponsiveContainer width="100%" height={190}><BarChart data={diagTier.map((x) => ({ name: loc(lang, TIER.find((tr) => tr.id === x.id)), v: x.n }))} margin={{ top: 6, right: 6, left: -24, bottom: 0 }}>{grid}<XAxis dataKey="name" {...axis} /><YAxis {...axis} /><Tooltip contentStyle={tipStyle} cursor={{ fill: C.blueSoft }} /><Bar dataKey="v" radius={[3, 3, 0, 0]} isAnimationActive={false}>{diagTier.map((_, i) => <Cell key={i} fill={PAL[i]} />)}</Bar></BarChart></ResponsiveContainer></Card>}
+        {ttft.length > 0 && <Card title={t("cTimeToTrade")}><ResponsiveContainer width="100%" height={190}><BarChart data={ttft.map((x) => ({ name: loc(lang, x), v: x.n }))} margin={{ top: 6, right: 6, left: -24, bottom: 0 }}>{grid}<XAxis dataKey="name" {...axis} /><YAxis {...axis} /><Tooltip contentStyle={tipStyle} cursor={{ fill: C.blueSoft }} /><Bar dataKey="v" fill={PAL[2]} radius={[3, 3, 0, 0]} isAnimationActive={false} /></BarChart></ResponsiveContainer></Card>}
         <Card title={t("gCommit")}><Gauge value={commitRate} label={t("gCommit")} suffix="%" color={C.pos} /></Card>
       </div>
       <div style={{ marginTop: 14 }}><Card title={t("listDropoff")}><RankList items={drops} tone={riskTone} /></Card></div>
