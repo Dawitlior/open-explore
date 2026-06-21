@@ -150,13 +150,54 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
     return entry;
   };
 
-  const autoCalcPositionSize = useMemo(() => {
-    const { entry, stopLoss, risk } = form;
-    if (!entry || !stopLoss || !risk || entry === stopLoss) return 0;
-    return risk / Math.abs(entry - stopLoss);
-  }, [form.entry, form.stopLoss, form.risk]);
+  // ── Unified sizing derivation (non-futures) ──────────────────────
+  // Inputs: Entry + Stop + ONE anchor (Risk$ | Notional$ | Units).
+  // Output: the OTHER two values + Margin, all derived through stop distance.
+  // Current price is NEVER used.
+  const sizing = useMemo(() => {
+    const entry = +form.entry || 0;
+    const stop = +form.stopLoss || 0;
+    const d = entry > 0 && stop > 0 ? Math.abs(entry - stop) : 0;
+    const dPct = entry > 0 && d > 0 ? d / entry : 0;
+    const lev = Math.max(1, +form.leverage || 1);
+    if (!d) return { d: 0, dPct: 0, units: 0, notional: 0, riskDollar: 0, margin: 0, ready: false, lev };
+    let units = 0, notional = 0, riskDollar = 0;
+    if (sizeAnchor === 'risk') {
+      riskDollar = +form.risk || 0;
+      units = riskDollar / d;
+      notional = units * entry;
+    } else if (sizeAnchor === 'notional') {
+      notional = +notionalInput || 0;
+      units = entry > 0 ? notional / entry : 0;
+      riskDollar = units * d;
+    } else {
+      units = +unitsInput || 0;
+      notional = units * entry;
+      riskDollar = units * d;
+    }
+    return { d, dPct, units, notional, riskDollar, margin: notional / lev, ready: true, lev };
+  }, [form.entry, form.stopLoss, form.risk, form.leverage, sizeAnchor, notionalInput, unitsInput]);
 
-  const equivPercent = useMemo(() => currentBalance > 0 ? (form.risk / currentBalance) * 100 : 0, [currentBalance, form.risk]);
+  // Sync derived values back into form so save/projection/futures-path stay coherent.
+  useEffect(() => {
+    if (isFutures) return;
+    if (!sizing.ready) return;
+    const nextRisk = +sizing.riskDollar.toFixed(2);
+    const nextSize = +sizing.units.toFixed(8);
+    const nextPct = currentBalance > 0 ? (nextRisk / currentBalance) * 100 : 0;
+    if (
+      Math.abs(nextRisk - (form.risk || 0)) > 0.005 ||
+      Math.abs(nextSize - (form.positionSize || 0)) > 1e-8
+    ) {
+      setForm(f => ({ ...f, risk: nextRisk, riskPct: nextPct, positionSize: nextSize }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sizing.riskDollar, sizing.units, isFutures, currentBalance]);
+
+  const equivPercent = useMemo(
+    () => (currentBalance > 0 ? (form.risk / currentBalance) * 100 : null),
+    [currentBalance, form.risk],
+  );
 
   const handleDateChange = (val: string) => {
     const d = new Date(val);
