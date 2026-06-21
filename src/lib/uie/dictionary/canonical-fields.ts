@@ -87,6 +87,14 @@ export const FIELD_TAXONOMY: FieldDescriptor[] = [
   { canonical:'pnl', destination:'journal_column', tier:2, profile:'signedNumber',
     aliases:{ he:['רווח הפסד','רווח/הפסד','רווח','הפסד','תוצאה','רוהס','רווח נקי','רווח והפסד'],
               en:['p&l','pnl','profit','profit/loss','realized p&l','realized pnl','net p&l','gain/loss','result','net profit','closed p&l'] } },
+  // Split-leg P&L (Purple-Belt / NinjaTrader templates use two columns: one for winners, one for losers).
+  // Each row fills ONE of the two; pipeline merges them into pnl = realisedWin - realisedLoss.
+  { canonical:'realisedWin', destination:'journal_column', tier:2, profile:'positiveNumber',
+    aliases:{ he:['רווח ממומש','רווח שמומש'],
+              en:['realised win','realized win','realised profit','realized profit','realised gain','realized gain','win amount','profit amount'] } },
+  { canonical:'realisedLoss', destination:'journal_column', tier:2, profile:'positiveNumber',
+    aliases:{ he:['הפסד ממומש','הפסד שמומש'],
+              en:['realised loss','realized loss','loss amount','realised loss usd','realized loss usd'] } },
   { canonical:'pnlPercent', destination:'journal_column', tier:3, profile:'percent', ambiguity:['R_VS_PERCENT'],
     aliases:{ he:['תשואה','אחוז רווח','אחוז שינוי','תשואה באחוזים'],
               en:['roi','return %','% gain','change %','p&l %','pnl %','profit %','yield'] } },
