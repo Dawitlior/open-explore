@@ -217,7 +217,7 @@ export const LegalGate = () => {
             fontSize: 10, color: TEXT_MUTED, letterSpacing: '0.22em',
             textTransform: 'uppercase', marginBottom: 6, fontWeight: 600,
           }}>
-            שלב {stepNum} מתוך 2 · {isTerms ? 'תנאי שימוש' : 'מדיניות פרטיות'}
+            {t(`שלב ${stepNum} מתוך 2 · ${isTerms ? 'תנאי שימוש' : 'מדיניות פרטיות'}`, `Step ${stepNum} of 2 · ${isTerms ? 'Terms of Service' : 'Privacy Policy'}`)}
           </div>
           <h2
             id="legal-gate-title"
