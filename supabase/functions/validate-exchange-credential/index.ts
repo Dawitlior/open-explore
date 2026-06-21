@@ -35,7 +35,7 @@ const SAFE_KEY = /^[A-Za-z0-9_\-]{8,256}$/;
 const SAFE_SECRET = /^[A-Za-z0-9_\-+/=]{8,512}$/;
 const SAFE_LABEL = /^[A-Za-z0-9 _\-]{1,64}$/;
 
-const SUPPORTED_PROVIDERS = ['bybit', 'binance', 'mexc_futures', 'mexc_spot'] as const;
+const SUPPORTED_PROVIDERS = ['bybit', 'binance', 'mexc_futures', 'mexc_spot', 'gate_futures', 'kraken_futures'] as const;
 type SupportedProvider = typeof SUPPORTED_PROVIDERS[number];
 
 export interface ValidatedInput {
@@ -246,6 +246,106 @@ export async function verifyMexcSpot(
   return { ok: false, reason: 'mexc_spot_rejected', detail: body?.msg ?? `status ${res.status}` };
 }
 
+// ---------- Shared crypto helpers (SHA-512 + HMAC-SHA-512, used by Gate + Kraken) ----------
+async function sha512Hex(s: string): Promise<string> {
+  const buf = await crypto.subtle.digest('SHA-512', new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+async function hmacSha512Hex(secret: string, msg: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(secret),
+    { name: 'HMAC', hash: 'SHA-512' }, false, ['sign'],
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(msg));
+  return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// ---------- Provider: Gate.io USDT-M Futures ----------
+// Gate keys without IP-binding expire after 90 days (same as MEXC). Read-only
+// posture identical to MEXC: no per-key permission introspection available, so
+// the verifier just proves the key signs correctly against a benign read.
+const GATE_BASE = 'https://api.gateio.ws';
+const GATE_PREFIX = '/api/v4';
+
+export async function verifyGateFutures(
+  apiKey: string, apiSecret: string, fetchImpl: typeof fetch = fetch,
+): Promise<{ ok: true } | { ok: false; reason: string; detail?: string }> {
+  const ts = Math.floor(Date.now() / 1000).toString();
+  const path = '/futures/usdt/accounts';
+  const query = '';
+  const bodyHash = await sha512Hex('');
+  const sigString = `GET\n${GATE_PREFIX}${path}\n${query}\n${bodyHash}\n${ts}`;
+  const sign = await hmacSha512Hex(apiSecret, sigString);
+  let res: Response;
+  try {
+    res = await fetchImpl(`${GATE_BASE}${GATE_PREFIX}${path}`, {
+      method: 'GET',
+      headers: { KEY: apiKey, Timestamp: ts, SIGN: sign, Accept: 'application/json' },
+    });
+  } catch {
+    return { ok: false, reason: 'connection_error', detail: 'Gate.io unreachable' };
+  }
+  if (res.status >= 500) return { ok: false, reason: 'connection_error', detail: `Gate ${res.status}` };
+  if (res.ok) return { ok: true };
+  const body = await res.json().catch(() => ({}));
+  return { ok: false, reason: 'gate_futures_rejected', detail: body?.message ?? `status ${res.status}` };
+}
+
+// ---------- Provider: Kraken Futures ----------
+// Kraken Authent: base64( HMAC_SHA512( base64decode(secret), SHA256(postData + nonce + endpointPath) ) )
+const KRAKEN_FX_BASE = 'https://futures.kraken.com';
+
+function b64ToBytes(b64: string): Uint8Array {
+  const bin = atob(b64);
+  const a = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
+  return a;
+}
+
+async function krakenAuthent(apiSecret: string, postData: string, nonce: string, endpointPath: string): Promise<string> {
+  let secretBytes: Uint8Array;
+  try {
+    secretBytes = b64ToBytes(apiSecret);
+  } catch {
+    // Fall back to raw bytes if user pasted a non-base64 secret — verifier will reject it.
+    secretBytes = new TextEncoder().encode(apiSecret);
+  }
+  const sha256 = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(postData + nonce + endpointPath));
+  const key = await crypto.subtle.importKey(
+    'raw', secretBytes,
+    { name: 'HMAC', hash: 'SHA-512' }, false, ['sign'],
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, new Uint8Array(sha256));
+  return btoa(String.fromCharCode(...new Uint8Array(sig)));
+}
+
+export async function verifyKrakenFutures(
+  apiKey: string, apiSecret: string, fetchImpl: typeof fetch = fetch,
+): Promise<{ ok: true } | { ok: false; reason: string; detail?: string }> {
+  const nonce = Date.now().toString();
+  const endpointPath = '/api/v3/accounts';
+  const postData = '';
+  let authent: string;
+  try {
+    authent = await krakenAuthent(apiSecret, postData, nonce, endpointPath);
+  } catch (e) {
+    return { ok: false, reason: 'kraken_futures_rejected', detail: `sign_failed: ${(e as Error).message}` };
+  }
+  let res: Response;
+  try {
+    res = await fetchImpl(`${KRAKEN_FX_BASE}/derivatives${endpointPath}`, {
+      method: 'GET',
+      headers: { APIKey: apiKey, Authent: authent, Nonce: nonce, Accept: 'application/json' },
+    });
+  } catch {
+    return { ok: false, reason: 'connection_error', detail: 'Kraken unreachable' };
+  }
+  if (res.status >= 500) return { ok: false, reason: 'connection_error', detail: `Kraken ${res.status}` };
+  const body = await res.json().catch(() => ({}));
+  if (res.ok && body?.result === 'success') return { ok: true };
+  return { ok: false, reason: 'kraken_futures_rejected', detail: body?.error ?? `status ${res.status}` };
+}
+
 // ---------- Handler (dependency-injected for testability) ----------
 export interface HandlerDeps {
   getUserId: (authHeader: string) => Promise<string | null>;
@@ -284,7 +384,11 @@ export async function handler(req: Request, deps: HandlerDeps): Promise<Response
       ? await verifyBinance(api_key, api_secret, deps.fetchImpl)
       : provider === 'mexc_futures'
         ? await verifyMexcFutures(api_key, api_secret, deps.fetchImpl)
-        : await verifyMexcSpot(api_key, api_secret, deps.fetchImpl);
+        : provider === 'mexc_spot'
+          ? await verifyMexcSpot(api_key, api_secret, deps.fetchImpl)
+          : provider === 'gate_futures'
+            ? await verifyGateFutures(api_key, api_secret, deps.fetchImpl)
+            : await verifyKrakenFutures(api_key, api_secret, deps.fetchImpl);
 
   if (!verdict.ok) {
     if (verdict.reason === 'connection_error') {

@@ -14,6 +14,8 @@ import "./bybit";
 import "./binance";
 import "./mexc_futures";
 import "./mexc_spot";
+import "./gate_futures";
+import "./kraken_futures";
 import "./manual";
 import "./csv-brokers";
 // import "./ibkr";      // Phase 6 — fill-level adapter overrides the CSV factory entry

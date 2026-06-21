@@ -72,21 +72,21 @@ const PROVIDERS: ProviderMeta[] = [
     .map(a => metaToProvider(a.meta)),
   // ── UI-only "coming soon" tiles. No registry/sync wiring; these surface as
   // disabled cards so users see the roadmap without enabling any code path. ──
-  // (MEXC is now a real, registered provider — see src/lib/brokers/mexc_*.ts)
+  // (MEXC, Gate.io and Kraken are real, registered providers — see src/lib/brokers/) 
   {
-    id: 'gateio',
-    name: 'Gate.io',
+    id: 'coinbase',
+    name: 'Coinbase',
     tagline: { he: 'תמיכה מלאה בעבודה — בקרוב', en: 'Full support in the works — coming soon' },
-    gradient: 'linear-gradient(135deg, rgba(220,38,127,0.18), rgba(220,38,127,0.02))',
-    accent: '#dc267f',
+    gradient: 'linear-gradient(135deg, rgba(0,82,255,0.18), rgba(0,82,255,0.02))',
+    accent: '#0052ff',
     enabled: false,
   },
   {
-    id: 'kraken',
-    name: 'Kraken',
+    id: 'crypto_com',
+    name: 'Crypto.com',
     tagline: { he: 'תמיכה מלאה בעבודה — בקרוב', en: 'Full support in the works — coming soon' },
-    gradient: 'linear-gradient(135deg, rgba(92,55,255,0.18), rgba(92,55,255,0.02))',
-    accent: '#5c37ff',
+    gradient: 'linear-gradient(135deg, rgba(0,52,153,0.18), rgba(0,52,153,0.02))',
+    accent: '#003399',
     enabled: false,
   },
 ];
@@ -1543,11 +1543,57 @@ function KeyGuide({ T, isRTL, provider }: { T: TradingTheme; isRTL: boolean; pro
       en: { title: 'Confirm with 2FA and paste here', body: 'Complete 2FA. Copy the Access Key and Secret Key and paste them here. We will auto-detect the pairs you trade from your current balances.' },
     },
   ];
+  const gateFuturesSteps: Step[] = [
+    {
+      he: { title: 'היכנס ל-Gate.io', body: 'פתח את gate.io והתחבר לחשבון. השלם אימות זהות (KYC) אם עוד לא עשית.' },
+      en: { title: 'Sign in to Gate.io', body: 'Open gate.io and sign in. Complete identity verification (KYC) first if you have not yet.' },
+    },
+    {
+      he: { title: 'פתח את ניהול ה-API', body: 'לחץ על תמונת הפרופיל → "API Management" → "Create API Key". תן שם כמו "ORCA Read Only".' },
+      en: { title: 'Open API Management', body: 'Click your profile picture → "API Management" → "Create API Key". Name it something like "ORCA Read Only".' },
+    },
+    {
+      he: { title: 'הרשאות — Futures Read Only בלבד', body: 'תחת ההרשאות אפשר אך ורק "Read Only" עבור Futures. אל תאפשר Trading, Withdraw, Transfer או הרשאות Spot.' },
+      en: { title: 'Permissions — Futures Read Only', body: 'Under permissions, enable ONLY "Read Only" for Futures. Do NOT enable Trading, Withdraw, Transfer, or Spot permissions.' },
+    },
+    {
+      he: { title: 'אל תקשר כתובת IP', body: 'השאר את שדה ה-IP ריק. שרתי הסנכרון של ORCA לא משתמשים ב-IP קבוע, ולכן מפתח מוגבל ל-IP ייכשל. שים לב: מפתח בלי IP פג אחרי 90 יום — נזכיר לחדש.' },
+      en: { title: 'Do NOT bind an IP address', body: 'Leave the IP field empty. ORCA sync servers do not use a fixed IP, so an IP-bound key will fail. Note: keys without IP binding expire after 90 days — we will remind you to renew.' },
+    },
+    {
+      he: { title: 'אשר עם 2FA והדבק כאן', body: 'השלם אימות דו-שלבי. העתק את ה-Key ואת ה-Secret (ה-Secret מוצג פעם אחת!) והדבק כאן למטה. לחץ "אמת ושמור".' },
+      en: { title: 'Confirm with 2FA and paste here', body: 'Complete 2FA. Copy the Key and Secret (the Secret is shown ONCE!) and paste them below. Click "Verify & Save".' },
+    },
+  ];
+  const krakenFuturesSteps: Step[] = [
+    {
+      he: { title: 'היכנס ל-Kraken Pro', body: 'פתח את futures.kraken.com או pro.kraken.com והתחבר. ודא שחשבון הפיוצ\'רס שלך מאומת.' },
+      en: { title: 'Sign in to Kraken Pro', body: 'Open futures.kraken.com or pro.kraken.com and sign in. Make sure your futures account is verified.' },
+    },
+    {
+      he: { title: 'פתח את Settings → API', body: 'מתפריט הפרופיל בחר Settings → API → "Add Key" (או "Create API Key").' },
+      en: { title: 'Open Settings → API', body: 'From your profile menu choose Settings → API → "Add Key" (or "Create API Key").' },
+    },
+    {
+      he: { title: 'הרשאות — General API: Read Only', body: 'הענק אך ורק את ההרשאה "General API → Read Only". אל תעניק Withdraw, Transfer, או Trade.' },
+      en: { title: 'Permissions — General API: Read Only', body: 'Grant ONLY "General API → Read Only". Do NOT grant Withdraw, Transfer, or Trade.' },
+    },
+    {
+      he: { title: 'אשר עם 2FA', body: 'השלם אימות דו-שלבי כדי לאשר את יצירת המפתח.' },
+      en: { title: 'Confirm with 2FA', body: 'Complete 2FA to confirm key creation.' },
+    },
+    {
+      he: { title: 'הדבק כאן את ה-API Key ואת ה-Private Key', body: 'העתק את API Key ואת Private Key (ה-Private מוצג פעם אחת!), חזור לכאן, הדבק בשדות. לחץ "אמת ושמור".' },
+      en: { title: 'Paste the API Key and Private Key', body: 'Copy the API Key and Private Key (the Private Key is shown ONCE!), return here, paste them in the fields. Click "Verify & Save".' },
+    },
+  ];
   const steps: Step[] =
     provider.id === 'bybit' ? bybitSteps
     : provider.id === 'binance' ? binanceSteps
     : provider.id === 'mexc_futures' ? mexcFuturesSteps
     : provider.id === 'mexc_spot' ? mexcSpotSteps
+    : provider.id === 'gate_futures' ? gateFuturesSteps
+    : provider.id === 'kraken_futures' ? krakenFuturesSteps
     : binanceSteps;
 
   return (
