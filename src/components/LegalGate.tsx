@@ -314,7 +314,7 @@ export const LegalGate = () => {
               opacity: saving ? 0.7 : 1,
             }}
           >
-            {saving ? 'שומר…' : (isTerms ? 'אישור והמשך למדיניות פרטיות' : 'אישור והכניסה לפלטפורמה')}
+            {saving ? t('שומר…', 'Saving…') : (isTerms ? t('אישור והמשך למדיניות פרטיות', 'Accept and continue to Privacy Policy') : t('אישור והכניסה לפלטפורמה', 'Accept and enter the platform'))}
           </button>
         </footer>
       </div>
