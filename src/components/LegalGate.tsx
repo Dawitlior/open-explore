@@ -1,16 +1,24 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
+import { useLang } from '@/hooks/use-lang';
 import {
   LEGAL_TITLE_HE,
+  LEGAL_TITLE_EN,
   LEGAL_SECTIONS_HE,
+  LEGAL_SECTIONS_EN,
   LEGAL_ACCEPT_LABEL_HE,
+  LEGAL_ACCEPT_LABEL_EN,
   PRIVACY_TITLE_HE,
+  PRIVACY_TITLE_EN,
   PRIVACY_SECTIONS_HE,
+  PRIVACY_SECTIONS_EN,
   PRIVACY_ACCEPT_LABEL_HE,
+  PRIVACY_ACCEPT_LABEL_EN,
   LEGAL_VERSION,
   LEGAL_VERSION_DATE,
   LEGAL_FOOTER_HE,
+  LEGAL_FOOTER_EN,
 } from '@/lib/legal-text';
 
 /**
