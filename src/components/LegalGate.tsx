@@ -294,7 +294,7 @@ export const LegalGate = () => {
           display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
         }}>
           <span style={{ fontSize: 11, color: TEXT_MUTED, letterSpacing: '0.04em' }}>
-            חתימה אלקטרונית · {new Date().toLocaleDateString('he-IL')}
+            {t('חתימה אלקטרונית', 'Electronic signature')} · {new Date().toLocaleDateString(isRTL ? 'he-IL' : 'en-US')}
           </span>
           <button
             type="button"
