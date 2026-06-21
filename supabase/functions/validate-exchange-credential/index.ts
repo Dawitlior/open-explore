@@ -35,8 +35,11 @@ const SAFE_KEY = /^[A-Za-z0-9_\-]{8,256}$/;
 const SAFE_SECRET = /^[A-Za-z0-9_\-+/=]{8,512}$/;
 const SAFE_LABEL = /^[A-Za-z0-9 _\-]{1,64}$/;
 
+const SUPPORTED_PROVIDERS = ['bybit', 'binance', 'mexc_futures', 'mexc_spot'] as const;
+type SupportedProvider = typeof SUPPORTED_PROVIDERS[number];
+
 export interface ValidatedInput {
-  provider: 'bybit' | 'binance';
+  provider: SupportedProvider;
   label: string;
   api_key: string;
   api_secret: string;
@@ -49,7 +52,9 @@ export function validateInput(raw: unknown):
   if (!raw || typeof raw !== 'object') return { ok: false, error: 'invalid_body' };
   const b = raw as Record<string, unknown>;
   const provider = String(b.provider || '').toLowerCase().trim();
-  if (provider !== 'bybit' && provider !== 'binance') return { ok: false, error: 'unsupported_provider' };
+  if (!(SUPPORTED_PROVIDERS as readonly string[]).includes(provider)) {
+    return { ok: false, error: 'unsupported_provider' };
+  }
 
   const labelRaw = typeof b.label === 'string' && b.label.trim().length > 0 ? b.label.trim() : 'main';
   const apiKey = typeof b.api_key === 'string' ? b.api_key.trim() : '';
@@ -59,7 +64,7 @@ export function validateInput(raw: unknown):
   if (!SAFE_KEY.test(apiKey)) return { ok: false, error: 'invalid_api_key', detail: 'API key contains forbidden characters' };
   if (!SAFE_SECRET.test(apiSecret)) return { ok: false, error: 'invalid_api_secret', detail: 'API secret contains forbidden characters' };
 
-  return { ok: true, value: { provider, label: labelRaw, api_key: apiKey, api_secret: apiSecret } };
+  return { ok: true, value: { provider: provider as SupportedProvider, label: labelRaw, api_key: apiKey, api_secret: apiSecret } };
 }
 
 // ---------- Rate limit (in-memory, structural placeholder) ----------
@@ -181,6 +186,66 @@ export async function verifyBinance(
   return { ok: true };
 }
 
+// ---------- Provider: MEXC Futures ----------
+// MEXC does NOT expose per-key permission introspection for normal user keys,
+// so we cannot prove the key is read-only server-side. Instead we perform a
+// benign signed read (account assets) to prove the key + secret are valid and
+// sign correctly. Read-only intent is enforced via the guided key-creation
+// flow (the user is walked through ticking ONLY read permissions) and via
+// ORCA's structural posture (no order/withdraw code path exists anywhere).
+const MEXC_FUTURES_BASE = 'https://contract.mexc.com';
+
+export async function verifyMexcFutures(
+  apiKey: string, apiSecret: string, fetchImpl: typeof fetch = fetch,
+): Promise<{ ok: true } | { ok: false; reason: string; detail?: string }> {
+  const ts = Date.now().toString();
+  // GET with no params → parameter string is empty.
+  const signature = await hmacSha256Hex(apiSecret, apiKey + ts + '');
+  let res: Response;
+  try {
+    res = await fetchImpl(`${MEXC_FUTURES_BASE}/api/v1/private/account/assets`, {
+      method: 'GET',
+      headers: {
+        'ApiKey': apiKey,
+        'Request-Time': ts,
+        'Signature': signature,
+        'Content-Type': 'application/json',
+      },
+    });
+  } catch {
+    return { ok: false, reason: 'connection_error', detail: 'MEXC unreachable' };
+  }
+  if (res.status >= 500) return { ok: false, reason: 'connection_error', detail: `MEXC ${res.status}` };
+  const body = await res.json().catch(() => ({}));
+  if (res.ok && body?.success === true) return { ok: true };
+  return { ok: false, reason: 'mexc_futures_rejected', detail: body?.message ?? `status ${res.status}` };
+}
+
+// ---------- Provider: MEXC Spot ----------
+// Same read-only caveat as MEXC Futures (see comment above).
+// Spot uses a Binance-compatible query-string signing scheme.
+const MEXC_SPOT_BASE = 'https://api.mexc.com';
+
+export async function verifyMexcSpot(
+  apiKey: string, apiSecret: string, fetchImpl: typeof fetch = fetch,
+): Promise<{ ok: true } | { ok: false; reason: string; detail?: string }> {
+  const qs = `timestamp=${Date.now()}&recvWindow=5000`;
+  const signature = await hmacSha256Hex(apiSecret, qs);
+  let res: Response;
+  try {
+    res = await fetchImpl(`${MEXC_SPOT_BASE}/api/v3/account?${qs}&signature=${signature}`, {
+      method: 'GET',
+      headers: { 'X-MEXC-APIKEY': apiKey },
+    });
+  } catch {
+    return { ok: false, reason: 'connection_error', detail: 'MEXC unreachable' };
+  }
+  if (res.status >= 500) return { ok: false, reason: 'connection_error', detail: `MEXC ${res.status}` };
+  const body = await res.json().catch(() => ({}));
+  if (res.ok && Array.isArray(body?.balances)) return { ok: true };
+  return { ok: false, reason: 'mexc_spot_rejected', detail: body?.msg ?? `status ${res.status}` };
+}
+
 // ---------- Handler (dependency-injected for testability) ----------
 export interface HandlerDeps {
   getUserId: (authHeader: string) => Promise<string | null>;
@@ -215,7 +280,11 @@ export async function handler(req: Request, deps: HandlerDeps): Promise<Response
   const { provider, api_key, api_secret, label } = v.value;
   const verdict = provider === 'bybit'
     ? await verifyBybit(api_key, api_secret, deps.fetchImpl)
-    : await verifyBinance(api_key, api_secret, deps.fetchImpl);
+    : provider === 'binance'
+      ? await verifyBinance(api_key, api_secret, deps.fetchImpl)
+      : provider === 'mexc_futures'
+        ? await verifyMexcFutures(api_key, api_secret, deps.fetchImpl)
+        : await verifyMexcSpot(api_key, api_secret, deps.fetchImpl);
 
   if (!verdict.ok) {
     if (verdict.reason === 'connection_error') {
