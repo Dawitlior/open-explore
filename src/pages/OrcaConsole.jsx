@@ -1531,7 +1531,7 @@ export default function OrcaConsole() {
   const [lang, setLang] = useState("en");
   const [active, setActive] = useState("overview");
   const [picked, setPicked] = useState(null);
-  const [F, setF] = useState({ range: "90", asset: "all", tier: "all" });
+  const [F, setF] = useState({ range: "all", asset: "all", tier: "all" });
   const [q, setQ] = useState("");
   const [jumpFn, setJumpFn] = useState(null);
   const [theme, setTheme] = useState("light");
@@ -1546,16 +1546,41 @@ export default function OrcaConsole() {
   grid = <CartesianGrid stroke={C.gridLine} strokeDasharray="3 4" vertical={false} />;
 
   const filtered = useMemo(() => D.traders.filter((x) => (F.asset === "all" || x.asset.id === F.asset) && (F.tier === "all" || x.tier.id === F.tier)), [D.traders, F]);
-  const weeks = { "7": 2, "30": 5, "90": 13, "12": 24 }[F.range] || 24;
+  // "all" → no slicing; show every weekly bucket the RPC returned.
+  const weeks = { "7": 2, "30": 5, "90": 13, "12": 24, "all": 9999 }[F.range] || 9999;
   const eng = useMemo(() => D.engagement.slice(-weeks), [D.engagement, weeks]);
+
+  // Derive "last activity" timestamp for the live status strip — gives
+  // honest context when active_7d/30d are real zeros.
+  const lastActivityLabel = useMemo(() => {
+    const nonZero = (D.engagement || []).filter((e) => (e.trades || 0) > 0 || (e.active || 0) > 0);
+    if (!nonZero.length) return null;
+    const weeksAgo = (D.engagement || []).length - 1 - (D.engagement || []).lastIndexOf(nonZero[nonZero.length - 1]);
+    if (weeksAgo <= 0) return lang === "he" ? "השבוע" : "this week";
+    return lang === "he" ? `לפני ${weeksAgo} שבועות` : `${weeksAgo}w ago`;
+  }, [D.engagement, lang]);
 
   const props = { t, lang, traders: filtered, eng, heat: D.heat, hmax: D.hmax, cohorts: D.cohorts, funnel: D.funnel, diagTier: D.diagTier, ttft: D.ttft, aiUsage: D.aiUsage, storage: D.storage, storageTrend: D.storageTrend, dbStats: D.dbStats, jumpFn, onPick: setPicked, live };
 
   // ZERO-SEED guards: render EmptyShell when the section's primary data is empty.
+  // Sections that are empty by design (no event-logging yet, or below k-anonymity
+  // threshold) get a specific message rather than the generic placeholder.
   const empty = (title, subtitle) => <EmptyShell title={title} subtitle={subtitle} hint={lang === "he" ? "ראה /console/diagnostics לבדיקת RPCs" : "See /console/diagnostics for RPC health"} />;
   const need = (arr, sectionKey) => arr.length > 0
     ? null
     : empty(lang === "he" ? "אין נתונים חיים עדיין" : "No live data yet", `${sectionKey}`);
+  const emptyAi = empty(
+    lang === "he" ? "טלמטריית AI מחכה לאירועים" : "AI telemetry awaiting events",
+    lang === "he"
+      ? "תתחיל להתמלא ברגע שאירועי העוזר (coach / review / insights) יירשמו. אין ריצות מתועדות עדיין."
+      : "Populates once assistant events (coach / review / insights) are logged. No runs recorded yet."
+  );
+  const emptyBench = empty(
+    lang === "he" ? "מדדים מצרפיים — מתחת לסף" : "Aggregate benchmarks — below threshold",
+    lang === "he"
+      ? "נפתחים מ-25 סוחרים שהביעו הסכמה ומעלה (סף k-anonymity). כרגע מתחת לסף."
+      : "Unlock at ≥25 opted-in traders (k-anonymity threshold). Currently below threshold."
+  );
   const SECTION_MAP = {
     overview: eng.length ? <Overview {...props} /> : need(eng, "engagement_weekly"),
     activity: D.heat.length ? <CommunityActivity {...props} /> : need(D.heat, "activity_heatmap"),
@@ -1566,8 +1591,8 @@ export default function OrcaConsole() {
     risk: filtered.length && eng.length ? <RiskEngine {...props} /> : need([], "risk_engine"),
     perf: filtered.length ? <Performance {...props} /> : need(filtered, "performance"),
     matrix: filtered.length ? <TraderMatrix {...props} /> : need(filtered, "trader_matrix"),
-    bench: filtered.length && eng.length ? <Benchmarks {...props} /> : need([], "benchmarks"),
-    ai: D.aiUsage.length ? <AIUsage {...props} /> : need(D.aiUsage, "ai_usage"),
+    bench: filtered.length && eng.length ? <Benchmarks {...props} /> : emptyBench,
+    ai: D.aiUsage.length ? <AIUsage {...props} /> : emptyAi,
     storage: D.storage.length ? <Storage {...props} /> : need(D.storage, "db_storage"),
     queries: <QueryConsole {...props} />,
     quality: filtered.length ? <DataQuality {...props} /> : need(filtered, "data_quality"),
@@ -1575,7 +1600,13 @@ export default function OrcaConsole() {
   };
   const SECTION = SECTION_MAP[active];
 
-  const rangeOpts = [{ v: "7", l: t("d7") }, { v: "30", l: t("d30") }, { v: "90", l: t("d90") }, { v: "12", l: t("m12") }];
+  const rangeOpts = [
+    { v: "7", l: t("d7") },
+    { v: "30", l: t("d30") },
+    { v: "90", l: t("d90") },
+    { v: "12", l: t("m12") },
+    { v: "all", l: lang === "he" ? "כל הזמן" : "All-time" },
+  ];
   const assetOpts = [{ v: "all", l: t("allAssets") }, ...ASSET.map((a) => ({ v: a.id, l: loc(lang, a) }))];
   const tierOpts = [{ v: "all", l: t("allTiers") }, ...TIER.map((tr) => ({ v: tr.id, l: loc(lang, tr) }))];
   const activeGroup = groupOfPage(active).id;
