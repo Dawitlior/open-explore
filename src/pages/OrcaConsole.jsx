@@ -1259,7 +1259,7 @@ function BoardReport({ t, lang, traders, eng, aiUsage, funnel, onClose }) {
   const revengePct = Math.round((traders.filter((x) => x.revenge > 0.12).length / n) * 100);
   const readyAvg = Math.round(traders.reduce((s, x) => s + x.readiness, 0) / n);
   const provMix = PROV.map((pv) => { const c = traders.filter((x) => x.prov === pv).length; return { pv, c, pct: Math.round((c / n) * 100) }; });
-  const aiLast = (aiUsage && aiUsage.length ? aiUsage : DATA.aiUsage)[ (aiUsage && aiUsage.length ? aiUsage : DATA.aiUsage).length - 1 ];
+  const aiLast = (aiUsage && aiUsage.length ? aiUsage : [{ tokens: 0, calls: 0, cost: 0, latency: 0, errors: 0, coach: 0, review: 0, insights: 0 }])[ Math.max((aiUsage && aiUsage.length ? aiUsage.length : 1) - 1, 0) ];
   const dateStr = new Date().toLocaleDateString(he ? "he-IL" : "en-US", { year: "numeric", month: "long", day: "numeric" });
   const card = { background: C.panel, border: `1px solid ${C.border}`, borderRadius: 12, padding: 12 };
   const cc = (el, h = 210) => <div style={{ ...card, height: h }}>{el}</div>;
