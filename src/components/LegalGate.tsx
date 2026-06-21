@@ -62,6 +62,7 @@ async function writeConsentRow(userId: string, kind: 'terms' | 'privacy') {
 
 export const LegalGate = () => {
   const { user } = useAuth();
+  const { isRTL } = useLang();
   const [stage, setStage] = useState<Stage>('loading');
   const [agreed, setAgreed] = useState(false);
   const [saving, setSaving] = useState(false);
