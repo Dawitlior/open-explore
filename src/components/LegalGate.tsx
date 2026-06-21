@@ -1,16 +1,24 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
+import { useLang } from '@/hooks/use-lang';
 import {
   LEGAL_TITLE_HE,
+  LEGAL_TITLE_EN,
   LEGAL_SECTIONS_HE,
+  LEGAL_SECTIONS_EN,
   LEGAL_ACCEPT_LABEL_HE,
+  LEGAL_ACCEPT_LABEL_EN,
   PRIVACY_TITLE_HE,
+  PRIVACY_TITLE_EN,
   PRIVACY_SECTIONS_HE,
+  PRIVACY_SECTIONS_EN,
   PRIVACY_ACCEPT_LABEL_HE,
+  PRIVACY_ACCEPT_LABEL_EN,
   LEGAL_VERSION,
   LEGAL_VERSION_DATE,
   LEGAL_FOOTER_HE,
+  LEGAL_FOOTER_EN,
 } from '@/lib/legal-text';
 
 /**
@@ -54,6 +62,7 @@ async function writeConsentRow(userId: string, kind: 'terms' | 'privacy') {
 
 export const LegalGate = () => {
   const { user } = useAuth();
+  const { isRTL } = useLang();
   const [stage, setStage] = useState<Stage>('loading');
   const [agreed, setAgreed] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -102,10 +111,17 @@ export const LegalGate = () => {
   if (stage === 'loading' || stage === 'done' || !user?.id) return null;
 
   const isTerms = stage === 'terms';
-  const sections = isTerms ? LEGAL_SECTIONS_HE : PRIVACY_SECTIONS_HE;
-  const title = isTerms ? LEGAL_TITLE_HE : PRIVACY_TITLE_HE;
-  const acceptLabel = isTerms ? LEGAL_ACCEPT_LABEL_HE : PRIVACY_ACCEPT_LABEL_HE;
+  const sections = isTerms
+    ? (isRTL ? LEGAL_SECTIONS_HE : LEGAL_SECTIONS_EN)
+    : (isRTL ? PRIVACY_SECTIONS_HE : PRIVACY_SECTIONS_EN);
+  const title = isTerms
+    ? (isRTL ? LEGAL_TITLE_HE : LEGAL_TITLE_EN)
+    : (isRTL ? PRIVACY_TITLE_HE : PRIVACY_TITLE_EN);
+  const acceptLabel = isTerms
+    ? (isRTL ? LEGAL_ACCEPT_LABEL_HE : LEGAL_ACCEPT_LABEL_EN)
+    : (isRTL ? PRIVACY_ACCEPT_LABEL_HE : PRIVACY_ACCEPT_LABEL_EN);
   const stepNum = isTerms ? 1 : 2;
+  const t = (he: string, en: string) => (isRTL ? he : en);
 
   const handleAccept = async () => {
     if (!agreed || saving) return;
@@ -138,8 +154,8 @@ export const LegalGate = () => {
       role="dialog"
       aria-modal="true"
       aria-labelledby="legal-gate-title"
-      dir="rtl"
-      lang="he"
+      dir={isRTL ? 'rtl' : 'ltr'}
+      lang={isRTL ? 'he' : 'en'}
       style={{
         position: 'fixed', inset: 0, zIndex: 100000,
         background: 'rgba(0,0,0,0.94)',
@@ -201,7 +217,7 @@ export const LegalGate = () => {
             fontSize: 10, color: TEXT_MUTED, letterSpacing: '0.22em',
             textTransform: 'uppercase', marginBottom: 6, fontWeight: 600,
           }}>
-            שלב {stepNum} מתוך 2 · {isTerms ? 'תנאי שימוש' : 'מדיניות פרטיות'}
+            {t(`שלב ${stepNum} מתוך 2 · ${isTerms ? 'תנאי שימוש' : 'מדיניות פרטיות'}`, `Step ${stepNum} of 2 · ${isTerms ? 'Terms of Service' : 'Privacy Policy'}`)}
           </div>
           <h2
             id="legal-gate-title"
@@ -246,7 +262,7 @@ export const LegalGate = () => {
             fontSize: 11, fontWeight: 600, color: TEXT_MUTED, textAlign: 'center',
             letterSpacing: '0.04em',
           }}>
-            {LEGAL_FOOTER_HE}
+            {isRTL ? LEGAL_FOOTER_HE : LEGAL_FOOTER_EN}
           </p>
         </div>
 
@@ -278,7 +294,7 @@ export const LegalGate = () => {
           display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
         }}>
           <span style={{ fontSize: 11, color: TEXT_MUTED, letterSpacing: '0.04em' }}>
-            חתימה אלקטרונית · {new Date().toLocaleDateString('he-IL')}
+            {t('חתימה אלקטרונית', 'Electronic signature')} · {new Date().toLocaleDateString(isRTL ? 'he-IL' : 'en-US')}
           </span>
           <button
             type="button"
@@ -298,7 +314,7 @@ export const LegalGate = () => {
               opacity: saving ? 0.7 : 1,
             }}
           >
-            {saving ? 'שומר…' : (isTerms ? 'אישור והמשך למדיניות פרטיות' : 'אישור והכניסה לפלטפורמה')}
+            {saving ? t('שומר…', 'Saving…') : (isTerms ? t('אישור והמשך למדיניות פרטיות', 'Accept and continue to Privacy Policy') : t('אישור והכניסה לפלטפורמה', 'Accept and enter the platform'))}
           </button>
         </footer>
       </div>
