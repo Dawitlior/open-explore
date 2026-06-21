@@ -1,7 +1,7 @@
-// Full Hebrew Terms of Service + Privacy Policy for OrcaInvestment.
+// Full bilingual Terms of Service + Privacy Policy for OrcaInvestment.
 // Single source of truth — used by /terms, /privacy, LegalGate modal, Settings.
 // Version v2.0_orca_investment — 20 June 2026.
-// Hebrew is the legally binding text; both documents are RTL only.
+// Hebrew is the legally binding text. English is provided for accessibility.
 
 export const LEGAL_VERSION = 'v2.0_orca_investment';
 export const LEGAL_VERSION_DATE = '2026-06-20';
@@ -64,6 +64,57 @@ export const LEGAL_SECTIONS_HE: LegalSection[] = [
   },
 ];
 
+export const LEGAL_SECTIONS_EN: LegalSection[] = [
+  {
+    heading: 'Introduction & Acceptance of Terms',
+    body:
+      'Welcome to the OrcaInvestment platform (the "Platform" or the "System"). The Platform is operated by the system operator (the "Operator") and provides traders in the financial markets with advanced tools for risk management, journaling and performance tracking via API connections, as well as analytics for self-discipline and trading psychology.\n\n' +
+      'These Terms of Service (the "Terms") constitute a binding legal agreement between the Operator and any person who browses, registers, logs in or uses the Platform or its services in any way (the "User").\n\n' +
+      'Please read these Terms carefully. Browsing the site, creating an account, or entering API keys into the System constitute full, absolute and irrevocable acceptance of every condition and clause set out in this document. If you do not agree to any term herein, you must immediately stop using the Platform; you are not permitted to use it in any manner.\n\n' +
+      'Note: The Hebrew version of these Terms is the legally binding text. This English version is provided for accessibility only; in any inconsistency the Hebrew version prevails.',
+  },
+  {
+    heading: '1. Eligibility, Registration & Access Restrictions',
+    body:
+      '1.1. Age restriction: Use of the Platform is permitted only to users aged 18 or above who are legally competent to enter into binding actions. By registering, the User declares and confirms that they meet this age requirement.\n\n' +
+      '1.2. Anti-Compete: It is strictly prohibited to use the Platform, its content, design or logic in order to develop, produce, market or promote a competing system, directly or indirectly. The Operator reserves the sole right to block, immediately and without prior notice, any User reasonably suspected of acting on behalf of a business competitor or attempting to copy the System\'s methodology.\n\n' +
+      '1.3. Accuracy of details: When registering, the User undertakes to provide accurate, complete and correct details. Knowingly providing false or inaccurate details will be grounds for immediate suspension and deletion of the account.',
+  },
+  {
+    heading: '2. No Financial Advice & Limitation of Liability',
+    body:
+      '2.1. Technological tool only: The information, metrics, analytics and risk-management figures displayed in the Platform are produced for statistical, educational and self-discipline purposes only. The System, its content and alerts shall not be regarded as investment advice, a recommendation to execute trades, or a substitute for professional financial advice tailored to the User\'s personal circumstances.\n\n' +
+      '2.2. Sole responsibility for trading: Every trading decision, definition of risk levels (such as R Units), management of positions or activation of protection and trading-halt mechanisms (Kill Switch) is performed by the User and is solely and fully their responsibility.\n\n' +
+      '2.3. Liability exclusion for financial loss: The Operator, its employees and anyone acting on its behalf shall not be liable in any way and under any circumstances for any damage, financial loss, loss of profit, or harm (direct, indirect, consequential or special) caused to the User or any third party as a result of relying on data displayed in the System, using the System, or being unable to use it.',
+  },
+  {
+    heading: '3. Intellectual Property & Anti-Scraping',
+    body:
+      '3.1. Full ownership of intellectual property: All copyrights, trademarks, source code, architecture, algorithms, analytical methods, UI/UX design and ideas underlying the OrcaInvestment platform are the exclusive intellectual property of the Operator. No part of the Platform may be copied, distributed, publicly displayed, modified or commercially exploited without the express prior written consent of the Operator.\n\n' +
+      '3.2. No data mining or reverse engineering: It is strictly prohibited to operate applications, bots, crawlers, robots or any other automated tool for searching, scanning, copying, mining or automatically retrieving data and content from the Platform. Reverse engineering, decompiling or altering the System code is likewise strictly prohibited.',
+  },
+  {
+    heading: '4. Service Availability & Faults (AS-IS)',
+    body:
+      '4.1. Service provided AS-IS: The Platform is provided on an "AS-IS" and "AS-AVAILABLE" basis. The Operator does not warrant that services will be uninterrupted, immune to unauthorised access, or free of errors, bugs or faults in communications, hardware or software systems.\n\n' +
+      '4.2. Changes and temporary downtime: The Operator reserves the sole right to change, update, add or remove features, interfaces and tools at any time, and to temporarily take the System down for maintenance, all without prior notice and without giving rise to any claim or demand from the User.',
+  },
+  {
+    heading: '5. Indemnification',
+    body:
+      '5.1. User\'s indemnification obligation: The User undertakes to indemnify, compensate and defend the Operator, its directors, business partners and employees against any claim, demand, damage, loss, loss of profit or expense (including attorneys\' fees and court costs) arising out of the User\'s breach of these Terms or out of the User\'s unlawful, negligent or unauthorised use of the Platform.',
+  },
+  {
+    heading: '6. Usage Model, Future Pricing & Purchases Framework',
+    body:
+      '6.1. Free access at the current stage (Early Adopters): As of the date of these Terms, the Operator makes the Platform\'s core services and features available at no cost in order to grow the community. The User acknowledges and agrees that this free access is granted as a temporary courtesy and does not constitute any commitment, promise or vested right to receive the System free of charge in perpetuity.\n\n' +
+      '6.2. Right to change the business model and charge fees: The Operator reserves the full and exclusive right, at any time and in its sole discretion, to change the OrcaInvestment business model. This includes, among other things: charging monthly/annual subscription fees for use of the System (in whole or in part); moving existing features behind a paywall; or limiting data volume, trade count and API syncs on the free tier.\n\n' +
+      '6.3. Protection of ownership transfer, mergers and exits: The right to change the business model and reset free access is granted in full also to any third party or new legal entity that acquires the Platform, merges with it or assumes its management rights. In the event of a change of ownership, the acquiring entity is not obliged to grant free access to historical users and may demand payment immediately.\n\n' +
+      '6.4. Notice of transition to paid access: If a decision is made to charge fees, notice will be published on the Platform or sent to the User\'s registered email address. A User who chooses not to pay the required fee will have their access (in whole or in part) blocked, and the Operator may disconnect their API connections.\n\n' +
+      '6.5. Legal framework for future paid services (cancellation policy): To the extent that paid tiers are offered in the future, they will be subject to the Israeli Consumer Protection Law, 5741-1981 and its regulations. Cancellation of an annual/one-off transaction will be possible within 14 days of purchase, less statutory cancellation fees (5% of the transaction or NIS 100, whichever is lower) and less the pro-rata portion already supplied. Cancellation of a recurring monthly subscription will be possible at any time via the user interface, will take effect at the end of the current billing cycle, and will not entitle the User to a pro-rata refund for unused days within that month.',
+  },
+];
+
 export const PRIVACY_SECTIONS_HE: LegalSection[] = [
   {
     heading: 'כללי',
@@ -119,11 +170,76 @@ export const PRIVACY_SECTIONS_HE: LegalSection[] = [
   },
 ];
 
+export const PRIVACY_SECTIONS_EN: LegalSection[] = [
+  {
+    heading: 'General',
+    body:
+      'The OrcaInvestment platform (the "System" or the "Operator") attaches the utmost importance to protecting users\' privacy. This Privacy Policy describes the types of information collected by the System during use, how it is processed, the essential use made of it for anonymous statistical research, and the terms under which it is stored.\n\n' +
+      'By registering with the System and connecting your trading accounts, you grant the Operator your express consent to the collection, processing and management of the information in accordance with the principles set out below.\n\n' +
+      'Note: The Hebrew version of this Privacy Policy is the legally binding text. This English version is provided for accessibility only; in any inconsistency the Hebrew version prevails.',
+  },
+  {
+    heading: '1. Types of Information Collected',
+    body:
+      'The System collects and processes three principal types of information:\n\n' +
+      '1.1. Active Identity Data: email address, first and last name, and digital login identifiers voluntarily provided by the User during registration or login via third-party providers (such as Google OAuth).\n\n' +
+      '1.2. Usage Telemetry: IP addresses, browser type, device type, operating system, browsing times, pages viewed and click data. This information is collected automatically using cookies and external analytics tools for security, server performance monitoring and improvement of the user experience.\n\n' +
+      '1.3. Raw Trading & Performance Data: trade history, open and closed positions, traded volume, profit and loss (PnL) metrics, entry and exit prices, and precise execution times. This data is automatically pulled from the User\'s external trading accounts using the API keys they enter into the System.',
+  },
+  {
+    heading: '2. API Key Connection — User Duties & Liability Exclusion',
+    body:
+      '2.1. Read-Only obligation: It is the User\'s sole and absolute obligation to verify, before entering an API key into the System, that the key is configured on the broker/exchange side with read-only permission, with no withdrawal permission and no active trading/execution permission.\n\n' +
+      '2.2. Full liability exclusion for leakage or breach: The Operator does not check or supervise the permission level of the key on the broker side. Entering a key with permissions broader than allowed is performed at the User\'s sole and full responsibility. The Operator excludes any liability, direct or indirect, for any damage, forced trading action or withdrawal of funds carried out in the User\'s broker account, including in the event of a cyber incident, data leak or breach of OrcaInvestment servers.',
+  },
+  {
+    heading: '3. Anonymisation, Pseudonymisation & Data Monetisation',
+    body:
+      'The System\'s architecture relies on broad statistical data processing. By accepting this document, the User grants the Operator an irrevocable right to act in accordance with the following mechanism:\n\n' +
+      '3.1. Strict pseudonymisation: The System maintains a complete technological and structural separation between the User\'s identifying details (name and email) and their trading data, trade journal and discipline metrics. Trading data is encoded under a random anonymous identifier (UUID) detached from personal identity.\n\n' +
+      '3.2. Aggregated statistical pool: All anonymous trading data from the System\'s users is fused and aggregated into a collective statistical dataset, which analyses market trends, heatmaps, community sentiment and broad trading-psychology metrics.\n\n' +
+      '3.3. Monetisation rights: The Operator reserves the full, exclusive and permanent right to process, analyse, sell, license or share this aggregated, anonymous, collective dataset with third parties — including institutional bodies, hedge funds, brokers or market makers — for commercial, research or business purposes, without owing the users any compensation. The Operator undertakes that any data shared or monetised will not, under any circumstances, enable the identification of a single trader or the exposure of their personal details.',
+  },
+  {
+    heading: '4. Information Security, Storage & International Vendors',
+    body:
+      '4.1. Security standard: The Operator implements accepted technological security measures, including transport encryption (SSL) and encryption of API keys at rest in the database. However, the User acknowledges that there is no fully hermetic security solution on the internet and that the System is not fully immune to malicious intrusions.\n\n' +
+      '4.2. Transfer of information outside the country: The System\'s servers and databases are operated and stored using leading international cloud providers (such as AWS / Google Cloud servers) and external software vendors, which may be located outside the State of Israel. The User expressly consents to the transfer and storage of information abroad.',
+  },
+  {
+    heading: '5. User Rights, Account Deletion & Anonymous Data Carve-Out',
+    body:
+      '5.1. Right to delete identity: The User is entitled at any time to request the closure of their account and the deletion of their personal details from the System\'s databases. Upon receipt of such a written request, the Operator will permanently delete the User\'s name, email address and OAuth account, and disconnect their API connections.\n\n' +
+      '5.2. Carve-out for anonymous data: It is hereby clarified and emphasised that the deletion request does not apply to the trading journals, trade records, statistical data and discipline metrics that have already undergone anonymisation and been embedded in the System\'s aggregated statistical dataset. This data is detached from the User\'s identity, cannot be retrieved retroactively, and will remain the full and permanent property of the Operator for its commercial purposes even after account closure.',
+  },
+  {
+    heading: '6. Marketing Communications & Newsletters',
+    body:
+      '6.1. Marketing consent (Israeli Communications Law): When registering with the System or providing details as part of the OrcaInvestment community, the User grants their express and informed consent to receive notices, professional newsletters, market updates, event invitations and marketing content from the Operator or its business partners, to the email address they provided, in accordance with section 30A of the Israeli Communications Law (Telecommunications and Broadcasts), 5742-1982.\n\n' +
+      '6.2. Easy opt-out: The User may withdraw this consent at any time and remove themselves from the marketing list by clicking the unsubscribe link at the bottom of every marketing email or by contacting customer support. This opt-out does not apply to operational and essential system messages (such as changes to the Terms, password resets or critical system alerts).',
+  },
+  {
+    heading: '7. Governing Law & Exclusive Jurisdiction',
+    body:
+      '7.1. Governing law: These Terms and this Privacy Policy, their interpretation, enforcement and any matter arising from them, shall be governed exclusively by the laws of the State of Israel, without application of international conflict-of-laws rules.\n\n' +
+      '7.2. Exclusive jurisdiction: The competent courts of the Tel Aviv-Yafo district shall have sole, exclusive and final jurisdiction over any dispute, claim or legal matter connected with or arising from the use of the OrcaInvestment platform or this Privacy Policy.',
+  },
+];
+
 export const LEGAL_FOOTER_HE =
   `גרסה ${LEGAL_VERSION} · עודכן לאחרונה: ${LEGAL_VERSION_DATE}. סימון תיבת האישור ולחיצה על לחצן ההמשך מהווים חתימה אלקטרונית מחייבת.`;
+
+export const LEGAL_FOOTER_EN =
+  `Version ${LEGAL_VERSION} · Last updated: ${LEGAL_VERSION_DATE}. Ticking the acceptance checkbox and clicking the continue button constitute a binding electronic signature.`;
 
 export const LEGAL_ACCEPT_LABEL_HE =
   'אני מאשר/ת ומצהיר/ה שקראתי את תנאי השימוש של OrcaInvestment, הבנתי אותם ומסכים/ה להם באופן מלא — לרבות סעיף העדר הייעוץ הפיננסי, איסור התחרות, והעברת זכויות עתידית במקרה של אקזיט.';
 
+export const LEGAL_ACCEPT_LABEL_EN =
+  'I confirm and declare that I have read the OrcaInvestment Terms of Service, understand them and fully agree to them — including the no-financial-advice clause, the anti-compete clause, and the future transfer of rights in the event of an exit.';
+
 export const PRIVACY_ACCEPT_LABEL_HE =
   'אני מאשר/ת ומצהיר/ה שקראתי את מדיניות הפרטיות של OrcaInvestment, הבנתי את אופן איסוף הנתונים, הפסאודונימיזציה, השיתוף/מסחור האגרגטיבי והעברת בסיס הנתונים במקרה של אקזיט, ומסכים/ה לכך באופן מלא.';
+
+export const PRIVACY_ACCEPT_LABEL_EN =
+  'I confirm and declare that I have read the OrcaInvestment Privacy Policy, understand how data is collected, pseudonymised, aggregated/monetised and how the database may be transferred in the event of an exit, and I fully agree to it.';
