@@ -650,7 +650,7 @@ function CommunityActivity({ t, lang, traders, heat, hmax }) {
   const heatColor = (v) => { const x = v / hmax; return x < 0.05 ? "#F1F4FA" : `rgba(37,99,235,${clamp(0.12 + x * 0.82, 0, 1)})`; };
   const byHour = Array.from({ length: 24 }, (_, h) => ({ h, v: r1(heat.filter((c) => c.h === h).reduce((s, c) => s + c.v, 0)) }));
   const byDay = DOW.map((dd, di) => ({ d: loc(lang, dd), v: r1(heat.filter((c) => c.d === di).reduce((s, c) => s + c.v, 0)) }));
-  const peak = heat.reduce((b, c) => (c.v > b.v ? c : b), { v: -1 });
+  const peak = heat.reduce((b, c) => (c.v > b.v ? c : b), { v: -1, d: 0, h: 0 });
   const busiest = byDay.reduce((b, c) => (c.v > b.v ? c : b), { v: -1 });
   const avgSess = r1(traders.reduce((s, x) => s + x.sessionsWk, 0) / Math.max(traders.length, 1));
   const sessBins = Array.from({ length: 7 }, (_, b) => ({ name: `${b * 2}`, v: traders.filter((x) => x.sessionsWk >= b * 2 && x.sessionsWk < b * 2 + 2).length }));
@@ -668,7 +668,7 @@ function CommunityActivity({ t, lang, traders, heat, hmax }) {
       <Card title={t("cHeatmap")} subtitle={t("fallback")} badge={<Badge tone="blue">{`${loc(lang, DOW[peak.d])} · ${String(peak.h).padStart(2, "0")}:00`}</Badge>}>
         <div style={{ overflowX: "auto" }}><div style={{ minWidth: 620 }}>
           <div style={{ display: "flex", marginInlineStart: 30, marginBottom: 5 }}>{Array.from({ length: 24 }, (_, h) => <div key={h} style={{ flex: 1, textAlign: "center", fontFamily: MONO, fontSize: 9, color: h % 3 === 0 ? C.ink3 : "transparent" }}>{String(h).padStart(2, "0")}</div>)}</div>
-          {DOW.map((dd, di) => (<div key={di} style={{ display: "flex", alignItems: "center", gap: 3, marginBottom: 3 }}><div style={{ width: 26, fontFamily: SANS, fontSize: 11, fontWeight: 600, color: C.ink2, textAlign: "center" }}>{loc(lang, dd)}</div><div style={{ display: "flex", flex: 1, gap: 3 }}>{Array.from({ length: 24 }, (_, h) => { const c = heat.find((x) => x.d === di && x.h === h); return <div key={h} title={`${String(h).padStart(2, "0")}:00 · ${Math.round((c.v / hmax) * 100)}%`} style={{ flex: 1, aspectRatio: "1", minHeight: 16, borderRadius: 3, background: heatColor(c.v) }} />; })}</div></div>))}
+          {DOW.map((dd, di) => (<div key={di} style={{ display: "flex", alignItems: "center", gap: 3, marginBottom: 3 }}><div style={{ width: 26, fontFamily: SANS, fontSize: 11, fontWeight: 600, color: C.ink2, textAlign: "center" }}>{loc(lang, dd)}</div><div style={{ display: "flex", flex: 1, gap: 3 }}>{Array.from({ length: 24 }, (_, h) => { const c = heat.find((x) => x.d === di && x.h === h); const v = c?.v ?? 0; return <div key={h} title={`${String(h).padStart(2, "0")}:00 · ${Math.round((v / hmax) * 100)}%`} style={{ flex: 1, aspectRatio: "1", minHeight: 16, borderRadius: 3, background: heatColor(v) }} />; })}</div></div>))}
         </div></div>
       </Card>
       <div style={{ ...gridCols(2), marginTop: 14 }}>
@@ -716,24 +716,26 @@ function Retention({ t, lang, traders, cohorts, eng }) {
 
 /* 4 · Activation */
 function Activation({ t, lang, traders, funnel, diagTier, ttft }) {
-  const max = funnel[0].n;
-  const drops = funnel.slice(1).map((s, i) => ({ code: `${i + 1}→${i + 2}`, v: Math.round((1 - s.n / funnel[i].n) * 100), label: `${Math.round((1 - s.n / funnel[i].n) * 100)}%` })).sort((a, b) => b.v - a.v).slice(0, 5);
-  const commitRate = Math.round((funnel[4].n / funnel[3].n) * 100);
+  const max = funnel[0]?.n || 1;
+  const drops = funnel.slice(1).map((s, i) => ({ code: `${i + 1}→${i + 2}`, v: Math.round((1 - s.n / Math.max(funnel[i].n, 1)) * 100), label: `${Math.round((1 - s.n / Math.max(funnel[i].n, 1)) * 100)}%` })).sort((a, b) => b.v - a.v).slice(0, 5);
+  const lastIdx = funnel.length - 1;
+  const commitRate = funnel.length >= 2 ? Math.round((funnel[lastIdx].n / Math.max(funnel[0].n, 1)) * 100) : 0;
   const presets = [{ fn: "admin_activation_funnel", params: { period: "90" } }, { fn: "admin_activation_funnel", params: { period: "30" } }, { fn: "admin_subscriptions", params: { period: "90" } }, { fn: "admin_engagement_weekly", params: { period: "30" } }];
+  const tile2 = funnel[2], tile3 = funnel[3];
   return (
     <>
       <SectionHead n="04" title={t("navActivation")} subtitle={t("subActivation")} />
       <div style={{ ...gridCols(4), marginBottom: 14 }}>
-        <StatTile label={t("kSignups")} value={nf.format(funnel[0].n)} icon={Users} bg={C.tintBlue} tint={C.blue} />
+        <StatTile label={t("kSignups")} value={nf.format(funnel[0]?.n || 0)} icon={Users} bg={C.tintBlue} tint={C.blue} />
         <StatTile label={t("gCommit")} value={commitRate} suffix="%" icon={CheckCircle2} bg={C.tintMint} tint={C.pos} />
-        <StatTile label={funnel[5][lang]} value={nf.format(funnel[5].n)} icon={Target} bg={C.tintIndigo} tint={PAL[1]} />
-        <StatTile label={funnel[6][lang]} value={nf.format(funnel[6].n)} icon={Activity} bg={C.tintAmber} tint={C.warn} />
+        {tile2 && <StatTile label={tile2[lang]} value={nf.format(tile2.n)} icon={Target} bg={C.tintIndigo} tint={PAL[1]} />}
+        {tile3 && <StatTile label={tile3[lang]} value={nf.format(tile3.n)} icon={Activity} bg={C.tintAmber} tint={C.warn} />}
       </div>
       <div style={{ marginBottom: 14 }}><QueryStrip t={t} lang={lang} traders={traders} presets={presets} /></div>
-      <Card title={t("cFunnel")}><div style={{ display: "grid", gap: 9 }}>{funnel.map((s, i) => { const w = (s.n / max) * 100, drop = i > 0 ? Math.round((1 - s.n / funnel[i - 1].n) * 100) : 0, c = i >= 5 ? PAL[6] : i >= 4 ? PAL[1] : C.blue; return (<div key={s.id}><div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}><span style={{ fontFamily: SANS, fontSize: 12, color: C.ink }}>{i + 1}. {loc(lang, s)}</span><span style={{ display: "flex", gap: 10, alignItems: "center" }}><span style={{ fontFamily: MONO, fontSize: 12, fontWeight: 600, color: C.ink }}>{nf.format(s.n)}</span>{drop > 0 && <span style={{ fontFamily: MONO, fontSize: 10.5, color: drop > 25 ? C.neg : C.ink3 }}>−{drop}%</span>}</span></div><div style={{ height: 16, background: C.appBg, borderRadius: 5, overflow: "hidden" }}><div style={{ height: "100%", width: `${w}%`, background: c, borderRadius: 5 }} /></div></div>); })}</div></Card>
+      <Card title={t("cFunnel")}><div style={{ display: "grid", gap: 9 }}>{funnel.map((s, i) => { const w = (s.n / max) * 100, drop = i > 0 ? Math.round((1 - s.n / Math.max(funnel[i - 1].n, 1)) * 100) : 0, c = i >= 5 ? PAL[6] : i >= 4 ? PAL[1] : C.blue; return (<div key={s.id}><div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}><span style={{ fontFamily: SANS, fontSize: 12, color: C.ink }}>{i + 1}. {loc(lang, s)}</span><span style={{ display: "flex", gap: 10, alignItems: "center" }}><span style={{ fontFamily: MONO, fontSize: 12, fontWeight: 600, color: C.ink }}>{nf.format(s.n)}</span>{drop > 0 && <span style={{ fontFamily: MONO, fontSize: 10.5, color: drop > 25 ? C.neg : C.ink3 }}>−{drop}%</span>}</span></div><div style={{ height: 16, background: C.appBg, borderRadius: 5, overflow: "hidden" }}><div style={{ height: "100%", width: `${w}%`, background: c, borderRadius: 5 }} /></div></div>); })}</div></Card>
       <div style={{ ...gridCols(3), marginTop: 14 }}>
-        <Card title={t("cDiagnostic")}><ResponsiveContainer width="100%" height={190}><BarChart data={diagTier.map((x) => ({ name: loc(lang, TIER.find((tr) => tr.id === x.id)), v: x.n }))} margin={{ top: 6, right: 6, left: -24, bottom: 0 }}>{grid}<XAxis dataKey="name" {...axis} /><YAxis {...axis} /><Tooltip contentStyle={tipStyle} cursor={{ fill: C.blueSoft }} /><Bar dataKey="v" radius={[3, 3, 0, 0]} isAnimationActive={false}>{diagTier.map((_, i) => <Cell key={i} fill={PAL[i]} />)}</Bar></BarChart></ResponsiveContainer></Card>
-        <Card title={t("cTimeToTrade")}><ResponsiveContainer width="100%" height={190}><BarChart data={ttft.map((x) => ({ name: loc(lang, x), v: x.n }))} margin={{ top: 6, right: 6, left: -24, bottom: 0 }}>{grid}<XAxis dataKey="name" {...axis} /><YAxis {...axis} /><Tooltip contentStyle={tipStyle} cursor={{ fill: C.blueSoft }} /><Bar dataKey="v" fill={PAL[2]} radius={[3, 3, 0, 0]} isAnimationActive={false} /></BarChart></ResponsiveContainer></Card>
+        {diagTier.length > 0 && <Card title={t("cDiagnostic")}><ResponsiveContainer width="100%" height={190}><BarChart data={diagTier.map((x) => ({ name: loc(lang, TIER.find((tr) => tr.id === x.id)), v: x.n }))} margin={{ top: 6, right: 6, left: -24, bottom: 0 }}>{grid}<XAxis dataKey="name" {...axis} /><YAxis {...axis} /><Tooltip contentStyle={tipStyle} cursor={{ fill: C.blueSoft }} /><Bar dataKey="v" radius={[3, 3, 0, 0]} isAnimationActive={false}>{diagTier.map((_, i) => <Cell key={i} fill={PAL[i]} />)}</Bar></BarChart></ResponsiveContainer></Card>}
+        {ttft.length > 0 && <Card title={t("cTimeToTrade")}><ResponsiveContainer width="100%" height={190}><BarChart data={ttft.map((x) => ({ name: loc(lang, x), v: x.n }))} margin={{ top: 6, right: 6, left: -24, bottom: 0 }}>{grid}<XAxis dataKey="name" {...axis} /><YAxis {...axis} /><Tooltip contentStyle={tipStyle} cursor={{ fill: C.blueSoft }} /><Bar dataKey="v" fill={PAL[2]} radius={[3, 3, 0, 0]} isAnimationActive={false} /></BarChart></ResponsiveContainer></Card>}
         <Card title={t("gCommit")}><Gauge value={commitRate} label={t("gCommit")} suffix="%" color={C.pos} /></Card>
       </div>
       <div style={{ marginTop: 14 }}><Card title={t("listDropoff")}><RankList items={drops} tone={riskTone} /></Card></div>
@@ -1257,7 +1259,7 @@ function BoardReport({ t, lang, traders, eng, aiUsage, funnel, onClose }) {
   const revengePct = Math.round((traders.filter((x) => x.revenge > 0.12).length / n) * 100);
   const readyAvg = Math.round(traders.reduce((s, x) => s + x.readiness, 0) / n);
   const provMix = PROV.map((pv) => { const c = traders.filter((x) => x.prov === pv).length; return { pv, c, pct: Math.round((c / n) * 100) }; });
-  const aiLast = (aiUsage && aiUsage.length ? aiUsage : DATA.aiUsage)[ (aiUsage && aiUsage.length ? aiUsage : DATA.aiUsage).length - 1 ];
+  const aiLast = (aiUsage && aiUsage.length ? aiUsage : [{ tokens: 0, calls: 0, cost: 0, latency: 0, errors: 0, coach: 0, review: 0, insights: 0 }])[ Math.max((aiUsage && aiUsage.length ? aiUsage.length : 1) - 1, 0) ];
   const dateStr = new Date().toLocaleDateString(he ? "he-IL" : "en-US", { year: "numeric", month: "long", day: "numeric" });
   const card = { background: C.panel, border: `1px solid ${C.border}`, borderRadius: 12, padding: 12 };
   const cc = (el, h = 210) => <div style={{ ...card, height: h }}>{el}</div>;
@@ -1365,7 +1367,7 @@ function BoardReport({ t, lang, traders, eng, aiUsage, funnel, onClose }) {
         </RSection>
 
         <RSection n="6" title={he ? "הפעלה וקליטה" : "Activation"} lead={actLead}>
-          {cc(<ResponsiveContainer width="100%" height="100%"><BarChart data={(funnel && funnel.length ? funnel : DATA.funnel).map((s) => ({ name: loc(lang, s), v: s.n }))} layout="vertical" margin={{ top: 4, right: 12, left: 8, bottom: 0 }}>{grid}<XAxis type="number" {...axis} /><YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: C.ink2, fontFamily: SANS }} width={104} axisLine={false} tickLine={false} /><Tooltip contentStyle={tipStyle} cursor={{ fill: C.blueSoft }} /><Bar dataKey="v" fill={C.blue} radius={[0, 3, 3, 0]} isAnimationActive={false} /></BarChart></ResponsiveContainer>, 230)}
+          {cc(<ResponsiveContainer width="100%" height="100%"><BarChart data={(funnel || []).map((s) => ({ name: loc(lang, s), v: s.n }))} layout="vertical" margin={{ top: 4, right: 12, left: 8, bottom: 0 }}>{grid}<XAxis type="number" {...axis} /><YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: C.ink2, fontFamily: SANS }} width={104} axisLine={false} tickLine={false} /><Tooltip contentStyle={tipStyle} cursor={{ fill: C.blueSoft }} /><Bar dataKey="v" fill={C.blue} radius={[0, 3, 3, 0]} isAnimationActive={false} /></BarChart></ResponsiveContainer>, 230)}
         </RSection>
 
         <RSection n="7" title={he ? "איכות נתונים ומקור" : "Data quality & provenance"} lead={dqLead}>
@@ -1490,23 +1492,35 @@ function mapFunnel(rows) {
   }));
 }
 
+function EmptyShell({ title, subtitle, hint }) {
+  return (
+    <div style={{ padding: "60px 24px", textAlign: "center", background: C.panel, border: `1px dashed ${C.borderStrong}`, borderRadius: 12 }}>
+      <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 650, color: C.ink, marginBottom: 6 }}>{title}</div>
+      {subtitle && <div style={{ fontFamily: SANS, fontSize: 12.5, color: C.ink2, marginBottom: 10 }}>{subtitle}</div>}
+      {hint && <div style={{ fontFamily: MONO, fontSize: 11, color: C.ink3 }}>{hint}</div>}
+    </div>
+  );
+}
+
 export default function OrcaConsole() {
   const live = useAdminLive();
   const D = useMemo(() => {
-    const base = DATA;
-    const traders = live.traderMatrix && live.traderMatrix.length ? mapMatrixTraders(live.traderMatrix) : base.traders;
-    const engagement = live.engagementWeekly && live.engagementWeekly.length ? mapEngagement(live.engagementWeekly) : base.engagement;
-    const heatRaw = live.activityHeatmap && live.activityHeatmap.length ? mapHeat(live.activityHeatmap) : base.heat;
-    const hmax = heatRaw.length ? Math.max(...heatRaw.map((c) => c.v)) || 1 : base.hmax;
-    const cohorts = live.retentionCohorts && live.retentionCohorts.length ? mapCohorts(live.retentionCohorts) : base.cohorts;
-    const funnel = live.activationFunnel && live.activationFunnel.length ? mapFunnel(live.activationFunnel) : base.funnel;
+    // ZERO-SEED: live data only. Empty arrays when RPCs return nothing.
+    // Sections must render EmptyShell rather than fabricated demo data.
+    const traders = live.traderMatrix ? mapMatrixTraders(live.traderMatrix) : [];
+    const engagement = live.engagementWeekly ? mapEngagement(live.engagementWeekly) : [];
+    const heat = live.activityHeatmap ? mapHeat(live.activityHeatmap) : [];
+    const hmax = heat.length ? Math.max(...heat.map((c) => c.v)) || 1 : 1;
+    const cohorts = live.retentionCohorts ? mapCohorts(live.retentionCohorts) : [];
+    const funnel = live.activationFunnel ? mapFunnel(live.activationFunnel) : [];
     return {
-      ...base,
-      traders, engagement, heat: heatRaw, hmax, cohorts, funnel,
-      storage: live.storage?.storage?.length ? live.storage.storage : base.storage,
-      storageTrend: live.storage?.storageTrend?.length ? live.storage.storageTrend : base.storageTrend,
-      dbStats: live.storage?.dbStats ? live.storage.dbStats : base.dbStats,
-      aiUsage: live.aiUsage && live.aiUsage.length ? live.aiUsage : base.aiUsage,
+      traders, engagement, heat, hmax, cohorts, funnel,
+      // Derived UI dimensions not yet served by RPCs — explicitly empty (no seed).
+      diagTier: [], ttft: [],
+      storage: live.storage?.storage || [],
+      storageTrend: live.storage?.storageTrend || [],
+      dbStats: live.storage?.dbStats || { sizeMb: 0, rows: 0, connections: 0, cacheHit: 0 },
+      aiUsage: live.aiUsage || [],
     };
   }, [live]);
   const [lang, setLang] = useState("en");
@@ -1531,12 +1545,30 @@ export default function OrcaConsole() {
   const eng = useMemo(() => D.engagement.slice(-weeks), [D.engagement, weeks]);
 
   const props = { t, lang, traders: filtered, eng, heat: D.heat, hmax: D.hmax, cohorts: D.cohorts, funnel: D.funnel, diagTier: D.diagTier, ttft: D.ttft, aiUsage: D.aiUsage, storage: D.storage, storageTrend: D.storageTrend, dbStats: D.dbStats, jumpFn, onPick: setPicked, live };
-  const SECTION = {
-    overview: <Overview {...props} />, activity: <CommunityActivity {...props} />, retention: <Retention {...props} />,
-    activation: <Activation {...props} />, subs: <Subscriptions {...props} />, mind: <Mind {...props} />,
-    risk: <RiskEngine {...props} />, perf: <Performance {...props} />, matrix: <TraderMatrix {...props} />,
-    bench: <Benchmarks {...props} />, ai: <AIUsage {...props} />, storage: <Storage {...props} />, queries: <QueryConsole {...props} />, quality: <DataQuality {...props} />, system: <SystemAccess {...props} />,
-  }[active];
+
+  // ZERO-SEED guards: render EmptyShell when the section's primary data is empty.
+  const empty = (title, subtitle) => <EmptyShell title={title} subtitle={subtitle} hint={lang === "he" ? "ראה /console/diagnostics לבדיקת RPCs" : "See /console/diagnostics for RPC health"} />;
+  const need = (arr, sectionKey) => arr.length > 0
+    ? null
+    : empty(lang === "he" ? "אין נתונים חיים עדיין" : "No live data yet", `${sectionKey}`);
+  const SECTION_MAP = {
+    overview: eng.length ? <Overview {...props} /> : need(eng, "engagement_weekly"),
+    activity: D.heat.length ? <CommunityActivity {...props} /> : need(D.heat, "activity_heatmap"),
+    retention: D.cohorts.length && eng.length ? <Retention {...props} /> : need([], "retention_cohorts"),
+    activation: D.funnel.length >= 4 ? <Activation {...props} /> : need([], "activation_funnel"),
+    subs: filtered.length && eng.length ? <Subscriptions {...props} /> : need([], "trader_matrix + engagement"),
+    mind: filtered.length ? <Mind {...props} /> : need(filtered, "trader_matrix"),
+    risk: filtered.length && eng.length ? <RiskEngine {...props} /> : need([], "risk_engine"),
+    perf: filtered.length ? <Performance {...props} /> : need(filtered, "performance"),
+    matrix: filtered.length ? <TraderMatrix {...props} /> : need(filtered, "trader_matrix"),
+    bench: filtered.length && eng.length ? <Benchmarks {...props} /> : need([], "benchmarks"),
+    ai: D.aiUsage.length ? <AIUsage {...props} /> : need(D.aiUsage, "ai_usage"),
+    storage: D.storage.length ? <Storage {...props} /> : need(D.storage, "db_storage"),
+    queries: <QueryConsole {...props} />,
+    quality: filtered.length ? <DataQuality {...props} /> : need(filtered, "data_quality"),
+    system: <SystemAccess {...props} />,
+  };
+  const SECTION = SECTION_MAP[active];
 
   const rangeOpts = [{ v: "7", l: t("d7") }, { v: "30", l: t("d30") }, { v: "90", l: t("d90") }, { v: "12", l: t("m12") }];
   const assetOpts = [{ v: "all", l: t("allAssets") }, ...ASSET.map((a) => ({ v: a.id, l: loc(lang, a) }))];
@@ -1554,7 +1586,9 @@ export default function OrcaConsole() {
     let payload;
     if (active === "overview") {
       payload = { ...base, scope: "full-console-report",
-        summary: { activeTraders: eng[eng.length - 1].active, tradesThisWeek: eng[eng.length - 1].trades, churnRatePct: eng[eng.length - 1].churn, avgExpectancyR: r2(filtered.reduce((s, x) => s + x.expectancy, 0) / Math.max(filtered.length, 1)), profitablePct: Math.round(filtered.filter((x) => x.expectancy > 0).length / Math.max(filtered.length, 1) * 100), disciplineIndex: Math.round(filtered.reduce((s, x) => s + x.discipline, 0) / Math.max(filtered.length, 1)) },
+      const engLast = eng[eng.length - 1] || { active: 0, trades: 0, churn: 0 };
+      payload = { ...base, scope: "full-console-report",
+        summary: { activeTraders: engLast.active, tradesThisWeek: engLast.trades, churnRatePct: engLast.churn, avgExpectancyR: r2(filtered.reduce((s, x) => s + x.expectancy, 0) / Math.max(filtered.length, 1)), profitablePct: Math.round(filtered.filter((x) => x.expectancy > 0).length / Math.max(filtered.length, 1) * 100), disciplineIndex: Math.round(filtered.reduce((s, x) => s + x.discipline, 0) / Math.max(filtered.length, 1)) },
         tierMix: TIER.map((tr) => ({ tier: tr.id, label: loc(lang, tr), count: filtered.filter((x) => x.tier.id === tr.id).length })),
         topBehaviouralRisk: topBy(filtered, "behaviouralRisk").map((x) => ({ code: x.code, score: x.behaviouralRisk, archetype: x.arch.id, archetypeLabel: loc(lang, x.arch) })),
         topValuePotential: topBy(filtered, "valuePotential").map((x) => ({ code: x.code, score: x.valuePotential, archetype: x.arch.id, archetypeLabel: loc(lang, x.arch) })) };
