@@ -384,7 +384,11 @@ export async function handler(req: Request, deps: HandlerDeps): Promise<Response
       ? await verifyBinance(api_key, api_secret, deps.fetchImpl)
       : provider === 'mexc_futures'
         ? await verifyMexcFutures(api_key, api_secret, deps.fetchImpl)
-        : await verifyMexcSpot(api_key, api_secret, deps.fetchImpl);
+        : provider === 'mexc_spot'
+          ? await verifyMexcSpot(api_key, api_secret, deps.fetchImpl)
+          : provider === 'gate_futures'
+            ? await verifyGateFutures(api_key, api_secret, deps.fetchImpl)
+            : await verifyKrakenFutures(api_key, api_secret, deps.fetchImpl);
 
   if (!verdict.ok) {
     if (verdict.reason === 'connection_error') {
