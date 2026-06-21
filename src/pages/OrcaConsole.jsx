@@ -650,7 +650,7 @@ function CommunityActivity({ t, lang, traders, heat, hmax }) {
   const heatColor = (v) => { const x = v / hmax; return x < 0.05 ? "#F1F4FA" : `rgba(37,99,235,${clamp(0.12 + x * 0.82, 0, 1)})`; };
   const byHour = Array.from({ length: 24 }, (_, h) => ({ h, v: r1(heat.filter((c) => c.h === h).reduce((s, c) => s + c.v, 0)) }));
   const byDay = DOW.map((dd, di) => ({ d: loc(lang, dd), v: r1(heat.filter((c) => c.d === di).reduce((s, c) => s + c.v, 0)) }));
-  const peak = heat.reduce((b, c) => (c.v > b.v ? c : b), { v: -1 });
+  const peak = heat.reduce((b, c) => (c.v > b.v ? c : b), { v: -1, d: 0, h: 0 });
   const busiest = byDay.reduce((b, c) => (c.v > b.v ? c : b), { v: -1 });
   const avgSess = r1(traders.reduce((s, x) => s + x.sessionsWk, 0) / Math.max(traders.length, 1));
   const sessBins = Array.from({ length: 7 }, (_, b) => ({ name: `${b * 2}`, v: traders.filter((x) => x.sessionsWk >= b * 2 && x.sessionsWk < b * 2 + 2).length }));
