@@ -130,6 +130,15 @@ export function runImport(sheets: SheetInput[], opts?: RunImportOptions): Import
       const dir = normalizeDirection(gStr(rv, 'direction')) || 'long';
       const isSnapshot = archetype === 'D_POSITIONS_SNAPSHOT';
       const entryPrice = gNum(rv, 'entryPrice') ?? (isSnapshot ? (gNum(rv, 'currentPrice') ?? 0) : 0);
+      // Split-leg P&L (REALISED WIN / REALISED LOSS) — merge into a single signed pnl.
+      // Each row of these templates fills ONE side; loss is recorded as a positive magnitude
+      // and must be subtracted. Falls back cleanly when only `pnl` is present.
+      const rWin = gNum(rv, 'realisedWin');
+      const rLoss = gNum(rv, 'realisedLoss');
+      let mergedPnl = gNum(rv, 'pnl');
+      if (mergedPnl == null && (rWin != null || rLoss != null)) {
+        mergedPnl = (rWin || 0) - Math.abs(rLoss || 0);
+      }
       const t: CanonicalTrade = {
         id: tid(), externalIds: [gStr(rv, 'externalId')].filter(Boolean), symbol: sym, symbolRaw: gStr(rv, 'symbol'),
         direction: dir, status: isSnapshot ? 'open' : ((gNum(rv, 'exitPrice') != null || exit) ? 'closed' : 'open'), entryDate: entry, exitDate: exit,
@@ -137,7 +146,7 @@ export function runImport(sheets: SheetInput[], opts?: RunImportOptions): Import
         quantity: gNum(rv, 'quantity') ?? undefined, positionSize: gNum(rv, 'positionSize') ?? undefined,
         leverage: gNum(rv, 'leverage') ?? undefined, stopLoss: gNum(rv, 'stopLoss') ?? undefined,
         takeProfit: gNum(rv, 'takeProfit') ?? undefined, riskAmount: gNum(rv, 'riskAmount') ?? undefined,
-        rMultiple: gNum(rv, 'rMultiple') ?? undefined, pnl: gNum(rv, 'pnl') ?? undefined,
+        rMultiple: gNum(rv, 'rMultiple') ?? undefined, pnl: mergedPnl ?? undefined,
         pnlPercent: gNum(rv, 'pnlPercent') ?? undefined, commission: gNum(rv, 'commission') ?? undefined,
         unitsMode, notes: gStr(rv, 'notes'), derivedFields: [], warnings: [],
       };
