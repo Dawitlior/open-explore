@@ -72,6 +72,13 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
   // trades — never feeds expectancy/equity until closed).
   const [isOpenPosition, setIsOpenPosition] = useState(false);
   const [savingOpen, setSavingOpen] = useState(false);
+  // ── Sizing model (non-futures) ──────────────────────────────────
+  // User picks ONE anchor; the other two values + Margin are derived
+  // deterministically through stop distance `d`. Current price is NEVER used.
+  type SizeAnchor = 'risk' | 'notional' | 'units';
+  const [sizeAnchor, setSizeAnchor] = useState<SizeAnchor>('risk');
+  const [notionalInput, setNotionalInput] = useState<number>(0);
+  const [unitsInput, setUnitsInput] = useState<number>(trade?.positionSize || 0);
 
   const [form, setForm] = useState({
     date: trade?.date || new Date().toISOString().slice(0, 16),
@@ -84,7 +91,10 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
     exit: trade?.exit || 0,
     risk: trade?.risk || 0,
     riskPct: trade?.riskPct || 1,
-    leverage: trade?.leverage || 10,
+    // Leverage default = 1 (no leverage). Users can leave empty; the input
+     // renders empty when value is 1 to encourage explicit choice. Leverage
+     // affects Margin only — never Risk$ or Notional.
+     leverage: trade?.leverage ?? 1,
     positionSize: trade?.positionSize || 0,
     rules: trade?.rules ?? true,
     comments: trade?.comments || '',
@@ -140,13 +150,56 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
     return entry;
   };
 
-  const autoCalcPositionSize = useMemo(() => {
-    const { entry, stopLoss, risk } = form;
-    if (!entry || !stopLoss || !risk || entry === stopLoss) return 0;
-    return risk / Math.abs(entry - stopLoss);
-  }, [form.entry, form.stopLoss, form.risk]);
+  // ── Unified sizing derivation (non-futures) ──────────────────────
+  // Inputs: Entry + Stop + ONE anchor (Risk$ | Notional$ | Units).
+  // Output: the OTHER two values + Margin, all derived through stop distance.
+  // Current price is NEVER used.
+  const sizing = useMemo(() => {
+    const entry = +form.entry || 0;
+    const stop = +form.stopLoss || 0;
+    const d = entry > 0 && stop > 0 ? Math.abs(entry - stop) : 0;
+    const dPct = entry > 0 && d > 0 ? d / entry : 0;
+    const lev = Math.max(1, +form.leverage || 1);
+    if (!d) return { d: 0, dPct: 0, units: 0, notional: 0, riskDollar: 0, margin: 0, ready: false, lev };
+    let units = 0, notional = 0, riskDollar = 0;
+    if (sizeAnchor === 'risk') {
+      riskDollar = +form.risk || 0;
+      units = riskDollar / d;
+      notional = units * entry;
+    } else if (sizeAnchor === 'notional') {
+      notional = +notionalInput || 0;
+      units = entry > 0 ? notional / entry : 0;
+      riskDollar = units * d;
+    } else {
+      units = +unitsInput || 0;
+      notional = units * entry;
+      riskDollar = units * d;
+    }
+    return { d, dPct, units, notional, riskDollar, margin: notional / lev, ready: true, lev };
+  }, [form.entry, form.stopLoss, form.risk, form.leverage, sizeAnchor, notionalInput, unitsInput]);
 
-  const equivPercent = useMemo(() => currentBalance > 0 ? (form.risk / currentBalance) * 100 : 0, [currentBalance, form.risk]);
+  // Sync derived values back into form so save/projection/futures-path stay coherent.
+  useEffect(() => {
+    if (isFutures) return;
+    if (!sizing.ready) return;
+    const nextRisk = +sizing.riskDollar.toFixed(2);
+    const nextSize = +sizing.units.toFixed(8);
+    const nextPct = currentBalance > 0 ? (nextRisk / currentBalance) * 100 : 0;
+    if (
+      Math.abs(nextRisk - (form.risk || 0)) > 0.005 ||
+      Math.abs(nextSize - (form.positionSize || 0)) > 1e-8
+    ) {
+      setForm(f => ({ ...f, risk: nextRisk, riskPct: nextPct, positionSize: nextSize }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sizing.riskDollar, sizing.units, isFutures, currentBalance]);
+
+  // Backward-compat alias used by review/save paths.
+  const autoCalcPositionSize = sizing.units;
+  const equivPercent = useMemo(
+    () => (currentBalance > 0 ? (form.risk / currentBalance) * 100 : null),
+    [currentBalance, form.risk],
+  );
 
   const handleDateChange = (val: string) => {
     const d = new Date(val);
@@ -213,6 +266,16 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
     if (s >= 1) {
       if (!form.entry) errs.push(isRTL ? 'מחיר כניסה חסר' : 'Entry price required');
       if (!form.stopLoss) errs.push(isRTL ? 'סטופ לוס חסר' : 'Stop loss required');
+      // Direction sanity: Long → stop must be BELOW entry; Short → ABOVE.
+      if (form.entry && form.stopLoss) {
+        if (form.entry === form.stopLoss) {
+          errs.push(isRTL ? 'סטופ זהה לכניסה — מרחק סטופ חייב להיות גדול מ-0' : 'Stop equals entry — distance must be > 0');
+        } else if (form.direction === 'Long' && form.stopLoss >= form.entry) {
+          errs.push(isRTL ? 'בלונג, הסטופ חייב להיות מתחת למחיר הכניסה' : 'For a Long, stop must be below entry');
+        } else if (form.direction === 'Short' && form.stopLoss <= form.entry) {
+          errs.push(isRTL ? 'בשורט, הסטופ חייב להיות מעל מחיר הכניסה' : 'For a Short, stop must be above entry');
+        }
+      }
       if (!isOpenPosition) {
         if (!form.exit) errs.push(isRTL ? 'מחיר יציאה חסר' : 'Exit price required');
         if (form.risk <= 0) errs.push(isRTL ? 'סכום סיכון חייב להיות גדול מ-0' : 'Risk amount must be greater than 0');
@@ -600,77 +663,8 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                 </div>
               )}
 
-              <div style={sectionCard}>
-                <label style={bigLabel}>{isRTL ? 'כמה הסתכנת? (בדולרים)' : 'How much did you risk? ($)'}</label>
-
-                {/* R-Multiple chips — pick risk as % of balance with one tap */}
-                {currentBalance > 0 && (
-                  <div
-                    role="radiogroup"
-                    aria-label={isRTL ? 'אחוז סיכון מהירים' : 'Quick risk percentage'}
-                    style={{
-                      display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap',
-                    }}
-                  >
-                    {[0.25, 0.5, 1, 1.5, 2].map(pct => {
-                      const dollar = +((currentBalance * pct) / 100).toFixed(2);
-                      const active = Math.abs(equivPercent - pct) < 0.05;
-                      return (
-                        <button
-                          key={pct}
-                          type="button"
-                          role="radio"
-                          aria-checked={active}
-                          onClick={() => { haptics.selection(); handleRiskChange(dollar); }}
-                          className="orca-press"
-                          style={{
-                            flex: '1 1 auto',
-                            minWidth: 56,
-                            minHeight: 44,
-                            padding: '8px 10px',
-                            borderRadius: T.radius.md,
-                            border: `1px solid ${active ? T.accent.cyan : T.border.medium}`,
-                            background: active
-                              ? `linear-gradient(135deg, ${T.accent.cyan}22, ${T.accent.teal}18)`
-                              : T.bg.tertiary,
-                            color: active ? T.accent.cyan : T.text.secondary,
-                            cursor: 'pointer',
-                            fontFamily: "'JetBrains Mono', monospace",
-                            fontWeight: 700,
-                            fontSize: 13,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: 2,
-                            boxShadow: active ? `0 0 0 1px ${T.accent.cyan}55, 0 0 14px ${T.accent.cyan}25` : 'none',
-                            WebkitTapHighlightColor: 'transparent',
-                            transition: 'border-color 0.18s, background 0.18s, color 0.18s, box-shadow 0.18s',
-                          }}
-                        >
-                          <span>{pct}%</span>
-                          <span style={{ fontSize: 9, fontWeight: 500, opacity: 0.75 }}>
-                            ${dollar.toLocaleString()}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-
-                <input
-                  type="number" step="any" inputMode="decimal"
-                  value={form.risk || ''}
-                  onChange={e => handleRiskChange(+e.target.value)}
-                  placeholder={isRTL ? 'סכום בדולרים' : 'Amount in $'}
-                  style={bigInput}
-                />
-                <div style={helpText}>
-                  {`${isRTL ? 'שווה ערך ל-' : 'Equivalent to '}${equivPercent.toFixed(2)}% ${isRTL ? 'מההון' : 'of your balance'} ${currentBalance > 0 ? `($${currentBalance.toFixed(0)})` : ''}`}
-                </div>
-              </div>
-
-              {isFutures && (
+              {/* ─── Sizing card ─── */}
+              {isFutures ? (
                 <div style={{ ...sectionCard, border: `1.5px solid ${T.accent.orange}50`, background: `${T.accent.orange}08` }}>
                   <label style={bigLabel}>
                     {isRTL ? `כמה חוזים סחרת? · ${form.coin}` : `How many contracts? · ${form.coin}`}
@@ -694,42 +688,130 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                   </div>
                   <div style={helpText}>{isRTL ? 'בחוזים עתידיים הסיכון בדולרים מחושב אוטומטית מכמות החוזים × מרחק הסטופ × שווי הטיק.' : 'For futures, $ risk is auto-derived from contracts × stop distance × tick value.'}</div>
                 </div>
-              )}
-
-              {!isFutures && (
+              ) : (
                 <div style={sectionCard}>
-                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
-                    <div>
-                      <label style={bigLabel}>{isRTL ? 'מינוף' : 'Leverage'}</label>
-                      <input type="number" inputMode="numeric" value={form.leverage} onChange={e => setForm(f => ({ ...f, leverage: +e.target.value }))} style={bigInput} />
-                    </div>
-                    <div>
-                      <label style={bigLabel}>{isRTL ? 'גודל פוזיציה' : 'Position size'}</label>
-                      <input type="number" step="any" inputMode="decimal" value={form.positionSize || ''} onChange={e => setForm(f => ({ ...f, positionSize: +e.target.value }))} placeholder={isRTL ? 'אופציונלי' : 'Optional'} style={bigInput} />
-                      {autoCalcPositionSize > 0 && !form.positionSize && (
-                        <button onClick={() => setForm(f => ({ ...f, positionSize: +autoCalcPositionSize.toFixed(4) }))}
-                          style={{ fontSize: 12, color: T.accent.cyan, background: 'none', border: 'none', cursor: 'pointer', marginTop: 6, padding: 0, fontWeight: 600 }}>
-                          ✨ {isRTL ? 'חשב אוטומטית:' : 'Auto-fill:'} {autoCalcPositionSize.toFixed(4)}
+                  <label style={bigLabel}>{isRTL ? 'גודל פוזיציה — בחר עוגן אחד' : 'Position size — pick one anchor'}</label>
+
+                  {/* Anchor selector */}
+                  <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
+                    {([
+                      { id: 'risk',     he: 'סיכון $',     en: 'Risk $' },
+                      { id: 'notional', he: 'נומינלי $',   en: 'Notional $' },
+                      { id: 'units',    he: 'יחידות',      en: 'Units' },
+                    ] as const).map(opt => {
+                      const active = sizeAnchor === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => { haptics.selection(); setSizeAnchor(opt.id); }}
+                          style={{
+                            flex: '1 1 auto', minWidth: 80, padding: '10px 12px',
+                            border: `1.5px solid ${active ? T.accent.cyan : T.border.medium}`,
+                            borderRadius: 10,
+                            background: active ? `${T.accent.cyan}18` : T.bg.tertiary,
+                            color: active ? T.accent.cyan : T.text.secondary,
+                            cursor: 'pointer', fontWeight: 700, fontSize: 13,
+                          }}
+                        >
+                          {isRTL ? opt.he : opt.en}
                         </button>
-                      )}
-                      {(() => {
-                        const sz = form.positionSize || autoCalcPositionSize;
-                        const lev = Math.max(1, Number(form.leverage) || 1);
-                        const entry = Number(form.entry) || 0;
-                        if (!sz || !entry) return null;
-                        const notional = sz * entry;
-                        const margin = notional / lev;
+                      );
+                    })}
+                  </div>
+
+                  {/* Quick % chips — only in Risk$ anchor + known balance */}
+                  {sizeAnchor === 'risk' && currentBalance > 0 && (
+                    <div role="radiogroup" aria-label={isRTL ? 'אחוז סיכון מהירים' : 'Quick risk percentage'}
+                      style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
+                      {[0.25, 0.5, 1, 1.5, 2].map(pct => {
+                        const dollar = +((currentBalance * pct) / 100).toFixed(2);
+                        const active = equivPercent != null && Math.abs(equivPercent - pct) < 0.05;
                         return (
-                          <div style={{ fontSize: 11, color: T.text.muted, marginTop: 6, fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.5 }}>
-                            {isRTL ? `נומינלי: $${notional.toLocaleString(undefined,{maximumFractionDigits:2})} · מרג׳ין נדרש (×${lev}): ` : `Notional: $${notional.toLocaleString(undefined,{maximumFractionDigits:2})} · Margin (×${lev}): `}
-                            <span style={{ color: T.accent.cyan, fontWeight: 700 }}>${margin.toLocaleString(undefined,{maximumFractionDigits:2})}</span>
-                          </div>
+                          <button key={pct} type="button" role="radio" aria-checked={active}
+                            onClick={() => { haptics.selection(); handleRiskChange(dollar); }}
+                            className="orca-press"
+                            style={{
+                              flex: '1 1 auto', minWidth: 56, minHeight: 44, padding: '8px 10px',
+                              borderRadius: T.radius.md,
+                              border: `1px solid ${active ? T.accent.cyan : T.border.medium}`,
+                              background: active ? `linear-gradient(135deg, ${T.accent.cyan}22, ${T.accent.teal}18)` : T.bg.tertiary,
+                              color: active ? T.accent.cyan : T.text.secondary,
+                              cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace",
+                              fontWeight: 700, fontSize: 13,
+                              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2,
+                              boxShadow: active ? `0 0 0 1px ${T.accent.cyan}55, 0 0 14px ${T.accent.cyan}25` : 'none',
+                              WebkitTapHighlightColor: 'transparent',
+                            }}>
+                            <span>{pct}%</span>
+                            <span style={{ fontSize: 9, fontWeight: 500, opacity: 0.75 }}>${dollar.toLocaleString()}</span>
+                          </button>
                         );
-                      })()}
+                      })}
                     </div>
+                  )}
+
+                  {/* Anchor input */}
+                  {sizeAnchor === 'risk' && (
+                    <input type="number" step="any" inputMode="decimal"
+                      value={form.risk || ''}
+                      onChange={e => handleRiskChange(+e.target.value)}
+                      placeholder={isRTL ? 'סכום בדולרים' : 'Amount in $'}
+                      style={bigInput} />
+                  )}
+                  {sizeAnchor === 'notional' && (
+                    <input type="number" step="any" inputMode="decimal"
+                      value={notionalInput || ''}
+                      onChange={e => setNotionalInput(+e.target.value || 0)}
+                      placeholder={isRTL ? 'גודל פוזיציה בדולרים (לדוגמה 1890)' : 'Position size in $ (e.g. 1890)'}
+                      style={bigInput} />
+                  )}
+                  {sizeAnchor === 'units' && (
+                    <input type="number" step="any" inputMode="decimal"
+                      value={unitsInput || ''}
+                      onChange={e => setUnitsInput(+e.target.value || 0)}
+                      placeholder={isRTL ? 'כמות יחידות (לדוגמה 0.0315)' : 'Quantity in units (e.g. 0.0315)'}
+                      style={bigInput} />
+                  )}
+
+                  {/* Help line — risk % of balance */}
+                  <div style={helpText}>
+                    {equivPercent == null
+                      ? (isRTL ? 'יתרת חשבון לא הוגדרה — אחוז סיכון מהחשבון לא זמין.' : 'Account balance not set — risk % of account unavailable.')
+                      : `${isRTL ? 'סיכון =' : 'Risk ='} ${equivPercent.toFixed(2)}% ${isRTL ? 'מההון' : 'of balance'} ($${currentBalance.toFixed(0)})`}
+                  </div>
+
+                  {/* Derived sizing display */}
+                  {sizing.ready && (
+                    <div style={{
+                      marginTop: 12, padding: 12, background: T.bg.tertiary, borderRadius: 10,
+                      fontSize: 12, color: T.text.secondary,
+                      fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.75,
+                      border: `1px solid ${T.border.subtle}`,
+                    }}>
+                      <div>{isRTL ? 'מרחק סטופ:' : 'Stop distance:'} <span style={{ color: T.text.primary }}>{sizing.d.toFixed(sizing.d < 1 ? 5 : 2)}</span> · <span style={{ color: T.text.primary }}>{(sizing.dPct * 100).toFixed(2)}%</span></div>
+                      <div>{isRTL ? 'יחידות:' : 'Units:'} <span style={{ color: T.accent.cyan, fontWeight: 700 }}>{sizing.units.toFixed(sizing.units < 1 ? 6 : 4)}</span></div>
+                      <div>{isRTL ? 'נומינלי:' : 'Notional:'} <span style={{ color: T.accent.cyan, fontWeight: 700 }}>${sizing.notional.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span></div>
+                      <div>{isRTL ? 'סיכון:' : 'Risk:'} <span style={{ color: T.accent.orange, fontWeight: 700 }}>${sizing.riskDollar.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span></div>
+                      <div>{isRTL ? `מרג'ין (×${sizing.lev}):` : `Margin (×${sizing.lev}):`} <span style={{ color: T.text.primary, fontWeight: 700 }}>${sizing.margin.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span></div>
+                    </div>
+                  )}
+
+                  {/* Leverage */}
+                  <div style={{ marginTop: 12 }}>
+                    <label style={bigLabel}>{isRTL ? 'מינוף (אופציונלי)' : 'Leverage (optional)'}</label>
+                    <input type="number" inputMode="numeric" min={1} step={1}
+                      value={form.leverage && form.leverage > 1 ? form.leverage : ''}
+                      onChange={e => setForm(f => ({ ...f, leverage: Math.max(1, +e.target.value || 1) }))}
+                      placeholder="1"
+                      style={bigInput} />
+                    <div style={helpText}>{isRTL
+                      ? 'ריק = ללא מינוף (×1). מינוף משפיע רק על המרג׳ין הנדרש — לא על הסיכון ולא על הנומינלי.'
+                      : 'Empty = no leverage (×1). Leverage only affects required Margin — it does NOT change your Risk or Notional.'}</div>
                   </div>
                 </div>
               )}
+
 
               <div style={sectionCard}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 14, color: T.text.primary, fontWeight: 600 }}>
