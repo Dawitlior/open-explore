@@ -653,79 +653,8 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                 </div>
               )}
 
-              <div style={sectionCard}>
-                <label style={bigLabel}>{isRTL ? 'כמה הסתכנת? (בדולרים)' : 'How much did you risk? ($)'}</label>
-
-                {/* R-Multiple chips — pick risk as % of balance with one tap */}
-                {currentBalance > 0 && (
-                  <div
-                    role="radiogroup"
-                    aria-label={isRTL ? 'אחוז סיכון מהירים' : 'Quick risk percentage'}
-                    style={{
-                      display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap',
-                    }}
-                  >
-                    {[0.25, 0.5, 1, 1.5, 2].map(pct => {
-                      const dollar = +((currentBalance * pct) / 100).toFixed(2);
-                      const active = equivPercent != null && Math.abs(equivPercent - pct) < 0.05;
-                      return (
-                        <button
-                          key={pct}
-                          type="button"
-                          role="radio"
-                          aria-checked={active}
-                          onClick={() => { haptics.selection(); handleRiskChange(dollar); }}
-                          className="orca-press"
-                          style={{
-                            flex: '1 1 auto',
-                            minWidth: 56,
-                            minHeight: 44,
-                            padding: '8px 10px',
-                            borderRadius: T.radius.md,
-                            border: `1px solid ${active ? T.accent.cyan : T.border.medium}`,
-                            background: active
-                              ? `linear-gradient(135deg, ${T.accent.cyan}22, ${T.accent.teal}18)`
-                              : T.bg.tertiary,
-                            color: active ? T.accent.cyan : T.text.secondary,
-                            cursor: 'pointer',
-                            fontFamily: "'JetBrains Mono', monospace",
-                            fontWeight: 700,
-                            fontSize: 13,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: 2,
-                            boxShadow: active ? `0 0 0 1px ${T.accent.cyan}55, 0 0 14px ${T.accent.cyan}25` : 'none',
-                            WebkitTapHighlightColor: 'transparent',
-                            transition: 'border-color 0.18s, background 0.18s, color 0.18s, box-shadow 0.18s',
-                          }}
-                        >
-                          <span>{pct}%</span>
-                          <span style={{ fontSize: 9, fontWeight: 500, opacity: 0.75 }}>
-                            ${dollar.toLocaleString()}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-
-                <input
-                  type="number" step="any" inputMode="decimal"
-                  value={form.risk || ''}
-                  onChange={e => handleRiskChange(+e.target.value)}
-                  placeholder={isRTL ? 'סכום בדולרים' : 'Amount in $'}
-                  style={bigInput}
-                />
-                <div style={helpText}>
-                  {equivPercent == null
-                    ? (isRTL ? 'יתרת חשבון לא הוגדרה — אחוז סיכון אינו זמין.' : 'Account balance not set — risk % unavailable.')
-                    : `${isRTL ? 'שווה ערך ל-' : 'Equivalent to '}${equivPercent.toFixed(2)}% ${isRTL ? 'מההון' : 'of your balance'} ($${currentBalance.toFixed(0)})`}
-                </div>
-              </div>
-
-              {isFutures && (
+              {/* ─── Sizing card ─── */}
+              {isFutures ? (
                 <div style={{ ...sectionCard, border: `1.5px solid ${T.accent.orange}50`, background: `${T.accent.orange}08` }}>
                   <label style={bigLabel}>
                     {isRTL ? `כמה חוזים סחרת? · ${form.coin}` : `How many contracts? · ${form.coin}`}
@@ -749,42 +678,130 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                   </div>
                   <div style={helpText}>{isRTL ? 'בחוזים עתידיים הסיכון בדולרים מחושב אוטומטית מכמות החוזים × מרחק הסטופ × שווי הטיק.' : 'For futures, $ risk is auto-derived from contracts × stop distance × tick value.'}</div>
                 </div>
-              )}
-
-              {!isFutures && (
+              ) : (
                 <div style={sectionCard}>
-                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
-                    <div>
-                      <label style={bigLabel}>{isRTL ? 'מינוף' : 'Leverage'}</label>
-                      <input type="number" inputMode="numeric" value={form.leverage} onChange={e => setForm(f => ({ ...f, leverage: +e.target.value }))} style={bigInput} />
-                    </div>
-                    <div>
-                      <label style={bigLabel}>{isRTL ? 'גודל פוזיציה' : 'Position size'}</label>
-                      <input type="number" step="any" inputMode="decimal" value={form.positionSize || ''} onChange={e => setForm(f => ({ ...f, positionSize: +e.target.value }))} placeholder={isRTL ? 'אופציונלי' : 'Optional'} style={bigInput} />
-                      {autoCalcPositionSize > 0 && !form.positionSize && (
-                        <button onClick={() => setForm(f => ({ ...f, positionSize: +autoCalcPositionSize.toFixed(4) }))}
-                          style={{ fontSize: 12, color: T.accent.cyan, background: 'none', border: 'none', cursor: 'pointer', marginTop: 6, padding: 0, fontWeight: 600 }}>
-                          ✨ {isRTL ? 'חשב אוטומטית:' : 'Auto-fill:'} {autoCalcPositionSize.toFixed(4)}
+                  <label style={bigLabel}>{isRTL ? 'גודל פוזיציה — בחר עוגן אחד' : 'Position size — pick one anchor'}</label>
+
+                  {/* Anchor selector */}
+                  <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
+                    {([
+                      { id: 'risk',     he: 'סיכון $',     en: 'Risk $' },
+                      { id: 'notional', he: 'נומינלי $',   en: 'Notional $' },
+                      { id: 'units',    he: 'יחידות',      en: 'Units' },
+                    ] as const).map(opt => {
+                      const active = sizeAnchor === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => { haptics.selection(); setSizeAnchor(opt.id); }}
+                          style={{
+                            flex: '1 1 auto', minWidth: 80, padding: '10px 12px',
+                            border: `1.5px solid ${active ? T.accent.cyan : T.border.medium}`,
+                            borderRadius: 10,
+                            background: active ? `${T.accent.cyan}18` : T.bg.tertiary,
+                            color: active ? T.accent.cyan : T.text.secondary,
+                            cursor: 'pointer', fontWeight: 700, fontSize: 13,
+                          }}
+                        >
+                          {isRTL ? opt.he : opt.en}
                         </button>
-                      )}
-                      {(() => {
-                        const sz = form.positionSize || autoCalcPositionSize;
-                        const lev = Math.max(1, Number(form.leverage) || 1);
-                        const entry = Number(form.entry) || 0;
-                        if (!sz || !entry) return null;
-                        const notional = sz * entry;
-                        const margin = notional / lev;
+                      );
+                    })}
+                  </div>
+
+                  {/* Quick % chips — only in Risk$ anchor + known balance */}
+                  {sizeAnchor === 'risk' && currentBalance > 0 && (
+                    <div role="radiogroup" aria-label={isRTL ? 'אחוז סיכון מהירים' : 'Quick risk percentage'}
+                      style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
+                      {[0.25, 0.5, 1, 1.5, 2].map(pct => {
+                        const dollar = +((currentBalance * pct) / 100).toFixed(2);
+                        const active = equivPercent != null && Math.abs(equivPercent - pct) < 0.05;
                         return (
-                          <div style={{ fontSize: 11, color: T.text.muted, marginTop: 6, fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.5 }}>
-                            {isRTL ? `נומינלי: $${notional.toLocaleString(undefined,{maximumFractionDigits:2})} · מרג׳ין נדרש (×${lev}): ` : `Notional: $${notional.toLocaleString(undefined,{maximumFractionDigits:2})} · Margin (×${lev}): `}
-                            <span style={{ color: T.accent.cyan, fontWeight: 700 }}>${margin.toLocaleString(undefined,{maximumFractionDigits:2})}</span>
-                          </div>
+                          <button key={pct} type="button" role="radio" aria-checked={active}
+                            onClick={() => { haptics.selection(); handleRiskChange(dollar); }}
+                            className="orca-press"
+                            style={{
+                              flex: '1 1 auto', minWidth: 56, minHeight: 44, padding: '8px 10px',
+                              borderRadius: T.radius.md,
+                              border: `1px solid ${active ? T.accent.cyan : T.border.medium}`,
+                              background: active ? `linear-gradient(135deg, ${T.accent.cyan}22, ${T.accent.teal}18)` : T.bg.tertiary,
+                              color: active ? T.accent.cyan : T.text.secondary,
+                              cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace",
+                              fontWeight: 700, fontSize: 13,
+                              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2,
+                              boxShadow: active ? `0 0 0 1px ${T.accent.cyan}55, 0 0 14px ${T.accent.cyan}25` : 'none',
+                              WebkitTapHighlightColor: 'transparent',
+                            }}>
+                            <span>{pct}%</span>
+                            <span style={{ fontSize: 9, fontWeight: 500, opacity: 0.75 }}>${dollar.toLocaleString()}</span>
+                          </button>
                         );
-                      })()}
+                      })}
                     </div>
+                  )}
+
+                  {/* Anchor input */}
+                  {sizeAnchor === 'risk' && (
+                    <input type="number" step="any" inputMode="decimal"
+                      value={form.risk || ''}
+                      onChange={e => handleRiskChange(+e.target.value)}
+                      placeholder={isRTL ? 'סכום בדולרים' : 'Amount in $'}
+                      style={bigInput} />
+                  )}
+                  {sizeAnchor === 'notional' && (
+                    <input type="number" step="any" inputMode="decimal"
+                      value={notionalInput || ''}
+                      onChange={e => setNotionalInput(+e.target.value || 0)}
+                      placeholder={isRTL ? 'גודל פוזיציה בדולרים (לדוגמה 1890)' : 'Position size in $ (e.g. 1890)'}
+                      style={bigInput} />
+                  )}
+                  {sizeAnchor === 'units' && (
+                    <input type="number" step="any" inputMode="decimal"
+                      value={unitsInput || ''}
+                      onChange={e => setUnitsInput(+e.target.value || 0)}
+                      placeholder={isRTL ? 'כמות יחידות (לדוגמה 0.0315)' : 'Quantity in units (e.g. 0.0315)'}
+                      style={bigInput} />
+                  )}
+
+                  {/* Help line — risk % of balance */}
+                  <div style={helpText}>
+                    {equivPercent == null
+                      ? (isRTL ? 'יתרת חשבון לא הוגדרה — אחוז סיכון מהחשבון לא זמין.' : 'Account balance not set — risk % of account unavailable.')
+                      : `${isRTL ? 'סיכון =' : 'Risk ='} ${equivPercent.toFixed(2)}% ${isRTL ? 'מההון' : 'of balance'} ($${currentBalance.toFixed(0)})`}
+                  </div>
+
+                  {/* Derived sizing display */}
+                  {sizing.ready && (
+                    <div style={{
+                      marginTop: 12, padding: 12, background: T.bg.tertiary, borderRadius: 10,
+                      fontSize: 12, color: T.text.secondary,
+                      fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.75,
+                      border: `1px solid ${T.border.subtle}`,
+                    }}>
+                      <div>{isRTL ? 'מרחק סטופ:' : 'Stop distance:'} <span style={{ color: T.text.primary }}>{sizing.d.toFixed(sizing.d < 1 ? 5 : 2)}</span> · <span style={{ color: T.text.primary }}>{(sizing.dPct * 100).toFixed(2)}%</span></div>
+                      <div>{isRTL ? 'יחידות:' : 'Units:'} <span style={{ color: T.accent.cyan, fontWeight: 700 }}>{sizing.units.toFixed(sizing.units < 1 ? 6 : 4)}</span></div>
+                      <div>{isRTL ? 'נומינלי:' : 'Notional:'} <span style={{ color: T.accent.cyan, fontWeight: 700 }}>${sizing.notional.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span></div>
+                      <div>{isRTL ? 'סיכון:' : 'Risk:'} <span style={{ color: T.accent.orange, fontWeight: 700 }}>${sizing.riskDollar.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span></div>
+                      <div>{isRTL ? `מרג'ין (×${sizing.lev}):` : `Margin (×${sizing.lev}):`} <span style={{ color: T.text.primary, fontWeight: 700 }}>${sizing.margin.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span></div>
+                    </div>
+                  )}
+
+                  {/* Leverage */}
+                  <div style={{ marginTop: 12 }}>
+                    <label style={bigLabel}>{isRTL ? 'מינוף (אופציונלי)' : 'Leverage (optional)'}</label>
+                    <input type="number" inputMode="numeric" min={1} step={1}
+                      value={form.leverage && form.leverage > 1 ? form.leverage : ''}
+                      onChange={e => setForm(f => ({ ...f, leverage: Math.max(1, +e.target.value || 1) }))}
+                      placeholder="1"
+                      style={bigInput} />
+                    <div style={helpText}>{isRTL
+                      ? 'ריק = ללא מינוף (×1). מינוף משפיע רק על המרג׳ין הנדרש — לא על הסיכון ולא על הנומינלי.'
+                      : 'Empty = no leverage (×1). Leverage only affects required Margin — it does NOT change your Risk or Notional.'}</div>
                   </div>
                 </div>
               )}
+
 
               <div style={sectionCard}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 14, color: T.text.primary, fontWeight: 600 }}>
