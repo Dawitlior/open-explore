@@ -177,6 +177,19 @@ const App = () => (
                 }
               />
               <Route
+                path="/console/diagnostics"
+                element={
+                  <RequireAuth>
+                    <RequireAdmin>
+                      <Suspense fallback={<div style={{ padding: 24, color: '#94a3b8', fontFamily: 'monospace' }}>Loading diagnostics…</div>}>
+                        <OrcaDiagnosticsPage />
+                        <ConsoleBackButton />
+                      </Suspense>
+                    </RequireAdmin>
+                  </RequireAuth>
+                }
+              />
+              <Route
                 path="/console"
                 element={
                   <RequireAuth>
