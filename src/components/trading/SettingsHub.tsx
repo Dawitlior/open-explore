@@ -6,7 +6,7 @@ import {
   Volume2, VolumeX, Zap, Type, Brush, Target, Gauge, Plug, Scale, Terminal,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { LEGAL_TITLE_HE, LEGAL_SECTIONS_HE, LEGAL_FOOTER_HE, PRIVACY_TITLE_HE, PRIVACY_SECTIONS_HE, LEGAL_VERSION, LEGAL_VERSION_DATE } from '@/lib/legal-text';
+import { LEGAL_TITLE_HE, LEGAL_TITLE_EN, LEGAL_SECTIONS_HE, LEGAL_SECTIONS_EN, LEGAL_FOOTER_HE, LEGAL_FOOTER_EN, PRIVACY_TITLE_HE, PRIVACY_TITLE_EN, PRIVACY_SECTIONS_HE, PRIVACY_SECTIONS_EN, LEGAL_VERSION, LEGAL_VERSION_DATE } from '@/lib/legal-text';
 import { ExchangesPanel } from './ExchangesPanel';
 import { playMorningLock } from '@/lib/apex-sounds';
 import type { TradingTheme, CustomTheme, BaseMood } from '@/lib/trading-theme';
@@ -2149,74 +2149,86 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                     'Full Terms of Service, Privacy Policy and Accessibility Statement — always available.'
                   )}
                 </p>
-                <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {LEGAL_SECTIONS_HE.map((s) => (
-                    <a
-                      key={s.heading}
-                      href={`#legal-${s.heading.split('.')[0]}`}
-                      style={{
-                        fontSize: 11, fontWeight: 600, padding: '5px 10px',
-                        borderRadius: 999, border: `1px solid ${T.border.subtle}`,
-                        color: T.accent.cyan, textDecoration: 'none', background: T.bg.secondary,
-                      }}
-                    >
-                      {s.heading}
-                    </a>
-                  ))}
-                </div>
-                <div
-                  dir="rtl"
-                  style={{
-                    marginTop: 16, maxHeight: 460, overflowY: 'auto',
-                    padding: 16, borderRadius: T.radius.md,
-                    background: T.bg.secondary, border: `1px solid ${T.border.subtle}`,
-                  }}
-                >
-                  <div style={{ fontSize: 10, color: T.text.muted, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 6 }}>
-                    {t('גרסה', 'Version')} {LEGAL_VERSION} · {LEGAL_VERSION_DATE}
-                  </div>
-                  <h4 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 800, color: T.accent.cyan, lineHeight: 1.5 }}>
-                    {LEGAL_TITLE_HE}
-                  </h4>
-                  {LEGAL_SECTIONS_HE.map((s) => (
-                    <section key={s.heading} id={`legal-${s.heading.split('.')[0]}`} style={{ marginBottom: 16 }}>
-                      <h5 style={{ margin: '0 0 6px', fontSize: 13, fontWeight: 700, color: T.text.primary }}>
-                        {s.heading}
-                      </h5>
-                      <p style={{
-                        margin: 0, fontSize: 12.5, lineHeight: 1.8,
-                        color: T.text.secondary, whiteSpace: 'pre-line',
-                      }}>
-                        {s.body}
-                      </p>
-                    </section>
-                  ))}
+                {(() => {
+                  const legalSections = isRTL ? LEGAL_SECTIONS_HE : LEGAL_SECTIONS_EN;
+                  const privacySections = isRTL ? PRIVACY_SECTIONS_HE : PRIVACY_SECTIONS_EN;
+                  const legalTitle = isRTL ? LEGAL_TITLE_HE : LEGAL_TITLE_EN;
+                  const privacyTitle = isRTL ? PRIVACY_TITLE_HE : PRIVACY_TITLE_EN;
+                  const footer = isRTL ? LEGAL_FOOTER_HE : LEGAL_FOOTER_EN;
+                  return (
+                    <>
+                      <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        {legalSections.map((s) => (
+                          <a
+                            key={s.heading}
+                            href={`#legal-${s.heading.split('.')[0]}`}
+                            style={{
+                              fontSize: 11, fontWeight: 600, padding: '5px 10px',
+                              borderRadius: 999, border: `1px solid ${T.border.subtle}`,
+                              color: T.accent.cyan, textDecoration: 'none', background: T.bg.secondary,
+                            }}
+                          >
+                            {s.heading}
+                          </a>
+                        ))}
+                      </div>
+                      <div
+                        dir={isRTL ? 'rtl' : 'ltr'}
+                        lang={isRTL ? 'he' : 'en'}
+                        style={{
+                          marginTop: 16, maxHeight: 460, overflowY: 'auto',
+                          padding: 16, borderRadius: T.radius.md,
+                          background: T.bg.secondary, border: `1px solid ${T.border.subtle}`,
+                        }}
+                      >
+                        <div style={{ fontSize: 10, color: T.text.muted, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 6 }}>
+                          {t('גרסה', 'Version')} {LEGAL_VERSION} · {LEGAL_VERSION_DATE}
+                        </div>
+                        <h4 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 800, color: T.accent.cyan, lineHeight: 1.5 }}>
+                          {legalTitle}
+                        </h4>
+                        {legalSections.map((s) => (
+                          <section key={s.heading} id={`legal-${s.heading.split('.')[0]}`} style={{ marginBottom: 16 }}>
+                            <h5 style={{ margin: '0 0 6px', fontSize: 13, fontWeight: 700, color: T.text.primary }}>
+                              {s.heading}
+                            </h5>
+                            <p style={{
+                              margin: 0, fontSize: 12.5, lineHeight: 1.8,
+                              color: T.text.secondary, whiteSpace: 'pre-line',
+                            }}>
+                              {s.body}
+                            </p>
+                          </section>
+                        ))}
 
-                  <h4 style={{ margin: '24px 0 14px', paddingTop: 16, borderTop: `1px solid ${T.border.subtle}`, fontSize: 14, fontWeight: 800, color: T.accent.cyan, lineHeight: 1.5 }}>
-                    {PRIVACY_TITLE_HE}
-                  </h4>
-                  {PRIVACY_SECTIONS_HE.map((s) => (
-                    <section key={s.heading} id={`privacy-${s.heading.split('.')[0]}`} style={{ marginBottom: 16 }}>
-                      <h5 style={{ margin: '0 0 6px', fontSize: 13, fontWeight: 700, color: T.text.primary }}>
-                        {s.heading}
-                      </h5>
-                      <p style={{
-                        margin: 0, fontSize: 12.5, lineHeight: 1.8,
-                        color: T.text.secondary, whiteSpace: 'pre-line',
-                      }}>
-                        {s.body}
-                      </p>
-                    </section>
-                  ))}
+                        <h4 style={{ margin: '24px 0 14px', paddingTop: 16, borderTop: `1px solid ${T.border.subtle}`, fontSize: 14, fontWeight: 800, color: T.accent.cyan, lineHeight: 1.5 }}>
+                          {privacyTitle}
+                        </h4>
+                        {privacySections.map((s) => (
+                          <section key={s.heading} id={`privacy-${s.heading.split('.')[0]}`} style={{ marginBottom: 16 }}>
+                            <h5 style={{ margin: '0 0 6px', fontSize: 13, fontWeight: 700, color: T.text.primary }}>
+                              {s.heading}
+                            </h5>
+                            <p style={{
+                              margin: 0, fontSize: 12.5, lineHeight: 1.8,
+                              color: T.text.secondary, whiteSpace: 'pre-line',
+                            }}>
+                              {s.body}
+                            </p>
+                          </section>
+                        ))}
 
-                  <p style={{
-                    marginTop: 14, paddingTop: 12,
-                    borderTop: `1px solid ${T.border.subtle}`,
-                    fontSize: 12, fontWeight: 600, color: T.accent.cyan, textAlign: 'center',
-                  }}>
-                    {LEGAL_FOOTER_HE}
-                  </p>
-                </div>
+                        <p style={{
+                          marginTop: 14, paddingTop: 12,
+                          borderTop: `1px solid ${T.border.subtle}`,
+                          fontSize: 12, fontWeight: 600, color: T.accent.cyan, textAlign: 'center',
+                        }}>
+                          {footer}
+                        </p>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             )}
           </div>

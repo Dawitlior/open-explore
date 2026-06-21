@@ -128,8 +128,8 @@ const Accessibility = () => {
       style={{
         minHeight: '100dvh',
         background:
-          'radial-gradient(1200px 600px at 50% -10%, rgba(0,242,255,0.08), transparent 60%), #061326',
-        color: '#e6f4ff',
+          'radial-gradient(1200px 600px at 50% -10%, rgba(212,175,90,0.08), transparent 60%), #000000',
+        color: '#f5ecd6',
         fontFamily: "'Poppins', sans-serif",
         padding: '48px 20px',
       }}
@@ -138,19 +138,18 @@ const Accessibility = () => {
         style={{
           maxWidth: 880,
           margin: '0 auto',
-          background: 'rgba(8,22,46,0.85)',
-          border: '1px solid rgba(0,242,255,0.18)',
+          background: 'rgba(7,9,15,0.9)',
+          border: '1px solid rgba(212,175,90,0.22)',
           borderRadius: 16,
           padding: '36px clamp(20px, 4vw, 48px)',
-          boxShadow: '0 0 0 1px rgba(0,242,255,0.05), 0 20px 80px rgba(0,0,0,0.5)',
-          backdropFilter: 'blur(10px)',
+          boxShadow: '0 0 0 1px rgba(212,175,90,0.05), 0 20px 80px rgba(0,0,0,0.6)',
         }}
       >
         <Link
           to="/"
           style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
-            color: '#7fe6ff', fontSize: 13, textDecoration: 'none',
+            color: '#f0d78c', fontSize: 13, textDecoration: 'none',
             marginBottom: 24, opacity: 0.9,
           }}
         >
@@ -162,8 +161,7 @@ const Accessibility = () => {
           style={{
             fontSize: 'clamp(20px, 2.6vw, 28px)',
             fontWeight: 800, lineHeight: 1.4, margin: '0 0 8px',
-            background: 'linear-gradient(90deg, #00f2ff, #7fe6ff)',
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+            color: '#f0d78c', letterSpacing: '-0.01em',
           }}
         >
           {title}
@@ -172,26 +170,26 @@ const Accessibility = () => {
           {updatedLabel} {lastUpdated}
         </p>
 
-        <p style={{ fontSize: 14, lineHeight: 1.85, color: 'rgba(230,244,255,0.88)', margin: '0 0 28px' }}>
+        <p style={{ fontSize: 14, lineHeight: 1.85, color: 'rgba(245,236,214,0.88)', margin: '0 0 28px' }}>
           {intro}
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
           {sections.map((s) => (
             <section key={s.heading}>
-              <h2 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 8px', color: '#00f2ff' }}>
+              <h2 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 8px', color: '#f0d78c' }}>
                 {s.heading}
               </h2>
               {Array.isArray(s.body) ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {s.body.map((p, i) => (
-                    <p key={i} style={{ fontSize: 14, lineHeight: 1.85, color: 'rgba(230,244,255,0.88)', margin: 0 }}>
+                    <p key={i} style={{ fontSize: 14, lineHeight: 1.85, color: 'rgba(245,236,214,0.88)', margin: 0 }}>
                       {p}
                     </p>
                   ))}
                 </div>
               ) : (
-                <p style={{ fontSize: 14, lineHeight: 1.85, color: 'rgba(230,244,255,0.88)', margin: 0 }}>
+                <p style={{ fontSize: 14, lineHeight: 1.85, color: 'rgba(245,236,214,0.88)', margin: 0 }}>
                   {s.body}
                 </p>
               )}

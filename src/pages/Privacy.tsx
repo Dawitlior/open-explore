@@ -6,6 +6,7 @@ import {
   PRIVACY_TITLE_HE,
   PRIVACY_TITLE_EN,
   PRIVACY_SECTIONS_HE,
+  PRIVACY_SECTIONS_EN,
   LEGAL_VERSION,
   LEGAL_VERSION_DATE,
 } from '@/lib/legal-text';
@@ -66,12 +67,12 @@ const Privacy = () => {
             background: 'rgba(212,175,90,0.06)',
             fontSize: 12.5, lineHeight: 1.6, color: 'rgba(245,236,214,0.85)',
           }}>
-            <strong style={{ color: '#f0d78c' }}>Notice.</strong> The legally binding text of this policy is the Hebrew version below. An English summary is available on request at <a href="mailto:innovationai@mail.com" style={{ color: '#f0d78c' }}>innovationai@mail.com</a>.
+            <strong style={{ color: '#f0d78c' }}>Notice.</strong> The legally binding text of this policy is the Hebrew version. The English text below is provided for accessibility.
           </div>
         )}
 
-        <div dir="rtl" lang="he" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
-          {PRIVACY_SECTIONS_HE.map((s) => (
+        <div dir={isRTL ? 'rtl' : 'ltr'} lang={isRTL ? 'he' : 'en'} style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+          {(isRTL ? PRIVACY_SECTIONS_HE : PRIVACY_SECTIONS_EN).map((s) => (
             <section key={s.heading}>
               <h2 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 8px', color: '#f0d78c' }}>{s.heading}</h2>
               <p style={{
