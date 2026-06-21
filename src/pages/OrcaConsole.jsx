@@ -1585,9 +1585,9 @@ export default function OrcaConsole() {
     const base = { generatedAt: new Date().toISOString(), console: "ORCA Console", page: active, language: lang, filters: { period: F.range, asset: F.asset, tier: F.tier }, liveTraders: filtered.length };
     let payload;
     if (active === "overview") {
-      payload = { ...base, scope: "full-console-report",
       const engLast = eng[eng.length - 1] || { active: 0, trades: 0, churn: 0 };
       payload = { ...base, scope: "full-console-report",
+
         summary: { activeTraders: engLast.active, tradesThisWeek: engLast.trades, churnRatePct: engLast.churn, avgExpectancyR: r2(filtered.reduce((s, x) => s + x.expectancy, 0) / Math.max(filtered.length, 1)), profitablePct: Math.round(filtered.filter((x) => x.expectancy > 0).length / Math.max(filtered.length, 1) * 100), disciplineIndex: Math.round(filtered.reduce((s, x) => s + x.discipline, 0) / Math.max(filtered.length, 1)) },
         tierMix: TIER.map((tr) => ({ tier: tr.id, label: loc(lang, tr), count: filtered.filter((x) => x.tier.id === tr.id).length })),
         topBehaviouralRisk: topBy(filtered, "behaviouralRisk").map((x) => ({ code: x.code, score: x.behaviouralRisk, archetype: x.arch.id, archetypeLabel: loc(lang, x.arch) })),
