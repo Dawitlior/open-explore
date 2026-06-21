@@ -64,7 +64,7 @@ export function validateInput(raw: unknown):
   if (!SAFE_KEY.test(apiKey)) return { ok: false, error: 'invalid_api_key', detail: 'API key contains forbidden characters' };
   if (!SAFE_SECRET.test(apiSecret)) return { ok: false, error: 'invalid_api_secret', detail: 'API secret contains forbidden characters' };
 
-  return { ok: true, value: { provider, label: labelRaw, api_key: apiKey, api_secret: apiSecret } };
+  return { ok: true, value: { provider: provider as SupportedProvider, label: labelRaw, api_key: apiKey, api_secret: apiSecret } };
 }
 
 // ---------- Rate limit (in-memory, structural placeholder) ----------
