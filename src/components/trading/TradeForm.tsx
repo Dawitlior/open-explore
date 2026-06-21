@@ -196,6 +196,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
 
   // Backward-compat alias used by review/save paths.
   const autoCalcPositionSize = sizing.units;
+  const equivPercent = useMemo(
     () => (currentBalance > 0 ? (form.risk / currentBalance) * 100 : null),
     [currentBalance, form.risk],
   );
