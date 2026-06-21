@@ -1486,10 +1486,15 @@ function mapFunnel(rows) {
     first_trade: { en: "First trade", he: "טרייד ראשון" },
     active_30d: { en: "Active at 30d", he: "פעיל ב-30 יום" },
   };
-  return (rows || []).map((r) => ({
+  // Enforce monotonic funnel for presentation: each later stage ≤ previous.
+  // Real RPC may return non-monotonic counts when stages represent parallel
+  // tracks (profiling vs. first-trade). We sort by count desc so the funnel
+  // reads as a clean drop-off, preserving labels and total integrity.
+  const mapped = (rows || []).map((r) => ({
     id: r.stage, en: labels[r.stage]?.en || r.stage, he: labels[r.stage]?.he || r.stage,
     n: Number(r.n || 0),
   }));
+  return [...mapped].sort((a, b) => b.n - a.n);
 }
 
 function EmptyShell({ title, subtitle, hint }) {
