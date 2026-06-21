@@ -986,6 +986,15 @@ export type Database = {
       }
       admin_retention_cohorts: { Args: { p_cohorts?: number }; Returns: Json }
       admin_risk_engine: { Args: { p_tier?: string }; Returns: Json }
+      admin_sanity_counts: {
+        Args: never
+        Returns: {
+          subscriptions: number
+          total_trades: number
+          traders_with_trades: number
+          users: number
+        }[]
+      }
       admin_subscriptions: { Args: never; Returns: Json }
       admin_trader_matrix: {
         Args: {
