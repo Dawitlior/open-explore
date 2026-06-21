@@ -111,10 +111,17 @@ export const LegalGate = () => {
   if (stage === 'loading' || stage === 'done' || !user?.id) return null;
 
   const isTerms = stage === 'terms';
-  const sections = isTerms ? LEGAL_SECTIONS_HE : PRIVACY_SECTIONS_HE;
-  const title = isTerms ? LEGAL_TITLE_HE : PRIVACY_TITLE_HE;
-  const acceptLabel = isTerms ? LEGAL_ACCEPT_LABEL_HE : PRIVACY_ACCEPT_LABEL_HE;
+  const sections = isTerms
+    ? (isRTL ? LEGAL_SECTIONS_HE : LEGAL_SECTIONS_EN)
+    : (isRTL ? PRIVACY_SECTIONS_HE : PRIVACY_SECTIONS_EN);
+  const title = isTerms
+    ? (isRTL ? LEGAL_TITLE_HE : LEGAL_TITLE_EN)
+    : (isRTL ? PRIVACY_TITLE_HE : PRIVACY_TITLE_EN);
+  const acceptLabel = isTerms
+    ? (isRTL ? LEGAL_ACCEPT_LABEL_HE : LEGAL_ACCEPT_LABEL_EN)
+    : (isRTL ? PRIVACY_ACCEPT_LABEL_HE : PRIVACY_ACCEPT_LABEL_EN);
   const stepNum = isTerms ? 1 : 2;
+  const t = (he: string, en: string) => (isRTL ? he : en);
 
   const handleAccept = async () => {
     if (!agreed || saving) return;
