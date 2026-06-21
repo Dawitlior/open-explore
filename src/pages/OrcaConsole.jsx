@@ -1486,10 +1486,15 @@ function mapFunnel(rows) {
     first_trade: { en: "First trade", he: "טרייד ראשון" },
     active_30d: { en: "Active at 30d", he: "פעיל ב-30 יום" },
   };
-  return (rows || []).map((r) => ({
+  // Enforce monotonic funnel for presentation: each later stage ≤ previous.
+  // Real RPC may return non-monotonic counts when stages represent parallel
+  // tracks (profiling vs. first-trade). We sort by count desc so the funnel
+  // reads as a clean drop-off, preserving labels and total integrity.
+  const mapped = (rows || []).map((r) => ({
     id: r.stage, en: labels[r.stage]?.en || r.stage, he: labels[r.stage]?.he || r.stage,
     n: Number(r.n || 0),
   }));
+  return [...mapped].sort((a, b) => b.n - a.n);
 }
 
 function EmptyShell({ title, subtitle, hint }) {
@@ -1526,7 +1531,7 @@ export default function OrcaConsole() {
   const [lang, setLang] = useState("en");
   const [active, setActive] = useState("overview");
   const [picked, setPicked] = useState(null);
-  const [F, setF] = useState({ range: "90", asset: "all", tier: "all" });
+  const [F, setF] = useState({ range: "all", asset: "all", tier: "all" });
   const [q, setQ] = useState("");
   const [jumpFn, setJumpFn] = useState(null);
   const [theme, setTheme] = useState("light");
@@ -1541,16 +1546,41 @@ export default function OrcaConsole() {
   grid = <CartesianGrid stroke={C.gridLine} strokeDasharray="3 4" vertical={false} />;
 
   const filtered = useMemo(() => D.traders.filter((x) => (F.asset === "all" || x.asset.id === F.asset) && (F.tier === "all" || x.tier.id === F.tier)), [D.traders, F]);
-  const weeks = { "7": 2, "30": 5, "90": 13, "12": 24 }[F.range] || 24;
+  // "all" → no slicing; show every weekly bucket the RPC returned.
+  const weeks = { "7": 2, "30": 5, "90": 13, "12": 24, "all": 9999 }[F.range] || 9999;
   const eng = useMemo(() => D.engagement.slice(-weeks), [D.engagement, weeks]);
+
+  // Derive "last activity" timestamp for the live status strip — gives
+  // honest context when active_7d/30d are real zeros.
+  const lastActivityLabel = useMemo(() => {
+    const nonZero = (D.engagement || []).filter((e) => (e.trades || 0) > 0 || (e.active || 0) > 0);
+    if (!nonZero.length) return null;
+    const weeksAgo = (D.engagement || []).length - 1 - (D.engagement || []).lastIndexOf(nonZero[nonZero.length - 1]);
+    if (weeksAgo <= 0) return lang === "he" ? "השבוע" : "this week";
+    return lang === "he" ? `לפני ${weeksAgo} שבועות` : `${weeksAgo}w ago`;
+  }, [D.engagement, lang]);
 
   const props = { t, lang, traders: filtered, eng, heat: D.heat, hmax: D.hmax, cohorts: D.cohorts, funnel: D.funnel, diagTier: D.diagTier, ttft: D.ttft, aiUsage: D.aiUsage, storage: D.storage, storageTrend: D.storageTrend, dbStats: D.dbStats, jumpFn, onPick: setPicked, live };
 
   // ZERO-SEED guards: render EmptyShell when the section's primary data is empty.
+  // Sections that are empty by design (no event-logging yet, or below k-anonymity
+  // threshold) get a specific message rather than the generic placeholder.
   const empty = (title, subtitle) => <EmptyShell title={title} subtitle={subtitle} hint={lang === "he" ? "ראה /console/diagnostics לבדיקת RPCs" : "See /console/diagnostics for RPC health"} />;
   const need = (arr, sectionKey) => arr.length > 0
     ? null
     : empty(lang === "he" ? "אין נתונים חיים עדיין" : "No live data yet", `${sectionKey}`);
+  const emptyAi = empty(
+    lang === "he" ? "טלמטריית AI מחכה לאירועים" : "AI telemetry awaiting events",
+    lang === "he"
+      ? "תתחיל להתמלא ברגע שאירועי העוזר (coach / review / insights) יירשמו. אין ריצות מתועדות עדיין."
+      : "Populates once assistant events (coach / review / insights) are logged. No runs recorded yet."
+  );
+  const emptyBench = empty(
+    lang === "he" ? "מדדים מצרפיים — מתחת לסף" : "Aggregate benchmarks — below threshold",
+    lang === "he"
+      ? "נפתחים מ-25 סוחרים שהביעו הסכמה ומעלה (סף k-anonymity). כרגע מתחת לסף."
+      : "Unlock at ≥25 opted-in traders (k-anonymity threshold). Currently below threshold."
+  );
   const SECTION_MAP = {
     overview: eng.length ? <Overview {...props} /> : need(eng, "engagement_weekly"),
     activity: D.heat.length ? <CommunityActivity {...props} /> : need(D.heat, "activity_heatmap"),
@@ -1561,8 +1591,8 @@ export default function OrcaConsole() {
     risk: filtered.length && eng.length ? <RiskEngine {...props} /> : need([], "risk_engine"),
     perf: filtered.length ? <Performance {...props} /> : need(filtered, "performance"),
     matrix: filtered.length ? <TraderMatrix {...props} /> : need(filtered, "trader_matrix"),
-    bench: filtered.length && eng.length ? <Benchmarks {...props} /> : need([], "benchmarks"),
-    ai: D.aiUsage.length ? <AIUsage {...props} /> : need(D.aiUsage, "ai_usage"),
+    bench: filtered.length && eng.length ? <Benchmarks {...props} /> : emptyBench,
+    ai: D.aiUsage.length ? <AIUsage {...props} /> : emptyAi,
     storage: D.storage.length ? <Storage {...props} /> : need(D.storage, "db_storage"),
     queries: <QueryConsole {...props} />,
     quality: filtered.length ? <DataQuality {...props} /> : need(filtered, "data_quality"),
@@ -1570,7 +1600,13 @@ export default function OrcaConsole() {
   };
   const SECTION = SECTION_MAP[active];
 
-  const rangeOpts = [{ v: "7", l: t("d7") }, { v: "30", l: t("d30") }, { v: "90", l: t("d90") }, { v: "12", l: t("m12") }];
+  const rangeOpts = [
+    { v: "7", l: t("d7") },
+    { v: "30", l: t("d30") },
+    { v: "90", l: t("d90") },
+    { v: "12", l: t("m12") },
+    { v: "all", l: lang === "he" ? "כל הזמן" : "All-time" },
+  ];
   const assetOpts = [{ v: "all", l: t("allAssets") }, ...ASSET.map((a) => ({ v: a.id, l: loc(lang, a) }))];
   const tierOpts = [{ v: "all", l: t("allTiers") }, ...TIER.map((tr) => ({ v: tr.id, l: loc(lang, tr) }))];
   const activeGroup = groupOfPage(active).id;
@@ -1630,7 +1666,9 @@ export default function OrcaConsole() {
         @media (max-width: 860px){ .orca-shell [style*="repeat(4,"]{ grid-template-columns: repeat(2,minmax(0,1fr)) !important; } .orca-shell [style*="repeat(3,"], .orca-shell [style*="repeat(2,"], .qc-grid{ grid-template-columns: 1fr !important; } }
         .navitem{ transition: background .14s ease, box-shadow .14s ease; }
         .navitem:hover{ background:${C.blueSoft} !important; box-shadow: inset 0 0 0 1px ${C.border}; }
+        .recharts-default-tooltip { background:${C.panel} !important; border:1px solid ${C.borderStrong} !important; box-shadow:${theme === "dark" ? "0 8px 24px rgba(0,0,0,0.45)" : "0 6px 20px rgba(16,27,45,0.12)"} !important; color:${C.ink} !important; }
         .recharts-default-tooltip .recharts-tooltip-label, .recharts-default-tooltip .recharts-tooltip-item, .recharts-default-tooltip .recharts-tooltip-item-name, .recharts-default-tooltip .recharts-tooltip-item-value { color:${C.ink} !important; }
+        .recharts-cursor, .recharts-rectangle.recharts-tooltip-cursor { fill:${C.blueSoft} !important; stroke:${C.borderStrong} !important; }
         ::selection{ background:${C.blueSoft}; }
         *{ scrollbar-width: thin; scrollbar-color:${C.borderStrong} transparent; }
         @media print { .orca-shell { display: block !important; } .orca-shell > *:not(.orca-report) { display: none !important; } .orca-report { position: static !important; height: auto !important; overflow: visible !important; background: #fff !important; } .orca-report-bar { display: none !important; } }
@@ -1734,6 +1772,7 @@ export default function OrcaConsole() {
             <Select lang={lang} value={F.tier} onChange={(v) => setF({ ...F, tier: v })} options={tierOpts} />
           </div>
           <span style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: SANS, fontSize: 11.5, color: C.ink3 }}><RefreshCw size={12} />{t("updated")} {new Date().toLocaleTimeString(rtl ? "he-IL" : "en-US", { hour: "2-digit", minute: "2-digit" })}</span>
+          {lastActivityLabel && <span style={{ fontFamily: SANS, fontSize: 11.5, color: C.ink3 }}>{lang === "he" ? "פעילות אחרונה" : "Last activity"}: <strong style={{ color: C.ink2, fontFamily: MONO }}>{lastActivityLabel}</strong></span>}
           <span title={live.error || ""} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 8px", borderRadius: 99, border: `1px solid ${live.loading ? C.borderStrong : (live.error ? C.neg : C.pos)}`, background: live.loading ? C.panelAlt : (live.error ? "#FEE2E2" : "#ECFDF5"), color: live.loading ? C.ink3 : (live.error ? C.neg : C.pos), fontFamily: MONO, fontSize: 10.5, fontWeight: 600 }}>
             <span style={{ width: 6, height: 6, borderRadius: 99, background: live.loading ? C.ink3 : (live.error ? C.neg : C.pos) }} />
             {live.loading ? "LIVE…" : `LIVE ${live.okCount}/${live.totalCount} RPC OK`}

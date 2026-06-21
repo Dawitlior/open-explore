@@ -177,9 +177,12 @@ export function useAdminLive(): AdminLive {
     const rpc = (name: string, args?: any) => (supabase as any).rpc(name, args);
     (async () => {
       try {
+        // ALL-TIME default: large period so every historical trade populates
+        // windowed RPCs. Diagnostics page can request narrower windows.
+        const ALL_TIME = 3650;
         const calls = [
           rpc("admin_db_storage"),
-          rpc("admin_ai_usage", { p_period: 120, p_feature: null }),
+          rpc("admin_ai_usage", { p_period: ALL_TIME, p_feature: null }),
           rpc("admin_active_count", { p_window: 7 }),
           rpc("admin_subscriptions"),
           rpc("admin_trader_matrix_full", { p_sort: "behavioural_risk", p_dir: "desc", p_limit: 500, p_tier: null, p_archetype: null }),
@@ -187,8 +190,8 @@ export function useAdminLive(): AdminLive {
           rpc("admin_performance", { p_archetype: null, p_tier: null }),
           rpc("admin_risk_engine", { p_tier: null }),
           rpc("admin_benchmarks", { p_kmin: 25 }),
-          rpc("admin_engagement_weekly", { p_period: 90 }),
-          rpc("admin_activity_heatmap", { p_period: 90 }),
+          rpc("admin_engagement_weekly", { p_period: ALL_TIME }),
+          rpc("admin_activity_heatmap", { p_period: ALL_TIME }),
           rpc("admin_retention_cohorts", { p_cohorts: 8 }),
           rpc("admin_activation_funnel"),
           rpc("admin_data_quality"),
