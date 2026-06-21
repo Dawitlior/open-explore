@@ -194,7 +194,8 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sizing.riskDollar, sizing.units, isFutures, currentBalance]);
 
-  const equivPercent = useMemo(
+  // Backward-compat alias used by review/save paths.
+  const autoCalcPositionSize = sizing.units;
     () => (currentBalance > 0 ? (form.risk / currentBalance) * 100 : null),
     [currentBalance, form.risk],
   );
