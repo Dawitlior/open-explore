@@ -72,6 +72,13 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
   // trades — never feeds expectancy/equity until closed).
   const [isOpenPosition, setIsOpenPosition] = useState(false);
   const [savingOpen, setSavingOpen] = useState(false);
+  // ── Sizing model (non-futures) ──────────────────────────────────
+  // User picks ONE anchor; the other two values + Margin are derived
+  // deterministically through stop distance `d`. Current price is NEVER used.
+  type SizeAnchor = 'risk' | 'notional' | 'units';
+  const [sizeAnchor, setSizeAnchor] = useState<SizeAnchor>('risk');
+  const [notionalInput, setNotionalInput] = useState<number>(0);
+  const [unitsInput, setUnitsInput] = useState<number>(trade?.positionSize || 0);
 
   const [form, setForm] = useState({
     date: trade?.date || new Date().toISOString().slice(0, 16),
