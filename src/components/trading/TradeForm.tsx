@@ -84,7 +84,10 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
     exit: trade?.exit || 0,
     risk: trade?.risk || 0,
     riskPct: trade?.riskPct || 1,
-    leverage: trade?.leverage || 10,
+    // Leverage default = 1 (no leverage). Users can leave empty; the input
+     // renders empty when value is 1 to encourage explicit choice. Leverage
+     // affects Margin only — never Risk$ or Notional.
+     leverage: trade?.leverage ?? 1,
     positionSize: trade?.positionSize || 0,
     rules: trade?.rules ?? true,
     comments: trade?.comments || '',
