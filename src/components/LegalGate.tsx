@@ -262,7 +262,7 @@ export const LegalGate = () => {
             fontSize: 11, fontWeight: 600, color: TEXT_MUTED, textAlign: 'center',
             letterSpacing: '0.04em',
           }}>
-            {LEGAL_FOOTER_HE}
+            {isRTL ? LEGAL_FOOTER_HE : LEGAL_FOOTER_EN}
           </p>
         </div>
 
