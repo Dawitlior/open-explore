@@ -676,8 +676,288 @@ function mexcSpotToTrades(symbol: string, fills: MexcSpotFill[], provider: strin
   return out;
 }
 
+// ============== Shared SHA-512 / HMAC-SHA-512 (Gate + Kraken) ==============
+async function sha512Hex(s: string): Promise<string> {
+  const buf = await crypto.subtle.digest('SHA-512', new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+async function hmacSha512Hex(secret: string, msg: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(secret),
+    { name: 'HMAC', hash: 'SHA-512' }, false, ['sign'],
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(msg));
+  return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// ============== Gate.io USDT-M Futures (position_close → one row = one trade) ==============
+const GATE_BASE = 'https://api.gateio.ws';
+const GATE_PREFIX = '/api/v4';
+
+interface GateClosedPosition {
+  time?: number;
+  contract?: string;
+  side?: string;             // 'long' | 'short' (closed-position side)
+  pnl?: string | number;
+  pnl_fee?: string | number;
+  pnl_pnl?: string | number;
+  text?: string;
+  accum_size?: string | number;
+  long_price?: string | number;
+  short_price?: string | number;
+  entry_price?: string | number;
+  exit_price?: string | number;
+  first_open_time?: number;
+}
+
+async function gateSignedGet(
+  apiKey: string, apiSecret: string, path: string, query: string,
+): Promise<{ ok: true; body: unknown } | BybitFetchError> {
+  const ts = Math.floor(Date.now() / 1000).toString();
+  const bodyHash = await sha512Hex('');
+  const sigString = `GET\n${GATE_PREFIX}${path}\n${query}\n${bodyHash}\n${ts}`;
+  const sign = await hmacSha512Hex(apiSecret, sigString);
+  const url = query ? `${GATE_BASE}${GATE_PREFIX}${path}?${query}` : `${GATE_BASE}${GATE_PREFIX}${path}`;
+  let res: Response;
+  try {
+    res = await fetch(url, { headers: { KEY: apiKey, Timestamp: ts, SIGN: sign, Accept: 'application/json' } });
+  } catch (e) {
+    return { ok: false, status: 503, error: 'exchange_unreachable', detail: (e as Error).message || 'fetch_failed' };
+  }
+  if (res.status >= 500) return { ok: false, status: 503, error: 'exchange_unreachable', detail: `gate_http_${res.status}` };
+  const text = await res.text();
+  if (res.status === 401 || res.status === 403) {
+    return { ok: false, status: 401, error: 'gate_futures_rejected', detail: text.slice(0, 240) };
+  }
+  if (res.status >= 400) {
+    return { ok: false, status: 422, error: 'gate_futures_rejected', detail: text.slice(0, 240) };
+  }
+  let body: unknown;
+  try { body = JSON.parse(text); } catch { body = []; }
+  return { ok: true, body };
+}
+
+async function fetchGateFuturesClosed(
+  apiKey: string, apiSecret: string,
+): Promise<{ ok: true; list: GateClosedPosition[] } | BybitFetchError> {
+  const all: GateClosedPosition[] = [];
+  for (let offset = 0; offset < 5000; offset += 100) {
+    const q = `limit=100&offset=${offset}`;
+    const r = await gateSignedGet(apiKey, apiSecret, '/futures/usdt/position_close', q);
+    if (!r.ok) return r;
+    const rows = Array.isArray(r.body) ? (r.body as GateClosedPosition[]) : [];
+    if (rows.length === 0) break;
+    all.push(...rows);
+    if (rows.length < 100) break;
+  }
+  return { ok: true, list: all };
+}
+
+function gateFuturesToTrades(rows: GateClosedPosition[], provider: string): BybitNormalized[] {
+  const out: BybitNormalized[] = [];
+  for (const r of rows) {
+    const symbol = String(r.contract || '');
+    if (!symbol) continue;
+    const direction: 'Long' | 'Short' = String(r.side || '').toLowerCase() === 'short' ? 'Short' : 'Long';
+    const entry = Number(r.long_price ?? r.entry_price ?? 0);
+    const exit = Number(r.short_price ?? r.exit_price ?? 0);
+    const size = Math.abs(Number(r.accum_size ?? 0));
+    const pnl = Number(r.pnl ?? r.pnl_pnl ?? 0);
+    const fees = Number(r.pnl_fee ?? 0);
+    const closeMs = Number(r.time ?? 0) * 1000 || Date.now();
+    const openMs = r.first_open_time ? Number(r.first_open_time) * 1000 : closeMs;
+    const externalId = `gate_futures:${symbol}:${r.time ?? ''}`;
+    const d = new Date(closeMs);
+    const iso = d.toISOString().slice(0, 19).replace('T', ' ');
+    const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
+    const winLoss: 'Win' | 'Loss' | 'Break Even' = pnl > 0 ? 'Win' : pnl < 0 ? 'Loss' : 'Break Even';
+    out.push({
+      legacy: {
+        date: iso, day: dayName, coin: symbol, direction,
+        orderType: 'Market',
+        entry, stopLoss: 0, exit,
+        returnR: 0, winLoss, risk: 0, expectedLoss: 0,
+        pnl, deviation: 0,
+        positionSize: size * (entry || exit || 0),
+        leverage: 0, riskPct: 0, rules: true,
+        comments: `__CLOSED:${externalId}__ ${provider} fees:${fees.toFixed(6)}`,
+        exchange_provider: provider,
+        exchange_exec_id: externalId,
+      },
+      provenance: {
+        broker_id: provider,
+        source_type: 'api_sync',
+        asset_class: 'crypto',
+        external_id: externalId,
+        opened_at: new Date(openMs).toISOString(),
+        closed_at: new Date(closeMs).toISOString(),
+      },
+    });
+  }
+  return out;
+}
+
+// ============== Kraken Futures (fills → generalised long+short FIFO) ==============
+const KRAKEN_FX_BASE = 'https://futures.kraken.com';
+
+interface KrakenFill {
+  fill_id: string;
+  symbol: string;
+  side: 'buy' | 'sell';
+  size: number | string;
+  price: number | string;
+  fillTime: string;       // ISO string
+  fillType?: string;
+  fee?: number | string;
+}
+
+function b64ToBytes(b64: string): Uint8Array {
+  const bin = atob(b64);
+  const a = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
+  return a;
+}
+async function krakenAuthent(apiSecret: string, postData: string, nonce: string, endpointPath: string): Promise<string> {
+  let secretBytes: Uint8Array;
+  try { secretBytes = b64ToBytes(apiSecret); }
+  catch { secretBytes = new TextEncoder().encode(apiSecret); }
+  const sha256 = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(postData + nonce + endpointPath));
+  const key = await crypto.subtle.importKey('raw', secretBytes,
+    { name: 'HMAC', hash: 'SHA-512' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, new Uint8Array(sha256));
+  return btoa(String.fromCharCode(...new Uint8Array(sig)));
+}
+
+async function krakenSignedGet(
+  apiKey: string, apiSecret: string, endpointPath: string, query = '',
+): Promise<{ ok: true; body: { result?: string; fills?: KrakenFill[]; error?: string } } | BybitFetchError> {
+  const nonce = Date.now().toString();
+  const authent = await krakenAuthent(apiSecret, query, nonce, endpointPath);
+  const url = query
+    ? `${KRAKEN_FX_BASE}/derivatives${endpointPath}?${query}`
+    : `${KRAKEN_FX_BASE}/derivatives${endpointPath}`;
+  let res: Response;
+  try {
+    res = await fetch(url, { headers: { APIKey: apiKey, Authent: authent, Nonce: nonce, Accept: 'application/json' } });
+  } catch (e) {
+    return { ok: false, status: 503, error: 'exchange_unreachable', detail: (e as Error).message || 'fetch_failed' };
+  }
+  if (res.status >= 500) return { ok: false, status: 503, error: 'exchange_unreachable', detail: `kraken_http_${res.status}` };
+  const text = await res.text();
+  if (res.status === 401 || res.status === 403) {
+    return { ok: false, status: 401, error: 'kraken_futures_rejected', detail: text.slice(0, 240) };
+  }
+  if (res.status >= 400) {
+    return { ok: false, status: 422, error: 'kraken_futures_rejected', detail: text.slice(0, 240) };
+  }
+  let body: { result?: string; fills?: KrakenFill[]; error?: string };
+  try { body = JSON.parse(text); } catch { body = {}; }
+  if (body.result !== 'success') {
+    return { ok: false, status: 422, error: 'kraken_futures_rejected', detail: body.error || 'kraken_unsuccess' };
+  }
+  return { ok: true, body };
+}
+
+async function fetchKrakenFills(
+  apiKey: string, apiSecret: string,
+): Promise<{ ok: true; list: KrakenFill[] } | BybitFetchError> {
+  const r = await krakenSignedGet(apiKey, apiSecret, '/api/v3/fills');
+  if (!r.ok) return r;
+  return { ok: true, list: Array.isArray(r.body.fills) ? r.body.fills : [] };
+}
+
+/**
+ * Generalised FIFO for fills with long + short support.
+ * Per-symbol signed inventory: a BUY adds to longQueue, or closes shortQueue
+ * first; a SELL adds to shortQueue, or closes longQueue first. Each closed
+ * lot emits one trade. Fees consumed proportionally (same §3.1 rule).
+ */
+function krakenFillsToTrades(fills: KrakenFill[], provider: string): BybitNormalized[] {
+  const out: BybitNormalized[] = [];
+  const bySymbol = new Map<string, KrakenFill[]>();
+  for (const f of fills) {
+    if (!f?.symbol) continue;
+    if (!bySymbol.has(f.symbol)) bySymbol.set(f.symbol, []);
+    bySymbol.get(f.symbol)!.push(f);
+  }
+  for (const [symbol, list] of bySymbol) {
+    const sorted = [...list].sort((a, b) => Date.parse(a.fillTime) - Date.parse(b.fillTime));
+    const longQ: { price: number; qty: number; fee: number; time: number }[] = [];
+    const shortQ: { price: number; qty: number; fee: number; time: number }[] = [];
+
+    for (const f of sorted) {
+      const price = Number(f.price) || 0;
+      const qty = Math.abs(Number(f.size) || 0);
+      const fee = Number(f.fee || 0);
+      const tMs = Date.parse(f.fillTime);
+      if (!qty) continue;
+
+      const isBuy = f.side === 'buy';
+      const closingQueue = isBuy ? shortQ : longQ;
+      const openingQueue = isBuy ? longQ : shortQ;
+      const openedDirection: 'Long' | 'Short' = isBuy ? 'Short' : 'Long';
+
+      let remaining = qty;
+      let remainingFee = fee;
+      let matchIndex = 0;
+
+      while (remaining > 1e-12 && closingQueue.length > 0) {
+        const lot = closingQueue[0];
+        const matched = Math.min(remaining, lot.qty);
+        const portion = lot.qty > 0 ? matched / lot.qty : 0;
+        const lotFeePortion = lot.fee * portion;
+        lot.fee -= lotFeePortion;
+        const fillFeePortion = qty > 0 ? remainingFee * (matched / remaining) : 0;
+        remainingFee -= fillFeePortion;
+
+        const entry = lot.price;
+        const exit = price;
+        const pnl = openedDirection === 'Long'
+          ? (exit - entry) * matched - lotFeePortion - fillFeePortion
+          : (entry - exit) * matched - lotFeePortion - fillFeePortion;
+        const externalId = `kraken_futures:${symbol}:${f.fill_id}:${matchIndex}`;
+        const d = new Date(tMs);
+        const iso = d.toISOString().slice(0, 19).replace('T', ' ');
+        const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
+        const winLoss: 'Win' | 'Loss' | 'Break Even' = pnl > 0 ? 'Win' : pnl < 0 ? 'Loss' : 'Break Even';
+        out.push({
+          legacy: {
+            date: iso, day: dayName, coin: symbol, direction: openedDirection,
+            orderType: 'Market',
+            entry, stopLoss: 0, exit,
+            returnR: 0, winLoss, risk: 0, expectedLoss: 0,
+            pnl, deviation: 0,
+            positionSize: matched * entry,
+            leverage: 0, riskPct: 0, rules: true,
+            comments: `__CLOSED:${externalId}__ ${provider} fees:${(lotFeePortion + fillFeePortion).toFixed(8)}`,
+            exchange_provider: provider,
+            exchange_exec_id: externalId,
+          },
+          provenance: {
+            broker_id: provider,
+            source_type: 'api_sync',
+            asset_class: 'crypto',
+            external_id: externalId,
+            opened_at: new Date(lot.time).toISOString(),
+            closed_at: new Date(tMs).toISOString(),
+          },
+        });
+        lot.qty -= matched;
+        remaining -= matched;
+        matchIndex++;
+        if (lot.qty <= 1e-12) closingQueue.shift();
+      }
+      if (remaining > 1e-12) {
+        // Opens (or grows) a position on the opposite side.
+        openingQueue.push({ price, qty: remaining, fee: remainingFee, time: tMs });
+      }
+    }
+  }
+  return out;
+}
+
 // Provider dispatch table — used by the handler's bulk path.
-type ProviderId = 'bybit' | 'binance' | 'mexc_futures' | 'mexc_spot';
+type ProviderId = 'bybit' | 'binance' | 'mexc_futures' | 'mexc_spot' | 'gate_futures' | 'kraken_futures';
 async function fetchProviderClosedTrades(
   provider: ProviderId,
   apiKey: string,
