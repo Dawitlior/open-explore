@@ -72,14 +72,7 @@ const PROVIDERS: ProviderMeta[] = [
     .map(a => metaToProvider(a.meta)),
   // ── UI-only "coming soon" tiles. No registry/sync wiring; these surface as
   // disabled cards so users see the roadmap without enabling any code path. ──
-  {
-    id: 'mexc',
-    name: 'MEXC',
-    tagline: { he: 'תמיכה מלאה בעבודה — בקרוב', en: 'Full support in the works — coming soon' },
-    gradient: 'linear-gradient(135deg, rgba(45,140,255,0.18), rgba(45,140,255,0.02))',
-    accent: '#2d8cff',
-    enabled: false,
-  },
+  // (MEXC is now a real, registered provider — see src/lib/brokers/mexc_*.ts)
   {
     id: 'gateio',
     name: 'Gate.io',
