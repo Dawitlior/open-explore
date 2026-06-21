@@ -35,8 +35,11 @@ const SAFE_KEY = /^[A-Za-z0-9_\-]{8,256}$/;
 const SAFE_SECRET = /^[A-Za-z0-9_\-+/=]{8,512}$/;
 const SAFE_LABEL = /^[A-Za-z0-9 _\-]{1,64}$/;
 
+const SUPPORTED_PROVIDERS = ['bybit', 'binance', 'mexc_futures', 'mexc_spot'] as const;
+type SupportedProvider = typeof SUPPORTED_PROVIDERS[number];
+
 export interface ValidatedInput {
-  provider: 'bybit' | 'binance';
+  provider: SupportedProvider;
   label: string;
   api_key: string;
   api_secret: string;
@@ -49,7 +52,9 @@ export function validateInput(raw: unknown):
   if (!raw || typeof raw !== 'object') return { ok: false, error: 'invalid_body' };
   const b = raw as Record<string, unknown>;
   const provider = String(b.provider || '').toLowerCase().trim();
-  if (provider !== 'bybit' && provider !== 'binance') return { ok: false, error: 'unsupported_provider' };
+  if (!(SUPPORTED_PROVIDERS as readonly string[]).includes(provider)) {
+    return { ok: false, error: 'unsupported_provider' };
+  }
 
   const labelRaw = typeof b.label === 'string' && b.label.trim().length > 0 ? b.label.trim() : 'main';
   const apiKey = typeof b.api_key === 'string' ? b.api_key.trim() : '';
