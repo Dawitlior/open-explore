@@ -878,6 +878,31 @@ Deno.serve(async (req) => {
     }
 
 
+    // ---- Gap fix: kill-switch guard (MEXC providers at minimum) ----
+    // If the user has engaged the live-risk kill switch, do NOT write any new
+    // rows. Returns structured `sync_blocked_kill_switch` so the UI can show
+    // the honest reason instead of a silent success.
+    if (provider === 'mexc_futures' || provider === 'mexc_spot') {
+      try {
+        const { data: locks } = await admin
+          .from('live_risk_locks')
+          .select('id')
+          .eq('user_id', userId)
+          .limit(1);
+        if (locks && locks.length > 0) {
+          return json({ ok: false, error: 'sync_blocked_kill_switch', inserted: 0, wiped: 0 }, 423);
+        }
+      } catch (e) {
+        // Non-fatal — if the lock table is unreachable, fall through rather than
+        // block the user from syncing their own data.
+        console.warn('[sync-futures-trades] kill-switch check failed', (e as Error).message);
+      }
+    }
+    // Advisory lock: Supabase Edge → PostgREST has no persistent session, so
+    // transaction-scoped pg_advisory_xact_lock cannot hold across the sync's
+    // many HTTP calls. We rely on the per-user UI button being single-click
+    // and the upsert layer being idempotent on external_id.
+
     // ---- Fetch consolidated closed trades via the provider dispatcher ----
     const fetchResult = await fetchProviderClosedTrades(provider, cred.api_key, apiSecret);
     if (!fetchResult.ok) {
