@@ -1009,6 +1009,22 @@ async function fetchProviderClosedTrades(
     }
     return { ok: true, list: all.map(n => ({ ...n, key: n.provenance.external_id })) };
   }
+  if (provider === 'gate_futures') {
+    const r = await fetchGateFuturesClosed(apiKey, apiSecret);
+    if (!r.ok) return r;
+    return {
+      ok: true,
+      list: gateFuturesToTrades(r.list, provider).map(n => ({ ...n, key: n.provenance.external_id })),
+    };
+  }
+  if (provider === 'kraken_futures') {
+    const r = await fetchKrakenFills(apiKey, apiSecret);
+    if (!r.ok) return r;
+    return {
+      ok: true,
+      list: krakenFillsToTrades(r.list, provider).map(n => ({ ...n, key: n.provenance.external_id })),
+    };
+  }
   return { ok: false, status: 400, error: 'unsupported_provider', detail: provider };
 }
 
