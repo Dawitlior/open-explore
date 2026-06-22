@@ -30,10 +30,12 @@ import {
   statusLabel,
   type BugComment,
   type BugReporter,
+  type BugResolutionFeedback,
   type BugSeverity,
   type BugStatus,
   type BugType,
   type BugWithMeta,
+  type ResolutionVerdict,
 } from './bugArenaTypes';
 import { useLang } from '@/hooks/use-lang';
 import { User } from 'lucide-react';
