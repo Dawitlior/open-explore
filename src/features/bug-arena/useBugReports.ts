@@ -161,6 +161,22 @@ export function useBugReports(
     [api, load]
   );
 
+  const setVerdict = useCallback(
+    async (bug: BugWithMeta, verdict: ResolutionVerdict, note?: string | null) => {
+      await api.setResolutionVerdict(bug.id, currentUserId, verdict, note ?? null);
+      load();
+    },
+    [api, currentUserId, load]
+  );
+
+  const clearVerdict = useCallback(
+    async (bug: BugWithMeta) => {
+      await api.clearResolutionVerdict(bug.id, currentUserId);
+      load();
+    },
+    [api, currentUserId, load]
+  );
+
   const grouped = useMemo(() => {
     const map = new Map<string, BugWithMeta[]>();
     for (const b of bugs) {
@@ -186,6 +202,8 @@ export function useBugReports(
     leaveOrDelete,
     remove,
     setStatus,
+    setVerdict,
+    clearVerdict,
     canHardDelete,
   };
 }
