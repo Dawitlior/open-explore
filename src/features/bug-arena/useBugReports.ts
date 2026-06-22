@@ -107,6 +107,7 @@ export function useBugReports(
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bug_reports' }, bump)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bug_reporters' }, bump)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bug_attachments' }, bump)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bug_resolution_feedback' }, bump)
       .subscribe();
     return () => {
       if (t) clearTimeout(t);
