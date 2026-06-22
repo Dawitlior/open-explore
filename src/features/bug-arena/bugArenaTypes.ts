@@ -76,6 +76,19 @@ export interface BugComment {
   profile?: ProfileLite | null;
 }
 
+export type ResolutionVerdict = 'fixed' | 'not_fixed';
+
+export interface BugResolutionFeedback {
+  bug_id: string;
+  user_id: string;
+  verdict: ResolutionVerdict;
+  /** optional reason, mainly when verdict is 'not_fixed' */
+  note: string | null;
+  created_at: string;
+  updated_at: string;
+  profile?: ProfileLite | null;
+}
+
 export interface BugReport {
   id: string;
   title: string | null;
