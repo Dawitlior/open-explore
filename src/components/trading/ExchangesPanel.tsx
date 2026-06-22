@@ -200,27 +200,23 @@ export function ExchangesPanel({ T, isRTL }: Props) {
   return (
     <div>
       <style>{`@keyframes orcaStream { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }`}</style>
-      {/* Header */}
+      {/* Intro (the panel title lives in the parent wrapper — avoid duplication) */}
       <div style={{
-        marginBottom: 18, padding: 18,
+        marginBottom: 18, padding: '14px 18px',
         borderRadius: 14,
-        background: 'linear-gradient(135deg, rgba(0,242,255,0.06), rgba(0,242,255,0.01))',
+        background: 'linear-gradient(135deg, rgba(0,242,255,0.04), rgba(0,242,255,0.01))',
         border: `1px solid ${T.border.subtle}`,
         backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-          <Plug size={16} color={T.accent.cyan} />
-          <h3 style={{ margin: 0, fontFamily: sans, fontWeight: 700, fontSize: 14, color: T.text.primary, letterSpacing: 0.3 }}>
-            {t('בורסות מחוברות', 'Connected Exchanges')}
-          </h3>
-        </div>
-        <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.6, color: T.text.muted, fontFamily: sans }}>
+        <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.6, color: T.text.muted, fontFamily: sans, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Plug size={13} color={T.accent.cyan} style={{ flexShrink: 0 }} />
           {t(
             'חבר בורסות וברוקרים כדי לסנכרן עסקאות אוטומטית. כל המפתחות מאוחסנים בכספת מוצפנת בצד השרת — לעולם לא בדפדפן.',
             'Connect exchanges and brokers to sync trades automatically. All keys live in a server-side encrypted vault — never in your browser.'
           )}
         </p>
       </div>
+
 
       {/* Grid */}
       <div style={{
