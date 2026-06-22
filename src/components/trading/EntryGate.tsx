@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import type { CSSProperties } from 'react';
 import { OrcaBootLoader } from '@/components/OrcaBootLoader';
 
 interface EntryGateProps {
@@ -9,12 +10,9 @@ interface EntryGateProps {
 /**
  * EntryGate — premium horizontal-seam curtain split.
  *
- * Two 50vh black panels sit flush against each other, each containing
- * the EXACT canonical OrcaBootLoader (untouched). Each panel pins a
- * full-viewport wrapper to its own edge, so the loader's centered icon
- * is physically sliced by the seam at 50vh — the top panel shows the
- * upper half, the bottom panel shows the lower half. They appear as
- * one continuous, perfectly centered icon.
+ * Two absolute 50vh panels meet exactly at the horizontal seam. Each
+ * panel clips the exact canonical OrcaBootLoader (untouched), with the
+ * OI orbit aligned to the seam so the icon is physically sliced in half.
  *
  * On reveal the top panel translates -100% and the bottom +100%
  * simultaneously, carrying their halves of the icon off-screen.
@@ -24,16 +22,71 @@ type Phase = 'idle' | 'spin' | 'settle' | 'split' | 'done';
 const SPIN_MS = 2000;
 const SETTLE_MS = 1200;
 const SPLIT_MS = 800;
+const PANEL_BG = '#0B0E11';
+const ICON_CENTER_OFFSET_PX = 44;
+const SPLIT_EASING = 'cubic-bezier(0.65, 0, 0.35, 1)';
+
+function rotationFromMatrix(transform: string): number {
+  if (!transform || transform === 'none') return 0;
+  const values = transform.match(/matrix\(([^)]+)\)/)?.[1]?.split(',').map(Number);
+  if (!values || values.length < 2) return 0;
+  return Math.round(Math.atan2(values[1], values[0]) * (180 / Math.PI));
+}
+
+function decelerateCanonicalLoader(topRoot: HTMLDivElement | null, bottomRoot: HTMLDivElement | null) {
+  const roots = [topRoot, bottomRoot].filter(Boolean) as HTMLDivElement[];
+  if (!roots.length) return;
+
+  const ringsByRoot = roots.map((root) =>
+    Array.from(root.querySelectorAll<HTMLElement>('[style*="orca-bl-spin"]'))
+  );
+
+  ringsByRoot[0]?.forEach((sourceRing, ringIndex) => {
+    const sourceStyle = window.getComputedStyle(sourceRing);
+    const start = rotationFromMatrix(sourceStyle.transform);
+    const isReverse = (sourceRing.getAttribute('style') || '').includes('orca-bl-spin-rev');
+    const normalized = ((start % 360) + 360) % 360;
+    const end = isReverse
+      ? start - (normalized || 360) - 360
+      : start + (360 - normalized || 360) + 360;
+
+    ringsByRoot.forEach((rings) => {
+      const ring = rings[ringIndex];
+      if (!ring) return;
+      ring.getAnimations().forEach((animation) => animation.cancel());
+      ring.style.animation = 'none';
+      ring.style.transform = `rotate(${start}deg)`;
+      const decel = ring.animate(
+        [{ transform: `rotate(${start}deg)` }, { transform: `rotate(${end}deg)` }],
+        { duration: SETTLE_MS, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'forwards' }
+      );
+      decel.onfinish = () => {
+        ring.style.transform = `rotate(${end}deg)`;
+      };
+    });
+  });
+
+  roots.forEach((root) => {
+    root.querySelectorAll<HTMLElement>('[style*="orca-bl-pulse"]').forEach((dot) => {
+      dot.style.animationPlayState = 'paused';
+    });
+  });
+}
 
 export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
   const isRTL = lang === 'he';
   const [phase, setPhase] = useState<Phase>('idle');
+  const topLoaderRef = useRef<HTMLDivElement | null>(null);
+  const bottomLoaderRef = useRef<HTMLDivElement | null>(null);
 
   const handleAccess = useCallback(() => setPhase('spin'), []);
 
   useEffect(() => {
     if (phase === 'spin') {
-      const t = setTimeout(() => setPhase('settle'), SPIN_MS);
+      const t = setTimeout(() => {
+        decelerateCanonicalLoader(topLoaderRef.current, bottomLoaderRef.current);
+        setPhase('settle');
+      }, SPIN_MS);
       return () => clearTimeout(t);
     }
     if (phase === 'settle') {
