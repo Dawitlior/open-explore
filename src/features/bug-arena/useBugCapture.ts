@@ -194,7 +194,10 @@ export function useBugCapture(
     setError(null);
     setSimilar([]);
     setStage('picking');
-    const picker = new ElementPicker({ accent: config?.accent });
+    const picker = new ElementPicker({
+      accent: config?.accent,
+      ...(config?.pickerLabels ?? {}),
+    });
     pickerRef.current = picker;
     picker.start(
       (result) => {
@@ -206,7 +209,7 @@ export function useBugCapture(
         setStage('idle');
       }
     );
-  }, [openDraft, config?.accent]);
+  }, [openDraft, config?.accent, config?.pickerLabels]);
 
   const quickCapture = useCallback(async () => {
     setError(null);
