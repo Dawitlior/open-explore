@@ -136,10 +136,26 @@ export function BugArenaProvider({
   onReported?: (bugId: string) => void;
   children: React.ReactNode;
 }) {
+  const { isRTL: providerIsRTL } = useLang();
   const capture = useBugCapture(supabase, user.id, {
     accent,
     sectionResolver,
     onDone: onReported,
+    pickerLabels: providerIsRTL
+      ? {
+          dir: 'rtl',
+          hintText: 'הקש על האלמנט הפגום',
+          cancelText: 'ביטול',
+          scrollText: 'גלול',
+          scrollActiveText: 'בחר',
+        }
+      : {
+          dir: 'ltr',
+          hintText: 'Tap the broken element',
+          cancelText: 'Cancel',
+          scrollText: 'Scroll',
+          scrollActiveText: 'Pick',
+        },
   });
   const value = useMemo(
     () => ({ supabase, user, accent, capture }),
