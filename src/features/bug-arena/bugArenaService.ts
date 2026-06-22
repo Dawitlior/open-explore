@@ -118,6 +118,7 @@ export function createBugArenaService(supabase: SupabaseClient): BugArenaService
     for (const r of rows) {
       for (const a of r.attachments || []) paths.push(a.storage_path);
       for (const rep of r.reporters || []) personIds.push(rep.user_id);
+      for (const f of r.feedback || []) personIds.push(f.user_id);
     }
     const [urlMap, people] = await Promise.all([
       signedUrlMap(paths),
@@ -133,6 +134,10 @@ export function createBugArenaService(supabase: SupabaseClient): BugArenaService
         ...rep,
         profile: people.get(rep.user_id) ?? null,
       }));
+      const feedback: BugResolutionFeedback[] = (r.feedback || []).map((f: any) => ({
+        ...f,
+        profile: people.get(f.user_id) ?? null,
+      }));
       const cover =
         attachments.find((a) => a.kind === 'annotation') ||
         attachments.find((a) => a.kind === 'screenshot') ||
@@ -141,6 +146,8 @@ export function createBugArenaService(supabase: SupabaseClient): BugArenaService
         ...r,
         reporters,
         attachments,
+        feedback,
+        myVerdict: feedback.find((f) => f.user_id === currentUserId)?.verdict ?? null,
         reporterCount: reporters.length,
         isMine: reporters.some((x) => x.user_id === currentUserId),
         coverUrl: cover?.url ?? null,
