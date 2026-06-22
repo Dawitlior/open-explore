@@ -506,17 +506,17 @@ export async function handler(req: Request, deps: HandlerDeps): Promise<Response
 
   // 4) Live exchange verification
   const { provider, api_key, api_secret, label } = v.value;
-  const verdict = provider === 'bybit'
-    ? await verifyBybit(api_key, api_secret, deps.fetchImpl)
-    : provider === 'binance'
-      ? await verifyBinance(api_key, api_secret, deps.fetchImpl)
-      : provider === 'mexc_futures'
-        ? await verifyMexcFutures(api_key, api_secret, deps.fetchImpl)
-        : provider === 'mexc_spot'
-          ? await verifyMexcSpot(api_key, api_secret, deps.fetchImpl)
-          : provider === 'gate_futures'
-            ? await verifyGateFutures(api_key, api_secret, deps.fetchImpl)
-            : await verifyKrakenFutures(api_key, api_secret, deps.fetchImpl);
+  const verifiers: Record<SupportedProvider, () => Promise<{ ok: true } | { ok: false; reason: string; detail?: string }>> = {
+    bybit:           () => verifyBybit(api_key, api_secret, deps.fetchImpl),
+    binance:         () => verifyBinance(api_key, api_secret, deps.fetchImpl),
+    mexc_futures:    () => verifyMexcFutures(api_key, api_secret, deps.fetchImpl),
+    mexc_spot:       () => verifyMexcSpot(api_key, api_secret, deps.fetchImpl),
+    gate_futures:    () => verifyGateFutures(api_key, api_secret, deps.fetchImpl),
+    kraken_futures:  () => verifyKrakenFutures(api_key, api_secret, deps.fetchImpl),
+    crypto_com:      () => verifyCryptoCom(api_key, api_secret, deps.fetchImpl),
+    coinbase:        () => verifyCoinbase(api_key, api_secret, deps.fetchImpl),
+  };
+  const verdict = await verifiers[provider]();
 
   if (!verdict.ok) {
     if (verdict.reason === 'connection_error') {
