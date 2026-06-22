@@ -1432,8 +1432,12 @@ function inputStyle(T: TradingTheme, mono: string): React.CSSProperties {
     color: T.text.primary, fontSize: 13, outline: 'none',
     fontFamily: mono, boxSizing: 'border-box',
     transition: 'border-color .15s, background .15s',
+    // Credentials are ASCII-only. Force LTR so password bullets and
+    // placeholders never get bidi-reordered inside an RTL container.
+    direction: 'ltr', textAlign: 'left', unicodeBidi: 'plaintext',
   };
 }
+
 
 /* ====================== KEY GUIDE — LAUNCHER + LARGE MODAL ====================== */
 function KeyGuide({ T, isRTL, provider }: { T: TradingTheme; isRTL: boolean; provider: ProviderMeta }) {
