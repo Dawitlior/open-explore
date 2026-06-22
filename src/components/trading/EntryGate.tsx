@@ -23,6 +23,7 @@ const SPIN_MS = 2000;
 const SETTLE_MS = 1200;
 const SPLIT_MS = 800;
 const PANEL_BG = '#0B0E11';
+const LOADER_ICON_CENTER_OFFSET_PX = 48;
 const SPLIT_EASING = 'cubic-bezier(0.65, 0, 0.35, 1)';
 
 function rotationFromMatrix(transform: string): number {
@@ -155,7 +156,7 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
     width: '100vw',
     height: '100vh',
     overflow: 'hidden',
-    transform: 'translateZ(0)',
+    transform: `translateY(${LOADER_ICON_CENTER_OFFSET_PX}px) translateZ(0)`,
     ...(half === 'top' ? { top: 0 } : { bottom: 0 }),
   });
 
