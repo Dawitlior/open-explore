@@ -989,6 +989,8 @@ function BugCard({
       </div>
 
       {reportersOpen && <ReportersPopover reporters={bug.reporters} />}
+
+      <ResolutionAppeal bug={bug} onVerdict={onVerdict} />
     </article>
   );
 }
