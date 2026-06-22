@@ -11,6 +11,7 @@ import type {
   BugWithMeta,
   BoardFilter,
   BugStatus,
+  ResolutionVerdict,
 } from './bugArenaTypes';
 
 export interface UseBugReports {
@@ -30,6 +31,13 @@ export interface UseBugReports {
   leaveOrDelete: (bug: BugWithMeta) => Promise<void>;
   remove: (bug: BugWithMeta) => Promise<void>;
   setStatus: (bug: BugWithMeta, status: BugStatus) => Promise<void>;
+
+  setVerdict: (
+    bug: BugWithMeta,
+    verdict: ResolutionVerdict,
+    note?: string | null
+  ) => Promise<void>;
+  clearVerdict: (bug: BugWithMeta) => Promise<void>;
 
   /** whether the action button for this bug should read delete vs leave */
   canHardDelete: (bug: BugWithMeta) => boolean;
