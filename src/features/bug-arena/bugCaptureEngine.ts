@@ -260,7 +260,7 @@ export class ElementPicker {
       border: '1px solid rgba(245,197,66,0.35)',
       color: '#e8edf5',
       font: '600 14px/1 Heebo,system-ui,sans-serif',
-      direction: 'rtl',
+      direction: this.opts.dir,
       boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
     } as CSSStyleDeclaration);
 
