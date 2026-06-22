@@ -879,6 +879,7 @@ function BugCard({
   onJoin,
   onLeaveOrDelete,
   onStatus,
+  onVerdict,
   onOpen,
 }: {
   bug: BugWithMeta;
@@ -887,6 +888,7 @@ function BugCard({
   onJoin: () => void;
   onLeaveOrDelete: () => void;
   onStatus: (s: BugStatus) => void;
+  onVerdict: (v: ResolutionVerdict, note?: string | null) => void;
   onOpen: () => void;
 }) {
   const { lang, isRTL, t } = useLang();
