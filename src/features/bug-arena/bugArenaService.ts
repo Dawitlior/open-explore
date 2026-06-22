@@ -53,6 +53,14 @@ export interface BugArenaService {
   leaveBug(bugId: string, userId: string): Promise<void>;
   updateMyNote(bugId: string, userId: string, note: string): Promise<void>;
 
+  setResolutionVerdict(
+    bugId: string,
+    userId: string,
+    verdict: ResolutionVerdict,
+    note?: string | null
+  ): Promise<void>;
+  clearResolutionVerdict(bugId: string, userId: string): Promise<void>;
+
   uploadAttachment(
     bugId: string,
     userId: string,
