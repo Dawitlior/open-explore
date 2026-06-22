@@ -329,7 +329,7 @@ export class ElementPicker {
       // Release pointer interception so the page can scroll under the overlay.
       this.overlay.style.touchAction = 'auto';
       this.overlay.style.pointerEvents = 'none';
-      this.scrollToggleBtn.textContent = 'בחר';
+      this.scrollToggleBtn.textContent = this.opts.scrollActiveText;
       this.scrollToggleBtn.style.background = this.opts.accent;
       this.scrollToggleBtn.style.color = '#06121f';
       // Hint pill stays interactive (it's a child).
@@ -337,7 +337,7 @@ export class ElementPicker {
     } else {
       this.overlay.style.touchAction = 'none';
       this.overlay.style.pointerEvents = 'auto';
-      this.scrollToggleBtn.textContent = 'גלול';
+      this.scrollToggleBtn.textContent = this.opts.scrollText;
       this.scrollToggleBtn.style.background = 'transparent';
       this.scrollToggleBtn.style.color = '#9fb0c5';
     }
