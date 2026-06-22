@@ -91,6 +91,14 @@ const DEFAULT_SECTIONS: Record<string, string> = {
   '/charts': 'גרפים',
 };
 
+export interface PickerLabels {
+  hintText?: string;
+  cancelText?: string;
+  scrollText?: string;
+  scrollActiveText?: string;
+  dir?: 'rtl' | 'ltr';
+}
+
 export function useBugCapture(
   supabase: SupabaseClient,
   currentUserId: string,
@@ -98,6 +106,8 @@ export function useBugCapture(
     accent?: string;
     sectionResolver?: (route: string) => string;
     onDone?: (bugId: string) => void;
+    /** Localized labels for the on-screen element picker overlay. */
+    pickerLabels?: PickerLabels;
   }
 ): UseBugCapture {
   const api = useMemo(() => createBugArenaService(supabase), [supabase]);
