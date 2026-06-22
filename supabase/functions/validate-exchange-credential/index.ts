@@ -384,6 +384,96 @@ export async function verifyKrakenFutures(
   return { ok: false, reason: 'kraken_futures_rejected', detail: body?.error ?? `status ${res.status}` };
 }
 
+// ---------- Provider: Crypto.com Exchange ----------
+// Crypto.com Exchange v1 does NOT expose per-key permission introspection,
+// so verification is a benign signed read (`private/user-balance`). The
+// payload-string signing rule (`params_to_str`) is replicated here so the
+// edge function and the sync function stay in lock-step.
+const CDC_BASE = 'https://api.crypto.com/exchange/v1';
+
+function cdcParamString(params: Record<string, unknown>): string {
+  return Object.keys(params).sort().map((k) => {
+    const v = (params as Record<string, unknown>)[k];
+    if (v === null || v === undefined) return k + 'null';
+    if (Array.isArray(v)) return k + v.map((x) =>
+      typeof x === 'object' && x !== null ? cdcParamString(x as Record<string, unknown>) : String(x)
+    ).join('');
+    if (typeof v === 'object') return k + cdcParamString(v as Record<string, unknown>);
+    return k + String(v);
+  }).join('');
+}
+
+export async function verifyCryptoCom(
+  apiKey: string, apiSecret: string, fetchImpl: typeof fetch = fetch,
+): Promise<{ ok: true } | { ok: false; reason: string; detail?: string }> {
+  const id = Date.now();
+  const nonce = Date.now();
+  const method = 'private/user-balance';
+  const params: Record<string, unknown> = {};
+  const sig = await hmacSha256Hex(apiSecret, method + id + apiKey + cdcParamString(params) + nonce);
+  const body = JSON.stringify({ id, method, api_key: apiKey, params, nonce, sig });
+  let res: Response;
+  try {
+    res = await fetchImpl(`${CDC_BASE}/${method}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+    });
+  } catch {
+    return { ok: false, reason: 'connection_error', detail: 'Crypto.com unreachable' };
+  }
+  if (res.status >= 500) return { ok: false, reason: 'connection_error', detail: `Crypto.com ${res.status}` };
+  const json = await res.json().catch(() => ({})) as { code?: number; message?: string };
+  if (res.ok && json?.code === 0) return { ok: true };
+  return { ok: false, reason: 'crypto_com_rejected', detail: json?.message ?? `code ${json?.code ?? res.status}` };
+}
+
+// ---------- Provider: Coinbase Advanced Trade ----------
+// Coinbase CDP auth: short-lived JWT (alg EdDSA for Ed25519 keys, ES256 for
+// ECDSA), signed with the user's PEM private key, passed as Bearer. We use
+// `jose` (esm.sh) so we don't hand-roll EdDSA/ES256 in Deno. The verifier
+// hits `/api/v3/brokerage/accounts` — a benign read; HTTP 200 == valid key.
+async function coinbaseJwt(keyName: string, pemSecret: string, method: string, path: string): Promise<string> {
+  const jose = await import('https://esm.sh/jose@5');
+  const isEd = /BEGIN PRIVATE KEY/.test(pemSecret) && !/BEGIN EC PRIVATE KEY/.test(pemSecret);
+  const alg = isEd ? 'EdDSA' : 'ES256';
+  const key = await jose.importPKCS8(pemSecret, alg);
+  const uri = `${method} api.coinbase.com${path}`;
+  return await new jose.SignJWT({ sub: keyName, uri })
+    .setProtectedHeader({ alg, kid: keyName, nonce: crypto.randomUUID(), typ: 'JWT' })
+    .setIssuedAt()
+    .setNotBefore('0s')
+    .setExpirationTime('120s')
+    .setIssuer('cdp')
+    .setAudience(['retail_rest_api_proxy'])
+    .sign(key);
+}
+
+export async function verifyCoinbase(
+  keyName: string, pemSecret: string, fetchImpl: typeof fetch = fetch,
+): Promise<{ ok: true } | { ok: false; reason: string; detail?: string }> {
+  let jwt: string;
+  try {
+    jwt = await coinbaseJwt(keyName, pemSecret, 'GET', '/api/v3/brokerage/accounts');
+  } catch (e) {
+    return { ok: false, reason: 'coinbase_rejected', detail: `pem_import_failed: ${(e as Error).message}` };
+  }
+  let res: Response;
+  try {
+    res = await fetchImpl('https://api.coinbase.com/api/v3/brokerage/accounts', {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${jwt}`, Accept: 'application/json' },
+    });
+  } catch {
+    return { ok: false, reason: 'connection_error', detail: 'Coinbase unreachable' };
+  }
+  if (res.status >= 500) return { ok: false, reason: 'connection_error', detail: `Coinbase ${res.status}` };
+  if (res.ok) return { ok: true };
+  const body = await res.json().catch(() => ({})) as { message?: string };
+  return { ok: false, reason: 'coinbase_rejected', detail: body?.message ?? `status ${res.status}` };
+}
+
+
 // ---------- Handler (dependency-injected for testability) ----------
 export interface HandlerDeps {
   getUserId: (authHeader: string) => Promise<string | null>;
