@@ -263,6 +263,7 @@ export default function AuthPage() {
         if (data.user?.id && data.session) await logConsent(data.user.id);
         else try { localStorage.setItem(PENDING_CONSENT_KEY, '1'); } catch { /* noop */ }
         toast.success(c.emailSent);
+        setSignupNotice(cleanEmail);
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
         if (error) throw error;
