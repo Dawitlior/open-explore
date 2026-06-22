@@ -96,9 +96,10 @@ export function EconomicAlertBanner() {
           aria-label={t.dismiss}
           title={t.dismiss}
           dir="ltr"
+          style={{ direction: 'ltr', unicodeBidi: 'isolate', fontFamily: 'system-ui, sans-serif', fontSize: 16, lineHeight: 1, fontWeight: 700 }}
           className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-border bg-background text-foreground hover:bg-muted hover:border-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring transition-colors"
         >
-          <X className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
+          <span aria-hidden="true">✕</span>
         </button>
       </div>
     </div>
