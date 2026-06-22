@@ -70,25 +70,9 @@ const PROVIDERS: ProviderMeta[] = [
   ...BrokerRegistry.apiCapable()
     .filter(a => !a.meta.hidden && a.meta.supportsSync)
     .map(a => metaToProvider(a.meta)),
-  // ── UI-only "coming soon" tiles. No registry/sync wiring; these surface as
-  // disabled cards so users see the roadmap without enabling any code path. ──
-  // (MEXC, Gate.io and Kraken are real, registered providers — see src/lib/brokers/) 
-  {
-    id: 'coinbase',
-    name: 'Coinbase',
-    tagline: { he: 'תמיכה מלאה בעבודה — בקרוב', en: 'Full support in the works — coming soon' },
-    gradient: 'linear-gradient(135deg, rgba(0,82,255,0.18), rgba(0,82,255,0.02))',
-    accent: '#0052ff',
-    enabled: false,
-  },
-  {
-    id: 'crypto_com',
-    name: 'Crypto.com',
-    tagline: { he: 'תמיכה מלאה בעבודה — בקרוב', en: 'Full support in the works — coming soon' },
-    gradient: 'linear-gradient(135deg, rgba(0,52,153,0.18), rgba(0,52,153,0.02))',
-    accent: '#003399',
-    enabled: false,
-  },
+  // All real exchanges (Bybit, Binance, MEXC×2, Gate, Kraken, Coinbase,
+  // Crypto.com) live in BrokerRegistry. UI-only "coming soon" tiles can be
+  // appended here as { enabled: false } entries when needed.
 ];
 
 const CSV_BROKERS: CsvBrokerMeta[] = BrokerRegistry.fileCapable()
