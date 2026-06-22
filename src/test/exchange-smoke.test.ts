@@ -67,18 +67,28 @@ describe('Smoke: signing format', () => {
 
   it('Coinbase produces a 3-part JWT (header.payload.signature)', async () => {
     // The Coinbase edge verifier uses `jose` with EdDSA/ES256 against the
-    // user's PEM. Here we only assert the wire SHAPE — that SignJWT emits
-    // a standard 3-part compact JWS — using a vitest-friendly HS256 key.
-    const { SignJWT } = await import('jose');
-    const key = new TextEncoder().encode('smoke-secret-key-32-bytes-min-length!');
-    const jwt = await new SignJWT({ sub: 'organizations/o/apiKeys/k', uri: 'GET api.coinbase.com/api/v3/brokerage/accounts' })
-      .setProtectedHeader({ alg: 'HS256', kid: 'organizations/o/apiKeys/k', nonce: 'n', typ: 'JWT' })
-      .setIssuedAt().setExpirationTime('120s')
-      .setIssuer('cdp').setAudience(['retail_rest_api_proxy'])
-      .sign(key);
+    // user's PEM key. Here we only assert the wire SHAPE — that a JWT is
+    // three base64url segments joined by dots — using a plain WebCrypto
+    // HS256 signature so the smoke test is realm-agnostic.
+    const b64url = (bytes: Uint8Array) =>
+      btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const header = b64url(new TextEncoder().encode(JSON.stringify({ alg: 'HS256', typ: 'JWT' })));
+    const payload = b64url(new TextEncoder().encode(JSON.stringify({
+      sub: 'organizations/o/apiKeys/k',
+      uri: 'GET api.coinbase.com/api/v3/brokerage/accounts',
+      iss: 'cdp',
+      aud: ['retail_rest_api_proxy'],
+    })));
+    const key = await crypto.subtle.importKey(
+      'raw', new TextEncoder().encode('smoke-secret'),
+      { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
+    );
+    const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${header}.${payload}`));
+    const jwt = `${header}.${payload}.${b64url(new Uint8Array(sig))}`;
     expect(jwt.split('.')).toHaveLength(3);
     expect(jwt).toMatch(/^[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+$/);
   });
+
 
 });
 
