@@ -272,7 +272,7 @@ export class ElementPicker {
     const scrollBtn = document.createElement('button');
     scrollBtn.setAttribute(OVERLAY_ATTR, 'scroll-toggle');
     scrollBtn.type = 'button';
-    scrollBtn.textContent = 'גלול';
+    scrollBtn.textContent = this.opts.scrollText;
     Object.assign(scrollBtn.style, {
       cursor: 'pointer',
       border: '1px solid rgba(255,255,255,0.18)',
