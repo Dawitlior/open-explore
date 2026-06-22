@@ -1696,14 +1696,14 @@ export default function OrcaConsole() {
           <div style={{ fontFamily: SANS, fontSize: 10.5, color: C.ink3, marginTop: 1 }}>{t("appTag")}</div>
         </div>
         {GROUPS.map((g) => (
-          <div key={g.id} dir="ltr" style={{ marginBottom: 13 }}>
-            <div style={{ fontFamily: SANS, fontSize: 10.5, fontWeight: 600, color: C.ink3, letterSpacing: 0.4, textTransform: "uppercase", padding: "0 8px 7px" }}>{EN_LABEL[g.label]}</div>
+          <div key={g.id} style={{ marginBottom: 13 }}>
+            <div style={{ fontFamily: SANS, fontSize: 10.5, fontWeight: 600, color: C.ink3, letterSpacing: 0.4, textTransform: "uppercase", padding: "0 8px 7px", textAlign: "start" }}>{t(g.label)}</div>
             {g.pages.map(([id, label, Icon]) => {
               const on = active === id;
               return (
                 <button key={id} onClick={() => setActive(id)} className={on ? undefined : "navitem"} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "8px 10px", borderRadius: 8, border: "none", cursor: "pointer", marginBottom: 2, textAlign: "start", background: on ? C.blueSoft : "transparent", color: on ? C.accent : C.ink2, fontFamily: SANS, fontSize: 12.5, fontWeight: on ? 650 : 500, position: "relative" }}>
                   {on && <span style={{ position: "absolute", insetInlineStart: 0, top: 7, bottom: 7, width: 3, borderRadius: 99, background: C.accent }} />}
-                  <Icon size={16} color={on ? C.blue : C.ink3} />{EN_LABEL[label]}
+                  <Icon size={16} color={on ? C.blue : C.ink3} /><span style={{ flex: 1, textAlign: "start" }}>{t(label)}</span>
                 </button>
               );
             })}
@@ -1721,10 +1721,10 @@ export default function OrcaConsole() {
         <div className="orca-topnav" style={{ display: "none", gap: 8, overflowX: "auto", padding: "10px 14px", background: C.panel, borderBottom: `1px solid ${C.border}`, alignItems: "center" }}>
           {GROUPS.map((g) => (
             <React.Fragment key={g.id}>
-              <span dir="ltr" style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: C.ink3, textTransform: "uppercase", whiteSpace: "nowrap", letterSpacing: 0.3 }}>{EN_LABEL[g.label]}</span>
+              <span style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: C.ink3, textTransform: "uppercase", whiteSpace: "nowrap", letterSpacing: 0.3 }}>{t(g.label)}</span>
               {g.pages.map(([id, label, Icon]) => {
                 const on = active === id;
-                return <button key={id} dir="ltr" onClick={() => setActive(id)} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 10px", borderRadius: 8, border: `1px solid ${on ? C.accent : C.borderStrong}`, background: on ? C.blueSoft : C.panel, color: on ? C.accent : C.ink2, fontFamily: SANS, fontSize: 11.5, fontWeight: on ? 650 : 500, whiteSpace: "nowrap", cursor: "pointer" }}><Icon size={13} />{EN_LABEL[label]}</button>;
+                return <button key={id} onClick={() => setActive(id)} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 10px", borderRadius: 8, border: `1px solid ${on ? C.accent : C.borderStrong}`, background: on ? C.blueSoft : C.panel, color: on ? C.accent : C.ink2, fontFamily: SANS, fontSize: 11.5, fontWeight: on ? 650 : 500, whiteSpace: "nowrap", cursor: "pointer" }}><Icon size={13} />{t(label)}</button>;
               })}
             </React.Fragment>
           ))}

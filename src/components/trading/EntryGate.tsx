@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { OrcaBootLoader } from '@/components/OrcaBootLoader';
 
 interface EntryGateProps {
   onEnter: () => void;
@@ -8,33 +9,33 @@ interface EntryGateProps {
 /**
  * EntryGate — premium curtain-split reveal.
  *
+ * The loading indicator is the platform's canonical OrcaBootLoader —
+ * the exact same spinner used across page refreshes and dimension
+ * transitions. We DO NOT recreate or restyle it; we only wrap it
+ * with the curtain-split overlay logic.
+ *
  * Phases:
- *  - idle      : platform branding + Access button.
- *  - spinning  : full dark overlay, OI spinner rotating at full speed.
- *  - slowing   : spinner decelerates smoothly to a complete halt (1.5s).
- *  - split     : two stacked halves (top + bottom) of the dark overlay slide
- *                vertically apart, cleanly cutting the static OI in half.
- *  - done      : overlay unmounts, platform becomes interactive.
+ *  - idle    : branding + Access button.
+ *  - loading : full dark overlay with OrcaBootLoader centered.
+ *  - split   : overlay splits horizontally at 50vh; the OrcaBootLoader
+ *              remains rendered in both halves so it visually stays put
+ *              while the curtains pull away around it.
+ *  - done    : overlay unmounts.
  */
-type Phase = 'idle' | 'spinning' | 'slowing' | 'split' | 'done';
+type Phase = 'idle' | 'loading' | 'split' | 'done';
 
-const SPIN_FULL_MS = 2400;
-const SPIN_DECEL_MS = 1500;
-const SPLIT_MS = 850;
+const LOAD_MS = 2200;
+const SPLIT_MS = 900;
 
 export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
   const isRTL = lang === 'he';
   const [phase, setPhase] = useState<Phase>('idle');
 
-  const handleAccess = useCallback(() => setPhase('spinning'), []);
+  const handleAccess = useCallback(() => setPhase('loading'), []);
 
   useEffect(() => {
-    if (phase === 'spinning') {
-      const t = setTimeout(() => setPhase('slowing'), SPIN_FULL_MS);
-      return () => clearTimeout(t);
-    }
-    if (phase === 'slowing') {
-      const t = setTimeout(() => setPhase('split'), SPIN_DECEL_MS);
+    if (phase === 'loading') {
+      const t = setTimeout(() => setPhase('split'), LOAD_MS);
       return () => clearTimeout(t);
     }
     if (phase === 'split') {
@@ -98,58 +99,6 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
   if (phase === 'done') return null;
 
   const isSplitting = phase === 'split';
-  const spinnerAnim =
-    phase === 'spinning'
-      ? 'oi-spin 0.9s linear infinite'
-      : phase === 'slowing'
-        ? `oi-spin-decel ${SPIN_DECEL_MS}ms cubic-bezier(0.16, 1, 0.3, 1) forwards`
-        : 'none';
-
-  // Shared inner content (spinner + halo) — rendered identically in both halves
-  // so they line up pixel-perfectly when the curtains split.
-  const innerContent = (
-    <div style={{
-      position: 'absolute', top: '50vh', left: '50vw',
-      transform: 'translate(-50%, -50%)',
-      width: 'clamp(96px, 22vmin, 168px)',
-      height: 'clamp(96px, 22vmin, 168px)',
-      pointerEvents: 'none',
-    }}>
-      {/* Outer ring */}
-      <div style={{
-        position: 'absolute', inset: 0, borderRadius: '50%',
-        border: '2px solid rgba(6,214,160,0.13)',
-        borderTopColor: '#06d6a0',
-        animation: spinnerAnim,
-        boxShadow: '0 0 24px rgba(6,214,160,0.15)',
-      }} />
-      {/* Inner counter-ring */}
-      <div style={{
-        position: 'absolute', inset: '12%', borderRadius: '50%',
-        border: '2px solid rgba(6,214,160,0.13)',
-        borderBottomColor: '#06d6a0',
-        opacity: 0.75,
-        animation: phase === 'spinning'
-          ? 'oi-spin-rev 1.3s linear infinite'
-          : phase === 'slowing'
-            ? `oi-spin-rev-decel ${SPIN_DECEL_MS}ms cubic-bezier(0.16, 1, 0.3, 1) forwards`
-            : 'none',
-      }} />
-      {/* OI mark */}
-      <div style={{
-        position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        color: '#06d6a0',
-        filter: 'drop-shadow(0 0 14px rgba(6,214,160,0.55))',
-        fontFamily: "'JetBrains Mono', 'IBM Plex Mono', monospace",
-        fontSize: 'clamp(18px, 4.2vmin, 30px)',
-        fontWeight: 800, letterSpacing: '0.15em',
-      }}>
-        OI
-      </div>
-    </div>
-  );
-
-  const halfBg = '#020408';
   const easing = 'cubic-bezier(0.77, 0, 0.175, 1)';
 
   return (
@@ -161,47 +110,33 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
         pointerEvents: phase === 'split' ? 'none' : 'auto',
       }}
     >
-      {/* TOP HALF curtain — clips the inner content to the upper 50vh */}
+      {/* TOP HALF curtain — the transform here creates a containing block,
+          so the OrcaBootLoader's position:fixed is scoped to this half. */}
       <div style={{
         position: 'absolute', top: 0, left: 0, right: 0, height: '50vh',
-        background: halfBg,
         overflow: 'hidden',
         transform: isSplitting ? 'translateY(-100%)' : 'translateY(0)',
         transition: `transform ${SPLIT_MS}ms ${easing}`,
         willChange: 'transform',
       }}>
-        {innerContent}
+        <OrcaBootLoader />
       </div>
 
-      {/* BOTTOM HALF curtain — clips the inner content to the lower 50vh */}
+      {/* BOTTOM HALF curtain */}
       <div style={{
         position: 'absolute', bottom: 0, left: 0, right: 0, height: '50vh',
-        background: halfBg,
         overflow: 'hidden',
         transform: isSplitting ? 'translateY(100%)' : 'translateY(0)',
         transition: `transform ${SPLIT_MS}ms ${easing}`,
         willChange: 'transform',
       }}>
-        {/* Shift the inner content up by 50vh so its absolute top:50vh lands
-            exactly on this half's top edge — pairing perfectly with the top
-            half above for a seamless cut. */}
+        {/* Shift the inner loader up by 50vh so its viewport-centered
+            position lands exactly on this half's top edge — pairing
+            seamlessly with the top half above. */}
         <div style={{ position: 'absolute', inset: 0, transform: 'translateY(-50vh)' }}>
-          {innerContent}
+          <OrcaBootLoader />
         </div>
       </div>
-
-      <style>{`
-        @keyframes oi-spin { to { transform: rotate(360deg); } }
-        @keyframes oi-spin-rev { to { transform: rotate(-360deg); } }
-        @keyframes oi-spin-decel {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(540deg); }
-        }
-        @keyframes oi-spin-rev-decel {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(-420deg); }
-        }
-      `}</style>
     </div>
   );
 };
