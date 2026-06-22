@@ -546,10 +546,11 @@ function ExchangeCard({
   const mono = "'IBM Plex Mono', monospace";
   const disabled = !meta.enabled;
 
-  const statusColor = disabled ? T.text.muted : connected ? '#10b981' : '#ef4444';
+  // Neutral gray for "not connected yet" — it's a default state, not an error.
+  const statusColor = disabled ? T.text.muted : connected ? '#10b981' : T.text.muted;
   const statusLabel = disabled
     ? t('בקרוב', 'Coming Soon')
-    : connected ? t('פעיל', 'Live') : t('לא מחובר', 'Disconnected');
+    : connected ? t('פעיל', 'Live') : t('לא מחובר', 'Not connected');
 
   return (
     <div
