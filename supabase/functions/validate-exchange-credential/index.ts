@@ -29,13 +29,38 @@ async function hmacSha256Hex(secret: string, message: string): Promise<string> {
 }
 
 // ---------- Input sanitization (XSS / SQL / control chars) ----------
-// API keys from real exchanges are strictly alphanumeric (sometimes with - or _).
-// Anything else is structurally rejected before it can hit the upstream API or DB.
+// Standard exchange keys are strictly alphanumeric (sometimes with - or _).
+// Coinbase is a special case: the "key" is a CDP key NAME containing
+// slashes (organizations/.../apiKeys/...), and the "secret" is a multi-line
+// PEM private-key block. Both need bespoke validation patterns; if the
+// default SAFE_KEY/SAFE_SECRET were applied to a Coinbase key they would
+// always reject it before the verifier ever ran.
 const SAFE_KEY = /^[A-Za-z0-9_\-]{8,256}$/;
 const SAFE_SECRET = /^[A-Za-z0-9_\-+/=]{8,512}$/;
 const SAFE_LABEL = /^[A-Za-z0-9 _\-]{1,64}$/;
+// Coinbase CDP key name: lowercase hex segments joined by slashes.
+const COINBASE_KEY = /^[A-Za-z0-9_\-\/]{16,256}$/;
 
-const SUPPORTED_PROVIDERS = ['bybit', 'binance', 'mexc_futures', 'mexc_spot', 'gate_futures', 'kraken_futures'] as const;
+function isPemPrivateKey(s: string): boolean {
+  // Accepts Ed25519 PKCS8 (`BEGIN PRIVATE KEY`) and ECDSA SEC1
+  // (`BEGIN EC PRIVATE KEY`). The body is base64 with `+`, `/`, `=`,
+  // separated by newlines — we don't strictly parse it; we require the
+  // BEGIN/END envelope and bound the overall length.
+  if (s.length < 80 || s.length > 8192) return false;
+  const hasBegin = /-----BEGIN (?:EC )?PRIVATE KEY-----/.test(s);
+  const hasEnd = /-----END (?:EC )?PRIVATE KEY-----/.test(s);
+  if (!hasBegin || !hasEnd) return false;
+  // Everything outside the BEGIN/END envelope must be safe whitespace.
+  // We allow the standard PEM character set inside.
+  return /^[A-Za-z0-9_\-\s+/=:]+$/.test(s);
+}
+
+const SUPPORTED_PROVIDERS = [
+  'bybit', 'binance',
+  'mexc_futures', 'mexc_spot',
+  'gate_futures', 'kraken_futures',
+  'crypto_com', 'coinbase',
+] as const;
 type SupportedProvider = typeof SUPPORTED_PROVIDERS[number];
 
 export interface ValidatedInput {
@@ -58,14 +83,27 @@ export function validateInput(raw: unknown):
 
   const labelRaw = typeof b.label === 'string' && b.label.trim().length > 0 ? b.label.trim() : 'main';
   const apiKey = typeof b.api_key === 'string' ? b.api_key.trim() : '';
+  // Coinbase secrets are multi-line PEM blocks — DO NOT trim internal
+  // whitespace, only outer whitespace.
   const apiSecret = typeof b.api_secret === 'string' ? b.api_secret.trim() : '';
 
   if (!SAFE_LABEL.test(labelRaw)) return { ok: false, error: 'invalid_label', detail: 'Label contains forbidden characters' };
-  if (!SAFE_KEY.test(apiKey)) return { ok: false, error: 'invalid_api_key', detail: 'API key contains forbidden characters' };
-  if (!SAFE_SECRET.test(apiSecret)) return { ok: false, error: 'invalid_api_secret', detail: 'API secret contains forbidden characters' };
+
+  if (provider === 'coinbase') {
+    if (!COINBASE_KEY.test(apiKey)) {
+      return { ok: false, error: 'invalid_api_key', detail: 'Coinbase key name must look like organizations/.../apiKeys/...' };
+    }
+    if (!isPemPrivateKey(apiSecret)) {
+      return { ok: false, error: 'invalid_api_secret', detail: 'Coinbase secret must be a PEM private-key block (BEGIN PRIVATE KEY ... END PRIVATE KEY).' };
+    }
+  } else {
+    if (!SAFE_KEY.test(apiKey)) return { ok: false, error: 'invalid_api_key', detail: 'API key contains forbidden characters' };
+    if (!SAFE_SECRET.test(apiSecret)) return { ok: false, error: 'invalid_api_secret', detail: 'API secret contains forbidden characters' };
+  }
 
   return { ok: true, value: { provider: provider as SupportedProvider, label: labelRaw, api_key: apiKey, api_secret: apiSecret } };
 }
+
 
 // ---------- Rate limit (in-memory, structural placeholder) ----------
 // NOTE: Lovable Cloud does not yet expose durable rate-limit primitives.
