@@ -1293,6 +1293,9 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
               </div>
             )}
 
+            <ResolutionAppeal bug={bug} onVerdict={handleVerdict} />
+            <ResolutionFeedbackPanel bug={bug} isAdmin={isAdmin} />
+
             <ReportersPopover reporters={bug.reporters} />
 
             {/* comments */}
