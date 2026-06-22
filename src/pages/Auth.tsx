@@ -198,6 +198,8 @@ export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [consent, setConsent] = useState(false);
+  const [signupNotice, setSignupNotice] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
   const [idleGate, setIdleGate] = useState(() => {
     if (typeof window === 'undefined') return false;
     return new URLSearchParams(window.location.search).get('idle') === '1';
