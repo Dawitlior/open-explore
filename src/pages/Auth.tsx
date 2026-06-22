@@ -550,6 +550,59 @@ export default function AuthPage() {
               </p>
             </header>
 
+            {signupNotice && (
+              <div
+                role="status"
+                aria-live="polite"
+                style={{
+                  marginBottom: 16,
+                  padding: '14px 16px',
+                  borderRadius: 12,
+                  border: `1px solid ${GOLD}`,
+                  background: 'linear-gradient(135deg, rgba(212,175,90,0.12), rgba(212,175,90,0.04))',
+                  display: 'grid',
+                  gap: 8,
+                  textAlign: isRTL ? 'right' : 'left',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Mail size={16} color={GOLD_BRIGHT} />
+                  <strong style={{ color: GOLD_BRIGHT, fontSize: 13, letterSpacing: '0.04em' }}>
+                    {c.emailSentTitle}
+                  </strong>
+                </div>
+                <div style={{ fontSize: 12.5, color: TEXT, lineHeight: 1.5 }}>
+                  {c.emailSentBody} <span dir="ltr" style={{ fontWeight: 700, color: GOLD_BRIGHT }}>{signupNotice}</span>
+                </div>
+                <div style={{ fontSize: 11.5, color: TEXT_MUTED, lineHeight: 1.5 }}>
+                  ⚠️ {c.emailSentSpamHint}
+                </div>
+                <div>
+                  <button
+                    type="button"
+                    onClick={handleResendVerification}
+                    disabled={resending}
+                    style={{
+                      marginTop: 2,
+                      padding: '6px 12px',
+                      borderRadius: 8,
+                      border: `1px solid ${BORDER}`,
+                      background: 'transparent',
+                      color: GOLD_BRIGHT,
+                      fontSize: 11.5,
+                      fontWeight: 600,
+                      cursor: resending ? 'wait' : 'pointer',
+                      opacity: resending ? 0.6 : 1,
+                    }}
+                  >
+                    {resending ? '…' : c.emailSentResend}
+                  </button>
+                </div>
+              </div>
+            )}
+
+
+
             <button
               onClick={handleGoogle}
               disabled={busy || !consent}
