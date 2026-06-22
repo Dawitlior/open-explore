@@ -1579,6 +1579,58 @@ function KeyGuide({ T, isRTL, provider }: { T: TradingTheme; isRTL: boolean; pro
       en: { title: 'Paste the API Key and Private Key', body: 'Copy the API Key and Private Key (the Private Key is shown ONCE!), return here, paste them in the fields. Click "Verify & Save".' },
     },
   ];
+  const cryptoComSteps: Step[] = [
+    {
+      he: { title: 'היכנס ל-Crypto.com Exchange', body: 'פתח את crypto.com/exchange והתחבר. שים לב: זה Exchange, לא האפליקציה הקמעונאית — מפתחות API נוצרים רק שם.' },
+      en: { title: 'Sign in to Crypto.com Exchange', body: 'Open crypto.com/exchange and sign in. Note: this is the Exchange, not the retail app — API keys are only created there.' },
+    },
+    {
+      he: { title: 'פתח את User Center → API', body: 'לחץ על תמונת הפרופיל → "API Keys" (או דרך Settings → API). זה הדף ליצירת מפתחות.' },
+      en: { title: 'Open User Center → API', body: 'Click your profile picture → "API Keys" (or via Settings → API). This is where new keys are created.' },
+    },
+    {
+      he: { title: 'צור API חדש', body: 'לחץ "Create a New API Key", תן שם כמו "ORCA Read Only".' },
+      en: { title: 'Create a new API', body: 'Click "Create a New API Key" and name it like "ORCA Read Only".' },
+    },
+    {
+      he: { title: 'הרשאות — Read-Only בלבד', body: 'בחר Read Only. אל תאפשר Trade, Withdraw או הרשאות אחרות. ORCA לעולם לא שולח פקודות — קריאה בלבד.' },
+      en: { title: 'Permissions — Read-Only ONLY', body: 'Select Read Only. Do NOT enable Trade, Withdraw, or any other permission. ORCA never places orders — read only.' },
+    },
+    {
+      he: { title: 'אל תקשר כתובת IP', body: 'השאר את ה-IP Whitelist ריק. שרתי הסנכרון של ORCA לא משתמשים ב-IP קבוע, ולכן מפתח מוגבל ל-IP ייכשל.' },
+      en: { title: 'Do NOT bind an IP address', body: 'Leave the IP Whitelist empty. ORCA sync servers do not use a fixed IP, so an IP-bound key will fail.' },
+    },
+    {
+      he: { title: 'אשר עם 2FA והדבק כאן', body: 'השלם אימות דו-שלבי. העתק את ה-API Key ואת ה-Secret (ה-Secret מוצג פעם אחת!) והדבק בשדות למטה. לחץ "אמת ושמור".' },
+      en: { title: 'Confirm with 2FA and paste here', body: 'Complete 2FA. Copy the API Key and Secret (the Secret is shown ONCE!) and paste them into the fields below. Click "Verify & Save".' },
+    },
+  ];
+  const coinbaseSteps: Step[] = [
+    {
+      he: { title: 'היכנס ל-Coinbase Developer Platform (CDP)', body: 'פתח את portal.cdp.coinbase.com והתחבר עם חשבון ה-Coinbase שלך. זה לא הדף הרגיל של coinbase.com — צריך CDP.' },
+      en: { title: 'Sign in to the Coinbase Developer Platform (CDP)', body: 'Open portal.cdp.coinbase.com and sign in with your Coinbase account. This is NOT the regular coinbase.com page — you need the CDP portal.' },
+    },
+    {
+      he: { title: 'פתח את API Keys', body: 'בתפריט הצדדי בחר "API Keys" → "Create API key". בחר את הארגון שלך אם נדרש.' },
+      en: { title: 'Open API Keys', body: 'From the side menu choose "API Keys" → "Create API key". Pick your organization if prompted.' },
+    },
+    {
+      he: { title: 'הרשאות — View בלבד', body: 'תחת Permissions בחר אך ורק "View". אל תאפשר Trade או Transfer. ORCA רק קוראת — היא לעולם לא תזיז כסף.' },
+      en: { title: 'Permissions — View only', body: 'Under Permissions select ONLY "View". Do NOT enable Trade or Transfer. ORCA only reads — it never moves funds.' },
+    },
+    {
+      he: { title: 'בחר Ed25519 (מומלץ)', body: 'בחר את סוג המפתח Ed25519. זה הסטנדרט המומלץ של Coinbase, וקל יותר לעבוד איתו מאשר ECDSA.' },
+      en: { title: 'Choose Ed25519 (recommended)', body: 'Select Ed25519 as the key type. It is Coinbase\'s recommended default, and easier to work with than ECDSA.' },
+    },
+    {
+      he: { title: 'הורד את הקובץ — תקבל שני ערכים', body: 'Coinbase ייצר קובץ JSON עם "name" (השם של המפתח, מסוג organizations/.../apiKeys/...) ו-"privateKey" (בלוק PEM רב-שורתי שמתחיל ב-BEGIN PRIVATE KEY). שמור את הקובץ — לא תוכל להוריד אותו שוב.' },
+      en: { title: 'Download the file — you get TWO values', body: 'Coinbase will generate a JSON file containing "name" (the key name, of the form organizations/.../apiKeys/...) and "privateKey" (a multi-line PEM block starting with BEGIN PRIVATE KEY). Save the file — you cannot download it again.' },
+    },
+    {
+      he: { title: 'הדבק כאן את שניהם', body: 'הדבק את ה-"name" המלא (כולל הקווים הנטויים) בשדה "API Key". הדבק את כל בלוק ה-PEM של ה-"privateKey" — כולל שורות ה-BEGIN/END והשורות שביניהן — בשדה "API Secret" (השדה הוא רב-שורתי במיוחד עבור Coinbase). לחץ "אמת ושמור".' },
+      en: { title: 'Paste both here', body: 'Paste the full "name" (including the slashes) into "API Key". Paste the entire "privateKey" PEM block — including the BEGIN/END lines and everything between them — into "API Secret" (the field is multi-line specifically for Coinbase). Click "Verify & Save".' },
+    },
+  ];
   const steps: Step[] =
     provider.id === 'bybit' ? bybitSteps
     : provider.id === 'binance' ? binanceSteps
@@ -1586,7 +1638,10 @@ function KeyGuide({ T, isRTL, provider }: { T: TradingTheme; isRTL: boolean; pro
     : provider.id === 'mexc_spot' ? mexcSpotSteps
     : provider.id === 'gate_futures' ? gateFuturesSteps
     : provider.id === 'kraken_futures' ? krakenFuturesSteps
+    : provider.id === 'crypto_com' ? cryptoComSteps
+    : provider.id === 'coinbase' ? coinbaseSteps
     : binanceSteps;
+
 
   return (
     <>
