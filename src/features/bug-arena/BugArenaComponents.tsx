@@ -1198,6 +1198,7 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
   const [bug, setBug] = useState<BugWithMeta | null>(null);
   const [comments, setComments] = useState<BugComment[]>([]);
   const [body, setBody] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const reload = () => {
     api.getBug(bugId, user.id).then(setBug);
@@ -1205,11 +1206,24 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
   };
   useEffect(reload, [bugId]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    let alive = true;
+    api.isAdmin(user.id).then((v) => alive && setIsAdmin(v));
+    return () => {
+      alive = false;
+    };
+  }, [api, user.id]);
+
   const send = async () => {
     if (!body.trim()) return;
     await api.addComment(bugId, body.trim());
     setBody('');
     api.listComments(bugId).then(setComments);
+  };
+
+  const handleVerdict = async (v: ResolutionVerdict, note?: string | null) => {
+    await api.setResolutionVerdict(bugId, user.id, v, note ?? null);
+    api.getBug(bugId, user.id).then(setBug);
   };
 
   return (
