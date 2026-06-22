@@ -313,6 +313,22 @@ export default function AuthPage() {
     } finally { setBusy(false); }
   };
 
+  const handleResendVerification = async () => {
+    if (!signupNotice) return;
+    setResending(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: signupNotice,
+        options: { emailRedirectTo: `${window.location.origin}/auth?verified=1` },
+      });
+      if (error) throw error;
+      toast.success(c.emailSent);
+    } catch (err) {
+      toast.error(translateAuthError(err instanceof Error ? err.message : 'Resend failed'));
+    } finally { setResending(false); }
+  };
+
   const featureList = [
     { icon: <LineChart size={14} />, label: c.feature1 },
     { icon: <ShieldCheck size={14} />, label: c.feature2 },
