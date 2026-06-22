@@ -29,13 +29,38 @@ async function hmacSha256Hex(secret: string, message: string): Promise<string> {
 }
 
 // ---------- Input sanitization (XSS / SQL / control chars) ----------
-// API keys from real exchanges are strictly alphanumeric (sometimes with - or _).
-// Anything else is structurally rejected before it can hit the upstream API or DB.
+// Standard exchange keys are strictly alphanumeric (sometimes with - or _).
+// Coinbase is a special case: the "key" is a CDP key NAME containing
+// slashes (organizations/.../apiKeys/...), and the "secret" is a multi-line
+// PEM private-key block. Both need bespoke validation patterns; if the
+// default SAFE_KEY/SAFE_SECRET were applied to a Coinbase key they would
+// always reject it before the verifier ever ran.
 const SAFE_KEY = /^[A-Za-z0-9_\-]{8,256}$/;
 const SAFE_SECRET = /^[A-Za-z0-9_\-+/=]{8,512}$/;
 const SAFE_LABEL = /^[A-Za-z0-9 _\-]{1,64}$/;
+// Coinbase CDP key name: lowercase hex segments joined by slashes.
+const COINBASE_KEY = /^[A-Za-z0-9_\-\/]{16,256}$/;
 
-const SUPPORTED_PROVIDERS = ['bybit', 'binance', 'mexc_futures', 'mexc_spot', 'gate_futures', 'kraken_futures'] as const;
+function isPemPrivateKey(s: string): boolean {
+  // Accepts Ed25519 PKCS8 (`BEGIN PRIVATE KEY`) and ECDSA SEC1
+  // (`BEGIN EC PRIVATE KEY`). The body is base64 with `+`, `/`, `=`,
+  // separated by newlines — we don't strictly parse it; we require the
+  // BEGIN/END envelope and bound the overall length.
+  if (s.length < 80 || s.length > 8192) return false;
+  const hasBegin = /-----BEGIN (?:EC )?PRIVATE KEY-----/.test(s);
+  const hasEnd = /-----END (?:EC )?PRIVATE KEY-----/.test(s);
+  if (!hasBegin || !hasEnd) return false;
+  // Everything outside the BEGIN/END envelope must be safe whitespace.
+  // We allow the standard PEM character set inside.
+  return /^[A-Za-z0-9_\-\s+/=:]+$/.test(s);
+}
+
+const SUPPORTED_PROVIDERS = [
+  'bybit', 'binance',
+  'mexc_futures', 'mexc_spot',
+  'gate_futures', 'kraken_futures',
+  'crypto_com', 'coinbase',
+] as const;
 type SupportedProvider = typeof SUPPORTED_PROVIDERS[number];
 
 export interface ValidatedInput {
@@ -58,14 +83,27 @@ export function validateInput(raw: unknown):
 
   const labelRaw = typeof b.label === 'string' && b.label.trim().length > 0 ? b.label.trim() : 'main';
   const apiKey = typeof b.api_key === 'string' ? b.api_key.trim() : '';
+  // Coinbase secrets are multi-line PEM blocks — DO NOT trim internal
+  // whitespace, only outer whitespace.
   const apiSecret = typeof b.api_secret === 'string' ? b.api_secret.trim() : '';
 
   if (!SAFE_LABEL.test(labelRaw)) return { ok: false, error: 'invalid_label', detail: 'Label contains forbidden characters' };
-  if (!SAFE_KEY.test(apiKey)) return { ok: false, error: 'invalid_api_key', detail: 'API key contains forbidden characters' };
-  if (!SAFE_SECRET.test(apiSecret)) return { ok: false, error: 'invalid_api_secret', detail: 'API secret contains forbidden characters' };
+
+  if (provider === 'coinbase') {
+    if (!COINBASE_KEY.test(apiKey)) {
+      return { ok: false, error: 'invalid_api_key', detail: 'Coinbase key name must look like organizations/.../apiKeys/...' };
+    }
+    if (!isPemPrivateKey(apiSecret)) {
+      return { ok: false, error: 'invalid_api_secret', detail: 'Coinbase secret must be a PEM private-key block (BEGIN PRIVATE KEY ... END PRIVATE KEY).' };
+    }
+  } else {
+    if (!SAFE_KEY.test(apiKey)) return { ok: false, error: 'invalid_api_key', detail: 'API key contains forbidden characters' };
+    if (!SAFE_SECRET.test(apiSecret)) return { ok: false, error: 'invalid_api_secret', detail: 'API secret contains forbidden characters' };
+  }
 
   return { ok: true, value: { provider: provider as SupportedProvider, label: labelRaw, api_key: apiKey, api_secret: apiSecret } };
 }
+
 
 // ---------- Rate limit (in-memory, structural placeholder) ----------
 // NOTE: Lovable Cloud does not yet expose durable rate-limit primitives.
@@ -346,6 +384,96 @@ export async function verifyKrakenFutures(
   return { ok: false, reason: 'kraken_futures_rejected', detail: body?.error ?? `status ${res.status}` };
 }
 
+// ---------- Provider: Crypto.com Exchange ----------
+// Crypto.com Exchange v1 does NOT expose per-key permission introspection,
+// so verification is a benign signed read (`private/user-balance`). The
+// payload-string signing rule (`params_to_str`) is replicated here so the
+// edge function and the sync function stay in lock-step.
+const CDC_BASE = 'https://api.crypto.com/exchange/v1';
+
+function cdcParamString(params: Record<string, unknown>): string {
+  return Object.keys(params).sort().map((k) => {
+    const v = (params as Record<string, unknown>)[k];
+    if (v === null || v === undefined) return k + 'null';
+    if (Array.isArray(v)) return k + v.map((x) =>
+      typeof x === 'object' && x !== null ? cdcParamString(x as Record<string, unknown>) : String(x)
+    ).join('');
+    if (typeof v === 'object') return k + cdcParamString(v as Record<string, unknown>);
+    return k + String(v);
+  }).join('');
+}
+
+export async function verifyCryptoCom(
+  apiKey: string, apiSecret: string, fetchImpl: typeof fetch = fetch,
+): Promise<{ ok: true } | { ok: false; reason: string; detail?: string }> {
+  const id = Date.now();
+  const nonce = Date.now();
+  const method = 'private/user-balance';
+  const params: Record<string, unknown> = {};
+  const sig = await hmacSha256Hex(apiSecret, method + id + apiKey + cdcParamString(params) + nonce);
+  const body = JSON.stringify({ id, method, api_key: apiKey, params, nonce, sig });
+  let res: Response;
+  try {
+    res = await fetchImpl(`${CDC_BASE}/${method}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+    });
+  } catch {
+    return { ok: false, reason: 'connection_error', detail: 'Crypto.com unreachable' };
+  }
+  if (res.status >= 500) return { ok: false, reason: 'connection_error', detail: `Crypto.com ${res.status}` };
+  const json = await res.json().catch(() => ({})) as { code?: number; message?: string };
+  if (res.ok && json?.code === 0) return { ok: true };
+  return { ok: false, reason: 'crypto_com_rejected', detail: json?.message ?? `code ${json?.code ?? res.status}` };
+}
+
+// ---------- Provider: Coinbase Advanced Trade ----------
+// Coinbase CDP auth: short-lived JWT (alg EdDSA for Ed25519 keys, ES256 for
+// ECDSA), signed with the user's PEM private key, passed as Bearer. We use
+// `jose` (esm.sh) so we don't hand-roll EdDSA/ES256 in Deno. The verifier
+// hits `/api/v3/brokerage/accounts` — a benign read; HTTP 200 == valid key.
+async function coinbaseJwt(keyName: string, pemSecret: string, method: string, path: string): Promise<string> {
+  const jose = await import('https://esm.sh/jose@5');
+  const isEd = /BEGIN PRIVATE KEY/.test(pemSecret) && !/BEGIN EC PRIVATE KEY/.test(pemSecret);
+  const alg = isEd ? 'EdDSA' : 'ES256';
+  const key = await jose.importPKCS8(pemSecret, alg);
+  const uri = `${method} api.coinbase.com${path}`;
+  return await new jose.SignJWT({ sub: keyName, uri })
+    .setProtectedHeader({ alg, kid: keyName, nonce: crypto.randomUUID(), typ: 'JWT' })
+    .setIssuedAt()
+    .setNotBefore('0s')
+    .setExpirationTime('120s')
+    .setIssuer('cdp')
+    .setAudience(['retail_rest_api_proxy'])
+    .sign(key);
+}
+
+export async function verifyCoinbase(
+  keyName: string, pemSecret: string, fetchImpl: typeof fetch = fetch,
+): Promise<{ ok: true } | { ok: false; reason: string; detail?: string }> {
+  let jwt: string;
+  try {
+    jwt = await coinbaseJwt(keyName, pemSecret, 'GET', '/api/v3/brokerage/accounts');
+  } catch (e) {
+    return { ok: false, reason: 'coinbase_rejected', detail: `pem_import_failed: ${(e as Error).message}` };
+  }
+  let res: Response;
+  try {
+    res = await fetchImpl('https://api.coinbase.com/api/v3/brokerage/accounts', {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${jwt}`, Accept: 'application/json' },
+    });
+  } catch {
+    return { ok: false, reason: 'connection_error', detail: 'Coinbase unreachable' };
+  }
+  if (res.status >= 500) return { ok: false, reason: 'connection_error', detail: `Coinbase ${res.status}` };
+  if (res.ok) return { ok: true };
+  const body = await res.json().catch(() => ({})) as { message?: string };
+  return { ok: false, reason: 'coinbase_rejected', detail: body?.message ?? `status ${res.status}` };
+}
+
+
 // ---------- Handler (dependency-injected for testability) ----------
 export interface HandlerDeps {
   getUserId: (authHeader: string) => Promise<string | null>;
@@ -378,17 +506,17 @@ export async function handler(req: Request, deps: HandlerDeps): Promise<Response
 
   // 4) Live exchange verification
   const { provider, api_key, api_secret, label } = v.value;
-  const verdict = provider === 'bybit'
-    ? await verifyBybit(api_key, api_secret, deps.fetchImpl)
-    : provider === 'binance'
-      ? await verifyBinance(api_key, api_secret, deps.fetchImpl)
-      : provider === 'mexc_futures'
-        ? await verifyMexcFutures(api_key, api_secret, deps.fetchImpl)
-        : provider === 'mexc_spot'
-          ? await verifyMexcSpot(api_key, api_secret, deps.fetchImpl)
-          : provider === 'gate_futures'
-            ? await verifyGateFutures(api_key, api_secret, deps.fetchImpl)
-            : await verifyKrakenFutures(api_key, api_secret, deps.fetchImpl);
+  const verifiers: Record<SupportedProvider, () => Promise<{ ok: true } | { ok: false; reason: string; detail?: string }>> = {
+    bybit:           () => verifyBybit(api_key, api_secret, deps.fetchImpl),
+    binance:         () => verifyBinance(api_key, api_secret, deps.fetchImpl),
+    mexc_futures:    () => verifyMexcFutures(api_key, api_secret, deps.fetchImpl),
+    mexc_spot:       () => verifyMexcSpot(api_key, api_secret, deps.fetchImpl),
+    gate_futures:    () => verifyGateFutures(api_key, api_secret, deps.fetchImpl),
+    kraken_futures:  () => verifyKrakenFutures(api_key, api_secret, deps.fetchImpl),
+    crypto_com:      () => verifyCryptoCom(api_key, api_secret, deps.fetchImpl),
+    coinbase:        () => verifyCoinbase(api_key, api_secret, deps.fetchImpl),
+  };
+  const verdict = await verifiers[provider]();
 
   if (!verdict.ok) {
     if (verdict.reason === 'connection_error') {

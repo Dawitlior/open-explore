@@ -956,8 +956,276 @@ function krakenFillsToTrades(fills: KrakenFill[], provider: string): BybitNormal
   return out;
 }
 
+// ============== Generalised spot FIFO (Crypto.com + Coinbase) ==============
+// Long-only spot FIFO with §3.1 proportional-fee fix. Same algorithm as
+// MEXC spot, but parametrised so external_id and broker tag are per-provider
+// and so we can plug in any spot exchange whose fills expose isBuyer/price/
+// qty/commission/time/id. The pure-TS mirror lives in
+// `src/lib/brokers/_recon/_spot_fifo.ts` and is covered by recon tests.
+interface SpotFill {
+  id: string | number;
+  symbol: string;
+  price: number | string;
+  qty: number | string;
+  commission?: number | string;
+  time: number;
+  isBuyer: boolean;
+}
+
+function spotFifoTrades(provider: string, symbol: string, fills: SpotFill[]): BybitNormalized[] {
+  const sorted = [...fills].sort(
+    (a, b) => (Number(a.time) - Number(b.time)) || (String(a.id) < String(b.id) ? -1 : 1),
+  );
+  const buyQueue: { price: number; qty: number; fee: number; time: number }[] = [];
+  const out: BybitNormalized[] = [];
+
+  for (const f of sorted) {
+    const price = Number(f.price) || 0;
+    const qty = Math.abs(Number(f.qty) || 0);
+    const fee = Math.abs(Number(f.commission || 0));
+    if (!qty) continue;
+
+    if (f.isBuyer) {
+      buyQueue.push({ price, qty, fee, time: Number(f.time) });
+      continue;
+    }
+    const sellQty = qty;
+    const sellFee = fee;
+    let remaining = qty;
+    let matchIndex = 0;
+    while (remaining > 1e-12 && buyQueue.length > 0) {
+      const lot = buyQueue[0];
+      const matched = Math.min(remaining, lot.qty);
+      const portion = lot.qty > 0 ? matched / lot.qty : 0;
+      const buyFeePortion = lot.fee * portion;
+      lot.fee -= buyFeePortion;
+      const sellFeePortion = sellQty > 0 ? sellFee * (matched / sellQty) : 0;
+      const pnl = (price - lot.price) * matched - buyFeePortion - sellFeePortion;
+      const externalId = `${provider}:${symbol}:${f.id}:${matchIndex}`;
+      const closeMs = Number(f.time);
+      const d = new Date(closeMs);
+      const iso = d.toISOString().slice(0, 19).replace('T', ' ');
+      const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
+      const winLoss: 'Win' | 'Loss' | 'Break Even' = pnl > 0 ? 'Win' : pnl < 0 ? 'Loss' : 'Break Even';
+      out.push({
+        legacy: {
+          date: iso, day: dayName, coin: symbol, direction: 'Long',
+          orderType: 'Market',
+          entry: lot.price, stopLoss: 0, exit: price,
+          returnR: 0, winLoss, risk: 0, expectedLoss: 0,
+          pnl, deviation: 0,
+          positionSize: matched * lot.price,
+          leverage: 1, riskPct: 0, rules: true,
+          comments: `__CLOSED:${externalId}__ ${provider} fees:${(buyFeePortion + sellFeePortion).toFixed(8)}`,
+          exchange_provider: provider,
+          exchange_exec_id: externalId,
+        },
+        provenance: {
+          broker_id: provider,
+          source_type: 'api_sync',
+          asset_class: 'crypto',
+          external_id: externalId,
+          opened_at: new Date(lot.time).toISOString(),
+          closed_at: new Date(closeMs).toISOString(),
+        },
+      });
+      lot.qty -= matched;
+      remaining -= matched;
+      matchIndex++;
+      if (lot.qty <= 1e-12) buyQueue.shift();
+    }
+  }
+  return out;
+}
+
+// ============== Crypto.com Exchange v1 (private/get-trades → spot FIFO) ==============
+const CDC_BASE = 'https://api.crypto.com/exchange/v1';
+
+function cdcParamString(params: Record<string, unknown>): string {
+  return Object.keys(params).sort().map((k) => {
+    const v = (params as Record<string, unknown>)[k];
+    if (v === null || v === undefined) return k + 'null';
+    if (Array.isArray(v)) return k + v.map((x) =>
+      typeof x === 'object' && x !== null ? cdcParamString(x as Record<string, unknown>) : String(x)
+    ).join('');
+    if (typeof v === 'object') return k + cdcParamString(v as Record<string, unknown>);
+    return k + String(v);
+  }).join('');
+}
+
+interface CryptoComTrade {
+  trade_id: string | number;
+  instrument_name: string;
+  side: string;
+  traded_price: string | number;
+  traded_quantity: string | number;
+  fees?: string | number;
+  create_time: number;
+}
+
+async function cdcSignedPost(
+  apiKey: string, apiSecret: string, method: string, params: Record<string, unknown> = {},
+): Promise<{ ok: true; body: { code?: number; result?: { data?: CryptoComTrade[] }; message?: string } } | BybitFetchError> {
+  const id = Date.now();
+  const nonce = Date.now();
+  const sig = await hmacSha256Hex(apiSecret, method + id + apiKey + cdcParamString(params) + nonce);
+  const body = JSON.stringify({ id, method, api_key: apiKey, params, nonce, sig });
+  let res: Response;
+  try {
+    res = await fetch(`${CDC_BASE}/${method}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+    });
+  } catch (e) {
+    return { ok: false, status: 503, error: 'exchange_unreachable', detail: (e as Error).message || 'fetch_failed' };
+  }
+  if (res.status >= 500) return { ok: false, status: 503, error: 'exchange_unreachable', detail: `cdc_http_${res.status}` };
+  const text = await res.text();
+  let json: { code?: number; result?: { data?: CryptoComTrade[] }; message?: string };
+  try { json = JSON.parse(text); } catch { json = {}; }
+  if (res.status === 401 || res.status === 403) {
+    return { ok: false, status: 401, error: 'crypto_com_rejected', detail: json?.message || `status ${res.status}` };
+  }
+  if (!res.ok || json?.code !== 0) {
+    return { ok: false, status: 422, error: 'crypto_com_rejected', detail: json?.message || `code ${json?.code ?? res.status}` };
+  }
+  return { ok: true, body: json };
+}
+
+async function fetchCryptoComTrades(
+  apiKey: string, apiSecret: string,
+): Promise<{ ok: true; list: CryptoComTrade[] } | BybitFetchError> {
+  const r = await cdcSignedPost(apiKey, apiSecret, 'private/get-trades', {});
+  if (!r.ok) return r;
+  const rows = Array.isArray(r.body?.result?.data) ? r.body.result!.data! : [];
+  return { ok: true, list: rows };
+}
+
+function cryptoComToTrades(rows: CryptoComTrade[], provider: string): BybitNormalized[] {
+  const bySymbol = new Map<string, CryptoComTrade[]>();
+  for (const r of rows) {
+    if (!r?.instrument_name) continue;
+    if (!bySymbol.has(r.instrument_name)) bySymbol.set(r.instrument_name, []);
+    bySymbol.get(r.instrument_name)!.push(r);
+  }
+  const out: BybitNormalized[] = [];
+  for (const [symbol, list] of bySymbol) {
+    const fills: SpotFill[] = list.map((t) => ({
+      id: t.trade_id,
+      symbol: t.instrument_name,
+      price: Number(t.traded_price),
+      qty: Number(t.traded_quantity),
+      commission: Math.abs(Number(t.fees ?? 0)),
+      time: Number(t.create_time),
+      isBuyer: String(t.side).toUpperCase() === 'BUY',
+    }));
+    out.push(...spotFifoTrades(provider, symbol, fills));
+  }
+  return out;
+}
+
+// ============== Coinbase Advanced Trade (JWT + PEM, fills → spot FIFO) ==============
+async function coinbaseJwt(keyName: string, pemSecret: string, method: string, path: string): Promise<string> {
+  const jose = await import('https://esm.sh/jose@5');
+  const isEd = /BEGIN PRIVATE KEY/.test(pemSecret) && !/BEGIN EC PRIVATE KEY/.test(pemSecret);
+  const alg = isEd ? 'EdDSA' : 'ES256';
+  const key = await jose.importPKCS8(pemSecret, alg);
+  const uri = `${method} api.coinbase.com${path}`;
+  return await new jose.SignJWT({ sub: keyName, uri })
+    .setProtectedHeader({ alg, kid: keyName, nonce: crypto.randomUUID(), typ: 'JWT' })
+    .setIssuedAt()
+    .setNotBefore('0s')
+    .setExpirationTime('120s')
+    .setIssuer('cdp')
+    .setAudience(['retail_rest_api_proxy'])
+    .sign(key);
+}
+
+interface CoinbaseFill {
+  trade_id: string | number;
+  product_id: string;
+  side: string;
+  price: string | number;
+  size: string | number;
+  commission?: string | number;
+  trade_time: string;
+}
+
+async function coinbaseGet(
+  keyName: string, pemSecret: string, path: string, query = '',
+): Promise<{ ok: true; body: { fills?: CoinbaseFill[]; cursor?: string; message?: string } } | BybitFetchError> {
+  let jwt: string;
+  try { jwt = await coinbaseJwt(keyName, pemSecret, 'GET', path); }
+  catch (e) { return { ok: false, status: 422, error: 'coinbase_rejected', detail: `pem_import_failed: ${(e as Error).message}` }; }
+  const url = query ? `https://api.coinbase.com${path}?${query}` : `https://api.coinbase.com${path}`;
+  let res: Response;
+  try {
+    res = await fetch(url, { headers: { Authorization: `Bearer ${jwt}`, Accept: 'application/json' } });
+  } catch (e) {
+    return { ok: false, status: 503, error: 'exchange_unreachable', detail: (e as Error).message || 'fetch_failed' };
+  }
+  if (res.status >= 500) return { ok: false, status: 503, error: 'exchange_unreachable', detail: `coinbase_http_${res.status}` };
+  const text = await res.text();
+  let body: { fills?: CoinbaseFill[]; cursor?: string; message?: string };
+  try { body = JSON.parse(text); } catch { body = {}; }
+  if (res.status === 401 || res.status === 403) {
+    return { ok: false, status: 401, error: 'coinbase_rejected', detail: body?.message || `status ${res.status}` };
+  }
+  if (res.status >= 400) {
+    return { ok: false, status: 422, error: 'coinbase_rejected', detail: body?.message || `status ${res.status}` };
+  }
+  return { ok: true, body };
+}
+
+async function fetchCoinbaseFills(
+  keyName: string, pemSecret: string,
+): Promise<{ ok: true; list: CoinbaseFill[] } | BybitFetchError> {
+  const all: CoinbaseFill[] = [];
+  let cursor = '';
+  const MAX_PAGES = 50;
+  for (let i = 0; i < MAX_PAGES; i++) {
+    const query = cursor ? `limit=100&cursor=${encodeURIComponent(cursor)}` : 'limit=100';
+    const r = await coinbaseGet(keyName, pemSecret, '/api/v3/brokerage/orders/historical/fills', query);
+    if (!r.ok) return r;
+    const fills = Array.isArray(r.body.fills) ? r.body.fills : [];
+    all.push(...fills);
+    const nextCursor = (r.body.cursor || '').toString();
+    if (!nextCursor || nextCursor === cursor || fills.length === 0) break;
+    cursor = nextCursor;
+  }
+  return { ok: true, list: all };
+}
+
+function coinbaseToTrades(rows: CoinbaseFill[], provider: string): BybitNormalized[] {
+  const bySymbol = new Map<string, CoinbaseFill[]>();
+  for (const r of rows) {
+    if (!r?.product_id) continue;
+    if (!bySymbol.has(r.product_id)) bySymbol.set(r.product_id, []);
+    bySymbol.get(r.product_id)!.push(r);
+  }
+  const out: BybitNormalized[] = [];
+  for (const [symbol, list] of bySymbol) {
+    const fills: SpotFill[] = list.map((f) => ({
+      id: f.trade_id,
+      symbol: f.product_id,
+      price: Number(f.price),
+      qty: Number(f.size),
+      commission: Math.abs(Number(f.commission ?? 0)),
+      time: new Date(f.trade_time).getTime(),
+      isBuyer: String(f.side).toUpperCase() === 'BUY',
+    }));
+    out.push(...spotFifoTrades(provider, symbol, fills));
+  }
+  return out;
+}
+
 // Provider dispatch table — used by the handler's bulk path.
-type ProviderId = 'bybit' | 'binance' | 'mexc_futures' | 'mexc_spot' | 'gate_futures' | 'kraken_futures';
+type ProviderId =
+  | 'bybit' | 'binance'
+  | 'mexc_futures' | 'mexc_spot'
+  | 'gate_futures' | 'kraken_futures'
+  | 'crypto_com' | 'coinbase';
 async function fetchProviderClosedTrades(
   provider: ProviderId,
   apiKey: string,
@@ -1025,6 +1293,22 @@ async function fetchProviderClosedTrades(
       list: krakenFillsToTrades(r.list, provider).map(n => ({ ...n, key: n.provenance.external_id })),
     };
   }
+  if (provider === 'crypto_com') {
+    const r = await fetchCryptoComTrades(apiKey, apiSecret);
+    if (!r.ok) return r;
+    return {
+      ok: true,
+      list: cryptoComToTrades(r.list, provider).map(n => ({ ...n, key: n.provenance.external_id })),
+    };
+  }
+  if (provider === 'coinbase') {
+    const r = await fetchCoinbaseFills(apiKey, apiSecret);
+    if (!r.ok) return r;
+    return {
+      ok: true,
+      list: coinbaseToTrades(r.list, provider).map(n => ({ ...n, key: n.provenance.external_id })),
+    };
+  }
   return { ok: false, status: 400, error: 'unsupported_provider', detail: provider };
 }
 
@@ -1072,7 +1356,7 @@ Deno.serve(async (req) => {
     catch { return json({ ok: false, error: 'invalid_body', detail: 'json_parse_failed' }, 400); }
 
     const provider = String(body.provider || '').toLowerCase().trim() as ProviderId;
-    const ALLOWED_PROVIDERS: ProviderId[] = ['bybit', 'binance', 'mexc_futures', 'mexc_spot', 'gate_futures', 'kraken_futures'];
+    const ALLOWED_PROVIDERS: ProviderId[] = ['bybit', 'binance', 'mexc_futures', 'mexc_spot', 'gate_futures', 'kraken_futures', 'crypto_com', 'coinbase'];
     if (!ALLOWED_PROVIDERS.includes(provider)) {
       return json({ ok: false, error: 'unsupported_provider', detail: `Provider '${provider}' is not supported yet` }, 400);
     }
@@ -1183,7 +1467,7 @@ Deno.serve(async (req) => {
     // If the user has engaged the live-risk kill switch, do NOT write any new
     // rows. Returns structured `sync_blocked_kill_switch` so the UI can show
     // the honest reason instead of a silent success.
-    if (provider === 'mexc_futures' || provider === 'mexc_spot' || provider === 'gate_futures' || provider === 'kraken_futures') {
+    if (provider === 'mexc_futures' || provider === 'mexc_spot' || provider === 'gate_futures' || provider === 'kraken_futures' || provider === 'crypto_com' || provider === 'coinbase') {
       try {
         const { data: locks } = await admin
           .from('live_risk_locks')
