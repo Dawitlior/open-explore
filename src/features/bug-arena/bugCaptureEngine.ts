@@ -127,6 +127,17 @@ export interface PickerOptions {
   /** Text shown in the floating hint. Defaults to Hebrew. */
   hintText?: string;
   cancelText?: string;
+export interface PickerOptions {
+  /** Hint shown to the user inside the bottom pill. */
+  hintText?: string;
+  /** Cancel button label. */
+  cancelText?: string;
+  /** Scroll-mode toggle label (inactive state — "tap to scroll the page"). */
+  scrollText?: string;
+  /** Scroll-mode toggle label (active state — "tap to resume picking"). */
+  scrollActiveText?: string;
+  /** Text direction of the bottom pill — RTL for Hebrew, LTR for English. */
+  dir?: 'rtl' | 'ltr';
   /** Accent color for the highlight ring. */
   accent?: string;
 }
@@ -151,9 +162,13 @@ export class ElementPicker {
     this.opts = {
       hintText: options.hintText ?? 'הקש על האלמנט הפגום',
       cancelText: options.cancelText ?? 'ביטול',
+      scrollText: options.scrollText ?? 'גלול',
+      scrollActiveText: options.scrollActiveText ?? 'בחר',
+      dir: options.dir ?? 'rtl',
       accent: options.accent ?? '#f5c542', // ORCA gold
     };
   }
+
 
   get active(): boolean {
     return !!this.overlay;
