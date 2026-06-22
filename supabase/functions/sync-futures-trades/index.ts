@@ -1467,7 +1467,7 @@ Deno.serve(async (req) => {
     // If the user has engaged the live-risk kill switch, do NOT write any new
     // rows. Returns structured `sync_blocked_kill_switch` so the UI can show
     // the honest reason instead of a silent success.
-    if (provider === 'mexc_futures' || provider === 'mexc_spot' || provider === 'gate_futures' || provider === 'kraken_futures') {
+    if (provider === 'mexc_futures' || provider === 'mexc_spot' || provider === 'gate_futures' || provider === 'kraken_futures' || provider === 'crypto_com' || provider === 'coinbase') {
       try {
         const { data: locks } = await admin
           .from('live_risk_locks')
