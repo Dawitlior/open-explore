@@ -991,46 +991,78 @@ function CredentialModal({
           />
         </Field>
 
-        {/* API Key */}
-        <Field label="API Key" T={T}>
+        {/* API Key — for Coinbase this is the long CDP key NAME
+            (organizations/.../apiKeys/...), which contains slashes. */}
+        <Field
+          label={provider.id === 'coinbase' ? t('שם המפתח (Key Name)', 'Key Name') : 'API Key'}
+          T={T}
+        >
           <input
             value={apiKey}
             onChange={e => setApiKey(e.target.value)}
-            placeholder={provider.id === 'bybit' ? 'XXXXXXXXXXXXXXXXXXXX' : 'XXXXXXXXXXXXXXXXXXXX'}
+            placeholder={
+              provider.id === 'coinbase'
+                ? 'organizations/.../apiKeys/...'
+                : 'XXXXXXXXXXXXXXXXXXXX'
+            }
             autoComplete="off"
             spellCheck={false}
             style={inputStyle(T, mono)}
           />
         </Field>
 
-        {/* API Secret */}
-        <Field label="API Secret" T={T}>
-          <div style={{ position: 'relative' }}>
-            <input
-              type={showSecret ? 'text' : 'password'}
+        {/* API Secret — for Coinbase the secret is a MULTI-LINE PEM
+            private-key block. Use a tall textarea so the BEGIN/END lines
+            and newlines paste verbatim. */}
+        <Field
+          label={provider.id === 'coinbase' ? t('מפתח פרטי (Private Key — בלוק PEM)', 'Private Key (PEM block)') : 'API Secret'}
+          T={T}
+        >
+          {provider.id === 'coinbase' ? (
+            <textarea
               value={apiSecret}
               onChange={e => setApiSecret(e.target.value)}
-              placeholder="••••••••••••••••••••••••"
+              placeholder={'-----BEGIN PRIVATE KEY-----\nMC4CAQ...\n-----END PRIVATE KEY-----'}
               autoComplete="off"
               spellCheck={false}
-              style={{ ...inputStyle(T, mono), paddingInlineEnd: 64 }}
-            />
-            <button
-              type="button"
-              onClick={() => setShowSecret(s => !s)}
+              rows={8}
               style={{
-                position: 'absolute', top: '50%', insetInlineEnd: 8, transform: 'translateY(-50%)',
-                background: 'transparent', border: 'none', color: T.text.muted,
-                fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: mono,
-                letterSpacing: 0.5, textTransform: 'uppercase',
+                ...inputStyle(T, mono),
+                fontSize: 11,
+                lineHeight: 1.45,
+                minHeight: 160,
+                whiteSpace: 'pre',
+                resize: 'vertical',
               }}
-            >
-              {showSecret ? t('הסתר', 'Hide') : t('הצג', 'Show')}
-            </button>
-          </div>
+            />
+          ) : (
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showSecret ? 'text' : 'password'}
+                value={apiSecret}
+                onChange={e => setApiSecret(e.target.value)}
+                placeholder="••••••••••••••••••••••••"
+                autoComplete="off"
+                spellCheck={false}
+                style={{ ...inputStyle(T, mono), paddingInlineEnd: 64 }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowSecret(s => !s)}
+                style={{
+                  position: 'absolute', top: '50%', insetInlineEnd: 8, transform: 'translateY(-50%)',
+                  background: 'transparent', border: 'none', color: T.text.muted,
+                  fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: mono,
+                  letterSpacing: 0.5, textTransform: 'uppercase',
+                }}
+              >
+                {showSecret ? t('הסתר', 'Hide') : t('הצג', 'Show')}
+              </button>
+            </div>
+          )}
         </Field>
 
-        {/* Vault note */}
+        {/* Vault note + Coinbase-specific PEM hint */}
         <div style={{
           marginTop: 6, marginBottom: 16,
           fontSize: 10.5, color: T.text.muted, fontFamily: sans,
@@ -1042,6 +1074,20 @@ function CredentialModal({
             'The private secret is encrypted and stored in the server-side vault. No copy is kept in your browser.'
           )}
         </div>
+        {provider.id === 'coinbase' && (
+          <div style={{
+            marginTop: -6, marginBottom: 16,
+            fontSize: 10.5, color: T.text.muted, fontFamily: sans,
+            display: 'flex', alignItems: 'flex-start', gap: 6, lineHeight: 1.5,
+          }}>
+            <BookOpen size={11} style={{ marginTop: 2, flexShrink: 0 }} />
+            {t(
+              'הסוד הוא בלוק PEM רב-שורתי. הדבק את הקובץ כולו — כולל שורות ה-BEGIN PRIVATE KEY ו-END PRIVATE KEY.',
+              'The secret is a multi-line PEM block. Paste the whole block — including the BEGIN PRIVATE KEY and END PRIVATE KEY lines.'
+            )}
+          </div>
+        )}
+
 
         {/* Actions */}
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', position: 'relative' }}>
