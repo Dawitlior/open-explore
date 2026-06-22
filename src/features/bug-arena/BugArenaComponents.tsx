@@ -30,16 +30,19 @@ import {
   statusLabel,
   type BugComment,
   type BugReporter,
+  type BugResolutionFeedback,
   type BugSeverity,
   type BugStatus,
   type BugType,
   type BugWithMeta,
+  type ResolutionVerdict,
 } from './bugArenaTypes';
 import { useLang } from '@/hooks/use-lang';
 import { User } from 'lucide-react';
 
 const ACCENT = '#f5c542'; // ORCA gold
 const CYAN = '#37e0c6';
+const RED = '#ff5470';
 
 // Translate the Hebrew section names stored in DB to the active UI language.
 const SECTION_EN: Record<string, string> = {
@@ -844,6 +847,7 @@ export function BugBoard() {
                   onJoin={() => board.join(b)}
                   onLeaveOrDelete={() => board.leaveOrDelete(b)}
                   onStatus={(s) => board.setStatus(b, s)}
+                  onVerdict={(v, note) => board.setVerdict(b, v, note)}
                   onOpen={() => setOpenBug(b)}
                 />
               ))}
@@ -875,6 +879,7 @@ function BugCard({
   onJoin,
   onLeaveOrDelete,
   onStatus,
+  onVerdict,
   onOpen,
 }: {
   bug: BugWithMeta;
@@ -883,6 +888,7 @@ function BugCard({
   onJoin: () => void;
   onLeaveOrDelete: () => void;
   onStatus: (s: BugStatus) => void;
+  onVerdict: (v: ResolutionVerdict, note?: string | null) => void;
   onOpen: () => void;
 }) {
   const { lang, isRTL, t } = useLang();
@@ -983,6 +989,8 @@ function BugCard({
       </div>
 
       {reportersOpen && <ReportersPopover reporters={bug.reporters} />}
+
+      <ResolutionAppeal bug={bug} onVerdict={onVerdict} />
     </article>
   );
 }
@@ -1028,6 +1036,158 @@ function ReportersPopover({ reporters }: { reporters: BugReporter[] }) {
 }
 
 
+// ---------------------------------------------------------------------
+// Resolution feedback — reporter buttons (סודר / לא סודר)
+// ---------------------------------------------------------------------
+function ResolutionAppeal({
+  bug,
+  onVerdict,
+}: {
+  bug: BugWithMeta;
+  onVerdict: (v: ResolutionVerdict, note?: string | null) => void;
+}) {
+  const { isRTL, t } = useLang();
+  // For a reporter, RLS returns only their own feedback row (if any).
+  const mine = bug.feedback[0];
+  const [reason, setReason] = useState(mine?.note ?? '');
+  if (bug.status !== 'resolved' || !bug.isMine) return null;
+  const v = bug.myVerdict;
+  return (
+    <div
+      data-bug-resolution-appeal
+      dir={isRTL ? 'rtl' : 'ltr'}
+      className="mt-3 rounded-xl border border-white/10 bg-white/[0.04] p-3"
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-sm font-bold text-white/80">
+          {t('האם הבאג סודר?', 'Was the bug fixed?')}
+        </span>
+        <button
+          onClick={() => onVerdict('fixed', null)}
+          className="rounded-full px-3 py-1 text-sm font-bold transition"
+          style={{
+            background: v === 'fixed' ? CYAN : 'rgba(255,255,255,0.08)',
+            color: v === 'fixed' ? '#06121f' : '#cdd6e3',
+          }}
+        >
+          {t('סודר ✓', 'Fixed ✓')}
+        </button>
+        <button
+          onClick={() => onVerdict('not_fixed', reason || null)}
+          className="rounded-full px-3 py-1 text-sm font-bold transition"
+          style={{
+            background: v === 'not_fixed' ? RED : 'rgba(255,255,255,0.08)',
+            color: v === 'not_fixed' ? '#06121f' : '#cdd6e3',
+          }}
+        >
+          {t('לא סודר ✗', 'Not fixed ✗')}
+        </button>
+        {v === 'fixed' && (
+          <span className="text-xs text-white/50">{t('תודה — נרשם', 'Thanks — recorded')}</span>
+        )}
+      </div>
+
+      {v === 'not_fixed' && (
+        <div className="mt-2 flex gap-2">
+          <input
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder={t('מה עדיין לא תקין? (לא חובה)', "What's still broken? (optional)")}
+            className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm outline-none"
+          />
+          <button
+            onClick={() => onVerdict('not_fixed', reason || null)}
+            className="rounded-lg px-3 py-1.5 text-sm font-bold text-[#06121f]"
+            style={{ background: ACCENT }}
+          >
+            {t('עדכן', 'Update')}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------
+// Resolution feedback panel — admin-only (RLS already hides data)
+// ---------------------------------------------------------------------
+function ResolutionFeedbackPanel({
+  bug,
+  isAdmin,
+}: {
+  bug: BugWithMeta;
+  isAdmin: boolean;
+}) {
+  const { lang, isRTL, t } = useLang();
+  if (!isAdmin || bug.status !== 'resolved') return null;
+  const fixed = bug.feedback.filter((f) => f.verdict === 'fixed');
+  const notFixed = bug.feedback.filter((f) => f.verdict === 'not_fixed');
+  return (
+    <div
+      data-bug-resolution-panel
+      dir={isRTL ? 'rtl' : 'ltr'}
+      className="rounded-xl border border-white/10 bg-[#0d1a20] p-3"
+    >
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span className="text-xs font-bold uppercase tracking-wide" style={{ color: CYAN }}>
+          {t('משוב פתרון · גלוי לך בלבד', 'Resolution feedback · admin-only')}
+        </span>
+        <span className="text-[11px] text-white/50">
+          {fixed.length} {t('סודר', 'fixed')} · {notFixed.length} {t('לא סודר', 'not fixed')}
+        </span>
+      </div>
+      {notFixed.length > 0 && (
+        <div
+          className="mb-2 rounded-lg px-2 py-1 text-xs font-bold"
+          style={{ background: `${RED}22`, color: RED }}
+        >
+          ⚠️ {notFixed.length}{' '}
+          {t('מדווחים טוענים שהבאג עדיין לא נפתר', 'reporters say the bug is still not fixed')}
+        </div>
+      )}
+      {bug.feedback.length === 0 ? (
+        <p className="text-xs text-white/40">
+          {t('עדיין אין משוב מהמדווחים.', 'No feedback from reporters yet.')}
+        </p>
+      ) : (
+        <ul className="space-y-2">
+          {bug.feedback.map((f: BugResolutionFeedback) => (
+            <li key={f.user_id} className="rounded-lg bg-white/[0.03] p-2">
+              <div className="flex items-center gap-2">
+                <span
+                  className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold"
+                  style={{ background: '#23324a' }}
+                >
+                  {initials(f.profile?.display_name)}
+                </span>
+                <span className="text-xs font-semibold">
+                  {f.profile?.display_name || t('משתמש', 'User')}
+                </span>
+                <span
+                  className="rounded-full px-2 py-0.5 text-[10px] font-bold"
+                  style={{
+                    background: f.verdict === 'fixed' ? `${CYAN}22` : `${RED}22`,
+                    color: f.verdict === 'fixed' ? CYAN : RED,
+                  }}
+                >
+                  {f.verdict === 'fixed' ? t('סודר', 'Fixed') : t('לא סודר', 'Not fixed')}
+                </span>
+                <span className={`${isRTL ? 'mr-auto' : 'ml-auto'} text-[11px] text-white/30`}>
+                  {timeAgo(f.updated_at, lang)}
+                </span>
+              </div>
+              {f.note && (
+                <p className="mt-1 text-xs text-white/70">&ldquo;{f.note}&rdquo;</p>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+
 // =====================================================================
 // DETAIL  (full view + comments)
 // =====================================================================
@@ -1038,6 +1198,7 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
   const [bug, setBug] = useState<BugWithMeta | null>(null);
   const [comments, setComments] = useState<BugComment[]>([]);
   const [body, setBody] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const reload = () => {
     api.getBug(bugId, user.id).then(setBug);
@@ -1045,11 +1206,24 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
   };
   useEffect(reload, [bugId]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    let alive = true;
+    api.isAdmin(user.id).then((v) => alive && setIsAdmin(v));
+    return () => {
+      alive = false;
+    };
+  }, [api, user.id]);
+
   const send = async () => {
     if (!body.trim()) return;
     await api.addComment(bugId, body.trim());
     setBody('');
     api.listComments(bugId).then(setComments);
+  };
+
+  const handleVerdict = async (v: ResolutionVerdict, note?: string | null) => {
+    await api.setResolutionVerdict(bugId, user.id, v, note ?? null);
+    api.getBug(bugId, user.id).then(setBug);
   };
 
   return (
@@ -1118,6 +1292,9 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
                 )}
               </div>
             )}
+
+            <ResolutionAppeal bug={bug} onVerdict={handleVerdict} />
+            <ResolutionFeedbackPanel bug={bug} isAdmin={isAdmin} />
 
             <ReportersPopover reporters={bug.reporters} />
 

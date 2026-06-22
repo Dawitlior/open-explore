@@ -11,6 +11,7 @@ import type {
   BugWithMeta,
   BoardFilter,
   BugStatus,
+  ResolutionVerdict,
 } from './bugArenaTypes';
 
 export interface UseBugReports {
@@ -30,6 +31,13 @@ export interface UseBugReports {
   leaveOrDelete: (bug: BugWithMeta) => Promise<void>;
   remove: (bug: BugWithMeta) => Promise<void>;
   setStatus: (bug: BugWithMeta, status: BugStatus) => Promise<void>;
+
+  setVerdict: (
+    bug: BugWithMeta,
+    verdict: ResolutionVerdict,
+    note?: string | null
+  ) => Promise<void>;
+  clearVerdict: (bug: BugWithMeta) => Promise<void>;
 
   /** whether the action button for this bug should read delete vs leave */
   canHardDelete: (bug: BugWithMeta) => boolean;
@@ -99,6 +107,7 @@ export function useBugReports(
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bug_reports' }, bump)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bug_reporters' }, bump)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bug_attachments' }, bump)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bug_resolution_feedback' }, bump)
       .subscribe();
     return () => {
       if (t) clearTimeout(t);
@@ -152,6 +161,22 @@ export function useBugReports(
     [api, load]
   );
 
+  const setVerdict = useCallback(
+    async (bug: BugWithMeta, verdict: ResolutionVerdict, note?: string | null) => {
+      await api.setResolutionVerdict(bug.id, currentUserId, verdict, note ?? null);
+      load();
+    },
+    [api, currentUserId, load]
+  );
+
+  const clearVerdict = useCallback(
+    async (bug: BugWithMeta) => {
+      await api.clearResolutionVerdict(bug.id, currentUserId);
+      load();
+    },
+    [api, currentUserId, load]
+  );
+
   const grouped = useMemo(() => {
     const map = new Map<string, BugWithMeta[]>();
     for (const b of bugs) {
@@ -177,6 +202,8 @@ export function useBugReports(
     leaveOrDelete,
     remove,
     setStatus,
+    setVerdict,
+    clearVerdict,
     canHardDelete,
   };
 }

@@ -248,6 +248,41 @@ export type Database = {
         }
         Relationships: []
       }
+      bug_resolution_feedback: {
+        Row: {
+          bug_id: string
+          created_at: string
+          note: string | null
+          updated_at: string
+          user_id: string
+          verdict: string
+        }
+        Insert: {
+          bug_id: string
+          created_at?: string
+          note?: string | null
+          updated_at?: string
+          user_id: string
+          verdict: string
+        }
+        Update: {
+          bug_id?: string
+          created_at?: string
+          note?: string | null
+          updated_at?: string
+          user_id?: string
+          verdict?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bug_resolution_feedback_bug_id_fkey"
+            columns: ["bug_id"]
+            isOneToOne: false
+            referencedRelation: "bug_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_errors: {
         Row: {
           created_at: string

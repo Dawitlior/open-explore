@@ -24,9 +24,11 @@ import type {
   BugComment,
   BugReport,
   BugReporter,
+  BugResolutionFeedback,
   BugWithMeta,
   BoardFilter,
   CreateBugInput,
+  ResolutionVerdict,
   SimilarBugQuery,
   AttachmentKind,
   BugStatus,
@@ -51,6 +53,14 @@ export interface BugArenaService {
   leaveBug(bugId: string, userId: string): Promise<void>;
   updateMyNote(bugId: string, userId: string, note: string): Promise<void>;
 
+  setResolutionVerdict(
+    bugId: string,
+    userId: string,
+    verdict: ResolutionVerdict,
+    note?: string | null
+  ): Promise<void>;
+  clearResolutionVerdict(bugId: string, userId: string): Promise<void>;
+
   uploadAttachment(
     bugId: string,
     userId: string,
@@ -71,7 +81,8 @@ export interface BugArenaService {
 const SELECT_BUG = `
   *,
   reporters:bug_reporters(bug_id, user_id, note, created_at),
-  attachments:bug_attachments(id, bug_id, user_id, storage_path, kind, width, height, created_at)
+  attachments:bug_attachments(id, bug_id, user_id, storage_path, kind, width, height, created_at),
+  feedback:bug_resolution_feedback(bug_id, user_id, verdict, note, created_at, updated_at)
 `;
 
 export function createBugArenaService(supabase: SupabaseClient): BugArenaService {
@@ -107,6 +118,7 @@ export function createBugArenaService(supabase: SupabaseClient): BugArenaService
     for (const r of rows) {
       for (const a of r.attachments || []) paths.push(a.storage_path);
       for (const rep of r.reporters || []) personIds.push(rep.user_id);
+      for (const f of r.feedback || []) personIds.push(f.user_id);
     }
     const [urlMap, people] = await Promise.all([
       signedUrlMap(paths),
@@ -122,6 +134,10 @@ export function createBugArenaService(supabase: SupabaseClient): BugArenaService
         ...rep,
         profile: people.get(rep.user_id) ?? null,
       }));
+      const feedback: BugResolutionFeedback[] = (r.feedback || []).map((f: any) => ({
+        ...f,
+        profile: people.get(f.user_id) ?? null,
+      }));
       const cover =
         attachments.find((a) => a.kind === 'annotation') ||
         attachments.find((a) => a.kind === 'screenshot') ||
@@ -130,6 +146,8 @@ export function createBugArenaService(supabase: SupabaseClient): BugArenaService
         ...r,
         reporters,
         attachments,
+        feedback,
+        myVerdict: feedback.find((f) => f.user_id === currentUserId)?.verdict ?? null,
         reporterCount: reporters.length,
         isMine: reporters.some((x) => x.user_id === currentUserId),
         coverUrl: cover?.url ?? null,
@@ -269,6 +287,26 @@ export function createBugArenaService(supabase: SupabaseClient): BugArenaService
       const { error } = await supabase
         .from('bug_reporters')
         .update({ note })
+        .eq('bug_id', bugId)
+        .eq('user_id', userId);
+      if (error) throw error;
+    },
+
+    async setResolutionVerdict(bugId, userId, verdict, note) {
+      // RLS enforces: only yourself, only a reporter, only while status='resolved'.
+      const { error } = await supabase
+        .from('bug_resolution_feedback')
+        .upsert(
+          { bug_id: bugId, user_id: userId, verdict, note: note ?? null },
+          { onConflict: 'bug_id,user_id' }
+        );
+      if (error) throw error;
+    },
+
+    async clearResolutionVerdict(bugId, userId) {
+      const { error } = await supabase
+        .from('bug_resolution_feedback')
+        .delete()
         .eq('bug_id', bugId)
         .eq('user_id', userId);
       if (error) throw error;

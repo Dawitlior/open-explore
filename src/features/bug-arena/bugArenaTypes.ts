@@ -76,6 +76,19 @@ export interface BugComment {
   profile?: ProfileLite | null;
 }
 
+export type ResolutionVerdict = 'fixed' | 'not_fixed';
+
+export interface BugResolutionFeedback {
+  bug_id: string;
+  user_id: string;
+  verdict: ResolutionVerdict;
+  /** optional reason, mainly when verdict is 'not_fixed' */
+  note: string | null;
+  created_at: string;
+  updated_at: string;
+  profile?: ProfileLite | null;
+}
+
 export interface BugReport {
   id: string;
   title: string | null;
@@ -100,6 +113,10 @@ export interface BugReport {
 export interface BugWithMeta extends BugReport {
   reporters: BugReporter[];
   attachments: BugAttachment[];
+  /** RLS: a reporter sees only their own row; the admin sees all rows. */
+  feedback: BugResolutionFeedback[];
+  /** the current user's own verdict, if any */
+  myVerdict: ResolutionVerdict | null;
   reporterCount: number;
   isMine: boolean;
   coverUrl: string | null;
