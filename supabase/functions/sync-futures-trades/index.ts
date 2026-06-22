@@ -1293,6 +1293,22 @@ async function fetchProviderClosedTrades(
       list: krakenFillsToTrades(r.list, provider).map(n => ({ ...n, key: n.provenance.external_id })),
     };
   }
+  if (provider === 'crypto_com') {
+    const r = await fetchCryptoComTrades(apiKey, apiSecret);
+    if (!r.ok) return r;
+    return {
+      ok: true,
+      list: cryptoComToTrades(r.list, provider).map(n => ({ ...n, key: n.provenance.external_id })),
+    };
+  }
+  if (provider === 'coinbase') {
+    const r = await fetchCoinbaseFills(apiKey, apiSecret);
+    if (!r.ok) return r;
+    return {
+      ok: true,
+      list: coinbaseToTrades(r.list, provider).map(n => ({ ...n, key: n.provenance.external_id })),
+    };
+  }
   return { ok: false, status: 400, error: 'unsupported_provider', detail: provider };
 }
 
