@@ -847,6 +847,7 @@ export function BugBoard() {
                   onJoin={() => board.join(b)}
                   onLeaveOrDelete={() => board.leaveOrDelete(b)}
                   onStatus={(s) => board.setStatus(b, s)}
+                  onVerdict={(v, note) => board.setVerdict(b, v, note)}
                   onOpen={() => setOpenBug(b)}
                 />
               ))}
