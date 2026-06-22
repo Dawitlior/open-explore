@@ -113,6 +113,10 @@ export interface BugReport {
 export interface BugWithMeta extends BugReport {
   reporters: BugReporter[];
   attachments: BugAttachment[];
+  /** RLS: a reporter sees only their own row; the admin sees all rows. */
+  feedback: BugResolutionFeedback[];
+  /** the current user's own verdict, if any */
+  myVerdict: ResolutionVerdict | null;
   reporterCount: number;
   isMine: boolean;
   coverUrl: string | null;
