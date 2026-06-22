@@ -69,7 +69,11 @@ const COPY = {
     feature4: 'אחסון מוצפן פר-משתמש',
     invalidEmail: 'כתובת האימייל לא תקינה',
     weakPw: 'הסיסמה חייבת להכיל לפחות 6 תווים',
-    emailSent: 'בדוק/י את האימייל לאישור החשבון',
+    emailSent: 'בדוק/י את תיבת הדואר (וגם את תיקיית הספאם) כדי לאמת את כתובת האימייל.',
+    emailSentTitle: 'שלחנו לך מייל אימות',
+    emailSentBody: 'שלחנו קישור אימות אל',
+    emailSentSpamHint: 'אם המייל לא הגיע תוך דקה, בדק/י את תיקיית הספאם או הקידום מכירות.',
+    emailSentResend: 'שליחה מחדש',
     resetSent: 'שלחנו לך קישור לאיפוס הסיסמה',
     needEmail: 'הכנס/י אימייל תקין כדי לאפס סיסמה',
     notReg: 'כתובת אימייל זו לא רשומה במערכת',
@@ -114,7 +118,11 @@ const COPY = {
     feature4: 'Encrypted per-user cloud storage',
     invalidEmail: 'Invalid email address',
     weakPw: 'Password must be at least 6 characters',
-    emailSent: 'Check your email to verify your account',
+    emailSent: 'Check your inbox (and your spam folder) to verify your email address.',
+    emailSentTitle: 'Verification email sent',
+    emailSentBody: 'We sent a verification link to',
+    emailSentSpamHint: 'If you don\'t see it within a minute, check your Spam or Promotions folder.',
+    emailSentResend: 'Resend',
     resetSent: 'We sent you a password reset link',
     needEmail: 'Enter a valid email to reset your password',
     notReg: 'This email is not registered',
@@ -190,6 +198,8 @@ export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [consent, setConsent] = useState(false);
+  const [signupNotice, setSignupNotice] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
   const [idleGate, setIdleGate] = useState(() => {
     if (typeof window === 'undefined') return false;
     return new URLSearchParams(window.location.search).get('idle') === '1';
@@ -253,6 +263,7 @@ export default function AuthPage() {
         if (data.user?.id && data.session) await logConsent(data.user.id);
         else try { localStorage.setItem(PENDING_CONSENT_KEY, '1'); } catch { /* noop */ }
         toast.success(c.emailSent);
+        setSignupNotice(cleanEmail);
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
         if (error) throw error;
@@ -300,6 +311,22 @@ export default function AuthPage() {
     } catch (err) {
       toast.error(translateAuthError(err instanceof Error ? err.message : 'Password reset failed'));
     } finally { setBusy(false); }
+  };
+
+  const handleResendVerification = async () => {
+    if (!signupNotice) return;
+    setResending(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: signupNotice,
+        options: { emailRedirectTo: `${window.location.origin}/auth?verified=1` },
+      });
+      if (error) throw error;
+      toast.success(c.emailSent);
+    } catch (err) {
+      toast.error(translateAuthError(err instanceof Error ? err.message : 'Resend failed'));
+    } finally { setResending(false); }
   };
 
   const featureList = [
@@ -522,6 +549,59 @@ export default function AuthPage() {
                 {mode === 'sign-in' ? c.signInSub : c.signUpSub}
               </p>
             </header>
+
+            {signupNotice && (
+              <div
+                role="status"
+                aria-live="polite"
+                style={{
+                  marginBottom: 16,
+                  padding: '14px 16px',
+                  borderRadius: 12,
+                  border: `1px solid ${GOLD}`,
+                  background: 'linear-gradient(135deg, rgba(212,175,90,0.12), rgba(212,175,90,0.04))',
+                  display: 'grid',
+                  gap: 8,
+                  textAlign: isRTL ? 'right' : 'left',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Mail size={16} color={GOLD_BRIGHT} />
+                  <strong style={{ color: GOLD_BRIGHT, fontSize: 13, letterSpacing: '0.04em' }}>
+                    {c.emailSentTitle}
+                  </strong>
+                </div>
+                <div style={{ fontSize: 12.5, color: TEXT, lineHeight: 1.5 }}>
+                  {c.emailSentBody} <span dir="ltr" style={{ fontWeight: 700, color: GOLD_BRIGHT }}>{signupNotice}</span>
+                </div>
+                <div style={{ fontSize: 11.5, color: TEXT_MUTED, lineHeight: 1.5 }}>
+                  ⚠️ {c.emailSentSpamHint}
+                </div>
+                <div>
+                  <button
+                    type="button"
+                    onClick={handleResendVerification}
+                    disabled={resending}
+                    style={{
+                      marginTop: 2,
+                      padding: '6px 12px',
+                      borderRadius: 8,
+                      border: `1px solid ${BORDER}`,
+                      background: 'transparent',
+                      color: GOLD_BRIGHT,
+                      fontSize: 11.5,
+                      fontWeight: 600,
+                      cursor: resending ? 'wait' : 'pointer',
+                      opacity: resending ? 0.6 : 1,
+                    }}
+                  >
+                    {resending ? '…' : c.emailSentResend}
+                  </button>
+                </div>
+              </div>
+            )}
+
+
 
             <button
               onClick={handleGoogle}
