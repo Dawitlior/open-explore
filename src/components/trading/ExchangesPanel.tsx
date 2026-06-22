@@ -596,7 +596,7 @@ function ExchangeCard({
       {/* (Coming-soon state is already conveyed by the status dot label above — no duplicate badge.) */}
 
 
-      <div style={{ marginTop: 24 }}>
+      <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', minHeight: 88 }}>
         <div style={{
           fontFamily: sans, fontWeight: 800, fontSize: 19,
           color: T.text.primary, letterSpacing: 0.2,
@@ -605,10 +605,14 @@ function ExchangeCard({
         </div>
         <div style={{
           fontFamily: sans, fontSize: 11, color: T.text.muted, marginTop: 4,
+          lineHeight: 1.5,
+          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
         }}>
           {meta.tagline[isRTL ? 'he' : 'en']}
         </div>
       </div>
+
 
       <div style={{ marginTop: 18, display: 'flex', alignItems: 'center', gap: 8 }}>
         {disabled ? (
