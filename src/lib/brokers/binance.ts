@@ -29,8 +29,8 @@ export const binanceAdapter: BrokerAdapter = {
     gradient: "linear-gradient(135deg, rgba(243,186,47,0.18), rgba(243,186,47,0.04))",
     supportsSync: true,
     tagline: {
-      he: "סנכרון USDT-M Futures דרך realized PnL",
-      en: "USDT-M Futures sync via realized PnL stream",
+      he: "סנכרון אוטומטי של עסקאות סגורות (USDT-M)",
+      en: "Auto-sync of closed positions (USDT-M)",
     },
   },
 
