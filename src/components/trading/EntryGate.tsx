@@ -150,24 +150,16 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
   if (phase === 'done') return null;
 
   const isSplitting = phase === 'split';
-  const easing = 'cubic-bezier(0.65, 0, 0.35, 1)';
-
-  // Decelerate-to-halt: during the "settle" phase we layer a backdrop
-  // that fades in nothing visible — the loader keeps spinning untouched
-  // (per the rule that OrcaBootLoader must not be modified). The visual
-  // halt is implicit: the split begins exactly when the user expects it.
-
-  // Each panel hosts a transformed wrapper. Because the wrapper has its
-  // own transform, the OrcaBootLoader's `position: fixed` is scoped to
-  // that wrapper (not the panel), so it lays out across a full viewport
-  // box pinned to the seam edge — giving us a perfect anatomical slice.
-  const fullViewportWrapper = (edge: 'top' | 'bottom'): React.CSSProperties => ({
+  const loaderSliceStyle = (half: 'top' | 'bottom'): CSSProperties => ({
     position: 'absolute',
-    left: 0,
+    left: '50%',
     width: '100vw',
     height: '100vh',
-    transform: 'translateZ(0)', // creates containing block for fixed children
-    ...(edge === 'top' ? { bottom: 0 } : { top: 0 }),
+    overflow: 'hidden',
+    transform: half === 'top'
+      ? `translateX(-50%) translateY(${ICON_CENTER_OFFSET_PX}px)`
+      : `translateX(-50%) translateY(calc(-50vh - ${ICON_CENTER_OFFSET_PX}px))`,
+    ...(half === 'top' ? { bottom: 0 } : { top: 0 }),
   });
 
   return (
@@ -177,32 +169,33 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
         position: 'fixed', inset: 0, zIndex: 9999,
         overflow: 'hidden',
         pointerEvents: 'none',
+        background: 'transparent',
       }}
     >
       {/* TOP PANEL — animates UP, shows top half of icon */}
       <div style={{
-        position: 'absolute', top: 0, left: 0, right: 0, height: '50vh',
-        background: '#000',
+        position: 'absolute', top: 0, left: 0, width: '100%', height: '50vh',
+        background: PANEL_BG,
         overflow: 'hidden',
         transform: isSplitting ? 'translateY(-100%)' : 'translateY(0)',
-        transition: `transform ${SPLIT_MS}ms ${easing}`,
+        transition: `transform ${SPLIT_MS}ms ${SPLIT_EASING}`,
         willChange: 'transform',
       }}>
-        <div style={fullViewportWrapper('top')}>
+        <div ref={topLoaderRef} style={loaderSliceStyle('top')}>
           <OrcaBootLoader />
         </div>
       </div>
 
       {/* BOTTOM PANEL — animates DOWN, shows bottom half of icon */}
       <div style={{
-        position: 'absolute', bottom: 0, left: 0, right: 0, height: '50vh',
-        background: '#000',
+        position: 'absolute', bottom: 0, left: 0, width: '100%', height: '50vh',
+        background: PANEL_BG,
         overflow: 'hidden',
         transform: isSplitting ? 'translateY(100%)' : 'translateY(0)',
-        transition: `transform ${SPLIT_MS}ms ${easing}`,
+        transition: `transform ${SPLIT_MS}ms ${SPLIT_EASING}`,
         willChange: 'transform',
       }}>
-        <div style={fullViewportWrapper('bottom')}>
+        <div ref={bottomLoaderRef} style={loaderSliceStyle('bottom')}>
           <OrcaBootLoader />
         </div>
       </div>
