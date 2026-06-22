@@ -37,8 +37,8 @@ export const mexcFuturesAdapter: BrokerAdapter = {
       "linear-gradient(135deg, rgba(45,140,255,0.18), rgba(45,140,255,0.04))",
     supportsSync: true,
     tagline: {
-      he: "סנכרון פוזיציות USDT-M סגורות (איחוד לפי positionId)",
-      en: "USDT-M closed positions, grouped by positionId",
+      he: "סנכרון אוטומטי של עסקאות סגורות (90 יום)",
+      en: "Auto-sync of closed positions (90-day window)",
     },
   },
 
