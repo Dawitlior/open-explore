@@ -81,7 +81,8 @@ export interface BugArenaService {
 const SELECT_BUG = `
   *,
   reporters:bug_reporters(bug_id, user_id, note, created_at),
-  attachments:bug_attachments(id, bug_id, user_id, storage_path, kind, width, height, created_at)
+  attachments:bug_attachments(id, bug_id, user_id, storage_path, kind, width, height, created_at),
+  feedback:bug_resolution_feedback(bug_id, user_id, verdict, note, created_at, updated_at)
 `;
 
 export function createBugArenaService(supabase: SupabaseClient): BugArenaService {
