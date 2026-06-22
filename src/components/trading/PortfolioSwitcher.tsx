@@ -307,13 +307,13 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
                       {p.currency} · {isRTL ? 'הון התחלתי' : 'Start'} {Number(p.starting_balance).toLocaleString()}
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center', direction: 'ltr' }}>
+                  <div dir="ltr" style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center', direction: 'ltr', unicodeBidi: 'isolate' }}>
                     {!p.is_default && !locked && (
                       <button
                         onClick={(e) => { e.stopPropagation(); void setDefault(p.id); }}
                         title={isRTL ? 'הפוך לברירת מחדל' : 'Set as default'}
                         aria-label={isRTL ? 'הפוך לברירת מחדל' : 'Set as default'}
-                        style={{ background: 'rgba(148,163,184,0.10)', border: '1px solid rgba(148,163,184,0.25)', color: '#cbd5e1', cursor: 'pointer', padding: '4px 6px', borderRadius: 6, fontSize: 13, lineHeight: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 26, minHeight: 26 }}
+                        style={{ background: 'rgba(148,163,184,0.10)', border: '1px solid rgba(148,163,184,0.25)', color: '#facc15', cursor: 'pointer', padding: 0, borderRadius: 6, fontSize: 15, lineHeight: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, fontFamily: 'system-ui, sans-serif' }}
                       >★</button>
                     )}
                     <button
@@ -321,28 +321,22 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
                       title={locked ? (isRTL ? 'נעול — לא ניתן לעריכה' : 'Locked — cannot edit') : (isRTL ? 'ערוך' : 'Edit')}
                       aria-label={isRTL ? 'ערוך תיק' : 'Edit portfolio'}
                       disabled={locked}
-                      style={{ background: 'rgba(148,163,184,0.10)', border: '1px solid rgba(148,163,184,0.25)', color: locked ? '#475569' : '#cbd5e1', cursor: locked ? 'not-allowed' : 'pointer', padding: '4px 6px', borderRadius: 6, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 26, minHeight: 26 }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    </button>
+                      style={{ background: 'rgba(148,163,184,0.10)', border: '1px solid rgba(148,163,184,0.25)', color: locked ? '#475569' : '#e2e8f0', cursor: locked ? 'not-allowed' : 'pointer', padding: 0, borderRadius: 6, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, fontSize: 14, lineHeight: 1, fontFamily: 'system-ui, sans-serif' }}
+                    >✎</button>
                     <button
                       onClick={(e) => { e.stopPropagation(); if (locked) return; void handleReset(p); }}
                       title={locked ? (isRTL ? 'נעול — לא ניתן לאיפוס' : 'Locked — cannot reset') : (isRTL ? 'אפס תיק' : 'Reset portfolio')}
                       aria-label={isRTL ? 'אפס תיק' : 'Reset portfolio'}
                       disabled={locked || busy}
-                      style={{ background: 'rgba(251,146,60,0.10)', border: '1px solid rgba(251,146,60,0.30)', color: (locked || busy) ? '#475569' : '#fb923c', cursor: (locked || busy) ? 'not-allowed' : 'pointer', padding: '4px 6px', borderRadius: 6, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 26, minHeight: 26 }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-                    </button>
+                      style={{ background: 'rgba(251,146,60,0.12)', border: '1px solid rgba(251,146,60,0.35)', color: (locked || busy) ? '#475569' : '#fb923c', cursor: (locked || busy) ? 'not-allowed' : 'pointer', padding: 0, borderRadius: 6, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, fontSize: 14, lineHeight: 1, fontFamily: 'system-ui, sans-serif' }}
+                    >↺</button>
                     <button
                       onClick={(e) => { e.stopPropagation(); if (locked) return; void handleDelete(p); }}
                       title={locked ? (isRTL ? 'נעול — לא ניתן למחיקה' : 'Locked — cannot delete') : (isRTL ? 'מחק' : 'Delete')}
                       aria-label={isRTL ? 'מחק תיק' : 'Delete portfolio'}
                       disabled={portfolios.length <= 1 || locked}
-                      style={{ background: 'rgba(248,113,113,0.10)', border: '1px solid rgba(248,113,113,0.30)', color: (portfolios.length <= 1 || locked) ? '#475569' : '#f87171', cursor: (portfolios.length <= 1 || locked) ? 'not-allowed' : 'pointer', padding: '4px 6px', borderRadius: 6, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 26, minHeight: 26 }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                    </button>
+                      style={{ background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.35)', color: (portfolios.length <= 1 || locked) ? '#475569' : '#f87171', cursor: (portfolios.length <= 1 || locked) ? 'not-allowed' : 'pointer', padding: 0, borderRadius: 6, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, fontSize: 14, lineHeight: 1, fontFamily: 'system-ui, sans-serif', fontWeight: 700 }}
+                    >✕</button>
                   </div>
                 </div>
               );
