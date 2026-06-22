@@ -593,20 +593,8 @@ function ExchangeCard({
         {statusLabel}
       </div>
 
-      {/* Coming soon badge */}
-      {disabled && (
-        <div style={{
-          position: 'absolute', top: 12, insetInlineEnd: 12,
-          padding: '3px 8px', borderRadius: 999,
-          background: 'rgba(220,38,38,0.12)',
-          border: '1px solid rgba(220,38,38,0.35)',
-          fontSize: 9, fontWeight: 800, color: '#fca5a5',
-          fontFamily: mono, letterSpacing: 0.6, textTransform: 'uppercase',
-          display: 'flex', alignItems: 'center', gap: 4,
-        }}>
-          <Lock size={9} /> Soon
-        </div>
-      )}
+      {/* (Coming-soon state is already conveyed by the status dot label above — no duplicate badge.) */}
+
 
       <div style={{ marginTop: 24 }}>
         <div style={{
