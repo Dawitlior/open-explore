@@ -42,6 +42,7 @@ import { User } from 'lucide-react';
 
 const ACCENT = '#f5c542'; // ORCA gold
 const CYAN = '#37e0c6';
+const RED = '#ff5470';
 
 // Translate the Hebrew section names stored in DB to the active UI language.
 const SECTION_EN: Record<string, string> = {
