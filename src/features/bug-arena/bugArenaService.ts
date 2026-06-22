@@ -292,6 +292,26 @@ export function createBugArenaService(supabase: SupabaseClient): BugArenaService
       if (error) throw error;
     },
 
+    async setResolutionVerdict(bugId, userId, verdict, note) {
+      // RLS enforces: only yourself, only a reporter, only while status='resolved'.
+      const { error } = await supabase
+        .from('bug_resolution_feedback')
+        .upsert(
+          { bug_id: bugId, user_id: userId, verdict, note: note ?? null },
+          { onConflict: 'bug_id,user_id' }
+        );
+      if (error) throw error;
+    },
+
+    async clearResolutionVerdict(bugId, userId) {
+      const { error } = await supabase
+        .from('bug_resolution_feedback')
+        .delete()
+        .eq('bug_id', bugId)
+        .eq('user_id', userId);
+      if (error) throw error;
+    },
+
     async uploadAttachment(bugId, userId, blob, kind, size) {
       const ext = blob.type.includes('png') ? 'png' : 'jpg';
       const path = `${userId}/${bugId}/${crypto.randomUUID()}.${ext}`;
