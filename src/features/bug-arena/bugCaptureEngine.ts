@@ -124,10 +124,6 @@ export interface PickResult {
 }
 
 export interface PickerOptions {
-  /** Text shown in the floating hint. Defaults to Hebrew. */
-  hintText?: string;
-  cancelText?: string;
-export interface PickerOptions {
   /** Hint shown to the user inside the bottom pill. */
   hintText?: string;
   /** Cancel button label. */
