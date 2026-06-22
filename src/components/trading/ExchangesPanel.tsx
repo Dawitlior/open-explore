@@ -964,24 +964,37 @@ function CredentialModal({
           </button>
         </div>
 
-        {/* Security notice */}
-        <div style={{
-          padding: 14, borderRadius: 12, marginBottom: 18,
-          background: 'rgba(239,68,68,0.07)',
-          border: '1px solid rgba(239,68,68,0.28)',
-          display: 'flex', gap: 10, alignItems: 'flex-start',
-        }}>
-          <ShieldCheck size={16} color="#f87171" style={{ flexShrink: 0, marginTop: 2 }} />
-          <div style={{ fontSize: 11.5, lineHeight: 1.6, color: '#fecaca' }}>
-            <strong style={{ color: '#fca5a5', fontWeight: 800 }}>
-              {t('דרישת אבטחה: ', 'Security Requirement: ')}
-            </strong>
-            {t(
-              'ודא שמפתחות ה־API מוגדרים כ־READ-ONLY / HISTORY בלבד. יש להשבית הרשאות מסחר ומשיכה. הכספת תדחה מפתחות עם הרשאות גבוהות יותר.',
-              'Ensure your API keys are configured as READ-ONLY / HISTORY only. Trading and Withdrawal permissions must be disabled. The vault will reject keys with elevated scopes.'
-            )}
-          </div>
-        </div>
+        {/* Security notice — wording differs for exchanges that expose key
+            permission introspection (Bybit/Binance) vs. those that do not
+            (MEXC/Gate/Kraken), where we cannot reject elevated keys server-side. */}
+        {(() => {
+          const introspects = provider.id === 'bybit' || provider.id === 'binance';
+          return (
+            <div style={{
+              padding: 14, borderRadius: 12, marginBottom: 18,
+              background: 'rgba(239,68,68,0.07)',
+              border: '1px solid rgba(239,68,68,0.28)',
+              display: 'flex', gap: 10, alignItems: 'flex-start',
+            }}>
+              <ShieldCheck size={16} color="#f87171" style={{ flexShrink: 0, marginTop: 2 }} />
+              <div style={{ fontSize: 11.5, lineHeight: 1.6, color: '#fecaca' }}>
+                <strong style={{ color: '#fca5a5', fontWeight: 800 }}>
+                  {t('דרישת אבטחה: ', 'Security Requirement: ')}
+                </strong>
+                {introspects
+                  ? t(
+                      'ודא שמפתחות ה־API מוגדרים כ־READ-ONLY / HISTORY בלבד. יש להשבית הרשאות מסחר ומשיכה. הכספת תדחה מפתחות עם הרשאות גבוהות יותר.',
+                      'Ensure your API keys are configured as READ-ONLY / HISTORY only. Trading and Withdrawal permissions must be disabled. The vault will reject keys with elevated scopes.'
+                    )
+                  : t(
+                      'צור מפתח קריאה־בלבד (Read-Only). אל תפעיל הרשאות מסחר, משיכה או העברה. בורסה זו לא חושפת בדיקת הרשאות — האחריות ליצירת מפתח מינימלי היא עליך.',
+                      'Create a Read-Only API key. Do not enable Trading, Withdrawal, or Transfer permissions. This exchange does not expose permission introspection — keeping the key minimal is your responsibility.'
+                    )}
+              </div>
+            </div>
+          );
+        })()}
+
 
         {/* Embedded Onboarding Guide (Phase 4) */}
         <KeyGuide T={T} isRTL={isRTL} provider={provider} />
