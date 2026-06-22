@@ -35,8 +35,8 @@ export const gateFuturesAdapter: BrokerAdapter = {
       "linear-gradient(135deg, rgba(35,84,230,0.18), rgba(35,84,230,0.04))",
     supportsSync: true,
     tagline: {
-      he: "פוזיציות USDT-M סגורות (רשומה אחת = עסקה אחת)",
-      en: "USDT-M closed positions (one record → one trade)",
+      he: "סנכרון אוטומטי של עסקאות סגורות",
+      en: "Auto-sync of closed positions",
     },
   },
 

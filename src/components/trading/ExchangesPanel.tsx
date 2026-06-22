@@ -200,27 +200,23 @@ export function ExchangesPanel({ T, isRTL }: Props) {
   return (
     <div>
       <style>{`@keyframes orcaStream { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }`}</style>
-      {/* Header */}
+      {/* Intro (the panel title lives in the parent wrapper — avoid duplication) */}
       <div style={{
-        marginBottom: 18, padding: 18,
+        marginBottom: 18, padding: '14px 18px',
         borderRadius: 14,
-        background: 'linear-gradient(135deg, rgba(0,242,255,0.06), rgba(0,242,255,0.01))',
+        background: 'linear-gradient(135deg, rgba(0,242,255,0.04), rgba(0,242,255,0.01))',
         border: `1px solid ${T.border.subtle}`,
         backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-          <Plug size={16} color={T.accent.cyan} />
-          <h3 style={{ margin: 0, fontFamily: sans, fontWeight: 700, fontSize: 14, color: T.text.primary, letterSpacing: 0.3 }}>
-            {t('בורסות מחוברות', 'Connected Exchanges')}
-          </h3>
-        </div>
-        <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.6, color: T.text.muted, fontFamily: sans }}>
+        <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.6, color: T.text.muted, fontFamily: sans, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Plug size={13} color={T.accent.cyan} style={{ flexShrink: 0 }} />
           {t(
             'חבר בורסות וברוקרים כדי לסנכרן עסקאות אוטומטית. כל המפתחות מאוחסנים בכספת מוצפנת בצד השרת — לעולם לא בדפדפן.',
             'Connect exchanges and brokers to sync trades automatically. All keys live in a server-side encrypted vault — never in your browser.'
           )}
         </p>
       </div>
+
 
       {/* Grid */}
       <div style={{
@@ -550,10 +546,11 @@ function ExchangeCard({
   const mono = "'IBM Plex Mono', monospace";
   const disabled = !meta.enabled;
 
-  const statusColor = disabled ? T.text.muted : connected ? '#10b981' : '#ef4444';
+  // Neutral gray for "not connected yet" — it's a default state, not an error.
+  const statusColor = disabled ? T.text.muted : connected ? '#10b981' : T.text.muted;
   const statusLabel = disabled
     ? t('בקרוב', 'Coming Soon')
-    : connected ? t('פעיל', 'Live') : t('לא מחובר', 'Disconnected');
+    : connected ? t('פעיל', 'Live') : t('לא מחובר', 'Not connected');
 
   return (
     <div
@@ -596,22 +593,10 @@ function ExchangeCard({
         {statusLabel}
       </div>
 
-      {/* Coming soon badge */}
-      {disabled && (
-        <div style={{
-          position: 'absolute', top: 12, insetInlineEnd: 12,
-          padding: '3px 8px', borderRadius: 999,
-          background: 'rgba(220,38,38,0.12)',
-          border: '1px solid rgba(220,38,38,0.35)',
-          fontSize: 9, fontWeight: 800, color: '#fca5a5',
-          fontFamily: mono, letterSpacing: 0.6, textTransform: 'uppercase',
-          display: 'flex', alignItems: 'center', gap: 4,
-        }}>
-          <Lock size={9} /> Soon
-        </div>
-      )}
+      {/* (Coming-soon state is already conveyed by the status dot label above — no duplicate badge.) */}
 
-      <div style={{ marginTop: 24 }}>
+
+      <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', minHeight: 88 }}>
         <div style={{
           fontFamily: sans, fontWeight: 800, fontSize: 19,
           color: T.text.primary, letterSpacing: 0.2,
@@ -620,10 +605,14 @@ function ExchangeCard({
         </div>
         <div style={{
           fontFamily: sans, fontSize: 11, color: T.text.muted, marginTop: 4,
+          lineHeight: 1.5,
+          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
         }}>
           {meta.tagline[isRTL ? 'he' : 'en']}
         </div>
       </div>
+
 
       <div style={{ marginTop: 18, display: 'flex', alignItems: 'center', gap: 8 }}>
         {disabled ? (
@@ -682,17 +671,19 @@ function ExchangeCard({
             style={{
               flex: 1,
               padding: '10px 12px', borderRadius: 10,
-              background: meta.accent,
-              border: 'none',
-              color: '#06121f',
+              background: 'linear-gradient(135deg, rgba(0,242,255,0.16), rgba(0,242,255,0.06))',
+              border: `1px solid ${meta.accent}66`,
+              color: '#dffaff',
               fontWeight: 800, fontSize: 11.5, fontFamily: sans,
               cursor: 'pointer', letterSpacing: 0.4,
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              boxShadow: `inset 0 0 0 1px rgba(0,242,255,0.10), 0 6px 18px -14px ${meta.accent}aa`,
             }}
           >
             <Plug size={11} /> {t('חבר חשבון', 'Connect Account')}
           </button>
         )}
+
       </div>
 
       {/* Sync Trades — futures fetch engine */}
@@ -973,24 +964,37 @@ function CredentialModal({
           </button>
         </div>
 
-        {/* Security notice */}
-        <div style={{
-          padding: 14, borderRadius: 12, marginBottom: 18,
-          background: 'rgba(239,68,68,0.07)',
-          border: '1px solid rgba(239,68,68,0.28)',
-          display: 'flex', gap: 10, alignItems: 'flex-start',
-        }}>
-          <ShieldCheck size={16} color="#f87171" style={{ flexShrink: 0, marginTop: 2 }} />
-          <div style={{ fontSize: 11.5, lineHeight: 1.6, color: '#fecaca' }}>
-            <strong style={{ color: '#fca5a5', fontWeight: 800 }}>
-              {t('דרישת אבטחה: ', 'Security Requirement: ')}
-            </strong>
-            {t(
-              'ודא שמפתחות ה־API מוגדרים כ־READ-ONLY / HISTORY בלבד. יש להשבית הרשאות מסחר ומשיכה. הכספת תדחה מפתחות עם הרשאות גבוהות יותר.',
-              'Ensure your API keys are configured as READ-ONLY / HISTORY only. Trading and Withdrawal permissions must be disabled. The vault will reject keys with elevated scopes.'
-            )}
-          </div>
-        </div>
+        {/* Security notice — wording differs for exchanges that expose key
+            permission introspection (Bybit/Binance) vs. those that do not
+            (MEXC/Gate/Kraken), where we cannot reject elevated keys server-side. */}
+        {(() => {
+          const introspects = provider.id === 'bybit' || provider.id === 'binance';
+          return (
+            <div style={{
+              padding: 14, borderRadius: 12, marginBottom: 18,
+              background: 'rgba(239,68,68,0.07)',
+              border: '1px solid rgba(239,68,68,0.28)',
+              display: 'flex', gap: 10, alignItems: 'flex-start',
+            }}>
+              <ShieldCheck size={16} color="#f87171" style={{ flexShrink: 0, marginTop: 2 }} />
+              <div style={{ fontSize: 11.5, lineHeight: 1.6, color: '#fecaca' }}>
+                <strong style={{ color: '#fca5a5', fontWeight: 800 }}>
+                  {t('דרישת אבטחה: ', 'Security Requirement: ')}
+                </strong>
+                {introspects
+                  ? t(
+                      'ודא שמפתחות ה־API מוגדרים כ־READ-ONLY / HISTORY בלבד. יש להשבית הרשאות מסחר ומשיכה. הכספת תדחה מפתחות עם הרשאות גבוהות יותר.',
+                      'Ensure your API keys are configured as READ-ONLY / HISTORY only. Trading and Withdrawal permissions must be disabled. The vault will reject keys with elevated scopes.'
+                    )
+                  : t(
+                      'צור מפתח קריאה־בלבד (Read-Only). אל תפעיל הרשאות מסחר, משיכה או העברה. בורסה זו לא חושפת בדיקת הרשאות — האחריות ליצירת מפתח מינימלי היא עליך.',
+                      'Create a Read-Only API key. Do not enable Trading, Withdrawal, or Transfer permissions. This exchange does not expose permission introspection — keeping the key minimal is your responsibility.'
+                    )}
+              </div>
+            </div>
+          );
+        })()}
+
 
         {/* Embedded Onboarding Guide (Phase 4) */}
         <KeyGuide T={T} isRTL={isRTL} provider={provider} />
@@ -1428,8 +1432,12 @@ function inputStyle(T: TradingTheme, mono: string): React.CSSProperties {
     color: T.text.primary, fontSize: 13, outline: 'none',
     fontFamily: mono, boxSizing: 'border-box',
     transition: 'border-color .15s, background .15s',
+    // Credentials are ASCII-only. Force LTR so password bullets and
+    // placeholders never get bidi-reordered inside an RTL container.
+    direction: 'ltr', textAlign: 'left', unicodeBidi: 'plaintext',
   };
 }
+
 
 /* ====================== KEY GUIDE — LAUNCHER + LARGE MODAL ====================== */
 function KeyGuide({ T, isRTL, provider }: { T: TradingTheme; isRTL: boolean; provider: ProviderMeta }) {

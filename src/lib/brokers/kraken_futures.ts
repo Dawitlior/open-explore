@@ -34,8 +34,8 @@ export const krakenFuturesAdapter: BrokerAdapter = {
       "linear-gradient(135deg, rgba(113,50,245,0.18), rgba(113,50,245,0.04))",
     supportsSync: true,
     tagline: {
-      he: "FIFO גנרי על fills — לונג ושורט",
-      en: "Generalised FIFO over fills — long & short",
+      he: "סנכרון אוטומטי של עסקאות סגורות (לונג ושורט)",
+      en: "Auto-sync of closed positions (long & short)",
     },
   },
 

@@ -124,9 +124,16 @@ export interface PickResult {
 }
 
 export interface PickerOptions {
-  /** Text shown in the floating hint. Defaults to Hebrew. */
+  /** Hint shown to the user inside the bottom pill. */
   hintText?: string;
+  /** Cancel button label. */
   cancelText?: string;
+  /** Scroll-mode toggle label (inactive state — "tap to scroll the page"). */
+  scrollText?: string;
+  /** Scroll-mode toggle label (active state — "tap to resume picking"). */
+  scrollActiveText?: string;
+  /** Text direction of the bottom pill — RTL for Hebrew, LTR for English. */
+  dir?: 'rtl' | 'ltr';
   /** Accent color for the highlight ring. */
   accent?: string;
 }
@@ -151,9 +158,13 @@ export class ElementPicker {
     this.opts = {
       hintText: options.hintText ?? 'הקש על האלמנט הפגום',
       cancelText: options.cancelText ?? 'ביטול',
+      scrollText: options.scrollText ?? 'גלול',
+      scrollActiveText: options.scrollActiveText ?? 'בחר',
+      dir: options.dir ?? 'rtl',
       accent: options.accent ?? '#f5c542', // ORCA gold
     };
   }
+
 
   get active(): boolean {
     return !!this.overlay;
@@ -249,7 +260,7 @@ export class ElementPicker {
       border: '1px solid rgba(245,197,66,0.35)',
       color: '#e8edf5',
       font: '600 14px/1 Heebo,system-ui,sans-serif',
-      direction: 'rtl',
+      direction: this.opts.dir,
       boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
     } as CSSStyleDeclaration);
 
@@ -261,7 +272,7 @@ export class ElementPicker {
     const scrollBtn = document.createElement('button');
     scrollBtn.setAttribute(OVERLAY_ATTR, 'scroll-toggle');
     scrollBtn.type = 'button';
-    scrollBtn.textContent = 'גלול';
+    scrollBtn.textContent = this.opts.scrollText;
     Object.assign(scrollBtn.style, {
       cursor: 'pointer',
       border: '1px solid rgba(255,255,255,0.18)',
@@ -318,7 +329,7 @@ export class ElementPicker {
       // Release pointer interception so the page can scroll under the overlay.
       this.overlay.style.touchAction = 'auto';
       this.overlay.style.pointerEvents = 'none';
-      this.scrollToggleBtn.textContent = 'בחר';
+      this.scrollToggleBtn.textContent = this.opts.scrollActiveText;
       this.scrollToggleBtn.style.background = this.opts.accent;
       this.scrollToggleBtn.style.color = '#06121f';
       // Hint pill stays interactive (it's a child).
@@ -326,7 +337,7 @@ export class ElementPicker {
     } else {
       this.overlay.style.touchAction = 'none';
       this.overlay.style.pointerEvents = 'auto';
-      this.scrollToggleBtn.textContent = 'גלול';
+      this.scrollToggleBtn.textContent = this.opts.scrollText;
       this.scrollToggleBtn.style.background = 'transparent';
       this.scrollToggleBtn.style.color = '#9fb0c5';
     }

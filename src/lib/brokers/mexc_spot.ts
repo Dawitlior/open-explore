@@ -31,8 +31,8 @@ export const mexcSpotAdapter: BrokerAdapter = {
       "linear-gradient(135deg, rgba(0,179,255,0.18), rgba(0,179,255,0.04))",
     supportsSync: true,
     tagline: {
-      he: "FIFO על myTrades — לוטים סגורים לפי צמדים",
-      en: "FIFO over myTrades — closed lots per symbol",
+      he: "סנכרון אוטומטי של עסקאות סגורות (ספוט)",
+      en: "Auto-sync of closed spot trades",
     },
   },
 
