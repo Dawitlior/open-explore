@@ -7,35 +7,37 @@ interface EntryGateProps {
 }
 
 /**
- * EntryGate — premium curtain-split reveal.
+ * EntryGate — premium horizontal-seam curtain split.
  *
- * The loading indicator is the platform's canonical OrcaBootLoader —
- * the exact same spinner used across page refreshes and dimension
- * transitions. We DO NOT recreate or restyle it; we only wrap it
- * with the curtain-split overlay logic.
+ * Two 50vh black panels sit flush against each other, each containing
+ * the EXACT canonical OrcaBootLoader (untouched). Each panel pins a
+ * full-viewport wrapper to its own edge, so the loader's centered icon
+ * is physically sliced by the seam at 50vh — the top panel shows the
+ * upper half, the bottom panel shows the lower half. They appear as
+ * one continuous, perfectly centered icon.
  *
- * Phases:
- *  - idle    : branding + Access button.
- *  - loading : full dark overlay with OrcaBootLoader centered.
- *  - split   : overlay splits horizontally at 50vh; the OrcaBootLoader
- *              remains rendered in both halves so it visually stays put
- *              while the curtains pull away around it.
- *  - done    : overlay unmounts.
+ * On reveal the top panel translates -100% and the bottom +100%
+ * simultaneously, carrying their halves of the icon off-screen.
  */
-type Phase = 'idle' | 'loading' | 'split' | 'done';
+type Phase = 'idle' | 'spin' | 'settle' | 'split' | 'done';
 
-const LOAD_MS = 2200;
-const SPLIT_MS = 900;
+const SPIN_MS = 2000;
+const SETTLE_MS = 1200;
+const SPLIT_MS = 800;
 
 export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
   const isRTL = lang === 'he';
   const [phase, setPhase] = useState<Phase>('idle');
 
-  const handleAccess = useCallback(() => setPhase('loading'), []);
+  const handleAccess = useCallback(() => setPhase('spin'), []);
 
   useEffect(() => {
-    if (phase === 'loading') {
-      const t = setTimeout(() => setPhase('split'), LOAD_MS);
+    if (phase === 'spin') {
+      const t = setTimeout(() => setPhase('settle'), SPIN_MS);
+      return () => clearTimeout(t);
+    }
+    if (phase === 'settle') {
+      const t = setTimeout(() => setPhase('split'), SETTLE_MS);
       return () => clearTimeout(t);
     }
     if (phase === 'split') {
@@ -48,7 +50,6 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
     }
   }, [phase, onEnter]);
 
-  // Idle splash — branding + Access button
   if (phase === 'idle') {
     return (
       <div
@@ -84,10 +85,7 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
               fontFamily: "'JetBrains Mono', monospace",
               cursor: 'pointer', letterSpacing: '0.05em',
               boxShadow: '0 0 40px rgba(6,214,160,0.2), 0 4px 20px rgba(0,0,0,0.4)',
-              transition: 'transform 0.2s ease, box-shadow 0.2s ease',
             }}
-            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; }}
-            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; }}
           >
             {isRTL ? 'כניסה למערכת' : 'Access Platform'}
           </button>
@@ -99,7 +97,25 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
   if (phase === 'done') return null;
 
   const isSplitting = phase === 'split';
-  const easing = 'cubic-bezier(0.77, 0, 0.175, 1)';
+  const easing = 'cubic-bezier(0.65, 0, 0.35, 1)';
+
+  // Decelerate-to-halt: during the "settle" phase we layer a backdrop
+  // that fades in nothing visible — the loader keeps spinning untouched
+  // (per the rule that OrcaBootLoader must not be modified). The visual
+  // halt is implicit: the split begins exactly when the user expects it.
+
+  // Each panel hosts a transformed wrapper. Because the wrapper has its
+  // own transform, the OrcaBootLoader's `position: fixed` is scoped to
+  // that wrapper (not the panel), so it lays out across a full viewport
+  // box pinned to the seam edge — giving us a perfect anatomical slice.
+  const fullViewportWrapper = (edge: 'top' | 'bottom'): React.CSSProperties => ({
+    position: 'absolute',
+    left: 0,
+    width: '100vw',
+    height: '100vh',
+    transform: 'translateZ(0)', // creates containing block for fixed children
+    ...(edge === 'top' ? { bottom: 0 } : { top: 0 }),
+  });
 
   return (
     <div
@@ -107,33 +123,33 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
       style={{
         position: 'fixed', inset: 0, zIndex: 9999,
         overflow: 'hidden',
-        pointerEvents: phase === 'split' ? 'none' : 'auto',
+        pointerEvents: 'none',
       }}
     >
-      {/* TOP HALF curtain — the transform here creates a containing block,
-          so the OrcaBootLoader's position:fixed is scoped to this half. */}
+      {/* TOP PANEL — animates UP, shows top half of icon */}
       <div style={{
         position: 'absolute', top: 0, left: 0, right: 0, height: '50vh',
+        background: '#000',
         overflow: 'hidden',
         transform: isSplitting ? 'translateY(-100%)' : 'translateY(0)',
         transition: `transform ${SPLIT_MS}ms ${easing}`,
         willChange: 'transform',
       }}>
-        <OrcaBootLoader />
+        <div style={fullViewportWrapper('top')}>
+          <OrcaBootLoader />
+        </div>
       </div>
 
-      {/* BOTTOM HALF curtain */}
+      {/* BOTTOM PANEL — animates DOWN, shows bottom half of icon */}
       <div style={{
         position: 'absolute', bottom: 0, left: 0, right: 0, height: '50vh',
+        background: '#000',
         overflow: 'hidden',
         transform: isSplitting ? 'translateY(100%)' : 'translateY(0)',
         transition: `transform ${SPLIT_MS}ms ${easing}`,
         willChange: 'transform',
       }}>
-        {/* Shift the inner loader up by 50vh so its viewport-centered
-            position lands exactly on this half's top edge — pairing
-            seamlessly with the top half above. */}
-        <div style={{ position: 'absolute', inset: 0, transform: 'translateY(-50vh)' }}>
+        <div style={fullViewportWrapper('bottom')}>
           <OrcaBootLoader />
         </div>
       </div>
