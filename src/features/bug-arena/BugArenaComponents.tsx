@@ -1044,14 +1044,46 @@ function ResolutionAppeal({
   onVerdict,
 }: {
   bug: BugWithMeta;
-  onVerdict: (v: ResolutionVerdict, note?: string | null) => void;
+  onVerdict: (v: ResolutionVerdict, note?: string | null) => void | Promise<void>;
 }) {
   const { isRTL, t } = useLang();
   // For a reporter, RLS returns only their own feedback row (if any).
   const mine = bug.feedback[0];
   const [reason, setReason] = useState(mine?.note ?? '');
+  const [submitting, setSubmitting] = useState<null | 'fixed' | 'not_fixed' | 'update'>(null);
+  const [justSaved, setJustSaved] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setReason(mine?.note ?? '');
+  }, [mine?.note]);
+
+  useEffect(() => {
+    return () => {
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+    };
+  }, []);
+
   if (bug.status !== 'resolved' || !bug.isMine) return null;
   const v = bug.myVerdict;
+
+  const handle = async (kind: 'fixed' | 'not_fixed' | 'update', note: string | null) => {
+    if (submitting) return;
+    setSubmitting(kind);
+    try {
+      await onVerdict(kind === 'update' ? 'not_fixed' : kind, note);
+      setJustSaved(true);
+      setEditing(false);
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+      savedTimerRef.current = setTimeout(() => setJustSaved(false), 2200);
+    } finally {
+      setSubmitting(null);
+    }
+  };
+
+  const showInput = v === 'not_fixed' && (editing || !mine);
+
   return (
     <div
       data-bug-resolution-appeal
@@ -1063,48 +1095,76 @@ function ResolutionAppeal({
           {t('האם הבאג סודר?', 'Was the bug fixed?')}
         </span>
         <button
-          onClick={() => onVerdict('fixed', null)}
-          className="rounded-full px-3 py-1 text-sm font-bold transition"
+          disabled={!!submitting}
+          onClick={() => handle('fixed', null)}
+          className="rounded-full px-3 py-1 text-sm font-bold transition disabled:opacity-60 inline-flex items-center gap-1.5"
           style={{
             background: v === 'fixed' ? CYAN : 'rgba(255,255,255,0.08)',
             color: v === 'fixed' ? '#06121f' : '#cdd6e3',
           }}
         >
-          {t('סודר ✓', 'Fixed ✓')}
+          {submitting === 'fixed' ? <Spinner /> : t('סודר ✓', 'Fixed ✓')}
         </button>
         <button
-          onClick={() => onVerdict('not_fixed', reason || null)}
-          className="rounded-full px-3 py-1 text-sm font-bold transition"
+          disabled={!!submitting}
+          onClick={() => {
+            if (v === 'not_fixed' && mine) {
+              setEditing((e) => !e);
+            } else {
+              handle('not_fixed', reason || null);
+            }
+          }}
+          className="rounded-full px-3 py-1 text-sm font-bold transition disabled:opacity-60 inline-flex items-center gap-1.5"
           style={{
             background: v === 'not_fixed' ? RED : 'rgba(255,255,255,0.08)',
             color: v === 'not_fixed' ? '#06121f' : '#cdd6e3',
           }}
         >
-          {t('לא סודר ✗', 'Not fixed ✗')}
+          {submitting === 'not_fixed' ? <Spinner /> : t('לא סודר ✗', 'Not fixed ✗')}
         </button>
-        {v === 'fixed' && (
+        {justSaved && (
+          <span className="text-xs font-bold" style={{ color: CYAN }}>
+            {t('נשמר ✓', 'Saved ✓')}
+          </span>
+        )}
+        {!justSaved && v === 'fixed' && (
           <span className="text-xs text-white/50">{t('תודה — נרשם', 'Thanks — recorded')}</span>
+        )}
+        {!justSaved && !editing && v === 'not_fixed' && mine?.note && (
+          <span className="text-xs text-white/50 truncate max-w-[260px]">"{mine.note}"</span>
         )}
       </div>
 
-      {v === 'not_fixed' && (
+      {showInput && (
         <div className="mt-2 flex gap-2">
           <input
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder={t('מה עדיין לא תקין? (לא חובה)', "What's still broken? (optional)")}
             className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm outline-none"
+            disabled={!!submitting}
           />
           <button
-            onClick={() => onVerdict('not_fixed', reason || null)}
-            className="rounded-lg px-3 py-1.5 text-sm font-bold text-[#06121f]"
+            disabled={!!submitting}
+            onClick={() => handle('update', reason || null)}
+            className="rounded-lg px-3 py-1.5 text-sm font-bold text-[#06121f] disabled:opacity-60 inline-flex items-center gap-2"
             style={{ background: ACCENT }}
           >
-            {t('עדכן', 'Update')}
+            {submitting === 'update' ? <Spinner dark /> : t('עדכן', 'Update')}
           </button>
         </div>
       )}
     </div>
+  );
+}
+
+function Spinner({ dark = false }: { dark?: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent align-[-2px]"
+      style={{ opacity: dark ? 0.9 : 0.85 }}
+    />
   );
 }
 
