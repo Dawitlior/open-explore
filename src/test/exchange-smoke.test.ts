@@ -66,17 +66,20 @@ describe('Smoke: signing format', () => {
   });
 
   it('Coinbase produces a 3-part JWT (header.payload.signature)', async () => {
-    // jose works in jsdom; generate an Ed25519 keypair just for shape check.
-    const { SignJWT, generateKeyPair } = await import('jose');
-    const { privateKey } = await generateKeyPair('EdDSA');
+    // The Coinbase edge verifier uses `jose` with EdDSA/ES256 against the
+    // user's PEM. Here we only assert the wire SHAPE — that SignJWT emits
+    // a standard 3-part compact JWS — using a vitest-friendly HS256 key.
+    const { SignJWT } = await import('jose');
+    const key = new TextEncoder().encode('smoke-secret-key-32-bytes-min-length!');
     const jwt = await new SignJWT({ sub: 'organizations/o/apiKeys/k', uri: 'GET api.coinbase.com/api/v3/brokerage/accounts' })
-      .setProtectedHeader({ alg: 'EdDSA', kid: 'organizations/o/apiKeys/k', nonce: 'n', typ: 'JWT' })
+      .setProtectedHeader({ alg: 'HS256', kid: 'organizations/o/apiKeys/k', nonce: 'n', typ: 'JWT' })
       .setIssuedAt().setExpirationTime('120s')
       .setIssuer('cdp').setAudience(['retail_rest_api_proxy'])
-      .sign(privateKey);
+      .sign(key);
     expect(jwt.split('.')).toHaveLength(3);
     expect(jwt).toMatch(/^[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+$/);
   });
+
 });
 
 // ---------- 2/3. Empty input + idempotency for each reconstructor ----------
