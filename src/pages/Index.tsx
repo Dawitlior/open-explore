@@ -2002,7 +2002,7 @@ const Index = () => {
       <MainPullToRefresh isMobile={isMobile} accent={T.accent.cyan}>
         {/* Mobile: bottom-nav handles everything, so the top header is hidden entirely. */}
         {!isMobile && (
-        <header style={{ padding: '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${T.border.subtle}`, background: `${T.bg.secondary}cc`, backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 5, gap: 8, flexWrap: 'nowrap', minWidth: 0 } as any}>
+        <header style={{ padding: '10px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(8,12,20,0.72)', backdropFilter: 'blur(14px) saturate(140%)', WebkitBackdropFilter: 'blur(14px) saturate(140%)', position: 'sticky', top: 0, zIndex: 5, gap: 12, flexWrap: 'nowrap', minWidth: 0 } as any}>
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 14, minWidth: 0, flex: '1 1 auto', overflow: 'hidden' }}>
             {/* Mobile hamburger */}
             {isMobile && (
@@ -2010,22 +2010,24 @@ const Index = () => {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
               </button>
             )}
-            <h1 style={{ fontSize: isMobile ? 13 : 17, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{nav.find(n => n.id === page)?.label}</h1>
+            <h1 style={{ fontSize: isMobile ? 13 : 15, fontWeight: 600, fontFamily: "'Inter', system-ui, sans-serif", letterSpacing: '-0.01em', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0, color: T.text.primary }}>{nav.find(n => n.id === page)?.label}</h1>
             {!isMobile && <PortfolioSwitcher isRTL={isRTL} compact />}
-            {!isMobile && !uiPrefs.hideHeaderBadges && <TradingBadge color={appTier === 'ultimate' ? T.accent.purple : appTier === 'advanced' ? T.accent.cyan : T.accent.blue}>{appTier.toUpperCase()}</TradingBadge>}
             {!isMobile && settings.privacyMode && <TradingBadge color={T.accent.orange}>🔒</TradingBadge>}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 10, flexWrap: 'nowrap', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 8, flexWrap: 'nowrap', flexShrink: 0 }}>
             {/* Global Dual-Currency Toggle — persistent across every page */}
             {!isMobile && (
               <DisplayModeToggle T={T} isRTL={isRTL} compact />
             )}
-            {/* Prominent Add Trade button */}
-            {!uiPrefs.hideAddTradeButton && !isMobile && <button onClick={() => { setEditingTrade(null); setShowTradeForm(true); }} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 16px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 700, cursor: 'pointer', fontSize: 12, transition: 'all 0.2s', boxShadow: `0 0 12px ${T.accent.cyan}30` }}>
-              + {t.addTrade}
+            {/* Premium Add Trade — crisp white pill, no icon */}
+            {!uiPrefs.hideAddTradeButton && !isMobile && <button onClick={() => { setEditingTrade(null); setShowTradeForm(true); }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = '#f5f6f8'; e.currentTarget.style.transform = 'translateY(0)'; }}
+              style={{ padding: '7px 16px', background: '#f5f6f8', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: '#0a0e1a', fontWeight: 600, cursor: 'pointer', fontSize: 12.5, letterSpacing: '-0.005em', fontFamily: "'Inter', system-ui, sans-serif", transition: 'all 0.18s ease' }}>
+              {t.addTrade}
             </button>}
             {!isMobile && hiddenCharts.length > 0 && (
-              <button onClick={handleRestoreCharts} style={{ padding: '4px 10px', background: `${T.accent.orange}15`, border: `1px solid ${T.accent.orange}30`, borderRadius: T.radius.sm, color: T.accent.orange, cursor: 'pointer', fontSize: 10, fontWeight: 600, transition: 'all 0.2s' }}>
+              <button onClick={handleRestoreCharts} style={{ padding: '6px 10px', background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: T.accent.orange, cursor: 'pointer', fontSize: 11, fontWeight: 500, transition: 'all 0.2s' }}>
                 ↩ {isRTL ? 'שחזר גרפים' : 'Restore Charts'} ({hiddenCharts.length})
               </button>
             )}
@@ -2035,55 +2037,45 @@ const Index = () => {
                 aria-label={isRTL ? 'פעולות מהירות' : 'Quick Actions'}
                 style={{
                   display: 'flex', alignItems: 'center', gap: isMobile ? 4 : 8,
-                  padding: isMobile ? '6px 10px' : '6px 14px',
-                  background: `linear-gradient(135deg, ${T.bg.tertiary}, ${T.bg.card})`,
-                  border: `1px solid ${T.border.medium}`,
-                  borderRadius: T.radius.md,
-                  color: T.text.secondary,
+                  padding: isMobile ? '7px 10px' : '7px 12px',
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  borderRadius: 8,
+                  color: T.text.muted,
                   cursor: 'pointer',
-                  fontSize: 12,
+                  fontSize: 12.5,
                   fontWeight: 500,
-                  transition: 'all 0.2s ease',
-                  boxShadow: T.shadow.card,
+                  fontFamily: "'Inter', system-ui, sans-serif",
+                  transition: 'background 0.18s ease, border-color 0.18s ease, color 0.18s ease',
                   flexShrink: 0,
                 }}
                 onMouseEnter={e => {
-                  e.currentTarget.style.borderColor = T.accent.cyan + '50';
-                  e.currentTarget.style.background = `linear-gradient(135deg, ${T.accent.cyan}08, ${T.bg.card})`;
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)';
                   e.currentTarget.style.color = T.text.primary;
-                  e.currentTarget.style.boxShadow = `${T.shadow.card}, 0 0 12px ${T.accent.cyan}15`;
                 }}
                 onMouseLeave={e => {
-                  e.currentTarget.style.borderColor = T.border.medium;
-                  e.currentTarget.style.background = `linear-gradient(135deg, ${T.bg.tertiary}, ${T.bg.card})`;
-                  e.currentTarget.style.color = T.text.secondary;
-                  e.currentTarget.style.boxShadow = T.shadow.card;
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
+                  e.currentTarget.style.color = T.text.muted;
                 }}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
                 </svg>
                 {!isMobile && (
-                  <span style={{ fontFamily: "'Inter', sans-serif" }}>
-                    {isRTL ? 'פעולות מהירות' : 'Quick Actions'}
-                  </span>
+                  <span>{isRTL ? 'פעולות מהירות' : 'Quick Actions'}</span>
                 )}
                 {!isMobile && (
                   <span style={{
-                    fontSize: 9, padding: '2px 5px',
-                    background: `${T.accent.cyan}12`, border: `1px solid ${T.accent.cyan}20`,
-                    borderRadius: 4, color: T.accent.cyan,
-                    fontFamily: "'JetBrains Mono', monospace", fontWeight: 700
+                    fontSize: 10.5,
+                    color: 'rgba(255,255,255,0.32)',
+                    fontFamily: "'JetBrains Mono', monospace", fontWeight: 500,
+                    marginInlineStart: 2,
                   }}>⌘K</span>
                 )}
               </button>
             )}
-
-            {!isMobile && !uiPrefs.hideHeaderDate && <div style={{ fontSize: 11, color: T.text.muted }}>{new Date().toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</div>}
-            <PV><div style={{ fontSize: 11, color: T.accent.cyan, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace" }}>${currentBalance.toFixed(2)}</div></PV>
-            
-            <NavAvatar T={T} size={isMobile ? 28 : 32} onClick={() => setShowSettings(true)} />
-            
           </div>
         </header>
         )}
