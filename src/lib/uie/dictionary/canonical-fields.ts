@@ -14,10 +14,10 @@ export interface FieldDescriptor {
 export const FIELD_TAXONOMY: FieldDescriptor[] = [
   { canonical:'symbol', destination:'journal_column', tier:1, profile:'identifier', ambiguity:['HE_MATBEA','EN_NAME'],
     aliases:{ he:['שם הנייר','נייר','שם נייר','נייר ערך','ניע','שם המניה','מניה','מטבע','צמד','צמד מטבעות','נכס','שם נכס','סימול','סמל','מכשיר','חוזה','שם'],
-              en:['symbol','ticker','instrument','asset','pair','market','contract','security','stock','coin','product','name','underlying'] } },
+              en:['symbol','ticker','instrument','asset','pair','market','contract','contracts','security','stock','coin','product','name','underlying','underlying symbol','root symbol','market pos','market position'] } },
   { canonical:'direction', destination:'journal_column', tier:1, profile:'directionEnum', ambiguity:['TYPE_DISAMBIG'],
     aliases:{ he:['כיוון','צד','פעולה','סוג פעולה','קניה מכירה','לונג שורט','סוג עסקה','כיוון עסקה'],
-              en:['side','direction','action','buy/sell','long/short','position side','order side','trade type'] } },
+              en:['side','direction','action','buy/sell','buy sell','b/s','b s','long/short','l/s','l s','position side','order side','trade type','closing direction'] } },
   { canonical:'activityType', destination:'metadata', tier:2, profile:'activityEnum',
     aliases:{ he:['סוג תנועה','תיאור פעולה','סוג הפעולה','מהות הפעולה','תנועה'],
               en:['transaction type','activity','activity type','operation','filled type','exec type'] } },
