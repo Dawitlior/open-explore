@@ -34,7 +34,7 @@ export const FIELD_TAXONOMY: FieldDescriptor[] = [
     aliases:{ he:['זמן','שעה'], en:['time','hour'] } },
   { canonical:'entryPrice', destination:'journal_column', tier:1, profile:'positiveNumber', ambiguity:['SINGLE_PRICE'],
     aliases:{ he:['מחיר','שער','מחיר ממוצע','שער ממוצע','מחיר קניה','שער קניה','מחיר כניסה','שער ביצוע','מחיר ביצוע','מחיר פתיחה','שער עסקה','מחיר עסקה'],
-              en:['price','avg price','average price','fill price','filled price','entry price','entry','open price','execution price','buy price','open'] } },
+              en:['price','avg price','average price','avg entry price','avg fill price','fill price','filled price','entry price','entry','open price','execution price','buy price','open','t price','trade price'] } },
   { canonical:'exitPrice', destination:'journal_column', tier:2, profile:'positiveNumber',
     aliases:{ he:['מחיר יציאה','שער יציאה','מחיר מכירה','שער מכירה','מחיר סגירה','שער סגירה'],
               en:['exit price','close price','sell price','exit','avg close price','closing price','close'] } },
