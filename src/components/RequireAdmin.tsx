@@ -7,6 +7,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { OrcaBootLoader } from "@/components/OrcaBootLoader";
 
 interface Props {
   children: ReactNode;
