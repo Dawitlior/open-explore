@@ -124,24 +124,19 @@ export function DisplayModeToggle({ T, isRTL, compact }: Props) {
         aria-label={isRTL ? 'מצב תצוגה' : 'Display mode'}
         style={{
           position: 'relative',
-          width: 196,
-          maxWidth: 196,
+          width: 168,
+          maxWidth: 168,
           height: PILL_H,
           padding: PADDING,
-          borderRadius: 999,
-          background: `
-            linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)),
-            rgba(6,12,24,0.6)
-          `,
-          border: '1px solid rgba(255,255,255,0.08)',
-          backdropFilter: 'blur(20px) saturate(160%)',
-          WebkitBackdropFilter: 'blur(20px) saturate(160%)',
-          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05), 0 8px 22px -16px rgba(0,0,0,0.8)',
+          borderRadius: 10,
+          background: 'rgba(15,23,42,0.55)',
+          border: '1px solid rgba(148,163,184,0.15)',
+          boxShadow: 'none',
           display: 'flex',
-          direction: 'ltr', // stable thumb math regardless of RTL parent
+          direction: 'ltr',
         }}
       >
-        {/* sliding thumb */}
+        {/* sliding thumb — subtle, no neon */}
         <span
           aria-hidden
           style={{
@@ -150,20 +145,18 @@ export function DisplayModeToggle({ T, isRTL, compact }: Props) {
             bottom: PADDING,
             left: PADDING,
             width: `calc(50% - ${PADDING}px)`,
-            borderRadius: 999,
+            borderRadius: 8,
             transform: isMoney ? 'translateX(0%)' : 'translateX(100%)',
-            transition: 'transform .35s cubic-bezier(.16,1,.3,1), background .25s ease, box-shadow .25s ease',
-            background: isMoney
-              ? 'linear-gradient(135deg, rgba(16,185,129,0.95), rgba(5,150,105,0.85))'
-              : 'linear-gradient(135deg, rgba(0,242,255,0.95), rgba(59,130,246,0.85))',
-            boxShadow: isMoney
-              ? '0 0 18px rgba(16,185,129,0.35), inset 0 1px 0 rgba(255,255,255,0.25)'
-              : '0 0 18px rgba(0,242,255,0.35), inset 0 1px 0 rgba(255,255,255,0.25)',
+            transition: 'transform .3s cubic-bezier(.16,1,.3,1), background .2s ease',
+            background: 'rgba(51,65,85,0.85)',
+            border: '1px solid rgba(148,163,184,0.22)',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
           }}
         />
         {labels.map(l => {
           const active = l.id === displayMode;
           const lockThis = locked && l.id === 'R_MULTIPLE';
+          const accent = l.id === 'MONEY' ? '#10b981' : '#22d3ee';
           return (
             <button
               key={l.id}
@@ -177,34 +170,30 @@ export function DisplayModeToggle({ T, isRTL, compact }: Props) {
                 flex: 1,
                 background: 'transparent',
                 border: 'none',
-                color: active ? '#06121f' : 'rgba(240,245,255,0.65)',
+                color: active ? '#f1f5f9' : 'rgba(148,163,184,0.75)',
                 fontFamily: sans,
-                fontWeight: 700,
+                fontWeight: 600,
                 fontSize: 11.5,
-                letterSpacing: 0.3,
+                letterSpacing: 0.2,
                 cursor: lockThis ? 'not-allowed' : 'pointer',
                 opacity: lockThis ? 0.45 : 1,
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 5,
-                transition: 'color .25s ease, opacity .25s ease',
+                transition: 'color .2s ease',
                 padding: 0,
                 zIndex: 1,
               }}
             >
               {lockThis && <Lock size={10} />}
+              <span style={{ fontFamily: mono, fontSize: 10, fontWeight: 700, color: active ? accent : 'rgba(148,163,184,0.55)' }}>{l.sub}</span>
               <span>{isRTL ? l.he : l.en}</span>
-              <span style={{
-                fontFamily: mono, fontSize: 9.5, fontWeight: 800,
-                opacity: active ? 0.55 : 0.45,
-                padding: '1px 5px', borderRadius: 4,
-                background: active ? 'rgba(6,18,31,0.18)' : 'rgba(255,255,255,0.05)',
-              }}>{l.sub}</span>
             </button>
           );
         })}
       </div>
+
       {!compact && hint && displayMode === 'R_MULTIPLE' && (
         <div style={{
           fontFamily: mono, fontSize: 10, color: T.text.muted,

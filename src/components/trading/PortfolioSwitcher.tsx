@@ -198,32 +198,31 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
         aria-expanded={open}
         title={isRTL ? 'מעבר בין תיקים' : 'Switch portfolio'}
         style={{
-          display: 'flex', alignItems: 'center', gap: 10,
-          padding: compact ? '6px 14px' : '8px 16px',
-          background: open
-            ? 'linear-gradient(135deg, rgba(212,175,55,0.18) 0%, rgba(20,28,46,0.95) 60%)'
-            : 'linear-gradient(135deg, rgba(212,175,55,0.08) 0%, rgba(20,28,46,0.85) 70%)',
-          border: '1px solid rgba(212,175,55,0.35)',
-          borderRadius: 999,
-          color: '#f1f5f9',
+          display: 'flex', alignItems: 'center', gap: 8,
+          padding: compact ? '6px 12px' : '7px 14px',
+          background: open ? 'rgba(30,41,59,0.85)' : 'rgba(15,23,42,0.55)',
+          border: `1px solid ${open ? 'rgba(148,163,184,0.28)' : 'rgba(148,163,184,0.15)'}`,
+          borderRadius: 10,
+          color: '#e2e8f0',
           cursor: 'pointer',
           fontSize: compact ? 11.5 : 12.5,
-          fontWeight: 600,
+          fontWeight: 500,
           fontFamily: "'Poppins', sans-serif",
-          letterSpacing: '0.02em',
-          maxWidth: 240, minWidth: 0,
-          boxShadow: open
-            ? '0 6px 24px rgba(212,175,55,0.22), inset 0 1px 0 rgba(255,255,255,0.06)'
-            : '0 2px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)',
-          transition: 'all 0.22s cubic-bezier(0.4, 0, 0.2, 1)',
+          letterSpacing: '0.01em',
+          maxWidth: 220, minWidth: 0,
+          boxShadow: 'none',
+          transition: 'background 0.18s ease, border-color 0.18s ease',
         }}
+        onMouseEnter={(e) => { if (!open) e.currentTarget.style.background = 'rgba(30,41,59,0.7)'; }}
+        onMouseLeave={(e) => { if (!open) e.currentTarget.style.background = 'rgba(15,23,42,0.55)'; }}
       >
         {dot(activePortfolio?.color)}
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, textAlign: isRTL ? 'right' : 'left' }}>{triggerLabel}</span>
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(212,175,55,0.85)" strokeWidth="2.2" aria-hidden="true" style={{ transform: open ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s ease' }}>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(148,163,184,0.7)" strokeWidth="2" aria-hidden="true" style={{ transform: open ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s ease', flexShrink: 0 }}>
           <polyline points="6 9 12 15 18 9" />
         </svg>
       </button>
+
 
       {open && typeof document !== 'undefined' && createPortal(
         <div
