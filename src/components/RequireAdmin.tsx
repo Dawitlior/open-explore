@@ -36,11 +36,7 @@ export const RequireAdmin = ({ children, fallback }: Props) => {
   }, [user]);
 
   if (state === "checking") {
-    return (
-      <div style={{ padding: 24, color: "#94a3b8", fontFamily: "monospace" }}>
-        מאמת הרשאות…
-      </div>
-    );
+    return <OrcaBootLoader label="Verifying access" />;
   }
   if (state === "deny") {
     return (
