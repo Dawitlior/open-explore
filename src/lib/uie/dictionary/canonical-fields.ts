@@ -74,7 +74,7 @@ export const FIELD_TAXONOMY: FieldDescriptor[] = [
     aliases:{ he:['סטייה','סליפג'], en:['deviation','slippage'] } },
   { canonical:'commission', destination:'notes_overflow', tier:2, profile:'number', ambiguity:['DUPLICATE_FEE','FEE_RATE'],
     aliases:{ he:['עמלה','עמלות','עמלת קניה','עמלת מכירה','עמלת פעולה','דמי טיפול','עלויות','עמלת מסחר'],
-              en:['commission','fee','fees','comm','brokerage','charges','transaction fee','trading fee','exec fee'] } },
+              en:['commission','fee','fees','comm','comm fee','comm/fee','brokerage','charges','transaction fee','trading fee','exec fee'] } },
   { canonical:'feeRate', destination:'metadata', tier:3, profile:'smallFraction',
     aliases:{ he:['שיעור עמלה'], en:['fee rate','commission rate'] } },
   { canonical:'feeCurrency', destination:'metadata', tier:3, profile:'currencyEnum',
