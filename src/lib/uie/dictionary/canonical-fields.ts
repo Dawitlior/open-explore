@@ -81,12 +81,12 @@ export const FIELD_TAXONOMY: FieldDescriptor[] = [
     aliases:{ he:['מטבע עמלה'], en:['fee coin','fee currency','feecoin','commission asset','fee asset'] } },
   { canonical:'swapFunding', destination:'notes_overflow', tier:3, profile:'number',
     aliases:{ he:['ריבית','מימון','פאנדינג','ריבית לילה','דמי החזקה'],
-              en:['swap','funding','funding fee','overnight fee','rollover','carry'] } },
+              en:['swap','funding','funding fee','overnight','overnight fee','rollover','carry','financing','financing fee'] } },
   { canonical:'tax', destination:'notes_overflow', tier:3, profile:'number',
     aliases:{ he:['מס','ניכוי מס','מס במקור','ניכוי במקור'], en:['tax','withholding','tax withheld','wht'] } },
   { canonical:'pnl', destination:'journal_column', tier:2, profile:'signedNumber',
     aliases:{ he:['רווח הפסד','רווח/הפסד','רווח','הפסד','תוצאה','רוהס','רווח נקי','רווח והפסד'],
-              en:['p&l','pnl','profit','profit/loss','realized p&l','realized pnl','net p&l','gain/loss','result','net profit','closed p&l'] } },
+              en:['p&l','pnl','p l','p/l','profit','profit/loss','realized p&l','realised p&l','realized pnl','realised pnl','net p&l','net p l','net p/l','gross p&l','gross p l','gross p/l','gain/loss','result','net profit','closed p&l','cumulative profit','cum profit'] } },
   // Split-leg P&L (Purple-Belt / NinjaTrader templates use two columns: one for winners, one for losers).
   // Each row fills ONE of the two; pipeline merges them into pnl = realisedWin - realisedLoss.
   { canonical:'realisedWin', destination:'journal_column', tier:2, profile:'positiveNumber',
