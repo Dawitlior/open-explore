@@ -400,7 +400,8 @@ export default function AuthPage() {
             zIndex: 1,
             padding: 'clamp(40px, 6vw, 72px)',
             flexDirection: 'column',
-            justifyContent: 'space-between',
+            justifyContent: 'flex-start',
+            gap: 'clamp(28px, 4vw, 56px)',
             background: `
               linear-gradient(${isRTL ? '270deg' : '90deg'}, ${INK_3} 0%, ${INK_2} 60%, ${INK} 100%)
             `,
