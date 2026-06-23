@@ -182,7 +182,7 @@ const App = () => (
                 element={
                   <RequireAuth>
                     <RequireAdmin>
-                      <Suspense fallback={<div style={{ padding: 24, color: '#94a3b8', fontFamily: 'monospace' }}>Loading diagnostics…</div>}>
+                      <Suspense fallback={<OrcaBootLoader label="Loading diagnostics" />}>
                         <OrcaDiagnosticsPage />
                         <ConsoleBackButton />
                       </Suspense>
