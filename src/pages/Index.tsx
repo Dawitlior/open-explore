@@ -1982,7 +1982,7 @@ const Index = () => {
             </button>
           </div>
         )}
-        {sbOpen && <div style={{ padding: '4px 6px' }}><InstallPrompt T={T} isRTL={isRTL} compact /></div>}
+        {/* InstallPrompt removed from sidebar — install lives in Settings now */}
         <div style={{ padding: 10, borderTop: `1px solid ${T.border.subtle}`, display: 'flex', flexDirection: 'column', gap: 4 }}>
           {sbOpen && <button onClick={() => setShowSettings(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '9px 10px', background: `${T.accent.cyan}10`, border: `1px solid ${T.accent.cyan}30`, borderRadius: T.radius.md, color: T.accent.cyan, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
             <span style={{ fontSize: 14 }}>⚙️</span>
