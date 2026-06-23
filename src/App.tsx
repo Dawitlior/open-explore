@@ -40,6 +40,7 @@ const BugBoardPage = lazy(() => import("./pages/BugBoardPage"));
 const OrcaConsolePage = lazy(() => import("./pages/OrcaConsole"));
 const OrcaDiagnosticsPage = lazy(() => import("./pages/OrcaDiagnostics"));
 import { RequireAdmin } from "@/components/RequireAdmin";
+import { OrcaBootLoader } from "@/components/OrcaBootLoader";
 import { ConsoleBackButton } from "@/components/ConsoleBackButton";
 
 /**
