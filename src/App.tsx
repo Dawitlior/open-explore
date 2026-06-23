@@ -40,6 +40,7 @@ const BugBoardPage = lazy(() => import("./pages/BugBoardPage"));
 const OrcaConsolePage = lazy(() => import("./pages/OrcaConsole"));
 const OrcaDiagnosticsPage = lazy(() => import("./pages/OrcaDiagnostics"));
 import { RequireAdmin } from "@/components/RequireAdmin";
+import { OrcaBootLoader } from "@/components/OrcaBootLoader";
 import { ConsoleBackButton } from "@/components/ConsoleBackButton";
 
 /**
@@ -181,7 +182,7 @@ const App = () => (
                 element={
                   <RequireAuth>
                     <RequireAdmin>
-                      <Suspense fallback={<div style={{ padding: 24, color: '#94a3b8', fontFamily: 'monospace' }}>Loading diagnostics…</div>}>
+                      <Suspense fallback={<OrcaBootLoader label="Loading diagnostics" />}>
                         <OrcaDiagnosticsPage />
                         <ConsoleBackButton />
                       </Suspense>
@@ -194,7 +195,7 @@ const App = () => (
                 element={
                   <RequireAuth>
                     <RequireAdmin>
-                      <Suspense fallback={<div style={{ padding: 24, color: '#94a3b8', fontFamily: 'monospace' }}>Loading console…</div>}>
+                      <Suspense fallback={<OrcaBootLoader label="Loading console" />}>
                         <OrcaConsolePage />
                         <ConsoleBackButton />
                       </Suspense>
