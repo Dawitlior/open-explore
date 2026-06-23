@@ -19,12 +19,12 @@ const Accessibility = () => {
 
   const lastUpdated = isRTL ? '17 ביוני 2026' : 'June 17, 2026';
   const title = isRTL
-    ? 'הצהרת נגישות רשמית – פלטפורמת APEX OS (Orca Investment)'
-    : 'Official Accessibility Statement – APEX OS Platform (Orca Investment)';
+    ? 'הצהרת נגישות רשמית – פלטפורמת Orca Investment'
+    : 'Official Accessibility Statement – Orca Investment Platform';
 
   const intro = isRTL
-    ? 'מפעילי אתר ופלטפורמת APEX OS וקהילת Orca Investment (להלן: "הנהלת האתר") רואים בחשיבות עליונה את אספקת שירותיהם באופן שוויוני, מכבד ונגיש לכלל הציבור, לרבות אנשים עם מוגבלויות. אנו משקיעים משאבים ומאמצים על מנת להתאים את אתר האינטרנט והפלטפורמה הדיגיטלית לדרישות החוק, מתוך אמונה כי לכל אדם זכות שווה לשימוש עצמאי ויעיל במרחב הדיגיטלי.'
-    : 'The operators of the APEX OS website and platform and the Orca Investment community (hereinafter: "the site administration") consider it of utmost importance to deliver their services equitably, respectfully and accessibly to the public at large, including people with disabilities. We invest resources and effort to adapt the website and the digital platform to the requirements of the law, believing that every person has an equal right to independent and effective use of the digital space.';
+    ? 'מפעילי אתר ופלטפורמת Orca Investment (להלן: "הנהלת האתר") רואים בחשיבות עליונה את אספקת שירותיהם באופן שוויוני, מכבד ונגיש לכלל הציבור, לרבות אנשים עם מוגבלויות. אנו משקיעים משאבים ומאמצים על מנת להתאים את אתר האינטרנט והפלטפורמה הדיגיטלית לדרישות החוק, מתוך אמונה כי לכל אדם זכות שווה לשימוש עצמאי ויעיל במרחב הדיגיטלי.'
+    : 'The operators of the Orca Investment platform and community (hereinafter: "the site administration") consider it of utmost importance to deliver their services equitably, respectfully and accessibly to the public at large, including people with disabilities. We invest resources and effort to adapt the website and the digital platform to the requirements of the law, believing that every person has an equal right to independent and effective use of the digital space.';
 
   const sections: Section[] = isRTL ? [
     {
@@ -61,7 +61,7 @@ const Accessibility = () => {
       heading: '5. פרטי רכז הנגישות ודרכי פנייה לדיווח על תקלות',
       body: [
         'אם במהלך השימוש בפלטפורמה נתקלתם בקושי, במידע שאינו נגיש, או ברכיב שאינו עומד בדרישות התקן, אנא פנו אלינו על מנת שנוכל לתקן את הליקוי בהקדם.',
-        'מחלקת תמיכה ונגישות – APEX OS',
+        'מחלקת תמיכה ונגישות – Orca Investment',
         'דואר אלקטרוני: innovationai@mail.com',
         'ערוץ: פניות דיגיטליות בלבד.',
         'בעת פנייה בנושאי נגישות, נבקש לציין ככל הניתן את הפרטים הבאים על מנת שנוכל לטפל בפנייה ביעילות המרבית:',
@@ -106,7 +106,7 @@ const Accessibility = () => {
       heading: '5. Accessibility Coordinator & How to Report Issues',
       body: [
         'If, while using the platform, you encounter a difficulty, content that is not accessible, or a component that does not meet the standard, please contact us so we can address the issue as soon as possible.',
-        'APEX OS — Support & Accessibility',
+        'Orca Investment — Support &amp; Accessibility',
         'Email: innovationai@mail.com',
         'Channel: digital correspondence only.',
         'When contacting us about accessibility, please include the following information so we can handle your request as effectively as possible:',
