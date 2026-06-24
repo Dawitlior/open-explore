@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import {
   ResponsiveContainer, AreaChart, Area, LineChart, Line, BarChart, Bar,
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
@@ -1600,6 +1600,20 @@ export default function OrcaConsole() {
   const [collapsed, setCollapsed] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [now, setNow] = useState(Date.now());
+  const [pulse, setPulse] = useState(false);
+  const prevHashRef = useRef("");
+  useEffect(() => { const id = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(id); }, []);
+  useEffect(() => {
+    if (!live.dataHash) return;
+    if (prevHashRef.current && prevHashRef.current !== live.dataHash) {
+      setPulse(true);
+      const id = setTimeout(() => setPulse(false), 1400);
+      prevHashRef.current = live.dataHash;
+      return () => clearTimeout(id);
+    }
+    prevHashRef.current = live.dataHash;
+  }, [live.dataHash]);
   const t = useT(lang);
   const rtl = lang === "he";
   C = theme === "dark" ? DARK : LIGHT;
@@ -1733,6 +1747,8 @@ export default function OrcaConsole() {
         .recharts-cursor, .recharts-rectangle.recharts-tooltip-cursor { fill:${C.blueSoft} !important; stroke:${C.borderStrong} !important; }
         ::selection{ background:${C.blueSoft}; }
         *{ scrollbar-width: thin; scrollbar-color:${C.borderStrong} transparent; }
+        @keyframes orcaSpin { from { transform: rotate(0deg);} to { transform: rotate(360deg);} }
+        @keyframes orcaPulse { 0% { box-shadow: 0 0 0 0 ${C.pos}66; } 100% { box-shadow: 0 0 0 10px ${C.pos}00; } }
         @media print { .orca-shell { display: block !important; } .orca-shell > *:not(.orca-report) { display: none !important; } .orca-report { position: static !important; height: auto !important; overflow: visible !important; background: #fff !important; } .orca-report-bar { display: none !important; } }
       `}</style>
 
@@ -1833,10 +1849,14 @@ export default function OrcaConsole() {
             <Select lang={lang} value={F.asset} onChange={(v) => setF({ ...F, asset: v })} options={assetOpts} />
             <Select lang={lang} value={F.tier} onChange={(v) => setF({ ...F, tier: v })} options={tierOpts} />
           </div>
-          <span style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: SANS, fontSize: 11.5, color: C.ink3 }}><RefreshCw size={12} />{t("updated")} {new Date().toLocaleTimeString(rtl ? "he-IL" : "en-US", { hour: "2-digit", minute: "2-digit" })}</span>
+          {(() => {
+            const ageSec = live.lastUpdated ? Math.max(0, Math.floor((now - live.lastUpdated) / 1000)) : null;
+            const ageLabel = ageSec == null ? "—" : ageSec < 5 ? (lang === "he" ? "עכשיו" : "just now") : ageSec < 60 ? `${ageSec}s` : ageSec < 3600 ? `${Math.floor(ageSec / 60)}m` : `${Math.floor(ageSec / 3600)}h`;
+            return <span style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: SANS, fontSize: 11.5, color: C.ink3 }}><RefreshCw size={12} style={{ animation: pulse ? "orcaSpin 1.2s linear" : "none" }} />{t("updated")} <strong style={{ fontFamily: MONO, color: C.ink2 }}>{ageLabel}</strong></span>;
+          })()}
           {lastActivityLabel && <span style={{ fontFamily: SANS, fontSize: 11.5, color: C.ink3 }}>{lang === "he" ? "פעילות אחרונה" : "Last activity"}: <strong style={{ color: C.ink2, fontFamily: MONO }}>{lastActivityLabel}</strong></span>}
-          <span title={live.error || ""} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 8px", borderRadius: 99, border: `1px solid ${live.loading ? C.borderStrong : (live.error ? C.neg : C.pos)}`, background: live.loading ? C.panelAlt : (live.error ? "#FEE2E2" : "#ECFDF5"), color: live.loading ? C.ink3 : (live.error ? C.neg : C.pos), fontFamily: MONO, fontSize: 10.5, fontWeight: 600 }}>
-            <span style={{ width: 6, height: 6, borderRadius: 99, background: live.loading ? C.ink3 : (live.error ? C.neg : C.pos) }} />
+          <span title={live.error || ""} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 9px", borderRadius: 99, border: `1px solid ${live.loading ? C.borderStrong : (live.error ? C.neg : C.pos)}`, background: live.loading ? C.panelAlt : (live.error ? (theme === "dark" ? "#2A1117" : "#FEE2E2") : (theme === "dark" ? "#10241A" : "#ECFDF5")), color: live.loading ? C.ink3 : (live.error ? C.neg : C.pos), fontFamily: MONO, fontSize: 10.5, fontWeight: 600, transition: "box-shadow .4s ease", boxShadow: pulse ? `0 0 0 4px ${C.pos}33` : "none" }}>
+            <span style={{ width: 6, height: 6, borderRadius: 99, background: live.loading ? C.ink3 : (live.error ? C.neg : C.pos), animation: pulse ? "orcaPulse 1.2s ease-out" : "none" }} />
             {live.loading ? "LIVE…" : `LIVE ${live.okCount}/${live.totalCount} RPC OK`}
           </span>
         </div>

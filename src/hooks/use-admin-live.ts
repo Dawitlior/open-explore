@@ -71,6 +71,8 @@ export type AdminLive = {
   error: string | null;
   okCount: number;
   totalCount: number;
+  lastUpdated: number;
+  dataHash: string;
   // wave 1
   storage: LiveStorage | null;
   aiUsage: LiveAi | null;
@@ -153,6 +155,8 @@ const INITIAL: AdminLive = {
   error: null,
   okCount: 0,
   totalCount: 13,
+  lastUpdated: 0,
+  dataHash: "",
   storage: null,
   aiUsage: null,
   activeCount: null,
@@ -174,8 +178,9 @@ export function useAdminLive(): AdminLive {
 
   useEffect(() => {
     let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
     const rpc = (name: string, args?: any) => (supabase as any).rpc(name, args);
-    (async () => {
+    const fetchAll = async () => {
       try {
         // ALL-TIME default: large period so every historical trade populates
         // windowed RPCs. Diagnostics page can request narrower windows.
@@ -217,11 +222,26 @@ export function useAdminLive(): AdminLive {
 
         const okCount = results.filter((r: any) => !r.error).length;
 
+        // Lightweight content hash — only changes when material counts change.
+        // Avoids spurious pulses from object identity on each poll.
+        const hashParts = [
+          okCount,
+          (matrixRes.data as any[] | null)?.length || 0,
+          (engRes.data as any[] | null)?.length || 0,
+          (heatRes.data as any[] | null)?.reduce?.((s: number, r: any) => s + Number(r.n || 0), 0) || 0,
+          (funnelRes.data as any[] | null)?.reduce?.((s: number, r: any) => s + Number(r.n || 0), 0) || 0,
+          liveActive ?? 0,
+          liveStorage?.dbStats.sizeMb || 0,
+        ];
+        const dataHash = hashParts.join("|");
+
         setState({
           loading: false,
           error: firstError,
           okCount,
           totalCount: results.length,
+          lastUpdated: Date.now(),
+          dataHash,
           storage: liveStorage,
           aiUsage: liveAi && liveAi.length ? liveAi : null,
           activeCount: liveActive,
@@ -240,10 +260,14 @@ export function useAdminLive(): AdminLive {
       } catch (e: any) {
         if (cancelled) return;
         setState((s) => ({ ...s, loading: false, error: e?.message || String(e) }));
+      } finally {
+        if (!cancelled) timer = setTimeout(fetchAll, 30000);
       }
-    })();
+    };
+    fetchAll();
     return () => {
       cancelled = true;
+      if (timer) clearTimeout(timer);
     };
   }, []);
 
