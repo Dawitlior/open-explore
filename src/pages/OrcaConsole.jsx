@@ -767,7 +767,7 @@ function CommunityActivity({ t, lang, traders, heat, hmax }) {
 /* 3 · Retention */
 function Retention({ t, lang, traders, cohorts, eng }) {
   const data = Array.from({ length: 8 }, (_, k) => { const row = { k }; cohorts.forEach((c) => (row[`c${c.c}`] = c.curve[k])); return row; });
-  const churn = eng.map((e) => ({ x: e.w, churn: e.churn })), cell = (v) => `rgba(37,99,235,${clamp(v / 100, 0.05, 0.85)})`;
+  const churn = eng.map((e) => ({ x: e.wk || `w${e.w}`, churn: e.churn })), cell = (v) => `rgba(37,99,235,${clamp(v / 100, 0.05, 0.85)})`;
   const w1 = Math.round(cohorts.reduce((s, c) => s + c.curve[1], 0) / cohorts.length);
   const w4 = Math.round(cohorts.reduce((s, c) => s + c.curve[4], 0) / cohorts.length);
   const w8 = Math.round(cohorts.reduce((s, c) => s + c.curve[7], 0) / cohorts.length);
