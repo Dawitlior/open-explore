@@ -109,7 +109,8 @@ function shapeStorage(rows: StorageRow[]): LiveStorage {
   }));
   const dbSizeMb = Math.round((head.db_size_bytes || 0) / (1024 * 1024));
   const totalRows = storage.reduce((s, t) => s + t.rows, 0);
-  const storageTrend = Array.from({ length: 16 }, (_, w) => ({ w, mb: dbSizeMb }));
+  // Honest trend: one real data point (current snapshot). No fabricated growth curve.
+  const storageTrend = [{ w: 0, mb: dbSizeMb || storage.reduce((s, t) => s + t.mb, 0) }];
   return {
     storage,
     storageTrend,
