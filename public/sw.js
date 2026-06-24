@@ -1,24 +1,32 @@
 // Minimal service worker for PWA installability.
-// Bumped cache name to force eviction of stale shells after a project revert.
+//
+// IMPORTANT: This worker MUST NOT force-reload open tabs on activation.
+// A previous version called `client.navigate(client.url)` inside `activate`,
+// which silently wiped any unsaved form state (e.g. API-key entry forms)
+// whenever users switched tabs and came back — Chrome re-checks the SW on
+// tab focus, and a byte-different worker would skipWaiting → activate →
+// reload everyone.
+//
+// Behavior now:
+//   • install: pre-activate immediately (skipWaiting) but do NOT touch caches.
+//   • activate: clear stale caches and claim clients — NO forced reloads.
+//   • fetch:   network-first for navigations and static assets, with cache as
+//              an offline-only fallback for assets.
 
-const CACHE = 'orca-shell-v9';
+const CACHE = 'orca-shell-v10';
 
-self.addEventListener('install', (e) => {
+self.addEventListener('install', () => {
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (e) => {
   e.waitUntil((async () => {
-    // Nuke ALL previous caches — not just non-matching ones — so a revert
-    // can never serve a stale bundle.
     const keys = await caches.keys();
-    await Promise.all(keys.map(k => caches.delete(k)));
+    await Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)));
     await self.clients.claim();
-    // Force every open tab to reload onto the fresh bundle.
-    const clients = await self.clients.matchAll({ type: 'window' });
-    for (const c of clients) {
-      try { c.navigate(c.url); } catch { /* ignore */ }
-    }
+    // Intentionally do NOT navigate/reload open clients — that destroys
+    // in-progress form input. Returning users pick up the new bundle on
+    // their next natural navigation.
   })());
 });
 
