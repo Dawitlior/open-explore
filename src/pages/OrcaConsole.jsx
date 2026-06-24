@@ -1919,7 +1919,7 @@ export default function OrcaConsole() {
           </span>
         </div>
 
-        <main style={{ padding: "22px", maxWidth: 1340, width: "100%" }}>
+        <main style={{ padding: "22px", maxWidth: 1340, width: "100%", marginInline: "auto" }}>
           <div className="orca-print-head" style={{ display: "none", marginBottom: 16, paddingBottom: 12, borderBottom: `2px solid ${C.ink}` }}>
             <div style={{ fontFamily: SANS, fontWeight: 750, fontSize: 20, color: C.ink }}>ORCA Console · {t(activeLabel)}</div>
             <div style={{ fontFamily: SANS, fontSize: 12, color: C.ink2, marginTop: 5 }}>{t("reportTitle")} · {t("showing")} {nf.format(filtered.length)} {t("traders")} · {new Date().toLocaleDateString(rtl ? "he-IL" : "en-US")}</div>
