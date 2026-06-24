@@ -15,6 +15,7 @@ export function useTrades() {
   const [initialized, setInitialized] = useState(false);
   const [riskAlert, setRiskAlert] = useState<RiskLimitStatus | null>(null);
   const tradesRef = useRef<Trade[]>([]);
+  const loadedOnceRef = useRef(false);
   const mutationQueueRef = useRef<Promise<void>>(Promise.resolve());
 
   useEffect(() => {
@@ -24,7 +25,7 @@ export function useTrades() {
   useEffect(() => {
     let cancelled = false;
     const load = () => {
-      setLoading(true);
+      if (!loadedOnceRef.current) setLoading(true);
       getAllTrades().then(t => {
         if (cancelled) return;
         const sanitized = sanitizeTrades(t);
@@ -39,12 +40,14 @@ export function useTrades() {
         const sorted = unique.sort((a, b) => a.id - b.id);
         tradesRef.current = sorted;
         setTrades(sorted);
+        loadedOnceRef.current = true;
         setLoading(false);
         setInitialized(true);
       }).catch((err) => {
         if (cancelled) return;
         console.error('Failed to load trades:', err);
         setTrades([]);
+        loadedOnceRef.current = true;
         setLoading(false);
         setInitialized(true);
       });
