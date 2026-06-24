@@ -1268,7 +1268,7 @@ function Storage({ t, lang, traders, storage, storageTrend, dbStats }) {
         <Card title={t("cTableSize")} pad={0}>
           <div style={{ overflowX: "auto" }}><table style={{ width: "100%", borderCollapse: "collapse", minWidth: 480 }}>
             <thead><tr style={{ background: C.panelAlt }}>{[t("thTable"), t("thSize"), t("thRows")].map((h, i) => <th key={i} style={{ fontFamily: SANS, fontSize: 11, fontWeight: 600, color: C.ink2, textAlign: i === 0 ? "start" : "end", padding: "10px 16px", borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap" }}>{h}</th>)}</tr></thead>
-            <tbody>{[...storage].sort((a, b) => b.mb - a.mb).map((s) => (<tr key={s.id} style={{ borderBottom: `1px solid ${C.gridLine}` }}>
+            <tbody>{[...storage].sort((a, b) => b.mb - a.mb).map((s) => (<tr key={s.id} style={{ borderBottom: `1px solid ${C.gridLine}`, transition: "background .12s ease" }} onMouseEnter={(e) => (e.currentTarget.style.background = C.blueSoft)} onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
               <td style={{ fontFamily: MONO, fontSize: 12, color: C.ink, padding: "9px 16px", whiteSpace: "nowrap" }}>{s.id}</td>
               <td style={{ fontFamily: MONO, fontSize: 12, color: C.ink2, padding: "9px 16px", textAlign: "end" }}>{s.mb >= 1024 ? `${r1(s.mb / 1024)} GB` : `${s.mb} MB`}</td>
               <td style={{ fontFamily: MONO, fontSize: 12, color: C.ink2, padding: "9px 16px", textAlign: "end" }}>{nf.format(s.rows)}</td>
