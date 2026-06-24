@@ -12,8 +12,8 @@ export interface RadarAlert {
 
 /**
  * Schedules countdown alerts for Tier-1 events at T-5min, T-1min, and release.
- * Uses setTimeout (not setInterval). Survives tab sleep via `visibilitychange`
- * by re-evaluating timers on focus.
+ * Uses setTimeout (not setInterval). Does not reschedule on tab focus, so it
+ * cannot visually refresh the app when users return to a backgrounded tab.
  */
 export function useEconomicRadar(enabled = true) {
   const { events } = useEconomicEvents({ hoursAhead: 6, impacts: ['t1'], enabled });
@@ -59,11 +59,8 @@ export function useEconomicRadar(enabled = true) {
 
   useEffect(() => {
     schedule();
-    const onVis = () => { if (document.visibilityState === 'visible') schedule(); };
-    document.addEventListener('visibilitychange', onVis);
     return () => {
       clearTimers();
-      document.removeEventListener('visibilitychange', onVis);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [events.map((e) => e.id + e.release_at).join(','), enabled]);
