@@ -2,6 +2,12 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { getSetting, setSetting } from '@/lib/storage';
 import { applyThemeToDOM } from '@/lib/trading-theme';
 import { writeCachedLang } from '@/hooks/use-lang';
+import { scopedStorage } from '@/lib/scoped-storage';
+
+function writeThemeCaches(t: string) {
+  try { window.localStorage.setItem('orca:theme-cache', t); } catch { /* noop */ }
+  try { scopedStorage.setSync('theme-cache', t); } catch { /* noop */ }
+}
 
 export type ThemeId = 'midnight' | 'blue' | 'platinum' | 'graphite';
 const VALID_THEMES: ThemeId[] = ['midnight', 'blue', 'platinum', 'graphite'];
@@ -72,7 +78,7 @@ export function useSettings() {
       const migrated: ThemeId = migrateTheme(t);
 
       setThemeState(migrated);
-      try { window.localStorage.setItem('orca:theme-cache', migrated); } catch { /* noop */ }
+      writeThemeCaches(migrated);
       if (m) setSystemModeState(m);
       if (o) setOperatingModeState(o);
       const authLangOverride = readAuthLangOverride();
@@ -98,7 +104,7 @@ export function useSettings() {
   const setTheme = useCallback((t: ThemeId) => {
     const from = prev.current.theme;
     setThemeState(t);
-    try { window.localStorage.setItem('orca:theme-cache', t); } catch { /* noop */ }
+    writeThemeCaches(t);
     setSetting('theme', t);
     if (from !== t) ModeSwitchEvents.emit({ kind: 'theme', from, to: t });
     prev.current.theme = t;
