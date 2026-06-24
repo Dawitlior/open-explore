@@ -749,6 +749,26 @@ function CredentialModal({
   const [cooldownUntil, setCooldownUntil] = useState(0);
   const [nowTick, setNowTick] = useState(Date.now());
   const [consecutiveFailures, setConsecutiveFailures] = useState(0);
+  const draftKey = user?.id ? `orca:exchange-draft:${user.id}:${provider.id}` : null;
+
+  useEffect(() => {
+    if (!draftKey) return;
+    try {
+      const raw = window.sessionStorage.getItem(draftKey);
+      if (!raw) return;
+      const draft = JSON.parse(raw) as { label?: string; apiKey?: string; apiSecret?: string };
+      if (typeof draft.label === 'string') setLabel(draft.label);
+      if (typeof draft.apiKey === 'string') setApiKey(draft.apiKey);
+      if (typeof draft.apiSecret === 'string') setApiSecret(draft.apiSecret);
+    } catch { /* ignore invalid draft */ }
+  }, [draftKey]);
+
+  useEffect(() => {
+    if (!draftKey) return;
+    try {
+      window.sessionStorage.setItem(draftKey, JSON.stringify({ label, apiKey, apiSecret }));
+    } catch { /* ignore storage errors */ }
+  }, [draftKey, label, apiKey, apiSecret]);
 
   // Live tick while cooldown is active so the button re-enables crisply
   useEffect(() => {
@@ -893,6 +913,9 @@ function CredentialModal({
       body: t('המפתח אומת כ־Read-Only ואוחסן בכספת השרת.',
         'Key verified as Read-Only and sealed inside the server vault.'),
       code: 'VAULT_SEALED' });
+    if (draftKey) {
+      try { window.sessionStorage.removeItem(draftKey); } catch { /* ignore */ }
+    }
     setApiKey(''); setApiSecret('');
     try { window.dispatchEvent(new CustomEvent('orca:exchange-credentials-changed', { detail: { provider: provider.id } })); } catch {/*noop*/}
     setTimeout(() => onSaved(), 1600);
