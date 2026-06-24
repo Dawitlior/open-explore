@@ -550,10 +550,36 @@ Deno.serve((req) => {
       return data.claims.sub as string;
     },
     persist: async (userId, input) => {
+      // Resolve a portfolio_id: keep existing on rotation, else fall back to
+      // the user's default portfolio (created by handle_new_user_portfolio).
+      // portfolio_id is NOT NULL on exchange_credentials, so we MUST supply one.
+      const { data: existing } = await supabase
+        .from('exchange_credentials')
+        .select('portfolio_id')
+        .eq('user_id', userId)
+        .eq('provider', input.provider)
+        .eq('label', input.label)
+        .maybeSingle();
+      let portfolioId: string | null = existing?.portfolio_id ?? null;
+      if (!portfolioId) {
+        const { data: defPort } = await supabase
+          .from('portfolios')
+          .select('id')
+          .eq('user_id', userId)
+          .order('is_default', { ascending: false })
+          .order('created_at', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        portfolioId = defPort?.id ?? null;
+      }
+      if (!portfolioId) {
+        return { error: { message: 'no_portfolio: user has no portfolio to attach credential to' } };
+      }
       const { error } = await supabase
         .from('exchange_credentials')
         .upsert({
           user_id: userId,
+          portfolio_id: portfolioId,
           provider: input.provider,
           label: input.label,
           api_key: input.api_key,
