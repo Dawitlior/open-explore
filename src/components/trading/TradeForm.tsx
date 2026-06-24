@@ -823,7 +823,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
 
               <div style={sectionCard}>
                 <label style={bigLabel}>{isRTL ? 'הערות (אופציונלי)' : 'Notes (optional)'}</label>
-                <textarea value={form.comments} onChange={e => setForm(f => ({ ...f, comments: e.target.value }))} placeholder={isRTL ? 'מה למדת? איך הרגשת? מה הסיבה לעסקה?' : 'What did you learn? How did you feel? Why this trade?'} style={{ ...bigInput, minHeight: 80, resize: 'vertical', fontFamily: "'Inter', system-ui, sans-serif" }} />
+                <textarea value={form.comments} maxLength={2000} onChange={e => setForm(f => ({ ...f, comments: e.target.value.slice(0, 2000) }))} placeholder={isRTL ? 'מה למדת? איך הרגשת? מה הסיבה לעסקה?' : 'What did you learn? How did you feel? Why this trade?'} style={{ ...bigInput, minHeight: 80, resize: 'vertical', fontFamily: "'Inter', system-ui, sans-serif" }} />
               </div>
             </>
           )}

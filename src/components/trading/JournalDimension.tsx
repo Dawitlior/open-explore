@@ -771,9 +771,9 @@ const Lbl = ({ c, dir, th }: { c: string; dir: string; th: typeof THEMES.dark })
   <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: '1.5px', textTransform: 'uppercase' as const, color: th.tx3, marginBottom: 6, display: 'block', textAlign: dir === 'rtl' ? 'right' : 'left' }}>{c}</span>
 );
 
-const TA = ({ val, set, ph, rows = 4, dir, disabled, th }: any) => (
-  <textarea value={val} rows={rows} disabled={disabled}
-    onChange={e => set?.(e.target.value)} placeholder={ph}
+const TA = ({ val, set, ph, rows = 4, dir, disabled, th, maxLength = 5000 }: any) => (
+  <textarea value={val} rows={rows} disabled={disabled} maxLength={maxLength}
+    onChange={e => set?.(e.target.value.slice(0, maxLength))} placeholder={ph}
     style={{ width: '100%', background: th.inputBg, border: `1px solid ${th.inputBr}`, borderRadius: 10, color: th.tx, fontFamily: "'Poppins',sans-serif", fontSize: 13, outline: 'none', padding: '10px 14px', lineHeight: 1.75, resize: 'vertical' as const, direction: dir, textAlign: dir === 'rtl' ? 'right' : 'left', transition: 'border-color .2s, box-shadow .2s, background .2s' }} />
 );
 

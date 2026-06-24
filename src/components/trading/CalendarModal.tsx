@@ -375,6 +375,7 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
         <>
           <textarea
             value={note}
+            maxLength={10000}
             onChange={(e) => {
               // Bug fix: when the auto-editor opened because the day had no note,
               // `editingNote` is false. The moment the user types one character
@@ -382,7 +383,7 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
               // unmounts and loses focus. Promote to explicit edit mode on the
               // first keystroke so the editor stays mounted.
               if (!editingNote) setEditingNote(true);
-              setNote(e.target.value);
+              setNote(e.target.value.slice(0, 10000));
             }}
             onFocus={() => { if (!editingNote) setEditingNote(true); }}
             disabled={!noteLoaded}

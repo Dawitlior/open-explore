@@ -105,8 +105,9 @@ export default function CommitBacktestModal({ onCommit }: Props) {
           <div style={lbl}>NOTES</div>
           <textarea
             style={{ ...inp, height: 56, resize: 'none' }}
+            maxLength={1000}
             value={local.notes}
-            onChange={(e) => set('notes', e.target.value)}
+            onChange={(e) => set('notes', e.target.value.slice(0, 1000))}
           />
         </div>
 

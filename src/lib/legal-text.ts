@@ -163,10 +163,18 @@ export const PRIVACY_SECTIONS_HE: LegalSection[] = [
       '6.2. זכות הסרה פשוטה (Opt-Out): המשתמש רשאי לחזור בו מהסכמתו זו בכל עת ולהסיר את עצמו מרשימת התפוצה השיווקית באמצעות לחיצה על קישור ההסרה המופיע בתחתית כל מייל שיווקי ("Unsubscribe") או שליחת הודעה לשירות הלקוחות. הסרה זו לא תחול על הודעות מערכת תפעוליות והכרחיות (כגון שינויי תקנון, איפוס סיסמאות או התראות מערכת קריטיות).',
   },
   {
-    heading: '7. הדין החל וסמכות שיפוט בלעדית',
+    heading: '7. אחסון מקומי בדפדפן (LocalStorage / Session Token)',
     body:
-      '7.1. הדין החל: על תנאי שימוש אלו ומדיניות הפרטיות, פרשנותם, אכיפתם וכל עניין הנובע מהם, יחולו אך ורק דיני מדינת ישראל, ללא תחולה לכללי ברירת הדין הבינלאומי.\n\n' +
-      '7.2. סמכות שיפוט ייחודית: לבתי המשפט המוסמכים במחוז תל אביב-יפו תהיה סמכות השיפוט הבלעדית, הייחודית והסופית בכל מחלוקת, תביעה או עניין משפטי הקשור או נובע מהשימוש בפלטפורמת OrcaInvestment או ממדיניות פרטיות זו.',
+      '7.1. אסימון התחברות: לצורך שמירת הפעלה רציפה ("Remember Me") המערכת שומרת בדפדפן המשתמש (LocalStorage) אסימון JWT חתום מטעם ספק האימות (Supabase Auth). אסימון זה מאפשר גישה לחשבון המשתמש בלבד, מוגבל בזמן (כשעה לפני רענון), ואינו מכיל סיסמה או מפתחות API.\n\n' +
+      '7.2. מטמון תצוגה בלבד: בנוסף לאסימון, המערכת עשויה לשמור בדפדפן העדפות UI (שפה, ערכת נושא, מצב פרטיות), מזהה תיק פעיל, וטיוטות זמניות של טפסים. מטמון זה מקודד תחת מפתח מבודד לפי משתמש (Per-User Scoping), נמחק אוטומטית בהתנתקות, ואינו מכיל מפתחות API, סיסמאות או נתוני מסחר גולמיים מלאים.\n\n' +
+      '7.3. אחריות פיזית על המכשיר: המשתמש מצהיר ומאשר כי הגישה הפיזית למחשב/לדפדפן שלו היא באחריותו הבלעדית. גורם זדוני עם גישה למכשיר הפתוח, או הרחבת דפדפן בעלת הרשאות קריאה ל-LocalStorage, עלול לגשת לחשבון. מומלץ להתנתק בסיום השימוש במחשבים משותפים ולהימנע מהתקנת הרחבות לא מהימנות.\n\n' +
+      '7.4. ביטול ההפעלה: התנתקות מהמערכת מוחקת לאלתר את האסימון ואת מטמון המשתמש מהדפדפן ומבטלת את תוקפו בצד השרת.',
+  },
+  {
+    heading: '8. הדין החל וסמכות שיפוט בלעדית',
+    body:
+      '8.1. הדין החל: על תנאי שימוש אלו ומדיניות הפרטיות, פרשנותם, אכיפתם וכל עניין הנובע מהם, יחולו אך ורק דיני מדינת ישראל, ללא תחולה לכללי ברירת הדין הבינלאומי.\n\n' +
+      '8.2. סמכות שיפוט ייחודית: לבתי המשפט המוסמכים במחוז תל אביב-יפו תהיה סמכות השיפוט הבלעדית, הייחודית והסופית בכל מחלוקת, תביעה או עניין משפטי הקשור או נובע מהשימוש בפלטפורמת OrcaInvestment או ממדיניות פרטיות זו.',
   },
 ];
 
@@ -219,10 +227,18 @@ export const PRIVACY_SECTIONS_EN: LegalSection[] = [
       '6.2. Easy opt-out: The User may withdraw this consent at any time and remove themselves from the marketing list by clicking the unsubscribe link at the bottom of every marketing email or by contacting customer support. This opt-out does not apply to operational and essential system messages (such as changes to the Terms, password resets or critical system alerts).',
   },
   {
-    heading: '7. Governing Law & Exclusive Jurisdiction',
+    heading: '7. Client-Side Storage (LocalStorage / Session Token)',
     body:
-      '7.1. Governing law: These Terms and this Privacy Policy, their interpretation, enforcement and any matter arising from them, shall be governed exclusively by the laws of the State of Israel, without application of international conflict-of-laws rules.\n\n' +
-      '7.2. Exclusive jurisdiction: The competent courts of the Tel Aviv-Yafo district shall have sole, exclusive and final jurisdiction over any dispute, claim or legal matter connected with or arising from the use of the OrcaInvestment platform or this Privacy Policy.',
+      '7.1. Authentication token: To maintain a persistent session ("Remember Me"), the System stores in the user\'s browser (LocalStorage) a signed JWT issued by the authentication provider (Supabase Auth). This token grants access to the user\'s own account only, is time-limited (approximately one hour before refresh), and contains no password or API keys.\n\n' +
+      '7.2. UI cache only: In addition to the token, the System may store in the browser UI preferences (language, theme, privacy mode), the active portfolio identifier, and transient form drafts. This cache is namespaced per-user, is wiped on sign-out, and contains no API keys, no passwords, and no full raw trading records.\n\n' +
+      '7.3. Physical device responsibility: The User acknowledges that physical access to their device/browser is their sole responsibility. A malicious actor with access to the unlocked device, or a browser extension with permission to read LocalStorage, may access the account. We recommend signing out when finished on shared machines and avoiding the installation of untrusted browser extensions.\n\n' +
+      '7.4. Revoking the session: Signing out of the System immediately deletes the token and the user\'s cache from the browser and invalidates the token on the server side.',
+  },
+  {
+    heading: '8. Governing Law & Exclusive Jurisdiction',
+    body:
+      '8.1. Governing law: These Terms and this Privacy Policy, their interpretation, enforcement and any matter arising from them, shall be governed exclusively by the laws of the State of Israel, without application of international conflict-of-laws rules.\n\n' +
+      '8.2. Exclusive jurisdiction: The competent courts of the Tel Aviv-Yafo district shall have sole, exclusive and final jurisdiction over any dispute, claim or legal matter connected with or arising from the use of the OrcaInvestment platform or this Privacy Policy.',
   },
 ];
 

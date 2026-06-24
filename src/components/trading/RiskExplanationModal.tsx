@@ -89,7 +89,8 @@ export const RiskExplanationModal = ({ T, isRTL, tradeId, riskChange, onSave, on
           </label>
           <textarea
             value={customNote}
-            onChange={e => setCustomNote(e.target.value)}
+            maxLength={1000}
+            onChange={e => setCustomNote(e.target.value.slice(0, 1000))}
             placeholder={isRTL ? 'הוסף הקשר...' : 'Add context...'}
             style={{ width: '100%', padding: '8px 10px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: 8, color: T.text.primary, fontSize: 12, fontFamily: "'Inter', sans-serif", outline: 'none', minHeight: 50, resize: 'vertical' }}
           />

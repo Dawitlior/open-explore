@@ -543,8 +543,8 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
           <div style={{ color: fg, fontWeight: 700, fontSize: 14, textAlign: isRTL ? 'right' : 'left' }}>{L.reflection} ✍️</div>
           <div style={{ color: muted, fontSize: 11, marginTop: 4, marginBottom: 10, textAlign: isRTL ? 'right' : 'left' }}>{L.reflectionCue}</div>
           <textarea
-            rows={6} value={draft.mindset} placeholder={L.reflectionPh}
-            onChange={e => update({ mindset: e.target.value })}
+            rows={6} value={draft.mindset} placeholder={L.reflectionPh} maxLength={5000}
+            onChange={e => update({ mindset: e.target.value.slice(0, 5000) })}
             style={{ ...input, minHeight: 140, resize: 'vertical' }}
             dir={isRTL ? 'rtl' : 'ltr'}
           />
