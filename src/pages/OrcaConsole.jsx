@@ -30,6 +30,7 @@ const LIGHT = {
   ink: "#16181D", ink2: "#3F434C", ink3: "#71757F",
   blue: "#4F46E5", blueDark: "#4338CA", blueSoft: "#EEF0FF",
   black: "#16181D", blackHover: "#0F1115", accent: "#4F46E5", accentHover: "#4338CA", chipFg: "#FFFFFF", rail: "#FFFFFF",
+  railIcon: "#71757F", railIconActive: "#16181D", railHover: "rgba(16,24,40,0.06)", railActiveBg: "rgba(79,70,229,0.10)", railActiveBar: "#4F46E5", railLogoBg: "#EEF0FF", railLogoBorder: "#E0E2E8", railLogoInk: "#4F46E5",
   pos: "#15803D", neg: "#BE123C", warn: "#B45309",
   gridLine: "#ECEDF1", codeBg: "#16181D",
   /* soft KPI tint backgrounds */
@@ -44,6 +45,7 @@ const DARK = {
   ink: "#F2F3F5", ink2: "#C7CAD1", ink3: "#9AA0AA",
   blue: "#6366F1", blueDark: "#818CF8", blueSoft: "#1E2030",
   black: "#0A0E16", blackHover: "#05070C", accent: "#6366F1", accentHover: "#818CF8", chipFg: "#FFFFFF", rail: "#16181D",
+  railIcon: "#8C9AB4", railIconActive: "#FFFFFF", railHover: "rgba(255,255,255,0.05)", railActiveBg: "rgba(255,255,255,0.10)", railActiveBar: "#FFFFFF", railLogoBg: "rgba(255,255,255,0.08)", railLogoBorder: "rgba(255,255,255,0.06)", railLogoInk: "#FFFFFF",
   pos: "#34D399", neg: "#FB7185", warn: "#FBBF24",
   gridLine: "#262A31", codeBg: "#0A1019",
   tintMint: "#10241A", tintViolet: "#1E1A33", tintAmber: "#2A2008", tintRose: "#2A1117", tintSky: "#0A2233",
@@ -1810,14 +1812,14 @@ export default function OrcaConsole() {
 
       {/* icon rail (groups) */}
       <aside className="orca-rail" style={{ background: C.rail, position: "sticky", top: 0, height: "100vh", display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 14, gap: 4, borderInlineEnd: `1px solid ${C.border}` }}>
-        <button onClick={() => setCollapsed((c) => !c)} title="toggle sidebar" style={{ width: 40, height: 40, borderRadius: 10, border: "none", background: "transparent", cursor: "pointer", display: "grid", placeItems: "center", color: "#94A3B8", marginBottom: 2, transition: "background .15s ease, color .15s ease" }} onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "#fff"; }} onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#94A3B8"; }}><PanelLeft size={17} /></button>
-        <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.08)", display: "grid", placeItems: "center", marginBottom: 10, border: "1px solid rgba(255,255,255,0.06)" }}><Grid3x3 size={18} color="#fff" /></div>
+        <button onClick={() => setCollapsed((c) => !c)} title="toggle sidebar" style={{ width: 40, height: 40, borderRadius: 10, border: "none", background: "transparent", cursor: "pointer", display: "grid", placeItems: "center", color: C.railIcon, marginBottom: 2, transition: "background .15s ease, color .15s ease" }} onMouseEnter={(e) => { e.currentTarget.style.background = C.railHover; e.currentTarget.style.color = C.railIconActive; }} onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.railIcon; }}><PanelLeft size={17} /></button>
+        <div style={{ width: 36, height: 36, borderRadius: 10, background: C.railLogoBg, display: "grid", placeItems: "center", marginBottom: 10, border: `1px solid ${C.railLogoBorder}` }}><Grid3x3 size={18} color={C.railLogoInk} /></div>
         {GROUPS.map((g) => {
           const on = activeGroup === g.id, Icon = g.icon;
           return (
-            <button key={g.id} onClick={() => setActive(g.pages[0][0])} title={t(g.label)} style={{ width: 40, height: 40, borderRadius: 10, border: "none", cursor: "pointer", display: "grid", placeItems: "center", background: on ? "rgba(255,255,255,0.10)" : "transparent", position: "relative", transition: "background .15s ease" }} onMouseEnter={(e) => { if (!on) e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }} onMouseLeave={(e) => { if (!on) e.currentTarget.style.background = "transparent"; }}>
-              {on && <span style={{ position: "absolute", insetInlineStart: -10, top: 10, bottom: 10, width: 3, borderRadius: 99, background: "#fff" }} />}
-              <Icon size={18} color={on ? "#fff" : "#8C9AB4"} />
+            <button key={g.id} onClick={() => setActive(g.pages[0][0])} title={t(g.label)} style={{ width: 40, height: 40, borderRadius: 10, border: "none", cursor: "pointer", display: "grid", placeItems: "center", background: on ? C.railActiveBg : "transparent", position: "relative", transition: "background .15s ease" }} onMouseEnter={(e) => { if (!on) e.currentTarget.style.background = C.railHover; }} onMouseLeave={(e) => { if (!on) e.currentTarget.style.background = "transparent"; }}>
+              {on && <span style={{ position: "absolute", insetInlineStart: -10, top: 10, bottom: 10, width: 3, borderRadius: 99, background: C.railActiveBar }} />}
+              <Icon size={18} color={on ? C.railIconActive : C.railIcon} />
             </button>
           );
         })}
@@ -1917,7 +1919,7 @@ export default function OrcaConsole() {
           </span>
         </div>
 
-        <main style={{ padding: "22px", maxWidth: 1340, width: "100%" }}>
+        <main style={{ padding: "22px", maxWidth: 1340, width: "100%", marginInline: "auto" }}>
           <div className="orca-print-head" style={{ display: "none", marginBottom: 16, paddingBottom: 12, borderBottom: `2px solid ${C.ink}` }}>
             <div style={{ fontFamily: SANS, fontWeight: 750, fontSize: 20, color: C.ink }}>ORCA Console · {t(activeLabel)}</div>
             <div style={{ fontFamily: SANS, fontSize: 12, color: C.ink2, marginTop: 5 }}>{t("reportTitle")} · {t("showing")} {nf.format(filtered.length)} {t("traders")} · {new Date().toLocaleDateString(rtl ? "he-IL" : "en-US")}</div>
