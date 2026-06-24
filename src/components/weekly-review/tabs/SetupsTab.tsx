@@ -241,8 +241,8 @@ export default function SetupsTab({ T, isRTL, trades, state }: Props) {
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: muted, marginBottom: 6 }}>{L.rules}</div>
               <textarea
-                rows={5} value={editing.rules || ''}
-                onChange={e => setEditing({ ...editing, rules: e.target.value })}
+                rows={5} value={editing.rules || ''} maxLength={3000}
+                onChange={e => setEditing({ ...editing, rules: e.target.value.slice(0, 3000) })}
                 style={{ ...inputStyle, resize: 'vertical', minHeight: 120 }}
               />
             </div>
