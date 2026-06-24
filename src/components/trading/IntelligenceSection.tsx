@@ -69,7 +69,7 @@ export default function IntelligenceSection({ trades, T, enabled }: { trades: Tr
       </div>
 
       {/* segments */}
-      <GlassCard>
+      <GlassCard T={T}>
         <div style={{ padding: '4px 2px' }}>
           <Eyebrow>{t('מתי אתה סוחר טוב · SEGMENTS', 'WHEN YOU TRADE WELL · SEGMENTS')}</Eyebrow>
           <p style={{ fontSize: 15, lineHeight: 1.85, color: C.text, margin: '6px 0 16px' }}>{seg.narrative}</p>
@@ -95,7 +95,7 @@ export default function IntelligenceSection({ trades, T, enabled }: { trades: Tr
 
       {/* edge engine */}
       <div style={{ marginTop: 16 }}>
-        <GlassCard>
+        <GlassCard T={T}>
           <div style={{ padding: '4px 2px' }}>
             <Eyebrow color={C.purple}>{t('מנוע ה-EDGE · מודל שלמד אותך', 'EDGE ENGINE · a model that learned you')}</Eyebrow>
 
