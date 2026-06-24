@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { setScopedUid } from '@/lib/scoped-storage';
@@ -61,13 +61,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [signingOut, setSigningOut] = useState(false);
+  const sessionRef = useRef<Session | null>(null);
 
   const commitSession = useCallback((next: Session | null) => {
-    setSession((prev) => {
-      if (!next) return null;
-      const stableUser = prev?.user?.id === next.user.id ? prev.user : next.user;
-      return stableUser === next.user ? next : { ...next, user: stableUser };
-    });
+    const prev = sessionRef.current;
+    if (prev?.user?.id === next?.user?.id) {
+      sessionRef.current = prev;
+      setLoading(false);
+      setScopedUid(prev.user.id);
+      return;
+    }
+    sessionRef.current = next;
+    setSession(next);
     setScopedUid(next?.user?.id ?? null);
     setLoading(false);
   }, []);
