@@ -1167,7 +1167,7 @@ function SystemAccess({ t, lang }) {
           <Card title={t("sysCatalog")} pad={0}>
             <div style={{ overflowX: "auto" }}><table style={{ width: "100%", borderCollapse: "collapse", minWidth: 560 }}>
               <thead><tr style={{ background: C.panelAlt }}>{[t("thFn"), t("thScope"), t("thGuard"), t("thStatus")].map((h, i) => <th key={i} style={{ fontFamily: SANS, fontSize: 11, fontWeight: 600, color: C.ink2, textAlign: "start", padding: "10px 14px", borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap" }}>{h}</th>)}</tr></thead>
-              <tbody>{RPCS.map((r) => (<tr key={r.fn} style={{ borderBottom: `1px solid ${C.gridLine}` }}>
+              <tbody>{RPCS.map((r) => (<tr key={r.fn} style={{ borderBottom: `1px solid ${C.gridLine}`, transition: "background .12s ease" }} onMouseEnter={(e) => (e.currentTarget.style.background = C.blueSoft)} onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
                 <td style={{ fontFamily: MONO, fontSize: 11.5, color: C.ink, padding: "9px 14px", whiteSpace: "nowrap" }}>{r.fn}()</td>
                 <td style={{ padding: "9px 14px" }}><Badge tone={scopeTone[r.scope]}>{t(r.scope)}</Badge></td>
                 <td style={{ padding: "9px 14px" }}><span style={{ fontFamily: MONO, fontSize: 11, color: C.ink2 }}>is_admin()</span></td>
