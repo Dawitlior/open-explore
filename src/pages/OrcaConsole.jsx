@@ -25,27 +25,45 @@ import { useAdminLive } from "@/hooks/use-admin-live";
    ══════════════════════════════════════════════════════════════════════════ */
 
 const LIGHT = {
-  appBg: "#F3F5F9", panel: "#FFFFFF", panelAlt: "#FAFBFD",
-  border: "#E4E8F0", borderStrong: "#D5DBE6",
-  ink: "#0F1B2D", ink2: "#5B6B85", ink3: "#94A0B5",
-  blue: "#2563EB", blueDark: "#1D4ED8", blueSoft: "#EEF2F7",
-  black: "#111827", blackHover: "#1F2937", accent: "#1F2A3D", accentHover: "#0F1B2D", chipFg: "#FFFFFF", rail: "#0F1B2D",
-  pos: "#059669", neg: "#BE123C", warn: "#B45309",
-  gridLine: "#EDF0F6", codeBg: "#0F1B2D",
-  tintBlue: "#F2F4F8", tintMint: "#F2F4F8", tintAmber: "#F2F4F8", tintRose: "#F2F4F8", tintIndigo: "#F2F4F8",
+  appBg: "#F6F7F9", panel: "#FFFFFF", panelAlt: "#FBFBFC",
+  border: "#ECEDF1", borderStrong: "#E0E2E8",
+  ink: "#16181D", ink2: "#3F434C", ink3: "#71757F",
+  blue: "#4F46E5", blueDark: "#4338CA", blueSoft: "#EEF0FF",
+  black: "#16181D", blackHover: "#0F1115", accent: "#4F46E5", accentHover: "#4338CA", chipFg: "#FFFFFF", rail: "#FFFFFF",
+  pos: "#15803D", neg: "#BE123C", warn: "#B45309",
+  gridLine: "#ECEDF1", codeBg: "#16181D",
+  /* soft KPI tint backgrounds */
+  tintMint: "#E8F5EE", tintViolet: "#EEEAFE", tintAmber: "#FEF3C7", tintRose: "#FFE4E6", tintSky: "#E0F2FE",
+  tintBlue: "#E0F2FE", tintIndigo: "#EEEAFE",
+  /* matching ink colors for icon chips */
+  tintMintInk: "#1B7A43", tintVioletInk: "#6D28D9", tintAmberInk: "#B45309", tintRoseInk: "#BE123C", tintSkyInk: "#0369A1",
 };
 const DARK = {
-  appBg: "#0E1420", panel: "#161D2B", panelAlt: "#1B2433",
-  border: "#27313F", borderStrong: "#37414F",
-  ink: "#EAEFF7", ink2: "#9CA8BB", ink3: "#6E7A8E",
-  blue: "#3B82F6", blueDark: "#60A5FA", blueSoft: "#1E2839",
-  black: "#0A0E16", blackHover: "#05070C", accent: "#EAEFF7", accentHover: "#FFFFFF", chipFg: "#0E1420", rail: "#0A0E16",
+  appBg: "#0E0F13", panel: "#16181D", panelAlt: "#1B1E24",
+  border: "#262A31", borderStrong: "#2F343C",
+  ink: "#F2F3F5", ink2: "#C7CAD1", ink3: "#9AA0AA",
+  blue: "#6366F1", blueDark: "#818CF8", blueSoft: "#1E2030",
+  black: "#0A0E16", blackHover: "#05070C", accent: "#6366F1", accentHover: "#818CF8", chipFg: "#FFFFFF", rail: "#16181D",
   pos: "#34D399", neg: "#FB7185", warn: "#FBBF24",
-  gridLine: "#222C3A", codeBg: "#0A1019",
-  tintBlue: "#1B2433", tintMint: "#1B2433", tintAmber: "#1B2433", tintRose: "#1B2433", tintIndigo: "#1B2433",
+  gridLine: "#262A31", codeBg: "#0A1019",
+  tintMint: "#10241A", tintViolet: "#1E1A33", tintAmber: "#2A2008", tintRose: "#2A1117", tintSky: "#0A2233",
+  tintBlue: "#0A2233", tintIndigo: "#1E1A33",
+  tintMintInk: "#6EE7A8", tintVioletInk: "#C4B5FD", tintAmberInk: "#FCD34D", tintRoseInk: "#FDA4AF", tintSkyInk: "#7DD3FC",
 };
 let C = LIGHT;
-const PAL = ["#2563EB", "#4F46E5", "#0D9488", "#0EA5E9", "#475569", "#B45309", "#059669", "#BE123C"];
+const PAL = ["#4F46E5", "#6D28D9", "#14B8A6", "#0EA5E9", "#475569", "#B45309", "#15803D", "#BE123C"];
+/* Resolve the matching ink color for a given soft tint background */
+const tintInk = (bg) => {
+  const map = {
+    [LIGHT.tintMint]: LIGHT.tintMintInk, [LIGHT.tintViolet]: LIGHT.tintVioletInk,
+    [LIGHT.tintAmber]: LIGHT.tintAmberInk, [LIGHT.tintRose]: LIGHT.tintRoseInk, [LIGHT.tintSky]: LIGHT.tintSkyInk,
+    [LIGHT.tintBlue]: LIGHT.tintSkyInk, [LIGHT.tintIndigo]: LIGHT.tintVioletInk,
+    [DARK.tintMint]: DARK.tintMintInk, [DARK.tintViolet]: DARK.tintVioletInk,
+    [DARK.tintAmber]: DARK.tintAmberInk, [DARK.tintRose]: DARK.tintRoseInk, [DARK.tintSky]: DARK.tintSkyInk,
+    [DARK.tintBlue]: DARK.tintSkyInk, [DARK.tintIndigo]: DARK.tintVioletInk,
+  };
+  return map[bg] || C.accent;
+};
 const SANS = "'Poppins', 'Heebo', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif";
 const MONO = "ui-monospace, 'SF Mono', 'Roboto Mono', Menlo, Consolas, monospace";
 
