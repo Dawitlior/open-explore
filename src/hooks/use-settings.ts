@@ -3,13 +3,15 @@ import { getSetting, setSetting } from '@/lib/storage';
 import { applyThemeToDOM } from '@/lib/trading-theme';
 import { writeCachedLang } from '@/hooks/use-lang';
 
-export type ThemeId = 'midnight' | 'institutional' | 'hightech' | 'platinum' | 'graphite' | 'precision';
-const VALID_THEMES: ThemeId[] = ['midnight', 'institutional', 'hightech', 'platinum', 'graphite', 'precision'];
-// Legacy theme migration: indigo → hightech (closest violet replacement)
+export type ThemeId = 'midnight' | 'blue' | 'platinum' | 'graphite';
+const VALID_THEMES: ThemeId[] = ['midnight', 'blue', 'platinum', 'graphite'];
+// Legacy theme migration: indigo/hightech → blue, precision/institutional → blue
 const migrateTheme = (v: unknown): ThemeId => {
-  if (v === 'indigo') return 'hightech';
+  if (v === 'indigo' || v === 'hightech' || v === 'institutional') return 'blue';
+  if (v === 'precision') return 'graphite';
   return (typeof v === 'string' && (VALID_THEMES as string[]).includes(v)) ? (v as ThemeId) : 'graphite';
 };
+
 
 export type SystemMode = 'standard' | 'alpha';
 export type OperatingMode = 'live' | 'review' | 'research' | 'beginner';
