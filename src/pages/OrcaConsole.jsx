@@ -472,6 +472,18 @@ function Card({ title, subtitle, toolbar, children, pad = 16, badge }) {
   );
 }
 
+/* ChartCard — thin Card wrapper that enforces a consistent chart height and
+   trims inner padding so axis labels breathe. Use for any Recharts container. */
+function ChartCard({ title, subtitle, toolbar, badge, height = 220, children }) {
+  return (
+    <Card title={title} subtitle={subtitle} toolbar={toolbar} badge={badge} pad={12}>
+      <div style={{ width: "100%", height, minWidth: 0 }}>
+        <ResponsiveContainer width="100%" height="100%">{children}</ResponsiveContainer>
+      </div>
+    </Card>
+  );
+}
+
 function StatTile({ label, value, suffix, delta, deltaGood = "up", bg, tint, icon: Icon, spark }) {
   const up = (delta ?? 0) >= 0, good = deltaGood === "up" ? up : !up;
   const chipBg = bg || C.tintIndigo;
