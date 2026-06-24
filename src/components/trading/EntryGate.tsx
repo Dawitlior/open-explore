@@ -108,12 +108,14 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
       <div
         dir={isRTL ? 'rtl' : 'ltr'}
         style={{
-          position: 'fixed', inset: 0, zIndex: 9999,
+          position: 'fixed', inset: 0, zIndex: 2147483647,
+          width: '100vw', height: '100dvh',
           background: 'radial-gradient(ellipse at 50% 30%, #0f1528 0%, #070b14 50%, #030508 100%)',
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           fontFamily: "'JetBrains Mono', 'Inter', monospace",
           overflow: 'hidden',
         }}
+
       >
         <div style={{
           position: 'absolute', inset: 0, opacity: 0.04,
