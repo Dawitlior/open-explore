@@ -84,9 +84,15 @@ function normalizePrefs(p?: Partial<UIPrefs> | null): UIPrefs {
 function readCachedPrefs(): UIPrefs {
   if (typeof window === 'undefined') return DEFAULTS;
   try {
-    const raw = scopedStorage.getSync('ui-prefs-cache') || window.localStorage.getItem(CACHE_KEY);
+    const raw = readCachedPrefsRaw();
     return raw ? normalizePrefs(JSON.parse(raw) as Partial<UIPrefs>) : DEFAULTS;
   } catch { return DEFAULTS; }
+}
+
+function readCachedPrefsRaw(): string | null {
+  if (typeof window === 'undefined') return null;
+  try { return scopedStorage.getSync('ui-prefs-cache') || window.localStorage.getItem(CACHE_KEY); }
+  catch { return null; }
 }
 
 function persistPrefs(next: UIPrefs) {
@@ -106,7 +112,15 @@ export function useUIPrefs() {
 
   useEffect(() => {
     getSetting<Partial<UIPrefs>>(KEY).then(p => {
-      if (p && typeof p === 'object') {
+      const cachedRaw = readCachedPrefsRaw();
+      if (cachedRaw) {
+        try {
+          const next = normalizePrefs(JSON.parse(cachedRaw) as Partial<UIPrefs>);
+          setPrefsState(next);
+          writePrefsCaches(JSON.stringify(next));
+          setSetting(KEY, next);
+        } catch { /* ignore malformed cache */ }
+      } else if (p && typeof p === 'object') {
         const next = normalizePrefs(p);
         setPrefsState(next);
         writePrefsCaches(JSON.stringify(next));

@@ -9,11 +9,16 @@ function writeThemeCaches(t: string) {
   try { scopedStorage.setSync('theme-cache', t); } catch { /* noop */ }
 }
 
-function readThemeCacheSync(): ThemeId {
-  if (typeof window === 'undefined') return 'blue';
+function readExplicitThemeCacheSync(): ThemeId | null {
+  if (typeof window === 'undefined') return null;
   try {
-    return migrateTheme(scopedStorage.getSync('theme-cache') || window.localStorage.getItem('orca:theme-cache'));
-  } catch { return 'blue'; }
+    const raw = scopedStorage.getSync('theme-cache') || window.localStorage.getItem('orca:theme-cache');
+    return raw ? migrateTheme(raw) : null;
+  } catch { return null; }
+}
+
+function readThemeCacheSync(): ThemeId {
+  return readExplicitThemeCacheSync() || 'blue';
 }
 
 export type ThemeId = 'midnight' | 'blue' | 'platinum' | 'graphite';
@@ -78,10 +83,16 @@ export function useSettings() {
       getSetting<Lang>('lang'),
       getSetting<boolean>('privacyMode'),
     ]).then(([t, m, o, l, p]) => {
-      const migrated: ThemeId = migrateTheme(t);
+      // The synchronous per-user cache is the first-paint source of truth. If
+      // the cloud value is stale (common after delayed deploys/offline writes),
+      // do NOT flash back to graphite/green during bootstrap; heal the cloud row.
+      const cachedTheme = readExplicitThemeCacheSync();
+      const cloudTheme = migrateTheme(t);
+      const migrated: ThemeId = cachedTheme || cloudTheme;
 
       setThemeState(migrated);
       writeThemeCaches(migrated);
+      if (cachedTheme && cachedTheme !== cloudTheme) void setSetting('theme', cachedTheme);
       if (m) setSystemModeState(m);
       if (o) setOperatingModeState(o);
       const authLangOverride = readAuthLangOverride();
