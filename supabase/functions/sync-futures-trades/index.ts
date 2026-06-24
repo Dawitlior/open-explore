@@ -1373,7 +1373,7 @@ Deno.serve(async (req) => {
 
     // ---- Resolve credential row ----
     let credQ = admin.from('exchange_credentials')
-      .select('id, api_key, secret_id, label, is_active')
+      .select('id, api_key, secret_id, label, is_active, portfolio_id')
       .eq('user_id', userId)
       .eq('provider', provider)
       .eq('is_active', true)
