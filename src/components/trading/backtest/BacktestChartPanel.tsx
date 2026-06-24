@@ -168,8 +168,9 @@ export default function BacktestChartPanel({ visible }: { visible: boolean }) {
             <textarea
               style={{ ...inp, height: 50, fontFamily: 'inherit', resize: 'none' }}
               placeholder="הערות…"
+              maxLength={1000}
               value={form.notes}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              onChange={(e) => setForm({ ...form, notes: e.target.value.slice(0, 1000) })}
             />
             <button
               onClick={captureNow}
