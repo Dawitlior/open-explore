@@ -227,10 +227,18 @@ export const PRIVACY_SECTIONS_EN: LegalSection[] = [
       '6.2. Easy opt-out: The User may withdraw this consent at any time and remove themselves from the marketing list by clicking the unsubscribe link at the bottom of every marketing email or by contacting customer support. This opt-out does not apply to operational and essential system messages (such as changes to the Terms, password resets or critical system alerts).',
   },
   {
-    heading: '7. Governing Law & Exclusive Jurisdiction',
+    heading: '7. Client-Side Storage (LocalStorage / Session Token)',
     body:
-      '7.1. Governing law: These Terms and this Privacy Policy, their interpretation, enforcement and any matter arising from them, shall be governed exclusively by the laws of the State of Israel, without application of international conflict-of-laws rules.\n\n' +
-      '7.2. Exclusive jurisdiction: The competent courts of the Tel Aviv-Yafo district shall have sole, exclusive and final jurisdiction over any dispute, claim or legal matter connected with or arising from the use of the OrcaInvestment platform or this Privacy Policy.',
+      '7.1. Authentication token: To maintain a persistent session ("Remember Me"), the System stores in the user\'s browser (LocalStorage) a signed JWT issued by the authentication provider (Supabase Auth). This token grants access to the user\'s own account only, is time-limited (approximately one hour before refresh), and contains no password or API keys.\n\n' +
+      '7.2. UI cache only: In addition to the token, the System may store in the browser UI preferences (language, theme, privacy mode), the active portfolio identifier, and transient form drafts. This cache is namespaced per-user, is wiped on sign-out, and contains no API keys, no passwords, and no full raw trading records.\n\n' +
+      '7.3. Physical device responsibility: The User acknowledges that physical access to their device/browser is their sole responsibility. A malicious actor with access to the unlocked device, or a browser extension with permission to read LocalStorage, may access the account. We recommend signing out when finished on shared machines and avoiding the installation of untrusted browser extensions.\n\n' +
+      '7.4. Revoking the session: Signing out of the System immediately deletes the token and the user\'s cache from the browser and invalidates the token on the server side.',
+  },
+  {
+    heading: '8. Governing Law & Exclusive Jurisdiction',
+    body:
+      '8.1. Governing law: These Terms and this Privacy Policy, their interpretation, enforcement and any matter arising from them, shall be governed exclusively by the laws of the State of Israel, without application of international conflict-of-laws rules.\n\n' +
+      '8.2. Exclusive jurisdiction: The competent courts of the Tel Aviv-Yafo district shall have sole, exclusive and final jurisdiction over any dispute, claim or legal matter connected with or arising from the use of the OrcaInvestment platform or this Privacy Policy.',
   },
 ];
 
