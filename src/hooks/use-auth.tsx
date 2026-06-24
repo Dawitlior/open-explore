@@ -65,15 +65,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const commitSession = useCallback((next: Session | null) => {
     const prev = sessionRef.current;
-    if (prev?.user?.id === next?.user?.id) {
-      sessionRef.current = prev;
+    const prevUid = prev?.user?.id ?? null;
+    const nextUid = next?.user?.id ?? null;
+    if (prevUid === nextUid) {
+      // Same user (or both signed-out) — keep the existing session reference
+      // so background token refreshes don't trigger re-renders downstream.
+      // Still ensure scoped-storage uid + loading flag are correct.
+      sessionRef.current = prev ?? next;
+      setScopedUid(prevUid);
       setLoading(false);
-      setScopedUid(prev.user.id);
       return;
     }
     sessionRef.current = next;
     setSession(next);
-    setScopedUid(next?.user?.id ?? null);
+    setScopedUid(nextUid);
     setLoading(false);
   }, []);
 
