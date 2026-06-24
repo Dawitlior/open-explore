@@ -9,7 +9,36 @@
     <script>
       (function () {
         try {
-          var t = localStorage.getItem('orca:theme-cache');
+          // Derive the currently signed-in Supabase user id from localStorage so the
+          // preboot can read the PER-USER theme cache (orca:<uid>:theme-cache).
+          // Falls back to the legacy global cache, then graphite.
+          var uid = null;
+          try {
+            for (var i = 0; i < localStorage.length; i++) {
+              var k = localStorage.key(i);
+              if (!k || k.indexOf('sb-') !== 0 || k.indexOf('-auth-token') === -1) continue;
+              var raw = localStorage.getItem(k);
+              if (!raw) continue;
+              var parsed = null;
+              try { parsed = JSON.parse(raw); } catch (_e) { parsed = null; }
+              if (!parsed) continue;
+              var u = (parsed.user && parsed.user.id)
+                || (parsed.currentSession && parsed.currentSession.user && parsed.currentSession.user.id)
+                || (Array.isArray(parsed) && parsed[0] && typeof parsed[0] === 'object' && parsed[0].user && parsed[0].user.id)
+                || null;
+              if (u) { uid = u; break; }
+            }
+          } catch (_e) { /* ignore */ }
+          var readCache = function (key) {
+            try {
+              if (uid) {
+                var v = localStorage.getItem('orca:' + uid + ':' + key);
+                if (v !== null && v !== undefined) return v;
+              }
+              return localStorage.getItem('orca:' + key);
+            } catch (_e) { return null; }
+          };
+          var t = readCache('theme-cache');
           if (t !== 'midnight' && t !== 'indigo' && t !== 'platinum' && t !== 'graphite') t = 'graphite';
           var SOLID = { midnight: '#020202', indigo: '#070817', platinum: '#f4efe4', graphite: '#0e1013' };
           // Full token maps — MUST stay in sync with src/lib/trading-theme.ts cssVars.
