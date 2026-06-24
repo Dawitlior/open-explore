@@ -18,15 +18,15 @@ function extractFeatures(e: EnrichedTrade[]): { X: number[][]; defs: FeatDef[] }
 
   // NOTE: deliberately no day-of-week here — owned by Segment Engine.
   const defs: FeatDef[] = [
-    { key: 'london', he: 'מסחר ב-London session', en: 'London session' },
-    { key: 'ny', he: 'מסחר ב-NY session', en: 'NY session' },
-    { key: 'asia', he: 'מסחר ב-Asia session', en: 'Asia session' },
-    { key: 'long', he: 'כיוון Long', en: 'Long direction' },
-    { key: 'afterLoss', he: 'מסחר מיד אחרי הפסד', en: 'Trading after a loss' },
-    { key: 'tradeNo', he: 'העסקה ה-N ביום (overtrading)', en: 'Nth trade of day' },
-    { key: 'risk', he: 'גודל הסיכון', en: 'Risk size' },
-    { key: 'rollWR', he: 'win-rate אחרון (מומנטום)', en: 'Recent win-rate' },
-    ...topSetups.map(s => ({ key: 'setup:' + s, he: 'סטאפ ' + s, en: s + ' setup' })),
+    { key: 'london', he: 'מסחר בשעות לונדון', en: 'London session' },
+    { key: 'ny', he: 'מסחר בשעות ניו-יורק', en: 'NY session' },
+    { key: 'asia', he: 'מסחר בשעות אסיה', en: 'Asia session' },
+    { key: 'long', he: 'עסקאות קנייה (לונג)', en: 'Long direction' },
+    { key: 'afterLoss', he: 'מסחר מיד אחרי הפסד', en: 'Trading right after a loss' },
+    { key: 'tradeNo', he: 'מספר העסקה ביום (סחר יתר)', en: 'Nth trade of the day' },
+    { key: 'risk', he: 'גודל הסיכון בעסקה', en: 'Risk size' },
+    { key: 'rollWR', he: 'רצף הצלחות אחרון (מומנטום)', en: 'Recent win-rate' },
+    ...topSetups.map(s => ({ key: 'setup:' + s, he: 'שימוש בסטאפ ' + s, en: s + ' setup' })),
   ];
 
   let prevWin: boolean | null = null;
