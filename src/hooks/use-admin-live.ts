@@ -71,6 +71,8 @@ export type AdminLive = {
   error: string | null;
   okCount: number;
   totalCount: number;
+  lastUpdated: number;
+  dataHash: string;
   // wave 1
   storage: LiveStorage | null;
   aiUsage: LiveAi | null;
