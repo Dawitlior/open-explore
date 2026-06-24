@@ -1747,6 +1747,8 @@ export default function OrcaConsole() {
         .recharts-cursor, .recharts-rectangle.recharts-tooltip-cursor { fill:${C.blueSoft} !important; stroke:${C.borderStrong} !important; }
         ::selection{ background:${C.blueSoft}; }
         *{ scrollbar-width: thin; scrollbar-color:${C.borderStrong} transparent; }
+        @keyframes orcaSpin { from { transform: rotate(0deg);} to { transform: rotate(360deg);} }
+        @keyframes orcaPulse { 0% { box-shadow: 0 0 0 0 ${C.pos}66; } 100% { box-shadow: 0 0 0 10px ${C.pos}00; } }
         @media print { .orca-shell { display: block !important; } .orca-shell > *:not(.orca-report) { display: none !important; } .orca-report { position: static !important; height: auto !important; overflow: visible !important; background: #fff !important; } .orca-report-bar { display: none !important; } }
       `}</style>
 
