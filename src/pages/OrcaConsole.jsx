@@ -828,7 +828,7 @@ function Activation({ t, lang, traders, funnel, diagTier, ttft }) {
 function Subscriptions({ t, lang, traders, eng }) {
   const tierData = TIER.map((tr, i) => ({ name: loc(lang, tr), v: traders.filter((x) => x.tier.id === tr.id).length, c: PAL[i] }));
   const stateData = SUBSTATE.map((s, i) => ({ name: loc(lang, s), v: traders.filter((x) => x.subState.id === s.id).length, c: PAL[i === 0 ? 1 : i === 1 ? 6 : i === 2 ? 5 : 4] }));
-  const conv = eng.map((e) => ({ x: e.w, conv: e.conv })), overTime = eng.map((e) => ({ x: e.w, Beginner: e.tStd, Advanced: e.tAdv, Ultimate: e.tPro + e.tUlt }));
+  const conv = eng.map((e) => ({ x: e.wk || `w${e.w}`, conv: e.conv })), overTime = eng.map((e) => ({ x: e.wk || `w${e.w}`, Beginner: e.tStd, Advanced: e.tAdv, Ultimate: e.tPro + e.tUlt }));
   const last = eng[eng.length - 1], prev = eng[eng.length - 2];
   const paid = traders.filter((x) => x.subState.id !== "trial").length, trial = traders.filter((x) => x.subState.id === "trial").length;
   const presets = [{ fn: "admin_subscriptions", params: { period: "90" } }, { fn: "admin_subscriptions", params: { period: "90", tier: "Ultimate" } }, { fn: "admin_subscriptions", params: { period: "365" } }, { fn: "admin_trader_matrix", params: { segment: "stars", tier: "Ultimate", sort: "valuePotential" } }];
