@@ -155,6 +155,8 @@ const INITIAL: AdminLive = {
   error: null,
   okCount: 0,
   totalCount: 13,
+  lastUpdated: 0,
+  dataHash: "",
   storage: null,
   aiUsage: null,
   activeCount: null,
