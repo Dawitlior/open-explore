@@ -1373,7 +1373,7 @@ Deno.serve(async (req) => {
 
     // ---- Resolve credential row ----
     let credQ = admin.from('exchange_credentials')
-      .select('id, api_key, secret_id, label, is_active')
+      .select('id, api_key, secret_id, label, is_active, portfolio_id')
       .eq('user_id', userId)
       .eq('provider', provider)
       .eq('is_active', true)
@@ -1435,6 +1435,7 @@ Deno.serve(async (req) => {
         const full: Trade = { ...legacy, id: nextId, balance: 0 };
         rows.push({
           user_id: userId,
+          portfolio_id: cred.portfolio_id,
           trade_id: nextId,
           data: full,
           // Phase 1 dual-write: provenance columns alongside legacy `data` blob.
@@ -1561,6 +1562,7 @@ Deno.serve(async (req) => {
       const full: Trade = { ...legacy, id: nextId, balance: Math.round(runningBalance * 10000) / 10000 };
       rows.push({
         user_id: userId,
+        portfolio_id: cred.portfolio_id,
         trade_id: nextId,
         data: full,
         broker_id: provenance.broker_id,
