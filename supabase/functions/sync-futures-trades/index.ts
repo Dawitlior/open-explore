@@ -1562,6 +1562,7 @@ Deno.serve(async (req) => {
       const full: Trade = { ...legacy, id: nextId, balance: Math.round(runningBalance * 10000) / 10000 };
       rows.push({
         user_id: userId,
+        portfolio_id: cred.portfolio_id,
         trade_id: nextId,
         data: full,
         broker_id: provenance.broker_id,
