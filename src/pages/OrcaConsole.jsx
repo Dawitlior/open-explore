@@ -686,7 +686,7 @@ function Overview({ t, lang, traders, eng }) {
   const scn = traders.reduce((a, x) => ((a[seg(x)] = (a[seg(x)] || 0) + 1), a), {});
   const segData = [{ name: t("segStars"), v: scn.stars || 0, c: PAL[6] }, { name: t("segWatch"), v: scn.watch || 0, c: PAL[5] }, { name: t("segRisk"), v: scn.risk || 0, c: PAL[7] }, { name: t("segDormant"), v: scn.dormant || 0, c: PAL[4] }];
   const tierData = TIER.map((tr, i) => ({ name: loc(lang, tr), v: traders.filter((x) => x.tier.id === tr.id).length, c: PAL[i] }));
-  const trend = eng.map((e) => ({ x: e.w, active: e.active, mau: e.mau })), vol = eng.map((e) => ({ x: e.w, trades: e.trades }));
+  const trend = eng.map((e) => ({ x: e.wk || `w${e.w}`, active: e.active, mau: e.mau })), vol = eng.map((e) => ({ x: e.wk || `w${e.w}`, trades: e.trades }));
   const tv = topBy(traders, "valuePotential").map((x) => ({ code: x.code, v: x.valuePotential, label: x.valuePotential }));
   const trk = topBy(traders, "behaviouralRisk").map((x) => ({ code: x.code, v: x.behaviouralRisk, label: x.behaviouralRisk }));
   const mini = eng.slice(-8);
