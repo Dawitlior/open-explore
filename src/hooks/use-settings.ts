@@ -45,9 +45,10 @@ export function useSettings() {
     if (typeof window === 'undefined') return 'graphite';
     try {
       const v = window.localStorage.getItem('orca:theme-cache');
-      return (v === 'midnight' || v === 'indigo' || v === 'platinum' || v === 'graphite') ? v : 'graphite';
+      return migrateTheme(v);
     } catch { return 'graphite'; }
   });
+
   const [systemMode, setSystemModeState] = useState<SystemMode>('standard');
   const [operatingMode, setOperatingModeState] = useState<OperatingMode>('beginner');
   const [lang, setLangState] = useState<Lang>(() => {
