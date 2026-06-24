@@ -182,12 +182,19 @@ export default function IntelligenceSection({ trades, T, enabled }: { trades: Tr
 
                 <div style={{ marginTop: 18 }}>
                   <Eyebrow>{t('מה המנוע למד עליך', 'WHAT IT LEARNED ABOUT YOU')}</Eyebrow>
-                  <p style={{ fontSize: 13.5, color: C.mut, margin: '6px 0 12px', lineHeight: 1.6 }}>
+                  <p style={{ fontSize: 13.5, color: C.text, margin: '6px 0 8px', lineHeight: 1.7 }}>
                     {t(
-                      'אלו הדפוסים שהמנוע זיהה — מה מגדיל את הסיכויים שלך להצליח, ומה מקטין אותם:',
-                      'These are the patterns the engine detected — what increases your chances of success, and what reduces them:',
+                      'אלה הדפוסים שהמנוע זיהה בהיסטוריה שלך. השורות הירוקות (↑) הם תנאים שכאשר הם מתקיימים, הסיכוי שלך להצליח בעסקה עולה — שווה לחפש אותם. השורות האדומות (↓) הם תנאים שמורידים לך את הסיכוי — שווה להימנע מהם.',
+                      'These are the patterns the engine detected in your history. Green rows (↑) are conditions that — when present — raise your chance of a winning trade, so look for them. Red rows (↓) are conditions that lower your odds, so avoid them.',
                     )}
                   </p>
+                  <p style={{ fontSize: 12, color: C.mut, margin: '0 0 14px', lineHeight: 1.6, fontStyle: 'italic' }}>
+                    {t(
+                      'איך להשתמש: לפני שאתה נכנס לעסקה, בדוק אם התנאים הירוקים מתקיימים — ושאף התנאים האדומים לא מתקיימים.',
+                      'How to use: before you enter a trade, check that the green conditions hold — and that the red ones do not.',
+                    )}
+                  </p>
+
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {edge.drivers.slice(0, 6).map(d => {
                       const positive = d.coef >= 0;
