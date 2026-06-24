@@ -450,7 +450,7 @@ function runCount(fn, params, traders) {
 
 /* ════════════════ UI atoms ════════════════ */
 const useT = (lang) => (k) => (L[k] ? L[k][lang] : k);
-let axis = { tick: { fontSize: 10.5, fill: C.ink3, fontFamily: MONO }, axisLine: false, tickLine: false };
+let axis = { tick: { fontSize: 10.5, fill: C.ink3, fontFamily: MONO }, axisLine: false, tickLine: false, minTickGap: 24, padding: { left: 6, right: 6 } };
 let tipStyle = { background: C.panel, border: `1px solid ${C.borderStrong}`, borderRadius: 8, fontFamily: SANS, fontSize: 11.5, boxShadow: "0 6px 20px rgba(16,27,45,0.12)", color: C.ink };
 let grid = <CartesianGrid stroke={C.gridLine} strokeDasharray="3 4" vertical={false} />;
 const gridCols = (cols, gap = 14) => ({ display: "grid", gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, ${cols >= 4 ? 168 : cols === 3 ? 230 : 300}px), 1fr))`, gap });
