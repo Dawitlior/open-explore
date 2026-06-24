@@ -30,6 +30,7 @@ const LIGHT = {
   ink: "#16181D", ink2: "#3F434C", ink3: "#71757F",
   blue: "#4F46E5", blueDark: "#4338CA", blueSoft: "#EEF0FF",
   black: "#16181D", blackHover: "#0F1115", accent: "#4F46E5", accentHover: "#4338CA", chipFg: "#FFFFFF", rail: "#FFFFFF",
+  railIcon: "#71757F", railIconActive: "#16181D", railHover: "rgba(16,24,40,0.06)", railActiveBg: "rgba(79,70,229,0.10)", railActiveBar: "#4F46E5", railLogoBg: "#EEF0FF", railLogoBorder: "#E0E2E8", railLogoInk: "#4F46E5",
   pos: "#15803D", neg: "#BE123C", warn: "#B45309",
   gridLine: "#ECEDF1", codeBg: "#16181D",
   /* soft KPI tint backgrounds */
