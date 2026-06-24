@@ -1,5 +1,5 @@
 import type { ThemeId } from '@/hooks/use-settings';
-// ThemeId now: 'midnight' | 'indigo' | 'platinum'
+// ThemeId now: 'midnight' | 'blue' | 'platinum' | 'graphite'
 
 export interface TradingTheme {
   id?: ThemeId;
@@ -340,7 +340,7 @@ export const T = midnight;
 /* ════════════════════════════════════════════════
    CUSTOM ACCENT — derive an HSL string from a hex
    and override the live primary/accent/ring tokens.
-   Works on top of any base theme (midnight/indigo/platinum).
+   Works on top of any base theme (midnight/blue/platinum/graphite).
    ════════════════════════════════════════════════ */
 export function hexToHsl(hex: string): { h: number; s: number; l: number } | null {
   const m = /^#?([0-9a-f]{6}|[0-9a-f]{3})$/i.exec(hex.trim());

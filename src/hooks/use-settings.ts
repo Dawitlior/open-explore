@@ -9,13 +9,25 @@ function writeThemeCaches(t: string) {
   try { scopedStorage.setSync('theme-cache', t); } catch { /* noop */ }
 }
 
+function readExplicitThemeCacheSync(): ThemeId | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = scopedStorage.getSync('theme-cache') || window.localStorage.getItem('orca:theme-cache');
+    return raw ? migrateTheme(raw) : null;
+  } catch { return null; }
+}
+
+function readThemeCacheSync(): ThemeId {
+  return readExplicitThemeCacheSync() || 'blue';
+}
+
 export type ThemeId = 'midnight' | 'blue' | 'platinum' | 'graphite';
 const VALID_THEMES: ThemeId[] = ['midnight', 'blue', 'platinum', 'graphite'];
-// Legacy theme migration: indigo/hightech → blue, precision/institutional → blue
+// Legacy theme migration: indigo/hightech → blue, precision → graphite
 const migrateTheme = (v: unknown): ThemeId => {
   if (v === 'indigo' || v === 'hightech' || v === 'institutional') return 'blue';
   if (v === 'precision') return 'graphite';
-  return (typeof v === 'string' && (VALID_THEMES as string[]).includes(v)) ? (v as ThemeId) : 'graphite';
+  return (typeof v === 'string' && (VALID_THEMES as string[]).includes(v)) ? (v as ThemeId) : 'blue';
 };
 
 
@@ -50,11 +62,7 @@ export function useSettings() {
   }, []);
 
   const [theme, setThemeState] = useState<ThemeId>(() => {
-    if (typeof window === 'undefined') return 'graphite';
-    try {
-      const v = window.localStorage.getItem('orca:theme-cache');
-      return migrateTheme(v);
-    } catch { return 'graphite'; }
+    return readThemeCacheSync();
   });
 
   const [systemMode, setSystemModeState] = useState<SystemMode>('standard');
@@ -75,10 +83,16 @@ export function useSettings() {
       getSetting<Lang>('lang'),
       getSetting<boolean>('privacyMode'),
     ]).then(([t, m, o, l, p]) => {
-      const migrated: ThemeId = migrateTheme(t);
+      // The synchronous per-user cache is the first-paint source of truth. If
+      // the cloud value is stale (common after delayed deploys/offline writes),
+      // do NOT flash back to graphite/green during bootstrap; heal the cloud row.
+      const cachedTheme = readExplicitThemeCacheSync();
+      const cloudTheme = migrateTheme(t);
+      const migrated: ThemeId = cachedTheme || cloudTheme;
 
       setThemeState(migrated);
       writeThemeCaches(migrated);
+      if (cachedTheme && cachedTheme !== cloudTheme) void setSetting('theme', cachedTheme);
       if (m) setSystemModeState(m);
       if (o) setOperatingModeState(o);
       const authLangOverride = readAuthLangOverride();

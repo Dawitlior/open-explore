@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
     <!-- iOS: prevent auto-linking of PnL numbers/dates into blue telephone links inside tables. -->
     <meta name="format-detection" content="telephone=no, date=no, address=no, email=no" />
-    <!-- Theme preboot — applies the FULL token map before first paint to prevent FOUC across midnight/indigo/platinum. -->
+    <!-- Theme preboot — applies the FULL token map before first paint to prevent FOUC across midnight/blue/platinum. -->
     <script>
       (function () {
         try {
           // Derive the currently signed-in Supabase user id from localStorage so the
           // preboot can read the PER-USER theme cache (orca:<uid>:theme-cache).
-          // Falls back to the legacy global cache, then graphite.
+          // Falls back to the legacy global cache, then blue.
           var uid = null;
           try {
             for (var i = 0; i < localStorage.length; i++) {
@@ -39,8 +39,10 @@
             } catch (_e) { return null; }
           };
           var t = readCache('theme-cache');
-          if (t !== 'midnight' && t !== 'indigo' && t !== 'platinum' && t !== 'graphite') t = 'graphite';
-          var SOLID = { midnight: '#020202', indigo: '#070817', platinum: '#f4efe4', graphite: '#0e1013' };
+          if (t === 'indigo' || t === 'hightech' || t === 'institutional') t = 'blue';
+          if (t === 'precision') t = 'graphite';
+          if (t !== 'midnight' && t !== 'blue' && t !== 'platinum' && t !== 'graphite') t = 'blue';
+          var SOLID = { midnight: '#020202', blue: '#0B1120', platinum: '#f4efe4', graphite: '#0e1013' };
           // Full token maps — MUST stay in sync with src/lib/trading-theme.ts cssVars.
           var TOKENS = {
             midnight: {
@@ -58,20 +60,20 @@
               '--orca-aurora-a':'184 100% 50%','--orca-aurora-b':'258 90% 66%',
               '--orca-glow-spot':'184 100% 50%','--orca-primary-h':'184 100% 50%'
             },
-            indigo: {
-              '--background':'255 60% 4%','--foreground':'258 90% 95%',
-              '--card':'258 50% 9%','--card-foreground':'258 90% 95%',
-              '--popover':'258 50% 9%','--popover-foreground':'258 90% 95%',
-              '--primary':'258 90% 76%','--primary-foreground':'255 60% 4%',
-              '--secondary':'258 40% 14%','--secondary-foreground':'258 90% 95%',
-              '--muted':'258 30% 16%','--muted-foreground':'258 20% 65%',
-              '--accent':'258 90% 76%','--accent-foreground':'255 60% 4%',
-              '--destructive':'350 90% 60%','--ring':'258 90% 76%',
-              '--sidebar-background':'258 60% 6%','--sidebar-foreground':'258 20% 65%',
-              '--sidebar-primary':'258 90% 76%','--sidebar-primary-foreground':'255 60% 4%',
-              '--sidebar-accent':'258 40% 14%','--sidebar-accent-foreground':'258 90% 95%','--sidebar-ring':'258 90% 76%',
-              '--orca-aurora-a':'258 90% 66%','--orca-aurora-b':'230 90% 60%',
-              '--orca-glow-spot':'258 90% 76%','--orca-primary-h':'258 90% 76%'
+            blue: {
+              '--background':'220 60% 8%','--foreground':'213 31% 94%',
+              '--card':'220 45% 13%','--card-foreground':'213 31% 94%',
+              '--popover':'220 45% 13%','--popover-foreground':'213 31% 94%',
+              '--primary':'199 89% 60%','--primary-foreground':'220 60% 8%',
+              '--secondary':'217 33% 17%','--secondary-foreground':'213 31% 94%',
+              '--muted':'217 25% 20%','--muted-foreground':'215 20% 65%',
+              '--accent':'199 89% 60%','--accent-foreground':'220 60% 8%',
+              '--destructive':'0 84% 70%','--ring':'199 89% 60%',
+              '--sidebar-background':'220 55% 10%','--sidebar-foreground':'215 20% 65%',
+              '--sidebar-primary':'199 89% 60%','--sidebar-primary-foreground':'220 60% 8%',
+              '--sidebar-accent':'217 33% 17%','--sidebar-accent-foreground':'213 31% 94%','--sidebar-ring':'199 89% 60%',
+              '--orca-aurora-a':'199 89% 60%','--orca-aurora-b':'217 70% 55%',
+              '--orca-glow-spot':'199 89% 70%','--orca-primary-h':'199 89% 60%'
             },
             platinum: {
               '--background':'40 30% 96%','--foreground':'222 47% 11%',
@@ -147,7 +149,7 @@
     <meta http-equiv="Content-Security-Policy-Report-Only" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.lovable.dev https://*.lovableproject.com https://cdn.gpteng.co; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.lovable.dev https://*.lovableproject.com https://fonts.googleapis.com https://fonts.gstatic.com; frame-ancestors 'self' https://*.lovable.dev https://*.lovableproject.com; base-uri 'self'; form-action 'self';" />
     <link rel="icon" type="image/png" href="/orca-logo.png" />
     <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#06d6a0" />
+    <meta name="theme-color" content="#0B1120" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="apple-touch-icon" href="/orca-logo.png" />

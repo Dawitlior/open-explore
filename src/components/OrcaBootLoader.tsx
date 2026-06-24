@@ -6,12 +6,12 @@
  *
  * Theme contract: background inherits the current page surface and the
  * orbit accent inherits the active theme's `--primary` token, so the
- * loader looks identical across midnight / indigo / platinum / graphite.
+ * loader looks identical across midnight / blue / platinum / graphite.
  */
 import { useEffect, useState } from 'react';
 
-const FALLBACK_BG = 'radial-gradient(circle at 50% 40%, #0e1013 0%, #050607 70%)';
-const FALLBACK_ACCENT = '142 71% 45%'; // graphite green — must match the default platform theme
+const FALLBACK_BG = 'radial-gradient(circle at 50% 40%, #0B1120 0%, #030712 70%)';
+const FALLBACK_ACCENT = '199 89% 60%';
 
 function readVar(name: string): string {
   if (typeof window === 'undefined') return '';

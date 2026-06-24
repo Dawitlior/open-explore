@@ -19,8 +19,44 @@ export function setScopedUid(uid: string | null) {
   cachedUid = uid;
 }
 
-async function ensureUid(): Promise<string | null> {
+function readAuthUidFromStorage(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k || !k.startsWith('sb-') || !k.includes('-auth-token')) continue;
+      const raw = localStorage.getItem(k);
+      if (!raw) continue;
+      let parsed: unknown = null;
+      try { parsed = JSON.parse(raw); } catch { parsed = null; }
+      if (!parsed || typeof parsed !== 'object') continue;
+
+      const p = parsed as {
+        user?: { id?: unknown };
+        currentSession?: { user?: { id?: unknown } };
+        session?: { user?: { id?: unknown } };
+      };
+      const direct = p.user?.id;
+      const current = p.currentSession?.user?.id;
+      const session = p.session?.user?.id;
+      const tuple = Array.isArray(parsed) ? (parsed[0] as { user?: { id?: unknown } } | undefined)?.user?.id : null;
+      const uid = direct || current || session || tuple;
+      if (typeof uid === 'string' && uid) return uid;
+    }
+  } catch { /* ignore */ }
+  return null;
+}
+
+function getCachedUidSync(): string | null {
   if (cachedUid) return cachedUid;
+  const uid = readAuthUidFromStorage();
+  if (uid) cachedUid = uid;
+  return cachedUid;
+}
+
+async function ensureUid(): Promise<string | null> {
+  const syncUid = getCachedUidSync();
+  if (syncUid) return syncUid;
   if (pending) return pending;
   pending = supabase.auth.getUser().then(r => {
     cachedUid = r.data.user?.id ?? null;
@@ -49,13 +85,13 @@ export const scopedStorage = {
   },
   /** Synchronous variants — only safe to call after auth has resolved. */
   getSync(key: string): string | null {
-    try { return localStorage.getItem(makeKey(cachedUid, key)); } catch { return null; }
+    try { return localStorage.getItem(makeKey(getCachedUidSync(), key)); } catch { return null; }
   },
   setSync(key: string, value: string): void {
-    try { localStorage.setItem(makeKey(cachedUid, key), value); } catch { /* ignore */ }
+    try { localStorage.setItem(makeKey(getCachedUidSync(), key), value); } catch { /* ignore */ }
   },
   removeSync(key: string): void {
-    try { localStorage.removeItem(makeKey(cachedUid, key)); } catch { /* ignore */ }
+    try { localStorage.removeItem(makeKey(getCachedUidSync(), key)); } catch { /* ignore */ }
   },
   /** Wipe every key belonging to the current user. */
   async wipeCurrentUser(): Promise<number> {
