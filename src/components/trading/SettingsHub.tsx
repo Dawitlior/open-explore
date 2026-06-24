@@ -61,12 +61,11 @@ const ACCENT_PRESETS = [
 ];
 
 const THEME_OPTIONS: { id: ThemeId; label: { he: string; en: string }; sub: { he: string; en: string }; preview: string[] }[] = [
-  { id: 'midnight', label: { he: 'חצות', en: 'Midnight' }, sub: { he: 'כחול עמוק • ברירת מחדל', en: 'Deep blue • Default' }, preview: ['#020202', '#0b1730', '#00f2ff', '#3b82f6'] },
-  { id: 'institutional', label: { he: 'סמכות מוסדית', en: 'Institutional' }, sub: { he: 'כחול-ים עמוק • תכלת זוהר', en: 'Deep navy • Sky blue' }, preview: ['#0B1120', '#1E293B', '#38BDF8', '#E6EEF8'] },
-  { id: 'hightech', label: { he: 'High-Tech AI', en: 'High-Tech AI' }, sub: { he: 'מידנייט וויולט', en: 'Midnight violet' }, preview: ['#0F0F17', '#2D1B4E', '#8B5CF6', '#10B981'] },
+  { id: 'midnight', label: { he: 'חצות', en: 'Midnight' }, sub: { he: 'שחור קלאסי • ברירת מחדל', en: 'Classic black • Default' }, preview: ['#000000', '#0d0d0d', '#00e5ff', '#fafafa'] },
+  { id: 'blue', label: { he: 'כחול', en: 'Blue' }, sub: { he: 'כחול-ים עמוק • תכלת זוהר', en: 'Deep navy • Sky blue' }, preview: ['#0B1120', '#1E293B', '#38BDF8', '#E6EEF8'] },
   { id: 'platinum', label: { he: 'לבן יוקרתי', en: 'Platinum White' }, sub: { he: 'מצב יום מינימלי', en: 'Minimal light mode' }, preview: ['#ffffff', '#f1f5f9', '#1d4ed8', '#b45309'] },
   { id: 'graphite', label: { he: 'גרפיט רשמי', en: 'Graphite Formal' }, sub: { he: 'אפור • ירוק • אדום בלבד', en: 'Gray • Green • Red only' }, preview: ['#0e1013', '#1c2128', '#22c55e', '#ef4444'] },
-  { id: 'precision', label: { he: 'Precision Focus', en: 'Precision Focus' }, sub: { he: 'גרפיט • נחושת/Amber', en: 'Graphite • Amber/Copper' }, preview: ['#171717', '#262626', '#D97706', '#84CC16'] },
+
 
 ];
 
