@@ -1167,7 +1167,7 @@ function SystemAccess({ t, lang }) {
           <Card title={t("sysCatalog")} pad={0}>
             <div style={{ overflowX: "auto" }}><table style={{ width: "100%", borderCollapse: "collapse", minWidth: 560 }}>
               <thead><tr style={{ background: C.panelAlt }}>{[t("thFn"), t("thScope"), t("thGuard"), t("thStatus")].map((h, i) => <th key={i} style={{ fontFamily: SANS, fontSize: 11, fontWeight: 600, color: C.ink2, textAlign: "start", padding: "10px 14px", borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap" }}>{h}</th>)}</tr></thead>
-              <tbody>{RPCS.map((r) => (<tr key={r.fn} style={{ borderBottom: `1px solid ${C.gridLine}` }}>
+              <tbody>{RPCS.map((r) => (<tr key={r.fn} style={{ borderBottom: `1px solid ${C.gridLine}`, transition: "background .12s ease" }} onMouseEnter={(e) => (e.currentTarget.style.background = C.blueSoft)} onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
                 <td style={{ fontFamily: MONO, fontSize: 11.5, color: C.ink, padding: "9px 14px", whiteSpace: "nowrap" }}>{r.fn}()</td>
                 <td style={{ padding: "9px 14px" }}><Badge tone={scopeTone[r.scope]}>{t(r.scope)}</Badge></td>
                 <td style={{ padding: "9px 14px" }}><span style={{ fontFamily: MONO, fontSize: 11, color: C.ink2 }}>is_admin()</span></td>
@@ -1268,7 +1268,7 @@ function Storage({ t, lang, traders, storage, storageTrend, dbStats }) {
         <Card title={t("cTableSize")} pad={0}>
           <div style={{ overflowX: "auto" }}><table style={{ width: "100%", borderCollapse: "collapse", minWidth: 480 }}>
             <thead><tr style={{ background: C.panelAlt }}>{[t("thTable"), t("thSize"), t("thRows")].map((h, i) => <th key={i} style={{ fontFamily: SANS, fontSize: 11, fontWeight: 600, color: C.ink2, textAlign: i === 0 ? "start" : "end", padding: "10px 16px", borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap" }}>{h}</th>)}</tr></thead>
-            <tbody>{[...storage].sort((a, b) => b.mb - a.mb).map((s) => (<tr key={s.id} style={{ borderBottom: `1px solid ${C.gridLine}` }}>
+            <tbody>{[...storage].sort((a, b) => b.mb - a.mb).map((s) => (<tr key={s.id} style={{ borderBottom: `1px solid ${C.gridLine}`, transition: "background .12s ease" }} onMouseEnter={(e) => (e.currentTarget.style.background = C.blueSoft)} onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
               <td style={{ fontFamily: MONO, fontSize: 12, color: C.ink, padding: "9px 16px", whiteSpace: "nowrap" }}>{s.id}</td>
               <td style={{ fontFamily: MONO, fontSize: 12, color: C.ink2, padding: "9px 16px", textAlign: "end" }}>{s.mb >= 1024 ? `${r1(s.mb / 1024)} GB` : `${s.mb} MB`}</td>
               <td style={{ fontFamily: MONO, fontSize: 12, color: C.ink2, padding: "9px 16px", textAlign: "end" }}>{nf.format(s.rows)}</td>
@@ -1558,10 +1558,13 @@ function mapFunnel(rows) {
 
 function EmptyShell({ title, subtitle, hint }) {
   return (
-    <div style={{ padding: "60px 24px", textAlign: "center", background: C.panel, border: `1px dashed ${C.borderStrong}`, borderRadius: 12 }}>
-      <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 650, color: C.ink, marginBottom: 6 }}>{title}</div>
-      {subtitle && <div style={{ fontFamily: SANS, fontSize: 12.5, color: C.ink2, marginBottom: 10 }}>{subtitle}</div>}
-      {hint && <div style={{ fontFamily: MONO, fontSize: 11, color: C.ink3 }}>{hint}</div>}
+    <div style={{ padding: "56px 24px", textAlign: "center", background: C.panel, border: `1px dashed ${C.border}`, borderRadius: 14, position: "relative", overflow: "hidden" }}>
+      <div aria-hidden style={{ width: 44, height: 44, borderRadius: 12, background: C.panelAlt, border: `1px solid ${C.border}`, margin: "0 auto 14px", display: "grid", placeItems: "center", color: C.ink3 }}>
+        <Database size={18} />
+      </div>
+      <div style={{ fontFamily: SANS, fontSize: 14.5, fontWeight: 650, color: C.ink, marginBottom: 5, letterSpacing: -0.1 }}>{title}</div>
+      {subtitle && <div style={{ fontFamily: SANS, fontSize: 12.5, color: C.ink2, marginBottom: 10, maxWidth: 420, marginInline: "auto", lineHeight: 1.5 }}>{subtitle}</div>}
+      {hint && <div style={{ fontFamily: MONO, fontSize: 10.5, color: C.ink3, letterSpacing: 0.2 }}>{hint}</div>}
     </div>
   );
 }
