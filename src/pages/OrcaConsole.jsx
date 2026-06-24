@@ -891,8 +891,8 @@ function Mind({ t, lang, traders }) {
 /* 7 · Risk Engine */
 function RiskEngine({ t, lang, traders, eng }) {
   const [win, setWin] = useState("all");
-  const breach = eng.map((e) => ({ x: e.w, trade: e.breachT, daily: e.breachD, weekly: e.breachW, monthly: e.breachM }));
-  const kr = eng.map((e) => ({ x: e.w, kill: e.kill, recovery: e.recovery }));
+  const breach = eng.map((e) => ({ x: e.wk || `w${e.w}`, trade: e.breachT, daily: e.breachD, weekly: e.breachW, monthly: e.breachM }));
+  const kr = eng.map((e) => ({ x: e.wk || `w${e.w}`, kill: e.kill, recovery: e.recovery }));
   const ovBins = Array.from({ length: 10 }, (_, b) => ({ name: `${b * 10}`, v: traders.filter((x) => x.overrideRate * 100 >= b * 10 && x.overrideRate * 100 < b * 10 + 10).length }));
   const totals = { trade: traders.reduce((s, x) => s + x.breaches.trade, 0), daily: traders.reduce((s, x) => s + x.breaches.daily, 0), weekly: traders.reduce((s, x) => s + x.breaches.weekly, 0), monthly: traders.reduce((s, x) => s + x.breaches.monthly, 0) };
   const share = [{ name: t("wTrade"), v: totals.trade, c: PAL[3] }, { name: t("wDaily"), v: totals.daily, c: PAL[5] }, { name: t("wWeekly"), v: totals.weekly, c: C.warn }, { name: t("wMonthly"), v: totals.monthly, c: C.neg }];
