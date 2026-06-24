@@ -189,51 +189,8 @@ const graphite: TradingTheme = {
   },
 };
 
-/* ════════════════════════════════════════════════
-   6) PRECISION — Graphite & Amber/Copper
-   Communicates: luxury, premium, private-trading-desk feel.
-   ════════════════════════════════════════════════ */
-const precision: TradingTheme = {
-  id: 'precision',
-  bg: { primary: '#171717', secondary: '#1f1f1f', tertiary: '#262626', card: '#1d1d1d', surface: '#2d2d2d' },
-  accent: {
-    cyan: '#D97706', cyanGlow: 'rgba(217,119,6,0.22)',
-    teal: '#B45309',
-    blue: '#A16207', blueGlow: 'rgba(161,98,7,0.14)',
-    purple: '#F59E0B', purpleGlow: 'rgba(245,158,11,0.16)',
-    orange: '#D97706',
-    red: '#EF4444', redGlow: 'rgba(239,68,68,0.18)',
-    green: '#84CC16', greenGlow: 'rgba(132,204,22,0.18)',
-  },
-  text: { primary: '#F5F5F5', secondary: '#A3A3A3', muted: '#737373', dim: '#525252' },
-  border: { subtle: 'rgba(217,119,6,0.06)', medium: 'rgba(217,119,6,0.16)', active: 'rgba(217,119,6,0.45)' },
-  radius: { sm: 4, md: 8, lg: 12, xl: 16 },
-  shadow: {
-    card: '0 1px 2px rgba(0,0,0,0.55), 0 6px 18px rgba(0,0,0,0.4)',
-    elevated: '0 6px 24px rgba(0,0,0,0.6), 0 12px 38px rgba(120,60,0,0.18)',
-    glow: (c: string) => `0 0 16px ${c}, 0 0 34px ${c}`,
-  },
-  cssVars: {
-    background: '0 0% 9%',
-    foreground: '0 0% 96%',
-    card: '0 0% 11%',
-    popover: '0 0% 11%',
-    primary: '32 95% 44%',
-    primaryFg: '0 0% 9%',
-    secondary: '0 0% 15%',
-    muted: '0 0% 17%',
-    mutedFg: '0 0% 65%',
-    accent: '32 95% 44%',
-    destructive: '0 84% 60%',
-    ring: '32 95% 44%',
-    sidebar: '0 0% 10%',
-    auroraA: '32 95% 44%',
-    auroraB: '82 78% 45%',
-    glowSpot: '32 95% 55%',
-  },
-};
+export const themes: Record<ThemeId, TradingTheme> = { midnight, blue, platinum, graphite };
 
-export const themes: Record<ThemeId, TradingTheme> = { midnight, institutional, hightech, platinum, graphite, precision };
 
 export function getTheme(id: ThemeId): TradingTheme {
   return themes[id] || midnight;
