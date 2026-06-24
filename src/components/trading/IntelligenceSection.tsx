@@ -72,19 +72,43 @@ export default function IntelligenceSection({ trades, T, enabled }: { trades: Tr
       <GlassCard T={T}>
         <div style={{ padding: '4px 2px' }}>
           <Eyebrow>{t('מתי אתה סוחר טוב · SEGMENTS', 'WHEN YOU TRADE WELL · SEGMENTS')}</Eyebrow>
-          <p style={{ fontSize: 15, lineHeight: 1.85, color: C.text, margin: '6px 0 16px' }}>{seg.narrative}</p>
-          <div style={{ direction: 'ltr' }}>
-            {seg.byDow.map(s => {
+          <p style={{ fontSize: 15, lineHeight: 1.85, color: C.text, margin: '6px 0 18px' }}>{seg.narrative}</p>
+          <div style={{
+            direction: 'ltr',
+            padding: '14px 16px',
+            background: 'linear-gradient(180deg, rgba(8,18,36,0.55), rgba(8,18,36,0.25))',
+            border: `1px solid ${C.border}`,
+            borderRadius: 14,
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
+          }}>
+            {seg.byDow.map((s, idx) => {
               const maxAbs = Math.max(...seg.byDow.map(x => Math.abs(x.expectancy)), 0.01);
               const w = Math.min(100, Math.abs(s.expectancy) / maxAbs * 100);
+              const dim = s.verdict === 'gray' || s.verdict === 'insufficient';
+              const col = verdictColor(s.verdict);
               return (
-                <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '6px 0', opacity: s.verdict === 'gray' || s.verdict === 'insufficient' ? 0.5 : 1 }}>
-                  <div style={{ flex: '0 0 70px', textAlign: isRTL ? 'right' : 'left', fontSize: 12.5, color: C.text }}>{s.label}</div>
-                  <div style={{ flex: 1, height: 16, background: 'rgba(255,255,255,0.04)', borderRadius: 5, position: 'relative', overflow: 'hidden' }}>
-                    <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: `${w}%`, background: verdictColor(s.verdict), borderRadius: 5 }} />
+                <div key={s.key} style={{
+                  display: 'flex', alignItems: 'center', gap: 14,
+                  padding: '9px 4px',
+                  borderTop: idx === 0 ? 'none' : '1px solid rgba(255,255,255,0.04)',
+                  opacity: dim ? 0.62 : 1,
+                }}>
+                  <div style={{ flex: '0 0 72px', textAlign: isRTL ? 'right' : 'left', fontSize: 13, color: C.text, fontWeight: 500 }}>{s.label}</div>
+                  <div style={{ flex: 1, height: 10, background: 'rgba(255,255,255,0.05)', borderRadius: 999, position: 'relative', overflow: 'hidden' }}>
+                    <div style={{
+                      position: 'absolute', top: 0, bottom: 0, left: 0, width: `${w}%`,
+                      background: `linear-gradient(90deg, ${col}55, ${col})`,
+                      borderRadius: 999,
+                      boxShadow: dim ? 'none' : `0 0 12px ${col}55`,
+                      transition: 'width 600ms ease',
+                    }} />
                   </div>
-                  <div style={{ flex: '0 0 120px', fontFamily: MONO, fontSize: 11.5, color: verdictColor(s.verdict), textAlign: 'left' }}>
-                    {fmtR(s.expectancy)} · {Nlabel(s.n)}
+                  <div style={{
+                    flex: '0 0 160px', fontFamily: MONO, fontSize: 12, color: col,
+                    textAlign: 'left', whiteSpace: 'nowrap', fontWeight: 600,
+                  }}>
+                    {fmtR(s.expectancy)} <span style={{ color: C.dim, margin: '0 6px' }}>·</span>
+                    <span style={{ color: dim ? C.mut : C.text }}>{Nlabel(s.n)}</span>
                   </div>
                 </div>
               );
@@ -92,6 +116,7 @@ export default function IntelligenceSection({ trades, T, enabled }: { trades: Tr
           </div>
         </div>
       </GlassCard>
+
 
       {/* edge engine */}
       <div style={{ marginTop: 16 }}>
