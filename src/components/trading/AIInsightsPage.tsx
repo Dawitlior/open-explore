@@ -26,6 +26,7 @@ import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { GlassCard } from './TradingUI';
 import { analyzeDeep, type DeepInsight, type DeepSeverity } from '@/lib/ai-insights-deep';
+import IntelligenceSection from './IntelligenceSection';
 import { findBestEdge } from '@/lib/psychology-diagnostic';
 import { useLang } from '@/hooks/use-lang';
 
@@ -1182,6 +1183,9 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
                 </div>
               </motion.div>
             )}
+
+            {/* ORCA · INTELLIGENCE LAYER — segment + edge engine, same visibleTrades */}
+            <IntelligenceSection trades={trades} T={T} enabled={!!analysis} />
           </motion.div>
         )}
       </AnimatePresence>
