@@ -1734,42 +1734,42 @@ export default function OrcaConsole() {
       `}</style>
 
       {/* icon rail (groups) */}
-      <aside className="orca-rail" style={{ background: C.rail, position: "sticky", top: 0, height: "100vh", display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 16, gap: 6 }}>
-        <button onClick={() => setCollapsed((c) => !c)} title="toggle sidebar" style={{ width: 42, height: 42, borderRadius: 11, border: "none", background: "transparent", cursor: "pointer", display: "grid", placeItems: "center", color: "#8C9AB4", marginBottom: 2 }}><PanelLeft size={18} /></button>
-        <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.1)", display: "grid", placeItems: "center", marginBottom: 12 }}><Grid3x3 size={19} color="#fff" /></div>
+      <aside className="orca-rail" style={{ background: C.rail, position: "sticky", top: 0, height: "100vh", display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 14, gap: 4, borderInlineEnd: `1px solid ${C.border}` }}>
+        <button onClick={() => setCollapsed((c) => !c)} title="toggle sidebar" style={{ width: 40, height: 40, borderRadius: 10, border: "none", background: "transparent", cursor: "pointer", display: "grid", placeItems: "center", color: "#94A3B8", marginBottom: 2, transition: "background .15s ease, color .15s ease" }} onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "#fff"; }} onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#94A3B8"; }}><PanelLeft size={17} /></button>
+        <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.08)", display: "grid", placeItems: "center", marginBottom: 10, border: "1px solid rgba(255,255,255,0.06)" }}><Grid3x3 size={18} color="#fff" /></div>
         {GROUPS.map((g) => {
           const on = activeGroup === g.id, Icon = g.icon;
           return (
-            <button key={g.id} onClick={() => setActive(g.pages[0][0])} title={t(g.label)} style={{ width: 42, height: 42, borderRadius: 11, border: "none", cursor: "pointer", display: "grid", placeItems: "center", background: on ? "rgba(255,255,255,0.12)" : "transparent", position: "relative" }}>
-              {on && <span style={{ position: "absolute", insetInlineStart: -10, top: 9, bottom: 9, width: 3, borderRadius: 99, background: "#fff" }} />}
-              <Icon size={19} color={on ? "#fff" : "#8C9AB4"} />
+            <button key={g.id} onClick={() => setActive(g.pages[0][0])} title={t(g.label)} style={{ width: 40, height: 40, borderRadius: 10, border: "none", cursor: "pointer", display: "grid", placeItems: "center", background: on ? "rgba(255,255,255,0.10)" : "transparent", position: "relative", transition: "background .15s ease" }} onMouseEnter={(e) => { if (!on) e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }} onMouseLeave={(e) => { if (!on) e.currentTarget.style.background = "transparent"; }}>
+              {on && <span style={{ position: "absolute", insetInlineStart: -10, top: 10, bottom: 10, width: 3, borderRadius: 99, background: "#fff" }} />}
+              <Icon size={18} color={on ? "#fff" : "#8C9AB4"} />
             </button>
           );
         })}
       </aside>
 
       {/* labelled sidebar (all groups + pages) */}
-      {!collapsed && <aside className="orca-side" style={{ background: C.panel, borderInlineEnd: `1px solid ${C.border}`, position: "sticky", top: 0, height: "100vh", overflowY: "auto", padding: "18px 14px" }}>
-        <div style={{ padding: "0 6px 16px" }}>
+      {!collapsed && <aside className="orca-side" style={{ background: C.panel, borderInlineEnd: `1px solid ${C.border}`, position: "sticky", top: 0, height: "100vh", overflowY: "auto", padding: "16px 12px" }}>
+        <div style={{ padding: "0 8px 18px" }}>
           <div style={{ fontFamily: SANS, fontWeight: 750, fontSize: 15, color: C.ink, letterSpacing: -0.2 }}>{t("appName")}</div>
-          <div style={{ fontFamily: SANS, fontSize: 10.5, color: C.ink3, marginTop: 1 }}>{t("appTag")}</div>
+          <div style={{ fontFamily: SANS, fontSize: 10.5, color: C.ink3, marginTop: 2 }}>{t("appTag")}</div>
         </div>
         {GROUPS.map((g) => (
-          <div key={g.id} style={{ marginBottom: 13 }}>
-            <div style={{ fontFamily: SANS, fontSize: 10.5, fontWeight: 600, color: C.ink3, letterSpacing: 0.4, textTransform: "uppercase", padding: "0 8px 7px", textAlign: "start" }}>{t(g.label)}</div>
+          <div key={g.id} style={{ marginBottom: 14 }}>
+            <div style={{ fontFamily: SANS, fontSize: 10, fontWeight: 600, color: C.ink3, letterSpacing: 0.6, textTransform: "uppercase", padding: "0 10px 6px", textAlign: "start", opacity: 0.85 }}>{t(g.label)}</div>
             {g.pages.map(([id, label, Icon]) => {
               const on = active === id;
               return (
-                <button key={id} onClick={() => setActive(id)} className={on ? undefined : "navitem"} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "8px 10px", borderRadius: 8, border: "none", cursor: "pointer", marginBottom: 2, textAlign: "start", background: on ? C.blueSoft : "transparent", color: on ? C.accent : C.ink2, fontFamily: SANS, fontSize: 12.5, fontWeight: on ? 650 : 500, position: "relative" }}>
-                  {on && <span style={{ position: "absolute", insetInlineStart: 0, top: 7, bottom: 7, width: 3, borderRadius: 99, background: C.accent }} />}
-                  <Icon size={16} color={on ? C.blue : C.ink3} /><span style={{ flex: 1, textAlign: "start" }}>{t(label)}</span>
+                <button key={id} onClick={() => setActive(id)} className={on ? undefined : "navitem"} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "8px 10px", borderRadius: 8, border: "none", cursor: "pointer", marginBottom: 1, textAlign: "start", background: on ? C.blueSoft : "transparent", color: on ? C.accent : C.ink2, fontFamily: SANS, fontSize: 12.5, fontWeight: on ? 600 : 500, position: "relative" }}>
+                  {on && <span style={{ position: "absolute", insetInlineStart: 0, top: 6, bottom: 6, width: 2.5, borderRadius: 99, background: C.accent }} />}
+                  <Icon size={15} color={on ? C.accent : C.ink3} /><span style={{ flex: 1, textAlign: "start" }}>{t(label)}</span>
                 </button>
               );
             })}
           </div>
         ))}
-        <div style={{ marginTop: 6, padding: "10px", borderRadius: 8, background: C.panelAlt, border: `1px solid ${C.border}` }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 4 }}><Lock size={12} color={C.pos} /><span style={{ fontFamily: SANS, fontSize: 10.5, fontWeight: 600, color: C.ink2 }}>{t("securedBy")}</span></div>
+        <div style={{ marginTop: 8, padding: "10px 12px", borderRadius: 10, background: C.panelAlt, border: `1px solid ${C.border}` }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 4 }}><Lock size={11} color={C.pos} /><span style={{ fontFamily: SANS, fontSize: 10, fontWeight: 600, color: C.ink2, letterSpacing: 0.3, textTransform: "uppercase" }}>{t("securedBy")}</span></div>
           <div style={{ fontFamily: MONO, fontSize: 10, color: C.ink3, overflow: "hidden", textOverflow: "ellipsis" }}>dawitlior777@gmail.com</div>
         </div>
       </aside>}
@@ -1788,15 +1788,15 @@ export default function OrcaConsole() {
             </React.Fragment>
           ))}
         </div>
-        <header style={{ position: "sticky", top: 0, zIndex: 40, background: C.panel, borderBottom: `1px solid ${C.border}`, padding: "11px 22px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-          <div style={{ position: "relative", flex: 1, minWidth: 180, maxWidth: 360 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, background: C.appBg, border: `1px solid ${matches.length ? C.blue : C.border}`, borderRadius: 9, padding: "7px 11px" }}>
-              <Search size={15} color={C.ink3} />
+        <header style={{ position: "sticky", top: 0, zIndex: 40, background: C.panel, borderBottom: `1px solid ${C.border}`, padding: "10px 22px", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", minHeight: 56 }}>
+          <div style={{ position: "relative", flex: 1, minWidth: 180, maxWidth: 380 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, background: C.appBg, border: `1px solid ${matches.length ? C.blue : C.border}`, borderRadius: 10, padding: "7px 11px", height: 36, transition: "border-color .15s ease" }}>
+              <Search size={14} color={C.ink3} />
               <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("searchPh")} dir={rtl ? "rtl" : "ltr"} style={{ border: "none", background: "transparent", outline: "none", fontFamily: SANS, fontSize: 12.5, color: C.ink, width: "100%" }} />
               {q && <button onClick={() => setQ("")} style={{ border: "none", background: "transparent", cursor: "pointer", color: C.ink3, display: "grid", placeItems: "center", padding: 0 }}><X size={13} /></button>}
             </div>
             {q && (
-              <div style={{ position: "absolute", insetInlineStart: 0, insetInlineEnd: 0, top: "calc(100% + 6px)", background: C.panel, border: `1px solid ${C.borderStrong}`, borderRadius: 10, boxShadow: "0 10px 30px rgba(16,27,45,0.14)", padding: 6, zIndex: 50, maxHeight: 360, overflowY: "auto" }}>
+              <div style={{ position: "absolute", insetInlineStart: 0, insetInlineEnd: 0, top: "calc(100% + 6px)", background: C.panel, border: `1px solid ${C.borderStrong}`, borderRadius: 10, boxShadow: theme === "dark" ? "0 12px 32px rgba(0,0,0,0.55)" : "0 10px 30px rgba(16,27,45,0.14)", padding: 6, zIndex: 50, maxHeight: 360, overflowY: "auto" }}>
                 {matches.length ? matches.map((it, i) => (
                   <button key={i} onClick={() => { if (it.type === "page") { setActive(it.id); } else { setActive("queries"); setJumpFn(it.id + ":" + Date.now()); } setQ(""); }} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, width: "100%", padding: "8px 10px", borderRadius: 7, border: "none", background: "transparent", cursor: "pointer", textAlign: "start" }} onMouseEnter={(e) => (e.currentTarget.style.background = C.blueSoft)} onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
                     <span style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0 }}>{it.type === "page" ? <LayoutDashboard size={14} color={C.ink3} /> : <Terminal size={14} color={C.ink3} />}<span style={{ fontFamily: it.type === "fn" ? MONO : SANS, fontSize: 12.5, color: C.ink, fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{it.label}</span></span>
@@ -1806,13 +1806,13 @@ export default function OrcaConsole() {
               </div>
             )}
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 9, marginInlineStart: "auto" }}>
-            <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} title="theme" style={{ display: "grid", placeItems: "center", width: 34, height: 34, borderRadius: 8, border: `1px solid ${C.borderStrong}`, background: C.panel, cursor: "pointer", color: C.ink2 }}>{theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}</button>
-            <button onClick={() => setLang(rtl ? "en" : "he")} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 11px", borderRadius: 8, border: `1px solid ${C.borderStrong}`, background: C.panel, cursor: "pointer", fontFamily: SANS, fontSize: 12, fontWeight: 600, color: C.ink }}><Globe size={14} color={C.ink2} />{rtl ? "EN" : "עב"}</button>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginInlineStart: "auto" }}>
+            <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} title="theme" style={{ display: "grid", placeItems: "center", width: 36, height: 36, borderRadius: 9, border: `1px solid ${C.border}`, background: C.panel, cursor: "pointer", color: C.ink2, transition: "background .15s ease, border-color .15s ease" }} onMouseEnter={(e) => { e.currentTarget.style.background = C.panelAlt; e.currentTarget.style.borderColor = C.borderStrong; }} onMouseLeave={(e) => { e.currentTarget.style.background = C.panel; e.currentTarget.style.borderColor = C.border; }}>{theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}</button>
+            <button onClick={() => setLang(rtl ? "en" : "he")} style={{ display: "flex", alignItems: "center", gap: 6, padding: "0 12px", height: 36, borderRadius: 9, border: `1px solid ${C.border}`, background: C.panel, cursor: "pointer", fontFamily: SANS, fontSize: 12, fontWeight: 600, color: C.ink, transition: "background .15s ease, border-color .15s ease" }} onMouseEnter={(e) => { e.currentTarget.style.background = C.panelAlt; e.currentTarget.style.borderColor = C.borderStrong; }} onMouseLeave={(e) => { e.currentTarget.style.background = C.panel; e.currentTarget.style.borderColor = C.border; }}><Globe size={13} color={C.ink2} />{rtl ? "EN" : "עב"}</button>
             <div style={{ position: "relative" }}>
-              <button onClick={() => setExportOpen((o) => !o)} style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 14px", borderRadius: 8, border: "none", background: C.accent, color: C.appBg, cursor: "pointer", fontFamily: SANS, fontSize: 12, fontWeight: 600 }} onMouseEnter={(e) => (e.currentTarget.style.background = C.accentHover)} onMouseLeave={(e) => (e.currentTarget.style.background = C.accent)}><Download size={14} />{t("export")}</button>
+              <button onClick={() => setExportOpen((o) => !o)} style={{ display: "flex", alignItems: "center", gap: 7, padding: "0 14px", height: 36, borderRadius: 9, border: "none", background: C.accent, color: C.appBg, cursor: "pointer", fontFamily: SANS, fontSize: 12, fontWeight: 600, transition: "background .15s ease" }} onMouseEnter={(e) => (e.currentTarget.style.background = C.accentHover)} onMouseLeave={(e) => (e.currentTarget.style.background = C.accent)}><Download size={14} />{t("export")}</button>
               {exportOpen && (
-                <div style={{ position: "absolute", insetInlineEnd: 0, top: "calc(100% + 6px)", background: C.panel, border: `1px solid ${C.borderStrong}`, borderRadius: 10, boxShadow: "0 12px 32px rgba(16,27,45,0.18)", padding: 6, zIndex: 60, minWidth: 192 }}>
+                <div style={{ position: "absolute", insetInlineEnd: 0, top: "calc(100% + 6px)", background: C.panel, border: `1px solid ${C.borderStrong}`, borderRadius: 10, boxShadow: theme === "dark" ? "0 14px 36px rgba(0,0,0,0.6)" : "0 12px 32px rgba(16,27,45,0.18)", padding: 6, zIndex: 60, minWidth: 192 }}>
                   <button onClick={() => { setExportOpen(false); setReportOpen(true); }} style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "9px 10px", borderRadius: 7, border: "none", background: "transparent", cursor: "pointer", textAlign: "start", fontFamily: SANS, fontSize: 12.5, color: C.ink }} onMouseEnter={(e) => (e.currentTarget.style.background = C.blueSoft)} onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}><FileText size={15} color={C.ink2} />{t("exportPdf")}</button>
                   <button onClick={() => { setExportOpen(false); doExport(); }} style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "9px 10px", borderRadius: 7, border: "none", background: "transparent", cursor: "pointer", textAlign: "start", fontFamily: SANS, fontSize: 12.5, color: C.ink }} onMouseEnter={(e) => (e.currentTarget.style.background = C.blueSoft)} onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}><Database size={15} color={C.ink2} />{t("exportJson")}</button>
                 </div>
@@ -1821,7 +1821,7 @@ export default function OrcaConsole() {
           </div>
         </header>
 
-        <div className="orca-statusstrip" style={{ display: "flex", alignItems: "center", gap: 16, padding: "9px 22px", borderBottom: `1px solid ${C.border}`, background: C.panel, flexWrap: "wrap" }}>
+        <div className="orca-statusstrip" style={{ display: "flex", alignItems: "center", gap: 14, padding: "8px 22px", borderBottom: `1px solid ${C.border}`, background: C.panelAlt, flexWrap: "wrap" }}>
           <span style={{ display: "flex", alignItems: "center", gap: 7, fontFamily: SANS, fontSize: 11.5, color: C.ink2 }}><span style={{ width: 7, height: 7, borderRadius: 99, background: C.pos }} />{t("live")}</span>
           <span style={{ fontFamily: SANS, fontSize: 11.5, color: C.ink2 }}>{t("showing")} <strong style={{ color: C.ink, fontFamily: MONO }}>{nf.format(filtered.length)}</strong> {t("traders")}</span>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginInlineStart: "auto", flexWrap: "wrap" }}>
