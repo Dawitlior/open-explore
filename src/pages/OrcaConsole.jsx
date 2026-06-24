@@ -751,7 +751,7 @@ function CommunityActivity({ t, lang, traders, heat, hmax }) {
           const total = heat.reduce((s, c) => s + (c.v || 0), 0);
           const concentrated = total > 0 && peak.v / total > 0.7;
           return concentrated ? (
-            <div style={{ marginBottom: 10, padding: "9px 12px", borderRadius: 8, background: theme === "dark" ? "#2A2008" : "#FEF3C7", border: `1px solid ${C.warn}55`, color: theme === "dark" ? "#FCD34D" : "#B45309", fontFamily: SANS, fontSize: 11.5, lineHeight: 1.5 }}>
+            <div style={{ marginBottom: 10, padding: "9px 12px", borderRadius: 8, background: C.tintAmber, border: `1px solid ${C.warn}55`, color: C.tintAmberInk, fontFamily: SANS, fontSize: 11.5, lineHeight: 1.5 }}>
               <strong>{lang === "he" ? "ריכוז חריג בתא יחיד" : "Single-cell concentration"}:</strong> {Math.round(peak.v / total * 100)}% {lang === "he" ? "מהפעילות מרוכזת בתא אחד — סימן לחותמת-זמן ברירת-מחדל בייבוא. ידווח ב-Data Quality." : "of activity sits in one cell — indicates default intraday timestamp on imports. Flagged in Data Quality."}
             </div>
           ) : null;
