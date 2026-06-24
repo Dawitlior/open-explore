@@ -271,6 +271,28 @@ const r2 = (n) => Math.round(n * 100) / 100;
 const sgn = (n) => (n > 0 ? "+" : "");
 const nf = new Intl.NumberFormat("en-US");
 const pctv = (n) => `${Math.round(n)}%`;
+// Short date formatter for time-series X-axis: "11 May" / "מאי 11".
+// Accepts ISO-ish "YYYY-MM-DD" strings and degrades gracefully.
+const fmtShortDate = (wk, lang) => {
+  if (!wk) return "";
+  const d = new Date(wk);
+  if (isNaN(d.getTime())) return String(wk);
+  try {
+    return d.toLocaleDateString(lang === "he" ? "he-IL" : "en-US", { day: "2-digit", month: "short" });
+  } catch { return String(wk); }
+};
+// Returns recharts XAxis props for a time-series array; caps tick density.
+const timeAxisProps = (data, lang) => {
+  const n = (data || []).length;
+  const interval = n > 1 ? Math.max(0, Math.ceil(n / 8) - 1) : 0;
+  return {
+    interval, minTickGap: 24,
+    angle: n > 16 ? -35 : 0,
+    textAnchor: n > 16 ? "end" : "middle",
+    height: n > 16 ? 56 : 30,
+    tickFormatter: (v) => fmtShortDate(v, lang),
+  };
+};
 const loc = (lang, o) => o[lang];
 function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 const pickR = (rand, arr) => arr[Math.floor(rand() * arr.length)];
@@ -664,7 +686,7 @@ function Overview({ t, lang, traders, eng }) {
   const scn = traders.reduce((a, x) => ((a[seg(x)] = (a[seg(x)] || 0) + 1), a), {});
   const segData = [{ name: t("segStars"), v: scn.stars || 0, c: PAL[6] }, { name: t("segWatch"), v: scn.watch || 0, c: PAL[5] }, { name: t("segRisk"), v: scn.risk || 0, c: PAL[7] }, { name: t("segDormant"), v: scn.dormant || 0, c: PAL[4] }];
   const tierData = TIER.map((tr, i) => ({ name: loc(lang, tr), v: traders.filter((x) => x.tier.id === tr.id).length, c: PAL[i] }));
-  const trend = eng.map((e) => ({ x: e.w, active: e.active, mau: e.mau })), vol = eng.map((e) => ({ x: e.w, trades: e.trades }));
+  const trend = eng.map((e) => ({ x: e.wk || `w${e.w}`, active: e.active, mau: e.mau })), vol = eng.map((e) => ({ x: e.wk || `w${e.w}`, trades: e.trades }));
   const tv = topBy(traders, "valuePotential").map((x) => ({ code: x.code, v: x.valuePotential, label: x.valuePotential }));
   const trk = topBy(traders, "behaviouralRisk").map((x) => ({ code: x.code, v: x.behaviouralRisk, label: x.behaviouralRisk }));
   const mini = eng.slice(-8);
@@ -688,8 +710,8 @@ function Overview({ t, lang, traders, eng }) {
       </div>
       <div style={{ marginBottom: 14 }}><QueryStrip t={t} lang={lang} traders={traders} presets={presets} /></div>
       <div style={gridCols(2)}>
-        <Card title={t("cActiveTrend")}><ResponsiveContainer width="100%" height={210}><AreaChart data={trend} margin={{ top: 6, right: 8, left: -18, bottom: 0 }}><defs><linearGradient id="ovA" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.blue} stopOpacity={0.18} /><stop offset="100%" stopColor={C.blue} stopOpacity={0} /></linearGradient></defs>{grid}<XAxis dataKey="x" {...axis} tickFormatter={(v) => `${t("wkShort")}${v + 1}`} interval={3} /><YAxis {...axis} /><Tooltip contentStyle={tipStyle} /><Area type="monotone" dataKey="active" name={t("kActive")} stroke={C.blue} strokeWidth={2} fill="url(#ovA)" isAnimationActive={false} /><Line type="monotone" dataKey="mau" name={t("kMau")} stroke={PAL[4]} strokeWidth={1.6} dot={false} isAnimationActive={false} /></AreaChart></ResponsiveContainer></Card>
-        <Card title={t("cVolume")}><ResponsiveContainer width="100%" height={210}><BarChart data={vol} margin={{ top: 6, right: 8, left: -18, bottom: 0 }}>{grid}<XAxis dataKey="x" {...axis} tickFormatter={(v) => `${t("wkShort")}${v + 1}`} interval={3} /><YAxis {...axis} /><Tooltip contentStyle={tipStyle} cursor={{ fill: C.blueSoft }} /><Bar dataKey="trades" name={t("kTrades")} fill={C.blue} radius={[3, 3, 0, 0]} isAnimationActive={false} /></BarChart></ResponsiveContainer></Card>
+        <Card title={t("cActiveTrend")}><ResponsiveContainer width="100%" height={210}><AreaChart data={trend} margin={{ top: 6, right: 8, left: -18, bottom: 0 }}><defs><linearGradient id="ovA" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.blue} stopOpacity={0.18} /><stop offset="100%" stopColor={C.blue} stopOpacity={0} /></linearGradient></defs>{grid}<XAxis dataKey="x" {...axis} {...timeAxisProps(trend, lang)} /><YAxis {...axis} allowDecimals={false} /><Tooltip contentStyle={tipStyle} /><Area type="monotone" dataKey="active" name={t("kActive")} stroke={C.blue} strokeWidth={2} fill="url(#ovA)" isAnimationActive={false} /><Line type="monotone" dataKey="mau" name={t("kMau")} stroke={PAL[4]} strokeWidth={1.6} dot={false} isAnimationActive={false} /></AreaChart></ResponsiveContainer></Card>
+        <Card title={t("cVolume")}><ResponsiveContainer width="100%" height={210}><BarChart data={vol} margin={{ top: 6, right: 8, left: -18, bottom: 0 }}>{grid}<XAxis dataKey="x" {...axis} {...timeAxisProps(vol, lang)} /><YAxis {...axis} allowDecimals={false} /><Tooltip contentStyle={tipStyle} cursor={{ fill: C.blueSoft }} /><Bar dataKey="trades" name={t("kTrades")} fill={C.blue} radius={[3, 3, 0, 0]} isAnimationActive={false} /></BarChart></ResponsiveContainer></Card>
       </div>
       <div style={{ ...gridCols(3), marginTop: 14 }}>
         <Card title={t("cSegmentation")}><DonutWithLegend data={segData} /></Card>
@@ -725,6 +747,15 @@ function CommunityActivity({ t, lang, traders, heat, hmax }) {
       </div>
       <div style={{ marginBottom: 14 }}><QueryStrip t={t} lang={lang} traders={traders} presets={presets} /></div>
       <Card title={t("cHeatmap")} subtitle={t("fallback")} badge={<Badge tone="blue">{`${loc(lang, DOW[peak.d])} · ${String(peak.h).padStart(2, "0")}:00`}</Badge>}>
+        {(() => {
+          const total = heat.reduce((s, c) => s + (c.v || 0), 0);
+          const concentrated = total > 0 && peak.v / total > 0.7;
+          return concentrated ? (
+            <div style={{ marginBottom: 10, padding: "9px 12px", borderRadius: 8, background: C.tintAmber, border: `1px solid ${C.warn}55`, color: C.tintAmberInk, fontFamily: SANS, fontSize: 11.5, lineHeight: 1.5 }}>
+              <strong>{lang === "he" ? "ריכוז חריג בתא יחיד" : "Single-cell concentration"}:</strong> {Math.round(peak.v / total * 100)}% {lang === "he" ? "מהפעילות מרוכזת בתא אחד — סימן לחותמת-זמן ברירת-מחדל בייבוא. ידווח ב-Data Quality." : "of activity sits in one cell — indicates default intraday timestamp on imports. Flagged in Data Quality."}
+            </div>
+          ) : null;
+        })()}
         <div style={{ overflowX: "auto" }}><div style={{ minWidth: 620 }}>
           <div style={{ display: "flex", marginInlineStart: 30, marginBottom: 5 }}>{Array.from({ length: 24 }, (_, h) => <div key={h} style={{ flex: 1, textAlign: "center", fontFamily: MONO, fontSize: 9, color: h % 3 === 0 ? C.ink3 : "transparent" }}>{String(h).padStart(2, "0")}</div>)}</div>
           {DOW.map((dd, di) => (<div key={di} style={{ display: "flex", alignItems: "center", gap: 3, marginBottom: 3 }}><div style={{ width: 26, fontFamily: SANS, fontSize: 11, fontWeight: 600, color: C.ink2, textAlign: "center" }}>{loc(lang, dd)}</div><div style={{ display: "flex", flex: 1, gap: 3 }}>{Array.from({ length: 24 }, (_, h) => { const c = heat.find((x) => x.d === di && x.h === h); const v = c?.v ?? 0; return <div key={h} title={`${String(h).padStart(2, "0")}:00 · ${Math.round((v / hmax) * 100)}%`} style={{ flex: 1, aspectRatio: "1", minHeight: 16, borderRadius: 3, background: heatColor(v) }} />; })}</div></div>))}
@@ -745,7 +776,7 @@ function CommunityActivity({ t, lang, traders, heat, hmax }) {
 /* 3 · Retention */
 function Retention({ t, lang, traders, cohorts, eng }) {
   const data = Array.from({ length: 8 }, (_, k) => { const row = { k }; cohorts.forEach((c) => (row[`c${c.c}`] = c.curve[k])); return row; });
-  const churn = eng.map((e) => ({ x: e.w, churn: e.churn })), cell = (v) => `rgba(37,99,235,${clamp(v / 100, 0.05, 0.85)})`;
+  const churn = eng.map((e) => ({ x: e.wk || `w${e.w}`, churn: e.churn })), cell = (v) => `rgba(37,99,235,${clamp(v / 100, 0.05, 0.85)})`;
   const w1 = Math.round(cohorts.reduce((s, c) => s + c.curve[1], 0) / cohorts.length);
   const w4 = Math.round(cohorts.reduce((s, c) => s + c.curve[4], 0) / cohorts.length);
   const w8 = Math.round(cohorts.reduce((s, c) => s + c.curve[7], 0) / cohorts.length);
@@ -763,7 +794,7 @@ function Retention({ t, lang, traders, cohorts, eng }) {
       <div style={{ marginBottom: 14 }}><QueryStrip t={t} lang={lang} traders={traders} presets={presets} /></div>
       <div style={gridCols(2)}>
         <Card title={t("cRetentionCurves")}><ResponsiveContainer width="100%" height={230}><LineChart data={data} margin={{ top: 6, right: 8, left: -20, bottom: 0 }}>{grid}<XAxis dataKey="k" {...axis} tickFormatter={(v) => `${t("wkShort")}${v}`} /><YAxis {...axis} unit="%" /><Tooltip contentStyle={tipStyle} />{cohorts.map((c, i) => <Line key={c.c} type="monotone" dataKey={`c${c.c}`} name={`${t("thCohort")} ${c.c + 1}`} stroke={PAL[i]} strokeWidth={1.8} dot={false} isAnimationActive={false} />)}</LineChart></ResponsiveContainer></Card>
-        <Card title={t("cChurnTrend")}><ResponsiveContainer width="100%" height={230}><AreaChart data={churn} margin={{ top: 6, right: 8, left: -22, bottom: 0 }}><defs><linearGradient id="ch" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.neg} stopOpacity={0.16} /><stop offset="100%" stopColor={C.neg} stopOpacity={0} /></linearGradient></defs>{grid}<XAxis dataKey="x" {...axis} tickFormatter={(v) => `${t("wkShort")}${v + 1}`} interval={3} /><YAxis {...axis} unit="%" /><Tooltip contentStyle={tipStyle} /><Area type="monotone" dataKey="churn" name={t("kChurn")} stroke={C.neg} strokeWidth={2} fill="url(#ch)" isAnimationActive={false} /></AreaChart></ResponsiveContainer></Card>
+        <Card title={t("cChurnTrend")}><ResponsiveContainer width="100%" height={230}><AreaChart data={churn} margin={{ top: 6, right: 8, left: -22, bottom: 0 }}><defs><linearGradient id="ch" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.neg} stopOpacity={0.16} /><stop offset="100%" stopColor={C.neg} stopOpacity={0} /></linearGradient></defs>{grid}<XAxis dataKey="x" {...axis} {...timeAxisProps(churn, lang)} /><YAxis {...axis} unit="%" allowDecimals={false} /><Tooltip contentStyle={tipStyle} /><Area type="monotone" dataKey="churn" name={t("kChurn")} stroke={C.neg} strokeWidth={2} fill="url(#ch)" isAnimationActive={false} /></AreaChart></ResponsiveContainer></Card>
       </div>
       <div style={{ ...gridCols(3), marginTop: 14 }}>
         <div style={{ gridColumn: "span 2" }}><Card title={t("cRetentionTable")} pad={0}><div style={{ overflowX: "auto", padding: 16 }}><table style={{ borderCollapse: "separate", borderSpacing: 4, width: "100%", minWidth: 520 }}><thead><tr><th style={{ fontFamily: SANS, fontSize: 11, color: C.ink3, textAlign: "start", padding: 6 }}>{t("thCohort")}</th>{Array.from({ length: 8 }, (_, k) => <th key={k} style={{ fontFamily: MONO, fontSize: 10.5, color: C.ink3, padding: 6 }}>{t("wkShort")}{k}</th>)}</tr></thead><tbody>{cohorts.map((c) => (<tr key={c.c}><td style={{ fontFamily: SANS, fontSize: 11.5, color: C.ink2, padding: 6, whiteSpace: "nowrap" }}>{t("thCohort")} {c.c + 1}</td>{c.curve.map((v, k) => <td key={k} style={{ textAlign: "center", fontFamily: MONO, fontSize: 11, fontWeight: 600, color: v > 45 ? "#fff" : C.ink, background: cell(v), borderRadius: 5, padding: "7px 4px" }}>{v}</td>)}</tr>))}</tbody></table></div></Card></div>
@@ -806,7 +837,7 @@ function Activation({ t, lang, traders, funnel, diagTier, ttft }) {
 function Subscriptions({ t, lang, traders, eng }) {
   const tierData = TIER.map((tr, i) => ({ name: loc(lang, tr), v: traders.filter((x) => x.tier.id === tr.id).length, c: PAL[i] }));
   const stateData = SUBSTATE.map((s, i) => ({ name: loc(lang, s), v: traders.filter((x) => x.subState.id === s.id).length, c: PAL[i === 0 ? 1 : i === 1 ? 6 : i === 2 ? 5 : 4] }));
-  const conv = eng.map((e) => ({ x: e.w, conv: e.conv })), overTime = eng.map((e) => ({ x: e.w, Beginner: e.tStd, Advanced: e.tAdv, Ultimate: e.tPro + e.tUlt }));
+  const conv = eng.map((e) => ({ x: e.wk || `w${e.w}`, conv: e.conv })), overTime = eng.map((e) => ({ x: e.wk || `w${e.w}`, Beginner: e.tStd, Advanced: e.tAdv, Ultimate: e.tPro + e.tUlt }));
   const last = eng[eng.length - 1], prev = eng[eng.length - 2];
   const paid = traders.filter((x) => x.subState.id !== "trial").length, trial = traders.filter((x) => x.subState.id === "trial").length;
   const presets = [{ fn: "admin_subscriptions", params: { period: "90" } }, { fn: "admin_subscriptions", params: { period: "90", tier: "Ultimate" } }, { fn: "admin_subscriptions", params: { period: "365" } }, { fn: "admin_trader_matrix", params: { segment: "stars", tier: "Ultimate", sort: "valuePotential" } }];
@@ -825,10 +856,10 @@ function Subscriptions({ t, lang, traders, eng }) {
         <Card title={t("cSubStates")}><DonutWithLegend data={stateData} /></Card>
       </div>
       <div style={{ ...gridCols(3), marginTop: 14 }}>
-        <div style={{ gridColumn: "span 2" }}><Card title={t("cTierOverTime")}><ResponsiveContainer width="100%" height={210}><AreaChart data={overTime} margin={{ top: 6, right: 8, left: -22, bottom: 0 }}>{grid}<XAxis dataKey="x" {...axis} tickFormatter={(v) => `${t("wkShort")}${v + 1}`} interval={3} /><YAxis {...axis} /><Tooltip contentStyle={tipStyle} />{TIER.map((tr, i) => <Area key={tr.id} type="monotone" dataKey={tr.id} stackId="1" name={loc(lang, tr)} stroke={PAL[i]} fill={PAL[i]} fillOpacity={0.5} strokeWidth={1} isAnimationActive={false} />)}</AreaChart></ResponsiveContainer></Card></div>
+        <div style={{ gridColumn: "span 2" }}><Card title={t("cTierOverTime")}><ResponsiveContainer width="100%" height={210}><AreaChart data={overTime} margin={{ top: 6, right: 8, left: -22, bottom: 0 }}>{grid}<XAxis dataKey="x" {...axis} {...timeAxisProps(overTime, lang)} /><YAxis {...axis} allowDecimals={false} /><Tooltip contentStyle={tipStyle} />{TIER.map((tr, i) => <Area key={tr.id} type="monotone" dataKey={tr.id} stackId="1" name={loc(lang, tr)} stroke={PAL[i]} fill={PAL[i]} fillOpacity={0.5} strokeWidth={1} isAnimationActive={false} />)}</AreaChart></ResponsiveContainer></Card></div>
         <Card title={t("kConversion")}><Gauge value={last.conv} label={t("kConversion")} suffix="%" color={C.blue} /></Card>
       </div>
-      <div style={{ marginTop: 14 }}><Card title={t("cConvTrend")}><ResponsiveContainer width="100%" height={190}><LineChart data={conv} margin={{ top: 6, right: 8, left: -22, bottom: 0 }}>{grid}<XAxis dataKey="x" {...axis} tickFormatter={(v) => `${t("wkShort")}${v + 1}`} interval={3} /><YAxis {...axis} unit="%" /><Tooltip contentStyle={tipStyle} /><Line type="monotone" dataKey="conv" name={t("kConversion")} stroke={C.blue} strokeWidth={2} dot={false} isAnimationActive={false} /></LineChart></ResponsiveContainer></Card></div>
+      <div style={{ marginTop: 14 }}><Card title={t("cConvTrend")}><ResponsiveContainer width="100%" height={190}><LineChart data={conv} margin={{ top: 6, right: 8, left: -22, bottom: 0 }}>{grid}<XAxis dataKey="x" {...axis} {...timeAxisProps(conv, lang)} /><YAxis {...axis} unit="%" allowDecimals={false} /><Tooltip contentStyle={tipStyle} /><Line type="monotone" dataKey="conv" name={t("kConversion")} stroke={C.blue} strokeWidth={2} dot={false} isAnimationActive={false} /></LineChart></ResponsiveContainer></Card></div>
     </>
   );
 }
@@ -869,8 +900,8 @@ function Mind({ t, lang, traders }) {
 /* 7 · Risk Engine */
 function RiskEngine({ t, lang, traders, eng }) {
   const [win, setWin] = useState("all");
-  const breach = eng.map((e) => ({ x: e.w, trade: e.breachT, daily: e.breachD, weekly: e.breachW, monthly: e.breachM }));
-  const kr = eng.map((e) => ({ x: e.w, kill: e.kill, recovery: e.recovery }));
+  const breach = eng.map((e) => ({ x: e.wk || `w${e.w}`, trade: e.breachT, daily: e.breachD, weekly: e.breachW, monthly: e.breachM }));
+  const kr = eng.map((e) => ({ x: e.wk || `w${e.w}`, kill: e.kill, recovery: e.recovery }));
   const ovBins = Array.from({ length: 10 }, (_, b) => ({ name: `${b * 10}`, v: traders.filter((x) => x.overrideRate * 100 >= b * 10 && x.overrideRate * 100 < b * 10 + 10).length }));
   const totals = { trade: traders.reduce((s, x) => s + x.breaches.trade, 0), daily: traders.reduce((s, x) => s + x.breaches.daily, 0), weekly: traders.reduce((s, x) => s + x.breaches.weekly, 0), monthly: traders.reduce((s, x) => s + x.breaches.monthly, 0) };
   const share = [{ name: t("wTrade"), v: totals.trade, c: PAL[3] }, { name: t("wDaily"), v: totals.daily, c: PAL[5] }, { name: t("wWeekly"), v: totals.weekly, c: C.warn }, { name: t("wMonthly"), v: totals.monthly, c: C.neg }];
@@ -892,8 +923,8 @@ function RiskEngine({ t, lang, traders, eng }) {
       </div>
       <div style={{ marginBottom: 14 }}><QueryStrip t={t} lang={lang} traders={traders} presets={presets} /></div>
       <div style={gridCols(2)}>
-        <Card title={t("cBreachWindow")} toolbar={<Select lang={lang} value={win} onChange={setWin} options={winOpts} />}><ResponsiveContainer width="100%" height={220}><BarChart data={breach} margin={{ top: 6, right: 8, left: -22, bottom: 0 }}>{grid}<XAxis dataKey="x" {...axis} tickFormatter={(v) => `${t("wkShort")}${v + 1}`} interval={3} /><YAxis {...axis} /><Tooltip contentStyle={tipStyle} cursor={{ fill: C.blueSoft }} />{keys.map((k) => <Bar key={k} dataKey={k} stackId="b" name={keyName[k]} fill={keyColor[k]} radius={[2, 2, 0, 0]} isAnimationActive={false} />)}</BarChart></ResponsiveContainer></Card>
-        <Card title={t("cKillRecovery")}><ResponsiveContainer width="100%" height={220}><LineChart data={kr} margin={{ top: 6, right: 8, left: -22, bottom: 0 }}>{grid}<XAxis dataKey="x" {...axis} tickFormatter={(v) => `${t("wkShort")}${v + 1}`} interval={3} /><YAxis {...axis} /><Tooltip contentStyle={tipStyle} /><Line type="monotone" dataKey="kill" name={t("kKill")} stroke={C.neg} strokeWidth={2} dot={false} isAnimationActive={false} /><Line type="monotone" dataKey="recovery" name={t("mRecovery")} stroke={PAL[5]} strokeWidth={2} dot={false} isAnimationActive={false} /></LineChart></ResponsiveContainer></Card>
+        <Card title={t("cBreachWindow")} toolbar={<Select lang={lang} value={win} onChange={setWin} options={winOpts} />}><ResponsiveContainer width="100%" height={220}><BarChart data={breach} margin={{ top: 6, right: 8, left: -22, bottom: 0 }}>{grid}<XAxis dataKey="x" {...axis} {...timeAxisProps(breach, lang)} /><YAxis {...axis} allowDecimals={false} /><Tooltip contentStyle={tipStyle} cursor={{ fill: C.blueSoft }} />{keys.map((k) => <Bar key={k} dataKey={k} stackId="b" name={keyName[k]} fill={keyColor[k]} radius={[2, 2, 0, 0]} isAnimationActive={false} />)}</BarChart></ResponsiveContainer></Card>
+        <Card title={t("cKillRecovery")}><ResponsiveContainer width="100%" height={220}><LineChart data={kr} margin={{ top: 6, right: 8, left: -22, bottom: 0 }}>{grid}<XAxis dataKey="x" {...axis} {...timeAxisProps(kr, lang)} /><YAxis {...axis} allowDecimals={false} /><Tooltip contentStyle={tipStyle} /><Line type="monotone" dataKey="kill" name={t("kKill")} stroke={C.neg} strokeWidth={2} dot={false} isAnimationActive={false} /><Line type="monotone" dataKey="recovery" name={t("mRecovery")} stroke={PAL[5]} strokeWidth={2} dot={false} isAnimationActive={false} /></LineChart></ResponsiveContainer></Card>
       </div>
       <div style={{ ...gridCols(4), marginTop: 14 }}>
         <div style={{ gridColumn: "span 2" }}><Card title={t("cOverride")}><ResponsiveContainer width="100%" height={190}><BarChart data={ovBins} margin={{ top: 6, right: 6, left: -24, bottom: 0 }}>{grid}<XAxis dataKey="name" {...axis} unit="%" /><YAxis {...axis} /><Tooltip contentStyle={tipStyle} cursor={{ fill: C.blueSoft }} /><Bar dataKey="v" fill={C.warn} radius={[3, 3, 0, 0]} isAnimationActive={false} /></BarChart></ResponsiveContainer></Card></div>
@@ -1248,7 +1279,8 @@ function AIUsage({ t, lang, traders, aiUsage }) {
 /* 15 · Database & Storage */
 function Storage({ t, lang, traders, storage, storageTrend, dbStats }) {
   const byTable = storage.map((s, i) => ({ name: s.id, mb: s.mb, rows: s.rows, c: PAL[i % PAL.length] }));
-  const trend = storageTrend.map((e) => ({ x: e.w, gb: r1(e.mb / 1024) }));
+  // Honest storage trend — single point until a history table is populated.
+  const trend = storageTrend.map((e, i) => ({ x: `pt${i}`, gb: r1(e.mb / 1024) }));
   const presets = [{ fn: "admin_db_storage", params: {} }, { fn: "admin_ai_usage", params: { period: "90" } }];
   return (
     <>
@@ -1262,7 +1294,7 @@ function Storage({ t, lang, traders, storage, storageTrend, dbStats }) {
       <div style={{ marginBottom: 14 }}><QueryStrip t={t} lang={lang} traders={traders} presets={presets} /></div>
       <div style={gridCols(2)}>
         <Card title={t("cTableSize")}><ResponsiveContainer width="100%" height={230}><BarChart data={byTable} layout="vertical" margin={{ top: 4, right: 12, left: 8, bottom: 0 }}>{grid}<XAxis type="number" {...axis} tickFormatter={(v) => `${v}`} /><YAxis type="category" dataKey="name" tick={{ fontSize: 10.5, fill: C.ink2, fontFamily: MONO }} axisLine={false} tickLine={false} width={104} /><Tooltip contentStyle={tipStyle} cursor={{ fill: C.blueSoft }} /><Bar dataKey="mb" name="MB" radius={[0, 3, 3, 0]} isAnimationActive={false}>{byTable.map((b, i) => <Cell key={i} fill={b.c} />)}</Bar></BarChart></ResponsiveContainer></Card>
-        <Card title={t("cStorageTrend")}><ResponsiveContainer width="100%" height={230}><AreaChart data={trend} margin={{ top: 6, right: 8, left: -18, bottom: 0 }}><defs><linearGradient id="stg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.blue} stopOpacity={0.18} /><stop offset="100%" stopColor={C.blue} stopOpacity={0} /></linearGradient></defs>{grid}<XAxis dataKey="x" {...axis} tickFormatter={(v) => `${t("wkShort")}${v + 1}`} interval={3} /><YAxis {...axis} unit=" GB" /><Tooltip contentStyle={tipStyle} /><Area type="monotone" dataKey="gb" name={t("kDbSize")} stroke={C.blue} strokeWidth={2} fill="url(#stg)" isAnimationActive={false} /></AreaChart></ResponsiveContainer></Card>
+        <Card title={t("cStorageTrend")} subtitle={trend.length < 2 ? (lang === "he" ? "נקודת מדידה יחידה — היסטוריה תיווצר עם הזמן" : "Single snapshot — history accrues over time") : undefined}><ResponsiveContainer width="100%" height={230}><AreaChart data={trend} margin={{ top: 6, right: 8, left: -18, bottom: 0 }}><defs><linearGradient id="stg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.blue} stopOpacity={0.18} /><stop offset="100%" stopColor={C.blue} stopOpacity={0} /></linearGradient></defs>{grid}<XAxis dataKey="x" {...axis} minTickGap={24} /><YAxis {...axis} unit=" GB" /><Tooltip contentStyle={tipStyle} /><Area type="monotone" dataKey="gb" name={t("kDbSize")} stroke={C.blue} strokeWidth={2} fill="url(#stg)" isAnimationActive={false} /></AreaChart></ResponsiveContainer></Card>
       </div>
       <div style={{ marginTop: 14 }}>
         <Card title={t("cTableSize")} pad={0}>
@@ -1516,13 +1548,37 @@ function mapMatrixTraders(rows) {
   });
 }
 function mapEngagement(rows) {
-  return rows.map((r, i) => ({
-    w: i, dau: 0, wau: 0, mau: 0, stickiness: 0,
+  // Preserve the real week date so charts can render true time-axis labels.
+  // Trim leading empty buckets (no activity at all) — backend "all-time" pads
+  // with years of zeros which makes time-series unreadable. If the resulting
+  // series is still huge, downsample to monthly to keep ~12–60 points.
+  const all = (rows || []).map((r, i) => ({
+    w: i,
+    wk: String(r.week || ""),
+    dau: 0, wau: 0, mau: 0, stickiness: 0,
     signups: Number(r.signups || 0), deletions: 0, churn: 0,
     trades: Number(r.trades || 0), active: Number(r.active || 0),
     breachT: 0, breachD: 0, breachW: 0, breachM: 0,
     kill: 0, recovery: 0, conv: 0,
     tStd: 0, tAdv: 0, tPro: 0, tUlt: 0,
+  }));
+  const firstReal = all.findIndex((e) => e.signups > 0 || e.trades > 0 || e.active > 0);
+  const trimmed = firstReal >= 0 ? all.slice(firstReal) : all;
+  if (trimmed.length <= 60) return trimmed.map((e, i) => ({ ...e, w: i }));
+  // Monthly bucketing for long ranges (>~14 months of weekly data).
+  const byMonth = new Map();
+  for (const e of trimmed) {
+    const key = e.wk.slice(0, 7) || `bucket-${e.w}`;
+    if (!byMonth.has(key)) byMonth.set(key, { wk: `${key}-01`, signups: 0, trades: 0, active: 0 });
+    const b = byMonth.get(key);
+    b.signups += e.signups; b.trades += e.trades; b.active = Math.max(b.active, e.active);
+  }
+  return [...byMonth.values()].map((b, i) => ({
+    w: i, wk: b.wk, dau: 0, wau: 0, mau: 0, stickiness: 0,
+    signups: b.signups, deletions: 0, churn: 0,
+    trades: b.trades, active: b.active,
+    breachT: 0, breachD: 0, breachW: 0, breachM: 0,
+    kill: 0, recovery: 0, conv: 0, tStd: 0, tAdv: 0, tPro: 0, tUlt: 0,
   }));
 }
 function mapHeat(rows) {
