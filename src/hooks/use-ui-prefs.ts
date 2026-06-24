@@ -109,7 +109,7 @@ export function useUIPrefs() {
       if (p && typeof p === 'object') {
         const next = normalizePrefs(p);
         setPrefsState(next);
-        try { window.localStorage.setItem(CACHE_KEY, JSON.stringify(next)); } catch { /* noop */ }
+        writePrefsCaches(JSON.stringify(next));
       }
       setLoaded(true);
     });
