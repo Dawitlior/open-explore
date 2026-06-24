@@ -11,7 +11,6 @@ import type { Trade } from '@/data/trades';
 
 const MONO = "'JetBrains Mono', monospace";
 const fmtR = (v: number) => `${v >= 0 ? '+' : '−'}${Math.abs(v).toFixed(2)}R`;
-const pct = (v: number) => `${Math.round(v * 100)}%`;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyTheme = any;
@@ -19,6 +18,7 @@ type AnyTheme = any;
 export default function IntelligenceSection({ trades, T, enabled }: { trades: Trade[]; T: AnyTheme; enabled: boolean }) {
   const { t, isRTL } = useLang();
   const lang: 'he' | 'en' = isRTL ? 'he' : 'en';
+  const Nlabel = (n: number) => lang === 'he' ? `${n} עסקאות` : `${n} trades`;
 
   // token resolver — inherits page palette
   const C = {
@@ -57,7 +57,7 @@ export default function IntelligenceSection({ trades, T, enabled }: { trades: Tr
           <h3 style={{ fontSize: 22, fontWeight: 800, color: C.text, margin: 0 }}>{t('מודיעין סוחר', 'Trader Intelligence')}</h3>
         </div>
         <div style={{ fontFamily: MONO, fontSize: 11.5, color: C.mut, textAlign: isRTL ? 'left' : 'right' }}>
-          {t('מבוסס על', 'Based on')} <b style={{ color: C.text }}>{seg.totalN}</b> {t('עסקאות', 'trades')} ·{' '}
+          {t('מבוסס על', 'Based on')} <b style={{ color: C.text }}>{Nlabel(seg.totalN)}</b> ·{' '}
           {t('אמינות', 'reliability')}:{' '}
           <b style={{ color: seg.reliability === 'high' ? C.green : seg.reliability === 'medium' ? C.cyan : C.orange }}>
             {t(
@@ -83,8 +83,8 @@ export default function IntelligenceSection({ trades, T, enabled }: { trades: Tr
                   <div style={{ flex: 1, height: 16, background: 'rgba(255,255,255,0.04)', borderRadius: 5, position: 'relative', overflow: 'hidden' }}>
                     <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: `${w}%`, background: verdictColor(s.verdict), borderRadius: 5 }} />
                   </div>
-                  <div style={{ flex: '0 0 96px', fontFamily: MONO, fontSize: 11.5, color: verdictColor(s.verdict), textAlign: 'left' }}>
-                    {fmtR(s.expectancy)} · n={s.n}
+                  <div style={{ flex: '0 0 120px', fontFamily: MONO, fontSize: 11.5, color: verdictColor(s.verdict), textAlign: 'left' }}>
+                    {fmtR(s.expectancy)} · {Nlabel(s.n)}
                   </div>
                 </div>
               );
@@ -102,19 +102,43 @@ export default function IntelligenceSection({ trades, T, enabled }: { trades: Tr
             {!edge.ok ? (
               <p style={{ fontSize: 14, color: C.mut, margin: '10px 0 0', lineHeight: 1.6 }}>
                 {t(
-                  `צריך לפחות 30 עסקאות לאימון אמין (כרגע ${seg.totalN}). ככל שתעלה עוד טריידים, המנוע ילמד אותך טוב יותר.`,
-                  `Need at least 30 trades for reliable training (currently ${seg.totalN}). The more trades you add, the better it learns you.`,
+                  `צריך לפחות 30 עסקאות לאימון אמין (כרגע ${Nlabel(seg.totalN)}). ככל שתעלה עוד טריידים, המנוע ילמד אותך טוב יותר.`,
+                  `Need at least 30 trades for reliable training (currently ${Nlabel(seg.totalN)}). The more trades you add, the better it learns you.`,
                 )}
               </p>
             ) : (
               <>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(130px,1fr))', gap: 12, margin: '12px 0 16px' }}>
-                  <Stat C={C} label={t('TEST AUC · out-of-sample', 'TEST AUC · out-of-sample')} value={edge.testAUC.toFixed(3)} color={C.cyan}
-                    sub={t(`train ${edge.trainAUC.toFixed(3)} — לומד, לא משנן`, `train ${edge.trainAUC.toFixed(3)} — learns, not memorizes`)} />
-                  <Stat C={C} label={t('סף · נלמד לבד', 'threshold · self-tuned')} value={edge.threshold.toFixed(2)} color={C.purple} sub={t('לא קודד ביד', 'not hand-coded')} />
-                  <Stat C={C} label={t('R בלי המנוע', 'R without engine')} value={fmtR(edge.allR)} color={edge.allR >= 0 ? C.green : C.red} sub={`${fmtR(edge.expAll)} · n=${edge.testN}`} />
-                  <Stat C={C} label={t('R עם המנוע', 'R with engine')} value={fmtR(edge.keptR)} color={edge.keptR >= 0 ? C.green : C.red} sub={`${fmtR(edge.expKept)} · n=${edge.keptN}`} />
+                <p style={{ fontSize: 14, color: C.mut, margin: '6px 0 14px', lineHeight: 1.7 }}>
+                  {t(
+                    'המנוע אימן את עצמו על העבר שלך, ואז ניסה לנבא על עסקאות שלא ראה — בדיוק כמו שזה היה עובד בזמן אמת.',
+                    'The engine trained on your past, then tried to predict on trades it never saw — exactly how it would work in real time.',
+                  )}
+                </p>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 12, margin: '0 0 16px' }}>
+                  <Stat C={C} label={t('דיוק המודל (out-of-sample)', 'Model accuracy (out-of-sample)')} value={edge.testAUC.toFixed(3)} color={C.cyan}
+                    sub={t(`0.5 = ניחוש, 1.0 = מושלם`, `0.5 = guessing, 1.0 = perfect`)} />
+                  <Stat C={C} label={t('בלי המנוע (כל העסקאות)', 'Without engine (all trades)')} value={fmtR(edge.allR)} color={edge.allR >= 0 ? C.green : C.red} sub={Nlabel(edge.testN)} />
+                  <Stat C={C} label={t('עם המנוע (סינון אוטומטי)', 'With engine (auto-filter)')} value={fmtR(edge.keptR)} color={edge.keptR >= 0 ? C.green : C.red} sub={Nlabel(edge.keptN)} />
                 </div>
+
+                {/* Plain-language summary — directional */}
+                <p style={{ fontSize: 15, lineHeight: 1.85, color: C.text, margin: '0 0 14px' }}>
+                  {(() => {
+                    const better = edge.keptR > edge.allR;
+                    const delta = Math.abs(edge.keptR - edge.allR);
+                    if (better) {
+                      return t(
+                        `המנוע סינן ${Nlabel(edge.skipN)} מתוך ${Nlabel(edge.testN)}, ובחר רק את ${Nlabel(edge.keptN)} שנראו לו איכותיות. התוצאה: עברת מ-${fmtR(edge.allR)} ל-${fmtR(edge.keptR)} — שיפור של ${fmtR(delta)}. כלומר אם היית סומך על המנוע, היית מרוויח יותר.`,
+                        `The engine filtered ${Nlabel(edge.skipN)} out of ${Nlabel(edge.testN)} and kept only the ${Nlabel(edge.keptN)} it considered high-quality. Result: you went from ${fmtR(edge.allR)} to ${fmtR(edge.keptR)} — an improvement of ${fmtR(delta)}. If you had trusted the engine, you would have made more.`,
+                      );
+                    }
+                    return t(
+                      `המנוע סינן ${Nlabel(edge.skipN)} מתוך ${Nlabel(edge.testN)}, אבל דווקא העסקאות שהוא דילג עליהן הרוויחו ${fmtR(delta)}. כלומר במקרה הזה, היית מרוויח יותר אם לא היית סומך עליו — צריך עוד דאטה כדי שילמד אותך טוב יותר.`,
+                      `The engine filtered ${Nlabel(edge.skipN)} out of ${Nlabel(edge.testN)}, but the trades it skipped actually earned ${fmtR(delta)}. In this case, you would have made more without it — needs more data to learn you better.`,
+                    );
+                  })()}
+                </p>
 
                 <div style={{ height: 230, direction: 'ltr' }}>
                   <ResponsiveContainer width="100%" height="100%">
@@ -123,50 +147,53 @@ export default function IntelligenceSection({ trades, T, enabled }: { trades: Tr
                       <XAxis dataKey="k" tick={{ fill: C.dim, fontSize: 10, fontFamily: MONO }} tickLine={false} axisLine={{ stroke: C.border }} />
                       <YAxis tick={{ fill: C.dim, fontSize: 10, fontFamily: MONO }} tickLine={false} axisLine={{ stroke: C.border }} width={42} />
                       <Tooltip contentStyle={{ background: '#0A1B33', border: `1px solid ${C.border}`, borderRadius: 10, fontFamily: MONO, fontSize: 12 }}
-                        formatter={(v: number | string, n: string) => [`${Number(v) >= 0 ? '+' : ''}${v}R`, n === 'all' ? t('כל העסקאות', 'all trades') : t('מסונן ע״י המנוע', 'engine-filtered')]} />
+                        formatter={(v: number | string, n: string) => [`${Number(v) >= 0 ? '+' : ''}${v}R`, n === 'all' ? t('כל העסקאות', 'all trades') : t('עם המנוע', 'with engine')]} />
                       <ReferenceLine y={0} stroke={C.dim} strokeDasharray="3 3" />
                       <Line type="monotone" dataKey="all" stroke={C.dim} strokeWidth={2} dot={false} name="all" />
                       <Line type="monotone" dataKey="filtered" stroke={C.green} strokeWidth={2.6} dot={false} name="filtered" />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
-                <p style={{ fontFamily: MONO, fontSize: 13, color: C.text, lineHeight: 1.7, margin: '8px 0 16px' }}>
-                  {t(
-                    `המנוע דילג על ${edge.skipN} עסקאות (שלא ראה) ששוות נטו ${fmtR(edge.diff)} — והפך ${fmtR(edge.allR)} ל-${fmtR(edge.keptR)}.`,
-                    `The engine skipped ${edge.skipN} unseen trades worth net ${fmtR(edge.diff)} — turning ${fmtR(edge.allR)} into ${fmtR(edge.keptR)}.`,
-                  )}
-                </p>
 
-                <Eyebrow>{t('מה המנוע למד עליך · DRIVERS', 'WHAT IT LEARNED · DRIVERS')}</Eyebrow>
-                <div style={{ direction: 'ltr', marginTop: 8 }}>
-                  {edge.drivers.slice(0, 6).map(d => {
-                    const w = Math.min(100, Math.abs(d.coef) / (Math.abs(edge.drivers[0].coef) || 1) * 100);
-                    const posD = d.coef >= 0;
-                    return (
-                      <div key={d.key} style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '6px 0' }}>
-                        <div style={{ flex: '0 0 190px', textAlign: isRTL ? 'right' : 'left', fontSize: 12, color: C.text }}>{lang === 'he' ? d.he : d.en}</div>
-                        <div style={{ flex: 1, height: 16, background: 'rgba(255,255,255,0.04)', borderRadius: 5, position: 'relative', overflow: 'hidden' }}>
-                          <div style={{ position: 'absolute', top: 0, bottom: 0, [posD ? 'left' : 'right']: 0, width: `${w}%`, background: posD ? C.green : C.red, borderRadius: 5 } as React.CSSProperties} />
+                <div style={{ marginTop: 18 }}>
+                  <Eyebrow>{t('מה המנוע למד עליך', 'WHAT IT LEARNED ABOUT YOU')}</Eyebrow>
+                  <p style={{ fontSize: 13.5, color: C.mut, margin: '6px 0 12px', lineHeight: 1.6 }}>
+                    {t(
+                      'אלו הדפוסים שהמנוע זיהה — מה מגדיל את הסיכויים שלך להצליח, ומה מקטין אותם:',
+                      'These are the patterns the engine detected — what increases your chances of success, and what reduces them:',
+                    )}
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {edge.drivers.slice(0, 6).map(d => {
+                      const positive = d.coef >= 0;
+                      const label = lang === 'he' ? d.he : d.en;
+                      const verdict = positive
+                        ? t('מגדיל לך את הסיכוי להצליח', 'increases your chance of success')
+                        : t('מקטין לך את הסיכוי להצליח', 'reduces your chance of success');
+                      const color = positive ? C.green : C.red;
+                      const icon = positive ? '↑' : '↓';
+                      return (
+                        <div key={d.key} style={{
+                          display: 'flex', alignItems: 'center', gap: 12,
+                          padding: '10px 12px',
+                          background: `${color}0D`,
+                          border: `1px solid ${color}33`,
+                          borderRadius: 10,
+                        }}>
+                          <div style={{
+                            flex: '0 0 28px', height: 28, borderRadius: '50%',
+                            background: `${color}22`, color, fontSize: 16, fontWeight: 700,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}>{icon}</div>
+                          <div style={{ flex: 1, textAlign: isRTL ? 'right' : 'left' }}>
+                            <div style={{ fontSize: 14, color: C.text, fontWeight: 600 }}>{label}</div>
+                            <div style={{ fontSize: 12, color, marginTop: 2 }}>{verdict}</div>
+                          </div>
                         </div>
-                        <div style={{ flex: '0 0 60px', fontFamily: MONO, fontSize: 11.5, color: posD ? C.green : C.red, textAlign: 'left' }}>
-                          {posD ? '+' : '−'}{Math.abs(d.coef).toFixed(3)}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {edge.changepoint && (
-                  <div style={{ background: 'rgba(251,146,60,0.07)', border: '1px solid rgba(251,146,60,0.28)', borderRadius: 12, padding: '12px 14px', marginTop: 16 }}>
-                    <Eyebrow color={C.orange}>{t('שינוי מבני · CHANGEPOINT', 'STRUCTURAL SHIFT · CHANGEPOINT')}</Eyebrow>
-                    <p style={{ fontSize: 14, color: C.text, lineHeight: 1.7, margin: '8px 0 0' }}>
-                      {t(
-                        `משהו השתנה ב-trading שלך סביב ${new Date(edge.changepoint.dateISO).toLocaleDateString('he-IL')} — התוחלת צנחה מ-${fmtR(edge.changepoint.before)} ל-${fmtR(edge.changepoint.after)}. המנוע מצא את זה לבד; שווה לבדוק מה השתנה אז.`,
-                        `Something shifted around ${new Date(edge.changepoint.dateISO).toLocaleDateString('en-US')} — expectancy dropped from ${fmtR(edge.changepoint.before)} to ${fmtR(edge.changepoint.after)}. The engine found it on its own; worth checking what changed then.`,
-                      )}
-                    </p>
+                      );
+                    })}
                   </div>
-                )}
+                </div>
               </>
             )}
           </div>

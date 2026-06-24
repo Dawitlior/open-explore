@@ -38,6 +38,8 @@ export function analyzeSegments(e: EnrichedTrade[], lang: Lang): SegmentReport {
   const SESS = lang === 'he' ? SESS_HE : SESS_EN;
   const totalN = e.length;
   const reliability = reliabilityOf(totalN);
+  const N = (n: number) => lang === 'he' ? `${n} עסקאות` : `${n} trades`;
+  const dayWord = (label: string) => lang === 'he' ? `יום ${label}` : label;
 
   const byDow = [0, 1, 2, 3, 4, 5, 6]
     .map(dw => segStats(e.filter(t => t.dow === dw), `dow-${dw}`, DOW[dw]))
@@ -52,9 +54,9 @@ export function analyzeSegments(e: EnrichedTrade[], lang: Lang): SegmentReport {
   const weak = byDow.filter(s => s.verdict === 'weak').sort((a, b) => a.expectancy - b.expectancy);
   const gray = byDow.filter(s => s.verdict === 'gray');
 
-  // best day × direction (over strong days)
+  // best day × direction across top-2 strong days
   let bestDD: { day: string; dir: 'long' | 'short'; s: SegmentStats } | null = null;
-  for (const day of strong) {
+  for (const day of strong.slice(0, 2)) {
     const dw = DOW.indexOf(day.label);
     const L = segStats(e.filter(t => t.dow === dw && t.dir === 'long'), 'L', 'long');
     const S = segStats(e.filter(t => t.dow === dw && t.dir === 'short'), 'S', 'short');
@@ -65,28 +67,52 @@ export function analyzeSegments(e: EnrichedTrade[], lang: Lang): SegmentReport {
     }
   }
 
+  // combined stats for top-2 strong days
+  let combined: { n: number; exp: number; days: string[] } | null = null;
+  if (strong.length >= 2) {
+    const top2 = strong.slice(0, 2);
+    const dws = top2.map(s => DOW.indexOf(s.label));
+    const subset = e.filter(t => dws.includes(t.dow));
+    const totR = subset.reduce((a, b) => a + b.r, 0);
+    combined = { n: subset.length, exp: subset.length ? totR / subset.length : 0, days: top2.map(s => s.label) };
+  }
+
   const parts: string[] = [];
   if (lang === 'he') {
-    if (gray.length) parts.push(`שמתי לב שימי ${listJoin(gray.map(g => g.label), 'he')} שלך אפורים יחסית — התוחלת בהם לא מובהקת סטטיסטית (${gray.map(g => `n=${g.n}`).join(', ')}), אז לא הייתי בונה עליהם.`);
-    if (strong.length) {
-      parts.push(`לעומת זאת ימי ${listJoin(strong.map(s => s.label), 'he')} בולטים לטובה: ${listJoin(strong.map(s => `${s.label} בתוחלת ${fmtR(s.expectancy)}`), 'he')}.`);
+    if (gray.length) {
+      const grayList = gray.map(g => `${dayWord(g.label)} (${N(g.n)})`);
+      parts.push(`הימים ${listJoin(grayList, 'he')} עדיין לא מראים כיוון ברור — התוצאות בהם לא מובהקות סטטיסטית, אז אין מה להסיק מהם כרגע.`);
+    }
+    if (strong.length === 1) {
       const top = strong[0];
-      parts.push(`ובמיוחד יום ${top.label} — תוחלת של ${fmtR(top.expectancy)} על ${top.n} עסקאות (אחוז הצלחה ${pct(top.winRate)}, אמינות ${relHe[top.reliability]}).`);
+      parts.push(`הימים החזקים שלך: ${dayWord(top.label)} — תוחלת של ${fmtR(top.expectancy)} על ${N(top.n)}, אחוז הצלחה ${pct(top.winRate)} (אמינות ${relHe[top.reliability]}).`);
+    } else if (strong.length >= 2) {
+      const a = strong[0], b = strong[1];
+      parts.push(`שני הימים החזקים שלך הם ${dayWord(a.label)} (תוחלת ${fmtR(a.expectancy)} על ${N(a.n)}) ו${dayWord(b.label)} (תוחלת ${fmtR(b.expectancy)} על ${N(b.n)}).`);
+      if (combined) parts.push(`יחד הם מייצרים תוחלת ממוצעת של ${fmtR(combined.exp)} על ${N(combined.n)} — זה לב הביצועים שלך.`);
     }
     if (bestDD) {
-      const dirHe = bestDD.dir === 'long' ? 'long (קנייה)' : 'short (מכירה)';
-      parts.push(`ושמתי לב שימי ${bestDD.day} שלך מצטיינים ב-${dirHe}: אחוז הצלחה ${pct(bestDD.s.winRate)} ותוחלת ${fmtR(bestDD.s.expectancy)} (n=${bestDD.s.n}).`);
+      const dirHe = bestDD.dir === 'long' ? 'בלונג (קנייה)' : 'בשורט (מכירה)';
+      parts.push(`ובתוך זה, ${dayWord(bestDD.day)} שלך בולט במיוחד ${dirHe}: אחוז הצלחה ${pct(bestDD.s.winRate)} ותוחלת ${fmtR(bestDD.s.expectancy)} על ${N(bestDD.s.n)}.`);
     }
-    if (weak.length) parts.push(`שים לב — ${listJoin(weak.map(w => w.label), 'he')} שלילי מובהק (${fmtR(weak[0].expectancy)}); שווה לבדוק אם להימנע.`);
+    if (weak.length) {
+      parts.push(`לעומת זאת, ${listJoin(weak.map(w => dayWord(w.label)), 'he')} מפסידים לך באופן מובהק (${fmtR(weak[0].expectancy)} ב${dayWord(weak[0].label)}) — שווה לשקול להימנע.`);
+    }
   } else {
-    if (gray.length) parts.push(`Your ${listJoin(gray.map(g => g.label), 'en')} are relatively gray — their expectancy isn't statistically significant (${gray.map(g => `n=${g.n}`).join(', ')}), so I wouldn't lean on them.`);
-    if (strong.length) {
-      parts.push(`By contrast, ${listJoin(strong.map(s => s.label), 'en')} stand out: ${listJoin(strong.map(s => `${s.label} at ${fmtR(s.expectancy)}`), 'en')}.`);
-      const top = strong[0];
-      parts.push(`Especially ${top.label} — expectancy of ${fmtR(top.expectancy)} over ${top.n} trades (win rate ${pct(top.winRate)}, ${relEn[top.reliability]} reliability).`);
+    if (gray.length) {
+      const grayList = gray.map(g => `${g.label} (${N(g.n)})`);
+      parts.push(`${listJoin(grayList, 'en')} don't show a clear direction yet — results aren't statistically significant, so there's nothing to lean on there for now.`);
     }
-    if (bestDD) parts.push(`And your ${bestDD.day} excels on ${bestDD.dir}: win rate ${pct(bestDD.s.winRate)}, expectancy ${fmtR(bestDD.s.expectancy)} (n=${bestDD.s.n}).`);
-    if (weak.length) parts.push(`Heads up — ${listJoin(weak.map(w => w.label), 'en')} is significantly negative (${fmtR(weak[0].expectancy)}); worth considering avoiding.`);
+    if (strong.length === 1) {
+      const top = strong[0];
+      parts.push(`Your strongest day: ${top.label} — expectancy of ${fmtR(top.expectancy)} over ${N(top.n)}, win rate ${pct(top.winRate)} (${relEn[top.reliability]} reliability).`);
+    } else if (strong.length >= 2) {
+      const a = strong[0], b = strong[1];
+      parts.push(`Your two strongest days are ${a.label} (expectancy ${fmtR(a.expectancy)} over ${N(a.n)}) and ${b.label} (expectancy ${fmtR(b.expectancy)} over ${N(b.n)}).`);
+      if (combined) parts.push(`Together they produce an average expectancy of ${fmtR(combined.exp)} over ${N(combined.n)} — this is the core of your performance.`);
+    }
+    if (bestDD) parts.push(`Within that, your ${bestDD.day} excels on ${bestDD.dir}: win rate ${pct(bestDD.s.winRate)}, expectancy ${fmtR(bestDD.s.expectancy)} over ${N(bestDD.s.n)}.`);
+    if (weak.length) parts.push(`On the other hand, ${listJoin(weak.map(w => w.label), 'en')} loses you money significantly (${fmtR(weak[0].expectancy)} on ${weak[0].label}) — worth considering avoiding.`);
   }
 
   const headline = strong.length
