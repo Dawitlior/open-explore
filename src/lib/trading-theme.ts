@@ -57,58 +57,101 @@ const midnight: TradingTheme = {
 };
 
 /* ════════════════════════════════════════════════
-   2) INDIGO NOIR — Institutional purple-black-indigo
+   2) INSTITUTIONAL — Deep Navy & Sky Blue
+   Communicates: "your money is in safe, professional hands".
    ════════════════════════════════════════════════ */
-const indigo: TradingTheme = {
-  id: 'indigo',
-  bg: { primary: '#06030f', secondary: '#0c0820', tertiary: '#120c2d', card: '#0e0a24', surface: '#16113a' },
+const institutional: TradingTheme = {
+  id: 'institutional',
+  bg: { primary: '#0B1120', secondary: '#111a2e', tertiary: '#1E293B', card: '#131c30', surface: '#1E293B' },
   accent: {
-    cyan: '#a78bfa', cyanGlow: 'rgba(167,139,250,0.20)', // primary = violet
-    teal: '#7c3aed',
-    blue: '#6366f1', blueGlow: 'rgba(99,102,241,0.16)',
-    purple: '#c084fc', purpleGlow: 'rgba(192,132,252,0.16)',
-    orange: '#f59e0b',
-    red: '#f43f5e', redGlow: 'rgba(244,63,94,0.16)',
-    green: '#34d399', greenGlow: 'rgba(52,211,153,0.16)',
+    cyan: '#38BDF8', cyanGlow: 'rgba(56,189,248,0.20)',
+    teal: '#0EA5E9',
+    blue: '#2563EB', blueGlow: 'rgba(37,99,235,0.16)',
+    purple: '#7DD3FC', purpleGlow: 'rgba(125,211,252,0.14)',
+    orange: '#F59E0B',
+    red: '#F87171', redGlow: 'rgba(248,113,113,0.16)',
+    green: '#34D399', greenGlow: 'rgba(52,211,153,0.16)',
   },
-  text: { primary: '#ede9fe', secondary: '#a5a0c9', muted: '#7670a3', dim: '#534e80' },
-  border: { subtle: 'rgba(167,139,250,0.07)', medium: 'rgba(167,139,250,0.14)', active: 'rgba(167,139,250,0.40)' },
+  text: { primary: '#E6EEF8', secondary: '#94A3B8', muted: '#64748B', dim: '#475569' },
+  border: { subtle: 'rgba(148,197,255,0.06)', medium: 'rgba(148,197,255,0.14)', active: 'rgba(56,189,248,0.42)' },
   radius: { sm: 6, md: 10, lg: 14, xl: 18 },
   shadow: {
-    card: '0 1px 3px rgba(0,0,0,0.5), 0 6px 22px rgba(70,40,160,0.18)',
-    elevated: '0 6px 30px rgba(0,0,0,0.55), 0 10px 40px rgba(80,50,180,0.25)',
+    card: '0 1px 3px rgba(0,0,0,0.5), 0 6px 22px rgba(15,30,70,0.30)',
+    elevated: '0 6px 30px rgba(0,0,0,0.55), 0 10px 40px rgba(15,30,90,0.35)',
     glow: (c: string) => `0 0 22px ${c}, 0 0 44px ${c}`,
   },
   cssVars: {
-    background: '255 60% 4%',
-    foreground: '258 90% 95%',
-    card: '258 50% 9%',
-    popover: '258 50% 9%',
-    primary: '258 90% 76%',
-    primaryFg: '255 60% 4%',
-    secondary: '258 40% 14%',
-    muted: '258 30% 16%',
-    mutedFg: '258 20% 65%',
-    accent: '258 90% 76%',
-    destructive: '350 90% 60%',
-    ring: '258 90% 76%',
-    sidebar: '258 60% 6%',
-    auroraA: '258 90% 66%',
-    auroraB: '230 90% 60%',
-    glowSpot: '258 90% 76%',
+    background: '220 60% 8%',
+    foreground: '213 31% 94%',
+    card: '220 45% 13%',
+    popover: '220 45% 13%',
+    primary: '199 89% 60%',
+    primaryFg: '220 60% 8%',
+    secondary: '217 33% 17%',
+    muted: '217 25% 20%',
+    mutedFg: '215 20% 65%',
+    accent: '199 89% 60%',
+    destructive: '0 84% 70%',
+    ring: '199 89% 60%',
+    sidebar: '220 55% 10%',
+    auroraA: '199 89% 60%',
+    auroraB: '217 70% 55%',
+    glowSpot: '199 89% 70%',
   },
 };
 
 /* ════════════════════════════════════════════════
-   3) PLATINUM — Luxurious white / soft cream
-   Pristine institutional-light, royal blue + warm gold accents.
-   Designed so all charts remain LEGIBLE on light surfaces.
+   3) HIGH-TECH AI — Midnight Violet
+   Communicates: smart, AI-first, modern technology.
+   ════════════════════════════════════════════════ */
+const hightech: TradingTheme = {
+  id: 'hightech',
+  bg: { primary: '#0F0F17', secondary: '#16132A', tertiary: '#2D1B4E', card: '#181429', surface: '#2D1B4E' },
+  accent: {
+    cyan: '#8B5CF6', cyanGlow: 'rgba(139,92,246,0.22)',
+    teal: '#10B981',
+    blue: '#6366F1', blueGlow: 'rgba(99,102,241,0.16)',
+    purple: '#A78BFA', purpleGlow: 'rgba(167,139,250,0.18)',
+    orange: '#F59E0B',
+    red: '#F43F5e', redGlow: 'rgba(244,63,94,0.16)',
+    green: '#10B981', greenGlow: 'rgba(16,185,129,0.18)',
+  },
+  text: { primary: '#EDE9FE', secondary: '#A5A0C9', muted: '#7670A3', dim: '#534E80' },
+  border: { subtle: 'rgba(167,139,250,0.07)', medium: 'rgba(167,139,250,0.16)', active: 'rgba(139,92,246,0.42)' },
+  radius: { sm: 6, md: 10, lg: 14, xl: 18 },
+  shadow: {
+    card: '0 1px 3px rgba(0,0,0,0.55), 0 6px 22px rgba(70,40,160,0.22)',
+    elevated: '0 6px 30px rgba(0,0,0,0.6), 0 10px 40px rgba(80,50,180,0.30)',
+    glow: (c: string) => `0 0 22px ${c}, 0 0 44px ${c}`,
+  },
+  cssVars: {
+    background: '240 22% 8%',
+    foreground: '258 90% 95%',
+    card: '256 35% 12%',
+    popover: '256 35% 12%',
+    primary: '258 90% 66%',
+    primaryFg: '240 22% 8%',
+    secondary: '258 40% 20%',
+    muted: '258 30% 18%',
+    mutedFg: '258 20% 65%',
+    accent: '258 90% 66%',
+    destructive: '350 90% 60%',
+    ring: '258 90% 66%',
+    sidebar: '240 30% 10%',
+    auroraA: '258 90% 66%',
+    auroraB: '160 84% 39%',
+    glowSpot: '258 90% 75%',
+  },
+};
+
+/* ════════════════════════════════════════════════
+   4) PLATINUM — Luxurious white / soft cream
    ════════════════════════════════════════════════ */
 const platinum: TradingTheme = {
   id: 'platinum',
   bg: { primary: '#f6f4ef', secondary: '#fbfaf6', tertiary: '#ffffff', card: '#ffffff', surface: '#f1ede4' },
   accent: {
-    cyan: '#1d4ed8', cyanGlow: 'rgba(29,78,216,0.16)', // primary = royal blue
+    cyan: '#1d4ed8', cyanGlow: 'rgba(29,78,216,0.16)',
     teal: '#0f766e',
     blue: '#1e3a8a', blueGlow: 'rgba(30,58,138,0.14)',
     purple: '#6d28d9', purpleGlow: 'rgba(109,40,217,0.12)',
@@ -145,20 +188,18 @@ const platinum: TradingTheme = {
 };
 
 /* ════════════════════════════════════════════════
-   4) GRAPHITE — Formal institutional gray / green / red
-   Three-color discipline: graphite surfaces, green wins, red losses.
-   Sober, corporate, low-stimulus — designed for serious review work.
+   5) GRAPHITE — Formal institutional gray / green / red
    ════════════════════════════════════════════════ */
 const graphite: TradingTheme = {
   id: 'graphite',
   bg: { primary: '#0e1013', secondary: '#161a1f', tertiary: '#1c2128', card: '#161a1f', surface: '#1f242c' },
   accent: {
-    cyan: '#22c55e', cyanGlow: 'rgba(34,197,94,0.16)',   // primary = green (positive)
+    cyan: '#22c55e', cyanGlow: 'rgba(34,197,94,0.16)',
     teal: '#16a34a',
-    blue: '#9aa4b2', blueGlow: 'rgba(154,164,178,0.14)', // neutral gray-blue
+    blue: '#9aa4b2', blueGlow: 'rgba(154,164,178,0.14)',
     purple: '#a3a3a3', purpleGlow: 'rgba(163,163,163,0.10)',
     orange: '#a16207',
-    red: '#ef4444', redGlow: 'rgba(239,68,68,0.16)',     // negative
+    red: '#ef4444', redGlow: 'rgba(239,68,68,0.16)',
     green: '#22c55e', greenGlow: 'rgba(34,197,94,0.16)',
   },
   text: { primary: '#e7eaee', secondary: '#a8b0bb', muted: '#7c8694', dim: '#525c6b' },
@@ -189,11 +230,56 @@ const graphite: TradingTheme = {
   },
 };
 
-export const themes: Record<ThemeId, TradingTheme> = { midnight, indigo, platinum, graphite };
+/* ════════════════════════════════════════════════
+   6) PRECISION — Graphite & Amber/Copper
+   Communicates: luxury, premium, private-trading-desk feel.
+   ════════════════════════════════════════════════ */
+const precision: TradingTheme = {
+  id: 'precision',
+  bg: { primary: '#171717', secondary: '#1f1f1f', tertiary: '#262626', card: '#1d1d1d', surface: '#2d2d2d' },
+  accent: {
+    cyan: '#D97706', cyanGlow: 'rgba(217,119,6,0.22)',
+    teal: '#B45309',
+    blue: '#A16207', blueGlow: 'rgba(161,98,7,0.14)',
+    purple: '#F59E0B', purpleGlow: 'rgba(245,158,11,0.16)',
+    orange: '#D97706',
+    red: '#EF4444', redGlow: 'rgba(239,68,68,0.18)',
+    green: '#84CC16', greenGlow: 'rgba(132,204,22,0.18)',
+  },
+  text: { primary: '#F5F5F5', secondary: '#A3A3A3', muted: '#737373', dim: '#525252' },
+  border: { subtle: 'rgba(217,119,6,0.06)', medium: 'rgba(217,119,6,0.16)', active: 'rgba(217,119,6,0.45)' },
+  radius: { sm: 4, md: 8, lg: 12, xl: 16 },
+  shadow: {
+    card: '0 1px 2px rgba(0,0,0,0.55), 0 6px 18px rgba(0,0,0,0.4)',
+    elevated: '0 6px 24px rgba(0,0,0,0.6), 0 12px 38px rgba(120,60,0,0.18)',
+    glow: (c: string) => `0 0 16px ${c}, 0 0 34px ${c}`,
+  },
+  cssVars: {
+    background: '0 0% 9%',
+    foreground: '0 0% 96%',
+    card: '0 0% 11%',
+    popover: '0 0% 11%',
+    primary: '32 95% 44%',
+    primaryFg: '0 0% 9%',
+    secondary: '0 0% 15%',
+    muted: '0 0% 17%',
+    mutedFg: '0 0% 65%',
+    accent: '32 95% 44%',
+    destructive: '0 84% 60%',
+    ring: '32 95% 44%',
+    sidebar: '0 0% 10%',
+    auroraA: '32 95% 44%',
+    auroraB: '82 78% 45%',
+    glowSpot: '32 95% 55%',
+  },
+};
+
+export const themes: Record<ThemeId, TradingTheme> = { midnight, institutional, hightech, platinum, graphite, precision };
 
 export function getTheme(id: ThemeId): TradingTheme {
   return themes[id] || midnight;
 }
+
 
 /* ════════════════════════════════════════════════
    tintTheme — re-tint the JS-side TradingTheme so all

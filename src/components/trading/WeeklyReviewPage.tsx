@@ -13,7 +13,7 @@ import WeeklyReviewShell from '@/components/weekly-review/WeeklyReviewShell';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type OrcaTheme = any;
-type OrcaThemeId = 'midnight' | 'indigo' | 'platinum' | 'graphite';
+type OrcaThemeId = 'midnight' | 'institutional' | 'hightech' | 'platinum' | 'graphite' | 'precision';
 
 interface Props {
   T: OrcaTheme;
@@ -26,10 +26,13 @@ interface Props {
 
 const THEME_MAP: Record<OrcaThemeId, 'night' | 'snow'> = {
   midnight: 'night',
-  indigo: 'night',
+  institutional: 'night',
+  hightech: 'night',
   platinum: 'snow',
   graphite: 'night',
+  precision: 'night',
 };
+
 
 function isLegacyRequested(): boolean {
   if (typeof window === 'undefined') return false;

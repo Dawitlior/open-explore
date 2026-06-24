@@ -72,19 +72,43 @@ export default function IntelligenceSection({ trades, T, enabled }: { trades: Tr
       <GlassCard T={T}>
         <div style={{ padding: '4px 2px' }}>
           <Eyebrow>{t('מתי אתה סוחר טוב · SEGMENTS', 'WHEN YOU TRADE WELL · SEGMENTS')}</Eyebrow>
-          <p style={{ fontSize: 15, lineHeight: 1.85, color: C.text, margin: '6px 0 16px' }}>{seg.narrative}</p>
-          <div style={{ direction: 'ltr' }}>
-            {seg.byDow.map(s => {
+          <p style={{ fontSize: 15, lineHeight: 1.85, color: C.text, margin: '6px 0 18px' }}>{seg.narrative}</p>
+          <div style={{
+            direction: 'ltr',
+            padding: '14px 16px',
+            background: 'linear-gradient(180deg, rgba(8,18,36,0.55), rgba(8,18,36,0.25))',
+            border: `1px solid ${C.border}`,
+            borderRadius: 14,
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
+          }}>
+            {seg.byDow.map((s, idx) => {
               const maxAbs = Math.max(...seg.byDow.map(x => Math.abs(x.expectancy)), 0.01);
               const w = Math.min(100, Math.abs(s.expectancy) / maxAbs * 100);
+              const dim = s.verdict === 'gray' || s.verdict === 'insufficient';
+              const col = verdictColor(s.verdict);
               return (
-                <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '6px 0', opacity: s.verdict === 'gray' || s.verdict === 'insufficient' ? 0.5 : 1 }}>
-                  <div style={{ flex: '0 0 70px', textAlign: isRTL ? 'right' : 'left', fontSize: 12.5, color: C.text }}>{s.label}</div>
-                  <div style={{ flex: 1, height: 16, background: 'rgba(255,255,255,0.04)', borderRadius: 5, position: 'relative', overflow: 'hidden' }}>
-                    <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: `${w}%`, background: verdictColor(s.verdict), borderRadius: 5 }} />
+                <div key={s.key} style={{
+                  display: 'flex', alignItems: 'center', gap: 14,
+                  padding: '9px 4px',
+                  borderTop: idx === 0 ? 'none' : '1px solid rgba(255,255,255,0.04)',
+                  opacity: dim ? 0.62 : 1,
+                }}>
+                  <div style={{ flex: '0 0 72px', textAlign: isRTL ? 'right' : 'left', fontSize: 13, color: C.text, fontWeight: 500 }}>{s.label}</div>
+                  <div style={{ flex: 1, height: 10, background: 'rgba(255,255,255,0.05)', borderRadius: 999, position: 'relative', overflow: 'hidden' }}>
+                    <div style={{
+                      position: 'absolute', top: 0, bottom: 0, left: 0, width: `${w}%`,
+                      background: `linear-gradient(90deg, ${col}55, ${col})`,
+                      borderRadius: 999,
+                      boxShadow: dim ? 'none' : `0 0 12px ${col}55`,
+                      transition: 'width 600ms ease',
+                    }} />
                   </div>
-                  <div style={{ flex: '0 0 120px', fontFamily: MONO, fontSize: 11.5, color: verdictColor(s.verdict), textAlign: 'left' }}>
-                    {fmtR(s.expectancy)} · {Nlabel(s.n)}
+                  <div style={{
+                    flex: '0 0 160px', fontFamily: MONO, fontSize: 12, color: col,
+                    textAlign: 'left', whiteSpace: 'nowrap', fontWeight: 600,
+                  }}>
+                    {fmtR(s.expectancy)} <span style={{ color: C.dim, margin: '0 6px' }}>·</span>
+                    <span style={{ color: dim ? C.mut : C.text }}>{Nlabel(s.n)}</span>
                   </div>
                 </div>
               );
@@ -92,6 +116,7 @@ export default function IntelligenceSection({ trades, T, enabled }: { trades: Tr
           </div>
         </div>
       </GlassCard>
+
 
       {/* edge engine */}
       <div style={{ marginTop: 16 }}>
@@ -157,12 +182,19 @@ export default function IntelligenceSection({ trades, T, enabled }: { trades: Tr
 
                 <div style={{ marginTop: 18 }}>
                   <Eyebrow>{t('מה המנוע למד עליך', 'WHAT IT LEARNED ABOUT YOU')}</Eyebrow>
-                  <p style={{ fontSize: 13.5, color: C.mut, margin: '6px 0 12px', lineHeight: 1.6 }}>
+                  <p style={{ fontSize: 13.5, color: C.text, margin: '6px 0 8px', lineHeight: 1.7 }}>
                     {t(
-                      'אלו הדפוסים שהמנוע זיהה — מה מגדיל את הסיכויים שלך להצליח, ומה מקטין אותם:',
-                      'These are the patterns the engine detected — what increases your chances of success, and what reduces them:',
+                      'אלה הדפוסים שהמנוע זיהה בהיסטוריה שלך. השורות הירוקות (↑) הם תנאים שכאשר הם מתקיימים, הסיכוי שלך להצליח בעסקה עולה — שווה לחפש אותם. השורות האדומות (↓) הם תנאים שמורידים לך את הסיכוי — שווה להימנע מהם.',
+                      'These are the patterns the engine detected in your history. Green rows (↑) are conditions that — when present — raise your chance of a winning trade, so look for them. Red rows (↓) are conditions that lower your odds, so avoid them.',
                     )}
                   </p>
+                  <p style={{ fontSize: 12, color: C.mut, margin: '0 0 14px', lineHeight: 1.6, fontStyle: 'italic' }}>
+                    {t(
+                      'איך להשתמש: לפני שאתה נכנס לעסקה, בדוק אם התנאים הירוקים מתקיימים — ושאף התנאים האדומים לא מתקיימים.',
+                      'How to use: before you enter a trade, check that the green conditions hold — and that the red ones do not.',
+                    )}
+                  </p>
+
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {edge.drivers.slice(0, 6).map(d => {
                       const positive = d.coef >= 0;
