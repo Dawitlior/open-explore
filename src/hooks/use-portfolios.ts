@@ -10,7 +10,7 @@
  * Plan tier portfolio limits (from master plan §6 + open-questions resolution):
  *   beginner: 2, advanced: 3, ultimate: 10
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { deletePortfolioTrades } from '@/lib/storage';
@@ -66,17 +66,20 @@ interface UsePortfoliosResult {
 
 export function usePortfolios(): UsePortfoliosResult {
   const { user } = useAuth();
+  const userId = user?.id ?? null;
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const loadedUserRef = useRef<string | null>(null);
 
   const fetchAll = useCallback(async () => {
-    if (!user) {
+    if (!userId) {
+      loadedUserRef.current = null;
       setPortfolios([]);
       setLoading(false);
       return;
     }
-    setLoading(true);
+    if (loadedUserRef.current !== userId) setLoading(true);
     setError(null);
     const { data, error: err } = await supabase
       .from('portfolios')
@@ -90,8 +93,9 @@ export function usePortfolios(): UsePortfoliosResult {
     } else {
       setPortfolios((data as Portfolio[]) || []);
     }
+    loadedUserRef.current = userId;
     setLoading(false);
-  }, [user]);
+  }, [userId]);
 
   useEffect(() => {
     void fetchAll();
@@ -99,9 +103,9 @@ export function usePortfolios(): UsePortfoliosResult {
 
   const createPortfolio = useCallback(
     async (draft: PortfolioDraft): Promise<Portfolio | null> => {
-      if (!user) return null;
+      if (!userId) return null;
       const payload = {
-        user_id: user.id,
+        user_id: userId,
         name: draft.name.trim(),
         currency: draft.currency ?? 'USD',
         starting_balance: draft.starting_balance ?? 0,
@@ -123,17 +127,17 @@ export function usePortfolios(): UsePortfoliosResult {
       await fetchAll();
       return data as Portfolio;
     },
-    [user, portfolios.length, fetchAll],
+    [userId, portfolios.length, fetchAll],
   );
 
   const updatePortfolio = useCallback(
     async (id: string, patch: Partial<PortfolioDraft>): Promise<Portfolio | null> => {
-      if (!user) return null;
+      if (!userId) return null;
       const { data, error: err } = await supabase
         .from('portfolios')
         .update(patch)
         .eq('id', id)
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .select('*')
         .single();
       if (err) {
@@ -144,17 +148,17 @@ export function usePortfolios(): UsePortfoliosResult {
       await fetchAll();
       return data as Portfolio;
     },
-    [user, fetchAll],
+    [userId, fetchAll],
   );
 
   const deletePortfolio = useCallback(
     async (id: string): Promise<boolean> => {
-      if (!user) return false;
+      if (!userId) return false;
       const { error: err } = await supabase
         .from('portfolios')
         .delete()
         .eq('id', id)
-        .eq('user_id', user.id);
+        .eq('user_id', userId);
       if (err) {
         console.error('[portfolios] delete failed', err);
         setError(err.message);
@@ -163,12 +167,12 @@ export function usePortfolios(): UsePortfoliosResult {
       await fetchAll();
       return true;
     },
-    [user, fetchAll],
+    [userId, fetchAll],
   );
 
   const resetPortfolio = useCallback(
     async (id: string): Promise<boolean> => {
-      if (!user) return false;
+      if (!userId) return false;
       try {
         await deletePortfolioTrades(id);
         if (typeof window !== 'undefined') {
@@ -181,18 +185,18 @@ export function usePortfolios(): UsePortfoliosResult {
         return false;
       }
     },
-    [user],
+    [userId],
   );
 
   const setDefault = useCallback(
     async (id: string): Promise<boolean> => {
-      if (!user) return false;
+      if (!userId) return false;
       // The DB has a partial unique index enforcing one default per user.
       // Clear any current default first, then set the new one.
       const { error: clearErr } = await supabase
         .from('portfolios')
         .update({ is_default: false })
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('is_default', true);
       if (clearErr) {
         console.error('[portfolios] clear default failed', clearErr);
@@ -203,7 +207,7 @@ export function usePortfolios(): UsePortfoliosResult {
         .from('portfolios')
         .update({ is_default: true })
         .eq('id', id)
-        .eq('user_id', user.id);
+        .eq('user_id', userId);
       if (setErr) {
         console.error('[portfolios] set default failed', setErr);
         setError(setErr.message);
@@ -212,7 +216,7 @@ export function usePortfolios(): UsePortfoliosResult {
       await fetchAll();
       return true;
     },
-    [user, fetchAll],
+    [userId, fetchAll],
   );
 
   return {

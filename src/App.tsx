@@ -82,7 +82,14 @@ if (typeof window !== 'undefined') {
 }
 
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+    },
+  },
+});
 
 /**
  * Global client-side protection layer.

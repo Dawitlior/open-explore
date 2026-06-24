@@ -89,6 +89,12 @@ interface ConnectionRow {
   created_at: string;
 }
 
+declare global {
+  interface Window {
+    __orcaExchangeDrafts?: Record<string, { label: string; apiKey: string; apiSecret: string }>;
+  }
+}
+
 interface Props {
   T: TradingTheme;
   isRTL: boolean;
@@ -749,6 +755,22 @@ function CredentialModal({
   const [cooldownUntil, setCooldownUntil] = useState(0);
   const [nowTick, setNowTick] = useState(Date.now());
   const [consecutiveFailures, setConsecutiveFailures] = useState(0);
+  const draftKey = user?.id ? `${user.id}:${provider.id}` : null;
+
+  useEffect(() => {
+    if (!draftKey) return;
+    const draft = window.__orcaExchangeDrafts?.[draftKey];
+    if (!draft) return;
+    setLabel(draft.label);
+    setApiKey(draft.apiKey);
+    setApiSecret(draft.apiSecret);
+  }, [draftKey]);
+
+  useEffect(() => {
+    if (!draftKey) return;
+    window.__orcaExchangeDrafts = window.__orcaExchangeDrafts ?? {};
+    window.__orcaExchangeDrafts[draftKey] = { label, apiKey, apiSecret };
+  }, [draftKey, label, apiKey, apiSecret]);
 
   // Live tick while cooldown is active so the button re-enables crisply
   useEffect(() => {
@@ -893,6 +915,7 @@ function CredentialModal({
       body: t('המפתח אומת כ־Read-Only ואוחסן בכספת השרת.',
         'Key verified as Read-Only and sealed inside the server vault.'),
       code: 'VAULT_SEALED' });
+    if (draftKey && window.__orcaExchangeDrafts) delete window.__orcaExchangeDrafts[draftKey];
     setApiKey(''); setApiSecret('');
     try { window.dispatchEvent(new CustomEvent('orca:exchange-credentials-changed', { detail: { provider: provider.id } })); } catch {/*noop*/}
     setTimeout(() => onSaved(), 1600);
