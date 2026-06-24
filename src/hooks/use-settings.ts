@@ -18,11 +18,11 @@ function readThemeCacheSync(): ThemeId {
 
 export type ThemeId = 'midnight' | 'blue' | 'platinum' | 'graphite';
 const VALID_THEMES: ThemeId[] = ['midnight', 'blue', 'platinum', 'graphite'];
-// Legacy theme migration: indigo/hightech → blue, precision/institutional → blue
+// Legacy theme migration: indigo/hightech → blue, precision → graphite
 const migrateTheme = (v: unknown): ThemeId => {
   if (v === 'indigo' || v === 'hightech' || v === 'institutional') return 'blue';
   if (v === 'precision') return 'graphite';
-  return (typeof v === 'string' && (VALID_THEMES as string[]).includes(v)) ? (v as ThemeId) : 'graphite';
+  return (typeof v === 'string' && (VALID_THEMES as string[]).includes(v)) ? (v as ThemeId) : 'blue';
 };
 
 

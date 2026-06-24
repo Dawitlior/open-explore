@@ -11,7 +11,7 @@
         try {
           // Derive the currently signed-in Supabase user id from localStorage so the
           // preboot can read the PER-USER theme cache (orca:<uid>:theme-cache).
-          // Falls back to the legacy global cache, then graphite.
+          // Falls back to the legacy global cache, then blue.
           var uid = null;
           try {
             for (var i = 0; i < localStorage.length; i++) {
