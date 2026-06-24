@@ -62,20 +62,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [signingOut, setSigningOut] = useState(false);
 
+  const commitSession = useCallback((next: Session | null) => {
+    setSession((prev) => {
+      if (!next) return null;
+      const stableUser = prev?.user?.id === next.user.id ? prev.user : next.user;
+      return stableUser === next.user ? next : { ...next, user: stableUser };
+    });
+    setScopedUid(next?.user?.id ?? null);
+    setLoading(false);
+  }, []);
+
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s);
-      setScopedUid(s?.user?.id ?? null);
-      setLoading(false);
+      commitSession(s);
     });
 
     supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setScopedUid(data.session?.user?.id ?? null);
-      setLoading(false);
+      commitSession(data.session);
     });
     return () => sub.subscription.unsubscribe();
-  }, []);
+  }, [commitSession]);
 
   useEffect(() => {
     if (!session?.user) return;
