@@ -19,11 +19,12 @@ export const LiquidSweep = () => {
       if (!detail) return;
 
       const labels: Record<string, string> = {
-        midnight: 'MIDNIGHT', institutional: 'INSTITUTIONAL', hightech: 'HIGH-TECH  AI',
-        platinum: 'PLATINUM  WHITE', graphite: 'GRAPHITE', precision: 'PRECISION  FOCUS',
+        midnight: 'MIDNIGHT', blue: 'BLUE',
+        platinum: 'PLATINUM  WHITE', graphite: 'GRAPHITE',
         standard: 'STANDARD', alpha: 'ALPHA  MODE',
         beginner: 'BEGINNER', live: 'LIVE  MODE', review: 'REVIEW', research: 'RESEARCH  LAB',
       };
+
 
       setLabel(labels[detail.to] || detail.to.toUpperCase());
 
