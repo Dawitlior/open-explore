@@ -747,6 +747,15 @@ function CommunityActivity({ t, lang, traders, heat, hmax }) {
       </div>
       <div style={{ marginBottom: 14 }}><QueryStrip t={t} lang={lang} traders={traders} presets={presets} /></div>
       <Card title={t("cHeatmap")} subtitle={t("fallback")} badge={<Badge tone="blue">{`${loc(lang, DOW[peak.d])} · ${String(peak.h).padStart(2, "0")}:00`}</Badge>}>
+        {(() => {
+          const total = heat.reduce((s, c) => s + (c.v || 0), 0);
+          const concentrated = total > 0 && peak.v / total > 0.7;
+          return concentrated ? (
+            <div style={{ marginBottom: 10, padding: "9px 12px", borderRadius: 8, background: theme === "dark" ? "#2A2008" : "#FEF3C7", border: `1px solid ${C.warn}55`, color: theme === "dark" ? "#FCD34D" : "#B45309", fontFamily: SANS, fontSize: 11.5, lineHeight: 1.5 }}>
+              <strong>{lang === "he" ? "ריכוז חריג בתא יחיד" : "Single-cell concentration"}:</strong> {Math.round(peak.v / total * 100)}% {lang === "he" ? "מהפעילות מרוכזת בתא אחד — סימן לחותמת-זמן ברירת-מחדל בייבוא. ידווח ב-Data Quality." : "of activity sits in one cell — indicates default intraday timestamp on imports. Flagged in Data Quality."}
+            </div>
+          ) : null;
+        })()}
         <div style={{ overflowX: "auto" }}><div style={{ minWidth: 620 }}>
           <div style={{ display: "flex", marginInlineStart: 30, marginBottom: 5 }}>{Array.from({ length: 24 }, (_, h) => <div key={h} style={{ flex: 1, textAlign: "center", fontFamily: MONO, fontSize: 9, color: h % 3 === 0 ? C.ink3 : "transparent" }}>{String(h).padStart(2, "0")}</div>)}</div>
           {DOW.map((dd, di) => (<div key={di} style={{ display: "flex", alignItems: "center", gap: 3, marginBottom: 3 }}><div style={{ width: 26, fontFamily: SANS, fontSize: 11, fontWeight: 600, color: C.ink2, textAlign: "center" }}>{loc(lang, dd)}</div><div style={{ display: "flex", flex: 1, gap: 3 }}>{Array.from({ length: 24 }, (_, h) => { const c = heat.find((x) => x.d === di && x.h === h); const v = c?.v ?? 0; return <div key={h} title={`${String(h).padStart(2, "0")}:00 · ${Math.round((v / hmax) * 100)}%`} style={{ flex: 1, aspectRatio: "1", minHeight: 16, borderRadius: 3, background: heatColor(v) }} />; })}</div></div>))}
