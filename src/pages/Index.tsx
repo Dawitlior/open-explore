@@ -613,11 +613,14 @@ const Index = () => {
   // flash users were seeing. (state declared above with other hooks)
   useEffect(() => {
     if (!dataReady) { setFirstPaintReady(false); return; }
+    let raf2: number | undefined;
     const raf1 = requestAnimationFrame(() => {
-      const raf2 = requestAnimationFrame(() => setFirstPaintReady(true));
-      (raf1 as unknown as { _next?: number })._next = raf2;
+      raf2 = requestAnimationFrame(() => setFirstPaintReady(true));
     });
-    return () => cancelAnimationFrame(raf1);
+    return () => {
+      cancelAnimationFrame(raf1);
+      if (raf2 !== undefined) cancelAnimationFrame(raf2);
+    };
   }, [dataReady]);
 
   // Entry gate check (after all hooks — must stay below every hook to avoid React #310)
