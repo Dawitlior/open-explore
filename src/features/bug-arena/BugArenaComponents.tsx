@@ -420,7 +420,8 @@ function CaptureFlow() {
               ref={textareaRef}
               data-bug-description
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => setDescription(e.target.value.slice(0, 2000))}
+              maxLength={2000}
               rows={3}
               autoFocus
               placeholder={t('תאר בקצרה את הבאג…', 'Briefly describe the bug…')}
