@@ -45,6 +45,7 @@ const DARK = {
   ink: "#F2F3F5", ink2: "#C7CAD1", ink3: "#9AA0AA",
   blue: "#6366F1", blueDark: "#818CF8", blueSoft: "#1E2030",
   black: "#0A0E16", blackHover: "#05070C", accent: "#6366F1", accentHover: "#818CF8", chipFg: "#FFFFFF", rail: "#16181D",
+  railIcon: "#8C9AB4", railIconActive: "#FFFFFF", railHover: "rgba(255,255,255,0.05)", railActiveBg: "rgba(255,255,255,0.10)", railActiveBar: "#FFFFFF", railLogoBg: "rgba(255,255,255,0.08)", railLogoBorder: "rgba(255,255,255,0.06)", railLogoInk: "#FFFFFF",
   pos: "#34D399", neg: "#FB7185", warn: "#FBBF24",
   gridLine: "#262A31", codeBg: "#0A1019",
   tintMint: "#10241A", tintViolet: "#1E1A33", tintAmber: "#2A2008", tintRose: "#2A1117", tintSky: "#0A2233",
