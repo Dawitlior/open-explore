@@ -1270,7 +1270,8 @@ function AIUsage({ t, lang, traders, aiUsage }) {
 /* 15 · Database & Storage */
 function Storage({ t, lang, traders, storage, storageTrend, dbStats }) {
   const byTable = storage.map((s, i) => ({ name: s.id, mb: s.mb, rows: s.rows, c: PAL[i % PAL.length] }));
-  const trend = storageTrend.map((e) => ({ x: e.w, gb: r1(e.mb / 1024) }));
+  // Honest storage trend — single point until a history table is populated.
+  const trend = storageTrend.map((e, i) => ({ x: `pt${i}`, gb: r1(e.mb / 1024) }));
   const presets = [{ fn: "admin_db_storage", params: {} }, { fn: "admin_ai_usage", params: { period: "90" } }];
   return (
     <>
