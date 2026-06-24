@@ -25,27 +25,45 @@ import { useAdminLive } from "@/hooks/use-admin-live";
    ══════════════════════════════════════════════════════════════════════════ */
 
 const LIGHT = {
-  appBg: "#F3F5F9", panel: "#FFFFFF", panelAlt: "#FAFBFD",
-  border: "#E4E8F0", borderStrong: "#D5DBE6",
-  ink: "#0F1B2D", ink2: "#5B6B85", ink3: "#94A0B5",
-  blue: "#2563EB", blueDark: "#1D4ED8", blueSoft: "#EEF2F7",
-  black: "#111827", blackHover: "#1F2937", accent: "#1F2A3D", accentHover: "#0F1B2D", chipFg: "#FFFFFF", rail: "#0F1B2D",
-  pos: "#059669", neg: "#BE123C", warn: "#B45309",
-  gridLine: "#EDF0F6", codeBg: "#0F1B2D",
-  tintBlue: "#F2F4F8", tintMint: "#F2F4F8", tintAmber: "#F2F4F8", tintRose: "#F2F4F8", tintIndigo: "#F2F4F8",
+  appBg: "#F6F7F9", panel: "#FFFFFF", panelAlt: "#FBFBFC",
+  border: "#ECEDF1", borderStrong: "#E0E2E8",
+  ink: "#16181D", ink2: "#3F434C", ink3: "#71757F",
+  blue: "#4F46E5", blueDark: "#4338CA", blueSoft: "#EEF0FF",
+  black: "#16181D", blackHover: "#0F1115", accent: "#4F46E5", accentHover: "#4338CA", chipFg: "#FFFFFF", rail: "#FFFFFF",
+  pos: "#15803D", neg: "#BE123C", warn: "#B45309",
+  gridLine: "#ECEDF1", codeBg: "#16181D",
+  /* soft KPI tint backgrounds */
+  tintMint: "#E8F5EE", tintViolet: "#EEEAFE", tintAmber: "#FEF3C7", tintRose: "#FFE4E6", tintSky: "#E0F2FE",
+  tintBlue: "#E0F2FE", tintIndigo: "#EEEAFE",
+  /* matching ink colors for icon chips */
+  tintMintInk: "#1B7A43", tintVioletInk: "#6D28D9", tintAmberInk: "#B45309", tintRoseInk: "#BE123C", tintSkyInk: "#0369A1",
 };
 const DARK = {
-  appBg: "#0E1420", panel: "#161D2B", panelAlt: "#1B2433",
-  border: "#27313F", borderStrong: "#37414F",
-  ink: "#EAEFF7", ink2: "#9CA8BB", ink3: "#6E7A8E",
-  blue: "#3B82F6", blueDark: "#60A5FA", blueSoft: "#1E2839",
-  black: "#0A0E16", blackHover: "#05070C", accent: "#EAEFF7", accentHover: "#FFFFFF", chipFg: "#0E1420", rail: "#0A0E16",
+  appBg: "#0E0F13", panel: "#16181D", panelAlt: "#1B1E24",
+  border: "#262A31", borderStrong: "#2F343C",
+  ink: "#F2F3F5", ink2: "#C7CAD1", ink3: "#9AA0AA",
+  blue: "#6366F1", blueDark: "#818CF8", blueSoft: "#1E2030",
+  black: "#0A0E16", blackHover: "#05070C", accent: "#6366F1", accentHover: "#818CF8", chipFg: "#FFFFFF", rail: "#16181D",
   pos: "#34D399", neg: "#FB7185", warn: "#FBBF24",
-  gridLine: "#222C3A", codeBg: "#0A1019",
-  tintBlue: "#1B2433", tintMint: "#1B2433", tintAmber: "#1B2433", tintRose: "#1B2433", tintIndigo: "#1B2433",
+  gridLine: "#262A31", codeBg: "#0A1019",
+  tintMint: "#10241A", tintViolet: "#1E1A33", tintAmber: "#2A2008", tintRose: "#2A1117", tintSky: "#0A2233",
+  tintBlue: "#0A2233", tintIndigo: "#1E1A33",
+  tintMintInk: "#6EE7A8", tintVioletInk: "#C4B5FD", tintAmberInk: "#FCD34D", tintRoseInk: "#FDA4AF", tintSkyInk: "#7DD3FC",
 };
 let C = LIGHT;
-const PAL = ["#2563EB", "#4F46E5", "#0D9488", "#0EA5E9", "#475569", "#B45309", "#059669", "#BE123C"];
+const PAL = ["#4F46E5", "#6D28D9", "#14B8A6", "#0EA5E9", "#475569", "#B45309", "#15803D", "#BE123C"];
+/* Resolve the matching ink color for a given soft tint background */
+const tintInk = (bg) => {
+  const map = {
+    [LIGHT.tintMint]: LIGHT.tintMintInk, [LIGHT.tintViolet]: LIGHT.tintVioletInk,
+    [LIGHT.tintAmber]: LIGHT.tintAmberInk, [LIGHT.tintRose]: LIGHT.tintRoseInk, [LIGHT.tintSky]: LIGHT.tintSkyInk,
+    [LIGHT.tintBlue]: LIGHT.tintSkyInk, [LIGHT.tintIndigo]: LIGHT.tintVioletInk,
+    [DARK.tintMint]: DARK.tintMintInk, [DARK.tintViolet]: DARK.tintVioletInk,
+    [DARK.tintAmber]: DARK.tintAmberInk, [DARK.tintRose]: DARK.tintRoseInk, [DARK.tintSky]: DARK.tintSkyInk,
+    [DARK.tintBlue]: DARK.tintSkyInk, [DARK.tintIndigo]: DARK.tintVioletInk,
+  };
+  return map[bg] || C.accent;
+};
 const SANS = "'Poppins', 'Heebo', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif";
 const MONO = "ui-monospace, 'SF Mono', 'Roboto Mono', Menlo, Consolas, monospace";
 
@@ -456,15 +474,44 @@ function Card({ title, subtitle, toolbar, children, pad = 16, badge }) {
 
 function StatTile({ label, value, suffix, delta, deltaGood = "up", bg, tint, icon: Icon, spark }) {
   const up = (delta ?? 0) >= 0, good = deltaGood === "up" ? up : !up;
+  const chipBg = bg || C.tintIndigo;
+  const chipInk = tintInk(chipBg);
+  const sparkId = `sp-${label?.toString().replace(/[^a-z0-9]/gi, "") || Math.random().toString(36).slice(2)}`;
   return (
-    <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 12, padding: 14 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
-        <div style={{ width: 30, height: 30, borderRadius: 8, background: C.accent, display: "grid", placeItems: "center", flexShrink: 0 }}>{Icon && <Icon size={15} color={C.chipFg} />}</div>
-        {delta !== undefined && <span style={{ display: "flex", alignItems: "center", gap: 2, fontFamily: MONO, fontSize: 11, fontWeight: 700, color: good ? C.pos : C.neg }}>{up ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}{sgn(delta)}{delta}%</span>}
+    <div
+      style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 16, padding: 18, display: "flex", flexDirection: "column", gap: 12, boxShadow: "0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06)", transition: "box-shadow .2s ease, transform .2s ease" }}
+      onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 8px 24px rgba(16,24,40,.10)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06)"; e.currentTarget.style.transform = "none"; }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <span style={{ width: 40, height: 40, borderRadius: 12, display: "grid", placeItems: "center", background: chipBg, color: chipInk, flexShrink: 0 }}>{Icon && <Icon size={20} />}</span>
+        {delta !== undefined && delta !== null && (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontFamily: MONO, fontSize: 11.5, fontWeight: 700, padding: "3px 8px", borderRadius: 999, color: good ? C.pos : C.neg, background: good ? (C.tintMint) : (C.tintRose) }}>
+            {up ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}{sgn(delta)}{delta}%
+          </span>
+        )}
       </div>
-      <div style={{ fontFamily: MONO, fontWeight: 700, fontSize: 22, color: C.ink, lineHeight: 1, letterSpacing: -0.5 }}>{value}<span style={{ fontSize: 12, color: C.ink3, fontWeight: 600 }}>{suffix}</span></div>
-      <div style={{ fontFamily: SANS, fontSize: 11.5, color: C.ink2, marginTop: 7 }}>{label}</div>
-      {spark && <div style={{ height: 26, marginTop: 6 }}><ResponsiveContainer width="100%" height="100%"><AreaChart data={spark.map((v, i) => ({ i, v }))} margin={{ top: 2, bottom: 0, left: 0, right: 0 }}><defs><linearGradient id={`st${label}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.ink3} stopOpacity={0.35} /><stop offset="100%" stopColor={C.ink3} stopOpacity={0} /></linearGradient></defs><Area type="monotone" dataKey="v" stroke={C.ink3} strokeWidth={1.5} fill={`url(#st${label})`} isAnimationActive={false} /></AreaChart></ResponsiveContainer></div>}
+      <div>
+        <div style={{ fontFamily: SANS, fontSize: 12.5, color: C.ink3, fontWeight: 500, marginBottom: 4 }}>{label}</div>
+        <div style={{ fontFamily: SANS, fontSize: 28, fontWeight: 700, color: C.ink, lineHeight: 1, letterSpacing: -0.5 }}>
+          {value}<span style={{ fontSize: 13, color: C.ink3, fontWeight: 600, marginInlineStart: 2 }}>{suffix}</span>
+        </div>
+      </div>
+      {spark && spark.length > 1 && (
+        <div style={{ height: 36, marginInline: -4, marginBottom: -4 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={spark.map((v, i) => ({ i, v }))} margin={{ top: 2, bottom: 0, left: 0, right: 0 }}>
+              <defs>
+                <linearGradient id={sparkId} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={chipInk} stopOpacity={0.30} />
+                  <stop offset="100%" stopColor={chipInk} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <Area type="monotone" dataKey="v" stroke={chipInk} strokeWidth={2} fill={`url(#${sparkId})`} dot={false} isAnimationActive={false} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </div>
   );
 }
