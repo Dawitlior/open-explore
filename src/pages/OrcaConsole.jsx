@@ -1600,6 +1600,20 @@ export default function OrcaConsole() {
   const [collapsed, setCollapsed] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [now, setNow] = useState(Date.now());
+  const [pulse, setPulse] = useState(false);
+  const prevHashRef = useRef("");
+  useEffect(() => { const id = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(id); }, []);
+  useEffect(() => {
+    if (!live.dataHash) return;
+    if (prevHashRef.current && prevHashRef.current !== live.dataHash) {
+      setPulse(true);
+      const id = setTimeout(() => setPulse(false), 1400);
+      prevHashRef.current = live.dataHash;
+      return () => clearTimeout(id);
+    }
+    prevHashRef.current = live.dataHash;
+  }, [live.dataHash]);
   const t = useT(lang);
   const rtl = lang === "he";
   C = theme === "dark" ? DARK : LIGHT;
