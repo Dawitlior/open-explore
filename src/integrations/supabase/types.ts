@@ -453,6 +453,7 @@ export type Database = {
           is_active: boolean
           label: string | null
           last_validated_at: string | null
+          portfolio_id: string
           provider: string
           scope: string
           secret_id: string
@@ -467,6 +468,7 @@ export type Database = {
           is_active?: boolean
           label?: string | null
           last_validated_at?: string | null
+          portfolio_id: string
           provider: string
           scope?: string
           secret_id: string
@@ -481,13 +483,22 @@ export type Database = {
           is_active?: boolean
           label?: string | null
           last_validated_at?: string | null
+          portfolio_id?: string
           provider?: string
           scope?: string
           secret_id?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "exchange_credentials_portfolio_id_fkey"
+            columns: ["portfolio_id"]
+            isOneToOne: false
+            referencedRelation: "portfolios"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       feature_flags: {
         Row: {
