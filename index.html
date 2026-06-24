@@ -108,7 +108,7 @@
           r.setAttribute('data-theme', t);
           var map = TOKENS[t];
           for (var k in map) r.style.setProperty(k, map[k]);
-          var prefsRaw = localStorage.getItem('orca:ui-prefs-cache');
+          var prefsRaw = readCache('ui-prefs-cache');
           if (prefsRaw) {
             var prefs = JSON.parse(prefsRaw);
             var hex = prefs && prefs.customAccentEnabled && typeof prefs.customAccent === 'string' ? prefs.customAccent.trim() : '';
