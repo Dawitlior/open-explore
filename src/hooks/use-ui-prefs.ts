@@ -84,7 +84,7 @@ function normalizePrefs(p?: Partial<UIPrefs> | null): UIPrefs {
 function readCachedPrefs(): UIPrefs {
   if (typeof window === 'undefined') return DEFAULTS;
   try {
-    const raw = window.localStorage.getItem(CACHE_KEY);
+    const raw = scopedStorage.getSync('ui-prefs-cache') || window.localStorage.getItem(CACHE_KEY);
     return raw ? normalizePrefs(JSON.parse(raw) as Partial<UIPrefs>) : DEFAULTS;
   } catch { return DEFAULTS; }
 }

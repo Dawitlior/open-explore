@@ -9,6 +9,13 @@ function writeThemeCaches(t: string) {
   try { scopedStorage.setSync('theme-cache', t); } catch { /* noop */ }
 }
 
+function readThemeCacheSync(): ThemeId {
+  if (typeof window === 'undefined') return 'blue';
+  try {
+    return migrateTheme(scopedStorage.getSync('theme-cache') || window.localStorage.getItem('orca:theme-cache'));
+  } catch { return 'blue'; }
+}
+
 export type ThemeId = 'midnight' | 'blue' | 'platinum' | 'graphite';
 const VALID_THEMES: ThemeId[] = ['midnight', 'blue', 'platinum', 'graphite'];
 // Legacy theme migration: indigo/hightech → blue, precision/institutional → blue
@@ -50,11 +57,7 @@ export function useSettings() {
   }, []);
 
   const [theme, setThemeState] = useState<ThemeId>(() => {
-    if (typeof window === 'undefined') return 'graphite';
-    try {
-      const v = window.localStorage.getItem('orca:theme-cache');
-      return migrateTheme(v);
-    } catch { return 'graphite'; }
+    return readThemeCacheSync();
   });
 
   const [systemMode, setSystemModeState] = useState<SystemMode>('standard');
