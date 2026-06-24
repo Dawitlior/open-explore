@@ -14,21 +14,28 @@ if (typeof window !== 'undefined') {
     (window as any).deferredInstallPrompt = e;
   });
 
-  // Register service worker (required for PWA install prompt).
-  // Skip in Lovable preview iframes to avoid caching the dev shell.
-  const inIframe = (() => { try { return window.self !== window.top; } catch { return true; } })();
-  const isPreviewHost =
-    location.hostname.includes('id-preview--') ||
-    location.hostname.includes('lovableproject.com');
-
+  // Manifest-only installability: do not register an app-shell service worker.
+  // Existing /sw.js registrations are removed so dev/preview and published tabs
+  // cannot be silently refreshed by stale workers when users switch tabs.
   if ('serviceWorker' in navigator) {
-    if (inIframe || isPreviewHost) {
-      navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister()));
-    } else {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(() => {});
-      });
-    }
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.getRegistrations()
+        .then((registrations) => {
+          registrations.forEach((registration) => {
+            const urls = [
+              registration.active?.scriptURL,
+              registration.installing?.scriptURL,
+              registration.waiting?.scriptURL,
+            ].filter(Boolean) as string[];
+            const isOrcaShellWorker = urls.some((url) => {
+              try { return new URL(url).pathname === '/sw.js'; }
+              catch { return false; }
+            });
+            if (isOrcaShellWorker) registration.unregister().catch(() => {});
+          });
+        })
+        .catch(() => {});
+    });
   }
 }
 
