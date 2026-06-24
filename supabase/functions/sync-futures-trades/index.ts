@@ -1435,6 +1435,7 @@ Deno.serve(async (req) => {
         const full: Trade = { ...legacy, id: nextId, balance: 0 };
         rows.push({
           user_id: userId,
+          portfolio_id: cred.portfolio_id,
           trade_id: nextId,
           data: full,
           // Phase 1 dual-write: provenance columns alongside legacy `data` blob.
