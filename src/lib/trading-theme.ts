@@ -101,49 +101,7 @@ const blue: TradingTheme = {
   },
 };
 
-/* ════════════════════════════════════════════════
-   3) HIGH-TECH AI — Midnight Violet
-   Communicates: smart, AI-first, modern technology.
-   ════════════════════════════════════════════════ */
-const hightech: TradingTheme = {
-  id: 'hightech',
-  bg: { primary: '#0F0F17', secondary: '#16132A', tertiary: '#2D1B4E', card: '#181429', surface: '#2D1B4E' },
-  accent: {
-    cyan: '#8B5CF6', cyanGlow: 'rgba(139,92,246,0.22)',
-    teal: '#10B981',
-    blue: '#6366F1', blueGlow: 'rgba(99,102,241,0.16)',
-    purple: '#A78BFA', purpleGlow: 'rgba(167,139,250,0.18)',
-    orange: '#F59E0B',
-    red: '#F43F5e', redGlow: 'rgba(244,63,94,0.16)',
-    green: '#10B981', greenGlow: 'rgba(16,185,129,0.18)',
-  },
-  text: { primary: '#EDE9FE', secondary: '#A5A0C9', muted: '#7670A3', dim: '#534E80' },
-  border: { subtle: 'rgba(167,139,250,0.07)', medium: 'rgba(167,139,250,0.16)', active: 'rgba(139,92,246,0.42)' },
-  radius: { sm: 6, md: 10, lg: 14, xl: 18 },
-  shadow: {
-    card: '0 1px 3px rgba(0,0,0,0.55), 0 6px 22px rgba(70,40,160,0.22)',
-    elevated: '0 6px 30px rgba(0,0,0,0.6), 0 10px 40px rgba(80,50,180,0.30)',
-    glow: (c: string) => `0 0 22px ${c}, 0 0 44px ${c}`,
-  },
-  cssVars: {
-    background: '240 22% 8%',
-    foreground: '258 90% 95%',
-    card: '256 35% 12%',
-    popover: '256 35% 12%',
-    primary: '258 90% 66%',
-    primaryFg: '240 22% 8%',
-    secondary: '258 40% 20%',
-    muted: '258 30% 18%',
-    mutedFg: '258 20% 65%',
-    accent: '258 90% 66%',
-    destructive: '350 90% 60%',
-    ring: '258 90% 66%',
-    sidebar: '240 30% 10%',
-    auroraA: '258 90% 66%',
-    auroraB: '160 84% 39%',
-    glowSpot: '258 90% 75%',
-  },
-};
+
 
 /* ════════════════════════════════════════════════
    4) PLATINUM — Luxurious white / soft cream
