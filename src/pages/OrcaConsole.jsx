@@ -1788,15 +1788,15 @@ export default function OrcaConsole() {
             </React.Fragment>
           ))}
         </div>
-        <header style={{ position: "sticky", top: 0, zIndex: 40, background: C.panel, borderBottom: `1px solid ${C.border}`, padding: "11px 22px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-          <div style={{ position: "relative", flex: 1, minWidth: 180, maxWidth: 360 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, background: C.appBg, border: `1px solid ${matches.length ? C.blue : C.border}`, borderRadius: 9, padding: "7px 11px" }}>
-              <Search size={15} color={C.ink3} />
+        <header style={{ position: "sticky", top: 0, zIndex: 40, background: C.panel, borderBottom: `1px solid ${C.border}`, padding: "10px 22px", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", minHeight: 56 }}>
+          <div style={{ position: "relative", flex: 1, minWidth: 180, maxWidth: 380 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, background: C.appBg, border: `1px solid ${matches.length ? C.blue : C.border}`, borderRadius: 10, padding: "7px 11px", height: 36, transition: "border-color .15s ease" }}>
+              <Search size={14} color={C.ink3} />
               <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("searchPh")} dir={rtl ? "rtl" : "ltr"} style={{ border: "none", background: "transparent", outline: "none", fontFamily: SANS, fontSize: 12.5, color: C.ink, width: "100%" }} />
               {q && <button onClick={() => setQ("")} style={{ border: "none", background: "transparent", cursor: "pointer", color: C.ink3, display: "grid", placeItems: "center", padding: 0 }}><X size={13} /></button>}
             </div>
             {q && (
-              <div style={{ position: "absolute", insetInlineStart: 0, insetInlineEnd: 0, top: "calc(100% + 6px)", background: C.panel, border: `1px solid ${C.borderStrong}`, borderRadius: 10, boxShadow: "0 10px 30px rgba(16,27,45,0.14)", padding: 6, zIndex: 50, maxHeight: 360, overflowY: "auto" }}>
+              <div style={{ position: "absolute", insetInlineStart: 0, insetInlineEnd: 0, top: "calc(100% + 6px)", background: C.panel, border: `1px solid ${C.borderStrong}`, borderRadius: 10, boxShadow: theme === "dark" ? "0 12px 32px rgba(0,0,0,0.55)" : "0 10px 30px rgba(16,27,45,0.14)", padding: 6, zIndex: 50, maxHeight: 360, overflowY: "auto" }}>
                 {matches.length ? matches.map((it, i) => (
                   <button key={i} onClick={() => { if (it.type === "page") { setActive(it.id); } else { setActive("queries"); setJumpFn(it.id + ":" + Date.now()); } setQ(""); }} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, width: "100%", padding: "8px 10px", borderRadius: 7, border: "none", background: "transparent", cursor: "pointer", textAlign: "start" }} onMouseEnter={(e) => (e.currentTarget.style.background = C.blueSoft)} onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
                     <span style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0 }}>{it.type === "page" ? <LayoutDashboard size={14} color={C.ink3} /> : <Terminal size={14} color={C.ink3} />}<span style={{ fontFamily: it.type === "fn" ? MONO : SANS, fontSize: 12.5, color: C.ink, fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{it.label}</span></span>
@@ -1806,13 +1806,13 @@ export default function OrcaConsole() {
               </div>
             )}
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 9, marginInlineStart: "auto" }}>
-            <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} title="theme" style={{ display: "grid", placeItems: "center", width: 34, height: 34, borderRadius: 8, border: `1px solid ${C.borderStrong}`, background: C.panel, cursor: "pointer", color: C.ink2 }}>{theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}</button>
-            <button onClick={() => setLang(rtl ? "en" : "he")} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 11px", borderRadius: 8, border: `1px solid ${C.borderStrong}`, background: C.panel, cursor: "pointer", fontFamily: SANS, fontSize: 12, fontWeight: 600, color: C.ink }}><Globe size={14} color={C.ink2} />{rtl ? "EN" : "עב"}</button>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginInlineStart: "auto" }}>
+            <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} title="theme" style={{ display: "grid", placeItems: "center", width: 36, height: 36, borderRadius: 9, border: `1px solid ${C.border}`, background: C.panel, cursor: "pointer", color: C.ink2, transition: "background .15s ease, border-color .15s ease" }} onMouseEnter={(e) => { e.currentTarget.style.background = C.panelAlt; e.currentTarget.style.borderColor = C.borderStrong; }} onMouseLeave={(e) => { e.currentTarget.style.background = C.panel; e.currentTarget.style.borderColor = C.border; }}>{theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}</button>
+            <button onClick={() => setLang(rtl ? "en" : "he")} style={{ display: "flex", alignItems: "center", gap: 6, padding: "0 12px", height: 36, borderRadius: 9, border: `1px solid ${C.border}`, background: C.panel, cursor: "pointer", fontFamily: SANS, fontSize: 12, fontWeight: 600, color: C.ink, transition: "background .15s ease, border-color .15s ease" }} onMouseEnter={(e) => { e.currentTarget.style.background = C.panelAlt; e.currentTarget.style.borderColor = C.borderStrong; }} onMouseLeave={(e) => { e.currentTarget.style.background = C.panel; e.currentTarget.style.borderColor = C.border; }}><Globe size={13} color={C.ink2} />{rtl ? "EN" : "עב"}</button>
             <div style={{ position: "relative" }}>
-              <button onClick={() => setExportOpen((o) => !o)} style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 14px", borderRadius: 8, border: "none", background: C.accent, color: C.appBg, cursor: "pointer", fontFamily: SANS, fontSize: 12, fontWeight: 600 }} onMouseEnter={(e) => (e.currentTarget.style.background = C.accentHover)} onMouseLeave={(e) => (e.currentTarget.style.background = C.accent)}><Download size={14} />{t("export")}</button>
+              <button onClick={() => setExportOpen((o) => !o)} style={{ display: "flex", alignItems: "center", gap: 7, padding: "0 14px", height: 36, borderRadius: 9, border: "none", background: C.accent, color: C.appBg, cursor: "pointer", fontFamily: SANS, fontSize: 12, fontWeight: 600, transition: "background .15s ease" }} onMouseEnter={(e) => (e.currentTarget.style.background = C.accentHover)} onMouseLeave={(e) => (e.currentTarget.style.background = C.accent)}><Download size={14} />{t("export")}</button>
               {exportOpen && (
-                <div style={{ position: "absolute", insetInlineEnd: 0, top: "calc(100% + 6px)", background: C.panel, border: `1px solid ${C.borderStrong}`, borderRadius: 10, boxShadow: "0 12px 32px rgba(16,27,45,0.18)", padding: 6, zIndex: 60, minWidth: 192 }}>
+                <div style={{ position: "absolute", insetInlineEnd: 0, top: "calc(100% + 6px)", background: C.panel, border: `1px solid ${C.borderStrong}`, borderRadius: 10, boxShadow: theme === "dark" ? "0 14px 36px rgba(0,0,0,0.6)" : "0 12px 32px rgba(16,27,45,0.18)", padding: 6, zIndex: 60, minWidth: 192 }}>
                   <button onClick={() => { setExportOpen(false); setReportOpen(true); }} style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "9px 10px", borderRadius: 7, border: "none", background: "transparent", cursor: "pointer", textAlign: "start", fontFamily: SANS, fontSize: 12.5, color: C.ink }} onMouseEnter={(e) => (e.currentTarget.style.background = C.blueSoft)} onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}><FileText size={15} color={C.ink2} />{t("exportPdf")}</button>
                   <button onClick={() => { setExportOpen(false); doExport(); }} style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "9px 10px", borderRadius: 7, border: "none", background: "transparent", cursor: "pointer", textAlign: "start", fontFamily: SANS, fontSize: 12.5, color: C.ink }} onMouseEnter={(e) => (e.currentTarget.style.background = C.blueSoft)} onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}><Database size={15} color={C.ink2} />{t("exportJson")}</button>
                 </div>
@@ -1821,7 +1821,7 @@ export default function OrcaConsole() {
           </div>
         </header>
 
-        <div className="orca-statusstrip" style={{ display: "flex", alignItems: "center", gap: 16, padding: "9px 22px", borderBottom: `1px solid ${C.border}`, background: C.panel, flexWrap: "wrap" }}>
+        <div className="orca-statusstrip" style={{ display: "flex", alignItems: "center", gap: 14, padding: "8px 22px", borderBottom: `1px solid ${C.border}`, background: C.panelAlt, flexWrap: "wrap" }}>
           <span style={{ display: "flex", alignItems: "center", gap: 7, fontFamily: SANS, fontSize: 11.5, color: C.ink2 }}><span style={{ width: 7, height: 7, borderRadius: 99, background: C.pos }} />{t("live")}</span>
           <span style={{ fontFamily: SANS, fontSize: 11.5, color: C.ink2 }}>{t("showing")} <strong style={{ color: C.ink, fontFamily: MONO }}>{nf.format(filtered.length)}</strong> {t("traders")}</span>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginInlineStart: "auto", flexWrap: "wrap" }}>
