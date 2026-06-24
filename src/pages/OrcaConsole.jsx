@@ -1516,13 +1516,37 @@ function mapMatrixTraders(rows) {
   });
 }
 function mapEngagement(rows) {
-  return rows.map((r, i) => ({
-    w: i, dau: 0, wau: 0, mau: 0, stickiness: 0,
+  // Preserve the real week date so charts can render true time-axis labels.
+  // Trim leading empty buckets (no activity at all) — backend "all-time" pads
+  // with years of zeros which makes time-series unreadable. If the resulting
+  // series is still huge, downsample to monthly to keep ~12–60 points.
+  const all = (rows || []).map((r, i) => ({
+    w: i,
+    wk: String(r.week || ""),
+    dau: 0, wau: 0, mau: 0, stickiness: 0,
     signups: Number(r.signups || 0), deletions: 0, churn: 0,
     trades: Number(r.trades || 0), active: Number(r.active || 0),
     breachT: 0, breachD: 0, breachW: 0, breachM: 0,
     kill: 0, recovery: 0, conv: 0,
     tStd: 0, tAdv: 0, tPro: 0, tUlt: 0,
+  }));
+  const firstReal = all.findIndex((e) => e.signups > 0 || e.trades > 0 || e.active > 0);
+  const trimmed = firstReal >= 0 ? all.slice(firstReal) : all;
+  if (trimmed.length <= 60) return trimmed.map((e, i) => ({ ...e, w: i }));
+  // Monthly bucketing for long ranges (>~14 months of weekly data).
+  const byMonth = new Map();
+  for (const e of trimmed) {
+    const key = e.wk.slice(0, 7) || `bucket-${e.w}`;
+    if (!byMonth.has(key)) byMonth.set(key, { wk: `${key}-01`, signups: 0, trades: 0, active: 0 });
+    const b = byMonth.get(key);
+    b.signups += e.signups; b.trades += e.trades; b.active = Math.max(b.active, e.active);
+  }
+  return [...byMonth.values()].map((b, i) => ({
+    w: i, wk: b.wk, dau: 0, wau: 0, mau: 0, stickiness: 0,
+    signups: b.signups, deletions: 0, churn: 0,
+    trades: b.trades, active: b.active,
+    breachT: 0, breachD: 0, breachW: 0, breachM: 0,
+    kill: 0, recovery: 0, conv: 0, tStd: 0, tAdv: 0, tPro: 0, tUlt: 0,
   }));
 }
 function mapHeat(rows) {
