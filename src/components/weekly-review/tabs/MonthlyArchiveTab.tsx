@@ -265,8 +265,8 @@ export default function MonthlyArchiveTab({ T, isRTL, trades, state }: Props) {
             <div style={{ marginTop: 16, paddingTop: 16, borderTop: `1px solid ${border}` }}>
               <div style={{ ...label, marginBottom: 8 }}>{L.recap}</div>
               <textarea
-                rows={4} value={recap} placeholder={L.recapPh}
-                onChange={e => setRecapDraft({ ...recapDraft, [g.monthKey]: e.target.value })}
+                rows={4} value={recap} placeholder={L.recapPh} maxLength={5000}
+                onChange={e => setRecapDraft({ ...recapDraft, [g.monthKey]: e.target.value.slice(0, 5000) })}
                 style={{
                   width: '100%', background: 'transparent', color: fg,
                   border: `1px solid ${border}`, borderRadius: 8, padding: 10,
