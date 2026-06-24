@@ -58,11 +58,11 @@ const midnight: TradingTheme = {
 
 
 /* ════════════════════════════════════════════════
-   2) INSTITUTIONAL — Deep Navy & Sky Blue
-   Communicates: "your money is in safe, professional hands".
+   2) BLUE — Deep Navy & Sky Blue
    ════════════════════════════════════════════════ */
-const institutional: TradingTheme = {
-  id: 'institutional',
+const blue: TradingTheme = {
+  id: 'blue',
+
   bg: { primary: '#0B1120', secondary: '#111a2e', tertiary: '#1E293B', card: '#131c30', surface: '#1E293B' },
   accent: {
     cyan: '#38BDF8', cyanGlow: 'rgba(56,189,248,0.20)',
