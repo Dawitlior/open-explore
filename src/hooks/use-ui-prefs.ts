@@ -1,7 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getSetting, setSetting } from '@/lib/storage';
+import { scopedStorage } from '@/lib/scoped-storage';
 import type { OperatingMode } from '@/hooks/use-settings';
 import { applyDerivedPalette, clearCustomAccent, applyCustomTheme, clearCustomTheme, CUSTOM_THEME_DEFAULT, type CustomTheme } from '@/lib/trading-theme';
+
+function writePrefsCaches(json: string) {
+  try { window.localStorage.setItem('orca:ui-prefs-cache', json); } catch { /* noop */ }
+  try { scopedStorage.setSync('ui-prefs-cache', json); } catch { /* noop */ }
+}
 
 export type DensityLevel = 'compact' | 'comfortable' | 'spacious';
 
@@ -84,7 +90,7 @@ function readCachedPrefs(): UIPrefs {
 }
 
 function persistPrefs(next: UIPrefs) {
-  try { window.localStorage.setItem(CACHE_KEY, JSON.stringify(next)); } catch { /* noop */ }
+  try { writePrefsCaches(JSON.stringify(next)); } catch { /* noop */ }
   setSetting(KEY, next);
 }
 
