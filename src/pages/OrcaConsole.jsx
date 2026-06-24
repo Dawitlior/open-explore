@@ -1558,10 +1558,13 @@ function mapFunnel(rows) {
 
 function EmptyShell({ title, subtitle, hint }) {
   return (
-    <div style={{ padding: "60px 24px", textAlign: "center", background: C.panel, border: `1px dashed ${C.borderStrong}`, borderRadius: 12 }}>
-      <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 650, color: C.ink, marginBottom: 6 }}>{title}</div>
-      {subtitle && <div style={{ fontFamily: SANS, fontSize: 12.5, color: C.ink2, marginBottom: 10 }}>{subtitle}</div>}
-      {hint && <div style={{ fontFamily: MONO, fontSize: 11, color: C.ink3 }}>{hint}</div>}
+    <div style={{ padding: "56px 24px", textAlign: "center", background: C.panel, border: `1px dashed ${C.border}`, borderRadius: 14, position: "relative", overflow: "hidden" }}>
+      <div aria-hidden style={{ width: 44, height: 44, borderRadius: 12, background: C.panelAlt, border: `1px solid ${C.border}`, margin: "0 auto 14px", display: "grid", placeItems: "center", color: C.ink3 }}>
+        <Database size={18} />
+      </div>
+      <div style={{ fontFamily: SANS, fontSize: 14.5, fontWeight: 650, color: C.ink, marginBottom: 5, letterSpacing: -0.1 }}>{title}</div>
+      {subtitle && <div style={{ fontFamily: SANS, fontSize: 12.5, color: C.ink2, marginBottom: 10, maxWidth: 420, marginInline: "auto", lineHeight: 1.5 }}>{subtitle}</div>}
+      {hint && <div style={{ fontFamily: MONO, fontSize: 10.5, color: C.ink3, letterSpacing: 0.2 }}>{hint}</div>}
     </div>
   );
 }
