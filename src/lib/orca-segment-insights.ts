@@ -78,14 +78,21 @@ export function analyzeSegments(e: EnrichedTrade[], lang: Lang): SegmentReport {
   }
 
   const parts: string[] = [];
+  // pick second-best day (any verdict) so we always show top-2 context
+  const sortedByExp = [...byDow].sort((a, b) => b.expectancy - a.expectancy);
+  const topDay = strong[0] ?? sortedByExp[0] ?? null;
+  const secondDay = sortedByExp.find(d => d.key !== topDay?.key) ?? null;
+
   if (lang === 'he') {
     if (gray.length) {
       const grayList = gray.map(g => `${dayWord(g.label)} (${N(g.n)})`);
       parts.push(`הימים ${listJoin(grayList, 'he')} עדיין לא מראים כיוון ברור — התוצאות בהם לא מובהקות סטטיסטית, אז אין מה להסיק מהם כרגע.`);
     }
-    if (strong.length === 1) {
-      const top = strong[0];
-      parts.push(`הימים החזקים שלך: ${dayWord(top.label)} — תוחלת של ${fmtR(top.expectancy)} על ${N(top.n)}, אחוז הצלחה ${pct(top.winRate)} (אמינות ${relHe[top.reliability]}).`);
+    if (strong.length === 1 && topDay) {
+      parts.push(`היום החזק שלך: ${dayWord(topDay.label)} — תוחלת של ${fmtR(topDay.expectancy)} על ${N(topDay.n)}, אחוז הצלחה ${pct(topDay.winRate)} (אמינות ${relHe[topDay.reliability]}).`);
+      if (secondDay) {
+        parts.push(`היום השני הכי טוב שלך הוא ${dayWord(secondDay.label)} (תוחלת ${fmtR(secondDay.expectancy)} על ${N(secondDay.n)}) — עדיין לא מובהק סטטיסטית, אבל שווה לעקוב אחריו.`);
+      }
     } else if (strong.length >= 2) {
       const a = strong[0], b = strong[1];
       parts.push(`שני הימים החזקים שלך הם ${dayWord(a.label)} (תוחלת ${fmtR(a.expectancy)} על ${N(a.n)}) ו${dayWord(b.label)} (תוחלת ${fmtR(b.expectancy)} על ${N(b.n)}).`);
@@ -103,10 +110,13 @@ export function analyzeSegments(e: EnrichedTrade[], lang: Lang): SegmentReport {
       const grayList = gray.map(g => `${g.label} (${N(g.n)})`);
       parts.push(`${listJoin(grayList, 'en')} don't show a clear direction yet — results aren't statistically significant, so there's nothing to lean on there for now.`);
     }
-    if (strong.length === 1) {
-      const top = strong[0];
-      parts.push(`Your strongest day: ${top.label} — expectancy of ${fmtR(top.expectancy)} over ${N(top.n)}, win rate ${pct(top.winRate)} (${relEn[top.reliability]} reliability).`);
+    if (strong.length === 1 && topDay) {
+      parts.push(`Your strongest day: ${topDay.label} — expectancy of ${fmtR(topDay.expectancy)} over ${N(topDay.n)}, win rate ${pct(topDay.winRate)} (${relEn[topDay.reliability]} reliability).`);
+      if (secondDay) {
+        parts.push(`Your second-best day is ${secondDay.label} (expectancy ${fmtR(secondDay.expectancy)} over ${N(secondDay.n)}) — not yet statistically significant, but worth tracking.`);
+      }
     } else if (strong.length >= 2) {
+
       const a = strong[0], b = strong[1];
       parts.push(`Your two strongest days are ${a.label} (expectancy ${fmtR(a.expectancy)} over ${N(a.n)}) and ${b.label} (expectancy ${fmtR(b.expectancy)} over ${N(b.n)}).`);
       if (combined) parts.push(`Together they produce an average expectancy of ${fmtR(combined.exp)} over ${N(combined.n)} — this is the core of your performance.`);
