@@ -1588,8 +1588,8 @@ export default function OrcaConsole() {
   const t = useT(lang);
   const rtl = lang === "he";
   C = theme === "dark" ? DARK : LIGHT;
-  axis = { tick: { fontSize: 10.5, fill: C.ink3, fontFamily: MONO }, axisLine: false, tickLine: false };
-  tipStyle = { background: C.panel, border: `1px solid ${C.borderStrong}`, borderRadius: 8, fontFamily: SANS, fontSize: 11.5, boxShadow: theme === "dark" ? "0 8px 24px rgba(0,0,0,0.45)" : "0 6px 20px rgba(16,27,45,0.12)", color: C.ink };
+  axis = { tick: { fontSize: 10.5, fill: C.ink3, fontFamily: MONO }, axisLine: false, tickLine: false, minTickGap: 24, padding: { left: 6, right: 6 } };
+  tipStyle = { background: C.panel, border: `1px solid ${C.borderStrong}`, borderRadius: 10, fontFamily: SANS, fontSize: 11.5, boxShadow: theme === "dark" ? "0 10px 32px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.02)" : "0 8px 24px rgba(16,27,45,0.10), 0 1px 2px rgba(16,27,45,0.06)", color: C.ink, padding: "8px 10px" };
   grid = <CartesianGrid stroke={C.gridLine} strokeDasharray="3 4" vertical={false} />;
 
   const filtered = useMemo(() => D.traders.filter((x) => (F.asset === "all" || x.asset.id === F.asset) && (F.tier === "all" || x.tier.id === F.tier)), [D.traders, F]);
