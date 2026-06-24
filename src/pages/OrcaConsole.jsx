@@ -271,6 +271,28 @@ const r2 = (n) => Math.round(n * 100) / 100;
 const sgn = (n) => (n > 0 ? "+" : "");
 const nf = new Intl.NumberFormat("en-US");
 const pctv = (n) => `${Math.round(n)}%`;
+// Short date formatter for time-series X-axis: "11 May" / "מאי 11".
+// Accepts ISO-ish "YYYY-MM-DD" strings and degrades gracefully.
+const fmtShortDate = (wk, lang) => {
+  if (!wk) return "";
+  const d = new Date(wk);
+  if (isNaN(d.getTime())) return String(wk);
+  try {
+    return d.toLocaleDateString(lang === "he" ? "he-IL" : "en-US", { day: "2-digit", month: "short" });
+  } catch { return String(wk); }
+};
+// Returns recharts XAxis props for a time-series array; caps tick density.
+const timeAxisProps = (data, lang) => {
+  const n = (data || []).length;
+  const interval = n > 1 ? Math.max(0, Math.ceil(n / 8) - 1) : 0;
+  return {
+    interval, minTickGap: 24,
+    angle: n > 16 ? -35 : 0,
+    textAnchor: n > 16 ? "end" : "middle",
+    height: n > 16 ? 56 : 30,
+    tickFormatter: (v) => fmtShortDate(v, lang),
+  };
+};
 const loc = (lang, o) => o[lang];
 function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 const pickR = (rand, arr) => arr[Math.floor(rand() * arr.length)];
