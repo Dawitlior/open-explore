@@ -154,7 +154,7 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
     position: 'absolute',
     left: 0,
     width: '100vw',
-    height: '100vh',
+    height: '100dvh',
     overflow: 'hidden',
     transform: `translateY(${LOADER_ICON_CENTER_OFFSET_PX}px) translateZ(0)`,
     ...(half === 'top' ? { top: 0 } : { bottom: 0 }),
@@ -164,15 +164,17 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
     <div
       aria-hidden="true"
       style={{
-        position: 'fixed', inset: 0, zIndex: 9999,
+        position: 'fixed', inset: 0, zIndex: 2147483647,
+        width: '100vw', height: '100dvh',
         overflow: 'hidden',
         pointerEvents: 'none',
         background: 'transparent',
+        contain: 'strict',
       }}
     >
       {/* TOP PANEL — animates UP, shows top half of icon */}
       <div style={{
-        position: 'absolute', top: 0, left: 0, width: '100%', height: '50vh',
+        position: 'absolute', top: 0, left: 0, width: '100vw', height: '50dvh',
         background: PANEL_BG,
         overflow: 'hidden',
         transform: isSplitting ? 'translateY(-100%)' : 'translateY(0)',
@@ -186,7 +188,7 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
 
       {/* BOTTOM PANEL — animates DOWN, shows bottom half of icon */}
       <div style={{
-        position: 'absolute', bottom: 0, left: 0, width: '100%', height: '50vh',
+        position: 'absolute', bottom: 0, left: 0, width: '100vw', height: '50dvh',
         background: PANEL_BG,
         overflow: 'hidden',
         transform: isSplitting ? 'translateY(100%)' : 'translateY(0)',
@@ -197,6 +199,7 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
           <OrcaBootLoader />
         </div>
       </div>
+
     </div>
   );
 };
