@@ -30,6 +30,8 @@ import { readDraft, writeBlock } from '../render/legacy-adapter';
 import { WeeklyReviewRenderer } from '../render/WeeklyReviewRenderer';
 import { createDefaultActionRegistry } from '../render/action-registry';
 import { useUserTemplate } from '../hooks/use-user-template';
+import { useWeekStart } from '../hooks/use-week-start';
+import { useCloseDays } from '../hooks/use-close-days';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Theme = any;
