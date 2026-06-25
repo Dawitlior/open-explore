@@ -302,6 +302,10 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
       T={T} isRTL={isRTL} draft={draft} update={update}
       border={border} fg={fg} muted={muted}
       userTpl={userTpl}
+      archive={state.archive}
+      weekStart={weekStart} setWeekStart={setWeekStart}
+      closeDays={closeDays} setCloseDays={setCloseDays}
+      currentWeekKey={wk.weekKey}
     />;
   }
 
