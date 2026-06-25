@@ -146,8 +146,14 @@ describe('Wave-0 parity gate — renderer DOM matches legacy WeeklyTab contract'
 
     it('mindset multiselect tags appear in legacy order', () => {
       const { container } = mount(locale, isRTL);
-      const got = labelsInOrder(container, LEGACY.mindsetTags);
-      expect(got).toEqual(LEGACY.mindsetTags);
+      // FOMO appears in both Mistakes and Mindset — dedupe to the contiguous
+      // 8-button mindset run (the multiselect is the only place where all
+      // 8 tags appear together, in order).
+      const all = labelsInOrder(container, LEGACY.mindsetTags);
+      // Find the contiguous match starting at 'Tired' through 'FOMO'.
+      const start = all.indexOf(LEGACY.mindsetTags[0]);
+      expect(start).toBeGreaterThanOrEqual(0);
+      expect(all.slice(start, start + LEGACY.mindsetTags.length)).toEqual(LEGACY.mindsetTags);
     });
 
     it('all system slots render exactly once and in fixed slot positions', () => {
