@@ -49,7 +49,7 @@ interface BuildDeps {
   risk: { dailyUSD: number; weeklyUSD: number; monthlyUSD: number };
   isUSD: boolean;
   execScore: number;
-  computedGrade: Grade;
+  computedGrade: WeekGrade;
   gradeColor: string;
   fg: string; muted: string; border: string;
   cyan: string; win: string; loss: string; warn: string;
