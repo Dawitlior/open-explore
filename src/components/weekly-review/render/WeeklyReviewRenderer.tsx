@@ -562,7 +562,7 @@ function ChecklistBlock(p: BlockProps) {
                 <button
                   type="button"
                   aria-label={`delete ${item.id}`}
-                  onClick={() => deleteItem(item.id)}
+                  onClick={() => void deleteItem(item.id)}
                   style={{
                     flexShrink: 0, width: 26, height: 26,
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
