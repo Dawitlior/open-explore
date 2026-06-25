@@ -4,3 +4,7 @@
 // JSX path in WeeklyTab.tsx remains the source of truth until then.
 
 export const WR_SCHEMA_RENDERER_ENABLED = true as const;
+
+// Wave-2 Item 4 — edit-mode customization surface (drag/reorder, demote,
+// delete, add). Default OFF until customization persistence lands.
+export const WR_EDIT_MODE_ENABLED = false as const;
