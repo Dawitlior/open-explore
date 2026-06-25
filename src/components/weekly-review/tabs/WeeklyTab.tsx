@@ -1054,10 +1054,11 @@ interface SchemaSurfaceProps {
   draft: ReturnType<typeof useWeekDraft>['draft'];
   update: ReturnType<typeof useWeekDraft>['update'];
   border: string; fg: string; muted: string;
+  userTpl: ReturnType<typeof useUserTemplate>;
 }
 
-function SchemaRendererSurface({ T, isRTL, draft, update, border, fg, muted }: SchemaSurfaceProps) {
-  const { template, loaded, save, resetToDefault } = useUserTemplate();
+function SchemaRendererSurface({ T, isRTL, draft, update, border, fg, muted, userTpl }: SchemaSurfaceProps) {
+  const { template, loaded, save, resetToDefault, pendingMerge, acceptPendingMerge, dismissPendingMerge } = userTpl;
   const [editMode, setEditMode] = useState(false);
 
   if (!loaded) {
