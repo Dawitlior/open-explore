@@ -29,6 +29,9 @@ import { ORCA_DEFAULT_TEMPLATE } from '../lib/wr-default-template';
 import { readDraft, writeBlock } from '../render/legacy-adapter';
 import { WeeklyReviewRenderer } from '../render/WeeklyReviewRenderer';
 import { createDefaultActionRegistry } from '../render/action-registry';
+import { buildWeeklySystemSlots } from '../render/build-system-slots';
+import type { SystemSlotId } from '../render/WeeklyReviewRenderer';
+import type { Block } from '../lib/wr-schema';
 import { useUserTemplate } from '../hooks/use-user-template';
 import { useWeekStart } from '../hooks/use-week-start';
 import { useCloseDays } from '../hooks/use-close-days';
@@ -298,6 +301,19 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
   // Wave-0: flag-gated schema renderer. Default OFF; legacy JSX renders.
   // Wired here so the swap is a one-line flag flip once parity is green.
   if (WR_SCHEMA_RENDERER_ENABLED) {
+    // P0: real system-slot wiring — the renderer is value-agnostic and the
+    // legacy JSX below owns the trade-spine visuals. Build a slot map here
+    // and pass it down. Regression-guarded by `system-slots-wiring.test.ts`.
+    const systemSlots = buildWeeklySystemSlots({
+      T, isRTL, L,
+      tradesArr, hasMoney,
+      wk, rr, n, showUSD,
+      risk, isUSD,
+      execScore,
+      computedGrade, gradeColor,
+      fg, muted, border, cyan, win, loss, warn,
+      card, cardSubtle, statLabel, statValue,
+    });
     return <SchemaRendererSurface
       T={T} isRTL={isRTL} draft={draft} update={update}
       border={border} fg={fg} muted={muted}
@@ -306,6 +322,7 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
       weekStart={weekStart} setWeekStart={setWeekStart}
       closeDays={closeDays} setCloseDays={setCloseDays}
       currentWeekKey={wk.weekKey}
+      systemSlots={systemSlots}
     />;
   }
 
@@ -1070,11 +1087,15 @@ interface SchemaSurfaceProps {
   closeDays: number[];
   setCloseDays: (d: number[]) => Promise<void>;
   currentWeekKey: string;
+  // P0 — real system-slot wiring. Required (no default to `{}`); the
+  // renderer's system blocks render null without this.
+  systemSlots: Partial<Record<SystemSlotId, (block: Block) => React.ReactNode>>;
 }
 
 function SchemaRendererSurface(props: SchemaSurfaceProps) {
   const { T, isRTL, draft, update, border, fg, muted, userTpl, archive,
-          weekStart, setWeekStart, closeDays, setCloseDays, currentWeekKey } = props;
+          weekStart, setWeekStart, closeDays, setCloseDays, currentWeekKey,
+          systemSlots } = props;
   const { template, loaded, save, resetToDefault,
           pendingMerge, acceptPendingMerge, dismissPendingMerge } = userTpl;
   const [mode, setMode] = useState<'fill' | 'customize'>('fill');
@@ -1222,7 +1243,7 @@ function SchemaRendererSurface(props: SchemaSurfaceProps) {
         T={T}
         isRTL={isRTL}
         locale={isRTL ? 'he' : 'en'}
-        systemSlots={{}}
+        systemSlots={systemSlots}
         actionRegistry={createDefaultActionRegistry()}
         editMode={editMode}
         onTemplateChange={save}
