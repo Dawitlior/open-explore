@@ -98,7 +98,7 @@ export function readDraft(draft: WeekDraft): ReviewValues {
     execChecklist[id] = execValToState(draft.executionChecklist[key]);
   }
 
-  return {
+  const legacy: ReviewValues = {
     prep_checklist:     prepChecklist,
     exec_checklist:     execChecklist,
     strategy_adherence: strategyChecklist,
@@ -116,6 +116,23 @@ export function readDraft(draft: WeekDraft): ReviewValues {
     reflection:         draft.mindset,
     decision_quality:   DECISION_R[draft.decisionQuality] ?? '',
   };
+
+  // Wave-1 — generic values map layered ON TOP. For built-in slugs both stores
+  // are dual-written; the generic map is authoritative. For checklist blocks
+  // we MERGE (not replace) so custom-added items appear alongside built-ins.
+  const generic = draft.values || {};
+  const out: ReviewValues = { ...legacy };
+  for (const [k, v] of Object.entries(generic)) {
+    if (v == null) continue;
+    const prev = out[k];
+    if (prev && typeof prev === 'object' && !Array.isArray(prev) && typeof v === 'object' && !Array.isArray(v)) {
+      out[k] = { ...(prev as Record<string, ChecklistState>), ...(v as Record<string, ChecklistState>) };
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      out[k] = v as any;
+    }
+  }
+  return out;
 }
 
 // ── PUBLIC: write a single block update back to the legacy draft ─────────
