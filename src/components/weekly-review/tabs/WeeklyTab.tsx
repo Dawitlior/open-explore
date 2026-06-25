@@ -1087,11 +1087,15 @@ interface SchemaSurfaceProps {
   closeDays: number[];
   setCloseDays: (d: number[]) => Promise<void>;
   currentWeekKey: string;
+  // P0 — real system-slot wiring. Required (no default to `{}`); the
+  // renderer's system blocks render null without this.
+  systemSlots: Partial<Record<SystemSlotId, (block: Block) => React.ReactNode>>;
 }
 
 function SchemaRendererSurface(props: SchemaSurfaceProps) {
   const { T, isRTL, draft, update, border, fg, muted, userTpl, archive,
-          weekStart, setWeekStart, closeDays, setCloseDays, currentWeekKey } = props;
+          weekStart, setWeekStart, closeDays, setCloseDays, currentWeekKey,
+          systemSlots } = props;
   const { template, loaded, save, resetToDefault,
           pendingMerge, acceptPendingMerge, dismissPendingMerge } = userTpl;
   const [mode, setMode] = useState<'fill' | 'customize'>('fill');
