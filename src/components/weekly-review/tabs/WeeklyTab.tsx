@@ -22,6 +22,12 @@ import { isCloseWeekAllowed } from '../lib/week-key';
 import type { WeekRecord } from '../lib/types';
 import { TriState } from '../widgets/TriState';
 import { SectionTitle } from '../widgets/SectionTitle';
+// Wave-0 schema renderer wiring point. Flag is OFF — legacy JSX below is
+// the source of truth until the side-by-side parity gate is green.
+import { WR_SCHEMA_RENDERER_ENABLED } from '../lib/wr-flag';
+import { ORCA_DEFAULT_TEMPLATE } from '../lib/wr-default-template';
+import { readDraft, writeBlock } from '../render/legacy-adapter';
+import { WeeklyReviewRenderer } from '../render/WeeklyReviewRenderer';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Theme = any;
@@ -273,6 +279,27 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
     border: `1px solid ${border}`, borderRadius: 10, padding: '12px 14px',
     fontFamily: 'inherit', fontSize: 13, outline: 'none', boxSizing: 'border-box', minHeight: 44,
   };
+
+  // Wave-0: flag-gated schema renderer. Default OFF; legacy JSX renders.
+  // Wired here so the swap is a one-line flag flip once parity is green.
+  if (WR_SCHEMA_RENDERER_ENABLED) {
+    return (
+      <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'grid', gap: 18, paddingBottom: 48 }}>
+        <WeeklyReviewRenderer
+          schema={ORCA_DEFAULT_TEMPLATE}
+          values={readDraft(draft)}
+          onChange={(blockId, value) => {
+            const patch = writeBlock(blockId, value, draft);
+            if (patch) update(patch);
+          }}
+          T={T}
+          isRTL={isRTL}
+          locale={isRTL ? 'he' : 'en'}
+          systemSlots={{}}
+        />
+      </div>
+    );
+  }
 
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'grid', gap: 18, paddingBottom: 48 }}>
