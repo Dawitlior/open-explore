@@ -298,6 +298,19 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
   // Wave-0: flag-gated schema renderer. Default OFF; legacy JSX renders.
   // Wired here so the swap is a one-line flag flip once parity is green.
   if (WR_SCHEMA_RENDERER_ENABLED) {
+    // P0: real system-slot wiring — the renderer is value-agnostic and the
+    // legacy JSX below owns the trade-spine visuals. Build a slot map here
+    // and pass it down. Regression-guarded by `system-slots-wiring.test.ts`.
+    const systemSlots = buildWeeklySystemSlots({
+      T, isRTL, L,
+      tradesArr, hasMoney,
+      wk, rr, n, showUSD,
+      risk, isUSD,
+      execScore,
+      computedGrade, gradeColor,
+      fg, muted, border, cyan, win, loss, warn,
+      card, cardSubtle, statLabel, statValue,
+    });
     return <SchemaRendererSurface
       T={T} isRTL={isRTL} draft={draft} update={update}
       border={border} fg={fg} muted={muted}
@@ -306,6 +319,7 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
       weekStart={weekStart} setWeekStart={setWeekStart}
       closeDays={closeDays} setCloseDays={setCloseDays}
       currentWeekKey={wk.weekKey}
+      systemSlots={systemSlots}
     />;
   }
 
