@@ -1094,8 +1094,36 @@ function SchemaRendererSurface({ T, isRTL, draft, update, border, fg, muted, use
     </div>
   ) : null;
 
+  const mergeBanner = pendingMerge ? (
+    <div style={{
+      padding: '10px 12px', border: `1px solid ${border}`, borderRadius: 10,
+      background: 'rgba(57,255,20,0.06)', color: fg, fontSize: 12,
+      display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'space-between',
+      flexDirection: isRTL ? 'row-reverse' : 'row',
+    }}>
+      <span>
+        {isRTL ? 'עדכון תבנית זמין' : 'Template update available'}
+        {' — '}
+        {pendingMerge.added.sections.length + pendingMerge.added.blocks.length + pendingMerge.added.items.length}
+        {' '}{isRTL ? 'תוספות' : 'additions'}
+      </span>
+      <span style={{ display: 'flex', gap: 8 }}>
+        <button type="button" onClick={() => void acceptPendingMerge()} style={{
+          padding: '4px 10px', fontSize: 12, borderRadius: 6,
+          border: `1px solid ${border}`, background: '#39FF14', color: '#061326',
+          cursor: 'pointer', fontWeight: 600,
+        }}>{isRTL ? 'קבל' : 'Accept'}</button>
+        <button type="button" onClick={dismissPendingMerge} style={{
+          padding: '4px 10px', fontSize: 12, borderRadius: 6,
+          border: `1px solid ${border}`, background: 'transparent', color: muted, cursor: 'pointer',
+        }}>{isRTL ? 'דחה' : 'Dismiss'}</button>
+      </span>
+    </div>
+  ) : null;
+
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'grid', gap: 18, paddingBottom: 48 }}>
+      {mergeBanner}
       {toolbar}
       <WeeklyReviewRenderer
         schema={template}
