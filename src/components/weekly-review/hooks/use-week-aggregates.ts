@@ -1,15 +1,23 @@
 // Derives the "current week" aggregates from the live trades list.
 // Pure: takes trades + an anchor date, returns the slice + numbers.
 // Dual-unit aware — every R metric has a matching USD metric (from t.pnl).
+//
+// WE-2: slice window AND weekKey derive from the same `startDow` boundary.
+// Default startDow=1 (Monday) produces userWeekKey identical to isoWeekKey
+// for every date (proven by weekkey-default-equivalence.test.ts), so the
+// historical archive (keyed by isoWeekKey) lines up byte-exact under default.
 
 import { useMemo } from 'react';
 import type { Trade } from '@/data/trades';
-import { fridayOf, isoWeekKey, parseTradeDate, ymd } from '../lib/week-key';
+import {
+  parseTradeDate, ymd,
+  startOfUserWeek, endOfUserWeek, userWeekKey,
+} from '../lib/week-key';
 
 export interface WeekAggregates {
   weekKey: string;
-  weekStartISO: string;   // Monday (YYYY-MM-DD)
-  weekEndISO: string;     // Friday  (YYYY-MM-DD)
+  weekStartISO: string;   // first day of the user's week (YYYY-MM-DD)
+  weekEndISO: string;     // last  day of the user's week (YYYY-MM-DD)
   trades: Trade[];
   // R metrics
   netR: number;
@@ -33,17 +41,13 @@ export interface WeekAggregates {
   rulesCompliance: number;// 0..1
 }
 
-function mondayOf(d: Date): Date {
-  const out = new Date(d);
-  const dow = out.getDay() || 7; // Sun=7
-  out.setDate(out.getDate() - (dow - 1));
-  out.setHours(0, 0, 0, 0);
-  return out;
-}
-
-export function aggregateWeek(trades: Trade[], anchor: Date = new Date()): WeekAggregates {
-  const start = mondayOf(anchor);
-  const end   = fridayOf(anchor);
+export function aggregateWeek(
+  trades: Trade[],
+  anchor: Date = new Date(),
+  startDow = 1,
+): WeekAggregates {
+  const start = startOfUserWeek(anchor, startDow);
+  const end   = endOfUserWeek(anchor, startDow);
   const inWk: Trade[] = [];
   for (const t of trades) {
     const d = parseTradeDate(t.date);
@@ -71,7 +75,7 @@ export function aggregateWeek(trades: Trade[], anchor: Date = new Date()): WeekA
   }
   const n = inWk.length;
   return {
-    weekKey: isoWeekKey(end),
+    weekKey: userWeekKey(anchor, startDow),
     weekStartISO: ymd(start),
     weekEndISO: ymd(end),
     trades: inWk,
@@ -92,6 +96,6 @@ export function aggregateWeek(trades: Trade[], anchor: Date = new Date()): WeekA
   };
 }
 
-export function useWeekAggregates(trades: Trade[], anchor?: Date) {
-  return useMemo(() => aggregateWeek(trades, anchor), [trades, anchor]);
+export function useWeekAggregates(trades: Trade[], anchor?: Date, startDow = 1) {
+  return useMemo(() => aggregateWeek(trades, anchor, startDow), [trades, anchor, startDow]);
 }
