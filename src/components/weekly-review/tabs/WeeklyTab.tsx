@@ -1049,7 +1049,7 @@ interface SchemaSurfaceProps {
 
 function SchemaRendererSurface({ T, isRTL, draft, update, border, fg, muted }: SchemaSurfaceProps) {
   const { template, loaded, save, resetToDefault } = useUserTemplate();
-  const [editMode, setEditMode] = React.useState(false);
+  const [editMode, setEditMode] = useState(false);
 
   if (!loaded) {
     return <div dir={isRTL ? 'rtl' : 'ltr'} style={{ padding: 24, color: muted, fontSize: 12 }}>
