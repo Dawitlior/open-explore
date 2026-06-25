@@ -14,7 +14,8 @@
 
 import type { ReactNode } from 'react';
 import { fmtR, fmtUSD } from '../hooks/use-review-unit';
-import { GRADE_COLORS, type Grade } from '../lib/grading';
+import { GRADE_COLORS } from '../lib/grading';
+import type { WeekGrade } from '../lib/types';
 import { themeBgs } from '../lib/theme-bg';
 import type { Block } from '../lib/wr-schema';
 import type { SystemSlotId } from './WeeklyReviewRenderer';
