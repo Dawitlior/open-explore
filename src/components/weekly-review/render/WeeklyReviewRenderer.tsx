@@ -51,6 +51,10 @@ export interface WeeklyReviewRendererProps {
   systemSlots: Partial<Record<SystemSlotId, (block: Block) => React.ReactNode>>;
   /** Host-supplied deep-link handlers (Wave-2 Item 5). Optional — missing entries hide the affordance. */
   actionRegistry?: ActionRegistry;
+  /** Wave-2 Item 4 — edit mode shows reorder / demote / delete / add controls. */
+  editMode?: boolean;
+  /** Required when editMode is true — receives the mutated schema after each customization action. */
+  onTemplateChange?: (next: WeeklyReviewSchema) => void;
 }
 
 const STATE_TO_LEGACY_NUM: Record<ChecklistState, 0 | 1 | 2> = { neutral: 0, done: 1, missed: 2 };
