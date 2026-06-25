@@ -177,10 +177,14 @@ describe('Wave-0 parity gate — renderer DOM matches legacy WeeklyTab contract'
       desc.forEach((d, i) => expect(got[i]).toContain(d));
     });
 
-    it('market context env + position pills render in legacy order', () => {
+    it('market context env + position dropdowns render in legacy order', () => {
+      // Env / position are native <select> dropdowns in both the legacy
+      // SelectField and the seed (variant: 'dropdown'); assert via <option>.
       const { container } = mount(locale, isRTL);
-      const envs = labelsInOrder(container, LEGACY.envs);
-      const pos  = labelsInOrder(container, LEGACY.positions);
+      const allOpts = Array.from(container.querySelectorAll('option'))
+        .map(o => (o.textContent || '').trim());
+      const envs = allOpts.filter(t => LEGACY.envs.includes(t));
+      const pos  = allOpts.filter(t => LEGACY.positions.includes(t));
       expect(envs).toEqual(LEGACY.envs);
       expect(pos).toEqual(LEGACY.positions);
     });
