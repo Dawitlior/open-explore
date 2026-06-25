@@ -1033,3 +1033,75 @@ function ScoreRing({ value, color }: { value: number; color: string }) {
     </svg>
   );
 }
+
+// ── Wave-2 schema renderer surface ─────────────────────────────────────────
+// Owns per-user template loading (`useUserTemplate`) and the edit-mode
+// toggle (gated by WR_EDIT_MODE_ENABLED). Kept as a sibling component so
+// the legacy JSX path below stays untouched.
+
+interface SchemaSurfaceProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  T: any; isRTL: boolean;
+  draft: ReturnType<typeof useWeekDraft>['draft'];
+  update: ReturnType<typeof useWeekDraft>['update'];
+  border: string; fg: string; muted: string;
+}
+
+function SchemaRendererSurface({ T, isRTL, draft, update, border, fg, muted }: SchemaSurfaceProps) {
+  const { template, loaded, save, resetToDefault } = useUserTemplate();
+  const [editMode, setEditMode] = React.useState(false);
+
+  if (!loaded) {
+    return <div dir={isRTL ? 'rtl' : 'ltr'} style={{ padding: 24, color: muted, fontSize: 12 }}>
+      {isRTL ? 'טוען תבנית…' : 'Loading template…'}
+    </div>;
+  }
+
+  const toolbar = WR_EDIT_MODE_ENABLED ? (
+    <div style={{
+      display: 'flex', gap: 8, justifyContent: isRTL ? 'flex-start' : 'flex-end',
+      flexDirection: isRTL ? 'row-reverse' : 'row',
+    }}>
+      <button
+        type="button"
+        onClick={() => setEditMode(v => !v)}
+        style={{
+          padding: '6px 14px', fontSize: 12, borderRadius: 8,
+          border: `1px solid ${border}`, background: editMode ? '#39FF14' : 'transparent',
+          color: editMode ? '#061326' : fg, cursor: 'pointer', fontWeight: 600,
+        }}
+      >{editMode ? (isRTL ? 'סיים עריכה' : 'Done') : (isRTL ? 'ערוך תבנית' : 'Edit template')}</button>
+      {editMode && (
+        <button
+          type="button"
+          onClick={() => { if (confirm(isRTL ? 'לאפס לתבנית ברירת המחדל?' : 'Reset to default template?')) void resetToDefault(); }}
+          style={{
+            padding: '6px 14px', fontSize: 12, borderRadius: 8,
+            border: `1px solid ${border}`, background: 'transparent', color: '#ff3b3b', cursor: 'pointer',
+          }}
+        >{isRTL ? 'אפס' : 'Reset'}</button>
+      )}
+    </div>
+  ) : null;
+
+  return (
+    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'grid', gap: 18, paddingBottom: 48 }}>
+      {toolbar}
+      <WeeklyReviewRenderer
+        schema={template}
+        values={readDraft(draft)}
+        onChange={(blockId, value) => {
+          const patch = writeBlock(blockId, value, draft);
+          if (patch) update(patch);
+        }}
+        T={T}
+        isRTL={isRTL}
+        locale={isRTL ? 'he' : 'en'}
+        systemSlots={{}}
+        actionRegistry={createDefaultActionRegistry()}
+        editMode={editMode}
+        onTemplateChange={save}
+      />
+    </div>
+  );
+}
