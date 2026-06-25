@@ -28,6 +28,7 @@ import { WR_SCHEMA_RENDERER_ENABLED } from '../lib/wr-flag';
 import { ORCA_DEFAULT_TEMPLATE } from '../lib/wr-default-template';
 import { readDraft, writeBlock } from '../render/legacy-adapter';
 import { WeeklyReviewRenderer } from '../render/WeeklyReviewRenderer';
+import { createDefaultActionRegistry } from '../render/action-registry';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Theme = any;
@@ -296,6 +297,7 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
           isRTL={isRTL}
           locale={isRTL ? 'he' : 'en'}
           systemSlots={{}}
+          actionRegistry={createDefaultActionRegistry()}
         />
       </div>
     );
