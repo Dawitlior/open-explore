@@ -42,6 +42,7 @@ import { MobileTradeCard } from '@/components/trading/MobileTradeCard';
 import { RiskExplanationModal, type RiskExplanation } from '@/components/trading/RiskExplanationModal';
 import { toast } from 'sonner';
 import { LazyShell } from '@/components/LazyShell';
+import { isoWeekKey } from '@/components/weekly-review/lib/week-key';
 import { useNavigate } from 'react-router-dom';
 import { useArena } from '@/features/bug-arena';
 const AdvancedRiskPage = lazy(() => import('@/components/trading/AdvancedRiskPage').then(m => ({ default: m.AdvancedRiskPage })));
@@ -577,13 +578,10 @@ const Index = () => {
   const showWeeklyReminder = useMemo(() => {
     void reviewReminderTick;
     const now = new Date();
-    // Current ISO week key (matches lib/week-key.ts isoWeekKey)
-    const tmp = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
-    const day = tmp.getUTCDay() || 7;
-    tmp.setUTCDate(tmp.getUTCDate() + 4 - day);
-    const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 1));
-    const weekNo = Math.ceil((((tmp.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-    const wkKey = `${tmp.getUTCFullYear()}-W${weekNo < 10 ? '0' : ''}${weekNo}`;
+    // WE-1: single source of truth — was a duplicated ISO algorithm here,
+    // now delegated to the canonical week-key resolver. Behavior is
+    // byte-identical; the badge and the archive can no longer disagree.
+    const wkKey = isoWeekKey(now);
     const weekClosed = reviewArchive.some(w => w?.weekKey === wkKey);
     const mKey = `${now.getFullYear()}-${now.getMonth() + 1 < 10 ? '0' : ''}${now.getMonth() + 1}`;
     const monthRecapped = !!reviewRecaps[mKey];
