@@ -50,6 +50,12 @@ export interface WeekRecord {
   closedAt: string;
   /** Optional, manually edited later. */
   editedAt?: string;
+  /** Wave-1 — frozen template the week was filled against. Enables faithful historical render even after the user edits their template. Optional for back-compat with pre-Wave-1 records (fall back to ORCA_DEFAULT_TEMPLATE per §13). */
+  schemaSnapshot?: WeeklyReviewSchema;
+  /** Wave-1 — schema-keyed answers (canonical store). Optional for back-compat. */
+  values?: ReviewValues;
+  /** Wave-1 — provenance of the snapshot (mirrors meta.templateVersion at close-week). */
+  schemaVersion?: number;
 }
 
 export interface MonthSummary {
