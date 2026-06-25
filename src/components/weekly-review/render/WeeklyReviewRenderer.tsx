@@ -14,7 +14,7 @@
 // Flagged off by default (`WR_SCHEMA_RENDERER_ENABLED`); zero UX change
 // until the side-by-side parity gate is green.
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { TriState } from '../widgets/TriState';
 import { SectionTitle } from '../widgets/SectionTitle';
 import { themeBgs } from '../lib/theme-bg';
@@ -29,6 +29,10 @@ import type {
 import { resolveLoc } from '../lib/wr-schema';
 import type { ActionRegistry } from './action-registry';
 import { invokeAction } from './action-registry';
+import {
+  reorderBlock, demoteToChecklist, softDeleteBlock, addChecklistItem,
+  softDeleteChecklistItem,
+} from './customization';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Theme = any;
