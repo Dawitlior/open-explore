@@ -22,8 +22,8 @@ export const ORCA_DEFAULT_TEMPLATE: WeeklyReviewSchema = {
   meta: {
     name: 'ORCA Weekly Review',
     localeDefault: 'he',
-    basedOn: 'orca_default_v1',
-    templateVersion: 1,
+    basedOn: 'orca_default_v2',
+    templateVersion: 2,
   },
   sections: [
     // ── 1. PREP ─────────────────────────────────────────────────────────
