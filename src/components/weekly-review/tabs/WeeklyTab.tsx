@@ -297,6 +297,7 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
           isRTL={isRTL}
           locale={isRTL ? 'he' : 'en'}
           systemSlots={{}}
+          actionRegistry={createDefaultActionRegistry()}
         />
       </div>
     );
