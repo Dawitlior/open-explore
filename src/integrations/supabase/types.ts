@@ -1152,6 +1152,14 @@ export type Database = {
         Returns: Database["public"]["Enums"]["app_tier"]
       }
       has_role: { Args: { _role: string; _user_id: string }; Returns: boolean }
+      is_bug_creator: {
+        Args: { _bug_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_bug_reporter: {
+        Args: { _bug_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_sole_reporter: {
         Args: { _bug_id: string; _user_id: string }
         Returns: boolean

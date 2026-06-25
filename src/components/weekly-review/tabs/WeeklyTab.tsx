@@ -24,11 +24,12 @@ import { TriState } from '../widgets/TriState';
 import { SectionTitle } from '../widgets/SectionTitle';
 // Wave-0 schema renderer wiring point. Flag is OFF — legacy JSX below is
 // the source of truth until the side-by-side parity gate is green.
-import { WR_SCHEMA_RENDERER_ENABLED } from '../lib/wr-flag';
+import { WR_SCHEMA_RENDERER_ENABLED, WR_EDIT_MODE_ENABLED } from '../lib/wr-flag';
 import { ORCA_DEFAULT_TEMPLATE } from '../lib/wr-default-template';
 import { readDraft, writeBlock } from '../render/legacy-adapter';
 import { WeeklyReviewRenderer } from '../render/WeeklyReviewRenderer';
 import { createDefaultActionRegistry } from '../render/action-registry';
+import { useUserTemplate } from '../hooks/use-user-template';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Theme = any;
@@ -284,23 +285,10 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
   // Wave-0: flag-gated schema renderer. Default OFF; legacy JSX renders.
   // Wired here so the swap is a one-line flag flip once parity is green.
   if (WR_SCHEMA_RENDERER_ENABLED) {
-    return (
-      <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'grid', gap: 18, paddingBottom: 48 }}>
-        <WeeklyReviewRenderer
-          schema={ORCA_DEFAULT_TEMPLATE}
-          values={readDraft(draft)}
-          onChange={(blockId, value) => {
-            const patch = writeBlock(blockId, value, draft);
-            if (patch) update(patch);
-          }}
-          T={T}
-          isRTL={isRTL}
-          locale={isRTL ? 'he' : 'en'}
-          systemSlots={{}}
-          actionRegistry={createDefaultActionRegistry()}
-        />
-      </div>
-    );
+    return <SchemaRendererSurface
+      T={T} isRTL={isRTL} draft={draft} update={update}
+      border={border} fg={fg} muted={muted}
+    />;
   }
 
   return (
@@ -1043,5 +1031,77 @@ function ScoreRing({ value, color }: { value: number; color: string }) {
         {value}
       </text>
     </svg>
+  );
+}
+
+// ── Wave-2 schema renderer surface ─────────────────────────────────────────
+// Owns per-user template loading (`useUserTemplate`) and the edit-mode
+// toggle (gated by WR_EDIT_MODE_ENABLED). Kept as a sibling component so
+// the legacy JSX path below stays untouched.
+
+interface SchemaSurfaceProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  T: any; isRTL: boolean;
+  draft: ReturnType<typeof useWeekDraft>['draft'];
+  update: ReturnType<typeof useWeekDraft>['update'];
+  border: string; fg: string; muted: string;
+}
+
+function SchemaRendererSurface({ T, isRTL, draft, update, border, fg, muted }: SchemaSurfaceProps) {
+  const { template, loaded, save, resetToDefault } = useUserTemplate();
+  const [editMode, setEditMode] = useState(false);
+
+  if (!loaded) {
+    return <div dir={isRTL ? 'rtl' : 'ltr'} style={{ padding: 24, color: muted, fontSize: 12 }}>
+      {isRTL ? 'טוען תבנית…' : 'Loading template…'}
+    </div>;
+  }
+
+  const toolbar = WR_EDIT_MODE_ENABLED ? (
+    <div style={{
+      display: 'flex', gap: 8, justifyContent: isRTL ? 'flex-start' : 'flex-end',
+      flexDirection: isRTL ? 'row-reverse' : 'row',
+    }}>
+      <button
+        type="button"
+        onClick={() => setEditMode(v => !v)}
+        style={{
+          padding: '6px 14px', fontSize: 12, borderRadius: 8,
+          border: `1px solid ${border}`, background: editMode ? '#39FF14' : 'transparent',
+          color: editMode ? '#061326' : fg, cursor: 'pointer', fontWeight: 600,
+        }}
+      >{editMode ? (isRTL ? 'סיים עריכה' : 'Done') : (isRTL ? 'ערוך תבנית' : 'Edit template')}</button>
+      {editMode && (
+        <button
+          type="button"
+          onClick={() => { if (confirm(isRTL ? 'לאפס לתבנית ברירת המחדל?' : 'Reset to default template?')) void resetToDefault(); }}
+          style={{
+            padding: '6px 14px', fontSize: 12, borderRadius: 8,
+            border: `1px solid ${border}`, background: 'transparent', color: '#ff3b3b', cursor: 'pointer',
+          }}
+        >{isRTL ? 'אפס' : 'Reset'}</button>
+      )}
+    </div>
+  ) : null;
+
+  return (
+    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'grid', gap: 18, paddingBottom: 48 }}>
+      {toolbar}
+      <WeeklyReviewRenderer
+        schema={template}
+        values={readDraft(draft)}
+        onChange={(blockId, value) => {
+          const patch = writeBlock(blockId, value, draft);
+          if (patch) update(patch);
+        }}
+        T={T}
+        isRTL={isRTL}
+        locale={isRTL ? 'he' : 'en'}
+        systemSlots={{}}
+        actionRegistry={createDefaultActionRegistry()}
+        editMode={editMode}
+        onTemplateChange={save}
+      />
+    </div>
   );
 }
