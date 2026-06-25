@@ -245,6 +245,11 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
       },
       reflection: draft.mindset,
       closedAt: new Date().toISOString(),
+      // Wave-1 — freeze the template + values the user filled against so
+      // historical render survives later template edits. Additive only.
+      schemaSnapshot: userTpl.template,
+      schemaVersion: userTpl.template.meta.templateVersion,
+      values: readDraft(draft),
     };
     await state.saveArchive([...state.archive, record]);
     // After closing the week, wipe ALL inputs so the new week starts clean.
