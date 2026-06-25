@@ -3,6 +3,7 @@
 // snapshots survive the migration. Do not rename fields casually.
 
 import type { Trade } from '@/data/trades';
+import type { WeeklyReviewSchema, ReviewValues } from './wr-schema';
 
 export type WeekGrade = 'A+' | 'A' | 'B' | 'C' | 'D' | 'F';
 
