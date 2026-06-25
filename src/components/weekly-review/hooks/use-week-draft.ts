@@ -92,6 +92,7 @@ export function useWeekDraft(weekKey: string) {
       edges: [0, 0, 0, 0],
       mindsetTags: [],
       executionChecklist: { ...EMPTY_EXEC },
+      values: {},
     };
     setDraft(empty);
     await setSetting(KEY(weekKey), empty);
