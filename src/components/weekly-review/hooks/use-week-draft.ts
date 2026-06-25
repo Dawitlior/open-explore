@@ -63,7 +63,7 @@ export function useWeekDraft(weekKey: string) {
     (async () => {
       const v = await getSetting<WeekDraft>(KEY(weekKey));
       if (cancelled) return;
-      setDraft(v ? { ...EMPTY_DRAFT, ...v, executionChecklist: { ...EMPTY_EXEC, ...(v.executionChecklist || {}) } } : EMPTY_DRAFT);
+      setDraft(v ? { ...EMPTY_DRAFT, ...v, executionChecklist: { ...EMPTY_EXEC, ...(v.executionChecklist || {}) }, values: (v.values && typeof v.values === 'object') ? v.values : {} } : EMPTY_DRAFT);
       setLoaded(true);
     })();
     return () => { cancelled = true; };
