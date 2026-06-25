@@ -48,6 +48,13 @@ export const EMPTY_DRAFT: WeekDraft = {
   mindsetTags: [], mindset: '',
   executionChecklist: { ...EMPTY_EXEC },
   decisionQuality: '', grade: '',
+  values: {},
+};
+  emotion: '', focusRating: 0,
+  bigMistake: '', repeatMistake: null,
+  mindsetTags: [], mindset: '',
+  executionChecklist: { ...EMPTY_EXEC },
+  decisionQuality: '', grade: '',
 };
 
 const KEY = (weekKey: string) => `weekly_review.draft.${weekKey}`;
