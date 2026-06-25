@@ -296,6 +296,7 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
     return <SchemaRendererSurface
       T={T} isRTL={isRTL} draft={draft} update={update}
       border={border} fg={fg} muted={muted}
+      userTpl={userTpl}
     />;
   }
 
