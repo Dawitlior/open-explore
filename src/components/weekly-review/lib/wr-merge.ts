@@ -147,3 +147,82 @@ function layerBlock(
 
   return next;
 }
+
+// ── Selective merge (Wave-2 user consent UI) ───────────────────────────────
+//
+// `mergeTemplateWith` runs the additive merge but RESTRICTS appended slugs to
+// `acceptedSlugs`. Any slug the user dismissed (in `dismissedSlugs`) is added
+// to `removedSeedIds` tombstones so the same prompt never returns next bump.
+//
+// Pure — no I/O. Caller persists.
+
+export interface SelectiveMergeOptions {
+  acceptedSlugs?: ReadonlyArray<string>;
+  dismissedSlugs?: ReadonlyArray<string>;
+}
+
+export function mergeTemplateWith(
+  userTpl: WeeklyReviewSchema,
+  defaultTpl: WeeklyReviewSchema,
+  opts: SelectiveMergeOptions = {},
+): MergeResult {
+  const accepted = new Set(opts.acceptedSlugs ?? []);
+  const dismissed = new Set(opts.dismissedSlugs ?? []);
+
+  // Augment user tombstones with dismissed slugs so the next merge skips them.
+  const nextTombstones = Array.from(new Set([
+    ...(userTpl.meta.removedSeedIds ?? []),
+    ...dismissed,
+  ]));
+
+  // Build a "filtered default" — anything NOT in accepted gets stripped from
+  // the default so the additive merge simply doesn't see it.
+  const filteredDefault: WeeklyReviewSchema = {
+    ...defaultTpl,
+    sections: defaultTpl.sections
+      .filter(s => !dismissed.has(s.id))
+      .map(s => ({
+        ...s,
+        blocks: s.blocks
+          .filter(b => !dismissed.has(b.id))
+          .map(b => {
+            if (!b.config?.items) return b;
+            return {
+              ...b,
+              config: {
+                ...b.config,
+                items: b.config.items.filter(i => !dismissed.has(i.id)),
+              },
+            };
+          }),
+      })),
+  };
+
+  // Pre-stamp the merged-user shape with augmented tombstones.
+  const stamped: WeeklyReviewSchema = {
+    ...userTpl,
+    meta: { ...userTpl.meta, removedSeedIds: nextTombstones },
+  };
+
+  const out = mergeTemplate(stamped, filteredDefault);
+
+  // If acceptedSlugs is provided, also strip anything the merge would have
+  // added that wasn't accepted (defensive — filteredDefault should already
+  // handle this, but acceptedSlugs is the authoritative whitelist).
+  if (opts.acceptedSlugs) {
+    const keep = (id: string) => accepted.has(id) || !out.added.sections.includes(id) && !out.added.blocks.includes(id) && !out.added.items.includes(id);
+    out.schema.sections = out.schema.sections.filter(s => keep(s.id))
+      .map(s => ({
+        ...s,
+        blocks: s.blocks.filter(b => keep(b.id)).map(b => {
+          if (!b.config?.items) return b;
+          return { ...b, config: { ...b.config, items: b.config.items.filter(i => keep(i.id)) } };
+        }),
+      }));
+    out.added.sections = out.added.sections.filter(id => accepted.has(id));
+    out.added.blocks   = out.added.blocks.filter(id => accepted.has(id));
+    out.added.items    = out.added.items.filter(id => accepted.has(id));
+  }
+
+  return out;
+}

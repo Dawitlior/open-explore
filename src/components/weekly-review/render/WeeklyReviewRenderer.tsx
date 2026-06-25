@@ -15,6 +15,14 @@
 // until the side-by-side parity gate is green.
 
 import { useMemo, useState } from 'react';
+import {
+  DndContext, PointerSensor, KeyboardSensor, useSensor, useSensors,
+  closestCenter, type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { TriState } from '../widgets/TriState';
 import { SectionTitle } from '../widgets/SectionTitle';
 import { themeBgs } from '../lib/theme-bg';
@@ -30,8 +38,9 @@ import { resolveLoc } from '../lib/wr-schema';
 import type { ActionRegistry } from './action-registry';
 import { invokeAction } from './action-registry';
 import {
-  reorderBlock, demoteToChecklist, softDeleteBlock, addChecklistItem,
-  softDeleteChecklistItem,
+  reorderBlock, reorderBlockTo, reorderSection, reorderSectionTo,
+  demoteToChecklist, softDeleteBlock, addChecklistItem,
+  softDeleteChecklistItem, hideBlock, showBlock, hideSection, showSection,
 } from './customization';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -51,20 +60,24 @@ export interface WeeklyReviewRendererProps {
   T: Theme;
   isRTL: boolean;
   locale: 'he' | 'en';
-  /** Host-supplied renderers for system blocks. */
   systemSlots: Partial<Record<SystemSlotId, (block: Block) => React.ReactNode>>;
-  /** Host-supplied deep-link handlers (Wave-2 Item 5). Optional — missing entries hide the affordance. */
   actionRegistry?: ActionRegistry;
-  /** Wave-2 Item 4 — edit mode shows reorder / demote / delete / add controls. */
+  /** Wave-2 — edit mode shows reorder / hide / demote / delete / add controls. */
   editMode?: boolean;
-  /** Required when editMode is true — receives the mutated schema after each customization action. */
+  /** Required when editMode is true. */
   onTemplateChange?: (next: WeeklyReviewSchema) => void;
+  /**
+   * Wave-2 §E — non-destructive delete intercept. Caller inspects the archive
+   * for usage of `slug` and returns true to proceed with deletion, false to
+   * abort. If omitted, deletion proceeds immediately (legacy behavior).
+   */
+  onConfirmDelete?: (slug: string, kind: 'block' | 'item') => boolean | Promise<boolean>;
 }
 
 const STATE_TO_LEGACY_NUM: Record<ChecklistState, 0 | 1 | 2> = { neutral: 0, done: 1, missed: 2 };
 
 export function WeeklyReviewRenderer(props: WeeklyReviewRendererProps) {
-  const { schema, T, isRTL } = props;
+  const { schema, T, isRTL, editMode, onTemplateChange } = props;
   const isLight = (T as { id?: string })?.id === 'platinum';
   const panel = T?.bg?.surface || (isLight ? '#ffffff' : 'rgba(255,255,255,0.04)');
   const border = T?.border?.subtle || (isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.08)');
@@ -77,31 +90,101 @@ export function WeeklyReviewRenderer(props: WeeklyReviewRendererProps) {
     boxSizing: 'border-box',
   };
 
-  const sections = useMemo(
-    () => [...schema.sections].filter(s => !s.hidden).sort((a, b) => a.order - b.order),
-    [schema.sections],
+  // In fill mode, hidden items are filtered out (legacy). In edit mode, they
+  // render greyed-out with a "show" toggle so users can restore them.
+  const sections = useMemo(() => {
+    const sorted = [...schema.sections].sort((a, b) => a.order - b.order);
+    return editMode ? sorted : sorted.filter(s => !s.hidden);
+  }, [schema.sections, editMode]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
-  return (
+  const handleSectionDragEnd = (e: DragEndEvent) => {
+    if (!onTemplateChange) return;
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const ids = sections.map(s => s.id);
+    const to = ids.indexOf(String(over.id));
+    if (to < 0) return;
+    onTemplateChange(reorderSectionTo(schema, String(active.id), to));
+  };
+
+  const body = (
     <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'grid', gap: 18, paddingBottom: 48 }}>
-      {sections.map(section => {
-        const visibleBlocks = [...section.blocks].filter(b => !b.hidden).sort((a, b) => a.order - b.order);
+      {sections.map((section, sIdx) => {
+        const blocks = editMode
+          ? [...section.blocks].sort((a, b) => a.order - b.order)
+          : [...section.blocks].filter(b => !b.hidden).sort((a, b) => a.order - b.order);
         return (
-          <SectionShell key={section.id} section={section} card={card} {...props}>
-            {visibleBlocks.map((block, idx) => (
-              <EditableBlock
-                key={block.id}
-                block={block}
-                section={section}
-                isFirst={idx === 0}
-                isLast={idx === visibleBlocks.length - 1}
-                {...props}
-              />
-            ))}
+          <SectionShell
+            key={section.id}
+            section={section}
+            card={card}
+            isFirst={sIdx === 0}
+            isLast={sIdx === sections.length - 1}
+            {...props}
+          >
+            <BlocksList section={section} blocks={blocks} {...props} />
           </SectionShell>
         );
       })}
     </div>
+  );
+
+  if (!editMode || !onTemplateChange) return body;
+
+  return (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSectionDragEnd}>
+      <SortableContext items={sections.map(s => s.id)} strategy={verticalListSortingStrategy}>
+        {body}
+      </SortableContext>
+    </DndContext>
+  );
+}
+
+// ── Sortable wrappers ──────────────────────────────────────────────────────
+
+function SortableSection({ id, children, editMode }: { id: string; children: (handleProps: React.HTMLAttributes<HTMLButtonElement>) => React.ReactNode; editMode?: boolean }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled: !editMode });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  };
+  const handleProps = { ...attributes, ...listeners } as React.HTMLAttributes<HTMLButtonElement>;
+  return <div ref={setNodeRef} style={style}>{children(handleProps)}</div>;
+}
+
+function SortableBlock({ id, children, editMode }: { id: string; children: (handleProps: React.HTMLAttributes<HTMLButtonElement>) => React.ReactNode; editMode?: boolean }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled: !editMode });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  };
+  const handleProps = { ...attributes, ...listeners } as React.HTMLAttributes<HTMLButtonElement>;
+  return <div ref={setNodeRef} style={style}>{children(handleProps)}</div>;
+}
+
+function GripButton({ disabled, handleProps, color, border }: { disabled?: boolean; handleProps?: React.HTMLAttributes<HTMLButtonElement>; color: string; border: string }) {
+  return (
+    <button
+      type="button"
+      {...handleProps}
+      disabled={disabled}
+      aria-label="drag to reorder"
+      title="drag"
+      style={{
+        width: 26, height: 26, padding: 0,
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        borderRadius: 6, border: `1px solid ${border}`,
+        background: 'transparent', color, cursor: disabled ? 'not-allowed' : 'grab',
+        fontSize: 14, lineHeight: 1, touchAction: 'none',
+      }}
+    >⋮⋮</button>
   );
 }
 
@@ -111,18 +194,141 @@ interface SectionShellProps extends WeeklyReviewRendererProps {
   section: Section;
   card: React.CSSProperties;
   children: React.ReactNode;
+  isFirst: boolean;
+  isLast: boolean;
 }
 
-function SectionShell({ section, card, T, isRTL, locale, children }: SectionShellProps) {
-  if (section.chromeless) {
-    return <div style={{ display: 'grid', gap: 12 }}>{children}</div>;
-  }
-  const title = resolveLoc(section.title, locale);
+function SectionShell({ section, card, T, isRTL, locale, children, isFirst, isLast, editMode, onTemplateChange, schema }: SectionShellProps) {
+  const tk = useTokens(T);
+  const sectionLocked = section.system === true || section.removable === false;
+  const canHide = section.removable !== false; // even system-but-removable (risk, insights)
+
+  const rail = editMode && onTemplateChange ? (
+    <SectionRail
+      section={section}
+      isFirst={isFirst}
+      isLast={isLast}
+      sectionLocked={sectionLocked}
+      canHide={canHide}
+      tk={tk}
+      onMove={(d) => onTemplateChange(reorderSection(schema, section.id, d))}
+      onHide={() => onTemplateChange(hideSection(schema, section.id))}
+      onShow={() => onTemplateChange(showSection(schema, section.id))}
+    />
+  ) : null;
+
+  const greyedStyle: React.CSSProperties = section.hidden && editMode
+    ? { opacity: 0.5, position: 'relative' }
+    : {};
+
+  const inner = (handleProps?: React.HTMLAttributes<HTMLButtonElement>) => {
+    if (section.chromeless) {
+      return (
+        <div style={{ display: 'grid', gap: 12, ...greyedStyle }}>
+          {rail && (
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexDirection: isRTL ? 'row-reverse' : 'row' }}>
+              {!sectionLocked && handleProps && <GripButton handleProps={handleProps} color={tk.muted} border={tk.border} />}
+              {rail}
+              <span style={{ color: tk.muted, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' }}>
+                {section.id}{section.hidden ? ' · hidden' : ''}
+              </span>
+            </div>
+          )}
+          {children}
+        </div>
+      );
+    }
+    const title = resolveLoc(section.title, locale);
+    return (
+      <section style={{ ...card, ...greyedStyle }}>
+        {rail && (
+          <div style={{
+            display: 'flex', gap: 6, alignItems: 'center', marginBottom: 8,
+            flexDirection: isRTL ? 'row-reverse' : 'row',
+          }}>
+            {!sectionLocked && handleProps && <GripButton handleProps={handleProps} color={tk.muted} border={tk.border} />}
+            {rail}
+            {section.hidden && (
+              <span style={{ color: tk.muted, fontSize: 11 }}>· hidden</span>
+            )}
+          </div>
+        )}
+        {title && <SectionTitle title={title} emoji={section.icon} T={T} isRTL={isRTL} />}
+        <div style={{ display: 'grid', gap: 12 }}>{children}</div>
+      </section>
+    );
+  };
+
+  if (!editMode || !onTemplateChange) return inner();
+  return <SortableSection id={section.id} editMode={editMode}>{inner}</SortableSection>;
+}
+
+interface RailProps {
+  section: Section;
+  isFirst: boolean;
+  isLast: boolean;
+  sectionLocked: boolean;
+  canHide: boolean;
+  tk: ReturnType<typeof useTokens>;
+  onMove: (d: -1 | 1) => void;
+  onHide: () => void;
+  onShow: () => void;
+}
+
+function SectionRail({ section, isFirst, isLast, sectionLocked, canHide, tk, onMove, onHide, onShow }: RailProps) {
+  const btn: React.CSSProperties = {
+    width: 26, height: 26, padding: 0,
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    borderRadius: 6, border: `1px solid ${tk.border}`,
+    background: 'transparent', color: tk.muted, cursor: 'pointer',
+    fontSize: 12, lineHeight: 1,
+  };
   return (
-    <section style={card}>
-      {title && <SectionTitle title={title} emoji={section.icon} T={T} isRTL={isRTL} />}
-      <div style={{ display: 'grid', gap: 12 }}>{children}</div>
-    </section>
+    <div style={{ display: 'inline-flex', gap: 4 }}>
+      <button type="button" style={btn} disabled={sectionLocked || isFirst} onClick={() => onMove(-1)} aria-label={`move ${section.id} up`} title="↑">↑</button>
+      <button type="button" style={btn} disabled={sectionLocked || isLast}  onClick={() => onMove(1)}  aria-label={`move ${section.id} down`} title="↓">↓</button>
+      {canHide && (
+        section.hidden
+          ? <button type="button" style={btn} onClick={onShow} aria-label={`show ${section.id}`} title="show">👁</button>
+          : <button type="button" style={btn} onClick={onHide} aria-label={`hide ${section.id}`} title="hide">🚫</button>
+      )}
+    </div>
+  );
+}
+
+// ── Blocks list (sortable inner context) ───────────────────────────────────
+
+function BlocksList(p: WeeklyReviewRendererProps & { section: Section; blocks: Block[] }) {
+  const { section, blocks, editMode, onTemplateChange, schema } = p;
+
+  const handleDragEnd = (e: DragEndEvent) => {
+    if (!onTemplateChange) return;
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const ids = blocks.map(b => b.id);
+    const to = ids.indexOf(String(over.id));
+    if (to < 0) return;
+    onTemplateChange(reorderBlockTo(schema, section.id, String(active.id), to));
+  };
+
+  const list = blocks.map((block, idx) => (
+    <EditableBlock
+      key={block.id}
+      block={block}
+      section={section}
+      isFirst={idx === 0}
+      isLast={idx === blocks.length - 1}
+      {...p}
+    />
+  ));
+
+  if (!editMode || !onTemplateChange) return <>{list}</>;
+  return (
+    <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={blocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
+        {list}
+      </SortableContext>
+    </DndContext>
   );
 }
 
@@ -136,13 +342,21 @@ interface EditableBlockProps extends WeeklyReviewRendererProps {
 }
 
 function EditableBlock(p: EditableBlockProps) {
-  const { block, section, isFirst, isLast, editMode, onTemplateChange, schema, T, isRTL, locale } = p;
+  const { block, section, isFirst, isLast, editMode, onTemplateChange, onConfirmDelete, schema, T, isRTL } = p;
   const tk = useTokens(T);
   if (!editMode || !onTemplateChange) {
     return <BlockSwitch {...p} />;
   }
-  // System blocks may not be reordered/deleted/demoted.
-  const locked = block.type.startsWith('system-') || block.locked === true;
+  // Locked spine: trades_table, stat_chips, final_grade — no rail at all.
+  const fullyLocked = block.locked === true || block.removable === false;
+  // Hide-only blocks (e.g. risk_gauges, ai_insights): system + editable===false
+  // but parent section is removable — allow hide, no delete/demote/reorder.
+  const isSystem = block.type.startsWith('system-');
+  const canDelete = !fullyLocked && !isSystem;
+  const canDemote = canDelete && block.type !== 'checklist';
+  const canReorder = !fullyLocked && !isSystem;
+  const canHide = !fullyLocked; // system-but-not-locked may be hidden
+
   const btn: React.CSSProperties = {
     width: 26, height: 26, padding: 0,
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -153,26 +367,46 @@ function EditableBlock(p: EditableBlockProps) {
   const danger: React.CSSProperties = { ...btn, color: tk.loss };
   const move = (delta: -1 | 1) => onTemplateChange(reorderBlock(schema, section.id, block.id, delta));
   const demote = () => onTemplateChange(demoteToChecklist(schema, section.id, block.id));
-  const del = () => onTemplateChange(softDeleteBlock(schema, section.id, block.id));
+  const del = async () => {
+    const ok = onConfirmDelete ? await onConfirmDelete(block.id, 'block') : true;
+    if (ok) onTemplateChange(softDeleteBlock(schema, section.id, block.id));
+  };
+  const greyed = block.hidden ? { opacity: 0.45 } : {};
 
-  return (
-    <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', flexDirection: isRTL ? 'row-reverse' : 'row' }}>
+  const inner = (handleProps?: React.HTMLAttributes<HTMLButtonElement>) => (
+    <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', flexDirection: isRTL ? 'row-reverse' : 'row', ...greyed }}>
+      {canReorder && handleProps && <GripButton handleProps={handleProps} color={tk.muted} border={tk.border} />}
       <div style={{ flex: 1, minWidth: 0 }}>
         <BlockSwitch {...p} />
       </div>
-      {!locked && (
+      {!fullyLocked && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0, paddingTop: 4 }}>
-          <button type="button" style={btn} disabled={isFirst} onClick={() => move(-1)} aria-label="move up" title="↑">↑</button>
-          <button type="button" style={btn} disabled={isLast}  onClick={() => move(1)}  aria-label="move down" title="↓">↓</button>
-          {block.type !== 'checklist' && (
-            <button type="button" style={btn} onClick={demote} aria-label="demote to checklist" title="demote">⇣</button>
+          {canReorder && (
+            <>
+              <button type="button" style={btn} disabled={isFirst} onClick={() => move(-1)} aria-label={`move ${block.id} up`} title="↑">↑</button>
+              <button type="button" style={btn} disabled={isLast}  onClick={() => move(1)}  aria-label={`move ${block.id} down`} title="↓">↓</button>
+            </>
           )}
-          <button type="button" style={danger} onClick={del} aria-label="delete block" title="delete">×</button>
+          {canHide && (
+            block.hidden
+              ? <button type="button" style={btn} onClick={() => onTemplateChange(showBlock(schema, section.id, block.id))} aria-label={`show ${block.id}`} title="show">👁</button>
+              : <button type="button" style={btn} onClick={() => onTemplateChange(hideBlock(schema, section.id, block.id))} aria-label={`hide ${block.id}`} title="hide">🚫</button>
+          )}
+          {canDemote && (
+            <button type="button" style={btn} onClick={demote} aria-label={`demote ${block.id}`} title="demote">⇣</button>
+          )}
+          {canDelete && (
+            <button type="button" style={danger} onClick={() => void del()} aria-label={`delete ${block.id}`} title="delete">×</button>
+          )}
         </div>
       )}
     </div>
   );
+
+  if (!canReorder) return inner();
+  return <SortableBlock id={block.id} editMode={editMode}>{inner}</SortableBlock>;
 }
+
 
 // ── Block switch ───────────────────────────────────────────────────────────
 
@@ -239,7 +473,7 @@ function resolveLabel(loc: Loc | undefined, locale: 'he' | 'en') {
 
 function ChecklistBlock(p: BlockProps) {
   const { block, values, onChange, T, isRTL, locale, actionRegistry,
-          editMode, onTemplateChange, schema } = p;
+          editMode, onTemplateChange, onConfirmDelete, schema } = p;
   const cfg = block.config || {};
   const cycle: ChecklistState[] = cfg.cycle || ['neutral', 'done', 'missed'];
   const items = cfg.items || [];
@@ -248,7 +482,6 @@ function ChecklistBlock(p: BlockProps) {
   const label = resolveLabel(block.label, locale);
   const help = resolveLabel(block.helpText, locale);
   const canEdit = !!(editMode && onTemplateChange);
-  // Locate parent section (lookup by id; cheap — sections array is tiny).
   const parentSection = canEdit ? schema.sections.find(s => s.blocks.some(b => b.id === block.id)) : undefined;
   const [adding, setAdding] = useState('');
 
@@ -259,9 +492,10 @@ function ChecklistBlock(p: BlockProps) {
     onChange(block.id, { ...current, [itemId]: next });
   };
 
-  const deleteItem = (itemId: string) => {
+  const deleteItem = async (itemId: string) => {
     if (!canEdit || !parentSection) return;
-    onTemplateChange!(softDeleteChecklistItem(schema, parentSection.id, block.id, itemId));
+    const ok = onConfirmDelete ? await onConfirmDelete(itemId, 'item') : true;
+    if (ok) onTemplateChange!(softDeleteChecklistItem(schema, parentSection.id, block.id, itemId));
   };
   const submitAdd = () => {
     if (!canEdit || !parentSection || !adding.trim()) return;
@@ -269,6 +503,7 @@ function ChecklistBlock(p: BlockProps) {
     onTemplateChange!(addChecklistItem(schema, parentSection.id, block.id, { he: adding, en: adding }, suffix));
     setAdding('');
   };
+
 
   return (
     <div style={{ display: 'grid', gap: 8 }}>
@@ -327,7 +562,7 @@ function ChecklistBlock(p: BlockProps) {
                 <button
                   type="button"
                   aria-label={`delete ${item.id}`}
-                  onClick={() => deleteItem(item.id)}
+                  onClick={() => void deleteItem(item.id)}
                   style={{
                     flexShrink: 0, width: 26, height: 26,
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
