@@ -1044,9 +1044,7 @@ function ScoreRing({ value, color }: { value: number; color: string }) {
 }
 
 // ── Wave-2 schema renderer surface ─────────────────────────────────────────
-// Owns per-user template loading (`useUserTemplate`) and the edit-mode
-// toggle (gated by WR_EDIT_MODE_ENABLED). Kept as a sibling component so
-// the legacy JSX path below stays untouched.
+// Customize mode: dedicated entry/exit. Fill mode is zero-chrome.
 
 interface SchemaSurfaceProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1055,11 +1053,23 @@ interface SchemaSurfaceProps {
   update: ReturnType<typeof useWeekDraft>['update'];
   border: string; fg: string; muted: string;
   userTpl: ReturnType<typeof useUserTemplate>;
+  // Wave-2 §E archive-aware delete
+  archive: WeekRecord[];
+  // WE-2
+  weekStart: number;
+  setWeekStart: (n: number) => Promise<void>;
+  closeDays: number[];
+  setCloseDays: (d: number[]) => Promise<void>;
+  currentWeekKey: string;
 }
 
-function SchemaRendererSurface({ T, isRTL, draft, update, border, fg, muted, userTpl }: SchemaSurfaceProps) {
-  const { template, loaded, save, resetToDefault, pendingMerge, acceptPendingMerge, dismissPendingMerge } = userTpl;
-  const [editMode, setEditMode] = useState(false);
+function SchemaRendererSurface(props: SchemaSurfaceProps) {
+  const { T, isRTL, draft, update, border, fg, muted, userTpl, archive,
+          weekStart, setWeekStart, closeDays, setCloseDays, currentWeekKey } = props;
+  const { template, loaded, save, resetToDefault,
+          pendingMerge, acceptPendingMerge, dismissPendingMerge } = userTpl;
+  const [mode, setMode] = useState<'fill' | 'customize'>('fill');
+  const editMode = mode === 'customize';
 
   if (!loaded) {
     return <div dir={isRTL ? 'rtl' : 'ltr'} style={{ padding: 24, color: muted, fontSize: 12 }}>
@@ -1067,64 +1077,132 @@ function SchemaRendererSurface({ T, isRTL, draft, update, border, fg, muted, use
     </div>;
   }
 
-  const toolbar = WR_EDIT_MODE_ENABLED ? (
-    <div style={{
-      display: 'flex', gap: 8, justifyContent: isRTL ? 'flex-start' : 'flex-end',
-      flexDirection: isRTL ? 'row-reverse' : 'row',
-    }}>
-      <button
-        type="button"
-        onClick={() => setEditMode(v => !v)}
-        style={{
-          padding: '6px 14px', fontSize: 12, borderRadius: 8,
-          border: `1px solid ${border}`, background: editMode ? '#39FF14' : 'transparent',
-          color: editMode ? '#061326' : fg, cursor: 'pointer', fontWeight: 600,
-        }}
-      >{editMode ? (isRTL ? 'סיים עריכה' : 'Done') : (isRTL ? 'ערוך תבנית' : 'Edit template')}</button>
-      {editMode && (
-        <button
-          type="button"
-          onClick={() => { if (confirm(isRTL ? 'לאפס לתבנית ברירת המחדל?' : 'Reset to default template?')) void resetToDefault(); }}
-          style={{
-            padding: '6px 14px', fontSize: 12, borderRadius: 8,
-            border: `1px solid ${border}`, background: 'transparent', color: '#ff3b3b', cursor: 'pointer',
-          }}
-        >{isRTL ? 'אפס' : 'Reset'}</button>
-      )}
+  // §E — non-destructive delete intercept. Looks up archive usage; returns
+  // true iff user confirms (or no historical reference exists).
+  const onConfirmDelete = (slug: string, kind: 'block' | 'item'): boolean => {
+    const usage = countArchiveUsage(archive, slug);
+    if (usage === 0) return true;
+    const msg = isRTL
+      ? `${usage} שבועות סגורים מתייחסים ל-${kind === 'item' ? 'פריט' : 'בלוק'} "${slug}".\nהמחיקה תסיר אותו מהתבנית הנוכחית בלבד — הסנאפשוטים ההיסטוריים נשמרים.\nלהמשיך?`
+      : `${usage} closed week(s) reference this ${kind} "${slug}".\nThis removes it from your current template only — historical snapshots are preserved.\nProceed?`;
+    return window.confirm(msg);
+  };
+
+  const onWeekStartChange = async (next: number) => {
+    if (next === weekStart) return;
+    const proceed = !window.confirm
+      ? true
+      : window.confirm(isRTL
+          ? 'שינוי יום תחילת השבוע עשוי להעביר את הטיוטה הנוכחית לשבוע אחר. להמשיך?'
+          : 'Changing the week-start may re-key your in-progress draft to a new week. Continue?');
+    if (proceed) await setWeekStart(next);
+  };
+
+  // ── Customize toolbar (only when in customize mode) ────────────────────
+  const dowLabels = isRTL ? ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת']
+                          : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const enterBtnStyle: React.CSSProperties = {
+    padding: '6px 14px', fontSize: 12, borderRadius: 8,
+    border: `1px solid ${border}`, background: 'transparent', color: fg,
+    cursor: 'pointer', fontWeight: 600,
+  };
+  const doneBtnStyle: React.CSSProperties = { ...enterBtnStyle, background: '#39FF14', color: '#061326' };
+  const dangerBtnStyle: React.CSSProperties = { ...enterBtnStyle, color: '#ff3b3b' };
+  const fieldStyle: React.CSSProperties = {
+    background: 'transparent', color: fg,
+    border: `1px solid ${border}`, borderRadius: 8, padding: '4px 8px', fontSize: 12,
+  };
+
+  const enterBar = !editMode && WR_EDIT_MODE_ENABLED ? (
+    <div style={{ display: 'flex', justifyContent: isRTL ? 'flex-start' : 'flex-end' }}>
+      <button type="button" onClick={() => setMode('customize')} style={enterBtnStyle}>
+        {isRTL ? '⚙ התאם תבנית' : '⚙ Customize'}
+      </button>
     </div>
   ) : null;
 
-  const mergeBanner = pendingMerge ? (
+  const customizeBar = editMode ? (
     <div style={{
-      padding: '10px 12px', border: `1px solid ${border}`, borderRadius: 10,
-      background: 'rgba(57,255,20,0.06)', color: fg, fontSize: 12,
-      display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'space-between',
+      display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center',
+      padding: 12, border: `1px dashed ${border}`, borderRadius: 10,
       flexDirection: isRTL ? 'row-reverse' : 'row',
     }}>
-      <span>
-        {isRTL ? 'עדכון תבנית זמין' : 'Template update available'}
-        {' — '}
-        {pendingMerge.added.sections.length + pendingMerge.added.blocks.length + pendingMerge.added.items.length}
-        {' '}{isRTL ? 'תוספות' : 'additions'}
-      </span>
-      <span style={{ display: 'flex', gap: 8 }}>
-        <button type="button" onClick={() => void acceptPendingMerge()} style={{
-          padding: '4px 10px', fontSize: 12, borderRadius: 6,
-          border: `1px solid ${border}`, background: '#39FF14', color: '#061326',
-          cursor: 'pointer', fontWeight: 600,
-        }}>{isRTL ? 'קבל' : 'Accept'}</button>
-        <button type="button" onClick={dismissPendingMerge} style={{
-          padding: '4px 10px', fontSize: 12, borderRadius: 6,
-          border: `1px solid ${border}`, background: 'transparent', color: muted, cursor: 'pointer',
-        }}>{isRTL ? 'דחה' : 'Dismiss'}</button>
+      <button type="button" onClick={() => setMode('fill')} style={doneBtnStyle}>
+        {isRTL ? '✓ סיום' : '✓ Done'}
+      </button>
+      <button
+        type="button"
+        onClick={() => { if (window.confirm(isRTL ? 'לאפס לתבנית ברירת המחדל?' : 'Reset to default template?')) void resetToDefault(); }}
+        style={dangerBtnStyle}
+      >{isRTL ? 'אפס לברירת מחדל' : 'Reset to default'}</button>
+
+      <span style={{ width: 1, height: 22, background: border }} />
+
+      <label style={{ display: 'inline-flex', gap: 6, alignItems: 'center', fontSize: 12, color: muted }}>
+        {isRTL ? 'תחילת שבוע:' : 'Week starts on:'}
+        <select
+          value={weekStart}
+          onChange={e => void onWeekStartChange(Number(e.target.value))}
+          style={fieldStyle}
+          aria-label="week start day"
+        >
+          {dowLabels.map((l, i) => <option key={i} value={i} style={{ background: '#061326', color: fg }}>{l}</option>)}
+        </select>
+      </label>
+
+      <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center', fontSize: 12, color: muted }}>
+        {isRTL ? 'ימי סגירה:' : 'Close days:'}
+        {dowLabels.map((l, i) => {
+          const active = closeDays.includes(i);
+          return (
+            <button
+              key={i}
+              type="button"
+              aria-label={`toggle close day ${l}`}
+              aria-pressed={active}
+              onClick={() => {
+                const next = active ? closeDays.filter(d => d !== i) : [...closeDays, i];
+                if (next.length === 0) return; // never empty
+                void setCloseDays(next);
+              }}
+              style={{
+                ...fieldStyle,
+                padding: '4px 8px',
+                background: active ? '#39FF14' : 'transparent',
+                color: active ? '#061326' : fg,
+                cursor: 'pointer',
+                fontWeight: active ? 700 : 500,
+              }}
+            >{l.slice(0, 2)}</button>
+          );
+        })}
       </span>
     </div>
+  ) : null;
+
+  // ── Selective merge banner (Item 3 consent UI) ─────────────────────────
+  const mergeBanner = pendingMerge ? (
+    <SelectiveMergeBanner
+      pendingMerge={pendingMerge}
+      currentTemplate={template}
+      defaultTemplate={ORCA_DEFAULT_TEMPLATE}
+      isRTL={isRTL} fg={fg} muted={muted} border={border}
+      onAccept={async (acceptedSlugs, dismissedSlugs) => {
+        const { mergeTemplateWith } = await import('../lib/wr-merge');
+        const next = mergeTemplateWith(template, ORCA_DEFAULT_TEMPLATE, { acceptedSlugs, dismissedSlugs });
+        save(next.schema);
+        dismissPendingMerge();
+      }}
+      onAcceptAll={() => void acceptPendingMerge()}
+      onDismissAll={dismissPendingMerge}
+    />
   ) : null;
 
   return (
-    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'grid', gap: 18, paddingBottom: 48 }}>
+    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'grid', gap: 14, paddingBottom: 48 }}>
       {mergeBanner}
-      {toolbar}
+      {enterBar}
+      {customizeBar}
       <WeeklyReviewRenderer
         schema={template}
         values={readDraft(draft)}
@@ -1139,7 +1217,101 @@ function SchemaRendererSurface({ T, isRTL, draft, update, border, fg, muted, use
         actionRegistry={createDefaultActionRegistry()}
         editMode={editMode}
         onTemplateChange={save}
+        onConfirmDelete={onConfirmDelete}
       />
     </div>
   );
 }
+
+// ── Selective merge banner ────────────────────────────────────────────────
+
+function SelectiveMergeBanner({ pendingMerge, currentTemplate, defaultTemplate,
+                               isRTL, fg, muted, border, onAccept, onAcceptAll, onDismissAll }: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  pendingMerge: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  currentTemplate: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  defaultTemplate: any;
+  isRTL: boolean; fg: string; muted: string; border: string;
+  onAccept: (accepted: string[], dismissed: string[]) => void;
+  onAcceptAll: () => void;
+  onDismissAll: () => void;
+}) {
+  void currentTemplate; void defaultTemplate;
+  const all: string[] = [
+    ...pendingMerge.added.sections,
+    ...pendingMerge.added.blocks,
+    ...pendingMerge.added.items,
+  ];
+  const [checked, setChecked] = useState<Set<string>>(() => new Set(all));
+  if (all.length === 0) return null;
+  const toggle = (id: string) => {
+    setChecked(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const accept = () => {
+    const acceptedSlugs = Array.from(checked);
+    const dismissedSlugs = all.filter(s => !checked.has(s));
+    onAccept(acceptedSlugs, dismissedSlugs);
+  };
+  return (
+    <div style={{
+      padding: '10px 12px', border: `1px solid ${border}`, borderRadius: 10,
+      background: 'rgba(57,255,20,0.06)', color: fg, fontSize: 12,
+      display: 'grid', gap: 8,
+    }}>
+      <div style={{ fontWeight: 600 }}>
+        {isRTL ? 'עדכון תבנית זמין — בחר מה להוסיף:' : 'Template update available — pick what to add:'}
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        {all.map(slug => (
+          <label key={slug} style={{
+            display: 'inline-flex', gap: 4, alignItems: 'center',
+            border: `1px solid ${border}`, borderRadius: 6, padding: '2px 8px',
+            cursor: 'pointer',
+          }}>
+            <input type="checkbox" checked={checked.has(slug)} onChange={() => toggle(slug)} />
+            <code style={{ fontSize: 11 }}>{slug}</code>
+          </label>
+        ))}
+      </div>
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+        <button type="button" onClick={onDismissAll} style={{
+          padding: '4px 10px', fontSize: 12, borderRadius: 6,
+          border: `1px solid ${border}`, background: 'transparent', color: muted, cursor: 'pointer',
+        }}>{isRTL ? 'דחה הכל (לצמיתות)' : 'Dismiss all (permanent)'}</button>
+        <button type="button" onClick={onAcceptAll} style={{
+          padding: '4px 10px', fontSize: 12, borderRadius: 6,
+          border: `1px solid ${border}`, background: 'transparent', color: fg, cursor: 'pointer',
+        }}>{isRTL ? 'קבל הכל' : 'Accept all'}</button>
+        <button type="button" onClick={accept} style={{
+          padding: '4px 12px', fontSize: 12, borderRadius: 6,
+          border: `1px solid ${border}`, background: '#39FF14', color: '#061326',
+          cursor: 'pointer', fontWeight: 700,
+        }}>{isRTL ? 'קבל נבחרים' : 'Accept selected'}</button>
+      </div>
+    </div>
+  );
+}
+
+// Count of archived weeks whose `values` reference `slug` either as a block
+// key or as a checklist item key inside a block's value map.
+function countArchiveUsage(archive: WeekRecord[], slug: string): number {
+  let n = 0;
+  for (const w of archive) {
+    const values = w.values;
+    if (!values) continue;
+    if (Object.prototype.hasOwnProperty.call(values, slug)) { n += 1; continue; }
+    for (const v of Object.values(values)) {
+      if (v && typeof v === 'object' && !Array.isArray(v) && Object.prototype.hasOwnProperty.call(v as object, slug)) {
+        n += 1; break;
+      }
+    }
+  }
+  return n;
+}
+
