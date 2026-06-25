@@ -28,6 +28,8 @@ export interface WeekDraft {
   executionChecklist: ExecutionChecklist;
   decisionQuality: 'A+' | 'B' | 'C' | 'D' | '';
   grade: string;
+  /** Wave-1 generic values map — canonical store keyed by Block.id (and per-checklist itemId for checklist blocks). Holds user-added custom items and any future schema-only blocks. Dual-written alongside legacy fields for built-in slugs; sole-store for custom slugs. */
+  values: Record<string, unknown>;
 }
 
 export const EMPTY_EXEC: ExecutionChecklist = {
