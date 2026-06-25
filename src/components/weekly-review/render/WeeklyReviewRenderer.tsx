@@ -174,7 +174,7 @@ function resolveLabel(loc: Loc | undefined, locale: 'he' | 'en') {
 
 // ── Checklist ──────────────────────────────────────────────────────────────
 
-function ChecklistBlock({ block, values, onChange, T, isRTL, locale }: BlockProps) {
+function ChecklistBlock({ block, values, onChange, T, isRTL, locale, actionRegistry }: BlockProps) {
   const cfg = block.config || {};
   const cycle: ChecklistState[] = cfg.cycle || ['neutral', 'done', 'missed'];
   const items = cfg.items || [];
@@ -203,7 +203,8 @@ function ChecklistBlock({ block, values, onChange, T, isRTL, locale }: BlockProp
           const state = current[item.id] ?? 'neutral';
           const polarity = item.goodIs ?? cfg.goodIs ?? 'done';
           const legacyGoodIs = STATE_TO_LEGACY_NUM[polarity] === 0 ? 1 : (STATE_TO_LEGACY_NUM[polarity] as 1 | 2);
-          return (
+          const hasAction = !!(item.action && actionRegistry && actionRegistry[item.action.target]);
+          const tri = (
             <TriState
               key={item.id}
               state={STATE_TO_LEGACY_NUM[state]}
@@ -214,6 +215,37 @@ function ChecklistBlock({ block, values, onChange, T, isRTL, locale }: BlockProp
               isRTL={isRTL}
               onCycle={() => cycleItem(item.id)}
             />
+          );
+          if (!hasAction) return tri;
+          return (
+            <div
+              key={item.id}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                flexDirection: isRTL ? 'row-reverse' : 'row',
+              }}
+            >
+              <div style={{ flex: 1, minWidth: 0 }}>{tri}</div>
+              <button
+                type="button"
+                aria-label={`open ${item.action!.target}`}
+                onClick={() => invokeAction(item.action, actionRegistry)}
+                title={resolveLabel(item.label, locale)}
+                style={{
+                  flexShrink: 0,
+                  width: 32, height: 32,
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  borderRadius: 8,
+                  border: `1px solid ${tk.border}`,
+                  background: 'transparent',
+                  color: tk.accent,
+                  cursor: 'pointer',
+                  fontSize: 14, lineHeight: 1,
+                }}
+              >
+                {isRTL ? '↖' : '↗'}
+              </button>
+            </div>
           );
         })}
       </div>
