@@ -84,16 +84,23 @@ export function WeeklyReviewRenderer(props: WeeklyReviewRendererProps) {
 
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'grid', gap: 18, paddingBottom: 48 }}>
-      {sections.map(section => (
-        <SectionShell key={section.id} section={section} card={card} {...props}>
-          {[...section.blocks]
-            .filter(b => !b.hidden)
-            .sort((a, b) => a.order - b.order)
-            .map(block => (
-              <BlockSwitch key={block.id} block={block} {...props} />
+      {sections.map(section => {
+        const visibleBlocks = [...section.blocks].filter(b => !b.hidden).sort((a, b) => a.order - b.order);
+        return (
+          <SectionShell key={section.id} section={section} card={card} {...props}>
+            {visibleBlocks.map((block, idx) => (
+              <EditableBlock
+                key={block.id}
+                block={block}
+                section={section}
+                isFirst={idx === 0}
+                isLast={idx === visibleBlocks.length - 1}
+                {...props}
+              />
             ))}
-        </SectionShell>
-      ))}
+          </SectionShell>
+        );
+      })}
     </div>
   );
 }
