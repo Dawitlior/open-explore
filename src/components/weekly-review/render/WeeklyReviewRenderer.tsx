@@ -473,7 +473,7 @@ function resolveLabel(loc: Loc | undefined, locale: 'he' | 'en') {
 
 function ChecklistBlock(p: BlockProps) {
   const { block, values, onChange, T, isRTL, locale, actionRegistry,
-          editMode, onTemplateChange, schema } = p;
+          editMode, onTemplateChange, onConfirmDelete, schema } = p;
   const cfg = block.config || {};
   const cycle: ChecklistState[] = cfg.cycle || ['neutral', 'done', 'missed'];
   const items = cfg.items || [];
@@ -482,7 +482,6 @@ function ChecklistBlock(p: BlockProps) {
   const label = resolveLabel(block.label, locale);
   const help = resolveLabel(block.helpText, locale);
   const canEdit = !!(editMode && onTemplateChange);
-  // Locate parent section (lookup by id; cheap — sections array is tiny).
   const parentSection = canEdit ? schema.sections.find(s => s.blocks.some(b => b.id === block.id)) : undefined;
   const [adding, setAdding] = useState('');
 
@@ -493,9 +492,10 @@ function ChecklistBlock(p: BlockProps) {
     onChange(block.id, { ...current, [itemId]: next });
   };
 
-  const deleteItem = (itemId: string) => {
+  const deleteItem = async (itemId: string) => {
     if (!canEdit || !parentSection) return;
-    onTemplateChange!(softDeleteChecklistItem(schema, parentSection.id, block.id, itemId));
+    const ok = onConfirmDelete ? await onConfirmDelete(itemId, 'item') : true;
+    if (ok) onTemplateChange!(softDeleteChecklistItem(schema, parentSection.id, block.id, itemId));
   };
   const submitAdd = () => {
     if (!canEdit || !parentSection || !adding.trim()) return;
@@ -503,6 +503,7 @@ function ChecklistBlock(p: BlockProps) {
     onTemplateChange!(addChecklistItem(schema, parentSection.id, block.id, { he: adding, en: adding }, suffix));
     setAdding('');
   };
+
 
   return (
     <div style={{ display: 'grid', gap: 8 }}>
