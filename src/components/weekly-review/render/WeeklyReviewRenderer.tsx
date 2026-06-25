@@ -27,6 +27,8 @@ import type {
   Loc,
 } from '../lib/wr-schema';
 import { resolveLoc } from '../lib/wr-schema';
+import type { ActionRegistry } from './action-registry';
+import { invokeAction } from './action-registry';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Theme = any;
@@ -47,6 +49,8 @@ export interface WeeklyReviewRendererProps {
   locale: 'he' | 'en';
   /** Host-supplied renderers for system blocks. */
   systemSlots: Partial<Record<SystemSlotId, (block: Block) => React.ReactNode>>;
+  /** Host-supplied deep-link handlers (Wave-2 Item 5). Optional — missing entries hide the affordance. */
+  actionRegistry?: ActionRegistry;
 }
 
 const STATE_TO_LEGACY_NUM: Record<ChecklistState, 0 | 1 | 2> = { neutral: 0, done: 1, missed: 2 };
