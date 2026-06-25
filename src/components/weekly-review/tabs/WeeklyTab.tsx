@@ -160,7 +160,9 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
   const loss = T?.status?.danger || '#ff3b3b';
   const warn = T?.status?.warning || (isLight ? '#b86e00' : '#ffb830');
 
-  const wk = useWeekAggregates(trades);
+  const { weekStart, setWeekStart } = useWeekStart();
+  const { closeDays, setCloseDays } = useCloseDays();
+  const wk = useWeekAggregates(trades, undefined, weekStart);
   const { draft, update, hardReset } = useWeekDraft(wk.weekKey);
   // Wave-1 — template is hoisted to the outer tab so closeWeek() can freeze
   // it into the WeekRecord. SchemaRendererSurface reuses the same instance.
@@ -175,7 +177,8 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
     () => state.archive.some(w => w.weekKey === wk.weekKey),
     [state.archive, wk.weekKey],
   );
-  const friday = isCloseWeekAllowed();
+  const friday = isCloseWeekAllowed(new Date(), closeDays);
+
 
   // Derived: aggregates
   const tradesArr = wk.trades;
