@@ -15,7 +15,7 @@ import type {
   Block,
   ChecklistItem,
   Loc,
-} from './wr-schema';
+} from '../lib/wr-schema';
 
 // ── Section/block reorder ──────────────────────────────────────────────────
 
