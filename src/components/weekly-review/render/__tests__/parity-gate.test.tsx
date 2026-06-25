@@ -120,33 +120,33 @@ describe('Wave-0 parity gate — renderer DOM matches legacy WeeklyTab contract'
     it('prep checklist labels appear in legacy order', () => {
       const { container } = mount(locale, isRTL);
       const want = locale === 'en' ? LEGACY.prepEN : LEGACY.prepHE;
-      const got = buttonTextsInOrder(container, t => want.includes(t));
+      const got = labelsInOrder(container, want);
       expect(got).toEqual(want);
     });
 
     it('execution checklist labels appear in legacy order', () => {
       const { container } = mount(locale, isRTL);
       const want = locale === 'en' ? LEGACY.execEN : LEGACY.execHE;
-      const got = buttonTextsInOrder(container, t => want.includes(t));
+      const got = labelsInOrder(container, want);
       expect(got).toEqual(want);
     });
 
     it('strategy edge questions appear in legacy order (incl. inverted #3)', () => {
       const { container } = mount(locale, isRTL);
       const want = locale === 'en' ? LEGACY.edgeEN : LEGACY.edgeHE;
-      const got = buttonTextsInOrder(container, t => want.includes(t));
+      const got = labelsInOrder(container, want);
       expect(got).toEqual(want);
     });
 
     it('emotion pills appear in legacy order', () => {
       const { container } = mount(locale, isRTL);
-      const got = buttonTextsInOrder(container, t => LEGACY.emotions.includes(t));
+      const got = labelsInOrder(container, LEGACY.emotions);
       expect(got).toEqual(LEGACY.emotions);
     });
 
     it('mindset multiselect tags appear in legacy order', () => {
       const { container } = mount(locale, isRTL);
-      const got = buttonTextsInOrder(container, t => LEGACY.mindsetTags.includes(t));
+      const got = labelsInOrder(container, LEGACY.mindsetTags);
       expect(got).toEqual(LEGACY.mindsetTags);
     });
 
@@ -165,7 +165,7 @@ describe('Wave-0 parity gate — renderer DOM matches legacy WeeklyTab contract'
       // The grade letter is the option id surfaced as emoji-or-label fragment.
       // We assert the supporting description appears in legacy order instead.
       const desc = locale === 'en' ? LEGACY.decisionEN : LEGACY.decisionHE;
-      const got = buttonTextsInOrder(container, t => desc.some(d => t.includes(d)));
+      const got = labelsInOrder(container, desc);
       // Each pill's text contains its description; order must match.
       expect(got.length).toBe(want.length);
       desc.forEach((d, i) => expect(got[i]).toContain(d));
@@ -173,8 +173,8 @@ describe('Wave-0 parity gate — renderer DOM matches legacy WeeklyTab contract'
 
     it('market context env + position pills render in legacy order', () => {
       const { container } = mount(locale, isRTL);
-      const envs = buttonTextsInOrder(container, t => LEGACY.envs.includes(t));
-      const pos  = buttonTextsInOrder(container, t => LEGACY.positions.includes(t));
+      const envs = labelsInOrder(container, LEGACY.envs);
+      const pos  = labelsInOrder(container, LEGACY.positions);
       expect(envs).toEqual(LEGACY.envs);
       expect(pos).toEqual(LEGACY.positions);
     });
