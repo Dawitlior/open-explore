@@ -24,11 +24,12 @@ import { TriState } from '../widgets/TriState';
 import { SectionTitle } from '../widgets/SectionTitle';
 // Wave-0 schema renderer wiring point. Flag is OFF — legacy JSX below is
 // the source of truth until the side-by-side parity gate is green.
-import { WR_SCHEMA_RENDERER_ENABLED } from '../lib/wr-flag';
+import { WR_SCHEMA_RENDERER_ENABLED, WR_EDIT_MODE_ENABLED } from '../lib/wr-flag';
 import { ORCA_DEFAULT_TEMPLATE } from '../lib/wr-default-template';
 import { readDraft, writeBlock } from '../render/legacy-adapter';
 import { WeeklyReviewRenderer } from '../render/WeeklyReviewRenderer';
 import { createDefaultActionRegistry } from '../render/action-registry';
+import { useUserTemplate } from '../hooks/use-user-template';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Theme = any;
