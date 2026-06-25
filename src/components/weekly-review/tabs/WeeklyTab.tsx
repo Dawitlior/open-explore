@@ -280,6 +280,27 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
     fontFamily: 'inherit', fontSize: 13, outline: 'none', boxSizing: 'border-box', minHeight: 44,
   };
 
+  // Wave-0: flag-gated schema renderer. Default OFF; legacy JSX renders.
+  // Wired here so the swap is a one-line flag flip once parity is green.
+  if (WR_SCHEMA_RENDERER_ENABLED) {
+    return (
+      <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'grid', gap: 18, paddingBottom: 48 }}>
+        <WeeklyReviewRenderer
+          schema={ORCA_DEFAULT_TEMPLATE}
+          values={readDraft(draft)}
+          onChange={(blockId, value) => {
+            const patch = writeBlock(blockId, value, draft);
+            if (patch) update(patch);
+          }}
+          T={T}
+          isRTL={isRTL}
+          locale={isRTL ? 'he' : 'en'}
+          systemSlots={{}}
+        />
+      </div>
+    );
+  }
+
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'grid', gap: 18, paddingBottom: 48 }}>
       {/* === Header bar === */}
