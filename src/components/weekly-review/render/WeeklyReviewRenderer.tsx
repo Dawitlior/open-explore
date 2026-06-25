@@ -237,7 +237,9 @@ function resolveLabel(loc: Loc | undefined, locale: 'he' | 'en') {
 
 // ── Checklist ──────────────────────────────────────────────────────────────
 
-function ChecklistBlock({ block, values, onChange, T, isRTL, locale, actionRegistry }: BlockProps) {
+function ChecklistBlock(p: BlockProps) {
+  const { block, values, onChange, T, isRTL, locale, actionRegistry,
+          editMode, onTemplateChange, schema } = p;
   const cfg = block.config || {};
   const cycle: ChecklistState[] = cfg.cycle || ['neutral', 'done', 'missed'];
   const items = cfg.items || [];
@@ -245,12 +247,27 @@ function ChecklistBlock({ block, values, onChange, T, isRTL, locale, actionRegis
   const current = (values[block.id] as Record<string, ChecklistState> | undefined) || {};
   const label = resolveLabel(block.label, locale);
   const help = resolveLabel(block.helpText, locale);
+  const canEdit = !!(editMode && onTemplateChange);
+  // Locate parent section (lookup by id; cheap — sections array is tiny).
+  const parentSection = canEdit ? schema.sections.find(s => s.blocks.some(b => b.id === block.id)) : undefined;
+  const [adding, setAdding] = useState('');
 
   const cycleItem = (itemId: string) => {
     const cur = current[itemId] ?? 'neutral';
     const i = cycle.indexOf(cur);
     const next = cycle[(i + 1) % cycle.length];
     onChange(block.id, { ...current, [itemId]: next });
+  };
+
+  const deleteItem = (itemId: string) => {
+    if (!canEdit || !parentSection) return;
+    onTemplateChange!(softDeleteChecklistItem(schema, parentSection.id, block.id, itemId));
+  };
+  const submitAdd = () => {
+    if (!canEdit || !parentSection || !adding.trim()) return;
+    const suffix = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    onTemplateChange!(addChecklistItem(schema, parentSection.id, block.id, { he: adding, en: adding }, suffix));
+    setAdding('');
   };
 
   return (
@@ -279,7 +296,7 @@ function ChecklistBlock({ block, values, onChange, T, isRTL, locale, actionRegis
               onCycle={() => cycleItem(item.id)}
             />
           );
-          if (!hasAction) return tri;
+          if (!hasAction && !canEdit) return tri;
           return (
             <div
               key={item.id}
@@ -289,28 +306,69 @@ function ChecklistBlock({ block, values, onChange, T, isRTL, locale, actionRegis
               }}
             >
               <div style={{ flex: 1, minWidth: 0 }}>{tri}</div>
-              <button
-                type="button"
-                aria-label={`open ${item.action!.target}`}
-                onClick={() => invokeAction(item.action, actionRegistry)}
-                title={resolveLabel(item.label, locale)}
-                style={{
-                  flexShrink: 0,
-                  width: 32, height: 32,
-                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  borderRadius: 8,
-                  border: `1px solid ${tk.border}`,
-                  background: 'transparent',
-                  color: tk.accent,
-                  cursor: 'pointer',
-                  fontSize: 14, lineHeight: 1,
-                }}
-              >
-                {isRTL ? '↖' : '↗'}
-              </button>
+              {hasAction && (
+                <button
+                  type="button"
+                  aria-label={`open ${item.action!.target}`}
+                  onClick={() => invokeAction(item.action, actionRegistry)}
+                  title={resolveLabel(item.label, locale)}
+                  style={{
+                    flexShrink: 0, width: 32, height: 32,
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    borderRadius: 8, border: `1px solid ${tk.border}`,
+                    background: 'transparent', color: tk.accent, cursor: 'pointer',
+                    fontSize: 14, lineHeight: 1,
+                  }}
+                >
+                  {isRTL ? '↖' : '↗'}
+                </button>
+              )}
+              {canEdit && (
+                <button
+                  type="button"
+                  aria-label={`delete ${item.id}`}
+                  onClick={() => deleteItem(item.id)}
+                  style={{
+                    flexShrink: 0, width: 26, height: 26,
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    borderRadius: 6, border: `1px solid ${tk.border}`,
+                    background: 'transparent', color: tk.loss, cursor: 'pointer',
+                    fontSize: 12, lineHeight: 1,
+                  }}
+                >×</button>
+              )}
             </div>
           );
         })}
+        {canEdit && (
+          <div style={{ display: 'flex', gap: 6, marginTop: 4, flexDirection: isRTL ? 'row-reverse' : 'row' }}>
+            <input
+              type="text"
+              value={adding}
+              onChange={e => setAdding(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); submitAdd(); } }}
+              placeholder={isRTL ? 'הוסף פריט מותאם…' : 'Add custom item…'}
+              style={{
+                flex: 1, minWidth: 0,
+                background: 'transparent', color: tk.fg,
+                border: `1px solid ${tk.border}`, borderRadius: 8,
+                padding: '6px 10px', fontSize: 12, outline: 'none',
+                textAlign: isRTL ? 'right' : 'left',
+              }}
+            />
+            <button
+              type="button"
+              onClick={submitAdd}
+              disabled={!adding.trim()}
+              style={{
+                padding: '6px 12px', fontSize: 12,
+                borderRadius: 8, border: `1px solid ${tk.border}`,
+                background: 'transparent', color: tk.accent,
+                cursor: adding.trim() ? 'pointer' : 'not-allowed',
+              }}
+            >+</button>
+          </div>
+        )}
       </div>
     </div>
   );
