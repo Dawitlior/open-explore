@@ -16,6 +16,7 @@ function withPatch(draft: WeekDraft, patch: Partial<WeekDraft> | null): WeekDraf
     ...draft,
     ...patch,
     executionChecklist: { ...draft.executionChecklist, ...(patch.executionChecklist ?? {}) },
+    values: { ...draft.values, ...(patch.values ?? {}) },
   };
 }
 
