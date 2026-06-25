@@ -161,7 +161,11 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
   const warn = T?.status?.warning || (isLight ? '#b86e00' : '#ffb830');
 
   const wk = useWeekAggregates(trades);
+  const wk = useWeekAggregates(trades);
   const { draft, update, hardReset } = useWeekDraft(wk.weekKey);
+  // Wave-1 — template is hoisted to the outer tab so closeWeek() can freeze
+  // it into the WeekRecord. SchemaRendererSurface reuses the same instance.
+  const userTpl = useUserTemplate();
   const { isUSD } = useReviewUnit();
   // R-only portfolio guard — when no trade carries real $ data, suppress
   // misleading "0$" in USD-mode columns / dual-stats.
