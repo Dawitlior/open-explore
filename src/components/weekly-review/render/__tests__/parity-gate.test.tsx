@@ -94,13 +94,22 @@ function mount(locale: 'he' | 'en', isRTL: boolean) {
   );
 }
 
-// Document-order traversal: collect visible button text in DOM order, filtered
-// by a predicate so we can isolate (e.g.) emotion pills from mindset pills.
-function buttonTextsInOrder(root: HTMLElement, keep: (t: string) => boolean): string[] {
-  return Array.from(root.querySelectorAll('button'))
-    .map(b => (b.textContent || '').trim())
-    .filter(Boolean)
-    .filter(keep);
+// Document-order traversal: for each button, return the FIRST matching label
+// from `candidates` whose text appears as a substring of the button. This is
+// robust to leading icons (—/✅/❌), emoji prefixes (🔥), and sub-labels.
+// Order in the returned array == DOM order; ordering of `candidates` is the
+// contract we're proving.
+function labelsInOrder(root: HTMLElement, candidates: string[]): string[] {
+  const out: string[] = [];
+  for (const btn of Array.from(root.querySelectorAll('button'))) {
+    const text = (btn.textContent || '').trim();
+    // Prefer the longest match to avoid 'FOMO' inside 'No FOMO'-style strings.
+    const hit = candidates
+      .filter(c => text.includes(c))
+      .sort((a, b) => b.length - a.length)[0];
+    if (hit) out.push(hit);
+  }
+  return out;
 }
 
 describe('Wave-0 parity gate — renderer DOM matches legacy WeeklyTab contract', () => {
