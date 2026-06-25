@@ -23,9 +23,18 @@ export function reorderSection(tpl: WeeklyReviewSchema, sectionId: string, delta
   const sorted = [...tpl.sections].sort((a, b) => a.order - b.order);
   const i = sorted.findIndex(s => s.id === sectionId);
   if (i < 0) return tpl;
-  const j = i + delta;
-  if (j < 0 || j >= sorted.length) return tpl;
-  [sorted[i], sorted[j]] = [sorted[j], sorted[i]];
+  return reorderSectionTo(tpl, sectionId, i + delta);
+}
+
+/** Move a section to the absolute index `to` (clamped). Used by dnd-kit drop. */
+export function reorderSectionTo(tpl: WeeklyReviewSchema, sectionId: string, to: number): WeeklyReviewSchema {
+  const sorted = [...tpl.sections].sort((a, b) => a.order - b.order);
+  const from = sorted.findIndex(s => s.id === sectionId);
+  if (from < 0) return tpl;
+  const clamped = Math.max(0, Math.min(sorted.length - 1, to));
+  if (clamped === from) return tpl;
+  const [moved] = sorted.splice(from, 1);
+  sorted.splice(clamped, 0, moved);
   const rebased = sorted.map((s, idx) => ({ ...s, order: (idx + 1) * 10 }));
   return { ...tpl, sections: rebased };
 }
@@ -41,6 +50,36 @@ export function reorderBlock(tpl: WeeklyReviewSchema, sectionId: string, blockId
     const rebased = sorted.map((b, idx) => ({ ...b, order: (idx + 1) * 10 }));
     return { ...sec, blocks: rebased };
   });
+}
+
+/** Move a block to absolute index `to` within its section (clamped). dnd-kit drop. */
+export function reorderBlockTo(tpl: WeeklyReviewSchema, sectionId: string, blockId: string, to: number): WeeklyReviewSchema {
+  return mapSection(tpl, sectionId, sec => {
+    const sorted = [...sec.blocks].sort((a, b) => a.order - b.order);
+    const from = sorted.findIndex(b => b.id === blockId);
+    if (from < 0) return sec;
+    const clamped = Math.max(0, Math.min(sorted.length - 1, to));
+    if (clamped === from) return sec;
+    const [moved] = sorted.splice(from, 1);
+    sorted.splice(clamped, 0, moved);
+    const rebased = sorted.map((b, idx) => ({ ...b, order: (idx + 1) * 10 }));
+    return { ...sec, blocks: rebased };
+  });
+}
+
+// ── Hide / show (reversible — no tombstone) ────────────────────────────────
+
+export function hideSection(tpl: WeeklyReviewSchema, sectionId: string): WeeklyReviewSchema {
+  return mapSection(tpl, sectionId, sec => ({ ...sec, hidden: true }));
+}
+export function showSection(tpl: WeeklyReviewSchema, sectionId: string): WeeklyReviewSchema {
+  return mapSection(tpl, sectionId, sec => ({ ...sec, hidden: false }));
+}
+export function hideBlock(tpl: WeeklyReviewSchema, sectionId: string, blockId: string): WeeklyReviewSchema {
+  return mapBlock(tpl, sectionId, blockId, b => ({ ...b, hidden: true }));
+}
+export function showBlock(tpl: WeeklyReviewSchema, sectionId: string, blockId: string): WeeklyReviewSchema {
+  return mapBlock(tpl, sectionId, blockId, b => ({ ...b, hidden: false }));
 }
 
 // ── Demote a non-checklist block to a plain checkbox ───────────────────────
