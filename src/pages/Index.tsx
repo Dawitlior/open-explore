@@ -42,6 +42,7 @@ import { MobileTradeCard } from '@/components/trading/MobileTradeCard';
 import { RiskExplanationModal, type RiskExplanation } from '@/components/trading/RiskExplanationModal';
 import { toast } from 'sonner';
 import { LazyShell } from '@/components/LazyShell';
+import { isoWeekKey } from '@/components/weekly-review/lib/week-key';
 import { useNavigate } from 'react-router-dom';
 import { useArena } from '@/features/bug-arena';
 const AdvancedRiskPage = lazy(() => import('@/components/trading/AdvancedRiskPage').then(m => ({ default: m.AdvancedRiskPage })));
