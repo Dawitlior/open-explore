@@ -1243,7 +1243,7 @@ function SchemaRendererSurface(props: SchemaSurfaceProps) {
         T={T}
         isRTL={isRTL}
         locale={isRTL ? 'he' : 'en'}
-        systemSlots={{}}
+        systemSlots={systemSlots}
         actionRegistry={createDefaultActionRegistry()}
         editMode={editMode}
         onTemplateChange={save}
