@@ -46,11 +46,13 @@ export const ORCA_DEFAULT_TEMPLATE: WeeklyReviewSchema = {
             goodIs: 'done',
             items: [
               { id: 'coffee',    label: { he: 'הכנת קפה ☕', en: 'Coffee ready ☕' } },
-              { id: 'open_stat', label: { he: 'פתיחת לוג סטטיסטי (Statistical Trade Log)', en: 'Open Statistical Trade Log' } },
-              { id: 'open_cal',  label: { he: 'פתיחת יומן קלנדרי (Weekly Calendar)',         en: 'Open Weekly Calendar' } },
-              { id: 'open_mkt',  label: { he: 'פתיחת Market Journal',                          en: 'Open Market Journal' } },
-              // NOTE: prep deep-link `action` deferred to Wave-3 wiring per
-              // Wave-0 zero-UX-change rule. Seed items remain plain checks.
+              // Wave-2 Item 5: deep-link metadata — registry-fallback safe.
+              { id: 'open_stat', label: { he: 'פתיחת לוג סטטיסטי (Statistical Trade Log)', en: 'Open Statistical Trade Log' },
+                action: { type: 'open_panel', target: 'statistical-trade-log' } },
+              { id: 'open_cal',  label: { he: 'פתיחת יומן קלנדרי (Weekly Calendar)',         en: 'Open Weekly Calendar' },
+                action: { type: 'open_panel', target: 'weekly-calendar' } },
+              { id: 'open_mkt',  label: { he: 'פתיחת Market Journal',                          en: 'Open Market Journal' },
+                action: { type: 'open_panel', target: 'market-journal' } },
             ],
           },
         },
