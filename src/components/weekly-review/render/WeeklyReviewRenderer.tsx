@@ -126,6 +126,54 @@ function SectionShell({ section, card, T, isRTL, locale, children }: SectionShel
   );
 }
 
+// ── Editable block wrapper (Wave-2 Item 4) ─────────────────────────────────
+
+interface EditableBlockProps extends WeeklyReviewRendererProps {
+  block: Block;
+  section: Section;
+  isFirst: boolean;
+  isLast: boolean;
+}
+
+function EditableBlock(p: EditableBlockProps) {
+  const { block, section, isFirst, isLast, editMode, onTemplateChange, schema, T, isRTL, locale } = p;
+  const tk = useTokens(T);
+  if (!editMode || !onTemplateChange) {
+    return <BlockSwitch {...p} />;
+  }
+  // System blocks may not be reordered/deleted/demoted.
+  const locked = block.type.startsWith('system-') || block.locked === true;
+  const btn: React.CSSProperties = {
+    width: 26, height: 26, padding: 0,
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    borderRadius: 6, border: `1px solid ${tk.border}`,
+    background: 'transparent', color: tk.muted, cursor: 'pointer',
+    fontSize: 12, lineHeight: 1,
+  };
+  const danger: React.CSSProperties = { ...btn, color: tk.loss };
+  const move = (delta: -1 | 1) => onTemplateChange(reorderBlock(schema, section.id, block.id, delta));
+  const demote = () => onTemplateChange(demoteToChecklist(schema, section.id, block.id));
+  const del = () => onTemplateChange(softDeleteBlock(schema, section.id, block.id));
+
+  return (
+    <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', flexDirection: isRTL ? 'row-reverse' : 'row' }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <BlockSwitch {...p} />
+      </div>
+      {!locked && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0, paddingTop: 4 }}>
+          <button type="button" style={btn} disabled={isFirst} onClick={() => move(-1)} aria-label="move up" title="↑">↑</button>
+          <button type="button" style={btn} disabled={isLast}  onClick={() => move(1)}  aria-label="move down" title="↓">↓</button>
+          {block.type !== 'checklist' && (
+            <button type="button" style={btn} onClick={demote} aria-label="demote to checklist" title="demote">⇣</button>
+          )}
+          <button type="button" style={danger} onClick={del} aria-label="delete block" title="delete">×</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Block switch ───────────────────────────────────────────────────────────
 
 interface BlockProps extends WeeklyReviewRendererProps {
