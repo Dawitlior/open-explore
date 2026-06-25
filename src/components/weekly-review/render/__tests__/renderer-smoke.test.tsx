@@ -70,7 +70,7 @@ describe('WeeklyReviewRenderer (Wave 0 smoke)', () => {
     expect(last).toEqual({ id: 'emotion', value: 'confident' });
     // And the patch landing on the legacy draft uses the legacy label
     const patch = writeBlock(last!.id, last!.value, EMPTY_DRAFT);
-    expect(patch).toEqual({ emotion: 'Confident' });
+    expect(patch).toEqual({ emotion: 'Confident', values: { emotion: 'confident' } });
   });
 
   it('round-trips a prep tri-state cycle through the legacy adapter', () => {

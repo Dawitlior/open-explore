@@ -28,6 +28,8 @@ export interface WeekDraft {
   executionChecklist: ExecutionChecklist;
   decisionQuality: 'A+' | 'B' | 'C' | 'D' | '';
   grade: string;
+  /** Wave-1 generic values map — canonical store keyed by Block.id (and per-checklist itemId for checklist blocks). Holds user-added custom items and any future schema-only blocks. Dual-written alongside legacy fields for built-in slugs; sole-store for custom slugs. */
+  values: Record<string, unknown>;
 }
 
 export const EMPTY_EXEC: ExecutionChecklist = {
@@ -46,6 +48,7 @@ export const EMPTY_DRAFT: WeekDraft = {
   mindsetTags: [], mindset: '',
   executionChecklist: { ...EMPTY_EXEC },
   decisionQuality: '', grade: '',
+  values: {},
 };
 
 const KEY = (weekKey: string) => `weekly_review.draft.${weekKey}`;
@@ -60,7 +63,7 @@ export function useWeekDraft(weekKey: string) {
     (async () => {
       const v = await getSetting<WeekDraft>(KEY(weekKey));
       if (cancelled) return;
-      setDraft(v ? { ...EMPTY_DRAFT, ...v, executionChecklist: { ...EMPTY_EXEC, ...(v.executionChecklist || {}) } } : EMPTY_DRAFT);
+      setDraft(v ? { ...EMPTY_DRAFT, ...v, executionChecklist: { ...EMPTY_EXEC, ...(v.executionChecklist || {}) }, values: (v.values && typeof v.values === 'object') ? v.values : {} } : EMPTY_DRAFT);
       setLoaded(true);
     })();
     return () => { cancelled = true; };
@@ -89,6 +92,7 @@ export function useWeekDraft(weekKey: string) {
       edges: [0, 0, 0, 0],
       mindsetTags: [],
       executionChecklist: { ...EMPTY_EXEC },
+      values: {},
     };
     setDraft(empty);
     await setSetting(KEY(weekKey), empty);

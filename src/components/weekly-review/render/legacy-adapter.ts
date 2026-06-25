@@ -98,7 +98,7 @@ export function readDraft(draft: WeekDraft): ReviewValues {
     execChecklist[id] = execValToState(draft.executionChecklist[key]);
   }
 
-  return {
+  const legacy: ReviewValues = {
     prep_checklist:     prepChecklist,
     exec_checklist:     execChecklist,
     strategy_adherence: strategyChecklist,
@@ -116,6 +116,23 @@ export function readDraft(draft: WeekDraft): ReviewValues {
     reflection:         draft.mindset,
     decision_quality:   DECISION_R[draft.decisionQuality] ?? '',
   };
+
+  // Wave-1 — generic values map layered ON TOP. For built-in slugs both stores
+  // are dual-written; the generic map is authoritative. For checklist blocks
+  // we MERGE (not replace) so custom-added items appear alongside built-ins.
+  const generic = draft.values || {};
+  const out: ReviewValues = { ...legacy };
+  for (const [k, v] of Object.entries(generic)) {
+    if (v == null) continue;
+    const prev = out[k];
+    if (prev && typeof prev === 'object' && !Array.isArray(prev) && typeof v === 'object' && !Array.isArray(v)) {
+      out[k] = { ...(prev as Record<string, ChecklistState>), ...(v as Record<string, ChecklistState>) };
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      out[k] = v as any;
+    }
+  }
+  return out;
 }
 
 // ── PUBLIC: write a single block update back to the legacy draft ─────────
@@ -123,11 +140,13 @@ export function readDraft(draft: WeekDraft): ReviewValues {
 export type DraftPatch = Partial<WeekDraft>;
 
 /**
- * Translate a schema-block change into the equivalent legacy-draft patch.
- * Caller (`WeeklyTab`) passes the patch into `useWeekDraft.update(...)`.
+ * Translate a schema-block change into the equivalent draft patch.
  *
- * Returns `null` for system blocks (read-only) or unrecognized IDs — caller
- * should no-op when null.
+ * Wave-1: ALWAYS dual-writes into `current.values[blockId]` so unknown
+ * (custom-added) blocks persist via the generic store and built-ins
+ * survive a legacy→generic transition cleanly.
+ *
+ * Returns `null` ONLY for system / computed blocks (read-only).
  */
 export function writeBlock(
   blockId: string,
@@ -135,63 +154,8 @@ export function writeBlock(
   value: any,
   current: WeekDraft,
 ): DraftPatch | null {
+  // System / computed blocks remain read-only.
   switch (blockId) {
-    case 'prep_checklist': {
-      const itemMap = value as Record<string, ChecklistState>;
-      const next = [...current.preps];
-      PREP_ITEM_IDS.forEach((id, i) => {
-        const s = itemMap[id];
-        if (s) next[i] = PREPLIKE_STATE_TO_NUM[s];
-      });
-      return { preps: next };
-    }
-    case 'strategy_adherence': {
-      const itemMap = value as Record<string, ChecklistState>;
-      const next = [...current.edges];
-      STRATEGY_ITEM_IDS.forEach((id, i) => {
-        const s = itemMap[id];
-        if (s) next[i] = PREPLIKE_STATE_TO_NUM[s];
-      });
-      return { edges: next };
-    }
-    case 'exec_checklist': {
-      const itemMap = value as Record<string, ChecklistState>;
-      const next: ExecutionChecklist = { ...current.executionChecklist };
-      for (const { id, key } of EXEC_ITEM_KEYS) {
-        const s = itemMap[id];
-        if (s) next[key] = execStateToVal(s);
-      }
-      return { executionChecklist: next };
-    }
-    case 'violations':
-      return { violations: value == null ? '' : String(value) };
-    case 'violation_pattern':
-      return { violationPattern: String(value ?? '') };
-    case 'environment':
-      return { env: ENV[String(value)] ?? '' };
-    case 'positioning':
-      return { pos: POS[String(value)] ?? '' };
-    case 'emotion':
-      return { emotion: EMOTION[String(value)] ?? '' };
-    case 'focus':
-      return { focusRating: Number(value) || 0 };
-    case 'biggest_mistake':
-      return { bigMistake: MISTAKE[String(value)] ?? '' };
-    case 'repeat_mistake': {
-      if (value === '' || value == null) return { repeatMistake: null };
-      return { repeatMistake: value === 'yes' };
-    }
-    case 'mindset_tags': {
-      const slugs = (value as string[]) ?? [];
-      return { mindsetTags: slugs.map(s => MINDSET_TAG[s]).filter(Boolean) };
-    }
-    case 'reflection':
-      return { mindset: String(value ?? '').slice(0, 5000) };
-    case 'decision_quality': {
-      const v = DECISION[String(value)] ?? '';
-      return { decisionQuality: v };
-    }
-    // system / computed blocks are read-only
     case 'exec_score':
     case 'final_grade':
     case 'trades_table':
@@ -199,9 +163,74 @@ export function writeBlock(
     case 'risk_gauges':
     case 'ai_insights':
       return null;
-    default:
-      return null;
   }
+
+  // Always dual-write into the generic values map (Wave-1 canonical store).
+  const baseValues = (current.values && typeof current.values === 'object') ? current.values : {};
+  const nextValues: Record<string, unknown> = { ...baseValues, [blockId]: value };
+  const legacyPatch: DraftPatch = {};
+
+  switch (blockId) {
+    case 'prep_checklist': {
+      const itemMap = value as Record<string, ChecklistState>;
+      const next = [...current.preps];
+      PREP_ITEM_IDS.forEach((id, i) => {
+        const s = itemMap?.[id];
+        if (s) next[i] = PREPLIKE_STATE_TO_NUM[s];
+      });
+      legacyPatch.preps = next;
+      break;
+    }
+    case 'strategy_adherence': {
+      const itemMap = value as Record<string, ChecklistState>;
+      const next = [...current.edges];
+      STRATEGY_ITEM_IDS.forEach((id, i) => {
+        const s = itemMap?.[id];
+        if (s) next[i] = PREPLIKE_STATE_TO_NUM[s];
+      });
+      legacyPatch.edges = next;
+      break;
+    }
+    case 'exec_checklist': {
+      const itemMap = value as Record<string, ChecklistState>;
+      const next: ExecutionChecklist = { ...current.executionChecklist };
+      for (const { id, key } of EXEC_ITEM_KEYS) {
+        const s = itemMap?.[id];
+        if (s) next[key] = execStateToVal(s);
+      }
+      legacyPatch.executionChecklist = next;
+      break;
+    }
+    case 'violations':
+      legacyPatch.violations = value == null ? '' : String(value); break;
+    case 'violation_pattern':
+      legacyPatch.violationPattern = String(value ?? ''); break;
+    case 'environment':
+      legacyPatch.env = ENV[String(value)] ?? ''; break;
+    case 'positioning':
+      legacyPatch.pos = POS[String(value)] ?? ''; break;
+    case 'emotion':
+      legacyPatch.emotion = EMOTION[String(value)] ?? ''; break;
+    case 'focus':
+      legacyPatch.focusRating = Number(value) || 0; break;
+    case 'biggest_mistake':
+      legacyPatch.bigMistake = MISTAKE[String(value)] ?? ''; break;
+    case 'repeat_mistake':
+      legacyPatch.repeatMistake = (value === '' || value == null) ? null : value === 'yes'; break;
+    case 'mindset_tags': {
+      const slugs = (value as string[]) ?? [];
+      legacyPatch.mindsetTags = slugs.map(s => MINDSET_TAG[s]).filter(Boolean); break;
+    }
+    case 'reflection':
+      legacyPatch.mindset = String(value ?? '').slice(0, 5000); break;
+    case 'decision_quality':
+      legacyPatch.decisionQuality = DECISION[String(value)] ?? ''; break;
+    default:
+      // Custom / schema-only block — generic store carries it alone.
+      break;
+  }
+
+  return { ...legacyPatch, values: nextValues };
 }
 
 // Internal exports for tests

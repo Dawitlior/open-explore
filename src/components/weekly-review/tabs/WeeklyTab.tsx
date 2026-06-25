@@ -162,6 +162,9 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
 
   const wk = useWeekAggregates(trades);
   const { draft, update, hardReset } = useWeekDraft(wk.weekKey);
+  // Wave-1 — template is hoisted to the outer tab so closeWeek() can freeze
+  // it into the WeekRecord. SchemaRendererSurface reuses the same instance.
+  const userTpl = useUserTemplate();
   const { isUSD } = useReviewUnit();
   // R-only portfolio guard — when no trade carries real $ data, suppress
   // misleading "0$" in USD-mode columns / dual-stats.
@@ -242,6 +245,11 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
       },
       reflection: draft.mindset,
       closedAt: new Date().toISOString(),
+      // Wave-1 — freeze the template + values the user filled against so
+      // historical render survives later template edits. Additive only.
+      schemaSnapshot: userTpl.template,
+      schemaVersion: userTpl.template.meta.templateVersion,
+      values: readDraft(draft),
     };
     await state.saveArchive([...state.archive, record]);
     // After closing the week, wipe ALL inputs so the new week starts clean.
@@ -288,6 +296,7 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
     return <SchemaRendererSurface
       T={T} isRTL={isRTL} draft={draft} update={update}
       border={border} fg={fg} muted={muted}
+      userTpl={userTpl}
     />;
   }
 
@@ -1045,10 +1054,11 @@ interface SchemaSurfaceProps {
   draft: ReturnType<typeof useWeekDraft>['draft'];
   update: ReturnType<typeof useWeekDraft>['update'];
   border: string; fg: string; muted: string;
+  userTpl: ReturnType<typeof useUserTemplate>;
 }
 
-function SchemaRendererSurface({ T, isRTL, draft, update, border, fg, muted }: SchemaSurfaceProps) {
-  const { template, loaded, save, resetToDefault } = useUserTemplate();
+function SchemaRendererSurface({ T, isRTL, draft, update, border, fg, muted, userTpl }: SchemaSurfaceProps) {
+  const { template, loaded, save, resetToDefault, pendingMerge, acceptPendingMerge, dismissPendingMerge } = userTpl;
   const [editMode, setEditMode] = useState(false);
 
   if (!loaded) {
@@ -1084,8 +1094,36 @@ function SchemaRendererSurface({ T, isRTL, draft, update, border, fg, muted }: S
     </div>
   ) : null;
 
+  const mergeBanner = pendingMerge ? (
+    <div style={{
+      padding: '10px 12px', border: `1px solid ${border}`, borderRadius: 10,
+      background: 'rgba(57,255,20,0.06)', color: fg, fontSize: 12,
+      display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'space-between',
+      flexDirection: isRTL ? 'row-reverse' : 'row',
+    }}>
+      <span>
+        {isRTL ? 'עדכון תבנית זמין' : 'Template update available'}
+        {' — '}
+        {pendingMerge.added.sections.length + pendingMerge.added.blocks.length + pendingMerge.added.items.length}
+        {' '}{isRTL ? 'תוספות' : 'additions'}
+      </span>
+      <span style={{ display: 'flex', gap: 8 }}>
+        <button type="button" onClick={() => void acceptPendingMerge()} style={{
+          padding: '4px 10px', fontSize: 12, borderRadius: 6,
+          border: `1px solid ${border}`, background: '#39FF14', color: '#061326',
+          cursor: 'pointer', fontWeight: 600,
+        }}>{isRTL ? 'קבל' : 'Accept'}</button>
+        <button type="button" onClick={dismissPendingMerge} style={{
+          padding: '4px 10px', fontSize: 12, borderRadius: 6,
+          border: `1px solid ${border}`, background: 'transparent', color: muted, cursor: 'pointer',
+        }}>{isRTL ? 'דחה' : 'Dismiss'}</button>
+      </span>
+    </div>
+  ) : null;
+
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'grid', gap: 18, paddingBottom: 48 }}>
+      {mergeBanner}
       {toolbar}
       <WeeklyReviewRenderer
         schema={template}
