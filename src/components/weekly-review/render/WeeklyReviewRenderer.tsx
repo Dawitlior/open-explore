@@ -241,6 +241,15 @@ function SectionShell({ section, card, T, isRTL, locale, children, isFirst, isLa
       );
     }
     const title = resolveLoc(section.title, locale);
+    // Phase 1: fill-mode (no rail) → MUI Card via BlockSection. Edit-mode keeps
+    // the inline-styled shell (Phase 3 owns customize-mode redesign).
+    if (!editMode) {
+      return (
+        <BlockSection title={title} emoji={section.icon} isRTL={isRTL}>
+          {children}
+        </BlockSection>
+      );
+    }
     return (
       <section style={{ ...card, ...greyedStyle }}>
         {rail && (
