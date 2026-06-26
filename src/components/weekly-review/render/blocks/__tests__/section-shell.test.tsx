@@ -8,9 +8,8 @@ import { WeeklyReviewRenderer } from '../../WeeklyReviewRenderer';
 import type { WeeklyReviewSchema } from '../../../lib/wr-schema';
 
 const schema: WeeklyReviewSchema = {
-  version: 1,
-  templateVersion: 1,
-  locale: { default: 'en' },
+  schemaFormatVersion: 1,
+  meta: { name: 'test', localeDefault: 'en', templateVersion: 1 },
   sections: [
     {
       id: 'prep',
