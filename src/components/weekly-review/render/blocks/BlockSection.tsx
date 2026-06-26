@@ -49,9 +49,8 @@ export function BlockSection({ title, emoji, isRTL, chromeless, children }: Prop
         {title && (
           <Stack
             direction={isRTL ? 'row-reverse' : 'row'}
-            alignItems="center"
             spacing={1}
-            sx={{ mb: 1.5 }}
+            sx={{ alignItems: 'center', mb: 1.5 }}
           >
             {emoji && (
               <Box
