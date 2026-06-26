@@ -265,13 +265,15 @@ const WeeklyReviewShellInner = ({ T, isRTL, trades }: Props) => {
         })}
       </div>
 
-      <Suspense fallback={<TabSkeleton muted={muted} isRTL={isRTL} />}>
-        {tab === 0 && <WeeklyTab {...shared} />}
-        {tab === 1 && <SetupsTab {...shared} />}
-        {tab === 2 && <MonthlyArchiveTab {...shared} />}
-        {tab === 3 && <SemiAnnualTab {...shared} />}
-        {tab === 4 && <AnnualTab {...shared} />}
-      </Suspense>
+      <ReflectionThemeProvider direction={isRTL ? 'rtl' : 'ltr'}>
+        <Suspense fallback={<TabSkeleton muted={muted} isRTL={isRTL} />}>
+          {tab === 0 && <WeeklyTab {...shared} />}
+          {tab === 1 && <SetupsTab {...shared} />}
+          {tab === 2 && <MonthlyArchiveTab {...shared} />}
+          {tab === 3 && <SemiAnnualTab {...shared} />}
+          {tab === 4 && <AnnualTab {...shared} />}
+        </Suspense>
+      </ReflectionThemeProvider>
     </div>
   );
 };
