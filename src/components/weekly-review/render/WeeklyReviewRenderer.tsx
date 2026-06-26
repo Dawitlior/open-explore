@@ -444,7 +444,7 @@ function BlockSwitch(p: BlockProps) {
     case 'select':    return <SelectBlock {...p} />;
     case 'multiselect': return <MultiSelectBlock {...p} />;
     case 'scale':     return <ScaleBlock {...p} />;
-    case 'score':     return <ScoreBlock {...p} />;
+    case 'score':     return <BlockScoreRing block={p.block} values={p.values} locale={p.locale} isRTL={p.isRTL} />;
     default:          return null;
   }
 }
