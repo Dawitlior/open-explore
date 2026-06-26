@@ -114,7 +114,7 @@ describe('Phase 1d — renderer wires the responsive grid in fill mode', () => {
     const deps = makeDeps();
     const slots = buildWeeklySystemSlots(deps);
     const { container } = render(
-      <ReflectionThemeProvider isRTL={false}>
+      <ReflectionThemeProvider direction="ltr">
         <WeeklyReviewRenderer
           schema={ORCA_DEFAULT_TEMPLATE}
           values={readDraft(EMPTY_DRAFT)}
@@ -139,7 +139,7 @@ describe('Phase 1d — renderer wires the responsive grid in fill mode', () => {
 
   it('RTL: ReflectionThemeProvider sets direction=rtl on the document subtree', () => {
     const { container } = render(
-      <ReflectionThemeProvider isRTL>
+      <ReflectionThemeProvider direction="rtl">
         <div data-testid="probe">x</div>
       </ReflectionThemeProvider>,
     );
