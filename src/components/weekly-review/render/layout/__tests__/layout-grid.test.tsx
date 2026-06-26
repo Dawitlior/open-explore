@@ -11,14 +11,14 @@
 
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
-import { WeeklyReviewRenderer } from '../WeeklyReviewRenderer';
-import { buildWeeklySystemSlots } from '../build-system-slots';
-import { resolveLayoutSpan, resolveSectionLayoutSpan, BLOCK_SPAN_DEFAULTS } from '../layout/layout-span';
-import { ORCA_DEFAULT_TEMPLATE } from '../../lib/wr-default-template';
-import { readDraft } from '../legacy-adapter';
-import { EMPTY_DRAFT } from '../../hooks/use-week-draft';
-import { ReflectionThemeProvider } from '../../theme/ReflectionThemeProvider';
-import type { Block, Section } from '../../lib/wr-schema';
+import { WeeklyReviewRenderer } from '../../WeeklyReviewRenderer';
+import { buildWeeklySystemSlots } from '../../build-system-slots';
+import { resolveLayoutSpan, resolveSectionLayoutSpan, BLOCK_SPAN_DEFAULTS } from '../layout-span';
+import { ORCA_DEFAULT_TEMPLATE } from '../../../lib/wr-default-template';
+import { readDraft } from '../../legacy-adapter';
+import { EMPTY_DRAFT } from '../../../hooks/use-week-draft';
+import { ReflectionThemeProvider } from '../../../theme/ReflectionThemeProvider';
+import type { Block, Section } from '../../../lib/wr-schema';
 
 const T_MIDNIGHT = {
   id: 'midnight',
