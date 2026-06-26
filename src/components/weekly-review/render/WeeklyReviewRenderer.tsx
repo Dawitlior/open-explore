@@ -26,6 +26,8 @@ import { CSS } from '@dnd-kit/utilities';
 import { TriState } from '../widgets/TriState';
 import { SectionTitle } from '../widgets/SectionTitle';
 import { themeBgs } from '../lib/theme-bg';
+import { BlockSection } from './blocks/BlockSection';
+import { BlockScoreRing } from './blocks/BlockScoreRing';
 import type {
   WeeklyReviewSchema,
   Section,
