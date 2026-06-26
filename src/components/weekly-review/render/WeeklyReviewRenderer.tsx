@@ -28,6 +28,8 @@ import { SectionTitle } from '../widgets/SectionTitle';
 import { themeBgs } from '../lib/theme-bg';
 import { BlockSection } from './blocks/BlockSection';
 import { BlockScoreRing } from './blocks/BlockScoreRing';
+import { ReflectionGrid, ReflectionGridItem } from './layout/ReflectionGrid';
+import { resolveLayoutSpan, resolveSectionLayoutSpan } from './layout/layout-span';
 import type {
   WeeklyReviewSchema,
   Section,
@@ -114,29 +116,48 @@ export function WeeklyReviewRenderer(props: WeeklyReviewRendererProps) {
     onTemplateChange(reorderSectionTo(schema, String(active.id), to));
   };
 
+  const renderedSections = sections.map((section, sIdx) => {
+    const blocks = editMode
+      ? [...section.blocks].sort((a, b) => a.order - b.order)
+      : [...section.blocks].filter(b => !b.hidden).sort((a, b) => a.order - b.order);
+    return (
+      <SectionShell
+        key={section.id}
+        section={section}
+        card={card}
+        isFirst={sIdx === 0}
+        isLast={sIdx === sections.length - 1}
+        {...props}
+      >
+        <BlocksList section={section} blocks={blocks} {...props} />
+      </SectionShell>
+    );
+  });
+
+  // Fill mode: responsive section-level grid (Phase 1d). Customize mode keeps
+  // the legacy vertical stack so drag-reorder stays simple.
+  if (!editMode || !onTemplateChange) {
+    return (
+      <div dir={isRTL ? 'rtl' : 'ltr'} style={{ paddingBottom: 48 }}>
+        <ReflectionGrid>
+          {sections.map((section, idx) => (
+            <ReflectionGridItem
+              key={section.id}
+              span={resolveSectionLayoutSpan(section)}
+            >
+              {renderedSections[idx]}
+            </ReflectionGridItem>
+          ))}
+        </ReflectionGrid>
+      </div>
+    );
+  }
+
   const body = (
     <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'grid', gap: 18, paddingBottom: 48 }}>
-      {sections.map((section, sIdx) => {
-        const blocks = editMode
-          ? [...section.blocks].sort((a, b) => a.order - b.order)
-          : [...section.blocks].filter(b => !b.hidden).sort((a, b) => a.order - b.order);
-        return (
-          <SectionShell
-            key={section.id}
-            section={section}
-            card={card}
-            isFirst={sIdx === 0}
-            isLast={sIdx === sections.length - 1}
-            {...props}
-          >
-            <BlocksList section={section} blocks={blocks} {...props} />
-          </SectionShell>
-        );
-      })}
+      {renderedSections}
     </div>
   );
-
-  if (!editMode || !onTemplateChange) return body;
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSectionDragEnd}>
