@@ -866,33 +866,6 @@ function ScaleBlock({ block, values, onChange, T, isRTL, locale }: BlockProps) {
   );
 }
 
-// ── Score (computed display) ───────────────────────────────────────────────
+// Score block: now rendered by BlockScoreRing (Phase 1, restored SVG donut
+// with locked 80/50 thresholds — see render/blocks/BlockScoreRing.tsx).
 
-function ScoreBlock({ block, values, T, isRTL, locale }: BlockProps) {
-  const tk = useTokens(T);
-  const cfg = block.config || {};
-  const source = cfg.source;
-  const max = cfg.scoreMax ?? 100;
-
-  // Derive: checklist_percent over source block's items
-  let score = 0;
-  if (source && cfg.method === 'checklist_percent') {
-    const items = (values[source] as Record<string, ChecklistState> | undefined) || {};
-    const set = Object.values(items).filter(s => s !== 'neutral');
-    const good = set.filter(s => s === 'done').length;
-    score = set.length ? Math.round((good / set.length) * max) : 0;
-  }
-  const color = score >= 70 ? tk.win : score >= 40 ? tk.warn : tk.loss;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const bg = themeBgs(T).overlay;
-  return (
-    <div style={{ display: 'grid', gap: 6 }}>
-      <Label text={resolveLabel(block.label, locale)} sub={resolveLabel(block.helpText, locale)} T={T} isRTL={isRTL} />
-      <div style={{
-        fontFamily: "'IBM Plex Mono', monospace",
-        fontSize: 28, fontWeight: 800, color,
-        textAlign: isRTL ? 'right' : 'left',
-      }}>{score}{max === 100 ? '%' : ` / ${max}`}</div>
-    </div>
-  );
-}
