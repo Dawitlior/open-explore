@@ -51,8 +51,7 @@ export function BlockScoreRing({ block, values, locale, isRTL }: Props) {
     <Stack
       direction={isRTL ? 'row-reverse' : 'row'}
       spacing={2}
-      alignItems="center"
-      sx={{ py: 1 }}
+      sx={{ alignItems: 'center', py: 1 }}
     >
       <Box
         component="svg"
