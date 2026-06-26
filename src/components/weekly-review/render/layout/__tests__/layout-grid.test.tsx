@@ -1,13 +1,17 @@
-// Phase 1d — Responsive grid layout regression guard.
+// Phase 1d (revised) — Packing card grid regression guard.
 //
 // Asserts:
-//   1. Per-block layoutSpan resolves correctly (defaults + explicit overrides).
-//   2. Per-section layoutSpan derives from contained blocks.
-//   3. Fill-mode renders sections inside <Grid container> with grid items
-//      sized via data-layout-span markers.
-//   4. RTL: ReflectionThemeProvider direction propagates so MUI Grid flows
-//      right-to-left.
-//   5. Customize mode (editMode=true) does NOT render the layout grid.
+//   1. Per-block layoutSpan defaults: ONLY trades-table + textarea are full.
+//      Every other block — including checklist + ai-insights — is `cell`.
+//   2. Explicit per-block `layoutSpan` overrides win over defaults.
+//   3. Per-section layoutSpan derives `full` from any contained full block;
+//      a section explicit override wins.
+//   4. Fill-mode renders a [data-reflection-grid] container with
+//      [data-layout-span] items, both 'cell' and 'full' types appear.
+//   5. EMPTY-CARDS REGRESSION: prep_checklist + exec_checklist render every
+//      one of their items in fill mode, in BOTH dir=ltr and dir=rtl. Must
+//      fail if either checklist goes empty again.
+//   6. Customize mode does NOT mount the layout grid (Phase 3 owns it).
 
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
@@ -49,107 +53,127 @@ function makeDeps() {
 const block = (id: string, type: Block['type'], extra: Partial<Block> = {}): Block =>
   ({ id, type, order: 0, ...extra });
 
-describe('Phase 1d — layoutSpan resolver', () => {
-  it('per-block defaults match the locked map', () => {
+function renderFill(direction: 'ltr' | 'rtl' = 'ltr') {
+  const deps = makeDeps();
+  const slots = buildWeeklySystemSlots(deps);
+  return render(
+    <ReflectionThemeProvider direction={direction}>
+      <WeeklyReviewRenderer
+        schema={ORCA_DEFAULT_TEMPLATE}
+        values={readDraft(EMPTY_DRAFT)}
+        onChange={() => {}}
+        T={T_MIDNIGHT}
+        isRTL={direction === 'rtl'}
+        locale={direction === 'rtl' ? 'he' : 'en'}
+        systemSlots={slots}
+      />
+    </ReflectionThemeProvider>,
+  );
+}
+
+describe('Phase 1d revised — layoutSpan defaults', () => {
+  it('only trades-table and textarea are full; everything else is cell', () => {
     expect(BLOCK_SPAN_DEFAULTS['system-trades-table']).toBe('full');
-    expect(BLOCK_SPAN_DEFAULTS['system-ai-insights']).toBe('full');
-    expect(BLOCK_SPAN_DEFAULTS['checklist']).toBe('full');
     expect(BLOCK_SPAN_DEFAULTS['textarea']).toBe('full');
+
+    // All other block types: cell.
+    expect(BLOCK_SPAN_DEFAULTS['checklist']).toBe('cell');
+    expect(BLOCK_SPAN_DEFAULTS['system-ai-insights']).toBe('cell');
     expect(BLOCK_SPAN_DEFAULTS['system-stat-chips']).toBe('cell');
     expect(BLOCK_SPAN_DEFAULTS['system-risk-gauges']).toBe('cell');
     expect(BLOCK_SPAN_DEFAULTS['system-grade']).toBe('cell');
     expect(BLOCK_SPAN_DEFAULTS['score']).toBe('cell');
+    expect(BLOCK_SPAN_DEFAULTS['binary']).toBe('cell');
+    expect(BLOCK_SPAN_DEFAULTS['number']).toBe('cell');
+    expect(BLOCK_SPAN_DEFAULTS['text']).toBe('cell');
+    expect(BLOCK_SPAN_DEFAULTS['select']).toBe('cell');
+    expect(BLOCK_SPAN_DEFAULTS['multiselect']).toBe('cell');
     expect(BLOCK_SPAN_DEFAULTS['scale']).toBe('cell');
   });
 
-  it('explicit layoutSpan on a block overrides the default', () => {
-    expect(resolveLayoutSpan(block('a', 'system-trades-table', { layoutSpan: 'cell' } as Partial<Block>))).toBe('cell');
-    expect(resolveLayoutSpan(block('b', 'score', { layoutSpan: 'full' } as Partial<Block>))).toBe('full');
+  it('explicit block layoutSpan overrides default', () => {
+    expect(resolveLayoutSpan(block('a', 'checklist', { layoutSpan: 'full' } as Partial<Block>))).toBe('full');
+    expect(resolveLayoutSpan(block('b', 'textarea',  { layoutSpan: 'cell' } as Partial<Block>))).toBe('cell');
   });
 
-  it('falls back to cell for unknown short blocks and full for textarea/checklist', () => {
-    expect(resolveLayoutSpan(block('c', 'binary'))).toBe('cell');
-    expect(resolveLayoutSpan(block('d', 'textarea'))).toBe('full');
-    expect(resolveLayoutSpan(block('e', 'checklist'))).toBe('full');
-  });
-
-  it('section span is full when any visible block is full', () => {
-    const s: Section = {
-      id: 's1', order: 0,
-      blocks: [block('x', 'score'), block('y', 'system-trades-table')],
+  it('section span is full when any visible block is full (textarea/trades-table)', () => {
+    const sMindset: Section = {
+      id: 'mindset', order: 0,
+      blocks: [block('emotion', 'select'), block('reflection', 'textarea')],
     };
-    expect(resolveSectionLayoutSpan(s)).toBe('full');
-  });
+    expect(resolveSectionLayoutSpan(sMindset)).toBe('full');
 
-  it('section span is cell when all visible blocks are cell', () => {
-    const s: Section = {
-      id: 's2', order: 0,
-      blocks: [block('x', 'score'), block('y', 'system-stat-chips')],
+    const sTrades: Section = {
+      id: 'trades', order: 0,
+      blocks: [block('tt', 'system-trades-table'), block('chips', 'system-stat-chips')],
     };
-    expect(resolveSectionLayoutSpan(s)).toBe('cell');
+    expect(resolveSectionLayoutSpan(sTrades)).toBe('full');
   });
 
-  it('section explicit layoutSpan overrides derivation', () => {
+  it('section span is cell when no blocks are full (prep, execution, strategy)', () => {
+    const sPrep: Section = {
+      id: 'prep', order: 0,
+      blocks: [block('p', 'checklist')],
+    };
+    const sExec: Section = {
+      id: 'execution', order: 0,
+      blocks: [block('s', 'score'), block('c', 'checklist')],
+    };
+    expect(resolveSectionLayoutSpan(sPrep)).toBe('cell');
+    expect(resolveSectionLayoutSpan(sExec)).toBe('cell');
+  });
+
+  it('explicit section layoutSpan overrides derivation', () => {
     const s = {
-      id: 's3', order: 0, layoutSpan: 'cell',
-      blocks: [block('y', 'system-trades-table')],
+      id: 'x', order: 0, layoutSpan: 'cell',
+      blocks: [block('t', 'system-trades-table')],
     } as Section;
     expect(resolveSectionLayoutSpan(s)).toBe('cell');
   });
 
-  it('section ignores hidden blocks when deriving span', () => {
+  it('hidden blocks are ignored when deriving section span', () => {
     const s: Section = {
-      id: 's4', order: 0,
+      id: 's', order: 0,
       blocks: [
-        block('h', 'system-trades-table', { hidden: true }),
-        block('v', 'score'),
+        block('t', 'system-trades-table', { hidden: true }),
+        block('s', 'score'),
       ],
     };
     expect(resolveSectionLayoutSpan(s)).toBe('cell');
   });
 });
 
-describe('Phase 1d — renderer wires the responsive grid in fill mode', () => {
-  it('renders a [data-reflection-grid] container with [data-layout-span] items', () => {
-    const deps = makeDeps();
-    const slots = buildWeeklySystemSlots(deps);
-    const { container } = render(
-      <ReflectionThemeProvider direction="ltr">
-        <WeeklyReviewRenderer
-          schema={ORCA_DEFAULT_TEMPLATE}
-          values={readDraft(EMPTY_DRAFT)}
-          onChange={() => {}}
-          T={T_MIDNIGHT}
-          isRTL={false}
-          locale="en"
-          systemSlots={slots}
-        />
-      </ReflectionThemeProvider>,
-    );
+describe('Phase 1d revised — renderer wires the packing grid in fill mode', () => {
+  it('renders a [data-reflection-grid] container with both cell + full items', () => {
+    const { container } = renderFill('ltr');
     const grids = container.querySelectorAll('[data-reflection-grid]');
     expect(grids.length).toBeGreaterThan(0);
     const items = Array.from(container.querySelectorAll('[data-layout-span]'));
     expect(items.length).toBeGreaterThan(0);
     const spans = new Set(items.map(i => i.getAttribute('data-layout-span')));
-    // Both span types should appear across the seed template (it has stat-chips
-    // cells and a trades-table full row).
     expect(spans.has('full')).toBe(true);
     expect(spans.has('cell')).toBe(true);
   });
 
-  it('RTL: ReflectionThemeProvider sets direction=rtl on the document subtree', () => {
-    const { container } = render(
-      <ReflectionThemeProvider direction="rtl">
-        <div data-testid="probe">x</div>
-      </ReflectionThemeProvider>,
-    );
-    // Emotion stylesheet + MUI ThemeProvider both honour direction; the
-    // closest <html dir> here is jsdom's, which we set via the scoped baseline.
-    // Smoke-check that the provider mounted without throwing in RTL mode.
-    expect(container.textContent).toBe('x');
+  it('full items get grid-column: 1 / -1 (span every track)', () => {
+    const { container } = renderFill('ltr');
+    const fullItems = container.querySelectorAll<HTMLElement>('[data-layout-span="full"]');
+    expect(fullItems.length).toBeGreaterThan(0);
+    fullItems.forEach(el => {
+      expect(el.style.gridColumn).toBe('1 / -1');
+    });
   });
 
-  it('customize mode does NOT mount the layout grid', () => {
+  it('grid uses repeat(auto-fill, minmax(...)) so cards pack without holes', () => {
+    const { container } = renderFill('ltr');
+    const grid = container.querySelector<HTMLElement>('[data-reflection-grid]')!;
+    expect(grid.style.display).toBe('grid');
+    expect(grid.style.gridTemplateColumns).toMatch(/repeat\(auto-fill,\s*minmax\(/);
+    // grid-auto-flow may be serialised as `dense` or `row dense`.
+    expect(grid.style.gridAutoFlow).toMatch(/dense/);
+  });
+
+  it('customize mode (editMode=true) does NOT mount the packing grid', () => {
     const deps = makeDeps();
     const slots = buildWeeklySystemSlots(deps);
     const { container } = render(
@@ -167,5 +191,55 @@ describe('Phase 1d — renderer wires the responsive grid in fill mode', () => {
     );
     expect(container.querySelector('[data-reflection-grid]')).toBeNull();
     expect(container.querySelector('[data-layout-span]')).toBeNull();
+  });
+});
+
+describe('Phase 1d revised — empty-cards regression (prep + execution)', () => {
+  // The bug: prep_checklist + exec_checklist used to render an empty card
+  // because they were classified `full` inside a nested half-width grid
+  // cell, collapsing to 0px. Now the section is the only grid participant
+  // and blocks stack vertically inside it; every checklist item MUST
+  // render its label.
+
+  const PREP_ITEMS = [
+    /Coffee ready/i,
+    /Open Statistical Trade Log/i,
+    /Open Weekly Calendar/i,
+    /Open Market Journal/i,
+  ];
+  const EXEC_ITEMS = [
+    /Entry followed the plan/i,
+    /Stop Loss respected/i,
+    /Did not chase price/i,
+    /Correct position size/i,
+    /No revenge trade/i,
+  ];
+
+  it('renders every prep + execution checklist item in dir=ltr', () => {
+    const { container } = renderFill('ltr');
+    const text = container.textContent || '';
+    PREP_ITEMS.forEach(re => expect(text).toMatch(re));
+    EXEC_ITEMS.forEach(re => expect(text).toMatch(re));
+  });
+
+  const PREP_ITEMS_HE = [
+    /הכנת קפה/,
+    /לוג סטטיסטי/,
+    /יומן קלנדרי/,
+    /Market Journal/,
+  ];
+  const EXEC_ITEMS_HE = [
+    /עקבה אחרי התוכנית/,
+    /Stop Loss נשמר/,
+    /לא רדפתי אחרי מחיר/,
+    /גודל פוזיציה נכון/,
+    /ללא מסחר נקמה/,
+  ];
+
+  it('renders every prep + execution checklist item in dir=rtl (Hebrew)', () => {
+    const { container } = renderFill('rtl');
+    const text = container.textContent || '';
+    PREP_ITEMS_HE.forEach(re => expect(text).toMatch(re));
+    EXEC_ITEMS_HE.forEach(re => expect(text).toMatch(re));
   });
 });

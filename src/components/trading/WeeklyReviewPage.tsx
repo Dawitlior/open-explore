@@ -42,10 +42,54 @@ function isLegacyRequested(): boolean {
   return false;
 }
 
+const WEEKLY_REVIEW_ALLOWED_EMAIL = 'dawitlior777@gmail.com';
+
 export const WeeklyReviewPage = (props: Props) => {
+  const { user } = useAuth();
+  const email = (user?.email || '').toLowerCase();
+  if (email !== WEEKLY_REVIEW_ALLOWED_EMAIL) {
+    return <WeeklyReviewMaintenanceGate isRTL={props.isRTL} />;
+  }
   // Native shell is now the default. Opt-in legacy via ?legacy=1.
   if (!isLegacyRequested()) return <WeeklyReviewShell T={props.T} isRTL={props.isRTL} trades={props.trades} />;
   return <LegacyIframePage {...props} />;
+};
+
+const WeeklyReviewMaintenanceGate = ({ isRTL }: { isRTL: boolean }) => {
+  const title = isRTL ? 'כרגע אנחנו משפצים פה' : 'Weekly Review is under maintenance';
+  const body  = isRTL
+    ? 'הסקירה השבועית סגורה זמנית בזמן שיפוצים. נשוב בקרוב — תודה על הסבלנות.'
+    : "The Weekly Review is temporarily closed while we rebuild it. We'll be back shortly — thanks for your patience.";
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+      dir={isRTL ? 'rtl' : 'ltr'}
+      data-weekly-review-maintenance
+      style={{
+        position: 'fixed', inset: 0, zIndex: 9999,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'rgba(6, 19, 38, 0.85)', backdropFilter: 'blur(6px)',
+        padding: 24,
+      }}
+    >
+      <div
+        style={{
+          maxWidth: 480, width: '100%',
+          background: '#0f1b2e', color: '#e9eef7',
+          border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16,
+          padding: '28px 24px', textAlign: isRTL ? 'right' : 'left',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+          fontFamily: "'Poppins', system-ui, -apple-system, sans-serif",
+        }}
+      >
+        <div style={{ fontSize: 38, lineHeight: 1, marginBottom: 12 }}>🛠️</div>
+        <h2 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 700 }}>{title}</h2>
+        <p style={{ margin: 0, color: '#a8b5cc', fontSize: 14, lineHeight: 1.5 }}>{body}</p>
+      </div>
+    </div>
+  );
 };
 
 const LegacyIframePage = ({ T, isRTL, trades, themeId }: Props) => {

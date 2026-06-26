@@ -29,7 +29,7 @@ import { themeBgs } from '../lib/theme-bg';
 import { BlockSection } from './blocks/BlockSection';
 import { BlockScoreRing } from './blocks/BlockScoreRing';
 import { ReflectionGrid, ReflectionGridItem } from './layout/ReflectionGrid';
-import { resolveLayoutSpan, resolveSectionLayoutSpan } from './layout/layout-span';
+import { resolveSectionLayoutSpan } from './layout/layout-span';
 import type {
   WeeklyReviewSchema,
   Section,
@@ -354,19 +354,12 @@ function BlocksList(p: WeeklyReviewRendererProps & { section: Section; blocks: B
     />
   ));
 
-  // Fill mode: block-level responsive grid (Phase 1d). Each block sits in a
-  // grid cell sized by `resolveLayoutSpan(block)`. Edit mode keeps the
-  // vertical list so the dnd-kit Sortable axis stays vertical.
+  // Fill mode: blocks stack vertically inside their section card. The packing
+  // grid lives ONE level up (section-level). Stacking blocks vertically here
+  // is what guarantees a checklist always gets the full width of its parent
+  // card — no nested half-width grid can starve it to 0px.
   if (!editMode || !onTemplateChange) {
-    return (
-      <ReflectionGrid>
-        {blocks.map((block, idx) => (
-          <ReflectionGridItem key={block.id} span={resolveLayoutSpan(block)}>
-            {list[idx]}
-          </ReflectionGridItem>
-        ))}
-      </ReflectionGrid>
-    );
+    return <>{list}</>;
   }
   return (
     <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
