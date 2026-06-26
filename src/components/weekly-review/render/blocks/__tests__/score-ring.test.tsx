@@ -10,6 +10,7 @@ import type { Block, ReviewValues, ChecklistState } from '../../../lib/wr-schema
 const block: Block = {
   id: 'execution_score',
   type: 'score',
+  order: 1,
   label: { en: 'Execution score', he: 'ציון ביצוע' },
   config: { source: 'rules', method: 'checklist_percent', scoreMax: 100 },
 };
