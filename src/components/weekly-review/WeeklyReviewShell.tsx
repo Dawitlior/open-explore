@@ -7,6 +7,7 @@ import type { Trade } from '@/data/trades';
 import { useWeeklyReviewState } from './hooks/use-weekly-review-state';
 import WeeklyReviewBanner from './widgets/WeeklyReviewBanner';
 import { ReviewUnitProvider, useReviewUnit } from './hooks/use-review-unit';
+import { ReflectionThemeProvider } from './theme/ReflectionThemeProvider';
 
 const WeeklyTab        = lazy(() => import('./tabs/WeeklyTab'));
 const SetupsTab        = lazy(() => import('./tabs/SetupsTab'));
