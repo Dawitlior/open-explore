@@ -22,7 +22,7 @@ export const ReflectionThemeProvider = ({ direction, children }: Props) => {
     () =>
       createCache({
         key: direction === 'rtl' ? 'mui-rtl' : 'mui',
-        stylisPlugins: direction === 'rtl' ? [prefixer, rtlPlugin] : [prefixer],
+        stylisPlugins: direction === 'rtl' ? [rtlPlugin, prefixer] : [prefixer],
       }),
     [direction],
   );
