@@ -29,7 +29,7 @@ import { themeBgs } from '../lib/theme-bg';
 import { BlockSection } from './blocks/BlockSection';
 import { BlockScoreRing } from './blocks/BlockScoreRing';
 import { ReflectionGrid, ReflectionGridItem } from './layout/ReflectionGrid';
-import { resolveLayoutSpan, resolveSectionLayoutSpan } from './layout/layout-span';
+import { resolveSectionLayoutSpan } from './layout/layout-span';
 import type {
   WeeklyReviewSchema,
   Section,
