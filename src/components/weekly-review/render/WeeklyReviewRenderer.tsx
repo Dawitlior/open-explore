@@ -354,7 +354,20 @@ function BlocksList(p: WeeklyReviewRendererProps & { section: Section; blocks: B
     />
   ));
 
-  if (!editMode || !onTemplateChange) return <>{list}</>;
+  // Fill mode: block-level responsive grid (Phase 1d). Each block sits in a
+  // grid cell sized by `resolveLayoutSpan(block)`. Edit mode keeps the
+  // vertical list so the dnd-kit Sortable axis stays vertical.
+  if (!editMode || !onTemplateChange) {
+    return (
+      <ReflectionGrid>
+        {blocks.map((block, idx) => (
+          <ReflectionGridItem key={block.id} span={resolveLayoutSpan(block)}>
+            {list[idx]}
+          </ReflectionGridItem>
+        ))}
+      </ReflectionGrid>
+    );
+  }
   return (
     <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <SortableContext items={blocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
