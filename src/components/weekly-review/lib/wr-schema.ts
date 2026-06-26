@@ -80,6 +80,10 @@ export interface Block {
   locked?: boolean;
   /** Wave-2 hide toggle — kept in schema, not rendered. */
   hidden?: boolean;
+  /** Phase 1d — fill-mode responsive grid hint. 'full' spans the row,
+   *  'cell' takes a single grid cell (half-width on md+). Optional;
+   *  per-type defaults live in render/layout/layout-span.ts. */
+  layoutSpan?: 'full' | 'cell';
   order: number;
 
   config?: {
@@ -137,6 +141,9 @@ export interface Section {
   system?: boolean;
   hidden?: boolean;
   collapsed?: boolean;
+  /** Phase 1d — fill-mode responsive grid hint. Falls back to span derived
+   *  from contained blocks (see render/layout/layout-span.ts). */
+  layoutSpan?: 'full' | 'cell';
   order: number;
   blocks: Block[];
 }
