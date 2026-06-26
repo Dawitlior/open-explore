@@ -7,6 +7,7 @@ import type { Trade } from '@/data/trades';
 import { useWeeklyReviewState } from './hooks/use-weekly-review-state';
 import WeeklyReviewBanner from './widgets/WeeklyReviewBanner';
 import { ReviewUnitProvider, useReviewUnit } from './hooks/use-review-unit';
+import { ReflectionThemeProvider } from './theme/ReflectionThemeProvider';
 
 const WeeklyTab        = lazy(() => import('./tabs/WeeklyTab'));
 const SetupsTab        = lazy(() => import('./tabs/SetupsTab'));
@@ -264,13 +265,15 @@ const WeeklyReviewShellInner = ({ T, isRTL, trades }: Props) => {
         })}
       </div>
 
-      <Suspense fallback={<TabSkeleton muted={muted} isRTL={isRTL} />}>
-        {tab === 0 && <WeeklyTab {...shared} />}
-        {tab === 1 && <SetupsTab {...shared} />}
-        {tab === 2 && <MonthlyArchiveTab {...shared} />}
-        {tab === 3 && <SemiAnnualTab {...shared} />}
-        {tab === 4 && <AnnualTab {...shared} />}
-      </Suspense>
+      <ReflectionThemeProvider direction={isRTL ? 'rtl' : 'ltr'}>
+        <Suspense fallback={<TabSkeleton muted={muted} isRTL={isRTL} />}>
+          {tab === 0 && <WeeklyTab {...shared} />}
+          {tab === 1 && <SetupsTab {...shared} />}
+          {tab === 2 && <MonthlyArchiveTab {...shared} />}
+          {tab === 3 && <SemiAnnualTab {...shared} />}
+          {tab === 4 && <AnnualTab {...shared} />}
+        </Suspense>
+      </ReflectionThemeProvider>
     </div>
   );
 };
