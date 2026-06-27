@@ -1,101 +1,146 @@
-# Phase 1d — Responsive Grid for Fill-Mode Display
+# Two separate plans — please approve each independently
 
-Pure layout change to the fill-mode render path. No data, no adapter, no system-slot markers, no input behavior, no customize-mode changes.
+---
 
-## Scope guardrails
+## PLAN 1 — Reflection Room: one coherent layout system (fill + customize)
 
-- Fill mode only: `editMode === false` path in `WeeklyReviewRenderer`.
-- Customize mode (`editMode === true`): **untouched** — keeps current single-column stack so drag-reorder stays trivial. Phase 3 owns any grid-in-edit-mode work.
-- Locked spine still renders unchanged; `data-system-slot` markers preserved verbatim. Wiring tests stay green.
-- Tokens only — gap uses `space.lg` from `REFLECTION_TOKENS`. No hardcoded spacing.
+Stop patching card-by-card. Rebuild the Weekly Review surface to a single layout spec shared by fill mode and customize mode. Customize mode = fill mode + edit affordances layered on top, not a different screen.
 
-## Two-tier grid (both tiers, per request)
+### 1. Shared layout primitives (one source of truth)
 
-1. **Section-level grid** — sections render as cards inside a responsive `<Grid container>` on the tab root.
-2. **Block-level grid** — inside a section card, blocks render inside a nested `<Grid container>`. Short blocks sit side-by-side; wide blocks span full row.
+New folder `src/components/weekly-review/render/layout/`:
 
-## Breakpoints
+- `ReflectionBoard.tsx` — top-level layout. Renders the three layout bands in fixed order:
+  1. **Risk band** (full-width row of 3 equal cards: Daily / Weekly / Monthly)
+  2. **Main grid** (auto-fill, minmax(320px,1fr), `align-items: stretch`, `grid-auto-flow: dense`)
+  3. **Footer band** (Decision Quality → Final Grade → AI Insights → Close-Week bar, full-width stack)
+- `ReflectionCard.tsx` — the ONE card primitive used everywhere. MUI `Card variant="outlined"` with strict anatomy:
+  - Header row: emoji + title + optional secondary line + underline divider (legacy look)
+  - Content slot
+  - Optional actions slot (used by customize mode)
+  - Watermark step-number badge (top-trailing, low opacity, derived from render order)
+  - `height: 100%` so siblings in a row are equal height
+  - Consistent padding/radius/elevation from `REFLECTION_TOKENS`
+- `useStepNumbers.ts` — walks the visible section list in render order and yields `{id → n}`. Auto-renumbers when sections are hidden/reordered. Risk band and footer band are excluded from numbering (or numbered separately — TBD by Lior; default: numbered with main grid only).
+- `card-slots.ts` — replaces `layout-span.ts`. Maps each section id to: `{ band: 'risk' | 'main' | 'footer', span: 'full' | 'cell', priority: number }`. Single source the renderer reads.
 
-- `xs` (<600px): 1 column. Single stack, correct semantic order, no horizontal scroll.
-- `sm` (600–899): 1 column still (forms read better full-width on small tablets).
-- `md+` (≥900px): 2 columns. Gap = `space.lg` (16px) horizontally and vertically.
+### 2. Section assignment (mirrors legacy top-to-bottom)
 
-Implemented via MUI `<Grid container spacing>` with `xs={12} md={6}` for cell blocks and `xs={12}` for full-width blocks. MUI Grid is RTL-aware out of the box via the theme `direction` already wired in Phase 0 — first card lands top-right in HE, top-left in EN. No manual `flex-direction: row-reverse` anywhere.
+| Band   | Sections                                                                              |
+| ------ | ------------------------------------------------------------------------------------- |
+| risk   | Daily Risk, Weekly Risk, Monthly Risk (3 equal cards, full-width band)                |
+| main   | Prep, Execution Quality, Strategy/Edge, Market Context, Mindset sub-cards, Trades table (full), Reflection textarea (full) |
+| footer | Decision Quality, Final Grade, AI Insights, Close-Week bar                            |
 
-## Width classification (`layoutSpan`)
+Within `main`, order = legacy order; trades table + reflection textarea remain `span:'full'`.
 
-New optional hint on block/section descriptors:
+### 3. Split the Mindset monolith
 
-```ts
-type LayoutSpan = "full" | "cell";
-```
+Replace the single 🧠 Mindset section with separate sibling sections, each a standard `ReflectionCard` participating in the main grid with its own step number:
 
-Resolution order in the renderer:
-1. Explicit `block.layoutSpan` if present.
-2. Otherwise, `BLOCK_SPAN_DEFAULTS[block.type]` lookup.
-3. Fallback rule: tables, long checklists, textareas → `"full"`; everything else → `"cell"`.
+- Mindset · Emotion ("how did the week feel")
+- Mindset · Focus (focus rating)
+- Mindset · Biggest Mistake
+- Mindset · Repeat Mistake
+- Mindset · Tags
+- Mindset · Reflection (textarea, `span:'full'`)
 
-### Default map (fill-mode display)
+Implemented by updating the default template (`wr-default-template.ts`) — schema unchanged.
 
-**Full-width (span 12):**
-- `trades-table` (system slot)
-- `reflection-textarea` / any `textarea` block
-- `checklist` blocks: prep, execution, strategy edges, lessons (long lists)
-- `ai-insights` Alert
-- Any block flagged `wide: true` in schema
+### 4. Responsiveness INSIDE each card
 
-**Grid-cell (xs=12, md=6):**
-- `score-ring`
-- `final-grade` / grade buckets
-- `stat-chips` group
-- `risk-gauges`
-- `market-context` selects
-- `emotion-pills`, `mistake-pills`, `decision-pills`
-- `focus-scale`
-- `tags`
-- Any short single-value or compact-control block
+Every internal control must reflow at any card width (full / half / third / mobile):
 
-Section-level defaults mirror block defaults: a section whose dominant block is full → section spans full; otherwise section is a grid cell. Authors can override via `section.layoutSpan`.
+- Chips/pills → MUI `Stack` with `flexWrap: 'wrap'` and `useFlexGap`
+- Selects, scales, checklists → 100% width, no fixed pixel widths
+- Risk gauges → `ResponsiveContainer` or SVG with `viewBox` + `width: 100%`
+- Numbers/labels → `clamp()` font sizes from tokens
+- Container queries (`@container`) on `ReflectionCard` so internal layout responds to card width, not viewport
+- Audit pass on every block component in `render/blocks/` — remove fixed `minWidth`/`width` pixels, replace with token-based clamps
 
-## RTL handling
+### 5. Customize mode = same board + edit layer
 
-- Grid container inherits theme `direction` already set by `ReflectionThemeProvider` from `isRTL`. MUI flips flow automatically.
-- All inner spacing uses MUI `sx` shorthand (`p`, `px`, `py`, `gap`) which compiles to logical properties via the existing stylis-RTL plugin from Phase 0.
-- Zero `marginLeft`/`paddingRight` literals introduced. Lint-style grep check in the test suite.
+Delete the old raw single-column edit view. Customize mode renders the exact same `ReflectionBoard` with an `editMode` flag that:
 
-## Test plan (added before bake)
+- Wraps each `ReflectionCard` in an `EditableCardShell` adding a MUI action row: drag handle (`DragIndicator`), visibility toggle (`Visibility` / `VisibilityOff` — replaces red 🚫), delete (`DeleteOutline`), all as `IconButton` + `Tooltip`, token colors
+- Hidden cards stay in the grid at `opacity: 0.4` with a "show" `IconButton`
+- Delete confirmation → MUI `Dialog`
+- Add-custom-item → MUI `TextField` + `Button` inside an `EditableCardShell` slot
+- Week-start picker → MUI `ToggleButtonGroup`; close-days → MUI `Select` (multiple)
+- Reset / Done → MUI `Button` (`variant="outlined"` / `"contained"`)
+- Merge-consent banner → MUI `Alert` with token styling
+- Mode transition: `Collapse` / `Fade` on the action row only; the board itself does not jump
+- Strip ALL literal leaked strings ("hidden", "HIDDEN", "RISK", "P", red 🚫) — replaced by icons + `sr-only` labels
 
-`layout-grid.test.tsx`:
-1. Renders fill mode with a mixed schema; asserts trades-table block container has `data-layout-span="full"` and its grid item carries `xs={12}` (no md override).
-2. Asserts score-ring, stat-chips, risk-gauges render with `data-layout-span="cell"` and grid items expose `md=6`.
-3. RTL: wraps render in `dir="rtl"` ReflectionThemeProvider; asserts grid container resolves to `direction: rtl` computed style.
-4. xs collapse: renders inside a container forced to <600px; asserts every grid item resolves to full width (single column).
-5. Customize-mode guard: `editMode={true}` renders **without** the grid container — sections remain a vertical stack.
+### 6. Two real bugs (folded into this pass)
 
-Existing 872 tests must stay green. Add ~5 new tests → target 877+.
+- **Execution Score "100 / 0"** — fix the score block: render a single value (`{score}%` inside the ring), choose color by threshold (≥80 success, ≥50 warning, else muted — never red on an unfilled/zero state). Locate in `render/blocks/ScoreBlock.tsx` / equivalent.
+- **R:R = 0.00 with no losses** — in `wr-metrics.ts` (or the R:R compute), if `avgLoss === 0` return `null`; the gauge renders "—" (or ∞ when there are wins but zero losses, per Lior's preference — default to "—").
 
-## Files
+### 7. RTL + mobile (verified, not assumed)
 
-- `src/components/weekly-review/render/layout/layout-span.ts` (new) — `LayoutSpan` type + `BLOCK_SPAN_DEFAULTS` map + `resolveLayoutSpan(block)` helper.
-- `src/components/weekly-review/render/layout/ReflectionGrid.tsx` (new) — thin wrapper over MUI `<Grid container>` bound to `space.lg`.
-- `src/components/weekly-review/render/WeeklyReviewRenderer.tsx` — wrap fill-mode section list in `<ReflectionGrid>`; keep edit-mode path unchanged.
-- `src/components/weekly-review/render/blocks/BlockSection.tsx` — wrap block children in a nested `<ReflectionGrid>` for fill mode; render each block in a `<Grid item>` sized by `resolveLayoutSpan`.
-- `src/components/weekly-review/render/layout/__tests__/layout-grid.test.tsx` (new).
+- `ReflectionBoard` sets `direction` from `ReflectionThemeProvider`; CSS Grid handles RTL natively (first card top-trailing in HE)
+- Mobile (<900px): risk band collapses to 1 column, main grid to 1 column, footer stacks; no horizontal scroll
+- Bake screenshots: fill + customize × HE + EN × desktop + mobile (8 shots) via Playwright
 
-## What is explicitly NOT in this phase
+### 8. Guardrails
 
-- No restyle of inputs, pills, selects (Phase 2).
-- No drag-handle grid (Phase 3).
-- No animation/transition polish (later phase).
-- No change to schema shape beyond the optional `layoutSpan` field.
+- Parity gate stays green (same blocks rendered, same data wired)
+- Flags untouched
+- Locked spine intact
+- All 884 tests stay green; add tests for: step-number derivation, band assignment, equal-height contract (data attribute check), no-leak-string assertion in customize mode
 
-## Gate
+### Technical notes
 
-1. `bun test` green (877+).
-2. Live bake by Lior, HE+EN, desktop+mobile:
-   - md+: 2-column grid, trades/checklists/reflection span full row, ScoreRing+grade+chips sit side-by-side cleanly.
-   - xs: single column, semantic order preserved, no horizontal scroll.
-   - HE: first card top-right, flow reads right-to-left.
-   - Customize mode: visually identical to today (still single column).
+- Files created: `ReflectionBoard.tsx`, `ReflectionCard.tsx`, `EditableCardShell.tsx`, `useStepNumbers.ts`, `card-slots.ts`
+- Files edited: `WeeklyReviewRenderer.tsx` (delegates to board), `BlockSection.tsx` (becomes a thin adapter or is replaced by `ReflectionCard`), `ReflectionGrid.tsx` (absorbed into board or kept as `main` band's grid), `layout-span.ts` (replaced by `card-slots.ts`), `wr-default-template.ts` (Mindset split), `ScoreBlock` + R:R metric (bug fixes), all `render/blocks/*` (internal responsiveness audit)
+- Customize-mode legacy raw renderer is deleted, not branched
 
-Stops here for bake before any further phase work.
+---
+
+## PLAN 2 — Calendar zoom-out (separate task, separate PR mindset)
+
+Apple-Calendar-style zoom-out in the existing Calendar Hub. Fully isolated from the Weekly Review work above.
+
+### Zoom levels
+
+`Day → Week → Month → Year` (4 levels). Day is the existing default.
+
+| Level | Shows                                                                  |
+| ----- | ---------------------------------------------------------------------- |
+| Day   | Existing day view, unchanged                                           |
+| Week  | 7-column strip, P&L per day, click a day → zoom into Day               |
+| Month | Current month grid (already partially exists) with P&L heatmap cells   |
+| Year  | 12 mini-month grids in a 4×3 layout, each cell color-coded by daily P&L|
+
+### Triggers (both)
+
+- **Control**: segmented `ToggleButtonGroup` in the calendar header: `D · W · M · Y`
+- **Gesture**:
+  - Desktop: ⌘/Ctrl + scroll-wheel zooms in/out one level per detent; pinch-zoom on trackpads via `wheel` event with `ctrlKey`
+  - Mobile: pinch gesture (`touchstart`/`touchmove` two-finger distance delta) zooms one level per threshold crossed
+  - Keyboard: `⌘+` / `⌘-` step zoom
+
+### Interaction feel (Apple parity)
+
+- Transition between levels: `framer-motion` shared-layout scale+fade, 220ms ease-out, anchored on the focused date so it "zooms into" the cell under cursor
+- Clicking a cell at any level zooms in one step centered on that cell
+- Back button / `Esc` zooms out one step
+- Current zoom level + focused date persisted in URL search params (`?zoom=month&date=2026-06-15`) so refresh keeps state
+
+### Files (planned)
+
+- `src/components/calendar/CalendarZoomProvider.tsx` — zoom state + gesture handlers
+- `src/components/calendar/views/YearView.tsx` (new)
+- `src/components/calendar/views/WeekStripView.tsx` (new if missing)
+- Update existing month/day view components to read zoom from context and render the segmented control
+- No backend changes — reuses existing trades query
+
+### Out of scope for this plan
+
+- New event types
+- Editing/creating events at year/month levels (read-only zoom-out; editing happens at day level as today)
+
+---
+
+**Please approve Plan 1 and/or Plan 2 (independently). I'll build only what you green-light, in the order you choose.**
