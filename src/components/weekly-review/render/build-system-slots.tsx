@@ -176,7 +176,7 @@ function StatChipsSlot({ L, wk, rr, n, showUSD }: BuildDeps) {
         gap: 1.25,
       }}
     >
-      <StatCard label={L.rr} value={rr.rr ? rr.rr.toFixed(2) : '0.00'} color={RT.text.primary} />
+      <StatCard label={L.rr} value={rr.avgLoss === 0 ? '—' : (rr.rr ? rr.rr.toFixed(2) : '0.00')} color={RT.text.primary} />
       <DualStatCard
         label={L.winR}
         r={fmtR(rr.avgWin)} d={fmtUSD(wk.avgWinUSD)} isUSD={showUSD}

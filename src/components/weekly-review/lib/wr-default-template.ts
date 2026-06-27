@@ -9,6 +9,7 @@
 //   • Recurring violation pattern is a free-TEXT block (not binary)
 //   • EN prep coffee = "Coffee ready ☕" (not "Make coffee ☕")
 //   • Decision options carry HE+EN sub-labels (Option.sublabel)
+//   • Psychology/mindset section is split into 6 sibling sections (Wave-1)
 //
 // All IDs are STABLE SLUGS — they are the canonical immutable identifiers
 // and MUST NEVER be renamed (Wave-2 merge is additive-only; rename would
@@ -213,11 +214,11 @@ export const ORCA_DEFAULT_TEMPLATE: WeeklyReviewSchema = {
       ],
     },
 
-    // ── 7. PSYCHOLOGY ───────────────────────────────────────────────────
+    // ── 7a. MINDSET — EMOTION ────────────────────────────────────────────
     {
-      id: 'psychology',
+      id: 'mindset-emotion',
       icon: '🧠',
-      title: { he: 'פסיכולוגיה וניהול עצמי', en: 'Mindset & self-management' },
+      title: { he: 'רגש דומיננטי', en: 'Dominant emotion' },
       order: 70,
       blocks: [
         {
@@ -239,6 +240,16 @@ export const ORCA_DEFAULT_TEMPLATE: WeeklyReviewSchema = {
             ],
           },
         },
+      ],
+    },
+
+    // ── 7b. MINDSET — FOCUS ─────────────────────────────────────────────
+    {
+      id: 'mindset-focus',
+      icon: '🧠',
+      title: { he: 'פוקוס', en: 'Focus' },
+      order: 71,
+      blocks: [
         {
           id: 'focus',
           type: 'scale',
@@ -253,6 +264,16 @@ export const ORCA_DEFAULT_TEMPLATE: WeeklyReviewSchema = {
             maxLabel: { he: 'Excellent', en: 'Excellent' },
           },
         },
+      ],
+    },
+
+    // ── 7c. MINDSET — BIGGEST MISTAKE ───────────────────────────────────
+    {
+      id: 'mindset-biggest-mistake',
+      icon: '🧠',
+      title: { he: 'הטעות הגדולה ביותר', en: 'Biggest mistake' },
+      order: 72,
+      blocks: [
         {
           id: 'biggest_mistake',
           type: 'select',
@@ -271,6 +292,16 @@ export const ORCA_DEFAULT_TEMPLATE: WeeklyReviewSchema = {
             ],
           },
         },
+      ],
+    },
+
+    // ── 7d. MINDSET — REPEAT MISTAKE ────────────────────────────────────
+    {
+      id: 'mindset-repeat-mistake',
+      icon: '🧠',
+      title: { he: 'חזרה על טעות', en: 'Repeat mistake' },
+      order: 73,
+      blocks: [
         {
           id: 'repeat_mistake',
           type: 'binary',
@@ -289,6 +320,16 @@ export const ORCA_DEFAULT_TEMPLATE: WeeklyReviewSchema = {
             },
           },
         },
+      ],
+    },
+
+    // ── 7e. MINDSET — TAGS ──────────────────────────────────────────────
+    {
+      id: 'mindset-tags',
+      icon: '🧠',
+      title: { he: 'תגיות מסחר', en: 'Trader tags' },
+      order: 74,
+      blocks: [
         {
           id: 'mindset_tags',
           type: 'multiselect',
@@ -310,6 +351,16 @@ export const ORCA_DEFAULT_TEMPLATE: WeeklyReviewSchema = {
             ],
           },
         },
+      ],
+    },
+
+    // ── 7f. MINDSET — REFLECTION ────────────────────────────────────────
+    {
+      id: 'mindset-reflection',
+      icon: '🧠',
+      title: { he: 'רפלקציה חופשית', en: 'Free reflection' },
+      order: 75,
+      blocks: [
         {
           id: 'reflection',
           type: 'textarea',

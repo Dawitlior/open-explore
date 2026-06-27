@@ -1,6 +1,7 @@
 // Phase 1 — ScoreRing block (fill mode display).
 // Restores the SVG donut killed during Wave-0 (legacy parity) and binds color
 // to the locked 80/50 thresholds defined in theme/tokens. Computed read-only.
+// Fix: render single "{score}%" inside ring; never use error color on unfilled state.
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -16,7 +17,9 @@ interface Props {
   isRTL: boolean;
 }
 
-function scoreColor(score: number): string {
+function scoreColor(score: number, hasData: boolean): string {
+  // No data yet — never paint red on an unfilled state.
+  if (!hasData) return T.accent.neutral;
   if (score >= T.thresholds.score.success) return T.accent.success;
   if (score >= T.thresholds.score.warning) return T.accent.warning;
   return T.accent.error;
@@ -28,14 +31,16 @@ export function BlockScoreRing({ block, values, locale, isRTL }: Props) {
   const max = (cfg.scoreMax as number | undefined) ?? 100;
 
   let score = 0;
+  let hasData = false;
   if (source && cfg.method === 'checklist_percent') {
     const items = (values[source] as Record<string, ChecklistState> | undefined) || {};
     const set = Object.values(items).filter((s) => s !== 'neutral');
     const good = set.filter((s) => s === 'done').length;
-    score = set.length ? Math.round((good / set.length) * max) : 0;
+    hasData = set.length > 0;
+    score = hasData ? Math.round((good / set.length) * max) : 0;
   }
 
-  const color = scoreColor(score);
+  const color = scoreColor(score, hasData);
   const pct = max > 0 ? Math.min(1, Math.max(0, score / max)) : 0;
 
   const size = 96;
@@ -88,11 +93,11 @@ export function BlockScoreRing({ block, values, locale, isRTL }: Props) {
           fill={color}
           style={{
             fontFamily: T.typography.fontFamilyMono,
-            fontSize: 22,
+            fontSize: 20,
             fontWeight: 700,
           }}
         >
-          {max === 100 ? `${score}` : `${score}`}
+          {`${score}%`}
         </text>
       </Box>
       <Box sx={{ minWidth: 0, textAlign: isRTL ? 'right' : 'left' }}>
@@ -120,7 +125,7 @@ export function BlockScoreRing({ block, values, locale, isRTL }: Props) {
             letterSpacing: '0.5px',
           }}
         >
-          {max === 100 ? `${score} / 100` : `${score} / ${max}`}
+          {`${score}%`}
         </Typography>
       </Box>
     </Stack>
