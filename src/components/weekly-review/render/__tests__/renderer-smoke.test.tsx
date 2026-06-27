@@ -48,7 +48,7 @@ describe('WeeklyReviewRenderer (Wave 0 smoke)', () => {
     expect(container.textContent).toContain('Execution quality');
     expect(container.textContent).toContain('Strategy adherence');
     expect(container.textContent).toContain('Market context');
-    expect(container.textContent).toContain('Mindset & self-management');
+    expect(container.textContent).toContain('Dominant emotion');
     expect(container.textContent).toContain('Decision quality');
   });
 
