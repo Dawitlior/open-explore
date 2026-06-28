@@ -350,14 +350,24 @@ export const ModeSwitch = ({ T, isRTL }: ModeSwitchProps) => {
                       onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.14)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.45)'; }}
                       onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; }}
                       >{isRTL ? 'ביטול' : 'Cancel'}</button>
-                      <button onClick={handleTierConfirm} style={{
+                      <button
+                        onClick={handleTierConfirm}
+                        onPointerUp={(e) => {
+                          if (e.pointerType === 'touch' || e.pointerType === 'pen') {
+                            e.preventDefault();
+                            handleTierConfirm();
+                          }
+                        }}
+                        style={{
                         position: 'relative', overflow: 'hidden',
-                        padding: '10px 28px', border: 'none', borderRadius: 12,
+                        padding: '12px 28px', border: 'none', borderRadius: 12,
                         color: '#0a0e1a', cursor: 'pointer', fontSize: 12, fontWeight: 800,
-                        letterSpacing: '0.06em',
+                        letterSpacing: '0.06em', minHeight: 44,
                         background: `linear-gradient(135deg, ${accent}, ${accent}cc)`,
                         boxShadow: `0 10px 28px -8px ${glow}, inset 0 1px 0 rgba(255,255,255,0.3)`,
                         transition: 'all .2s',
+                        touchAction: 'manipulation',
+                        WebkitTapHighlightColor: 'transparent',
                       }}
                       onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.12)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
                       onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'translateY(0)'; }}
