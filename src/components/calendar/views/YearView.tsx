@@ -62,35 +62,37 @@ function MiniMonth({
         background: T.bg.card,
         border: `1px solid ${isCurrentMonth ? T.accent.cyan : T.border.subtle}`,
         borderRadius: T.radius.md,
-        padding: '10px 10px 12px',
+        padding: compact ? '6px 6px 8px' : '10px 10px 12px',
         cursor: 'pointer',
         boxShadow: isCurrentMonth ? `0 0 0 1px ${T.accent.cyan}40` : 'none',
-        display: 'flex', flexDirection: 'column', gap: 6,
+        display: 'flex', flexDirection: 'column', gap: compact ? 4 : 6,
+        minWidth: 0, overflow: 'hidden',
       }}
     >
       {/* Title */}
       <div style={{
-        fontSize: 12, fontWeight: 700,
+        fontSize: compact ? 11 : 12, fontWeight: 700,
         color: isCurrentMonth ? T.accent.cyan : T.text.primary,
         letterSpacing: '0.04em',
         paddingBottom: 4,
         borderBottom: `1px solid ${T.border.subtle}`,
+        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
       }}>
         {monthLabels[monthIdx]}
       </div>
 
       {/* Weekday headers */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1 }}>
         {dowLabels.map((d, i) => (
           <div key={i} style={{
-            textAlign: 'center', fontSize: 9, fontWeight: 600,
+            textAlign: 'center', fontSize: compact ? 8 : 9, fontWeight: 600,
             color: T.text.muted, letterSpacing: '0.02em',
           }}>{d}</div>
         ))}
       </div>
 
       {/* Day grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1 }}>
         {calDays.map((d, i) => {
           if (!d) return <div key={i} style={{ aspectRatio: '1' }} />;
           const agg = dayPnl[`${monthIdx}-${d}`];
