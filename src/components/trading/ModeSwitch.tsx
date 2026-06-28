@@ -112,19 +112,28 @@ export const ModeSwitch = ({ T, isRTL }: ModeSwitchProps) => {
         <div style={{ display: 'flex', gap: 4, background: T.bg.primary, borderRadius: T.radius.md, padding: 4 }}>
           {TIER_OPTIONS.map(m => {
             const color = m.color(T);
+            const openTier = () => {
+              if (m.id !== tier) { setPhase('ask'); setPendingTier(m.id); }
+            };
             return (
             <button
               key={m.id}
               type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (m.id !== tier) { setPhase('ask'); setPendingTier(m.id); }
+              onClick={(e) => { e.stopPropagation(); openTier(); }}
+              // iOS Safari sometimes drops synthetic click after touch — use a pointer
+              // fallback so taps reliably open the modal on mobile.
+              onPointerUp={(e) => {
+                if (e.pointerType === 'touch' || e.pointerType === 'pen') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  openTier();
+                }
               }}
               style={{
                 flex: 1,
                 // Larger tap targets so mobile users can reliably hit them.
-                padding: '10px 6px',
-                minHeight: 40,
+                padding: '12px 6px',
+                minHeight: 44,
                 fontSize: 11, fontWeight: 700, letterSpacing: '0.06em',
                 textTransform: 'uppercase', border: 'none', borderRadius: T.radius.sm,
                 cursor: 'pointer',
@@ -133,9 +142,10 @@ export const ModeSwitch = ({ T, isRTL }: ModeSwitchProps) => {
                 transition: 'all 0.2s', position: 'relative',
                 touchAction: 'manipulation',
                 WebkitTapHighlightColor: 'transparent',
+                userSelect: 'none',
               }}
             >
-              {tier === m.id && <div style={{ position: 'absolute', bottom: 0, left: '20%', right: '20%', height: 2, background: color, borderRadius: 1 }} />}
+              {tier === m.id && <div style={{ position: 'absolute', bottom: 0, left: '20%', right: '20%', height: 2, background: color, borderRadius: 1, pointerEvents: 'none' }} />}
               {isRTL ? m.labelHe : m.label}
             </button>
           );})}
@@ -340,14 +350,24 @@ export const ModeSwitch = ({ T, isRTL }: ModeSwitchProps) => {
                       onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.14)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.45)'; }}
                       onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; }}
                       >{isRTL ? 'ביטול' : 'Cancel'}</button>
-                      <button onClick={handleTierConfirm} style={{
+                      <button
+                        onClick={handleTierConfirm}
+                        onPointerUp={(e) => {
+                          if (e.pointerType === 'touch' || e.pointerType === 'pen') {
+                            e.preventDefault();
+                            handleTierConfirm();
+                          }
+                        }}
+                        style={{
                         position: 'relative', overflow: 'hidden',
-                        padding: '10px 28px', border: 'none', borderRadius: 12,
+                        padding: '12px 28px', border: 'none', borderRadius: 12,
                         color: '#0a0e1a', cursor: 'pointer', fontSize: 12, fontWeight: 800,
-                        letterSpacing: '0.06em',
+                        letterSpacing: '0.06em', minHeight: 44,
                         background: `linear-gradient(135deg, ${accent}, ${accent}cc)`,
                         boxShadow: `0 10px 28px -8px ${glow}, inset 0 1px 0 rgba(255,255,255,0.3)`,
                         transition: 'all .2s',
+                        touchAction: 'manipulation',
+                        WebkitTapHighlightColor: 'transparent',
                       }}
                       onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.12)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
                       onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'translateY(0)'; }}

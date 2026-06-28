@@ -1693,7 +1693,7 @@ const MarketSentimentGauge = ({ value, dir, th, onChangeValue, disabled }: { val
 const TCard = ({ trade, idx, onChange, onDel, f, dir, disabled, th }: any) => {
   const p = parseFloat(trade.pnl) || 0;
   const isR = useJournalIsR();
-  const rVal = (() => { try { return getR(trade as any); } catch { return 0; } })();
+  const rVal = (() => { try { return getR(trade as any) ?? 0; } catch { return 0; } })();
   const sc = trade.side === 'LONG' ? '#00FFA3' : trade.side === 'SHORT' ? '#FF4D4D' : '#5AA9FF';
   return (
     <div style={{
