@@ -39,11 +39,9 @@ function readAccent(): string {
 export const OrcaBootLoader = ({
   label = 'Investment Terminal',
   frame = 'fixed',
-  contentOffsetY = 0,
 }: {
   label?: string;
   frame?: 'fixed' | 'absolute';
-  contentOffsetY?: number;
 }) => {
   const [bg, setBg] = useState<string>(() => readCurrentSurface());
   const [accent, setAccent] = useState<string>(() => readAccent());
@@ -98,7 +96,6 @@ export const OrcaBootLoader = ({
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           flexDirection: 'column', gap: 28,
-          transform: contentOffsetY ? `translateY(${contentOffsetY}px)` : undefined,
         }}
       >
         <div style={{ position: 'relative', width: 96, height: 96 }}>
