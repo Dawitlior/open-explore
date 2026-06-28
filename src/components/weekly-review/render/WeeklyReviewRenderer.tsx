@@ -137,24 +137,47 @@ export function WeeklyReviewRenderer(props: WeeklyReviewRendererProps) {
     );
   });
 
-  // Fill mode: responsive section-level grid (Phase 1d). Customize mode keeps
-  // the legacy vertical stack so drag-reorder stays simple.
+  // Step numbers for the main band only — risk/footer cards aren't numbered.
+  const stepNumbers = useStepNumbers(sections);
+
+  // Fill mode: 3-band ReflectionBoard. Customize mode keeps the legacy
+  // vertical stack with dnd-kit so drag-reorder UX is unchanged.
   if (!editMode || !onTemplateChange) {
+    const bands = groupSectionsByBand(sections);
+    const toItem = (section: Section) => {
+      const sIdx = sections.indexOf(section);
+      const blocks = [...section.blocks].filter(b => !b.hidden).sort((a, b) => a.order - b.order);
+      const span = resolveSectionLayoutSpan(section);
+      const title = resolveLoc(section.title, locale);
+      const band = resolveBand(section);
+      const node = section.chromeless ? (
+        <ReflectionCard isRTL={isRTL} chromeless>
+          <BlocksList section={section} blocks={blocks} {...props} />
+        </ReflectionCard>
+      ) : (
+        <ReflectionCard
+          isRTL={isRTL}
+          title={title}
+          emoji={section.icon}
+          step={band === 'main' ? stepNumbers[section.id] : undefined}
+        >
+          <BlocksList section={section} blocks={blocks} {...props} />
+        </ReflectionCard>
+      );
+      // Silence unused-var warning while keeping the signature stable.
+      void sIdx;
+      return { id: section.id, span, node };
+    };
     return (
-      <div dir={isRTL ? 'rtl' : 'ltr'} style={{ paddingBottom: 48 }}>
-        <ReflectionGrid>
-          {sections.map((section, idx) => (
-            <ReflectionGridItem
-              key={section.id}
-              span={resolveSectionLayoutSpan(section)}
-            >
-              {renderedSections[idx]}
-            </ReflectionGridItem>
-          ))}
-        </ReflectionGrid>
-      </div>
+      <ReflectionBoard
+        isRTL={isRTL}
+        risk={bands.risk.map(toItem)}
+        main={bands.main.map(toItem)}
+        footer={bands.footer.map(toItem)}
+      />
     );
   }
+  void renderedSections;
 
   const body = (
     <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'grid', gap: 18, paddingBottom: 48 }}>
