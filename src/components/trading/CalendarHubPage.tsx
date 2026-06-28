@@ -301,20 +301,42 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8 }}>
                     {calDays.map((d, i) => {
                       const dd = d ? calDayPnl[d] : null;
-                      const intensity = dd ? Math.min(1, Math.abs(dd.pnl) / 10) : 0;
+                      // Active-mode driven lead value (controls color + dominant figure).
+                      const ddR = dd && dd.rValid > 0;
+                      const ddLead = dd ? (isR && ddR ? dd.rTotal : dd.pnl) : 0;
+                      const leadPos = ddLead >= 0;
+                      const intensity = dd ? Math.min(1, Math.abs(isR && ddR ? dd.rTotal : dd.pnl) / (isR && ddR ? 2 : 10)) : 0;
                       const riskColor = d ? getDayRiskColor(trades, d, calMonth, calYear) : 'neutral';
                       const isDarkRed = riskColor === 'darkred';
                       const isToday = isCurrentMonth && d === todayN;
                       const macros = d ? macroByDay.get(d) ?? [] : [];
                       const dayPast = !!d && new Date(calYear, calMonth, d) < new Date(now.getFullYear(), now.getMonth(), now.getDate());
                       const hasContent = !!dd || macros.length > 0;
+                      const tintGreen = `${T.accent.green}${Math.round(15 + intensity * 25).toString(16).padStart(2, '0')}`;
+                      const tintRed = `${T.accent.red}${Math.round(12 + intensity * 20).toString(16).padStart(2, '0')}`;
+                      const borderGreen = `${T.accent.green}${Math.round(40 + intensity * 60).toString(16)}`;
+                      const borderRed = `${T.accent.red}${Math.round(40 + intensity * 60).toString(16)}`;
+                      const moneyStr = dd ? `${dd.pnl >= 0 ? '+' : '-'}$${Math.abs(dd.pnl).toFixed(0)}` : '';
+                      const rStr = dd ? (dd.rValid === 0 ? 'N/A' : `${dd.rTotal >= 0 ? '+' : ''}${dd.rTotal.toFixed(1)}R`) : '';
+                      const bigStr = isR ? rStr : moneyStr;
+                      const sideStr = isR ? moneyStr : rStr;
+                      const bigColor = isDarkRed
+                        ? T.accent.red
+                        : !dd
+                          ? T.text.muted
+                          : isR
+                            ? (dd.rValid === 0 ? T.text.muted : dd.rTotal >= 0 ? T.accent.green : T.accent.red)
+                            : (dd.pnl >= 0 ? T.accent.green : T.accent.red);
+                      const sideColor = isR
+                        ? (dd && dd.pnl >= 0 ? T.accent.green : T.accent.red)
+                        : (!dd || dd.rValid === 0 ? T.text.muted : dd.rTotal >= 0 ? T.accent.green : T.accent.red);
                       return (
                         <motion.div key={i} whileHover={hasContent ? { scale: 1.03 } : {}}
                           onClick={() => { if (hasContent && d) setCalModalDay(d); }}
                           style={{
                             minHeight: 130, borderRadius: T.radius.md,
-                            border: `1px solid ${isToday ? T.accent.cyan : isDarkRed ? `${T.accent.red}60` : dd ? (dd.pnl > 0 ? `${T.accent.green}${Math.round(40 + intensity * 60).toString(16)}` : dd.pnl < 0 ? `${T.accent.red}${Math.round(40 + intensity * 60).toString(16)}` : `${T.accent.orange}30`) : T.border.subtle}`,
-                            background: isDarkRed ? `${T.accent.red}25` : dd ? (dd.pnl > 0 ? `${T.accent.green}${Math.round(15 + intensity * 25).toString(16).padStart(2, '0')}` : dd.pnl < 0 ? `${T.accent.red}${Math.round(12 + intensity * 20).toString(16).padStart(2, '0')}` : `${T.accent.orange}12`) : 'transparent',
+                            border: `1px solid ${isToday ? T.accent.cyan : isDarkRed ? `${T.accent.red}60` : dd ? (leadPos && ddLead !== 0 ? borderGreen : ddLead < 0 ? borderRed : `${T.accent.orange}30`) : T.border.subtle}`,
+                            background: isDarkRed ? `${T.accent.red}25` : dd ? (leadPos && ddLead !== 0 ? tintGreen : ddLead < 0 ? tintRed : `${T.accent.orange}12`) : 'transparent',
                             padding: '10px 12px', cursor: hasContent ? 'pointer' : 'default', display: 'flex', flexDirection: 'column',
                           }}>
                           {d && (<>
@@ -322,13 +344,13 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
                               <span>{d}</span>{isDarkRed && <span>⚠️</span>}
                             </div>
                             {dd && (<>
-                              <div style={{ fontSize: 22, fontWeight: 800, color: isDarkRed ? T.accent.red : dd.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace", marginTop: 6 }}>
-                                {dd.pnl >= 0 ? '+' : '-'}${Math.abs(dd.pnl).toFixed(0)}
+                              <div style={{ fontSize: 22, fontWeight: 800, color: bigColor, fontFamily: "'JetBrains Mono', monospace", marginTop: 6 }}>
+                                {bigStr}
                               </div>
                               <div style={{ fontSize: 11, color: T.text.muted, marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
                                 <span>{dd.trades} {isRTL ? 'עסקאות' : 'tr'} · {dd.wins}/{dd.trades} W</span>
-                                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: dd.rValid === 0 ? T.text.muted : dd.rTotal >= 0 ? T.accent.green : T.accent.red }}>
-                                  {dd.rValid === 0 ? 'N/A' : `${dd.rTotal >= 0 ? '+' : ''}${dd.rTotal.toFixed(1)}R`}
+                                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: sideColor }}>
+                                  {sideStr}
                                 </span>
                               </div>
                             </>)}
@@ -347,15 +369,28 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
                 <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, fontWeight: 700 }}>
                   {isRTL ? 'סיכום שבועי' : 'Weekly Summary'}
                 </div>
-                {weekStats.map((w, i) => (
-                  <GlassCard T={T} key={i} style={{ marginBottom: 8, padding: 12 }}>
-                    <div style={{ fontSize: 9, color: T.text.muted, marginBottom: 4 }}>{isRTL ? `שבוע ${w.week}` : `Week ${w.week}`}</div>
-                    <div style={{ fontSize: 17, fontWeight: 700, color: w.pnl >= 0 ? T.accent.green : w.pnl < 0 ? T.accent.red : T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>
-                      {w.pnl !== 0 ? `${w.pnl >= 0 ? '+' : ''}$${w.pnl.toFixed(2)}` : '$0.00'}
-                    </div>
-                    <div style={{ fontSize: 9, color: T.text.muted, marginTop: 2 }}>{w.trades} {isRTL ? 'עסקאות' : 'trades'} · {w.days}d</div>
-                  </GlassCard>
-                ))}
+                {weekStats.map((w, i) => {
+                  const lead = isR && w.rValid > 0 ? w.rTotal : w.pnl;
+                  const leadColor = lead > 0 ? T.accent.green : lead < 0 ? T.accent.red : T.text.muted;
+                  const leadStr = isR
+                    ? (w.rValid === 0 ? '—' : `${w.rTotal >= 0 ? '+' : ''}${w.rTotal.toFixed(1)}R`)
+                    : (w.pnl !== 0 ? `${w.pnl >= 0 ? '+' : ''}$${w.pnl.toFixed(2)}` : '$0.00');
+                  const sideStr = isR
+                    ? (w.pnl !== 0 ? `${w.pnl >= 0 ? '+' : ''}$${w.pnl.toFixed(0)}` : '$0')
+                    : (w.rValid === 0 ? '' : `${w.rTotal >= 0 ? '+' : ''}${w.rTotal.toFixed(1)}R`);
+                  return (
+                    <GlassCard T={T} key={i} style={{ marginBottom: 8, padding: 12 }}>
+                      <div style={{ fontSize: 9, color: T.text.muted, marginBottom: 4 }}>{isRTL ? `שבוע ${w.week}` : `Week ${w.week}`}</div>
+                      <div style={{ fontSize: 17, fontWeight: 700, color: leadColor, fontFamily: "'JetBrains Mono', monospace" }}>
+                        {leadStr}
+                      </div>
+                      <div style={{ fontSize: 9, color: T.text.muted, marginTop: 2, display: 'flex', justifyContent: 'space-between', gap: 6 }}>
+                        <span>{w.trades} {isRTL ? 'עסקאות' : 'trades'} · {w.days}d</span>
+                        {sideStr && <span style={{ fontFamily: "'JetBrains Mono', monospace" }}>{sideStr}</span>}
+                      </div>
+                    </GlassCard>
+                  );
+                })}
               </div>
             </div>
           )}
