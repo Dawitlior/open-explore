@@ -191,7 +191,7 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
             {zoomLevel === 'year' && (
               <YearView T={T} isRTL={isRTL} trades={trades} year={calYear} />
             )}
-            {(zoomLevel === 'month' || zoomLevel === 'day') && (
+            {zoomLevel === 'month' && (
               <>
                 {/* compact month grid for mobile */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 4 }}>
