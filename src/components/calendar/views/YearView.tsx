@@ -117,7 +117,7 @@ function MiniMonth({
               style={{
                 aspectRatio: '1',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 10, fontWeight: isToday || hasTrades ? 700 : 500,
+                fontSize: compact ? 9 : 10, fontWeight: isToday || hasTrades ? 700 : 500,
                 color, background: bg,
                 border: 'none', borderRadius: '50%',
                 cursor: hasTrades ? 'pointer' : 'default',
