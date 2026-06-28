@@ -29,8 +29,7 @@ describe('YearView mobile grid', () => {
       </CalendarZoomProvider>
     );
 
-    const january = screen.getByText('ינואר').parentElement?.parentElement as HTMLElement;
-    const grid = january?.firstElementChild as HTMLElement;
+    const grid = screen.getByText('ינואר').parentElement?.parentElement as HTMLElement;
     expect(grid.style.gridTemplateColumns).toContain('160px');
     expect(grid.style.gridTemplateColumns).toContain('auto-fit');
 
