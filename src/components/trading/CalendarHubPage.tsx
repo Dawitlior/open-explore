@@ -17,7 +17,6 @@ import {
   useCalendarGestures,
   type ZoomLevel,
 } from '@/components/calendar/CalendarZoomProvider';
-import { WeekStripView } from '@/components/calendar/views/WeekStripView';
 import { YearView } from '@/components/calendar/views/YearView';
 
 type Props = {
