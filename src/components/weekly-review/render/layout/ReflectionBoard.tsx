@@ -67,7 +67,7 @@ function Band({ kind, items }: BandProps) {
     style.gridAutoFlow = 'row';
   }
   return (
-    <div data-reflection-band={kind} style={style}>
+    <div data-reflection-band={kind} data-reflection-grid={kind} style={style}>
       {items.map(it => (
         <div
           key={it.id}
