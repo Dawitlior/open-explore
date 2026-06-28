@@ -206,7 +206,7 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
                     const dayPast = !!d && new Date(calYear, calMonth, d) < new Date(now.getFullYear(), now.getMonth(), now.getDate());
                     const hasContent = !!dd || macros.length > 0;
                     return (
-                      <button key={i} disabled={!d} onClick={() => { if (hasContent && d) { if (zoomLevel === 'day') setCalModalDay(d); else { setFocusedDate(new Date(calYear, calMonth, d)); zoomIn(new Date(calYear, calMonth, d)); } } }}
+                      <button key={i} disabled={!d} onClick={() => { if (hasContent && d) setCalModalDay(d); }}
                         style={{ aspectRatio: '1', border: 'none', background: 'transparent', cursor: hasContent ? 'pointer' : 'default', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, padding: 0, position: 'relative' }}>
                         {d && (<>
                           <span style={{ width: 30, height: 30, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: isToday ? 700 : 500, color: isToday ? '#001023' : T.text.primary, background: isToday ? T.accent.cyan : 'transparent' }}>{d}</span>
