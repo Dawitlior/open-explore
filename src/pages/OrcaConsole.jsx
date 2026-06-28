@@ -13,6 +13,8 @@ import {
   Terminal, Play, Copy, Check, Filter, Sun, Moon, PanelLeft, FileText,
 } from "lucide-react";
 import { useAdminLive } from "@/hooks/use-admin-live";
+import { useIsMobile } from "@/hooks/use-mobile";
+import MobileConsoleShell from "@/components/console/MobileConsoleShell";
 
 /* ══════════════════════════════════════════════════════════════════════════
    ORCA CONSOLE · Administrative Command Centre for OrcaInvestment OS
@@ -1648,6 +1650,7 @@ export default function OrcaConsole() {
       aiUsage: live.aiUsage || [],
     };
   }, [live]);
+  const isMobile = useIsMobile();
   const [lang, setLang] = useState("en");
   const [active, setActive] = useState("overview");
   const [picked, setPicked] = useState(null);
@@ -1790,6 +1793,25 @@ export default function OrcaConsole() {
       setTimeout(() => URL.revokeObjectURL(url), 60000);
     } catch (e) { /* blocked */ }
   };
+
+  if (isMobile) {
+    return (
+      <>
+        <MobileConsoleShell
+          C={C} theme={theme} setTheme={setTheme}
+          lang={lang} setLang={setLang} rtl={rtl} t={t}
+          active={active} setActive={setActive} GROUPS={GROUPS}
+          F={F} setF={setF}
+          rangeOpts={rangeOpts} assetOpts={assetOpts} tierOpts={tierOpts}
+          SECTION={SECTION} activeLabel={activeLabel}
+          doExport={doExport} doPrint={doPrint}
+          filteredCount={filtered.length} live={live} nf={nf}
+        />
+        <Drawer t={t} lang={lang} x={picked} onClose={() => setPicked(null)} />
+        {reportOpen && <BoardReport t={t} lang={lang} traders={filtered} eng={D.engagement} aiUsage={D.aiUsage} funnel={D.funnel} onClose={() => setReportOpen(false)} />}
+      </>
+    );
+  }
 
   return (
     <div key={theme} dir={rtl ? "rtl" : "ltr"} lang={lang} style={{ direction: rtl ? "rtl" : "ltr", unicodeBidi: "isolate", minHeight: "100vh", background: C.appBg, fontFamily: SANS, color: C.ink, display: "grid", gridTemplateColumns: collapsed ? "62px 1fr" : "62px 234px 1fr" }} className="orca-shell">
