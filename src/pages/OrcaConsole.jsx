@@ -1650,6 +1650,7 @@ export default function OrcaConsole() {
       aiUsage: live.aiUsage || [],
     };
   }, [live]);
+  const isMobile = useIsMobile();
   const [lang, setLang] = useState("en");
   const [active, setActive] = useState("overview");
   const [picked, setPicked] = useState(null);
