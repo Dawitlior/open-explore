@@ -13,6 +13,8 @@ import {
   Terminal, Play, Copy, Check, Filter, Sun, Moon, PanelLeft, FileText,
 } from "lucide-react";
 import { useAdminLive } from "@/hooks/use-admin-live";
+import { useIsMobile } from "@/hooks/use-mobile";
+import MobileConsoleShell from "@/components/console/MobileConsoleShell";
 
 /* ══════════════════════════════════════════════════════════════════════════
    ORCA CONSOLE · Administrative Command Centre for OrcaInvestment OS
