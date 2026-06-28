@@ -246,6 +246,7 @@ export function YearView({ T, isRTL, trades, year }: Props) {
       flexDirection: isMobile ? 'column' : 'row',
       gap: isMobile ? 0 : 16,
       direction: isRTL ? 'rtl' : 'ltr',
+      width: '100%', maxWidth: '100%', minWidth: 0, overflow: 'hidden',
     }}>
       {grid}
       {quartersPanel}
