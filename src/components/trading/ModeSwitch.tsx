@@ -164,7 +164,8 @@ export const ModeSwitch = ({ T, isRTL }: ModeSwitchProps) => {
               transition={{ duration: 0.3 }}
               onClick={() => phase === 'ask' && close()}
               style={{
-                position: 'fixed', inset: 0, zIndex: 9600,
+                // Must sit above SettingsHub on mobile (SettingsHub uses z-index 9999).
+                position: 'fixed', inset: 0, zIndex: 100010,
                 background: 'radial-gradient(ellipse at center, rgba(6,10,22,0.82), rgba(2,4,10,0.96))',
                 backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
               }}
@@ -178,7 +179,7 @@ export const ModeSwitch = ({ T, isRTL }: ModeSwitchProps) => {
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               transition={{ type: 'spring', stiffness: 240, damping: 24, mass: 0.9 }}
               style={{
-                position: 'fixed', inset: 0, zIndex: 9601,
+                position: 'fixed', inset: 0, zIndex: 100011,
                 display: 'grid', placeItems: 'center', padding: 20,
                 pointerEvents: 'none', perspective: 1200,
               }}
@@ -355,6 +356,7 @@ export const ModeSwitch = ({ T, isRTL }: ModeSwitchProps) => {
                         onPointerUp={(e) => {
                           if (e.pointerType === 'touch' || e.pointerType === 'pen') {
                             e.preventDefault();
+                            e.stopPropagation();
                             handleTierConfirm();
                           }
                         }}
@@ -368,6 +370,7 @@ export const ModeSwitch = ({ T, isRTL }: ModeSwitchProps) => {
                         transition: 'all .2s',
                         touchAction: 'manipulation',
                         WebkitTapHighlightColor: 'transparent',
+                        userSelect: 'none',
                       }}
                       onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.12)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
                       onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'translateY(0)'; }}
@@ -376,6 +379,7 @@ export const ModeSwitch = ({ T, isRTL }: ModeSwitchProps) => {
                           position: 'absolute', top: 0, bottom: 0, width: '40%',
                           background: 'linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent)',
                           animation: 'msShimmer 2.2s ease-in-out infinite',
+                          pointerEvents: 'none',
                         }} />
                         <span style={{ position: 'relative' }}>{isRTL ? 'אישור החלפה' : 'Confirm Switch'}</span>
                       </button>
