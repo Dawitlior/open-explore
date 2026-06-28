@@ -192,9 +192,11 @@ function buildRow(uid: string, t: Trade) {
     row.opened_at = tradeIso;
     row.closed_at = tradeIso;
   }
-  row.source_type = 'manual';
-  row.asset_class = 'other';
-  row.broker_id = 'manual';
+  if (!withMeta.__external_id) {
+    row.source_type = 'manual';
+    row.asset_class = 'other';
+    row.broker_id = 'manual';
+  }
   if (prov) {
     row.broker_id = prov.broker_id;
     row.account_label = prov.account_label;
