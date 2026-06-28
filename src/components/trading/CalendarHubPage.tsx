@@ -17,7 +17,6 @@ import {
   useCalendarGestures,
   type ZoomLevel,
 } from '@/components/calendar/CalendarZoomProvider';
-import { WeekStripView } from '@/components/calendar/views/WeekStripView';
 import { YearView } from '@/components/calendar/views/YearView';
 
 type Props = {
@@ -67,7 +66,6 @@ function ZoomToggle({ T }: { T: any }) {
       }}
     >
       <ToggleButton value="day">D</ToggleButton>
-      <ToggleButton value="week">W</ToggleButton>
       <ToggleButton value="month">M</ToggleButton>
       <ToggleButton value="year">Y</ToggleButton>
     </ToggleButtonGroup>
@@ -93,7 +91,6 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
     const d = new Date(focusedDate);
     if (zoomLevel === 'year') d.setFullYear(d.getFullYear() - 1);
     else if (zoomLevel === 'month') d.setMonth(d.getMonth() - 1);
-    else if (zoomLevel === 'week') d.setDate(d.getDate() - 7);
     else d.setDate(d.getDate() - 1);
     setFocusedDate(d);
   };
@@ -101,7 +98,6 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
     const d = new Date(focusedDate);
     if (zoomLevel === 'year') d.setFullYear(d.getFullYear() + 1);
     else if (zoomLevel === 'month') d.setMonth(d.getMonth() + 1);
-    else if (zoomLevel === 'week') d.setDate(d.getDate() + 7);
     else d.setDate(d.getDate() + 1);
     setFocusedDate(d);
   };
@@ -174,13 +170,8 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
   const headerTitle = useMemo(() => {
     if (zoomLevel === 'year') return String(calYear);
     if (zoomLevel === 'month') return `${months[calMonth]} ${calYear}`;
-    if (zoomLevel === 'week') {
-      const ws = new Date(weekStart);
-      const we = new Date(weekStart); we.setDate(we.getDate() + 6);
-      return `${ws.getDate()} – ${we.getDate()} ${months[we.getMonth()]} ${we.getFullYear()}`;
-    }
     return focusedDate.toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-  }, [zoomLevel, calYear, calMonth, months, weekStart, focusedDate, isRTL]);
+  }, [zoomLevel, calYear, calMonth, months, focusedDate, isRTL]);
 
   /* ── Mobile ── */
   if (isMobile) {
@@ -200,9 +191,6 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
           <motion.div key={zoomLevel} variants={variants} initial="enter" animate="center" exit="exit" transition={transition}>
             {zoomLevel === 'year' && (
               <YearView T={T} isRTL={isRTL} trades={trades} year={calYear} />
-            )}
-            {zoomLevel === 'week' && (
-              <WeekStripView T={T} isRTL={isRTL} trades={trades} weekStart={weekStart} />
             )}
             {(zoomLevel === 'month' || zoomLevel === 'day') && (
               <>
@@ -294,11 +282,6 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
         <motion.div key={zoomLevel} variants={variants} initial="enter" animate="center" exit="exit" transition={transition}>
           {zoomLevel === 'year' && (
             <YearView T={T} isRTL={isRTL} trades={trades} year={calYear} />
-          )}
-          {zoomLevel === 'week' && (
-            <GlassCard T={T} style={{ padding: 20 }}>
-              <WeekStripView T={T} isRTL={isRTL} trades={trades} weekStart={weekStart} />
-            </GlassCard>
           )}
           {(zoomLevel === 'month' || zoomLevel === 'day') && (
             <div style={{ display: 'flex', gap: 18 }}>
