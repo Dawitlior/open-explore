@@ -104,8 +104,11 @@ function MiniMonth({
           if (!d) return <div key={i} style={{ aspectRatio: '1' }} />;
           const agg = dayPnl[`${monthIdx}-${d}`];
           const isToday = isCurrentMonth && today.getDate() === d;
+          // In R mode prefer R-driven sign/value when there's any R data on the day.
+          const useR = isR && !!agg && agg.rValid > 0;
+          const leadVal = useR ? agg!.rTotal : (agg ? agg.pnl : 0);
           const hasTrades = !!agg;
-          const isPos = agg ? agg.pnl >= 0 : false;
+          const isPos = hasTrades ? leadVal >= 0 : false;
           const dotColor = hasTrades ? (isPos ? T.accent.green : T.accent.red) : 'transparent';
           const color = isToday
             ? '#001023'
@@ -117,7 +120,7 @@ function MiniMonth({
             <button
               key={i}
               onClick={(e) => { if (hasTrades) { e.stopPropagation(); onDayClick(d); } }}
-              title={hasTrades ? `${d}: ${isPos ? '+' : '-'}$${Math.abs(agg!.pnl).toFixed(0)} · ${agg!.trades}` : undefined}
+              title={hasTrades ? (useR ? `${d}: ${leadVal >= 0 ? '+' : ''}${leadVal.toFixed(2)}R · ${agg!.trades}` : `${d}: ${isPos ? '+' : '-'}$${Math.abs(agg!.pnl).toFixed(0)} · ${agg!.trades}`) : undefined}
               style={{
                 position: 'relative',
                 aspectRatio: '1',
