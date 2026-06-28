@@ -65,7 +65,6 @@ function ZoomToggle({ T }: { T: any }) {
         },
       }}
     >
-      <ToggleButton value="day">D</ToggleButton>
       <ToggleButton value="month">M</ToggleButton>
       <ToggleButton value="year">Y</ToggleButton>
     </ToggleButtonGroup>
