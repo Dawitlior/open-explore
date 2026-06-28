@@ -145,11 +145,17 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
   }, [macroByDayRaw]);
 
   const weekStats = useMemo(() => {
-    const w: { week: number; pnl: number; trades: number; days: number }[] = [];
-    let wp = 0, wt = 0, wd = 0, wn = 1;
+    const w: { week: number; pnl: number; rTotal: number; rValid: number; trades: number; days: number }[] = [];
+    let wp = 0, wr = 0, wrv = 0, wt = 0, wd = 0, wn = 1;
     calDays.forEach((d, i) => {
-      if (d && calDayPnl[d]) { wp += calDayPnl[d].pnl; wt += calDayPnl[d].trades; wd++; }
-      if ((i + 1) % 7 === 0 || i === calDays.length - 1) { w.push({ week: wn, pnl: wp, trades: wt, days: wd }); wp = 0; wt = 0; wd = 0; wn++; }
+      if (d && calDayPnl[d]) {
+        wp += calDayPnl[d].pnl; wr += calDayPnl[d].rTotal; wrv += calDayPnl[d].rValid;
+        wt += calDayPnl[d].trades; wd++;
+      }
+      if ((i + 1) % 7 === 0 || i === calDays.length - 1) {
+        w.push({ week: wn, pnl: wp, rTotal: wr, rValid: wrv, trades: wt, days: wd });
+        wp = 0; wr = 0; wrv = 0; wt = 0; wd = 0; wn++;
+      }
     });
     return w;
   }, [calDays, calDayPnl]);
