@@ -109,19 +109,30 @@ export const ModeSwitch = ({ T, isRTL }: ModeSwitchProps) => {
   return (
     <>
       <div style={{ padding: '0 10px', marginBottom: 8 }}>
-        <div style={{ display: 'flex', gap: 3, background: T.bg.primary, borderRadius: T.radius.md, padding: 3 }}>
+        <div style={{ display: 'flex', gap: 4, background: T.bg.primary, borderRadius: T.radius.md, padding: 4 }}>
           {TIER_OPTIONS.map(m => {
             const color = m.color(T);
             return (
             <button
               key={m.id}
-              onClick={() => { if (m.id !== tier) { setPhase('ask'); setPendingTier(m.id); } }}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (m.id !== tier) { setPhase('ask'); setPendingTier(m.id); }
+              }}
               style={{
-                flex: 1, padding: '5px 2px', fontSize: 8, fontWeight: 600, letterSpacing: '0.04em',
-                textTransform: 'uppercase', border: 'none', borderRadius: T.radius.sm, cursor: 'pointer',
+                flex: 1,
+                // Larger tap targets so mobile users can reliably hit them.
+                padding: '10px 6px',
+                minHeight: 40,
+                fontSize: 11, fontWeight: 700, letterSpacing: '0.06em',
+                textTransform: 'uppercase', border: 'none', borderRadius: T.radius.sm,
+                cursor: 'pointer',
                 background: tier === m.id ? `${color}20` : 'transparent',
                 color: tier === m.id ? color : T.text.muted,
                 transition: 'all 0.2s', position: 'relative',
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: 'transparent',
               }}
             >
               {tier === m.id && <div style={{ position: 'absolute', bottom: 0, left: '20%', right: '20%', height: 2, background: color, borderRadius: 1 }} />}
@@ -130,6 +141,7 @@ export const ModeSwitch = ({ T, isRTL }: ModeSwitchProps) => {
           );})}
         </div>
       </div>
+
 
       {createPortal(
       <AnimatePresence>

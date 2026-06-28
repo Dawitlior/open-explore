@@ -3493,7 +3493,7 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
 // ═══════════════════════════════════════════════════════════════
 // EOD FORM
 // ═══════════════════════════════════════════════════════════════
-const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, th, risk, onInfoClick, onAddOrcaTrade, onUpdateOrcaTrade, onUpsertJournalTrade }: any) => {
+const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, th, risk, onInfoClick, onAddOrcaTrade, onUpdateOrcaTrade, onUpsertJournalTrade, onRemoveOrcaTrade }: any) => {
   const f = t.f;
   const isR = useJournalIsR();
   const U = (k: string) => (v: any) => upd({ [k]: v });
@@ -3616,6 +3616,32 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
   };
 
   const clearEod = () => {
+    // Also remove the linked Orca mirrors for every journal trade we're about
+    // to wipe. Without this, "Clear Demo" leaves orphaned trades inside the
+    // dashboard / calendar / analytics — visible to the user as a real bug.
+    const jids = (day.trades || []).map((tr: any) => String(tr.id));
+    if (jids.length > 0 && typeof onRemoveOrcaTrade === 'function') {
+      const bridge = allOrcaTrades || orcaTrades || [];
+      const orcaIds: number[] = [];
+      // 1) prefer the live in-memory jid → orca-id map (always fresh after sync)
+      jids.forEach((jid: string) => {
+        const mapped = jidMapRef.current.get(jid);
+        if (typeof mapped === 'number') orcaIds.push(mapped);
+      });
+      // 2) fall back to comment-tag scan for any jid not in the map
+      const seen = new Set<number>(orcaIds);
+      bridge.forEach((o: Trade) => {
+        if (seen.has(o.id)) return;
+        if (typeof o.comments !== 'string') return;
+        const m = o.comments.match(/__JID:([^_]+)__/);
+        if (m && jids.includes(m[1])) { orcaIds.push(o.id); seen.add(o.id); }
+      });
+      orcaIds.forEach(id => {
+        try { void onRemoveOrcaTrade(id); } catch { /* silent */ }
+        // Forget the mapping so a subsequent Demo Fill re-creates a fresh Orca trade.
+        jidMapRef.current.forEach((v, k) => { if (v === id) jidMapRef.current.delete(k); });
+      });
+    }
     upd({
       hasOpen: null,
       trades: [],
@@ -3997,9 +4023,12 @@ interface JournalDimensionProps {
   onUpdateOrcaTrade?: (trade: Trade) => Promise<unknown> | void;
   /** Guaranteed bridge: creates or updates the Orca mirror by Journal trade id. */
   onUpsertJournalTrade?: (journalTradeId: number | string, trade: Omit<Trade, 'id' | 'balance'>) => Promise<unknown> | void;
+  /** Bridge: removes the linked Orca trade — used by "Clear Demo" so demo
+   *  trades disappear from every Orca surface (dashboard, calendar, analytics). */
+  onRemoveOrcaTrade?: (orcaTradeId: number) => Promise<unknown> | void;
 }
 
-export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, onUpdateOrcaTrade, onUpsertJournalTrade }: JournalDimensionProps) => {
+export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, onUpdateOrcaTrade, onUpsertJournalTrade, onRemoveOrcaTrade }: JournalDimensionProps) => {
   // Language strictly follows the platform language (isRTL prop). Do NOT keep
   // local state for this — it caused HE/EN to desync when the user toggled
   // language while inside the journal and on subsequent loads (we used to
@@ -4624,7 +4653,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
               ) : (
                 !displayDay.morningSaved
                   ? <MorningForm day={displayDay} upd={upd} t={t} dir={dir} onSave={saveMorning} dirty={mDirty} th={th} onInfoClick={() => setKnowledgePanel('morning')} />
-                  : <EodForm day={displayDay} upd={upd} t={t} dir={dir} onSave={saveEOD} dirty={eDirty} orcaTrades={tradesForDate(displayDay.date)} allOrcaTrades={orcaTrades} th={th} risk={riskStatus} onInfoClick={() => setKnowledgePanel('eod')} onAddOrcaTrade={onAddOrcaTrade} onUpdateOrcaTrade={onUpdateOrcaTrade} onUpsertJournalTrade={onUpsertJournalTrade} />
+                  : <EodForm day={displayDay} upd={upd} t={t} dir={dir} onSave={saveEOD} dirty={eDirty} orcaTrades={tradesForDate(displayDay.date)} allOrcaTrades={orcaTrades} th={th} risk={riskStatus} onInfoClick={() => setKnowledgePanel('eod')} onAddOrcaTrade={onAddOrcaTrade} onUpdateOrcaTrade={onUpdateOrcaTrade} onUpsertJournalTrade={onUpsertJournalTrade} onRemoveOrcaTrade={onRemoveOrcaTrade} />
               )}
             </div>
           )}

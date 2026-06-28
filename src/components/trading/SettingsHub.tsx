@@ -2960,7 +2960,7 @@ function BenchmarkOptInCard(props: {
   sans: string;
 }) {
   const { T, isRTL, t, userId, card, sectionTitle, sectionHint, sans } = props;
-  const [optedIn, setOptedIn] = useState<boolean>(false);
+  const [optedIn, setOptedIn] = useState<boolean>(true);
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -2974,8 +2974,18 @@ function BenchmarkOptInCard(props: {
         .eq('user_id', userId)
         .maybeSingle();
       if (!alive) return;
-      setOptedIn(Boolean((data as { benchmark_opt_in?: boolean } | null)?.benchmark_opt_in));
+      const row = data as { benchmark_opt_in?: boolean | null } | null;
+      // Default new accounts to opted-in: missing row OR explicit null falls back to true.
+      const next = row == null || row.benchmark_opt_in == null ? true : !!row.benchmark_opt_in;
+      setOptedIn(next);
       setLoaded(true);
+      // Persist the implicit opt-in so the user_preferences row exists and the
+      // benchmarks aggregation view picks them up immediately.
+      if (next && (row == null || row.benchmark_opt_in == null)) {
+        void supabase
+          .from('user_preferences')
+          .upsert({ user_id: userId, benchmark_opt_in: true } as never, { onConflict: 'user_id' });
+      }
     })();
     return () => { alive = false; };
   }, [userId]);
