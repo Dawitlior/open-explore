@@ -36,7 +36,15 @@ function readAccent(): string {
   return readVar('--primary') || FALLBACK_ACCENT;
 }
 
-export const OrcaBootLoader = ({ label = 'Investment Terminal' }: { label?: string }) => {
+export const OrcaBootLoader = ({
+  label = 'Investment Terminal',
+  frame = 'fixed',
+  contentOffsetY = 0,
+}: {
+  label?: string;
+  frame?: 'fixed' | 'absolute';
+  contentOffsetY?: number;
+}) => {
   const [bg, setBg] = useState<string>(() => readCurrentSurface());
   const [accent, setAccent] = useState<string>(() => readAccent());
 
@@ -78,7 +86,7 @@ export const OrcaBootLoader = ({ label = 'Investment Terminal' }: { label?: stri
   return (
     <div
       style={{
-        position: 'fixed', inset: 0, zIndex: 9998,
+        position: frame, inset: 0, zIndex: 9998,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         flexDirection: 'column', gap: 28,
         background: bg,
@@ -86,51 +94,59 @@ export const OrcaBootLoader = ({ label = 'Investment Terminal' }: { label?: stri
         transition: 'background 0.35s ease',
       }}
     >
-      <div style={{ position: 'relative', width: 96, height: 96 }}>
-        <div style={{
-          position: 'absolute', inset: 0, borderRadius: '50%',
-          border: `2px solid ${accentSoft}`,
-          borderTopColor: accentColor,
-          animation: 'orca-bl-spin 1.1s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite',
-        }} />
-        <div style={{
-          position: 'absolute', inset: 10, borderRadius: '50%',
-          border: `2px solid ${accentSoft}`,
-          borderBottomColor: accentColor,
-          opacity: 0.7,
-          animation: 'orca-bl-spin-rev 1.6s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite',
-        }} />
-        <div style={{
-          position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: accentColor, filter: `drop-shadow(0 0 12px ${accentGlow})`,
-          fontFamily: "'JetBrains Mono', 'IBM Plex Mono', monospace",
-          fontSize: 16, fontWeight: 700, letterSpacing: '0.15em',
-        }}>
-          OI
+      <div
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexDirection: 'column', gap: 28,
+          transform: contentOffsetY ? `translateY(${contentOffsetY}px)` : undefined,
+        }}
+      >
+        <div style={{ position: 'relative', width: 96, height: 96 }}>
+          <div style={{
+            position: 'absolute', inset: 0, borderRadius: '50%',
+            border: `2px solid ${accentSoft}`,
+            borderTopColor: accentColor,
+            animation: 'orca-bl-spin 1.1s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite',
+          }} />
+          <div style={{
+            position: 'absolute', inset: 10, borderRadius: '50%',
+            border: `2px solid ${accentSoft}`,
+            borderBottomColor: accentColor,
+            opacity: 0.7,
+            animation: 'orca-bl-spin-rev 1.6s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite',
+          }} />
+          <div style={{
+            position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: accentColor, filter: `drop-shadow(0 0 12px ${accentGlow})`,
+            fontFamily: "'JetBrains Mono', 'IBM Plex Mono', monospace",
+            fontSize: 16, fontWeight: 700, letterSpacing: '0.15em',
+          }}>
+            OI
+          </div>
         </div>
-      </div>
-      <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <div style={{
-          fontSize: 18, fontWeight: 700, letterSpacing: '0.32em',
-          fontFamily: "'JetBrains Mono', 'IBM Plex Mono', monospace",
-          color: 'hsl(var(--foreground))',
-        }}>
-          ORCA
-        </div>
-        <div style={{
-          fontSize: 10, color: 'hsl(var(--muted-foreground))',
-          letterSpacing: '0.4em', textTransform: 'uppercase',
-        }}>
-          {label}
-        </div>
-        <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-          {[0, 1, 2].map(i => (
-            <span key={i} style={{
-              width: 6, height: 6, borderRadius: '50%', background: accentColor,
-              opacity: 0.35,
-              animation: `orca-bl-pulse 1.2s ease-in-out ${i * 0.18}s infinite`,
-            }} />
-          ))}
+        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{
+            fontSize: 18, fontWeight: 700, letterSpacing: '0.32em',
+            fontFamily: "'JetBrains Mono', 'IBM Plex Mono', monospace",
+            color: 'hsl(var(--foreground))',
+          }}>
+            ORCA
+          </div>
+          <div style={{
+            fontSize: 10, color: 'hsl(var(--muted-foreground))',
+            letterSpacing: '0.4em', textTransform: 'uppercase',
+          }}>
+            {label}
+          </div>
+          <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            {[0, 1, 2].map(i => (
+              <span key={i} style={{
+                width: 6, height: 6, borderRadius: '50%', background: accentColor,
+                opacity: 0.35,
+                animation: `orca-bl-pulse 1.2s ease-in-out ${i * 0.18}s infinite`,
+              }} />
+            ))}
+          </div>
         </div>
       </div>
       <style>{`
