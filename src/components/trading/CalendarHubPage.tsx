@@ -170,13 +170,8 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
   const headerTitle = useMemo(() => {
     if (zoomLevel === 'year') return String(calYear);
     if (zoomLevel === 'month') return `${months[calMonth]} ${calYear}`;
-    if (zoomLevel === 'week') {
-      const ws = new Date(weekStart);
-      const we = new Date(weekStart); we.setDate(we.getDate() + 6);
-      return `${ws.getDate()} – ${we.getDate()} ${months[we.getMonth()]} ${we.getFullYear()}`;
-    }
     return focusedDate.toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-  }, [zoomLevel, calYear, calMonth, months, weekStart, focusedDate, isRTL]);
+  }, [zoomLevel, calYear, calMonth, months, focusedDate, isRTL]);
 
   /* ── Mobile ── */
   if (isMobile) {
