@@ -26,7 +26,7 @@ const MONTHS_HE = ['ינואר','פברואר','מרץ','אפריל','מאי','�
 const DOW_EN = ['S','M','T','W','T','F','S'];
 const DOW_HE = ['א','ב','ג','ד','ה','ו','ש'];
 
-interface DayAgg { pnl: number; trades: number; }
+interface DayAgg { pnl: number; rTotal: number; rValid: number; trades: number; rows: Trade[]; }
 
 function buildYearPnl(trades: Trade[], year: number): Record<string, DayAgg> {
   const m: Record<string, DayAgg> = {};
@@ -35,8 +35,12 @@ function buildYearPnl(trades: Trade[], year: number): Record<string, DayAgg> {
     const d = new Date(tr.date.replace(' ', 'T'));
     if (isNaN(d.getTime()) || d.getFullYear() !== year) return;
     const key = `${d.getMonth()}-${d.getDate()}`;
-    if (!m[key]) m[key] = { pnl: 0, trades: 0 };
-    m[key].pnl += tr.pnl; m[key].trades++;
+    if (!m[key]) m[key] = { pnl: 0, rTotal: 0, rValid: 0, trades: 0, rows: [] };
+    m[key].pnl += tr.pnl; m[key].trades++; m[key].rows.push(tr);
+  });
+  Object.keys(m).forEach(k => {
+    const agg = sumR(m[k].rows);
+    m[k].rTotal = agg.total; m[k].rValid = agg.validCount;
   });
   return m;
 }
