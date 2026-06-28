@@ -1623,7 +1623,7 @@ const Index = () => {
       <DimensionController
         activeDimension="journal"
         orcaUI={<div />}
-        journalUI={<LazyShell><JournalDimension onReturn={() => setActiveDimension('orca')} isRTL={isRTL} orcaTrades={trades} onAddOrcaTrade={addTrade} onUpdateOrcaTrade={updateTrade} onUpsertJournalTrade={upsertJournalTrade} /></LazyShell>}
+        journalUI={<LazyShell><JournalDimension onReturn={() => setActiveDimension('orca')} isRTL={isRTL} orcaTrades={trades} onAddOrcaTrade={addTrade} onUpdateOrcaTrade={updateTrade} onUpsertJournalTrade={upsertJournalTrade} onRemoveOrcaTrade={removeTrade} /></LazyShell>}
       />
     );
   }
