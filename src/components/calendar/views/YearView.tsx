@@ -46,13 +46,14 @@ function buildYearPnl(trades: Trade[], year: number): Record<string, DayAgg> {
 }
 
 function MiniMonth({
-  T, isRTL, year, monthIdx, dayPnl, onMonthClick, onDayClick, compact,
+  T, isRTL, year, monthIdx, dayPnl, onMonthClick, onDayClick, compact, isR,
 }: {
   T: any; isRTL: boolean; year: number; monthIdx: number;
   dayPnl: Record<string, DayAgg>;
   onMonthClick: () => void;
   onDayClick: (d: number) => void;
   compact?: boolean;
+  isR: boolean;
 }) {
   const monthLabels = isRTL ? MONTHS_HE : MONTHS_EN;
   const dowLabels = isRTL ? DOW_HE : DOW_EN;
