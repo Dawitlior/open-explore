@@ -28,7 +28,10 @@ import { SectionTitle } from '../widgets/SectionTitle';
 import { themeBgs } from '../lib/theme-bg';
 import { BlockSection } from './blocks/BlockSection';
 import { BlockScoreRing } from './blocks/BlockScoreRing';
-import { ReflectionGrid, ReflectionGridItem } from './layout/ReflectionGrid';
+import { ReflectionBoard } from './layout/ReflectionBoard';
+import { ReflectionCard } from './layout/ReflectionCard';
+import { groupSectionsByBand, resolveBand } from './layout/card-slots';
+import { useStepNumbers } from './layout/useStepNumbers';
 import { resolveSectionLayoutSpan } from './layout/layout-span';
 import type {
   WeeklyReviewSchema,
