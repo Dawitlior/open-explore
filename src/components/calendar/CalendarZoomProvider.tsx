@@ -13,8 +13,8 @@ import React, {
   useState,
 } from 'react';
 
-export type ZoomLevel = 'day' | 'month' | 'year';
-const ZOOM_ORDER: ZoomLevel[] = ['day', 'month', 'year'];
+export type ZoomLevel = 'month' | 'year';
+const ZOOM_ORDER: ZoomLevel[] = ['month', 'year'];
 
 interface CalendarZoomContextValue {
   zoomLevel: ZoomLevel;

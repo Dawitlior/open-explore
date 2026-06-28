@@ -40,12 +40,13 @@ function buildYearPnl(trades: Trade[], year: number): Record<string, DayAgg> {
 }
 
 function MiniMonth({
-  T, isRTL, year, monthIdx, dayPnl, onMonthClick, onDayClick,
+  T, isRTL, year, monthIdx, dayPnl, onMonthClick, onDayClick, compact,
 }: {
   T: any; isRTL: boolean; year: number; monthIdx: number;
   dayPnl: Record<string, DayAgg>;
   onMonthClick: () => void;
   onDayClick: (d: number) => void;
+  compact?: boolean;
 }) {
   const monthLabels = isRTL ? MONTHS_HE : MONTHS_EN;
   const dowLabels = isRTL ? DOW_HE : DOW_EN;
@@ -61,35 +62,37 @@ function MiniMonth({
         background: T.bg.card,
         border: `1px solid ${isCurrentMonth ? T.accent.cyan : T.border.subtle}`,
         borderRadius: T.radius.md,
-        padding: '10px 10px 12px',
+        padding: compact ? '6px 6px 8px' : '10px 10px 12px',
         cursor: 'pointer',
         boxShadow: isCurrentMonth ? `0 0 0 1px ${T.accent.cyan}40` : 'none',
-        display: 'flex', flexDirection: 'column', gap: 6,
+        display: 'flex', flexDirection: 'column', gap: compact ? 4 : 6,
+        minWidth: 0, overflow: 'hidden',
       }}
     >
       {/* Title */}
       <div style={{
-        fontSize: 12, fontWeight: 700,
+        fontSize: compact ? 11 : 12, fontWeight: 700,
         color: isCurrentMonth ? T.accent.cyan : T.text.primary,
         letterSpacing: '0.04em',
         paddingBottom: 4,
         borderBottom: `1px solid ${T.border.subtle}`,
+        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
       }}>
         {monthLabels[monthIdx]}
       </div>
 
       {/* Weekday headers */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1 }}>
         {dowLabels.map((d, i) => (
           <div key={i} style={{
-            textAlign: 'center', fontSize: 9, fontWeight: 600,
+            textAlign: 'center', fontSize: compact ? 8 : 9, fontWeight: 600,
             color: T.text.muted, letterSpacing: '0.02em',
           }}>{d}</div>
         ))}
       </div>
 
       {/* Day grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1 }}>
         {calDays.map((d, i) => {
           if (!d) return <div key={i} style={{ aspectRatio: '1' }} />;
           const agg = dayPnl[`${monthIdx}-${d}`];
@@ -114,7 +117,7 @@ function MiniMonth({
               style={{
                 aspectRatio: '1',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 10, fontWeight: isToday || hasTrades ? 700 : 500,
+                fontSize: compact ? 9 : 10, fontWeight: isToday || hasTrades ? 700 : 500,
                 color, background: bg,
                 border: 'none', borderRadius: '50%',
                 cursor: hasTrades ? 'pointer' : 'default',
@@ -131,7 +134,7 @@ function MiniMonth({
 }
 
 export function YearView({ T, isRTL, trades, year }: Props) {
-  const { setFocusedDate, setZoomLevel, zoomIn } = useCalendarZoom();
+  const { setFocusedDate, setZoomLevel } = useCalendarZoom();
   const isMobile = useIsMobile();
   const dayPnl = useMemo(() => buildYearPnl(trades, year), [trades, year]);
 
@@ -152,24 +155,22 @@ export function YearView({ T, isRTL, trades, year }: Props) {
   const yearTrades = quarters.reduce((s, q) => s + q.trades, 0);
 
   const goMonth = (m: number) => { setFocusedDate(new Date(year, m, 1)); setZoomLevel('month'); };
-  const goDay = (m: number, d: number) => {
-    const dt = new Date(year, m, d);
-    setFocusedDate(dt);
-    zoomIn(dt);
-  };
+  // Clicking a specific day: jump into Month view focused on that date (day modal opens from there).
+  const goDay = (m: number, d: number) => { setFocusedDate(new Date(year, m, d)); setZoomLevel('month'); };
 
   const grid = (
     <div style={{
       display: 'grid',
-      gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
-      gap: isMobile ? 8 : 12,
+      gridTemplateColumns: isMobile ? 'repeat(2, minmax(0, 1fr))' : 'repeat(4, minmax(0, 1fr))',
+      gap: isMobile ? 6 : 12,
       direction: isRTL ? 'rtl' : 'ltr',
-      flex: 1, minWidth: 0,
+      flex: 1, minWidth: 0, width: '100%',
     }}>
       {Array.from({ length: 12 }, (_, m) => (
         <MiniMonth
           key={m} T={T} isRTL={isRTL} year={year} monthIdx={m}
           dayPnl={dayPnl}
+          compact={isMobile}
           onMonthClick={() => goMonth(m)}
           onDayClick={(d) => goDay(m, d)}
         />
@@ -245,6 +246,7 @@ export function YearView({ T, isRTL, trades, year }: Props) {
       flexDirection: isMobile ? 'column' : 'row',
       gap: isMobile ? 0 : 16,
       direction: isRTL ? 'rtl' : 'ltr',
+      width: '100%', maxWidth: '100%', minWidth: 0, overflow: 'hidden',
     }}>
       {grid}
       {quartersPanel}

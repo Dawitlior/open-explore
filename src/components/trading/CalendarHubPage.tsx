@@ -65,7 +65,6 @@ function ZoomToggle({ T }: { T: any }) {
         },
       }}
     >
-      <ToggleButton value="day">D</ToggleButton>
       <ToggleButton value="month">M</ToggleButton>
       <ToggleButton value="year">Y</ToggleButton>
     </ToggleButtonGroup>
@@ -74,7 +73,7 @@ function ZoomToggle({ T }: { T: any }) {
 
 /* ── Inner calendar — reads zoom from context ─────────────────── */
 function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSetManualR }: Props) {
-  const { zoomLevel, focusedDate, setFocusedDate, setZoomLevel, zoomIn } = useCalendarZoom();
+  const { zoomLevel, focusedDate, setFocusedDate, setZoomLevel } = useCalendarZoom();
   const containerRef = useRef<HTMLDivElement>(null!);
   useCalendarGestures(containerRef);
 
@@ -192,7 +191,7 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
             {zoomLevel === 'year' && (
               <YearView T={T} isRTL={isRTL} trades={trades} year={calYear} />
             )}
-            {(zoomLevel === 'month' || zoomLevel === 'day') && (
+            {zoomLevel === 'month' && (
               <>
                 {/* compact month grid for mobile */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 4 }}>
@@ -207,7 +206,7 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
                     const dayPast = !!d && new Date(calYear, calMonth, d) < new Date(now.getFullYear(), now.getMonth(), now.getDate());
                     const hasContent = !!dd || macros.length > 0;
                     return (
-                      <button key={i} disabled={!d} onClick={() => { if (hasContent && d) { if (zoomLevel === 'day') setCalModalDay(d); else { setFocusedDate(new Date(calYear, calMonth, d)); zoomIn(new Date(calYear, calMonth, d)); } } }}
+                      <button key={i} disabled={!d} onClick={() => { if (hasContent && d) setCalModalDay(d); }}
                         style={{ aspectRatio: '1', border: 'none', background: 'transparent', cursor: hasContent ? 'pointer' : 'default', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, padding: 0, position: 'relative' }}>
                         {d && (<>
                           <span style={{ width: 30, height: 30, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: isToday ? 700 : 500, color: isToday ? '#001023' : T.text.primary, background: isToday ? T.accent.cyan : 'transparent' }}>{d}</span>
@@ -283,7 +282,7 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
           {zoomLevel === 'year' && (
             <YearView T={T} isRTL={isRTL} trades={trades} year={calYear} />
           )}
-          {(zoomLevel === 'month' || zoomLevel === 'day') && (
+          {zoomLevel === 'month' && (
             <div style={{ display: 'flex', gap: 18 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <GlassCard T={T} style={{ padding: 20 }}>
@@ -302,11 +301,7 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
                       const hasContent = !!dd || macros.length > 0;
                       return (
                         <motion.div key={i} whileHover={hasContent ? { scale: 1.03 } : {}}
-                          onClick={() => {
-                            if (!hasContent || !d) return;
-                            if (zoomLevel === 'day') { setCalModalDay(d); }
-                            else { setFocusedDate(new Date(calYear, calMonth, d)); zoomIn(new Date(calYear, calMonth, d)); }
-                          }}
+                          onClick={() => { if (hasContent && d) setCalModalDay(d); }}
                           style={{
                             minHeight: 130, borderRadius: T.radius.md,
                             border: `1px solid ${isToday ? T.accent.cyan : isDarkRed ? `${T.accent.red}60` : dd ? (dd.pnl > 0 ? `${T.accent.green}${Math.round(40 + intensity * 60).toString(16)}` : dd.pnl < 0 ? `${T.accent.red}${Math.round(40 + intensity * 60).toString(16)}` : `${T.accent.orange}30`) : T.border.subtle}`,
