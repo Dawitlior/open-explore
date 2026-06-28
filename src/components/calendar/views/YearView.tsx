@@ -11,6 +11,8 @@ import type { Trade } from '@/data/trades';
 import { useCalendarZoom } from '../CalendarZoomProvider';
 import { getCalDays } from '@/lib/trading-analytics';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { sumR } from '@/lib/r-multiple';
+import { useEffectiveDisplayMode } from '@/lib/display-mode';
 
 interface Props {
   T: any;
