@@ -123,9 +123,9 @@ describe('P0 — WeeklyTab wires real systemSlots into the schema renderer', () 
     const markers = Array.from(container.querySelectorAll('[data-system-slot]'))
       .map(n => n.getAttribute('data-system-slot'));
     expect(markers).toEqual([
+      'risk-gauges',
       'trades-table',
       'stat-chips',
-      'risk-gauges',
       'final-grade',
       'ai-insights',
     ]);

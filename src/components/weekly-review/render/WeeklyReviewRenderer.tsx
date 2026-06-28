@@ -28,8 +28,19 @@ import { SectionTitle } from '../widgets/SectionTitle';
 import { themeBgs } from '../lib/theme-bg';
 import { BlockSection } from './blocks/BlockSection';
 import { BlockScoreRing } from './blocks/BlockScoreRing';
-import { ReflectionGrid, ReflectionGridItem } from './layout/ReflectionGrid';
+import { ReflectionBoard } from './layout/ReflectionBoard';
+import { ReflectionCard } from './layout/ReflectionCard';
+import { groupSectionsByBand, resolveBand } from './layout/card-slots';
+import { useStepNumbers } from './layout/useStepNumbers';
 import { resolveSectionLayoutSpan } from './layout/layout-span';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlined';
+import SubdirectoryArrowRightIcon from '@mui/icons-material/SubdirectoryArrowRight';
 import type {
   WeeklyReviewSchema,
   Section,
@@ -81,7 +92,7 @@ export interface WeeklyReviewRendererProps {
 const STATE_TO_LEGACY_NUM: Record<ChecklistState, 0 | 1 | 2> = { neutral: 0, done: 1, missed: 2 };
 
 export function WeeklyReviewRenderer(props: WeeklyReviewRendererProps) {
-  const { schema, T, isRTL, editMode, onTemplateChange } = props;
+  const { schema, T, isRTL, locale, editMode, onTemplateChange } = props;
   const isLight = (T as { id?: string })?.id === 'platinum';
   const panel = T?.bg?.surface || (isLight ? '#ffffff' : 'rgba(255,255,255,0.04)');
   const border = T?.border?.subtle || (isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.08)');
@@ -134,24 +145,47 @@ export function WeeklyReviewRenderer(props: WeeklyReviewRendererProps) {
     );
   });
 
-  // Fill mode: responsive section-level grid (Phase 1d). Customize mode keeps
-  // the legacy vertical stack so drag-reorder stays simple.
+  // Step numbers for the main band only — risk/footer cards aren't numbered.
+  const stepNumbers = useStepNumbers(sections);
+
+  // Fill mode: 3-band ReflectionBoard. Customize mode keeps the legacy
+  // vertical stack with dnd-kit so drag-reorder UX is unchanged.
   if (!editMode || !onTemplateChange) {
+    const bands = groupSectionsByBand(sections);
+    const toItem = (section: Section) => {
+      const sIdx = sections.indexOf(section);
+      const blocks = [...section.blocks].filter(b => !b.hidden).sort((a, b) => a.order - b.order);
+      const span = resolveSectionLayoutSpan(section);
+      const title = resolveLoc(section.title, locale);
+      const band = resolveBand(section);
+      const node = section.chromeless ? (
+        <ReflectionCard isRTL={isRTL} chromeless>
+          <BlocksList section={section} blocks={blocks} {...props} />
+        </ReflectionCard>
+      ) : (
+        <ReflectionCard
+          isRTL={isRTL}
+          title={title}
+          emoji={section.icon}
+          step={band === 'main' ? stepNumbers[section.id] : undefined}
+        >
+          <BlocksList section={section} blocks={blocks} {...props} />
+        </ReflectionCard>
+      );
+      // Silence unused-var warning while keeping the signature stable.
+      void sIdx;
+      return { id: section.id, span, node };
+    };
     return (
-      <div dir={isRTL ? 'rtl' : 'ltr'} style={{ paddingBottom: 48 }}>
-        <ReflectionGrid>
-          {sections.map((section, idx) => (
-            <ReflectionGridItem
-              key={section.id}
-              span={resolveSectionLayoutSpan(section)}
-            >
-              {renderedSections[idx]}
-            </ReflectionGridItem>
-          ))}
-        </ReflectionGrid>
-      </div>
+      <ReflectionBoard
+        isRTL={isRTL}
+        risk={bands.risk.map(toItem)}
+        main={bands.main.map(toItem)}
+        footer={bands.footer.map(toItem)}
+      />
     );
   }
+  void renderedSections;
 
   const body = (
     <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'grid', gap: 18, paddingBottom: 48 }}>
@@ -307,22 +341,38 @@ interface RailProps {
   onShow: () => void;
 }
 
-function SectionRail({ section, isFirst, isLast, sectionLocked, canHide, tk, onMove, onHide, onShow }: RailProps) {
-  const btn: React.CSSProperties = {
-    width: 26, height: 26, padding: 0,
-    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-    borderRadius: 6, border: `1px solid ${tk.border}`,
-    background: 'transparent', color: tk.muted, cursor: 'pointer',
-    fontSize: 12, lineHeight: 1,
-  };
+function SectionRail({ section, isFirst, isLast, sectionLocked, canHide, onMove, onHide, onShow }: RailProps) {
+  const iconBtnSx = { color: 'inherit', p: 0.5 } as const;
   return (
-    <div style={{ display: 'inline-flex', gap: 4 }}>
-      <button type="button" style={btn} disabled={sectionLocked || isFirst} onClick={() => onMove(-1)} aria-label={`move ${section.id} up`} title="↑">↑</button>
-      <button type="button" style={btn} disabled={sectionLocked || isLast}  onClick={() => onMove(1)}  aria-label={`move ${section.id} down`} title="↓">↓</button>
+    <div style={{ display: 'inline-flex', gap: 2, alignItems: 'center' }}>
+      <Tooltip title="Move up">
+        <span>
+          <IconButton size="small" sx={iconBtnSx} disabled={sectionLocked || isFirst} onClick={() => onMove(-1)} aria-label={`move ${section.id} up`}>
+            <ArrowUpwardIcon fontSize="inherit" />
+          </IconButton>
+        </span>
+      </Tooltip>
+      <Tooltip title="Move down">
+        <span>
+          <IconButton size="small" sx={iconBtnSx} disabled={sectionLocked || isLast} onClick={() => onMove(1)} aria-label={`move ${section.id} down`}>
+            <ArrowDownwardIcon fontSize="inherit" />
+          </IconButton>
+        </span>
+      </Tooltip>
       {canHide && (
-        section.hidden
-          ? <button type="button" style={btn} onClick={onShow} aria-label={`show ${section.id}`} title="show">👁</button>
-          : <button type="button" style={btn} onClick={onHide} aria-label={`hide ${section.id}`} title="hide">🚫</button>
+        section.hidden ? (
+          <Tooltip title="Show">
+            <IconButton size="small" sx={iconBtnSx} onClick={onShow} aria-label={`show ${section.id}`}>
+              <VisibilityIcon fontSize="inherit" />
+            </IconButton>
+          </Tooltip>
+        ) : (
+          <Tooltip title="Hide">
+            <IconButton size="small" sx={iconBtnSx} onClick={onHide} aria-label={`hide ${section.id}`}>
+              <VisibilityOffIcon fontSize="inherit" />
+            </IconButton>
+          </Tooltip>
+        )
       )}
     </div>
   );
@@ -418,23 +468,49 @@ function EditableBlock(p: EditableBlockProps) {
         <BlockSwitch {...p} />
       </div>
       {!fullyLocked && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0, paddingTop: 4 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flexShrink: 0, paddingTop: 4 }}>
           {canReorder && (
             <>
-              <button type="button" style={btn} disabled={isFirst} onClick={() => move(-1)} aria-label={`move ${block.id} up`} title="↑">↑</button>
-              <button type="button" style={btn} disabled={isLast}  onClick={() => move(1)}  aria-label={`move ${block.id} down`} title="↓">↓</button>
+              <Tooltip title="Move up"><span>
+                <IconButton size="small" disabled={isFirst} onClick={() => move(-1)} aria-label={`move ${block.id} up`} sx={{ color: tk.muted, p: 0.5 }}>
+                  <ArrowUpwardIcon fontSize="inherit" />
+                </IconButton>
+              </span></Tooltip>
+              <Tooltip title="Move down"><span>
+                <IconButton size="small" disabled={isLast} onClick={() => move(1)} aria-label={`move ${block.id} down`} sx={{ color: tk.muted, p: 0.5 }}>
+                  <ArrowDownwardIcon fontSize="inherit" />
+                </IconButton>
+              </span></Tooltip>
             </>
           )}
           {canHide && (
-            block.hidden
-              ? <button type="button" style={btn} onClick={() => onTemplateChange(showBlock(schema, section.id, block.id))} aria-label={`show ${block.id}`} title="show">👁</button>
-              : <button type="button" style={btn} onClick={() => onTemplateChange(hideBlock(schema, section.id, block.id))} aria-label={`hide ${block.id}`} title="hide">🚫</button>
+            block.hidden ? (
+              <Tooltip title="Show">
+                <IconButton size="small" onClick={() => onTemplateChange(showBlock(schema, section.id, block.id))} aria-label={`show ${block.id}`} sx={{ color: tk.muted, p: 0.5 }}>
+                  <VisibilityIcon fontSize="inherit" />
+                </IconButton>
+              </Tooltip>
+            ) : (
+              <Tooltip title="Hide">
+                <IconButton size="small" onClick={() => onTemplateChange(hideBlock(schema, section.id, block.id))} aria-label={`hide ${block.id}`} sx={{ color: tk.muted, p: 0.5 }}>
+                  <VisibilityOffIcon fontSize="inherit" />
+                </IconButton>
+              </Tooltip>
+            )
           )}
           {canDemote && (
-            <button type="button" style={btn} onClick={demote} aria-label={`demote ${block.id}`} title="demote">⇣</button>
+            <Tooltip title="Demote to checklist">
+              <IconButton size="small" onClick={demote} aria-label={`demote ${block.id}`} sx={{ color: tk.muted, p: 0.5 }}>
+                <SubdirectoryArrowRightIcon fontSize="inherit" />
+              </IconButton>
+            </Tooltip>
           )}
           {canDelete && (
-            <button type="button" style={danger} onClick={() => void del()} aria-label={`delete ${block.id}`} title="delete">×</button>
+            <Tooltip title="Delete">
+              <IconButton size="small" onClick={() => void del()} aria-label={`delete ${block.id}`} sx={{ color: tk.loss, p: 0.5 }}>
+                <DeleteOutlineIcon fontSize="inherit" />
+              </IconButton>
+            </Tooltip>
           )}
         </div>
       )}

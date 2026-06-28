@@ -161,8 +161,9 @@ describe('Wave-0 parity gate — renderer DOM matches legacy WeeklyTab contract'
       const slots = Array.from(container.querySelectorAll('[data-slot]')).map(
         n => n.getAttribute('data-slot'),
       );
-      // Order is contract: trades → chips → gauges (then later) grade → ai
-      expect(slots).toEqual(['trades', 'chips', 'gauges', 'grade', 'ai']);
+      // Plan-1 layout bands: risk band renders FIRST (above main), footer LAST.
+      // Order becomes: gauges → trades → chips → grade → ai.
+      expect(slots).toEqual(['gauges', 'trades', 'chips', 'grade', 'ai']);
     });
 
     it('decision-quality grades render D / C / B / A+ in order', () => {
