@@ -47,6 +47,13 @@ function reportStorageError(op: string, error: unknown) {
   window.dispatchEvent(new CustomEvent('orca:storage-error', { detail: { op, message } }));
 }
 
+function tradeDateToIso(date: string | undefined): string | null {
+  if (!date || typeof date !== 'string') return null;
+  const normalized = date.trim().replace(' ', 'T');
+  const d = new Date(normalized);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
 // ─── Module-level UID cache ───
 // auth.getUser() does a round-trip to Supabase on every call. Since every
 // storage operation needs the UID, that's 10+ unnecessary network calls per
@@ -165,6 +172,7 @@ function buildRow(uid: string, t: Trade) {
       closed_at: string | null;
     };
     __portfolio_id?: string | null;
+    __external_id?: string | null;
   };
   const prov = withMeta.__provenance;
   const portfolioId = withMeta.__portfolio_id ?? getActivePortfolioIdGlobal();
@@ -180,6 +188,16 @@ function buildRow(uid: string, t: Trade) {
     portfolio_id: portfolioId,
     data: clean,
   };
+  const tradeIso = tradeDateToIso(t.date);
+  if (tradeIso) {
+    row.opened_at = tradeIso;
+    row.closed_at = tradeIso;
+  }
+  if (!withMeta.__external_id) {
+    row.source_type = 'manual';
+    row.asset_class = 'other';
+    row.broker_id = 'manual';
+  }
   if (prov) {
     row.broker_id = prov.broker_id;
     row.account_label = prov.account_label;
