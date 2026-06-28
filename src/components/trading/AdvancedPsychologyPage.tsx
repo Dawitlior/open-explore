@@ -383,33 +383,7 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
               : (isRTL ? '◆ הסבר ערכים יוצג ב-R (יחידות סיכון)' : '◆ Values explained in R (risk units)')}
           </div>
         </div>
-        {/* ─── Fresh CTA ─── */}
-        <button
-          onClick={startDiagnosis}
-          disabled={diagLoading}
-          className="orca-diagnose-cta"
-          style={{
-            position: 'relative', overflow: 'hidden',
-            padding: '11px 22px', borderRadius: 999,
-            border: 'none',
-            background: `linear-gradient(120deg, #00E5FF 0%, #7C5BFF 55%, #FF4ED8 100%)`,
-            color: '#0a0a16', fontSize: 13, fontWeight: 900, cursor: diagLoading ? 'wait' : 'pointer',
-            boxShadow: `0 10px 28px rgba(0,229,255,0.35), 0 0 0 1px rgba(255,255,255,0.12) inset`,
-            display: 'inline-flex', alignItems: 'center', gap: 10, letterSpacing: '0.02em',
-            transition: 'transform .25s cubic-bezier(0.16,1,0.3,1), box-shadow .25s',
-          }}
-          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px) scale(1.03)'; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0) scale(1)'; }}
-        >
-          {/* Pulsing dot */}
-          <span style={{ position: 'relative', width: 10, height: 10 }}>
-            <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#0a0a16', opacity: 0.85 }} />
-            <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#0a0a16', animation: 'pulse 1.6s ease-in-out infinite' }} />
-          </span>
-          <span>{diagLoading ? (isRTL ? 'מאבחן...' : 'Diagnosing...') : (isRTL ? '⚡ אבחן אותי' : '⚡ Diagnose Me')}</span>
-          {/* Shimmer sweep */}
-          <span style={{ position: 'absolute', inset: 0, background: `linear-gradient(110deg, transparent 35%, rgba(255,255,255,0.55) 50%, transparent 65%)`, backgroundSize: '220% 100%', animation: diagLoading ? 'none' : 'shimmer 2.6s ease-in-out infinite', pointerEvents: 'none' }} />
-        </button>
+        {/* CTA removed per request — diagnosis still accessible programmatically via modal state. */}
       </div>
 
 
