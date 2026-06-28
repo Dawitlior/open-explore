@@ -175,8 +175,12 @@ export function YearView({ T, isRTL, trades, year }: Props) {
   const grid = (
     <div style={{
       display: 'grid',
-      gridTemplateColumns: isMobile ? 'repeat(2, minmax(0, 1fr))' : 'repeat(4, minmax(0, 1fr))',
-      gap: isMobile ? 6 : 12,
+      // Mobile: auto-fit so cells gracefully drop to 1 column when viewport
+      // can't fit 2 mini-months side-by-side (no clipping at 390px).
+      gridTemplateColumns: isMobile
+        ? 'repeat(auto-fit, minmax(160px, 1fr))'
+        : 'repeat(4, minmax(0, 1fr))',
+      gap: isMobile ? 8 : 12,
       direction: isRTL ? 'rtl' : 'ltr',
       flex: 1, minWidth: 0, width: '100%',
     }}>
