@@ -16,7 +16,7 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import SubdirectoryArrowRightIcon from '@mui/icons-material/SubdirectoryArrowRight';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlined';
 import { REFLECTION_TOKENS as T } from '../../theme/tokens';
 
 export interface EditableShellProps {
@@ -70,10 +70,12 @@ export function EditableCardShell({
       >
         {canReorder && dragHandleProps && (
           <Tooltip title={isRTL ? 'גרור לסידור' : 'Drag to reorder'}>
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             <IconButton
               size="small"
               aria-label={`drag ${targetId ?? ''}`.trim()}
-              {...(dragHandleProps as React.HTMLAttributes<HTMLButtonElement>)}
+              {...(dragHandleProps as unknown as Record<string, unknown>)}
+              color="default"
               sx={{ color: T.text.secondary, cursor: 'grab', touchAction: 'none' }}
             >
               <DragIndicatorIcon fontSize="small" />
