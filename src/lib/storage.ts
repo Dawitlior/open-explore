@@ -172,6 +172,7 @@ function buildRow(uid: string, t: Trade) {
       closed_at: string | null;
     };
     __portfolio_id?: string | null;
+    __external_id?: string | null;
   };
   const prov = withMeta.__provenance;
   const portfolioId = withMeta.__portfolio_id ?? getActivePortfolioIdGlobal();
