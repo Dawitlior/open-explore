@@ -22,15 +22,21 @@ describe('ModeSwitch mobile touch smoke', () => {
 
     render(<ModeSwitch T={getTheme('midnight')} isRTL />);
 
-    fireEvent.pointerUp(screen.getByRole('button', { name: 'אולטימייט' }), { pointerType: 'touch' });
-    const confirm = await screen.findByRole('button', { name: 'אישור החלפה' });
+    const touchUp = (el: HTMLElement) => {
+      const event = new Event('pointerup', { bubbles: true, cancelable: true });
+      Object.defineProperty(event, 'pointerType', { value: 'touch' });
+      fireEvent(el, event);
+    };
+
+    await act(async () => touchUp(screen.getByRole('button', { name: 'אולטימייט' })));
+    const confirm = screen.getByRole('button', { name: 'אישור החלפה' });
 
     const zIndexes = Array.from(document.body.querySelectorAll('div'))
       .map((el) => Number((el as HTMLElement).style.zIndex || 0))
       .filter(Boolean);
     expect(Math.max(...zIndexes)).toBeGreaterThan(9999);
 
-    fireEvent.pointerUp(confirm, { pointerType: 'touch' });
+    await act(async () => touchUp(confirm));
     await act(async () => { vi.advanceTimersByTime(1300); });
 
     expect(localStorage.getItem('orca:tier-preview')).toBe('ultimate');
