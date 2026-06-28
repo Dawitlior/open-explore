@@ -269,7 +269,12 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
             <>
               <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
                 <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase' }}>{isRTL ? 'סה״כ חודש' : 'Monthly Total'}</div>
-                <div style={{ fontSize: 22, fontWeight: 700, color: monthStats.totalPnl >= 0 ? T.accent.cyan : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>${monthStats.totalPnl.toFixed(2)}</div>
+                {(() => {
+                  const useR = isR && monthStats.rValid > 0;
+                  const lead = useR ? monthStats.totalR : monthStats.totalPnl;
+                  const leadStr = useR ? `${lead >= 0 ? '+' : ''}${lead.toFixed(1)}R` : `${lead < 0 ? '-' : ''}$${Math.abs(lead).toFixed(2)}`;
+                  return <div style={{ fontSize: 22, fontWeight: 700, color: lead >= 0 ? T.accent.cyan : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{leadStr}</div>;
+                })()}
               </div>
               <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
                 <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase' }}>{isRTL ? 'עסקאות' : 'Trades'}</div>
