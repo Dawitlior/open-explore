@@ -33,6 +33,14 @@ import { ReflectionCard } from './layout/ReflectionCard';
 import { groupSectionsByBand, resolveBand } from './layout/card-slots';
 import { useStepNumbers } from './layout/useStepNumbers';
 import { resolveSectionLayoutSpan } from './layout/layout-span';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlined';
+import SubdirectoryArrowRightIcon from '@mui/icons-material/SubdirectoryArrowRight';
 import type {
   WeeklyReviewSchema,
   Section,
