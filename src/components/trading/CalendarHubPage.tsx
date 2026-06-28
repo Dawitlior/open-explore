@@ -91,7 +91,6 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
     const d = new Date(focusedDate);
     if (zoomLevel === 'year') d.setFullYear(d.getFullYear() - 1);
     else if (zoomLevel === 'month') d.setMonth(d.getMonth() - 1);
-    else if (zoomLevel === 'week') d.setDate(d.getDate() - 7);
     else d.setDate(d.getDate() - 1);
     setFocusedDate(d);
   };
@@ -99,7 +98,6 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
     const d = new Date(focusedDate);
     if (zoomLevel === 'year') d.setFullYear(d.getFullYear() + 1);
     else if (zoomLevel === 'month') d.setMonth(d.getMonth() + 1);
-    else if (zoomLevel === 'week') d.setDate(d.getDate() + 7);
     else d.setDate(d.getDate() + 1);
     setFocusedDate(d);
   };
