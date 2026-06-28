@@ -91,7 +91,7 @@ export const ModeSwitch = ({ T, isRTL }: ModeSwitchProps) => {
   const close = () => { setPendingTier(null); setPhase('ask'); };
 
   const handleTierConfirm = () => {
-    if (!pendingTier) return;
+    if (!pendingTier || phase !== 'ask') return;
     setPhase('transmuting');
     setTimeout(() => {
       window.localStorage.setItem('orca:tier-preview', pendingTier);

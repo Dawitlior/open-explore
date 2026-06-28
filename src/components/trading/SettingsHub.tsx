@@ -2095,13 +2095,14 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                     title: t('מצב מערכת', 'Operating Mode'),
                     hint: t('Beginner · Standard · Alpha — שולט בעומק המידע והכלים שמוצגים.', 'Beginner · Standard · Alpha — controls how much depth and tooling is exposed.'),
                     body: <ModeSwitch T={T} isRTL={isRTL} />,
+                    allowOverflow: true,
                   },
                 ].map((row, i) => {
                   const Icon = row.icon;
                   return (
                     <div key={i} style={{
                       ...card,
-                      padding: 0, overflow: 'hidden',
+                      padding: 0, overflow: row.allowOverflow ? 'visible' : 'hidden',
                     }}>
                       <div style={{
                         display: 'flex', alignItems: 'center', gap: 10,

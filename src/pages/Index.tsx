@@ -1812,6 +1812,12 @@ const Index = () => {
                 <BacktestPortalButton onClick={() => { setSbOpen(false); setActiveDimension('backtest'); }} isRTL={isRTL} expanded={true} />
               </div>
 
+              {/* Package switcher — kept directly in the mobile menu so changing plan is not buried behind Settings. */}
+              <div className="mm-section-label">{isRTL ? 'חבילה' : 'Package'}</div>
+              <div style={{ padding: '0 4px 8px' }}>
+                <ModeSwitch T={T} isRTL={isRTL} />
+              </div>
+
               {/* Quick actions */}
               <div className="mm-section-label">{isRTL ? 'פעולות' : 'Actions'}</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
