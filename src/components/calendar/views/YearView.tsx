@@ -134,7 +134,7 @@ function MiniMonth({
 }
 
 export function YearView({ T, isRTL, trades, year }: Props) {
-  const { setFocusedDate, setZoomLevel, zoomIn } = useCalendarZoom();
+  const { setFocusedDate, setZoomLevel } = useCalendarZoom();
   const isMobile = useIsMobile();
   const dayPnl = useMemo(() => buildYearPnl(trades, year), [trades, year]);
 
@@ -155,24 +155,22 @@ export function YearView({ T, isRTL, trades, year }: Props) {
   const yearTrades = quarters.reduce((s, q) => s + q.trades, 0);
 
   const goMonth = (m: number) => { setFocusedDate(new Date(year, m, 1)); setZoomLevel('month'); };
-  const goDay = (m: number, d: number) => {
-    const dt = new Date(year, m, d);
-    setFocusedDate(dt);
-    zoomIn(dt);
-  };
+  // Clicking a specific day: jump into Month view focused on that date (day modal opens from there).
+  const goDay = (m: number, d: number) => { setFocusedDate(new Date(year, m, d)); setZoomLevel('month'); };
 
   const grid = (
     <div style={{
       display: 'grid',
-      gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
-      gap: isMobile ? 8 : 12,
+      gridTemplateColumns: isMobile ? 'repeat(2, minmax(0, 1fr))' : 'repeat(4, minmax(0, 1fr))',
+      gap: isMobile ? 6 : 12,
       direction: isRTL ? 'rtl' : 'ltr',
-      flex: 1, minWidth: 0,
+      flex: 1, minWidth: 0, width: '100%',
     }}>
       {Array.from({ length: 12 }, (_, m) => (
         <MiniMonth
           key={m} T={T} isRTL={isRTL} year={year} monthIdx={m}
           dayPnl={dayPnl}
+          compact={isMobile}
           onMonthClick={() => goMonth(m)}
           onDayClick={(d) => goDay(m, d)}
         />
