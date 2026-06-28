@@ -3997,9 +3997,12 @@ interface JournalDimensionProps {
   onUpdateOrcaTrade?: (trade: Trade) => Promise<unknown> | void;
   /** Guaranteed bridge: creates or updates the Orca mirror by Journal trade id. */
   onUpsertJournalTrade?: (journalTradeId: number | string, trade: Omit<Trade, 'id' | 'balance'>) => Promise<unknown> | void;
+  /** Bridge: removes the linked Orca trade — used by "Clear Demo" so demo
+   *  trades disappear from every Orca surface (dashboard, calendar, analytics). */
+  onRemoveOrcaTrade?: (orcaTradeId: number) => Promise<unknown> | void;
 }
 
-export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, onUpdateOrcaTrade, onUpsertJournalTrade }: JournalDimensionProps) => {
+export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, onUpdateOrcaTrade, onUpsertJournalTrade, onRemoveOrcaTrade }: JournalDimensionProps) => {
   // Language strictly follows the platform language (isRTL prop). Do NOT keep
   // local state for this — it caused HE/EN to desync when the user toggled
   // language while inside the journal and on subsequent loads (we used to
