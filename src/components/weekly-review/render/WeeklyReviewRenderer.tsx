@@ -468,23 +468,49 @@ function EditableBlock(p: EditableBlockProps) {
         <BlockSwitch {...p} />
       </div>
       {!fullyLocked && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0, paddingTop: 4 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flexShrink: 0, paddingTop: 4 }}>
           {canReorder && (
             <>
-              <button type="button" style={btn} disabled={isFirst} onClick={() => move(-1)} aria-label={`move ${block.id} up`} title="↑">↑</button>
-              <button type="button" style={btn} disabled={isLast}  onClick={() => move(1)}  aria-label={`move ${block.id} down`} title="↓">↓</button>
+              <Tooltip title="Move up"><span>
+                <IconButton size="small" disabled={isFirst} onClick={() => move(-1)} aria-label={`move ${block.id} up`} sx={{ color: tk.muted, p: 0.5 }}>
+                  <ArrowUpwardIcon fontSize="inherit" />
+                </IconButton>
+              </span></Tooltip>
+              <Tooltip title="Move down"><span>
+                <IconButton size="small" disabled={isLast} onClick={() => move(1)} aria-label={`move ${block.id} down`} sx={{ color: tk.muted, p: 0.5 }}>
+                  <ArrowDownwardIcon fontSize="inherit" />
+                </IconButton>
+              </span></Tooltip>
             </>
           )}
           {canHide && (
-            block.hidden
-              ? <button type="button" style={btn} onClick={() => onTemplateChange(showBlock(schema, section.id, block.id))} aria-label={`show ${block.id}`} title="show">👁</button>
-              : <button type="button" style={btn} onClick={() => onTemplateChange(hideBlock(schema, section.id, block.id))} aria-label={`hide ${block.id}`} title="hide">🚫</button>
+            block.hidden ? (
+              <Tooltip title="Show">
+                <IconButton size="small" onClick={() => onTemplateChange(showBlock(schema, section.id, block.id))} aria-label={`show ${block.id}`} sx={{ color: tk.muted, p: 0.5 }}>
+                  <VisibilityIcon fontSize="inherit" />
+                </IconButton>
+              </Tooltip>
+            ) : (
+              <Tooltip title="Hide">
+                <IconButton size="small" onClick={() => onTemplateChange(hideBlock(schema, section.id, block.id))} aria-label={`hide ${block.id}`} sx={{ color: tk.muted, p: 0.5 }}>
+                  <VisibilityOffIcon fontSize="inherit" />
+                </IconButton>
+              </Tooltip>
+            )
           )}
           {canDemote && (
-            <button type="button" style={btn} onClick={demote} aria-label={`demote ${block.id}`} title="demote">⇣</button>
+            <Tooltip title="Demote to checklist">
+              <IconButton size="small" onClick={demote} aria-label={`demote ${block.id}`} sx={{ color: tk.muted, p: 0.5 }}>
+                <SubdirectoryArrowRightIcon fontSize="inherit" />
+              </IconButton>
+            </Tooltip>
           )}
           {canDelete && (
-            <button type="button" style={danger} onClick={() => void del()} aria-label={`delete ${block.id}`} title="delete">×</button>
+            <Tooltip title="Delete">
+              <IconButton size="small" onClick={() => void del()} aria-label={`delete ${block.id}`} sx={{ color: tk.loss, p: 0.5 }}>
+                <DeleteOutlineIcon fontSize="inherit" />
+              </IconButton>
+            </Tooltip>
           )}
         </div>
       )}
