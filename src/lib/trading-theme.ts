@@ -313,6 +313,8 @@ export function applyThemeToDOM(id: ThemeId) {
   // Keep the PWA / browser title-bar (and iOS status bar) painted with the
   // active theme's solid background — otherwise the OS chrome stays stuck on
   // manifest.json#theme_color and visibly clashes with the in-app theme.
+  // Scope: ONLY <meta name="theme-color"> + the <html> element's background.
+  // Do NOT touch document.body — pages like Landing paint their own surface.
   try {
     const SOLID: Record<string, string> = {
       midnight: '#020202',
@@ -322,7 +324,6 @@ export function applyThemeToDOM(id: ThemeId) {
     };
     const solid = SOLID[id] || SOLID.blue;
     r.style.backgroundColor = solid;
-    if (document.body) document.body.style.backgroundColor = solid;
     let meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
     if (!meta) {
       meta = document.createElement('meta');
