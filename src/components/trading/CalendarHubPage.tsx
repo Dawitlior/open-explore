@@ -282,7 +282,7 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
           {zoomLevel === 'year' && (
             <YearView T={T} isRTL={isRTL} trades={trades} year={calYear} />
           )}
-          {(zoomLevel === 'month' || zoomLevel === 'day') && (
+          {zoomLevel === 'month' && (
             <div style={{ display: 'flex', gap: 18 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <GlassCard T={T} style={{ padding: 20 }}>
@@ -301,11 +301,7 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
                       const hasContent = !!dd || macros.length > 0;
                       return (
                         <motion.div key={i} whileHover={hasContent ? { scale: 1.03 } : {}}
-                          onClick={() => {
-                            if (!hasContent || !d) return;
-                            if (zoomLevel === 'day') { setCalModalDay(d); }
-                            else { setFocusedDate(new Date(calYear, calMonth, d)); zoomIn(new Date(calYear, calMonth, d)); }
-                          }}
+                          onClick={() => { if (hasContent && d) setCalModalDay(d); }}
                           style={{
                             minHeight: 130, borderRadius: T.radius.md,
                             border: `1px solid ${isToday ? T.accent.cyan : isDarkRed ? `${T.accent.red}60` : dd ? (dd.pnl > 0 ? `${T.accent.green}${Math.round(40 + intensity * 60).toString(16)}` : dd.pnl < 0 ? `${T.accent.red}${Math.round(40 + intensity * 60).toString(16)}` : `${T.accent.orange}30`) : T.border.subtle}`,
