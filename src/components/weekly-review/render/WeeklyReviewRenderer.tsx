@@ -341,22 +341,38 @@ interface RailProps {
   onShow: () => void;
 }
 
-function SectionRail({ section, isFirst, isLast, sectionLocked, canHide, tk, onMove, onHide, onShow }: RailProps) {
-  const btn: React.CSSProperties = {
-    width: 26, height: 26, padding: 0,
-    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-    borderRadius: 6, border: `1px solid ${tk.border}`,
-    background: 'transparent', color: tk.muted, cursor: 'pointer',
-    fontSize: 12, lineHeight: 1,
-  };
+function SectionRail({ section, isFirst, isLast, sectionLocked, canHide, onMove, onHide, onShow }: RailProps) {
+  const iconBtnSx = { color: 'inherit', p: 0.5 } as const;
   return (
-    <div style={{ display: 'inline-flex', gap: 4 }}>
-      <button type="button" style={btn} disabled={sectionLocked || isFirst} onClick={() => onMove(-1)} aria-label={`move ${section.id} up`} title="↑">↑</button>
-      <button type="button" style={btn} disabled={sectionLocked || isLast}  onClick={() => onMove(1)}  aria-label={`move ${section.id} down`} title="↓">↓</button>
+    <div style={{ display: 'inline-flex', gap: 2, alignItems: 'center' }}>
+      <Tooltip title="Move up">
+        <span>
+          <IconButton size="small" sx={iconBtnSx} disabled={sectionLocked || isFirst} onClick={() => onMove(-1)} aria-label={`move ${section.id} up`}>
+            <ArrowUpwardIcon fontSize="inherit" />
+          </IconButton>
+        </span>
+      </Tooltip>
+      <Tooltip title="Move down">
+        <span>
+          <IconButton size="small" sx={iconBtnSx} disabled={sectionLocked || isLast} onClick={() => onMove(1)} aria-label={`move ${section.id} down`}>
+            <ArrowDownwardIcon fontSize="inherit" />
+          </IconButton>
+        </span>
+      </Tooltip>
       {canHide && (
-        section.hidden
-          ? <button type="button" style={btn} onClick={onShow} aria-label={`show ${section.id}`} title="show">👁</button>
-          : <button type="button" style={btn} onClick={onHide} aria-label={`hide ${section.id}`} title="hide">🚫</button>
+        section.hidden ? (
+          <Tooltip title="Show">
+            <IconButton size="small" sx={iconBtnSx} onClick={onShow} aria-label={`show ${section.id}`}>
+              <VisibilityIcon fontSize="inherit" />
+            </IconButton>
+          </Tooltip>
+        ) : (
+          <Tooltip title="Hide">
+            <IconButton size="small" sx={iconBtnSx} onClick={onHide} aria-label={`hide ${section.id}`}>
+              <VisibilityOffIcon fontSize="inherit" />
+            </IconButton>
+          </Tooltip>
+        )
       )}
     </div>
   );
