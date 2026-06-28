@@ -3493,7 +3493,7 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
 // ═══════════════════════════════════════════════════════════════
 // EOD FORM
 // ═══════════════════════════════════════════════════════════════
-const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, th, risk, onInfoClick, onAddOrcaTrade, onUpdateOrcaTrade, onUpsertJournalTrade }: any) => {
+const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, th, risk, onInfoClick, onAddOrcaTrade, onUpdateOrcaTrade, onUpsertJournalTrade, onRemoveOrcaTrade }: any) => {
   const f = t.f;
   const isR = useJournalIsR();
   const U = (k: string) => (v: any) => upd({ [k]: v });
