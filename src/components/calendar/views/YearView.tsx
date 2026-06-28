@@ -233,10 +233,12 @@ export function YearView({ T, isRTL, trades, year }: Props) {
         <div style={{ fontSize: 9, color: T.text.muted }}>{isRTL ? 'סה״כ שנתי' : 'Year Total'}</div>
         <div style={{
           fontSize: 18, fontWeight: 800,
-          color: yearTotal >= 0 ? T.accent.green : T.accent.red,
+          color: (isR ? yearR : yearTotal) >= 0 ? T.accent.green : T.accent.red,
           fontFamily: "'JetBrains Mono', monospace",
         }}>
-          {yearTotal >= 0 ? '+' : '-'}${Math.abs(yearTotal).toFixed(0)}
+          {isR
+            ? `${yearR >= 0 ? '+' : ''}${yearR.toFixed(1)}R`
+            : `${yearTotal >= 0 ? '+' : '-'}$${Math.abs(yearTotal).toFixed(0)}`}
         </div>
         <div style={{ fontSize: 9, color: T.text.muted, marginTop: 2 }}>
           {yearTrades} {isRTL ? 'עסקאות' : 'trades'}
@@ -249,7 +251,8 @@ export function YearView({ T, isRTL, trades, year }: Props) {
         gap: 6,
       }}>
         {quarters.map(q => {
-          const pos = q.pnl >= 0;
+          const v = isR ? q.rTotal : q.pnl;
+          const pos = v >= 0;
           return (
             <div key={q.q} style={{
               background: T.bg.card,
@@ -262,7 +265,11 @@ export function YearView({ T, isRTL, trades, year }: Props) {
                 color: q.trades === 0 ? T.text.muted : pos ? T.accent.green : T.accent.red,
                 fontFamily: "'JetBrains Mono', monospace",
               }}>
-                {q.trades === 0 ? '—' : `${pos ? '+' : '-'}$${Math.abs(q.pnl).toFixed(0)}`}
+                {q.trades === 0
+                  ? '—'
+                  : isR
+                    ? `${pos ? '+' : ''}${v.toFixed(1)}R`
+                    : `${pos ? '+' : '-'}$${Math.abs(v).toFixed(0)}`}
               </div>
               <div style={{ fontSize: 8, color: T.text.muted }}>{q.trades} {isRTL ? 'עס׳' : 'tr'}</div>
             </div>
