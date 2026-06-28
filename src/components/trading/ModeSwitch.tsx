@@ -112,19 +112,28 @@ export const ModeSwitch = ({ T, isRTL }: ModeSwitchProps) => {
         <div style={{ display: 'flex', gap: 4, background: T.bg.primary, borderRadius: T.radius.md, padding: 4 }}>
           {TIER_OPTIONS.map(m => {
             const color = m.color(T);
+            const openTier = () => {
+              if (m.id !== tier) { setPhase('ask'); setPendingTier(m.id); }
+            };
             return (
             <button
               key={m.id}
               type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (m.id !== tier) { setPhase('ask'); setPendingTier(m.id); }
+              onClick={(e) => { e.stopPropagation(); openTier(); }}
+              // iOS Safari sometimes drops synthetic click after touch — use a pointer
+              // fallback so taps reliably open the modal on mobile.
+              onPointerUp={(e) => {
+                if (e.pointerType === 'touch' || e.pointerType === 'pen') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  openTier();
+                }
               }}
               style={{
                 flex: 1,
                 // Larger tap targets so mobile users can reliably hit them.
-                padding: '10px 6px',
-                minHeight: 40,
+                padding: '12px 6px',
+                minHeight: 44,
                 fontSize: 11, fontWeight: 700, letterSpacing: '0.06em',
                 textTransform: 'uppercase', border: 'none', borderRadius: T.radius.sm,
                 cursor: 'pointer',
@@ -133,9 +142,10 @@ export const ModeSwitch = ({ T, isRTL }: ModeSwitchProps) => {
                 transition: 'all 0.2s', position: 'relative',
                 touchAction: 'manipulation',
                 WebkitTapHighlightColor: 'transparent',
+                userSelect: 'none',
               }}
             >
-              {tier === m.id && <div style={{ position: 'absolute', bottom: 0, left: '20%', right: '20%', height: 2, background: color, borderRadius: 1 }} />}
+              {tier === m.id && <div style={{ position: 'absolute', bottom: 0, left: '20%', right: '20%', height: 2, background: color, borderRadius: 1, pointerEvents: 'none' }} />}
               {isRTL ? m.labelHe : m.label}
             </button>
           );})}
