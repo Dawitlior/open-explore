@@ -209,7 +209,8 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
                   {calDays.map((d, i) => {
                     const dd = d ? calDayPnl[d] : null;
                     const isToday = isCurrentMonth && d === todayN;
-                    const dotColor = dd ? (dd.pnl > 0 ? T.accent.green : dd.pnl < 0 ? T.accent.red : T.accent.orange) : null;
+                    const ddLead = dd ? (isR && dd.rValid > 0 ? dd.rTotal : dd.pnl) : 0;
+                    const dotColor = dd ? (ddLead > 0 ? T.accent.green : ddLead < 0 ? T.accent.red : T.accent.orange) : null;
                     const macros = d ? macroByDay.get(d) ?? [] : [];
                     const dayPast = !!d && new Date(calYear, calMonth, d) < new Date(now.getFullYear(), now.getMonth(), now.getDate());
                     const hasContent = !!dd || macros.length > 0;
