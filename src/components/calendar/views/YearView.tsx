@@ -99,32 +99,46 @@ function MiniMonth({
           const isToday = isCurrentMonth && today.getDate() === d;
           const hasTrades = !!agg;
           const isPos = agg ? agg.pnl >= 0 : false;
-          const bg = isToday
-            ? T.accent.cyan
-            : hasTrades
-              ? (isPos ? `${T.accent.green}28` : `${T.accent.red}28`)
-              : 'transparent';
+          const dotColor = hasTrades ? (isPos ? T.accent.green : T.accent.red) : 'transparent';
           const color = isToday
             ? '#001023'
             : hasTrades
               ? (isPos ? T.accent.green : T.accent.red)
               : T.text.muted;
+          const dotSize = compact ? 3 : 4;
           return (
             <button
               key={i}
               onClick={(e) => { if (hasTrades) { e.stopPropagation(); onDayClick(d); } }}
               title={hasTrades ? `${d}: ${isPos ? '+' : '-'}$${Math.abs(agg!.pnl).toFixed(0)} · ${agg!.trades}` : undefined}
               style={{
+                position: 'relative',
                 aspectRatio: '1',
+                width: '100%', minWidth: 0, height: 'auto',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: compact ? 9 : 10, fontWeight: isToday || hasTrades ? 700 : 500,
-                color, background: bg,
+                color,
+                background: isToday ? T.accent.cyan : 'transparent',
                 border: 'none', borderRadius: '50%',
                 cursor: hasTrades ? 'pointer' : 'default',
-                padding: 0, lineHeight: 1,
+                padding: 0, lineHeight: 1, overflow: 'hidden',
+                boxSizing: 'border-box',
               }}
             >
-              {d}
+              <span style={{ position: 'relative', zIndex: 1 }}>{d}</span>
+              {hasTrades && !isToday && (
+                <span
+                  aria-hidden
+                  style={{
+                    position: 'absolute',
+                    bottom: compact ? 1 : 2,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: dotSize, height: dotSize, borderRadius: '50%',
+                    background: dotColor,
+                  }}
+                />
+              )}
             </button>
           );
         })}
