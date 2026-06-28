@@ -161,21 +161,25 @@ export function YearView({ T, isRTL, trades, year }: Props) {
   const { setFocusedDate, setZoomLevel } = useCalendarZoom();
   const isMobile = useIsMobile();
   const dayPnl = useMemo(() => buildYearPnl(trades, year), [trades, year]);
+  const { isR } = useEffectiveDisplayMode(trades);
 
   // Quarter totals
   const quarters = useMemo(() => {
     const q = [0, 0, 0, 0];
+    const qR = [0, 0, 0, 0];
     const t = [0, 0, 0, 0];
     Object.entries(dayPnl).forEach(([key, v]) => {
       const m = +key.split('-')[0];
       const qi = Math.floor(m / 3);
       q[qi] += v.pnl;
+      qR[qi] += v.rTotal;
       t[qi] += v.trades;
     });
-    return q.map((pnl, i) => ({ q: i + 1, pnl, trades: t[i] }));
+    return q.map((pnl, i) => ({ q: i + 1, pnl, rTotal: qR[i], trades: t[i] }));
   }, [dayPnl]);
 
   const yearTotal = quarters.reduce((s, q) => s + q.pnl, 0);
+  const yearR = quarters.reduce((s, q) => s + q.rTotal, 0);
   const yearTrades = quarters.reduce((s, q) => s + q.trades, 0);
 
   const goMonth = (m: number) => { setFocusedDate(new Date(year, m, 1)); setZoomLevel('month'); };
@@ -185,12 +189,11 @@ export function YearView({ T, isRTL, trades, year }: Props) {
   const grid = (
     <div style={{
       display: 'grid',
-      // Mobile: auto-fit so cells gracefully drop to 1 column when viewport
-      // can't fit 2 mini-months side-by-side (no clipping at 390px).
+      // Mobile: force a true single column (≤480px). Tablet/desktop keep 4 cols.
       gridTemplateColumns: isMobile
-        ? 'repeat(auto-fit, minmax(160px, 1fr))'
+        ? '1fr'
         : 'repeat(4, minmax(0, 1fr))',
-      gap: isMobile ? 8 : 12,
+      gap: isMobile ? 10 : 12,
       direction: isRTL ? 'rtl' : 'ltr',
       flex: 1, minWidth: 0, width: '100%',
     }}>
@@ -199,6 +202,7 @@ export function YearView({ T, isRTL, trades, year }: Props) {
           key={m} T={T} isRTL={isRTL} year={year} monthIdx={m}
           dayPnl={dayPnl}
           compact={isMobile}
+          isR={isR}
           onMonthClick={() => goMonth(m)}
           onDayClick={(d) => goDay(m, d)}
         />
