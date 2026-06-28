@@ -192,9 +192,6 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
             {zoomLevel === 'year' && (
               <YearView T={T} isRTL={isRTL} trades={trades} year={calYear} />
             )}
-            {zoomLevel === 'week' && (
-              <WeekStripView T={T} isRTL={isRTL} trades={trades} weekStart={weekStart} />
-            )}
             {(zoomLevel === 'month' || zoomLevel === 'day') && (
               <>
                 {/* compact month grid for mobile */}
