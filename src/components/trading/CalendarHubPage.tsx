@@ -75,6 +75,7 @@ function ZoomToggle({ T }: { T: any }) {
 /* ── Inner calendar — reads zoom from context ─────────────────── */
 function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSetManualR }: Props) {
   const { zoomLevel, focusedDate, setFocusedDate, setZoomLevel } = useCalendarZoom();
+  const { isR } = useEffectiveDisplayMode(trades);
   const containerRef = useRef<HTMLDivElement>(null!);
   useCalendarGestures(containerRef);
 
