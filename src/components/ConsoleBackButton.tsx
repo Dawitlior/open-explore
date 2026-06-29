@@ -1,7 +1,8 @@
 // =====================================================================
-//  ConsoleBackButton — floating "back to app" pill on /console.
-//  Placed top-start so it never collides with the console's own header.
-//  Pure presentation; no business logic.
+//  ConsoleBackButton — minimal icon-only "back to app" chip on /console.
+//  Floats at the TOP-START corner, just below the safe-area inset, so it
+//  no longer collides with the dashboard's top header nor with the mobile
+//  bottom tab bar / footer content.
 // =====================================================================
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
@@ -15,29 +16,30 @@ export const ConsoleBackButton = () => {
       aria-label="Back to Orca"
       style={{
         position: "fixed",
-        bottom: "calc(16px + env(safe-area-inset-bottom))",
-        insetInlineStart: 16,
+        top: "calc(10px + env(safe-area-inset-top))",
+        insetInlineStart: "calc(10px + env(safe-area-inset-left))",
         zIndex: 100000,
         display: "inline-flex",
         alignItems: "center",
-        gap: 8,
-        padding: "8px 14px 8px 10px",
-        borderRadius: 999,
-        background: "rgba(15, 27, 45, 0.92)",
+        justifyContent: "center",
+        width: 34,
+        height: 34,
+        padding: 0,
+        borderRadius: 10,
+        background: "rgba(15, 27, 45, 0.78)",
         color: "#fff",
-        border: "1px solid rgba(255,255,255,0.18)",
-        boxShadow: "0 6px 22px rgba(0,0,0,0.35)",
+        border: "1px solid rgba(255,255,255,0.14)",
+        boxShadow: "0 4px 14px rgba(0,0,0,0.28)",
         backdropFilter: "blur(10px)",
         WebkitBackdropFilter: "blur(10px)",
-        fontFamily: "'Poppins', system-ui, sans-serif",
-        fontSize: 12.5,
-        fontWeight: 700,
-        letterSpacing: 0.2,
         cursor: "pointer",
+        opacity: 0.85,
+        transition: "opacity .15s ease, transform .12s ease",
       }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = "1"; }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = "0.85"; }}
     >
-      <ArrowLeft size={14} strokeWidth={2.4} />
-      <span>חזרה ל-Orca · Back</span>
+      <ArrowLeft size={16} strokeWidth={2.4} />
     </button>
   );
 };
