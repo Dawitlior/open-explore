@@ -142,6 +142,19 @@ export default function MobileConsoleShell({
         display: "flex", alignItems: "center", gap: 8,
         padding: "10px 14px", minHeight: 52,
       }}>
+        <button
+          onClick={() => navigate("/")}
+          aria-label={rtl ? "חזרה לאורקה" : "Back to Orca"}
+          title={rtl ? "חזרה לאורקה" : "Back to Orca"}
+          className="mconsole-tap"
+          style={{
+            width: 38, height: 38, borderRadius: 10, border: `1px solid ${C.border}`,
+            background: "transparent", color: C.ink2, display: "grid", placeItems: "center",
+            cursor: "pointer", flexShrink: 0,
+          }}
+        >
+          {rtl ? <ArrowLeft size={18} style={{ transform: "scaleX(-1)" }} /> : <ArrowLeft size={18} />}
+        </button>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
           <div style={{ width: 30, height: 30, borderRadius: 8, background: C.blueSoft, display: "grid", placeItems: "center", flexShrink: 0 }}>
             <Grid3x3 size={16} color={C.accent} />
