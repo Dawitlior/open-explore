@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard, Activity, Grid3x3, ShieldAlert, MoreHorizontal, X,
+  LayoutDashboard, Activity, Grid3x3, ShieldAlert, MoreHorizontal, X, ArrowLeft,
   SlidersHorizontal, Download, Sun, Moon, Globe, FileText, Database, ChevronLeft,
   Repeat, GitMerge, CreditCard, Brain, TrendingUp, Layers, FileCheck, Server, Terminal,
 } from "lucide-react";
