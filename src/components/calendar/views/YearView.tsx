@@ -89,22 +89,21 @@ function MiniMonth({
       </div>
 
       {/* Weekday headers */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 2 }}>
         {dowLabels.map((d, i) => (
           <div key={i} style={{
             textAlign: 'center', fontSize: compact ? 8 : 9, fontWeight: 600,
             color: T.text.muted, letterSpacing: '0.02em',
+            minWidth: 0, lineHeight: 1,
           }}>{d}</div>
         ))}
       </div>
 
-      {/* Day grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1 }}>
+      {/* Day grid — every cell is a uniform aspect-ratio square; button fills it absolutely. */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 2 }}>
         {calDays.map((d, i) => {
-          if (!d) return <div key={i} style={{ aspectRatio: '1' }} />;
-          const agg = dayPnl[`${monthIdx}-${d}`];
-          const isToday = isCurrentMonth && today.getDate() === d;
-          // In R mode prefer R-driven sign/value when there's any R data on the day.
+          const agg = d ? dayPnl[`${monthIdx}-${d}`] : undefined;
+          const isToday = !!d && isCurrentMonth && today.getDate() === d;
           const useR = isR && !!agg && agg.rValid > 0;
           const leadVal = useR ? agg!.rTotal : (agg ? agg.pnl : 0);
           const hasTrades = !!agg;
@@ -117,42 +116,46 @@ function MiniMonth({
               : T.text.muted;
           const dotSize = compact ? 3 : 4;
           return (
-            <button
-              key={i}
-              onClick={(e) => { if (hasTrades) { e.stopPropagation(); onDayClick(d); } }}
-              title={hasTrades ? (useR ? `${d}: ${leadVal >= 0 ? '+' : ''}${leadVal.toFixed(2)}R · ${agg!.trades}` : `${d}: ${isPos ? '+' : '-'}$${Math.abs(agg!.pnl).toFixed(0)} · ${agg!.trades}`) : undefined}
-              style={{
-                position: 'relative',
-                aspectRatio: '1',
-                width: '100%', minWidth: 0, height: 'auto',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: compact ? 9 : 10, fontWeight: isToday || hasTrades ? 700 : 500,
-                color,
-                background: isToday ? T.accent.cyan : 'transparent',
-                border: 'none', borderRadius: '50%',
-                cursor: hasTrades ? 'pointer' : 'default',
-                padding: 0, lineHeight: 1, overflow: 'hidden',
-                boxSizing: 'border-box',
-              }}
-            >
-              <span style={{ position: 'relative', zIndex: 1 }}>{d}</span>
-              {hasTrades && !isToday && (
-                <span
-                  aria-hidden
+            <div key={i} style={{
+              position: 'relative',
+              width: '100%',
+              aspectRatio: '1 / 1',
+              minWidth: 0,
+            }}>
+              {d && (
+                <button
+                  onClick={(e) => { if (hasTrades) { e.stopPropagation(); onDayClick(d); } }}
+                  title={hasTrades ? (useR ? `${d}: ${leadVal >= 0 ? '+' : ''}${leadVal.toFixed(2)}R · ${agg!.trades}` : `${d}: ${isPos ? '+' : '-'}$${Math.abs(agg!.pnl).toFixed(0)} · ${agg!.trades}`) : undefined}
                   style={{
-                    position: 'absolute',
-                    bottom: compact ? 1 : 2,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    width: dotSize, height: dotSize, borderRadius: '50%',
-                    background: dotColor,
+                    position: 'absolute', inset: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: compact ? 9 : 10, fontWeight: isToday || hasTrades ? 700 : 500,
+                    color,
+                    background: isToday ? T.accent.cyan : 'transparent',
+                    border: 'none', borderRadius: '50%',
+                    cursor: hasTrades ? 'pointer' : 'default',
+                    padding: 0, margin: 0, lineHeight: 1,
+                    boxSizing: 'border-box', fontFamily: 'inherit',
                   }}
-                />
+                >
+                  <span style={{ position: 'relative', zIndex: 1 }}>{d}</span>
+                  {hasTrades && !isToday && (
+                    <span aria-hidden style={{
+                      position: 'absolute',
+                      bottom: compact ? 1 : 2,
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      width: dotSize, height: dotSize, borderRadius: '50%',
+                      background: dotColor,
+                    }} />
+                  )}
+                </button>
               )}
-            </button>
+            </div>
           );
         })}
       </div>
+
     </motion.div>
   );
 }
