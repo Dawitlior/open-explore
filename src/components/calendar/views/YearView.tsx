@@ -189,10 +189,10 @@ export function YearView({ T, isRTL, trades, year }: Props) {
   const grid = (
     <div style={{
       display: 'grid',
-      // Mobile: dense two-column mini-month grid on normal phones.
-      // Falls back to one column only when the container is too narrow (<~340px).
+      // Mobile: ALWAYS exactly 2 mini-months per row — Apple-style year overview.
+      // Desktop: 4 across. No auto-fit guessing — guarantees a clean, consistent grid.
       gridTemplateColumns: isMobile
-        ? 'repeat(auto-fit, minmax(min(100%, 160px), 1fr))'
+        ? 'repeat(2, minmax(0, 1fr))'
         : 'repeat(4, minmax(0, 1fr))',
       gap: isMobile ? 10 : 12,
       direction: isRTL ? 'rtl' : 'ltr',
