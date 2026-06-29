@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard, Activity, Grid3x3, ShieldAlert, MoreHorizontal, X,
+  LayoutDashboard, Activity, Grid3x3, ShieldAlert, MoreHorizontal, X, ArrowLeft,
   SlidersHorizontal, Download, Sun, Moon, Globe, FileText, Database, ChevronLeft,
   Repeat, GitMerge, CreditCard, Brain, TrendingUp, Layers, FileCheck, Server, Terminal,
 } from "lucide-react";
@@ -94,6 +95,7 @@ export default function MobileConsoleShell({
     return () => { document.documentElement.style.overflowX = prev; };
   }, []);
 
+  const navigate = useNavigate();
   const allPages = GROUPS.flatMap((g) => g.pages.map(([id, label, Icon]) => ({
     id, label: t(label), groupId: g.id, groupLabel: t(g.label), Icon,
   })));
@@ -126,8 +128,12 @@ export default function MobileConsoleShell({
           .mconsole-content [style*="grid-template-columns: repeat(4"],
           .mconsole-content [style*="grid-template-columns: repeat(3"] { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
           .mconsole-content [style*="grid-template-columns: repeat(2"] { grid-template-columns: 1fr !important; }
-          .mconsole-content table { font-size: 12px; }
+          .mconsole-content table { font-size: 12px; width: 100%; }
+          /* Wide tables → horizontal-scroll containers, not page-overflow */
+          .mconsole-content .table-wrap, .mconsole-content [class*="overflow"] { -webkit-overflow-scrolling: touch; }
+          .mconsole-content table th, .mconsole-content table td { white-space: nowrap; padding: 8px 10px !important; }
           .mconsole-content .recharts-wrapper { font-size: 10px; }
+          .mconsole-content .recharts-responsive-container { max-width: 100% !important; }
         }
       `}</style>
 
@@ -140,6 +146,19 @@ export default function MobileConsoleShell({
         display: "flex", alignItems: "center", gap: 8,
         padding: "10px 14px", minHeight: 52,
       }}>
+        <button
+          onClick={() => navigate("/")}
+          aria-label={rtl ? "חזרה לאורקה" : "Back to Orca"}
+          title={rtl ? "חזרה לאורקה" : "Back to Orca"}
+          className="mconsole-tap"
+          style={{
+            width: 38, height: 38, borderRadius: 10, border: `1px solid ${C.border}`,
+            background: "transparent", color: C.ink2, display: "grid", placeItems: "center",
+            cursor: "pointer", flexShrink: 0,
+          }}
+        >
+          {rtl ? <ArrowLeft size={18} style={{ transform: "scaleX(-1)" }} /> : <ArrowLeft size={18} />}
+        </button>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
           <div style={{ width: 30, height: 30, borderRadius: 8, background: C.blueSoft, display: "grid", placeItems: "center", flexShrink: 0 }}>
             <Grid3x3 size={16} color={C.accent} />
