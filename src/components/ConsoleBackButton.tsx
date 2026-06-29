@@ -9,6 +9,10 @@ import { ArrowLeft } from "lucide-react";
 
 export const ConsoleBackButton = () => {
   const navigate = useNavigate();
+  // On mobile the shell renders its own in-header back arrow, so hide this floater.
+  if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
+    return null;
+  }
   return (
     <button
       onClick={() => navigate("/")}
