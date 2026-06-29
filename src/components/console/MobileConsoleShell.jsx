@@ -128,8 +128,12 @@ export default function MobileConsoleShell({
           .mconsole-content [style*="grid-template-columns: repeat(4"],
           .mconsole-content [style*="grid-template-columns: repeat(3"] { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
           .mconsole-content [style*="grid-template-columns: repeat(2"] { grid-template-columns: 1fr !important; }
-          .mconsole-content table { font-size: 12px; }
+          .mconsole-content table { font-size: 12px; width: 100%; }
+          /* Wide tables → horizontal-scroll containers, not page-overflow */
+          .mconsole-content .table-wrap, .mconsole-content [class*="overflow"] { -webkit-overflow-scrolling: touch; }
+          .mconsole-content table th, .mconsole-content table td { white-space: nowrap; padding: 8px 10px !important; }
           .mconsole-content .recharts-wrapper { font-size: 10px; }
+          .mconsole-content .recharts-responsive-container { max-width: 100% !important; }
         }
       `}</style>
 
