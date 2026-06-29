@@ -95,6 +95,7 @@ export default function MobileConsoleShell({
     return () => { document.documentElement.style.overflowX = prev; };
   }, []);
 
+  const navigate = useNavigate();
   const allPages = GROUPS.flatMap((g) => g.pages.map(([id, label, Icon]) => ({
     id, label: t(label), groupId: g.id, groupLabel: t(g.label), Icon,
   })));
