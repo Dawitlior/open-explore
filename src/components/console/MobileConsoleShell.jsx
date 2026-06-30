@@ -372,3 +372,39 @@ function ActionRow({ C, icon: Icon, label, onClick }) {
     </button>
   );
 }
+
+/* ────────────────────────────────────────────────────────────────────
+   Skeleton — shown only on first load (before any data has arrived).
+   Mirrors the typical ORCA Console layout: KPI strip + 2 chart cards.
+   ──────────────────────────────────────────────────────────────────── */
+function ConsoleSkeleton({ C }) {
+  const block = (h, w = "100%") => (
+    <div style={{
+      height: h, width: w, borderRadius: 10,
+      background: `linear-gradient(90deg, ${C.panelAlt} 0%, ${C.border} 50%, ${C.panelAlt} 100%)`,
+      backgroundSize: "400px 100%",
+      animation: "mcShimmer 1.4s ease-in-out infinite",
+    }} />
+  );
+  const card = (children) => (
+    <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 14, padding: 14, display: "grid", gap: 10 }}>
+      {children}
+    </div>
+  );
+  return (
+    <div style={{ display: "grid", gap: 12 }} aria-busy="true" aria-label="Loading">
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0,1fr))", gap: 10 }}>
+        {[0,1,2,3].map(i => (
+          <div key={i} style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 14, padding: 14, display: "grid", gap: 10 }}>
+            {block(10, "50%")}
+            {block(24, "70%")}
+            {block(8, "40%")}
+          </div>
+        ))}
+      </div>
+      {card(<>{block(12, "40%")}{block(160)}</>)}
+      {card(<>{block(12, "55%")}{block(120)}</>)}
+    </div>
+  );
+}
+
