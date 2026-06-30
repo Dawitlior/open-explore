@@ -179,14 +179,64 @@ export const ReviewDashboard = ({
                 </div>
               )}
               {isChartVisible('pnlDistribution') && (() => {
-                const distData = trades
-                  .map((tr: Trade, i: number) => ({
-                    n: i + 1,
-                    v: isMoney
-                      ? (Number.isFinite(tr.pnl) ? Number(tr.pnl) : null)
-                      : (hasStrictR(tr) ? getEffectiveR(tr) : null),
-                  }))
-                  .filter((d) => d.v !== null && Number.isFinite(d.v as number)) as { n: number; v: number }[];
+                // Collect per-trade outcome values in current mode ($ or R)
+                const values = trades
+                  .map((tr: Trade) => isMoney
+                    ? (Number.isFinite(tr.pnl) ? Number(tr.pnl) : null)
+                    : (hasStrictR(tr) ? getEffectiveR(tr) : null))
+                  .filter((v): v is number => v !== null && Number.isFinite(v as number));
+
+                // Compute bins. Use fixed R width (1R) when in R mode;
+                // dynamic $ width based on data spread when in money mode.
+                let binWidth = 1;
+                if (values.length > 0) {
+                  if (isMoney) {
+                    const absMax = Math.max(...values.map(v => Math.abs(v)));
+                    // Aim for ~10 buckets on each side of zero
+                    const raw = absMax / 8 || 1;
+                    const pow = Math.pow(10, Math.floor(Math.log10(raw)));
+                    const norm = raw / pow;
+                    const nice = norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10;
+                    binWidth = nice * pow;
+                  } else {
+                    binWidth = 1; // 1R buckets
+                  }
+                }
+
+                const bins = new Map<number, { idx: number; count: number; low: number; high: number }>();
+                for (const v of values) {
+                  const idx = Math.floor(v / binWidth);
+                  const low = idx * binWidth;
+                  const high = low + binWidth;
+                  const cur = bins.get(idx);
+                  if (cur) cur.count += 1;
+                  else bins.set(idx, { idx, count: 1, low, high });
+                }
+                const sorted = Array.from(bins.values()).sort((a, b) => a.idx - b.idx);
+                // Ensure contiguous range (fill empty bins between min/max)
+                const distData = (() => {
+                  if (sorted.length === 0) return [] as { label: string; count: number; mid: number; low: number; high: number }[];
+                  const minIdx = sorted[0].idx;
+                  const maxIdx = sorted[sorted.length - 1].idx;
+                  const out: { label: string; count: number; mid: number; low: number; high: number }[] = [];
+                  const fmt = (x: number) => isMoney
+                    ? `$${Math.round(x)}`
+                    : `${x >= 0 ? '+' : ''}${x.toFixed(binWidth < 1 ? 1 : 0)}R`;
+                  for (let i = minIdx; i <= maxIdx; i++) {
+                    const low = i * binWidth;
+                    const high = low + binWidth;
+                    const found = bins.get(i);
+                    out.push({
+                      label: `${fmt(low)} → ${fmt(high)}`,
+                      count: found?.count || 0,
+                      mid: (low + high) / 2,
+                      low,
+                      high,
+                    });
+                  }
+                  return out;
+                })();
+
                 return (
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.pnlDistribution} explanation={EXPLANATIONS.pnlDistribution} unit={isMoney ? '$' : 'R'} chartId="pnlDistribution" onRemove={handleHideChart}>
@@ -197,23 +247,33 @@ export const ReviewDashboard = ({
                         </div>
                       ) : (
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={distData} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
+                        <BarChart data={distData} margin={{ top: 8, right: 12, bottom: 8, left: 0 }} barCategoryGap={1}>
+                          <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} vertical={false} />
                           <XAxis
-                            dataKey="n"
-                            tick={distData.length > 60 ? false : { fill: T.text.muted, fontSize: 10 }}
-                            interval={distData.length > 60 ? Math.max(0, Math.floor(distData.length / 8) - 1) : 'preserveStartEnd'}
-                            minTickGap={48}
-                            height={distData.length > 60 ? 8 : 20}
+                            dataKey="mid"
+                            type="number"
+                            domain={[distData[0].low, distData[distData.length - 1].high]}
+                            tick={{ fill: T.text.muted, fontSize: 10 }}
+                            tickFormatter={(v: number) => isMoney ? `$${Math.round(v)}` : `${v >= 0 ? '+' : ''}${v.toFixed(0)}R`}
                             axisLine={{ stroke: T.border.subtle }}
                             tickLine={false}
+                            minTickGap={24}
                           />
-                          <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} width={48} tickFormatter={(v: number) => isMoney ? `$${Math.round(v)}` : `${v.toFixed(1)}R`} />
-                          <Tooltip contentStyle={tt} formatter={(v: any) => isMoney ? `${Number(v) >= 0 ? '+' : ''}$${Number(v).toFixed(2)}` : `${Number(v) >= 0 ? '+' : ''}${Number(v).toFixed(2)}R`} labelFormatter={(l: any) => `#${l}`} />
-                          <ReferenceLine y={0} stroke={T.border.medium} />
-                          <Bar dataKey="v" radius={[4,4,0,0]}>
+                          <YAxis
+                            allowDecimals={false}
+                            tick={{ fill: T.text.muted, fontSize: 10 }}
+                            width={36}
+                            tickFormatter={(v: number) => `${v}`}
+                          />
+                          <Tooltip
+                            contentStyle={tt}
+                            formatter={(v: any) => [`${v} ${Number(v) === 1 ? (isRTL ? 'עסקה' : 'trade') : (isRTL ? 'עסקאות' : 'trades')}`, isRTL ? 'תדירות' : 'Frequency']}
+                            labelFormatter={(_l: any, payload: any) => payload?.[0]?.payload?.label ?? ''}
+                          />
+                          <ReferenceLine x={0} stroke={T.border.medium} strokeDasharray="2 2" />
+                          <Bar dataKey="count" radius={[4,4,0,0]}>
                             {distData.map((d, i: number) => (
-                              <Cell key={i} fill={d.v >= 0 ? T.accent.green : T.accent.red} />
+                              <Cell key={i} fill={d.mid >= 0 ? T.accent.green : T.accent.red} fillOpacity={d.count === 0 ? 0.15 : 0.85} />
                             ))}
                           </Bar>
                         </BarChart>
@@ -224,6 +284,7 @@ export const ReviewDashboard = ({
                 </div>
                 );
               })()}
+
             </div>
 
             {/* Radar + Coin + Direction */}
