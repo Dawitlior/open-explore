@@ -47,34 +47,61 @@ export function selectVisibleTrades(trades: Trade[], mode: DisplayMode): Trade[]
 }
 
 const STORAGE_KEY = 'orca:displayMode';
+const USER_SET_KEY = 'orca:displayMode:userSet';
+
+/** Auto-pick the mode the user most likely wants, based on their data:
+ *  more R-eligible trades than not → R_MULTIPLE; otherwise → MONEY. */
+export function autoPickMode(trades: Trade[]): DisplayMode {
+  if (!trades || trades.length === 0) return 'R_MULTIPLE';
+  let rOk = 0;
+  for (const t of trades) if (hasStrictR(t)) rOk++;
+  const moneyOnly = trades.length - rOk;
+  return rOk > moneyOnly ? 'R_MULTIPLE' : 'MONEY';
+}
 
 export function DisplayModeProvider({ trades, children }: { trades: Trade[]; children: ReactNode }) {
   const hasAnyR = useMemo(() => trades.some(hasStrictR), [trades]);
   const locked = !hasAnyR;
+  const autoMode = useMemo(() => autoPickMode(trades), [trades]);
 
   const [displayMode, setDisplayModeState] = useState<DisplayMode>(() => {
     if (typeof window === 'undefined') return 'R_MULTIPLE';
     try {
+      const userSet = window.localStorage.getItem(USER_SET_KEY) === '1';
       const cached = window.localStorage.getItem(STORAGE_KEY);
-      if (cached === 'MONEY' || cached === 'R_MULTIPLE') return cached;
+      if (userSet && (cached === 'MONEY' || cached === 'R_MULTIPLE')) return cached;
     } catch { /* ignore */ }
-    return 'R_MULTIPLE';
+    return autoPickMode(trades);
   });
 
   // Derive effective mode synchronously — prevents a one-frame flicker on
   // first paint when an effect would otherwise downgrade R_MULTIPLE → MONEY.
   const effectiveMode: DisplayMode = locked ? 'MONEY' : displayMode;
 
-  // Persist the reconciled state back to React state so consumers that read
-  // `displayMode` (rather than the derived value) eventually converge.
   useEffect(() => {
     if (locked && displayMode !== 'MONEY') setDisplayModeState('MONEY');
   }, [locked, displayMode]);
 
+  // Auto-follow the data while the user hasn't explicitly picked a mode.
+  useEffect(() => {
+    try {
+      const userSet = window.localStorage.getItem(USER_SET_KEY) === '1';
+      if (userSet) return;
+    } catch { /* ignore */ }
+    if (autoMode !== displayMode) {
+      setDisplayModeState(autoMode);
+      try { window.localStorage.setItem(STORAGE_KEY, autoMode); } catch { /* ignore */ }
+      try { window.dispatchEvent(new CustomEvent('orca:displayMode-changed', { detail: autoMode })); } catch { /* noop */ }
+    }
+  }, [autoMode, displayMode]);
+
   const setDisplayMode = (m: DisplayMode) => {
     if (locked && m === 'R_MULTIPLE') return; // can't enter R without eligible data
     setDisplayModeState(m);
-    try { window.localStorage.setItem(STORAGE_KEY, m); } catch { /* ignore */ }
+    try {
+      window.localStorage.setItem(STORAGE_KEY, m);
+      window.localStorage.setItem(USER_SET_KEY, '1');
+    } catch { /* ignore */ }
     try { window.dispatchEvent(new CustomEvent('orca:displayMode-changed', { detail: m })); } catch { /* noop */ }
   };
 

@@ -223,8 +223,12 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
                     minWidth: 0,
                     padding: 0,
                     cursor: data ? 'pointer' : 'default',
-                    background: pos ? `${T.accent.green}22` : neg ? `${T.accent.red}22` : T.bg.tertiary,
-                    border: `1px solid ${isToday ? T.accent.cyan : pos ? `${T.accent.green}55` : neg ? `${T.accent.red}55` : T.border.subtle}`,
+                    background: pos
+                      ? `linear-gradient(180deg, ${T.accent.green}55, ${T.accent.green}30)`
+                      : neg
+                      ? `linear-gradient(180deg, ${T.accent.red}55, ${T.accent.red}30)`
+                      : T.bg.tertiary,
+                    border: `1px solid ${isToday ? T.accent.cyan : pos ? T.accent.green : neg ? T.accent.red : T.border.subtle}`,
                     borderRadius: 8,
                     color: T.text.primary,
                     display: 'flex',
