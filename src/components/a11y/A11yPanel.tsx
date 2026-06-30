@@ -10,7 +10,8 @@
  */
 import { useEffect, useId, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { Accessibility, X, Type, Contrast, Eye, MousePointer2, Sparkles, Link as LinkIcon, ALargeSmall, RotateCcw } from 'lucide-react';
+import { Accessibility, X, Type, Contrast, Eye, MousePointer2, Sparkles, Link as LinkIcon, ALargeSmall, RotateCcw, AlignHorizontalJustifyCenter } from 'lucide-react';
+import { ReadingGuide } from './ReadingGuide';
 import { useA11yPrefs, type A11yContrast } from '@/hooks/use-a11y-prefs';
 import { useLang } from '@/hooks/use-lang';
 
@@ -36,6 +37,7 @@ export function A11yPanel() {
 
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
+      <ReadingGuide />
       <Dialog.Trigger asChild>
         <button
           type="button"
@@ -57,6 +59,7 @@ export function A11yPanel() {
         <Dialog.Content
           aria-labelledby={titleId}
           dir={isRTL ? 'rtl' : 'ltr'}
+          className="a11y-popup"
           style={{
             position: 'fixed', zIndex: 95,
             insetBlockEnd: 'clamp(16px, 4vh, 96px)',
@@ -72,7 +75,9 @@ export function A11yPanel() {
             color: '#E8ECF4',
           }}
         >
+          <span className="a11y-popup-handle" aria-hidden="true" />
           <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', borderBottom: '1px solid #1A2236' }}>
+
             <Dialog.Title id={titleId} style={{ fontSize: 17, fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', gap: 10, margin: 0 }}>
               <Accessibility size={22} color="#E5B94E" aria-hidden="true" />
               {t('נגישות', 'Accessibility')}
@@ -133,6 +138,7 @@ export function A11yPanel() {
                       role="radio"
                       aria-checked={pressed}
                       onClick={() => update({ contrast: v })}
+                      className="a11y-seg-btn"
                       style={segBtn(pressed)}
                     >
                       {labels[v]}
@@ -155,6 +161,7 @@ export function A11yPanel() {
               <ToggleRow icon={<MousePointer2 size={18} aria-hidden="true" />} title={t('סמן עכבר גדול', 'Large cursor')} hint={t('סמן בולט וקל לאיתור', 'High-visibility pointer')} pressed={prefs.cursor} onToggle={() => update({ cursor: !prefs.cursor })} />
               <ToggleRow icon={<Eye size={18} aria-hidden="true" />} title={t('מסגרת פוקוס מודגשת', 'Stronger focus ring')} hint={t('מתאר עבה כשמתמקדים בקלט', 'Thicker outline on focus')} pressed={prefs.focus} onToggle={() => update({ focus: !prefs.focus })} />
               <ToggleRow icon={<Sparkles size={18} aria-hidden="true" />} title={t('עצור אנימציות', 'Reduce motion')} hint={t('בטל מעברים ואנימציות', 'Disable transitions / animations')} pressed={prefs.motion} onToggle={() => update({ motion: !prefs.motion })} />
+              <ToggleRow icon={<AlignHorizontalJustifyCenter size={18} aria-hidden="true" />} title={t('מדריך קריאה', 'Reading guide')} hint={t('פס אופקי שעוקב אחרי הסמן', 'Horizontal bar that follows the cursor')} pressed={prefs.guide} onToggle={() => update({ guide: !prefs.guide })} />
             </Section>
 
             <button
@@ -183,7 +190,7 @@ function Section({ label, children }: { label: string; children: React.ReactNode
 
 function SizeBtn({ children, onClick, disabled, ariaLabel }: { children: React.ReactNode; onClick: () => void; disabled?: boolean; ariaLabel: string }) {
   return (
-    <button type="button" onClick={onClick} disabled={disabled} aria-label={ariaLabel} style={{
+    <button type="button" onClick={onClick} disabled={disabled} aria-label={ariaLabel} className="a11y-size-btn" style={{
       flex: 1, height: 48, borderRadius: 12, background: '#101728', border: '1px solid #242e48',
       color: disabled ? '#4a546b' : '#E8ECF4', cursor: disabled ? 'not-allowed' : 'pointer',
       display: 'grid', placeItems: 'center', fontWeight: 700, opacity: disabled ? 0.5 : 1,
@@ -208,6 +215,7 @@ function ToggleRow({ icon, title, hint, pressed, onToggle }: { icon: React.React
       type="button"
       aria-pressed={pressed}
       onClick={onToggle}
+      className="a11y-toggle-row"
       style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
         width: '100%', background: '#0E1524', border: '1px solid #1d2740', borderRadius: 13,
