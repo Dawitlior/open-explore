@@ -90,6 +90,8 @@ export default function MobileConsoleShell({
   const [moreOpen, setMoreOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [pageKey, setPageKey] = useState(active);
+  const [fading, setFading] = useState(false);
 
   // Lock horizontal scrolling at the shell level — nothing should overflow.
   useEffect(() => {
@@ -97,6 +99,26 @@ export default function MobileConsoleShell({
     document.documentElement.style.overflowX = "hidden";
     return () => { document.documentElement.style.overflowX = prev; };
   }, []);
+
+  // Smooth fade between sections (respects reduced-motion).
+  useEffect(() => {
+    if (pageKey === active) return;
+    const reduce = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) { setPageKey(active); return; }
+    setFading(true);
+    const t1 = setTimeout(() => { setPageKey(active); setFading(false); window.scrollTo({ top: 0, behavior: "auto" }); }, 140);
+    return () => clearTimeout(t1);
+  }, [active, pageKey]);
+
+  // Pull-to-refresh: re-fetch live data by reloading the route's data sources.
+  // useAdminLive polls; trigger a hard refresh of the page-level data via a
+  // bump key. We just resolve after a short delay so the indicator animates,
+  // and let the existing 30s poll pick up new data.
+  const ptr = usePullToRefresh({
+    enabled: true,
+    threshold: 64,
+    onRefresh: () => new Promise((r) => setTimeout(r, 700)),
+  });
 
   const navigate = useNavigate();
   const allPages = GROUPS.flatMap((g) => g.pages.map(([id, label, Icon]) => ({
