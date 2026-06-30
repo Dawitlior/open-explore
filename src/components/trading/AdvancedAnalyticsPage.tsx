@@ -24,6 +24,7 @@ import {
   AreaChart, Area, BarChart, Bar, LineChart, Line, ScatterChart, Scatter,
   XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   Cell, ComposedChart, RadialBarChart, RadialBar, PolarAngleAxis,
+  Legend, ReferenceLine,
 } from 'recharts';
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
