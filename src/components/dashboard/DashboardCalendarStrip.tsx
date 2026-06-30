@@ -273,7 +273,7 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
 
         {/* ── Long card ──────────────────────────────────────── */}
         <BreakdownCard
-          T={T} isRTL={isRTL}
+          T={T} isRTL={isRTL} isR={isR}
           title={isRTL ? 'ניתוח לונג' : 'Long Analysis'}
           accent={T.accent.green}
           stats={breakdown.long}
@@ -281,7 +281,7 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
 
         {/* ── Short card ─────────────────────────────────────── */}
         <BreakdownCard
-          T={T} isRTL={isRTL}
+          T={T} isRTL={isRTL} isR={isR}
           title={isRTL ? 'ניתוח שורט' : 'Short Analysis'}
           accent={T.accent.red}
           stats={breakdown.short}
