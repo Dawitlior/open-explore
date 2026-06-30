@@ -260,7 +260,7 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
                         lineHeight: 1.1,
                         color: pos ? T.accent.green : neg ? T.accent.red : T.text.primary,
                       }}>
-                        {data.pnl >= 0 ? '+' : ''}{fmtMoneyShort(data.pnl)}
+                        {fmtValShort(data.pnl)}
                       </span>
                       <span style={{ fontSize: 8, color: T.text.muted }}>({data.n})</span>
                     </>
