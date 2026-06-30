@@ -16,6 +16,7 @@ import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { getEffectiveR } from '@/lib/r-multiple';
 import { hasStrictR } from '@/lib/display-mode';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Props {
   T: TradingTheme;
@@ -28,6 +29,7 @@ interface Props {
 export const PnLDistributionHistogram = ({ T, trades, isMoney, isRTL, tt }: Props) => {
   const [logScale, setLogScale] = useState(false);
   const [focusProfits, setFocusProfits] = useState(false);
+  const isMobile = useIsMobile();
 
   const { distDataMA, hasLossBin } = useMemo(() => {
     const values = trades
@@ -94,9 +96,13 @@ export const PnLDistributionHistogram = ({ T, trades, isMoney, isRTL, tt }: Prop
       filtered = full.filter((b) => b.mid !== dominantLoss.mid);
     }
 
+    // Desktop uses a wider smoothing window (5-point) for a noticeably smoother
+    // trend curve. Mobile keeps the original 3-point window to stay readable
+    // on the tighter layout.
+    const maRadius = isMobile ? 1 : 2;
     const withMA = filtered.map((d, i, arr) => {
       let s = 0, n = 0;
-      for (let k = Math.max(0, i - 1); k <= Math.min(arr.length - 1, i + 1); k++) {
+      for (let k = Math.max(0, i - maRadius); k <= Math.min(arr.length - 1, i + maRadius); k++) {
         s += arr[k].count;
         n += 1;
       }
@@ -104,7 +110,7 @@ export const PnLDistributionHistogram = ({ T, trades, isMoney, isRTL, tt }: Prop
     });
 
     return { distDataMA: withMA, hasLossBin };
-  }, [trades, isMoney, focusProfits]);
+  }, [trades, isMoney, focusProfits, isMobile]);
 
   if (distDataMA.length === 0) {
     return (
@@ -150,7 +156,11 @@ export const PnLDistributionHistogram = ({ T, trades, isMoney, isRTL, tt }: Prop
       </div>
       <div style={{ flex: 1, minHeight: 0 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={distDataMA} margin={{ top: 8, right: 12, bottom: 8, left: 0 }} barCategoryGap={1}>
+          <ComposedChart
+            data={distDataMA}
+            margin={{ top: 8, right: 12, bottom: 8, left: 0 }}
+            barCategoryGap={isMobile ? 1 : '4%'}
+          >
             <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} vertical={false} />
             <XAxis
               dataKey="mid"
@@ -169,6 +179,18 @@ export const PnLDistributionHistogram = ({ T, trades, isMoney, isRTL, tt }: Prop
               scale={logScale ? 'log' : 'linear'}
               domain={logScale ? logDomain : linearDomain}
               allowDataOverflow={logScale}
+              // Desktop log mode: pin ticks to clean power-of-10 milestones
+              // (1, 10, 100, 1000, …) so the axis reads as a milestone scale
+              // instead of arbitrary intermediate values. Mobile + linear keep
+              // Recharts' default tick generator to avoid crowding.
+              ticks={!isMobile && logScale
+                ? (() => {
+                    const max = logDomain[1];
+                    const out: number[] = [];
+                    for (let p = 0; Math.pow(10, p) <= max; p++) out.push(Math.pow(10, p));
+                    return out;
+                  })()
+                : undefined}
               tickFormatter={(v: number) => `${Math.round(v)}`}
             />
             <Tooltip
@@ -182,14 +204,16 @@ export const PnLDistributionHistogram = ({ T, trades, isMoney, isRTL, tt }: Prop
             <ReferenceLine x={0} stroke={T.border.medium} strokeDasharray="2 2" />
             <Bar dataKey="count" radius={[4, 4, 0, 0]} stroke={T.border.medium} strokeWidth={1}>
               {distDataMA.map((d, i: number) => (
-                <Cell key={i} fill={d.mid >= 0 ? T.accent.green : T.accent.red} fillOpacity={d.count === 0 ? 0.12 : 0.75} />
+                <Cell key={i} fill={d.mid >= 0 ? T.accent.green : T.accent.red} fillOpacity={d.count === 0 ? 0.12 : 0.78} />
               ))}
             </Bar>
             <Line
-              type="monotone"
+              // Desktop uses `basis` for a noticeably smoother spline; mobile
+              // keeps `monotone` which is tighter and reads cleaner small.
+              type={isMobile ? 'monotone' : 'basis'}
               dataKey="ma"
               stroke={T.accent.blue || '#60a5fa'}
-              strokeWidth={2}
+              strokeWidth={isMobile ? 2 : 2.5}
               dot={false}
               isAnimationActive={false}
             />
