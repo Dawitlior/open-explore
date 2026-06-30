@@ -189,7 +189,7 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
                   fontSize: 16, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace",
                   color: monthTotal.pnl > 0 ? T.accent.green : monthTotal.pnl < 0 ? T.accent.red : T.text.primary,
                 }}>
-                  {monthTotal.pnl >= 0 ? '+' : ''}{fmtMoney(monthTotal.pnl, 1)}
+                  {fmtValTotal(monthTotal.pnl)}
                 </div>
               </div>
               <div>
