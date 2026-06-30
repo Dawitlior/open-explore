@@ -366,6 +366,10 @@ export const ReviewDashboard = ({
       </div>
 
       {/* Advanced Analytics Lab + Risk-Adjusted Ratios moved to /analytics (Ultimate-tier only) */}
+
+      {/* ═══ LAYER 4 — CALENDAR + LONG/SHORT BREAKDOWN ═══ */}
+      <DashboardCalendarStrip T={T} t={t} isRTL={isRTL} trades={trades} />
+
     </div>
   );
 };
