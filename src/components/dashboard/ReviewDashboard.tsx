@@ -348,15 +348,20 @@ export const ReviewDashboard = ({
                         paddingInlineEnd: stats.monthlyPerf.length > 7 ? 6 : 0,
                       }}
                     >
-                      {stats.monthlyPerf.map((mp: any, i: number) => (
+                      {stats.monthlyPerf.map((mp: any, i: number) => {
+                        const totalR = (Number(mp.avgR) || 0) * (Number(mp.trades) || 0);
+                        return (
                         <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px solid ${T.border.subtle}` }}>
                           <span style={{ fontSize: 12, color: T.text.secondary }}>{mp.month}</span>
                           <div style={{ display: 'flex', gap: 12 }}>
-                            {isMoney && <PV><span style={{ fontSize: 11, color: mp.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{mp.pnl >= 0 ? '+' : ''}${mp.pnl.toFixed(2)}</span></PV>}
-                            <span style={{ fontSize: 11, color: T.accent.purple, fontFamily: "'JetBrains Mono', monospace" }}>{mp.expectancyR >= 0 ? '+' : ''}{mp.expectancyR.toFixed(2)}R</span>
+                            {isMoney
+                              ? <PV><span style={{ fontSize: 11, color: mp.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{mp.pnl >= 0 ? '+' : ''}${mp.pnl.toFixed(2)}</span></PV>
+                              : <span style={{ fontSize: 11, color: totalR >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{totalR >= 0 ? '+' : ''}{totalR.toFixed(2)}R</span>}
+                            <span style={{ fontSize: 11, color: T.accent.purple, fontFamily: "'JetBrains Mono', monospace" }}>{mp.expectancyR >= 0 ? '+' : ''}{mp.expectancyR.toFixed(2)}R/tr</span>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </ChartWrapper>
                 </div>
