@@ -68,6 +68,7 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
   const today = useMemo(() => new Date(), []);
   const [focused, setFocused] = useState<Date>(today);
   const [modalDay, setModalDay] = useState<number | null>(null);
+  const [pickerMode, setPickerMode] = useState<'days' | 'months' | 'years'>('days');
 
   const fmtValShort = (v: number) => isR
     ? `${v >= 0 ? '+' : ''}${v.toFixed(2)}R`
@@ -203,8 +204,16 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <button onClick={navPrev} aria-label="prev" style={navBtn(T)}>{isRTL ? '›' : '‹'}</button>
-              <button onClick={() => setFocused(new Date())} style={{ ...navBtn(T), padding: '4px 10px', fontSize: 12 }}>
-                {monthLabel}
+              <button
+                onClick={() => setPickerMode(m => m === 'days' ? 'months' : m === 'months' ? 'years' : 'days')}
+                aria-label={isRTL ? 'בחר חודש או שנה' : 'Pick month or year'}
+                style={{ ...navBtn(T), padding: '4px 10px', fontSize: 12 }}
+              >
+                {pickerMode === 'years'
+                  ? `${Math.floor(year / 10) * 10}–${Math.floor(year / 10) * 10 + 11}`
+                  : pickerMode === 'months'
+                    ? String(year)
+                    : monthLabel}
               </button>
               <button onClick={navNext} aria-label="next" style={navBtn(T)}>{isRTL ? '‹' : '›'}</button>
             </div>
