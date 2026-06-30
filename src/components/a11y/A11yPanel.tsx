@@ -10,7 +10,8 @@
  */
 import { useEffect, useId, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { Accessibility, X, Type, Contrast, Eye, MousePointer2, Sparkles, Link as LinkIcon, ALargeSmall, RotateCcw } from 'lucide-react';
+import { Accessibility, X, Type, Contrast, Eye, MousePointer2, Sparkles, Link as LinkIcon, ALargeSmall, RotateCcw, AlignHorizontalJustifyCenter } from 'lucide-react';
+import { ReadingGuide } from './ReadingGuide';
 import { useA11yPrefs, type A11yContrast } from '@/hooks/use-a11y-prefs';
 import { useLang } from '@/hooks/use-lang';
 
@@ -36,6 +37,7 @@ export function A11yPanel() {
 
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
+      <ReadingGuide />
       <Dialog.Trigger asChild>
         <button
           type="button"
@@ -57,6 +59,7 @@ export function A11yPanel() {
         <Dialog.Content
           aria-labelledby={titleId}
           dir={isRTL ? 'rtl' : 'ltr'}
+          className="a11y-popup"
           style={{
             position: 'fixed', zIndex: 95,
             insetBlockEnd: 'clamp(16px, 4vh, 96px)',
@@ -72,7 +75,9 @@ export function A11yPanel() {
             color: '#E8ECF4',
           }}
         >
+          <span className="a11y-popup-handle" aria-hidden="true" />
           <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', borderBottom: '1px solid #1A2236' }}>
+
             <Dialog.Title id={titleId} style={{ fontSize: 17, fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', gap: 10, margin: 0 }}>
               <Accessibility size={22} color="#E5B94E" aria-hidden="true" />
               {t('נגישות', 'Accessibility')}
