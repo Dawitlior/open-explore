@@ -154,13 +154,13 @@ export const BestWorstWindowChart = ({ T, trades, isRTL, tt }: Props) => {
           <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 2 }}>
             {isRTL ? 'לפי יום' : 'By day'}
           </div>
-          <div className="bw-window-chart-canvas" style={{ height: 180, width: '100%' }}>{renderBars(data.days, 'day')}</div>
+          <div className="bw-window-chart-canvas" style={{ height: 180, width: '100%' }}>{renderBars(data.days, 'day', data.bestDay?.name, data.worstDay?.name)}</div>
         </div>
         <div className="bw-window-chart-cell">
           <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 2 }}>
             {isRTL ? 'לפי שעה' : 'By hour'}
           </div>
-          <div className="bw-window-chart-canvas" style={{ height: 180, width: '100%' }}>{renderBars(data.hours, 'hour')}</div>
+          <div className="bw-window-chart-canvas" style={{ height: 180, width: '100%' }}>{renderBars(data.hours, 'hour', data.bestHour?.name, data.worstHour?.name)}</div>
         </div>
       </div>
     </div>
