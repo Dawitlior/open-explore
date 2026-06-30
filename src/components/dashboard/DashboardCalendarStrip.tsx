@@ -371,10 +371,10 @@ function BreakdownCard({ T, isRTL, isR, title, accent, stats }: BreakdownProps) 
         <span><span style={{ color: T.accent.green, marginInlineEnd: 4 }}>●</span>{stats.wins} {isRTL ? 'ניצחונות' : 'wins'}</span>
       </div>
 
-      {row(isRTL ? 'רווח ממוצע' : 'Avg profit',     fmtMoney(stats.avgWin, 1),     T.accent.green)}
-      {row(isRTL ? 'הפסד ממוצע' : 'Avg loss',       (stats.avgLoss === 0 ? '$0' : `-${fmtMoney(Math.abs(stats.avgLoss), 1)}`), T.accent.red)}
-      {row(isRTL ? 'ממוצע לעסקה' : 'Avg per trade', `${stats.avgPerTrade >= 0 ? '' : '-'}${fmtMoney(Math.abs(stats.avgPerTrade), 1)}`)}
-      {row(isRTL ? 'רווח/הפסד (סה״כ)' : 'P&L (total)', `${stats.totalPnl >= 0 ? '' : '-'}${fmtMoney(Math.abs(stats.totalPnl), 1)}`,
+      {row(isRTL ? 'רווח ממוצע' : 'Avg profit',     fmtVal(stats.avgWin),     T.accent.green)}
+      {row(isRTL ? 'הפסד ממוצע' : 'Avg loss',       fmtVal(stats.avgLoss), T.accent.red)}
+      {row(isRTL ? 'ממוצע לעסקה' : 'Avg per trade', fmtVal(stats.avgPerTrade))}
+      {row(isRTL ? 'רווח/הפסד (סה״כ)' : 'P&L (total)', fmtVal(stats.totalPnl),
         stats.totalPnl >= 0 ? T.accent.green : T.accent.red)}
       {row(isRTL ? 'ממוצע רווח/הפסד לעסקה' : 'Avg R:R per trade',
         stats.avgRR > 0 ? stats.avgRR.toFixed(2) : '—',
