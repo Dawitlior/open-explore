@@ -116,8 +116,16 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
   const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
   const todayN = today.getDate();
 
-  const navPrev = () => setFocused(new Date(year, month - 1, 1));
-  const navNext = () => setFocused(new Date(year, month + 1, 1));
+  const navPrev = () => {
+    if (pickerMode === 'days') setFocused(new Date(year, month - 1, 1));
+    else if (pickerMode === 'months') setFocused(new Date(year - 1, month, 1));
+    else setFocused(new Date(year - 10, month, 1));
+  };
+  const navNext = () => {
+    if (pickerMode === 'days') setFocused(new Date(year, month + 1, 1));
+    else if (pickerMode === 'months') setFocused(new Date(year + 1, month, 1));
+    else setFocused(new Date(year + 10, month, 1));
+  };
 
   const monthLabel = `${(isRTL ? MONTHS_HE : MONTHS_EN)[month]} ${year}`;
   const dow = isRTL ? DOW_HE : DOW_EN;
