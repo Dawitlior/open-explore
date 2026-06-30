@@ -128,13 +128,13 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
     for (const tr of trades) {
       const bucket = tr.direction === 'Short' ? S : L;
       bucket.n++;
-      const pnl = Number(tr.pnl) || 0;
-      bucket.sumPnl += pnl;
-      if (tr.winLoss === 'Win') { bucket.wins++; bucket.sumWin += pnl; }
-      else if (tr.winLoss === 'Loss') { bucket.losses++; bucket.sumLoss += pnl; }
+      const val = isR ? (getEffectiveR(tr, { strict: true }) ?? 0) : (Number(tr.pnl) || 0);
+      bucket.sumPnl += val;
+      if (tr.winLoss === 'Win') { bucket.wins++; bucket.sumWin += val; }
+      else if (tr.winLoss === 'Loss') { bucket.losses++; bucket.sumLoss += val; }
       else bucket.breakEven++;
       // R-Multiple ≈ realized risk-reward when stop-loss known
-      const r = Number(tr.returnR);
+      const r = isR ? val : Number(tr.returnR);
       if (Number.isFinite(r)) { bucket.sumRR += Math.abs(r); bucket.rrN++; }
       const hm = getHoldMinutes(tr);
       if (hm != null) { bucket.holdSum += hm; bucket.holdN++; }
@@ -155,7 +155,7 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
       };
     };
     return { long: stat(L), short: stat(S) };
-  }, [trades]);
+  }, [trades, isR]);
 
   const cardBase: React.CSSProperties = {
     background: T.bg.card,
