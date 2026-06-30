@@ -8,7 +8,6 @@ import { AdaptiveExpectancyCard, AdaptiveQuickStats } from '@/components/trading
 import { ChartWrapper, EXPLANATIONS, type ChartExplanation } from '@/components/trading/ChartWrapper';
 import { FeatureHint } from '@/components/trading/FeatureHint';
 import DashboardCalendarStrip from './DashboardCalendarStrip';
-import { RiskAdjustedRatiosSection } from './RiskAdjustedRatiosSection';
 import { TierGate } from '@/components/billing/TierGate';
 import { BestWorstWindowChart } from './BestWorstWindowChart';
 import { WinsByMonthChart, WinsByQuarterChart, ReturnPerTimeChart } from './SimpleExtraCharts';
