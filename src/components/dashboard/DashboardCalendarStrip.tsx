@@ -15,6 +15,8 @@ import type { I18nStrings } from '@/lib/trading-i18n';
 import { parseTradeDate } from '@/components/weekly-review/lib/week-key';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { CalendarModal } from '@/components/trading/CalendarModal';
+import { useDisplayMode } from '@/lib/display-mode';
+import { getEffectiveR } from '@/lib/r-multiple';
 
 interface Props {
   T: TradingTheme;
