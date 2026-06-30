@@ -15,7 +15,7 @@ import {
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { getEffectiveR } from '@/lib/r-multiple';
-import { hasStrictR } from '@/lib/display-mode-format';
+import { hasStrictR } from '@/lib/display-mode';
 
 interface Props {
   T: TradingTheme;
