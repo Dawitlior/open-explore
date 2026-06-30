@@ -71,6 +71,7 @@ export const BestWorstWindowChart = ({ T, trades, isRTL, tt }: Props) => {
     xKind: 'day' | 'hour',
     bestName?: string,
     worstName?: string,
+    forceAllLabels = false,
   ) => (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={rows} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
@@ -80,8 +81,9 @@ export const BestWorstWindowChart = ({ T, trades, isRTL, tt }: Props) => {
           tick={{ fill: T.text.muted, fontSize: 10 }}
           // Days = always show 7 labels. Hours = let recharts pick spaced ticks
           // with a generous gap so they never overlap on desktop or mobile.
-          interval={xKind === 'day' ? 0 : 'preserveStartEnd'}
-          minTickGap={xKind === 'hour' ? 24 : 4}
+          // When `forceAllLabels` (mobile scrollable view), show every label.
+          interval={forceAllLabels || xKind === 'day' ? 0 : 'preserveStartEnd'}
+          minTickGap={forceAllLabels ? 0 : (xKind === 'hour' ? 24 : 4)}
           height={24}
           tickMargin={6}
         />
@@ -96,18 +98,9 @@ export const BestWorstWindowChart = ({ T, trades, isRTL, tt }: Props) => {
             const isBest = r.name === bestName;
             const isWorst = r.name === worstName;
             const fill = r.value >= 0 ? T.accent.green : T.accent.red;
-            // Worst bar gets a darker red + stroke ring; Best gets bright + stroke ring.
-            const finalFill = isWorst
-              ? T.accent.red
-              : isBest
-                ? T.accent.green
-                : fill;
+            const finalFill = isWorst ? T.accent.red : isBest ? T.accent.green : fill;
             const opacity = isBest || isWorst ? 1 : 0.55;
-            const stroke = isBest
-              ? T.accent.green
-              : isWorst
-                ? T.accent.red
-                : 'transparent';
+            const stroke = isBest ? T.accent.green : isWorst ? T.accent.red : 'transparent';
             return (
               <Cell
                 key={i}
@@ -135,12 +128,54 @@ export const BestWorstWindowChart = ({ T, trades, isRTL, tt }: Props) => {
     </div>
   );
 
+  /**
+   * Chart cell: on desktop renders fluid 100% width; on mobile renders inside
+   * a horizontal scroll container with a min-width large enough to show every
+   * X-axis label clearly (~44px per bar). Two stacked variants (desktop +
+   * mobile) avoid trying to detect viewport in JS — CSS toggles visibility.
+   */
+  const ChartCell = ({
+    label,
+    rows,
+    xKind,
+    bestName,
+    worstName,
+  }: {
+    label: string;
+    rows: { name: string; value: number }[];
+    xKind: 'day' | 'hour';
+    bestName?: string;
+    worstName?: string;
+  }) => {
+    const mobileMinWidth = Math.max(320, rows.length * (xKind === 'hour' ? 44 : 56));
+    return (
+      <div className="bw-window-chart-cell">
+        <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 2 }}>
+          {label}
+        </div>
+        {/* Desktop / tablet */}
+        <div className="bw-window-chart-canvas bw-window-desktop" style={{ height: 180, width: '100%' }}>
+          {renderBars(rows, xKind, bestName, worstName, false)}
+        </div>
+        {/* Mobile: horizontally scrollable with every label visible */}
+        <div className="bw-window-mobile" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <div style={{ height: 200, width: mobileMinWidth, minWidth: '100%' }}>
+            {renderBars(rows, xKind, bestName, worstName, true)}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="bw-window-root" style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
       <style>{`
+        .bw-window-mobile { display: none; }
+        .bw-window-desktop { display: block; }
         @media (max-width: 640px) {
           .bw-window-chart-cell { min-height: 220px; }
-          .bw-window-chart-cell .bw-window-chart-canvas { height: 200px !important; }
+          .bw-window-desktop { display: none !important; }
+          .bw-window-mobile { display: block !important; }
         }
       `}</style>
       <div className="bw-window-highlights" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 6 }}>
@@ -150,20 +185,11 @@ export const BestWorstWindowChart = ({ T, trades, isRTL, tt }: Props) => {
         <Highlight label={isRTL ? 'שעה הכי גרועה' : 'Worst hour'} win={data.worstHour?.name} val={data.worstHour?.value} />
       </div>
       <div className="bw-window-charts" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 8 }}>
-        <div className="bw-window-chart-cell">
-          <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 2 }}>
-            {isRTL ? 'לפי יום' : 'By day'}
-          </div>
-          <div className="bw-window-chart-canvas" style={{ height: 180, width: '100%' }}>{renderBars(data.days, 'day', data.bestDay?.name, data.worstDay?.name)}</div>
-        </div>
-        <div className="bw-window-chart-cell">
-          <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 2 }}>
-            {isRTL ? 'לפי שעה' : 'By hour'}
-          </div>
-          <div className="bw-window-chart-canvas" style={{ height: 180, width: '100%' }}>{renderBars(data.hours, 'hour', data.bestHour?.name, data.worstHour?.name)}</div>
-        </div>
+        <ChartCell label={isRTL ? 'לפי יום' : 'By day'} rows={data.days} xKind="day" bestName={data.bestDay?.name} worstName={data.worstDay?.name} />
+        <ChartCell label={isRTL ? 'לפי שעה' : 'By hour'} rows={data.hours} xKind="hour" bestName={data.bestHour?.name} worstName={data.worstHour?.name} />
       </div>
     </div>
   );
 };
+
 
