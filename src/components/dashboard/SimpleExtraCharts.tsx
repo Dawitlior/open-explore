@@ -66,23 +66,28 @@ export const WinsByMonthChart = ({ T, trades, isRTL, tt }: BaseProps) => {
     }
     return Array.from(map.values())
       .sort((a, b) => a.name.localeCompare(b.name))
-      .map(r => ({ ...r, name: isMobile ? SHORT_MONTH(r.name) : r.name }));
-  }, [trades, isMobile]);
+      .map(r => ({ ...r, name: SHORT_MONTH(r.name) }));
+  }, [trades]);
 
   if (!data.length) return <Empty T={T} isRTL={isRTL} />;
+
+  // Skip labels when crowded so the desktop X-axis stays readable.
+  const desktopInterval = Math.max(0, Math.ceil(data.length / 12) - 1);
+  const interval = isMobile ? 0 : desktopInterval;
 
   return (
     <div style={{ height: isMobile ? 300 : 260, width: '100%' }}>
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 8, right: 8, bottom: isMobile ? 40 : 4, left: 0 }}>
+        <BarChart data={data} margin={{ top: 8, right: 8, bottom: isMobile ? 40 : 24, left: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
           <XAxis
             dataKey="name"
             tick={{ fill: T.text.muted, fontSize: isMobile ? 9 : 10 }}
-            interval={0}
-            angle={isMobile ? -45 : 0}
-            textAnchor={isMobile ? 'end' : 'middle'}
-            height={isMobile ? 50 : 30}
+            interval={interval}
+            angle={isMobile ? -45 : (data.length > 8 ? -35 : 0)}
+            textAnchor={isMobile || data.length > 8 ? 'end' : 'middle'}
+            height={isMobile ? 50 : (data.length > 8 ? 50 : 30)}
+            minTickGap={8}
           />
           <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} width={32} allowDecimals={false} />
           <Tooltip contentStyle={tt} />

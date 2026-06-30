@@ -24,6 +24,7 @@ import {
   AreaChart, Area, BarChart, Bar, LineChart, Line, ScatterChart, Scatter,
   XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   Cell, ComposedChart, RadialBarChart, RadialBar, PolarAngleAxis,
+  Legend, ReferenceLine,
 } from 'recharts';
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
@@ -740,7 +741,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
       {/* ═══ QUARTERLY & YEARLY PERFORMANCE DETAIL ═══ */}
       {showPro && stats.monthlyPerf && stats.monthlyPerf.length > 0 && (() => {
         type Bucket = { label: string; pnl: number; trades: number; wins: number; totalR: number };
-        const aggregate = (keyFn: (mp: any) => string, sortLabel?: (a: string, b: string) => number) => {
+        const aggregate = (keyFn: (mp: any) => string) => {
           const map = new Map<string, Bucket>();
           stats.monthlyPerf.forEach((mp: any) => {
             const k = keyFn(mp);
@@ -751,87 +752,159 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
             cur.totalR += (Number(mp.avgR) || 0) * (Number(mp.trades) || 0);
             map.set(k, cur);
           });
-          const arr = Array.from(map.values()).map(b => ({
-            ...b,
-            winRate: b.trades > 0 ? (b.wins / b.trades) * 100 : 0,
-            expectancyR: b.trades > 0 ? b.totalR / b.trades : 0,
-          }));
-          arr.sort((a, b) => (sortLabel ? sortLabel(a.label, b.label) : a.label.localeCompare(b.label)));
-          return arr;
+          return Array.from(map.values())
+            .map(b => ({
+              ...b,
+              winRate: b.trades > 0 ? (b.wins / b.trades) * 100 : 0,
+              expectancyR: b.trades > 0 ? b.totalR / b.trades : 0,
+              value: isMoney ? b.pnl : b.totalR,
+            }))
+            .sort((a, b) => a.label.localeCompare(b.label));
         };
 
         const quarterly = aggregate((mp: any) => {
           const [y, m] = String(mp.monthKey).split('-').map(Number);
           const q = Math.floor((m || 0) / 3) + 1;
-          return `${y}-Q${q}`;
+          return `${y} Q${q}`;
         });
         const yearly = aggregate((mp: any) => String(mp.monthKey).split('-')[0]);
 
-        const renderDeck = (label: string, rows: typeof quarterly) => {
-          const maxAbs = Math.max(1, ...rows.map(r => Math.abs(isMoney ? r.pnl : r.totalR)));
-          return (
-            <GlassCard T={T} style={{ marginBottom: 16 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, gap: 8, flexWrap: 'wrap' }}>
-                <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700 }}>{label}</div>
-                <span style={{ fontSize: 10, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.1em' }}>
-                  {rows.length} · {isMoney ? '$' : 'R'}
-                </span>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 10 }}>
-                {rows.map((b, i) => {
-                  const val = isMoney ? b.pnl : b.totalR;
-                  const positive = val >= 0;
-                  const color = positive ? T.accent.green : T.accent.red;
-                  const intensity = Math.min(1, Math.abs(val) / maxAbs);
-                  const displayVal = isMoney
-                    ? `${positive ? '+' : ''}$${b.pnl.toFixed(2)}`
-                    : `${positive ? '+' : ''}${b.totalR.toFixed(2)}R`;
-                  return (
-                    <motion.div
-                      key={b.label}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.25, delay: i * 0.025 }}
-                      style={{
-                        position: 'relative', padding: '14px 16px', borderRadius: 12,
-                        background: `linear-gradient(135deg, ${color}14 0%, ${T.bg.tertiary}40 100%)`,
-                        border: `1px solid ${color}33`, overflow: 'hidden',
-                      }}
-                    >
-                      <div style={{ position: 'absolute', insetInlineStart: 0, top: 0, bottom: 0, width: 3, background: color, opacity: 0.7 }} />
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-                        <span style={{ fontSize: 11, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em' }}>{b.label}</span>
-                        <span style={{ fontSize: 9, padding: '2px 7px', borderRadius: 6, background: T.bg.tertiary, color: T.text.muted, fontWeight: 600 }}>{b.trades}{t(' עס׳', ' tr')}</span>
-                      </div>
-                      <div style={{ fontSize: 18, fontWeight: 800, color, fontFamily: "'JetBrains Mono', monospace", marginBottom: 8, letterSpacing: '-0.02em' }}>
-                        <PV>{displayVal}</PV>
-                      </div>
-                      <div style={{ height: 4, background: T.bg.tertiary, borderRadius: 4, overflow: 'hidden', marginBottom: 8 }}>
-                        <div style={{ width: `${intensity * 100}%`, height: '100%', background: color, borderRadius: 4, transition: 'width 0.4s ease' }} />
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10 }}>
-                        <span style={{ color: T.text.muted }}>
-                          {t('הצלחה', 'Win')} <span style={{ color: b.winRate >= 50 ? T.accent.green : T.accent.orange, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>{b.winRate.toFixed(0)}%</span>
-                        </span>
-                        <span style={{ color: T.text.muted }}>
-                          {t('תוחלת', 'Exp')} <span style={{ color: b.expectancyR >= 0 ? T.accent.purple : T.accent.red, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>{b.expectancyR >= 0 ? '+' : ''}{b.expectancyR.toFixed(2)}R</span>
-                        </span>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </GlassCard>
-          );
-        };
+        const fmt = (v: number) => isMoney
+          ? `${v >= 0 ? '+' : ''}$${v.toFixed(2)}`
+          : `${v >= 0 ? '+' : ''}${v.toFixed(2)}R`;
 
         return (
           <>
-            {renderDeck(t('פירוט ביצועים רבעוני', 'Quarterly Performance Detail'), quarterly)}
-            {renderDeck(t('פירוט ביצועים שנתי', 'Yearly Performance Detail'), yearly)}
+            {/* ── QUARTERLY · horizontal bar chart with KPI strip ── */}
+            <GlassCard T={T} style={{ marginBottom: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, gap: 8, flexWrap: 'wrap' }}>
+                <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, letterSpacing: '0.05em' }}>
+                  {t('פירוט ביצועים רבעוני', 'Quarterly Performance Detail')}
+                </div>
+                <span style={{ fontSize: 10, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.1em' }}>
+                  {quarterly.length} {t('רבעונים', 'quarters')} · {isMoney ? '$' : 'R'}
+                </span>
+              </div>
+              <div style={{ width: '100%', height: Math.max(220, quarterly.length * 32 + 40) }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={quarterly} layout="vertical" margin={{ top: 8, right: 24, bottom: 8, left: 8 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} horizontal={false} />
+                    <XAxis type="number" tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => isMoney ? `$${Math.round(v)}` : `${v.toFixed(1)}R`} />
+                    <YAxis type="category" dataKey="label" tick={{ fill: T.text.secondary, fontSize: 11, fontWeight: 600 }} width={70} tickMargin={6} interval={0} />
+                    <Tooltip
+                      contentStyle={tt}
+                      formatter={(v: any, _n: any, p: any) => [fmt(Number(v)), `${p?.payload?.trades || 0} ${t('עסקאות','trades')} · ${(p?.payload?.winRate || 0).toFixed(0)}% WR`]}
+                    />
+                    <ReferenceLine x={0} stroke={T.border.medium} />
+                    <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={22}>
+                      {quarterly.map((b, i) => (
+                        <Cell key={i} fill={b.value >= 0 ? T.accent.green : T.accent.red} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              {/* KPI strip */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: 8, marginTop: 12, paddingTop: 12, borderTop: `1px solid ${T.border.subtle}` }}>
+                {quarterly.map((b) => (
+                  <div key={b.label} style={{ padding: '8px 10px', borderRadius: 8, background: `${T.bg.tertiary}40`, border: `1px solid ${T.border.subtle}` }}>
+                    <div style={{ fontSize: 10, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em' }}>{b.label}</div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: b.value >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>
+                      <PV>{fmt(b.value)}</PV>
+                    </div>
+                    <div style={{ fontSize: 9, color: T.text.muted, marginTop: 2 }}>
+                      {b.trades}{t(' עס׳',' tr')} · {b.winRate.toFixed(0)}% · {b.expectancyR >= 0 ? '+' : ''}{b.expectancyR.toFixed(2)}R
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </GlassCard>
+
+            {/* ── YEARLY · CHART 1 — P&L / R per year (area + bars) ── */}
+            <GlassCard T={T} style={{ marginBottom: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, gap: 8, flexWrap: 'wrap' }}>
+                <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, letterSpacing: '0.05em' }}>
+                  {t('ביצועים שנתיים — רווח/הפסד', 'Yearly Performance — P&L')}
+                </div>
+                <span style={{ fontSize: 10, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.1em' }}>
+                  {yearly.length} {t('שנים', 'years')} · {isMoney ? '$' : 'R'}
+                </span>
+              </div>
+              <div style={{ width: '100%', height: 280 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={yearly} margin={{ top: 12, right: 16, bottom: 8, left: 0 }}>
+                    <defs>
+                      <linearGradient id="yrCumG" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.45} />
+                        <stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.02} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
+                    <XAxis dataKey="label" tick={{ fill: T.text.muted, fontSize: 11, fontWeight: 600 }} />
+                    <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} width={56} tickFormatter={(v: number) => isMoney ? `$${Math.round(v)}` : `${v.toFixed(1)}R`} />
+                    <Tooltip contentStyle={tt} formatter={(v: any, n: any) => [fmt(Number(v)), n === 'value' ? (isMoney ? 'P&L' : 'R') : (isMoney ? 'Cumulative $' : 'Cumulative R')]} />
+                    <Legend wrapperStyle={{ fontSize: 11, color: T.text.muted }} />
+                    <ReferenceLine y={0} stroke={T.border.medium} />
+                    <Bar dataKey="value" name={isMoney ? t('רווח שנתי','Yearly P&L') : t('R שנתי','Yearly R')} radius={[6,6,0,0]} barSize={48}>
+                      {yearly.map((b, i) => (
+                        <Cell key={i} fill={b.value >= 0 ? T.accent.green : T.accent.red} />
+                      ))}
+                    </Bar>
+                    <Area
+                      type="monotone"
+                      dataKey={(d: any) => {
+                        // running cumulative
+                        const idx = yearly.findIndex(y => y.label === d.label);
+                        return yearly.slice(0, idx + 1).reduce((s, y) => s + y.value, 0);
+                      }}
+                      name={isMoney ? t('מצטבר','Cumulative') : t('R מצטבר','Cumulative R')}
+                      stroke={T.accent.cyan}
+                      strokeWidth={2.5}
+                      fill="url(#yrCumG)"
+                      dot={{ r: 3, fill: T.accent.cyan }}
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            </GlassCard>
+
+            {/* ── YEARLY · CHART 2 — Win Rate + Expectancy line ── */}
+            <GlassCard T={T} style={{ marginBottom: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, gap: 8, flexWrap: 'wrap' }}>
+                <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, letterSpacing: '0.05em' }}>
+                  {t('ביצועים שנתיים — איכות (Win % · תוחלת R)', 'Yearly Performance — Quality (Win % · Expectancy R)')}
+                </div>
+                <span style={{ fontSize: 10, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.1em' }}>
+                  {yearly.length} {t('שנים', 'years')}
+                </span>
+              </div>
+              <div style={{ width: '100%', height: 260 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={yearly} margin={{ top: 12, right: 16, bottom: 8, left: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
+                    <XAxis dataKey="label" tick={{ fill: T.text.muted, fontSize: 11, fontWeight: 600 }} />
+                    <YAxis yAxisId="wr" orientation="left" tick={{ fill: T.text.muted, fontSize: 10 }} width={42} domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} />
+                    <YAxis yAxisId="r" orientation="right" tick={{ fill: T.text.muted, fontSize: 10 }} width={42} tickFormatter={(v: number) => `${v.toFixed(1)}R`} />
+                    <Tooltip
+                      contentStyle={tt}
+                      formatter={(v: any, n: any) => {
+                        if (n === t('הצלחה','Win %')) return [`${Number(v).toFixed(1)}%`, n];
+                        if (n === t('תוחלת R','Expectancy R')) return [`${Number(v) >= 0 ? '+' : ''}${Number(v).toFixed(2)}R`, n];
+                        return [v, n];
+                      }}
+                    />
+                    <Legend wrapperStyle={{ fontSize: 11, color: T.text.muted }} />
+                    <ReferenceLine yAxisId="wr" y={50} stroke={T.border.medium} strokeDasharray="3 3" />
+                    <Bar yAxisId="wr" dataKey="winRate" name={t('הצלחה','Win %')} fill={T.accent.purple} radius={[6,6,0,0]} barSize={36} opacity={0.7} />
+                    <Line yAxisId="r" type="monotone" dataKey="expectancyR" name={t('תוחלת R','Expectancy R')} stroke={T.accent.orange} strokeWidth={2.5} dot={{ r: 4, fill: T.accent.orange }} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            </GlassCard>
           </>
         );
       })()}
+
 
 
 
