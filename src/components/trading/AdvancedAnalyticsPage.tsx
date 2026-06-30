@@ -627,7 +627,14 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
         </div>
       </GlassCard>}
 
-      {/* ═══ QUANT LAB — moved directly below Day × Hour heatmap ═══ */}
+      {/* ═══ RISK-ADJUSTED PERFORMANCE — moved directly below Day×Hour heatmap ═══ */}
+      {showMax && (
+        <div style={{ marginBottom: 16 }}>
+          <RiskAdjustedRatiosSection T={T} isRTL={langRTL} trades={_allTrades} />
+        </div>
+      )}
+
+      {/* ═══ QUANT LAB ═══ */}
       {showMax && registryAllows('rollingSharpe') && (
         <Suspense fallback={<div style={{ padding: 18, fontSize: 11, color: T.text.muted, opacity: 0.7 }}>Loading Quant Lab…</div>}>
           <AnalyticsQuantLab T={T} trades={trades} privacyMode={privacyMode} />
@@ -729,6 +736,104 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
           </GlassCard>
         );
       })()}
+
+      {/* ═══ QUARTERLY & YEARLY PERFORMANCE DETAIL ═══ */}
+      {showPro && stats.monthlyPerf && stats.monthlyPerf.length > 0 && (() => {
+        type Bucket = { label: string; pnl: number; trades: number; wins: number; totalR: number };
+        const aggregate = (keyFn: (mp: any) => string, sortLabel?: (a: string, b: string) => number) => {
+          const map = new Map<string, Bucket>();
+          stats.monthlyPerf.forEach((mp: any) => {
+            const k = keyFn(mp);
+            const cur = map.get(k) || { label: k, pnl: 0, trades: 0, wins: 0, totalR: 0 };
+            cur.pnl += Number(mp.pnl) || 0;
+            cur.trades += Number(mp.trades) || 0;
+            cur.wins += Number(mp.wins) || 0;
+            cur.totalR += (Number(mp.avgR) || 0) * (Number(mp.trades) || 0);
+            map.set(k, cur);
+          });
+          const arr = Array.from(map.values()).map(b => ({
+            ...b,
+            winRate: b.trades > 0 ? (b.wins / b.trades) * 100 : 0,
+            expectancyR: b.trades > 0 ? b.totalR / b.trades : 0,
+          }));
+          arr.sort((a, b) => (sortLabel ? sortLabel(a.label, b.label) : a.label.localeCompare(b.label)));
+          return arr;
+        };
+
+        const quarterly = aggregate((mp: any) => {
+          const [y, m] = String(mp.monthKey).split('-').map(Number);
+          const q = Math.floor((m || 0) / 3) + 1;
+          return `${y}-Q${q}`;
+        });
+        const yearly = aggregate((mp: any) => String(mp.monthKey).split('-')[0]);
+
+        const renderDeck = (label: string, rows: typeof quarterly) => {
+          const maxAbs = Math.max(1, ...rows.map(r => Math.abs(isMoney ? r.pnl : r.totalR)));
+          return (
+            <GlassCard T={T} style={{ marginBottom: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, gap: 8, flexWrap: 'wrap' }}>
+                <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700 }}>{label}</div>
+                <span style={{ fontSize: 10, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.1em' }}>
+                  {rows.length} · {isMoney ? '$' : 'R'}
+                </span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 10 }}>
+                {rows.map((b, i) => {
+                  const val = isMoney ? b.pnl : b.totalR;
+                  const positive = val >= 0;
+                  const color = positive ? T.accent.green : T.accent.red;
+                  const intensity = Math.min(1, Math.abs(val) / maxAbs);
+                  const displayVal = isMoney
+                    ? `${positive ? '+' : ''}$${b.pnl.toFixed(2)}`
+                    : `${positive ? '+' : ''}${b.totalR.toFixed(2)}R`;
+                  return (
+                    <motion.div
+                      key={b.label}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.25, delay: i * 0.025 }}
+                      style={{
+                        position: 'relative', padding: '14px 16px', borderRadius: 12,
+                        background: `linear-gradient(135deg, ${color}14 0%, ${T.bg.tertiary}40 100%)`,
+                        border: `1px solid ${color}33`, overflow: 'hidden',
+                      }}
+                    >
+                      <div style={{ position: 'absolute', insetInlineStart: 0, top: 0, bottom: 0, width: 3, background: color, opacity: 0.7 }} />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+                        <span style={{ fontSize: 11, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em' }}>{b.label}</span>
+                        <span style={{ fontSize: 9, padding: '2px 7px', borderRadius: 6, background: T.bg.tertiary, color: T.text.muted, fontWeight: 600 }}>{b.trades}{t(' עס׳', ' tr')}</span>
+                      </div>
+                      <div style={{ fontSize: 18, fontWeight: 800, color, fontFamily: "'JetBrains Mono', monospace", marginBottom: 8, letterSpacing: '-0.02em' }}>
+                        <PV>{displayVal}</PV>
+                      </div>
+                      <div style={{ height: 4, background: T.bg.tertiary, borderRadius: 4, overflow: 'hidden', marginBottom: 8 }}>
+                        <div style={{ width: `${intensity * 100}%`, height: '100%', background: color, borderRadius: 4, transition: 'width 0.4s ease' }} />
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10 }}>
+                        <span style={{ color: T.text.muted }}>
+                          {t('הצלחה', 'Win')} <span style={{ color: b.winRate >= 50 ? T.accent.green : T.accent.orange, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>{b.winRate.toFixed(0)}%</span>
+                        </span>
+                        <span style={{ color: T.text.muted }}>
+                          {t('תוחלת', 'Exp')} <span style={{ color: b.expectancyR >= 0 ? T.accent.purple : T.accent.red, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>{b.expectancyR >= 0 ? '+' : ''}{b.expectancyR.toFixed(2)}R</span>
+                        </span>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </GlassCard>
+          );
+        };
+
+        return (
+          <>
+            {renderDeck(t('פירוט ביצועים רבעוני', 'Quarterly Performance Detail'), quarterly)}
+            {renderDeck(t('פירוט ביצועים שנתי', 'Yearly Performance Detail'), yearly)}
+          </>
+        );
+      })()}
+
+
 
 
       {/* ═══ ADVANCED LAYER (PRO/MAX modes) ═══ */}
@@ -850,13 +955,10 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
         </div>
       </GlassCard>}
 
-      {/* ═══ ULTIMATE-ONLY · Advanced Analytics Lab + Risk-Adjusted Ratios ═══ */}
+      {/* ═══ ULTIMATE-ONLY · Advanced Analytics Lab (Risk-Adjusted moved below Day×Hour heatmap) ═══ */}
       {showMax && (
         <div style={{ marginTop: 24 }}>
           <DashboardAdvancedLab T={T} isRTL={langRTL} trades={_allTrades} />
-          <div style={{ marginTop: 16 }}>
-            <RiskAdjustedRatiosSection T={T} isRTL={langRTL} trades={_allTrades} />
-          </div>
         </div>
       )}
     </div>

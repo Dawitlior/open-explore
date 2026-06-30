@@ -178,28 +178,44 @@ export const ReviewDashboard = ({
                   </ChartWrapper>
                 </div>
               )}
-              {isChartVisible('pnlDistribution') && (
+              {isChartVisible('pnlDistribution') && (() => {
+                const distData = trades
+                  .map((tr: Trade, i: number) => ({
+                    n: i + 1,
+                    v: isMoney
+                      ? (Number.isFinite(tr.pnl) ? Number(tr.pnl) : null)
+                      : (hasStrictR(tr) ? getEffectiveR(tr) : null),
+                  }))
+                  .filter((d) => d.v !== null && Number.isFinite(d.v as number)) as { n: number; v: number }[];
+                return (
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.pnlDistribution} explanation={EXPLANATIONS.pnlDistribution} unit={isMoney ? '$' : 'R'} chartId="pnlDistribution" onRemove={handleHideChart}>
-                    <div className="dash-chart-h-sm">
+                    <div className="dash-chart-h-sm" style={{ width: '100%' }}>
+                      {distData.length === 0 ? (
+                        <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%', color: T.text.muted, fontSize: 12 }}>
+                          {isRTL ? 'אין נתונים במצב הנבחר' : 'No data in selected mode'}
+                        </div>
+                      ) : (
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={trades.map((tr: Trade) => ({ id: tr.id, v: isMoney ? (Number.isFinite(tr.pnl) ? tr.pnl : 0) : (hasStrictR(tr) ? getEffectiveR(tr) : 0) }))} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
+                        <BarChart data={distData} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                          <XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 10 }} interval="preserveStartEnd" minTickGap={24} />
-                          <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} width={40} />
-                          <Tooltip contentStyle={tt} formatter={(v: any) => isMoney ? `$${Number(v).toFixed(2)}` : `${Number(v).toFixed(2)}R`} />
+                          <XAxis dataKey="n" tick={{ fill: T.text.muted, fontSize: 10 }} interval="preserveStartEnd" minTickGap={28} />
+                          <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} width={48} tickFormatter={(v: number) => isMoney ? `$${Math.round(v)}` : `${v.toFixed(1)}R`} />
+                          <Tooltip contentStyle={tt} formatter={(v: any) => isMoney ? `${Number(v) >= 0 ? '+' : ''}$${Number(v).toFixed(2)}` : `${Number(v) >= 0 ? '+' : ''}${Number(v).toFixed(2)}R`} labelFormatter={(l: any) => `#${l}`} />
+                          <ReferenceLine y={0} stroke={T.border.medium} />
                           <Bar dataKey="v" radius={[4,4,0,0]}>
-                            {trades.map((tr: Trade, i: number) => {
-                              const v = isMoney ? tr.pnl : (hasStrictR(tr) ? getEffectiveR(tr) : 0);
-                              return <Cell key={i} fill={v >= 0 ? T.accent.green : T.accent.red} />;
-                            })}
+                            {distData.map((d, i: number) => (
+                              <Cell key={i} fill={d.v >= 0 ? T.accent.green : T.accent.red} />
+                            ))}
                           </Bar>
                         </BarChart>
                       </ResponsiveContainer>
+                      )}
                     </div>
                   </ChartWrapper>
                 </div>
-              )}
+                );
+              })()}
             </div>
 
             {/* Radar + Coin + Direction */}
@@ -332,15 +348,20 @@ export const ReviewDashboard = ({
                         paddingInlineEnd: stats.monthlyPerf.length > 7 ? 6 : 0,
                       }}
                     >
-                      {stats.monthlyPerf.map((mp: any, i: number) => (
+                      {stats.monthlyPerf.map((mp: any, i: number) => {
+                        const totalR = (Number(mp.avgR) || 0) * (Number(mp.trades) || 0);
+                        return (
                         <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px solid ${T.border.subtle}` }}>
                           <span style={{ fontSize: 12, color: T.text.secondary }}>{mp.month}</span>
                           <div style={{ display: 'flex', gap: 12 }}>
-                            {isMoney && <PV><span style={{ fontSize: 11, color: mp.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{mp.pnl >= 0 ? '+' : ''}${mp.pnl.toFixed(2)}</span></PV>}
-                            <span style={{ fontSize: 11, color: T.accent.purple, fontFamily: "'JetBrains Mono', monospace" }}>{mp.expectancyR >= 0 ? '+' : ''}{mp.expectancyR.toFixed(2)}R</span>
+                            {isMoney
+                              ? <PV><span style={{ fontSize: 11, color: mp.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{mp.pnl >= 0 ? '+' : ''}${mp.pnl.toFixed(2)}</span></PV>
+                              : <span style={{ fontSize: 11, color: totalR >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{totalR >= 0 ? '+' : ''}{totalR.toFixed(2)}R</span>}
+                            <span style={{ fontSize: 11, color: T.accent.purple, fontFamily: "'JetBrains Mono', monospace" }}>{mp.expectancyR >= 0 ? '+' : ''}{mp.expectancyR.toFixed(2)}R/tr</span>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </ChartWrapper>
                 </div>
