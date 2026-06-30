@@ -139,6 +139,9 @@ export const ReviewDashboard = ({
         </div>
       </div>
 
+      {/* ═══ LAYER 2.5 — CALENDAR + LONG/SHORT BREAKDOWN ═══ */}
+      <DashboardCalendarStrip T={T} t={t} isRTL={isRTL} trades={trades} />
+
       {/* ═══ LAYER 3 — ADVANCED (COLLAPSIBLE) ═══ */}
       <div style={{ marginBottom: 18 }}>
         <button
@@ -366,10 +369,6 @@ export const ReviewDashboard = ({
       </div>
 
       {/* Advanced Analytics Lab + Risk-Adjusted Ratios moved to /analytics (Ultimate-tier only) */}
-
-      {/* ═══ LAYER 4 — CALENDAR + LONG/SHORT BREAKDOWN ═══ */}
-      <DashboardCalendarStrip T={T} t={t} isRTL={isRTL} trades={trades} />
-
     </div>
   );
 };
