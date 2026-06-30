@@ -25,6 +25,8 @@ import { LegalGate } from "@/components/LegalGate";
 import { EconomicAlertBanner } from "@/components/economic/EconomicAlertBanner";
 import { UpgradeModal } from "@/components/billing/UpgradeModal";
 import { CookieConsentRoot } from "@/components/privacy/CookieConsentRoot";
+import { A11yPanel } from "@/components/a11y/A11yPanel";
+import "@/components/a11y/a11y-engine.css";
 import { OrcaConfirmRoot } from "@/lib/orca-confirm";
 import { ImportPreflightRoot } from "@/components/trading/ImportPreflightModal";
 // Side-effect import: registers every BrokerAdapter into BrokerRegistry at boot.
@@ -147,6 +149,7 @@ const App = () => (
             <CookieConsentRoot />
             <OrcaConfirmRoot />
             <ImportPreflightRoot />
+            <A11yPanel />
             <BugArenaMount>
             <Routes>
               <Route path="/welcome" element={<Landing />} />
