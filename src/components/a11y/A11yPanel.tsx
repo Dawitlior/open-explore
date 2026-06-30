@@ -138,6 +138,7 @@ export function A11yPanel() {
                       role="radio"
                       aria-checked={pressed}
                       onClick={() => update({ contrast: v })}
+                      className="a11y-seg-btn"
                       style={segBtn(pressed)}
                     >
                       {labels[v]}
@@ -160,6 +161,7 @@ export function A11yPanel() {
               <ToggleRow icon={<MousePointer2 size={18} aria-hidden="true" />} title={t('סמן עכבר גדול', 'Large cursor')} hint={t('סמן בולט וקל לאיתור', 'High-visibility pointer')} pressed={prefs.cursor} onToggle={() => update({ cursor: !prefs.cursor })} />
               <ToggleRow icon={<Eye size={18} aria-hidden="true" />} title={t('מסגרת פוקוס מודגשת', 'Stronger focus ring')} hint={t('מתאר עבה כשמתמקדים בקלט', 'Thicker outline on focus')} pressed={prefs.focus} onToggle={() => update({ focus: !prefs.focus })} />
               <ToggleRow icon={<Sparkles size={18} aria-hidden="true" />} title={t('עצור אנימציות', 'Reduce motion')} hint={t('בטל מעברים ואנימציות', 'Disable transitions / animations')} pressed={prefs.motion} onToggle={() => update({ motion: !prefs.motion })} />
+              <ToggleRow icon={<AlignHorizontalJustifyCenter size={18} aria-hidden="true" />} title={t('מדריך קריאה', 'Reading guide')} hint={t('פס אופקי שעוקב אחרי הסמן', 'Horizontal bar that follows the cursor')} pressed={prefs.guide} onToggle={() => update({ guide: !prefs.guide })} />
             </Section>
 
             <button
@@ -188,7 +190,7 @@ function Section({ label, children }: { label: string; children: React.ReactNode
 
 function SizeBtn({ children, onClick, disabled, ariaLabel }: { children: React.ReactNode; onClick: () => void; disabled?: boolean; ariaLabel: string }) {
   return (
-    <button type="button" onClick={onClick} disabled={disabled} aria-label={ariaLabel} style={{
+    <button type="button" onClick={onClick} disabled={disabled} aria-label={ariaLabel} className="a11y-size-btn" style={{
       flex: 1, height: 48, borderRadius: 12, background: '#101728', border: '1px solid #242e48',
       color: disabled ? '#4a546b' : '#E8ECF4', cursor: disabled ? 'not-allowed' : 'pointer',
       display: 'grid', placeItems: 'center', fontWeight: 700, opacity: disabled ? 0.5 : 1,
@@ -213,6 +215,7 @@ function ToggleRow({ icon, title, hint, pressed, onToggle }: { icon: React.React
       type="button"
       aria-pressed={pressed}
       onClick={onToggle}
+      className="a11y-toggle-row"
       style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
         width: '100%', background: '#0E1524', border: '1px solid #1d2740', borderRadius: 13,
