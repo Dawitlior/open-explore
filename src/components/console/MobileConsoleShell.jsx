@@ -145,8 +145,14 @@ export default function MobileConsoleShell({
       <style>{`
         @keyframes sheetUp { from { transform: translateY(100%);} to { transform: translateY(0);} }
         @keyframes sheetFade { from { opacity:0;} to { opacity:1;} }
+        @keyframes mcFadeIn { from { opacity:0; transform: translateY(6px);} to { opacity:1; transform: translateY(0);} }
+        @keyframes mcShimmer { 0% { background-position: -200px 0;} 100% { background-position: 200px 0;} }
+        @keyframes orca-spin { from { transform: rotate(0);} to { transform: rotate(360deg);} }
         .mconsole-tap { transition: background .15s ease, transform .12s ease; }
         .mconsole-tap:active { transform: scale(.97); }
+        @media (prefers-reduced-motion: reduce) {
+          .mconsole-tap, .mconsole-content * { animation: none !important; transition: none !important; }
+        }
         .mconsole-content input, .mconsole-content select, .mconsole-content textarea { font-size: 16px !important; }
         @media (max-width: 768px) {
           .mconsole-content { font-size: 14px; }
