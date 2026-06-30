@@ -199,7 +199,15 @@ export const ReviewDashboard = ({
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={distData} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
-                          <XAxis dataKey="n" tick={{ fill: T.text.muted, fontSize: 10 }} interval="preserveStartEnd" minTickGap={28} />
+                          <XAxis
+                            dataKey="n"
+                            tick={distData.length > 60 ? false : { fill: T.text.muted, fontSize: 10 }}
+                            interval={distData.length > 60 ? Math.max(0, Math.floor(distData.length / 8) - 1) : 'preserveStartEnd'}
+                            minTickGap={48}
+                            height={distData.length > 60 ? 8 : 20}
+                            axisLine={{ stroke: T.border.subtle }}
+                            tickLine={false}
+                          />
                           <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} width={48} tickFormatter={(v: number) => isMoney ? `$${Math.round(v)}` : `${v.toFixed(1)}R`} />
                           <Tooltip contentStyle={tt} formatter={(v: any) => isMoney ? `${Number(v) >= 0 ? '+' : ''}$${Number(v).toFixed(2)}` : `${Number(v) >= 0 ? '+' : ''}${Number(v).toFixed(2)}R`} labelFormatter={(l: any) => `#${l}`} />
                           <ReferenceLine y={0} stroke={T.border.medium} />

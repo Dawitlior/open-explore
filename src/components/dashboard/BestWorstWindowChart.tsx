@@ -66,17 +66,24 @@ export const BestWorstWindowChart = ({ T, trades, isRTL, tt }: Props) => {
     );
   }
 
-  const renderBars = (rows: { name: string; value: number }[], xKind: 'day' | 'hour') => (
+  const renderBars = (
+    rows: { name: string; value: number }[],
+    xKind: 'day' | 'hour',
+    bestName?: string,
+    worstName?: string,
+  ) => (
     <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={rows} margin={{ top: 8, right: 8, bottom: 28, left: 0 }}>
+      <BarChart data={rows} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
         <XAxis
           dataKey="name"
           tick={{ fill: T.text.muted, fontSize: 10 }}
-          interval={0}
-          height={36}
-          angle={xKind === 'hour' ? -35 : 0}
-          textAnchor={xKind === 'hour' ? 'end' : 'middle'}
+          // Days = always show 7 labels. Hours = let recharts pick spaced ticks
+          // with a generous gap so they never overlap on desktop or mobile.
+          interval={xKind === 'day' ? 0 : 'preserveStartEnd'}
+          minTickGap={xKind === 'hour' ? 24 : 4}
+          height={24}
+          tickMargin={6}
         />
         <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} width={42} tickFormatter={formatAxis} />
         <Tooltip
@@ -85,9 +92,32 @@ export const BestWorstWindowChart = ({ T, trades, isRTL, tt }: Props) => {
         />
         <ReferenceLine y={0} stroke={T.border.medium} strokeDasharray="2 2" />
         <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-          {rows.map((r, i) => (
-            <Cell key={i} fill={r.value >= 0 ? T.accent.green : T.accent.red} />
-          ))}
+          {rows.map((r, i) => {
+            const isBest = r.name === bestName;
+            const isWorst = r.name === worstName;
+            const fill = r.value >= 0 ? T.accent.green : T.accent.red;
+            // Worst bar gets a darker red + stroke ring; Best gets bright + stroke ring.
+            const finalFill = isWorst
+              ? T.accent.red
+              : isBest
+                ? T.accent.green
+                : fill;
+            const opacity = isBest || isWorst ? 1 : 0.55;
+            const stroke = isBest
+              ? T.accent.green
+              : isWorst
+                ? T.accent.red
+                : 'transparent';
+            return (
+              <Cell
+                key={i}
+                fill={finalFill}
+                fillOpacity={opacity}
+                stroke={stroke}
+                strokeWidth={isBest || isWorst ? 2 : 0}
+              />
+            );
+          })}
         </Bar>
       </BarChart>
     </ResponsiveContainer>
@@ -124,13 +154,13 @@ export const BestWorstWindowChart = ({ T, trades, isRTL, tt }: Props) => {
           <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 2 }}>
             {isRTL ? 'לפי יום' : 'By day'}
           </div>
-          <div className="bw-window-chart-canvas" style={{ height: 180, width: '100%' }}>{renderBars(data.days, 'day')}</div>
+          <div className="bw-window-chart-canvas" style={{ height: 180, width: '100%' }}>{renderBars(data.days, 'day', data.bestDay?.name, data.worstDay?.name)}</div>
         </div>
         <div className="bw-window-chart-cell">
           <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 2 }}>
             {isRTL ? 'לפי שעה' : 'By hour'}
           </div>
-          <div className="bw-window-chart-canvas" style={{ height: 180, width: '100%' }}>{renderBars(data.hours, 'hour')}</div>
+          <div className="bw-window-chart-canvas" style={{ height: 180, width: '100%' }}>{renderBars(data.hours, 'hour', data.bestHour?.name, data.worstHour?.name)}</div>
         </div>
       </div>
     </div>

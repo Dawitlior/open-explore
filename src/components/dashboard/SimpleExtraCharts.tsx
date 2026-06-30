@@ -71,23 +71,23 @@ export const WinsByMonthChart = ({ T, trades, isRTL, tt }: BaseProps) => {
 
   if (!data.length) return <Empty T={T} isRTL={isRTL} />;
 
-  // Skip labels when crowded so the desktop X-axis stays readable.
+  // Desktop: skip labels so they never overlap.
   const desktopInterval = Math.max(0, Math.ceil(data.length / 12) - 1);
-  const interval = isMobile ? 0 : desktopInterval;
+  // Mobile: horizontal-scroll so every label is readable upright (no rotation).
+  const mobileMinWidth = Math.max(320, data.length * 56);
 
-  return (
-    <div style={{ height: isMobile ? 300 : 260, width: '100%' }}>
+  const chart = (width: string | number, height: number, interval: number) => (
+    <div style={{ width, height }}>
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 8, right: 8, bottom: isMobile ? 40 : 24, left: 0 }}>
+        <BarChart data={data} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
           <XAxis
             dataKey="name"
-            tick={{ fill: T.text.muted, fontSize: isMobile ? 9 : 10 }}
+            tick={{ fill: T.text.muted, fontSize: 10 }}
             interval={interval}
-            angle={isMobile ? -45 : (data.length > 8 ? -35 : 0)}
-            textAnchor={isMobile || data.length > 8 ? 'end' : 'middle'}
-            height={isMobile ? 50 : (data.length > 8 ? 50 : 30)}
-            minTickGap={8}
+            height={28}
+            tickMargin={6}
+            minTickGap={isMobile ? 4 : 12}
           />
           <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} width={32} allowDecimals={false} />
           <Tooltip contentStyle={tt} />
@@ -98,6 +98,15 @@ export const WinsByMonthChart = ({ T, trades, isRTL, tt }: BaseProps) => {
       </ResponsiveContainer>
     </div>
   );
+
+  if (isMobile) {
+    return (
+      <div style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        {chart(mobileMinWidth, 260, 0)}
+      </div>
+    );
+  }
+  return chart('100%', 260, desktopInterval);
 };
 
 /* ────────── #2 wins by quarter ────────── */
