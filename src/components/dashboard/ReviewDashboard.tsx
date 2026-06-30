@@ -178,134 +178,16 @@ export const ReviewDashboard = ({
                   </ChartWrapper>
                 </div>
               )}
-              {isChartVisible('pnlDistribution') && (() => {
-                // Collect per-trade outcome values in current mode ($ or R)
-                const values = trades
-                  .map((tr: Trade) => isMoney
-                    ? (Number.isFinite(tr.pnl) ? Number(tr.pnl) : null)
-                    : (hasStrictR(tr) ? getEffectiveR(tr) : null))
-                  .filter((v): v is number => v !== null && Number.isFinite(v as number));
-
-                // Compute bins. Use fixed R width (1R) when in R mode;
-                // dynamic $ width based on data spread when in money mode.
-                let binWidth = 1;
-                if (values.length > 0) {
-                  if (isMoney) {
-                    const absMax = Math.max(...values.map(v => Math.abs(v)));
-                    // Aim for ~10 buckets on each side of zero
-                    const raw = absMax / 8 || 1;
-                    const pow = Math.pow(10, Math.floor(Math.log10(raw)));
-                    const norm = raw / pow;
-                    const nice = norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10;
-                    binWidth = nice * pow;
-                  } else {
-                    binWidth = 1; // 1R buckets
-                  }
-                }
-
-                const bins = new Map<number, { idx: number; count: number; low: number; high: number }>();
-                for (const v of values) {
-                  const idx = Math.floor(v / binWidth);
-                  const low = idx * binWidth;
-                  const high = low + binWidth;
-                  const cur = bins.get(idx);
-                  if (cur) cur.count += 1;
-                  else bins.set(idx, { idx, count: 1, low, high });
-                }
-                const sorted = Array.from(bins.values()).sort((a, b) => a.idx - b.idx);
-                // Ensure contiguous range (fill empty bins between min/max)
-                const distData = (() => {
-                  if (sorted.length === 0) return [] as { label: string; count: number; mid: number; low: number; high: number }[];
-                  const minIdx = sorted[0].idx;
-                  const maxIdx = sorted[sorted.length - 1].idx;
-                  const out: { label: string; count: number; mid: number; low: number; high: number }[] = [];
-                  const fmt = (x: number) => isMoney
-                    ? `$${Math.round(x)}`
-                    : `${x >= 0 ? '+' : ''}${x.toFixed(binWidth < 1 ? 1 : 0)}R`;
-                  for (let i = minIdx; i <= maxIdx; i++) {
-                    const low = i * binWidth;
-                    const high = low + binWidth;
-                    const found = bins.get(i);
-                    out.push({
-                      label: `${fmt(low)} → ${fmt(high)}`,
-                      count: found?.count || 0,
-                      mid: (low + high) / 2,
-                      low,
-                      high,
-                    });
-                  }
-                  return out;
-                })();
-
-                // 3-bin centered moving-average overlay → smooth KDE-like curve.
-                const distDataMA = distData.map((d, i, arr) => {
-                  const w = 1; // half window
-                  let s = 0, n = 0;
-                  for (let k = Math.max(0, i - w); k <= Math.min(arr.length - 1, i + w); k++) {
-                    s += arr[k].count;
-                    n += 1;
-                  }
-                  return { ...d, ma: n > 0 ? s / n : 0 };
-                });
-
-                return (
+              {isChartVisible('pnlDistribution') && (
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.pnlDistribution} explanation={EXPLANATIONS.pnlDistribution} unit={isMoney ? '$' : 'R'} chartId="pnlDistribution" onRemove={handleHideChart}>
                     <div className="dash-chart-h-sm" style={{ width: '100%' }}>
-                      {distData.length === 0 ? (
-                        <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%', color: T.text.muted, fontSize: 12 }}>
-                          {isRTL ? 'אין נתונים במצב הנבחר' : 'No data in selected mode'}
-                        </div>
-                      ) : (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={distDataMA} margin={{ top: 8, right: 12, bottom: 8, left: 0 }} barCategoryGap={1}>
-                          <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} vertical={false} />
-                          <XAxis
-                            dataKey="mid"
-                            type="number"
-                            domain={[distDataMA[0].low, distDataMA[distDataMA.length - 1].high]}
-                            tick={{ fill: T.text.muted, fontSize: 10 }}
-                            tickFormatter={(v: number) => isMoney ? `$${Math.round(v)}` : `${v >= 0 ? '+' : ''}${v.toFixed(0)}R`}
-                            axisLine={{ stroke: T.border.subtle }}
-                            tickLine={false}
-                            minTickGap={24}
-                          />
-                          <YAxis
-                            allowDecimals={false}
-                            tick={{ fill: T.text.muted, fontSize: 10 }}
-                            width={36}
-                            tickFormatter={(v: number) => `${v}`}
-                          />
-                          <Tooltip
-                            contentStyle={tt}
-                            formatter={(v: any, name: any) => {
-                              if (name === 'ma') return [Number(v).toFixed(1), isRTL ? 'ממוצע נע' : 'Moving avg'];
-                              return [`${v} ${Number(v) === 1 ? (isRTL ? 'עסקה' : 'trade') : (isRTL ? 'עסקאות' : 'trades')}`, isRTL ? 'תדירות' : 'Frequency'];
-                            }}
-                            labelFormatter={(_l: any, payload: any) => payload?.[0]?.payload?.label ?? ''}
-                          />
-                          <ReferenceLine x={0} stroke={T.border.medium} strokeDasharray="2 2" />
-                          <Bar dataKey="count" radius={[4,4,0,0]} stroke={T.border.medium} strokeWidth={1}>
-                            {distDataMA.map((d, i: number) => (
-                              <Cell key={i} fill={d.mid >= 0 ? T.accent.green : T.accent.red} fillOpacity={d.count === 0 ? 0.12 : 0.75} />
-                            ))}
-                          </Bar>
-                          <Line
-                            type="monotone"
-                            dataKey="ma"
-                            stroke={T.accent.blue || '#60a5fa'}
-                            strokeWidth={2}
-                            dot={false}
-                            isAnimationActive={false}
-                          />
-                        </ComposedChart>
-                      </ResponsiveContainer>
-                      )}
+                      <PnLDistributionHistogram T={T} trades={trades} isMoney={isMoney} isRTL={isRTL} tt={tt} />
                     </div>
                   </ChartWrapper>
                 </div>
-                );
-              })()}
+              )}
+
 
 
             </div>
