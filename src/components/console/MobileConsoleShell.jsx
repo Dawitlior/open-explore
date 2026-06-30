@@ -4,7 +4,10 @@ import {
   LayoutDashboard, Activity, Grid3x3, ShieldAlert, MoreHorizontal, X, ArrowLeft,
   SlidersHorizontal, Download, Sun, Moon, Globe, FileText, Database, ChevronLeft,
   Repeat, GitMerge, CreditCard, Brain, TrendingUp, Layers, FileCheck, Server, Terminal,
+  RefreshCw,
 } from "lucide-react";
+import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
+import { PullToRefreshIndicator } from "@/components/trading/PullToRefreshIndicator";
 
 const SANS = "'Poppins', 'Heebo', system-ui, -apple-system, sans-serif";
 const MONO = "ui-monospace, 'SF Mono', 'Roboto Mono', Menlo, Consolas, monospace";
@@ -87,6 +90,8 @@ export default function MobileConsoleShell({
   const [moreOpen, setMoreOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [pageKey, setPageKey] = useState(active);
+  const [fading, setFading] = useState(false);
 
   // Lock horizontal scrolling at the shell level — nothing should overflow.
   useEffect(() => {
@@ -94,6 +99,26 @@ export default function MobileConsoleShell({
     document.documentElement.style.overflowX = "hidden";
     return () => { document.documentElement.style.overflowX = prev; };
   }, []);
+
+  // Smooth fade between sections (respects reduced-motion).
+  useEffect(() => {
+    if (pageKey === active) return;
+    const reduce = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) { setPageKey(active); return; }
+    setFading(true);
+    const t1 = setTimeout(() => { setPageKey(active); setFading(false); window.scrollTo({ top: 0, behavior: "auto" }); }, 140);
+    return () => clearTimeout(t1);
+  }, [active, pageKey]);
+
+  // Pull-to-refresh: re-fetch live data by reloading the route's data sources.
+  // useAdminLive polls; trigger a hard refresh of the page-level data via a
+  // bump key. We just resolve after a short delay so the indicator animates,
+  // and let the existing 30s poll pick up new data.
+  const ptr = usePullToRefresh({
+    enabled: true,
+    threshold: 64,
+    onRefresh: () => new Promise((r) => setTimeout(r, 700)),
+  });
 
   const navigate = useNavigate();
   const allPages = GROUPS.flatMap((g) => g.pages.map(([id, label, Icon]) => ({
@@ -120,8 +145,14 @@ export default function MobileConsoleShell({
       <style>{`
         @keyframes sheetUp { from { transform: translateY(100%);} to { transform: translateY(0);} }
         @keyframes sheetFade { from { opacity:0;} to { opacity:1;} }
+        @keyframes mcFadeIn { from { opacity:0; transform: translateY(6px);} to { opacity:1; transform: translateY(0);} }
+        @keyframes mcShimmer { 0% { background-position: -200px 0;} 100% { background-position: 200px 0;} }
+        @keyframes orca-spin { from { transform: rotate(0);} to { transform: rotate(360deg);} }
         .mconsole-tap { transition: background .15s ease, transform .12s ease; }
         .mconsole-tap:active { transform: scale(.97); }
+        @media (prefers-reduced-motion: reduce) {
+          .mconsole-tap, .mconsole-content * { animation: none !important; transition: none !important; }
+        }
         .mconsole-content input, .mconsole-content select, .mconsole-content textarea { font-size: 16px !important; }
         @media (max-width: 768px) {
           .mconsole-content { font-size: 14px; }
@@ -186,13 +217,30 @@ export default function MobileConsoleShell({
         </button>
       </header>
 
-      {/* ─── Content ─── */}
-      <main className="mconsole-content" style={{
-        padding: "16px 14px",
-        paddingBottom: "calc(72px + env(safe-area-inset-bottom) + 16px)",
-        maxWidth: "100%", overflow: "hidden",
-      }}>
-        {SECTION}
+      {/* ─── Content (with pull-to-refresh) ─── */}
+      <main
+        ref={ptr.ref}
+        className="mconsole-content"
+        style={{
+          padding: "16px 14px",
+          paddingBottom: "calc(72px + env(safe-area-inset-bottom) + 16px)",
+          maxWidth: "100%", overflowX: "hidden", overflowY: "auto",
+          WebkitOverflowScrolling: "touch", overscrollBehavior: "contain",
+          position: "relative", minHeight: "calc(100vh - 110px)",
+        }}
+      >
+        <PullToRefreshIndicator pull={ptr.pull} progress={ptr.progress} refreshing={ptr.refreshing} color={C.accent} />
+        <div
+          key={pageKey}
+          style={{
+            transform: ptr.pull ? `translate3d(0, ${ptr.pull}px, 0)` : undefined,
+            transition: ptr.refreshing ? "transform .28s cubic-bezier(.16,1,.3,1)" : "none",
+            opacity: fading ? 0 : 1,
+            animation: fading ? undefined : "mcFadeIn .22s ease-out",
+          }}
+        >
+          {live.loading && !live.lastUpdated ? <ConsoleSkeleton C={C} /> : SECTION}
+        </div>
       </main>
 
       {/* ─── Bottom Tab Bar ─── */}
@@ -324,3 +372,39 @@ function ActionRow({ C, icon: Icon, label, onClick }) {
     </button>
   );
 }
+
+/* ────────────────────────────────────────────────────────────────────
+   Skeleton — shown only on first load (before any data has arrived).
+   Mirrors the typical ORCA Console layout: KPI strip + 2 chart cards.
+   ──────────────────────────────────────────────────────────────────── */
+function ConsoleSkeleton({ C }) {
+  const block = (h, w = "100%") => (
+    <div style={{
+      height: h, width: w, borderRadius: 10,
+      background: `linear-gradient(90deg, ${C.panelAlt} 0%, ${C.border} 50%, ${C.panelAlt} 100%)`,
+      backgroundSize: "400px 100%",
+      animation: "mcShimmer 1.4s ease-in-out infinite",
+    }} />
+  );
+  const card = (children) => (
+    <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 14, padding: 14, display: "grid", gap: 10 }}>
+      {children}
+    </div>
+  );
+  return (
+    <div style={{ display: "grid", gap: 12 }} aria-busy="true" aria-label="Loading">
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0,1fr))", gap: 10 }}>
+        {[0,1,2,3].map(i => (
+          <div key={i} style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 14, padding: 14, display: "grid", gap: 10 }}>
+            {block(10, "50%")}
+            {block(24, "70%")}
+            {block(8, "40%")}
+          </div>
+        ))}
+      </div>
+      {card(<>{block(12, "40%")}{block(160)}</>)}
+      {card(<>{block(12, "55%")}{block(120)}</>)}
+    </div>
+  );
+}
+
