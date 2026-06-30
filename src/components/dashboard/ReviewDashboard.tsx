@@ -237,6 +237,17 @@ export const ReviewDashboard = ({
                   return out;
                 })();
 
+                // 3-bin centered moving-average overlay → smooth KDE-like curve.
+                const distDataMA = distData.map((d, i, arr) => {
+                  const w = 1; // half window
+                  let s = 0, n = 0;
+                  for (let k = Math.max(0, i - w); k <= Math.min(arr.length - 1, i + w); k++) {
+                    s += arr[k].count;
+                    n += 1;
+                  }
+                  return { ...d, ma: n > 0 ? s / n : 0 };
+                });
+
                 return (
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.pnlDistribution} explanation={EXPLANATIONS.pnlDistribution} unit={isMoney ? '$' : 'R'} chartId="pnlDistribution" onRemove={handleHideChart}>
@@ -247,12 +258,12 @@ export const ReviewDashboard = ({
                         </div>
                       ) : (
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={distData} margin={{ top: 8, right: 12, bottom: 8, left: 0 }} barCategoryGap={1}>
+                        <ComposedChart data={distDataMA} margin={{ top: 8, right: 12, bottom: 8, left: 0 }} barCategoryGap={1}>
                           <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} vertical={false} />
                           <XAxis
                             dataKey="mid"
                             type="number"
-                            domain={[distData[0].low, distData[distData.length - 1].high]}
+                            domain={[distDataMA[0].low, distDataMA[distDataMA.length - 1].high]}
                             tick={{ fill: T.text.muted, fontSize: 10 }}
                             tickFormatter={(v: number) => isMoney ? `$${Math.round(v)}` : `${v >= 0 ? '+' : ''}${v.toFixed(0)}R`}
                             axisLine={{ stroke: T.border.subtle }}
@@ -267,16 +278,27 @@ export const ReviewDashboard = ({
                           />
                           <Tooltip
                             contentStyle={tt}
-                            formatter={(v: any) => [`${v} ${Number(v) === 1 ? (isRTL ? 'עסקה' : 'trade') : (isRTL ? 'עסקאות' : 'trades')}`, isRTL ? 'תדירות' : 'Frequency']}
+                            formatter={(v: any, name: any) => {
+                              if (name === 'ma') return [Number(v).toFixed(1), isRTL ? 'ממוצע נע' : 'Moving avg'];
+                              return [`${v} ${Number(v) === 1 ? (isRTL ? 'עסקה' : 'trade') : (isRTL ? 'עסקאות' : 'trades')}`, isRTL ? 'תדירות' : 'Frequency'];
+                            }}
                             labelFormatter={(_l: any, payload: any) => payload?.[0]?.payload?.label ?? ''}
                           />
                           <ReferenceLine x={0} stroke={T.border.medium} strokeDasharray="2 2" />
-                          <Bar dataKey="count" radius={[4,4,0,0]}>
-                            {distData.map((d, i: number) => (
-                              <Cell key={i} fill={d.mid >= 0 ? T.accent.green : T.accent.red} fillOpacity={d.count === 0 ? 0.15 : 0.85} />
+                          <Bar dataKey="count" radius={[4,4,0,0]} stroke={T.border.medium} strokeWidth={1}>
+                            {distDataMA.map((d, i: number) => (
+                              <Cell key={i} fill={d.mid >= 0 ? T.accent.green : T.accent.red} fillOpacity={d.count === 0 ? 0.12 : 0.75} />
                             ))}
                           </Bar>
-                        </BarChart>
+                          <Line
+                            type="monotone"
+                            dataKey="ma"
+                            stroke={T.accent.blue || '#60a5fa'}
+                            strokeWidth={2}
+                            dot={false}
+                            isAnimationActive={false}
+                          />
+                        </ComposedChart>
                       </ResponsiveContainer>
                       )}
                     </div>
@@ -284,6 +306,7 @@ export const ReviewDashboard = ({
                 </div>
                 );
               })()}
+
 
             </div>
 
