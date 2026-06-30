@@ -211,13 +211,30 @@ export default function MobileConsoleShell({
         </button>
       </header>
 
-      {/* ─── Content ─── */}
-      <main className="mconsole-content" style={{
-        padding: "16px 14px",
-        paddingBottom: "calc(72px + env(safe-area-inset-bottom) + 16px)",
-        maxWidth: "100%", overflow: "hidden",
-      }}>
-        {SECTION}
+      {/* ─── Content (with pull-to-refresh) ─── */}
+      <main
+        ref={ptr.ref}
+        className="mconsole-content"
+        style={{
+          padding: "16px 14px",
+          paddingBottom: "calc(72px + env(safe-area-inset-bottom) + 16px)",
+          maxWidth: "100%", overflowX: "hidden", overflowY: "auto",
+          WebkitOverflowScrolling: "touch", overscrollBehavior: "contain",
+          position: "relative", minHeight: "calc(100vh - 110px)",
+        }}
+      >
+        <PullToRefreshIndicator pull={ptr.pull} progress={ptr.progress} refreshing={ptr.refreshing} color={C.accent} />
+        <div
+          key={pageKey}
+          style={{
+            transform: ptr.pull ? `translate3d(0, ${ptr.pull}px, 0)` : undefined,
+            transition: ptr.refreshing ? "transform .28s cubic-bezier(.16,1,.3,1)" : "none",
+            opacity: fading ? 0 : 1,
+            animation: fading ? undefined : "mcFadeIn .22s ease-out",
+          }}
+        >
+          {live.loading && !live.lastUpdated ? <ConsoleSkeleton C={C} /> : SECTION}
+        </div>
       </main>
 
       {/* ─── Bottom Tab Bar ─── */}
