@@ -116,8 +116,6 @@ export const ReviewDashboard = ({
         </div>
       </div>
 
-      {/* ═══ LAYER 1.5 — CALENDAR + LONG/SHORT BREAKDOWN ═══ */}
-      <DashboardCalendarStrip T={T} t={t} isRTL={isRTL} trades={trades} />
 
 
       {/* ═══ LAYER 2 — EDGE & SYSTEM HEALTH ═══ */}
