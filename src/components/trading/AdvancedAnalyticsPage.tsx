@@ -627,7 +627,14 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
         </div>
       </GlassCard>}
 
-      {/* ═══ QUANT LAB — moved directly below Day × Hour heatmap ═══ */}
+      {/* ═══ RISK-ADJUSTED PERFORMANCE — moved directly below Day×Hour heatmap ═══ */}
+      {showMax && (
+        <div style={{ marginBottom: 16 }}>
+          <RiskAdjustedRatiosSection T={T} isRTL={langRTL} trades={_allTrades} />
+        </div>
+      )}
+
+      {/* ═══ QUANT LAB ═══ */}
       {showMax && registryAllows('rollingSharpe') && (
         <Suspense fallback={<div style={{ padding: 18, fontSize: 11, color: T.text.muted, opacity: 0.7 }}>Loading Quant Lab…</div>}>
           <AnalyticsQuantLab T={T} trades={trades} privacyMode={privacyMode} />
