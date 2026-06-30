@@ -850,13 +850,10 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
         </div>
       </GlassCard>}
 
-      {/* ═══ ULTIMATE-ONLY · Advanced Analytics Lab + Risk-Adjusted Ratios ═══ */}
+      {/* ═══ ULTIMATE-ONLY · Advanced Analytics Lab (Risk-Adjusted moved below Day×Hour heatmap) ═══ */}
       {showMax && (
         <div style={{ marginTop: 24 }}>
           <DashboardAdvancedLab T={T} isRTL={langRTL} trades={_allTrades} />
-          <div style={{ marginTop: 16 }}>
-            <RiskAdjustedRatiosSection T={T} isRTL={langRTL} trades={_allTrades} />
-          </div>
         </div>
       )}
     </div>
