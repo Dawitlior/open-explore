@@ -96,9 +96,13 @@ export const PnLDistributionHistogram = ({ T, trades, isMoney, isRTL, tt }: Prop
       filtered = full.filter((b) => b.mid !== dominantLoss.mid);
     }
 
+    // Desktop uses a wider smoothing window (5-point) for a noticeably smoother
+    // trend curve. Mobile keeps the original 3-point window to stay readable
+    // on the tighter layout.
+    const maRadius = isMobile ? 1 : 2;
     const withMA = filtered.map((d, i, arr) => {
       let s = 0, n = 0;
-      for (let k = Math.max(0, i - 1); k <= Math.min(arr.length - 1, i + 1); k++) {
+      for (let k = Math.max(0, i - maRadius); k <= Math.min(arr.length - 1, i + maRadius); k++) {
         s += arr[k].count;
         n += 1;
       }
@@ -106,7 +110,7 @@ export const PnLDistributionHistogram = ({ T, trades, isMoney, isRTL, tt }: Prop
     });
 
     return { distDataMA: withMA, hasLossBin };
-  }, [trades, isMoney, focusProfits]);
+  }, [trades, isMoney, focusProfits, isMobile]);
 
   if (distDataMA.length === 0) {
     return (
