@@ -93,7 +93,7 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
       map.set(k, e);
     }
     return map;
-  }, [trades, year, month]);
+  }, [trades, year, month, isR]);
 
   const monthTotal = useMemo(() => {
     let pnl = 0, n = 0;
