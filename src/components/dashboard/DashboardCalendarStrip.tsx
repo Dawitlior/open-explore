@@ -52,8 +52,8 @@ function fmtMinutes(min: number, isRTL: boolean): string {
 }
 
 function getHoldMinutes(tr: Trade): number | null {
-  const entryRaw = (tr as any).entryTime || (tr as any).openTime;
-  const exitRaw = (tr as any).exitTime || tr.date;
+  const entryRaw = (tr as any).entryTime || (tr as any).openTime || (tr as any).opened_at;
+  const exitRaw = (tr as any).exitTime || (tr as any).closed_at || tr.date;
   if (!entryRaw || !exitRaw) return null;
   const e = new Date(entryRaw).getTime();
   const x = new Date(exitRaw).getTime();
