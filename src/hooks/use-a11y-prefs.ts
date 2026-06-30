@@ -23,6 +23,7 @@ export interface A11yPrefs {
   cursor: boolean;
   focus: boolean;
   motion: boolean;           // true = reduced
+  guide: boolean;            // reading guide bar
 }
 
 export const A11Y_DEFAULTS: A11yPrefs = {
@@ -35,6 +36,7 @@ export const A11Y_DEFAULTS: A11yPrefs = {
   cursor: false,
   focus: false,
   motion: false,
+  guide: false,
 };
 
 const KEY = 'orca:a11y-prefs';
@@ -79,6 +81,7 @@ function applyToDOM(p: A11yPrefs) {
   toggle('data-a11y-cursor', p.cursor);
   toggle('data-a11y-focus', p.focus);
   toggle('data-a11y-motion', p.motion, 'reduced');
+  toggle('data-a11y-guide', p.guide);
 }
 
 // Apply cached prefs immediately at module load so first paint already
