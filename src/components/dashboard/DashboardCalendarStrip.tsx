@@ -318,6 +318,7 @@ function navBtn(T: TradingTheme): React.CSSProperties {
 interface BreakdownProps {
   T: TradingTheme;
   isRTL: boolean;
+  isR: boolean;
   title: string;
   accent: string;
   stats: {
@@ -327,7 +328,7 @@ interface BreakdownProps {
   };
 }
 
-function BreakdownCard({ T, isRTL, title, accent, stats }: BreakdownProps) {
+function BreakdownCard({ T, isRTL, isR, title, accent, stats }: BreakdownProps) {
   const card: React.CSSProperties = {
     background: T.bg.card,
     border: `1px solid ${T.border.subtle}`,
@@ -341,6 +342,10 @@ function BreakdownCard({ T, isRTL, title, accent, stats }: BreakdownProps) {
       <span style={{ fontSize: 12, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: color || T.text.primary }}>{value}</span>
     </div>
   );
+
+  const fmtVal = (v: number) => isR
+    ? `${v >= 0 ? '+' : ''}${v.toFixed(2)}R`
+    : `${v >= 0 ? '' : '-'}${fmtMoney(Math.abs(v), 1)}`;
 
   const wr = stats.winRate;
 
