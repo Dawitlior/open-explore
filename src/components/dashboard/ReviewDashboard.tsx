@@ -10,6 +10,8 @@ import { FeatureHint } from '@/components/trading/FeatureHint';
 import DashboardCalendarStrip from './DashboardCalendarStrip';
 
 import { BestWorstWindowChart } from './BestWorstWindowChart';
+import { PnLDistributionHistogram } from './PnLDistributionHistogram';
+
 import { WinsByMonthChart, WinsByQuarterChart, ReturnPerTimeChart } from './SimpleExtraCharts';
 import { OpenPositionsPanel } from './OpenPositionsPanel';
 import { useDisplayMode, hasStrictR } from '@/lib/display-mode';
