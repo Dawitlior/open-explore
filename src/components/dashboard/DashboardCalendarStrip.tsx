@@ -52,8 +52,8 @@ function fmtMinutes(min: number, isRTL: boolean): string {
 }
 
 function getHoldMinutes(tr: Trade): number | null {
-  const entryRaw = (tr as any).entryTime || (tr as any).openTime;
-  const exitRaw = (tr as any).exitTime || tr.date;
+  const entryRaw = (tr as any).entryTime || (tr as any).openTime || (tr as any).opened_at;
+  const exitRaw = (tr as any).exitTime || (tr as any).closed_at || tr.date;
   if (!entryRaw || !exitRaw) return null;
   const e = new Date(entryRaw).getTime();
   const x = new Date(exitRaw).getTime();
@@ -128,13 +128,13 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
     for (const tr of trades) {
       const bucket = tr.direction === 'Short' ? S : L;
       bucket.n++;
-      const pnl = Number(tr.pnl) || 0;
-      bucket.sumPnl += pnl;
-      if (tr.winLoss === 'Win') { bucket.wins++; bucket.sumWin += pnl; }
-      else if (tr.winLoss === 'Loss') { bucket.losses++; bucket.sumLoss += pnl; }
+      const val = isR ? (getEffectiveR(tr, { strict: true }) ?? 0) : (Number(tr.pnl) || 0);
+      bucket.sumPnl += val;
+      if (tr.winLoss === 'Win') { bucket.wins++; bucket.sumWin += val; }
+      else if (tr.winLoss === 'Loss') { bucket.losses++; bucket.sumLoss += val; }
       else bucket.breakEven++;
       // R-Multiple ≈ realized risk-reward when stop-loss known
-      const r = Number(tr.returnR);
+      const r = isR ? val : Number(tr.returnR);
       if (Number.isFinite(r)) { bucket.sumRR += Math.abs(r); bucket.rrN++; }
       const hm = getHoldMinutes(tr);
       if (hm != null) { bucket.holdSum += hm; bucket.holdN++; }
@@ -155,7 +155,7 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
       };
     };
     return { long: stat(L), short: stat(S) };
-  }, [trades]);
+  }, [trades, isR]);
 
   const cardBase: React.CSSProperties = {
     background: T.bg.card,
@@ -273,7 +273,7 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
 
         {/* ── Long card ──────────────────────────────────────── */}
         <BreakdownCard
-          T={T} isRTL={isRTL}
+          T={T} isRTL={isRTL} isR={isR}
           title={isRTL ? 'ניתוח לונג' : 'Long Analysis'}
           accent={T.accent.green}
           stats={breakdown.long}
@@ -281,7 +281,7 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
 
         {/* ── Short card ─────────────────────────────────────── */}
         <BreakdownCard
-          T={T} isRTL={isRTL}
+          T={T} isRTL={isRTL} isR={isR}
           title={isRTL ? 'ניתוח שורט' : 'Short Analysis'}
           accent={T.accent.red}
           stats={breakdown.short}
@@ -318,6 +318,7 @@ function navBtn(T: TradingTheme): React.CSSProperties {
 interface BreakdownProps {
   T: TradingTheme;
   isRTL: boolean;
+  isR: boolean;
   title: string;
   accent: string;
   stats: {
@@ -327,7 +328,7 @@ interface BreakdownProps {
   };
 }
 
-function BreakdownCard({ T, isRTL, title, accent, stats }: BreakdownProps) {
+function BreakdownCard({ T, isRTL, isR, title, accent, stats }: BreakdownProps) {
   const card: React.CSSProperties = {
     background: T.bg.card,
     border: `1px solid ${T.border.subtle}`,
@@ -341,6 +342,10 @@ function BreakdownCard({ T, isRTL, title, accent, stats }: BreakdownProps) {
       <span style={{ fontSize: 12, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: color || T.text.primary }}>{value}</span>
     </div>
   );
+
+  const fmtVal = (v: number) => isR
+    ? `${v >= 0 ? '+' : ''}${v.toFixed(2)}R`
+    : `${v >= 0 ? '' : '-'}${fmtMoney(Math.abs(v), 1)}`;
 
   const wr = stats.winRate;
 
@@ -366,10 +371,10 @@ function BreakdownCard({ T, isRTL, title, accent, stats }: BreakdownProps) {
         <span><span style={{ color: T.accent.green, marginInlineEnd: 4 }}>●</span>{stats.wins} {isRTL ? 'ניצחונות' : 'wins'}</span>
       </div>
 
-      {row(isRTL ? 'רווח ממוצע' : 'Avg profit',     fmtMoney(stats.avgWin, 1),     T.accent.green)}
-      {row(isRTL ? 'הפסד ממוצע' : 'Avg loss',       (stats.avgLoss === 0 ? '$0' : `-${fmtMoney(Math.abs(stats.avgLoss), 1)}`), T.accent.red)}
-      {row(isRTL ? 'ממוצע לעסקה' : 'Avg per trade', `${stats.avgPerTrade >= 0 ? '' : '-'}${fmtMoney(Math.abs(stats.avgPerTrade), 1)}`)}
-      {row(isRTL ? 'רווח/הפסד (סה״כ)' : 'P&L (total)', `${stats.totalPnl >= 0 ? '' : '-'}${fmtMoney(Math.abs(stats.totalPnl), 1)}`,
+      {row(isRTL ? 'רווח ממוצע' : 'Avg profit',     fmtVal(stats.avgWin),     T.accent.green)}
+      {row(isRTL ? 'הפסד ממוצע' : 'Avg loss',       fmtVal(stats.avgLoss), T.accent.red)}
+      {row(isRTL ? 'ממוצע לעסקה' : 'Avg per trade', fmtVal(stats.avgPerTrade))}
+      {row(isRTL ? 'רווח/הפסד (סה״כ)' : 'P&L (total)', fmtVal(stats.totalPnl),
         stats.totalPnl >= 0 ? T.accent.green : T.accent.red)}
       {row(isRTL ? 'ממוצע רווח/הפסד לעסקה' : 'Avg R:R per trade',
         stats.avgRR > 0 ? stats.avgRR.toFixed(2) : '—',
