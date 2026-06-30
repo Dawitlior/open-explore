@@ -29,6 +29,7 @@ interface Props {
 export const PnLDistributionHistogram = ({ T, trades, isMoney, isRTL, tt }: Props) => {
   const [logScale, setLogScale] = useState(false);
   const [focusProfits, setFocusProfits] = useState(false);
+  const isMobile = useIsMobile();
 
   const { distDataMA, hasLossBin } = useMemo(() => {
     const values = trades
