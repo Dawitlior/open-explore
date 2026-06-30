@@ -227,66 +227,130 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
             </div>
           </div>
 
-          {/* Weekday header */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 4, marginBottom: 4 }}>
-            {dow.map((d, i) => (
-              <div key={i} style={{ textAlign: 'center', fontSize: 10, color: T.text.muted, fontWeight: 600, padding: '2px 0' }}>{d}</div>
-            ))}
-          </div>
+          {pickerMode === 'days' && (
+            <>
+              {/* Weekday header */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 4, marginBottom: 4 }}>
+                {dow.map((d, i) => (
+                  <div key={i} style={{ textAlign: 'center', fontSize: 10, color: T.text.muted, fontWeight: 600, padding: '2px 0' }}>{d}</div>
+                ))}
+              </div>
 
-          {/* Day grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 4 }}>
-            {grid.map((d, i) => {
-              if (!d) return <div key={i} style={{ aspectRatio: '1/1' }} />;
-              const data = dayMap.get(d);
-              const isToday = isCurrentMonth && d === todayN;
-              const pos = data && data.pnl > 0;
-              const neg = data && data.pnl < 0;
-              return (
-                <button
-                  key={i}
-                  onClick={() => data && setModalDay(d)}
-                  disabled={!data}
-                  style={{
-                    aspectRatio: '1/1',
-                    minWidth: 0,
-                    padding: 0,
-                    cursor: data ? 'pointer' : 'default',
-                    background: pos
-                      ? `linear-gradient(180deg, ${T.accent.green}55, ${T.accent.green}30)`
-                      : neg
-                      ? `linear-gradient(180deg, ${T.accent.red}55, ${T.accent.red}30)`
-                      : T.bg.tertiary,
-                    border: `1px solid ${isToday ? T.accent.cyan : pos ? T.accent.green : neg ? T.accent.red : T.border.subtle}`,
-                    borderRadius: 8,
-                    color: T.text.primary,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontFamily: "'JetBrains Mono', monospace",
-                    overflow: 'hidden',
-                  }}
-                >
-                  <span style={{ fontSize: 10, color: isToday ? T.accent.cyan : T.text.muted, fontWeight: isToday ? 700 : 500 }}>{d}</span>
-                  {data && (
-                    <>
-                      <span style={{
-                        fontSize: isMobile ? 9 : 10,
+              {/* Day grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 4 }}>
+                {grid.map((d, i) => {
+                  if (!d) return <div key={i} style={{ aspectRatio: '1/1' }} />;
+                  const data = dayMap.get(d);
+                  const isToday = isCurrentMonth && d === todayN;
+                  const pos = data && data.pnl > 0;
+                  const neg = data && data.pnl < 0;
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => data && setModalDay(d)}
+                      disabled={!data}
+                      style={{
+                        aspectRatio: '1/1',
+                        minWidth: 0,
+                        padding: 0,
+                        cursor: data ? 'pointer' : 'default',
+                        background: pos
+                          ? `linear-gradient(180deg, ${T.accent.green}55, ${T.accent.green}30)`
+                          : neg
+                          ? `linear-gradient(180deg, ${T.accent.red}55, ${T.accent.red}30)`
+                          : T.bg.tertiary,
+                        border: `1px solid ${isToday ? T.accent.cyan : pos ? T.accent.green : neg ? T.accent.red : T.border.subtle}`,
+                        borderRadius: 8,
+                        color: T.text.primary,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontFamily: "'JetBrains Mono', monospace",
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <span style={{ fontSize: 10, color: isToday ? T.accent.cyan : T.text.muted, fontWeight: isToday ? 700 : 500 }}>{d}</span>
+                      {data && (
+                        <>
+                          <span style={{
+                            fontSize: isMobile ? 9 : 10,
+                            fontWeight: 700,
+                            lineHeight: 1.1,
+                            color: pos ? T.accent.green : neg ? T.accent.red : T.text.primary,
+                          }}>
+                            {fmtValShort(data.pnl)}
+                          </span>
+                          <span style={{ fontSize: 8, color: T.text.muted }}>({data.n})</span>
+                        </>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {pickerMode === 'months' && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8 }}>
+              {(isRTL ? MONTHS_HE : MONTHS_EN).map((label, mi) => {
+                const isCur = today.getFullYear() === year && today.getMonth() === mi;
+                const isSel = month === mi;
+                return (
+                  <button
+                    key={mi}
+                    onClick={() => { setFocused(new Date(year, mi, 1)); setPickerMode('days'); }}
+                    style={{
+                      padding: '14px 6px',
+                      background: isSel ? T.accent.cyan : T.bg.tertiary,
+                      color: isSel ? '#001023' : T.text.primary,
+                      border: `1px solid ${isCur ? T.accent.cyan : T.border.subtle}`,
+                      borderRadius: 10,
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {pickerMode === 'years' && (() => {
+            const base = Math.floor(year / 10) * 10;
+            const years = Array.from({ length: 12 }, (_, i) => base + i);
+            return (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8 }}>
+                {years.map(y => {
+                  const isCur = today.getFullYear() === y;
+                  const isSel = year === y;
+                  return (
+                    <button
+                      key={y}
+                      onClick={() => { setFocused(new Date(y, month, 1)); setPickerMode('months'); }}
+                      style={{
+                        padding: '14px 6px',
+                        background: isSel ? T.accent.cyan : T.bg.tertiary,
+                        color: isSel ? '#001023' : T.text.primary,
+                        border: `1px solid ${isCur ? T.accent.cyan : T.border.subtle}`,
+                        borderRadius: 10,
+                        fontSize: 14,
                         fontWeight: 700,
-                        lineHeight: 1.1,
-                        color: pos ? T.accent.green : neg ? T.accent.red : T.text.primary,
-                      }}>
-                        {fmtValShort(data.pnl)}
-                      </span>
-                      <span style={{ fontSize: 8, color: T.text.muted }}>({data.n})</span>
-                    </>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+                        cursor: 'pointer',
+                        fontFamily: "'JetBrains Mono', monospace",
+                      }}
+                    >
+                      {y}
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
+
 
         {/* ── Long card ──────────────────────────────────────── */}
         <BreakdownCard
