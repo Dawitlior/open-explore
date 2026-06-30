@@ -4,7 +4,10 @@ import {
   LayoutDashboard, Activity, Grid3x3, ShieldAlert, MoreHorizontal, X, ArrowLeft,
   SlidersHorizontal, Download, Sun, Moon, Globe, FileText, Database, ChevronLeft,
   Repeat, GitMerge, CreditCard, Brain, TrendingUp, Layers, FileCheck, Server, Terminal,
+  RefreshCw,
 } from "lucide-react";
+import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
+import { PullToRefreshIndicator } from "@/components/trading/PullToRefreshIndicator";
 
 const SANS = "'Poppins', 'Heebo', system-ui, -apple-system, sans-serif";
 const MONO = "ui-monospace, 'SF Mono', 'Roboto Mono', Menlo, Consolas, monospace";
