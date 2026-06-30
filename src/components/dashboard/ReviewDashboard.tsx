@@ -368,12 +368,7 @@ export const ReviewDashboard = ({
         )}
       </div>
 
-      {/* Advanced Analytics Lab moved to /analytics (Ultimate-tier only) */}
-
-      {/* ═══ RISK-ADJUSTED PERFORMANCE — Ultimate-tier · Sharpe · Sortino · Omega · Max DD ═══ */}
-      <TierGate required="ultimate" label="Risk-Adjusted Performance" silent>
-        <RiskAdjustedRatiosSection T={T} isRTL={isRTL} trades={trades} />
-      </TierGate>
+      {/* Advanced Analytics Lab + Risk-Adjusted Ratios moved to /analytics (Ultimate-tier only) */}
     </div>
   );
 };
