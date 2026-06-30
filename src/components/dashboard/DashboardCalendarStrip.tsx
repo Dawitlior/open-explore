@@ -15,6 +15,8 @@ import type { I18nStrings } from '@/lib/trading-i18n';
 import { parseTradeDate } from '@/components/weekly-review/lib/week-key';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { CalendarModal } from '@/components/trading/CalendarModal';
+import { useDisplayMode } from '@/lib/display-mode';
+import { getEffectiveR } from '@/lib/r-multiple';
 
 interface Props {
   T: TradingTheme;
@@ -61,9 +63,18 @@ function getHoldMinutes(tr: Trade): number | null {
 
 export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
   const isMobile = useIsMobile();
+  const { displayMode } = useDisplayMode();
+  const isR = displayMode === 'R_MULTIPLE';
   const today = useMemo(() => new Date(), []);
   const [focused, setFocused] = useState<Date>(today);
   const [modalDay, setModalDay] = useState<number | null>(null);
+
+  const fmtValShort = (v: number) => isR
+    ? `${v >= 0 ? '+' : ''}${v.toFixed(2)}R`
+    : `${v >= 0 ? '+' : ''}${fmtMoneyShort(v)}`;
+  const fmtValTotal = (v: number) => isR
+    ? `${v >= 0 ? '+' : ''}${v.toFixed(2)}R`
+    : `${v >= 0 ? '+' : ''}${fmtMoney(v, 1)}`;
 
   const year = focused.getFullYear();
   const month = focused.getMonth();
@@ -76,12 +87,13 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
       if (d.getFullYear() !== year || d.getMonth() !== month) continue;
       const k = d.getDate();
       const e = map.get(k) || { pnl: 0, n: 0 };
-      e.pnl += Number(tr.pnl) || 0;
+      const val = isR ? (getEffectiveR(tr, { strict: true }) ?? 0) : (Number(tr.pnl) || 0);
+      e.pnl += val;
       e.n += 1;
       map.set(k, e);
     }
     return map;
-  }, [trades, year, month]);
+  }, [trades, year, month, isR]);
 
   const monthTotal = useMemo(() => {
     let pnl = 0, n = 0;
@@ -177,7 +189,7 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
                   fontSize: 16, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace",
                   color: monthTotal.pnl > 0 ? T.accent.green : monthTotal.pnl < 0 ? T.accent.red : T.text.primary,
                 }}>
-                  {monthTotal.pnl >= 0 ? '+' : ''}{fmtMoney(monthTotal.pnl, 1)}
+                  {fmtValTotal(monthTotal.pnl)}
                 </div>
               </div>
               <div>
@@ -248,7 +260,7 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
                         lineHeight: 1.1,
                         color: pos ? T.accent.green : neg ? T.accent.red : T.text.primary,
                       }}>
-                        {data.pnl >= 0 ? '+' : ''}{fmtMoneyShort(data.pnl)}
+                        {fmtValShort(data.pnl)}
                       </span>
                       <span style={{ fontSize: 8, color: T.text.muted }}>({data.n})</span>
                     </>
