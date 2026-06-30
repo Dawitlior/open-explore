@@ -1,0 +1,145 @@
+/* ============================================================
+ * ORCA Accessibility Engine — Phase 1 (preferences panel only)
+ * Real CSS effects keyed off data-attributes on <html>.
+ * Layer B (semantic foundation / labels / alt-text) is intentionally
+ * NOT shipped here — see docs/ORCA_ACCESSIBILITY_COMPLETE.md §7.
+ * ============================================================ */
+
+/* ---------- Font scale (real rem scaling, !important to win over
+   user-ui-prefs inline font-size when the user opts in) ---------- */
+html[data-a11y-scale-active="true"] {
+  font-size: calc(16px * var(--a11y-scale, 1)) !important;
+}
+
+/* ---------- Contrast palette: HIGH ---------- */
+html[data-a11y-contrast="high"],
+html[data-a11y-contrast="high"] body {
+  background: #000 !important;
+  color: #fff !important;
+}
+html[data-a11y-contrast="high"] :is(a, button) {
+  text-decoration: underline;
+}
+html[data-a11y-contrast="high"] :is(input, textarea, select) {
+  background: #000 !important;
+  color: #fff !important;
+  border: 1px solid #FFD24A !important;
+}
+
+/* ---------- Contrast palette: INVERTED (true light) ---------- */
+html[data-a11y-contrast="inverted"],
+html[data-a11y-contrast="inverted"] body {
+  background: #FBFBF7 !important;
+  color: #14181F !important;
+}
+html[data-a11y-contrast="inverted"] :is(input, textarea, select) {
+  background: #fff !important;
+  color: #14181F !important;
+}
+html[data-a11y-contrast="inverted"] :is(a, button) {
+  text-decoration: underline;
+}
+
+/* ---------- Grayscale (whole document, real desaturation) ---------- */
+html[data-a11y-grayscale="true"] body {
+  filter: grayscale(1) !important;
+}
+
+/* ---------- Highlight links (don't rely on color alone) ---------- */
+html[data-a11y-links="true"] a {
+  text-decoration: underline !important;
+  text-underline-offset: 3px;
+  outline: 1px solid currentColor;
+  outline-offset: 1px;
+  border-radius: 3px;
+  background: color-mix(in srgb, currentColor 10%, transparent);
+}
+
+/* ---------- Readable font + spacing ---------- */
+html[data-a11y-readable="true"] body {
+  font-family: 'Heebo', Verdana, system-ui, sans-serif !important;
+  letter-spacing: 0.03em !important;
+  word-spacing: 0.16em !important;
+  line-height: 1.9 !important;
+  font-weight: 500 !important;
+}
+
+/* ---------- Text spacing only (WCAG 1.4.12) ---------- */
+html[data-a11y-spacing="true"] body {
+  letter-spacing: 0.12em !important;
+  word-spacing: 0.18em !important;
+  line-height: 2 !important;
+}
+
+/* ---------- Big cursor ---------- */
+html[data-a11y-cursor="true"] body {
+  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'><path d='M6 3 L6 38 L15 29 L21 43 L28 40 L22 26 L34 26 Z' fill='white' stroke='black' stroke-width='2.5' stroke-linejoin='round'/></svg>") 4 2, auto !important;
+}
+html[data-a11y-cursor="true"] :is(a, button, [role="button"]) {
+  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'><g fill='white' stroke='black' stroke-width='2.5' stroke-linejoin='round'><path d='M18 4 v18'/><path d='M18 12 c0-3 5-3 5 0 v3 c4-2 7 0 7 4 v6 c0 5-3 9-9 9 h-3 c-4 0-6-2-8-6 l-3-7 c-1-3 3-5 5-2 l2 3 V9 c0-3 5-3 5 0z'/></g></svg>") 12 2, pointer !important;
+}
+
+/* ---------- Stronger focus ring on every focusable ---------- */
+html[data-a11y-focus="true"] :is(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 3px #000, 0 0 0 6px #22D3EE !important;
+  border-radius: 8px;
+  position: relative;
+  z-index: 5;
+}
+
+/* ---------- Reduce motion (also respects OS pref) ---------- */
+html[data-a11y-motion="reduced"] *,
+html[data-a11y-motion="reduced"] *::before,
+html[data-a11y-motion="reduced"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* ---------- The FAB and panel chrome ---------- */
+.orca-a11y-fab {
+  position: fixed;
+  inset-inline-end: 24px;
+  inset-block-end: 24px;
+  z-index: 92;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(135deg, #E5B94E, #D4AF37);
+  color: #06121b;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 14px 36px -10px rgba(229,185,78,.7), 0 0 0 1px rgba(255,255,255,.08) inset;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.orca-a11y-fab:hover { transform: scale(1.06); }
+.orca-a11y-fab:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px #05070E, 0 0 0 6px #22D3EE;
+}
+.orca-a11y-fab svg { width: 28px; height: 28px; }
+
+/* On mobile, lift the FAB above any bottom-tab bar */
+@media (max-width: 640px) {
+  .orca-a11y-fab { inset-block-end: 84px; width: 52px; height: 52px; }
+}
+
+/* Skip link (visible only on focus) */
+.orca-a11y-skip {
+  position: fixed;
+  inset-inline-start: 12px;
+  inset-block-start: -100px;
+  z-index: 9999;
+  background: #E5B94E;
+  color: #06121b;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: top .15s ease;
+}
+.orca-a11y-skip:focus { inset-block-start: 12px; outline: none; box-shadow: 0 0 0 3px #05070E, 0 0 0 6px #22D3EE; }
