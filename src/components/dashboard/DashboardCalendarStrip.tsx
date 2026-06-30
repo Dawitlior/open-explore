@@ -69,8 +69,12 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
   const [focused, setFocused] = useState<Date>(today);
   const [modalDay, setModalDay] = useState<number | null>(null);
 
-  const fmtValShort = (v: number) => isR ? `${v >= 0 ? '+' : ''}${v.toFixed(2)}R` : `${v >= 0 ? '+' : '-'}${fmtMoneyShort(Math.abs(v)).replace(/^-/, '')}`;
-  const fmtValTotal = (v: number) => isR ? `${v >= 0 ? '+' : ''}${v.toFixed(2)}R` : `${v >= 0 ? '+' : ''}${fmtMoney(v, 1)}`;
+  const fmtValShort = (v: number) => isR
+    ? `${v >= 0 ? '+' : ''}${v.toFixed(2)}R`
+    : `${v >= 0 ? '+' : ''}${fmtMoneyShort(v)}`;
+  const fmtValTotal = (v: number) => isR
+    ? `${v >= 0 ? '+' : ''}${v.toFixed(2)}R`
+    : `${v >= 0 ? '+' : ''}${fmtMoney(v, 1)}`;
 
   const year = focused.getFullYear();
   const month = focused.getMonth();
@@ -83,7 +87,8 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
       if (d.getFullYear() !== year || d.getMonth() !== month) continue;
       const k = d.getDate();
       const e = map.get(k) || { pnl: 0, n: 0 };
-      e.pnl += Number(tr.pnl) || 0;
+      const val = isR ? (getEffectiveR(tr, { strict: true }) ?? 0) : (Number(tr.pnl) || 0);
+      e.pnl += val;
       e.n += 1;
       map.set(k, e);
     }
