@@ -41,6 +41,8 @@ const AnalyticsQuantLab = lazy(() => import('./AnalyticsQuantLab').then(m => ({ 
 import { TimeSeriesPerfMatrix } from './TimeSeriesPerfMatrix';
 import { UltimateAnalyticsDeck } from './UltimateDeckCharts';
 import { useEntitlement } from '@/hooks/use-entitlement';
+import DashboardAdvancedLab from '@/components/dashboard/DashboardAdvancedLab';
+import { RiskAdjustedRatiosSection } from '@/components/dashboard/RiskAdjustedRatiosSection';
 
 
 interface AdvancedAnalyticsPageProps {
@@ -847,6 +849,16 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
           </table>
         </div>
       </GlassCard>}
+
+      {/* ═══ ULTIMATE-ONLY · Advanced Analytics Lab + Risk-Adjusted Ratios ═══ */}
+      {showMax && (
+        <div style={{ marginTop: 24 }}>
+          <DashboardAdvancedLab T={T} isRTL={langRTL} trades={_allTrades} />
+          <div style={{ marginTop: 16 }}>
+            <RiskAdjustedRatiosSection T={T} isRTL={langRTL} trades={_allTrades} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
