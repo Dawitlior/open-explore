@@ -215,17 +215,29 @@ export const ReviewDashboard = ({
               {isAdvancedTier && isChartVisible('coinPerformance') && (() => {
                 const coinKey = (c: any) => (isMoney ? c.pnl : (typeof c.totalR === 'number' ? c.totalR : (Number(c.avgR) || 0) * (Number(c.trades) || 0)));
                 const sorted = [...(stats.coinPerf || [])].sort((a:any,b:any)=> coinKey(b) - coinKey(a));
-                const winner = sorted[0];
-                const loser = sorted[sorted.length - 1];
-                const hasData = winner && loser && winner.coin !== loser.coin;
                 const winnerLabel = isRTL ? 'מנצח גדול' : 'Top Winner';
                 const loserLabel = isRTL ? 'מפסיד גדול' : 'Top Loser';
+                const singleLabel = isRTL ? 'הנכס היחיד שנסחר' : 'Only asset traded';
                 const noData = isRTL ? 'אין מספיק נתונים' : 'Not enough data';
                 const title = isRTL ? 'מנצח גדול מול מפסיד גדול' : 'Top Winner vs Top Loser';
-                const data = hasData ? [
-                  { label: winnerLabel, coin: winner.coin, v: coinKey(winner), fill: T.accent.green },
-                  { label: loserLabel, coin: loser.coin, v: coinKey(loser), fill: T.accent.red },
-                ] : [];
+                // Build data with graceful fallback for single-asset users:
+                // - 0 coins → empty state
+                // - 1 coin → show that coin alone, colored by sign of result
+                // - 2+ coins → original best vs worst comparison
+                let data: any[] = [];
+                if (sorted.length >= 2) {
+                  const winner = sorted[0];
+                  const loser = sorted[sorted.length - 1];
+                  data = [
+                    { label: winnerLabel, coin: winner.coin, v: coinKey(winner), fill: T.accent.green },
+                    { label: loserLabel, coin: loser.coin, v: coinKey(loser), fill: T.accent.red },
+                  ];
+                } else if (sorted.length === 1) {
+                  const only = sorted[0];
+                  const v = coinKey(only);
+                  data = [{ label: singleLabel, coin: only.coin, v, fill: v >= 0 ? T.accent.green : T.accent.red }];
+                }
+                const hasData = data.length > 0;
                 return (
                   <div className="dash-chart-card">
                     <ChartWrapper T={T} onExplainClick={handleExplainClick} title={title} explanation={EXPLANATIONS.coinPerformance} unit={isMoney ? '$' : 'R'} chartId="coinPerformance" onRemove={handleHideChart}>
