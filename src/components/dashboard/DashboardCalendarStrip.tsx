@@ -134,7 +134,9 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
     const cells: (number | null)[] = [];
     for (let i = 0; i < start; i++) cells.push(null);
     for (let d = 1; d <= days; d++) cells.push(d);
-    while (cells.length % 7 !== 0) cells.push(null);
+    // Always pad to 6 full weeks (42 cells) so switching months never
+    // resizes the calendar card and shifts the adjacent Long/Short cards.
+    while (cells.length < 42) cells.push(null);
     return cells;
   }, [year, month]);
 
