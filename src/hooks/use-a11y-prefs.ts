@@ -44,13 +44,20 @@ const SCALE_MIN = 1;
 const SCALE_MAX = 2;
 const SCALE_STEP = 0.1;
 
+function isCoarsePointer(): boolean {
+  if (typeof window === 'undefined' || !window.matchMedia) return false;
+  return window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+}
+
 function readCache(): A11yPrefs {
   if (typeof window === 'undefined') return A11Y_DEFAULTS;
   try {
     const raw = window.localStorage.getItem(KEY);
-    if (!raw) return A11Y_DEFAULTS;
-    const parsed = JSON.parse(raw) as Partial<A11yPrefs>;
-    return { ...A11Y_DEFAULTS, ...parsed };
+    const parsed = raw ? (JSON.parse(raw) as Partial<A11yPrefs>) : {};
+    const merged: A11yPrefs = { ...A11Y_DEFAULTS, ...parsed };
+    // Reading guide is a pointer-only feature — never active on touch.
+    if (isCoarsePointer()) merged.guide = false;
+    return merged;
   } catch { return A11Y_DEFAULTS; }
 }
 
