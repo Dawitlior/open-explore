@@ -96,6 +96,31 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
     return map;
   }, [trades, year, month, isR]);
 
+  // Totals per month (for the current focused year) — used in the months picker.
+  const monthTotals = useMemo(() => {
+    const arr = new Array(12).fill(0) as number[];
+    for (const tr of trades) {
+      const d = parseTradeDate(tr.date);
+      if (!d || d.getFullYear() !== year) continue;
+      const val = isR ? (getEffectiveR(tr, { strict: true }) ?? 0) : (Number(tr.pnl) || 0);
+      arr[d.getMonth()] += val;
+    }
+    return arr;
+  }, [trades, year, isR]);
+
+  // Totals per year — used in the years picker (keyed by year number).
+  const yearTotals = useMemo(() => {
+    const map = new Map<number, number>();
+    for (const tr of trades) {
+      const d = parseTradeDate(tr.date);
+      if (!d) continue;
+      const y = d.getFullYear();
+      const val = isR ? (getEffectiveR(tr, { strict: true }) ?? 0) : (Number(tr.pnl) || 0);
+      map.set(y, (map.get(y) ?? 0) + val);
+    }
+    return map;
+  }, [trades, isR]);
+
   const monthTotal = useMemo(() => {
     let pnl = 0, n = 0;
     for (const v of dayMap.values()) { pnl += v.pnl; n += v.n; }
