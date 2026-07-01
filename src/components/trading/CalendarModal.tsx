@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { I18nStrings } from '@/lib/trading-i18n';
@@ -513,7 +514,7 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
      =========================================================== */
   if (isMobile) {
     const backArrow = isRTL ? '→' : '←';
-    return (
+    return createPortal((
       <div
         dir={isRTL ? 'rtl' : 'ltr'}
         style={{
@@ -644,13 +645,13 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
           @keyframes slideInLeft  { from { transform: translateX(-100%); } to { transform: translateX(0); } }
         `}</style>
       </div>
-    );
+    ), document.body);
   }
 
   /* ===========================================================
      DESKTOP — Immersive fullscreen split-screen experience
      =========================================================== */
-  return (
+  return createPortal((
     <div
       dir={isRTL ? 'rtl' : 'ltr'}
       onClick={onClose}
@@ -817,5 +818,5 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
         `}</style>
       </div>
     </div>
-  );
+  ), document.body);
 };

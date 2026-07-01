@@ -92,8 +92,20 @@ html[data-a11y-contrast="inverted"] :is(a, button) {
   text-decoration: underline;
 }
 
-/* ---------- Grayscale ---------- */
-html[data-a11y-grayscale="true"] body { filter: grayscale(1) !important; }
+/* ---------- Grayscale ----------
+ * Apply the filter to the app root (NOT html/body). Filtering html/body
+ * turns them into a containing block for `position:fixed` and breaks the
+ * sidebar / FAB / modals. Filtering also exposes horizontal overflow, so
+ * clip it right on the filtered element.
+ * The a11y FAB/panel live in a body-level portal, staying outside this
+ * subtree so their colors are unaffected. */
+html[data-a11y-grayscale="true"] #root {
+  filter: grayscale(1) !important;
+  overflow-x: clip;
+  max-width: 100%;
+}
+/* Safety net so nothing else can push horizontal scroll. */
+html, body { overflow-x: hidden; }
 
 /* ---------- Highlight links ---------- */
 html[data-a11y-links="true"] a {
@@ -150,13 +162,22 @@ html[data-a11y-motion="reduced"] *::after {
 #a11y-reading-guide {
   position: fixed;
   inset-inline: 0;
+  top: 0;
   height: 2px;
   background: hsl(var(--primary));
   pointer-events: none;
   z-index: 96;
   display: none;
+  will-change: transform;
 }
 :root[data-a11y-guide="true"] #a11y-reading-guide { display: block; }
+
+/* Reading guide is a pointer-only feature — hide the toggle row and
+ * force the bar off on touch / coarse-pointer devices. */
+@media (hover: none) and (pointer: coarse) {
+  [data-a11y-row="guide"] { display: none !important; }
+  #a11y-reading-guide { display: none !important; }
+}
 
 /* ---------- FAB ---------- */
 .orca-a11y-fab {

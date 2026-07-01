@@ -1,7 +1,9 @@
 /**
  * ReadingGuide — thin horizontal bar that follows the pointer/touch.
  * Activated when prefs.guide is true (data-a11y-guide="true" on <html>).
- * CSS in a11y-engine.css handles the show/hide rule.
+ * Listener is attached to `window` (the bar itself has pointer-events:none
+ * so it cannot receive events). Position is updated via `transform` for
+ * cheap compositor-only updates.
  */
 import { useEffect, useRef } from 'react';
 import { useA11yPrefs } from '@/hooks/use-a11y-prefs';
@@ -12,18 +14,24 @@ export function ReadingGuide() {
 
   useEffect(() => {
     if (!prefs.guide) return;
-    const onMove = (y: number) => {
-      const el = ref.current;
-      if (!el) return;
-      el.style.top = `${y}px`;
+    const el = ref.current;
+    if (!el) return;
+
+    const setY = (y: number) => {
+      el.style.transform = `translate3d(0, ${y}px, 0)`;
     };
-    const onMouse = (e: MouseEvent) => onMove(e.clientY);
+    const onPointer = (e: PointerEvent) => setY(e.clientY);
+    const onMouse = (e: MouseEvent) => setY(e.clientY);
     const onTouch = (e: TouchEvent) => {
-      if (e.touches[0]) onMove(e.touches[0].clientY);
+      const t = e.touches[0];
+      if (t) setY(t.clientY);
     };
+
+    window.addEventListener('pointermove', onPointer, { passive: true });
     window.addEventListener('mousemove', onMouse, { passive: true });
     window.addEventListener('touchmove', onTouch, { passive: true });
     return () => {
+      window.removeEventListener('pointermove', onPointer);
       window.removeEventListener('mousemove', onMouse);
       window.removeEventListener('touchmove', onTouch);
     };
