@@ -161,7 +161,9 @@ export function A11yPanel() {
               <ToggleRow icon={<MousePointer2 size={18} aria-hidden="true" />} title={t('סמן עכבר גדול', 'Large cursor')} hint={t('סמן בולט וקל לאיתור', 'High-visibility pointer')} pressed={prefs.cursor} onToggle={() => update({ cursor: !prefs.cursor })} />
               <ToggleRow icon={<Eye size={18} aria-hidden="true" />} title={t('מסגרת פוקוס מודגשת', 'Stronger focus ring')} hint={t('מתאר עבה כשמתמקדים בקלט', 'Thicker outline on focus')} pressed={prefs.focus} onToggle={() => update({ focus: !prefs.focus })} />
               <ToggleRow icon={<Sparkles size={18} aria-hidden="true" />} title={t('עצור אנימציות', 'Reduce motion')} hint={t('בטל מעברים ואנימציות', 'Disable transitions / animations')} pressed={prefs.motion} onToggle={() => update({ motion: !prefs.motion })} />
-              <ToggleRow icon={<AlignHorizontalJustifyCenter size={18} aria-hidden="true" />} title={t('מדריך קריאה', 'Reading guide')} hint={t('פס אופקי שעוקב אחרי הסמן', 'Horizontal bar that follows the cursor')} pressed={prefs.guide} onToggle={() => update({ guide: !prefs.guide })} />
+              <div data-a11y-row="guide">
+                <ToggleRow icon={<AlignHorizontalJustifyCenter size={18} aria-hidden="true" />} title={t('מדריך קריאה', 'Reading guide')} hint={t('פס אופקי שעוקב אחרי הסמן', 'Horizontal bar that follows the cursor')} pressed={prefs.guide} onToggle={() => update({ guide: !prefs.guide })} />
+              </div>
             </Section>
 
             <button
