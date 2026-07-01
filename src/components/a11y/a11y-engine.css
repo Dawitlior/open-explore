@@ -162,11 +162,13 @@ html[data-a11y-motion="reduced"] *::after {
 #a11y-reading-guide {
   position: fixed;
   inset-inline: 0;
+  top: 0;
   height: 2px;
   background: hsl(var(--primary));
   pointer-events: none;
   z-index: 96;
   display: none;
+  will-change: transform;
 }
 :root[data-a11y-guide="true"] #a11y-reading-guide { display: block; }
 
