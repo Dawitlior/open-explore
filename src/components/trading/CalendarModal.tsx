@@ -818,5 +818,5 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
         `}</style>
       </div>
     </div>
-  );
+  ), document.body);
 };
