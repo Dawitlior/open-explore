@@ -651,7 +651,7 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
   /* ===========================================================
      DESKTOP — Immersive fullscreen split-screen experience
      =========================================================== */
-  return (
+  return createPortal((
     <div
       dir={isRTL ? 'rtl' : 'ltr'}
       onClick={onClose}
