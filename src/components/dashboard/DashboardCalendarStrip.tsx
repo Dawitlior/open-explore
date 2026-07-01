@@ -317,26 +317,44 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
           )}
 
           {pickerMode === 'months' && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 6 }}>
               {(isRTL ? MONTHS_HE : MONTHS_EN).map((label, mi) => {
                 const isCur = today.getFullYear() === year && today.getMonth() === mi;
                 const isSel = month === mi;
+                const total = monthTotals[mi] || 0;
+                const pos = total > 0;
+                const neg = total < 0;
                 return (
                   <button
                     key={mi}
                     onClick={() => { setFocused(new Date(year, mi, 1)); setPickerMode('days'); }}
                     style={{
-                      padding: '14px 6px',
-                      background: isSel ? T.accent.cyan : T.bg.tertiary,
+                      aspectRatio: '1/1',
+                      minWidth: 0,
+                      padding: 0,
+                      display: 'flex', flexDirection: 'column',
+                      alignItems: 'center', justifyContent: 'center', gap: 2,
+                      background: isSel
+                        ? T.accent.cyan
+                        : pos ? `linear-gradient(180deg, ${T.accent.green}55, ${T.accent.green}30)`
+                        : neg ? `linear-gradient(180deg, ${T.accent.red}55, ${T.accent.red}30)`
+                        : T.bg.tertiary,
                       color: isSel ? '#001023' : T.text.primary,
-                      border: `1px solid ${isCur ? T.accent.cyan : T.border.subtle}`,
+                      border: `1px solid ${isCur ? T.accent.cyan : pos ? T.accent.green : neg ? T.accent.red : T.border.subtle}`,
                       borderRadius: 10,
-                      fontSize: 13,
-                      fontWeight: 600,
+                      fontSize: 12,
+                      fontWeight: 700,
                       cursor: 'pointer',
                     }}
                   >
-                    {label}
+                    <span style={{ fontSize: 11, fontWeight: 700 }}>{label.slice(0, 3)}</span>
+                    <span style={{
+                      fontSize: 10,
+                      fontFamily: "'JetBrains Mono', monospace",
+                      color: isSel ? '#001023' : pos ? T.accent.green : neg ? T.accent.red : T.text.muted,
+                    }}>
+                      {total === 0 ? '—' : fmtValShort(total)}
+                    </span>
                   </button>
                 );
               })}
@@ -347,27 +365,42 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
             const base = Math.floor(year / 10) * 10;
             const years = Array.from({ length: 12 }, (_, i) => base + i);
             return (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 6 }}>
                 {years.map(y => {
                   const isCur = today.getFullYear() === y;
                   const isSel = year === y;
+                  const total = yearTotals.get(y) || 0;
+                  const pos = total > 0;
+                  const neg = total < 0;
                   return (
                     <button
                       key={y}
                       onClick={() => { setFocused(new Date(y, month, 1)); setPickerMode('months'); }}
                       style={{
-                        padding: '14px 6px',
-                        background: isSel ? T.accent.cyan : T.bg.tertiary,
+                        aspectRatio: '1/1',
+                        minWidth: 0,
+                        padding: 0,
+                        display: 'flex', flexDirection: 'column',
+                        alignItems: 'center', justifyContent: 'center', gap: 2,
+                        background: isSel
+                          ? T.accent.cyan
+                          : pos ? `linear-gradient(180deg, ${T.accent.green}55, ${T.accent.green}30)`
+                          : neg ? `linear-gradient(180deg, ${T.accent.red}55, ${T.accent.red}30)`
+                          : T.bg.tertiary,
                         color: isSel ? '#001023' : T.text.primary,
-                        border: `1px solid ${isCur ? T.accent.cyan : T.border.subtle}`,
+                        border: `1px solid ${isCur ? T.accent.cyan : pos ? T.accent.green : neg ? T.accent.red : T.border.subtle}`,
                         borderRadius: 10,
-                        fontSize: 14,
-                        fontWeight: 700,
                         cursor: 'pointer',
                         fontFamily: "'JetBrains Mono', monospace",
                       }}
                     >
-                      {y}
+                      <span style={{ fontSize: 13, fontWeight: 800 }}>{y}</span>
+                      <span style={{
+                        fontSize: 10,
+                        color: isSel ? '#001023' : pos ? T.accent.green : neg ? T.accent.red : T.text.muted,
+                      }}>
+                        {total === 0 ? '—' : fmtValShort(total)}
+                      </span>
                     </button>
                   );
                 })}
