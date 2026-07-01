@@ -177,6 +177,15 @@ html[data-a11y-motion="reduced"] *::after {
   #a11y-reading-guide { display: none !important; }
 }
 
+/* ---------- FAB ---------- */
+.orca-a11y-fab {
+  position: fixed;
+  inset-inline-end: 24px;
+  inset-block-end: 24px;
+  z-index: 92;
+  width: 56px; height: 56px; border-radius: 50%;
+  border: none; cursor: pointer;
+  background: linear-gradient(135deg, #E5B94E, #D4AF37);
   color: #06121b;
   display: grid; place-items: center;
   box-shadow: 0 14px 36px -10px rgba(229,185,78,.7), 0 0 0 1px rgba(255,255,255,.08) inset;
