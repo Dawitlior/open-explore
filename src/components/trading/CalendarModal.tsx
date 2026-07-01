@@ -514,7 +514,7 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
      =========================================================== */
   if (isMobile) {
     const backArrow = isRTL ? '→' : '←';
-    return (
+    return createPortal((
       <div
         dir={isRTL ? 'rtl' : 'ltr'}
         style={{
