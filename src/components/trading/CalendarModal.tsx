@@ -645,7 +645,7 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
           @keyframes slideInLeft  { from { transform: translateX(-100%); } to { transform: translateX(0); } }
         `}</style>
       </div>
-    );
+    ), document.body);
   }
 
   /* ===========================================================
