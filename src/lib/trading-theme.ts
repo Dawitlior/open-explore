@@ -319,9 +319,9 @@ export function applyThemeToDOM(id: ThemeId) {
   // Do NOT touch document.body — pages like Landing paint their own surface.
   try {
     const SOLID: Record<string, string> = {
-      midnight: '#020202',
+      midnight: '#0A0F0A',
       blue: '#0B1120',
-      platinum: '#f4efe4',
+      platinum: '#F5F1EA',
       graphite: '#0e1013',
     };
     const solid = SOLID[id] || SOLID.blue;
