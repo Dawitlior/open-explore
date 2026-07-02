@@ -1637,6 +1637,43 @@ function mapFunnel(rows) {
   return [...mapped].sort((a, b) => b.n - a.n);
 }
 
+/**
+ * PendingTile — a StatTile-shaped placeholder for a metric whose source event
+ * stream isn't wired yet. Renders "—" with an honest hint instead of a
+ * fabricated zero.
+ */
+function PendingTile({ label, hint }) {
+  return (
+    <div style={{ background: C.panel, border: `1px dashed ${C.border}`, borderRadius: 14, padding: "14px 16px", minHeight: 96, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+      <div style={{ fontFamily: SANS, fontSize: 11.5, color: C.ink3, fontWeight: 500 }}>{label}</div>
+      <div>
+        <div style={{ fontFamily: MONO, fontSize: 26, fontWeight: 700, color: C.ink3, letterSpacing: -0.5 }}>—</div>
+        {hint && <div style={{ fontFamily: SANS, fontSize: 10.5, color: C.ink3, marginTop: 4, lineHeight: 1.35 }}>{hint}</div>}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * PendingCard — a Card-shaped placeholder for a chart whose data source
+ * isn't wired yet. Preserves grid layout but avoids fake charts.
+ */
+function PendingCard({ title, hint }) {
+  return (
+    <div style={{ background: C.panel, border: `1px dashed ${C.border}`, borderRadius: 14, padding: 18, minHeight: 200, display: "flex", flexDirection: "column" }}>
+      <div style={{ fontFamily: SANS, fontSize: 12.5, fontWeight: 650, color: C.ink2, marginBottom: 8 }}>{title}</div>
+      <div style={{ flex: 1, display: "grid", placeItems: "center", textAlign: "center" }}>
+        <div>
+          <div style={{ fontFamily: SANS, fontSize: 12.5, color: C.ink3, marginBottom: 6, maxWidth: 320 }}>
+            {hint || "Requires event collection · not yet active"}
+          </div>
+          <div style={{ fontFamily: MONO, fontSize: 10, color: C.ink3, letterSpacing: 1, textTransform: "uppercase" }}>Awaiting data pipe</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function EmptyShell({ title, subtitle, hint }) {
   return (
     <div style={{ padding: "56px 24px", textAlign: "center", background: C.panel, border: `1px dashed ${C.border}`, borderRadius: 14, position: "relative", overflow: "hidden" }}>
