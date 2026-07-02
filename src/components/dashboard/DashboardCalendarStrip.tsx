@@ -543,6 +543,30 @@ function BreakdownCard({ T, isRTL, isR, title, accent, stats, series, showChart 
         stats.avgRR > 0 ? stats.avgRR.toFixed(2) : '—',
         T.accent.cyan)}
       {row(isRTL ? 'זמן החזקה ממוצע' : 'Avg hold time', fmtMinutes(stats.avgHold, isRTL))}
+      {showChart && series && series.length > 1 && <EquityMiniChart series={series} color={accent} T={T} />}
+    </div>
+  );
+}
+
+function EquityMiniChart({ series, color, T }: { series: number[]; color: string; T: TradingTheme }) {
+  const W = 260, H = 44, PAD = 3;
+  const n = series.length;
+  const min = Math.min(0, ...series);
+  const max = Math.max(0, ...series);
+  const range = max - min || 1;
+  const x = (i: number) => PAD + (i * (W - PAD * 2)) / Math.max(1, n - 1);
+  const y = (v: number) => H - PAD - ((v - min) / range) * (H - PAD * 2);
+  const path = series.map((v, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const zeroY = y(0);
+  return (
+    <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${T.border.subtle}` }}>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="none" style={{ display: 'block', overflow: 'visible' }} aria-hidden="true">
+        <line x1={0} x2={W} y1={zeroY} y2={zeroY} stroke={T.border.subtle} strokeWidth={1} strokeDasharray="2 3" />
+        <path d={path} fill="none" stroke={color} strokeWidth={1.25} strokeLinejoin="round" strokeLinecap="round" />
+        {series.map((v, i) => (
+          <circle key={i} cx={x(i)} cy={y(v)} r={1.6} fill={color} opacity={0.85} />
+        ))}
+      </svg>
     </div>
   );
 }
