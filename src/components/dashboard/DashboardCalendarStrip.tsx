@@ -218,7 +218,7 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
   };
 
   return (
-    <div className="dash-section" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="dash-section" dir={isRTL ? 'rtl' : 'ltr'} style={{ marginBottom: 40 }}>
       <div className="dash-section-label" style={{ color: T.accent.cyan }}>
         {isRTL ? 'לוח שנה · לונג / שורט' : 'CALENDAR · LONG / SHORT'}
       </div>
