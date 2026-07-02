@@ -32,7 +32,7 @@ async function logRiskEvent(event_type: 'kill_switch_on' | 'kill_switch_off', co
     await supabase.from('risk_events').insert({
       user_id: user.id,
       event_type,
-      context,
+      context: context as never,
     });
   } catch (err) {
     // Console-only — never surface to the user, never block the toggle.
