@@ -150,6 +150,33 @@ html[data-a11y-motion="reduced"] *::after {
   .orca-a11y-fab { inset-block-end: 84px; width: 52px; height: 52px; }
 }
 
+/* ---------- Docked FAB (mobile edge tab) ---------- */
+.orca-a11y-fab {
+  transition: transform .18s ease, box-shadow .18s ease, width .18s ease, height .18s ease, border-radius .18s ease, opacity .18s ease;
+}
+.orca-a11y-fab--docked {
+  box-shadow: 0 6px 18px -4px rgba(229,185,78,.55);
+  background: linear-gradient(135deg, #E5B94E, #D4AF37);
+}
+.orca-a11y-fab--docked::after {
+  /* Expand touch area to 44x44 minimum without changing visual size */
+  content: '';
+  position: absolute;
+  inset: -12px -20px;
+}
+.orca-a11y-fab--docked svg { display: none; }
+/* Respect safe areas */
+.orca-a11y-fab--docked {
+  margin-inline-start: env(safe-area-inset-left, 0);
+  margin-inline-end: env(safe-area-inset-right, 0);
+}
+
+/* Reduced motion — no dock animations */
+html[data-a11y-motion="reduced"] .orca-a11y-fab,
+@media (prefers-reduced-motion: reduce) {
+  .orca-a11y-fab { transition: none !important; }
+}
+
 /* ---------- Panel (mobile bottom-sheet) ---------- */
 .a11y-popup-handle { display: none; }
 
