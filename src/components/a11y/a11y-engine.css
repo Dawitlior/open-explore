@@ -172,7 +172,7 @@ html[data-a11y-motion="reduced"] *::after {
 }
 
 /* Reduced motion — no dock animations */
-html[data-a11y-motion="reduced"] .orca-a11y-fab,
+html[data-a11y-motion="reduced"] .orca-a11y-fab { transition: none !important; }
 @media (prefers-reduced-motion: reduce) {
   .orca-a11y-fab { transition: none !important; }
 }
