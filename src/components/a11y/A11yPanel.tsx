@@ -13,6 +13,11 @@ import { useLang } from '@/hooks/use-lang';
 const FAB_SIZE = 56;
 const FAB_MARGIN = 12;
 const FAB_POS_KEY = 'orca:a11y:fabPos';
+const FAB_DOCK_KEY = 'orca:a11y:fabDock';
+const DOCK_EDGE_THRESHOLD = 32;
+const AUTO_DOCK_MS = 4000;
+
+type DockState = { docked: boolean; side: 'left' | 'right'; y: number };
 
 function isTouchDevice(): boolean {
   return typeof window !== 'undefined'
@@ -41,76 +46,217 @@ export function A11yPanel() {
   // ---- Draggable FAB (touch only) ----
   const [isTouch] = useState<boolean>(() => isTouchDevice());
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
-  const drag = useRef({ active: false, moved: false, sx: 0, sy: 0, ox: 0, oy: 0 });
+  const [dock, setDock] = useState<DockState | null>(null);
+  const drag = useRef({ active: false, moved: false, sx: 0, sy: 0, ox: 0, oy: 0, vx: 0, lx: 0, lt: 0 });
+  const autoDockTimer = useRef<number | null>(null);
 
   const clamp = useCallback((x: number, y: number) => ({
     x: Math.min(Math.max(FAB_MARGIN, x), window.innerWidth - FAB_SIZE - FAB_MARGIN),
     y: Math.min(Math.max(FAB_MARGIN, y), window.innerHeight - FAB_SIZE - FAB_MARGIN),
   }), []);
 
+  const clampY = useCallback((y: number) =>
+    Math.min(Math.max(FAB_MARGIN, y), window.innerHeight - FAB_SIZE - FAB_MARGIN),
+  []);
+
+  // Load persisted position + dock state
   useEffect(() => {
     if (!isTouch) return;
     try {
-      const s = localStorage.getItem(FAB_POS_KEY);
-      if (s) {
-        const p = JSON.parse(s);
-        if (typeof p?.x === 'number' && typeof p?.y === 'number') setPos(clamp(p.x, p.y));
+      const d = localStorage.getItem(FAB_DOCK_KEY);
+      if (d) {
+        const s = JSON.parse(d) as DockState;
+        if (s && (s.side === 'left' || s.side === 'right') && typeof s.y === 'number') {
+          setDock({ ...s, y: clampY(s.y) });
+        }
+      }
+      const p = localStorage.getItem(FAB_POS_KEY);
+      if (p) {
+        const pp = JSON.parse(p);
+        if (typeof pp?.x === 'number' && typeof pp?.y === 'number') setPos(clamp(pp.x, pp.y));
       }
     } catch { /* noop */ }
-  }, [isTouch, clamp]);
+  }, [isTouch, clamp, clampY]);
 
+  // Reclamp on resize/orientation
   useEffect(() => {
     if (!isTouch) return;
-    const h = () => setPos(p => p ? clamp(p.x, p.y) : p);
+    const h = () => {
+      setPos(p => p ? clamp(p.x, p.y) : p);
+      setDock(d => d ? { ...d, y: clampY(d.y) } : d);
+    };
     window.addEventListener('resize', h);
     window.addEventListener('orientationchange', h);
     return () => {
       window.removeEventListener('resize', h);
       window.removeEventListener('orientationchange', h);
     };
-  }, [isTouch, clamp]);
+  }, [isTouch, clamp, clampY]);
+
+  const persistDock = useCallback((d: DockState | null) => {
+    try {
+      if (d) localStorage.setItem(FAB_DOCK_KEY, JSON.stringify(d));
+      else localStorage.removeItem(FAB_DOCK_KEY);
+    } catch { /* noop */ }
+  }, []);
+
+  const clearAutoDock = useCallback(() => {
+    if (autoDockTimer.current) { window.clearTimeout(autoDockTimer.current); autoDockTimer.current = null; }
+  }, []);
+
+  const dockToSide = useCallback((side: 'left' | 'right', y: number) => {
+    const next: DockState = { docked: true, side, y: clampY(y) };
+    setDock(next);
+    persistDock(next);
+    clearAutoDock();
+  }, [clampY, persistDock, clearAutoDock]);
+
+  const undock = useCallback(() => {
+    setDock(prev => {
+      if (!prev) return prev;
+      // Re-expand slightly inward from the edge, same y
+      const x = prev.side === 'right'
+        ? window.innerWidth - FAB_SIZE - FAB_MARGIN
+        : FAB_MARGIN;
+      const y = clampY(prev.y);
+      setPos({ x, y });
+      const next: DockState = { ...prev, docked: false };
+      persistDock(next);
+      return next;
+    });
+    scheduleAutoDock();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clampY, persistDock]);
+
+  const scheduleAutoDock = useCallback(() => {
+    clearAutoDock();
+    autoDockTimer.current = window.setTimeout(() => {
+      setPos(p => {
+        if (!p) return p;
+        const nearRight = p.x >= window.innerWidth - FAB_SIZE - DOCK_EDGE_THRESHOLD - FAB_MARGIN;
+        const nearLeft = p.x <= DOCK_EDGE_THRESHOLD + FAB_MARGIN;
+        if (nearRight) dockToSide('right', p.y);
+        else if (nearLeft) dockToSide('left', p.y);
+        return p;
+      });
+    }, AUTO_DOCK_MS);
+  }, [clearAutoDock, dockToSide]);
+
+  useEffect(() => () => clearAutoDock(), [clearAutoDock]);
 
   const onPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
     if (!isTouch) return;
     const r = e.currentTarget.getBoundingClientRect();
-    drag.current = { active: true, moved: false, sx: e.clientX, sy: e.clientY, ox: r.left, oy: r.top };
+    drag.current = { active: true, moved: false, sx: e.clientX, sy: e.clientY, ox: r.left, oy: r.top, vx: 0, lx: e.clientX, lt: performance.now() };
     e.currentTarget.setPointerCapture(e.pointerId);
+    clearAutoDock();
   };
   const onPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
     const d = drag.current;
     if (!d.active) return;
     const dx = e.clientX - d.sx, dy = e.clientY - d.sy;
     if (Math.hypot(dx, dy) > 8) d.moved = true;
-    if (d.moved) setPos(clamp(d.ox + dx, d.oy + dy));
+    if (d.moved) {
+      // If we were docked, moving = undock into a live position
+      if (dock?.docked) {
+        setDock(prev => prev ? { ...prev, docked: false } : prev);
+      }
+      const now = performance.now();
+      const dt = Math.max(1, now - d.lt);
+      d.vx = (e.clientX - d.lx) / dt; // px/ms
+      d.lx = e.clientX; d.lt = now;
+      setPos(clamp(d.ox + dx, d.oy + dy));
+    }
   };
   const onPointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
     const d = drag.current;
     if (!d.active) return;
     d.active = false;
     try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { /* noop */ }
-    if (d.moved) {
-      setPos(p => {
-        if (p) { try { localStorage.setItem(FAB_POS_KEY, JSON.stringify(p)); } catch { /* noop */ } }
-        return p;
-      });
-    } else {
-      setOpen(true);
+
+    if (!d.moved) {
+      // Tap
+      if (dock?.docked) {
+        undock(); // expand only, do NOT open
+      } else {
+        setOpen(true);
+        clearAutoDock();
+      }
+      return;
     }
+
+    // Drag release — decide dock vs free
+    setPos(prev => {
+      if (!prev) return prev;
+      const halfway = window.innerWidth / 2;
+      const outwardRight = d.vx > 0.6; // px/ms fling
+      const outwardLeft = d.vx < -0.6;
+      const nearRightEdge = prev.x >= window.innerWidth - FAB_SIZE - DOCK_EDGE_THRESHOLD - FAB_MARGIN;
+      const nearLeftEdge = prev.x <= DOCK_EDGE_THRESHOLD + FAB_MARGIN;
+      const pastHalfRight = prev.x + FAB_SIZE / 2 > halfway && outwardRight;
+      const pastHalfLeft = prev.x + FAB_SIZE / 2 < halfway && outwardLeft;
+
+      if (nearRightEdge || pastHalfRight) {
+        dockToSide('right', prev.y);
+        return prev;
+      }
+      if (nearLeftEdge || pastHalfLeft) {
+        dockToSide('left', prev.y);
+        return prev;
+      }
+      try { localStorage.setItem(FAB_POS_KEY, JSON.stringify(prev)); } catch { /* noop */ }
+      scheduleAutoDock();
+      return prev;
+    });
   };
 
-  const fabStyle: React.CSSProperties | undefined = (isTouch && pos)
-    ? { position: 'fixed', left: pos.x, top: pos.y, insetInlineEnd: 'auto', insetBlockEnd: 'auto', touchAction: 'none' }
+  // Compute FAB style
+  const isDocked = !!dock?.docked;
+  const fabStyle: React.CSSProperties | undefined = isTouch
+    ? (isDocked
+        ? {
+            position: 'fixed',
+            top: dock!.y,
+            left: dock!.side === 'left' ? 0 : 'auto',
+            right: dock!.side === 'right' ? 0 : 'auto',
+            insetBlockEnd: 'auto', insetInlineEnd: 'auto',
+            width: 28, height: 56,
+            borderRadius: dock!.side === 'right' ? '28px 0 0 28px' : '0 28px 28px 0',
+            touchAction: 'none',
+            opacity: 0.9,
+          }
+        : (pos
+            ? {
+                position: 'fixed', left: pos.x, top: pos.y,
+                insetInlineEnd: 'auto', insetBlockEnd: 'auto',
+                touchAction: 'none',
+              }
+            : undefined))
     : undefined;
 
+  const fabAriaLabel = isDocked
+    ? t('הצג כפתור נגישות', 'Show accessibility button')
+    : t('פתח פאנל נגישות', 'Open accessibility panel');
+
   const scalePct = Math.round(prefs.scale * 100);
+
+  const dockedChevron = isDocked ? (
+    <span aria-hidden="true" style={{
+      display: 'inline-block',
+      width: 0, height: 0,
+      borderTop: '6px solid transparent',
+      borderBottom: '6px solid transparent',
+      [dock!.side === 'right' ? 'borderRight' : 'borderLeft']: '8px solid #06121b',
+    } as React.CSSProperties} />
+  ) : null;
 
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
       {isTouch ? (
         <button
           type="button"
-          className="orca-a11y-fab"
-          aria-label={t('פתח פאנל נגישות', 'Open accessibility panel')}
+          className={`orca-a11y-fab${isDocked ? ' orca-a11y-fab--docked' : ''}`}
+          aria-label={fabAriaLabel}
           aria-haspopup="dialog"
           aria-expanded={open}
           style={fabStyle}
@@ -118,7 +264,7 @@ export function A11yPanel() {
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
         >
-          <Accessibility aria-hidden="true" />
+          {isDocked ? dockedChevron : <Accessibility aria-hidden="true" />}
         </button>
       ) : (
         <Dialog.Trigger asChild>
