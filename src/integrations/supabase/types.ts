@@ -701,6 +701,30 @@ export type Database = {
         }
         Relationships: []
       }
+      risk_events: {
+        Row: {
+          context: Json
+          created_at: string
+          event_type: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          context?: Json
+          created_at?: string
+          event_type: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          context?: Json
+          created_at?: string
+          event_type?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           cancel_at_period_end: boolean
