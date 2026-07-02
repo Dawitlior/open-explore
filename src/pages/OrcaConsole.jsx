@@ -709,12 +709,12 @@ function Overview({ t, lang, traders, eng }) {
       <div style={{ ...gridCols(4), marginBottom: 14 }}>
         <StatTile label={t("kActive")} value={nf.format(last.active)} delta={d(last.active, prev.active)} icon={Users} bg={C.tintBlue} tint={C.blue} spark={eng.map((e) => e.active)} />
         <StatTile label={t("kSignups")} value={nf.format(last.signups)} delta={d(last.signups, prev.signups)} icon={Zap} bg={C.tintIndigo} tint={PAL[1]} spark={eng.map((e) => e.signups)} />
-        <StatTile label={t("kChurn")} value={last.churn} suffix="%" delta={d(last.churn, prev.churn)} deltaGood="down" icon={TrendingDown} bg={C.tintRose} tint={C.neg} spark={eng.map((e) => e.churn)} />
+        <PendingTile label={t("kChurn")} hint={lang === "he" ? "דורש איסוף אירועי נטישה" : "Requires churn-event collection"} />
         <StatTile label={t("kExpect")} value={`${sgn(avgExp)}${avgExp}`} suffix="R" icon={Target} bg={C.tintMint} tint={C.pos} />
       </div>
       <div style={{ marginBottom: 14 }}><QueryStrip t={t} lang={lang} traders={traders} presets={presets} /></div>
       <div style={gridCols(2)}>
-        <Card title={t("cActiveTrend")}><ResponsiveContainer width="100%" height={210}><AreaChart data={trend} margin={{ top: 6, right: 8, left: -18, bottom: 0 }}><defs><linearGradient id="ovA" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.blue} stopOpacity={0.18} /><stop offset="100%" stopColor={C.blue} stopOpacity={0} /></linearGradient></defs>{grid}<XAxis dataKey="x" {...axis} {...timeAxisProps(trend, lang)} /><YAxis {...axis} allowDecimals={false} /><Tooltip contentStyle={tipStyle} /><Area type="monotone" dataKey="active" name={t("kActive")} stroke={C.blue} strokeWidth={2} fill="url(#ovA)" isAnimationActive={false} /><Line type="monotone" dataKey="mau" name={t("kMau")} stroke={PAL[4]} strokeWidth={1.6} dot={false} isAnimationActive={false} /></AreaChart></ResponsiveContainer></Card>
+        <Card title={t("cActiveTrend")}><ResponsiveContainer width="100%" height={210}><AreaChart data={trend} margin={{ top: 6, right: 8, left: -18, bottom: 0 }}><defs><linearGradient id="ovA" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.blue} stopOpacity={0.18} /><stop offset="100%" stopColor={C.blue} stopOpacity={0} /></linearGradient></defs>{grid}<XAxis dataKey="x" {...axis} {...timeAxisProps(trend, lang)} /><YAxis {...axis} allowDecimals={false} /><Tooltip contentStyle={tipStyle} /><Area type="monotone" dataKey="active" name={t("kActive")} stroke={C.blue} strokeWidth={2} fill="url(#ovA)" isAnimationActive={false} /></AreaChart></ResponsiveContainer></Card>
         <Card title={t("cVolume")}><ResponsiveContainer width="100%" height={210}><BarChart data={vol} margin={{ top: 6, right: 8, left: -18, bottom: 0 }}>{grid}<XAxis dataKey="x" {...axis} {...timeAxisProps(vol, lang)} /><YAxis {...axis} allowDecimals={false} /><Tooltip contentStyle={tipStyle} cursor={{ fill: C.blueSoft }} /><Bar dataKey="trades" name={t("kTrades")} fill={C.blue} radius={[3, 3, 0, 0]} isAnimationActive={false} /></BarChart></ResponsiveContainer></Card>
       </div>
       <div style={{ ...gridCols(3), marginTop: 14 }}>
@@ -747,7 +747,7 @@ function CommunityActivity({ t, lang, traders, heat, hmax }) {
         <StatTile label={t("tPeak")} value={`${loc(lang, DOW[peak.d])} ${String(peak.h).padStart(2, "0")}:00`} icon={Flame} bg={C.tintAmber} tint={C.warn} />
         <StatTile label={t("tBusiest")} value={busiest.d} icon={Clock} bg={C.tintBlue} tint={C.blue} />
         <StatTile label={t("kSessions")} value={avgSess} icon={Activity} bg={C.tintIndigo} tint={PAL[1]} />
-        <StatTile label={t("kTrades")} value={nf.format(traders.reduce((s, x) => s + x.tradesTotal, 0))} icon={Database} bg={C.tintMint} tint={C.pos} />
+        <StatTile label={t("kTrades")} value={nf.format(eng.length ? eng[eng.length - 1].trades : 0)} icon={Database} bg={C.tintMint} tint={C.pos} spark={eng.map((e) => e.trades)} />
       </div>
       <div style={{ marginBottom: 14 }}><QueryStrip t={t} lang={lang} traders={traders} presets={presets} /></div>
       <Card title={t("cHeatmap")} subtitle={t("fallback")} badge={<Badge tone="blue">{`${loc(lang, DOW[peak.d])} · ${String(peak.h).padStart(2, "0")}:00`}</Badge>}>
@@ -793,12 +793,12 @@ function Retention({ t, lang, traders, cohorts, eng }) {
         <StatTile label={`${t("wkShort")}1`} value={w1} suffix="%" icon={Repeat} bg={C.tintBlue} tint={C.blue} />
         <StatTile label={`${t("wkShort")}4`} value={w4} suffix="%" icon={Repeat} bg={C.tintIndigo} tint={PAL[1]} />
         <StatTile label={`${t("wkShort")}8`} value={w8} suffix="%" icon={Repeat} bg={C.tintMint} tint={C.pos} />
-        <StatTile label={t("kChurn")} value={eng[eng.length - 1].churn} suffix="%" deltaGood="down" icon={TrendingDown} bg={C.tintRose} tint={C.neg} />
+        <PendingTile label={t("kChurn")} hint={lang === "he" ? "דורש איסוף אירועי נטישה" : "Requires churn-event collection"} />
       </div>
       <div style={{ marginBottom: 14 }}><QueryStrip t={t} lang={lang} traders={traders} presets={presets} /></div>
       <div style={gridCols(2)}>
         <Card title={t("cRetentionCurves")}><ResponsiveContainer width="100%" height={230}><LineChart data={data} margin={{ top: 6, right: 8, left: -20, bottom: 0 }}>{grid}<XAxis dataKey="k" {...axis} tickFormatter={(v) => `${t("wkShort")}${v}`} /><YAxis {...axis} unit="%" /><Tooltip contentStyle={tipStyle} />{cohorts.map((c, i) => <Line key={c.c} type="monotone" dataKey={`c${c.c}`} name={`${t("thCohort")} ${c.c + 1}`} stroke={PAL[i]} strokeWidth={1.8} dot={false} isAnimationActive={false} />)}</LineChart></ResponsiveContainer></Card>
-        <Card title={t("cChurnTrend")}><ResponsiveContainer width="100%" height={230}><AreaChart data={churn} margin={{ top: 6, right: 8, left: -22, bottom: 0 }}><defs><linearGradient id="ch" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.neg} stopOpacity={0.16} /><stop offset="100%" stopColor={C.neg} stopOpacity={0} /></linearGradient></defs>{grid}<XAxis dataKey="x" {...axis} {...timeAxisProps(churn, lang)} /><YAxis {...axis} unit="%" allowDecimals={false} /><Tooltip contentStyle={tipStyle} /><Area type="monotone" dataKey="churn" name={t("kChurn")} stroke={C.neg} strokeWidth={2} fill="url(#ch)" isAnimationActive={false} /></AreaChart></ResponsiveContainer></Card>
+        <PendingCard title={t("cChurnTrend")} hint={lang === "he" ? "מחייב לוגים של נטישה שבועיים" : "Weekly churn-event collection required"} />
       </div>
       <div style={{ ...gridCols(3), marginTop: 14 }}>
         <div style={{ gridColumn: "span 2" }}><Card title={t("cRetentionTable")} pad={0}><div style={{ overflowX: "auto", padding: 16 }}><table style={{ borderCollapse: "separate", borderSpacing: 4, width: "100%", minWidth: 520 }}><thead><tr><th style={{ fontFamily: SANS, fontSize: 11, color: C.ink3, textAlign: "start", padding: 6 }}>{t("thCohort")}</th>{Array.from({ length: 8 }, (_, k) => <th key={k} style={{ fontFamily: MONO, fontSize: 10.5, color: C.ink3, padding: 6 }}>{t("wkShort")}{k}</th>)}</tr></thead><tbody>{cohorts.map((c) => (<tr key={c.c}><td style={{ fontFamily: SANS, fontSize: 11.5, color: C.ink2, padding: 6, whiteSpace: "nowrap" }}>{t("thCohort")} {c.c + 1}</td>{c.curve.map((v, k) => <td key={k} style={{ textAlign: "center", fontFamily: MONO, fontSize: 11, fontWeight: 600, color: v > 45 ? "#fff" : C.ink, background: cell(v), borderRadius: 5, padding: "7px 4px" }}>{v}</td>)}</tr>))}</tbody></table></div></Card></div>
@@ -849,7 +849,7 @@ function Subscriptions({ t, lang, traders, eng }) {
     <>
       <SectionHead n="05" title={t("navSubs")} subtitle={t("subSubs")} />
       <div style={{ ...gridCols(4), marginBottom: 14 }}>
-        <StatTile label={t("kConversion")} value={last.conv} suffix="%" delta={r1(last.conv - prev.conv)} icon={CreditCard} bg={C.tintBlue} tint={C.blue} spark={eng.map((e) => e.conv)} />
+        <PendingTile label={t("kConversion")} hint={lang === "he" ? "מחייב אירועי trial→paid" : "Requires trial→paid event stream"} />
         <StatTile label={SUBSTATE[1][lang]} value={nf.format(paid)} icon={CheckCircle2} bg={C.tintMint} tint={C.pos} />
         <StatTile label={SUBSTATE[0][lang]} value={nf.format(trial)} icon={Clock} bg={C.tintIndigo} tint={PAL[1]} />
         <StatTile label={loc(lang, TIER[2])} value={nf.format(traders.filter((x) => x.tier.id === "Ultimate").length)} icon={Layers} bg={C.tintAmber} tint={C.warn} />
@@ -860,10 +860,11 @@ function Subscriptions({ t, lang, traders, eng }) {
         <Card title={t("cSubStates")}><DonutWithLegend data={stateData} /></Card>
       </div>
       <div style={{ ...gridCols(3), marginTop: 14 }}>
-        <div style={{ gridColumn: "span 2" }}><Card title={t("cTierOverTime")}><ResponsiveContainer width="100%" height={210}><AreaChart data={overTime} margin={{ top: 6, right: 8, left: -22, bottom: 0 }}>{grid}<XAxis dataKey="x" {...axis} {...timeAxisProps(overTime, lang)} /><YAxis {...axis} allowDecimals={false} /><Tooltip contentStyle={tipStyle} />{TIER.map((tr, i) => <Area key={tr.id} type="monotone" dataKey={tr.id} stackId="1" name={loc(lang, tr)} stroke={PAL[i]} fill={PAL[i]} fillOpacity={0.5} strokeWidth={1} isAnimationActive={false} />)}</AreaChart></ResponsiveContainer></Card></div>
-        <Card title={t("kConversion")}><Gauge value={last.conv} label={t("kConversion")} suffix="%" color={C.blue} /></Card>
+        <div style={{ gridColumn: "span 2" }}><PendingCard title={t("cTierOverTime")} hint={lang === "he" ? "מחייב snapshot שבועי של הרכב המסלולים" : "Weekly tier-composition snapshots required"} /></div>
+        <PendingCard title={t("kConversion")} hint={lang === "he" ? "מחייב אירועי trial→paid" : "Requires trial→paid event stream"} />
       </div>
-      <div style={{ marginTop: 14 }}><Card title={t("cConvTrend")}><ResponsiveContainer width="100%" height={190}><LineChart data={conv} margin={{ top: 6, right: 8, left: -22, bottom: 0 }}>{grid}<XAxis dataKey="x" {...axis} {...timeAxisProps(conv, lang)} /><YAxis {...axis} unit="%" allowDecimals={false} /><Tooltip contentStyle={tipStyle} /><Line type="monotone" dataKey="conv" name={t("kConversion")} stroke={C.blue} strokeWidth={2} dot={false} isAnimationActive={false} /></LineChart></ResponsiveContainer></Card></div>
+      <div style={{ marginTop: 14 }}><PendingCard title={t("cConvTrend")} hint={lang === "he" ? "מחייב אירועי trial→paid" : "Requires trial→paid event stream"} /></div>
+
     </>
   );
 }
@@ -883,20 +884,22 @@ function Mind({ t, lang, traders }) {
     <>
       <SectionHead n="06" title={t("navMind")} subtitle={t("subMind")} />
       <div style={{ ...gridCols(4), marginBottom: 14 }}>
-        <StatTile label="ORCA" value={avg("orca")} suffix="/100" icon={Brain} bg={C.tintBlue} tint={C.blue} />
+        <PendingTile label="ORCA" hint={lang === "he" ? "מנוע ORCA לא נכתב ל-DB" : "ORCA composite not yet persisted"} />
         <StatTile label={t("kDiscipline")} value={avg("discipline")} suffix="/100" icon={CheckCircle2} bg={C.tintMint} tint={C.pos} />
-        <StatTile label={t("benchEdge")} value={avg("edgeHealth")} suffix="/100" icon={Target} bg={C.tintIndigo} tint={PAL[1]} />
-        <StatTile label={t("mRegime")} value={avg("regimeFit")} suffix="/100" icon={Activity} bg={C.tintAmber} tint={C.warn} />
+        <PendingTile label={t("benchEdge")} hint={lang === "he" ? "מדד Edge לא נכתב ל-DB" : "Edge-health metric not yet persisted"} />
+        <PendingTile label={t("mRegime")} hint={lang === "he" ? "התאמת רג׳ים לא נכתבת ל-DB" : "Regime-fit metric not yet persisted"} />
+
       </div>
       <div style={{ marginBottom: 14 }}><QueryStrip t={t} lang={lang} traders={traders} presets={presets} /></div>
       <div style={gridCols(2)}>
         <Card title={t("cArchetypeMix")}><DonutWithLegend data={archData} /></Card>
-        <Card title={t("cScoreRadar")} toolbar={<Select lang={lang} value={arch} onChange={setArch} options={archOpts} />}><ResponsiveContainer width="100%" height={220}><RadarChart data={radar} margin={{ top: 8, right: 24, bottom: 8, left: 24 }}><PolarGrid stroke={C.gridLine} /><PolarAngleAxis dataKey="m" tick={{ fontSize: 10.5, fill: C.ink2, fontFamily: SANS }} /><PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 9, fill: C.ink3 }} axisLine={false} /><Radar dataKey="v" stroke={C.blue} fill={C.blue} fillOpacity={0.18} strokeWidth={2} isAnimationActive={false} /><Tooltip contentStyle={tipStyle} /></RadarChart></ResponsiveContainer></Card>
+        <PendingCard title={t("cScoreRadar")} hint={lang === "he" ? "רדאר דורש ORCA / Edge / Regime שאינם נכתבים עדיין" : "Radar needs ORCA / Edge / Regime fields — not persisted yet"} />
       </div>
       <div style={{ ...gridCols(2), marginTop: 14 }}>
-        <Card title={t("cScoreDist")}><ResponsiveContainer width="100%" height={200}><BarChart data={bins} margin={{ top: 6, right: 6, left: -24, bottom: 0 }}>{grid}<XAxis dataKey="name" {...axis} /><YAxis {...axis} /><Tooltip contentStyle={tipStyle} cursor={{ fill: C.blueSoft }} /><Bar dataKey="v" fill={PAL[1]} radius={[3, 3, 0, 0]} isAnimationActive={false} /></BarChart></ResponsiveContainer></Card>
-        <Card title={t("cDiscEdge")}><ResponsiveContainer width="100%" height={200}><ScatterChart margin={{ top: 8, right: 12, left: -22, bottom: 0 }}>{grid}<XAxis type="number" dataKey="x" name={t("kDiscipline")} {...axis} domain={[0, 100]} /><YAxis type="number" dataKey="y" name={t("benchEdge")} {...axis} domain={[0, 100]} /><ZAxis type="number" dataKey="z" range={[20, 200]} /><Tooltip contentStyle={tipStyle} cursor={{ strokeDasharray: "3 3" }} /><Scatter data={scatter} fill={C.blue} fillOpacity={0.45} isAnimationActive={false} /></ScatterChart></ResponsiveContainer></Card>
+        <PendingCard title={t("cScoreDist")} hint={lang === "he" ? "מדד ORCA לא נכתב ל-DB" : "Depends on ORCA composite — not persisted"} />
+        <PendingCard title={t("cDiscEdge")} hint={lang === "he" ? "ציר Edge-health לא נכתב ל-DB" : "Edge-health axis not persisted"} />
       </div>
+
     </>
   );
 }
@@ -935,8 +938,9 @@ function RiskEngine({ t, lang, traders, eng, live }) {
           bg={C.tintRose}
           tint={C.neg}
         />
-        <StatTile label={t("wWeekly")} value={nf.format(last.breachW)} icon={Flame} bg={C.tintAmber} tint={C.warn} spark={eng.map((e) => e.breachW)} />
-        <StatTile label={t("wMonthly")} value={nf.format(last.breachM)} icon={Flame} bg={C.tintRose} tint={C.neg} spark={eng.map((e) => e.breachM)} />
+        <PendingTile label={t("wWeekly")} hint={lang === "he" ? "מחייב אירועי חריגה שבועיים" : "Requires weekly-breach event stream"} />
+        <PendingTile label={t("wMonthly")} hint={lang === "he" ? "מחייב אירועי חריגה חודשיים" : "Requires monthly-breach event stream"} />
+
         <StatTile
           label={t("mRecovery")}
           value={recoveryMin != null ? (lang === "he" ? `${recoveryMin} ד׳` : `${recoveryMin}m`) : "—"}
@@ -948,14 +952,15 @@ function RiskEngine({ t, lang, traders, eng, live }) {
       </div>
       <div style={{ marginBottom: 14 }}><QueryStrip t={t} lang={lang} traders={traders} presets={presets} /></div>
       <div style={gridCols(2)}>
-        <Card title={t("cBreachWindow")} toolbar={<Select lang={lang} value={win} onChange={setWin} options={winOpts} />}><ResponsiveContainer width="100%" height={220}><BarChart data={breach} margin={{ top: 6, right: 8, left: -22, bottom: 0 }}>{grid}<XAxis dataKey="x" {...axis} {...timeAxisProps(breach, lang)} /><YAxis {...axis} allowDecimals={false} /><Tooltip contentStyle={tipStyle} cursor={{ fill: C.blueSoft }} />{keys.map((k) => <Bar key={k} dataKey={k} stackId="b" name={keyName[k]} fill={keyColor[k]} radius={[2, 2, 0, 0]} isAnimationActive={false} />)}</BarChart></ResponsiveContainer></Card>
-        <Card title={t("cKillRecovery")}><ResponsiveContainer width="100%" height={220}><LineChart data={kr} margin={{ top: 6, right: 8, left: -22, bottom: 0 }}>{grid}<XAxis dataKey="x" {...axis} {...timeAxisProps(kr, lang)} /><YAxis {...axis} allowDecimals={false} /><Tooltip contentStyle={tipStyle} /><Line type="monotone" dataKey="kill" name={t("kKill")} stroke={C.neg} strokeWidth={2} dot={false} isAnimationActive={false} /><Line type="monotone" dataKey="recovery" name={t("mRecovery")} stroke={PAL[5]} strokeWidth={2} dot={false} isAnimationActive={false} /></LineChart></ResponsiveContainer></Card>
+        <PendingCard title={t("cBreachWindow")} hint={lang === "he" ? "מחייב סדרת אירועי חריגה שבועיים" : "Requires weekly breach-event time series"} />
+        <PendingCard title={t("cKillRecovery")} hint={lang === "he" ? "risk_events מספק ספירה כוללת — סדרה שבועית תבוא בהמשך" : "risk_events supplies totals; weekly series pending"} />
       </div>
       <div style={{ ...gridCols(4), marginTop: 14 }}>
-        <div style={{ gridColumn: "span 2" }}><Card title={t("cOverride")}><ResponsiveContainer width="100%" height={190}><BarChart data={ovBins} margin={{ top: 6, right: 6, left: -24, bottom: 0 }}>{grid}<XAxis dataKey="name" {...axis} unit="%" /><YAxis {...axis} /><Tooltip contentStyle={tipStyle} cursor={{ fill: C.blueSoft }} /><Bar dataKey="v" fill={C.warn} radius={[3, 3, 0, 0]} isAnimationActive={false} /></BarChart></ResponsiveContainer></Card></div>
+        <div style={{ gridColumn: "span 2" }}><PendingCard title={t("cOverride")} hint={lang === "he" ? "אחוז override לא נכתב ל-DB" : "Override rate not yet persisted"} /></div>
         <Card title={t("cBreachShare")}><DonutWithLegend data={share} /></Card>
-        <Card title={t("gKillPrev")}><Gauge value={killPrev} label={t("gKillPrev")} suffix="%" color={C.neg} /></Card>
+        <PendingCard title={t("gKillPrev")} hint={lang === "he" ? "פילוח kill לפי-סוחר אינו זמין" : "Per-trader kill counts not persisted"} />
       </div>
+
       <div style={{ marginTop: 14 }}><Card title={t("listTopRisk")}><RankList items={topRisk} tone={riskTone} /></Card></div>
     </>
   );
