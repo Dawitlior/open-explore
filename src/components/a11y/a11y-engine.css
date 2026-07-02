@@ -1,6 +1,9 @@
 /* ============================================================
  * ORCA Accessibility Engine — Phase 1 (preferences panel only)
  * Real CSS effects keyed off data-attributes on <html>.
+ * The a11y FAB + panel are portaled to <body>, so they sit
+ * OUTSIDE #root and are unaffected by the filters/forced colors
+ * applied below.
  * ============================================================ */
 
 /* ---------- Font scale ---------- */
@@ -8,97 +11,58 @@ html[data-a11y-scale-active="true"] {
   font-size: calc(16px * var(--a11y-scale, 1)) !important;
 }
 
-/* ---------- Contrast palette: HIGH ----------
- * Remap the shadcn semantic HSL tokens so every component that uses
- * bg-background / text-foreground / bg-card / bg-primary / border-border
- * automatically picks up the new palette. This is the proper hook —
- * hardcoded #000 backgrounds on <body> can never reach those components.
- */
-:root[data-a11y-contrast="high"] {
-  --background: 0 0% 0%;
-  --foreground: 0 0% 100%;
-  --card: 0 0% 0%;
-  --card-foreground: 0 0% 100%;
-  --popover: 0 0% 0%;
-  --popover-foreground: 0 0% 100%;
-  --primary: 48 100% 55%;
-  --primary-foreground: 0 0% 0%;
-  --secondary: 0 0% 8%;
-  --secondary-foreground: 0 0% 100%;
-  --muted: 0 0% 10%;
-  --muted-foreground: 0 0% 90%;
-  --accent: 48 100% 55%;
-  --accent-foreground: 0 0% 0%;
-  --destructive: 0 100% 50%;
-  --destructive-foreground: 0 0% 100%;
-  --border: 48 100% 55%;
-  --input: 0 0% 0%;
-  --ring: 48 100% 55%;
-  --sidebar-background: 0 0% 0%;
-  --sidebar-foreground: 0 0% 100%;
-  --sidebar-border: 48 100% 55%;
+/* ============================================================
+ * HIGH CONTRAST — forced palette, reaches every element regardless
+ * of how it's colored in the source (hardcoded hex, inline styles,
+ * shadcn tokens — all overridden). Media stays visible.
+ * ============================================================ */
+html[data-a11y-contrast="high"] #root,
+html[data-a11y-contrast="high"] #root *:not(svg):not(path):not(img):not(video):not(canvas) {
+  background-color: #000 !important;
+  color: #FFF !important;
+  border-color: #FFF !important;
+  box-shadow: none !important;
+  background-image: none !important;
 }
-/* Fallback for inline-styled / hex-coded components — at least the
- * page background and base text become readable immediately. */
-html[data-a11y-contrast="high"],
-html[data-a11y-contrast="high"] body {
+html[data-a11y-contrast="high"] #root a {
+  color: #FFE500 !important;
+  text-decoration: underline !important;
+}
+html[data-a11y-contrast="high"] #root button,
+html[data-a11y-contrast="high"] #root [role="button"] {
+  border: 2px solid #FFF !important;
+}
+html[data-a11y-contrast="high"] #root input,
+html[data-a11y-contrast="high"] #root textarea,
+html[data-a11y-contrast="high"] #root select {
   background: #000 !important;
-  color: #fff !important;
-}
-html[data-a11y-contrast="high"] :is(a, button) {
-  text-decoration: underline;
-}
-html[data-a11y-contrast="high"] :is(input, textarea, select) {
-  background: #000 !important;
-  color: #fff !important;
-  border: 1px solid #FFD24A !important;
+  color: #FFF !important;
+  border: 1px solid #FFF !important;
 }
 
-/* ---------- Contrast palette: INVERTED (true light) ---------- */
-:root[data-a11y-contrast="inverted"] {
-  --background: 40 30% 97%;
-  --foreground: 222 47% 11%;
-  --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
-  --primary: 222 47% 11%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 210 40% 96%;
-  --secondary-foreground: 222 47% 11%;
-  --muted: 210 40% 94%;
-  --muted-foreground: 215 16% 30%;
-  --accent: 210 40% 92%;
-  --accent-foreground: 222 47% 11%;
-  --destructive: 0 84% 42%;
-  --destructive-foreground: 0 0% 100%;
-  --border: 215 20% 78%;
-  --input: 215 20% 78%;
-  --ring: 222 47% 11%;
-  --sidebar-background: 40 30% 95%;
-  --sidebar-foreground: 222 47% 11%;
-  --sidebar-border: 215 20% 78%;
+/* ============================================================
+ * INVERTED — pixel invert on the app root; media counter-inverted
+ * back so photos/charts/icons stay readable.
+ * The invert filter creates a new containing block; clip horizontal
+ * overflow so it can never push a sideways scrollbar.
+ * ============================================================ */
+html[data-a11y-contrast="inverted"] #root {
+  filter: invert(1) hue-rotate(180deg);
+  overflow-x: clip;
+  max-width: 100%;
 }
-html[data-a11y-contrast="inverted"],
-html[data-a11y-contrast="inverted"] body {
-  background: #FBFBF7 !important;
-  color: #14181F !important;
-}
-html[data-a11y-contrast="inverted"] :is(input, textarea, select) {
-  background: #fff !important;
-  color: #14181F !important;
-}
-html[data-a11y-contrast="inverted"] :is(a, button) {
-  text-decoration: underline;
+html[data-a11y-contrast="inverted"] #root img,
+html[data-a11y-contrast="inverted"] #root video,
+html[data-a11y-contrast="inverted"] #root canvas,
+html[data-a11y-contrast="inverted"] #root svg,
+html[data-a11y-contrast="inverted"] #root [data-no-invert] {
+  filter: invert(1) hue-rotate(180deg);
 }
 
 /* ---------- Grayscale ----------
- * Apply the filter to the app root (NOT html/body). Filtering html/body
- * turns them into a containing block for `position:fixed` and breaks the
- * sidebar / FAB / modals. Filtering also exposes horizontal overflow, so
- * clip it right on the filtered element.
- * The a11y FAB/panel live in a body-level portal, staying outside this
- * subtree so their colors are unaffected. */
+ * Filter goes on #root (NOT body) so the FAB/panel portal on <body>
+ * is unaffected. Clip horizontal overflow (the filter creates a
+ * containing block that can expose sideways scroll). */
 html[data-a11y-grayscale="true"] #root {
   filter: grayscale(1) !important;
   overflow-x: clip;
@@ -148,6 +112,12 @@ html[data-a11y-focus="true"] :is(a, button, input, textarea, select, [tabindex])
   z-index: 5;
 }
 
+/* Accessibility-statement link keyboard focus ring (always on). */
+.a11y-statement-link:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px #05070E, 0 0 0 6px #22D3EE;
+}
+
 /* ---------- Reduce motion ---------- */
 html[data-a11y-motion="reduced"] *,
 html[data-a11y-motion="reduced"] *::before,
@@ -156,27 +126,6 @@ html[data-a11y-motion="reduced"] *::after {
   animation-iteration-count: 1 !important;
   transition-duration: 0.001ms !important;
   scroll-behavior: auto !important;
-}
-
-/* ---------- Reading guide ---------- */
-#a11y-reading-guide {
-  position: fixed;
-  inset-inline: 0;
-  top: 0;
-  height: 2px;
-  background: hsl(var(--primary));
-  pointer-events: none;
-  z-index: 96;
-  display: none;
-  will-change: transform;
-}
-:root[data-a11y-guide="true"] #a11y-reading-guide { display: block; }
-
-/* Reading guide is a pointer-only feature — hide the toggle row and
- * force the bar off on touch / coarse-pointer devices. */
-@media (hover: none) and (pointer: coarse) {
-  [data-a11y-row="guide"] { display: none !important; }
-  #a11y-reading-guide { display: none !important; }
 }
 
 /* ---------- FAB ---------- */
@@ -201,10 +150,9 @@ html[data-a11y-motion="reduced"] *::after {
   .orca-a11y-fab { inset-block-end: 84px; width: 52px; height: 52px; }
 }
 
-/* ---------- Panel (desktop floating card) ---------- */
+/* ---------- Panel (mobile bottom-sheet) ---------- */
 .a11y-popup-handle { display: none; }
 
-/* ---------- Panel (mobile bottom-sheet) ---------- */
 @media (max-width: 600px) {
   .a11y-popup {
     inset-inline: 0 !important;
@@ -225,7 +173,6 @@ html[data-a11y-motion="reduced"] *::after {
     margin: 8px auto 4px;
     flex: none;
   }
-  /* Bigger touch targets on mobile */
   .a11y-popup .a11y-size-btn { height: 52px !important; }
   .a11y-popup .a11y-toggle-row { padding: 14px !important; min-height: 48px; }
   .a11y-popup .a11y-seg-btn { height: 48px !important; font-size: 14px !important; }
