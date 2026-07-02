@@ -17,7 +17,7 @@ const THEMES: { id: string; label: { he: string; en: string }; swatch: string[] 
   { id: 'orca-neon', label: { he: 'Orca ניאון', en: 'Orca Neon' }, swatch: ['#061326', '#0b1730', '#00f2ff', '#06d6a0'] },
   { id: 'midnight', label: { he: 'חצות', en: 'Midnight' }, swatch: ['#020202', '#0b1730', '#00f2ff', '#3b82f6'] },
   { id: 'blue', label: { he: 'כחול', en: 'Blue' }, swatch: ['#0B1120', '#1E293B', '#38BDF8', '#E6EEF8'] },
-  { id: 'platinum', label: { he: 'לבן יוקרתי', en: 'Platinum' }, swatch: ['#ffffff', '#f1f5f9', '#1d4ed8', '#b45309'] },
+  
 ];
 
 export function shouldShowRiskOnboarding(prefs: UserPreferences, loaded: boolean): boolean {
