@@ -638,7 +638,9 @@ html[data-theme-transition] [class*="bg-"], html[data-theme-transition] [class*=
     0 1px 2px hsl(0 0% 6% / 0.06),
     0 12px 32px -12px hsl(22 94% 53% / 0.18);
 }
-[data-theme="platinum"] .orca-grain { opacity: 0.018; mix-blend-mode: multiply; }
+[data-theme="platinum"] .orca-grain { display: none !important; }
+[data-theme="platinum"] .orca-glass::before,
+[data-theme="platinum"] .orca-glass::after { display: none !important; }
 [data-theme="platinum"] body::before {
   background:
     radial-gradient(900px 600px at 12% -10%, hsl(var(--orca-aurora-a) / 0.10), transparent 60%),
