@@ -8,7 +8,7 @@
  *   Desktop  ▸ [ Calendar  |  Long card  |  Short card ]  — 3 columns
  *   Mobile   ▸ stacked, calendar uses identical sizing as the hub mobile view.
  */
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { I18nStrings } from '@/lib/trading-i18n';
@@ -193,21 +193,29 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
     return { long: stat(L), short: stat(S) };
   }, [trades, isR]);
 
-  // Current-month cumulative equity series per direction (desktop mini-chart)
-  const monthSeries = useMemo(() => {
+  // Full cumulative equity series per direction — reflects the totals shown
+  // in each Analysis card (uses ALL trades, not the current-month subset).
+  const allSeries = useMemo(() => {
     const rows = trades
       .map(tr => ({ tr, d: parseTradeDate(tr.date) }))
-      .filter(x => x.d && x.d.getFullYear() === year && x.d.getMonth() === month)
+      .filter(x => x.d)
       .sort((a, b) => (a.d!.getTime() - b.d!.getTime()));
-    const long: number[] = [], short: number[] = [];
+    const long: EquityPoint[] = [], short: EquityPoint[] = [];
     let cL = 0, cS = 0;
-    for (const { tr } of rows) {
-      const val = isR ? (getEffectiveR(tr, { strict: true }) ?? 0) : (Number(tr.pnl) || 0);
-      if (tr.direction === 'Short') { cS += val; short.push(cS); }
-      else { cL += val; long.push(cL); }
+    for (const { tr, d } of rows) {
+      const r = getEffectiveR(tr, { strict: true });
+      const pnl = Number(tr.pnl) || 0;
+      const val = isR ? (r ?? 0) : pnl;
+      if (tr.direction === 'Short') {
+        cS += val;
+        short.push({ cum: cS, pnl, r, date: d!, symbol: (tr as any).ticker || (tr as any).symbol || '' });
+      } else {
+        cL += val;
+        long.push({ cum: cL, pnl, r, date: d!, symbol: (tr as any).ticker || (tr as any).symbol || '' });
+      }
     }
     return { long, short };
-  }, [trades, year, month, isR]);
+  }, [trades, isR]);
 
   const cardBase: React.CSSProperties = {
     background: T.bg.card,
@@ -434,7 +442,7 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
           title={isRTL ? 'ניתוח לונג' : 'Long Analysis'}
           accent={T.accent.green}
           stats={breakdown.long}
-          series={monthSeries.long}
+          series={allSeries.long}
           showChart={!isMobile}
         />
 
@@ -444,7 +452,7 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
           title={isRTL ? 'ניתוח שורט' : 'Short Analysis'}
           accent={T.accent.red}
           stats={breakdown.short}
-          series={monthSeries.short}
+          series={allSeries.short}
           showChart={!isMobile}
         />
       </div>
@@ -476,6 +484,14 @@ function navBtn(T: TradingTheme): React.CSSProperties {
   };
 }
 
+interface EquityPoint {
+  cum: number;
+  pnl: number;
+  r: number | null;
+  date: Date;
+  symbol: string;
+}
+
 interface BreakdownProps {
   T: TradingTheme;
   isRTL: boolean;
@@ -487,7 +503,7 @@ interface BreakdownProps {
     avgWin: number; avgLoss: number; avgPerTrade: number; totalPnl: number;
     avgRR: number; avgHold: number;
   };
-  series?: number[];
+  series?: EquityPoint[];
   showChart?: boolean;
 }
 
@@ -498,6 +514,8 @@ function BreakdownCard({ T, isRTL, isR, title, accent, stats, series, showChart 
     borderRadius: 14,
     padding: 14,
     minWidth: 0,
+    display: 'flex',
+    flexDirection: 'column',
   };
   const row = (label: string, value: string, color?: string): JSX.Element => (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: `1px solid ${T.border.subtle}` }}>
@@ -543,30 +561,144 @@ function BreakdownCard({ T, isRTL, isR, title, accent, stats, series, showChart 
         stats.avgRR > 0 ? stats.avgRR.toFixed(2) : '—',
         T.accent.cyan)}
       {row(isRTL ? 'זמן החזקה ממוצע' : 'Avg hold time', fmtMinutes(stats.avgHold, isRTL))}
-      {showChart && series && series.length > 1 && <EquityMiniChart series={series} color={accent} T={T} />}
+      {showChart && series && series.length > 1 && (
+        <EquityCurve series={series} color={accent} T={T} isRTL={isRTL} isR={isR} />
+      )}
     </div>
   );
 }
 
-function EquityMiniChart({ series, color, T }: { series: number[]; color: string; T: TradingTheme }) {
-  const W = 260, H = 44, PAD = 3;
+/**
+ * EquityCurve — interactive cumulative equity chart.
+ * Smooth Catmull-Rom curve, gradient area, hover tooltip per trade.
+ */
+function EquityCurve({
+  series, color, T, isRTL, isR,
+}: { series: EquityPoint[]; color: string; T: TradingTheme; isRTL: boolean; isR: boolean }) {
+  const W = 320, H = 130;
+  const PAD_L = 6, PAD_R = 6, PAD_T = 14, PAD_B = 10;
+  const [hover, setHover] = useState<number | null>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+
   const n = series.length;
-  const min = Math.min(0, ...series);
-  const max = Math.max(0, ...series);
-  const range = max - min || 1;
-  const x = (i: number) => PAD + (i * (W - PAD * 2)) / Math.max(1, n - 1);
-  const y = (v: number) => H - PAD - ((v - min) / range) * (H - PAD * 2);
-  const path = series.map((v, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const cums = series.map(p => p.cum);
+  const minV = Math.min(0, ...cums);
+  const maxV = Math.max(0, ...cums);
+  const range = maxV - minV || 1;
+
+  const x = (i: number) => PAD_L + (i * (W - PAD_L - PAD_R)) / Math.max(1, n - 1);
+  const y = (v: number) => PAD_T + (1 - (v - minV) / range) * (H - PAD_T - PAD_B);
   const zeroY = y(0);
+
+  // Smooth path via Catmull-Rom → cubic Bezier (tension 0.5)
+  const smoothPath = (): string => {
+    if (n === 0) return '';
+    const pts = series.map((p, i) => [x(i), y(p.cum)] as [number, number]);
+    if (n === 1) return `M${pts[0][0]},${pts[0][1]}`;
+    let d = `M${pts[0][0].toFixed(2)},${pts[0][1].toFixed(2)}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[i - 1] || pts[i];
+      const p1 = pts[i];
+      const p2 = pts[i + 1];
+      const p3 = pts[i + 2] || p2;
+      const c1x = p1[0] + (p2[0] - p0[0]) / 6;
+      const c1y = p1[1] + (p2[1] - p0[1]) / 6;
+      const c2x = p2[0] - (p3[0] - p1[0]) / 6;
+      const c2y = p2[1] - (p3[1] - p1[1]) / 6;
+      d += ` C${c1x.toFixed(2)},${c1y.toFixed(2)} ${c2x.toFixed(2)},${c2y.toFixed(2)} ${p2[0].toFixed(2)},${p2[1].toFixed(2)}`;
+    }
+    return d;
+  };
+
+  const linePath = smoothPath();
+  const areaPath = linePath ? `${linePath} L${x(n - 1).toFixed(2)},${(H - PAD_B).toFixed(2)} L${x(0).toFixed(2)},${(H - PAD_B).toFixed(2)} Z` : '';
+
+  const gradId = `eq-grad-${color.replace(/[^a-z0-9]/gi, '')}`;
+
+  const handleMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    const rect = svgRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const px = ((e.clientX - rect.left) / rect.width) * W;
+    let best = 0, bd = Infinity;
+    for (let i = 0; i < n; i++) {
+      const d = Math.abs(x(i) - px);
+      if (d < bd) { bd = d; best = i; }
+    }
+    setHover(best);
+  };
+
+  const hp = hover != null ? series[hover] : null;
+  const hx = hover != null ? x(hover) : 0;
+  const hy = hp ? y(hp.cum) : 0;
+
+  const fmtDate = (d: Date) => d.toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { day: '2-digit', month: 'short', year: '2-digit' });
+  const fmtCum = (v: number) => isR ? `${v >= 0 ? '+' : ''}${v.toFixed(2)}R` : `${v >= 0 ? '' : '-'}$${Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+  const fmtPnl = (v: number, r: number | null) => {
+    const money = `${v >= 0 ? '+' : '-'}$${Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+    const rTxt = r != null ? ` · ${r >= 0 ? '+' : ''}${r.toFixed(2)}R` : '';
+    return money + rTxt;
+  };
+
+  // Tooltip positioning (keep inside bounds)
+  const ttW = 168, ttH = 62;
+  const ttX = Math.max(4, Math.min(W - ttW - 4, hx - ttW / 2));
+  const ttY = Math.max(4, hy - ttH - 10);
+
   return (
-    <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${T.border.subtle}` }}>
-      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="none" style={{ display: 'block', overflow: 'visible' }} aria-hidden="true">
-        <line x1={0} x2={W} y1={zeroY} y2={zeroY} stroke={T.border.subtle} strokeWidth={1} strokeDasharray="2 3" />
-        <path d={path} fill="none" stroke={color} strokeWidth={1.25} strokeLinejoin="round" strokeLinecap="round" />
-        {series.map((v, i) => (
-          <circle key={i} cx={x(i)} cy={y(v)} r={1.6} fill={color} opacity={0.85} />
-        ))}
-      </svg>
+    <div style={{ marginTop: 18, paddingTop: 14, borderTop: `1px solid ${T.border.subtle}` }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+        <span style={{ fontSize: 9, color: T.text.muted, letterSpacing: 1.5, fontWeight: 600, textTransform: 'uppercase' }}>
+          {isRTL ? 'עקומת הון מצטברת' : 'Cumulative Equity'}
+        </span>
+        <span style={{ fontSize: 10, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>
+          {n} {isRTL ? 'עסקאות' : 'trades'}
+        </span>
+      </div>
+      <div style={{ position: 'relative' }}>
+        <svg
+          ref={svgRef}
+          viewBox={`0 0 ${W} ${H}`}
+          width="100%"
+          height={H}
+          preserveAspectRatio="none"
+          onMouseMove={handleMove}
+          onMouseLeave={() => setHover(null)}
+          style={{ display: 'block', cursor: 'crosshair', overflow: 'visible' }}
+        >
+          <defs>
+            <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity="0.35" />
+              <stop offset="100%" stopColor={color} stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          {/* Zero baseline */}
+          <line x1={0} x2={W} y1={zeroY} y2={zeroY} stroke={T.border.subtle} strokeWidth={1} strokeDasharray="3 4" />
+          {/* Area fill */}
+          <path d={areaPath} fill={`url(#${gradId})`} />
+          {/* Smooth line */}
+          <path d={linePath} fill="none" stroke={color} strokeWidth={1.75} strokeLinejoin="round" strokeLinecap="round" />
+          {/* Hover crosshair + dot */}
+          {hp && (
+            <>
+              <line x1={hx} x2={hx} y1={PAD_T} y2={H - PAD_B} stroke={color} strokeOpacity={0.4} strokeWidth={1} strokeDasharray="2 3" />
+              <circle cx={hx} cy={hy} r={4.5} fill={color} stroke={T.bg.card} strokeWidth={2} />
+              {/* Tooltip */}
+              <g transform={`translate(${ttX},${ttY})`}>
+                <rect width={ttW} height={ttH} rx={7} fill={T.bg.primary} stroke={T.border.subtle} strokeWidth={1} opacity={0.98} />
+                <text x={8} y={15} fill={T.text.muted} fontSize={9} fontFamily="'JetBrains Mono', monospace" style={{ letterSpacing: 1 }}>
+                  {fmtDate(hp.date)}{hp.symbol ? ` · ${hp.symbol}` : ''}
+                </text>
+                <text x={8} y={32} fill={hp.pnl >= 0 ? T.accent.green : T.accent.red} fontSize={11} fontFamily="'JetBrains Mono', monospace" fontWeight={700}>
+                  {isRTL ? 'עסקה: ' : 'Trade: '}{fmtPnl(hp.pnl, hp.r)}
+                </text>
+                <text x={8} y={49} fill={T.text.primary} fontSize={11} fontFamily="'JetBrains Mono', monospace" fontWeight={600}>
+                  {isRTL ? 'מצטבר: ' : 'Total: '}{fmtCum(hp.cum)}
+                </text>
+              </g>
+            </>
+          )}
+        </svg>
+      </div>
     </div>
   );
 }

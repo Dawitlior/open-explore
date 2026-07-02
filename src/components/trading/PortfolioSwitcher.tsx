@@ -227,37 +227,55 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
           style={{
             position: 'fixed', top: menuPos.top, left: menuPos.left,
             width: typeof window !== 'undefined' && window.innerWidth < 480 ? Math.min(window.innerWidth - 16, 380) : undefined,
-            minWidth: 280, maxWidth: 380,
-            maxHeight: 'min(80vh, 560px)', overflowY: 'auto',
-            background: 'linear-gradient(180deg, rgba(14,22,40,0.98) 0%, rgba(6,19,38,0.99) 100%)',
-            backdropFilter: 'blur(18px)',
-            border: '1px solid rgba(212,175,55,0.28)', borderRadius: 14,
-            boxShadow: '0 24px 70px rgba(0,0,0,0.6), 0 0 30px rgba(212,175,55,0.10), inset 0 1px 0 rgba(255,255,255,0.05)',
-            zIndex: 10000, padding: 8, fontFamily: "'Poppins', sans-serif", direction: isRTL ? 'rtl' : 'ltr',
+            minWidth: 300, maxWidth: 380,
+            maxHeight: 'min(80vh, 580px)', overflowY: 'auto',
+            background: 'hsl(var(--trading-bg-secondary) / 0.94)',
+            backdropFilter: 'blur(18px) saturate(140%)',
+            WebkitBackdropFilter: 'blur(18px) saturate(140%)',
+            border: '1px solid hsl(var(--border))',
+            borderRadius: 14,
+            boxShadow: '0 0 0 1px hsl(var(--border)), 0 20px 48px -18px rgb(0 0 0 / 0.7), 0 8px 24px -14px rgb(0 0 0 / 0.5)',
+            zIndex: 10000,
+            padding: 10,
+            fontFamily: "'Inter', system-ui, sans-serif",
+            direction: isRTL ? 'rtl' : 'ltr',
+            color: 'hsl(var(--foreground))',
           } as React.CSSProperties}
         >
-          {/* Header */}
+          {/* Header — mirrors navbar's ohb-title / ohb-ghost language */}
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '8px 10px 10px', marginBottom: 4,
-            borderBottom: '1px solid rgba(212,175,55,0.14)',
+            padding: '4px 6px 10px', marginBottom: 6,
+            borderBottom: '1px solid hsl(var(--border))',
           }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', color: 'rgba(212,175,55,0.85)', textTransform: 'uppercase', fontFamily: "'IBM Plex Mono', monospace" }}>
-                {isRTL ? 'תיקי מסחר' : 'Portfolios'}
-              </span>
-              <span style={{ fontSize: 11, color: '#94a3b8' }}>
-                {isRTL ? 'בחר תיק או נהל את הקיימים' : 'Select or manage a portfolio'}
-              </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'hsl(var(--muted-foreground))', flexShrink: 0 }} aria-hidden="true">
+                <rect x="2" y="7" width="20" height="14" rx="2" />
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+              </svg>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'hsl(var(--foreground))', letterSpacing: '-0.01em', lineHeight: 1.2 }}>
+                  {isRTL ? 'תיקי מסחר' : 'Portfolios'}
+                </span>
+                <span style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))', lineHeight: 1.3 }}>
+                  {isRTL ? 'בחר או נהל תיק' : 'Switch or manage'}
+                </span>
+              </div>
             </div>
-            <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 999, background: 'rgba(212,175,55,0.10)', border: '1px solid rgba(212,175,55,0.28)', color: 'rgba(212,175,55,0.95)', fontFamily: "'IBM Plex Mono', monospace", letterSpacing: '0.06em' }}>
+            <span style={{
+              fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 6,
+              background: 'hsl(var(--trading-bg-surface) / 0.6)',
+              border: '1px solid hsl(var(--border))',
+              color: 'hsl(var(--muted-foreground))',
+              fontFamily: "'JetBrains Mono', monospace",
+              letterSpacing: '0.04em',
+            }}>
               {portfolios.length}/{tierMax}
             </span>
           </div>
 
           {/* List */}
-          <div style={{ maxHeight: 320, overflowY: 'auto', padding: '2px 2px 4px' }}>
-
+          <div style={{ maxHeight: 340, overflowY: 'auto', padding: '2px', display: 'flex', flexDirection: 'column', gap: 4 }}>
             {portfolios.map((p) => {
               const isActive = p.id === activePortfolioId;
               const locked = isPortfolioLocked(p.id);
@@ -269,101 +287,110 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
                   onClick={() => { setActivePortfolioId(p.id); setOpen(false); }}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 10,
-                    padding: '8px 10px', borderRadius: 7, cursor: 'pointer',
-                    background: isActive ? 'rgba(34,211,238,0.10)' : 'transparent',
-                    border: `1px solid ${isActive ? 'rgba(34,211,238,0.35)' : 'transparent'}`,
-                    transition: 'background 0.15s',
-                    marginBottom: 2,
-                    opacity: locked ? 0.78 : 1,
+                    padding: '9px 10px', borderRadius: 8, cursor: 'pointer',
+                    background: isActive ? 'hsl(var(--trading-cyan) / 0.09)' : 'hsl(var(--trading-bg-surface) / 0.35)',
+                    border: `1px solid ${isActive ? 'hsl(var(--trading-cyan) / 0.35)' : 'hsl(var(--border))'}`,
+                    transition: 'background 0.15s, border-color 0.15s',
+                    opacity: locked ? 0.72 : 1,
                   }}
-                  onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'rgba(148,163,184,0.06)'; }}
-                  onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+                  onMouseEnter={(e) => { if (!isActive) { e.currentTarget.style.background = 'hsl(var(--trading-bg-surface) / 0.7)'; e.currentTarget.style.borderColor = 'hsl(var(--trading-cyan) / 0.25)'; } }}
+                  onMouseLeave={(e) => { if (!isActive) { e.currentTarget.style.background = 'hsl(var(--trading-bg-surface) / 0.35)'; e.currentTarget.style.borderColor = 'hsl(var(--border))'; } }}
                 >
                   {dot(p.color)}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: '#f1f5f9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {p.name}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: 'hsl(var(--foreground))', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</span>
                       {p.is_default && (
-                        <span style={{ marginInlineStart: 6, fontSize: 9, padding: '1px 5px', background: 'rgba(52,211,153,0.15)', color: '#34d399', borderRadius: 4, fontWeight: 700, letterSpacing: 0.4 }}>
+                        <span style={{ fontSize: 9, padding: '1px 5px', background: 'hsl(var(--trading-green) / 0.15)', color: 'hsl(var(--trading-green))', borderRadius: 4, fontWeight: 700, letterSpacing: 0.4, fontFamily: "'JetBrains Mono', monospace" }}>
                           {isRTL ? 'ברירת מחדל' : 'DEFAULT'}
                         </span>
                       )}
                       {locked && (
                         <span
-                          title={isRTL ? 'תיק במצב קריאה־בלבד (חרג ממגבלת המסלול). שדרג כדי לפתוח לעריכה.' : 'Read-only — exceeds plan limit. Upgrade to unlock.'}
-                          style={{ marginInlineStart: 6, fontSize: 9, padding: '1px 5px', background: 'rgba(251,146,60,0.15)', color: '#fb923c', borderRadius: 4, fontWeight: 700, letterSpacing: 0.4, display: 'inline-flex', alignItems: 'center', gap: 3 }}
+                          title={isRTL ? 'תיק במצב קריאה־בלבד' : 'Read-only — upgrade to unlock'}
+                          style={{ fontSize: 9, padding: '1px 5px', background: 'hsl(var(--trading-orange) / 0.15)', color: 'hsl(var(--trading-orange))', borderRadius: 4, fontWeight: 700, letterSpacing: 0.4, display: 'inline-flex', alignItems: 'center', gap: 3, fontFamily: "'JetBrains Mono', monospace" }}
                         >
                           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                           {isRTL ? 'נעול' : 'LOCKED'}
                         </span>
                       )}
                     </div>
-                    <div style={{ fontSize: 10, color: '#94a3b8', fontFamily: "'IBM Plex Mono', monospace" }}>
-                      {p.currency} · {isRTL ? 'הון התחלתי' : 'Start'} {Number(p.starting_balance).toLocaleString()}
+                    <div style={{ fontSize: 10.5, color: 'hsl(var(--muted-foreground))', fontFamily: "'JetBrains Mono', monospace", marginTop: 2 }}>
+                      {p.currency} · {isRTL ? 'הון' : 'Start'} {Number(p.starting_balance).toLocaleString()}
                     </div>
                   </div>
-                  <div dir="ltr" style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center', direction: 'ltr', unicodeBidi: 'isolate' }}>
+                  <div dir="ltr" style={{ display: 'flex', gap: 4, flexShrink: 0, alignItems: 'center', direction: 'ltr', unicodeBidi: 'isolate' }}>
                     {!p.is_default && !locked && (
-                      <button
+                      <IconBtn
                         onClick={(e) => { e.stopPropagation(); void setDefault(p.id); }}
                         title={isRTL ? 'הפוך לברירת מחדל' : 'Set as default'}
-                        aria-label={isRTL ? 'הפוך לברירת מחדל' : 'Set as default'}
-                        style={{ background: 'rgba(148,163,184,0.10)', border: '1px solid rgba(148,163,184,0.25)', color: '#facc15', cursor: 'pointer', padding: 0, borderRadius: 6, fontSize: 15, lineHeight: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, fontFamily: 'system-ui, sans-serif' }}
-                      >★</button>
+                        tone="star"
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                        </svg>
+                      </IconBtn>
                     )}
-                    <button
+                    <IconBtn
                       onClick={(e) => { e.stopPropagation(); if (locked) return; setEditing(p); setCreating(false); }}
-                      title={locked ? (isRTL ? 'נעול — לא ניתן לעריכה' : 'Locked — cannot edit') : (isRTL ? 'ערוך' : 'Edit')}
-                      aria-label={isRTL ? 'ערוך תיק' : 'Edit portfolio'}
+                      title={locked ? (isRTL ? 'נעול' : 'Locked') : (isRTL ? 'ערוך' : 'Edit')}
                       disabled={locked}
-                      style={{ background: 'rgba(148,163,184,0.10)', border: '1px solid rgba(148,163,184,0.25)', color: locked ? '#475569' : '#e2e8f0', cursor: locked ? 'not-allowed' : 'pointer', padding: 0, borderRadius: 6, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, fontSize: 14, lineHeight: 1, fontFamily: 'system-ui, sans-serif' }}
-                    >✎</button>
-                    <button
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                      </svg>
+                    </IconBtn>
+                    <IconBtn
                       onClick={(e) => { e.stopPropagation(); if (locked) return; void handleReset(p); }}
-                      title={locked ? (isRTL ? 'נעול — לא ניתן לאיפוס' : 'Locked — cannot reset') : (isRTL ? 'אפס תיק' : 'Reset portfolio')}
-                      aria-label={isRTL ? 'אפס תיק' : 'Reset portfolio'}
+                      title={locked ? (isRTL ? 'נעול' : 'Locked') : (isRTL ? 'אפס תיק' : 'Reset')}
                       disabled={locked || busy}
-                      style={{ background: 'rgba(251,146,60,0.12)', border: '1px solid rgba(251,146,60,0.35)', color: (locked || busy) ? '#475569' : '#fb923c', cursor: (locked || busy) ? 'not-allowed' : 'pointer', padding: 0, borderRadius: 6, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, fontSize: 14, lineHeight: 1, fontFamily: 'system-ui, sans-serif' }}
-                    >↺</button>
-                    <button
+                      tone="warn"
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                      </svg>
+                    </IconBtn>
+                    <IconBtn
                       onClick={(e) => { e.stopPropagation(); if (locked) return; void handleDelete(p); }}
-                      title={locked ? (isRTL ? 'נעול — לא ניתן למחיקה' : 'Locked — cannot delete') : (isRTL ? 'מחק' : 'Delete')}
-                      aria-label={isRTL ? 'מחק תיק' : 'Delete portfolio'}
+                      title={locked ? (isRTL ? 'נעול' : 'Locked') : (isRTL ? 'מחק' : 'Delete')}
                       disabled={portfolios.length <= 1 || locked}
-                      style={{ background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.35)', color: (portfolios.length <= 1 || locked) ? '#475569' : '#f87171', cursor: (portfolios.length <= 1 || locked) ? 'not-allowed' : 'pointer', padding: 0, borderRadius: 6, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, fontSize: 14, lineHeight: 1, fontFamily: 'system-ui, sans-serif', fontWeight: 700 }}
-                    >✕</button>
+                      tone="danger"
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
+                      </svg>
+                    </IconBtn>
                   </div>
                 </div>
               );
             })}
           </div>
 
-          {/* Tier limit summary */}
-          <div style={{ padding: '4px 8px', fontSize: 10, color: '#64748b', fontFamily: "'IBM Plex Mono', monospace", display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(148,163,184,0.08)' }}>
+          {/* Footer status */}
+          <div style={{ padding: '8px 6px 4px', fontSize: 10.5, color: 'hsl(var(--muted-foreground))', fontFamily: "'JetBrains Mono', monospace", display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid hsl(var(--border))', marginTop: 6 }}>
             <span>
-              {portfolios.length} / {tierMax} · <span style={{ color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 0.5 }}>{tier}</span>
+              {portfolios.length} / {tierMax} · <span style={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>{tier}</span>
             </span>
             {!canCreate && (
-              <span style={{ color: '#fb923c' }}>{isRTL ? 'הגעת למגבלת המסלול' : 'Plan limit reached'}</span>
+              <span style={{ color: 'hsl(var(--trading-orange))' }}>{isRTL ? 'הגעת למגבלה' : 'Limit reached'}</span>
             )}
           </div>
 
-
           {/* Create / Edit form */}
           {(creating || editing) ? (
-            <div style={{ borderTop: '1px solid rgba(148,163,184,0.15)', padding: '10px 6px 6px', display: 'grid', gap: 8 }}>
+            <div style={{ borderTop: '1px solid hsl(var(--border))', padding: '12px 4px 4px', display: 'grid', gap: 8, marginTop: 4 }}>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder={isRTL ? 'שם התיק' : 'Portfolio name'}
                 autoFocus
-                style={{ background: 'rgba(15,23,42,0.7)', border: '1px solid rgba(148,163,184,0.2)', borderRadius: 6, color: '#f1f5f9', padding: '6px 10px', fontSize: 12, fontFamily: 'inherit', outline: 'none' }}
+                style={{ background: 'hsl(var(--trading-bg-surface) / 0.6)', border: '1px solid hsl(var(--border))', borderRadius: 8, color: 'hsl(var(--foreground))', padding: '8px 10px', fontSize: 12.5, fontFamily: 'inherit', outline: 'none' }}
               />
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 <select
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value)}
-                  style={{ background: 'rgba(15,23,42,0.7)', border: '1px solid rgba(148,163,184,0.2)', borderRadius: 6, color: '#f1f5f9', padding: '6px 8px', fontSize: 12, fontFamily: 'inherit' }}
+                  style={{ background: 'hsl(var(--trading-bg-surface) / 0.6)', border: '1px solid hsl(var(--border))', borderRadius: 8, color: 'hsl(var(--foreground))', padding: '8px 8px', fontSize: 12.5, fontFamily: 'inherit' }}
                 >
                   <option value="USD">USD</option>
                   <option value="ILS">ILS</option>
@@ -375,7 +402,7 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
                   onChange={(e) => setStarting(e.target.value)}
                   inputMode="decimal"
                   placeholder={isRTL ? 'הון התחלתי' : 'Starting balance'}
-                  style={{ background: 'rgba(15,23,42,0.7)', border: '1px solid rgba(148,163,184,0.2)', borderRadius: 6, color: '#f1f5f9', padding: '6px 10px', fontSize: 12, fontFamily: "'IBM Plex Mono', monospace", outline: 'none' }}
+                  style={{ background: 'hsl(var(--trading-bg-surface) / 0.6)', border: '1px solid hsl(var(--border))', borderRadius: 8, color: 'hsl(var(--foreground))', padding: '8px 10px', fontSize: 12.5, fontFamily: "'JetBrains Mono', monospace", outline: 'none' }}
                 />
               </div>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -384,21 +411,23 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
                     key={c}
                     onClick={() => setColor(c)}
                     aria-label={c}
-                    style={{ width: 20, height: 20, borderRadius: '50%', background: c, border: color === c ? '2px solid #f1f5f9' : '2px solid transparent', cursor: 'pointer', padding: 0 }}
+                    style={{ width: 22, height: 22, borderRadius: '50%', background: c, border: color === c ? '2px solid hsl(var(--foreground))' : '2px solid transparent', cursor: 'pointer', padding: 0 }}
                   />
                 ))}
               </div>
-              {err && <div style={{ fontSize: 11, color: '#f87171' }}>{err}</div>}
+              {err && <div style={{ fontSize: 11, color: 'hsl(var(--trading-red))' }}>{err}</div>}
               <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                 <button
                   onClick={closeForm}
                   disabled={busy}
-                  style={{ background: 'transparent', border: '1px solid rgba(148,163,184,0.25)', color: '#94a3b8', padding: '5px 12px', borderRadius: 6, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}
+                  className="ohb-ghost"
+                  style={{ height: 32, fontSize: 12 }}
                 >{isRTL ? 'ביטול' : 'Cancel'}</button>
                 <button
                   onClick={handleSubmit}
                   disabled={busy}
-                  style={{ background: 'linear-gradient(135deg, #22d3ee, #14b8a6)', border: 'none', color: '#061326', padding: '5px 14px', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+                  className="ohb-primary"
+                  style={{ height: 32, fontSize: 12 }}
                 >{busy ? '…' : (editing ? (isRTL ? 'שמור' : 'Save') : (isRTL ? 'צור' : 'Create'))}</button>
               </div>
             </div>
@@ -406,26 +435,77 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
             <button
               onClick={() => { if (!canCreate) return; setCreating(true); setEditing(null); }}
               disabled={!canCreate}
-              title={!canCreate ? (isRTL ? `הגעת למגבלת המסלול (${tierMax}). שדרג כדי להוסיף עוד.` : `Plan limit reached (${tierMax}). Upgrade to add more.`) : undefined}
+              title={!canCreate ? (isRTL ? `הגעת למגבלת המסלול (${tierMax})` : `Plan limit reached (${tierMax})`) : undefined}
+              className="ohb-ghost"
               style={{
-                display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-                background: canCreate ? 'rgba(34,211,238,0.06)' : 'rgba(148,163,184,0.04)',
-                border: `1px dashed ${canCreate ? 'rgba(34,211,238,0.35)' : 'rgba(148,163,184,0.2)'}`,
-                color: canCreate ? '#22d3ee' : '#64748b',
-                padding: '8px 10px', borderRadius: 7,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%',
+                marginTop: 8, height: 36,
+                borderStyle: 'dashed',
+                color: canCreate ? 'hsl(var(--trading-cyan))' : 'hsl(var(--muted-foreground))',
                 cursor: canCreate ? 'pointer' : 'not-allowed',
-                fontSize: 12, fontWeight: 600, fontFamily: 'inherit', marginTop: 4,
+                fontSize: 12.5, fontWeight: 600,
               }}
             >
-              <span style={{ fontSize: 14, lineHeight: 1 }}>{canCreate ? '+' : '🔒'}</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                {canCreate ? <><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></> : <><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>}
+              </svg>
               {canCreate
                 ? (isRTL ? 'תיק חדש' : 'New portfolio')
-                : (isRTL ? `הגעת למגבלת המסלול (${tierMax})` : `Plan limit reached (${tierMax})`)}
+                : (isRTL ? `הגעת למגבלה (${tierMax})` : `Limit reached (${tierMax})`)}
             </button>
           )}
         </div>,
         document.body,
       )}
     </div>
+  );
+}
+
+/** Compact icon button matching the navbar's ohb-ghost language. */
+function IconBtn({
+  children, onClick, title, disabled, tone,
+}: {
+  children: React.ReactNode;
+  onClick: (e: React.MouseEvent) => void;
+  title?: string;
+  disabled?: boolean;
+  tone?: 'star' | 'warn' | 'danger';
+}) {
+  const toneColor =
+    tone === 'star' ? 'hsl(var(--trading-orange))' :
+    tone === 'warn' ? 'hsl(var(--trading-orange))' :
+    tone === 'danger' ? 'hsl(var(--trading-red))' :
+    'hsl(var(--muted-foreground))';
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      aria-label={title}
+      style={{
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        width: 28, height: 28, padding: 0, borderRadius: 7,
+        background: 'hsl(var(--trading-bg-surface) / 0.5)',
+        border: '1px solid hsl(var(--border))',
+        color: disabled ? 'hsl(var(--muted-foreground) / 0.4)' : toneColor,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        transition: 'background 0.15s, border-color 0.15s, transform 0.15s',
+      }}
+      onMouseEnter={(e) => {
+        if (disabled) return;
+        e.currentTarget.style.background = 'hsl(var(--trading-bg-surface))';
+        e.currentTarget.style.borderColor = toneColor;
+        e.currentTarget.style.transform = 'translateY(-1px)';
+      }}
+      onMouseLeave={(e) => {
+        if (disabled) return;
+        e.currentTarget.style.background = 'hsl(var(--trading-bg-surface) / 0.5)';
+        e.currentTarget.style.borderColor = 'hsl(var(--border))';
+        e.currentTarget.style.transform = 'translateY(0)';
+      }}
+    >
+      {children}
+    </button>
   );
 }
