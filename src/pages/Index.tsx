@@ -60,6 +60,7 @@ const BacktestDimension = lazy(() => import('@/components/trading/BacktestDimens
 import { useTrades } from '@/hooks/use-trades';
 import { DisplayModeProvider, hasStrictR, useEffectiveDisplayMode } from '@/lib/display-mode';
 import { DisplayModeToggle } from '@/components/trading/DisplayModeToggle';
+import { HeaderBar } from '@/components/trading/HeaderBar';
 import { useSettings, type ThemeId } from '@/hooks/use-settings';
 import { useUserPreferences } from '@/hooks/use-user-preferences';
 import { assessRisk } from '@/lib/risk-engine';
