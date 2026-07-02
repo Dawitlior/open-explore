@@ -2006,82 +2006,29 @@ const Index = () => {
       <MainPullToRefresh isMobile={isMobile} accent={T.accent.cyan}>
         {/* Mobile: bottom-nav handles everything, so the top header is hidden entirely. */}
         {!isMobile && (
-        <header style={{ padding: '10px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(8,12,20,0.72)', backdropFilter: 'blur(14px) saturate(140%)', WebkitBackdropFilter: 'blur(14px) saturate(140%)', position: 'sticky', top: 0, zIndex: 5, gap: 12, flexWrap: 'nowrap', minWidth: 0 } as any}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 14, minWidth: 0, flex: '1 1 auto', overflow: 'hidden' }}>
-            {/* Mobile hamburger */}
-            {isMobile && (
-              <button onClick={() => setSbOpen(true)} aria-label={isRTL ? 'פתח תפריט ניווט' : 'Open navigation menu'} aria-expanded={sbOpen} style={{ background: 'none', border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.sm, color: T.text.secondary, cursor: 'pointer', padding: '5px 7px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-              </button>
-            )}
-            <h1 style={{ fontSize: isMobile ? 13 : 15, fontWeight: 600, fontFamily: "'Inter', system-ui, sans-serif", letterSpacing: '-0.01em', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0, color: T.text.primary }}>{nav.find(n => n.id === page)?.label}</h1>
-            {!isMobile && <PortfolioSwitcher isRTL={isRTL} compact />}
-            {!isMobile && settings.privacyMode && <TradingBadge color={T.accent.orange}>🔒</TradingBadge>}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 8, flexWrap: 'nowrap', flexShrink: 0 }}>
-            {/* Global Dual-Currency Toggle — persistent across every page */}
-            {!isMobile && (
-              <DisplayModeToggle T={T} isRTL={isRTL} compact />
-            )}
-            {/* Premium Add Trade — crisp white pill, no icon */}
-            {!uiPrefs.hideAddTradeButton && !isMobile && <button onClick={() => { setEditingTrade(null); setShowTradeForm(true); }}
-              onMouseEnter={e => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = '#f5f6f8'; e.currentTarget.style.transform = 'translateY(0)'; }}
-              style={{ padding: '7px 16px', background: '#f5f6f8', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: '#0a0e1a', fontWeight: 600, cursor: 'pointer', fontSize: 12.5, letterSpacing: '-0.005em', fontFamily: "'Inter', system-ui, sans-serif", transition: 'all 0.18s ease' }}>
-              {t.addTrade}
-            </button>}
-            {!isMobile && hiddenCharts.length > 0 && (
-              <button onClick={handleRestoreCharts} style={{ padding: '6px 10px', background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: T.accent.orange, cursor: 'pointer', fontSize: 11, fontWeight: 500, transition: 'all 0.2s' }}>
-                ↩ {isRTL ? 'שחזר גרפים' : 'Restore Charts'} ({hiddenCharts.length})
-              </button>
-            )}
-            {!uiPrefs.hideQuickActions && (
-              <button
-                onClick={() => setShowCmdPalette(true)}
-                aria-label={isRTL ? 'פעולות מהירות' : 'Quick Actions'}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: isMobile ? 4 : 8,
-                  padding: isMobile ? '7px 10px' : '7px 12px',
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.06)',
-                  borderRadius: 8,
-                  color: T.text.muted,
-                  cursor: 'pointer',
-                  fontSize: 12.5,
-                  fontWeight: 500,
-                  fontFamily: "'Inter', system-ui, sans-serif",
-                  transition: 'background 0.18s ease, border-color 0.18s ease, color 0.18s ease',
-                  flexShrink: 0,
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)';
-                  e.currentTarget.style.color = T.text.primary;
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
-                  e.currentTarget.style.color = T.text.muted;
-                }}
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-                </svg>
-                {!isMobile && (
-                  <span>{isRTL ? 'פעולות מהירות' : 'Quick Actions'}</span>
-                )}
-                {!isMobile && (
-                  <span style={{
-                    fontSize: 10.5,
-                    color: 'rgba(255,255,255,0.32)',
-                    fontFamily: "'JetBrains Mono', monospace", fontWeight: 500,
-                    marginInlineStart: 2,
-                  }}>⌘K</span>
-                )}
-              </button>
-            )}
-          </div>
-        </header>
+          <HeaderBar
+            T={T}
+            isRTL={isRTL}
+            pageLabel={nav.find(n => n.id === page)?.label ?? ''}
+            startSlot={
+              <>
+                <PortfolioSwitcher isRTL={isRTL} compact />
+                {settings.privacyMode && <TradingBadge color={T.accent.orange}>🔒</TradingBadge>}
+              </>
+            }
+            onImport={() => {
+              const cmd = commands.find(c => c.id === 'import');
+              if (cmd) cmd.action();
+              else setShowCmdPalette(true);
+            }}
+            showAddTrade={!uiPrefs.hideAddTradeButton}
+            addTradeLabel={t.addTrade}
+            onAddTrade={() => { setEditingTrade(null); setShowTradeForm(true); }}
+            showQuickActions={!uiPrefs.hideQuickActions}
+            onOpenPalette={() => setShowCmdPalette(true)}
+            hiddenChartsCount={hiddenCharts.length}
+            onRestoreCharts={handleRestoreCharts}
+          />
         )}
 
         <div className={isMobile ? 'orca-mobile-pad-bottom' : ''} style={{ padding: isMobile ? '12px 10px' : '20px 24px', maxWidth: 1400, width: '100%', minWidth: 0, boxSizing: 'border-box', overflowX: 'hidden', margin: '0 auto' }}>
