@@ -487,9 +487,11 @@ interface BreakdownProps {
     avgWin: number; avgLoss: number; avgPerTrade: number; totalPnl: number;
     avgRR: number; avgHold: number;
   };
+  series?: number[];
+  showChart?: boolean;
 }
 
-function BreakdownCard({ T, isRTL, isR, title, accent, stats }: BreakdownProps) {
+function BreakdownCard({ T, isRTL, isR, title, accent, stats, series, showChart }: BreakdownProps) {
   const card: React.CSSProperties = {
     background: T.bg.card,
     border: `1px solid ${T.border.subtle}`,
