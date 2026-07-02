@@ -19,7 +19,7 @@ export interface TradingTheme {
 const midnight: TradingTheme = {
   id: 'midnight',
   // Deep near-black base with warm-green undertone + lime accent (per new brand ref)
-  bg: { primary: '#0A0F0A', secondary: '#10161080'.slice(0,7), tertiary: '#161C18', card: '#121814', surface: '#1A211C' },
+  bg: { primary: '#0A0F0A', secondary: '#101610', tertiary: '#161C18', card: '#121814', surface: '#1A211C' },
   accent: {
     cyan: '#C6F84E', cyanGlow: 'rgba(198,248,78,0.22)',
     teal: '#34D97F',
