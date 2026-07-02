@@ -8,7 +8,7 @@
  *   Desktop  ▸ [ Calendar  |  Long card  |  Short card ]  — 3 columns
  *   Mobile   ▸ stacked, calendar uses identical sizing as the hub mobile view.
  */
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { I18nStrings } from '@/lib/trading-i18n';
