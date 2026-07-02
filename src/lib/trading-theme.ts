@@ -110,7 +110,7 @@ const blue: TradingTheme = {
 const platinum: TradingTheme = {
   id: 'platinum',
   // Warm cream base with pure-white cards + vivid orange accent (per new brand ref)
-  bg: { primary: '#F5F1EA', secondary: '#FBF8F2', tertiary: '#FFFFFF', card: '#FFFFFF', surface: '#F0EAE0' },
+  bg: { primary: '#F5F1EA', secondary: '#FFFFFF', tertiary: '#FFFFFF', card: '#FFFFFF', surface: '#FFFFFF' },
   accent: {
     cyan: '#F97316', cyanGlow: 'rgba(249,115,22,0.18)',
     teal: '#EA580C',
