@@ -22,10 +22,11 @@ function readThemeCacheSync(): ThemeId {
 }
 
 export type ThemeId = 'midnight' | 'blue' | 'platinum' | 'graphite';
-const VALID_THEMES: ThemeId[] = ['midnight', 'blue', 'platinum', 'graphite'];
-// Legacy theme migration: indigo/hightech → blue, precision → graphite
+// 'platinum' removed from selectable themes — auto-migrated to 'blue'.
+const VALID_THEMES: ThemeId[] = ['midnight', 'blue', 'graphite'];
+// Legacy theme migration: indigo/hightech → blue, precision → graphite, platinum → blue
 const migrateTheme = (v: unknown): ThemeId => {
-  if (v === 'indigo' || v === 'hightech' || v === 'institutional') return 'blue';
+  if (v === 'indigo' || v === 'hightech' || v === 'institutional' || v === 'platinum') return 'blue';
   if (v === 'precision') return 'graphite';
   return (typeof v === 'string' && (VALID_THEMES as string[]).includes(v)) ? (v as ThemeId) : 'blue';
 };

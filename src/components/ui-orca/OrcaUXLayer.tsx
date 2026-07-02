@@ -242,22 +242,38 @@ export const OrcaUXLayer = () => {
 
       {/* 8. Live clock + market session — REMOVED (was blocking Dual-Currency Toggle). */}
 
-      {/* 7. Online/offline toast */}
+      {/* 7. Online/offline banner (top, full-width) */}
       <AnimatePresence>
         {showOnlineToast && (
           <motion.div
-            initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 30, opacity: 0 }}
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9995] orca-glass orca-grain px-4 py-2 rounded-full text-xs font-mono uppercase tracking-wider flex items-center gap-2"
+            role="status"
+            aria-live="polite"
+            initial={{ y: -40, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -40, opacity: 0 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            className="fixed top-0 left-0 right-0 z-[9995] flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-center shadow-lg backdrop-blur-md"
             style={{
-              borderColor: showOnlineToast === 'online' ? 'hsl(152 76% 45% / 0.4)' : 'hsl(0 100% 56% / 0.4)',
-              color: showOnlineToast === 'online' ? 'hsl(152 76% 60%)' : 'hsl(0 100% 68%)',
+              background: showOnlineToast === 'online'
+                ? 'linear-gradient(90deg, hsl(152 76% 25% / 0.95), hsl(152 76% 35% / 0.95))'
+                : 'linear-gradient(90deg, hsl(0 72% 40% / 0.95), hsl(0 72% 50% / 0.95))',
+              color: '#fff',
+              borderBottom: `1px solid ${showOnlineToast === 'online' ? 'hsl(152 76% 45% / 0.6)' : 'hsl(0 72% 55% / 0.6)'}`,
             }}
           >
-            <span className="w-2 h-2 rounded-full" style={{ background: 'currentColor', boxShadow: `0 0 10px currentColor` }} />
-            {showOnlineToast === 'online' ? 'Connection restored' : 'You are offline'}
+            <span
+              className="w-2.5 h-2.5 rounded-full"
+              style={{ background: '#fff', boxShadow: '0 0 10px rgba(255,255,255,0.9)' }}
+            />
+            <span>
+              {showOnlineToast === 'online'
+                ? 'We are back online — connection restored'
+                : 'You are disconnected from the internet'}
+            </span>
           </motion.div>
         )}
       </AnimatePresence>
+
 
       {/* 5. Back to top */}
       <AnimatePresence>
