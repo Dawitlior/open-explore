@@ -193,6 +193,22 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
     return { long: stat(L), short: stat(S) };
   }, [trades, isR]);
 
+  // Current-month cumulative equity series per direction (desktop mini-chart)
+  const monthSeries = useMemo(() => {
+    const rows = trades
+      .map(tr => ({ tr, d: parseTradeDate(tr.date) }))
+      .filter(x => x.d && x.d.getFullYear() === year && x.d.getMonth() === month)
+      .sort((a, b) => (a.d!.getTime() - b.d!.getTime()));
+    const long: number[] = [], short: number[] = [];
+    let cL = 0, cS = 0;
+    for (const { tr } of rows) {
+      const val = isR ? (getEffectiveR(tr, { strict: true }) ?? 0) : (Number(tr.pnl) || 0);
+      if (tr.direction === 'Short') { cS += val; short.push(cS); }
+      else { cL += val; long.push(cL); }
+    }
+    return { long, short };
+  }, [trades, year, month, isR]);
+
   const cardBase: React.CSSProperties = {
     background: T.bg.card,
     border: `1px solid ${T.border.subtle}`,
