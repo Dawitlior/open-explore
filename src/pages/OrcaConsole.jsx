@@ -902,7 +902,7 @@ function Mind({ t, lang, traders }) {
 }
 
 /* 7 · Risk Engine */
-function RiskEngine({ t, lang, traders, eng }) {
+function RiskEngine({ t, lang, traders, eng, live }) {
   const [win, setWin] = useState("all");
   const breach = eng.map((e) => ({ x: e.wk || `w${e.w}`, trade: e.breachT, daily: e.breachD, weekly: e.breachW, monthly: e.breachM }));
   const kr = eng.map((e) => ({ x: e.wk || `w${e.w}`, kill: e.kill, recovery: e.recovery }));
@@ -913,6 +913,13 @@ function RiskEngine({ t, lang, traders, eng }) {
   const keys = win === "all" ? ["trade", "daily", "weekly", "monthly"] : [win];
   const keyColor = { trade: PAL[3], daily: PAL[5], weekly: C.warn, monthly: C.neg }, keyName = { trade: t("wTrade"), daily: t("wDaily"), weekly: t("wWeekly"), monthly: t("wMonthly") };
   const last = eng[eng.length - 1], prev = eng[eng.length - 2];
+  // Kill-switch numbers now come from the real risk_events audit trail
+  // (admin_risk_engine.killOnCount). When hasKillData=false we show a real 0
+  // with no delta rather than fake deltas from synthesised week-series.
+  const re = live?.riskEngine || {};
+  const hasKill = !!re.hasKillData;
+  const killValue = hasKill ? Number(re.killOnCount || 0) : 0;
+  const recoveryMin = re.avgRecoveryMinutes != null ? Number(re.avgRecoveryMinutes) : null;
   const killPrev = Math.round(traders.filter((x) => x.kill > 0).length / Math.max(traders.length, 1) * 100);
   const topRisk = topBy(traders, "behaviouralRisk").map((x) => ({ code: x.code, v: x.behaviouralRisk, label: x.behaviouralRisk }));
   const presets = [{ fn: "admin_risk_engine", params: { window: "all", period: "90" } }, { fn: "admin_risk_engine", params: { window: "weekly", period: "90" } }, { fn: "admin_risk_engine", params: { window: "monthly", period: "90" } }, { fn: "admin_risk_engine", params: { window: "daily", period: "30" } }, { fn: "admin_trader_matrix", params: { segment: "risk", sort: "behaviouralRisk", limit: "25" } }];
@@ -920,10 +927,24 @@ function RiskEngine({ t, lang, traders, eng }) {
     <>
       <SectionHead n="07" title={t("navRisk")} subtitle={t("subRisk")} />
       <div style={{ ...gridCols(4), marginBottom: 14 }}>
-        <StatTile label={t("kKill")} value={nf.format(last.kill)} delta={Math.round(((last.kill - prev.kill) / Math.max(prev.kill, 1)) * 100)} deltaGood="down" icon={ShieldAlert} bg={C.tintRose} tint={C.neg} spark={eng.map((e) => e.kill)} />
+        <StatTile
+          label={t("kKill")}
+          value={hasKill ? nf.format(killValue) : "—"}
+          hint={hasKill ? (lang === "he" ? "מ-risk_events · 90 יום" : "from risk_events · 90d") : (lang === "he" ? "אין אירועים עדיין" : "no events yet")}
+          icon={ShieldAlert}
+          bg={C.tintRose}
+          tint={C.neg}
+        />
         <StatTile label={t("wWeekly")} value={nf.format(last.breachW)} icon={Flame} bg={C.tintAmber} tint={C.warn} spark={eng.map((e) => e.breachW)} />
         <StatTile label={t("wMonthly")} value={nf.format(last.breachM)} icon={Flame} bg={C.tintRose} tint={C.neg} spark={eng.map((e) => e.breachM)} />
-        <StatTile label={t("mRecovery")} value={nf.format(last.recovery)} icon={Repeat} bg={C.tintIndigo} tint={PAL[4]} spark={eng.map((e) => e.recovery)} />
+        <StatTile
+          label={t("mRecovery")}
+          value={recoveryMin != null ? (lang === "he" ? `${recoveryMin} ד׳` : `${recoveryMin}m`) : "—"}
+          hint={recoveryMin != null ? (lang === "he" ? "חציון החזרה" : "median recovery") : (lang === "he" ? "אין נתונים" : "no data")}
+          icon={Repeat}
+          bg={C.tintIndigo}
+          tint={PAL[4]}
+        />
       </div>
       <div style={{ marginBottom: 14 }}><QueryStrip t={t} lang={lang} traders={traders} presets={presets} /></div>
       <div style={gridCols(2)}>
