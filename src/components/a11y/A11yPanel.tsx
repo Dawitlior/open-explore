@@ -1,19 +1,24 @@
 /**
- * A11yPanel — the native ORCA accessibility preferences panel.
- *
- * Implemented on top of Radix Dialog (focus trap, ESC handling,
- * `aria-modal`, return-focus to trigger — all free). Rendered as a
- * compact chat-window-style overlay anchored to the inline-end edge,
- * NOT a full-height Sheet, per the Phase 1 spec.
- *
- * NO cosmetic-filter overlays — every control writes real CSS state.
+ * A11yPanel — ORCA accessibility preferences panel.
+ * Radix Dialog for focus/ESC handling. Portaled to <body>, so it is
+ * NEVER inside the filtered #root subtree.
  */
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState, useCallback } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { Accessibility, X, Type, Contrast, Eye, MousePointer2, Sparkles, Link as LinkIcon, ALargeSmall, RotateCcw, AlignHorizontalJustifyCenter } from 'lucide-react';
-import { ReadingGuide } from './ReadingGuide';
+import { Link as RouterLink } from 'react-router-dom';
+import { Accessibility, X, Type, Contrast, Eye, MousePointer2, Sparkles, Link as LinkIcon, ALargeSmall, RotateCcw } from 'lucide-react';
 import { useA11yPrefs, type A11yContrast } from '@/hooks/use-a11y-prefs';
 import { useLang } from '@/hooks/use-lang';
+
+const FAB_SIZE = 56;
+const FAB_MARGIN = 12;
+const FAB_POS_KEY = 'orca:a11y:fabPos';
+
+function isTouchDevice(): boolean {
+  return typeof window !== 'undefined'
+    && !!window.matchMedia
+    && window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+}
 
 export function A11yPanel() {
   const { isRTL, t } = useLang();
@@ -21,7 +26,7 @@ export function A11yPanel() {
   const [open, setOpen] = useState(false);
   const titleId = useId();
 
-  // Alt+A shortcut (does not interfere with screen-reader nav keys).
+  // Alt+A shortcut
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.altKey && (e.key === 'a' || e.key === 'A')) {
@@ -33,22 +38,101 @@ export function A11yPanel() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  // ---- Draggable FAB (touch only) ----
+  const [isTouch] = useState<boolean>(() => isTouchDevice());
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const drag = useRef({ active: false, moved: false, sx: 0, sy: 0, ox: 0, oy: 0 });
+
+  const clamp = useCallback((x: number, y: number) => ({
+    x: Math.min(Math.max(FAB_MARGIN, x), window.innerWidth - FAB_SIZE - FAB_MARGIN),
+    y: Math.min(Math.max(FAB_MARGIN, y), window.innerHeight - FAB_SIZE - FAB_MARGIN),
+  }), []);
+
+  useEffect(() => {
+    if (!isTouch) return;
+    try {
+      const s = localStorage.getItem(FAB_POS_KEY);
+      if (s) {
+        const p = JSON.parse(s);
+        if (typeof p?.x === 'number' && typeof p?.y === 'number') setPos(clamp(p.x, p.y));
+      }
+    } catch { /* noop */ }
+  }, [isTouch, clamp]);
+
+  useEffect(() => {
+    if (!isTouch) return;
+    const h = () => setPos(p => p ? clamp(p.x, p.y) : p);
+    window.addEventListener('resize', h);
+    window.addEventListener('orientationchange', h);
+    return () => {
+      window.removeEventListener('resize', h);
+      window.removeEventListener('orientationchange', h);
+    };
+  }, [isTouch, clamp]);
+
+  const onPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!isTouch) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    drag.current = { active: true, moved: false, sx: e.clientX, sy: e.clientY, ox: r.left, oy: r.top };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const onPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const d = drag.current;
+    if (!d.active) return;
+    const dx = e.clientX - d.sx, dy = e.clientY - d.sy;
+    if (Math.hypot(dx, dy) > 8) d.moved = true;
+    if (d.moved) setPos(clamp(d.ox + dx, d.oy + dy));
+  };
+  const onPointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const d = drag.current;
+    if (!d.active) return;
+    d.active = false;
+    try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { /* noop */ }
+    if (d.moved) {
+      setPos(p => {
+        if (p) { try { localStorage.setItem(FAB_POS_KEY, JSON.stringify(p)); } catch { /* noop */ } }
+        return p;
+      });
+    } else {
+      setOpen(true);
+    }
+  };
+
+  const fabStyle: React.CSSProperties | undefined = (isTouch && pos)
+    ? { position: 'fixed', left: pos.x, top: pos.y, insetInlineEnd: 'auto', insetBlockEnd: 'auto', touchAction: 'none' }
+    : undefined;
+
   const scalePct = Math.round(prefs.scale * 100);
 
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
-      <ReadingGuide />
-      <Dialog.Trigger asChild>
+      {isTouch ? (
         <button
           type="button"
           className="orca-a11y-fab"
           aria-label={t('פתח פאנל נגישות', 'Open accessibility panel')}
           aria-haspopup="dialog"
           aria-expanded={open}
+          style={fabStyle}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
         >
           <Accessibility aria-hidden="true" />
         </button>
-      </Dialog.Trigger>
+      ) : (
+        <Dialog.Trigger asChild>
+          <button
+            type="button"
+            className="orca-a11y-fab"
+            aria-label={t('פתח פאנל נגישות', 'Open accessibility panel')}
+            aria-haspopup="dialog"
+            aria-expanded={open}
+          >
+            <Accessibility aria-hidden="true" />
+          </button>
+        </Dialog.Trigger>
+      )}
       <Dialog.Portal>
         <Dialog.Overlay
           style={{
@@ -77,7 +161,6 @@ export function A11yPanel() {
         >
           <span className="a11y-popup-handle" aria-hidden="true" />
           <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', borderBottom: '1px solid #1A2236' }}>
-
             <Dialog.Title id={titleId} style={{ fontSize: 17, fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', gap: 10, margin: 0 }}>
               <Accessibility size={22} color="#E5B94E" aria-hidden="true" />
               {t('נגישות', 'Accessibility')}
@@ -161,9 +244,6 @@ export function A11yPanel() {
               <ToggleRow icon={<MousePointer2 size={18} aria-hidden="true" />} title={t('סמן עכבר גדול', 'Large cursor')} hint={t('סמן בולט וקל לאיתור', 'High-visibility pointer')} pressed={prefs.cursor} onToggle={() => update({ cursor: !prefs.cursor })} />
               <ToggleRow icon={<Eye size={18} aria-hidden="true" />} title={t('מסגרת פוקוס מודגשת', 'Stronger focus ring')} hint={t('מתאר עבה כשמתמקדים בקלט', 'Thicker outline on focus')} pressed={prefs.focus} onToggle={() => update({ focus: !prefs.focus })} />
               <ToggleRow icon={<Sparkles size={18} aria-hidden="true" />} title={t('עצור אנימציות', 'Reduce motion')} hint={t('בטל מעברים ואנימציות', 'Disable transitions / animations')} pressed={prefs.motion} onToggle={() => update({ motion: !prefs.motion })} />
-              <div data-a11y-row="guide">
-                <ToggleRow icon={<AlignHorizontalJustifyCenter size={18} aria-hidden="true" />} title={t('מדריך קריאה', 'Reading guide')} hint={t('פס אופקי שעוקב אחרי הסמן', 'Horizontal bar that follows the cursor')} pressed={prefs.guide} onToggle={() => update({ guide: !prefs.guide })} />
-              </div>
             </Section>
 
             <button
@@ -174,6 +254,21 @@ export function A11yPanel() {
               <RotateCcw size={16} aria-hidden="true" />
               {t('אפס הגדרות נגישות', 'Reset accessibility settings')}
             </button>
+
+            <footer style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid #1A2236', textAlign: 'center' }}>
+              <RouterLink
+                to="/accessibility"
+                onClick={() => setOpen(false)}
+                className="a11y-statement-link"
+                style={{
+                  fontSize: 13, fontWeight: 600, color: '#E5B94E',
+                  textDecoration: 'underline', textUnderlineOffset: 3,
+                  padding: '6px 10px', borderRadius: 8, display: 'inline-block',
+                }}
+              >
+                {t('הצהרת נגישות', 'Accessibility statement')}
+              </RouterLink>
+            </footer>
           </div>
         </Dialog.Content>
       </Dialog.Portal>

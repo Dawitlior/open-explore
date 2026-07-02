@@ -5,9 +5,6 @@
  * round-trip — the panel must respond instantly on every device, even
  * pre-auth). Applies them by writing data-attributes and CSS variables
  * onto <html>, which `a11y-engine.css` reacts to.
- *
- * Layer B (semantic foundation / form labels / chart alt-text) is a
- * separate workstream; this hook never touches business code.
  */
 import { useCallback, useEffect, useState } from 'react';
 
@@ -23,7 +20,6 @@ export interface A11yPrefs {
   cursor: boolean;
   focus: boolean;
   motion: boolean;           // true = reduced
-  guide: boolean;            // reading guide bar
 }
 
 export const A11Y_DEFAULTS: A11yPrefs = {
@@ -36,7 +32,6 @@ export const A11Y_DEFAULTS: A11yPrefs = {
   cursor: false,
   focus: false,
   motion: false,
-  guide: false,
 };
 
 const KEY = 'orca:a11y-prefs';
@@ -44,20 +39,12 @@ const SCALE_MIN = 1;
 const SCALE_MAX = 2;
 const SCALE_STEP = 0.1;
 
-function isCoarsePointer(): boolean {
-  if (typeof window === 'undefined' || !window.matchMedia) return false;
-  return window.matchMedia('(hover: none) and (pointer: coarse)').matches;
-}
-
 function readCache(): A11yPrefs {
   if (typeof window === 'undefined') return A11Y_DEFAULTS;
   try {
     const raw = window.localStorage.getItem(KEY);
     const parsed = raw ? (JSON.parse(raw) as Partial<A11yPrefs>) : {};
-    const merged: A11yPrefs = { ...A11Y_DEFAULTS, ...parsed };
-    // Reading guide is a pointer-only feature — never active on touch.
-    if (isCoarsePointer()) merged.guide = false;
-    return merged;
+    return { ...A11Y_DEFAULTS, ...parsed };
   } catch { return A11Y_DEFAULTS; }
 }
 
@@ -88,11 +75,10 @@ function applyToDOM(p: A11yPrefs) {
   toggle('data-a11y-cursor', p.cursor);
   toggle('data-a11y-focus', p.focus);
   toggle('data-a11y-motion', p.motion, 'reduced');
-  toggle('data-a11y-guide', p.guide);
 }
 
 // Apply cached prefs immediately at module load so first paint already
-// honours the user's settings (no flash of un-styled accessibility).
+// honours the user's settings.
 if (typeof document !== 'undefined') applyToDOM(readCache());
 
 export function useA11yPrefs() {
