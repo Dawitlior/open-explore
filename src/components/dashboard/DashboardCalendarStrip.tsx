@@ -434,6 +434,8 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
           title={isRTL ? 'ניתוח לונג' : 'Long Analysis'}
           accent={T.accent.green}
           stats={breakdown.long}
+          series={monthSeries.long}
+          showChart={!isMobile}
         />
 
         {/* ── Short card ─────────────────────────────────────── */}
@@ -442,6 +444,8 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
           title={isRTL ? 'ניתוח שורט' : 'Short Analysis'}
           accent={T.accent.red}
           stats={breakdown.short}
+          series={monthSeries.short}
+          showChart={!isMobile}
         />
       </div>
 
