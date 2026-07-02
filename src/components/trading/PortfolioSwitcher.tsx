@@ -197,28 +197,24 @@ export function PortfolioSwitcher({ isRTL, compact }: Props) {
         aria-haspopup="listbox"
         aria-expanded={open}
         title={isRTL ? 'מעבר בין תיקים' : 'Switch portfolio'}
+        className="ohb-ghost"
         style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          padding: compact ? '6px 12px' : '7px 14px',
-          background: open ? 'rgba(30,41,59,0.85)' : 'rgba(15,23,42,0.55)',
-          border: `1px solid ${open ? 'rgba(148,163,184,0.28)' : 'rgba(148,163,184,0.15)'}`,
-          borderRadius: 10,
-          color: '#e2e8f0',
-          cursor: 'pointer',
-          fontSize: compact ? 11.5 : 12.5,
+          maxWidth: 240,
+          minWidth: 0,
+          height: 34,
+          padding: '0 11px',
+          gap: 8,
+          fontFamily: "'Inter', system-ui, sans-serif",
           fontWeight: 500,
-          fontFamily: "'Poppins', sans-serif",
-          letterSpacing: '0.01em',
-          maxWidth: 220, minWidth: 0,
-          boxShadow: 'none',
-          transition: 'background 0.18s ease, border-color 0.18s ease',
         }}
-        onMouseEnter={(e) => { if (!open) e.currentTarget.style.background = 'rgba(30,41,59,0.7)'; }}
-        onMouseLeave={(e) => { if (!open) e.currentTarget.style.background = 'rgba(15,23,42,0.55)'; }}
       >
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}>
+          <rect x="2" y="7" width="20" height="14" rx="2"/>
+          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+        </svg>
         {dot(activePortfolio?.color)}
-        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, textAlign: isRTL ? 'right' : 'left' }}>{triggerLabel}</span>
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(148,163,184,0.7)" strokeWidth="2" aria-hidden="true" style={{ transform: open ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s ease', flexShrink: 0 }}>
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, textAlign: isRTL ? 'right' : 'left', color: 'hsl(var(--foreground))' }}>{triggerLabel}</span>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" style={{ transform: open ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s ease', flexShrink: 0, opacity: 0.7 }}>
           <polyline points="6 9 12 15 18 9" />
         </svg>
       </button>

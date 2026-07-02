@@ -193,6 +193,22 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
     return { long: stat(L), short: stat(S) };
   }, [trades, isR]);
 
+  // Current-month cumulative equity series per direction (desktop mini-chart)
+  const monthSeries = useMemo(() => {
+    const rows = trades
+      .map(tr => ({ tr, d: parseTradeDate(tr.date) }))
+      .filter(x => x.d && x.d.getFullYear() === year && x.d.getMonth() === month)
+      .sort((a, b) => (a.d!.getTime() - b.d!.getTime()));
+    const long: number[] = [], short: number[] = [];
+    let cL = 0, cS = 0;
+    for (const { tr } of rows) {
+      const val = isR ? (getEffectiveR(tr, { strict: true }) ?? 0) : (Number(tr.pnl) || 0);
+      if (tr.direction === 'Short') { cS += val; short.push(cS); }
+      else { cL += val; long.push(cL); }
+    }
+    return { long, short };
+  }, [trades, year, month, isR]);
+
   const cardBase: React.CSSProperties = {
     background: T.bg.card,
     border: `1px solid ${T.border.subtle}`,
@@ -202,7 +218,7 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
   };
 
   return (
-    <div className="dash-section" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="dash-section" dir={isRTL ? 'rtl' : 'ltr'} style={{ marginBottom: 40 }}>
       <div className="dash-section-label" style={{ color: T.accent.cyan }}>
         {isRTL ? 'לוח שנה · לונג / שורט' : 'CALENDAR · LONG / SHORT'}
       </div>
@@ -418,6 +434,8 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
           title={isRTL ? 'ניתוח לונג' : 'Long Analysis'}
           accent={T.accent.green}
           stats={breakdown.long}
+          series={monthSeries.long}
+          showChart={!isMobile}
         />
 
         {/* ── Short card ─────────────────────────────────────── */}
@@ -426,6 +444,8 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
           title={isRTL ? 'ניתוח שורט' : 'Short Analysis'}
           accent={T.accent.red}
           stats={breakdown.short}
+          series={monthSeries.short}
+          showChart={!isMobile}
         />
       </div>
 
@@ -467,9 +487,11 @@ interface BreakdownProps {
     avgWin: number; avgLoss: number; avgPerTrade: number; totalPnl: number;
     avgRR: number; avgHold: number;
   };
+  series?: number[];
+  showChart?: boolean;
 }
 
-function BreakdownCard({ T, isRTL, isR, title, accent, stats }: BreakdownProps) {
+function BreakdownCard({ T, isRTL, isR, title, accent, stats, series, showChart }: BreakdownProps) {
   const card: React.CSSProperties = {
     background: T.bg.card,
     border: `1px solid ${T.border.subtle}`,
@@ -521,6 +543,30 @@ function BreakdownCard({ T, isRTL, isR, title, accent, stats }: BreakdownProps) 
         stats.avgRR > 0 ? stats.avgRR.toFixed(2) : '—',
         T.accent.cyan)}
       {row(isRTL ? 'זמן החזקה ממוצע' : 'Avg hold time', fmtMinutes(stats.avgHold, isRTL))}
+      {showChart && series && series.length > 1 && <EquityMiniChart series={series} color={accent} T={T} />}
+    </div>
+  );
+}
+
+function EquityMiniChart({ series, color, T }: { series: number[]; color: string; T: TradingTheme }) {
+  const W = 260, H = 44, PAD = 3;
+  const n = series.length;
+  const min = Math.min(0, ...series);
+  const max = Math.max(0, ...series);
+  const range = max - min || 1;
+  const x = (i: number) => PAD + (i * (W - PAD * 2)) / Math.max(1, n - 1);
+  const y = (v: number) => H - PAD - ((v - min) / range) * (H - PAD * 2);
+  const path = series.map((v, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const zeroY = y(0);
+  return (
+    <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${T.border.subtle}` }}>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="none" style={{ display: 'block', overflow: 'visible' }} aria-hidden="true">
+        <line x1={0} x2={W} y1={zeroY} y2={zeroY} stroke={T.border.subtle} strokeWidth={1} strokeDasharray="2 3" />
+        <path d={path} fill="none" stroke={color} strokeWidth={1.25} strokeLinejoin="round" strokeLinecap="round" />
+        {series.map((v, i) => (
+          <circle key={i} cx={x(i)} cy={y(v)} r={1.6} fill={color} opacity={0.85} />
+        ))}
+      </svg>
     </div>
   );
 }
