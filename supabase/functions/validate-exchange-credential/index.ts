@@ -556,6 +556,7 @@ export async function handler(req: Request, deps: HandlerDeps): Promise<Response
     kraken_futures:  () => verifyKrakenFutures(api_key, api_secret, deps.fetchImpl),
     crypto_com:      () => verifyCryptoCom(api_key, api_secret, deps.fetchImpl),
     coinbase:        () => verifyCoinbase(api_key, api_secret, deps.fetchImpl),
+    ibkr_flex:       () => verifyIbkrFlex(api_key, api_secret, deps.fetchImpl),
   };
   const verdict = await verifiers[provider]();
 
