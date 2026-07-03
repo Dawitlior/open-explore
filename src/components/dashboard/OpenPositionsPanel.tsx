@@ -340,34 +340,55 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
                 </div>
               </div>
 
-              {/* Money row: margin (what user put in) + risk $ */}
+              {/* Money row: Risk Management (At Risk + stop distance) + Trade Execution (Position Value) */}
+              {(() => {
+                const stopPct = stop ? Math.abs((entry - stop) / entry) * 100 : null;
+                return (
               <div style={{
                 display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8,
                 background: T.bg.secondary, border: `1px solid ${T.border.subtle}`,
                 borderRadius: 10, padding: '10px 12px',
               }}>
-                <div>
-                  <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 2, textTransform: 'uppercase', letterSpacing: 0.3 }}>
-                    {isRTL ? 'נכנסת עם' : 'Entered With'}
+                <div style={{ borderInlineEnd: `1px solid ${T.border.subtle}`, paddingInlineEnd: 10 }}>
+                  <div style={{ fontSize: 9, color: T.accent.red, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: 700 }}>
+                    {isRTL ? '· ניהול סיכון' : '· Risk Management'}
                   </div>
-                  <div style={{ fontSize: 15, color: T.text.primary, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>
-                    {fmtUsd(marginUsd)}
-                  </div>
-                  {leverage > 1 && (
-                    <div style={{ fontSize: 9, color: T.text.muted, marginTop: 2, fontFamily: "'JetBrains Mono', monospace" }}>
-                      {isRTL ? `נומינלי ${fmtUsd(notionalUsd)}` : `Notional ${fmtUsd(notionalUsd)}`}
-                    </div>
-                  )}
-                </div>
-                <div>
                   <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 2, textTransform: 'uppercase', letterSpacing: 0.3 }}>
                     {isRTL ? 'בסיכון' : 'At Risk'}
                   </div>
                   <div style={{ fontSize: 15, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: riskUsd ? T.accent.red : T.text.muted }}>
                     {riskUsd != null ? fmtUsd(riskUsd) : '—'}
                   </div>
+                  {stopPct != null && (
+                    <div style={{ fontSize: 9, color: T.text.muted, marginTop: 3, lineHeight: 1.3 }}>
+                      {isRTL ? `לפי מרחק סטופ ${stopPct.toFixed(2)}%` : `Based on ${stopPct.toFixed(2)}% stop distance`}
+                    </div>
+                  )}
+                </div>
+                <div style={{ paddingInlineStart: 4 }}>
+                  <div style={{ fontSize: 9, color: T.accent.cyan, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: 700 }}>
+                    {isRTL ? '· ביצוע עסקה' : '· Trade Execution'}
+                  </div>
+                  <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 2, textTransform: 'uppercase', letterSpacing: 0.3 }}>
+                    {isRTL ? 'שווי פוזיציה' : 'Position Value'}
+                  </div>
+                  <div style={{ fontSize: 15, color: T.text.primary, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>
+                    {fmtUsd(notionalUsd)}
+                  </div>
+                  {leverage > 1 ? (
+                    <div style={{ fontSize: 9, color: T.text.muted, marginTop: 3, fontFamily: "'JetBrains Mono', monospace" }}>
+                      {isRTL ? `מרג'ין ${fmtUsd(marginUsd)} · ${leverage}x` : `Margin ${fmtUsd(marginUsd)} · ${leverage}x`}
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: 9, color: T.text.muted, marginTop: 3, lineHeight: 1.3 }}>
+                      {isRTL ? 'שווי שוק כולל של הפוזיציה' : 'Total market value of position'}
+                    </div>
+                  )}
                 </div>
               </div>
+                );
+              })()}
+
 
 
               {/* Technical details grid — collapsed by default; expand via ▾ toggle. */}
