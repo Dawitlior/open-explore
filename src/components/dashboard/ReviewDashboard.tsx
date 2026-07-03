@@ -77,10 +77,31 @@ export const ReviewDashboard = ({
 }: ReviewDashboardProps) => {
   const { displayMode } = useDisplayMode();
   const isMoney = displayMode === 'MONEY';
+  const [shareOpen, setShareOpen] = useState(false);
   return (
     <div className="dash-root" dir={isRTL ? 'rtl' : 'ltr'}>
 
-      <h2 className="dash-greeting">{getTimeOfDayGreeting(isRTL)} 👋</h2>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+        <h2 className="dash-greeting" style={{ margin: 0 }}>{getTimeOfDayGreeting(isRTL)} 👋</h2>
+        <button
+          type="button"
+          onClick={() => setShareOpen(true)}
+          aria-label={isRTL ? 'שתף תעודת ביצועים' : 'Share performance card'}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            padding: '9px 14px', borderRadius: 999,
+            background: 'rgba(245,197,66,0.08)',
+            border: '1px solid rgba(245,197,66,0.45)',
+            color: '#f5c542', fontWeight: 700, fontSize: 13,
+            cursor: 'pointer', fontFamily: 'Poppins, system-ui, sans-serif',
+          }}
+        >
+          <Share2 size={14} /> {isRTL ? 'שתף סטטיסטיקות' : 'Share stats'}
+        </button>
+      </div>
+
+      <ShareStatsModal open={shareOpen} onClose={() => setShareOpen(false)} stats={stats} isRTL={isRTL} isMoney={isMoney} />
+
 
       <FeatureHint
         T={T}
