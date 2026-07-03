@@ -689,67 +689,120 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
 
       {/* Leaderboard moved to bottom — see end of page */}
 
-      {/* ═══ MONTHLY PERFORMANCE — redesigned cards ═══ */}
+      {/* ═══ MONTHLY PERFORMANCE — compact single-chart visual ═══ */}
       {showPro && registryAllows('cumWinLossRatio') && stats.monthlyPerf && stats.monthlyPerf.length > 0 && (() => {
-        const maxAbs = Math.max(1, ...stats.monthlyPerf.map((m: any) => Math.abs(isMoney ? m.pnl : (m.expectancyR * m.trades))));
+        const monthly = stats.monthlyPerf.map((mp: any) => {
+          const val = isMoney ? Number(mp.pnl) || 0 : (Number(mp.expectancyR) || 0) * (Number(mp.trades) || 0);
+          return {
+            month: mp.month,
+            value: val,
+            trades: Number(mp.trades) || 0,
+            winRate: Number(mp.winRate) || 0,
+            expectancyR: Number(mp.expectancyR) || 0,
+            pnl: Number(mp.pnl) || 0,
+          };
+        });
+        const positives = monthly.filter((m: any) => m.value > 0).length;
+        const negatives = monthly.filter((m: any) => m.value < 0).length;
+        const bestMonth = monthly.reduce((b: any, c: any) => (c.value > (b?.value ?? -Infinity) ? c : b), monthly[0]);
+        const worstMonth = monthly.reduce((b: any, c: any) => (c.value < (b?.value ?? Infinity) ? c : b), monthly[0]);
+        const netSum = monthly.reduce((s: number, m: any) => s + m.value, 0);
+        const fmt = (v: number) => isMoney
+          ? `${v >= 0 ? '+' : ''}$${v.toFixed(2)}`
+          : `${v >= 0 ? '+' : ''}${v.toFixed(2)}R`;
+
         return (
           <GlassCard T={T} style={{ marginBottom: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, gap: 8, flexWrap: 'wrap' }}>
               <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700 }}>{t('פירוט ביצועים חודשיים','Monthly Performance Detail')}</div>
               <span style={{ fontSize: 10, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.1em' }}>
-                {stats.monthlyPerf.length} {t('חודשים','months')} · {isMoney ? '$' : 'R'}
+                {monthly.length} {t('חודשים','months')} · {isMoney ? '$' : 'R'}
               </span>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 10 }}>
-              {stats.monthlyPerf.map((mp: any, i: number) => {
-                const val = isMoney ? mp.pnl : (mp.expectancyR * mp.trades);
-                const positive = val >= 0;
-                const color = positive ? T.accent.green : T.accent.red;
-                const intensity = Math.min(1, Math.abs(val) / maxAbs);
-                const displayVal = isMoney
-                  ? `${positive ? '+' : ''}$${mp.pnl.toFixed(2)}`
-                  : `${val >= 0 ? '+' : ''}${val.toFixed(2)}R`;
-                return (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.25, delay: i * 0.025 }}
-                    style={{
-                      position: 'relative',
-                      padding: '14px 16px',
-                      borderRadius: 12,
-                      background: `linear-gradient(135deg, ${color}14 0%, ${T.bg.tertiary}40 100%)`,
-                      border: `1px solid ${color}33`,
-                      overflow: 'hidden',
+
+            {/* Quick summary strip — replaces the tall card grid */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 120px), 1fr))',
+              gap: 6,
+              marginBottom: 12,
+            }}>
+              {[
+                { label: t('חודשים חיוביים','Green months'), value: `${positives}/${monthly.length}`, color: T.accent.green },
+                { label: t('חודשים שליליים','Red months'), value: `${negatives}/${monthly.length}`, color: T.accent.red },
+                { label: t('חודש חזק','Best month'), value: bestMonth ? `${bestMonth.month} · ${fmt(bestMonth.value)}` : '—', color: T.accent.green },
+                { label: t('חודש חלש','Worst month'), value: worstMonth ? `${worstMonth.month} · ${fmt(worstMonth.value)}` : '—', color: T.accent.red },
+                { label: t('סה״כ נטו','Net total'), value: fmt(netSum), color: netSum >= 0 ? T.accent.green : T.accent.red },
+              ].map((k, i) => (
+                <div key={i} style={{
+                  padding: '7px 9px', borderRadius: 8,
+                  background: `${T.bg.tertiary}55`, border: `1px solid ${T.border.subtle}`,
+                }}>
+                  <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{k.label}</div>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: k.color, fontFamily: "'JetBrains Mono', monospace", marginTop: 2 }}>{k.value}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Single combined chart: bars for P&L/R, line for win-rate */}
+            <div style={{ width: '100%', height: isMobile ? 220 : 300 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={monthly} margin={{ top: 12, right: 12, bottom: 8, left: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} vertical={false} />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fill: T.text.secondary, fontSize: isMobile ? 9 : 11, fontWeight: 600 }}
+                    interval={monthly.length > (isMobile ? 8 : 18) ? 'preserveStartEnd' : 0}
+                    angle={isMobile && monthly.length > 6 ? -35 : 0}
+                    textAnchor={isMobile && monthly.length > 6 ? 'end' : 'middle'}
+                    height={isMobile && monthly.length > 6 ? 46 : 26}
+                    tickMargin={6}
+                    padding={{ left: 6, right: 6 }}
+                  />
+                  <YAxis
+                    yAxisId="left"
+                    tick={{ fill: T.text.muted, fontSize: 10 }}
+                    width={48}
+                    tickFormatter={(v: number) => isMoney ? `$${Math.round(v)}` : `${v.toFixed(1)}R`}
+                  />
+                  <YAxis
+                    yAxisId="right"
+                    orientation="right"
+                    domain={[0, 100]}
+                    tick={{ fill: T.text.muted, fontSize: 10 }}
+                    width={36}
+                    tickFormatter={(v: number) => `${Math.round(v)}%`}
+                  />
+                  <Tooltip
+                    contentStyle={tt}
+                    formatter={(v: any, name: any, p: any) => {
+                      if (name === 'value') return [fmt(Number(v)), `${p?.payload?.trades || 0} ${t('עסקאות','trades')}`];
+                      if (name === 'winRate') return [`${Number(v).toFixed(0)}%`, t('אחוז הצלחה','Win rate')];
+                      return [v, name];
                     }}
-                  >
-                    <div style={{ position: 'absolute', insetInlineStart: 0, top: 0, bottom: 0, width: 3, background: color, opacity: 0.7 }} />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-                      <span style={{ fontSize: 11, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em' }}>{mp.month}</span>
-                      <span style={{ fontSize: 9, padding: '2px 7px', borderRadius: 6, background: `${T.bg.tertiary}`, color: T.text.muted, fontWeight: 600 }}>{mp.trades}{t(' עס׳',' tr')}</span>
-                    </div>
-                    <div style={{ fontSize: 18, fontWeight: 800, color, fontFamily: "'JetBrains Mono', monospace", marginBottom: 8, letterSpacing: '-0.02em' }}>
-                      <PV>{displayVal}</PV>
-                    </div>
-                    <div style={{ height: 4, background: `${T.bg.tertiary}`, borderRadius: 4, overflow: 'hidden', marginBottom: 8 }}>
-                      <div style={{ width: `${intensity * 100}%`, height: '100%', background: color, borderRadius: 4, transition: 'width 0.4s ease' }} />
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10 }}>
-                      <span style={{ color: T.text.muted }}>
-                        {t('הצלחה','Win')} <span style={{ color: mp.winRate >= 50 ? T.accent.green : T.accent.orange, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>{mp.winRate.toFixed(0)}%</span>
-                      </span>
-                      <span style={{ color: T.text.muted }}>
-                        {t('תוחלת','Exp')} <span style={{ color: mp.expectancyR >= 0 ? T.accent.purple : T.accent.red, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>{mp.expectancyR >= 0 ? '+' : ''}{mp.expectancyR.toFixed(2)}R</span>
-                      </span>
-                    </div>
-                  </motion.div>
-                );
-              })}
+                  />
+                  <ReferenceLine yAxisId="left" y={0} stroke={T.border.medium} />
+                  <Bar yAxisId="left" dataKey="value" radius={[5, 5, 0, 0]}>
+                    {monthly.map((m: any, i: number) => (
+                      <Cell key={i} fill={m.value >= 0 ? T.accent.green : T.accent.red} />
+                    ))}
+                  </Bar>
+                  <Line
+                    yAxisId="right"
+                    type="monotone"
+                    dataKey="winRate"
+                    stroke={T.accent.cyan}
+                    strokeWidth={2}
+                    dot={{ r: 3, fill: T.accent.cyan, strokeWidth: 0 }}
+                    activeDot={{ r: 5 }}
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
             </div>
           </GlassCard>
         );
       })()}
+
 
       {/* ═══ QUARTERLY & YEARLY PERFORMANCE DETAIL ═══ */}
       {showPro && stats.monthlyPerf && stats.monthlyPerf.length > 0 && (() => {
