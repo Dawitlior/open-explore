@@ -9,6 +9,11 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { X, Download, Share2, Copy } from 'lucide-react';
+import type { Trade } from '@/data/trades';
+import { computeAnalytics } from '@/lib/trading-analytics';
+import { parseTradeDate } from '@/components/weekly-review/lib/week-key';
+
+type ShareRange = 'all' | 'month' | 'week' | 'day' | 'last10';
 
 interface ShareStatsModalProps {
   open: boolean;
@@ -16,6 +21,8 @@ interface ShareStatsModalProps {
   stats: any;
   isRTL: boolean;
   isMoney: boolean;
+  /** Optional — enables the range selector (All / Month / Week / Day / Last 10). */
+  trades?: Trade[];
 }
 
 const W = 1080;
