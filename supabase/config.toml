@@ -9,6 +9,9 @@ verify_jwt = false
 [functions.sync-futures-trades]
 verify_jwt = false
 
+[functions.sync-ibkr-flex]
+verify_jwt = false
+
 [functions.sync-economic-events]
 verify_jwt = false
 
