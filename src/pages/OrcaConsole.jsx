@@ -1465,11 +1465,12 @@ function BoardReport({ t, lang, traders, eng, aiUsage, funnel, onClose }) {
     { en: `Weekly-active population ${growth >= 0 ? "expanded" : "contracted"} ${Math.abs(growth)}% over the window.`, he: `אוכלוסיית הפעילים השבועית ${growth >= 0 ? "התרחבה" : "התכווצה"} ב-${Math.abs(growth)}% לאורך התקופה.` },
     { en: `Aggregate expectancy of ${expAvg}R with ${profitablePct}% of traders net-positive.`, he: `תוחלת מצרפית של ${expAvg}R כש-${profitablePct}% מהסוחרים רווחיים נטו.` },
     { en: `${loc(lang, dom.a)} leads as the dominant archetype at ${domPct}% of profiled traders.`, he: `${loc(lang, dom.a)} מוביל כארכיטיפ הדומיננטי עם ${domPct}% מהסוחרים המפולחים.` },
-    { en: `Mean discipline index of ${discAvg}/100, edge-health ${edgeAvg}/100 across the base.`, he: `מדד משמעת ממוצע ${discAvg}/100, בריאות-יתרון ${edgeAvg}/100 לרוחב הבסיס.` },
+    { en: `Mean discipline index of ${discAvg}/100 across the base.`, he: `מדד משמעת ממוצע ${discAvg}/100 לרוחב הבסיס.` },
     { en: `~${revengePct}% of traders exhibit elevated reactive-entry behaviour.`, he: `כ-${revengePct}% מהסוחרים מגלים כניסה-תגובתית מוגברת.` },
     { en: `${profiledPct}% behavioural-profiling coverage; ${100 - profiledPct}% awaiting diagnostic.`, he: `${profiledPct}% כיסוי פרופיל התנהגותי; ${100 - profiledPct}% ממתינים לאבחון.` },
     { en: `Weekly churn at ${churn}% against ${stick}% DAU/MAU stickiness.`, he: `נטישה שבועית ${churn}% מול דביקות DAU/MAU של ${stick}%.` },
-    { en: `${killTot} kill-switch events and ${recovTot} recovery-mode entries this period.`, he: `${killTot} הפעלות kill-switch ו-${recovTot} כניסות למצב התאוששות בתקופה.` },
+    { en: `Kill-switch and recovery-mode event logs are not yet instrumented per-trader.`, he: `לוגי kill-switch ו-Recovery ברמת-הסוחר עדיין אינם מנוטרים.` },
+
   ];
   const fSel = rot(findings, seed, 4);
   const recPool = [];
