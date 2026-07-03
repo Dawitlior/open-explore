@@ -88,6 +88,8 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
   const showPro = tier === 'pro' || tier === 'max';
   const showMax = tier === 'max';
   const showCore = true;
+  const isMobile = useIsMobile();
+
   const tt = {
     background: T.bg.card,
     border: `1px solid ${T.border.medium}`,
