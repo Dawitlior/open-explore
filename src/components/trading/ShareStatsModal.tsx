@@ -43,7 +43,7 @@ function fmtMoney(v: number | undefined | null) {
   return `${s}$${Math.abs(Number(v)).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 }
 
-async function paint(canvas: HTMLCanvasElement, stats: any, isRTL: boolean, isMoney: boolean) {
+async function paint(canvas: HTMLCanvasElement, stats: any, isRTL: boolean, isMoney: boolean, rangeLabel?: string) {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
   const dpr = window.devicePixelRatio || 1;
