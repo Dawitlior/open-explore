@@ -101,6 +101,13 @@ export function validateInput(raw: unknown):
     if (!isPemPrivateKey(apiSecret)) {
       return { ok: false, error: 'invalid_api_secret', detail: 'Coinbase secret must be a PEM private-key block (BEGIN PRIVATE KEY ... END PRIVATE KEY).' };
     }
+  } else if (provider === 'ibkr_flex') {
+    if (!IBKR_QUERY_ID.test(apiKey)) {
+      return { ok: false, error: 'invalid_api_key', detail: 'IBKR Flex Query ID must be a numeric string (e.g. 123456).' };
+    }
+    if (!IBKR_TOKEN.test(apiSecret)) {
+      return { ok: false, error: 'invalid_api_secret', detail: 'IBKR Flex Token must be a long alphanumeric string.' };
+    }
   } else {
     if (!SAFE_KEY.test(apiKey)) return { ok: false, error: 'invalid_api_key', detail: 'API key contains forbidden characters' };
     if (!SAFE_SECRET.test(apiSecret)) return { ok: false, error: 'invalid_api_secret', detail: 'API secret contains forbidden characters' };
