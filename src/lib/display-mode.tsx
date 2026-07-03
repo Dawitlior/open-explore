@@ -106,8 +106,11 @@ export function DisplayModeProvider({ trades, children }: { trades: Trade[]; chi
     if (locked && m === 'R_MULTIPLE') return; // can't enter R without eligible data
     setDisplayModeState(m);
     try {
+      // Session-scoped manual override — resets on next session so auto-detect
+      // takes over again when the user returns to the platform.
+      window.sessionStorage.setItem(STORAGE_KEY, m);
+      window.sessionStorage.setItem(USER_SET_KEY, '1');
       window.localStorage.setItem(STORAGE_KEY, m);
-      window.localStorage.setItem(USER_SET_KEY, '1');
     } catch { /* ignore */ }
     try { window.dispatchEvent(new CustomEvent('orca:displayMode-changed', { detail: m })); } catch { /* noop */ }
   };
