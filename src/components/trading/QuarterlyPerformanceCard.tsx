@@ -15,6 +15,7 @@ import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { getEffectiveR } from '@/lib/r-multiple';
 import { parseTradeDate } from '@/components/weekly-review/lib/week-key';
+import { useDisplayMode } from '@/lib/display-mode';
 
 interface Props {
   T: TradingTheme;
@@ -49,6 +50,9 @@ function arcPath(cx: number, cy: number, r: number, start: number, end: number, 
 }
 
 export function QuarterlyPerformanceCard({ T, trades, isRTL }: Props) {
+  const { displayMode } = useDisplayMode();
+  const isMoney = displayMode === 'MONEY';
+
   const { buckets, yearsRange, bestQ, hasData } = useMemo(() => {
     const map = new Map<QKey, QBucket>();
     ([1, 2, 3, 4] as QKey[]).forEach(q => map.set(q, { q, n: 0, wins: 0, losses: 0, totalR: 0, totalPnl: 0 }));
@@ -58,11 +62,14 @@ export function QuarterlyPerformanceCard({ T, trades, isRTL }: Props) {
       if (!d) continue;
       const q = (Math.floor(d.getMonth() / 3) + 1) as QKey;
       const b = map.get(q)!;
-      const r = getEffectiveR(tr, { strict: true });
+      // Non-strict: falls back to a proxy R when explicit R is missing.
+      // This mirrors the money-mode behaviour and prevents an empty card
+      // for R-only imports without stop/target metadata.
+      const r = getEffectiveR(tr, { strict: false });
       const pnl = Number(tr.pnl) || 0;
       b.n += 1;
       b.totalPnl += pnl;
-      if (r != null) b.totalR += r;
+      if (r != null && Number.isFinite(r)) b.totalR += r;
       if (pnl > 0) b.wins += 1;
       else if (pnl < 0) b.losses += 1;
       const y = d.getFullYear();
@@ -70,11 +77,20 @@ export function QuarterlyPerformanceCard({ T, trades, isRTL }: Props) {
       if (y > maxY) maxY = y;
     }
     const buckets = Array.from(map.values()).sort((a, b) => a.q - b.q);
-    const bestQ = buckets.reduce((best, cur) => (cur.totalR > best.totalR ? cur : best), buckets[0]);
+    // Rank by the metric we're currently displaying so "strongest quarter"
+    // always matches the value shown in the callout.
+    const rankMetric = (b: QBucket) => (isMoney ? b.totalPnl : b.totalR);
+    const bestQ = buckets.reduce((best, cur) => (rankMetric(cur) > rankMetric(best) ? cur : best), buckets[0]);
     const yearsRange = minY === Infinity ? '' : (minY === maxY ? `${minY}` : `${minY} – ${maxY}`);
     const hasData = buckets.some(b => b.n > 0);
     return { buckets, yearsRange, bestQ, hasData };
-  }, [trades]);
+  }, [trades, isMoney]);
+
+  const fmtMoney = (v: number) => `${v >= 0 ? '+' : ''}$${Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: v >= 1000 || v <= -1000 ? 0 : 2 })}`;
+  const fmtR = (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(2)}R`;
+  const fmtVal = (b: QBucket) => (isMoney ? fmtMoney(b.totalPnl) : fmtR(b.totalR));
+  const valueOf = (b: QBucket) => (isMoney ? b.totalPnl : b.totalR);
+
 
   const QCOLORS: Record<QKey, string> = { 1: T.accent.cyan, 2: T.accent.green, 3: T.accent.purple, 4: T.accent.orange };
 
