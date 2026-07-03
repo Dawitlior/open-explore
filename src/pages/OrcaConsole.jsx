@@ -1066,12 +1066,15 @@ function TraderMatrix({ t, lang, traders, onPick }) {
 function Benchmarks({ t, lang, traders, eng }) {
   const n = Math.max(traders.length, 1);
   const avgExp = r2(traders.reduce((s, x) => s + x.expectancy, 0) / n), profit = Math.round(traders.filter((x) => x.expectancy > 0).length / n * 100);
-  const disc = Math.round(traders.reduce((s, x) => s + x.discipline, 0) / n), edge = Math.round(traders.reduce((s, x) => s + x.edgeHealth, 0) / n);
+  const disc = Math.round(traders.reduce((s, x) => s + x.discipline, 0) / n);
+  // edgeHealth is not persisted per-trader yet — omit from benchmarks rather
+  // than emit a hard-coded 0. See "Awaiting Edge-health metric" pending state.
   const revenge = Math.round(traders.filter((x) => x.revenge > 0.4).length / n * 100), over = Math.round(traders.filter((x) => x.overZ > 1.2).length / n * 100);
   const sess = r1(traders.reduce((s, x) => s + x.sessionsWk, 0) / n), vol = eng.slice(-4).reduce((s, e) => s + e.trades, 0);
-  const cards = [{ l: t("benchExpect"), v: `${sgn(avgExp)}${avgExp}R`, c: avgExp >= 0 ? C.pos : C.neg }, { l: t("benchProfit"), v: `${profit}%`, c: C.blue }, { l: t("benchDisc"), v: `${disc}/100`, c: C.ink }, { l: t("benchEdge"), v: `${edge}/100`, c: C.ink }, { l: t("benchRevenge"), v: `${revenge}%`, c: C.warn }, { l: t("benchOver"), v: `${over}%`, c: C.warn }, { l: t("benchAvgSess"), v: `${sess}`, c: C.ink }, { l: t("benchVol"), v: nf.format(vol), c: C.blue }];
+  const cards = [{ l: t("benchExpect"), v: `${sgn(avgExp)}${avgExp}R`, c: avgExp >= 0 ? C.pos : C.neg }, { l: t("benchProfit"), v: `${profit}%`, c: C.blue }, { l: t("benchDisc"), v: `${disc}/100`, c: C.ink }, { l: t("benchRevenge"), v: `${revenge}%`, c: C.warn }, { l: t("benchOver"), v: `${over}%`, c: C.warn }, { l: t("benchAvgSess"), v: `${sess}`, c: C.ink }, { l: t("benchVol"), v: nf.format(vol), c: C.blue }];
   const distArch = ARCH.map((a, i) => ({ name: loc(lang, a), v: r2(traders.filter((x) => x.arch.id === a.id).reduce((s, x) => s + Math.max(0, x.expectancy), 0) / Math.max(traders.filter((x) => x.arch.id === a.id).length, 1)), c: PAL[i] }));
-  const radial = [{ name: t("benchProfit"), v: profit, c: C.blue }, { name: t("benchDisc"), v: disc, c: C.pos }, { name: t("benchEdge"), v: edge, c: PAL[1] }];
+  const radial = [{ name: t("benchProfit"), v: profit, c: C.blue }, { name: t("benchDisc"), v: disc, c: C.pos }];
+
   const presets = [{ fn: "admin_benchmarks", params: { kmin: "25" } }, { fn: "admin_benchmarks", params: { kmin: "50" } }, { fn: "admin_benchmarks", params: { asset: "crypto", kmin: "25" } }, { fn: "admin_benchmarks", params: { tier: "Ultimate", kmin: "25" } }];
   return (
     <>
