@@ -1014,7 +1014,11 @@ function TraderMatrix({ t, lang, traders, onPick }) {
   let rows = seg === "all" ? traders : traders.filter((x) => segOf(x) === seg);
   rows = [...rows].sort((a, b) => b[sortKey] - a[sortKey]).slice(0, 40);
   const cols = [{ k: "code", l: t("thId"), align: "start" }, { k: "arch", l: t("thArch"), align: "start" }, { k: "tier", l: t("thTier"), align: "start" }, { k: "discipline", l: t("thDisc"), bar: valueTone }, { k: "retentionRisk", l: t("thRetention"), bar: riskTone }, { k: "behaviouralRisk", l: t("thBehaviour"), bar: riskTone }, { k: "valuePotential", l: t("thValue"), bar: valueTone }, { k: "expectancy", l: t("thExpect"), align: "end" }, { k: "sessionsWk", l: t("thSessions"), align: "end" }, { k: "lastActive", l: t("thLastSeen"), align: "end" }];
-  const quad = traders.map((x) => ({ x: x.valuePotential, y: 100 - Math.max(x.behaviouralRisk, x.retentionRisk), z: x.ltv, c: valueTone(x.valuePotential), id: x.id }));
+  // Z-axis bubble size — use live `sessionsWk` (weekly-active intensity).
+  // Previous code used `ltv` which is unmapped in the RPC and always 0,
+  // so every bubble rendered at the same minimum size.
+  const quad = traders.map((x) => ({ x: x.valuePotential, y: 100 - Math.max(x.behaviouralRisk, x.retentionRisk), z: Math.max(1, x.sessionsWk), c: valueTone(x.valuePotential), id: x.id }));
+
   const segOpts = [{ v: "all", l: t("segAll") }, { v: "stars", l: t("segStars") }, { v: "watch", l: t("segWatch") }, { v: "risk", l: t("segRisk") }, { v: "dormant", l: t("segDormant") }];
   const counts = traders.reduce((a, x) => ((a[segOf(x)] = (a[segOf(x)] || 0) + 1), a), {});
   const trk = topBy(traders, "behaviouralRisk").map((x) => ({ code: x.code, v: x.behaviouralRisk, label: x.behaviouralRisk }));
