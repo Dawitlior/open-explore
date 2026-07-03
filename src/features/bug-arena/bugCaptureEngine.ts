@@ -194,6 +194,7 @@ export class ElementPicker {
 
   // -- internals ------------------------------------------------------
   private build() {
+    const isMobileOverlay = typeof window !== 'undefined' && window.innerWidth < 768;
     const o = document.createElement('div');
     o.setAttribute(OVERLAY_ATTR, 'root');
     Object.assign(o.style, {
@@ -202,11 +203,18 @@ export class ElementPicker {
       zIndex: String(Z),
       cursor: 'crosshair',
       touchAction: 'none',
-      background: 'rgba(6,10,18,0.28)',
-      backdropFilter: 'saturate(1.05)',
+      // Darker overlay on mobile so we can drop the giant 2000px ring shadow.
+      background: isMobileOverlay ? 'rgba(6,10,18,0.42)' : 'rgba(6,10,18,0.28)',
+      // Skip backdrop-filter on mobile — the compositing cost is not worth it.
+      ...(isMobileOverlay ? {} : { backdropFilter: 'saturate(1.05)' }),
     } as CSSStyleDeclaration);
 
-    // highlight ring
+
+    // highlight ring — on mobile we skip the giant 2000px box-shadow
+    // (it triggers full-viewport repaints on every pointermove and is the
+    // main cause of laggy element picking). Dimming is provided by the
+    // overlay's own background instead.
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
     const ring = document.createElement('div');
     ring.setAttribute(OVERLAY_ATTR, 'ring');
     Object.assign(ring.style, {
@@ -214,14 +222,18 @@ export class ElementPicker {
       pointerEvents: 'none',
       border: `2px solid ${this.opts.accent}`,
       borderRadius: '6px',
-      boxShadow: `0 0 0 2000px rgba(6,10,18,0.45), 0 0 18px ${this.opts.accent}55`,
-      transition: 'all 60ms ease-out',
+      boxShadow: isMobile
+        ? `0 0 12px ${this.opts.accent}88`
+        : `0 0 0 2000px rgba(6,10,18,0.45), 0 0 18px ${this.opts.accent}55`,
+      transition: 'left 40ms linear, top 40ms linear, width 40ms linear, height 40ms linear',
+      willChange: 'left, top, width, height',
       left: '0px',
       top: '0px',
       width: '0px',
       height: '0px',
       opacity: '0',
     } as CSSStyleDeclaration);
+
 
     // floating element tag/label near the cursor
     const tag = document.createElement('div');
