@@ -16,6 +16,7 @@ import { WinsByMonthChart, WinsByQuarterChart, ReturnPerTimeChart } from './Simp
 import { OpenPositionsPanel } from './OpenPositionsPanel';
 import { useDisplayMode, hasStrictR } from '@/lib/display-mode';
 import { getEffectiveR } from '@/lib/r-multiple';
+import { QuarterlyPerformanceCard } from '@/components/trading/QuarterlyPerformanceCard';
 
 
 interface ReviewDashboardProps {
@@ -327,6 +328,30 @@ export const ReviewDashboard = ({
                 </div>
 
                 <div className="dash-chart-card">
+                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ביצועים רבעוניים — Multi-View' : 'Quarterly Performance — Multi-View'} explanation={EXPLANATIONS.monthlyPerformance} unit="R">
+                    <QuarterlyPerformanceCard T={T} trades={trades} isRTL={isRTL} />
+                  </ChartWrapper>
+                </div>
+
+                <div className="dash-chart-card">
+                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ניצחונות לפי חודש — לונג / שורט' : 'Wins by Month — Long / Short'} explanation={EXPLANATIONS.monthlyPerformance}>
+                    <WinsByMonthChart T={T} trades={trades} isRTL={isRTL} tt={tt} />
+                  </ChartWrapper>
+                </div>
+
+                <div className="dash-chart-card">
+                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ניצחונות לפי רבעון — לונג / שורט' : 'Wins by Quarter — Long / Short'} explanation={EXPLANATIONS.monthlyPerformance}>
+                    <WinsByQuarterChart T={T} trades={trades} isRTL={isRTL} tt={tt} />
+                  </ChartWrapper>
+                </div>
+
+                <div className="dash-chart-card">
+                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'תשואה ממוצעת לשעת החזקה' : 'Return / Time Held — avg'} explanation={EXPLANATIONS.expectancy}>
+                    <ReturnPerTimeChart T={T} trades={trades} isRTL={isRTL} tt={tt} />
+                  </ChartWrapper>
+                </div>
+
+                <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ביצועים חודשיים (R)' : 'Monthly Performance (R)'} explanation={EXPLANATIONS.monthlyPerformance} unit="R">
                     <div
                       className="orca-thin-scroll"
@@ -351,24 +376,6 @@ export const ReviewDashboard = ({
                         );
                       })}
                     </div>
-                  </ChartWrapper>
-                </div>
-
-                <div className="dash-chart-card">
-                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ניצחונות לפי חודש — לונג / שורט' : 'Wins by Month — Long / Short'} explanation={EXPLANATIONS.monthlyPerformance}>
-                    <WinsByMonthChart T={T} trades={trades} isRTL={isRTL} tt={tt} />
-                  </ChartWrapper>
-                </div>
-
-                <div className="dash-chart-card">
-                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ניצחונות לפי רבעון — לונג / שורט' : 'Wins by Quarter — Long / Short'} explanation={EXPLANATIONS.monthlyPerformance}>
-                    <WinsByQuarterChart T={T} trades={trades} isRTL={isRTL} tt={tt} />
-                  </ChartWrapper>
-                </div>
-
-                <div className="dash-chart-card">
-                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'תשואה ממוצעת לשעת החזקה' : 'Return / Time Held — avg'} explanation={EXPLANATIONS.expectancy}>
-                    <ReturnPerTimeChart T={T} trades={trades} isRTL={isRTL} tt={tt} />
                   </ChartWrapper>
                 </div>
               </div>

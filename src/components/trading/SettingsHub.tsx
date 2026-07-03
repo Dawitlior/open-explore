@@ -89,6 +89,16 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
       return sliced;
     });
   };
+  // Listen for external "open a specific tab" requests (e.g. from empty-state CTA).
+  useEffect(() => {
+    const onOpenTab = (e: Event) => {
+      const detail = (e as CustomEvent).detail as TabId | undefined;
+      if (detail) setTab(detail);
+    };
+    window.addEventListener('orca:settings:open-tab', onOpenTab as EventListener);
+    return () => window.removeEventListener('orca:settings:open-tab', onOpenTab as EventListener);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const canGoBack = historyIdx > 0;
   const canGoFwd = historyIdx < tabHistory.length - 1;
   const goBack = () => { if (canGoBack) setHistoryIdx(historyIdx - 1); };
@@ -879,6 +889,14 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                     );
                   })()}
 
+
+                  {!isMobile && (
+                    <div style={card}>
+                      <h3 style={sectionTitle}><Sparkles size={14} /> {t('תוכנית פעילה', 'Active Plan')}</h3>
+                      <p style={sectionHint}>{t('החלף בין BEGINNER · ADVANCED · ULTIMATE. השינוי מיידי בכל הפלטפורמה.', 'Switch between BEGINNER · ADVANCED · ULTIMATE. Applies instantly across the platform.')}</p>
+                      <ModeSwitch T={T} isRTL={isRTL} />
+                    </div>
+                  )}
 
                   <div style={{ ...card, borderColor: `${T.accent.orange}40`, background: `linear-gradient(135deg, ${T.accent.orange}08, transparent)` }}>
                     <h3 style={{ ...sectionTitle, color: T.accent.orange }}><AlertTriangle size={14} /> {t('יציאה מהמערכת', 'Sign out')}</h3>
