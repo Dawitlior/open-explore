@@ -89,6 +89,16 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
       return sliced;
     });
   };
+  // Listen for external "open a specific tab" requests (e.g. from empty-state CTA).
+  useEffect(() => {
+    const onOpenTab = (e: Event) => {
+      const detail = (e as CustomEvent).detail as TabId | undefined;
+      if (detail) setTab(detail);
+    };
+    window.addEventListener('orca:settings:open-tab', onOpenTab as EventListener);
+    return () => window.removeEventListener('orca:settings:open-tab', onOpenTab as EventListener);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const canGoBack = historyIdx > 0;
   const canGoFwd = historyIdx < tabHistory.length - 1;
   const goBack = () => { if (canGoBack) setHistoryIdx(historyIdx - 1); };
