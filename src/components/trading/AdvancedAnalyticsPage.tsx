@@ -976,23 +976,41 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
             </ResponsiveContainer>
           </GlassCard>}
           {registryAllows('edgeDecay') && <GlassCard T={T} glow={`${T.accent.green}18`}>
-            <div style={{ fontSize: 11, color: T.accent.green, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>● PRO · {t('אבולוציית Profit Factor','Profit Factor Evolution')}</div>
-            <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={pfEvolution}>
-                <defs>
-                  <linearGradient id="pfG" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={T.accent.green} stopOpacity={0.5} />
-                    <stop offset="100%" stopColor={T.accent.green} stopOpacity={0.04} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
-                <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
-                <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
-                <Tooltip contentStyle={tt} />
-                <Area type="monotone" dataKey="pf" stroke={T.accent.green} fill="url(#pfG)" strokeWidth={2.2} />
-              </AreaChart>
-            </ResponsiveContainer>
+            <div style={{ fontSize: 11, color: T.accent.green, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>
+              ● PRO · {t('אבולוציית Profit Factor','Profit Factor Evolution')}
+              <span style={{ marginInlineStart: 8, color: T.text.muted, fontSize: 9.5, letterSpacing: '0.12em' }}>· {isMoney ? '$' : 'R'}</span>
+            </div>
+            {pfEvolution.length < 2 ? (
+              <div style={{ height: 220, display: 'grid', placeItems: 'center', color: T.text.muted, fontSize: 12, textAlign: 'center', padding: 12 }}>
+                {t(
+                  `לא ניתן לחשב Profit Factor ב-${isMoney ? 'כסף' : 'R'} — נדרש לפחות הפסד אחד ורווח אחד.`,
+                  `Not enough ${isMoney ? '$' : 'R'} data — Profit Factor needs at least one winning and one losing trade.`
+                )}
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={220}>
+                <AreaChart data={pfEvolution} margin={{ top: 8, right: 8, bottom: 4, left: 0 }}>
+                  <defs>
+                    <linearGradient id="pfG" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={T.accent.green} stopOpacity={0.5} />
+                      <stop offset="100%" stopColor={T.accent.green} stopOpacity={0.04} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+                  <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                  <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => `${Number(v).toFixed(2)}x`} />
+                  <ReferenceLine y={1} stroke={T.border.medium} strokeDasharray="4 3" />
+                  <Tooltip
+                    contentStyle={tt}
+                    formatter={(v: any) => [`${Number(v).toFixed(2)}x`, t('פקטור רווח','Profit Factor')]}
+                    labelFormatter={(l: any) => `${t('עסקה','Trade')} #${l}`}
+                  />
+                  <Area type="monotone" dataKey="pf" stroke={T.accent.green} fill="url(#pfG)" strokeWidth={2.2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
           </GlassCard>}
+
         </div>
       )}
 
