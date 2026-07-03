@@ -452,11 +452,13 @@ export type Database = {
           id: string
           is_active: boolean
           label: string | null
+          last_error: string | null
           last_validated_at: string | null
           portfolio_id: string
           provider: string
           scope: string
           secret_id: string
+          status: string
           updated_at: string
           user_id: string
         }
@@ -467,11 +469,13 @@ export type Database = {
           id?: string
           is_active?: boolean
           label?: string | null
+          last_error?: string | null
           last_validated_at?: string | null
           portfolio_id: string
           provider: string
           scope?: string
           secret_id: string
+          status?: string
           updated_at?: string
           user_id?: string
         }
@@ -482,11 +486,13 @@ export type Database = {
           id?: string
           is_active?: boolean
           label?: string | null
+          last_error?: string | null
           last_validated_at?: string | null
           portfolio_id?: string
           provider?: string
           scope?: string
           secret_id?: string
+          status?: string
           updated_at?: string
           user_id?: string
         }
