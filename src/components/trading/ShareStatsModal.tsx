@@ -358,6 +358,40 @@ export function ShareStatsModal({ open, onClose, stats, isRTL, isMoney, trades }
           </button>
         </div>
 
+        {trades && (
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 11, letterSpacing: 1, color: 'rgba(159,176,197,0.75)', marginBottom: 6, fontFamily: '"IBM Plex Mono", ui-monospace, monospace' }}>
+              {isRTL ? 'טווח נתונים' : 'DATA RANGE'}
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {rangeOptions.map(opt => {
+                const active = range === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setRange(opt.id)}
+                    style={{
+                      padding: '7px 12px',
+                      borderRadius: 999,
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      fontFamily: 'Poppins, system-ui, sans-serif',
+                      background: active ? 'rgba(245,197,66,0.14)' : 'transparent',
+                      border: `1px solid ${active ? 'rgba(245,197,66,0.55)' : 'rgba(255,255,255,0.14)'}`,
+                      color: active ? '#f5c542' : '#9fb0c5',
+                      transition: 'all .15s ease',
+                    }}
+                  >
+                    {isRTL ? opt.he : opt.en}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div
           style={{
             background: '#04101c',
