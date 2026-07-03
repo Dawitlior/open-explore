@@ -639,11 +639,6 @@ function EquityCurve({
     return money + rTxt;
   };
 
-  // Tooltip positioning (keep inside bounds)
-  const ttW = 168, ttH = 62;
-  const ttX = Math.max(4, Math.min(W - ttW - 4, hx - ttW / 2));
-  const ttY = Math.max(4, hy - ttH - 10);
-
   return (
     <div style={{ marginTop: 18, paddingTop: 14, borderTop: `1px solid ${T.border.subtle}` }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
@@ -677,27 +672,54 @@ function EquityCurve({
           <path d={areaPath} fill={`url(#${gradId})`} />
           {/* Smooth line */}
           <path d={linePath} fill="none" stroke={color} strokeWidth={1.75} strokeLinejoin="round" strokeLinecap="round" />
-          {/* Hover crosshair + dot */}
+          {/* Hover crosshair + dot (kept in SVG so it doesn't clip) */}
           {hp && (
             <>
-              <line x1={hx} x2={hx} y1={PAD_T} y2={H - PAD_B} stroke={color} strokeOpacity={0.4} strokeWidth={1} strokeDasharray="2 3" />
+              <line x1={hx} x2={hx} y1={PAD_T} y2={H - PAD_B} stroke={color} strokeOpacity={0.5} strokeWidth={1} strokeDasharray="2 3" />
               <circle cx={hx} cy={hy} r={4.5} fill={color} stroke={T.bg.card} strokeWidth={2} />
-              {/* Tooltip */}
-              <g transform={`translate(${ttX},${ttY})`}>
-                <rect width={ttW} height={ttH} rx={7} fill={T.bg.primary} stroke={T.border.subtle} strokeWidth={1} opacity={0.98} />
-                <text x={8} y={15} fill={T.text.muted} fontSize={9} fontFamily="'JetBrains Mono', monospace" style={{ letterSpacing: 1 }}>
-                  {fmtDate(hp.date)}{hp.symbol ? ` · ${hp.symbol}` : ''}
-                </text>
-                <text x={8} y={32} fill={hp.pnl >= 0 ? T.accent.green : T.accent.red} fontSize={11} fontFamily="'JetBrains Mono', monospace" fontWeight={700}>
-                  {isRTL ? 'עסקה: ' : 'Trade: '}{fmtPnl(hp.pnl, hp.r)}
-                </text>
-                <text x={8} y={49} fill={T.text.primary} fontSize={11} fontFamily="'JetBrains Mono', monospace" fontWeight={600}>
-                  {isRTL ? 'מצטבר: ' : 'Total: '}{fmtCum(hp.cum)}
-                </text>
-              </g>
             </>
           )}
         </svg>
+        {/* HTML tooltip — rendered outside SVG for crisp text + full contrast */}
+        {hp && (() => {
+          const rect = svgRef.current?.getBoundingClientRect();
+          const scaleX = rect ? rect.width / W : 1;
+          const scaleY = rect ? (rect.height || H) / H : 1;
+          const leftPx = hx * scaleX;
+          const topPx = hy * scaleY;
+          const posColor = hp.pnl >= 0 ? T.accent.green : T.accent.red;
+          return (
+            <div
+              style={{
+                position: 'absolute',
+                left: leftPx,
+                top: Math.max(0, topPx - 12),
+                transform: `translate(-50%, -100%)`,
+                pointerEvents: 'none',
+                background: 'rgba(6, 18, 38, 0.98)',
+                border: `1px solid ${posColor}80`,
+                boxShadow: `0 12px 32px -12px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.04)`,
+                borderRadius: 8,
+                padding: '8px 10px',
+                minWidth: 160,
+                fontFamily: "'JetBrains Mono', monospace",
+                direction: 'ltr',
+                textAlign: isRTL ? 'right' : 'left',
+                zIndex: 20,
+              }}
+            >
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.65)', marginBottom: 4, letterSpacing: 0.6 }}>
+                {fmtDate(hp.date)}{hp.symbol ? ` · ${hp.symbol}` : ''}
+              </div>
+              <div style={{ fontSize: 12, color: posColor, fontWeight: 700, lineHeight: 1.4 }}>
+                {isRTL ? 'עסקה' : 'Trade'}: {fmtPnl(hp.pnl, hp.r)}
+              </div>
+              <div style={{ fontSize: 12, color: '#ffffff', fontWeight: 600, lineHeight: 1.4 }}>
+                {isRTL ? 'מצטבר' : 'Total'}: {fmtCum(hp.cum)}
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
