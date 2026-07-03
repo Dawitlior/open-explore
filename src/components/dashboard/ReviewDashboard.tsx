@@ -17,6 +17,11 @@ import { OpenPositionsPanel } from './OpenPositionsPanel';
 import { useDisplayMode, hasStrictR } from '@/lib/display-mode';
 import { getEffectiveR } from '@/lib/r-multiple';
 import { QuarterlyPerformanceCard } from '@/components/trading/QuarterlyPerformanceCard';
+import { ShareStatsModal } from '@/components/trading/ShareStatsModal';
+import { useState } from 'react';
+import { Share2 } from 'lucide-react';
+
+
 
 
 interface ReviewDashboardProps {
