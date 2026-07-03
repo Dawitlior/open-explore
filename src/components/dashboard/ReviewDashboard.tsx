@@ -379,31 +379,56 @@ export const ReviewDashboard = ({
 
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ביצועים חודשיים (R)' : 'Monthly Performance (R)'} explanation={EXPLANATIONS.monthlyPerformance} unit="R">
+                    {/* Compact chip grid — 2 cols mobile, 3-4 desktop, no vertical scroll.
+                        Prevents "cannot scroll when many months exist" issue and gives
+                        a much denser at-a-glance snapshot. */}
                     <div
-                      className="orca-thin-scroll"
                       style={{
-                        maxHeight: stats.monthlyPerf.length > 7 ? 260 : 'none',
-                        overflowY: stats.monthlyPerf.length > 7 ? 'auto' : 'visible',
-                        paddingInlineEnd: stats.monthlyPerf.length > 7 ? 6 : 0,
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 130px), 1fr))',
+                        gap: 6,
+                        maxHeight: stats.monthlyPerf.length > 18 ? 300 : 'none',
+                        overflowY: stats.monthlyPerf.length > 18 ? 'auto' : 'visible',
+                        paddingInlineEnd: stats.monthlyPerf.length > 18 ? 4 : 0,
                       }}
+                      className={stats.monthlyPerf.length > 18 ? 'orca-thin-scroll' : ''}
                     >
                       {stats.monthlyPerf.map((mp: any, i: number) => {
                         const totalR = (Number(mp.avgR) || 0) * (Number(mp.trades) || 0);
+                        const val = isMoney ? mp.pnl : totalR;
+                        const positive = val >= 0;
+                        const accent = positive ? T.accent.green : T.accent.red;
                         return (
-                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px solid ${T.border.subtle}` }}>
-                          <span style={{ fontSize: 12, color: T.text.secondary }}>{mp.month}</span>
-                          <div style={{ display: 'flex', gap: 12 }}>
-                            {isMoney
-                              ? <PV><span style={{ fontSize: 11, color: mp.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{mp.pnl >= 0 ? '+' : ''}${mp.pnl.toFixed(2)}</span></PV>
-                              : <span style={{ fontSize: 11, color: totalR >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{totalR >= 0 ? '+' : ''}{totalR.toFixed(2)}R</span>}
-                            <span style={{ fontSize: 11, color: T.accent.purple, fontFamily: "'JetBrains Mono', monospace" }}>{mp.expectancyR >= 0 ? '+' : ''}{mp.expectancyR.toFixed(2)}R/tr</span>
+                          <div
+                            key={i}
+                            title={`${mp.month} · ${mp.trades ?? 0} trades`}
+                            style={{
+                              display: 'flex', flexDirection: 'column', gap: 2,
+                              padding: '7px 9px', borderRadius: 8,
+                              background: `${T.bg.tertiary}66`,
+                              border: `1px solid ${T.border.subtle}`,
+                              borderInlineStart: `2px solid ${accent}`,
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 6 }}>
+                              <span style={{ fontSize: 10.5, color: T.text.secondary, fontWeight: 600 }}>{mp.month}</span>
+                              <span style={{ fontSize: 9, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>{mp.trades ?? 0}</span>
+                            </div>
+                            <span style={{ fontSize: 11.5, fontWeight: 700, color: accent, fontFamily: "'JetBrains Mono', monospace" }}>
+                              {isMoney
+                                ? `${positive ? '+' : ''}$${Math.abs(mp.pnl).toFixed(mp.pnl >= 100 || mp.pnl <= -100 ? 0 : 2)}`
+                                : `${positive ? '+' : ''}${totalR.toFixed(2)}R`}
+                            </span>
+                            <span style={{ fontSize: 9.5, color: T.accent.purple, fontFamily: "'JetBrains Mono', monospace" }}>
+                              {mp.expectancyR >= 0 ? '+' : ''}{mp.expectancyR.toFixed(2)}R/tr
+                            </span>
                           </div>
-                        </div>
                         );
                       })}
                     </div>
                   </ChartWrapper>
                 </div>
+
               </div>
             )}
           </div>

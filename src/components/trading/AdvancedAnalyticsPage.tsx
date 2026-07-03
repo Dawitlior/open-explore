@@ -43,6 +43,8 @@ import { TimeSeriesPerfMatrix } from './TimeSeriesPerfMatrix';
 import { UltimateAnalyticsDeck } from './UltimateDeckCharts';
 import { useEntitlement } from '@/hooks/use-entitlement';
 import DashboardAdvancedLab from '@/components/dashboard/DashboardAdvancedLab';
+import { useIsMobile } from '@/hooks/use-mobile';
+
 import { RiskAdjustedRatiosSection } from '@/components/dashboard/RiskAdjustedRatiosSection';
 
 
@@ -86,6 +88,8 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
   const showPro = tier === 'pro' || tier === 'max';
   const showMax = tier === 'max';
   const showCore = true;
+  const isMobile = useIsMobile();
+
   const tt = {
     background: T.bg.card,
     border: `1px solid ${T.border.medium}`,
@@ -369,13 +373,22 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
   }, [tradesByDay]);
 
   // C) Profit-factor evolution (cumulative gross-win / gross-loss)
+  //    Respects display mode: $ uses pnl, R uses effective-R so R-only imports
+  //    (no money data) still render a meaningful curve.
   const pfEvolution = useMemo(() => {
     let gw = 0, gl = 0;
-    return trades.map((t, i) => {
-      if (t.pnl >= 0) gw += t.pnl; else gl += Math.abs(t.pnl);
-      return { i: i + 1, pf: gl > 0 ? +(gw / gl).toFixed(3) : (gw > 0 ? 5 : 0) };
+    const out: Array<{ i: number; pf: number }> = [];
+    trades.forEach((t, i) => {
+      const v = isMoney ? Number(t.pnl) || 0 : (getEffectiveR(t) ?? 0);
+      if (v >= 0) gw += v; else gl += Math.abs(v);
+      // Emit a point only once at least one loss exists — otherwise PF is
+      // undefined (division by zero) and would flat-line at 0 or 5 forever.
+      const pf = gl > 0 ? +(gw / gl).toFixed(3) : (gw > 0 ? null : 0);
+      if (pf !== null) out.push({ i: i + 1, pf });
     });
-  }, [trades]);
+    return out;
+  }, [trades, isMoney]);
+
 
   // D) Win-rate vs Avg-R quadrant (per coin) — strategic positioning
   const quadrant = useMemo(() => {
@@ -785,18 +798,35 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
                   {quarterly.length} {t('רבעונים', 'quarters')} · {isMoney ? '$' : 'R'}
                 </span>
               </div>
-              <div style={{ width: '100%', height: Math.max(220, quarterly.length * 32 + 40) }}>
+              <div style={{ width: '100%', height: isMobile ? 200 : 260 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={quarterly} layout="vertical" margin={{ top: 8, right: 24, bottom: 8, left: 8 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} horizontal={false} />
-                    <XAxis type="number" tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => isMoney ? `$${Math.round(v)}` : `${v.toFixed(1)}R`} />
-                    <YAxis type="category" dataKey="label" tick={{ fill: T.text.secondary, fontSize: 11, fontWeight: 600 }} width={70} tickMargin={6} interval={0} />
+                  <BarChart
+                    data={quarterly}
+                    margin={{ top: 12, right: 8, bottom: 8, left: 0 }}
+                    barCategoryGap={isMobile ? '18%' : '24%'}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} vertical={false} />
+                    <XAxis
+                      dataKey="label"
+                      tick={{ fill: T.text.secondary, fontSize: isMobile ? 9 : 11, fontWeight: 600 }}
+                      interval={0}
+                      angle={isMobile && quarterly.length > 6 ? -35 : 0}
+                      textAnchor={isMobile && quarterly.length > 6 ? 'end' : 'middle'}
+                      height={isMobile && quarterly.length > 6 ? 46 : 26}
+                      tickMargin={6}
+                      padding={{ left: 6, right: 6 }}
+                    />
+                    <YAxis
+                      tick={{ fill: T.text.muted, fontSize: 10 }}
+                      width={48}
+                      tickFormatter={(v: number) => isMoney ? `$${Math.round(v)}` : `${v.toFixed(1)}R`}
+                    />
                     <Tooltip
                       contentStyle={tt}
                       formatter={(v: any, _n: any, p: any) => [fmt(Number(v)), `${p?.payload?.trades || 0} ${t('עסקאות','trades')} · ${(p?.payload?.winRate || 0).toFixed(0)}% WR`]}
                     />
-                    <ReferenceLine x={0} stroke={T.border.medium} />
-                    <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={22}>
+                    <ReferenceLine y={0} stroke={T.border.medium} />
+                    <Bar dataKey="value" radius={[6, 6, 0, 0]}>
                       {quarterly.map((b, i) => (
                         <Cell key={i} fill={b.value >= 0 ? T.accent.green : T.accent.red} />
                       ))}
@@ -804,20 +834,35 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              {/* KPI strip */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: 8, marginTop: 12, paddingTop: 12, borderTop: `1px solid ${T.border.subtle}` }}>
+              {/* KPI strip — flush on mobile, spacious on desktop */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile
+                  ? 'repeat(auto-fit, minmax(min(100%, 92px), 1fr))'
+                  : 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))',
+                gap: isMobile ? 4 : 8,
+                marginTop: isMobile ? 4 : 12,
+                paddingTop: isMobile ? 6 : 12,
+                borderTop: isMobile ? 'none' : `1px solid ${T.border.subtle}`,
+              }}>
                 {quarterly.map((b) => (
-                  <div key={b.label} style={{ padding: '8px 10px', borderRadius: 8, background: `${T.bg.tertiary}40`, border: `1px solid ${T.border.subtle}` }}>
-                    <div style={{ fontSize: 10, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em' }}>{b.label}</div>
-                    <div style={{ fontSize: 13, fontWeight: 800, color: b.value >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>
+                  <div key={b.label} style={{
+                    padding: isMobile ? '6px 7px' : '8px 10px',
+                    borderRadius: 8,
+                    background: `${T.bg.tertiary}40`,
+                    border: `1px solid ${T.border.subtle}`,
+                  }}>
+                    <div style={{ fontSize: isMobile ? 9 : 10, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em' }}>{b.label}</div>
+                    <div style={{ fontSize: isMobile ? 11 : 13, fontWeight: 800, color: b.value >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace", marginTop: 3 }}>
                       <PV>{fmt(b.value)}</PV>
                     </div>
-                    <div style={{ fontSize: 9, color: T.text.muted, marginTop: 2 }}>
+                    <div style={{ fontSize: isMobile ? 8.5 : 9, color: T.text.muted, marginTop: 2 }}>
                       {b.trades}{t(' עס׳',' tr')} · {b.winRate.toFixed(0)}% · {b.expectancyR >= 0 ? '+' : ''}{b.expectancyR.toFixed(2)}R
                     </div>
                   </div>
                 ))}
               </div>
+
             </GlassCard>
 
             {/* ── YEARLY · CHART 1 — P&L / R per year (area + bars) ── */}
@@ -931,23 +976,41 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
             </ResponsiveContainer>
           </GlassCard>}
           {registryAllows('edgeDecay') && <GlassCard T={T} glow={`${T.accent.green}18`}>
-            <div style={{ fontSize: 11, color: T.accent.green, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>● PRO · {t('אבולוציית Profit Factor','Profit Factor Evolution')}</div>
-            <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={pfEvolution}>
-                <defs>
-                  <linearGradient id="pfG" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={T.accent.green} stopOpacity={0.5} />
-                    <stop offset="100%" stopColor={T.accent.green} stopOpacity={0.04} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
-                <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
-                <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
-                <Tooltip contentStyle={tt} />
-                <Area type="monotone" dataKey="pf" stroke={T.accent.green} fill="url(#pfG)" strokeWidth={2.2} />
-              </AreaChart>
-            </ResponsiveContainer>
+            <div style={{ fontSize: 11, color: T.accent.green, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>
+              ● PRO · {t('אבולוציית Profit Factor','Profit Factor Evolution')}
+              <span style={{ marginInlineStart: 8, color: T.text.muted, fontSize: 9.5, letterSpacing: '0.12em' }}>· {isMoney ? '$' : 'R'}</span>
+            </div>
+            {pfEvolution.length < 2 ? (
+              <div style={{ height: 220, display: 'grid', placeItems: 'center', color: T.text.muted, fontSize: 12, textAlign: 'center', padding: 12 }}>
+                {t(
+                  `לא ניתן לחשב Profit Factor ב-${isMoney ? 'כסף' : 'R'} — נדרש לפחות הפסד אחד ורווח אחד.`,
+                  `Not enough ${isMoney ? '$' : 'R'} data — Profit Factor needs at least one winning and one losing trade.`
+                )}
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={220}>
+                <AreaChart data={pfEvolution} margin={{ top: 8, right: 8, bottom: 4, left: 0 }}>
+                  <defs>
+                    <linearGradient id="pfG" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={T.accent.green} stopOpacity={0.5} />
+                      <stop offset="100%" stopColor={T.accent.green} stopOpacity={0.04} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
+                  <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
+                  <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => `${Number(v).toFixed(2)}x`} />
+                  <ReferenceLine y={1} stroke={T.border.medium} strokeDasharray="4 3" />
+                  <Tooltip
+                    contentStyle={tt}
+                    formatter={(v: any) => [`${Number(v).toFixed(2)}x`, t('פקטור רווח','Profit Factor')]}
+                    labelFormatter={(l: any) => `${t('עסקה','Trade')} #${l}`}
+                  />
+                  <Area type="monotone" dataKey="pf" stroke={T.accent.green} fill="url(#pfG)" strokeWidth={2.2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
           </GlassCard>}
+
         </div>
       )}
 

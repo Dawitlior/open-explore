@@ -15,6 +15,7 @@ import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { getEffectiveR } from '@/lib/r-multiple';
 import { parseTradeDate } from '@/components/weekly-review/lib/week-key';
+import { useDisplayMode } from '@/lib/display-mode';
 
 interface Props {
   T: TradingTheme;
@@ -49,6 +50,9 @@ function arcPath(cx: number, cy: number, r: number, start: number, end: number, 
 }
 
 export function QuarterlyPerformanceCard({ T, trades, isRTL }: Props) {
+  const { displayMode } = useDisplayMode();
+  const isMoney = displayMode === 'MONEY';
+
   const { buckets, yearsRange, bestQ, hasData } = useMemo(() => {
     const map = new Map<QKey, QBucket>();
     ([1, 2, 3, 4] as QKey[]).forEach(q => map.set(q, { q, n: 0, wins: 0, losses: 0, totalR: 0, totalPnl: 0 }));
@@ -58,11 +62,14 @@ export function QuarterlyPerformanceCard({ T, trades, isRTL }: Props) {
       if (!d) continue;
       const q = (Math.floor(d.getMonth() / 3) + 1) as QKey;
       const b = map.get(q)!;
-      const r = getEffectiveR(tr, { strict: true });
+      // Non-strict: falls back to a proxy R when explicit R is missing.
+      // This mirrors the money-mode behaviour and prevents an empty card
+      // for R-only imports without stop/target metadata.
+      const r = getEffectiveR(tr, { strict: false });
       const pnl = Number(tr.pnl) || 0;
       b.n += 1;
       b.totalPnl += pnl;
-      if (r != null) b.totalR += r;
+      if (r != null && Number.isFinite(r)) b.totalR += r;
       if (pnl > 0) b.wins += 1;
       else if (pnl < 0) b.losses += 1;
       const y = d.getFullYear();
@@ -70,16 +77,26 @@ export function QuarterlyPerformanceCard({ T, trades, isRTL }: Props) {
       if (y > maxY) maxY = y;
     }
     const buckets = Array.from(map.values()).sort((a, b) => a.q - b.q);
-    const bestQ = buckets.reduce((best, cur) => (cur.totalR > best.totalR ? cur : best), buckets[0]);
+    // Rank by the metric we're currently displaying so "strongest quarter"
+    // always matches the value shown in the callout.
+    const rankMetric = (b: QBucket) => (isMoney ? b.totalPnl : b.totalR);
+    const bestQ = buckets.reduce((best, cur) => (rankMetric(cur) > rankMetric(best) ? cur : best), buckets[0]);
     const yearsRange = minY === Infinity ? '' : (minY === maxY ? `${minY}` : `${minY} – ${maxY}`);
     const hasData = buckets.some(b => b.n > 0);
     return { buckets, yearsRange, bestQ, hasData };
-  }, [trades]);
+  }, [trades, isMoney]);
+
+  const fmtMoney = (v: number) => `${v >= 0 ? '+' : ''}$${Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: v >= 1000 || v <= -1000 ? 0 : 2 })}`;
+  const fmtR = (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(2)}R`;
+  const fmtVal = (b: QBucket) => (isMoney ? fmtMoney(b.totalPnl) : fmtR(b.totalR));
+  const valueOf = (b: QBucket) => (isMoney ? b.totalPnl : b.totalR);
+
 
   const QCOLORS: Record<QKey, string> = { 1: T.accent.cyan, 2: T.accent.green, 3: T.accent.purple, 4: T.accent.orange };
 
-  // Donut math — proportional to absolute R (so losers show volume, not sign).
-  const absTotals = buckets.map(b => Math.abs(b.totalR));
+  // Donut math — proportional to |value| in the active display mode, so a
+  // dominant quarter in either $ or R is always visible.
+  const absTotals = buckets.map(b => Math.abs(valueOf(b)));
   const grandAbs = absTotals.reduce((s, v) => s + v, 0) || 1;
   const cx = 62, cy = 62, R = 58, IR = 34;
   let cursor = 0;
@@ -91,8 +108,9 @@ export function QuarterlyPerformanceCard({ T, trades, isRTL }: Props) {
     return { b, start, end, share };
   });
 
-  const maxR = Math.max(1, ...buckets.map(b => Math.abs(b.totalR)));
+  const maxAbs = Math.max(isMoney ? 0.01 : 1, ...buckets.map(b => Math.abs(valueOf(b))));
   const t = (he: string, en: string) => (isRTL ? he : en);
+  const grandTotal = buckets.reduce((s, b) => s + valueOf(b), 0);
 
   if (!hasData) {
     return (
@@ -129,9 +147,9 @@ export function QuarterlyPerformanceCard({ T, trades, isRTL }: Props) {
         </div>
         <div style={{
           fontFamily: "'JetBrains Mono', monospace", fontSize: 15, fontWeight: 800,
-          color: bestQ.totalR >= 0 ? T.accent.green : T.accent.red,
+          color: valueOf(bestQ) >= 0 ? T.accent.green : T.accent.red,
         }}>
-          {bestQ.totalR >= 0 ? '+' : ''}{bestQ.totalR.toFixed(2)}R
+          {fmtVal(bestQ)}
         </div>
       </div>
 
@@ -155,19 +173,22 @@ export function QuarterlyPerformanceCard({ T, trades, isRTL }: Props) {
           <circle cx={cx} cy={cy} r={IR - 2} fill={T.bg.card} />
           <text x={cx} y={cy - 4} textAnchor="middle" fill={T.text.muted} fontSize={8}
             style={{ letterSpacing: 1.4, fontFamily: "'JetBrains Mono', monospace" }}>
-            {t('סה״כ R', 'TOTAL R')}
+            {isMoney ? t('סה״כ $', 'TOTAL $') : t('סה״כ R', 'TOTAL R')}
           </text>
           <text x={cx} y={cy + 12} textAnchor="middle"
-            fill={buckets.reduce((s, b) => s + b.totalR, 0) >= 0 ? T.accent.green : T.accent.red}
-            fontSize={14} fontWeight={800} fontFamily="'JetBrains Mono', monospace">
-            {(() => { const t = buckets.reduce((s, b) => s + b.totalR, 0); return `${t >= 0 ? '+' : ''}${t.toFixed(1)}`; })()}
+            fill={grandTotal >= 0 ? T.accent.green : T.accent.red}
+            fontSize={isMoney ? 12 : 14} fontWeight={800} fontFamily="'JetBrains Mono', monospace">
+            {isMoney
+              ? `${grandTotal >= 0 ? '+' : ''}${Math.round(grandTotal).toLocaleString()}`
+              : `${grandTotal >= 0 ? '+' : ''}${grandTotal.toFixed(1)}`}
           </text>
         </svg>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {buckets.map(b => {
             const col = QCOLORS[b.q];
-            const barPct = Math.min(100, (Math.abs(b.totalR) / maxR) * 100);
+            const v = valueOf(b);
+            const barPct = Math.min(100, (Math.abs(v) / maxAbs) * 100);
             return (
               <div key={b.q} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{
@@ -177,16 +198,16 @@ export function QuarterlyPerformanceCard({ T, trades, isRTL }: Props) {
                 <div style={{ flex: 1, height: 8, background: T.bg.tertiary, borderRadius: 4, overflow: 'hidden', position: 'relative' }}>
                   <div style={{
                     width: `${barPct}%`, height: '100%',
-                    background: b.totalR >= 0 ? `linear-gradient(90deg, ${col}bb, ${col})` : `linear-gradient(90deg, ${T.accent.red}bb, ${T.accent.red})`,
+                    background: v >= 0 ? `linear-gradient(90deg, ${col}bb, ${col})` : `linear-gradient(90deg, ${T.accent.red}bb, ${T.accent.red})`,
                     transition: 'width .4s ease',
                   }} />
                 </div>
                 <span style={{
-                  minWidth: 56, textAlign: 'end', fontSize: 10.5, fontWeight: 700,
+                  minWidth: 64, textAlign: 'end', fontSize: 10.5, fontWeight: 700,
                   fontFamily: "'JetBrains Mono', monospace",
-                  color: b.totalR >= 0 ? T.accent.green : T.accent.red,
+                  color: v >= 0 ? T.accent.green : T.accent.red,
                 }}>
-                  {b.totalR >= 0 ? '+' : ''}{b.totalR.toFixed(2)}R
+                  {fmtVal(b)}
                 </span>
               </div>
             );
@@ -200,6 +221,7 @@ export function QuarterlyPerformanceCard({ T, trades, isRTL }: Props) {
           const col = QCOLORS[b.q];
           const wr = b.n > 0 ? (b.wins / b.n) * 100 : 0;
           const exp = b.n > 0 ? b.totalR / b.n : 0;
+          const expM = b.n > 0 ? b.totalPnl / b.n : 0;
           return (
             <div key={b.q} style={{
               padding: '8px 8px 9px', borderRadius: 8,
@@ -213,8 +235,11 @@ export function QuarterlyPerformanceCard({ T, trades, isRTL }: Props) {
               <div style={{ fontSize: 10.5, fontFamily: "'JetBrains Mono', monospace", color: T.text.primary }}>
                 {wr.toFixed(0)}% <span style={{ color: T.text.muted, fontSize: 9 }}>WR</span>
               </div>
-              <div style={{ fontSize: 10.5, fontFamily: "'JetBrains Mono', monospace", color: exp >= 0 ? T.accent.green : T.accent.red }}>
-                {exp >= 0 ? '+' : ''}{exp.toFixed(2)}R<span style={{ color: T.text.muted, fontSize: 9 }}>/tr</span>
+              <div style={{ fontSize: 10.5, fontFamily: "'JetBrains Mono', monospace", color: (isMoney ? expM : exp) >= 0 ? T.accent.green : T.accent.red }}>
+                {isMoney
+                  ? `${expM >= 0 ? '+' : ''}$${Math.abs(expM).toFixed(expM >= 100 || expM <= -100 ? 0 : 2)}`
+                  : `${exp >= 0 ? '+' : ''}${exp.toFixed(2)}R`}
+                <span style={{ color: T.text.muted, fontSize: 9 }}>/tr</span>
               </div>
             </div>
           );
@@ -222,6 +247,7 @@ export function QuarterlyPerformanceCard({ T, trades, isRTL }: Props) {
       </div>
     </div>
   );
+
 }
 
 export default QuarterlyPerformanceCard;
