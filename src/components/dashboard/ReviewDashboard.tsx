@@ -16,6 +16,7 @@ import { WinsByMonthChart, WinsByQuarterChart, ReturnPerTimeChart } from './Simp
 import { OpenPositionsPanel } from './OpenPositionsPanel';
 import { useDisplayMode, hasStrictR } from '@/lib/display-mode';
 import { getEffectiveR } from '@/lib/r-multiple';
+import { QuarterlyPerformanceCard } from '@/components/trading/QuarterlyPerformanceCard';
 
 
 interface ReviewDashboardProps {

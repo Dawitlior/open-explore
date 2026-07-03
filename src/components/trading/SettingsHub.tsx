@@ -880,6 +880,14 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                   })()}
 
 
+                  {!isMobile && (
+                    <div style={card}>
+                      <h3 style={sectionTitle}><Sparkles size={14} /> {t('תוכנית פעילה', 'Active Plan')}</h3>
+                      <p style={sectionHint}>{t('החלף בין BEGINNER · ADVANCED · ULTIMATE. השינוי מיידי בכל הפלטפורמה.', 'Switch between BEGINNER · ADVANCED · ULTIMATE. Applies instantly across the platform.')}</p>
+                      <ModeSwitch T={T} isRTL={isRTL} />
+                    </div>
+                  )}
+
                   <div style={{ ...card, borderColor: `${T.accent.orange}40`, background: `linear-gradient(135deg, ${T.accent.orange}08, transparent)` }}>
                     <h3 style={{ ...sectionTitle, color: T.accent.orange }}><AlertTriangle size={14} /> {t('יציאה מהמערכת', 'Sign out')}</h3>
                     <p style={sectionHint}>{t('יציאה תנתק אותך מהמכשיר הזה. הנתונים שלך נשמרים בענן ויהיו זמינים בכניסה הבאה.', 'Signs you out from this device. Your data stays in the cloud and will be available next sign-in.')}</p>
