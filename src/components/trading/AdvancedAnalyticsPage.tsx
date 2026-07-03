@@ -369,13 +369,22 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
   }, [tradesByDay]);
 
   // C) Profit-factor evolution (cumulative gross-win / gross-loss)
+  //    Respects display mode: $ uses pnl, R uses effective-R so R-only imports
+  //    (no money data) still render a meaningful curve.
   const pfEvolution = useMemo(() => {
     let gw = 0, gl = 0;
-    return trades.map((t, i) => {
-      if (t.pnl >= 0) gw += t.pnl; else gl += Math.abs(t.pnl);
-      return { i: i + 1, pf: gl > 0 ? +(gw / gl).toFixed(3) : (gw > 0 ? 5 : 0) };
+    const out: Array<{ i: number; pf: number }> = [];
+    trades.forEach((t, i) => {
+      const v = isMoney ? Number(t.pnl) || 0 : (getEffectiveR(t) ?? 0);
+      if (v >= 0) gw += v; else gl += Math.abs(v);
+      // Emit a point only once at least one loss exists — otherwise PF is
+      // undefined (division by zero) and would flat-line at 0 or 5 forever.
+      const pf = gl > 0 ? +(gw / gl).toFixed(3) : (gw > 0 ? null : 0);
+      if (pf !== null) out.push({ i: i + 1, pf });
     });
-  }, [trades]);
+    return out;
+  }, [trades, isMoney]);
+
 
   // D) Win-rate vs Avg-R quadrant (per coin) — strategic positioning
   const quadrant = useMemo(() => {
