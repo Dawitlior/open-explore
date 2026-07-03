@@ -1267,7 +1267,29 @@ function Drawer({ t, lang, x, onClose }) {
   useEffect(() => { const k = (e) => e.key === "Escape" && onClose(); window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k); }, [onClose]);
   if (!x) return null;
   const scores = [{ l: t("thRetention"), v: x.retentionRisk, c: riskTone(x.retentionRisk) }, { l: t("thBehaviour"), v: x.behaviouralRisk, c: riskTone(x.behaviouralRisk) }, { l: t("thValue"), v: x.valuePotential, c: valueTone(x.valuePotential) }];
-  const metrics = [{ l: t("mRules"), v: pctv(x.rulesRate * 100) }, { l: t("mOverride"), v: pctv(x.overrideRate * 100) }, { l: t("mRevenge"), v: pctv(x.revenge * 100) }, { l: t("mDrift"), v: `${sgn(x.riskDrift)}${x.riskDrift}%` }, { l: t("mJournal"), v: pctv(x.journal * 100) }, { l: t("mEdge"), v: `${x.edgeHealth}/100` }, { l: t("mRegime"), v: `${x.regimeFit}/100` }, { l: t("mKill"), v: x.kill }, { l: t("mRecovery"), v: x.recovery }, { l: t("mTenure"), v: x.tenure }, { l: t("mTrades"), v: nf.format(x.tradesTotal) }, { l: "ORCA", v: `${x.orca}/100` }];
+  // Only metrics with a live source render numerically; unmapped fields show
+  // "—" instead of a fabricated zero. Currently persisted per-trader:
+  //   winRate, revenge, expectancy, discipline, expSlope, expTrend,
+  //   retentionRisk, behaviouralRisk, valuePotential, readiness, sessionsWk,
+  //   lastActive, breaches.{trade,daily,weekly,monthly}, tier, archetype, asset.
+  const has = (v) => v != null && !(typeof v === "number" && v === 0 && !Number.isFinite(1 / v));
+  const fmt = (v, fn) => (v == null || v === 0 ? "—" : fn(v));
+  const metrics = [
+    { l: t("mRules"),    v: "—", hint: lang === "he" ? "לא נכתב ל-DB" : "not persisted" },
+    { l: t("mOverride"), v: "—", hint: lang === "he" ? "לא נכתב ל-DB" : "not persisted" },
+    { l: t("mRevenge"),  v: pctv(x.revenge * 100) },
+    { l: t("mDrift"),    v: "—", hint: lang === "he" ? "לא נכתב ל-DB" : "not persisted" },
+    { l: t("mJournal"),  v: "—", hint: lang === "he" ? "לא נכתב ל-DB" : "not persisted" },
+    { l: t("mEdge"),     v: "—", hint: lang === "he" ? "לא נכתב ל-DB" : "not persisted" },
+    { l: t("mRegime"),   v: "—", hint: lang === "he" ? "לא נכתב ל-DB" : "not persisted" },
+    { l: t("mKill"),     v: "—", hint: lang === "he" ? "מחייב לוג kill-switch" : "requires kill-switch log" },
+    { l: t("mRecovery"), v: "—", hint: lang === "he" ? "מחייב לוג התאוששות" : "requires recovery log" },
+    { l: t("mTenure"),   v: "—", hint: lang === "he" ? "מחייב snapshot היסטורי" : "requires historical snapshot" },
+    { l: t("mTrades"),   v: "—", hint: lang === "he" ? "לא נכתב ל-DB" : "not persisted" },
+    { l: "ORCA",         v: "—", hint: lang === "he" ? "קומפוזיט ORCA לא נכתב" : "ORCA composite not persisted" },
+  ];
+  void has; void fmt;
+
   const side = lang === "he" ? { left: 0 } : { right: 0 };
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(15,27,45,0.32)", backdropFilter: "blur(2px)" }}>
