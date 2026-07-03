@@ -1121,7 +1121,7 @@ function DataQuality({ t, lang, traders }) {
       </div>
       <div style={{ ...gridCols(3), marginTop: 14 }}>
         <Card title={t("cProvenance")}><DonutWithLegend data={prov} /></Card>
-        <Card title={t("cGapTypes")}><div style={{ display: "grid", gap: 10 }}>{gaps.map((g) => { const max = Math.max(...gaps.map((x) => x.v)); return (<div key={g.en}><div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}><span style={{ fontFamily: SANS, fontSize: 12, color: C.ink2 }}>{loc(lang, g)}</span><span style={{ fontFamily: MONO, fontSize: 12, fontWeight: 600, color: C.ink }}>{g.v}</span></div><div style={{ height: 8, background: C.appBg, borderRadius: 5, overflow: "hidden" }}><div style={{ height: "100%", width: `${(g.v / max) * 100}%`, background: g.c, borderRadius: 5 }} /></div></div>); })}</div></Card>
+        <PendingCard title={t("cGapTypes")} hint={lang === "he" ? "מחייב יומן ולידציה של ייבוא (Missing stop / Ambiguous direction / Duplicate fingerprint) — לא נכתב עדיין" : "Requires an import-validation log (Missing stop / Ambiguous direction / Duplicate fingerprint) — not persisted yet"} />
         <Card title={t("cAssetDist")}><DonutWithLegend data={assetDist} /></Card>
       </div>
     </>
