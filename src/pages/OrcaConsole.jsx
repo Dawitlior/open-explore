@@ -1422,7 +1422,10 @@ function BoardReport({ t, lang, traders, eng, aiUsage, funnel, onClose }) {
   const rulesAvg = null;  // rulesRate not persisted
 
   const br = { trade: traders.reduce((s, x) => s + x.breaches.trade, 0), daily: traders.reduce((s, x) => s + x.breaches.daily, 0), weekly: traders.reduce((s, x) => s + x.breaches.weekly, 0), monthly: traders.reduce((s, x) => s + x.breaches.monthly, 0) };
-  const killTot = traders.reduce((s, x) => s + x.kill, 0), recovTot = traders.reduce((s, x) => s + x.recovery, 0);
+  // kill-switch + recovery counts aren't logged per-trader on the matrix
+  // RPC yet — null routes prose through the "not-yet-instrumented" branch.
+  const killTot = null, recovTot = null;
+
   const revengePct = Math.round((traders.filter((x) => x.revenge > 0.12).length / n) * 100);
   const readyAvg = Math.round(traders.reduce((s, x) => s + x.readiness, 0) / n);
   const provMix = PROV.map((pv) => { const c = traders.filter((x) => x.prov === pv).length; return { pv, c, pct: Math.round((c / n) * 100) }; });
