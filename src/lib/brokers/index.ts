@@ -20,6 +20,6 @@ import "./crypto_com";
 import "./coinbase";
 import "./manual";
 import "./csv-brokers";
-// import "./ibkr";      // Phase 6 — fill-level adapter overrides the CSV factory entry
+import "./ibkr_flex";  // Phase 6 — IBKR Flex Web Service (server-side sync)
 
 export { BrokerRegistry } from "./registry";

@@ -155,7 +155,8 @@ export function ExchangesPanel({ T, isRTL }: Props) {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       if (!token) throw new Error('NO_SESSION');
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sync-futures-trades`;
+      const fnName = providerId === 'ibkr_flex' ? 'sync-ibkr-flex' : 'sync-futures-trades';
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${fnName}`;
       const res = await fetch(url, {
         method: 'POST',
         headers: {
