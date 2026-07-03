@@ -100,7 +100,7 @@ export const ReviewDashboard = ({
         </button>
       </div>
 
-      <ShareStatsModal open={shareOpen} onClose={() => setShareOpen(false)} stats={stats} isRTL={isRTL} isMoney={isMoney} />
+      <ShareStatsModal open={shareOpen} onClose={() => setShareOpen(false)} stats={stats} isRTL={isRTL} isMoney={isMoney} trades={trades} />
 
 
       <FeatureHint
