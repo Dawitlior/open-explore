@@ -1416,9 +1416,11 @@ function BoardReport({ t, lang, traders, eng, aiUsage, funnel, onClose }) {
   const profitablePct = Math.round((traders.filter((x) => x.expectancy > 0).length / n) * 100);
   const winAvg = Math.round((traders.reduce((s, x) => s + x.winRate, 0) / n) * 100);
   const discAvg = Math.round(traders.reduce((s, x) => s + x.discipline, 0) / n);
-  const edgeAvg = Math.round(traders.reduce((s, x) => s + x.edgeHealth, 0) / n);
-  const orcaAvg = Math.round(traders.reduce((s, x) => s + x.orca, 0) / n);
-  const rulesAvg = Math.round((traders.reduce((s, x) => s + x.rulesRate, 0) / n) * 100);
+  // Aggregates gated on live persistence — do not fabricate 0.
+  const edgeAvg = null;   // edgeHealth per-trader not persisted
+  const orcaAvg = null;   // ORCA composite not persisted
+  const rulesAvg = null;  // rulesRate not persisted
+
   const br = { trade: traders.reduce((s, x) => s + x.breaches.trade, 0), daily: traders.reduce((s, x) => s + x.breaches.daily, 0), weekly: traders.reduce((s, x) => s + x.breaches.weekly, 0), monthly: traders.reduce((s, x) => s + x.breaches.monthly, 0) };
   const killTot = traders.reduce((s, x) => s + x.kill, 0), recovTot = traders.reduce((s, x) => s + x.recovery, 0);
   const revengePct = Math.round((traders.filter((x) => x.revenge > 0.12).length / n) * 100);
