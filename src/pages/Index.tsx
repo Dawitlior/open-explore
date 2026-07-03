@@ -2033,11 +2033,18 @@ const Index = () => {
 
         <div className={isMobile ? 'orca-mobile-pad-bottom' : ''} style={{ padding: isMobile ? '12px 10px' : '20px 24px', maxWidth: 1400, width: '100%', minWidth: 0, boxSizing: 'border-box', overflowX: 'hidden', margin: '0 auto' }}>
           {trades.length === 0 && page !== 'weekly-review' && (
-            <div style={{ textAlign: 'center', padding: isMobile ? 30 : 60 }}>
-              <div style={{ fontSize: 48, marginBottom: 16 }}>🐋</div>
-              <div style={{ fontSize: 16, color: T.text.secondary, marginBottom: 20 }}>{t.noTrades}</div>
-              <button onClick={() => setShowTradeForm(true)} style={{ padding: '10px 24px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 700, cursor: 'pointer', fontSize: 14 }}>+ {t.addTrade}</button>
-            </div>
+            <EmptyStateImportCTA
+              T={T}
+              isRTL={isRTL}
+              onImportFile={handleImport}
+              onConnectAPI={() => {
+                setShowSettings(true);
+                setTimeout(() => {
+                  window.dispatchEvent(new CustomEvent('orca:settings:open-tab', { detail: 'exchanges' }));
+                }, 30);
+              }}
+              onManualTrade={() => { setEditingTrade(null); setShowTradeForm(true); }}
+            />
           )}
           {page === 'dashboard' && <div data-orca-dashboard="true">{trades.length > 0 && <CustomKPIPanel T={T} isRTL={isRTL} stats={stats as any} />}{renderDashboard()}</div>}
           {page === 'calendar' && (
