@@ -43,6 +43,8 @@ import { TimeSeriesPerfMatrix } from './TimeSeriesPerfMatrix';
 import { UltimateAnalyticsDeck } from './UltimateDeckCharts';
 import { useEntitlement } from '@/hooks/use-entitlement';
 import DashboardAdvancedLab from '@/components/dashboard/DashboardAdvancedLab';
+import { useIsMobile } from '@/hooks/use-mobile';
+
 import { RiskAdjustedRatiosSection } from '@/components/dashboard/RiskAdjustedRatiosSection';
 
 
