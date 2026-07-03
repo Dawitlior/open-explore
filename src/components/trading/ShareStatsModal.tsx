@@ -83,7 +83,10 @@ async function paint(canvas: HTMLCanvasElement, stats: any, isRTL: boolean, isMo
   ctx.fillText('ORCA', startX, 140);
   ctx.fillStyle = 'rgba(232,237,245,0.55)';
   ctx.font = '600 22px "IBM Plex Mono", ui-monospace, monospace';
-  ctx.fillText(isRTL ? 'תעודת ביצועים · פורטפוליו פעיל' : 'PERFORMANCE CARD · ACTIVE PORTFOLIO', startX, 180);
+  const subLabel = rangeLabel
+    ? (isRTL ? `תעודת ביצועים · ${rangeLabel}` : `PERFORMANCE CARD · ${rangeLabel.toUpperCase()}`)
+    : (isRTL ? 'תעודת ביצועים · פורטפוליו פעיל' : 'PERFORMANCE CARD · ACTIVE PORTFOLIO');
+  ctx.fillText(subLabel, startX, 180);
 
   // Big headline: Net R (or money)
   const headlineLabel = isRTL ? (isMoney ? 'תוחלת נטו' : 'תוחלת נטו (R)') : (isMoney ? 'Net P&L' : 'Net R');
