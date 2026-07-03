@@ -9,6 +9,11 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { X, Download, Share2, Copy } from 'lucide-react';
+import type { Trade } from '@/data/trades';
+import { computeAnalytics } from '@/lib/trading-analytics';
+import { parseTradeDate } from '@/components/weekly-review/lib/week-key';
+
+type ShareRange = 'all' | 'month' | 'week' | 'day' | 'last10';
 
 interface ShareStatsModalProps {
   open: boolean;
@@ -16,6 +21,8 @@ interface ShareStatsModalProps {
   stats: any;
   isRTL: boolean;
   isMoney: boolean;
+  /** Optional — enables the range selector (All / Month / Week / Day / Last 10). */
+  trades?: Trade[];
 }
 
 const W = 1080;
@@ -36,7 +43,7 @@ function fmtMoney(v: number | undefined | null) {
   return `${s}$${Math.abs(Number(v)).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 }
 
-async function paint(canvas: HTMLCanvasElement, stats: any, isRTL: boolean, isMoney: boolean) {
+async function paint(canvas: HTMLCanvasElement, stats: any, isRTL: boolean, isMoney: boolean, rangeLabel?: string) {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
   const dpr = window.devicePixelRatio || 1;
@@ -76,7 +83,10 @@ async function paint(canvas: HTMLCanvasElement, stats: any, isRTL: boolean, isMo
   ctx.fillText('ORCA', startX, 140);
   ctx.fillStyle = 'rgba(232,237,245,0.55)';
   ctx.font = '600 22px "IBM Plex Mono", ui-monospace, monospace';
-  ctx.fillText(isRTL ? 'תעודת ביצועים · פורטפוליו פעיל' : 'PERFORMANCE CARD · ACTIVE PORTFOLIO', startX, 180);
+  const subLabel = rangeLabel
+    ? (isRTL ? `תעודת ביצועים · ${rangeLabel}` : `PERFORMANCE CARD · ${rangeLabel.toUpperCase()}`)
+    : (isRTL ? 'תעודת ביצועים · פורטפוליו פעיל' : 'PERFORMANCE CARD · ACTIVE PORTFOLIO');
+  ctx.fillText(subLabel, startX, 180);
 
   // Big headline: Net R (or money)
   const headlineLabel = isRTL ? (isMoney ? 'תוחלת נטו' : 'תוחלת נטו (R)') : (isMoney ? 'Net P&L' : 'Net R');
@@ -168,17 +178,64 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.closePath();
 }
 
-export function ShareStatsModal({ open, onClose, stats, isRTL, isMoney }: ShareStatsModalProps) {
+export function ShareStatsModal({ open, onClose, stats, isRTL, isMoney, trades }: ShareStatsModalProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [busy, setBusy] = useState<null | 'copy' | 'download' | 'share'>(null);
   const [note, setNote] = useState<string>('');
+  const [range, setRange] = useState<ShareRange>('all');
+
+  const rangeOptions: Array<{ id: ShareRange; he: string; en: string }> = [
+    { id: 'all',    he: 'הכל',           en: 'All-time' },
+    { id: 'month',  he: 'החודש',         en: 'This month' },
+    { id: 'week',   he: 'השבוע',         en: 'This week' },
+    { id: 'day',    he: 'היום',          en: 'Today' },
+    { id: 'last10', he: '10 אחרונים',    en: 'Last 10' },
+  ];
+  const currentRangeLabel = (() => {
+    const opt = rangeOptions.find(o => o.id === range)!;
+    return isRTL ? opt.he : opt.en;
+  })();
+
+  // Recompute stats when the user picks a shorter range. Fall back to the
+  // parent-provided `stats` object when `trades` isn't supplied.
+  const filteredStats = useMemo(() => {
+    if (!trades || range === 'all') return stats;
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const dow = now.getDay(); // 0=Sun
+    const startOfWeek = startOfDay - dow * 86400000;
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+
+    let subset: Trade[] = [];
+    if (range === 'last10') {
+      subset = [...trades]
+        .sort((a, b) => {
+          const da = parseTradeDate(a.date)?.getTime() ?? 0;
+          const db = parseTradeDate(b.date)?.getTime() ?? 0;
+          return db - da;
+        })
+        .slice(0, 10);
+    } else {
+      const cutoff = range === 'day' ? startOfDay : range === 'week' ? startOfWeek : startOfMonth;
+      subset = trades.filter(t => {
+        const d = parseTradeDate(t.date);
+        return d ? d.getTime() >= cutoff : false;
+      });
+    }
+    if (subset.length === 0) return { ...(stats ?? {}), totalPnl: 0, totalR: 0, winRate: 0, expectancyR: 0, totalTrades: 0, maxDrawdown: 0 };
+    try {
+      return computeAnalytics(subset);
+    } catch {
+      return stats;
+    }
+  }, [trades, range, stats]);
 
   useEffect(() => {
     if (!open) return;
     const c = canvasRef.current;
     if (!c) return;
-    paint(c, stats, isRTL, isMoney);
-  }, [open, stats, isRTL, isMoney]);
+    paint(c, filteredStats, isRTL, isMoney, currentRangeLabel);
+  }, [open, filteredStats, isRTL, isMoney, currentRangeLabel]);
 
   const toBlob = (): Promise<Blob | null> =>
     new Promise((res) => {
@@ -300,6 +357,40 @@ export function ShareStatsModal({ open, onClose, stats, isRTL, isMoney }: ShareS
             <X size={16} />
           </button>
         </div>
+
+        {trades && (
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 11, letterSpacing: 1, color: 'rgba(159,176,197,0.75)', marginBottom: 6, fontFamily: '"IBM Plex Mono", ui-monospace, monospace' }}>
+              {isRTL ? 'טווח נתונים' : 'DATA RANGE'}
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {rangeOptions.map(opt => {
+                const active = range === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setRange(opt.id)}
+                    style={{
+                      padding: '7px 12px',
+                      borderRadius: 999,
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      fontFamily: 'Poppins, system-ui, sans-serif',
+                      background: active ? 'rgba(245,197,66,0.14)' : 'transparent',
+                      border: `1px solid ${active ? 'rgba(245,197,66,0.55)' : 'rgba(255,255,255,0.14)'}`,
+                      color: active ? '#f5c542' : '#9fb0c5',
+                      transition: 'all .15s ease',
+                    }}
+                  >
+                    {isRTL ? opt.he : opt.en}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div
           style={{

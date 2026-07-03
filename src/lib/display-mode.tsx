@@ -47,6 +47,9 @@ export function selectVisibleTrades(trades: Trade[], mode: DisplayMode): Trade[]
 }
 
 const STORAGE_KEY = 'orca:displayMode';
+// Manual override is now SESSION-scoped only. When the user re-enters the
+// platform (new tab / new day), display mode auto-follows the majority of
+// their trades again — no manual toggling required across sessions.
 const USER_SET_KEY = 'orca:displayMode:userSet';
 
 /** Auto-pick the mode the user most likely wants, based on their data:
@@ -67,8 +70,9 @@ export function DisplayModeProvider({ trades, children }: { trades: Trade[]; chi
   const [displayMode, setDisplayModeState] = useState<DisplayMode>(() => {
     if (typeof window === 'undefined') return 'R_MULTIPLE';
     try {
-      const userSet = window.localStorage.getItem(USER_SET_KEY) === '1';
-      const cached = window.localStorage.getItem(STORAGE_KEY);
+      // Session-scoped manual override (this tab only).
+      const userSet = window.sessionStorage.getItem(USER_SET_KEY) === '1';
+      const cached = window.sessionStorage.getItem(STORAGE_KEY) || window.localStorage.getItem(STORAGE_KEY);
       if (userSet && (cached === 'MONEY' || cached === 'R_MULTIPLE')) return cached;
     } catch { /* ignore */ }
     return autoPickMode(trades);
@@ -82,15 +86,18 @@ export function DisplayModeProvider({ trades, children }: { trades: Trade[]; chi
     if (locked && displayMode !== 'MONEY') setDisplayModeState('MONEY');
   }, [locked, displayMode]);
 
-  // Auto-follow the data while the user hasn't explicitly picked a mode.
+  // Auto-follow the data unless the user manually toggled during THIS session.
   useEffect(() => {
     try {
-      const userSet = window.localStorage.getItem(USER_SET_KEY) === '1';
+      const userSet = window.sessionStorage.getItem(USER_SET_KEY) === '1';
       if (userSet) return;
     } catch { /* ignore */ }
     if (autoMode !== displayMode) {
       setDisplayModeState(autoMode);
-      try { window.localStorage.setItem(STORAGE_KEY, autoMode); } catch { /* ignore */ }
+      try {
+        window.localStorage.setItem(STORAGE_KEY, autoMode);
+        window.sessionStorage.setItem(STORAGE_KEY, autoMode);
+      } catch { /* ignore */ }
       try { window.dispatchEvent(new CustomEvent('orca:displayMode-changed', { detail: autoMode })); } catch { /* noop */ }
     }
   }, [autoMode, displayMode]);
@@ -99,8 +106,11 @@ export function DisplayModeProvider({ trades, children }: { trades: Trade[]; chi
     if (locked && m === 'R_MULTIPLE') return; // can't enter R without eligible data
     setDisplayModeState(m);
     try {
+      // Session-scoped manual override — resets on next session so auto-detect
+      // takes over again when the user returns to the platform.
+      window.sessionStorage.setItem(STORAGE_KEY, m);
+      window.sessionStorage.setItem(USER_SET_KEY, '1');
       window.localStorage.setItem(STORAGE_KEY, m);
-      window.localStorage.setItem(USER_SET_KEY, '1');
     } catch { /* ignore */ }
     try { window.dispatchEvent(new CustomEvent('orca:displayMode-changed', { detail: m })); } catch { /* noop */ }
   };
