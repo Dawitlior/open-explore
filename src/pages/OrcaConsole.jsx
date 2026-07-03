@@ -1079,7 +1079,11 @@ function Benchmarks({ t, lang, traders, eng }) {
   return (
     <>
       <SectionHead n="10" title={t("navBench")} subtitle={t("subBench")} />
-      <div style={{ ...gridCols(4), marginBottom: 14 }}>{cards.map((c) => (<div key={c.l} style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 12, padding: 16 }}><div style={{ fontFamily: SANS, fontSize: 11.5, color: C.ink2, marginBottom: 9 }}>{c.l}</div><div style={{ fontFamily: MONO, fontWeight: 700, fontSize: 22, color: c.c }}>{c.v}</div></div>))}</div>
+      <div style={{ ...gridCols(4), marginBottom: 14 }}>
+        {cards.map((c) => (<div key={c.l} style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 12, padding: 16 }}><div style={{ fontFamily: SANS, fontSize: 11.5, color: C.ink2, marginBottom: 9 }}>{c.l}</div><div style={{ fontFamily: MONO, fontWeight: 700, fontSize: 22, color: c.c }}>{c.v}</div></div>))}
+        <PendingTile label={t("benchEdge")} hint={lang === "he" ? "מדד Edge-health לא נכתב ל-DB" : "Edge-health metric not yet persisted"} />
+      </div>
+
       <div style={{ marginBottom: 14 }}><QueryStrip t={t} lang={lang} traders={traders} presets={presets} /></div>
       <div style={gridCols(2)}>
         <Card title={t("cComposition")} subtitle={t("kAnon")}><RadialStack data={radial} /></Card>
