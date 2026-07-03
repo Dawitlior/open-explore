@@ -64,6 +64,7 @@ const SUPPORTED_PROVIDERS = [
   'mexc_futures', 'mexc_spot',
   'gate_futures', 'kraken_futures',
   'crypto_com', 'coinbase',
+  'ibkr_flex',
 ] as const;
 type SupportedProvider = typeof SUPPORTED_PROVIDERS[number];
 
