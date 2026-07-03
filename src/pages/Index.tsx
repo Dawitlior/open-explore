@@ -75,6 +75,7 @@ import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
 import { useRegistryCharts } from '@/hooks/use-registry-charts';
 import { useExpectancyMode } from '@/lib/dashboard-engine';
 import { useEntitlement } from '@/hooks/use-entitlement';
+import { EmptyStateImportCTA } from '@/components/trading/EmptyStateImportCTA';
 
 // ─── Facebook-style red notification badge with "1" ───
 const ReminderBadge = () => (
