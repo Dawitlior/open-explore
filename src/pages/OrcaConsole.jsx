@@ -1014,7 +1014,11 @@ function TraderMatrix({ t, lang, traders, onPick }) {
   let rows = seg === "all" ? traders : traders.filter((x) => segOf(x) === seg);
   rows = [...rows].sort((a, b) => b[sortKey] - a[sortKey]).slice(0, 40);
   const cols = [{ k: "code", l: t("thId"), align: "start" }, { k: "arch", l: t("thArch"), align: "start" }, { k: "tier", l: t("thTier"), align: "start" }, { k: "discipline", l: t("thDisc"), bar: valueTone }, { k: "retentionRisk", l: t("thRetention"), bar: riskTone }, { k: "behaviouralRisk", l: t("thBehaviour"), bar: riskTone }, { k: "valuePotential", l: t("thValue"), bar: valueTone }, { k: "expectancy", l: t("thExpect"), align: "end" }, { k: "sessionsWk", l: t("thSessions"), align: "end" }, { k: "lastActive", l: t("thLastSeen"), align: "end" }];
-  const quad = traders.map((x) => ({ x: x.valuePotential, y: 100 - Math.max(x.behaviouralRisk, x.retentionRisk), z: x.ltv, c: valueTone(x.valuePotential), id: x.id }));
+  // Z-axis bubble size — use live `sessionsWk` (weekly-active intensity).
+  // Previous code used `ltv` which is unmapped in the RPC and always 0,
+  // so every bubble rendered at the same minimum size.
+  const quad = traders.map((x) => ({ x: x.valuePotential, y: 100 - Math.max(x.behaviouralRisk, x.retentionRisk), z: Math.max(1, x.sessionsWk), c: valueTone(x.valuePotential), id: x.id }));
+
   const segOpts = [{ v: "all", l: t("segAll") }, { v: "stars", l: t("segStars") }, { v: "watch", l: t("segWatch") }, { v: "risk", l: t("segRisk") }, { v: "dormant", l: t("segDormant") }];
   const counts = traders.reduce((a, x) => ((a[segOf(x)] = (a[segOf(x)] || 0) + 1), a), {});
   const trk = topBy(traders, "behaviouralRisk").map((x) => ({ code: x.code, v: x.behaviouralRisk, label: x.behaviouralRisk }));
@@ -1062,17 +1066,24 @@ function TraderMatrix({ t, lang, traders, onPick }) {
 function Benchmarks({ t, lang, traders, eng }) {
   const n = Math.max(traders.length, 1);
   const avgExp = r2(traders.reduce((s, x) => s + x.expectancy, 0) / n), profit = Math.round(traders.filter((x) => x.expectancy > 0).length / n * 100);
-  const disc = Math.round(traders.reduce((s, x) => s + x.discipline, 0) / n), edge = Math.round(traders.reduce((s, x) => s + x.edgeHealth, 0) / n);
+  const disc = Math.round(traders.reduce((s, x) => s + x.discipline, 0) / n);
+  // edgeHealth is not persisted per-trader yet — omit from benchmarks rather
+  // than emit a hard-coded 0. See "Awaiting Edge-health metric" pending state.
   const revenge = Math.round(traders.filter((x) => x.revenge > 0.4).length / n * 100), over = Math.round(traders.filter((x) => x.overZ > 1.2).length / n * 100);
   const sess = r1(traders.reduce((s, x) => s + x.sessionsWk, 0) / n), vol = eng.slice(-4).reduce((s, e) => s + e.trades, 0);
-  const cards = [{ l: t("benchExpect"), v: `${sgn(avgExp)}${avgExp}R`, c: avgExp >= 0 ? C.pos : C.neg }, { l: t("benchProfit"), v: `${profit}%`, c: C.blue }, { l: t("benchDisc"), v: `${disc}/100`, c: C.ink }, { l: t("benchEdge"), v: `${edge}/100`, c: C.ink }, { l: t("benchRevenge"), v: `${revenge}%`, c: C.warn }, { l: t("benchOver"), v: `${over}%`, c: C.warn }, { l: t("benchAvgSess"), v: `${sess}`, c: C.ink }, { l: t("benchVol"), v: nf.format(vol), c: C.blue }];
+  const cards = [{ l: t("benchExpect"), v: `${sgn(avgExp)}${avgExp}R`, c: avgExp >= 0 ? C.pos : C.neg }, { l: t("benchProfit"), v: `${profit}%`, c: C.blue }, { l: t("benchDisc"), v: `${disc}/100`, c: C.ink }, { l: t("benchRevenge"), v: `${revenge}%`, c: C.warn }, { l: t("benchOver"), v: `${over}%`, c: C.warn }, { l: t("benchAvgSess"), v: `${sess}`, c: C.ink }, { l: t("benchVol"), v: nf.format(vol), c: C.blue }];
   const distArch = ARCH.map((a, i) => ({ name: loc(lang, a), v: r2(traders.filter((x) => x.arch.id === a.id).reduce((s, x) => s + Math.max(0, x.expectancy), 0) / Math.max(traders.filter((x) => x.arch.id === a.id).length, 1)), c: PAL[i] }));
-  const radial = [{ name: t("benchProfit"), v: profit, c: C.blue }, { name: t("benchDisc"), v: disc, c: C.pos }, { name: t("benchEdge"), v: edge, c: PAL[1] }];
+  const radial = [{ name: t("benchProfit"), v: profit, c: C.blue }, { name: t("benchDisc"), v: disc, c: C.pos }];
+
   const presets = [{ fn: "admin_benchmarks", params: { kmin: "25" } }, { fn: "admin_benchmarks", params: { kmin: "50" } }, { fn: "admin_benchmarks", params: { asset: "crypto", kmin: "25" } }, { fn: "admin_benchmarks", params: { tier: "Ultimate", kmin: "25" } }];
   return (
     <>
       <SectionHead n="10" title={t("navBench")} subtitle={t("subBench")} />
-      <div style={{ ...gridCols(4), marginBottom: 14 }}>{cards.map((c) => (<div key={c.l} style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 12, padding: 16 }}><div style={{ fontFamily: SANS, fontSize: 11.5, color: C.ink2, marginBottom: 9 }}>{c.l}</div><div style={{ fontFamily: MONO, fontWeight: 700, fontSize: 22, color: c.c }}>{c.v}</div></div>))}</div>
+      <div style={{ ...gridCols(4), marginBottom: 14 }}>
+        {cards.map((c) => (<div key={c.l} style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 12, padding: 16 }}><div style={{ fontFamily: SANS, fontSize: 11.5, color: C.ink2, marginBottom: 9 }}>{c.l}</div><div style={{ fontFamily: MONO, fontWeight: 700, fontSize: 22, color: c.c }}>{c.v}</div></div>))}
+        <PendingTile label={t("benchEdge")} hint={lang === "he" ? "מדד Edge-health לא נכתב ל-DB" : "Edge-health metric not yet persisted"} />
+      </div>
+
       <div style={{ marginBottom: 14 }}><QueryStrip t={t} lang={lang} traders={traders} presets={presets} /></div>
       <div style={gridCols(2)}>
         <Card title={t("cComposition")} subtitle={t("kAnon")}><RadialStack data={radial} /></Card>
@@ -1087,7 +1098,9 @@ function Benchmarks({ t, lang, traders, eng }) {
 function DataQuality({ t, lang, traders }) {
   const readBins = Array.from({ length: 10 }, (_, b) => ({ name: `${b * 10}`, v: traders.filter((x) => x.readiness >= b * 10 && x.readiness < b * 10 + 10).length }));
   const prov = PROV.map((p, i) => ({ name: loc(lang, p), v: Math.round(traders.reduce((s, x) => s + x.prov[p.id], 0)), c: PAL[i] }));
-  const gaps = [{ en: "Missing stop", he: "חוסר סטופ", v: 142, c: C.neg }, { en: "Ambiguous direction", he: "כיוון לא ברור", v: 98, c: C.warn }, { en: "Date format", he: "פורמט תאריך", v: 76, c: PAL[5] }, { en: "Duplicate fingerprint", he: "טביעת אצבע כפולה", v: 41, c: PAL[4] }, { en: "Currency mismatch", he: "אי-התאמת מטבע", v: 33, c: PAL[3] }];
+  // gap-type breakdown requires an import-validation log that isn't
+  // wired yet — no fabricated fallback.
+
   const assetDist = ASSET.map((a, i) => ({ name: loc(lang, a), v: traders.filter((x) => x.asset.id === a.id).length, c: PAL[i] }));
   const avgRead = Math.round(traders.reduce((s, x) => s + x.readiness, 0) / Math.max(traders.length, 1));
   const provPct = (id) => Math.round(traders.reduce((s, x) => s + x.prov[id], 0) / Math.max(traders.length, 1) * 100);
@@ -1108,7 +1121,7 @@ function DataQuality({ t, lang, traders }) {
       </div>
       <div style={{ ...gridCols(3), marginTop: 14 }}>
         <Card title={t("cProvenance")}><DonutWithLegend data={prov} /></Card>
-        <Card title={t("cGapTypes")}><div style={{ display: "grid", gap: 10 }}>{gaps.map((g) => { const max = Math.max(...gaps.map((x) => x.v)); return (<div key={g.en}><div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}><span style={{ fontFamily: SANS, fontSize: 12, color: C.ink2 }}>{loc(lang, g)}</span><span style={{ fontFamily: MONO, fontSize: 12, fontWeight: 600, color: C.ink }}>{g.v}</span></div><div style={{ height: 8, background: C.appBg, borderRadius: 5, overflow: "hidden" }}><div style={{ height: "100%", width: `${(g.v / max) * 100}%`, background: g.c, borderRadius: 5 }} /></div></div>); })}</div></Card>
+        <PendingCard title={t("cGapTypes")} hint={lang === "he" ? "מחייב יומן ולידציה של ייבוא (Missing stop / Ambiguous direction / Duplicate fingerprint) — לא נכתב עדיין" : "Requires an import-validation log (Missing stop / Ambiguous direction / Duplicate fingerprint) — not persisted yet"} />
         <Card title={t("cAssetDist")}><DonutWithLegend data={assetDist} /></Card>
       </div>
     </>
@@ -1254,7 +1267,29 @@ function Drawer({ t, lang, x, onClose }) {
   useEffect(() => { const k = (e) => e.key === "Escape" && onClose(); window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k); }, [onClose]);
   if (!x) return null;
   const scores = [{ l: t("thRetention"), v: x.retentionRisk, c: riskTone(x.retentionRisk) }, { l: t("thBehaviour"), v: x.behaviouralRisk, c: riskTone(x.behaviouralRisk) }, { l: t("thValue"), v: x.valuePotential, c: valueTone(x.valuePotential) }];
-  const metrics = [{ l: t("mRules"), v: pctv(x.rulesRate * 100) }, { l: t("mOverride"), v: pctv(x.overrideRate * 100) }, { l: t("mRevenge"), v: pctv(x.revenge * 100) }, { l: t("mDrift"), v: `${sgn(x.riskDrift)}${x.riskDrift}%` }, { l: t("mJournal"), v: pctv(x.journal * 100) }, { l: t("mEdge"), v: `${x.edgeHealth}/100` }, { l: t("mRegime"), v: `${x.regimeFit}/100` }, { l: t("mKill"), v: x.kill }, { l: t("mRecovery"), v: x.recovery }, { l: t("mTenure"), v: x.tenure }, { l: t("mTrades"), v: nf.format(x.tradesTotal) }, { l: "ORCA", v: `${x.orca}/100` }];
+  // Only metrics with a live source render numerically; unmapped fields show
+  // "—" instead of a fabricated zero. Currently persisted per-trader:
+  //   winRate, revenge, expectancy, discipline, expSlope, expTrend,
+  //   retentionRisk, behaviouralRisk, valuePotential, readiness, sessionsWk,
+  //   lastActive, breaches.{trade,daily,weekly,monthly}, tier, archetype, asset.
+  const has = (v) => v != null && !(typeof v === "number" && v === 0 && !Number.isFinite(1 / v));
+  const fmt = (v, fn) => (v == null || v === 0 ? "—" : fn(v));
+  const metrics = [
+    { l: t("mRules"),    v: "—", hint: lang === "he" ? "לא נכתב ל-DB" : "not persisted" },
+    { l: t("mOverride"), v: "—", hint: lang === "he" ? "לא נכתב ל-DB" : "not persisted" },
+    { l: t("mRevenge"),  v: pctv(x.revenge * 100) },
+    { l: t("mDrift"),    v: "—", hint: lang === "he" ? "לא נכתב ל-DB" : "not persisted" },
+    { l: t("mJournal"),  v: "—", hint: lang === "he" ? "לא נכתב ל-DB" : "not persisted" },
+    { l: t("mEdge"),     v: "—", hint: lang === "he" ? "לא נכתב ל-DB" : "not persisted" },
+    { l: t("mRegime"),   v: "—", hint: lang === "he" ? "לא נכתב ל-DB" : "not persisted" },
+    { l: t("mKill"),     v: "—", hint: lang === "he" ? "מחייב לוג kill-switch" : "requires kill-switch log" },
+    { l: t("mRecovery"), v: "—", hint: lang === "he" ? "מחייב לוג התאוששות" : "requires recovery log" },
+    { l: t("mTenure"),   v: "—", hint: lang === "he" ? "מחייב snapshot היסטורי" : "requires historical snapshot" },
+    { l: t("mTrades"),   v: "—", hint: lang === "he" ? "לא נכתב ל-DB" : "not persisted" },
+    { l: "ORCA",         v: "—", hint: lang === "he" ? "קומפוזיט ORCA לא נכתב" : "ORCA composite not persisted" },
+  ];
+  void has; void fmt;
+
   const side = lang === "he" ? { left: 0 } : { right: 0 };
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(15,27,45,0.32)", backdropFilter: "blur(2px)" }}>
@@ -1268,7 +1303,16 @@ function Drawer({ t, lang, x, onClose }) {
         <div style={{ fontFamily: SANS, fontSize: 11.5, fontWeight: 600, color: C.ink3, marginBottom: 9 }}>{t("drExpTrend")}</div>
         <div style={{ border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 6px", marginBottom: 18 }}><ResponsiveContainer width="100%" height={70}><LineChart data={x.expTrend.map((v, i) => ({ i, v }))} margin={{ top: 4, bottom: 4, left: 0, right: 0 }}><ReferenceLine y={0} stroke={C.gridLine} /><YAxis hide domain={["dataMin", "dataMax"]} /><Line type="monotone" dataKey="v" stroke={x.expSlope >= 0 ? C.pos : C.neg} strokeWidth={2} dot={false} isAnimationActive={false} /></LineChart></ResponsiveContainer></div>
         <div style={{ fontFamily: SANS, fontSize: 11.5, fontWeight: 600, color: C.ink3, marginBottom: 9 }}>{t("drMetrics")}</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 8, marginBottom: 18 }}>{metrics.map((m) => (<div key={m.l} style={{ display: "flex", justifyContent: "space-between", border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px" }}><span style={{ fontFamily: SANS, fontSize: 11.5, color: C.ink2 }}>{m.l}</span><span style={{ fontFamily: MONO, fontSize: 12.5, fontWeight: 600, color: C.ink }}>{m.v}</span></div>))}</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 8, marginBottom: 18 }}>{metrics.map((m) => {
+          const pending = m.v === "—";
+          return (
+            <div key={m.l} title={pending && m.hint ? m.hint : ""} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", border: `1px ${pending ? "dashed" : "solid"} ${C.border}`, borderRadius: 8, padding: "9px 12px" }}>
+              <span style={{ fontFamily: SANS, fontSize: 11.5, color: pending ? C.ink3 : C.ink2 }}>{m.l}</span>
+              <span style={{ fontFamily: MONO, fontSize: 12.5, fontWeight: 600, color: pending ? C.ink3 : C.ink }}>{m.v}</span>
+            </div>
+          );
+        })}</div>
+
         <div style={{ display: "flex", alignItems: "center", gap: 7, fontFamily: SANS, fontSize: 11, color: C.ink3 }}><Lock size={12} /> {t("privacyNote")}</div>
       </div>
     </div>
@@ -1372,11 +1416,14 @@ function BoardReport({ t, lang, traders, eng, aiUsage, funnel, onClose }) {
   const profitablePct = Math.round((traders.filter((x) => x.expectancy > 0).length / n) * 100);
   const winAvg = Math.round((traders.reduce((s, x) => s + x.winRate, 0) / n) * 100);
   const discAvg = Math.round(traders.reduce((s, x) => s + x.discipline, 0) / n);
-  const edgeAvg = Math.round(traders.reduce((s, x) => s + x.edgeHealth, 0) / n);
-  const orcaAvg = Math.round(traders.reduce((s, x) => s + x.orca, 0) / n);
-  const rulesAvg = Math.round((traders.reduce((s, x) => s + x.rulesRate, 0) / n) * 100);
+  // Aggregates gated on live persistence — do not fabricate 0. These fields
+  // (edgeHealth / ORCA composite / rulesRate / kill / recovery) are not yet
+  // persisted per-trader, so the report prose below routes through the
+  // "not-yet-instrumented" branch instead of averaging zeros into a headline.
+
   const br = { trade: traders.reduce((s, x) => s + x.breaches.trade, 0), daily: traders.reduce((s, x) => s + x.breaches.daily, 0), weekly: traders.reduce((s, x) => s + x.breaches.weekly, 0), monthly: traders.reduce((s, x) => s + x.breaches.monthly, 0) };
-  const killTot = traders.reduce((s, x) => s + x.kill, 0), recovTot = traders.reduce((s, x) => s + x.recovery, 0);
+
+
   const revengePct = Math.round((traders.filter((x) => x.revenge > 0.12).length / n) * 100);
   const readyAvg = Math.round(traders.reduce((s, x) => s + x.readiness, 0) / n);
   const provMix = PROV.map((pv) => { const c = traders.filter((x) => x.prov === pv).length; return { pv, c, pct: Math.round((c / n) * 100) }; });
@@ -1397,11 +1444,12 @@ function BoardReport({ t, lang, traders, eng, aiUsage, funnel, onClose }) {
     ? `מבין ${ARCH.length} ארכיטיפים התנהגותיים, ${loc(lang, dom.a)} מוביל עם ${domPct}% מהסוחרים המפולחים. ${profiledPct}% השלימו את אבחון תודעת-הסוחר; היתר (${100 - profiledPct}%) ממתינים לפרופיל ומוחרגים מפילוחים לפי-סגנון. תמהיל החבילות: ${tierStr}.`
     : `Across ${ARCH.length} behavioural archetypes, ${loc(lang, dom.a)} leads at ${domPct}% of profiled traders. ${profiledPct}% have completed the Trader-Mind diagnostic; the remaining ${100 - profiledPct}% are awaiting profiling and are excluded from style-specific cuts. Package mix: ${tierStr}.`;
   const perfLead = he
-    ? `התוחלת המצרפית ${expAvg}R עם שיעור זכייה ממוצע ${winAvg}%, ו-${profitablePct}% מהקבוצה רווחיים נטו. בריאות-היתרון הממוצעת ${edgeAvg}/100 וציון ORCA המורכב ${orcaAvg}/100 — פרופיל יתרון ${edgeAvg >= 60 ? "יציב מבנית" : "מתפתח"} לרוחב הבסיס.`
-    : `Aggregate expectancy is ${expAvg}R on a ${winAvg}% mean win-rate, with ${profitablePct}% of the cohort net-positive. Edge-health averages ${edgeAvg}/100 and the composite ORCA score ${orcaAvg}/100 — a ${edgeAvg >= 60 ? "structurally sound" : "developing"} edge profile across the base.`;
+    ? `התוחלת המצרפית ${expAvg}R עם שיעור זכייה ממוצע ${winAvg}%, ו-${profitablePct}% מהקבוצה רווחיים נטו. מדדי בריאות-היתרון (Edge-health) ו-ORCA composite עדיין אינם נכתבים ל-DB — יתווספו לדוח ברגע שינותבו.`
+    : `Aggregate expectancy is ${expAvg}R on a ${winAvg}% mean win-rate, with ${profitablePct}% of the cohort net-positive. Edge-health and the composite ORCA score are not yet persisted to the DB — they will appear in the report once instrumented.`;
   const riskLead = he
-    ? `במסגרת תקציב ה-R המתגלגל נרשמו ${br.trade} חריגות פר-טרייד, ${br.daily} יומיות, ${br.weekly} שבועיות ו-${br.monthly} חודשיות, שהובילו ל-${killTot} הפעלות kill-switch ו-${recovTot} כניסות למצב התאוששות. עמידה-בכללים ${rulesAvg}% בממוצע וכ-${revengePct}% מהסוחרים מראים כניסה-תגובתית מוגברת — ${revengePct >= 20 ? "פלח שמצדיק התערבות ממוקדת" : "בתוך טווח נורמלי"}.`
-    : `Within the rolling R-budget, the cohort logged ${br.trade} per-trade, ${br.daily} daily, ${br.weekly} weekly and ${br.monthly} monthly limit breaches, triggering ${killTot} kill-switch events and ${recovTot} recovery-mode entries. Rule-adherence averages ${rulesAvg}% and roughly ${revengePct}% of traders show elevated reactive-entry behaviour — ${revengePct >= 20 ? "a segment worth targeted intervention" : "contained within normal range"}.`;
+    ? `במסגרת תקציב ה-R המתגלגל נרשמו ${br.trade} חריגות פר-טרייד, ${br.daily} יומיות, ${br.weekly} שבועיות ו-${br.monthly} חודשיות. הפעלות kill-switch, כניסות למצב-התאוששות ועמידה-בכללים ברמת-הסוחר עדיין אינן נכתבות ל-DB. כ-${revengePct}% מהסוחרים מראים כניסה-תגובתית מוגברת — ${revengePct >= 20 ? "פלח שמצדיק התערבות ממוקדת" : "בתוך טווח נורמלי"}.`
+    : `Within the rolling R-budget, the cohort logged ${br.trade} per-trade, ${br.daily} daily, ${br.weekly} weekly and ${br.monthly} monthly limit breaches. Per-trader kill-switch events, recovery-mode entries and rule-adherence are not yet persisted to the DB. Roughly ${revengePct}% of traders show elevated reactive-entry behaviour — ${revengePct >= 20 ? "a segment worth targeted intervention" : "contained within normal range"}.`;
+
   const actLead = he
     ? `מסע ההצטרפות בן 5 השלבים מוביל מזהות, דרך שער-מחויבות, אל הטרייד הראשון. המרת ניסיון-לתשלום עומדת כיום על ${last.conv}%, כשהמשפך מצטמצם בעיקר בשלבי הפרופיילינג והמחויבות.`
     : `The five-phase onboarding moves users from identity through a commitment gate to first trade. Trial-to-paid conversion currently runs at ${last.conv}%, with the funnel narrowing most at the profiling and commitment stages.`;
@@ -1415,11 +1463,12 @@ function BoardReport({ t, lang, traders, eng, aiUsage, funnel, onClose }) {
     { en: `Weekly-active population ${growth >= 0 ? "expanded" : "contracted"} ${Math.abs(growth)}% over the window.`, he: `אוכלוסיית הפעילים השבועית ${growth >= 0 ? "התרחבה" : "התכווצה"} ב-${Math.abs(growth)}% לאורך התקופה.` },
     { en: `Aggregate expectancy of ${expAvg}R with ${profitablePct}% of traders net-positive.`, he: `תוחלת מצרפית של ${expAvg}R כש-${profitablePct}% מהסוחרים רווחיים נטו.` },
     { en: `${loc(lang, dom.a)} leads as the dominant archetype at ${domPct}% of profiled traders.`, he: `${loc(lang, dom.a)} מוביל כארכיטיפ הדומיננטי עם ${domPct}% מהסוחרים המפולחים.` },
-    { en: `Mean discipline index of ${discAvg}/100, edge-health ${edgeAvg}/100 across the base.`, he: `מדד משמעת ממוצע ${discAvg}/100, בריאות-יתרון ${edgeAvg}/100 לרוחב הבסיס.` },
+    { en: `Mean discipline index of ${discAvg}/100 across the base.`, he: `מדד משמעת ממוצע ${discAvg}/100 לרוחב הבסיס.` },
     { en: `~${revengePct}% of traders exhibit elevated reactive-entry behaviour.`, he: `כ-${revengePct}% מהסוחרים מגלים כניסה-תגובתית מוגברת.` },
     { en: `${profiledPct}% behavioural-profiling coverage; ${100 - profiledPct}% awaiting diagnostic.`, he: `${profiledPct}% כיסוי פרופיל התנהגותי; ${100 - profiledPct}% ממתינים לאבחון.` },
     { en: `Weekly churn at ${churn}% against ${stick}% DAU/MAU stickiness.`, he: `נטישה שבועית ${churn}% מול דביקות DAU/MAU של ${stick}%.` },
-    { en: `${killTot} kill-switch events and ${recovTot} recovery-mode entries this period.`, he: `${killTot} הפעלות kill-switch ו-${recovTot} כניסות למצב התאוששות בתקופה.` },
+    { en: `Kill-switch and recovery-mode event logs are not yet instrumented per-trader.`, he: `לוגי kill-switch ו-Recovery ברמת-הסוחר עדיין אינם מנוטרים.` },
+
   ];
   const fSel = rot(findings, seed, 4);
   const recPool = [];
