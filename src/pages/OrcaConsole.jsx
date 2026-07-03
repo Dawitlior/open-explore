@@ -1303,7 +1303,16 @@ function Drawer({ t, lang, x, onClose }) {
         <div style={{ fontFamily: SANS, fontSize: 11.5, fontWeight: 600, color: C.ink3, marginBottom: 9 }}>{t("drExpTrend")}</div>
         <div style={{ border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 6px", marginBottom: 18 }}><ResponsiveContainer width="100%" height={70}><LineChart data={x.expTrend.map((v, i) => ({ i, v }))} margin={{ top: 4, bottom: 4, left: 0, right: 0 }}><ReferenceLine y={0} stroke={C.gridLine} /><YAxis hide domain={["dataMin", "dataMax"]} /><Line type="monotone" dataKey="v" stroke={x.expSlope >= 0 ? C.pos : C.neg} strokeWidth={2} dot={false} isAnimationActive={false} /></LineChart></ResponsiveContainer></div>
         <div style={{ fontFamily: SANS, fontSize: 11.5, fontWeight: 600, color: C.ink3, marginBottom: 9 }}>{t("drMetrics")}</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 8, marginBottom: 18 }}>{metrics.map((m) => (<div key={m.l} style={{ display: "flex", justifyContent: "space-between", border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px" }}><span style={{ fontFamily: SANS, fontSize: 11.5, color: C.ink2 }}>{m.l}</span><span style={{ fontFamily: MONO, fontSize: 12.5, fontWeight: 600, color: C.ink }}>{m.v}</span></div>))}</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 8, marginBottom: 18 }}>{metrics.map((m) => {
+          const pending = m.v === "—";
+          return (
+            <div key={m.l} title={pending && m.hint ? m.hint : ""} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", border: `1px ${pending ? "dashed" : "solid"} ${C.border}`, borderRadius: 8, padding: "9px 12px" }}>
+              <span style={{ fontFamily: SANS, fontSize: 11.5, color: pending ? C.ink3 : C.ink2 }}>{m.l}</span>
+              <span style={{ fontFamily: MONO, fontSize: 12.5, fontWeight: 600, color: pending ? C.ink3 : C.ink }}>{m.v}</span>
+            </div>
+          );
+        })}</div>
+
         <div style={{ display: "flex", alignItems: "center", gap: 7, fontFamily: SANS, fontSize: 11, color: C.ink3 }}><Lock size={12} /> {t("privacyNote")}</div>
       </div>
     </div>
