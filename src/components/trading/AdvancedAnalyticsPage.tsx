@@ -798,18 +798,35 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
                   {quarterly.length} {t('רבעונים', 'quarters')} · {isMoney ? '$' : 'R'}
                 </span>
               </div>
-              <div style={{ width: '100%', height: Math.max(220, quarterly.length * 32 + 40) }}>
+              <div style={{ width: '100%', height: isMobile ? 200 : 260 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={quarterly} layout="vertical" margin={{ top: 8, right: 24, bottom: 8, left: 8 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} horizontal={false} />
-                    <XAxis type="number" tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => isMoney ? `$${Math.round(v)}` : `${v.toFixed(1)}R`} />
-                    <YAxis type="category" dataKey="label" tick={{ fill: T.text.secondary, fontSize: 11, fontWeight: 600 }} width={70} tickMargin={6} interval={0} />
+                  <BarChart
+                    data={quarterly}
+                    margin={{ top: 12, right: 8, bottom: 8, left: 0 }}
+                    barCategoryGap={isMobile ? '18%' : '24%'}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} vertical={false} />
+                    <XAxis
+                      dataKey="label"
+                      tick={{ fill: T.text.secondary, fontSize: isMobile ? 9 : 11, fontWeight: 600 }}
+                      interval={0}
+                      angle={isMobile && quarterly.length > 6 ? -35 : 0}
+                      textAnchor={isMobile && quarterly.length > 6 ? 'end' : 'middle'}
+                      height={isMobile && quarterly.length > 6 ? 46 : 26}
+                      tickMargin={6}
+                      padding={{ left: 6, right: 6 }}
+                    />
+                    <YAxis
+                      tick={{ fill: T.text.muted, fontSize: 10 }}
+                      width={48}
+                      tickFormatter={(v: number) => isMoney ? `$${Math.round(v)}` : `${v.toFixed(1)}R`}
+                    />
                     <Tooltip
                       contentStyle={tt}
                       formatter={(v: any, _n: any, p: any) => [fmt(Number(v)), `${p?.payload?.trades || 0} ${t('עסקאות','trades')} · ${(p?.payload?.winRate || 0).toFixed(0)}% WR`]}
                     />
-                    <ReferenceLine x={0} stroke={T.border.medium} />
-                    <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={22}>
+                    <ReferenceLine y={0} stroke={T.border.medium} />
+                    <Bar dataKey="value" radius={[6, 6, 0, 0]}>
                       {quarterly.map((b, i) => (
                         <Cell key={i} fill={b.value >= 0 ? T.accent.green : T.accent.red} />
                       ))}
@@ -817,20 +834,35 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              {/* KPI strip */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: 8, marginTop: 12, paddingTop: 12, borderTop: `1px solid ${T.border.subtle}` }}>
+              {/* KPI strip — flush on mobile, spacious on desktop */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile
+                  ? 'repeat(auto-fit, minmax(min(100%, 92px), 1fr))'
+                  : 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))',
+                gap: isMobile ? 4 : 8,
+                marginTop: isMobile ? 4 : 12,
+                paddingTop: isMobile ? 6 : 12,
+                borderTop: isMobile ? 'none' : `1px solid ${T.border.subtle}`,
+              }}>
                 {quarterly.map((b) => (
-                  <div key={b.label} style={{ padding: '8px 10px', borderRadius: 8, background: `${T.bg.tertiary}40`, border: `1px solid ${T.border.subtle}` }}>
-                    <div style={{ fontSize: 10, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em' }}>{b.label}</div>
-                    <div style={{ fontSize: 13, fontWeight: 800, color: b.value >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>
+                  <div key={b.label} style={{
+                    padding: isMobile ? '6px 7px' : '8px 10px',
+                    borderRadius: 8,
+                    background: `${T.bg.tertiary}40`,
+                    border: `1px solid ${T.border.subtle}`,
+                  }}>
+                    <div style={{ fontSize: isMobile ? 9 : 10, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em' }}>{b.label}</div>
+                    <div style={{ fontSize: isMobile ? 11 : 13, fontWeight: 800, color: b.value >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace", marginTop: 3 }}>
                       <PV>{fmt(b.value)}</PV>
                     </div>
-                    <div style={{ fontSize: 9, color: T.text.muted, marginTop: 2 }}>
+                    <div style={{ fontSize: isMobile ? 8.5 : 9, color: T.text.muted, marginTop: 2 }}>
                       {b.trades}{t(' עס׳',' tr')} · {b.winRate.toFixed(0)}% · {b.expectancyR >= 0 ? '+' : ''}{b.expectancyR.toFixed(2)}R
                     </div>
                   </div>
                 ))}
               </div>
+
             </GlassCard>
 
             {/* ── YEARLY · CHART 1 — P&L / R per year (area + bars) ── */}
