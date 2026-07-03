@@ -1098,7 +1098,9 @@ function Benchmarks({ t, lang, traders, eng }) {
 function DataQuality({ t, lang, traders }) {
   const readBins = Array.from({ length: 10 }, (_, b) => ({ name: `${b * 10}`, v: traders.filter((x) => x.readiness >= b * 10 && x.readiness < b * 10 + 10).length }));
   const prov = PROV.map((p, i) => ({ name: loc(lang, p), v: Math.round(traders.reduce((s, x) => s + x.prov[p.id], 0)), c: PAL[i] }));
-  const gaps = [{ en: "Missing stop", he: "חוסר סטופ", v: 142, c: C.neg }, { en: "Ambiguous direction", he: "כיוון לא ברור", v: 98, c: C.warn }, { en: "Date format", he: "פורמט תאריך", v: 76, c: PAL[5] }, { en: "Duplicate fingerprint", he: "טביעת אצבע כפולה", v: 41, c: PAL[4] }, { en: "Currency mismatch", he: "אי-התאמת מטבע", v: 33, c: PAL[3] }];
+  // gap-type breakdown requires an import-validation log that isn't
+  // wired yet — no fabricated fallback.
+
   const assetDist = ASSET.map((a, i) => ({ name: loc(lang, a), v: traders.filter((x) => x.asset.id === a.id).length, c: PAL[i] }));
   const avgRead = Math.round(traders.reduce((s, x) => s + x.readiness, 0) / Math.max(traders.length, 1));
   const provPct = (id) => Math.round(traders.reduce((s, x) => s + x.prov[id], 0) / Math.max(traders.length, 1) * 100);
