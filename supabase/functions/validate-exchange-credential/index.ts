@@ -485,6 +485,35 @@ export async function verifyCoinbase(
   return { ok: false, reason: 'coinbase_rejected', detail: body?.message ?? `status ${res.status}` };
 }
 
+// ---------- Provider: Interactive Brokers Flex Web Service ----------
+// Validation = single cheap SendRequest call. Success (ReferenceCode returned)
+// OR 1019 (statement generation in progress) both prove the token + query are
+// valid — do NOT poll for the statement here. Rate-limit friendly.
+const IBKR_FLEX_BASE = 'https://ndcdyn.interactivebrokers.com/AccountManagement/FlexWebService';
+
+export async function verifyIbkrFlex(
+  queryId: string, token: string, fetchImpl: typeof fetch = fetch,
+): Promise<{ ok: true } | { ok: false; reason: string; detail?: string }> {
+  const url = `${IBKR_FLEX_BASE}/SendRequest?t=${encodeURIComponent(token)}&q=${encodeURIComponent(queryId)}&v=3`;
+  let res: Response;
+  try {
+    res = await fetchImpl(url, { method: 'GET', headers: { 'User-Agent': 'ORCA-FlexSync/1.0', Accept: 'application/xml' } });
+  } catch {
+    return { ok: false, reason: 'connection_error', detail: 'IBKR unreachable' };
+  }
+  if (res.status >= 500) return { ok: false, reason: 'connection_error', detail: `IBKR ${res.status}` };
+  const xml = await res.text();
+  // Success signal: ReferenceCode present.
+  if (/<ReferenceCode>\d+<\/ReferenceCode>/.test(xml)) return { ok: true };
+  // 1019 = statement in progress — also proves creds are valid.
+  const codeM = xml.match(/<ErrorCode>(\d+)<\/ErrorCode>/);
+  const msgM = xml.match(/<ErrorMessage>([^<]+)<\/ErrorMessage>/);
+  const code = codeM?.[1] ?? 'unknown';
+  const message = msgM?.[1] ?? 'IBKR Flex rejected the request';
+  if (code === '1019') return { ok: true };
+  return { ok: false, reason: 'ibkr_flex_rejected', detail: `${code}: ${message}` };
+}
+
 
 // ---------- Handler (dependency-injected for testability) ----------
 export interface HandlerDeps {
