@@ -83,36 +83,52 @@ const CSS = `
   margin:0;line-height:1.5}
 
 .esc-pop-backdrop{position:fixed;inset:0;z-index:9500;
-  background:radial-gradient(ellipse at center, rgba(6,10,22,.72), rgba(0,0,0,.9));
-  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-  display:flex;align-items:center;justify-content:center;padding:20px;
+  background:radial-gradient(ellipse at center, rgba(6,18,31,.85), rgba(0,4,12,.95));
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  display:flex;align-items:center;justify-content:center;padding:24px;
   animation:escFadeIn .22s ease}
-.esc-pop{width:min(520px,100%);border-radius:20px;padding:22px 18px 18px;
-  background:linear-gradient(165deg, hsl(var(--trading-bg-secondary)/.98), hsl(var(--trading-bg-primary)/.98));
-  border:1px solid hsl(var(--border));
-  box-shadow:0 40px 100px -20px rgba(0,0,0,.85), 0 0 0 1px hsl(var(--border));
-  animation:escFadeIn .28s cubic-bezier(.2,.8,.2,1) both}
-.esc-pop-title{margin:0 0 4px;font-size:15px;font-weight:700;text-align:center;
-  color:hsl(var(--foreground));font-family:'Inter',system-ui,sans-serif;letter-spacing:-.01em}
-.esc-pop-sub{margin:0 0 16px;font-size:12px;text-align:center;color:hsl(var(--muted-foreground));
-  font-family:'Inter',system-ui,sans-serif}
-.esc-opts{display:grid;grid-template-columns:1fr;gap:8px}
-@media (min-width:640px){.esc-opts{grid-template-columns:repeat(3,1fr)}}
-.esc-opt{display:flex;flex-direction:column;align-items:flex-start;gap:6px;
-  padding:14px 14px 12px;border-radius:12px;cursor:pointer;text-align:start;
-  background:hsl(var(--trading-bg-surface)/.5);border:1px solid hsl(var(--border));
-  color:hsl(var(--foreground));font-family:'Inter',system-ui,sans-serif;
-  transition:transform .15s ease, border-color .15s ease, background .15s ease}
-.esc-opt:hover{transform:translateY(-2px);border-color:hsl(var(--trading-cyan)/.55);
-  background:hsl(var(--trading-bg-surface))}
-.esc-opt:focus-visible{outline:2px solid hsl(var(--ring));outline-offset:2px}
-.esc-opt-icon{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;
-  background:hsl(var(--trading-cyan)/.12);color:hsl(var(--trading-cyan));border:1px solid hsl(var(--trading-cyan)/.28)}
-.esc-opt-title{font-size:13px;font-weight:700;letter-spacing:-.005em}
-.esc-opt-desc{font-size:11px;color:hsl(var(--muted-foreground));line-height:1.4}
-.esc-close{position:absolute;top:10px;inset-inline-end:12px;width:28px;height:28px;border-radius:8px;
-  background:transparent;border:1px solid hsl(var(--border));color:hsl(var(--muted-foreground));
-  display:grid;place-items:center;cursor:pointer}
+.esc-pop{position:relative;width:min(720px,100%);max-height:calc(100vh - 48px);overflow:auto;
+  border-radius:22px;padding:32px 30px 28px;
+  background:linear-gradient(160deg, #0a1a2e 0%, #061326 55%, #04101c 100%);
+  border:1px solid rgba(245,197,66,.35);
+  box-shadow:0 40px 100px -20px rgba(0,0,0,.85), 0 0 0 1px rgba(245,197,66,.08), inset 0 1px 0 rgba(255,255,255,.04);
+  animation:escFadeIn .28s cubic-bezier(.2,.8,.2,1) both;
+  font-family:'Poppins','Inter',system-ui,sans-serif}
+.esc-pop::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg, transparent, rgba(245,197,66,.6), transparent);
+  border-radius:22px 22px 0 0;pointer-events:none}
+.esc-pop-brand{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px}
+.esc-pop-brand-mark{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
+  background:rgba(245,197,66,.12);border:1px solid rgba(245,197,66,.5);color:#f5c542;font-size:18px;font-weight:800;
+  font-family:'Poppins',system-ui,sans-serif}
+.esc-pop-brand-text{font-size:11px;letter-spacing:2.5px;color:rgba(232,237,245,.6);
+  font-family:'IBM Plex Mono',ui-monospace,monospace;font-weight:600}
+.esc-pop-title{margin:0 0 8px;font-size:22px;font-weight:800;text-align:center;
+  color:#f5c542;letter-spacing:-.01em;line-height:1.2}
+.esc-pop-sub{margin:0 0 24px;font-size:13.5px;text-align:center;color:rgba(159,176,197,.85);
+  line-height:1.55;max-width:520px;margin-left:auto;margin-right:auto}
+.esc-opts{display:grid;grid-template-columns:1fr;gap:12px}
+@media (min-width:640px){.esc-opts{grid-template-columns:repeat(3,1fr);gap:14px}}
+.esc-opt{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:10px;
+  padding:20px 18px 18px;border-radius:16px;cursor:pointer;text-align:start;overflow:hidden;
+  background:linear-gradient(160deg, rgba(15,26,44,.9), rgba(6,18,31,.9));
+  border:1px solid rgba(245,197,66,.15);color:#e8edf5;
+  font-family:'Poppins','Inter',system-ui,sans-serif;
+  transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease}
+.esc-opt::after{content:'';position:absolute;inset:0;border-radius:16px;pointer-events:none;
+  background:radial-gradient(ellipse at top, rgba(245,197,66,.10), transparent 70%);opacity:0;transition:opacity .2s ease}
+.esc-opt:hover{transform:translateY(-3px);border-color:rgba(245,197,66,.55);
+  box-shadow:0 18px 40px -18px rgba(0,0,0,.7), 0 0 0 1px rgba(245,197,66,.25)}
+.esc-opt:hover::after{opacity:1}
+.esc-opt:focus-visible{outline:2px solid #f5c542;outline-offset:2px}
+.esc-opt-icon{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;
+  background:rgba(245,197,66,.12);color:#f5c542;border:1px solid rgba(245,197,66,.4)}
+.esc-opt-title{font-size:15px;font-weight:800;letter-spacing:-.005em;color:#e8edf5}
+.esc-opt-desc{font-size:12px;color:rgba(159,176,197,.85);line-height:1.5}
+.esc-close{position:absolute;top:16px;inset-inline-end:16px;width:34px;height:34px;border-radius:10px;
+  background:rgba(15,26,44,.6);border:1px solid rgba(255,255,255,.14);color:#9fb0c5;
+  display:grid;place-items:center;cursor:pointer;transition:all .15s ease;z-index:2}
+.esc-close:hover{background:rgba(245,197,66,.12);border-color:rgba(245,197,66,.5);color:#f5c542}
 @media (prefers-reduced-motion:reduce){
   .esc-file,.esc-slot::after,.esc-sweep,.esc-tile,.esc-pop,.esc-pop-backdrop,.esc-opt{animation:none;transition:none}
   .esc-tile:hover,.esc-opt:hover{transform:none}
