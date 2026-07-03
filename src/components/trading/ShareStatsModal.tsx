@@ -178,17 +178,64 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.closePath();
 }
 
-export function ShareStatsModal({ open, onClose, stats, isRTL, isMoney }: ShareStatsModalProps) {
+export function ShareStatsModal({ open, onClose, stats, isRTL, isMoney, trades }: ShareStatsModalProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [busy, setBusy] = useState<null | 'copy' | 'download' | 'share'>(null);
   const [note, setNote] = useState<string>('');
+  const [range, setRange] = useState<ShareRange>('all');
+
+  const rangeOptions: Array<{ id: ShareRange; he: string; en: string }> = [
+    { id: 'all',    he: 'הכל',           en: 'All-time' },
+    { id: 'month',  he: 'החודש',         en: 'This month' },
+    { id: 'week',   he: 'השבוע',         en: 'This week' },
+    { id: 'day',    he: 'היום',          en: 'Today' },
+    { id: 'last10', he: '10 אחרונים',    en: 'Last 10' },
+  ];
+  const currentRangeLabel = (() => {
+    const opt = rangeOptions.find(o => o.id === range)!;
+    return isRTL ? opt.he : opt.en;
+  })();
+
+  // Recompute stats when the user picks a shorter range. Fall back to the
+  // parent-provided `stats` object when `trades` isn't supplied.
+  const filteredStats = useMemo(() => {
+    if (!trades || range === 'all') return stats;
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const dow = now.getDay(); // 0=Sun
+    const startOfWeek = startOfDay - dow * 86400000;
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+
+    let subset: Trade[] = [];
+    if (range === 'last10') {
+      subset = [...trades]
+        .sort((a, b) => {
+          const da = parseTradeDate(a.date)?.getTime() ?? 0;
+          const db = parseTradeDate(b.date)?.getTime() ?? 0;
+          return db - da;
+        })
+        .slice(0, 10);
+    } else {
+      const cutoff = range === 'day' ? startOfDay : range === 'week' ? startOfWeek : startOfMonth;
+      subset = trades.filter(t => {
+        const d = parseTradeDate(t.date);
+        return d ? d.getTime() >= cutoff : false;
+      });
+    }
+    if (subset.length === 0) return { ...(stats ?? {}), totalPnl: 0, totalR: 0, winRate: 0, expectancyR: 0, totalTrades: 0, maxDrawdown: 0 };
+    try {
+      return computeAnalytics(subset);
+    } catch {
+      return stats;
+    }
+  }, [trades, range, stats]);
 
   useEffect(() => {
     if (!open) return;
     const c = canvasRef.current;
     if (!c) return;
-    paint(c, stats, isRTL, isMoney);
-  }, [open, stats, isRTL, isMoney]);
+    paint(c, filteredStats, isRTL, isMoney, currentRangeLabel);
+  }, [open, filteredStats, isRTL, isMoney, currentRangeLabel]);
 
   const toBlob = (): Promise<Blob | null> =>
     new Promise((res) => {
