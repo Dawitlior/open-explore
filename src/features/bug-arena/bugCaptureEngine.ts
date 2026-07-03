@@ -194,6 +194,7 @@ export class ElementPicker {
 
   // -- internals ------------------------------------------------------
   private build() {
+    const isMobileOverlay = typeof window !== 'undefined' && window.innerWidth < 768;
     const o = document.createElement('div');
     o.setAttribute(OVERLAY_ATTR, 'root');
     Object.assign(o.style, {
@@ -202,9 +203,12 @@ export class ElementPicker {
       zIndex: String(Z),
       cursor: 'crosshair',
       touchAction: 'none',
-      background: 'rgba(6,10,18,0.28)',
-      backdropFilter: 'saturate(1.05)',
+      // Darker overlay on mobile so we can drop the giant 2000px ring shadow.
+      background: isMobileOverlay ? 'rgba(6,10,18,0.42)' : 'rgba(6,10,18,0.28)',
+      // Skip backdrop-filter on mobile — the compositing cost is not worth it.
+      ...(isMobileOverlay ? {} : { backdropFilter: 'saturate(1.05)' }),
     } as CSSStyleDeclaration);
+
 
     // highlight ring — on mobile we skip the giant 2000px box-shadow
     // (it triggers full-viewport repaints on every pointermove and is the
