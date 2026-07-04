@@ -1954,6 +1954,21 @@ function KeyGuide({ T, isRTL, provider }: { T: TradingTheme; isRTL: boolean; pro
               </button>
             </div>
 
+            {/* Top note — IBKR only (language-toggle instruction) */}
+            {provider.id === 'ibkr_flex' && (
+              <div style={{
+                marginBottom: 14, padding: '12px 14px', borderRadius: 12,
+                background: 'rgba(255,255,255,0.03)',
+                border: `1px solid ${T.border.subtle}`,
+                fontSize: 12.5, lineHeight: 1.6, color: T.text.muted,
+              }}>
+                {t(
+                  <>שמות הכפתורים במדריך מופיעים כפי שהם נראים כשהפורטל של אינטראקטיב מוגדר לאנגלית. אם הפורטל שלכם בשפה אחרת, החליפו אותו לאנגלית להגדרה הזאת בלבד — בורר השפה נמצא בפינה העליונה של הפורטל. בסיום אפשר להחזיר לעברית.</>,
+                  <>The button names below appear in English, as shown when the IBKR portal is set to English. If your portal is in another language, switch it to English for this setup using the language selector in the top corner.</>
+                )}
+              </div>
+            )}
+
             {/* Steps */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {steps.map((s, i) => {
@@ -1978,12 +1993,14 @@ function KeyGuide({ T, isRTL, provider }: { T: TradingTheme; isRTL: boolean; pro
                       {String(i + 1).padStart(2, '0')}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{
-                        fontSize: 14.5, fontWeight: 700, color: T.text.primary,
-                        marginBottom: 4, letterSpacing: -0.1,
-                      }}>
-                        {copy.title}
-                      </div>
+                      {copy.title && (
+                        <div style={{
+                          fontSize: 14.5, fontWeight: 700, color: T.text.primary,
+                          marginBottom: 4, letterSpacing: -0.1,
+                        }}>
+                          {copy.title}
+                        </div>
+                      )}
                       <div style={{
                         fontSize: 13, lineHeight: 1.6, color: T.text.secondary,
                       }}>
@@ -1994,6 +2011,20 @@ function KeyGuide({ T, isRTL, provider }: { T: TradingTheme; isRTL: boolean; pro
                 );
               })}
             </div>
+
+            {/* Closing note — IBKR only (deeper-history workaround) */}
+            {provider.id === 'ibkr_flex' && (
+              <div style={{
+                marginTop: 14, padding: '12px 14px', borderRadius: 12,
+                background: 'rgba(255,255,255,0.03)',
+                border: `1px solid ${T.border.subtle}`,
+                fontSize: 12.5, lineHeight: 1.6, color: T.text.muted,
+              }}>
+                {isRTL
+                  ? <>להיסטוריה ישנה מ־30 יום: שנו זמנית את התקופה בשאילתה לטווח ארוך יותר, לחצו {L('סנכרן עכשיו')} באורקה, ואז החזירו את ההגדרה ל־{L('Last 30 Calendar Days')}.</>
+                  : <>For history older than 30 days, temporarily change the query's Period to a longer range, click {L('"Sync now"')} in ORCA, then set it back to {L('"Last 30 Calendar Days"')}.</>}
+              </div>
+            )}
 
             {/* Firewall notice */}
             <div style={{
