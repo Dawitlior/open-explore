@@ -234,6 +234,54 @@ export default function IntelligenceSection({ trades, T, enabled }: { trades: Tr
                     })}
                   </div>
                 </div>
+
+                {/* Discovered rules — distilled from what the model learned */}
+                {edge.rules.length > 0 && (
+                  <div style={{ marginTop: 16 }}>
+                    <Eyebrow>{t('חוקים שהמנוע גילה · DISCOVERED RULES', 'DISCOVERED RULES')}</Eyebrow>
+                    <p style={{ fontSize: 12.5, color: C.mut, margin: '6px 0 10px' }}>
+                      {t('אף אחד לא קידד את החוקים האלה — הם חולצו ממה שהמודל למד עליך.', 'Nobody coded these — they were distilled from what the model learned about you.')}
+                    </p>
+                    {edge.rules.map((r, i) => (
+                      <div key={i} style={{
+                        background: r.kind === 'bad' ? 'rgba(248,113,113,0.06)' : 'rgba(52,211,153,0.06)',
+                        border: `1px solid ${r.kind === 'bad' ? 'rgba(248,113,113,0.25)' : 'rgba(52,211,153,0.25)'}`,
+                        borderRadius: 10, padding: '10px 12px', margin: '8px 0',
+                      }}>
+                        <div style={{ fontSize: 13, color: C.text, lineHeight: 1.6 }}>
+                          <b style={{ color: r.kind === 'bad' ? C.red : C.green }}>{r.kind === 'bad' ? t('הימנע:', 'Avoid:') : t('נצל:', 'Exploit:')}</b>{' '}
+                          {(isRTL ? r.condsHe : r.condsEn).join(' + ')}
+                        </div>
+                        <div style={{ fontFamily: MONO, fontSize: 11.5, color: C.mut, marginTop: 4, direction: 'ltr', textAlign: isRTL ? 'right' : 'left' }}>
+                          WR {Math.round(r.winRate * 100)}% · {fmtR(r.expectancy)}/trade · n={r.n}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Regime monitor — multi-changepoint + self-drift */}
+                {(edge.changepoints.length > 0 || edge.drift?.decaying) && (
+                  <div style={{ background: 'rgba(251,146,60,0.07)', border: `1px solid rgba(251,146,60,0.28)`, borderRadius: 12, padding: '12px 14px', marginTop: 16 }}>
+                    <Eyebrow color={C.orange}>{t('שינויים מבניים · REGIME MONITOR', 'STRUCTURAL SHIFTS · REGIME MONITOR')}</Eyebrow>
+                    {edge.changepoints.map((cp, i) => (
+                      <p key={i} style={{ fontSize: 13.5, color: C.text, lineHeight: 1.65, margin: '8px 0 0' }}>
+                        {t(
+                          `סביב ${new Date(cp.dateISO).toLocaleDateString('he-IL')} התוחלת עברה מ-${fmtR(cp.before)} ל-${fmtR(cp.after)} (מובהקות t=${cp.t.toFixed(1)}).`,
+                          `Around ${new Date(cp.dateISO).toLocaleDateString('en-US')} expectancy moved from ${fmtR(cp.before)} to ${fmtR(cp.after)} (t=${cp.t.toFixed(1)}).`
+                        )}
+                      </p>
+                    ))}
+                    {edge.drift?.decaying && (
+                      <p style={{ fontSize: 13.5, color: C.orange, lineHeight: 1.65, margin: '8px 0 0' }}>
+                        {t(
+                          `שים לב: הדיוק שלי עליך יורד לאחרונה (${edge.drift.earlyAUC.toFixed(2)} → ${edge.drift.lateAUC.toFixed(2)}). משהו בסגנון שלך משתנה — אלמד את הגרסה החדשה שלך ככל שתעלה עוד עסקאות.`,
+                          `Heads up: my accuracy on you is decaying (${edge.drift.earlyAUC.toFixed(2)} → ${edge.drift.lateAUC.toFixed(2)}). Something in your style is changing — I'll learn the new you as more trades come in.`
+                        )}
+                      </p>
+                    )}
+                  </div>
+                )}
               </>
             )}
           </div>
