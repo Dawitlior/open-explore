@@ -168,14 +168,36 @@ export function ExchangesPanel({ T, isRTL }: Props) {
         },
         body: JSON.stringify({ provider: providerId, label: label ?? undefined }),
       });
-      const payload = await res.json().catch(() => ({} as { ok?: boolean; inserted?: number; skipped?: number; error?: string; detail?: string }));
+      const payload = await res.json().catch(() => ({} as { ok?: boolean; inserted?: number; skipped?: number; wiped?: number; error?: string; detail?: string; retryable?: boolean; warnings?: string[]; pnlCrosscheck?: { ours: number; ibkr: number; delta: number; basis: string } }));
       if (res.status === 200 && payload.ok) {
         toast.success(t(
-          `סנכרון הושלם • ${payload.inserted ?? 0} חדשות, ${payload.skipped ?? 0} קיימות`,
-          `Sync complete • ${payload.inserted ?? 0} new, ${payload.skipped ?? 0} existing`
+          `סנכרון הושלם • ${payload.inserted ?? 0} חדשות, ${payload.skipped ?? payload.wiped ?? 0} קיימות`,
+          `Sync complete • ${payload.inserted ?? 0} new, ${payload.skipped ?? payload.wiped ?? 0} existing`
         ));
+        // IBKR: surface PnL crosscheck delta + warnings as a non-blocking warning toast.
+        const xc = payload.pnlCrosscheck;
+        const tol = xc ? Math.max(1, Math.abs(xc.ibkr) * 0.005) : 0;
+        const overTol = xc && Math.abs(xc.delta) > tol;
+        const hasWarn = Array.isArray(payload.warnings) && payload.warnings.length > 0;
+        if (overTol || hasWarn) {
+          const parts: string[] = [];
+          if (overTol && xc) parts.push(t(
+            `סטיית PnL: שלנו ${xc.ours.toFixed(2)} · IBKR ${xc.ibkr.toFixed(2)} · Δ ${xc.delta.toFixed(2)}`,
+            `PnL delta: ours ${xc.ours.toFixed(2)} · IBKR ${xc.ibkr.toFixed(2)} · Δ ${xc.delta.toFixed(2)}`
+          ));
+          if (hasWarn) parts.push((payload.warnings ?? []).slice(0, 3).join(' • '));
+          toast.warning(t('אזהרות סנכרון', 'Sync warnings'), { description: parts.join('\n') });
+        }
         // Notify any listeners (useTrades, journal) that data changed
         window.dispatchEvent(new CustomEvent('orca:trades-synced', { detail: payload }));
+      } else if (res.status === 202 || payload.error === 'report_not_ready') {
+        // IBKR Flex: statement generation still in progress. Informational — not an error.
+        toast.info(t(
+          'הדוח עדיין לא מוכן — נסה שוב בעוד דקה.',
+          'Report not ready — try again in a minute.'
+        ));
+      } else if (res.status === 423 || payload.error === 'sync_blocked_kill_switch') {
+        toast.error(t('סנכרון חסום — מתג-חירום פעיל.', 'Sync blocked — kill-switch active.'));
       } else if (res.status === 404 || payload.error === 'no_credential') {
         toast.error(t('לא נמצא חיבור פעיל לבורסה.', 'No active exchange connection found.'));
       } else if (res.status === 502 || res.status === 503 || payload.error === 'exchange_error') {
