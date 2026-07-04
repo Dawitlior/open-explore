@@ -336,7 +336,7 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
                   gridAutoRows: '112px', gap: 10,
                 }}>
                   {weeks.map((row, rowIdx) => (
-                    <>
+                    <Fragment key={`wk-${rowIdx}`}>
                       {row.map((d, colIdx) => {
                         const i = rowIdx * 7 + colIdx;
                         const dd = d ? calDayPnl[d] : null;
