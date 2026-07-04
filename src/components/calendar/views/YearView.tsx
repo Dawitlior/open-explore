@@ -49,10 +49,11 @@ function buildYearPnl(trades: Trade[], year: number): Record<string, DayAgg> {
 }
 
 function MiniMonth({
-  T, isRTL, year, monthIdx, dayPnl, onMonthClick, onDayClick, compact, isR,
+  T, isRTL, year, monthIdx, dayPnl, macroByDay, onMonthClick, onDayClick, compact, isR,
 }: {
   T: any; isRTL: boolean; year: number; monthIdx: number;
   dayPnl: Record<string, DayAgg>;
+  macroByDay: Map<string, EconomicEvent[]>;
   onMonthClick: () => void;
   onDayClick: (d: number) => void;
   compact?: boolean;
@@ -66,17 +67,20 @@ function MiniMonth({
 
   return (
     <motion.div
-      whileHover={{ y: -2 }}
+      whileHover={{ y: -3, boxShadow: `0 18px 40px -22px ${T.accent.cyan}55, 0 0 0 1px ${isCurrentMonth ? T.accent.cyan : T.border.subtle}` }}
       onClick={onMonthClick}
       style={{
-        background: T.bg.card,
+        background: `linear-gradient(160deg, ${T.bg.card}, rgba(255,255,255,0.01) 80%)`,
         border: `1px solid ${isCurrentMonth ? T.accent.cyan : T.border.subtle}`,
         borderRadius: T.radius.md,
-        padding: compact ? '6px 6px 8px' : '10px 10px 12px',
+        padding: compact ? '6px 6px 8px' : '12px 12px 14px',
         cursor: 'pointer',
-        boxShadow: isCurrentMonth ? `0 0 0 1px ${T.accent.cyan}40` : 'none',
+        boxShadow: isCurrentMonth
+          ? `0 0 0 1px ${T.accent.cyan}40, 0 10px 30px -18px ${T.accent.cyan}66`
+          : `inset 0 1px 0 rgba(255,255,255,0.03), 0 6px 20px -18px rgba(0,0,0,0.6)`,
         display: 'flex', flexDirection: 'column', gap: compact ? 4 : 6,
         minWidth: 0, overflow: 'hidden',
+        transition: 'box-shadow 200ms ease, transform 200ms ease',
       }}
     >
       {/* Title */}
