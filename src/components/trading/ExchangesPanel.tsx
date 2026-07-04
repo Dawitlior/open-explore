@@ -927,7 +927,12 @@ function CredentialModal({
     const verified = status === 200 && payload.ok === true;
 
     if (!verified) {
-      if (status === 403 || payload.error === 'security_rejected') {
+      // `security_rejected` is a REAL permission-scope failure (crypto keys with
+      // Trade/Withdraw enabled). IBKR Flex tokens have no permission concept,
+      // so this branch must never render for ibkr_flex — its rejections come as
+      // `exchange_rejected` with the actual IBKR error code (e.g. "1012: Token
+      // has expired") in `payload.detail`.
+      if (payload.error === 'security_rejected' && provider.id !== 'ibkr_flex') {
         fireAlert({ kind: 'error',
           title: t('חיבור נדחה — הרשאות גבוהות מדי', 'Connection refused — scope too broad'),
           body: t(
@@ -935,6 +940,19 @@ function CredentialModal({
             'This API key carries Trading or Withdrawal permissions. Orca accepts strictly Read-Only keys.'
           ),
           code: 'SECURITY_REJECTED' });
+      } else if (payload.error === 'exchange_rejected' || (payload.error === 'security_rejected' && provider.id === 'ibkr_flex')) {
+        // Surface the upstream broker's actual rejection message verbatim.
+        const isIbkr = provider.id === 'ibkr_flex';
+        fireAlert({ kind: 'error',
+          title: isIbkr
+            ? t('אינטראקטיב ברוקרס דחתה את הבקשה', 'Interactive Brokers rejected the request')
+            : t('הבורסה דחתה את המפתח', 'Exchange rejected the key'),
+          body: payload.detail
+            || (isIbkr
+              ? t('בדקו שה־Query ID וה־Flex Token תקפים ושלא פג תוקפם.',
+                  'Check that the Query ID and Flex Token are valid and not expired.')
+              : t('בדוק את פרטי המפתח מול הבורסה.', 'Check the key details with the exchange.')),
+          code: (payload.reason || payload.error || 'EXCHANGE_REJECTED').toUpperCase() });
       } else if (status === 503 || payload.error === 'connection_error') {
         fireAlert({ kind: 'error',
           title: t('הבורסה לא זמינה', 'Exchange unavailable'),

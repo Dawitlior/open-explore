@@ -565,7 +565,16 @@ export async function handler(req: Request, deps: HandlerDeps): Promise<Response
       // Fail-safe: NO DB write, NO secret echo
       return json({ ok: false, error: 'connection_error', reason: verdict.reason, detail: verdict.detail ?? null }, 503);
     }
-    return json({ ok: false, error: 'security_rejected', reason: verdict.reason, detail: verdict.detail ?? null }, 403);
+    // `security_rejected` MUST only fire for real permission-scope violations
+    // on crypto providers that expose permission introspection (Bybit/Binance).
+    // Every other verifier failure — including IBKR Flex token/query rejections,
+    // which have no "permission" concept — is surfaced as `exchange_rejected`
+    // so the client can render the provider's actual error, not crypto copy.
+    const isPermissionScope = verdict.reason === 'permissions_too_broad';
+    return json(
+      { ok: false, error: isPermissionScope ? 'security_rejected' : 'exchange_rejected', reason: verdict.reason, detail: verdict.detail ?? null },
+      isPermissionScope ? 403 : 400,
+    );
   }
 
   // 5) Persist via vault
