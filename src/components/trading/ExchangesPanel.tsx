@@ -1153,6 +1153,9 @@ function CredentialModal({
             </div>
           )}
         </Field>
+            </>
+          );
+        })()}
 
         {/* Vault note + Coinbase-specific PEM hint */}
         <div style={{
