@@ -13,6 +13,9 @@ import { getCalDays } from '@/lib/trading-analytics';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { sumR } from '@/lib/r-multiple';
 import { useEffectiveDisplayMode } from '@/lib/display-mode';
+import { useYearEconomicEvents } from '@/hooks/use-year-economic-events';
+import type { EconomicEvent } from '@/lib/economic';
+import { MACRO_TIER_COLOR } from '@/components/economic/MacroEventStrip';
 
 interface Props {
   T: any;
@@ -46,10 +49,11 @@ function buildYearPnl(trades: Trade[], year: number): Record<string, DayAgg> {
 }
 
 function MiniMonth({
-  T, isRTL, year, monthIdx, dayPnl, onMonthClick, onDayClick, compact, isR,
+  T, isRTL, year, monthIdx, dayPnl, macroByDay, onMonthClick, onDayClick, compact, isR,
 }: {
   T: any; isRTL: boolean; year: number; monthIdx: number;
   dayPnl: Record<string, DayAgg>;
+  macroByDay: Map<string, EconomicEvent[]>;
   onMonthClick: () => void;
   onDayClick: (d: number) => void;
   compact?: boolean;
@@ -63,17 +67,20 @@ function MiniMonth({
 
   return (
     <motion.div
-      whileHover={{ y: -2 }}
+      whileHover={{ y: -3, boxShadow: `0 18px 40px -22px ${T.accent.cyan}55, 0 0 0 1px ${isCurrentMonth ? T.accent.cyan : T.border.subtle}` }}
       onClick={onMonthClick}
       style={{
-        background: T.bg.card,
+        background: `linear-gradient(160deg, ${T.bg.card}, rgba(255,255,255,0.01) 80%)`,
         border: `1px solid ${isCurrentMonth ? T.accent.cyan : T.border.subtle}`,
         borderRadius: T.radius.md,
-        padding: compact ? '6px 6px 8px' : '10px 10px 12px',
+        padding: compact ? '6px 6px 8px' : '12px 12px 14px',
         cursor: 'pointer',
-        boxShadow: isCurrentMonth ? `0 0 0 1px ${T.accent.cyan}40` : 'none',
+        boxShadow: isCurrentMonth
+          ? `0 0 0 1px ${T.accent.cyan}40, 0 10px 30px -18px ${T.accent.cyan}66`
+          : `inset 0 1px 0 rgba(255,255,255,0.03), 0 6px 20px -18px rgba(0,0,0,0.6)`,
         display: 'flex', flexDirection: 'column', gap: compact ? 4 : 6,
         minWidth: 0, overflow: 'hidden',
+        transition: 'box-shadow 200ms ease, transform 200ms ease',
       }}
     >
       {/* Title */}
@@ -103,6 +110,7 @@ function MiniMonth({
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 2 }}>
         {calDays.map((d, i) => {
           const agg = d ? dayPnl[`${monthIdx}-${d}`] : undefined;
+          const macros = d ? (macroByDay.get(`${monthIdx}-${d}`) ?? []) : [];
           const isToday = !!d && isCurrentMonth && today.getDate() === d;
           const useR = isR && !!agg && agg.rValid > 0;
           const leadVal = useR ? agg!.rTotal : (agg ? agg.pnl : 0);
@@ -115,6 +123,11 @@ function MiniMonth({
               ? (isPos ? T.accent.green : T.accent.red)
               : T.text.muted;
           const dotSize = compact ? 3 : 4;
+          const macroTier = macros.length
+            ? (macros.some(e => e.impact === 't1') ? 't1' : macros.some(e => e.impact === 't2') ? 't2' : 't3')
+            : null;
+          const macroColor = macroTier ? MACRO_TIER_COLOR[macroTier] : null;
+          const macroDotSize = compact ? 3 : 4;
           return (
             <div key={i} style={{
               position: 'relative',
@@ -125,7 +138,18 @@ function MiniMonth({
               {d && (
                 <button
                   onClick={(e) => { if (hasTrades) { e.stopPropagation(); onDayClick(d); } }}
-                  title={hasTrades ? (useR ? `${d}: ${leadVal >= 0 ? '+' : ''}${leadVal.toFixed(2)}R · ${agg!.trades}` : `${d}: ${isPos ? '+' : '-'}$${Math.abs(agg!.pnl).toFixed(0)} · ${agg!.trades}`) : undefined}
+                  title={
+                    [
+                      hasTrades
+                        ? (useR
+                            ? `${d}: ${leadVal >= 0 ? '+' : ''}${leadVal.toFixed(2)}R · ${agg!.trades}`
+                            : `${d}: ${isPos ? '+' : '-'}$${Math.abs(agg!.pnl).toFixed(0)} · ${agg!.trades}`)
+                        : null,
+                      macros.length
+                        ? `${macros.length} macro event${macros.length > 1 ? 's' : ''}`
+                        : null,
+                    ].filter(Boolean).join(' · ') || undefined
+                  }
                   style={{
                     position: 'absolute', inset: 0,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -149,6 +173,16 @@ function MiniMonth({
                       background: dotColor,
                     }} />
                   )}
+                  {macroColor && !isToday && (
+                    <span aria-hidden style={{
+                      position: 'absolute',
+                      top: compact ? 1 : 2,
+                      insetInlineEnd: compact ? 1 : 2,
+                      width: macroDotSize, height: macroDotSize, borderRadius: '50%',
+                      background: macroColor,
+                      boxShadow: `0 0 4px ${macroColor}bb`,
+                    }} />
+                  )}
                 </button>
               )}
             </div>
@@ -165,6 +199,11 @@ export function YearView({ T, isRTL, trades, year }: Props) {
   const isMobile = useIsMobile();
   const dayPnl = useMemo(() => buildYearPnl(trades, year), [trades, year]);
   const { isR } = useEffectiveDisplayMode(trades);
+
+  // Macro events for the year (T1 impacts, USD/CNY per Calendar policy).
+  const { byDay: macroByDay } = useYearEconomicEvents({
+    year, impacts: ['t1'], currencies: ['USD', 'CNY'],
+  });
 
   // Quarter totals
   const quarters = useMemo(() => {
@@ -205,6 +244,7 @@ export function YearView({ T, isRTL, trades, year }: Props) {
         <MiniMonth
           key={m} T={T} isRTL={isRTL} year={year} monthIdx={m}
           dayPnl={dayPnl}
+          macroByDay={macroByDay}
           compact={isMobile}
           isR={isR}
           onMonthClick={() => goMonth(m)}

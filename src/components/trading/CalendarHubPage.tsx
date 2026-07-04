@@ -11,7 +11,7 @@ import { getDayRiskColor, checkRiskLimits } from '@/lib/risk-limits';
 import { sumR, formatR } from '@/lib/r-multiple';
 import { useEffectiveDisplayMode } from '@/lib/display-mode';
 import { useMonthEconomicEvents } from '@/hooks/use-month-economic-events';
-import { MacroEventStrip, MacroDot } from '@/components/economic/MacroEventStrip';
+import { MacroEventStrip, MacroDot, MacroSideDots } from '@/components/economic/MacroEventStrip';
 import {
   CalendarZoomProvider,
   useCalendarZoom,
@@ -336,13 +336,30 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
                         ? (dd && dd.pnl >= 0 ? T.accent.green : T.accent.red)
                         : (!dd || dd.rValid === 0 ? T.text.muted : dd.rTotal >= 0 ? T.accent.green : T.accent.red);
                       return (
-                        <motion.div key={i} whileHover={hasContent ? { scale: 1.03 } : {}}
+                        <motion.div key={i} whileHover={hasContent ? { scale: 1.03, y: -1 } : {}}
                           onClick={() => { if (hasContent && d) setCalModalDay(d); }}
                           style={{
+                            position: 'relative',
                             minHeight: 130, borderRadius: T.radius.md,
                             border: `1px solid ${isToday ? T.accent.cyan : isDarkRed ? `${T.accent.red}60` : dd ? (leadPos && ddLead !== 0 ? borderGreen : ddLead < 0 ? borderRed : `${T.accent.orange}30`) : T.border.subtle}`,
-                            background: isDarkRed ? `${T.accent.red}25` : dd ? (leadPos && ddLead !== 0 ? tintGreen : ddLead < 0 ? tintRed : `${T.accent.orange}12`) : 'transparent',
-                            padding: '10px 12px', cursor: hasContent ? 'pointer' : 'default', display: 'flex', flexDirection: 'column',
+                            background: isDarkRed
+                              ? `${T.accent.red}25`
+                              : dd
+                                ? (leadPos && ddLead !== 0
+                                    ? `linear-gradient(155deg, ${tintGreen}, rgba(255,255,255,0.015) 70%)`
+                                    : ddLead < 0
+                                      ? `linear-gradient(155deg, ${tintRed}, rgba(255,255,255,0.015) 70%)`
+                                      : `${T.accent.orange}12`)
+                                : 'transparent',
+                            boxShadow: isToday
+                              ? `0 0 0 1px ${T.accent.cyan}55, 0 8px 24px -12px ${T.accent.cyan}55`
+                              : dd
+                                ? `inset 0 1px 0 rgba(255,255,255,0.04), 0 6px 18px -14px ${(leadPos && ddLead !== 0 ? T.accent.green : ddLead < 0 ? T.accent.red : T.accent.orange)}aa`
+                                : 'none',
+                            padding: '10px 12px',
+                            paddingInlineEnd: macros.length ? 20 : 12,
+                            cursor: hasContent ? 'pointer' : 'default', display: 'flex', flexDirection: 'column',
+                            transition: 'box-shadow 160ms ease, transform 160ms ease',
                           }}>
                           {d && (<>
                             <div style={{ fontSize: 15, color: isToday ? T.accent.cyan : T.text.muted, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -359,9 +376,10 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
                                 </span>
                               </div>
                             </>)}
-                            <div style={{ marginTop: 'auto', paddingTop: dd ? 6 : 4 }}>
-                              <MacroEventStrip events={macros} isPast={dayPast} />
-                            </div>
+                            {/* Macro events surface as premium red side-dots
+                                stacked on the inline-end edge (Apple-style),
+                                replacing the older pill strip inside the cell. */}
+                            <MacroSideDots events={macros} isPast={dayPast} />
                           </>)}
                         </motion.div>
                       );
