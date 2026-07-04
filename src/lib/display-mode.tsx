@@ -160,29 +160,18 @@ export function useEffectiveDisplayMode(trades: Trade[]): {
   locked: boolean;
 } {
   const hasAnyR = useMemo(() => trades.some(hasStrictR), [trades]);
-  const [stored, setStored] = useState<DisplayMode>(() => {
-    if (typeof window === 'undefined') return 'MONEY';
-    try {
-      const v = window.localStorage.getItem(STORAGE_KEY);
-      return (v === 'MONEY' || v === 'R_MULTIPLE') ? v : 'R_MULTIPLE';
-    } catch { return 'MONEY'; }
-  });
+  // Auto-follow the majority of trades — this is the SINGLE SOURCE OF TRUTH.
+  // localStorage is only a fallback for when there are no trades at all.
+  const autoMode = useMemo(() => autoPickMode(trades), [trades]);
+  const [stored, setStored] = useState<DisplayMode>(autoMode);
+  useEffect(() => { setStored(autoMode); }, [autoMode]);
   useEffect(() => {
     const onChange = (e: Event) => {
       const ce = e as CustomEvent<DisplayMode>;
       if (ce.detail === 'MONEY' || ce.detail === 'R_MULTIPLE') setStored(ce.detail);
     };
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY && (e.newValue === 'MONEY' || e.newValue === 'R_MULTIPLE')) {
-        setStored(e.newValue);
-      }
-    };
     window.addEventListener('orca:displayMode-changed', onChange);
-    window.addEventListener('storage', onStorage);
-    return () => {
-      window.removeEventListener('orca:displayMode-changed', onChange);
-      window.removeEventListener('storage', onStorage);
-    };
+    return () => window.removeEventListener('orca:displayMode-changed', onChange);
   }, []);
   const locked = !hasAnyR;
   const displayMode: DisplayMode = locked ? 'MONEY' : stored;
