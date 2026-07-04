@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Plug, Shield, ShieldCheck, X, Trash2, Sparkles, Lock, ChevronDown, BookOpen, AlertTriangle, RefreshCw, FileSpreadsheet, UploadCloud, CheckCircle2, Loader2, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -87,6 +87,8 @@ interface ConnectionRow {
   is_active: boolean;
   last_validated_at: string | null;
   created_at: string;
+  status?: 'active' | 'expired' | 'error' | null;
+  last_error?: string | null;
 }
 
 declare global {
@@ -116,7 +118,7 @@ export function ExchangesPanel({ T, isRTL }: Props) {
     setLoading(true);
     const { data, error } = await supabase
       .from('exchange_credentials')
-      .select('id, provider, label, is_active, last_validated_at, created_at')
+      .select('id, provider, label, is_active, last_validated_at, created_at, status, last_error')
       .order('created_at', { ascending: false });
     if (error) {
       console.error('exchange_credentials list', error);
@@ -166,14 +168,36 @@ export function ExchangesPanel({ T, isRTL }: Props) {
         },
         body: JSON.stringify({ provider: providerId, label: label ?? undefined }),
       });
-      const payload = await res.json().catch(() => ({} as { ok?: boolean; inserted?: number; skipped?: number; error?: string; detail?: string }));
+      const payload = await res.json().catch(() => ({} as { ok?: boolean; inserted?: number; skipped?: number; wiped?: number; error?: string; detail?: string; retryable?: boolean; warnings?: string[]; pnlCrosscheck?: { ours: number; ibkr: number; delta: number; basis: string } }));
       if (res.status === 200 && payload.ok) {
         toast.success(t(
-          `סנכרון הושלם • ${payload.inserted ?? 0} חדשות, ${payload.skipped ?? 0} קיימות`,
-          `Sync complete • ${payload.inserted ?? 0} new, ${payload.skipped ?? 0} existing`
+          `סנכרון הושלם • ${payload.inserted ?? 0} חדשות, ${payload.skipped ?? payload.wiped ?? 0} קיימות`,
+          `Sync complete • ${payload.inserted ?? 0} new, ${payload.skipped ?? payload.wiped ?? 0} existing`
         ));
+        // IBKR: surface PnL crosscheck delta + warnings as a non-blocking warning toast.
+        const xc = payload.pnlCrosscheck;
+        const tol = xc ? Math.max(1, Math.abs(xc.ibkr) * 0.005) : 0;
+        const overTol = xc && Math.abs(xc.delta) > tol;
+        const hasWarn = Array.isArray(payload.warnings) && payload.warnings.length > 0;
+        if (overTol || hasWarn) {
+          const parts: string[] = [];
+          if (overTol && xc) parts.push(t(
+            `סטיית PnL: שלנו ${xc.ours.toFixed(2)} · IBKR ${xc.ibkr.toFixed(2)} · Δ ${xc.delta.toFixed(2)}`,
+            `PnL delta: ours ${xc.ours.toFixed(2)} · IBKR ${xc.ibkr.toFixed(2)} · Δ ${xc.delta.toFixed(2)}`
+          ));
+          if (hasWarn) parts.push((payload.warnings ?? []).slice(0, 3).join(' • '));
+          toast.warning(t('אזהרות סנכרון', 'Sync warnings'), { description: parts.join('\n') });
+        }
         // Notify any listeners (useTrades, journal) that data changed
         window.dispatchEvent(new CustomEvent('orca:trades-synced', { detail: payload }));
+      } else if (res.status === 202 || payload.error === 'report_not_ready') {
+        // IBKR Flex: statement generation still in progress. Informational — not an error.
+        toast.info(t(
+          'הדוח עדיין לא מוכן — נסה שוב בעוד דקה.',
+          'Report not ready — try again in a minute.'
+        ));
+      } else if (res.status === 423 || payload.error === 'sync_blocked_kill_switch') {
+        toast.error(t('סנכרון חסום — מתג-חירום פעיל.', 'Sync blocked — kill-switch active.'));
       } else if (res.status === 404 || payload.error === 'no_credential') {
         toast.error(t('לא נמצא חיבור פעיל לבורסה.', 'No active exchange connection found.'));
       } else if (res.status === 502 || res.status === 503 || payload.error === 'exchange_error') {
@@ -218,6 +242,7 @@ export function ExchangesPanel({ T, isRTL }: Props) {
         {PROVIDERS.map(p => {
           const conns = byProvider.get(p.id) ?? [];
           const connected = conns.length > 0 && p.enabled;
+          const primary = conns[0];
           return (
             <ExchangeCard
               key={p.id}
@@ -225,11 +250,13 @@ export function ExchangesPanel({ T, isRTL }: Props) {
               meta={p}
               connected={connected}
               loading={loading}
-              connectionLabel={connected ? conns[0].label || t('מחובר', 'Connected') : null}
+              connectionLabel={connected ? primary.label || t('מחובר', 'Connected') : null}
+              connectionStatus={connected ? (primary.status ?? 'active') : null}
+              connectionLastError={connected ? (primary.last_error ?? null) : null}
               isRTL={isRTL}
               onConnect={() => p.enabled && setOpenProvider(p.id)}
-              onDisconnect={connected ? () => onDisconnect(conns[0].id) : undefined}
-              onSync={connected ? () => onSync(p.id, conns[0].label) : undefined}
+              onDisconnect={connected ? () => onDisconnect(primary.id) : undefined}
+              onSync={connected ? () => onSync(p.id, primary.label) : undefined}
               syncing={syncingProvider === p.id}
             />
           );
@@ -519,13 +546,15 @@ function SyncOverlay({ isRTL, providerName, accent }: { isRTL: boolean; provider
 
 /* ============================== CARD ============================== */
 function ExchangeCard({
-  T, meta, connected, loading, connectionLabel, isRTL, onConnect, onDisconnect, onSync, syncing,
+  T, meta, connected, loading, connectionLabel, connectionStatus, connectionLastError, isRTL, onConnect, onDisconnect, onSync, syncing,
 }: {
   T: TradingTheme;
   meta: ProviderMeta;
   connected: boolean;
   loading: boolean;
   connectionLabel: string | null;
+  connectionStatus?: 'active' | 'expired' | 'error' | null;
+  connectionLastError?: string | null;
   isRTL: boolean;
   onConnect: () => void;
   onDisconnect?: () => void;
@@ -718,6 +747,34 @@ function ExchangeCard({
             </>
           )}
         </button>
+      )}
+
+      {connected && (connectionStatus === 'expired' || connectionStatus === 'error') && (
+        <div
+          title={connectionLastError ?? undefined}
+          style={{
+            marginTop: 10, padding: '7px 10px', borderRadius: 8,
+            border: `1px solid ${connectionStatus === 'expired' ? 'rgba(245,158,11,0.55)' : 'rgba(239,68,68,0.55)'}`,
+            background: connectionStatus === 'expired' ? 'rgba(245,158,11,0.10)' : 'rgba(239,68,68,0.10)',
+            color: connectionStatus === 'expired' ? '#fcd34d' : '#fca5a5',
+            fontFamily: mono, fontSize: 10, letterSpacing: 0.4,
+            display: 'flex', alignItems: 'center', gap: 6,
+            cursor: connectionLastError ? 'help' : 'default',
+          }}
+        >
+          <AlertTriangle size={11} />
+          {connectionStatus === 'expired'
+            ? t('פג תוקף — יש לחדש חיבור', 'Expired — reconnect')
+            : t('שגיאה בסנכרון', 'Sync error')}
+          {connectionLastError && (
+            <span style={{
+              opacity: 0.75, marginInlineStart: 4,
+              maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>
+              · {connectionLastError}
+            </span>
+          )}
+        </div>
       )}
 
       {connected && connectionLabel && (
@@ -972,10 +1029,12 @@ function CredentialModal({
           </button>
         </div>
 
-        {/* Security notice — wording differs for exchanges that expose key
-            permission introspection (Bybit/Binance) vs. those that do not
-            (MEXC/Gate/Kraken), where we cannot reject elevated keys server-side. */}
+        {/* Security notice — three variants:
+            - ibkr_flex: the Flex token is read-only by design (can only retrieve reports).
+            - Bybit/Binance: server introspects permissions and rejects elevated keys.
+            - MEXC/Gate/Kraken/etc.: no introspection; user must scope minimally. */}
         {(() => {
+          const isIbkr = provider.id === 'ibkr_flex';
           const introspects = provider.id === 'bybit' || provider.id === 'binance';
           return (
             <div style={{
@@ -989,7 +1048,12 @@ function CredentialModal({
                 <strong style={{ color: '#fca5a5', fontWeight: 800 }}>
                   {t('דרישת אבטחה: ', 'Security Requirement: ')}
                 </strong>
-                {introspects
+                {isIbkr
+                  ? t(
+                      'אסימון הפלקס הוא לקריאה בלבד מעצם טבעו — הוא מסוגל אך ורק לשלוף דוחות. הוא אינו יכול לסחור, למשוך או להעביר דבר, בשום מצב.',
+                      'Your Flex token is read-only by design — it can only retrieve reports. It cannot trade, withdraw, or transfer anything, ever.'
+                    )
+                  : introspects
                   ? t(
                       'ודא שמפתחות ה־API מוגדרים כ־READ-ONLY / HISTORY בלבד. יש להשבית הרשאות מסחר ומשיכה. הכספת תדחה מפתחות עם הרשאות גבוהות יותר.',
                       'Ensure your API keys are configured as READ-ONLY / HISTORY only. Trading and Withdrawal permissions must be disabled. The vault will reject keys with elevated scopes.'
@@ -1006,42 +1070,46 @@ function CredentialModal({
 
         {/* Embedded Onboarding Guide (Phase 4) */}
         <KeyGuide T={T} isRTL={isRTL} provider={provider} />
-        <Field label={t('כינוי לחשבון', 'Account label')} T={T}>
-          <input
-            value={label}
-            onChange={e => setLabel(e.target.value)}
-            placeholder="main"
-            style={inputStyle(T, mono)}
-          />
-        </Field>
+        {(() => {
+          // Provider-specific credential labels (BrokerMeta.credentialLabels).
+          // Generic labels remain the default for every crypto adapter.
+          const adapter = BrokerRegistry.all().find(a => a.meta.id === provider.id);
+          const cl = adapter?.meta.credentialLabels;
+          const accountLabelText = cl?.accountLabel
+            ? t(cl.accountLabel.he, cl.accountLabel.en)
+            : t('כינוי לחשבון', 'Account label');
+          const apiKeyLabelText = cl?.apiKey
+            ? t(cl.apiKey.he, cl.apiKey.en)
+            : provider.id === 'coinbase' ? t('שם המפתח (Key Name)', 'Key Name') : 'API Key';
+          const apiSecretLabelText = cl?.apiSecret
+            ? t(cl.apiSecret.he, cl.apiSecret.en)
+            : provider.id === 'coinbase' ? t('מפתח פרטי (Private Key — בלוק PEM)', 'Private Key (PEM block)') : 'API Secret';
+          const apiKeyPlaceholder = cl?.apiKeyPlaceholder
+            ?? (provider.id === 'coinbase' ? 'organizations/.../apiKeys/...' : 'XXXXXXXXXXXXXXXXXXXX');
 
-        {/* API Key — for Coinbase this is the long CDP key NAME
-            (organizations/.../apiKeys/...), which contains slashes. */}
-        <Field
-          label={provider.id === 'coinbase' ? t('שם המפתח (Key Name)', 'Key Name') : 'API Key'}
-          T={T}
-        >
-          <input
-            value={apiKey}
-            onChange={e => setApiKey(e.target.value)}
-            placeholder={
-              provider.id === 'coinbase'
-                ? 'organizations/.../apiKeys/...'
-                : 'XXXXXXXXXXXXXXXXXXXX'
-            }
-            autoComplete="off"
-            spellCheck={false}
-            style={inputStyle(T, mono)}
-          />
-        </Field>
+          return (
+            <>
+              <Field label={accountLabelText} T={T}>
+                <input
+                  value={label}
+                  onChange={e => setLabel(e.target.value)}
+                  placeholder="main"
+                  style={inputStyle(T, mono)}
+                />
+              </Field>
 
-        {/* API Secret — for Coinbase the secret is a MULTI-LINE PEM
-            private-key block. Use a tall textarea so the BEGIN/END lines
-            and newlines paste verbatim. */}
-        <Field
-          label={provider.id === 'coinbase' ? t('מפתח פרטי (Private Key — בלוק PEM)', 'Private Key (PEM block)') : 'API Secret'}
-          T={T}
-        >
+              <Field label={apiKeyLabelText} T={T}>
+                <input
+                  value={apiKey}
+                  onChange={e => setApiKey(e.target.value)}
+                  placeholder={apiKeyPlaceholder}
+                  autoComplete="off"
+                  spellCheck={false}
+                  style={inputStyle(T, mono)}
+                />
+              </Field>
+
+              <Field label={apiSecretLabelText} T={T}>
           {provider.id === 'coinbase' ? (
             <textarea
               value={apiSecret}
@@ -1085,6 +1153,9 @@ function CredentialModal({
             </div>
           )}
         </Field>
+            </>
+          );
+        })()}
 
         {/* Vault note + Coinbase-specific PEM hint */}
         <div style={{
@@ -1500,7 +1571,9 @@ function KeyGuide({ T, isRTL, provider }: { T: TradingTheme; isRTL: boolean; pro
   const sans = "'Poppins', sans-serif";
   const mono = "'IBM Plex Mono', monospace";
 
-  type Step = { he: { title: string; body: string }; en: { title: string; body: string } };
+  type Step = { he: { title: string; body: ReactNode }; en: { title: string; body: ReactNode } };
+  // Small helper: an English UI label rendered LTR + bidi-isolated inside Hebrew.
+  const L = (s: string) => <span dir="ltr" style={{ unicodeBidi: 'isolate' as const, whiteSpace: 'nowrap' }}>{s}</span>;
   const bybitSteps: Step[] = [
     {
       he: { title: 'התחבר לחשבון Bybit שלך', body: 'פתח את האתר bybit.com ולחץ "Log In" בפינה הימנית. אם אין לך חשבון — צור אחד והשלם את אימות הזהות.' },
@@ -1701,6 +1774,42 @@ function KeyGuide({ T, isRTL, provider }: { T: TradingTheme; isRTL: boolean; pro
       en: { title: 'Paste both here', body: 'Paste the full "name" (including the slashes) into "API Key". Paste the entire "privateKey" PEM block — including the BEGIN/END lines and everything between them — into "API Secret" (the field is multi-line specifically for Coinbase). Click "Verify & Save".' },
     },
   ];
+
+  // IBKR Flex — walkthrough for creating an Activity Flex Query + Flex Token.
+  // Hebrew keeps English IBKR UI labels inside bidi-isolated LTR spans so the
+  // menu paths render correctly under RTL. Closes with the "Last 30 Calendar
+  // Days" note (deeper history requires enlarging the query period).
+  const ibkrFlexSteps: Step[] = [
+    {
+      he: { title: 'התחבר ל-Client Portal של Interactive Brokers', body: <>גש אל <span dir="ltr">interactivebrokers.com</span> ולחץ {L('Login → Client Portal')}. ודא שהזהות שלך מאומתת ושחשבון המסחר פעיל.</> },
+      en: { title: 'Log in to the Interactive Brokers Client Portal', body: <>Go to <span dir="ltr">interactivebrokers.com</span> and click {L('Login → Client Portal')}. Make sure your identity is verified and your trading account is active.</> },
+    },
+    {
+      he: { title: 'צור Activity Flex Query חדש', body: <>מהתפריט העליון בחר {L('Performance & Reports → Flex Queries')}, ולאחר מכן לחץ על {L('+ Create')} מתחת ל-{L('Activity Flex Query')}. תן שם כמו {L('ORCA Activity')}.</> },
+      en: { title: 'Create a new Activity Flex Query', body: <>From the top menu choose {L('Performance & Reports → Flex Queries')}, then click {L('+ Create')} under {L('Activity Flex Query')}. Give it a name like {L('ORCA Activity')}.</> },
+    },
+    {
+      he: { title: 'בחר סקציות: Trades ו-Open Positions', body: <>סמן את הסקציות {L('Trades')} ו-{L('Open Positions')}. בתוך כל סקציה לחץ {L('Select All')} על שדות המידע — ORCA צריכה את סט השדות המלא כדי לשחזר את העסקאות בצורה מדויקת.</> },
+      en: { title: 'Pick sections: Trades and Open Positions', body: <>Tick the {L('Trades')} and {L('Open Positions')} sections. Inside each section press {L('Select All')} on the fields — ORCA needs the full field set to reconstruct trades accurately.</> },
+    },
+    {
+      he: { title: 'הגדר Period ו-Format', body: <>תחת {L('Period')} בחר {L('Last 30 Calendar Days')} (ראה הערה בסוף). תחת {L('Format')} ודא שנבחר {L('XML')} — לא {L('CSV')}. שמור את השאילתה.</> },
+      en: { title: 'Set the Period and Format', body: <>Under {L('Period')} choose {L('Last 30 Calendar Days')} (see note at the bottom). Under {L('Format')} make sure {L('XML')} is selected — not {L('CSV')}. Save the query.</> },
+    },
+    {
+      he: { title: 'העתק את ה-Query ID', body: <>לאחר השמירה יופיע מזהה מספרי לצד השאילתה — זהו ה-{L('Query ID')} (בדרך כלל 6 עד 10 ספרות). העתק אותו — זה הערך שנדביק בהמשך בשדה {L('Activity Flex Query ID')}.</> },
+      en: { title: 'Copy the Query ID', body: <>After saving, a numeric ID appears next to the query — this is the {L('Query ID')} (usually 6-10 digits). Copy it — this is the value you will paste into the {L('Activity Flex Query ID')} field.</> },
+    },
+    {
+      he: { title: 'הפעל את Flex Web Service וצור Token', body: <>גש אל {L('Settings → Account Settings → Reporting → Flex Web Service')} ולחץ {L('Configure')}. בחר בתוקף המרבי (365 ימים) והשאר את {L('IP Restrictions')} <strong>ריק</strong> — לשרתי הסנכרון של ORCA אין IP קבוע ולכן טוקן מוגבל ל-IP ייכשל. אשר, ואז לחץ {L('Generate')} כדי לקבל את ה-{L('Flex Token')}.</> },
+      en: { title: 'Enable the Flex Web Service and generate a Token', body: <>Go to {L('Settings → Account Settings → Reporting → Flex Web Service')} and click {L('Configure')}. Pick the maximum validity (365 days) and leave {L('IP Restrictions')} <strong>empty</strong> — ORCA sync servers have no fixed IP, so an IP-bound token will fail. Confirm, then click {L('Generate')} to get the {L('Flex Token')}.</> },
+    },
+    {
+      he: { title: 'הדבק כאן את שני הערכים', body: <>חזור לחלון הזה. הדבק את ה-{L('Query ID')} בשדה {L('Activity Flex Query ID')} ואת ה-{L('Flex Token')} בשדה {L('Flex Token')}. לחץ {L('Verify & Save')}. הערה: {L('Last 30 Calendar Days')} מספיק לסנכרון היומי הרציף; לייבוא היסטוריה עמוקה יותר חזור לשאילתה והגדל את התקופה, ולאחר מכן הרץ סנכרון ידני אחד.</> },
+      en: { title: 'Paste both values here', body: <>Return to this window. Paste the {L('Query ID')} into {L('Activity Flex Query ID')} and the {L('Flex Token')} into {L('Flex Token')}. Click {L('Verify & Save')}. Note: {L('Last 30 Calendar Days')} is enough for the continuous daily sync; to import deeper history, edit the query and widen the period, then run one manual sync.</> },
+    },
+  ];
+
   const steps: Step[] =
     provider.id === 'bybit' ? bybitSteps
     : provider.id === 'binance' ? binanceSteps
@@ -1710,6 +1819,7 @@ function KeyGuide({ T, isRTL, provider }: { T: TradingTheme; isRTL: boolean; pro
     : provider.id === 'kraken_futures' ? krakenFuturesSteps
     : provider.id === 'crypto_com' ? cryptoComSteps
     : provider.id === 'coinbase' ? coinbaseSteps
+    : provider.id === 'ibkr_flex' ? ibkrFlexSteps
     : binanceSteps;
 
 
@@ -1747,10 +1857,15 @@ function KeyGuide({ T, isRTL, provider }: { T: TradingTheme; isRTL: boolean; pro
             {t('מדריך שלב-אחר-שלב', 'Step-by-step walkthrough')}
           </div>
           <div style={{ fontSize: 11, fontWeight: 500, color: T.text.muted, lineHeight: 1.45 }}>
-            {t(
-              `איך מוציאים מפתח API בטוח מ-${provider.name}? לחץ כאן — מוסבר בשפה פשוטה, ללא ידע טכני.`,
-              `How to create a safe API key on ${provider.name}? Click here — explained in plain language, no tech skills needed.`
-            )}
+            {provider.id === 'ibkr_flex'
+              ? t(
+                  'איך יוצרים Activity Flex Query ו-Flex Token ב-Interactive Brokers? לחץ כאן — מוסבר בשפה פשוטה, ללא ידע טכני.',
+                  'How to create an Activity Flex Query and a Flex Token in Interactive Brokers? Click here — explained in plain language, no tech skills needed.'
+                )
+              : t(
+                  `איך מוציאים מפתח API בטוח מ-${provider.name}? לחץ כאן — מוסבר בשפה פשוטה, ללא ידע טכני.`,
+                  `How to create a safe API key on ${provider.name}? Click here — explained in plain language, no tech skills needed.`
+                )}
           </div>
         </div>
         <ChevronDown size={16} color={provider.accent} style={{ flexShrink: 0, transform: 'rotate(-90deg)' }} />

@@ -34,6 +34,13 @@ export const ibkrFlexAdapter: BrokerAdapter = {
       he: "סנכרון יומי אוטומטי דרך Activity Flex Query",
       en: "Daily auto-sync via Activity Flex Query",
     },
+    credentialLabels: {
+      accountLabel: { he: "שם לחשבון", en: "Account name" },
+      apiKey: { he: "Activity Flex Query ID", en: "Activity Flex Query ID" },
+      apiSecret: { he: "Flex Token", en: "Flex Token" },
+      apiKeyPlaceholder: "123456",
+      apiSecretPlaceholder: "XXXXXXXXXXXXXXXXXXXX",
+    },
   },
 
   async detectFormat(input): Promise<DetectResult> {
