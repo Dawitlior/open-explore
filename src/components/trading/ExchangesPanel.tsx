@@ -1110,7 +1110,6 @@ function CredentialModal({
               </Field>
 
               <Field label={apiSecretLabelText} T={T}>
-        >
           {provider.id === 'coinbase' ? (
             <textarea
               value={apiSecret}
