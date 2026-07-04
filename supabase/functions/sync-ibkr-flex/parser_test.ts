@@ -8,7 +8,7 @@ import {
   parseFlexXml,
   reconstructClosedTrades,
   mapOpenPositions,
-} from './ibkr-flex.ts';
+} from '../_shared/brokers/ibkr-flex.ts';
 
 const POSITIONS_ONLY_XML = `<FlexQueryResponse queryName="ORCA" type="AF">
  <FlexStatements count="1">
