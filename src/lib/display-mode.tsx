@@ -47,13 +47,11 @@ export function selectVisibleTrades(trades: Trade[], mode: DisplayMode): Trade[]
 }
 
 const STORAGE_KEY = 'orca:displayMode';
-// Manual override is now SESSION-scoped only. When the user re-enters the
-// platform (new tab / new day), display mode auto-follows the majority of
-// their trades again — no manual toggling required across sessions.
-const USER_SET_KEY = 'orca:displayMode:userSet';
 
 /** Auto-pick the mode the user most likely wants, based on their data:
- *  more R-eligible trades than not → R_MULTIPLE; otherwise → MONEY. */
+ *  more R-eligible trades than not → R_MULTIPLE; otherwise → MONEY.
+ *  This is the SINGLE SOURCE OF TRUTH — the platform always follows the
+ *  majority of the user's actual trades, never a stale manual override. */
 export function autoPickMode(trades: Trade[]): DisplayMode {
   if (!trades || trades.length === 0) return 'R_MULTIPLE';
   let rOk = 0;
@@ -67,16 +65,7 @@ export function DisplayModeProvider({ trades, children }: { trades: Trade[]; chi
   const locked = !hasAnyR;
   const autoMode = useMemo(() => autoPickMode(trades), [trades]);
 
-  const [displayMode, setDisplayModeState] = useState<DisplayMode>(() => {
-    if (typeof window === 'undefined') return 'R_MULTIPLE';
-    try {
-      // Session-scoped manual override (this tab only).
-      const userSet = window.sessionStorage.getItem(USER_SET_KEY) === '1';
-      const cached = window.sessionStorage.getItem(STORAGE_KEY) || window.localStorage.getItem(STORAGE_KEY);
-      if (userSet && (cached === 'MONEY' || cached === 'R_MULTIPLE')) return cached;
-    } catch { /* ignore */ }
-    return autoPickMode(trades);
-  });
+  const [displayMode, setDisplayModeState] = useState<DisplayMode>(() => autoPickMode(trades));
 
   // Derive effective mode synchronously — prevents a one-frame flicker on
   // first paint when an effect would otherwise downgrade R_MULTIPLE → MONEY.
@@ -86,12 +75,10 @@ export function DisplayModeProvider({ trades, children }: { trades: Trade[]; chi
     if (locked && displayMode !== 'MONEY') setDisplayModeState('MONEY');
   }, [locked, displayMode]);
 
-  // Auto-follow the data unless the user manually toggled during THIS session.
+  // ALWAYS auto-follow the majority of the data. Manual toggles are ephemeral
+  // (current render only) — as soon as the trade set changes, the majority
+  // wins. This is the behaviour the user explicitly requires.
   useEffect(() => {
-    try {
-      const userSet = window.sessionStorage.getItem(USER_SET_KEY) === '1';
-      if (userSet) return;
-    } catch { /* ignore */ }
     if (autoMode !== displayMode) {
       setDisplayModeState(autoMode);
       try {
@@ -100,20 +87,21 @@ export function DisplayModeProvider({ trades, children }: { trades: Trade[]; chi
       } catch { /* ignore */ }
       try { window.dispatchEvent(new CustomEvent('orca:displayMode-changed', { detail: autoMode })); } catch { /* noop */ }
     }
-  }, [autoMode, displayMode]);
+    // Intentionally depend only on autoMode — we don't want manual toggles
+    // to re-trigger this effect and immediately snap back.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoMode]);
 
   const setDisplayMode = (m: DisplayMode) => {
     if (locked && m === 'R_MULTIPLE') return; // can't enter R without eligible data
     setDisplayModeState(m);
     try {
-      // Session-scoped manual override — resets on next session so auto-detect
-      // takes over again when the user returns to the platform.
       window.sessionStorage.setItem(STORAGE_KEY, m);
-      window.sessionStorage.setItem(USER_SET_KEY, '1');
       window.localStorage.setItem(STORAGE_KEY, m);
     } catch { /* ignore */ }
     try { window.dispatchEvent(new CustomEvent('orca:displayMode-changed', { detail: m })); } catch { /* noop */ }
   };
+
 
   const visibleTrades = useMemo(
     () => selectVisibleTrades(trades, effectiveMode),
