@@ -110,6 +110,7 @@ function MiniMonth({
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 2 }}>
         {calDays.map((d, i) => {
           const agg = d ? dayPnl[`${monthIdx}-${d}`] : undefined;
+          const macros = d ? (macroByDay.get(`${monthIdx}-${d}`) ?? []) : [];
           const isToday = !!d && isCurrentMonth && today.getDate() === d;
           const useR = isR && !!agg && agg.rValid > 0;
           const leadVal = useR ? agg!.rTotal : (agg ? agg.pnl : 0);
@@ -122,6 +123,11 @@ function MiniMonth({
               ? (isPos ? T.accent.green : T.accent.red)
               : T.text.muted;
           const dotSize = compact ? 3 : 4;
+          const macroTier = macros.length
+            ? (macros.some(e => e.impact === 't1') ? 't1' : macros.some(e => e.impact === 't2') ? 't2' : 't3')
+            : null;
+          const macroColor = macroTier ? MACRO_TIER_COLOR[macroTier] : null;
+          const macroDotSize = compact ? 3 : 4;
           return (
             <div key={i} style={{
               position: 'relative',
@@ -132,7 +138,18 @@ function MiniMonth({
               {d && (
                 <button
                   onClick={(e) => { if (hasTrades) { e.stopPropagation(); onDayClick(d); } }}
-                  title={hasTrades ? (useR ? `${d}: ${leadVal >= 0 ? '+' : ''}${leadVal.toFixed(2)}R · ${agg!.trades}` : `${d}: ${isPos ? '+' : '-'}$${Math.abs(agg!.pnl).toFixed(0)} · ${agg!.trades}`) : undefined}
+                  title={
+                    [
+                      hasTrades
+                        ? (useR
+                            ? `${d}: ${leadVal >= 0 ? '+' : ''}${leadVal.toFixed(2)}R · ${agg!.trades}`
+                            : `${d}: ${isPos ? '+' : '-'}$${Math.abs(agg!.pnl).toFixed(0)} · ${agg!.trades}`)
+                        : null,
+                      macros.length
+                        ? `${macros.length} macro event${macros.length > 1 ? 's' : ''}`
+                        : null,
+                    ].filter(Boolean).join(' · ') || undefined
+                  }
                   style={{
                     position: 'absolute', inset: 0,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -154,6 +171,16 @@ function MiniMonth({
                       transform: 'translateX(-50%)',
                       width: dotSize, height: dotSize, borderRadius: '50%',
                       background: dotColor,
+                    }} />
+                  )}
+                  {macroColor && !isToday && (
+                    <span aria-hidden style={{
+                      position: 'absolute',
+                      top: compact ? 1 : 2,
+                      insetInlineEnd: compact ? 1 : 2,
+                      width: macroDotSize, height: macroDotSize, borderRadius: '50%',
+                      background: macroColor,
+                      boxShadow: `0 0 4px ${macroColor}bb`,
                     }} />
                   )}
                 </button>
