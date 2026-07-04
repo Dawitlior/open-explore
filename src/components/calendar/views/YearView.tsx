@@ -244,6 +244,7 @@ export function YearView({ T, isRTL, trades, year }: Props) {
         <MiniMonth
           key={m} T={T} isRTL={isRTL} year={year} monthIdx={m}
           dayPnl={dayPnl}
+          macroByDay={macroByDay}
           compact={isMobile}
           isR={isR}
           onMonthClick={() => goMonth(m)}
