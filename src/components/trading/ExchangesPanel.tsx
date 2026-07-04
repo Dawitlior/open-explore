@@ -1073,7 +1073,7 @@ function CredentialModal({
         {(() => {
           // Provider-specific credential labels (BrokerMeta.credentialLabels).
           // Generic labels remain the default for every crypto adapter.
-          const adapter = BrokerRegistry.get(provider.id);
+          const adapter = BrokerRegistry.all().find(a => a.meta.id === provider.id);
           const cl = adapter?.meta.credentialLabels;
           const accountLabelText = cl?.accountLabel
             ? t(cl.accountLabel.he, cl.accountLabel.en)
