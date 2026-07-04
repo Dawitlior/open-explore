@@ -1962,10 +1962,9 @@ function KeyGuide({ T, isRTL, provider }: { T: TradingTheme; isRTL: boolean; pro
                 border: `1px solid ${T.border.subtle}`,
                 fontSize: 12.5, lineHeight: 1.6, color: T.text.muted,
               }}>
-                {t(
-                  <>שמות הכפתורים במדריך מופיעים כפי שהם נראים כשהפורטל של אינטראקטיב מוגדר לאנגלית. אם הפורטל שלכם בשפה אחרת, החליפו אותו לאנגלית להגדרה הזאת בלבד — בורר השפה נמצא בפינה העליונה של הפורטל. בסיום אפשר להחזיר לעברית.</>,
-                  <>The button names below appear in English, as shown when the IBKR portal is set to English. If your portal is in another language, switch it to English for this setup using the language selector in the top corner.</>
-                )}
+                {isRTL
+                  ? <>שמות הכפתורים במדריך מופיעים כפי שהם נראים כשהפורטל של אינטראקטיב מוגדר לאנגלית. אם הפורטל שלכם בשפה אחרת, החליפו אותו לאנגלית להגדרה הזאת בלבד — בורר השפה נמצא בפינה העליונה של הפורטל. בסיום אפשר להחזיר לעברית.</>
+                  : <>The button names below appear in English, as shown when the IBKR portal is set to English. If your portal is in another language, switch it to English for this setup using the language selector in the top corner.</>}
               </div>
             )}
 
