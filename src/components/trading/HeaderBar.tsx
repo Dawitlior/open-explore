@@ -62,15 +62,16 @@ const HEADER_CSS = `
   font-family:'Inter',system-ui,sans-serif;letter-spacing:-0.005em;
   transition:transform .15s, box-shadow .15s}
 .ohb-primary:hover{transform:translateY(-1px);box-shadow:0 6px 16px -8px rgb(255 255 255 / 0.35)}
-.ohb-collapse{width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;
+.ohb-collapse{width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;
   border:1px solid hsl(var(--border));border-radius:8px;cursor:pointer;
-  background:hsl(var(--trading-bg-surface) / 0.5);color:hsl(var(--muted-foreground));
+  background:hsl(var(--trading-bg-surface) / 0.5);color:hsl(var(--foreground));
   transition:background .15s, color .15s, transform .15s}
+.ohb-collapse svg{opacity:.95}
 .ohb-collapse:hover{background:hsl(var(--trading-bg-surface));color:hsl(var(--foreground));transform:translateY(-1px)}
 .ohb-pill-wrap{position:sticky;top:0;z-index:5;padding:10px 24px 6px;background:transparent;pointer-events:none;
   display:flex;justify-content:center;animation:ohb-in .28s cubic-bezier(.2,.8,.2,1) both}
 .ohb-pill-wrap > *{pointer-events:auto}
-.ohb-pill{display:inline-flex;align-items:center;gap:10px;height:32px;padding:0 14px;
+.ohb-pill{display:inline-flex;align-items:center;gap:10px;height:34px;padding:0 16px;
   border-radius:999px;cursor:pointer;
   background:hsl(var(--trading-bg-secondary) / 0.8);
   -webkit-backdrop-filter:blur(14px) saturate(140%);
@@ -82,7 +83,7 @@ const HEADER_CSS = `
   transition:transform .18s cubic-bezier(.2,.8,.2,1), box-shadow .18s ease, background .18s ease}
 .ohb-pill:hover{transform:translateY(1px) scale(1.02);
   box-shadow:0 0 0 1px hsl(var(--trading-cyan) / 0.4), 0 12px 28px -14px hsl(var(--trading-cyan) / 0.35)}
-.ohb-pill svg{opacity:.75;transition:transform .2s ease}
+.ohb-pill svg{opacity:1;color:hsl(var(--foreground));transition:transform .2s ease}
 .ohb-pill:hover svg{transform:translateX(2px);opacity:1}
 @media (prefers-reduced-motion:reduce){
   .ohb,.ohb-ghost,.ohb-primary,.ohb-collapse,.ohb-pill,.ohb-pill-wrap,.ohb-pill svg{transition:none;animation:none}
