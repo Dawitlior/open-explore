@@ -1029,10 +1029,12 @@ function CredentialModal({
           </button>
         </div>
 
-        {/* Security notice — wording differs for exchanges that expose key
-            permission introspection (Bybit/Binance) vs. those that do not
-            (MEXC/Gate/Kraken), where we cannot reject elevated keys server-side. */}
+        {/* Security notice — three variants:
+            - ibkr_flex: the Flex token is read-only by design (can only retrieve reports).
+            - Bybit/Binance: server introspects permissions and rejects elevated keys.
+            - MEXC/Gate/Kraken/etc.: no introspection; user must scope minimally. */}
         {(() => {
+          const isIbkr = provider.id === 'ibkr_flex';
           const introspects = provider.id === 'bybit' || provider.id === 'binance';
           return (
             <div style={{
@@ -1046,7 +1048,12 @@ function CredentialModal({
                 <strong style={{ color: '#fca5a5', fontWeight: 800 }}>
                   {t('דרישת אבטחה: ', 'Security Requirement: ')}
                 </strong>
-                {introspects
+                {isIbkr
+                  ? t(
+                      'אסימון הפלקס הוא לקריאה בלבד מעצם טבעו — הוא מסוגל אך ורק לשלוף דוחות. הוא אינו יכול לסחור, למשוך או להעביר דבר, בשום מצב.',
+                      'Your Flex token is read-only by design — it can only retrieve reports. It cannot trade, withdraw, or transfer anything, ever.'
+                    )
+                  : introspects
                   ? t(
                       'ודא שמפתחות ה־API מוגדרים כ־READ-ONLY / HISTORY בלבד. יש להשבית הרשאות מסחר ומשיכה. הכספת תדחה מפתחות עם הרשאות גבוהות יותר.',
                       'Ensure your API keys are configured as READ-ONLY / HISTORY only. Trading and Withdrawal permissions must be disabled. The vault will reject keys with elevated scopes.'
@@ -1063,41 +1070,46 @@ function CredentialModal({
 
         {/* Embedded Onboarding Guide (Phase 4) */}
         <KeyGuide T={T} isRTL={isRTL} provider={provider} />
-        <Field label={t('כינוי לחשבון', 'Account label')} T={T}>
-          <input
-            value={label}
-            onChange={e => setLabel(e.target.value)}
-            placeholder="main"
-            style={inputStyle(T, mono)}
-          />
-        </Field>
+        {(() => {
+          // Provider-specific credential labels (BrokerMeta.credentialLabels).
+          // Generic labels remain the default for every crypto adapter.
+          const adapter = BrokerRegistry.get(provider.id);
+          const cl = adapter?.meta.credentialLabels;
+          const accountLabelText = cl?.accountLabel
+            ? t(cl.accountLabel.he, cl.accountLabel.en)
+            : t('כינוי לחשבון', 'Account label');
+          const apiKeyLabelText = cl?.apiKey
+            ? t(cl.apiKey.he, cl.apiKey.en)
+            : provider.id === 'coinbase' ? t('שם המפתח (Key Name)', 'Key Name') : 'API Key';
+          const apiSecretLabelText = cl?.apiSecret
+            ? t(cl.apiSecret.he, cl.apiSecret.en)
+            : provider.id === 'coinbase' ? t('מפתח פרטי (Private Key — בלוק PEM)', 'Private Key (PEM block)') : 'API Secret';
+          const apiKeyPlaceholder = cl?.apiKeyPlaceholder
+            ?? (provider.id === 'coinbase' ? 'organizations/.../apiKeys/...' : 'XXXXXXXXXXXXXXXXXXXX');
 
-        {/* API Key — for Coinbase this is the long CDP key NAME
-            (organizations/.../apiKeys/...), which contains slashes. */}
-        <Field
-          label={provider.id === 'coinbase' ? t('שם המפתח (Key Name)', 'Key Name') : 'API Key'}
-          T={T}
-        >
-          <input
-            value={apiKey}
-            onChange={e => setApiKey(e.target.value)}
-            placeholder={
-              provider.id === 'coinbase'
-                ? 'organizations/.../apiKeys/...'
-                : 'XXXXXXXXXXXXXXXXXXXX'
-            }
-            autoComplete="off"
-            spellCheck={false}
-            style={inputStyle(T, mono)}
-          />
-        </Field>
+          return (
+            <>
+              <Field label={accountLabelText} T={T}>
+                <input
+                  value={label}
+                  onChange={e => setLabel(e.target.value)}
+                  placeholder="main"
+                  style={inputStyle(T, mono)}
+                />
+              </Field>
 
-        {/* API Secret — for Coinbase the secret is a MULTI-LINE PEM
-            private-key block. Use a tall textarea so the BEGIN/END lines
-            and newlines paste verbatim. */}
-        <Field
-          label={provider.id === 'coinbase' ? t('מפתח פרטי (Private Key — בלוק PEM)', 'Private Key (PEM block)') : 'API Secret'}
-          T={T}
+              <Field label={apiKeyLabelText} T={T}>
+                <input
+                  value={apiKey}
+                  onChange={e => setApiKey(e.target.value)}
+                  placeholder={apiKeyPlaceholder}
+                  autoComplete="off"
+                  spellCheck={false}
+                  style={inputStyle(T, mono)}
+                />
+              </Field>
+
+              <Field label={apiSecretLabelText} T={T}>
         >
           {provider.id === 'coinbase' ? (
             <textarea
