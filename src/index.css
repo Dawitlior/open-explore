@@ -994,6 +994,51 @@ html[dir="rtl"] th[data-numeric] {
 /* Scrollbars on the correct edge for RTL */
 html[dir="rtl"] * { scrollbar-gutter: stable; }
 
+/* RTL icon hardening: several Hebrew-only surfaces render tiny stroke-only
+   action icons (X / collapse / chevron) on dark glass. Keep interactive SVGs
+   visible without changing provider-specific artwork or chart SVGs. */
+html[dir="rtl"] button > svg,
+html[dir="rtl"] button .lucide,
+html[dir="rtl"] [role="button"] > svg,
+html[dir="rtl"] [role="button"] .lucide {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  color: currentColor !important;
+  stroke: currentColor !important;
+  stroke-width: 2.35 !important;
+  overflow: visible !important;
+  flex-shrink: 0 !important;
+}
+
+html[dir="rtl"] button[aria-label*="סגור"],
+html[dir="rtl"] button[aria-label*="מזער"],
+html[dir="rtl"] button[aria-label*="הרחב"],
+html[dir="rtl"] button[aria-label*="Close"],
+html[dir="rtl"] button[aria-label*="Collapse"],
+html[dir="rtl"] button[aria-label*="Expand"] {
+  color: hsl(var(--foreground)) !important;
+}
+
+html[dir="rtl"] button[aria-label*="סגור"] > svg,
+html[dir="rtl"] button[aria-label*="סגור"] .lucide,
+html[dir="rtl"] button[aria-label*="מזער"] > svg,
+html[dir="rtl"] button[aria-label*="מזער"] .lucide,
+html[dir="rtl"] button[aria-label*="הרחב"] > svg,
+html[dir="rtl"] button[aria-label*="הרחב"] .lucide,
+html[dir="rtl"] button[aria-label*="Close"] > svg,
+html[dir="rtl"] button[aria-label*="Close"] .lucide,
+html[dir="rtl"] button[aria-label*="Collapse"] > svg,
+html[dir="rtl"] button[aria-label*="Collapse"] .lucide,
+html[dir="rtl"] button[aria-label*="Expand"] > svg,
+html[dir="rtl"] button[aria-label*="Expand"] .lucide {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  stroke-width: 2.7 !important;
+}
+
 /* ============================================================
    Premium Chart Polish — applied globally to every Recharts instance
    Goal: TradeView-grade density, hairline grids, smooth anti-aliased lines.
