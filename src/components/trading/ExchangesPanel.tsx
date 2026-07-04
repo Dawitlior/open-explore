@@ -1924,13 +1924,20 @@ function KeyGuide({ T, isRTL, provider }: { T: TradingTheme; isRTL: boolean; pro
                   {provider.name} · {t('מדריך אימות API', 'API onboarding guide')}
                 </div>
                 <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, letterSpacing: -0.4, color: T.text.primary }}>
-                  {t('צור מפתח API לקריאה בלבד', 'Create a Read-Only API key')}
+                  {provider.id === 'ibkr_flex'
+                    ? t('חיבור אינטראקטיב ברוקרס', 'Connect Interactive Brokers')
+                    : t('צור מפתח API לקריאה בלבד', 'Create a Read-Only API key')}
                 </h2>
                 <div style={{ marginTop: 6, fontSize: 13, lineHeight: 1.55, color: T.text.muted }}>
-                  {t(
-                    'עקוב אחרי השלבים אחד-אחד. בכל שלב הסבר מפורט בשפה פשוטה — גם אם אתה רחוק מטכנולוגיה.',
-                    'Follow the steps one by one. Each step is explained in plain language — even if you have zero technical background.'
-                  )}
+                  {provider.id === 'ibkr_flex'
+                    ? t(
+                        'ההגדרה לוקחת כחמש דקות. עברו שלב אחר שלב — לא צריך שום ידע טכני.',
+                        'This takes about 5 minutes. Follow it step by step — no technical background needed.'
+                      )
+                    : t(
+                        'עקוב אחרי השלבים אחד-אחד. בכל שלב הסבר מפורט בשפה פשוטה — גם אם אתה רחוק מטכנולוגיה.',
+                        'Follow the steps one by one. Each step is explained in plain language — even if you have zero technical background.'
+                      )}
                 </div>
               </div>
               <button
