@@ -140,12 +140,20 @@ export default function IntelligenceSection({ trades, T, enabled }: { trades: Tr
                   )}
                 </p>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 12, margin: '0 0 16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 12, margin: '0 0 12px' }}>
                   <Stat C={C} label={t('דיוק המודל (out-of-sample)', 'Model accuracy (out-of-sample)')} value={edge.testAUC.toFixed(3)} color={C.cyan}
                     sub={t(`0.5 = ניחוש, 1.0 = מושלם`, `0.5 = guessing, 1.0 = perfect`)} />
                   <Stat C={C} label={t('בלי המנוע (כל העסקאות)', 'Without engine (all trades)')} value={fmtR(edge.allR)} color={edge.allR >= 0 ? C.green : C.red} sub={Nlabel(edge.testN)} />
                   <Stat C={C} label={t('עם המנוע (סינון אוטומטי)', 'With engine (auto-filter)')} value={fmtR(edge.keptR)} color={edge.keptR >= 0 ? C.green : C.red} sub={Nlabel(edge.keptN)} />
                 </div>
+
+                {/* Cortex meta line — protocol / brain / memory */}
+                <p style={{ fontFamily: MONO, fontSize: 11, color: C.dim, margin: '0 0 14px' }}>
+                  {t(
+                    `פרוטוקול: ${edge.mode === 'walkforward' ? `walk-forward · ${edge.folds.length} בחינות` : 'split כרונולוגי'} · חלון ${edge.windowSize} · מוח נוכחי: ${edge.folds[edge.folds.length - 1]?.brain === 'gbm' ? 'עצים (אינטראקציות)' : 'ליניארי'} · זיכרון: ${edge.halfLife ? `חצי-חיים ${edge.halfLife} עסקאות` : 'יציב'}`,
+                    `Protocol: ${edge.mode === 'walkforward' ? `walk-forward · ${edge.folds.length} exams` : 'chronological split'} · window ${edge.windowSize} · current brain: ${edge.folds[edge.folds.length - 1]?.brain === 'gbm' ? 'trees (interactions)' : 'linear'} · memory: ${edge.halfLife ? `half-life ${edge.halfLife} trades` : 'stable'}`
+                  )}
+                </p>
 
                 {/* Plain-language summary — directional */}
                 <p style={{ fontSize: 15, lineHeight: 1.85, color: C.text, margin: '0 0 14px' }}>
@@ -226,6 +234,54 @@ export default function IntelligenceSection({ trades, T, enabled }: { trades: Tr
                     })}
                   </div>
                 </div>
+
+                {/* Discovered rules — distilled from what the model learned */}
+                {edge.rules.length > 0 && (
+                  <div style={{ marginTop: 16 }}>
+                    <Eyebrow>{t('חוקים שהמנוע גילה · DISCOVERED RULES', 'DISCOVERED RULES')}</Eyebrow>
+                    <p style={{ fontSize: 12.5, color: C.mut, margin: '6px 0 10px' }}>
+                      {t('אף אחד לא קידד את החוקים האלה — הם חולצו ממה שהמודל למד עליך.', 'Nobody coded these — they were distilled from what the model learned about you.')}
+                    </p>
+                    {edge.rules.map((r, i) => (
+                      <div key={i} style={{
+                        background: r.kind === 'bad' ? 'rgba(248,113,113,0.06)' : 'rgba(52,211,153,0.06)',
+                        border: `1px solid ${r.kind === 'bad' ? 'rgba(248,113,113,0.25)' : 'rgba(52,211,153,0.25)'}`,
+                        borderRadius: 10, padding: '10px 12px', margin: '8px 0',
+                      }}>
+                        <div style={{ fontSize: 13, color: C.text, lineHeight: 1.6 }}>
+                          <b style={{ color: r.kind === 'bad' ? C.red : C.green }}>{r.kind === 'bad' ? t('הימנע:', 'Avoid:') : t('נצל:', 'Exploit:')}</b>{' '}
+                          {(isRTL ? r.condsHe : r.condsEn).join(' + ')}
+                        </div>
+                        <div style={{ fontFamily: MONO, fontSize: 11.5, color: C.mut, marginTop: 4, direction: 'ltr', textAlign: isRTL ? 'right' : 'left' }}>
+                          WR {Math.round(r.winRate * 100)}% · {fmtR(r.expectancy)}/trade · n={r.n}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Regime monitor — multi-changepoint + self-drift */}
+                {(edge.changepoints.length > 0 || edge.drift?.decaying) && (
+                  <div style={{ background: 'rgba(251,146,60,0.07)', border: `1px solid rgba(251,146,60,0.28)`, borderRadius: 12, padding: '12px 14px', marginTop: 16 }}>
+                    <Eyebrow color={C.orange}>{t('שינויים מבניים · REGIME MONITOR', 'STRUCTURAL SHIFTS · REGIME MONITOR')}</Eyebrow>
+                    {edge.changepoints.map((cp, i) => (
+                      <p key={i} style={{ fontSize: 13.5, color: C.text, lineHeight: 1.65, margin: '8px 0 0' }}>
+                        {t(
+                          `סביב ${new Date(cp.dateISO).toLocaleDateString('he-IL')} התוחלת עברה מ-${fmtR(cp.before)} ל-${fmtR(cp.after)} (מובהקות t=${cp.t.toFixed(1)}).`,
+                          `Around ${new Date(cp.dateISO).toLocaleDateString('en-US')} expectancy moved from ${fmtR(cp.before)} to ${fmtR(cp.after)} (t=${cp.t.toFixed(1)}).`
+                        )}
+                      </p>
+                    ))}
+                    {edge.drift?.decaying && (
+                      <p style={{ fontSize: 13.5, color: C.orange, lineHeight: 1.65, margin: '8px 0 0' }}>
+                        {t(
+                          `שים לב: הדיוק שלי עליך יורד לאחרונה (${edge.drift.earlyAUC.toFixed(2)} → ${edge.drift.lateAUC.toFixed(2)}). משהו בסגנון שלך משתנה — אלמד את הגרסה החדשה שלך ככל שתעלה עוד עסקאות.`,
+                          `Heads up: my accuracy on you is decaying (${edge.drift.earlyAUC.toFixed(2)} → ${edge.drift.lateAUC.toFixed(2)}). Something in your style is changing — I'll learn the new you as more trades come in.`
+                        )}
+                      </p>
+                    )}
+                  </div>
+                )}
               </>
             )}
           </div>
