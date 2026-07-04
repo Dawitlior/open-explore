@@ -1775,38 +1775,52 @@ function KeyGuide({ T, isRTL, provider }: { T: TradingTheme; isRTL: boolean; pro
     },
   ];
 
-  // IBKR Flex — walkthrough for creating an Activity Flex Query + Flex Token.
-  // Hebrew keeps English IBKR UI labels inside bidi-isolated LTR spans so the
-  // menu paths render correctly under RTL. Closes with the "Last 30 Calendar
-  // Days" note (deeper history requires enlarging the query period).
+  // IBKR Flex — CANONICAL walkthrough (Section 7.3-R). Both language blocks are
+  // shipped VERBATIM: pure Hebrew prose in `he`, pure English prose in `en`,
+  // no language interleaving. In Hebrew every quoted English label is wrapped
+  // in a bidi-isolated LTR span via L() so RTL order never scrambles. Titles
+  // are intentionally empty — the canonical spec provides numbered prose only,
+  // and inventing per-step headings would violate the "verbatim" rule.
   const ibkrFlexSteps: Step[] = [
     {
-      he: { title: 'התחבר ל-Client Portal של Interactive Brokers', body: <>גש אל <span dir="ltr">interactivebrokers.com</span> ולחץ {L('Login → Client Portal')}. ודא שהזהות שלך מאומתת ושחשבון המסחר פעיל.</> },
-      en: { title: 'Log in to the Interactive Brokers Client Portal', body: <>Go to <span dir="ltr">interactivebrokers.com</span> and click {L('Login → Client Portal')}. Make sure your identity is verified and your trading account is active.</> },
+      he: { title: '', body: <>התחברו לפורטל של אינטראקטיב ברוקרס ({L('Client Portal')}) כרגיל.</> },
+      en: { title: '', body: <>Log in to your Interactive Brokers Client Portal as usual.</> },
     },
     {
-      he: { title: 'צור Activity Flex Query חדש', body: <>מהתפריט העליון בחר {L('Performance & Reports → Flex Queries')}, ולאחר מכן לחץ על {L('+ Create')} מתחת ל-{L('Activity Flex Query')}. תן שם כמו {L('ORCA Activity')}.</> },
-      en: { title: 'Create a new Activity Flex Query', body: <>From the top menu choose {L('Performance & Reports → Flex Queries')}, then click {L('+ Create')} under {L('Activity Flex Query')}. Give it a name like {L('ORCA Activity')}.</> },
+      he: { title: '', body: <>פתחו את התפריט ובחרו ב־{L('Performance & Reports')}, ואז ב־{L('Flex Queries')}.</> },
+      en: { title: '', body: <>Open the menu and choose {L('"Performance & Reports"')}, then {L('"Flex Queries"')}.</> },
     },
     {
-      he: { title: 'בחר סקציות: Trades ו-Open Positions', body: <>סמן את הסקציות {L('Trades')} ו-{L('Open Positions')}. בתוך כל סקציה לחץ {L('Select All')} על שדות המידע — ORCA צריכה את סט השדות המלא כדי לשחזר את העסקאות בצורה מדויקת.</> },
-      en: { title: 'Pick sections: Trades and Open Positions', body: <>Tick the {L('Trades')} and {L('Open Positions')} sections. Inside each section press {L('Select All')} on the fields — ORCA needs the full field set to reconstruct trades accurately.</> },
+      he: { title: '', body: <>ליד השורה {L('Activity Flex Query')} לחצו על הפלוס ({L('+')}) כדי ליצור שאילתה חדשה. תנו לה שם, למשל {L('ORCA')}.</> },
+      en: { title: '', body: <>Next to {L('"Activity Flex Query"')}, click the plus ({L('+')}) to create a new query. Give it a name, for example {L('"ORCA"')}.</> },
     },
     {
-      he: { title: 'הגדר Period ו-Format', body: <>תחת {L('Period')} בחר {L('Last 30 Calendar Days')} (ראה הערה בסוף). תחת {L('Format')} ודא שנבחר {L('XML')} — לא {L('CSV')}. שמור את השאילתה.</> },
-      en: { title: 'Set the Period and Format', body: <>Under {L('Period')} choose {L('Last 30 Calendar Days')} (see note at the bottom). Under {L('Format')} make sure {L('XML')} is selected — not {L('CSV')}. Save the query.</> },
+      he: { title: '', body: <>פתחו את המקטע {L('Trades')}, בחרו ב־{L('Executions')}, וסמנו את כל השדות (יש אפשרות {L('Select All')}). אחר כך פתחו את המקטע {L('Open Positions')} וסמנו גם שם את כל השדות.</> },
+      en: { title: '', body: <>Open the {L('"Trades"')} section, choose {L('"Executions"')}, and tick every field (there's a {L('"Select All"')} option). Then open the {L('"Open Positions"')} section and tick every field there too.</> },
     },
     {
-      he: { title: 'העתק את ה-Query ID', body: <>לאחר השמירה יופיע מזהה מספרי לצד השאילתה — זהו ה-{L('Query ID')} (בדרך כלל 6 עד 10 ספרות). העתק אותו — זה הערך שנדביק בהמשך בשדה {L('Activity Flex Query ID')}.</> },
-      en: { title: 'Copy the Query ID', body: <>After saving, a numeric ID appears next to the query — this is the {L('Query ID')} (usually 6-10 digits). Copy it — this is the value you will paste into the {L('Activity Flex Query ID')} field.</> },
+      he: { title: '', body: <>בהגדרות הכלליות של השאילתה קבעו כך: תקופה — {L('Last 30 Calendar Days')}; פורמט — {L('XML')}; תבנית תאריך — {L('yyyy-MM-dd')}; תבנית שעה — {L('HH:mm:ss')}; תו מפריד — נקודה־פסיק (;). ואז שמרו ({L('Save')}).</> },
+      en: { title: '', body: <>In the query's general settings, set: Period = {L('"Last 30 Calendar Days"')}; Format = {L('"XML"')}; Date format = {L('"yyyy-MM-dd"')}; Time format = {L('"HH:mm:ss"')}; Field/Line separator = semicolon (;). Then Save.</> },
     },
     {
-      he: { title: 'הפעל את Flex Web Service וצור Token', body: <>גש אל {L('Settings → Account Settings → Reporting → Flex Web Service')} ולחץ {L('Configure')}. בחר בתוקף המרבי (365 ימים) והשאר את {L('IP Restrictions')} <strong>ריק</strong> — לשרתי הסנכרון של ORCA אין IP קבוע ולכן טוקן מוגבל ל-IP ייכשל. אשר, ואז לחץ {L('Generate')} כדי לקבל את ה-{L('Flex Token')}.</> },
-      en: { title: 'Enable the Flex Web Service and generate a Token', body: <>Go to {L('Settings → Account Settings → Reporting → Flex Web Service')} and click {L('Configure')}. Pick the maximum validity (365 days) and leave {L('IP Restrictions')} <strong>empty</strong> — ORCA sync servers have no fixed IP, so an IP-bound token will fail. Confirm, then click {L('Generate')} to get the {L('Flex Token')}.</> },
+      he: { title: '', body: <>חזרתם לרשימת השאילתות. לחצו על אייקון המידע ({L('i')}) ליד השאילתה שיצרתם, העתיקו את המספר שמופיע כ־{L('Query ID')}, והדביקו אותו בשדה {L('Activity Flex Query ID')} כאן באורקה.</> },
+      en: { title: '', body: <>Back in the query list, click the info ({L('i')}) icon next to your query. Copy the number shown as the {L('"Query ID"')}, and paste it into the {L('"Activity Flex Query ID"')} field here in ORCA.</> },
     },
     {
-      he: { title: 'הדבק כאן את שני הערכים', body: <>חזור לחלון הזה. הדבק את ה-{L('Query ID')} בשדה {L('Activity Flex Query ID')} ואת ה-{L('Flex Token')} בשדה {L('Flex Token')}. לחץ {L('Verify & Save')}. הערה: {L('Last 30 Calendar Days')} מספיק לסנכרון היומי הרציף; לייבוא היסטוריה עמוקה יותר חזור לשאילתה והגדל את התקופה, ולאחר מכן הרץ סנכרון ידני אחד.</> },
-      en: { title: 'Paste both values here', body: <>Return to this window. Paste the {L('Query ID')} into {L('Activity Flex Query ID')} and the {L('Flex Token')} into {L('Flex Token')}. Click {L('Verify & Save')}. Note: {L('Last 30 Calendar Days')} is enough for the continuous daily sync; to import deeper history, edit the query and widen the period, then run one manual sync.</> },
+      he: { title: '', body: <>פתחו שוב את התפריט, בחרו ב־{L('Settings')} ואז ב־{L('Account Settings')}. תחת הקטגוריה {L('Reporting')} מצאו את {L('Flex Web Service')} ולחצו כדי להפעיל אותו.</> },
+      en: { title: '', body: <>Open the menu again, choose {L('"Settings"')}, then {L('"Account Settings"')}. Under {L('"Reporting"')}, find {L('"Flex Web Service"')} and click to turn it on.</> },
+    },
+    {
+      he: { title: '', body: <>לחצו על {L('Generate token')}. קבעו תוקף של שנה. אל תסמנו הגבלת כתובת {L('IP')} — לשרתים של אורקה אין כתובת קבועה, והגבלה כזאת תגרום לחיבור להפסיק לעבוד.</> },
+      en: { title: '', body: <>Click {L('"Generate token"')}. Set the expiry to 1 year. Do not set an IP restriction — ORCA's servers have no fixed IP address, so an IP-restricted token will stop working.</> },
+    },
+    {
+      he: { title: '', body: <>העתיקו את האסימון שנוצר והדביקו אותו בשדה {L('Flex Token')} כאן באורקה.</> },
+      en: { title: '', body: <>Copy the token you just generated and paste it into the {L('"Flex Token"')} field here in ORCA.</> },
+    },
+    {
+      he: { title: '', body: <>לחצו "הוסף חשבון". זהו — הסנכרון הראשון ימשוך את שלושים הימים האחרונים.</> },
+      en: { title: '', body: <>Click {L('"Add account"')}. Done — your first sync pulls the last 30 days.</> },
     },
   ];
 
