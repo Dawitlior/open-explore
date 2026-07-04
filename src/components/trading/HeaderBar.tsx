@@ -121,7 +121,7 @@ export function HeaderBar(props: HeaderBarProps) {
           aria-label={isRTL ? 'הרחב סרגל ניווט' : 'Expand navbar'}
           title={isRTL ? 'הרחב' : 'Expand'}
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M4 12h16M4 6h16M4 18h16"/>
           </svg>
           <span>{props.pageLabel}</span>
