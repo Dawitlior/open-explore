@@ -189,9 +189,17 @@ export function parseFlexXml(xml: string): ParsedFlex {
   const statements: FlexAccountStatement[] = [];
   for (const s of stmts) {
     const sa = attrObj(s);
-    const node = s as Record<string, unknown>;
-    const tradesWrap = node.Trades as { Trade?: unknown } | undefined;
-    const openWrap = node.OpenPositions as { OpenPosition?: unknown } | undefined;
+    const node = (s && typeof s === 'object') ? (s as Record<string, unknown>) : {};
+    // fast-xml-parser collapses `<Trades> </Trades>` (whitespace-only body) to
+    // an empty string rather than an object. Both shapes MUST parse as "no
+    // trades" — never as an error. A positions-only Flex report (open
+    // positions but zero closed trades in the window) is a valid success.
+    const tradesRaw = node.Trades;
+    const openRaw = node.OpenPositions;
+    const tradesWrap = (tradesRaw && typeof tradesRaw === 'object')
+      ? (tradesRaw as { Trade?: unknown }) : undefined;
+    const openWrap = (openRaw && typeof openRaw === 'object')
+      ? (openRaw as { OpenPosition?: unknown }) : undefined;
     const trades = coerceArray(tradesWrap?.Trade).map(t => attrObj(t)) as FlexTradeAttr[];
     const openPositions = coerceArray(openWrap?.OpenPosition).map(t => attrObj(t)) as FlexOpenPositionAttr[];
     statements.push({
