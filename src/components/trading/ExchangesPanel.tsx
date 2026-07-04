@@ -1571,7 +1571,9 @@ function KeyGuide({ T, isRTL, provider }: { T: TradingTheme; isRTL: boolean; pro
   const sans = "'Poppins', sans-serif";
   const mono = "'IBM Plex Mono', monospace";
 
-  type Step = { he: { title: string; body: string }; en: { title: string; body: string } };
+  type Step = { he: { title: string; body: ReactNode }; en: { title: string; body: ReactNode } };
+  // Small helper: an English UI label rendered LTR + bidi-isolated inside Hebrew.
+  const L = (s: string) => <span dir="ltr" style={{ unicodeBidi: 'isolate' as const, whiteSpace: 'nowrap' }}>{s}</span>;
   const bybitSteps: Step[] = [
     {
       he: { title: 'התחבר לחשבון Bybit שלך', body: 'פתח את האתר bybit.com ולחץ "Log In" בפינה הימנית. אם אין לך חשבון — צור אחד והשלם את אימות הזהות.' },
