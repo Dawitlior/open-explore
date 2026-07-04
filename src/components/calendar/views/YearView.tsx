@@ -13,6 +13,9 @@ import { getCalDays } from '@/lib/trading-analytics';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { sumR } from '@/lib/r-multiple';
 import { useEffectiveDisplayMode } from '@/lib/display-mode';
+import { useYearEconomicEvents } from '@/hooks/use-year-economic-events';
+import type { EconomicEvent } from '@/lib/economic';
+import { MACRO_TIER_COLOR } from '@/components/economic/MacroEventStrip';
 
 interface Props {
   T: any;
