@@ -749,6 +749,34 @@ function ExchangeCard({
         </button>
       )}
 
+      {connected && (connectionStatus === 'expired' || connectionStatus === 'error') && (
+        <div
+          title={connectionLastError ?? undefined}
+          style={{
+            marginTop: 10, padding: '7px 10px', borderRadius: 8,
+            border: `1px solid ${connectionStatus === 'expired' ? 'rgba(245,158,11,0.55)' : 'rgba(239,68,68,0.55)'}`,
+            background: connectionStatus === 'expired' ? 'rgba(245,158,11,0.10)' : 'rgba(239,68,68,0.10)',
+            color: connectionStatus === 'expired' ? '#fcd34d' : '#fca5a5',
+            fontFamily: mono, fontSize: 10, letterSpacing: 0.4,
+            display: 'flex', alignItems: 'center', gap: 6,
+            cursor: connectionLastError ? 'help' : 'default',
+          }}
+        >
+          <AlertTriangle size={11} />
+          {connectionStatus === 'expired'
+            ? t('פג תוקף — יש לחדש חיבור', 'Expired — reconnect')
+            : t('שגיאה בסנכרון', 'Sync error')}
+          {connectionLastError && (
+            <span style={{
+              opacity: 0.75, marginInlineStart: 4,
+              maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>
+              · {connectionLastError}
+            </span>
+          )}
+        </div>
+      )}
+
       {connected && connectionLabel && (
         <div style={{
           marginTop: 12, paddingTop: 12,
