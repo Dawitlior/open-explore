@@ -77,18 +77,15 @@ export function DisplayModeProvider({ trades, children }: { trades: Trade[]; chi
 
   // ALWAYS auto-follow the majority of the data. Manual toggles are ephemeral
   // (current render only) — as soon as the trade set changes, the majority
-  // wins. This is the behaviour the user explicitly requires.
+  // wins. Broadcast unconditionally so external consumers (useEffectiveDisplayMode,
+  // components outside the provider) re-sync even when the mode didn't change.
   useEffect(() => {
-    if (autoMode !== displayMode) {
-      setDisplayModeState(autoMode);
-      try {
-        window.localStorage.setItem(STORAGE_KEY, autoMode);
-        window.sessionStorage.setItem(STORAGE_KEY, autoMode);
-      } catch { /* ignore */ }
-      try { window.dispatchEvent(new CustomEvent('orca:displayMode-changed', { detail: autoMode })); } catch { /* noop */ }
-    }
-    // Intentionally depend only on autoMode — we don't want manual toggles
-    // to re-trigger this effect and immediately snap back.
+    if (autoMode !== displayMode) setDisplayModeState(autoMode);
+    try {
+      window.localStorage.setItem(STORAGE_KEY, autoMode);
+      window.sessionStorage.setItem(STORAGE_KEY, autoMode);
+    } catch { /* ignore */ }
+    try { window.dispatchEvent(new CustomEvent('orca:displayMode-changed', { detail: autoMode })); } catch { /* noop */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoMode]);
 
