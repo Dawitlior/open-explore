@@ -494,7 +494,7 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
                           </div>
                         );
                       })()}
-                    </>
+                    </Fragment>
                   ))}
                 </div>
               </GlassCard>
