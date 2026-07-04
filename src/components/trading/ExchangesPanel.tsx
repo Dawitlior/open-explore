@@ -1857,10 +1857,15 @@ function KeyGuide({ T, isRTL, provider }: { T: TradingTheme; isRTL: boolean; pro
             {t('מדריך שלב-אחר-שלב', 'Step-by-step walkthrough')}
           </div>
           <div style={{ fontSize: 11, fontWeight: 500, color: T.text.muted, lineHeight: 1.45 }}>
-            {t(
-              `איך מוציאים מפתח API בטוח מ-${provider.name}? לחץ כאן — מוסבר בשפה פשוטה, ללא ידע טכני.`,
-              `How to create a safe API key on ${provider.name}? Click here — explained in plain language, no tech skills needed.`
-            )}
+            {provider.id === 'ibkr_flex'
+              ? t(
+                  'איך יוצרים Activity Flex Query ו-Flex Token ב-Interactive Brokers? לחץ כאן — מוסבר בשפה פשוטה, ללא ידע טכני.',
+                  'How to create an Activity Flex Query and a Flex Token in Interactive Brokers? Click here — explained in plain language, no tech skills needed.'
+                )
+              : t(
+                  `איך מוציאים מפתח API בטוח מ-${provider.name}? לחץ כאן — מוסבר בשפה פשוטה, ללא ידע טכני.`,
+                  `How to create a safe API key on ${provider.name}? Click here — explained in plain language, no tech skills needed.`
+                )}
           </div>
         </div>
         <ChevronDown size={16} color={provider.accent} style={{ flexShrink: 0, transform: 'rotate(-90deg)' }} />
