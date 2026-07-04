@@ -117,4 +117,83 @@ export function MacroDot({ events, isPast }: { events: EconomicEvent[]; isPast?:
   );
 }
 
+/**
+ * Premium side-dot stack for calendar cells (desktop MonthView + YearView).
+ * Renders up to `max` vertical dots on the inline-end side of a relatively-
+ * positioned cell, colored by tier severity (T1 rose, T2 amber, T3 slate).
+ * "+N" overflow badge appears when there are more events than dots.
+ */
+export function MacroSideDots({
+  events, isPast = false, max = 3, size = 6, gap = 4, inset = 4,
+}: {
+  events: EconomicEvent[];
+  isPast?: boolean;
+  max?: number;
+  size?: number;
+  gap?: number;
+  inset?: number;
+}) {
+  if (!events?.length) return null;
+  const sorted = [...events].sort((a, b) => {
+    const rank = (i: EconomicImpact) => (i === 't1' ? 0 : i === 't2' ? 1 : 2);
+    return rank(a.impact) - rank(b.impact);
+  });
+  const shown = sorted.slice(0, max);
+  const extra = sorted.length - shown.length;
+  const title = sorted
+    .slice(0, 6)
+    .map((e) => `${e.currency ?? ''} ${e.event_name}`.trim())
+    .join('\n') + (sorted.length > 6 ? `\n+${sorted.length - 6} more` : '');
+  return (
+    <div
+      title={title}
+      style={{
+        position: 'absolute',
+        top: inset,
+        bottom: inset,
+        insetInlineEnd: inset,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap,
+        opacity: isPast ? 0.4 : 1,
+        pointerEvents: 'auto',
+        zIndex: 2,
+      }}
+    >
+      {shown.map((e) => {
+        const color = TIER_COLOR[e.impact];
+        return (
+          <span
+            key={e.id}
+            aria-hidden
+            style={{
+              width: size,
+              height: size,
+              borderRadius: '50%',
+              background: color,
+              boxShadow: `0 0 6px ${color}aa, inset 0 0 0 1px rgba(255,255,255,0.18)`,
+            }}
+          />
+        );
+      })}
+      {extra > 0 && (
+        <span
+          style={{
+            fontSize: 8,
+            fontWeight: 800,
+            color: '#f43f5e',
+            fontFamily: "'IBM Plex Mono', monospace",
+            lineHeight: 1,
+            marginTop: 1,
+          }}
+        >
+          +{extra}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export { FLAG as CURRENCY_FLAG, TIER_COLOR as MACRO_TIER_COLOR };
