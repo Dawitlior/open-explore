@@ -76,9 +76,9 @@ export function CookieConsentBanner() {
               type="button"
               onClick={rejectAll}
               aria-label={t('סגור', 'Close')}
-              className="shrink-0 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition"
+              className="shrink-0 p-1.5 rounded-md text-foreground/80 hover:text-foreground hover:bg-muted transition"
             >
-              <X className="h-4 w-4" />
+              <X className="h-5 w-5" strokeWidth={2.2} />
             </button>
           </div>
         </div>
