@@ -200,6 +200,11 @@ export function YearView({ T, isRTL, trades, year }: Props) {
   const dayPnl = useMemo(() => buildYearPnl(trades, year), [trades, year]);
   const { isR } = useEffectiveDisplayMode(trades);
 
+  // Macro events for the year (T1 impacts, USD/CNY per Calendar policy).
+  const { byDay: macroByDay } = useYearEconomicEvents({
+    year, impacts: ['t1'], currencies: ['USD', 'CNY'],
+  });
+
   // Quarter totals
   const quarters = useMemo(() => {
     const q = [0, 0, 0, 0];
