@@ -850,7 +850,12 @@ function CredentialModal({
   }
   const [alertState, setAlertState] = useState<AlertState | null>(null);
 
-  const canSubmit = apiKey.trim().length >= 8 && apiSecret.trim().length >= 8 && !busy && !inCooldown;
+  // IBKR Flex Query IDs are short numeric identifiers (typically 6–10 digits),
+  // so the generic ">= 8 chars" gate used for crypto API keys locks them out.
+  // Relax the api_key minimum for ibkr_flex only; api_secret (Flex Token) is
+  // always long, so its rule stays. Other providers are untouched.
+  const apiKeyMin = provider.id === 'ibkr_flex' ? 4 : 8;
+  const canSubmit = apiKey.trim().length >= apiKeyMin && apiSecret.trim().length >= 8 && !busy && !inCooldown;
 
   // Escalating backoff: 1st fail = 2s, every subsequent fail adds +30s.
   // (1=2s, 2=32s, 3=62s, 4=92s, ...)
