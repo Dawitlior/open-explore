@@ -118,7 +118,7 @@ export function ExchangesPanel({ T, isRTL }: Props) {
     setLoading(true);
     const { data, error } = await supabase
       .from('exchange_credentials')
-      .select('id, provider, label, is_active, last_validated_at, created_at')
+      .select('id, provider, label, is_active, last_validated_at, created_at, status, last_error')
       .order('created_at', { ascending: false });
     if (error) {
       console.error('exchange_credentials list', error);
