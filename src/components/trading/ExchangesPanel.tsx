@@ -546,13 +546,15 @@ function SyncOverlay({ isRTL, providerName, accent }: { isRTL: boolean; provider
 
 /* ============================== CARD ============================== */
 function ExchangeCard({
-  T, meta, connected, loading, connectionLabel, isRTL, onConnect, onDisconnect, onSync, syncing,
+  T, meta, connected, loading, connectionLabel, connectionStatus, connectionLastError, isRTL, onConnect, onDisconnect, onSync, syncing,
 }: {
   T: TradingTheme;
   meta: ProviderMeta;
   connected: boolean;
   loading: boolean;
   connectionLabel: string | null;
+  connectionStatus?: 'active' | 'expired' | 'error' | null;
+  connectionLastError?: string | null;
   isRTL: boolean;
   onConnect: () => void;
   onDisconnect?: () => void;
