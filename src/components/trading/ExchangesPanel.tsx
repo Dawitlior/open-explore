@@ -2048,28 +2048,54 @@ function KeyGuide({ T, isRTL, provider }: { T: TradingTheme; isRTL: boolean; pro
               </div>
             )}
 
-            {/* Firewall notice */}
-            <div style={{
-              marginTop: 18, padding: '14px 16px', borderRadius: 12,
-              background: 'linear-gradient(135deg, rgba(245,158,11,0.12), rgba(245,158,11,0.03))',
-              border: '1px solid rgba(245,158,11,0.5)',
-              boxShadow: '0 0 26px -10px rgba(245,158,11,0.7), inset 0 0 0 1px rgba(245,158,11,0.05)',
-              display: 'flex', gap: 12, alignItems: 'flex-start',
-            }}>
-              <AlertTriangle size={18} color="#fbbf24" style={{
-                flexShrink: 0, marginTop: 1,
-                filter: 'drop-shadow(0 0 4px rgba(251,191,36,0.7))',
-              }} />
-              <div style={{ fontSize: 13, lineHeight: 1.55, color: '#fde68a' }}>
-                <div style={{ color: '#fcd34d', fontWeight: 800, marginBottom: 3, letterSpacing: 0.2 }}>
-                  {t('חומת המגן של Orca', 'Orca Firewall')}
+            {/* Footer reassurance — ibkr_flex has no permission concept, so it
+                gets the read-only-by-design copy (identical to the form's
+                Security notice). Crypto adapters keep the firewall framing. */}
+            {provider.id === 'ibkr_flex' ? (
+              <div style={{
+                marginTop: 18, padding: '14px 16px', borderRadius: 12,
+                background: 'linear-gradient(135deg, rgba(34,197,94,0.10), rgba(34,197,94,0.02))',
+                border: '1px solid rgba(34,197,94,0.45)',
+                boxShadow: '0 0 26px -10px rgba(34,197,94,0.55), inset 0 0 0 1px rgba(34,197,94,0.05)',
+                display: 'flex', gap: 12, alignItems: 'flex-start',
+              }}>
+                <ShieldCheck size={18} color="#4ade80" style={{
+                  flexShrink: 0, marginTop: 1,
+                  filter: 'drop-shadow(0 0 4px rgba(74,222,128,0.7))',
+                }} />
+                <div style={{ fontSize: 13, lineHeight: 1.55, color: '#bbf7d0' }}>
+                  <div style={{ color: '#86efac', fontWeight: 800, marginBottom: 3, letterSpacing: 0.2 }}>
+                    {t('קריאה בלבד מעצם התכנון', 'Read-Only by Design')}
+                  </div>
+                  {t(
+                    'אסימון הפלקס הוא לקריאה בלבד מעצם טבעו — הוא מסוגל אך ורק לשלוף דוחות. הוא אינו יכול לסחור, למשוך או להעביר דבר, בשום מצב.',
+                    'Your Flex token is read-only by design — it can only retrieve reports. It cannot trade, withdraw, or transfer anything, ever.'
+                  )}
                 </div>
-                {t(
-                  'כל מפתח עם הרשאות מסחר או משיכה יידחה אוטומטית על-ידי השרת. אנחנו מקבלים אך ורק מפתחות לקריאה בלבד — הכסף שלך לעולם לא בסיכון.',
-                  'Any key with Trading or Withdrawal permissions is automatically rejected by our server. Only strict Read-Only keys are accepted — your funds are never at risk.'
-                )}
               </div>
-            </div>
+            ) : (
+              <div style={{
+                marginTop: 18, padding: '14px 16px', borderRadius: 12,
+                background: 'linear-gradient(135deg, rgba(245,158,11,0.12), rgba(245,158,11,0.03))',
+                border: '1px solid rgba(245,158,11,0.5)',
+                boxShadow: '0 0 26px -10px rgba(245,158,11,0.7), inset 0 0 0 1px rgba(245,158,11,0.05)',
+                display: 'flex', gap: 12, alignItems: 'flex-start',
+              }}>
+                <AlertTriangle size={18} color="#fbbf24" style={{
+                  flexShrink: 0, marginTop: 1,
+                  filter: 'drop-shadow(0 0 4px rgba(251,191,36,0.7))',
+                }} />
+                <div style={{ fontSize: 13, lineHeight: 1.55, color: '#fde68a' }}>
+                  <div style={{ color: '#fcd34d', fontWeight: 800, marginBottom: 3, letterSpacing: 0.2 }}>
+                    {t('חומת המגן של Orca', 'Orca Firewall')}
+                  </div>
+                  {t(
+                    'כל מפתח עם הרשאות מסחר או משיכה יידחה אוטומטית על-ידי השרת. אנחנו מקבלים אך ורק מפתחות לקריאה בלבד — הכסף שלך לעולם לא בסיכון.',
+                    'Any key with Trading or Withdrawal permissions is automatically rejected by our server. Only strict Read-Only keys are accepted — your funds are never at risk.'
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Close CTA */}
             <button
