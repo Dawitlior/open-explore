@@ -140,12 +140,20 @@ export default function IntelligenceSection({ trades, T, enabled }: { trades: Tr
                   )}
                 </p>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 12, margin: '0 0 16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 12, margin: '0 0 12px' }}>
                   <Stat C={C} label={t('דיוק המודל (out-of-sample)', 'Model accuracy (out-of-sample)')} value={edge.testAUC.toFixed(3)} color={C.cyan}
                     sub={t(`0.5 = ניחוש, 1.0 = מושלם`, `0.5 = guessing, 1.0 = perfect`)} />
                   <Stat C={C} label={t('בלי המנוע (כל העסקאות)', 'Without engine (all trades)')} value={fmtR(edge.allR)} color={edge.allR >= 0 ? C.green : C.red} sub={Nlabel(edge.testN)} />
                   <Stat C={C} label={t('עם המנוע (סינון אוטומטי)', 'With engine (auto-filter)')} value={fmtR(edge.keptR)} color={edge.keptR >= 0 ? C.green : C.red} sub={Nlabel(edge.keptN)} />
                 </div>
+
+                {/* Cortex meta line — protocol / brain / memory */}
+                <p style={{ fontFamily: MONO, fontSize: 11, color: C.dim, margin: '0 0 14px' }}>
+                  {t(
+                    `פרוטוקול: ${edge.mode === 'walkforward' ? `walk-forward · ${edge.folds.length} בחינות` : 'split כרונולוגי'} · חלון ${edge.windowSize} · מוח נוכחי: ${edge.folds[edge.folds.length - 1]?.brain === 'gbm' ? 'עצים (אינטראקציות)' : 'ליניארי'} · זיכרון: ${edge.halfLife ? `חצי-חיים ${edge.halfLife} עסקאות` : 'יציב'}`,
+                    `Protocol: ${edge.mode === 'walkforward' ? `walk-forward · ${edge.folds.length} exams` : 'chronological split'} · window ${edge.windowSize} · current brain: ${edge.folds[edge.folds.length - 1]?.brain === 'gbm' ? 'trees (interactions)' : 'linear'} · memory: ${edge.halfLife ? `half-life ${edge.halfLife} trades` : 'stable'}`
+                  )}
+                </p>
 
                 {/* Plain-language summary — directional */}
                 <p style={{ fontSize: 15, lineHeight: 1.85, color: C.text, margin: '0 0 14px' }}>
