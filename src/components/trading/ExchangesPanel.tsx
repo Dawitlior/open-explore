@@ -1774,6 +1774,42 @@ function KeyGuide({ T, isRTL, provider }: { T: TradingTheme; isRTL: boolean; pro
       en: { title: 'Paste both here', body: 'Paste the full "name" (including the slashes) into "API Key". Paste the entire "privateKey" PEM block — including the BEGIN/END lines and everything between them — into "API Secret" (the field is multi-line specifically for Coinbase). Click "Verify & Save".' },
     },
   ];
+
+  // IBKR Flex — walkthrough for creating an Activity Flex Query + Flex Token.
+  // Hebrew keeps English IBKR UI labels inside bidi-isolated LTR spans so the
+  // menu paths render correctly under RTL. Closes with the "Last 30 Calendar
+  // Days" note (deeper history requires enlarging the query period).
+  const ibkrFlexSteps: Step[] = [
+    {
+      he: { title: 'התחבר ל-Client Portal של Interactive Brokers', body: <>גש אל <span dir="ltr">interactivebrokers.com</span> ולחץ {L('Login → Client Portal')}. ודא שהזהות שלך מאומתת ושחשבון המסחר פעיל.</> },
+      en: { title: 'Log in to the Interactive Brokers Client Portal', body: <>Go to <span dir="ltr">interactivebrokers.com</span> and click {L('Login → Client Portal')}. Make sure your identity is verified and your trading account is active.</> },
+    },
+    {
+      he: { title: 'צור Activity Flex Query חדש', body: <>מהתפריט העליון בחר {L('Performance & Reports → Flex Queries')}, ולאחר מכן לחץ על {L('+ Create')} מתחת ל-{L('Activity Flex Query')}. תן שם כמו {L('ORCA Activity')}.</> },
+      en: { title: 'Create a new Activity Flex Query', body: <>From the top menu choose {L('Performance & Reports → Flex Queries')}, then click {L('+ Create')} under {L('Activity Flex Query')}. Give it a name like {L('ORCA Activity')}.</> },
+    },
+    {
+      he: { title: 'בחר סקציות: Trades ו-Open Positions', body: <>סמן את הסקציות {L('Trades')} ו-{L('Open Positions')}. בתוך כל סקציה לחץ {L('Select All')} על שדות המידע — ORCA צריכה את סט השדות המלא כדי לשחזר את העסקאות בצורה מדויקת.</> },
+      en: { title: 'Pick sections: Trades and Open Positions', body: <>Tick the {L('Trades')} and {L('Open Positions')} sections. Inside each section press {L('Select All')} on the fields — ORCA needs the full field set to reconstruct trades accurately.</> },
+    },
+    {
+      he: { title: 'הגדר Period ו-Format', body: <>תחת {L('Period')} בחר {L('Last 30 Calendar Days')} (ראה הערה בסוף). תחת {L('Format')} ודא שנבחר {L('XML')} — לא {L('CSV')}. שמור את השאילתה.</> },
+      en: { title: 'Set the Period and Format', body: <>Under {L('Period')} choose {L('Last 30 Calendar Days')} (see note at the bottom). Under {L('Format')} make sure {L('XML')} is selected — not {L('CSV')}. Save the query.</> },
+    },
+    {
+      he: { title: 'העתק את ה-Query ID', body: <>לאחר השמירה יופיע מזהה מספרי לצד השאילתה — זהו ה-{L('Query ID')} (בדרך כלל 6 עד 10 ספרות). העתק אותו — זה הערך שנדביק בהמשך בשדה {L('Activity Flex Query ID')}.</> },
+      en: { title: 'Copy the Query ID', body: <>After saving, a numeric ID appears next to the query — this is the {L('Query ID')} (usually 6-10 digits). Copy it — this is the value you will paste into the {L('Activity Flex Query ID')} field.</> },
+    },
+    {
+      he: { title: 'הפעל את Flex Web Service וצור Token', body: <>גש אל {L('Settings → Account Settings → Reporting → Flex Web Service')} ולחץ {L('Configure')}. בחר בתוקף המרבי (365 ימים) והשאר את {L('IP Restrictions')} <strong>ריק</strong> — לשרתי הסנכרון של ORCA אין IP קבוע ולכן טוקן מוגבל ל-IP ייכשל. אשר, ואז לחץ {L('Generate')} כדי לקבל את ה-{L('Flex Token')}.</> },
+      en: { title: 'Enable the Flex Web Service and generate a Token', body: <>Go to {L('Settings → Account Settings → Reporting → Flex Web Service')} and click {L('Configure')}. Pick the maximum validity (365 days) and leave {L('IP Restrictions')} <strong>empty</strong> — ORCA sync servers have no fixed IP, so an IP-bound token will fail. Confirm, then click {L('Generate')} to get the {L('Flex Token')}.</> },
+    },
+    {
+      he: { title: 'הדבק כאן את שני הערכים', body: <>חזור לחלון הזה. הדבק את ה-{L('Query ID')} בשדה {L('Activity Flex Query ID')} ואת ה-{L('Flex Token')} בשדה {L('Flex Token')}. לחץ {L('Verify & Save')}. הערה: {L('Last 30 Calendar Days')} מספיק לסנכרון היומי הרציף; לייבוא היסטוריה עמוקה יותר חזור לשאילתה והגדל את התקופה, ולאחר מכן הרץ סנכרון ידני אחד.</> },
+      en: { title: 'Paste both values here', body: <>Return to this window. Paste the {L('Query ID')} into {L('Activity Flex Query ID')} and the {L('Flex Token')} into {L('Flex Token')}. Click {L('Verify & Save')}. Note: {L('Last 30 Calendar Days')} is enough for the continuous daily sync; to import deeper history, edit the query and widen the period, then run one manual sync.</> },
+    },
+  ];
+
   const steps: Step[] =
     provider.id === 'bybit' ? bybitSteps
     : provider.id === 'binance' ? binanceSteps
@@ -1783,6 +1819,7 @@ function KeyGuide({ T, isRTL, provider }: { T: TradingTheme; isRTL: boolean; pro
     : provider.id === 'kraken_futures' ? krakenFuturesSteps
     : provider.id === 'crypto_com' ? cryptoComSteps
     : provider.id === 'coinbase' ? coinbaseSteps
+    : provider.id === 'ibkr_flex' ? ibkrFlexSteps
     : binanceSteps;
 
 
