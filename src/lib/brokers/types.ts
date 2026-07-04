@@ -32,6 +32,18 @@ export interface BrokerMeta {
   tagline: { he: string; en: string };
   /** Optional CSS gradient used by API exchange cards. UI only. */
   gradient?: string;
+  /** Optional per-provider field label overrides for the credential modal.
+   *  Generic labels ("Account label" / "API Key" / "API Secret") are used
+   *  when this is unset — every existing crypto adapter keeps the generic
+   *  wording. IBKR overrides these because a Flex Query ID and a Flex Token
+   *  are not "API Key / Secret" in any user-recognizable sense. */
+  credentialLabels?: {
+    accountLabel?: { he: string; en: string };
+    apiKey?: { he: string; en: string };
+    apiSecret?: { he: string; en: string };
+    apiKeyPlaceholder?: string;
+    apiSecretPlaceholder?: string;
+  };
   /** Short 2-character mark rendered on the CSV tile logo. UI only. */
   glyph?: string;
   /** Whether this adapter supports server-side API sync (vault credentials). */
