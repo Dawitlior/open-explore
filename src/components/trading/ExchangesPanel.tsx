@@ -87,6 +87,8 @@ interface ConnectionRow {
   is_active: boolean;
   last_validated_at: string | null;
   created_at: string;
+  status?: 'active' | 'expired' | 'error' | null;
+  last_error?: string | null;
 }
 
 declare global {
