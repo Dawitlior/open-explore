@@ -1,6 +1,6 @@
 import './dashboard.css';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell, ReferenceLine } from 'recharts';
-import type { CSSProperties } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { Trade } from '@/data/trades';
 import { MetricCard, ScoreGauge } from '@/components/trading/TradingUI';
@@ -12,13 +12,12 @@ import DashboardCalendarStrip from './DashboardCalendarStrip';
 import { BestWorstWindowChart } from './BestWorstWindowChart';
 import { PnLDistributionHistogram } from './PnLDistributionHistogram';
 
-import { WinsByMonthChart, WinsByQuarterChart, ReturnPerTimeChart } from './SimpleExtraCharts';
+import { WinsByMonthChart, WinsByQuarterChart, ReturnPerTimeChart, QuarterlyWinsLossesYoYChart, QuarterlyYearMatrixChart } from './SimpleExtraCharts';
 import { OpenPositionsPanel } from './OpenPositionsPanel';
 import { useDisplayMode, hasStrictR } from '@/lib/display-mode';
 import { getEffectiveR } from '@/lib/r-multiple';
 import { QuarterlyPerformanceCard } from '@/components/trading/QuarterlyPerformanceCard';
 import { ShareStatsModal } from '@/components/trading/ShareStatsModal';
-import { useState } from 'react';
 import { Share2 } from 'lucide-react';
 
 
@@ -46,6 +45,15 @@ interface ReviewDashboardProps {
 }
 
 const PV = ({ children }: { children: React.ReactNode }) => <>{children}</>;
+
+const parseDateMs = (raw: string) => new Date(String(raw || '').replace(' ', 'T')).getTime() || 0;
+const fmtDashValue = (v: number, isMoney: boolean) => {
+  if (!Number.isFinite(v)) return '—';
+  if (!isMoney) return `${v >= 0 ? '+' : ''}${v.toFixed(Math.abs(v) >= 10 ? 1 : 2)}R`;
+  const sign = v >= 0 ? '+' : '-';
+  const abs = Math.abs(v);
+  return abs >= 1000 ? `${sign}$${(abs / 1000).toFixed(abs >= 10000 ? 0 : 1)}k` : `${sign}$${abs.toFixed(abs >= 100 ? 0 : 2)}`;
+};
 
 /**
  * Time-of-day greeting (user-local clock). Windows:
@@ -78,12 +86,31 @@ export const ReviewDashboard = ({
   const { displayMode } = useDisplayMode();
   const isMoney = displayMode === 'MONEY';
   const [shareOpen, setShareOpen] = useState(false);
+  const equityAdvanced = useMemo(() => {
+    const sorted = [...trades].sort((a, b) => parseDateMs(a.date) - parseDateMs(b.date));
+    let equity = 0;
+    let peak = 0;
+    const points = [{ trade: 0, equity: 0, delta: 0, drawdown: 0, peak: 0, ma: 0 }];
+    sorted.forEach((tr, i) => {
+      const delta = isMoney ? (Number(tr.pnl) || 0) : getEffectiveR(tr);
+      equity += delta;
+      peak = Math.max(peak, equity);
+      const recent = sorted.slice(Math.max(0, i - 4), i + 1).reduce((s, item) => s + (isMoney ? (Number(item.pnl) || 0) : getEffectiveR(item)), 0) / Math.min(5, i + 1);
+      const drawdown = peak > 0 ? -((peak - equity) / Math.max(Math.abs(peak), 1)) * 100 : 0;
+      points.push({ trade: i + 1, equity: +equity.toFixed(3), delta: +delta.toFixed(3), drawdown: +drawdown.toFixed(2), peak: +peak.toFixed(3), ma: +recent.toFixed(3) });
+    });
+    const last = points[points.length - 1]?.equity || 0;
+    const best = Math.max(...points.map(p => p.equity));
+    const worstDd = Math.min(...points.map(p => p.drawdown));
+    return { points, last, best, worstDd };
+  }, [trades, isMoney]);
   return (
     <div className="dash-root" dir={isRTL ? 'rtl' : 'ltr'}>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+      <div className="dash-topbar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
         <h2 className="dash-greeting" style={{ margin: 0 }}>{getTimeOfDayGreeting(isRTL)} 👋</h2>
         <button
+          className="dash-share-stats-btn"
           type="button"
           onClick={() => setShareOpen(true)}
           aria-label={isRTL ? 'שתף תעודת ביצועים' : 'Share performance card'}
@@ -94,6 +121,7 @@ export const ReviewDashboard = ({
             border: '1px solid rgba(245,197,66,0.45)',
             color: '#f5c542', fontWeight: 700, fontSize: 13,
             cursor: 'pointer', fontFamily: 'Poppins, system-ui, sans-serif',
+            marginInlineStart: 'auto', flexShrink: 0,
           }}
         >
           <Share2 size={14} /> {isRTL ? 'שתף סטטיסטיקות' : 'Share stats'}
@@ -193,16 +221,31 @@ export const ReviewDashboard = ({
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.equityCurve} explanation={EXPLANATIONS.equityCurve} unit={isMoney ? '$' : 'R'} chartId="equityCurve" onRemove={handleHideChart}>
                     <div className="dash-chart-h-md">
                       <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={stats.equityCurve} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
-                          <defs><linearGradient id="eqGAdvNew" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.6}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.25}/></linearGradient></defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
+                        <ComposedChart data={equityAdvanced.points} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
+                          <defs>
+                            <linearGradient id="eqGAdvNew" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.52}/><stop offset="70%" stopColor={T.accent.cyan} stopOpacity={0.16}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.04}/></linearGradient>
+                            <linearGradient id="eqBarsWin" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.green} stopOpacity={0.78}/><stop offset="100%" stopColor={T.accent.green} stopOpacity={0.22}/></linearGradient>
+                            <linearGradient id="eqBarsLoss" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.red} stopOpacity={0.24}/><stop offset="100%" stopColor={T.accent.red} stopOpacity={0.7}/></linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} vertical={false} />
                           <XAxis dataKey="trade" tick={{ fill: T.text.muted, fontSize: 10 }} interval="preserveStartEnd" minTickGap={28} />
-                          <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} width={40} domain={[(d: number) => Math.floor(d * 0.98), (d: number) => Math.ceil(d * 1.02)]} />
-                          <Tooltip contentStyle={tt} />
-                          <ReferenceLine y={0} stroke={T.border.medium} strokeDasharray="2 2" />
-                          <Area type="monotone" dataKey="balance" stroke={T.accent.cyan} fill="url(#eqGAdvNew)" strokeWidth={2.5} dot={trades.length <= 50 ? { fill: T.accent.cyan, r: 3 } : false} activeDot={{ r: 5, fill: T.accent.cyan }} />
-                        </AreaChart>
+                          <YAxis yAxisId="equity" tick={{ fill: T.text.muted, fontSize: 10 }} width={52} tickFormatter={(v: number) => fmtDashValue(v, isMoney)} domain={['auto', 'auto']} />
+                          <YAxis yAxisId="dd" orientation="right" tick={{ fill: T.text.muted, fontSize: 10 }} width={40} tickFormatter={(v: number) => `${v.toFixed(0)}%`} domain={[-100, 0]} />
+                          <Tooltip contentStyle={tt} formatter={(v: any, n: string) => n === 'drawdown' ? [`${Number(v).toFixed(2)}%`, 'DD'] : [fmtDashValue(Number(v), isMoney), n === 'delta' ? (isRTL ? 'עסקה' : 'Trade') : n === 'ma' ? 'MA(5)' : (isRTL ? 'הון' : 'Equity')]} />
+                          <ReferenceLine yAxisId="equity" y={0} stroke={T.border.medium} strokeDasharray="2 2" />
+                          <Bar yAxisId="equity" dataKey="delta" barSize={4} radius={[3, 3, 0, 0]} opacity={0.55}>{equityAdvanced.points.map((p: any, i: number) => <Cell key={i} fill={p.delta >= 0 ? 'url(#eqBarsWin)' : 'url(#eqBarsLoss)'} />)}</Bar>
+                          <Area yAxisId="equity" type="monotone" dataKey="equity" stroke={T.accent.cyan} fill="url(#eqGAdvNew)" strokeWidth={3} dot={trades.length <= 30 ? { fill: T.accent.cyan, r: 2.8 } : false} activeDot={{ r: 6, fill: T.accent.cyan, stroke: T.bg.card, strokeWidth: 2 }} />
+                          <Line yAxisId="equity" type="monotone" dataKey="ma" stroke={T.accent.orange} strokeWidth={1.8} dot={false} strokeDasharray="5 4" />
+                          <Line yAxisId="dd" type="monotone" dataKey="drawdown" stroke={T.accent.red} strokeWidth={1.4} dot={false} opacity={0.72} />
+                        </ComposedChart>
                       </ResponsiveContainer>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8, marginTop: 10 }}>
+                      {[
+                        { l: isRTL ? 'נוכחי' : 'Current', v: equityAdvanced.last, c: equityAdvanced.last >= 0 ? T.accent.green : T.accent.red },
+                        { l: isRTL ? 'שיא' : 'Peak', v: equityAdvanced.best, c: T.accent.cyan },
+                        { l: isRTL ? 'DD גרוע' : 'Worst DD', v: equityAdvanced.worstDd, c: T.accent.red, pct: true },
+                      ].map((m, i) => <div key={i} style={{ padding: '7px 9px', borderRadius: 8, background: T.bg.tertiary, border: `1px solid ${T.border.subtle}` }}><div style={{ fontSize: 9, color: T.text.muted }}>{m.l}</div><div style={{ fontSize: 12, fontWeight: 800, color: m.c, fontFamily: "'JetBrains Mono', monospace" }}>{m.pct ? `${m.v.toFixed(1)}%` : fmtDashValue(m.v, isMoney)}</div></div>)}
                     </div>
                   </ChartWrapper>
                 </div>
@@ -343,6 +386,21 @@ export const ReviewDashboard = ({
                 currentStreak: t.currentStreak,
               }}
             />
+
+            {isAdvancedTier && (
+              <div className="dash-charts-alpha">
+                <div className="dash-chart-card">
+                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'רבעונים — ניצחונות / הפסדים מול שנים' : 'Quarterly Performance — Wins/Losses YoY'} explanation={EXPLANATIONS.monthlyPerformance} unit={isMoney ? '$' : 'R'}>
+                    <QuarterlyWinsLossesYoYChart T={T} trades={trades} isRTL={isRTL} tt={tt} />
+                  </ChartWrapper>
+                </div>
+                <div className="dash-chart-card">
+                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'מטריצת רבעונים — השוואת שנים' : 'Quarterly Year Matrix — Multi-View'} explanation={EXPLANATIONS.monthlyPerformance} unit={isMoney ? '$' : 'R'}>
+                    <QuarterlyYearMatrixChart T={T} trades={trades} isRTL={isRTL} tt={tt} />
+                  </ChartWrapper>
+                </div>
+              </div>
+            )}
 
             {/* Alpha additions */}
             {isAlpha && (

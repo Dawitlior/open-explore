@@ -30,6 +30,27 @@
   margin: 0 0 16px;
   color: hsl(var(--muted-foreground));
 }
+.dash-topbar {
+  position: relative;
+  z-index: 2;
+}
+.dash-share-stats-btn {
+  white-space: nowrap;
+}
+html[dir="ltr"] .dash-share-stats-btn {
+  margin-left: auto;
+  margin-right: 0;
+}
+html[dir="rtl"] .dash-share-stats-btn {
+  margin-right: auto;
+  margin-left: 0;
+}
+@container dash (max-width: 520px) {
+  .dash-share-stats-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
 
 /* ─── Section labels (TRADING HEALTH / SYSTEM HEALTH) ─── */
 .dash-section {

@@ -9,7 +9,7 @@
  * unit chip on ChartWrapper reflects the active mode.
  */
 import { useMemo, useState, useEffect } from 'react';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { BarChart, Bar, LineChart, Line, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine, Cell } from 'recharts';
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { useVisibleTrades } from '@/lib/display-mode-format';
@@ -48,6 +48,17 @@ const tradeDate = (t: Trade): Date | null => {
 
 const isWin = (t: Trade): boolean =>
   t.winLoss === 'Win' || (Number.isFinite(t.pnl) && t.pnl > 0);
+
+const isLoss = (t: Trade): boolean =>
+  t.winLoss === 'Loss' || (Number.isFinite(t.pnl) && t.pnl < 0);
+
+const fmtShort = (v: number, isMoney: boolean) => {
+  if (!Number.isFinite(v)) return '—';
+  if (!isMoney) return `${v >= 0 ? '+' : ''}${v.toFixed(Math.abs(v) >= 10 ? 1 : 2)}R`;
+  const sign = v >= 0 ? '+' : '-';
+  const abs = Math.abs(v);
+  return abs >= 1000 ? `${sign}$${(abs / 1000).toFixed(abs >= 10000 ? 0 : 1)}k` : `${sign}$${abs.toFixed(abs >= 100 ? 0 : 2)}`;
+};
 
 /* ────────── #1 wins by month ────────── */
 export const WinsByMonthChart = ({ T, trades, isRTL, tt }: BaseProps) => {
@@ -143,6 +154,131 @@ export const WinsByQuarterChart = ({ T, trades, isRTL, tt }: BaseProps) => {
           <Bar dataKey="Short" stackId="w" fill={T.accent.red} radius={[4, 4, 0, 0]} name={isRTL ? 'שורט' : 'Short'} />
         </BarChart>
       </ResponsiveContainer>
+    </div>
+  );
+};
+
+/* ────────── #4 quarterly wins/losses + net by year-quarter ────────── */
+export const QuarterlyWinsLossesYoYChart = ({ T, trades, isRTL, tt }: BaseProps) => {
+  const { isMoney, formatValue, unit } = useVisibleTrades(trades);
+  const isMobile = useIsMobile();
+  const data = useMemo(() => {
+    const map = new Map<string, { name: string; year: number; q: number; wins: number; losses: number; net: number; trades: number }>();
+    for (const t of trades) {
+      const d = tradeDate(t);
+      if (!d) continue;
+      const q = Math.floor(d.getMonth() / 3) + 1;
+      const year = d.getFullYear();
+      const key = `${year}-Q${q}`;
+      if (!map.has(key)) map.set(key, { name: key, year, q, wins: 0, losses: 0, net: 0, trades: 0 });
+      const row = map.get(key)!;
+      row.trades += 1;
+      if (isWin(t)) row.wins += 1;
+      if (isLoss(t)) row.losses += 1;
+      row.net += isMoney ? (Number(t.pnl) || 0) : getEffectiveR(t as any);
+    }
+    return Array.from(map.values()).sort((a, b) => a.year - b.year || a.q - b.q);
+  }, [trades, isMoney]);
+
+  if (!data.length) return <Empty T={T} isRTL={isRTL} />;
+  const minWidth = isMobile ? Math.max(360, data.length * 62) : '100%';
+  const interval = isMobile ? 0 : Math.max(0, Math.ceil(data.length / 10) - 1);
+
+  return (
+    <div style={{ width: '100%', overflowX: isMobile ? 'auto' : 'visible' }}>
+      <div style={{ height: 284, width: minWidth }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart data={data} margin={{ top: 10, right: 12, bottom: 8, left: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} vertical={false} />
+            <XAxis dataKey="name" tick={{ fill: T.text.muted, fontSize: 10 }} interval={interval} minTickGap={10} height={30} />
+            <YAxis yAxisId="count" tick={{ fill: T.text.muted, fontSize: 10 }} width={32} allowDecimals={false} />
+            <YAxis yAxisId="net" orientation="right" tick={{ fill: T.text.muted, fontSize: 10 }} width={50} tickFormatter={(v: number) => fmtShort(v, isMoney)} />
+            <Tooltip
+              contentStyle={tt}
+              formatter={(v: any, name: string) => {
+                if (name === 'net') return [formatValue(Number(v)), unit];
+                return [v, name === 'wins' ? (isRTL ? 'ניצחונות' : 'Wins') : (isRTL ? 'הפסדים' : 'Losses')];
+              }}
+            />
+            <Legend wrapperStyle={{ fontSize: 11, color: T.text.muted }} />
+            <ReferenceLine yAxisId="net" y={0} stroke={T.border.medium} strokeDasharray="3 3" />
+            <Bar yAxisId="count" dataKey="wins" stackId="wl" fill={T.accent.green} name={isRTL ? 'ניצחונות' : 'wins'} radius={[4, 4, 0, 0]} />
+            <Bar yAxisId="count" dataKey="losses" stackId="wl" fill={T.accent.red} name={isRTL ? 'הפסדים' : 'losses'} radius={[4, 4, 0, 0]} />
+            <Line yAxisId="net" type="monotone" dataKey="net" name="net" stroke={T.accent.cyan} strokeWidth={2.6} dot={{ r: 3, fill: T.accent.cyan }} />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+};
+
+/* ────────── #5 quarterly year matrix — heatmap comparison ────────── */
+export const QuarterlyYearMatrixChart = ({ T, trades, isRTL }: BaseProps) => {
+  const { isMoney } = useVisibleTrades(trades);
+  const { years, rows, maxAbs } = useMemo(() => {
+    const map = new Map<string, { year: number; q: number; wins: number; losses: number; net: number; trades: number }>();
+    for (const t of trades) {
+      const d = tradeDate(t);
+      if (!d) continue;
+      const year = d.getFullYear();
+      const q = Math.floor(d.getMonth() / 3) + 1;
+      const key = `${year}-Q${q}`;
+      if (!map.has(key)) map.set(key, { year, q, wins: 0, losses: 0, net: 0, trades: 0 });
+      const row = map.get(key)!;
+      row.trades += 1;
+      if (isWin(t)) row.wins += 1;
+      if (isLoss(t)) row.losses += 1;
+      row.net += isMoney ? (Number(t.pnl) || 0) : getEffectiveR(t as any);
+    }
+    const years = Array.from(new Set(Array.from(map.values()).map(v => v.year))).sort((a, b) => b - a);
+    const rows = years.map(year => ({
+      year,
+      quarters: [1, 2, 3, 4].map(q => map.get(`${year}-Q${q}`) || { year, q, wins: 0, losses: 0, net: 0, trades: 0 }),
+    }));
+    const maxAbs = Math.max(1, ...Array.from(map.values()).map(v => Math.abs(v.net)));
+    return { years, rows, maxAbs };
+  }, [trades, isMoney]);
+
+  if (!years.length) return <Empty T={T} isRTL={isRTL} />;
+
+  return (
+    <div style={{ width: '100%', overflowX: 'auto', paddingBottom: 2 }}>
+      <div style={{ minWidth: 420, display: 'grid', gap: 8 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '72px repeat(4, minmax(74px, 1fr))', gap: 8, alignItems: 'center' }}>
+          <span />
+          {[1, 2, 3, 4].map(q => <span key={q} style={{ color: T.text.muted, fontSize: 10, fontWeight: 800, fontFamily: "'JetBrains Mono', monospace", textAlign: 'center' }}>Q{q}</span>)}
+        </div>
+        {rows.map(row => (
+          <div key={row.year} style={{ display: 'grid', gridTemplateColumns: '72px repeat(4, minmax(74px, 1fr))', gap: 8, alignItems: 'stretch' }}>
+            <div style={{ color: T.text.primary, fontSize: 13, fontWeight: 800, fontFamily: "'JetBrains Mono', monospace", display: 'flex', alignItems: 'center' }}>{row.year}</div>
+            {row.quarters.map(cell => {
+              const positive = cell.net >= 0;
+              const tone = positive ? T.accent.green : T.accent.red;
+              const opacity = Math.max(0.12, Math.min(0.34, Math.abs(cell.net) / maxAbs * 0.34));
+              return (
+                <div key={cell.q} style={{
+                  minHeight: 72, borderRadius: 12, padding: '9px 10px',
+                  background: cell.trades ? `${tone}${Math.round(opacity * 255).toString(16).padStart(2, '0')}` : T.bg.tertiary,
+                  border: `1px solid ${cell.trades ? tone + '44' : T.border.subtle}`,
+                  display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 6,
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: T.text.muted, fontSize: 9.5 }}>
+                    <span>{cell.trades}T</span>
+                    <span style={{ color: tone, fontWeight: 800 }}>{cell.wins}W/{cell.losses}L</span>
+                  </div>
+                  <div style={{ color: tone, fontSize: 13, fontWeight: 900, fontFamily: "'JetBrains Mono', monospace" }}>
+                    {cell.trades ? fmtShort(cell.net, isMoney) : '—'}
+                  </div>
+                  <div style={{ display: 'flex', gap: 3, justifyContent: isRTL ? 'flex-end' : 'flex-start' }}>
+                    {Array.from({ length: Math.min(8, cell.wins) }).map((_, i) => <span key={`w${i}`} style={{ width: 5, height: 5, borderRadius: 999, background: T.accent.green }} />)}
+                    {Array.from({ length: Math.min(8, cell.losses) }).map((_, i) => <span key={`l${i}`} style={{ width: 5, height: 5, borderRadius: 999, background: T.accent.red }} />)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
