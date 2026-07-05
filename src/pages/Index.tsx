@@ -76,6 +76,7 @@ import { useRegistryCharts } from '@/hooks/use-registry-charts';
 import { useExpectancyMode } from '@/lib/dashboard-engine';
 import { useEntitlement } from '@/hooks/use-entitlement';
 import { EmptyStateImportCTA } from '@/components/trading/EmptyStateImportCTA';
+import { TradeDetailModal } from '@/components/trading/TradeDetailModal';
 
 // ─── Facebook-style red notification badge with "1" ───
 const ReminderBadge = () => (
@@ -1385,30 +1386,18 @@ const Index = () => {
         )}
         {/* Trade detail modal */}
         {selTrade && (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }} onClick={() => setSelTrade(null)}>
-            <div onClick={e => e.stopPropagation()} style={{ background: T.bg.card, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.xl, padding: 28, maxWidth: 500, width: '90%', boxShadow: T.shadow.elevated }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-                <div>
-                  <div style={{ fontSize: 18, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>{selTrade.coin} <TradingBadge color={selTrade.direction === 'Long' ? T.accent.green : T.accent.red}>{selTrade.direction}</TradingBadge></div>
-                  <div style={{ fontSize: 11, color: T.text.muted, marginTop: 3 }}>{isRTL ? 'עסקה' : 'Trade'} #{selTrade.id} • {new Date(selTrade.date).toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
-                </div>
-                <button onClick={() => setSelTrade(null)} style={{ background: 'none', border: 'none', color: T.text.muted, fontSize: 22, cursor: 'pointer' }}>×</button>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14 }}>
-                {[
-                  { l: t.entry, v: selTrade.entry }, { l: t.stopLoss, v: selTrade.stopLoss == null ? '—' : selTrade.stopLoss, c: T.accent.red },
-                  { l: t.exit, v: selTrade.exit }, (() => { const h = tradeHeadline(selTrade); return { l: `${t.pnl} (${h.unit})`, v: fmtHeadline(h.v, h.unit), c: h.v >= 0 ? T.accent.green : T.accent.red }; })(),
-                  { l: `${t.riskR} (R)`, v: `${getEffectiveR(selTrade).toFixed(2)}R` }, { l: t.deviation, v: selTrade.deviation ? selTrade.deviation.toFixed(4) + 'R' : '0', c: selTrade.deviation > 0 ? T.accent.orange : T.accent.green },
-                  { l: t.leverage, v: `${selTrade.leverage}x` }, { l: `${t.balance} ($)`, v: `$${selTrade.balance.toFixed(2)}` },
-                ].map((item, i) => (<div key={i}><div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{item.l}</div><PV><div style={{ fontSize: 15, fontWeight: 600, color: item.c || T.text.primary, fontFamily: "'JetBrains Mono', monospace", marginTop: 2 }}>{item.v}</div></PV></div>))}
-              </div>
-              {selTrade.comments && <div style={{ marginTop: 16, padding: 12, background: T.bg.tertiary, borderRadius: T.radius.md, border: `1px solid ${T.border.subtle}` }}><div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', marginBottom: 4 }}>{t.comments}</div><div style={{ fontSize: 13, color: T.text.secondary, lineHeight: 1.5 }}>{selTrade.comments}</div></div>}
-              <div style={{ display: 'flex', gap: 8, marginTop: 18, justifyContent: 'flex-end' }}>
-                <button onClick={() => handleDeleteTrade(selTrade.id)} style={{ padding: '7px 16px', background: `${T.accent.red}15`, border: `1px solid ${T.accent.red}30`, borderRadius: T.radius.md, color: T.accent.red, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>{t.deleteTrade}</button>
-                <button onClick={() => { setEditingTrade(selTrade); setSelTrade(null); setShowTradeForm(true); }} style={{ padding: '7px 16px', background: `${T.accent.blue}15`, border: `1px solid ${T.accent.blue}30`, borderRadius: T.radius.md, color: T.accent.blue, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>{t.editTrade}</button>
-              </div>
-            </div>
-          </div>
+          <TradeDetailModal
+            T={T}
+            t={t}
+            trade={selTrade}
+            isRTL={isRTL}
+            isMobile={isMobile}
+            onClose={() => setSelTrade(null)}
+            onDelete={() => handleDeleteTrade(selTrade.id)}
+            onEdit={() => { setEditingTrade(selTrade); setSelTrade(null); setShowTradeForm(true); }}
+            tradeHeadline={tradeHeadline}
+            fmtHeadline={fmtHeadline}
+          />
         )}
       </>
     );

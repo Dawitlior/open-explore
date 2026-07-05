@@ -82,6 +82,9 @@ export function sanitizeTrade(t: unknown, fallbackId: number): Trade | null {
           : null;
   const exit = safeNum(raw.exit);
   const returnR = safeNum(raw.returnR);
+  const manualRaw = raw.manual_r_multiple ?? raw.manualR;
+  const manualR = manualRaw == null || manualRaw === '' ? null : safeNum(manualRaw, NaN);
+  const hasManualR = typeof manualR === 'number' && isFinite(manualR);
   // CRITICAL: risk MUST default to 0 (unknown), NOT to a fabricated 2 USD.
   // A 2-USD default silently makes getR compute fake R = pnl/2 for any broker
   // CSV (Bybit Closed P&L etc.) that doesn't carry per-trade risk metadata.
@@ -104,7 +107,11 @@ export function sanitizeTrade(t: unknown, fallbackId: number): Trade | null {
   else if (pnl > 0.05) winLoss = 'Win';
   else if (pnl < -0.05) winLoss = 'Loss';
 
-  return { id, date, day, coin, direction, orderType, entry, stopLoss, exit, returnR, winLoss, risk, expectedLoss, pnl, deviation, positionSize, leverage, balance, riskPct, rules, comments };
+  return {
+    id, date, day, coin, direction, orderType, entry, stopLoss, exit, returnR, winLoss,
+    risk, expectedLoss, pnl, deviation, positionSize, leverage, balance, riskPct, rules, comments,
+    ...(hasManualR ? { manual_r_multiple: manualR, manualR } : {}),
+  };
 }
 
 function safeNum(v: unknown, fallback = 0): number {
