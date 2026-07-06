@@ -29,9 +29,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 export const OrcaUXLayer = () => {
   const [scrollPct, setScrollPct] = useState(0);
   const [showBackTop, setShowBackTop] = useState(false);
-  const [online, setOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+  // NOTE: `online` state was tracked but never rendered; only `showOnlineToast`
+  // is displayed. Dropped it to avoid an extra render on connectivity flip.
   const [showOnlineToast, setShowOnlineToast] = useState<null | 'online' | 'offline'>(null);
-  const [now, setNow] = useState<Date>(new Date());
+  // NOTE: `now` (live-clock tick) was rendered by the market-session pill
+  // which was removed. The 1-Hz interval was pure re-render waste — deleted.
   const [idle, setIdle] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [pageLoaded, setPageLoaded] = useState(false);
