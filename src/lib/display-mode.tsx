@@ -35,12 +35,19 @@ export function hasValidStop(t: Trade): boolean {
   return t != null && typeof t.stopLoss === 'number' && isFinite(t.stopLoss) && t.stopLoss !== 0;
 }
 
-/** Strict R eligibility: explicit manual R or calculable stop-based R, with no daily proxy. */
+/** Strict R eligibility: any trade whose R can be resolved through the
+ *  centralized engine — manual override, trusted `returnR`, pnl / risk$,
+ *  or calculable stop-based R. Trades imported with only an R value
+ *  (no stop-loss, no $ P&L) still qualify, so auto-mode correctly
+ *  flips to R_MULTIPLE for R-only portfolios. */
 export function hasStrictR(t: Trade): boolean {
-  const manual = t == null ? NaN : Number(t.manual_r_multiple ?? t.manualR);
+  if (t == null) return false;
+  const manual = Number(t.manual_r_multiple ?? t.manualR);
   if (Number.isFinite(manual)) return true;
+  const rr = Number((t as { returnR?: number | null }).returnR);
+  if (Number.isFinite(rr) && rr !== 0) return true;
   const r = getEffectiveR(t, { strict: true });
-  return hasValidStop(t) && typeof r === 'number' && isFinite(r);
+  return typeof r === 'number' && isFinite(r);
 }
 
 /** Pure selector — apply the active displayMode filter to an arbitrary list. */

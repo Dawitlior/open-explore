@@ -158,8 +158,8 @@ export const PnLDistributionHistogram = ({ T, trades, isMoney, isRTL, tt }: Prop
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart
             data={distDataMA}
-            margin={{ top: 8, right: 12, bottom: 8, left: 0 }}
-            barCategoryGap={isMobile ? 1 : '4%'}
+            margin={{ top: 6, right: 6, bottom: 2, left: -12 }}
+            barCategoryGap={isMobile ? 1 : '2%'}
           >
             <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} vertical={false} />
             <XAxis
@@ -175,7 +175,7 @@ export const PnLDistributionHistogram = ({ T, trades, isMoney, isRTL, tt }: Prop
             <YAxis
               allowDecimals={false}
               tick={{ fill: T.text.muted, fontSize: 10 }}
-              width={36}
+              width={30}
               scale={logScale ? 'log' : 'linear'}
               domain={logScale ? logDomain : linearDomain}
               allowDataOverflow={logScale}
