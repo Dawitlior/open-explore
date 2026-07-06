@@ -76,22 +76,22 @@ const WinsByMonthChartImpl = ({ T, trades, isRTL, tt }: BaseProps) => {
 
   // Desktop: skip labels so they never overlap.
   const desktopInterval = Math.max(0, Math.ceil(data.length / 12) - 1);
-  // Mobile: horizontal-scroll with wider per-bar spacing + slight angle so labels never overlap.
-  const mobileMinWidth = Math.max(360, data.length * 78);
+  // Mobile: horizontal-scroll with wider per-bar spacing + steep angle so labels never overlap.
+  const mobileMinWidth = Math.max(420, data.length * 34);
 
   const chart = (width: string | number, height: number, interval: number, mobile: boolean) => (
     <div style={{ width, height }}>
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 8, right: 12, bottom: mobile ? 22 : 8, left: 0 }}>
+        <BarChart data={data} margin={{ top: 8, right: 12, bottom: mobile ? 28 : 8, left: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
           <XAxis
             dataKey="name"
             tick={{ fill: T.text.muted, fontSize: mobile ? 9 : 10 }}
             interval={interval}
-            height={mobile ? 48 : 28}
-            tickMargin={mobile ? 10 : 6}
-            minTickGap={mobile ? 2 : 12}
-            angle={mobile ? -35 : 0}
+            height={mobile ? 64 : 28}
+            tickMargin={mobile ? 8 : 6}
+            minTickGap={mobile ? 0 : 12}
+            angle={mobile ? -55 : 0}
             textAnchor={mobile ? 'end' : 'middle'}
           />
           <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} width={32} allowDecimals={false} />
@@ -107,7 +107,7 @@ const WinsByMonthChartImpl = ({ T, trades, isRTL, tt }: BaseProps) => {
   if (isMobile) {
     return (
       <div style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-        {chart(mobileMinWidth, 280, 0, true)}
+        {chart(mobileMinWidth, 300, 0, true)}
       </div>
     );
   }
