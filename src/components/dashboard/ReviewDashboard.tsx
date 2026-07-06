@@ -1,6 +1,6 @@
 import './dashboard.css';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell, ReferenceLine } from 'recharts';
-import { useMemo, useState, type CSSProperties } from 'react';
+import { lazy, Suspense, useMemo, useState, type CSSProperties } from 'react';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { Trade } from '@/data/trades';
 import { MetricCard, ScoreGauge } from '@/components/trading/TradingUI';
@@ -9,16 +9,30 @@ import { ChartWrapper, EXPLANATIONS, type ChartExplanation } from '@/components/
 import { FeatureHint } from '@/components/trading/FeatureHint';
 import DashboardCalendarStrip from './DashboardCalendarStrip';
 
-import { BestWorstWindowChart } from './BestWorstWindowChart';
-import { PnLDistributionHistogram } from './PnLDistributionHistogram';
+// Lazy-load heavy chart bundles. These charts sit inside the collapsible
+// Advanced Analysis section AND behind tier gates (Advanced/Alpha), so most
+// users never see them. Downloading + parsing recharts sub-trees on mount
+// was pure waste — now they are code-split and only fetched when the gate
+// actually opens.
+const PnLDistributionHistogram = lazy(() => import('./PnLDistributionHistogram').then(m => ({ default: m.PnLDistributionHistogram })));
+const BestWorstWindowChart = lazy(() => import('./BestWorstWindowChart').then(m => ({ default: m.BestWorstWindowChart })));
+const WinsByMonthChart = lazy(() => import('./SimpleExtraCharts').then(m => ({ default: m.WinsByMonthChart })));
+const WinsByQuarterChart = lazy(() => import('./SimpleExtraCharts').then(m => ({ default: m.WinsByQuarterChart })));
+const ReturnPerTimeChart = lazy(() => import('./SimpleExtraCharts').then(m => ({ default: m.ReturnPerTimeChart })));
+const QuarterlyWinsLossesYoYChart = lazy(() => import('./SimpleExtraCharts').then(m => ({ default: m.QuarterlyWinsLossesYoYChart })));
+const QuarterlyYearMatrixChart = lazy(() => import('./SimpleExtraCharts').then(m => ({ default: m.QuarterlyYearMatrixChart })));
+const QuarterlyPerformanceCard = lazy(() => import('@/components/trading/QuarterlyPerformanceCard').then(m => ({ default: m.QuarterlyPerformanceCard })));
 
-import { WinsByMonthChart, WinsByQuarterChart, ReturnPerTimeChart, QuarterlyWinsLossesYoYChart, QuarterlyYearMatrixChart } from './SimpleExtraCharts';
 import { OpenPositionsPanel } from './OpenPositionsPanel';
 import { useDisplayMode, hasStrictR } from '@/lib/display-mode';
 import { getEffectiveR } from '@/lib/r-multiple';
-import { QuarterlyPerformanceCard } from '@/components/trading/QuarterlyPerformanceCard';
 import { ShareStatsModal } from '@/components/trading/ShareStatsModal';
 import { Share2 } from 'lucide-react';
+
+// Thin wrapper so lazy children get a graceful fallback while their chunk loads.
+const LazyChart = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={<div style={{ height: 220 }} aria-hidden />}>{children}</Suspense>
+);
 
 
 
