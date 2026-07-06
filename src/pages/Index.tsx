@@ -59,7 +59,7 @@ const JournalDimension = lazy(() => import('@/components/trading/JournalDimensio
 const BacktestDimension = lazy(() => import('@/components/trading/BacktestDimension').then(m => ({ default: m.BacktestDimension })));
 import { useTrades } from '@/hooks/use-trades';
 import { DisplayModeProvider, hasStrictR, useEffectiveDisplayMode } from '@/lib/display-mode';
-import { DisplayModeRescuePrompt } from '@/components/trading/DisplayModeRescuePrompt';
+import { DisplayModeToggle } from '@/components/trading/DisplayModeToggle';
 import { HeaderBar } from '@/components/trading/HeaderBar';
 import { useSettings, type ThemeId } from '@/hooks/use-settings';
 import { useUserPreferences } from '@/hooks/use-user-preferences';
@@ -2061,16 +2061,6 @@ const Index = () => {
       {showReset && <ResetModal T={T} t={t} isRTL={isRTL} onConfirm={handleReset} onClose={() => setShowReset(false)} />}
       {showSettings && <SettingsHub T={T} isRTL={isRTL} open={showSettings} onClose={() => setShowSettings(false)} theme={settings.theme} setTheme={settings.setTheme} stats={stats} lang={settings.lang} setLang={settings.setLang} privacyMode={settings.privacyMode} setPrivacyMode={settings.setPrivacyMode} trades={trades} />}
       <TraderMindSession open={showTraderMind} onClose={() => setShowTraderMind(false)} lang={settings.lang} />
-      <DisplayModeRescuePrompt
-        T={T}
-        isRTL={isRTL}
-        onOpenMobileSettings={() => {
-          setShowSettings(true);
-          setTimeout(() => {
-            window.dispatchEvent(new CustomEvent('orca:settings:open-tab', { detail: 'mobile-controls' }));
-          }, 30);
-        }}
-      />
       
       
       {/* Screen Lock removed in Phase 1 architectural cleanup */}

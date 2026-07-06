@@ -26,17 +26,6 @@ interface DisplayModeCtx {
   hiddenCount: number;
   /** Total trades regardless of mode. */
   totalCount: number;
-  /** Dataset-health fallback used when the selected unit cannot explain the imported data. */
-  recommendation: DisplayModeRecommendation;
-}
-
-export interface DisplayModeRecommendation {
-  recommendedMode: DisplayMode;
-  shouldPrompt: boolean;
-  reason: 'r_only_data' | 'money_only_data' | 'r_majority' | 'money_majority' | null;
-  rEligibleCount: number;
-  moneyValueCount: number;
-  totalCount: number;
 }
 
 const Ctx = createContext<DisplayModeCtx | null>(null);
@@ -46,25 +35,12 @@ export function hasValidStop(t: Trade): boolean {
   return t != null && typeof t.stopLoss === 'number' && isFinite(t.stopLoss) && t.stopLoss !== 0;
 }
 
-function finiteNum(v: unknown): number | null {
-  const n = typeof v === 'number' ? v : typeof v === 'string' ? parseFloat(v) : NaN;
-  return Number.isFinite(n) ? n : null;
-}
-
-function hasMoneyValue(t: Trade): boolean {
-  const pnl = finiteNum(t?.pnl);
-  return pnl !== null && Math.abs(pnl) > 1e-9;
-}
-
-/** Strict R eligibility: explicit manual/returnR or calculable risk-based R, with no daily proxy. */
+/** Strict R eligibility: explicit manual R or calculable stop-based R, with no daily proxy. */
 export function hasStrictR(t: Trade): boolean {
-  const manual = t == null ? null : finiteNum(t.manual_r_multiple ?? t.manualR);
-  if (manual !== null) return true;
-  const explicitReturnR = t == null ? null : finiteNum(t.returnR);
-  if (explicitReturnR !== null && explicitReturnR !== 0) return true;
+  const manual = t == null ? NaN : Number(t.manual_r_multiple ?? t.manualR);
+  if (Number.isFinite(manual)) return true;
   const r = getEffectiveR(t, { strict: true });
-  const risk = t == null ? null : finiteNum(t.risk);
-  return typeof r === 'number' && isFinite(r) && (hasValidStop(t) || (risk !== null && risk > 0));
+  return hasValidStop(t) && typeof r === 'number' && isFinite(r);
 }
 
 /** Pure selector — apply the active displayMode filter to an arbitrary list. */
@@ -82,31 +58,9 @@ const STORAGE_KEY = 'orca:displayMode';
 export function autoPickMode(trades: Trade[]): DisplayMode {
   if (!trades || trades.length === 0) return 'R_MULTIPLE';
   let rOk = 0;
-  let moneyOk = 0;
   for (const t of trades) if (hasStrictR(t)) rOk++;
-  for (const t of trades) if (hasMoneyValue(t)) moneyOk++;
-  if (rOk > 0 && moneyOk === 0) return 'R_MULTIPLE';
-  if (moneyOk > 0 && rOk === 0) return 'MONEY';
-  return rOk > trades.length - rOk ? 'R_MULTIPLE' : 'MONEY';
-}
-
-export function getDisplayModeRecommendation(trades: Trade[], currentMode: DisplayMode): DisplayModeRecommendation {
-  const totalCount = trades?.length || 0;
-  let rEligibleCount = 0;
-  let moneyValueCount = 0;
-  for (const t of trades || []) {
-    if (hasStrictR(t)) rEligibleCount++;
-    if (hasMoneyValue(t)) moneyValueCount++;
-  }
-  const recommendedMode = autoPickMode(trades || []);
-  const reason: DisplayModeRecommendation['reason'] =
-    recommendedMode === 'R_MULTIPLE' && moneyValueCount === 0 && rEligibleCount > 0 ? 'r_only_data' :
-    recommendedMode === 'MONEY' && rEligibleCount === 0 && moneyValueCount > 0 ? 'money_only_data' :
-    recommendedMode === 'R_MULTIPLE' && rEligibleCount > totalCount - rEligibleCount ? 'r_majority' :
-    recommendedMode === 'MONEY' && totalCount > 0 ? 'money_majority' :
-    null;
-  const shouldPrompt = totalCount > 0 && currentMode !== recommendedMode && reason !== null;
-  return { recommendedMode, shouldPrompt, reason, rEligibleCount, moneyValueCount, totalCount };
+  const moneyOnly = trades.length - rOk;
+  return rOk > moneyOnly ? 'R_MULTIPLE' : 'MONEY';
 }
 
 export function DisplayModeProvider({ trades, children }: { trades: Trade[]; children: ReactNode }) {
@@ -153,10 +107,6 @@ export function DisplayModeProvider({ trades, children }: { trades: Trade[]; chi
     () => selectVisibleTrades(trades, effectiveMode),
     [trades, effectiveMode],
   );
-  const recommendation = useMemo(
-    () => getDisplayModeRecommendation(trades, effectiveMode),
-    [trades, effectiveMode],
-  );
 
   const value: DisplayModeCtx = {
     displayMode: effectiveMode,
@@ -166,7 +116,6 @@ export function DisplayModeProvider({ trades, children }: { trades: Trade[]; chi
     visibleTrades,
     hiddenCount: Math.max(0, trades.length - visibleTrades.length),
     totalCount: trades.length,
-    recommendation,
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
@@ -184,7 +133,6 @@ export function useDisplayMode(): DisplayModeCtx {
       visibleTrades: [],
       hiddenCount: 0,
       totalCount: 0,
-      recommendation: { recommendedMode: 'MONEY', shouldPrompt: false, reason: null, rEligibleCount: 0, moneyValueCount: 0, totalCount: 0 },
     };
   }
   return v;

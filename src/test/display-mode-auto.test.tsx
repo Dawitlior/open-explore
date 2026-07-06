@@ -1,12 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import React from 'react';
-import { DisplayModeProvider, useDisplayMode, useEffectiveDisplayMode, autoPickMode, hasStrictR } from '@/lib/display-mode';
+import { DisplayModeProvider, useDisplayMode, useEffectiveDisplayMode, autoPickMode } from '@/lib/display-mode';
 import { sanitizeTrade } from '@/lib/trade-sanitizer';
-import { useExpectancyMode } from '@/lib/dashboard-engine';
 
 const rTrade = (id: number) => ({ id, date:'2025-01-01', day:'Mon', coin:'X', direction:'Long' as const, orderType:'Market', entry:100, stopLoss:95, exit:110, returnR:2, winLoss:'Win' as const, risk:5, expectedLoss:5, pnl:10, deviation:0, positionSize:1, leverage:1, balance:1000, riskPct:0.5, rules:true, comments:'' });
-const mTrade = (id: number) => ({ ...rTrade(id), stopLoss: null as any, returnR: 0, risk: 0, manual_r_multiple: null, manualR: null });
+const mTrade = (id: number) => ({ ...rTrade(id), stopLoss: null as any });
 const rOnlyTrade = (id: number) => ({ ...mTrade(id), pnl: 0, risk: 0, returnR: 0, manual_r_multiple: id % 2 ? 1.35 : -0.8, manualR: id % 2 ? 1.35 : -0.8 });
 
 describe('autoPickMode', () => {
@@ -20,11 +19,6 @@ describe('autoPickMode', () => {
   });
   it('R when trades are R-only manual values without stop-loss or money PnL', () => {
     const t = [rOnlyTrade(1), rOnlyTrade(2), rOnlyTrade(3)];
-    expect(autoPickMode(t as any)).toBe('R_MULTIPLE');
-  });
-  it('R when trades are R-only returnR values without stop-loss or money PnL', () => {
-    const t = [1, 2, 3].map(id => ({ ...mTrade(id), pnl: 0, risk: 0, returnR: id % 2 ? 1.2 : -0.7 }));
-    expect(t.every(tr => hasStrictR(tr as any))).toBe(true);
     expect(autoPickMode(t as any)).toBe('R_MULTIPLE');
   });
 });
@@ -53,11 +47,5 @@ describe('useEffectiveDisplayMode follows trades', () => {
     const hydrated = [1, 2, 3].map(id => sanitizeTrade(rOnlyTrade(id), id));
     const { result } = renderHook(() => useEffectiveDisplayMode(hydrated as any));
     expect(result.current.displayMode).toBe('R_MULTIPLE');
-  });
-
-  it('does not force tiny R-only datasets into money mode', () => {
-    const tiny = [rOnlyTrade(1), rOnlyTrade(2), rOnlyTrade(3)] as any[];
-    const { result } = renderHook(() => useExpectancyMode(tiny));
-    expect(result.current.mode).toBe('R');
   });
 });

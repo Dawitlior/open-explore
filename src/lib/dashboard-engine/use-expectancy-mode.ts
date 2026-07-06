@@ -16,7 +16,6 @@
 import { useMemo } from 'react';
 import type { Trade } from '@/data/trades';
 import { getEffectiveR } from '@/lib/r-multiple';
-import { hasStrictR } from '@/lib/display-mode';
 
 export type ExpectancyMode = 'R' | '$';
 
@@ -38,11 +37,11 @@ export function useExpectancyMode(trades: Trade[]): ExpectancyState {
     const recent = trades.slice(-WINDOW);
     let withR = 0;
     for (const t of recent) {
-      const r = getEffectiveR(t as Parameters<typeof getEffectiveR>[0], { strict: true });
-      if (hasStrictR(t) && typeof r === 'number' && isFinite(r)) withR++;
+      const r = getEffectiveR(t as Parameters<typeof getEffectiveR>[0]);
+      if (typeof r === 'number' && isFinite(r)) withR++;
     }
     const coverage = withR / recent.length;
-    if (recent.length < 5 && withR < recent.length) {
+    if (recent.length < 5) {
       return { mode: '$', coverage, sampleSize: recent.length, reason: 'insufficient_sample' };
     }
     if (coverage >= THRESHOLD) {
