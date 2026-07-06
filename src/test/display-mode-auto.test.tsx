@@ -1,12 +1,17 @@
-import { describe, it, expect } from 'vitest';
+import { beforeEach, describe, it, expect } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import React from 'react';
 import { DisplayModeProvider, useDisplayMode, useEffectiveDisplayMode, autoPickMode } from '@/lib/display-mode';
 import { sanitizeTrade } from '@/lib/trade-sanitizer';
 
 const rTrade = (id: number) => ({ id, date:'2025-01-01', day:'Mon', coin:'X', direction:'Long' as const, orderType:'Market', entry:100, stopLoss:95, exit:110, returnR:2, winLoss:'Win' as const, risk:5, expectedLoss:5, pnl:10, deviation:0, positionSize:1, leverage:1, balance:1000, riskPct:0.5, rules:true, comments:'' });
-const mTrade = (id: number) => ({ ...rTrade(id), stopLoss: null as any, returnR: 0 });
+const mTrade = (id: number) => ({ ...rTrade(id), stopLoss: null as any, returnR: 0, risk: 0, expectedLoss: 0 });
 const rOnlyTrade = (id: number) => ({ ...mTrade(id), pnl: 0, risk: 0, returnR: 0, manual_r_multiple: id % 2 ? 1.35 : -0.8, manualR: id % 2 ? 1.35 : -0.8 });
+
+beforeEach(() => {
+  localStorage.clear();
+  sessionStorage.clear();
+});
 
 describe('autoPickMode', () => {
   it('R when R majority', () => {
@@ -35,8 +40,6 @@ describe('provider follows trade majority on change', () => {
   });
 
   it('keeps a manual R choice after provider remount/refresh', () => {
-    localStorage.clear();
-    sessionStorage.clear();
     const trades: any[] = [rTrade(1), rTrade(2), rTrade(3), mTrade(4)];
     const wrapper = ({ children }: any) => <DisplayModeProvider trades={trades}>{children}</DisplayModeProvider>;
     const first = renderHook(() => useDisplayMode(), { wrapper });
