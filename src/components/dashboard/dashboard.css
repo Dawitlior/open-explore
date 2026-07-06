@@ -151,9 +151,10 @@ html[dir="rtl"] .dash-share-stats-btn {
   gap: 10px;
   grid-template-columns: 1fr;
   min-width: 0;
+  margin-bottom: 20px;
 }
 @container dash (min-width: 768px) {
-  .dash-charts-alpha { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .dash-charts-alpha { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 28px; }
 }
 
 /* ─── Chart card — owns its own responsive sizing ─── */
