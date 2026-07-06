@@ -219,6 +219,8 @@ function CaptureFlow() {
   const [showSkip, setShowSkip] = useState(false);
   const submitRef = useRef<HTMLButtonElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   // reset form whenever a new draft opens
   useEffect(() => {
