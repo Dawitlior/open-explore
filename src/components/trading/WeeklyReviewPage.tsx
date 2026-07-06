@@ -13,7 +13,7 @@ import WeeklyReviewShell from '@/components/weekly-review/WeeklyReviewShell';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type OrcaTheme = any;
-type OrcaThemeId = 'midnight' | 'blue' | 'platinum' | 'graphite';
+type OrcaThemeId = 'midnight' | 'blue' | 'platinum' | 'graphite' | 'minimal-light';
 
 interface Props {
   T: OrcaTheme;
@@ -29,6 +29,7 @@ const THEME_MAP: Record<OrcaThemeId, 'night' | 'snow'> = {
   blue: 'night',
   platinum: 'snow',
   graphite: 'night',
+  'minimal-light': 'snow',
 };
 
 
