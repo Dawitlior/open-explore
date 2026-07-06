@@ -213,18 +213,7 @@ export default function AuthPage() {
   }, [mode, lang, c]);
 
   const strength = useMemo(() => evaluatePassword(password), [password]);
-  const nextParam = useMemo(() => {
-    if (typeof window === 'undefined') return null;
-    const raw = new URLSearchParams(window.location.search).get('next');
-    if (!raw) return null;
-    // Same-origin relative path only.
-    if (!raw.startsWith('/') || raw.startsWith('//')) return null;
-    return raw;
-  }, []);
-  const redirectTo = nextParam || (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || '/';
-  const authReturnUrl = nextParam
-    ? `${window.location.origin}/auth?next=${encodeURIComponent(nextParam)}`
-    : `${window.location.origin}/auth`;
+  const redirectTo = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || '/';
 
   useEffect(() => {
     const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
@@ -266,7 +255,7 @@ export default function AuthPage() {
         const { data, error } = await supabase.auth.signUp({
           email: cleanEmail, password,
           options: {
-            emailRedirectTo: `${authReturnUrl}${authReturnUrl.includes('?') ? '&' : '?'}verified=1`,
+            emailRedirectTo: `${window.location.origin}/auth?verified=1`,
             data: { display_name: displayName.trim() || cleanEmail.split('@')[0] },
           },
         });
@@ -278,10 +267,7 @@ export default function AuthPage() {
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
         if (error) throw error;
-        if (data.user?.id) {
-          await logConsent(data.user.id);
-          if (nextParam) { window.location.href = nextParam; return; }
-        }
+        if (data.user?.id) await logConsent(data.user.id);
         navigate(redirectTo, { replace: true });
       }
     } catch (err) {
@@ -298,7 +284,7 @@ export default function AuthPage() {
       try { localStorage.setItem(PENDING_CONSENT_KEY, '1'); } catch { /* noop */ }
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: authReturnUrl, queryParams: { prompt: 'select_account' } },
+        options: { redirectTo: `${window.location.origin}/auth`, queryParams: { prompt: 'select_account' } },
       });
       if (error) throw error;
     } catch (err) {

@@ -21,7 +21,6 @@ import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Accessibility from "./pages/Accessibility";
 import NotFound from "./pages/NotFound";
-import OAuthConsent from "./pages/OAuthConsent";
 import { LegalGate } from "@/components/LegalGate";
 import { EconomicAlertBanner } from "@/components/economic/EconomicAlertBanner";
 import { UpgradeModal } from "@/components/billing/UpgradeModal";
@@ -53,7 +52,7 @@ import { ConsoleBackButton } from "@/components/ConsoleBackButton";
 const BugArenaMount = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
   const location = useLocation();
-  const suppressedRoutes = ['/welcome', '/auth', '/reset-password', '/terms', '/privacy', '/accessibility', '/console', '/.lovable/oauth'];
+  const suppressedRoutes = ['/welcome', '/auth', '/reset-password', '/terms', '/privacy', '/accessibility', '/console'];
   const suppressed = suppressedRoutes.some((p) => location.pathname.startsWith(p));
 
   if (!user) return <>{children}</>;
@@ -159,7 +158,6 @@ const App = () => (
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/accessibility" element={<Accessibility />} />
-              <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
               <Route
                 path="/"
                 element={
