@@ -72,7 +72,16 @@ export function HeaderModeToggle({ isRTL }: { isRTL: boolean }) {
             }
           `}</style>
           <span
-            aria-hidden
+            role="button"
+            tabIndex={0}
+            aria-label={isRTL ? 'החלף למצב המתאים לגרפים' : 'Switch to the chart-compatible mode'}
+            onClick={() => setDisplayMode(recommendation.recommendedMode)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setDisplayMode(recommendation.recommendedMode);
+              }
+            }}
             style={{
               position: 'absolute',
               insetInlineStart: isRTL ? 'auto' : -7,
@@ -85,7 +94,7 @@ export function HeaderModeToggle({ isRTL }: { isRTL: boolean }) {
               boxShadow: `0 0 0 5px ${R_COLOR}22, 0 0 18px ${R_COLOR}`,
               animation: 'orcaModeRescuePulse 1.35s ease-in-out infinite',
               zIndex: 3,
-              pointerEvents: 'none',
+              cursor: 'pointer',
             }}
           />
         </>
