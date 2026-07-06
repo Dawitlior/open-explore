@@ -8,12 +8,13 @@
  * relevant (chart #3). Charts #1/#2 count wins which is mode-agnostic but the
  * unit chip on ChartWrapper reflects the active mode.
  */
-import { useMemo, useState, useEffect } from 'react';
-import { BarChart, Bar, LineChart, Line, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine, Cell } from 'recharts';
+import { memo, useMemo } from 'react';
+import { BarChart, Bar, LineChart, Line, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from 'recharts';
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { useVisibleTrades } from '@/lib/display-mode-format';
 import { getEffectiveR } from '@/lib/r-multiple';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface BaseProps {
   T: TradingTheme;
@@ -28,15 +29,6 @@ const SHORT_MONTH = (k: string) => {
   const [y, m] = k.split('-');
   const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   return `${names[Number(m) - 1] || m} ${y.slice(2)}`;
-};
-const useIsMobile = () => {
-  const [m, setM] = useState(typeof window !== 'undefined' && window.innerWidth < 640);
-  useEffect(() => {
-    const on = () => setM(window.innerWidth < 640);
-    window.addEventListener('resize', on);
-    return () => window.removeEventListener('resize', on);
-  }, []);
-  return m;
 };
 
 const tradeDate = (t: Trade): Date | null => {
@@ -61,7 +53,7 @@ const fmtShort = (v: number, isMoney: boolean) => {
 };
 
 /* ────────── #1 wins by month ────────── */
-export const WinsByMonthChart = ({ T, trades, isRTL, tt }: BaseProps) => {
+const WinsByMonthChartImpl = ({ T, trades, isRTL, tt }: BaseProps) => {
   const isMobile = useIsMobile();
   const data = useMemo(() => {
     const map = new Map<string, { name: string; Long: number; Short: number }>();
@@ -123,7 +115,7 @@ export const WinsByMonthChart = ({ T, trades, isRTL, tt }: BaseProps) => {
 };
 
 /* ────────── #2 wins by quarter ────────── */
-export const WinsByQuarterChart = ({ T, trades, isRTL, tt }: BaseProps) => {
+const WinsByQuarterChartImpl = ({ T, trades, isRTL, tt }: BaseProps) => {
   const data = useMemo(() => {
     const map = new Map<string, { name: string; Long: number; Short: number }>();
     for (const t of trades) {
@@ -161,7 +153,7 @@ export const WinsByQuarterChart = ({ T, trades, isRTL, tt }: BaseProps) => {
 };
 
 /* ────────── #4 quarterly wins/losses + net by year-quarter ────────── */
-export const QuarterlyWinsLossesYoYChart = ({ T, trades, isRTL, tt }: BaseProps) => {
+const QuarterlyWinsLossesYoYChartImpl = ({ T, trades, isRTL, tt }: BaseProps) => {
   const { isMoney, formatValue, unit } = useVisibleTrades(trades);
   const isMobile = useIsMobile();
   const data = useMemo(() => {
@@ -215,7 +207,7 @@ export const QuarterlyWinsLossesYoYChart = ({ T, trades, isRTL, tt }: BaseProps)
 };
 
 /* ────────── #5 quarterly year matrix — heatmap comparison ────────── */
-export const QuarterlyYearMatrixChart = ({ T, trades, isRTL }: BaseProps) => {
+const QuarterlyYearMatrixChartImpl = ({ T, trades, isRTL }: BaseProps) => {
   const { isMoney } = useVisibleTrades(trades);
   const { years, rows, maxAbs } = useMemo(() => {
     const map = new Map<string, { year: number; q: number; wins: number; losses: number; net: number; trades: number }>();
@@ -289,7 +281,7 @@ export const QuarterlyYearMatrixChart = ({ T, trades, isRTL }: BaseProps) => {
    Tries to infer holding time from entryTime/openTime → exitTime. When
    timestamps are missing we fall back to plain "avg return per trade" for
    that month so the chart never silently disappears. */
-export const ReturnPerTimeChart = ({ T, trades, isRTL, tt }: BaseProps) => {
+const ReturnPerTimeChartImpl = ({ T, trades, isRTL, tt }: BaseProps) => {
   const { isMoney, formatValue, unit } = useVisibleTrades(trades);
 
   const data = useMemo(() => {
@@ -349,3 +341,14 @@ const Empty = ({ T, isRTL }: { T: TradingTheme; isRTL: boolean }) => (
     {isRTL ? 'אין מספיק נתונים להצגה' : 'Not enough data'}
   </div>
 );
+
+
+// Memoize all exports: props are stable references (trades, T, isRTL, tt)
+// coming from a parent that already caches them, so the default shallow
+// compare is safe and avoids re-rendering these expensive recharts trees on
+// every parent tick (theme toggle, tooltip hover, mode switch elsewhere).
+export const WinsByMonthChart = memo(WinsByMonthChartImpl);
+export const WinsByQuarterChart = memo(WinsByQuarterChartImpl);
+export const QuarterlyWinsLossesYoYChart = memo(QuarterlyWinsLossesYoYChartImpl);
+export const QuarterlyYearMatrixChart = memo(QuarterlyYearMatrixChartImpl);
+export const ReturnPerTimeChart = memo(ReturnPerTimeChartImpl);

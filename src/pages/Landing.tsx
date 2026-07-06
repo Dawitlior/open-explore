@@ -362,7 +362,7 @@ const TraderMindRotator: React.FC<{ slides: { src: string; caption: string }[] }
               src={s.src}
               alt={s.caption}
               loading={idx === 0 ? 'eager' : 'lazy'}
-              fetchPriority={idx === 0 ? 'high' : 'auto'}
+              {...(idx === 0 ? { fetchpriority: 'high' as any } : {})}
               decoding="async"
               style={{
                 position: 'absolute', inset: 0, width: '100%', height: '100%',

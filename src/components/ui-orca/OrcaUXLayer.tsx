@@ -29,9 +29,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 export const OrcaUXLayer = () => {
   const [scrollPct, setScrollPct] = useState(0);
   const [showBackTop, setShowBackTop] = useState(false);
-  const [online, setOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+  // NOTE: `online` state was tracked but never rendered; only `showOnlineToast`
+  // is displayed. Dropped it to avoid an extra render on connectivity flip.
   const [showOnlineToast, setShowOnlineToast] = useState<null | 'online' | 'offline'>(null);
-  const [now, setNow] = useState<Date>(new Date());
+  // NOTE: `now` (live-clock tick) was rendered by the market-session pill
+  // which was removed. The 1-Hz interval was pure re-render waste — deleted.
   const [idle, setIdle] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [pageLoaded, setPageLoaded] = useState(false);
@@ -54,35 +56,40 @@ export const OrcaUXLayer = () => {
     };
   }, []);
 
-  /* ─── 3. Scroll progress + 5. back-to-top ─── */
+  /* ─── 3. Scroll progress + 5. back-to-top (rAF-throttled) ─── */
   useEffect(() => {
-    const onScroll = () => {
+    let raf = 0;
+    let lastPct = -1;
+    let lastAbove = false;
+    const compute = () => {
+      raf = 0;
       const h = document.documentElement;
       const pct = (h.scrollTop / Math.max(1, h.scrollHeight - h.clientHeight)) * 100;
-      setScrollPct(pct);
-      setShowBackTop(h.scrollTop > 600);
+      // Only fire setState when the rounded % actually changes → avoids
+      // dozens of React renders per scroll tick.
+      const rounded = Math.round(pct);
+      if (rounded !== lastPct) { lastPct = rounded; setScrollPct(rounded); }
+      const above = h.scrollTop > 600;
+      if (above !== lastAbove) { lastAbove = above; setShowBackTop(above); }
     };
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(compute); };
     window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener('scroll', onScroll);
+    compute();
+    return () => { window.removeEventListener('scroll', onScroll); if (raf) cancelAnimationFrame(raf); };
   }, []);
 
   /* ─── 4. Custom cursor halo — DISABLED per user request ─── */
 
   /* ─── 7. Online / offline toasts ─── */
   useEffect(() => {
-    const on = () => { setOnline(true); setShowOnlineToast('online'); setTimeout(() => setShowOnlineToast(null), 2400); };
-    const off = () => { setOnline(false); setShowOnlineToast('offline'); };
+    const on = () => { setShowOnlineToast('online'); setTimeout(() => setShowOnlineToast(null), 2400); };
+    const off = () => { setShowOnlineToast('offline'); };
     window.addEventListener('online', on);
     window.addEventListener('offline', off);
     return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); };
   }, []);
 
-  /* ─── 8. Live clock ─── */
-  useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(t);
-  }, []);
+  /* ─── 8. Live clock — REMOVED (see note near state). ─── */
 
   /* ─── 9. Idle dimmer (90s) ─── */
   useEffect(() => {
@@ -212,7 +219,6 @@ export const OrcaUXLayer = () => {
   }, []);
 
   const scrollTop = useCallback(() => window.scrollTo({ top: 0, behavior: 'smooth' }), []);
-  const session = getMarketSession();
 
   return (
     <>
@@ -335,11 +341,4 @@ export const OrcaUXLayer = () => {
   );
 };
 
-/* Market session calculator (UTC-based, simplified) */
-function getMarketSession(): { label: string; color: string } {
-  const h = new Date().getUTCHours();
-  if (h >= 13 && h < 20) return { label: 'NY OPEN',   color: 'hsl(152 76% 60%)' };
-  if (h >= 7  && h < 16) return { label: 'LONDON',    color: 'hsl(184 100% 70%)' };
-  if (h >= 0  && h < 8)  return { label: 'TOKYO',     color: 'hsl(258 90% 75%)' };
-  return { label: 'AFTER HRS', color: 'hsl(38 95% 60%)' };
-}
+/* Market session calculator removed — the pill that consumed it was deleted. */
