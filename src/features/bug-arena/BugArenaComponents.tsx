@@ -401,8 +401,36 @@ function CaptureFlow() {
               )}
             </div>
           ) : captureStatus === 'skipped' ? (
-            <div className="rounded-xl border border-dashed border-white/15 bg-white/5 p-4 text-center text-xs text-white/40">
-              {t('ממשיך ללא צילום מסך — צרף תמונה ידנית למטה אם תרצה.', 'Continuing without a screenshot — attach an image manually below if needed.')}
+            <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.04] p-4 text-center">
+              <div className="mb-3 text-sm font-semibold text-white/80">
+                {t('צרף צילום מסך מהטלפון', 'Attach a screenshot from your phone')}
+              </div>
+              <p className="mb-3 text-[11px] leading-relaxed text-white/50">
+                {t(
+                  'במובייל אנחנו מדלגים על צילום אוטומטי כדי לשמור על ביצועים. צלם מסך במכשיר וצרף אותו כאן.',
+                  'On mobile we skip auto-capture for performance. Take a screenshot on your device and attach it here.',
+                )}
+              </p>
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-full px-4 py-2 text-sm font-bold text-[#06121f]" style={{ background: ACCENT }}>
+                {t('📎 בחר תמונה', '📎 Choose image')}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => setExtra(e.target.files?.[0] || null)}
+                />
+              </label>
+              {extra && (
+                <div className="mt-2 truncate text-xs text-white/60">{extra.name}</div>
+              )}
+              {!isMobile && (
+                <button
+                  onClick={() => capture.recapture(captureMode)}
+                  className="mt-3 block w-full rounded-full border border-white/20 px-3 py-1.5 text-xs text-white/70 hover:text-white"
+                >
+                  {t('או נסה צילום אוטומטי', 'Or try auto-capture')}
+                </button>
+              )}
             </div>
           ) : (
             <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4 text-xs text-white/50">
