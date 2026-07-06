@@ -294,7 +294,8 @@ function CaptureFlow() {
       onClick={capture.cancel}
     >
       <div
-        className="relative w-full sm:max-w-2xl max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl border border-white/10 bg-[#0b111b] text-[#e8edf5] shadow-2xl"
+        ref={scrollRef}
+        className="relative w-full sm:max-w-2xl max-h-[92vh] h-[92vh] sm:h-auto overflow-y-auto overflow-x-hidden overscroll-contain rounded-t-3xl sm:rounded-3xl border border-white/10 bg-[#0b111b] text-[#e8edf5] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* header */}
