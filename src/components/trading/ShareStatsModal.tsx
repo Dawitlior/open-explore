@@ -299,6 +299,8 @@ export function ShareStatsModal({ open, onClose, stats, isRTL, isMoney, trades }
     }
   };
 
+  const isMobileVP = typeof window !== 'undefined' && window.innerWidth < 640;
+
   const overlay = useMemo(
     () => ({
       position: 'fixed' as const,
@@ -307,11 +309,11 @@ export function ShareStatsModal({ open, onClose, stats, isRTL, isMoney, trades }
       backdropFilter: 'blur(10px)',
       zIndex: 2147483200,
       display: open ? 'flex' : 'none',
-      alignItems: 'center',
+      alignItems: isMobileVP ? ('flex-end' as const) : ('center' as const),
       justifyContent: 'center',
-      padding: 20,
+      padding: isMobileVP ? 0 : 20,
     }),
-    [open]
+    [open, isMobileVP]
   );
 
   if (!open) return null;
@@ -323,10 +325,14 @@ export function ShareStatsModal({ open, onClose, stats, isRTL, isMoney, trades }
         style={{
           background: '#0a1626',
           border: '1px solid rgba(245,197,66,0.35)',
-          borderRadius: 20,
-          padding: 24,
+          borderRadius: isMobileVP ? '20px 20px 0 0' : 20,
+          padding: isMobileVP ? '16px 14px calc(16px + env(safe-area-inset-bottom))' : 24,
+          paddingTop: isMobileVP ? 'calc(16px + env(safe-area-inset-top) * 0.5)' : 24,
           maxWidth: 560,
           width: '100%',
+          maxHeight: isMobileVP ? '92dvh' : '92vh',
+          overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
           boxShadow: '0 30px 80px rgba(0,0,0,0.55)',
           fontFamily: 'Poppins, system-ui, sans-serif',
           color: '#e8edf5',
