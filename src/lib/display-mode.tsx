@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useContext, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Trade } from '@/data/trades';
 import { getEffectiveR } from '@/lib/r-multiple';
 
@@ -57,6 +57,46 @@ export function selectVisibleTrades(trades: Trade[], mode: DisplayMode): Trade[]
 }
 
 const STORAGE_KEY = 'orca:displayMode';
+const PREFERENCE_KEY = 'orca:displayModePreference';
+
+function isDisplayMode(v: unknown): v is DisplayMode {
+  return v === 'MONEY' || v === 'R_MULTIPLE';
+}
+
+function readMode(key: string): DisplayMode | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const sessionValue = window.sessionStorage.getItem(key);
+    if (isDisplayMode(sessionValue)) return sessionValue;
+    const localValue = window.localStorage.getItem(key);
+    if (isDisplayMode(localValue)) return localValue;
+  } catch { /* ignore */ }
+  return null;
+}
+
+function writeMode(key: string, mode: DisplayMode) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.setItem(key, mode);
+    window.localStorage.setItem(key, mode);
+  } catch { /* ignore */ }
+}
+
+function broadcastMode(mode: DisplayMode) {
+  if (typeof window === 'undefined') return;
+  try { window.dispatchEvent(new CustomEvent('orca:displayMode-changed', { detail: mode })); } catch { /* noop */ }
+}
+
+function resolveDisplayMode(trades: Trade[], locked: boolean): DisplayMode {
+  if (locked) return 'MONEY';
+  const savedPreference = readMode(PREFERENCE_KEY);
+  if (savedPreference) return savedPreference;
+  // The legacy key is intentionally not used as preference: older builds wrote
+  // auto-detected values into it on every hydration, which is exactly what made
+  // refreshes snap back to MONEY. Only the new preference key represents a real
+  // user choice.
+  return autoPickMode(trades);
+}
 
 /** Auto-pick the mode the user most likely wants, based on their data:
  *  more R-eligible trades than not → R_MULTIPLE; otherwise → MONEY.
@@ -73,9 +113,8 @@ export function autoPickMode(trades: Trade[]): DisplayMode {
 export function DisplayModeProvider({ trades, children }: { trades: Trade[]; children: ReactNode }) {
   const hasAnyR = useMemo(() => trades.some(hasStrictR), [trades]);
   const locked = !hasAnyR;
-  const autoMode = useMemo(() => autoPickMode(trades), [trades]);
 
-  const [displayMode, setDisplayModeState] = useState<DisplayMode>(() => autoPickMode(trades));
+  const [displayMode, setDisplayModeState] = useState<DisplayMode>(() => resolveDisplayMode(trades, locked));
 
   // Derive effective mode synchronously — prevents a one-frame flicker on
   // first paint when an effect would otherwise downgrade R_MULTIPLE → MONEY.
@@ -85,29 +124,22 @@ export function DisplayModeProvider({ trades, children }: { trades: Trade[]; chi
     if (locked && displayMode !== 'MONEY') setDisplayModeState('MONEY');
   }, [locked, displayMode]);
 
-  // ALWAYS auto-follow the majority of the data. Manual toggles are ephemeral
-  // (current render only) — as soon as the trade set changes, the majority
-  // wins. Broadcast unconditionally so external consumers (useEffectiveDisplayMode,
-  // components outside the provider) re-sync even when the mode didn't change.
+  // Resolve on hydration / portfolio changes. A manual choice persists across
+  // refreshes; without one, the platform still auto-detects the best mode.
   useEffect(() => {
-    if (autoMode !== displayMode) setDisplayModeState(autoMode);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, autoMode);
-      window.sessionStorage.setItem(STORAGE_KEY, autoMode);
-    } catch { /* ignore */ }
-    try { window.dispatchEvent(new CustomEvent('orca:displayMode-changed', { detail: autoMode })); } catch { /* noop */ }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoMode]);
+    const nextMode = resolveDisplayMode(trades, locked);
+    if (nextMode !== displayMode) setDisplayModeState(nextMode);
+    writeMode(STORAGE_KEY, nextMode);
+    broadcastMode(nextMode);
+  }, [trades, locked, displayMode]);
 
-  const setDisplayMode = (m: DisplayMode) => {
+  const setDisplayMode = useCallback((m: DisplayMode) => {
     if (locked && m === 'R_MULTIPLE') return; // can't enter R without eligible data
     setDisplayModeState(m);
-    try {
-      window.sessionStorage.setItem(STORAGE_KEY, m);
-      window.localStorage.setItem(STORAGE_KEY, m);
-    } catch { /* ignore */ }
-    try { window.dispatchEvent(new CustomEvent('orca:displayMode-changed', { detail: m })); } catch { /* noop */ }
-  };
+    writeMode(PREFERENCE_KEY, m);
+    writeMode(STORAGE_KEY, m);
+    broadcastMode(m);
+  }, [locked]);
 
 
   const visibleTrades = useMemo(
@@ -170,15 +202,12 @@ export function useEffectiveDisplayMode(trades: Trade[]): {
   locked: boolean;
 } {
   const hasAnyR = useMemo(() => trades.some(hasStrictR), [trades]);
-  // Auto-follow the majority of trades — this is the SINGLE SOURCE OF TRUTH.
-  // localStorage is only a fallback for when there are no trades at all.
-  const autoMode = useMemo(() => autoPickMode(trades), [trades]);
-  const [stored, setStored] = useState<DisplayMode>(autoMode);
-  useEffect(() => { setStored(autoMode); }, [autoMode]);
+  const [stored, setStored] = useState<DisplayMode>(() => resolveDisplayMode(trades, !hasAnyR));
+  useEffect(() => { setStored(resolveDisplayMode(trades, !hasAnyR)); }, [trades, hasAnyR]);
   useEffect(() => {
     const onChange = (e: Event) => {
       const ce = e as CustomEvent<DisplayMode>;
-      if (ce.detail === 'MONEY' || ce.detail === 'R_MULTIPLE') setStored(ce.detail);
+      if (isDisplayMode(ce.detail)) setStored(ce.detail);
     };
     window.addEventListener('orca:displayMode-changed', onChange);
     return () => window.removeEventListener('orca:displayMode-changed', onChange);
