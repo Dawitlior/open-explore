@@ -175,7 +175,7 @@ export const PnLDistributionHistogram = ({ T, trades, isMoney, isRTL, tt }: Prop
             <YAxis
               allowDecimals={false}
               tick={{ fill: T.text.muted, fontSize: 10 }}
-              width={36}
+              width={30}
               scale={logScale ? 'log' : 'linear'}
               domain={logScale ? logDomain : linearDomain}
               allowDataOverflow={logScale}
