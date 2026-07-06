@@ -53,7 +53,7 @@ import { ConsoleBackButton } from "@/components/ConsoleBackButton";
 const BugArenaMount = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
   const location = useLocation();
-  const suppressedRoutes = ['/welcome', '/auth', '/reset-password', '/terms', '/privacy', '/accessibility', '/console'];
+  const suppressedRoutes = ['/welcome', '/auth', '/reset-password', '/terms', '/privacy', '/accessibility', '/console', '/.lovable/oauth'];
   const suppressed = suppressedRoutes.some((p) => location.pathname.startsWith(p));
 
   if (!user) return <>{children}</>;
@@ -159,6 +159,7 @@ const App = () => (
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/accessibility" element={<Accessibility />} />
+              <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
               <Route
                 path="/"
                 element={
