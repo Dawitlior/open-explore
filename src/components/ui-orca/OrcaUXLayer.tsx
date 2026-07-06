@@ -73,18 +73,14 @@ export const OrcaUXLayer = () => {
 
   /* ─── 7. Online / offline toasts ─── */
   useEffect(() => {
-    const on = () => { setOnline(true); setShowOnlineToast('online'); setTimeout(() => setShowOnlineToast(null), 2400); };
-    const off = () => { setOnline(false); setShowOnlineToast('offline'); };
+    const on = () => { setShowOnlineToast('online'); setTimeout(() => setShowOnlineToast(null), 2400); };
+    const off = () => { setShowOnlineToast('offline'); };
     window.addEventListener('online', on);
     window.addEventListener('offline', off);
     return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); };
   }, []);
 
-  /* ─── 8. Live clock ─── */
-  useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(t);
-  }, []);
+  /* ─── 8. Live clock — REMOVED (see note near state). ─── */
 
   /* ─── 9. Idle dimmer (90s) ─── */
   useEffect(() => {
