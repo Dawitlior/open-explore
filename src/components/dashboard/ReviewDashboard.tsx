@@ -283,11 +283,11 @@ export const ReviewDashboard = ({
               {isAdvancedTier && isChartVisible('radarScore') && (
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ציון Orca — פירוט' : 'Orca Score — Breakdown'} explanation={EXPLANATIONS.radarScore} chartId="radarScore" onRemove={handleHideChart}>
-                    <div className="dash-chart-h-xs">
+                    <div className="dash-chart-h-sm dash-chart-fill">
                       <ResponsiveContainer width="100%" height="100%">
-                        <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="58%" margin={{ top: 16, right: 28, bottom: 16, left: 28 }}>
+                        <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="82%" margin={{ top: 20, right: 40, bottom: 20, left: 40 }}>
                           <PolarGrid stroke={T.border.medium} />
-                          <PolarAngleAxis dataKey="m" tick={{ fill: T.text.secondary, fontSize: 10 }} />
+                          <PolarAngleAxis dataKey="m" tick={{ fill: T.text.secondary, fontSize: 11 }} />
                           <PolarRadiusAxis tick={false} domain={[0, 100]} axisLine={false} />
                           <Radar dataKey="v" stroke={T.accent.cyan} fill={T.accent.cyan} fillOpacity={0.55} strokeWidth={2.5} dot={{ r: 3, fill: T.accent.cyan, stroke: T.bg.card, strokeWidth: 1 }} />
                         </RadarChart>
@@ -350,10 +350,10 @@ export const ReviewDashboard = ({
               {isUltimateTier && (
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.directionAnalysis} explanation={EXPLANATIONS.directionAnalysis}>
-                    <div style={{ height: 180, width: '100%' }}>
+                    <div className="dash-chart-h-sm dash-chart-fill">
                       <ResponsiveContainer width="100%" height="100%">
-                        <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
-                          <Pie data={stats.directionData} dataKey="trades" nameKey="name" cx="50%" cy="50%" innerRadius={42} outerRadius={66} paddingAngle={4} label={({ name, percent }: any) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
+                        <PieChart margin={{ top: 12, right: 12, bottom: 12, left: 12 }}>
+                          <Pie data={stats.directionData} dataKey="trades" nameKey="name" cx="50%" cy="50%" innerRadius="46%" outerRadius="80%" paddingAngle={4} label={({ name, percent }: any) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
                             <Cell fill={T.accent.green} /><Cell fill={T.accent.red} />
                           </Pie>
                           <Tooltip contentStyle={tt} />
