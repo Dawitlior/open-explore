@@ -56,9 +56,12 @@ export function EconomicAlertBanner() {
   return (
     <div
       role="alert"
+      style={{ top: 'max(1rem, env(safe-area-inset-top))' }}
       className={[
-        'fixed z-[200] top-4 w-[360px] max-w-[calc(100vw-2rem)]',
-        lang === 'he' ? 'left-4' : 'right-4',
+        'fixed z-[200] w-[360px]',
+        'max-sm:inset-x-3 max-sm:w-auto max-sm:max-w-[calc(100vw-1.5rem)]',
+        'sm:max-w-[calc(100vw-2rem)]',
+        lang === 'he' ? 'sm:left-4' : 'sm:right-4',
         'bg-card text-foreground border border-border rounded-lg shadow-2xl',
         'px-4 py-3 animate-in slide-in-from-top-2 fade-in duration-300',
         'font-sans',
