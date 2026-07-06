@@ -76,25 +76,26 @@ const WinsByMonthChartImpl = ({ T, trades, isRTL, tt }: BaseProps) => {
 
   // Desktop: skip labels so they never overlap.
   const desktopInterval = Math.max(0, Math.ceil(data.length / 12) - 1);
-  // Mobile: aim for ~6 visible labels (skip the rest) + steep angle + compact "MMM 'YY" tick renderer.
-  const mobileInterval = Math.max(0, Math.ceil(data.length / 6) - 1);
+  // Mobile: aim for ~5 visible labels (skip the rest) + moderate angle so text
+  // stays readable and never truncates at the container edge.
+  const mobileInterval = Math.max(0, Math.ceil(data.length / 5) - 1);
 
   const chart = (height: number, interval: number, mobile: boolean) => (
     <div style={{ height, width: '100%' }}>
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 8, right: 12, bottom: mobile ? 24 : 8, left: 0 }}>
+        <BarChart data={data} margin={{ top: 8, right: mobile ? 8 : 12, bottom: mobile ? 28 : 8, left: mobile ? -8 : 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
           <XAxis
             dataKey="name"
-            tick={{ fill: T.text.muted, fontSize: mobile ? 9 : 10 }}
+            tick={{ fill: T.text.muted, fontSize: mobile ? 10 : 10 }}
             interval={interval}
-            height={mobile ? 58 : 28}
-            tickMargin={mobile ? 8 : 6}
-            minTickGap={mobile ? 4 : 12}
-            angle={mobile ? -55 : 0}
+            height={mobile ? 52 : 28}
+            tickMargin={mobile ? 10 : 6}
+            minTickGap={mobile ? 8 : 12}
+            angle={mobile ? -40 : 0}
             textAnchor={mobile ? 'end' : 'middle'}
           />
-          <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} width={32} allowDecimals={false} />
+          <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} width={mobile ? 28 : 32} allowDecimals={false} />
           <Tooltip contentStyle={tt} />
           <Legend wrapperStyle={{ fontSize: 11, color: T.text.muted }} />
           <Bar dataKey="Long" stackId="w" fill={T.accent.green} name={isRTL ? 'לונג' : 'Long'} />
@@ -104,7 +105,7 @@ const WinsByMonthChartImpl = ({ T, trades, isRTL, tt }: BaseProps) => {
     </div>
   );
 
-  return isMobile ? chart(300, mobileInterval, true) : chart(260, desktopInterval, false);
+  return isMobile ? chart(380, mobileInterval, true) : chart(260, desktopInterval, false);
 };
 
 /* ────────── #2 wins by quarter ────────── */
@@ -168,20 +169,26 @@ const QuarterlyWinsLossesYoYChartImpl = ({ T, trades, isRTL, tt }: BaseProps) =>
   }, [trades, isMoney]);
 
   if (!data.length) return <Empty T={T} isRTL={isRTL} />;
-  // Skip labels on mobile so ticks never overlap (target ~6 visible), rotate for extra safety.
+  // Skip labels on mobile so ticks never overlap (target ~5 visible), rotate for extra safety.
   const interval = isMobile
-    ? Math.max(0, Math.ceil(data.length / 6) - 1)
+    ? Math.max(0, Math.ceil(data.length / 5) - 1)
     : Math.max(0, Math.ceil(data.length / 10) - 1);
+  // Compact "Q1 '23" label on mobile so rotated text doesn't truncate.
+  const tickFormatter = (v: string) => {
+    if (!isMobile) return v;
+    const [y, q] = v.split('-');
+    return `${q} '${y.slice(2)}`;
+  };
 
   return (
     <div style={{ width: '100%' }}>
-      <div style={{ height: isMobile ? 300 : 284, width: '100%' }}>
+      <div style={{ height: isMobile ? 380 : 284, width: '100%' }}>
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 10, right: 12, bottom: isMobile ? 24 : 8, left: 0 }}>
+          <ComposedChart data={data} margin={{ top: 10, right: isMobile ? 8 : 12, bottom: isMobile ? 28 : 8, left: isMobile ? -8 : 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} vertical={false} />
-            <XAxis dataKey="name" tick={{ fill: T.text.muted, fontSize: isMobile ? 9 : 10 }} interval={interval} minTickGap={isMobile ? 4 : 10} height={isMobile ? 58 : 30} angle={isMobile ? -55 : 0} textAnchor={isMobile ? 'end' : 'middle'} tickMargin={isMobile ? 8 : 4} />
-            <YAxis yAxisId="count" tick={{ fill: T.text.muted, fontSize: 10 }} width={32} allowDecimals={false} />
-            <YAxis yAxisId="net" orientation="right" tick={{ fill: T.text.muted, fontSize: 10 }} width={50} tickFormatter={(v: number) => fmtShort(v, isMoney)} />
+            <XAxis dataKey="name" tickFormatter={tickFormatter} tick={{ fill: T.text.muted, fontSize: 10 }} interval={interval} minTickGap={isMobile ? 8 : 10} height={isMobile ? 52 : 30} angle={isMobile ? -40 : 0} textAnchor={isMobile ? 'end' : 'middle'} tickMargin={isMobile ? 10 : 4} />
+            <YAxis yAxisId="count" tick={{ fill: T.text.muted, fontSize: 10 }} width={isMobile ? 28 : 32} allowDecimals={false} />
+            <YAxis yAxisId="net" orientation="right" tick={{ fill: T.text.muted, fontSize: 10 }} width={isMobile ? 44 : 50} tickFormatter={(v: number) => fmtShort(v, isMoney)} />
             <Tooltip
               contentStyle={tt}
               formatter={(v: any, name: string) => {

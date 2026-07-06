@@ -378,17 +378,20 @@ html[dir="ltr"] .dash-kpi-grid .orca-metric-sub {
    240px height isn't clipped at the bottom (axis labels + legend). */
 @media (max-width: 768px) {
   .dash-advanced-body .dash-charts-3 > .dash-chart-card,
-  .dash-advanced-body .dash-charts-2 > .dash-chart-card {
+  .dash-advanced-body .dash-charts-2 > .dash-chart-card,
+  .dash-advanced-body .dash-charts-alpha > .dash-chart-card {
     min-height: 0 !important;
     height: auto !important;
     overflow: visible !important;
   }
   .dash-advanced-body .dash-charts-3 > .dash-chart-card > *,
-  .dash-advanced-body .dash-charts-2 > .dash-chart-card > * {
+  .dash-advanced-body .dash-charts-2 > .dash-chart-card > *,
+  .dash-advanced-body .dash-charts-alpha > .dash-chart-card > * {
     flex: 0 0 auto !important;
   }
   .dash-advanced-body .dash-charts-3 .recharts-responsive-container,
-  .dash-advanced-body .dash-charts-2 .recharts-responsive-container {
+  .dash-advanced-body .dash-charts-2 .recharts-responsive-container,
+  .dash-advanced-body .dash-charts-alpha .recharts-responsive-container {
     height: 100% !important;
     min-height: 0 !important;
     max-height: none !important;
