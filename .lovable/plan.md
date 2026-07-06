@@ -1,56 +1,77 @@
-# ORCA Console — pipes + validation (phased)
+# Performance Optimization Pass
 
-## Reality check
+Goal: make the platform noticeably faster without changing any functionality or visual output.
 
-The brief is three separable bodies of work:
-- **A1/A2** — DB pipes for Kill-switch and AI usage (concrete, small, verifiable this turn).
-- **A3** — decisions on placeholder widgets (Churn / conversion trend / TTFT / diagnostic→tier).
-- **B1/B2/B3** — full per-element validation matrix across 16 screens × 2 langs × 2 themes × 2 form factors + bug fixes.
+## Scope
 
-B alone is 200–400 matrix rows, each requiring: (1) RPC field trace, (2) direct SQL cross-check, (3) empty-state verification, (4) window filter check, plus visual pass. Done honestly = 4–6 focused turns. Done in one turn = a "sample" that misses exactly what you want caught.
+Investigate the whole app, but focus effort where the cost is highest:
 
-So I split it. **Each phase ends with proof, not a promise.**
+1. **Dashboard charts** (`SimpleExtraCharts`, `ReviewDashboard`, `BestWorstWindowChart`, `PnLDistributionHistogram`, `RiskAdjustedRatiosSection`, `DashboardAdvancedLab`, `QuarterlyPerformanceCard`).
+2. **Calendar Hub / Month & Year views** (heavy recompute on every render).
+3. **Global providers & app shell** (`App.tsx`, `use-trades`, `display-mode`, `use-active-portfolio`, `OrcaUXLayer`).
+4. **Weekly Review widgets** kept off-screen.
+5. **Landing page** unnecessary work when authed.
 
-## Phase 1 — Pipes (this turn)
+## Investigation steps
 
-### 1a · Kill-switch → `risk_events`
-- Create migration:
-  - `public.risk_events` (id, user_id FK auth.users, event_type CHECK ('kill_switch_on','kill_switch_off','daily_breach','weekly_breach','monthly_breach'), context jsonb, created_at).
-  - GRANT SELECT/INSERT to authenticated, ALL to service_role.
-  - RLS: own-row insert (auth.uid()=user_id), own-row select, admin select-all via `has_role`.
-  - Index on (user_id, event_type, created_at DESC).
-- Extend `useKillSwitch`: `engage()` writes `kill_switch_on` (context: `{hours, source:'manual'}`), `release()` writes `kill_switch_off` (context: `{msLeft}`). Non-blocking insert — if it fails the UI still toggles (local IndexedDB stays source of truth for the lock itself; the row is the audit trail).
-- Extend `admin_risk_engine`: add `killOnCount` and `avgRecoveryMinutes` sourced from `risk_events`. No fabricated numbers — if the window has zero events, return 0 with `hasData:false`.
-- Console widget: read the new fields, show empty-state copy when `!hasData`.
-- **Proof:** live toggle → `SELECT * FROM risk_events` shows the row → console widget re-fetches → number ticks. Screenshot + SQL in reply.
+- Grep for charts / heavy components mounted unconditionally.
+- Identify components that render even when their tab / tier is not active (e.g. Alpha charts rendered under a `{isAlpha && …}` gate — good; but check ones without a gate).
+- Look for `useMemo` misses on expensive derivations (trade aggregations recomputed on every keystroke elsewhere in the tree).
+- Find components with heavy JSX but no `React.memo` / stable props.
+- Find `useEffect`s with missing/broken deps causing loops.
+- Find dead files: components exported but never imported, legacy panels replaced by newer ones.
+- Find dev-only warnings we can silence cheaply (e.g. `fetchPriority` casing on Landing image).
 
-### 1b · AI usage → `ai_runs`
-- Audit AI call-sites: `orca-coach` (edge, has partial logging already), `ai-insights-deep.ts`, `ai-engine.ts`, `psychology-diagnostic.ts`, any other `lovable-ai-gateway` fetch.
-- One shared logger `logAiRun({ feature, model, tokens_in, tokens_out, latency_ms, ok, error })` — used from edge functions with service-role client, and (where the call is client-side) via an RLS-friendly insert with `user_id = auth.uid()`.
-- Wire every call-site. Report full list in the proof.
-- **Proof:** run one real coach call → row in `ai_runs` → `admin_ai_usage` returns it → console shows it.
+## Planned changes
 
-### 1c · A3 placeholders — verdicts
-For each of Churn / conversion trend / TTFT / diagnostic→tier: either wire to a real source or replace with an explicit "requires event collection — not active yet" empty state. No number that looks real unless it is real. Decisions listed in the reply.
+### A. Render-gating (don't render what you don't show)
 
-## Phase 2 — Validation matrix (next turn)
+- `ReviewDashboard`: wrap advanced/alpha chart blocks in a `React.lazy` + `Suspense`, so users on Standard tier never pay for `QuarterlyWinsLossesYoYChart`, `QuarterlyYearMatrixChart`, `BestWorstWindowChart`, `QuarterlyPerformanceCard`, `WinsByMonthChart`, `WinsByQuarterChart`, `ReturnPerTimeChart`, `PnLDistributionHistogram`, `RiskAdjustedRatiosSection`, `DashboardAdvancedLab` on mount.
+- Tab-based panels (Weekly / Monthly / Setups / Semi-Annual / Annual / Half-Year) — confirm only the active tab renders; convert any always-mounted ones to lazy.
+- Calendar `YearView` heavy per-day computation: only compute for the current visible year, memoize by `year + trades.length + lastId`.
 
-Screens 1–8 of 16. Full per-element table using your exact columns: `Screen | Element | RPC | RPC field | DB source column | Live value | Direct-query cross-check | PASS/FAIL + fix`. Every FAIL fixed in the same turn. Empty/window/RTL checks included per element.
+### B. Memoization
 
-## Phase 3 — Validation matrix cont'd (turn after)
+- Add `React.memo` with a shallow-props check to chart components in `SimpleExtraCharts.tsx` (they receive `trades` array + primitives).
+- Hoist `tt` (tooltip style) and `MONTH_KEY`/`QUARTER_KEY` derivations already stable — verify no per-render allocations in hot paths.
+- In `ReviewDashboard`, memoize the `trades`-derived objects (`stats`, formatted arrays) once per `trades` reference change.
+- In `display-mode.tsx` `useEffectiveDisplayMode`, avoid unnecessary event broadcasts when the value hasn't changed.
 
-Screens 9–16 same format.
+### C. Effect / listener hygiene
 
-## Phase 4 — Visual/UX sweep
+- Replace per-chart `useIsMobile` (5+ instances each adding `resize` listeners) with a single shared hook that dedupes listeners via a module-level subscriber.
+- `OrcaUXLayer` scroll progress listener → passive + `requestAnimationFrame` throttle to cut layout thrash.
 
-B2 + B3 across he/en, both themes, desktop + mobile-shell. Every bug fixed in-turn.
+### D. Dead-code removal
 
-## Technical notes
+- Search for exported-but-unused components and remove them (e.g. `_placeholder.tsx`, unused legacy chart wrappers if any). Only remove files whose imports do not resolve anywhere.
+- Remove commented-out blocks tagged "REMOVED" in `OrcaUXLayer` (live-clock block, etc.) that only contain a comment.
 
-- **No `now()` backfills.** Existing kill-switch state in IndexedDB has no reliable original timestamp — I will NOT synthesize one. From migration forward, every toggle writes a real event.
-- **Admin RPCs stay stable.** New fields are additive; existing consumers keep working.
-- **RLS discipline:** `risk_events` uses `auth.uid()`-scoped policies + admin read via `has_role`. No anon grant.
+### E. Small correctness/perf wins
 
-## What I need from you
+- Fix `fetchPriority` → `fetchpriority` on the Landing hero `<img>` (React 18 wants lowercase; error in console every mount).
+- Add `loading="lazy"` + `decoding="async"` to below-the-fold images that don't have it.
+- Ensure Recharts `ResponsiveContainer` isn't nested inside another `ResponsiveContainer` anywhere (double-observer cost).
 
-Just "go" — I'll start Phase 1 immediately. If you'd rather I collapse Phase 2+3 into one giant matrix turn (higher risk of missing things), say so.
+## What will NOT change
+
+- No visual redesigns, no feature removals, no theme changes.
+- No behavior change to R/$ auto-detect, calendar dots, share modal, macro banner, or any user-visible flow.
+- No backend / schema changes.
+- Bilingual + RTL + all themes untouched.
+
+## Verification
+
+- After each batch: `tsgo` typecheck + `bunx vitest run` for the display-mode / calendar tests already in the repo.
+- Playwright smoke: load `/` (dashboard) and `/calendar`, confirm no new console errors, screenshots match previous layout.
+- Manual pass through: dashboard tiers (Beginner/Standard/Alpha), Calendar Month/Year, Weekly Review tabs, mobile viewport.
+
+## Technical details
+
+- Lazy loading uses `React.lazy(() => import('./X'))` + `<Suspense fallback={null}>` so the chunk isn't downloaded until the gate opens.
+- Shared `useIsMobile` will live at `src/hooks/use-viewport.ts` as a subscriber-set pattern; the existing `use-mobile.tsx` stays as a thin re-export for back-compat so no imports break.
+- `React.memo` uses default shallow compare; `trades` array identity is already stable in `use-trades` (only replaced on real change), so shallow compare is correct.
+
+## Rollback
+
+Each batch is a self-contained commit; if a chart regresses visually, revert just that file.
