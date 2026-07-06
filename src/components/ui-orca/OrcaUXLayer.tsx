@@ -341,11 +341,4 @@ export const OrcaUXLayer = () => {
   );
 };
 
-/* Market session calculator (UTC-based, simplified) */
-function getMarketSession(): { label: string; color: string } {
-  const h = new Date().getUTCHours();
-  if (h >= 13 && h < 20) return { label: 'NY OPEN',   color: 'hsl(152 76% 60%)' };
-  if (h >= 7  && h < 16) return { label: 'LONDON',    color: 'hsl(184 100% 70%)' };
-  if (h >= 0  && h < 8)  return { label: 'TOKYO',     color: 'hsl(258 90% 75%)' };
-  return { label: 'AFTER HRS', color: 'hsl(38 95% 60%)' };
-}
+/* Market session calculator removed — the pill that consumed it was deleted. */
