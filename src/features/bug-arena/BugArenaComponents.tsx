@@ -219,6 +219,8 @@ function CaptureFlow() {
   const [showSkip, setShowSkip] = useState(false);
   const submitRef = useRef<HTMLButtonElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   // reset form whenever a new draft opens
   useEffect(() => {
@@ -229,6 +231,16 @@ function CaptureFlow() {
       setStrokes([]);
       setExtra(null);
       setShowSkip(false);
+    }
+  }, [stage, draft?.context.capturedAt]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-scroll the modal to top whenever it opens (mobile UX — the sheet
+  // slides up from the bottom and users otherwise land mid-form).
+  useEffect(() => {
+    if (stage === 'draft' && scrollRef.current) {
+      requestAnimationFrame(() => {
+        scrollRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+      });
     }
   }, [stage, draft?.context.capturedAt]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -282,7 +294,8 @@ function CaptureFlow() {
       onClick={capture.cancel}
     >
       <div
-        className="relative w-full sm:max-w-2xl max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl border border-white/10 bg-[#0b111b] text-[#e8edf5] shadow-2xl"
+        ref={scrollRef}
+        className="relative w-full sm:max-w-2xl max-h-[92vh] h-[92vh] sm:h-auto overflow-y-auto overflow-x-hidden overscroll-contain rounded-t-3xl sm:rounded-3xl border border-white/10 bg-[#0b111b] text-[#e8edf5] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* header */}
@@ -388,8 +401,36 @@ function CaptureFlow() {
               )}
             </div>
           ) : captureStatus === 'skipped' ? (
-            <div className="rounded-xl border border-dashed border-white/15 bg-white/5 p-4 text-center text-xs text-white/40">
-              {t('ממשיך ללא צילום מסך — צרף תמונה ידנית למטה אם תרצה.', 'Continuing without a screenshot — attach an image manually below if needed.')}
+            <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.04] p-4 text-center">
+              <div className="mb-3 text-sm font-semibold text-white/80">
+                {t('צרף צילום מסך מהטלפון', 'Attach a screenshot from your phone')}
+              </div>
+              <p className="mb-3 text-[11px] leading-relaxed text-white/50">
+                {t(
+                  'במובייל אנחנו מדלגים על צילום אוטומטי כדי לשמור על ביצועים. צלם מסך במכשיר וצרף אותו כאן.',
+                  'On mobile we skip auto-capture for performance. Take a screenshot on your device and attach it here.',
+                )}
+              </p>
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-full px-4 py-2 text-sm font-bold text-[#06121f]" style={{ background: ACCENT }}>
+                {t('📎 בחר תמונה', '📎 Choose image')}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => setExtra(e.target.files?.[0] || null)}
+                />
+              </label>
+              {extra && (
+                <div className="mt-2 truncate text-xs text-white/60">{extra.name}</div>
+              )}
+              {!isMobile && (
+                <button
+                  onClick={() => capture.recapture(captureMode)}
+                  className="mt-3 block w-full rounded-full border border-white/20 px-3 py-1.5 text-xs text-white/70 hover:text-white"
+                >
+                  {t('או נסה צילום אוטומטי', 'Or try auto-capture')}
+                </button>
+              )}
             </div>
           ) : (
             <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4 text-xs text-white/50">
@@ -423,7 +464,7 @@ function CaptureFlow() {
               onChange={(e) => setDescription(e.target.value.slice(0, 2000))}
               maxLength={2000}
               rows={3}
-              autoFocus
+              autoFocus={!isMobile}
               placeholder={t('תאר בקצרה את הבאג…', 'Briefly describe the bug…')}
               className="w-full resize-none rounded-xl border border-white/10 bg-white/5 p-3 text-sm outline-none focus:border-[var(--a)]"
               style={{ ['--a' as any]: ACCENT }}

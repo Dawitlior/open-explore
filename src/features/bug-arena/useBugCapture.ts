@@ -132,10 +132,26 @@ export function useBugCapture(
     [config]
   );
 
-  /** Run the requested capture and patch the draft when it lands. */
+  /** Run the requested capture and patch the draft when it lands.
+   *  html2canvas is main-thread-heavy — on mobile it can block the UI for
+   *  30+ seconds if the picked ancestor is large. We defer it behind a
+   *  double-rAF so the modal paints first, and on mobile we skip the
+   *  automatic capture entirely (user can attach a photo instead or hit
+   *  Retry). This is the fix for the "app freezes when picking" report. */
   const runCapture = useCallback(
-    async (pick: PickResult | null, mode: CaptureMode) => {
+    async (pick: PickResult | null, mode: CaptureMode, opts: { force?: boolean } = {}) => {
+      const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+      if (isMobile && !opts.force) {
+        // Skip auto-capture on mobile — html2canvas is too heavy.
+        setDraft((d) =>
+          d ? { ...d, shot: null, captureStatus: 'skipped', captureMode: mode } : d,
+        );
+        return;
+      }
       setDraft((d) => (d ? { ...d, captureStatus: 'capturing', captureMode: mode, shot: null } : d));
+      // Give the modal two frames to paint before we hog the main thread.
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
       let shot: Shot | null = null;
       try {
         if (mode === 'region' && pick?.element) {
@@ -160,6 +176,7 @@ export function useBugCapture(
       const route = getCurrentRoute();
       const section = sectionResolver(route);
       const initialMode: CaptureMode = pick?.element ? 'region' : 'full';
+      const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
       // Open the modal IMMEDIATELY with a "capturing" placeholder so the user
       // sees feedback the instant they tap. The shot fills in asynchronously.
@@ -168,13 +185,13 @@ export function useBugCapture(
         shot: null,
         context: collectContext(),
         section,
-        captureStatus: 'capturing',
+        captureStatus: isMobile ? 'skipped' : 'capturing',
         captureMode: initialMode,
       });
       setStage('draft');
 
-      // Kick off capture (no await — modal is already open).
-      void runCapture(pick, initialMode);
+      // Kick off capture (no await — modal is already open). Skipped on mobile.
+      if (!isMobile) void runCapture(pick, initialMode);
 
       // Dedup suggestions load in the background — must not block the modal.
       api
@@ -325,7 +342,7 @@ export function useBugCapture(
     async (mode: CaptureMode) => {
       const d = draft;
       if (!d) return;
-      await runCapture(d.pick, mode);
+      await runCapture(d.pick, mode, { force: true });
     },
     [draft, runCapture],
   );
