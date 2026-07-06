@@ -389,6 +389,7 @@ export function applyThemeToDOM(id: ThemeId) {
       blue: '#0B1120',
       platinum: '#F5F1EA',
       graphite: '#0e1013',
+      'minimal-light': '#F8F9FA',
     };
     const solid = SOLID[id] || SOLID.blue;
     r.style.backgroundColor = solid;
