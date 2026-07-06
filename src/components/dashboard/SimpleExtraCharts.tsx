@@ -76,21 +76,21 @@ const WinsByMonthChartImpl = ({ T, trades, isRTL, tt }: BaseProps) => {
 
   // Desktop: skip labels so they never overlap.
   const desktopInterval = Math.max(0, Math.ceil(data.length / 12) - 1);
-  // Mobile: horizontal-scroll with wider per-bar spacing + steep angle so labels never overlap.
-  const mobileMinWidth = Math.max(420, data.length * 34);
+  // Mobile: aim for ~6 visible labels (skip the rest) + steep angle + compact "MMM 'YY" tick renderer.
+  const mobileInterval = Math.max(0, Math.ceil(data.length / 6) - 1);
 
-  const chart = (width: string | number, height: number, interval: number, mobile: boolean) => (
-    <div style={{ width, height }}>
+  const chart = (height: number, interval: number, mobile: boolean) => (
+    <div style={{ height, width: '100%' }}>
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 8, right: 12, bottom: mobile ? 28 : 8, left: 0 }}>
+        <BarChart data={data} margin={{ top: 8, right: 12, bottom: mobile ? 24 : 8, left: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
           <XAxis
             dataKey="name"
             tick={{ fill: T.text.muted, fontSize: mobile ? 9 : 10 }}
             interval={interval}
-            height={mobile ? 64 : 28}
+            height={mobile ? 58 : 28}
             tickMargin={mobile ? 8 : 6}
-            minTickGap={mobile ? 0 : 12}
+            minTickGap={mobile ? 4 : 12}
             angle={mobile ? -55 : 0}
             textAnchor={mobile ? 'end' : 'middle'}
           />
@@ -104,14 +104,7 @@ const WinsByMonthChartImpl = ({ T, trades, isRTL, tt }: BaseProps) => {
     </div>
   );
 
-  if (isMobile) {
-    return (
-      <div style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-        {chart(mobileMinWidth, 300, 0, true)}
-      </div>
-    );
-  }
-  return chart('100%', 260, desktopInterval, false);
+  return isMobile ? chart(300, mobileInterval, true) : chart(260, desktopInterval, false);
 };
 
 /* ────────── #2 wins by quarter ────────── */
