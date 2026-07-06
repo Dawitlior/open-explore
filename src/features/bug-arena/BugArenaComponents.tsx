@@ -234,6 +234,16 @@ function CaptureFlow() {
     }
   }, [stage, draft?.context.capturedAt]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Auto-scroll the modal to top whenever it opens (mobile UX — the sheet
+  // slides up from the bottom and users otherwise land mid-form).
+  useEffect(() => {
+    if (stage === 'draft' && scrollRef.current) {
+      requestAnimationFrame(() => {
+        scrollRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+      });
+    }
+  }, [stage, draft?.context.capturedAt]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Show "Skip screenshot" escape hatch if capture takes too long.
   useEffect(() => {
     if (draft?.captureStatus !== 'capturing') return;
