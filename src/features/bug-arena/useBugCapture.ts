@@ -342,7 +342,7 @@ export function useBugCapture(
     async (mode: CaptureMode) => {
       const d = draft;
       if (!d) return;
-      await runCapture(d.pick, mode);
+      await runCapture(d.pick, mode, { force: true });
     },
     [draft, runCapture],
   );
