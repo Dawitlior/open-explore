@@ -13,10 +13,11 @@ const R_COLOR = '#22d3ee';
 const EASE = 'cubic-bezier(.22,1,.36,1)';
 
 export function HeaderModeToggle({ isRTL }: { isRTL: boolean }) {
-  const { displayMode, setDisplayMode, locked } = useDisplayMode();
+  const { displayMode, setDisplayMode, locked, recommendation } = useDisplayMode();
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const thumbRef = useRef<HTMLSpanElement | null>(null);
   const readyRef = useRef(false);
+  const showRescue = recommendation.shouldPrompt;
 
   useLayoutEffect(() => {
     const wrap = wrapRef.current;
@@ -59,8 +60,45 @@ export function HeaderModeToggle({ isRTL }: { isRTL: boolean }) {
         borderRadius: 9,
         background: 'hsl(var(--trading-bg-primary) / 0.55)',
         border: '1px solid hsl(var(--border))',
+        boxShadow: showRescue ? '0 0 0 1px hsl(var(--trading-cyan) / .42), 0 0 22px -8px hsl(var(--trading-cyan) / .9)' : undefined,
       }}
     >
+      {showRescue && (
+        <>
+          <style>{`
+            @keyframes orcaModeRescuePulse {
+              0%, 100% { transform: scale(.82); opacity: .42; }
+              50% { transform: scale(1.28); opacity: 1; }
+            }
+          `}</style>
+          <span
+            role="button"
+            tabIndex={0}
+            aria-label={isRTL ? 'החלף למצב המתאים לגרפים' : 'Switch to the chart-compatible mode'}
+            onClick={() => setDisplayMode(recommendation.recommendedMode)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setDisplayMode(recommendation.recommendedMode);
+              }
+            }}
+            style={{
+              position: 'absolute',
+              insetInlineStart: isRTL ? 'auto' : -7,
+              insetInlineEnd: isRTL ? -7 : 'auto',
+              top: -7,
+              width: 13,
+              height: 13,
+              borderRadius: '50%',
+              background: R_COLOR,
+              boxShadow: `0 0 0 5px ${R_COLOR}22, 0 0 18px ${R_COLOR}`,
+              animation: 'orcaModeRescuePulse 1.35s ease-in-out infinite',
+              zIndex: 3,
+              cursor: 'pointer',
+            }}
+          />
+        </>
+      )}
       <span
         ref={thumbRef}
         aria-hidden
@@ -87,7 +125,7 @@ export function HeaderModeToggle({ isRTL }: { isRTL: boolean }) {
             aria-selected={active}
             aria-disabled={o.disabled}
             data-mode={o.mode}
-            title={o.disabled ? (isRTL ? 'אין עסקאות עם סטופ מוגדר' : 'No trades with a defined stop-loss') : undefined}
+            title={showRescue ? (isRTL ? 'בעיה בגרפים? לחץ על המצב המומלץ' : 'Charts issue? Click the recommended mode') : o.disabled ? (isRTL ? 'אין עסקאות עם סטופ/R תקין' : 'No trades with valid stop/R data') : undefined}
             onClick={() => { if (!o.disabled) setDisplayMode(o.mode); }}
             style={{
               position: 'relative', zIndex: 1, minWidth: 34, height: 28,
