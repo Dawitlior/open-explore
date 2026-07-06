@@ -436,7 +436,7 @@ function CaptureFlow() {
               onChange={(e) => setDescription(e.target.value.slice(0, 2000))}
               maxLength={2000}
               rows={3}
-              autoFocus
+              autoFocus={!isMobile}
               placeholder={t('תאר בקצרה את הבאג…', 'Briefly describe the bug…')}
               className="w-full resize-none rounded-xl border border-white/10 bg-white/5 p-3 text-sm outline-none focus:border-[var(--a)]"
               style={{ ['--a' as any]: ACCENT }}
