@@ -191,7 +191,73 @@ const graphite: TradingTheme = {
   },
 };
 
-export const themes: Record<ThemeId, TradingTheme> = { midnight, blue, platinum, graphite };
+/* ════════════════════════════════════════════════
+   6) MINIMAL LIGHT — Pure white / deep black / indigo accent
+   ------------------------------------------------
+   • UI is strictly black, white, and indigo (Poppins font).
+   • Accent slots that charts read (cyan/teal/blue/purple/green)
+     are intentionally VIBRANT so financial data pops against the
+     minimalist canvas. Reds/greens stay saturated for win/loss.
+   ════════════════════════════════════════════════ */
+const minimalLight: TradingTheme = {
+  id: 'minimal-light',
+  bg: {
+    primary: '#F8F9FA',   // App shell (very subtle off-white)
+    secondary: '#FFFFFF', // Section surfaces
+    tertiary: '#F4F5F7',  // Hover / muted zones
+    card: '#FFFFFF',      // Cards — pure white
+    surface: '#FFFFFF',
+  },
+  accent: {
+    // Chart palette — vibrant multi-hue (teal, blue, indigo, green)
+    cyan: '#0EA5A4',  cyanGlow:  'rgba(14,165,164,0.18)',   // vivid teal
+    teal: '#14B8A6',
+    blue: '#2563EB',  blueGlow:  'rgba(37,99,235,0.14)',    // deep sapphire
+    purple: '#4F46E5', purpleGlow: 'rgba(79,70,229,0.16)',  // indigo (interactive accent)
+    orange: '#F59E0B',
+    red:   '#EF4444', redGlow:   'rgba(239,68,68,0.14)',
+    green: '#10B981', greenGlow: 'rgba(16,185,129,0.14)',
+  },
+  // Deep solid black text — no muted grays for primary content.
+  text: {
+    primary:   '#111111',
+    secondary: '#111111',
+    muted:     '#4B5563', // reserved for tiny sub-labels
+    dim:       '#9CA3AF',
+  },
+  border: {
+    subtle: 'rgba(17,17,17,0.06)',
+    medium: 'rgba(17,17,17,0.12)',
+    active: 'rgba(79,70,229,0.55)', // indigo focus ring
+  },
+  radius: { sm: 6, md: 10, lg: 14, xl: 18 },
+  shadow: {
+    // Airy, gentle shadows — no glow bloom on light bg.
+    card:     '0 1px 2px rgba(17,17,17,0.04), 0 6px 20px rgba(17,17,17,0.05)',
+    elevated: '0 4px 18px rgba(17,17,17,0.08), 0 14px 40px rgba(17,17,17,0.08)',
+    glow: (c: string) => `0 0 14px ${c}, 0 0 28px ${c}`,
+  },
+  cssVars: {
+    background:  '210 17% 98%',  // #F8F9FA
+    foreground:  '0 0% 7%',      // #111
+    card:        '0 0% 100%',
+    popover:     '0 0% 100%',
+    primary:     '239 84% 58%',  // indigo #4F46E5
+    primaryFg:   '0 0% 100%',
+    secondary:   '220 14% 96%',  // #F4F5F7
+    muted:       '220 14% 96%',
+    mutedFg:     '220 9% 30%',
+    accent:      '239 84% 58%',
+    destructive: '0 84% 55%',
+    ring:        '239 84% 58%',
+    sidebar:     '0 0% 100%',
+    auroraA:     '239 84% 68%',  // faint indigo mist
+    auroraB:     '186 78% 55%',  // faint teal mist
+    glowSpot:    '239 84% 72%',
+  },
+};
+
+export const themes: Record<ThemeId, TradingTheme> = { midnight, blue, platinum, graphite, 'minimal-light': minimalLight };
 
 
 export function getTheme(id: ThemeId): TradingTheme {
@@ -323,6 +389,7 @@ export function applyThemeToDOM(id: ThemeId) {
       blue: '#0B1120',
       platinum: '#F5F1EA',
       graphite: '#0e1013',
+      'minimal-light': '#F8F9FA',
     };
     const solid = SOLID[id] || SOLID.blue;
     r.style.backgroundColor = solid;

@@ -21,9 +21,9 @@ function readThemeCacheSync(): ThemeId {
   return readExplicitThemeCacheSync() || 'blue';
 }
 
-export type ThemeId = 'midnight' | 'blue' | 'platinum' | 'graphite';
+export type ThemeId = 'midnight' | 'blue' | 'platinum' | 'graphite' | 'minimal-light';
 // 'platinum' removed from selectable themes — auto-migrated to 'blue'.
-const VALID_THEMES: ThemeId[] = ['midnight', 'blue', 'graphite'];
+const VALID_THEMES: ThemeId[] = ['midnight', 'blue', 'graphite', 'minimal-light'];
 // Legacy theme migration: indigo/hightech → blue, precision → graphite, platinum → blue
 const migrateTheme = (v: unknown): ThemeId => {
   if (v === 'indigo' || v === 'hightech' || v === 'institutional' || v === 'platinum') return 'blue';
