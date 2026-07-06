@@ -268,7 +268,7 @@ export const ReviewDashboard = ({
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.pnlDistribution} explanation={EXPLANATIONS.pnlDistribution} unit={isMoney ? '$' : 'R'} chartId="pnlDistribution" onRemove={handleHideChart}>
                     <div className="dash-chart-h-sm" style={{ width: '100%' }}>
-                      <PnLDistributionHistogram T={T} trades={trades} isMoney={isMoney} isRTL={isRTL} tt={tt} />
+                      <LazyChart><PnLDistributionHistogram T={T} trades={trades} isMoney={isMoney} isRTL={isRTL} tt={tt} /></LazyChart>
                     </div>
                   </ChartWrapper>
                 </div>
@@ -405,12 +405,12 @@ export const ReviewDashboard = ({
               <div className="dash-charts-alpha">
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'רבעונים — ניצחונות / הפסדים מול שנים' : 'Quarterly Performance — Wins/Losses YoY'} explanation={EXPLANATIONS.monthlyPerformance} unit={isMoney ? '$' : 'R'}>
-                    <QuarterlyWinsLossesYoYChart T={T} trades={trades} isRTL={isRTL} tt={tt} />
+                    <LazyChart><QuarterlyWinsLossesYoYChart T={T} trades={trades} isRTL={isRTL} tt={tt} /></LazyChart>
                   </ChartWrapper>
                 </div>
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'מטריצת רבעונים — השוואת שנים' : 'Quarterly Year Matrix — Multi-View'} explanation={EXPLANATIONS.monthlyPerformance} unit={isMoney ? '$' : 'R'}>
-                    <QuarterlyYearMatrixChart T={T} trades={trades} isRTL={isRTL} tt={tt} />
+                    <LazyChart><QuarterlyYearMatrixChart T={T} trades={trades} isRTL={isRTL} tt={tt} /></LazyChart>
                   </ChartWrapper>
                 </div>
               </div>
@@ -421,31 +421,31 @@ export const ReviewDashboard = ({
               <div className="dash-charts-alpha">
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'חלונות הזדמנות — יום ושעה' : 'Opportunity Windows — Day & Hour'} explanation={EXPLANATIONS.riskAllocation}>
-                    <BestWorstWindowChart T={T} trades={trades} isRTL={isRTL} tt={tt} />
+                    <LazyChart><BestWorstWindowChart T={T} trades={trades} isRTL={isRTL} tt={tt} /></LazyChart>
                   </ChartWrapper>
                 </div>
 
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ביצועים רבעוניים — Multi-View' : 'Quarterly Performance — Multi-View'} explanation={EXPLANATIONS.monthlyPerformance} unit="R">
-                    <QuarterlyPerformanceCard T={T} trades={trades} isRTL={isRTL} />
+                    <LazyChart><QuarterlyPerformanceCard T={T} trades={trades} isRTL={isRTL} /></LazyChart>
                   </ChartWrapper>
                 </div>
 
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ניצחונות לפי חודש — לונג / שורט' : 'Wins by Month — Long / Short'} explanation={EXPLANATIONS.monthlyPerformance}>
-                    <WinsByMonthChart T={T} trades={trades} isRTL={isRTL} tt={tt} />
+                    <LazyChart><WinsByMonthChart T={T} trades={trades} isRTL={isRTL} tt={tt} /></LazyChart>
                   </ChartWrapper>
                 </div>
 
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ניצחונות לפי רבעון — לונג / שורט' : 'Wins by Quarter — Long / Short'} explanation={EXPLANATIONS.monthlyPerformance}>
-                    <WinsByQuarterChart T={T} trades={trades} isRTL={isRTL} tt={tt} />
+                    <LazyChart><WinsByQuarterChart T={T} trades={trades} isRTL={isRTL} tt={tt} /></LazyChart>
                   </ChartWrapper>
                 </div>
 
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'תשואה ממוצעת לשעת החזקה' : 'Return / Time Held — avg'} explanation={EXPLANATIONS.expectancy}>
-                    <ReturnPerTimeChart T={T} trades={trades} isRTL={isRTL} tt={tt} />
+                    <LazyChart><ReturnPerTimeChart T={T} trades={trades} isRTL={isRTL} tt={tt} /></LazyChart>
                   </ChartWrapper>
                 </div>
 
