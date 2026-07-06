@@ -176,8 +176,11 @@ html[dir="rtl"] .dash-share-stats-btn {
 
 /* Fluid chart heights — generous bottom space so labels/axes aren't clipped */
 .dash-chart-h-md { height: clamp(240px, 56vw, 300px); width: 100%; padding-bottom: 8px; box-sizing: border-box; }
-.dash-chart-h-sm { height: clamp(220px, 50vw, 260px); width: 100%; padding-bottom: 8px; box-sizing: border-box; }
+.dash-chart-h-sm { height: clamp(240px, 32vw, 380px); width: 100%; padding-bottom: 4px; box-sizing: border-box; }
 .dash-chart-h-xs { height: clamp(220px, 52vw, 260px); width: 100%; padding-bottom: 8px; box-sizing: border-box; }
+@media (max-width: 767px) {
+  .dash-chart-h-sm { height: clamp(220px, 50vw, 260px); }
+}
 
 /* Recharts tick text — keep horizontal, tabular, never stretched */
 .dash-chart-card .recharts-cartesian-axis-tick text,
