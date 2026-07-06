@@ -37,7 +37,7 @@ export function DisplayModeRescuePrompt({ T, isRTL, onOpenMobileSettings }: Disp
         padding: '10px 12px',
         borderRadius: 14,
         border: `1px solid ${T.accent.cyan}66`,
-        background: `linear-gradient(135deg, ${T.bg.secondary}f2, ${T.bg.primary}f5)`,
+        background: `linear-gradient(135deg, ${T.bg.secondary}, ${T.bg.primary})`,
         color: T.text.primary,
         boxShadow: `0 14px 34px -18px rgba(0,0,0,.85), 0 0 22px -10px ${T.accent.cyan}`,
         backdropFilter: 'blur(14px) saturate(140%)',
