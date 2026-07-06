@@ -53,7 +53,7 @@ const fmtShort = (v: number, isMoney: boolean) => {
 };
 
 /* ────────── #1 wins by month ────────── */
-export const WinsByMonthChart = ({ T, trades, isRTL, tt }: BaseProps) => {
+const WinsByMonthChartImpl = ({ T, trades, isRTL, tt }: BaseProps) => {
   const isMobile = useIsMobile();
   const data = useMemo(() => {
     const map = new Map<string, { name: string; Long: number; Short: number }>();
@@ -115,7 +115,7 @@ export const WinsByMonthChart = ({ T, trades, isRTL, tt }: BaseProps) => {
 };
 
 /* ────────── #2 wins by quarter ────────── */
-export const WinsByQuarterChart = ({ T, trades, isRTL, tt }: BaseProps) => {
+const WinsByQuarterChartImpl = ({ T, trades, isRTL, tt }: BaseProps) => {
   const data = useMemo(() => {
     const map = new Map<string, { name: string; Long: number; Short: number }>();
     for (const t of trades) {
@@ -153,7 +153,7 @@ export const WinsByQuarterChart = ({ T, trades, isRTL, tt }: BaseProps) => {
 };
 
 /* ────────── #4 quarterly wins/losses + net by year-quarter ────────── */
-export const QuarterlyWinsLossesYoYChart = ({ T, trades, isRTL, tt }: BaseProps) => {
+const QuarterlyWinsLossesYoYChartImpl = ({ T, trades, isRTL, tt }: BaseProps) => {
   const { isMoney, formatValue, unit } = useVisibleTrades(trades);
   const isMobile = useIsMobile();
   const data = useMemo(() => {
@@ -207,7 +207,7 @@ export const QuarterlyWinsLossesYoYChart = ({ T, trades, isRTL, tt }: BaseProps)
 };
 
 /* ────────── #5 quarterly year matrix — heatmap comparison ────────── */
-export const QuarterlyYearMatrixChart = ({ T, trades, isRTL }: BaseProps) => {
+const QuarterlyYearMatrixChartImpl = ({ T, trades, isRTL }: BaseProps) => {
   const { isMoney } = useVisibleTrades(trades);
   const { years, rows, maxAbs } = useMemo(() => {
     const map = new Map<string, { year: number; q: number; wins: number; losses: number; net: number; trades: number }>();
@@ -281,7 +281,7 @@ export const QuarterlyYearMatrixChart = ({ T, trades, isRTL }: BaseProps) => {
    Tries to infer holding time from entryTime/openTime → exitTime. When
    timestamps are missing we fall back to plain "avg return per trade" for
    that month so the chart never silently disappears. */
-export const ReturnPerTimeChart = ({ T, trades, isRTL, tt }: BaseProps) => {
+const ReturnPerTimeChartImpl = ({ T, trades, isRTL, tt }: BaseProps) => {
   const { isMoney, formatValue, unit } = useVisibleTrades(trades);
 
   const data = useMemo(() => {
@@ -341,3 +341,14 @@ const Empty = ({ T, isRTL }: { T: TradingTheme; isRTL: boolean }) => (
     {isRTL ? 'אין מספיק נתונים להצגה' : 'Not enough data'}
   </div>
 );
+
+
+// Memoize all exports: props are stable references (trades, T, isRTL, tt)
+// coming from a parent that already caches them, so the default shallow
+// compare is safe and avoids re-rendering these expensive recharts trees on
+// every parent tick (theme toggle, tooltip hover, mode switch elsewhere).
+export const WinsByMonthChart = memo(WinsByMonthChartImpl);
+export const WinsByQuarterChart = memo(WinsByQuarterChartImpl);
+export const QuarterlyWinsLossesYoYChart = memo(QuarterlyWinsLossesYoYChartImpl);
+export const QuarterlyYearMatrixChart = memo(QuarterlyYearMatrixChartImpl);
+export const ReturnPerTimeChart = memo(ReturnPerTimeChartImpl);
