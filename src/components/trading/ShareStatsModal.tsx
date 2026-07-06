@@ -414,7 +414,7 @@ export function ShareStatsModal({ open, onClose, stats, isRTL, isMoney, trades }
           <div style={{ fontSize: 13, marginBottom: 10, color: '#7fb2ff', textAlign: 'center' }}>{note}</div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobileVP ? '1fr' : '1fr 1fr 1fr', gap: 10 }}>
           <button
             onClick={download}
             disabled={!!busy}
