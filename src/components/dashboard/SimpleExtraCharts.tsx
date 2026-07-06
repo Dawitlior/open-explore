@@ -8,12 +8,13 @@
  * relevant (chart #3). Charts #1/#2 count wins which is mode-agnostic but the
  * unit chip on ChartWrapper reflects the active mode.
  */
-import { useMemo, useState, useEffect } from 'react';
-import { BarChart, Bar, LineChart, Line, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine, Cell } from 'recharts';
+import { memo, useMemo } from 'react';
+import { BarChart, Bar, LineChart, Line, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from 'recharts';
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { useVisibleTrades } from '@/lib/display-mode-format';
 import { getEffectiveR } from '@/lib/r-multiple';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface BaseProps {
   T: TradingTheme;
@@ -28,15 +29,6 @@ const SHORT_MONTH = (k: string) => {
   const [y, m] = k.split('-');
   const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   return `${names[Number(m) - 1] || m} ${y.slice(2)}`;
-};
-const useIsMobile = () => {
-  const [m, setM] = useState(typeof window !== 'undefined' && window.innerWidth < 640);
-  useEffect(() => {
-    const on = () => setM(window.innerWidth < 640);
-    window.addEventListener('resize', on);
-    return () => window.removeEventListener('resize', on);
-  }, []);
-  return m;
 };
 
 const tradeDate = (t: Trade): Date | null => {
