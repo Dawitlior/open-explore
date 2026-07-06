@@ -283,11 +283,11 @@ export const ReviewDashboard = ({
               {isAdvancedTier && isChartVisible('radarScore') && (
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ציון Orca — פירוט' : 'Orca Score — Breakdown'} explanation={EXPLANATIONS.radarScore} chartId="radarScore" onRemove={handleHideChart}>
-                    <div className="dash-chart-h-xs">
+                    <div className="dash-chart-h-sm dash-chart-fill">
                       <ResponsiveContainer width="100%" height="100%">
-                        <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="58%" margin={{ top: 16, right: 28, bottom: 16, left: 28 }}>
+                        <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="82%" margin={{ top: 20, right: 40, bottom: 20, left: 40 }}>
                           <PolarGrid stroke={T.border.medium} />
-                          <PolarAngleAxis dataKey="m" tick={{ fill: T.text.secondary, fontSize: 10 }} />
+                          <PolarAngleAxis dataKey="m" tick={{ fill: T.text.secondary, fontSize: 11 }} />
                           <PolarRadiusAxis tick={false} domain={[0, 100]} axisLine={false} />
                           <Radar dataKey="v" stroke={T.accent.cyan} fill={T.accent.cyan} fillOpacity={0.55} strokeWidth={2.5} dot={{ r: 3, fill: T.accent.cyan, stroke: T.bg.card, strokeWidth: 1 }} />
                         </RadarChart>
