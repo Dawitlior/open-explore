@@ -91,11 +91,10 @@ function resolveDisplayMode(trades: Trade[], locked: boolean): DisplayMode {
   if (locked) return 'MONEY';
   const savedPreference = readMode(PREFERENCE_KEY);
   if (savedPreference) return savedPreference;
-  // Backward compatibility: the old key was also auto-written on hydration,
-  // so only honor a legacy R value. Legacy MONEY is ignored when data supports R
-  // to prevent refreshes from getting stuck in money mode forever.
-  const legacyMode = readMode(STORAGE_KEY);
-  if (legacyMode === 'R_MULTIPLE') return 'R_MULTIPLE';
+  // The legacy key is intentionally not used as preference: older builds wrote
+  // auto-detected values into it on every hydration, which is exactly what made
+  // refreshes snap back to MONEY. Only the new preference key represents a real
+  // user choice.
   return autoPickMode(trades);
 }
 
