@@ -252,8 +252,10 @@ export const OrcaUXLayer = () => {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -40, opacity: 0 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="fixed top-0 left-0 right-0 z-[9995] flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-center shadow-lg backdrop-blur-md"
+            className="fixed top-0 left-0 right-0 z-[9995] flex items-center justify-center gap-2 px-4 text-xs sm:text-sm font-medium text-center shadow-lg backdrop-blur-md"
             style={{
+              paddingTop: 'calc(env(safe-area-inset-top) + 10px)',
+              paddingBottom: 10,
               background: showOnlineToast === 'online'
                 ? 'linear-gradient(90deg, hsl(152 76% 25% / 0.95), hsl(152 76% 35% / 0.95))'
                 : 'linear-gradient(90deg, hsl(0 72% 40% / 0.95), hsl(0 72% 50% / 0.95))',
