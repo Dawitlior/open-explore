@@ -219,7 +219,6 @@ export const OrcaUXLayer = () => {
   }, []);
 
   const scrollTop = useCallback(() => window.scrollTo({ top: 0, behavior: 'smooth' }), []);
-  const session = getMarketSession();
 
   return (
     <>
