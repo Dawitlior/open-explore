@@ -76,22 +76,22 @@ const WinsByMonthChartImpl = ({ T, trades, isRTL, tt }: BaseProps) => {
 
   // Desktop: skip labels so they never overlap.
   const desktopInterval = Math.max(0, Math.ceil(data.length / 12) - 1);
-  // Mobile: horizontal-scroll with wider per-bar spacing + slight angle so labels never overlap.
-  const mobileMinWidth = Math.max(360, data.length * 78);
+  // Mobile: aim for ~6 visible labels (skip the rest) + steep angle + compact "MMM 'YY" tick renderer.
+  const mobileInterval = Math.max(0, Math.ceil(data.length / 6) - 1);
 
-  const chart = (width: string | number, height: number, interval: number, mobile: boolean) => (
-    <div style={{ width, height }}>
+  const chart = (height: number, interval: number, mobile: boolean) => (
+    <div style={{ height, width: '100%' }}>
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 8, right: 12, bottom: mobile ? 22 : 8, left: 0 }}>
+        <BarChart data={data} margin={{ top: 8, right: 12, bottom: mobile ? 24 : 8, left: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
           <XAxis
             dataKey="name"
             tick={{ fill: T.text.muted, fontSize: mobile ? 9 : 10 }}
             interval={interval}
-            height={mobile ? 48 : 28}
-            tickMargin={mobile ? 10 : 6}
-            minTickGap={mobile ? 2 : 12}
-            angle={mobile ? -35 : 0}
+            height={mobile ? 58 : 28}
+            tickMargin={mobile ? 8 : 6}
+            minTickGap={mobile ? 4 : 12}
+            angle={mobile ? -55 : 0}
             textAnchor={mobile ? 'end' : 'middle'}
           />
           <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} width={32} allowDecimals={false} />
@@ -104,14 +104,7 @@ const WinsByMonthChartImpl = ({ T, trades, isRTL, tt }: BaseProps) => {
     </div>
   );
 
-  if (isMobile) {
-    return (
-      <div style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-        {chart(mobileMinWidth, 280, 0, true)}
-      </div>
-    );
-  }
-  return chart('100%', 260, desktopInterval, false);
+  return isMobile ? chart(300, mobileInterval, true) : chart(260, desktopInterval, false);
 };
 
 /* ────────── #2 wins by quarter ────────── */
@@ -175,16 +168,18 @@ const QuarterlyWinsLossesYoYChartImpl = ({ T, trades, isRTL, tt }: BaseProps) =>
   }, [trades, isMoney]);
 
   if (!data.length) return <Empty T={T} isRTL={isRTL} />;
-  const minWidth = isMobile ? Math.max(360, data.length * 62) : '100%';
-  const interval = isMobile ? 0 : Math.max(0, Math.ceil(data.length / 10) - 1);
+  // Skip labels on mobile so ticks never overlap (target ~6 visible), rotate for extra safety.
+  const interval = isMobile
+    ? Math.max(0, Math.ceil(data.length / 6) - 1)
+    : Math.max(0, Math.ceil(data.length / 10) - 1);
 
   return (
-    <div style={{ width: '100%', overflowX: isMobile ? 'auto' : 'visible' }}>
-      <div style={{ height: 284, width: minWidth }}>
+    <div style={{ width: '100%' }}>
+      <div style={{ height: isMobile ? 300 : 284, width: '100%' }}>
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 10, right: 12, bottom: 8, left: 0 }}>
+          <ComposedChart data={data} margin={{ top: 10, right: 12, bottom: isMobile ? 24 : 8, left: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} vertical={false} />
-            <XAxis dataKey="name" tick={{ fill: T.text.muted, fontSize: 10 }} interval={interval} minTickGap={10} height={30} />
+            <XAxis dataKey="name" tick={{ fill: T.text.muted, fontSize: isMobile ? 9 : 10 }} interval={interval} minTickGap={isMobile ? 4 : 10} height={isMobile ? 58 : 30} angle={isMobile ? -55 : 0} textAnchor={isMobile ? 'end' : 'middle'} tickMargin={isMobile ? 8 : 4} />
             <YAxis yAxisId="count" tick={{ fill: T.text.muted, fontSize: 10 }} width={32} allowDecimals={false} />
             <YAxis yAxisId="net" orientation="right" tick={{ fill: T.text.muted, fontSize: 10 }} width={50} tickFormatter={(v: number) => fmtShort(v, isMoney)} />
             <Tooltip
