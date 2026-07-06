@@ -5,7 +5,7 @@ import { DisplayModeProvider, useDisplayMode, useEffectiveDisplayMode, autoPickM
 import { sanitizeTrade } from '@/lib/trade-sanitizer';
 
 const rTrade = (id: number) => ({ id, date:'2025-01-01', day:'Mon', coin:'X', direction:'Long' as const, orderType:'Market', entry:100, stopLoss:95, exit:110, returnR:2, winLoss:'Win' as const, risk:5, expectedLoss:5, pnl:10, deviation:0, positionSize:1, leverage:1, balance:1000, riskPct:0.5, rules:true, comments:'' });
-const mTrade = (id: number) => ({ ...rTrade(id), stopLoss: null as any });
+const mTrade = (id: number) => ({ ...rTrade(id), stopLoss: null as any, returnR: 0 });
 const rOnlyTrade = (id: number) => ({ ...mTrade(id), pnl: 0, risk: 0, returnR: 0, manual_r_multiple: id % 2 ? 1.35 : -0.8, manualR: id % 2 ? 1.35 : -0.8 });
 
 describe('autoPickMode', () => {
@@ -32,6 +32,25 @@ describe('provider follows trade majority on change', () => {
     trades = [rTrade(1), mTrade(2), mTrade(3), mTrade(4)];
     rerender();
     expect(result.current.displayMode).toBe('MONEY');
+  });
+
+  it('keeps a manual R choice after provider remount/refresh', () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    const trades: any[] = [rTrade(1), rTrade(2), rTrade(3), mTrade(4)];
+    const wrapper = ({ children }: any) => <DisplayModeProvider trades={trades}>{children}</DisplayModeProvider>;
+    const first = renderHook(() => useDisplayMode(), { wrapper });
+    act(() => first.result.current.setDisplayMode('MONEY'));
+    expect(first.result.current.displayMode).toBe('MONEY');
+    first.unmount();
+
+    const second = renderHook(() => useDisplayMode(), { wrapper });
+    expect(second.result.current.displayMode).toBe('MONEY');
+    act(() => second.result.current.setDisplayMode('R_MULTIPLE'));
+    second.unmount();
+
+    const refreshed = renderHook(() => useDisplayMode(), { wrapper });
+    expect(refreshed.result.current.displayMode).toBe('R_MULTIPLE');
   });
 });
 
