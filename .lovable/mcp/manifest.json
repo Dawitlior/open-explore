@@ -1,0 +1,193 @@
+{
+  "version": 1,
+  "sdk_version": "0.20.0",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://pqezqcbbaekohzqnpmoc.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "orca-mcp",
+      "version": "0.1.0",
+      "title": "ORCA Trading Journal"
+    },
+    "tools": [
+      {
+        "name": "list_portfolios",
+        "title": "List portfolios",
+        "description": "List all trading portfolios owned by the signed-in ORCA user, including currency and starting balance.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_trades",
+        "title": "List trades",
+        "description": "List the signed-in ORCA user's most recent trades, optionally filtered by portfolio. Returns id, symbol, direction, R multiple and P&L extracted from the trade payload.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "portfolio_id": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional portfolio UUID to filter by. Pass null for all portfolios."
+            },
+            "limit": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Max rows to return (1-200). Defaults to 50 when null."
+            }
+          },
+          "required": [
+            "portfolio_id",
+            "limit"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_trade_stats",
+        "title": "Get trade stats",
+        "description": "Aggregate the signed-in user's trades into win rate, total R, average R, expectancy, and total P&L. Optionally scoped to a portfolio and a lookback window in days.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "portfolio_id": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional portfolio UUID. Null = all portfolios."
+            },
+            "days": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 3650
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Lookback window in days based on closed_at. Null = all time."
+            }
+          },
+          "required": [
+            "portfolio_id",
+            "days"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_upcoming_economic_events",
+        "title": "List upcoming macro events",
+        "description": "List upcoming macro/economic events from the ORCA economic radar, optionally filtered by impact tier and currency.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": true
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "days_ahead": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 30
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Look-ahead window in days (default 7)."
+            },
+            "impact": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "low",
+                    "medium",
+                    "high"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by impact tier."
+            },
+            "currency": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "ISO currency filter e.g. USD, EUR, CNY."
+            }
+          },
+          "required": [
+            "days_ahead",
+            "impact",
+            "currency"
+          ]
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
