@@ -56,17 +56,26 @@ export const OrcaUXLayer = () => {
     };
   }, []);
 
-  /* ─── 3. Scroll progress + 5. back-to-top ─── */
+  /* ─── 3. Scroll progress + 5. back-to-top (rAF-throttled) ─── */
   useEffect(() => {
-    const onScroll = () => {
+    let raf = 0;
+    let lastPct = -1;
+    let lastAbove = false;
+    const compute = () => {
+      raf = 0;
       const h = document.documentElement;
       const pct = (h.scrollTop / Math.max(1, h.scrollHeight - h.clientHeight)) * 100;
-      setScrollPct(pct);
-      setShowBackTop(h.scrollTop > 600);
+      // Only fire setState when the rounded % actually changes → avoids
+      // dozens of React renders per scroll tick.
+      const rounded = Math.round(pct);
+      if (rounded !== lastPct) { lastPct = rounded; setScrollPct(rounded); }
+      const above = h.scrollTop > 600;
+      if (above !== lastAbove) { lastAbove = above; setShowBackTop(above); }
     };
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(compute); };
     window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener('scroll', onScroll);
+    compute();
+    return () => { window.removeEventListener('scroll', onScroll); if (raf) cancelAnimationFrame(raf); };
   }, []);
 
   /* ─── 4. Custom cursor halo — DISABLED per user request ─── */
