@@ -6,7 +6,7 @@ import { sanitizeTrade } from '@/lib/trade-sanitizer';
 import { useExpectancyMode } from '@/lib/dashboard-engine';
 
 const rTrade = (id: number) => ({ id, date:'2025-01-01', day:'Mon', coin:'X', direction:'Long' as const, orderType:'Market', entry:100, stopLoss:95, exit:110, returnR:2, winLoss:'Win' as const, risk:5, expectedLoss:5, pnl:10, deviation:0, positionSize:1, leverage:1, balance:1000, riskPct:0.5, rules:true, comments:'' });
-const mTrade = (id: number) => ({ ...rTrade(id), stopLoss: null as any });
+const mTrade = (id: number) => ({ ...rTrade(id), stopLoss: null as any, returnR: 0, risk: 0, manual_r_multiple: null, manualR: null });
 const rOnlyTrade = (id: number) => ({ ...mTrade(id), pnl: 0, risk: 0, returnR: 0, manual_r_multiple: id % 2 ? 1.35 : -0.8, manualR: id % 2 ? 1.35 : -0.8 });
 
 describe('autoPickMode', () => {
