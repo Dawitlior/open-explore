@@ -63,10 +63,8 @@ const ACCENT_PRESETS = [
 const THEME_OPTIONS: { id: ThemeId; label: { he: string; en: string }; sub: { he: string; en: string }; preview: string[] }[] = [
   { id: 'midnight', label: { he: 'חצות', en: 'Midnight' }, sub: { he: 'שחור קלאסי • ברירת מחדל', en: 'Classic black • Default' }, preview: ['#000000', '#0d0d0d', '#00e5ff', '#fafafa'] },
   { id: 'blue', label: { he: 'כחול', en: 'Blue' }, sub: { he: 'כחול-ים עמוק • תכלת זוהר', en: 'Deep navy • Sky blue' }, preview: ['#0B1120', '#1E293B', '#38BDF8', '#E6EEF8'] },
-
+  
   { id: 'graphite', label: { he: 'גרפיט רשמי', en: 'Graphite Formal' }, sub: { he: 'אפור • ירוק • אדום בלבד', en: 'Gray • Green • Red only' }, preview: ['#0e1013', '#1c2128', '#22c55e', '#ef4444'] },
-
-  { id: 'minimal-light', label: { he: 'לבן מינימליסטי', en: 'Minimalist Light' }, sub: { he: 'לבן • שחור • אינדיגו • Poppins', en: 'White • Black • Indigo • Poppins' }, preview: ['#FFFFFF', '#F4F5F7', '#111111', '#4F46E5'] },
 
 
 ];
