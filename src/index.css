@@ -1375,3 +1375,89 @@ html[data-theme="platinum"] .orca-chart-skeleton {
   background: linear-gradient(180deg, rgba(240,215,140,0.85), rgba(212,175,90,0.85));
 }
 .orca-thin-scroll { scrollbar-width: thin; scrollbar-color: rgba(212,175,90,0.55) transparent; }
+
+/* ═══════════════════════════════════════════════════════════
+   MINIMALIST LIGHT THEME — theme-scoped overrides
+   ---------------------------------------------------------
+   Activated when <html data-theme="minimal-light"> is set by
+   applyThemeToDOM(). Kept in one block so no other theme is
+   affected and the file structure stays maintainable.
+   ═══════════════════════════════════════════════════════════ */
+:root[data-theme="minimal-light"],
+:root[data-theme="minimal-light"] body {
+  /* Poppins across the whole surface; JetBrains Mono still owns
+     numeric readouts via the earlier `.orca-num` rule. */
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+  font-feature-settings: normal;
+  letter-spacing: 0;
+}
+
+:root[data-theme="minimal-light"] {
+  color-scheme: light;
+  --border: 220 13% 91%;
+  --input:  220 13% 91%;
+}
+
+/* Aurora ambient — much softer on a white canvas */
+:root[data-theme="minimal-light"] body::before {
+  background:
+    radial-gradient(800px 500px at 12% -10%, hsl(var(--orca-aurora-a) / 0.05), transparent 60%),
+    radial-gradient(600px 420px at 100% 110%, hsl(var(--orca-aurora-b) / 0.04), transparent 60%);
+}
+
+/* Force headings + body to deep black regardless of tailwind defaults */
+:root[data-theme="minimal-light"] body {
+  color: #111111;
+  background-color: #F8F9FA;
+}
+:root[data-theme="minimal-light"] h1,
+:root[data-theme="minimal-light"] h2,
+:root[data-theme="minimal-light"] h3,
+:root[data-theme="minimal-light"] h4,
+:root[data-theme="minimal-light"] h5,
+:root[data-theme="minimal-light"] h6 {
+  color: #111111;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* Interactive hover / focus → indigo */
+:root[data-theme="minimal-light"] a:hover,
+:root[data-theme="minimal-light"] button:not(:disabled):hover {
+  color: #4F46E5;
+}
+:root[data-theme="minimal-light"] :focus-visible {
+  outline: 2px solid #4F46E5;
+  outline-offset: 2px;
+}
+
+/* Scrollbar — light on light */
+:root[data-theme="minimal-light"] ::-webkit-scrollbar-thumb {
+  background: rgba(17,17,17,0.14);
+}
+:root[data-theme="minimal-light"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(79,70,229,0.55);
+}
+:root[data-theme="minimal-light"] ::selection {
+  background: rgba(79,70,229,0.20);
+  color: #111;
+}
+
+/* Charts get breathing room + subtle framing so the vibrant palette
+   stands out on the minimalist canvas. Scopes to the chart cards used
+   by the dashboard so it never leaks into other surfaces. */
+:root[data-theme="minimal-light"] .dash-chart-card {
+  background: #FFFFFF;
+  border: 1px solid rgba(17,17,17,0.08);
+  border-radius: 14px;
+  padding: 14px 14px 8px;
+  box-shadow: 0 1px 2px rgba(17,17,17,0.03), 0 6px 20px rgba(17,17,17,0.04);
+}
+:root[data-theme="minimal-light"] .dash-chart-card .recharts-cartesian-axis-tick text,
+:root[data-theme="minimal-light"] .dash-chart-card .recharts-polar-angle-axis-tick text {
+  fill: #4B5563 !important;
+}
+:root[data-theme="minimal-light"] .dash-chart-card .recharts-cartesian-grid line {
+  stroke: rgba(17,17,17,0.06);
+}
