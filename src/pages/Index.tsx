@@ -594,6 +594,8 @@ const Index = () => {
   const dismissWeeklyReminder = useCallback(() => { /* no-op: badge persists until close-week */ }, []);
 
 
+  const WEEKLY_REVIEW_ALLOWED_EMAIL = 'dawitlior777@gmail.com';
+  const weeklyReviewAllowed = (authUser?.email || '').toLowerCase() === WEEKLY_REVIEW_ALLOWED_EMAIL;
   const nav: Array<{ id: string; icon: any; label: string; color?: string; action?: () => void }> = [
     { id: 'dashboard', icon: Ico.dash, label: isRTL ? 'דשבורד' : 'Dashboard' },
     { id: 'calendar', icon: '📅', label: isRTL ? 'לוח שנה' : 'Calendar' },
@@ -603,7 +605,9 @@ const Index = () => {
     { id: 'psychology', icon: Ico.brain, label: t.psychology },
     { id: 'ai', icon: Ico.star, label: t.ai },
     { id: 'economic-radar', icon: '📡', label: isRTL ? 'מכ״ם כלכלי' : 'Economic Radar' },
-    { id: 'weekly-review', icon: '📋', label: isRTL ? 'סקירה שבועית' : 'Weekly Review', color: '#FFD700' },
+    ...(weeklyReviewAllowed
+      ? [{ id: 'weekly-review', icon: '📋', label: isRTL ? 'סקירה שבועית' : 'Weekly Review', color: '#FFD700' }]
+      : []),
   ];
 
   // Keep the loader visible until BOTH the trade list and the portfolio
@@ -2050,7 +2054,7 @@ const Index = () => {
               <EconomicCalendarPage onClose={() => setPage('dashboard')} T={T} />
             </Suspense>
           )}
-          {page === 'weekly-review' && (
+          {page === 'weekly-review' && weeklyReviewAllowed && (
             <LazyShell><WeeklyReviewPage T={T} isRTL={isRTL} trades={trades} themeId={settings.theme} stats={stats} riskData={riskData} /></LazyShell>
           )}
         </div>
