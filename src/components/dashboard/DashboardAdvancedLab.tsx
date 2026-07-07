@@ -504,6 +504,132 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
             </div>
           )}
         </div>
+
+        {/* 7 · NEW Kelly-Optimal Growth Curve */}
+        <div style={cardStyle}>
+          <div style={{ fontSize: 11, color: muted, marginBottom: 8, letterSpacing: 1.5, textTransform: 'uppercase' }}>{L.kelly}</div>
+          {!kelly ? <Empty muted={muted}/> : (
+            <>
+              <ResponsiveContainer width="100%" height={chartH}>
+                <ComposedChart data={kelly.pts} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="kellySafeGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%"  stopColor={win} stopOpacity={0.45}/>
+                      <stop offset="100%" stopColor={win} stopOpacity={0.02}/>
+                    </linearGradient>
+                    <linearGradient id="kellyAggGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%"  stopColor={loss} stopOpacity={0.4}/>
+                      <stop offset="100%" stopColor={loss} stopOpacity={0.02}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid stroke={border} strokeDasharray="3 3" vertical={false}/>
+                  <XAxis dataKey="f" stroke={muted} fontSize={10} tickFormatter={(v: number) => `${v}%`} label={{ value: L.kellyF, position: 'insideBottom', offset: -2, fill: muted, fontSize: 9 }}/>
+                  <YAxis stroke={muted} fontSize={10} width={44} tickFormatter={(v: number) => `${v.toFixed(1)}%`}/>
+                  <ReferenceLine y={0} stroke={border}/>
+                  <ReferenceLine x={kelly.fStar} stroke={gold} strokeDasharray="4 4" label={{ value: `f* ${kelly.fStar}%`, fill: gold, fontSize: 10, position: 'top' }}/>
+                  <Tooltip contentStyle={tt} formatter={(v: number, n) => {
+                    if (n === 'safe') return [`${(v as number).toFixed(3)}%`, L.kellySafe];
+                    if (n === 'agg')  return [`${(v as number).toFixed(3)}%`, L.kellyAgg];
+                    return [`${(v as number).toFixed(3)}%`, L.kellyG];
+                  }} labelFormatter={(v) => `f = ${v}%`}/>
+                  <Area type="monotone" dataKey="safe" stroke={win}  strokeWidth={2} fill="url(#kellySafeGrad)"/>
+                  <Area type="monotone" dataKey="agg"  stroke={loss} strokeWidth={2} fill="url(#kellyAggGrad)"/>
+                </ComposedChart>
+              </ResponsiveContainer>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 8, fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: muted }}>
+                <span><span style={{ color: gold, fontWeight: 700 }}>f*</span> {kelly.fStar}%</span>
+                <span>p {kelly.p}%</span>
+                <span>b {kelly.b}x</span>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* 8 · NEW Streak Anatomy */}
+        <div style={cardStyle}>
+          <div style={{ fontSize: 11, color: muted, marginBottom: 8, letterSpacing: 1.5, textTransform: 'uppercase' }}>{L.streak}</div>
+          {streaks.length === 0 ? <Empty muted={muted}/> : (
+            <ResponsiveContainer width="100%" height={chartH}>
+              <BarChart data={streaks} stackOffset="sign" margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                <CartesianGrid stroke={border} strokeDasharray="3 3" vertical={false}/>
+                <XAxis dataKey="len" stroke={muted} fontSize={10} label={{ value: L.streakLen, position: 'insideBottom', offset: -2, fill: muted, fontSize: 9 }}/>
+                <YAxis stroke={muted} fontSize={10} width={40} tickFormatter={(v: number) => `${Math.abs(v)}`}/>
+                <ReferenceLine y={0} stroke={border}/>
+                <Tooltip contentStyle={tt}
+                  formatter={(v: number, n) => [Math.abs(v as number), n === 'wins' ? L.streakW : L.streakL]}
+                  labelFormatter={(v) => `${L.streakLen}: ${v}`}
+                />
+                <Bar dataKey="wins"   stackId="s" fill={win}  radius={[3, 3, 0, 0]}/>
+                <Bar dataKey="losses" stackId="s" fill={loss} radius={[0, 0, 3, 3]}/>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </div>
+
+      {/* NEW · Performance Regime Matrix (smart table) */}
+      <div style={cardStyle}>
+        <div style={{
+          display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+          gap: 8, flexWrap: 'wrap', marginBottom: 10,
+        }}>
+          <div style={{ fontSize: 11, color: muted, letterSpacing: 1.5, textTransform: 'uppercase' }}>{L.matrix}</div>
+          <div style={{ fontSize: 10, color: muted, fontFamily: "'JetBrains Mono', monospace" }}>
+            μ {fmtValue(regime.globalMean, unit)} · σ {fmtValue(regime.globalStd, unit)}
+          </div>
+        </div>
+        {regime.rows.length === 0 ? <Empty muted={muted}/> : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'JetBrains Mono', monospace", fontSize: 11, minWidth: 640 }}>
+              <thead>
+                <tr style={{ color: muted, textAlign: isRTL ? 'right' : 'left', borderBottom: `1px solid ${border}` }}>
+                  <th style={{ padding: '6px 8px', fontWeight: 500 }}>{L.matrixDim}</th>
+                  <th style={{ padding: '6px 8px', fontWeight: 500 }}>{L.matrixBucket}</th>
+                  <th style={{ padding: '6px 8px', fontWeight: 500, textAlign: 'right' }}>{L.matrixN}</th>
+                  <th style={{ padding: '6px 8px', fontWeight: 500, textAlign: 'right' }}>{L.matrixWr}</th>
+                  <th style={{ padding: '6px 8px', fontWeight: 500, textAlign: 'right' }}>{L.matrixAvg}</th>
+                  <th style={{ padding: '6px 8px', fontWeight: 500, textAlign: 'right' }}>{L.matrixExp}</th>
+                  <th style={{ padding: '6px 8px', fontWeight: 500, textAlign: 'right' }}>{L.matrixZ}</th>
+                  <th style={{ padding: '6px 8px', fontWeight: 500, minWidth: 100 }}>{L.matrixEdge}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {regime.rows.map((r, i) => {
+                  const zAbs = Math.min(3, Math.abs(r.z));
+                  const barW = (zAbs / 3) * 100;
+                  const color = r.z >= 0 ? win : loss;
+                  const strong = zAbs >= 1.5;
+                  return (
+                    <tr key={`${r.dim}-${r.bucket}-${i}`} style={{
+                      borderBottom: `1px solid ${border}`,
+                      background: strong ? `${color}0F` : 'transparent',
+                    }}>
+                      <td style={{ padding: '6px 8px', color: muted, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' }}>{r.dim}</td>
+                      <td style={{ padding: '6px 8px', color: fg, fontWeight: 600 }}>{r.bucket}</td>
+                      <td style={{ padding: '6px 8px', color: fg, textAlign: 'right' }}>{r.n}</td>
+                      <td style={{ padding: '6px 8px', textAlign: 'right', color: r.winRate >= 50 ? win : gold }}>{r.winRate}%</td>
+                      <td style={{ padding: '6px 8px', textAlign: 'right', color: r.avg >= 0 ? win : loss }}>{fmtValue(r.avg, unit)}</td>
+                      <td style={{ padding: '6px 8px', textAlign: 'right', color: r.expectancy >= 0 ? win : loss }}>{fmtValue(r.expectancy, unit)}</td>
+                      <td style={{ padding: '6px 8px', textAlign: 'right', color, fontWeight: 700 }}>{r.z >= 0 ? '+' : ''}{r.z.toFixed(2)}σ</td>
+                      <td style={{ padding: '6px 8px' }}>
+                        <div style={{ position: 'relative', height: 8, background: T.bg.tertiary, borderRadius: 4, overflow: 'hidden', border: `1px solid ${border}` }}>
+                          <div style={{
+                            position: 'absolute', top: 0, bottom: 0,
+                            [isRTL ? 'right' : 'left']: '50%',
+                            width: `${barW / 2}%`,
+                            transform: r.z >= 0 ? 'none' : (isRTL ? 'translateX(100%)' : 'translateX(-100%)'),
+                            background: color, opacity: 0.75,
+                          } as any}/>
+                          <div style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: 1, background: border }}/>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
