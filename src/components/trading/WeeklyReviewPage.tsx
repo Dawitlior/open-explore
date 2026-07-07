@@ -48,7 +48,7 @@ export const WeeklyReviewPage = (props: Props) => {
   const { user } = useAuth();
   const email = (user?.email || '').toLowerCase();
   if (email !== WEEKLY_REVIEW_ALLOWED_EMAIL) {
-    return <WeeklyReviewMaintenanceGate isRTL={props.isRTL} />;
+    return null;
   }
   // Native shell is now the default. Opt-in legacy via ?legacy=1.
   if (!isLegacyRequested()) return <WeeklyReviewShell T={props.T} isRTL={props.isRTL} trades={props.trades} />;

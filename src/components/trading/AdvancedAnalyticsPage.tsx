@@ -458,10 +458,10 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
         style={{ marginBottom: 14 }}
       >
         <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.3em', marginBottom: 4 }}>
-          ORCA · ANALYTICS DECK
+          ORCA · PERFORMANCE DECK
         </div>
         <div style={{ fontSize: 22, color: T.text.primary, fontWeight: 800, letterSpacing: '-0.01em' }}>
-          {t('לוח אנליטיקה מתקדם','Advanced Analytics Deck')}
+          {t('לוח ביצועים מתקדם','Advanced Performance Deck')}
         </div>
         <div style={{ fontSize: 12, color: T.text.secondary, marginTop: 2 }}>
           {t(`ניתוח רב-ממדי של ${trades.length} עסקאות לאורך כל ההיסטוריה.`, `Multi-dimensional analysis of ${trades.length} trades across history.`)}

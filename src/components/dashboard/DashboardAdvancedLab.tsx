@@ -132,6 +132,140 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
     return { grid, weeks: weekList, max };
   }, [sorted]);
 
+  // ── NEW 5 · Kelly-Optimal Growth Curve ─────────────────────────
+  // g(f) = p·log(1+b·f) + q·log(1−f). f* = (p·b − q)/b.
+  const kelly = useMemo(() => {
+    const wins  = sorted.filter(t => (Number(t.returnR) || 0) > 0);
+    const losses = sorted.filter(t => (Number(t.returnR) || 0) < 0);
+    if (wins.length < 3 || losses.length < 3) return null;
+    const avgWin  = wins.reduce((s, t) => s + (Number(t.returnR) || 0), 0) / wins.length;
+    const avgLoss = Math.abs(losses.reduce((s, t) => s + (Number(t.returnR) || 0), 0) / losses.length);
+    const p = wins.length / (wins.length + losses.length);
+    const q = 1 - p;
+    const b = avgLoss > 0 ? avgWin / avgLoss : 0;
+    if (!isFinite(b) || b <= 0) return null;
+    const fStar = Math.max(0, Math.min(0.5, (p * b - q) / b));
+    const pts = [] as { f: number; g: number; safe: number; agg: number }[];
+    for (let i = 0; i <= 50; i++) {
+      const f = i / 100; // 0 .. 0.50
+      const inside1 = 1 + b * f;
+      const inside2 = 1 - f;
+      const g = inside2 > 0 ? (p * Math.log(inside1) + q * Math.log(inside2)) : NaN;
+      pts.push({ f: +(f * 100).toFixed(1), g: +(g * 100).toFixed(3), safe: f <= fStar ? +(g * 100).toFixed(3) : 0, agg: f > fStar ? +(g * 100).toFixed(3) : 0 });
+    }
+    return { pts, fStar: +(fStar * 100).toFixed(2), p: +(p * 100).toFixed(1), b: +b.toFixed(2) };
+  }, [sorted]);
+
+  // ── NEW 6 · Streak Anatomy (win/loss run-length distribution) ──
+  const streaks = useMemo(() => {
+    if (sorted.length === 0) return [] as { len: number; wins: number; losses: number }[];
+    const winRuns = new Map<number, number>();
+    const lossRuns = new Map<number, number>();
+    let cur = 0; let curSign: 1 | -1 | 0 = 0;
+    const flush = () => {
+      if (cur > 0 && curSign !== 0) {
+        const m = curSign === 1 ? winRuns : lossRuns;
+        m.set(cur, (m.get(cur) || 0) + 1);
+      }
+      cur = 0;
+    };
+    for (const t of sorted) {
+      const r = Number(t.returnR) || 0;
+      const s: 1 | -1 | 0 = r > 0 ? 1 : r < 0 ? -1 : 0;
+      if (s === 0) { flush(); curSign = 0; continue; }
+      if (s === curSign) { cur++; }
+      else { flush(); curSign = s; cur = 1; }
+    }
+    flush();
+    const maxLen = Math.max(1, ...winRuns.keys(), ...lossRuns.keys());
+    const out: { len: number; wins: number; losses: number }[] = [];
+    for (let i = 1; i <= Math.min(12, maxLen); i++) {
+      out.push({ len: i, wins: winRuns.get(i) || 0, losses: -(lossRuns.get(i) || 0) });
+    }
+    return out;
+  }, [sorted]);
+
+  // ── NEW · Performance Regime Matrix (smart table) ──────────────
+  const regime = useMemo(() => {
+    const globalMean = sorted.length ? sorted.reduce((s, t) => s + valueOf(t, unit), 0) / sorted.length : 0;
+    const globalStd = (() => {
+      if (sorted.length < 2) return 0;
+      const m = globalMean;
+      const v = sorted.reduce((s, t) => s + Math.pow(valueOf(t, unit) - m, 2), 0) / (sorted.length - 1);
+      return Math.sqrt(v);
+    })();
+
+    type Row = { dim: string; bucket: string; n: number; winRate: number; avg: number; z: number; expectancy: number };
+    const rows: Row[] = [];
+    const push = (dim: string, bucket: string, arr: number[], wins: number) => {
+      if (arr.length === 0) return;
+      const n = arr.length;
+      const avg = arr.reduce((s, v) => s + v, 0) / n;
+      const wr = (wins / n) * 100;
+      const winsVals = arr.filter(v => v > 0);
+      const lossVals = arr.filter(v => v < 0);
+      const aw = winsVals.length ? winsVals.reduce((s, v) => s + v, 0) / winsVals.length : 0;
+      const al = lossVals.length ? Math.abs(lossVals.reduce((s, v) => s + v, 0) / lossVals.length) : 0;
+      const exp = (wr / 100) * aw - (1 - wr / 100) * al;
+      const se = globalStd > 0 ? globalStd / Math.sqrt(n) : 0;
+      const z = se > 0 ? (avg - globalMean) / se : 0;
+      rows.push({ dim, bucket, n, winRate: +wr.toFixed(1), avg: +avg.toFixed(3), z: +z.toFixed(2), expectancy: +exp.toFixed(3) });
+    };
+    const group = <K extends string>(dim: string, keyFn: (t: Trade) => K | null) => {
+      const buckets = new Map<string, { arr: number[]; wins: number }>();
+      for (const t of sorted) {
+        const k = keyFn(t); if (!k) continue;
+        const e = buckets.get(k) || { arr: [], wins: 0 };
+        e.arr.push(valueOf(t, unit));
+        if ((Number(t.returnR) || 0) > 0) e.wins++;
+        buckets.set(k, e);
+      }
+      const entries = Array.from(buckets.entries()).sort((a, b) => b[1].arr.length - a[1].arr.length);
+      for (const [bucket, e] of entries) push(dim, bucket, e.arr, e.wins);
+    };
+
+    // Hour bucket (4h windows)
+    group(isRTL ? 'שעה' : 'Hour', (t) => {
+      const d = parseTradeDate(t.date); if (!d) return null;
+      const h = d.getHours();
+      const start = Math.floor(h / 4) * 4;
+      return `${String(start).padStart(2,'0')}–${String(start+4).padStart(2,'0')}` as any;
+    });
+    // Day of week
+    const dowLbl = isRTL ? ['א','ב','ג','ד','ה','ו','ש'] : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    group(isRTL ? 'יום' : 'Day', (t) => {
+      const d = parseTradeDate(t.date); if (!d) return null;
+      return dowLbl[d.getDay()] as any;
+    });
+    // Session
+    group(isRTL ? 'סשן' : 'Session', (t) => {
+      const d = parseTradeDate(t.date); if (!d) return null;
+      const h = d.getHours();
+      if (h < 8) return (isRTL ? 'אסיה' : 'Asia') as any;
+      if (h < 16) return (isRTL ? 'אירופה' : 'Europe') as any;
+      return (isRTL ? 'ארה״ב' : 'US') as any;
+    });
+    // Direction
+    group(isRTL ? 'כיוון' : 'Direction', (t) => {
+      const dir = String((t as any).direction || (t as any).side || '').toLowerCase();
+      if (dir.includes('long') || dir.includes('buy')) return (isRTL ? 'לונג' : 'Long') as any;
+      if (dir.includes('short') || dir.includes('sell')) return (isRTL ? 'שורט' : 'Short') as any;
+      return null;
+    });
+    // Top assets (limit to top 5 by volume)
+    const assetRows: Row[] = [];
+    const buf: Row[] = [];
+    const before = rows.length;
+    group(isRTL ? 'נכס' : 'Asset', (t) => (t.coin || null) as any);
+    // Keep only top 5 assets by n
+    const assetSlice = rows.splice(before).sort((a, b) => b.n - a.n).slice(0, 5);
+    rows.push(...assetSlice);
+    void assetRows; void buf;
+
+    return { rows, globalMean: +globalMean.toFixed(3), globalStd: +globalStd.toFixed(3) };
+  }, [sorted, unit, isRTL]);
+
+
   if (sorted.length < 5) return null;
 
   const fmtAxis = (v: number) => fmtShort(v, unit);
@@ -146,6 +280,17 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
     prob: 'קונוס הסתברות לרווח',
     front: 'גבול סיכון-תשואה',
     vel: 'מהירות מסחר — יום × שבוע',
+    kelly: 'עקומת קלי — צמיחה גיאומטרית לפי סיכון',
+    kellyF: 'סיכון לעסקה f (%)', kellyG: 'תוחלת log-צמיחה (%)',
+    kellyStar: 'קלי אופטימלי',
+    kellySafe: 'אזור בטוח (≤f*)', kellyAgg: 'אזור אגרסיבי (>f*)',
+    streak: 'אנטומיית רצפים — התפלגות אורכי סדרות',
+    streakLen: 'אורך סדרה', streakCount: 'מספר סדרות',
+    streakW: 'רצפי ניצחון', streakL: 'רצפי הפסד',
+    matrix: 'מטריצת ביצועים לפי משטר — Z-Score מול תוחלת גלובלית',
+    matrixDim: 'מימד', matrixBucket: 'משטר', matrixN: '# עסקאות',
+    matrixWr: 'אחוז הצלחה', matrixAvg: 'ממוצע', matrixExp: 'תוחלת',
+    matrixZ: 'Z-Score', matrixEdge: 'עוצמת יתרון',
     iqr: 'IQR', median: 'חציון', equity: 'הון', prob2: 'הסתברות חיובי %',
     avgRisk: 'סיכון ממוצע %', avgOut: 'תשואה ממוצעת', noVel: 'אין נתונים',
   } : {
@@ -156,6 +301,17 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
     prob: 'Win Probability Cone',
     front: 'Risk-Reward Frontier',
     vel: 'Trade Velocity — Day × Week',
+    kelly: 'Kelly Growth Curve — geometric growth by risk',
+    kellyF: 'Risk per trade f (%)', kellyG: 'Expected log-growth (%)',
+    kellyStar: 'Optimal Kelly',
+    kellySafe: 'Safe zone (≤f*)', kellyAgg: 'Aggressive zone (>f*)',
+    streak: 'Streak Anatomy — run-length distribution',
+    streakLen: 'Run length', streakCount: 'Runs',
+    streakW: 'Winning runs', streakL: 'Losing runs',
+    matrix: 'Performance Regime Matrix — Z-Score vs global mean',
+    matrixDim: 'Dimension', matrixBucket: 'Regime', matrixN: '# Trades',
+    matrixWr: 'Win %', matrixAvg: 'Avg', matrixExp: 'Expectancy',
+    matrixZ: 'Z-Score', matrixEdge: 'Edge strength',
     iqr: 'IQR', median: 'Median', equity: 'Equity', prob2: 'Positive prob %',
     avgRisk: 'Avg risk %', avgOut: 'Avg outcome', noVel: 'No data',
   };
@@ -348,6 +504,132 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
             </div>
           )}
         </div>
+
+        {/* 7 · NEW Kelly-Optimal Growth Curve */}
+        <div style={cardStyle}>
+          <div style={{ fontSize: 11, color: muted, marginBottom: 8, letterSpacing: 1.5, textTransform: 'uppercase' }}>{L.kelly}</div>
+          {!kelly ? <Empty muted={muted}/> : (
+            <>
+              <ResponsiveContainer width="100%" height={chartH}>
+                <ComposedChart data={kelly.pts} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="kellySafeGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%"  stopColor={win} stopOpacity={0.45}/>
+                      <stop offset="100%" stopColor={win} stopOpacity={0.02}/>
+                    </linearGradient>
+                    <linearGradient id="kellyAggGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%"  stopColor={loss} stopOpacity={0.4}/>
+                      <stop offset="100%" stopColor={loss} stopOpacity={0.02}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid stroke={border} strokeDasharray="3 3" vertical={false}/>
+                  <XAxis dataKey="f" stroke={muted} fontSize={10} tickFormatter={(v: number) => `${v}%`} label={{ value: L.kellyF, position: 'insideBottom', offset: -2, fill: muted, fontSize: 9 }}/>
+                  <YAxis stroke={muted} fontSize={10} width={44} tickFormatter={(v: number) => `${v.toFixed(1)}%`}/>
+                  <ReferenceLine y={0} stroke={border}/>
+                  <ReferenceLine x={kelly.fStar} stroke={gold} strokeDasharray="4 4" label={{ value: `f* ${kelly.fStar}%`, fill: gold, fontSize: 10, position: 'top' }}/>
+                  <Tooltip contentStyle={tt} formatter={(v: number, n) => {
+                    if (n === 'safe') return [`${(v as number).toFixed(3)}%`, L.kellySafe];
+                    if (n === 'agg')  return [`${(v as number).toFixed(3)}%`, L.kellyAgg];
+                    return [`${(v as number).toFixed(3)}%`, L.kellyG];
+                  }} labelFormatter={(v) => `f = ${v}%`}/>
+                  <Area type="monotone" dataKey="safe" stroke={win}  strokeWidth={2} fill="url(#kellySafeGrad)"/>
+                  <Area type="monotone" dataKey="agg"  stroke={loss} strokeWidth={2} fill="url(#kellyAggGrad)"/>
+                </ComposedChart>
+              </ResponsiveContainer>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 8, fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: muted }}>
+                <span><span style={{ color: gold, fontWeight: 700 }}>f*</span> {kelly.fStar}%</span>
+                <span>p {kelly.p}%</span>
+                <span>b {kelly.b}x</span>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* 8 · NEW Streak Anatomy */}
+        <div style={cardStyle}>
+          <div style={{ fontSize: 11, color: muted, marginBottom: 8, letterSpacing: 1.5, textTransform: 'uppercase' }}>{L.streak}</div>
+          {streaks.length === 0 ? <Empty muted={muted}/> : (
+            <ResponsiveContainer width="100%" height={chartH}>
+              <BarChart data={streaks} stackOffset="sign" margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                <CartesianGrid stroke={border} strokeDasharray="3 3" vertical={false}/>
+                <XAxis dataKey="len" stroke={muted} fontSize={10} label={{ value: L.streakLen, position: 'insideBottom', offset: -2, fill: muted, fontSize: 9 }}/>
+                <YAxis stroke={muted} fontSize={10} width={40} tickFormatter={(v: number) => `${Math.abs(v)}`}/>
+                <ReferenceLine y={0} stroke={border}/>
+                <Tooltip contentStyle={tt}
+                  formatter={(v: number, n) => [Math.abs(v as number), n === 'wins' ? L.streakW : L.streakL]}
+                  labelFormatter={(v) => `${L.streakLen}: ${v}`}
+                />
+                <Bar dataKey="wins"   stackId="s" fill={win}  radius={[3, 3, 0, 0]}/>
+                <Bar dataKey="losses" stackId="s" fill={loss} radius={[0, 0, 3, 3]}/>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </div>
+
+      {/* NEW · Performance Regime Matrix (smart table) */}
+      <div style={cardStyle}>
+        <div style={{
+          display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+          gap: 8, flexWrap: 'wrap', marginBottom: 10,
+        }}>
+          <div style={{ fontSize: 11, color: muted, letterSpacing: 1.5, textTransform: 'uppercase' }}>{L.matrix}</div>
+          <div style={{ fontSize: 10, color: muted, fontFamily: "'JetBrains Mono', monospace" }}>
+            μ {fmtValue(regime.globalMean, unit)} · σ {fmtValue(regime.globalStd, unit)}
+          </div>
+        </div>
+        {regime.rows.length === 0 ? <Empty muted={muted}/> : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'JetBrains Mono', monospace", fontSize: 11, minWidth: 640 }}>
+              <thead>
+                <tr style={{ color: muted, textAlign: isRTL ? 'right' : 'left', borderBottom: `1px solid ${border}` }}>
+                  <th style={{ padding: '6px 8px', fontWeight: 500 }}>{L.matrixDim}</th>
+                  <th style={{ padding: '6px 8px', fontWeight: 500 }}>{L.matrixBucket}</th>
+                  <th style={{ padding: '6px 8px', fontWeight: 500, textAlign: 'right' }}>{L.matrixN}</th>
+                  <th style={{ padding: '6px 8px', fontWeight: 500, textAlign: 'right' }}>{L.matrixWr}</th>
+                  <th style={{ padding: '6px 8px', fontWeight: 500, textAlign: 'right' }}>{L.matrixAvg}</th>
+                  <th style={{ padding: '6px 8px', fontWeight: 500, textAlign: 'right' }}>{L.matrixExp}</th>
+                  <th style={{ padding: '6px 8px', fontWeight: 500, textAlign: 'right' }}>{L.matrixZ}</th>
+                  <th style={{ padding: '6px 8px', fontWeight: 500, minWidth: 100 }}>{L.matrixEdge}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {regime.rows.map((r, i) => {
+                  const zAbs = Math.min(3, Math.abs(r.z));
+                  const barW = (zAbs / 3) * 100;
+                  const color = r.z >= 0 ? win : loss;
+                  const strong = zAbs >= 1.5;
+                  return (
+                    <tr key={`${r.dim}-${r.bucket}-${i}`} style={{
+                      borderBottom: `1px solid ${border}`,
+                      background: strong ? `${color}0F` : 'transparent',
+                    }}>
+                      <td style={{ padding: '6px 8px', color: muted, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' }}>{r.dim}</td>
+                      <td style={{ padding: '6px 8px', color: fg, fontWeight: 600 }}>{r.bucket}</td>
+                      <td style={{ padding: '6px 8px', color: fg, textAlign: 'right' }}>{r.n}</td>
+                      <td style={{ padding: '6px 8px', textAlign: 'right', color: r.winRate >= 50 ? win : gold }}>{r.winRate}%</td>
+                      <td style={{ padding: '6px 8px', textAlign: 'right', color: r.avg >= 0 ? win : loss }}>{fmtValue(r.avg, unit)}</td>
+                      <td style={{ padding: '6px 8px', textAlign: 'right', color: r.expectancy >= 0 ? win : loss }}>{fmtValue(r.expectancy, unit)}</td>
+                      <td style={{ padding: '6px 8px', textAlign: 'right', color, fontWeight: 700 }}>{r.z >= 0 ? '+' : ''}{r.z.toFixed(2)}σ</td>
+                      <td style={{ padding: '6px 8px' }}>
+                        <div style={{ position: 'relative', height: 8, background: T.bg.tertiary, borderRadius: 4, overflow: 'hidden', border: `1px solid ${border}` }}>
+                          <div style={{
+                            position: 'absolute', top: 0, bottom: 0,
+                            [isRTL ? 'right' : 'left']: '50%',
+                            width: `${barW / 2}%`,
+                            transform: r.z >= 0 ? 'none' : (isRTL ? 'translateX(100%)' : 'translateX(-100%)'),
+                            background: color, opacity: 0.75,
+                          } as any}/>
+                          <div style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: 1, background: border }}/>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
