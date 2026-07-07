@@ -132,6 +132,140 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
     return { grid, weeks: weekList, max };
   }, [sorted]);
 
+  // ── NEW 5 · Kelly-Optimal Growth Curve ─────────────────────────
+  // g(f) = p·log(1+b·f) + q·log(1−f). f* = (p·b − q)/b.
+  const kelly = useMemo(() => {
+    const wins  = sorted.filter(t => (Number(t.returnR) || 0) > 0);
+    const losses = sorted.filter(t => (Number(t.returnR) || 0) < 0);
+    if (wins.length < 3 || losses.length < 3) return null;
+    const avgWin  = wins.reduce((s, t) => s + (Number(t.returnR) || 0), 0) / wins.length;
+    const avgLoss = Math.abs(losses.reduce((s, t) => s + (Number(t.returnR) || 0), 0) / losses.length);
+    const p = wins.length / (wins.length + losses.length);
+    const q = 1 - p;
+    const b = avgLoss > 0 ? avgWin / avgLoss : 0;
+    if (!isFinite(b) || b <= 0) return null;
+    const fStar = Math.max(0, Math.min(0.5, (p * b - q) / b));
+    const pts = [] as { f: number; g: number; safe: number; agg: number }[];
+    for (let i = 0; i <= 50; i++) {
+      const f = i / 100; // 0 .. 0.50
+      const inside1 = 1 + b * f;
+      const inside2 = 1 - f;
+      const g = inside2 > 0 ? (p * Math.log(inside1) + q * Math.log(inside2)) : NaN;
+      pts.push({ f: +(f * 100).toFixed(1), g: +(g * 100).toFixed(3), safe: f <= fStar ? +(g * 100).toFixed(3) : 0, agg: f > fStar ? +(g * 100).toFixed(3) : 0 });
+    }
+    return { pts, fStar: +(fStar * 100).toFixed(2), p: +(p * 100).toFixed(1), b: +b.toFixed(2) };
+  }, [sorted]);
+
+  // ── NEW 6 · Streak Anatomy (win/loss run-length distribution) ──
+  const streaks = useMemo(() => {
+    if (sorted.length === 0) return [] as { len: number; wins: number; losses: number }[];
+    const winRuns = new Map<number, number>();
+    const lossRuns = new Map<number, number>();
+    let cur = 0; let curSign: 1 | -1 | 0 = 0;
+    const flush = () => {
+      if (cur > 0 && curSign !== 0) {
+        const m = curSign === 1 ? winRuns : lossRuns;
+        m.set(cur, (m.get(cur) || 0) + 1);
+      }
+      cur = 0;
+    };
+    for (const t of sorted) {
+      const r = Number(t.returnR) || 0;
+      const s: 1 | -1 | 0 = r > 0 ? 1 : r < 0 ? -1 : 0;
+      if (s === 0) { flush(); curSign = 0; continue; }
+      if (s === curSign) { cur++; }
+      else { flush(); curSign = s; cur = 1; }
+    }
+    flush();
+    const maxLen = Math.max(1, ...winRuns.keys(), ...lossRuns.keys());
+    const out: { len: number; wins: number; losses: number }[] = [];
+    for (let i = 1; i <= Math.min(12, maxLen); i++) {
+      out.push({ len: i, wins: winRuns.get(i) || 0, losses: -(lossRuns.get(i) || 0) });
+    }
+    return out;
+  }, [sorted]);
+
+  // ── NEW · Performance Regime Matrix (smart table) ──────────────
+  const regime = useMemo(() => {
+    const globalMean = sorted.length ? sorted.reduce((s, t) => s + valueOf(t, unit), 0) / sorted.length : 0;
+    const globalStd = (() => {
+      if (sorted.length < 2) return 0;
+      const m = globalMean;
+      const v = sorted.reduce((s, t) => s + Math.pow(valueOf(t, unit) - m, 2), 0) / (sorted.length - 1);
+      return Math.sqrt(v);
+    })();
+
+    type Row = { dim: string; bucket: string; n: number; winRate: number; avg: number; z: number; expectancy: number };
+    const rows: Row[] = [];
+    const push = (dim: string, bucket: string, arr: number[], wins: number) => {
+      if (arr.length === 0) return;
+      const n = arr.length;
+      const avg = arr.reduce((s, v) => s + v, 0) / n;
+      const wr = (wins / n) * 100;
+      const winsVals = arr.filter(v => v > 0);
+      const lossVals = arr.filter(v => v < 0);
+      const aw = winsVals.length ? winsVals.reduce((s, v) => s + v, 0) / winsVals.length : 0;
+      const al = lossVals.length ? Math.abs(lossVals.reduce((s, v) => s + v, 0) / lossVals.length) : 0;
+      const exp = (wr / 100) * aw - (1 - wr / 100) * al;
+      const se = globalStd > 0 ? globalStd / Math.sqrt(n) : 0;
+      const z = se > 0 ? (avg - globalMean) / se : 0;
+      rows.push({ dim, bucket, n, winRate: +wr.toFixed(1), avg: +avg.toFixed(3), z: +z.toFixed(2), expectancy: +exp.toFixed(3) });
+    };
+    const group = <K extends string>(dim: string, keyFn: (t: Trade) => K | null) => {
+      const buckets = new Map<string, { arr: number[]; wins: number }>();
+      for (const t of sorted) {
+        const k = keyFn(t); if (!k) continue;
+        const e = buckets.get(k) || { arr: [], wins: 0 };
+        e.arr.push(valueOf(t, unit));
+        if ((Number(t.returnR) || 0) > 0) e.wins++;
+        buckets.set(k, e);
+      }
+      const entries = Array.from(buckets.entries()).sort((a, b) => b[1].arr.length - a[1].arr.length);
+      for (const [bucket, e] of entries) push(dim, bucket, e.arr, e.wins);
+    };
+
+    // Hour bucket (4h windows)
+    group(isRTL ? 'שעה' : 'Hour', (t) => {
+      const d = parseTradeDate(t.date); if (!d) return null;
+      const h = d.getHours();
+      const start = Math.floor(h / 4) * 4;
+      return `${String(start).padStart(2,'0')}–${String(start+4).padStart(2,'0')}` as any;
+    });
+    // Day of week
+    const dowLbl = isRTL ? ['א','ב','ג','ד','ה','ו','ש'] : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    group(isRTL ? 'יום' : 'Day', (t) => {
+      const d = parseTradeDate(t.date); if (!d) return null;
+      return dowLbl[d.getDay()] as any;
+    });
+    // Session
+    group(isRTL ? 'סשן' : 'Session', (t) => {
+      const d = parseTradeDate(t.date); if (!d) return null;
+      const h = d.getHours();
+      if (h < 8) return (isRTL ? 'אסיה' : 'Asia') as any;
+      if (h < 16) return (isRTL ? 'אירופה' : 'Europe') as any;
+      return (isRTL ? 'ארה״ב' : 'US') as any;
+    });
+    // Direction
+    group(isRTL ? 'כיוון' : 'Direction', (t) => {
+      const dir = String((t as any).direction || (t as any).side || '').toLowerCase();
+      if (dir.includes('long') || dir.includes('buy')) return (isRTL ? 'לונג' : 'Long') as any;
+      if (dir.includes('short') || dir.includes('sell')) return (isRTL ? 'שורט' : 'Short') as any;
+      return null;
+    });
+    // Top assets (limit to top 5 by volume)
+    const assetRows: Row[] = [];
+    const buf: Row[] = [];
+    const before = rows.length;
+    group(isRTL ? 'נכס' : 'Asset', (t) => (t.coin || null) as any);
+    // Keep only top 5 assets by n
+    const assetSlice = rows.splice(before).sort((a, b) => b.n - a.n).slice(0, 5);
+    rows.push(...assetSlice);
+    void assetRows; void buf;
+
+    return { rows, globalMean: +globalMean.toFixed(3), globalStd: +globalStd.toFixed(3) };
+  }, [sorted, unit, isRTL]);
+
+
   if (sorted.length < 5) return null;
 
   const fmtAxis = (v: number) => fmtShort(v, unit);
