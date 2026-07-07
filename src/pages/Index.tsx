@@ -598,7 +598,7 @@ const Index = () => {
     { id: 'dashboard', icon: Ico.dash, label: isRTL ? 'דשבורד' : 'Dashboard' },
     { id: 'calendar', icon: '📅', label: isRTL ? 'לוח שנה' : 'Calendar' },
     { id: 'journal', icon: Ico.book, label: t.journal },
-    { id: 'analytics', icon: Ico.bar, label: isRTL ? 'אנליטיקה' : 'Analytics' },
+    { id: 'analytics', icon: Ico.bar, label: isRTL ? 'ביצועים' : 'Performance' },
     { id: 'risk', icon: Ico.shield, label: t.risk },
     { id: 'psychology', icon: Ico.brain, label: t.psychology },
     { id: 'ai', icon: Ico.star, label: t.ai },
