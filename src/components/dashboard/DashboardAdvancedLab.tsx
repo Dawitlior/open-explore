@@ -581,7 +581,50 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
             μ {fmtValue(regime.globalMean, unit)} · σ {fmtValue(regime.globalStd, unit)}
           </div>
         </div>
-        {regime.rows.length === 0 ? <Empty muted={muted}/> : (
+        {regime.rows.length === 0 ? <Empty muted={muted}/> : isMobile ? (
+          <div style={{ display: 'grid', gap: 8 }}>
+            {regime.rows.map((r, i) => {
+              const zAbs = Math.min(3, Math.abs(r.z));
+              const barW = (zAbs / 3) * 100;
+              const color = r.z >= 0 ? win : loss;
+              const strong = zAbs >= 1.5;
+              return (
+                <div key={`${r.dim}-${r.bucket}-${i}`} style={{
+                  background: strong ? `${color}0F` : T.bg.tertiary,
+                  border: `1px solid ${strong ? color + '55' : border}`,
+                  borderRadius: 10, padding: 10,
+                  fontFamily: "'JetBrains Mono', monospace",
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, marginBottom: 6 }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 9, color: muted, letterSpacing: 1, textTransform: 'uppercase' }}>{r.dim}</div>
+                      <div style={{ fontSize: 13, color: fg, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.bucket}</div>
+                    </div>
+                    <div style={{ color, fontWeight: 800, fontSize: 13, whiteSpace: 'nowrap' }}>
+                      {r.z >= 0 ? '+' : ''}{r.z.toFixed(2)}σ
+                    </div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, fontSize: 10, marginBottom: 8 }}>
+                    <MetricCell label={L.matrixN}   value={String(r.n)} color={fg} muted={muted} />
+                    <MetricCell label={L.matrixWr}  value={`${r.winRate}%`} color={r.winRate >= 50 ? win : gold} muted={muted} />
+                    <MetricCell label={L.matrixAvg} value={fmtValue(r.avg, unit)} color={r.avg >= 0 ? win : loss} muted={muted} />
+                    <MetricCell label={L.matrixExp} value={fmtValue(r.expectancy, unit)} color={r.expectancy >= 0 ? win : loss} muted={muted} />
+                  </div>
+                  <div style={{ position: 'relative', height: 8, background: T.bg.card, borderRadius: 4, overflow: 'hidden', border: `1px solid ${border}` }}>
+                    <div style={{
+                      position: 'absolute', top: 0, bottom: 0,
+                      [isRTL ? 'right' : 'left']: '50%',
+                      width: `${barW / 2}%`,
+                      transform: r.z >= 0 ? 'none' : (isRTL ? 'translateX(100%)' : 'translateX(-100%)'),
+                      background: color, opacity: 0.75,
+                    } as any}/>
+                    <div style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: 1, background: border }}/>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'JetBrains Mono', monospace", fontSize: 11, minWidth: 640 }}>
               <thead>
