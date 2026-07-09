@@ -685,6 +685,15 @@ function Empty({ muted }: { muted: string }) {
   return <div style={{ textAlign: 'center', color: muted, padding: 36, fontSize: 11 }}>—</div>;
 }
 
+function MetricCell({ label, value, color, muted }: { label: string; value: string; color: string; muted: string }) {
+  return (
+    <div style={{ minWidth: 0 }}>
+      <div style={{ fontSize: 8, color: muted, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</div>
+      <div style={{ fontSize: 12, color, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</div>
+    </div>
+  );
+}
+
 function isoWeek(d: Date): string {
   // YYYY-Www
   const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
