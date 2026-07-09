@@ -40,9 +40,9 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
   const unit: Unit = displayMode === 'MONEY' ? 'USD' : 'R';
   const isUSD = unit === 'USD';
   const isMobile = useIsMobile();
-  const chartH = isMobile ? 200 : 220;
-  const minCard = isMobile ? 260 : 320;
-  const heatCell = isMobile ? 14 : 16;
+  const chartH = isMobile ? 240 : 220;
+  const minCard = isMobile ? 9999 : 320; // force single column on mobile
+  const heatCell = isMobile ? 18 : 16;
   const accent = T.accent.cyan;
   const muted  = T.text.muted;
   const border = T.border.subtle;
@@ -59,7 +59,10 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
   const cardStyle: React.CSSProperties = {
     background: T.bg.card,
     border: `1px solid ${border}`,
-    borderRadius: 14, padding: 14,
+    borderRadius: 14,
+    padding: isMobile ? 10 : 14,
+    minWidth: 0,
+    overflow: 'hidden',
   };
 
   const sorted = useMemo(() => [...trades].sort((a, b) =>
