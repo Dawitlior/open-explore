@@ -803,7 +803,11 @@ const Landing: React.FC = () => {
         {/* ───── 4b. EXECUTION FLOW (scrollytelling · Phase 1) ───── */}
         <ExecutionFlowStage isRTL={isRTL} t={t} />
 
+        {/* ───── 4c. TRADER MIND HEATMAP (scrollytelling · Phase 2) ───── */}
+        <TraderMindHeatmapStage isRTL={isRTL} t={t} />
+
         <div className="orca-divider" />
+
 
 
 
