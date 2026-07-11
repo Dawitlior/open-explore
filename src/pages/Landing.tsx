@@ -798,6 +798,13 @@ const Landing: React.FC = () => {
 
         <div className="orca-divider" />
 
+        {/* ───── 4b. EXECUTION FLOW (scrollytelling · Phase 1) ───── */}
+        <ExecutionFlowStage isRTL={isRTL} t={t} />
+
+        <div className="orca-divider" />
+
+
+
         {/* ───── 5. FEATURE TABS ───── */}
         <section id="features" className="orca-section">
           <div className="max-w-7xl mx-auto px-5 sm:px-8">
