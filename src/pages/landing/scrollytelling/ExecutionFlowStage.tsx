@@ -164,12 +164,22 @@ export const ExecutionFlowStage: React.FC<Props> = ({ isRTL, t }) => {
                 }}>{t('זרימת ביצוע', 'EXECUTION FLOW')}</div>
                 <h2 style={{
                   fontFamily: 'Poppins, sans-serif', fontWeight: 700,
-                  fontSize: 28, lineHeight: 1.2, margin: '0 0 28px', color: '#fff',
+                  fontSize: 28, lineHeight: 1.2, margin: '0 0 14px', color: '#fff',
                 }}>
                   {isRTL
                     ? <>מסחר → תובנה.<br /><span style={{ color: CYAN }}>אוטומטית.</span></>
                     : <>Trade → insight.<br /><span style={{ color: CYAN }}>Automatically.</span></>}
                 </h2>
+                <p style={{
+                  fontFamily: 'Poppins, sans-serif', fontSize: 14, lineHeight: 1.65,
+                  color: 'rgba(255,255,255,0.65)', margin: '0 0 24px', maxWidth: 320,
+                }}>
+                  {t(
+                    'ברגע שביצעת עסקה אצל הברוקר — ORCA מסנכרנת אותה, מתייגת אוטומטית לפי סטאפ וסשן, מחשבת R-Multiple, ומעדכנת את היומן שלך. שום גיליון אקסל. שום העתק־הדבק. גלול כדי לראות איך זה קורה.',
+                    'The moment you close a trade at your broker, ORCA syncs it in, auto-tags it by setup and session, computes the R-multiple, and updates your journal. No spreadsheets. No copy-paste. Scroll to watch it happen — step by step.'
+                  )}
+                </p>
+
 
                 <div style={{ position: 'relative', paddingInlineStart: 8 }}>
                   {/* connector track */}
