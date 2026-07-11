@@ -8,7 +8,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
-import { ExecutionFlowStage, TraderMindHeatmapStage } from './landing/scrollytelling';
+import { ExecutionFlowStage, TraderMindHeatmapStage, TradeCardExplodeStage } from './landing/scrollytelling';
 
 import dashboardMain from '@/assets/landing/dashboard_main.png';
 import journalEntry from '@/assets/landing/journal_entry.png';
@@ -825,7 +825,11 @@ const Landing: React.FC = () => {
           </div>
         </section>
 
+        {/* ───── 5b. TRADE CARD EXPLODE (scrollytelling · Phase 3) ───── */}
+        <TradeCardExplodeStage isRTL={isRTL} t={t} />
+
         {/* ───── 6. JOURNALING ───── */}
+
         <section id="journal" className="orca-section" style={{ background: 'var(--bg-2)' }}>
           <div className="max-w-7xl mx-auto px-5 sm:px-8">
             <SectionHeader

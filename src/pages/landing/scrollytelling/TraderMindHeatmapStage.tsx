@@ -358,20 +358,31 @@ export const TraderMindHeatmapStage: React.FC<Props> = ({ isRTL, t }) => {
             }}>
               {/* LEFT: rotating insight overlays */}
               <div style={{ position: 'relative', height: 260 }}>
-                <div style={{ position: 'absolute', top: -180, insetInlineStart: 0 }}>
+                <div style={{ position: 'absolute', top: -220, insetInlineStart: 0, maxWidth: 420 }}>
                   <div style={{
                     fontFamily: 'IBM Plex Mono, monospace', fontSize: 10, letterSpacing: 2,
                     color: PURPLE, marginBottom: 8, textTransform: 'uppercase',
                   }}>{t('תודעת הסוחר · מפת חום', 'TRADER MIND · HEATMAP')}</div>
                   <h2 style={{
                     fontFamily: 'Poppins, sans-serif', fontWeight: 700, fontSize: 30,
-                    lineHeight: 1.2, margin: 0, color: '#fff',
+                    lineHeight: 1.2, margin: '0 0 12px', color: '#fff',
                   }}>
                     {isRTL
                       ? <>דפוסי הרווח שלך — <span style={{ color: PURPLE }}>חשופים.</span></>
                       : <>Your winning patterns — <span style={{ color: PURPLE }}>exposed.</span></>}
                   </h2>
+                  <p style={{
+                    fontFamily: 'Poppins, sans-serif', fontSize: 13.5, lineHeight: 1.65,
+                    color: 'rgba(255,255,255,0.62)', margin: 0,
+                  }}>
+                    {t(
+                      'כל תא ברשת הוא שעה בשבוע המסחר שלך. ככל שהוא בוהק יותר, כך היתרון הסטטיסטי גדול יותר. גלול כדי לראות איך המנוע מזהה אשכולות של רווח, מבודד את שיא הביצועים שלך, וחושף שרוב היתרון שלך חי בפחות משעות בודדות.',
+                      'Every cell is one hour of your trading week. The brighter it burns, the stronger the statistical edge. Scroll to watch the engine surface profit clusters, isolate your single hottest hour, and reveal that most of your edge lives in just a handful of hours.'
+                    )}
+                  </p>
                 </div>
+
+
 
                 <Insight progress={progress} from={0.05} to={0.28}
                   label={t('שלב 1 · סריקה', 'Phase 1 · Scan')}
