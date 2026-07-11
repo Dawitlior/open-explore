@@ -107,8 +107,11 @@ export const ExecutionFlowStage: React.FC<Props> = ({ isRTL, t }) => {
     >
       <ScrollStage heightVh={2.4}>
         {({ progress, reduced, isMobile }) => {
-          // Timeline line growth
+          // Timeline line growth (hook must run unconditionally per render)
+          // eslint-disable-next-line react-hooks/rules-of-hooks
           const lineScale = useTransform(progress, [0, 1], [0, 1]);
+
+
 
           // Mobile / reduced: render all 4 states stacked
           if (reduced || isMobile) {
