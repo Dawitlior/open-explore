@@ -8,6 +8,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import { ExecutionFlowStage } from './landing/scrollytelling';
+
 import dashboardMain from '@/assets/landing/dashboard_main.png';
 import journalEntry from '@/assets/landing/journal_entry.png';
 import autoJournal from '@/assets/landing/auto_journal.png';
@@ -797,6 +799,13 @@ const Landing: React.FC = () => {
         </section>
 
         <div className="orca-divider" />
+
+        {/* ───── 4b. EXECUTION FLOW (scrollytelling · Phase 1) ───── */}
+        <ExecutionFlowStage isRTL={isRTL} t={t} />
+
+        <div className="orca-divider" />
+
+
 
         {/* ───── 5. FEATURE TABS ───── */}
         <section id="features" className="orca-section">
