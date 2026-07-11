@@ -1,77 +1,63 @@
-# Performance Optimization Pass
+# Landing → Scrollytelling Refactor (Phased)
 
-Goal: make the platform noticeably faster without changing any functionality or visual output.
+## Guardrails (non-negotiable)
+- No changes to: navbar routes, CTAs (`APP_URL`, `/auth`, `/welcome`), language logic, Supabase calls, `LANG_OVERRIDE_KEY`/`LANG_CACHE_KEY`, footer links, feature-tab content, TraderMind rotator data, or any imported hook.
+- All existing section IDs (`#features`, `#journal`, `#community`) preserved so anchor links keep working.
+- Refactor is additive: new scroll components wrap/replace **visual containers only**; button JSX + `onClick`/`href` stay verbatim.
+- Framer Motion already in project — no new deps.
 
-## Scope
+## Current section map (src/pages/Landing.tsx)
+```text
+Navbar → Hero → Integrations → FeatureTabs(#features) → Journaling(#journal)
+→ Video → Insights → Edge/Risk → TraderMind → Community(#community) → Final CTA → Footer
+```
 
-Investigate the whole app, but focus effort where the cost is highest:
+## Target scrollytelling architecture
+A shared `ScrollStage` primitive: `position: sticky; top: 0; height: 100vh` visual pinned while a tall spacer (`height: 200vh`) drives progress via `useScroll({ target, offset:['start start','end end'] })` + `useTransform`. Content overlays fade/slide with `useTransform(progress, [...], [...])`. `prefers-reduced-motion` disables transforms → falls back to current static layout.
 
-1. **Dashboard charts** (`SimpleExtraCharts`, `ReviewDashboard`, `BestWorstWindowChart`, `PnLDistributionHistogram`, `RiskAdjustedRatiosSection`, `DashboardAdvancedLab`, `QuarterlyPerformanceCard`).
-2. **Calendar Hub / Month & Year views** (heavy recompute on every render).
-3. **Global providers & app shell** (`App.tsx`, `use-trades`, `display-mode`, `use-active-portfolio`, `OrcaUXLayer`).
-4. **Weekly Review widgets** kept off-screen.
-5. **Landing page** unnecessary work when authed.
+New file: `src/pages/landing/scrollytelling/` (isolated, tree-shakeable)
+- `ScrollStage.tsx` — sticky+spacer primitive
+- `ExecutionFlowStage.tsx` — Phase 1 deliverable
+- `TradeCardExplode.tsx` — Phase 3
+- `DataObject.tsx` — geometric R:R shape (Phase 4)
+- `OldVsNewStage.tsx` — contrast comparison (Phase 5)
+- `index.ts`
 
-## Investigation steps
+`Landing.tsx` edits are surgical: replace one section's inner JSX with `<ExecutionFlowStage>`, keeping the outer `<section>` + id + CTAs.
 
-- Grep for charts / heavy components mounted unconditionally.
-- Identify components that render even when their tab / tier is not active (e.g. Alpha charts rendered under a `{isAlpha && …}` gate — good; but check ones without a gate).
-- Look for `useMemo` misses on expensive derivations (trade aggregations recomputed on every keystroke elsewhere in the tree).
-- Find components with heavy JSX but no `React.memo` / stable props.
-- Find `useEffect`s with missing/broken deps causing loops.
-- Find dead files: components exported but never imported, legacy panels replaced by newer ones.
-- Find dev-only warnings we can silence cheaply (e.g. `fetchPriority` casing on Landing image).
+## Phase 1 (this iteration): Execution Flow between Integrations & Feature Tabs
+**Insert a new pinned stage** right after Integrations (line ~800), before `#features`. It does NOT remove any existing section — it bridges them with narrative.
 
-## Planned changes
+Visual: a sticky vertical timeline (Broker Sync → AI Tag → Journal Update → Insight) on the left; on the right a mock trade row that animates through 4 states as scroll progresses. Uses only design tokens (`--bg-2`, cyan `#22D3EE`, existing Poppins/Plex Mono). Height ≈ 220vh spacer → ~1.5 screen scrolls to complete.
 
-### A. Render-gating (don't render what you don't show)
+Interactions:
+- 4 keyframes mapped to progress `[0, 0.25, 0.5, 0.75, 1]`.
+- Timeline dots fill sequentially; connector line grows via `scaleY`.
+- Trade card morphs: raw CSV row → tagged card → journal entry → insight tile.
+- Reduced-motion: renders all 4 states stacked, no sticky.
 
-- `ReviewDashboard`: wrap advanced/alpha chart blocks in a `React.lazy` + `Suspense`, so users on Standard tier never pay for `QuarterlyWinsLossesYoYChart`, `QuarterlyYearMatrixChart`, `BestWorstWindowChart`, `QuarterlyPerformanceCard`, `WinsByMonthChart`, `WinsByQuarterChart`, `ReturnPerTimeChart`, `PnLDistributionHistogram`, `RiskAdjustedRatiosSection`, `DashboardAdvancedLab` on mount.
-- Tab-based panels (Weekly / Monthly / Setups / Semi-Annual / Annual / Half-Year) — confirm only the active tab renders; convert any always-mounted ones to lazy.
-- Calendar `YearView` heavy per-day computation: only compute for the current visible year, memoize by `year + trades.length + lastId`.
+Acceptance:
+- No console errors, no layout shift on existing sections above/below.
+- All navbar anchor links still scroll to correct IDs.
+- Lighthouse mobile perf delta ≤ -3.
+- On mobile (<768px), stage collapses to a single-column non-sticky sequence (already handled by `useIsMobile`).
 
-### B. Memoization
+## Phase 2 — Trader Mind heatmap replacement (later)
+Swap the TraderMind rotator's screenshot with a scroll-driven heatmap (SVG grid, cells brighten by progress). Rotator data + captions untouched — only presentation layer swapped.
 
-- Add `React.memo` with a shallow-props check to chart components in `SimpleExtraCharts.tsx` (they receive `trades` array + primitives).
-- Hoist `tt` (tooltip style) and `MONTH_KEY`/`QUARTER_KEY` derivations already stable — verify no per-render allocations in hot paths.
-- In `ReviewDashboard`, memoize the `trades`-derived objects (`stats`, formatted arrays) once per `trades` reference change.
-- In `display-mode.tsx` `useEffectiveDisplayMode`, avoid unnecessary event broadcasts when the value hasn't changed.
+## Phase 3 — Exploded trade card (later)
+On the Journaling section, one card decomposes into 3 stacked layers (Broker / AI / Portfolio) as it enters the viewport.
 
-### C. Effect / listener hygiene
+## Phase 4 — Geometric R:R data objects (later)
+Replace static Edge/Risk stat tiles with `<DataObject>` — a polygon whose vertices scale with metric values (visual only; numbers unchanged).
 
-- Replace per-chart `useIsMobile` (5+ instances each adding `resize` listeners) with a single shared hook that dedupes listeners via a module-level subscriber.
-- `OrcaUXLayer` scroll progress listener → passive + `requestAnimationFrame` throttle to cut layout thrash.
+## Phase 5 — Old vs New contrast stage (later)
+New sticky stage before Final CTA: left column (spreadsheets, screenshots of chaos) fades out; right column (Orca dashboard) fades in as scroll progresses.
 
-### D. Dead-code removal
+## Rollout & rollback
+- Each phase is one PR-sized change to `Landing.tsx` (one section swap) plus additive files under `scrollytelling/`. Reverting = restore that section's original JSX block.
+- Feature flag not required; each stage is self-contained and behind reduced-motion fallback.
 
-- Search for exported-but-unused components and remove them (e.g. `_placeholder.tsx`, unused legacy chart wrappers if any). Only remove files whose imports do not resolve anywhere.
-- Remove commented-out blocks tagged "REMOVED" in `OrcaUXLayer` (live-clock block, etc.) that only contain a comment.
-
-### E. Small correctness/perf wins
-
-- Fix `fetchPriority` → `fetchpriority` on the Landing hero `<img>` (React 18 wants lowercase; error in console every mount).
-- Add `loading="lazy"` + `decoding="async"` to below-the-fold images that don't have it.
-- Ensure Recharts `ResponsiveContainer` isn't nested inside another `ResponsiveContainer` anywhere (double-observer cost).
-
-## What will NOT change
-
-- No visual redesigns, no feature removals, no theme changes.
-- No behavior change to R/$ auto-detect, calendar dots, share modal, macro banner, or any user-visible flow.
-- No backend / schema changes.
-- Bilingual + RTL + all themes untouched.
-
-## Verification
-
-- After each batch: `tsgo` typecheck + `bunx vitest run` for the display-mode / calendar tests already in the repo.
-- Playwright smoke: load `/` (dashboard) and `/calendar`, confirm no new console errors, screenshots match previous layout.
-- Manual pass through: dashboard tiers (Beginner/Standard/Alpha), Calendar Month/Year, Weekly Review tabs, mobile viewport.
-
-## Technical details
-
-- Lazy loading uses `React.lazy(() => import('./X'))` + `<Suspense fallback={null}>` so the chunk isn't downloaded until the gate opens.
-- Shared `useIsMobile` will live at `src/hooks/use-viewport.ts` as a subscriber-set pattern; the existing `use-mobile.tsx` stays as a thin re-export for back-compat so no imports break.
-- `React.memo` uses default shallow compare; `trades` array identity is already stable in `use-trades` (only replaced on real change), so shallow compare is correct.
-
-## Rollback
-
-Each batch is a self-contained commit; if a chart regresses visually, revert just that file.
+## Confirmation needed before I build
+1. Start with **Phase 1 (Execution Flow) inserted between Integrations and Feature Tabs** — yes/adjust?
+2. Any section you want to keep 100% untouched (e.g. Hero) even in later phases?
