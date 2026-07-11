@@ -825,7 +825,11 @@ const Landing: React.FC = () => {
           </div>
         </section>
 
+        {/* ───── 5b. TRADE CARD EXPLODE (scrollytelling · Phase 3) ───── */}
+        <TradeCardExplodeStage isRTL={isRTL} t={t} />
+
         {/* ───── 6. JOURNALING ───── */}
+
         <section id="journal" className="orca-section" style={{ background: 'var(--bg-2)' }}>
           <div className="max-w-7xl mx-auto px-5 sm:px-8">
             <SectionHeader
