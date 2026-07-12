@@ -8,7 +8,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
-import { ExecutionFlowStage, TraderMindHeatmapStage, TradeCardExplodeStage, RiskGeometryStage } from './landing/scrollytelling';
+import { ExecutionFlowStage, TraderMindHeatmapStage, TradeCardExplodeStage, RiskGeometryStage, FinaleStage } from './landing/scrollytelling';
 
 import dashboardMain from '@/assets/landing/dashboard_main.png';
 import journalEntry from '@/assets/landing/journal_entry.png';
@@ -1034,6 +1034,9 @@ const Landing: React.FC = () => {
 
         {/* Pricing section intentionally removed — all plans free during launch. */}
 
+
+        {/* ───── 12.5 · Scrollytelling Phase 5 — Finale ───── */}
+        <FinaleStage isRTL={isRTL} t={t} onCTA={goApp} />
 
         {/* ───── 13. FINAL CTA ───── */}
         <section className="orca-section orca-final">
