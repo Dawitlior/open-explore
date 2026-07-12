@@ -105,7 +105,7 @@ export const ExecutionFlowStage: React.FC<Props> = ({ isRTL, t }) => {
       style={{ paddingTop: 0, paddingBottom: 0, background: 'var(--bg-2)' }}
       aria-label={t('זרימת ביצוע', 'Execution flow')}
     >
-      <ScrollStage heightVh={2.4}>
+      <ScrollStage heightVh={1.7}>
         {({ progress, reduced, isMobile }) => {
           // Timeline line growth (hook must run unconditionally per render)
           // eslint-disable-next-line react-hooks/rules-of-hooks
