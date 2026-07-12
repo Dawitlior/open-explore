@@ -8,8 +8,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
-import { ExecutionFlowStage, TraderMindHeatmapStage, TradeCardExplodeStage, RiskGeometryStage, FinaleStage } from './landing/scrollytelling';
-
 import dashboardMain from '@/assets/landing/dashboard_main.png';
 import journalEntry from '@/assets/landing/journal_entry.png';
 import autoJournal from '@/assets/landing/auto_journal.png';
@@ -800,17 +798,6 @@ const Landing: React.FC = () => {
 
         <div className="orca-divider" />
 
-        {/* ───── 4b. EXECUTION FLOW (scrollytelling · Phase 1) ───── */}
-        <ExecutionFlowStage isRTL={isRTL} t={t} />
-
-        {/* ───── 4c. TRADER MIND HEATMAP (scrollytelling · Phase 2) ───── */}
-        <TraderMindHeatmapStage isRTL={isRTL} t={t} />
-
-        <div className="orca-divider" />
-
-
-
-
         {/* ───── 5. FEATURE TABS ───── */}
         <section id="features" className="orca-section">
           <div className="max-w-7xl mx-auto px-5 sm:px-8">
@@ -825,11 +812,7 @@ const Landing: React.FC = () => {
           </div>
         </section>
 
-        {/* ───── 5b. TRADE CARD EXPLODE (scrollytelling · Phase 3) ───── */}
-        <TradeCardExplodeStage isRTL={isRTL} t={t} />
-
         {/* ───── 6. JOURNALING ───── */}
-
         <section id="journal" className="orca-section" style={{ background: 'var(--bg-2)' }}>
           <div className="max-w-7xl mx-auto px-5 sm:px-8">
             <SectionHeader
@@ -892,12 +875,8 @@ const Landing: React.FC = () => {
           </div>
         </section>
 
-        {/* ───── 8.5 · Scrollytelling Phase 4 — Edge Geometry ───── */}
-        <RiskGeometryStage isRTL={isRTL} t={t} />
-
         {/* ───── 9. EDGE / RISK ───── */}
         <section className="orca-section">
-
           <div className="max-w-7xl mx-auto px-5 sm:px-8">
             <SectionHeader
               label="EDGE & RISK"
@@ -1034,9 +1013,6 @@ const Landing: React.FC = () => {
 
         {/* Pricing section intentionally removed — all plans free during launch. */}
 
-
-        {/* ───── 12.5 · Scrollytelling Phase 5 — Finale ───── */}
-        <FinaleStage isRTL={isRTL} t={t} onCTA={goApp} />
 
         {/* ───── 13. FINAL CTA ───── */}
         <section className="orca-section orca-final">
