@@ -274,7 +274,7 @@ export const TraderMindHeatmapStage: React.FC<Props> = ({ isRTL, t }) => {
       style={{ paddingTop: 0, paddingBottom: 0, background: 'var(--bg-2)' }}
       aria-label={t('מפת חום · תודעת הסוחר', 'Trader Mind heatmap')}
     >
-      <ScrollStage heightVh={2.6}>
+      <ScrollStage heightVh={1.8}>
         {({ progress, reduced, isMobile }) => {
           if (reduced || isMobile) {
             const size = 22;
