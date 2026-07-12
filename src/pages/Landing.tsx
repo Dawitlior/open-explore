@@ -8,7 +8,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
-import { ExecutionFlowStage, TraderMindHeatmapStage, TradeCardExplodeStage } from './landing/scrollytelling';
+import { ExecutionFlowStage, TraderMindHeatmapStage, TradeCardExplodeStage, RiskGeometryStage } from './landing/scrollytelling';
 
 import dashboardMain from '@/assets/landing/dashboard_main.png';
 import journalEntry from '@/assets/landing/journal_entry.png';
@@ -892,8 +892,12 @@ const Landing: React.FC = () => {
           </div>
         </section>
 
+        {/* ───── 8.5 · Scrollytelling Phase 4 — Edge Geometry ───── */}
+        <RiskGeometryStage isRTL={isRTL} t={t} />
+
         {/* ───── 9. EDGE / RISK ───── */}
         <section className="orca-section">
+
           <div className="max-w-7xl mx-auto px-5 sm:px-8">
             <SectionHeader
               label="EDGE & RISK"
