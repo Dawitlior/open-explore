@@ -173,7 +173,7 @@ export const TradeCardExplodeStage: React.FC<Props> = ({ isRTL, t }) => {
       style={{ paddingTop: 0, paddingBottom: 0 }}
       aria-label={t('פירוק עסקה לשכבות', 'Trade decomposition')}
     >
-      <ScrollStage heightVh={2.8}>
+      <ScrollStage heightVh={1.9}>
         {({ progress, reduced, isMobile }) => {
           // Focused layer index derived from progress bands.
           // React state kept in sync via a motion value listener.
