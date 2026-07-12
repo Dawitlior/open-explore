@@ -892,8 +892,12 @@ const Landing: React.FC = () => {
           </div>
         </section>
 
+        {/* ───── 8.5 · Scrollytelling Phase 4 — Edge Geometry ───── */}
+        <RiskGeometryStage isRTL={isRTL} t={t} />
+
         {/* ───── 9. EDGE / RISK ───── */}
         <section className="orca-section">
+
           <div className="max-w-7xl mx-auto px-5 sm:px-8">
             <SectionHeader
               label="EDGE & RISK"
