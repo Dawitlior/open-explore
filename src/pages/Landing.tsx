@@ -1035,6 +1035,9 @@ const Landing: React.FC = () => {
         {/* Pricing section intentionally removed — all plans free during launch. */}
 
 
+        {/* ───── 12.5 · Scrollytelling Phase 5 — Finale ───── */}
+        <FinaleStage isRTL={isRTL} t={t} onCTA={goApp} />
+
         {/* ───── 13. FINAL CTA ───── */}
         <section className="orca-section orca-final">
           <div className="max-w-4xl mx-auto px-5 sm:px-8">
