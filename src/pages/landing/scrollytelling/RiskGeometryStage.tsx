@@ -46,7 +46,7 @@ export const RiskGeometryStage: React.FC<Props> = ({ isRTL, t }) => {
 
   return (
     <section aria-labelledby="edge-geometry-heading" style={{ background: 'transparent' }}>
-      <ScrollStage heightVh={2.4}>
+      <ScrollStage heightVh={1.8}>
         {({ progress, reduced, isMobile }) => (
           <StageContent
             axes={axes}
