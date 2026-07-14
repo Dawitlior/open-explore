@@ -48,24 +48,6 @@ function metaToProvider(m: BrokerMeta): ProviderMeta {
   };
 }
 
-interface CsvBrokerMeta {
-  id: string;
-  name: string;
-  tagline: { he: string; en: string };
-  accent: string;
-  glyph: string;
-}
-
-function metaToCsvBroker(m: BrokerMeta): CsvBrokerMeta {
-  return {
-    id: m.id,
-    name: m.name,
-    tagline: m.tagline,
-    accent: m.accent,
-    glyph: m.glyph ?? m.name.slice(0, 2).toUpperCase(),
-  };
-}
-
 const PROVIDERS: ProviderMeta[] = [
   ...BrokerRegistry.apiCapable()
     .filter(a => !a.meta.hidden && a.meta.supportsSync)
