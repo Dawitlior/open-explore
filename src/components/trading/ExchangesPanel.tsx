@@ -57,9 +57,6 @@ const PROVIDERS: ProviderMeta[] = [
   // appended here as { enabled: false } entries when needed.
 ];
 
-const CSV_BROKERS: CsvBrokerMeta[] = BrokerRegistry.fileCapable()
-  .filter(a => !a.meta.hidden && a.meta.kind === 'file')
-  .map(a => metaToCsvBroker(a.meta));
 
 
 interface ConnectionRow {
