@@ -90,7 +90,7 @@ export function ExchangesPanel({ T, isRTL }: Props) {
   const [rows, setRows] = useState<ConnectionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [openProvider, setOpenProvider] = useState<ProviderId | null>(null);
-  const [csvBrokerId, setCsvBrokerId] = useState<string | null>(null);
+  
 
   const refresh = async () => {
     if (!user) return;
