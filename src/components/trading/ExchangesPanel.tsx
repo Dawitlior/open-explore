@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Plug, Shield, ShieldCheck, X, Trash2, Sparkles, Lock, ChevronDown, BookOpen, AlertTriangle, RefreshCw, FileSpreadsheet, UploadCloud, CheckCircle2, Loader2, Users } from 'lucide-react';
+import { Plug, Shield, ShieldCheck, X, Trash2, Sparkles, Lock, ChevronDown, BookOpen, AlertTriangle, RefreshCw, CheckCircle2, Loader2, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
