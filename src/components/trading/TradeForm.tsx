@@ -371,11 +371,15 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
         : 'This trade breaches a risk limit. Tick the checkbox below to save anyway.']);
       return;
     }
+    const manualPnlNum = parseFloat(manualPnlRaw);
+    const usingManual = manualPnlEnabled && Number.isFinite(manualPnlNum);
     onSave({
       date: form.date, day: form.day, coin: form.coin, direction: form.direction, orderType: form.orderType,
       entry: form.entry, stopLoss: form.stopLoss, exit: form.exit, returnR, winLoss, risk: form.risk,
       expectedLoss, pnl, deviation, positionSize: isFutures ? contracts : (form.positionSize || autoCalcPositionSize), leverage: form.leverage,
       riskPct: form.riskPct, rules: form.rules, comments: form.comments,
+      manual_r_multiple: usingManual && form.risk > 0 ? +(manualPnlNum / form.risk).toFixed(4) : null,
+      manualR: usingManual && form.risk > 0 ? +(manualPnlNum / form.risk).toFixed(4) : null,
     } as Omit<Trade, 'id' | 'balance'>);
   };
 
