@@ -79,6 +79,11 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
   const [sizeAnchor, setSizeAnchor] = useState<SizeAnchor>('risk');
   const [notionalInput, setNotionalInput] = useState<number>(0);
   const [unitsInput, setUnitsInput] = useState<number>(trade?.positionSize || 0);
+  // Raw string mirrors so users can type "0", "0.", "0.71" freely without
+  // the numeric coercion swallowing leading zeros or intermediate dots.
+  const [riskRaw, setRiskRaw] = useState<string>(trade?.risk ? String(trade.risk) : '');
+  const [notionalRaw, setNotionalRaw] = useState<string>('');
+  const [unitsRaw, setUnitsRaw] = useState<string>(trade?.positionSize ? String(trade.positionSize) : '');
 
   const [form, setForm] = useState({
     date: trade?.date || new Date().toISOString().slice(0, 16),
@@ -753,23 +758,38 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
 
                   {/* Anchor input */}
                   {sizeAnchor === 'risk' && (
-                    <input type="number" step="any" inputMode="decimal"
-                      value={form.risk || ''}
-                      onChange={e => handleRiskChange(+e.target.value)}
+                    <input type="text" inputMode="decimal"
+                      value={riskRaw}
+                      onChange={e => {
+                        const v = e.target.value.replace(',', '.');
+                        if (v !== '' && !/^\d*\.?\d*$/.test(v)) return;
+                        setRiskRaw(v);
+                        handleRiskChange(v === '' || v === '.' ? 0 : +v);
+                      }}
                       placeholder={isRTL ? 'סכום בדולרים' : 'Amount in $'}
                       style={bigInput} />
                   )}
                   {sizeAnchor === 'notional' && (
-                    <input type="number" step="any" inputMode="decimal"
-                      value={notionalInput || ''}
-                      onChange={e => setNotionalInput(+e.target.value || 0)}
+                    <input type="text" inputMode="decimal"
+                      value={notionalRaw}
+                      onChange={e => {
+                        const v = e.target.value.replace(',', '.');
+                        if (v !== '' && !/^\d*\.?\d*$/.test(v)) return;
+                        setNotionalRaw(v);
+                        setNotionalInput(v === '' || v === '.' ? 0 : +v);
+                      }}
                       placeholder={isRTL ? 'גודל פוזיציה בדולרים (לדוגמה 1890)' : 'Position size in $ (e.g. 1890)'}
                       style={bigInput} />
                   )}
                   {sizeAnchor === 'units' && (
-                    <input type="number" step="any" inputMode="decimal"
-                      value={unitsInput || ''}
-                      onChange={e => setUnitsInput(+e.target.value || 0)}
+                    <input type="text" inputMode="decimal"
+                      value={unitsRaw}
+                      onChange={e => {
+                        const v = e.target.value.replace(',', '.');
+                        if (v !== '' && !/^\d*\.?\d*$/.test(v)) return;
+                        setUnitsRaw(v);
+                        setUnitsInput(v === '' || v === '.' ? 0 : +v);
+                      }}
                       placeholder={isRTL ? 'כמות יחידות (לדוגמה 0.0315)' : 'Quantity in units (e.g. 0.0315)'}
                       style={bigInput} />
                   )}
