@@ -106,6 +106,12 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
   });
   const [errors, setErrors] = useState<string[]>([]);
   const [overrideLimit, setOverrideLimit] = useState(false);
+  // Manual P&L override — when the auto calculation is off, the user can
+  // just type the actual $ profit/loss they got from the broker.
+  const [manualPnlRaw, setManualPnlRaw] = useState<string>(
+    trade?.pnl != null && trade.pnl !== 0 ? String(trade.pnl) : ''
+  );
+  const [manualPnlEnabled, setManualPnlEnabled] = useState<boolean>(!!manualPnlRaw);
 
   // ── Futures tick economics ────────────────────────────────────────
   const tickInfo = assetCategory === 'Futures' ? TICK_VALUES[form.coin] : undefined;
