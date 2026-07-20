@@ -79,6 +79,11 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
   const [sizeAnchor, setSizeAnchor] = useState<SizeAnchor>('risk');
   const [notionalInput, setNotionalInput] = useState<number>(0);
   const [unitsInput, setUnitsInput] = useState<number>(trade?.positionSize || 0);
+  // Raw string mirrors so users can type "0", "0.", "0.71" freely without
+  // the numeric coercion swallowing leading zeros or intermediate dots.
+  const [riskRaw, setRiskRaw] = useState<string>(trade?.risk ? String(trade.risk) : '');
+  const [notionalRaw, setNotionalRaw] = useState<string>('');
+  const [unitsRaw, setUnitsRaw] = useState<string>(trade?.positionSize ? String(trade.positionSize) : '');
 
   const [form, setForm] = useState({
     date: trade?.date || new Date().toISOString().slice(0, 16),
