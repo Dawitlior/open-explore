@@ -258,12 +258,17 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
     if (!entry || !stopLoss || !exit) return { returnR: 0, pnl: 0, winLoss: 'Break Even' as const, expectedLoss: 0, deviation: 0 };
     const riskPerUnit = Math.abs(entry - stopLoss);
     const actualMove = direction === 'Long' ? exit - entry : entry - exit;
-    const returnR = riskPerUnit > 0 ? actualMove / riskPerUnit : 0;
+    const autoReturnR = riskPerUnit > 0 ? actualMove / riskPerUnit : 0;
     const expectedLoss = risk * 0.975;
     // Futures: P&L = contracts × price-move × $/point. Otherwise: R × $ risked.
-    const pnl = isFutures
+    const autoPnl = isFutures
       ? contracts * actualMove * dollarPerPoint
-      : returnR * risk;
+      : autoReturnR * risk;
+    // Manual override wins if the user typed a value.
+    const manualPnlNum = parseFloat(manualPnlRaw);
+    const useManual = manualPnlEnabled && Number.isFinite(manualPnlNum);
+    const pnl = useManual ? manualPnlNum : autoPnl;
+    const returnR = useManual && risk > 0 ? manualPnlNum / risk : autoReturnR;
     const winLoss: Trade['winLoss'] = pnl > 0.05 ? 'Win' : pnl < -0.05 ? 'Loss' : 'Break Even';
     const deviation = returnR < 0 ? Math.max(0, Math.abs(returnR) - 1) : 0;
     return { returnR, pnl, winLoss, expectedLoss, deviation };
