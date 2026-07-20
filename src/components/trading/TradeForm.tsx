@@ -106,6 +106,12 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
   });
   const [errors, setErrors] = useState<string[]>([]);
   const [overrideLimit, setOverrideLimit] = useState(false);
+  // Manual P&L override — when the auto calculation is off, the user can
+  // just type the actual $ profit/loss they got from the broker.
+  const [manualPnlRaw, setManualPnlRaw] = useState<string>(
+    trade?.pnl != null && trade.pnl !== 0 ? String(trade.pnl) : ''
+  );
+  const [manualPnlEnabled, setManualPnlEnabled] = useState<boolean>(!!manualPnlRaw);
 
   // ── Futures tick economics ────────────────────────────────────────
   const tickInfo = assetCategory === 'Futures' ? TICK_VALUES[form.coin] : undefined;
@@ -252,12 +258,17 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
     if (!entry || !stopLoss || !exit) return { returnR: 0, pnl: 0, winLoss: 'Break Even' as const, expectedLoss: 0, deviation: 0 };
     const riskPerUnit = Math.abs(entry - stopLoss);
     const actualMove = direction === 'Long' ? exit - entry : entry - exit;
-    const returnR = riskPerUnit > 0 ? actualMove / riskPerUnit : 0;
+    const autoReturnR = riskPerUnit > 0 ? actualMove / riskPerUnit : 0;
     const expectedLoss = risk * 0.975;
     // Futures: P&L = contracts × price-move × $/point. Otherwise: R × $ risked.
-    const pnl = isFutures
+    const autoPnl = isFutures
       ? contracts * actualMove * dollarPerPoint
-      : returnR * risk;
+      : autoReturnR * risk;
+    // Manual override wins if the user typed a value.
+    const manualPnlNum = parseFloat(manualPnlRaw);
+    const useManual = manualPnlEnabled && Number.isFinite(manualPnlNum);
+    const pnl = useManual ? manualPnlNum : autoPnl;
+    const returnR = useManual && risk > 0 ? manualPnlNum / risk : autoReturnR;
     const winLoss: Trade['winLoss'] = pnl > 0.05 ? 'Win' : pnl < -0.05 ? 'Loss' : 'Break Even';
     const deviation = returnR < 0 ? Math.max(0, Math.abs(returnR) - 1) : 0;
     return { returnR, pnl, winLoss, expectedLoss, deviation };
@@ -360,11 +371,15 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
         : 'This trade breaches a risk limit. Tick the checkbox below to save anyway.']);
       return;
     }
+    const manualPnlNum = parseFloat(manualPnlRaw);
+    const usingManual = manualPnlEnabled && Number.isFinite(manualPnlNum);
     onSave({
       date: form.date, day: form.day, coin: form.coin, direction: form.direction, orderType: form.orderType,
       entry: form.entry, stopLoss: form.stopLoss, exit: form.exit, returnR, winLoss, risk: form.risk,
       expectedLoss, pnl, deviation, positionSize: isFutures ? contracts : (form.positionSize || autoCalcPositionSize), leverage: form.leverage,
       riskPct: form.riskPct, rules: form.rules, comments: form.comments,
+      manual_r_multiple: usingManual && form.risk > 0 ? +(manualPnlNum / form.risk).toFixed(4) : null,
+      manualR: usingManual && form.risk > 0 ? +(manualPnlNum / form.risk).toFixed(4) : null,
     } as Omit<Trade, 'id' | 'balance'>);
   };
 
@@ -911,6 +926,47 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                   </div>
                 </GlassCard>
               )}
+
+              {!isOpenPosition && (
+                <GlassCard T={T} style={{ marginBottom: 18, padding: isMobile ? 16 : 20, border: `1.5px dashed ${manualPnlEnabled ? T.accent.cyan : T.border.medium}` }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: manualPnlEnabled ? 12 : 0 }}>
+                    <input
+                      type="checkbox"
+                      checked={manualPnlEnabled}
+                      onChange={e => setManualPnlEnabled(e.target.checked)}
+                      style={{ accentColor: T.accent.cyan, width: 18, height: 18 }}
+                    />
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: T.text.primary }}>
+                        {isRTL ? '✍️ מלא ידנית את הרווח/הפסד בפועל' : '✍️ Enter actual P&L manually'}
+                      </div>
+                      <div style={{ fontSize: 11, color: T.text.muted, marginTop: 2 }}>
+                        {isRTL
+                          ? 'עדיף כשהחישוב האוטומטי לא תואם את מה שקיבלת בפועל מהברוקר.'
+                          : 'Use when auto-calc doesn\'t match what your broker actually paid.'}
+                      </div>
+                    </div>
+                  </label>
+                  {manualPnlEnabled && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: 18, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>$</span>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={manualPnlRaw}
+                        onChange={e => {
+                          const v = e.target.value.replace(',', '.');
+                          if (v !== '' && v !== '-' && !/^-?\d*\.?\d*$/.test(v)) return;
+                          setManualPnlRaw(v);
+                        }}
+                        placeholder={isRTL ? 'לדוגמה 142.50 או -78.20' : 'e.g. 142.50 or -78.20'}
+                        style={{ ...bigInput, flex: 1, fontSize: 18, fontWeight: 700, textAlign: isRTL ? 'right' : 'left' }}
+                      />
+                    </div>
+                  )}
+                </GlassCard>
+              )}
+
 
               {!isOpenPosition && limitProjection?.newlyBreached && (
                 <div style={{
