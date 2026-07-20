@@ -927,6 +927,47 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                 </GlassCard>
               )}
 
+              {!isOpenPosition && (
+                <GlassCard T={T} style={{ marginBottom: 18, padding: isMobile ? 16 : 20, border: `1.5px dashed ${manualPnlEnabled ? T.accent.cyan : T.border.medium}` }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: manualPnlEnabled ? 12 : 0 }}>
+                    <input
+                      type="checkbox"
+                      checked={manualPnlEnabled}
+                      onChange={e => setManualPnlEnabled(e.target.checked)}
+                      style={{ accentColor: T.accent.cyan, width: 18, height: 18 }}
+                    />
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: T.text.primary }}>
+                        {isRTL ? '✍️ מלא ידנית את הרווח/הפסד בפועל' : '✍️ Enter actual P&L manually'}
+                      </div>
+                      <div style={{ fontSize: 11, color: T.text.muted, marginTop: 2 }}>
+                        {isRTL
+                          ? 'עדיף כשהחישוב האוטומטי לא תואם את מה שקיבלת בפועל מהברוקר.'
+                          : 'Use when auto-calc doesn\'t match what your broker actually paid.'}
+                      </div>
+                    </div>
+                  </label>
+                  {manualPnlEnabled && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: 18, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>$</span>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={manualPnlRaw}
+                        onChange={e => {
+                          const v = e.target.value.replace(',', '.');
+                          if (v !== '' && v !== '-' && !/^-?\d*\.?\d*$/.test(v)) return;
+                          setManualPnlRaw(v);
+                        }}
+                        placeholder={isRTL ? 'לדוגמה 142.50 או -78.20' : 'e.g. 142.50 or -78.20'}
+                        style={{ ...bigInput, flex: 1, fontSize: 18, fontWeight: 700, textAlign: isRTL ? 'right' : 'left' }}
+                      />
+                    </div>
+                  )}
+                </GlassCard>
+              )}
+
+
               {!isOpenPosition && limitProjection?.newlyBreached && (
                 <div style={{
                   padding: 14, marginBottom: 14,
