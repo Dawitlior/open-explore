@@ -1,4 +1,5 @@
 import type { ThemeId } from '@/hooks/use-settings';
+import { syncNeonPalette } from '@/lib/neon-palette';
 // ThemeId now: 'midnight' | 'blue' | 'platinum' | 'graphite'
 
 export interface ChartTokens {
