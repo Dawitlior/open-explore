@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { backtestDraftStore } from './backtest-draft-store';
 import { lineToolToDraft } from './tv-mapping';
+import { isLightScheme } from '@/lib/neon-palette';
 
 /**
  * BacktestChartPanel
@@ -41,9 +42,19 @@ function loadTvScript(): Promise<void> {
   });
 }
 
-const BL = '#2563eb', BG3 = '#161c26', BRD = '#1e2736', T1 = '#e8ecf1', T2 = '#8896ab', T3 = '#556277', G = '#0ecb81', RD = '#f6465d';
+const L = () => isLightScheme();
+const BL = '#2563eb';
+const px = {
+  get BG3() { return L() ? '#F7F9FC' : '#161c26'; },
+  get BRD() { return L() ? '#E2E8F0' : '#1e2736'; },
+  get T1() { return L() ? '#0F172A' : '#e8ecf1'; },
+  get T2() { return L() ? '#475569' : '#8896ab'; },
+  get T3() { return L() ? '#64748B' : '#556277'; },
+  get G() { return L() ? '#059669' : '#0ecb81'; },
+  get RD() { return L() ? '#DC2626' : '#f6465d'; },
+};
 const inp: React.CSSProperties = {
-  background: '#10141b', border: `1px solid ${BRD}`, borderRadius: 6,
+  background: L() ? '#FFFFFF' : '#10141b', border: `1px solid ${px.BRD}`, borderRadius: 6,
   color: T1, padding: '6px 8px', fontSize: 12, width: '100%', direction: 'ltr',
 };
 
