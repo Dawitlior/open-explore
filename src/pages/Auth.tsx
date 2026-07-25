@@ -1,9 +1,10 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useNavigate, Navigate, useLocation } from 'react-router-dom';
-import { Eye, EyeOff, ArrowRight, Lock, Mail, User, Languages, ShieldCheck, Sparkles, LineChart, Database } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
+import { Languages, ShieldCheck, Sparkles, LineChart, Database, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { lovable } from '@/integrations/lovable/index';
 import { useAuth } from '@/hooks/use-auth';
-import { evaluatePassword, isValidEmail, translateAuthError } from '@/lib/auth-utils';
+import { translateAuthError } from '@/lib/auth-utils';
 import { toast } from 'sonner';
 
 const ORCA_LOGO_SRC = '/orca-logo.png';
@@ -20,7 +21,6 @@ const TEXT_MUTED = '#9a9381';
 const BORDER = 'rgba(212,175,90,0.22)';
 const BORDER_SOFT = 'rgba(212,175,90,0.12)';
 
-type Mode = 'sign-in' | 'sign-up';
 type Lang = 'he' | 'en';
 
 const LANG_KEY = 'orca:lang-cache';
@@ -39,50 +39,26 @@ async function logConsent(userId: string) {
   } catch { /* non-blocking */ }
 }
 
-
 const COPY = {
   he: {
     brand: 'OrcaInvestment',
     tagline: 'חיבור לבורסאות · העלאת קבצים אוניברסלית · תובנות AI',
-    welcomeBack: 'ברוך/ה הבא/ה',
-    getStarted: 'הצטרפות',
-    signIn: 'התחברות לחשבון',
-    signUp: 'יצירת חשבון חדש',
-    signInSub: 'המשך/י לטרמינל המסחר שלך',
-    signUpSub: 'הצטרף/י לקהילת OrcaInvestment',
+    welcome: 'ברוך/ה הבא/ה',
+    title: 'כניסה לטרמינל',
+    sub: 'ההרשמה והכניסה מתבצעות דרך חשבון Google — בלי סיסמאות.',
     continueGoogle: 'המשך/י עם Google',
-    or: 'או',
-    displayName: 'שם תצוגה',
-    email: 'אימייל',
-    password: 'סיסמה',
-    passwordHint: 'סיסמה (לפחות 6 תווים)',
-    submitSignIn: 'כניסה לפלטפורמה',
-    submitSignUp: 'יצירת חשבון',
-    forgot: 'שכחת סיסמה?',
-    noAccount: 'אין לך חשבון?',
-    haveAccount: 'כבר רשום/ה?',
-    signUpCta: 'הרשמה',
-    signInCta: 'התחברות',
+    connecting: 'מתחבר…',
+    retry: 'נסה/י שוב',
+    noPasswords: 'אין סיסמאות לזכור, אין מיילים לאמת. חשבון Google בלבד.',
     feature1: 'חיבור מרובה לבורסאות דרך API',
     feature2: 'העלאת קבצים אוניברסלית — תומך במגוון פורמטים',
     feature3: 'תובנות AI מהמסחר שלך',
     feature4: 'אחסון מוצפן פר-משתמש',
-    invalidEmail: 'כתובת האימייל לא תקינה',
-    weakPw: 'הסיסמה חייבת להכיל לפחות 6 תווים',
-    emailSent: 'בדוק/י את תיבת הדואר (וגם את תיקיית הספאם) כדי לאמת את כתובת האימייל.',
-    emailSentTitle: 'שלחנו לך מייל אימות',
-    emailSentBody: 'שלחנו קישור אימות אל',
-    emailSentSpamHint: 'אם המייל לא הגיע תוך דקה, בדק/י את תיקיית הספאם או הקידום מכירות.',
-    emailSentResend: 'שליחה מחדש',
-    resetSent: 'שלחנו לך קישור לאיפוס הסיסמה',
-    needEmail: 'הכנס/י אימייל תקין כדי לאפס סיסמה',
-    notReg: 'כתובת אימייל זו לא רשומה במערכת',
-    verified: 'האימייל אושר — אפשר להתחבר עכשיו',
-    consentPrefix: 'אני מאשר/ת את',
+    consentPrefix: 'בכניסה אני מאשר/ת את',
     consentTerms: 'תנאי השימוש',
     consentAnd: 'ואת',
     consentPrivacy: 'מדיניות הפרטיות',
-    consentRequired: 'יש לאשר את תנאי השימוש ומדיניות הפרטיות כדי להמשיך',
+    failed: 'ההתחברות ל-Google נכשלה. נסה/י שוב.',
     typewriter: [
       'חיבור מרובה לבורסאות דרך API.',
       'העלאת קבצים אוניברסלית בכל פורמט.',
@@ -93,45 +69,22 @@ const COPY = {
   en: {
     brand: 'OrcaInvestment',
     tagline: 'Multi-exchange API · Universal file ingestion · AI insights',
-    welcomeBack: 'Welcome back',
-    getStarted: 'Get started',
-    signIn: 'Sign in to your account',
-    signUp: 'Create a new account',
-    signInSub: 'Continue to your trading terminal',
-    signUpSub: 'Join the OrcaInvestment community',
+    welcome: 'Welcome',
+    title: 'Sign in to the terminal',
+    sub: 'Sign-up and sign-in run through your Google account — no passwords.',
     continueGoogle: 'Continue with Google',
-    or: 'or',
-    displayName: 'Display name',
-    email: 'Email',
-    password: 'Password',
-    passwordHint: 'Password (at least 6 characters)',
-    submitSignIn: 'Sign in',
-    submitSignUp: 'Create account',
-    forgot: 'Forgot password?',
-    noAccount: "Don't have an account?",
-    haveAccount: 'Already registered?',
-    signUpCta: 'Sign up',
-    signInCta: 'Sign in',
+    connecting: 'Connecting…',
+    retry: 'Try again',
+    noPasswords: 'No passwords to remember, no emails to verify. Google only.',
     feature1: 'Connect multiple exchanges via API',
     feature2: 'Universal file uploader — supports many formats',
     feature3: 'AI insights from your own trades',
     feature4: 'Encrypted per-user cloud storage',
-    invalidEmail: 'Invalid email address',
-    weakPw: 'Password must be at least 6 characters',
-    emailSent: 'Check your inbox (and your spam folder) to verify your email address.',
-    emailSentTitle: 'Verification email sent',
-    emailSentBody: 'We sent a verification link to',
-    emailSentSpamHint: 'If you don\'t see it within a minute, check your Spam or Promotions folder.',
-    emailSentResend: 'Resend',
-    resetSent: 'We sent you a password reset link',
-    needEmail: 'Enter a valid email to reset your password',
-    notReg: 'This email is not registered',
-    verified: 'Email verified — you can sign in now',
-    consentPrefix: 'I agree to the',
+    consentPrefix: 'By continuing you agree to the',
     consentTerms: 'Terms of Service',
     consentAnd: 'and the',
     consentPrivacy: 'Privacy Policy',
-    consentRequired: 'You must agree to the Terms of Service and Privacy Policy to continue',
+    failed: 'Google sign-in failed. Please try again.',
     typewriter: [
       'Connect multiple exchanges via API.',
       'Universal file uploader for every format.',
@@ -186,20 +139,21 @@ function useTypewriter(phrases: readonly string[], opts?: { type?: number; erase
   return text;
 }
 
+const GoogleMark = ({ size = 20 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 48 48" aria-hidden="true">
+    <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z" />
+    <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.4 6.3 14.7z" />
+    <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.3 35.4 26.8 36 24 36c-5.3 0-9.7-3.3-11.3-8l-6.5 5C9.5 39.5 16.2 44 24 44z" />
+    <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.6l6.2 5.2c-.4.4 6.6-4.8 6.6-14.8 0-1.3-.1-2.3-.4-3.5z" />
+  </svg>
+);
+
 export default function AuthPage() {
-  const navigate = useNavigate();
   const location = useLocation();
   const { session, loading } = useAuth();
   const [lang, setLang] = useState<Lang>(() => readLang());
-  const [mode, setMode] = useState<Mode>('sign-in');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [consent, setConsent] = useState(false);
-  const [signupNotice, setSignupNotice] = useState<string | null>(null);
-  const [resending, setResending] = useState(false);
+  const [failed, setFailed] = useState(false);
   const [idleGate, setIdleGate] = useState(() => {
     if (typeof window === 'undefined') return false;
     return new URLSearchParams(window.location.search).get('idle') === '1';
@@ -209,21 +163,19 @@ export default function AuthPage() {
   const typed = useTypewriter(c.typewriter);
 
   useEffect(() => {
-    document.title = `${mode === 'sign-in' ? c.signIn : c.signUp} · ${c.brand}`;
-  }, [mode, lang, c]);
+    document.title = `${c.title} · ${c.brand}`;
+  }, [lang, c]);
 
-  const strength = useMemo(() => evaluatePassword(password), [password]);
   const redirectTo = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || '/';
 
   useEffect(() => {
     const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
     const search = new URLSearchParams(window.location.search);
     const error = hash.get('error_description') || search.get('error_description');
-    if (error) toast.error(translateAuthError(decodeURIComponent(error)));
-    if (search.get('verified') === '1') toast.success(c.verified);
-  }, []); // eslint-disable-line
+    if (error) { toast.error(translateAuthError(decodeURIComponent(error))); setFailed(true); }
+  }, []);
 
-  // After OAuth redirect lands back with a session, flush any pending consent record.
+  // After OAuth lands back with a session, flush any pending consent record.
   useEffect(() => {
     if (loading || !session?.user?.id) return;
     try {
@@ -243,90 +195,25 @@ export default function AuthPage() {
     writeAuthLangIntent(next);
   };
 
-  const handleEmailSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const cleanEmail = email.trim();
-    if (!consent) { toast.error(c.consentRequired); return; }
-    if (!isValidEmail(cleanEmail)) { toast.error(c.invalidEmail); return; }
-    if (mode === 'sign-up' && password.length < 6) { toast.error(c.weakPw); return; }
-    setBusy(true);
-    try {
-      if (mode === 'sign-up') {
-        const { data, error } = await supabase.auth.signUp({
-          email: cleanEmail, password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/auth?verified=1`,
-            data: { display_name: displayName.trim() || cleanEmail.split('@')[0] },
-          },
-        });
-        if (error) throw error;
-        if (data.user?.id && data.session) await logConsent(data.user.id);
-        else try { localStorage.setItem(PENDING_CONSENT_KEY, '1'); } catch { /* noop */ }
-        toast.success(c.emailSent);
-        setSignupNotice(cleanEmail);
-      } else {
-        const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
-        if (error) throw error;
-        if (data.user?.id) await logConsent(data.user.id);
-        navigate(redirectTo, { replace: true });
-      }
-    } catch (err) {
-      toast.error(translateAuthError(err instanceof Error ? err.message : 'Unknown error'));
-    } finally { setBusy(false); }
-  };
-
   const handleGoogle = async () => {
-    if (!consent) { toast.error(c.consentRequired); return; }
     setBusy(true);
+    setFailed(false);
     writeLang(lang);
     writeAuthLangIntent(lang);
+    try { localStorage.setItem(PENDING_CONSENT_KEY, '1'); } catch { /* noop */ }
     try {
-      try { localStorage.setItem(PENDING_CONSENT_KEY, '1'); } catch { /* noop */ }
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: `${window.location.origin}/auth`, queryParams: { prompt: 'select_account' } },
+      const result = await lovable.auth.signInWithOAuth('google', {
+        redirect_uri: window.location.origin,
+        extraParams: { prompt: 'select_account' },
       });
-      if (error) throw error;
+      if (result?.error) throw result.error;
+      if (result?.redirected) return; // browser navigates away
+      // Session already set by the helper — the guard above will redirect.
     } catch (err) {
-      toast.error(translateAuthError(err instanceof Error ? err.message : 'Google sign-in failed'));
+      toast.error(translateAuthError(err instanceof Error ? err.message : c.failed));
+      setFailed(true);
       setBusy(false);
     }
-  };
-
-  const handleForgotPassword = async () => {
-    const cleanEmail = email.trim();
-    if (!isValidEmail(cleanEmail)) { toast.error(c.needEmail); return; }
-    setBusy(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('request-password-reset', {
-        body: { email: cleanEmail, redirectTo: `${window.location.origin}/reset-password` },
-      });
-      if (error || !data?.ok) {
-        const code = data?.error;
-        if (code === 'not_registered') { toast.error(c.notReg); return; }
-        if (code === 'invalid_email') { toast.error(c.invalidEmail); return; }
-        throw new Error(code || error?.message || 'reset_failed');
-      }
-      toast.success(c.resetSent);
-    } catch (err) {
-      toast.error(translateAuthError(err instanceof Error ? err.message : 'Password reset failed'));
-    } finally { setBusy(false); }
-  };
-
-  const handleResendVerification = async () => {
-    if (!signupNotice) return;
-    setResending(true);
-    try {
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email: signupNotice,
-        options: { emailRedirectTo: `${window.location.origin}/auth?verified=1` },
-      });
-      if (error) throw error;
-      toast.success(c.emailSent);
-    } catch (err) {
-      toast.error(translateAuthError(err instanceof Error ? err.message : 'Resend failed'));
-    } finally { setResending(false); }
   };
 
   const featureList = [
@@ -353,9 +240,14 @@ export default function AuthPage() {
         @keyframes orca-auth-rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes orca-caret-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
         @keyframes orca-aurora-drift { 0% { transform: translate(0,0); } 50% { transform: translate(-2%, 2%); } 100% { transform: translate(0,0); } }
+        @keyframes orca-spin { to { transform: rotate(360deg); } }
         .orca-caret { display:inline-block; width:2px; height:0.95em; background:${GOLD_BRIGHT}; margin-inline-start:4px; vertical-align:-2px; animation: orca-caret-blink 1s steps(1) infinite; box-shadow: 0 0 8px rgba(240,215,140,0.6); }
         .orca-auth-grid { display:grid; grid-template-columns: 1fr; min-height:100dvh; }
         @media (min-width: 980px) { .orca-auth-grid { grid-template-columns: 1.05fr 1fr; } }
+        .orca-google-btn { transition: transform .16s ease, box-shadow .16s ease, filter .16s ease; }
+        .orca-google-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 18px 40px rgba(212,175,90,0.32); }
+        .orca-google-btn:active:not(:disabled) { transform: translateY(0); }
+        .orca-spin { animation: orca-spin 0.9s linear infinite; }
       `}</style>
 
       {/* Gold aurora — global */}
@@ -379,7 +271,7 @@ export default function AuthPage() {
       <button
         onClick={toggleLang}
         style={{
-          position: 'absolute', top: 20, insetInlineEnd: 20, zIndex: 5,
+          position: 'absolute', top: 'max(20px, env(safe-area-inset-top))', insetInlineEnd: 20, zIndex: 5,
           display: 'inline-flex', alignItems: 'center', gap: 6,
           padding: '8px 12px', borderRadius: 999,
           background: 'rgba(15,15,18,0.75)', border: `1px solid ${BORDER}`,
@@ -402,9 +294,7 @@ export default function AuthPage() {
             flexDirection: 'column',
             justifyContent: 'flex-start',
             gap: 'clamp(28px, 4vw, 56px)',
-            background: `
-              linear-gradient(${isRTL ? '270deg' : '90deg'}, ${INK_3} 0%, ${INK_2} 60%, ${INK} 100%)
-            `,
+            background: `linear-gradient(${isRTL ? '270deg' : '90deg'}, ${INK_3} 0%, ${INK_2} 60%, ${INK} 100%)`,
             borderInlineEnd: `1px solid ${BORDER_SOFT}`,
           }}
           className="orca-auth-aside"
@@ -423,10 +313,7 @@ export default function AuthPage() {
 
           {/* Typewriter hero */}
           <div style={{ display: 'grid', gap: 22, maxWidth: 520 }}>
-            <div style={{
-              fontSize: 10, letterSpacing: '0.32em', color: GOLD, fontWeight: 700,
-              textTransform: 'uppercase',
-            }}>
+            <div style={{ fontSize: 10, letterSpacing: '0.32em', color: GOLD, fontWeight: 700, textTransform: 'uppercase' }}>
               {c.tagline}
             </div>
             <h2 style={{
@@ -463,13 +350,13 @@ export default function AuthPage() {
               ))}
             </ul>
           </div>
-
         </aside>
 
-        {/* ── RIGHT COLUMN — Form ── */}
+        {/* ── RIGHT COLUMN — Google-only sign-in card ── */}
         <section style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           padding: 'clamp(20px, 4vw, 48px)',
+          paddingBottom: 'max(clamp(20px, 4vw, 48px), env(safe-area-inset-bottom))',
           position: 'relative', zIndex: 1,
         }}>
           <div
@@ -478,10 +365,11 @@ export default function AuthPage() {
               background: `linear-gradient(180deg, ${INK_2} 0%, ${INK} 100%)`,
               border: `1px solid ${BORDER}`,
               borderRadius: 24,
-              padding: 'clamp(24px, 4vw, 36px)',
+              padding: 'clamp(26px, 4vw, 38px)',
               boxShadow: '0 30px 90px rgba(0,0,0,0.7), inset 0 1px 0 rgba(240,215,140,0.08)',
               backdropFilter: 'blur(20px)',
               position: 'relative',
+              textAlign: 'center',
             }}
           >
             {/* Top gold line */}
@@ -490,248 +378,91 @@ export default function AuthPage() {
               background: `linear-gradient(90deg, transparent, ${GOLD}, transparent)`,
             }} />
 
-            {/* Mobile-only brand strip (the left column is hidden under 980px) */}
-            <div className="orca-auth-mobilebrand" style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginBottom: 18,
-            }}>
-              <style>{`@media (min-width: 980px) { .orca-auth-mobilebrand { display: none !important; } }`}</style>
-              <img src={ORCA_LOGO_SRC} alt="Orca Investment" width={64} height={64}
-                style={{ width: 64, height: 64, objectFit: 'contain', filter: 'drop-shadow(0 10px 22px rgba(212,175,90,0.35))' }} />
+            {/* Brand mark inside the card */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginBottom: 22 }}>
+              <img src={ORCA_LOGO_SRC} alt="Orca Investment" width={72} height={72}
+                style={{ width: 72, height: 72, objectFit: 'contain', filter: 'drop-shadow(0 12px 26px rgba(212,175,90,0.38))' }} />
               <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '0.22em', color: GOLD_BRIGHT, lineHeight: 1 }}>ORCA</div>
               <div style={{ fontSize: 8.5, color: TEXT_MUTED, letterSpacing: '0.36em', textTransform: 'uppercase', fontWeight: 600 }}>Investment</div>
             </div>
 
-            {/* Segmented mode tabs */}
-            <div
-              role="tablist"
-              aria-label={isRTL ? 'מצב חשבון' : 'Account mode'}
-              style={{
-                display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4,
-                background: 'rgba(5,5,5,0.6)', border: `1px solid ${BORDER}`,
-                borderRadius: 12, padding: 4, marginBottom: 18,
-              }}
-            >
-              {(['sign-in', 'sign-up'] as Mode[]).map(m => {
-                const active = mode === m;
-                const label = m === 'sign-in' ? c.signInCta : c.signUpCta;
-                return (
-                  <button
-                    key={m}
-                    type="button"
-                    role="tab"
-                    aria-selected={active}
-                    onClick={() => { if (mode !== m) { setMode(m); setPassword(''); } }}
-                    style={{
-                      padding: '10px 12px', borderRadius: 9,
-                      border: 'none', cursor: 'pointer',
-                      fontWeight: 700, fontSize: 13, letterSpacing: '0.04em',
-                      background: active
-                        ? `linear-gradient(135deg, ${GOLD_BRIGHT} 0%, ${GOLD} 100%)`
-                        : 'transparent',
-                      color: active ? '#1a1300' : TEXT_MUTED,
-                      transition: 'background .2s, color .2s',
-                    }}
-                  >{label}</button>
-                );
-              })}
-            </div>
-
-            <header style={{ marginBottom: 18, textAlign: 'center' }}>
+            <header style={{ marginBottom: 24 }}>
               <div style={{
                 fontSize: 10, color: GOLD, fontWeight: 700, letterSpacing: '0.28em',
-                textTransform: 'uppercase', marginBottom: 6,
+                textTransform: 'uppercase', marginBottom: 8,
               }}>
-                {mode === 'sign-in' ? c.welcomeBack : c.getStarted}
+                {c.welcome}
               </div>
-              <h1 style={{ fontSize: 20, margin: 0, fontWeight: 700, letterSpacing: '-0.01em', color: TEXT }}>
-                {mode === 'sign-in' ? c.signIn : c.signUp}
+              <h1 style={{ fontSize: 22, margin: 0, fontWeight: 700, letterSpacing: '-0.01em', color: TEXT }}>
+                {c.title}
               </h1>
-              <p style={{ marginTop: 5, color: TEXT_MUTED, fontSize: 12 }}>
-                {mode === 'sign-in' ? c.signInSub : c.signUpSub}
+              <p style={{ marginTop: 8, color: TEXT_MUTED, fontSize: 12.5, lineHeight: 1.6 }}>
+                {c.sub}
               </p>
             </header>
 
-            {signupNotice && (
-              <div
-                role="status"
-                aria-live="polite"
+            {/* Glow behind the button */}
+            <div style={{ position: 'relative' }}>
+              <div style={{
+                position: 'absolute', inset: '-14px -8px', borderRadius: 22, pointerEvents: 'none',
+                background: 'radial-gradient(60% 100% at 50% 50%, rgba(212,175,90,0.22), transparent 70%)',
+                filter: 'blur(6px)',
+              }} />
+              <button
+                className="orca-google-btn"
+                onClick={handleGoogle}
+                disabled={busy}
+                aria-busy={busy}
                 style={{
-                  marginBottom: 16,
-                  padding: '14px 16px',
-                  borderRadius: 12,
-                  border: `1px solid ${GOLD}`,
-                  background: 'linear-gradient(135deg, rgba(212,175,90,0.12), rgba(212,175,90,0.04))',
-                  display: 'grid',
-                  gap: 8,
-                  textAlign: isRTL ? 'right' : 'left',
+                  position: 'relative',
+                  width: '100%', minHeight: 54, padding: '15px 18px', borderRadius: 14,
+                  border: `1px solid ${GOLD_DEEP}`,
+                  background: 'linear-gradient(180deg, #ffffff 0%, #f5ecd6 100%)',
+                  color: '#0a0a0a',
+                  fontFamily: "'Poppins', system-ui, sans-serif",
+                  fontWeight: 700, fontSize: 15, letterSpacing: '0.01em',
+                  cursor: busy ? 'wait' : 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+                  boxShadow: '0 12px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.9)',
+                  opacity: busy ? 0.75 : 1,
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Mail size={16} color={GOLD_BRIGHT} />
-                  <strong style={{ color: GOLD_BRIGHT, fontSize: 13, letterSpacing: '0.04em' }}>
-                    {c.emailSentTitle}
-                  </strong>
-                </div>
-                <div style={{ fontSize: 12.5, color: TEXT, lineHeight: 1.5 }}>
-                  {c.emailSentBody} <span dir="ltr" style={{ fontWeight: 700, color: GOLD_BRIGHT }}>{signupNotice}</span>
-                </div>
-                <div style={{ fontSize: 11.5, color: TEXT_MUTED, lineHeight: 1.5 }}>
-                  ⚠️ {c.emailSentSpamHint}
-                </div>
-                <div>
-                  <button
-                    type="button"
-                    onClick={handleResendVerification}
-                    disabled={resending}
-                    style={{
-                      marginTop: 2,
-                      padding: '6px 12px',
-                      borderRadius: 8,
-                      border: `1px solid ${BORDER}`,
-                      background: 'transparent',
-                      color: GOLD_BRIGHT,
-                      fontSize: 11.5,
-                      fontWeight: 600,
-                      cursor: resending ? 'wait' : 'pointer',
-                      opacity: resending ? 0.6 : 1,
-                    }}
-                  >
-                    {resending ? '…' : c.emailSentResend}
-                  </button>
-                </div>
+                {busy ? <Loader2 size={18} className="orca-spin" /> : <GoogleMark size={20} />}
+                {busy ? c.connecting : c.continueGoogle}
+              </button>
+            </div>
+
+            {failed && !busy && (
+              <div role="alert" style={{
+                marginTop: 14, padding: '10px 12px', borderRadius: 12,
+                border: '1px solid rgba(239,68,68,0.35)', background: 'rgba(239,68,68,0.08)',
+                color: '#f7c5c5', fontSize: 12, lineHeight: 1.5,
+              }}>
+                {c.failed}
               </div>
             )}
 
-
-
-            <button
-              onClick={handleGoogle}
-              disabled={busy || !consent}
-              title={!consent ? c.consentRequired : undefined}
-              style={{
-                width: '100%', padding: '13px 16px', borderRadius: 12,
-                border: `1px solid ${BORDER}`,
-                background: 'rgba(245,236,214,0.97)', color: '#0a0a0a',
-                fontWeight: 600, fontSize: 14, cursor: busy ? 'wait' : (!consent ? 'not-allowed' : 'pointer'),
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                opacity: (busy || !consent) ? 0.5 : 1, transition: 'transform .15s, box-shadow .15s',
-              }}
-              onMouseEnter={e => { if (consent && !busy) { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = `0 12px 28px rgba(212,175,90,0.25)`; } }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
-            >
-              <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.4 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.3 35.4 26.8 36 24 36c-5.3 0-9.7-3.3-11.3-8l-6.5 5C9.5 39.5 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.6l6.2 5.2c-.4.4 6.6-4.8 6.6-14.8 0-1.3-.1-2.3-.4-3.5z"/></svg>
-              {c.continueGoogle}
-            </button>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0' }}>
-              <div style={{ flex: 1, height: 1, background: BORDER_SOFT }} />
-              <span style={{ color: TEXT_MUTED, fontSize: 11, letterSpacing: '0.24em' }}>{c.or}</span>
-              <div style={{ flex: 1, height: 1, background: BORDER_SOFT }} />
+            <div style={{
+              marginTop: 18, fontSize: 11, color: TEXT_MUTED,
+              fontFamily: "'IBM Plex Mono', monospace", letterSpacing: '0.02em', lineHeight: 1.6,
+            }}>
+              {c.noPasswords}
             </div>
 
-            <form onSubmit={handleEmailSubmit} style={{ display: 'grid', gap: 10 }}>
-              {mode === 'sign-up' && (
-                <IconInput icon={<User size={16} />}>
-                  <input type="text" value={displayName} onChange={e => setDisplayName(e.target.value)}
-                    placeholder={c.displayName} autoComplete="name" style={baseInput} />
-                </IconInput>
-              )}
-              <IconInput icon={<Mail size={16} />}>
-                <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
-                  placeholder={c.email} autoComplete="email" dir="ltr" style={baseInput} />
-              </IconInput>
+            <div style={{ height: 1, background: BORDER_SOFT, margin: '18px 0' }} />
 
-              <IconInput icon={<Lock size={16} />}>
-                <input
-                  type={showPassword ? 'text' : 'password'} required minLength={6}
-                  value={password} onChange={e => setPassword(e.target.value)}
-                  placeholder={mode === 'sign-up' ? c.passwordHint : c.password}
-                  autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'}
-                  dir="ltr" style={baseInput}
-                />
-                <button type="button" onClick={() => setShowPassword(v => !v)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  style={{
-                    background: 'none', border: 'none', color: TEXT_MUTED, cursor: 'pointer',
-                    padding: 6, display: 'inline-flex', alignItems: 'center',
-                  }}
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </IconInput>
-
-              {mode === 'sign-up' && password.length > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} dir="ltr">
-                  <div style={{ flex: 1, height: 4, background: 'rgba(212,175,90,0.12)', borderRadius: 999, overflow: 'hidden' }}>
-                    <div style={{
-                      width: `${(strength.score / 4) * 100}%`, height: '100%',
-                      background: strength.color, transition: 'width .25s ease, background .25s ease',
-                    }} />
-                  </div>
-                  <span style={{ fontSize: 11, color: strength.color, fontFamily: "'IBM Plex Mono', monospace", minWidth: 70, textAlign: 'right' }}>
-                    {strength.label}
-                  </span>
-                </div>
-              )}
-
-              <button type="submit" disabled={busy || !consent} title={!consent ? c.consentRequired : undefined}
-                style={{
-                  marginTop: 8, padding: '14px 16px', borderRadius: 12, border: `1px solid ${GOLD_DEEP}`,
-                  background: `linear-gradient(135deg, ${GOLD_BRIGHT} 0%, ${GOLD} 50%, ${GOLD_DEEP} 100%)`,
-                  color: '#1a1300', fontWeight: 800, fontSize: 14, letterSpacing: '0.04em',
-                  textTransform: 'uppercase',
-                  cursor: busy ? 'wait' : 'pointer',
-                  boxShadow: '0 12px 28px rgba(212,175,90,0.32), inset 0 1px 0 rgba(255,255,255,0.35)',
-                  opacity: busy ? 0.65 : 1,
-                  transition: 'transform .15s, box-shadow .15s',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                }}
-                onMouseEnter={e => { if (!busy) { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 16px 36px rgba(212,175,90,0.45), inset 0 1px 0 rgba(255,255,255,0.4)'; } }}
-                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(212,175,90,0.32), inset 0 1px 0 rgba(255,255,255,0.35)'; }}
-              >
-                {busy ? '…' : (mode === 'sign-in' ? c.submitSignIn : c.submitSignUp)}
-                {!busy && <ArrowRight size={15} style={{ transform: isRTL ? 'scaleX(-1)' : undefined }} />}
-              </button>
-
-              {mode === 'sign-in' && (
-                <button type="button" onClick={handleForgotPassword} disabled={busy}
-                  style={{ background: 'none', border: 'none', color: TEXT_MUTED, cursor: 'pointer', fontSize: 12, padding: 4, marginTop: 2 }}>
-                  {c.forgot}
-                </button>
-              )}
-            </form>
-
-            {/* Slim consent row */}
-            <label
-              htmlFor="orca-consent"
-              style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                marginTop: 14, padding: '8px 4px',
-                cursor: 'pointer',
-                textAlign: isRTL ? 'right' : 'left',
-              }}
-            >
-              <input
-                id="orca-consent"
-                type="checkbox"
-                checked={consent}
-                onChange={e => setConsent(e.target.checked)}
-                style={{ width: 14, height: 14, accentColor: GOLD, cursor: 'pointer', flexShrink: 0 }}
-              />
-              <span style={{ fontSize: 11, color: TEXT_MUTED, lineHeight: 1.5 }}>
-                {c.consentPrefix}{' '}
-                <a href="/terms" target="_blank" rel="noopener noreferrer"
-                   style={{ color: GOLD_BRIGHT, fontWeight: 700, textDecoration: 'underline' }}>
-                  {c.consentTerms}
-                </a>{' '}
-                {c.consentAnd}{' '}
-                <a href="/privacy" target="_blank" rel="noopener noreferrer"
-                   style={{ color: GOLD_BRIGHT, fontWeight: 700, textDecoration: 'underline' }}>
-                  {c.consentPrivacy}
-                </a>
-              </span>
-            </label>
-
+            <p style={{ fontSize: 11, color: TEXT_MUTED, lineHeight: 1.6, margin: 0 }}>
+              {c.consentPrefix}{' '}
+              <a href="/terms" target="_blank" rel="noopener noreferrer"
+                style={{ color: GOLD_BRIGHT, fontWeight: 700, textDecoration: 'underline' }}>
+                {c.consentTerms}
+              </a>{' '}
+              {c.consentAnd}{' '}
+              <a href="/privacy" target="_blank" rel="noopener noreferrer"
+                style={{ color: GOLD_BRIGHT, fontWeight: 700, textDecoration: 'underline' }}>
+                {c.consentPrivacy}
+              </a>
+            </p>
           </div>
         </section>
       </div>
@@ -779,8 +510,8 @@ export default function AuthPage() {
             </h2>
             <p style={{ fontSize: 13, color: TEXT_MUTED, lineHeight: 1.7, margin: '0 0 24px' }}>
               {lang === 'he'
-                ? 'לאבטחתך, ננעלת המערכת לאחר חוסר פעילות. לחץ להמשיך לכניסה לחשבון שלך.'
-                : "For your security, the session was locked after inactivity. Tap to continue and sign back in."}
+                ? 'לאבטחתך, ננעלה המערכת לאחר חוסר פעילות. לחץ להמשיך לכניסה לחשבון שלך.'
+                : 'For your security, the session was locked after inactivity. Tap to continue and sign back in.'}
             </p>
             <button
               onClick={() => { setIdleGate(false); try { window.history.replaceState({}, '', '/auth'); } catch { /* noop */ } }}
@@ -802,28 +533,3 @@ export default function AuthPage() {
     </main>
   );
 }
-
-const baseInput: React.CSSProperties = {
-  flex: 1,
-  padding: '12px 4px',
-  border: 'none',
-  background: 'transparent',
-  color: TEXT,
-  fontSize: 14,
-  outline: 'none',
-  fontFamily: "'IBM Plex Mono', monospace",
-  minWidth: 0,
-};
-
-const IconInput = ({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) => (
-  <div style={{
-    display: 'flex', alignItems: 'center', gap: 10,
-    padding: '2px 14px', borderRadius: 12,
-    border: `1px solid ${BORDER}`,
-    background: 'rgba(5,5,5,0.65)',
-    transition: 'border-color .15s, background .15s',
-  }}>
-    <span style={{ color: GOLD, display: 'inline-flex' }}>{icon}</span>
-    {children}
-  </div>
-);
