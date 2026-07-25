@@ -20,6 +20,7 @@ const emptyRow=()=>({id:uid(),coin:"",entryDT:"",exitDT:"",entry:"",sl:"",exit:"
 const recalc=(t:any)=>{const e=parseFloat(t.entry),sl=parseFloat(t.sl),ex=parseFloat(t.exit),mfe=parseFloat(t.mfeP),mae=parseFloat(t.maeP);t.dir=autoDir(e,sl);t.r=(e&&sl&&ex)?calcR(e,sl,ex):null;t.mfeR=(e&&sl&&mfe)?calcR(e,sl,mfe):null;t.maeR=(e&&sl&&mae)?calcR(e,sl,mae):null;const d=durCalc(t.entryDT,t.exitDT);t.dur=d?d.t:"";return t;};
 import { scopedStorage } from '@/lib/scoped-storage';
 import { useLang } from '@/hooks/use-lang';
+import { isLightScheme } from '@/lib/neon-palette';
 // ─── Multi-strategy storage ───
 // Each strategy is a fully isolated workbook with its own trades, analytics & equity.
 // v14 schema: {strategies:[{id,name,trades:[]}], activeId}. v13 (flat array) migrates
@@ -140,11 +141,15 @@ const BT_STR = {
 
 } as const;
 
-const BL="#2563eb",BL2="#3b82f6",G="#0ecb81",RD="#f6465d",CY="#06b6d4",PU="#a855f7";
-const BG="#0c0f14",BG2="#10141b",BG3="#161c26",SURF="#1e2535",BRD="#1e2736",BRDH="#2a3548";
-const T1="#e8ecf1",T2="#8896ab",T3="#556277",T4="#2d3a4d";
+const BT_DARK={BL:"#2563eb",BL2:"#3b82f6",G:"#0ecb81",RD:"#f6465d",CY:"#06b6d4",PU:"#a855f7",BG:"#0c0f14",BG2:"#10141b",BG3:"#161c26",SURF:"#1e2535",BRD:"#1e2736",BRDH:"#2a3548",T1:"#e8ecf1",T2:"#8896ab",T3:"#556277",T4:"#2d3a4d"};
+const BT_LIGHT={BL:"#2563eb",BL2:"#3b82f6",G:"#059669",RD:"#DC2626",CY:"#0E7490",PU:"#7C3AED",BG:"#F4F6FB",BG2:"#FFFFFF",BG3:"#F7F9FC",SURF:"#FFFFFF",BRD:"#E2E8F0",BRDH:"#CBD5E1",T1:"#0F172A",T2:"#475569",T3:"#64748B",T4:"#CBD5E1"};
+let BL=BT_DARK.BL,BL2=BT_DARK.BL2,G=BT_DARK.G,RD=BT_DARK.RD,CY=BT_DARK.CY,PU=BT_DARK.PU;
+let BG=BT_DARK.BG,BG2=BT_DARK.BG2,BG3=BT_DARK.BG3,SURF=BT_DARK.SURF,BRD=BT_DARK.BRD,BRDH=BT_DARK.BRDH;
+let T1=BT_DARK.T1,T2=BT_DARK.T2,T3=BT_DARK.T3,T4=BT_DARK.T4;
+let BT_SCHEME:"light"|"dark"="dark";
+const syncBt=()=>{const light=isLightScheme();const p=light?BT_LIGHT:BT_DARK;BL=p.BL;BL2=p.BL2;G=p.G;RD=p.RD;CY=p.CY;PU=p.PU;BG=p.BG;BG2=p.BG2;BG3=p.BG3;SURF=p.SURF;BRD=p.BRD;BRDH=p.BRDH;T1=p.T1;T2=p.T2;T3=p.T3;T4=p.T4;const next=light?"light":"dark";const changed=next!==BT_SCHEME;BT_SCHEME=next;return changed;};
 
-const css=()=>{if(document.getElementById("o13"))return;const s=document.createElement("style");s.id="o13";s.textContent=`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+const css=()=>{const prev=document.getElementById("o13");if(prev)prev.remove();const s=document.createElement("style");s.id="o13";s.textContent=`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
 .ox{font-family:'Poppins',system-ui,sans-serif;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}.ox *{font-family:inherit;box-sizing:border-box;}.ox input:focus,.ox select:focus{outline:none;}
 @keyframes fi{0%{opacity:0;transform:translateY(6px);}100%{opacity:1;transform:translateY(0);}}
 @keyframes pop{0%{opacity:0;transform:scale(.94);}100%{opacity:1;transform:scale(1);}}
@@ -528,7 +533,7 @@ function BacktestApp({ onReturn }: { onReturn: () => void }) {
   const[confirmDelStrat,setConfirmDelStrat]=useState(false);
   const[stratPrompt,setStratPrompt]=useState<{mode:'add'|'rename';value:string}|null>(null);
 
-  useEffect(()=>{css();loadState().then((s)=>{setState(s);setLoading(false);});},[]);
+  useEffect(()=>{syncBt();css();loadState().then((s)=>{setState(s);setLoading(false);});},[]);
 
   const activeStrat = useMemo(()=>state.strategies.find(s=>s.id===state.activeId)||state.strategies[0],[state]);
   const trades = activeStrat?.trades||[];
