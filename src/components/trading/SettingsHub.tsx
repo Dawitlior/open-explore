@@ -771,41 +771,6 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
           <div className="orca-settings-body" style={{ flex: 1, overflowY: 'auto', padding: '26px 26px 40px', WebkitOverflowScrolling: 'touch' }}>
             {/* ============ ACCOUNT ============ */}
             {tab === 'account' && (() => {
-              const handleChangePassword = async () => {
-                if (newPassword.length < 6) { toast.error(t('סיסמה חייבת להכיל לפחות 6 תווים', 'Password must be at least 6 characters')); return; }
-                if (newPassword !== newPasswordConfirm) { toast.error(t('הסיסמאות אינן תואמות', 'Passwords do not match')); return; }
-                setPwBusy(true);
-                try {
-                  const { error } = await supabase.auth.updateUser({ password: newPassword });
-                  if (error) throw error;
-                  toast.success(t('הסיסמה עודכנה בהצלחה', 'Password updated successfully'));
-                  setNewPassword(''); setNewPasswordConfirm('');
-                } catch (err) {
-                  toast.error(translateAuthError(err instanceof Error ? err.message : String(err)));
-                } finally { setPwBusy(false); }
-              };
-              const handleChangeEmail = async () => {
-                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail.trim())) { toast.error(t('כתובת אימייל לא תקינה', 'Invalid email')); return; }
-                setEmailBusy(true);
-                try {
-                  const { error } = await supabase.auth.updateUser({ email: newEmail.trim() });
-                  if (error) throw error;
-                  toast.success(t('נשלח אימייל אישור לכתובת החדשה', 'Confirmation email sent to the new address'));
-                  setNewEmail('');
-                } catch (err) {
-                  toast.error(translateAuthError(err instanceof Error ? err.message : String(err)));
-                } finally { setEmailBusy(false); }
-              };
-              const handleSendReset = async () => {
-                if (!auth.user?.email) return;
-                try {
-                  const { error } = await supabase.auth.resetPasswordForEmail(auth.user.email, { redirectTo: `${window.location.origin}/reset-password` });
-                  if (error) throw error;
-                  toast.success(t('שלחנו לך מייל לאיפוס סיסמה', 'Password reset email sent'));
-                } catch (err) {
-                  toast.error(translateAuthError(err instanceof Error ? err.message : String(err)));
-                }
-              };
               const created = auth.user?.created_at ? new Date(auth.user.created_at) : null;
               return (
                 <div>
