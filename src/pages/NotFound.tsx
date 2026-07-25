@@ -18,11 +18,11 @@ const NotFound = () => {
   return (
     <div
       dir={isRTL ? "rtl" : "ltr"}
-      className="relative isolate flex min-h-screen items-center justify-center overflow-hidden bg-[#061326] text-foreground"
+      className="relative isolate flex min-h-screen items-center justify-center overflow-hidden bg-background text-foreground"
     >
       {/* deep ocean gradient backdrop */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(200_60%_15%/0.6),transparent_70%)]" />
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,transparent,#020812_90%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,transparent,hsl(var(--background))_90%)]" />
 
       {/* drifting particles / bubbles */}
       <div className="pointer-events-none absolute inset-0">
@@ -110,7 +110,7 @@ const NotFound = () => {
         aria-hidden
       >
         <path d="M10,50 C30,20 70,10 110,25 C140,35 170,30 190,45 C175,55 150,55 130,52 C120,65 95,72 75,65 C55,72 25,68 10,50 Z" />
-        <circle cx="150" cy="38" r="2.5" fill="#061326" />
+        <circle cx="150" cy="38" r="2.5" fill="hsl(var(--background))" />
       </svg>
 
       <style>{`
