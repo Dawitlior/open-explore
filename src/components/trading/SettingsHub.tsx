@@ -134,11 +134,6 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
   const [newKpi, setNewKpi] = useState<Partial<CustomKPI>>({ label: '', formula: '', format: 'number' });
-  const [newPassword, setNewPassword] = useState('');
-  const [newPasswordConfirm, setNewPasswordConfirm] = useState('');
-  const [newEmail, setNewEmail] = useState('');
-  const [pwBusy, setPwBusy] = useState(false);
-  const [emailBusy, setEmailBusy] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const [draftAccent, setDraftAccent] = useState<string>('#00f2ff');
   const [showThemeConfirm, setShowThemeConfirm] = useState(false);
@@ -771,41 +766,6 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
           <div className="orca-settings-body" style={{ flex: 1, overflowY: 'auto', padding: '26px 26px 40px', WebkitOverflowScrolling: 'touch' }}>
             {/* ============ ACCOUNT ============ */}
             {tab === 'account' && (() => {
-              const handleChangePassword = async () => {
-                if (newPassword.length < 6) { toast.error(t('סיסמה חייבת להכיל לפחות 6 תווים', 'Password must be at least 6 characters')); return; }
-                if (newPassword !== newPasswordConfirm) { toast.error(t('הסיסמאות אינן תואמות', 'Passwords do not match')); return; }
-                setPwBusy(true);
-                try {
-                  const { error } = await supabase.auth.updateUser({ password: newPassword });
-                  if (error) throw error;
-                  toast.success(t('הסיסמה עודכנה בהצלחה', 'Password updated successfully'));
-                  setNewPassword(''); setNewPasswordConfirm('');
-                } catch (err) {
-                  toast.error(translateAuthError(err instanceof Error ? err.message : String(err)));
-                } finally { setPwBusy(false); }
-              };
-              const handleChangeEmail = async () => {
-                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail.trim())) { toast.error(t('כתובת אימייל לא תקינה', 'Invalid email')); return; }
-                setEmailBusy(true);
-                try {
-                  const { error } = await supabase.auth.updateUser({ email: newEmail.trim() });
-                  if (error) throw error;
-                  toast.success(t('נשלח אימייל אישור לכתובת החדשה', 'Confirmation email sent to the new address'));
-                  setNewEmail('');
-                } catch (err) {
-                  toast.error(translateAuthError(err instanceof Error ? err.message : String(err)));
-                } finally { setEmailBusy(false); }
-              };
-              const handleSendReset = async () => {
-                if (!auth.user?.email) return;
-                try {
-                  const { error } = await supabase.auth.resetPasswordForEmail(auth.user.email, { redirectTo: `${window.location.origin}/reset-password` });
-                  if (error) throw error;
-                  toast.success(t('שלחנו לך מייל לאיפוס סיסמה', 'Password reset email sent'));
-                } catch (err) {
-                  toast.error(translateAuthError(err instanceof Error ? err.message : String(err)));
-                }
-              };
               const created = auth.user?.created_at ? new Date(auth.user.created_at) : null;
               return (
                 <div>
@@ -835,59 +795,24 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                     const providers: string[] = (auth.user?.app_metadata as { providers?: string[]; provider?: string } | undefined)?.providers
                       ?? (auth.user?.app_metadata?.provider ? [auth.user.app_metadata.provider as string] : []);
                     const identities = auth.user?.identities ?? [];
-                    const hasEmailProvider = providers.includes('email') || identities.some(i => i.provider === 'email');
-                    if (!hasEmailProvider) {
-                      const primaryProvider = providers.find(p => p !== 'email') ?? identities[0]?.provider ?? 'OAuth';
-                      const providerLabel = primaryProvider.charAt(0).toUpperCase() + primaryProvider.slice(1);
-                      return (
-                        <div style={card}>
-                          <h3 style={sectionTitle}><KeyRound size={14} /> {t('ניהול חשבון', 'Account management')}</h3>
-                          <p style={sectionHint}>
-                            {t(
-                              `התחברת באמצעות ${providerLabel}. ניהול הסיסמה והאימייל מתבצע ישירות בחשבון ${providerLabel} שלך.`,
-                              `You are signed in with ${providerLabel}. Password and email are managed directly in your ${providerLabel} account.`
-                            )}
-                          </p>
-                        </div>
-                      );
-                    }
+                    const primaryProvider = providers.find(p => p !== 'email') ?? identities.find(i => i.provider !== 'email')?.provider ?? 'google';
+                    const providerLabel = primaryProvider.charAt(0).toUpperCase() + primaryProvider.slice(1);
                     return (
-                      <>
-                        <div style={card}>
-                          <h3 style={sectionTitle}><KeyRound size={14} /> {t('שינוי סיסמה', 'Change password')}</h3>
-                          <p style={sectionHint}>{t('סיסמה חייבת להיות באורך 6 תווים לפחות. השינוי מיידי.', 'Minimum 6 characters. Change applies immediately.')}</p>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
-                            <div>
-                              <label style={fieldLabel}>{t('סיסמה חדשה', 'New password')}</label>
-                              <input className="orca-settings-input" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} autoComplete="new-password" style={input} dir="ltr" />
-                            </div>
-                            <div>
-                              <label style={fieldLabel}>{t('אימות', 'Confirm')}</label>
-                              <input className="orca-settings-input" type="password" value={newPasswordConfirm} onChange={e => setNewPasswordConfirm(e.target.value)} autoComplete="new-password" style={input} dir="ltr" />
-                            </div>
-                          </div>
-                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                            <button className="orca-cta" onClick={handleChangePassword} disabled={pwBusy || !newPassword || !newPasswordConfirm} style={primaryBtn(T.accent.cyan, pwBusy || !newPassword || !newPasswordConfirm)}>
-                              <Check size={13} /> {pwBusy ? t('מעדכן…', 'Updating…') : t('עדכן סיסמה', 'Update password')}
-                            </button>
-                            <button onClick={handleSendReset} style={ghostBtn}>
-                              <Send size={13} /> {t('שלח מייל איפוס', 'Send reset email')}
-                            </button>
-                          </div>
+                      <div style={card}>
+                        <h3 style={sectionTitle}><KeyRound size={14} /> {t('ניהול חשבון', 'Account management')}</h3>
+                        <p style={sectionHint}>
+                          {t(
+                            `הכניסה לפלטפורמה מתבצעת דרך ${providerLabel} בלבד — אין סיסמה לנהל. שינוי אימייל, סיסמה ואבטחה מתבצע ישירות בחשבון ה-${providerLabel} שלך.`,
+                            `Sign-in runs through ${providerLabel} only — there is no password to manage. Email, password and security settings are managed directly in your ${providerLabel} account.`
+                          )}
+                        </p>
+                        <div style={{ marginTop: 10, fontSize: 12, color: T.text.muted, fontFamily: mono }} dir="ltr">
+                          {auth.user?.email ?? '—'}
                         </div>
-
-                        <div style={card}>
-                          <h3 style={sectionTitle}><Mail size={14} /> {t('שינוי כתובת אימייל', 'Change email address')}</h3>
-                          <p style={sectionHint}>{t('יישלח אליך מייל אישור לכתובת החדשה. השינוי ייכנס לתוקף רק לאחר אישור.', 'A confirmation email will be sent to the new address. Change applies after confirmation.')}</p>
-                          <label style={fieldLabel}>{t('אימייל חדש', 'New email')}</label>
-                          <input className="orca-settings-input" type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} autoComplete="email" style={{ ...input, marginBottom: 12 }} dir="ltr" placeholder="name@example.com" />
-                          <button className="orca-cta" onClick={handleChangeEmail} disabled={emailBusy || !newEmail} style={primaryBtn(T.accent.blue, emailBusy || !newEmail)}>
-                            <Check size={13} /> {emailBusy ? t('שולח…', 'Sending…') : t('עדכן אימייל', 'Update email')}
-                          </button>
-                        </div>
-                      </>
+                      </div>
                     );
                   })()}
+
 
 
                   {!isMobile && (

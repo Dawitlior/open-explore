@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LiquidSweep } from "@/components/ui-orca";
 // OrcaUXLayer bundles framer-motion + 20 ambient-UX effects that aren't
 // needed for the first paint. Lazy-loaded so it never blocks LCP.
@@ -16,7 +16,6 @@ import { StorageErrorListener } from "@/components/StorageErrorListener";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Landing from "./pages/Landing";
-import ResetPassword from "./pages/ResetPassword";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Accessibility from "./pages/Accessibility";
@@ -154,7 +153,7 @@ const App = () => (
             <Routes>
               <Route path="/welcome" element={<Landing />} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/reset-password" element={<Navigate to="/auth" replace />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/accessibility" element={<Accessibility />} />
