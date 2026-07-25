@@ -1236,7 +1236,7 @@ const KnowledgePanel = ({ type, days, dir, th, onClose, onOpenDay }: { type: 'mo
       const freq: Record<string, number> = {};
       words.forEach(w => { freq[w] = (freq[w] || 0) + 1; });
       const top = Object.entries(freq).sort((a, b) => b[1] - a[1])[0];
-      if (top && top[1] >= 2) patterns.push(dir === 'rtl' ? `מילה חוזרת בטעויות: `${top[0]}` (${top[1]}x)` : `Recurring in mistakes: `${top[0]}` (${top[1]}x)`);
+      if (top && top[1] >= 2) patterns.push(dir === 'rtl' ? `מילה חוזרת בטעויות: "${top[0]}" (${top[1]}x)` : `Recurring in mistakes: "${top[0]}" (${top[1]}x)`);
     }
     const byDay: Record<number, number[]> = {};
     completeDays.forEach(d => {
@@ -3357,7 +3357,7 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
           </Sec>
 
           {/* Bitcoin Thoughts */}
-          <Sec title={f.btcThoughts} icon="₿" accent=`${JC.amberDeep}` th={th} locked={sLocks['btcThoughts']} onLock={() => lockSec('btcThoughts')} onUnlock={() => unlockSec('btcThoughts')}>
+          <Sec title={f.btcThoughts} icon="₿" accent={JC.amberDeep} th={th} locked={sLocks['btcThoughts']} onLock={() => lockSec('btcThoughts')} onUnlock={() => unlockSec('btcThoughts')}>
             <TA val={day.btcThoughts} set={U('btcThoughts')} ph={f.btcThoughtsPh} rows={3} dir={dir} disabled={sLocks['btcThoughts']} th={th} />
           </Sec>
 
@@ -4703,8 +4703,8 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
                       {[
                         { l: dir === 'rtl' ? 'סה"כ ימים' : 'Total Days', v: String(archived.length), c: JC.blue },
                         { l: dir === 'rtl' ? 'הושלמו' : 'Completed', v: String(complete), c: JC.green },
-                        { l: dir === 'rtl' ? 'סה"כ R' : 'Total R`, v: `${totalR >= 0 ? `+' : ''}${totalR.toFixed(1)}R`, c: totalR >= 0 ? JC.green : JC.red },
-                        { l: dir === 'rtl' ? 'סה"כ P&L' : 'Total P&L`, v: `${totalPnl >= 0 ? `+' : ''}${totalPnl.toFixed(0)}$`, c: totalPnl >= 0 ? JC.green : JC.red },
+                        { l: dir === 'rtl' ? 'סה"כ R' : 'Total R', v: `${totalR >= 0 ? '+' : ''}${totalR.toFixed(1)}R`, c: totalR >= 0 ? JC.green : JC.red },
+                        { l: dir === 'rtl' ? 'סה"כ P&L' : 'Total P&L', v: `${totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(0)}$`, c: totalPnl >= 0 ? JC.green : JC.red },
                       ].map(s => (
                         <div key={s.l} style={{ background: `${s.c}06`, border: `1px solid ${s.c}12`, borderRadius: 12, padding: '12px 10px', textAlign: 'center' }}>
                           <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 700, letterSpacing: '1.5px', color: th.tx3, textTransform: 'uppercase' as const, marginBottom: 4 }}>{s.l}</div>
