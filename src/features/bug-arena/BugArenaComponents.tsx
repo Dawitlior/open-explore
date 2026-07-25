@@ -401,7 +401,7 @@ function CaptureFlow() {
               )}
             </div>
           ) : captureStatus === 'skipped' ? (
-            <div className="rounded-2xl border border-dashed border-foreground/15 bg-white/[0.04] p-4 text-center">
+            <div className="rounded-2xl border border-dashed border-foreground/15 bg-foreground/[0.04] p-4 text-center">
               <div className="mb-3 text-sm font-semibold text-foreground/80">
                 {t('צרף צילום מסך מהטלפון', 'Attach a screenshot from your phone')}
               </div>
@@ -445,7 +445,7 @@ function CaptureFlow() {
           )}
 
           {/* privacy notice */}
-          <div className="rounded-lg border border-foreground/10 bg-white/[0.04] p-3 text-[11px] leading-relaxed text-foreground/55">
+          <div className="rounded-lg border border-foreground/10 bg-foreground/[0.04] p-3 text-[11px] leading-relaxed text-foreground/55">
             {t(
               'הצילום יצורף לדיווח וגלוי לחברי הקהילה. רוצה להסתיר נתונים רגישים? הגדרות → מראה ושפה → הסתרת פרטים.',
               'The screenshot is attached to the report and visible to community members. Want to hide sensitive data? Settings → Appearance & language → Privacy mask.',
@@ -940,7 +940,7 @@ function BugCard({
     <article
       data-bug-card
       data-bug-id={bug.id}
-      className="rounded-2xl border border-foreground/10 bg-white/[0.03] p-4 transition hover:border-foreground/20"
+      className="rounded-2xl border border-foreground/10 bg-foreground/[0.03] p-4 transition hover:border-foreground/20"
     >
       <div className="flex items-start gap-3">
         {bug.coverUrl && (
@@ -1130,7 +1130,7 @@ function ResolutionAppeal({
     <div
       data-bug-resolution-appeal
       dir={isRTL ? 'rtl' : 'ltr'}
-      className="mt-3 rounded-xl border border-foreground/10 bg-white/[0.04] p-3"
+      className="mt-3 rounded-xl border border-foreground/10 bg-foreground/[0.04] p-3"
     >
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-sm font-bold text-foreground/80">
@@ -1254,7 +1254,7 @@ function ResolutionFeedbackPanel({
       ) : (
         <ul className="space-y-2">
           {bug.feedback.map((f: BugResolutionFeedback) => (
-            <li key={f.user_id} className="rounded-lg bg-white/[0.03] p-2">
+            <li key={f.user_id} className="rounded-lg bg-foreground/[0.03] p-2">
               <div className="flex items-center gap-2">
                 <span
                   className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold"
