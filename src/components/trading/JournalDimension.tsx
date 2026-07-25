@@ -4048,7 +4048,23 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
   const [eDirty, setED] = useState(false);
   const [toast, setToast] = useState<{ msg: string; type: string } | null>(null);
   const [sbQ, setSbQ] = useState('');
-  const [theme, setTheme] = useState<JTheme>('dark');
+  // The Journal keeps its own dark/light surface set, but it must *start* from
+  // the app-wide scheme — otherwise picking the Light theme leaves the Journal
+  // dimension stranded on black. A manual toggle below still wins until the
+  // app scheme itself changes.
+  const [theme, setTheme] = useState<JTheme>(() => {
+    try {
+      return document.documentElement.getAttribute('data-scheme') === 'light' ? 'light' : 'dark';
+    } catch { return 'dark'; }
+  });
+  useEffect(() => {
+    const root = document.documentElement;
+    const obs = new MutationObserver(() => {
+      setTheme(root.getAttribute('data-scheme') === 'light' ? 'light' : 'dark');
+    });
+    obs.observe(root, { attributes: true, attributeFilter: ['data-scheme'] });
+    return () => obs.disconnect();
+  }, []);
   const [riskAlertShown, setRiskAlertShown] = useState(false);
   const [showEntry, setShowEntry] = useState(true); // Always show entry animation when mounting
   const [exitingToOrca, setExitingToOrca] = useState(false);
