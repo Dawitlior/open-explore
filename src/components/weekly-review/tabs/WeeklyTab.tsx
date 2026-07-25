@@ -153,7 +153,7 @@ export default function WeeklyTab({ T, isRTL, trades, state }: Props) {
   const L = isRTL ? HE : EN;
 
   // Tokens — theme-aware so light mode stays readable
-  const isLight = (T as { id?: string })?.id === 'platinum';
+  const isLight = !!T?.isLight;
   const fg = T?.text?.primary || (isLight ? '#0a0e1a' : '#e9eef7');
   const muted = T?.text?.muted || (isLight ? '#4b5566' : '#7a8aa3');
   // In light mode swap the bright cyan/green accent for a deep, readable blue
@@ -741,7 +741,7 @@ function ResetConfirmModal({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
-  const isLight = (T as { id?: string })?.id === 'platinum';
+  const isLight = !!T?.isLight;
   const fg = T?.text?.primary || (isLight ? '#0a0e1a' : '#e9eef7');
   const muted = T?.text?.muted || (isLight ? '#4b5566' : '#7a8aa3');
   const panel = T?.bg?.surface || (isLight ? '#ffffff' : '#0e1726');
@@ -966,7 +966,7 @@ function SelectField({ value, options, placeholder, onChange, input, fg, optionB
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function Chip({ children, active, onClick, T, activeBg }: { children: React.ReactNode; active: boolean; onClick: () => void; T: any; activeBg?: string }) {
-  const isLight = (T as { id?: string })?.id === 'platinum';
+  const isLight = !!T?.isLight;
   const fg = T?.text?.primary || (isLight ? '#0a0e1a' : '#e9eef7');
   const muted = T?.text?.muted || (isLight ? '#4b5566' : '#7a8aa3');
   const border = T?.border?.subtle || (isLight ? 'rgba(0,0,0,0.18)' : 'rgba(255,255,255,0.08)');

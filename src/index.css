@@ -623,59 +623,136 @@ html[data-theme-transition] [class*="bg-"], html[data-theme-transition] [class*=
 }
 
 /* ════════════════════════════════════════════════════════════════
-   PLATINUM (light) theme — surgical overrides for legibility
+   LIGHT SCHEME — "Indigo SaaS"
+   Driven by html[data-scheme="light"] (set by applyThemeToDOM),
+   never by a theme id. This is the systemic layer that makes every
+   dark-mode affordance (glass, neon, grain, heavy scrims) behave
+   correctly on a white canvas.
    ════════════════════════════════════════════════════════════════ */
-[data-theme="platinum"] .orca-glass {
-  background: #FFFFFF !important;
-  border: 1px solid hsl(0 0% 6% / 0.08);
-  box-shadow:
-    0 1px 2px hsl(0 0% 6% / 0.04),
-    0 8px 24px -12px hsl(0 0% 6% / 0.08);
+html[data-scheme="light"] {
+  color-scheme: light;
 }
-[data-theme="platinum"] .orca-glass-hover:hover {
-  border-color: hsl(22 94% 53% / 0.35);
-  box-shadow:
-    0 1px 2px hsl(0 0% 6% / 0.06),
-    0 12px 32px -12px hsl(22 94% 53% / 0.18);
+
+/* ── Surfaces: glass becomes a real card ── */
+html[data-scheme="light"] .orca-glass,
+html[data-scheme="light"] .orca-panel {
+  background: var(--orca-surface-raised, #FFFFFF) !important;
+  border: 1px solid var(--orca-border-medium, #E9EDF5) !important;
+  box-shadow: var(--orca-shadow-card, 0 1px 2px rgba(15,23,42,0.04), 0 8px 24px rgba(15,23,42,0.06));
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
-[data-theme="platinum"] .orca-grain { display: none !important; }
-[data-theme="platinum"] .orca-glass::before,
-[data-theme="platinum"] .orca-glass::after { display: none !important; }
-[data-theme="platinum"] body::before {
+html[data-scheme="light"] .orca-glass-hover:hover {
+  border-color: var(--orca-border-active, rgba(99,102,241,0.45)) !important;
+  box-shadow: 0 1px 2px rgba(15,23,42,0.05), 0 12px 32px -10px rgba(99,102,241,0.22);
+}
+
+/* ── Kill dark-only texture / bloom effects ── */
+html[data-scheme="light"] .orca-grain,
+html[data-scheme="light"] .orca-glass::before,
+html[data-scheme="light"] .orca-glass::after,
+html[data-scheme="light"] .orca-scanline,
+html[data-scheme="light"] .orca-noise,
+html[data-scheme="light"] .orca-vignette { display: none !important; }
+
+html[data-scheme="light"] [class*="mix-blend-screen"] { mix-blend-mode: multiply !important; }
+
+/* Ambient aurora: barely-there pastel wash instead of a neon bloom */
+html[data-scheme="light"] body::before {
   background:
-    radial-gradient(900px 600px at 12% -10%, hsl(var(--orca-aurora-a) / 0.10), transparent 60%),
-    radial-gradient(700px 500px at 100% 110%, hsl(var(--orca-aurora-b) / 0.08), transparent 60%),
-    radial-gradient(500px 400px at 50% 50%, hsl(var(--orca-aurora-a) / 0.04), transparent 70%);
+    radial-gradient(900px 620px at 8% -12%, hsl(var(--orca-aurora-a) / 0.07), transparent 62%),
+    radial-gradient(760px 520px at 100% 108%, hsl(var(--orca-aurora-b) / 0.05), transparent 62%);
 }
-[data-theme="platinum"] .recharts-cartesian-axis-tick text,
-[data-theme="platinum"] .recharts-polar-angle-axis-tick text,
-[data-theme="platinum"] .recharts-polar-radius-axis-tick text { fill: hsl(215 20% 30%) !important; }
-[data-theme="platinum"] .recharts-cartesian-grid line,
-[data-theme="platinum"] .recharts-polar-grid line,
-[data-theme="platinum"] .recharts-polar-grid-concentric-circle { stroke: hsl(222 20% 60% / 0.25) !important; }
-[data-theme="platinum"] .recharts-default-tooltip {
-  background: #ffffff !important;
-  border: 1px solid hsl(222 47% 11% / 0.12) !important;
-  box-shadow: 0 6px 24px hsl(222 47% 11% / 0.12) !important;
-  color: hsl(222 47% 11%) !important;
+
+/* ── Charts ── */
+html[data-scheme="light"] .recharts-cartesian-axis-tick text,
+html[data-scheme="light"] .recharts-polar-angle-axis-tick text,
+html[data-scheme="light"] .recharts-polar-radius-axis-tick text,
+html[data-scheme="light"] .recharts-label,
+html[data-scheme="light"] .recharts-text { fill: var(--orca-chart-axis, #64748B) !important; }
+
+html[data-scheme="light"] .recharts-cartesian-grid line,
+html[data-scheme="light"] .recharts-polar-grid line,
+html[data-scheme="light"] .recharts-polar-grid-concentric-circle,
+html[data-scheme="light"] .recharts-polar-grid-concentric-polygon { stroke: var(--orca-chart-grid, #EDF1F7) !important; }
+
+html[data-scheme="light"] .recharts-cartesian-axis-line { stroke: var(--orca-chart-axis-line, #E2E8F0) !important; }
+
+html[data-scheme="light"] .recharts-default-tooltip,
+html[data-scheme="light"] .recharts-tooltip-wrapper > div {
+  background: var(--orca-tooltip-bg, #FFFFFF) !important;
+  border: 1px solid var(--orca-tooltip-border, #E9EDF5) !important;
+  box-shadow: var(--orca-tooltip-shadow, 0 8px 28px rgba(15,23,42,0.12)) !important;
+  color: var(--orca-text-primary, #111827) !important;
+  backdrop-filter: none !important;
 }
-[data-theme="platinum"] .recharts-tooltip-item { color: hsl(222 47% 11%) !important; }
-[data-theme="platinum"] .recharts-tooltip-label { color: hsl(215 20% 35%) !important; }
-[data-theme="platinum"] ::-webkit-scrollbar-thumb {
-  background: hsl(222 20% 60% / 0.4);
+html[data-scheme="light"] .recharts-tooltip-item { color: var(--orca-text-primary, #111827) !important; }
+html[data-scheme="light"] .recharts-tooltip-label { color: var(--orca-text-secondary, #475569) !important; }
+html[data-scheme="light"] .recharts-legend-item-text { color: var(--orca-text-secondary, #475569) !important; }
+
+/* ── Browser chrome ── */
+html[data-scheme="light"] ::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
   border-radius: 6px;
 }
-[data-theme="platinum"] ::-webkit-scrollbar-thumb:hover {
-  background: hsl(224 76% 48% / 0.5);
+html[data-scheme="light"] ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+html[data-scheme="light"] ::selection {
+  background: hsl(239 84% 67% / 0.18);
+  color: #111827;
 }
-[data-theme="platinum"] ::selection {
-  background: hsl(224 76% 48% / 0.20);
-  color: hsl(222 47% 11%);
-}
-[data-theme="platinum"] #orca-cursor-halo {
-  background: radial-gradient(circle, hsl(224 76% 48% / 0.18), transparent 70%) !important;
+html[data-scheme="light"] input,
+html[data-scheme="light"] textarea { caret-color: hsl(239 84% 67%); }
+
+html[data-scheme="light"] #orca-cursor-halo {
+  background: radial-gradient(circle, hsl(239 84% 67% / 0.14), transparent 70%) !important;
   mix-blend-mode: multiply !important;
 }
+
+/* ── Neutralize dark-mode hardcodes that survive in components ──
+   These are safety nets so no surface can render white-on-white while
+   the per-component migration lands. */
+html[data-scheme="light"] .text-white:not([data-keep-color]),
+html[data-scheme="light"] .text-white\/90:not([data-keep-color]),
+html[data-scheme="light"] .text-white\/80:not([data-keep-color]),
+html[data-scheme="light"] .text-white\/70:not([data-keep-color]) { color: var(--orca-text-primary, #111827) !important; }
+html[data-scheme="light"] .text-white\/60:not([data-keep-color]),
+html[data-scheme="light"] .text-white\/50:not([data-keep-color]),
+html[data-scheme="light"] .text-white\/40:not([data-keep-color]) { color: var(--orca-text-muted, #64748B) !important; }
+html[data-scheme="light"] .bg-black:not([data-keep-color]),
+html[data-scheme="light"] .bg-black\/40:not([data-keep-color]),
+html[data-scheme="light"] .bg-black\/50:not([data-keep-color]),
+html[data-scheme="light"] .bg-black\/60:not([data-keep-color]) { background-color: var(--orca-surface-sunken, #F1F4FA) !important; }
+
+/* Buttons / chips that rely on a dark pill background */
+html[data-scheme="light"] .orca-chip,
+html[data-scheme="light"] .orca-pill {
+  background: var(--orca-surface-sunken, #F1F4FA) !important;
+  border-color: var(--orca-border-medium, #E9EDF5) !important;
+  color: var(--orca-text-secondary, #475569) !important;
+}
+
+/* Inputs & tables */
+html[data-scheme="light"] input:not([type="checkbox"]):not([type="radio"]),
+html[data-scheme="light"] textarea,
+html[data-scheme="light"] select {
+  background-color: #FFFFFF;
+  border-color: var(--orca-border-medium, #E9EDF5);
+  color: var(--orca-text-primary, #111827);
+}
+html[data-scheme="light"] input::placeholder,
+html[data-scheme="light"] textarea::placeholder { color: var(--orca-text-dim, #94A3B8); }
+
+html[data-scheme="light"] thead th { color: var(--orca-text-muted, #64748B); }
+html[data-scheme="light"] tbody tr:hover { background: var(--orca-surface-hover, rgba(99,102,241,0.06)); }
+
+/* Modal scrim: dark themes use near-black, light uses a slate veil */
+html[data-scheme="light"] [data-radix-popper-content-wrapper] > * ,
+html[data-scheme="light"] [role="dialog"] {
+  --orca-modal-surface: #FFFFFF;
+}
+html[data-scheme="light"] [data-state="open"][data-radix-dialog-overlay],
+html[data-scheme="light"] .orca-scrim { background: var(--orca-scrim, rgba(15,23,42,0.32)) !important; }
+
 
 /* ─── Reminder badge pulse (Weekly Review notification) ─── */
 @keyframes orcaBadgePulse {
@@ -1114,20 +1191,19 @@ html[dir="rtl"] button[aria-label*="Expand"] .lucide {
   font-size: 11px !important;
 }
 
-/* Light theme overrides */
-html[data-theme="platinum"] .recharts-default-tooltip {
-  background: rgba(255,255,255,0.96) !important;
-  border-color: rgba(0,0,0,0.08) !important;
-  box-shadow: 0 8px 28px -8px rgba(0,0,0,0.18) !important;
-}
-html[data-theme="platinum"] .recharts-text {
-  fill-opacity: 0.72;
+/* Light scheme overrides */
+html[data-scheme="light"] .recharts-text {
+  fill-opacity: 1;
 }
 
 /* Reference / active dots */
 .recharts-active-dot circle {
   stroke-width: 2 !important;
   filter: drop-shadow(0 0 4px currentColor);
+}
+html[data-scheme="light"] .recharts-active-dot circle {
+  filter: none;
+  stroke: #FFFFFF !important;
 }
 
 /* Reusable skeleton shimmer for chart loaders */
@@ -1146,12 +1222,12 @@ html[data-theme="platinum"] .recharts-text {
   background-size: 200% 100%;
   animation: orca-chart-shimmer 1.4s ease-in-out infinite;
 }
-html[data-theme="platinum"] .orca-chart-skeleton {
+html[data-scheme="light"] .orca-chart-skeleton {
   background: linear-gradient(
     90deg,
-    rgba(0,0,0,0.04) 0%,
-    rgba(0,0,0,0.08) 50%,
-    rgba(0,0,0,0.04) 100%
+    #EEF1F7 0%,
+    #F8FAFC 50%,
+    #EEF1F7 100%
   );
   background-size: 200% 100%;
 }

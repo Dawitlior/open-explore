@@ -41,7 +41,7 @@ const WeeklyReviewShellInner = ({ T, isRTL, trades }: Props) => {
 
   const bg = T?.bg?.primary || '#061326';
   const fg = T?.text?.primary || '#e9eef7';
-  const isLight = (T as { id?: string })?.id === 'platinum';
+  const isLight = !!T?.isLight;
   // Light theme needs deeper, higher-contrast tokens — the dark cyan and
   // ghosted muted greys turn into illegible glyphs on white surfaces.
   const muted = isLight ? '#475569' : (T?.text?.muted || '#7a8aa3');

@@ -1,23 +1,125 @@
 import type { ThemeId } from '@/hooks/use-settings';
 // ThemeId now: 'midnight' | 'blue' | 'platinum' | 'graphite'
 
+export interface ChartTokens {
+  /** cartesian / polar grid lines */
+  grid: string;
+  /** axis tick label color */
+  axis: string;
+  /** axis line color */
+  axisLine: string;
+  /** tooltip surface */
+  tooltipBg: string;
+  tooltipBorder: string;
+  tooltipShadow: string;
+  /** semantic P&L */
+  profit: string;
+  loss: string;
+  neutral: string;
+  /** area/bar fill opacity multiplier (light themes need far less) */
+  fillOpacity: number;
+  /** categorical series palette — always 8 entries */
+  series: string[];
+  /** sequential heatmap ramp, cold → hot (5 stops) */
+  heat: string[];
+}
+
+export interface StateTokens {
+  profit: string;
+  loss: string;
+  neutral: string;
+  warn: string;
+  info: string;
+  profitSoft: string;
+  lossSoft: string;
+  warnSoft: string;
+  infoSoft: string;
+}
+
+export interface SurfaceTokens {
+  /** page background */
+  base: string;
+  /** default card */
+  raised: string;
+  /** inset wells, table stripes, inputs */
+  sunken: string;
+  /** modals / popovers / dropdowns */
+  overlay: string;
+  /** translucent "glass" fill used by .orca-glass style panels */
+  glass: string;
+  /** hover wash over any surface */
+  hover: string;
+  /** scrim behind modals */
+  scrim: string;
+}
+
 export interface TradingTheme {
   id?: ThemeId;
+  /** true for light-background themes — components branch on this, never on the id */
+  isLight: boolean;
   bg: { primary: string; secondary: string; tertiary: string; card: string; surface: string };
   accent: { cyan: string; cyanGlow: string; teal: string; blue: string; blueGlow: string; purple: string; purpleGlow: string; orange: string; red: string; redGlow: string; green: string; greenGlow: string };
   text: { primary: string; secondary: string; muted: string; dim: string };
   border: { subtle: string; medium: string; active: string };
   radius: { sm: number; md: number; lg: number; xl: number };
   shadow: { card: string; elevated: string; glow: (c: string) => string };
+  surface: SurfaceTokens;
+  state: StateTokens;
+  chart: ChartTokens;
   // CSS var mapping — source of truth for HSL tokens (without "hsl()" wrapper)
   cssVars?: Record<string, string>;
 }
+
+/* Shared dark-theme token factories — keeps the four themes in sync */
+function darkSurface(card: string, base: string, sunken: string): SurfaceTokens {
+  return {
+    base,
+    raised: card,
+    sunken,
+    overlay: card,
+    glass: 'rgba(255,255,255,0.03)',
+    hover: 'rgba(255,255,255,0.05)',
+    scrim: 'rgba(0,0,0,0.72)',
+  };
+}
+
+function darkState(green: string, red: string, orange: string, blue: string, muted: string): StateTokens {
+  return {
+    profit: green, loss: red, neutral: muted, warn: orange, info: blue,
+    profitSoft: 'rgba(34,197,94,0.14)',
+    lossSoft: 'rgba(239,68,68,0.14)',
+    warnSoft: 'rgba(245,158,11,0.14)',
+    infoSoft: 'rgba(56,189,248,0.14)',
+  };
+}
+
+function darkChart(green: string, red: string, series: string[]): ChartTokens {
+  return {
+    grid: 'rgba(255,255,255,0.06)',
+    axis: 'rgba(255,255,255,0.45)',
+    axisLine: 'rgba(255,255,255,0.10)',
+    tooltipBg: 'rgba(12,14,18,0.96)',
+    tooltipBorder: 'rgba(255,255,255,0.12)',
+    tooltipShadow: '0 8px 32px rgba(0,0,0,0.6)',
+    profit: green,
+    loss: red,
+    neutral: '#64748B',
+    fillOpacity: 1,
+    series,
+    heat: ['#0b1220', '#123047', '#1b5e73', '#2f9e8f', '#7ce3a1'],
+  };
+}
+
 
 /* ════════════════════════════════════════════════
    1) MIDNIGHT — Cyan / Carbon (kept, signature)
    ════════════════════════════════════════════════ */
 const midnight: TradingTheme = {
   id: 'midnight',
+  isLight: false,
+  surface: darkSurface('#121814', '#0A0F0A', '#0E130F'),
+  state: darkState('#22C55E', '#F2545B', '#F59E0B', '#7DD3FC', '#7A857A'),
+  chart: darkChart('#22C55E', '#F2545B', ['#C6F84E', '#34D97F', '#7DD3FC', '#A3E635', '#F59E0B', '#F2545B', '#22C55E', '#94A3B8']),
   // Deep near-black base with warm-green undertone + lime accent (per new brand ref)
   bg: { primary: '#0A0F0A', secondary: '#101610', tertiary: '#161C18', card: '#121814', surface: '#1A211C' },
   accent: {
@@ -63,6 +165,12 @@ const midnight: TradingTheme = {
    ════════════════════════════════════════════════ */
 const blue: TradingTheme = {
   id: 'blue',
+  isLight: false,
+  surface: darkSurface('#131c30', '#0B1120', '#0F1728'),
+  state: darkState('#34D399', '#F87171', '#F59E0B', '#38BDF8', '#64748B'),
+  chart: darkChart('#34D399', '#F87171', ['#38BDF8', '#34D399', '#F59E0B', '#A78BFA', '#F87171', '#2563EB', '#7DD3FC', '#94A3B8']),
+
+
 
   bg: { primary: '#0B1120', secondary: '#111a2e', tertiary: '#1E293B', card: '#131c30', surface: '#1E293B' },
   accent: {
@@ -105,54 +213,100 @@ const blue: TradingTheme = {
 
 
 /* ════════════════════════════════════════════════
-   4) PLATINUM — Luxurious white / soft cream
+   4) PLATINUM (technical id) — "LIGHT" Indigo SaaS
+   Soft blue-grey canvas, pure-white cards, indigo
+   accent, teal/rose P&L. No neon, no glow: elevation
+   is expressed with real shadows.
    ════════════════════════════════════════════════ */
 const platinum: TradingTheme = {
   id: 'platinum',
-  // Warm cream base with pure-white cards + vivid orange accent (per new brand ref)
-  bg: { primary: '#F5F1EA', secondary: '#FFFFFF', tertiary: '#FFFFFF', card: '#FFFFFF', surface: '#FFFFFF' },
+  isLight: true,
+  bg: { primary: '#F7F8FC', secondary: '#FFFFFF', tertiary: '#F1F4FA', card: '#FFFFFF', surface: '#FFFFFF' },
   accent: {
-    cyan: '#F97316', cyanGlow: 'rgba(249,115,22,0.18)',
-    teal: '#EA580C',
-    blue: '#111111', blueGlow: 'rgba(17,17,17,0.10)',
-    purple: '#C2410C', purpleGlow: 'rgba(194,65,12,0.12)',
-    orange: '#FB6B2B',
-    red: '#DC2626', redGlow: 'rgba(220,38,38,0.14)',
-    green: '#16A34A', greenGlow: 'rgba(22,163,74,0.14)',
+    // `cyan` is the primary accent slot consumed across the app
+    cyan: '#6366F1', cyanGlow: 'rgba(99,102,241,0.14)',
+    teal: '#0F9D8C',
+    blue: '#4F46E5', blueGlow: 'rgba(79,70,229,0.12)',
+    purple: '#8B5CF6', purpleGlow: 'rgba(139,92,246,0.12)',
+    orange: '#F59E0B',
+    red: '#E11D48', redGlow: 'rgba(225,29,72,0.12)',
+    green: '#0F9D8C', greenGlow: 'rgba(15,157,140,0.12)',
   },
-  text: { primary: '#0F0F0F', secondary: '#3F3F3F', muted: '#7A7A7A', dim: '#A3A3A3' },
-  border: { subtle: 'rgba(15,15,15,0.06)', medium: 'rgba(15,15,15,0.10)', active: 'rgba(249,115,22,0.45)' },
+  text: { primary: '#111827', secondary: '#475569', muted: '#64748B', dim: '#94A3B8' },
+  border: { subtle: '#EEF1F7', medium: '#E9EDF5', active: 'rgba(99,102,241,0.45)' },
   radius: { sm: 6, md: 10, lg: 14, xl: 18 },
   shadow: {
-    card: '0 1px 2px rgba(15,15,15,0.04), 0 4px 16px rgba(15,15,15,0.06)',
-    elevated: '0 4px 20px rgba(15,15,15,0.08), 0 12px 40px rgba(15,15,15,0.10)',
-    glow: (c: string) => `0 0 18px ${c}, 0 0 36px ${c}`,
+    card: '0 1px 2px rgba(15,23,42,0.04), 0 8px 24px rgba(15,23,42,0.06)',
+    elevated: '0 4px 12px rgba(15,23,42,0.08), 0 24px 48px rgba(15,23,42,0.10)',
+    // No neon on white — "glow" degrades to a soft ambient lift
+    glow: () => '0 2px 8px rgba(15,23,42,0.06), 0 12px 32px rgba(99,102,241,0.10)',
+  },
+  surface: {
+    base: '#F7F8FC',
+    raised: '#FFFFFF',
+    sunken: '#F1F4FA',
+    overlay: '#FFFFFF',
+    glass: 'rgba(255,255,255,0.86)',
+    hover: 'rgba(99,102,241,0.06)',
+    scrim: 'rgba(15,23,42,0.32)',
+  },
+  state: {
+    profit: '#0F9D8C',
+    loss: '#E11D48',
+    neutral: '#64748B',
+    warn: '#D97706',
+    info: '#4F46E5',
+    profitSoft: 'rgba(15,157,140,0.10)',
+    lossSoft: 'rgba(225,29,72,0.10)',
+    warnSoft: 'rgba(217,119,6,0.10)',
+    infoSoft: 'rgba(99,102,241,0.10)',
+  },
+  chart: {
+    grid: '#EDF1F7',
+    axis: '#64748B',
+    axisLine: '#E2E8F0',
+    tooltipBg: '#FFFFFF',
+    tooltipBorder: '#E9EDF5',
+    tooltipShadow: '0 8px 28px rgba(15,23,42,0.12)',
+    profit: '#0F9D8C',
+    loss: '#E11D48',
+    neutral: '#94A3B8',
+    fillOpacity: 0.55,
+    series: ['#6366F1', '#0F9D8C', '#F59E0B', '#8B5CF6', '#E11D48', '#0EA5E9', '#84CC16', '#64748B'],
+    heat: ['#F1F4FA', '#DBE4F5', '#B9C9F0', '#8C9FE8', '#6366F1'],
   },
   cssVars: {
-    background: '36 33% 94%',
-    foreground: '0 0% 6%',
+    background: '225 43% 98%',
+    foreground: '222 47% 11%',
     card: '0 0% 100%',
     popover: '0 0% 100%',
-    primary: '22 94% 53%',
+    primary: '239 84% 67%',
     primaryFg: '0 0% 100%',
-    secondary: '0 0% 100%',
-    muted: '0 0% 100%',
-    mutedFg: '0 0% 40%',
-    accent: '22 94% 53%',
-    destructive: '0 84% 50%',
-    ring: '22 94% 53%',
-    sidebar: '36 30% 92%',
-    auroraA: '22 94% 60%',
-    auroraB: '0 0% 12%',
-    glowSpot: '22 94% 65%',
+    secondary: '222 40% 96%',
+    muted: '222 40% 96%',
+    mutedFg: '215 20% 45%',
+    accent: '239 84% 67%',
+    destructive: '347 77% 50%',
+    ring: '239 84% 67%',
+    sidebar: '0 0% 100%',
+    auroraA: '239 84% 67%',
+    auroraB: '174 82% 34%',
+    glowSpot: '239 84% 80%',
+    border: '220 33% 93%',
+    input: '220 33% 93%',
   },
 };
+
 
 /* ════════════════════════════════════════════════
    5) GRAPHITE — Formal institutional gray / green / red
    ════════════════════════════════════════════════ */
 const graphite: TradingTheme = {
   id: 'graphite',
+  isLight: false,
+  surface: darkSurface('#161a1f', '#0e1013', '#12161b'),
+  state: darkState('#22c55e', '#ef4444', '#a16207', '#9aa4b2', '#7c8694'),
+  chart: darkChart('#22c55e', '#ef4444', ['#22c55e', '#9aa4b2', '#a16207', '#ef4444', '#16a34a', '#64748b', '#a3a3a3', '#3f6212']),
   bg: { primary: '#0e1013', secondary: '#161a1f', tertiary: '#1c2128', card: '#161a1f', surface: '#1f242c' },
   accent: {
     cyan: '#22c55e', cyanGlow: 'rgba(34,197,94,0.16)',
@@ -271,6 +425,44 @@ export function tintTheme(base: TradingTheme, hex: string): TradingTheme {
  * every component that reads from CSS vars (shadcn ui, orca-glass, aurora,
  * scrollbars, selection, etc.) updates instantly when the user switches.
  */
+/**
+ * toHslTriplet — converts any hex / rgb(a) color into the bare
+ * "H S% L%" triplet Tailwind + our CSS expect inside hsl(var(--x)).
+ * Returns the input untouched if it is already a triplet.
+ */
+export function toHslTriplet(input: string): string {
+  if (!input) return input;
+  const raw = input.trim();
+  if (!raw.startsWith('#') && !raw.startsWith('rgb')) return raw;
+
+  let r = 0, g = 0, b = 0;
+  if (raw.startsWith('#')) {
+    let h = raw.slice(1);
+    if (h.length === 3) h = h.split('').map(c => c + c).join('');
+    r = parseInt(h.slice(0, 2), 16);
+    g = parseInt(h.slice(2, 4), 16);
+    b = parseInt(h.slice(4, 6), 16);
+  } else {
+    const m = raw.match(/[\d.]+/g);
+    if (!m) return raw;
+    [r, g, b] = m.slice(0, 3).map(Number);
+  }
+
+  const rn = r / 255, gn = g / 255, bn = b / 255;
+  const max = Math.max(rn, gn, bn), min = Math.min(rn, gn, bn);
+  const l = (max + min) / 2;
+  let h = 0, s = 0;
+  const d = max - min;
+  if (d !== 0) {
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    if (max === rn) h = ((gn - bn) / d + (gn < bn ? 6 : 0));
+    else if (max === gn) h = (bn - rn) / d + 2;
+    else h = (rn - gn) / d + 4;
+    h /= 6;
+  }
+  return `${Math.round(h * 360)} ${Math.round(s * 1000) / 10}% ${Math.round(l * 1000) / 10}%`;
+}
+
 export function applyThemeToDOM(id: ThemeId) {
   if (typeof document === 'undefined') return;
   const theme = getTheme(id);
@@ -304,13 +496,76 @@ export function applyThemeToDOM(id: ThemeId) {
   set('--sidebar-accent-foreground', v.foreground);
   set('--sidebar-ring', v.ring);
 
+  // Border / input follow the theme when declared (light needs solid greys)
+  set('--border', v.border);
+  set('--input', v.input);
+
   // Custom orca tokens used by the global aurora + glass
   set('--orca-aurora-a', v.auroraA);
   set('--orca-aurora-b', v.auroraB);
   set('--orca-glow-spot', v.glowSpot);
   set('--orca-primary-h', v.primary);
 
+  /* ── Semantic runtime tokens (single source of truth for CSS + JS) ── */
+  const s = theme.surface, st = theme.state, ch = theme.chart;
+  set('--orca-surface-base', s.base);
+  set('--orca-surface-raised', s.raised);
+  set('--orca-surface-sunken', s.sunken);
+  set('--orca-surface-overlay', s.overlay);
+  set('--orca-surface-glass', s.glass);
+  set('--orca-surface-hover', s.hover);
+  set('--orca-scrim', s.scrim);
+  set('--orca-border-subtle', theme.border.subtle);
+  set('--orca-border-medium', theme.border.medium);
+  set('--orca-border-active', theme.border.active);
+  set('--orca-text-primary', theme.text.primary);
+  set('--orca-text-secondary', theme.text.secondary);
+  set('--orca-text-muted', theme.text.muted);
+  set('--orca-text-dim', theme.text.dim);
+  set('--orca-profit', st.profit);
+  set('--orca-loss', st.loss);
+  set('--orca-neutral', st.neutral);
+  set('--orca-warn', st.warn);
+  set('--orca-info', st.info);
+  set('--orca-profit-soft', st.profitSoft);
+  set('--orca-loss-soft', st.lossSoft);
+  set('--orca-warn-soft', st.warnSoft);
+  set('--orca-info-soft', st.infoSoft);
+  set('--orca-chart-grid', ch.grid);
+  set('--orca-chart-axis', ch.axis);
+  set('--orca-chart-axis-line', ch.axisLine);
+  set('--orca-tooltip-bg', ch.tooltipBg);
+  set('--orca-tooltip-border', ch.tooltipBorder);
+  set('--orca-tooltip-shadow', ch.tooltipShadow);
+  set('--orca-shadow-card', theme.shadow.card);
+  set('--orca-shadow-elevated', theme.shadow.elevated);
+  ch.series.forEach((c, i) => set(`--orca-series-${i + 1}`, c));
+
+  /* ── Legacy `--trading-*` bridge ───────────────────────────────
+     Dozens of components still read hsl(var(--trading-bg-*)) and
+     hsl(var(--trading-<accent>)). These used to be static dark
+     values in index.css, which is exactly why the Light theme
+     "half applied" before. We now derive them from the active
+     theme so every legacy consumer follows along automatically. */
+  set('--trading-bg-primary', toHslTriplet(theme.bg.primary));
+  set('--trading-bg-secondary', toHslTriplet(theme.bg.secondary));
+  set('--trading-bg-tertiary', toHslTriplet(theme.bg.tertiary));
+  set('--trading-bg-surface', toHslTriplet(theme.bg.surface));
+  set('--trading-cyan', toHslTriplet(theme.accent.cyan));
+  set('--trading-cyan-glow', toHslTriplet(theme.accent.cyan));
+  set('--trading-teal', toHslTriplet(theme.accent.teal));
+  set('--trading-blue', toHslTriplet(theme.accent.blue));
+  set('--trading-purple', toHslTriplet(theme.accent.purple));
+  set('--trading-orange', toHslTriplet(theme.accent.orange));
+  set('--trading-red', toHslTriplet(theme.accent.red));
+  set('--trading-green', toHslTriplet(theme.accent.green));
+  set('--sidebar-border', theme.isLight ? '220 33% 93%' : '0 0% 100% / 0.05');
+
+
   r.setAttribute('data-theme', id);
+  // Generic light/dark switch — components & CSS branch on this, never on the id
+  r.setAttribute('data-scheme', theme.isLight ? 'light' : 'dark');
+  if (theme.isLight) r.classList.add('orca-light'); else r.classList.remove('orca-light');
 
   // Keep the PWA / browser title-bar (and iOS status bar) painted with the
   // active theme's solid background — otherwise the OS chrome stays stuck on
@@ -318,13 +573,7 @@ export function applyThemeToDOM(id: ThemeId) {
   // Scope: ONLY <meta name="theme-color"> + the <html> element's background.
   // Do NOT touch document.body — pages like Landing paint their own surface.
   try {
-    const SOLID: Record<string, string> = {
-      midnight: '#0A0F0A',
-      blue: '#0B1120',
-      platinum: '#F5F1EA',
-      graphite: '#0e1013',
-    };
-    const solid = SOLID[id] || SOLID.blue;
+    const solid = theme.surface.base;
     r.style.backgroundColor = solid;
     let meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
     if (!meta) {
@@ -338,14 +587,15 @@ export function applyThemeToDOM(id: ThemeId) {
 
 export function ttStyle(T: TradingTheme) {
   return {
-    background: T.bg.card,
-    border: `1px solid ${T.border.medium}`,
+    background: T.chart.tooltipBg,
+    border: `1px solid ${T.chart.tooltipBorder}`,
     borderRadius: T.radius.md,
     color: T.text.primary,
     fontSize: 12,
-    boxShadow: T.shadow.elevated,
+    boxShadow: T.chart.tooltipShadow,
     padding: '8px 12px',
-    backdropFilter: 'blur(12px)',
+    // Blur is a dark-mode affordance; on white it muddies the tooltip
+    backdropFilter: T.isLight ? 'none' : 'blur(12px)',
   };
 }
 
@@ -358,6 +608,16 @@ export function cursorStyle(_T: TradingTheme) {
 export const modeColors: Record<string, string> = {
   live: '#10b981', review: '#3b82f6', research: '#8b5cf6', recovery: '#f59e0b', beginner: '#22d3ee',
 };
+
+export const modeColorsLight: Record<string, string> = {
+  live: '#0F9D8C', review: '#4F46E5', research: '#7C3AED', recovery: '#D97706', beginner: '#0EA5E9',
+};
+
+export function modeColor(mode: string, T?: TradingTheme): string {
+  const map = T?.isLight ? modeColorsLight : modeColors;
+  return map[mode] || map.live;
+}
+
 
 // Legacy
 export const T = midnight;
@@ -511,7 +771,7 @@ export function applyDerivedPalette(hex: string) {
   if (typeof document === 'undefined') return;
   const r = document.documentElement;
   // Decide mode based on currently active theme
-  const isLight = r.getAttribute('data-theme') === 'platinum';
+  const isLight = getTheme((r.getAttribute('data-theme') as ThemeId) || 'midnight').isLight;
   const p = deriveFullPalette(hex, isLight ? 'light' : 'dark');
   if (!p) return;
   const set = (k: string, v: string) => r.style.setProperty(k, v);
