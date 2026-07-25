@@ -5,6 +5,7 @@ import { ReturnButton } from './DimensionController';
 import { playSystemOpen, playMorningLock, playEODLock, playRiskAlert } from '@/lib/apex-sounds';
 import { MORNING_VARIATIONS, EOD_VARIATIONS, EN_MORNING_VARIATIONS, EN_EOD_VARIATIONS } from '@/lib/journal-demo-data';
 import { getR, sumR, formatR } from '@/lib/r-multiple';
+import { JC } from '@/lib/neon-palette';
 
 // ─── Display-mode awareness ────────────────────────────────────
 // Lightweight hook so any sub-component can hide $ amounts when the
