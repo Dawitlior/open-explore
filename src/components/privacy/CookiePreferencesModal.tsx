@@ -11,6 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { useCookieConsent, ConsentChoices, DEFAULT_CHOICES } from '@/hooks/use-cookie-consent';
 import { useLang } from '@/hooks/use-lang';
 import { Shield, BarChart3, Settings2, Megaphone, X } from 'lucide-react';
+import { SURF, JC } from '@/lib/neon-palette';
 
 type Props = { open: boolean; onClose: () => void };
 
@@ -72,11 +73,11 @@ export default function CookiePreferencesModal({ open, onClose }: Props) {
         style={{
           position: 'relative',
           width: '100%', maxWidth: 540, maxHeight: '90vh', overflow: 'auto',
-          background: 'linear-gradient(160deg, #0a1628 0%, #061326 100%)',
+          background: SURF.panelGradient,
           border: '1px solid rgba(0,242,255,0.35)',
           borderRadius: 18, padding: '24px 22px',
-          boxShadow: '0 24px 60px rgba(0,0,0,0.55), 0 0 50px rgba(0,242,255,0.18)',
-          color: '#e8eef8',
+          boxShadow: SURF.shadow,
+          color: SURF.text1,
         }}
       >
         <button
@@ -85,18 +86,18 @@ export default function CookiePreferencesModal({ open, onClose }: Props) {
           style={{
             position: 'absolute', top: 12, [isRTL ? 'left' : 'right']: 12,
             width: 32, height: 32, borderRadius: 8,
-            background: 'transparent', border: '1px solid #2a3a55',
-            color: '#cdd6e6', cursor: 'pointer',
+            background: 'transparent', border: `1px solid ${SURF.border}`,
+            color: SURF.text2, cursor: 'pointer',
             display: 'grid', placeItems: 'center',
           } as any}
         >
           <X size={16} />
         </button>
 
-        <h2 style={{ margin: '0 0 4px', fontSize: 18, fontWeight: 700, color: '#fff' }}>
+        <h2 style={{ margin: '0 0 4px', fontSize: 18, fontWeight: 700, color: SURF.text1 }}>
           {t('העדפות עוגיות', 'Cookie preferences')}
         </h2>
-        <p style={{ margin: '0 0 16px', fontSize: 13, color: '#90a3c0' }}>
+        <p style={{ margin: '0 0 16px', fontSize: 13, color: SURF.text2 }}>
           {t('בחר אילו קטגוריות לאפשר. ניתן לשנות בכל עת.', 'Choose which categories to allow. You can change this anytime.')}
         </p>
 
@@ -107,13 +108,13 @@ export default function CookiePreferencesModal({ open, onClose }: Props) {
               <div key={c.id} style={{
                 display: 'flex', alignItems: 'flex-start', gap: 12,
                 padding: 12, borderRadius: 10,
-                border: '1px solid rgba(255,255,255,0.06)',
-                background: 'rgba(255,255,255,0.025)',
+                border: `1px solid ${SURF.border}`,
+                background: SURF.card2,
               }}>
-                <Icon size={18} style={{ color: '#00f2ff', flexShrink: 0, marginTop: 2 }} aria-hidden="true" />
+                <Icon size={18} style={{ color: JC.blue, flexShrink: 0, marginTop: 2 }} aria-hidden="true" />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                    <h3 style={{ margin: 0, fontSize: 13.5, fontWeight: 600, color: '#fff' }}>{t(c.title[0], c.title[1])}</h3>
+                    <h3 style={{ margin: 0, fontSize: 13.5, fontWeight: 600, color: SURF.text1 }}>{t(c.title[0], c.title[1])}</h3>
                     <Switch
                       checked={c.locked ? true : Boolean(choices[c.id])}
                       disabled={c.locked}
@@ -136,8 +137,8 @@ export default function CookiePreferencesModal({ open, onClose }: Props) {
             onClick={onClose}
             style={{
               padding: '10px 20px', borderRadius: 10,
-              background: 'transparent', border: '1px solid #2a3a55',
-              color: '#cdd6e6', fontFamily: 'inherit',
+              background: 'transparent', border: `1px solid ${SURF.border}`,
+              color: SURF.text2, fontFamily: 'inherit',
               fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
             }}
           >
@@ -148,9 +149,9 @@ export default function CookiePreferencesModal({ open, onClose }: Props) {
             onClick={handleSave}
             style={{
               padding: '10px 22px', borderRadius: 10,
-              background: 'linear-gradient(135deg, #00f2ff, #0a8aa8)',
-              border: '1px solid #00f2ff',
-              color: '#03121f', fontFamily: 'inherit',
+              background: `linear-gradient(135deg, ${JC.blue}, ${JC.blue})`,
+              border: `1px solid ${JC.blue}`,
+              color: JC.onAccent, fontFamily: 'inherit',
               fontSize: 12.5, fontWeight: 800, cursor: 'pointer',
               boxShadow: '0 6px 20px rgba(0,242,255,0.30)',
             }}

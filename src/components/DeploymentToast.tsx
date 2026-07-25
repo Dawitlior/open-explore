@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useDeploymentWatcher } from '@/hooks/use-deployment-watcher';
+import { SURF, isLightScheme } from '@/lib/neon-palette';
 
 /**
  * Centered "System Update Available" modal.
@@ -17,6 +18,9 @@ type Phase = 'idle' | 'syncing' | 'done';
 const ACCENT = '#E9C46A';   // warm gold
 const ACCENT_DEEP = '#D4AF37';
 const BG_DEEP = '#06131F';
+const surfaceBg = () => (isLightScheme()
+  ? 'linear-gradient(165deg, #FFFFFF 0%, #F4F6FB 100%)'
+  : `linear-gradient(165deg, ${BG_DEEP} 0%, #0b1729 100%)`);
 
 export const DeploymentToast = ({ isRTL = false }: Props) => {
   const { hasNewDeployment, reload } = useDeploymentWatcher();
@@ -103,7 +107,7 @@ export const DeploymentToast = ({ isRTL = false }: Props) => {
           width: 'min(360px, calc(100vw - 32px))',
           padding: '16px 18px 16px',
           borderRadius: 14,
-          background: `linear-gradient(165deg, ${BG_DEEP} 0%, #0b1729 100%)`,
+          background: surfaceBg(),
           border: `1px solid ${ACCENT}33`,
           fontFamily: "'Poppins', 'Inter', sans-serif",
           color: '#f1f5f9',
