@@ -12,6 +12,7 @@ import { X, Download, Share2, Copy } from 'lucide-react';
 import type { Trade } from '@/data/trades';
 import { computeAnalytics } from '@/lib/trading-analytics';
 import { parseTradeDate } from '@/components/weekly-review/lib/week-key';
+import { SURF } from '@/lib/neon-palette';
 
 type ShareRange = 'all' | 'month' | 'week' | 'day' | 'last10';
 
@@ -116,7 +117,7 @@ async function paint(canvas: HTMLCanvasElement, stats: any, isRTL: boolean, isMo
     {
       label: isRTL ? 'עסקאות' : 'Trades',
       value: stats?.totalTrades != null ? String(stats.totalTrades) : '—',
-      color: '#e8edf5',
+      color: SURF.text1,
     },
     {
       label: isRTL ? 'דראודאון מקס.' : 'Max Drawdown',
@@ -305,7 +306,7 @@ export function ShareStatsModal({ open, onClose, stats, isRTL, isMoney, trades }
     () => ({
       position: 'fixed' as const,
       inset: 0,
-      background: 'rgba(4,10,20,0.82)',
+      background: SURF.scrim,
       backdropFilter: 'blur(10px)',
       zIndex: 2147483200,
       display: open ? 'flex' : 'none',
@@ -323,7 +324,7 @@ export function ShareStatsModal({ open, onClose, stats, isRTL, isMoney, trades }
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: '#0a1626',
+          background: SURF.panelGradient,
           border: '1px solid rgba(245,197,66,0.35)',
           borderRadius: isMobileVP ? '20px 20px 0 0' : 20,
           padding: isMobileVP ? '16px 14px calc(16px + env(safe-area-inset-bottom))' : 24,
@@ -335,7 +336,7 @@ export function ShareStatsModal({ open, onClose, stats, isRTL, isMoney, trades }
           WebkitOverflowScrolling: 'touch',
           boxShadow: '0 30px 80px rgba(0,0,0,0.55)',
           fontFamily: 'Poppins, system-ui, sans-serif',
-          color: '#e8edf5',
+          color: SURF.text1,
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
@@ -352,8 +353,8 @@ export function ShareStatsModal({ open, onClose, stats, isRTL, isMoney, trades }
             onClick={onClose}
             style={{
               background: 'transparent',
-              border: '1px solid rgba(255,255,255,0.16)',
-              color: '#9fb0c5',
+              border: `1px solid ${SURF.border}`,
+              color: SURF.text2,
               padding: 8,
               borderRadius: 10,
               cursor: 'pointer',
@@ -385,7 +386,7 @@ export function ShareStatsModal({ open, onClose, stats, isRTL, isMoney, trades }
                       cursor: 'pointer',
                       fontFamily: 'Poppins, system-ui, sans-serif',
                       background: active ? 'rgba(245,197,66,0.14)' : 'transparent',
-                      border: `1px solid ${active ? 'rgba(245,197,66,0.55)' : 'rgba(255,255,255,0.14)'}`,
+                      border: `1px solid ${active ? 'rgba(245,197,66,0.55)' : SURF.border}`,
                       color: active ? '#f5c542' : '#9fb0c5',
                       transition: 'all .15s ease',
                     }}
