@@ -2787,16 +2787,18 @@ const DailyIntelligencePanel = ({ day, dir, th, onClose, onOpenJournal }: {
   return (
     <div onClick={onClose} style={{
       position: 'fixed', inset: 0, zIndex: 200,
-      background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+      background: th.bg === '#f5f7fa' ? 'rgba(15,23,42,0.35)' : 'rgba(0,0,0,0.7)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       animation: 'j-fade-in .25s ease-out',
     }}>
       <div onClick={e => e.stopPropagation()} style={{
         width: '94%', maxWidth: 760, maxHeight: '90vh', overflow: 'hidden',
-        background: 'linear-gradient(165deg, #0d1117 0%, #0a0e1a 50%, #0d1117 100%)',
-        border: '1px solid rgba(90,169,255,0.15)',
+        background: `linear-gradient(165deg, ${th.bg1} 0%, ${th.bg} 50%, ${th.bg1} 100%)`,
+        border: `1px solid ${th.br2}`,
         borderRadius: 18,
-        boxShadow: '0 25px 80px rgba(0,0,0,0.6), 0 0 40px rgba(90,169,255,0.08)',
+        boxShadow: th.bg === '#f5f7fa'
+          ? '0 25px 80px rgba(15,23,42,0.18), 0 0 0 1px rgba(15,23,42,0.04)'
+          : '0 25px 80px rgba(0,0,0,0.6), 0 0 40px rgba(90,169,255,0.08)',
         animation: 'j-scale-in .3s cubic-bezier(0.16,1,0.3,1)',
         display: 'flex', flexDirection: 'column',
       }}>
