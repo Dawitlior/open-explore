@@ -1228,7 +1228,7 @@ function ResolutionFeedbackPanel({
     <div
       data-bug-resolution-panel
       dir={isRTL ? 'rtl' : 'ltr'}
-      className="rounded-xl border border-foreground/10 bg-[#0d1a20] p-3"
+      className="rounded-xl border border-foreground/10 bg-muted p-3"
     >
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className="text-xs font-bold uppercase tracking-wide" style={{ color: CYAN }}>
