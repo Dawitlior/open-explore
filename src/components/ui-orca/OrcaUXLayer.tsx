@@ -124,38 +124,52 @@ export const OrcaUXLayer = () => {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  /* ─── 6. Scroll-reveal observer ─── */
+  /* ─── 6. Scroll-reveal observer ───
+     SAFETY: this used to force `opacity:0` on EVERY `.orca-glass` and rely on
+     IntersectionObserver to restore it. Cards that were zero-height at observe
+     time (charts, lazy panels, collapsed sections) never intersected and stayed
+     permanently invisible — entire dashboard/journal/analytics sections vanished.
+     Now: only elements that are measurably sized AND start below the fold are
+     animated, and every hidden element has a watchdog that force-reveals it. */
   useEffect(() => {
+    const reveal = (el: HTMLElement) => {
+      el.style.opacity = '1';
+      el.style.transform = 'none';
+    };
+
     const io = new IntersectionObserver(entries => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
-          (entry.target as HTMLElement).style.opacity = '1';
-          (entry.target as HTMLElement).style.transform = 'translateY(0)';
+          reveal(entry.target as HTMLElement);
           io.unobserve(entry.target);
         }
       });
-    }, { threshold: 0.06, rootMargin: '0px 0px -40px 0px' });
-    const candidates = document.querySelectorAll<HTMLElement>('.orca-glass:not([data-revealed])');
-    candidates.forEach(el => {
+    }, { threshold: 0, rootMargin: '200px 0px 200px 0px' });
+
+    const prep = (el: HTMLElement) => {
       el.dataset.revealed = '1';
+      const r = el.getBoundingClientRect();
+      // Skip anything not safely animatable: zero-size, already on screen, or huge.
+      if (r.height < 24 || r.width < 24 || r.top < window.innerHeight) return;
       el.style.opacity = '0';
       el.style.transform = 'translateY(14px)';
       el.style.transition = 'opacity 540ms cubic-bezier(0.16,1,0.3,1), transform 540ms cubic-bezier(0.16,1,0.3,1)';
       io.observe(el);
-    });
-    // Re-run when DOM mutates
-    const mo = new MutationObserver(() => {
-      document.querySelectorAll<HTMLElement>('.orca-glass:not([data-revealed])').forEach(el => {
-        el.dataset.revealed = '1';
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(14px)';
-        el.style.transition = 'opacity 540ms cubic-bezier(0.16,1,0.3,1), transform 540ms cubic-bezier(0.16,1,0.3,1)';
-        io.observe(el);
-      });
-    });
+      // Watchdog — never let a card stay hidden.
+      window.setTimeout(() => {
+        if (el.isConnected && el.style.opacity === '0') { reveal(el); io.unobserve(el); }
+      }, 1500);
+    };
+
+    const scan = () => {
+      document.querySelectorAll<HTMLElement>('.orca-glass:not([data-revealed])').forEach(prep);
+    };
+    scan();
+    const mo = new MutationObserver(scan);
     mo.observe(document.body, { childList: true, subtree: true });
     return () => { io.disconnect(); mo.disconnect(); };
   }, []);
+
 
   /* ─── 14. Lazy images + 15. smooth anchors + 16. external rel ─── */
   useEffect(() => {
