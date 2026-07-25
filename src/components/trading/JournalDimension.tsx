@@ -5,7 +5,11 @@ import { ReturnButton } from './DimensionController';
 import { playSystemOpen, playMorningLock, playEODLock, playRiskAlert } from '@/lib/apex-sounds';
 import { MORNING_VARIATIONS, EOD_VARIATIONS, EN_MORNING_VARIATIONS, EN_EOD_VARIATIONS } from '@/lib/journal-demo-data';
 import { getR, sumR, formatR } from '@/lib/r-multiple';
-import { JC } from '@/lib/neon-palette';
+import { JC, neonPalette } from '@/lib/neon-palette';
+
+// The Journal boot splash is a deliberately cinematic full-bleed dark screen in
+// every scheme, so it keeps the neon (dark) accents regardless of the app theme.
+const BOOT = neonPalette(false);
 
 // ─── Display-mode awareness ────────────────────────────────────
 // Lightweight hook so any sub-component can hide $ amounts when the
@@ -79,7 +83,7 @@ const JournalEntryScreen = ({ onEnter, isRTL = true }: { onEnter: () => void; is
       canvas.height = canvas.offsetHeight * 2;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       // Draw 3 waves
-      [{ c: JC.green, a: 30, f: 0.008, o: 0.15 }, { c: JC.blue, a: 20, f: 0.012, o: 0.1 }, { c: JC.purple, a: 15, f: 0.006, o: 0.08 }].forEach(wave => {
+      [{ c: BOOT.green, a: 30, f: 0.008, o: 0.15 }, { c: BOOT.blue, a: 20, f: 0.012, o: 0.1 }, { c: BOOT.purple, a: 15, f: 0.006, o: 0.08 }].forEach(wave => {
         ctx.beginPath();
         ctx.strokeStyle = wave.c;
         ctx.globalAlpha = wave.o;
@@ -170,7 +174,7 @@ const JournalEntryScreen = ({ onEnter, isRTL = true }: { onEnter: () => void; is
         <div key={p.id} style={{
           position: 'absolute', left: `${p.x}%`, top: `${p.y}%`,
           width: p.s, height: p.s, borderRadius: '50%',
-          background: p.id % 3 === 0 ? JC.green : p.id % 3 === 1 ? JC.blue : JC.purple,
+          background: p.id % 3 === 0 ? BOOT.green : p.id % 3 === 1 ? BOOT.blue : BOOT.purple,
           opacity: phase === 'portal' ? 0 : p.o,
           transition: 'opacity 0.5s ease',
           animation: `j-float-particle ${8 + p.id % 5}s ease-in-out infinite alternate`,
@@ -227,18 +231,18 @@ const JournalEntryScreen = ({ onEnter, isRTL = true }: { onEnter: () => void; is
         transition: 'all 0.6s ease',
       }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: JC.green, boxShadow: `0 0 12px ${JC.green}`, animation: 'j-pulse-dot 2s infinite' }} />
-          <span style={{ color: JC.green, fontWeight: 700, letterSpacing: 2, fontSize: 10 }}>LIVE</span>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: BOOT.green, boxShadow: `0 0 12px ${BOOT.green}`, animation: 'j-pulse-dot 2s infinite' }} />
+          <span style={{ color: BOOT.green, fontWeight: 700, letterSpacing: 2, fontSize: 10 }}>LIVE</span>
         </div>
         <div style={{ display: 'flex', gap: 20, overflow: 'hidden' }}>
           {TICKER.map((t, i) => (
             <span key={i} style={{ color: '#94a3b8', whiteSpace: 'nowrap', fontSize: 10 }}>
               <span style={{ color: '#e2e8f0', fontWeight: 600 }}>{t.pair}</span>{' '}
-              <span style={{ color: t.change.startsWith('+') ? JC.green : JC.red, fontWeight: 700 }}>{t.change}%</span>
+              <span style={{ color: t.change.startsWith('+') ? BOOT.green : BOOT.red, fontWeight: 700 }}>{t.change}%</span>
             </span>
           ))}
         </div>
-        <span style={{ color: JC.green, fontWeight: 700, fontVariantNumeric: 'tabular-nums', fontSize: 10 }}>{clock}</span>
+        <span style={{ color: BOOT.green, fontWeight: 700, fontVariantNumeric: 'tabular-nums', fontSize: 10 }}>{clock}</span>
       </div>
 
       {/* Center content */}
@@ -260,16 +264,16 @@ const JournalEntryScreen = ({ onEnter, isRTL = true }: { onEnter: () => void; is
           <svg viewBox="0 0 80 80" style={{ width: '100%', height: '100%' }}>
             <defs>
               <linearGradient id="hex-grad" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor={JC.green} stopOpacity="0.2" />
-                <stop offset="100%" stopColor={JC.blue} stopOpacity="0.1" />
+                <stop offset="0%" stopColor={BOOT.green} stopOpacity="0.2" />
+                <stop offset="100%" stopColor={BOOT.blue} stopOpacity="0.1" />
               </linearGradient>
               <filter id="hex-glow"><feGaussianBlur stdDeviation="3" /><feComposite in="SourceGraphic" /></filter>
             </defs>
-            <polygon points="40,4 72,22 72,58 40,76 8,58 8,22" fill="url(#hex-grad)" stroke={JC.green} strokeWidth="1" opacity="0.6" filter="url(#hex-glow)" />
-            <polygon points="40,4 72,22 72,58 40,76 8,58 8,22" fill="none" stroke={JC.green} strokeWidth="0.5" opacity="0.3" />
+            <polygon points="40,4 72,22 72,58 40,76 8,58 8,22" fill="url(#hex-grad)" stroke={BOOT.green} strokeWidth="1" opacity="0.6" filter="url(#hex-glow)" />
+            <polygon points="40,4 72,22 72,58 40,76 8,58 8,22" fill="none" stroke={BOOT.green} strokeWidth="0.5" opacity="0.3" />
           </svg>
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={JC.green} strokeWidth="1.5" strokeLinecap="round">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={BOOT.green} strokeWidth="1.5" strokeLinecap="round">
               <path d="M3 17l3-3 4 4 6-8 5 5" /><path d="M14 7l7 0 0 7" />
             </svg>
           </div>
@@ -297,13 +301,13 @@ const JournalEntryScreen = ({ onEnter, isRTL = true }: { onEnter: () => void; is
           {BOOT_LABELS.map((label, i) => (
             <span key={i} style={{
               display: 'flex', alignItems: 'center', gap: 5,
-              color: bootStep > i ? JC.green : '#1e293b',
+              color: bootStep > i ? BOOT.green : '#1e293b',
               transition: 'color 0.4s ease',
             }}>
               <span style={{
                 width: 4, height: 4, borderRadius: '50%',
-                background: bootStep > i ? JC.green : '#1e293b',
-                boxShadow: bootStep > i ? `0 0 10px ${JC.green}` : 'none',
+                background: bootStep > i ? BOOT.green : '#1e293b',
+                boxShadow: bootStep > i ? `0 0 10px ${BOOT.green}` : 'none',
                 transition: 'all 0.4s ease',
               }} />
               {label}
@@ -320,7 +324,7 @@ const JournalEntryScreen = ({ onEnter, isRTL = true }: { onEnter: () => void; is
         }}>
           <div style={{
             height: '100%', width: `${(bootStep / 4) * 100}%`,
-            background: `linear-gradient(90deg, ${JC.green}, ${JC.blue})`,
+            background: `linear-gradient(90deg, ${BOOT.green}, ${BOOT.blue})`,
             borderRadius: 1, transition: 'width 0.5s ease',
             boxShadow: '0 0 10px rgba(0,255,163,0.5)',
           }} />
@@ -333,7 +337,7 @@ const JournalEntryScreen = ({ onEnter, isRTL = true }: { onEnter: () => void; is
               padding: 'clamp(16px, 3vw, 20px) clamp(48px, 12vw, 72px)',
               fontSize: 'clamp(12px, 2.5vw, 14px)', fontWeight: 800,
               letterSpacing: 4, textTransform: 'uppercase' as const,
-              color: '#030610', background: `linear-gradient(135deg, ${JC.green}, ${JC.greenDeep})`,
+              color: '#030610', background: `linear-gradient(135deg, ${BOOT.green}, ${BOOT.greenDeep})`,
               border: 'none', borderRadius: 14, cursor: 'pointer',
               boxShadow: '0 0 60px rgba(0,255,163,0.2), 0 4px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2)',
               transition: 'all 0.3s cubic-bezier(0.16,1,0.3,1)',
@@ -384,9 +388,9 @@ const JournalEntryScreen = ({ onEnter, isRTL = true }: { onEnter: () => void; is
         transition: 'opacity 0.4s ease',
       }}>
         <span>Orca Journal v4.0</span>
-        <span style={{ color: `${JC.green}40` }}>●</span>
+        <span style={{ color: `${BOOT.green}40` }}>●</span>
         <span>ENCRYPTED</span>
-        <span style={{ color: `${JC.green}40` }}>●</span>
+        <span style={{ color: `${BOOT.green}40` }}>●</span>
         <span>LOCAL STORAGE</span>
       </div>
 
