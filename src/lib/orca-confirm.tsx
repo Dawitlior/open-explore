@@ -6,6 +6,8 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AlertTriangle } from 'lucide-react';
+import { SURF, isLightScheme } from '@/lib/neon-palette';
+
 
 export interface OrcaConfirmOptions {
   title: string;
