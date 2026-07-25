@@ -122,7 +122,7 @@ export default function CookiePreferencesModal({ open, onClose }: Props) {
                       aria-label={t(c.title[0], c.title[1])}
                     />
                   </div>
-                  <p style={{ margin: '4px 0 0', fontSize: 12, color: '#90a3c0', lineHeight: 1.5 }}>
+                  <p style={{ margin: '4px 0 0', fontSize: 12, color: SURF.text2, lineHeight: 1.5 }}>
                     {t(c.desc[0], c.desc[1])}
                   </p>
                 </div>

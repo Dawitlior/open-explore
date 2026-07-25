@@ -110,7 +110,7 @@ export const DeploymentToast = ({ isRTL = false }: Props) => {
           background: surfaceBg(),
           border: `1px solid ${ACCENT}33`,
           fontFamily: "'Poppins', 'Inter', sans-serif",
-          color: '#f1f5f9',
+          color: SURF.text1,
           animation: mounted
             ? 'orcaUpdateSlideIn 420ms cubic-bezier(0.22, 1, 0.36, 1) both, orcaUpdateGlow 3.2s ease-in-out 0.5s infinite'
             : 'none',
@@ -130,13 +130,13 @@ export const DeploymentToast = ({ isRTL = false }: Props) => {
             borderRadius: '50%',
             background: 'rgba(255,255,255,0.08)',
             border: '1px solid rgba(255,255,255,0.18)',
-            color: '#f1f5f9',
+            color: SURF.text1,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer',
             transition: 'all 0.18s ease',
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; e.currentTarget.style.color = '#ffffff'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = '#f1f5f9'; }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = SURF.card2; e.currentTarget.style.color = SURF.text1; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = SURF.card2; e.currentTarget.style.color = SURF.text1; }}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
             <line x1="18" y1="6" x2="6" y2="18" />
