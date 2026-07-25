@@ -65,6 +65,9 @@ const THEME_OPTIONS: { id: ThemeId; label: { he: string; en: string }; sub: { he
   { id: 'blue', label: { he: 'כחול', en: 'Blue' }, sub: { he: 'כחול-ים עמוק • תכלת זוהר', en: 'Deep navy • Sky blue' }, preview: ['#0B1120', '#1E293B', '#38BDF8', '#E6EEF8'] },
   
   { id: 'graphite', label: { he: 'גרפיט רשמי', en: 'Graphite Formal' }, sub: { he: 'אפור • ירוק • אדום בלבד', en: 'Gray • Green • Red only' }, preview: ['#0e1013', '#1c2128', '#22c55e', '#ef4444'] },
+  { id: 'platinum', label: { he: 'בהיר', en: 'Light' }, sub: { he: 'לבן נקי • אינדיגו', en: 'Clean white • Indigo' }, preview: ['#F7F8FC', '#FFFFFF', '#6366F1', '#111827'] },
+
+
 
 
 ];
@@ -163,7 +166,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
   useEffect(() => { if (ui.prefs.customAccent) setDraftAccent(ui.prefs.customAccent); }, [ui.prefs.customAccent]);
   useEffect(() => { if (ui.prefs.customTheme) setDraftTheme(ui.prefs.customTheme); }, [ui.prefs.customTheme]);
   // Light-mode aware token helpers — flip iOS native chrome between premium dark and Apple light gray.
-  const isLight = (T as { id?: string })?.id === 'platinum';
+  const isLight = !!T?.isLight;
   const iosChromeBg = isLight ? '#f5f5f7' : '#000';
   const iosRowBg = isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.05)';
   const iosRowBgStrong = isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)';

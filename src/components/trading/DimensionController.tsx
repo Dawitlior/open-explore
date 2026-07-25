@@ -41,6 +41,7 @@ export const DimensionController = ({ orcaUI, journalUI, backtestUI, activeDimen
 export const PortalButton = ({ onClick, isRTL, expanded }: { onClick: () => void; isRTL: boolean; expanded: boolean }) => {
   return (
     <button
+      className="orca-gold-btn"
       onClick={onClick}
       style={{
         display: 'flex',

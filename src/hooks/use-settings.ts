@@ -22,11 +22,13 @@ function readThemeCacheSync(): ThemeId {
 }
 
 export type ThemeId = 'midnight' | 'blue' | 'platinum' | 'graphite';
-// 'platinum' removed from selectable themes — auto-migrated to 'blue'.
-const VALID_THEMES: ThemeId[] = ['midnight', 'blue', 'graphite'];
-// Legacy theme migration: indigo/hightech → blue, precision → graphite, platinum → blue
+// 'platinum' === the Light ("Indigo SaaS") theme. Kept as the technical id for
+// backwards-compatible localStorage / cloud settings.
+const VALID_THEMES: ThemeId[] = ['midnight', 'blue', 'graphite', 'platinum'];
+// Legacy theme migration: indigo/hightech → blue, precision → graphite, light → platinum
 const migrateTheme = (v: unknown): ThemeId => {
-  if (v === 'indigo' || v === 'hightech' || v === 'institutional' || v === 'platinum') return 'blue';
+  if (v === 'light' || v === 'white') return 'platinum';
+  if (v === 'indigo' || v === 'hightech' || v === 'institutional') return 'blue';
   if (v === 'precision') return 'graphite';
   return (typeof v === 'string' && (VALID_THEMES as string[]).includes(v)) ? (v as ThemeId) : 'blue';
 };

@@ -93,7 +93,7 @@ const STATE_TO_LEGACY_NUM: Record<ChecklistState, 0 | 1 | 2> = { neutral: 0, don
 
 export function WeeklyReviewRenderer(props: WeeklyReviewRendererProps) {
   const { schema, T, isRTL, locale, editMode, onTemplateChange } = props;
-  const isLight = (T as { id?: string })?.id === 'platinum';
+  const isLight = !!T?.isLight;
   const panel = T?.bg?.surface || (isLight ? '#ffffff' : 'rgba(255,255,255,0.04)');
   const border = T?.border?.subtle || (isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.08)');
 
@@ -555,7 +555,7 @@ function BlockSwitch(p: BlockProps) {
 // ── Shared helpers ─────────────────────────────────────────────────────────
 
 function useTokens(T: Theme) {
-  const isLight = (T as { id?: string })?.id === 'platinum';
+  const isLight = !!T?.isLight;
   return {
     isLight,
     fg: T?.text?.primary || (isLight ? '#0a0e1a' : '#e9eef7'),

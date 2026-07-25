@@ -159,6 +159,12 @@ const Index = () => {
     () => (uiPrefs.customAccentEnabled ? tintTheme(baseTheme, uiPrefs.customAccent) : baseTheme),
     [baseTheme, uiPrefs.customAccentEnabled, uiPrefs.customAccent],
   );
+  /* Brand gold. The bright dark-mode gold is illegible on the light canvas,
+     so it collapses to a deep amber that keeps the same semantic reading. */
+  const GOLD = T.isLight ? '#B45309' : '#f5c542';
+  const GOLD_SOFT = T.isLight ? 'rgba(180,83,9,0.10)' : 'rgba(245,197,66,0.08)';
+  const GOLD_BORDER = T.isLight ? 'rgba(180,83,9,0.32)' : '#f5c54244';
+
   const rEligibleTrades = useMemo(
     () => trades.filter(hasStrictR),
     [trades],
@@ -606,7 +612,7 @@ const Index = () => {
     { id: 'ai', icon: Ico.star, label: t.ai },
     { id: 'economic-radar', icon: '📡', label: isRTL ? 'מכ״ם כלכלי' : 'Economic Radar' },
     ...(weeklyReviewAllowed
-      ? [{ id: 'weekly-review', icon: '📋', label: isRTL ? 'סקירה שבועית' : 'Weekly Review', color: '#FFD700' }]
+      ? [{ id: 'weekly-review', icon: '📋', label: isRTL ? 'סקירה שבועית' : 'Weekly Review', color: T.isLight ? '#B45309' : '#FFD700' }]
       : []),
   ];
 
@@ -1829,8 +1835,8 @@ const Index = () => {
                   <svg className="mm-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                 </button>
                 <button className="mm-row" onClick={() => { setSbOpen(false); openBugReport(); }}>
-                  <span className="mm-icon" style={{ color: '#f5c542', borderColor: '#f5c54244', background: 'rgba(245,197,66,0.08)' }}>🐛</span>
-                  <span className="mm-label" style={{ color: '#f5c542' }}>{isRTL ? 'דווח על באג' : 'Report Bug'}</span>
+                  <span className="mm-icon" style={{ color: GOLD, borderColor: GOLD_BORDER, background: GOLD_SOFT }}>🐛</span>
+                  <span className="mm-label" style={{ color: GOLD }}>{isRTL ? 'דווח על באג' : 'Report Bug'}</span>
                   <svg className="mm-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                 </button>
               </div>
@@ -1926,7 +1932,7 @@ const Index = () => {
             <span style={{ fontSize: 16, lineHeight: 1 }}>📋</span>
             {sbOpen && <span>{isRTL ? 'לוח באגים' : 'Bug Board'}</span>}
           </button>
-          <button onClick={openBugReport} title={isRTL ? 'דווח על באג' : 'Report Bug'} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: sbOpen ? '9px 10px' : '9px 0', justifyContent: sbOpen ? 'flex-start' : 'center', background: 'transparent', color: '#f5c542', border: `1px solid #f5c54226`, borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: 600, transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left' }}>
+          <button onClick={openBugReport} title={isRTL ? 'דווח על באג' : 'Report Bug'} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: sbOpen ? '9px 10px' : '9px 0', justifyContent: sbOpen ? 'flex-start' : 'center', background: 'transparent', color: GOLD, border: `1px solid ${GOLD_BORDER}`, borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: 600, transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left' }}>
             <span style={{ fontSize: 16, lineHeight: 1 }}>🐛</span>
             {sbOpen && <span>{isRTL ? 'דווח על באג' : 'Report Bug'}</span>}
           </button>
