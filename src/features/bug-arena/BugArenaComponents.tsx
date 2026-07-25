@@ -616,7 +616,7 @@ function AnnotationToolbar({
           className="h-8 w-8 rounded-lg text-lg"
           style={{
             background: tool === x.t ? ACCENT : 'rgba(255,255,255,0.08)',
-            color: tool === x.t ? '#06121f' : '#e8edf5',
+            color: tool === x.t ? '#06121f' : 'hsl(var(--foreground))',
           }}
         >
           {x.label}
@@ -1043,7 +1043,7 @@ function Avatar({ reporter, size = 28 }: { reporter: BugReporter; size?: number 
   // image, which looks worse than a clean glyph.
   return (
     <span
-      className="flex items-center justify-center rounded-full ring-2 ring-[#0b111b]"
+      className="flex items-center justify-center rounded-full ring-2 ring-background"
       style={{ width: size, height: size, background: '#23324a', color: 'hsl(var(--foreground))' }}
       title={reporter.profile?.display_name || ''}
       aria-label={reporter.profile?.display_name || 'user'}
