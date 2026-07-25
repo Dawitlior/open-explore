@@ -5,6 +5,11 @@ import { ReturnButton } from './DimensionController';
 import { playSystemOpen, playMorningLock, playEODLock, playRiskAlert } from '@/lib/apex-sounds';
 import { MORNING_VARIATIONS, EOD_VARIATIONS, EN_MORNING_VARIATIONS, EN_EOD_VARIATIONS } from '@/lib/journal-demo-data';
 import { getR, sumR, formatR } from '@/lib/r-multiple';
+import { JC, neonPalette } from '@/lib/neon-palette';
+
+// The Journal boot splash is a deliberately cinematic full-bleed dark screen in
+// every scheme, so it keeps the neon (dark) accents regardless of the app theme.
+const BOOT = neonPalette(false);
 
 // ─── Display-mode awareness ────────────────────────────────────
 // Lightweight hook so any sub-component can hide $ amounts when the
@@ -78,7 +83,7 @@ const JournalEntryScreen = ({ onEnter, isRTL = true }: { onEnter: () => void; is
       canvas.height = canvas.offsetHeight * 2;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       // Draw 3 waves
-      [{ c: '#00FFA3', a: 30, f: 0.008, o: 0.15 }, { c: '#5AA9FF', a: 20, f: 0.012, o: 0.1 }, { c: '#b794f6', a: 15, f: 0.006, o: 0.08 }].forEach(wave => {
+      [{ c: BOOT.green, a: 30, f: 0.008, o: 0.15 }, { c: BOOT.blue, a: 20, f: 0.012, o: 0.1 }, { c: BOOT.purple, a: 15, f: 0.006, o: 0.08 }].forEach(wave => {
         ctx.beginPath();
         ctx.strokeStyle = wave.c;
         ctx.globalAlpha = wave.o;
@@ -169,7 +174,7 @@ const JournalEntryScreen = ({ onEnter, isRTL = true }: { onEnter: () => void; is
         <div key={p.id} style={{
           position: 'absolute', left: `${p.x}%`, top: `${p.y}%`,
           width: p.s, height: p.s, borderRadius: '50%',
-          background: p.id % 3 === 0 ? '#00FFA3' : p.id % 3 === 1 ? '#5AA9FF' : '#b794f6',
+          background: p.id % 3 === 0 ? BOOT.green : p.id % 3 === 1 ? BOOT.blue : BOOT.purple,
           opacity: phase === 'portal' ? 0 : p.o,
           transition: 'opacity 0.5s ease',
           animation: `j-float-particle ${8 + p.id % 5}s ease-in-out infinite alternate`,
@@ -226,18 +231,18 @@ const JournalEntryScreen = ({ onEnter, isRTL = true }: { onEnter: () => void; is
         transition: 'all 0.6s ease',
       }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00FFA3', boxShadow: '0 0 12px #00FFA3', animation: 'j-pulse-dot 2s infinite' }} />
-          <span style={{ color: '#00FFA3', fontWeight: 700, letterSpacing: 2, fontSize: 10 }}>LIVE</span>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: BOOT.green, boxShadow: `0 0 12px ${BOOT.green}`, animation: 'j-pulse-dot 2s infinite' }} />
+          <span style={{ color: BOOT.green, fontWeight: 700, letterSpacing: 2, fontSize: 10 }}>LIVE</span>
         </div>
         <div style={{ display: 'flex', gap: 20, overflow: 'hidden' }}>
           {TICKER.map((t, i) => (
             <span key={i} style={{ color: '#94a3b8', whiteSpace: 'nowrap', fontSize: 10 }}>
               <span style={{ color: '#e2e8f0', fontWeight: 600 }}>{t.pair}</span>{' '}
-              <span style={{ color: t.change.startsWith('+') ? '#00FFA3' : '#FF4040', fontWeight: 700 }}>{t.change}%</span>
+              <span style={{ color: t.change.startsWith('+') ? BOOT.green : BOOT.red, fontWeight: 700 }}>{t.change}%</span>
             </span>
           ))}
         </div>
-        <span style={{ color: '#00FFA3', fontWeight: 700, fontVariantNumeric: 'tabular-nums', fontSize: 10 }}>{clock}</span>
+        <span style={{ color: BOOT.green, fontWeight: 700, fontVariantNumeric: 'tabular-nums', fontSize: 10 }}>{clock}</span>
       </div>
 
       {/* Center content */}
@@ -259,16 +264,16 @@ const JournalEntryScreen = ({ onEnter, isRTL = true }: { onEnter: () => void; is
           <svg viewBox="0 0 80 80" style={{ width: '100%', height: '100%' }}>
             <defs>
               <linearGradient id="hex-grad" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#00FFA3" stopOpacity="0.2" />
-                <stop offset="100%" stopColor="#5AA9FF" stopOpacity="0.1" />
+                <stop offset="0%" stopColor={BOOT.green} stopOpacity="0.2" />
+                <stop offset="100%" stopColor={BOOT.blue} stopOpacity="0.1" />
               </linearGradient>
               <filter id="hex-glow"><feGaussianBlur stdDeviation="3" /><feComposite in="SourceGraphic" /></filter>
             </defs>
-            <polygon points="40,4 72,22 72,58 40,76 8,58 8,22" fill="url(#hex-grad)" stroke="#00FFA3" strokeWidth="1" opacity="0.6" filter="url(#hex-glow)" />
-            <polygon points="40,4 72,22 72,58 40,76 8,58 8,22" fill="none" stroke="#00FFA3" strokeWidth="0.5" opacity="0.3" />
+            <polygon points="40,4 72,22 72,58 40,76 8,58 8,22" fill="url(#hex-grad)" stroke={BOOT.green} strokeWidth="1" opacity="0.6" filter="url(#hex-glow)" />
+            <polygon points="40,4 72,22 72,58 40,76 8,58 8,22" fill="none" stroke={BOOT.green} strokeWidth="0.5" opacity="0.3" />
           </svg>
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00FFA3" strokeWidth="1.5" strokeLinecap="round">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={BOOT.green} strokeWidth="1.5" strokeLinecap="round">
               <path d="M3 17l3-3 4 4 6-8 5 5" /><path d="M14 7l7 0 0 7" />
             </svg>
           </div>
@@ -296,13 +301,13 @@ const JournalEntryScreen = ({ onEnter, isRTL = true }: { onEnter: () => void; is
           {BOOT_LABELS.map((label, i) => (
             <span key={i} style={{
               display: 'flex', alignItems: 'center', gap: 5,
-              color: bootStep > i ? '#00FFA3' : '#1e293b',
+              color: bootStep > i ? BOOT.green : '#1e293b',
               transition: 'color 0.4s ease',
             }}>
               <span style={{
                 width: 4, height: 4, borderRadius: '50%',
-                background: bootStep > i ? '#00FFA3' : '#1e293b',
-                boxShadow: bootStep > i ? '0 0 10px #00FFA3' : 'none',
+                background: bootStep > i ? BOOT.green : '#1e293b',
+                boxShadow: bootStep > i ? `0 0 10px ${BOOT.green}` : 'none',
                 transition: 'all 0.4s ease',
               }} />
               {label}
@@ -319,7 +324,7 @@ const JournalEntryScreen = ({ onEnter, isRTL = true }: { onEnter: () => void; is
         }}>
           <div style={{
             height: '100%', width: `${(bootStep / 4) * 100}%`,
-            background: 'linear-gradient(90deg, #00FFA3, #5AA9FF)',
+            background: `linear-gradient(90deg, ${BOOT.green}, ${BOOT.blue})`,
             borderRadius: 1, transition: 'width 0.5s ease',
             boxShadow: '0 0 10px rgba(0,255,163,0.5)',
           }} />
@@ -332,7 +337,7 @@ const JournalEntryScreen = ({ onEnter, isRTL = true }: { onEnter: () => void; is
               padding: 'clamp(16px, 3vw, 20px) clamp(48px, 12vw, 72px)',
               fontSize: 'clamp(12px, 2.5vw, 14px)', fontWeight: 800,
               letterSpacing: 4, textTransform: 'uppercase' as const,
-              color: '#030610', background: 'linear-gradient(135deg, #00FFA3, #00CC82)',
+              color: '#030610', background: `linear-gradient(135deg, ${BOOT.green}, ${BOOT.greenDeep})`,
               border: 'none', borderRadius: 14, cursor: 'pointer',
               boxShadow: '0 0 60px rgba(0,255,163,0.2), 0 4px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2)',
               transition: 'all 0.3s cubic-bezier(0.16,1,0.3,1)',
@@ -383,9 +388,9 @@ const JournalEntryScreen = ({ onEnter, isRTL = true }: { onEnter: () => void; is
         transition: 'opacity 0.4s ease',
       }}>
         <span>Orca Journal v4.0</span>
-        <span style={{ color: '#00FFA340' }}>●</span>
+        <span style={{ color: `${BOOT.green}40` }}>●</span>
         <span>ENCRYPTED</span>
-        <span style={{ color: '#00FFA340' }}>●</span>
+        <span style={{ color: `${BOOT.green}40` }}>●</span>
         <span>LOCAL STORAGE</span>
       </div>
 
@@ -731,6 +736,7 @@ function getDayColor(day: JournalDay): 'green' | 'red' | 'darkred' | 'neutral' {
 type JTheme = 'dark' | 'light';
 const THEMES = {
   dark: {
+    isLight: false,
     bg: '#080c18', bg1: '#0d1220', bg2: '#111827', bg3: 'rgba(255,255,255,0.06)',
     br: 'rgba(255,255,255,0.06)', br2: 'rgba(255,255,255,0.1)',
     tx: 'rgba(255,255,255,0.92)', tx2: 'rgba(255,255,255,0.6)', tx3: 'rgba(255,255,255,0.3)',
@@ -747,6 +753,7 @@ const THEMES = {
     tagUnsel: 'rgba(255,255,255,0.04)', tagUnselBr: 'rgba(255,255,255,0.08)', tagUnselTx: 'rgba(255,255,255,0.4)',
   },
   light: {
+    isLight: true,
     bg: '#f5f7fa', bg1: '#edf0f5', bg2: '#e4e8ee', bg3: 'rgba(0,0,0,0.03)',
     br: 'rgba(0,0,0,0.08)', br2: 'rgba(0,0,0,0.12)',
     tx: 'rgba(15,23,42,0.92)', tx2: 'rgba(15,23,42,0.6)', tx3: 'rgba(15,23,42,0.35)',
@@ -784,7 +791,7 @@ const IN = ({ val, set, ph, dir, disabled, style = {}, th }: any) => (
 );
 
 // Section with lock/unlock + animation
-const Sec = ({ title, icon, accent = '#5AA9FF', children, open: initOpen = true, locked, onLock, onUnlock, th, fullLocked }: any) => {
+const Sec = ({ title, icon, accent = JC.blue, children, open: initOpen = true, locked, onLock, onUnlock, th, fullLocked }: any) => {
   const [open, setOpen] = useState(initOpen);
   const isLocked = locked || fullLocked;
   return (
@@ -883,7 +890,7 @@ const ImageUpload = ({ images, onUpdate, label, uploadLabel, dir, disabled, th }
             onDragLeave={() => setDragOver(false)}
             onDrop={e => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
             onClick={() => fileRef.current?.click()}
-            style={{ width: 140, height: 100, borderRadius: 10, border: `2px dashed ${dragOver ? '#5AA9FF' : th.inputBr}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: dragOver ? 'rgba(90,169,255,0.05)' : th.inputBg, transition: 'all .2s' }}>
+            style={{ width: 140, height: 100, borderRadius: 10, border: `2px dashed ${dragOver ? JC.blue : th.inputBr}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: dragOver ? 'rgba(90,169,255,0.05)' : th.inputBg, transition: 'all .2s' }}>
             <span style={{ fontSize: 22, marginBottom: 4 }}>📷</span>
             <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, color: th.tx3, textAlign: 'center', padding: '0 8px' }}>{uploadLabel}</span>
           </div>
@@ -906,7 +913,7 @@ const ImageUpload = ({ images, onUpdate, label, uploadLabel, dir, disabled, th }
             <button onClick={() => setLightbox(lb => lb ? { ...lb, zoom: 1, x: 0, y: 0 } : null)}
               style={{ width: 36, height: 36, borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.08)', color: '#fff', cursor: 'pointer', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s', backdropFilter: 'blur(8px)' }}>1:1</button>
             <button onClick={() => setLightbox(null)}
-              style={{ width: 36, height: 36, borderRadius: 10, border: '1px solid rgba(255,77,77,0.3)', background: 'rgba(255,77,77,0.12)', color: '#FF4D4D', cursor: 'pointer', fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s', backdropFilter: 'blur(8px)' }}>✕</button>
+              style={{ width: 36, height: 36, borderRadius: 10, border: '1px solid rgba(255,77,77,0.3)', background: 'rgba(255,77,77,0.12)', color: JC.red, cursor: 'pointer', fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s', backdropFilter: 'blur(8px)' }}>✕</button>
           </div>
           {/* Zoom indicator */}
           <div style={{ position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)', fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', background: 'rgba(0,0,0,0.5)', padding: '4px 14px', borderRadius: 20, backdropFilter: 'blur(8px)' }}>
@@ -964,7 +971,7 @@ const PsychSection = ({ answers, onUpdate, questions, dir, disabled, th }: any) 
               {[true, false].map(v => {
                 const active = val === v;
                 const label = v ? (dir === 'rtl' ? 'כן' : 'Yes') : (dir === 'rtl' ? 'לא' : 'No');
-                const c = (v && k === 'sleepWell') || (!v && k !== 'sleepWell') ? '#00FFA3' : '#FF4D4D';
+                const c = (v && k === 'sleepWell') || (!v && k !== 'sleepWell') ? JC.green : JC.red;
                 return (
                   <button key={String(v)} disabled={disabled} onClick={() => onUpdate({ ...answers, [k]: active ? null : v })}
                     style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 600, padding: '5px 14px', borderRadius: 20, border: active ? `1px solid ${c}50` : `1px solid ${th.inputBr}`, background: active ? `${c}15` : th.inputBg, color: active ? c : th.tx3, cursor: disabled ? 'not-allowed' : 'pointer', transition: 'all .2s', boxShadow: active ? `0 0 12px ${c}20` : 'none' }}>
@@ -995,24 +1002,24 @@ const DisciplineSection = ({ commitments, confirmed, onUpdate, onConfirm, option
           return (
             <button key={opt} disabled={disabled || confirmed}
               onClick={() => onUpdate(on ? selected.filter((x: string) => x !== opt) : [...selected, opt])}
-              style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 600, padding: '6px 16px', borderRadius: 20, transition: 'all .2s', cursor: disabled || confirmed ? 'not-allowed' : 'pointer', ...(on ? { background: 'rgba(0,255,163,0.12)', border: '1px solid rgba(0,255,163,0.3)', color: '#00FFA3', boxShadow: '0 0 12px rgba(0,255,163,0.15)' } : { background: th.tagUnsel, border: `1px solid ${th.tagUnselBr}`, color: th.tagUnselTx }) }}>
+              style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 600, padding: '6px 16px', borderRadius: 20, transition: 'all .2s', cursor: disabled || confirmed ? 'not-allowed' : 'pointer', ...(on ? { background: 'rgba(0,255,163,0.12)', border: '1px solid rgba(0,255,163,0.3)', color: JC.green, boxShadow: '0 0 12px rgba(0,255,163,0.15)' } : { background: th.tagUnsel, border: `1px solid ${th.tagUnselBr}`, color: th.tagUnselTx }) }}>
               {on ? '✓ ' : ''}{opt}
             </button>
           );
         })}
       </div>
       {selected.length < 2 && !confirmed && (
-        <p style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, color: '#FFC857', opacity: 0.8 }}>⚠ {f.disciplineMin}</p>
+        <p style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, color: JC.amber, opacity: 0.8 }}>⚠ {f.disciplineMin}</p>
       )}
       {!confirmed && canConfirm && (
-        <button onClick={onConfirm} style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 700, padding: '10px 24px', borderRadius: 10, background: 'linear-gradient(135deg,#00FFA3,#0a9e76)', color: '#0a0e1a', border: 'none', cursor: 'pointer', transition: 'all .2s', marginTop: 4, boxShadow: '0 4px 20px rgba(0,255,163,0.25)' }}>
+        <button onClick={onConfirm} style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 700, padding: '10px 24px', borderRadius: 10, background: `linear-gradient(135deg,${JC.green},${JC.greenAlt})`, color: JC.onAccent, border: 'none', cursor: 'pointer', transition: 'all .2s', marginTop: 4, boxShadow: '0 4px 20px rgba(0,255,163,0.25)' }}>
           ✓ {f.disciplineConfirm}
         </button>
       )}
       {confirmed && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
           <span style={{ fontSize: 14, animation: 'j-pulse 3s ease-in-out infinite' }}>🔒</span>
-          <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 700, color: '#00FFA3', letterSpacing: '1px' }}>COMMITTED</span>
+          <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 700, color: JC.green, letterSpacing: '1px' }}>COMMITTED</span>
         </div>
       )}
     </div>
@@ -1024,11 +1031,11 @@ const DisciplineSection = ({ commitments, confirmed, onUpdate, onConfirm, option
 // ═══════════════════════════════════════════════════════════════
 const MarketStrip = ({ day, dir, th }: { day: JournalDay; dir: string; th: typeof THEMES.dark }) => {
   const emo = day.emotionScore;
-  const emoColor = emo >= 8 ? '#00FFA3' : emo >= 5 ? '#FFC857' : '#FF4D4D';
+  const emoColor = emo >= 8 ? JC.green : emo >= 5 ? JC.amber : JC.red;
 
   const badges = [
-    { label: dir === 'rtl' ? 'כיוון' : 'BIAS', value: day.bias || '—', color: day.bias?.includes('ull') || day.bias?.includes('שורי') ? '#00FFA3' : day.bias?.includes('ear') || day.bias?.includes('דובי') ? '#FF4D4D' : '#FFC857' },
-    { label: dir === 'rtl' ? 'מבנה' : 'STRUCTURE', value: day.mktStruct || '—', color: '#5AA9FF' },
+    { label: dir === 'rtl' ? 'כיוון' : 'BIAS', value: day.bias || '—', color: day.bias?.includes('ull') || day.bias?.includes('שורי') ? JC.green : day.bias?.includes('ear') || day.bias?.includes('דובי') ? JC.red : JC.amber },
+    { label: dir === 'rtl' ? 'מבנה' : 'STRUCTURE', value: day.mktStruct || '—', color: JC.blue },
     { label: dir === 'rtl' ? 'רגש' : 'EMOTION', value: `${emo}/10`, color: emoColor },
   ];
 
@@ -1058,7 +1065,7 @@ const MarketStrip = ({ day, dir, th }: { day: JournalDay; dir: string; th: typeo
 // ═══════════════════════════════════════════════════════════════
 const CircularMeter = ({ used, limit, label, color, th }: { used: number; limit: number; label: string; color: string; th: typeof THEMES.dark }) => {
   const pct = Math.min(Math.abs(used / limit) * 100, 100);
-  const meterColor = pct >= 80 ? '#FF4D4D' : pct >= 50 ? '#FFC857' : color;
+  const meterColor = pct >= 80 ? JC.red : pct >= 50 ? JC.amber : color;
   const R = 42, C = 2 * Math.PI * R;
   const offset = C - (pct / 100) * C;
   return (
@@ -1081,7 +1088,7 @@ const CircularMeter = ({ used, limit, label, color, th }: { used: number; limit:
           {used.toFixed(1)}R <span style={{ fontSize: 10, color: th.tx3, fontWeight: 400 }}>/ {limit}R</span>
         </div>
       </div>
-      {pct >= 80 && <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, fontWeight: 700, color: '#FF4D4D', background: 'rgba(255,77,77,0.1)', padding: '3px 10px', borderRadius: 12, animation: 'j-pulse 1.5s ease-in-out infinite' }}>⚠ {pct >= 100 ? 'BREACHED' : 'APPROACHING'}</div>}
+      {pct >= 80 && <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, fontWeight: 700, color: JC.red, background: 'rgba(255,77,77,0.1)', padding: '3px 10px', borderRadius: 12, animation: 'j-pulse 1.5s ease-in-out infinite' }}>⚠ {pct >= 100 ? 'BREACHED' : 'APPROACHING'}</div>}
     </div>
   );
 };
@@ -1090,21 +1097,21 @@ const CircularMeter = ({ used, limit, label, color, th }: { used: number; limit:
 const CompactRiskControl = ({ risk, dir, th }: { risk: JRiskStatus; dir: string; th: typeof THEMES.dark }) => {
   if (!risk) return null;
   const items = [
-    { label: dir === 'rtl' ? 'יומי' : 'Daily', used: risk.dailyR, limit: RISK_LIMITS.day, c: '#00FFA3' },
-    { label: dir === 'rtl' ? 'שבועי' : 'Weekly', used: risk.weeklyR, limit: RISK_LIMITS.week, c: '#FFC857' },
-    { label: dir === 'rtl' ? 'חודשי' : 'Monthly', used: risk.monthlyR, limit: RISK_LIMITS.month, c: '#5AA9FF' },
+    { label: dir === 'rtl' ? 'יומי' : 'Daily', used: risk.dailyR, limit: RISK_LIMITS.day, c: JC.green },
+    { label: dir === 'rtl' ? 'שבועי' : 'Weekly', used: risk.weeklyR, limit: RISK_LIMITS.week, c: JC.amber },
+    { label: dir === 'rtl' ? 'חודשי' : 'Monthly', used: risk.monthlyR, limit: RISK_LIMITS.month, c: JC.blue },
   ];
   return (
     <div style={{ background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 12, padding: '12px 16px', marginBottom: 14 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
         <span style={{ fontSize: 11 }}>🛡</span>
         <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 800, letterSpacing: '2px', color: th.tx3, textTransform: 'uppercase' as const }}>RISK CONTROL</span>
-        {risk.breachedLevel !== 'none' && <span style={{ fontSize: 8, color: '#FF4D4D', fontWeight: 700, animation: 'j-pulse 1s infinite' }}>⚠</span>}
+        {risk.breachedLevel !== 'none' && <span style={{ fontSize: 8, color: JC.red, fontWeight: 700, animation: 'j-pulse 1s infinite' }}>⚠</span>}
       </div>
       <div style={{ display: 'flex', gap: 10 }}>
         {items.map(item => {
           const pct = Math.min(100, (Math.abs(item.used) / Math.abs(item.limit)) * 100);
-          const mc = pct >= 80 ? '#FF4D4D' : pct >= 50 ? '#FFC857' : item.c;
+          const mc = pct >= 80 ? JC.red : pct >= 50 ? JC.amber : item.c;
           return (
             <div key={item.label} style={{ flex: 1, textAlign: 'center' }}>
               <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 7, fontWeight: 700, color: th.tx3, letterSpacing: '1px', marginBottom: 4 }}>{item.label}</div>
@@ -1138,7 +1145,7 @@ const RiskCommandCenter = ({ risk, days, dir, th }: { risk: JRiskStatus; days: J
     return Math.max(0, Math.min(100, Math.round(score)));
   }, [recentDays]);
 
-  const discColor = disciplineScore >= 80 ? '#00FFA3' : disciplineScore >= 50 ? '#FFC857' : '#FF4D4D';
+  const discColor = disciplineScore >= 80 ? JC.green : disciplineScore >= 50 ? JC.amber : JC.red;
 
   const today = new Date();
   const dayOfWeek = today.getDay();
@@ -1161,26 +1168,26 @@ const RiskCommandCenter = ({ risk, days, dir, th }: { risk: JRiskStatus; days: J
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
         <span style={{ fontSize: 15 }}>🛡</span>
         <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 800, letterSpacing: '2.5px', color: th.tx3, textTransform: 'uppercase' as const }}>RISK CONTROL</span>
-        {risk.breachedLevel !== 'none' && <span style={{ marginInlineStart: 'auto', background: 'rgba(255,77,77,0.1)', padding: '3px 10px', borderRadius: 12, color: '#FF4D4D', fontFamily: "'Poppins',sans-serif", fontWeight: 700, fontSize: 9, animation: 'j-pulse 1s ease-in-out infinite' }}>⚠ ALERT</span>}
+        {risk.breachedLevel !== 'none' && <span style={{ marginInlineStart: 'auto', background: 'rgba(255,77,77,0.1)', padding: '3px 10px', borderRadius: 12, color: JC.red, fontFamily: "'Poppins',sans-serif", fontWeight: 700, fontSize: 9, animation: 'j-pulse 1s ease-in-out infinite' }}>⚠ ALERT</span>}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginBottom: 20 }} className="j-grid-2col">
-        <CircularMeter used={risk.dailyR} limit={RISK_LIMITS.day} label={dir === 'rtl' ? 'יומי' : 'Daily'} color="#00FFA3" th={th} />
-        <CircularMeter used={risk.weeklyR} limit={RISK_LIMITS.week} label={dir === 'rtl' ? 'שבועי' : 'Weekly'} color="#FFC857" th={th} />
-        <CircularMeter used={risk.monthlyR} limit={RISK_LIMITS.month} label={dir === 'rtl' ? 'חודשי' : 'Monthly'} color="#5AA9FF" th={th} />
+        <CircularMeter used={risk.dailyR} limit={RISK_LIMITS.day} label={dir === 'rtl' ? 'יומי' : 'Daily'} color={JC.green} th={th} />
+        <CircularMeter used={risk.weeklyR} limit={RISK_LIMITS.week} label={dir === 'rtl' ? 'שבועי' : 'Weekly'} color={JC.amber} th={th} />
+        <CircularMeter used={risk.monthlyR} limit={RISK_LIMITS.month} label={dir === 'rtl' ? 'חודשי' : 'Monthly'} color={JC.blue} th={th} />
       </div>
       <div style={{ marginBottom: 18 }}>
         <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: '2px', color: th.tx3, marginBottom: 10, textTransform: 'uppercase' as const }}>{dir === 'rtl' ? 'ציר סיכון שבועי' : 'WEEKLY RISK TIMELINE'}</div>
         <div style={{ display: 'flex', gap: 4, alignItems: 'flex-end' }}>
           {weekDays.map((wd, i) => {
             const barH = Math.max(4, Math.min(40, Math.abs(wd.totalR) * 15));
-            const c = wd.totalR > 0 ? '#00FFA3' : wd.totalR < 0 ? '#FF4D4D' : th.inputBg;
+            const c = wd.totalR > 0 ? JC.green : wd.totalR < 0 ? JC.red : th.inputBg;
             return (
               <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                 <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, fontWeight: 700, color: wd.hasTrades ? c : th.tx3 }}>
                   {wd.hasTrades ? `${wd.totalR > 0 ? '+' : ''}${wd.totalR.toFixed(1)}R` : '—'}
                 </span>
                 <div style={{ width: '100%', height: barH, borderRadius: 4, background: c, transition: 'all .5s ease', boxShadow: wd.hasTrades ? `0 0 8px ${c}30` : 'none', opacity: wd.hasTrades ? 1 : 0.3 }} />
-                <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: wd.isToday ? 800 : 600, color: wd.isToday ? '#5AA9FF' : th.tx3 }}>{wd.dayName}</span>
+                <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: wd.isToday ? 800 : 600, color: wd.isToday ? JC.blue : th.tx3 }}>{wd.dayName}</span>
               </div>
             );
           })}
@@ -1208,7 +1215,7 @@ const RiskCommandCenter = ({ risk, days, dir, th }: { risk: JRiskStatus; days: J
 const KnowledgePanel = ({ type, days, dir, th, onClose, onOpenDay }: { type: 'morning' | 'eod'; days: JournalDay[]; dir: string; th: typeof THEMES.dark; onClose: () => void; onOpenDay: (id: string) => void }) => {
   const isMorning = type === 'morning';
   const isR = useJournalIsR();
-  const accent = isMorning ? '#5AA9FF' : '#b794f6';
+  const accent = isMorning ? JC.blue : JC.purple;
 
   const purposes = isMorning
     ? [
@@ -1309,7 +1316,7 @@ const KnowledgePanel = ({ type, days, dir, th, onClose, onOpenDay }: { type: 'mo
                 const dp = sumPnl(d);
                 const emo = d.emotionScore;
                 const tag = emo >= 8 ? (dir === 'rtl' ? 'ממוקד' : 'Focused') : emo >= 5 ? (dir === 'rtl' ? 'סביר' : 'OK') : (dir === 'rtl' ? 'מאתגר' : 'Hard');
-                const tagC = emo >= 8 ? '#00FFA3' : emo >= 5 ? '#FFC857' : '#FF4D4D';
+                const tagC = emo >= 8 ? JC.green : emo >= 5 ? JC.amber : JC.red;
                 return (
                   <div key={d.id} onClick={() => { onOpenDay(d.id); onClose(); }}
                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 10, cursor: 'pointer', transition: 'all .2s', direction: dir as 'ltr' | 'rtl' }}
@@ -1319,7 +1326,7 @@ const KnowledgePanel = ({ type, days, dir, th, onClose, onOpenDay }: { type: 'mo
                       <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 700, color: th.tx }}>{fmtShort(d.date, dir === 'rtl' ? 'he-IL' : 'en-US')}</span>
                       <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, fontWeight: 700, color: tagC, background: `${tagC}12`, padding: '2px 8px', borderRadius: 8 }}>{tag}</span>
                     </div>
-                    {(() => { const dr = (d.trades || []).reduce((s: number, tr: any) => { try { return s + getR(tr); } catch { return s; } }, 0); const v = isR ? dr : dp; const sfx = isR ? 'R' : '$'; const txt = isR ? dr.toFixed(2) : dp.toFixed(0); return (<span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 800, color: v >= 0 ? '#00FFA3' : '#FF4D4D' }}>{v >= 0 ? '+' : ''}{txt}{sfx}</span>); })()}
+                    {(() => { const dr = (d.trades || []).reduce((s: number, tr: any) => { try { return s + getR(tr); } catch { return s; } }, 0); const v = isR ? dr : dp; const sfx = isR ? 'R' : '$'; const txt = isR ? dr.toFixed(2) : dp.toFixed(0); return (<span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 800, color: v >= 0 ? JC.green : JC.red }}>{v >= 0 ? '+' : ''}{txt}{sfx}</span>); })()}
                   </div>
                 );
               })}
@@ -1363,9 +1370,9 @@ const KnowledgePanel = ({ type, days, dir, th, onClose, onOpenDay }: { type: 'mo
 // ═══════════════════════════════════════════════════════════════
 const RiskStrip = ({ risk, dir, th }: { risk: JRiskStatus; dir: string; th: typeof THEMES.dark }) => {
   const items = [
-    { label: dir === 'rtl' ? 'יומי' : 'DAILY', value: `${risk.dailyR.toFixed(1)}R`, limit: `${RISK_LIMITS.day}R`, breached: risk.dailyBreached, color: risk.dailyBreached ? '#FF4D4D' : '#00FFA3' },
-    { label: dir === 'rtl' ? 'שבועי' : 'WEEKLY', value: `${risk.weeklyR.toFixed(1)}R`, limit: `${RISK_LIMITS.week}R`, breached: risk.weeklyBreached, color: risk.weeklyBreached ? '#FF4D4D' : '#FFC857' },
-    { label: dir === 'rtl' ? 'חודשי' : 'MONTHLY', value: `${risk.monthlyR.toFixed(1)}R`, limit: `${RISK_LIMITS.month}R`, breached: risk.monthlyBreached, color: risk.monthlyBreached ? '#FF4D4D' : '#5AA9FF' },
+    { label: dir === 'rtl' ? 'יומי' : 'DAILY', value: `${risk.dailyR.toFixed(1)}R`, limit: `${RISK_LIMITS.day}R`, breached: risk.dailyBreached, color: risk.dailyBreached ? JC.red : JC.green },
+    { label: dir === 'rtl' ? 'שבועי' : 'WEEKLY', value: `${risk.weeklyR.toFixed(1)}R`, limit: `${RISK_LIMITS.week}R`, breached: risk.weeklyBreached, color: risk.weeklyBreached ? JC.red : JC.amber },
+    { label: dir === 'rtl' ? 'חודשי' : 'MONTHLY', value: `${risk.monthlyR.toFixed(1)}R`, limit: `${RISK_LIMITS.month}R`, breached: risk.monthlyBreached, color: risk.monthlyBreached ? JC.red : JC.blue },
   ];
   return (
     <div style={{ display: 'flex', gap: 8, padding: '6px 0', overflowX: 'auto' as const }}>
@@ -1397,9 +1404,9 @@ const RiskAlertModal = ({ risk, t, dir, onClose, th }: { risk: JRiskStatus; t: a
   const [scanLine, setScanLine] = useState(0);
 
   const cfgMap = {
-    daily: { icon: '⚠️', color: '#f97316', glow: 'rgba(249,115,22,', severity: 'DAILY LIMIT', msg: t.risk.daily },
-    weekly: { icon: '🔴', color: '#FF4D4D', glow: 'rgba(255,77,77,', severity: 'WEEKLY LIMIT', msg: t.risk.weekly },
-    monthly: { icon: '🚨', color: '#FF0040', glow: 'rgba(255,0,64,', severity: 'MONTHLY LIMIT', msg: t.risk.monthly },
+    daily: { icon: '⚠️', color: JC.orange, glow: 'rgba(249,115,22,', severity: 'DAILY LIMIT', msg: t.risk.daily },
+    weekly: { icon: '🔴', color: JC.red, glow: 'rgba(255,77,77,', severity: 'WEEKLY LIMIT', msg: t.risk.weekly },
+    monthly: { icon: '🚨', color: JC.redHard, glow: 'rgba(255,0,64,', severity: 'MONTHLY LIMIT', msg: t.risk.monthly },
     none: { icon: '', color: '', glow: '', severity: '', msg: '' },
   };
   const cfg = cfgMap[level];
@@ -1499,7 +1506,7 @@ const RiskAlertModal = ({ risk, t, dir, onClose, th }: { risk: JRiskStatus; t: a
 // EMOTION SLIDER
 // ═══════════════════════════════════════════════════════════════
 const EmoSlider = ({ val, set, label, dir, disabled, th }: any) => {
-  const c = val >= 8 ? '#00FFA3' : val >= 5 ? '#FFC857' : '#FF4D4D';
+  const c = val >= 8 ? JC.green : val >= 5 ? JC.amber : JC.red;
   const e = val >= 9 ? '🔥' : val >= 7 ? '💪' : val >= 5 ? '😐' : val >= 3 ? '😔' : '💀';
   return (
     <div style={{ direction: dir }}>
@@ -1512,7 +1519,7 @@ const EmoSlider = ({ val, set, label, dir, disabled, th }: any) => {
         </div>
       </div>
       <div style={{ height: 4, background: th.inputBg, borderRadius: 2, overflow: 'hidden', marginBottom: 8 }}>
-        <div style={{ height: '100%', width: `${((val - 1) / 9) * 100}%`, background: `linear-gradient(90deg,#FF4D4D,#FFC857,#00FFA3)`, transition: 'width .3s ease', borderRadius: 2 }} />
+        <div style={{ height: '100%', width: `${((val - 1) / 9) * 100}%`, background: `linear-gradient(90deg,${JC.red},${JC.amber},${JC.green})`, transition: 'width .3s ease', borderRadius: 2 }} />
       </div>
       <input type="range" min={1} max={10} value={val} disabled={disabled}
         onChange={e => set?.(+e.target.value)} style={{ width: '100%', accentColor: c, cursor: disabled ? 'not-allowed' : 'pointer' }} />
@@ -1543,7 +1550,7 @@ const Scores = ({ val, set, disabled, th }: any) => (
 const MarketSentimentGauge = ({ value, dir, th, onChangeValue, disabled }: { value: string; dir: string; th: typeof THEMES.dark; onChangeValue?: (v: string) => void; disabled?: boolean }) => {
   const v = Math.min(100, Math.max(0, parseInt(value) || 0));
   const hasValue = value !== '' && value !== undefined;
-  const color = v <= 20 ? '#FF4D4D' : v <= 40 ? '#f97316' : v <= 60 ? '#FFC857' : v <= 80 ? '#84cc16' : '#00FFA3';
+  const color = v <= 20 ? JC.red : v <= 40 ? JC.orange : v <= 60 ? JC.amber : v <= 80 ? JC.lime : JC.green;
   const labelEN = v <= 20 ? 'Extreme Fear' : v <= 40 ? 'Fear' : v <= 60 ? 'Neutral' : v <= 80 ? 'Greed' : 'Extreme Greed';
   const labelHE = v <= 20 ? 'פחד קיצוני' : v <= 40 ? 'פחד' : v <= 60 ? 'ניטרלי' : v <= 80 ? 'תאוות בצע' : 'תאוות בצע קיצונית';
   const label = dir === 'rtl' ? labelHE : labelEN;
@@ -1553,8 +1560,8 @@ const MarketSentimentGauge = ({ value, dir, th, onChangeValue, disabled }: { val
   const rad = (d: number) => d * Math.PI / 180;
   const cx = 100, cy = 92, R = 72, ri = 50;
   const segs = [
-    { s: -180, e: -144, c: '#FF4D4D' }, { s: -144, e: -108, c: '#f97316' },
-    { s: -108, e: -72, c: '#FFC857' }, { s: -72, e: -36, c: '#84cc16' }, { s: -36, e: 0, c: '#00FFA3' }
+    { s: -180, e: -144, c: JC.red }, { s: -144, e: -108, c: JC.orange },
+    { s: -108, e: -72, c: JC.amber }, { s: -72, e: -36, c: JC.lime }, { s: -36, e: 0, c: JC.green }
   ];
   const arc = (s: number, e: number) => {
     const sr = rad(s), er = rad(e), lf = e - s > 180 ? 1 : 0;
@@ -1671,11 +1678,11 @@ const MarketSentimentGauge = ({ value, dir, th, onChangeValue, disabled }: { val
       {/* Scale labels */}
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12, padding: '0 10px', position: 'relative', zIndex: 1 }}>
         {[
-          { l: isRTL ? 'פחד קיצוני' : 'Extreme Fear', c: '#FF4D4D' },
-          { l: isRTL ? 'פחד' : 'Fear', c: '#f97316' },
-          { l: isRTL ? 'ניטרלי' : 'Neutral', c: '#FFC857' },
-          { l: isRTL ? 'תאוות בצע' : 'Greed', c: '#84cc16' },
-          { l: isRTL ? 'קיצוני' : 'Extreme', c: '#00FFA3' },
+          { l: isRTL ? 'פחד קיצוני' : 'Extreme Fear', c: JC.red },
+          { l: isRTL ? 'פחד' : 'Fear', c: JC.orange },
+          { l: isRTL ? 'ניטרלי' : 'Neutral', c: JC.amber },
+          { l: isRTL ? 'תאוות בצע' : 'Greed', c: JC.lime },
+          { l: isRTL ? 'קיצוני' : 'Extreme', c: JC.green },
         ].map((s, i) => (
           <div key={i} style={{ textAlign: 'center' }}>
             <div style={{ width: 4, height: 4, borderRadius: '50%', background: s.c, margin: '0 auto 3px', opacity: 0.6 }} />
@@ -1694,7 +1701,7 @@ const TCard = ({ trade, idx, onChange, onDel, f, dir, disabled, th }: any) => {
   const p = parseFloat(trade.pnl) || 0;
   const isR = useJournalIsR();
   const rVal = (() => { try { return getR(trade as any) ?? 0; } catch { return 0; } })();
-  const sc = trade.side === 'LONG' ? '#00FFA3' : trade.side === 'SHORT' ? '#FF4D4D' : '#5AA9FF';
+  const sc = trade.side === 'LONG' ? JC.green : trade.side === 'SHORT' ? JC.red : JC.blue;
   return (
     <div style={{
       background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 12, padding: 14, marginBottom: 10,
@@ -1707,9 +1714,9 @@ const TCard = ({ trade, idx, onChange, onDel, f, dir, disabled, th }: any) => {
         <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, color: th.tx3, letterSpacing: 1.2 }}>{f.tradeN} #{idx + 1}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {isR
-            ? (rVal !== 0 && <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 14, fontWeight: 800, color: rVal > 0 ? '#00FFA3' : '#FF4D4D', textShadow: `0 0 12px ${rVal > 0 ? 'rgba(0,255,163,0.3)' : 'rgba(255,77,77,0.3)'}` }}>{rVal > 0 ? '+' : ''}{rVal.toFixed(2)}R</span>)
-            : (p !== 0 && <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 14, fontWeight: 800, color: p > 0 ? '#00FFA3' : '#FF4D4D', textShadow: `0 0 12px ${p > 0 ? 'rgba(0,255,163,0.3)' : 'rgba(255,77,77,0.3)'}` }}>{p > 0 ? '+' : ''}{p.toFixed(2)}$</span>)}
-          {!disabled && <button onClick={onDel} style={{ background: 'rgba(255,77,77,.1)', border: '1px solid rgba(255,77,77,.2)', color: '#FF4D4D', padding: '5px 10px', fontSize: 11, borderRadius: 6, cursor: 'pointer', fontWeight: 600, transition: 'all .15s' }}>✕ {f.del}</button>}
+            ? (rVal !== 0 && <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 14, fontWeight: 800, color: rVal > 0 ? JC.green : JC.red, textShadow: `0 0 12px ${rVal > 0 ? 'rgba(0,255,163,0.3)' : 'rgba(255,77,77,0.3)'}` }}>{rVal > 0 ? '+' : ''}{rVal.toFixed(2)}R</span>)
+            : (p !== 0 && <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 14, fontWeight: 800, color: p > 0 ? JC.green : JC.red, textShadow: `0 0 12px ${p > 0 ? 'rgba(0,255,163,0.3)' : 'rgba(255,77,77,0.3)'}` }}>{p > 0 ? '+' : ''}{p.toFixed(2)}$</span>)}
+          {!disabled && <button onClick={onDel} style={{ background: 'rgba(255,77,77,.1)', border: '1px solid rgba(255,77,77,.2)', color: JC.red, padding: '5px 10px', fontSize: 11, borderRadius: 6, cursor: 'pointer', fontWeight: 600, transition: 'all .15s' }}>✕ {f.del}</button>}
         </div>
       </div>
 
@@ -1722,7 +1729,7 @@ const TCard = ({ trade, idx, onChange, onDel, f, dir, disabled, th }: any) => {
         <div style={{ display: 'flex', gap: 6, marginBottom: 9 }}>
           {['LONG', 'SHORT', 'MISSED'].map(s => (
             <button key={s} onClick={() => onChange?.({ ...trade, side: s })}
-              style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' as const, borderRadius: 20, padding: '5px 14px', cursor: 'pointer', transition: 'all .2s', ...(trade.side === s ? { background: s === 'LONG' ? '#00FFA3' : s === 'SHORT' ? '#FF4D4D' : '#5AA9FF', color: '#0a0e1a', border: 'none', boxShadow: `0 0 12px ${s === 'LONG' ? 'rgba(0,255,163,0.3)' : s === 'SHORT' ? 'rgba(255,77,77,0.3)' : 'rgba(90,169,255,0.3)'}` } : { background: th.unselBg, border: `1px solid ${th.unselBr}`, color: th.unselTx }) }}>
+              style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' as const, borderRadius: 20, padding: '5px 14px', cursor: 'pointer', transition: 'all .2s', ...(trade.side === s ? { background: s === 'LONG' ? JC.green : s === 'SHORT' ? JC.red : JC.blue, color: JC.onAccent, border: 'none', boxShadow: `0 0 12px ${s === 'LONG' ? 'rgba(0,255,163,0.3)' : s === 'SHORT' ? 'rgba(255,77,77,0.3)' : 'rgba(90,169,255,0.3)'}` } : { background: th.unselBg, border: `1px solid ${th.unselBr}`, color: th.unselTx }) }}>
               {s}
             </button>
           ))}
@@ -1772,7 +1779,7 @@ const MiniStat = ({ label, value, color, sub, th }: { label: string; value: stri
 );
 
 const InsightRow = ({ icon, text, type, th, delay = 0 }: { icon: string; text: string; type: 'warning' | 'success' | 'info' | 'neutral'; th: typeof THEMES.dark; delay?: number }) => {
-  const c = { warning: '#FF4D4D', success: '#00FFA3', info: '#5AA9FF', neutral: '#FFC857' }[type];
+  const c = { warning: JC.red, success: JC.green, info: JC.blue, neutral: JC.amber }[type];
   const [vis, setVis] = useState(false);
   useEffect(() => { const t = setTimeout(() => setVis(true), delay); return () => clearTimeout(t); }, [delay]);
   return (
@@ -1855,7 +1862,7 @@ const IntelCard = ({ children, delay = 0, accent = 'transparent', th, style = {}
         {hasModal && <div style={{ position: 'absolute', top: 12, right: 14, fontSize: 8, color: th.tx3, fontWeight: 700, letterSpacing: '1px', opacity: 0.5 }}>CLICK TO EXPAND ↗</div>}
         {children}
       </div>
-      {modal && hasModal && <IntelModal title={modalTitle!} icon={modalIcon || '📊'} accent={accent || '#5AA9FF'} onClose={() => setModal(false)} th={th}>{modalContent}</IntelModal>}
+      {modal && hasModal && <IntelModal title={modalTitle!} icon={modalIcon || '📊'} accent={accent || JC.blue} onClose={() => setModal(false)} th={th}>{modalContent}</IntelModal>}
     </>
   );
 };
@@ -2091,12 +2098,12 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
     const tags: { label: string; icon: string; impact: number; color: string }[] = [];
     const highEmo = completeDays.filter(d => d.emotionScore >= 8);
     const lowEmo = completeDays.filter(d => d.emotionScore <= 4);
-    if (highEmo.length > 0) { const avg = highEmo.reduce((s, d) => s + (d.trades || []).reduce((ss, t) => ss + getTradeR(t), 0), 0) / highEmo.length; tags.push({ label: 'focus', icon: '🎯', impact: avg, color: avg >= 0 ? '#00FFA3' : '#FF4D4D' }); }
-    if (lowEmo.length > 0) { const avg = lowEmo.reduce((s, d) => s + (d.trades || []).reduce((ss, t) => ss + getTradeR(t), 0), 0) / lowEmo.length; tags.push({ label: 'frustration', icon: '😠', impact: avg, color: avg >= 0 ? '#00FFA3' : '#FF4D4D' }); }
+    if (highEmo.length > 0) { const avg = highEmo.reduce((s, d) => s + (d.trades || []).reduce((ss, t) => ss + getTradeR(t), 0), 0) / highEmo.length; tags.push({ label: 'focus', icon: '🎯', impact: avg, color: avg >= 0 ? JC.green : JC.red }); }
+    if (lowEmo.length > 0) { const avg = lowEmo.reduce((s, d) => s + (d.trades || []).reduce((ss, t) => ss + getTradeR(t), 0), 0) / lowEmo.length; tags.push({ label: 'frustration', icon: '😠', impact: avg, color: avg >= 0 ? JC.green : JC.red }); }
     const pressured = completeDays.filter(d => d.psychAnswers?.feelingPressure);
-    if (pressured.length > 0) { const avg = pressured.reduce((s, d) => s + (d.trades || []).reduce((ss, t) => ss + getTradeR(t), 0), 0) / pressured.length; tags.push({ label: 'pressure', icon: '😰', impact: avg, color: avg >= 0 ? '#00FFA3' : '#FF4D4D' }); }
+    if (pressured.length > 0) { const avg = pressured.reduce((s, d) => s + (d.trades || []).reduce((ss, t) => ss + getTradeR(t), 0), 0) / pressured.length; tags.push({ label: 'pressure', icon: '😰', impact: avg, color: avg >= 0 ? JC.green : JC.red }); }
     const disciplined = completeDays.filter(d => d.disciplineConfirmed);
-    if (disciplined.length > 0) { const avg = disciplined.reduce((s, d) => s + (d.trades || []).reduce((ss, t) => ss + getTradeR(t), 0), 0) / disciplined.length; tags.push({ label: 'conviction', icon: '💪', impact: avg, color: avg >= 0 ? '#00FFA3' : '#FF4D4D' }); }
+    if (disciplined.length > 0) { const avg = disciplined.reduce((s, d) => s + (d.trades || []).reduce((ss, t) => ss + getTradeR(t), 0), 0) / disciplined.length; tags.push({ label: 'conviction', icon: '💪', impact: avg, color: avg >= 0 ? JC.green : JC.red }); }
     return tags.sort((a, b) => Math.abs(b.impact) - Math.abs(a.impact));
   }, [completeDays]);
 
@@ -2196,16 +2203,16 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
 
   const heatColor = (r: number | null) => {
     if (r === null) return th.inputBg;
-    if (r >= 3) return '#00FFA3';
+    if (r >= 3) return JC.green;
     if (r >= 1) return 'rgba(0,255,163,0.6)';
     if (r >= 0) return 'rgba(0,255,163,0.25)';
     if (r >= -1) return 'rgba(255,77,77,0.3)';
     if (r >= -2) return 'rgba(255,77,77,0.55)';
-    return '#FF4D4D';
+    return JC.red;
   };
 
   const monthLabel = new Date(heatMonth.y, heatMonth.m).toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { month: 'long', year: 'numeric' });
-  const statusColor = totalR >= 0 ? '#00FFA3' : '#FF4D4D';
+  const statusColor = totalR >= 0 ? JC.green : JC.red;
 
   // Generate status summary
   const statusSummary = isRTL
@@ -2222,7 +2229,7 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
 
         {/* Top bar: days · trades · streak */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' as const }}>
-          <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 800, letterSpacing: '1px', color: '#5AA9FF', textTransform: 'uppercase' as const }}>{isRTL ? 'מרכז מודיעין מסחרי' : 'TRADING INTELLIGENCE CENTER'}</span>
+          <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 800, letterSpacing: '1px', color: JC.blue, textTransform: 'uppercase' as const }}>{isRTL ? 'מרכז מודיעין מסחרי' : 'TRADING INTELLIGENCE CENTER'}</span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' as const }}>
@@ -2230,7 +2237,7 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
           <span style={{ fontSize: 10, color: th.tx3 }}>·</span>
           <span style={{ fontSize: 10, color: th.tx3, fontWeight: 700 }}>{totalTrades} {isRTL ? 'עסקאות' : 'trades'}</span>
           <span style={{ fontSize: 10, color: th.tx3 }}>·</span>
-          <span style={{ fontSize: 10, color: streaks.currentStreakType === 'win' ? '#00FFA3' : '#FF4D4D', fontWeight: 700 }}>🔥 {streaks.currentStreak}</span>
+          <span style={{ fontSize: 10, color: streaks.currentStreakType === 'win' ? JC.green : JC.red, fontWeight: 700 }}>🔥 {streaks.currentStreak}</span>
         </div>
 
         {/* Big R number */}
@@ -2248,36 +2255,36 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginBottom: 6 }} className="j-grid-2col">
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: th.inputBg, borderRadius: 10 }}>
             <span style={{ fontSize: 12 }}>💰</span>
-            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 800, color: '#00FFA3' }}>{totalWins}</span>
-            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 800, color: '#FF4D4D' }}>{totalLosses}</span>
+            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 800, color: JC.green }}>{totalWins}</span>
+            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 800, color: JC.red }}>{totalLosses}</span>
             {totalBE > 0 && <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 800, color: th.tx3 }}>{totalBE}</span>}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 10px', background: th.inputBg, borderRadius: 10 }}>
             <span style={{ fontSize: 10, color: th.tx3, fontWeight: 700 }}>{isRTL ? 'סה"כ' : 'P&L'}</span>
-            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 800, color: totalPnl >= 0 ? '#00FFA3' : '#FF4D4D' }}>{totalPnl >= 0 ? '+' : ''}{totalPnl.toFixed(0)}$</span>
+            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 800, color: totalPnl >= 0 ? JC.green : JC.red }}>{totalPnl >= 0 ? '+' : ''}{totalPnl.toFixed(0)}$</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 10px', background: th.inputBg, borderRadius: 10 }}>
             <span style={{ fontSize: 10, color: th.tx3, fontWeight: 700 }}>{isRTL ? 'הצלחה' : 'WR'}</span>
-            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 800, color: winRate >= 40 ? '#00FFA3' : '#FF4D4D' }}>{winRate.toFixed(1)}%</span>
+            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 800, color: winRate >= 40 ? JC.green : JC.red }}>{winRate.toFixed(1)}%</span>
           </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }} className="j-grid-2col">
           <div style={{ textAlign: 'center', padding: '6px 4px', background: th.inputBg, borderRadius: 8 }}>
             <div style={{ fontSize: 7, fontWeight: 700, color: th.tx3, letterSpacing: '1px' }}>📐 EV</div>
-            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 800, color: expectancy >= 0 ? '#00FFA3' : '#FF4D4D', marginTop: 2 }}>{expectancy >= 0 ? '+' : ''}{expectancy.toFixed(2)}R</div>
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 800, color: expectancy >= 0 ? JC.green : JC.red, marginTop: 2 }}>{expectancy >= 0 ? '+' : ''}{expectancy.toFixed(2)}R</div>
           </div>
           <div style={{ textAlign: 'center', padding: '6px 4px', background: th.inputBg, borderRadius: 8 }}>
             <div style={{ fontSize: 7, fontWeight: 700, color: th.tx3, letterSpacing: '1px' }}>⚖️ PF</div>
-            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 800, color: profitFactor >= 1 ? '#00FFA3' : '#FF4D4D', marginTop: 2 }}>{profitFactor === Infinity ? '∞' : profitFactor.toFixed(2)}</div>
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 800, color: profitFactor >= 1 ? JC.green : JC.red, marginTop: 2 }}>{profitFactor === Infinity ? '∞' : profitFactor.toFixed(2)}</div>
           </div>
           <div style={{ textAlign: 'center', padding: '6px 4px', background: th.inputBg, borderRadius: 8 }}>
             <div style={{ fontSize: 7, fontWeight: 700, color: th.tx3, letterSpacing: '1px' }}>🧠 {isRTL ? 'רגש' : 'EMO'}</div>
-            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 800, color: '#b794f6', marginTop: 2 }}>{avgEmotion.toFixed(1)}</div>
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 800, color: JC.purple, marginTop: 2 }}>{avgEmotion.toFixed(1)}</div>
           </div>
           <div style={{ textAlign: 'center', padding: '6px 4px', background: th.inputBg, borderRadius: 8 }}>
             <div style={{ fontSize: 7, fontWeight: 700, color: th.tx3, letterSpacing: '1px' }}>✓ {isRTL ? 'ממ. +' : 'Avg ✓'}</div>
-            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 800, color: '#00FFA3', marginTop: 2 }}>+{avgWinR.toFixed(1)}R</div>
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 800, color: JC.green, marginTop: 2 }}>+{avgWinR.toFixed(1)}R</div>
           </div>
         </div>
       </div>
@@ -2286,40 +2293,40 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }} className="j-grid-2col">
         {/* Streaks */}
         <div style={{ background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 14, padding: '14px 12px' }}>
-          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.5px', color: '#FFC857', textTransform: 'uppercase' as const, marginBottom: 10, fontFamily: "'Poppins',sans-serif" }}>{isRTL ? 'רצפים' : 'STREAKS'}</div>
+          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.5px', color: JC.amber, textTransform: 'uppercase' as const, marginBottom: 10, fontFamily: "'Poppins',sans-serif" }}>{isRTL ? 'רצפים' : 'STREAKS'}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
             <span style={{ fontSize: 10, color: th.tx3 }}>❄️</span>
-            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 18, fontWeight: 800, color: streaks.currentStreakType === 'win' ? '#00FFA3' : '#FF4D4D' }}>{streaks.currentStreak}</span>
+            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 18, fontWeight: 800, color: streaks.currentStreakType === 'win' ? JC.green : JC.red }}>{streaks.currentStreak}</span>
             <span style={{ fontSize: 8, color: th.tx3, fontWeight: 600 }}>{isRTL ? 'רצף נוכחי' : 'current'}</span>
           </div>
           <div style={{ display: 'flex', gap: 10, fontSize: 9, color: th.tx3 }}>
-            <span>{isRTL ? 'שיא' : 'Best'} ✓<strong style={{ color: '#00FFA3' }}>{streaks.bestWin}</strong></span>
-            <span>{isRTL ? 'שיא' : 'Best'} ✗<strong style={{ color: '#FF4D4D' }}>{streaks.bestLoss}</strong></span>
+            <span>{isRTL ? 'שיא' : 'Best'} ✓<strong style={{ color: JC.green }}>{streaks.bestWin}</strong></span>
+            <span>{isRTL ? 'שיא' : 'Best'} ✗<strong style={{ color: JC.red }}>{streaks.bestLoss}</strong></span>
           </div>
         </div>
 
         {/* Drawdown */}
         <div style={{ background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 14, padding: '14px 12px' }}>
-          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.5px', color: '#FF4D4D', textTransform: 'uppercase' as const, marginBottom: 8, fontFamily: "'Poppins',sans-serif" }}>{isRTL ? 'משיכה מקסימלית' : 'MAX DRAWDOWN'}</div>
-          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 18, fontWeight: 800, color: '#FF4D4D', marginBottom: 4 }}>-{drawdown.maxDD.toFixed(1)}R</div>
-          <div style={{ fontSize: 9, color: th.tx3 }}>{isRTL ? 'נוכחי' : 'Current'} <span style={{ color: drawdown.currentDD > 0 ? '#FFC857' : '#00FFA3', fontWeight: 700 }}>-{drawdown.currentDD.toFixed(1)}R</span></div>
-          <div style={{ fontSize: 9, color: th.tx3, marginTop: 2 }}>{isRTL ? 'שחזור' : 'Recovery'} <span style={{ color: '#5AA9FF', fontWeight: 700 }}>{drawdown.recoveryFactor === Infinity ? '∞' : drawdown.recoveryFactor.toFixed(1)}x</span></div>
+          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.5px', color: JC.red, textTransform: 'uppercase' as const, marginBottom: 8, fontFamily: "'Poppins',sans-serif" }}>{isRTL ? 'משיכה מקסימלית' : 'MAX DRAWDOWN'}</div>
+          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 18, fontWeight: 800, color: JC.red, marginBottom: 4 }}>-{drawdown.maxDD.toFixed(1)}R</div>
+          <div style={{ fontSize: 9, color: th.tx3 }}>{isRTL ? 'נוכחי' : 'Current'} <span style={{ color: drawdown.currentDD > 0 ? JC.amber : JC.green, fontWeight: 700 }}>-{drawdown.currentDD.toFixed(1)}R</span></div>
+          <div style={{ fontSize: 9, color: th.tx3, marginTop: 2 }}>{isRTL ? 'שחזור' : 'Recovery'} <span style={{ color: JC.blue, fontWeight: 700 }}>{drawdown.recoveryFactor === Infinity ? '∞' : drawdown.recoveryFactor.toFixed(1)}x</span></div>
         </div>
 
         {/* Consistency */}
         <div style={{ background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 14, padding: '14px 12px' }}>
-          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.5px', color: '#5AA9FF', textTransform: 'uppercase' as const, marginBottom: 8, fontFamily: "'Poppins',sans-serif" }}>{isRTL ? 'עקביות' : 'CONSISTENCY'}</div>
+          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.5px', color: JC.blue, textTransform: 'uppercase' as const, marginBottom: 8, fontFamily: "'Poppins',sans-serif" }}>{isRTL ? 'עקביות' : 'CONSISTENCY'}</div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
             <span style={{ fontSize: 9, color: th.tx3 }}>{isRTL ? 'ימים ירוקים' : 'Green Days'}</span>
-            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, fontWeight: 800, color: consistency.greenRatio >= 50 ? '#00FFA3' : '#FF4D4D' }}>{consistency.greenRatio.toFixed(0)}%</span>
+            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, fontWeight: 800, color: consistency.greenRatio >= 50 ? JC.green : JC.red }}>{consistency.greenRatio.toFixed(0)}%</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
             <span style={{ fontSize: 9, color: th.tx3 }}>Sharpe</span>
-            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, fontWeight: 800, color: consistency.sharpe >= 0.5 ? '#00FFA3' : '#FF4D4D' }}>{consistency.sharpe.toFixed(2)}</span>
+            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, fontWeight: 800, color: consistency.sharpe >= 0.5 ? JC.green : JC.red }}>{consistency.sharpe.toFixed(2)}</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 9, color: th.tx3 }}>{isRTL ? 'ממ. ✓' : 'Avg ✓'}/{isRTL ? 'ממ. ✗' : 'Avg ✗'}</span>
-            <span style={{ fontSize: 10 }}><span style={{ color: '#00FFA3', fontWeight: 700 }}>+{avgWinR.toFixed(0)}$</span> <span style={{ color: '#FF4D4D', fontWeight: 700 }}>-{avgLossR.toFixed(0)}$</span></span>
+            <span style={{ fontSize: 10 }}><span style={{ color: JC.green, fontWeight: 700 }}>+{avgWinR.toFixed(0)}$</span> <span style={{ color: JC.red, fontWeight: 700 }}>-{avgLossR.toFixed(0)}$</span></span>
           </div>
         </div>
       </div>
@@ -2329,12 +2336,12 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
         <div style={{ background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 14, padding: '16px 18px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
             <span style={{ fontSize: 14 }}>🔬</span>
-            <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 800, letterSpacing: '1.5px', color: '#b794f6', textTransform: 'uppercase' as const }}>{isRTL ? 'מודיעין מסחרי' : 'TRADING INTELLIGENCE'}</span>
+            <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 800, letterSpacing: '1.5px', color: JC.purple, textTransform: 'uppercase' as const }}>{isRTL ? 'מודיעין מסחרי' : 'TRADING INTELLIGENCE'}</span>
           </div>
           <div style={{ fontSize: 9, color: th.tx3, marginBottom: 10, lineHeight: 1.5 }}>{isRTL ? 'תובנות בעדיפות גבוהה מהתנהגות המסחר שלך' : 'High-priority insights from your trading behavior'}</div>
           <div style={{ display: 'grid', gap: 6 }}>
             {emotionInsights.slice(0, 8).map((ins, i) => {
-              const c = ins.type === 'warning' ? '#FF4D4D' : ins.type === 'success' ? '#00FFA3' : '#5AA9FF';
+              const c = ins.type === 'warning' ? JC.red : ins.type === 'success' ? JC.green : JC.blue;
               return (
                 <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', background: `${c}06`, border: `1px solid ${c}10`, borderRadius: 10 }}>
                   <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}>{ins.icon}</span>
@@ -2349,9 +2356,9 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
       {/* ═══ R-DISTRIBUTION ═══ */}
       {rDistribution.buckets.length > 0 && (
         <div style={{ background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 14, padding: '16px 18px' }}>
-          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.5px', color: '#b794f6', textTransform: 'uppercase' as const, marginBottom: 10, fontFamily: "'Poppins',sans-serif" }}>{isRTL ? 'התפלגות R' : 'R-DISTRIBUTION'}</div>
+          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.5px', color: JC.purple, textTransform: 'uppercase' as const, marginBottom: 10, fontFamily: "'Poppins',sans-serif" }}>{isRTL ? 'התפלגות R' : 'R-DISTRIBUTION'}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-            <span style={{ fontSize: 9, color: th.tx3 }}>{isRTL ? 'חציון' : 'Median'}: <strong style={{ color: '#b794f6' }}>{rDistribution.median.toFixed(1)}R</strong></span>
+            <span style={{ fontSize: 9, color: th.tx3 }}>{isRTL ? 'חציון' : 'Median'}: <strong style={{ color: JC.purple }}>{rDistribution.median.toFixed(1)}R</strong></span>
           </div>
           <div style={{ display: 'flex', gap: 3, alignItems: 'flex-end', height: 70, marginBottom: 6 }}>
             {rDistribution.buckets.map((b, i) => {
@@ -2361,7 +2368,7 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
               return (
                 <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', gap: 2 }}>
                   {b.count > 0 && <span style={{ fontSize: 8, fontWeight: 800, color: th.tx2 }}>{b.count}</span>}
-                  <div style={{ width: '75%', height: barH, borderRadius: 3, background: isNeg ? '#FF4D4D' : '#00FFA3', opacity: 0.7, transition: 'height .5s ease' }} />
+                  <div style={{ width: '75%', height: barH, borderRadius: 3, background: isNeg ? JC.red : JC.green, opacity: 0.7, transition: 'height .5s ease' }} />
                 </div>
               );
             })}
@@ -2370,8 +2377,8 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
             {rDistribution.buckets.map((b, i) => <div key={i} style={{ flex: 1, textAlign: 'center', fontSize: 7, color: th.tx3, fontWeight: 600 }}>{b.label}</div>)}
           </div>
           <div style={{ display: 'flex', gap: 16, marginTop: 8, fontSize: 9, color: th.tx3 }}>
-            <span>{isRTL ? 'הטיה' : 'Skew'}: <strong style={{ color: '#b794f6' }}>{rDistribution.skew > 0 ? '+' : ''}{rDistribution.skew.toFixed(2)}</strong></span>
-            <span>{isRTL ? 'מצב' : 'Mode'}: <strong style={{ color: '#b794f6' }}>{rDistribution.mode}</strong></span>
+            <span>{isRTL ? 'הטיה' : 'Skew'}: <strong style={{ color: JC.purple }}>{rDistribution.skew > 0 ? '+' : ''}{rDistribution.skew.toFixed(2)}</strong></span>
+            <span>{isRTL ? 'מצב' : 'Mode'}: <strong style={{ color: JC.purple }}>{rDistribution.mode}</strong></span>
           </div>
         </div>
       )}
@@ -2379,11 +2386,11 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
       {/* ═══ TRADE FREQUENCY ═══ */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }} className="j-grid-2col">
         <div style={{ background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 14, padding: '14px 16px' }}>
-          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.5px', color: '#FFC857', textTransform: 'uppercase' as const, marginBottom: 10, fontFamily: "'Poppins',sans-serif" }}>{isRTL ? 'תדירות מסחר' : 'TRADE FREQUENCY'}</div>
+          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.5px', color: JC.amber, textTransform: 'uppercase' as const, marginBottom: 10, fontFamily: "'Poppins',sans-serif" }}>{isRTL ? 'תדירות מסחר' : 'TRADE FREQUENCY'}</div>
           <div style={{ display: 'flex', gap: 12, marginBottom: 8 }}>
-            <div><div style={{ fontSize: 7, color: th.tx3, fontWeight: 700, letterSpacing: '1px' }}>{isRTL ? 'ממוצע/יום' : 'AVG/DAY'}</div><div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 18, fontWeight: 800, color: '#5AA9FF' }}>{frequency.avgTradesPerDay.toFixed(1)}</div></div>
-            {frequency.optimal && <div><div style={{ fontSize: 7, color: th.tx3, fontWeight: 700, letterSpacing: '1px' }}>{isRTL ? 'אופטימלי' : 'OPTIMAL'}</div><div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 18, fontWeight: 800, color: '#00FFA3' }}>{frequency.optimal.trades}</div></div>}
-            <div><div style={{ fontSize: 7, color: th.tx3, fontWeight: 700, letterSpacing: '1px' }}>{isRTL ? 'ימי יתר' : 'OVER'}</div><div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 18, fontWeight: 800, color: frequency.overtradingDays > 0 ? '#FF4D4D' : '#00FFA3' }}>{frequency.overtradingDays}</div></div>
+            <div><div style={{ fontSize: 7, color: th.tx3, fontWeight: 700, letterSpacing: '1px' }}>{isRTL ? 'ממוצע/יום' : 'AVG/DAY'}</div><div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 18, fontWeight: 800, color: JC.blue }}>{frequency.avgTradesPerDay.toFixed(1)}</div></div>
+            {frequency.optimal && <div><div style={{ fontSize: 7, color: th.tx3, fontWeight: 700, letterSpacing: '1px' }}>{isRTL ? 'אופטימלי' : 'OPTIMAL'}</div><div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 18, fontWeight: 800, color: JC.green }}>{frequency.optimal.trades}</div></div>}
+            <div><div style={{ fontSize: 7, color: th.tx3, fontWeight: 700, letterSpacing: '1px' }}>{isRTL ? 'ימי יתר' : 'OVER'}</div><div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 18, fontWeight: 800, color: frequency.overtradingDays > 0 ? JC.red : JC.green }}>{frequency.overtradingDays}</div></div>
           </div>
           {frequency.entries.length > 0 && (
             <div style={{ display: 'grid', gap: 3 }}>
@@ -2391,9 +2398,9 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
                 <div key={e.trades} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 9 }}>
                   <span style={{ color: th.tx3, fontWeight: 700, minWidth: 16 }}>{e.trades}t</span>
                   <div style={{ flex: 1, height: 3, background: th.inputBg, borderRadius: 2, overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${Math.min(100, (e.days / Math.max(...frequency.entries.map(x => x.days))) * 100)}%`, background: e.avgR >= 0 ? '#00FFA3' : '#FF4D4D', borderRadius: 2 }} />
+                    <div style={{ height: '100%', width: `${Math.min(100, (e.days / Math.max(...frequency.entries.map(x => x.days))) * 100)}%`, background: e.avgR >= 0 ? JC.green : JC.red, borderRadius: 2 }} />
                   </div>
-                  <span style={{ color: e.avgR >= 0 ? '#00FFA3' : '#FF4D4D', fontWeight: 800, minWidth: 35, textAlign: 'right' as const, fontFamily: "'JetBrains Mono',monospace" }}>{e.avgR >= 0 ? '+' : ''}{e.avgR.toFixed(1)}R</span>
+                  <span style={{ color: e.avgR >= 0 ? JC.green : JC.red, fontWeight: 800, minWidth: 35, textAlign: 'right' as const, fontFamily: "'JetBrains Mono',monospace" }}>{e.avgR >= 0 ? '+' : ''}{e.avgR.toFixed(1)}R</span>
                   <span style={{ color: th.tx3, minWidth: 16 }}>{e.days}d</span>
                 </div>
               ))}
@@ -2402,37 +2409,37 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
         </div>
 
         {/* Decision Quality Compact */}
-        <Expandable title={isRTL ? 'איכות החלטות' : 'DECISION QUALITY'} icon="🎯" accent="#b794f6" th={th} defaultOpen={decisionQuality.total > 0}>
+        <Expandable title={isRTL ? 'איכות החלטות' : 'DECISION QUALITY'} icon="🎯" accent={JC.purple} th={th} defaultOpen={decisionQuality.total > 0}>
           {decisionQuality.total > 0 ? (
             <div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 10 }}>
                 <div style={{ textAlign: 'center', padding: 8, background: 'rgba(0,255,163,0.04)', borderRadius: 8 }}>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: '#00FFA3', fontFamily: "'JetBrains Mono',monospace" }}>{decisionQuality.goodDecGoodOut}</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: JC.green, fontFamily: "'JetBrains Mono',monospace" }}>{decisionQuality.goodDecGoodOut}</div>
                   <div style={{ fontSize: 7, color: th.tx3, fontWeight: 700, marginTop: 2 }}>{isRTL ? 'טובה + ניצחון' : 'Good + Win'}</div>
                 </div>
                 <div style={{ textAlign: 'center', padding: 8, background: 'rgba(90,169,255,0.04)', borderRadius: 8 }}>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: '#5AA9FF', fontFamily: "'JetBrains Mono',monospace" }}>{decisionQuality.goodDecBadOut}</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: JC.blue, fontFamily: "'JetBrains Mono',monospace" }}>{decisionQuality.goodDecBadOut}</div>
                   <div style={{ fontSize: 7, color: th.tx3, fontWeight: 700, marginTop: 2 }}>{isRTL ? 'טובה + הפסד' : 'Good + Loss'}</div>
                 </div>
                 <div style={{ textAlign: 'center', padding: 8, background: 'rgba(255,200,87,0.04)', borderRadius: 8 }}>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: '#FFC857', fontFamily: "'JetBrains Mono',monospace" }}>{decisionQuality.badDecGoodOut}</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: JC.amber, fontFamily: "'JetBrains Mono',monospace" }}>{decisionQuality.badDecGoodOut}</div>
                   <div style={{ fontSize: 7, color: th.tx3, fontWeight: 700, marginTop: 2 }}>{isRTL ? 'חלשה + ניצחון' : 'Weak + Win'}</div>
                 </div>
                 <div style={{ textAlign: 'center', padding: 8, background: 'rgba(255,77,77,0.04)', borderRadius: 8 }}>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: '#FF4D4D', fontFamily: "'JetBrains Mono',monospace" }}>{decisionQuality.badDecBadOut}</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: JC.red, fontFamily: "'JetBrains Mono',monospace" }}>{decisionQuality.badDecBadOut}</div>
                   <div style={{ fontSize: 7, color: th.tx3, fontWeight: 700, marginTop: 2 }}>{isRTL ? 'חלשה + הפסד' : 'Weak + Loss'}</div>
                 </div>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 10px', background: th.inputBg, borderRadius: 8, marginBottom: 4 }}>
                 <span style={{ fontSize: 9, color: th.tx3, fontWeight: 700 }}>{isRTL ? 'החלטה' : 'Decision'}</span>
-                <span style={{ fontSize: 12, fontWeight: 800, color: decisionQuality.decisionPct >= 60 ? '#00FFA3' : '#FFC857', fontFamily: "'JetBrains Mono',monospace" }}>{decisionQuality.decisionPct.toFixed(0)}%</span>
+                <span style={{ fontSize: 12, fontWeight: 800, color: decisionQuality.decisionPct >= 60 ? JC.green : JC.amber, fontFamily: "'JetBrains Mono',monospace" }}>{decisionQuality.decisionPct.toFixed(0)}%</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 10px', background: th.inputBg, borderRadius: 8, marginBottom: 6 }}>
                 <span style={{ fontSize: 9, color: th.tx3, fontWeight: 700 }}>{isRTL ? 'תוצאה' : 'Outcome'}</span>
-                <span style={{ fontSize: 12, fontWeight: 800, color: decisionQuality.outcomePct >= 40 ? '#00FFA3' : '#FF4D4D', fontFamily: "'JetBrains Mono',monospace" }}>{decisionQuality.outcomePct.toFixed(0)}%</span>
+                <span style={{ fontSize: 12, fontWeight: 800, color: decisionQuality.outcomePct >= 40 ? JC.green : JC.red, fontFamily: "'JetBrains Mono',monospace" }}>{decisionQuality.outcomePct.toFixed(0)}%</span>
               </div>
               {decisionQuality.decisionPct > decisionQuality.outcomePct && (
-                <div style={{ fontSize: 9, color: '#00FFA3', fontWeight: 700, textAlign: 'center', padding: '4px 0' }}>
+                <div style={{ fontSize: 9, color: JC.green, fontWeight: 700, textAlign: 'center', padding: '4px 0' }}>
                   {isRTL ? 'פער קיימות' : 'Sustainability gap'}: +{(decisionQuality.decisionPct - decisionQuality.outcomePct).toFixed(0)}%
                 </div>
               )}
@@ -2445,13 +2452,13 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
 
       {/* ═══ EXECUTION + BEHAVIORAL INTELLIGENCE ═══ */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }} className="j-grid-2col">
-        <Expandable title={isRTL ? 'מודיעין ביצוע' : 'EXECUTION INTEL'} icon="📊" accent="#5AA9FF" th={th}>
+        <Expandable title={isRTL ? 'מודיעין ביצוע' : 'EXECUTION INTEL'} icon="📊" accent={JC.blue} th={th}>
           <div style={{ display: 'grid', gap: 6 }}>
             {[
-              { l: isRTL ? 'כניסה' : 'Entry', v: `${executionIntel.entryPct}%`, c: executionIntel.entryPct >= 90 ? '#00FFA3' : '#FFC857' },
-              { l: isRTL ? 'יציאה' : 'Exit', v: `${executionIntel.exitPct}%`, c: executionIntel.exitPct >= 80 ? '#00FFA3' : '#FFC857' },
-              { l: isRTL ? 'יציאות מוקדמות' : 'Early Exits', v: `${executionIntel.earlyExitPct}%`, c: executionIntel.earlyExitPct <= 10 ? '#00FFA3' : '#FF4D4D' },
-              { l: isRTL ? 'סטייה מתוכנית' : 'Plan Deviation', v: `${executionIntel.deviationPct}%`, c: executionIntel.deviationPct <= 10 ? '#00FFA3' : '#FF4D4D' },
+              { l: isRTL ? 'כניסה' : 'Entry', v: `${executionIntel.entryPct}%`, c: executionIntel.entryPct >= 90 ? JC.green : JC.amber },
+              { l: isRTL ? 'יציאה' : 'Exit', v: `${executionIntel.exitPct}%`, c: executionIntel.exitPct >= 80 ? JC.green : JC.amber },
+              { l: isRTL ? 'יציאות מוקדמות' : 'Early Exits', v: `${executionIntel.earlyExitPct}%`, c: executionIntel.earlyExitPct <= 10 ? JC.green : JC.red },
+              { l: isRTL ? 'סטייה מתוכנית' : 'Plan Deviation', v: `${executionIntel.deviationPct}%`, c: executionIntel.deviationPct <= 10 ? JC.green : JC.red },
             ].map(s => (
               <div key={s.l} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 10px', background: th.inputBg, borderRadius: 8 }}>
                 <span style={{ fontSize: 10, color: th.tx3, fontWeight: 700 }}>{s.l}</span>
@@ -2461,7 +2468,7 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
           </div>
         </Expandable>
 
-        <Expandable title={isRTL ? 'מודיעין התנהגותי' : 'BEHAVIORAL INTEL'} icon="🧠" accent="#b794f6" th={th}>
+        <Expandable title={isRTL ? 'מודיעין התנהגותי' : 'BEHAVIORAL INTEL'} icon="🧠" accent={JC.purple} th={th}>
           {behaviorTags.length > 0 ? (
             <div style={{ display: 'grid', gap: 4 }}>
               {behaviorTags.map((tag, i) => (
@@ -2480,7 +2487,7 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
 
       {/* ═══ EQUITY CURVE + TRADE DISTRIBUTION ═══ */}
       <div style={{ background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 14, padding: '14px 16px' }}>
-        <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.5px', color: '#00FFA3', textTransform: 'uppercase' as const, marginBottom: 8, fontFamily: "'Poppins',sans-serif" }}>{isRTL ? 'עקומת הון' : 'EQUITY CURVE'} · {totalPnl >= 0 ? '+' : ''}{totalPnl.toFixed(0)}$</div>
+        <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.5px', color: JC.green, textTransform: 'uppercase' as const, marginBottom: 8, fontFamily: "'Poppins',sans-serif" }}>{isRTL ? 'עקומת הון' : 'EQUITY CURVE'} · {totalPnl >= 0 ? '+' : ''}{totalPnl.toFixed(0)}$</div>
         {drawdown.equity.length > 2 && (
           <svg width="100%" height="50" viewBox={`0 0 ${drawdown.equity.length} 50`} preserveAspectRatio="none" style={{ borderRadius: 6, overflow: 'hidden' }}>
             {(() => {
@@ -2489,7 +2496,7 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
               const range = max - min || 1;
               const pts = eq.map((v, i) => `${i},${46 - ((v - min) / range) * 42}`).join(' ');
               return <>
-                <polyline points={pts} fill="none" stroke={totalR >= 0 ? '#00FFA3' : '#FF4D4D'} strokeWidth="1.5" opacity="0.8" />
+                <polyline points={pts} fill="none" stroke={totalR >= 0 ? JC.green : JC.red} strokeWidth="1.5" opacity="0.8" />
                 <polyline points={`0,46 ${pts} ${eq.length - 1},46`} fill={totalR >= 0 ? 'rgba(0,255,163,0.08)' : 'rgba(255,77,77,0.08)'} stroke="none" />
               </>;
             })()}
@@ -2500,14 +2507,14 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
           <span style={{ fontSize: 9, color: th.tx3, fontWeight: 700 }}>{totalTrades} {isRTL ? 'עסקאות' : 'TRADES'}</span>
           <div style={{ flex: 1, height: 8, borderRadius: 4, overflow: 'hidden', display: 'flex', background: th.inputBg }}>
             {totalTrades > 0 && <>
-              <div style={{ width: `${(totalWins / totalTrades) * 100}%`, background: '#00FFA3', height: '100%' }} />
-              <div style={{ width: `${(totalLosses / totalTrades) * 100}%`, background: '#FF4D4D', height: '100%' }} />
+              <div style={{ width: `${(totalWins / totalTrades) * 100}%`, background: JC.green, height: '100%' }} />
+              <div style={{ width: `${(totalLosses / totalTrades) * 100}%`, background: JC.red, height: '100%' }} />
               {totalBE > 0 && <div style={{ width: `${(totalBE / totalTrades) * 100}%`, background: th.tx3, height: '100%' }} />}
             </>}
           </div>
           <div style={{ display: 'flex', gap: 6, fontSize: 9 }}>
-            <span style={{ color: '#00FFA3', fontWeight: 700 }}>W {totalWins}</span>
-            <span style={{ color: '#FF4D4D', fontWeight: 700 }}>L {totalLosses}</span>
+            <span style={{ color: JC.green, fontWeight: 700 }}>W {totalWins}</span>
+            <span style={{ color: JC.red, fontWeight: 700 }}>L {totalLosses}</span>
             {totalBE > 0 && <span style={{ color: th.tx3, fontWeight: 700 }}>M {totalBE}</span>}
           </div>
         </div>
@@ -2516,7 +2523,7 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
       {/* ═══ DAILY PNL CALENDAR ═══ */}
       <div style={{ background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 14, padding: '14px 16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.5px', color: '#00FFA3', textTransform: 'uppercase' as const, fontFamily: "'Poppins',sans-serif" }}>📊 {isRTL ? 'לוח PnL יומי' : 'DAILY PNL BOARD'}</div>
+          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.5px', color: JC.green, textTransform: 'uppercase' as const, fontFamily: "'Poppins',sans-serif" }}>📊 {isRTL ? 'לוח PnL יומי' : 'DAILY PNL BOARD'}</div>
           <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
             <button onClick={() => setHeatMonth(p => p.m === 0 ? { y: p.y - 1, m: 11 } : { ...p, m: p.m - 1 })} style={{ width: 22, height: 22, borderRadius: 6, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', color: th.tx3, fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>‹</button>
             <span style={{ fontSize: 10, fontWeight: 700, color: th.tx2, minWidth: 80, textAlign: 'center' }}>{monthLabel}</span>
@@ -2550,17 +2557,17 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
             <span>🟢 {isRTL ? 'רווחי' : 'Profit'}</span>
             <span>🔴 {isRTL ? 'הפסד' : 'Loss'}</span>
           </div>
-          <span style={{ fontSize: 9, color: th.tx3 }}>{isRTL ? 'מגמת רגש' : 'Emo trend'} <strong style={{ color: '#b794f6' }}>{avgEmotion.toFixed(1)}/10</strong></span>
+          <span style={{ fontSize: 9, color: th.tx3 }}>{isRTL ? 'מגמת רגש' : 'Emo trend'} <strong style={{ color: JC.purple }}>{avgEmotion.toFixed(1)}/10</strong></span>
         </div>
       </div>
 
       {/* ═══ STRATEGY INTELLIGENCE ═══ */}
       {byStrategy.length > 0 && (
         <div style={{ background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 14, padding: '14px 16px' }}>
-          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.5px', color: '#b794f6', textTransform: 'uppercase' as const, marginBottom: 10, fontFamily: "'Poppins',sans-serif" }}>🎯 {isRTL ? 'מודיעין שיטות' : 'STRATEGY INTELLIGENCE'}</div>
+          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.5px', color: JC.purple, textTransform: 'uppercase' as const, marginBottom: 10, fontFamily: "'Poppins',sans-serif" }}>🎯 {isRTL ? 'מודיעין שיטות' : 'STRATEGY INTELLIGENCE'}</div>
           <div style={{ display: 'grid', gap: 8 }}>
             {byStrategy.map(s => {
-              const c = s.r >= 0 ? '#00FFA3' : '#FF4D4D';
+              const c = s.r >= 0 ? JC.green : JC.red;
               return (
                 <div key={s.name} style={{ background: `${c}04`, border: `1px solid ${c}10`, borderRadius: 12, padding: '12px 14px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
@@ -2569,8 +2576,8 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
                   </div>
                   <div style={{ display: 'flex', gap: 12, fontSize: 9, color: th.tx3, flexWrap: 'wrap' as const }}>
                     <span>{s.count} {isRTL ? 'עסקאות' : 'trades'}</span>
-                    <span style={{ color: s.wr >= 40 ? '#00FFA3' : '#FF4D4D' }}>{s.wr.toFixed(0)}% WR</span>
-                    <span style={{ color: s.avgR >= 0 ? '#00FFA3' : '#FF4D4D' }}>{s.avgR >= 0 ? '+' : ''}{s.avgR.toFixed(2)}R {isRTL ? 'ממוצע' : 'avg'}</span>
+                    <span style={{ color: s.wr >= 40 ? JC.green : JC.red }}>{s.wr.toFixed(0)}% WR</span>
+                    <span style={{ color: s.avgR >= 0 ? JC.green : JC.red }}>{s.avgR >= 0 ? '+' : ''}{s.avgR.toFixed(2)}R {isRTL ? 'ממוצע' : 'avg'}</span>
                   </div>
                 </div>
               );
@@ -2582,12 +2589,12 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
       {/* ═══ PERFORMANCE SUMMARY ═══ */}
       <div style={{ background: th.cardBg, border: `1px solid ${th.cardBr}`, borderRadius: 14, padding: '14px 16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.5px', color: '#FFC857', textTransform: 'uppercase' as const, fontFamily: "'Poppins',sans-serif" }}>📊 {isRTL ? 'סיכום ביצועים' : 'PERFORMANCE SUMMARY'}</div>
+          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.5px', color: JC.amber, textTransform: 'uppercase' as const, fontFamily: "'Poppins',sans-serif" }}>📊 {isRTL ? 'סיכום ביצועים' : 'PERFORMANCE SUMMARY'}</div>
           <div style={{ display: 'flex', gap: 0, borderRadius: 6, overflow: 'hidden', border: `1px solid ${th.inputBr}` }}>
             {(['monthly', 'yearly'] as const).map(tab => (
               <button key={tab} onClick={() => setPerfTab(tab)} style={{
                 padding: '4px 10px', fontSize: 8, fontWeight: 700, cursor: 'pointer', border: 'none',
-                background: perfTab === tab ? '#FFC857' : th.inputBg, color: perfTab === tab ? '#000' : th.tx3,
+                background: perfTab === tab ? JC.amber : th.inputBg, color: perfTab === tab ? '#000' : th.tx3,
                 letterSpacing: '1px', textTransform: 'uppercase' as const,
               }}>{tab === 'monthly' ? (isRTL ? 'חודשי' : 'Monthly') : (isRTL ? 'שנתי' : 'Yearly')}</button>
             ))}
@@ -2604,7 +2611,7 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
         {perfTab === 'monthly' ? (
           <div style={{ display: 'grid', gap: 6 }}>
             {monthlyRecap.map(m => {
-              const c = m.totalR >= 0 ? '#00FFA3' : '#FF4D4D';
+              const c = m.totalR >= 0 ? JC.green : JC.red;
               return (
                 <div key={m.ym} style={{ padding: '10px 12px', background: `${c}04`, borderRadius: 10, border: `1px solid ${c}08` }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
@@ -2616,7 +2623,7 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
                   </div>
                   <div style={{ display: 'flex', gap: 8, fontSize: 8, color: th.tx3, flexWrap: 'wrap' as const }}>
                     <span>{m.days} {isRTL ? 'ימים' : 'days'} · {m.trades}t</span>
-                    <span style={{ color: m.wr >= 40 ? '#00FFA3' : '#FF4D4D' }}>{m.wr.toFixed(0)}%</span>
+                    <span style={{ color: m.wr >= 40 ? JC.green : JC.red }}>{m.wr.toFixed(0)}%</span>
                     <span>EV {m.ev >= 0 ? '+' : ''}{m.ev.toFixed(2)}R</span>
                     <span>PF: {m.pf === Infinity ? '∞' : m.pf.toFixed(2)}</span>
                   </div>
@@ -2627,17 +2634,17 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
         ) : (
           <div style={{ display: 'grid', gap: 6 }}>
             {yearlyRecap.map(yr => {
-              const c = yr.totalR >= 0 ? '#00FFA3' : '#FF4D4D';
+              const c = yr.totalR >= 0 ? JC.green : JC.red;
               return (
                 <div key={yr.year} style={{ padding: '12px 14px', background: 'rgba(212,175,55,0.03)', borderRadius: 12, border: '1px solid rgba(212,175,55,0.1)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                    <span style={{ fontSize: 16, fontWeight: 800, color: '#D4AF37', fontFamily: "'Poppins',sans-serif" }}>{yr.year}</span>
+                    <span style={{ fontSize: 16, fontWeight: 800, color: JC.gold, fontFamily: "'Poppins',sans-serif" }}>{yr.year}</span>
                     <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 18, fontWeight: 800, color: c }}>{yr.totalR >= 0 ? '+' : ''}{yr.totalR.toFixed(1)}R</span>
                   </div>
                   <div style={{ display: 'flex', gap: 10, fontSize: 9, color: th.tx3, flexWrap: 'wrap' as const }}>
                     <span>{yr.trades}t</span>
                     <span>{yr.wins}W/{yr.losses}L/{yr.be}BE</span>
-                    <span style={{ color: yr.wr >= 40 ? '#00FFA3' : '#FF4D4D' }}>{yr.wr.toFixed(0)}%</span>
+                    <span style={{ color: yr.wr >= 40 ? JC.green : JC.red }}>{yr.wr.toFixed(0)}%</span>
                     <span>EV {yr.ev >= 0 ? '+' : ''}{yr.ev.toFixed(2)}R</span>
                     {!isR && <span>{yr.pnl >= 0 ? '+' : ''}{yr.pnl.toFixed(0)}$</span>}
                   </div>
@@ -2650,11 +2657,11 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
 
       {/* ═══ WEEKDAY + ASSET (expandable) ═══ */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }} className="j-grid-2col">
-        <Expandable title={isRTL ? 'מודיעין יום בשבוע' : 'WEEKDAY INTEL'} icon="📅" accent="#5AA9FF" th={th}>
+        <Expandable title={isRTL ? 'מודיעין יום בשבוע' : 'WEEKDAY INTEL'} icon="📅" accent={JC.blue} th={th}>
           {byWeekday.length > 0 && (
             <div style={{ display: 'grid', gap: 3 }}>
               {byWeekday.map(wd => {
-                const c = wd.pnl >= 0 ? '#00FFA3' : '#FF4D4D';
+                const c = wd.pnl >= 0 ? JC.green : JC.red;
                 return (
                   <div key={wd.dow} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', background: `${c}04`, borderRadius: 6 }}>
                     <span style={{ fontSize: 10, fontWeight: 700, color: th.tx2, minWidth: 40 }}>{wd.name}</span>
@@ -2667,11 +2674,11 @@ const AnalyticsPanel = ({ days, dir, th }: { days: JournalDay[]; dir: string; th
           )}
         </Expandable>
 
-        <Expandable title={isRTL ? 'מודיעין נכסים' : 'ASSET INTEL'} icon="🪙" accent="#FFC857" th={th}>
+        <Expandable title={isRTL ? 'מודיעין נכסים' : 'ASSET INTEL'} icon="🪙" accent={JC.amber} th={th}>
           {byAsset.length > 0 && (
             <div style={{ display: 'grid', gap: 3 }}>
               {byAsset.slice(0, 8).map(a => {
-                const c = a.r >= 0 ? '#00FFA3' : '#FF4D4D';
+                const c = a.r >= 0 ? JC.green : JC.red;
                 return (
                   <div key={a.asset} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '5px 8px', background: `${c}04`, borderRadius: 6 }}>
                     <span style={{ fontSize: 9, fontWeight: 800, color: th.tx, fontFamily: "'JetBrains Mono',monospace" }}>{a.asset}</span>
@@ -2786,16 +2793,18 @@ const DailyIntelligencePanel = ({ day, dir, th, onClose, onOpenJournal }: {
   return (
     <div onClick={onClose} style={{
       position: 'fixed', inset: 0, zIndex: 200,
-      background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+      background: th.isLight ? 'rgba(15,23,42,0.35)' : 'rgba(0,0,0,0.7)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       animation: 'j-fade-in .25s ease-out',
     }}>
       <div onClick={e => e.stopPropagation()} style={{
         width: '94%', maxWidth: 760, maxHeight: '90vh', overflow: 'hidden',
-        background: 'linear-gradient(165deg, #0d1117 0%, #0a0e1a 50%, #0d1117 100%)',
-        border: '1px solid rgba(90,169,255,0.15)',
+        background: `linear-gradient(165deg, ${th.bg1} 0%, ${th.bg} 50%, ${th.bg1} 100%)`,
+        border: `1px solid ${th.br2}`,
         borderRadius: 18,
-        boxShadow: '0 25px 80px rgba(0,0,0,0.6), 0 0 40px rgba(90,169,255,0.08)',
+        boxShadow: th.isLight
+          ? '0 25px 80px rgba(15,23,42,0.18), 0 0 0 1px rgba(15,23,42,0.04)'
+          : '0 25px 80px rgba(0,0,0,0.6), 0 0 40px rgba(90,169,255,0.08)',
         animation: 'j-scale-in .3s cubic-bezier(0.16,1,0.3,1)',
         display: 'flex', flexDirection: 'column',
       }}>
@@ -2830,11 +2839,11 @@ const DailyIntelligencePanel = ({ day, dir, th, onClose, onOpenJournal }: {
           {/* SECTION 1 — Stats */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10, marginBottom: 24 }} className="j-grid-2col">
             {[
-              { l: isRTL ? 'סה"כ עסקאות' : 'Trades', v: String(trades.length), c: '#5AA9FF' },
-              { l: isRTL ? 'תוצאה נטו' : 'Net R', v: `${totalR >= 0 ? '+' : ''}${totalR.toFixed(2)}R`, c: totalR >= 0 ? '#00FFA3' : '#FF4D4D' },
-              { l: isRTL ? 'אחוז הצלחה' : 'Win Rate', v: `${winRate}%`, c: parseInt(winRate) >= 50 ? '#00FFA3' : '#FF4D4D' },
-              { l: isRTL ? 'ממוצע R' : 'Avg R', v: trades.length > 0 ? `${(totalR / trades.length).toFixed(2)}R` : '—', c: totalR >= 0 ? '#00FFA3' : '#FF4D4D' },
-              { l: isRTL ? 'סיכון יומי' : 'Risk Used', v: `${negR.toFixed(1)}R`, c: negR <= -3 ? '#FF4D4D' : negR <= -2 ? '#FFC857' : '#00FFA3' },
+              { l: isRTL ? 'סה"כ עסקאות' : 'Trades', v: String(trades.length), c: JC.blue },
+              { l: isRTL ? 'תוצאה נטו' : 'Net R', v: `${totalR >= 0 ? '+' : ''}${totalR.toFixed(2)}R`, c: totalR >= 0 ? JC.green : JC.red },
+              { l: isRTL ? 'אחוז הצלחה' : 'Win Rate', v: `${winRate}%`, c: parseInt(winRate) >= 50 ? JC.green : JC.red },
+              { l: isRTL ? 'ממוצע R' : 'Avg R', v: trades.length > 0 ? `${(totalR / trades.length).toFixed(2)}R` : '—', c: totalR >= 0 ? JC.green : JC.red },
+              { l: isRTL ? 'סיכון יומי' : 'Risk Used', v: `${negR.toFixed(1)}R`, c: negR <= -3 ? JC.red : negR <= -2 ? JC.amber : JC.green },
             ].map((s, i) => (
               <div key={i} style={{ ...S.stat, animation: `j-fade-in ${0.2 + i * 0.06}s ease-out` }}>
                 <div style={S.label}>{s.l}</div>
@@ -2846,38 +2855,38 @@ const DailyIntelligencePanel = ({ day, dir, th, onClose, onOpenJournal }: {
           {/* SECTION 2 — Morning Analysis */}
           {day.morningSaved && (
             <div style={S.section}>
-              <div style={{ ...S.secTitle, color: '#5AA9FF' }}>
+              <div style={{ ...S.secTitle, color: JC.blue }}>
                 <span>☀️</span> {isRTL ? 'ניתוח בוקר' : 'Morning Analysis'}
               </div>
               <div style={{ background: 'rgba(90,169,255,0.04)', border: '1px solid rgba(90,169,255,0.12)', borderRadius: 12, padding: 16 }}>
                 {day.mood && (
                   <div style={{ marginBottom: 12 }}>
-                    <div style={{ fontSize: 9, color: '#5AA9FF', fontWeight: 700, letterSpacing: '1px', marginBottom: 4 }}>{isRTL ? 'מצב רוח' : 'MOOD'}</div>
+                    <div style={{ fontSize: 9, color: JC.blue, fontWeight: 700, letterSpacing: '1px', marginBottom: 4 }}>{isRTL ? 'מצב רוח' : 'MOOD'}</div>
                     <div style={{ fontSize: 13, color: th.tx2, lineHeight: 1.7 }}>{day.mood}</div>
                   </div>
                 )}
                 {day.plan && (
                   <div style={{ marginBottom: 12 }}>
-                    <div style={{ fontSize: 9, color: '#FFC857', fontWeight: 700, letterSpacing: '1px', marginBottom: 4 }}>{isRTL ? 'תוכנית מסחר' : 'TRADING PLAN'}</div>
+                    <div style={{ fontSize: 9, color: JC.amber, fontWeight: 700, letterSpacing: '1px', marginBottom: 4 }}>{isRTL ? 'תוכנית מסחר' : 'TRADING PLAN'}</div>
                     <div style={{ fontSize: 13, color: th.tx2, lineHeight: 1.7 }}>{day.plan}</div>
                   </div>
                 )}
                 {day.setups && (
                   <div style={{ marginBottom: 12 }}>
-                    <div style={{ fontSize: 9, color: '#b794f6', fontWeight: 700, letterSpacing: '1px', marginBottom: 4 }}>{isRTL ? 'סט-אפים מתוכננים' : 'PLANNED SETUPS'}</div>
+                    <div style={{ fontSize: 9, color: JC.purple, fontWeight: 700, letterSpacing: '1px', marginBottom: 4 }}>{isRTL ? 'סט-אפים מתוכננים' : 'PLANNED SETUPS'}</div>
                     <div style={{ fontSize: 13, color: th.tx2, lineHeight: 1.7 }}>{day.setups}</div>
                   </div>
                 )}
                 {day.levels && (
                   <div>
-                    <div style={{ fontSize: 9, color: '#00FFA3', fontWeight: 700, letterSpacing: '1px', marginBottom: 4 }}>{isRTL ? 'רמות מפתח' : 'KEY LEVELS'}</div>
+                    <div style={{ fontSize: 9, color: JC.green, fontWeight: 700, letterSpacing: '1px', marginBottom: 4 }}>{isRTL ? 'רמות מפתח' : 'KEY LEVELS'}</div>
                     <div style={{ fontSize: 13, color: th.tx2, lineHeight: 1.7 }}>{day.levels}</div>
                   </div>
                 )}
                 {day.emotionScore > 0 && (
                   <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div style={{ fontSize: 9, color: th.tx3, fontWeight: 700 }}>{isRTL ? 'ציון רגשי' : 'EMOTION'}</div>
-                    <div style={{ fontSize: 16, fontWeight: 800, color: day.emotionScore >= 7 ? '#00FFA3' : day.emotionScore >= 4 ? '#FFC857' : '#FF4D4D', fontFamily: "'JetBrains Mono',monospace" }}>{day.emotionScore}/10</div>
+                    <div style={{ fontSize: 16, fontWeight: 800, color: day.emotionScore >= 7 ? JC.green : day.emotionScore >= 4 ? JC.amber : JC.red, fontFamily: "'JetBrains Mono',monospace" }}>{day.emotionScore}/10</div>
                   </div>
                 )}
                 {!day.mood && !day.plan && !day.setups && !day.levels && (
@@ -2890,7 +2899,7 @@ const DailyIntelligencePanel = ({ day, dir, th, onClose, onOpenJournal }: {
           {/* SECTION 3 — Trade List */}
           {trades.length > 0 && Array.isArray(pagedTrades) && pagedTrades.length > 0 && (
             <div style={S.section}>
-              <div style={{ ...S.secTitle, color: '#FFC857' }}>
+              <div style={{ ...S.secTitle, color: JC.amber }}>
                 <span>📈</span> {isRTL ? `עסקאות (${trades.length})` : `Trades (${trades.length})`}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -2909,10 +2918,10 @@ const DailyIntelligencePanel = ({ day, dir, th, onClose, onOpenJournal }: {
                     }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <span style={{ fontSize: 14, fontWeight: 800, color: '#5AA9FF', fontFamily: "'JetBrains Mono',monospace" }}>{tr.pair || '—'}</span>
-                          <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 6, fontWeight: 700, background: tr.side === 'Long' ? 'rgba(0,255,163,0.1)' : 'rgba(255,77,77,0.1)', color: tr.side === 'Long' ? '#00FFA3' : '#FF4D4D' }}>{tr.side || '—'}</span>
+                          <span style={{ fontSize: 14, fontWeight: 800, color: JC.blue, fontFamily: "'JetBrains Mono',monospace" }}>{tr.pair || '—'}</span>
+                          <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 6, fontWeight: 700, background: tr.side === 'Long' ? 'rgba(0,255,163,0.1)' : 'rgba(255,77,77,0.1)', color: tr.side === 'Long' ? JC.green : JC.red }}>{tr.side || '—'}</span>
                         </div>
-                        <span style={{ fontSize: 16, fontWeight: 800, color: (isR ? trR : trPnl) >= 0 ? '#00FFA3' : '#FF4D4D', fontFamily: "'JetBrains Mono',monospace" }}>
+                        <span style={{ fontSize: 16, fontWeight: 800, color: (isR ? trR : trPnl) >= 0 ? JC.green : JC.red, fontFamily: "'JetBrains Mono',monospace" }}>
                           {isR ? `${trR >= 0 ? '+' : ''}${trR.toFixed(2)}R` : `${trPnl >= 0 ? '+' : ''}${trPnl.toFixed(2)}$`}
                         </span>
                       </div>
@@ -2921,7 +2930,7 @@ const DailyIntelligencePanel = ({ day, dir, th, onClose, onOpenJournal }: {
                           { l: 'Entry', v: tr.entry || '—' },
                           { l: 'Exit', v: tr.exit || '—' },
                           { l: 'Size', v: tr.size || '—' },
-                          { l: 'R', v: `${trR >= 0 ? '+' : ''}${trR.toFixed(2)}R`, c: trR >= 0 ? '#00FFA3' : '#FF4D4D' },
+                          { l: 'R', v: `${trR >= 0 ? '+' : ''}${trR.toFixed(2)}R`, c: trR >= 0 ? JC.green : JC.red },
                         ].map((f, fi) => (
                           <div key={fi}>
                             <span style={{ color: th.tx3, fontSize: 8, fontWeight: 700 }}>{f.l} </span>
@@ -2969,37 +2978,37 @@ const DailyIntelligencePanel = ({ day, dir, th, onClose, onOpenJournal }: {
           {/* SECTION 4 — End of Day Review */}
           {day.eodSaved && (
             <div style={S.section}>
-              <div style={{ ...S.secTitle, color: '#b794f6' }}>
+              <div style={{ ...S.secTitle, color: JC.purple }}>
                 <span>🌙</span> {isRTL ? 'סקירת סוף יום' : 'End-of-Day Review'}
               </div>
               <div style={{ background: 'rgba(183,148,246,0.04)', border: '1px solid rgba(183,148,246,0.12)', borderRadius: 12, padding: 16 }}>
                 {day.dayScore > 0 && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                    <div style={{ fontSize: 9, color: '#b794f6', fontWeight: 700, letterSpacing: '1px' }}>{isRTL ? 'ציון יום' : 'DAY SCORE'}</div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: day.dayScore >= 7 ? '#00FFA3' : day.dayScore >= 4 ? '#FFC857' : '#FF4D4D', fontFamily: "'JetBrains Mono',monospace" }}>{day.dayScore}/10</div>
+                    <div style={{ fontSize: 9, color: JC.purple, fontWeight: 700, letterSpacing: '1px' }}>{isRTL ? 'ציון יום' : 'DAY SCORE'}</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: day.dayScore >= 7 ? JC.green : day.dayScore >= 4 ? JC.amber : JC.red, fontFamily: "'JetBrains Mono',monospace" }}>{day.dayScore}/10</div>
                   </div>
                 )}
                 {day.wins && (
                   <div style={{ marginBottom: 12 }}>
-                    <div style={{ fontSize: 9, color: '#00FFA3', fontWeight: 700, letterSpacing: '1px', marginBottom: 4 }}>{isRTL ? 'הצלחות' : 'WINS'}</div>
+                    <div style={{ fontSize: 9, color: JC.green, fontWeight: 700, letterSpacing: '1px', marginBottom: 4 }}>{isRTL ? 'הצלחות' : 'WINS'}</div>
                     <div style={{ fontSize: 13, color: th.tx2, lineHeight: 1.7 }}>{day.wins}</div>
                   </div>
                 )}
                 {day.mistakes && (
                   <div style={{ marginBottom: 12 }}>
-                    <div style={{ fontSize: 9, color: '#FF4D4D', fontWeight: 700, letterSpacing: '1px', marginBottom: 4 }}>{isRTL ? 'טעויות' : 'MISTAKES'}</div>
+                    <div style={{ fontSize: 9, color: JC.red, fontWeight: 700, letterSpacing: '1px', marginBottom: 4 }}>{isRTL ? 'טעויות' : 'MISTAKES'}</div>
                     <div style={{ fontSize: 13, color: th.tx2, lineHeight: 1.7 }}>{day.mistakes}</div>
                   </div>
                 )}
                 {day.lessons && (
                   <div style={{ marginBottom: 12 }}>
-                    <div style={{ fontSize: 9, color: '#FFC857', fontWeight: 700, letterSpacing: '1px', marginBottom: 4 }}>{isRTL ? 'לקחים' : 'LESSONS'}</div>
+                    <div style={{ fontSize: 9, color: JC.amber, fontWeight: 700, letterSpacing: '1px', marginBottom: 4 }}>{isRTL ? 'לקחים' : 'LESSONS'}</div>
                     <div style={{ fontSize: 13, color: th.tx2, lineHeight: 1.7 }}>{day.lessons}</div>
                   </div>
                 )}
                 {day.solutions && (
                   <div>
-                    <div style={{ fontSize: 9, color: '#5AA9FF', fontWeight: 700, letterSpacing: '1px', marginBottom: 4 }}>{isRTL ? 'פתרונות' : 'SOLUTIONS'}</div>
+                    <div style={{ fontSize: 9, color: JC.blue, fontWeight: 700, letterSpacing: '1px', marginBottom: 4 }}>{isRTL ? 'פתרונות' : 'SOLUTIONS'}</div>
                     <div style={{ fontSize: 13, color: th.tx2, lineHeight: 1.7 }}>{day.solutions}</div>
                   </div>
                 )}
@@ -3012,7 +3021,7 @@ const DailyIntelligencePanel = ({ day, dir, th, onClose, onOpenJournal }: {
 
           {/* SECTION 5 — AI Day Analysis */}
           <div style={S.section}>
-            <div style={{ ...S.secTitle, color: '#b794f6' }}>
+            <div style={{ ...S.secTitle, color: JC.purple }}>
               <span>🧠</span> {isRTL ? 'ניתוח AI יומי' : 'AI Day Analysis'}
             </div>
             {!aiResult && !aiLoading ? (
@@ -3020,7 +3029,7 @@ const DailyIntelligencePanel = ({ day, dir, th, onClose, onOpenJournal }: {
                 width: '100%', padding: '14px 20px', borderRadius: 12, cursor: 'pointer',
                 background: 'linear-gradient(135deg, rgba(183,148,246,0.08), rgba(90,169,255,0.08))',
                 border: '1px solid rgba(183,148,246,0.2)',
-                color: '#b794f6', fontSize: 13, fontWeight: 700, fontFamily: "'Poppins',sans-serif",
+                color: JC.purple, fontSize: 13, fontWeight: 700, fontFamily: "'Poppins',sans-serif",
                 transition: 'all .25s', letterSpacing: '0.3px',
               }}
                 onMouseEnter={e => { e.currentTarget.style.background = 'linear-gradient(135deg, rgba(183,148,246,0.15), rgba(90,169,255,0.15))'; e.currentTarget.style.transform = 'scale(1.01)'; }}
@@ -3053,7 +3062,7 @@ const DailyIntelligencePanel = ({ day, dir, th, onClose, onOpenJournal }: {
             <button onClick={() => { onClose(); onOpenJournal(day.id); }} style={{
               flex: 1, minWidth: 160, padding: '12px 18px', borderRadius: 10, cursor: 'pointer',
               background: 'rgba(90,169,255,0.08)', border: '1px solid rgba(90,169,255,0.2)',
-              color: '#5AA9FF', fontSize: 12, fontWeight: 700, fontFamily: "'Poppins',sans-serif", transition: 'all .2s',
+              color: JC.blue, fontSize: 12, fontWeight: 700, fontFamily: "'Poppins',sans-serif", transition: 'all .2s',
             }}
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(90,169,255,0.15)'; }}
               onMouseLeave={e => { e.currentTarget.style.background = 'rgba(90,169,255,0.08)'; }}>
@@ -3063,7 +3072,7 @@ const DailyIntelligencePanel = ({ day, dir, th, onClose, onOpenJournal }: {
               <button onClick={() => { /* scroll to images in journal */ onClose(); onOpenJournal(day.id); }} style={{
                 flex: 1, minWidth: 160, padding: '12px 18px', borderRadius: 10, cursor: 'pointer',
                 background: 'rgba(0,255,163,0.06)', border: '1px solid rgba(0,255,163,0.15)',
-                color: '#00FFA3', fontSize: 12, fontWeight: 700, fontFamily: "'Poppins',sans-serif", transition: 'all .2s',
+                color: JC.green, fontSize: 12, fontWeight: 700, fontFamily: "'Poppins',sans-serif", transition: 'all .2s',
               }}
                 onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,255,163,0.12)'; }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,255,163,0.06)'; }}>
@@ -3152,7 +3161,7 @@ const CalendarView = ({ days, dir, th, t, risk, onSelectDay }: { days: JournalDa
         }}>
           <span style={{ fontSize: 20, animation: 'j-pulse 1s ease-in-out infinite' }}>🚨</span>
           <div>
-            <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 800, color: '#FF4D4D', letterSpacing: '1px' }}>{t.risk.banner}</div>
+            <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 800, color: JC.red, letterSpacing: '1px' }}>{t.risk.banner}</div>
             <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, color: th.tx3, marginTop: 2 }}>{monthlyR.toFixed(1)}R / {RISK_LIMITS.month}R</div>
           </div>
         </div>
@@ -3192,7 +3201,7 @@ const CalendarView = ({ days, dir, th, t, risk, onSelectDay }: { days: JournalDa
           const isToday = dayNum === today.getDate() && month === today.getMonth() && year === today.getFullYear();
           const dispVal = isR ? rSum : pnl;
           const color = !hasTrades ? 'transparent' : dayBreached ? 'rgba(153,27,27,0.4)' : dispVal < 0 ? 'rgba(255,77,77,0.15)' : 'rgba(0,255,163,0.12)';
-          const borderColor = isToday ? '#5AA9FF' : dayBreached ? 'rgba(255,77,77,0.4)' : hasMorning ? th.cardBr : 'transparent';
+          const borderColor = isToday ? JC.blue : dayBreached ? 'rgba(255,77,77,0.4)' : hasMorning ? th.cardBr : 'transparent';
           const jDay = jDays[0];
 
           return (
@@ -3206,14 +3215,14 @@ const CalendarView = ({ days, dir, th, t, risk, onSelectDay }: { days: JournalDa
               }}
               onMouseEnter={e => { if (jDay) { (e.currentTarget as HTMLElement).style.transform = 'scale(1.08)'; (e.currentTarget as HTMLElement).style.zIndex = '10'; } }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; (e.currentTarget as HTMLElement).style.zIndex = '1'; }}>
-              <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 13, fontWeight: isToday ? 800 : 600, color: isToday ? '#5AA9FF' : hasTrades ? th.tx : th.tx3 }}>{dayNum}</span>
+              <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 13, fontWeight: isToday ? 800 : 600, color: isToday ? JC.blue : hasTrades ? th.tx : th.tx3 }}>{dayNum}</span>
               {hasTrades && (
-                <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8.5, fontWeight: 700, color: dispVal >= 0 ? '#00FFA3' : '#FF4D4D', marginTop: 1 }}>
+                <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8.5, fontWeight: 700, color: dispVal >= 0 ? JC.green : JC.red, marginTop: 1 }}>
                   {isR ? `${rSum >= 0 ? '+' : ''}${rSum.toFixed(1)}R` : `${pnl >= 0 ? '+' : ''}${pnl.toFixed(0)}$`}
                 </span>
               )}
               {dayBreached && <span style={{ position: 'absolute', top: 2, right: 2, fontSize: 8, animation: 'j-pulse 1s ease-in-out infinite' }}>⚠️</span>}
-              {hasMorning && !hasTrades && <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#b794f6', marginTop: 3 }} />}
+              {hasMorning && !hasTrades && <div style={{ width: 4, height: 4, borderRadius: '50%', background: JC.purple, marginTop: 3 }} />}
             </div>
           );
         })}
@@ -3222,7 +3231,7 @@ const CalendarView = ({ days, dir, th, t, risk, onSelectDay }: { days: JournalDa
       {/* Weekly warnings */}
       {weeklyBreachedWeeks.size > 0 && (
         <div style={{ marginTop: 16, padding: '12px 16px', background: 'rgba(255,77,77,0.06)', border: '1px solid rgba(255,77,77,0.15)', borderRadius: 10 }}>
-          <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, color: '#FF4D4D', letterSpacing: '1.5px' }}>
+          <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, color: JC.red, letterSpacing: '1.5px' }}>
             ⚠️ {dir === 'rtl' ? 'שבועות שחרגו ממגבלת סיכון' : 'WEEKS WITH RISK LIMIT BREACH'}
           </div>
         </div>
@@ -3249,7 +3258,7 @@ const AutoFillButton = ({ onClick, dir, th, label }: { onClick: () => void; dir:
   <button onClick={onClick} style={{
     display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 16px', borderRadius: 20,
     background: 'linear-gradient(135deg, rgba(255,200,87,0.12), rgba(245,160,32,0.08))',
-    border: '1px solid rgba(255,200,87,0.25)', color: '#FFC857', cursor: 'pointer',
+    border: '1px solid rgba(255,200,87,0.25)', color: JC.amber, cursor: 'pointer',
     fontFamily: "'Poppins',sans-serif", fontSize: 10.5, fontWeight: 700, letterSpacing: '.3px',
     transition: 'all .25s', direction: dir as 'ltr' | 'rtl',
   }}
@@ -3263,7 +3272,7 @@ const ClearDemoButton = ({ onClick, dir, label }: { onClick: () => void; dir: st
   <button onClick={onClick} style={{
     display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20,
     background: 'linear-gradient(135deg, rgba(255,77,77,0.10), rgba(255,77,77,0.05))',
-    border: '1px solid rgba(255,77,77,0.28)', color: '#FF6B6B', cursor: 'pointer',
+    border: '1px solid rgba(255,77,77,0.28)', color: JC.redSoft, cursor: 'pointer',
     fontFamily: "'Poppins',sans-serif", fontSize: 10.5, fontWeight: 700, letterSpacing: '.3px',
     transition: 'all .25s', direction: dir as 'ltr' | 'rtl',
   }}
@@ -3281,7 +3290,7 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
   const sLocks = day.sectionLocks || {};
   const lockSec = (k: string) => upd({ sectionLocks: { ...sLocks, [k]: true } });
   const unlockSec = (k: string) => upd({ sectionLocks: { ...sLocks, [k]: false } });
-  const BC = ['#00FFA3', '#FF4D4D', '#FFC857', '#5AA9FF', '#b794f6'];
+  const BC = [JC.green, JC.red, JC.amber, JC.blue, JC.purple];
   const morningIdxRef = useRef(Math.floor(Math.random() * MORNING_VARIATIONS.length));
 
   const fillMorning = () => {
@@ -3340,7 +3349,7 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
       <MarketStrip day={day} dir={dir} th={th} />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 4 }}>
         <div onClick={onInfoClick} style={{ cursor: 'pointer', flex: 1 }}>
-          <PDiv label={dir === 'rtl' ? 'תדריך טרום-שוק' : 'PRE-MARKET BRIEFING'} color="#5AA9FF" icon="☀️" th={th} />
+          <PDiv label={dir === 'rtl' ? 'תדריך טרום-שוק' : 'PRE-MARKET BRIEFING'} color={JC.blue} icon="☀️" th={th} />
         </div>
         <AutoFillButton onClick={fillMorning} dir={dir} th={th} label={dir === 'rtl' ? 'מילוי דוגמה' : 'Demo Fill'} />
         <ClearDemoButton onClick={clearMorning} dir={dir} label={dir === 'rtl' ? 'מחק דוגמה' : 'Clear Demo'} />
@@ -3348,39 +3357,39 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }} className="j-grid-2col">
         <div>
-          <Sec title={f.moodTitle} icon="🧠" accent="#5AA9FF" th={th} locked={sLocks['mood']} onLock={() => lockSec('mood')} onUnlock={() => unlockSec('mood')}>
+          <Sec title={f.moodTitle} icon="🧠" accent={JC.blue} th={th} locked={sLocks['mood']} onLock={() => lockSec('mood')} onUnlock={() => unlockSec('mood')}>
             <TA val={day.mood} set={U('mood')} ph={f.moodPh} rows={3} dir={dir} disabled={sLocks['mood']} th={th} />
           </Sec>
-          <Sec title={f.planTitle} icon="📋" accent="#FFC857" th={th} locked={sLocks['plan']} onLock={() => lockSec('plan')} onUnlock={() => unlockSec('plan')}>
+          <Sec title={f.planTitle} icon="📋" accent={JC.amber} th={th} locked={sLocks['plan']} onLock={() => lockSec('plan')} onUnlock={() => unlockSec('plan')}>
             <TA val={day.plan} set={U('plan')} ph={f.planPh} rows={3} dir={dir} disabled={sLocks['plan']} th={th} />
           </Sec>
 
           {/* Bitcoin Thoughts */}
-          <Sec title={f.btcThoughts} icon="₿" accent="#f5a020" th={th} locked={sLocks['btcThoughts']} onLock={() => lockSec('btcThoughts')} onUnlock={() => unlockSec('btcThoughts')}>
+          <Sec title={f.btcThoughts} icon="₿" accent={JC.amberDeep} th={th} locked={sLocks['btcThoughts']} onLock={() => lockSec('btcThoughts')} onUnlock={() => unlockSec('btcThoughts')}>
             <TA val={day.btcThoughts} set={U('btcThoughts')} ph={f.btcThoughtsPh} rows={3} dir={dir} disabled={sLocks['btcThoughts']} th={th} />
           </Sec>
 
           {/* Image Upload */}
-          <Sec title={f.images} icon="📷" accent="#5AA9FF" th={th} locked={sLocks['images']} onLock={() => lockSec('images')} onUnlock={() => unlockSec('images')}>
+          <Sec title={f.images} icon="📷" accent={JC.blue} th={th} locked={sLocks['images']} onLock={() => lockSec('images')} onUnlock={() => unlockSec('images')}>
             <ImageUpload images={day.morningImages} onUpdate={(imgs: string[]) => upd({ morningImages: imgs })} label={f.images} uploadLabel={f.imageUpload} dir={dir} disabled={sLocks['images']} th={th} />
           </Sec>
 
-          <Sec title={f.checklist} icon="✅" accent="#00FFA3" th={th} locked={sLocks['checklist']} onLock={() => lockSec('checklist')} onUnlock={() => unlockSec('checklist')}>
+          <Sec title={f.checklist} icon="✅" accent={JC.green} th={th} locked={sLocks['checklist']} onLock={() => lockSec('checklist')} onUnlock={() => unlockSec('checklist')}>
             {(day.tasks || []).map((tk: any, i: number) => (
-              <Chk key={i} item={tk} color="#00FFA3" dir={dir} disabled={sLocks['checklist']} th={th}
+              <Chk key={i} item={tk} color={JC.green} dir={dir} disabled={sLocks['checklist']} th={th}
                 toggle={() => upd({ tasks: (day.tasks || []).map((x: any, j: number) => j === i ? { ...x, done: !x.done } : x) })} />
             ))}
             <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{ flex: 1, height: 4, background: th.inputBg, borderRadius: 2, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${taskArr.length ? (done / taskArr.length) * 100 : 0}%`, background: 'linear-gradient(90deg,#00FFA3,#06d6a0)', transition: 'width .5s ease', borderRadius: 2, boxShadow: done === taskArr.length ? '0 0 8px rgba(0,255,163,0.4)' : 'none' }} />
+                <div style={{ height: '100%', width: `${taskArr.length ? (done / taskArr.length) * 100 : 0}%`, background: `linear-gradient(90deg,${JC.green},${JC.greenAlt})`, transition: 'width .5s ease', borderRadius: 2, boxShadow: done === taskArr.length ? '0 0 8px rgba(0,255,163,0.4)' : 'none' }} />
               </div>
-              <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, color: done === taskArr.length ? '#00FFA3' : th.tx3, fontWeight: 700 }}>{done}/{taskArr.length}</span>
+              <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, color: done === taskArr.length ? JC.green : th.tx3, fontWeight: 700 }}>{done}/{taskArr.length}</span>
             </div>
           </Sec>
 
-          <Sec title={f.goals} icon="🏆" accent="#FFC857" open={false} th={th} locked={sLocks['goals']} onLock={() => lockSec('goals')} onUnlock={() => unlockSec('goals')}>
+          <Sec title={f.goals} icon="🏆" accent={JC.amber} open={false} th={th} locked={sLocks['goals']} onLock={() => lockSec('goals')} onUnlock={() => unlockSec('goals')}>
             {(day.goals || []).map((g: any, i: number) => (
-              <Chk key={i} item={g} color="#FFC857" dir={dir} disabled={sLocks['goals']} th={th}
+              <Chk key={i} item={g} color={JC.amber} dir={dir} disabled={sLocks['goals']} th={th}
                 toggle={() => upd({ goals: (day.goals || []).map((x: any, j: number) => j === i ? { ...x, done: !x.done } : x) })} />
             ))}
           </Sec>
@@ -3388,22 +3397,22 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
 
         <div>
           {/* Psychology Check */}
-          <Sec title={f.psych} icon="🧠" accent="#b794f6" th={th} locked={sLocks['psych']} onLock={() => lockSec('psych')} onUnlock={() => unlockSec('psych')}>
+          <Sec title={f.psych} icon="🧠" accent={JC.purple} th={th} locked={sLocks['psych']} onLock={() => lockSec('psych')} onUnlock={() => unlockSec('psych')}>
             <PsychSection answers={day.psychAnswers} onUpdate={(a: PsychAnswers) => upd({ psychAnswers: a })} questions={t.psychQ} dir={dir} disabled={sLocks['psych']} th={th} />
           </Sec>
 
           {/* Discipline Commitment */}
-          <Sec title={f.discipline} icon="⚔️" accent="#00FFA3" th={th} locked={day.disciplineConfirmed} fullLocked={day.disciplineConfirmed}>
+          <Sec title={f.discipline} icon="⚔️" accent={JC.green} th={th} locked={day.disciplineConfirmed} fullLocked={day.disciplineConfirmed}>
             <DisciplineSection commitments={day.disciplineCommitments} confirmed={day.disciplineConfirmed} onUpdate={(c: string[]) => upd({ disciplineCommitments: c })} onConfirm={() => upd({ disciplineConfirmed: true, sectionLocks: { ...sLocks, discipline: true } })} options={t.commitments} f={f} dir={dir} disabled={day.disciplineConfirmed} th={th} />
           </Sec>
 
-          <Sec title={`${f.biasTitle} & ${f.phaseTitle}`} icon="📊" accent="#00FFA3" th={th} locked={sLocks['bias']} onLock={() => lockSec('bias')} onUnlock={() => unlockSec('bias')}>
+          <Sec title={`${f.biasTitle} & ${f.phaseTitle}`} icon="📊" accent={JC.green} th={th} locked={sLocks['bias']} onLock={() => lockSec('bias')} onUnlock={() => unlockSec('bias')}>
             <div style={{ marginBottom: 14 }}>
               <Lbl c={f.biasTitle} dir={dir} th={th} />
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' as const }}>
                 {t.bias.map((o: string, i: number) => (
                   <button key={o} onClick={() => upd({ bias: o })} disabled={sLocks['bias']}
-                    style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: '5px 14px', cursor: sLocks['bias'] ? 'not-allowed' : 'pointer', transition: 'all .2s', ...(day.bias === o ? { background: BC[i], color: '#0a0e1a', border: 'none', boxShadow: `0 0 10px ${BC[i]}30` } : { background: th.unselBg, border: `1px solid ${th.unselBr}`, color: th.unselTx }) }}>
+                    style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: '5px 14px', cursor: sLocks['bias'] ? 'not-allowed' : 'pointer', transition: 'all .2s', ...(day.bias === o ? { background: BC[i], color: JC.onAccent, border: 'none', boxShadow: `0 0 10px ${BC[i]}30` } : { background: th.unselBg, border: `1px solid ${th.unselBr}`, color: th.unselTx }) }}>
                     {o}
                   </button>
                 ))}
@@ -3414,7 +3423,7 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' as const }}>
                 {t.struct.map((o: string, i: number) => (
                   <button key={o} onClick={() => upd({ mktStruct: o })} disabled={sLocks['bias']}
-                    style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: '5px 14px', cursor: sLocks['bias'] ? 'not-allowed' : 'pointer', transition: 'all .2s', ...(day.mktStruct === o ? { background: BC[i], color: '#0a0e1a', border: 'none', boxShadow: `0 0 10px ${BC[i]}30` } : { background: th.unselBg, border: `1px solid ${th.unselBr}`, color: th.unselTx }) }}>
+                    style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: '5px 14px', cursor: sLocks['bias'] ? 'not-allowed' : 'pointer', transition: 'all .2s', ...(day.mktStruct === o ? { background: BC[i], color: JC.onAccent, border: 'none', boxShadow: `0 0 10px ${BC[i]}30` } : { background: th.unselBg, border: `1px solid ${th.unselBr}`, color: th.unselTx }) }}>
                     {o}
                   </button>
                 ))}
@@ -3429,7 +3438,7 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
                     <button key={s} onClick={() => {
                       const cur = day.mentalTags || [];
                       upd({ mentalTags: on ? cur.filter((x: string) => x !== s) : [...cur, s] });
-                    }} disabled={sLocks['bias']} style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 600, borderRadius: 8, padding: '5px 13px', cursor: sLocks['bias'] ? 'not-allowed' : 'pointer', transition: 'all .2s', ...(on ? { background: 'rgba(153,104,248,.15)', border: '1px solid rgba(153,104,248,.35)', color: '#b794f6', boxShadow: '0 0 10px rgba(153,104,248,0.15)' } : { background: th.tagUnsel, border: `1px solid ${th.tagUnselBr}`, color: th.tagUnselTx }) }}>
+                    }} disabled={sLocks['bias']} style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 600, borderRadius: 8, padding: '5px 13px', cursor: sLocks['bias'] ? 'not-allowed' : 'pointer', transition: 'all .2s', ...(on ? { background: 'rgba(153,104,248,.15)', border: '1px solid rgba(153,104,248,.35)', color: JC.purple, boxShadow: '0 0 10px rgba(153,104,248,0.15)' } : { background: th.tagUnsel, border: `1px solid ${th.tagUnselBr}`, color: th.tagUnselTx }) }}>
                       {s}
                     </button>
                   );
@@ -3438,12 +3447,12 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
             </div>
           </Sec>
 
-          <Sec title="Asset Intelligence" icon="🪙" accent="#FFC857" th={th} locked={sLocks['assets']} onLock={() => lockSec('assets')} onUnlock={() => unlockSec('assets')}>
+          <Sec title="Asset Intelligence" icon="🪙" accent={JC.amber} th={th} locked={sLocks['assets']} onLock={() => lockSec('assets')} onUnlock={() => unlockSec('assets')}>
             {[
-              { key: 'btcNote', lbl: f.btc, ph: f.btcPh, badge: '₿', c: '#f5a020' },
-              { key: 't3Note', lbl: f.t3, ph: f.t3Ph, badge: 'T3', c: '#b794f6' },
-              { key: 'domNote', lbl: f.dom, ph: f.domPh, badge: 'DOM', c: '#5AA9FF' },
-              { key: 'macroNote', lbl: f.macro, ph: f.macroPh, badge: 'M', c: '#00FFA3' },
+              { key: 'btcNote', lbl: f.btc, ph: f.btcPh, badge: '₿', c: JC.amberDeep },
+              { key: 't3Note', lbl: f.t3, ph: f.t3Ph, badge: 'T3', c: JC.purple },
+              { key: 'domNote', lbl: f.dom, ph: f.domPh, badge: 'DOM', c: JC.blue },
+              { key: 'macroNote', lbl: f.macro, ph: f.macroPh, badge: 'M', c: JC.green },
             ].map(({ key, lbl, ph, badge, c }) => (
               <div key={key} style={{ marginBottom: 13, paddingInlineStart: 12, borderInlineStart: `2px solid ${c}25` }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
@@ -3455,13 +3464,13 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
             ))}
           </Sec>
 
-          <Sec title={f.levels} icon="🗺" accent="#5AA9FF" th={th} locked={sLocks['levels']} onLock={() => lockSec('levels')} onUnlock={() => unlockSec('levels')}>
+          <Sec title={f.levels} icon="🗺" accent={JC.blue} th={th} locked={sLocks['levels']} onLock={() => lockSec('levels')} onUnlock={() => unlockSec('levels')}>
             <TA val={day.levels} set={U('levels')} ph={f.levelsPh} rows={5} dir={dir} disabled={sLocks['levels']} th={th} />
           </Sec>
-          <Sec title={f.setups} icon="🔍" accent="#5AA9FF" th={th} locked={sLocks['setups']} onLock={() => lockSec('setups')} onUnlock={() => unlockSec('setups')}>
+          <Sec title={f.setups} icon="🔍" accent={JC.blue} th={th} locked={sLocks['setups']} onLock={() => lockSec('setups')} onUnlock={() => unlockSec('setups')}>
             <TA val={day.setups} set={U('setups')} ph={f.setupsPh} rows={4} dir={dir} disabled={sLocks['setups']} th={th} />
           </Sec>
-          <Sec title={f.emotion} icon="🧠" accent="#b794f6" th={th} locked={sLocks['emotion']} onLock={() => lockSec('emotion')} onUnlock={() => unlockSec('emotion')}>
+          <Sec title={f.emotion} icon="🧠" accent={JC.purple} th={th} locked={sLocks['emotion']} onLock={() => lockSec('emotion')} onUnlock={() => unlockSec('emotion')}>
             <EmoSlider val={day.emotionScore} set={U('emotionScore')} label={f.emotion} dir={dir} disabled={sLocks['emotion']} th={th} />
           </Sec>
 
@@ -3478,9 +3487,9 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
 
       {/* Lock Button */}
       <div style={{ margin: '22px 0 8px', background: 'rgba(255,200,87,0.06)', border: '1px solid rgba(255,200,87,0.12)', borderRadius: 14, padding: '18px 24px', textAlign: 'center' }}>
-        <p style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11.5, color: '#FFC857', marginBottom: 12, opacity: 0.8 }}>{t.m.lockSub}</p>
+        <p style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11.5, color: JC.amber, marginBottom: 12, opacity: 0.8 }}>{t.m.lockSub}</p>
         <button onClick={onSave} disabled={!dirty} style={{
-          background: 'linear-gradient(135deg,#FFC857,#f5a020)', color: '#0a0e1a', padding: '12px 28px', fontSize: 12.5, fontWeight: 800, letterSpacing: '.5px',
+          background: `linear-gradient(135deg,${JC.amber},${JC.amberDeep})`, color: JC.onAccent, padding: '12px 28px', fontSize: 12.5, fontWeight: 800, letterSpacing: '.5px',
           boxShadow: dirty ? '0 4px 24px rgba(255,200,87,.35)' : 'none', borderRadius: 12, border: 'none',
           cursor: dirty ? 'pointer' : 'not-allowed', opacity: dirty ? 1 : 0.3, fontFamily: "'Poppins',sans-serif",
           transition: 'all .25s', textTransform: 'uppercase' as const,
@@ -3662,7 +3671,7 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' as const, gap: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' as const }}>
-            <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8.5, color: '#00FFA3', letterSpacing: '1.8px', textTransform: 'uppercase' as const, background: 'rgba(0,255,163,.1)', padding: '3px 10px', borderRadius: 5, fontWeight: 700 }}>🔒 {t.m.locked}</span>
+            <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8.5, color: JC.green, letterSpacing: '1.8px', textTransform: 'uppercase' as const, background: 'rgba(0,255,163,.1)', padding: '3px 10px', borderRadius: 5, fontWeight: 700 }}>🔒 {t.m.locked}</span>
             <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, color: th.tx2, fontWeight: 600 }}>{day.bias} · {day.mktStruct}</span>
           </div>
           {(day.morningImages || []).length > 0 && (
@@ -3683,14 +3692,14 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
           animation: 'j-glow-red 2s ease-in-out infinite',
         }}>
           <span style={{ fontSize: 14, animation: 'j-pulse 1s ease-in-out infinite' }}>⚠️</span>
-          <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 700, color: '#FF4D4D' }}>
+          <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 700, color: JC.red }}>
             {risk.breachedLevel === 'daily' ? t.risk.daily : risk.breachedLevel === 'weekly' ? t.risk.weekly : t.risk.monthly}
           </span>
         </div>
       )}
 
       {/* EOD Chart Screenshots — FIRST in EOD */}
-      <Sec title={dir === 'rtl' ? 'צילומי מסך - סוף יום' : 'EOD CHART SCREENSHOTS'} icon="📸" accent="#5AA9FF" th={th} fullLocked={fullLocked} locked={sLocks['eodImages']} onLock={() => lockSec('eodImages')} onUnlock={() => unlockSec('eodImages')}>
+      <Sec title={dir === 'rtl' ? 'צילומי מסך - סוף יום' : 'EOD CHART SCREENSHOTS'} icon="📸" accent={JC.blue} th={th} fullLocked={fullLocked} locked={sLocks['eodImages']} onLock={() => lockSec('eodImages')} onUnlock={() => unlockSec('eodImages')}>
         <ImageUpload images={day.eodImages || []} onUpdate={(imgs: string[]) => upd({ eodImages: imgs })} label={dir === 'rtl' ? 'צילומי גרפים מסוף היום' : 'End of day chart captures'} uploadLabel={f.imageUpload} dir={dir} disabled={fullLocked || sLocks['eodImages']} th={th} />
       </Sec>
 
@@ -3708,18 +3717,18 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
             animation: 'j-fade-in .35s ease-out',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, flexWrap: 'wrap' as const }}>
-              <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, color: '#5AA9FF', letterSpacing: '2px', fontWeight: 800, textTransform: 'uppercase' as const, padding: '3px 8px', background: 'rgba(90,169,255,0.1)', borderRadius: 6, border: '1px solid rgba(90,169,255,0.2)' }}>⚡ ORCA LIVE BRIDGE</span>
+              <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, color: JC.blue, letterSpacing: '2px', fontWeight: 800, textTransform: 'uppercase' as const, padding: '3px 8px', background: 'rgba(90,169,255,0.1)', borderRadius: 6, border: '1px solid rgba(90,169,255,0.2)' }}>⚡ ORCA LIVE BRIDGE</span>
               <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, color: th.tx3, letterSpacing: '1px' }}>
                 {dir === 'rtl' ? `${orcaTrades.length} עסקאות סונכרנו ליום זה` : `${orcaTrades.length} trades synced for this day`}
               </span>
               <div style={{ marginInlineStart: 'auto', display: 'flex', gap: 14 }}>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: 8, color: th.tx3, letterSpacing: '1.5px', fontWeight: 700 }}>P&L</div>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: totalPnl >= 0 ? '#00FFA3' : '#FF4D4D', fontFamily: "'Poppins',sans-serif" }}>{totalPnl >= 0 ? '+' : ''}{totalPnl.toFixed(2)}$</div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: totalPnl >= 0 ? JC.green : JC.red, fontFamily: "'Poppins',sans-serif" }}>{totalPnl >= 0 ? '+' : ''}{totalPnl.toFixed(2)}$</div>
                 </div>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: 8, color: th.tx3, letterSpacing: '1.5px', fontWeight: 700 }}>WR</div>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: '#FFC857', fontFamily: "'Poppins',sans-serif" }}>{wr.toFixed(0)}%</div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: JC.amber, fontFamily: "'Poppins',sans-serif" }}>{wr.toFixed(0)}%</div>
                 </div>
               </div>
             </div>
@@ -3734,9 +3743,9 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                     <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 700, color: th.tx2 }}>{tr.coin}</div>
-                    <div style={{ fontSize: 8, color: tr.direction === 'Long' ? '#00FFA3' : '#FF4D4D', fontWeight: 700, letterSpacing: '1px' }}>{tr.direction === 'Long' ? '▲' : '▼'}</div>
+                    <div style={{ fontSize: 8, color: tr.direction === 'Long' ? JC.green : JC.red, fontWeight: 700, letterSpacing: '1px' }}>{tr.direction === 'Long' ? '▲' : '▼'}</div>
                   </div>
-                  <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 13, fontWeight: 800, color: tr.pnl >= 0 ? '#00FFA3' : '#FF4D4D', marginTop: 2, textShadow: `0 0 10px ${tr.pnl >= 0 ? 'rgba(0,255,163,0.3)' : 'rgba(255,77,77,0.3)'}` }}>{tr.pnl >= 0 ? '+' : ''}{tr.pnl.toFixed(2)}$</div>
+                  <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 13, fontWeight: 800, color: tr.pnl >= 0 ? JC.green : JC.red, marginTop: 2, textShadow: `0 0 10px ${tr.pnl >= 0 ? 'rgba(0,255,163,0.3)' : 'rgba(255,77,77,0.3)'}` }}>{tr.pnl >= 0 ? '+' : ''}{tr.pnl.toFixed(2)}$</div>
                   {(() => { const r = getR(tr as any); return (
                     <div style={{ fontSize: 9, color: th.tx3, marginTop: 2, fontFamily: "'Poppins',sans-serif" }}>{formatR(r, 2)}</div>
                   ); })()}
@@ -3749,20 +3758,20 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 4 }}>
         <div onClick={onInfoClick} style={{ cursor: 'pointer', flex: 1 }}>
-          <PDiv label={dir === 'rtl' ? 'תחקיר אחרי-שוק' : 'POST-MARKET DEBRIEF'} color="#b794f6" icon="🌙" th={th} />
+          <PDiv label={dir === 'rtl' ? 'תחקיר אחרי-שוק' : 'POST-MARKET DEBRIEF'} color={JC.purple} icon="🌙" th={th} />
         </div>
         {!fullLocked && <AutoFillButton onClick={fillEod} dir={dir} th={th} label={dir === 'rtl' ? 'מילוי דוגמה' : 'Demo Fill'} />}
         {!fullLocked && <ClearDemoButton onClick={clearEod} dir={dir} label={dir === 'rtl' ? 'מחק דוגמה' : 'Clear Demo'} />}
       </div>
 
       {/* Trade Log */}
-      <Sec title={f.tlog} icon="💹" accent="#5AA9FF" th={th} fullLocked={fullLocked} locked={sLocks['trades']} onLock={() => lockSec('trades')} onUnlock={() => unlockSec('trades')}>
+      <Sec title={f.tlog} icon="💹" accent={JC.blue} th={th} fullLocked={fullLocked} locked={sLocks['trades']} onLock={() => lockSec('trades')} onUnlock={() => unlockSec('trades')}>
         {day.hasOpen === null && !fullLocked ? (
           <div style={{ borderRadius: 12, padding: 22, textAlign: 'center', border: `1px dashed ${th.inputBr}`, background: th.inputBg }}>
             <div style={{ fontSize: 24, marginBottom: 10 }}>📂</div>
             <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 13, fontWeight: 600, color: th.tx2, marginBottom: 16 }}>{f.openQ}</div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' as const }}>
-              <button onClick={() => upd({ hasOpen: true })} style={{ background: 'linear-gradient(135deg,#FFC857,#f5a020)', color: '#0a0e1a', padding: '10px 22px', fontSize: 12, borderRadius: 10, fontFamily: "'Poppins',sans-serif", fontWeight: 700, border: 'none', cursor: 'pointer', transition: 'all .2s', boxShadow: '0 4px 16px rgba(255,200,87,0.25)' }}>📈 {f.openY}</button>
+              <button onClick={() => upd({ hasOpen: true })} style={{ background: `linear-gradient(135deg,${JC.amber},${JC.amberDeep})`, color: JC.onAccent, padding: '10px 22px', fontSize: 12, borderRadius: 10, fontFamily: "'Poppins',sans-serif", fontWeight: 700, border: 'none', cursor: 'pointer', transition: 'all .2s', boxShadow: '0 4px 16px rgba(255,200,87,0.25)' }}>📈 {f.openY}</button>
               <button onClick={() => upd({ hasOpen: false })} style={{ background: th.inputBg, border: `1px solid ${th.inputBr}`, color: th.tx2, padding: '7px 15px', fontSize: 11.5, borderRadius: 8, cursor: 'pointer', fontWeight: 600, transition: 'all .2s' }}>✖ {f.openN}</button>
             </div>
           </div>
@@ -3775,7 +3784,7 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
             ))}
             {!fullLocked && !sLocks['trades'] && (
               <button onClick={addTrade} style={{
-                width: '100%', padding: 10, borderRadius: 10, color: '#5AA9FF',
+                width: '100%', padding: 10, borderRadius: 10, color: JC.blue,
                 marginTop: 5, background: 'rgba(90,169,255,0.04)', border: '1px dashed rgba(90,169,255,0.2)',
                 cursor: 'pointer', fontWeight: 700, fontSize: 12, fontFamily: "'Poppins',sans-serif",
                 transition: 'all .2s', letterSpacing: '.5px',
@@ -3784,9 +3793,9 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
             {(day.trades || []).length > 0 && (
               <div style={{ display: 'flex', gap: 20, marginTop: 12, padding: '12px 16px', background: th.cardBg, borderRadius: 10, border: `1px solid ${th.cardBr}` }}>
                 {[
-                  { l: isR ? 'NET R' : 'P&L', v: isR ? `${dr >= 0 ? '+' : ''}${dr.toFixed(2)}R` : `${dp >= 0 ? '+' : ''}${dp.toFixed(2)}$`, c: (isR ? dr : dp) >= 0 ? '#00FFA3' : '#FF4D4D' },
+                  { l: isR ? 'NET R' : 'P&L', v: isR ? `${dr >= 0 ? '+' : ''}${dr.toFixed(2)}R` : `${dp >= 0 ? '+' : ''}${dp.toFixed(2)}$`, c: (isR ? dr : dp) >= 0 ? JC.green : JC.red },
                   { l: 'TRADES', v: String(day.trades.length), c: th.tx2 },
-                  { l: 'WIN %', v: `${((dw / Math.max(day.trades.length, 1)) * 100).toFixed(0)}%`, c: '#FFC857' },
+                  { l: 'WIN %', v: `${((dw / Math.max(day.trades.length, 1)) * 100).toFixed(0)}%`, c: JC.amber },
                 ].map(s => (
                   <div key={s.l}>
                     <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 700, letterSpacing: '2px', color: th.tx3, textTransform: 'uppercase' as const }}>{s.l}</div>
@@ -3800,15 +3809,15 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
       </Sec>
 
       {/* EOD Review */}
-      <Sec title={dir === 'rtl' ? 'תחקיר ביצוע' : 'EXECUTION REVIEW'} icon="🌙" accent="#b794f6" th={th} fullLocked={fullLocked} locked={sLocks['review']} onLock={() => lockSec('review')} onUnlock={() => unlockSec('review')}>
+      <Sec title={dir === 'rtl' ? 'תחקיר ביצוע' : 'EXECUTION REVIEW'} icon="🌙" accent={JC.purple} th={th} fullLocked={fullLocked} locked={sLocks['review']} onLock={() => lockSec('review')} onUnlock={() => unlockSec('review')}>
         <div style={{ marginBottom: 14 }}><Lbl c={f.actualMove} dir={dir} th={th} /><TA val={day.actualMove} set={U('actualMove')} ph={f.actualPh} rows={3} dir={dir} disabled={fullLocked || sLocks['review']} th={th} /></div>
         <div style={{ marginBottom: 16 }}><Lbl c={f.score} dir={dir} th={th} /><Scores val={day.dayScore} set={U('dayScore')} disabled={fullLocked || sLocks['review']} th={th} /></div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }} className="j-grid-2col">
           {[
-            { k: 'wins', l: f.wins, ph: f.winsPh, c: '#00FFA3' },
-            { k: 'lessons', l: f.lessons, ph: f.lessonsPh, c: '#5AA9FF' },
-            { k: 'mistakes', l: f.mistakes, ph: f.mistakesPh, c: '#FF4D4D' },
-            { k: 'solutions', l: f.solutions, ph: f.solutionsPh, c: '#FFC857' },
+            { k: 'wins', l: f.wins, ph: f.winsPh, c: JC.green },
+            { k: 'lessons', l: f.lessons, ph: f.lessonsPh, c: JC.blue },
+            { k: 'mistakes', l: f.mistakes, ph: f.mistakesPh, c: JC.red },
+            { k: 'solutions', l: f.solutions, ph: f.solutionsPh, c: JC.amber },
           ].map(item => (
             <div key={item.k} style={{ borderInlineStart: `2px solid ${item.c}20`, paddingInlineStart: 11 }}>
               <Lbl c={item.l} dir={dir} th={th} />
@@ -3826,9 +3835,9 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
       {/* Seal Day */}
       {!fullLocked && (
         <div style={{ margin: '22px 0 8px', background: 'rgba(183,148,246,0.06)', border: '1px solid rgba(183,148,246,0.12)', borderRadius: 14, padding: '18px 24px', textAlign: 'center' }}>
-          <p style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11.5, color: '#b794f6', marginBottom: 12, opacity: 0.8 }}>{t.e.lockSub}</p>
+          <p style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11.5, color: JC.purple, marginBottom: 12, opacity: 0.8 }}>{t.e.lockSub}</p>
           <button onClick={onSave} disabled={!dirty} style={{
-            background: 'linear-gradient(135deg,#b794f6,#7c3aed)', color: '#fff', padding: '12px 28px', fontSize: 12.5, fontWeight: 800, letterSpacing: '.5px',
+            background: `linear-gradient(135deg,${JC.purple},${JC.purpleDeep})`, color: '#fff', padding: '12px 28px', fontSize: 12.5, fontWeight: 800, letterSpacing: '.5px',
             boxShadow: dirty ? '0 4px 24px rgba(153,104,248,.35)' : 'none', borderRadius: 12, border: 'none',
             cursor: dirty ? 'pointer' : 'not-allowed', opacity: dirty ? 1 : 0.3, fontFamily: "'Poppins',sans-serif",
             transition: 'all .25s', textTransform: 'uppercase' as const,
@@ -3837,7 +3846,7 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
       )}
       {fullLocked && (
         <div style={{ margin: '22px 0', padding: '16px 24px', borderRadius: 14, background: 'rgba(0,255,163,0.06)', border: '1px solid rgba(0,255,163,0.15)', textAlign: 'center' }}>
-          <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 700, color: '#00FFA3', letterSpacing: '2px' }}>🔒 {dir === 'rtl' ? 'יום זה נעול לצמיתות' : 'THIS DAY IS PERMANENTLY LOCKED'}</span>
+          <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 700, color: JC.green, letterSpacing: '2px' }}>🔒 {dir === 'rtl' ? 'יום זה נעול לצמיתות' : 'THIS DAY IS PERMANENTLY LOCKED'}</span>
         </div>
       )}
     </div>
@@ -3894,14 +3903,14 @@ const MorningLockOverlay = ({ onDone, isRTL }: { onDone: () => void; isRTL: bool
           border: '2px solid rgba(90,169,255,0.55)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           margin: '0 auto 18px',
-          fontSize: 'clamp(30px, 6vw, 42px)', color: '#5AA9FF',
+          fontSize: 'clamp(30px, 6vw, 42px)', color: JC.blue,
           boxShadow: '0 0 60px rgba(90,169,255,0.45), inset 0 0 30px rgba(90,169,255,0.15)',
           transform: step >= 3 ? 'rotate(0deg)' : 'rotate(-90deg)',
           transition: 'transform 0.5s cubic-bezier(0.16,1,0.3,1)',
         }}>✓</div>
         <div style={{
           fontFamily: "'Poppins',sans-serif", fontSize: 'clamp(16px, 4vw, 22px)',
-          fontWeight: 800, color: '#5AA9FF', letterSpacing: 0.5,
+          fontWeight: 800, color: JC.blue, letterSpacing: 0.5,
           textShadow: '0 0 30px rgba(90,169,255,0.5)',
           direction: isRTL ? 'rtl' : 'ltr',
           opacity: step >= 3 ? 1 : 0, transform: step >= 3 ? 'translateY(0)' : 'translateY(8px)',
@@ -3971,7 +3980,7 @@ const EODLockOverlay = ({ onDone, isRTL }: { onDone: () => void; isRTL: boolean 
         ctx.strokeStyle = 'rgba(0,255,163,0.15)'; ctx.lineWidth = 6; ctx.stroke();
         ctx.beginPath(); ctx.moveTo(0, pts[0]);
         for (let i = 1; i < visible; i++) ctx.lineTo(i * sp, pts[i]);
-        ctx.strokeStyle = '#00FFA3'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.strokeStyle = JC.green; ctx.lineWidth = 2; ctx.stroke();
         ctx.beginPath(); ctx.moveTo(0, pts[0]);
         for (let i = 1; i < visible; i++) ctx.lineTo(i * sp, pts[i]);
         ctx.lineTo((visible - 1) * sp, h); ctx.lineTo(0, h); ctx.closePath();
@@ -3984,7 +3993,7 @@ const EODLockOverlay = ({ onDone, isRTL }: { onDone: () => void; isRTL: boolean 
           ctx.beginPath(); ctx.arc(tx, ty, 4 + pulse * 3, 0, Math.PI * 2);
           ctx.fillStyle = `rgba(0,255,163,${0.2 + pulse * 0.3})`; ctx.fill();
           ctx.beginPath(); ctx.arc(tx, ty, 3, 0, Math.PI * 2);
-          ctx.fillStyle = '#00FFA3'; ctx.fill();
+          ctx.fillStyle = JC.green; ctx.fill();
         }
       }
       frame++;
@@ -4000,11 +4009,11 @@ const EODLockOverlay = ({ onDone, isRTL }: { onDone: () => void; isRTL: boolean 
       <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: step >= 2 && step < 5 ? 0.25 : 0, transition: 'opacity 0.6s ease' }} />
       <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', width: '85%', maxWidth: 360, opacity: step >= 3 ? 1 : 0, transform: step >= 3 ? 'scale(1)' : 'scale(0.85)', transition: 'all 0.5s cubic-bezier(0.16,1,0.3,1)' }}>
         <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'rgba(212,175,55,0.08)', border: '2px solid rgba(212,175,55,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 28, boxShadow: '0 0 40px rgba(212,175,55,0.15)', transition: 'transform 0.3s ease', transform: step >= 4 ? 'rotateY(180deg)' : 'rotateY(0)' }}>🔒</div>
-        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 'clamp(16px, 4.5vw, 22px)', fontWeight: 800, color: '#D4AF37', letterSpacing: 0.5, textShadow: '0 0 30px rgba(212,175,55,0.4)', direction: isRTL ? 'rtl' : 'ltr' }}>
+        <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 'clamp(16px, 4.5vw, 22px)', fontWeight: 800, color: JC.gold, letterSpacing: 0.5, textShadow: '0 0 30px rgba(212,175,55,0.4)', direction: isRTL ? 'rtl' : 'ltr' }}>
           {isRTL ? 'יום המסחר ננעל' : 'Trading Day Sealed'}
         </div>
         <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, color: 'rgba(212,175,55,0.35)', letterSpacing: 3, marginTop: 8, textTransform: 'uppercase' as const }}>PERMANENTLY LOCKED</div>
-        <div style={{ width: 60, height: 2, background: 'linear-gradient(90deg, transparent, #D4AF37, transparent)', margin: '14px auto 0', borderRadius: 1, opacity: step >= 4 ? 1 : 0, transition: 'opacity 0.4s ease' }} />
+        <div style={{ width: 60, height: 2, background: `linear-gradient(90deg, transparent, ${JC.gold}, transparent)`, margin: '14px auto 0', borderRadius: 1, opacity: step >= 4 ? 1 : 0, transition: 'opacity 0.4s ease' }} />
       </div>
     </div>
   );
@@ -4047,7 +4056,23 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
   const [eDirty, setED] = useState(false);
   const [toast, setToast] = useState<{ msg: string; type: string } | null>(null);
   const [sbQ, setSbQ] = useState('');
-  const [theme, setTheme] = useState<JTheme>('dark');
+  // The Journal keeps its own dark/light surface set, but it must *start* from
+  // the app-wide scheme — otherwise picking the Light theme leaves the Journal
+  // dimension stranded on black. A manual toggle below still wins until the
+  // app scheme itself changes.
+  const [theme, setTheme] = useState<JTheme>(() => {
+    try {
+      return document.documentElement.getAttribute('data-scheme') === 'light' ? 'light' : 'dark';
+    } catch { return 'dark'; }
+  });
+  useEffect(() => {
+    const root = document.documentElement;
+    const obs = new MutationObserver(() => {
+      setTheme(root.getAttribute('data-scheme') === 'light' ? 'light' : 'dark');
+    });
+    obs.observe(root, { attributes: true, attributeFilter: ['data-scheme'] });
+    return () => obs.disconnect();
+  }, []);
   const [riskAlertShown, setRiskAlertShown] = useState(false);
   const [showEntry, setShowEntry] = useState(true); // Always show entry animation when mounting
   const [exitingToOrca, setExitingToOrca] = useState(false);
@@ -4312,14 +4337,14 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
 
   if (!loaded) return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', background: th.bg }}>
-      <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, color: '#00FFA3', letterSpacing: 3, animation: 'j-pulse 1.5s ease-in-out infinite' }}>INITIALIZING...</div>
+      <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, color: JC.green, letterSpacing: 3, animation: 'j-pulse 1.5s ease-in-out infinite' }}>INITIALIZING...</div>
     </div>
   );
 
   const TOAST_STYLES: Record<string, React.CSSProperties> = {
-    a: { background: 'rgba(255,200,87,.12)', border: '1px solid rgba(255,200,87,.25)', color: '#FFC857' },
-    p: { background: 'rgba(183,148,246,.12)', border: '1px solid rgba(183,148,246,.25)', color: '#b794f6' },
-    g: { background: 'rgba(0,255,163,.12)', border: '1px solid rgba(0,255,163,.25)', color: '#00FFA3' },
+    a: { background: 'rgba(255,200,87,.12)', border: '1px solid rgba(255,200,87,.25)', color: JC.amber },
+    p: { background: 'rgba(183,148,246,.12)', border: '1px solid rgba(183,148,246,.25)', color: JC.purple },
+    g: { background: 'rgba(0,255,163,.12)', border: '1px solid rgba(0,255,163,.25)', color: JC.green },
   };
 
   // Entry screen
@@ -4346,7 +4371,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
           animation: 'j-exit-overlay 0.8s ease-out',
         }}>
           <div style={{
-            fontSize: 28, fontWeight: 800, color: '#D4AF37', fontFamily: "'Poppins',sans-serif",
+            fontSize: 28, fontWeight: 800, color: JC.gold, fontFamily: "'Poppins',sans-serif",
             letterSpacing: '-0.5px', animation: 'j-exit-text 0.6s ease-out 0.3s both',
           }}>
             ⚔️
@@ -4427,7 +4452,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginBottom: 16 }}>
               {([['journal', t.nav.journal, '📝'], ['calendar', t.nav.calendar, '📅']] as const).map(([v, l, ic]) => (
                 <button key={v} onClick={() => { if (v === 'journal') setViewingArchiveId(null); setView(v as string); setMobileMenu(false); }}
-                  style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer', borderRadius: 12, padding: '14px 10px', transition: 'all .2s', ...(view === v ? { background: th.selBg, color: '#5AA9FF', border: `1px solid ${th.selBr}` } : { background: th.inputBg, color: th.tx3, border: `1px solid ${th.inputBr}` }) }}>
+                  style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer', borderRadius: 12, padding: '14px 10px', transition: 'all .2s', ...(view === v ? { background: th.selBg, color: JC.blue, border: `1px solid ${th.selBr}` } : { background: th.inputBg, color: th.tx3, border: `1px solid ${th.inputBr}` }) }}>
                   <span style={{ fontSize: 18, display: 'block', marginBottom: 4 }}>{ic}</span> {l}
                 </button>
               ))}
@@ -4438,11 +4463,11 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
                 {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
               </button>
               <button onClick={() => { setShowEntry(true); setMobileMenu(false); }}
-                style={{ flex: 1, padding: '12px', borderRadius: 10, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', color: '#FFC857', fontSize: 13, fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>
+                style={{ flex: 1, padding: '12px', borderRadius: 10, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', color: JC.amber, fontSize: 13, fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>
                 🔒 Lock System
               </button>
               <button onClick={() => { handleReturn(); setMobileMenu(false); }}
-                style={{ flex: 1, padding: '12px', borderRadius: 10, border: '1px solid rgba(212,175,55,0.3)', background: 'rgba(212,175,55,0.06)', cursor: 'pointer', color: '#D4AF37', fontSize: 13, fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>
+                style={{ flex: 1, padding: '12px', borderRadius: 10, border: '1px solid rgba(212,175,55,0.3)', background: 'rgba(212,175,55,0.06)', cursor: 'pointer', color: JC.gold, fontSize: 13, fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>
                 ⚔️ {isRTL ? 'חזרה ל-OrcaInvestment' : 'Return to OrcaInvestment'}
               </button>
             </div>
@@ -4454,7 +4479,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
               {sbDays.map(d => {
                 const dp = sumPnl(d);
                 const sel = d.id === activeId;
-                const ec = d.emotionScore >= 8 ? '#00FFA3' : d.emotionScore >= 5 ? '#FFC857' : '#FF4D4D';
+                const ec = d.emotionScore >= 8 ? JC.green : d.emotionScore >= 5 ? JC.amber : JC.red;
                 return (
                   <div key={d.id} onClick={() => { setActiveId(d.id); setView('journal'); setMobileMenu(false); }}
                     style={{ padding: '12px 14px', borderRadius: 10, cursor: 'pointer', marginBottom: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -4465,7 +4490,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
                         <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, color: th.tx3 }}>{dir === 'rtl' ? 'יום' : 'Day'} {d.dayNum || '?'}</span>
                         {d.autoSynced && (
                           <span title={dir === 'rtl' ? 'סונכרן אוטומטית מ-Orca' : 'Auto-synced from Orca'}
-                            style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 800, letterSpacing: '0.5px', color: '#5AA9FF', background: 'rgba(90,169,255,0.12)', border: '1px solid rgba(90,169,255,0.3)', padding: '2px 5px', borderRadius: 4, textTransform: 'uppercase' as const }}>
+                            style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 800, letterSpacing: '0.5px', color: JC.blue, background: 'rgba(90,169,255,0.12)', border: '1px solid rgba(90,169,255,0.3)', padding: '2px 5px', borderRadius: 4, textTransform: 'uppercase' as const }}>
                             ⚡ AUTO
                           </span>
                         )}
@@ -4473,7 +4498,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
                     </div>
                     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                       <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 800, color: ec }}>{d.emotionScore}</span>
-                      {dp !== 0 && <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 700, color: dp > 0 ? '#00FFA3' : '#FF4D4D' }}>{dp > 0 ? '+' : ''}{dp.toFixed(0)}$</span>}
+                      {dp !== 0 && <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 700, color: dp > 0 ? JC.green : JC.red }}>{dp > 0 ? '+' : ''}{dp.toFixed(0)}$</span>}
                     </div>
                   </div>
                 );
@@ -4495,8 +4520,8 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button onClick={() => setMobileMenu(true)} style={{ background: th.inputBg, border: `1px solid ${th.inputBr}`, color: th.tx2, padding: '6px 10px', fontSize: 13, borderRadius: 8, cursor: 'pointer', fontWeight: 600, transition: 'all .2s' }}>☰</button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 26, height: 26, background: 'linear-gradient(135deg,#5AA9FF,#b794f6)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>⚡</div>
-            <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 15, fontWeight: 800, background: 'linear-gradient(90deg,#5AA9FF,#b794f6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>APEX OS</span>
+            <div style={{ width: 26, height: 26, background: `linear-gradient(135deg,${JC.blue},${JC.purple})`, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>⚡</div>
+            <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 15, fontWeight: 800, background: `linear-gradient(90deg,${JC.blue},${JC.purple})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>APEX OS</span>
           </div>
         </div>
         <div className="j-topbar-right" style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -4504,7 +4529,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
           <div className="j-nav-labels" style={{ display: 'flex', gap: 3 }}>
             {([['journal', t.nav.journal], ['calendar', t.nav.calendar]] as const).map(([v, l]) => (
               <button key={v} onClick={() => { if (v === 'journal') setViewingArchiveId(null); setView(v as string); }}
-                style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' as const, border: 'none', cursor: 'pointer', borderRadius: 8, padding: '7px 14px', transition: 'all .2s', ...(view === v ? { background: th.selBg, color: '#5AA9FF' } : { background: 'none', color: th.tx3 }) }}>
+                style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' as const, border: 'none', cursor: 'pointer', borderRadius: 8, padding: '7px 14px', transition: 'all .2s', ...(view === v ? { background: th.selBg, color: JC.blue } : { background: 'none', color: th.tx3 }) }}>
                 {l}
               </button>
             ))}
@@ -4517,7 +4542,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
           </button>
           <button onClick={() => setShowEntry(true)}
             style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 8, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', color: th.tx3, fontSize: 11, fontWeight: 600, fontFamily: "'Poppins',sans-serif", transition: 'all .2s' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,200,87,0.3)'; (e.currentTarget as HTMLElement).style.color = '#FFC857'; }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,200,87,0.3)'; (e.currentTarget as HTMLElement).style.color = JC.amber; }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = th.inputBr; (e.currentTarget as HTMLElement).style.color = th.tx3; }}>
             🔒 <span className="j-lock-btn-text">Lock</span>
           </button>
@@ -4548,7 +4573,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span style={{ fontSize: 18 }}>{displayDay?.autoSynced ? '⚡' : '📂'}</span>
                     <div>
-                      <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 13, fontWeight: 800, color: displayDay?.autoSynced ? '#5AA9FF' : '#FFC857', letterSpacing: '0.5px', display: 'block' }}>
+                      <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 13, fontWeight: 800, color: displayDay?.autoSynced ? JC.blue : JC.amber, letterSpacing: '0.5px', display: 'block' }}>
                         {displayDay?.autoSynced
                           ? (dir === 'rtl' ? 'יום מסונכרן אוטומטית — ניתן לפתוח לעריכה' : 'AUTO-SYNCED FROM ORCA — UNLOCK TO EDIT')
                           : (dir === 'rtl' ? 'צפייה בארכיון — קריאה בלבד' : 'VIEWING ARCHIVE — READ ONLY')}
@@ -4565,7 +4590,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
                           fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 800, cursor: 'pointer',
                           padding: '8px 18px', borderRadius: 10, border: '1px solid rgba(90,169,255,0.4)',
                           background: 'linear-gradient(135deg, rgba(90,169,255,0.18) 0%, rgba(183,148,246,0.12) 100%)',
-                          color: '#5AA9FF', transition: 'all .25s', letterSpacing: '0.3px',
+                          color: JC.blue, transition: 'all .25s', letterSpacing: '0.3px',
                           boxShadow: '0 0 12px rgba(90,169,255,0.15)',
                         }}
                         onMouseEnter={e => { const s = e.currentTarget.style; s.transform = 'scale(1.03)'; s.boxShadow = '0 0 20px rgba(90,169,255,0.3)'; }}
@@ -4578,7 +4603,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
                         fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 800, cursor: 'pointer',
                         padding: '8px 22px', borderRadius: 10, border: '1px solid rgba(0,255,163,0.4)',
                         background: 'linear-gradient(135deg, rgba(0,255,163,0.12) 0%, rgba(0,255,163,0.06) 100%)',
-                        color: '#00FFA3', transition: 'all .25s', letterSpacing: '0.3px',
+                        color: JC.green, transition: 'all .25s', letterSpacing: '0.3px',
                         boxShadow: '0 0 12px rgba(0,255,163,0.1)',
                       }}
                       onMouseEnter={e => { const s = e.currentTarget.style; s.background = 'rgba(0,255,163,0.22)'; s.boxShadow = '0 0 20px rgba(0,255,163,0.2)'; s.transform = 'scale(1.03)'; }}
@@ -4620,7 +4645,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
                           style={{ width: w, background: th.inputBg, border: `1px solid ${th.inputBr}`, borderRadius: 7, color: th.tx, padding: '5px 7px', fontSize: 14, fontWeight: 800, fontFamily: "'Poppins',sans-serif", outline: 'none', textAlign: 'center', transition: 'all .2s' }} />
                       </div>
                     ))}
-                    {(isViewingArchive || isDayFullyLocked(displayDay)) && <span style={{ fontSize: 10, fontFamily: "'Poppins',sans-serif", color: '#00FFA3', fontWeight: 700, letterSpacing: '1.5px', background: 'rgba(0,255,163,0.08)', padding: '4px 12px', borderRadius: 6 }}>🔒 SEALED</span>}
+                    {(isViewingArchive || isDayFullyLocked(displayDay)) && <span style={{ fontSize: 10, fontFamily: "'Poppins',sans-serif", color: JC.green, fontWeight: 700, letterSpacing: '1.5px', background: 'rgba(0,255,163,0.08)', padding: '4px 12px', borderRadius: 6 }}>🔒 SEALED</span>}
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
@@ -4636,7 +4661,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
                     }}
                       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = `0 0 20px ${v >= 0 ? 'rgba(0,255,163,0.15)' : 'rgba(255,77,77,0.15)'}`;}}
                       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}>
-                      <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 18, fontWeight: 800, color: v >= 0 ? '#00FFA3' : '#FF4D4D', textShadow: `0 0 15px ${v >= 0 ? 'rgba(0,255,163,0.3)' : 'rgba(255,77,77,0.3)'}` }}>{txt}</div>
+                      <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 18, fontWeight: 800, color: v >= 0 ? JC.green : JC.red, textShadow: `0 0 15px ${v >= 0 ? 'rgba(0,255,163,0.3)' : 'rgba(255,77,77,0.3)'}` }}>{txt}</div>
                       <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase' as const, color: th.tx3 }}>SESSION {isR ? 'R' : 'P&L'}</span>
                     </div>
                   ); })()}
@@ -4684,10 +4709,10 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
                   return archived.length > 0 ? (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, marginTop: 16, animation: 'j-fade-in .5s ease-out' }} className="j-grid-2col">
                       {[
-                        { l: dir === 'rtl' ? 'סה"כ ימים' : 'Total Days', v: String(archived.length), c: '#5AA9FF' },
-                        { l: dir === 'rtl' ? 'הושלמו' : 'Completed', v: String(complete), c: '#00FFA3' },
-                        { l: dir === 'rtl' ? 'סה"כ R' : 'Total R', v: `${totalR >= 0 ? '+' : ''}${totalR.toFixed(1)}R`, c: totalR >= 0 ? '#00FFA3' : '#FF4D4D' },
-                        { l: dir === 'rtl' ? 'סה"כ P&L' : 'Total P&L', v: `${totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(0)}$`, c: totalPnl >= 0 ? '#00FFA3' : '#FF4D4D' },
+                        { l: dir === 'rtl' ? 'סה"כ ימים' : 'Total Days', v: String(archived.length), c: JC.blue },
+                        { l: dir === 'rtl' ? 'הושלמו' : 'Completed', v: String(complete), c: JC.green },
+                        { l: dir === 'rtl' ? 'סה"כ R' : 'Total R', v: `${totalR >= 0 ? '+' : ''}${totalR.toFixed(1)}R`, c: totalR >= 0 ? JC.green : JC.red },
+                        { l: dir === 'rtl' ? 'סה"כ P&L' : 'Total P&L', v: `${totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(0)}$`, c: totalPnl >= 0 ? JC.green : JC.red },
                       ].map(s => (
                         <div key={s.l} style={{ background: `${s.c}06`, border: `1px solid ${s.c}12`, borderRadius: 12, padding: '12px 10px', textAlign: 'center' }}>
                           <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 700, letterSpacing: '1.5px', color: th.tx3, textTransform: 'uppercase' as const, marginBottom: 4 }}>{s.l}</div>
@@ -4708,7 +4733,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
                   const tradeCount = (day.trades || []).length;
                   const winCount = numWins(day);
                   const wr = tradeCount > 0 ? ((winCount / tradeCount) * 100).toFixed(0) : '—';
-                  const c = dp >= 0 ? '#00FFA3' : '#FF4D4D';
+                  const c = dp >= 0 ? JC.green : JC.red;
                   return (
                     <div key={day.id} onClick={() => { setViewingArchiveId(day.id); setView('journal'); }}
                       style={{
@@ -4728,8 +4753,8 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
                           </div>
                           {/* Tags */}
                           <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' as const }}>
-                            <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 700, color: complete ? '#00FFA3' : '#FFC857', background: complete ? 'rgba(0,255,163,.08)' : 'rgba(255,200,87,.08)', padding: '3px 8px', borderRadius: 6, letterSpacing: '0.5px' }}>{complete ? '🔒' : '☀️'}</span>
-                            {dayRisk === 'darkred' && <span style={{ fontSize: 8, fontWeight: 700, color: '#FF4D4D', background: 'rgba(255,77,77,.08)', padding: '3px 8px', borderRadius: 6 }}>⚠️</span>}
+                            <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 700, color: complete ? JC.green : JC.amber, background: complete ? 'rgba(0,255,163,.08)' : 'rgba(255,200,87,.08)', padding: '3px 8px', borderRadius: 6, letterSpacing: '0.5px' }}>{complete ? '🔒' : '☀️'}</span>
+                            {dayRisk === 'darkred' && <span style={{ fontSize: 8, fontWeight: 700, color: JC.red, background: 'rgba(255,77,77,.08)', padding: '3px 8px', borderRadius: 6 }}>⚠️</span>}
                             {day.bias && <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 600, color: th.tx3, background: th.inputBg, padding: '3px 8px', borderRadius: 6 }}>{day.bias}</span>}
                           </div>
                           {/* Mini metrics */}
@@ -4741,11 +4766,11 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
                               </div>
                               <div style={{ textAlign: 'center' }}>
                                 <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 7, fontWeight: 700, color: th.tx3, letterSpacing: '1px' }}>WIN%</div>
-                                <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, fontWeight: 800, color: parseInt(wr) >= 50 ? '#00FFA3' : '#FF4D4D' }}>{wr}%</div>
+                                <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, fontWeight: 800, color: parseInt(wr) >= 50 ? JC.green : JC.red }}>{wr}%</div>
                               </div>
                               <div style={{ textAlign: 'center' }}>
                                 <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 7, fontWeight: 700, color: th.tx3, letterSpacing: '1px' }}>R</div>
-                                <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, fontWeight: 800, color: totalR >= 0 ? '#00FFA3' : '#FF4D4D' }}>{totalR >= 0 ? '+' : ''}{totalR.toFixed(1)}</div>
+                                <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, fontWeight: 800, color: totalR >= 0 ? JC.green : JC.red }}>{totalR >= 0 ? '+' : ''}{totalR.toFixed(1)}</div>
                               </div>
                             </div>
                           )}
@@ -4753,7 +4778,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
                         {/* P&L */}
                         <div style={{ textAlign: 'right', flexShrink: 0 }}>
                           {!isR && <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 16, fontWeight: 800, color: c, textShadow: `0 0 12px ${c}25` }}>{dp >= 0 ? '+' : ''}{dp.toFixed(0)}$</div>}
-                          {day.emotionScore && <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, color: day.emotionScore >= 7 ? '#00FFA3' : day.emotionScore >= 4 ? '#FFC857' : '#FF4D4D', marginTop: 2 }}>😊 {day.emotionScore}/10</div>}
+                          {day.emotionScore && <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 9, color: day.emotionScore >= 7 ? JC.green : day.emotionScore >= 4 ? JC.amber : JC.red, marginTop: 2 }}>😊 {day.emotionScore}/10</div>}
                         </div>
                       </div>
                     </div>
