@@ -295,11 +295,11 @@ function CaptureFlow() {
     >
       <div
         ref={scrollRef}
-        className="relative w-full sm:max-w-2xl max-h-[92vh] h-[92vh] sm:h-auto overflow-y-auto overflow-x-hidden overscroll-contain rounded-t-3xl sm:rounded-3xl border border-foreground/10 bg-[#0b111b] text-foreground shadow-2xl"
+        className="relative w-full sm:max-w-2xl max-h-[92vh] h-[92vh] sm:h-auto overflow-y-auto overflow-x-hidden overscroll-contain rounded-t-3xl sm:rounded-3xl border border-foreground/10 bg-background text-foreground shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-foreground/10 bg-[#0b111b]/95 px-5 py-4 backdrop-blur">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-foreground/10 bg-background/95 px-5 py-4 backdrop-blur">
           <div className="flex items-center gap-2">
             <TargetIcon />
             <h2 className="text-lg font-extrabold">{t('דיווח על באג', 'Report a bug')}</h2>
@@ -337,7 +337,7 @@ function CaptureFlow() {
             {draft.pick?.label && (
               <span
                 className="max-w-full truncate rounded-full px-3 py-1 font-mono"
-                style={{ background: '#10202c', color: CYAN, direction: 'ltr' }}
+                style={{ background: 'hsl(var(--muted))', color: CYAN, direction: 'ltr' }}
                 title={draft.pick.selector}
               >
                 {draft.pick.label}
@@ -506,7 +506,7 @@ function CaptureFlow() {
 
         {/* footer */}
         <div
-          className="sticky bottom-0 flex gap-3 border-t border-foreground/10 bg-[#0b111b]/95 px-5 py-4 backdrop-blur"
+          className="sticky bottom-0 flex gap-3 border-t border-foreground/10 bg-background/95 px-5 py-4 backdrop-blur"
           style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
         >
           <button
@@ -549,7 +549,7 @@ function DedupSuggestions({
     <div
       data-bug-dedup
       className="rounded-xl border p-3"
-      style={{ borderColor: `${CYAN}55`, background: '#0d1a20' }}
+      style={{ borderColor: `${CYAN}55`, background: 'hsl(var(--muted))' }}
     >
       <div className="mb-2 text-sm font-bold" style={{ color: CYAN }}>
         {t('אולי זה אותו באג? הצטרף במקום לפתוח חדש:', 'Maybe it\u2019s the same bug? Join instead of opening a new one:')}
@@ -627,7 +627,7 @@ function AnnotationToolbar({
         <button
           key={c}
           onClick={() => onColor(c)}
-          className="h-6 w-6 rounded-full ring-2 ring-offset-2 ring-offset-[#0b111b]"
+          className="h-6 w-6 rounded-full ring-2 ring-offset-2 ring-offset-background"
           style={{ background: c, boxShadow: color === c ? `0 0 0 2px ${c}` : 'none' }}
           aria-label={`${t('צבע', 'Color')} ${c}`}
         />
@@ -798,7 +798,7 @@ function Chips({
             className="rounded-full px-3 py-1 text-sm transition"
             style={{
               background: value === o.v ? ACCENT : 'rgba(255,255,255,0.08)',
-              color: value === o.v ? '#06121f' : '#cdd6e3',
+              color: value === o.v ? '#06121f' : 'hsl(var(--foreground))',
               fontWeight: value === o.v ? 700 : 500,
             }}
           >
@@ -839,7 +839,7 @@ export function BugBoard() {
           className="rounded-xl px-3 py-2 text-sm font-semibold"
           style={{
             background: board.filter.onlyMine ? accent : 'rgba(255,255,255,0.08)',
-            color: board.filter.onlyMine ? '#06121f' : '#cdd6e3',
+            color: board.filter.onlyMine ? '#06121f' : 'hsl(var(--foreground))',
           }}
         >
           {t('הדיווחים שלי', 'My reports')}
@@ -855,7 +855,7 @@ export function BugBoard() {
             className="shrink-0 rounded-full px-3 py-1 text-sm"
             style={{
               background: (board.filter.section || 'all') === s ? accent : 'rgba(255,255,255,0.08)',
-              color: (board.filter.section || 'all') === s ? '#06121f' : '#cdd6e3',
+              color: (board.filter.section || 'all') === s ? '#06121f' : 'hsl(var(--foreground))',
             }}
           >
             {s === 'all' ? t('הכל', 'All') : sectionLabel(s, lang)}
@@ -997,7 +997,7 @@ function BugCard({
               value={bug.status}
               onChange={(e) => onStatus(e.target.value as BugStatus)}
               onClick={(e) => e.stopPropagation()}
-              className="rounded-lg border border-foreground/15 bg-[#0b111b] px-2 py-1 text-xs"
+              className="rounded-lg border border-foreground/15 bg-background px-2 py-1 text-xs"
             >
               {(Object.keys(STATUS_LABEL) as BugStatus[]).map((s) => (
                 <option key={s} value={s}>
@@ -1021,7 +1021,7 @@ function BugCard({
               className="rounded-full border px-3 py-1 text-sm font-semibold"
               style={{
                 borderColor: canHardDelete ? '#ff547066' : 'rgba(255,255,255,0.2)',
-                color: canHardDelete ? '#ff5470' : '#cdd6e3',
+                color: canHardDelete ? '#ff5470' : 'hsl(var(--foreground))',
               }}
             >
               {canHardDelete ? t('מחק', 'Delete') : t('הסר אותי', 'Remove me')}
@@ -1044,7 +1044,7 @@ function Avatar({ reporter, size = 28 }: { reporter: BugReporter; size?: number 
   return (
     <span
       className="flex items-center justify-center rounded-full ring-2 ring-[#0b111b]"
-      style={{ width: size, height: size, background: '#23324a', color: '#cdd6e3' }}
+      style={{ width: size, height: size, background: '#23324a', color: 'hsl(var(--foreground))' }}
       title={reporter.profile?.display_name || ''}
       aria-label={reporter.profile?.display_name || 'user'}
     >
@@ -1058,7 +1058,7 @@ function ReportersPopover({ reporters }: { reporters: BugReporter[] }) {
   return (
     <div
       data-bug-reporters-popover
-      className="mt-3 rounded-xl border border-foreground/10 bg-[#0b111b] p-3"
+      className="mt-3 rounded-xl border border-foreground/10 bg-background p-3"
     >
       <div className="mb-2 text-xs font-bold text-foreground/50">{t('מי דיווח על הבאג', 'Who reported this bug')}</div>
       <ul className="space-y-2">
@@ -1142,7 +1142,7 @@ function ResolutionAppeal({
           className="rounded-full px-3 py-1 text-sm font-bold transition disabled:opacity-60 inline-flex items-center gap-1.5"
           style={{
             background: v === 'fixed' ? CYAN : 'rgba(255,255,255,0.08)',
-            color: v === 'fixed' ? '#06121f' : '#cdd6e3',
+            color: v === 'fixed' ? '#06121f' : 'hsl(var(--foreground))',
           }}
         >
           {submitting === 'fixed' ? <Spinner /> : t('סודר ✓', 'Fixed ✓')}
@@ -1159,7 +1159,7 @@ function ResolutionAppeal({
           className="rounded-full px-3 py-1 text-sm font-bold transition disabled:opacity-60 inline-flex items-center gap-1.5"
           style={{
             background: v === 'not_fixed' ? RED : 'rgba(255,255,255,0.08)',
-            color: v === 'not_fixed' ? '#06121f' : '#cdd6e3',
+            color: v === 'not_fixed' ? '#06121f' : 'hsl(var(--foreground))',
           }}
         >
           {submitting === 'not_fixed' ? <Spinner /> : t('לא סודר ✗', 'Not fixed ✗')}
@@ -1336,10 +1336,10 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-2xl overflow-y-auto bg-[#0b111b] text-foreground sm:max-h-[92vh] sm:rounded-3xl"
+        className="relative w-full max-w-2xl overflow-y-auto bg-background text-foreground sm:max-h-[92vh] sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-foreground/10 bg-[#0b111b]/95 px-5 py-4 backdrop-blur">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-foreground/10 bg-background/95 px-5 py-4 backdrop-blur">
           <h2 className="text-lg font-extrabold">{t('פרטי באג', 'Bug details')}</h2>
           <button onClick={onClose} className="text-2xl text-foreground/50 hover:text-foreground">
             ×
@@ -1370,7 +1370,7 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
             {bug.element_label && (
               <div
                 className="rounded-lg p-2 font-mono text-xs"
-                style={{ background: '#10202c', color: CYAN, direction: 'ltr' }}
+                style={{ background: 'hsl(var(--muted))', color: CYAN, direction: 'ltr' }}
               >
                 {bug.element_label}
                 <div className="text-foreground/40">{bug.element_selector}</div>
