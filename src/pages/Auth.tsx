@@ -193,6 +193,15 @@ export default function AuthPage() {
     writeAuthLangIntent(next);
   };
 
+  /**
+   * The Lovable OAuth broker lives behind the `/~oauth/*` paths, which only exist
+   * on Lovable-hosted origins (*.lovable.app / *.lovableproject.com and their
+   * proxied custom domains). On our external (Netlify) deployment those paths hit
+   * the SPA fallback and render the 404 page, so Google sign-in can never finish.
+   * On any non-Lovable origin we go straight to the backend's own OAuth endpoint.
+   */
+  const isLovableHost = () => /(^|\.)lovable\.app$|(^|\.)lovableproject\.com$|localhost|127\.0\.0\.1/.test(window.location.hostname);
+
   const handleGoogle = async () => {
     setBusy(true);
     setFailed(false);
@@ -200,6 +209,17 @@ export default function AuthPage() {
     writeAuthLangIntent(lang);
     try { localStorage.setItem(PENDING_CONSENT_KEY, '1'); } catch { /* noop */ }
     try {
+      if (!isLovableHost()) {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: `${window.location.origin}/auth`,
+            queryParams: { prompt: 'select_account' },
+          },
+        });
+        if (error) throw error;
+        return; // browser navigates away to Google
+      }
       const result = await lovable.auth.signInWithOAuth('google', {
         redirect_uri: window.location.origin,
         extraParams: { prompt: 'select_account' },
@@ -213,6 +233,7 @@ export default function AuthPage() {
       setBusy(false);
     }
   };
+
 
   const featureList = [
     { icon: <LineChart size={14} />, label: c.feature1 },

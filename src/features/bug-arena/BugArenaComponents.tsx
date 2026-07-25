@@ -295,11 +295,11 @@ function CaptureFlow() {
     >
       <div
         ref={scrollRef}
-        className="relative w-full sm:max-w-2xl max-h-[92vh] h-[92vh] sm:h-auto overflow-y-auto overflow-x-hidden overscroll-contain rounded-t-3xl sm:rounded-3xl border border-white/10 bg-[#0b111b] text-[#e8edf5] shadow-2xl"
+        className="relative w-full sm:max-w-2xl max-h-[92vh] h-[92vh] sm:h-auto overflow-y-auto overflow-x-hidden overscroll-contain rounded-t-3xl sm:rounded-3xl border border-foreground/10 bg-background text-foreground shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-white/10 bg-[#0b111b]/95 px-5 py-4 backdrop-blur">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-foreground/10 bg-background/95 px-5 py-4 backdrop-blur">
           <div className="flex items-center gap-2">
             <TargetIcon />
             <h2 className="text-lg font-extrabold">{t('דיווח על באג', 'Report a bug')}</h2>
@@ -310,7 +310,7 @@ function CaptureFlow() {
               <button
                 onClick={() => capture.recapture(captureMode === 'full' ? 'region' : 'full')}
                 disabled={isCapturing}
-                className="rounded-full border border-white/15 px-3 py-1 text-xs font-semibold text-white/70 hover:text-white disabled:opacity-40"
+                className="rounded-full border border-foreground/15 px-3 py-1 text-xs font-semibold text-foreground/70 hover:text-foreground disabled:opacity-40"
                 title={t('לכידת מסך מלא במקום אלמנט בלבד', 'Capture the full screen instead of just the element')}
               >
                 {captureMode === 'full'
@@ -320,7 +320,7 @@ function CaptureFlow() {
             )}
             <button
               onClick={capture.cancel}
-              className="rounded-full px-2 py-1 text-2xl leading-none text-white/50 hover:text-white"
+              className="rounded-full px-2 py-1 text-2xl leading-none text-foreground/50 hover:text-foreground"
               aria-label={t('סגור', 'Close')}
             >
               ×
@@ -331,13 +331,13 @@ function CaptureFlow() {
         <div className="space-y-5 p-5">
           {/* context chips — section + picked element (auto, no clicks) */}
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="rounded-full bg-white/10 px-3 py-1 font-semibold">
+            <span className="rounded-full bg-foreground/10 px-3 py-1 font-semibold">
               {t('אזור', 'Area')}: {sectionLabel(draft.section, lang)}
             </span>
             {draft.pick?.label && (
               <span
                 className="max-w-full truncate rounded-full px-3 py-1 font-mono"
-                style={{ background: '#10202c', color: CYAN, direction: 'ltr' }}
+                style={{ background: 'hsl(var(--muted))', color: CYAN, direction: 'ltr' }}
                 title={draft.pick.selector}
               >
                 {draft.pick.label}
@@ -346,7 +346,7 @@ function CaptureFlow() {
             {!draft.pick && (
               <button
                 onClick={capture.beginCapture}
-                className="rounded-full border border-dashed border-white/25 px-3 py-1 hover:border-white/50"
+                className="rounded-full border border-dashed border-foreground/25 px-3 py-1 hover:border-foreground/50"
               >
                 {t('+ סמן את האלמנט הפגום', '+ Mark the broken element')}
               </button>
@@ -380,32 +380,32 @@ function CaptureFlow() {
                 tool={tool}
                 color={color}
               />
-              <p className="mt-1 text-xs text-white/40">
+              <p className="mt-1 text-xs text-foreground/40">
                 {t('סמן על הצילום מה שבור — חץ, מסגרת או קו חופשי.', 'Mark what is broken on the screenshot — arrow, box or freehand.')}
               </p>
             </div>
           ) : isCapturing ? (
-            <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/5 p-8 text-center text-sm text-white/60">
+            <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-foreground/10 bg-foreground/5 p-8 text-center text-sm text-foreground/60">
               <span
-                className="inline-block h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-[var(--a)] motion-reduce:animate-none"
+                className="inline-block h-8 w-8 animate-spin rounded-full border-2 border-foreground/20 border-t-[var(--a)] motion-reduce:animate-none"
                 style={{ ['--a' as any]: ACCENT }}
               />
               <div className="font-semibold">{t('מכין צילום…', 'Preparing screenshot…')}</div>
               {showSkip && (
                 <button
                   onClick={capture.skipCapture}
-                  className="mt-2 rounded-full border border-white/20 px-3 py-1 text-xs text-white/80 hover:text-white"
+                  className="mt-2 rounded-full border border-foreground/20 px-3 py-1 text-xs text-foreground/80 hover:text-foreground"
                 >
                   {t('דלג על הצילום', 'Skip the screenshot')}
                 </button>
               )}
             </div>
           ) : captureStatus === 'skipped' ? (
-            <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.04] p-4 text-center">
-              <div className="mb-3 text-sm font-semibold text-white/80">
+            <div className="rounded-2xl border border-dashed border-foreground/15 bg-foreground/[0.04] p-4 text-center">
+              <div className="mb-3 text-sm font-semibold text-foreground/80">
                 {t('צרף צילום מסך מהטלפון', 'Attach a screenshot from your phone')}
               </div>
-              <p className="mb-3 text-[11px] leading-relaxed text-white/50">
+              <p className="mb-3 text-[11px] leading-relaxed text-foreground/50">
                 {t(
                   'במובייל אנחנו מדלגים על צילום אוטומטי כדי לשמור על ביצועים. צלם מסך במכשיר וצרף אותו כאן.',
                   'On mobile we skip auto-capture for performance. Take a screenshot on your device and attach it here.',
@@ -421,23 +421,23 @@ function CaptureFlow() {
                 />
               </label>
               {extra && (
-                <div className="mt-2 truncate text-xs text-white/60">{extra.name}</div>
+                <div className="mt-2 truncate text-xs text-foreground/60">{extra.name}</div>
               )}
               {!isMobile && (
                 <button
                   onClick={() => capture.recapture(captureMode)}
-                  className="mt-3 block w-full rounded-full border border-white/20 px-3 py-1.5 text-xs text-white/70 hover:text-white"
+                  className="mt-3 block w-full rounded-full border border-foreground/20 px-3 py-1.5 text-xs text-foreground/70 hover:text-foreground"
                 >
                   {t('או נסה צילום אוטומטי', 'Or try auto-capture')}
                 </button>
               )}
             </div>
           ) : (
-            <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4 text-xs text-white/50">
+            <div className="flex items-center justify-between rounded-xl border border-foreground/10 bg-foreground/5 p-4 text-xs text-foreground/50">
               <span>{t('הצילום נכשל. אפשר להמשיך בלי, או לנסות שוב.', 'Capture failed. Continue without it, or retry.')}</span>
               <button
                 onClick={() => capture.recapture(captureMode)}
-                className="rounded-full border border-white/20 px-3 py-1 text-xs text-white/80 hover:text-white"
+                className="rounded-full border border-foreground/20 px-3 py-1 text-xs text-foreground/80 hover:text-foreground"
               >
                 {t('נסה שוב', 'Retry')}
               </button>
@@ -445,7 +445,7 @@ function CaptureFlow() {
           )}
 
           {/* privacy notice */}
-          <div className="rounded-lg border border-white/10 bg-white/[0.04] p-3 text-[11px] leading-relaxed text-white/55">
+          <div className="rounded-lg border border-foreground/10 bg-foreground/[0.04] p-3 text-[11px] leading-relaxed text-foreground/55">
             {t(
               'הצילום יצורף לדיווח וגלוי לחברי הקהילה. רוצה להסתיר נתונים רגישים? הגדרות → מראה ושפה → הסתרת פרטים.',
               'The screenshot is attached to the report and visible to community members. Want to hide sensitive data? Settings → Appearance & language → Privacy mask.',
@@ -466,7 +466,7 @@ function CaptureFlow() {
               rows={3}
               autoFocus={!isMobile}
               placeholder={t('תאר בקצרה את הבאג…', 'Briefly describe the bug…')}
-              className="w-full resize-none rounded-xl border border-white/10 bg-white/5 p-3 text-sm outline-none focus:border-[var(--a)]"
+              className="w-full resize-none rounded-xl border border-foreground/10 bg-foreground/5 p-3 text-sm outline-none focus:border-[var(--a)]"
               style={{ ['--a' as any]: ACCENT }}
             />
           </div>
@@ -489,7 +489,7 @@ function CaptureFlow() {
 
           {/* optional extra image */}
           <div className="flex items-center gap-3">
-            <label className="cursor-pointer rounded-xl border border-white/15 px-3 py-2 text-sm hover:border-white/40">
+            <label className="cursor-pointer rounded-xl border border-foreground/15 px-3 py-2 text-sm hover:border-foreground/40">
               {t('📎 צרף תמונה', '📎 Attach image')}
               <input
                 type="file"
@@ -498,7 +498,7 @@ function CaptureFlow() {
                 onChange={(e) => setExtra(e.target.files?.[0] || null)}
               />
             </label>
-            {extra && <span className="truncate text-xs text-white/60">{extra.name}</span>}
+            {extra && <span className="truncate text-xs text-foreground/60">{extra.name}</span>}
           </div>
 
           {error && <div className="text-sm text-red-400">{error}</div>}
@@ -506,7 +506,7 @@ function CaptureFlow() {
 
         {/* footer */}
         <div
-          className="sticky bottom-0 flex gap-3 border-t border-white/10 bg-[#0b111b]/95 px-5 py-4 backdrop-blur"
+          className="sticky bottom-0 flex gap-3 border-t border-foreground/10 bg-background/95 px-5 py-4 backdrop-blur"
           style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
         >
           <button
@@ -521,7 +521,7 @@ function CaptureFlow() {
           </button>
           <button
             onClick={capture.cancel}
-            className="rounded-xl border border-white/15 px-5 py-3 font-semibold text-white/70 hover:text-white"
+            className="rounded-xl border border-foreground/15 px-5 py-3 font-semibold text-foreground/70 hover:text-foreground"
           >
             {t('ביטול', 'Cancel')}
           </button>
@@ -549,7 +549,7 @@ function DedupSuggestions({
     <div
       data-bug-dedup
       className="rounded-xl border p-3"
-      style={{ borderColor: `${CYAN}55`, background: '#0d1a20' }}
+      style={{ borderColor: `${CYAN}55`, background: 'hsl(var(--muted))' }}
     >
       <div className="mb-2 text-sm font-bold" style={{ color: CYAN }}>
         {t('אולי זה אותו באג? הצטרף במקום לפתוח חדש:', 'Maybe it\u2019s the same bug? Join instead of opening a new one:')}
@@ -558,11 +558,11 @@ function DedupSuggestions({
         {similar.map((b) => (
           <div
             key={b.id}
-            className="flex items-center justify-between gap-3 rounded-lg bg-white/5 px-3 py-2"
+            className="flex items-center justify-between gap-3 rounded-lg bg-foreground/5 px-3 py-2"
           >
             <div className="min-w-0">
               <div className="truncate text-sm">{b.title || b.description}</div>
-              <div className="text-xs text-white/40">
+              <div className="text-xs text-foreground/40">
                 {b.reporterCount} {t('מדווחים', 'reporters')} · {timeAgo(b.created_at, lang)}
               </div>
             </div>
@@ -616,27 +616,27 @@ function AnnotationToolbar({
           className="h-8 w-8 rounded-lg text-lg"
           style={{
             background: tool === x.t ? ACCENT : 'rgba(255,255,255,0.08)',
-            color: tool === x.t ? '#06121f' : '#e8edf5',
+            color: tool === x.t ? '#06121f' : 'hsl(var(--foreground))',
           }}
         >
           {x.label}
         </button>
       ))}
-      <span className="mx-1 h-5 w-px bg-white/15" />
+      <span className="mx-1 h-5 w-px bg-foreground/15" />
       {colors.map((c) => (
         <button
           key={c}
           onClick={() => onColor(c)}
-          className="h-6 w-6 rounded-full ring-2 ring-offset-2 ring-offset-[#0b111b]"
+          className="h-6 w-6 rounded-full ring-2 ring-offset-2 ring-offset-background"
           style={{ background: c, boxShadow: color === c ? `0 0 0 2px ${c}` : 'none' }}
           aria-label={`${t('צבע', 'Color')} ${c}`}
         />
       ))}
-      <span className="mx-1 h-5 w-px bg-white/15" />
-      <button onClick={onUndo} className="rounded-lg bg-white/8 px-2 py-1 text-xs">
+      <span className="mx-1 h-5 w-px bg-foreground/15" />
+      <button onClick={onUndo} className="rounded-lg bg-foreground/8 px-2 py-1 text-xs">
         {t('בטל', 'Undo')}
       </button>
-      <button onClick={onClear} className="rounded-lg bg-white/8 px-2 py-1 text-xs">
+      <button onClick={onClear} className="rounded-lg bg-foreground/8 px-2 py-1 text-xs">
         {t('נקה', 'Clear')}
       </button>
     </div>
@@ -757,7 +757,7 @@ function AnnotationCanvas({
   return (
     <div
       ref={wrapRef}
-      className="relative w-full overflow-hidden rounded-xl border border-white/10"
+      className="relative w-full overflow-hidden rounded-xl border border-foreground/10"
       style={{ touchAction: 'none' }}
     >
       <img src={imageUrl} alt="screenshot" className="block w-full select-none" draggable={false} />
@@ -798,7 +798,7 @@ function Chips({
             className="rounded-full px-3 py-1 text-sm transition"
             style={{
               background: value === o.v ? ACCENT : 'rgba(255,255,255,0.08)',
-              color: value === o.v ? '#06121f' : '#cdd6e3',
+              color: value === o.v ? '#06121f' : 'hsl(var(--foreground))',
               fontWeight: value === o.v ? 700 : 500,
             }}
           >
@@ -825,21 +825,21 @@ export function BugBoard() {
   }, [board.bugs]);
 
   return (
-    <div data-bug-board dir={isRTL ? 'rtl' : 'ltr'} className="mx-auto max-w-3xl p-4 text-[#e8edf5]">
+    <div data-bug-board dir={isRTL ? 'rtl' : 'ltr'} className="mx-auto max-w-3xl p-4 text-foreground">
       {/* filters */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <input
           value={board.filter.search || ''}
           onChange={(e) => board.setFilter({ search: e.target.value })}
           placeholder={t('חיפוש…', 'Search…')}
-          className="flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
+          className="flex-1 rounded-xl border border-foreground/10 bg-foreground/5 px-3 py-2 text-sm outline-none"
         />
         <button
           onClick={() => board.setFilter({ onlyMine: !board.filter.onlyMine })}
           className="rounded-xl px-3 py-2 text-sm font-semibold"
           style={{
             background: board.filter.onlyMine ? accent : 'rgba(255,255,255,0.08)',
-            color: board.filter.onlyMine ? '#06121f' : '#cdd6e3',
+            color: board.filter.onlyMine ? '#06121f' : 'hsl(var(--foreground))',
           }}
         >
           {t('הדיווחים שלי', 'My reports')}
@@ -855,7 +855,7 @@ export function BugBoard() {
             className="shrink-0 rounded-full px-3 py-1 text-sm"
             style={{
               background: (board.filter.section || 'all') === s ? accent : 'rgba(255,255,255,0.08)',
-              color: (board.filter.section || 'all') === s ? '#06121f' : '#cdd6e3',
+              color: (board.filter.section || 'all') === s ? '#06121f' : 'hsl(var(--foreground))',
             }}
           >
             {s === 'all' ? t('הכל', 'All') : sectionLabel(s, lang)}
@@ -863,10 +863,10 @@ export function BugBoard() {
         ))}
       </div>
 
-      {board.loading && <div className="py-10 text-center text-white/40">{t('טוען…', 'Loading…')}</div>}
+      {board.loading && <div className="py-10 text-center text-foreground/40">{t('טוען…', 'Loading…')}</div>}
       {board.error && <div className="py-4 text-center text-red-400">{board.error}</div>}
       {!board.loading && board.bugs.length === 0 && (
-        <div className="rounded-2xl border border-dashed border-white/15 p-10 text-center text-white/50">
+        <div className="rounded-2xl border border-dashed border-foreground/15 p-10 text-center text-foreground/50">
           {t('אין באגים פתוחים כרגע. מצאת אחד? לחץ על "דווח על באג".', 'No open bugs right now. Found one? Click "Report a bug".')}
         </div>
       )}
@@ -876,7 +876,7 @@ export function BugBoard() {
       <div className="space-y-6">
         {board.grouped.map((g) => (
           <section key={g.section}>
-            <h3 className="mb-2 text-sm font-bold uppercase tracking-wide text-white/40">
+            <h3 className="mb-2 text-sm font-bold uppercase tracking-wide text-foreground/40">
               {sectionLabel(g.section, lang)} · {g.bugs.length}
             </h3>
             <div className="space-y-3">
@@ -940,7 +940,7 @@ function BugCard({
     <article
       data-bug-card
       data-bug-id={bug.id}
-      className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition hover:border-white/20"
+      className="rounded-2xl border border-foreground/10 bg-foreground/[0.03] p-4 transition hover:border-foreground/20"
     >
       <div className="flex items-start gap-3">
         {bug.coverUrl && (
@@ -959,12 +959,12 @@ function BugCard({
             >
               {statusLabel(bug.status, lang)}
             </span>
-            <span className="text-[11px] text-white/40">{bugTypeLabel(bug.bug_type, lang)}</span>
+            <span className="text-[11px] text-foreground/40">{bugTypeLabel(bug.bug_type, lang)}</span>
           </div>
           <button onClick={onOpen} className={`mt-1 block ${isRTL ? 'text-right' : 'text-left'}`}>
             <p className="line-clamp-2 text-sm font-semibold">{bug.title || bug.description}</p>
           </button>
-          <div className="mt-1 text-[11px] text-white/35" title={formatDateTime(bug.created_at, lang)}>
+          <div className="mt-1 text-[11px] text-foreground/35" title={formatDateTime(bug.created_at, lang)}>
             {formatDateTime(bug.created_at, lang)}
           </div>
         </div>
@@ -984,9 +984,9 @@ function BugCard({
             ))}
           </div>
           {bug.reporterCount > 3 && (
-            <span className={`${isRTL ? 'mr-1' : 'ml-1'} text-xs text-white/50`}>+{bug.reporterCount - 3}</span>
+            <span className={`${isRTL ? 'mr-1' : 'ml-1'} text-xs text-foreground/50`}>+{bug.reporterCount - 3}</span>
           )}
-          <span className={`${isRTL ? 'mr-2' : 'ml-2'} text-xs font-semibold text-white/60`}>
+          <span className={`${isRTL ? 'mr-2' : 'ml-2'} text-xs font-semibold text-foreground/60`}>
             {bug.reporterCount} {t('מדווחים', 'reporters')}
           </span>
         </button>
@@ -997,7 +997,7 @@ function BugCard({
               value={bug.status}
               onChange={(e) => onStatus(e.target.value as BugStatus)}
               onClick={(e) => e.stopPropagation()}
-              className="rounded-lg border border-white/15 bg-[#0b111b] px-2 py-1 text-xs"
+              className="rounded-lg border border-foreground/15 bg-background px-2 py-1 text-xs"
             >
               {(Object.keys(STATUS_LABEL) as BugStatus[]).map((s) => (
                 <option key={s} value={s}>
@@ -1021,7 +1021,7 @@ function BugCard({
               className="rounded-full border px-3 py-1 text-sm font-semibold"
               style={{
                 borderColor: canHardDelete ? '#ff547066' : 'rgba(255,255,255,0.2)',
-                color: canHardDelete ? '#ff5470' : '#cdd6e3',
+                color: canHardDelete ? '#ff5470' : 'hsl(var(--foreground))',
               }}
             >
               {canHardDelete ? t('מחק', 'Delete') : t('הסר אותי', 'Remove me')}
@@ -1043,8 +1043,8 @@ function Avatar({ reporter, size = 28 }: { reporter: BugReporter; size?: number 
   // image, which looks worse than a clean glyph.
   return (
     <span
-      className="flex items-center justify-center rounded-full ring-2 ring-[#0b111b]"
-      style={{ width: size, height: size, background: '#23324a', color: '#cdd6e3' }}
+      className="flex items-center justify-center rounded-full ring-2 ring-background"
+      style={{ width: size, height: size, background: '#23324a', color: 'hsl(var(--foreground))' }}
       title={reporter.profile?.display_name || ''}
       aria-label={reporter.profile?.display_name || 'user'}
     >
@@ -1058,18 +1058,18 @@ function ReportersPopover({ reporters }: { reporters: BugReporter[] }) {
   return (
     <div
       data-bug-reporters-popover
-      className="mt-3 rounded-xl border border-white/10 bg-[#0b111b] p-3"
+      className="mt-3 rounded-xl border border-foreground/10 bg-background p-3"
     >
-      <div className="mb-2 text-xs font-bold text-white/50">{t('מי דיווח על הבאג', 'Who reported this bug')}</div>
+      <div className="mb-2 text-xs font-bold text-foreground/50">{t('מי דיווח על הבאג', 'Who reported this bug')}</div>
       <ul className="space-y-2">
         {reporters.map((r) => (
           <li key={r.user_id} className="flex items-center gap-2">
             <Avatar reporter={r} size={24} />
             <div className="min-w-0">
               <div className="truncate text-sm">{r.profile?.display_name || t('משתמש', 'User')}</div>
-              {r.note && <div className="truncate text-xs text-white/40">{r.note}</div>}
+              {r.note && <div className="truncate text-xs text-foreground/40">{r.note}</div>}
             </div>
-            <span className={`${isRTL ? 'mr-auto' : 'ml-auto'} text-[11px] text-white/30`}>{timeAgo(r.created_at, lang)}</span>
+            <span className={`${isRTL ? 'mr-auto' : 'ml-auto'} text-[11px] text-foreground/30`}>{timeAgo(r.created_at, lang)}</span>
           </li>
         ))}
       </ul>
@@ -1130,10 +1130,10 @@ function ResolutionAppeal({
     <div
       data-bug-resolution-appeal
       dir={isRTL ? 'rtl' : 'ltr'}
-      className="mt-3 rounded-xl border border-white/10 bg-white/[0.04] p-3"
+      className="mt-3 rounded-xl border border-foreground/10 bg-foreground/[0.04] p-3"
     >
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm font-bold text-white/80">
+        <span className="text-sm font-bold text-foreground/80">
           {t('האם הבאג סודר?', 'Was the bug fixed?')}
         </span>
         <button
@@ -1142,7 +1142,7 @@ function ResolutionAppeal({
           className="rounded-full px-3 py-1 text-sm font-bold transition disabled:opacity-60 inline-flex items-center gap-1.5"
           style={{
             background: v === 'fixed' ? CYAN : 'rgba(255,255,255,0.08)',
-            color: v === 'fixed' ? '#06121f' : '#cdd6e3',
+            color: v === 'fixed' ? '#06121f' : 'hsl(var(--foreground))',
           }}
         >
           {submitting === 'fixed' ? <Spinner /> : t('סודר ✓', 'Fixed ✓')}
@@ -1159,7 +1159,7 @@ function ResolutionAppeal({
           className="rounded-full px-3 py-1 text-sm font-bold transition disabled:opacity-60 inline-flex items-center gap-1.5"
           style={{
             background: v === 'not_fixed' ? RED : 'rgba(255,255,255,0.08)',
-            color: v === 'not_fixed' ? '#06121f' : '#cdd6e3',
+            color: v === 'not_fixed' ? '#06121f' : 'hsl(var(--foreground))',
           }}
         >
           {submitting === 'not_fixed' ? <Spinner /> : t('לא סודר ✗', 'Not fixed ✗')}
@@ -1170,10 +1170,10 @@ function ResolutionAppeal({
           </span>
         )}
         {!justSaved && v === 'fixed' && (
-          <span className="text-xs text-white/50">{t('תודה — נרשם', 'Thanks — recorded')}</span>
+          <span className="text-xs text-foreground/50">{t('תודה — נרשם', 'Thanks — recorded')}</span>
         )}
         {!justSaved && !editing && v === 'not_fixed' && mine?.note && (
-          <span className="text-xs text-white/50 truncate max-w-[260px]">"{mine.note}"</span>
+          <span className="text-xs text-foreground/50 truncate max-w-[260px]">"{mine.note}"</span>
         )}
       </div>
 
@@ -1183,7 +1183,7 @@ function ResolutionAppeal({
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder={t('מה עדיין לא תקין? (לא חובה)', "What's still broken? (optional)")}
-            className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm outline-none"
+            className="flex-1 rounded-lg border border-foreground/10 bg-foreground/5 px-3 py-1.5 text-sm outline-none"
             disabled={!!submitting}
           />
           <button
@@ -1228,13 +1228,13 @@ function ResolutionFeedbackPanel({
     <div
       data-bug-resolution-panel
       dir={isRTL ? 'rtl' : 'ltr'}
-      className="rounded-xl border border-white/10 bg-[#0d1a20] p-3"
+      className="rounded-xl border border-foreground/10 bg-muted p-3"
     >
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className="text-xs font-bold uppercase tracking-wide" style={{ color: CYAN }}>
           {t('משוב פתרון · גלוי לך בלבד', 'Resolution feedback · admin-only')}
         </span>
-        <span className="text-[11px] text-white/50">
+        <span className="text-[11px] text-foreground/50">
           {fixed.length} {t('סודר', 'fixed')} · {notFixed.length} {t('לא סודר', 'not fixed')}
         </span>
       </div>
@@ -1248,13 +1248,13 @@ function ResolutionFeedbackPanel({
         </div>
       )}
       {bug.feedback.length === 0 ? (
-        <p className="text-xs text-white/40">
+        <p className="text-xs text-foreground/40">
           {t('עדיין אין משוב מהמדווחים.', 'No feedback from reporters yet.')}
         </p>
       ) : (
         <ul className="space-y-2">
           {bug.feedback.map((f: BugResolutionFeedback) => (
-            <li key={f.user_id} className="rounded-lg bg-white/[0.03] p-2">
+            <li key={f.user_id} className="rounded-lg bg-foreground/[0.03] p-2">
               <div className="flex items-center gap-2">
                 <span
                   className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold"
@@ -1274,12 +1274,12 @@ function ResolutionFeedbackPanel({
                 >
                   {f.verdict === 'fixed' ? t('סודר', 'Fixed') : t('לא סודר', 'Not fixed')}
                 </span>
-                <span className={`${isRTL ? 'mr-auto' : 'ml-auto'} text-[11px] text-white/30`}>
+                <span className={`${isRTL ? 'mr-auto' : 'ml-auto'} text-[11px] text-foreground/30`}>
                   {timeAgo(f.updated_at, lang)}
                 </span>
               </div>
               {f.note && (
-                <p className="mt-1 text-xs text-white/70">&ldquo;{f.note}&rdquo;</p>
+                <p className="mt-1 text-xs text-foreground/70">&ldquo;{f.note}&rdquo;</p>
               )}
             </li>
           ))}
@@ -1336,18 +1336,18 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-2xl overflow-y-auto bg-[#0b111b] text-[#e8edf5] sm:max-h-[92vh] sm:rounded-3xl"
+        className="relative w-full max-w-2xl overflow-y-auto bg-background text-foreground sm:max-h-[92vh] sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-[#0b111b]/95 px-5 py-4 backdrop-blur">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-foreground/10 bg-background/95 px-5 py-4 backdrop-blur">
           <h2 className="text-lg font-extrabold">{t('פרטי באג', 'Bug details')}</h2>
-          <button onClick={onClose} className="text-2xl text-white/50 hover:text-white">
+          <button onClick={onClose} className="text-2xl text-foreground/50 hover:text-foreground">
             ×
           </button>
         </div>
 
         {!bug ? (
-          <div className="p-10 text-center text-white/40">{t('טוען…', 'Loading…')}</div>
+          <div className="p-10 text-center text-foreground/40">{t('טוען…', 'Loading…')}</div>
         ) : (
           <div className="space-y-5 p-5">
             <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -1357,12 +1357,12 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
               >
                 {statusLabel(bug.status, lang)}
               </span>
-              <span className="rounded-full bg-white/10 px-2 py-0.5">{sectionLabel(bug.section, lang)}</span>
-              <span className="rounded-full bg-white/10 px-2 py-0.5">{bugTypeLabel(bug.bug_type, lang)}</span>
-              <span className="rounded-full bg-white/10 px-2 py-0.5">
+              <span className="rounded-full bg-foreground/10 px-2 py-0.5">{sectionLabel(bug.section, lang)}</span>
+              <span className="rounded-full bg-foreground/10 px-2 py-0.5">{bugTypeLabel(bug.bug_type, lang)}</span>
+              <span className="rounded-full bg-foreground/10 px-2 py-0.5">
                 {t('חומרה', 'Severity')}: {severityLabel(bug.severity, lang)}
               </span>
-              <span className="text-white/40">{formatDateTime(bug.created_at, lang)}</span>
+              <span className="text-foreground/40">{formatDateTime(bug.created_at, lang)}</span>
             </div>
 
             <p className="whitespace-pre-wrap text-sm">{bug.description}</p>
@@ -1370,10 +1370,10 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
             {bug.element_label && (
               <div
                 className="rounded-lg p-2 font-mono text-xs"
-                style={{ background: '#10202c', color: CYAN, direction: 'ltr' }}
+                style={{ background: 'hsl(var(--muted))', color: CYAN, direction: 'ltr' }}
               >
                 {bug.element_label}
-                <div className="text-white/40">{bug.element_selector}</div>
+                <div className="text-foreground/40">{bug.element_selector}</div>
               </div>
             )}
 
@@ -1402,7 +1402,7 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
 
             {/* comments */}
             <div data-bug-comments>
-              <div className="mb-2 text-sm font-bold text-white/60">
+              <div className="mb-2 text-sm font-bold text-foreground/60">
                 {t('דיון', 'Discussion')} ({comments.length})
               </div>
               <ul className="space-y-3">
@@ -1414,12 +1414,12 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
                     >
                       {initials(c.profile?.display_name)}
                     </span>
-                    <div className="min-w-0 flex-1 rounded-xl bg-white/5 px-3 py-2">
+                    <div className="min-w-0 flex-1 rounded-xl bg-foreground/5 px-3 py-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold">
                           {c.profile?.display_name || t('משתמש', 'User')}
                         </span>
-                        <span className="text-[11px] text-white/30">{timeAgo(c.created_at, lang)}</span>
+                        <span className="text-[11px] text-foreground/30">{timeAgo(c.created_at, lang)}</span>
                       </div>
                       <p className="whitespace-pre-wrap text-sm">{c.body}</p>
                     </div>
@@ -1433,7 +1433,7 @@ export function BugDetail({ bugId, onClose }: { bugId: string; onClose: () => vo
                   onChange={(e) => setBody(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && send()}
                   placeholder={t('הוסף תגובה…', 'Add a comment…')}
-                  className="flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
+                  className="flex-1 rounded-xl border border-foreground/10 bg-foreground/5 px-3 py-2 text-sm outline-none"
                 />
                 <button
                   onClick={send}
