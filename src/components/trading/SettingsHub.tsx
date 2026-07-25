@@ -134,11 +134,6 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
   const [newKpi, setNewKpi] = useState<Partial<CustomKPI>>({ label: '', formula: '', format: 'number' });
-  const [newPassword, setNewPassword] = useState('');
-  const [newPasswordConfirm, setNewPasswordConfirm] = useState('');
-  const [newEmail, setNewEmail] = useState('');
-  const [pwBusy, setPwBusy] = useState(false);
-  const [emailBusy, setEmailBusy] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const [draftAccent, setDraftAccent] = useState<string>('#00f2ff');
   const [showThemeConfirm, setShowThemeConfirm] = useState(false);
