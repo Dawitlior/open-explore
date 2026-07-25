@@ -567,6 +567,10 @@ export function applyThemeToDOM(id: ThemeId) {
   r.setAttribute('data-scheme', theme.isLight ? 'light' : 'dark');
   if (theme.isLight) r.classList.add('orca-light'); else r.classList.remove('orca-light');
 
+  // Keep the shared neon accent palette in sync so the Journal / Orca dimensions
+  // (which read `JC.*` at render time) pick up scheme-correct accents.
+  syncNeonPalette(theme.isLight);
+
   // Keep the PWA / browser title-bar (and iOS status bar) painted with the
   // active theme's solid background — otherwise the OS chrome stays stuck on
   // manifest.json#theme_color and visibly clashes with the in-app theme.
