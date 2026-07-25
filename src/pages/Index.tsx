@@ -159,6 +159,12 @@ const Index = () => {
     () => (uiPrefs.customAccentEnabled ? tintTheme(baseTheme, uiPrefs.customAccent) : baseTheme),
     [baseTheme, uiPrefs.customAccentEnabled, uiPrefs.customAccent],
   );
+  /* Brand gold. The bright dark-mode gold is illegible on the light canvas,
+     so it collapses to a deep amber that keeps the same semantic reading. */
+  const GOLD = T.isLight ? '#B45309' : '#f5c542';
+  const GOLD_SOFT = T.isLight ? 'rgba(180,83,9,0.10)' : 'rgba(245,197,66,0.08)';
+  const GOLD_BORDER = T.isLight ? 'rgba(180,83,9,0.32)' : '#f5c54244';
+
   const rEligibleTrades = useMemo(
     () => trades.filter(hasStrictR),
     [trades],
