@@ -69,8 +69,12 @@ export function OrcaConfirmRoot() {
 
   const isRTL = !!req.isRTL;
   const danger = req.tone !== 'default';
-  const accent = danger ? '#ff3b3b' : '#00f2ff';
-  const accentGlow = danger ? 'rgba(255,59,59,0.35)' : 'rgba(0,242,255,0.30)';
+  const light = isLightScheme();
+  const accent = danger ? (light ? '#DC2626' : '#ff3b3b') : (light ? '#0E7490' : '#00f2ff');
+  const accentGlow = danger
+    ? (light ? 'rgba(220,38,38,0.18)' : 'rgba(255,59,59,0.35)')
+    : (light ? 'rgba(14,116,144,0.18)' : 'rgba(0,242,255,0.30)');
+
   const confirmLabel = req.confirmLabel ?? (isRTL ? 'אישור' : 'Confirm');
   const cancelLabel = req.cancelLabel ?? (isRTL ? 'ביטול' : 'Cancel');
 
