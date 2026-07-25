@@ -45,11 +45,10 @@ const COPY = {
     tagline: 'חיבור לבורסאות · העלאת קבצים אוניברסלית · תובנות AI',
     welcome: 'ברוך/ה הבא/ה',
     title: 'כניסה לטרמינל',
-    sub: 'ההרשמה והכניסה מתבצעות דרך חשבון Google — בלי סיסמאות.',
+    sub: 'ההרשמה והכניסה מתבצעות דרך חשבון Google.',
     continueGoogle: 'המשך/י עם Google',
     connecting: 'מתחבר…',
     retry: 'נסה/י שוב',
-    noPasswords: 'אין סיסמאות לזכור, אין מיילים לאמת. חשבון Google בלבד.',
     feature1: 'חיבור מרובה לבורסאות דרך API',
     feature2: 'העלאת קבצים אוניברסלית — תומך במגוון פורמטים',
     feature3: 'תובנות AI מהמסחר שלך',
@@ -71,11 +70,10 @@ const COPY = {
     tagline: 'Multi-exchange API · Universal file ingestion · AI insights',
     welcome: 'Welcome',
     title: 'Sign in to the terminal',
-    sub: 'Sign-up and sign-in run through your Google account — no passwords.',
+    sub: 'Sign-up and sign-in run through your Google account.',
     continueGoogle: 'Continue with Google',
     connecting: 'Connecting…',
     retry: 'Try again',
-    noPasswords: 'No passwords to remember, no emails to verify. Google only.',
     feature1: 'Connect multiple exchanges via API',
     feature2: 'Universal file uploader — supports many formats',
     feature3: 'AI insights from your own trades',
@@ -441,13 +439,6 @@ export default function AuthPage() {
                 {c.failed}
               </div>
             )}
-
-            <div style={{
-              marginTop: 18, fontSize: 11, color: TEXT_MUTED,
-              fontFamily: "'IBM Plex Mono', monospace", letterSpacing: '0.02em', lineHeight: 1.6,
-            }}>
-              {c.noPasswords}
-            </div>
 
             <div style={{ height: 1, background: BORDER_SOFT, margin: '18px 0' }} />
 
