@@ -647,13 +647,21 @@ html[data-scheme="light"] .orca-glass-hover:hover {
   box-shadow: 0 1px 2px rgba(15,23,42,0.05), 0 12px 32px -10px rgba(99,102,241,0.22);
 }
 
-/* ── Kill dark-only texture / bloom effects ── */
-html[data-scheme="light"] .orca-grain,
+/* ── Kill dark-only texture / bloom effects ──
+   IMPORTANT: these are *overlay* utilities applied to real content containers
+   (cards, panels). Hiding the element itself blanks entire sections in light
+   mode — only the decorative pseudo-element layers may be removed. */
+html[data-scheme="light"] .orca-grain::before,
+html[data-scheme="light"] .orca-grain::after,
 html[data-scheme="light"] .orca-glass::before,
 html[data-scheme="light"] .orca-glass::after,
-html[data-scheme="light"] .orca-scanline,
-html[data-scheme="light"] .orca-noise,
-html[data-scheme="light"] .orca-vignette { display: none !important; }
+html[data-scheme="light"] .orca-scanline::before,
+html[data-scheme="light"] .orca-scanline::after,
+html[data-scheme="light"] .orca-noise::before,
+html[data-scheme="light"] .orca-noise::after,
+html[data-scheme="light"] .orca-vignette::before,
+html[data-scheme="light"] .orca-vignette::after { display: none !important; }
+
 
 html[data-scheme="light"] [class*="mix-blend-screen"] { mix-blend-mode: multiply !important; }
 
