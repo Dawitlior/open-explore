@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { CSSProperties } from 'react';
 import { OrcaBootLoader } from '@/components/OrcaBootLoader';
+import { SURF, isLightScheme } from '@/lib/neon-palette';
 
 interface EntryGateProps {
   onEnter: () => void;
@@ -22,7 +23,11 @@ type Phase = 'idle' | 'spin' | 'settle' | 'split' | 'done';
 const SPIN_MS = 2000;
 const SETTLE_MS = 1200;
 const SPLIT_MS = 800;
-const PANEL_BG = '#0B0E11';
+const PANEL_BG = "#0B0E11";
+const panelBg = () => (isLightScheme() ? "#FFFFFF" : PANEL_BG);
+const gateBg = () => (isLightScheme()
+  ? 'radial-gradient(ellipse at 50% 30%, #FFFFFF 0%, #F4F6FB 55%, #E8ECF5 100%)'
+  : 'radial-gradient(ellipse at 50% 30%, #0f1528 0%, #070b14 50%, #030508 100%)');
 const SPLIT_EASING = 'cubic-bezier(0.65, 0, 0.35, 1)';
 
 function rotationFromMatrix(transform: string): number {
@@ -109,7 +114,7 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
         style={{
           position: 'fixed', inset: 0, zIndex: 2147483647,
           width: '100vw', height: '100dvh',
-          background: 'radial-gradient(ellipse at 50% 30%, #0f1528 0%, #070b14 50%, #030508 100%)',
+          background: gateBg(),
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           fontFamily: "'JetBrains Mono', 'Inter', monospace",
           overflow: 'hidden',
@@ -122,11 +127,11 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
           backgroundSize: '60px 60px',
         }} />
         <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-          <h1 style={{ fontSize: 42, margin: 0, lineHeight: 1.1, letterSpacing: '-0.03em', color: '#f1f5f9' }}>
+          <h1 style={{ fontSize: 42, margin: 0, lineHeight: 1.1, letterSpacing: '-0.03em', color: SURF.text1 }}>
             <span style={{ fontWeight: 800 }}>Orca</span>
-            <span style={{ fontWeight: 300, marginInlineStart: 10, color: '#94a3b8' }}>Investment</span>
+            <span style={{ fontWeight: 300, marginInlineStart: 10, color: SURF.text2 }}>Investment</span>
           </h1>
-          <p style={{ fontSize: 12, color: '#64748b', letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: 10, marginBottom: 48 }}>
+          <p style={{ fontSize: 12, color: SURF.text3, letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: 10, marginBottom: 48 }}>
             {isRTL ? 'מסוף מודיעין מסחרי' : 'Trading Intelligence Terminal'}
           </p>
           <button
@@ -175,7 +180,7 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
       {/* TOP PANEL — animates UP, shows top half of icon */}
       <div style={{
         position: 'absolute', top: 0, left: 0, width: '100vw', height: '50dvh',
-        background: PANEL_BG,
+        background: panelBg(),
         overflow: 'hidden',
         transform: isSplitting ? 'translateY(-100%)' : 'translateY(0)',
         transition: `transform ${SPLIT_MS}ms ${SPLIT_EASING}`,
@@ -189,7 +194,7 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
       {/* BOTTOM PANEL — animates DOWN, shows bottom half of icon */}
       <div style={{
         position: 'absolute', bottom: 0, left: 0, width: '100vw', height: '50dvh',
-        background: PANEL_BG,
+        background: panelBg(),
         overflow: 'hidden',
         transform: isSplitting ? 'translateY(100%)' : 'translateY(0)',
         transition: `transform ${SPLIT_MS}ms ${SPLIT_EASING}`,

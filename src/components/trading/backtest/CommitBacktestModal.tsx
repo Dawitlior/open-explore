@@ -2,15 +2,28 @@ import { useEffect, useState } from 'react';
 import { backtestDraftStore, useBacktestDraft } from './backtest-draft-store';
 import { previewR, type DraftBacktestTrade } from './tv-mapping';
 import { toast } from 'sonner';
+import { isLightScheme } from '@/lib/neon-palette';
 
-const BL = '#2563eb', BG = '#0c0f14', BG3 = '#161c26', BRD = '#1e2736', T1 = '#e8ecf1', T2 = '#8896ab', T3 = '#556277', G = '#0ecb81', RD = '#f6465d';
+const L = () => isLightScheme();
+const BL = '#2563eb';
+const px = {
+  get BG() { return L() ? '#F4F6FB' : '#0c0f14'; },
+  get BG2() { return L() ? '#FFFFFF' : '#10141b'; },
+  get BG3() { return L() ? '#F7F9FC' : '#161c26'; },
+  get BRD() { return L() ? '#E2E8F0' : '#1e2736'; },
+  get T1() { return L() ? '#0F172A' : '#e8ecf1'; },
+  get T2() { return L() ? '#475569' : '#8896ab'; },
+  get T3() { return L() ? '#64748B' : '#556277'; },
+  get G() { return L() ? '#059669' : '#0ecb81'; },
+  get RD() { return L() ? '#DC2626' : '#f6465d'; },
+};
 
 const inp: React.CSSProperties = {
-  background: '#10141b', border: `1px solid ${BRD}`, borderRadius: 6,
-  color: T1, padding: '8px 10px', fontSize: 13, width: '100%', direction: 'ltr',
+  background: px.BG2, border: `1px solid ${px.BRD}`, borderRadius: 6,
+  color: px.T1, padding: '8px 10px', fontSize: 13, width: '100%', direction: 'ltr',
   fontFamily: 'inherit',
 };
-const lbl: React.CSSProperties = { fontSize: 9, fontWeight: 700, color: T3, marginBottom: 3, letterSpacing: 1 };
+const lbl: React.CSSProperties = { fontSize: 9, fontWeight: 700, color: px.T3, marginBottom: 3, letterSpacing: 1 };
 
 interface Props {
   onCommit: (draft: DraftBacktestTrade) => void;
@@ -74,8 +87,8 @@ export default function CommitBacktestModal({ onCommit }: Props) {
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: BG3, border: `1px solid ${BRD}`, borderRadius: 14,
-          padding: 22, width: 'min(480px, 100%)', color: T1,
+          background: px.BG3, border: `1px solid ${px.BRD}`, borderRadius: 14,
+          padding: 22, width: 'min(480px, 100%)', color: px.T1,
           boxShadow: '0 30px 80px rgba(0,0,0,0.6)',
           animation: 'fi .25s ease-out',
         }}
@@ -83,9 +96,9 @@ export default function CommitBacktestModal({ onCommit }: Props) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: 1 }}>
             COMMIT BACKTEST · <span style={{ color: BL }}>{local.coin || '—'}</span> ·{' '}
-            <span style={{ color: local.dir === 'Long' ? G : RD }}>{local.dir || '—'}</span>
+            <span style={{ color: local.dir === 'Long' ? px.G : px.RD }}>{local.dir || '—'}</span>
           </div>
-          <button onClick={discard} style={{ background: 'none', border: 'none', color: T3, fontSize: 18, cursor: 'pointer' }}>×</button>
+          <button onClick={discard} style={{ background: 'none', border: 'none', color: px.T3, fontSize: 18, cursor: 'pointer' }}>×</button>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 10 }}>
@@ -112,19 +125,19 @@ export default function CommitBacktestModal({ onCommit }: Props) {
         </div>
 
         <div style={{
-          background: BG, border: `1px solid ${BRD}`, borderRadius: 10,
+          background: px.BG, border: `1px solid ${px.BRD}`, borderRadius: 10,
           padding: '10px 14px', marginBottom: 14,
           display: 'flex', justifyContent: 'space-around', alignItems: 'center',
         }}>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 9, color: T3, fontWeight: 700 }}>R-MULTIPLE</div>
-            <div style={{ fontSize: 22, fontWeight: 900, color: r == null ? T3 : r >= 0 ? G : RD }}>
+            <div style={{ fontSize: 9, color: px.T3, fontWeight: 700 }}>R-MULTIPLE</div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: r == null ? px.T3 : r >= 0 ? px.G : px.RD }}>
               {r == null ? '—' : `${r >= 0 ? '+' : ''}${r.toFixed(2)}`}
             </div>
           </div>
-          <div style={{ width: 1, alignSelf: 'stretch', background: BRD }} />
+          <div style={{ width: 1, alignSelf: 'stretch', background: px.BRD }} />
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 9, color: T3, fontWeight: 700 }}>STATUS</div>
+            <div style={{ fontSize: 9, color: px.T3, fontWeight: 700 }}>STATUS</div>
             <div style={{ fontSize: 12, fontWeight: 800, color: BL }}>⚡ READY</div>
           </div>
         </div>
@@ -132,7 +145,7 @@ export default function CommitBacktestModal({ onCommit }: Props) {
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
           <button
             onClick={discard}
-            style={{ background: 'none', border: `1px solid ${BRD}`, borderRadius: 8, color: T2, padding: '9px 18px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+            style={{ background: 'none', border: `1px solid ${px.BRD}`, borderRadius: 8, color: px.T2, padding: '9px 18px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
           >
             בטל (Esc)
           </button>

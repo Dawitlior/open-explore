@@ -6,6 +6,8 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AlertTriangle } from 'lucide-react';
+import { SURF, isLightScheme } from '@/lib/neon-palette';
+
 
 export interface OrcaConfirmOptions {
   title: string;
@@ -69,8 +71,12 @@ export function OrcaConfirmRoot() {
 
   const isRTL = !!req.isRTL;
   const danger = req.tone !== 'default';
-  const accent = danger ? '#ff3b3b' : '#00f2ff';
-  const accentGlow = danger ? 'rgba(255,59,59,0.35)' : 'rgba(0,242,255,0.30)';
+  const light = isLightScheme();
+  const accent = danger ? (light ? '#DC2626' : '#ff3b3b') : (light ? '#0E7490' : '#00f2ff');
+  const accentGlow = danger
+    ? (light ? 'rgba(220,38,38,0.18)' : 'rgba(255,59,59,0.35)')
+    : (light ? 'rgba(14,116,144,0.18)' : 'rgba(0,242,255,0.30)');
+
   const confirmLabel = req.confirmLabel ?? (isRTL ? 'אישור' : 'Confirm');
   const cancelLabel = req.cancelLabel ?? (isRTL ? 'ביטול' : 'Cancel');
 
@@ -82,7 +88,7 @@ export function OrcaConfirmRoot() {
       dir={isRTL ? 'rtl' : 'ltr'}
       style={{
         position: 'fixed', inset: 0, zIndex: 9700,
-        background: 'rgba(3,8,18,0.78)', backdropFilter: 'blur(10px)',
+        background: SURF.scrim, backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
         display: 'grid', placeItems: 'center', padding: 16,
         opacity: closing ? 0 : 1,
@@ -95,14 +101,14 @@ export function OrcaConfirmRoot() {
         style={{
           position: 'relative',
           width: '100%', maxWidth: 440,
-          background: 'linear-gradient(160deg, #0a1628 0%, #061326 100%)',
+          background: SURF.panelGradient,
           border: `1px solid ${accent}55`,
           borderRadius: 18,
           padding: '28px 26px 22px',
-          boxShadow: `0 24px 60px rgba(0,0,0,0.55), 0 0 0 1px ${accent}22, 0 0 50px ${accentGlow}`,
+          boxShadow: `${SURF.shadow}, 0 0 0 1px ${accent}22, 0 0 50px ${accentGlow}`,
           transform: closing ? 'scale(0.94) translateY(8px)' : 'scale(1) translateY(0)',
           transition: 'transform 180ms cubic-bezier(0.16,1,0.3,1)',
-          color: '#e8eef8',
+          color: SURF.text1,
           overflow: 'hidden',
         }}
       >
@@ -132,7 +138,7 @@ export function OrcaConfirmRoot() {
         </div>
         <h2 style={{
           position: 'relative',
-          margin: 0, fontSize: 18, fontWeight: 700, color: '#fff',
+          margin: 0, fontSize: 18, fontWeight: 700, color: SURF.text1,
           lineHeight: 1.4,
         }}>
           {req.title}
@@ -140,7 +146,7 @@ export function OrcaConfirmRoot() {
         {req.description && (
           <p style={{
             position: 'relative',
-            margin: '10px 0 0', fontSize: 13.5, color: '#90a3c0', lineHeight: 1.55,
+            margin: '10px 0 0', fontSize: 13.5, color: SURF.text2, lineHeight: 1.55,
           }}>
             {req.description}
           </p>
@@ -156,14 +162,14 @@ export function OrcaConfirmRoot() {
             style={{
               padding: '10px 20px', borderRadius: 10,
               background: 'transparent',
-              border: '1px solid #2a3a55',
-              color: '#cdd6e6',
+              border: `1px solid ${SURF.border}`,
+              color: SURF.text2,
               fontFamily: 'inherit', fontSize: 12.5, fontWeight: 600,
               letterSpacing: '0.05em', cursor: 'pointer',
               transition: 'all 160ms ease',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#4a5a75'; e.currentTarget.style.color = '#fff'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2a3a55'; e.currentTarget.style.color = '#cdd6e6'; }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = SURF.borderStrong; e.currentTarget.style.color = SURF.text1; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = SURF.border; e.currentTarget.style.color = SURF.text2; }}
           >
             {cancelLabel}
           </button>
@@ -173,10 +179,10 @@ export function OrcaConfirmRoot() {
             style={{
               padding: '10px 22px', borderRadius: 10,
               background: danger
-                ? `linear-gradient(135deg, ${accent}, #c41e1e)`
-                : `linear-gradient(135deg, ${accent}, #0a8aa8)`,
+                ? `linear-gradient(135deg, ${accent}, ${light ? '#991B1B' : '#c41e1e'})`
+                : `linear-gradient(135deg, ${accent}, ${light ? '#155E75' : '#0a8aa8'})`,
               border: `1px solid ${accent}`,
-              color: danger ? '#fff' : '#03121f',
+              color: danger || light ? '#fff' : '#03121f',
               fontFamily: 'inherit', fontSize: 12.5, fontWeight: 800,
               letterSpacing: '0.05em', cursor: 'pointer',
               boxShadow: `0 6px 20px ${accentGlow}`,

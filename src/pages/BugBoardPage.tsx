@@ -9,8 +9,8 @@ export default function BugBoardPage() {
   const BackIcon = isRTL ? ArrowRight : ArrowLeft;
 
   return (
-    <div dir={isRTL ? 'rtl' : 'ltr'} className="min-h-screen bg-[#070b12] text-[#e8edf5]">
-      <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-white/10 bg-[#070b12]/95 px-4 py-3 backdrop-blur">
+    <div dir={isRTL ? 'rtl' : 'ltr'} className="min-h-screen bg-background text-foreground">
+      <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-white/10 bg-background/95 px-4 py-3 backdrop-blur">
         <button
           onClick={() => navigate('/')}
           className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm font-semibold text-white/80 transition hover:border-[#37e0c6]/60 hover:text-[#37e0c6]"
