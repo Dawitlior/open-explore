@@ -226,7 +226,7 @@ const JournalEntryScreen = ({ onEnter, isRTL = true }: { onEnter: () => void; is
         transition: 'all 0.6s ease',
       }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: JC.green, boxShadow: '0 0 12px ${JC.green}', animation: 'j-pulse-dot 2s infinite' }} />
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: JC.green, boxShadow: `0 0 12px ${JC.green}`, animation: 'j-pulse-dot 2s infinite' }} />
           <span style={{ color: JC.green, fontWeight: 700, letterSpacing: 2, fontSize: 10 }}>LIVE</span>
         </div>
         <div style={{ display: 'flex', gap: 20, overflow: 'hidden' }}>
@@ -302,7 +302,7 @@ const JournalEntryScreen = ({ onEnter, isRTL = true }: { onEnter: () => void; is
               <span style={{
                 width: 4, height: 4, borderRadius: '50%',
                 background: bootStep > i ? JC.green : '#1e293b',
-                boxShadow: bootStep > i ? '0 0 10px ${JC.green}' : 'none',
+                boxShadow: bootStep > i ? `0 0 10px ${JC.green}` : 'none',
                 transition: 'all 0.4s ease',
               }} />
               {label}
@@ -319,7 +319,7 @@ const JournalEntryScreen = ({ onEnter, isRTL = true }: { onEnter: () => void; is
         }}>
           <div style={{
             height: '100%', width: `${(bootStep / 4) * 100}%`,
-            background: 'linear-gradient(90deg, ${JC.green}, ${JC.blue})',
+            background: `linear-gradient(90deg, ${JC.green}, ${JC.blue})`,
             borderRadius: 1, transition: 'width 0.5s ease',
             boxShadow: '0 0 10px rgba(0,255,163,0.5)',
           }} />
@@ -332,7 +332,7 @@ const JournalEntryScreen = ({ onEnter, isRTL = true }: { onEnter: () => void; is
               padding: 'clamp(16px, 3vw, 20px) clamp(48px, 12vw, 72px)',
               fontSize: 'clamp(12px, 2.5vw, 14px)', fontWeight: 800,
               letterSpacing: 4, textTransform: 'uppercase' as const,
-              color: '#030610', background: 'linear-gradient(135deg, ${JC.green}, ${JC.greenDeep})',
+              color: '#030610', background: `linear-gradient(135deg, ${JC.green}, ${JC.greenDeep})`,
               border: 'none', borderRadius: 14, cursor: 'pointer',
               boxShadow: '0 0 60px rgba(0,255,163,0.2), 0 4px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2)',
               transition: 'all 0.3s cubic-bezier(0.16,1,0.3,1)',
@@ -1005,7 +1005,7 @@ const DisciplineSection = ({ commitments, confirmed, onUpdate, onConfirm, option
         <p style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, color: JC.amber, opacity: 0.8 }}>⚠ {f.disciplineMin}</p>
       )}
       {!confirmed && canConfirm && (
-        <button onClick={onConfirm} style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 700, padding: '10px 24px', borderRadius: 10, background: 'linear-gradient(135deg,${JC.green},#0a9e76)', color: '#0a0e1a', border: 'none', cursor: 'pointer', transition: 'all .2s', marginTop: 4, boxShadow: '0 4px 20px rgba(0,255,163,0.25)' }}>
+        <button onClick={onConfirm} style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 700, padding: '10px 24px', borderRadius: 10, background: `linear-gradient(135deg,${JC.green},#0a9e76)`, color: '#0a0e1a', border: 'none', cursor: 'pointer', transition: 'all .2s', marginTop: 4, boxShadow: '0 4px 20px rgba(0,255,163,0.25)' }}>
           ✓ {f.disciplineConfirm}
         </button>
       )}
@@ -1235,7 +1235,7 @@ const KnowledgePanel = ({ type, days, dir, th, onClose, onOpenDay }: { type: 'mo
       const freq: Record<string, number> = {};
       words.forEach(w => { freq[w] = (freq[w] || 0) + 1; });
       const top = Object.entries(freq).sort((a, b) => b[1] - a[1])[0];
-      if (top && top[1] >= 2) patterns.push(dir === 'rtl' ? `מילה חוזרת בטעויות: "${top[0]}" (${top[1]}x)` : `Recurring in mistakes: "${top[0]}" (${top[1]}x)`);
+      if (top && top[1] >= 2) patterns.push(dir === 'rtl' ? `מילה חוזרת בטעויות: `${top[0]}` (${top[1]}x)` : `Recurring in mistakes: `${top[0]}` (${top[1]}x)`);
     }
     const byDay: Record<number, number[]> = {};
     completeDays.forEach(d => {
@@ -3372,7 +3372,7 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
             ))}
             <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{ flex: 1, height: 4, background: th.inputBg, borderRadius: 2, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${taskArr.length ? (done / taskArr.length) * 100 : 0}%`, background: 'linear-gradient(90deg,${JC.green},#06d6a0)', transition: 'width .5s ease', borderRadius: 2, boxShadow: done === taskArr.length ? '0 0 8px rgba(0,255,163,0.4)' : 'none' }} />
+                <div style={{ height: '100%', width: `${taskArr.length ? (done / taskArr.length) * 100 : 0}%`, background: `linear-gradient(90deg,${JC.green},#06d6a0)`, transition: 'width .5s ease', borderRadius: 2, boxShadow: done === taskArr.length ? '0 0 8px rgba(0,255,163,0.4)' : 'none' }} />
               </div>
               <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, color: done === taskArr.length ? JC.green : th.tx3, fontWeight: 700 }}>{done}/{taskArr.length}</span>
             </div>
@@ -3480,7 +3480,7 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
       <div style={{ margin: '22px 0 8px', background: 'rgba(255,200,87,0.06)', border: '1px solid rgba(255,200,87,0.12)', borderRadius: 14, padding: '18px 24px', textAlign: 'center' }}>
         <p style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11.5, color: JC.amber, marginBottom: 12, opacity: 0.8 }}>{t.m.lockSub}</p>
         <button onClick={onSave} disabled={!dirty} style={{
-          background: 'linear-gradient(135deg,${JC.amber},#f5a020)', color: '#0a0e1a', padding: '12px 28px', fontSize: 12.5, fontWeight: 800, letterSpacing: '.5px',
+          background: `linear-gradient(135deg,${JC.amber},#f5a020)`, color: '#0a0e1a', padding: '12px 28px', fontSize: 12.5, fontWeight: 800, letterSpacing: '.5px',
           boxShadow: dirty ? '0 4px 24px rgba(255,200,87,.35)' : 'none', borderRadius: 12, border: 'none',
           cursor: dirty ? 'pointer' : 'not-allowed', opacity: dirty ? 1 : 0.3, fontFamily: "'Poppins',sans-serif",
           transition: 'all .25s', textTransform: 'uppercase' as const,
@@ -3762,7 +3762,7 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
             <div style={{ fontSize: 24, marginBottom: 10 }}>📂</div>
             <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 13, fontWeight: 600, color: th.tx2, marginBottom: 16 }}>{f.openQ}</div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' as const }}>
-              <button onClick={() => upd({ hasOpen: true })} style={{ background: 'linear-gradient(135deg,${JC.amber},#f5a020)', color: '#0a0e1a', padding: '10px 22px', fontSize: 12, borderRadius: 10, fontFamily: "'Poppins',sans-serif", fontWeight: 700, border: 'none', cursor: 'pointer', transition: 'all .2s', boxShadow: '0 4px 16px rgba(255,200,87,0.25)' }}>📈 {f.openY}</button>
+              <button onClick={() => upd({ hasOpen: true })} style={{ background: `linear-gradient(135deg,${JC.amber},#f5a020)`, color: '#0a0e1a', padding: '10px 22px', fontSize: 12, borderRadius: 10, fontFamily: "'Poppins',sans-serif", fontWeight: 700, border: 'none', cursor: 'pointer', transition: 'all .2s', boxShadow: '0 4px 16px rgba(255,200,87,0.25)' }}>📈 {f.openY}</button>
               <button onClick={() => upd({ hasOpen: false })} style={{ background: th.inputBg, border: `1px solid ${th.inputBr}`, color: th.tx2, padding: '7px 15px', fontSize: 11.5, borderRadius: 8, cursor: 'pointer', fontWeight: 600, transition: 'all .2s' }}>✖ {f.openN}</button>
             </div>
           </div>
@@ -3828,7 +3828,7 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
         <div style={{ margin: '22px 0 8px', background: 'rgba(183,148,246,0.06)', border: '1px solid rgba(183,148,246,0.12)', borderRadius: 14, padding: '18px 24px', textAlign: 'center' }}>
           <p style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11.5, color: JC.purple, marginBottom: 12, opacity: 0.8 }}>{t.e.lockSub}</p>
           <button onClick={onSave} disabled={!dirty} style={{
-            background: 'linear-gradient(135deg,${JC.purple},#7c3aed)', color: '#fff', padding: '12px 28px', fontSize: 12.5, fontWeight: 800, letterSpacing: '.5px',
+            background: `linear-gradient(135deg,${JC.purple},#7c3aed)`, color: '#fff', padding: '12px 28px', fontSize: 12.5, fontWeight: 800, letterSpacing: '.5px',
             boxShadow: dirty ? '0 4px 24px rgba(153,104,248,.35)' : 'none', borderRadius: 12, border: 'none',
             cursor: dirty ? 'pointer' : 'not-allowed', opacity: dirty ? 1 : 0.3, fontFamily: "'Poppins',sans-serif",
             transition: 'all .25s', textTransform: 'uppercase' as const,
@@ -4004,7 +4004,7 @@ const EODLockOverlay = ({ onDone, isRTL }: { onDone: () => void; isRTL: boolean 
           {isRTL ? 'יום המסחר ננעל' : 'Trading Day Sealed'}
         </div>
         <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, color: 'rgba(212,175,55,0.35)', letterSpacing: 3, marginTop: 8, textTransform: 'uppercase' as const }}>PERMANENTLY LOCKED</div>
-        <div style={{ width: 60, height: 2, background: 'linear-gradient(90deg, transparent, ${JC.gold}, transparent)', margin: '14px auto 0', borderRadius: 1, opacity: step >= 4 ? 1 : 0, transition: 'opacity 0.4s ease' }} />
+        <div style={{ width: 60, height: 2, background: `linear-gradient(90deg, transparent, ${JC.gold}, transparent)`, margin: '14px auto 0', borderRadius: 1, opacity: step >= 4 ? 1 : 0, transition: 'opacity 0.4s ease' }} />
       </div>
     </div>
   );
@@ -4495,8 +4495,8 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button onClick={() => setMobileMenu(true)} style={{ background: th.inputBg, border: `1px solid ${th.inputBr}`, color: th.tx2, padding: '6px 10px', fontSize: 13, borderRadius: 8, cursor: 'pointer', fontWeight: 600, transition: 'all .2s' }}>☰</button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 26, height: 26, background: 'linear-gradient(135deg,${JC.blue},${JC.purple})', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>⚡</div>
-            <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 15, fontWeight: 800, background: 'linear-gradient(90deg,${JC.blue},${JC.purple})', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>APEX OS</span>
+            <div style={{ width: 26, height: 26, background: `linear-gradient(135deg,${JC.blue},${JC.purple})`, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>⚡</div>
+            <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 15, fontWeight: 800, background: `linear-gradient(90deg,${JC.blue},${JC.purple})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>APEX OS</span>
           </div>
         </div>
         <div className="j-topbar-right" style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -4686,8 +4686,8 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
                       {[
                         { l: dir === 'rtl' ? 'סה"כ ימים' : 'Total Days', v: String(archived.length), c: JC.blue },
                         { l: dir === 'rtl' ? 'הושלמו' : 'Completed', v: String(complete), c: JC.green },
-                        { l: dir === 'rtl' ? 'סה"כ R' : 'Total R', v: `${totalR >= 0 ? '+' : ''}${totalR.toFixed(1)}R`, c: totalR >= 0 ? JC.green : JC.red },
-                        { l: dir === 'rtl' ? 'סה"כ P&L' : 'Total P&L', v: `${totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(0)}$`, c: totalPnl >= 0 ? JC.green : JC.red },
+                        { l: dir === 'rtl' ? 'סה"כ R' : 'Total R`, v: `${totalR >= 0 ? `+' : ''}${totalR.toFixed(1)}R`, c: totalR >= 0 ? JC.green : JC.red },
+                        { l: dir === 'rtl' ? 'סה"כ P&L' : 'Total P&L`, v: `${totalPnl >= 0 ? `+' : ''}${totalPnl.toFixed(0)}$`, c: totalPnl >= 0 ? JC.green : JC.red },
                       ].map(s => (
                         <div key={s.l} style={{ background: `${s.c}06`, border: `1px solid ${s.c}12`, borderRadius: 12, padding: '12px 10px', textAlign: 'center' }}>
                           <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 8, fontWeight: 700, letterSpacing: '1.5px', color: th.tx3, textTransform: 'uppercase' as const, marginBottom: 4 }}>{s.l}</div>
