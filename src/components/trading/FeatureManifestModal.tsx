@@ -29,7 +29,7 @@ const SECTIONS_HE: Section[] = [
   { icon: '🔌', title: 'בורסות ואינטגרציות', items: ['חיבור Bybit ו-Binance באמצעות API Read-Only','סנכרון אוטומטי של עסקאות עתידיות','אימות מפתחות צד-שרת מאובטח','Open Positions ו-Live Risk Locks בזמן אמת','ייבוא CSV אוניברסלי עם זיהוי headers אוטומטי'] },
   { icon: '🔊', title: 'APEX OS Sound Engine', items: ['סינתזה ב-Web Audio API באיכות גבוהה','מאסטר וולום + הפעלה/כיבוי גלובלי','צלילים נפרדים לפעולות (Add, Lock, Alert, Win, Loss)','Gating מרכזי דרך soundsAllowed()'] },
   { icon: '💾', title: 'נתונים, ייבוא וגיבויים', items: ['גיבוי ריאקטיבי ב-JSON ו-XLSX','זיהוי headers אוטומטי ביבוא','אחסון פר-משתמש ב-Lovable Cloud עם RLS','Backup/Restore חלק','מערכת איפוס נתונים High-Friction','Storage Manager מרכזי'] },
-  { icon: '🔐', title: 'אימות, אבטחה ו-PWA', items: ['Email+Password + Google OAuth','RequireAuth שומר על כל המסלולים','RLS פר-משתמש על כל הטבלאות','Reset Password מובנה דרך Edge Function','PWA — התקנה כאפליקציית Desktop/Mobile','Service Worker עם cache strategy'] },
+  { icon: '🔐', title: 'אימות, אבטחה ו-PWA', items: ['Google OAuth בלבד (ללא סיסמאות)','RequireAuth שומר על כל המסלולים','RLS פר-משתמש על כל הטבלאות','PWA — התקנה כאפליקציית Desktop/Mobile','Service Worker עם cache strategy'] },
   { icon: '💳', title: 'מסלולי שימוש (Tiers)', items: ['Standard / Pro / Ultimate','TierGate חוסם פיצ׳רים מתקדמים','UpgradeModal עם תיאור היתרונות','מעבדת אנליטיקה מתקדמת זמינה רק ב-Ultimate'] },
   { icon: '🎓', title: 'מצבי הפעלה ולמידה', items: ['Beginner / Standard / Alpha modes','מודאלים חינוכיים למדדים מורכבים','הסברי גרפים אינטראקטיביים','הסברי סיכון מובנים','טרמינולוגיה מסטנדרטית עברית/אנגלית','FeatureHint contextual לכל מסך'] },
 ];
@@ -54,7 +54,7 @@ const SECTIONS_EN: Section[] = [
   { icon: '🔌', title: 'Exchanges & Integrations', items: ['Bybit and Binance via Read-Only API','Auto sync of futures trades','Secure server-side credential validation','Open Positions and Live Risk Locks in realtime','Universal CSV importer with auto header detection'] },
   { icon: '🔊', title: 'APEX OS Sound Engine', items: ['High-quality Web Audio API synthesis','Master volume + global on/off','Distinct sounds for actions (Add, Lock, Alert, Win, Loss)','Central gating via soundsAllowed()'] },
   { icon: '💾', title: 'Data, Imports & Backups', items: ['Reactive JSON & XLSX backups','Automatic header detection on import','Per-user storage on Lovable Cloud with RLS','Smooth Backup/Restore','High-friction data reset system','Central Storage Manager'] },
-  { icon: '🔐', title: 'Auth, Security & PWA', items: ['Email+Password + Google OAuth','RequireAuth guards every route','Per-user RLS on every table','Built-in Reset Password via Edge Function','PWA — install as a Desktop/Mobile app','Service Worker with cache strategy'] },
+  { icon: '🔐', title: 'Auth, Security & PWA', items: ['Google OAuth בלבד (ללא סיסמאות)','RequireAuth guards every route','Per-user RLS on every table','Built-in Reset Password via Edge Function','PWA — install as a Desktop/Mobile app','Service Worker with cache strategy'] },
   { icon: '💳', title: 'Subscription Tiers', items: ['Standard / Pro / Ultimate','TierGate gates advanced features','UpgradeModal with benefit breakdown','Advanced Analytics Lab is Ultimate-only'] },
   { icon: '🎓', title: 'Operating Modes & Learning', items: ['Beginner / Standard / Alpha modes','Educational modals for complex metrics','Interactive chart explanations','Built-in risk explanations','Standardized Hebrew/English terminology','Contextual FeatureHint on every screen'] },
 ];
