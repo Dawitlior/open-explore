@@ -1006,7 +1006,7 @@ const DisciplineSection = ({ commitments, confirmed, onUpdate, onConfirm, option
         <p style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, color: JC.amber, opacity: 0.8 }}>⚠ {f.disciplineMin}</p>
       )}
       {!confirmed && canConfirm && (
-        <button onClick={onConfirm} style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 700, padding: '10px 24px', borderRadius: 10, background: `linear-gradient(135deg,${JC.green},#0a9e76)`, color: '#0a0e1a', border: 'none', cursor: 'pointer', transition: 'all .2s', marginTop: 4, boxShadow: '0 4px 20px rgba(0,255,163,0.25)' }}>
+        <button onClick={onConfirm} style={{ fontFamily: "'Poppins',sans-serif", fontSize: 12, fontWeight: 700, padding: '10px 24px', borderRadius: 10, background: `linear-gradient(135deg,${JC.green},${JC.greenAlt})`, color: JC.onAccent, border: 'none', cursor: 'pointer', transition: 'all .2s', marginTop: 4, boxShadow: '0 4px 20px rgba(0,255,163,0.25)' }}>
           ✓ {f.disciplineConfirm}
         </button>
       )}
@@ -1723,7 +1723,7 @@ const TCard = ({ trade, idx, onChange, onDel, f, dir, disabled, th }: any) => {
         <div style={{ display: 'flex', gap: 6, marginBottom: 9 }}>
           {['LONG', 'SHORT', 'MISSED'].map(s => (
             <button key={s} onClick={() => onChange?.({ ...trade, side: s })}
-              style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' as const, borderRadius: 20, padding: '5px 14px', cursor: 'pointer', transition: 'all .2s', ...(trade.side === s ? { background: s === 'LONG' ? JC.green : s === 'SHORT' ? JC.red : JC.blue, color: '#0a0e1a', border: 'none', boxShadow: `0 0 12px ${s === 'LONG' ? 'rgba(0,255,163,0.3)' : s === 'SHORT' ? 'rgba(255,77,77,0.3)' : 'rgba(90,169,255,0.3)'}` } : { background: th.unselBg, border: `1px solid ${th.unselBr}`, color: th.unselTx }) }}>
+              style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' as const, borderRadius: 20, padding: '5px 14px', cursor: 'pointer', transition: 'all .2s', ...(trade.side === s ? { background: s === 'LONG' ? JC.green : s === 'SHORT' ? JC.red : JC.blue, color: JC.onAccent, border: 'none', boxShadow: `0 0 12px ${s === 'LONG' ? 'rgba(0,255,163,0.3)' : s === 'SHORT' ? 'rgba(255,77,77,0.3)' : 'rgba(90,169,255,0.3)'}` } : { background: th.unselBg, border: `1px solid ${th.unselBr}`, color: th.unselTx }) }}>
               {s}
             </button>
           ))}
@@ -3357,7 +3357,7 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
           </Sec>
 
           {/* Bitcoin Thoughts */}
-          <Sec title={f.btcThoughts} icon="₿" accent="#f5a020" th={th} locked={sLocks['btcThoughts']} onLock={() => lockSec('btcThoughts')} onUnlock={() => unlockSec('btcThoughts')}>
+          <Sec title={f.btcThoughts} icon="₿" accent=`${JC.amberDeep}` th={th} locked={sLocks['btcThoughts']} onLock={() => lockSec('btcThoughts')} onUnlock={() => unlockSec('btcThoughts')}>
             <TA val={day.btcThoughts} set={U('btcThoughts')} ph={f.btcThoughtsPh} rows={3} dir={dir} disabled={sLocks['btcThoughts']} th={th} />
           </Sec>
 
@@ -3373,7 +3373,7 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
             ))}
             <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{ flex: 1, height: 4, background: th.inputBg, borderRadius: 2, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${taskArr.length ? (done / taskArr.length) * 100 : 0}%`, background: `linear-gradient(90deg,${JC.green},#06d6a0)`, transition: 'width .5s ease', borderRadius: 2, boxShadow: done === taskArr.length ? '0 0 8px rgba(0,255,163,0.4)' : 'none' }} />
+                <div style={{ height: '100%', width: `${taskArr.length ? (done / taskArr.length) * 100 : 0}%`, background: `linear-gradient(90deg,${JC.green},${JC.greenAlt})`, transition: 'width .5s ease', borderRadius: 2, boxShadow: done === taskArr.length ? '0 0 8px rgba(0,255,163,0.4)' : 'none' }} />
               </div>
               <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, color: done === taskArr.length ? JC.green : th.tx3, fontWeight: 700 }}>{done}/{taskArr.length}</span>
             </div>
@@ -3404,7 +3404,7 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' as const }}>
                 {t.bias.map((o: string, i: number) => (
                   <button key={o} onClick={() => upd({ bias: o })} disabled={sLocks['bias']}
-                    style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: '5px 14px', cursor: sLocks['bias'] ? 'not-allowed' : 'pointer', transition: 'all .2s', ...(day.bias === o ? { background: BC[i], color: '#0a0e1a', border: 'none', boxShadow: `0 0 10px ${BC[i]}30` } : { background: th.unselBg, border: `1px solid ${th.unselBr}`, color: th.unselTx }) }}>
+                    style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: '5px 14px', cursor: sLocks['bias'] ? 'not-allowed' : 'pointer', transition: 'all .2s', ...(day.bias === o ? { background: BC[i], color: JC.onAccent, border: 'none', boxShadow: `0 0 10px ${BC[i]}30` } : { background: th.unselBg, border: `1px solid ${th.unselBr}`, color: th.unselTx }) }}>
                     {o}
                   </button>
                 ))}
@@ -3415,7 +3415,7 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' as const }}>
                 {t.struct.map((o: string, i: number) => (
                   <button key={o} onClick={() => upd({ mktStruct: o })} disabled={sLocks['bias']}
-                    style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: '5px 14px', cursor: sLocks['bias'] ? 'not-allowed' : 'pointer', transition: 'all .2s', ...(day.mktStruct === o ? { background: BC[i], color: '#0a0e1a', border: 'none', boxShadow: `0 0 10px ${BC[i]}30` } : { background: th.unselBg, border: `1px solid ${th.unselBr}`, color: th.unselTx }) }}>
+                    style={{ fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: '5px 14px', cursor: sLocks['bias'] ? 'not-allowed' : 'pointer', transition: 'all .2s', ...(day.mktStruct === o ? { background: BC[i], color: JC.onAccent, border: 'none', boxShadow: `0 0 10px ${BC[i]}30` } : { background: th.unselBg, border: `1px solid ${th.unselBr}`, color: th.unselTx }) }}>
                     {o}
                   </button>
                 ))}
@@ -3441,7 +3441,7 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
 
           <Sec title="Asset Intelligence" icon="🪙" accent={JC.amber} th={th} locked={sLocks['assets']} onLock={() => lockSec('assets')} onUnlock={() => unlockSec('assets')}>
             {[
-              { key: 'btcNote', lbl: f.btc, ph: f.btcPh, badge: '₿', c: '#f5a020' },
+              { key: 'btcNote', lbl: f.btc, ph: f.btcPh, badge: '₿', c: JC.amberDeep },
               { key: 't3Note', lbl: f.t3, ph: f.t3Ph, badge: 'T3', c: JC.purple },
               { key: 'domNote', lbl: f.dom, ph: f.domPh, badge: 'DOM', c: JC.blue },
               { key: 'macroNote', lbl: f.macro, ph: f.macroPh, badge: 'M', c: JC.green },
@@ -3481,7 +3481,7 @@ const MorningForm = ({ day, upd, t, dir, onSave, dirty, th, onInfoClick }: any) 
       <div style={{ margin: '22px 0 8px', background: 'rgba(255,200,87,0.06)', border: '1px solid rgba(255,200,87,0.12)', borderRadius: 14, padding: '18px 24px', textAlign: 'center' }}>
         <p style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11.5, color: JC.amber, marginBottom: 12, opacity: 0.8 }}>{t.m.lockSub}</p>
         <button onClick={onSave} disabled={!dirty} style={{
-          background: `linear-gradient(135deg,${JC.amber},#f5a020)`, color: '#0a0e1a', padding: '12px 28px', fontSize: 12.5, fontWeight: 800, letterSpacing: '.5px',
+          background: `linear-gradient(135deg,${JC.amber},${JC.amberDeep})`, color: JC.onAccent, padding: '12px 28px', fontSize: 12.5, fontWeight: 800, letterSpacing: '.5px',
           boxShadow: dirty ? '0 4px 24px rgba(255,200,87,.35)' : 'none', borderRadius: 12, border: 'none',
           cursor: dirty ? 'pointer' : 'not-allowed', opacity: dirty ? 1 : 0.3, fontFamily: "'Poppins',sans-serif",
           transition: 'all .25s', textTransform: 'uppercase' as const,
@@ -3763,7 +3763,7 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
             <div style={{ fontSize: 24, marginBottom: 10 }}>📂</div>
             <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 13, fontWeight: 600, color: th.tx2, marginBottom: 16 }}>{f.openQ}</div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' as const }}>
-              <button onClick={() => upd({ hasOpen: true })} style={{ background: `linear-gradient(135deg,${JC.amber},#f5a020)`, color: '#0a0e1a', padding: '10px 22px', fontSize: 12, borderRadius: 10, fontFamily: "'Poppins',sans-serif", fontWeight: 700, border: 'none', cursor: 'pointer', transition: 'all .2s', boxShadow: '0 4px 16px rgba(255,200,87,0.25)' }}>📈 {f.openY}</button>
+              <button onClick={() => upd({ hasOpen: true })} style={{ background: `linear-gradient(135deg,${JC.amber},${JC.amberDeep})`, color: JC.onAccent, padding: '10px 22px', fontSize: 12, borderRadius: 10, fontFamily: "'Poppins',sans-serif", fontWeight: 700, border: 'none', cursor: 'pointer', transition: 'all .2s', boxShadow: '0 4px 16px rgba(255,200,87,0.25)' }}>📈 {f.openY}</button>
               <button onClick={() => upd({ hasOpen: false })} style={{ background: th.inputBg, border: `1px solid ${th.inputBr}`, color: th.tx2, padding: '7px 15px', fontSize: 11.5, borderRadius: 8, cursor: 'pointer', fontWeight: 600, transition: 'all .2s' }}>✖ {f.openN}</button>
             </div>
           </div>
@@ -3829,7 +3829,7 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
         <div style={{ margin: '22px 0 8px', background: 'rgba(183,148,246,0.06)', border: '1px solid rgba(183,148,246,0.12)', borderRadius: 14, padding: '18px 24px', textAlign: 'center' }}>
           <p style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11.5, color: JC.purple, marginBottom: 12, opacity: 0.8 }}>{t.e.lockSub}</p>
           <button onClick={onSave} disabled={!dirty} style={{
-            background: `linear-gradient(135deg,${JC.purple},#7c3aed)`, color: '#fff', padding: '12px 28px', fontSize: 12.5, fontWeight: 800, letterSpacing: '.5px',
+            background: `linear-gradient(135deg,${JC.purple},${JC.purpleDeep})`, color: '#fff', padding: '12px 28px', fontSize: 12.5, fontWeight: 800, letterSpacing: '.5px',
             boxShadow: dirty ? '0 4px 24px rgba(153,104,248,.35)' : 'none', borderRadius: 12, border: 'none',
             cursor: dirty ? 'pointer' : 'not-allowed', opacity: dirty ? 1 : 0.3, fontFamily: "'Poppins',sans-serif",
             transition: 'all .25s', textTransform: 'uppercase' as const,

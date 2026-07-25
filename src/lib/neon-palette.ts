@@ -34,6 +34,17 @@ export interface NeonPalette {
   lime: string;
   /** Orange categorical accent */
   orange: string;
+  /** Secondary green, used as the far stop of green gradients */
+  greenAlt: string;
+  /** Secondary amber, used as the far stop of amber gradients */
+  amberDeep: string;
+  /** Secondary purple, used as the far stop of purple gradients */
+  purpleDeep: string;
+  /**
+   * Foreground for text/icons sitting ON a filled accent chip.
+   * Near-black on dark (accents are neon), white on light (accents are deep).
+   */
+  onAccent: string;
 }
 
 const DARK: NeonPalette = {
@@ -48,6 +59,10 @@ const DARK: NeonPalette = {
   purple: '#b794f6',
   lime: '#84cc16',
   orange: '#f97316',
+  greenAlt: '#06d6a0',
+  amberDeep: '#f5a020',
+  purpleDeep: '#7c3aed',
+  onAccent: '#0a0e1a',
 };
 
 const LIGHT: NeonPalette = {
@@ -62,6 +77,10 @@ const LIGHT: NeonPalette = {
   purple: '#7C3AED',
   lime: '#4D7C0F',
   orange: '#C2410C',
+  greenAlt: '#0A7C55',
+  amberDeep: '#92400E',
+  purpleDeep: '#5B21B6',
+  onAccent: '#FFFFFF',
 };
 
 /** Mutable live palette — read at render time, never destructured at module scope. */
