@@ -535,6 +535,16 @@ function BacktestApp({ onReturn }: { onReturn: () => void }) {
 
   useEffect(()=>{syncBt();css();loadState().then((s)=>{setState(s);setLoading(false);});},[]);
 
+  // Keep the backtest palette in sync with app-wide light/dark switching.
+  const[,forceTick]=useState(0);
+  useEffect(()=>{
+    const apply=()=>{if(syncBt()){css();forceTick((n)=>n+1);}};
+    const obs=new MutationObserver(apply);
+    obs.observe(document.documentElement,{attributes:true,attributeFilter:['data-scheme','class']});
+    return ()=>obs.disconnect();
+  },[]);
+
+
   const activeStrat = useMemo(()=>state.strategies.find(s=>s.id===state.activeId)||state.strategies[0],[state]);
   const trades = activeStrat?.trades||[];
 
