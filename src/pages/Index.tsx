@@ -612,7 +612,7 @@ const Index = () => {
     { id: 'ai', icon: Ico.star, label: t.ai },
     { id: 'economic-radar', icon: '📡', label: isRTL ? 'מכ״ם כלכלי' : 'Economic Radar' },
     ...(weeklyReviewAllowed
-      ? [{ id: 'weekly-review', icon: '📋', label: isRTL ? 'סקירה שבועית' : 'Weekly Review', color: '#FFD700' }]
+      ? [{ id: 'weekly-review', icon: '📋', label: isRTL ? 'סקירה שבועית' : 'Weekly Review', color: T.isLight ? '#B45309' : '#FFD700' }]
       : []),
   ];
 
