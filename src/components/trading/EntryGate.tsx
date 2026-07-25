@@ -23,7 +23,8 @@ type Phase = 'idle' | 'spin' | 'settle' | 'split' | 'done';
 const SPIN_MS = 2000;
 const SETTLE_MS = 1200;
 const SPLIT_MS = 800;
-const PANEL_BG = '#0B0E11';
+const PANEL_BG = "#0B0E11";
+const panelBg = () => (isLightScheme() ? "#FFFFFF" : PANEL_BG);
 const gateBg = () => (isLightScheme()
   ? 'radial-gradient(ellipse at 50% 30%, #FFFFFF 0%, #F4F6FB 55%, #E8ECF5 100%)'
   : 'radial-gradient(ellipse at 50% 30%, #0f1528 0%, #070b14 50%, #030508 100%)');
@@ -179,7 +180,7 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
       {/* TOP PANEL — animates UP, shows top half of icon */}
       <div style={{
         position: 'absolute', top: 0, left: 0, width: '100vw', height: '50dvh',
-        background: PANEL_BG,
+        background: panelBg(),
         overflow: 'hidden',
         transform: isSplitting ? 'translateY(-100%)' : 'translateY(0)',
         transition: `transform ${SPLIT_MS}ms ${SPLIT_EASING}`,
@@ -193,7 +194,7 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
       {/* BOTTOM PANEL — animates DOWN, shows bottom half of icon */}
       <div style={{
         position: 'absolute', bottom: 0, left: 0, width: '100vw', height: '50dvh',
-        background: PANEL_BG,
+        background: panelBg(),
         overflow: 'hidden',
         transform: isSplitting ? 'translateY(100%)' : 'translateY(0)',
         transition: `transform ${SPLIT_MS}ms ${SPLIT_EASING}`,
