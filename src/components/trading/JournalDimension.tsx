@@ -732,6 +732,7 @@ function getDayColor(day: JournalDay): 'green' | 'red' | 'darkred' | 'neutral' {
 type JTheme = 'dark' | 'light';
 const THEMES = {
   dark: {
+    isLight: false,
     bg: '#080c18', bg1: '#0d1220', bg2: '#111827', bg3: 'rgba(255,255,255,0.06)',
     br: 'rgba(255,255,255,0.06)', br2: 'rgba(255,255,255,0.1)',
     tx: 'rgba(255,255,255,0.92)', tx2: 'rgba(255,255,255,0.6)', tx3: 'rgba(255,255,255,0.3)',
@@ -748,6 +749,7 @@ const THEMES = {
     tagUnsel: 'rgba(255,255,255,0.04)', tagUnselBr: 'rgba(255,255,255,0.08)', tagUnselTx: 'rgba(255,255,255,0.4)',
   },
   light: {
+    isLight: true,
     bg: '#f5f7fa', bg1: '#edf0f5', bg2: '#e4e8ee', bg3: 'rgba(0,0,0,0.03)',
     br: 'rgba(0,0,0,0.08)', br2: 'rgba(0,0,0,0.12)',
     tx: 'rgba(15,23,42,0.92)', tx2: 'rgba(15,23,42,0.6)', tx3: 'rgba(15,23,42,0.35)',
@@ -2787,7 +2789,7 @@ const DailyIntelligencePanel = ({ day, dir, th, onClose, onOpenJournal }: {
   return (
     <div onClick={onClose} style={{
       position: 'fixed', inset: 0, zIndex: 200,
-      background: th.bg === '#f5f7fa' ? 'rgba(15,23,42,0.35)' : 'rgba(0,0,0,0.7)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+      background: th.isLight ? 'rgba(15,23,42,0.35)' : 'rgba(0,0,0,0.7)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       animation: 'j-fade-in .25s ease-out',
     }}>
@@ -2796,7 +2798,7 @@ const DailyIntelligencePanel = ({ day, dir, th, onClose, onOpenJournal }: {
         background: `linear-gradient(165deg, ${th.bg1} 0%, ${th.bg} 50%, ${th.bg1} 100%)`,
         border: `1px solid ${th.br2}`,
         borderRadius: 18,
-        boxShadow: th.bg === '#f5f7fa'
+        boxShadow: th.isLight
           ? '0 25px 80px rgba(15,23,42,0.18), 0 0 0 1px rgba(15,23,42,0.04)'
           : '0 25px 80px rgba(0,0,0,0.6), 0 0 40px rgba(90,169,255,0.08)',
         animation: 'j-scale-in .3s cubic-bezier(0.16,1,0.3,1)',
