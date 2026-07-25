@@ -753,6 +753,67 @@ html[data-scheme="light"] [role="dialog"] {
 html[data-scheme="light"] [data-state="open"][data-radix-dialog-overlay],
 html[data-scheme="light"] .orca-scrim { background: var(--orca-scrim, rgba(15,23,42,0.32)) !important; }
 
+/* ── "Gold rescue" ─────────────────────────────────────────────
+   The dark themes lean on a bright brand gold (#f5c542 / #D4AF37)
+   and on amber-400/500 for warnings. Both vanish on a white canvas.
+   In light mode they collapse to a deep, readable amber that keeps
+   the same semantic meaning without the neon. */
+html[data-scheme="light"] {
+  --orca-gold: #B45309;
+  --orca-gold-soft: rgba(180,83,9,0.10);
+  --orca-gold-border: rgba(180,83,9,0.30);
+}
+html[data-scheme="light"] .dash-share-stats-btn {
+  color: hsl(239 84% 55%) !important;
+  background: hsl(239 84% 67% / 0.08) !important;
+  border-color: hsl(239 84% 67% / 0.35) !important;
+}
+html[data-scheme="light"] .dash-share-stats-btn:hover {
+  background: hsl(239 84% 67% / 0.14) !important;
+}
+html[data-scheme="light"] .dash-share-stats-btn svg { color: inherit !important; }
+html[data-scheme="light"] .dash-section-label { color: hsl(239 40% 45%) !important; }
+
+/* Floating brand buttons (bug arena, Trader Mind) */
+html[data-scheme="light"] .orca-gold-btn,
+html[data-scheme="light"] .orca-bug-fab,
+html[data-scheme="light"] .orca-trader-mind-btn {
+  color: var(--orca-gold) !important;
+  background: var(--orca-gold-soft) !important;
+  border-color: var(--orca-gold-border) !important;
+}
+
+/* ── Sidebar rail ── */
+html[data-scheme="light"] [data-sidebar],
+html[data-scheme="light"] .orca-rail {
+  background: var(--orca-surface-raised, #FFFFFF) !important;
+  border-color: var(--orca-border-medium, #E9EDF5) !important;
+}
+html[data-scheme="light"] .orca-rail-item,
+html[data-scheme="light"] [data-sidebar] button { color: var(--orca-text-muted, #64748B); }
+html[data-scheme="light"] .orca-rail-item[data-active="true"],
+html[data-scheme="light"] [data-sidebar] button[data-active="true"] {
+  background: hsl(239 84% 67% / 0.10) !important;
+  color: hsl(239 84% 58%) !important;
+}
+
+/* ── Badges / statuses that assumed a dark backdrop ── */
+html[data-scheme="light"] .orca-badge-profit {
+  background: var(--orca-profit-soft) !important;
+  color: var(--orca-profit) !important;
+}
+html[data-scheme="light"] .orca-badge-loss {
+  background: var(--orca-loss-soft) !important;
+  color: var(--orca-loss) !important;
+}
+
+/* Dark-only decorative dividers turn into hairlines */
+html[data-scheme="light"] hr,
+html[data-scheme="light"] .orca-divider {
+  border-color: var(--orca-border-subtle, #EEF1F7) !important;
+  background: var(--orca-border-subtle, #EEF1F7);
+}
+
 
 /* ─── Reminder badge pulse (Weekly Review notification) ─── */
 @keyframes orcaBadgePulse {
