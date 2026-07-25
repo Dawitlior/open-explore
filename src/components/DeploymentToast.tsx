@@ -129,7 +129,7 @@ export const DeploymentToast = ({ isRTL = false }: Props) => {
             width: 28, height: 28,
             borderRadius: '50%',
             background: SURF.card2,
-            border: '1px solid rgba(255,255,255,0.18)',
+            border: `1px solid ${SURF.border}`,
             color: SURF.text1,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer',
