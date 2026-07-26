@@ -418,9 +418,12 @@ function ExchangeCard({
         position: 'relative',
         borderRadius: 16,
         padding: 18,
-        background: `${meta.gradient}, rgba(11,23,48,0.55)`,
+        background: T.isLight
+          ? `linear-gradient(160deg, ${meta.accent}0d, ${meta.accent}05), #ffffff`
+          : `${meta.gradient}, rgba(11,23,48,0.55)`,
         border: `1px solid ${connected ? meta.accent + '55' : T.border.subtle}`,
-        backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
+        backdropFilter: T.isLight ? 'none' : 'blur(18px)',
+        WebkitBackdropFilter: T.isLight ? 'none' : 'blur(18px)',
         cursor: disabled ? 'not-allowed' : connected ? 'default' : 'pointer',
         opacity: disabled ? 0.65 : 1,
         transition: 'transform .18s ease, border-color .18s ease, box-shadow .18s ease',
