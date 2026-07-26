@@ -198,7 +198,7 @@ export function ExchangesPanel({ T, isRTL }: Props) {
       <div style={{
         marginBottom: 18, padding: '14px 18px',
         borderRadius: 14,
-        background: 'linear-gradient(135deg, rgba(0,242,255,0.04), rgba(0,242,255,0.01))',
+        background: T.isLight ? '#f8fafc' : 'linear-gradient(135deg, rgba(0,242,255,0.04), rgba(0,242,255,0.01))',
         border: `1px solid ${T.border.subtle}`,
         backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
       }}>
@@ -606,7 +606,7 @@ function ExchangeCard({
             marginTop: 10, padding: '7px 10px', borderRadius: 8,
             border: `1px solid ${connectionStatus === 'expired' ? 'rgba(245,158,11,0.55)' : 'rgba(239,68,68,0.55)'}`,
             background: connectionStatus === 'expired' ? 'rgba(245,158,11,0.10)' : 'rgba(239,68,68,0.10)',
-            color: connectionStatus === 'expired' ? '#fcd34d' : '#fca5a5',
+            color: connectionStatus === 'expired' ? (T.isLight ? '#92400e' : '#fcd34d') : (T.isLight ? '#b91c1c' : '#fca5a5'),
             fontFamily: mono, fontSize: 10, letterSpacing: 0.4,
             display: 'flex', alignItems: 'center', gap: 6,
             cursor: connectionLastError ? 'help' : 'default',
@@ -1850,7 +1850,7 @@ function KeyGuide({ T, isRTL, provider }: { T: TradingTheme; isRTL: boolean; pro
                     display: 'flex', gap: 14,
                     padding: '16px 18px',
                     borderRadius: 14,
-                    background: 'linear-gradient(135deg, rgba(0,242,255,0.04), rgba(11,23,48,0.5))',
+                    background: T.isLight ? '#f8fafc' : 'linear-gradient(135deg, rgba(0,242,255,0.04), rgba(11,23,48,0.5))',
                     border: `1px solid ${T.border.subtle}`,
                   }}>
                     <div style={{
