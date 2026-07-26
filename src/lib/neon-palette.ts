@@ -122,19 +122,20 @@ export interface SurfacePalette {
 }
 
 const SURF_DARK: SurfacePalette = {
-  bg0: '#04101c',
-  bg1: '#061326',
-  card: '#0a1628',
-  card2: '#101c30',
-  border: 'rgba(255,255,255,0.10)',
-  borderStrong: 'rgba(255,255,255,0.20)',
-  text1: '#e9eef7',
-  text2: 'rgba(233,238,247,0.70)',
-  text3: 'rgba(233,238,247,0.45)',
-  scrim: 'rgba(0,0,0,0.78)',
+  bg0: '#080A11',
+  bg1: '#0B0D14',
+  card: '#151823',
+  card2: '#1E2231',
+  border: 'rgba(148,163,255,0.10)',
+  borderStrong: 'rgba(148,163,255,0.22)',
+  text1: '#F7F9FC',
+  text2: 'rgba(247,249,252,0.70)',
+  text3: 'rgba(247,249,252,0.45)',
+  scrim: 'rgba(4,5,10,0.78)',
   shadow: '0 24px 70px rgba(0,0,0,0.60)',
-  panelGradient: 'linear-gradient(160deg, #0a1628 0%, #061326 100%)',
+  panelGradient: 'linear-gradient(160deg, #151823 0%, #0B0D14 100%)',
 };
+
 
 const SURF_LIGHT: SurfacePalette = {
   bg0: '#F4F6FB',
