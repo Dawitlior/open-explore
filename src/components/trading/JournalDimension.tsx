@@ -3624,33 +3624,34 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
     });
   };
 
+  /** Remove the Orca mirror(s) linked to the given journal-trade ids. */
+  const removeOrcaMirrors = (jids: string[]) => {
+    if (jids.length === 0 || typeof onRemoveOrcaTrade !== 'function') return;
+    const bridge = allOrcaTrades || orcaTrades || [];
+    const orcaIds: number[] = [];
+    jids.forEach((jid: string) => {
+      const mapped = jidMapRef.current.get(jid);
+      if (typeof mapped === 'number') orcaIds.push(mapped);
+    });
+    const seen = new Set<number>(orcaIds);
+    bridge.forEach((o: Trade) => {
+      if (seen.has(o.id)) return;
+      if (typeof o.comments !== 'string') return;
+      const m = o.comments.match(/__JID:([^_]+)__/);
+      if (m && jids.includes(m[1])) { orcaIds.push(o.id); seen.add(o.id); }
+    });
+    orcaIds.forEach(id => {
+      try { void onRemoveOrcaTrade(id); } catch { /* silent */ }
+      jidMapRef.current.forEach((v, k) => { if (v === id) jidMapRef.current.delete(k); });
+    });
+  };
+
   const clearEod = () => {
     // Also remove the linked Orca mirrors for every journal trade we're about
     // to wipe. Without this, "Clear Demo" leaves orphaned trades inside the
     // dashboard / calendar / analytics — visible to the user as a real bug.
-    const jids = (day.trades || []).map((tr: any) => String(tr.id));
-    if (jids.length > 0 && typeof onRemoveOrcaTrade === 'function') {
-      const bridge = allOrcaTrades || orcaTrades || [];
-      const orcaIds: number[] = [];
-      // 1) prefer the live in-memory jid → orca-id map (always fresh after sync)
-      jids.forEach((jid: string) => {
-        const mapped = jidMapRef.current.get(jid);
-        if (typeof mapped === 'number') orcaIds.push(mapped);
-      });
-      // 2) fall back to comment-tag scan for any jid not in the map
-      const seen = new Set<number>(orcaIds);
-      bridge.forEach((o: Trade) => {
-        if (seen.has(o.id)) return;
-        if (typeof o.comments !== 'string') return;
-        const m = o.comments.match(/__JID:([^_]+)__/);
-        if (m && jids.includes(m[1])) { orcaIds.push(o.id); seen.add(o.id); }
-      });
-      orcaIds.forEach(id => {
-        try { void onRemoveOrcaTrade(id); } catch { /* silent */ }
-        // Forget the mapping so a subsequent Demo Fill re-creates a fresh Orca trade.
-        jidMapRef.current.forEach((v, k) => { if (v === id) jidMapRef.current.delete(k); });
-      });
-    }
+    removeOrcaMirrors((day.trades || []).map((tr: any) => String(tr.id)));
+
     upd({
       hasOpen: null,
       trades: [],
@@ -3780,7 +3781,7 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
             {(day.trades || []).map((tr: JournalTrade, i: number) => (
               <TCard key={tr.id} trade={tr} idx={i} f={f} dir={dir} disabled={fullLocked || sLocks['trades']} th={th}
                 onChange={(nt: JournalTrade) => { upd({ trades: (day.trades || []).map((x: any, j: number) => j === i ? nt : x) }); syncRowRef.current(nt); }}
-                onDel={() => upd({ trades: day.trades.filter((_: any, j: number) => j !== i) })} />
+                onDel={() => { removeOrcaMirrors([String(tr.id)]); upd({ trades: day.trades.filter((_: any, j: number) => j !== i) }); }} />
             ))}
             {!fullLocked && !sLocks['trades'] && (
               <button onClick={addTrade} style={{
