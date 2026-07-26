@@ -563,15 +563,17 @@ function ExchangeCard({
             position: 'relative', overflow: 'hidden',
             marginTop: 10, width: '100%',
             padding: '10px 12px', borderRadius: 10,
-            background: syncing
-              ? 'linear-gradient(180deg, rgba(6,12,28,0.95), rgba(2,6,15,0.95))'
-              : 'linear-gradient(135deg, rgba(0,242,255,0.14), rgba(0,242,255,0.04))',
-            border: `1px solid ${syncing ? '#00f2ff66' : '#00f2ff44'}`,
-            color: '#7defff',
+            background: T.isLight
+              ? (syncing ? '#e2e8f0' : '#f1f5f9')
+              : syncing
+                ? 'linear-gradient(180deg, rgba(6,12,28,0.95), rgba(2,6,15,0.95))'
+                : 'linear-gradient(135deg, rgba(0,242,255,0.14), rgba(0,242,255,0.04))',
+            border: `1px solid ${T.isLight ? 'rgba(15,23,42,0.14)' : syncing ? '#00f2ff66' : '#00f2ff44'}`,
+            color: T.isLight ? '#0f172a' : '#7defff',
             fontWeight: 800, fontSize: 11, fontFamily: sans,
             cursor: syncing ? 'wait' : 'pointer', letterSpacing: 0.5,
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            boxShadow: syncing ? '0 0 22px -6px #00f2ffaa' : '0 8px 22px -16px #00f2ff',
+            boxShadow: T.isLight ? 'none' : syncing ? '0 0 22px -6px #00f2ffaa' : '0 8px 22px -16px #00f2ff',
             transition: 'background .2s ease, box-shadow .2s ease',
           }}
         >
