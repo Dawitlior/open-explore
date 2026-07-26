@@ -48,22 +48,23 @@ export interface NeonPalette {
 }
 
 const DARK: NeonPalette = {
-  green: '#00FFA3',
-  greenDeep: '#00CC82',
-  red: '#FF4D4D',
-  redSoft: '#FF6B6B',
-  redHard: '#FF0040',
-  blue: '#5AA9FF',
-  amber: '#FFC857',
+  green: '#3DDC97',
+  greenDeep: '#22B37A',
+  red: '#FF6B6B',
+  redSoft: '#FF8787',
+  redHard: '#F03E5E',
+  blue: '#4CC9F0',
+  amber: '#F5A524',
   gold: '#D4AF37',
-  purple: '#b794f6',
+  purple: '#8B7BFF',
   lime: '#84cc16',
   orange: '#f97316',
-  greenAlt: '#06d6a0',
-  amberDeep: '#f5a020',
-  purpleDeep: '#7c3aed',
-  onAccent: '#0a0e1a',
+  greenAlt: '#22D3EE',
+  amberDeep: '#d98a12',
+  purpleDeep: '#6C5CE7',
+  onAccent: '#0B0D14',
 };
+
 
 const LIGHT: NeonPalette = {
   green: '#0F9D6B',
@@ -121,19 +122,20 @@ export interface SurfacePalette {
 }
 
 const SURF_DARK: SurfacePalette = {
-  bg0: '#04101c',
-  bg1: '#061326',
-  card: '#0a1628',
-  card2: '#101c30',
-  border: 'rgba(255,255,255,0.10)',
-  borderStrong: 'rgba(255,255,255,0.20)',
-  text1: '#e9eef7',
-  text2: 'rgba(233,238,247,0.70)',
-  text3: 'rgba(233,238,247,0.45)',
-  scrim: 'rgba(0,0,0,0.78)',
+  bg0: '#080A11',
+  bg1: '#0B0D14',
+  card: '#151823',
+  card2: '#1E2231',
+  border: 'rgba(148,163,255,0.10)',
+  borderStrong: 'rgba(148,163,255,0.22)',
+  text1: '#F7F9FC',
+  text2: 'rgba(247,249,252,0.70)',
+  text3: 'rgba(247,249,252,0.45)',
+  scrim: 'rgba(4,5,10,0.78)',
   shadow: '0 24px 70px rgba(0,0,0,0.60)',
-  panelGradient: 'linear-gradient(160deg, #0a1628 0%, #061326 100%)',
+  panelGradient: 'linear-gradient(160deg, #151823 0%, #0B0D14 100%)',
 };
+
 
 const SURF_LIGHT: SurfacePalette = {
   bg0: '#F4F6FB',
