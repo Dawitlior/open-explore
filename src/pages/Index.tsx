@@ -1,3 +1,4 @@
+import { SURF } from '@/lib/neon-palette';
 import { useState, useMemo, useCallback, useEffect, lazy, Suspense } from 'react';
 import { OnboardingWizard, shouldShowOnboarding } from '@/components/trading/OnboardingWizard';
 import { OrcaBootLoader } from '@/components/OrcaBootLoader';
@@ -1671,7 +1672,7 @@ const Index = () => {
           data-mobile-menu-overlay
           style={{
             position: 'fixed', inset: 0, zIndex: 100,
-            background: 'rgba(2,6,15,0.62)',
+            background: SURF.scrim,
             backdropFilter: 'blur(14px) saturate(140%)',
             WebkitBackdropFilter: 'blur(14px) saturate(140%)',
             display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
@@ -1877,7 +1878,7 @@ const Index = () => {
       {!isMobile && sbOpen && (
         <div
           onClick={() => setSbOpen(false)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(2,6,15,0.45)', backdropFilter: 'blur(2px)', zIndex: 49, animation: 'fadeIn 0.18s ease-out' }}
+          style={{ position: 'fixed', inset: 0, background: SURF.scrim, backdropFilter: 'blur(2px)', zIndex: 49, animation: 'fadeIn 0.18s ease-out' }}
         />
       )}
       {!isMobile && (

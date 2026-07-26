@@ -1223,7 +1223,7 @@ function CinematicAlert({
       style={{
         position: 'absolute', inset: -22, // covers the modal padding fully
         zIndex: 3,
-        background: 'rgba(2,4,10,0.62)',
+        background: isLightScheme() ? 'rgba(241,245,249,0.72)' : 'rgba(2,4,10,0.62)',
         backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
         borderRadius: 18,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -1246,7 +1246,7 @@ function CinematicAlert({
         }}
       >
         <div style={{
-          background: 'linear-gradient(180deg, rgba(6,8,14,0.96), rgba(2,4,10,0.96))',
+          background: isLightScheme() ? '#ffffff' : 'linear-gradient(180deg, rgba(6,8,14,0.96), rgba(2,4,10,0.96))',
           borderRadius: 14,
           padding: 22,
           fontFamily: sans,
@@ -1779,7 +1779,7 @@ function KeyGuide({ T, isRTL, provider }: { T: TradingTheme; isRTL: boolean; pro
             onClick={e => e.stopPropagation()}
             style={{
               width: '100%', maxWidth: 680, maxHeight: '90vh', overflowY: 'auto',
-              background: 'linear-gradient(180deg, rgba(11,23,48,0.98), rgba(6,12,28,0.98))',
+              background: isLightScheme() ? '#ffffff' : 'linear-gradient(180deg, rgba(11,23,48,0.98), rgba(6,12,28,0.98))',
               border: `1px solid ${provider.accent}55`,
               borderRadius: 20,
               padding: 'clamp(22px, 4vw, 32px)',

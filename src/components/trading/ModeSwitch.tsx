@@ -1,3 +1,4 @@
+import { SURF } from '@/lib/neon-palette';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -166,7 +167,7 @@ export const ModeSwitch = ({ T, isRTL }: ModeSwitchProps) => {
               style={{
                 // Must sit above SettingsHub on mobile (SettingsHub uses z-index 9999).
                 position: 'fixed', inset: 0, zIndex: 100010,
-                background: 'radial-gradient(ellipse at center, rgba(6,10,22,0.82), rgba(2,4,10,0.96))',
+                background: SURF.scrim,
                 backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
               }}
               dir={isRTL ? 'rtl' : 'ltr'}
@@ -193,7 +194,7 @@ export const ModeSwitch = ({ T, isRTL }: ModeSwitchProps) => {
                   width: 'min(460px, 100%)',
                   borderRadius: 24,
                   padding: '34px 28px 26px',
-                  background: `linear-gradient(165deg, rgba(14,20,36,0.94), rgba(6,10,20,0.98))`,
+                  background: SURF.panelGradient,
                   border: `1px solid ${accent}55`,
                   boxShadow: `0 50px 140px -20px rgba(0,0,0,0.8), 0 0 90px -10px ${glow}`,
                   overflow: 'hidden',
@@ -243,8 +244,8 @@ export const ModeSwitch = ({ T, isRTL }: ModeSwitchProps) => {
                   <button onClick={close} aria-label="Close" style={{
                     position: 'absolute', top: 12, insetInlineEnd: 12, zIndex: 5,
                     width: 30, height: 30, borderRadius: 9,
-                    background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)',
-                    color: '#cbd5e1', display: 'grid', placeItems: 'center', cursor: 'pointer',
+                    background: SURF.card2, border: `1px solid ${SURF.border}`,
+                    color: SURF.text2, display: 'grid', placeItems: 'center', cursor: 'pointer',
                   }}>
                     <X size={14} />
                   </button>
@@ -322,7 +323,7 @@ export const ModeSwitch = ({ T, isRTL }: ModeSwitchProps) => {
 
                   <h3 style={{
                     margin: 0, marginBottom: 6, fontSize: 20, fontWeight: 800,
-                    background: `linear-gradient(90deg, #fff, ${accent})`,
+                    background: `linear-gradient(90deg, ${SURF.text1}, ${accent})`,
                     WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
                     fontFamily: "'JetBrains Mono', monospace",
                   }}>
@@ -333,7 +334,7 @@ export const ModeSwitch = ({ T, isRTL }: ModeSwitchProps) => {
                         : (isRTL ? 'החלפת תוכנית' : 'Switch Tier')}
                   </h3>
 
-                  <div style={{ fontSize: 12, color: '#cbd5e1', lineHeight: 1.6, marginBottom: 4 }}>
+                  <div style={{ fontSize: 12, color: SURF.text2, lineHeight: 1.6, marginBottom: 4 }}>
                     {isRTL ? meta.taglineHe : meta.tagline}
                   </div>
                   <div style={{ fontSize: 11, color: '#94a3b8', lineHeight: 1.6, marginBottom: 18, padding: '0 8px' }}>
@@ -343,9 +344,9 @@ export const ModeSwitch = ({ T, isRTL }: ModeSwitchProps) => {
                   {phase === 'ask' && (
                     <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
                       <button onClick={close} style={{
-                        padding: '10px 22px', background: 'rgba(255,255,255,0.04)',
-                        border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12,
-                        color: '#cbd5e1', cursor: 'pointer', fontSize: 12, fontWeight: 600,
+                        padding: '10px 22px', background: SURF.card2,
+                        border: `1px solid ${SURF.border}`, borderRadius: 12,
+                        color: SURF.text2, cursor: 'pointer', fontSize: 12, fontWeight: 600,
                         transition: 'all .2s',
                       }}
                       onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.14)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.45)'; }}

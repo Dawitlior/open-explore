@@ -1,3 +1,4 @@
+import { SURF } from '@/lib/neon-palette';
 import { useState, useRef, useMemo, useEffect, type CSSProperties } from 'react';
 import {
   User, Palette, LayoutDashboard, Calculator, Shield, SlidersHorizontal, Database,
@@ -2193,7 +2194,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
           onClick={() => setThemeRefreshPrompt(null)}
           style={{
             position: 'fixed', inset: 0, zIndex: 100000,
-            background: 'rgba(2,6,15,0.72)', backdropFilter: 'blur(10px)',
+            background: SURF.scrim, backdropFilter: 'blur(10px)',
             display: 'grid', placeItems: 'center', padding: 20,
             animation: 'orcaThemePromptFade 0.25s ease-out',
           }}
@@ -2301,7 +2302,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
       {showDeleteAccountModal && (
         <div
           onClick={() => !deletingAccount && setShowDeleteAccountModal(false)}
-          style={{ position: 'fixed', inset: 0, zIndex: 10020, background: 'rgba(2,6,15,0.88)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+          style={{ position: 'fixed', inset: 0, zIndex: 10020, background: SURF.scrim, backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
         >
           <div
             onClick={e => e.stopPropagation()}
@@ -2363,7 +2364,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
           onClick={() => setShowThemeConfirm(false)}
           style={{
             position: 'fixed', inset: 0, zIndex: 10010,
-            background: 'rgba(2,6,15,0.78)',
+            background: SURF.scrim,
             backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             padding: 20, animation: 'orcaSettingsFade .18s ease-out',
@@ -2458,7 +2459,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
       {/* ============ STUDIO COMMIT CONFIRMATION ============ */}
       {showStudioConfirm && (
         <div onClick={() => setShowStudioConfirm(false)}
-          style={{ position: 'fixed', inset: 0, zIndex: 10010, background: 'rgba(2,6,15,0.78)', backdropFilter: 'blur(14px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          style={{ position: 'fixed', inset: 0, zIndex: 10010, background: SURF.scrim, backdropFilter: 'blur(14px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div onClick={e => e.stopPropagation()}
             style={{
               width: '100%', maxWidth: 460,
@@ -2500,7 +2501,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
       {/* ============ UNLOCK 24h DOUBLE-CONFIRM ============ */}
       {unlockStep > 0 && (
         <div onClick={() => setUnlockStep(0)}
-          style={{ position: 'fixed', inset: 0, zIndex: 10020, background: 'rgba(2,6,15,0.85)', backdropFilter: 'blur(16px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          style={{ position: 'fixed', inset: 0, zIndex: 10020, background: SURF.scrim, backdropFilter: 'blur(16px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div onClick={e => e.stopPropagation()}
             style={{
               width: '100%', maxWidth: 460,

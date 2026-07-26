@@ -153,7 +153,7 @@ export const DeploymentToast = ({ isRTL = false }: Props) => {
               margin: 0,
               fontSize: 14,
               fontWeight: 800,
-              color: '#ffffff',
+              color: SURF.text1,
               letterSpacing: '-0.005em',
               lineHeight: 1.25,
             }}
@@ -167,7 +167,7 @@ export const DeploymentToast = ({ isRTL = false }: Props) => {
           margin: '0 0 12px',
           fontSize: 12,
           lineHeight: 1.5,
-          color: 'rgba(241,245,249,0.7)',
+          color: SURF.text2,
         }}>
           {subtitles[phase]}
         </p>

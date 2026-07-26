@@ -1,3 +1,4 @@
+import { SURF } from '@/lib/neon-palette';
 /**
  * DashboardCalendarStrip — compact month calendar + Long/Short breakdown cards.
  * Visible on the main Dashboard (Layer 1). Mirrors the calendar logic from
@@ -696,7 +697,7 @@ function EquityCurve({
                 top: Math.max(0, topPx - 12),
                 transform: `translate(-50%, -100%)`,
                 pointerEvents: 'none',
-                background: 'rgba(6, 18, 38, 0.98)',
+                background: SURF.card,
                 border: `1px solid ${posColor}80`,
                 boxShadow: `0 12px 32px -12px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.04)`,
                 borderRadius: 8,
@@ -708,13 +709,13 @@ function EquityCurve({
                 zIndex: 20,
               }}
             >
-              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.65)', marginBottom: 4, letterSpacing: 0.6 }}>
+              <div style={{ fontSize: 10, color: SURF.text2, marginBottom: 4, letterSpacing: 0.6 }}>
                 {fmtDate(hp.date)}{hp.symbol ? ` · ${hp.symbol}` : ''}
               </div>
               <div style={{ fontSize: 12, color: posColor, fontWeight: 700, lineHeight: 1.4 }}>
                 {isRTL ? 'עסקה' : 'Trade'}: {fmtPnl(hp.pnl, hp.r)}
               </div>
-              <div style={{ fontSize: 12, color: '#ffffff', fontWeight: 600, lineHeight: 1.4 }}>
+              <div style={{ fontSize: 12, color: SURF.text1, fontWeight: 600, lineHeight: 1.4 }}>
                 {isRTL ? 'מצטבר' : 'Total'}: {fmtCum(hp.cum)}
               </div>
             </div>
