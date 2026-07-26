@@ -3742,10 +3742,35 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
                 }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = `0 6px 20px ${tr.pnl >= 0 ? 'rgba(0,255,163,0.15)' : 'rgba(255,77,77,0.15)'}`; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2, gap: 6 }}>
                     <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, fontWeight: 700, color: th.tx2 }}>{tr.coin}</div>
-                    <div style={{ fontSize: 8, color: tr.direction === 'Long' ? JC.green : JC.red, fontWeight: 700, letterSpacing: '1px' }}>{tr.direction === 'Long' ? '▲' : '▼'}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div style={{ fontSize: 8, color: tr.direction === 'Long' ? JC.green : JC.red, fontWeight: 700, letterSpacing: '1px' }}>{tr.direction === 'Long' ? '▲' : '▼'}</div>
+                      {!fullLocked && typeof onRemoveOrcaTrade === 'function' && (
+                        <button
+                          type="button"
+                          title={dir === 'rtl' ? 'מחק עסקה מהגשר' : 'Delete trade from bridge'}
+                          aria-label={dir === 'rtl' ? 'מחק עסקה מהגשר' : 'Delete trade from bridge'}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            try { void onRemoveOrcaTrade(tr.id); } catch { /* silent */ }
+                            // Drop any journal↔orca mapping so the row can't resurrect.
+                            jidMapRef.current.forEach((v, k) => { if (v === tr.id) jidMapRef.current.delete(k); });
+                            // Remove the mirrored journal row for this orca trade, if present.
+                            const jid = (typeof tr.comments === 'string' ? tr.comments.match(/__JID:([^_]+)__/)?.[1] : undefined);
+                            if (jid) upd({ trades: (day.trades || []).filter((x: any) => String(x.id) !== jid) });
+                          }}
+                          style={{
+                            width: 16, height: 16, lineHeight: '14px', textAlign: 'center', padding: 0,
+                            borderRadius: 5, cursor: 'pointer', fontSize: 10, fontWeight: 800,
+                            background: 'rgba(255,77,77,0.10)', color: JC.red,
+                            border: '1px solid rgba(255,77,77,0.28)',
+                          }}
+                        >✕</button>
+                      )}
+                    </div>
                   </div>
+
                   <div style={{ fontFamily: "'Poppins',sans-serif", fontSize: 13, fontWeight: 800, color: tr.pnl >= 0 ? JC.green : JC.red, marginTop: 2, textShadow: `0 0 10px ${tr.pnl >= 0 ? 'rgba(0,255,163,0.3)' : 'rgba(255,77,77,0.3)'}` }}>{tr.pnl >= 0 ? '+' : ''}{tr.pnl.toFixed(2)}$</div>
                   {(() => { const r = getR(tr as any); return (
                     <div style={{ fontSize: 9, color: th.tx3, marginTop: 2, fontFamily: "'Poppins',sans-serif" }}>{formatR(r, 2)}</div>
