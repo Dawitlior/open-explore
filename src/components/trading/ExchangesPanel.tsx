@@ -292,7 +292,7 @@ function SyncOverlay({ isRTL, providerName, accent }: { isRTL: boolean; provider
     <div
       style={{
         position: 'fixed', inset: 0, zIndex: 10050,
-        background: 'radial-gradient(ellipse at center, rgba(6,12,28,0.92) 0%, rgba(2,6,15,0.96) 70%)',
+        background: T.isLight ? 'rgba(241,245,249,0.86)' : 'radial-gradient(ellipse at center, rgba(6,12,28,0.92) 0%, rgba(2,6,15,0.96) 70%)',
         backdropFilter: 'blur(22px) saturate(160%)', WebkitBackdropFilter: 'blur(22px) saturate(160%)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: 24, direction: isRTL ? 'rtl' : 'ltr',
@@ -309,10 +309,10 @@ function SyncOverlay({ isRTL, providerName, accent }: { isRTL: boolean; provider
       <div style={{
         width: '100%', maxWidth: 460, padding: 'clamp(28px,5vw,40px)',
         borderRadius: 22,
-        background: 'linear-gradient(180deg, rgba(11,23,48,0.88), rgba(6,12,28,0.92))',
+        background: T.isLight ? '#ffffff' : 'linear-gradient(180deg, rgba(11,23,48,0.88), rgba(6,12,28,0.92))',
         border: `1px solid ${accent}44`,
         boxShadow: `0 30px 80px -30px ${accent}55, 0 0 0 1px rgba(255,255,255,0.04) inset`,
-        fontFamily: sans, color: '#f0f5ff', textAlign: 'center',
+        fontFamily: sans, color: T.isLight ? '#0f172a' : '#f0f5ff', textAlign: 'center',
       }}>
         <div style={{ position: 'relative', width: 96, height: 96, margin: '0 auto 24px' }}>
           <span style={{
@@ -857,7 +857,7 @@ function CredentialModal({
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0, zIndex: 10020,
-        background: 'rgba(2,6,15,0.78)',
+        background: T.isLight ? 'rgba(241,245,249,0.82)' : 'rgba(2,6,15,0.78)',
         backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: 16, direction: isRTL ? 'rtl' : 'ltr',
@@ -867,7 +867,7 @@ function CredentialModal({
         onClick={e => e.stopPropagation()}
         style={{
           width: '100%', maxWidth: 520,
-          background: 'linear-gradient(180deg, rgba(11,23,48,0.96), rgba(6,12,28,0.96))',
+          background: T.isLight ? '#ffffff' : 'linear-gradient(180deg, rgba(11,23,48,0.96), rgba(6,12,28,0.96))',
           border: `1px solid ${provider.accent}55`,
           borderRadius: 18,
           padding: 22,
@@ -1285,7 +1285,7 @@ function CinematicAlert({
             <AlertSigil color={stateColor} kind={loading ? 'scan' : isError ? 'shield-x' : 'shield-check'} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{
-                fontSize: 17, fontWeight: 800, color: '#fff',
+                fontSize: 17, fontWeight: 800, color: T.isLight ? '#0f172a' : '#fff',
                 letterSpacing: 0.2, marginBottom: 6, lineHeight: 1.25,
               }}>
                 {loading
@@ -1293,7 +1293,7 @@ function CinematicAlert({
                   : alert?.title}
               </div>
               <div style={{
-                fontSize: 12.5, color: '#cbd5e1', lineHeight: 1.6,
+                fontSize: 12.5, color: T.isLight ? '#475569' : '#cbd5e1', lineHeight: 1.6,
               }}>
                 {loading
                   ? t(
