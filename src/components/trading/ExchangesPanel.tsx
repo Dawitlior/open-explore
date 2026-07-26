@@ -1,3 +1,4 @@
+import { isLightScheme } from '@/lib/neon-palette';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Plug, Shield, ShieldCheck, X, Trash2, Sparkles, Lock, ChevronDown, BookOpen, AlertTriangle, RefreshCw, CheckCircle2, Loader2, Users } from 'lucide-react';
 import { toast } from 'sonner';
@@ -292,7 +293,7 @@ function SyncOverlay({ isRTL, providerName, accent }: { isRTL: boolean; provider
     <div
       style={{
         position: 'fixed', inset: 0, zIndex: 10050,
-        background: T.isLight ? 'rgba(241,245,249,0.86)' : 'radial-gradient(ellipse at center, rgba(6,12,28,0.92) 0%, rgba(2,6,15,0.96) 70%)',
+        background: isLightScheme() ? 'rgba(241,245,249,0.86)' : 'radial-gradient(ellipse at center, rgba(6,12,28,0.92) 0%, rgba(2,6,15,0.96) 70%)',
         backdropFilter: 'blur(22px) saturate(160%)', WebkitBackdropFilter: 'blur(22px) saturate(160%)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: 24, direction: isRTL ? 'rtl' : 'ltr',
@@ -309,10 +310,10 @@ function SyncOverlay({ isRTL, providerName, accent }: { isRTL: boolean; provider
       <div style={{
         width: '100%', maxWidth: 460, padding: 'clamp(28px,5vw,40px)',
         borderRadius: 22,
-        background: T.isLight ? '#ffffff' : 'linear-gradient(180deg, rgba(11,23,48,0.88), rgba(6,12,28,0.92))',
+        background: isLightScheme() ? '#ffffff' : 'linear-gradient(180deg, rgba(11,23,48,0.88), rgba(6,12,28,0.92))',
         border: `1px solid ${accent}44`,
         boxShadow: `0 30px 80px -30px ${accent}55, 0 0 0 1px rgba(255,255,255,0.04) inset`,
-        fontFamily: sans, color: T.isLight ? '#0f172a' : '#f0f5ff', textAlign: 'center',
+        fontFamily: sans, color: isLightScheme() ? '#0f172a' : '#f0f5ff', textAlign: 'center',
       }}>
         <div style={{ position: 'relative', width: 96, height: 96, margin: '0 auto 24px' }}>
           <span style={{
