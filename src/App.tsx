@@ -66,7 +66,12 @@ const BugArenaMount = ({ children }: { children: React.ReactNode }) => {
       }}
       accent="#f5c542"
       sectionResolver={mapRouteToHebrewArea}
-      onReported={() => toast.success('הדיווח נשלח, תודה!')}
+      onReported={() => toast.success(
+        (typeof document !== 'undefined' && document.documentElement.getAttribute('lang') === 'en')
+          ? 'Report sent — thank you!'
+          : 'הדיווח נשלח, תודה!'
+      )}
+
     >
       {children}
       {/* FAB removed — bug report is now in the sidebar navigation */}
