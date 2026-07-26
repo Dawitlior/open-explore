@@ -3624,7 +3624,30 @@ const EodForm = ({ day, upd, t, dir, onSave, dirty, orcaTrades, allOrcaTrades, t
     });
   };
 
+  /** Remove the Orca mirror(s) linked to the given journal-trade ids. */
+  const removeOrcaMirrors = (jids: string[]) => {
+    if (jids.length === 0 || typeof onRemoveOrcaTrade !== 'function') return;
+    const bridge = allOrcaTrades || orcaTrades || [];
+    const orcaIds: number[] = [];
+    jids.forEach((jid: string) => {
+      const mapped = jidMapRef.current.get(jid);
+      if (typeof mapped === 'number') orcaIds.push(mapped);
+    });
+    const seen = new Set<number>(orcaIds);
+    bridge.forEach((o: Trade) => {
+      if (seen.has(o.id)) return;
+      if (typeof o.comments !== 'string') return;
+      const m = o.comments.match(/__JID:([^_]+)__/);
+      if (m && jids.includes(m[1])) { orcaIds.push(o.id); seen.add(o.id); }
+    });
+    orcaIds.forEach(id => {
+      try { void onRemoveOrcaTrade(id); } catch { /* silent */ }
+      jidMapRef.current.forEach((v, k) => { if (v === id) jidMapRef.current.delete(k); });
+    });
+  };
+
   const clearEod = () => {
+
     // Also remove the linked Orca mirrors for every journal trade we're about
     // to wipe. Without this, "Clear Demo" leaves orphaned trades inside the
     // dashboard / calendar / analytics — visible to the user as a real bug.
