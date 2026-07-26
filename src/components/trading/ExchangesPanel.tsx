@@ -535,13 +535,17 @@ function ExchangeCard({
             style={{
               flex: 1,
               padding: '10px 12px', borderRadius: 10,
-              background: 'linear-gradient(135deg, rgba(0,242,255,0.16), rgba(0,242,255,0.06))',
-              border: `1px solid ${meta.accent}66`,
-              color: '#dffaff',
+              background: T.isLight
+                ? '#0f172a'
+                : 'linear-gradient(135deg, rgba(0,242,255,0.16), rgba(0,242,255,0.06))',
+              border: `1px solid ${T.isLight ? '#0f172a' : meta.accent + '66'}`,
+              color: T.isLight ? '#ffffff' : '#dffaff',
               fontWeight: 800, fontSize: 11.5, fontFamily: sans,
               cursor: 'pointer', letterSpacing: 0.4,
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              boxShadow: `inset 0 0 0 1px rgba(0,242,255,0.10), 0 6px 18px -14px ${meta.accent}aa`,
+              boxShadow: T.isLight
+                ? '0 6px 16px -12px rgba(15,23,42,0.8)'
+                : `inset 0 0 0 1px rgba(0,242,255,0.10), 0 6px 18px -14px ${meta.accent}aa`,
             }}
           >
             <Plug size={11} /> {t('חבר חשבון', 'Connect Account')}
