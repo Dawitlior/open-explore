@@ -1,3 +1,4 @@
+import { SURF } from '@/lib/neon-palette';
 import { useEffect, useState, useMemo } from 'react';
 
 interface Props {
@@ -57,7 +58,7 @@ export default function ImportLoadingOverlay({ isRTL, fileName, imported = 0, ph
         // Soft frosted backdrop — the previous near-opaque scrim looked like a
         // black flash before the Preflight UI mounted. We now blur the page
         // behind the loader instead of blacking it out.
-        background: 'rgba(6, 12, 24, 0.32)',
+        background: SURF.scrim,
         backdropFilter: 'blur(28px) saturate(160%)',
         WebkitBackdropFilter: 'blur(28px) saturate(160%)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -77,13 +78,13 @@ export default function ImportLoadingOverlay({ isRTL, fileName, imported = 0, ph
       <div
         style={{
           width: '100%', maxWidth: 460,
-          background: 'linear-gradient(180deg, rgba(20, 30, 50, 0.85), rgba(12, 20, 36, 0.85))',
+          background: SURF.panelGradient,
           border: '1px solid rgba(255, 255, 255, 0.08)',
           borderRadius: 24,
           padding: 'clamp(28px, 5vw, 40px)',
           boxShadow: '0 24px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255,255,255,0.04) inset',
           fontFamily: '"Poppins", -apple-system, system-ui, sans-serif',
-          color: '#f0f5ff',
+          color: SURF.text1,
           animation: 'orcaCardIn 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
       >
@@ -103,7 +104,7 @@ export default function ImportLoadingOverlay({ isRTL, fileName, imported = 0, ph
             </svg>
             <div style={{
               position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 22, fontWeight: 600, color: '#f0f5ff',
+              fontSize: 22, fontWeight: 600, color: SURF.text1,
               fontFamily: '"IBM Plex Mono", monospace',
             }}>
               {counter}

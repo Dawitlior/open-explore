@@ -1,3 +1,4 @@
+import { SURF } from '@/lib/neon-palette';
 /**
  * UpgradeModal — listens for 'orca:open-upgrade' and presents the
  * 3-tier pricing comparison (Standard / Advanced / Ultimate).
@@ -147,7 +148,7 @@ export function UpgradeModal() {
             onClick={() => setOpen(false)}
             style={{
               position: 'fixed', inset: 0, zIndex: 9500,
-              background: 'radial-gradient(ellipse at center, rgba(8,12,22,0.86), rgba(2,4,10,0.96))',
+              background: SURF.scrim,
               backdropFilter: 'blur(14px)',
               WebkitBackdropFilter: 'blur(14px)',
             }}
@@ -178,7 +179,7 @@ export function UpgradeModal() {
                 overflowY: 'auto',
                 borderRadius: 24,
                 padding: 'clamp(20px, 3vw, 36px)',
-                background: 'linear-gradient(160deg, rgba(14,20,36,0.92), rgba(6,10,20,0.96))',
+                background: SURF.panelGradient,
                 border: '1px solid rgba(34,211,238,0.18)',
                 boxShadow: '0 40px 120px -20px rgba(0,0,0,0.7), 0 0 80px -20px rgba(34,211,238,0.18)',
                 overflowX: 'hidden',
@@ -220,9 +221,9 @@ export function UpgradeModal() {
                 style={{
                   position: 'absolute', top: 14, insetInlineEnd: 14, zIndex: 5,
                   width: 36, height: 36, borderRadius: 10,
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.10)',
-                  color: '#cbd5e1', display: 'grid', placeItems: 'center',
+                  background: SURF.card2,
+                  border: `1px solid ${SURF.border}`,
+                  color: SURF.text2, display: 'grid', placeItems: 'center',
                   cursor: 'pointer', transition: 'all .2s',
                 }}
                 onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.18)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.55)'; e.currentTarget.style.color = '#fecaca'; }}
@@ -256,7 +257,7 @@ export function UpgradeModal() {
                   style={{
                     fontSize: 'clamp(22px, 3.2vw, 30px)', fontWeight: 800,
                     margin: 0, marginBottom: 6,
-                    background: 'linear-gradient(90deg, #ffffff 0%, #22d3ee 50%, #a78bfa 100%)',
+                    background: `linear-gradient(90deg, ${SURF.text1} 0%, #22d3ee 50%, #a78bfa 100%)`,
                     WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
                   }}
                 >
@@ -319,7 +320,7 @@ export function UpgradeModal() {
                         <div style={{
                           position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)',
                           padding: '4px 12px', borderRadius: 999,
-                          background: 'rgba(148,163,184,0.18)', color: '#cbd5e1',
+                          background: SURF.card2, color: SURF.text2,
                           fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase',
                           border: '1px solid rgba(148,163,184,0.4)',
                         }}>
@@ -336,7 +337,7 @@ export function UpgradeModal() {
                         }}>
                           <Icon size={18} style={{ color: tier.accent }} />
                         </div>
-                        <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#f1f5f9' }}>
+                        <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: SURF.text1 }}>
                           {tier.name[isHe ? 'he' : 'en']}
                         </h3>
                       </div>
@@ -358,7 +359,7 @@ export function UpgradeModal() {
                             initial={{ opacity: 0, x: isHe ? 8 : -8 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.4 + idx * 0.1 + i * 0.04 }}
-                            style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12, color: '#e2e8f0' }}
+                            style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12, color: SURF.text2 }}
                           >
                             <Check size={13} style={{ color: tier.accent, flexShrink: 0, marginTop: 2 }} />
                             <span>{f[isHe ? 'he' : 'en']}</span>
