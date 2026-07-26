@@ -48,22 +48,23 @@ export interface NeonPalette {
 }
 
 const DARK: NeonPalette = {
-  green: '#00FFA3',
-  greenDeep: '#00CC82',
-  red: '#FF4D4D',
-  redSoft: '#FF6B6B',
-  redHard: '#FF0040',
-  blue: '#5AA9FF',
-  amber: '#FFC857',
+  green: '#3DDC97',
+  greenDeep: '#22B37A',
+  red: '#FF6B6B',
+  redSoft: '#FF8787',
+  redHard: '#F03E5E',
+  blue: '#4CC9F0',
+  amber: '#F5A524',
   gold: '#D4AF37',
-  purple: '#b794f6',
+  purple: '#8B7BFF',
   lime: '#84cc16',
   orange: '#f97316',
-  greenAlt: '#06d6a0',
-  amberDeep: '#f5a020',
-  purpleDeep: '#7c3aed',
-  onAccent: '#0a0e1a',
+  greenAlt: '#22D3EE',
+  amberDeep: '#d98a12',
+  purpleDeep: '#6C5CE7',
+  onAccent: '#0B0D14',
 };
+
 
 const LIGHT: NeonPalette = {
   green: '#0F9D6B',
