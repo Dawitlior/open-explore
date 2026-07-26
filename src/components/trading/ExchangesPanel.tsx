@@ -427,7 +427,9 @@ function ExchangeCard({
         cursor: disabled ? 'not-allowed' : connected ? 'default' : 'pointer',
         opacity: disabled ? 0.65 : 1,
         transition: 'transform .18s ease, border-color .18s ease, box-shadow .18s ease',
-        boxShadow: connected ? `0 0 0 1px ${meta.accent}33, 0 10px 30px -18px ${meta.accent}88` : 'none',
+        boxShadow: connected
+          ? `0 0 0 1px ${meta.accent}33, 0 10px 30px -18px ${meta.accent}88`
+          : T.isLight ? '0 1px 2px rgba(15,23,42,0.06), 0 8px 24px -20px rgba(15,23,42,0.35)' : 'none',
         overflow: 'hidden',
       }}
       onMouseEnter={e => { if (!disabled && !connected) (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'; }}
@@ -436,7 +438,7 @@ function ExchangeCard({
       {/* glow corner */}
       <div style={{
         position: 'absolute', top: -40, insetInlineEnd: -40, width: 140, height: 140,
-        background: `radial-gradient(circle, ${meta.accent}33 0%, transparent 70%)`,
+        background: `radial-gradient(circle, ${meta.accent}${T.isLight ? '14' : '33'} 0%, transparent 70%)`,
         pointerEvents: 'none',
       }} />
 
