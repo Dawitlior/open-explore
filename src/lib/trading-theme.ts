@@ -113,27 +113,27 @@ function darkChart(green: string, red: string, series: string[]): ChartTokens {
 
 
 /* ════════════════════════════════════════════════
-   1) MIDNIGHT — Cyan / Carbon (kept, signature)
+   1) MIDNIGHT — Indigo Nebula (deep charcoal-blue + neon violet)
    ════════════════════════════════════════════════ */
 const midnight: TradingTheme = {
   id: 'midnight',
   isLight: false,
-  surface: darkSurface('#121814', '#0A0F0A', '#0E130F'),
-  state: darkState('#22C55E', '#F2545B', '#F59E0B', '#7DD3FC', '#7A857A'),
-  chart: darkChart('#22C55E', '#F2545B', ['#C6F84E', '#34D97F', '#7DD3FC', '#A3E635', '#F59E0B', '#F2545B', '#22C55E', '#94A3B8']),
-  // Deep near-black base with warm-green undertone + lime accent (per new brand ref)
-  bg: { primary: '#0A0F0A', secondary: '#101610', tertiary: '#161C18', card: '#121814', surface: '#1A211C' },
+  surface: darkSurface('#151823', '#0B0D14', '#11141D'),
+  state: darkState('#3DDC97', '#FF6B6B', '#F5A524', '#4CC9F0', '#8A93A6'),
+  chart: darkChart('#3DDC97', '#FF6B6B', ['#6C5CE7', '#4CC9F0', '#3DDC97', '#22D3EE', '#A78BFA', '#FF6B6B', '#F5A524', '#8A93A6']),
+  // Deep charcoal-blue, near-black canvas with steel-gray panels (bluish undertone)
+  bg: { primary: '#0B0D14', secondary: '#11141D', tertiary: '#1B1F2C', card: '#151823', surface: '#1E2231' },
   accent: {
-    cyan: '#C6F84E', cyanGlow: 'rgba(198,248,78,0.22)',
-    teal: '#34D97F',
-    blue: '#7DD3FC', blueGlow: 'rgba(125,211,252,0.12)',
-    purple: '#A3E635', purpleGlow: 'rgba(163,230,53,0.14)',
-    orange: '#F59E0B',
-    red: '#F2545B', redGlow: 'rgba(242,84,91,0.18)',
-    green: '#22C55E', greenGlow: 'rgba(34,197,94,0.18)',
+    cyan: '#6C5CE7', cyanGlow: 'rgba(108,92,231,0.24)',
+    teal: '#22D3EE',
+    blue: '#4CC9F0', blueGlow: 'rgba(76,201,240,0.16)',
+    purple: '#8B7BFF', purpleGlow: 'rgba(139,123,255,0.18)',
+    orange: '#F5A524',
+    red: '#FF6B6B', redGlow: 'rgba(255,107,107,0.18)',
+    green: '#3DDC97', greenGlow: 'rgba(61,220,151,0.18)',
   },
-  text: { primary: '#F1F5F1', secondary: '#A8B0A5', muted: '#7A857A', dim: '#525C55' },
-  border: { subtle: 'rgba(198,248,78,0.06)', medium: 'rgba(255,255,255,0.10)', active: 'rgba(198,248,78,0.42)' },
+  text: { primary: '#F7F9FC', secondary: '#A9B1C3', muted: '#8A93A6', dim: '#5B6377' },
+  border: { subtle: 'rgba(148,163,255,0.07)', medium: 'rgba(255,255,255,0.10)', active: 'rgba(108,92,231,0.46)' },
   radius: { sm: 6, md: 10, lg: 14, xl: 18 },
   shadow: {
     card: '0 1px 3px rgba(0,0,0,0.6), 0 8px 24px rgba(0,0,0,0.5)',
@@ -141,24 +141,25 @@ const midnight: TradingTheme = {
     glow: (c: string) => `0 0 22px ${c}, 0 0 44px ${c}`,
   },
   cssVars: {
-    background: '120 15% 5%',
-    foreground: '90 10% 96%',
-    card: '135 12% 8%',
-    popover: '135 12% 8%',
-    primary: '75 92% 64%',
-    primaryFg: '120 30% 8%',
-    secondary: '135 10% 12%',
-    muted: '135 8% 15%',
-    mutedFg: '120 6% 62%',
-    accent: '75 92% 64%',
-    destructive: '356 85% 58%',
-    ring: '75 92% 64%',
-    sidebar: '135 15% 4%',
-    auroraA: '75 92% 64%',
-    auroraB: '142 71% 45%',
-    glowSpot: '75 92% 74%',
+    background: '227 27% 6%',
+    foreground: '215 40% 97%',
+    card: '230 21% 11%',
+    popover: '230 21% 11%',
+    primary: '248 74% 63%',
+    primaryFg: '0 0% 100%',
+    secondary: '230 18% 16%',
+    muted: '230 15% 20%',
+    mutedFg: '222 16% 72%',
+    accent: '248 74% 63%',
+    destructive: '0 100% 71%',
+    ring: '248 74% 63%',
+    sidebar: '228 26% 8%',
+    auroraA: '248 74% 63%',
+    auroraB: '194 85% 62%',
+    glowSpot: '160 68% 58%',
   },
 };
+
 
 
 /* ════════════════════════════════════════════════
