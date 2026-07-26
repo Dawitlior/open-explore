@@ -129,6 +129,47 @@ const CSS = `
   background:rgba(15,26,44,.6);border:1px solid rgba(255,255,255,.14);color:#9fb0c5;
   display:grid;place-items:center;cursor:pointer;transition:all .15s ease;z-index:2}
 .esc-close:hover{background:rgba(245,197,66,.12);border-color:rgba(245,197,66,.5);color:#f5c542}
+
+/* ---- Light scheme (platinum) ---- */
+html[data-scheme="light"] .esc-tile{
+  background:#ffffff;
+  box-shadow:0 1px 2px rgba(15,23,42,.06), 0 18px 40px -28px rgba(15,23,42,.45)}
+html[data-scheme="light"] .esc-file{
+  background:linear-gradient(160deg,#ffffff,#eef1f6);
+  box-shadow:0 6px 16px -8px rgba(15,23,42,.4), inset 0 1px 0 #fff}
+html[data-scheme="light"] .esc-pop-backdrop{
+  background:rgba(241,245,249,.86)}
+html[data-scheme="light"] .esc-pop{
+  background:#ffffff;
+  border:1px solid rgba(15,23,42,.10);
+  box-shadow:0 40px 90px -30px rgba(15,23,42,.35), 0 1px 2px rgba(15,23,42,.06)}
+html[data-scheme="light"] .esc-pop::before{
+  background:linear-gradient(90deg, transparent, rgba(180,83,9,.55), transparent)}
+html[data-scheme="light"] .esc-pop-brand-mark{
+  background:rgba(180,83,9,.10);border-color:rgba(180,83,9,.35);color:#B45309}
+html[data-scheme="light"] .esc-pop-brand-text{color:rgba(15,23,42,.55)}
+html[data-scheme="light"] .esc-pop-title{color:#0F172A}
+html[data-scheme="light"] .esc-pop-sub{color:rgba(15,23,42,.62)}
+html[data-scheme="light"] .esc-opt{
+  background:#ffffff;
+  border:1px solid rgba(15,23,42,.10);
+  color:#0F172A;
+  box-shadow:0 1px 2px rgba(15,23,42,.06)}
+html[data-scheme="light"] .esc-opt::after{
+  background:radial-gradient(ellipse at top, rgba(180,83,9,.08), transparent 70%)}
+html[data-scheme="light"] .esc-opt:hover{
+  border-color:rgba(180,83,9,.45);
+  box-shadow:0 14px 30px -20px rgba(15,23,42,.5)}
+html[data-scheme="light"] .esc-opt:focus-visible{outline-color:#B45309}
+html[data-scheme="light"] .esc-opt-icon{
+  background:rgba(180,83,9,.10);color:#B45309;border-color:rgba(180,83,9,.30)}
+html[data-scheme="light"] .esc-opt-title{color:#0F172A}
+html[data-scheme="light"] .esc-opt-desc{color:rgba(15,23,42,.62)}
+html[data-scheme="light"] .esc-close{
+  background:#F1F5F9;border-color:rgba(15,23,42,.12);color:#475569}
+html[data-scheme="light"] .esc-close:hover{
+  background:rgba(180,83,9,.10);border-color:rgba(180,83,9,.4);color:#B45309}
+
 @media (prefers-reduced-motion:reduce){
   .esc-file,.esc-slot::after,.esc-sweep,.esc-tile,.esc-pop,.esc-pop-backdrop,.esc-opt{animation:none;transition:none}
   .esc-tile:hover,.esc-opt:hover{transform:none}

@@ -1,3 +1,4 @@
+import { isLightScheme } from '@/lib/neon-palette';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Plug, Shield, ShieldCheck, X, Trash2, Sparkles, Lock, ChevronDown, BookOpen, AlertTriangle, RefreshCw, CheckCircle2, Loader2, Users } from 'lucide-react';
 import { toast } from 'sonner';
@@ -198,7 +199,7 @@ export function ExchangesPanel({ T, isRTL }: Props) {
       <div style={{
         marginBottom: 18, padding: '14px 18px',
         borderRadius: 14,
-        background: 'linear-gradient(135deg, rgba(0,242,255,0.04), rgba(0,242,255,0.01))',
+        background: T.isLight ? '#f8fafc' : 'linear-gradient(135deg, rgba(0,242,255,0.04), rgba(0,242,255,0.01))',
         border: `1px solid ${T.border.subtle}`,
         backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
       }}>
@@ -292,7 +293,7 @@ function SyncOverlay({ isRTL, providerName, accent }: { isRTL: boolean; provider
     <div
       style={{
         position: 'fixed', inset: 0, zIndex: 10050,
-        background: 'radial-gradient(ellipse at center, rgba(6,12,28,0.92) 0%, rgba(2,6,15,0.96) 70%)',
+        background: isLightScheme() ? 'rgba(241,245,249,0.86)' : 'radial-gradient(ellipse at center, rgba(6,12,28,0.92) 0%, rgba(2,6,15,0.96) 70%)',
         backdropFilter: 'blur(22px) saturate(160%)', WebkitBackdropFilter: 'blur(22px) saturate(160%)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: 24, direction: isRTL ? 'rtl' : 'ltr',
@@ -309,10 +310,10 @@ function SyncOverlay({ isRTL, providerName, accent }: { isRTL: boolean; provider
       <div style={{
         width: '100%', maxWidth: 460, padding: 'clamp(28px,5vw,40px)',
         borderRadius: 22,
-        background: 'linear-gradient(180deg, rgba(11,23,48,0.88), rgba(6,12,28,0.92))',
+        background: isLightScheme() ? '#ffffff' : 'linear-gradient(180deg, rgba(11,23,48,0.88), rgba(6,12,28,0.92))',
         border: `1px solid ${accent}44`,
         boxShadow: `0 30px 80px -30px ${accent}55, 0 0 0 1px rgba(255,255,255,0.04) inset`,
-        fontFamily: sans, color: '#f0f5ff', textAlign: 'center',
+        fontFamily: sans, color: isLightScheme() ? '#0f172a' : '#f0f5ff', textAlign: 'center',
       }}>
         <div style={{ position: 'relative', width: 96, height: 96, margin: '0 auto 24px' }}>
           <span style={{
@@ -418,13 +419,18 @@ function ExchangeCard({
         position: 'relative',
         borderRadius: 16,
         padding: 18,
-        background: `${meta.gradient}, rgba(11,23,48,0.55)`,
+        background: T.isLight
+          ? `linear-gradient(160deg, ${meta.accent}0d, ${meta.accent}05), #ffffff`
+          : `${meta.gradient}, rgba(11,23,48,0.55)`,
         border: `1px solid ${connected ? meta.accent + '55' : T.border.subtle}`,
-        backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
+        backdropFilter: T.isLight ? 'none' : 'blur(18px)',
+        WebkitBackdropFilter: T.isLight ? 'none' : 'blur(18px)',
         cursor: disabled ? 'not-allowed' : connected ? 'default' : 'pointer',
         opacity: disabled ? 0.65 : 1,
         transition: 'transform .18s ease, border-color .18s ease, box-shadow .18s ease',
-        boxShadow: connected ? `0 0 0 1px ${meta.accent}33, 0 10px 30px -18px ${meta.accent}88` : 'none',
+        boxShadow: connected
+          ? `0 0 0 1px ${meta.accent}33, 0 10px 30px -18px ${meta.accent}88`
+          : T.isLight ? '0 1px 2px rgba(15,23,42,0.06), 0 8px 24px -20px rgba(15,23,42,0.35)' : 'none',
         overflow: 'hidden',
       }}
       onMouseEnter={e => { if (!disabled && !connected) (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'; }}
@@ -433,7 +439,7 @@ function ExchangeCard({
       {/* glow corner */}
       <div style={{
         position: 'absolute', top: -40, insetInlineEnd: -40, width: 140, height: 140,
-        background: `radial-gradient(circle, ${meta.accent}33 0%, transparent 70%)`,
+        background: `radial-gradient(circle, ${meta.accent}${T.isLight ? '14' : '33'} 0%, transparent 70%)`,
         pointerEvents: 'none',
       }} />
 
@@ -530,13 +536,17 @@ function ExchangeCard({
             style={{
               flex: 1,
               padding: '10px 12px', borderRadius: 10,
-              background: 'linear-gradient(135deg, rgba(0,242,255,0.16), rgba(0,242,255,0.06))',
-              border: `1px solid ${meta.accent}66`,
-              color: '#dffaff',
+              background: T.isLight
+                ? '#0f172a'
+                : 'linear-gradient(135deg, rgba(0,242,255,0.16), rgba(0,242,255,0.06))',
+              border: `1px solid ${T.isLight ? '#0f172a' : meta.accent + '66'}`,
+              color: T.isLight ? '#ffffff' : '#dffaff',
               fontWeight: 800, fontSize: 11.5, fontFamily: sans,
               cursor: 'pointer', letterSpacing: 0.4,
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              boxShadow: `inset 0 0 0 1px rgba(0,242,255,0.10), 0 6px 18px -14px ${meta.accent}aa`,
+              boxShadow: T.isLight
+                ? '0 6px 16px -12px rgba(15,23,42,0.8)'
+                : `inset 0 0 0 1px rgba(0,242,255,0.10), 0 6px 18px -14px ${meta.accent}aa`,
             }}
           >
             <Plug size={11} /> {t('חבר חשבון', 'Connect Account')}
@@ -554,15 +564,17 @@ function ExchangeCard({
             position: 'relative', overflow: 'hidden',
             marginTop: 10, width: '100%',
             padding: '10px 12px', borderRadius: 10,
-            background: syncing
-              ? 'linear-gradient(180deg, rgba(6,12,28,0.95), rgba(2,6,15,0.95))'
-              : 'linear-gradient(135deg, rgba(0,242,255,0.14), rgba(0,242,255,0.04))',
-            border: `1px solid ${syncing ? '#00f2ff66' : '#00f2ff44'}`,
-            color: '#7defff',
+            background: T.isLight
+              ? (syncing ? '#e2e8f0' : '#f1f5f9')
+              : syncing
+                ? 'linear-gradient(180deg, rgba(6,12,28,0.95), rgba(2,6,15,0.95))'
+                : 'linear-gradient(135deg, rgba(0,242,255,0.14), rgba(0,242,255,0.04))',
+            border: `1px solid ${T.isLight ? 'rgba(15,23,42,0.14)' : syncing ? '#00f2ff66' : '#00f2ff44'}`,
+            color: T.isLight ? '#0f172a' : '#7defff',
             fontWeight: 800, fontSize: 11, fontFamily: sans,
             cursor: syncing ? 'wait' : 'pointer', letterSpacing: 0.5,
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            boxShadow: syncing ? '0 0 22px -6px #00f2ffaa' : '0 8px 22px -16px #00f2ff',
+            boxShadow: T.isLight ? 'none' : syncing ? '0 0 22px -6px #00f2ffaa' : '0 8px 22px -16px #00f2ff',
             transition: 'background .2s ease, box-shadow .2s ease',
           }}
         >
@@ -595,7 +607,7 @@ function ExchangeCard({
             marginTop: 10, padding: '7px 10px', borderRadius: 8,
             border: `1px solid ${connectionStatus === 'expired' ? 'rgba(245,158,11,0.55)' : 'rgba(239,68,68,0.55)'}`,
             background: connectionStatus === 'expired' ? 'rgba(245,158,11,0.10)' : 'rgba(239,68,68,0.10)',
-            color: connectionStatus === 'expired' ? '#fcd34d' : '#fca5a5',
+            color: connectionStatus === 'expired' ? (T.isLight ? '#92400e' : '#fcd34d') : (T.isLight ? '#b91c1c' : '#fca5a5'),
             fontFamily: mono, fontSize: 10, letterSpacing: 0.4,
             display: 'flex', alignItems: 'center', gap: 6,
             cursor: connectionLastError ? 'help' : 'default',
@@ -846,7 +858,7 @@ function CredentialModal({
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0, zIndex: 10020,
-        background: 'rgba(2,6,15,0.78)',
+        background: T.isLight ? 'rgba(241,245,249,0.82)' : 'rgba(2,6,15,0.78)',
         backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: 16, direction: isRTL ? 'rtl' : 'ltr',
@@ -856,7 +868,7 @@ function CredentialModal({
         onClick={e => e.stopPropagation()}
         style={{
           width: '100%', maxWidth: 520,
-          background: 'linear-gradient(180deg, rgba(11,23,48,0.96), rgba(6,12,28,0.96))',
+          background: T.isLight ? '#ffffff' : 'linear-gradient(180deg, rgba(11,23,48,0.96), rgba(6,12,28,0.96))',
           border: `1px solid ${provider.accent}55`,
           borderRadius: 18,
           padding: 22,
@@ -1274,7 +1286,7 @@ function CinematicAlert({
             <AlertSigil color={stateColor} kind={loading ? 'scan' : isError ? 'shield-x' : 'shield-check'} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{
-                fontSize: 17, fontWeight: 800, color: '#fff',
+                fontSize: 17, fontWeight: 800, color: T.isLight ? '#0f172a' : '#fff',
                 letterSpacing: 0.2, marginBottom: 6, lineHeight: 1.25,
               }}>
                 {loading
@@ -1282,7 +1294,7 @@ function CinematicAlert({
                   : alert?.title}
               </div>
               <div style={{
-                fontSize: 12.5, color: '#cbd5e1', lineHeight: 1.6,
+                fontSize: 12.5, color: T.isLight ? '#475569' : '#cbd5e1', lineHeight: 1.6,
               }}>
                 {loading
                   ? t(
@@ -1839,7 +1851,7 @@ function KeyGuide({ T, isRTL, provider }: { T: TradingTheme; isRTL: boolean; pro
                     display: 'flex', gap: 14,
                     padding: '16px 18px',
                     borderRadius: 14,
-                    background: 'linear-gradient(135deg, rgba(0,242,255,0.04), rgba(11,23,48,0.5))',
+                    background: T.isLight ? '#f8fafc' : 'linear-gradient(135deg, rgba(0,242,255,0.04), rgba(11,23,48,0.5))',
                     border: `1px solid ${T.border.subtle}`,
                   }}>
                     <div style={{
