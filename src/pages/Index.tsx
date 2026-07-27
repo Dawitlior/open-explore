@@ -2071,8 +2071,8 @@ const Index = () => {
             </LazyShell>
           )}
 
-          {page === 'psychology' && renderPsychology()}
           {page === 'ai' && renderAI()}
+
           {page === 'economic-radar' && (
             <Suspense fallback={null}>
               <EconomicCalendarPage onClose={() => setPage('dashboard')} T={T} />
