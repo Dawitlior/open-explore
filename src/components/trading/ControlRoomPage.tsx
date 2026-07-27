@@ -8,7 +8,7 @@
  * render props so only the active tab mounts (keeps chart cost identical to
  * the previous two-page setup).
  */
-import { useState, type ReactNode } from 'react';
+import { Suspense, useState, type ReactNode } from 'react';
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { TradingStats } from '@/lib/trading-analytics';
@@ -29,10 +29,53 @@ interface Props {
   renderMind: () => ReactNode;
 }
 
+/** Shared skeleton so both tabs load with identical rhythm. */
+const TabSkeleton = ({ T }: { T: TradingTheme }) => (
+  <div style={{ display: 'grid', gap: 12 }} aria-busy="true">
+    {[220, 160, 160].map((h, i) => (
+      <div
+        key={i}
+        style={{
+          height: h,
+          borderRadius: 14,
+          background: T.bg.card,
+          border: `1px solid ${T.border.subtle}`,
+          opacity: 0.55,
+          animation: 'pulse 1.6s ease-in-out infinite',
+        }}
+      />
+    ))}
+  </div>
+);
+
+const EmptyState = ({ T, isRTL, tab }: { T: TradingTheme; isRTL: boolean; tab: ControlRoomTab }) => (
+  <div
+    style={{
+      padding: '46px 22px',
+      borderRadius: 14,
+      textAlign: 'center',
+      background: T.bg.card,
+      border: `1px dashed ${T.border.medium}`,
+    }}
+  >
+    <div style={{ fontSize: 26, marginBottom: 10 }}>{tab === 'risk' ? '🛡️' : '🧠'}</div>
+    <div style={{ fontSize: 15, fontWeight: 700, color: T.text.primary, marginBottom: 6 }}>
+      {isRTL ? 'אין עדיין נתונים' : 'No data yet'}
+    </div>
+    <div style={{ fontSize: 12, lineHeight: 1.6, color: T.text.muted, maxWidth: 420, margin: '0 auto' }}>
+      {tab === 'risk'
+        ? (isRTL ? 'הוסף או ייבא עסקאות כדי לחשב מגבלות סיכון, חשיפה ואיכות תשואות.' : 'Add or import trades to compute risk limits, exposure and return quality.')
+        : (isRTL ? 'הוסף או ייבא עסקאות כדי לנתח משמעת, טילט ודפוסי התנהגות.' : 'Add or import trades to analyse discipline, tilt and behavior patterns.')}
+    </div>
+  </div>
+);
+
 export const ControlRoomPage = ({
   T, isRTL, isMobile = false, trades, stats, limits, initialTab = 'risk', renderRisk, renderMind,
 }: Props) => {
   const [tab, setTab] = useState<ControlRoomTab>(initialTab);
+  const isEmpty = trades.length === 0;
+
 
   const tabs: Array<{ id: ControlRoomTab; icon: string; label: string; sub: string; color: string }> = [
     {
