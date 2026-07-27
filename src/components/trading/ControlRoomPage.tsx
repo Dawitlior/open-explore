@@ -8,7 +8,7 @@
  * render props so only the active tab mounts (keeps chart cost identical to
  * the previous two-page setup).
  */
-import { useState, type ReactNode } from 'react';
+import { Suspense, useState, type ReactNode } from 'react';
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { TradingStats } from '@/lib/trading-analytics';
@@ -29,10 +29,53 @@ interface Props {
   renderMind: () => ReactNode;
 }
 
+/** Shared skeleton so both tabs load with identical rhythm. */
+const TabSkeleton = ({ T }: { T: TradingTheme }) => (
+  <div style={{ display: 'grid', gap: 12 }} aria-busy="true">
+    {[220, 160, 160].map((h, i) => (
+      <div
+        key={i}
+        style={{
+          height: h,
+          borderRadius: 14,
+          background: T.bg.card,
+          border: `1px solid ${T.border.subtle}`,
+          opacity: 0.55,
+          animation: 'pulse 1.6s ease-in-out infinite',
+        }}
+      />
+    ))}
+  </div>
+);
+
+const EmptyState = ({ T, isRTL, tab }: { T: TradingTheme; isRTL: boolean; tab: ControlRoomTab }) => (
+  <div
+    style={{
+      padding: '46px 22px',
+      borderRadius: 14,
+      textAlign: 'center',
+      background: T.bg.card,
+      border: `1px dashed ${T.border.medium}`,
+    }}
+  >
+    <div style={{ fontSize: 26, marginBottom: 10 }}>{tab === 'risk' ? '🛡️' : '🧠'}</div>
+    <div style={{ fontSize: 15, fontWeight: 700, color: T.text.primary, marginBottom: 6 }}>
+      {isRTL ? 'אין עדיין נתונים' : 'No data yet'}
+    </div>
+    <div style={{ fontSize: 12, lineHeight: 1.6, color: T.text.muted, maxWidth: 420, margin: '0 auto' }}>
+      {tab === 'risk'
+        ? (isRTL ? 'הוסף או ייבא עסקאות כדי לחשב מגבלות סיכון, חשיפה ואיכות תשואות.' : 'Add or import trades to compute risk limits, exposure and return quality.')
+        : (isRTL ? 'הוסף או ייבא עסקאות כדי לנתח משמעת, טילט ודפוסי התנהגות.' : 'Add or import trades to analyse discipline, tilt and behavior patterns.')}
+    </div>
+  </div>
+);
+
 export const ControlRoomPage = ({
   T, isRTL, isMobile = false, trades, stats, limits, initialTab = 'risk', renderRisk, renderMind,
 }: Props) => {
   const [tab, setTab] = useState<ControlRoomTab>(initialTab);
+  const isEmpty = trades.length === 0;
+
 
   const tabs: Array<{ id: ControlRoomTab; icon: string; label: string; sub: string; color: string }> = [
     {
@@ -54,14 +97,14 @@ export const ControlRoomPage = ({
   return (
     <div>
       {/* ── Page header ───────────────────────────────────────── */}
-      <div style={{ marginBottom: 10 }}>
+      <div style={{ marginBottom: 12 }}>
         <div style={{
           fontSize: 9, color: T.text.muted, letterSpacing: '0.2em',
-          fontFamily: "'JetBrains Mono', monospace", marginBottom: 4,
+          fontFamily: "'JetBrains Mono', monospace", marginBottom: 5,
         }}>
           {isRTL ? '◆ חדר בקרה' : '◆ CONTROL ROOM'}
         </div>
-        <div style={{ fontSize: isMobile ? 20 : 24, fontWeight: 200, color: T.text.primary, letterSpacing: '-0.02em' }}>
+        <div style={{ fontSize: isMobile ? 20 : 24, fontWeight: 200, color: T.text.primary, letterSpacing: '-0.02em', lineHeight: 1.25 }}>
           {isRTL ? 'ניהול סיכון ותודעת מסחר' : 'Risk & Trading Mind'}
         </div>
       </div>
@@ -96,6 +139,7 @@ export const ControlRoomPage = ({
               style={{
                 textAlign: isRTL ? 'right' : 'left',
                 padding: isMobile ? '10px 12px' : '12px 16px',
+                minHeight: isMobile ? 44 : 62,
                 borderRadius: 12,
                 cursor: 'pointer',
                 background: active ? `linear-gradient(${isRTL ? '270deg' : '90deg'}, ${tb.color}18, ${T.bg.card})` : T.bg.card,
@@ -105,13 +149,13 @@ export const ControlRoomPage = ({
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 15 }}>{tb.icon}</span>
-                <span style={{ fontSize: isMobile ? 13 : 14, fontWeight: 700, color: active ? tb.color : T.text.primary }}>
+                <span style={{ fontSize: 15, lineHeight: 1 }}>{tb.icon}</span>
+                <span style={{ fontSize: isMobile ? 13 : 14, fontWeight: 700, color: active ? tb.color : T.text.primary, letterSpacing: '-0.01em' }}>
                   {tb.label}
                 </span>
               </div>
               {!isMobile && (
-                <div style={{ fontSize: 10.5, color: T.text.muted, marginTop: 3 }}>{tb.sub}</div>
+                <div style={{ fontSize: 10.5, lineHeight: 1.5, color: T.text.muted, marginTop: 4 }}>{tb.sub}</div>
               )}
             </button>
           );
@@ -119,10 +163,22 @@ export const ControlRoomPage = ({
       </div>
 
       {/* ── Active surface ───────────────────────────────────── */}
-      <div role="tabpanel">
-        {tab === 'risk' ? renderRisk() : renderMind()}
+      <div
+        role="tabpanel"
+        key={tab}
+        aria-label={tab === 'risk' ? (isRTL ? 'סיכון' : 'Risk') : (isRTL ? 'תודעה' : 'Mind')}
+        style={{ display: 'grid', gap: 12, animation: 'fadeIn .25s ease' }}
+      >
+        {isEmpty ? (
+          <EmptyState T={T} isRTL={isRTL} tab={tab} />
+        ) : (
+          <Suspense fallback={<TabSkeleton T={T} />}>
+            {tab === 'risk' ? renderRisk() : renderMind()}
+          </Suspense>
+        )}
       </div>
     </div>
+
   );
 };
 
