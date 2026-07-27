@@ -37,6 +37,9 @@ interface AdvancedRiskPageProps {
   riskExplanations: Array<{ tradeId: number; reason: string; customNote?: string; timestamp: string }>;
   /** Phase 2 — registry allowlist for `risk` surface. Optional. */
   registryCharts?: import('@/lib/chart-registry').ChartSpec[];
+  /** Control Room hosts a shared live-state bar — hide the in-page duplicate. */
+  hideLiveState?: boolean;
+
 }
 
 // ─── Section header (clear, plain-language with subtitle) ──────────
@@ -98,7 +101,7 @@ const LimitBar = ({ T, label, current, limit, isRTL }: { T: TradingTheme; label:
   );
 };
 
-const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', customLimits, trades: _allTrades, stats, riskData, onExplainClick, riskExplanations, registryCharts }: AdvancedRiskPageProps) => {
+const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', customLimits, trades: _allTrades, stats, riskData, onExplainClick, riskExplanations, registryCharts, hideLiveState = false }: AdvancedRiskPageProps) => {
   useChartGuard('risk');
   const registryAllows = (id: string) => !registryCharts || registryCharts.some(c => c.id === id);
   const { visibleTrades: trades, isMoney, rEligibleCount, totalCount } = useVisibleTrades(_allTrades);
@@ -649,9 +652,11 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
       />
 
       {/* ═══ LIVE STATUS & COOL-OFF — computed from recent trades ═══ */}
+      {!hideLiveState && (<>
       <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'מצב חי והתראות' : 'Live Status & Warnings'} subtitle={isRTL ? 'המצב שלך עכשיו, מחושב על העסקאות האחרונות שלך — לא הערכה כללית.' : 'Your current state, computed from your most recent trades — not a generic guess.'} />
 
       {(() => {
+
         const now = Date.now();
         const parseDate = (s: string) => {
           const d = new Date((s || '').replace(' ', 'T'));
@@ -821,6 +826,8 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
           </div>
         );
       })()}
+      </>)}
+
 
       {/* ═══ RISK EXPLANATIONS LOG — Alpha + Review/Research ═══ */}
       {showExplanationLog && riskExplanations.length > 0 && (

@@ -49,6 +49,8 @@ import { useArena } from '@/features/bug-arena';
 const AdvancedRiskPage = lazy(() => import('@/components/trading/AdvancedRiskPage').then(m => ({ default: m.AdvancedRiskPage })));
 const AdvancedAnalyticsPage = lazy(() => import('@/components/trading/AdvancedAnalyticsPage').then(m => ({ default: m.AdvancedAnalyticsPage })));
 const AdvancedPsychologyPage = lazy(() => import('@/components/trading/AdvancedPsychologyPage').then(m => ({ default: m.AdvancedPsychologyPage })));
+const ControlRoomPage = lazy(() => import('@/components/trading/ControlRoomPage').then(m => ({ default: m.ControlRoomPage })));
+
 const AIInsightsPage = lazy(() => import('@/components/trading/AIInsightsPage').then(m => ({ default: m.AIInsightsPage })));
 const WeeklyReviewPage = lazy(() => import('@/components/trading/WeeklyReviewPage').then(m => ({ default: m.WeeklyReviewPage })));
 const CalendarHubPage = lazy(() => import('@/components/trading/CalendarHubPage').then(m => ({ default: m.CalendarHubPage })));
@@ -550,9 +552,10 @@ const Index = () => {
     { id: 'settings', label: isRTL ? 'הגדרות' : 'Settings', icon: '⚙️', category: isRTL ? 'מערכת' : 'System', shortcut: '⌘,', action: () => setShowSettings(true) },
     { id: 'privacy', label: isRTL ? 'מצב פרטיות' : 'Toggle Privacy Mode', icon: '🔒', category: isRTL ? 'מערכת' : 'System', shortcut: '⌘⇧P', action: () => settings.setPrivacyMode(!settings.privacyMode) },
     { id: 'ai', label: isRTL ? 'צור תובנות AI' : 'Generate AI Insights', icon: '🧠', category: 'AI', action: () => { setPage('ai'); handleGenerateInsights(); } },
-    ...(['dashboard', 'calendar', 'journal', 'analytics', 'risk', 'psychology', 'ai'] as const).map(p => ({
+    ...(['dashboard', 'calendar', 'journal', 'analytics', 'control-room', 'ai'] as const).map(p => ({
       id: `nav-${p}`, label: `Go to ${p.charAt(0).toUpperCase() + p.slice(1)}`, icon: '📄', category: isRTL ? 'ניווט' : 'Navigation', action: () => setPage(p)
     })),
+
     { id: 'feature-info', label: isRTL ? 'אודות המערכת' : 'About Orca System', icon: 'ℹ️', category: isRTL ? 'מערכת' : 'System', action: () => setShowFeatureModal(true) },
     { id: 'journal-sanctuary', label: isRTL ? 'יומן מסע לסוחר' : 'Trader Journey', icon: '🏛️', category: isRTL ? 'ממדים' : 'Dimensions', action: () => setActiveDimension('journal') },
     { id: 'backtest-journal', label: isRTL ? 'יומן באק-טסט' : 'Backtest Journal', icon: '📊', category: isRTL ? 'ממדים' : 'Dimensions', action: () => setActiveDimension('backtest') },
@@ -608,8 +611,8 @@ const Index = () => {
     { id: 'calendar', icon: '📅', label: isRTL ? 'לוח שנה' : 'Calendar' },
     { id: 'journal', icon: Ico.book, label: t.journal },
     { id: 'analytics', icon: Ico.bar, label: isRTL ? 'ביצועים' : 'Performance' },
-    { id: 'risk', icon: Ico.shield, label: t.risk },
-    { id: 'psychology', icon: Ico.brain, label: t.psychology },
+    { id: 'control-room', icon: Ico.shield, label: isRTL ? 'חדר בקרה' : 'Control Room' },
+
     { id: 'ai', icon: Ico.star, label: t.ai },
     { id: 'economic-radar', icon: '📡', label: isRTL ? 'מכ״ם כלכלי' : 'Economic Radar' },
     ...(weeklyReviewAllowed
@@ -1590,6 +1593,8 @@ const Index = () => {
           onExplainClick={handleExplainClick}
           riskExplanations={riskExplanations}
           registryCharts={riskCharts}
+          hideLiveState
+
         />
       </LazyShell>
     );
@@ -2053,9 +2058,25 @@ const Index = () => {
           )}
           {page === 'journal' && renderJournal()}
           {page === 'analytics' && renderAnalytics()}
-          {page === 'risk' && renderRisk()}
-          {page === 'psychology' && renderPsychology()}
+          {(page === 'control-room' || page === 'risk' || page === 'psychology') && (
+
+            <LazyShell>
+              <ControlRoomPage
+                T={T}
+                isRTL={isRTL}
+                isMobile={isMobile}
+                trades={trades}
+                stats={stats}
+                limits={customRiskLimits}
+                initialTab={page === 'psychology' ? 'mind' : 'risk'}
+                renderRisk={renderRisk}
+                renderMind={renderPsychology}
+              />
+            </LazyShell>
+          )}
+
           {page === 'ai' && renderAI()}
+
           {page === 'economic-radar' && (
             <Suspense fallback={null}>
               <EconomicCalendarPage onClose={() => setPage('dashboard')} T={T} />
