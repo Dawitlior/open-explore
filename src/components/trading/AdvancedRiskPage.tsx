@@ -652,9 +652,11 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
       />
 
       {/* ═══ LIVE STATUS & COOL-OFF — computed from recent trades ═══ */}
+      {!hideLiveState && (<>
       <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'מצב חי והתראות' : 'Live Status & Warnings'} subtitle={isRTL ? 'המצב שלך עכשיו, מחושב על העסקאות האחרונות שלך — לא הערכה כללית.' : 'Your current state, computed from your most recent trades — not a generic guess.'} />
 
       {(() => {
+
         const now = Date.now();
         const parseDate = (s: string) => {
           const d = new Date((s || '').replace(' ', 'T'));
