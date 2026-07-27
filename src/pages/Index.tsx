@@ -2053,7 +2053,9 @@ const Index = () => {
             <LazyShell><CalendarHubPage T={T} isRTL={isRTL} t={t} trades={trades} isMobile={isMobile} onGenerateInsight={handleGenerateInsights} onSetManualR={setManualR} /></LazyShell>
           )}
           {page === 'journal' && renderJournal()}
+          {page === 'analytics' && renderAnalytics()}
           {(page === 'control-room' || page === 'risk' || page === 'psychology') && (
+
             <LazyShell>
               <ControlRoomPage
                 T={T}
