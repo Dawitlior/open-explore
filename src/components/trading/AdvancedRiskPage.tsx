@@ -37,6 +37,9 @@ interface AdvancedRiskPageProps {
   riskExplanations: Array<{ tradeId: number; reason: string; customNote?: string; timestamp: string }>;
   /** Phase 2 — registry allowlist for `risk` surface. Optional. */
   registryCharts?: import('@/lib/chart-registry').ChartSpec[];
+  /** Control Room hosts a shared live-state bar — hide the in-page duplicate. */
+  hideLiveState?: boolean;
+
 }
 
 // ─── Section header (clear, plain-language with subtitle) ──────────
