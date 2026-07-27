@@ -1593,6 +1593,8 @@ const Index = () => {
           onExplainClick={handleExplainClick}
           riskExplanations={riskExplanations}
           registryCharts={riskCharts}
+          hideLiveState
+
         />
       </LazyShell>
     );
