@@ -826,6 +826,8 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
           </div>
         );
       })()}
+      </>)}
+
 
       {/* ═══ RISK EXPLANATIONS LOG — Alpha + Review/Research ═══ */}
       {showExplanationLog && riskExplanations.length > 0 && (
