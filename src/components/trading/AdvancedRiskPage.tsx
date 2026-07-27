@@ -101,7 +101,7 @@ const LimitBar = ({ T, label, current, limit, isRTL }: { T: TradingTheme; label:
   );
 };
 
-const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', customLimits, trades: _allTrades, stats, riskData, onExplainClick, riskExplanations, registryCharts }: AdvancedRiskPageProps) => {
+const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', customLimits, trades: _allTrades, stats, riskData, onExplainClick, riskExplanations, registryCharts, hideLiveState = false }: AdvancedRiskPageProps) => {
   useChartGuard('risk');
   const registryAllows = (id: string) => !registryCharts || registryCharts.some(c => c.id === id);
   const { visibleTrades: trades, isMoney, rEligibleCount, totalCount } = useVisibleTrades(_allTrades);
