@@ -608,8 +608,8 @@ const Index = () => {
     { id: 'calendar', icon: '📅', label: isRTL ? 'לוח שנה' : 'Calendar' },
     { id: 'journal', icon: Ico.book, label: t.journal },
     { id: 'analytics', icon: Ico.bar, label: isRTL ? 'ביצועים' : 'Performance' },
-    { id: 'risk', icon: Ico.shield, label: t.risk },
-    { id: 'psychology', icon: Ico.brain, label: t.psychology },
+    { id: 'control-room', icon: Ico.shield, label: isRTL ? 'חדר בקרה' : 'Control Room' },
+
     { id: 'ai', icon: Ico.star, label: t.ai },
     { id: 'economic-radar', icon: '📡', label: isRTL ? 'מכ״ם כלכלי' : 'Economic Radar' },
     ...(weeklyReviewAllowed
