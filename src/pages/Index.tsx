@@ -2053,8 +2053,22 @@ const Index = () => {
             <LazyShell><CalendarHubPage T={T} isRTL={isRTL} t={t} trades={trades} isMobile={isMobile} onGenerateInsight={handleGenerateInsights} onSetManualR={setManualR} /></LazyShell>
           )}
           {page === 'journal' && renderJournal()}
-          {page === 'analytics' && renderAnalytics()}
-          {page === 'risk' && renderRisk()}
+          {(page === 'control-room' || page === 'risk' || page === 'psychology') && (
+            <LazyShell>
+              <ControlRoomPage
+                T={T}
+                isRTL={isRTL}
+                isMobile={isMobile}
+                trades={trades}
+                stats={stats}
+                limits={customRiskLimits}
+                initialTab={page === 'psychology' ? 'mind' : 'risk'}
+                renderRisk={renderRisk}
+                renderMind={renderPsychology}
+              />
+            </LazyShell>
+          )}
+
           {page === 'psychology' && renderPsychology()}
           {page === 'ai' && renderAI()}
           {page === 'economic-radar' && (
