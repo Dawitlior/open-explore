@@ -124,6 +124,47 @@ export const ControlRoomPage = ({
   const [tab, setTab] = useState<ControlRoomTab>(initialTab);
   const isEmpty = trades.length === 0;
 
+  /**
+   * Zero-layout-shift tab swapping: remember the last measured height of each
+   * tab's real content and use it as the panel's `min-height` while the next
+   * tab is still loading. First visit falls back to the skeleton's own height.
+   */
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const heightsRef = useRef<Partial<Record<ControlRoomTab, number>>>({});
+  const [reservedHeight, setReservedHeight] = useState<number | undefined>(undefined);
+
+  const measure = useCallback(() => {
+    const el = panelRef.current;
+    if (!el) return;
+    const h = el.offsetHeight;
+    if (h > 0) heightsRef.current[tab] = h;
+  }, [tab]);
+
+  useEffect(() => {
+    const el = panelRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => measure());
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [measure]);
+
+  // Once the new tab has painted, release the reserved height so the panel can
+  // shrink/grow naturally with its real content.
+  useEffect(() => {
+    if (reservedHeight === undefined) return;
+    const id = requestAnimationFrame(() => setReservedHeight(undefined));
+    return () => cancelAnimationFrame(id);
+  }, [reservedHeight, tab]);
+
+  const switchTab = useCallback((next: ControlRoomTab) => {
+    if (next === tab) return;
+    measure();
+    setReservedHeight(heightsRef.current[next] ?? heightsRef.current[tab]);
+    setTab(next);
+  }, [tab, measure]);
+
+
+
 
   const tabs: Array<{ id: ControlRoomTab; icon: string; label: string; sub: string; color: string }> = [
     {
