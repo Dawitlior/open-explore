@@ -1,4 +1,14 @@
-import * as XLSX from 'xlsx';
+// SheetJS is ~416 KB raw / ~141 KB gzip and is only needed when the user
+// actually exports or parses a spreadsheet. Types are imported type-only
+// (fully erased at build time); the runtime module is loaded on demand.
+import type * as XLSXType from 'xlsx';
+
+let _xlsx: typeof XLSXType | null = null;
+async function loadXLSX(): Promise<typeof XLSXType> {
+  if (!_xlsx) _xlsx = await import('xlsx');
+  return _xlsx;
+}
+
 import type { Trade } from '@/data/trades';
 import { sanitizeTrade } from './trade-sanitizer';
 
