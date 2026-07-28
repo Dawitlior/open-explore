@@ -568,10 +568,10 @@ const Index = () => {
   const [reviewReminderTick, setReviewReminderTick] = useState(0);
   const [reviewArchive, setReviewArchive] = useState<Array<{ weekKey?: string; closedAt?: string }>>([]);
   const [reviewRecaps, setReviewRecaps] = useState<Record<string, unknown>>({});
-  useEffect(() => {
-    const id = window.setInterval(() => setReviewReminderTick(t => t + 1), 5 * 60 * 1000);
-    return () => window.clearInterval(id);
-  }, []);
+  // Paused while the tab is hidden — a 5-minute re-render of this 2k-line
+  // component in a background tab is pure waste.
+  useVisibleInterval(() => setReviewReminderTick(t => t + 1), 5 * 60 * 1000);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
