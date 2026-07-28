@@ -182,7 +182,14 @@ export function useAdminLive(): AdminLive {
     let timer: ReturnType<typeof setTimeout> | null = null;
     const rpc = (name: string, args?: any) => (supabase as any).rpc(name, args);
     const fetchAll = async () => {
+      // 14 admin RPCs every 30s is expensive; skip entirely while the console
+      // tab is in the background and catch up the moment it's focused again.
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+        timer = setTimeout(fetchAll, 30000);
+        return;
+      }
       try {
+
         // ALL-TIME default: large period so every historical trade populates
         // windowed RPCs. Diagnostics page can request narrower windows.
         const ALL_TIME = 3650;
