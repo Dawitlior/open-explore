@@ -8,6 +8,7 @@
  * - Re-checks every 30s to auto-release when `until` passes.
  */
 import { useCallback, useEffect, useState } from 'react';
+import { useVisibleInterval } from '@/hooks/use-visible-interval';
 import { getSetting, setSetting } from '@/lib/storage';
 import { supabase } from '@/integrations/supabase/client';
 
