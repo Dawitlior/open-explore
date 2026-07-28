@@ -8,7 +8,7 @@
  * render props so only the active tab mounts (keeps chart cost identical to
  * the previous two-page setup).
  */
-import { Suspense, useState, type ReactNode } from 'react';
+import { Suspense, useState, useRef, useEffect, useCallback, type ReactNode } from 'react';
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { TradingStats } from '@/lib/trading-analytics';
@@ -29,24 +29,72 @@ interface Props {
   renderMind: () => ReactNode;
 }
 
-/** Shared skeleton so both tabs load with identical rhythm. */
-const TabSkeleton = ({ T }: { T: TradingTheme }) => (
-  <div style={{ display: 'grid', gap: 12 }} aria-busy="true">
-    {[220, 160, 160].map((h, i) => (
-      <div
-        key={i}
-        style={{
-          height: h,
-          borderRadius: 14,
-          background: T.bg.card,
-          border: `1px solid ${T.border.subtle}`,
-          opacity: 0.55,
-          animation: 'pulse 1.6s ease-in-out infinite',
-        }}
-      />
-    ))}
-  </div>
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' &&
+  typeof window.matchMedia === 'function' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/**
+ * Skeleton block. Shape-only — it never renders content, just reserves the
+ * geometry of the real element it stands in for.
+ */
+const Block = ({ T, h, radius = 14, flex, pulse }: { T: TradingTheme; h: number; radius?: number; flex?: number; pulse: boolean }) => (
+  <div
+    style={{
+      height: h,
+      flex,
+      minWidth: 0,
+      borderRadius: radius,
+      background: T.bg.card,
+      border: `1px solid ${T.border.subtle}`,
+      opacity: 0.55,
+      animation: pulse ? 'pulse 1.6s ease-in-out infinite' : 'none',
+    }}
+  />
 );
+
+/**
+ * Per-tab skeleton that mirrors the real layout of each surface, so the swap
+ * from skeleton → content does not shift anything on screen.
+ *
+ * Risk : KPI row → wide exposure block → correlation grid → table
+ * Mind : header strip → radar + donut pair → stacked insight cards
+ */
+const TabSkeleton = ({ T, tab, isMobile }: { T: TradingTheme; tab: ControlRoomTab; isMobile: boolean }) => {
+  const pulse = !prefersReducedMotion();
+  const row: React.CSSProperties = { display: 'flex', gap: 12, flexWrap: isMobile ? 'wrap' : 'nowrap' };
+
+  if (tab === 'risk') {
+    return (
+      <div style={{ display: 'grid', gap: 12 }} aria-busy="true" aria-live="polite">
+        <div style={row}>
+          <Block T={T} h={92} flex={1} pulse={pulse} />
+          <Block T={T} h={92} flex={1} pulse={pulse} />
+          {!isMobile && <Block T={T} h={92} flex={1} pulse={pulse} />}
+        </div>
+        <Block T={T} h={isMobile ? 240 : 300} pulse={pulse} />
+        <div style={row}>
+          <Block T={T} h={isMobile ? 200 : 240} flex={1.4} pulse={pulse} />
+          <Block T={T} h={isMobile ? 200 : 240} flex={1} pulse={pulse} />
+        </div>
+        <Block T={T} h={isMobile ? 220 : 260} pulse={pulse} />
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'grid', gap: 12 }} aria-busy="true" aria-live="polite">
+      <Block T={T} h={72} pulse={pulse} />
+      <div style={row}>
+        <Block T={T} h={isMobile ? 260 : 320} flex={1} pulse={pulse} />
+        <Block T={T} h={isMobile ? 260 : 320} flex={1} pulse={pulse} />
+      </div>
+      <Block T={T} h={isMobile ? 180 : 200} pulse={pulse} />
+      <Block T={T} h={isMobile ? 180 : 200} pulse={pulse} />
+    </div>
+  );
+};
+
 
 const EmptyState = ({ T, isRTL, tab }: { T: TradingTheme; isRTL: boolean; tab: ControlRoomTab }) => (
   <div
