@@ -405,16 +405,18 @@ export interface BrokerImportResult { trades: Trade[]; errors: string[]; skipped
 export function parseBrokerCsvRaw(file: File): Promise<Trade[]> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
+        const XLSX = await loadXLSX();
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const wb = XLSX.read(data, { type: 'array', cellDates: true, raw: true });
         const sheetName = wb.SheetNames[0];
         if (!sheetName) { resolve([]); return; }
         const ws = wb.Sheets[sheetName];
 
-        const headerRowIdx = findHeaderRow(ws);
+        const headerRowIdx = findHeaderRow(XLSX, ws);
         const rows = XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1, raw: false, blankrows: false, defval: '' });
+
         if (rows.length <= headerRowIdx + 1) { resolve([]); return; }
 
         const headerRow = rows[headerRowIdx] || [];
