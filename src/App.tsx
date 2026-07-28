@@ -159,7 +159,9 @@ const App = () => (
             <ImportPreflightRoot />
             <A11yPanel />
             <BugArenaMount>
+            <Suspense fallback={<OrcaBootLoader />}>
             <Routes>
+
               <Route path="/welcome" element={<Landing />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<Navigate to="/auth" replace />} />
