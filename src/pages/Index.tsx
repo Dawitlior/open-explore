@@ -5,6 +5,7 @@ import { OrcaBootLoader } from '@/components/OrcaBootLoader';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell, ComposedChart, ScatterChart, Scatter, ZAxis, ReferenceLine } from 'recharts';
 import type { Trade } from '@/data/trades';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useVisibleInterval } from '@/hooks/use-visible-interval';
 
 import { computeAnalytics, getCalDays } from '@/lib/trading-analytics';
 import { i18n } from '@/lib/trading-i18n';
