@@ -224,7 +224,7 @@ export const ControlRoomPage = ({
               key={tb.id}
               role="tab"
               aria-selected={active}
-              onClick={() => setTab(tb.id)}
+              onClick={() => switchTab(tb.id)}
               style={{
                 textAlign: isRTL ? 'right' : 'left',
                 padding: isMobile ? '10px 12px' : '12px 16px',
