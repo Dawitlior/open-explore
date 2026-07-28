@@ -358,7 +358,9 @@ function parseTimespanMinutes(value: unknown): number {
 // EXPORT
 // ═══════════════════════════════════════════════════
 
-export function exportToXlsx(trades: Trade[]): void {
+export async function exportToXlsx(trades: Trade[]): Promise<void> {
+  const XLSX = await loadXLSX();
+
   const headers = [
     'System No.', 'ENTRY DATE/TIME', 'COIN', 'DIRECTION', 'ENTRY ORDER TYPE',
     'ENTRY', 'STOP LOSS', 'AVG EXIT', 'DESIRED RISK (%)', 'DESIRED RISK (USD)',
