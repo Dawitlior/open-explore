@@ -8,6 +8,7 @@ import { themeBgs } from '../lib/theme-bg';
 // All text bilingual + RTL-aware.
 
 import { useEffect, useMemo, useState } from 'react';
+import { useVisibleInterval } from '@/hooks/use-visible-interval';
 import type { Trade } from '@/data/trades';
 import { aggregateWeek } from '../hooks/use-week-aggregates';
 
