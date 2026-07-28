@@ -254,18 +254,25 @@ export const ControlRoomPage = ({
       {/* ── Active surface ───────────────────────────────────── */}
       <div
         role="tabpanel"
+        ref={panelRef}
         key={tab}
         aria-label={tab === 'risk' ? (isRTL ? 'סיכון' : 'Risk') : (isRTL ? 'תודעה' : 'Mind')}
-        style={{ display: 'grid', gap: 12, animation: 'fadeIn .25s ease' }}
+        style={{
+          display: 'grid',
+          gap: 12,
+          minHeight: reservedHeight,
+          animation: prefersReducedMotion() ? 'none' : 'fadeIn .25s ease',
+        }}
       >
         {isEmpty ? (
           <EmptyState T={T} isRTL={isRTL} tab={tab} />
         ) : (
-          <Suspense fallback={<TabSkeleton T={T} />}>
+          <Suspense fallback={<TabSkeleton T={T} tab={tab} isMobile={isMobile} />}>
             {tab === 'risk' ? renderRisk() : renderMind()}
           </Suspense>
         )}
       </div>
+
     </div>
 
   );
