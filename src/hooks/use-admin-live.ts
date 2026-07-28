@@ -273,11 +273,20 @@ export function useAdminLive(): AdminLive {
       }
     };
     fetchAll();
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        if (timer) clearTimeout(timer);
+        fetchAll();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
     return () => {
       cancelled = true;
       if (timer) clearTimeout(timer);
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, []);
+
 
   return state;
 }
