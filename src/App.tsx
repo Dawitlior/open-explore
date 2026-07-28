@@ -13,16 +13,17 @@ import { ActivePortfolioProvider } from "@/hooks/use-active-portfolio";
 import { RequireAuth } from "@/components/RequireAuth";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { StorageErrorListener } from "@/components/StorageErrorListener";
-import Index from "./pages/Index";
-// Auth/marketing/legal routes are never needed on the authenticated dashboard
-// path (and vice-versa), so they load on demand instead of inflating the entry
-// chunk that every single visitor must parse before first paint.
+// Every route is code-split. The dashboard (`Index`) statically pulls in
+// recharts + ~40 heavy modules, so keeping it lazy means visitors landing on
+// /welcome or /auth never download or parse any of it.
+const Index = lazy(() => import("./pages/Index"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Landing = lazy(() => import("./pages/Landing"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Accessibility = lazy(() => import("./pages/Accessibility"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+
 
 import { LegalGate } from "@/components/LegalGate";
 import { EconomicAlertBanner } from "@/components/economic/EconomicAlertBanner";
