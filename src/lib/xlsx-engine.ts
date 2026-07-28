@@ -304,7 +304,7 @@ function isEmptyRow(mapped: Record<string, unknown>): boolean {
 // DYNAMIC HEADER DETECTION
 // ═══════════════════════════════════════════════════
 
-function findHeaderRow(sheet: XLSX.WorkSheet): number {
+function findHeaderRow(XLSX: typeof XLSXType, sheet: XLSXType.WorkSheet): number {
   const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
   const maxScan = Math.min(range.e.r, 15); // scan first 15 rows
 
@@ -325,12 +325,13 @@ function findHeaderRow(sheet: XLSX.WorkSheet): number {
   return bestRow;
 }
 
-function pickMainSheet(wb: XLSX.WorkBook): XLSX.WorkSheet | null {
+function pickMainSheet(wb: XLSXType.WorkBook): XLSXType.WorkSheet | null {
   const name = wb.SheetNames.find(n => normalizeHeader(n) === 'main sheet')
     || wb.SheetNames.find(n => normalizeHeader(n).includes('main'))
     || wb.SheetNames.find(n => !['calculations', 'statistics'].includes(normalizeHeader(n)));
   return name ? wb.Sheets[name] : null;
 }
+
 
 function cellAt(row: unknown[], headers: Record<string, number>, names: string[]): unknown {
   for (const name of names) {
