@@ -13,13 +13,18 @@ import { ActivePortfolioProvider } from "@/hooks/use-active-portfolio";
 import { RequireAuth } from "@/components/RequireAuth";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { StorageErrorListener } from "@/components/StorageErrorListener";
-import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import Landing from "./pages/Landing";
-import Terms from "./pages/Terms";
-import Privacy from "./pages/Privacy";
-import Accessibility from "./pages/Accessibility";
-import NotFound from "./pages/NotFound";
+// Every route is code-split. The dashboard (`Index`) statically pulls in
+// recharts + ~40 heavy modules, so keeping it lazy means visitors landing on
+// /welcome or /auth never download or parse any of it.
+const Index = lazy(() => import("./pages/Index"));
+const Auth = lazy(() => import("./pages/Auth"));
+const Landing = lazy(() => import("./pages/Landing"));
+const Terms = lazy(() => import("./pages/Terms"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const Accessibility = lazy(() => import("./pages/Accessibility"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+
+
 import { LegalGate } from "@/components/LegalGate";
 import { EconomicAlertBanner } from "@/components/economic/EconomicAlertBanner";
 import { UpgradeModal } from "@/components/billing/UpgradeModal";
@@ -155,7 +160,9 @@ const App = () => (
             <ImportPreflightRoot />
             <A11yPanel />
             <BugArenaMount>
+            <Suspense fallback={<OrcaBootLoader />}>
             <Routes>
+
               <Route path="/welcome" element={<Landing />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<Navigate to="/auth" replace />} />
@@ -220,6 +227,8 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </Suspense>
+
             </BugArenaMount>
             </ActivePortfolioProvider>
           </AuthProvider>

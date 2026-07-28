@@ -1,90 +1,153 @@
-# מיזוג "ניהול סיכונים" + "פסיכולוגיה" → מרכז שליטה אחד
+## Performance Diagnostic Report — ORCA
 
-## 1. מה קיים היום (ממצאים מהקוד)
+Analysis only. No code was changed. Numbers below come from a real production build of the current codebase.
 
-**עמוד סיכונים** (`AdvancedRiskPage.tsx`, 846 שורות) — 9 סקציות:
-Kill Switch · חשיפת תיק (Net Exposure + Correlation Matrix) · איכות התשואות · מדדי מפתח · מדים ומגבלות · **חריגות סיכון שזוהו** (מסחר נקמה, קפיצות סיכון) · התפתחות סיכון לאורך זמן · השוואת סטאפים · **הקשר של זמן** (Hour-of-Day) · הקצאה ונסיגה · **מצב חי והתראות** (cool-off / caution / safe).
+### Measured baseline
 
-**עמוד פסיכולוגיה** (`AdvancedPsychologyPage.tsx`, 843 שורות) — 6 סקציות:
-פרופיל התנהגותי (Tilt Radar) · מפת חום שבועית · אותות התנהגותיים · התנהגות לאחר הפסד · מגמות לאורך זמן (מגמת משמעת, לחץ רצף הפסדים) · ביצוע מתקדם (התפלגות סטייה R).
-
-**חפיפה מהותית שכבר קיימת היום:**
-
-| נושא | קיים בסיכונים | קיים בפסיכולוגיה |
+| Artifact | Raw | Gzip |
 |---|---|---|
-| מסחר נקמה / העלאת סיכון אחרי הפסד | "חריגות סיכון" + "מצב חי" | "התנהגות לאחר הפסד" |
-| רצף הפסדים / לחץ | קירור (cool-off) ומגבלות | "לחץ רצף הפסדים" |
-| סטייה מהתוכנית (Deviation R) | Risk Evolution / drift | "התפלגות סטייה (R)" |
-| הקשר זמן (שעה/יום) | Hour-of-Day Strip | Weekly Heatmap |
+| `index-*.js` (entry) | 1.2 MB | 356 KB |
+| `vendor-charts` (recharts) | 464 KB | 124 KB |
+| `vendor-xlsx` | 416 KB | 141 KB |
+| `JournalDimension` | 250 KB | 69 KB |
+| `vendor-supabase` | 203 KB | 53 KB |
+| `html2canvas` | 198 KB | 47 KB |
+| `WeeklyTab` (MUI) | 192 KB | 64 KB |
+| `index.css` | 117 KB | — |
+| All JS | 4.24 MB | — |
+| `dist/` total | 13 MB | — |
 
-זו לא חפיפה טכנית — זו **אותה תובנה מוצגת פעמיים בשני עמודים**, וזה בדיוק הטיעון החזק למיזוג.
+Roughly **520 KB gzipped of JS is required before the dashboard can paint** (entry + react + supabase + charts). That is the single biggest lever.
 
-**תשתית:** שני העמודים כבר חולקים חוזה props זהה (`T, isRTL, isAlpha, operatingMode, trades, stats, onExplainClick, registryCharts`), שניהם ב-`lazy()` ב-`Index.tsx`, שניהם חסומים ב-`beginner` דרך `BeginnerUpsell`, ושניהם ניזונים מ-`useRegistryCharts('risk' | 'psychology')` עם `home` surface ב-`chart-registry.ts`. המיזוג הוא לכן בעיקר **שכבת מעטפת**, לא כתיבה מחדש.
+---
 
-## 2. האם כדאי? — המלצה
+## 1. Bundle structure
 
-**כן, אבל במיזוג "מעטפת עם טאבים", לא מיזוג לגלילה אחת ארוכה.**
+**F1 — The entry chunk is 356 KB gzip and contains almost the whole app shell.**
+Where: `src/App.tsx` statically imports `Index`, `Auth`, `Landing`, `Terms`, `Privacy`, `Accessibility`, `NotFound`, plus `LegalGate`, `EconomicAlertBanner`, `UpgradeModal`, `CookieConsentRoot`, `A11yPanel`, `OrcaConfirmRoot`, `ImportPreflightRoot`, and `import "@/lib/brokers"` (every broker adapter). `src/pages/Index.tsx` then statically imports ~40 more modules (`SettingsHub` 2,996 lines, `TradeForm`, `CalendarModal`, `CommandPalette`, `FeatureManifestModal`, `TraderMindSession`, `ResetModal`, `OnboardingWizard`, …).
+Why it hurts: every byte is parsed and executed before first paint, on every route including `/welcome` and `/auth`.
+Fix: route-level `lazy()` for `Landing`, `Auth`, `Terms`, `Privacy`, `Accessibility`; component-level `lazy()` for every modal that starts closed (`SettingsHub`, `TradeForm`, `ResetModal`, `CalendarModal`, `CommandPalette`, `FeatureManifestModal`, `TraderMindSession`, `ImportPreflightModal`, `UpgradeModal`, `A11yPanel`). Expected: entry drops well under 200 KB gzip.
 
-בעד:
-- ניהול סיכונים ופסיכולוגיה הם אותו דבר מנקודות מבט שונות: הסיכון הוא המספר, הפסיכולוגיה היא הסיבה. סוחר שמקבל "חריגת סיכון" צריך לראות באותו מסך את "התנהגות לאחר הפסד".
-- ה-sidebar היום מונה 8-9 פריטים; ירידה ל-7 מנקה את הניווט (במובייל שני הפריטים ממילא נמצאים ב"עוד").
-- מסירים כפילות תובנות שמבלבלת ("למה זה כתוב לי בשני מקומות?").
+**F2 — `recharts` (124 KB gz) is eagerly loaded.**
+Where: `src/pages/Index.tsx` line 5 statically imports 25 recharts symbols even though the chart-heavy surfaces (`ReviewDashboard`, `AdvancedAnalyticsPage`, …) are already lazy.
+Why: forces the chart vendor chunk into the critical path for users who never scroll to a chart.
+Fix: move the inline recharts usages in `Index.tsx` into a lazy child component so `vendor-charts` loads on demand.
 
-נגד (ולכן לא מיזוג מלא):
-- 1,700 שורות תוכן. גלילה אחת = עמוד בלתי-נסבל במובייל וזמן רינדור ארוך.
-- אובדן deep-link / זיכרון מיקום למשתמשים שרגילים ללכת ישר ל-Kill Switch.
-- `chart-registry` בנוי סביב `home: 'risk' | 'psychology'` — ביטול מלא של אחד מהם ישבור את השיוך.
+**F3 — `@mui/material` + `@mui/icons-material` + `@emotion` ship for a feature that is hard-gated to one email.**
+Where: the entire `src/components/weekly-review/render/**` tree and `reflection-theme.ts`. Produces `WeeklyTab` (64 KB gz) and `DefaultPropsProvider` (80 KB) chunks.
+Why: two full UI systems (shadcn/Tailwind + MUI/Emotion) for a page 99.9% of users cannot open.
+Fix: keep the whole subtree behind a single dynamic import gated on entitlement (it is partly lazy already, but `use-user-template.ts` statically re-imports `wr-merge`, defeating splitting — see F5). Longer term, port those screens off MUI and drop 4 dependencies.
 
-לכן: **עמוד אחד, שתי לשוניות + שכבת סיכום משותפת מעליהן.**
+**F4 — `xlsx` (141 KB gz) and `html2canvas` (47 KB gz) are large and only needed on rare actions.**
+Where: `src/lib/xlsx-engine.ts` and `src/lib/uie/io.ts` use `import * as XLSX`; `src/lib/brokers/_csv-factory.ts` statically imports `xlsx-engine`, and `src/lib/brokers/index.ts` is a side-effect import in `App.tsx` — so the broker registry drags xlsx toward the boot graph.
+Why: import/export and screenshot capture are once-in-a-session actions paying a first-load cost.
+Fix: make `brokers/index.ts` register adapters lazily (registry stores loader functions), and use `await import('xlsx')` / `await import('html2canvas')` inside the handlers only.
 
-## 3. איך זה אמור להיראות
+**F5 — Five modules are both statically and dynamically imported, so the dynamic import is a no-op.**
+Rollup reported this for `scoped-storage.ts`, `storage.ts`, `xlsx-engine.ts`, `orca-confirm.tsx`, `wr-merge.ts`.
+Why: the code *looks* split but the module is already in the parent chunk — zero benefit, plus confusion.
+Fix: pick one strategy per module. For `storage.ts`/`scoped-storage.ts` just make them static everywhere (they are small and always needed); for `xlsx-engine` and `orca-confirm` remove the static importers.
 
-```text
-◆ חדר בקרה · CONTROL ROOM
-────────────────────────────────────────────────
-[ מצב חי ]  🟢 SAFE   |  סיכון יומי 0.8R/2R  |  משמעת 82%  |  Kill Switch ⏻
-   ← שורת סטטוס אחת, תמיד גלויה, ממזגת "מצב חי" (סיכונים) + Tilt (פסיכולוגיה)
-────────────────────────────────────────────────
-[ סיכון · RISK ]   [ תודעה · MIND ]        ← טאבים
-────────────────────────────────────────────────
-  תוכן הטאב הפעיל (הסקציות הקיימות, ללא שינוי פנימי)
-```
+**F6 — `manualChunks` is a coarse hard-coded map.**
+Where: `vite.config.ts`.
+Why: `vendor-charts` and `vendor-xlsx` are single monoliths; changing one line in the app invalidates the 1.2 MB entry chunk for every returning user.
+Fix: split vendor by `node_modules` package path instead of a fixed list, so caching is granular.
 
-- **שכבה 0 — Live Status Bar (חדש, משותף):** מאחד את סקציית "מצב חי והתראות" מהסיכונים עם ציון ה-Tilt/משמעת מהפסיכולוגיה + כפתור Kill Switch. זו הסקציה היחידה שנכתבת מחדש; היא הופכת ל"כותרת" של העמוד ומופיעה בשני הטאבים.
-- **טאב RISK:** כל סקציות הסיכון הקיימות, פחות "מצב חי" (עלה למעלה) ופחות "מפת שעות" (עוברת ל-MIND יחד עם ה-Heatmap, כי שתיהן "מתי אני מתפקד").
-- **טאב MIND:** כל סקציות הפסיכולוגיה + Hour-of-Day Strip, כשסקציית "התנהגות לאחר הפסד" מקבלת קישור-הצלבה ל-"חריגות סיכון" בטאב השני.
-- **מובייל:** הטאבים כ-segmented control דביק מתחת לשורת הסטטוס; שורת הסטטוס מתכווצת לשורה אחת עם 3 מדדים.
-- **עיצוב:** אין פלטה חדשה. Risk = אדום/כתום/ירוק כמו היום, Mind = ויולט/טורקיז מפלטת Indigo Nebula. הטאב הפעיל מקבל את צבע הדומיין שלו — כך שהמשתמש "מרגיש" באיזה מוד הוא נמצא.
+---
 
-## 4. סיכונים ואיך מנטרלים אותם
+## 2. Assets
 
-| סיכון | חומרה | נטרול |
-|---|---|---|
-| שבירת `chart-registry` (`home: 'psychology'`) | גבוהה | לא נוגעים ברישום. העמוד החדש קורא לשני ה-hooks ומזין כל טאב ב-registryCharts שלו. |
-| ביצועים — טעינת 1,700 שורות בבת אחת | בינונית | כל טאב נשאר `lazy()` נפרד; טאב לא-פעיל לא מרונדר כלל. בפועל **ישתפר** מול היום. |
-| deep-link ישן ל-`page === 'risk'` / `'psychology'` | בינונית | שני ה-ids ממשיכים לעבוד ומנתבים לעמוד המאוחד עם הטאב המתאים נבחר מראש. אפס 404. |
-| מובייל — עומק גלילה | בינונית | טאבים + סטטוס דביק פותרים; אין גלילה מאוחדת. |
-| בלבול משתמשים ותיקים | נמוכה | שם ברור בשתי השפות + tooltip חד-פעמי בכניסה הראשונה. |
-| Bug Arena `section-resolver` מזהה מקטעים לפי שם | נמוכה | מוסיפים מיפוי לשני ה-surfaces הישנים. |
+**F7 — 17 landing PNGs totalling ~4.4 MB, plus a 505 KB logo shipped twice.**
+Where: `src/assets/landing/*.png` (largest: `ai_gold_edge.png` 512 KB, `orca_logo.png` 505 KB, `calendar.png` 424 KB, `dashboard_main.png` 408 KB) and `public/orca-logo.png` (505 KB) duplicated at `src/assets/orca-logo.png`.
+Why: `public/orca-logo.png` is the favicon *and* the PWA icon — every visitor downloads 505 KB for a 32 px icon. Landing screenshots dominate LCP on `/welcome`.
+Fix: convert screenshots to WebP/AVIF via `vite-imagetools` (expect 70–85% reduction), generate proper 192/512 px PWA icons and a small favicon, add `loading="lazy"` + `decoding="async"` to below-fold screenshots, and `<link rel="preload" as="image">` only for the single LCP hero.
 
-**סיכון מרכזי אחד שכן קיים:** אם בעתיד תרצה למכור "Psychology" כמודול נפרד בתמחור, מיזוג ויזואלי מקשה על הפרדה מסחרית. הפתרון: הטאב נשאר ישות עצמאית בקוד, כך שאפשר לפצל חזרה בשינוי מעטפת בלבד.
+**F8 — 117 KB of CSS in one blocking stylesheet.**
+Where: `src/index.css` plus `dashboard.css`, `a11y-engine.css`.
+Why: render-blocking; much of it targets routes the visitor is not on.
+Fix: audit for dead rules, and move route-specific CSS into the lazy chunk that uses it (`ReviewDashboard.css` already does this correctly — use it as the pattern).
 
-## 5. שלבי ביצוע
+---
 
-1. **`ControlRoomPage.tsx` חדש** — מעטפת: כותרת, Live Status Bar, טאבים, ניתוב `initialTab`.
-2. **חילוץ Live Status** — הוצאת "מצב חי והתראות" מ-`AdvancedRiskPage` ואיחודו עם ציון ה-Tilt מ-`AdvancedPsychologyPage` לרכיב משותף `LiveStateBar.tsx`.
-3. **העברת Hour-of-Day** מטאב RISK לטאב MIND.
-4. **`Index.tsx`** — `nav` יאבד שני פריטים ויקבל אחד (`control-room`), `page === 'risk'|'psychology'` ימשיכו לעבוד כ-aliases שקובעים טאב.
-5. **תרגומים** — מפתח חדש ב-`trading-i18n.ts`: `חדר בקרה` / `Control Room`.
-6. **בדיקות** — smoke: כניסה משני ה-ids הישנים, החלפת טאבים, מובייל 390px, שני ה-themes.
+## 3. Data access
 
-## 6. פרטים טכניים
+**F9 — `@tanstack/react-query` is installed and provided, but there is not a single `useQuery` in the codebase.**
+Where: `src/App.tsx` sets up `QueryClientProvider`; zero consumers.
+Why: all server state is hand-rolled with `useState` + `useEffect`, so there is no dedupe, no cache, no stale-while-revalidate. Every remount refetches.
+Fix: migrate the hot read paths (`use-trades`, `use-portfolios`, `use-economic-events`, `use-settings`, `use-entitlement`) to `useQuery` with sane `staleTime`. This is the highest-value structural fix after F1.
 
-- שני העמודים הקיימים נשארים כקבצים; הם הופכים לרכיבי-תוכן שמקבלים `hideLiveState` / `hideHourStrip` כדי למנוע כפילות. אפס מחיקה של לוגיקה.
-- `useRegistryCharts('risk')` ו-`useRegistryCharts('psychology')` נקראים שניהם בעמוד האב — זול, מדובר בסינון מערך.
-- `BeginnerUpsell` מקבל surface חדש `'control-room'` ומאחד את שני ה-upsells הקיימים.
-- אין שינוי סכימה, אין שינוי backend, אין מיגרציה.
+**F10 — Full trade reload on every sync event.**
+Where: `src/hooks/use-trades.ts` — `orca:trades-synced` and `orca:active-portfolio-changed` both call `load()`, which pages the *entire* trades table 1,000 rows at a time (`src/lib/storage.ts` `getAllTrades`), re-sanitizes, dedupes and re-sorts everything.
+Why: after importing 3,000 trades this is 3 round-trips plus a full O(n log n) re-process, and it fires again for each subsequent event. Also creates a brand-new `trades` array identity, invalidating every downstream `useMemo`.
+Fix: debounce the event-driven reload (~300 ms), and for local mutations patch state in place instead of refetching. Cache the sanitized result keyed by portfolio id.
 
-## 7. שאלה אחת פתוחה
+**F11 — Several always-on timers.**
+Where: `use-kill-switch.ts` 30 s interval, `use-admin-live.ts` 30 s poll, `use-deployment-watcher.ts` interval poll, `Index.tsx:572` 5 min tick, `WeeklyReviewBanner` 60 s tick, `ExchangesPanel.tsx:687` **120 ms** interval, `OrcaBootLoader` 250 ms poll.
+Why: the 120 ms interval re-renders a panel ~8×/s; none of them pause when the tab is hidden, so background tabs keep burning CPU and battery.
+Fix: gate every interval on `document.visibilityState === 'visible'`, raise the 120 ms tick to ~1 s (or drive it with `requestAnimationFrame` only while a sync is active), and let react-query's `refetchInterval` handle the polling ones.
 
-שם העמוד המועדף: **חדר בקרה / Control Room**, **סיכון ותודעה / Risk & Mind**, או שמירה על **ניהול סיכונים** עם טאב פסיכולוגיה בפנים? אבחר "חדר בקרה" כברירת מחדל אם לא תגיד אחרת.
+**F12 — Settings are read one key at a time.**
+Where: `src/lib/storage.ts` `getSetting()` does one `maybeSingle()` per key; `use-settings`, `use-ui-prefs`, `use-lang`, `use-risk-limits`, `use-dashboard-config`, `use-week-start` each call it independently.
+Why: classic N+1 — 6+ sequential round-trips at boot, serialised behind auth.
+Fix: one `select('key,value').eq('user_id', uid)` at boot into a context/react-query cache; `getSetting` reads from that map.
+
+---
+
+## 4. Rendering
+
+**F13 — `Index.tsx` is a 2,222-line component with ~35 `useState` hooks.**
+Why: any state change — hover on a calendar day (`calHoverDay`), opening a menu, a 5-minute reminder tick — re-renders the whole tree including the dashboard and all charts.
+Fix: extract modal/UI-chrome state into a small context or `useReducer` colocated with the consumers; split the page body into memoised sections (`<DashboardSection>`, `<CalendarSection>`, `<JournalSection>`) so unrelated state changes stay local.
+
+**F14 — `JournalDimension.tsx`: 4,853 lines, 29 `useEffect`, 36 memo hooks in one file.**
+Why: 250 KB chunk, very expensive mount, and hard to reason about which effect re-fires.
+Fix: split into subcomponents by responsibility (bridge, entry list, editor, analytics) so React can bail out on subtrees.
+
+**F15 — Expensive analytics recompute on every `trades` identity change.**
+Where: `use-trades.ts` `stats = useMemo(... computeAnalytics(filtered) ...)`, plus `Index.tsx` `riskData = useMemo(() => assessRisk(trades))`, `rEligibleTrades`, `calDayPnl`, `weekStats`, `monthStats`.
+Why: these run synchronously on the main thread; combined with F10 (new array identity per sync) they re-run more often than the data actually changes.
+Fix: memoise on a cheap content signature (length + max id + last-updated) rather than array identity; for large datasets move `computeAnalytics` behind `startTransition` or a Web Worker.
+
+**F16 — `OrcaUXLayer` has 12 effects with global listeners.**
+Why: scroll/pointer/resize listeners on every route, mounted for signed-out visitors too.
+Fix: it is already lazy — additionally gate the ambient effects behind `prefers-reduced-motion` and skip them entirely on mobile/low-`deviceMemory` devices.
+
+**F17 — Charts re-render on parent state changes.**
+Where: 21 files import recharts; most chart components are not wrapped in `React.memo` and receive inline-constructed `data`/`margin`/`style` object literals.
+Why: recharts re-layout is one of the most expensive things in the app.
+Fix: `React.memo` each chart, hoist static `margin`/`style` objects to module scope, and memoise the `data` arrays.
+
+---
+
+## 5. Main-thread work
+
+**F18 — Import pipeline parses XLSX/CSV synchronously.** `src/lib/uie/pipeline.ts` + `xlsx-engine.ts` block the UI during a large import (the loading overlay is animating on the same blocked thread). Fix: move parsing into a Web Worker.
+
+**F19 — `html2canvas` capture in Bug Arena.** Already disabled on mobile; on desktop it still freezes the tab for hundreds of ms. Fix: dynamic import at click time (F4) and run it inside `requestIdleCallback`.
+
+**F20 — The `index.html` preboot script does a full `localStorage` scan + JSON parse of every `sb-*` key on every page load,** before anything renders. Small, but it is strictly on the critical path. Fix: cache the resolved uid under a single well-known key.
+
+---
+
+## Suggested order of work
+
+1. **F1 + F2** — lazy-load routes, modals and recharts. Biggest first-paint win, lowest risk.
+2. **F7** — image/icon optimisation. Large win on `/welcome` and mobile.
+3. **F4 + F5** — dynamic `xlsx`/`html2canvas`, fix the no-op dynamic imports.
+4. **F11 + F12** — visibility-gated timers, batched settings read.
+5. **F9 + F10** — react-query migration for the hot read paths.
+6. **F13 + F15 + F17** — component splitting and memoisation.
+7. **F3, F14, F18** — larger refactors (drop MUI, split JournalDimension, worker-based import).
+
+---
+
+## Also requested: per-tab loading skeleton (Control Room)
+
+`src/components/trading/ControlRoomPage.tsx` currently renders `TabSkeleton` as three fixed bars (220/160/160 px), which does **not** match either tab's real layout — so switching tabs causes a visible jump. Planned change (not yet applied):
+
+- Give `TabSkeleton` a `tab` prop and render two distinct shapes: **Risk** = LiveStateBar strip + 2-up KPI row + wide exposure block + table; **Mind** = header strip + radar/donut pair + stacked insight cards.
+- Reserve height with `min-height` on the tab container equal to the last measured real content height (tracked per tab in a ref), so the swap is zero-shift.
+- Respect `prefers-reduced-motion` for the pulse animation.
+
+### Technical notes
+No code changes have been made. Every finding above is reproducible from the build output in `dist/` and the file references given.

@@ -87,14 +87,26 @@ export function useDeploymentWatcher() {
 
     // First check after a short delay so the page settles.
     const initial = setTimeout(check, 8_000);
-    const iv = setInterval(check, POLL_INTERVAL_MS);
+
+    // Only poll while the tab is visible — a backgrounded tab re-fetching
+    // index.html forever is pure waste. On resume we check immediately.
+    let iv: number | undefined;
+    const start = () => { if (iv === undefined) iv = window.setInterval(check, POLL_INTERVAL_MS); };
+    const stop = () => { if (iv !== undefined) { window.clearInterval(iv); iv = undefined; } };
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') { check(); start(); } else { stop(); }
+    };
+    if (document.visibilityState === 'visible') start();
+    document.addEventListener('visibilitychange', onVisibility);
 
     return () => {
       cancelled = true;
       clearTimeout(initial);
-      clearInterval(iv);
+      stop();
+      document.removeEventListener('visibilitychange', onVisibility);
     };
   }, []);
+
 
   return { hasNewDeployment, reload };
 }

@@ -5,6 +5,7 @@ import { OrcaBootLoader } from '@/components/OrcaBootLoader';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell, ComposedChart, ScatterChart, Scatter, ZAxis, ReferenceLine } from 'recharts';
 import type { Trade } from '@/data/trades';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useVisibleInterval } from '@/hooks/use-visible-interval';
 
 import { computeAnalytics, getCalDays } from '@/lib/trading-analytics';
 import { i18n } from '@/lib/trading-i18n';
@@ -568,10 +569,10 @@ const Index = () => {
   const [reviewReminderTick, setReviewReminderTick] = useState(0);
   const [reviewArchive, setReviewArchive] = useState<Array<{ weekKey?: string; closedAt?: string }>>([]);
   const [reviewRecaps, setReviewRecaps] = useState<Record<string, unknown>>({});
-  useEffect(() => {
-    const id = window.setInterval(() => setReviewReminderTick(t => t + 1), 5 * 60 * 1000);
-    return () => window.clearInterval(id);
-  }, []);
+  // Paused while the tab is hidden — a 5-minute re-render of this 2k-line
+  // component in a background tab is pure waste.
+  useVisibleInterval(() => setReviewReminderTick(t => t + 1), 5 * 60 * 1000);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {

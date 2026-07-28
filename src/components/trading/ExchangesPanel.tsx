@@ -681,12 +681,15 @@ function CredentialModal({
     window.__orcaExchangeDrafts[draftKey] = { label, apiKey, apiSecret };
   }, [draftKey, label, apiKey, apiSecret]);
 
-  // Live tick while cooldown is active so the button re-enables crisply
+  // Live tick while cooldown is active so the button re-enables crisply.
+  // 120ms re-rendered this panel ~8x/sec; the countdown is displayed in
+  // seconds, so 500ms is visually identical at a fraction of the cost.
   useEffect(() => {
     if (cooldownUntil <= Date.now()) return;
-    const id = setInterval(() => setNowTick(Date.now()), 120);
+    const id = setInterval(() => setNowTick(Date.now()), 500);
     return () => clearInterval(id);
   }, [cooldownUntil]);
+
 
   const cooldownRemainingMs = Math.max(0, cooldownUntil - nowTick);
   const inCooldown = cooldownRemainingMs > 0;

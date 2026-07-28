@@ -8,7 +8,7 @@
  * render props so only the active tab mounts (keeps chart cost identical to
  * the previous two-page setup).
  */
-import { Suspense, useState, type ReactNode } from 'react';
+import { Suspense, useState, useRef, useEffect, useCallback, type ReactNode } from 'react';
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { TradingStats } from '@/lib/trading-analytics';
@@ -29,24 +29,72 @@ interface Props {
   renderMind: () => ReactNode;
 }
 
-/** Shared skeleton so both tabs load with identical rhythm. */
-const TabSkeleton = ({ T }: { T: TradingTheme }) => (
-  <div style={{ display: 'grid', gap: 12 }} aria-busy="true">
-    {[220, 160, 160].map((h, i) => (
-      <div
-        key={i}
-        style={{
-          height: h,
-          borderRadius: 14,
-          background: T.bg.card,
-          border: `1px solid ${T.border.subtle}`,
-          opacity: 0.55,
-          animation: 'pulse 1.6s ease-in-out infinite',
-        }}
-      />
-    ))}
-  </div>
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' &&
+  typeof window.matchMedia === 'function' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/**
+ * Skeleton block. Shape-only — it never renders content, just reserves the
+ * geometry of the real element it stands in for.
+ */
+const Block = ({ T, h, radius = 14, flex, pulse }: { T: TradingTheme; h: number; radius?: number; flex?: number; pulse: boolean }) => (
+  <div
+    style={{
+      height: h,
+      flex,
+      minWidth: 0,
+      borderRadius: radius,
+      background: T.bg.card,
+      border: `1px solid ${T.border.subtle}`,
+      opacity: 0.55,
+      animation: pulse ? 'pulse 1.6s ease-in-out infinite' : 'none',
+    }}
+  />
 );
+
+/**
+ * Per-tab skeleton that mirrors the real layout of each surface, so the swap
+ * from skeleton → content does not shift anything on screen.
+ *
+ * Risk : KPI row → wide exposure block → correlation grid → table
+ * Mind : header strip → radar + donut pair → stacked insight cards
+ */
+const TabSkeleton = ({ T, tab, isMobile }: { T: TradingTheme; tab: ControlRoomTab; isMobile: boolean }) => {
+  const pulse = !prefersReducedMotion();
+  const row: React.CSSProperties = { display: 'flex', gap: 12, flexWrap: isMobile ? 'wrap' : 'nowrap' };
+
+  if (tab === 'risk') {
+    return (
+      <div style={{ display: 'grid', gap: 12 }} aria-busy="true" aria-live="polite">
+        <div style={row}>
+          <Block T={T} h={92} flex={1} pulse={pulse} />
+          <Block T={T} h={92} flex={1} pulse={pulse} />
+          {!isMobile && <Block T={T} h={92} flex={1} pulse={pulse} />}
+        </div>
+        <Block T={T} h={isMobile ? 240 : 300} pulse={pulse} />
+        <div style={row}>
+          <Block T={T} h={isMobile ? 200 : 240} flex={1.4} pulse={pulse} />
+          <Block T={T} h={isMobile ? 200 : 240} flex={1} pulse={pulse} />
+        </div>
+        <Block T={T} h={isMobile ? 220 : 260} pulse={pulse} />
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'grid', gap: 12 }} aria-busy="true" aria-live="polite">
+      <Block T={T} h={72} pulse={pulse} />
+      <div style={row}>
+        <Block T={T} h={isMobile ? 260 : 320} flex={1} pulse={pulse} />
+        <Block T={T} h={isMobile ? 260 : 320} flex={1} pulse={pulse} />
+      </div>
+      <Block T={T} h={isMobile ? 180 : 200} pulse={pulse} />
+      <Block T={T} h={isMobile ? 180 : 200} pulse={pulse} />
+    </div>
+  );
+};
+
 
 const EmptyState = ({ T, isRTL, tab }: { T: TradingTheme; isRTL: boolean; tab: ControlRoomTab }) => (
   <div
@@ -75,6 +123,47 @@ export const ControlRoomPage = ({
 }: Props) => {
   const [tab, setTab] = useState<ControlRoomTab>(initialTab);
   const isEmpty = trades.length === 0;
+
+  /**
+   * Zero-layout-shift tab swapping: remember the last measured height of each
+   * tab's real content and use it as the panel's `min-height` while the next
+   * tab is still loading. First visit falls back to the skeleton's own height.
+   */
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const heightsRef = useRef<Partial<Record<ControlRoomTab, number>>>({});
+  const [reservedHeight, setReservedHeight] = useState<number | undefined>(undefined);
+
+  const measure = useCallback(() => {
+    const el = panelRef.current;
+    if (!el) return;
+    const h = el.offsetHeight;
+    if (h > 0) heightsRef.current[tab] = h;
+  }, [tab]);
+
+  useEffect(() => {
+    const el = panelRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => measure());
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [measure]);
+
+  // Once the new tab has painted, release the reserved height so the panel can
+  // shrink/grow naturally with its real content.
+  useEffect(() => {
+    if (reservedHeight === undefined) return;
+    const id = requestAnimationFrame(() => setReservedHeight(undefined));
+    return () => cancelAnimationFrame(id);
+  }, [reservedHeight, tab]);
+
+  const switchTab = useCallback((next: ControlRoomTab) => {
+    if (next === tab) return;
+    measure();
+    setReservedHeight(heightsRef.current[next] ?? heightsRef.current[tab]);
+    setTab(next);
+  }, [tab, measure]);
+
+
 
 
   const tabs: Array<{ id: ControlRoomTab; icon: string; label: string; sub: string; color: string }> = [
@@ -135,7 +224,7 @@ export const ControlRoomPage = ({
               key={tb.id}
               role="tab"
               aria-selected={active}
-              onClick={() => setTab(tb.id)}
+              onClick={() => switchTab(tb.id)}
               style={{
                 textAlign: isRTL ? 'right' : 'left',
                 padding: isMobile ? '10px 12px' : '12px 16px',
@@ -165,18 +254,25 @@ export const ControlRoomPage = ({
       {/* ── Active surface ───────────────────────────────────── */}
       <div
         role="tabpanel"
+        ref={panelRef}
         key={tab}
         aria-label={tab === 'risk' ? (isRTL ? 'סיכון' : 'Risk') : (isRTL ? 'תודעה' : 'Mind')}
-        style={{ display: 'grid', gap: 12, animation: 'fadeIn .25s ease' }}
+        style={{
+          display: 'grid',
+          gap: 12,
+          minHeight: reservedHeight,
+          animation: prefersReducedMotion() ? 'none' : 'fadeIn .25s ease',
+        }}
       >
         {isEmpty ? (
           <EmptyState T={T} isRTL={isRTL} tab={tab} />
         ) : (
-          <Suspense fallback={<TabSkeleton T={T} />}>
+          <Suspense fallback={<TabSkeleton T={T} tab={tab} isMobile={isMobile} />}>
             {tab === 'risk' ? renderRisk() : renderMind()}
           </Suspense>
         )}
       </div>
+
     </div>
 
   );

@@ -1,4 +1,14 @@
-import * as XLSX from 'xlsx';
+// SheetJS is ~416 KB raw / ~141 KB gzip and is only needed when the user
+// actually exports or parses a spreadsheet. Types are imported type-only
+// (fully erased at build time); the runtime module is loaded on demand.
+import type * as XLSXType from 'xlsx';
+
+let _xlsx: typeof XLSXType | null = null;
+async function loadXLSX(): Promise<typeof XLSXType> {
+  if (!_xlsx) _xlsx = await import('xlsx');
+  return _xlsx;
+}
+
 import type { Trade } from '@/data/trades';
 import { sanitizeTrade } from './trade-sanitizer';
 
@@ -294,7 +304,7 @@ function isEmptyRow(mapped: Record<string, unknown>): boolean {
 // DYNAMIC HEADER DETECTION
 // ═══════════════════════════════════════════════════
 
-function findHeaderRow(sheet: XLSX.WorkSheet): number {
+function findHeaderRow(XLSX: typeof XLSXType, sheet: XLSXType.WorkSheet): number {
   const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
   const maxScan = Math.min(range.e.r, 15); // scan first 15 rows
 
@@ -315,12 +325,13 @@ function findHeaderRow(sheet: XLSX.WorkSheet): number {
   return bestRow;
 }
 
-function pickMainSheet(wb: XLSX.WorkBook): XLSX.WorkSheet | null {
+function pickMainSheet(wb: XLSXType.WorkBook): XLSXType.WorkSheet | null {
   const name = wb.SheetNames.find(n => normalizeHeader(n) === 'main sheet')
     || wb.SheetNames.find(n => normalizeHeader(n).includes('main'))
     || wb.SheetNames.find(n => !['calculations', 'statistics'].includes(normalizeHeader(n)));
   return name ? wb.Sheets[name] : null;
 }
+
 
 function cellAt(row: unknown[], headers: Record<string, number>, names: string[]): unknown {
   for (const name of names) {
@@ -347,7 +358,9 @@ function parseTimespanMinutes(value: unknown): number {
 // EXPORT
 // ═══════════════════════════════════════════════════
 
-export function exportToXlsx(trades: Trade[]): void {
+export async function exportToXlsx(trades: Trade[]): Promise<void> {
+  const XLSX = await loadXLSX();
+
   const headers = [
     'System No.', 'ENTRY DATE/TIME', 'COIN', 'DIRECTION', 'ENTRY ORDER TYPE',
     'ENTRY', 'STOP LOSS', 'AVG EXIT', 'DESIRED RISK (%)', 'DESIRED RISK (USD)',
@@ -392,16 +405,18 @@ export interface BrokerImportResult { trades: Trade[]; errors: string[]; skipped
 export function parseBrokerCsvRaw(file: File): Promise<Trade[]> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
+        const XLSX = await loadXLSX();
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const wb = XLSX.read(data, { type: 'array', cellDates: true, raw: true });
         const sheetName = wb.SheetNames[0];
         if (!sheetName) { resolve([]); return; }
         const ws = wb.Sheets[sheetName];
 
-        const headerRowIdx = findHeaderRow(ws);
+        const headerRowIdx = findHeaderRow(XLSX, ws);
         const rows = XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1, raw: false, blankrows: false, defval: '' });
+
         if (rows.length <= headerRowIdx + 1) { resolve([]); return; }
 
         const headerRow = rows[headerRowIdx] || [];
