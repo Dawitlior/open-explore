@@ -39,13 +39,13 @@ function isLastDayOfMonth(d: Date): boolean {
 
 
 export default function WeeklyReviewBanner({ T, isRTL, trades }: Props) {
-  // Live tick to flip states across midnight without reload
+  // Live tick to flip states across midnight without reload.
+  // Paused while hidden; fires on resume so a tab left open overnight
+  // still snaps to the correct state the moment it's looked at.
   const [tick, setTick] = useState(0);
-  useEffect(() => {
-    const id = window.setInterval(() => setTick(t => t + 1), 60 * 1000);
-    return () => window.clearInterval(id);
-  }, []);
+  useVisibleInterval(() => setTick(t => t + 1), 60 * 1000);
   void tick;
+
 
   const now = new Date();
   const isFri = now.getDay() === 5;
