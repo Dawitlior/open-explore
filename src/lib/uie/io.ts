@@ -7,7 +7,15 @@
  *   - .csv/.txt/.tsv → PapaParse, single sheet
  *   - .json → not handled here (legacy JSON path still runs in Index.tsx)
  */
-import * as XLSX from 'xlsx';
+import type * as XLSXType from 'xlsx';
+
+// SheetJS is only needed when an actual spreadsheet is dropped in. Loading it
+// on demand keeps ~141 KB gzip out of the boot path.
+let _xlsx: typeof XLSXType | null = null;
+async function loadXLSX(): Promise<typeof XLSXType> {
+  if (!_xlsx) _xlsx = await import('xlsx');
+  return _xlsx;
+}
 import Papa from 'papaparse';
 import type { SheetInput } from './types';
 
@@ -29,6 +37,7 @@ function isCsvLike(file: File): boolean {
 
 export async function fileToSheets(file: File): Promise<SheetInput[]> {
   if (isXlsx(file)) {
+    const XLSX = await loadXLSX();
     const buf = await file.arrayBuffer();
     const wb = XLSX.read(buf, { raw: false });
     return wb.SheetNames.map((name) => ({
@@ -47,6 +56,7 @@ export async function fileToSheets(file: File): Promise<SheetInput[]> {
   }
   // Unknown — try XLSX first (binary), fall back to CSV text
   try {
+    const XLSX = await loadXLSX();
     const buf = await file.arrayBuffer();
     const wb = XLSX.read(buf, { raw: false });
     return wb.SheetNames.map((name) => ({
