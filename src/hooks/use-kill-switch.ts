@@ -52,10 +52,13 @@ export function useKillSwitch() {
       setState(s && typeof s === 'object' ? { until: s.until ?? null, engagedAt: s.engagedAt ?? null } : EMPTY);
       setLoaded(true);
     });
-    // Periodic re-render so "time remaining" countdown + auto-release work.
-    const id = setInterval(() => tick(n => n + 1), 30_000);
-    return () => { alive = false; clearInterval(id); };
+    return () => { alive = false; };
   }, []);
+
+  // Periodic re-render so "time remaining" countdown + auto-release work.
+  // Paused while the tab is hidden; catches up on resume.
+  useVisibleInterval(() => tick(n => n + 1), 30_000);
+
 
   const now = Date.now();
   const untilMs = state.until ? Date.parse(state.until) : 0;
