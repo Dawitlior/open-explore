@@ -148,14 +148,16 @@ html[dir="rtl"] .dash-share-stats-btn {
 
 /* Charts that should stretch to fill their card on desktop
    (radar + direction pie were previously locked to tiny fixed heights). */
-.dash-chart-fill { width: 100%; height: 100%; min-height: 260px; }
+.dash-chart-fill { width: 100%; height: 100%; min-height: 210px; }
 @media (min-width: 768px) {
   .dash-charts-3 > .dash-chart-card { display: flex; flex-direction: column; }
   .dash-charts-3 > .dash-chart-card > * { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
-  .dash-charts-3 .dash-chart-fill { flex: 1 1 auto; height: clamp(340px, 28vw, 420px) !important; min-height: 340px; }
+  .dash-charts-3 .dash-chart-fill { flex: 1 1 auto; height: clamp(250px, 20vw, 300px) !important; min-height: 250px; }
+  .dash-charts-3 .dash-chart-h-sm { height: clamp(250px, 20vw, 300px); }
 }
 @media (min-width: 1280px) {
-  .dash-charts-3 .dash-chart-fill { height: clamp(400px, 24vw, 460px) !important; min-height: 400px; }
+  .dash-charts-3 .dash-chart-fill { height: clamp(280px, 18vw, 320px) !important; min-height: 280px; }
+  .dash-charts-3 .dash-chart-h-sm { height: clamp(280px, 18vw, 320px); }
 }
 
 .dash-charts-alpha {
