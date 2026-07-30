@@ -29,10 +29,16 @@ interface Props {
   renderMind: () => ReactNode;
 }
 
-const prefersReducedMotion = () =>
+/**
+ * Reduced-motion is a device/OS level setting — resolve it once at module load
+ * instead of hitting matchMedia on every render of every skeleton block.
+ */
+const REDUCED_MOTION =
   typeof window !== 'undefined' &&
   typeof window.matchMedia === 'function' &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const prefersReducedMotion = () => REDUCED_MOTION;
 
 /**
  * Skeleton block. Shape-only — it never renders content, just reserves the
