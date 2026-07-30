@@ -253,6 +253,8 @@ export const ReviewDashboard = ({
                                 <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} vertical={false} />
                                 <XAxis dataKey="trade" tick={false} axisLine={false} height={0} />
                                 <YAxis yAxisId="equity" tick={{ fill: T.text.muted, fontSize: 10 }} width={56} tickLine={false} axisLine={false} tickFormatter={(v: number) => fmtDashValue(v, isMoney)} domain={['auto', 'auto']} />
+                                {/* Mirror gutter so this panel's plot area matches the drawdown panel below */}
+                                <YAxis yAxisId="equityMirror" orientation="right" width={56} tick={false} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
                                 <YAxis yAxisId="bars" hide domain={barDomain} />
                                 <Tooltip contentStyle={tt} formatter={(v: any, n: string) => [fmtDashValue(Number(v), isMoney), n === 'delta' ? (isRTL ? 'עסקה' : 'Trade') : (isRTL ? 'הון' : 'Equity')]} />
                                 <ReferenceLine yAxisId="equity" y={0} stroke={T.border.medium} strokeDasharray="2 2" />
