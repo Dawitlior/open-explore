@@ -271,6 +271,8 @@ export const ReviewDashboard = ({
                               <ComposedChart data={pts} margin={{ top: 4, right: 8, bottom: 4, left: 0 }} syncId="eqSync">
                                 <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} vertical={false} />
                                 <XAxis dataKey="trade" tick={{ fill: T.text.muted, fontSize: 10 }} tickLine={false} axisLine={false} interval="preserveStartEnd" minTickGap={28} />
+                                {/* Mirror gutter (left) so this panel's plot area matches the equity panel above */}
+                                <YAxis yAxisId="ddMirror" width={56} tick={false} tickLine={false} axisLine={false} domain={[-100, 0]} />
                                 <YAxis yAxisId="dd" orientation="right" tick={{ fill: T.text.muted, fontSize: 10 }} width={56} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${v.toFixed(0)}%`} domain={[-100, 0]} ticks={[0, -50, -100]} />
                                 <Tooltip contentStyle={tt} formatter={(v: any) => [`${Number(v).toFixed(2)}%`, 'DD']} />
                                 <Line yAxisId="dd" type="linear" dataKey="drawdown" stroke={T.accent.red} strokeWidth={1.4} dot={false} isAnimationActive={false} />
