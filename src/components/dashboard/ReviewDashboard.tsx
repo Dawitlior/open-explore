@@ -282,7 +282,7 @@ export const ReviewDashboard = ({
                         </>
                       );
                     })()}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8, marginTop: 10 }}>
+                    <div className="dash-eq-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8, marginTop: 10 }}>
                       {[
                         { l: isRTL ? 'נוכחי' : 'Current', v: equityAdvanced.last, c: equityAdvanced.last >= 0 ? T.accent.green : T.accent.red },
                         { l: isRTL ? 'שיא' : 'Peak', v: equityAdvanced.best, c: T.accent.cyan },
