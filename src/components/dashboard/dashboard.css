@@ -464,3 +464,10 @@ html[dir="ltr"] .dash-kpi-grid .orca-metric-sub {
   /* Horizontal heatmap scroll container — never bleed past card */
   [data-advanced-lab] [style*="overflowX"] { max-width: 100%; }
 }
+
+/* Equity Curve — align the 3 summary metric cards with the chart plot area
+   (both panels reserve a 56px axis gutter on each side). */
+.dash-eq-metrics { padding-inline: 56px; }
+@media (max-width: 768px) {
+  .dash-eq-metrics { padding-inline: 0; }
+}
