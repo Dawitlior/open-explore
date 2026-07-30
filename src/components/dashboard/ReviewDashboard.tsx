@@ -233,27 +233,51 @@ export const ReviewDashboard = ({
               {isChartVisible('equityCurve') && (
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.equityCurve} explanation={EXPLANATIONS.equityCurve} unit={isMoney ? '$' : 'R'} chartId="equityCurve" onRemove={handleHideChart}>
-                    <div className="dash-chart-h-md">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={equityAdvanced.points} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
-                          <defs>
-                            <linearGradient id="eqGAdvNew" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.52}/><stop offset="70%" stopColor={T.accent.cyan} stopOpacity={0.16}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.04}/></linearGradient>
-                            <linearGradient id="eqBarsWin" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.green} stopOpacity={0.78}/><stop offset="100%" stopColor={T.accent.green} stopOpacity={0.22}/></linearGradient>
-                            <linearGradient id="eqBarsLoss" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.red} stopOpacity={0.24}/><stop offset="100%" stopColor={T.accent.red} stopOpacity={0.7}/></linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} vertical={false} />
-                          <XAxis dataKey="trade" tick={{ fill: T.text.muted, fontSize: 10 }} interval="preserveStartEnd" minTickGap={28} />
-                          <YAxis yAxisId="equity" tick={{ fill: T.text.muted, fontSize: 10 }} width={52} tickFormatter={(v: number) => fmtDashValue(v, isMoney)} domain={['auto', 'auto']} />
-                          <YAxis yAxisId="dd" orientation="right" tick={{ fill: T.text.muted, fontSize: 10 }} width={40} tickFormatter={(v: number) => `${v.toFixed(0)}%`} domain={[-100, 0]} />
-                          <Tooltip contentStyle={tt} formatter={(v: any, n: string) => n === 'drawdown' ? [`${Number(v).toFixed(2)}%`, 'DD'] : [fmtDashValue(Number(v), isMoney), n === 'delta' ? (isRTL ? 'עסקה' : 'Trade') : n === 'ma' ? 'MA(5)' : (isRTL ? 'הון' : 'Equity')]} />
-                          <ReferenceLine yAxisId="equity" y={0} stroke={T.border.medium} strokeDasharray="2 2" />
-                          <Bar yAxisId="equity" dataKey="delta" barSize={4} radius={[3, 3, 0, 0]} opacity={0.55}>{equityAdvanced.points.map((p: any, i: number) => <Cell key={i} fill={p.delta >= 0 ? 'url(#eqBarsWin)' : 'url(#eqBarsLoss)'} />)}</Bar>
-                          <Area yAxisId="equity" type="monotone" dataKey="equity" stroke={T.accent.cyan} fill="url(#eqGAdvNew)" strokeWidth={3} dot={trades.length <= 30 ? { fill: T.accent.cyan, r: 2.8 } : false} activeDot={{ r: 6, fill: T.accent.cyan, stroke: T.bg.card, strokeWidth: 2 }} />
-                          <Line yAxisId="equity" type="monotone" dataKey="ma" stroke={T.accent.orange} strokeWidth={1.8} dot={false} strokeDasharray="5 4" />
-                          <Line yAxisId="dd" type="monotone" dataKey="drawdown" stroke={T.accent.red} strokeWidth={1.4} dot={false} opacity={0.72} />
-                        </ComposedChart>
-                      </ResponsiveContainer>
-                    </div>
+                    {(() => {
+                      const pts = equityAdvanced.points as any[];
+                      const maxAbsDelta = Math.max(0.01, ...pts.map((p: any) => Math.abs(Number(p.delta) || 0)));
+                      const barDomain: [number, number] = [-maxAbsDelta * 1.15, maxAbsDelta * 7];
+                      const EQ = T.accent.purple || T.accent.cyan;
+                      return (
+                        <>
+                          {/* ── Panel A · equity + trade histogram ── */}
+                          <div className="dash-chart-h-md" style={{ paddingBottom: 0 }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                              <ComposedChart data={pts} margin={{ top: 8, right: 8, bottom: 0, left: 0 }} syncId="eqSync">
+                                <defs>
+                                  <linearGradient id="eqGAdvNew" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor={EQ} stopOpacity={0.28} />
+                                    <stop offset="100%" stopColor={EQ} stopOpacity={0.02} />
+                                  </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} vertical={false} />
+                                <XAxis dataKey="trade" tick={false} axisLine={false} height={0} />
+                                <YAxis yAxisId="equity" tick={{ fill: T.text.muted, fontSize: 10 }} width={56} tickLine={false} axisLine={false} tickFormatter={(v: number) => fmtDashValue(v, isMoney)} domain={['auto', 'auto']} />
+                                <YAxis yAxisId="bars" hide domain={barDomain} />
+                                <Tooltip contentStyle={tt} formatter={(v: any, n: string) => [fmtDashValue(Number(v), isMoney), n === 'delta' ? (isRTL ? 'עסקה' : 'Trade') : (isRTL ? 'הון' : 'Equity')]} />
+                                <ReferenceLine yAxisId="equity" y={0} stroke={T.border.medium} strokeDasharray="2 2" />
+                                <Bar yAxisId="bars" dataKey="delta" barSize={3} isAnimationActive={false}>
+                                  {pts.map((p: any, i: number) => <Cell key={i} fill={p.delta >= 0 ? T.accent.green : T.accent.red} />)}
+                                </Bar>
+                                <Area yAxisId="equity" type="linear" dataKey="equity" stroke={EQ} fill="url(#eqGAdvNew)" strokeWidth={1.8} isAnimationActive={false} dot={false} activeDot={{ r: 4, fill: EQ, stroke: T.bg.card, strokeWidth: 1.5 }} />
+                              </ComposedChart>
+                            </ResponsiveContainer>
+                          </div>
+                          {/* ── Panel B · drawdown ── */}
+                          <div style={{ height: 96, width: '100%', marginTop: 6 }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                              <ComposedChart data={pts} margin={{ top: 4, right: 8, bottom: 4, left: 0 }} syncId="eqSync">
+                                <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} vertical={false} />
+                                <XAxis dataKey="trade" tick={{ fill: T.text.muted, fontSize: 10 }} tickLine={false} axisLine={false} interval="preserveStartEnd" minTickGap={28} />
+                                <YAxis yAxisId="dd" orientation="right" tick={{ fill: T.text.muted, fontSize: 10 }} width={56} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${v.toFixed(0)}%`} domain={[-100, 0]} ticks={[0, -50, -100]} />
+                                <Tooltip contentStyle={tt} formatter={(v: any) => [`${Number(v).toFixed(2)}%`, 'DD']} />
+                                <Line yAxisId="dd" type="linear" dataKey="drawdown" stroke={T.accent.red} strokeWidth={1.4} dot={false} isAnimationActive={false} />
+                              </ComposedChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </>
+                      );
+                    })()}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8, marginTop: 10 }}>
                       {[
                         { l: isRTL ? 'נוכחי' : 'Current', v: equityAdvanced.last, c: equityAdvanced.last >= 0 ? T.accent.green : T.accent.red },
