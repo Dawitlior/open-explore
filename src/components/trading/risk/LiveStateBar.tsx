@@ -7,7 +7,7 @@
  *
  * Pure presentation + local derivation — no new data sources.
  */
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { TradingStats } from '@/lib/trading-analytics';
@@ -22,7 +22,7 @@ interface Props {
   compact?: boolean;
 }
 
-export const LiveStateBar = ({ T, isRTL, trades, stats, limits, compact = false }: Props) => {
+const LiveStateBarImpl = ({ T, isRTL, trades, stats, limits, compact = false }: Props) => {
   const L = limits ?? DEFAULT_RISK_LIMITS;
 
   const model = useMemo(() => {
@@ -159,5 +159,7 @@ export const LiveStateBar = ({ T, isRTL, trades, stats, limits, compact = false 
     </div>
   );
 };
+
+export const LiveStateBar = memo(LiveStateBarImpl);
 
 export default LiveStateBar;
