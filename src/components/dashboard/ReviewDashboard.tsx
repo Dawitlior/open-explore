@@ -253,6 +253,8 @@ export const ReviewDashboard = ({
                                 <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} vertical={false} />
                                 <XAxis dataKey="trade" tick={false} axisLine={false} height={0} />
                                 <YAxis yAxisId="equity" tick={{ fill: T.text.muted, fontSize: 10 }} width={56} tickLine={false} axisLine={false} tickFormatter={(v: number) => fmtDashValue(v, isMoney)} domain={['auto', 'auto']} />
+                                {/* Mirror gutter so this panel's plot area matches the drawdown panel below */}
+                                <YAxis yAxisId="equityMirror" orientation="right" width={56} tick={false} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
                                 <YAxis yAxisId="bars" hide domain={barDomain} />
                                 <Tooltip contentStyle={tt} formatter={(v: any, n: string) => [fmtDashValue(Number(v), isMoney), n === 'delta' ? (isRTL ? 'עסקה' : 'Trade') : (isRTL ? 'הון' : 'Equity')]} />
                                 <ReferenceLine yAxisId="equity" y={0} stroke={T.border.medium} strokeDasharray="2 2" />
@@ -269,6 +271,8 @@ export const ReviewDashboard = ({
                               <ComposedChart data={pts} margin={{ top: 4, right: 8, bottom: 4, left: 0 }} syncId="eqSync">
                                 <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} vertical={false} />
                                 <XAxis dataKey="trade" tick={{ fill: T.text.muted, fontSize: 10 }} tickLine={false} axisLine={false} interval="preserveStartEnd" minTickGap={28} />
+                                {/* Mirror gutter (left) so this panel's plot area matches the equity panel above */}
+                                <YAxis yAxisId="ddMirror" width={56} tick={false} tickLine={false} axisLine={false} domain={[-100, 0]} />
                                 <YAxis yAxisId="dd" orientation="right" tick={{ fill: T.text.muted, fontSize: 10 }} width={56} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${v.toFixed(0)}%`} domain={[-100, 0]} ticks={[0, -50, -100]} />
                                 <Tooltip contentStyle={tt} formatter={(v: any) => [`${Number(v).toFixed(2)}%`, 'DD']} />
                                 <Line yAxisId="dd" type="linear" dataKey="drawdown" stroke={T.accent.red} strokeWidth={1.4} dot={false} isAnimationActive={false} />
@@ -278,7 +282,7 @@ export const ReviewDashboard = ({
                         </>
                       );
                     })()}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8, marginTop: 10 }}>
+                    <div className="dash-eq-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8, marginTop: 10 }}>
                       {[
                         { l: isRTL ? 'נוכחי' : 'Current', v: equityAdvanced.last, c: equityAdvanced.last >= 0 ? T.accent.green : T.accent.red },
                         { l: isRTL ? 'שיא' : 'Peak', v: equityAdvanced.best, c: T.accent.cyan },
