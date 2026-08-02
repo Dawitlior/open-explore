@@ -19,6 +19,8 @@ import {
   type ZoomLevel,
 } from '@/components/calendar/CalendarZoomProvider';
 import { YearView } from '@/components/calendar/views/YearView';
+import { SessionToggles, SessionMarker, ALL_SESSIONS_ON, type SessionFilter } from '@/components/calendar/SessionUI';
+import { buildMonthSessionMap } from '@/lib/market-sessions';
 
 type Props = {
   T: any; isRTL: boolean; trades: Trade[];
@@ -144,6 +146,18 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
     return m;
   }, [macroByDayRaw]);
 
+  /* ── Trading sessions (Asia / London / NY) per day ── */
+  const [sessionFilter, setSessionFilter] = useState<SessionFilter>(ALL_SESSIONS_ON);
+  const sessionByDay = useMemo(
+    () => buildMonthSessionMap(monthTrades, calYear, calMonth, tr => {
+      const d = new Date(String(tr.date).replace(' ', 'T'));
+      return isNaN(d.getTime()) ? null : d;
+    }),
+    [monthTrades, calYear, calMonth],
+  );
+
+
+
   const weekStats = useMemo(() => {
     const w: { week: number; pnl: number; rTotal: number; rValid: number; trades: number; days: number }[] = [];
     let wp = 0, wr = 0, wrv = 0, wt = 0, wd = 0, wn = 1;
@@ -190,9 +204,15 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
           <button onClick={() => setFocusedDate(new Date())} style={{ background: 'transparent', border: 'none', color: T.text.primary, fontSize: 18, fontWeight: 700, cursor: 'pointer' }}>{headerTitle}</button>
           <button onClick={navNext} style={{ background: 'transparent', border: 'none', color: T.accent.cyan, fontSize: 22, cursor: 'pointer' }}>{isRTL ? '‹' : '›'}</button>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
           <ZoomToggle T={T} />
         </div>
+        {zoomLevel === 'month' && (
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+            <SessionToggles T={T} isRTL={isRTL} value={sessionFilter} onChange={setSessionFilter} compact />
+          </div>
+        )}
+
 
         <AnimatePresence mode="wait">
           <motion.div key={zoomLevel} variants={variants} initial="enter" animate="center" exit="exit" transition={transition}>
@@ -219,9 +239,13 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
                         style={{ aspectRatio: '1', border: 'none', background: 'transparent', cursor: hasContent ? 'pointer' : 'default', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, padding: 0, position: 'relative' }}>
                         {d && (<>
                           <span style={{ width: 30, height: 30, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: isToday ? 700 : 500, color: isToday ? '#001023' : T.text.primary, background: isToday ? T.accent.cyan : 'transparent' }}>{d}</span>
-                          {dotColor && <span style={{ position: 'absolute', bottom: 4, width: 5, height: 5, borderRadius: '50%', background: dotColor }} />}
+                          {dotColor && <span style={{ position: 'absolute', bottom: 9, width: 5, height: 5, borderRadius: '50%', background: dotColor }} />}
+                          <span style={{ position: 'absolute', bottom: 2, left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
+                            <SessionMarker stat={d ? sessionByDay.get(d) : undefined} filter={sessionFilter} size={3} />
+                          </span>
                           <MacroDot events={macros} isPast={dayPast} />
                         </>)}
+
                       </button>
                     );
                   })}
@@ -311,6 +335,10 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
             for (let r = 0; r < calDays.length; r += 7) weeks.push(calDays.slice(r, r + 7));
             return (
               <GlassCard T={T} style={{ padding: 20 }}>
+                <div style={{ display: 'flex', justifyContent: isRTL ? 'flex-start' : 'flex-end', marginBottom: 12 }}>
+                  <SessionToggles T={T} isRTL={isRTL} value={sessionFilter} onChange={setSessionFilter} />
+                </div>
+
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(7, minmax(0, 1fr)) 1.1fr',
@@ -442,8 +470,10 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
                                     }}>
                                       ({dd.trades})
                                     </div>
+                                    <SessionMarker stat={sessionByDay.get(d)} filter={sessionFilter} size={3} />
                                   </div>
                                 )}
+
 
                                 <MacroSideDots events={macros} isPast={dayPast} />
                               </>

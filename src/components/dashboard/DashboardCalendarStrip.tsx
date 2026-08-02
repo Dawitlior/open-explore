@@ -18,6 +18,8 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { CalendarModal } from '@/components/trading/CalendarModal';
 import { useDisplayMode } from '@/lib/display-mode';
 import { getEffectiveR } from '@/lib/r-multiple';
+import { SessionToggles, SessionMarker, ALL_SESSIONS_ON, type SessionFilter } from '@/components/calendar/SessionUI';
+import { buildMonthSessionMap } from '@/lib/market-sessions';
 
 interface Props {
   T: TradingTheme;
@@ -96,6 +98,13 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
     }
     return map;
   }, [trades, year, month, isR]);
+
+  /* Sessions (Asia / London / NY) active on each day of the focused month. */
+  const [sessionFilter, setSessionFilter] = useState<SessionFilter>(ALL_SESSIONS_ON);
+  const sessionByDay = useMemo(
+    () => buildMonthSessionMap(trades, year, month, tr => parseTradeDate(tr.date)),
+    [trades, year, month],
+  );
 
   // Totals per month (for the current focused year) — used in the months picker.
   const monthTotals = useMemo(() => {
@@ -288,6 +297,11 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
                 ))}
               </div>
 
+              {/* Session filter */}
+              <div style={{ display: 'flex', justifyContent: 'center', margin: '2px 0 6px' }}>
+                <SessionToggles T={T} isRTL={isRTL} value={sessionFilter} onChange={setSessionFilter} compact />
+              </div>
+
               {/* Day grid */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 4 }}>
                 {grid.map((d, i) => {
@@ -334,6 +348,7 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
                             {fmtValShort(data.pnl)}
                           </span>
                           <span style={{ fontSize: 8, color: T.text.muted }}>({data.n})</span>
+                          <SessionMarker stat={sessionByDay.get(d)} filter={sessionFilter} size={2.5} />
                         </>
                       )}
                     </button>
