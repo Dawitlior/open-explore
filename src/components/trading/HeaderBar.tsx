@@ -116,7 +116,7 @@ html[data-scheme="light"] .ohb-primary::after{opacity:.4;
 .ohb-pill svg{opacity:1;color:hsl(var(--foreground));transition:transform .2s ease}
 .ohb-pill:hover svg{transform:translateX(2px);opacity:1}
 @media (prefers-reduced-motion:reduce){
-  .ohb,.ohb-ghost,.ohb-primary,.ohb-collapse,.ohb-pill,.ohb-pill-wrap,.ohb-pill svg{transition:none;animation:none}
+  .ohb,.ohb-ghost,.ohb-primary,.ohb-primary::after,.ohb-collapse,.ohb-pill,.ohb-pill-wrap,.ohb-pill svg{transition:none;animation:none}
   .ohb-ghost:hover,.ohb-primary:hover,.ohb-collapse:hover,.ohb-pill:hover{transform:none}
 }
 `;
