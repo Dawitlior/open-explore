@@ -146,6 +146,18 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
     return m;
   }, [macroByDayRaw]);
 
+  /* ── Trading sessions (Asia / London / NY) per day ── */
+  const [sessionFilter, setSessionFilter] = useState<SessionFilter>(ALL_SESSIONS_ON);
+  const sessionByDay = useMemo(
+    () => buildMonthSessionMap(monthTrades, calYear, calMonth, tr => {
+      const d = new Date(String(tr.date).replace(' ', 'T'));
+      return isNaN(d.getTime()) ? null : d;
+    }),
+    [monthTrades, calYear, calMonth],
+  );
+
+
+
   const weekStats = useMemo(() => {
     const w: { week: number; pnl: number; rTotal: number; rValid: number; trades: number; days: number }[] = [];
     let wp = 0, wr = 0, wrv = 0, wt = 0, wd = 0, wn = 1;
