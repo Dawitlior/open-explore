@@ -56,12 +56,42 @@ const HEADER_CSS = `
   border-color:hsl(var(--trading-cyan) / 0.35);transform:translateY(-1px)}
 .ohb-ghost:focus-visible,.ohb-primary:focus-visible,.ohb-collapse:focus-visible,.ohb-pill:focus-visible{outline:2px solid hsl(var(--ring));outline-offset:2px}
 .ohb-kbd{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:hsl(var(--muted-foreground) / 0.7)}
-.ohb-primary{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 15px;
+.ohb-primary{position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 15px;
   border:1px solid rgb(255 255 255 / 0.12);border-radius:8px;cursor:pointer;
   background:#f5f6f8;color:#0a0e1a;font-weight:600;font-size:12.5px;white-space:nowrap;
   font-family:'Inter',system-ui,sans-serif;letter-spacing:-0.005em;
-  transition:transform .15s, box-shadow .15s}
-.ohb-primary:hover{transform:translateY(-1px);box-shadow:0 6px 16px -8px rgb(255 255 255 / 0.35)}
+  transition:transform .15s, box-shadow .15s;
+  /* Theme-aware attention pulse — the halo colour is read from the active
+     theme's accent token, so it re-tints itself on every scheme. */
+  --ohb-attn:hsl(var(--trading-cyan));
+  animation:ohb-attn 2.8s ease-in-out infinite}
+/* Sheen sweep so the button reads as "alive" even on flat light surfaces. */
+.ohb-primary::after{content:'';position:absolute;top:0;bottom:0;width:38%;
+  inset-inline-start:-45%;pointer-events:none;
+  background:linear-gradient(100deg,transparent,var(--ohb-attn),transparent);
+  opacity:.28;filter:blur(2px);
+  animation:ohb-sheen 2.8s ease-in-out infinite}
+.ohb-primary:hover{transform:translateY(-1px);animation-play-state:paused;
+  box-shadow:0 6px 18px -8px var(--ohb-attn)}
+.ohb-primary:hover::after{animation-play-state:paused;opacity:0}
+@keyframes ohb-attn{
+  0%,100%{box-shadow:0 0 0 0 rgb(0 0 0 / 0)}
+  50%{box-shadow:0 0 0 3px color-mix(in srgb, var(--ohb-attn) 26%, transparent),
+      0 6px 18px -10px var(--ohb-attn)}
+}
+@keyframes ohb-sheen{
+  0%{inset-inline-start:-45%}
+  55%,100%{inset-inline-start:115%}
+}
+/* Light scheme: the near-white face disappears on a white canvas, so give the
+   button an accent-tinted body and a matching accent halo. */
+html[data-scheme="light"] .ohb-primary{
+  background:linear-gradient(180deg,hsl(var(--trading-purple)),color-mix(in srgb,hsl(var(--trading-purple)) 84%, #000));
+  color:#fff;border-color:color-mix(in srgb,hsl(var(--trading-purple)) 55%, transparent);
+  --ohb-attn:hsl(var(--trading-purple))}
+html[data-scheme="light"] .ohb-primary::after{opacity:.4;
+  background:linear-gradient(100deg,transparent,rgb(255 255 255 / 0.85),transparent)}
+
 .ohb-collapse{width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;
   border:1px solid hsl(var(--border));border-radius:8px;cursor:pointer;
   background:hsl(var(--trading-bg-surface) / 0.5);color:hsl(var(--foreground));
