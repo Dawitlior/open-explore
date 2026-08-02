@@ -19,6 +19,8 @@ import {
   type ZoomLevel,
 } from '@/components/calendar/CalendarZoomProvider';
 import { YearView } from '@/components/calendar/views/YearView';
+import { SessionToggles, SessionMarker, ALL_SESSIONS_ON, type SessionFilter } from '@/components/calendar/SessionUI';
+import { buildMonthSessionMap } from '@/lib/market-sessions';
 
 type Props = {
   T: any; isRTL: boolean; trades: Trade[];
