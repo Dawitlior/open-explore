@@ -239,9 +239,13 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
                         style={{ aspectRatio: '1', border: 'none', background: 'transparent', cursor: hasContent ? 'pointer' : 'default', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, padding: 0, position: 'relative' }}>
                         {d && (<>
                           <span style={{ width: 30, height: 30, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: isToday ? 700 : 500, color: isToday ? '#001023' : T.text.primary, background: isToday ? T.accent.cyan : 'transparent' }}>{d}</span>
-                          {dotColor && <span style={{ position: 'absolute', bottom: 4, width: 5, height: 5, borderRadius: '50%', background: dotColor }} />}
+                          {dotColor && <span style={{ position: 'absolute', bottom: 9, width: 5, height: 5, borderRadius: '50%', background: dotColor }} />}
+                          <span style={{ position: 'absolute', bottom: 2, left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
+                            <SessionMarker stat={d ? sessionByDay.get(d) : undefined} filter={sessionFilter} size={3} />
+                          </span>
                           <MacroDot events={macros} isPast={dayPast} />
                         </>)}
+
                       </button>
                     );
                   })}
