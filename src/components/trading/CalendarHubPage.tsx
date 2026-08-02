@@ -204,9 +204,15 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
           <button onClick={() => setFocusedDate(new Date())} style={{ background: 'transparent', border: 'none', color: T.text.primary, fontSize: 18, fontWeight: 700, cursor: 'pointer' }}>{headerTitle}</button>
           <button onClick={navNext} style={{ background: 'transparent', border: 'none', color: T.accent.cyan, fontSize: 22, cursor: 'pointer' }}>{isRTL ? '‹' : '›'}</button>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
           <ZoomToggle T={T} />
         </div>
+        {zoomLevel === 'month' && (
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+            <SessionToggles T={T} isRTL={isRTL} value={sessionFilter} onChange={setSessionFilter} compact />
+          </div>
+        )}
+
 
         <AnimatePresence mode="wait">
           <motion.div key={zoomLevel} variants={variants} initial="enter" animate="center" exit="exit" transition={transition}>
