@@ -466,8 +466,10 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
                                     }}>
                                       ({dd.trades})
                                     </div>
+                                    <SessionMarker stat={sessionByDay.get(d)} filter={sessionFilter} size={3} />
                                   </div>
                                 )}
+
 
                                 <MacroSideDots events={macros} isPast={dayPast} />
                               </>
