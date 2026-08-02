@@ -39,13 +39,14 @@ import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
 import { useVisibleTrades } from '@/lib/display-mode-format';
 import { useChartGuard } from '@/lib/dashboard-engine';
 const AnalyticsQuantLab = lazy(() => import('./AnalyticsQuantLab').then(m => ({ default: m.AnalyticsQuantLab })));
-import { TimeSeriesPerfMatrix } from './TimeSeriesPerfMatrix';
-import { UltimateAnalyticsDeck } from './UltimateDeckCharts';
+const TimeSeriesPerfMatrix = lazy(() => import('./TimeSeriesPerfMatrix').then(m => ({ default: m.TimeSeriesPerfMatrix })));
+const UltimateAnalyticsDeck = lazy(() => import('./UltimateDeckCharts').then(m => ({ default: m.UltimateAnalyticsDeck })));
 import { useEntitlement } from '@/hooks/use-entitlement';
-import DashboardAdvancedLab from '@/components/dashboard/DashboardAdvancedLab';
+const DashboardAdvancedLab = lazy(() => import('@/components/dashboard/DashboardAdvancedLab'));
 import { useIsMobile } from '@/hooks/use-mobile';
 
-import { RiskAdjustedRatiosSection } from '@/components/dashboard/RiskAdjustedRatiosSection';
+const RiskAdjustedRatiosSection = lazy(() => import('@/components/dashboard/RiskAdjustedRatiosSection').then(m => ({ default: m.RiskAdjustedRatiosSection })));
+import { DeferMount } from '@/components/common/DeferMount';
 
 
 interface AdvancedAnalyticsPageProps {
@@ -533,7 +534,9 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
 
       {/* ═══ TIME-SERIES PERFORMANCE DISTRIBUTION MATRIX — Advanced only ═══ */}
       {showPro && !showMax && registryAllows('tsPerfMatrix') && (
-        <TimeSeriesPerfMatrix T={T} trades={trades} />
+        <DeferMount minHeight={360}>
+          <Suspense fallback={null}><TimeSeriesPerfMatrix T={T} trades={trades} /></Suspense>
+        </DeferMount>
       )}
 
       {/* ═══ EQUITY + DRAWDOWN OVERLAY ═══ */}
@@ -644,7 +647,9 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
       {/* ═══ RISK-ADJUSTED PERFORMANCE — moved directly below Day×Hour heatmap ═══ */}
       {showMax && (
         <div style={{ marginBottom: 16 }}>
-          <RiskAdjustedRatiosSection T={T} isRTL={langRTL} trades={_allTrades} />
+          <DeferMount minHeight={320}>
+            <Suspense fallback={null}><RiskAdjustedRatiosSection T={T} isRTL={langRTL} trades={_allTrades} /></Suspense>
+          </DeferMount>
         </div>
       )}
 
@@ -1086,12 +1091,16 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
 
 
       {/* ═══ ULTIMATE-TIER DECK (Phase 4) ═══ */}
-      <UltimateAnalyticsDeck
-        T={T}
-        trades={trades}
-        onExplainClick={onExplainClick}
-        registryAllows={registryAllows}
-      />
+      <DeferMount minHeight={420}>
+        <Suspense fallback={null}>
+          <UltimateAnalyticsDeck
+            T={T}
+            trades={trades}
+            onExplainClick={onExplainClick}
+            registryAllows={registryAllows}
+          />
+        </Suspense>
+      </DeferMount>
 
       {/* ═══ SETUP LEADERBOARD — bottom of page ═══ */}
       {showPro && registryAllows('strategyExpectancy') && <GlassCard T={T} style={{ marginBottom: 16, padding: 0, overflow: 'hidden' }}>
@@ -1147,7 +1156,9 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
       {/* ═══ ULTIMATE-ONLY · Advanced Analytics Lab (Risk-Adjusted moved below Day×Hour heatmap) ═══ */}
       {showMax && (
         <div style={{ marginTop: 24 }}>
-          <DashboardAdvancedLab T={T} isRTL={langRTL} trades={_allTrades} />
+          <DeferMount minHeight={480}>
+            <Suspense fallback={null}><DashboardAdvancedLab T={T} isRTL={langRTL} trades={_allTrades} /></Suspense>
+          </DeferMount>
         </div>
       )}
     </div>
