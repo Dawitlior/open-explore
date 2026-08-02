@@ -335,6 +335,10 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
             for (let r = 0; r < calDays.length; r += 7) weeks.push(calDays.slice(r, r + 7));
             return (
               <GlassCard T={T} style={{ padding: 20 }}>
+                <div style={{ display: 'flex', justifyContent: isRTL ? 'flex-start' : 'flex-end', marginBottom: 12 }}>
+                  <SessionToggles T={T} isRTL={isRTL} value={sessionFilter} onChange={setSessionFilter} />
+                </div>
+
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(7, minmax(0, 1fr)) 1.1fr',
