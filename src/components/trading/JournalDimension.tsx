@@ -4078,6 +4078,18 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [view, setView] = useState('journal');
+  // Journal layout mode — 'focus' (narrow, editorial) vs 'wide' (dense cockpit).
+  const [uiMode, setUiMode] = useState<'focus' | 'wide'>(() => {
+    try { return window.localStorage.getItem('orca:journal-ui-mode') === 'wide' ? 'wide' : 'focus'; } catch { return 'focus'; }
+  });
+  const toggleUiMode = useCallback(() => {
+    setUiMode(p => {
+      const next = p === 'focus' ? 'wide' : 'focus';
+      try { window.localStorage.setItem('orca:journal-ui-mode', next); } catch { /* noop */ }
+      return next;
+    });
+  }, []);
+
   const [mDirty, setMD] = useState(false);
   const [eDirty, setED] = useState(false);
   const [toast, setToast] = useState<{ msg: string; type: string } | null>(null);
