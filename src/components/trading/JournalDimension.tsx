@@ -4633,7 +4633,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
         {/* MAIN */}
         <main style={{ flex: 1, overflowY: 'auto', background: 'transparent' }}>
           {view === 'journal' && displayDay && (
-            <div className="j-main-content" style={{ maxWidth: 1080, margin: '0 auto', padding: '22px 22px 50px', direction: dir, animation: 'j-fade-in .3s ease-out' }}>
+            <div className={`j-main-content j-ui-${uiMode}`} style={{ maxWidth: uiMode === 'wide' ? 1560 : 1080, margin: '0 auto', padding: uiMode === 'wide' ? '18px 28px 50px' : '22px 22px 50px', direction: dir, animation: 'j-fade-in .3s ease-out', transition: 'max-width .38s cubic-bezier(.22,1,.36,1), padding .28s ease' }}>
               {/* Archive viewing banner — sticky top bar */}
               {isViewingArchive && (
                 <div style={{
