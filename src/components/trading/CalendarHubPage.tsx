@@ -12,6 +12,8 @@ import { sumR, formatR } from '@/lib/r-multiple';
 import { useEffectiveDisplayMode } from '@/lib/display-mode';
 import { useMonthEconomicEvents } from '@/hooks/use-month-economic-events';
 import { MacroEventStrip, MacroDot, MacroSideDots } from '@/components/economic/MacroEventStrip';
+import { MonthDayCell } from '@/components/calendar/MonthDayCell';
+
 import {
   CalendarZoomProvider,
   useCalendarZoom,
