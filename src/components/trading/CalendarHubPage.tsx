@@ -368,119 +368,28 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
                       {row.map((d, colIdx) => {
                         const i = rowIdx * 7 + colIdx;
                         const dd = d ? calDayPnl[d] : null;
-                        const ddR = dd && dd.rValid > 0;
-                        const ddLead = dd ? (isR && ddR ? dd.rTotal : dd.pnl) : 0;
-                        const leadPos = ddLead >= 0;
                         const riskColor = d ? getDayRiskColor(trades, d, calMonth, calYear) : 'neutral';
-                        const isDarkRed = riskColor === 'darkred';
                         const isToday = isCurrentMonth && d === todayN;
                         const macros = d ? macroByDay.get(d) ?? [] : [];
                         const dayPast = !!d && new Date(calYear, calMonth, d) < new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                        const hasContent = !!dd || macros.length > 0;
-                        // Solid tinted fill (no gradient) — matches the flat
-                        // reference. Loss cells lean deeper than win cells to
-                        // preserve the emotional weight of red days.
-                        const bg = isDarkRed
-                          ? `${T.accent.red}33`
-                          : dd
-                            ? (leadPos && ddLead !== 0
-                                ? `${T.accent.green}22`
-                                : ddLead < 0
-                                  ? `${T.accent.red}2e`
-                                  : `${T.accent.orange}18`)
-                            : 'rgba(255,255,255,0.02)';
-                        const borderColor = isToday
-                          ? T.accent.cyan
-                          : isDarkRed
-                            ? `${T.accent.red}66`
-                            : dd
-                              ? (leadPos && ddLead !== 0
-                                  ? `${T.accent.green}3a`
-                                  : ddLead < 0
-                                    ? `${T.accent.red}55`
-                                    : `${T.accent.orange}33`)
-                              : T.border.subtle;
-                        const moneyStr = dd ? `${dd.pnl >= 0 ? '+' : '-'}$${Math.abs(dd.pnl).toFixed(0)}` : '';
-                        const rStr = dd ? (dd.rValid === 0 ? 'N/A' : `${dd.rTotal >= 0 ? '+' : ''}${dd.rTotal.toFixed(1)}R`) : '';
-                        const bigStr = isR ? rStr : moneyStr;
-                        const bigColor = !dd
-                          ? T.text.muted
-                          : isR
-                            ? (dd.rValid === 0 ? T.text.muted : dd.rTotal >= 0 ? T.accent.green : T.accent.red)
-                            : (dd.pnl >= 0 ? T.accent.green : T.accent.red);
                         return (
-                          <motion.div key={`d-${i}`}
-                            whileHover={hasContent ? { y: -1 } : {}}
-                            onClick={() => { if (hasContent && d) setCalModalDay(d); }}
-                            style={{
-                              position: 'relative',
-                              borderRadius: 14,
-                              border: `1px solid ${borderColor}`,
-                              background: bg,
-                              boxShadow: isToday ? `0 0 0 1px ${T.accent.cyan}55` : 'none',
-                              padding: '10px 12px',
-                              paddingInlineEnd: macros.length ? 18 : 12,
-                              cursor: hasContent ? 'pointer' : 'default',
-                              display: 'flex', flexDirection: 'column',
-                              overflow: 'hidden',
-                              transition: 'transform 140ms ease, border-color 140ms ease',
-                            }}>
-                            {d && (
-                              <>
-                                {/* Day number — small, top-inline-end corner
-                                    (visually top-right in RTL, top-left in LTR
-                                    per the reference). */}
-                                <div style={{
-                                  position: 'absolute',
-                                  top: 8,
-                                  insetInlineEnd: macros.length ? 16 : 10,
-                                  fontSize: 12,
-                                  fontWeight: 600,
-                                  color: isToday ? T.accent.cyan : T.text.muted,
-                                  fontFamily: "'JetBrains Mono', monospace",
-                                  lineHeight: 1,
-                                }}>
-                                  {d}{isDarkRed && <span style={{ marginInlineStart: 4 }}>⚠️</span>}
-                                </div>
-
-                                {dd && (
-                                  <div style={{
-                                    flex: 1,
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: 4,
-                                    paddingTop: 6,
-                                  }}>
-                                    <div style={{
-                                      fontSize: 20,
-                                      fontWeight: 700,
-                                      color: bigColor,
-                                      fontFamily: "'JetBrains Mono', monospace",
-                                      letterSpacing: '-0.01em',
-                                      lineHeight: 1.1,
-                                    }}>
-                                      {bigStr}
-                                    </div>
-                                    <div style={{
-                                      fontSize: 11,
-                                      color: T.text.muted,
-                                      fontFamily: "'JetBrains Mono', monospace",
-                                    }}>
-                                      ({dd.trades})
-                                    </div>
-                                    <SessionMarker stat={sessionByDay.get(d)} filter={sessionFilter} size={3} />
-                                  </div>
-                                )}
-
-
-                                <MacroSideDots events={macros} isPast={dayPast} />
-                              </>
-                            )}
-                          </motion.div>
+                          <MonthDayCell
+                            key={`d-${i}`}
+                            T={T}
+                            day={d ?? null}
+                            stat={dd ?? null}
+                            isR={isR}
+                            isToday={!!isToday}
+                            isDarkRed={riskColor === 'darkred'}
+                            dayPast={dayPast}
+                            macros={macros}
+                            sessionStat={d ? sessionByDay.get(d) : undefined}
+                            sessionFilter={sessionFilter}
+                            onSelect={setCalModalDay}
+                          />
                         );
                       })}
+
                       {/* Weekly summary cell — same visual language as the day
                           cells, integrated as the row's 8th column. */}
                       {(() => {
