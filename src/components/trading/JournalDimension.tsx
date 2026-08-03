@@ -4574,6 +4574,44 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
           </div>
           {/* Spacer */}
           <div style={{ width: 1, height: 18, background: th.br, margin: '0 4px' }} />
+          {/* Layout mode switch — Focus ⇄ Wide, animated sliding thumb */}
+          <button
+            type="button"
+            role="switch"
+            aria-checked={uiMode === 'wide'}
+            onClick={toggleUiMode}
+            title={dir === 'rtl' ? 'החלף פריסת יומן' : 'Switch journal layout'}
+            aria-label={dir === 'rtl' ? 'החלף פריסת יומן' : 'Switch journal layout'}
+            className="j-uimode-switch"
+            style={{
+              position: 'relative', display: 'flex', alignItems: 'center',
+              width: 116, height: 30, padding: 3, borderRadius: 999,
+              border: `1px solid ${th.inputBr}`, background: th.inputBg,
+              cursor: 'pointer', overflow: 'hidden',
+            }}>
+            <span aria-hidden style={{
+              position: 'absolute', top: 3, bottom: 3, width: 'calc(50% - 3px)',
+              insetInlineStart: uiMode === 'focus' ? 3 : 'calc(50% + 0px)',
+              borderRadius: 999,
+              background: `linear-gradient(135deg, ${JC.green}33, ${JC.blue}26)`,
+              border: `1px solid ${JC.green}55`,
+              transition: 'inset-inline-start .32s cubic-bezier(.22,1,.36,1)',
+            }} />
+            {(['focus', 'wide'] as const).map(m => (
+              <span key={m} style={{
+                position: 'relative', flex: 1, textAlign: 'center',
+                fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 800,
+                letterSpacing: '0.04em',
+                color: uiMode === m ? JC.green : th.tx3,
+                transition: 'color .25s ease',
+              }}>
+                {m === 'focus'
+                  ? (dir === 'rtl' ? '◧ מיקוד' : '◧ Focus')
+                  : (dir === 'rtl' ? '▦ רחב' : '▦ Wide')}
+              </span>
+            ))}
+          </button>
+
           <button onClick={() => setTheme(p => p === 'dark' ? 'light' : 'dark')}
             style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, transition: 'all .2s' }}>
             {theme === 'dark' ? '☀️' : '🌙'}
