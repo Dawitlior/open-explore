@@ -848,7 +848,12 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                     {THEME_OPTIONS.map(opt => {
                       const active = theme === opt.id;
                       return (
-                        <button key={opt.id} onClick={() => { setTheme(opt.id); setThemeRefreshPrompt(opt.id); }} style={{
+                        <button key={opt.id} onClick={() => {
+                          if (theme === opt.id) return;
+                          setTheme(opt.id);
+                          // Apply everywhere immediately — reload instead of prompting.
+                          window.setTimeout(() => window.location.reload(), 220);
+                        }} style={{
                           padding: 14, borderRadius: T.radius.md, cursor: 'pointer',
                           textAlign: isRTL ? 'right' : 'left' as const,
                           background: active ? T.bg.tertiary : T.bg.secondary,
