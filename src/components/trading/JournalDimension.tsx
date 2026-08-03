@@ -4448,6 +4448,13 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
         @keyframes j-menu-slide { from { opacity: 0; transform: translateY(-20px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
         .j-card-hover { transition: all .25s ease !important; }
         .j-card-hover:hover { transform: translateY(-1px) !important; box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important; }
+        .j-uimode-switch:focus-visible { outline: 2px solid ${JC.green}; outline-offset: 2px; }
+        /* Wide (cockpit) layout — denser two-column flow on large screens. */
+        @media (min-width: 1200px) {
+          .j-ui-wide .j-grid-2col { gap: 14px !important; }
+        }
+        .j-ui-wide > * { animation: j-fade-in .35s ease-out; }
+
         @media (max-width: 768px) {
           .j-grid-2col { grid-template-columns: 1fr !important; }
           .j-nav-labels { display: none !important; }
