@@ -1561,3 +1561,10 @@ html[data-scheme="light"] optgroup {
   color: #0F172A !important;
 }
 html[data-scheme="light"] { color-scheme: light; }
+
+/* ── Session filter chips: visible keyboard focus ── */
+.orca-session-chip:focus-visible {
+  outline: 2px solid var(--orca-session-ring, hsl(var(--ring)));
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--orca-session-ring, hsl(var(--ring))) 25%, transparent);
+}

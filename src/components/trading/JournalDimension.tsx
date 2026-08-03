@@ -4078,6 +4078,18 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [view, setView] = useState('journal');
+  // Journal layout mode — 'focus' (narrow, editorial) vs 'wide' (dense cockpit).
+  const [uiMode, setUiMode] = useState<'focus' | 'wide'>(() => {
+    try { return window.localStorage.getItem('orca:journal-ui-mode') === 'wide' ? 'wide' : 'focus'; } catch { return 'focus'; }
+  });
+  const toggleUiMode = useCallback(() => {
+    setUiMode(p => {
+      const next = p === 'focus' ? 'wide' : 'focus';
+      try { window.localStorage.setItem('orca:journal-ui-mode', next); } catch { /* noop */ }
+      return next;
+    });
+  }, []);
+
   const [mDirty, setMD] = useState(false);
   const [eDirty, setED] = useState(false);
   const [toast, setToast] = useState<{ msg: string; type: string } | null>(null);
@@ -4436,6 +4448,13 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
         @keyframes j-menu-slide { from { opacity: 0; transform: translateY(-20px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
         .j-card-hover { transition: all .25s ease !important; }
         .j-card-hover:hover { transform: translateY(-1px) !important; box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important; }
+        .j-uimode-switch:focus-visible { outline: 2px solid ${JC.green}; outline-offset: 2px; }
+        /* Wide (cockpit) layout — denser two-column flow on large screens. */
+        @media (min-width: 1200px) {
+          .j-ui-wide .j-grid-2col { gap: 14px !important; }
+        }
+        .j-ui-wide > * { animation: j-fade-in .35s ease-out; }
+
         @media (max-width: 768px) {
           .j-grid-2col { grid-template-columns: 1fr !important; }
           .j-nav-labels { display: none !important; }
@@ -4562,6 +4581,44 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
           </div>
           {/* Spacer */}
           <div style={{ width: 1, height: 18, background: th.br, margin: '0 4px' }} />
+          {/* Layout mode switch — Focus ⇄ Wide, animated sliding thumb */}
+          <button
+            type="button"
+            role="switch"
+            aria-checked={uiMode === 'wide'}
+            onClick={toggleUiMode}
+            title={dir === 'rtl' ? 'החלף פריסת יומן' : 'Switch journal layout'}
+            aria-label={dir === 'rtl' ? 'החלף פריסת יומן' : 'Switch journal layout'}
+            className="j-uimode-switch"
+            style={{
+              position: 'relative', display: 'flex', alignItems: 'center',
+              width: 116, height: 30, padding: 3, borderRadius: 999,
+              border: `1px solid ${th.inputBr}`, background: th.inputBg,
+              cursor: 'pointer', overflow: 'hidden',
+            }}>
+            <span aria-hidden style={{
+              position: 'absolute', top: 3, bottom: 3, width: 'calc(50% - 3px)',
+              insetInlineStart: uiMode === 'focus' ? 3 : 'calc(50% + 0px)',
+              borderRadius: 999,
+              background: `linear-gradient(135deg, ${JC.green}33, ${JC.blue}26)`,
+              border: `1px solid ${JC.green}55`,
+              transition: 'inset-inline-start .32s cubic-bezier(.22,1,.36,1)',
+            }} />
+            {(['focus', 'wide'] as const).map(m => (
+              <span key={m} style={{
+                position: 'relative', flex: 1, textAlign: 'center',
+                fontFamily: "'Poppins',sans-serif", fontSize: 10, fontWeight: 800,
+                letterSpacing: '0.04em',
+                color: uiMode === m ? JC.green : th.tx3,
+                transition: 'color .25s ease',
+              }}>
+                {m === 'focus'
+                  ? (dir === 'rtl' ? '◧ מיקוד' : '◧ Focus')
+                  : (dir === 'rtl' ? '▦ רחב' : '▦ Wide')}
+              </span>
+            ))}
+          </button>
+
           <button onClick={() => setTheme(p => p === 'dark' ? 'light' : 'dark')}
             style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, transition: 'all .2s' }}>
             {theme === 'dark' ? '☀️' : '🌙'}
@@ -4583,7 +4640,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
         {/* MAIN */}
         <main style={{ flex: 1, overflowY: 'auto', background: 'transparent' }}>
           {view === 'journal' && displayDay && (
-            <div className="j-main-content" style={{ maxWidth: 1080, margin: '0 auto', padding: '22px 22px 50px', direction: dir, animation: 'j-fade-in .3s ease-out' }}>
+            <div className={`j-main-content j-ui-${uiMode}`} style={{ maxWidth: uiMode === 'wide' ? 1560 : 1080, margin: '0 auto', padding: uiMode === 'wide' ? '18px 28px 50px' : '22px 22px 50px', direction: dir, animation: 'j-fade-in .3s ease-out', transition: 'max-width .38s cubic-bezier(.22,1,.36,1), padding .28s ease' }}>
               {/* Archive viewing banner — sticky top bar */}
               {isViewingArchive && (
                 <div style={{

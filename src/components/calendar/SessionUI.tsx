@@ -35,13 +35,19 @@ export const SessionToggles = memo(function SessionToggles({ T, isRTL, value, on
       </span>
       {SESSIONS.map(s => {
         const on = value[s.id];
+        const name = isRTL ? s.labelHe : s.labelEn;
         return (
           <button
             key={s.id}
             type="button"
-            aria-pressed={on}
+            role="switch"
+            aria-checked={on}
+            aria-label={isRTL
+              ? `סשן ${name} — ${on ? 'מוצג' : 'מוסתר'}`
+              : `${name} session — ${on ? 'shown' : 'hidden'}`}
             onClick={() => onChange({ ...value, [s.id]: !on })}
-            title={isRTL ? s.labelHe : s.labelEn}
+            title={name}
+            className="orca-session-chip"
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 5,
               padding: compact ? '2px 7px' : '3px 9px',
@@ -55,17 +61,19 @@ export const SessionToggles = memo(function SessionToggles({ T, isRTL, value, on
               border: `1px solid ${on ? `${s.color}66` : T.border.subtle}`,
               color: on ? s.color : T.text.muted,
               transition: 'background .15s, color .15s, border-color .15s',
+              ['--orca-session-ring' as string]: s.color,
             }}
           >
-            <span style={{
+            <span aria-hidden style={{
               width: 6, height: 6, borderRadius: '50%',
               background: on ? s.color : T.text.muted,
               opacity: on ? 1 : 0.45,
             }} />
-            {compact ? s.short : (isRTL ? s.labelHe : s.labelEn)}
+            {compact ? s.short : name}
           </button>
         );
       })}
+
     </div>
   );
 });
