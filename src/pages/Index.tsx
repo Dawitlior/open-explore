@@ -41,6 +41,8 @@ import { MobileBottomNav } from '@/components/trading/MobileBottomNav';
 import { MainPullToRefresh } from '@/components/trading/MainPullToRefresh';
 const ReviewDashboard = lazy(() => import('@/components/dashboard/ReviewDashboard').then(m => ({ default: m.ReviewDashboard })));
 import { MobileTradeCard } from '@/components/trading/MobileTradeCard';
+import { JournalLayoutSwitch, type JournalLayout } from '@/components/trading/JournalLayoutSwitch';
+import { JournalGallery } from '@/components/trading/JournalGallery';
 import { RiskExplanationModal, type RiskExplanation } from '@/components/trading/RiskExplanationModal';
 import { toast } from 'sonner';
 import { LazyShell } from '@/components/LazyShell';
@@ -187,6 +189,7 @@ const Index = () => {
   const [calYear, setCalYear] = useState(() => new Date().getFullYear());
   const [selTrade, setSelTrade] = useState<Trade | null>(null);
   const [journalPage, setJournalPage] = useState(0);
+  const [journalLayout, setJournalLayout] = useState<JournalLayout>(() => (localStorage.getItem('orca:journalLayout') === 'gallery' ? 'gallery' : 'table'));
   const JOURNAL_PAGE_SIZE = 50;
   const [showTradeForm, setShowTradeForm] = useState(false);
   const [editingTrade, setEditingTrade] = useState<Trade | null>(null);
@@ -1326,7 +1329,15 @@ const Index = () => {
               </span>
             )}
           </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            {!isMobile && (
+              <JournalLayoutSwitch
+                T={T}
+                isRTL={isRTL}
+                value={journalLayout}
+                onChange={(v) => { setJournalLayout(v); localStorage.setItem('orca:journalLayout', v); }}
+              />
+            )}
             {!isMobile && <button onClick={handleImport} style={{ padding: '7px 14px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, fontSize: 11, cursor: 'pointer' }}>📥 {t.importData}</button>}
             {!isMobile && <button onClick={handleExport} style={{ padding: '7px 14px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, fontSize: 11, cursor: 'pointer' }}>📊 XLSX</button>}
             {!isMobile && <button onClick={handleExportJson} style={{ padding: '7px 14px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, fontSize: 11, cursor: 'pointer' }}>📤 JSON</button>}
@@ -1351,6 +1362,20 @@ const Index = () => {
               />
             ))}
           </div>
+        ) : journalLayout === 'gallery' ? (
+          <JournalGallery
+            T={T}
+            isRTL={isRTL}
+            trades={pageRows}
+            isAlpha={isAlpha}
+            getEffectiveR={getEffectiveR}
+            tradeHeadline={tradeHeadline}
+            fmtHeadline={fmtHeadline}
+            PV={PV}
+            onOpen={(tr) => setSelTrade(tr)}
+            onEdit={(tr) => { setEditingTrade(tr); setShowTradeForm(true); }}
+            onDelete={(id) => handleDeleteTrade(id)}
+          />
         ) : (
         <GlassCard T={T} style={{ padding: 0, overflow: 'hidden' }} className="orca-no-hover">
           <div style={{ overflowX: 'auto' }}>
