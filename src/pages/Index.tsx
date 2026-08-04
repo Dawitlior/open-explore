@@ -187,6 +187,7 @@ const Index = () => {
   const [calYear, setCalYear] = useState(() => new Date().getFullYear());
   const [selTrade, setSelTrade] = useState<Trade | null>(null);
   const [journalPage, setJournalPage] = useState(0);
+  const [journalLayout, setJournalLayout] = useState<JournalLayout>(() => (localStorage.getItem('orca:journalLayout') === 'gallery' ? 'gallery' : 'table'));
   const JOURNAL_PAGE_SIZE = 50;
   const [showTradeForm, setShowTradeForm] = useState(false);
   const [editingTrade, setEditingTrade] = useState<Trade | null>(null);
