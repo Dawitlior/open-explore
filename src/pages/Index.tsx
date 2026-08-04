@@ -1362,6 +1362,20 @@ const Index = () => {
               />
             ))}
           </div>
+        ) : journalLayout === 'gallery' ? (
+          <JournalGallery
+            T={T}
+            isRTL={isRTL}
+            trades={pageRows}
+            isAlpha={isAlpha}
+            getEffectiveR={getEffectiveR}
+            tradeHeadline={tradeHeadline}
+            fmtHeadline={fmtHeadline}
+            PV={PV}
+            onOpen={(tr) => setSelTrade(tr)}
+            onEdit={(tr) => { setEditingTrade(tr); setShowTradeForm(true); }}
+            onDelete={(id) => handleDeleteTrade(id)}
+          />
         ) : (
         <GlassCard T={T} style={{ padding: 0, overflow: 'hidden' }} className="orca-no-hover">
           <div style={{ overflowX: 'auto' }}>
