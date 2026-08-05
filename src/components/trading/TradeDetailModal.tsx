@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { getEffectiveR } from '@/lib/r-multiple';
+import { useVisualPrefs, glowAlpha } from '@/lib/visual-prefs';
 
 interface Props {
   T: TradingTheme;
@@ -15,16 +16,27 @@ interface Props {
   onDelete: () => void;
   tradeHeadline: (tr: Trade) => { v: number; unit: 'R' | '$' };
   fmtHeadline: (v: number, unit: 'R' | '$', signed?: boolean) => string;
+  /** Move to the neighbouring trade without closing the dossier. */
+  onNavigate?: (dir: -1 | 1) => void;
+  /** 1-based position in the visible list, for the "3 / 24" pill. */
+  position?: { index: number; total: number };
+  canPrev?: boolean;
+  canNext?: boolean;
 }
 
 const MONO = "'JetBrains Mono', monospace";
 
 /**
  * TradeDetailModal — premium "trade dossier" card.
- * Aurora header, hero outcome slab with an R-strength meter,
- * a live price-ladder (stop → entry → exit) and stat tiles.
+ * Aurora header (theme + contrast aware), hero outcome slab with an
+ * R-strength meter, a price ladder (stop → entry → exit) and stat tiles.
+ * Supports prev/next navigation via buttons or ← / → keys.
  */
-export function TradeDetailModal({ T, t, trade, isRTL, isMobile, onClose, onEdit, onDelete, tradeHeadline, fmtHeadline }: Props) {
+export function TradeDetailModal({
+  T, t, trade, isRTL, isMobile, onClose, onEdit, onDelete, tradeHeadline, fmtHeadline,
+  onNavigate, position, canPrev = false, canNext = false,
+}: Props) {
+  const { glow, highContrast, reducedMotion } = useVisualPrefs();
   const headline = tradeHeadline(trade);
   const r = getEffectiveR(trade);
   const isLong = trade.direction === 'Long';
@@ -33,15 +45,27 @@ export function TradeDetailModal({ T, t, trade, isRTL, isMobile, onClose, onEdit
   const resultColor = trade.winLoss === 'Win' ? T.accent.green : trade.winLoss === 'Loss' ? T.accent.red : T.accent.orange;
   const dir = isRTL ? 'rtl' : 'ltr';
 
+  const g = (hex: string, a: number) => glowAlpha(hex, a, glow);
+  const auroraHeader = highContrast
+    ? T.bg.secondary
+    : `radial-gradient(120% 160% at ${isRTL ? '100%' : '0%'} 0%, ${g(sideColor, 0.14)}, transparent 55%), radial-gradient(90% 140% at ${isRTL ? '0%' : '100%'} 0%, ${g(outcomeColor, 0.09)}, transparent 60%)`;
+
   const dateLabel = new Date(trade.date).toLocaleDateString(isRTL ? 'he-IL' : 'en-US', {
     weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
   });
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { onClose(); return; }
+      if (!onNavigate) return;
+      const back = isRTL ? 'ArrowRight' : 'ArrowLeft';
+      const fwd = isRTL ? 'ArrowLeft' : 'ArrowRight';
+      if (e.key === back && canPrev) { e.preventDefault(); onNavigate(-1); }
+      if (e.key === fwd && canNext) { e.preventDefault(); onNavigate(1); }
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, [onClose, onNavigate, canPrev, canNext, isRTL]);
 
   // ── price ladder positions (0..100) ────────────────────────────────────────
   const pts = [trade.entry, trade.exit, trade.stopLoss ?? trade.entry].filter(n => Number.isFinite(n)) as number[];
@@ -51,24 +75,52 @@ export function TradeDetailModal({ T, t, trade, isRTL, isMobile, onClose, onEdit
 
   const meter = Math.min(100, (Math.abs(r) / 3) * 100);
 
+  const NavBtn = ({ d, disabled }: { d: -1 | 1; disabled: boolean }) => {
+    const forward = d === 1;
+    const glyph = (isRTL ? !forward : forward) ? '›' : '‹';
+    return (
+      <button
+        onClick={() => onNavigate?.(d)}
+        disabled={disabled}
+        className="orca-focus"
+        aria-label={forward ? (isRTL ? 'העסקה הבאה' : 'Next trade') : (isRTL ? 'העסקה הקודמת' : 'Previous trade')}
+        style={{
+          width: isMobile ? 34 : 36, height: isMobile ? 34 : 36,
+          borderRadius: 11,
+          border: `1px solid ${T.border.subtle}`,
+          background: T.bg.tertiary,
+          color: disabled ? T.text.muted : T.text.secondary,
+          opacity: disabled ? 0.35 : 1,
+          cursor: disabled ? 'not-allowed' : 'pointer',
+          fontSize: 19, lineHeight: 1, fontWeight: 700,
+          transition: reducedMotion ? 'none' : 'all .18s ease',
+        }}
+      >{glyph}</button>
+    );
+  };
+
   const Tile = ({ label, value, color = T.text.primary, accentBar }: { label: string; value: React.ReactNode; color?: string; accentBar?: string }) => (
     <div style={{
       position: 'relative',
       overflow: 'hidden',
       minWidth: 0,
-      padding: isMobile ? '11px 12px' : '13px 14px',
+      padding: isMobile ? '12px 13px' : '14px 16px',
       borderRadius: T.radius.md,
       border: `1px solid ${T.border.subtle}`,
-      background: `linear-gradient(160deg, ${T.bg.tertiary}, transparent)`,
+      background: highContrast ? T.bg.tertiary : `linear-gradient(160deg, ${T.bg.tertiary}, transparent)`,
     }}>
-      {accentBar && <span aria-hidden style={{ position: 'absolute', insetInlineStart: 0, top: 0, bottom: 0, width: 2, background: accentBar, opacity: 0.75 }} />}
-      <div style={{ fontSize: 9.5, letterSpacing: 0.7, textTransform: 'uppercase', color: T.text.muted, marginBottom: 5 }}>{label}</div>
+      {accentBar && <span aria-hidden style={{ position: 'absolute', insetInlineStart: 0, top: 0, bottom: 0, width: 2, background: accentBar, opacity: highContrast ? 1 : 0.75 }} />}
+      <div style={{ fontSize: 9.5, letterSpacing: 0.8, textTransform: 'uppercase', color: T.text.muted, marginBottom: 6 }}>{label}</div>
       <div style={{ fontSize: isMobile ? 16 : 18, fontWeight: 800, color, fontFamily: MONO, lineHeight: 1.1, overflowWrap: 'anywhere' }}>{value}</div>
     </div>
   );
 
+  const spring = reducedMotion
+    ? { duration: 0 }
+    : { type: 'spring' as const, stiffness: 260, damping: 26, mass: 0.9 };
+
   return (
-    <AnimatePresence>
+    <AnimatePresence mode="wait">
       <motion.div
         role="dialog"
         aria-modal="true"
@@ -78,103 +130,124 @@ export function TradeDetailModal({ T, t, trade, isRTL, isMobile, onClose, onEdit
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: 0.18 }}
+        transition={{ duration: reducedMotion ? 0 : 0.22, ease: [0.22, 1, 0.36, 1] }}
         style={{
           position: 'fixed', inset: 0, zIndex: 100,
           background: 'rgba(2,6,16,0.62)',
           display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center',
-          padding: isMobile ? '12px 10px 0' : 24,
-          backdropFilter: 'blur(14px)',
+          padding: isMobile ? '12px 10px 0' : 28,
+          backdropFilter: highContrast ? 'none' : 'blur(16px) saturate(120%)',
         }}
       >
         <motion.div
           onClick={e => e.stopPropagation()}
-          initial={{ opacity: 0, y: isMobile ? 40 : 18, scale: isMobile ? 1 : 0.975 }}
+          initial={{ opacity: 0, y: isMobile ? 44 : 22, scale: isMobile ? 1 : 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 12, scale: 0.985 }}
-          transition={{ type: 'spring', stiffness: 320, damping: 30 }}
+          exit={{ opacity: 0, y: 14, scale: 0.985 }}
+          transition={spring}
           style={{
             position: 'relative',
-            width: '100%', maxWidth: isMobile ? '100%' : 880,
+            width: '100%', maxWidth: isMobile ? '100%' : 900,
             maxHeight: isMobile ? '90dvh' : '88vh', overflow: 'auto',
-            borderRadius: isMobile ? '24px 24px 0 0' : 26,
+            borderRadius: isMobile ? '26px 26px 0 0' : 28,
             border: `1px solid ${T.border.medium}`,
-            background: `linear-gradient(150deg, ${T.bg.card}, ${T.bg.secondary} 62%)`,
-            boxShadow: isMobile ? '0 -30px 80px rgba(0,0,0,0.55)' : T.shadow.elevated,
+            background: highContrast ? T.bg.card : `linear-gradient(150deg, ${T.bg.card}, ${T.bg.secondary} 62%)`,
+            boxShadow: isMobile ? '0 -30px 80px rgba(0,0,0,0.45)' : T.shadow.elevated,
           }}
         >
           {/* ── aurora header ─────────────────────────────────────────────── */}
           <div style={{
             position: 'relative',
             overflow: 'hidden',
-            padding: isMobile ? '18px 18px 16px' : '26px 30px 22px',
+            padding: isMobile ? '18px 18px 16px' : '28px 32px 24px',
             borderBottom: `1px solid ${T.border.subtle}`,
-            background: `radial-gradient(120% 160% at ${isRTL ? '100%' : '0%'} 0%, ${sideColor}22, transparent 55%), radial-gradient(90% 140% at ${isRTL ? '0%' : '100%'} 0%, ${outcomeColor}14, transparent 60%)`,
+            background: auroraHeader,
           }}>
             <span aria-hidden style={{
               position: 'absolute', top: 0, insetInline: 0, height: 2,
               background: `linear-gradient(90deg, transparent, ${sideColor}, ${outcomeColor}, transparent)`,
-              opacity: 0.85,
+              opacity: highContrast ? 1 : 0.85,
             }} />
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 14 }}>
               <div style={{ minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 11, flexWrap: 'wrap' }}>
                   <span style={{
                     display: 'inline-flex', alignItems: 'center', gap: 5,
                     padding: '4px 11px', borderRadius: 999,
                     fontSize: 10, fontWeight: 900, letterSpacing: 1.1, textTransform: 'uppercase',
-                    color: sideColor, background: `${sideColor}16`, border: `1px solid ${sideColor}44`,
+                    color: sideColor, background: g(sideColor, 0.12), border: `1px solid ${sideColor}55`,
                   }}>
                     {isLong ? '▲' : '▼'} {trade.direction}
                   </span>
                   <span style={{
-                    fontSize: isMobile ? 32 : 42, lineHeight: 1, fontWeight: 900,
-                    fontFamily: MONO, color: T.text.primary,
+                    fontSize: isMobile ? 32 : 44, lineHeight: 1, fontWeight: 900,
+                    fontFamily: MONO, color: T.text.primary, letterSpacing: '-0.02em',
                   }}>{trade.coin}</span>
                 </div>
-                <div style={{ marginTop: 9, color: T.text.muted, fontSize: isMobile ? 11.5 : 13, fontFamily: MONO }}>
+                <div style={{ marginTop: 10, color: T.text.muted, fontSize: isMobile ? 11.5 : 12.5, fontFamily: MONO }}>
                   {isRTL ? 'עסקה' : 'Trade'} #{trade.id} • {dateLabel}
                 </div>
               </div>
-              <button
-                onClick={onClose}
-                aria-label={isRTL ? 'סגור' : 'Close'}
-                className="orca-focus"
-                style={{
-                  flexShrink: 0,
-                  width: isMobile ? 34 : 38, height: isMobile ? 34 : 38,
-                  borderRadius: 12,
-                  border: `1px solid ${T.border.subtle}`,
-                  background: T.bg.tertiary, color: T.text.muted,
-                  cursor: 'pointer', fontSize: 20, lineHeight: 1,
-                  transition: 'all .18s ease',
-                }}
-              >×</button>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                {onNavigate && (
+                  <>
+                    <NavBtn d={-1} disabled={!canPrev} />
+                    {position && (
+                      <span style={{
+                        fontSize: 10.5, fontFamily: MONO, color: T.text.muted,
+                        padding: '5px 9px', borderRadius: 999,
+                        border: `1px solid ${T.border.subtle}`, background: T.bg.tertiary,
+                        whiteSpace: 'nowrap',
+                      }}>{position.index} / {position.total}</span>
+                    )}
+                    <NavBtn d={1} disabled={!canNext} />
+                  </>
+                )}
+                <button
+                  onClick={onClose}
+                  aria-label={isRTL ? 'סגור' : 'Close'}
+                  className="orca-focus"
+                  style={{
+                    width: isMobile ? 34 : 38, height: isMobile ? 34 : 38,
+                    borderRadius: 12,
+                    border: `1px solid ${T.border.subtle}`,
+                    background: T.bg.tertiary, color: T.text.muted,
+                    cursor: 'pointer', fontSize: 20, lineHeight: 1,
+                    transition: reducedMotion ? 'none' : 'all .18s ease',
+                  }}
+                >×</button>
+              </div>
             </div>
           </div>
 
           {/* ── body ──────────────────────────────────────────────────────── */}
-          <div style={{
-            padding: isMobile ? '16px 16px calc(18px + env(safe-area-inset-bottom))' : '24px 30px 28px',
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : '1.25fr 1fr',
-            gap: isMobile ? 14 : 22,
-            alignItems: 'start',
-          }}>
+          <motion.div
+            key={trade.id}
+            initial={reducedMotion ? false : { opacity: 0, x: isRTL ? -10 : 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: reducedMotion ? 0 : 0.22, ease: [0.22, 1, 0.36, 1] }}
+            style={{
+              padding: isMobile ? '18px 16px calc(20px + env(safe-area-inset-bottom))' : '26px 32px 30px',
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : '1.25fr 1fr',
+              gap: isMobile ? 16 : 24,
+              alignItems: 'start',
+            }}>
             {/* left column */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
               {/* price ladder */}
               <div style={{
-                padding: isMobile ? '16px 14px 12px' : '18px 18px 14px',
+                padding: isMobile ? '16px 14px 12px' : '20px 20px 16px',
                 borderRadius: T.radius.lg,
                 border: `1px solid ${T.border.subtle}`,
                 background: T.bg.tertiary,
               }}>
-                <div style={{ fontSize: 9.5, letterSpacing: 0.8, textTransform: 'uppercase', color: T.text.muted, marginBottom: 18 }}>
+                <div style={{ fontSize: 9.5, letterSpacing: 0.9, textTransform: 'uppercase', color: T.text.muted, marginBottom: 20 }}>
                   {isRTL ? 'מסלול המחיר' : 'Price path'}
                 </div>
-                <div style={{ position: 'relative', height: 46 }}>
-                  <div style={{ position: 'absolute', insetInline: 0, top: 20, height: 3, borderRadius: 999, background: `linear-gradient(90deg, ${T.accent.red}55, ${T.border.medium}, ${outcomeColor}88)` }} />
+                <div style={{ position: 'relative', height: 48 }}>
+                  <div style={{ position: 'absolute', insetInline: 0, top: 20, height: 3, borderRadius: 999, background: `linear-gradient(90deg, ${g(T.accent.red, 0.34)}, ${T.border.medium}, ${g(outcomeColor, 0.55)})` }} />
                   {[
                     { p: trade.stopLoss, label: isRTL ? 'סטופ' : 'Stop', c: T.accent.red },
                     { p: trade.entry, label: isRTL ? 'כניסה' : 'Entry', c: T.accent.cyan },
@@ -187,7 +260,7 @@ export function TradeDetailModal({ T, t, trade, isRTL, isMobile, onClose, onEdit
                       whiteSpace: 'nowrap',
                     }}>
                       <span style={{ fontSize: 10.5, fontFamily: MONO, fontWeight: 800, color: m.c }}>{m.p}</span>
-                      <span style={{ width: 9, height: 9, borderRadius: 999, background: m.c, boxShadow: `0 0 0 3px ${m.c}22` }} />
+                      <span style={{ width: 9, height: 9, borderRadius: 999, background: m.c, boxShadow: `0 0 0 3px ${g(m.c, 0.16)}` }} />
                       <span style={{ fontSize: 8.5, letterSpacing: 0.6, textTransform: 'uppercase', color: T.text.muted }}>{m.label}</span>
                     </div>
                   ))}
@@ -195,7 +268,7 @@ export function TradeDetailModal({ T, t, trade, isRTL, isMobile, onClose, onEdit
               </div>
 
               {/* stat tiles */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 10 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 11 }}>
                 <Tile label={t.entry} value={trade.entry} accentBar={T.accent.cyan} />
                 <Tile label={t.stopLoss} value={trade.stopLoss == null ? '—' : trade.stopLoss} color={T.accent.red} accentBar={T.accent.red} />
                 <Tile label={t.exit} value={trade.exit} accentBar={outcomeColor} />
@@ -208,71 +281,74 @@ export function TradeDetailModal({ T, t, trade, isRTL, isMobile, onClose, onEdit
             </div>
 
             {/* right column — hero outcome */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
               <div style={{
                 position: 'relative', overflow: 'hidden',
-                padding: isMobile ? '18px 16px' : '22px 20px',
+                padding: isMobile ? '18px 16px' : '24px 22px',
                 borderRadius: T.radius.lg,
-                border: `1px solid ${outcomeColor}3D`,
-                background: `radial-gradient(120% 120% at 50% 0%, ${outcomeColor}1F, transparent 70%), ${T.bg.tertiary}`,
-                boxShadow: `inset 0 1px 0 ${outcomeColor}22`,
+                border: `1px solid ${highContrast ? outcomeColor : `${outcomeColor}3D`}`,
+                background: highContrast
+                  ? T.bg.tertiary
+                  : `radial-gradient(120% 120% at 50% 0%, ${g(outcomeColor, 0.13)}, transparent 70%), ${T.bg.tertiary}`,
+                boxShadow: highContrast ? 'none' : `inset 0 1px 0 ${g(outcomeColor, 0.14)}`,
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                  <span style={{ fontSize: 9.5, letterSpacing: 0.9, textTransform: 'uppercase', color: T.text.muted }}>{isRTL ? 'תוצאה' : 'Outcome'}</span>
+                  <span style={{ fontSize: 9.5, letterSpacing: 1, textTransform: 'uppercase', color: T.text.muted }}>{isRTL ? 'תוצאה' : 'Outcome'}</span>
                   <span style={{
                     padding: '3px 10px', borderRadius: 999, fontSize: 9.5, fontWeight: 900,
                     letterSpacing: 1, textTransform: 'uppercase',
-                    color: resultColor, background: `${resultColor}18`, border: `1px solid ${resultColor}44`,
+                    color: resultColor, background: g(resultColor, 0.14), border: `1px solid ${resultColor}55`,
                   }}>{trade.winLoss}</span>
                 </div>
                 <div style={{
-                  marginTop: 14, fontSize: isMobile ? 38 : 46, lineHeight: 1,
+                  marginTop: 16, fontSize: isMobile ? 38 : 48, lineHeight: 1,
                   fontWeight: 900, fontFamily: MONO, color: outcomeColor,
-                  textShadow: `0 0 34px ${outcomeColor}40`,
+                  letterSpacing: '-0.02em',
+                  textShadow: highContrast ? 'none' : `0 0 34px ${g(outcomeColor, 0.25)}`,
                 }}>
                   {fmtHeadline(headline.v, headline.unit)}
                 </div>
-                <div style={{ marginTop: 16 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9.5, color: T.text.muted, marginBottom: 6, letterSpacing: 0.5 }}>
+                <div style={{ marginTop: 18 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9.5, color: T.text.muted, marginBottom: 7, letterSpacing: 0.6 }}>
                     <span>{isRTL ? 'עוצמת R' : 'R strength'}</span>
                     <span style={{ fontFamily: MONO }}>{r.toFixed(2)}R</span>
                   </div>
                   <div style={{ height: 6, borderRadius: 999, background: `${T.border.medium}`, overflow: 'hidden' }}>
                     <motion.div
-                      initial={{ width: 0 }}
+                      initial={{ width: reducedMotion ? `${meter}%` : 0 }}
                       animate={{ width: `${meter}%` }}
-                      transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                      style={{ height: '100%', background: `linear-gradient(90deg, ${outcomeColor}77, ${outcomeColor})` }}
+                      transition={{ duration: reducedMotion ? 0 : 0.7, ease: [0.16, 1, 0.3, 1] }}
+                      style={{ height: '100%', background: highContrast ? outcomeColor : `linear-gradient(90deg, ${g(outcomeColor, 0.45)}, ${outcomeColor})` }}
                     />
                   </div>
                 </div>
               </div>
 
               {trade.comments && (
-                <div style={{ padding: 15, background: T.bg.tertiary, borderRadius: T.radius.md, border: `1px solid ${T.border.subtle}` }}>
-                  <div style={{ fontSize: 9.5, color: T.text.muted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 7 }}>{t.comments}</div>
-                  <div style={{ fontSize: 13, color: T.text.secondary, lineHeight: 1.6 }}>{trade.comments}</div>
+                <div style={{ padding: 16, background: T.bg.tertiary, borderRadius: T.radius.md, border: `1px solid ${T.border.subtle}` }}>
+                  <div style={{ fontSize: 9.5, color: T.text.muted, textTransform: 'uppercase', letterSpacing: 0.9, marginBottom: 8 }}>{t.comments}</div>
+                  <div style={{ fontSize: 13, color: T.text.secondary, lineHeight: 1.65 }}>{trade.comments}</div>
                 </div>
               )}
 
               {/* actions */}
               <div style={{ display: 'flex', gap: 10, marginTop: 2, flexDirection: isMobile ? 'column-reverse' : 'row' }}>
                 <button onClick={onDelete} className="orca-focus" style={{
-                  flex: 1, padding: isMobile ? '13px 16px' : '11px 16px',
-                  background: `${T.accent.red}14`, border: `1px solid ${T.accent.red}3D`, borderRadius: T.radius.md,
+                  flex: 1, padding: isMobile ? '13px 16px' : '12px 16px',
+                  background: g(T.accent.red, 0.1), border: `1px solid ${T.accent.red}3D`, borderRadius: T.radius.md,
                   color: T.accent.red, cursor: 'pointer', fontSize: 12.5, fontWeight: 800,
-                  transition: 'all .18s ease',
+                  transition: reducedMotion ? 'none' : 'all .18s ease',
                 }}>{t.deleteTrade}</button>
                 <button onClick={onEdit} className="orca-focus" style={{
-                  flex: 1.4, padding: isMobile ? '14px 16px' : '11px 18px',
+                  flex: 1.4, padding: isMobile ? '14px 16px' : '12px 18px',
                   background: `linear-gradient(135deg, ${T.accent.blue}, ${T.accent.cyan})`, border: 'none', borderRadius: T.radius.md,
                   color: T.bg.primary, cursor: 'pointer', fontSize: 12.5, fontWeight: 900,
-                  boxShadow: `0 8px 22px -10px ${T.accent.cyan}`,
-                  transition: 'all .18s ease',
+                  boxShadow: highContrast ? 'none' : `0 8px 22px -10px ${g(T.accent.cyan, 0.9)}`,
+                  transition: reducedMotion ? 'none' : 'all .18s ease',
                 }}>{t.editTrade}</button>
               </div>
             </div>
-          </div>
+          </motion.div>
         </motion.div>
       </motion.div>
     </AnimatePresence>

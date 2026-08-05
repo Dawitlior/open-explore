@@ -108,6 +108,14 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
   }, [phase, onEnter]);
 
   if (phase === 'idle') {
+    const light = isLightScheme();
+    const ink = SURF.text1;
+    const reduced = typeof window !== 'undefined'
+      && (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+        || document.body?.getAttribute('data-reduce-motion') === '1');
+    const anim = (name: string, delay: number, dur = 900) =>
+      reduced ? undefined : `${name} ${dur}ms cubic-bezier(0.22,1,0.36,1) ${delay}ms both`;
+
     return (
       <div
         dir={isRTL ? 'rtl' : 'ltr'}
@@ -119,35 +127,87 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
           fontFamily: "'JetBrains Mono', 'Inter', monospace",
           overflow: 'hidden',
         }}
-
       >
-        <div style={{
-          position: 'absolute', inset: 0, opacity: 0.04,
-          backgroundImage: 'linear-gradient(rgba(6,214,160,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(6,214,160,0.3) 1px, transparent 1px)',
-          backgroundSize: '60px 60px',
+        <style>{`
+          @keyframes orca-gate-rise { from { opacity:0; transform: translateY(18px); } to { opacity:1; transform:none; } }
+          @keyframes orca-gate-line { from { transform: scaleX(0); opacity:0; } to { transform: scaleX(1); opacity:1; } }
+          @keyframes orca-gate-breathe { 0%,100% { transform: scale(1); opacity:.55; } 50% { transform: scale(1.12); opacity:.9; } }
+          @keyframes orca-gate-drift { 0% { transform: translate3d(-2%, 0, 0); } 50% { transform: translate3d(2%, -1.5%, 0); } 100% { transform: translate3d(-2%, 0, 0); } }
+        `}</style>
+
+        {/* soft drifting aurora — intensity adapts to scheme */}
+        <div aria-hidden style={{
+          position: 'absolute', inset: '-15%',
+          background: light
+            ? 'radial-gradient(38% 42% at 32% 34%, rgba(99,102,241,0.14), transparent 70%), radial-gradient(34% 38% at 68% 62%, rgba(6,214,160,0.13), transparent 70%)'
+            : 'radial-gradient(38% 42% at 32% 34%, rgba(6,214,160,0.16), transparent 70%), radial-gradient(34% 38% at 68% 62%, rgba(99,102,241,0.18), transparent 70%)',
+          filter: 'blur(20px)',
+          animation: reduced ? undefined : 'orca-gate-drift 18s ease-in-out infinite',
         }} />
-        <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-          <h1 style={{ fontSize: 42, margin: 0, lineHeight: 1.1, letterSpacing: '-0.03em', color: SURF.text1 }}>
+        <div aria-hidden style={{
+          position: 'absolute', inset: 0, opacity: light ? 0.05 : 0.045,
+          backgroundImage: 'linear-gradient(currentColor 1px, transparent 1px), linear-gradient(90deg, currentColor 1px, transparent 1px)',
+          backgroundSize: '72px 72px',
+          color: light ? '#3730a3' : '#06d6a0',
+          maskImage: 'radial-gradient(70% 60% at 50% 45%, #000 30%, transparent 100%)',
+          WebkitMaskImage: 'radial-gradient(70% 60% at 50% 45%, #000 30%, transparent 100%)',
+        }} />
+
+        <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '0 24px' }}>
+          {/* breathing mark */}
+          <div aria-hidden style={{ display: 'flex', justifyContent: 'center', marginBottom: 30, animation: anim('orca-gate-rise', 0, 700) }}>
+            <span style={{
+              width: 12, height: 12, borderRadius: 999,
+              background: 'linear-gradient(135deg,#06d6a0,#6366f1)',
+              boxShadow: light ? '0 0 0 10px rgba(99,102,241,0.07)' : '0 0 34px rgba(6,214,160,0.45)',
+              animation: reduced ? undefined : 'orca-gate-breathe 3.4s ease-in-out infinite',
+            }} />
+          </div>
+
+          <h1 style={{
+            fontSize: 'clamp(32px, 7vw, 54px)', margin: 0, lineHeight: 1.05, letterSpacing: '-0.045em', color: ink,
+            animation: anim('orca-gate-rise', 90),
+          }}>
             <span style={{ fontWeight: 800 }}>Orca</span>
-            <span style={{ fontWeight: 300, marginInlineStart: 10, color: SURF.text2 }}>Investment</span>
+            <span style={{ fontWeight: 200, marginInlineStart: 12, color: SURF.text2 }}>Investment</span>
           </h1>
-          <p style={{ fontSize: 12, color: SURF.text3, letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: 10, marginBottom: 48 }}>
+
+          <div aria-hidden style={{
+            width: 'min(280px, 60vw)', height: 1, margin: '22px auto 0',
+            background: `linear-gradient(90deg, transparent, ${light ? 'rgba(55,48,163,0.35)' : 'rgba(6,214,160,0.5)'}, transparent)`,
+            transformOrigin: 'center',
+            animation: anim('orca-gate-line', 220, 1000),
+          }} />
+
+          <p style={{
+            fontSize: 11.5, color: SURF.text3, letterSpacing: '0.28em', textTransform: 'uppercase',
+            marginTop: 18, marginBottom: 46,
+            animation: anim('orca-gate-rise', 300),
+          }}>
             {isRTL ? 'מסוף מודיעין מסחרי' : 'Trading Intelligence Terminal'}
           </p>
-          <button
-            onClick={handleAccess}
-            style={{
-              padding: '14px 48px',
-              background: 'linear-gradient(135deg, #06d6a0, #0d9488)',
-              border: 'none', borderRadius: 10,
-              color: '#0a0e1a', fontSize: 14, fontWeight: 700,
-              fontFamily: "'JetBrains Mono', monospace",
-              cursor: 'pointer', letterSpacing: '0.05em',
-              boxShadow: '0 0 40px rgba(6,214,160,0.2), 0 4px 20px rgba(0,0,0,0.4)',
-            }}
-          >
-            {isRTL ? 'כניסה למערכת' : 'Access Platform'}
-          </button>
+
+          <div style={{ animation: anim('orca-gate-rise', 420) }}>
+            <button
+              onClick={handleAccess}
+              onMouseEnter={e => { if (!reduced) e.currentTarget.style.transform = 'translateY(-2px)'; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'none'; }}
+              style={{
+                padding: '15px 52px',
+                background: light ? 'linear-gradient(135deg,#4f46e5,#06d6a0)' : 'linear-gradient(135deg, #06d6a0, #0d9488)',
+                border: 'none', borderRadius: 999,
+                color: light ? '#ffffff' : '#0a0e1a', fontSize: 13.5, fontWeight: 700,
+                fontFamily: "'JetBrains Mono', monospace",
+                cursor: 'pointer', letterSpacing: '0.08em',
+                transition: reduced ? 'none' : 'transform .25s cubic-bezier(0.22,1,0.36,1), box-shadow .25s ease',
+                boxShadow: light
+                  ? '0 12px 30px -12px rgba(79,70,229,0.55)'
+                  : '0 0 44px rgba(6,214,160,0.22), 0 10px 26px -12px rgba(0,0,0,0.6)',
+              }}
+            >
+              {isRTL ? 'כניסה למערכת' : 'Access Platform'}
+            </button>
+          </div>
         </div>
       </div>
     );

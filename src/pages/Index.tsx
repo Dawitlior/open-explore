@@ -1425,20 +1425,31 @@ const Index = () => {
           </div>
         )}
         {/* Trade detail modal */}
-        {selTrade && (
-          <TradeDetailModal
-            T={T}
-            t={t}
-            trade={selTrade}
-            isRTL={isRTL}
-            isMobile={isMobile}
-            onClose={() => setSelTrade(null)}
-            onDelete={() => handleDeleteTrade(selTrade.id)}
-            onEdit={() => { setEditingTrade(selTrade); setSelTrade(null); setShowTradeForm(true); }}
-            tradeHeadline={tradeHeadline}
-            fmtHeadline={fmtHeadline}
-          />
-        )}
+        {selTrade && (() => {
+          const navList = pageRows;
+          const navIdx = navList.findIndex(x => x.id === selTrade.id);
+          return (
+            <TradeDetailModal
+              T={T}
+              t={t}
+              trade={selTrade}
+              isRTL={isRTL}
+              isMobile={isMobile}
+              onClose={() => setSelTrade(null)}
+              onDelete={() => handleDeleteTrade(selTrade.id)}
+              onEdit={() => { setEditingTrade(selTrade); setSelTrade(null); setShowTradeForm(true); }}
+              tradeHeadline={tradeHeadline}
+              fmtHeadline={fmtHeadline}
+              onNavigate={navIdx >= 0 ? (d) => {
+                const next = navList[navIdx + d];
+                if (next) setSelTrade(next);
+              } : undefined}
+              position={navIdx >= 0 ? { index: navIdx + 1, total: navList.length } : undefined}
+              canPrev={navIdx > 0}
+              canNext={navIdx >= 0 && navIdx < navList.length - 1}
+            />
+          );
+        })()}
       </>
     );
   };
