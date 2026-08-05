@@ -133,7 +133,7 @@ export function TradeDetailModal({
         transition={{ duration: reducedMotion ? 0 : 0.22, ease: [0.22, 1, 0.36, 1] }}
         style={{
           position: 'fixed', inset: 0, zIndex: 100,
-          background: T.overlay ?? 'rgba(2,6,16,0.62)',
+          background: 'rgba(2,6,16,0.62)',
           display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center',
           padding: isMobile ? '12px 10px 0' : 28,
           backdropFilter: highContrast ? 'none' : 'blur(16px) saturate(120%)',
