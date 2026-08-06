@@ -275,25 +275,32 @@ export function TradeDetailModal({
                 <div style={{ fontSize: 9.5, letterSpacing: 0.9, textTransform: 'uppercase', color: T.text.muted, marginBottom: 20 }}>
                   {isRTL ? 'מסלול המחיר' : 'Price path'}
                 </div>
-                <div style={{ position: 'relative', height: 48 }}>
-                  <div style={{ position: 'absolute', insetInline: 0, top: 20, height: 3, borderRadius: 999, background: `linear-gradient(90deg, ${g(T.accent.red, 0.34)}, ${T.border.medium}, ${g(outcomeColor, 0.55)})` }} />
-                  {[
-                    { p: trade.stopLoss, label: isRTL ? 'סטופ' : 'Stop', c: T.accent.red },
-                    { p: trade.entry, label: isRTL ? 'כניסה' : 'Entry', c: T.accent.cyan },
-                    { p: trade.exit, label: isRTL ? 'יציאה' : 'Exit', c: outcomeColor },
-                  ].map((m, i) => m.p == null ? null : (
+                <div style={{ position: 'relative', height: 76, direction: 'ltr' }}>
+                  <div style={{ position: 'absolute', insetInline: 0, top: 24, height: 3, borderRadius: 999, background: `linear-gradient(90deg, ${g(T.accent.red, 0.34)}, ${T.border.medium}, ${g(outcomeColor, 0.55)})` }} />
+                  {markers.map((m, i) => (
                     <div key={i} style={{
                       position: 'absolute', top: 0,
-                      left: `${pos(m.p)}%`, transform: 'translateX(-50%)',
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                      left: `${m.x}%`, transform: 'translateX(-50%)',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center',
                       whiteSpace: 'nowrap',
                     }}>
-                      <span style={{ fontSize: 10.5, fontFamily: MONO, fontWeight: 800, color: m.c }}>{m.p}</span>
+                      {/* price chip — lane 1 sits higher so neighbours never collide */}
+                      <span style={{
+                        fontSize: 10, fontFamily: MONO, fontWeight: 800, color: m.c,
+                        padding: '2px 6px', borderRadius: 6,
+                        background: T.bg.card, border: `1px solid ${g(m.c, 0.35)}`,
+                        marginBottom: m.lane === 1 ? 22 : 4,
+                        marginTop: m.lane === 1 ? -18 : 0,
+                      }}>{m.p}</span>
                       <span style={{ width: 9, height: 9, borderRadius: 999, background: m.c, boxShadow: `0 0 0 3px ${g(m.c, 0.16)}` }} />
-                      <span style={{ fontSize: 8.5, letterSpacing: 0.6, textTransform: 'uppercase', color: T.text.muted }}>{m.label}</span>
+                      <span style={{
+                        fontSize: 8.5, letterSpacing: 0.6, textTransform: 'uppercase', color: T.text.muted,
+                        marginTop: m.lane === 1 ? 16 : 4,
+                      }}>{m.label}</span>
                     </div>
                   ))}
                 </div>
+
               </div>
 
               {/* stat tiles */}
