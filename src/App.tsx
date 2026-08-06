@@ -16,7 +16,7 @@ import { StorageErrorListener } from "@/components/StorageErrorListener";
 // Every route is code-split. The dashboard (`Index`) statically pulls in
 // recharts + ~40 heavy modules, so keeping it lazy means visitors landing on
 // /welcome or /auth never download or parse any of it.
-const Index = lazy(() => import("./pages/Index"));
+
 const Auth = lazy(() => import("./pages/Auth"));
 const Landing = lazy(() => import("./pages/Landing"));
 const Terms = lazy(() => import("./pages/Terms"));
@@ -46,6 +46,7 @@ const BugBoardPage = lazy(() => import("./pages/BugBoardPage"));
 const OrcaConsolePage = lazy(() => import("./pages/OrcaConsole"));
 const OrcaDiagnosticsPage = lazy(() => import("./pages/OrcaDiagnostics"));
 import { RequireAdmin } from "@/components/RequireAdmin";
+import RootEntry from "@/components/RootEntry";
 import { OrcaBootLoader } from "@/components/OrcaBootLoader";
 import { ConsoleBackButton } from "@/components/ConsoleBackButton";
 
@@ -173,7 +174,7 @@ const App = () => (
                 path="/"
                 element={
                   <RequireAuth>
-                    <Index />
+                    <RootEntry />
                   </RequireAuth>
                 }
               />

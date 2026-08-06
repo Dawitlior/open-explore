@@ -71,9 +71,38 @@ export function TradeDetailModal({
   const pts = [trade.entry, trade.exit, trade.stopLoss ?? trade.entry].filter(n => Number.isFinite(n)) as number[];
   const lo = Math.min(...pts), hi = Math.max(...pts);
   const span = hi - lo || 1;
-  const pos = (n: number) => ((n - lo) / span) * 100;
+  const rawPos = (n: number) => ((n - lo) / span) * 100;
 
-  const meter = Math.min(100, (Math.abs(r) / 3) * 100);
+  /** Markers with collision-aware lanes so labels never overlap. */
+  const markers = (() => {
+    const base = [
+      { p: trade.stopLoss, label: isRTL ? 'סטופ' : 'Stop', c: T.accent.red },
+      { p: trade.entry, label: isRTL ? 'כניסה' : 'Entry', c: T.accent.cyan },
+      { p: trade.exit, label: isRTL ? 'יציאה' : 'Exit', c: outcomeColor },
+    ].filter(m => m.p != null && Number.isFinite(m.p as number)) as Array<{ p: number; label: string; c: string }>;
+
+    const withPos = base
+      .map(m => ({ ...m, x: Math.max(7, Math.min(93, rawPos(m.p))) }))
+      .sort((a, b) => a.x - b.x);
+
+    // Assign alternating lanes when two markers sit closer than the label width.
+    const MIN_GAP = 22; // % of track
+    let lane = 0;
+    return withPos.map((m, i) => {
+      if (i > 0 && m.x - withPos[i - 1].x < MIN_GAP) lane = lane === 0 ? 1 : 0;
+      else lane = 0;
+      return { ...m, lane };
+    });
+  })();
+
+  // ── bipolar R scale: -2R ⟵ 0 ⟶ +5R, with outlier clamping ────────────────
+  const R_MIN = -2, R_MAX = 5;
+  const zeroPct = (0 - R_MIN) / (R_MAX - R_MIN) * 100; // ≈28.6%
+  const clampedR = Math.max(R_MIN, Math.min(R_MAX, r));
+  const rPct = (clampedR - R_MIN) / (R_MAX - R_MIN) * 100;
+  const isOutlier = r > R_MAX || r < R_MIN;
+  const barLeft = Math.min(zeroPct, rPct);
+  const barWidth = Math.abs(rPct - zeroPct);
 
   const NavBtn = ({ d, disabled }: { d: -1 | 1; disabled: boolean }) => {
     const forward = d === 1;
@@ -185,7 +214,7 @@ export function TradeDetailModal({
                   }}>{trade.coin}</span>
                 </div>
                 <div style={{ marginTop: 10, color: T.text.muted, fontSize: isMobile ? 11.5 : 12.5, fontFamily: MONO }}>
-                  {isRTL ? 'עסקה' : 'Trade'} #{trade.id} • {dateLabel}
+                  {isRTL ? 'עסקה' : 'Trade'} #{position?.index ?? trade.id} • {dateLabel}
                 </div>
               </div>
 
@@ -246,25 +275,32 @@ export function TradeDetailModal({
                 <div style={{ fontSize: 9.5, letterSpacing: 0.9, textTransform: 'uppercase', color: T.text.muted, marginBottom: 20 }}>
                   {isRTL ? 'מסלול המחיר' : 'Price path'}
                 </div>
-                <div style={{ position: 'relative', height: 48 }}>
-                  <div style={{ position: 'absolute', insetInline: 0, top: 20, height: 3, borderRadius: 999, background: `linear-gradient(90deg, ${g(T.accent.red, 0.34)}, ${T.border.medium}, ${g(outcomeColor, 0.55)})` }} />
-                  {[
-                    { p: trade.stopLoss, label: isRTL ? 'סטופ' : 'Stop', c: T.accent.red },
-                    { p: trade.entry, label: isRTL ? 'כניסה' : 'Entry', c: T.accent.cyan },
-                    { p: trade.exit, label: isRTL ? 'יציאה' : 'Exit', c: outcomeColor },
-                  ].map((m, i) => m.p == null ? null : (
+                <div style={{ position: 'relative', height: 76, direction: 'ltr' }}>
+                  <div style={{ position: 'absolute', insetInline: 0, top: 24, height: 3, borderRadius: 999, background: `linear-gradient(90deg, ${g(T.accent.red, 0.34)}, ${T.border.medium}, ${g(outcomeColor, 0.55)})` }} />
+                  {markers.map((m, i) => (
                     <div key={i} style={{
                       position: 'absolute', top: 0,
-                      left: `${pos(m.p)}%`, transform: 'translateX(-50%)',
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                      left: `${m.x}%`, transform: 'translateX(-50%)',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center',
                       whiteSpace: 'nowrap',
                     }}>
-                      <span style={{ fontSize: 10.5, fontFamily: MONO, fontWeight: 800, color: m.c }}>{m.p}</span>
+                      {/* price chip — lane 1 sits higher so neighbours never collide */}
+                      <span style={{
+                        fontSize: 10, fontFamily: MONO, fontWeight: 800, color: m.c,
+                        padding: '2px 6px', borderRadius: 6,
+                        background: T.bg.card, border: `1px solid ${g(m.c, 0.35)}`,
+                        marginBottom: m.lane === 1 ? 22 : 4,
+                        marginTop: m.lane === 1 ? -18 : 0,
+                      }}>{m.p}</span>
                       <span style={{ width: 9, height: 9, borderRadius: 999, background: m.c, boxShadow: `0 0 0 3px ${g(m.c, 0.16)}` }} />
-                      <span style={{ fontSize: 8.5, letterSpacing: 0.6, textTransform: 'uppercase', color: T.text.muted }}>{m.label}</span>
+                      <span style={{
+                        fontSize: 8.5, letterSpacing: 0.6, textTransform: 'uppercase', color: T.text.muted,
+                        marginTop: m.lane === 1 ? 16 : 4,
+                      }}>{m.label}</span>
                     </div>
                   ))}
                 </div>
+
               </div>
 
               {/* stat tiles */}
@@ -308,20 +344,39 @@ export function TradeDetailModal({
                 }}>
                   {fmtHeadline(headline.v, headline.unit)}
                 </div>
-                <div style={{ marginTop: 18 }}>
+                <div style={{ marginTop: 18, direction: 'ltr' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9.5, color: T.text.muted, marginBottom: 7, letterSpacing: 0.6 }}>
                     <span>{isRTL ? 'עוצמת R' : 'R strength'}</span>
-                    <span style={{ fontFamily: MONO }}>{r.toFixed(2)}R</span>
+                    <span style={{ fontFamily: MONO, color: outcomeColor, fontWeight: 800 }}>
+                      {r.toFixed(2)}R{isOutlier ? (r > 0 ? ' ↗' : ' ↘') : ''}
+                    </span>
                   </div>
-                  <div style={{ height: 6, borderRadius: 999, background: `${T.border.medium}`, overflow: 'hidden' }}>
+                  {/* bipolar track: -2R … 0 … +5R */}
+                  <div style={{ position: 'relative', height: 8, borderRadius: 999, background: T.border.medium, overflow: 'hidden' }}>
+                    <span aria-hidden style={{ position: 'absolute', left: `${zeroPct}%`, top: 0, bottom: 0, width: 1, background: T.text.muted, opacity: 0.55 }} />
                     <motion.div
-                      initial={{ width: reducedMotion ? `${meter}%` : 0 }}
-                      animate={{ width: `${meter}%` }}
+                      initial={{ width: reducedMotion ? `${barWidth}%` : 0, left: `${barLeft}%` }}
+                      animate={{ width: `${barWidth}%`, left: `${barLeft}%` }}
                       transition={{ duration: reducedMotion ? 0 : 0.7, ease: [0.16, 1, 0.3, 1] }}
-                      style={{ height: '100%', background: highContrast ? outcomeColor : `linear-gradient(90deg, ${g(outcomeColor, 0.45)}, ${outcomeColor})` }}
+                      style={{
+                        position: 'absolute', top: 0, bottom: 0,
+                        borderRadius: 999,
+                        background: highContrast ? outcomeColor : `linear-gradient(90deg, ${g(outcomeColor, 0.5)}, ${outcomeColor})`,
+                      }}
                     />
+                    {isOutlier && (
+                      <span aria-hidden style={{
+                        position: 'absolute', top: 0, bottom: 0, width: 6,
+                        [r > 0 ? 'right' : 'left']: 0,
+                        background: `repeating-linear-gradient(45deg, ${outcomeColor}, ${outcomeColor} 2px, transparent 2px, transparent 4px)`,
+                      } as React.CSSProperties} />
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 8.5, fontFamily: MONO, color: T.text.muted, marginTop: 5 }}>
+                    <span>-2R</span><span style={{ marginInlineStart: `${zeroPct - 12}%` }}>0</span><span>+5R</span>
                   </div>
                 </div>
+
               </div>
 
               {trade.comments && (

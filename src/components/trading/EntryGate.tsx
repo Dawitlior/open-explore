@@ -20,9 +20,9 @@ interface EntryGateProps {
  */
 type Phase = 'idle' | 'spin' | 'settle' | 'split' | 'done';
 
-const SPIN_MS = 2000;
-const SETTLE_MS = 1200;
-const SPLIT_MS = 800;
+const SPIN_MS = 1200;
+const SETTLE_MS = 800;
+const SPLIT_MS = 620;
 const PANEL_BG = "#0B0E11";
 const panelBg = () => (isLightScheme() ? "#FFFFFF" : PANEL_BG);
 const gateBg = () => (isLightScheme()
