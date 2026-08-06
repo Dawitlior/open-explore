@@ -71,9 +71,38 @@ export function TradeDetailModal({
   const pts = [trade.entry, trade.exit, trade.stopLoss ?? trade.entry].filter(n => Number.isFinite(n)) as number[];
   const lo = Math.min(...pts), hi = Math.max(...pts);
   const span = hi - lo || 1;
-  const pos = (n: number) => ((n - lo) / span) * 100;
+  const rawPos = (n: number) => ((n - lo) / span) * 100;
 
-  const meter = Math.min(100, (Math.abs(r) / 3) * 100);
+  /** Markers with collision-aware lanes so labels never overlap. */
+  const markers = (() => {
+    const base = [
+      { p: trade.stopLoss, label: isRTL ? 'סטופ' : 'Stop', c: T.accent.red },
+      { p: trade.entry, label: isRTL ? 'כניסה' : 'Entry', c: T.accent.cyan },
+      { p: trade.exit, label: isRTL ? 'יציאה' : 'Exit', c: outcomeColor },
+    ].filter(m => m.p != null && Number.isFinite(m.p as number)) as Array<{ p: number; label: string; c: string }>;
+
+    const withPos = base
+      .map(m => ({ ...m, x: Math.max(7, Math.min(93, rawPos(m.p))) }))
+      .sort((a, b) => a.x - b.x);
+
+    // Assign alternating lanes when two markers sit closer than the label width.
+    const MIN_GAP = 22; // % of track
+    let lane = 0;
+    return withPos.map((m, i) => {
+      if (i > 0 && m.x - withPos[i - 1].x < MIN_GAP) lane = lane === 0 ? 1 : 0;
+      else lane = 0;
+      return { ...m, lane };
+    });
+  })();
+
+  // ── bipolar R scale: -2R ⟵ 0 ⟶ +5R, with outlier clamping ────────────────
+  const R_MIN = -2, R_MAX = 5;
+  const zeroPct = (0 - R_MIN) / (R_MAX - R_MIN) * 100; // ≈28.6%
+  const clampedR = Math.max(R_MIN, Math.min(R_MAX, r));
+  const rPct = (clampedR - R_MIN) / (R_MAX - R_MIN) * 100;
+  const isOutlier = r > R_MAX || r < R_MIN;
+  const barLeft = Math.min(zeroPct, rPct);
+  const barWidth = Math.abs(rPct - zeroPct);
 
   const NavBtn = ({ d, disabled }: { d: -1 | 1; disabled: boolean }) => {
     const forward = d === 1;
