@@ -344,20 +344,39 @@ export function TradeDetailModal({
                 }}>
                   {fmtHeadline(headline.v, headline.unit)}
                 </div>
-                <div style={{ marginTop: 18 }}>
+                <div style={{ marginTop: 18, direction: 'ltr' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9.5, color: T.text.muted, marginBottom: 7, letterSpacing: 0.6 }}>
                     <span>{isRTL ? 'עוצמת R' : 'R strength'}</span>
-                    <span style={{ fontFamily: MONO }}>{r.toFixed(2)}R</span>
+                    <span style={{ fontFamily: MONO, color: outcomeColor, fontWeight: 800 }}>
+                      {r.toFixed(2)}R{isOutlier ? (r > 0 ? ' ↗' : ' ↘') : ''}
+                    </span>
                   </div>
-                  <div style={{ height: 6, borderRadius: 999, background: `${T.border.medium}`, overflow: 'hidden' }}>
+                  {/* bipolar track: -2R … 0 … +5R */}
+                  <div style={{ position: 'relative', height: 8, borderRadius: 999, background: T.border.medium, overflow: 'hidden' }}>
+                    <span aria-hidden style={{ position: 'absolute', left: `${zeroPct}%`, top: 0, bottom: 0, width: 1, background: T.text.muted, opacity: 0.55 }} />
                     <motion.div
-                      initial={{ width: reducedMotion ? `${meter}%` : 0 }}
-                      animate={{ width: `${meter}%` }}
+                      initial={{ width: reducedMotion ? `${barWidth}%` : 0, left: `${barLeft}%` }}
+                      animate={{ width: `${barWidth}%`, left: `${barLeft}%` }}
                       transition={{ duration: reducedMotion ? 0 : 0.7, ease: [0.16, 1, 0.3, 1] }}
-                      style={{ height: '100%', background: highContrast ? outcomeColor : `linear-gradient(90deg, ${g(outcomeColor, 0.45)}, ${outcomeColor})` }}
+                      style={{
+                        position: 'absolute', top: 0, bottom: 0,
+                        borderRadius: 999,
+                        background: highContrast ? outcomeColor : `linear-gradient(90deg, ${g(outcomeColor, 0.5)}, ${outcomeColor})`,
+                      }}
                     />
+                    {isOutlier && (
+                      <span aria-hidden style={{
+                        position: 'absolute', top: 0, bottom: 0, width: 6,
+                        [r > 0 ? 'right' : 'left']: 0,
+                        background: `repeating-linear-gradient(45deg, ${outcomeColor}, ${outcomeColor} 2px, transparent 2px, transparent 4px)`,
+                      } as React.CSSProperties} />
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 8.5, fontFamily: MONO, color: T.text.muted, marginTop: 5 }}>
+                    <span>-2R</span><span style={{ marginInlineStart: `${zeroPct - 12}%` }}>0</span><span>+5R</span>
                   </div>
                 </div>
+
               </div>
 
               {trade.comments && (
