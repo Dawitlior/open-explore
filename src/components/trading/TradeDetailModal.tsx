@@ -214,7 +214,7 @@ export function TradeDetailModal({
                   }}>{trade.coin}</span>
                 </div>
                 <div style={{ marginTop: 10, color: T.text.muted, fontSize: isMobile ? 11.5 : 12.5, fontFamily: MONO }}>
-                  {isRTL ? 'עסקה' : 'Trade'} #{trade.id} • {dateLabel}
+                  {isRTL ? 'עסקה' : 'Trade'} #{position?.index ?? trade.id} • {dateLabel}
                 </div>
               </div>
 
