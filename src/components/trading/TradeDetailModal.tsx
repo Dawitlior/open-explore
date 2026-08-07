@@ -1,9 +1,14 @@
-import { useEffect } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { getEffectiveR } from '@/lib/r-multiple';
 import { useVisualPrefs, glowAlpha } from '@/lib/visual-prefs';
+
+const TradeChartPanel = lazy(() => import('./chart/TradeChartPanel'));
+
+type DossierTab = 'overview' | 'chart' | 'notes';
+
 
 interface Props {
   T: TradingTheme;
