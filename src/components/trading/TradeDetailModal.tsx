@@ -63,7 +63,13 @@ export function TradeDetailModal({
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      const typing = (e.target as HTMLElement | null)?.tagName === 'INPUT'
+        || (e.target as HTMLElement | null)?.tagName === 'TEXTAREA';
       if (e.key === 'Escape') { onClose(); return; }
+      if (typing) return;
+      if (e.key === '1') { setTab('overview'); return; }
+      if (e.key === '2') { setTab('chart'); return; }
+      if (e.key === '3') { setTab('notes'); return; }
       if (!onNavigate) return;
       const back = isRTL ? 'ArrowRight' : 'ArrowLeft';
       const fwd = isRTL ? 'ArrowLeft' : 'ArrowRight';
@@ -73,6 +79,7 @@ export function TradeDetailModal({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose, onNavigate, canPrev, canNext, isRTL]);
+
 
   // ── price ladder positions (0..100) ────────────────────────────────────────
   const pts = [trade.entry, trade.exit, trade.stopLoss ?? trade.entry].filter(n => Number.isFinite(n)) as number[];
