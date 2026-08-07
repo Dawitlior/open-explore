@@ -190,7 +190,7 @@ export function TradeDetailModal({
           transition={spring}
           style={{
             position: 'relative',
-            width: '100%', maxWidth: isMobile ? '100%' : 900,
+            width: '100%', maxWidth: isMobile ? '100%' : (tab === 'overview' ? 900 : 1120),
             maxHeight: isMobile ? '90dvh' : '88vh', overflow: 'auto',
             borderRadius: isMobile ? '26px 26px 0 0' : 28,
             border: `1px solid ${T.border.medium}`,
