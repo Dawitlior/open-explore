@@ -42,6 +42,8 @@ export function TradeDetailModal({
   onNavigate, position, canPrev = false, canNext = false,
 }: Props) {
   const { glow, highContrast, reducedMotion } = useVisualPrefs();
+  const [tab, setTab] = useState<DossierTab>('overview');
+
   const headline = tradeHeadline(trade);
   const r = getEffectiveR(trade);
   const isLong = trade.direction === 'Long';
