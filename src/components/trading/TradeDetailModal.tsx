@@ -273,12 +273,15 @@ export function TradeDetailModal({
             style={{
               padding: isMobile ? '18px 16px calc(20px + env(safe-area-inset-bottom))' : '26px 32px 30px',
               display: 'grid',
-              gridTemplateColumns: isMobile ? '1fr' : '1.25fr 1fr',
+              gridTemplateColumns: isMobile || tab !== 'overview' ? '1fr' : '1.25fr 1fr',
               gap: isMobile ? 16 : 24,
               alignItems: 'start',
             }}>
+            {tab === 'overview' && (
+              <>
             {/* left column */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
+
               {/* price ladder */}
               <div style={{
                 padding: isMobile ? '16px 14px 12px' : '20px 20px 16px',
