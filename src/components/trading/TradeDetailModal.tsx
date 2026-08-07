@@ -393,30 +393,61 @@ export function TradeDetailModal({
 
               </div>
 
-              {trade.comments && (
-                <div style={{ padding: 16, background: T.bg.tertiary, borderRadius: T.radius.md, border: `1px solid ${T.border.subtle}` }}>
-                  <div style={{ fontSize: 9.5, color: T.text.muted, textTransform: 'uppercase', letterSpacing: 0.9, marginBottom: 8 }}>{t.comments}</div>
-                  <div style={{ fontSize: 13, color: T.text.secondary, lineHeight: 1.65 }}>{trade.comments}</div>
+                  {trade.comments && (
+                    <div style={{ padding: 16, background: T.bg.tertiary, borderRadius: T.radius.md, border: `1px solid ${T.border.subtle}` }}>
+                      <div style={{ fontSize: 9.5, color: T.text.muted, textTransform: 'uppercase', letterSpacing: 0.9, marginBottom: 8 }}>{t.comments}</div>
+                      <div style={{ fontSize: 13, color: T.text.secondary, lineHeight: 1.65 }}>{trade.comments}</div>
+                    </div>
+                  )}
                 </div>
-              )}
+              </>
+            )}
 
-              {/* actions */}
-              <div style={{ display: 'flex', gap: 10, marginTop: 2, flexDirection: isMobile ? 'column-reverse' : 'row' }}>
-                <button onClick={onDelete} className="orca-focus" style={{
-                  flex: 1, padding: isMobile ? '13px 16px' : '12px 16px',
-                  background: g(T.accent.red, 0.1), border: `1px solid ${T.accent.red}3D`, borderRadius: T.radius.md,
-                  color: T.accent.red, cursor: 'pointer', fontSize: 12.5, fontWeight: 800,
-                  transition: reducedMotion ? 'none' : 'all .18s ease',
-                }}>{t.deleteTrade}</button>
-                <button onClick={onEdit} className="orca-focus" style={{
-                  flex: 1.4, padding: isMobile ? '14px 16px' : '12px 18px',
-                  background: `linear-gradient(135deg, ${T.accent.blue}, ${T.accent.cyan})`, border: 'none', borderRadius: T.radius.md,
-                  color: T.bg.primary, cursor: 'pointer', fontSize: 12.5, fontWeight: 900,
-                  boxShadow: highContrast ? 'none' : `0 8px 22px -10px ${g(T.accent.cyan, 0.9)}`,
-                  transition: reducedMotion ? 'none' : 'all .18s ease',
-                }}>{t.editTrade}</button>
+            {tab === 'chart' && (
+              <div style={{ gridColumn: '1 / -1', minWidth: 0 }}>
+                <Suspense fallback={
+                  <div style={{
+                    height: isMobile ? 300 : 420, borderRadius: T.radius.md,
+                    border: `1px solid ${T.border.subtle}`, background: T.bg.tertiary,
+                    display: 'grid', placeItems: 'center', color: T.text.muted, fontSize: 12,
+                  }}>{isRTL ? 'טוען גרף…' : 'Loading chart…'}</div>
+                }>
+                  <TradeChartPanel T={T} trade={trade} isRTL={isRTL} isMobile={isMobile} reducedMotion={reducedMotion} />
+                </Suspense>
               </div>
+            )}
+
+            {tab === 'notes' && (
+              <div style={{
+                gridColumn: '1 / -1', minWidth: 0,
+                padding: isMobile ? 16 : 20, background: T.bg.tertiary,
+                borderRadius: T.radius.lg, border: `1px solid ${T.border.subtle}`,
+                minHeight: 180,
+              }}>
+                <div style={{ fontSize: 9.5, color: T.text.muted, textTransform: 'uppercase', letterSpacing: 0.9, marginBottom: 10 }}>{t.comments}</div>
+                <div style={{ fontSize: 14, color: T.text.secondary, lineHeight: 1.75, whiteSpace: 'pre-wrap' }}>
+                  {trade.comments || (isRTL ? 'אין הערות לעסקה הזו.' : 'No notes for this trade yet.')}
+                </div>
+              </div>
+            )}
+
+            {/* actions */}
+            <div style={{ gridColumn: '1 / -1', display: 'flex', gap: 10, marginTop: 2, flexDirection: isMobile ? 'column-reverse' : 'row', justifyContent: 'flex-end' }}>
+              <button onClick={onDelete} className="orca-focus" style={{
+                flex: isMobile ? 1 : 0.25, padding: isMobile ? '13px 16px' : '12px 16px',
+                background: g(T.accent.red, 0.1), border: `1px solid ${T.accent.red}3D`, borderRadius: T.radius.md,
+                color: T.accent.red, cursor: 'pointer', fontSize: 12.5, fontWeight: 800,
+                transition: reducedMotion ? 'none' : 'all .18s ease',
+              }}>{t.deleteTrade}</button>
+              <button onClick={onEdit} className="orca-focus" style={{
+                flex: isMobile ? 1.4 : 0.35, padding: isMobile ? '14px 16px' : '12px 18px',
+                background: `linear-gradient(135deg, ${T.accent.blue}, ${T.accent.cyan})`, border: 'none', borderRadius: T.radius.md,
+                color: T.bg.primary, cursor: 'pointer', fontSize: 12.5, fontWeight: 900,
+                boxShadow: highContrast ? 'none' : `0 8px 22px -10px ${g(T.accent.cyan, 0.9)}`,
+                transition: reducedMotion ? 'none' : 'all .18s ease',
+              }}>{t.editTrade}</button>
             </div>
+
           </motion.div>
         </motion.div>
       </motion.div>
