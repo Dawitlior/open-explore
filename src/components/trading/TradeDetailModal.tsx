@@ -264,6 +264,52 @@ export function TradeDetailModal({
             </div>
           </div>
 
+          {/* ── tabs ──────────────────────────────────────────────────────── */}
+          <div role="tablist" aria-label={isRTL ? 'תצוגות עסקה' : 'Trade views'} style={{
+            display: 'flex', gap: 6,
+            padding: isMobile ? '10px 14px 0' : '14px 32px 0',
+            borderBottom: `1px solid ${T.border.subtle}`,
+          }}>
+            {([
+              ['overview', isRTL ? 'סקירה' : 'Overview'],
+              ['chart', isRTL ? 'גרף' : 'Chart'],
+              ['notes', isRTL ? 'הערות' : 'Notes'],
+            ] as Array<[DossierTab, string]>).map(([id, label]) => {
+              const active = tab === id;
+              return (
+                <button
+                  key={id}
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setTab(id)}
+                  className="orca-focus"
+                  style={{
+                    position: 'relative',
+                    padding: isMobile ? '9px 12px' : '10px 16px',
+                    border: 'none', background: 'transparent',
+                    cursor: 'pointer',
+                    fontSize: 11.5, fontWeight: 800, letterSpacing: 0.6,
+                    textTransform: 'uppercase',
+                    color: active ? T.text.primary : T.text.muted,
+                    transition: reducedMotion ? 'none' : 'color .18s ease',
+                  }}
+                >
+                  {label}
+                  {active && (
+                    <motion.span
+                      layoutId="orca-dossier-tab"
+                      transition={reducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 380, damping: 32 }}
+                      style={{
+                        position: 'absolute', insetInline: 8, bottom: -1, height: 2, borderRadius: 999,
+                        background: `linear-gradient(90deg, ${T.accent.blue}, ${T.accent.cyan})`,
+                      }}
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
           {/* ── body ──────────────────────────────────────────────────────── */}
           <motion.div
             key={trade.id}
