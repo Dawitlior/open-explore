@@ -45,10 +45,13 @@ const MONO = "'JetBrains Mono', monospace";
  */
 export function TradeDetailModal({
   T, t, trade, isRTL, isMobile, onClose, onEdit, onDelete, tradeHeadline, fmtHeadline,
-  onNavigate, position, canPrev = false, canNext = false,
+  onNavigate, position, canPrev = false, canNext = false, onSaveNotes,
 }: Props) {
   const { glow, highContrast, reducedMotion } = useVisualPrefs();
   const [tab, setTab] = useState<DossierTab>('overview');
+  const [noteDraft, setNoteDraft] = useState(trade.comments || '');
+  const [noteEditing, setNoteEditing] = useState(false);
+  const [noteSaving, setNoteSaving] = useState(false);
 
   const headline = tradeHeadline(trade);
   const r = getEffectiveR(trade);
@@ -500,10 +503,71 @@ export function TradeDetailModal({
                 borderRadius: T.radius.lg, border: `1px solid ${T.border.subtle}`,
                 minHeight: 180,
               }}>
-                <div style={{ fontSize: 9.5, color: T.text.muted, textTransform: 'uppercase', letterSpacing: 0.9, marginBottom: 10 }}>{t.comments}</div>
-                <div style={{ fontSize: 14, color: T.text.secondary, lineHeight: 1.75, whiteSpace: 'pre-wrap' }}>
-                  {trade.comments || (isRTL ? 'אין הערות לעסקה הזו.' : 'No notes for this trade yet.')}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                  <span style={{ fontSize: 9.5, color: T.text.muted, textTransform: 'uppercase', letterSpacing: 0.9 }}>{t.comments}</span>
+                  <span style={{ flex: 1 }} />
+                  {onSaveNotes && !noteEditing && (
+                    <button
+                      onClick={() => { setNoteDraft(trade.comments || ''); setNoteEditing(true); }}
+                      className="orca-focus"
+                      style={{
+                        padding: '5px 12px', borderRadius: 999, fontSize: 10.5, fontWeight: 800, cursor: 'pointer',
+                        border: `1px solid ${g(T.accent.cyan, 0.4)}`, background: g(T.accent.cyan, 0.12), color: T.accent.cyan,
+                      }}
+                    >{isRTL ? 'ערוך הערות' : 'Edit notes'}</button>
+                  )}
                 </div>
+
+                {noteEditing ? (
+                  <>
+                    <textarea
+                      value={noteDraft}
+                      onChange={e => setNoteDraft(e.target.value)}
+                      rows={7}
+                      autoFocus
+                      placeholder={isRTL ? 'מה עבד, מה לא, ומה תעשה אחרת…' : 'What worked, what didn’t, what you’d do differently…'}
+                      style={{
+                        width: '100%', resize: 'vertical', padding: 12, borderRadius: T.radius.md,
+                        border: `1px solid ${T.border.medium}`, background: T.bg.card, color: T.text.primary,
+                        fontSize: 13.5, lineHeight: 1.7, fontFamily: 'inherit',
+                      }}
+                    />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 10, color: T.text.muted }}>
+                        {isRTL ? 'השמירה מעדכנת רק את ההערות — שאר נתוני העסקה לא משתנים.'
+                               : 'Saving updates only the notes — no other trade data is touched.'}
+                      </span>
+                      <span style={{ flex: 1 }} />
+                      <button
+                        onClick={() => setNoteEditing(false)}
+                        className="orca-focus"
+                        style={{
+                          padding: '8px 14px', borderRadius: T.radius.md, fontSize: 11.5, fontWeight: 700, cursor: 'pointer',
+                          border: `1px solid ${T.border.subtle}`, background: T.bg.card, color: T.text.secondary,
+                        }}
+                      >{isRTL ? 'ביטול' : 'Cancel'}</button>
+                      <button
+                        onClick={async () => {
+                          if (!onSaveNotes) return;
+                          setNoteSaving(true);
+                          try { await onSaveNotes(trade.id, noteDraft); setNoteEditing(false); }
+                          finally { setNoteSaving(false); }
+                        }}
+                        disabled={noteSaving}
+                        className="orca-focus"
+                        style={{
+                          padding: '8px 16px', borderRadius: T.radius.md, fontSize: 11.5, fontWeight: 800,
+                          cursor: noteSaving ? 'wait' : 'pointer', opacity: noteSaving ? 0.7 : 1,
+                          border: `1px solid ${g(T.accent.cyan, 0.5)}`, background: g(T.accent.cyan, 0.18), color: T.accent.cyan,
+                        }}
+                      >{noteSaving ? (isRTL ? 'שומר…' : 'Saving…') : (isRTL ? 'שמור הערות' : 'Save notes')}</button>
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ fontSize: 14, color: T.text.secondary, lineHeight: 1.75, whiteSpace: 'pre-wrap' }}>
+                    {trade.comments || (isRTL ? 'אין הערות לעסקה הזו.' : 'No notes for this trade yet.')}
+                  </div>
+                )}
               </div>
             )}
 
