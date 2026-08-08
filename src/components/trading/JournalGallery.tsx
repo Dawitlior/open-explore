@@ -74,7 +74,7 @@ export const JournalGallery = memo(function JournalGallery({
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 16, fontWeight: 900, fontFamily: MONO, color: T.text.primary, letterSpacing: 0.3 }}>{tr.coin}</div>
                 <div style={{ fontSize: 9.5, color: T.text.muted, fontFamily: MONO, marginTop: 3 }}>
-                  #{numberFor ? numberFor(i) : tr.id} • {new Date(tr.date).toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  #{numberFor ? numberFor(i) : tr.id} • {new Date(tr.date).toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                 </div>
               </div>
               <span style={{
