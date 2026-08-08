@@ -328,43 +328,52 @@ export function TradeDetailModal({
             {/* left column */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
 
-              {/* price ladder */}
+              {/* price ladder — vertical rows, ordered high → low (never overlaps) */}
               <div style={{
-                padding: isMobile ? '16px 14px 12px' : '20px 20px 16px',
+                padding: isMobile ? '16px 14px 14px' : '20px 20px 18px',
                 borderRadius: T.radius.lg,
                 border: `1px solid ${T.border.subtle}`,
                 background: T.bg.tertiary,
               }}>
-                <div style={{ fontSize: 9.5, letterSpacing: 0.9, textTransform: 'uppercase', color: T.text.muted, marginBottom: 20 }}>
+                <div style={{ fontSize: 9.5, letterSpacing: 0.9, textTransform: 'uppercase', color: T.text.muted, marginBottom: 14 }}>
                   {isRTL ? 'מסלול המחיר' : 'Price path'}
                 </div>
-                <div style={{ position: 'relative', height: 76, direction: 'ltr' }}>
-                  <div style={{ position: 'absolute', insetInline: 0, top: 24, height: 3, borderRadius: 999, background: `linear-gradient(90deg, ${g(T.accent.red, 0.34)}, ${T.border.medium}, ${g(outcomeColor, 0.55)})` }} />
-                  {markers.map((m, i) => (
-                    <div key={i} style={{
-                      position: 'absolute', top: 0,
-                      left: `${m.x}%`, transform: 'translateX(-50%)',
-                      display: 'flex', flexDirection: 'column', alignItems: 'center',
-                      whiteSpace: 'nowrap',
-                    }}>
-                      {/* price chip — lane 1 sits higher so neighbours never collide */}
-                      <span style={{
-                        fontSize: 10, fontFamily: MONO, fontWeight: 800, color: m.c,
-                        padding: '2px 6px', borderRadius: 6,
-                        background: T.bg.card, border: `1px solid ${g(m.c, 0.35)}`,
-                        marginBottom: m.lane === 1 ? 22 : 4,
-                        marginTop: m.lane === 1 ? -18 : 0,
-                      }}>{m.p}</span>
-                      <span style={{ width: 9, height: 9, borderRadius: 999, background: m.c, boxShadow: `0 0 0 3px ${g(m.c, 0.16)}` }} />
-                      <span style={{
-                        fontSize: 8.5, letterSpacing: 0.6, textTransform: 'uppercase', color: T.text.muted,
-                        marginTop: m.lane === 1 ? 16 : 4,
-                      }}>{m.label}</span>
-                    </div>
-                  ))}
+                <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <span aria-hidden style={{
+                    position: 'absolute', insetInlineStart: 5, top: 10, bottom: 10, width: 2, borderRadius: 999,
+                    background: `linear-gradient(180deg, ${g(T.accent.cyan, 0.5)}, ${T.border.medium})`,
+                  }} />
+                  {[...markers].sort((a, b) => b.p - a.p).map((m, i) => {
+                    const distR = trade.stopLoss != null && trade.stopLoss !== trade.entry
+                      ? Math.abs(m.p - trade.entry) / Math.abs(trade.entry - trade.stopLoss)
+                      : null;
+                    return (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, position: 'relative', minWidth: 0 }}>
+                        <span style={{
+                          width: 12, height: 12, borderRadius: 999, flexShrink: 0,
+                          background: m.c, boxShadow: `0 0 0 3px ${g(m.c, 0.16)}`,
+                        }} />
+                        <span style={{
+                          fontSize: 9.5, letterSpacing: 0.8, textTransform: 'uppercase',
+                          color: T.text.muted, minWidth: 52,
+                        }}>{m.label}</span>
+                        <span aria-hidden style={{ flex: 1, height: 1, background: T.border.subtle, minWidth: 8 }} />
+                        {distR != null && (
+                          <span style={{ fontSize: 9, fontFamily: MONO, color: T.text.muted, whiteSpace: 'nowrap' }}>
+                            {distR === 0 ? '0R' : `${distR.toFixed(2)}R`}
+                          </span>
+                        )}
+                        <span style={{
+                          fontSize: 12.5, fontFamily: MONO, fontWeight: 800, color: m.c,
+                          padding: '3px 9px', borderRadius: 8, whiteSpace: 'nowrap',
+                          background: T.bg.card, border: `1px solid ${g(m.c, 0.3)}`,
+                        }}>{m.p}</span>
+                      </div>
+                    );
+                  })}
                 </div>
-
               </div>
+
 
               {/* stat tiles */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 11 }}>
