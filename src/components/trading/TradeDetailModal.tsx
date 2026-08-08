@@ -29,7 +29,11 @@ interface Props {
   position?: { index: number; total: number };
   canPrev?: boolean;
   canNext?: boolean;
+  canNext?: boolean;
+  /** Fast, notes-only save. When omitted the Notes tab stays read-only. */
+  onSaveNotes?: (tradeId: number, notes: string) => void | Promise<void>;
 }
+
 
 const MONO = "'JetBrains Mono', monospace";
 
