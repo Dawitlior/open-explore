@@ -6,6 +6,8 @@ import { getEffectiveR } from '@/lib/r-multiple';
 import { useVisualPrefs, glowAlpha } from '@/lib/visual-prefs';
 
 const TradeChartPanel = lazy(() => import('./chart/TradeChartPanel'));
+const TradeMiniChart = lazy(() => import('./chart/TradeMiniChart'));
+
 
 type DossierTab = 'overview' | 'chart' | 'notes';
 
