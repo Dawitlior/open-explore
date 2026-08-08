@@ -8,6 +8,10 @@ interface Props {
   interval: string;
   height: number;
   isRTL: boolean;
+  /** Entry timestamp (unix ms) — the chart tries to scroll to this moment. */
+  tradeMs?: number;
+  /** Exit timestamp (unix ms) when known/inferred, used to frame the range. */
+  exitMs?: number;
 }
 
 let scriptPromise: Promise<void> | null = null;
@@ -31,9 +35,10 @@ let uid = 0;
 /**
  * Full TradingView Advanced Chart (free widget) for any ticker on earth.
  * Mounted only while its tab is active; the container is destroyed on unmount
- * so the iframe never lingers while browsing trades.
+ * so the iframe never lingers while browsing trades. When the trade timestamp
+ * is known we ask the widget to scroll to that exact window.
  */
-export function TradingViewPanel({ T, tvSymbol, interval, height, isRTL }: Props) {
+export function TradingViewPanel({ T, tvSymbol, interval, height, isRTL, tradeMs, exitMs }: Props) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const idRef = useRef(`orca_tv_${++uid}`);
 
@@ -48,7 +53,7 @@ export function TradingViewPanel({ T, tvSymbol, interval, height, isRTL }: Props
       const TV = (window as any).TradingView;
       if (!TV?.widget) return;
       try {
-        new TV.widget({
+        const w = new TV.widget({
           container_id: idRef.current,
           autosize: true,
           symbol: tvSymbol,
@@ -66,6 +71,17 @@ export function TradingViewPanel({ T, tvSymbol, interval, height, isRTL }: Props
           withdateranges: true,
           save_image: false,
         });
+
+        // Best-effort: scroll the widget to the trade window instead of "now".
+        if (tradeMs && Number.isFinite(tradeMs)) {
+          const from = Math.floor((tradeMs - 6 * 3_600_000) / 1000);
+          const to = Math.floor(((exitMs && exitMs > tradeMs ? exitMs : tradeMs) + 6 * 3_600_000) / 1000);
+          try {
+            w.onChartReady?.(() => {
+              try { w.activeChart?.().setVisibleRange?.({ from, to }); } catch { /* free widget: not exposed */ }
+            });
+          } catch { /* no chart api */ }
+        }
       } catch { /* widget failed — panel stays empty */ }
     }).catch(() => { /* offline */ });
 
@@ -73,7 +89,7 @@ export function TradingViewPanel({ T, tvSymbol, interval, height, isRTL }: Props
       disposed = true;
       if (host) host.innerHTML = '';
     };
-  }, [tvSymbol, interval, T, isRTL]);
+  }, [tvSymbol, interval, T, isRTL, tradeMs, exitMs]);
 
   return (
     <div
