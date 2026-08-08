@@ -13,6 +13,8 @@ interface Props {
   tradeHeadline: (t: Trade) => { v: number; unit: string };
   fmtHeadline: (v: number, unit: string) => string;
   PV: ComponentType<{ children: ReactNode }>;
+  /** Maps a row index to the journal's display number (matches the table view). */
+  numberFor?: (idx: number) => number;
   onOpen: (t: Trade) => void;
   onEdit: (t: Trade) => void;
   onDelete: (id: number) => void;
@@ -26,7 +28,7 @@ const MONO = "'JetBrains Mono', monospace";
  * headline P&L, R-strength meter, price ladder and hover-revealed actions.
  */
 export const JournalGallery = memo(function JournalGallery({
-  T, isRTL, trades, isAlpha, getEffectiveR, tradeHeadline, fmtHeadline, PV, onOpen, onEdit, onDelete,
+  T, isRTL, trades, isAlpha, getEffectiveR, tradeHeadline, fmtHeadline, PV, numberFor, onOpen, onEdit, onDelete,
 }: Props) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))', gap: 14 }}>
@@ -54,7 +56,7 @@ export const JournalGallery = memo(function JournalGallery({
               overflow: 'hidden',
               borderRadius: T.radius.lg,
               border: `1px solid ${T.border.subtle}`,
-              background: `radial-gradient(130% 110% at ${isRTL ? '100%' : '0%'} 0%, ${tone}14, transparent 58%), linear-gradient(160deg, ${T.bg.card}, ${T.bg.secondary})`,
+              background: `radial-gradient(120% 100% at ${isRTL ? '100%' : '0%'} 0%, ${tone}0A, transparent 60%), linear-gradient(160deg, ${T.bg.card}, ${T.bg.secondary})`,
               boxShadow: T.shadow.card,
               padding: '14px 16px 13px',
               cursor: 'pointer',
@@ -64,36 +66,36 @@ export const JournalGallery = memo(function JournalGallery({
             }}
           >
             {/* top hairline + direction rail */}
-            <span aria-hidden style={{ position: 'absolute', top: 0, insetInline: 0, height: 2, background: `linear-gradient(90deg, transparent, ${tone}, transparent)`, opacity: 0.7 }} />
-            <span aria-hidden style={{ position: 'absolute', insetInlineStart: 0, top: 0, bottom: 0, width: 3, background: side, opacity: 0.8 }} />
+            <span aria-hidden style={{ position: 'absolute', top: 0, insetInline: 0, height: 2, background: `linear-gradient(90deg, transparent, ${tone}, transparent)`, opacity: 0.35 }} />
+            <span aria-hidden style={{ position: 'absolute', insetInlineStart: 0, top: 0, bottom: 0, width: 2, background: side, opacity: 0.45 }} />
 
             {/* head */}
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 16, fontWeight: 900, fontFamily: MONO, color: T.text.primary, letterSpacing: 0.3 }}>{tr.coin}</div>
                 <div style={{ fontSize: 9.5, color: T.text.muted, fontFamily: MONO, marginTop: 3 }}>
-                  #{tr.id} • {new Date(tr.date).toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  #{numberFor ? numberFor(i) : tr.id} • {new Date(tr.date).toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                 </div>
               </div>
               <span style={{
                 fontSize: 9, fontWeight: 900, letterSpacing: 0.9, textTransform: 'uppercase',
                 padding: '3px 9px', borderRadius: 999, whiteSpace: 'nowrap',
-                color: side, background: `${side}14`, border: `1px solid ${side}3D`,
+                color: T.text.secondary, background: T.bg.tertiary, border: `1px solid ${T.border.subtle}`,
               }}>
-                {tr.direction === 'Long' ? '▲' : '▼'} {tr.direction}
+                <span style={{ color: side }}>{tr.direction === 'Long' ? '▲' : '▼'}</span> {tr.direction}
               </span>
             </div>
 
             {/* headline */}
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 9 }}>
               <PV>
-                <span style={{ fontSize: 26, fontWeight: 900, fontFamily: MONO, color: tone, lineHeight: 1, textShadow: `0 0 26px ${tone}33` }}>
+                <span style={{ fontSize: 26, fontWeight: 900, fontFamily: MONO, color: tone, lineHeight: 1 }}>
                   {fmtHeadline(h.v, h.unit)}
                 </span>
               </PV>
               <span style={{
-                fontSize: 10, fontFamily: MONO, fontWeight: 800, color: tone,
-                padding: '2px 7px', borderRadius: 999, background: `${tone}12`, border: `1px solid ${tone}30`,
+                fontSize: 10, fontFamily: MONO, fontWeight: 800, color: T.text.muted,
+                padding: '2px 7px', borderRadius: 999, background: T.bg.tertiary, border: `1px solid ${T.border.subtle}`,
               }}>{r.toFixed(2)}R</span>
             </div>
 
@@ -103,15 +105,15 @@ export const JournalGallery = memo(function JournalGallery({
                 initial={{ width: 0 }}
                 animate={{ width: `${meter}%` }}
                 transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                style={{ height: '100%', background: `linear-gradient(90deg, ${tone}66, ${tone})` }}
+                style={{ height: '100%', background: `linear-gradient(90deg, ${tone}55, ${tone}CC)` }}
               />
             </div>
 
             {/* price ladder */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 7 }}>
               {[
-                { k: isRTL ? 'כניסה' : 'Entry', v: String(tr.entry), c: T.accent.cyan },
-                { k: isRTL ? 'סטופ' : 'Stop', v: tr.stopLoss == null ? '—' : String(tr.stopLoss), c: T.accent.red },
+                { k: isRTL ? 'כניסה' : 'Entry', v: String(tr.entry), c: T.text.muted },
+                { k: isRTL ? 'סטופ' : 'Stop', v: tr.stopLoss == null ? '—' : String(tr.stopLoss), c: T.text.muted },
                 { k: isRTL ? 'יציאה' : 'Exit', v: String(tr.exit), c: tone },
               ].map(cell => (
                 <div key={cell.k} style={{
@@ -119,7 +121,7 @@ export const JournalGallery = memo(function JournalGallery({
                   background: T.bg.tertiary, borderRadius: T.radius.sm,
                   border: `1px solid ${T.border.subtle}`, padding: '6px 8px',
                 }}>
-                  <span aria-hidden style={{ position: 'absolute', insetInlineStart: 0, top: 0, bottom: 0, width: 2, background: cell.c, opacity: 0.6 }} />
+                  <span aria-hidden style={{ position: 'absolute', insetInlineStart: 0, top: 0, bottom: 0, width: 2, background: cell.c, opacity: 0.35 }} />
                   <div style={{ fontSize: 8, color: T.text.muted, textTransform: 'uppercase', letterSpacing: 0.6 }}>{cell.k}</div>
                   <div style={{ fontSize: 11, fontFamily: MONO, fontWeight: 700, color: T.text.secondary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cell.v}</div>
                 </div>
