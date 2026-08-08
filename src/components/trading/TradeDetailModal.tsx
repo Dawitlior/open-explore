@@ -451,12 +451,24 @@ export function TradeDetailModal({
 
               </div>
 
+                  {/* mini price preview → jumps to the Chart tab */}
+                  <Suspense fallback={
+                    <div style={{
+                      height: 150, borderRadius: T.radius.lg, border: `1px solid ${T.border.subtle}`,
+                      background: T.bg.tertiary, display: 'grid', placeItems: 'center',
+                      color: T.text.muted, fontSize: 11,
+                    }}>{isRTL ? 'טוען תצוגה…' : 'Loading preview…'}</div>
+                  }>
+                    <TradeMiniChart T={T} trade={trade} isRTL={isRTL} onOpen={() => setTab('chart')} />
+                  </Suspense>
+
                   {trade.comments && (
                     <div style={{ padding: 16, background: T.bg.tertiary, borderRadius: T.radius.md, border: `1px solid ${T.border.subtle}` }}>
                       <div style={{ fontSize: 9.5, color: T.text.muted, textTransform: 'uppercase', letterSpacing: 0.9, marginBottom: 8 }}>{t.comments}</div>
                       <div style={{ fontSize: 13, color: T.text.secondary, lineHeight: 1.65 }}>{trade.comments}</div>
                     </div>
                   )}
+
                 </div>
               </>
             )}
