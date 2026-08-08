@@ -5,6 +5,7 @@ import {
   INTERVALS, type Interval, pickInterval, resolveSymbol, setSymbolOverride,
 } from '@/lib/market/symbol-resolver';
 import { frameWindow, useTradeCandles } from '@/lib/market/use-trade-candles';
+import { getExitTimeOverride, inferExitTime, setExitTimeOverride, toLocalInput } from '@/lib/market/exit-time';
 
 const TradeReplayChart = lazy(() => import('./TradeReplayChart'));
 const TradingViewPanel = lazy(() => import('./TradingViewPanel'));
@@ -37,20 +38,38 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
   const [symbolDraft, setSymbolDraft] = useState(resolved.tvSymbol);
   const [mapVersion, setMapVersion] = useState(0);
 
+  // exit-time: user override → inferred from candles
+  const [exitOverride, setExitOverride] = useState<number | null>(() => getExitTimeOverride(trade.id));
+  const [editExit, setEditExit] = useState(false);
+  const [exitDraft, setExitDraft] = useState(() => toLocalInput(getExitTimeOverride(trade.id) ?? entryMs));
+
   useEffect(() => {
     setSource(resolved.klineSymbol ? 'replay' : 'tv');
     setSymbolDraft(resolved.tvSymbol);
     setEditSymbol(false);
   }, [resolved.klineSymbol, resolved.tvSymbol, mapVersion]);
 
+  useEffect(() => {
+    const v = getExitTimeOverride(trade.id);
+    setExitOverride(v);
+    setExitDraft(toLocalInput(v ?? entryMs));
+    setEditExit(false);
+  }, [trade.id, entryMs]);
+
   const win = useMemo(
-    () => frameWindow(entryMs, entryMs + 4 * 60 * 60 * 1000, interval),
-    [entryMs, interval],
+    () => frameWindow(entryMs, (exitOverride ?? entryMs + 4 * 60 * 60 * 1000), interval),
+    [entryMs, exitOverride, interval],
   );
 
   const { candles, loading, error } = useTradeCandles(
     resolved.klineSymbol, interval, win, source === 'replay',
   );
+
+  const inferredExitSec = useMemo(
+    () => (exitOverride ? Math.floor(exitOverride / 1000) : inferExitTime(candles, trade.exit, entryMs)),
+    [candles, exitOverride, trade.exit, entryMs],
+  );
+  const exitInferred = !exitOverride && inferredExitSec != null;
 
   const height = isMobile ? 300 : 420;
   const L = (he: string, en: string) => (isRTL ? he : en);
@@ -147,10 +166,73 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
         )}
       </div>
 
+      {/* exit-time notice / editor */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
+        padding: '8px 10px', borderRadius: T.radius.sm,
+        border: `1px solid ${exitOverride ? T.border.subtle : `${T.accent.orange}44`}`,
+        background: exitOverride ? T.bg.tertiary : `${T.accent.orange}0F`,
+      }}>
+        <span style={{ fontSize: 10.5, color: exitOverride ? T.text.muted : T.accent.orange, lineHeight: 1.5 }}>
+          {exitOverride
+            ? `${L('זמן יציאה', 'Exit time')}: ${new Date(exitOverride).toLocaleString(isRTL ? 'he-IL' : 'en-US')}`
+            : exitInferred
+              ? L('זמן היציאה לא תועד — הוערך לפי הנר הראשון שנגע במחיר היציאה.',
+                  'No exit time recorded — inferred from the first candle that touched the exit price.')
+              : L('זמן היציאה לא תועד.', 'No exit time recorded for this trade.')}
+        </span>
+        <div style={{ flex: 1 }} />
+        {editExit ? (
+          <>
+            <input
+              type="datetime-local"
+              value={exitDraft}
+              onChange={e => setExitDraft(e.target.value)}
+              style={{
+                padding: '6px 9px', borderRadius: 8, border: `1px solid ${T.border.medium}`,
+                background: T.bg.card, color: T.text.primary, fontSize: 11.5,
+                fontFamily: "'JetBrains Mono', monospace",
+              }}
+            />
+            <button
+              onClick={() => {
+                const ms = new Date(exitDraft).getTime();
+                if (Number.isFinite(ms)) { setExitTimeOverride(trade.id, ms); setExitOverride(ms); }
+                setEditExit(false);
+              }}
+              className="orca-focus" style={{ ...chip(true), fontSize: 10 }}
+            >{L('שמור', 'Save')}</button>
+            <button onClick={() => setEditExit(false)} className="orca-focus" style={{ ...chip(false), fontSize: 10 }}>
+              {L('ביטול', 'Cancel')}
+            </button>
+          </>
+        ) : (
+          <>
+            <button onClick={() => setEditExit(true)} className="orca-focus" style={{ ...chip(false), fontSize: 10 }}>
+              {exitOverride ? L('ערוך זמן יציאה', 'Edit exit time') : L('הוסף זמן יציאה', 'Add exit time')}
+            </button>
+            {exitOverride && (
+              <button
+                onClick={() => { setExitTimeOverride(trade.id, null); setExitOverride(null); }}
+                className="orca-focus" style={{ ...chip(false), fontSize: 10 }}
+              >{L('נקה', 'Clear')}</button>
+            )}
+          </>
+        )}
+      </div>
+
       {/* chart */}
       <Suspense fallback={<div style={shell}>{L('טוען גרף…', 'Loading chart…')}</div>}>
         {source === 'tv' ? (
-          <TradingViewPanel T={T} tvSymbol={resolved.tvSymbol} interval={interval} height={height} isRTL={isRTL} />
+          <TradingViewPanel
+            T={T}
+            tvSymbol={resolved.tvSymbol}
+            interval={interval}
+            height={height}
+            isRTL={isRTL}
+            tradeMs={entryMs}
+            exitMs={exitOverride ?? (inferredExitSec ? inferredExitSec * 1000 : undefined)}
+          />
         ) : loading ? (
           <div style={shell}>{L('טוען נרות…', 'Loading candles…')}</div>
         ) : candles && candles.length ? (
@@ -166,6 +248,8 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
               exit={trade.exit}
               isLong={trade.direction === 'Long'}
               entryTime={Math.floor(entryMs / 1000)}
+              exitTime={inferredExitSec ?? undefined}
+              exitInferred={exitInferred}
               height={height}
               reducedMotion={reducedMotion}
               isRTL={isRTL}

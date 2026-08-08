@@ -12,6 +12,8 @@ interface Props {
   /** unix seconds */
   entryTime?: number;
   exitTime?: number;
+  /** Exit timestamp was inferred (first candle touching the exit price). */
+  exitInferred?: boolean;
   height: number;
   reducedMotion: boolean;
   isRTL: boolean;
@@ -24,7 +26,7 @@ interface Props {
  * Chart tab is opened.
  */
 export function TradeReplayChart({
-  T, candles, entry, stop, exit, isLong, entryTime, exitTime, height, reducedMotion, isRTL,
+  T, candles, entry, stop, exit, isLong, entryTime, exitTime, exitInferred, height, reducedMotion, isRTL,
 }: Props) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const apiRef = useRef<{ chart: any; series: any; lines: any[] } | null>(null);
@@ -158,7 +160,7 @@ export function TradeReplayChart({
         const clampT = (t?: number) => (t == null ? null : Math.min(Math.max(t, first), last));
         const et = clampT(entryTime), xt = clampT(exitTime);
         if (et) markers.push({ time: et, position: isLong ? 'belowBar' : 'aboveBar', color: T.accent.cyan, shape: isLong ? 'arrowUp' : 'arrowDown', text: isRTL ? 'כניסה' : 'Entry' });
-        if (xt) markers.push({ time: xt, position: isLong ? 'aboveBar' : 'belowBar', color: won ? T.accent.green : T.accent.red, shape: 'circle', text: isRTL ? 'יציאה' : 'Exit' });
+        if (xt) markers.push({ time: xt, position: isLong ? 'aboveBar' : 'belowBar', color: won ? T.accent.green : T.accent.red, shape: 'circle', text: (isRTL ? 'יציאה' : 'Exit') + (exitInferred ? ' ~' : '') });
         if (markers.length && (lcMod as any).createSeriesMarkers) {
           (lcMod as any).createSeriesMarkers(api.series, markers.sort((a, b) => a.time - b.time));
         }
@@ -167,7 +169,7 @@ export function TradeReplayChart({
       api.chart.timeScale().fitContent();
     })();
     return () => { cancelled = true; };
-  }, [candles, entry, stop, exit, isLong, entryTime, exitTime, T, isRTL, reducedMotion]);
+  }, [candles, entry, stop, exit, isLong, entryTime, exitTime, exitInferred, T, isRTL, reducedMotion]);
 
   return <div ref={hostRef} style={{ width: '100%', height }} />;
 }

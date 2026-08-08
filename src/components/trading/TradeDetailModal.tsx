@@ -6,6 +6,8 @@ import { getEffectiveR } from '@/lib/r-multiple';
 import { useVisualPrefs, glowAlpha } from '@/lib/visual-prefs';
 
 const TradeChartPanel = lazy(() => import('./chart/TradeChartPanel'));
+const TradeMiniChart = lazy(() => import('./chart/TradeMiniChart'));
+
 
 type DossierTab = 'overview' | 'chart' | 'notes';
 
@@ -27,7 +29,11 @@ interface Props {
   position?: { index: number; total: number };
   canPrev?: boolean;
   canNext?: boolean;
+
+  /** Fast, notes-only save. When omitted the Notes tab stays read-only. */
+  onSaveNotes?: (tradeId: number, notes: string) => void | Promise<void>;
 }
+
 
 const MONO = "'JetBrains Mono', monospace";
 
@@ -39,10 +45,16 @@ const MONO = "'JetBrains Mono', monospace";
  */
 export function TradeDetailModal({
   T, t, trade, isRTL, isMobile, onClose, onEdit, onDelete, tradeHeadline, fmtHeadline,
-  onNavigate, position, canPrev = false, canNext = false,
+  onNavigate, position, canPrev = false, canNext = false, onSaveNotes,
 }: Props) {
   const { glow, highContrast, reducedMotion } = useVisualPrefs();
   const [tab, setTab] = useState<DossierTab>('overview');
+  const [noteDraft, setNoteDraft] = useState(trade.comments || '');
+  const [noteEditing, setNoteEditing] = useState(false);
+  const [noteSaving, setNoteSaving] = useState(false);
+
+  // reset the notes editor whenever the dossier moves to another trade
+  useEffect(() => { setNoteEditing(false); setNoteDraft(trade.comments || ''); }, [trade.id, trade.comments]);
 
   const headline = tradeHeadline(trade);
   const r = getEffectiveR(trade);
@@ -328,43 +340,52 @@ export function TradeDetailModal({
             {/* left column */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
 
-              {/* price ladder */}
+              {/* price ladder — vertical rows, ordered high → low (never overlaps) */}
               <div style={{
-                padding: isMobile ? '16px 14px 12px' : '20px 20px 16px',
+                padding: isMobile ? '16px 14px 14px' : '20px 20px 18px',
                 borderRadius: T.radius.lg,
                 border: `1px solid ${T.border.subtle}`,
                 background: T.bg.tertiary,
               }}>
-                <div style={{ fontSize: 9.5, letterSpacing: 0.9, textTransform: 'uppercase', color: T.text.muted, marginBottom: 20 }}>
+                <div style={{ fontSize: 9.5, letterSpacing: 0.9, textTransform: 'uppercase', color: T.text.muted, marginBottom: 14 }}>
                   {isRTL ? 'מסלול המחיר' : 'Price path'}
                 </div>
-                <div style={{ position: 'relative', height: 76, direction: 'ltr' }}>
-                  <div style={{ position: 'absolute', insetInline: 0, top: 24, height: 3, borderRadius: 999, background: `linear-gradient(90deg, ${g(T.accent.red, 0.34)}, ${T.border.medium}, ${g(outcomeColor, 0.55)})` }} />
-                  {markers.map((m, i) => (
-                    <div key={i} style={{
-                      position: 'absolute', top: 0,
-                      left: `${m.x}%`, transform: 'translateX(-50%)',
-                      display: 'flex', flexDirection: 'column', alignItems: 'center',
-                      whiteSpace: 'nowrap',
-                    }}>
-                      {/* price chip — lane 1 sits higher so neighbours never collide */}
-                      <span style={{
-                        fontSize: 10, fontFamily: MONO, fontWeight: 800, color: m.c,
-                        padding: '2px 6px', borderRadius: 6,
-                        background: T.bg.card, border: `1px solid ${g(m.c, 0.35)}`,
-                        marginBottom: m.lane === 1 ? 22 : 4,
-                        marginTop: m.lane === 1 ? -18 : 0,
-                      }}>{m.p}</span>
-                      <span style={{ width: 9, height: 9, borderRadius: 999, background: m.c, boxShadow: `0 0 0 3px ${g(m.c, 0.16)}` }} />
-                      <span style={{
-                        fontSize: 8.5, letterSpacing: 0.6, textTransform: 'uppercase', color: T.text.muted,
-                        marginTop: m.lane === 1 ? 16 : 4,
-                      }}>{m.label}</span>
-                    </div>
-                  ))}
+                <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <span aria-hidden style={{
+                    position: 'absolute', insetInlineStart: 5, top: 10, bottom: 10, width: 2, borderRadius: 999,
+                    background: `linear-gradient(180deg, ${g(T.accent.cyan, 0.5)}, ${T.border.medium})`,
+                  }} />
+                  {[...markers].sort((a, b) => b.p - a.p).map((m, i) => {
+                    const distR = trade.stopLoss != null && trade.stopLoss !== trade.entry
+                      ? Math.abs(m.p - trade.entry) / Math.abs(trade.entry - trade.stopLoss)
+                      : null;
+                    return (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, position: 'relative', minWidth: 0 }}>
+                        <span style={{
+                          width: 12, height: 12, borderRadius: 999, flexShrink: 0,
+                          background: m.c, boxShadow: `0 0 0 3px ${g(m.c, 0.16)}`,
+                        }} />
+                        <span style={{
+                          fontSize: 9.5, letterSpacing: 0.8, textTransform: 'uppercase',
+                          color: T.text.muted, minWidth: 52,
+                        }}>{m.label}</span>
+                        <span aria-hidden style={{ flex: 1, height: 1, background: T.border.subtle, minWidth: 8 }} />
+                        {distR != null && (
+                          <span style={{ fontSize: 9, fontFamily: MONO, color: T.text.muted, whiteSpace: 'nowrap' }}>
+                            {distR === 0 ? '0R' : `${distR.toFixed(2)}R`}
+                          </span>
+                        )}
+                        <span style={{
+                          fontSize: 12.5, fontFamily: MONO, fontWeight: 800, color: m.c,
+                          padding: '3px 9px', borderRadius: 8, whiteSpace: 'nowrap',
+                          background: T.bg.card, border: `1px solid ${g(m.c, 0.3)}`,
+                        }}>{m.p}</span>
+                      </div>
+                    );
+                  })}
                 </div>
-
               </div>
+
 
               {/* stat tiles */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 11 }}>
@@ -442,12 +463,24 @@ export function TradeDetailModal({
 
               </div>
 
+                  {/* mini price preview → jumps to the Chart tab */}
+                  <Suspense fallback={
+                    <div style={{
+                      height: 150, borderRadius: T.radius.lg, border: `1px solid ${T.border.subtle}`,
+                      background: T.bg.tertiary, display: 'grid', placeItems: 'center',
+                      color: T.text.muted, fontSize: 11,
+                    }}>{isRTL ? 'טוען תצוגה…' : 'Loading preview…'}</div>
+                  }>
+                    <TradeMiniChart T={T} trade={trade} isRTL={isRTL} onOpen={() => setTab('chart')} />
+                  </Suspense>
+
                   {trade.comments && (
                     <div style={{ padding: 16, background: T.bg.tertiary, borderRadius: T.radius.md, border: `1px solid ${T.border.subtle}` }}>
                       <div style={{ fontSize: 9.5, color: T.text.muted, textTransform: 'uppercase', letterSpacing: 0.9, marginBottom: 8 }}>{t.comments}</div>
                       <div style={{ fontSize: 13, color: T.text.secondary, lineHeight: 1.65 }}>{trade.comments}</div>
                     </div>
                   )}
+
                 </div>
               </>
             )}
@@ -473,10 +506,71 @@ export function TradeDetailModal({
                 borderRadius: T.radius.lg, border: `1px solid ${T.border.subtle}`,
                 minHeight: 180,
               }}>
-                <div style={{ fontSize: 9.5, color: T.text.muted, textTransform: 'uppercase', letterSpacing: 0.9, marginBottom: 10 }}>{t.comments}</div>
-                <div style={{ fontSize: 14, color: T.text.secondary, lineHeight: 1.75, whiteSpace: 'pre-wrap' }}>
-                  {trade.comments || (isRTL ? 'אין הערות לעסקה הזו.' : 'No notes for this trade yet.')}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                  <span style={{ fontSize: 9.5, color: T.text.muted, textTransform: 'uppercase', letterSpacing: 0.9 }}>{t.comments}</span>
+                  <span style={{ flex: 1 }} />
+                  {onSaveNotes && !noteEditing && (
+                    <button
+                      onClick={() => { setNoteDraft(trade.comments || ''); setNoteEditing(true); }}
+                      className="orca-focus"
+                      style={{
+                        padding: '5px 12px', borderRadius: 999, fontSize: 10.5, fontWeight: 800, cursor: 'pointer',
+                        border: `1px solid ${g(T.accent.cyan, 0.4)}`, background: g(T.accent.cyan, 0.12), color: T.accent.cyan,
+                      }}
+                    >{isRTL ? 'ערוך הערות' : 'Edit notes'}</button>
+                  )}
                 </div>
+
+                {noteEditing ? (
+                  <>
+                    <textarea
+                      value={noteDraft}
+                      onChange={e => setNoteDraft(e.target.value)}
+                      rows={7}
+                      autoFocus
+                      placeholder={isRTL ? 'מה עבד, מה לא, ומה תעשה אחרת…' : 'What worked, what didn’t, what you’d do differently…'}
+                      style={{
+                        width: '100%', resize: 'vertical', padding: 12, borderRadius: T.radius.md,
+                        border: `1px solid ${T.border.medium}`, background: T.bg.card, color: T.text.primary,
+                        fontSize: 13.5, lineHeight: 1.7, fontFamily: 'inherit',
+                      }}
+                    />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 10, color: T.text.muted }}>
+                        {isRTL ? 'השמירה מעדכנת רק את ההערות — שאר נתוני העסקה לא משתנים.'
+                               : 'Saving updates only the notes — no other trade data is touched.'}
+                      </span>
+                      <span style={{ flex: 1 }} />
+                      <button
+                        onClick={() => setNoteEditing(false)}
+                        className="orca-focus"
+                        style={{
+                          padding: '8px 14px', borderRadius: T.radius.md, fontSize: 11.5, fontWeight: 700, cursor: 'pointer',
+                          border: `1px solid ${T.border.subtle}`, background: T.bg.card, color: T.text.secondary,
+                        }}
+                      >{isRTL ? 'ביטול' : 'Cancel'}</button>
+                      <button
+                        onClick={async () => {
+                          if (!onSaveNotes) return;
+                          setNoteSaving(true);
+                          try { await onSaveNotes(trade.id, noteDraft); setNoteEditing(false); }
+                          finally { setNoteSaving(false); }
+                        }}
+                        disabled={noteSaving}
+                        className="orca-focus"
+                        style={{
+                          padding: '8px 16px', borderRadius: T.radius.md, fontSize: 11.5, fontWeight: 800,
+                          cursor: noteSaving ? 'wait' : 'pointer', opacity: noteSaving ? 0.7 : 1,
+                          border: `1px solid ${g(T.accent.cyan, 0.5)}`, background: g(T.accent.cyan, 0.18), color: T.accent.cyan,
+                        }}
+                      >{noteSaving ? (isRTL ? 'שומר…' : 'Saving…') : (isRTL ? 'שמור הערות' : 'Save notes')}</button>
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ fontSize: 14, color: T.text.secondary, lineHeight: 1.75, whiteSpace: 'pre-wrap' }}>
+                    {trade.comments || (isRTL ? 'אין הערות לעסקה הזו.' : 'No notes for this trade yet.')}
+                  </div>
+                )}
               </div>
             )}
 
