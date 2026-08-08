@@ -1372,6 +1372,7 @@ const Index = () => {
             tradeHeadline={tradeHeadline}
             fmtHeadline={fmtHeadline}
             PV={PV}
+            numberFor={(idx) => (isLive ? trades.length - idx : sortedDesc.length - (start + idx))}
             onOpen={(tr) => setSelTrade(tr)}
             onEdit={(tr) => { setEditingTrade(tr); setShowTradeForm(true); }}
             onDelete={(id) => handleDeleteTrade(id)}
@@ -1447,6 +1448,13 @@ const Index = () => {
               position={navIdx >= 0 ? { index: navIdx + 1, total: navList.length } : undefined}
               canPrev={navIdx > 0}
               canNext={navIdx >= 0 && navIdx < navList.length - 1}
+              onSaveNotes={async (id, notes) => {
+                const target = trades.find(x => x.id === id);
+                if (!target) return;
+                const next = { ...target, comments: notes };
+                await updateTrade(next);
+                setSelTrade(prev => (prev && prev.id === id ? { ...prev, comments: notes } : prev));
+              }}
             />
           );
         })()}
