@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react';
 import { EntryGate } from '@/components/trading/EntryGate';
 import { OrcaBootLoader } from '@/components/OrcaBootLoader';
 
