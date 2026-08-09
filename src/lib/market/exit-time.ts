@@ -22,6 +22,13 @@ export function getExitTimeOverride(tradeId: number | string): number | null {
   return Number.isFinite(v) ? v : null;
 }
 
+/** Exit timestamp recorded on the trade itself (from the add/edit trade form). */
+export function tradeExitMs(exitDate?: string | null): number | null {
+  if (!exitDate) return null;
+  const ms = new Date(exitDate).getTime();
+  return Number.isFinite(ms) ? ms : null;
+}
+
 export function setExitTimeOverride(tradeId: number | string, ms: number | null) {
   try {
     const map = read();
