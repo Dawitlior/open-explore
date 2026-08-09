@@ -29,7 +29,9 @@ export function TradeReplayChart({
   T, candles, entry, stop, exit, isLong, entryTime, exitTime, exitInferred, height, reducedMotion, isRTL,
 }: Props) {
   const hostRef = useRef<HTMLDivElement | null>(null);
-  const apiRef = useRef<{ chart: any; series: any; lines: any[] } | null>(null);
+  const apiRef = useRef<{ chart: any; series: any; lines: any[]; tradeLine: any | null } | null>(null);
+  /** Levels the price scale must always keep in view (big winners included). */
+  const levelsRef = useRef<number[]>([]);
 
   const colors = useMemo(() => ({
     up: T.accent.green,
@@ -76,9 +78,21 @@ export function TradeReplayChart({
         borderDownColor: colors.down,
         wickUpColor: colors.up,
         wickDownColor: colors.down,
+        // Keep entry / stop / exit inside the visible price range even when the
+        // exit is far outside the candle range (e.g. a +16R runner).
+        autoscaleInfoProvider: (original: () => any) => {
+          const res = original();
+          const levels = levelsRef.current.filter(Number.isFinite);
+          if (!levels.length) return res;
+          const min = Math.min(...levels, res?.priceRange?.minValue ?? Infinity);
+          const max = Math.max(...levels, res?.priceRange?.maxValue ?? -Infinity);
+          if (!Number.isFinite(min) || !Number.isFinite(max)) return res;
+          const pad = (max - min) * 0.06 || Math.abs(max) * 0.01 || 1;
+          return { ...(res || {}), priceRange: { minValue: min - pad, maxValue: max + pad } };
+        },
       });
 
-      apiRef.current = { chart, series, lines: [] };
+      apiRef.current = { chart, series, lines: [], tradeLine: null };
 
       const ro = new ResizeObserver(entries => {
         const w = entries[0]?.contentRect.width ?? 0;
@@ -127,6 +141,7 @@ export function TradeReplayChart({
       const api = apiRef.current;
       if (!api || cancelled || !candles.length) return;
 
+      levelsRef.current = [entry, exit, ...(stop != null && Number.isFinite(stop) ? [stop] : [])];
       api.series.setData(candles);
 
       // clear previous price lines
@@ -134,7 +149,6 @@ export function TradeReplayChart({
       api.lines = [];
 
       const mk = (price: number, color: string, title: string, dashed = false) => {
-        const lc = (window as any).__lcStyles;
         const line = api.series.createPriceLine({
           price,
           color,
@@ -144,7 +158,6 @@ export function TradeReplayChart({
           title,
         });
         api.lines.push(line);
-        void lc;
       };
 
       mk(entry, T.accent.cyan, isRTL ? 'כניסה' : 'ENTRY');
@@ -152,19 +165,37 @@ export function TradeReplayChart({
       const won = isLong ? exit > entry : exit < entry;
       mk(exit, won ? T.accent.green : T.accent.red, isRTL ? 'יציאה' : 'EXIT');
 
-      // entry / exit markers on the time axis when we know the timestamps
+      // recompute autoscale now that the levels are known
+      try { api.series.priceScale().applyOptions({ autoScale: true }); } catch { /* noop */ }
+
+      const lcMod = await import('lightweight-charts');
+
+      // entry → exit trade line, the way desks draw it
       try {
-        const lcMod = await import('lightweight-charts');
-        const markers: any[] = [];
+        if (api.tradeLine) { try { api.chart.removeSeries(api.tradeLine); } catch { /* noop */ } api.tradeLine = null; }
         const first = candles[0].time, last = candles[candles.length - 1].time;
         const clampT = (t?: number) => (t == null ? null : Math.min(Math.max(t, first), last));
         const et = clampT(entryTime), xt = clampT(exitTime);
+        if (et && xt && xt > et) {
+          const line = api.chart.addSeries((lcMod as any).LineSeries, {
+            color: won ? T.accent.green : T.accent.red,
+            lineWidth: 2,
+            lineStyle: 0,
+            priceLineVisible: false,
+            lastValueVisible: false,
+            crosshairMarkerVisible: false,
+          });
+          line.setData([{ time: et, value: entry }, { time: xt, value: exit }]);
+          api.tradeLine = line;
+        }
+
+        const markers: any[] = [];
         if (et) markers.push({ time: et, position: isLong ? 'belowBar' : 'aboveBar', color: T.accent.cyan, shape: isLong ? 'arrowUp' : 'arrowDown', text: isRTL ? 'כניסה' : 'Entry' });
         if (xt) markers.push({ time: xt, position: isLong ? 'aboveBar' : 'belowBar', color: won ? T.accent.green : T.accent.red, shape: 'circle', text: (isRTL ? 'יציאה' : 'Exit') + (exitInferred ? ' ~' : '') });
         if (markers.length && (lcMod as any).createSeriesMarkers) {
           (lcMod as any).createSeriesMarkers(api.series, markers.sort((a, b) => a.time - b.time));
         }
-      } catch { /* markers are decorative */ }
+      } catch { /* overlays are decorative */ }
 
       api.chart.timeScale().fitContent();
     })();

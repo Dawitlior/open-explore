@@ -42,6 +42,7 @@ import { MainPullToRefresh } from '@/components/trading/MainPullToRefresh';
 const ReviewDashboard = lazy(() => import('@/components/dashboard/ReviewDashboard').then(m => ({ default: m.ReviewDashboard })));
 import { MobileTradeCard } from '@/components/trading/MobileTradeCard';
 import { JournalLayoutSwitch, type JournalLayout } from '@/components/trading/JournalLayoutSwitch';
+import { JournalDataMenu } from '@/components/trading/JournalDataMenu';
 import { JournalGallery } from '@/components/trading/JournalGallery';
 import { RiskExplanationModal, type RiskExplanation } from '@/components/trading/RiskExplanationModal';
 import { toast } from 'sonner';
@@ -1338,9 +1339,15 @@ const Index = () => {
                 onChange={(v) => { setJournalLayout(v); localStorage.setItem('orca:journalLayout', v); }}
               />
             )}
-            {!isMobile && <button onClick={handleImport} style={{ padding: '7px 14px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, fontSize: 11, cursor: 'pointer' }}>📥 {t.importData}</button>}
-            {!isMobile && <button onClick={handleExport} style={{ padding: '7px 14px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, fontSize: 11, cursor: 'pointer' }}>📊 XLSX</button>}
-            {!isMobile && <button onClick={handleExportJson} style={{ padding: '7px 14px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, fontSize: 11, cursor: 'pointer' }}>📤 JSON</button>}
+            {!isMobile && (
+              <JournalDataMenu
+                T={T}
+                isRTL={isRTL}
+                onImport={handleImport}
+                onExportXlsx={handleExport}
+                onExportJson={handleExportJson}
+              />
+            )}
             <button onClick={() => { setEditingTrade(null); setShowTradeForm(true); }} style={{ padding: '7px 18px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>+ {t.addTrade}</button>
           </div>
         </div>

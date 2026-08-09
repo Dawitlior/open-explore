@@ -87,6 +87,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
 
   const [form, setForm] = useState({
     date: trade?.date || new Date().toISOString().slice(0, 16),
+    exitDate: trade?.exitDate || '',
     day: trade?.day || ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date().getDay()],
     coin: trade?.coin || 'BTC',
     direction: trade?.direction || 'Long' as 'Long' | 'Short',
@@ -374,7 +375,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
     const manualPnlNum = parseFloat(manualPnlRaw);
     const usingManual = manualPnlEnabled && Number.isFinite(manualPnlNum);
     onSave({
-      date: form.date, day: form.day, coin: form.coin, direction: form.direction, orderType: form.orderType,
+      date: form.date, exitDate: form.exitDate || null, day: form.day, coin: form.coin, direction: form.direction, orderType: form.orderType,
       entry: form.entry, stopLoss: form.stopLoss, exit: form.exit, returnR, winLoss, risk: form.risk,
       expectedLoss, pnl, deviation, positionSize: isFutures ? contracts : (form.positionSize || autoCalcPositionSize), leverage: form.leverage,
       riskPct: form.riskPct, rules: form.rules, comments: form.comments,
@@ -592,7 +593,21 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
               <div style={sectionCard}>
                 <label style={bigLabel}>{isRTL ? '3. מתי ביצעת את העסקה?' : '3. When did you make this trade?'}</label>
                 <input type="datetime-local" value={form.date} onChange={e => handleDateChange(e.target.value)} style={bigInput} />
+                <label style={{ ...bigLabel, marginTop: 14 }}>{isRTL ? 'זמן יציאה (אופציונלי)' : 'Exit date & time (optional)'}</label>
+                <input
+                  type="datetime-local"
+                  value={form.exitDate}
+                  min={form.date || undefined}
+                  onChange={e => setForm(f => ({ ...f, exitDate: e.target.value }))}
+                  style={bigInput}
+                />
+                <div style={helpText}>
+                  {isRTL
+                    ? 'אם תמלא זמן יציאה, שחזור הטרייד יסמן קו בין הכניסה ליציאה.'
+                    : 'Adding an exit time draws the entry → exit line on the trade replay.'}
+                </div>
               </div>
+
 
               <div style={sectionCard}>
                 <label style={bigLabel}>{isRTL ? '4. כיוון העסקה' : '4. Trade direction'}</label>
