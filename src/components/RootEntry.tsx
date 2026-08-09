@@ -18,11 +18,19 @@ export default function RootEntry() {
   const [entered, setEntered] = useState(() => {
     try { return sessionStorage.getItem('orca-entered') === '1'; } catch { return false; }
   });
+  const warm = useRef<Promise<unknown> | null>(null);
 
   // Warm the Index chunk while the gate is on screen.
-  useEffect(() => { void import('@/pages/Index'); }, []);
+  useEffect(() => { warm.current = import('@/pages/Index'); }, []);
 
-  if (!entered) return <EntryGate onEnter={() => setEntered(true)} lang={cachedLang()} />;
+  // Only swap once the Index chunk is actually parsed — otherwise the gate
+  // hands off to a second boot loader and the entry feels like it loads twice.
+  const handleEnter = useCallback(() => {
+    const done = () => setEntered(true);
+    (warm.current ?? import('@/pages/Index')).then(done, done);
+  }, []);
+
+  if (!entered) return <EntryGate onEnter={handleEnter} lang={cachedLang()} />;
 
   return (
     <Suspense fallback={<OrcaBootLoader />}>
