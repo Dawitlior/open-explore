@@ -592,7 +592,21 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
               <div style={sectionCard}>
                 <label style={bigLabel}>{isRTL ? '3. מתי ביצעת את העסקה?' : '3. When did you make this trade?'}</label>
                 <input type="datetime-local" value={form.date} onChange={e => handleDateChange(e.target.value)} style={bigInput} />
+                <label style={{ ...bigLabel, marginTop: 14 }}>{isRTL ? 'זמן יציאה (אופציונלי)' : 'Exit date & time (optional)'}</label>
+                <input
+                  type="datetime-local"
+                  value={form.exitDate}
+                  min={form.date || undefined}
+                  onChange={e => setForm(f => ({ ...f, exitDate: e.target.value }))}
+                  style={bigInput}
+                />
+                <div style={helpText}>
+                  {isRTL
+                    ? 'אם תמלא זמן יציאה, שחזור הטרייד יסמן קו בין הכניסה ליציאה.'
+                    : 'Adding an exit time draws the entry → exit line on the trade replay.'}
+                </div>
               </div>
+
 
               <div style={sectionCard}>
                 <label style={bigLabel}>{isRTL ? '4. כיוון העסקה' : '4. Trade direction'}</label>
