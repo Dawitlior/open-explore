@@ -87,6 +87,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
 
   const [form, setForm] = useState({
     date: trade?.date || new Date().toISOString().slice(0, 16),
+    exitDate: trade?.exitDate || '',
     day: trade?.day || ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date().getDay()],
     coin: trade?.coin || 'BTC',
     direction: trade?.direction || 'Long' as 'Long' | 'Short',
