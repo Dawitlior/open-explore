@@ -1,6 +1,8 @@
 export interface Trade {
   id: number;
   date: string;
+  /** Optional exit timestamp (`datetime-local` string). Used by the trade replay. */
+  exitDate?: string | null;
   day: string;
   coin: string;
   direction: 'Long' | 'Short';
