@@ -5,10 +5,11 @@ import {
   INTERVALS, type Interval, pickInterval, resolveSymbol, setSymbolOverride,
 } from '@/lib/market/symbol-resolver';
 import { frameWindow, useTradeCandles } from '@/lib/market/use-trade-candles';
-import { getExitTimeOverride, inferExitTime, setExitTimeOverride, toLocalInput } from '@/lib/market/exit-time';
+import {
+  getExitTimeOverride, inferExitTime, setExitTimeOverride, toLocalInput, tradeExitMs,
+} from '@/lib/market/exit-time';
 
 const TradeReplayChart = lazy(() => import('./TradeReplayChart'));
-const TradingViewPanel = lazy(() => import('./TradingViewPanel'));
 
 interface Props {
   T: TradingTheme;
@@ -18,12 +19,11 @@ interface Props {
   reducedMotion: boolean;
 }
 
-type Source = 'replay' | 'tv';
-
 /**
  * Chart surface for the trade dossier: a themed replay chart with the exact
- * entry/stop/exit levels, plus the free TradingView Advanced Chart for any
- * ticker. Everything below loads only when this component mounts.
+ * entry/stop/exit levels and the entry→exit trade line. The TradingView embed
+ * was removed on purpose — the free widget cannot be scrolled to a historical
+ * trade window, so it always landed on "today" and was misleading.
  */
 export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Props) {
   const resolved = useMemo(() => resolveSymbol(trade.coin), [trade.coin]);
@@ -32,44 +32,44 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
     return Number.isFinite(t) ? t : Date.now();
   }, [trade.date]);
 
-  const [source, setSource] = useState<Source>(resolved.klineSymbol ? 'replay' : 'tv');
   const [interval, setIntervalState] = useState<Interval>(() => pickInterval(60 * 60 * 1000) as Interval);
   const [editSymbol, setEditSymbol] = useState(false);
   const [symbolDraft, setSymbolDraft] = useState(resolved.tvSymbol);
   const [mapVersion, setMapVersion] = useState(0);
 
-  // exit-time: user override → inferred from candles
-  const [exitOverride, setExitOverride] = useState<number | null>(() => getExitTimeOverride(trade.id));
+  // exit-time: trade field → local override → inferred from candles
+  const recordedExitMs = tradeExitMs(trade.exitDate);
+  const [localOverride, setLocalOverride] = useState<number | null>(() => getExitTimeOverride(trade.id));
+  const exitMs = recordedExitMs ?? localOverride;
   const [editExit, setEditExit] = useState(false);
-  const [exitDraft, setExitDraft] = useState(() => toLocalInput(getExitTimeOverride(trade.id) ?? entryMs));
+  const [exitDraft, setExitDraft] = useState(() => toLocalInput(recordedExitMs ?? getExitTimeOverride(trade.id) ?? entryMs));
 
   useEffect(() => {
-    setSource(resolved.klineSymbol ? 'replay' : 'tv');
     setSymbolDraft(resolved.tvSymbol);
     setEditSymbol(false);
   }, [resolved.klineSymbol, resolved.tvSymbol, mapVersion]);
 
   useEffect(() => {
     const v = getExitTimeOverride(trade.id);
-    setExitOverride(v);
-    setExitDraft(toLocalInput(v ?? entryMs));
+    setLocalOverride(v);
+    setExitDraft(toLocalInput(tradeExitMs(trade.exitDate) ?? v ?? entryMs));
     setEditExit(false);
-  }, [trade.id, entryMs]);
+  }, [trade.id, trade.exitDate, entryMs]);
 
   const win = useMemo(
-    () => frameWindow(entryMs, (exitOverride ?? entryMs + 4 * 60 * 60 * 1000), interval),
-    [entryMs, exitOverride, interval],
+    () => frameWindow(entryMs, (exitMs && exitMs > entryMs ? exitMs : entryMs + 4 * 60 * 60 * 1000), interval),
+    [entryMs, exitMs, interval],
   );
 
   const { candles, loading, error } = useTradeCandles(
-    resolved.klineSymbol, interval, win, source === 'replay',
+    resolved.klineSymbol, interval, win, true,
   );
 
   const inferredExitSec = useMemo(
-    () => (exitOverride ? Math.floor(exitOverride / 1000) : inferExitTime(candles, trade.exit, entryMs)),
-    [candles, exitOverride, trade.exit, entryMs],
+    () => (exitMs ? Math.floor(exitMs / 1000) : inferExitTime(candles, trade.exit, entryMs)),
+    [candles, exitMs, trade.exit, entryMs],
   );
-  const exitInferred = !exitOverride && inferredExitSec != null;
+  const exitInferred = !exitMs && inferredExitSec != null;
 
   const height = isMobile ? 300 : 420;
   const L = (he: string, en: string) => (isRTL ? he : en);
@@ -106,20 +106,10 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
       {/* controls */}
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
-        <div style={{ display: 'flex', gap: 6 }}>
-          <button
-            onClick={() => setSource('replay')}
-            disabled={!resolved.klineSymbol}
-            className="orca-focus"
-            style={{ ...chip(source === 'replay'), opacity: resolved.klineSymbol ? 1 : 0.4, cursor: resolved.klineSymbol ? 'pointer' : 'not-allowed' }}
-          >{L('שחזור טרייד', 'Trade replay')}</button>
-          <button onClick={() => setSource('tv')} className="orca-focus" style={chip(source === 'tv')}>
-            TradingView
-          </button>
-        </div>
-
+        <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.6, color: T.text.secondary, fontFamily: "'JetBrains Mono', monospace" }}>
+          {L('שחזור טרייד', 'TRADE REPLAY')}
+        </span>
         <div style={{ flex: 1 }} />
-
         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
           {INTERVALS.map(iv => (
             <button key={iv} onClick={() => setIntervalState(iv)} className="orca-focus" style={{ ...chip(interval === iv), padding: '4px 8px', fontSize: 10 }}>
@@ -170,12 +160,12 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
       <div style={{
         display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
         padding: '8px 10px', borderRadius: T.radius.sm,
-        border: `1px solid ${exitOverride ? T.border.subtle : `${T.accent.orange}44`}`,
-        background: exitOverride ? T.bg.tertiary : `${T.accent.orange}0F`,
+        border: `1px solid ${exitMs ? T.border.subtle : `${T.accent.orange}44`}`,
+        background: exitMs ? T.bg.tertiary : `${T.accent.orange}0F`,
       }}>
-        <span style={{ fontSize: 10.5, color: exitOverride ? T.text.muted : T.accent.orange, lineHeight: 1.5 }}>
-          {exitOverride
-            ? `${L('זמן יציאה', 'Exit time')}: ${new Date(exitOverride).toLocaleString(isRTL ? 'he-IL' : 'en-US')}`
+        <span style={{ fontSize: 10.5, color: exitMs ? T.text.muted : T.accent.orange, lineHeight: 1.5 }}>
+          {exitMs
+            ? `${L('זמן יציאה', 'Exit time')}: ${new Date(exitMs).toLocaleString(isRTL ? 'he-IL' : 'en-US')}`
             : exitInferred
               ? L('זמן היציאה לא תועד — הוערך לפי הנר הראשון שנגע במחיר היציאה.',
                   'No exit time recorded — inferred from the first candle that touched the exit price.')
@@ -197,7 +187,7 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
             <button
               onClick={() => {
                 const ms = new Date(exitDraft).getTime();
-                if (Number.isFinite(ms)) { setExitTimeOverride(trade.id, ms); setExitOverride(ms); }
+                if (Number.isFinite(ms)) { setExitTimeOverride(trade.id, ms); setLocalOverride(ms); }
                 setEditExit(false);
               }}
               className="orca-focus" style={{ ...chip(true), fontSize: 10 }}
@@ -209,11 +199,11 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
         ) : (
           <>
             <button onClick={() => setEditExit(true)} className="orca-focus" style={{ ...chip(false), fontSize: 10 }}>
-              {exitOverride ? L('ערוך זמן יציאה', 'Edit exit time') : L('הוסף זמן יציאה', 'Add exit time')}
+              {exitMs ? L('ערוך זמן יציאה', 'Edit exit time') : L('הוסף זמן יציאה', 'Add exit time')}
             </button>
-            {exitOverride && (
+            {localOverride && !recordedExitMs && (
               <button
-                onClick={() => { setExitTimeOverride(trade.id, null); setExitOverride(null); }}
+                onClick={() => { setExitTimeOverride(trade.id, null); setLocalOverride(null); }}
                 className="orca-focus" style={{ ...chip(false), fontSize: 10 }}
               >{L('נקה', 'Clear')}</button>
             )}
@@ -223,23 +213,10 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
 
       {/* chart */}
       <Suspense fallback={<div style={shell}>{L('טוען גרף…', 'Loading chart…')}</div>}>
-        {source === 'tv' ? (
-          <TradingViewPanel
-            T={T}
-            tvSymbol={resolved.tvSymbol}
-            interval={interval}
-            height={height}
-            isRTL={isRTL}
-            tradeMs={entryMs}
-            exitMs={exitOverride ?? (inferredExitSec ? inferredExitSec * 1000 : undefined)}
-          />
-        ) : loading ? (
+        {loading ? (
           <div style={shell}>{L('טוען נרות…', 'Loading candles…')}</div>
-        ) : candles && candles.length ? (
-          <div style={{
-            borderRadius: T.radius.md, border: `1px solid ${T.border.subtle}`,
-            background: T.bg.tertiary, overflow: 'hidden', padding: 4,
-          }}>
+        ) : resolved.klineSymbol && candles && candles.length ? (
+          <div style={{ borderRadius: T.radius.md, overflow: 'hidden', border: `1px solid ${T.border.subtle}`, background: T.bg.tertiary }}>
             <TradeReplayChart
               T={T}
               candles={candles}
@@ -258,10 +235,10 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
         ) : (
           <div style={shell}>
             {resolved.klineSymbol
-              ? L(`אין נתוני נרות ל-${resolved.klineSymbol}${error ? '' : ''} — נסה את לשונית TradingView`,
-                  `No candle data for ${resolved.klineSymbol} — try the TradingView tab`)
-              : L('שחזור נרות זמין כרגע לקריפטו. פתח את לשונית TradingView לכל נכס אחר.',
-                  'Candle replay currently covers crypto. Use the TradingView tab for any other market.')}
+              ? L(`אין נתוני נרות ל-${resolved.klineSymbol}${error ? '' : ''}`,
+                  `No candle data available for ${resolved.klineSymbol}`)
+              : L('שחזור נרות זמין כרגע לקריפטו בלבד.',
+                  'Candle replay currently covers crypto markets only.')}
           </div>
         )}
       </Suspense>
