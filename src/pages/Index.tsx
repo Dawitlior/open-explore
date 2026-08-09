@@ -42,6 +42,7 @@ import { MainPullToRefresh } from '@/components/trading/MainPullToRefresh';
 const ReviewDashboard = lazy(() => import('@/components/dashboard/ReviewDashboard').then(m => ({ default: m.ReviewDashboard })));
 import { MobileTradeCard } from '@/components/trading/MobileTradeCard';
 import { JournalLayoutSwitch, type JournalLayout } from '@/components/trading/JournalLayoutSwitch';
+import { JournalDataMenu } from '@/components/trading/JournalDataMenu';
 import { JournalGallery } from '@/components/trading/JournalGallery';
 import { RiskExplanationModal, type RiskExplanation } from '@/components/trading/RiskExplanationModal';
 import { toast } from 'sonner';
