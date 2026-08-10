@@ -441,10 +441,11 @@ function CaptureFlow() {
           {/* privacy notice */}
           <div className="rounded-lg border border-foreground/10 bg-foreground/[0.04] p-3 text-[11px] leading-relaxed text-foreground/55">
             {t(
-              'הצילום יצורף לדיווח וגלוי לחברי הקהילה. רוצה להסתיר נתונים רגישים? הגדרות → מראה ושפה → הסתרת פרטים.',
-              'The screenshot is attached to the report and visible to community members. Want to hide sensitive data? Settings → Appearance & language → Privacy mask.',
+              'הצילום נשלח לצוות אורקה בלבד ואינו מוצג למשתמשים אחרים.',
+              'The screenshot is sent only to the ORCA team and is never shown to other users.',
             )}
           </div>
+
 
           {/* description (the only required field) */}
           <div>
