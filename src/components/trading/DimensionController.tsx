@@ -1,3 +1,4 @@
+import { JournalPortalIcon, BacktestPortalIcon } from '@/components/trading/dimension-icons';
 // Pure-CSS crossfade — no framer-motion AnimatePresence GPU layer churn.
 // Memory rule: dimensions unmount completely during transitions to prevent
 // theme leakage. We render exactly one subtree, keyed by activeDimension,
@@ -84,7 +85,7 @@ export const PortalButton = ({ onClick, isRTL, expanded }: { onClick: () => void
         animation: 'portalShimmer 4.5s linear infinite',
         pointerEvents: 'none',
       }} />
-      <span style={{ fontSize: 17, position: 'relative', zIndex: 1, filter: 'drop-shadow(0 0 6px rgba(212,175,55,0.55))' }}>🏛️</span>
+      <JournalPortalIcon size={18} style={{ position: 'relative', zIndex: 1, filter: 'drop-shadow(0 0 6px rgba(212,175,55,0.55))', flexShrink: 0 }} />
       {expanded && (
         <span style={{ position: 'relative', zIndex: 1 }}>
           {isRTL ? 'יומן מסע לסוחר' : 'Trader Journey'}
@@ -140,7 +141,7 @@ export const BacktestPortalButton = ({ onClick, isRTL, expanded }: { onClick: ()
         animation: 'portalShimmer 4.5s linear infinite',
         pointerEvents: 'none',
       }} />
-      <span style={{ fontSize: 17, position: 'relative', zIndex: 1, filter: 'drop-shadow(0 0 6px rgba(6,182,212,0.55))' }}>📊</span>
+      <BacktestPortalIcon size={18} style={{ position: 'relative', zIndex: 1, filter: 'drop-shadow(0 0 6px rgba(6,182,212,0.55))', flexShrink: 0 }} />
       {expanded && (
         <span style={{ position: 'relative', zIndex: 1 }}>
           {isRTL ? 'יומן באק-טסט' : 'Backtest Journal'}
