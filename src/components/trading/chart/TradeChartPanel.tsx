@@ -177,6 +177,7 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
             <input
               type="datetime-local"
               value={exitDraft}
+                min={toLocalInput(entryMs)}
               onChange={e => setExitDraft(e.target.value)}
               style={{
                 padding: '6px 9px', borderRadius: 8, border: `1px solid ${T.border.medium}`,
@@ -187,9 +188,10 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
             <button
               onClick={() => {
                 const ms = new Date(exitDraft).getTime();
-                if (Number.isFinite(ms)) { setExitTimeOverride(trade.id, ms); setLocalOverride(ms); }
+                if (Number.isFinite(ms) && ms >= entryMs) { setExitTimeOverride(trade.id, ms); setLocalOverride(ms); }
                 setEditExit(false);
               }}
+              disabled={new Date(exitDraft).getTime() < entryMs}
               className="orca-focus" style={{ ...chip(true), fontSize: 10 }}
             >{L('שמור', 'Save')}</button>
             <button onClick={() => setEditExit(false)} className="orca-focus" style={{ ...chip(false), fontSize: 10 }}>

@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import type { TradingTheme } from '@/lib/trading-theme';
 
 interface Props {
   T: TradingTheme;
   isRTL: boolean;
-  onImport: () => void;
+  onImport: (file?: File) => void;
   onExportXlsx: () => void;
   onExportJson: () => void;
 }
@@ -15,7 +16,22 @@ interface Props {
  */
 export function JournalDataMenu({ T, isRTL, onImport, onExportXlsx, onExportJson }: Props) {
   const [open, setOpen] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const [preview, setPreview] = useState<File | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const chooseFile = (file?: File) => {
+    if (!file) return;
+    const supported = /\.(xlsx?|csv|txt|tsv|json)$/i.test(file.name);
+    if (!supported || file.size === 0) {
+      toast.error(isRTL ? 'הקובץ אינו נתמך' : 'Unsupported file', {
+        description: isRTL ? 'בחר קובץ XLSX, XLS, CSV, TSV, TXT או JSON שאינו ריק.' : 'Choose a non-empty XLSX, XLS, CSV, TSV, TXT, or JSON file.',
+      });
+      return;
+    }
+    setPreview(file);
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -29,13 +45,14 @@ export function JournalDataMenu({ T, isRTL, onImport, onExportXlsx, onExportJson
   }, [open]);
 
   const items = [
-    { icon: '📥', label: isRTL ? 'ייבוא נתונים' : 'Import data', run: onImport },
+    { icon: '📥', label: isRTL ? 'ייבוא נתונים' : 'Import data', run: () => inputRef.current?.click() },
     { icon: '📊', label: isRTL ? 'ייצוא XLSX' : 'Export XLSX', run: onExportXlsx },
     { icon: '📤', label: isRTL ? 'ייצוא JSON' : 'Export JSON', run: onExportJson },
   ];
 
   return (
     <div ref={rootRef} style={{ position: 'relative' }}>
+      <input ref={inputRef} type="file" hidden accept=".xlsx,.xls,.csv,.txt,.tsv,.json" onChange={e => chooseFile(e.target.files?.[0])} />
       <button
         onClick={() => setOpen(o => !o)}
         aria-haspopup="menu"
@@ -84,6 +101,38 @@ export function JournalDataMenu({ T, isRTL, onImport, onExportXlsx, onExportJson
               <span>{it.label}</span>
             </button>
           ))}
+          <div
+            onDragEnter={e => { e.preventDefault(); setDragging(true); }}
+            onDragOver={e => { e.preventDefault(); setDragging(true); }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={e => { e.preventDefault(); setDragging(false); chooseFile(e.dataTransfer.files?.[0]); }}
+            style={{
+              marginTop: 4, padding: '12px 10px', textAlign: 'center', borderRadius: T.radius.sm,
+              border: `1px dashed ${dragging ? T.accent.cyan : T.border.medium}`,
+              background: dragging ? `${T.accent.cyan}12` : T.bg.tertiary,
+              color: dragging ? T.accent.cyan : T.text.muted, fontSize: 10.5, lineHeight: 1.45,
+            }}
+          >
+            {isRTL ? 'גרור קובץ לכאן' : 'Drop a file here'}
+          </div>
+          {preview && (
+            <div style={{ marginTop: 4, padding: 10, borderRadius: T.radius.sm, border: `1px solid ${T.border.medium}`, background: T.bg.tertiary }}>
+              <div style={{ color: T.text.primary, fontSize: 11, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{preview.name}</div>
+              <div style={{ color: T.text.muted, fontSize: 9.5, marginTop: 3 }}>{(preview.size / 1024).toFixed(1)} KB</div>
+              <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+                <button
+                  className="orca-focus"
+                  onClick={() => { const file = preview; setPreview(null); setOpen(false); onImport(file); }}
+                  style={{ flex: 1, padding: '6px 8px', border: 'none', borderRadius: T.radius.sm, background: T.accent.cyan, color: T.bg.primary, fontSize: 10.5, fontWeight: 800, cursor: 'pointer' }}
+                >{isRTL ? 'בדיקה וייבוא' : 'Review & import'}</button>
+                <button
+                  className="orca-focus"
+                  onClick={() => setPreview(null)}
+                  style={{ padding: '6px 8px', border: `1px solid ${T.border.medium}`, borderRadius: T.radius.sm, background: 'transparent', color: T.text.secondary, fontSize: 10.5, cursor: 'pointer' }}
+                >{isRTL ? 'הסר' : 'Remove'}</button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

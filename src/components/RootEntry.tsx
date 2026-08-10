@@ -1,4 +1,4 @@
-import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useState } from 'react';
 import { EntryGate } from '@/components/trading/EntryGate';
 import { OrcaBootLoader } from '@/components/OrcaBootLoader';
 
@@ -18,23 +18,22 @@ export default function RootEntry() {
   const [entered, setEntered] = useState(() => {
     try { return sessionStorage.getItem('orca-entered') === '1'; } catch { return false; }
   });
-  const warm = useRef<Promise<unknown> | null>(null);
-
-  // Warm the Index chunk while the gate is on screen.
-  useEffect(() => { warm.current = import('@/pages/Index'); }, []);
-
-  // Only swap once the Index chunk is actually parsed — otherwise the gate
-  // hands off to a second boot loader and the entry feels like it loads twice.
+  const [appReady, setAppReady] = useState(false);
+  useEffect(() => {
+    const markReady = () => setAppReady(true);
+    window.addEventListener('orca:index-ready', markReady);
+    return () => window.removeEventListener('orca:index-ready', markReady);
+  }, []);
   const handleEnter = useCallback(() => {
-    const done = () => setEntered(true);
-    (warm.current ?? import('@/pages/Index')).then(done, done);
+    setEntered(true);
   }, []);
 
-  if (!entered) return <EntryGate onEnter={handleEnter} lang={cachedLang()} />;
-
   return (
-    <Suspense fallback={<OrcaBootLoader />}>
-      <Index />
-    </Suspense>
+    <>
+      <Suspense fallback={<OrcaBootLoader />}>
+        <Index />
+      </Suspense>
+      {!entered && <EntryGate onEnter={handleEnter} lang={cachedLang()} ready={appReady} />}
+    </>
   );
 }

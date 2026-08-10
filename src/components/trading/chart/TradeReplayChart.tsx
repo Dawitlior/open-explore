@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { Candle } from '@/lib/market/use-trade-candles';
 
@@ -32,6 +32,7 @@ export function TradeReplayChart({
   const apiRef = useRef<{ chart: any; series: any; lines: any[]; tradeLine: any | null } | null>(null);
   /** Levels the price scale must always keep in view (big winners included). */
   const levelsRef = useRef<number[]>([]);
+  const [showTradeLine, setShowTradeLine] = useState(true);
 
   const colors = useMemo(() => ({
     up: T.accent.green,
@@ -176,7 +177,7 @@ export function TradeReplayChart({
         const first = candles[0].time, last = candles[candles.length - 1].time;
         const clampT = (t?: number) => (t == null ? null : Math.min(Math.max(t, first), last));
         const et = clampT(entryTime), xt = clampT(exitTime);
-        if (et && xt && xt > et) {
+        if (showTradeLine && et && xt && xt > et) {
           const line = api.chart.addSeries((lcMod as any).LineSeries, {
             color: won ? T.accent.green : T.accent.red,
             lineWidth: 2,
@@ -200,9 +201,48 @@ export function TradeReplayChart({
       api.chart.timeScale().fitContent();
     })();
     return () => { cancelled = true; };
-  }, [candles, entry, stop, exit, isLong, entryTime, exitTime, exitInferred, T, isRTL, reducedMotion]);
+  }, [candles, entry, stop, exit, isLong, entryTime, exitTime, exitInferred, T, isRTL, reducedMotion, showTradeLine]);
 
-  return <div ref={hostRef} style={{ width: '100%', height }} />;
+  const jumpTo = (time?: number) => {
+    const api = apiRef.current;
+    if (!api || time == null || !candles.length) return;
+    const first = candles[0].time;
+    const last = candles[candles.length - 1].time;
+    const center = Math.min(Math.max(time, first), last);
+    const span = Math.max(60, Math.floor((last - first) / 7));
+    try { api.chart.timeScale().setVisibleRange({ from: Math.max(first, center - span), to: Math.min(last, center + span) }); } catch { /* noop */ }
+  };
+
+  const controlStyle = (active = false): React.CSSProperties => ({
+    border: `1px solid ${active ? T.accent.cyan : T.border.subtle}`,
+    background: active ? `${T.accent.cyan}18` : T.bg.card,
+    color: active ? T.accent.cyan : T.text.secondary,
+    borderRadius: T.radius.sm,
+    padding: '5px 9px',
+    fontSize: 10,
+    fontWeight: 700,
+    cursor: 'pointer',
+  });
+
+  return (
+    <div style={{ width: '100%' }}>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', padding: '8px 10px', borderBottom: `1px solid ${T.border.subtle}` }}>
+        <button className="orca-focus" style={controlStyle()} onClick={() => jumpTo(entryTime)}>{isRTL ? 'כניסה' : 'Entry'}</button>
+        {stop != null && Number.isFinite(stop) && <button className="orca-focus" style={controlStyle()} onClick={() => jumpTo(entryTime)}>{isRTL ? 'סטופ' : 'Stop'}</button>}
+        <button className="orca-focus" style={controlStyle()} onClick={() => jumpTo(exitTime)}>{isRTL ? 'יציאה' : 'Exit'}</button>
+        <div style={{ flex: 1 }} />
+        <button
+          className="orca-focus"
+          aria-pressed={showTradeLine}
+          style={controlStyle(showTradeLine)}
+          onClick={() => setShowTradeLine(v => !v)}
+        >
+          {showTradeLine ? (isRTL ? 'הסתר קו עסקה' : 'Hide trade line') : (isRTL ? 'הצג קו עסקה' : 'Show trade line')}
+        </button>
+      </div>
+      <div ref={hostRef} style={{ width: '100%', height }} />
+    </div>
+  );
 }
 
 export default TradeReplayChart;

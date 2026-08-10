@@ -279,6 +279,13 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
     const errs: string[] = [];
     if (s >= 0) {
       if (!form.coin.trim()) errs.push(isRTL ? 'בחר נכס' : 'Pick an asset');
+      if (form.date && form.exitDate) {
+        const entryAt = new Date(form.date).getTime();
+        const exitAt = new Date(form.exitDate).getTime();
+        if (Number.isFinite(entryAt) && Number.isFinite(exitAt) && exitAt < entryAt) {
+          errs.push(isRTL ? 'זמן היציאה אינו יכול להיות לפני זמן הכניסה' : 'Exit date & time cannot be earlier than entry date & time');
+        }
+      }
     }
     if (s >= 1) {
       if (!form.entry) errs.push(isRTL ? 'מחיר כניסה חסר' : 'Entry price required');
@@ -598,9 +605,15 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                   type="datetime-local"
                   value={form.exitDate}
                   min={form.date || undefined}
-                  onChange={e => setForm(f => ({ ...f, exitDate: e.target.value }))}
-                  style={bigInput}
+                  onChange={e => { setForm(f => ({ ...f, exitDate: e.target.value })); setErrors([]); }}
+                  aria-invalid={Boolean(form.date && form.exitDate && new Date(form.exitDate).getTime() < new Date(form.date).getTime())}
+                  style={{ ...bigInput, borderColor: form.date && form.exitDate && new Date(form.exitDate).getTime() < new Date(form.date).getTime() ? T.accent.red : T.border.medium }}
                 />
+                {form.date && form.exitDate && new Date(form.exitDate).getTime() < new Date(form.date).getTime() && (
+                  <div role="alert" style={{ ...helpText, color: T.accent.red, fontWeight: 700 }}>
+                    {isRTL ? 'זמן היציאה חייב להיות אחרי זמן הכניסה.' : 'Exit time must be after the entry time.'}
+                  </div>
+                )}
                 <div style={helpText}>
                   {isRTL
                     ? 'אם תמלא זמן יציאה, שחזור הטרייד יסמן קו בין הכניסה ליציאה.'

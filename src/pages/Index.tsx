@@ -1,5 +1,5 @@
 import { SURF } from '@/lib/neon-palette';
-import { useState, useMemo, useCallback, useEffect, lazy, Suspense } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
 import { OnboardingWizard, shouldShowOnboarding } from '@/components/trading/OnboardingWizard';
 import { OrcaBootLoader } from '@/components/OrcaBootLoader';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell, ComposedChart, ScatterChart, Scatter, ZAxis, ReferenceLine } from 'recharts';
@@ -35,7 +35,6 @@ import { DeploymentToast } from '@/components/DeploymentToast';
 import { RiskOnboardingWizard, shouldShowRiskOnboarding } from '@/components/trading/RiskOnboardingWizard';
 import ImportLoadingOverlay from '@/components/trading/ImportLoadingOverlay';
 import { FeatureHint } from '@/components/trading/FeatureHint';
-import { EntryGate } from '@/components/trading/EntryGate';
 import { RiskLimitAlert } from '@/components/trading/RiskLimitAlert';
 import { MobileBottomNav } from '@/components/trading/MobileBottomNav';
 import { MainPullToRefresh } from '@/components/trading/MainPullToRefresh';
@@ -144,7 +143,6 @@ const Index = () => {
     return Number.isFinite(tr.pnl) ? tr.pnl : 0;
   };
   const { limits: customRiskLimits } = useRiskLimits();
-  const [entered, setEntered] = useState(() => sessionStorage.getItem('orca-entered') === '1');
   const [onboardingDone, setOnboardingDone] = useState(() => !shouldShowOnboarding());
   const [activeDimension, setActiveDimension] = useState<'orca' | 'journal' | 'backtest'>('orca');
   // economic-radar is now a regular page (page === 'economic-radar'); no overlay state needed
@@ -414,10 +412,8 @@ const Index = () => {
         console.log(`[Reset] Wiped ${wiped} per-user localStorage keys`);
       } catch (e) { console.warn('[Reset] scoped wipe failed', e); }
 
-      // 3. Reset transient session flags for this tab.
-      try { sessionStorage.removeItem('orca-entered'); } catch { /* ignore */ }
-
-      // 4. Reset local UI state
+      // 3. Reset local UI state. Keep the entry flag intact so a data reset
+      // does not replay the platform-entry animation in the current session.
       setHiddenCharts([]);
       setRiskExplanations([]);
       sessionStorage.setItem('orca-seeded', '1');
@@ -437,14 +433,73 @@ const Index = () => {
     const blob = new Blob([data], { type: 'application/json' }); const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = `orca-trades-${new Date().toISOString().slice(0,10)}.json`; a.click();
   }, [trades]);
-  const handleImport = useCallback(() => {
+  const pendingImportRef = useRef<File | null>(null);
+  const handleImport = useCallback((file?: File) => {
+    pendingImportRef.current = file || null;
     setShowImportWarning(true);
   }, []);
-  const handleImportConfirmed = useCallback(() => {
+  const handleImportConfirmed = useCallback((providedFile?: File) => {
     setShowImportWarning(false);
+    const processFile = async (file: File) => {
+      pendingImportRef.current = null;
+      toast.loading(isRTL ? 'בודק את הקובץ…' : 'Checking file…', { id: 'journal-import' });
+      if (!activePortfolio) {
+        toast.error(isRTL ? 'אין תיק פעיל' : 'No active portfolio', { id: 'journal-import', description: isRTL ? 'בחר תיק לפני ייבוא נתונים.' : 'Pick a portfolio before importing data.' });
+        return;
+      }
+      if (isActivePortfolioLocked) {
+        toast.error(isRTL ? 'התיק נעול לקריאה־בלבד' : 'Portfolio is read-only', { id: 'journal-import', description: isRTL ? 'שדרג את המסלול או החלף לתיק פעיל אחר.' : 'Upgrade your plan or switch to an unlocked portfolio.' });
+        return;
+      }
+      setImportFileName(file.name);
+      setImportedCount(0);
+      setImportPhase('reading');
+      setImportLoading(true);
+      try {
+        await new Promise(r => setTimeout(r, 450));
+        if (file.name.endsWith('.json')) {
+          setImportPhase('parsing');
+          const text = await file.text(); const data = JSON.parse(text);
+          const importedTrades = data.trades || data;
+          if (!Array.isArray(importedTrades)) throw new Error('Invalid format');
+          setImportedCount(importedTrades.length);
+          setImportPhase('validating');
+          await new Promise(r => setTimeout(r, 350));
+          setImportPhase('saving');
+          await importTrades(importedTrades);
+        } else {
+          setImportPhase('parsing');
+          const dismissForModal = () => setImportLoading(false);
+          window.addEventListener('orca:uie:preflight-will-open', dismissForModal, { once: true });
+          const outcome = await runImportWithPreflight(file, {
+            brokerId: 'orca',
+            targetPortfolio: { id: activePortfolio.id, name: activePortfolio.name, color: activePortfolio.color, currency: activePortfolio.currency },
+          });
+          window.removeEventListener('orca:uie:preflight-will-open', dismissForModal);
+          if (!outcome.ok) {
+            if (outcome.reason === 'user_cancelled') { toast.dismiss('journal-import'); return; }
+            throw new Error(outcome.reason || 'Import failed');
+          }
+          setImportLoading(true);
+          setImportedCount(outcome.drafts.length);
+          setImportPhase('saving');
+          await importTrades(outcome.drafts as unknown as Parameters<typeof importTrades>[0]);
+        }
+        setImportPhase('done');
+        toast.success(isRTL ? 'הייבוא הושלם' : 'Import complete', { id: 'journal-import', description: isRTL ? `${file.name} נשמר בהצלחה.` : `${file.name} was imported successfully.` });
+        await new Promise(r => setTimeout(r, 700));
+        sessionStorage.setItem('orca-seeded', '1');
+      } catch (err) {
+        toast.error(isRTL ? 'שגיאת ייבוא' : 'Import error', { id: 'journal-import', description: err instanceof Error ? err.message : 'Unknown error' });
+      } finally { setImportLoading(false); }
+    };
+    const queued = providedFile || pendingImportRef.current;
+    if (queued) { void processFile(queued); return; }
     const input = document.createElement('input'); input.type = 'file'; input.accept = '.xlsx,.xls,.csv,.txt,.tsv,.json';
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]; if (!file) return;
+      await processFile(file);
+      return;
       // Stage 6 (Multi-Portfolio): hard-stop if active portfolio is locked or missing.
       if (!activePortfolio) {
         toast.error(isRTL ? 'אין תיק פעיל' : 'No active portfolio', { description: isRTL ? 'בחר תיק לפני ייבוא נתונים.' : 'Pick a portfolio before importing data.' });
@@ -533,15 +588,6 @@ const Index = () => {
     };
     input.click();
   }, [importTrades, isRTL, activePortfolio, isActivePortfolioLocked]);
-  const [exiting, setExiting] = useState(false);
-  const handleLogout = useCallback(() => {
-    setExiting(true);
-    setTimeout(() => {
-      sessionStorage.removeItem('orca-entered');
-      setExiting(false);
-      setEntered(false);
-    }, 1000);
-  }, []);
 
   const tt = ttStyle(T);
   const ttItem = { color: T.text.secondary, fontSize: 11 };
@@ -643,10 +689,9 @@ const Index = () => {
     };
   }, [dataReady]);
 
-  // Entry gate check (after all hooks — must stay below every hook to avoid React #310)
-  if (!entered) {
-    return <EntryGate onEnter={() => setEntered(true)} lang={settings.lang} />;
-  }
+  useEffect(() => {
+    if (firstPaintReady) window.dispatchEvent(new CustomEvent('orca:index-ready'));
+  }, [firstPaintReady]);
 
   const stillBootstrapping = !dataReady || !firstPaintReady;
   if (stillBootstrapping) {
@@ -1706,18 +1751,9 @@ const Index = () => {
 
   return (
     <DisplayModeProvider trades={trades}>
-    <div dir={isRTL ? 'rtl' : 'ltr'} className="orca-app-shell" style={{ display: 'flex', height: '100dvh', width: '100%', minWidth: 0, overflow: 'hidden', background: T.bg.primary, color: T.text.primary, fontFamily: "'Inter', system-ui, -apple-system, sans-serif", fontSize: 14, transition: 'background 0.5s ease, color 0.5s ease, filter 0.5s ease, opacity 0.5s ease', opacity: exiting ? 0 : 1, filter: exiting ? 'blur(8px)' : 'none' }}>
+    <div dir={isRTL ? 'rtl' : 'ltr'} className="orca-app-shell" style={{ display: 'flex', height: '100dvh', width: '100%', minWidth: 0, overflow: 'hidden', background: T.bg.primary, color: T.text.primary, fontFamily: "'Inter', system-ui, -apple-system, sans-serif", fontSize: 14, transition: 'background 0.5s ease, color 0.5s ease' }}>
 
       <style>{portalCSS}</style>
-      {/* Exit animation overlay */}
-      {exiting && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 9998, background: 'rgba(3,5,8,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'fadeIn 0.3s ease' }}>
-          <div style={{ textAlign: 'center', animation: 'fadeIn 0.5s ease' }}>
-            <div style={{ fontSize: 24, fontWeight: 800, color: '#06d6a0', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '-0.02em', opacity: 0.6 }}>ORCA</div>
-            <div style={{ fontSize: 10, color: '#475569', marginTop: 6, letterSpacing: '0.2em', textTransform: 'uppercase' }}>{isRTL ? 'מתנתק...' : 'Disconnecting...'}</div>
-          </div>
-        </div>
-      )}
       {/* ═══ MOBILE MENU — Wave 7 native-grade bottom sheet ═══
           Slides up from the bottom like iOS / Material You. Drag-handle,
           identity header, contextual controls, sectioned nav rows with
@@ -2219,7 +2255,7 @@ const Index = () => {
               <button onClick={() => setShowImportWarning(false)} style={{ padding: '10px 20px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
                 {isRTL ? 'ביטול' : 'Cancel'}
               </button>
-              <button onClick={handleImportConfirmed} style={{ padding: '10px 24px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 800, cursor: 'pointer', fontSize: 12, letterSpacing: '0.3px', boxShadow: `0 4px 14px ${T.accent.cyan}40` }}>
+              <button onClick={() => handleImportConfirmed()} style={{ padding: '10px 24px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 800, cursor: 'pointer', fontSize: 12, letterSpacing: '0.3px', boxShadow: `0 4px 14px ${T.accent.cyan}40` }}>
                 {isRTL ? '📂 בחר קובץ' : '📂 Choose File'}
               </button>
             </div>
