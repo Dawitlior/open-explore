@@ -691,6 +691,10 @@ const Index = () => {
     };
   }, [dataReady]);
 
+  useEffect(() => {
+    if (firstPaintReady) window.dispatchEvent(new CustomEvent('orca:index-ready'));
+  }, [firstPaintReady]);
+
   const stillBootstrapping = !dataReady || !firstPaintReady;
   if (stillBootstrapping) {
     return <OrcaBootLoader />;

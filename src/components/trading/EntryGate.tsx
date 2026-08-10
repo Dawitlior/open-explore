@@ -1,11 +1,10 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import type { CSSProperties } from 'react';
-import { OrcaBootLoader } from '@/components/OrcaBootLoader';
+import { useState, useEffect, useCallback } from 'react';
 import { JC, SURF, isLightScheme } from '@/lib/neon-palette';
 
 interface EntryGateProps {
   onEnter: () => void;
   lang?: 'he' | 'en';
+  ready?: boolean;
 }
 
 /**
@@ -18,82 +17,23 @@ interface EntryGateProps {
  * On reveal the top panel translates -100% and the bottom +100%
  * simultaneously, carrying their halves of the icon off-screen.
  */
-type Phase = 'idle' | 'spin' | 'settle' | 'split' | 'done';
-
-const SPIN_MS = 1200;
-const SETTLE_MS = 800;
+type Phase = 'idle' | 'split' | 'done';
 const SPLIT_MS = 620;
 const panelBg = () => SURF.bg1;
 const gateBg = () => SURF.panelGradient;
 const SPLIT_EASING = 'cubic-bezier(0.65, 0, 0.35, 1)';
 
-function rotationFromMatrix(transform: string): number {
-  if (!transform || transform === 'none') return 0;
-  const values = transform.match(/matrix\(([^)]+)\)/)?.[1]?.split(',').map(Number);
-  if (!values || values.length < 2) return 0;
-  return Math.round(Math.atan2(values[1], values[0]) * (180 / Math.PI));
-}
-
-function decelerateCanonicalLoader(topRoot: HTMLDivElement | null, bottomRoot: HTMLDivElement | null) {
-  const roots = [topRoot, bottomRoot].filter(Boolean) as HTMLDivElement[];
-  if (!roots.length) return;
-
-  const ringsByRoot = roots.map((root) =>
-    Array.from(root.querySelectorAll<HTMLElement>('[style*="orca-bl-spin"]'))
-  );
-
-  ringsByRoot[0]?.forEach((sourceRing, ringIndex) => {
-    const sourceStyle = window.getComputedStyle(sourceRing);
-    const start = rotationFromMatrix(sourceStyle.transform);
-    const isReverse = (sourceRing.getAttribute('style') || '').includes('orca-bl-spin-rev');
-    const normalized = ((start % 360) + 360) % 360;
-    const end = isReverse
-      ? start - (normalized || 360) - 360
-      : start + (360 - normalized || 360) + 360;
-
-    ringsByRoot.forEach((rings) => {
-      const ring = rings[ringIndex];
-      if (!ring) return;
-      ring.getAnimations().forEach((animation) => animation.cancel());
-      ring.style.animation = 'none';
-      ring.style.transform = `rotate(${start}deg)`;
-      const decel = ring.animate(
-        [{ transform: `rotate(${start}deg)` }, { transform: `rotate(${end}deg)` }],
-        { duration: SETTLE_MS, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'forwards' }
-      );
-      decel.onfinish = () => {
-        ring.style.transform = `rotate(${end}deg)`;
-      };
-    });
-  });
-
-  roots.forEach((root) => {
-    root.querySelectorAll<HTMLElement>('[style*="orca-bl-pulse"]').forEach((dot) => {
-      dot.style.animationPlayState = 'paused';
-    });
-  });
-}
-
-export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
+export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps) => {
   const isRTL = lang === 'he';
   const [phase, setPhase] = useState<Phase>('idle');
-  const topLoaderRef = useRef<HTMLDivElement | null>(null);
-  const bottomLoaderRef = useRef<HTMLDivElement | null>(null);
-
-  const handleAccess = useCallback(() => setPhase('spin'), []);
+  const [requested, setRequested] = useState(false);
+  const handleAccess = useCallback(() => {
+    setRequested(true);
+    if (ready) setPhase('split');
+  }, [ready]);
 
   useEffect(() => {
-    if (phase === 'spin') {
-      const t = setTimeout(() => {
-        decelerateCanonicalLoader(topLoaderRef.current, bottomLoaderRef.current);
-        setPhase('settle');
-      }, SPIN_MS);
-      return () => clearTimeout(t);
-    }
-    if (phase === 'settle') {
-      const t = setTimeout(() => setPhase('split'), SETTLE_MS);
-      return () => clearTimeout(t);
-    }
+    if (requested && ready && phase === 'idle') setPhase('split');
     if (phase === 'split') {
       const t = setTimeout(() => {
         setPhase('done');
@@ -102,7 +42,7 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
       }, SPLIT_MS);
       return () => clearTimeout(t);
     }
-  }, [phase, onEnter]);
+  }, [phase, onEnter, ready, requested]);
 
   if (phase === 'idle') {
     const light = isLightScheme();
@@ -178,6 +118,7 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
           <div style={{ animation: anim('orca-gate-rise', 420) }}>
             <button
               onClick={handleAccess}
+              disabled={requested && !ready}
               onMouseEnter={e => { if (!reduced) e.currentTarget.style.transform = 'translateY(-2px)'; }}
               onMouseLeave={e => { e.currentTarget.style.transform = 'none'; }}
               style={{
@@ -186,14 +127,14 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
                 border: 'none', borderRadius: 999,
                 color: JC.onAccent, fontSize: 13.5, fontWeight: 700,
                 fontFamily: "'JetBrains Mono', monospace",
-                cursor: 'pointer', letterSpacing: '0.08em',
+                cursor: requested && !ready ? 'wait' : 'pointer', letterSpacing: '0.08em',
                 transition: reduced ? 'none' : 'transform .25s cubic-bezier(0.22,1,0.36,1), box-shadow .25s ease',
                 boxShadow: light
                   ? '0 12px 30px -12px rgba(79,70,229,0.55)'
                   : '0 0 44px rgba(6,214,160,0.22), 0 10px 26px -12px rgba(0,0,0,0.6)',
               }}
             >
-              {isRTL ? 'כניסה למערכת' : 'Access Platform'}
+              {requested && !ready ? (isRTL ? 'מכין את המסוף…' : 'Preparing terminal…') : (isRTL ? 'כניסה למערכת' : 'Access Platform')}
             </button>
           </div>
         </div>
@@ -204,15 +145,6 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
   if (phase === 'done') return null;
 
   const isSplitting = phase === 'split';
-  const loaderSliceStyle = (half: 'top' | 'bottom'): CSSProperties => ({
-    position: 'absolute',
-    left: 0,
-    width: '100vw',
-    height: '100dvh',
-    overflow: 'hidden',
-    ...(half === 'top' ? { top: 0 } : { bottom: 0 }),
-  });
-
   return (
     <div
       aria-hidden="true"
@@ -225,7 +157,7 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
         contain: 'strict',
       }}
     >
-      {/* TOP PANEL — animates UP, shows top half of icon */}
+      {/* A single curtain reveal; no loader remounts or duplicate animations. */}
       <div style={{
         position: 'absolute', top: 0, left: 0, width: '100vw', height: '50dvh',
         background: panelBg(),
@@ -233,11 +165,7 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
         transform: isSplitting ? 'translateY(-100%)' : 'translateY(0)',
         transition: `transform ${SPLIT_MS}ms ${SPLIT_EASING}`,
         willChange: 'transform',
-      }}>
-        <div ref={topLoaderRef} style={loaderSliceStyle('top')}>
-          <OrcaBootLoader frame="absolute" />
-        </div>
-      </div>
+      }} />
 
       {/* BOTTOM PANEL — animates DOWN, shows bottom half of icon */}
       <div style={{
@@ -247,11 +175,7 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
         transform: isSplitting ? 'translateY(100%)' : 'translateY(0)',
         transition: `transform ${SPLIT_MS}ms ${SPLIT_EASING}`,
         willChange: 'transform',
-      }}>
-        <div ref={bottomLoaderRef} style={loaderSliceStyle('bottom')}>
-          <OrcaBootLoader frame="absolute" />
-        </div>
-      </div>
+      }} />
 
     </div>
   );

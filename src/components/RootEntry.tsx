@@ -1,4 +1,4 @@
-import { Suspense, lazy, useCallback, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useState } from 'react';
 import { EntryGate } from '@/components/trading/EntryGate';
 import { OrcaBootLoader } from '@/components/OrcaBootLoader';
 
@@ -18,6 +18,12 @@ export default function RootEntry() {
   const [entered, setEntered] = useState(() => {
     try { return sessionStorage.getItem('orca-entered') === '1'; } catch { return false; }
   });
+  const [appReady, setAppReady] = useState(false);
+  useEffect(() => {
+    const markReady = () => setAppReady(true);
+    window.addEventListener('orca:index-ready', markReady);
+    return () => window.removeEventListener('orca:index-ready', markReady);
+  }, []);
   const handleEnter = useCallback(() => {
     setEntered(true);
   }, []);
@@ -27,7 +33,7 @@ export default function RootEntry() {
       <Suspense fallback={<OrcaBootLoader />}>
         <Index />
       </Suspense>
-      {!entered && <EntryGate onEnter={handleEnter} lang={cachedLang()} />}
+      {!entered && <EntryGate onEnter={handleEnter} lang={cachedLang()} ready={appReady} />}
     </>
   );
 }
