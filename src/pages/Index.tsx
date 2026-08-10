@@ -1931,11 +1931,13 @@ const Index = () => {
                   <svg className="mm-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                 </button>
                 )}
+                {bugBoardAllowed && (
                 <button className="mm-row" onClick={() => { setSbOpen(false); openBugReport(); }}>
                   <span className="mm-icon" style={{ color: GOLD, borderColor: GOLD_BORDER, background: GOLD_SOFT }}>🐛</span>
                   <span className="mm-label" style={{ color: GOLD }}>{isRTL ? 'דווח על באג' : 'Report Bug'}</span>
                   <svg className="mm-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                 </button>
+                )}
               </div>
 
               {/* Settings — primary CTA */}
