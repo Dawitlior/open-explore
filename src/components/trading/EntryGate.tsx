@@ -27,6 +27,7 @@ export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps
   const isRTL = lang === 'he';
   const [phase, setPhase] = useState<Phase>('idle');
   const [requested, setRequested] = useState(false);
+  const [armed, setArmed] = useState(false);
   const handleAccess = useCallback(() => {
     setRequested(true);
     if (ready) setPhase('split');
@@ -35,12 +36,15 @@ export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps
   useEffect(() => {
     if (requested && ready && phase === 'idle') setPhase('split');
     if (phase === 'split') {
+      // Mount the curtain at its start position first, then arm the transform on
+      // the next frame so the browser actually interpolates the reveal.
+      const raf1 = requestAnimationFrame(() => requestAnimationFrame(() => setArmed(true)));
       const t = setTimeout(() => {
         setPhase('done');
         sessionStorage.setItem('orca-entered', '1');
         onEnter();
-      }, SPLIT_MS);
-      return () => clearTimeout(t);
+      }, SPLIT_MS + 60);
+      return () => { clearTimeout(t); cancelAnimationFrame(raf1); };
     }
   }, [phase, onEnter, ready, requested]);
 
@@ -144,7 +148,7 @@ export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps
 
   if (phase === 'done') return null;
 
-  const isSplitting = phase === 'split';
+  const isSplitting = phase === 'split' && armed;
   return (
     <div
       aria-hidden="true"
