@@ -657,6 +657,7 @@ const Index = () => {
 
   const WEEKLY_REVIEW_ALLOWED_EMAIL = 'dawitlior777@gmail.com';
   const weeklyReviewAllowed = (authUser?.email || '').toLowerCase() === WEEKLY_REVIEW_ALLOWED_EMAIL;
+  const bugBoardAllowed = (authUser?.email || '').toLowerCase() === WEEKLY_REVIEW_ALLOWED_EMAIL;
   const nav: Array<{ id: string; icon: any; label: string; color?: string; action?: () => void }> = [
     { id: 'dashboard', icon: Ico.dash, label: isRTL ? 'דשבורד' : 'Dashboard' },
     { id: 'calendar', icon: '📅', label: isRTL ? 'לוח שנה' : 'Calendar' },
