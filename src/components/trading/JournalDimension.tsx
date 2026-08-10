@@ -417,7 +417,7 @@ const JournalEntryScreen = ({ onEnter, isRTL = true }: { onEnter: () => void; is
 const TR: Record<string, any> = {
   en: {
     dir: 'ltr', locale: 'en-US',
-    app: 'APEX OS', sub: 'Private Trading Operating System',
+    app: 'ORCA Investment', sub: 'Private Trading Operating System',
     nav: { journal: 'Journal', archive: 'Archive', dashboard: 'Dashboard', calendar: 'Calendar' },
     m: { phase: 'Morning Analysis', lock: 'Lock Morning Analysis', lockSub: 'Morning analysis will be permanently sealed.', locked: 'MORNING LOCKED' },
     e: { phase: 'End of Day', lock: 'Close Day & Open New', lockSub: 'Seals today\'s journal and opens a fresh new day automatically.', locked: 'DAY COMPLETE' },
@@ -473,7 +473,7 @@ const TR: Record<string, any> = {
   },
   he: {
     dir: 'rtl', locale: 'he-IL',
-    app: 'APEX OS', sub: 'מערכת הפעלה פרטית למסחר',
+    app: 'ORCA Investment', sub: 'מערכת הפעלה פרטית למסחר',
     nav: { journal: 'יומן', archive: 'ארכיון', dashboard: 'דשבורד', calendar: 'לוח שנה' },
     m: { phase: 'ניתוח בוקר', lock: 'נעל ניתוח בוקר', lockSub: 'ניתוח הבוקר יינעל לצמיתות.', locked: 'בוקר נעול' },
     e: { phase: 'סקירת סוף יום', lock: 'סגור יום ופתח חדש', lockSub: 'יסגור את היומן של היום ויפתח יום חדש אוטומטית.', locked: 'יום הושלם' },
@@ -4490,7 +4490,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
           }}>
             {/* Close button */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-              <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 14, fontWeight: 800, color: th.tx, letterSpacing: '-.3px' }}>⚡ APEX OS</span>
+              <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 14, fontWeight: 800, color: th.tx, letterSpacing: '-.3px' }}>⚡ ORCA Investment</span>
               <button onClick={() => setMobileMenu(false)} style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${th.inputBr}`, background: th.inputBg, cursor: 'pointer', color: th.tx3, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
             </div>
             {/* Nav buttons */}
@@ -4566,7 +4566,7 @@ export const JournalDimension = ({ onReturn, isRTL, orcaTrades, onAddOrcaTrade, 
           <button onClick={() => setMobileMenu(true)} style={{ background: th.inputBg, border: `1px solid ${th.inputBr}`, color: th.tx2, padding: '6px 10px', fontSize: 13, borderRadius: 8, cursor: 'pointer', fontWeight: 600, transition: 'all .2s' }}>☰</button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ width: 26, height: 26, background: `linear-gradient(135deg,${JC.blue},${JC.purple})`, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>⚡</div>
-            <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 15, fontWeight: 800, background: `linear-gradient(90deg,${JC.blue},${JC.purple})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>APEX OS</span>
+            <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: 15, fontWeight: 800, background: `linear-gradient(90deg,${JC.blue},${JC.purple})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>ORCA Investment</span>
           </div>
         </div>
         <div className="j-topbar-right" style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
