@@ -113,27 +113,37 @@ function darkChart(green: string, red: string, series: string[]): ChartTokens {
 
 
 /* ════════════════════════════════════════════════
-   1) MIDNIGHT — Indigo Nebula (deep charcoal-blue + neon violet)
+   1) MIDNIGHT — Terminal (deep charcoal-blue, ONE electric-blue accent)
+   Color discipline: green/red are reserved for P&L only. Categorical
+   series use a single-hue blue ladder + cool neutrals so multi-series
+   charts separate by lightness, never by decorative hue.
    ════════════════════════════════════════════════ */
 const midnight: TradingTheme = {
   id: 'midnight',
   isLight: false,
-  surface: darkSurface('#151823', '#0B0D14', '#11141D'),
-  state: darkState('#3DDC97', '#FF6B6B', '#F5A524', '#4CC9F0', '#8A93A6'),
-  chart: darkChart('#3DDC97', '#FF6B6B', ['#6C5CE7', '#4CC9F0', '#3DDC97', '#22D3EE', '#A78BFA', '#FF6B6B', '#F5A524', '#8A93A6']),
+  surface: darkSurface('#151925', '#0B0E14', '#10131C'),
+  state: darkState('#3DDC97', '#FF6B6B', '#F5A524', '#3B82F6', '#8A93A6'),
+  chart: {
+    ...darkChart('#3DDC97', '#FF6B6B', [
+      '#3B82F6', '#60A5FA', '#93C5FD', '#C7DBF7',
+      '#5B6B8C', '#8A93A6', '#B4BDD0', '#2C3A55',
+    ]),
+    // Monochrome blue ramp — a heatmap must never read as profit/loss.
+    heat: ['#0E1526', '#16305C', '#1E4E96', '#3B82F6', '#BFDBFE'],
+  },
   // Deep charcoal-blue, near-black canvas with steel-gray panels (bluish undertone)
-  bg: { primary: '#0B0D14', secondary: '#11141D', tertiary: '#1B1F2C', card: '#151823', surface: '#1E2231' },
+  bg: { primary: '#0B0E14', secondary: '#10131C', tertiary: '#1C2130', card: '#151925', surface: '#1C2130' },
   accent: {
-    cyan: '#6C5CE7', cyanGlow: 'rgba(108,92,231,0.24)',
-    teal: '#22D3EE',
-    blue: '#4CC9F0', blueGlow: 'rgba(76,201,240,0.16)',
-    purple: '#8B7BFF', purpleGlow: 'rgba(139,123,255,0.18)',
+    cyan: '#3B82F6', cyanGlow: 'rgba(59,130,246,0.24)',
+    teal: '#60A5FA',
+    blue: '#3B82F6', blueGlow: 'rgba(59,130,246,0.16)',
+    purple: '#7C7BF0', purpleGlow: 'rgba(124,123,240,0.16)',
     orange: '#F5A524',
     red: '#FF6B6B', redGlow: 'rgba(255,107,107,0.18)',
     green: '#3DDC97', greenGlow: 'rgba(61,220,151,0.18)',
   },
   text: { primary: '#F7F9FC', secondary: '#A9B1C3', muted: '#8A93A6', dim: '#5B6377' },
-  border: { subtle: 'rgba(148,163,255,0.07)', medium: 'rgba(255,255,255,0.10)', active: 'rgba(108,92,231,0.46)' },
+  border: { subtle: 'rgba(148,180,255,0.08)', medium: 'rgba(255,255,255,0.10)', active: 'rgba(59,130,246,0.50)' },
   radius: { sm: 6, md: 10, lg: 14, xl: 18 },
   shadow: {
     card: '0 1px 3px rgba(0,0,0,0.6), 0 8px 24px rgba(0,0,0,0.5)',
