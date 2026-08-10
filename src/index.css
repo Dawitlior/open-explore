@@ -104,6 +104,20 @@
     letter-spacing: -0.01em;
   }
 
+  /* Tabular lining figures everywhere digits are compared in columns:
+     data tables, metric cards and chart axis ticks. Font family is left
+     untouched — only the numeral rendering changes. */
+  table, th, td,
+  .recharts-cartesian-axis-tick-value,
+  .recharts-polar-angle-axis-tick-value,
+  .recharts-label,
+  .orca-metric,
+  .orca-stat,
+  [data-metric] {
+    font-feature-settings: 'tnum', 'lnum';
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: hsl(0 0% 100% / 0.06); border-radius: 3px; }
