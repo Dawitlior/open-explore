@@ -435,14 +435,73 @@ const Index = () => {
     const blob = new Blob([data], { type: 'application/json' }); const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = `orca-trades-${new Date().toISOString().slice(0,10)}.json`; a.click();
   }, [trades]);
-  const handleImport = useCallback(() => {
+  const pendingImportRef = useRef<File | null>(null);
+  const handleImport = useCallback((file?: File) => {
+    pendingImportRef.current = file || null;
     setShowImportWarning(true);
   }, []);
-  const handleImportConfirmed = useCallback(() => {
+  const handleImportConfirmed = useCallback((providedFile?: File) => {
     setShowImportWarning(false);
+    const processFile = async (file: File) => {
+      pendingImportRef.current = null;
+      toast.loading(isRTL ? 'בודק את הקובץ…' : 'Checking file…', { id: 'journal-import' });
+      if (!activePortfolio) {
+        toast.error(isRTL ? 'אין תיק פעיל' : 'No active portfolio', { id: 'journal-import', description: isRTL ? 'בחר תיק לפני ייבוא נתונים.' : 'Pick a portfolio before importing data.' });
+        return;
+      }
+      if (isActivePortfolioLocked) {
+        toast.error(isRTL ? 'התיק נעול לקריאה־בלבד' : 'Portfolio is read-only', { id: 'journal-import', description: isRTL ? 'שדרג את המסלול או החלף לתיק פעיל אחר.' : 'Upgrade your plan or switch to an unlocked portfolio.' });
+        return;
+      }
+      setImportFileName(file.name);
+      setImportedCount(0);
+      setImportPhase('reading');
+      setImportLoading(true);
+      try {
+        await new Promise(r => setTimeout(r, 450));
+        if (file.name.endsWith('.json')) {
+          setImportPhase('parsing');
+          const text = await file.text(); const data = JSON.parse(text);
+          const importedTrades = data.trades || data;
+          if (!Array.isArray(importedTrades)) throw new Error('Invalid format');
+          setImportedCount(importedTrades.length);
+          setImportPhase('validating');
+          await new Promise(r => setTimeout(r, 350));
+          setImportPhase('saving');
+          await importTrades(importedTrades);
+        } else {
+          setImportPhase('parsing');
+          const dismissForModal = () => setImportLoading(false);
+          window.addEventListener('orca:uie:preflight-will-open', dismissForModal, { once: true });
+          const outcome = await runImportWithPreflight(file, {
+            brokerId: 'orca',
+            targetPortfolio: { id: activePortfolio.id, name: activePortfolio.name, color: activePortfolio.color, currency: activePortfolio.currency },
+          });
+          window.removeEventListener('orca:uie:preflight-will-open', dismissForModal);
+          if (!outcome.ok) {
+            if (outcome.reason === 'user_cancelled') { toast.dismiss('journal-import'); return; }
+            throw new Error(outcome.reason || 'Import failed');
+          }
+          setImportLoading(true);
+          setImportedCount(outcome.drafts.length);
+          setImportPhase('saving');
+          await importTrades(outcome.drafts as unknown as Parameters<typeof importTrades>[0]);
+        }
+        setImportPhase('done');
+        toast.success(isRTL ? 'הייבוא הושלם' : 'Import complete', { id: 'journal-import', description: isRTL ? `${file.name} נשמר בהצלחה.` : `${file.name} was imported successfully.` });
+        await new Promise(r => setTimeout(r, 700));
+        sessionStorage.setItem('orca-seeded', '1');
+      } catch (err) {
+        toast.error(isRTL ? 'שגיאת ייבוא' : 'Import error', { id: 'journal-import', description: err instanceof Error ? err.message : 'Unknown error' });
+      } finally { setImportLoading(false); }
+    };
+    const queued = providedFile || pendingImportRef.current;
+    if (queued) { void processFile(queued); return; }
     const input = document.createElement('input'); input.type = 'file'; input.accept = '.xlsx,.xls,.csv,.txt,.tsv,.json';
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]; if (!file) return;
+      await processFile(file);
+      return;
       // Stage 6 (Multi-Portfolio): hard-stop if active portfolio is locked or missing.
       if (!activePortfolio) {
         toast.error(isRTL ? 'אין תיק פעיל' : 'No active portfolio', { description: isRTL ? 'בחר תיק לפני ייבוא נתונים.' : 'Pick a portfolio before importing data.' });
