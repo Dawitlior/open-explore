@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { JC, SURF, isLightScheme } from '@/lib/neon-palette';
+import { OrcaBootLoader } from '@/components/OrcaBootLoader';
 
 interface EntryGateProps {
   onEnter: () => void;
@@ -17,7 +18,8 @@ interface EntryGateProps {
  * On reveal the top panel translates -100% and the bottom +100%
  * simultaneously, carrying their halves of the icon off-screen.
  */
-type Phase = 'idle' | 'split' | 'done';
+type Phase = 'idle' | 'loading' | 'split' | 'done';
+const MIN_LOADER_MS = 900;
 const SPLIT_MS = 620;
 const panelBg = () => SURF.bg1;
 const gateBg = () => SURF.panelGradient;
@@ -30,11 +32,22 @@ export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps
   const [armed, setArmed] = useState(false);
   const handleAccess = useCallback(() => {
     setRequested(true);
-    if (ready) setPhase('split');
-  }, [ready]);
+    setPhase('loading');
+  }, []);
 
   useEffect(() => {
-    if (requested && ready && phase === 'idle') setPhase('split');
+    if (phase === 'loading') {
+      // Keep the canonical Orca loader on screen for a beat (and until the
+      // dashboard signals readiness) before the curtain splits open.
+      let t = 0;
+      const start = performance.now();
+      const tryGo = () => {
+        const wait = Math.max(0, MIN_LOADER_MS - (performance.now() - start));
+        t = window.setTimeout(() => setPhase('split'), wait);
+      };
+      if (ready) tryGo(); else t = window.setTimeout(() => setPhase('split'), 4000);
+      return () => window.clearTimeout(t);
+    }
     if (phase === 'split') {
       // Mount the curtain at its start position first, then arm the transform on
       // the next frame so the browser actually interpolates the reveal.
@@ -46,7 +59,7 @@ export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps
       }, SPLIT_MS + 60);
       return () => { clearTimeout(t); cancelAnimationFrame(raf1); };
     }
-  }, [phase, onEnter, ready, requested]);
+  }, [phase, onEnter, ready]);
 
   if (phase === 'idle') {
     const light = isLightScheme();
@@ -156,12 +169,13 @@ export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps
         position: 'fixed', inset: 0, zIndex: 2147483647,
         width: '100vw', height: '100dvh',
         overflow: 'hidden',
-        pointerEvents: 'none',
+        pointerEvents: 'auto',
         background: 'transparent',
         contain: 'strict',
       }}
     >
-      {/* A single curtain reveal; no loader remounts or duplicate animations. */}
+      {/* Curtain halves, each clipping one half of the canonical Orca loader
+          so the mark is physically sliced at the seam and carried off-screen. */}
       <div style={{
         position: 'absolute', top: 0, left: 0, width: '100vw', height: '50dvh',
         background: panelBg(),
@@ -169,9 +183,13 @@ export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps
         transform: isSplitting ? 'translateY(-100%)' : 'translateY(0)',
         transition: `transform ${SPLIT_MS}ms ${SPLIT_EASING}`,
         willChange: 'transform',
-      }} />
+      }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, width: '100vw', height: '100dvh' }}>
+          <OrcaBootLoader frame="absolute" />
+        </div>
+      </div>
 
-      {/* BOTTOM PANEL — animates DOWN, shows bottom half of icon */}
+      {/* BOTTOM PANEL — animates DOWN, shows bottom half of loader */}
       <div style={{
         position: 'absolute', bottom: 0, left: 0, width: '100vw', height: '50dvh',
         background: panelBg(),
@@ -179,7 +197,11 @@ export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps
         transform: isSplitting ? 'translateY(100%)' : 'translateY(0)',
         transition: `transform ${SPLIT_MS}ms ${SPLIT_EASING}`,
         willChange: 'transform',
-      }} />
+      }}>
+        <div style={{ position: 'absolute', top: '-50dvh', left: 0, width: '100vw', height: '100dvh' }}>
+          <OrcaBootLoader frame="absolute" />
+        </div>
+      </div>
 
     </div>
   );
