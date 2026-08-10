@@ -35,7 +35,6 @@ import { DeploymentToast } from '@/components/DeploymentToast';
 import { RiskOnboardingWizard, shouldShowRiskOnboarding } from '@/components/trading/RiskOnboardingWizard';
 import ImportLoadingOverlay from '@/components/trading/ImportLoadingOverlay';
 import { FeatureHint } from '@/components/trading/FeatureHint';
-import { EntryGate } from '@/components/trading/EntryGate';
 import { RiskLimitAlert } from '@/components/trading/RiskLimitAlert';
 import { MobileBottomNav } from '@/components/trading/MobileBottomNav';
 import { MainPullToRefresh } from '@/components/trading/MainPullToRefresh';
@@ -144,7 +143,6 @@ const Index = () => {
     return Number.isFinite(tr.pnl) ? tr.pnl : 0;
   };
   const { limits: customRiskLimits } = useRiskLimits();
-  const [entered, setEntered] = useState(() => sessionStorage.getItem('orca-entered') === '1');
   const [onboardingDone, setOnboardingDone] = useState(() => !shouldShowOnboarding());
   const [activeDimension, setActiveDimension] = useState<'orca' | 'journal' | 'backtest'>('orca');
   // economic-radar is now a regular page (page === 'economic-radar'); no overlay state needed
@@ -533,15 +531,6 @@ const Index = () => {
     };
     input.click();
   }, [importTrades, isRTL, activePortfolio, isActivePortfolioLocked]);
-  const [exiting, setExiting] = useState(false);
-  const handleLogout = useCallback(() => {
-    setExiting(true);
-    setTimeout(() => {
-      sessionStorage.removeItem('orca-entered');
-      setExiting(false);
-      setEntered(false);
-    }, 1000);
-  }, []);
 
   const tt = ttStyle(T);
   const ttItem = { color: T.text.secondary, fontSize: 11 };
@@ -642,11 +631,6 @@ const Index = () => {
       if (raf2 !== undefined) cancelAnimationFrame(raf2);
     };
   }, [dataReady]);
-
-  // Entry gate check (after all hooks — must stay below every hook to avoid React #310)
-  if (!entered) {
-    return <EntryGate onEnter={() => setEntered(true)} lang={settings.lang} />;
-  }
 
   const stillBootstrapping = !dataReady || !firstPaintReady;
   if (stillBootstrapping) {

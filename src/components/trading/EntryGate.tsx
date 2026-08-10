@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { CSSProperties } from 'react';
 import { OrcaBootLoader } from '@/components/OrcaBootLoader';
-import { SURF, isLightScheme } from '@/lib/neon-palette';
+import { JC, SURF, isLightScheme } from '@/lib/neon-palette';
 
 interface EntryGateProps {
   onEnter: () => void;
@@ -23,11 +23,8 @@ type Phase = 'idle' | 'spin' | 'settle' | 'split' | 'done';
 const SPIN_MS = 1200;
 const SETTLE_MS = 800;
 const SPLIT_MS = 620;
-const PANEL_BG = "#0B0E11";
-const panelBg = () => (isLightScheme() ? "#FFFFFF" : PANEL_BG);
-const gateBg = () => (isLightScheme()
-  ? 'radial-gradient(ellipse at 50% 30%, #FFFFFF 0%, #F4F6FB 55%, #E8ECF5 100%)'
-  : 'radial-gradient(ellipse at 50% 30%, #0f1528 0%, #070b14 50%, #030508 100%)');
+const panelBg = () => SURF.bg1;
+const gateBg = () => SURF.panelGradient;
 const SPLIT_EASING = 'cubic-bezier(0.65, 0, 0.35, 1)';
 
 function rotationFromMatrix(transform: string): number {
@@ -135,20 +132,11 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
           @keyframes orca-gate-drift { 0% { transform: translate3d(-2%, 0, 0); } 50% { transform: translate3d(2%, -1.5%, 0); } 100% { transform: translate3d(-2%, 0, 0); } }
         `}</style>
 
-        {/* soft drifting aurora — intensity adapts to scheme */}
-        <div aria-hidden style={{
-          position: 'absolute', inset: '-15%',
-          background: light
-            ? 'radial-gradient(38% 42% at 32% 34%, rgba(99,102,241,0.14), transparent 70%), radial-gradient(34% 38% at 68% 62%, rgba(6,214,160,0.13), transparent 70%)'
-            : 'radial-gradient(38% 42% at 32% 34%, rgba(6,214,160,0.16), transparent 70%), radial-gradient(34% 38% at 68% 62%, rgba(99,102,241,0.18), transparent 70%)',
-          filter: 'blur(20px)',
-          animation: reduced ? undefined : 'orca-gate-drift 18s ease-in-out infinite',
-        }} />
         <div aria-hidden style={{
           position: 'absolute', inset: 0, opacity: light ? 0.05 : 0.045,
           backgroundImage: 'linear-gradient(currentColor 1px, transparent 1px), linear-gradient(90deg, currentColor 1px, transparent 1px)',
           backgroundSize: '72px 72px',
-          color: light ? '#3730a3' : '#06d6a0',
+          color: JC.blue,
           maskImage: 'radial-gradient(70% 60% at 50% 45%, #000 30%, transparent 100%)',
           WebkitMaskImage: 'radial-gradient(70% 60% at 50% 45%, #000 30%, transparent 100%)',
         }} />
@@ -158,8 +146,8 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
           <div aria-hidden style={{ display: 'flex', justifyContent: 'center', marginBottom: 30, animation: anim('orca-gate-rise', 0, 700) }}>
             <span style={{
               width: 12, height: 12, borderRadius: 999,
-              background: 'linear-gradient(135deg,#06d6a0,#6366f1)',
-              boxShadow: light ? '0 0 0 10px rgba(99,102,241,0.07)' : '0 0 34px rgba(6,214,160,0.45)',
+              background: JC.green,
+              boxShadow: light ? `0 0 0 10px ${SURF.border}` : `0 0 34px ${JC.green}66`,
               animation: reduced ? undefined : 'orca-gate-breathe 3.4s ease-in-out infinite',
             }} />
           </div>
@@ -194,9 +182,9 @@ export const EntryGate = ({ onEnter, lang = 'he' }: EntryGateProps) => {
               onMouseLeave={e => { e.currentTarget.style.transform = 'none'; }}
               style={{
                 padding: '15px 52px',
-                background: light ? 'linear-gradient(135deg,#4f46e5,#06d6a0)' : 'linear-gradient(135deg, #06d6a0, #0d9488)',
+                background: JC.green,
                 border: 'none', borderRadius: 999,
-                color: light ? '#ffffff' : '#0a0e1a', fontSize: 13.5, fontWeight: 700,
+                color: JC.onAccent, fontSize: 13.5, fontWeight: 700,
                 fontFamily: "'JetBrains Mono', monospace",
                 cursor: 'pointer', letterSpacing: '0.08em',
                 transition: reduced ? 'none' : 'transform .25s cubic-bezier(0.22,1,0.36,1), box-shadow .25s ease',
