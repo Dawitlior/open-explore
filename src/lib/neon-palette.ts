@@ -53,16 +53,16 @@ const DARK: NeonPalette = {
   red: '#FF6B6B',
   redSoft: '#FF8787',
   redHard: '#F03E5E',
-  blue: '#4CC9F0',
+  blue: '#3B82F6',
   amber: '#F5A524',
   gold: '#D4AF37',
-  purple: '#8B7BFF',
+  purple: '#7C7BF0',
   lime: '#84cc16',
   orange: '#f97316',
-  greenAlt: '#22D3EE',
+  greenAlt: '#22B37A',
   amberDeep: '#d98a12',
-  purpleDeep: '#6C5CE7',
-  onAccent: '#0B0D14',
+  purpleDeep: '#4F46E5',
+  onAccent: '#0B0E14',
 };
 
 
@@ -122,18 +122,18 @@ export interface SurfacePalette {
 }
 
 const SURF_DARK: SurfacePalette = {
-  bg0: '#080A11',
-  bg1: '#0B0D14',
-  card: '#151823',
-  card2: '#1E2231',
-  border: 'rgba(148,163,255,0.10)',
-  borderStrong: 'rgba(148,163,255,0.22)',
+  bg0: '#070910',
+  bg1: '#0B0E14',
+  card: '#151925',
+  card2: '#1C2130',
+  border: 'rgba(148,180,255,0.10)',
+  borderStrong: 'rgba(148,180,255,0.22)',
   text1: '#F7F9FC',
   text2: 'rgba(247,249,252,0.70)',
   text3: 'rgba(247,249,252,0.45)',
   scrim: 'rgba(4,5,10,0.78)',
   shadow: '0 24px 70px rgba(0,0,0,0.60)',
-  panelGradient: 'linear-gradient(160deg, #151823 0%, #0B0D14 100%)',
+  panelGradient: 'linear-gradient(160deg, #151925 0%, #0B0E14 100%)',
 };
 
 
