@@ -1690,18 +1690,9 @@ const Index = () => {
 
   return (
     <DisplayModeProvider trades={trades}>
-    <div dir={isRTL ? 'rtl' : 'ltr'} className="orca-app-shell" style={{ display: 'flex', height: '100dvh', width: '100%', minWidth: 0, overflow: 'hidden', background: T.bg.primary, color: T.text.primary, fontFamily: "'Inter', system-ui, -apple-system, sans-serif", fontSize: 14, transition: 'background 0.5s ease, color 0.5s ease, filter 0.5s ease, opacity 0.5s ease', opacity: exiting ? 0 : 1, filter: exiting ? 'blur(8px)' : 'none' }}>
+    <div dir={isRTL ? 'rtl' : 'ltr'} className="orca-app-shell" style={{ display: 'flex', height: '100dvh', width: '100%', minWidth: 0, overflow: 'hidden', background: T.bg.primary, color: T.text.primary, fontFamily: "'Inter', system-ui, -apple-system, sans-serif", fontSize: 14, transition: 'background 0.5s ease, color 0.5s ease' }}>
 
       <style>{portalCSS}</style>
-      {/* Exit animation overlay */}
-      {exiting && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 9998, background: 'rgba(3,5,8,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'fadeIn 0.3s ease' }}>
-          <div style={{ textAlign: 'center', animation: 'fadeIn 0.5s ease' }}>
-            <div style={{ fontSize: 24, fontWeight: 800, color: '#06d6a0', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '-0.02em', opacity: 0.6 }}>ORCA</div>
-            <div style={{ fontSize: 10, color: '#475569', marginTop: 6, letterSpacing: '0.2em', textTransform: 'uppercase' }}>{isRTL ? 'מתנתק...' : 'Disconnecting...'}</div>
-          </div>
-        </div>
-      )}
       {/* ═══ MOBILE MENU — Wave 7 native-grade bottom sheet ═══
           Slides up from the bottom like iOS / Material You. Drag-handle,
           identity header, contextual controls, sectioned nav rows with
