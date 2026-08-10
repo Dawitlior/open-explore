@@ -2,8 +2,17 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 import { installGlobalErrorTelemetry } from "./lib/telemetry";
+import { applyThemeToDOM } from "./lib/trading-theme";
 
 installGlobalErrorTelemetry();
+
+// Paint the user's cached theme BEFORE the first React frame so the boot
+// loader never flashes the default blue palette before settings resolve.
+try {
+  const cached = localStorage.getItem('orca:theme-cache');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  applyThemeToDOM((cached || 'midnight') as any);
+} catch { /* noop */ }
 
 // Capture beforeinstallprompt globally so the SettingsHub "Install Now"
 // button can trigger the native PWA install dialog at any time.
