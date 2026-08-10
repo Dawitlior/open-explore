@@ -353,14 +353,8 @@ function CaptureFlow() {
             )}
           </div>
 
-          {/* dedup suggestions (loads in background; small inline indicator) */}
-          {similar.length > 0 && (
-            <DedupSuggestions
-              similar={similar}
-              busy={busy}
-              onJoin={(b) => capture.joinSimilar(b)}
-            />
-          )}
+          {/* dedup suggestions removed — no longer relevant */}
+
 
           {/* screenshot + annotation */}
           {draft.shot ? (
