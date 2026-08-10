@@ -657,6 +657,7 @@ const Index = () => {
 
   const WEEKLY_REVIEW_ALLOWED_EMAIL = 'dawitlior777@gmail.com';
   const weeklyReviewAllowed = (authUser?.email || '').toLowerCase() === WEEKLY_REVIEW_ALLOWED_EMAIL;
+  const bugBoardAllowed = (authUser?.email || '').toLowerCase() === WEEKLY_REVIEW_ALLOWED_EMAIL;
   const nav: Array<{ id: string; icon: any; label: string; color?: string; action?: () => void }> = [
     { id: 'dashboard', icon: Ico.dash, label: isRTL ? 'דשבורד' : 'Dashboard' },
     { id: 'calendar', icon: '📅', label: isRTL ? 'לוח שנה' : 'Calendar' },
@@ -1923,11 +1924,13 @@ const Index = () => {
                   <span className="mm-label">{isRTL ? 'אודות המערכת' : 'About System'}</span>
                   <svg className="mm-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                 </button>
+                {bugBoardAllowed && (
                 <button className="mm-row" onClick={() => { setSbOpen(false); goBugBoard(); }}>
                   <span className="mm-icon">📋</span>
                   <span className="mm-label">{isRTL ? 'לוח באגים' : 'Bug Board'}</span>
                   <svg className="mm-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                 </button>
+                )}
                 <button className="mm-row" onClick={() => { setSbOpen(false); openBugReport(); }}>
                   <span className="mm-icon" style={{ color: GOLD, borderColor: GOLD_BORDER, background: GOLD_SOFT }}>🐛</span>
                   <span className="mm-label" style={{ color: GOLD }}>{isRTL ? 'דווח על באג' : 'Report Bug'}</span>
@@ -2022,10 +2025,12 @@ const Index = () => {
             </button>
             );
           })}
+          {bugBoardAllowed && (
           <button onClick={goBugBoard} title={isRTL ? 'לוח באגים' : 'Bug Board'} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: sbOpen ? '9px 10px' : '9px 0', justifyContent: sbOpen ? 'flex-start' : 'center', background: 'transparent', color: T.text.muted, border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: 400, transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: '2px solid transparent' }}>
             <span style={{ fontSize: 16, lineHeight: 1 }}>📋</span>
             {sbOpen && <span>{isRTL ? 'לוח באגים' : 'Bug Board'}</span>}
           </button>
+          )}
           <button onClick={openBugReport} title={isRTL ? 'דווח על באג' : 'Report Bug'} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: sbOpen ? '9px 10px' : '9px 0', justifyContent: sbOpen ? 'flex-start' : 'center', background: 'transparent', color: GOLD, border: `1px solid ${GOLD_BORDER}`, borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: 600, transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left' }}>
             <span style={{ fontSize: 16, lineHeight: 1 }}>🐛</span>
             {sbOpen && <span>{isRTL ? 'דווח על באג' : 'Report Bug'}</span>}
