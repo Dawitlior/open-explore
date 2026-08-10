@@ -412,10 +412,8 @@ const Index = () => {
         console.log(`[Reset] Wiped ${wiped} per-user localStorage keys`);
       } catch (e) { console.warn('[Reset] scoped wipe failed', e); }
 
-      // 3. Reset transient session flags for this tab.
-      try { sessionStorage.removeItem('orca-entered'); } catch { /* ignore */ }
-
-      // 4. Reset local UI state
+      // 3. Reset local UI state. Keep the entry flag intact so a data reset
+      // does not replay the platform-entry animation in the current session.
       setHiddenCharts([]);
       setRiskExplanations([]);
       sessionStorage.setItem('orca-seeded', '1');
