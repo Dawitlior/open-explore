@@ -8,33 +8,6 @@
  * orbit accent inherits the active theme's `--primary` token, so the
  * loader looks identical across midnight / blue / platinum / graphite.
  */
-import { useEffect, useState } from 'react';
-
-const FALLBACK_BG = 'radial-gradient(circle at 50% 40%, #0B1120 0%, #030712 70%)';
-const FALLBACK_ACCENT = '199 89% 60%';
-
-function readVar(name: string): string {
-  if (typeof window === 'undefined') return '';
-  try { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
-  catch { return ''; }
-}
-
-function readCurrentSurface(): string {
-  if (typeof window === 'undefined') return FALLBACK_BG;
-  try {
-    const themed = readVar('--orca-surface') || readVar('--bg');
-    if (themed) return themed;
-    const bgHsl = readVar('--background');
-    if (bgHsl) return `radial-gradient(circle at 50% 40%, hsl(${bgHsl} / 0.96) 0%, hsl(${bgHsl}) 70%)`;
-    const bodyBg = getComputedStyle(document.body).backgroundColor;
-    if (bodyBg && bodyBg !== 'rgba(0, 0, 0, 0)' && bodyBg !== 'transparent') return bodyBg;
-  } catch { /* noop */ }
-  return FALLBACK_BG;
-}
-
-function readAccent(): string {
-  return readVar('--primary') || FALLBACK_ACCENT;
-}
 
 export const OrcaBootLoader = ({
   label = 'Investment Terminal',
@@ -43,43 +16,12 @@ export const OrcaBootLoader = ({
   label?: string;
   frame?: 'fixed' | 'absolute';
 }) => {
-  const [bg, setBg] = useState<string>(() => readCurrentSurface());
-  const [accent, setAccent] = useState<string>(() => readAccent());
-
-  // Re-read theme tokens reactively. On a hard refresh the auth loader paints
-  // before useSettings has resolved the user's saved theme from the cloud, so
-  // we must update the accent in-place rather than letting a later remount
-  // create a second, differently-colored loader flash.
-  useEffect(() => {
-    let raf = 0;
-    const sync = () => {
-      raf = requestAnimationFrame(() => {
-        setBg(readCurrentSurface());
-        setAccent(readAccent());
-      });
-    };
-    sync();
-    // 1) Mode/theme switches dispatched by useSettings.
-    const onSwitch = () => sync();
-    window.addEventListener('orca:mode-switch', onSwitch);
-    // 2) Any direct mutation of <html> attributes (data-theme / inline vars).
-    const mo = new MutationObserver(sync);
-    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'style', 'class'] });
-    // 3) Safety net for the first ~1.5s while async settings resolve.
-    const poll = window.setInterval(sync, 250);
-    const stop = window.setTimeout(() => window.clearInterval(poll), 2000);
-    return () => {
-      window.removeEventListener('orca:mode-switch', onSwitch);
-      mo.disconnect();
-      window.clearInterval(poll);
-      window.clearTimeout(stop);
-      if (raf) cancelAnimationFrame(raf);
-    };
-  }, []);
-
-  const accentColor = `hsl(${accent})`;
-  const accentSoft  = `hsl(${accent} / 0.13)`;
-  const accentGlow  = `hsl(${accent} / 0.55)`;
+  // Pure CSS-variable driven: the loader inherits whatever theme is live on
+  // <html> at paint time and re-tints instantly (and smoothly) if it changes.
+  const accentColor = 'hsl(var(--primary))';
+  const accentSoft  = 'hsl(var(--primary) / 0.13)';
+  const accentGlow  = 'hsl(var(--primary) / 0.55)';
+  const bg = 'radial-gradient(circle at 50% 40%, hsl(var(--card)) 0%, hsl(var(--background)) 70%)';
 
   return (
     <div
@@ -89,7 +31,7 @@ export const OrcaBootLoader = ({
         flexDirection: 'column', gap: 28,
         background: bg,
         color: accentColor,
-        transition: 'background 0.35s ease',
+        transition: 'background 0.45s ease, color 0.45s ease',
       }}
     >
       <div
