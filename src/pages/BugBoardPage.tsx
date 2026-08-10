@@ -1,12 +1,20 @@
 import { BugBoard } from '@/features/bug-arena';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { useLang } from '@/hooks/use-lang';
+import { useAuth } from '@/hooks/use-auth';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
+
+const BUG_BOARD_ALLOWED_EMAIL = 'dawitlior777@gmail.com';
 
 export default function BugBoardPage() {
   const navigate = useNavigate();
   const { isRTL, t } = useLang();
+  const { user, loading } = useAuth() as any;
   const BackIcon = isRTL ? ArrowRight : ArrowLeft;
+
+  if (loading) return null;
+  if ((user?.email || '').toLowerCase() !== BUG_BOARD_ALLOWED_EMAIL) return <Navigate to="/" replace />;
+
 
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} className="min-h-screen bg-background text-foreground">
