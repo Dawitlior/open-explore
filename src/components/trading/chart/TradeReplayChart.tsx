@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { Candle } from '@/lib/market/use-trade-candles';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 interface Props {
   T: TradingTheme;
@@ -161,7 +162,7 @@ export function TradeReplayChart({
         api.lines.push(line);
       };
 
-      mk(entry, T.accent.cyan, isRTL ? 'כניסה' : 'ENTRY');
+      mk(entry, infoColor(T), isRTL ? 'כניסה' : 'ENTRY');
       if (stop != null && Number.isFinite(stop)) mk(stop, T.accent.red, isRTL ? 'סטופ' : 'STOP', true);
       const won = isLong ? exit > entry : exit < entry;
       mk(exit, won ? T.accent.green : T.accent.red, isRTL ? 'יציאה' : 'EXIT');
@@ -191,7 +192,7 @@ export function TradeReplayChart({
         }
 
         const markers: any[] = [];
-        if (et) markers.push({ time: et, position: isLong ? 'belowBar' : 'aboveBar', color: T.accent.cyan, shape: isLong ? 'arrowUp' : 'arrowDown', text: isRTL ? 'כניסה' : 'Entry' });
+        if (et) markers.push({ time: et, position: isLong ? 'belowBar' : 'aboveBar', color: infoColor(T), shape: isLong ? 'arrowUp' : 'arrowDown', text: isRTL ? 'כניסה' : 'Entry' });
         if (xt) markers.push({ time: xt, position: isLong ? 'aboveBar' : 'belowBar', color: won ? T.accent.green : T.accent.red, shape: 'circle', text: (isRTL ? 'יציאה' : 'Exit') + (exitInferred ? ' ~' : '') });
         if (markers.length && (lcMod as any).createSeriesMarkers) {
           (lcMod as any).createSeriesMarkers(api.series, markers.sort((a, b) => a.time - b.time));
@@ -214,9 +215,9 @@ export function TradeReplayChart({
   };
 
   const controlStyle = (active = false): React.CSSProperties => ({
-    border: `1px solid ${active ? T.accent.cyan : T.border.subtle}`,
-    background: active ? `${T.accent.cyan}18` : T.bg.card,
-    color: active ? T.accent.cyan : T.text.secondary,
+    border: `1px solid ${active ? infoColor(T) : T.border.subtle}`,
+    background: active ? `${infoColor(T)}18` : T.bg.card,
+    color: active ? infoColor(T) : T.text.secondary,
     borderRadius: T.radius.sm,
     padding: '5px 9px',
     fontSize: 10,

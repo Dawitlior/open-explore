@@ -1,5 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import type { TradingTheme } from '@/lib/trading-theme';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 interface FeatureManifestModalProps {
   T: TradingTheme;
@@ -125,7 +126,7 @@ export const FeatureManifestModal = ({ T, isRTL, onClose }: FeatureManifestModal
         {/* Header */}
         <div className="orca-manifest-header" style={{
           padding: '28px 32px 20px',
-          background: `linear-gradient(135deg, ${T.accent.cyan}06, ${T.accent.purple}06)`,
+          background: `linear-gradient(135deg, ${infoColor(T)}06, ${neutralRamp(T, 3)[1]}06)`,
           borderBottom: `1px solid ${T.border.subtle}`,
           flexShrink: 0,
         }}>
@@ -134,7 +135,7 @@ export const FeatureManifestModal = ({ T, isRTL, onClose }: FeatureManifestModal
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
                 <span style={{ fontSize: 28 }}>🐋</span>
                 <div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: infoColor(T), fontFamily: "'JetBrains Mono', monospace" }}>
                     ORCA<span style={{ fontWeight: 300, color: T.text.muted, marginInlineStart: 6 }}>Investment</span>
                   </div>
                   <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 2 }}>
@@ -172,10 +173,10 @@ export const FeatureManifestModal = ({ T, isRTL, onClose }: FeatureManifestModal
           {/* Disclaimer */}
           <div style={{
             padding: 16, marginBottom: 20,
-            background: `${T.accent.orange}06`, border: `1px solid ${T.accent.orange}18`,
+            background: `${T.state.warn}06`, border: `1px solid ${T.state.warn}18`,
             borderRadius: T.radius.md, direction: isRTL ? 'rtl' : 'ltr', textAlign: isRTL ? 'right' : 'left',
           }}>
-            <div style={{ fontSize: 9, color: T.accent.orange, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
+            <div style={{ fontSize: 9, color: T.state.warn, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
               {copy.disclaimerTitle}
             </div>
             <p style={{ fontSize: 11, color: T.text.secondary, lineHeight: 1.8, margin: 0 }}>
@@ -198,7 +199,7 @@ export const FeatureManifestModal = ({ T, isRTL, onClose }: FeatureManifestModal
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                   <span style={{ fontSize: 20 }}>{section.icon}</span>
                   <div style={{
-                    fontSize: 12, fontWeight: 700, color: T.accent.cyan,
+                    fontSize: 12, fontWeight: 700, color: infoColor(T),
                     fontFamily: "'JetBrains Mono', monospace", direction: isRTL ? 'rtl' : 'ltr',
                   }}>
                     {section.title}
@@ -212,8 +213,8 @@ export const FeatureManifestModal = ({ T, isRTL, onClose }: FeatureManifestModal
                     }}>
                       <div style={{
                         width: 5, height: 5, borderRadius: '50%',
-                        background: T.accent.cyan, flexShrink: 0,
-                        boxShadow: `0 0 4px ${T.accent.cyan}40`,
+                        background: infoColor(T), flexShrink: 0,
+                        boxShadow: `0 0 4px ${infoColor(T)}40`,
                       }} />
                       <span>{item}</span>
                     </div>

@@ -6,6 +6,7 @@ import { getEffectiveR } from '@/lib/r-multiple';
 import {
   computeSharpe, computeSortino, computeCalmar, dailySeries, formatRatio,
 } from '@/lib/risk/quality-metrics';
+import { qualityColor, severityColor, infoColor, statusColor, neutralRamp, moneyColor } from '@/lib/semantic-color';
 
 interface Props {
   T: TradingTheme;
@@ -36,7 +37,7 @@ export const QualityOfReturnsStrip = ({ T, isRTL, trades: all, marRatio }: Props
     {
       label: 'MAR',
       value: marRatio != null && Number.isFinite(marRatio) ? marRatio.toFixed(2) : 'N/A',
-      color: T.accent.blue,
+      color: infoColor(T),
       sub: isRTL ? 'תשואה / נסיגה' : 'Return / Drawdown',
     },
     {
@@ -104,8 +105,7 @@ export const QualityOfReturnsStrip = ({ T, isRTL, trades: all, marRatio }: Props
 
 function ratioColor(v: number | null, T: TradingTheme, [bad, ok, great]: number[]): string {
   if (v == null || !Number.isFinite(v)) return T.text.muted;
-  if (v >= great) return T.accent.green;
-  if (v >= ok) return T.accent.cyan;
-  if (v >= bad) return T.accent.orange;
-  return T.accent.red;
+  if (v >= ok) return T.text.primary;
+  if (v >= bad) return T.state.warn;
+  return T.state.loss;
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { useKillSwitch, formatKillRemaining } from '@/hooks/use-kill-switch';
+import { infoColor } from '@/lib/semantic-color';
 
 interface Props { T: TradingTheme; isRTL: boolean; }
 
@@ -40,7 +41,7 @@ export const KillSwitchPanel = ({ T, isRTL }: Props) => {
           </div>
           <div style={{
             fontSize: 13, fontWeight: 700,
-            color: isLocked ? T.accent.red : T.accent.green,
+            color: isLocked ? T.accent.red : T.text.primary,
           }}>
             {isLocked
               ? (isRTL ? `נעול · נותר ${formatKillRemaining(msRemaining, true)}` : `LOCKED · ${formatKillRemaining(msRemaining, false)} left`)
@@ -139,7 +140,7 @@ export const KillSwitchPanel = ({ T, isRTL }: Props) => {
               onClick={() => { release(); setUnlockText(''); }}
               style={{
                 padding: '8px 14px',
-                background: unlockText.trim() === 'UNLOCK' ? T.accent.green : T.bg.tertiary,
+                background: unlockText.trim() === 'UNLOCK' ? infoColor(T) : T.bg.tertiary,
                 color: unlockText.trim() === 'UNLOCK' ? '#fff' : T.text.muted,
                 border: 'none', borderRadius: 6,
                 cursor: unlockText.trim() === 'UNLOCK' ? 'pointer' : 'not-allowed',

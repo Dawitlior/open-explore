@@ -15,6 +15,7 @@ import type { TradingTheme } from '@/lib/trading-theme';
 import { useVisibleTrades } from '@/lib/display-mode-format';
 import { getEffectiveR } from '@/lib/r-multiple';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { qualityColor, severityColor, infoColor, statusColor, neutralRamp, moneyColor } from '@/lib/semantic-color';
 
 interface BaseProps {
   T: TradingTheme;
@@ -200,7 +201,7 @@ const QuarterlyWinsLossesYoYChartImpl = ({ T, trades, isRTL, tt }: BaseProps) =>
             <ReferenceLine yAxisId="net" y={0} stroke={T.border.medium} strokeDasharray="3 3" />
             <Bar yAxisId="count" dataKey="wins" stackId="wl" fill={T.accent.green} name={isRTL ? 'ניצחונות' : 'wins'} radius={[4, 4, 0, 0]} />
             <Bar yAxisId="count" dataKey="losses" stackId="wl" fill={T.accent.red} name={isRTL ? 'הפסדים' : 'losses'} radius={[4, 4, 0, 0]} />
-            <Line yAxisId="net" type="monotone" dataKey="net" name="net" stroke={T.accent.cyan} strokeWidth={2.6} dot={{ r: 3, fill: T.accent.cyan }} />
+            <Line yAxisId="net" type="monotone" dataKey="net" name="net" stroke={infoColor(T)} strokeWidth={2.6} dot={{ r: 3, fill: infoColor(T) }} />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
@@ -331,7 +332,7 @@ const ReturnPerTimeChartImpl = ({ T, trades, isRTL, tt }: BaseProps) => {
             contentStyle={tt}
             formatter={(v: any) => [formatValue(Number(v)), unit === '$' ? (isRTL ? 'לשעה' : '/hr') : 'R/hr']}
           />
-          <Line type="monotone" dataKey="ratio" stroke={T.accent.cyan} strokeWidth={2} dot={{ r: 3, fill: T.accent.cyan }} />
+          <Line type="monotone" dataKey="ratio" stroke={infoColor(T)} strokeWidth={2} dot={{ r: 3, fill: infoColor(T) }} />
         </LineChart>
       </ResponsiveContainer>
     </div>

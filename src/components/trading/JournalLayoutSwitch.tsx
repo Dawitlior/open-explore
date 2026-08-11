@@ -1,4 +1,5 @@
 import type { TradingTheme } from '@/lib/trading-theme';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 export type JournalLayout = 'table' | 'gallery';
 
@@ -64,9 +65,9 @@ export function JournalLayoutSwitch({ T, isRTL, value, onChange }: Props) {
               gap: 6,
               padding: '5px 11px',
               borderRadius: T.radius.sm,
-              border: `1px solid ${active ? `${T.accent.cyan}55` : 'transparent'}`,
-              background: active ? `${T.accent.cyan}18` : 'transparent',
-              color: active ? T.accent.cyan : T.text.muted,
+              border: `1px solid ${active ? `${infoColor(T)}55` : 'transparent'}`,
+              background: active ? `${infoColor(T)}18` : 'transparent',
+              color: active ? infoColor(T) : T.text.muted,
               fontSize: 11,
               fontWeight: 700,
               cursor: 'pointer',

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { resolveAvatarUrl, getCachedAvatarUrl } from '@/lib/avatar';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 interface Props {
   T: any; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -58,10 +59,10 @@ export const NavAvatar = ({ T, size = 30, onClick }: Props) => {
       aria-label="Open settings"
       style={{
         width: size, height: size, borderRadius: '50%',
-        background: url ? '#000' : `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.purple})`,
+        background: url ? '#000' : `linear-gradient(135deg, ${infoColor(T)}, ${neutralRamp(T, 3)[1]})`,
         border: `1px solid ${T.border.medium}`, padding: 0, overflow: 'hidden',
         cursor: 'pointer', display: 'grid', placeItems: 'center',
-        boxShadow: `0 0 8px ${T.accent.cyan}30`, flexShrink: 0,
+        boxShadow: `0 0 8px ${infoColor(T)}30`, flexShrink: 0,
       }}
     >
       {url ? (

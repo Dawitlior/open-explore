@@ -1,4 +1,5 @@
 import type { TradingTheme } from '@/lib/trading-theme';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 interface ChartExplanation {
   what: string;
@@ -48,7 +49,7 @@ export const ChartExplanationModal = ({ T, isRTL, title, explanation, chartId, o
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
           <div>
-            <div style={{ fontSize: 9, color: T.accent.cyan, textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, marginBottom: 4 }}>
+            <div style={{ fontSize: 9, color: infoColor(T), textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, marginBottom: 4 }}>
               {isRTL ? 'הסבר מדד' : 'Metric Explanation'}
             </div>
             <div style={{ fontSize: 18, fontWeight: 700, color: T.text.primary, fontFamily: "'JetBrains Mono', monospace" }}>
@@ -68,7 +69,7 @@ export const ChartExplanationModal = ({ T, isRTL, title, explanation, chartId, o
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                 <span style={{ fontSize: 14 }}>{icons[i]}</span>
-                <div style={{ fontSize: 10, color: T.accent.cyan, textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.06em' }}>
+                <div style={{ fontSize: 10, color: infoColor(T), textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.06em' }}>
                   {labels[i]}
                 </div>
               </div>
@@ -91,7 +92,7 @@ export const ChartExplanationModal = ({ T, isRTL, title, explanation, chartId, o
           )}
           <button onClick={onClose} style={{
             padding: '8px 20px', fontSize: 12,
-            background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`,
+            background: `linear-gradient(135deg, ${infoColor(T)}, ${infoColor(T)})`,
             border: 'none', borderRadius: T.radius.md, color: T.bg.primary,
             cursor: 'pointer', fontWeight: 700
           }}>

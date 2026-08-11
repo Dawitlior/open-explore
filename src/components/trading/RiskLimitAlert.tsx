@@ -1,5 +1,6 @@
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { RiskLimitStatus } from '@/lib/risk-limits';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 interface RiskLimitAlertProps {
   T: TradingTheme;
@@ -12,7 +13,7 @@ export const RiskLimitAlert = ({ T, isRTL, status, onClose }: RiskLimitAlertProp
   if (status.breachedLevel === 'none') return null;
 
   const levelConfig = {
-    daily: { icon: '⚠️', color: T.accent.orange, title: isRTL ? 'מגבלת הפסד יומית' : 'Daily Loss Limit' },
+    daily: { icon: '⚠️', color: T.state.warn, title: isRTL ? 'מגבלת הפסד יומית' : 'Daily Loss Limit' },
     weekly: { icon: '🔴', color: T.accent.red, title: isRTL ? 'מגבלת הפסד שבועית' : 'Weekly Loss Limit' },
     monthly: { icon: '🚨', color: '#991b1b', title: isRTL ? 'מגבלת הפסד חודשית' : 'Monthly Loss Limit' },
   };

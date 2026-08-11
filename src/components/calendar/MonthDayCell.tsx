@@ -12,6 +12,7 @@ import type { TradingTheme } from '@/lib/trading-theme';
 import { MacroSideDots } from '@/components/economic/MacroEventStrip';
 import { SessionMarker, type SessionFilter } from '@/components/calendar/SessionUI';
 import type { DaySessionStat } from '@/lib/market-sessions';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 export interface DayPnlStat {
   pnl: number;
@@ -50,10 +51,10 @@ export const MonthDayCell = memo(function MonthDayCell({
           ? `${T.accent.green}22`
           : ddLead < 0
             ? `${T.accent.red}2e`
-            : `${T.accent.orange}18`)
+            : `${T.state.warn}18`)
       : 'rgba(255,255,255,0.02)';
   const borderColor = isToday
-    ? T.accent.cyan
+    ? infoColor(T)
     : isDarkRed
       ? `${T.accent.red}66`
       : dd
@@ -61,7 +62,7 @@ export const MonthDayCell = memo(function MonthDayCell({
             ? `${T.accent.green}3a`
             : ddLead < 0
               ? `${T.accent.red}55`
-              : `${T.accent.orange}33`)
+              : `${T.state.warn}33`)
         : T.border.subtle;
   const moneyStr = dd ? `${dd.pnl >= 0 ? '+' : '-'}$${Math.abs(dd.pnl).toFixed(0)}` : '';
   const rStr = dd ? (dd.rValid === 0 ? 'N/A' : `${dd.rTotal >= 0 ? '+' : ''}${dd.rTotal.toFixed(1)}R`) : '';
@@ -81,7 +82,7 @@ export const MonthDayCell = memo(function MonthDayCell({
         borderRadius: 14,
         border: `1px solid ${borderColor}`,
         background: bg,
-        boxShadow: isToday ? `0 0 0 1px ${T.accent.cyan}55` : 'none',
+        boxShadow: isToday ? `0 0 0 1px ${infoColor(T)}55` : 'none',
         padding: '10px 12px',
         paddingInlineEnd: macros.length ? 18 : 12,
         cursor: hasContent ? 'pointer' : 'default',
@@ -99,7 +100,7 @@ export const MonthDayCell = memo(function MonthDayCell({
             insetInlineEnd: macros.length ? 16 : 10,
             fontSize: 12,
             fontWeight: 600,
-            color: isToday ? T.accent.cyan : T.text.muted,
+            color: isToday ? infoColor(T) : T.text.muted,
             fontFamily: "'JetBrains Mono', monospace",
             lineHeight: 1,
           }}>

@@ -511,9 +511,9 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
 
 
       {/* ═══ KEY OBSERVATIONS — promoted to top for instant signal ═══ */}
-      <GlassCard T={T} glow={`${T.accent.cyan}22`} style={{ marginBottom: 16, borderInlineStart: `3px solid ${T.accent.cyan}` }}>
+      <GlassCard T={T} glow={`${infoColor(T)}22`} style={{ marginBottom: 16, borderInlineStart: `3px solid ${infoColor(T)}` }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
-          <div style={{ fontSize: 10, color: T.accent.cyan, textTransform: 'uppercase', letterSpacing: '0.22em', fontWeight: 800 }}>● {t('תקציר','Snapshot')}</div>
+          <div style={{ fontSize: 10, color: infoColor(T), textTransform: 'uppercase', letterSpacing: '0.22em', fontWeight: 800 }}>● {t('תקציר','Snapshot')}</div>
           <div style={{ fontSize: 13, color: T.text.primary, fontWeight: 800 }}>{t('תצפיות מרכזיות','Key Observations')}</div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 160px), 1fr))', gap: 10 }}>
@@ -545,7 +545,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700 }}>{t('עקומת הון מול נסיגה','Equity vs Drawdown')}</div>
           <div style={{ display: 'flex', gap: 14, fontSize: 10, color: T.text.muted }}>
-            <span>● <span style={{ color: T.accent.cyan }}>{isMoney ? t('הון מצטבר ($)','Cumulative P&L ($)') : t('R מצטבר','Cumulative R')}</span></span>
+            <span>● <span style={{ color: infoColor(T) }}>{isMoney ? t('הון מצטבר ($)','Cumulative P&L ($)') : t('R מצטבר','Cumulative R')}</span></span>
             <span>● <span style={{ color: T.accent.red }}>{t('נסיגה (%)','Drawdown (%)')}</span></span>
           </div>
         </div>
@@ -553,8 +553,8 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
           <ComposedChart data={equityDD}>
             <defs>
               <linearGradient id="equityG" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.5} />
-                <stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.05} />
+                <stop offset="0%" stopColor={infoColor(T)} stopOpacity={0.5} />
+                <stop offset="100%" stopColor={infoColor(T)} stopOpacity={0.05} />
               </linearGradient>
               <linearGradient id="ddG" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={T.accent.red} stopOpacity={0.05} />
@@ -566,7 +566,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
             <YAxis yAxisId="L" tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => fmtAxis(v)} />
             <YAxis yAxisId="R" orientation="right" tick={{ fill: T.text.muted, fontSize: 10 }} domain={[(dataMin: number) => Math.min(-1, Math.max(-100, dataMin)), 0]} tickFormatter={(v: number) => `${v.toFixed(0)}%`} allowDataOverflow={false} />
             <Tooltip contentStyle={tt} formatter={(v: number, n: string) => n === 'dd' || n === 'ddMoney' ? `${v.toFixed(2)}%` : fmtVal(v)} />
-            <Area yAxisId="L" type="monotone" dataKey={isMoney ? 'equityMoney' : 'equity'} stroke={T.accent.cyan} strokeWidth={2.5} fill="url(#equityG)" />
+            <Area yAxisId="L" type="monotone" dataKey={isMoney ? 'equityMoney' : 'equity'} stroke={infoColor(T)} strokeWidth={2.5} fill="url(#equityG)" />
             <Area yAxisId="R" type="monotone" dataKey={isMoney ? 'ddMoney' : 'dd'} stroke={T.accent.red} strokeWidth={1.5} fill="url(#ddG)" />
           </ComposedChart>
         </ResponsiveContainer>
@@ -797,9 +797,9 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
                     yAxisId="right"
                     type="monotone"
                     dataKey="winRate"
-                    stroke={T.accent.cyan}
+                    stroke={infoColor(T)}
                     strokeWidth={2}
-                    dot={{ r: 3, fill: T.accent.cyan, strokeWidth: 0 }}
+                    dot={{ r: 3, fill: infoColor(T), strokeWidth: 0 }}
                     activeDot={{ r: 5 }}
                   />
                 </ComposedChart>
@@ -939,8 +939,8 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
                   <ComposedChart data={yearly} margin={{ top: 12, right: 16, bottom: 8, left: 0 }}>
                     <defs>
                       <linearGradient id="yrCumG" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.45} />
-                        <stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.02} />
+                        <stop offset="0%" stopColor={infoColor(T)} stopOpacity={0.45} />
+                        <stop offset="100%" stopColor={infoColor(T)} stopOpacity={0.02} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
@@ -962,10 +962,10 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
                         return yearly.slice(0, idx + 1).reduce((s, y) => s + y.value, 0);
                       }}
                       name={isMoney ? t('מצטבר','Cumulative') : t('R מצטבר','Cumulative R')}
-                      stroke={T.accent.cyan}
+                      stroke={infoColor(T)}
                       strokeWidth={2.5}
                       fill="url(#yrCumG)"
-                      dot={{ r: 3, fill: T.accent.cyan }}
+                      dot={{ r: 3, fill: infoColor(T) }}
                     />
                   </ComposedChart>
                 </ResponsiveContainer>
@@ -1116,9 +1116,9 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
                 onClick={() => setSortKey(o.k)}
                 style={{
                   padding: '4px 10px', fontSize: 10, fontWeight: 700,
-                  background: sortKey === o.k ? T.accent.cyan : 'transparent',
+                  background: sortKey === o.k ? infoColor(T) : 'transparent',
                   color: sortKey === o.k ? T.bg.primary : T.text.muted,
-                  border: `1px solid ${sortKey === o.k ? T.accent.cyan : T.border.subtle}`,
+                  border: `1px solid ${sortKey === o.k ? infoColor(T) : T.border.subtle}`,
                   borderRadius: 6, cursor: 'pointer',
                 }}
               >
@@ -1139,13 +1139,13 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
             <tbody>
               {setupBoard.map((s, i) => (
                 <tr key={s.coin} style={{ background: i % 2 ? `${T.bg.tertiary}40` : 'transparent' }}>
-                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontWeight: 700, color: T.accent.cyan }}>{s.coin}</td>
+                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontWeight: 700, color: infoColor(T) }}>{s.coin}</td>
                   <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace" }}>{s.n}</td>
-                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontWeight: 700, color: s.wr >= 50 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{s.wr.toFixed(0)}%</td>
+                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontWeight: 700, color: s.wr >= 50 ? T.text.primary : T.state.warn, fontFamily: "'JetBrains Mono', monospace" }}>{s.wr.toFixed(0)}%</td>
                   <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: s.pnl >= 0 ? T.accent.green : T.accent.red }}>
                     <PV>{s.pnl >= 0 ? '+' : ''}${s.pnl.toFixed(2)}</PV>
                   </td>
-                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", color: s.exp >= 0 ? T.accent.cyan : T.accent.red, fontWeight: 600 }}>{s.exp >= 0 ? '+' : ''}{s.exp.toFixed(2)}R</td>
+                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", color: s.exp >= 0 ? infoColor(T) : T.accent.red, fontWeight: 600 }}>{s.exp >= 0 ? '+' : ''}{s.exp.toFixed(2)}R</td>
                   <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace" }}><PV>${s.avgRisk.toFixed(2)}</PV></td>
                 </tr>
               ))}

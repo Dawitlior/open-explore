@@ -25,6 +25,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { Trade } from '@/data/trades';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 interface OpenPos {
   id: string;
@@ -227,7 +228,7 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
     return (
       <div className="dash-section" style={sectionAnim}>
         {keyframes}
-        <div className="dash-section-label" style={{ color: T.accent.orange }}>
+        <div className="dash-section-label" style={{ color: T.state.warn }}>
           {isRTL ? '⚡ פוזיציות פתוחות · 0' : '⚡ OPEN POSITIONS · 0'}
         </div>
         <div style={{
@@ -249,7 +250,7 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
   return (
     <div className="dash-section" style={sectionAnim}>
       {keyframes}
-      <div className="dash-section-label" style={{ color: T.accent.orange, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+      <div className="dash-section-label" style={{ color: T.state.warn, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
         <span>{isRTL ? '⚡ פוזיציות פתוחות' : '⚡ OPEN POSITIONS'} · {rows.length}</span>
         {totalUnreal !== 0 && (
           <span style={{ fontSize: 12, fontWeight: 700, color: totalUnreal >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>
@@ -314,7 +315,7 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
                   <span style={{ fontWeight: 800, color: T.text.primary, fontSize: 16, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.symbol}</span>
                   <span style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: 0.4 }}>
                     {isManual ? (isRTL ? 'ידני' : 'Manual') : p.provider}
-                    {leverage > 1 && <span style={{ marginInlineStart: 6, color: T.accent.orange, fontWeight: 700 }}>· {leverage}x</span>}
+                    {leverage > 1 && <span style={{ marginInlineStart: 6, color: T.state.warn, fontWeight: 700 }}>· {leverage}x</span>}
                   </span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -366,7 +367,7 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
                   )}
                 </div>
                 <div style={{ paddingInlineStart: 4 }}>
-                  <div style={{ fontSize: 9, color: T.accent.cyan, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: 700 }}>
+                  <div style={{ fontSize: 9, color: infoColor(T), marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: 700 }}>
                     {isRTL ? '· ביצוע עסקה' : '· Trade Execution'}
                   </div>
                   <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 2, textTransform: 'uppercase', letterSpacing: 0.3 }}>
@@ -407,7 +408,7 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
                   value={stop ? stop.toLocaleString(undefined, { maximumFractionDigits: 6 }) : '—'}
                   mono color={stop ? T.accent.red : T.text.muted} T={T}
                 />
-                <DetailField label={isRTL ? 'מינוף' : 'Leverage'} value={`${leverage}x`} mono color={leverage > 1 ? T.accent.orange : T.text.secondary} T={T} />
+                <DetailField label={isRTL ? 'מינוף' : 'Leverage'} value={`${leverage}x`} mono color={leverage > 1 ? T.state.warn : T.text.secondary} T={T} />
                 <DetailField
                   label={isRTL ? 'מרחק לסטופ' : 'Stop Distance'}
                   value={stop ? `${(Math.abs((entry - stop) / entry) * 100).toFixed(2)}%` : '—'}
@@ -419,7 +420,7 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
                 <DetailField
                   label={isRTL ? 'סטטוס' : 'Status'}
                   value={isRTL ? 'פוזיציה פתוחה' : 'Open'}
-                  color={T.accent.cyan} T={T}
+                  color={infoColor(T)} T={T}
                 />
               </div>
               )}
@@ -467,7 +468,7 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
                   style={{
                     marginTop: 2,
                     padding: '10px 12px',
-                    background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`,
+                    background: `linear-gradient(135deg, ${infoColor(T)}, ${infoColor(T)})`,
                     border: 'none', borderRadius: 8,
                     color: T.bg.primary, fontWeight: 800, fontSize: 13, cursor: 'pointer',
                   }}>
@@ -545,7 +546,7 @@ export const OpenPositionsPanel = ({ T, isRTL, onAddTrade, refreshKey }: Props) 
                 onClick={() => submitClose(false)}
                 style={{
                   flex: '1 1 140px', padding: '10px 12px',
-                  background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`,
+                  background: `linear-gradient(135deg, ${infoColor(T)}, ${infoColor(T)})`,
                   border: 'none', borderRadius: 10, color: T.bg.primary,
                   fontWeight: 800, fontSize: 13, cursor: busy || !exitPrice ? 'not-allowed' : 'pointer',
                   opacity: busy || !exitPrice ? 0.6 : 1,

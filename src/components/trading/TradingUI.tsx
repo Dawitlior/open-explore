@@ -2,6 +2,7 @@ import { ReactNode, CSSProperties } from 'react';
 import { motion } from 'framer-motion';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { cn } from '@/lib/utils';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 /* ═══════════════════════════════════════════════════════════════
    ORCA ELITE TRADING UI
@@ -56,7 +57,7 @@ export const MetricCard = ({ label, value, suffix, color, small, T, onInfoClick,
   const isPos = typeof value === 'number' && value >= 0;
   const isNeg = typeof value === 'number' && value < 0;
   const tone =
-    color === T.accent.cyan  ? 'orca-glow-cyan' :
+    color === infoColor(T)  ? 'orca-glow-cyan' :
     color === T.accent.red   ? 'orca-glow-ruby' :
     color === T.accent.green ? 'orca-glow-emerald' :
     isPos && !suffix         ? 'orca-glow-emerald' :

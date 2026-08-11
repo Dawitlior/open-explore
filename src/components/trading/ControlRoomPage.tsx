@@ -14,6 +14,7 @@ import type { TradingTheme } from '@/lib/trading-theme';
 import type { TradingStats } from '@/lib/trading-analytics';
 import type { RiskLimits } from '@/lib/risk-limits';
 import { LiveStateBar } from './risk/LiveStateBar';
+import { infoColor, neutralRamp, severityColor, moneyColor, statusColor } from '@/lib/semantic-color';
 
 export type ControlRoomTab = 'risk' | 'mind';
 
@@ -178,14 +179,14 @@ export const ControlRoomPage = ({
       icon: '🛡️',
       label: isRTL ? 'סיכון' : 'Risk',
       sub: isRTL ? 'מגבלות · חשיפה · איכות תשואות' : 'Limits · Exposure · Return quality',
-      color: T.accent.cyan,
+      color: infoColor(T),
     },
     {
       id: 'mind',
       icon: '🧠',
       label: isRTL ? 'תודעה' : 'Mind',
       sub: isRTL ? 'משמעת · טילט · דפוסי התנהגות' : 'Discipline · Tilt · Behavior patterns',
-      color: T.accent.purple,
+      color: neutralRamp(T, 3)[1],
     },
   ];
 

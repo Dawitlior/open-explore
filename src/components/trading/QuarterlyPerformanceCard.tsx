@@ -16,6 +16,7 @@ import type { TradingTheme } from '@/lib/trading-theme';
 import { getEffectiveR } from '@/lib/r-multiple';
 import { parseTradeDate } from '@/components/weekly-review/lib/week-key';
 import { useDisplayMode } from '@/lib/display-mode';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 interface Props {
   T: TradingTheme;
@@ -92,7 +93,8 @@ export function QuarterlyPerformanceCard({ T, trades, isRTL }: Props) {
   const valueOf = (b: QBucket) => (isMoney ? b.totalPnl : b.totalR);
 
 
-  const QCOLORS: Record<QKey, string> = { 1: T.accent.cyan, 2: T.accent.green, 3: T.accent.purple, 4: T.accent.orange };
+  const ramp = neutralRamp(T, 4);
+  const QCOLORS: Record<QKey, string> = { 1: ramp[0], 2: ramp[1], 3: ramp[2], 4: ramp[3] };
 
   // Donut math — proportional to |value| in the active display mode, so a
   // dominant quarter in either $ or R is always visible.

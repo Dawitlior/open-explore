@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { GlassCard } from './TradingUI';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 export interface RiskExplanation {
   tradeId: number;
@@ -51,7 +52,7 @@ export const RiskExplanationModal = ({ T, isRTL, tradeId, riskChange, onSave, on
         <div style={{ fontSize: 16, fontWeight: 700, color: T.text.primary, textAlign: 'center', marginBottom: 6, fontFamily: "'JetBrains Mono', monospace" }}>
           {isRTL ? 'זוהה שינוי בסיכון' : 'Risk Change Detected'}
         </div>
-        <div style={{ fontSize: 12, color: T.accent.orange, textAlign: 'center', marginBottom: 18, fontFamily: "'JetBrains Mono', monospace" }}>
+        <div style={{ fontSize: 12, color: T.state.warn, textAlign: 'center', marginBottom: 18, fontFamily: "'JetBrains Mono', monospace" }}>
           {riskChange}
         </div>
         <div style={{ fontSize: 11, color: T.text.muted, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
@@ -64,10 +65,10 @@ export const RiskExplanationModal = ({ T, isRTL, tradeId, riskChange, onSave, on
               onClick={() => setSelected(r.id)}
               style={{
                 padding: '10px 12px',
-                background: selected === r.id ? `${T.accent.cyan}15` : T.bg.tertiary,
-                border: `1px solid ${selected === r.id ? T.accent.cyan : T.border.subtle}`,
+                background: selected === r.id ? `${infoColor(T)}15` : T.bg.tertiary,
+                border: `1px solid ${selected === r.id ? infoColor(T) : T.border.subtle}`,
                 borderRadius: 10,
-                color: selected === r.id ? T.accent.cyan : T.text.secondary,
+                color: selected === r.id ? infoColor(T) : T.text.secondary,
                 cursor: 'pointer',
                 fontSize: 11,
                 fontWeight: selected === r.id ? 600 : 400,
@@ -104,7 +105,7 @@ export const RiskExplanationModal = ({ T, isRTL, tradeId, riskChange, onSave, on
             disabled={!selected}
             style={{
               padding: '8px 22px',
-              background: selected ? `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})` : T.bg.tertiary,
+              background: selected ? `linear-gradient(135deg, ${infoColor(T)}, ${infoColor(T)})` : T.bg.tertiary,
               border: 'none',
               borderRadius: 10,
               color: selected ? T.bg.primary : T.text.muted,

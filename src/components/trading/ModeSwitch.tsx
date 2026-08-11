@@ -6,6 +6,7 @@ import { Sparkles, Zap, Crown, Check, X } from 'lucide-react';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { AppTier } from '@/hooks/use-entitlement';
 import { useEntitlement } from '@/hooks/use-entitlement';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 interface ModeSwitchProps {
   T: TradingTheme;
@@ -26,13 +27,13 @@ type TierMeta = {
 };
 
 const TIER_OPTIONS: TierMeta[] = [
-  { id: 'standard', label: 'STANDARD', labelHe: 'סטנדרט', color: (T) => T.accent.blue, glow: 'rgba(59,130,246,0.55)', icon: Zap,
+  { id: 'standard', label: 'STANDARD', labelHe: 'סטנדרט', color: (T) => infoColor(T), glow: 'rgba(59,130,246,0.55)', icon: Zap,
     desc: 'Core journal, risk limits, calendar, and baseline analytics', descHe: 'יומן, מגבלות סיכון, קלנדר ואנליטיקה בסיסית',
     tagline: 'The disciplined baseline', taglineHe: 'הבסיס למסחר ממושמע' },
-  { id: 'advanced', label: 'ADVANCED', labelHe: 'מתקדם', color: (T) => T.accent.cyan, glow: 'rgba(34,211,238,0.6)', icon: Sparkles,
+  { id: 'advanced', label: 'ADVANCED', labelHe: 'מתקדם', color: (T) => infoColor(T), glow: 'rgba(34,211,238,0.6)', icon: Sparkles,
     desc: 'Professional analytics, R/$ chart controls, and deeper diagnostics', descHe: 'אנליטיקה מקצועית, בקרות R/$ ודיאגנוסטיקה עמוקה',
     tagline: 'Pro-grade analytics', taglineHe: 'אנליטיקה ברמת פרו' },
-  { id: 'ultimate', label: 'ULTIMATE', labelHe: 'אולטימייט', color: (T) => T.accent.purple, glow: 'rgba(168,85,247,0.6)', icon: Crown,
+  { id: 'ultimate', label: 'ULTIMATE', labelHe: 'אולטימייט', color: (T) => neutralRamp(T, 3)[1], glow: 'rgba(168,85,247,0.6)', icon: Crown,
     desc: 'Full quant engine, Kelly, MAR, autocorrelation, and drawdown structure', descHe: 'מנוע כמותי מלא, Kelly, MAR, אוטוקורלציה ומבנה Drawdown',
     tagline: 'Full quant engine', taglineHe: 'מנוע כמותי מלא' },
 ];
@@ -103,7 +104,7 @@ export const ModeSwitch = ({ T, isRTL }: ModeSwitchProps) => {
   };
 
   const meta = TIER_OPTIONS.find(m => m.id === pendingTier);
-  const accent = meta ? meta.color(T) : T.accent.cyan;
+  const accent = meta ? meta.color(T) : infoColor(T);
   const glow = meta?.glow ?? 'rgba(34,211,238,0.55)';
   const Icon = meta?.icon ?? Sparkles;
 

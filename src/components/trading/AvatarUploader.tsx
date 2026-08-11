@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Camera, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { resolveAvatarUrl, getCachedAvatarUrl, invalidateAvatarCache } from '@/lib/avatar';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 interface Props {
   T: any; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -87,11 +88,11 @@ export const AvatarUploader = ({ T, size = 72, isRTL }: Props) => {
         title={isRTL ? 'שינוי תמונת פרופיל' : 'Change profile picture'}
         style={{
           position: 'relative', width: size, height: size, borderRadius: '50%',
-          background: url ? '#000' : `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.purple})`,
+          background: url ? '#000' : `linear-gradient(135deg, ${infoColor(T)}, ${neutralRamp(T, 3)[1]})`,
           display: 'grid', placeItems: 'center', overflow: 'hidden',
           border: `2px solid ${T.border.medium}`, cursor: busy ? 'wait' : 'pointer',
           padding: 0, flexShrink: 0,
-          boxShadow: T.shadow.glow(T.accent.cyanGlow),
+          boxShadow: T.shadow.glow(`${infoColor(T)}30`),
         }}
       >
         {url ? (
@@ -115,7 +116,7 @@ export const AvatarUploader = ({ T, size = 72, isRTL }: Props) => {
           position: 'absolute', insetInlineEnd: -2, bottom: -2,
           width: Math.max(20, size * 0.32), height: Math.max(20, size * 0.32), borderRadius: '50%',
           background: T.bg.primary, border: `1px solid ${T.border.medium}`,
-          display: 'grid', placeItems: 'center', color: T.accent.cyan,
+          display: 'grid', placeItems: 'center', color: infoColor(T),
         }}>
           {busy ? <Loader2 size={12} className="animate-spin" /> : <Camera size={12} />}
         </span>

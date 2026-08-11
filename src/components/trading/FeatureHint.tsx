@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, HelpCircle } from 'lucide-react';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { scopedStorage } from '@/lib/scoped-storage';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 /**
  * FeatureHint — small dismissible explanation chip.
@@ -53,15 +54,15 @@ export const FeatureHint = ({ T, id, text, style, compact }: Props) => {
         padding: compact ? '6px 10px' : '10px 12px',
         marginBottom: 12,
         borderRadius: T.radius.md,
-        background: `linear-gradient(135deg, ${T.accent.cyan}10, ${T.accent.cyan}04)`,
-        border: `1px solid ${T.accent.cyan}28`,
+        background: `linear-gradient(135deg, ${infoColor(T)}10, ${infoColor(T)}04)`,
+        border: `1px solid ${infoColor(T)}28`,
         fontSize: 12,
         color: T.text.secondary,
         lineHeight: 1.5,
         ...style,
       }}
     >
-      <HelpCircle size={14} style={{ color: T.accent.cyan, flexShrink: 0, marginTop: compact ? 0 : 1 }} />
+      <HelpCircle size={14} style={{ color: infoColor(T), flexShrink: 0, marginTop: compact ? 0 : 1 }} />
       <div style={{ flex: 1, minWidth: 0 }}>{text}</div>
       <button
         aria-label="Dismiss hint"
@@ -77,7 +78,7 @@ export const FeatureHint = ({ T, id, text, style, compact }: Props) => {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           flexShrink: 0, transition: 'all .15s',
         }}
-        onMouseEnter={e => { e.currentTarget.style.background = `${T.accent.cyan}18`; e.currentTarget.style.color = T.accent.cyan; }}
+        onMouseEnter={e => { e.currentTarget.style.background = `${infoColor(T)}18`; e.currentTarget.style.color = infoColor(T); }}
         onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = T.text.muted; }}
       >
         <X size={13} />

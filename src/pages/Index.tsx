@@ -84,6 +84,7 @@ import { useExpectancyMode } from '@/lib/dashboard-engine';
 import { useEntitlement } from '@/hooks/use-entitlement';
 import { EmptyStateImportCTA } from '@/components/trading/EmptyStateImportCTA';
 import { TradeDetailModal } from '@/components/trading/TradeDetailModal';
+import { infoColor, neutralRamp, scoreColor, SCORE_THRESHOLDS } from '@/lib/semantic-color';
 
 // ─── Facebook-style red notification badge with "1" ───
 const ReminderBadge = () => (
@@ -730,8 +731,8 @@ const Index = () => {
         </h2>
         {/* Core metrics only */}
         <div style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
-          <MetricCard T={T} label={isR ? (isRTL ? 'תוחלת נטו (R)' : 'Net R') : t.netPnl} value={isR ? `${stats.totalR >= 0 ? '+' : ''}${stats.totalR.toFixed(2)}R` : stats.totalPnl} color={(isR ? stats.totalR : stats.totalPnl) >= 0 ? T.accent.cyan : T.accent.red} onInfoClick={() => handleExplainClick(t.netPnl, EXPLANATIONS.netPnl)} />
-          <MetricCard T={T} label={t.winRate} value={stats.winRate} suffix="%" color={T.accent.green} onInfoClick={() => handleExplainClick(t.winRate, EXPLANATIONS.winRate)} />
+          <MetricCard T={T} label={isR ? (isRTL ? 'תוחלת נטו (R)' : 'Net R') : t.netPnl} value={isR ? `${stats.totalR >= 0 ? '+' : ''}${stats.totalR.toFixed(2)}R` : stats.totalPnl} color={(isR ? stats.totalR : stats.totalPnl) >= 0 ? infoColor(T) : T.accent.red} onInfoClick={() => handleExplainClick(t.netPnl, EXPLANATIONS.netPnl)} />
+          <MetricCard T={T} label={t.winRate} value={stats.winRate} suffix="%" color={scoreColor(T, stats.winRate, SCORE_THRESHOLDS.winRate)} onInfoClick={() => handleExplainClick(t.winRate, EXPLANATIONS.winRate)} />
           <MetricCard T={T} label={t.totalTrades} value={String(stats.totalTrades)} color={T.text.primary} />
           <MetricCard T={T} label={t.avgWin} value={isR ? `+${stats.avgWinR.toFixed(2)}R` : stats.avgWin} suffix={isR ? undefined : '$'} color={T.accent.green} />
           <MetricCard T={T} label={t.avgLoss} value={isR ? `-${stats.avgLossR.toFixed(2)}R` : stats.avgLoss} suffix={isR ? undefined : '$'} color={T.accent.red} />
@@ -741,13 +742,13 @@ const Index = () => {
         <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.equityCurve} explanation={EXPLANATIONS.equityCurve} unit={isR ? 'R' : '$'} style={{ marginBottom: 18 }}>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={stats.equityCurve}>
-              <defs><linearGradient id="eqBeg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.6}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.25}/></linearGradient></defs>
+              <defs><linearGradient id="eqBeg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={infoColor(T)} stopOpacity={0.6}/><stop offset="100%" stopColor={infoColor(T)} stopOpacity={0.25}/></linearGradient></defs>
               <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
               <XAxis dataKey="trade" tick={{ fill: T.text.muted, fontSize: 10 }} />
               <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} domain={[(dataMin: number) => Math.floor(dataMin * 0.98), (dataMax: number) => Math.ceil(dataMax * 1.02)]} />
               <Tooltip contentStyle={tt} />
               <ReferenceLine y={0} stroke={T.border.medium} strokeDasharray="2 2" />
-              <Area type="monotone" dataKey="balance" stroke={T.accent.cyan} fill="url(#eqBeg)" strokeWidth={2.5} dot={trades.length <= 50 ? { fill: T.accent.cyan, r: 3 } : false} activeDot={{ r: 5, fill: T.accent.cyan }} />
+              <Area type="monotone" dataKey="balance" stroke={infoColor(T)} fill="url(#eqBeg)" strokeWidth={2.5} dot={trades.length <= 50 ? { fill: infoColor(T), r: 3 } : false} activeDot={{ r: 5, fill: infoColor(T) }} />
             </AreaChart>
           </ResponsiveContainer>
         </ChartWrapper>
@@ -767,7 +768,7 @@ const Index = () => {
         {/* Discipline indicator */}
         <GlassCard T={T} style={{ marginBottom: 18, textAlign: 'center', padding: 24 }}>
           <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>{t.disciplineScore}</div>
-          <div style={{ fontSize: 48, fontWeight: 700, color: stats.rulesFollowed >= 80 ? T.accent.green : stats.rulesFollowed >= 50 ? T.accent.orange : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>
+          <div style={{ fontSize: 48, fontWeight: 700, color: stats.rulesFollowed >= 70 ? T.text.primary : stats.rulesFollowed >= 50 ? T.state.warn : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>
             {stats.rulesFollowed.toFixed(0)}%
           </div>
           <div style={{ fontSize: 12, color: T.text.secondary, marginTop: 8 }}>
@@ -777,11 +778,11 @@ const Index = () => {
           </div>
         </GlassCard>
         {/* Tip card */}
-        <GlassCard T={T} glow={`${T.accent.blue}12`}>
+        <GlassCard T={T} glow={`${infoColor(T)}12`}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
             <span style={{ fontSize: 24 }}>💡</span>
             <div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: T.accent.blue, marginBottom: 4 }}>{isRTL ? 'טיפ למתחיל' : 'Beginner Tip'}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: infoColor(T), marginBottom: 4 }}>{isRTL ? 'טיפ למתחיל' : 'Beginner Tip'}</div>
               <div style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.6 }}>
                 {isRTL
                   ? 'התמקד באחוז ההצלחה ובמשמעת. עקוב אחרי הכללים שלך, ושמור על סיכון קבוע לעסקה. השאר הוא רעש.'
@@ -798,7 +799,7 @@ const Index = () => {
       <>
         {/* Session Focus Panel */}
         <div className={isMobile ? 'orca-snap-h' : ''} style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: isMobile ? 'nowrap' : 'wrap' }}>
-          <GlassCard T={T} glow={T.accent.cyanGlow} style={{ flex: 2, minWidth: isMobile ? 0 : 300, width: isMobile ? '100%' : undefined }}>
+          <GlassCard T={T} glow={`${infoColor(T)}30`} style={{ flex: 2, minWidth: isMobile ? 0 : 300, width: isMobile ? '100%' : undefined }}>
             <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>{isRTL ? '🔴 מצב חי — פוקוס ביצוע' : '🔴 LIVE — Execution Focus'}</div>
             <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
               <div>
@@ -811,7 +812,7 @@ const Index = () => {
               </div>
               <div>
                 <div style={{ fontSize: 9, color: T.text.muted }}>{isRTL ? 'משמעת חיה' : 'Live Discipline'}</div>
-                <div style={{ fontSize: 22, fontWeight: 700, color: stats.rulesFollowed > 80 ? T.accent.green : T.accent.orange, fontFamily: "'JetBrains Mono', monospace" }}>{stats.rulesFollowed.toFixed(0)}%</div>
+                <div style={{ fontSize: 22, fontWeight: 700, color: stats.rulesFollowed > 70 ? T.text.primary : T.state.warn, fontFamily: "'JetBrains Mono', monospace" }}>{stats.rulesFollowed.toFixed(0)}%</div>
               </div>
             </div>
           </GlassCard>
@@ -822,8 +823,8 @@ const Index = () => {
             <svg width="100" height="55" viewBox="0 0 200 110" style={{ margin: '0 auto', display: 'block' }}>
               <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke={T.border.subtle} strokeWidth="12" strokeLinecap="round"/>
               <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="url(#rGlive)" strokeWidth="12" strokeLinecap="round" strokeDasharray={`${riskPct * 2.51} 251`} style={{ transition: 'stroke-dasharray 1s ease' }}/>
-              <defs><linearGradient id="rGlive" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor={T.accent.green}/><stop offset="50%" stopColor={T.accent.orange}/><stop offset="100%" stopColor={T.accent.red}/></linearGradient></defs>
-              <text x="100" y="82" textAnchor="middle" fill={riskLevel === 'critical' ? T.accent.red : riskLevel === 'warning' ? T.accent.orange : T.accent.green} fontSize="22" fontWeight="700" fontFamily="'JetBrains Mono', monospace">{riskPct.toFixed(0)}%</text>
+              <defs><linearGradient id="rGlive" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor={infoColor(T)}/><stop offset="50%" stopColor={T.state.warn}/><stop offset="100%" stopColor={T.accent.red}/></linearGradient></defs>
+              <text x="100" y="82" textAnchor="middle" fill={riskLevel === 'critical' ? T.accent.red : riskLevel === 'warning' ? T.state.warn : T.text.primary} fontSize="22" fontWeight="700" fontFamily="'JetBrains Mono', monospace">{riskPct.toFixed(0)}%</text>
             </svg>
           </GlassCard>
           )}
@@ -833,7 +834,7 @@ const Index = () => {
           {true && (
           <GlassCard T={T} style={{ flex: 1, minWidth: isMobile ? 0 : 200, width: isMobile ? '100%' : undefined }}>
             <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{isRTL ? 'לחץ רצף' : 'Streak Pressure'}</div>
-            <div style={{ padding: 14, borderRadius: T.radius.md, textAlign: 'center', background: stats.maxConsecLosses >= 3 ? `${T.accent.red}10` : stats.currentStreak >= 3 && stats.streakType === 'Win' ? `${T.accent.green}10` : `${T.accent.blue}08`, border: `1px solid ${stats.maxConsecLosses >= 3 ? T.accent.red : T.accent.green}20` }}>
+            <div style={{ padding: 14, borderRadius: T.radius.md, textAlign: 'center', background: stats.maxConsecLosses >= 3 ? `${T.accent.red}10` : stats.currentStreak >= 3 && stats.streakType === 'Win' ? `${T.accent.green}10` : `${infoColor(T)}08`, border: `1px solid ${stats.maxConsecLosses >= 3 ? T.accent.red : T.accent.green}20` }}>
               <div style={{ fontSize: 28, marginBottom: 4 }}>{stats.maxConsecLosses >= 3 ? '🔥' : stats.currentStreak >= 3 ? '🚀' : '⚖️'}</div>
               <div style={{ fontSize: 12, fontWeight: 600, color: T.text.primary }}>{stats.maxConsecLosses >= 3 ? (isRTL ? 'צינון מומלץ' : 'Cool-Off Recommended') : stats.currentStreak >= 3 ? (isRTL ? 'מומנטום חיובי' : 'Positive Momentum') : (isRTL ? 'ניטרלי' : 'Neutral')}</div>
             </div>
@@ -844,7 +845,7 @@ const Index = () => {
             {trades.slice(-5).map(tr => (
               <div key={tr.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: `1px solid ${T.border.subtle}`, fontSize: 11 }}>
                 <span style={{ color: T.text.muted }}>{tr.coin}</span>
-                <span style={{ color: tr.deviation > 0.1 ? T.accent.red : T.accent.green, fontFamily: "'JetBrains Mono', monospace" }}>{tr.deviation.toFixed(3)}R {tr.deviation > 0.1 ? '⚠️' : '✓'}</span>
+                <span style={{ color: tr.deviation > 0.1 ? T.state.warn : T.text.primary, fontFamily: "'JetBrains Mono', monospace" }}>{tr.deviation.toFixed(3)}R {tr.deviation > 0.1 ? '⚠️' : '✓'}</span>
               </div>
             ))}
           </GlassCard>
@@ -856,7 +857,7 @@ const Index = () => {
                 const isOvertrading = todayTrades.length >= 3;
                 return <>
                   <div style={{ fontSize: 32, marginBottom: 4 }}>{isOvertrading ? '🚨' : todayTrades.length >= 2 ? '⚡' : '✅'}</div>
-                  <div style={{ fontSize: 20, fontWeight: 700, color: isOvertrading ? T.accent.red : T.accent.green, fontFamily: "'JetBrains Mono', monospace" }}>{todayTrades.length}</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: isOvertrading ? T.state.warn : T.text.primary, fontFamily: "'JetBrains Mono', monospace" }}>{todayTrades.length}</div>
                   <div style={{ fontSize: 9, color: T.text.muted }}>{isRTL ? 'עסקאות היום' : 'trades today'}</div>
                 </>;
               })()}
@@ -869,8 +870,8 @@ const Index = () => {
           <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>{isRTL ? 'סיכון מול תוכנית' : 'Position Risk vs Plan'}</div>
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
             {trades.slice(-6).map(tr => (
-              <div key={tr.id} style={{ flex: '0 0 auto', padding: 10, background: T.bg.tertiary, borderRadius: T.radius.md, minWidth: 100, textAlign: 'center', border: `1px solid ${Math.abs(tr.riskPct - 1) > 0.5 ? T.accent.red : T.accent.green}20` }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: T.accent.cyan }}>{tr.coin}</div>
+              <div key={tr.id} style={{ flex: '0 0 auto', padding: 10, background: T.bg.tertiary, borderRadius: T.radius.md, minWidth: 100, textAlign: 'center', border: `1px solid ${Math.abs(tr.riskPct - 1) > 0.5 ? T.state.warn : T.border.medium}20` }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: infoColor(T) }}>{tr.coin}</div>
                 <div style={{ fontSize: 9, color: T.text.muted, marginTop: 2 }}>Plan: {tr.riskPct}% • Actual: {((tr.risk / (tr.balance - tr.pnl)) * 100).toFixed(1)}%</div>
                 <div style={{ height: 3, background: T.bg.surface, borderRadius: 2, marginTop: 4 }}>
                   <div style={{ height: '100%', width: `${Math.min(100, (tr.risk / (tr.balance - tr.pnl)) * 100 * 50)}%`, background: Math.abs(tr.riskPct - 1) > 0.5 ? T.accent.red : T.accent.green, borderRadius: 2 }} />
@@ -881,7 +882,7 @@ const Index = () => {
         </GlassCard>
         )}
         {isUltimateTier && <>
-          <ScoreGauge T={T} score={stats.orcaScore} label={isRTL ? 'ציון משמעת חי' : 'Live Discipline Score'} color={T.accent.cyan} />
+          <ScoreGauge T={T} score={stats.orcaScore} label={isRTL ? 'ציון משמעת חי' : 'Live Discipline Score'} color={infoColor(T)} />
         </>}
       </>
     );
@@ -916,9 +917,9 @@ const Index = () => {
     // RESEARCH MODE: quant lab
     return (
       <>
-        <div style={{ padding: '6px 12px', background: `${T.accent.purple}10`, border: `1px solid ${T.accent.purple}25`, borderRadius: T.radius.md, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ padding: '6px 12px', background: `${neutralRamp(T, 3)[1]}10`, border: `1px solid ${neutralRamp(T, 3)[1]}25`, borderRadius: T.radius.md, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 14 }}>🔬</span>
-          <span style={{ fontSize: 12, color: T.accent.purple, fontWeight: 600 }}>{isRTL ? 'מעבדת מחקר מתקדמת' : 'Advanced Research Lab'}</span>
+          <span style={{ fontSize: 12, color: neutralRamp(T, 3)[1], fontWeight: 600 }}>{isRTL ? 'מעבדת מחקר מתקדמת' : 'Advanced Research Lab'}</span>
           <span style={{ fontSize: 10, color: T.text.muted, marginInlineStart: 'auto' }}>{stats.totalTrades} {isRTL ? 'עסקאות' : 'trades'} | {isRTL ? 'עומק אלפא' : 'Alpha Depth'}: {isAlpha ? 'ON' : 'OFF'}</span>
         </div>
 
@@ -927,17 +928,17 @@ const Index = () => {
         {/* Key R-metrics row */}
         <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
           {[
-            { l: 'Expectancy (R)', v: `${stats.expectancyR >= 0 ? '+' : ''}${stats.expectancyR.toFixed(3)}R`, c: stats.expectancyR >= 0 ? T.accent.cyan : T.accent.red, u: 'R' },
-            { l: 'Vol-Adj Expectancy', v: stats.volatilityAdjustedExpectancy.toFixed(3), c: T.accent.blue, u: 'R/σ' },
-            { l: 'Kelly Optimal', v: `${stats.kellyOptimal.toFixed(1)}%`, c: stats.kellyOptimal > 0 ? T.accent.green : T.accent.red, u: '%' },
-            { l: 'Risk of Ruin', v: `${Math.min(99.9, stats.riskOfRuin).toFixed(1)}%`, c: stats.riskOfRuin < 10 ? T.accent.green : T.accent.red, u: '%' },
+            { l: 'Expectancy (R)', v: `${stats.expectancyR >= 0 ? '+' : ''}${stats.expectancyR.toFixed(3)}R`, c: stats.expectancyR >= 0 ? infoColor(T) : T.accent.red, u: 'R' },
+            { l: 'Vol-Adj Expectancy', v: stats.volatilityAdjustedExpectancy.toFixed(3), c: infoColor(T), u: 'R/σ' },
+            { l: 'Kelly Optimal', v: `${stats.kellyOptimal.toFixed(1)}%`, c: stats.kellyOptimal > 0 ? T.text.primary : T.state.warn, u: '%' },
+            { l: 'Risk of Ruin', v: `${Math.min(99.9, stats.riskOfRuin).toFixed(1)}%`, c: stats.riskOfRuin < 10 ? T.text.primary : T.accent.red, u: '%' },
             { l: 'Avg Win R', v: `+${stats.avgWinR.toFixed(2)}R`, c: T.accent.green, u: 'R' },
             { l: 'Avg Loss R', v: `-${stats.avgLossR.toFixed(2)}R`, c: T.accent.red, u: 'R' },
           ].map((m, i) => (
             <GlassCard T={T} key={i} className="orca-dashboard-stat-card" style={{ flex: isMobile ? '1 1 calc(50% - 5px)' : 1, minWidth: isMobile ? 0 : 130, width: isMobile ? 'auto' : undefined, padding: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}>
                 <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{m.l}</div>
-                <span style={{ fontSize: 7, padding: '1px 3px', borderRadius: 3, background: `${T.accent.purple}12`, color: T.accent.purple, fontWeight: 700 }}>{m.u}</span>
+                <span style={{ fontSize: 7, padding: '1px 3px', borderRadius: 3, background: `${neutralRamp(T, 3)[1]}12`, color: neutralRamp(T, 3)[1], fontWeight: 700 }}>{m.u}</span>
               </div>
               <PV><div style={{ fontSize: 18, fontWeight: 700, color: m.c, fontFamily: "'JetBrains Mono', monospace" }}>{m.v}</div></PV>
             </GlassCard>
@@ -948,34 +949,34 @@ const Index = () => {
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : (isAlpha ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)'), gap: 10, marginBottom: 14 }}>
             <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'התפלגות R-Multiple' : 'R-Multiple Distribution'} explanation={EXPLANATIONS.rDistribution} unit="R">
               <ResponsiveContainer width="100%" height={isAlpha ? 120 : 200}>
-                <BarChart data={stats.rDist}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 9 }} /><Tooltip contentStyle={tt} /><Bar dataKey="r" radius={[3,3,0,0]}>{stats.rDist.map((d, i) => <Cell key={i} fill={d.r >= 0 ? T.accent.cyan : T.accent.red} />)}</Bar></BarChart>
+                <BarChart data={stats.rDist}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="id" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 9 }} /><Tooltip contentStyle={tt} /><Bar dataKey="r" radius={[3,3,0,0]}>{stats.rDist.map((d, i) => <Cell key={i} fill={d.r >= 0 ? infoColor(T) : T.accent.red} />)}</Bar></BarChart>
               </ResponsiveContainer>
             </ChartWrapper>
 
           <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'שארפ מתגלגל' : 'Rolling Sharpe Ratio'} explanation={EXPLANATIONS.rollingSharpe} unit="R/σ">
             <ResponsiveContainer width="100%" height={isAlpha?120:200}>
-              <LineChart data={stats.rollingSharpe}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="tradeId" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 9 }} /><Tooltip contentStyle={tt} /><Line type="monotone" dataKey="sharpe" stroke={T.accent.blue} strokeWidth={2} dot={{ fill: T.accent.blue, r: 2 }} /><Line type="monotone" dataKey="sharpe" stroke="transparent" />{/* zero line */}</LineChart>
+              <LineChart data={stats.rollingSharpe}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="tradeId" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 9 }} /><Tooltip contentStyle={tt} /><Line type="monotone" dataKey="sharpe" stroke={infoColor(T)} strokeWidth={2} dot={{ fill: infoColor(T), r: 2 }} /><Line type="monotone" dataKey="sharpe" stroke="transparent" />{/* zero line */}</LineChart>
             </ResponsiveContainer>
           </ChartWrapper>
 
           <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'דעיכת יתרון' : 'Edge Decay Timeline'} explanation={EXPLANATIONS.edgeDecay} unit="R">
             <ResponsiveContainer width="100%" height={isAlpha?120:200}>
-              <BarChart data={stats.edgeDecay}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="period" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 9 }} /><Tooltip contentStyle={tt} /><Bar dataKey="expectancyR" radius={[4,4,0,0]}>{stats.edgeDecay.map((d, i) => <Cell key={i} fill={d.expectancyR >= 0 ? T.accent.cyan : T.accent.red} />)}</Bar></BarChart>
+              <BarChart data={stats.edgeDecay}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="period" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 9 }} /><Tooltip contentStyle={tt} /><Bar dataKey="expectancyR" radius={[4,4,0,0]}>{stats.edgeDecay.map((d, i) => <Cell key={i} fill={d.expectancyR >= 0 ? infoColor(T) : T.accent.red} />)}</Bar></BarChart>
             </ResponsiveContainer>
           </ChartWrapper>
 
           <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'אחוז הצלחה vs R:R' : 'Win Rate vs R:R Bucket'} explanation={EXPLANATIONS.winRateVsRR} unit="%">
             <ResponsiveContainer width="100%" height={isAlpha?120:200}>
-              <BarChart data={stats.winRateVsRR}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="rr" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 9 }} domain={[0, 100]} /><Tooltip contentStyle={tt} /><Bar dataKey="winRate" fill={T.accent.blue} radius={[4,4,0,0]} /><Bar dataKey="count" fill={`${T.accent.cyan}40`} radius={[4,4,0,0]} /></BarChart>
+              <BarChart data={stats.winRateVsRR}><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="rr" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 9 }} domain={[0, 100]} /><Tooltip contentStyle={tt} /><Bar dataKey="winRate" fill={infoColor(T)} radius={[4,4,0,0]} /><Bar dataKey="count" fill={`${infoColor(T)}40`} radius={[4,4,0,0]} /></BarChart>
             </ResponsiveContainer>
           </ChartWrapper>
 
           <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'תוחלת מתגלגלת (R)' : 'Rolling Expectancy (R)'} explanation={EXPLANATIONS.expectancy} unit="R">
             <ResponsiveContainer width="100%" height={isAlpha?120:200}>
               <AreaChart data={stats.rollingExpectancyR}>
-                <defs><linearGradient id="reGRes" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.55}/><stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.25}/></linearGradient></defs>
+                <defs><linearGradient id="reGRes" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={infoColor(T)} stopOpacity={0.55}/><stop offset="100%" stopColor={infoColor(T)} stopOpacity={0.25}/></linearGradient></defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} /><XAxis dataKey="tradeId" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis tick={{ fill: T.text.muted, fontSize: 9 }} />
-                <Tooltip contentStyle={tt} /><Area type="monotone" dataKey="expectancyR" stroke={T.accent.cyan} fill="url(#reGRes)" strokeWidth={2} />
+                <Tooltip contentStyle={tt} /><Area type="monotone" dataKey="expectancyR" stroke={infoColor(T)} fill="url(#reGRes)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
           </ChartWrapper>
@@ -1008,19 +1009,19 @@ const Index = () => {
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
             <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'סיכון/רוויה' : 'Risk of Ruin Curve'} explanation={EXPLANATIONS.riskOfRuin} unit="%">
               <div style={{ textAlign: 'center', padding: 20 }}>
-                <div style={{ fontSize: 42, fontWeight: 700, color: stats.riskOfRuin < 10 ? T.accent.green : stats.riskOfRuin < 30 ? T.accent.orange : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{Math.min(99.9, stats.riskOfRuin).toFixed(1)}%</div>
+                <div style={{ fontSize: 42, fontWeight: 700, color: stats.riskOfRuin < 10 ? T.text.primary : stats.riskOfRuin < 30 ? T.state.warn : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{Math.min(99.9, stats.riskOfRuin).toFixed(1)}%</div>
                 <div style={{ fontSize: 10, color: T.text.muted, marginTop: 4 }}>{stats.riskOfRuin < 10 ? '🟢 Low Risk' : stats.riskOfRuin < 30 ? '🟡 Moderate' : '🔴 High Risk'}</div>
               </div>
             </ChartWrapper>
             <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'אופטימום קלי' : 'Kelly Optimal Sizing'} explanation={EXPLANATIONS.kellyOptimal} unit="%">
               <div style={{ textAlign: 'center', padding: 20 }}>
-                <div style={{ fontSize: 42, fontWeight: 700, color: stats.kellyOptimal > 0 ? T.accent.cyan : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{stats.kellyOptimal.toFixed(1)}%</div>
+                <div style={{ fontSize: 42, fontWeight: 700, color: stats.kellyOptimal > 0 ? infoColor(T) : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{stats.kellyOptimal.toFixed(1)}%</div>
                 <div style={{ fontSize: 10, color: T.text.muted, marginTop: 4 }}>Half-Kelly: {(stats.kellyOptimal / 2).toFixed(1)}%</div>
               </div>
             </ChartWrapper>
             <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'יעילות הון' : 'Capital Efficiency'} explanation={EXPLANATIONS.volatilityAdjusted} unit="R/σ">
               <div style={{ textAlign: 'center', padding: 20 }}>
-                <div style={{ fontSize: 42, fontWeight: 700, color: stats.volatilityAdjustedExpectancy > 0.5 ? T.accent.cyan : T.accent.orange, fontFamily: "'JetBrains Mono', monospace" }}>{stats.volatilityAdjustedExpectancy.toFixed(2)}</div>
+                <div style={{ fontSize: 42, fontWeight: 700, color: stats.volatilityAdjustedExpectancy > 0.5 ? infoColor(T) : T.state.warn, fontFamily: "'JetBrains Mono', monospace" }}>{stats.volatilityAdjustedExpectancy.toFixed(2)}</div>
                 <div style={{ fontSize: 10, color: T.text.muted, marginTop: 4 }}>{stats.volatilityAdjustedExpectancy > 0.5 ? '🟢 Efficient' : '🟡 Suboptimal'}</div>
               </div>
             </ChartWrapper>
@@ -1047,14 +1048,14 @@ const Index = () => {
             <ResponsiveContainer width="100%" height={200}>
               <ScatterChart><CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
                 <XAxis dataKey="deviation" name="Deviation" tick={{ fill: T.text.muted, fontSize: 9 }} /><YAxis dataKey="returnR" name="R-Multiple" tick={{ fill: T.text.muted, fontSize: 9 }} /><ZAxis dataKey="risk" range={[40, 90]} />
-                <Tooltip contentStyle={tt} cursor={{ strokeDasharray: '3 3' }} /><ReferenceLine y={0} stroke={T.border.medium} strokeDasharray="2 2" /><Scatter data={trades.map(tr => ({ deviation: tr.deviation, returnR: getEffectiveR(tr), risk: tr.risk, coin: tr.coin }))} fill={T.accent.cyan} fillOpacity={0.85} stroke={T.bg.card} strokeWidth={1} />
+                <Tooltip contentStyle={tt} cursor={{ strokeDasharray: '3 3' }} /><ReferenceLine y={0} stroke={T.border.medium} strokeDasharray="2 2" /><Scatter data={trades.map(tr => ({ deviation: tr.deviation, returnR: getEffectiveR(tr), risk: tr.risk, coin: tr.coin }))} fill={infoColor(T)} fillOpacity={0.85} stroke={T.bg.card} strokeWidth={1} />
               </ScatterChart>
             </ResponsiveContainer>
           </ChartWrapper>
 
           {/* ═══ ALPHA QUANT LAB — slim-line advanced visualisations ═══ */}
-          <div style={{ fontSize: 9, color: T.accent.purple, textTransform: 'uppercase', letterSpacing: '0.18em', fontWeight: 700, margin: '20px 0 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ width: 22, height: 1, background: T.accent.purple, display: 'inline-block' }} />
+          <div style={{ fontSize: 9, color: neutralRamp(T, 3)[1], textTransform: 'uppercase', letterSpacing: '0.18em', fontWeight: 700, margin: '20px 0 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ width: 22, height: 1, background: neutralRamp(T, 3)[1], display: 'inline-block' }} />
             {isRTL ? 'מעבדת קוונט · גרפים דקיקים מתקדמים' : 'QUANT LAB · slim advanced visualisations'}
           </div>
           {(() => {
@@ -1121,7 +1122,7 @@ const Index = () => {
                       <YAxis tick={{ fill: T.text.muted, fontSize: 9 }} />
                       <Tooltip contentStyle={tt} />
                       <ReferenceLine y={0} stroke={T.border.medium} strokeDasharray="2 2" />
-                      <Line type="monotone" dataKey="sortino" stroke={T.accent.purple} strokeWidth={1.4} dot={false} />
+                      <Line type="monotone" dataKey="sortino" stroke={neutralRamp(T, 3)[1]} strokeWidth={1.4} dot={false} />
                     </LineChart>
                   </ResponsiveContainer>
                 </ChartWrapper>
@@ -1130,15 +1131,15 @@ const Index = () => {
                     <AreaChart data={mar}>
                       <defs>
                         <linearGradient id="marG" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.45} />
-                          <stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.04} />
+                          <stop offset="0%" stopColor={infoColor(T)} stopOpacity={0.45} />
+                          <stop offset="100%" stopColor={infoColor(T)} stopOpacity={0.04} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
                       <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 9 }} hide />
                       <YAxis tick={{ fill: T.text.muted, fontSize: 9 }} />
                       <Tooltip contentStyle={tt} />
-                      <Area type="monotone" dataKey="mar" stroke={T.accent.cyan} fill="url(#marG)" strokeWidth={1.4} />
+                      <Area type="monotone" dataKey="mar" stroke={infoColor(T)} fill="url(#marG)" strokeWidth={1.4} />
                     </AreaChart>
                   </ResponsiveContainer>
                 </ChartWrapper>
@@ -1164,7 +1165,7 @@ const Index = () => {
                       <Tooltip contentStyle={tt} cursor={{ strokeDasharray: '3 3' }} />
                       <ReferenceLine x={0} stroke={T.border.medium} strokeDasharray="2 2" />
                       <ReferenceLine y={0} stroke={T.border.medium} strokeDasharray="2 2" />
-                      <Scatter data={acData} fill={T.accent.purple} fillOpacity={0.7} />
+                      <Scatter data={acData} fill={neutralRamp(T, 3)[1]} fillOpacity={0.7} />
                     </ScatterChart>
                   </ResponsiveContainer>
                 </ChartWrapper>
@@ -1173,15 +1174,15 @@ const Index = () => {
                     <AreaChart data={interHrs}>
                       <defs>
                         <linearGradient id="ihG" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor={T.accent.orange} stopOpacity={0.5} />
-                          <stop offset="100%" stopColor={T.accent.orange} stopOpacity={0.04} />
+                          <stop offset="0%" stopColor={T.state.warn} stopOpacity={0.5} />
+                          <stop offset="100%" stopColor={T.state.warn} stopOpacity={0.04} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke={T.border.subtle} />
                       <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 9 }} hide />
                       <YAxis tick={{ fill: T.text.muted, fontSize: 9 }} />
                       <Tooltip contentStyle={tt} />
-                      <Area type="monotone" dataKey="hrs" stroke={T.accent.orange} fill="url(#ihG)" strokeWidth={1.2} />
+                      <Area type="monotone" dataKey="hrs" stroke={T.state.warn} fill="url(#ihG)" strokeWidth={1.2} />
                     </AreaChart>
                   </ResponsiveContainer>
                 </ChartWrapper>
@@ -1200,7 +1201,7 @@ const Index = () => {
                       <YAxis tick={{ fill: T.text.muted, fontSize: 9 }} />
                       <Tooltip contentStyle={tt} />
                       <ReferenceLine y={1} stroke={T.border.medium} strokeDasharray="2 2" />
-                      <Line type="monotone" dataKey="ratio" stroke={T.accent.green} strokeWidth={1.4} dot={false} />
+                      <Line type="monotone" dataKey="ratio" stroke={infoColor(T)} strokeWidth={1.4} dot={false} />
                     </LineChart>
                   </ResponsiveContainer>
                 </ChartWrapper>
@@ -1212,8 +1213,8 @@ const Index = () => {
         {/* ═══ ALPHA+REVIEW: Structured Performance Tables ═══ */}
         {isAlpha && (
           <div style={{ marginTop: 18, animation: 'fadeIn 0.3s ease' }}>
-            <div style={{ fontSize: 9, color: T.accent.orange, textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 700, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ width: 18, height: 1, background: T.accent.orange, display: 'inline-block' }} />
+            <div style={{ fontSize: 9, color: T.state.warn, textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 700, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ width: 18, height: 1, background: T.state.warn, display: 'inline-block' }} />
               {isRTL ? 'ניתוח מעמיק' : 'DEEP ANALYTICS'}
             </div>
 
@@ -1244,7 +1245,7 @@ const Index = () => {
                       });
                       return Object.entries(setupMap).sort((a, b) => b[1].totalR - a[1].totalR).slice(0, 8).map(([name, d]) => (
                         <tr key={name} style={{ borderBottom: `1px solid ${T.border.subtle}` }}>
-                          <td style={{ padding: '8px 12px', fontWeight: 600, color: T.accent.cyan }}>{name}</td>
+                          <td style={{ padding: '8px 12px', fontWeight: 600, color: infoColor(T) }}>{name}</td>
                           <td style={{ padding: '8px 12px', color: T.text.secondary }}>{d.trades}</td>
                           <td style={{ padding: '8px 12px', color: (d.wins / d.trades * 100) >= 50 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{(d.wins / d.trades * 100).toFixed(0)}%</td>
                           <td style={{ padding: '8px 12px', color: (d.totalR / d.trades) >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{(d.totalR / d.trades).toFixed(2)}R</td>
@@ -1326,7 +1327,7 @@ const Index = () => {
                         <td style={{ padding: '8px 12px', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: T.text.primary }}>{row.value}</td>
                         <td style={{ padding: '8px 12px', color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>{row.target}</td>
                         <td style={{ padding: '8px 12px' }}>
-                          <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 700, background: row.ok ? `${T.accent.green}15` : `${T.accent.red}15`, color: row.ok ? T.accent.green : T.accent.red }}>
+                          <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 700, background: row.ok ? `${infoColor(T)}15` : `${T.state.warn}15`, color: row.ok ? infoColor(T) : T.state.warn }}>
                             {row.ok ? '✓ On Track' : '⚠ Off Target'}
                           </span>
                         </td>
@@ -1358,9 +1359,9 @@ const Index = () => {
     const navBtn = (label: string, onClick: () => void, disabled: boolean) => (
       <button onClick={onClick} disabled={disabled} style={{
         padding: '6px 12px', minWidth: 38, fontSize: 11, fontWeight: 700,
-        background: disabled ? T.bg.tertiary : `${T.accent.cyan}14`,
-        border: `1px solid ${disabled ? T.border.subtle : T.accent.cyan}55`,
-        borderRadius: T.radius.md, color: disabled ? T.text.dim : T.accent.cyan,
+        background: disabled ? T.bg.tertiary : `${infoColor(T)}14`,
+        border: `1px solid ${disabled ? T.border.subtle : infoColor(T)}55`,
+        borderRadius: T.radius.md, color: disabled ? T.text.dim : infoColor(T),
         cursor: disabled ? 'not-allowed' : 'pointer', fontFamily: "'JetBrains Mono', monospace",
         transition: 'all .15s',
       }}>{label}</button>
@@ -1395,7 +1396,7 @@ const Index = () => {
                 onExportJson={handleExportJson}
               />
             )}
-            <button onClick={() => { setEditingTrade(null); setShowTradeForm(true); }} style={{ padding: '7px 18px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>+ {t.addTrade}</button>
+            <button onClick={() => { setEditingTrade(null); setShowTradeForm(true); }} style={{ padding: '7px 18px', background: `linear-gradient(135deg, ${infoColor(T)}, ${infoColor(T)})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>+ {t.addTrade}</button>
           </div>
         </div>
         {/* Mode-specific journal header */}
@@ -1446,7 +1447,7 @@ const Index = () => {
                     <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }}>{isLive ? (trades.length - idx) : (sortedDesc.length - (start + idx))}</td>
 
                     <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, whiteSpace: 'nowrap', fontSize: 11 }}>{new Date(tr.date).toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
-                    <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontWeight: 600, color: T.accent.cyan }}>{tr.coin}</td>
+                    <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontWeight: 600, color: infoColor(T) }}>{tr.coin}</td>
                     <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}` }}><TradingBadge color={tr.direction === 'Long' ? T.accent.green : T.accent.red}>{tr.direction === 'Long' ? '↑' : '↓'} {tr.direction}</TradingBadge></td>
                     <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }}>{tr.entry}</td>
                     <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: T.accent.red }}>{tr.stopLoss == null ? '—' : tr.stopLoss}</td>
@@ -1454,10 +1455,10 @@ const Index = () => {
                     {(() => { const h = tradeHeadline(tr); return (
                       <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: h.v >= 0 ? T.accent.green : T.accent.red }}><PV>{fmtHeadline(h.v, h.unit)}</PV></td>
                     ); })()}
-                    {opMode !== 'live' && <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}` }}><TradingBadge color={tr.winLoss === 'Win' ? T.accent.green : tr.winLoss === 'Loss' ? T.accent.red : T.accent.orange}>{tr.winLoss}</TradingBadge></td>}
+                    {opMode !== 'live' && <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}` }}><TradingBadge color={tr.winLoss === 'Win' ? T.accent.green : tr.winLoss === 'Loss' ? T.accent.red : T.state.warn}>{tr.winLoss}</TradingBadge></td>}
                     <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }}>{getEffectiveR(tr).toFixed(2)}R</td>
                     {isAlpha && <>
-                      <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: tr.deviation > 0.1 ? T.accent.red : T.accent.green }}>{tr.deviation.toFixed(3)}R</td>
+                      <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: tr.deviation > 0.1 ? T.state.warn : T.text.primary }}>{tr.deviation.toFixed(3)}R</td>
                       <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }}>{tr.leverage}x</td>
                     </>}
                     <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, color: T.text.muted, fontSize: 11, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tr.comments || '—'}</td>
@@ -1539,9 +1540,9 @@ const Index = () => {
           </div>
         )}
         {calRiskStatus.weeklyBreached && !calRiskStatus.monthlyBreached && (
-          <div style={{ padding: '8px 14px', background: `${T.accent.orange}12`, border: `1px solid ${T.accent.orange}30`, borderRadius: T.radius.md, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ padding: '8px 14px', background: `${T.state.warn}12`, border: `1px solid ${T.state.warn}30`, borderRadius: T.radius.md, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 16 }}>⚠️</span>
-            <div style={{ fontSize: 11, color: T.accent.orange }}>{isRTL ? `מגבלת הפסד שבועית הושגה: ${calRiskStatus.weeklyNegR.toFixed(1)}R` : `Weekly loss limit reached: ${calRiskStatus.weeklyNegR.toFixed(1)}R`}</div>
+            <div style={{ fontSize: 11, color: T.state.warn }}>{isRTL ? `מגבלת הפסד שבועית הושגה: ${calRiskStatus.weeklyNegR.toFixed(1)}R` : `Weekly loss limit reached: ${calRiskStatus.weeklyNegR.toFixed(1)}R`}</div>
           </div>
         )}
         <div style={{ display: 'flex', gap: isMobile ? 12 : 18, flexWrap: 'wrap', flexDirection: isMobile ? 'column' : 'row' }}>
@@ -1572,7 +1573,7 @@ const Index = () => {
                       onMouseEnter={() => d && setCalHoverDay(d)}
                       onMouseLeave={() => setCalHoverDay(null)}
                       onClick={() => dd && d && setCalModalDay(d)}
-                      style={{ minHeight: isMobile ? 48 : (isHovered && dd ? 95 : 68), borderRadius: T.radius.md, border: `1px solid ${isDarkRed ? `${T.accent.red}60` : dd ? (dd.pnl > 0 ? `${T.accent.green}${Math.round(40 + intensity * 40).toString(16)}` : dd.pnl < 0 ? `${T.accent.red}${Math.round(35 + intensity * 40).toString(16)}` : `${T.accent.orange}25`) : T.border.subtle}`, background: isDarkRed ? `${T.accent.red}20` : dd ? (dd.pnl > 0 ? `${T.accent.green}${Math.round(10 + intensity * 20).toString(16).padStart(2, '0')}` : dd.pnl < 0 ? `${T.accent.red}${Math.round(10 + intensity * 15).toString(16).padStart(2, '0')}` : `${T.accent.orange}10`) : 'transparent', padding: isMobile ? '3px 3px' : '5px 6px', transition: 'all 0.2s ease', cursor: dd ? 'pointer' : 'default', position: 'relative' }}>
+                      style={{ minHeight: isMobile ? 48 : (isHovered && dd ? 95 : 68), borderRadius: T.radius.md, border: `1px solid ${isDarkRed ? `${T.accent.red}60` : dd ? (dd.pnl > 0 ? `${T.accent.green}${Math.round(40 + intensity * 40).toString(16)}` : dd.pnl < 0 ? `${T.accent.red}${Math.round(35 + intensity * 40).toString(16)}` : `${T.state.warn}25`) : T.border.subtle}`, background: isDarkRed ? `${T.accent.red}20` : dd ? (dd.pnl > 0 ? `${T.accent.green}${Math.round(10 + intensity * 20).toString(16).padStart(2, '0')}` : dd.pnl < 0 ? `${T.accent.red}${Math.round(10 + intensity * 15).toString(16).padStart(2, '0')}` : `${T.state.warn}10`) : 'transparent', padding: isMobile ? '3px 3px' : '5px 6px', transition: 'all 0.2s ease', cursor: dd ? 'pointer' : 'default', position: 'relative' }}>
                       {d && <><div style={{ fontSize: 10, color: T.text.muted, display: 'flex', alignItems: 'center', gap: 3 }}>{d}{isDarkRed && <span title="Risk limit exceeded">⚠️</span>}</div>{dd && <><PV><div style={{ fontSize: 13, fontWeight: 700, color: isDarkRed ? T.accent.red : dd.pnl >= 0 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace", marginTop: 3 }}>{isR ? `${dd.pnl >= 0 ? '+' : ''}${dd.pnl.toFixed(1)}R` : `$${Math.abs(dd.pnl).toFixed(0)}`}</div></PV><div style={{ fontSize: 8, color: T.text.muted, marginTop: 1 }}>{dd.trades} {isRTL ? 'עס׳' : 'tr'} • {dd.wins}/{dd.trades}</div>
                         {isHovered && <div style={{ fontSize: 8, color: T.text.muted, marginTop: 2 }}>{dd.details.map(det => det.coin).join(', ')}</div>}
                       </>}</>}
@@ -1586,9 +1587,9 @@ const Index = () => {
               <GlassCard T={T} style={{ flex: 1, padding: 12, textAlign: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'center' }}>
                   <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase' }}>{t.monthlyEV}</div>
-                  <span style={{ fontSize: 7, padding: '1px 3px', borderRadius: 3, background: `${T.accent.purple}15`, color: T.accent.purple, fontWeight: 700 }}>R</span>
+                  <span style={{ fontSize: 7, padding: '1px 3px', borderRadius: 3, background: `${neutralRamp(T, 3)[1]}15`, color: neutralRamp(T, 3)[1], fontWeight: 700 }}>R</span>
                 </div>
-                <PV><div style={{ fontSize: 18, fontWeight: 700, color: monthStats.expectancyR >= 0 ? T.accent.cyan : T.accent.red, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>{monthStats.expectancyR >= 0 ? '+' : ''}{monthStats.expectancyR.toFixed(3)}R</div></PV>
+                <PV><div style={{ fontSize: 18, fontWeight: 700, color: monthStats.expectancyR >= 0 ? infoColor(T) : T.accent.red, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>{monthStats.expectancyR >= 0 ? '+' : ''}{monthStats.expectancyR.toFixed(3)}R</div></PV>
                 <div style={{ fontSize: 8, color: T.text.muted, marginTop: 2, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t.month[calMonth]} {calYear}</div>
               </GlassCard>
               <GlassCard T={T} style={{ flex: 1, padding: 12, textAlign: 'center' }}>
@@ -1612,8 +1613,8 @@ const Index = () => {
             <div style={{ marginTop: 14, fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
               {t.monthlyTotal} <span style={{ color: T.text.dim, fontWeight: 500 }}>· {t.month[calMonth]} {calYear}</span>
             </div>
-            <GlassCard T={T} glow={T.accent.cyanGlow}>
-              <PV><div style={{ fontSize: 22, fontWeight: 700, color: (isR ? monthStats.totalR : monthStats.totalPnl) >= 0 ? T.accent.cyan : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{isR ? `${monthStats.totalR >= 0 ? '+' : ''}${monthStats.totalR.toFixed(2)}R` : `$${monthStats.totalPnl.toFixed(2)}`}</div></PV>
+            <GlassCard T={T} glow={`${infoColor(T)}30`}>
+              <PV><div style={{ fontSize: 22, fontWeight: 700, color: (isR ? monthStats.totalR : monthStats.totalPnl) >= 0 ? infoColor(T) : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{isR ? `${monthStats.totalR >= 0 ? '+' : ''}${monthStats.totalR.toFixed(2)}R` : `$${monthStats.totalPnl.toFixed(2)}`}</div></PV>
               <div style={{ fontSize: 9, color: T.text.muted, marginTop: 3 }}>{monthStats.count} {isRTL ? 'עסקאות' : 'trades'} • {monthStats.winRate.toFixed(0)}% WR</div>
             </GlassCard>
           </div>
@@ -1642,7 +1643,7 @@ const Index = () => {
             ? 'מצב מתחיל מציג רק את העיקר. עבור ל-Standard או Alpha כדי לפתוח ניתוחים מתקדמים.'
             : 'Beginner mode keeps it minimal. Switch to Standard or Alpha to unlock advanced analytics.'}
         </p>
-        <div style={{ fontSize: 11, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>{isRTL ? 'הגדרות → מצב הפעלה' : 'Settings → Operating Mode'}</div>
+        <div style={{ fontSize: 11, color: infoColor(T), fontFamily: "'JetBrains Mono', monospace" }}>{isRTL ? 'הגדרות → מצב הפעלה' : 'Settings → Operating Mode'}</div>
       </div>
     );
   };
@@ -1791,8 +1792,8 @@ const Index = () => {
             }
             .mm-row:active { transform: scale(0.985); background: ${T.bg.tertiary || T.bg.secondary}; }
             .mm-row[data-active="true"] {
-              background: linear-gradient(${isRTL ? '270deg' : '90deg'}, ${T.accent.cyan}1c, ${T.accent.cyan}08 80%, transparent);
-              box-shadow: inset 0 0 0 1px ${T.accent.cyan}30;
+              background: linear-gradient(${isRTL ? '270deg' : '90deg'}, ${infoColor(T)}1c, ${infoColor(T)}08 80%, transparent);
+              box-shadow: inset 0 0 0 1px ${infoColor(T)}30;
             }
             .mm-icon {
               width: 36px; height: 36px; border-radius: 10px;
@@ -1803,13 +1804,13 @@ const Index = () => {
               color: ${T.text.secondary};
             }
             .mm-row[data-active="true"] .mm-icon {
-              background: linear-gradient(135deg, ${T.accent.cyan}28, ${T.accent.cyan}10);
-              border-color: ${T.accent.cyan}55;
-              color: ${T.accent.cyan};
-              box-shadow: 0 0 16px -4px ${T.accent.cyan}66;
+              background: linear-gradient(135deg, ${infoColor(T)}28, ${infoColor(T)}10);
+              border-color: ${infoColor(T)}55;
+              color: ${infoColor(T)};
+              box-shadow: 0 0 16px -4px ${infoColor(T)}66;
             }
             .mm-label { flex: 1; font-size: 15px; font-weight: 500; color: ${T.text.primary}; letter-spacing: 0.01em; min-width: 0; }
-            .mm-row[data-active="true"] .mm-label { color: ${T.accent.cyan}; font-weight: 700; }
+            .mm-row[data-active="true"] .mm-label { color: ${infoColor(T)}; font-weight: 700; }
             .mm-chev { color: ${T.text.muted}; opacity: 0.55; flex-shrink: 0; transform: ${isRTL ? 'scaleX(-1)' : 'none'}; }
             .mm-section-label {
               font-size: 10px; font-weight: 700; letter-spacing: 0.18em;
@@ -1846,11 +1847,11 @@ const Index = () => {
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 18px 14px', flexShrink: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 12, background: `linear-gradient(135deg, ${T.accent.cyan}22, ${T.accent.teal || T.accent.cyan}10)`, border: `1px solid ${T.accent.cyan}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 0 16px -4px ${T.accent.cyan}55` }}>
+                <div style={{ width: 36, height: 36, borderRadius: 12, background: `linear-gradient(135deg, ${infoColor(T)}22, ${infoColor(T) || infoColor(T)}10)`, border: `1px solid ${infoColor(T)}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 0 16px -4px ${infoColor(T)}55` }}>
                   {Ico.orca}
                 </div>
                 <div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace", lineHeight: 1 }}>ORCA</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: infoColor(T), fontFamily: "'JetBrains Mono', monospace", lineHeight: 1 }}>ORCA</div>
                   <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: 3 }}>Investment</div>
                 </div>
               </div>
@@ -1948,17 +1949,17 @@ const Index = () => {
                   style={{
                     display: 'flex', alignItems: 'center', gap: 12, width: '100%',
                     padding: '14px 16px', minHeight: 56,
-                    background: `linear-gradient(${isRTL ? '270deg' : '90deg'}, ${T.accent.cyan}22, ${T.accent.cyan}0a)`,
-                    border: `1px solid ${T.accent.cyan}55`,
+                    background: `linear-gradient(${isRTL ? '270deg' : '90deg'}, ${infoColor(T)}22, ${infoColor(T)}0a)`,
+                    border: `1px solid ${infoColor(T)}55`,
                     borderRadius: 16,
-                    color: T.accent.cyan, cursor: 'pointer',
+                    color: infoColor(T), cursor: 'pointer',
                     fontSize: 15, fontWeight: 700,
-                    boxShadow: `0 6px 22px -8px ${T.accent.cyan}66, inset 0 1px 0 rgba(255,255,255,0.04)`,
+                    boxShadow: `0 6px 22px -8px ${infoColor(T)}66, inset 0 1px 0 rgba(255,255,255,0.04)`,
                     textAlign: isRTL ? 'right' : 'left',
                     WebkitTapHighlightColor: 'transparent',
                   }}
                 >
-                  <span className="mm-icon" style={{ color: T.accent.cyan, borderColor: `${T.accent.cyan}55`, background: `${T.accent.cyan}18` }}>⚙</span>
+                  <span className="mm-icon" style={{ color: infoColor(T), borderColor: `${infoColor(T)}55`, background: `${infoColor(T)}18` }}>⚙</span>
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <span style={{ display: 'block', lineHeight: 1.2 }}>{isRTL ? 'הגדרות' : 'Settings'}</span>
                     <span style={{ display: 'block', fontSize: 10, color: T.text.muted, fontWeight: 400, marginTop: 3, letterSpacing: '0.04em' }}>
@@ -1994,7 +1995,7 @@ const Index = () => {
         <div style={{ padding: '18px 14px 6px', display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }} onClick={() => setShowFeatureModal(true)}>
             {Ico.orca}
-            {sbOpen && <div><div style={{ fontSize: 16, fontWeight: 700, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>ORCA</div><div style={{ fontSize: 8, color: T.text.muted, letterSpacing: '0.15em', textTransform: 'uppercase' }}>Investment</div></div>}
+            {sbOpen && <div><div style={{ fontSize: 16, fontWeight: 700, color: infoColor(T), fontFamily: "'JetBrains Mono', monospace" }}>ORCA</div><div style={{ fontSize: 8, color: T.text.muted, letterSpacing: '0.15em', textTransform: 'uppercase' }}>Investment</div></div>}
           </div>
           {sbOpen && <button onClick={() => setSbOpen(false)} style={{ marginInlineStart: 'auto', background: 'none', border: 'none', color: T.text.muted, cursor: 'pointer', fontSize: 14, padding: 4, lineHeight: 1, transition: 'color 0.2s' }}>‹</button>}
         </div>
@@ -2003,7 +2004,7 @@ const Index = () => {
         <nav style={{ flex: 1, padding: '0 6px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
           {nav.map(item => {
             const isWeekly = item.id === 'weekly-review';
-            const activeColor = isWeekly ? '#FFD700' : T.accent.cyan;
+            const activeColor = isWeekly ? '#FFD700' : infoColor(T);
             const showBadge = isWeekly && showWeeklyReminder;
             return (
             <button key={item.id} onClick={() => { if (item.action) { item.action(); return; } setPage(item.id); if (isWeekly) dismissWeeklyReminder(); }}
@@ -2052,20 +2053,20 @@ const Index = () => {
               title={isRTL ? 'תודעת הסוחר — אבחון התנהגותי' : 'Trader Mind — behavioral diagnostic'}
               onMouseEnter={e => {
                 e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = `0 0 26px -6px ${T.accent.purple ?? T.accent.cyan}cc, inset 0 0 0 1px ${T.accent.purple ?? T.accent.cyan}66`;
-                e.currentTarget.style.background = `linear-gradient(135deg, ${T.accent.purple ?? T.accent.cyan}22, ${T.accent.cyan}18)`;
+                e.currentTarget.style.boxShadow = `0 0 26px -6px ${neutralRamp(T, 3)[1] ?? infoColor(T)}cc, inset 0 0 0 1px ${neutralRamp(T, 3)[1] ?? infoColor(T)}66`;
+                e.currentTarget.style.background = `linear-gradient(135deg, ${neutralRamp(T, 3)[1] ?? infoColor(T)}22, ${infoColor(T)}18)`;
               }}
               onMouseLeave={e => {
                 e.currentTarget.style.transform = 'translateY(0)';
                 e.currentTarget.style.boxShadow = 'none';
-                e.currentTarget.style.background = `linear-gradient(135deg, ${T.accent.purple ?? T.accent.cyan}15, transparent)`;
+                e.currentTarget.style.background = `linear-gradient(135deg, ${neutralRamp(T, 3)[1] ?? infoColor(T)}15, transparent)`;
               }}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 12px', background: `linear-gradient(135deg, ${T.accent.purple ?? T.accent.cyan}15, transparent)`, border: `1px solid ${T.accent.purple ?? T.accent.cyan}40`, borderRadius: T.radius.md, color: T.accent.purple ?? T.accent.cyan, cursor: 'pointer', fontSize: 12, fontWeight: 700, letterSpacing: 0.3, transition: 'all 0.25s ease' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 12px', background: `linear-gradient(135deg, ${neutralRamp(T, 3)[1] ?? infoColor(T)}15, transparent)`, border: `1px solid ${neutralRamp(T, 3)[1] ?? infoColor(T)}40`, borderRadius: T.radius.md, color: neutralRamp(T, 3)[1] ?? infoColor(T), cursor: 'pointer', fontSize: 12, fontWeight: 700, letterSpacing: 0.3, transition: 'all 0.25s ease' }}
             >
-              <TraderMindIcon size={17} style={{ filter: `drop-shadow(0 0 6px ${T.accent.purple ?? T.accent.cyan}aa)`, flexShrink: 0 }} />
+              <TraderMindIcon size={17} style={{ filter: `drop-shadow(0 0 6px ${neutralRamp(T, 3)[1] ?? infoColor(T)}aa)`, flexShrink: 0 }} />
               <span>{isRTL ? 'תודעת הסוחר' : 'Trader Mind'}</span>
               {tmCalibrated ? (
-                <span style={{ marginInlineStart: 'auto', fontSize: 8, color: T.accent.cyan, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase' }}>
+                <span style={{ marginInlineStart: 'auto', fontSize: 8, color: infoColor(T), fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase' }}>
                   {tmArchetype?.slice(0, 18) ?? (isRTL ? 'הושלם' : 'Complete')}
                 </span>
               ) : (
@@ -2081,7 +2082,7 @@ const Index = () => {
             <button
               onClick={() => setShowTraderMind(true)}
               title="Trader Mind"
-              style={{ background: 'transparent', border: 'none', color: T.accent.purple ?? T.accent.cyan, cursor: 'pointer', fontSize: 16, position: 'relative' }}
+              style={{ background: 'transparent', border: 'none', color: neutralRamp(T, 3)[1] ?? infoColor(T), cursor: 'pointer', fontSize: 16, position: 'relative' }}
             >
               <TraderMindIcon size={18} />
               {!tmCalibrated && (
@@ -2094,14 +2095,14 @@ const Index = () => {
         {/* visual separation between the dimension portals and Settings */}
         <div aria-hidden style={{ height: 1, margin: '12px 12px 4px', background: `linear-gradient(90deg, transparent, ${T.border.subtle}, transparent)` }} />
         <div style={{ padding: 10, borderTop: `1px solid ${T.border.subtle}`, display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {sbOpen && <button onClick={() => setShowSettings(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '9px 10px', background: `${T.accent.cyan}10`, border: `1px solid ${T.accent.cyan}30`, borderRadius: T.radius.md, color: T.accent.cyan, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+          {sbOpen && <button onClick={() => setShowSettings(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '9px 10px', background: `${infoColor(T)}10`, border: `1px solid ${infoColor(T)}30`, borderRadius: T.radius.md, color: infoColor(T), cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
             <span style={{ fontSize: 14 }}>⚙️</span>
             <span>{isRTL ? 'הגדרות' : 'Settings'}</span>
             <span style={{ marginInlineStart: 'auto', fontSize: 8, color: T.text.muted, fontWeight: 400, opacity: 0.75 }}>
               {isRTL ? 'נושא · שפה · פרטיות' : 'Theme · Lang · Privacy'}
             </span>
           </button>}
-          {!sbOpen && <button onClick={() => setShowSettings(true)} title={isRTL ? 'הגדרות' : 'Settings'} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '9px 0', background: 'transparent', border: 'none', borderRadius: T.radius.md, color: T.accent.cyan, cursor: 'pointer', fontSize: 18 }}>
+          {!sbOpen && <button onClick={() => setShowSettings(true)} title={isRTL ? 'הגדרות' : 'Settings'} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '9px 0', background: 'transparent', border: 'none', borderRadius: T.radius.md, color: infoColor(T), cursor: 'pointer', fontSize: 18 }}>
             ⚙️
           </button>}
         </div>
@@ -2109,7 +2110,7 @@ const Index = () => {
       )}
 
       {/* MAIN */}
-      <MainPullToRefresh isMobile={isMobile} accent={T.accent.cyan}>
+      <MainPullToRefresh isMobile={isMobile} accent={infoColor(T)}>
         {/* Mobile: bottom-nav handles everything, so the top header is hidden entirely. */}
         {!isMobile && (
           <HeaderBar
@@ -2119,7 +2120,7 @@ const Index = () => {
             startSlot={
               <>
                 <PortfolioSwitcher isRTL={isRTL} compact />
-                {settings.privacyMode && <TradingBadge color={T.accent.orange}>🔒</TradingBadge>}
+                {settings.privacyMode && <TradingBadge color={T.state.warn}>🔒</TradingBadge>}
               </>
             }
             onImport={() => {
@@ -2215,8 +2216,8 @@ const Index = () => {
             <div style={{
               width: 64, height: 64, margin: '0 auto 14px',
               borderRadius: 20, display: 'grid', placeItems: 'center',
-              background: `linear-gradient(135deg, ${T.accent.cyan}22, ${T.accent.teal}12)`,
-              border: `1px solid ${T.accent.cyan}55`,
+              background: `linear-gradient(135deg, ${infoColor(T)}22, ${infoColor(T)}12)`,
+              border: `1px solid ${infoColor(T)}55`,
               fontSize: 30,
             }}>🧠</div>
 
@@ -2267,7 +2268,7 @@ const Index = () => {
               <button onClick={() => setShowImportWarning(false)} style={{ padding: '10px 20px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
                 {isRTL ? 'ביטול' : 'Cancel'}
               </button>
-              <button onClick={() => handleImportConfirmed()} style={{ padding: '10px 24px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 800, cursor: 'pointer', fontSize: 12, letterSpacing: '0.3px', boxShadow: `0 4px 14px ${T.accent.cyan}40` }}>
+              <button onClick={() => handleImportConfirmed()} style={{ padding: '10px 24px', background: `linear-gradient(135deg, ${infoColor(T)}, ${infoColor(T)})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 800, cursor: 'pointer', fontSize: 12, letterSpacing: '0.3px', boxShadow: `0 4px 14px ${infoColor(T)}40` }}>
                 {isRTL ? '📂 בחר קובץ' : '📂 Choose File'}
               </button>
             </div>

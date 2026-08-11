@@ -12,6 +12,7 @@ import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { TradingStats } from '@/lib/trading-analytics';
 import { checkRiskLimits, DEFAULT_RISK_LIMITS, type RiskLimits } from '@/lib/risk-limits';
+import { qualityColor, severityColor, infoColor, statusColor, neutralRamp, moneyColor } from '@/lib/semantic-color';
 
 interface Props {
   T: TradingTheme;
@@ -66,7 +67,7 @@ const LiveStateBarImpl = ({ T, isRTL, trades, stats, limits, compact = false }: 
   }, [trades, stats, L]);
 
   const color =
-    model.state === 'cool-off' ? T.accent.red : model.state === 'caution' ? T.accent.orange : T.accent.green;
+    model.state === 'cool-off' ? T.state.loss : model.state === 'caution' ? T.state.warn : infoColor(T);
   const icon = model.state === 'cool-off' ? '🛑' : model.state === 'caution' ? '⚠️' : '🟢';
   const label =
     model.state === 'cool-off'
@@ -79,22 +80,22 @@ const LiveStateBarImpl = ({ T, isRTL, trades, stats, limits, compact = false }: 
     {
       k: isRTL ? 'יומי' : 'Daily',
       v: `${model.status.dailyNegR.toFixed(2)}R / ${L.day}R`,
-      c: model.dailyPct >= 80 ? T.accent.red : model.dailyPct >= 50 ? T.accent.orange : T.text.secondary,
+      c: model.dailyPct >= 80 ? T.state.loss : model.dailyPct >= 50 ? T.state.warn : T.text.secondary,
     },
     {
       k: isRTL ? 'שבועי' : 'Weekly',
       v: `${model.status.weeklyNegR.toFixed(2)}R / ${L.week}R`,
-      c: model.weeklyPct >= 75 ? T.accent.orange : T.text.secondary,
+      c: model.weeklyPct >= 75 ? T.state.warn : T.text.secondary,
     },
     {
       k: isRTL ? 'משמעת' : 'Discipline',
       v: `${model.discipline.toFixed(0)}%`,
-      c: model.discipline >= 75 ? T.accent.green : model.discipline >= 50 ? T.accent.orange : T.accent.red,
+      c: model.discipline >= 70 ? T.text.primary : model.discipline >= 50 ? T.state.warn : T.state.loss,
     },
     {
       k: isRTL ? 'טילט' : 'Tilt',
       v: `${model.tilt.toFixed(0)}/100`,
-      c: model.tilt >= 60 ? T.accent.red : model.tilt >= 30 ? T.accent.orange : T.accent.green,
+      c: model.tilt >= 60 ? T.state.loss : model.tilt >= 30 ? T.state.warn : T.text.primary,
     },
   ];
 
@@ -147,7 +148,7 @@ const LiveStateBarImpl = ({ T, isRTL, trades, stats, limits, compact = false }: 
             style={{
               position: 'absolute', insetInlineStart: 0, top: 0, bottom: 0,
               width: `${model.severity}%`,
-              background: `linear-gradient(${isRTL ? '270deg' : '90deg'}, ${T.accent.green}, ${T.accent.orange}, ${T.accent.red})`,
+              background: `linear-gradient(${isRTL ? '270deg' : '90deg'}, ${infoColor(T)}, ${T.state.warn}, ${T.state.loss})`,
               transition: 'width .6s cubic-bezier(0.16,1,0.3,1)',
             }}
           />

@@ -4,7 +4,7 @@ import { lazy, Suspense, useMemo, useState, type CSSProperties } from 'react';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { Trade } from '@/data/trades';
 import { MetricCard, ScoreGauge } from '@/components/trading/TradingUI';
-import { SCORE_THRESHOLDS, gaugeColor, scoreGlyph, isAlert, scoreColor, severityColor, moneyColor } from '@/lib/semantic-color';
+import { SCORE_THRESHOLDS, gaugeColor, scoreGlyph, isAlert, scoreColor, severityColor, moneyColor, infoColor, neutralRamp } from '@/lib/semantic-color';
 import { AdaptiveExpectancyCard, AdaptiveQuickStats } from '@/components/trading/AdaptiveKpiCards';
 import { ChartWrapper, EXPLANATIONS, type ChartExplanation } from '@/components/trading/ChartWrapper';
 import { FeatureHint } from '@/components/trading/FeatureHint';
@@ -161,7 +161,7 @@ export const ReviewDashboard = ({
 
       {/* ═══ LAYER 1 — CORE TRADING HEALTH ═══ */}
       <div className="dash-section">
-        <div className="dash-section-label" style={{ color: T.accent.cyan }}>
+        <div className="dash-section-label" style={{ color: infoColor(T) }}>
 
           {isRTL ? 'בריאות מסחר' : 'TRADING HEALTH'}
         </div>
@@ -192,7 +192,7 @@ export const ReviewDashboard = ({
 
       {/* ═══ LAYER 2 — EDGE & SYSTEM HEALTH ═══ */}
       <div className="dash-section">
-        <div className="dash-section-label" style={{ color: T.accent.purple }}>
+        <div className="dash-section-label" style={{ color: neutralRamp(T, 3)[1] }}>
           {isRTL ? 'בריאות מערכת' : 'SYSTEM HEALTH'}
         </div>
         <div className="dash-score-grid">
@@ -250,7 +250,7 @@ export const ReviewDashboard = ({
                       const pts = equityAdvanced.points as any[];
                       const maxAbsDelta = Math.max(0.01, ...pts.map((p: any) => Math.abs(Number(p.delta) || 0)));
                       const barDomain: [number, number] = [-maxAbsDelta * 1.15, maxAbsDelta * 7];
-                      const EQ = T.accent.purple || T.accent.cyan;
+                      const EQ = neutralRamp(T, 3)[1] || infoColor(T);
                       return (
                         <>
                           {/* ── Panel A · equity + trade histogram ── */}
@@ -298,7 +298,7 @@ export const ReviewDashboard = ({
                     <div className="dash-eq-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8, marginTop: 10 }}>
                       {[
                         { l: isRTL ? 'נוכחי' : 'Current', v: equityAdvanced.last, c: equityAdvanced.last >= 0 ? T.accent.green : T.accent.red },
-                        { l: isRTL ? 'שיא' : 'Peak', v: equityAdvanced.best, c: T.accent.cyan },
+                        { l: isRTL ? 'שיא' : 'Peak', v: equityAdvanced.best, c: infoColor(T) },
                         { l: isRTL ? 'DD גרוע' : 'Worst DD', v: equityAdvanced.worstDd, c: T.accent.red, pct: true },
                       ].map((m, i) => <div key={i} style={{ padding: '7px 9px', borderRadius: 8, background: T.bg.tertiary, border: `1px solid ${T.border.subtle}` }}><div style={{ fontSize: 9, color: T.text.muted }}>{m.l}</div><div style={{ fontSize: 12, fontWeight: 800, color: m.c, fontFamily: "'JetBrains Mono', monospace" }}>{m.pct ? `${m.v.toFixed(1)}%` : fmtDashValue(m.v, isMoney)}</div></div>)}
                     </div>
@@ -330,7 +330,7 @@ export const ReviewDashboard = ({
                           <PolarGrid stroke={T.border.medium} />
                           <PolarAngleAxis dataKey="m" tick={{ fill: T.text.secondary, fontSize: 11 }} />
                           <PolarRadiusAxis tick={false} domain={[0, 100]} axisLine={false} />
-                          <Radar dataKey="v" stroke={T.accent.cyan} fill={T.accent.cyan} fillOpacity={0.55} strokeWidth={2.5} dot={{ r: 3, fill: T.accent.cyan, stroke: T.bg.card, strokeWidth: 1 }} />
+                          <Radar dataKey="v" stroke={infoColor(T)} fill={infoColor(T)} fillOpacity={0.55} strokeWidth={2.5} dot={{ r: 3, fill: infoColor(T), stroke: T.bg.card, strokeWidth: 1 }} />
                         </RadarChart>
                       </ResponsiveContainer>
                     </div>
@@ -532,7 +532,7 @@ export const ReviewDashboard = ({
                                 ? `${positive ? '+' : ''}$${Math.abs(mp.pnl).toFixed(mp.pnl >= 100 || mp.pnl <= -100 ? 0 : 2)}`
                                 : `${positive ? '+' : ''}${totalR.toFixed(2)}R`}
                             </span>
-                            <span style={{ fontSize: 9.5, color: T.accent.purple, fontFamily: "'JetBrains Mono', monospace" }}>
+                            <span style={{ fontSize: 9.5, color: neutralRamp(T, 3)[1], fontFamily: "'JetBrains Mono', monospace" }}>
                               {mp.expectancyR >= 0 ? '+' : ''}{mp.expectancyR.toFixed(2)}R/tr
                             </span>
                           </div>

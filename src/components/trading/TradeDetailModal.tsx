@@ -4,6 +4,7 @@ import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { getEffectiveR } from '@/lib/r-multiple';
 import { useVisualPrefs, glowAlpha } from '@/lib/visual-prefs';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 const TradeChartPanel = lazy(() => import('./chart/TradeChartPanel'));
 const TradeMiniChart = lazy(() => import('./chart/TradeMiniChart'));
@@ -60,8 +61,8 @@ export function TradeDetailModal({
   const r = getEffectiveR(trade);
   const isLong = trade.direction === 'Long';
   const sideColor = isLong ? T.accent.green : T.accent.red;
-  const outcomeColor = headline.v > 0 ? T.accent.green : headline.v < 0 ? T.accent.red : T.accent.orange;
-  const resultColor = trade.winLoss === 'Win' ? T.accent.green : trade.winLoss === 'Loss' ? T.accent.red : T.accent.orange;
+  const outcomeColor = headline.v > 0 ? T.accent.green : headline.v < 0 ? T.accent.red : T.state.warn;
+  const resultColor = trade.winLoss === 'Win' ? T.accent.green : trade.winLoss === 'Loss' ? T.accent.red : T.state.warn;
   const dir = isRTL ? 'rtl' : 'ltr';
 
   const g = (hex: string, a: number) => glowAlpha(hex, a, glow);
@@ -103,7 +104,7 @@ export function TradeDetailModal({
   const markers = (() => {
     const base = [
       { p: trade.stopLoss, label: isRTL ? 'סטופ' : 'Stop', c: T.accent.red },
-      { p: trade.entry, label: isRTL ? 'כניסה' : 'Entry', c: T.accent.cyan },
+      { p: trade.entry, label: isRTL ? 'כניסה' : 'Entry', c: infoColor(T) },
       { p: trade.exit, label: isRTL ? 'יציאה' : 'Exit', c: outcomeColor },
     ].filter(m => m.p != null && Number.isFinite(m.p as number)) as Array<{ p: number; label: string; c: string }>;
 
@@ -313,7 +314,7 @@ export function TradeDetailModal({
                       transition={reducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 380, damping: 32 }}
                       style={{
                         position: 'absolute', insetInline: 8, bottom: -1, height: 2, borderRadius: 999,
-                        background: `linear-gradient(90deg, ${T.accent.blue}, ${T.accent.cyan})`,
+                        background: `linear-gradient(90deg, ${infoColor(T)}, ${infoColor(T)})`,
                       }}
                     />
                   )}
@@ -353,7 +354,7 @@ export function TradeDetailModal({
                 <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <span aria-hidden style={{
                     position: 'absolute', insetInlineStart: 5, top: 10, bottom: 10, width: 2, borderRadius: 999,
-                    background: `linear-gradient(180deg, ${g(T.accent.cyan, 0.5)}, ${T.border.medium})`,
+                    background: `linear-gradient(180deg, ${g(infoColor(T), 0.5)}, ${T.border.medium})`,
                   }} />
                   {[...markers].sort((a, b) => b.p - a.p).map((m, i) => {
                     const distR = trade.stopLoss != null && trade.stopLoss !== trade.entry
@@ -389,11 +390,11 @@ export function TradeDetailModal({
 
               {/* stat tiles */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 11 }}>
-                <Tile label={t.entry} value={trade.entry} accentBar={T.accent.cyan} />
+                <Tile label={t.entry} value={trade.entry} accentBar={infoColor(T)} />
                 <Tile label={t.stopLoss} value={trade.stopLoss == null ? '—' : trade.stopLoss} color={T.accent.red} accentBar={T.accent.red} />
                 <Tile label={t.exit} value={trade.exit} accentBar={outcomeColor} />
                 <Tile label={`${t.riskR} (R)`} value={`${r.toFixed(2)}R`} color={outcomeColor} />
-                <Tile label={t.deviation} value={trade.deviation ? `${trade.deviation.toFixed(4)}R` : '0'} color={trade.deviation > 0 ? T.accent.orange : T.accent.green} />
+                <Tile label={t.deviation} value={trade.deviation ? `${trade.deviation.toFixed(4)}R` : '0'} color={trade.deviation > 0 ? T.state.warn : T.text.primary} />
                 <Tile label={t.leverage} value={`${trade.leverage}x`} />
                 <Tile label={`${t.balance} ($)`} value={`$${trade.balance.toFixed(2)}`} />
                 <Tile label={isRTL ? 'סטטוס' : 'Result'} value={trade.winLoss} color={resultColor} accentBar={resultColor} />
@@ -515,7 +516,7 @@ export function TradeDetailModal({
                       className="orca-focus"
                       style={{
                         padding: '5px 12px', borderRadius: 999, fontSize: 10.5, fontWeight: 800, cursor: 'pointer',
-                        border: `1px solid ${g(T.accent.cyan, 0.4)}`, background: g(T.accent.cyan, 0.12), color: T.accent.cyan,
+                        border: `1px solid ${g(infoColor(T), 0.4)}`, background: g(infoColor(T), 0.12), color: infoColor(T),
                       }}
                     >{isRTL ? 'ערוך הערות' : 'Edit notes'}</button>
                   )}
@@ -561,7 +562,7 @@ export function TradeDetailModal({
                         style={{
                           padding: '8px 16px', borderRadius: T.radius.md, fontSize: 11.5, fontWeight: 800,
                           cursor: noteSaving ? 'wait' : 'pointer', opacity: noteSaving ? 0.7 : 1,
-                          border: `1px solid ${g(T.accent.cyan, 0.5)}`, background: g(T.accent.cyan, 0.18), color: T.accent.cyan,
+                          border: `1px solid ${g(infoColor(T), 0.5)}`, background: g(infoColor(T), 0.18), color: infoColor(T),
                         }}
                       >{noteSaving ? (isRTL ? 'שומר…' : 'Saving…') : (isRTL ? 'שמור הערות' : 'Save notes')}</button>
                     </div>
@@ -584,9 +585,9 @@ export function TradeDetailModal({
               }}>{t.deleteTrade}</button>
               <button onClick={onEdit} className="orca-focus" style={{
                 flex: isMobile ? 1.4 : 0.35, padding: isMobile ? '14px 16px' : '12px 18px',
-                background: `linear-gradient(135deg, ${T.accent.blue}, ${T.accent.cyan})`, border: 'none', borderRadius: T.radius.md,
+                background: `linear-gradient(135deg, ${infoColor(T)}, ${infoColor(T)})`, border: 'none', borderRadius: T.radius.md,
                 color: T.bg.primary, cursor: 'pointer', fontSize: 12.5, fontWeight: 900,
-                boxShadow: highContrast ? 'none' : `0 8px 22px -10px ${g(T.accent.cyan, 0.9)}`,
+                boxShadow: highContrast ? 'none' : `0 8px 22px -10px ${g(infoColor(T), 0.9)}`,
                 transition: reducedMotion ? 'none' : 'all .18s ease',
               }}>{t.editTrade}</button>
             </div>

@@ -23,6 +23,7 @@ import {
 import { YearView } from '@/components/calendar/views/YearView';
 import { SessionToggles, SessionMarker, ALL_SESSIONS_ON, type SessionFilter } from '@/components/calendar/SessionUI';
 import { buildMonthSessionMap } from '@/lib/market-sessions';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 type Props = {
   T: any; isRTL: boolean; trades: Trade[];
@@ -63,9 +64,9 @@ function ZoomToggle({ T }: { T: any }) {
           padding: '4px 10px',
           fontFamily: "'JetBrains Mono', monospace",
           '&.Mui-selected': {
-            color: T.accent.cyan,
-            background: `${T.accent.cyan}18`,
-            borderColor: `${T.accent.cyan}50`,
+            color: infoColor(T),
+            background: `${infoColor(T)}18`,
+            borderColor: `${infoColor(T)}50`,
           },
         },
       }}
@@ -202,9 +203,9 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
       <div ref={containerRef} style={{ direction: isRTL ? 'rtl' : 'ltr', padding: '4px 2px 24px', touchAction: 'pan-y' }}>
         {/* Mobile header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 6px 10px' }}>
-          <button onClick={navPrev} style={{ background: 'transparent', border: 'none', color: T.accent.cyan, fontSize: 22, cursor: 'pointer' }}>{isRTL ? '›' : '‹'}</button>
+          <button onClick={navPrev} style={{ background: 'transparent', border: 'none', color: infoColor(T), fontSize: 22, cursor: 'pointer' }}>{isRTL ? '›' : '‹'}</button>
           <button onClick={() => setFocusedDate(new Date())} style={{ background: 'transparent', border: 'none', color: T.text.primary, fontSize: 18, fontWeight: 700, cursor: 'pointer' }}>{headerTitle}</button>
-          <button onClick={navNext} style={{ background: 'transparent', border: 'none', color: T.accent.cyan, fontSize: 22, cursor: 'pointer' }}>{isRTL ? '‹' : '›'}</button>
+          <button onClick={navNext} style={{ background: 'transparent', border: 'none', color: infoColor(T), fontSize: 22, cursor: 'pointer' }}>{isRTL ? '‹' : '›'}</button>
         </div>
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
           <ZoomToggle T={T} />
@@ -232,7 +233,7 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
                     const dd = d ? calDayPnl[d] : null;
                     const isToday = isCurrentMonth && d === todayN;
                     const ddLead = dd ? (isR && dd.rValid > 0 ? dd.rTotal : dd.pnl) : 0;
-                    const dotColor = dd ? (ddLead > 0 ? T.accent.green : ddLead < 0 ? T.accent.red : T.accent.orange) : null;
+                    const dotColor = dd ? (ddLead > 0 ? T.accent.green : ddLead < 0 ? T.accent.red : T.state.warn) : null;
                     const macros = d ? macroByDay.get(d) ?? [] : [];
                     const dayPast = !!d && new Date(calYear, calMonth, d) < new Date(now.getFullYear(), now.getMonth(), now.getDate());
                     const hasContent = !!dd || macros.length > 0;
@@ -240,7 +241,7 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
                       <button key={i} disabled={!d} onClick={() => { if (hasContent && d) setCalModalDay(d); }}
                         style={{ aspectRatio: '1', border: 'none', background: 'transparent', cursor: hasContent ? 'pointer' : 'default', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, padding: 0, position: 'relative' }}>
                         {d && (<>
-                          <span style={{ width: 30, height: 30, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: isToday ? 700 : 500, color: isToday ? '#001023' : T.text.primary, background: isToday ? T.accent.cyan : 'transparent' }}>{d}</span>
+                          <span style={{ width: 30, height: 30, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: isToday ? 700 : 500, color: isToday ? '#001023' : T.text.primary, background: isToday ? infoColor(T) : 'transparent' }}>{d}</span>
                           {dotColor && <span style={{ position: 'absolute', bottom: 9, width: 5, height: 5, borderRadius: '50%', background: dotColor }} />}
                           <span style={{ position: 'absolute', bottom: 2, left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
                             <SessionMarker stat={d ? sessionByDay.get(d) : undefined} filter={sessionFilter} size={3} />
@@ -299,7 +300,7 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
                   const useR = isR && monthStats.rValid > 0;
                   const lead = useR ? monthStats.totalR : monthStats.totalPnl;
                   const leadStr = useR ? `${lead >= 0 ? '+' : ''}${lead.toFixed(1)}R` : `${lead < 0 ? '-' : ''}$${Math.abs(lead).toFixed(2)}`;
-                  return <div style={{ fontSize: 22, fontWeight: 700, color: lead >= 0 ? T.accent.cyan : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{leadStr}</div>;
+                  return <div style={{ fontSize: 22, fontWeight: 700, color: lead >= 0 ? infoColor(T) : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{leadStr}</div>;
                 })()}
               </div>
               <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
@@ -308,7 +309,7 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
               </div>
               <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
                 <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase' }}>{isRTL ? 'אחוז זכייה' : 'Win Rate'}</div>
-                <div style={{ fontSize: 22, fontWeight: 700, color: monthStats.winRate >= 50 ? T.accent.green : T.accent.orange, fontFamily: "'JetBrains Mono', monospace" }}>{monthStats.winRate.toFixed(1)}%</div>
+                <div style={{ fontSize: 22, fontWeight: 700, color: monthStats.winRate >= 50 ? T.accent.green : T.state.warn, fontFamily: "'JetBrains Mono', monospace" }}>{monthStats.winRate.toFixed(1)}%</div>
               </div>
             </>
           )}

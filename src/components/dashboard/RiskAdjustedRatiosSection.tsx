@@ -7,6 +7,7 @@ import {
   computeSharpe, computeSortino, computeOmega, computeMaxDrawdownAbs,
   dailySeries, formatRatio,
 } from '@/lib/risk/quality-metrics';
+import { qualityColor, severityColor, infoColor, statusColor, neutralRamp, moneyColor } from '@/lib/semantic-color';
 
 interface Props {
   T: TradingTheme;
@@ -170,7 +171,7 @@ export const RiskAdjustedRatiosSection = ({ T, isRTL, trades: all }: Props) => {
     {
       label: isRTL ? 'נסיגה מקס' : 'Max DD',
       value: ddText,
-      color: T.accent.red,
+      color: T.state.loss,
       sub: isRTL ? `נסיגה גדולה ביותר ב-${unit}` : `Largest equity dip (${unit})`,
       long: isRTL ? 'מהשיא להלן' : 'Peak-to-trough',
       spark: ddSpark, baseline: 0, fillSpark: true,
@@ -202,7 +203,7 @@ export const RiskAdjustedRatiosSection = ({ T, isRTL, trades: all }: Props) => {
           const first = m.spark[0]?.v;
           const last = m.spark[m.spark.length - 1]?.v;
           const delta = (first != null && last != null) ? (last - first) : null;
-          const deltaColor = delta == null ? T.text.muted : delta >= 0 ? T.accent.green : T.accent.red;
+          const deltaColor = delta == null ? T.text.muted : moneyColor(T, delta);
           const deltaArrow = delta == null ? '·' : delta >= 0 ? '▲' : '▼';
 
           return (
@@ -260,8 +261,7 @@ export const RiskAdjustedRatiosSection = ({ T, isRTL, trades: all }: Props) => {
 
 function ratioColor(v: number | null, T: TradingTheme, [bad, ok, great]: number[]): string {
   if (v == null || !Number.isFinite(v)) return T.text.muted;
-  if (v >= great) return T.accent.green;
-  if (v >= ok) return T.accent.cyan;
-  if (v >= bad) return T.accent.orange;
-  return T.accent.red;
+  if (v >= ok) return T.text.primary;
+  if (v >= bad) return T.state.warn;
+  return T.state.loss;
 }

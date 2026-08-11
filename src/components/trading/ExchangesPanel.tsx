@@ -12,6 +12,7 @@ import { BrokerRegistry } from '@/lib/brokers';
 import type { BrokerMeta } from '@/lib/brokers/types';
 import { useBrokerAccounts } from '@/hooks/use-broker-accounts';
 import { orcaConfirm } from '@/lib/orca-confirm';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 type ProviderId = string;
 
@@ -204,7 +205,7 @@ export function ExchangesPanel({ T, isRTL }: Props) {
         backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
       }}>
         <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.6, color: T.text.muted, fontFamily: sans, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Plug size={13} color={T.accent.cyan} style={{ flexShrink: 0 }} />
+          <Plug size={13} color={infoColor(T)} style={{ flexShrink: 0 }} />
           {t(
             'חבר בורסות וברוקרים כדי לסנכרן עסקאות אוטומטית. כל המפתחות מאוחסנים בכספת מוצפנת בצד השרת — לעולם לא בדפדפן.',
             'Connect exchanges and brokers to sync trades automatically. All keys live in a server-side encrypted vault — never in your browser.'

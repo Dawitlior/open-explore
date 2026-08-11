@@ -11,6 +11,7 @@ import type { TradingTheme } from '@/lib/trading-theme';
 import type { TradingStats } from '@/lib/trading-analytics';
 import { GlassCard } from './TradingUI';
 import { useVisibleTrades } from '@/lib/display-mode-format';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 interface ExpectancyProps {
   T: TradingTheme;
@@ -36,7 +37,7 @@ export const AdaptiveExpectancyCard = ({
 
   const valueColor = isMoney
     ? (avgPnl >= 0 ? T.accent.green : T.accent.red)
-    : (stats.expectancyR >= 0 ? T.accent.cyan : T.accent.red);
+    : (stats.expectancyR >= 0 ? infoColor(T) : T.accent.red);
 
   const valueStr = isMoney
     ? fmtVal(avgPnl)
@@ -44,7 +45,7 @@ export const AdaptiveExpectancyCard = ({
 
   const label = isMoney ? labels.avgPnl : labels.expectancy;
   const tag = isMoney ? '$' : 'R';
-  const tagColor = isMoney ? T.accent.green : T.accent.purple;
+  const tagColor = isMoney ? T.accent.green : neutralRamp(T, 3)[1];
   const sub = isMoney ? labels.tooltipMoney : labels.tooltipR;
 
   const PV = ({ children }: { children: React.ReactNode }) => (
@@ -52,7 +53,7 @@ export const AdaptiveExpectancyCard = ({
   );
 
   return (
-    <GlassCard T={T} glow={T.accent.cyanGlow} className="orca-metric-card orca-adaptive-expectancy-card" style={{ flex: 1, minWidth: isMobile ? 0 : 170, width: isMobile ? '100%' : undefined }}>
+    <GlassCard T={T} glow={`${infoColor(T)}30`} className="orca-metric-card orca-adaptive-expectancy-card" style={{ flex: 1, minWidth: isMobile ? 0 : 170, width: isMobile ? '100%' : undefined }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</div>
@@ -120,16 +121,16 @@ export const AdaptiveQuickStats = ({
   const rows = isMoney ? [
     { l: `${labels.avgWin} ($)`, v: fmtVal(money.avgWin), c: T.accent.green },
     { l: `${labels.avgLoss} ($)`, v: fmtVal(-money.avgLoss), c: T.accent.red },
-    { l: labels.bestTrade, v: fmtVal(money.best), c: T.accent.cyan },
+    { l: labels.bestTrade, v: fmtVal(money.best), c: infoColor(T) },
     { l: labels.worstTrade, v: fmtVal(money.worst), c: T.accent.red },
-    { l: labels.profitFactor, v: isFinite(stats.profitFactor) ? `${stats.profitFactor.toFixed(2)}x` : '∞', c: T.accent.blue },
+    { l: labels.profitFactor, v: isFinite(stats.profitFactor) ? `${stats.profitFactor.toFixed(2)}x` : '∞', c: infoColor(T) },
     { l: labels.currentStreak, v: streakDisplay, c: streakColor },
   ] : [
     { l: `${labels.avgWin} (R)`, v: `+${stats.avgWinR.toFixed(2)}R`, c: T.accent.green },
     { l: `${labels.avgLoss} (R)`, v: `-${stats.avgLossR.toFixed(2)}R`, c: T.accent.red },
-    { l: labels.bestTrade, v: `+${stats.bestTradeR.toFixed(2)}R`, c: T.accent.cyan },
+    { l: labels.bestTrade, v: `+${stats.bestTradeR.toFixed(2)}R`, c: infoColor(T) },
     { l: labels.worstTrade, v: `${stats.worstTradeR.toFixed(2)}R`, c: T.accent.red },
-    { l: labels.profitFactor, v: isFinite(stats.profitFactorR) ? `${stats.profitFactorR.toFixed(2)}x` : '∞', c: T.accent.blue },
+    { l: labels.profitFactor, v: isFinite(stats.profitFactorR) ? `${stats.profitFactorR.toFixed(2)}x` : '∞', c: infoColor(T) },
     { l: labels.currentStreak, v: streakDisplay, c: streakColor },
   ];
 

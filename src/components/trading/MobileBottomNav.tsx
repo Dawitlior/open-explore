@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { haptics } from '@/lib/haptics';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 /* ─────────────────────────────────────────────────────────────────────────
    MobileBottomNav v2 — floating capsule pill, native-grade polish.
@@ -135,8 +136,8 @@ export const MobileBottomNav = ({
 
   if (!mounted) return null;
 
-  const accent = T.accent.cyan;
-  const accent2 = T.accent.teal || T.accent.cyan;
+  const accent = infoColor(T);
+  const accent2 = infoColor(T) || infoColor(T);
   // Active indicator position — slides along the bar with a spring easing.
   const slotPct = 100 / slots.length;
 

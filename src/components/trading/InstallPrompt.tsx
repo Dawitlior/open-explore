@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { GlassCard } from './TradingUI';
 import { scopedStorage } from '@/lib/scoped-storage';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -65,10 +66,10 @@ export const InstallPrompt = ({ T, isRTL, compact }: Props) => {
         style={{
           display: 'flex', alignItems: 'center', gap: 8, width: '100%',
           padding: '7px 10px',
-          background: `linear-gradient(135deg, ${T.accent.cyan}10, ${T.accent.teal}10)`,
-          border: `1px solid ${T.accent.cyan}25`,
+          background: `linear-gradient(135deg, ${infoColor(T)}10, ${infoColor(T)}10)`,
+          border: `1px solid ${infoColor(T)}25`,
           borderRadius: T.radius.md,
-          color: T.accent.cyan, cursor: 'pointer', fontSize: 12, fontWeight: 600,
+          color: infoColor(T), cursor: 'pointer', fontSize: 12, fontWeight: 600,
           transition: 'all 0.2s',
         }}
       >
@@ -79,7 +80,7 @@ export const InstallPrompt = ({ T, isRTL, compact }: Props) => {
   }
 
   return (
-    <GlassCard T={T} glow={`${T.accent.cyan}08`} style={{ margin: '12px 0', padding: '12px 16px' }}>
+    <GlassCard T={T} glow={`${infoColor(T)}08`} style={{ margin: '12px 0', padding: '12px 16px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <div style={{ fontSize: 22 }}>📥</div>
         <div style={{ flex: 1 }}>
@@ -91,7 +92,7 @@ export const InstallPrompt = ({ T, isRTL, compact }: Props) => {
           </div>
         </div>
         <button onClick={handleInstall} style={{
-          padding: '6px 16px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`,
+          padding: '6px 16px', background: `linear-gradient(135deg, ${infoColor(T)}, ${infoColor(T)})`,
           border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontWeight: 700,
           cursor: 'pointer', fontSize: 11, transition: 'all 0.2s',
         }}>

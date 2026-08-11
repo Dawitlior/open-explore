@@ -11,6 +11,7 @@ import { MACRO_TIER_COLOR, CURRENCY_FLAG } from '@/components/economic/MacroEven
 import { formatISTTime } from '@/lib/economic';
 import { supabase } from '@/integrations/supabase/client';
 import { useActivePortfolio } from '@/hooks/use-active-portfolio';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 
 interface CalendarModalProps {
@@ -186,23 +187,23 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
     return (
       <div style={{
         padding: 14, background: T.bg.tertiary, borderRadius: T.radius.md, marginBottom: 8,
-        border: `1px solid ${tr.winLoss === 'Win' ? T.accent.green : tr.winLoss === 'Loss' ? T.accent.red : T.accent.orange}20`,
-        borderInlineStart: `3px solid ${tr.winLoss === 'Win' ? T.accent.green : tr.winLoss === 'Loss' ? T.accent.red : T.accent.orange}`,
+        border: `1px solid ${tr.winLoss === 'Win' ? T.accent.green : tr.winLoss === 'Loss' ? T.accent.red : T.state.warn}20`,
+        borderInlineStart: `3px solid ${tr.winLoss === 'Win' ? T.accent.green : tr.winLoss === 'Loss' ? T.accent.red : T.state.warn}`,
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 6 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>{tr.coin}</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: infoColor(T), fontFamily: "'JetBrains Mono', monospace" }}>{tr.coin}</span>
             <TradingBadge color={tr.direction === 'Long' ? T.accent.green : T.accent.red}>
               {tr.direction === 'Long' ? '↑' : '↓'} {tr.direction}
             </TradingBadge>
-            <TradingBadge color={tr.winLoss === 'Win' ? T.accent.green : tr.winLoss === 'Loss' ? T.accent.red : T.accent.orange}>
+            <TradingBadge color={tr.winLoss === 'Win' ? T.accent.green : tr.winLoss === 'Loss' ? T.accent.red : T.state.warn}>
               {tr.winLoss}
             </TradingBadge>
             {hasManual && (
               <span title={isRTL ? 'R ידני' : 'Manual R'} style={{
-                fontSize: 9, fontWeight: 800, color: T.accent.purple,
+                fontSize: 9, fontWeight: 800, color: neutralRamp(T, 3)[1],
                 padding: '2px 6px', borderRadius: 999,
-                background: `${T.accent.purple}18`, border: `1px solid ${T.accent.purple}40`,
+                background: `${neutralRamp(T, 3)[1]}18`, border: `1px solid ${neutralRamp(T, 3)[1]}40`,
                 letterSpacing: '0.05em',
               }}>MANUAL</span>
             )}
@@ -225,8 +226,8 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
                 style={{
                   fontSize: 10.5, fontWeight: 700, padding: '5px 10px',
                   borderRadius: 999, cursor: 'pointer',
-                  background: `${T.accent.cyan}12`, color: T.accent.cyan,
-                  border: `1px solid ${T.accent.cyan}40`,
+                  background: `${infoColor(T)}12`, color: infoColor(T),
+                  border: `1px solid ${infoColor(T)}40`,
                   fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.04em',
                 }}
               >
@@ -244,16 +245,16 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
                   placeholder="+3.5"
                   style={{
                     width: 86, padding: '5px 8px', borderRadius: 8,
-                    border: `1px solid ${T.accent.cyan}55`, background: T.bg.secondary,
+                    border: `1px solid ${infoColor(T)}55`, background: T.bg.secondary,
                     color: T.text.primary, fontSize: 12, fontFamily: "'JetBrains Mono', monospace",
                     outline: 'none', textAlign: 'center', fontWeight: 700,
                   }}
                 />
                 <button disabled={saving} onClick={() => void commit(false)} style={{
                   fontSize: 10.5, fontWeight: 800, padding: '5px 12px', borderRadius: 8,
-                  background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`,
+                  background: `linear-gradient(135deg, ${infoColor(T)}, ${infoColor(T)})`,
                   color: T.bg.primary, border: 'none', cursor: 'pointer',
-                  boxShadow: `0 4px 12px ${T.accent.cyan}40`,
+                  boxShadow: `0 4px 12px ${infoColor(T)}40`,
                 }}>{saving ? '…' : (isRTL ? 'שמור' : 'Save')}</button>
                 {hasManual && (
                   <button disabled={saving} onClick={() => void commit(true)} style={{
@@ -341,7 +342,7 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
   const showEditor = editingNote || (!hasNote && noteLoaded);
   const noteSection = (
     <div style={{
-      background: `linear-gradient(135deg, ${T.accent.cyan}08, ${T.bg.tertiary})`,
+      background: `linear-gradient(135deg, ${infoColor(T)}08, ${T.bg.tertiary})`,
       border: `1px solid ${T.border.subtle}`,
       borderRadius: T.radius.md, padding: 14,
     }}>
@@ -354,7 +355,7 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {noteStatus === 'saved' && (
-            <span style={{ fontSize: 10, color: T.accent.green, fontWeight: 700 }}>{isRTL ? '✓ נשמר' : '✓ Saved'}</span>
+            <span style={{ fontSize: 10, color: infoColor(T), fontWeight: 700 }}>{isRTL ? '✓ נשמר' : '✓ Saved'}</span>
           )}
           {noteStatus === 'error' && (
             <span style={{ fontSize: 10, color: T.accent.red, fontWeight: 700 }}>{isRTL ? 'שגיאת שמירה' : 'Save failed'}</span>
@@ -364,8 +365,8 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
               onClick={() => setEditingNote(true)}
               style={{
                 fontSize: 10, fontWeight: 700, padding: '4px 10px', borderRadius: 999,
-                background: 'transparent', color: T.accent.cyan,
-                border: `1px solid ${T.accent.cyan}55`, cursor: 'pointer', letterSpacing: '0.05em',
+                background: 'transparent', color: infoColor(T),
+                border: `1px solid ${infoColor(T)}55`, cursor: 'pointer', letterSpacing: '0.05em',
               }}
             >{isRTL ? '✎ עריכה' : '✎ Edit'}</button>
           )}
@@ -417,10 +418,10 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
               disabled={noteSaving || !noteLoaded}
               style={{
                 fontSize: 11, fontWeight: 800, padding: '7px 16px', borderRadius: 999,
-                background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`,
+                background: `linear-gradient(135deg, ${infoColor(T)}, ${infoColor(T)})`,
                 color: T.bg.primary, border: 'none',
                 cursor: (noteSaving || !noteLoaded) ? 'wait' : 'pointer',
-                boxShadow: `0 4px 14px ${T.accent.cyan}40`,
+                boxShadow: `0 4px 14px ${infoColor(T)}40`,
                 letterSpacing: '0.05em',
               }}
             >{noteSaving ? '…' : (isRTL ? 'שמור הערה' : 'Save Note')}</button>
@@ -452,9 +453,9 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
     !showAI ? (
       <button onClick={handleDayAI} disabled={dayTrades.length === 0} style={{
         width: '100%', padding: '14px',
-        background: `linear-gradient(135deg, ${T.accent.purple}20, ${T.accent.blue}15)`,
-        border: `1px solid ${T.accent.purple}40`, borderRadius: T.radius.md,
-        color: T.accent.purple, cursor: dayTrades.length === 0 ? 'default' : 'pointer',
+        background: `linear-gradient(135deg, ${neutralRamp(T, 3)[1]}20, ${infoColor(T)}15)`,
+        border: `1px solid ${neutralRamp(T, 3)[1]}40`, borderRadius: T.radius.md,
+        color: neutralRamp(T, 3)[1], cursor: dayTrades.length === 0 ? 'default' : 'pointer',
         fontSize: 14, fontWeight: 700,
         opacity: dayTrades.length === 0 ? 0.5 : 1
       }}>
@@ -462,11 +463,11 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
       </button>
     ) : (
       <div style={{
-        background: `linear-gradient(135deg, ${T.accent.purple}08, ${T.accent.blue}08)`,
-        border: `1px solid ${T.accent.purple}25`, borderRadius: T.radius.md,
+        background: `linear-gradient(135deg, ${neutralRamp(T, 3)[1]}08, ${infoColor(T)}08)`,
+        border: `1px solid ${neutralRamp(T, 3)[1]}25`, borderRadius: T.radius.md,
         padding: 16
       }}>
-        <div style={{ fontSize: 10, color: T.accent.purple, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
+        <div style={{ fontSize: 10, color: neutralRamp(T, 3)[1], fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
           🧠 {isRTL ? 'ניתוח AI' : 'AI Day Analysis'}
         </div>
         <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 12 }}>
@@ -486,7 +487,7 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {dayInsights.map((ins, i) => {
-              const c = ins.type === 'strength' ? T.accent.green : ins.type === 'weakness' ? T.accent.red : ins.type === 'alert' ? T.accent.orange : ins.type === 'momentum' ? T.accent.purple : T.accent.cyan;
+              const c = ins.type === 'strength' ? infoColor(T) : ins.type === 'weakness' ? T.accent.red : ins.type === 'alert' ? T.state.warn : ins.type === 'momentum' ? neutralRamp(T, 3)[1] : infoColor(T);
               return (
                 <div key={i} style={{
                   padding: 12, borderRadius: T.radius.md, background: `${c}10`,
@@ -534,7 +535,7 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
           display: 'flex', alignItems: 'center', gap: 10,
         }}>
           <button onClick={onClose} style={{
-            background: 'transparent', border: 'none', color: T.accent.cyan,
+            background: 'transparent', border: 'none', color: infoColor(T),
             fontSize: 26, fontWeight: 400, cursor: 'pointer', padding: 4,
             display: 'flex', alignItems: 'center', gap: 4,
           }}>
@@ -584,9 +585,9 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
           {/* Stats row */}
           <div style={{ padding: '0 16px 18px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
             {[
-              { l: isRTL ? 'אחוז זכייה' : 'Win Rate', v: `${dayTrades.length > 0 ? ((wins / dayTrades.length) * 100).toFixed(0) : 0}%`, c: T.accent.cyan },
-              { l: isRTL ? 'משמעת' : 'Discipline', v: allRulesFollowed ? '✓' : '⚠︎', c: allRulesFollowed ? T.accent.green : T.accent.orange },
-              { l: isRTL ? 'סטיות' : 'Deviations', v: `${highDeviation.length}`, c: highDeviation.length > 0 ? T.accent.orange : T.accent.green },
+              { l: isRTL ? 'אחוז זכייה' : 'Win Rate', v: `${dayTrades.length > 0 ? ((wins / dayTrades.length) * 100).toFixed(0) : 0}%`, c: infoColor(T) },
+              { l: isRTL ? 'משמעת' : 'Discipline', v: allRulesFollowed ? '✓' : '⚠︎', c: allRulesFollowed ? T.text.primary : T.state.warn },
+              { l: isRTL ? 'סטיות' : 'Deviations', v: `${highDeviation.length}`, c: highDeviation.length > 0 ? T.state.warn : T.text.primary },
             ].map((s, i) => (
               <div key={i} style={{ padding: 12, background: T.bg.card, border: `1px solid ${T.border.subtle}`, borderRadius: 12, textAlign: 'center' }}>
                 <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>{s.l}</div>
@@ -597,8 +598,8 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
 
           {/* Behavioral flags */}
           {(highDeviation.length > 0 || !allRulesFollowed || dayTrades.length >= 3) && (
-            <div style={{ margin: '0 16px 18px', padding: 14, background: `${T.accent.orange}10`, border: `1px solid ${T.accent.orange}30`, borderRadius: 14 }}>
-              <div style={{ fontSize: 10, color: T.accent.orange, fontWeight: 700, textTransform: 'uppercase', marginBottom: 8, letterSpacing: '0.06em' }}>
+            <div style={{ margin: '0 16px 18px', padding: 14, background: `${T.state.warn}10`, border: `1px solid ${T.state.warn}30`, borderRadius: 14 }}>
+              <div style={{ fontSize: 10, color: T.state.warn, fontWeight: 700, textTransform: 'uppercase', marginBottom: 8, letterSpacing: '0.06em' }}>
                 🚩 {isRTL ? 'דגלים התנהגותיים' : 'Behavioral Flags'}
               </div>
               {dayTrades.length >= 3 && <div style={{ fontSize: 12, color: T.text.secondary, marginBottom: 4 }}>⚡ {isRTL ? 'מסחר יתר — 3+ עסקאות' : 'Overtrading — 3+ trades'}</div>}
@@ -753,10 +754,10 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
           {/* Stats grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
             {[
-              { l: isRTL ? 'אחוז זכייה' : 'Win Rate', v: `${dayTrades.length > 0 ? ((wins / dayTrades.length) * 100).toFixed(0) : 0}%`, c: T.accent.cyan },
+              { l: isRTL ? 'אחוז זכייה' : 'Win Rate', v: `${dayTrades.length > 0 ? ((wins / dayTrades.length) * 100).toFixed(0) : 0}%`, c: infoColor(T) },
               { l: isRTL ? 'סה״כ R' : 'Total R', v: `${totalR >= 0 ? '+' : ''}${totalR.toFixed(2)}R`, c: totalR >= 0 ? T.accent.green : T.accent.red },
-              { l: isRTL ? 'משמעת' : 'Discipline', v: `${rulesFollowed}/${dayTrades.length}`, c: allRulesFollowed ? T.accent.green : T.accent.orange },
-              { l: isRTL ? 'סטיות גבוהות' : 'High Deviation', v: `${highDeviation.length}`, c: highDeviation.length > 0 ? T.accent.orange : T.accent.green },
+              { l: isRTL ? 'משמעת' : 'Discipline', v: `${rulesFollowed}/${dayTrades.length}`, c: allRulesFollowed ? T.text.primary : T.state.warn },
+              { l: isRTL ? 'סטיות גבוהות' : 'High Deviation', v: `${highDeviation.length}`, c: highDeviation.length > 0 ? T.state.warn : T.text.primary },
             ].map((s, i) => (
               <div key={i} style={{
                 padding: 16, background: T.bg.tertiary, border: `1px solid ${T.border.subtle}`,
@@ -770,8 +771,8 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
 
           {/* Behavioral flags */}
           {(highDeviation.length > 0 || !allRulesFollowed || dayTrades.length >= 3) && (
-            <div style={{ padding: 16, background: `${T.accent.orange}10`, border: `1px solid ${T.accent.orange}30`, borderRadius: 14 }}>
-              <div style={{ fontSize: 10, color: T.accent.orange, fontWeight: 700, textTransform: 'uppercase', marginBottom: 8, letterSpacing: '0.08em' }}>
+            <div style={{ padding: 16, background: `${T.state.warn}10`, border: `1px solid ${T.state.warn}30`, borderRadius: 14 }}>
+              <div style={{ fontSize: 10, color: T.state.warn, fontWeight: 700, textTransform: 'uppercase', marginBottom: 8, letterSpacing: '0.08em' }}>
                 🚩 {isRTL ? 'דגלים התנהגותיים' : 'Behavioral Flags'}
               </div>
               {dayTrades.length >= 3 && <div style={{ fontSize: 12, color: T.text.secondary, marginBottom: 4 }}>⚡ {isRTL ? 'מסחר יתר — 3+ עסקאות' : 'Overtrading — 3+ trades'}</div>}

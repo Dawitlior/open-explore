@@ -34,6 +34,7 @@ import { getEffectiveR, sumDailyR } from '@/lib/r-multiple';
 import { useVisibleTrades } from '@/lib/display-mode-format';
 import { RProxyBanner } from './RProxyBanner';
 import { useLang } from '@/hooks/use-lang';
+import { infoColor, neutralRamp, severityColor, moneyColor, statusColor, qualityColor } from '@/lib/semantic-color';
 
 type DayRPoint = { i: number; day: string; total: number; cum: number; trades: Trade[] };
 
@@ -212,7 +213,7 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
   if (trades.length === 0) return null;
 
   const sectionStyle = {
-    fontSize: 11, color: T.accent.purple,
+    fontSize: 11, color: neutralRamp(T, 3)[1],
     textTransform: 'uppercase' as const, letterSpacing: '0.18em',
     margin: '24px 0 12px', fontWeight: 700,
     fontFamily: "'JetBrains Mono', monospace",
@@ -247,28 +248,28 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginBottom: 12 }}>
         <GlassCard T={T} style={{ padding: 12 }}>
           <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Recovery Factor</div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>
+          <div style={{ fontSize: 22, fontWeight: 800, color: infoColor(T), fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>
             {isFinite(recovery) ? recovery.toFixed(2) : '∞'}
           </div>
           <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>{t('רווח ברוטו / נסיגה מקס', 'Gross profit / max drawdown')}</div>
         </GlassCard>
         <GlassCard T={T} style={{ padding: 12 }}>
           <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Best Session</div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: T.accent.green, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>
+          <div style={{ fontSize: 22, fontWeight: 800, color: T.text.primary, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>
             {moneyBlocked ? '—' : (sessions.filter(s => s.n).sort((a, b) => (isMoney ? b.pnl - a.pnl : b.r - a.r))[0]?.session || '—')}
           </div>
           <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>{moneyBlocked ? emptyMoneyMsg : t('סשן הכי רווחי', 'Most profitable session')}</div>
         </GlassCard>
         <GlassCard T={T} style={{ padding: 12 }}>
           <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Trades / Day</div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: T.accent.blue, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>
+          <div style={{ fontSize: 22, fontWeight: 800, color: infoColor(T), fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>
             {dailyEq.length ? (trades.length / dailyEq.length).toFixed(1) : '0'}
           </div>
           <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>{t('תדירות יומית', 'Daily frequency')}</div>
         </GlassCard>
         <GlassCard T={T} style={{ padding: 12 }}>
           <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Active Days</div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: T.accent.purple, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>
+          <div style={{ fontSize: 22, fontWeight: 800, color: neutralRamp(T, 3)[1], fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>
             {dailyEq.length}
           </div>
           <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>{t('ימי מסחר פעילים', 'Active trading days')}</div>
@@ -286,8 +287,8 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
             <AreaChart data={cumR}>
               <defs>
                 <linearGradient id="cumR" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.5} />
-                  <stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.04} />
+                  <stop offset="0%" stopColor={infoColor(T)} stopOpacity={0.5} />
+                  <stop offset="100%" stopColor={infoColor(T)} stopOpacity={0.04} />
                 </linearGradient>
               </defs>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
@@ -295,7 +296,7 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
               <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => fmtAxis(v)} />
               <Tooltip contentStyle={tt} formatter={(v: number) => fmtVal(v)} />
               <ReferenceLine y={0} stroke={T.text.muted} />
-              <Area type="monotone" dataKey={isMoney ? 'money' : 'r'} stroke={T.accent.cyan} fill="url(#cumR)" strokeWidth={2.4} />
+              <Area type="monotone" dataKey={isMoney ? 'money' : 'r'} stroke={infoColor(T)} fill="url(#cumR)" strokeWidth={2.4} />
             </AreaChart>
           </ResponsiveContainer>
           )}
@@ -310,7 +311,7 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
               <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
               <Tooltip contentStyle={tt} />
               <ReferenceLine y={0} stroke={T.text.muted} />
-              <Line type="monotone" dataKey="calmar" stroke={T.accent.orange} strokeWidth={2.2} dot={false} />
+              <Line type="monotone" dataKey="calmar" stroke={T.state.warn} strokeWidth={2.2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </GlassCard>
@@ -404,15 +405,15 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
           <AreaChart data={dailyEq}>
             <defs>
               <linearGradient id="dEq" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={T.accent.green} stopOpacity={0.45} />
-                <stop offset="100%" stopColor={T.accent.green} stopOpacity={0.04} />
+                <stop offset="0%" stopColor={infoColor(T)} stopOpacity={0.45} />
+                <stop offset="100%" stopColor={infoColor(T)} stopOpacity={0.04} />
               </linearGradient>
             </defs>
             <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
             <XAxis dataKey="day" tick={{ fill: T.text.muted, fontSize: 9 }} />
             <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => fmtAxis(v)} />
             <Tooltip contentStyle={tt} formatter={(v: number) => <PV>{fmtVal(v)}</PV>} />
-            <Area type="stepAfter" dataKey={isMoney ? 'cum' : 'cumR'} stroke={T.accent.green} fill="url(#dEq)" strokeWidth={2.2} />
+            <Area type="stepAfter" dataKey={isMoney ? 'cum' : 'cumR'} stroke={infoColor(T)} fill="url(#dEq)" strokeWidth={2.2} />
           </AreaChart>
         </ResponsiveContainer>
       </GlassCard>
