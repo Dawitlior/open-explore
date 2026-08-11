@@ -249,8 +249,8 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
             <AreaChart data={rar}>
               <defs>
                 <linearGradient id="rarG" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={T.accent.green} stopOpacity={0.45} />
-                  <stop offset="100%" stopColor={T.accent.green} stopOpacity={0.04} />
+                  <stop offset="0%" stopColor={T.text.primary} stopOpacity={0.45} />
+                  <stop offset="100%" stopColor={T.text.primary} stopOpacity={0.04} />
                 </linearGradient>
               </defs>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
@@ -258,7 +258,7 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
               <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} domain={[0, 100]} unit="%" />
               <Tooltip contentStyle={tt} />
               <ReferenceLine y={80} stroke={T.state.warn} strokeDasharray="3 3" />
-              <Area type="monotone" dataKey="rar" stroke={T.accent.green} fill="url(#rarG)" strokeWidth={2.2} />
+              <Area type="monotone" dataKey="rar" stroke={T.text.primary} fill="url(#rarG)" strokeWidth={2.2} />
             </AreaChart>
           </ResponsiveContainer>
         </GlassCard>
@@ -428,11 +428,11 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
           {t('◆ Cognitive Bias Report · דוח הטיות קוגניטיביות','◆ Cognitive Bias Report')}
         </div>
         {biasFlags.length === 0 ? (
-          <div style={{ fontSize: 12, color: T.accent.green, padding: 14 }}>{t('✅ לא זוהו דפוסי הטיה דומיננטיים במדגם הנוכחי.','✅ No dominant bias patterns detected in the current sample.')}</div>
+          <div style={{ fontSize: 12, color: T.text.primary, padding: 14 }}>{t('✅ לא זוהו דפוסי הטיה דומיננטיים במדגם הנוכחי.','✅ No dominant bias patterns detected in the current sample.')}</div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 8 }}>
             {biasFlags.map((b, i) => {
-              const c = b.severity === 'good' ? T.accent.green : b.severity === 'warn' ? T.state.warn : T.accent.red;
+              const c = b.severity === 'good' ? T.text.primary : b.severity === 'warn' ? T.state.warn : T.accent.red;
               return (
                 <div key={i} style={{ padding: 12, borderRadius: 10, background: `${c}10`, border: `1px solid ${c}33`, borderInlineStart: `3px solid ${c}` }}>
                   <div style={{ fontSize: 12, color: c, fontWeight: 800, marginBottom: 4 }}>{b.label}</div>
