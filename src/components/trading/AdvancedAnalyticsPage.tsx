@@ -735,8 +735,9 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
               marginBottom: 12,
             }}>
               {[
-                { label: t('חודשים חיוביים','Green months'), value: `${positives}/${monthly.length}`, color: T.accent.green },
-                { label: t('חודשים שליליים','Red months'), value: `${negatives}/${monthly.length}`, color: T.accent.red },
+                // Counts are structure, not money — neutral by rule.
+                { label: t('חודשים חיוביים','Green months'), value: `${positives}/${monthly.length}`, color: T.text.primary },
+                { label: t('חודשים שליליים','Red months'), value: `${negatives}/${monthly.length}`, color: T.text.primary },
                 { label: t('חודש חזק','Best month'), value: bestMonth ? `${bestMonth.month} · ${fmt(bestMonth.value)}` : '—', color: T.accent.green },
                 { label: t('חודש חלש','Worst month'), value: worstMonth ? `${worstMonth.month} · ${fmt(worstMonth.value)}` : '—', color: T.accent.red },
                 { label: t('סה״כ נטו','Net total'), value: fmt(netSum), color: netSum >= 0 ? T.accent.green : T.accent.red },
