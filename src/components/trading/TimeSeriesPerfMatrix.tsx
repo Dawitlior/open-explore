@@ -14,6 +14,7 @@ import { GlassCard } from './TradingUI';
 import { useLang } from '@/hooks/use-lang';
 import { useDisplayMode } from '@/lib/display-mode';
 import { getEffectiveR } from '@/lib/r-multiple';
+import { infoColor, neutralRamp, severityColor, moneyColor, statusColor, qualityColor } from '@/lib/semantic-color';
 
 interface Props {
   T: TradingTheme;
@@ -114,9 +115,9 @@ export function TimeSeriesPerfMatrix({ T, trades }: Props) {
   }
 
   return (
-    <GlassCard T={T} style={{ marginBottom: 16 }} glow={`${T.accent.purple}22`}>
+    <GlassCard T={T} style={{ marginBottom: 16 }} glow={`${neutralRamp(T, 3)[1]}22`}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
-        <div style={{ fontSize: 11, color: T.accent.purple, textTransform: 'uppercase', letterSpacing: '0.18em', fontWeight: 700 }}>● ADVANCED</div>
+        <div style={{ fontSize: 11, color: neutralRamp(T, 3)[1], textTransform: 'uppercase', letterSpacing: '0.18em', fontWeight: 700 }}>● ADVANCED</div>
         <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700 }}>
           {t('מטריצת התפלגות ביצועים רב-ממדית', 'Time-Series Performance Distribution Matrix')}
         </div>

@@ -29,6 +29,7 @@ import { ChartWrapper, EXPLANATIONS, type ChartExplanation } from './ChartWrappe
 import { useLang } from '@/hooks/use-lang';
 import { useDisplayMode } from '@/lib/display-mode';
 import { getEffectiveR } from '@/lib/r-multiple';
+import { infoColor, neutralRamp, severityColor, moneyColor, statusColor, qualityColor } from '@/lib/semantic-color';
 
 interface AnalyticsProps {
   T: TradingTheme;
@@ -107,7 +108,7 @@ export function UltimateAnalyticsDeck({ T, trades, onExplainClick, registryAllow
     return { pairs, rho: +rho.toFixed(3) };
   }, [trades, isMoney]);
 
-  const rhoColor = Math.abs(lag.rho) > 0.3 ? T.accent.red : Math.abs(lag.rho) > 0.15 ? T.accent.orange : T.accent.green;
+  const rhoColor = Math.abs(lag.rho) > 0.3 ? T.accent.red : Math.abs(lag.rho) > 0.15 ? T.state.warn : T.accent.green;
 
   // ── 2. Inter-trade Interval (histogram, hours) ──────────────
   const intervals = useMemo(() => {
@@ -131,7 +132,7 @@ export function UltimateAnalyticsDeck({ T, trades, onExplainClick, registryAllow
     return { bins, median };
   }, [trades]);
 
-  const medianColor = intervals.median < 1 ? T.accent.red : intervals.median < 4 ? T.accent.orange : T.accent.green;
+  const medianColor = intervals.median < 1 ? T.accent.red : intervals.median < 4 ? T.state.warn : T.accent.green;
 
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 12, marginTop: 16, marginBottom: 28 }}>
@@ -183,7 +184,7 @@ export function UltimateAnalyticsDeck({ T, trades, onExplainClick, registryAllow
                   <XAxis dataKey="bucket" tick={{ fill: T.text.muted, fontSize: 10 }} />
                   <YAxis allowDecimals={false} tick={{ fill: T.text.muted, fontSize: 10 }} />
                   <Tooltip contentStyle={tt} />
-                  <Bar dataKey="n" radius={[6, 6, 0, 0]} fill={T.accent.purple} />
+                  <Bar dataKey="n" radius={[6, 6, 0, 0]} fill={neutralRamp(T, 3)[1]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : <EmptyNote T={T}>{t('אין מספיק נתוני זמן.', 'Not enough timestamped trades.')}</EmptyNote>}
@@ -218,7 +219,7 @@ export function UltimateRiskDeck({ T, trades, privacyMode, onExplainClick, regis
     return { full: +full.toFixed(2), half: +(full / 2).toFixed(2), p: +(p * 100).toFixed(1), b: +b.toFixed(2) };
   }, [trades]);
 
-  const kellyColor = kelly.full < 0 ? T.accent.red : kelly.full < 2 ? T.accent.orange : T.accent.green;
+  const kellyColor = kelly.full < 0 ? T.accent.red : kelly.full < 2 ? T.state.warn : T.accent.green;
 
   // ── 4. Capital Efficiency (rolling mean R / σ R, w=20) ────
   const capEff = useMemo(() => {
@@ -284,7 +285,7 @@ export function UltimateRiskDeck({ T, trades, privacyMode, onExplainClick, regis
                   </div>
                   <div style={{ fontSize: 11, color: T.text.muted, marginTop: 4 }}>
                     {t('חצי-קלי המומלץ', 'Recommended half-Kelly')}:{' '}
-                    <span style={{ color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}><PV>{kelly.half.toFixed(2)}%</PV></span>
+                    <span style={{ color: infoColor(T), fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}><PV>{kelly.half.toFixed(2)}%</PV></span>
                   </div>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 10, color: T.text.muted }}>
@@ -316,7 +317,7 @@ export function UltimateRiskDeck({ T, trades, privacyMode, onExplainClick, regis
                   <ReferenceLine y={0} stroke={T.text.muted} />
                   <ReferenceLine y={0.5} stroke={T.accent.green} strokeDasharray="4 4" label={{ value: t('יעיל', 'efficient'), fontSize: 9, fill: T.accent.green, position: 'insideBottomRight' }} />
                   <Tooltip contentStyle={tt} />
-                  <Line type="monotone" dataKey="eff" stroke={T.accent.cyan} strokeWidth={2.2} dot={false} />
+                  <Line type="monotone" dataKey="eff" stroke={infoColor(T)} strokeWidth={2.2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             ) : <EmptyNote T={T}>{t('צריך לפחות 5 עסקאות.', 'Need at least 5 trades.')}</EmptyNote>}
@@ -340,7 +341,7 @@ export function UltimateRiskDeck({ T, trades, privacyMode, onExplainClick, regis
                   <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
                   <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
                   <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
-                  <ReferenceLine y={1} stroke={T.accent.orange} strokeDasharray="4 4" label={{ value: 'MAR=1', fontSize: 9, fill: T.accent.orange, position: 'insideTopRight' }} />
+                  <ReferenceLine y={1} stroke={T.state.warn} strokeDasharray="4 4" label={{ value: 'MAR=1', fontSize: 9, fill: T.state.warn, position: 'insideTopRight' }} />
                   <Tooltip contentStyle={tt} formatter={(v: number) => `${v}x`} />
                   <Area type="monotone" dataKey="mar" stroke={T.accent.green} fill="url(#marFill)" strokeWidth={2.2} />
                 </ComposedChart>
@@ -368,10 +369,10 @@ export function UltimateRiskDeck({ T, trades, privacyMode, onExplainClick, regis
                   <Legend wrapperStyle={{ fontSize: 10 }} />
                   <Bar yAxisId="left" name={t('עומק', 'Depth')} dataKey="depth" radius={[4, 4, 0, 0]}>
                     {ddEvents.map((d, i) => (
-                      <Cell key={i} fill={d.recovered ? T.accent.orange : T.accent.red} />
+                      <Cell key={i} fill={d.recovered ? T.state.warn : T.accent.red} />
                     ))}
                   </Bar>
-                  <Bar yAxisId="right" name={t('משך', 'Duration')} dataKey="duration" radius={[4, 4, 0, 0]} fill={`${T.accent.cyan}80`} />
+                  <Bar yAxisId="right" name={t('משך', 'Duration')} dataKey="duration" radius={[4, 4, 0, 0]} fill={`${infoColor(T)}80`} />
                 </BarChart>
               </ResponsiveContainer>
             ) : <EmptyNote T={T}>{t('אין נסיגות לחישוב.', 'No drawdown events.')}</EmptyNote>}

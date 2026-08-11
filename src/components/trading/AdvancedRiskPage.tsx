@@ -20,6 +20,7 @@ import { NetExposurePanel } from './risk/NetExposurePanel';
 import { CorrelationMatrix } from './risk/CorrelationMatrix';
 import { QualityOfReturnsStrip } from './risk/QualityOfReturnsStrip';
 import { HourOfDayStrip } from './risk/HourOfDayStrip';
+import { infoColor, neutralRamp, severityColor, moneyColor, statusColor, qualityColor } from '@/lib/semantic-color';
 
 
 type OperatingMode = 'live' | 'review' | 'research' | 'beginner';
@@ -44,7 +45,7 @@ interface AdvancedRiskPageProps {
 
 // ─── Section header (clear, plain-language with subtitle) ──────────
 const SectionHeader = ({ T, label, accent, isRTL, subtitle }: { T: TradingTheme; label: string; accent?: string; isRTL: boolean; subtitle?: string }) => {
-  const color = accent || T.accent.cyan;
+  const color = accent || infoColor(T);
   return (
     <div style={{ margin: '24px 0 12px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -72,7 +73,7 @@ const SectionHeader = ({ T, label, accent, isRTL, subtitle }: { T: TradingTheme;
 const LimitBar = ({ T, label, current, limit, isRTL }: { T: TradingTheme; label: string; current: number; limit: number; isRTL: boolean }) => {
   // current is negative (e.g. -1.5R), limit is negative (e.g. -2R)
   const pct = Math.min(100, Math.max(0, (Math.abs(current) / Math.abs(limit)) * 100));
-  const color = pct >= 100 ? T.accent.red : pct >= 75 ? T.accent.orange : pct >= 50 ? T.accent.orange : T.accent.green;
+  const color = pct >= 100 ? T.accent.red : pct >= 75 ? T.state.warn : pct >= 50 ? T.state.warn : T.accent.green;
   return (
     <div style={{ flex: 1, minWidth: 180 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 10 }}>
@@ -135,10 +136,10 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
   const isAdvancedPlan = tierAllows('advanced');
   const isUltimatePlan = tierAllows('ultimate');
   const tierMeta = appTier === 'ultimate'
-    ? { he: 'אולטימייט', en: 'Ultimate', sub: { he: 'מנוע סיכון כמותי מלא', en: 'Full quantitative risk engine' }, color: T.accent.purple }
+    ? { he: 'אולטימייט', en: 'Ultimate', sub: { he: 'מנוע סיכון כמותי מלא', en: 'Full quantitative risk engine' }, color: neutralRamp(T, 3)[1] }
     : appTier === 'advanced'
-      ? { he: 'מתקדם', en: 'Advanced', sub: { he: 'דיאגנוסטיקה מקצועית ואנומליות סיכון', en: 'Professional diagnostics and risk anomalies' }, color: T.accent.cyan }
-      : { he: 'סטנדרט', en: 'Standard', sub: { he: 'מגבלות סיכון, Drawdown והקצאה בסיסית', en: 'Risk limits, drawdown, and baseline allocation' }, color: T.accent.blue };
+      ? { he: 'מתקדם', en: 'Advanced', sub: { he: 'דיאגנוסטיקה מקצועית ואנומליות סיכון', en: 'Professional diagnostics and risk anomalies' }, color: infoColor(T) }
+      : { he: 'סטנדרט', en: 'Standard', sub: { he: 'מגבלות סיכון, Drawdown והקצאה בסיסית', en: 'Risk limits, drawdown, and baseline allocation' }, color: infoColor(T) };
 
   // What each SaaS tier shows on the Risk page.
   // Standard ships a minimal deck: limit bars + KPI strip + drawdown card only.
@@ -295,7 +296,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
 
   const riskLevel = stats.maxConsecLosses >= 4 ? 'critical' : stats.maxConsecLosses >= 3 ? 'warning' : 'safe';
   const riskPct = Math.min(100, (stats.maxDrawdown / 10) * 100);
-  const healthColor = riskHealth >= 75 ? T.accent.green : riskHealth >= 50 ? T.accent.orange : T.accent.red;
+  const healthColor = riskHealth >= 75 ? T.accent.green : riskHealth >= 50 ? T.state.warn : T.accent.red;
   const healthLabel = riskHealth >= 75 ? (isRTL ? 'בריא' : 'HEALTHY') : riskHealth >= 50 ? (isRTL ? 'מתון' : 'MODERATE') : (isRTL ? 'קריטי' : 'CRITICAL');
 
   return (
@@ -399,11 +400,11 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
       <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'מדדי מפתח' : 'Key Metrics'} subtitle={isRTL ? 'מבט מהיר על המספרים החשובים ביותר לניהול הסיכון היומי שלך.' : 'A quick snapshot of the numbers that matter most for daily risk management.'} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: 8, marginBottom: 4 }}>
         {[
-          { l: isRTL ? 'סיכון ממוצע' : 'Avg Risk', v: `${riskData.avgRiskPct.toFixed(2)}%`, c: T.accent.cyan, hint: `$${(riskData.riskGrowthEvolution.reduce((s,e)=>s+e.risk,0)/(riskData.riskGrowthEvolution.length||1)).toFixed(2)}` },
-          { l: isRTL ? 'סחיפת סיכון' : 'Risk Drift', v: `${riskData.riskDrift.toFixed(2)}%`, c: riskData.riskDrift > 0.5 ? T.accent.orange : T.accent.green, hint: isRTL ? 'מהבסיס' : 'from baseline' },
+          { l: isRTL ? 'סיכון ממוצע' : 'Avg Risk', v: `${riskData.avgRiskPct.toFixed(2)}%`, c: infoColor(T), hint: `$${(riskData.riskGrowthEvolution.reduce((s,e)=>s+e.risk,0)/(riskData.riskGrowthEvolution.length||1)).toFixed(2)}` },
+          { l: isRTL ? 'סחיפת סיכון' : 'Risk Drift', v: `${riskData.riskDrift.toFixed(2)}%`, c: riskData.riskDrift > 0.5 ? T.state.warn : T.accent.green, hint: isRTL ? 'מהבסיס' : 'from baseline' },
           { l: isRTL ? 'נסיגה מקס' : 'Max DD', v: `${stats.maxDrawdown.toFixed(1)}%`, c: stats.maxDrawdown > 5 ? T.accent.red : T.accent.green, hint: '' },
           { l: isRTL ? 'הפסדים רצופים' : 'Consec. Loss', v: String(stats.maxConsecLosses), c: stats.maxConsecLosses >= 3 ? T.accent.red : T.accent.green, hint: '' },
-          { l: isRTL ? 'מגמה $' : 'Dollar Trend', v: riskData.dollarRiskTrend === 'increasing' ? '↑' : riskData.dollarRiskTrend === 'decreasing' ? '↓' : '→', c: riskData.dollarRiskTrend === 'increasing' ? T.accent.orange : T.accent.green, hint: riskData.dollarRiskTrend },
+          { l: isRTL ? 'מגמה $' : 'Dollar Trend', v: riskData.dollarRiskTrend === 'increasing' ? '↑' : riskData.dollarRiskTrend === 'decreasing' ? '↓' : '→', c: riskData.dollarRiskTrend === 'increasing' ? T.state.warn : T.accent.green, hint: riskData.dollarRiskTrend },
           { l: isRTL ? 'P&L היום' : 'Today P&L', v: `$${dailyPnlToday.toFixed(2)}`, c: dailyPnlToday >= 0 ? T.accent.green : T.accent.red, hint: '' },
         ].map((m, i) => (
           <div key={i} style={{
@@ -424,17 +425,17 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
       {showGaugesRow && (<>
       <SectionHeader T={T} isRTL={isRTL} label={isRTL ? 'מדים ומגבלות' : 'Gauges & Guardrails'} subtitle={isRTL ? 'איפה אתה עומד מול המגבלות שהצבת לעצמך — באדום זה אזור סכנה.' : 'Where you stand against your own preset limits — red means you are entering the danger zone.'} />
       <div style={{ display: 'flex', gap: 12, marginBottom: 4, flexWrap: 'wrap' }}>
-        <GlassCard T={T} glow={riskLevel === 'warning' ? 'rgba(245,158,11,0.12)' : T.accent.greenGlow} style={{ flex: 1, minWidth: 220, textAlign: 'center' }}>
+        <GlassCard T={T} glow={riskLevel === 'warning' ? 'rgba(245,158,11,0.12)' : `${infoColor(T)}22`} style={{ flex: 1, minWidth: 220, textAlign: 'center' }}>
           <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>{isRTL ? 'מד סיכון' : 'Risk Meter'}</div>
           <svg width="190" height="105" viewBox="0 0 200 110" style={{ margin: '0 auto', display: 'block' }}>
             <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke={T.border.subtle} strokeWidth="12" strokeLinecap="round" />
             <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="url(#rGadv)" strokeWidth="12" strokeLinecap="round" strokeDasharray={`${riskPct * 2.51} 251`} style={{ transition: 'stroke-dasharray 1s ease' }} />
-            <defs><linearGradient id="rGadv" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor={T.accent.green} /><stop offset="50%" stopColor={T.accent.orange} /><stop offset="100%" stopColor={T.accent.red} /></linearGradient></defs>
-            <text x="100" y="82" textAnchor="middle" fill={riskLevel === 'critical' ? T.accent.red : riskLevel === 'warning' ? T.accent.orange : T.accent.green} fontSize="26" fontWeight="700" fontFamily="'JetBrains Mono', monospace">{riskPct.toFixed(0)}%</text>
+            <defs><linearGradient id="rGadv" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor={T.accent.green} /><stop offset="50%" stopColor={T.state.warn} /><stop offset="100%" stopColor={T.accent.red} /></linearGradient></defs>
+            <text x="100" y="82" textAnchor="middle" fill={riskLevel === 'critical' ? T.accent.red : riskLevel === 'warning' ? T.state.warn : T.accent.green} fontSize="26" fontWeight="700" fontFamily="'JetBrains Mono', monospace">{riskPct.toFixed(0)}%</text>
             <text x="100" y="102" textAnchor="middle" fill={T.text.muted} fontSize="10">{riskLevel === 'critical' ? 'CRITICAL' : riskLevel === 'warning' ? 'WARNING' : 'SAFE'}</text>
           </svg>
         </GlassCard>
-        <ScoreGauge T={T} score={riskData.riskConsistencyScore} label={isRTL ? 'עקביות סיכון' : 'Risk Consistency'} color={T.accent.orange} description={isRTL ? 'עד כמה הסיכון שלך עקבי בין עסקאות' : 'How consistent your risk is across trades'} />
+        <ScoreGauge T={T} score={riskData.riskConsistencyScore} label={isRTL ? 'עקביות סיכון' : 'Risk Consistency'} color={T.state.warn} description={isRTL ? 'עד כמה הסיכון שלך עקבי בין עסקאות' : 'How consistent your risk is across trades'} />
         <GlassCard T={T} style={{ flex: 1, minWidth: 200 }}>
           <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>{isRTL ? 'גבולות סיכון' : 'Risk Guardrails'}</div>
           {[
@@ -461,11 +462,11 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
           <SectionHeader T={T} isRTL={isRTL} accent={T.accent.red} label={isRTL ? 'חריגות סיכון שזוהו' : 'Risk Anomalies Detected'} subtitle={isRTL ? 'דפוסי התנהגות חריגים שהמערכת זיהתה — מסחר נקמה, קפיצות סיכון ועוד.' : 'Behavioral patterns the system has flagged — revenge trades, risk spikes, and sizing drift.'} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 4 }}>
             {anomalies.map((a, i) => (
-              <GlassCard T={T} key={i} style={{ borderInlineStart: `3px solid ${a.severity === 'danger' ? T.accent.red : T.accent.orange}`, padding: 16 }}>
+              <GlassCard T={T} key={i} style={{ borderInlineStart: `3px solid ${a.severity === 'danger' ? T.accent.red : T.state.warn}`, padding: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                   <span style={{ fontSize: 18 }}>{a.icon}</span>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: a.severity === 'danger' ? T.accent.red : T.accent.orange }}>{a.title}</span>
-                  <TradingBadge color={a.severity === 'danger' ? T.accent.red : T.accent.orange}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: a.severity === 'danger' ? T.accent.red : T.state.warn }}>{a.title}</span>
+                  <TradingBadge color={a.severity === 'danger' ? T.accent.red : T.state.warn}>
                     {a.severity === 'danger' ? (isRTL ? 'קריטי' : 'Critical') : (isRTL ? 'אזהרה' : 'Warning')}
                   </TradingBadge>
                 </div>
@@ -498,10 +499,10 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
                 <Tooltip contentStyle={tt} cursor={false} />
                 <Bar dataKey="risk" radius={[3, 3, 0, 0]}>
                   {riskTimeline.map((d, i) => (
-                    <Cell key={i} fill={d.wasLoss ? T.accent.red : d.change > 50 ? T.accent.orange : T.accent.blue} fillOpacity={d.wasLoss ? 0.85 : 0.7} />
+                    <Cell key={i} fill={d.wasLoss ? T.accent.red : d.change > 50 ? T.state.warn : infoColor(T)} fillOpacity={d.wasLoss ? 0.85 : 0.7} />
                   ))}
                 </Bar>
-                <Line type="monotone" dataKey="riskPct" stroke={T.accent.cyan} strokeWidth={2.5} dot={{ fill: T.accent.cyan, r: 2 }} yAxisId={0} />
+                <Line type="monotone" dataKey="riskPct" stroke={infoColor(T)} strokeWidth={2.5} dot={{ fill: infoColor(T), r: 2 }} yAxisId={0} />
               </ComposedChart>
             </ResponsiveContainer>
           </LazyChart>
@@ -523,7 +524,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
                       <Tooltip contentStyle={tt} cursor={false} formatter={(v: number) => `${v.toFixed(1)}%`} />
                       <Bar dataKey="change" radius={[3, 3, 0, 0]}>
                         {changeData.map((d, i) => (
-                          <Cell key={i} fill={Math.abs(d.change) > 50 ? T.accent.red : Math.abs(d.change) > 20 ? T.accent.orange : T.accent.green} />
+                          <Cell key={i} fill={Math.abs(d.change) > 50 ? T.accent.red : Math.abs(d.change) > 20 ? T.state.warn : T.accent.green} />
                         ))}
                       </Bar>
                     </BarChart>
@@ -562,10 +563,10 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
             <tbody>
               {setupComparison.map((s, idx) => (
                 <tr key={s.coin} style={{ background: idx % 2 ? `${T.bg.tertiary}40` : 'transparent', transition: 'background 0.2s' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = `${T.accent.cyan}08`)}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = `${infoColor(T)}08`)}
                   onMouseLeave={(e) => (e.currentTarget.style.background = idx % 2 ? `${T.bg.tertiary}40` : 'transparent')}
                 >
-                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontWeight: 600, color: T.accent.cyan }}>{s.coin}</td>
+                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontWeight: 600, color: infoColor(T) }}>{s.coin}</td>
                   <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace" }}>{s.trades}</td>
                   <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace" }}>${s.avgRisk.toFixed(2)}</td>
                   <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace" }}>{s.avgRiskPct.toFixed(2)}%</td>
@@ -599,7 +600,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
                 <XAxis type="number" tick={{ fill: T.text.muted, fontSize: 10 }} />
                 <YAxis dataKey="coin" type="category" tick={{ fill: T.text.secondary, fontSize: 11 }} width={45} />
                 <Tooltip contentStyle={tt} cursor={false} />
-                <Bar dataKey="pct" radius={[0, 4, 4, 0]} fill={T.accent.blue} />
+                <Bar dataKey="pct" radius={[0, 4, 4, 0]} fill={infoColor(T)} />
               </BarChart>
             </ResponsiveContainer>
           </LazyChart>
@@ -633,8 +634,8 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
                   <XAxis dataKey="tradeId" tick={{ fill: T.text.muted, fontSize: 10 }} />
                   <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
                   <Tooltip contentStyle={tt} cursor={false} />
-                  <Bar dataKey="risk" fill={T.accent.blue} fillOpacity={0.6} radius={[3, 3, 0, 0]} />
-                  <Line type="monotone" dataKey="pctOfAccount" stroke={T.accent.orange} strokeWidth={2} dot={{ fill: T.accent.orange, r: 3 }} />
+                  <Bar dataKey="risk" fill={infoColor(T)} fillOpacity={0.6} radius={[3, 3, 0, 0]} />
+                  <Line type="monotone" dataKey="pctOfAccount" stroke={T.state.warn} strokeWidth={2} dot={{ fill: T.state.warn, r: 3 }} />
                 </ComposedChart>
               </ResponsiveContainer>
             </LazyChart>
@@ -686,7 +687,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
             text: isRTL ? `${recentConsecLosses} הפסדים רצופים ב-10 העסקאות האחרונות` : `${recentConsecLosses} losses in a row in your last 10 trades` });
         } else if (recentConsecLosses === 2) {
           severity += 20;
-          reasons.push({ icon: '🟠', weight: 20, color: T.accent.orange,
+          reasons.push({ icon: '🟠', weight: 20, color: T.state.warn,
             text: isRTL ? '2 הפסדים רצופים — היזהר מהשלישי' : '2 losses in a row — watch the third' });
         }
 
@@ -696,19 +697,19 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
             text: isRTL ? `נצרכו ${dailyConsumedPct.toFixed(0)}% מהמגבלה היומית (${limitStatus.dailyNegR.toFixed(2)}R / ${LIMITS_USED.day}R)` : `${dailyConsumedPct.toFixed(0)}% of daily limit used (${limitStatus.dailyNegR.toFixed(2)}R / ${LIMITS_USED.day}R)` });
         } else if (dailyConsumedPct >= 50) {
           severity += 15;
-          reasons.push({ icon: '📊', weight: 15, color: T.accent.orange,
+          reasons.push({ icon: '📊', weight: 15, color: T.state.warn,
             text: isRTL ? `נצרכו ${dailyConsumedPct.toFixed(0)}% מהמגבלה היומית` : `${dailyConsumedPct.toFixed(0)}% of daily limit used` });
         }
 
         if (weeklyConsumedPct >= 75) {
           severity += 20;
-          reasons.push({ icon: '🗓️', weight: 20, color: T.accent.orange,
+          reasons.push({ icon: '🗓️', weight: 20, color: T.state.warn,
             text: isRTL ? `נצרכו ${weeklyConsumedPct.toFixed(0)}% מהמגבלה השבועית` : `${weeklyConsumedPct.toFixed(0)}% of weekly limit used` });
         }
 
         if (minutesSinceLoss !== null && minutesSinceLoss < 15 && lastLoss) {
           severity += 15;
-          reasons.push({ icon: '⏱️', weight: 15, color: T.accent.orange,
+          reasons.push({ icon: '⏱️', weight: 15, color: T.state.warn,
             text: isRTL ? `הפסד אחרון לפני ${minutesSinceLoss} דק׳ — קח רגע לנשום` : `Last loss was ${minutesSinceLoss} min ago — take a breath` });
         }
 
@@ -720,7 +721,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
 
         severity = Math.min(100, severity);
         const state = severity >= 60 ? 'cool-off' : severity >= 30 ? 'caution' : 'clear';
-        const stateColor = state === 'cool-off' ? T.accent.red : state === 'caution' ? T.accent.orange : T.accent.green;
+        const stateColor = state === 'cool-off' ? T.accent.red : state === 'caution' ? T.state.warn : T.accent.green;
         const stateIcon = state === 'cool-off' ? '🛑' : state === 'caution' ? '⚠️' : '✅';
         const stateLabel = state === 'cool-off'
           ? (isRTL ? 'מומלץ: צינון' : 'Recommended: Cool Off')
@@ -757,7 +758,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
                   <div style={{
                     position: 'absolute', insetInlineStart: 0, top: 0, bottom: 0,
                     width: `${severity}%`,
-                    background: `linear-gradient(${isRTL ? '270deg' : '90deg'}, ${T.accent.green}, ${T.accent.orange}, ${T.accent.red})`,
+                    background: `linear-gradient(${isRTL ? '270deg' : '90deg'}, ${T.accent.green}, ${T.state.warn}, ${T.accent.red})`,
                     transition: 'width 0.6s cubic-bezier(0.16,1,0.3,1)',
                   }} />
                 </div>
@@ -816,7 +817,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
                   </div>
                   {riskData.warnings.map((w, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: T.text.secondary, padding: '3px 0' }}>
-                      <span style={{ color: T.accent.orange }}>⚠️</span>
+                      <span style={{ color: T.state.warn }}>⚠️</span>
                       <span>{w}</span>
                     </div>
                   ))}
@@ -837,7 +838,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
             {riskExplanations.slice(-10).reverse().map((exp, i) => (
               <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: `1px solid ${T.border.subtle}` }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 9, padding: '2px 6px', background: `${T.accent.cyan}12`, borderRadius: 4, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>#{exp.tradeId}</span>
+                  <span style={{ fontSize: 9, padding: '2px 6px', background: `${infoColor(T)}12`, borderRadius: 4, color: infoColor(T), fontFamily: "'JetBrains Mono', monospace" }}>#{exp.tradeId}</span>
                   <span style={{ fontSize: 12, color: T.text.secondary }}>{exp.reason}</span>
                 </div>
                 {exp.customNote && <span style={{ fontSize: 10, color: T.text.muted, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{exp.customNote}</span>}

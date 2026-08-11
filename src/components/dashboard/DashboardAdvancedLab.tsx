@@ -24,6 +24,7 @@ import {
 import { parseTradeDate } from '@/components/weekly-review/lib/week-key';
 import { useDisplayMode } from '@/lib/display-mode';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { infoColor, neutralRamp, severityColor, moneyColor, statusColor, qualityColor } from '@/lib/semantic-color';
 
 interface Props {
   T: TradingTheme;
@@ -43,13 +44,13 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
   const chartH = isMobile ? 240 : 220;
   const minCard = isMobile ? 9999 : 320; // force single column on mobile
   const heatCell = isMobile ? 18 : 16;
-  const accent = T.accent.cyan;
+  const accent = infoColor(T);
   const muted  = T.text.muted;
   const border = T.border.subtle;
   const fg     = T.text.primary;
   const win    = T.accent.green;
   const loss   = T.accent.red;
-  const gold   = T.accent.orange;
+  const gold   = T.state.warn;
 
   const tt = {
     background: T.bg.card, border: `1px solid ${T.border.medium}`,
