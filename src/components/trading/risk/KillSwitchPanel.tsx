@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { useKillSwitch, formatKillRemaining } from '@/hooks/use-kill-switch';
+import { infoColor } from '@/lib/semantic-color';
 
 interface Props { T: TradingTheme; isRTL: boolean; }
 
