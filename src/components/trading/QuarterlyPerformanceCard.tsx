@@ -93,7 +93,8 @@ export function QuarterlyPerformanceCard({ T, trades, isRTL }: Props) {
   const valueOf = (b: QBucket) => (isMoney ? b.totalPnl : b.totalR);
 
 
-  const QCOLORS: Record<QKey, string> = = neutralRamp(T, 4) as unknown as Record<QKey, string>;
+  const ramp = neutralRamp(T, 4);
+  const QCOLORS: Record<QKey, string> = { 1: ramp[0], 2: ramp[1], 3: ramp[2], 4: ramp[3] };
 
   // Donut math — proportional to |value| in the active display mode, so a
   // dominant quarter in either $ or R is always visible.
