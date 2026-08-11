@@ -113,3 +113,32 @@ export function isAlert(score: number, th: ScoreThresholds): boolean {
   const v = Number.isFinite(score) ? score : 0;
   return v < th.warn;
 }
+
+/**
+ * System status (connected / syncing / failed). Deliberately NOT the P&L
+ * palette: a connected exchange must not read like a winning trade.
+ */
+export function statusColor(T: TradingTheme, status: 'ok' | 'warn' | 'error' | 'idle'): string {
+  switch (status) {
+    case 'error': return T.state.loss;
+    case 'warn': return T.state.warn;
+    case 'ok': return infoColor(T);
+    default: return T.text.muted;
+  }
+}
+
+/**
+ * "Higher is better" quality metric (Sharpe, Sortino, expectancy quality).
+ * Healthy stays neutral — only degradation spends color.
+ */
+export function qualityColor(T: TradingTheme, v: number, ok: number, bad: number): string {
+  const x = Number.isFinite(v) ? v : 0;
+  if (x < bad) return T.state.loss;
+  if (x < ok) return T.state.warn;
+  return T.text.primary;
+}
+
+/** Glyph companion for `qualityColor` / `severityColor`. */
+export function levelGlyph(level: 'good' | 'warn' | 'bad'): string {
+  return level === 'bad' ? '▼' : level === 'warn' ? '▬' : '▲';
+}
