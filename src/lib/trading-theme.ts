@@ -245,7 +245,7 @@ const platinum: TradingTheme = {
     red: '#E11D48', redGlow: 'rgba(225,29,72,0.12)',
     green: '#0F9D8C', greenGlow: 'rgba(15,157,140,0.12)',
   },
-  text: { primary: '#111827', secondary: '#475569', muted: '#566171', dim: '#64748B' },
+  text: { primary: '#111827', secondary: '#475569', muted: '#566171', dim: '#5C6979' },
   border: { subtle: '#E4E9F2', medium: '#D8E0EC', active: 'rgba(99,102,241,0.45)' },
   radius: { sm: 6, md: 10, lg: 14, xl: 18 },
   shadow: {
