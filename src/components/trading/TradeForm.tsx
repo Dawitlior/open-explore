@@ -432,7 +432,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
   const helpText = {
     fontSize: 12, color: T.text.muted, marginTop: 6, lineHeight: 1.5,
   } as const;
-  const categoryColors: Record<AssetCategory, string> = { Crypto: infoColor(T), Stocks: T.accent.green, Forex: neutralRamp(T, 3)[1], Futures: T.state.warn, Options: infoColor(T) };
+  const categoryColors: Record<AssetCategory, string> = { Crypto: infoColor(T), Stocks: neutralRamp(T, 4)[2], Forex: neutralRamp(T, 3)[1], Futures: T.state.warn, Options: infoColor(T) };
 
   const sectionCard = {
     padding: isMobile ? 16 : 18,
@@ -465,7 +465,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
   const StepDot = ({ idx }: { idx: number }) => {
     const active = idx === step;
     const done = idx < step;
-    const color = done ? T.accent.green : active ? infoColor(T) : T.text.muted;
+    const color = done ? infoColor(T) : active ? infoColor(T) : T.text.muted;
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
         <div style={{
@@ -516,7 +516,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
             {[0,1,2].map(i => (
               <div key={i} style={{ display: 'contents' }}>
                 <StepDot idx={i} />
-                {i < 2 && <div style={{ height: 2, background: i < step ? T.accent.green : T.border.medium, flex: isMobile ? 1 : 0, minWidth: isMobile ? 0 : 24 }} />}
+                {i < 2 && <div style={{ height: 2, background: i < step ? infoColor(T) : T.border.medium, flex: isMobile ? 1 : 0, minWidth: isMobile ? 0 : 24 }} />}
               </div>
             ))}
           </div>
@@ -1054,7 +1054,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
             </button>
           ) : (
             <button onClick={handleSubmit} disabled={savingOpen}
-              style={{ padding: isMobile ? '13px 28px' : '12px 28px', background: `linear-gradient(135deg, ${isOpenPosition ? infoColor(T) : T.accent.green}, ${infoColor(T)})`, border: 'none', borderRadius: 12, color: T.bg.primary, fontWeight: 800, cursor: savingOpen ? 'wait' : 'pointer', fontSize: 14, opacity: savingOpen ? 0.7 : 1 }}>
+              style={{ padding: isMobile ? '13px 28px' : '12px 28px', background: `linear-gradient(135deg, ${infoColor(T)}, ${neutralRamp(T, 3)[1]})`, border: 'none', borderRadius: 12, color: T.bg.primary, fontWeight: 800, cursor: savingOpen ? 'wait' : 'pointer', fontSize: 14, opacity: savingOpen ? 0.7 : 1 }}>
               {savingOpen ? (isRTL ? 'שומר…' : 'Saving…') : (isOpenPosition ? (isRTL ? '◴ שמור פוזיציה פתוחה' : '◴ Save Open Position') : (isRTL ? '✓ שמור עסקה' : '✓ Save Trade'))}
             </button>
           )}

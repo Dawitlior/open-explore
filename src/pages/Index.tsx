@@ -732,7 +732,7 @@ const Index = () => {
         {/* Core metrics only */}
         <div style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
           <MetricCard T={T} label={isR ? (isRTL ? 'תוחלת נטו (R)' : 'Net R') : t.netPnl} value={isR ? `${stats.totalR >= 0 ? '+' : ''}${stats.totalR.toFixed(2)}R` : stats.totalPnl} color={(isR ? stats.totalR : stats.totalPnl) >= 0 ? infoColor(T) : T.accent.red} onInfoClick={() => handleExplainClick(t.netPnl, EXPLANATIONS.netPnl)} />
-          <MetricCard T={T} label={t.winRate} value={stats.winRate} suffix="%" color={T.accent.green} onInfoClick={() => handleExplainClick(t.winRate, EXPLANATIONS.winRate)} />
+          <MetricCard T={T} label={t.winRate} value={stats.winRate} suffix="%" color={scoreColor(T, stats.winRate, SCORE_THRESHOLDS.winRate)} onInfoClick={() => handleExplainClick(t.winRate, EXPLANATIONS.winRate)} />
           <MetricCard T={T} label={t.totalTrades} value={String(stats.totalTrades)} color={T.text.primary} />
           <MetricCard T={T} label={t.avgWin} value={isR ? `+${stats.avgWinR.toFixed(2)}R` : stats.avgWin} suffix={isR ? undefined : '$'} color={T.accent.green} />
           <MetricCard T={T} label={t.avgLoss} value={isR ? `-${stats.avgLossR.toFixed(2)}R` : stats.avgLoss} suffix={isR ? undefined : '$'} color={T.accent.red} />
@@ -768,7 +768,7 @@ const Index = () => {
         {/* Discipline indicator */}
         <GlassCard T={T} style={{ marginBottom: 18, textAlign: 'center', padding: 24 }}>
           <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>{t.disciplineScore}</div>
-          <div style={{ fontSize: 48, fontWeight: 700, color: stats.rulesFollowed >= 80 ? T.accent.green : stats.rulesFollowed >= 50 ? T.state.warn : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>
+          <div style={{ fontSize: 48, fontWeight: 700, color: stats.rulesFollowed >= 70 ? T.text.primary : stats.rulesFollowed >= 50 ? T.state.warn : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>
             {stats.rulesFollowed.toFixed(0)}%
           </div>
           <div style={{ fontSize: 12, color: T.text.secondary, marginTop: 8 }}>
@@ -812,7 +812,7 @@ const Index = () => {
               </div>
               <div>
                 <div style={{ fontSize: 9, color: T.text.muted }}>{isRTL ? 'משמעת חיה' : 'Live Discipline'}</div>
-                <div style={{ fontSize: 22, fontWeight: 700, color: stats.rulesFollowed > 80 ? T.accent.green : T.state.warn, fontFamily: "'JetBrains Mono', monospace" }}>{stats.rulesFollowed.toFixed(0)}%</div>
+                <div style={{ fontSize: 22, fontWeight: 700, color: stats.rulesFollowed > 70 ? T.text.primary : T.state.warn, fontFamily: "'JetBrains Mono', monospace" }}>{stats.rulesFollowed.toFixed(0)}%</div>
               </div>
             </div>
           </GlassCard>
@@ -823,8 +823,8 @@ const Index = () => {
             <svg width="100" height="55" viewBox="0 0 200 110" style={{ margin: '0 auto', display: 'block' }}>
               <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke={T.border.subtle} strokeWidth="12" strokeLinecap="round"/>
               <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="url(#rGlive)" strokeWidth="12" strokeLinecap="round" strokeDasharray={`${riskPct * 2.51} 251`} style={{ transition: 'stroke-dasharray 1s ease' }}/>
-              <defs><linearGradient id="rGlive" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor={T.accent.green}/><stop offset="50%" stopColor={T.state.warn}/><stop offset="100%" stopColor={T.accent.red}/></linearGradient></defs>
-              <text x="100" y="82" textAnchor="middle" fill={riskLevel === 'critical' ? T.accent.red : riskLevel === 'warning' ? T.state.warn : T.accent.green} fontSize="22" fontWeight="700" fontFamily="'JetBrains Mono', monospace">{riskPct.toFixed(0)}%</text>
+              <defs><linearGradient id="rGlive" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor={infoColor(T)}/><stop offset="50%" stopColor={T.state.warn}/><stop offset="100%" stopColor={T.accent.red}/></linearGradient></defs>
+              <text x="100" y="82" textAnchor="middle" fill={riskLevel === 'critical' ? T.accent.red : riskLevel === 'warning' ? T.state.warn : T.text.primary} fontSize="22" fontWeight="700" fontFamily="'JetBrains Mono', monospace">{riskPct.toFixed(0)}%</text>
             </svg>
           </GlassCard>
           )}

@@ -83,7 +83,7 @@ export const ResetModal = ({ T, t, isRTL, onConfirm, onClose }: ResetModalProps)
         <div style={{ fontSize: 48, marginBottom: 16, animation: step === 2 ? 'pulse 1s infinite' : undefined }}>
           {step === 0 ? '⚠️' : step === 1 ? '🔴' : step === 2 ? '🌀' : '✅'}
         </div>
-        <div style={{ fontSize: 20, fontWeight: 700, color: step === 0 ? T.state.warn : step === 3 ? T.accent.green : T.accent.red, marginBottom: 12, fontFamily: "'JetBrains Mono', monospace" }}>
+        <div style={{ fontSize: 20, fontWeight: 700, color: step === 0 ? T.state.warn : step === 3 ? infoColor(T) : T.accent.red, marginBottom: 12, fontFamily: "'JetBrains Mono', monospace" }}>
           {step === 0 ? t.resetAll
             : step === 1 ? (isRTL ? 'אזהרה אחרונה' : 'FINAL WARNING')
             : step === 2 ? (isRTL ? 'מוחק נתונים…' : 'WIPING DATA…')

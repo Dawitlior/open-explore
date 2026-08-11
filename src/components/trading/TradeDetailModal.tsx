@@ -394,7 +394,7 @@ export function TradeDetailModal({
                 <Tile label={t.stopLoss} value={trade.stopLoss == null ? '—' : trade.stopLoss} color={T.accent.red} accentBar={T.accent.red} />
                 <Tile label={t.exit} value={trade.exit} accentBar={outcomeColor} />
                 <Tile label={`${t.riskR} (R)`} value={`${r.toFixed(2)}R`} color={outcomeColor} />
-                <Tile label={t.deviation} value={trade.deviation ? `${trade.deviation.toFixed(4)}R` : '0'} color={trade.deviation > 0 ? T.state.warn : T.accent.green} />
+                <Tile label={t.deviation} value={trade.deviation ? `${trade.deviation.toFixed(4)}R` : '0'} color={trade.deviation > 0 ? T.state.warn : T.text.primary} />
                 <Tile label={t.leverage} value={`${trade.leverage}x`} />
                 <Tile label={`${t.balance} ($)`} value={`$${trade.balance.toFixed(2)}`} />
                 <Tile label={isRTL ? 'סטטוס' : 'Result'} value={trade.winLoss} color={resultColor} accentBar={resultColor} />

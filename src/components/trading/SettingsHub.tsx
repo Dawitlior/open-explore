@@ -597,7 +597,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                     }}>
                       {rows.map((item, i) => {
                         const Icon = item.icon;
-                        const palette = [infoColor(T), neutralRamp(T, 3)[1], T.state.warn, T.accent.green || infoColor(T)];
+                        const palette = neutralRamp(T, 4);
                         const tint = palette[i % palette.length];
                         return (
                           <button
@@ -786,8 +786,8 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, fontSize: 11, color: T.text.muted }}>
                         <span style={{ fontFamily: mono }}>ID: {auth.user?.id?.slice(0, 8)}…</span>
                         {created && <span>{t('הצטרף/ה', 'Joined')}: {created.toLocaleDateString(isRTL ? 'he-IL' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>}
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: T.accent.green }}>
-                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: T.accent.green }} />
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: infoColor(T) }}>
+                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: infoColor(T) }} />
                           {t('פעיל', 'Active')}
                         </span>
                       </div>
@@ -1194,9 +1194,9 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                           <span style={{
                             marginInlineStart: 8, fontSize: 9.5, fontWeight: 800, letterSpacing: 0.6,
                             padding: '2px 7px', borderRadius: 999,
-                            background: usdSaving ? `${infoColor(T)}22` : `${T.accent.green}18`,
-                            color: usdSaving ? infoColor(T) : T.accent.green,
-                            border: `1px solid ${usdSaving ? infoColor(T) : T.accent.green}55`,
+                            background: `${infoColor(T)}18`,
+                            color: infoColor(T),
+                            border: `1px solid ${infoColor(T)}55`,
                             fontFamily: mono, transition: 'all .2s',
                           }}>
                             {usdSaving ? t('מסנכרן…', 'SYNCING…') : t('חי', 'LIVE')}
@@ -2897,7 +2897,7 @@ function BenchmarkOptInCard(props: {
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
           width: '100%', padding: '14px 16px', borderRadius: T.radius.md,
-          background: T.bg.primary, border: `1px solid ${optedIn ? T.accent.green : T.border.subtle}`,
+          background: T.bg.primary, border: `1px solid ${optedIn ? infoColor(T) : T.border.subtle}`,
           cursor: loaded ? 'pointer' : 'wait', textAlign: isRTL ? 'right' : 'left' as const, fontFamily: sans,
           opacity: loaded ? 1 : 0.6,
         }}
@@ -2912,7 +2912,7 @@ function BenchmarkOptInCard(props: {
               : t('המדדים הקבוצתיים לא רואים את הנתונים שלך', 'Group benchmarks do not see your data')}
           </div>
         </div>
-        <div style={{ width: 40, height: 22, borderRadius: 11, position: 'relative', background: optedIn ? T.accent.green : T.bg.tertiary, transition: 'background .15s' }}>
+        <div style={{ width: 40, height: 22, borderRadius: 11, position: 'relative', background: optedIn ? infoColor(T) : T.bg.tertiary, transition: 'background .15s' }}>
           <div style={{ position: 'absolute', top: 2, insetInlineStart: optedIn ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'inset-inline-start .15s' }} />
         </div>
       </button>

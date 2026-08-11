@@ -41,7 +41,7 @@ interface AIInsightsPageProps {
 const getSevMeta = (t: Tr): Record<DeepSeverity, { label: string; color: (T: TradingTheme) => string; icon: string }> => ({
   critical: { label: t('דחוף','Critical'), color: (T) => T.accent.red, icon: '⛔' },
   warning:  { label: t('אזהרה','Warning'), color: (T) => T.state.warn, icon: '⚠️' },
-  strength: { label: t('חוזק','Strength'), color: (T) => T.accent.green, icon: '💎' },
+  strength: { label: t('חוזק','Strength'), color: (T) => infoColor(T), icon: '💎' },
   insight:  { label: t('תובנה','Insight'), color: (T) => infoColor(T), icon: '🔍' },
 });
 
@@ -288,10 +288,10 @@ const LowTradesPopup: React.FC<{ count: number; T: TradingTheme; isRTL: boolean;
         <div style={{ fontSize: 13, color: T.text.secondary, lineHeight: 1.7, marginBottom: 22 }}>
           {lines.slice(1).map((l, i) => <div key={i} style={{ marginBottom: 6 }}>{l}</div>)}
         </div>
-        <div style={{ padding: '10px 16px', marginBottom: 20, borderRadius: 12, background: `${T.accent.green}10`, border: `1px solid ${T.accent.green}30`, fontSize: 12, color: T.accent.green, fontWeight: 600 }}>
+        <div style={{ padding: '10px 16px', marginBottom: 20, borderRadius: 12, background: `${infoColor(T)}10`, border: `1px solid ${infoColor(T)}30`, fontSize: 12, color: infoColor(T), fontWeight: 600 }}>
           {isRTL ? `יש לך ${count} עסקאות · נדרשות לפחות 10` : `You have ${count} trades · 10 minimum required`}
         </div>
-        <button onClick={onClose} style={{ width: '100%', padding: '13px 16px', borderRadius: 12, border: 'none', background: `linear-gradient(135deg, ${infoColor(T)}, ${T.accent.green})`, color: T.bg.primary, fontWeight: 800, fontSize: 14, cursor: 'pointer', letterSpacing: '0.04em', boxShadow: `0 10px 24px ${infoColor(T)}40` }}>
+        <button onClick={onClose} style={{ width: '100%', padding: '13px 16px', borderRadius: 12, border: 'none', background: `linear-gradient(135deg, ${infoColor(T)}, ${neutralRamp(T, 3)[1]})`, color: T.bg.primary, fontWeight: 800, fontSize: 14, cursor: 'pointer', letterSpacing: '0.04em', boxShadow: `0 10px 24px ${infoColor(T)}40` }}>
           {isRTL ? 'יאלה, חזרתי לשוק 🚀' : 'Got it, back to the market 🚀'}
         </button>
       </motion.div>
@@ -794,7 +794,7 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
                 {[
                   { label: t('אדג׳',t('אדג\'','Edge')), value: analysis.dna.edge, color: infoColor(T) },
-                  { label: t('משמעת','Discipline'), value: analysis.dna.discipline, color: T.accent.green },
+                  { label: t('משמעת','Discipline'), value: analysis.dna.discipline, color: infoColor(T) },
                   { label: t('עקביות','Consistency'), value: analysis.dna.consistency, color: infoColor(T) },
                   { label: t('התנהגות','Behavior'), value: analysis.dna.behaviour, color: neutralRamp(T, 3)[1] },
                 ].map((s, i) => (

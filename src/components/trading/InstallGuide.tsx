@@ -175,8 +175,8 @@ export function InstallGuide({ T, t, isRTL }: Props) {
         {installed && (
           <div style={{
             padding: 14, borderRadius: 12, marginBottom: 14,
-            background: `${T.accent.green}15`, border: `1px solid ${T.accent.green}40`,
-            color: T.accent.green, fontWeight: 700, fontSize: 13,
+            background: `${infoColor(T)}15`, border: `1px solid ${infoColor(T)}40`,
+            color: infoColor(T), fontWeight: 700, fontSize: 13,
             display: 'flex', alignItems: 'center', gap: 10,
           }}>
             <Check size={18} /> {t('אורקה כבר מותקנת על המכשיר הזה ✓', 'Orca is already installed on this device ✓')}
@@ -342,7 +342,7 @@ export function InstallGuide({ T, t, isRTL }: Props) {
         {/* Shortcut install button */}
         {canPrompt && !installed && (
           <div style={{ marginTop: 16, padding: 14, borderRadius: 14,
-            background: `linear-gradient(135deg, ${infoColor(T)}15, ${T.accent.green}10)`,
+            background: `linear-gradient(135deg, ${infoColor(T)}15, ${neutralRamp(T, 3)[1]}10)`,
             border: `1px solid ${infoColor(T)}40`,
           }}>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -359,7 +359,7 @@ export function InstallGuide({ T, t, isRTL }: Props) {
                 onClick={handleInstallNow}
                 style={{
                   padding: '10px 18px', borderRadius: 12,
-                  background: `linear-gradient(135deg, ${infoColor(T)}, ${T.accent.green})`,
+                  background: `linear-gradient(135deg, ${infoColor(T)}, ${neutralRamp(T, 3)[1]})`,
                   border: 'none', color: T.bg.primary, fontWeight: 800, fontSize: 13, cursor: 'pointer',
                   boxShadow: `0 8px 22px ${infoColor(T)}40`, fontFamily: 'inherit',
                   display: 'flex', alignItems: 'center', gap: 8,
@@ -399,7 +399,7 @@ export function InstallGuide({ T, t, isRTL }: Props) {
                 onClick={handleInstallNow}
                 style={{
                   width: '100%', padding: '14px 18px', borderRadius: 12,
-                  background: `linear-gradient(135deg, ${infoColor(T)}, ${T.accent.green})`,
+                  background: `linear-gradient(135deg, ${infoColor(T)}, ${neutralRamp(T, 3)[1]})`,
                   border: 'none', color: T.bg.primary, fontWeight: 800, fontSize: 14, cursor: 'pointer',
                   boxShadow: `0 10px 26px ${infoColor(T)}45`, fontFamily: 'inherit',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
