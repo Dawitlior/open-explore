@@ -181,7 +181,12 @@ const blue: TradingTheme = {
   isLight: false,
   surface: darkSurface('#131c30', '#0B1120', '#0F1728'),
   state: darkState('#34D399', '#F87171', '#F59E0B', '#38BDF8', '#64748B'),
-  chart: darkChart('#34D399', '#F87171', ['#38BDF8', '#34D399', '#F59E0B', '#A78BFA', '#F87171', '#2563EB', '#7DD3FC', '#94A3B8']),
+  // Single-hue sky ladder (desaturated) + cool neutrals — series separate by
+  // lightness, never by decorative hue. Green/red stay reserved for P&L.
+  chart: darkChart('#34D399', '#F87171', [
+    '#4A9FD4', '#77BCE4', '#A6D4F0', '#CBE6F7',
+    '#5B7186', '#8296A8', '#B0BECB', '#3A4A5A',
+  ]),
 
 
 
