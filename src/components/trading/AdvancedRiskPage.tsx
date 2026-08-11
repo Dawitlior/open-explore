@@ -73,7 +73,7 @@ const SectionHeader = ({ T, label, accent, isRTL, subtitle }: { T: TradingTheme;
 const LimitBar = ({ T, label, current, limit, isRTL }: { T: TradingTheme; label: string; current: number; limit: number; isRTL: boolean }) => {
   // current is negative (e.g. -1.5R), limit is negative (e.g. -2R)
   const pct = Math.min(100, Math.max(0, (Math.abs(current) / Math.abs(limit)) * 100));
-  const color = pct >= 100 ? T.accent.red : pct >= 75 ? T.state.warn : pct >= 50 ? T.state.warn : T.accent.green;
+  const color = pct >= 100 ? T.accent.red : pct >= 50 ? T.state.warn : T.text.primary;
   return (
     <div style={{ flex: 1, minWidth: 180 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 10 }}>
@@ -296,7 +296,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
 
   const riskLevel = stats.maxConsecLosses >= 4 ? 'critical' : stats.maxConsecLosses >= 3 ? 'warning' : 'safe';
   const riskPct = Math.min(100, (stats.maxDrawdown / 10) * 100);
-  const healthColor = riskHealth >= 75 ? T.accent.green : riskHealth >= 50 ? T.state.warn : T.accent.red;
+  const healthColor = riskHealth >= 75 ? infoColor(T) : riskHealth >= 50 ? T.state.warn : T.accent.red;
   const healthLabel = riskHealth >= 75 ? (isRTL ? 'בריא' : 'HEALTHY') : riskHealth >= 50 ? (isRTL ? 'מתון' : 'MODERATE') : (isRTL ? 'קריטי' : 'CRITICAL');
 
   return (
@@ -401,11 +401,11 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: 8, marginBottom: 4 }}>
         {[
           { l: isRTL ? 'סיכון ממוצע' : 'Avg Risk', v: `${riskData.avgRiskPct.toFixed(2)}%`, c: infoColor(T), hint: `$${(riskData.riskGrowthEvolution.reduce((s,e)=>s+e.risk,0)/(riskData.riskGrowthEvolution.length||1)).toFixed(2)}` },
-          { l: isRTL ? 'סחיפת סיכון' : 'Risk Drift', v: `${riskData.riskDrift.toFixed(2)}%`, c: riskData.riskDrift > 0.5 ? T.state.warn : T.accent.green, hint: isRTL ? 'מהבסיס' : 'from baseline' },
-          { l: isRTL ? 'נסיגה מקס' : 'Max DD', v: `${stats.maxDrawdown.toFixed(1)}%`, c: stats.maxDrawdown > 5 ? T.accent.red : T.accent.green, hint: '' },
-          { l: isRTL ? 'הפסדים רצופים' : 'Consec. Loss', v: String(stats.maxConsecLosses), c: stats.maxConsecLosses >= 3 ? T.accent.red : T.accent.green, hint: '' },
-          { l: isRTL ? 'מגמה $' : 'Dollar Trend', v: riskData.dollarRiskTrend === 'increasing' ? '↑' : riskData.dollarRiskTrend === 'decreasing' ? '↓' : '→', c: riskData.dollarRiskTrend === 'increasing' ? T.state.warn : T.accent.green, hint: riskData.dollarRiskTrend },
-          { l: isRTL ? 'P&L היום' : 'Today P&L', v: `$${dailyPnlToday.toFixed(2)}`, c: dailyPnlToday >= 0 ? T.accent.green : T.accent.red, hint: '' },
+          { l: isRTL ? 'סחיפת סיכון' : 'Risk Drift', v: `${riskData.riskDrift.toFixed(2)}%`, c: riskData.riskDrift > 0.5 ? T.state.warn : T.text.primary, hint: isRTL ? 'מהבסיס' : 'from baseline' },
+          { l: isRTL ? 'נסיגה מקס' : 'Max DD', v: `${stats.maxDrawdown.toFixed(1)}%`, c: severityColor(T, stats.maxDrawdown, 3, 5), hint: '' },
+          { l: isRTL ? 'הפסדים רצופים' : 'Consec. Loss', v: String(stats.maxConsecLosses), c: severityColor(T, stats.maxConsecLosses, 2, 3), hint: '' },
+          { l: isRTL ? 'מגמה $' : 'Dollar Trend', v: riskData.dollarRiskTrend === 'increasing' ? '↑' : riskData.dollarRiskTrend === 'decreasing' ? '↓' : '→', c: riskData.dollarRiskTrend === 'increasing' ? T.state.warn : T.text.primary, hint: riskData.dollarRiskTrend },
+          { l: isRTL ? 'P&L היום' : 'Today P&L', v: `$${dailyPnlToday.toFixed(2)}`, c: moneyColor(T, dailyPnlToday), hint: '' },
         ].map((m, i) => (
           <div key={i} style={{
             background: T.bg.card, border: `1px solid ${T.border.subtle}`, borderRadius: 10, padding: 12,
@@ -430,8 +430,8 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
           <svg width="190" height="105" viewBox="0 0 200 110" style={{ margin: '0 auto', display: 'block' }}>
             <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke={T.border.subtle} strokeWidth="12" strokeLinecap="round" />
             <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="url(#rGadv)" strokeWidth="12" strokeLinecap="round" strokeDasharray={`${riskPct * 2.51} 251`} style={{ transition: 'stroke-dasharray 1s ease' }} />
-            <defs><linearGradient id="rGadv" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor={T.accent.green} /><stop offset="50%" stopColor={T.state.warn} /><stop offset="100%" stopColor={T.accent.red} /></linearGradient></defs>
-            <text x="100" y="82" textAnchor="middle" fill={riskLevel === 'critical' ? T.accent.red : riskLevel === 'warning' ? T.state.warn : T.accent.green} fontSize="26" fontWeight="700" fontFamily="'JetBrains Mono', monospace">{riskPct.toFixed(0)}%</text>
+            <defs><linearGradient id="rGadv" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor={infoColor(T)} /><stop offset="50%" stopColor={T.state.warn} /><stop offset="100%" stopColor={T.accent.red} /></linearGradient></defs>
+            <text x="100" y="82" textAnchor="middle" fill={riskLevel === 'critical' ? T.accent.red : riskLevel === 'warning' ? T.state.warn : T.text.primary} fontSize="26" fontWeight="700" fontFamily="'JetBrains Mono', monospace">{riskPct.toFixed(0)}%</text>
             <text x="100" y="102" textAnchor="middle" fill={T.text.muted} fontSize="10">{riskLevel === 'critical' ? 'CRITICAL' : riskLevel === 'warning' ? 'WARNING' : 'SAFE'}</text>
           </svg>
         </GlassCard>
@@ -448,7 +448,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
               <span style={{ color: T.text.muted, fontSize: 11 }}>{r.l}</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ fontSize: 11, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>{r.cur}/{r.val}</span>
-                <div style={{ width: 7, height: 7, borderRadius: '50%', background: r.ok ? T.accent.green : T.accent.red, boxShadow: r.ok ? `0 0 6px ${T.accent.green}` : `0 0 6px ${T.accent.red}` }} />
+                <div style={{ width: 7, height: 7, borderRadius: '50%', background: r.ok ? infoColor(T) : T.accent.red, boxShadow: r.ok ? 'none' : `0 0 6px ${T.accent.red}` }} />
               </div>
             </div>
           ))}
@@ -524,7 +524,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
                       <Tooltip contentStyle={tt} cursor={false} formatter={(v: number) => `${v.toFixed(1)}%`} />
                       <Bar dataKey="change" radius={[3, 3, 0, 0]}>
                         {changeData.map((d, i) => (
-                          <Cell key={i} fill={Math.abs(d.change) > 50 ? T.accent.red : Math.abs(d.change) > 20 ? T.state.warn : T.accent.green} />
+                          <Cell key={i} fill={Math.abs(d.change) > 50 ? T.accent.red : Math.abs(d.change) > 20 ? T.state.warn : infoColor(T)} />
                         ))}
                       </Bar>
                     </BarChart>
@@ -570,7 +570,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
                   <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace" }}>{s.trades}</td>
                   <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace" }}>${s.avgRisk.toFixed(2)}</td>
                   <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace" }}>{s.avgRiskPct.toFixed(2)}%</td>
-                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontWeight: 600, color: s.winRate >= 50 ? T.accent.green : T.accent.red }}>{s.winRate.toFixed(0)}%</td>
+                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontWeight: 600, color: s.winRate >= 50 ? T.text.primary : T.state.warn }}>{s.winRate.toFixed(0)}%</td>
                   
                 </tr>
               ))}
@@ -721,7 +721,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
 
         severity = Math.min(100, severity);
         const state = severity >= 60 ? 'cool-off' : severity >= 30 ? 'caution' : 'clear';
-        const stateColor = state === 'cool-off' ? T.accent.red : state === 'caution' ? T.state.warn : T.accent.green;
+        const stateColor = state === 'cool-off' ? T.accent.red : state === 'caution' ? T.state.warn : infoColor(T);
         const stateIcon = state === 'cool-off' ? '🛑' : state === 'caution' ? '⚠️' : '✅';
         const stateLabel = state === 'cool-off'
           ? (isRTL ? 'מומלץ: צינון' : 'Recommended: Cool Off')
@@ -758,7 +758,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
                   <div style={{
                     position: 'absolute', insetInlineStart: 0, top: 0, bottom: 0,
                     width: `${severity}%`,
-                    background: `linear-gradient(${isRTL ? '270deg' : '90deg'}, ${T.accent.green}, ${T.state.warn}, ${T.accent.red})`,
+                    background: `linear-gradient(${isRTL ? '270deg' : '90deg'}, ${infoColor(T)}, ${T.state.warn}, ${T.accent.red})`,
                     transition: 'width 0.6s cubic-bezier(0.16,1,0.3,1)',
                   }} />
                 </div>
@@ -783,7 +783,7 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
               {positiveNote ? (
                 <div style={{
                   padding: 14, borderRadius: 10, textAlign: 'center',
-                  background: `${T.accent.green}08`, border: `1px dashed ${T.accent.green}30`,
+                  background: `${infoColor(T)}08`, border: `1px dashed ${infoColor(T)}30`,
                   color: T.text.secondary, fontSize: 12, lineHeight: 1.6,
                 }}>
                   ✨ {positiveNote}

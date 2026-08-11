@@ -108,7 +108,7 @@ export function UltimateAnalyticsDeck({ T, trades, onExplainClick, registryAllow
     return { pairs, rho: +rho.toFixed(3) };
   }, [trades, isMoney]);
 
-  const rhoColor = Math.abs(lag.rho) > 0.3 ? T.accent.red : Math.abs(lag.rho) > 0.15 ? T.state.warn : T.accent.green;
+  const rhoColor = Math.abs(lag.rho) > 0.3 ? T.accent.red : Math.abs(lag.rho) > 0.15 ? T.state.warn : T.text.primary;
 
   // ── 2. Inter-trade Interval (histogram, hours) ──────────────
   const intervals = useMemo(() => {
@@ -132,7 +132,7 @@ export function UltimateAnalyticsDeck({ T, trades, onExplainClick, registryAllow
     return { bins, median };
   }, [trades]);
 
-  const medianColor = intervals.median < 1 ? T.accent.red : intervals.median < 4 ? T.state.warn : T.accent.green;
+  const medianColor = intervals.median < 1 ? T.accent.red : intervals.median < 4 ? T.state.warn : T.text.primary;
 
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 12, marginTop: 16, marginBottom: 28 }}>
@@ -219,7 +219,7 @@ export function UltimateRiskDeck({ T, trades, privacyMode, onExplainClick, regis
     return { full: +full.toFixed(2), half: +(full / 2).toFixed(2), p: +(p * 100).toFixed(1), b: +b.toFixed(2) };
   }, [trades]);
 
-  const kellyColor = kelly.full < 0 ? T.accent.red : kelly.full < 2 ? T.state.warn : T.accent.green;
+  const kellyColor = kelly.full < 0 ? T.accent.red : kelly.full < 2 ? T.state.warn : T.text.primary;
 
   // ── 4. Capital Efficiency (rolling mean R / σ R, w=20) ────
   const capEff = useMemo(() => {
@@ -315,7 +315,7 @@ export function UltimateRiskDeck({ T, trades, privacyMode, onExplainClick, regis
                   <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
                   <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
                   <ReferenceLine y={0} stroke={T.text.muted} />
-                  <ReferenceLine y={0.5} stroke={T.accent.green} strokeDasharray="4 4" label={{ value: t('יעיל', 'efficient'), fontSize: 9, fill: T.accent.green, position: 'insideBottomRight' }} />
+                  <ReferenceLine y={0.5} stroke={T.border.medium} strokeDasharray="4 4" label={{ value: t('יעיל', 'efficient'), fontSize: 9, fill: T.text.muted, position: 'insideBottomRight' }} />
                   <Tooltip contentStyle={tt} />
                   <Line type="monotone" dataKey="eff" stroke={infoColor(T)} strokeWidth={2.2} dot={false} />
                 </LineChart>
@@ -334,8 +334,8 @@ export function UltimateRiskDeck({ T, trades, privacyMode, onExplainClick, regis
                 <ComposedChart data={marSeries}>
                   <defs>
                     <linearGradient id="marFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={T.accent.green} stopOpacity={0.4} />
-                      <stop offset="100%" stopColor={T.accent.green} stopOpacity={0.03} />
+                      <stop offset="0%" stopColor={infoColor(T)} stopOpacity={0.4} />
+                      <stop offset="100%" stopColor={infoColor(T)} stopOpacity={0.03} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
@@ -343,7 +343,7 @@ export function UltimateRiskDeck({ T, trades, privacyMode, onExplainClick, regis
                   <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
                   <ReferenceLine y={1} stroke={T.state.warn} strokeDasharray="4 4" label={{ value: 'MAR=1', fontSize: 9, fill: T.state.warn, position: 'insideTopRight' }} />
                   <Tooltip contentStyle={tt} formatter={(v: number) => `${v}x`} />
-                  <Area type="monotone" dataKey="mar" stroke={T.accent.green} fill="url(#marFill)" strokeWidth={2.2} />
+                  <Area type="monotone" dataKey="mar" stroke={infoColor(T)} fill="url(#marFill)" strokeWidth={2.2} />
                 </ComposedChart>
               </ResponsiveContainer>
             ) : <EmptyNote T={T}>{t('צריך לפחות 3 עסקאות.', 'Need at least 3 trades.')}</EmptyNote>}

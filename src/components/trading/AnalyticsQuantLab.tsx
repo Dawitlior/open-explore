@@ -405,15 +405,15 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
           <AreaChart data={dailyEq}>
             <defs>
               <linearGradient id="dEq" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={T.accent.green} stopOpacity={0.45} />
-                <stop offset="100%" stopColor={T.accent.green} stopOpacity={0.04} />
+                <stop offset="0%" stopColor={infoColor(T)} stopOpacity={0.45} />
+                <stop offset="100%" stopColor={infoColor(T)} stopOpacity={0.04} />
               </linearGradient>
             </defs>
             <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
             <XAxis dataKey="day" tick={{ fill: T.text.muted, fontSize: 9 }} />
             <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(v: number) => fmtAxis(v)} />
             <Tooltip contentStyle={tt} formatter={(v: number) => <PV>{fmtVal(v)}</PV>} />
-            <Area type="stepAfter" dataKey={isMoney ? 'cum' : 'cumR'} stroke={T.accent.green} fill="url(#dEq)" strokeWidth={2.2} />
+            <Area type="stepAfter" dataKey={isMoney ? 'cum' : 'cumR'} stroke={infoColor(T)} fill="url(#dEq)" strokeWidth={2.2} />
           </AreaChart>
         </ResponsiveContainer>
       </GlassCard>
