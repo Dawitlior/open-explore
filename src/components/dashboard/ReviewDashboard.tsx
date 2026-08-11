@@ -4,7 +4,7 @@ import { lazy, Suspense, useMemo, useState, type CSSProperties } from 'react';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { Trade } from '@/data/trades';
 import { MetricCard, ScoreGauge } from '@/components/trading/TradingUI';
-import { SCORE_THRESHOLDS, gaugeColor, scoreGlyph, isAlert, scoreColor, severityColor, moneyColor } from '@/lib/semantic-color';
+import { SCORE_THRESHOLDS, gaugeColor, scoreGlyph, isAlert, scoreColor, severityColor, moneyColor, infoColor, neutralRamp } from '@/lib/semantic-color';
 import { AdaptiveExpectancyCard, AdaptiveQuickStats } from '@/components/trading/AdaptiveKpiCards';
 import { ChartWrapper, EXPLANATIONS, type ChartExplanation } from '@/components/trading/ChartWrapper';
 import { FeatureHint } from '@/components/trading/FeatureHint';
