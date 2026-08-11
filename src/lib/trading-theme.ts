@@ -292,7 +292,8 @@ const platinum: TradingTheme = {
     neutral: '#8494AB',
 
     fillOpacity: 0.55,
-    series: ['#6366F1', '#0F9D8C', '#F59E0B', '#8B5CF6', '#E11D48', '#0EA5E9', '#84CC16', '#64748B'],
+    // Single-hue indigo ladder (desaturated) + cool neutrals.
+    series: ['#5C63C4', '#828AD8', '#A7ADE4', '#C8CCEE', '#6B7688', '#8E99A9', '#B3BCC8', '#4A5464'],
     heat: ['#F1F4FA', '#DBE4F5', '#B9C9F0', '#8C9FE8', '#6366F1'],
   },
   cssVars: {
