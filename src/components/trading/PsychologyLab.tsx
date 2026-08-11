@@ -249,8 +249,8 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
             <AreaChart data={rar}>
               <defs>
                 <linearGradient id="rarG" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={T.text.primary} stopOpacity={0.45} />
-                  <stop offset="100%" stopColor={T.text.primary} stopOpacity={0.04} />
+                  <stop offset="0%" stopColor={infoColor(T)} stopOpacity={0.45} />
+                  <stop offset="100%" stopColor={infoColor(T)} stopOpacity={0.04} />
                 </linearGradient>
               </defs>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
@@ -258,7 +258,7 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
               <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} domain={[0, 100]} unit="%" />
               <Tooltip contentStyle={tt} />
               <ReferenceLine y={80} stroke={T.state.warn} strokeDasharray="3 3" />
-              <Area type="monotone" dataKey="rar" stroke={T.text.primary} fill="url(#rarG)" strokeWidth={2.2} />
+              <Area type="monotone" dataKey="rar" stroke={infoColor(T)} fill="url(#rarG)" strokeWidth={2.2} />
             </AreaChart>
           </ResponsiveContainer>
         </GlassCard>
@@ -373,7 +373,7 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
                 />
                 <ReferenceLine y={0} stroke={T.text.muted} />
                 <Bar dataKey="deltaPct" radius={[4, 4, 0, 0]} minPointSize={3}>
-                  {postWin.map((d, i) => <Cell key={i} fill={d.deltaPct > 15 ? T.accent.red : d.deltaPct > 0 ? T.state.warn : T.accent.green} />)}
+                  {postWin.map((d, i) => <Cell key={i} fill={d.deltaPct > 15 ? T.accent.red : d.deltaPct > 0 ? T.state.warn : T.text.primary} />)}
                 </Bar>
                 <Line type="monotone" dataKey="deltaPct" stroke={T.state.warn} strokeWidth={1.8} dot={{ r: 3 }} activeDot={{ r: 5 }} />
               </ComposedChart>
