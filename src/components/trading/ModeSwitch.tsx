@@ -338,7 +338,7 @@ export const ModeSwitch = ({ T, isRTL }: ModeSwitchProps) => {
                   <div style={{ fontSize: 12, color: SURF.text2, lineHeight: 1.6, marginBottom: 4 }}>
                     {isRTL ? meta.taglineHe : meta.tagline}
                   </div>
-                  <div style={{ fontSize: 11, color: '#94a3b8', lineHeight: 1.6, marginBottom: 18, padding: '0 8px' }}>
+                  <div style={{ fontSize: 11, color: SURF.text3, lineHeight: 1.6, marginBottom: 18, padding: '0 8px' }}>
                     {isRTL ? meta.descHe : meta.desc}
                   </div>
 

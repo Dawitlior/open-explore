@@ -267,7 +267,7 @@ export function UpgradeModal() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.28, duration: 0.4 }}
-                  style={{ color: '#94a3b8', fontSize: 13, margin: 0 }}
+                  style={{ color: SURF.text2, fontSize: 13, margin: 0 }}
                 >
                   {subtitle}
                 </motion.p>
@@ -341,7 +341,7 @@ export function UpgradeModal() {
                           {tier.name[isHe ? 'he' : 'en']}
                         </h3>
                       </div>
-                      <p style={{ margin: 0, marginBottom: 10, fontSize: 11, color: '#94a3b8' }}>
+                      <p style={{ margin: 0, marginBottom: 10, fontSize: 11, color: SURF.text2 }}>
                         {tier.tagline[isHe ? 'he' : 'en']}
                       </p>
                       <div style={{

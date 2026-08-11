@@ -47,7 +47,7 @@ export const RequireAdmin = ({ children, fallback }: Props) => {
             display: "grid",
             placeItems: "center",
             background: "#061326",
-            color: "#94a3b8",
+            color: "var(--orca-text-muted, #94a3b8)",
             fontFamily: "monospace",
             padding: 24,
             textAlign: "center",

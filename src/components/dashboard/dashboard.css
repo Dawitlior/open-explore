@@ -471,3 +471,28 @@ html[dir="ltr"] .dash-kpi-grid .orca-metric-sub {
 @media (max-width: 768px) {
   .dash-eq-metrics { padding-inline: 0; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   DESKTOP SPATIAL RHYTHM (≥768px only — mobile is untouched)
+   One grid step (12px) and one chart inset across every desktop grid,
+   so the eye's scan distance between cards is predictable.
+   ═══════════════════════════════════════════════════════════════ */
+@media (min-width: 768px) {
+  .dash-root {
+    --orca-grid-gap: 12px;
+    --orca-chart-inset: 12px;
+  }
+  .dash-kpi-grid,
+  .dash-score-grid,
+  .dash-charts-2,
+  .dash-charts-3,
+  .dash-charts-alpha { gap: var(--orca-grid-gap, 12px); }
+
+  [data-advanced-lab] > div[style*="grid"] { gap: var(--orca-grid-gap, 12px) !important; }
+
+  /* Title → plot → caption rhythm inside chart cards */
+  .dash-chart-card > * + .recharts-responsive-container,
+  .dash-chart-card .recharts-responsive-container + * {
+    margin-top: var(--orca-chart-inset, 12px);
+  }
+}
