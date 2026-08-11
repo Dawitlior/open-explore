@@ -17,6 +17,7 @@ import type { TradingTheme } from '@/lib/trading-theme';
 import { getEffectiveR } from '@/lib/r-multiple';
 import { hasStrictR } from '@/lib/display-mode';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { qualityColor, severityColor, infoColor, statusColor, neutralRamp, moneyColor } from '@/lib/semantic-color';
 
 interface Props {
   T: TradingTheme;
@@ -129,9 +130,9 @@ export const PnLDistributionHistogram = ({ T, trades, isMoney, isRTL, tt }: Prop
     padding: '3px 8px',
     fontSize: 10,
     borderRadius: 6,
-    border: `1px solid ${active ? T.accent.blue || '#60a5fa' : T.border.subtle}`,
-    background: active ? `${T.accent.blue || '#60a5fa'}22` : 'transparent',
-    color: active ? (T.accent.blue || '#60a5fa') : T.text.muted,
+    border: `1px solid ${active ? infoColor(T) : T.border.subtle}`,
+    background: active ? `${infoColor(T)}22` : 'transparent',
+    color: active ? (infoColor(T)) : T.text.muted,
     cursor: 'pointer',
     fontWeight: 600,
     letterSpacing: '0.04em',
@@ -212,7 +213,7 @@ export const PnLDistributionHistogram = ({ T, trades, isMoney, isRTL, tt }: Prop
               // keeps `monotone` which is tighter and reads cleaner small.
               type={isMobile ? 'monotone' : 'basis'}
               dataKey="ma"
-              stroke={T.accent.blue || '#60a5fa'}
+              stroke={infoColor(T)}
               strokeWidth={isMobile ? 2 : 2.5}
               dot={false}
               isAnimationActive={false}

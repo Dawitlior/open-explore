@@ -3,6 +3,7 @@ import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { useVisibleTrades } from '@/lib/display-mode-format';
 import { buildCorrelationMatrix, effectiveIndependentBets } from '@/lib/risk/correlation';
+import { qualityColor, severityColor, infoColor, statusColor, neutralRamp, moneyColor } from '@/lib/semantic-color';
 
 interface Props { T: TradingTheme; isRTL: boolean; trades: Trade[]; }
 
@@ -49,7 +50,7 @@ export const CorrelationMatrix = ({ T, isRTL, trades: all }: Props) => {
           {isRTL ? 'מטריצת מתאם בין נכסים' : 'Cross-Asset Correlation'}
         </div>
         <div style={{
-          fontSize: 10, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace",
+          fontSize: 10, color: T.text.secondary, fontFamily: "'JetBrains Mono', monospace",
         }}>
           {isRTL ? `הימורים בלתי-תלויים ≈ ${nEff.toFixed(1)}` : `effective bets ≈ ${nEff.toFixed(1)}`}
         </div>
@@ -86,9 +87,9 @@ export const CorrelationMatrix = ({ T, isRTL, trades: all }: Props) => {
               const abs = Math.abs(v);
               const color = i === j
                 ? T.border.medium
-                : abs >= 0.7 ? T.accent.red
-                  : abs >= 0.4 ? T.accent.orange
-                    : T.accent.green;
+                : abs >= 0.7 ? T.state.loss
+                  : abs >= 0.4 ? T.state.warn
+                    : T.text.primary;
               return (
                 <div key={`${i}-${j}`} title={`${matrix.symbols[i]} ↔ ${matrix.symbols[j]} = ${v.toFixed(2)}`}
                   style={{
@@ -113,7 +114,7 @@ export const CorrelationMatrix = ({ T, isRTL, trades: all }: Props) => {
         display: 'flex', gap: 12, marginTop: 10, fontSize: 9, color: T.text.muted,
         fontFamily: "'JetBrains Mono', monospace", flexWrap: 'wrap',
       }}>
-        <Legend color={T.accent.green} label={isRTL ? '<0.4 עצמאי' : '<0.4 independent'} />
+        <Legend color={T.text.primary} label={isRTL ? '<0.4 עצמאי' : '<0.4 independent'} />
         <Legend color={T.accent.orange} label={isRTL ? '0.4–0.7 בינוני' : '0.4–0.7 moderate'} />
         <Legend color={T.accent.red} label={isRTL ? '>0.7 כפילות' : '>0.7 redundant'} />
       </div>

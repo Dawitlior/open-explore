@@ -3,6 +3,7 @@ import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { useVisibleTrades } from '@/lib/display-mode-format';
 import { getEffectiveR } from '@/lib/r-multiple';
+import { qualityColor, severityColor, infoColor, statusColor, neutralRamp, moneyColor } from '@/lib/semantic-color';
 
 interface Props { T: TradingTheme; isRTL: boolean; trades: Trade[]; }
 
@@ -62,8 +63,8 @@ export const HourOfDayStrip = ({ T, isRTL, trades: all }: Props) => {
         {lastHour != null && (
           <div style={{
             fontSize: 9, padding: '3px 8px', borderRadius: 4,
-            background: lastInBest ? `${T.accent.green}20` : `${T.accent.orange}20`,
-            color: lastInBest ? T.accent.green : T.accent.orange,
+            background: lastInBest ? `${infoColor(T)}20` : `${T.state.warn}20`,
+            color: lastInBest ? infoColor(T) : T.state.warn,
             fontFamily: "'JetBrains Mono', monospace",
             letterSpacing: '0.08em',
           }}>

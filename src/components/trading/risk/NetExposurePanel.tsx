@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useVisibleTrades } from '@/lib/display-mode-format';
 import { fetchOpenPositions, summarizeExposure, type OpenPositionRow } from '@/lib/risk/exposure';
 import { getEffectiveR } from '@/lib/r-multiple';
+import { qualityColor, severityColor, infoColor, statusColor, neutralRamp, moneyColor } from '@/lib/semantic-color';
 
 interface Props {
   T: TradingTheme;
@@ -48,16 +49,16 @@ export const NetExposurePanel = ({ T, isRTL, trades: all }: Props) => {
 
   const tiles = isMoney
     ? [
-        { l: isRTL ? 'חשיפה ברוטו' : 'Gross Exposure', v: fmt$(summary.grossNotional), c: T.accent.cyan, sub: isRTL ? 'סך פוזיציות פתוחות' : 'sum of |positions|' },
-        { l: isRTL ? 'חשיפה נטו' : 'Net Exposure', v: fmt$(summary.netNotional), c: summary.netNotional >= 0 ? T.accent.green : T.accent.red, sub: isRTL ? 'לונג − שורט' : 'long − short' },
-        { l: isRTL ? 'מינוף' : 'Leverage', v: `${summary.leverage.toFixed(2)}×`, c: summary.leverage > 5 ? T.accent.red : summary.leverage > 2 ? T.accent.orange : T.accent.green, sub: isRTL ? 'ברוטו ÷ הון' : 'gross ÷ equity' },
-        { l: isRTL ? 'P&L לא ממומש' : 'Unrealized P&L', v: fmt$(summary.unrealized), c: summary.unrealized >= 0 ? T.accent.green : T.accent.red, sub: isRTL ? 'מעודכן' : 'live' },
+        { l: isRTL ? 'חשיפה ברוטו' : 'Gross Exposure', v: fmt$(summary.grossNotional), c: T.text.primary, sub: isRTL ? 'סך פוזיציות פתוחות' : 'sum of |positions|' },
+        { l: isRTL ? 'חשיפה נטו' : 'Net Exposure', v: fmt$(summary.netNotional), c: moneyColor(T, summary.netNotional), sub: isRTL ? 'לונג − שורט' : 'long − short' },
+        { l: isRTL ? 'מינוף' : 'Leverage', v: `${summary.leverage.toFixed(2)}×`, c: severityColor(T, summary.leverage, 2, 5), sub: isRTL ? 'ברוטו ÷ הון' : 'gross ÷ equity' },
+        { l: isRTL ? 'P&L לא ממומש' : 'Unrealized P&L', v: fmt$(summary.unrealized), c: moneyColor(T, summary.unrealized), sub: isRTL ? 'מעודכן' : 'live' },
       ]
     : [
-        { l: isRTL ? 'סיכון פתוח (R)' : 'Open Risk (R)', v: `${openRiskR.toFixed(2)}R`, c: openRiskR > 3 ? T.accent.red : openRiskR > 1.5 ? T.accent.orange : T.accent.green, sub: isRTL ? 'סכום |R| בעסקאות' : 'sum of |R| across trades' },
-        { l: isRTL ? 'פוזיציות פתוחות' : 'Open Positions', v: String(rows.length), c: T.accent.cyan, sub: isRTL ? 'מבורסה' : 'from broker' },
-        { l: isRTL ? 'מינוף' : 'Leverage', v: equity > 0 ? `${summary.leverage.toFixed(2)}×` : 'N/A', c: summary.leverage > 5 ? T.accent.red : summary.leverage > 2 ? T.accent.orange : T.accent.green, sub: isRTL ? 'ברוטו ÷ הון' : 'gross ÷ equity' },
-        { l: isRTL ? 'ריכוז עליון' : 'Top Concentration', v: summary.topSymbol ? `${(summary.topConcentration * 100).toFixed(0)}%` : '—', c: summary.topConcentration > 0.5 ? T.accent.red : summary.topConcentration > 0.3 ? T.accent.orange : T.accent.green, sub: summary.topSymbol || (isRTL ? 'אין נתון' : 'no data') },
+        { l: isRTL ? 'סיכון פתוח (R)' : 'Open Risk (R)', v: `${openRiskR.toFixed(2)}R`, c: severityColor(T, openRiskR, 1.5, 3), sub: isRTL ? 'סכום |R| בעסקאות' : 'sum of |R| across trades' },
+        { l: isRTL ? 'פוזיציות פתוחות' : 'Open Positions', v: String(rows.length), c: T.text.primary, sub: isRTL ? 'מבורסה' : 'from broker' },
+        { l: isRTL ? 'מינוף' : 'Leverage', v: equity > 0 ? `${summary.leverage.toFixed(2)}×` : 'N/A', c: severityColor(T, summary.leverage, 2, 5), sub: isRTL ? 'ברוטו ÷ הון' : 'gross ÷ equity' },
+        { l: isRTL ? 'ריכוז עליון' : 'Top Concentration', v: summary.topSymbol ? `${(summary.topConcentration * 100).toFixed(0)}%` : '—', c: severityColor(T, summary.topConcentration * 100, 30, 50), sub: summary.topSymbol || (isRTL ? 'אין נתון' : 'no data') },
       ];
 
   return (
