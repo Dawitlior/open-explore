@@ -71,4 +71,4 @@ Each wave ends with a rendered light-mode check of those routes, not just a type
 
 ## Explicitly out of scope
 
-No changes to dark themes, no repositioning or resizing of charts, no changes to which metrics are colored, no component restructuring.
+No changes to dark themes, no repositioning or resizing of charts, no changes to which metrics are colored, no component restructuring, and no layout/spacing changes below the 768px breakpoint.
