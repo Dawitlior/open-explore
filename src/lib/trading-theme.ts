@@ -327,7 +327,11 @@ const graphite: TradingTheme = {
   isLight: false,
   surface: darkSurface('#161a1f', '#0e1013', '#12161b'),
   state: darkState('#22c55e', '#ef4444', '#a16207', '#9aa4b2', '#7c8694'),
-  chart: darkChart('#22c55e', '#ef4444', ['#22c55e', '#9aa4b2', '#a16207', '#ef4444', '#16a34a', '#64748b', '#a3a3a3', '#3f6212']),
+  // Single-hue steel ladder (desaturated) — no green/red in categorical series.
+  chart: darkChart('#22c55e', '#ef4444', [
+    '#8FA0B0', '#AEBCC8', '#C8D2DB', '#E0E6EB',
+    '#6B7A87', '#59666F', '#96A3AE', '#414A52',
+  ]),
   bg: { primary: '#0e1013', secondary: '#161a1f', tertiary: '#1c2128', card: '#161a1f', surface: '#1f242c' },
   accent: {
     cyan: '#22c55e', cyanGlow: 'rgba(34,197,94,0.16)',
