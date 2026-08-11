@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useDashboardConfig, evalCustomKPI } from '@/hooks/use-dashboard-config';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { useDisplayMode } from '@/lib/display-mode';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 interface Stats {
   totalTrades: number;
@@ -87,7 +88,7 @@ export function CustomKPIPanel({ T, isRTL, stats }: Props) {
         <span style={{ fontSize: 16 }}>📐</span>
         <h3 style={{
           margin: 0, fontSize: 13, fontWeight: 700,
-          color: T.accent.cyan, letterSpacing: '0.15em', textTransform: 'uppercase',
+          color: infoColor(T), letterSpacing: '0.15em', textTransform: 'uppercase',
           fontFamily: "'JetBrains Mono', monospace",
         }}>
           {isRTL ? 'מדדים מותאמים אישית' : 'Custom Metrics'}
@@ -105,7 +106,7 @@ export function CustomKPIPanel({ T, isRTL, stats }: Props) {
         <AnimatePresence>
           {kpis.map((k, idx) => {
             const v = evalCustomKPI(k.formula, ctx);
-            const color = k.color || T.accent.cyan;
+            const color = k.color || infoColor(T);
             return (
               <motion.div
                 key={k.id}

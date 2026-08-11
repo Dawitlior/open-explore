@@ -1,6 +1,7 @@
 import type { Trade } from '@/data/trades';
 import { SwipeableRow } from './SwipeableRow';
 import { PrivacyMask } from './PrivacyMask';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 interface MobileTradeCardProps {
   T: any;
@@ -43,7 +44,7 @@ export const MobileTradeCard = ({
           label: isRTL ? 'ערוך' : 'Edit',
           icon: '✏️',
           color: T.bg.primary,
-          bg: T.accent.cyan,
+          bg: infoColor(T),
           onAction: onEdit,
         }]}
         rightActions={[{
@@ -77,7 +78,7 @@ export const MobileTradeCard = ({
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
               <span style={{
                 fontSize: 15, fontWeight: 800,
-                color: T.accent.cyan,
+                color: infoColor(T),
                 fontFamily: "'JetBrains Mono', monospace",
                 letterSpacing: '-0.01em',
               }}>{trade.coin}</span>
@@ -126,12 +127,12 @@ export const MobileTradeCard = ({
                 ? `${T.accent.green}18`
                 : trade.winLoss === 'Loss'
                   ? `${T.accent.red}18`
-                  : `${T.accent.orange}18`,
+                  : `${T.state.warn}18`,
               color: trade.winLoss === 'Win'
                 ? T.accent.green
                 : trade.winLoss === 'Loss'
                   ? T.accent.red
-                  : T.accent.orange,
+                  : T.state.warn,
               textTransform: 'uppercase', letterSpacing: '0.06em',
             }}>
               {trade.winLoss}

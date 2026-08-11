@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import type { TradingTheme } from '@/lib/trading-theme';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 interface Props {
   T: TradingTheme;
@@ -60,8 +61,8 @@ export function JournalDataMenu({ T, isRTL, onImport, onExportXlsx, onExportJson
         className="orca-focus"
         style={{
           padding: '7px 14px', background: open ? T.bg.card : T.bg.tertiary,
-          border: `1px solid ${open ? T.accent.cyan : T.border.medium}`,
-          borderRadius: T.radius.md, color: open ? T.accent.cyan : T.text.secondary,
+          border: `1px solid ${open ? infoColor(T) : T.border.medium}`,
+          borderRadius: T.radius.md, color: open ? infoColor(T) : T.text.secondary,
           fontSize: 11, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6,
         }}
       >
@@ -108,9 +109,9 @@ export function JournalDataMenu({ T, isRTL, onImport, onExportXlsx, onExportJson
             onDrop={e => { e.preventDefault(); setDragging(false); chooseFile(e.dataTransfer.files?.[0]); }}
             style={{
               marginTop: 4, padding: '12px 10px', textAlign: 'center', borderRadius: T.radius.sm,
-              border: `1px dashed ${dragging ? T.accent.cyan : T.border.medium}`,
-              background: dragging ? `${T.accent.cyan}12` : T.bg.tertiary,
-              color: dragging ? T.accent.cyan : T.text.muted, fontSize: 10.5, lineHeight: 1.45,
+              border: `1px dashed ${dragging ? infoColor(T) : T.border.medium}`,
+              background: dragging ? `${infoColor(T)}12` : T.bg.tertiary,
+              color: dragging ? infoColor(T) : T.text.muted, fontSize: 10.5, lineHeight: 1.45,
             }}
           >
             {isRTL ? 'גרור קובץ לכאן' : 'Drop a file here'}
@@ -123,7 +124,7 @@ export function JournalDataMenu({ T, isRTL, onImport, onExportXlsx, onExportJson
                 <button
                   className="orca-focus"
                   onClick={() => { const file = preview; setPreview(null); setOpen(false); onImport(file); }}
-                  style={{ flex: 1, padding: '6px 8px', border: 'none', borderRadius: T.radius.sm, background: T.accent.cyan, color: T.bg.primary, fontSize: 10.5, fontWeight: 800, cursor: 'pointer' }}
+                  style={{ flex: 1, padding: '6px 8px', border: 'none', borderRadius: T.radius.sm, background: infoColor(T), color: T.bg.primary, fontSize: 10.5, fontWeight: 800, cursor: 'pointer' }}
                 >{isRTL ? 'בדיקה וייבוא' : 'Review & import'}</button>
                 <button
                   className="orca-focus"

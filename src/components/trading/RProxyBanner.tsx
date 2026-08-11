@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 type Props = {
   T: any;
@@ -44,14 +45,14 @@ export const RProxyBanner = ({ T, isRTL, compact, rEligibleCount, totalCount }: 
         display: 'flex', alignItems: 'flex-start', gap: 12,
         padding: compact ? '10px 14px' : '12px 18px',
         marginBottom: 14,
-        background: `linear-gradient(135deg, ${T.accent.cyan}10, ${T.accent.cyan}05)`,
-        border: `1px solid ${T.accent.cyan}35`,
-        borderInlineStart: `3px solid ${T.accent.cyan}`,
+        background: `linear-gradient(135deg, ${infoColor(T)}10, ${infoColor(T)}05)`,
+        border: `1px solid ${infoColor(T)}35`,
+        borderInlineStart: `3px solid ${infoColor(T)}`,
         borderRadius: T.radius?.md ?? 12,
         direction: isRTL ? 'rtl' : 'ltr',
       }}
     >
-      <span aria-hidden style={{ fontSize: 18, lineHeight: 1, color: T.accent.cyan }}>ⓘ</span>
+      <span aria-hidden style={{ fontSize: 18, lineHeight: 1, color: infoColor(T) }}>ⓘ</span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: T.text.primary, marginBottom: 4 }}>{title}</div>
         <div style={{ fontSize: 11, lineHeight: 1.55, color: T.text.secondary }}>{body}</div>

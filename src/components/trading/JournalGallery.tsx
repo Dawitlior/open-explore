@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import type { ComponentType, ReactNode } from 'react';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { Trade } from '@/data/trades';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 interface Props {
   T: TradingTheme;
@@ -35,7 +36,7 @@ export const JournalGallery = memo(function JournalGallery({
       {trades.map((tr, i) => {
         const h = tradeHeadline(tr);
         const r = getEffectiveR(tr);
-        const tone = h.v > 0 ? T.accent.green : h.v < 0 ? T.accent.red : T.accent.orange;
+        const tone = h.v > 0 ? T.accent.green : h.v < 0 ? T.accent.red : T.state.warn;
         const side = tr.direction === 'Long' ? T.accent.green : T.accent.red;
         const meter = Math.min(100, (Math.abs(r) / 3) * 100);
 

@@ -115,7 +115,7 @@ export const CorrelationMatrix = ({ T, isRTL, trades: all }: Props) => {
         fontFamily: "'JetBrains Mono', monospace", flexWrap: 'wrap',
       }}>
         <Legend color={T.text.primary} label={isRTL ? '<0.4 עצמאי' : '<0.4 independent'} />
-        <Legend color={T.accent.orange} label={isRTL ? '0.4–0.7 בינוני' : '0.4–0.7 moderate'} />
+        <Legend color={T.state.warn} label={isRTL ? '0.4–0.7 בינוני' : '0.4–0.7 moderate'} />
         <Legend color={T.accent.red} label={isRTL ? '>0.7 כפילות' : '>0.7 redundant'} />
       </div>
     </div>

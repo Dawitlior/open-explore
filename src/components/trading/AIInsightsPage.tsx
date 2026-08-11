@@ -29,6 +29,7 @@ import { analyzeDeep, type DeepInsight, type DeepSeverity } from '@/lib/ai-insig
 import IntelligenceSection from './IntelligenceSection';
 import { findBestEdge } from '@/lib/psychology-diagnostic';
 import { useLang } from '@/hooks/use-lang';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 type Tr = (he: string, en: string) => string;
 
@@ -39,9 +40,9 @@ interface AIInsightsPageProps {
 
 const getSevMeta = (t: Tr): Record<DeepSeverity, { label: string; color: (T: TradingTheme) => string; icon: string }> => ({
   critical: { label: t('דחוף','Critical'), color: (T) => T.accent.red, icon: '⛔' },
-  warning:  { label: t('אזהרה','Warning'), color: (T) => T.accent.orange, icon: '⚠️' },
+  warning:  { label: t('אזהרה','Warning'), color: (T) => T.state.warn, icon: '⚠️' },
   strength: { label: t('חוזק','Strength'), color: (T) => T.accent.green, icon: '💎' },
-  insight:  { label: t('תובנה','Insight'), color: (T) => T.accent.cyan, icon: '🔍' },
+  insight:  { label: t('תובנה','Insight'), color: (T) => infoColor(T), icon: '🔍' },
 });
 
 const getCatLabel = (t: Tr): Record<string, string> => ({
@@ -63,7 +64,7 @@ const MotherboardButton: React.FC<{
   hasResult: boolean;
   t: Tr;
 }> = ({ onClick, loading, T, hasResult, t }) => {
-  const accent = T.accent.cyan;
+  const accent = infoColor(T);
   return (
     <motion.button
       data-mainframe-button
@@ -276,11 +277,11 @@ const LowTradesPopup: React.FC<{ count: number; T: TradingTheme; isRTL: boolean;
         initial={{ scale: 0.8, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0 }}
         transition={{ type: 'spring', stiffness: 220, damping: 22 }}
         dir={isRTL ? 'rtl' : 'ltr'}
-        style={{ width: '100%', maxWidth: 460, background: `linear-gradient(165deg, ${T.bg.card}, ${T.bg.secondary})`, border: `1px solid ${T.accent.cyan}40`, borderRadius: 24, padding: 32, textAlign: 'center', position: 'relative', overflow: 'hidden', boxShadow: `0 30px 80px rgba(0,0,0,0.6), 0 0 60px ${T.accent.cyan}22` }}
+        style={{ width: '100%', maxWidth: 460, background: `linear-gradient(165deg, ${T.bg.card}, ${T.bg.secondary})`, border: `1px solid ${infoColor(T)}40`, borderRadius: 24, padding: 32, textAlign: 'center', position: 'relative', overflow: 'hidden', boxShadow: `0 30px 80px rgba(0,0,0,0.6), 0 0 60px ${infoColor(T)}22` }}
       >
-        <div style={{ position: 'absolute', top: -2, left: 24, right: 24, height: 2, background: `linear-gradient(90deg, transparent, ${T.accent.cyan}, transparent)` }} />
+        <div style={{ position: 'absolute', top: -2, left: 24, right: 24, height: 2, background: `linear-gradient(90deg, transparent, ${infoColor(T)}, transparent)` }} />
         <div style={{ fontSize: 64, marginBottom: 12, lineHeight: 1 }}>🤔</div>
-        <div style={{ fontSize: 11, color: T.accent.cyan, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: 14 }}>
+        <div style={{ fontSize: 11, color: infoColor(T), fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: 14 }}>
           {isRTL ? 'אזהרת נתונים דלילים' : 'Sparse data warning'}
         </div>
         <div style={{ fontSize: 18, fontWeight: 800, color: T.text.primary, marginBottom: 18, lineHeight: 1.4 }}>{lines[0]}</div>
@@ -290,7 +291,7 @@ const LowTradesPopup: React.FC<{ count: number; T: TradingTheme; isRTL: boolean;
         <div style={{ padding: '10px 16px', marginBottom: 20, borderRadius: 12, background: `${T.accent.green}10`, border: `1px solid ${T.accent.green}30`, fontSize: 12, color: T.accent.green, fontWeight: 600 }}>
           {isRTL ? `יש לך ${count} עסקאות · נדרשות לפחות 10` : `You have ${count} trades · 10 minimum required`}
         </div>
-        <button onClick={onClose} style={{ width: '100%', padding: '13px 16px', borderRadius: 12, border: 'none', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.green})`, color: T.bg.primary, fontWeight: 800, fontSize: 14, cursor: 'pointer', letterSpacing: '0.04em', boxShadow: `0 10px 24px ${T.accent.cyan}40` }}>
+        <button onClick={onClose} style={{ width: '100%', padding: '13px 16px', borderRadius: 12, border: 'none', background: `linear-gradient(135deg, ${infoColor(T)}, ${T.accent.green})`, color: T.bg.primary, fontWeight: 800, fontSize: 14, cursor: 'pointer', letterSpacing: '0.04em', boxShadow: `0 10px 24px ${infoColor(T)}40` }}>
           {isRTL ? 'יאלה, חזרתי לשוק 🚀' : 'Got it, back to the market 🚀'}
         </button>
       </motion.div>
@@ -640,12 +641,12 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
     <svg width="0" height="0" style={{ position: 'absolute', pointerEvents: 'none' }} aria-hidden>
       <defs>
         <linearGradient id="orca-g-cyan" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.95} />
-          <stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.05} />
+          <stop offset="0%" stopColor={infoColor(T)} stopOpacity={0.95} />
+          <stop offset="100%" stopColor={infoColor(T)} stopOpacity={0.05} />
         </linearGradient>
         <linearGradient id="orca-g-cyan-bar" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={T.accent.cyan} stopOpacity={1} />
-          <stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.35} />
+          <stop offset="0%" stopColor={infoColor(T)} stopOpacity={1} />
+          <stop offset="100%" stopColor={infoColor(T)} stopOpacity={0.35} />
         </linearGradient>
         <linearGradient id="orca-g-green" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={T.accent.green} stopOpacity={1} />
@@ -656,16 +657,16 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
           <stop offset="100%" stopColor={T.accent.red} stopOpacity={0.25} />
         </linearGradient>
         <linearGradient id="orca-g-purple" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={T.accent.purple} stopOpacity={0.9} />
-          <stop offset="100%" stopColor={T.accent.purple} stopOpacity={0.08} />
+          <stop offset="0%" stopColor={neutralRamp(T, 3)[1]} stopOpacity={0.9} />
+          <stop offset="100%" stopColor={neutralRamp(T, 3)[1]} stopOpacity={0.08} />
         </linearGradient>
         <linearGradient id="orca-g-orange" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={T.accent.orange} stopOpacity={1} />
-          <stop offset="100%" stopColor={T.accent.orange} stopOpacity={0.2} />
+          <stop offset="0%" stopColor={T.state.warn} stopOpacity={1} />
+          <stop offset="100%" stopColor={T.state.warn} stopOpacity={0.2} />
         </linearGradient>
         <radialGradient id="orca-g-radial" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.7} />
-          <stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0} />
+          <stop offset="0%" stopColor={infoColor(T)} stopOpacity={0.7} />
+          <stop offset="100%" stopColor={infoColor(T)} stopOpacity={0} />
         </radialGradient>
         <filter id="orca-glow" x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur stdDeviation="3.5" result="b" />
@@ -675,7 +676,7 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
           </feMerge>
         </filter>
         <filter id="orca-shadow" x="-30%" y="-30%" width="160%" height="160%">
-          <feDropShadow dx="0" dy="3" stdDeviation="4" floodColor={T.accent.cyan} floodOpacity="0.35" />
+          <feDropShadow dx="0" dy="3" stdDeviation="4" floodColor={infoColor(T)} floodOpacity="0.35" />
         </filter>
       </defs>
     </svg>
@@ -687,7 +688,7 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
     badge?: string | number; children: React.ReactNode;
   }> = ({ title, subtitle, tone = 'cyan', badge, children }) => {
     const tColor = tone === 'green' ? T.accent.green : tone === 'red' ? T.accent.red
-      : tone === 'purple' ? T.accent.purple : tone === 'orange' ? T.accent.orange : T.accent.cyan;
+      : tone === 'purple' ? neutralRamp(T, 3)[1] : tone === 'orange' ? T.state.warn : infoColor(T);
     return (
       <GlassCard T={T} style={{ padding: 0, overflow: 'hidden', position: 'relative' }}>
         <div style={{
@@ -761,7 +762,7 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
                   initial={{ opacity: 0 }}
                   animate={{ opacity: [0.3, 1, 0.3] }}
                   transition={{ delay: i * 0.35, duration: 1.5, repeat: Infinity }}
-                  style={{ fontSize: 11, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.05em' }}
+                  style={{ fontSize: 11, color: infoColor(T), fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.05em' }}
                 >
                   {s}
                 </motion.div>
@@ -782,20 +783,20 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
             transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
           >
             {/* DNA STRIP */}
-            <GlassCard T={T} style={{ marginBottom: 16, padding: 18 }} glow={`${T.accent.cyan}22`}>
+            <GlassCard T={T} style={{ marginBottom: 16, padding: 18 }} glow={`${infoColor(T)}22`}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.18em' }}>{t('DNA סוחר','Trader DNA')}</div>
-                <div style={{ fontSize: 28, fontWeight: 800, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace" }}>
+                <div style={{ fontSize: 28, fontWeight: 800, color: infoColor(T), fontFamily: "'JetBrains Mono', monospace" }}>
                   {analysis.dna.overall}
                   <span style={{ fontSize: 12, color: T.text.muted, marginInlineStart: 4 }}>/100</span>
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
                 {[
-                  { label: t('אדג׳',t('אדג\'','Edge')), value: analysis.dna.edge, color: T.accent.cyan },
+                  { label: t('אדג׳',t('אדג\'','Edge')), value: analysis.dna.edge, color: infoColor(T) },
                   { label: t('משמעת','Discipline'), value: analysis.dna.discipline, color: T.accent.green },
-                  { label: t('עקביות','Consistency'), value: analysis.dna.consistency, color: T.accent.blue },
-                  { label: t('התנהגות','Behavior'), value: analysis.dna.behaviour, color: T.accent.purple },
+                  { label: t('עקביות','Consistency'), value: analysis.dna.consistency, color: infoColor(T) },
+                  { label: t('התנהגות','Behavior'), value: analysis.dna.behaviour, color: neutralRamp(T, 3)[1] },
                 ].map((s, i) => (
                   <div key={s.label}>
                     <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 4 }}>{s.label}</div>
@@ -822,14 +823,14 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
                       <RadarChart data={dnaData}>
                         <defs>
                           <radialGradient id="radar-fill">
-                            <stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.55} />
-                            <stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.05} />
+                            <stop offset="0%" stopColor={infoColor(T)} stopOpacity={0.55} />
+                            <stop offset="100%" stopColor={infoColor(T)} stopOpacity={0.05} />
                           </radialGradient>
                         </defs>
                         <PolarGrid stroke={T.border.subtle} strokeDasharray="2 4" />
                         <PolarAngleAxis dataKey="axis" tick={{ fill: T.text.secondary, fontSize: 12, fontWeight: 700 }} />
                         <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fill: T.text.dim, fontSize: 9 }} stroke={T.border.subtle} />
-                        <Radar dataKey="value" stroke={T.accent.cyan} fill="url(#radar-fill)" strokeWidth={2.5} filter="url(#orca-glow)" />
+                        <Radar dataKey="value" stroke={infoColor(T)} fill="url(#radar-fill)" strokeWidth={2.5} filter="url(#orca-glow)" />
                         <Tooltip contentStyle={tt} />
                       </RadarChart>
                     </ResponsiveContainer>
@@ -841,7 +842,7 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
                         <XAxis type="number" dataKey="hour" name={t('שעה','Hour')} domain={[0, 23]} ticks={[0, 4, 8, 12, 16, 20]} tick={{ fill: T.text.muted, fontSize: 10 }} label={{ value: t('שעה','Hour'), position: 'insideBottom', offset: -2, fill: T.text.dim, fontSize: 10 }} />
                         <YAxis type="number" dataKey="day" name={t('יום','Day')} domain={[0, 6]} tick={{ fill: T.text.muted, fontSize: 10 }} tickFormatter={(d) => (t('rtl','ltr') === 'rtl' ? ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'] : ['Su','Mo','Tu','We','Th','Fr','Sa'])[d] || ''} />
                         <ZAxis type="number" dataKey="n" range={[60, 520]} />
-                        <Tooltip contentStyle={tt} cursor={{ stroke: T.accent.cyan, strokeOpacity: 0.3, strokeDasharray: '3 3' }} />
+                        <Tooltip contentStyle={tt} cursor={{ stroke: infoColor(T), strokeOpacity: 0.3, strokeDasharray: '3 3' }} />
                         <Scatter data={heatData}>
                           {heatData.map((d, i) => (
                             <Cell key={i} fill={d.avgR >= 0 ? T.accent.green : T.accent.red} fillOpacity={0.78} stroke={d.avgR >= 0 ? T.accent.green : T.accent.red} />
@@ -861,7 +862,7 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
                         <CartesianGrid stroke={T.border.subtle} strokeDasharray="2 4" />
                         <XAxis type="number" dataKey="risk" name={t('סיכון $','Risk $')} tick={{ fill: T.text.muted, fontSize: 10 }} />
                         <YAxis type="number" dataKey="pnl" name="P&L $" tick={{ fill: T.text.muted, fontSize: 10 }} />
-                        <Tooltip contentStyle={tt} cursor={{ stroke: T.accent.cyan, strokeOpacity: 0.3 }} />
+                        <Tooltip contentStyle={tt} cursor={{ stroke: infoColor(T), strokeOpacity: 0.3 }} />
                         <Scatter data={scatterData}>
                           {scatterData.map((d, i) => (
                             <Cell key={i} fill={d.win ? T.accent.green : T.accent.red} fillOpacity={0.8} />
@@ -888,7 +889,7 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
                         <Bar dataKey="pnl" radius={[6, 6, 0, 0]}>
                           {monthlyData.map((m, i) => <Cell key={i} fill={m.pnl >= 0 ? 'url(#orca-g-green)' : 'url(#orca-g-red)'} />)}
                         </Bar>
-                        <Line type="monotone" dataKey="avgR" stroke={T.accent.cyan} strokeWidth={2.5} dot={{ fill: T.accent.cyan, r: 3.5, strokeWidth: 0 }} filter="url(#orca-glow)" />
+                        <Line type="monotone" dataKey="avgR" stroke={infoColor(T)} strokeWidth={2.5} dot={{ fill: infoColor(T), r: 3.5, strokeWidth: 0 }} filter="url(#orca-glow)" />
                       </ComposedChart>
                     </ResponsiveContainer>
                   </Frame>
@@ -1014,7 +1015,7 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
                         <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
                         <YAxis domain={[0, 100]} tick={{ fill: T.text.muted, fontSize: 10 }} unit="%" />
                         <Tooltip contentStyle={tt} />
-                        <Line type="monotone" dataKey="wr" stroke={T.accent.cyan} strokeWidth={2.5} dot={false} />
+                        <Line type="monotone" dataKey="wr" stroke={infoColor(T)} strokeWidth={2.5} dot={false} />
                       </LineChart>
                     </ResponsiveContainer>
                   </GlassCard>
@@ -1035,8 +1036,8 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
                         <PolarAngleAxis dataKey="axis" tick={{ fill: T.text.secondary, fontSize: 10 }} />
                         <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fill: T.text.muted, fontSize: 9 }} />
                         <Radar dataKey={t('רווח','Profit')} stroke={T.accent.green} fill={T.accent.green} fillOpacity={0.22} strokeWidth={1.6} />
-                        <Radar dataKey={t('ניצחונות','Wins')} stroke={T.accent.cyan} fill={T.accent.cyan} fillOpacity={0.18} strokeWidth={1.6} />
-                        <Radar dataKey={t('תוחלת','Expectancy')} stroke={T.accent.purple} fill={T.accent.purple} fillOpacity={0.18} strokeWidth={1.6} />
+                        <Radar dataKey={t('ניצחונות','Wins')} stroke={infoColor(T)} fill={infoColor(T)} fillOpacity={0.18} strokeWidth={1.6} />
+                        <Radar dataKey={t('תוחלת','Expectancy')} stroke={neutralRamp(T, 3)[1]} fill={neutralRamp(T, 3)[1]} fillOpacity={0.18} strokeWidth={1.6} />
                         <Tooltip contentStyle={tt} />
                       </RadarChart>
                     </ResponsiveContainer>
@@ -1053,7 +1054,7 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
                         <Bar yAxisId="l" dataKey="pnl" radius={[4, 4, 0, 0]}>
                           {focusPareto.map((d, i) => <Cell key={i} fill={d.pnl >= 0 ? T.accent.green : T.accent.red} fillOpacity={0.85} />)}
                         </Bar>
-                        <Line yAxisId="r" type="monotone" dataKey="cum" stroke={T.accent.orange} strokeWidth={2.5} dot={{ fill: T.accent.orange, r: 3 }} />
+                        <Line yAxisId="r" type="monotone" dataKey="cum" stroke={T.state.warn} strokeWidth={2.5} dot={{ fill: T.state.warn, r: 3 }} />
                       </ComposedChart>
                     </ResponsiveContainer>
                   </GlassCard>
@@ -1067,35 +1068,35 @@ const AIInsightsPage_Impl: React.FC<AIInsightsPageProps> = ({ T, trades: _allTra
                   <GlassCard T={T} style={{ gridColumn: '1 / -1' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                       <div style={{ fontSize: 11, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.12em' }}>{t('Monte Carlo — קונוס תוצאות אפשריות (50 מסלולים)','Monte Carlo — outcome cone (50 paths)')}</div>
-                      <div style={{ fontSize: 10, color: T.accent.purple, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.12em' }}>QUANT TIER</div>
+                      <div style={{ fontSize: 10, color: neutralRamp(T, 3)[1], fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.12em' }}>QUANT TIER</div>
                     </div>
                     <ResponsiveContainer width="100%" height={290}>
                       <AreaChart data={monteCarloData}>
                         <defs>
                           <linearGradient id="mcOuter" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor={T.accent.purple} stopOpacity={0.35} />
-                            <stop offset="100%" stopColor={T.accent.purple} stopOpacity={0.02} />
+                            <stop offset="0%" stopColor={neutralRamp(T, 3)[1]} stopOpacity={0.35} />
+                            <stop offset="100%" stopColor={neutralRamp(T, 3)[1]} stopOpacity={0.02} />
                           </linearGradient>
                           <linearGradient id="mcInner" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor={T.accent.cyan} stopOpacity={0.45} />
-                            <stop offset="100%" stopColor={T.accent.cyan} stopOpacity={0.05} />
+                            <stop offset="0%" stopColor={infoColor(T)} stopOpacity={0.45} />
+                            <stop offset="100%" stopColor={infoColor(T)} stopOpacity={0.05} />
                           </linearGradient>
                         </defs>
                         <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
                         <XAxis dataKey="step" tick={{ fill: T.text.muted, fontSize: 10 }} label={{ value: t('עסקאות קדימה','Trades ahead'), fill: T.text.muted, fontSize: 10, position: 'insideBottom', offset: -4 }} />
                         <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} label={{ value: t('R מצטבר','Cumulative R'), angle: -90, fill: T.text.muted, fontSize: 10, position: 'insideLeft' }} />
                         <Tooltip contentStyle={tt} />
-                        <Area type="monotone" dataKey="p95" stroke={T.accent.purple} fill="url(#mcOuter)" strokeWidth={1.4} />
-                        <Area type="monotone" dataKey="p75" stroke={T.accent.cyan} fill="url(#mcInner)" strokeWidth={1.5} />
-                        <Area type="monotone" dataKey="p25" stroke={T.accent.cyan} fill={T.bg.primary} fillOpacity={0.6} strokeWidth={1.5} />
-                        <Area type="monotone" dataKey="p05" stroke={T.accent.purple} fill={T.bg.primary} fillOpacity={1} strokeWidth={1.4} />
+                        <Area type="monotone" dataKey="p95" stroke={neutralRamp(T, 3)[1]} fill="url(#mcOuter)" strokeWidth={1.4} />
+                        <Area type="monotone" dataKey="p75" stroke={infoColor(T)} fill="url(#mcInner)" strokeWidth={1.5} />
+                        <Area type="monotone" dataKey="p25" stroke={infoColor(T)} fill={T.bg.primary} fillOpacity={0.6} strokeWidth={1.5} />
+                        <Area type="monotone" dataKey="p05" stroke={neutralRamp(T, 3)[1]} fill={T.bg.primary} fillOpacity={1} strokeWidth={1.4} />
                         <Line type="monotone" dataKey="p50" stroke={T.accent.green} strokeWidth={2.5} dot={false} />
                       </AreaChart>
                     </ResponsiveContainer>
                     <div style={{ display: 'flex', gap: 14, marginTop: 8, fontSize: 10, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace", flexWrap: 'wrap' }}>
                       <span>● {t('חציון','Median')} (P50)</span>
-                      <span style={{ color: T.accent.cyan }}>● {t('50% טווח','50% range')} (P25-P75)</span>
-                      <span style={{ color: T.accent.purple }}>● {t('90% טווח','90% range')} (P05-P95)</span>
+                      <span style={{ color: infoColor(T) }}>● {t('50% טווח','50% range')} (P25-P75)</span>
+                      <span style={{ color: neutralRamp(T, 3)[1] }}>● {t('90% טווח','90% range')} (P05-P95)</span>
                     </div>
                   </GlassCard>
                 </>

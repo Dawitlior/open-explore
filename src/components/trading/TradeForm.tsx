@@ -11,6 +11,7 @@ import { useKillSwitch, formatKillRemaining } from '@/hooks/use-kill-switch';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { toast } from 'sonner';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 interface TradeFormProps {
   T: TradingTheme;
@@ -431,7 +432,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
   const helpText = {
     fontSize: 12, color: T.text.muted, marginTop: 6, lineHeight: 1.5,
   } as const;
-  const categoryColors: Record<AssetCategory, string> = { Crypto: T.accent.cyan, Stocks: T.accent.green, Forex: T.accent.purple, Futures: T.accent.orange, Options: T.accent.blue };
+  const categoryColors: Record<AssetCategory, string> = { Crypto: infoColor(T), Stocks: T.accent.green, Forex: neutralRamp(T, 3)[1], Futures: T.state.warn, Options: infoColor(T) };
 
   const sectionCard = {
     padding: isMobile ? 16 : 18,
@@ -453,7 +454,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
     width: isMobile ? '100%' : '95%',
     maxHeight: isMobile ? 'calc(100dvh - env(safe-area-inset-top, 0px))' : '92vh',
     overflow: 'hidden',
-    boxShadow: `0 28px 90px rgba(0,0,0,0.6), 0 0 0 1px ${T.accent.cyan}18 inset`,
+    boxShadow: `0 28px 90px rgba(0,0,0,0.6), 0 0 0 1px ${infoColor(T)}18 inset`,
     animation: 'scaleIn 0.18s ease',
     display: 'flex', flexDirection: 'column' as const,
     marginTop: isMobile ? 'env(safe-area-inset-top, 0px)' : undefined,
@@ -464,7 +465,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
   const StepDot = ({ idx }: { idx: number }) => {
     const active = idx === step;
     const done = idx < step;
-    const color = done ? T.accent.green : active ? T.accent.cyan : T.text.muted;
+    const color = done ? T.accent.green : active ? infoColor(T) : T.text.muted;
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
         <div style={{
@@ -502,7 +503,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
       <div onClick={e => e.stopPropagation()} style={panelStyle}>
 
         {/* Header */}
-        <div style={{ padding: isMobile ? '18px 18px 14px' : '22px 26px 16px', borderBottom: `1px solid ${T.border.subtle}`, background: `linear-gradient(90deg, ${T.accent.cyan}10, transparent 45%)` }}>
+        <div style={{ padding: isMobile ? '18px 18px 14px' : '22px 26px 16px', borderBottom: `1px solid ${T.border.subtle}`, background: `linear-gradient(90deg, ${infoColor(T)}10, transparent 45%)` }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 14 }}>
             <div>
               <div style={{ fontSize: isMobile ? 22 : 26, fontWeight: 800, color: T.text.primary, lineHeight: 1.1 }}>{trade ? t.editTrade : (isRTL ? 'הוספת עסקה חדשה' : 'Add a New Trade')}</div>
@@ -556,9 +557,9 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                       onClick={() => { haptics.selection(); setIsOpenPosition(opt.id); setErrors([]); }}
                       style={{
                         flex: 1, padding: '12px 10px', borderRadius: 12,
-                        border: `1.5px solid ${active ? T.accent.cyan : 'transparent'}`,
-                        background: active ? `${T.accent.cyan}15` : 'transparent',
-                        color: active ? T.accent.cyan : T.text.secondary,
+                        border: `1.5px solid ${active ? infoColor(T) : 'transparent'}`,
+                        background: active ? `${infoColor(T)}15` : 'transparent',
+                        color: active ? infoColor(T) : T.text.secondary,
                         cursor: 'pointer', fontWeight: 700, fontSize: 13,
                         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
                         transition: 'all 0.18s',
@@ -641,7 +642,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                 <div style={{ display: 'flex', gap: 8 }}>
                   {['Market','Limit','Stop'].map(o => (
                     <button key={o} onClick={() => setForm(f => ({ ...f, orderType: o }))}
-                      style={{ flex: 1, padding: isMobile ? '12px' : '11px', border: `1.5px solid ${form.orderType === o ? T.accent.cyan : T.border.medium}`, borderRadius: 12, background: form.orderType === o ? `${T.accent.cyan}15` : T.bg.tertiary, color: form.orderType === o ? T.accent.cyan : T.text.secondary, cursor: 'pointer', fontSize: isMobile ? 14 : 13, fontWeight: 600 }}>
+                      style={{ flex: 1, padding: isMobile ? '12px' : '11px', border: `1.5px solid ${form.orderType === o ? infoColor(T) : T.border.medium}`, borderRadius: 12, background: form.orderType === o ? `${infoColor(T)}15` : T.bg.tertiary, color: form.orderType === o ? infoColor(T) : T.text.secondary, cursor: 'pointer', fontSize: isMobile ? 14 : 13, fontWeight: 600 }}>
                       {o}
                     </button>
                   ))}
@@ -665,7 +666,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                   <div style={{ display: 'flex', gap: 4 }}>
                     {availableStopModes.map(m => (
                       <button key={m.id} onClick={() => handleStopModeChange(m.id)}
-                        style={{ padding: '6px 10px', border: `1.5px solid ${stopMode === m.id ? T.accent.orange : T.border.medium}`, borderRadius: 8, background: stopMode === m.id ? `${T.accent.orange}15` : T.bg.tertiary, color: stopMode === m.id ? T.accent.orange : T.text.muted, cursor: 'pointer', fontSize: 11, fontWeight: 700 }}>
+                        style={{ padding: '6px 10px', border: `1.5px solid ${stopMode === m.id ? T.state.warn : T.border.medium}`, borderRadius: 8, background: stopMode === m.id ? `${T.state.warn}15` : T.bg.tertiary, color: stopMode === m.id ? T.state.warn : T.text.muted, cursor: 'pointer', fontSize: 11, fontWeight: 700 }}>
                         {m.label}
                       </button>
                     ))}
@@ -681,7 +682,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                       placeholder={stopMode === 'pips' ? (assetCategory === 'Futures' ? 'Ticks' : 'Pips') : stopMode === 'percent' ? '%' : '$'}
                       style={bigInput} />
                     {form.stopLoss > 0 && (
-                      <div style={{ fontSize: 12, color: T.accent.cyan, marginTop: 6, fontFamily: "'JetBrains Mono', monospace" }}>
+                      <div style={{ fontSize: 12, color: infoColor(T), marginTop: 6, fontFamily: "'JetBrains Mono', monospace" }}>
                         → {isRTL ? 'מחיר סטופ:' : 'Stop price:'} {form.stopLoss.toFixed(form.stopLoss < 1 ? 5 : 2)}
                       </div>
                     )}
@@ -698,8 +699,8 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                 </div>
               )}
               {isOpenPosition && (
-                <div style={{ ...sectionCard, border: `1.5px solid ${T.accent.cyan}55`, background: `${T.accent.cyan}10` }}>
-                  <div style={{ fontSize: 13, color: T.accent.cyan, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ ...sectionCard, border: `1.5px solid ${infoColor(T)}55`, background: `${infoColor(T)}10` }}>
+                  <div style={{ fontSize: 13, color: infoColor(T), fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ fontSize: 18 }}>◴</span>
                     {isRTL ? 'הפוזיציה עדיין פתוחה' : 'Position is still open'}
                   </div>
@@ -713,7 +714,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
 
               {/* ─── Sizing card ─── */}
               {isFutures ? (
-                <div style={{ ...sectionCard, border: `1.5px solid ${T.accent.orange}50`, background: `${T.accent.orange}08` }}>
+                <div style={{ ...sectionCard, border: `1.5px solid ${T.state.warn}50`, background: `${T.state.warn}08` }}>
                   <label style={bigLabel}>
                     {isRTL ? `כמה חוזים סחרת? · ${form.coin}` : `How many contracts? · ${form.coin}`}
                   </label>
@@ -725,10 +726,10 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                     style={bigInput}
                   />
                   <div style={{ marginTop: 10, padding: 10, background: T.bg.tertiary, borderRadius: 10, fontSize: 12, color: T.text.secondary, fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.7 }}>
-                    <div>{isRTL ? 'גודל טיק:' : 'Tick size:'} <span style={{ color: T.text.primary }}>{tickInfo!.tick}</span> · {isRTL ? 'שווי טיק:' : 'Tick value:'} <span style={{ color: T.accent.cyan }}>${tickInfo!.value.toFixed(2)}</span></div>
-                    <div>{isRTL ? '$ לנקודה לחוזה:' : '$/point per contract:'} <span style={{ color: T.accent.cyan }}>${dollarPerPoint.toFixed(2)}</span></div>
+                    <div>{isRTL ? 'גודל טיק:' : 'Tick size:'} <span style={{ color: T.text.primary }}>{tickInfo!.tick}</span> · {isRTL ? 'שווי טיק:' : 'Tick value:'} <span style={{ color: infoColor(T) }}>${tickInfo!.value.toFixed(2)}</span></div>
+                    <div>{isRTL ? '$ לנקודה לחוזה:' : '$/point per contract:'} <span style={{ color: infoColor(T) }}>${dollarPerPoint.toFixed(2)}</span></div>
                     {form.entry > 0 && form.stopLoss > 0 && (
-                      <div style={{ color: T.accent.orange }}>
+                      <div style={{ color: T.state.warn }}>
                         {isRTL ? 'סיכון מחושב:' : 'Computed risk:'} <span style={{ fontWeight: 700 }}>${form.risk.toFixed(2)}</span>
                         {' · '}({contracts} × {Math.abs(form.entry - form.stopLoss).toFixed(2)}pt × ${dollarPerPoint.toFixed(2)})
                       </div>
@@ -755,10 +756,10 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                           onClick={() => { haptics.selection(); setSizeAnchor(opt.id); }}
                           style={{
                             flex: '1 1 auto', minWidth: 80, padding: '10px 12px',
-                            border: `1.5px solid ${active ? T.accent.cyan : T.border.medium}`,
+                            border: `1.5px solid ${active ? infoColor(T) : T.border.medium}`,
                             borderRadius: 10,
-                            background: active ? `${T.accent.cyan}18` : T.bg.tertiary,
-                            color: active ? T.accent.cyan : T.text.secondary,
+                            background: active ? `${infoColor(T)}18` : T.bg.tertiary,
+                            color: active ? infoColor(T) : T.text.secondary,
                             cursor: 'pointer', fontWeight: 700, fontSize: 13,
                           }}
                         >
@@ -782,13 +783,13 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                             style={{
                               flex: '1 1 auto', minWidth: 56, minHeight: 44, padding: '8px 10px',
                               borderRadius: T.radius.md,
-                              border: `1px solid ${active ? T.accent.cyan : T.border.medium}`,
-                              background: active ? `linear-gradient(135deg, ${T.accent.cyan}22, ${T.accent.teal}18)` : T.bg.tertiary,
-                              color: active ? T.accent.cyan : T.text.secondary,
+                              border: `1px solid ${active ? infoColor(T) : T.border.medium}`,
+                              background: active ? `linear-gradient(135deg, ${infoColor(T)}22, ${infoColor(T)}18)` : T.bg.tertiary,
+                              color: active ? infoColor(T) : T.text.secondary,
                               cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace",
                               fontWeight: 700, fontSize: 13,
                               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2,
-                              boxShadow: active ? `0 0 0 1px ${T.accent.cyan}55, 0 0 14px ${T.accent.cyan}25` : 'none',
+                              boxShadow: active ? `0 0 0 1px ${infoColor(T)}55, 0 0 14px ${infoColor(T)}25` : 'none',
                               WebkitTapHighlightColor: 'transparent',
                             }}>
                             <span>{pct}%</span>
@@ -853,9 +854,9 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                       border: `1px solid ${T.border.subtle}`,
                     }}>
                       <div>{isRTL ? 'מרחק סטופ:' : 'Stop distance:'} <span style={{ color: T.text.primary }}>{sizing.d.toFixed(sizing.d < 1 ? 5 : 2)}</span> · <span style={{ color: T.text.primary }}>{(sizing.dPct * 100).toFixed(2)}%</span></div>
-                      <div>{isRTL ? 'יחידות:' : 'Units:'} <span style={{ color: T.accent.cyan, fontWeight: 700 }}>{sizing.units.toFixed(sizing.units < 1 ? 6 : 4)}</span></div>
-                      <div>{isRTL ? 'נומינלי:' : 'Notional:'} <span style={{ color: T.accent.cyan, fontWeight: 700 }}>${sizing.notional.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span></div>
-                      <div>{isRTL ? 'סיכון:' : 'Risk:'} <span style={{ color: T.accent.orange, fontWeight: 700 }}>${sizing.riskDollar.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span></div>
+                      <div>{isRTL ? 'יחידות:' : 'Units:'} <span style={{ color: infoColor(T), fontWeight: 700 }}>{sizing.units.toFixed(sizing.units < 1 ? 6 : 4)}</span></div>
+                      <div>{isRTL ? 'נומינלי:' : 'Notional:'} <span style={{ color: infoColor(T), fontWeight: 700 }}>${sizing.notional.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span></div>
+                      <div>{isRTL ? 'סיכון:' : 'Risk:'} <span style={{ color: T.state.warn, fontWeight: 700 }}>${sizing.riskDollar.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span></div>
                       <div>{isRTL ? `מרג'ין (×${sizing.lev}):` : `Margin (×${sizing.lev}):`} <span style={{ color: T.text.primary, fontWeight: 700 }}>${sizing.margin.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span></div>
                     </div>
                   )}
@@ -878,7 +879,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
 
               <div style={sectionCard}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 14, color: T.text.primary, fontWeight: 600 }}>
-                  <input type="checkbox" checked={form.rules} onChange={e => setForm(f => ({ ...f, rules: e.target.checked }))} style={{ accentColor: T.accent.cyan, width: 18, height: 18 }} />
+                  <input type="checkbox" checked={form.rules} onChange={e => setForm(f => ({ ...f, rules: e.target.checked }))} style={{ accentColor: infoColor(T), width: 18, height: 18 }} />
                   {isRTL ? 'עקבתי אחר חוקי המסחר שלי' : 'I followed my trading rules'}
                 </label>
                 <div style={helpText}>{isRTL ? 'סמן אם פעלת לפי האסטרטגיה והכללים שהגדרת לעצמך.' : 'Check this if you stuck to your strategy and rules.'}</div>
@@ -911,13 +912,13 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                   </div>
                   <div>
                     <div style={{ fontSize: 11, color: T.text.muted }}>{isRTL ? 'סטופ לוס' : 'Stop loss'}</div>
-                    <div style={{ fontSize: 14, color: T.accent.orange, fontFamily: "'JetBrains Mono', monospace" }}>{form.stopLoss}</div>
+                    <div style={{ fontSize: 14, color: T.state.warn, fontFamily: "'JetBrains Mono', monospace" }}>{form.stopLoss}</div>
                   </div>
                 </div>
               </GlassCard>
 
               {isOpenPosition ? (
-                <GlassCard T={T} style={{ marginBottom: 18, padding: isMobile ? 18 : 22, background: `${T.accent.cyan}10`, border: `2px solid ${T.accent.cyan}40` }}>
+                <GlassCard T={T} style={{ marginBottom: 18, padding: isMobile ? 18 : 22, background: `${infoColor(T)}10`, border: `2px solid ${infoColor(T)}40` }}>
                   <div style={{ fontSize: 12, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 14, fontWeight: 700 }}>{isRTL ? 'פוזיציה פתוחה' : 'Open Position'}</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
                     <span style={{ fontSize: 28 }}>◴</span>
@@ -945,7 +946,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                     </div>
                     <div>
                       <div style={{ fontSize: 11, color: T.text.muted }}>{isRTL ? 'תוצאה' : 'Outcome'}</div>
-                      <div style={{ fontSize: 18, fontWeight: 700, color: winLoss === 'Win' ? T.accent.green : winLoss === 'Loss' ? T.accent.red : T.accent.orange }}>{winLoss === 'Win' ? (isRTL ? 'רווח' : 'Win') : winLoss === 'Loss' ? (isRTL ? 'הפסד' : 'Loss') : 'Break-even'}</div>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: winLoss === 'Win' ? T.accent.green : winLoss === 'Loss' ? T.accent.red : T.state.warn }}>{winLoss === 'Win' ? (isRTL ? 'רווח' : 'Win') : winLoss === 'Loss' ? (isRTL ? 'הפסד' : 'Loss') : 'Break-even'}</div>
                     </div>
                   </div>
                   <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${T.border.subtle}`, fontSize: 12, color: T.text.secondary }}>
@@ -956,13 +957,13 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
               )}
 
               {!isOpenPosition && (
-                <GlassCard T={T} style={{ marginBottom: 18, padding: isMobile ? 16 : 20, border: `1.5px dashed ${manualPnlEnabled ? T.accent.cyan : T.border.medium}` }}>
+                <GlassCard T={T} style={{ marginBottom: 18, padding: isMobile ? 16 : 20, border: `1.5px dashed ${manualPnlEnabled ? infoColor(T) : T.border.medium}` }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: manualPnlEnabled ? 12 : 0 }}>
                     <input
                       type="checkbox"
                       checked={manualPnlEnabled}
                       onChange={e => setManualPnlEnabled(e.target.checked)}
-                      style={{ accentColor: T.accent.cyan, width: 18, height: 18 }}
+                      style={{ accentColor: infoColor(T), width: 18, height: 18 }}
                     />
                     <div>
                       <div style={{ fontSize: 13, fontWeight: 700, color: T.text.primary }}>
@@ -1048,12 +1049,12 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
           <div style={{ fontSize: 11, color: T.text.muted }}>{isRTL ? `שלב ${step + 1} מתוך 3` : `Step ${step + 1} of 3`}</div>
           {step < 2 ? (
             <button onClick={handleNext}
-              style={{ padding: isMobile ? '13px 28px' : '12px 28px', background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`, border: 'none', borderRadius: 12, color: T.bg.primary, fontWeight: 700, cursor: 'pointer', fontSize: 14 }}>
+              style={{ padding: isMobile ? '13px 28px' : '12px 28px', background: `linear-gradient(135deg, ${infoColor(T)}, ${infoColor(T)})`, border: 'none', borderRadius: 12, color: T.bg.primary, fontWeight: 700, cursor: 'pointer', fontSize: 14 }}>
               {isRTL ? 'המשך →' : 'Continue →'}
             </button>
           ) : (
             <button onClick={handleSubmit} disabled={savingOpen}
-              style={{ padding: isMobile ? '13px 28px' : '12px 28px', background: `linear-gradient(135deg, ${isOpenPosition ? T.accent.cyan : T.accent.green}, ${T.accent.teal})`, border: 'none', borderRadius: 12, color: T.bg.primary, fontWeight: 800, cursor: savingOpen ? 'wait' : 'pointer', fontSize: 14, opacity: savingOpen ? 0.7 : 1 }}>
+              style={{ padding: isMobile ? '13px 28px' : '12px 28px', background: `linear-gradient(135deg, ${isOpenPosition ? infoColor(T) : T.accent.green}, ${infoColor(T)})`, border: 'none', borderRadius: 12, color: T.bg.primary, fontWeight: 800, cursor: savingOpen ? 'wait' : 'pointer', fontSize: 14, opacity: savingOpen ? 0.7 : 1 }}>
               {savingOpen ? (isRTL ? 'שומר…' : 'Saving…') : (isOpenPosition ? (isRTL ? '◴ שמור פוזיציה פתוחה' : '◴ Save Open Position') : (isRTL ? '✓ שמור עסקה' : '✓ Save Trade'))}
             </button>
           )}
@@ -1079,7 +1080,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
               width: '100%', maxWidth: 420,
               background: `linear-gradient(165deg, ${T.bg.card} 0%, ${T.bg.secondary} 100%)`,
               border: `1px solid ${T.border.medium}`, borderRadius: 18,
-              padding: 26, boxShadow: `0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px ${T.accent.orange}25`,
+              padding: 26, boxShadow: `0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px ${T.state.warn}25`,
               animation: 'tfScaleIn 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
             }}
           >
@@ -1097,7 +1098,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                 onClick={() => setShowExitConfirm(false)}
                 style={{
                   padding: '10px 18px', fontSize: 13, fontWeight: 700,
-                  background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.teal})`,
+                  background: `linear-gradient(135deg, ${infoColor(T)}, ${infoColor(T)})`,
                   border: 'none', borderRadius: 10, color: T.bg.primary, cursor: 'pointer',
                 }}
               >

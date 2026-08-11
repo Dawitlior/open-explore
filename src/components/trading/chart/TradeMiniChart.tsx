@@ -3,6 +3,7 @@ import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { pickInterval, resolveSymbol, type Interval } from '@/lib/market/symbol-resolver';
 import { frameWindow, useTradeCandles } from '@/lib/market/use-trade-candles';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 interface Props {
   T: TradingTheme;
@@ -60,7 +61,7 @@ export function TradeMiniChart({ T, trade, isRTL, onOpen }: Props) {
         <span style={{ fontSize: 9.5, letterSpacing: 0.9, textTransform: 'uppercase', color: T.text.muted }}>
           {L('תצוגה מקדימה', 'Price preview')}
         </span>
-        <span style={{ fontSize: 9.5, fontFamily: MONO, color: T.accent.cyan }}>
+        <span style={{ fontSize: 9.5, fontFamily: MONO, color: infoColor(T) }}>
           {L('פתח גרף', 'Open chart')} ›
         </span>
       </div>
@@ -79,7 +80,7 @@ export function TradeMiniChart({ T, trade, isRTL, onOpen }: Props) {
             {trade.stopLoss != null && (
               <line x1="0" x2={W} y1={path.y(trade.stopLoss)} y2={path.y(trade.stopLoss)} stroke={T.accent.red} strokeWidth="1" strokeDasharray="4 4" vectorEffect="non-scaling-stroke" opacity="0.8" />
             )}
-            <line x1="0" x2={W} y1={path.y(trade.entry)} y2={path.y(trade.entry)} stroke={T.accent.cyan} strokeWidth="1" vectorEffect="non-scaling-stroke" opacity="0.9" />
+            <line x1="0" x2={W} y1={path.y(trade.entry)} y2={path.y(trade.entry)} stroke={infoColor(T)} strokeWidth="1" vectorEffect="non-scaling-stroke" opacity="0.9" />
             <line x1="0" x2={W} y1={path.y(trade.exit)} y2={path.y(trade.exit)} stroke={outcome} strokeWidth="1" strokeDasharray="2 3" vectorEffect="non-scaling-stroke" opacity="0.9" />
           </svg>
         ) : (
@@ -92,7 +93,7 @@ export function TradeMiniChart({ T, trade, isRTL, onOpen }: Props) {
       </div>
 
       <div style={{ display: 'flex', gap: 10, fontSize: 9, fontFamily: MONO, color: T.text.muted, flexWrap: 'wrap' }}>
-        <span style={{ color: T.accent.cyan }}>— {L('כניסה', 'Entry')} {trade.entry}</span>
+        <span style={{ color: infoColor(T) }}>— {L('כניסה', 'Entry')} {trade.entry}</span>
         {trade.stopLoss != null && <span style={{ color: T.accent.red }}>-- {L('סטופ', 'Stop')} {trade.stopLoss}</span>}
         <span style={{ color: outcome }}>·· {L('יציאה', 'Exit')} {trade.exit}</span>
       </div>

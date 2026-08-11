@@ -279,7 +279,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
     color: T.text.primary, fontSize: 13, outline: 'none',
     fontFamily: mono, boxSizing: 'border-box', transition: 'border-color .15s, background .15s',
   };
-  const primaryBtn = (color = T.accent.cyan, disabled = false): CSSProperties => ({
+  const primaryBtn = (color = infoColor(T), disabled = false): CSSProperties => ({
     padding: '10px 18px', borderRadius: T.radius.sm, border: 'none',
     background: disabled ? T.bg.tertiary : color, color: disabled ? T.text.muted : T.bg.primary,
     cursor: disabled ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 800,
@@ -309,7 +309,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
         @keyframes orcaSettingsFade { from { opacity: 0 } to { opacity: 1 } }
         @keyframes orcaSettingsRise { from { opacity: 0; transform: translateY(12px) scale(.99) } to { opacity: 1; transform: none } }
         @keyframes orcaIosSlide { from { opacity: 0; transform: translateX(${isRTL ? '-' : ''}24px) } to { opacity: 1; transform: none } }
-        .orca-settings-input:focus { border-color: ${T.accent.cyan} !important; background: ${T.bg.secondary} !important; }
+        .orca-settings-input:focus { border-color: ${infoColor(T)} !important; background: ${T.bg.secondary} !important; }
         .orca-nav-item:hover { background: ${T.bg.tertiary} !important; }
         .orca-cta:hover:not(:disabled) { transform: translateY(-1px); }
         .orca-ios-row-btn:active { background: ${iosActiveTap} !important; }
@@ -404,7 +404,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
               {isOwner && (
                 <div style={{ marginBottom: 14, padding: '0 4px' }}>
                   <div style={{
-                    fontSize: 9.5, fontWeight: 800, letterSpacing: 1.6, color: T.accent.orange,
+                    fontSize: 9.5, fontWeight: 800, letterSpacing: 1.6, color: T.state.warn,
                     textTransform: 'uppercase', padding: '6px 8px 6px',
                   }}>{t('ניהול מערכת', 'System Admin')}</div>
                   <button
@@ -413,23 +413,23 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                     style={{
                       display: 'flex', alignItems: 'center', gap: 10, width: '100%',
                       padding: '9px 10px', borderRadius: 8,
-                      background: `linear-gradient(135deg, ${T.accent.orange}22, ${T.accent.orange}11)`,
-                      border: `1px solid ${T.accent.orange}55`,
+                      background: `linear-gradient(135deg, ${T.state.warn}22, ${T.state.warn}11)`,
+                      border: `1px solid ${T.state.warn}55`,
                       cursor: 'pointer', textAlign: isRTL ? 'right' : 'left' as const,
                       color: T.text.primary, fontFamily: sans,
                       fontSize: 13, fontWeight: 700,
-                      boxShadow: `0 0 0 1px ${T.accent.orange}22 inset`,
+                      boxShadow: `0 0 0 1px ${T.state.warn}22 inset`,
                     }}
                   >
                     <span style={{
                       width: 22, height: 22, borderRadius: 6, flexShrink: 0,
                       display: 'grid', placeItems: 'center',
-                      background: T.accent.orange, color: '#fff',
+                      background: T.state.warn, color: '#fff',
                     }}><Terminal size={13} strokeWidth={2.4} /></span>
                     <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {t('מסוף ORCA — אדמין', 'ORCA Console — Admin')}
                     </span>
-                    <span style={{ fontSize: 10, color: T.accent.orange, fontFamily: mono, opacity: 0.85 }}>↗</span>
+                    <span style={{ fontSize: 10, color: T.state.warn, fontFamily: mono, opacity: 0.85 }}>↗</span>
                   </button>
                 </div>
               )}
@@ -495,7 +495,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                 style={{
                   padding: '6px 10px', borderRadius: 6, display: 'inline-flex', alignItems: 'center', gap: 6,
                   background: 'transparent', border: `1px solid ${T.border.medium}`,
-                  color: T.accent.orange, cursor: 'pointer', fontSize: 11, fontWeight: 600, fontFamily: sans,
+                  color: T.state.warn, cursor: 'pointer', fontSize: 11, fontWeight: 600, fontFamily: sans,
                 }}
               ><LogOut size={12} /> {t('התנתק', 'Sign out')}</button>
             </div>
@@ -540,7 +540,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                 </div>
                 <div style={{
                   width: 48, height: 48, borderRadius: '50%', flexShrink: 0,
-                  background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.purple})`,
+                  background: `linear-gradient(135deg, ${infoColor(T)}, ${neutralRamp(T, 3)[1]})`,
                   display: 'grid', placeItems: 'center', fontSize: 18, fontWeight: 800, color: isLight ? '#fff' : '#000',
                 }}>{(auth.user?.email || '?').charAt(0).toUpperCase()}</div>
               </div>
@@ -551,7 +551,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
               {isOwner && (
                 <div style={{ marginBottom: 22 }}>
                   <div style={{
-                    fontSize: 11, fontWeight: 700, color: T.accent.orange, textTransform: 'uppercase',
+                    fontSize: 11, fontWeight: 700, color: T.state.warn, textTransform: 'uppercase',
                     letterSpacing: 1.2, padding: '4px 6px 8px',
                   }}>{t('ניהול מערכת', 'System Admin')}</div>
                   <button
@@ -560,8 +560,8 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                     style={{
                       display: 'flex', alignItems: 'center', gap: 12, width: '100%',
                       padding: '13px 12px',
-                      background: `linear-gradient(135deg, ${T.accent.orange}22, ${T.accent.orange}11)`,
-                      border: `1px solid ${T.accent.orange}66`, borderRadius: 12,
+                      background: `linear-gradient(135deg, ${T.state.warn}22, ${T.state.warn}11)`,
+                      border: `1px solid ${T.state.warn}66`, borderRadius: 12,
                       color: T.text.primary, fontFamily: sans,
                       textAlign: isRTL ? 'right' : 'left' as const, cursor: 'pointer',
                     }}
@@ -569,14 +569,14 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                     <span style={{
                       width: 30, height: 30, borderRadius: 7, flexShrink: 0,
                       display: 'grid', placeItems: 'center',
-                      background: `linear-gradient(160deg, ${T.accent.orange}, ${T.accent.orange}aa)`,
+                      background: `linear-gradient(160deg, ${T.state.warn}, ${T.state.warn}aa)`,
                       color: '#fff',
                     }}><Terminal size={16} strokeWidth={2.4} /></span>
                     <span style={{ flex: 1, fontSize: 14.5, fontWeight: 600, color: T.text.primary, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {t('מסוף ORCA — אדמין', 'ORCA Console — Admin')}
                     </span>
                     <span style={{
-                      color: T.accent.orange, fontSize: 18, lineHeight: 1,
+                      color: T.state.warn, fontSize: 18, lineHeight: 1,
                       transform: isRTL ? 'scaleX(-1)' : 'none',
                     }}>›</span>
                   </button>
@@ -597,7 +597,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                     }}>
                       {rows.map((item, i) => {
                         const Icon = item.icon;
-                        const palette = [T.accent.cyan, T.accent.purple, T.accent.orange, T.accent.green || T.accent.cyan];
+                        const palette = [infoColor(T), neutralRamp(T, 3)[1], T.state.warn, T.accent.green || infoColor(T)];
                         const tint = palette[i % palette.length];
                         return (
                           <button
@@ -639,7 +639,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                 style={{
                   width: '100%', marginTop: 4, padding: '13px 14px',
                   background: iosRowBg, border: `1px solid ${T.border.subtle}`,
-                  borderRadius: 12, color: T.accent.orange, fontFamily: sans, fontSize: 14.5, fontWeight: 600,
+                  borderRadius: 12, color: T.state.warn, fontFamily: sans, fontSize: 14.5, fontWeight: 600,
                   cursor: 'pointer', textAlign: 'center',
                 }}
               >{t('התנתקות', 'Sign out')}</button>
@@ -669,7 +669,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                 onClick={() => setMobileDrilled(false)}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 4,
-                  background: 'transparent', border: 'none', color: T.accent.cyan,
+                  background: 'transparent', border: 'none', color: infoColor(T),
                   fontFamily: sans, fontSize: 15, fontWeight: 600, cursor: 'pointer',
                   padding: '4px 6px',
                 }}
@@ -826,10 +826,10 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                     </div>
                   )}
 
-                  <div style={{ ...card, borderColor: `${T.accent.orange}40`, background: `linear-gradient(135deg, ${T.accent.orange}08, transparent)` }}>
-                    <h3 style={{ ...sectionTitle, color: T.accent.orange }}><AlertTriangle size={14} /> {t('יציאה מהמערכת', 'Sign out')}</h3>
+                  <div style={{ ...card, borderColor: `${T.state.warn}40`, background: `linear-gradient(135deg, ${T.state.warn}08, transparent)` }}>
+                    <h3 style={{ ...sectionTitle, color: T.state.warn }}><AlertTriangle size={14} /> {t('יציאה מהמערכת', 'Sign out')}</h3>
                     <p style={sectionHint}>{t('יציאה תנתק אותך מהמכשיר הזה. הנתונים שלך נשמרים בענן ויהיו זמינים בכניסה הבאה.', 'Signs you out from this device. Your data stays in the cloud and will be available next sign-in.')}</p>
-                    <button onClick={async () => { await auth.signOut(); }} style={{ ...ghostBtn, color: T.accent.orange, borderColor: `${T.accent.orange}55` }}>
+                    <button onClick={async () => { await auth.signOut(); }} style={{ ...ghostBtn, color: T.state.warn, borderColor: `${T.state.warn}55` }}>
                       <LogOut size={13} /> {t('התנתק עכשיו', 'Sign out now')}
                     </button>
                   </div>
@@ -856,8 +856,8 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                           padding: 14, borderRadius: T.radius.md, cursor: 'pointer',
                           textAlign: isRTL ? 'right' : 'left' as const,
                           background: active ? T.bg.tertiary : T.bg.secondary,
-                          border: `2px solid ${active ? T.accent.cyan : T.border.subtle}`,
-                          boxShadow: active ? T.shadow.glow(T.accent.cyanGlow) : 'none',
+                          border: `2px solid ${active ? infoColor(T) : T.border.subtle}`,
+                          boxShadow: active ? T.shadow.glow(`${infoColor(T)}30`) : 'none',
                           transition: 'all .18s', fontFamily: sans,
                         }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
@@ -865,7 +865,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                               <div style={{ fontSize: 13, fontWeight: 800, color: T.text.primary }}>{opt.label[isRTL ? 'he' : 'en']}</div>
                               <div style={{ fontSize: 10.5, color: T.text.muted, marginTop: 2 }}>{opt.sub[isRTL ? 'he' : 'en']}</div>
                             </div>
-                            {active && <Check size={14} color={T.accent.cyan} strokeWidth={3} />}
+                            {active && <Check size={14} color={infoColor(T)} strokeWidth={3} />}
                           </div>
                           <div style={{ display: 'flex', gap: 4 }}>
                             {opt.preview.map((c, i) => (
@@ -887,9 +887,9 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                       return (
                         <button key={L} onClick={() => setLang(L)} style={{
                           padding: '14px 16px', borderRadius: T.radius.md, cursor: 'pointer',
-                          background: active ? `${T.accent.cyan}14` : T.bg.primary,
-                          border: `2px solid ${active ? T.accent.cyan : T.border.subtle}`,
-                          color: active ? T.accent.cyan : T.text.primary,
+                          background: active ? `${infoColor(T)}14` : T.bg.primary,
+                          border: `2px solid ${active ? infoColor(T) : T.border.subtle}`,
+                          color: active ? infoColor(T) : T.text.primary,
                           fontSize: 14, fontWeight: 800, fontFamily: sans,
                           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                         }}>
@@ -907,7 +907,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                   <button onClick={() => setPrivacyMode(!privacyMode)} style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
                     width: '100%', padding: '14px 16px', borderRadius: T.radius.md,
-                    background: T.bg.primary, border: `1px solid ${privacyMode ? T.accent.orange : T.border.subtle}`,
+                    background: T.bg.primary, border: `1px solid ${privacyMode ? T.state.warn : T.border.subtle}`,
                     cursor: 'pointer', textAlign: isRTL ? 'right' : 'left' as const, fontFamily: sans,
                   }}>
                     <div>
@@ -918,7 +918,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                         {privacyMode ? t('כל הסכומים מוסתרים', 'All amounts are masked') : t('הסכומים מוצגים', 'Amounts are visible')}
                       </div>
                     </div>
-                    <div style={{ width: 40, height: 22, borderRadius: 11, position: 'relative', background: privacyMode ? T.accent.orange : T.bg.tertiary, transition: 'background .15s' }}>
+                    <div style={{ width: 40, height: 22, borderRadius: 11, position: 'relative', background: privacyMode ? T.state.warn : T.bg.tertiary, transition: 'background .15s' }}>
                       <div style={{ position: 'absolute', top: 2, insetInlineStart: privacyMode ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'inset-inline-start .15s' }} />
                     </div>
                   </button>
@@ -977,8 +977,8 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                         onDrop={() => { if (dragIdx !== null && dragIdx !== idx) dash.moveWidget(dragIdx, idx); setDragIdx(null); setOverIdx(null); }}
                         style={{
                           padding: '12px 14px', borderRadius: T.radius.md, cursor: 'grab',
-                          background: isOver ? `${T.accent.cyan}18` : T.bg.secondary,
-                          border: `1px solid ${isOver ? T.accent.cyan : T.border.subtle}`,
+                          background: isOver ? `${infoColor(T)}18` : T.bg.secondary,
+                          border: `1px solid ${isOver ? infoColor(T) : T.border.subtle}`,
                           opacity: isDrag ? 0.4 : 1,
                           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                           transition: 'all .15s', userSelect: 'none',
@@ -991,7 +991,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                         </div>
                         <button onClick={() => dash.toggleWidget(w.id)} style={{
                           background: 'transparent', border: 'none', cursor: 'pointer',
-                          color: w.visible ? T.accent.cyan : T.text.muted,
+                          color: w.visible ? infoColor(T) : T.text.muted,
                           display: 'grid', placeItems: 'center', padding: 4,
                         }}>
                           {w.visible ? <Eye size={15} /> : <EyeOff size={15} />}
@@ -1031,7 +1031,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                               <div style={{ fontSize: 13, fontWeight: 700, color: T.text.primary }}>{k.label}</div>
                               <div style={{ fontSize: 10.5, color: T.text.muted, fontFamily: mono, marginTop: 2 }}>= {k.formula}</div>
                             </div>
-                            <div style={{ fontSize: 16, fontWeight: 800, color: val !== null ? T.accent.cyan : T.accent.red, fontFamily: mono }}>
+                            <div style={{ fontSize: 16, fontWeight: 800, color: val !== null ? infoColor(T) : T.accent.red, fontFamily: mono }}>
                               {val !== null
                                 ? ((isR && k.format === 'currency') ? `${val >= 0 ? '+' : ''}${val.toFixed(2)}R`
                                   : k.format === 'currency' ? `$${val.toFixed(2)}`
@@ -1078,7 +1078,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                     dash.setKpis([...dash.kpis, { id: `kpi_${Date.now()}`, label: newKpi.label!, formula: newKpi.formula!, format: newKpi.format || 'number' }]);
                     setNewKpi({ label: '', formula: '', format: 'number' });
                     toast.success(t('המדד נוסף', 'KPI added'));
-                  }} style={primaryBtn(T.accent.cyan, !newKpi.label || !newKpi.formula)} disabled={!newKpi.label || !newKpi.formula}>
+                  }} style={primaryBtn(infoColor(T), !newKpi.label || !newKpi.formula)} disabled={!newKpi.label || !newKpi.formula}>
                     <Plus size={13} /> {t('הוסף מדד', 'Add KPI')}
                   </button>
                   <div style={{ marginTop: 14, padding: 12, borderRadius: T.radius.sm, background: T.bg.secondary, border: `1px solid ${T.border.subtle}`, fontSize: 10.5, color: T.text.muted, fontFamily: mono, lineHeight: 1.7 }}>
@@ -1133,16 +1133,16 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                     </div>
                     <div style={{
                       marginTop: 14, padding: '12px 14px', borderRadius: T.radius.md,
-                      background: `linear-gradient(135deg, ${T.accent.orange}10, transparent)`,
-                      border: `1px solid ${T.accent.orange}30`, fontSize: 11.5, color: T.text.secondary, lineHeight: 1.6,
+                      background: `linear-gradient(135deg, ${T.state.warn}10, transparent)`,
+                      border: `1px solid ${T.state.warn}30`, fontSize: 11.5, color: T.text.secondary, lineHeight: 1.6,
                     }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 800, color: T.accent.orange, marginBottom: 4, fontSize: 11 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 800, color: T.state.warn, marginBottom: 4, fontSize: 11 }}>
                         <Sparkles size={12} /> {t('המלצה מקצועית', 'Professional guideline')}
                       </div>
                       {t('יום ≤ 2× עסקה  ·  שבוע ≤ 5× עסקה  ·  חודש ≤ 10× עסקה', 'Day ≤ 2× per-trade  ·  Week ≤ 5× per-trade  ·  Month ≤ 10× per-trade')}
                     </div>
                     <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-                      <button className="orca-cta" onClick={apply} disabled={!dirty} style={{ ...primaryBtn(T.accent.cyan, !dirty), flex: 1 }}>
+                      <button className="orca-cta" onClick={apply} disabled={!dirty} style={{ ...primaryBtn(infoColor(T), !dirty), flex: 1 }}>
                         <Check size={13} /> {dirty ? t('שמור מגבלות', 'Save limits') : t('נשמר', 'Saved')}
                       </button>
                       <button onClick={() => { riskCfg.reset(); setPendingLimits(null); toast.success(t('אופס', 'Reset')); }} style={ghostBtn}>
@@ -1194,9 +1194,9 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                           <span style={{
                             marginInlineStart: 8, fontSize: 9.5, fontWeight: 800, letterSpacing: 0.6,
                             padding: '2px 7px', borderRadius: 999,
-                            background: usdSaving ? `${T.accent.cyan}22` : `${T.accent.green}18`,
-                            color: usdSaving ? T.accent.cyan : T.accent.green,
-                            border: `1px solid ${usdSaving ? T.accent.cyan : T.accent.green}55`,
+                            background: usdSaving ? `${infoColor(T)}22` : `${T.accent.green}18`,
+                            color: usdSaving ? infoColor(T) : T.accent.green,
+                            border: `1px solid ${usdSaving ? infoColor(T) : T.accent.green}55`,
                             fontFamily: mono, transition: 'all .2s',
                           }}>
                             {usdSaving ? t('מסנכרן…', 'SYNCING…') : t('חי', 'LIVE')}
@@ -1223,14 +1223,14 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                 <button onClick={onClick} style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
                   width: '100%', padding: '12px 14px', borderRadius: T.radius.md,
-                  background: T.bg.secondary, border: `1px solid ${on ? T.accent.cyan : T.border.subtle}`,
+                  background: T.bg.secondary, border: `1px solid ${on ? infoColor(T) : T.border.subtle}`,
                   cursor: 'pointer', textAlign: isRTL ? 'right' : 'left' as const, marginBottom: 6, fontFamily: sans,
                 }}>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: T.text.primary }}>{label}</div>
                     {hint && <div style={{ fontSize: 10.5, color: T.text.muted, marginTop: 2 }}>{hint}</div>}
                   </div>
-                  <div style={{ width: 36, height: 20, borderRadius: 10, position: 'relative', background: on ? T.accent.cyan : T.bg.tertiary, transition: 'background .15s', flexShrink: 0 }}>
+                  <div style={{ width: 36, height: 20, borderRadius: 10, position: 'relative', background: on ? infoColor(T) : T.bg.tertiary, transition: 'background .15s', flexShrink: 0 }}>
                     <div style={{ position: 'absolute', top: 2, insetInlineStart: on ? 18 : 2, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'inset-inline-start .15s' }} />
                   </div>
                 </button>
@@ -1246,9 +1246,9 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                         return (
                           <button key={d} onClick={() => ui.setPrefs({ density: d })} style={{
                             padding: '12px 10px', borderRadius: T.radius.md, cursor: 'pointer',
-                            background: active ? `${T.accent.cyan}14` : T.bg.secondary,
-                            border: `2px solid ${active ? T.accent.cyan : T.border.subtle}`,
-                            color: active ? T.accent.cyan : T.text.primary,
+                            background: active ? `${infoColor(T)}14` : T.bg.secondary,
+                            border: `2px solid ${active ? infoColor(T) : T.border.subtle}`,
+                            color: active ? infoColor(T) : T.text.primary,
                             fontSize: 12, fontWeight: 800, fontFamily: sans,
                           }}>
                             {d === 'compact' ? t('דחוס', 'Compact') : d === 'comfortable' ? t('נוח', 'Comfortable') : t('מרווח', 'Spacious')}
@@ -1263,7 +1263,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                     <p style={sectionHint}>{t('משנה את גודל הבסיס בכל האפליקציה. ערך נוכחי: ', 'Scales the base font size everywhere. Current: ')}<strong style={{ color: T.text.primary, fontFamily: mono }}>{Math.round(p.fontScale * 100)}%</strong></p>
                     <input type="range" min={0.85} max={1.2} step={0.01} value={p.fontScale}
                       onChange={e => ui.setPrefs({ fontScale: parseFloat(e.target.value) })}
-                      style={{ width: '100%', accentColor: T.accent.cyan }} />
+                      style={{ width: '100%', accentColor: infoColor(T) }} />
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: T.text.muted, fontFamily: mono, marginTop: 4 }}>
                       <span>85%</span><span>100%</span><span>120%</span>
                     </div>
@@ -1311,14 +1311,14 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                       style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
                         width: '100%', padding: '14px 16px', borderRadius: T.radius.md,
-                        background: `linear-gradient(135deg, ${T.accent.cyan}22, ${T.accent.cyan}08)`,
-                        border: `1px solid ${T.accent.cyan}66`,
+                        background: `linear-gradient(135deg, ${infoColor(T)}22, ${infoColor(T)}08)`,
+                        border: `1px solid ${infoColor(T)}66`,
                         color: T.text.primary, cursor: 'pointer', fontFamily: sans,
                         marginBottom: 12, textAlign: isRTL ? 'right' : 'left' as const,
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                        <Zap size={16} color={T.accent.cyan} />
+                        <Zap size={16} color={infoColor(T)} />
                         <div style={{ minWidth: 0 }}>
                           <div style={{ fontSize: 13, fontWeight: 800 }}>{t('פתח עכשיו', 'Open now')}</div>
                           <div style={{ fontSize: 10.5, color: T.text.muted, marginTop: 2 }}>
@@ -1340,7 +1340,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
                         width: '100%', padding: '12px 14px', borderRadius: T.radius.md,
                         background: T.bg.secondary,
-                        border: `1px solid ${!hidden ? T.accent.cyan : T.border.subtle}`,
+                        border: `1px solid ${!hidden ? infoColor(T) : T.border.subtle}`,
                         cursor: 'pointer', textAlign: isRTL ? 'right' : 'left' as const, fontFamily: sans,
                       }}
                     >
@@ -1354,7 +1354,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                       </div>
                       <div style={{
                         width: 36, height: 20, borderRadius: 10, position: 'relative',
-                        background: !hidden ? T.accent.cyan : T.bg.tertiary, transition: 'background .15s', flexShrink: 0,
+                        background: !hidden ? infoColor(T) : T.bg.tertiary, transition: 'background .15s', flexShrink: 0,
                       }}>
                         <div style={{
                           position: 'absolute', top: 2,
@@ -1433,11 +1433,11 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                   <div style={{
                     ...card,
                     background: locked
-                      ? `linear-gradient(135deg, ${T.accent.orange}10, transparent)`
+                      ? `linear-gradient(135deg, ${T.state.warn}10, transparent)`
                       : p.customAccentEnabled
                         ? `linear-gradient(135deg, ${p.customAccent}18, transparent)`
                         : T.bg.primary,
-                    borderColor: locked ? `${T.accent.orange}40` : p.customAccentEnabled ? `${p.customAccent}40` : T.border.subtle,
+                    borderColor: locked ? `${T.state.warn}40` : p.customAccentEnabled ? `${p.customAccent}40` : T.border.subtle,
                     display: 'flex', alignItems: 'center', gap: 14,
                   }}>
                     <div style={{
@@ -1454,12 +1454,12 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                       </div>
                       <div style={{ fontSize: 11, color: T.text.muted, fontFamily: mono, marginTop: 3 }}>
                         {p.customAccentEnabled ? p.customAccent.toUpperCase() : '—'}
-                        {locked && <span style={{ color: T.accent.orange, marginInlineStart: 10, fontWeight: 800 }}>🔒 {lockText}</span>}
+                        {locked && <span style={{ color: T.state.warn, marginInlineStart: 10, fontWeight: 800 }}>🔒 {lockText}</span>}
                       </div>
                     </div>
                     {p.customAccentEnabled && !locked && (
                       <button onClick={() => { ui.removeCustomAccent(); toast.success(t('הוסר', 'Removed')); }}
-                        style={{ ...ghostBtn, color: T.accent.orange, borderColor: `${T.accent.orange}55` }}>
+                        style={{ ...ghostBtn, color: T.state.warn, borderColor: `${T.state.warn}55` }}>
                         <X size={13} /> {t('הסר פלטה', 'Remove')}
                       </button>
                     )}
@@ -1472,7 +1472,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                         setDraftAccent('#00f2ff');
                         toast.success(t('הצבעים אופסו לברירת המחדל (חצות)', 'Colors reset to default (Midnight)'));
                       }}
-                      style={{ ...ghostBtn, color: T.accent.blue, borderColor: `${T.accent.blue}55` }}
+                      style={{ ...ghostBtn, color: infoColor(T), borderColor: `${infoColor(T)}55` }}
                       title={t('אפס הכל לערכת חצות ברירת המחדל', 'Reset everything to the default Midnight theme')}
                     >
                       <RotateCcw size={13} /> {t('ברירת מחדל', 'Default')}
@@ -1632,10 +1632,10 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                       {locked && (
                         <div style={{
                           marginTop: 10, padding: 10, borderRadius: T.radius.sm,
-                          background: `${T.accent.orange}10`, border: `1px solid ${T.accent.orange}40`,
+                          background: `${T.state.warn}10`, border: `1px solid ${T.state.warn}40`,
                           fontSize: 11, color: T.text.secondary, lineHeight: 1.6,
                         }}>
-                          <strong style={{ color: T.accent.orange }}>🔒 {t('הפלטה נעולה', 'Palette locked')}.</strong>{' '}
+                          <strong style={{ color: T.state.warn }}>🔒 {t('הפלטה נעולה', 'Palette locked')}.</strong>{' '}
                           {t('המנגנון מגביל החלפת פלטה לפעם אחת ביום בשביל יציבות חזותית. תוכל לערוך שוב ב', 'The system limits palette changes to once per day for visual stability. You can edit again on ')}
                           <strong>{new Date(p.customAccentLockedUntil).toLocaleString(isRTL ? 'he-IL' : 'en-US')}</strong>.
                         </div>
@@ -1798,13 +1798,13 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                           </button>
                           {p.customThemeEnabled && !studioLocked && (
                             <button onClick={() => { ui.removeCustomTheme(); toast.success(t('בוטל', 'Disabled')); }}
-                              style={{ ...ghostBtn, color: T.accent.orange, borderColor: `${T.accent.orange}55` }}>
+                              style={{ ...ghostBtn, color: T.state.warn, borderColor: `${T.state.warn}55` }}>
                               <X size={13} /> {t('כבה ערכה אישית', 'Disable custom theme')}
                             </button>
                           )}
                           {studioLocked && (
                             <button onClick={() => setUnlockStep(1)}
-                              style={{ ...ghostBtn, color: T.accent.orange, borderColor: `${T.accent.orange}55` }}>
+                              style={{ ...ghostBtn, color: T.state.warn, borderColor: `${T.state.warn}55` }}>
                               <AlertTriangle size={13} /> {t('בטל נעילה', 'Unlock now')}
                             </button>
                           )}
@@ -1828,7 +1828,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                     <button onClick={() => ui.setPrefs({ soundsEnabled: !p.soundsEnabled })} style={{
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
                       width: '100%', padding: '14px 16px', borderRadius: T.radius.md,
-                      background: T.bg.primary, border: `1px solid ${p.soundsEnabled ? T.accent.cyan : T.border.subtle}`,
+                      background: T.bg.primary, border: `1px solid ${p.soundsEnabled ? infoColor(T) : T.border.subtle}`,
                       cursor: 'pointer', textAlign: isRTL ? 'right' : 'left' as const, marginBottom: 14, fontFamily: sans,
                     }}>
                       <div>
@@ -1839,7 +1839,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                           {p.soundsEnabled ? t('כל פידבק אקוסטי פעיל', 'All acoustic feedback enabled') : t('האפליקציה דוממת לחלוטין', 'App stays completely silent')}
                         </div>
                       </div>
-                      <div style={{ width: 40, height: 22, borderRadius: 11, position: 'relative', background: p.soundsEnabled ? T.accent.cyan : T.bg.tertiary, transition: 'background .15s' }}>
+                      <div style={{ width: 40, height: 22, borderRadius: 11, position: 'relative', background: p.soundsEnabled ? infoColor(T) : T.bg.tertiary, transition: 'background .15s' }}>
                         <div style={{ position: 'absolute', top: 2, insetInlineStart: p.soundsEnabled ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'inset-inline-start .15s' }} />
                       </div>
                     </button>
@@ -1848,10 +1848,10 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                     <input type="range" min={0} max={1} step={0.01} value={p.soundVolume}
                       disabled={!p.soundsEnabled}
                       onChange={e => ui.setPrefs({ soundVolume: parseFloat(e.target.value) })}
-                      style={{ width: '100%', accentColor: T.accent.cyan, opacity: p.soundsEnabled ? 1 : 0.4 }} />
+                      style={{ width: '100%', accentColor: infoColor(T), opacity: p.soundsEnabled ? 1 : 0.4 }} />
 
                     <div style={{ marginTop: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      <button onClick={playMorningLock} disabled={!p.soundsEnabled} style={primaryBtn(T.accent.cyan, !p.soundsEnabled)}>
+                      <button onClick={playMorningLock} disabled={!p.soundsEnabled} style={primaryBtn(infoColor(T), !p.soundsEnabled)}>
                         <Zap size={13} /> {t('נגן דוגמה', 'Play sample')}
                       </button>
                     </div>
@@ -1872,19 +1872,19 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                     <label style={fieldLabel}>{t('אחוז סיכון מהחשבון', 'Account risk %')} · <span style={{ fontFamily: mono, color: T.text.primary }}>{p.defaultRiskPercent.toFixed(2)}%</span></label>
                     <input type="range" min={0.1} max={5} step={0.05} value={p.defaultRiskPercent}
                       onChange={e => ui.setPrefs({ defaultRiskPercent: parseFloat(e.target.value) })}
-                      style={{ width: '100%', accentColor: T.accent.cyan, marginBottom: 16 }} />
+                      style={{ width: '100%', accentColor: infoColor(T), marginBottom: 16 }} />
 
                     <label style={fieldLabel}>{t('יעד R לעסקה', 'Default R target')} · <span style={{ fontFamily: mono, color: T.text.primary }}>{p.defaultRMultiple.toFixed(1)}R</span></label>
                     <input type="range" min={0.5} max={5} step={0.1} value={p.defaultRMultiple}
                       onChange={e => ui.setPrefs({ defaultRMultiple: parseFloat(e.target.value) })}
-                      style={{ width: '100%', accentColor: T.accent.cyan }} />
+                      style={{ width: '100%', accentColor: infoColor(T) }} />
 
                     <div style={{
                       marginTop: 18, padding: 12, borderRadius: T.radius.md,
-                      background: `linear-gradient(135deg, ${T.accent.cyan}10, transparent)`,
-                      border: `1px solid ${T.accent.cyan}30`, fontSize: 11.5, color: T.text.secondary, lineHeight: 1.65,
+                      background: `linear-gradient(135deg, ${infoColor(T)}10, transparent)`,
+                      border: `1px solid ${infoColor(T)}30`, fontSize: 11.5, color: T.text.secondary, lineHeight: 1.65,
                     }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 800, color: T.accent.cyan, marginBottom: 4, fontSize: 11 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 800, color: infoColor(T), marginBottom: 4, fontSize: 11 }}>
                         <Sparkles size={12} /> {t('המלצה', 'Guideline')}
                       </div>
                       {t('סיכון 0.5%–1% לעסקה ויעד 2R+ הם הסטנדרט המקצועי.', '0.5%–1% risk per trade and 2R+ targets are the professional standard.')}
@@ -1919,7 +1919,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                     <h3 style={sectionTitle}><Database size={14} /> {t('סקירת נתונים', 'Data overview')}</h3>
                     <p style={sectionHint}>{t('הנתונים שלך מאוחסנים בענן ומסונכרנים בין המכשירים.', 'Your data lives in the cloud and syncs across devices.')}</p>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-                      {stat(t('סך עסקאות', 'Total'), total, T.accent.cyan)}
+                      {stat(t('סך עסקאות', 'Total'), total, infoColor(T))}
                       {stat(t('זכיות', 'Wins'), winsD, T.accent.green)}
                       {stat(t('הפסדים', 'Losses'), lossesD, T.accent.red)}
                     </div>
@@ -1927,7 +1927,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                   <div style={card}>
                     <h3 style={sectionTitle}><Download size={14} /> {t('גיבוי מקומי', 'Local backup')}</h3>
                     <p style={sectionHint}>{t('הורד קובץ JSON מלא הכולל את כל העסקאות, המטא-דאטה והאירועים. שמור אותו במקום בטוח.', 'Download a full JSON file with all trades, metadata and events. Keep it somewhere safe.')}</p>
-                    <button className="orca-cta" onClick={exportJson} style={{ ...primaryBtn(T.accent.cyan), padding: '14px 18px', fontSize: 13 }}>
+                    <button className="orca-cta" onClick={exportJson} style={{ ...primaryBtn(infoColor(T)), padding: '14px 18px', fontSize: 13 }}>
                       <Download size={14} /> {t('הורד גיבוי מלא (JSON)', 'Download full backup (JSON)')}
                     </button>
                   </div>
@@ -2002,20 +2002,20 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                 {/* Hero header */}
                 <div style={{
                   padding: '16px 18px', borderRadius: T.radius.md,
-                  background: `linear-gradient(135deg, ${T.accent.cyan}1a, ${T.bg.secondary})`,
-                  border: `1px solid ${T.accent.cyan}33`,
+                  background: `linear-gradient(135deg, ${infoColor(T)}1a, ${T.bg.secondary})`,
+                  border: `1px solid ${infoColor(T)}33`,
                   display: 'flex', alignItems: 'center', gap: 12,
                 }}>
                   <div style={{
                     width: 40, height: 40, borderRadius: 10,
-                    background: `linear-gradient(135deg, ${T.accent.cyan}33, ${T.accent.cyan}11)`,
-                    border: `1px solid ${T.accent.cyan}55`,
+                    background: `linear-gradient(135deg, ${infoColor(T)}33, ${infoColor(T)}11)`,
+                    border: `1px solid ${infoColor(T)}55`,
                     display: 'grid', placeItems: 'center', flexShrink: 0,
                   }}>
-                    <SlidersHorizontal size={18} color={T.accent.cyan} />
+                    <SlidersHorizontal size={18} color={infoColor(T)} />
                   </div>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: T.accent.cyan, letterSpacing: '0.18em', textTransform: 'uppercase' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: infoColor(T), letterSpacing: '0.18em', textTransform: 'uppercase' }}>
                       {t('בקרות מובייל', 'Mobile Controls')}
                     </div>
                     <div style={{ fontSize: 13, fontWeight: 700, color: T.text.primary, marginTop: 2 }}>
@@ -2066,7 +2066,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                           background: T.bg.tertiary, border: `1px solid ${T.border.subtle}`,
                           display: 'grid', placeItems: 'center', flexShrink: 0,
                         }}>
-                          <Icon size={14} color={T.accent.cyan} />
+                          <Icon size={14} color={infoColor(T)} />
                         </div>
                         <div style={{ minWidth: 0, flex: 1 }}>
                           <div style={{ fontSize: 13, fontWeight: 700, color: T.text.primary }}>{row.title}</div>
@@ -2119,7 +2119,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                             style={{
                               fontSize: 11, fontWeight: 600, padding: '5px 10px',
                               borderRadius: 999, border: `1px solid ${T.border.subtle}`,
-                              color: T.accent.cyan, textDecoration: 'none', background: T.bg.secondary,
+                              color: infoColor(T), textDecoration: 'none', background: T.bg.secondary,
                             }}
                           >
                             {s.heading}
@@ -2138,7 +2138,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                         <div style={{ fontSize: 10, color: T.text.muted, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 6 }}>
                           {t('גרסה', 'Version')} {LEGAL_VERSION} · {LEGAL_VERSION_DATE}
                         </div>
-                        <h4 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 800, color: T.accent.cyan, lineHeight: 1.5 }}>
+                        <h4 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 800, color: infoColor(T), lineHeight: 1.5 }}>
                           {legalTitle}
                         </h4>
                         {legalSections.map((s) => (
@@ -2155,7 +2155,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                           </section>
                         ))}
 
-                        <h4 style={{ margin: '24px 0 14px', paddingTop: 16, borderTop: `1px solid ${T.border.subtle}`, fontSize: 14, fontWeight: 800, color: T.accent.cyan, lineHeight: 1.5 }}>
+                        <h4 style={{ margin: '24px 0 14px', paddingTop: 16, borderTop: `1px solid ${T.border.subtle}`, fontSize: 14, fontWeight: 800, color: infoColor(T), lineHeight: 1.5 }}>
                           {privacyTitle}
                         </h4>
                         {privacySections.map((s) => (
@@ -2175,7 +2175,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                         <p style={{
                           marginTop: 14, paddingTop: 12,
                           borderTop: `1px solid ${T.border.subtle}`,
-                          fontSize: 12, fontWeight: 600, color: T.accent.cyan, textAlign: 'center',
+                          fontSize: 12, fontWeight: 600, color: infoColor(T), textAlign: 'center',
                         }}>
                           {footer}
                         </p>
@@ -2331,10 +2331,10 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
               </p>
               <div style={{
                 marginTop: 14, padding: '10px 14px',
-                background: `${T.accent.orange}10`,
-                border: `1px solid ${T.accent.orange}35`,
+                background: `${T.state.warn}10`,
+                border: `1px solid ${T.state.warn}35`,
                 borderRadius: T.radius.md,
-                fontSize: 12, color: T.accent.orange, fontWeight: 600,
+                fontSize: 12, color: T.state.warn, fontWeight: 600,
                 display: 'inline-flex', alignItems: 'center', gap: 8,
               }}>
                 🔒 {t('הבחירה תינעל ל־24 שעות', 'Locked for 24 hours after applying')}
@@ -2403,7 +2403,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                 {t('כל 7 הצירים יישמרו כאובייקט customTheme וייטענו אוטומטית בכל מכשיר.',
                    'All 7 axes will be saved as a customTheme object and auto-loaded across devices.')}
               </p>
-              <div style={{ marginTop: 14, padding: '10px 14px', background: `${T.accent.orange}10`, border: `1px solid ${T.accent.orange}35`, borderRadius: T.radius.md, fontSize: 12, color: T.accent.orange, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ marginTop: 14, padding: '10px 14px', background: `${T.state.warn}10`, border: `1px solid ${T.state.warn}35`, borderRadius: T.radius.md, fontSize: 12, color: T.state.warn, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                 🔒 {t('הבחירה תינעל ל־24 שעות', 'Locked for 24 hours')}
               </div>
             </div>
@@ -2430,11 +2430,11 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
             style={{
               width: '100%', maxWidth: 460,
               background: `linear-gradient(180deg, ${T.bg.secondary} 0%, ${T.bg.primary} 100%)`,
-              border: `1px solid ${T.accent.orange}55`, borderRadius: T.radius.xl,
-              boxShadow: `0 30px 80px rgba(0,0,0,0.6), 0 0 60px ${T.accent.orange}22`, overflow: 'hidden',
+              border: `1px solid ${T.state.warn}55`, borderRadius: T.radius.xl,
+              boxShadow: `0 30px 80px rgba(0,0,0,0.6), 0 0 60px ${T.state.warn}22`, overflow: 'hidden',
             }}>
-            <div style={{ height: 76, background: `linear-gradient(135deg, ${T.accent.orange}30, transparent)`, borderBottom: `1px solid ${T.border.subtle}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <AlertTriangle size={36} color={T.accent.orange} />
+            <div style={{ height: 76, background: `linear-gradient(135deg, ${T.state.warn}30, transparent)`, borderBottom: `1px solid ${T.border.subtle}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <AlertTriangle size={36} color={T.state.warn} />
             </div>
             <div style={{ padding: '22px 24px 8px', textAlign: 'center' }}>
               <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: T.text.primary, fontFamily: sans }}>
@@ -2462,7 +2462,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                   setUnlockStep(0);
                   toast.success(t('הנעילה בוטלה — תוכל להחיל ערכה חדשה', 'Lock bypassed — you can apply a new theme now'));
                 }}
-                style={{ flex: 1.4, padding: '12px 16px', borderRadius: T.radius.md, background: `linear-gradient(135deg, ${T.accent.orange}, ${T.accent.red})`, border: `1px solid ${T.accent.orange}`, color: '#fff', fontSize: 13, fontWeight: 800, cursor: 'pointer', fontFamily: sans, boxShadow: `0 6px 24px ${T.accent.orange}66`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                style={{ flex: 1.4, padding: '12px 16px', borderRadius: T.radius.md, background: `linear-gradient(135deg, ${T.state.warn}, ${T.accent.red})`, border: `1px solid ${T.state.warn}`, color: '#fff', fontSize: 13, fontWeight: 800, cursor: 'pointer', fontFamily: sans, boxShadow: `0 6px 24px ${T.state.warn}66`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                 {unlockStep === 1 ? <>{t('המשך', 'Continue')} →</> : <><AlertTriangle size={14} /> {t('בטל נעילה', 'Confirm unlock')}</>}
               </button>
             </div>
@@ -2479,6 +2479,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
 // Trader Mind diagnostics tab — surfaces calibration state + launch
 // =============================================================
 import { useTraderMind } from '@/hooks/use-trader-mind';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 function TraderMindDiagnosticsTab({
   T, isRTL, t, card, sectionTitle, sectionHint,
@@ -2501,8 +2502,8 @@ function TraderMindDiagnosticsTab({
 
       <div style={{
         marginTop: 14, padding: 14, borderRadius: 12,
-        background: isCalibrated ? `${T.accent.cyan}10` : '#fbbf2410',
-        border: `1px solid ${isCalibrated ? `${T.accent.cyan}40` : '#fbbf2440'}`,
+        background: isCalibrated ? `${infoColor(T)}10` : '#fbbf2410',
+        border: `1px solid ${isCalibrated ? `${infoColor(T)}40` : '#fbbf2440'}`,
         display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
       }}>
         <span style={{ fontSize: 22 }}>{isCalibrated ? '◈' : '⚠'}</span>
@@ -2527,9 +2528,9 @@ function TraderMindDiagnosticsTab({
           onClick={open}
           style={{
             padding: '10px 18px', borderRadius: 10,
-            background: isCalibrated ? 'transparent' : T.accent.cyan,
-            color: isCalibrated ? T.accent.cyan : '#0a0e1a',
-            border: `1px solid ${T.accent.cyan}`,
+            background: isCalibrated ? 'transparent' : infoColor(T),
+            color: isCalibrated ? infoColor(T) : '#0a0e1a',
+            border: `1px solid ${infoColor(T)}`,
             fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase',
             cursor: 'pointer',
           }}
@@ -2580,7 +2581,7 @@ function TraderMindSummary({
     border: `1px solid ${T.border.subtle}`, marginTop: 10,
   };
   const blockTitle: CSSProperties = {
-    fontSize: 11, fontWeight: 800, color: T.accent.cyan, letterSpacing: 1.4,
+    fontSize: 11, fontWeight: 800, color: infoColor(T), letterSpacing: 1.4,
     textTransform: 'uppercase', marginBottom: 8,
   };
   const listText: CSSProperties = { color: T.text.primary, fontSize: 13, lineHeight: 1.7, margin: 0 };
@@ -2600,7 +2601,7 @@ function TraderMindSummary({
     <div dir={isRTL ? 'rtl' : 'ltr'} style={{ textAlign: isRTL ? 'right' : 'left' }}>
       {/* ── Header ── */}
       <div style={headerCard}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: T.accent.cyan, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 6 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: infoColor(T), letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 6 }}>
           {t('סיכום אבחון', 'Diagnostic Summary')}
         </div>
         <div style={{ fontSize: 16, color: T.text.primary, fontWeight: 800 }}>
@@ -2717,7 +2718,7 @@ function TraderMindSummary({
                       border: `1px solid ${T.border.subtle}`, textAlign: 'center',
                     }}>
                       <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>{k}</div>
-                      <div style={{ fontSize: 18, fontWeight: 800, color: T.accent.cyan, fontFamily: "'IBM Plex Mono', monospace" }}>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: infoColor(T), fontFamily: "'IBM Plex Mono', monospace" }}>
                         {Number.isInteger(num) ? num : num.toFixed(2)}
                       </div>
                     </div>
@@ -2765,7 +2766,7 @@ function FullReportBlock({
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         marginBottom: 10, gap: 8, flexWrap: 'wrap',
       }}>
-        <div style={{ fontSize: 11, fontWeight: 800, color: T.accent.cyan, letterSpacing: 1.4, textTransform: 'uppercase' }}>
+        <div style={{ fontSize: 11, fontWeight: 800, color: infoColor(T), letterSpacing: 1.4, textTransform: 'uppercase' }}>
           📄 {t('דוח מלא', 'Full Report')}
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -2782,8 +2783,8 @@ function FullReportBlock({
           <button
             onClick={openInNewTab}
             style={{
-              padding: '6px 12px', borderRadius: 8, background: T.accent.cyan,
-              border: `1px solid ${T.accent.cyan}`, color: '#0a0e1a',
+              padding: '6px 12px', borderRadius: 8, background: infoColor(T),
+              border: `1px solid ${infoColor(T)}`, color: '#0a0e1a',
               fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', cursor: 'pointer',
             }}
           >

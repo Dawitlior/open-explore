@@ -5,6 +5,7 @@ import {
   INTERVALS, type Interval, pickInterval, resolveSymbol, setSymbolOverride,
 } from '@/lib/market/symbol-resolver';
 import { frameWindow, useTradeCandles } from '@/lib/market/use-trade-candles';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 import {
   getExitTimeOverride, inferExitTime, setExitTimeOverride, toLocalInput, tradeExitMs,
 } from '@/lib/market/exit-time';
@@ -82,9 +83,9 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
     letterSpacing: 0.5,
     fontFamily: "'JetBrains Mono', monospace",
     cursor: 'pointer',
-    border: `1px solid ${active ? T.accent.cyan : T.border.subtle}`,
-    background: active ? `${T.accent.cyan}1F` : T.bg.tertiary,
-    color: active ? T.accent.cyan : T.text.muted,
+    border: `1px solid ${active ? infoColor(T) : T.border.subtle}`,
+    background: active ? `${infoColor(T)}1F` : T.bg.tertiary,
+    color: active ? infoColor(T) : T.text.muted,
     transition: reducedMotion ? 'none' : 'all .16s ease',
   });
 
@@ -160,10 +161,10 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
       <div style={{
         display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
         padding: '8px 10px', borderRadius: T.radius.sm,
-        border: `1px solid ${exitMs ? T.border.subtle : `${T.accent.orange}44`}`,
-        background: exitMs ? T.bg.tertiary : `${T.accent.orange}0F`,
+        border: `1px solid ${exitMs ? T.border.subtle : `${T.state.warn}44`}`,
+        background: exitMs ? T.bg.tertiary : `${T.state.warn}0F`,
       }}>
-        <span style={{ fontSize: 10.5, color: exitMs ? T.text.muted : T.accent.orange, lineHeight: 1.5 }}>
+        <span style={{ fontSize: 10.5, color: exitMs ? T.text.muted : T.state.warn, lineHeight: 1.5 }}>
           {exitMs
             ? `${L('זמן יציאה', 'Exit time')}: ${new Date(exitMs).toLocaleString(isRTL ? 'he-IL' : 'en-US')}`
             : exitInferred
@@ -247,7 +248,7 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
 
       <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: 0.4 }}>
         {L('גרפים באדיבות', 'Charts by')}{' '}
-        <a href="https://www.tradingview.com" target="_blank" rel="noreferrer" style={{ color: T.accent.cyan }}>TradingView</a>
+        <a href="https://www.tradingview.com" target="_blank" rel="noreferrer" style={{ color: infoColor(T) }}>TradingView</a>
       </div>
     </div>
   );

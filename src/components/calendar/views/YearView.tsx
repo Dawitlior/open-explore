@@ -16,6 +16,7 @@ import { useEffectiveDisplayMode } from '@/lib/display-mode';
 import { useYearEconomicEvents } from '@/hooks/use-year-economic-events';
 import type { EconomicEvent } from '@/lib/economic';
 import { MACRO_TIER_COLOR } from '@/components/economic/MacroEventStrip';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 interface Props {
   T: any;
@@ -67,16 +68,16 @@ function MiniMonth({
 
   return (
     <motion.div
-      whileHover={{ y: -3, boxShadow: `0 18px 40px -22px ${T.accent.cyan}55, 0 0 0 1px ${isCurrentMonth ? T.accent.cyan : T.border.subtle}` }}
+      whileHover={{ y: -3, boxShadow: `0 18px 40px -22px ${infoColor(T)}55, 0 0 0 1px ${isCurrentMonth ? infoColor(T) : T.border.subtle}` }}
       onClick={onMonthClick}
       style={{
         background: `linear-gradient(160deg, ${T.bg.card}, rgba(255,255,255,0.01) 80%)`,
-        border: `1px solid ${isCurrentMonth ? T.accent.cyan : T.border.subtle}`,
+        border: `1px solid ${isCurrentMonth ? infoColor(T) : T.border.subtle}`,
         borderRadius: T.radius.md,
         padding: compact ? '6px 6px 8px' : '12px 12px 14px',
         cursor: 'pointer',
         boxShadow: isCurrentMonth
-          ? `0 0 0 1px ${T.accent.cyan}40, 0 10px 30px -18px ${T.accent.cyan}66`
+          ? `0 0 0 1px ${infoColor(T)}40, 0 10px 30px -18px ${infoColor(T)}66`
           : `inset 0 1px 0 rgba(255,255,255,0.03), 0 6px 20px -18px rgba(0,0,0,0.6)`,
         display: 'flex', flexDirection: 'column', gap: compact ? 4 : 6,
         minWidth: 0, overflow: 'hidden',
@@ -86,7 +87,7 @@ function MiniMonth({
       {/* Title */}
       <div style={{
         fontSize: compact ? 11 : 12, fontWeight: 700,
-        color: isCurrentMonth ? T.accent.cyan : T.text.primary,
+        color: isCurrentMonth ? infoColor(T) : T.text.primary,
         letterSpacing: '0.04em',
         paddingBottom: 4,
         borderBottom: `1px solid ${T.border.subtle}`,
@@ -155,7 +156,7 @@ function MiniMonth({
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: compact ? 9 : 10, fontWeight: isToday || hasTrades ? 700 : 500,
                     color,
-                    background: isToday ? T.accent.cyan : 'transparent',
+                    background: isToday ? infoColor(T) : 'transparent',
                     border: 'none', borderRadius: '50%',
                     cursor: hasTrades ? 'pointer' : 'default',
                     padding: 0, margin: 0, lineHeight: 1,

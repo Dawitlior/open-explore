@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { TradingTheme } from '@/lib/trading-theme';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 interface Command {
   id: string;
@@ -81,9 +82,9 @@ export const CommandPalette = ({ T, commands, isOpen, onClose }: CommandPaletteP
       <div onClick={e => e.stopPropagation()} data-bottom-sheet style={{
         width: '100%', maxWidth: 560,
         background: `linear-gradient(180deg, ${T.bg.card} 0%, ${T.bg.tertiary || T.bg.card} 100%)`,
-        border: `1px solid ${T.accent.cyan}33`,
+        border: `1px solid ${infoColor(T)}33`,
         borderRadius: 18,
-        boxShadow: `0 30px 80px -20px ${T.accent.cyan}25, 0 20px 60px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06)`,
+        boxShadow: `0 30px 80px -20px ${infoColor(T)}25, 0 20px 60px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06)`,
         overflow: 'hidden',
         animation: 'cp-rise 0.22s cubic-bezier(0.16,1,0.3,1)',
         position: 'relative',
@@ -91,7 +92,7 @@ export const CommandPalette = ({ T, commands, isOpen, onClose }: CommandPaletteP
         {/* Top hairline shimmer accent */}
         <div style={{
           position: 'absolute', top: 0, left: 0, right: 0, height: 1,
-          background: `linear-gradient(90deg, transparent, ${T.accent.cyan}, transparent)`,
+          background: `linear-gradient(90deg, transparent, ${infoColor(T)}, transparent)`,
           backgroundSize: '200% 100%',
           animation: 'cp-shimmer 3.2s linear infinite',
           opacity: 0.7,
@@ -99,12 +100,12 @@ export const CommandPalette = ({ T, commands, isOpen, onClose }: CommandPaletteP
         <div style={{ display: 'flex', alignItems: 'center', padding: '16px 20px', borderBottom: `1px solid ${T.border.subtle}` }}>
           <div style={{
             width: 28, height: 28, borderRadius: 8, marginRight: 12,
-            background: `linear-gradient(135deg, ${T.accent.cyan}25, ${T.accent.teal || T.accent.cyan}15)`,
-            border: `1px solid ${T.accent.cyan}30`,
+            background: `linear-gradient(135deg, ${infoColor(T)}25, ${infoColor(T) || infoColor(T)}15)`,
+            border: `1px solid ${infoColor(T)}30`,
             display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            boxShadow: `inset 0 0 12px ${T.accent.cyan}20`,
+            boxShadow: `inset 0 0 12px ${infoColor(T)}20`,
           }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={T.accent.cyan} strokeWidth="2.2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={infoColor(T)} strokeWidth="2.2">
               <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
             </svg>
           </div>
@@ -131,7 +132,7 @@ export const CommandPalette = ({ T, commands, isOpen, onClose }: CommandPaletteP
           {Object.entries(grouped).map(([category, cmds]) => (
             <div key={category} style={{ marginBottom: 4 }}>
               <div style={{
-                padding: '10px 20px 6px', fontSize: 9.5, color: T.accent.cyan,
+                padding: '10px 20px 6px', fontSize: 9.5, color: infoColor(T),
                 textTransform: 'uppercase', letterSpacing: '0.18em', fontWeight: 700,
                 opacity: 0.78,
               }}>{category}</div>
@@ -148,8 +149,8 @@ export const CommandPalette = ({ T, commands, isOpen, onClose }: CommandPaletteP
                     transition: 'all 0.16s cubic-bezier(0.16,1,0.3,1)',
                   }}
                   onMouseEnter={e => {
-                    e.currentTarget.style.background = `linear-gradient(90deg, ${T.accent.cyan}12, transparent)`;
-                    e.currentTarget.style.borderInlineStartColor = T.accent.cyan;
+                    e.currentTarget.style.background = `linear-gradient(90deg, ${infoColor(T)}12, transparent)`;
+                    e.currentTarget.style.borderInlineStartColor = infoColor(T);
                     e.currentTarget.style.transform = 'translateX(2px)';
                   }}
                   onMouseLeave={e => {
@@ -195,7 +196,7 @@ export const CommandPalette = ({ T, commands, isOpen, onClose }: CommandPaletteP
         }}>
           <span>↑ ↓ navigate</span>
           <span>↵ select</span>
-          <span style={{ color: T.accent.cyan, opacity: 0.7 }}>ORCA · COMMAND</span>
+          <span style={{ color: infoColor(T), opacity: 0.7 }}>ORCA · COMMAND</span>
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import { ReactNode, Component, ErrorInfo } from 'react';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { GlassCard } from './TradingUI';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 class ChartErrorBoundary extends Component<{ children: ReactNode; T: TradingTheme }, { hasError: boolean }> {
   state = { hasError: false };
@@ -53,7 +54,7 @@ export const ChartWrapper = ({ T, title, explanation, children, style, unit, cha
           onClick={handleInfoClick}
         >
           <div className="orca-chart-title" style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</div>
-          {unit && <span style={{ fontSize: 8, padding: '1px 5px', borderRadius: 4, background: `${T.accent.purple}15`, color: T.accent.purple, fontWeight: 600, flexShrink: 0 }}>{unit}</span>}
+          {unit && <span style={{ fontSize: 8, padding: '1px 5px', borderRadius: 4, background: `${neutralRamp(T, 3)[1]}15`, color: neutralRamp(T, 3)[1], fontWeight: 600, flexShrink: 0 }}>{unit}</span>}
         </div>
         <button
           onClick={handleInfoClick}

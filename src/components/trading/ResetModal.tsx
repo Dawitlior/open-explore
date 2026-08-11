@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { I18nStrings } from '@/lib/trading-i18n';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 interface ResetModalProps {
   T: TradingTheme;
@@ -82,7 +83,7 @@ export const ResetModal = ({ T, t, isRTL, onConfirm, onClose }: ResetModalProps)
         <div style={{ fontSize: 48, marginBottom: 16, animation: step === 2 ? 'pulse 1s infinite' : undefined }}>
           {step === 0 ? '⚠️' : step === 1 ? '🔴' : step === 2 ? '🌀' : '✅'}
         </div>
-        <div style={{ fontSize: 20, fontWeight: 700, color: step === 0 ? T.accent.orange : step === 3 ? T.accent.green : T.accent.red, marginBottom: 12, fontFamily: "'JetBrains Mono', monospace" }}>
+        <div style={{ fontSize: 20, fontWeight: 700, color: step === 0 ? T.state.warn : step === 3 ? T.accent.green : T.accent.red, marginBottom: 12, fontFamily: "'JetBrains Mono', monospace" }}>
           {step === 0 ? t.resetAll
             : step === 1 ? (isRTL ? 'אזהרה אחרונה' : 'FINAL WARNING')
             : step === 2 ? (isRTL ? 'מוחק נתונים…' : 'WIPING DATA…')
@@ -99,7 +100,7 @@ export const ResetModal = ({ T, t, isRTL, onConfirm, onClose }: ResetModalProps)
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
             <button onClick={handleClose} style={{ padding: '10px 24px', background: T.bg.tertiary, border: `1px solid ${T.border.medium}`, borderRadius: T.radius.md, color: T.text.secondary, cursor: 'pointer', fontSize: 13, fontWeight: 500 }}>{t.cancel}</button>
             {step === 0 ? (
-              <button onClick={() => setStep(1)} style={{ padding: '10px 24px', background: `${T.accent.orange}20`, border: `1px solid ${T.accent.orange}`, borderRadius: T.radius.md, color: T.accent.orange, cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>
+              <button onClick={() => setStep(1)} style={{ padding: '10px 24px', background: `${T.state.warn}20`, border: `1px solid ${T.state.warn}`, borderRadius: T.radius.md, color: T.state.warn, cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>
                 {isRTL ? 'המשך' : 'Continue'}
               </button>
             ) : (

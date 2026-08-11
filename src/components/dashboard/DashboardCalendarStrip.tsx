@@ -20,6 +20,7 @@ import { useDisplayMode } from '@/lib/display-mode';
 import { getEffectiveR } from '@/lib/r-multiple';
 import { SessionToggles, SessionMarker, ALL_SESSIONS_ON, type SessionFilter } from '@/components/calendar/SessionUI';
 import { buildMonthSessionMap } from '@/lib/market-sessions';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 interface Props {
   T: TradingTheme;
@@ -237,7 +238,7 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
 
   return (
     <div className="dash-section" dir={isRTL ? 'rtl' : 'ltr'} style={{ marginBottom: 40 }}>
-      <div className="dash-section-label" style={{ color: T.accent.cyan }}>
+      <div className="dash-section-label" style={{ color: infoColor(T) }}>
         {isRTL ? 'לוח שנה · לונג / שורט' : 'CALENDAR · LONG / SHORT'}
       </div>
 
@@ -325,7 +326,7 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
                           : neg
                           ? `linear-gradient(180deg, ${T.accent.red}55, ${T.accent.red}30)`
                           : T.bg.tertiary,
-                        border: `1px solid ${isToday ? T.accent.cyan : pos ? T.accent.green : neg ? T.accent.red : T.border.subtle}`,
+                        border: `1px solid ${isToday ? infoColor(T) : pos ? T.accent.green : neg ? T.accent.red : T.border.subtle}`,
                         borderRadius: 8,
                         color: T.text.primary,
                         display: 'flex',
@@ -336,7 +337,7 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
                         overflow: 'hidden',
                       }}
                     >
-                      <span style={{ fontSize: 10, color: isToday ? T.accent.cyan : T.text.muted, fontWeight: isToday ? 700 : 500 }}>{d}</span>
+                      <span style={{ fontSize: 10, color: isToday ? infoColor(T) : T.text.muted, fontWeight: isToday ? 700 : 500 }}>{d}</span>
                       {data && (
                         <>
                           <span style={{
@@ -377,12 +378,12 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
                       display: 'flex', flexDirection: 'column',
                       alignItems: 'center', justifyContent: 'center', gap: 2,
                       background: isSel
-                        ? T.accent.cyan
+                        ? infoColor(T)
                         : pos ? `linear-gradient(180deg, ${T.accent.green}55, ${T.accent.green}30)`
                         : neg ? `linear-gradient(180deg, ${T.accent.red}55, ${T.accent.red}30)`
                         : T.bg.tertiary,
                       color: isSel ? '#001023' : T.text.primary,
-                      border: `1px solid ${isCur ? T.accent.cyan : pos ? T.accent.green : neg ? T.accent.red : T.border.subtle}`,
+                      border: `1px solid ${isCur ? infoColor(T) : pos ? T.accent.green : neg ? T.accent.red : T.border.subtle}`,
                       borderRadius: 10,
                       fontSize: 12,
                       fontWeight: 700,
@@ -425,12 +426,12 @@ export default function DashboardCalendarStrip({ T, t, isRTL, trades }: Props) {
                         display: 'flex', flexDirection: 'column',
                         alignItems: 'center', justifyContent: 'center', gap: 2,
                         background: isSel
-                          ? T.accent.cyan
+                          ? infoColor(T)
                           : pos ? `linear-gradient(180deg, ${T.accent.green}55, ${T.accent.green}30)`
                           : neg ? `linear-gradient(180deg, ${T.accent.red}55, ${T.accent.red}30)`
                           : T.bg.tertiary,
                         color: isSel ? '#001023' : T.text.primary,
-                        border: `1px solid ${isCur ? T.accent.cyan : pos ? T.accent.green : neg ? T.accent.red : T.border.subtle}`,
+                        border: `1px solid ${isCur ? infoColor(T) : pos ? T.accent.green : neg ? T.accent.red : T.border.subtle}`,
                         borderRadius: 10,
                         cursor: 'pointer',
                         fontFamily: "'JetBrains Mono', monospace",
@@ -575,7 +576,7 @@ function BreakdownCard({ T, isRTL, isR, title, accent, stats, series, showChart 
         stats.totalPnl >= 0 ? T.accent.green : T.accent.red)}
       {row(isRTL ? 'ממוצע רווח/הפסד לעסקה' : 'Avg R:R per trade',
         stats.avgRR > 0 ? stats.avgRR.toFixed(2) : '—',
-        T.accent.cyan)}
+        infoColor(T))}
       {row(isRTL ? 'זמן החזקה ממוצע' : 'Avg hold time', fmtMinutes(stats.avgHold, isRTL))}
       {showChart && series && series.length > 1 && (
         <EquityCurve series={series} color={accent} T={T} isRTL={isRTL} isR={isR} />

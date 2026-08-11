@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Download, Smartphone, Monitor, Apple, Chrome, Share, Plus, MoreVertical, Check, ArrowRight, ArrowLeft } from 'lucide-react';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { toast } from 'sonner';
+import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 type Platform = 'iphone' | 'android' | 'windows' | 'mac';
 
@@ -157,7 +158,7 @@ export function InstallGuide({ T, t, isRTL }: Props) {
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
             padding: '4px 10px', borderRadius: 999,
-            background: `${T.accent.cyan}18`, color: T.accent.cyan,
+            background: `${infoColor(T)}18`, color: infoColor(T),
             fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase',
             marginBottom: 10,
           }}>
@@ -212,7 +213,7 @@ export function InstallGuide({ T, t, isRTL }: Props) {
                   <span style={{
                     position: 'absolute', top: -7, [isRTL ? 'left' : 'right']: 8,
                     fontSize: 8, fontWeight: 800, letterSpacing: '0.12em',
-                    background: T.accent.cyan, color: T.bg.primary,
+                    background: infoColor(T), color: T.bg.primary,
                     padding: '2px 6px', borderRadius: 6,
                   }}>{t('המכשיר שלך', 'Your device')}</span>
                 )}
@@ -299,7 +300,7 @@ export function InstallGuide({ T, t, isRTL }: Props) {
                     onClick={() => { setPlatform(null); setStep(0); toast.success(t('כל הכבוד! בחר מכשיר אחר אם תרצה', 'Nice! Pick another device anytime')); }}
                     style={{
                       padding: '10px 18px', borderRadius: 12,
-                      background: `linear-gradient(135deg, ${meta.color}, ${T.accent.cyan})`,
+                      background: `linear-gradient(135deg, ${meta.color}, ${infoColor(T)})`,
                       border: 'none', color: T.bg.primary,
                       fontWeight: 800, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
                       boxShadow: `0 8px 22px ${meta.color}50`,
@@ -313,7 +314,7 @@ export function InstallGuide({ T, t, isRTL }: Props) {
                     onClick={() => setStep(s => Math.min(all.length - 1, s + 1))}
                     style={{
                       padding: '10px 18px', borderRadius: 12,
-                      background: `linear-gradient(135deg, ${meta.color}, ${T.accent.cyan})`,
+                      background: `linear-gradient(135deg, ${meta.color}, ${infoColor(T)})`,
                       border: 'none', color: T.bg.primary,
                       fontWeight: 800, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
                       boxShadow: `0 8px 22px ${meta.color}40`,
@@ -341,8 +342,8 @@ export function InstallGuide({ T, t, isRTL }: Props) {
         {/* Shortcut install button */}
         {canPrompt && !installed && (
           <div style={{ marginTop: 16, padding: 14, borderRadius: 14,
-            background: `linear-gradient(135deg, ${T.accent.cyan}15, ${T.accent.green}10)`,
-            border: `1px solid ${T.accent.cyan}40`,
+            background: `linear-gradient(135deg, ${infoColor(T)}15, ${T.accent.green}10)`,
+            border: `1px solid ${infoColor(T)}40`,
           }}>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
               <div style={{ fontSize: 22 }}>⚡</div>
@@ -358,9 +359,9 @@ export function InstallGuide({ T, t, isRTL }: Props) {
                 onClick={handleInstallNow}
                 style={{
                   padding: '10px 18px', borderRadius: 12,
-                  background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.green})`,
+                  background: `linear-gradient(135deg, ${infoColor(T)}, ${T.accent.green})`,
                   border: 'none', color: T.bg.primary, fontWeight: 800, fontSize: 13, cursor: 'pointer',
-                  boxShadow: `0 8px 22px ${T.accent.cyan}40`, fontFamily: 'inherit',
+                  boxShadow: `0 8px 22px ${infoColor(T)}40`, fontFamily: 'inherit',
                   display: 'flex', alignItems: 'center', gap: 8,
                 }}
               >
@@ -374,13 +375,13 @@ export function InstallGuide({ T, t, isRTL }: Props) {
         {!installed && (
           <div style={{
             marginTop: 16, padding: 18, borderRadius: 14,
-            background: `linear-gradient(135deg, ${T.accent.orange}10, ${T.accent.cyan}08)`,
-            border: `1px solid ${(T.accent.orange)}35`,
+            background: `linear-gradient(135deg, ${T.state.warn}10, ${infoColor(T)}08)`,
+            border: `1px solid ${(T.state.warn)}35`,
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
               <div style={{
                 width: 32, height: 32, borderRadius: 10,
-                background: `${T.accent.orange}25`,
+                background: `${T.state.warn}25`,
                 display: 'grid', placeItems: 'center', fontSize: 18,
               }}>🤔</div>
               <div style={{ flex: 1, textAlign: isRTL ? 'right' : 'left' }}>
@@ -398,9 +399,9 @@ export function InstallGuide({ T, t, isRTL }: Props) {
                 onClick={handleInstallNow}
                 style={{
                   width: '100%', padding: '14px 18px', borderRadius: 12,
-                  background: `linear-gradient(135deg, ${T.accent.cyan}, ${T.accent.green})`,
+                  background: `linear-gradient(135deg, ${infoColor(T)}, ${T.accent.green})`,
                   border: 'none', color: T.bg.primary, fontWeight: 800, fontSize: 14, cursor: 'pointer',
-                  boxShadow: `0 10px 26px ${T.accent.cyan}45`, fontFamily: 'inherit',
+                  boxShadow: `0 10px 26px ${infoColor(T)}45`, fontFamily: 'inherit',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                 }}
               >
