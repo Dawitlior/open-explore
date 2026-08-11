@@ -22,14 +22,16 @@ export interface SessionDef {
   /** UTC hour range [start, end) — wraps midnight when start > end. */
   startUtc: number;
   endUtc: number;
-  /** Hue used for the marker; kept theme-neutral (works on light + dark). */
+  /** Neutral marker color — sessions are identity, not status, so no hue. */
   color: string;
+  /** Lightness weight (0..1) that separates sessions without spending a hue. */
+  weight: number;
 }
 
 export const SESSIONS: SessionDef[] = [
-  { id: 'asia', short: 'AS', labelEn: 'Asia', labelHe: 'אסיה', startUtc: 23, endUtc: 8, color: '#F0B429' },
-  { id: 'london', short: 'LDN', labelEn: 'London', labelHe: 'לונדון', startUtc: 7, endUtc: 16, color: '#4C8DFF' },
-  { id: 'ny', short: 'NY', labelEn: 'New York', labelHe: 'ניו יורק', startUtc: 12, endUtc: 21, color: '#3DDC97' },
+  { id: 'asia', short: 'AS', labelEn: 'Asia', labelHe: 'אסיה', startUtc: 23, endUtc: 8, color: '#94A3B8', weight: 0.42 },
+  { id: 'london', short: 'LDN', labelEn: 'London', labelHe: 'לונדון', startUtc: 7, endUtc: 16, color: '#94A3B8', weight: 0.7 },
+  { id: 'ny', short: 'NY', labelEn: 'New York', labelHe: 'ניו יורק', startUtc: 12, endUtc: 21, color: '#94A3B8', weight: 1 },
 ];
 
 export const SESSION_BY_ID: Record<SessionId, SessionDef> =

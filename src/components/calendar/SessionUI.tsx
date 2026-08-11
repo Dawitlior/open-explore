@@ -57,9 +57,9 @@ export const SessionToggles = memo(function SessionToggles({ T, isRTL, value, on
               fontWeight: 700,
               letterSpacing: '0.04em',
               fontFamily: "'JetBrains Mono', monospace",
-              background: on ? `${s.color}1f` : 'transparent',
-              border: `1px solid ${on ? `${s.color}66` : T.border.subtle}`,
-              color: on ? s.color : T.text.muted,
+              background: on ? `${s.color}18` : 'transparent',
+              border: `1px solid ${on ? `${s.color}55` : T.border.subtle}`,
+              color: on ? T.text.primary : T.text.muted,
               transition: 'background .15s, color .15s, border-color .15s',
               ['--orca-session-ring' as string]: s.color,
             }}
@@ -67,7 +67,7 @@ export const SessionToggles = memo(function SessionToggles({ T, isRTL, value, on
             <span aria-hidden style={{
               width: 6, height: 6, borderRadius: '50%',
               background: on ? s.color : T.text.muted,
-              opacity: on ? 1 : 0.45,
+              opacity: on ? s.weight : 0.32,
             }} />
             {compact ? s.short : name}
           </button>
@@ -114,7 +114,7 @@ export const SessionMarker = memo(function SessionMarker({ stat, filter, size = 
             flex: align === 'stretch' ? 1 : undefined,
             borderRadius: 999,
             background: s.color,
-            opacity: 0.92,
+            opacity: s.weight,
           }}
         />
       ))}
