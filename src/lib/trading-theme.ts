@@ -125,7 +125,7 @@ const midnight: TradingTheme = {
   state: darkState('#3DDC97', '#FF6B6B', '#F5A524', '#3B82F6', '#8A93A6'),
   chart: {
     ...darkChart('#3DDC97', '#FF6B6B', [
-      '#3B82F6', '#60A5FA', '#93C5FD', '#C7DBF7',
+      '#4B7FC0', '#7AA5D6', '#A6C4E6', '#CBDDEE',
       '#5B6B8C', '#8A93A6', '#B4BDD0', '#2C3A55',
     ]),
     // Monochrome blue ramp — a heatmap must never read as profit/loss.
@@ -184,7 +184,7 @@ const blue: TradingTheme = {
   // Single-hue sky ladder (desaturated) + cool neutrals — series separate by
   // lightness, never by decorative hue. Green/red stay reserved for P&L.
   chart: darkChart('#34D399', '#F87171', [
-    '#4A9FD4', '#77BCE4', '#A6D4F0', '#CBE6F7',
+    '#4A9FD4', '#77BCE4', '#A5CDE2', '#CBE0EE',
     '#5B7186', '#8296A8', '#B0BECB', '#3A4A5A',
   ]),
 
