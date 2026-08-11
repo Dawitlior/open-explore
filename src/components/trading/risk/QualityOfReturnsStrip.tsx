@@ -4,9 +4,9 @@ import type { TradingTheme } from '@/lib/trading-theme';
 import { useVisibleTrades } from '@/lib/display-mode-format';
 import { getEffectiveR } from '@/lib/r-multiple';
 import {
-import { qualityColor, severityColor, infoColor, statusColor, neutralRamp, moneyColor } from '@/lib/semantic-color';
   computeSharpe, computeSortino, computeCalmar, dailySeries, formatRatio,
 } from '@/lib/risk/quality-metrics';
+import { qualityColor, severityColor, infoColor, statusColor, neutralRamp, moneyColor } from '@/lib/semantic-color';
 
 interface Props {
   T: TradingTheme;
