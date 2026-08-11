@@ -36,6 +36,7 @@ import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { GlassCard } from './TradingUI';
 import { useLang } from '@/hooks/use-lang';
+import { infoColor, neutralRamp, severityColor, moneyColor, statusColor } from '@/lib/semantic-color';
 
 interface Props {
   T: TradingTheme;
@@ -228,7 +229,7 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
   if (trades.length === 0) return null;
 
   const sectionStyle = {
-    fontSize: 11, color: T.accent.purple,
+    fontSize: 11, color: neutralRamp(T, 3)[1],
     textTransform: 'uppercase' as const, letterSpacing: '0.18em',
     margin: '24px 0 12px', fontWeight: 700,
     fontFamily: "'JetBrains Mono', monospace",
@@ -256,7 +257,7 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
               <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
               <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} domain={[0, 100]} unit="%" />
               <Tooltip contentStyle={tt} />
-              <ReferenceLine y={80} stroke={T.accent.orange} strokeDasharray="3 3" />
+              <ReferenceLine y={80} stroke={T.state.warn} strokeDasharray="3 3" />
               <Area type="monotone" dataKey="rar" stroke={T.accent.green} fill="url(#rarG)" strokeWidth={2.2} />
             </AreaChart>
           </ResponsiveContainer>
@@ -273,7 +274,7 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
               <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} />
               <Tooltip contentStyle={tt} />
               <ReferenceLine y={1} stroke={T.text.muted} strokeDasharray="3 3" />
-              <Line type="monotone" dataKey="pf" stroke={T.accent.cyan} strokeWidth={2.2} dot={false} />
+              <Line type="monotone" dataKey="pf" stroke={infoColor(T)} strokeWidth={2.2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </GlassCard>
@@ -311,7 +312,7 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
               <Tooltip contentStyle={tt} formatter={(v: number) => formatMetric(v)} />
               <ReferenceLine y={0} stroke={T.text.muted} />
               <Bar dataKey="avgEdge" radius={[3, 3, 0, 0]}>
-                {todEdge.map((d, i) => <Cell key={i} fill={d.avgEdge >= 0 ? T.accent.cyan : T.accent.red} fillOpacity={d.n ? 0.85 : 0.15} />)}
+                {todEdge.map((d, i) => <Cell key={i} fill={d.avgEdge >= 0 ? infoColor(T) : T.accent.red} fillOpacity={d.n ? 0.85 : 0.15} />)}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -336,7 +337,7 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
               <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
               <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} domain={[0, 100]} />
               <Tooltip contentStyle={tt} />
-              <ReferenceLine y={60} stroke={T.accent.orange} strokeDasharray="3 3" />
+              <ReferenceLine y={60} stroke={T.state.warn} strokeDasharray="3 3" />
               <Area type="monotone" dataKey="tilt" stroke={T.accent.red} fill="url(#tiltG)" strokeWidth={2.2} />
             </AreaChart>
           </ResponsiveContainer>
@@ -372,9 +373,9 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
                 />
                 <ReferenceLine y={0} stroke={T.text.muted} />
                 <Bar dataKey="deltaPct" radius={[4, 4, 0, 0]} minPointSize={3}>
-                  {postWin.map((d, i) => <Cell key={i} fill={d.deltaPct > 15 ? T.accent.red : d.deltaPct > 0 ? T.accent.orange : T.accent.green} />)}
+                  {postWin.map((d, i) => <Cell key={i} fill={d.deltaPct > 15 ? T.accent.red : d.deltaPct > 0 ? T.state.warn : T.accent.green} />)}
                 </Bar>
-                <Line type="monotone" dataKey="deltaPct" stroke={T.accent.orange} strokeWidth={1.8} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                <Line type="monotone" dataKey="deltaPct" stroke={T.state.warn} strokeWidth={1.8} dot={{ r: 3 }} activeDot={{ r: 5 }} />
               </ComposedChart>
             </ResponsiveContainer>
           )}
@@ -393,7 +394,7 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
               <XAxis dataKey="k" tick={{ fill: T.text.muted, fontSize: 11 }} />
               <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} unit="%" />
               <Tooltip contentStyle={tt} formatter={(v: number) => `${v}%`} />
-              <Bar dataKey="prob" radius={[4, 4, 0, 0]} fill={T.accent.purple} />
+              <Bar dataKey="prob" radius={[4, 4, 0, 0]} fill={neutralRamp(T, 3)[1]} />
             </BarChart>
           </ResponsiveContainer>
         </GlassCard>
@@ -406,7 +407,7 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
             <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.16em', textTransform: 'uppercase' }}>
               {t('חלק העשירון העליון מסך הרווחים','Top decile share of total profits')}
             </div>
-            <div style={{ fontSize: 56, fontWeight: 800, color: skew.topDecileShare > 60 ? T.accent.orange : T.accent.cyan, fontFamily: "'JetBrains Mono', monospace", marginTop: 8 }}>
+            <div style={{ fontSize: 56, fontWeight: 800, color: skew.topDecileShare > 60 ? T.state.warn : infoColor(T), fontFamily: "'JetBrains Mono', monospace", marginTop: 8 }}>
               {skew.topDecileShare}%
             </div>
             <div style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.6, marginTop: 10, maxWidth: 380, margin: '10px auto 0' }}>
@@ -422,7 +423,7 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
       </div>
 
       {/* Row 5: Cognitive Bias Report */}
-      <GlassCard T={T} style={{ marginBottom: 12 }} glow={`${T.accent.purple}18`}>
+      <GlassCard T={T} style={{ marginBottom: 12 }} glow={`${neutralRamp(T, 3)[1]}18`}>
         <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
           {t('◆ Cognitive Bias Report · דוח הטיות קוגניטיביות','◆ Cognitive Bias Report')}
         </div>
@@ -431,7 +432,7 @@ export const PsychologyLab = ({ T, trades, isRTL }: Props) => {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 8 }}>
             {biasFlags.map((b, i) => {
-              const c = b.severity === 'good' ? T.accent.green : b.severity === 'warn' ? T.accent.orange : T.accent.red;
+              const c = b.severity === 'good' ? T.accent.green : b.severity === 'warn' ? T.state.warn : T.accent.red;
               return (
                 <div key={i} style={{ padding: 12, borderRadius: 10, background: `${c}10`, border: `1px solid ${c}33`, borderInlineStart: `3px solid ${c}` }}>
                   <div style={{ fontSize: 12, color: c, fontWeight: 800, marginBottom: 4 }}>{b.label}</div>

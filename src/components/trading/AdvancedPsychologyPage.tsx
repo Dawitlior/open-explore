@@ -14,6 +14,7 @@ import { useVisibleTrades } from '@/lib/display-mode-format';
 import { RProxyBanner } from './RProxyBanner';
 import { useChartGuard } from '@/lib/dashboard-engine';
 import { useEntitlement } from '@/hooks/use-entitlement';
+import { infoColor, neutralRamp, severityColor, moneyColor, statusColor } from '@/lib/semantic-color';
 
 type OperatingMode = 'live' | 'review' | 'research' | 'beginner';
 
@@ -33,15 +34,15 @@ interface AdvancedPsychologyPageProps {
 const SectionHeader = ({ T, label, accent, isRTL }: { T: TradingTheme; label: string; accent?: string; isRTL: boolean }) => (
   <div style={{
     display: 'flex', alignItems: 'center', gap: 10,
-    fontSize: 9, color: accent || T.accent.cyan,
+    fontSize: 9, color: accent || infoColor(T),
     textTransform: 'uppercase', letterSpacing: '0.16em', fontWeight: 700,
     fontFamily: "'JetBrains Mono', monospace",
     margin: '20px 0 12px',
   }}>
-    <span style={{ width: 6, height: 6, borderRadius: 1, background: accent || T.accent.cyan, boxShadow: `0 0 10px ${accent || T.accent.cyan}` }} />
-    <span style={{ width: 24, height: 1, background: `${accent || T.accent.cyan}50` }} />
+    <span style={{ width: 6, height: 6, borderRadius: 1, background: accent || infoColor(T), boxShadow: `0 0 10px ${accent || infoColor(T)}` }} />
+    <span style={{ width: 24, height: 1, background: `${accent || infoColor(T)}50` }} />
     {label}
-    <span style={{ flex: 1, height: 1, background: `linear-gradient(${isRTL ? '270deg' : '90deg'}, ${accent || T.accent.cyan}30, transparent)` }} />
+    <span style={{ flex: 1, height: 1, background: `linear-gradient(${isRTL ? '270deg' : '90deg'}, ${accent || infoColor(T)}30, transparent)` }} />
   </div>
 );
 
@@ -63,10 +64,10 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
   const isAdvancedPlan = tierAllows('advanced');
   const isUltimatePlan = tierAllows('ultimate');
   const tierMeta = appTier === 'ultimate'
-    ? { he: 'אולטימייט', en: 'Ultimate', sub: { he: 'מנוע פסיכולוגיה כמותי מלא', en: 'Full quantitative psychology engine' }, color: T.accent.purple }
+    ? { he: 'אולטימייט', en: 'Ultimate', sub: { he: 'מנוע פסיכולוגיה כמותי מלא', en: 'Full quantitative psychology engine' }, color: neutralRamp(T, 3)[1] }
     : appTier === 'advanced'
-      ? { he: 'מתקדם', en: 'Advanced', sub: { he: 'דפוסי התנהגות, Tilt ולחץ לאחר הפסד', en: 'Behavior patterns, tilt, and post-loss pressure' }, color: T.accent.cyan }
-      : { he: 'סטנדרט', en: 'Standard', sub: { he: 'אותות פסיכולוגיים בסיסיים ומשמעת', en: 'Baseline psychology and discipline signals' }, color: T.accent.blue };
+      ? { he: 'מתקדם', en: 'Advanced', sub: { he: 'דפוסי התנהגות, Tilt ולחץ לאחר הפסד', en: 'Behavior patterns, tilt, and post-loss pressure' }, color: infoColor(T) }
+      : { he: 'סטנדרט', en: 'Standard', sub: { he: 'אותות פסיכולוגיים בסיסיים ומשמעת', en: 'Baseline psychology and discipline signals' }, color: infoColor(T) };
 
   // What sections each SaaS tier shows
   const showRadar          = isAdvancedPlan;
@@ -272,9 +273,9 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
     }
   }
 
-  const severityColor = (s: Signal['severity']) => s === 'good' ? T.accent.green : s === 'warning' ? T.accent.orange : T.accent.red;
-  const healthColor = behavioralHealth >= 75 ? T.accent.green : behavioralHealth >= 50 ? T.accent.orange : T.accent.red;
-  const tiltColor = tiltScore.status === 'calm' ? T.accent.green : tiltScore.status === 'elevated' ? T.accent.orange : T.accent.red;
+  const severityColor = (s: Signal['severity']) => s === 'good' ? T.accent.green : s === 'warning' ? T.state.warn : T.accent.red;
+  const healthColor = behavioralHealth >= 75 ? T.accent.green : behavioralHealth >= 50 ? T.state.warn : T.accent.red;
+  const tiltColor = tiltScore.status === 'calm' ? T.accent.green : tiltScore.status === 'elevated' ? T.state.warn : T.accent.red;
   const tiltLabel = tiltScore.status === 'calm' ? (isRTL ? 'רגוע' : 'CALM') : tiltScore.status === 'elevated' ? (isRTL ? 'מוגבר' : 'ELEVATED') : (isRTL ? 'מוטה' : 'TILTED');
 
   const deepDiag: DeepDiagnosis = useMemo(() => diagnose(trades, { lang: isRTL ? 'he' : 'en', isMoney }), [trades, isRTL, isMoney]);
@@ -322,7 +323,7 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
           <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.16em', textTransform: 'uppercase', marginBottom: 4 }}>{isRTL ? 'הון מנטלי' : 'Mental Cap'}</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: mentalCapital >= 60 ? T.accent.green : T.accent.orange, fontFamily: "'JetBrains Mono', monospace", lineHeight: 1 }}>
+              <div style={{ fontSize: 28, fontWeight: 700, color: mentalCapital >= 60 ? T.accent.green : T.state.warn, fontFamily: "'JetBrains Mono', monospace", lineHeight: 1 }}>
                 {mentalCapital.toFixed(0)}
               </div>
             </div>
@@ -390,32 +391,32 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
       {/* Cinematic loading overlay — motherboard pulse */}
       {diagLoading && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 1100, background: 'rgba(2,8,20,0.86)', backdropFilter: 'blur(18px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 22 }}>
-          <svg width="220" height="220" viewBox="0 0 220 220" style={{ filter: `drop-shadow(0 0 24px ${T.accent.cyan})` }}>
+          <svg width="220" height="220" viewBox="0 0 220 220" style={{ filter: `drop-shadow(0 0 24px ${infoColor(T)})` }}>
             <defs>
               <linearGradient id="diag-trace" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor={T.accent.cyan} stopOpacity="0" />
-                <stop offset="50%" stopColor={T.accent.cyan} stopOpacity="1" />
-                <stop offset="100%" stopColor={T.accent.cyan} stopOpacity="0" />
+                <stop offset="0%" stopColor={infoColor(T)} stopOpacity="0" />
+                <stop offset="50%" stopColor={infoColor(T)} stopOpacity="1" />
+                <stop offset="100%" stopColor={infoColor(T)} stopOpacity="0" />
               </linearGradient>
             </defs>
-            <rect x="20" y="20" width="180" height="180" rx="18" stroke={`${T.accent.cyan}55`} strokeWidth="1.4" fill="none" />
-            <rect x="78" y="78" width="64" height="64" rx="8" stroke={T.accent.cyan} strokeWidth="1.6" fill={`${T.accent.cyan}10`} />
+            <rect x="20" y="20" width="180" height="180" rx="18" stroke={`${infoColor(T)}55`} strokeWidth="1.4" fill="none" />
+            <rect x="78" y="78" width="64" height="64" rx="8" stroke={infoColor(T)} strokeWidth="1.6" fill={`${infoColor(T)}10`} />
             {['M30,30 L80,30 L80,80','M190,30 L140,30 L140,80','M30,190 L80,190 L80,140','M190,190 L140,190 L140,140','M20,110 L78,110','M200,110 L142,110','M110,20 L110,78','M110,200 L110,142'].map((d,i)=>(
               <g key={i}>
-                <path d={d} stroke={`${T.accent.cyan}30`} strokeWidth="1.4" fill="none" />
+                <path d={d} stroke={`${infoColor(T)}30`} strokeWidth="1.4" fill="none" />
                 <path d={d} stroke="url(#diag-trace)" strokeWidth="2.4" fill="none" strokeDasharray="14 180">
                   <animate attributeName="stroke-dashoffset" from="0" to="-200" dur={`${1.1 + i * 0.12}s`} repeatCount="indefinite" />
                 </path>
               </g>
             ))}
             {[[30,30],[190,30],[30,190],[190,190],[20,110],[200,110],[110,20],[110,200]].map(([x,y],i)=>(
-              <circle key={i} cx={x} cy={y} r="4" fill={T.bg.primary} stroke={T.accent.cyan} strokeWidth="1.5" />
+              <circle key={i} cx={x} cy={y} r="4" fill={T.bg.primary} stroke={infoColor(T)} strokeWidth="1.5" />
             ))}
-            <text x="110" y="115" textAnchor="middle" fill={T.accent.cyan} fontSize="14" fontFamily="'JetBrains Mono', monospace" letterSpacing="0.2em">ORCA·DX</text>
+            <text x="110" y="115" textAnchor="middle" fill={infoColor(T)} fontSize="14" fontFamily="'JetBrains Mono', monospace" letterSpacing="0.2em">ORCA·DX</text>
           </svg>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
             {[isRTL ? 'סורק התנהגות סוחר...' : 'Scanning trader behavior...', isRTL ? 'מזהה דפוסי סיכון ומתח...' : 'Detecting risk & pressure patterns...', isRTL ? 'מחבר ארכיטיפ אישי...' : 'Composing personal archetype...'].map((s, i) => (
-              <div key={i} style={{ fontSize: 11, color: T.accent.cyan, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em', opacity: 0.4 + i * 0.2, animation: `pulse ${1.4 + i * 0.2}s ease-in-out infinite` }}>◆ {s}</div>
+              <div key={i} style={{ fontSize: 11, color: infoColor(T), fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em', opacity: 0.4 + i * 0.2, animation: `pulse ${1.4 + i * 0.2}s ease-in-out infinite` }}>◆ {s}</div>
             ))}
           </div>
         </div>
@@ -435,7 +436,7 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
               <PolarGrid stroke={T.border.subtle} />
               <PolarAngleAxis dataKey="axis" tick={{ fill: T.text.secondary, fontSize: 10 }} />
               <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fill: T.text.muted, fontSize: 8 }} />
-              <Radar dataKey="value" stroke={T.accent.cyan} fill={T.accent.cyan} fillOpacity={0.25} strokeWidth={2} />
+              <Radar dataKey="value" stroke={infoColor(T)} fill={infoColor(T)} fillOpacity={0.25} strokeWidth={2} />
               <Tooltip contentStyle={tt} cursor={false} formatter={(v: number) => `${v.toFixed(0)}/100`} />
             </RadarChart>
           </ResponsiveContainer>
@@ -443,11 +444,11 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
         <div style={{ flex: 1, minWidth: 280, display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ display: 'flex', gap: 8 }}>
             <ScoreGauge T={T} score={stats.rulesFollowed} label={isRTL ? 'משמעת' : 'Discipline'} color={T.accent.green} description={isRTL ? 'אחוז עמידה בכללים' : 'Rule compliance %'} />
-            <ScoreGauge T={T} score={Math.max(0, 100 - riskCV)} label={isRTL ? 'עקביות' : 'Consistency'} color={T.accent.orange} description={isRTL ? 'אחידות גודל סיכון' : 'How uniform risk sizing is'} />
+            <ScoreGauge T={T} score={Math.max(0, 100 - riskCV)} label={isRTL ? 'עקביות' : 'Consistency'} color={T.state.warn} description={isRTL ? 'אחידות גודל סיכון' : 'How uniform risk sizing is'} />
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <ScoreGauge T={T} score={stats.orcaScore} label={isRTL ? 'ציון Orca' : 'Orca Score'} color={T.accent.cyan} description={isRTL ? 'ציון משולב' : 'Combined score'} />
-            <ScoreGauge T={T} score={Math.max(0, 100 - (revengeTrades / Math.max(1, trades.length)) * 500)} label={isRTL ? 'רגשי' : 'Emotional'} color={T.accent.purple} description={isRTL ? 'היעדר אימפולסיביות' : 'Absence of impulsivity'} />
+            <ScoreGauge T={T} score={stats.orcaScore} label={isRTL ? 'ציון Orca' : 'Orca Score'} color={infoColor(T)} description={isRTL ? 'ציון משולב' : 'Combined score'} />
+            <ScoreGauge T={T} score={Math.max(0, 100 - (revengeTrades / Math.max(1, trades.length)) * 500)} label={isRTL ? 'רגשי' : 'Emotional'} color={neutralRamp(T, 3)[1]} description={isRTL ? 'היעדר אימפולסיביות' : 'Absence of impulsivity'} />
           </div>
         </div>
       </div>
@@ -520,8 +521,8 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
               {[
                 { l: isRTL ? 'הגדלת סיכון' : 'Risk Increase', v: postLossBehavior.riskIncAfterLoss, pct: (postLossBehavior.riskIncAfterLoss / postLossBehavior.totalAfterLoss * 100), c: T.accent.red, icon: '📈' },
                 { l: isRTL ? 'שמירה על סיכון' : 'Risk Maintained', v: postLossBehavior.sameAfterLoss, pct: (postLossBehavior.sameAfterLoss / postLossBehavior.totalAfterLoss * 100), c: T.accent.green, icon: '➡️' },
-                { l: isRTL ? 'הקטנת סיכון' : 'Risk Decrease', v: postLossBehavior.riskDecAfterLoss, pct: (postLossBehavior.riskDecAfterLoss / postLossBehavior.totalAfterLoss * 100), c: T.accent.blue, icon: '📉' },
-                { l: isRTL ? 'עמידה בכללים' : 'Rules Followed', v: postLossBehavior.rulesAfterLoss, pct: (postLossBehavior.rulesAfterLoss / postLossBehavior.totalAfterLoss * 100), c: T.accent.cyan, icon: '✅' },
+                { l: isRTL ? 'הקטנת סיכון' : 'Risk Decrease', v: postLossBehavior.riskDecAfterLoss, pct: (postLossBehavior.riskDecAfterLoss / postLossBehavior.totalAfterLoss * 100), c: infoColor(T), icon: '📉' },
+                { l: isRTL ? 'עמידה בכללים' : 'Rules Followed', v: postLossBehavior.rulesAfterLoss, pct: (postLossBehavior.rulesAfterLoss / postLossBehavior.totalAfterLoss * 100), c: infoColor(T), icon: '✅' },
               ].map((item, i) => (
                 <div key={i} style={{ flex: 1, minWidth: 130, padding: 12, background: `${item.c}08`, border: `1px solid ${item.c}20`, borderRadius: 10, textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
                   <div style={{ position: 'absolute', bottom: 0, insetInlineStart: 0, height: 2, width: `${item.pct}%`, background: item.c, transition: 'width 0.6s ease' }} />
@@ -548,7 +549,7 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
                   <YAxis tick={{ fill: T.text.muted, fontSize: 9 }} domain={[0, 100]} />
                   <Tooltip contentStyle={tt} cursor={false} />
                   <Line type="monotone" dataKey="discipline" stroke={T.accent.green} strokeWidth={2} dot={{ fill: T.accent.green, r: 2 }} name={isRTL ? 'משמעת' : 'Discipline'} />
-                  <Line type="monotone" dataKey="riskConsistency" stroke={T.accent.orange} strokeWidth={2} dot={{ fill: T.accent.orange, r: 2 }} name={isRTL ? 'עקביות סיכון' : 'Risk Consistency'} />
+                  <Line type="monotone" dataKey="riskConsistency" stroke={T.state.warn} strokeWidth={2} dot={{ fill: T.state.warn, r: 2 }} name={isRTL ? 'עקביות סיכון' : 'Risk Consistency'} />
                 </LineChart>
               </ResponsiveContainer>
             </LazyChart>
@@ -567,7 +568,7 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
                 <YAxis tick={{ fill: T.text.muted, fontSize: 9 }} domain={[0, 100]} />
                 <Tooltip contentStyle={tt} cursor={false} />
                 <Bar dataKey="pressure" radius={[3, 3, 0, 0]}>
-                  {lossPressure.map((d, i) => <Cell key={i} fill={d.pressure >= 75 ? T.accent.red : d.pressure >= 50 ? T.accent.orange : d.pressure > 0 ? T.accent.orange : T.accent.green} fillOpacity={d.pressure >= 50 ? 0.9 : d.pressure > 0 ? 0.55 : 0.4} />)}
+                  {lossPressure.map((d, i) => <Cell key={i} fill={d.pressure >= 75 ? T.accent.red : d.pressure >= 50 ? T.state.warn : d.pressure > 0 ? T.state.warn : T.accent.green} fillOpacity={d.pressure >= 50 ? 0.9 : d.pressure > 0 ? 0.55 : 0.4} />)}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -604,7 +605,7 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
                       <YAxis tick={{ fill: T.text.muted, fontSize: 10 }} allowDecimals={false} />
                       <Tooltip contentStyle={tt} cursor={false} formatter={(v: number) => [`${v} trades`, 'Count']} />
                       <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                        {bins.map((b, i) => <Cell key={i} fill={b.midSign === 1 ? T.accent.red : b.midSign === -1 ? T.accent.orange : T.accent.green} />)}
+                        {bins.map((b, i) => <Cell key={i} fill={b.midSign === 1 ? T.accent.red : b.midSign === -1 ? T.state.warn : T.accent.green} />)}
                       </Bar>
                     </BarChart>
                   );
@@ -622,23 +623,23 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
 
       {diagnosisOpen && (
         <div onClick={() => setDiagnosisOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(16px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18, animation: 'fadeIn .25s ease' }}>
-          <div onClick={e => e.stopPropagation()} dir={isRTL ? 'rtl' : 'ltr'} style={{ width: 'min(820px, 100%)', maxHeight: '90vh', overflow: 'auto', borderRadius: 20, border: `1px solid ${enoughForDiag ? healthColor : T.accent.orange}55`, background: `linear-gradient(145deg, ${T.bg.card}, ${T.bg.secondary} 48%, ${T.bg.tertiary})`, boxShadow: `0 30px 90px rgba(0,0,0,.62), 0 0 60px ${enoughForDiag ? healthColor : T.accent.orange}25`, padding: 26, animation: 'scaleIn .32s cubic-bezier(0.16,1,0.3,1)' }}>
+          <div onClick={e => e.stopPropagation()} dir={isRTL ? 'rtl' : 'ltr'} style={{ width: 'min(820px, 100%)', maxHeight: '90vh', overflow: 'auto', borderRadius: 20, border: `1px solid ${enoughForDiag ? healthColor : T.state.warn}55`, background: `linear-gradient(145deg, ${T.bg.card}, ${T.bg.secondary} 48%, ${T.bg.tertiary})`, boxShadow: `0 30px 90px rgba(0,0,0,.62), 0 0 60px ${enoughForDiag ? healthColor : T.state.warn}25`, padding: 26, animation: 'scaleIn .32s cubic-bezier(0.16,1,0.3,1)' }}>
             {!enoughForDiag ? (
               <div style={{ textAlign: 'center', padding: '20px 10px' }}>
                 <div style={{ fontSize: 56, marginBottom: 12 }}>📉</div>
-                <div style={{ fontSize: 11, color: T.accent.orange, letterSpacing: '0.2em', fontFamily: "'JetBrains Mono', monospace", marginBottom: 8 }}>INSUFFICIENT DATA</div>
+                <div style={{ fontSize: 11, color: T.state.warn, letterSpacing: '0.2em', fontFamily: "'JetBrains Mono', monospace", marginBottom: 8 }}>INSUFFICIENT DATA</div>
                 <div style={{ fontSize: 22, color: T.text.primary, fontWeight: 900, marginBottom: 10 }}>{isRTL ? 'אין מספיק נתונים לאבחון מדויק' : 'Not enough data for an accurate diagnosis'}</div>
                 <div style={{ fontSize: 13, color: T.text.secondary, lineHeight: 1.7, maxWidth: 540, margin: '0 auto' }}>
                   {isRTL
                     ? `כדי לייצר אבחון פסיכולוגי אמין נדרשות לפחות ${MIN_DIAG_TRADES} עסקאות. כרגע יש ${trades.length}. המערכת לא תייצר תובנות מומצאות — המשך לתעד עסקאות נקיות וחזור.`
                     : `A reliable psychological diagnosis requires at least ${MIN_DIAG_TRADES} trades. You currently have ${trades.length}. The system will not fabricate insights — log more clean trades and return.`}
                 </div>
-                <div style={{ marginTop: 20, display: 'inline-flex', alignItems: 'center', gap: 10, padding: '10px 16px', borderRadius: 10, background: `${T.accent.orange}10`, border: `1px solid ${T.accent.orange}33` }}>
+                <div style={{ marginTop: 20, display: 'inline-flex', alignItems: 'center', gap: 10, padding: '10px 16px', borderRadius: 10, background: `${T.state.warn}10`, border: `1px solid ${T.state.warn}33` }}>
                   <span style={{ fontSize: 11, color: T.text.muted }}>{isRTL ? 'התקדמות:' : 'Progress:'}</span>
                   <div style={{ width: 160, height: 6, background: T.bg.tertiary, borderRadius: 3, overflow: 'hidden' }}>
-                    <div style={{ width: `${Math.min(100, (trades.length / MIN_DIAG_TRADES) * 100)}%`, height: '100%', background: T.accent.orange, transition: 'width .4s' }} />
+                    <div style={{ width: `${Math.min(100, (trades.length / MIN_DIAG_TRADES) * 100)}%`, height: '100%', background: T.state.warn, transition: 'width .4s' }} />
                   </div>
-                  <span style={{ fontSize: 12, color: T.accent.orange, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>{trades.length}/{MIN_DIAG_TRADES}</span>
+                  <span style={{ fontSize: 12, color: T.state.warn, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>{trades.length}/{MIN_DIAG_TRADES}</span>
                 </div>
                 <div style={{ marginTop: 22 }}>
                   <button onClick={() => setDiagnosisOpen(false)} style={{ padding: '10px 22px', borderRadius: 10, border: `1px solid ${T.border.medium}`, background: T.bg.tertiary, color: T.text.secondary, cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>{isRTL ? 'סגור' : 'Close'}</button>
@@ -689,8 +690,8 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
                     </div>
                   </div>
                   <div style={{ height: 8, background: T.bg.primary, borderRadius: 4, overflow: 'hidden', position: 'relative' }}>
-                    <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(90deg, ${T.accent.red}, ${T.accent.orange}, ${T.accent.green})`, opacity: 0.2 }} />
-                    <div style={{ width: `${deepDiag.scores.survivability}%`, height: '100%', background: `linear-gradient(90deg, ${T.accent.red}, ${T.accent.orange}, ${T.accent.green})`, transition: 'width .9s cubic-bezier(0.16,1,0.3,1)', boxShadow: `0 0 12px ${healthColor}80` }} />
+                    <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(90deg, ${T.accent.red}, ${T.state.warn}, ${T.accent.green})`, opacity: 0.2 }} />
+                    <div style={{ width: `${deepDiag.scores.survivability}%`, height: '100%', background: `linear-gradient(90deg, ${T.accent.red}, ${T.state.warn}, ${T.accent.green})`, transition: 'width .9s cubic-bezier(0.16,1,0.3,1)', boxShadow: `0 0 12px ${healthColor}80` }} />
                   </div>
                   {/* 3-pillar sub-scores */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 12 }}>
@@ -699,7 +700,7 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
                       { l: isRTL ? 'עקביות סיכון' : 'Risk Consistency', v: deepDiag.scores.riskDiscipline },
                       { l: isRTL ? 'שליטה רגשית' : 'Emotional Control', v: deepDiag.scores.emotional },
                     ].map(s => {
-                      const c = s.v >= 60 ? T.accent.green : s.v >= 35 ? T.accent.orange : T.accent.red;
+                      const c = s.v >= 60 ? T.accent.green : s.v >= 35 ? T.state.warn : T.accent.red;
                       return (
                         <div key={s.l} style={{ padding: 10, borderRadius: 10, background: `${c}10`, border: `1px solid ${c}30` }}>
                           <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>{s.l}</div>
@@ -712,7 +713,7 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
 
                 {/* ── DISCIPLINE PARADOX BANNER (only if detected) ───── */}
                 {deepDiag.disciplineParadox && (
-                  <div style={{ marginBottom: 14, padding: 14, borderRadius: 12, background: `linear-gradient(135deg, ${T.accent.red}15, ${T.accent.orange}08)`, border: `1px solid ${T.accent.red}40`, borderInlineStart: `3px solid ${T.accent.red}` }}>
+                  <div style={{ marginBottom: 14, padding: 14, borderRadius: 12, background: `linear-gradient(135deg, ${T.accent.red}15, ${T.state.warn}08)`, border: `1px solid ${T.accent.red}40`, borderInlineStart: `3px solid ${T.accent.red}` }}>
                     <div style={{ fontSize: 11, color: T.accent.red, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: "'JetBrains Mono', monospace", marginBottom: 8 }}>{isRTL ? '⚠ פרדוקס המשמעת — אשליה של שליטה' : '⚠ DISCIPLINE PARADOX'}</div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginBottom: 10 }}>
                       <div style={{ padding: 10, borderRadius: 8, background: T.bg.tertiary }}>
@@ -721,7 +722,7 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
                       </div>
                       <div style={{ padding: 10, borderRadius: 8, background: T.bg.tertiary }}>
                         <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{isRTL ? 'משמעת ניהול סיכון' : 'Risk Discipline'}</div>
-                        <div style={{ fontSize: 22, fontWeight: 900, color: deepDiag.scores.riskDiscipline >= 50 ? T.accent.orange : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{deepDiag.scores.riskDiscipline}<span style={{ fontSize: 11, color: T.text.muted, fontWeight: 400 }}>/100</span></div>
+                        <div style={{ fontSize: 22, fontWeight: 900, color: deepDiag.scores.riskDiscipline >= 50 ? T.state.warn : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{deepDiag.scores.riskDiscipline}<span style={{ fontSize: 11, color: T.text.muted, fontWeight: 400 }}>/100</span></div>
                       </div>
                     </div>
                     <div style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.6 }}>
@@ -738,13 +739,13 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: 8 }}>
                     {[
                       { k: isRTL ? 'תוחלת פוזיציה ($)' : 'Avg Trade ($)', v: `${deepDiag.raw.avgPnl >= 0 ? '+' : ''}$${deepDiag.raw.avgPnl.toFixed(2)}`, c: deepDiag.raw.avgPnl >= 0 ? T.accent.green : T.accent.red, sub: isRTL ? (deepDiag.raw.avgPnl < 0 ? 'אתה משלם לסחור' : 'רווח נטו פר עסקה') : (deepDiag.raw.avgPnl < 0 ? 'You pay to trade' : 'Net $ per trade') },
-                      { k: isRTL ? 'כאוס סיזינג (CV)' : 'Sizing Chaos (CV)', v: `${deepDiag.raw.riskCV.toFixed(0)}%`, c: deepDiag.raw.riskCV <= 35 ? T.accent.green : deepDiag.raw.riskCV <= 60 ? T.accent.orange : T.accent.red, sub: isRTL ? 'תנודתיות גודל פוזיציה' : 'Position-size volatility' },
+                      { k: isRTL ? 'כאוס סיזינג (CV)' : 'Sizing Chaos (CV)', v: `${deepDiag.raw.riskCV.toFixed(0)}%`, c: deepDiag.raw.riskCV <= 35 ? T.accent.green : deepDiag.raw.riskCV <= 60 ? T.state.warn : T.accent.red, sub: isRTL ? 'תנודתיות גודל פוזיציה' : 'Position-size volatility' },
                       { k: isRTL ? 'הסלמה אחרי הפסד' : 'Post-Loss Escalation', v: `${deepDiag.raw.postLossEscalationPct.toFixed(0)}%`, c: deepDiag.raw.postLossEscalationPct > 30 ? T.accent.red : T.accent.green, sub: isRTL ? 'אינדיקציה למסחר נקמה' : 'Revenge-trading indicator' },
                       { k: isRTL ? 'רצף הפסדים מקס׳' : 'Max Loss Streak', v: `${deepDiag.raw.maxLossStreak}L`, c: deepDiag.raw.maxLossStreak >= 4 ? T.accent.red : T.accent.green, sub: isRTL ? 'ריצה לתוך הקיר ללא בלמים' : 'No-brakes loss run' },
-                      { k: 'Profit Factor', v: deepDiag.raw.profitFactor.toFixed(2), c: deepDiag.raw.profitFactor >= 1.3 ? T.accent.green : deepDiag.raw.profitFactor >= 1 ? T.accent.orange : T.accent.red, sub: isRTL ? 'רווח/הפסד גולמי' : 'Gross win/loss' },
-                      { k: isRTL ? 'ימי מסחר יתר' : 'Overtrading Days', v: `${deepDiag.raw.overtradingDays}`, c: deepDiag.raw.overtradingDays >= 3 ? T.accent.orange : T.accent.green, sub: isRTL ? '3+ עסקאות ביום' : '3+ trades/day' },
-                      { k: 'Win Rate', v: `${deepDiag.raw.winRate.toFixed(0)}%`, c: T.accent.cyan, sub: `${deepDiag.raw.wins}W / ${deepDiag.raw.losses}L` },
-                      { k: 'Sortino', v: deepDiag.raw.sortino.toFixed(2), c: deepDiag.raw.sortino >= 0.3 ? T.accent.green : T.accent.orange, sub: isRTL ? 'תשואה ביחס ללחץ' : 'Risk-adjusted return' },
+                      { k: 'Profit Factor', v: deepDiag.raw.profitFactor.toFixed(2), c: deepDiag.raw.profitFactor >= 1.3 ? T.accent.green : deepDiag.raw.profitFactor >= 1 ? T.state.warn : T.accent.red, sub: isRTL ? 'רווח/הפסד גולמי' : 'Gross win/loss' },
+                      { k: isRTL ? 'ימי מסחר יתר' : 'Overtrading Days', v: `${deepDiag.raw.overtradingDays}`, c: deepDiag.raw.overtradingDays >= 3 ? T.state.warn : T.accent.green, sub: isRTL ? '3+ עסקאות ביום' : '3+ trades/day' },
+                      { k: 'Win Rate', v: `${deepDiag.raw.winRate.toFixed(0)}%`, c: infoColor(T), sub: `${deepDiag.raw.wins}W / ${deepDiag.raw.losses}L` },
+                      { k: 'Sortino', v: deepDiag.raw.sortino.toFixed(2), c: deepDiag.raw.sortino >= 0.3 ? T.accent.green : T.state.warn, sub: isRTL ? 'תשואה ביחס ללחץ' : 'Risk-adjusted return' },
                     ].map(m => (
                       <div key={m.k} style={{ padding: 10, borderRadius: 10, background: T.bg.tertiary, border: `1px solid ${m.c}25` }}>
                         <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.k}</div>
@@ -758,7 +759,7 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
                 {/* FINGERPRINT CHIPS */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
                   {deepDiag.fingerprint.map((chip, i) => {
-                    const colorMap = { green: T.accent.green, red: T.accent.red, orange: T.accent.orange, cyan: T.accent.cyan, purple: T.accent.purple };
+                    const colorMap = { green: T.accent.green, red: T.accent.red, orange: T.state.warn, cyan: infoColor(T), purple: neutralRamp(T, 3)[1] };
                     const c = colorMap[chip.c];
                     return <span key={i} style={{ fontSize: 11, padding: '5px 10px', borderRadius: 999, background: `${c}14`, border: `1px solid ${c}38`, color: c, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.04em' }}>● {chip.l}</span>;
                   })}
@@ -770,7 +771,7 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
                     <div style={{ fontSize: 10, color: T.text.muted, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>{isRTL ? '◆ ניתוח פסיכולוגי · הלמה מאחורי הדפוס' : '◆ PSYCHOLOGICAL ANALYSIS · The Why'}</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {deepDiag.patterns.map(p => {
-                        const c = p.severity === 'good' ? T.accent.green : p.severity === 'warning' ? T.accent.orange : T.accent.red;
+                        const c = p.severity === 'good' ? T.accent.green : p.severity === 'warning' ? T.state.warn : T.accent.red;
                         return (
                           <div key={p.id} style={{ padding: 12, borderRadius: 10, background: `${c}08`, border: `1px solid ${c}30`, borderInlineStart: `3px solid ${c}` }}>
                             <div style={{ fontSize: 13, color: c, fontWeight: 800, marginBottom: 4 }}>{p.label}</div>
@@ -800,7 +801,7 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
                   <div style={{ marginTop: 10, padding: 14, borderRadius: 12, background: T.bg.tertiary, borderInlineStart: `4px solid ${T.accent.red}` }}>
                     <div style={{ fontSize: 13, color: T.accent.red, fontWeight: 900, marginBottom: 10 }}>{isRTL ? '◆ סיכונים שמרסנים אותך' : '◆ RISKS HOLDING YOU BACK'}</div>
                     {deepDiag.risks.map((r, i) => {
-                      const c = r.severity === 'danger' ? T.accent.red : T.accent.orange;
+                      const c = r.severity === 'danger' ? T.accent.red : T.state.warn;
                       return (
                         <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '6px 0', borderBottom: i < deepDiag.risks.length - 1 ? `1px solid ${T.border.subtle}` : 'none', gap: 12 }}>
                           <span style={{ fontSize: 13, color: T.text.primary, fontWeight: 600 }}>● {r.title}</span>
@@ -812,13 +813,13 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
                 )}
 
                 {/* ── RECOVERY PROTOCOL — military-style standing orders ─ */}
-                <div style={{ marginTop: 10, padding: 16, borderRadius: 12, background: `linear-gradient(135deg, ${T.accent.cyan}10, ${T.bg.tertiary})`, border: `1px solid ${T.accent.cyan}30`, borderInlineStart: `4px solid ${T.accent.cyan}` }}>
+                <div style={{ marginTop: 10, padding: 16, borderRadius: 12, background: `linear-gradient(135deg, ${infoColor(T)}10, ${T.bg.tertiary})`, border: `1px solid ${infoColor(T)}30`, borderInlineStart: `4px solid ${infoColor(T)}` }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
-                    <div style={{ fontSize: 13, color: T.accent.cyan, fontWeight: 900 }}>{isRTL ? '◆ פרוטוקול חילוץ · פקודות קבע' : '◆ RECOVERY PROTOCOL · STANDING ORDERS'}</div>
+                    <div style={{ fontSize: 13, color: infoColor(T), fontWeight: 900 }}>{isRTL ? '◆ פרוטוקול חילוץ · פקודות קבע' : '◆ RECOVERY PROTOCOL · STANDING ORDERS'}</div>
                     <span style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.16em', fontFamily: "'JetBrains Mono', monospace" }}>{isRTL ? 'חד-משמעי · בלי יוצא מן הכלל' : 'NON-NEGOTIABLE'}</span>
                   </div>
                   {deepDiag.plan.map((p, i) => {
-                    const pc = p.priority === 'critical' ? T.accent.red : p.priority === 'high' ? T.accent.orange : T.accent.cyan;
+                    const pc = p.priority === 'critical' ? T.accent.red : p.priority === 'high' ? T.state.warn : infoColor(T);
                     const pLabel = p.priority === 'critical' ? (isRTL ? 'קריטי' : 'CRITICAL') : p.priority === 'high' ? (isRTL ? 'גבוה' : 'HIGH') : (isRTL ? 'תקני' : 'STANDARD');
                     return (
                       <div key={i} style={{ padding: '10px 0', borderBottom: i < deepDiag.plan.length - 1 ? `1px solid ${T.border.subtle}` : 'none' }}>
