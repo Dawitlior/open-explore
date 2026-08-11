@@ -711,14 +711,14 @@ html[data-scheme="light"] .recharts-cartesian-axis-tick text,
 html[data-scheme="light"] .recharts-polar-angle-axis-tick text,
 html[data-scheme="light"] .recharts-polar-radius-axis-tick text,
 html[data-scheme="light"] .recharts-label,
-html[data-scheme="light"] .recharts-text { fill: var(--orca-chart-axis, #64748B) !important; }
+html[data-scheme="light"] .recharts-text { fill: var(--orca-chart-axis, #566171) !important; }
 
 html[data-scheme="light"] .recharts-cartesian-grid line,
 html[data-scheme="light"] .recharts-polar-grid line,
 html[data-scheme="light"] .recharts-polar-grid-concentric-circle,
-html[data-scheme="light"] .recharts-polar-grid-concentric-polygon { stroke: var(--orca-chart-grid, #EDF1F7) !important; }
+html[data-scheme="light"] .recharts-polar-grid-concentric-polygon { stroke: var(--orca-chart-grid, #E8EDF5) !important; }
 
-html[data-scheme="light"] .recharts-cartesian-axis-line { stroke: var(--orca-chart-axis-line, #E2E8F0) !important; }
+html[data-scheme="light"] .recharts-cartesian-axis-line { stroke: var(--orca-chart-axis-line, #D8E0EC) !important; }
 
 html[data-scheme="light"] .recharts-default-tooltip,
 html[data-scheme="light"] .recharts-tooltip-wrapper > div {
