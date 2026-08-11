@@ -81,7 +81,7 @@ function MacroEventStripImpl({ events, compact = false, isPast = false }: Props)
           style={{
             fontSize: compact ? 8 : 9,
             fontWeight: 700,
-            color: '#94a3b8',
+            color: 'var(--orca-text-muted, #94a3b8)',
             fontFamily: "'IBM Plex Mono', monospace",
           }}
         >
