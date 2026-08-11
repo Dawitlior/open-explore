@@ -651,15 +651,35 @@ html[data-scheme="light"] {
 html[data-scheme="light"] .orca-glass,
 html[data-scheme="light"] .orca-panel {
   background: var(--orca-surface-raised, #FFFFFF) !important;
-  border: 1px solid var(--orca-border-medium, #E9EDF5) !important;
-  box-shadow: var(--orca-shadow-card, 0 1px 2px rgba(15,23,42,0.04), 0 8px 24px rgba(15,23,42,0.06));
+  border: 1px solid var(--orca-border-subtle, #E4E9F2) !important;
+  box-shadow: var(--orca-shadow-card, 0 1px 2px rgba(15,23,42,0.05), 0 6px 18px rgba(15,23,42,0.05));
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
 html[data-scheme="light"] .orca-glass-hover:hover {
   border-color: var(--orca-border-active, rgba(99,102,241,0.45)) !important;
-  box-shadow: 0 1px 2px rgba(15,23,42,0.05), 0 12px 32px -10px rgba(99,102,241,0.22);
+  box-shadow: 0 1px 2px rgba(15,23,42,0.05), 0 10px 26px -10px rgba(99,102,241,0.20);
 }
+
+/* ── Desktop-only spatial rhythm (mobile layout untouched) ──
+   A single canonical card inset + chart inset for the light scheme.
+   Authored without !important so any deliberate inline padding
+   (tables, full-bleed charts, p-0 cards) still wins. */
+@media (min-width: 768px) {
+  html[data-scheme="light"] {
+    --orca-card-pad: 18px;
+    --orca-chart-inset: 12px;
+    --orca-grid-gap: 12px;
+  }
+  html[data-scheme="light"] body[data-density="compact"]   { --orca-card-pad: 12px; --orca-chart-inset: 8px;  --orca-grid-gap: 10px; }
+  html[data-scheme="light"] body[data-density="spacious"]  { --orca-card-pad: 24px; --orca-chart-inset: 16px; --orca-grid-gap: 16px; }
+
+  html[data-scheme="light"] .orca-glass,
+  html[data-scheme="light"] .orca-panel {
+    padding: var(--orca-card-pad, 18px);
+  }
+}
+
 
 /* ── Kill dark-only texture / bloom effects ──
    IMPORTANT: these are *overlay* utilities applied to real content containers
