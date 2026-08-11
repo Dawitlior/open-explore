@@ -31,6 +31,7 @@ import type { TradingTheme } from '@/lib/trading-theme';
 import type { TradingStats } from '@/lib/trading-analytics';
 import type { OperatingMode } from '@/hooks/use-settings';
 import { GlassCard } from './TradingUI';
+import { SCORE_THRESHOLDS, scoreColor, severityColor, moneyColor, neutralRamp, infoColor } from '@/lib/semantic-color';
 import type { ChartExplanation } from './ChartWrapper';
 import type { ChartSpec } from '@/lib/chart-registry';
 import { useLang } from '@/hooks/use-lang';
@@ -480,18 +481,18 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
             color: T.accent.red },
           { label: t('פקטור רווח','Profit Factor'),
             value: (() => { const pf = isMoney ? moneyStats.profitFactor : stats.profitFactorR; return isFinite(pf) ? `${pf.toFixed(2)}x` : '∞'; })(),
-            color: (isMoney ? moneyStats.profitFactor : stats.profitFactorR) >= 1.5 ? T.accent.green : (isMoney ? moneyStats.profitFactor : stats.profitFactorR) >= 1 ? T.accent.orange : T.accent.red },
-          { label: t('אחוז הצלחה','Win Rate'), value: `${stats.winRate.toFixed(1)}%`, color: stats.winRate >= 50 ? T.accent.green : T.accent.orange },
+            color: (isMoney ? moneyStats.profitFactor : stats.profitFactorR) >= 1 ? T.text.primary : T.state.warn },
+          { label: t('אחוז הצלחה','Win Rate'), value: `${stats.winRate.toFixed(1)}%`, color: scoreColor(T, stats.winRate, SCORE_THRESHOLDS.winRate) },
           { label: isMoney ? t('יחס תשלום ($)','Payoff Ratio ($)') : t('יחס תשלום (R)','Payoff Ratio (R)'),
             value: (() => { const p = isMoney ? moneyStats.payoff : (stats.avgLossR > 0 ? stats.avgWinR / stats.avgLossR : 0); return p > 0 ? p.toFixed(2) : '—'; })(),
-            color: T.accent.blue },
+            color: T.text.primary },
           { label: isMoney ? t('P&L מצטבר','Cumulative P&L') : t('R מצטבר','Cumulative R'),
             value: <PV>{isMoney ? fmtVal(stats.totalPnl) : `${stats.totalR >= 0 ? '+' : ''}${stats.totalR.toFixed(2)}R`}</PV>,
             color: (isMoney ? stats.totalPnl : stats.totalR) >= 0 ? T.accent.green : T.accent.red },
           { label: isMoney ? t('נסיגה מקס ($)','Max Drawdown ($)') : t('נסיגה מקס R (%)','Max Drawdown R (%)'),
             value: isMoney ? <PV>{fmtVal(-moneyStats.maxDDMoney)}</PV> : `${stats.maxDrawdown.toFixed(1)}%`,
-            color: T.accent.orange },
-          { label: t('נסיגה מקס (%)','Max Drawdown (%)'), value: `${moneyStats.maxDDPct.toFixed(1)}%`, color: T.accent.orange },
+            color: severityColor(T, stats.maxDrawdown, 10, 20) },
+          { label: t('נסיגה מקס (%)','Max Drawdown (%)'), value: `${moneyStats.maxDDPct.toFixed(1)}%`, color: severityColor(T, moneyStats.maxDDPct, 10, 20) },
         ].map((k, i) => (
           <motion.div
             key={k.label}
@@ -521,8 +522,8 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
             { l: t('רצף הפסדים הארוך ביותר','Longest loss streak'), v: `${Math.max(0, ...streaks.filter(s => s.type === 'L').map(s => s.len))} ${t('עסקאות','trades')}`, c: T.accent.red },
             { l: t('עסקה הכי טובה','Best trade'), v: isMoney ? fmtVal(Math.max(...trades.map(tr => tr.pnl), 0)) : `+${stats.bestTradeR.toFixed(2)}R`, c: T.accent.green },
             { l: t('עסקה הכי גרועה','Worst trade'), v: isMoney ? fmtVal(Math.min(...trades.map(tr => tr.pnl), 0)) : `${stats.worstTradeR.toFixed(2)}R`, c: T.accent.red },
-            { l: t('נכסים פעילים','Active assets'), v: String(setupBoard.length), c: T.accent.blue },
-            { l: t('סיכון קריסה','Risk of Ruin'), v: `${effectiveStats.riskOfRuin.toFixed(1)}%`, c: effectiveStats.riskOfRuin > 50 ? T.accent.red : T.accent.green },
+            { l: t('נכסים פעילים','Active assets'), v: String(setupBoard.length), c: T.text.primary },
+            { l: t('סיכון קריסה','Risk of Ruin'), v: `${effectiveStats.riskOfRuin.toFixed(1)}%`, c: severityColor(T, effectiveStats.riskOfRuin, 25, 50) },
           ].map((o, i) => (
             <div key={i} style={{ padding: 12, background: T.bg.tertiary, borderRadius: 10, borderInlineStart: `3px solid ${o.c}` }}>
               <div style={{ fontSize: 10, color: T.text.muted, marginBottom: 4, letterSpacing: '0.05em' }}>{o.l}</div>
@@ -998,8 +999,8 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
                     />
                     <Legend wrapperStyle={{ fontSize: 11, color: T.text.muted }} />
                     <ReferenceLine yAxisId="wr" y={50} stroke={T.border.medium} strokeDasharray="3 3" />
-                    <Bar yAxisId="wr" dataKey="winRate" name={t('הצלחה','Win %')} fill={T.accent.purple} radius={[6,6,0,0]} barSize={36} opacity={0.7} />
-                    <Line yAxisId="r" type="monotone" dataKey="expectancyR" name={t('תוחלת R','Expectancy R')} stroke={T.accent.orange} strokeWidth={2.5} dot={{ r: 4, fill: T.accent.orange }} />
+                    <Bar yAxisId="wr" dataKey="winRate" name={t('הצלחה','Win %')} fill={neutralRamp(T, 2)[1]} radius={[6,6,0,0]} barSize={36} opacity={0.7} />
+                    <Line yAxisId="r" type="monotone" dataKey="expectancyR" name={t('תוחלת R','Expectancy R')} stroke={infoColor(T)} strokeWidth={2.5} dot={{ r: 4, fill: infoColor(T) }} />
                   </ComposedChart>
                 </ResponsiveContainer>
               </div>
