@@ -84,7 +84,7 @@ import { useExpectancyMode } from '@/lib/dashboard-engine';
 import { useEntitlement } from '@/hooks/use-entitlement';
 import { EmptyStateImportCTA } from '@/components/trading/EmptyStateImportCTA';
 import { TradeDetailModal } from '@/components/trading/TradeDetailModal';
-import { infoColor, neutralRamp } from '@/lib/semantic-color';
+import { infoColor, neutralRamp, scoreColor, SCORE_THRESHOLDS } from '@/lib/semantic-color';
 
 // ─── Facebook-style red notification badge with "1" ───
 const ReminderBadge = () => (
