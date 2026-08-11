@@ -22,7 +22,7 @@ import {
 } from '@/lib/legal-text';
 
 /**
- * Iron-clad two-step legal gatekeeper for APEX OS.
+ * Iron-clad two-step legal gatekeeper for ORCA Investment.
  * Mounts after auth. Blocks the entire app until the user:
  *   1) Reads & ticks Terms of Service → continues
  *   2) Reads & ticks Privacy Policy → continues
@@ -196,7 +196,7 @@ export const LegalGate = () => {
             <span style={{
               fontSize: 10, color: GOLD, fontWeight: 700,
               letterSpacing: '0.28em', textTransform: 'uppercase',
-            }}>APEX OS · Legal</span>
+            }}>ORCA Investment · Legal</span>
             <span style={{ color: TEXT_MUTED, fontSize: 10, letterSpacing: '0.18em' }}>
               · {LEGAL_VERSION}
             </span>

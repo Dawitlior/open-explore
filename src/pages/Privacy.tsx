@@ -16,7 +16,7 @@ const Privacy = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
     const prev = document.title;
-    document.title = isRTL ? `${PRIVACY_TITLE_HE} — APEX OS` : `${PRIVACY_TITLE_EN} — APEX OS`;
+    document.title = isRTL ? `${PRIVACY_TITLE_HE} — ORCA Investment` : `${PRIVACY_TITLE_EN} — ORCA Investment`;
     return () => { document.title = prev; };
   }, [isRTL]);
 

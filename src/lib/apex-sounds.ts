@@ -1,5 +1,5 @@
 /**
- * APEX OS — Premium Sound Engine v2
+ * ORCA Investment — Premium Sound Engine v2
  * Inspired by Bloomberg Terminal, Apple Pay, high-end fintech
  * Multi-layered Web Audio synthesis with convolution-style warmth
  */

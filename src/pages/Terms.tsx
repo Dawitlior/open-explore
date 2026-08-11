@@ -18,7 +18,7 @@ const Terms = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
     const prevTitle = document.title;
-    document.title = isRTL ? `${LEGAL_TITLE_HE} — APEX OS` : `${LEGAL_TITLE_EN} — APEX OS`;
+    document.title = isRTL ? `${LEGAL_TITLE_HE} — ORCA Investment` : `${LEGAL_TITLE_EN} — ORCA Investment`;
     const upsertMeta = (selector: string, create: () => HTMLElement) => {
       let el = document.head.querySelector(selector) as HTMLElement | null;
       if (!el) { el = create(); document.head.appendChild(el); }
