@@ -125,7 +125,7 @@ const midnight: TradingTheme = {
   state: darkState('#3DDC97', '#FF6B6B', '#F5A524', '#3B82F6', '#8A93A6'),
   chart: {
     ...darkChart('#3DDC97', '#FF6B6B', [
-      '#3B82F6', '#60A5FA', '#93C5FD', '#C7DBF7',
+      '#4B7FC0', '#7AA5D6', '#A6C4E6', '#CBDDEE',
       '#5B6B8C', '#8A93A6', '#B4BDD0', '#2C3A55',
     ]),
     // Monochrome blue ramp — a heatmap must never read as profit/loss.
@@ -181,7 +181,12 @@ const blue: TradingTheme = {
   isLight: false,
   surface: darkSurface('#131c30', '#0B1120', '#0F1728'),
   state: darkState('#34D399', '#F87171', '#F59E0B', '#38BDF8', '#64748B'),
-  chart: darkChart('#34D399', '#F87171', ['#38BDF8', '#34D399', '#F59E0B', '#A78BFA', '#F87171', '#2563EB', '#7DD3FC', '#94A3B8']),
+  // Single-hue sky ladder (desaturated) + cool neutrals — series separate by
+  // lightness, never by decorative hue. Green/red stay reserved for P&L.
+  chart: darkChart('#34D399', '#F87171', [
+    '#4A9FD4', '#77BCE4', '#A5CDE2', '#CBE0EE',
+    '#5B7186', '#8296A8', '#B0BECB', '#3A4A5A',
+  ]),
 
 
 
@@ -287,7 +292,8 @@ const platinum: TradingTheme = {
     neutral: '#8494AB',
 
     fillOpacity: 0.55,
-    series: ['#6366F1', '#0F9D8C', '#F59E0B', '#8B5CF6', '#E11D48', '#0EA5E9', '#84CC16', '#64748B'],
+    // Single-hue indigo ladder (desaturated) + cool neutrals.
+    series: ['#5C63C4', '#828AD8', '#A7ADE4', '#C8CCEE', '#6B7688', '#8E99A9', '#B3BCC8', '#4A5464'],
     heat: ['#F1F4FA', '#DBE4F5', '#B9C9F0', '#8C9FE8', '#6366F1'],
   },
   cssVars: {
@@ -321,7 +327,11 @@ const graphite: TradingTheme = {
   isLight: false,
   surface: darkSurface('#161a1f', '#0e1013', '#12161b'),
   state: darkState('#22c55e', '#ef4444', '#a16207', '#9aa4b2', '#7c8694'),
-  chart: darkChart('#22c55e', '#ef4444', ['#22c55e', '#9aa4b2', '#a16207', '#ef4444', '#16a34a', '#64748b', '#a3a3a3', '#3f6212']),
+  // Single-hue steel ladder (desaturated) — no green/red in categorical series.
+  chart: darkChart('#22c55e', '#ef4444', [
+    '#8FA0B0', '#AEBCC8', '#C8D2DB', '#E0E6EB',
+    '#6B7A87', '#59666F', '#96A3AE', '#414A52',
+  ]),
   bg: { primary: '#0e1013', secondary: '#161a1f', tertiary: '#1c2128', card: '#161a1f', surface: '#1f242c' },
   accent: {
     cyan: '#22c55e', cyanGlow: 'rgba(34,197,94,0.16)',

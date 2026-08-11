@@ -296,8 +296,9 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
     const longs = trades.filter(t => t.direction === 'Long');
     const shorts = trades.filter(t => t.direction === 'Short');
     return [
-      { name: t('לונג','Long'), n: longs.length, wr: longs.length ? (longs.filter(t => t.winLoss === 'Win').length / longs.length) * 100 : 0, color: T.accent.green },
-      { name: t('שורט','Short'), n: shorts.length, wr: shorts.length ? (shorts.filter(t => t.winLoss === 'Win').length / shorts.length) * 100 : 0, color: T.accent.red },
+      // Direction is identity, not outcome — it takes the theme's neutral ladder.
+      { name: t('לונג','Long'), n: longs.length, wr: longs.length ? (longs.filter(t => t.winLoss === 'Win').length / longs.length) * 100 : 0, color: neutralRamp(T, 2)[0] },
+      { name: t('שורט','Short'), n: shorts.length, wr: shorts.length ? (shorts.filter(t => t.winLoss === 'Win').length / shorts.length) * 100 : 0, color: neutralRamp(T, 2)[1] },
     ];
   }, [trades, T, t]);
 
@@ -734,8 +735,9 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
               marginBottom: 12,
             }}>
               {[
-                { label: t('חודשים חיוביים','Green months'), value: `${positives}/${monthly.length}`, color: T.accent.green },
-                { label: t('חודשים שליליים','Red months'), value: `${negatives}/${monthly.length}`, color: T.accent.red },
+                // Counts are structure, not money — neutral by rule.
+                { label: t('חודשים חיוביים','Green months'), value: `${positives}/${monthly.length}`, color: T.text.primary },
+                { label: t('חודשים שליליים','Red months'), value: `${negatives}/${monthly.length}`, color: T.text.primary },
                 { label: t('חודש חזק','Best month'), value: bestMonth ? `${bestMonth.month} · ${fmt(bestMonth.value)}` : '—', color: T.accent.green },
                 { label: t('חודש חלש','Worst month'), value: worstMonth ? `${worstMonth.month} · ${fmt(worstMonth.value)}` : '—', color: T.accent.red },
                 { label: t('סה״כ נטו','Net total'), value: fmt(netSum), color: netSum >= 0 ? T.accent.green : T.accent.red },
@@ -1016,8 +1018,8 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
       {/* ═══ ADVANCED LAYER (PRO/MAX modes) ═══ */}
       {showPro && (registryAllows('rDistribution') || registryAllows('edgeDecay')) && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 12, marginBottom: 12 }}>
-          {registryAllows('rDistribution') && <GlassCard T={T} glow={`${T.accent.red}18`}>
-            <div style={{ fontSize: 11, color: T.accent.red, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>● PRO · {t('עקומת תת-מים (Underwater)','Underwater Curve')}</div>
+          {registryAllows('rDistribution') && <GlassCard T={T} glow={`${infoColor(T)}18`}>
+            <div style={{ fontSize: 11, color: infoColor(T), textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>● PRO · {t('עקומת תת-מים (Underwater)','Underwater Curve')}</div>
             <ResponsiveContainer width="100%" height={220}>
               <AreaChart data={underwater}>
                 <defs>
