@@ -1141,7 +1141,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
                 <tr key={s.coin} style={{ background: i % 2 ? `${T.bg.tertiary}40` : 'transparent' }}>
                   <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontWeight: 700, color: infoColor(T) }}>{s.coin}</td>
                   <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace" }}>{s.n}</td>
-                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontWeight: 700, color: s.wr >= 50 ? T.accent.green : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{s.wr.toFixed(0)}%</td>
+                  <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontWeight: 700, color: s.wr >= 50 ? T.text.primary : T.state.warn, fontFamily: "'JetBrains Mono', monospace" }}>{s.wr.toFixed(0)}%</td>
                   <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: s.pnl >= 0 ? T.accent.green : T.accent.red }}>
                     <PV>{s.pnl >= 0 ? '+' : ''}${s.pnl.toFixed(2)}</PV>
                   </td>

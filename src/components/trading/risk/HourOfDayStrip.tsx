@@ -112,7 +112,7 @@ export const HourOfDayStrip = ({ T, isRTL, trades: all }: Props) => {
       </div>
 
       <div style={{ display: 'flex', gap: 12, marginTop: 12, flexWrap: 'wrap' }}>
-        <Pill T={T} color={T.accent.green}
+        <Pill T={T} color={infoColor(T)}
           label={isRTL ? 'חלון מנצח' : 'Best window'}
           value={`${hh(best.start)}–${hh(best.start + 3)}`}
           sub={fmt(best.value)} />

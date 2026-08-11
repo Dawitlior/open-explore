@@ -845,7 +845,7 @@ const Index = () => {
             {trades.slice(-5).map(tr => (
               <div key={tr.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: `1px solid ${T.border.subtle}`, fontSize: 11 }}>
                 <span style={{ color: T.text.muted }}>{tr.coin}</span>
-                <span style={{ color: tr.deviation > 0.1 ? T.accent.red : T.accent.green, fontFamily: "'JetBrains Mono', monospace" }}>{tr.deviation.toFixed(3)}R {tr.deviation > 0.1 ? '⚠️' : '✓'}</span>
+                <span style={{ color: tr.deviation > 0.1 ? T.state.warn : T.text.primary, fontFamily: "'JetBrains Mono', monospace" }}>{tr.deviation.toFixed(3)}R {tr.deviation > 0.1 ? '⚠️' : '✓'}</span>
               </div>
             ))}
           </GlassCard>
@@ -857,7 +857,7 @@ const Index = () => {
                 const isOvertrading = todayTrades.length >= 3;
                 return <>
                   <div style={{ fontSize: 32, marginBottom: 4 }}>{isOvertrading ? '🚨' : todayTrades.length >= 2 ? '⚡' : '✅'}</div>
-                  <div style={{ fontSize: 20, fontWeight: 700, color: isOvertrading ? T.accent.red : T.accent.green, fontFamily: "'JetBrains Mono', monospace" }}>{todayTrades.length}</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: isOvertrading ? T.state.warn : T.text.primary, fontFamily: "'JetBrains Mono', monospace" }}>{todayTrades.length}</div>
                   <div style={{ fontSize: 9, color: T.text.muted }}>{isRTL ? 'עסקאות היום' : 'trades today'}</div>
                 </>;
               })()}
@@ -870,7 +870,7 @@ const Index = () => {
           <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>{isRTL ? 'סיכון מול תוכנית' : 'Position Risk vs Plan'}</div>
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
             {trades.slice(-6).map(tr => (
-              <div key={tr.id} style={{ flex: '0 0 auto', padding: 10, background: T.bg.tertiary, borderRadius: T.radius.md, minWidth: 100, textAlign: 'center', border: `1px solid ${Math.abs(tr.riskPct - 1) > 0.5 ? T.accent.red : T.accent.green}20` }}>
+              <div key={tr.id} style={{ flex: '0 0 auto', padding: 10, background: T.bg.tertiary, borderRadius: T.radius.md, minWidth: 100, textAlign: 'center', border: `1px solid ${Math.abs(tr.riskPct - 1) > 0.5 ? T.state.warn : T.border.medium}20` }}>
                 <div style={{ fontSize: 11, fontWeight: 600, color: infoColor(T) }}>{tr.coin}</div>
                 <div style={{ fontSize: 9, color: T.text.muted, marginTop: 2 }}>Plan: {tr.riskPct}% • Actual: {((tr.risk / (tr.balance - tr.pnl)) * 100).toFixed(1)}%</div>
                 <div style={{ height: 3, background: T.bg.surface, borderRadius: 2, marginTop: 4 }}>
@@ -930,8 +930,8 @@ const Index = () => {
           {[
             { l: 'Expectancy (R)', v: `${stats.expectancyR >= 0 ? '+' : ''}${stats.expectancyR.toFixed(3)}R`, c: stats.expectancyR >= 0 ? infoColor(T) : T.accent.red, u: 'R' },
             { l: 'Vol-Adj Expectancy', v: stats.volatilityAdjustedExpectancy.toFixed(3), c: infoColor(T), u: 'R/σ' },
-            { l: 'Kelly Optimal', v: `${stats.kellyOptimal.toFixed(1)}%`, c: stats.kellyOptimal > 0 ? T.accent.green : T.accent.red, u: '%' },
-            { l: 'Risk of Ruin', v: `${Math.min(99.9, stats.riskOfRuin).toFixed(1)}%`, c: stats.riskOfRuin < 10 ? T.accent.green : T.accent.red, u: '%' },
+            { l: 'Kelly Optimal', v: `${stats.kellyOptimal.toFixed(1)}%`, c: stats.kellyOptimal > 0 ? T.text.primary : T.state.warn, u: '%' },
+            { l: 'Risk of Ruin', v: `${Math.min(99.9, stats.riskOfRuin).toFixed(1)}%`, c: stats.riskOfRuin < 10 ? T.text.primary : T.accent.red, u: '%' },
             { l: 'Avg Win R', v: `+${stats.avgWinR.toFixed(2)}R`, c: T.accent.green, u: 'R' },
             { l: 'Avg Loss R', v: `-${stats.avgLossR.toFixed(2)}R`, c: T.accent.red, u: 'R' },
           ].map((m, i) => (
@@ -1009,7 +1009,7 @@ const Index = () => {
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
             <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'סיכון/רוויה' : 'Risk of Ruin Curve'} explanation={EXPLANATIONS.riskOfRuin} unit="%">
               <div style={{ textAlign: 'center', padding: 20 }}>
-                <div style={{ fontSize: 42, fontWeight: 700, color: stats.riskOfRuin < 10 ? T.accent.green : stats.riskOfRuin < 30 ? T.state.warn : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{Math.min(99.9, stats.riskOfRuin).toFixed(1)}%</div>
+                <div style={{ fontSize: 42, fontWeight: 700, color: stats.riskOfRuin < 10 ? T.text.primary : stats.riskOfRuin < 30 ? T.state.warn : T.accent.red, fontFamily: "'JetBrains Mono', monospace" }}>{Math.min(99.9, stats.riskOfRuin).toFixed(1)}%</div>
                 <div style={{ fontSize: 10, color: T.text.muted, marginTop: 4 }}>{stats.riskOfRuin < 10 ? '🟢 Low Risk' : stats.riskOfRuin < 30 ? '🟡 Moderate' : '🔴 High Risk'}</div>
               </div>
             </ChartWrapper>
@@ -1201,7 +1201,7 @@ const Index = () => {
                       <YAxis tick={{ fill: T.text.muted, fontSize: 9 }} />
                       <Tooltip contentStyle={tt} />
                       <ReferenceLine y={1} stroke={T.border.medium} strokeDasharray="2 2" />
-                      <Line type="monotone" dataKey="ratio" stroke={T.accent.green} strokeWidth={1.4} dot={false} />
+                      <Line type="monotone" dataKey="ratio" stroke={infoColor(T)} strokeWidth={1.4} dot={false} />
                     </LineChart>
                   </ResponsiveContainer>
                 </ChartWrapper>
@@ -1327,7 +1327,7 @@ const Index = () => {
                         <td style={{ padding: '8px 12px', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: T.text.primary }}>{row.value}</td>
                         <td style={{ padding: '8px 12px', color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>{row.target}</td>
                         <td style={{ padding: '8px 12px' }}>
-                          <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 700, background: row.ok ? `${T.accent.green}15` : `${T.accent.red}15`, color: row.ok ? T.accent.green : T.accent.red }}>
+                          <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 700, background: row.ok ? `${infoColor(T)}15` : `${T.state.warn}15`, color: row.ok ? infoColor(T) : T.state.warn }}>
                             {row.ok ? '✓ On Track' : '⚠ Off Target'}
                           </span>
                         </td>
@@ -1458,7 +1458,7 @@ const Index = () => {
                     {opMode !== 'live' && <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}` }}><TradingBadge color={tr.winLoss === 'Win' ? T.accent.green : tr.winLoss === 'Loss' ? T.accent.red : T.state.warn}>{tr.winLoss}</TradingBadge></td>}
                     <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }}>{getEffectiveR(tr).toFixed(2)}R</td>
                     {isAlpha && <>
-                      <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: tr.deviation > 0.1 ? T.accent.red : T.accent.green }}>{tr.deviation.toFixed(3)}R</td>
+                      <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: tr.deviation > 0.1 ? T.state.warn : T.text.primary }}>{tr.deviation.toFixed(3)}R</td>
                       <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }}>{tr.leverage}x</td>
                     </>}
                     <td style={{ padding: '8px 12px', borderBottom: `1px solid ${T.border.subtle}`, color: T.text.muted, fontSize: 11, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tr.comments || '—'}</td>

@@ -355,7 +355,7 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {noteStatus === 'saved' && (
-            <span style={{ fontSize: 10, color: T.accent.green, fontWeight: 700 }}>{isRTL ? '✓ נשמר' : '✓ Saved'}</span>
+            <span style={{ fontSize: 10, color: infoColor(T), fontWeight: 700 }}>{isRTL ? '✓ נשמר' : '✓ Saved'}</span>
           )}
           {noteStatus === 'error' && (
             <span style={{ fontSize: 10, color: T.accent.red, fontWeight: 700 }}>{isRTL ? 'שגיאת שמירה' : 'Save failed'}</span>
@@ -487,7 +487,7 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {dayInsights.map((ins, i) => {
-              const c = ins.type === 'strength' ? T.accent.green : ins.type === 'weakness' ? T.accent.red : ins.type === 'alert' ? T.state.warn : ins.type === 'momentum' ? neutralRamp(T, 3)[1] : infoColor(T);
+              const c = ins.type === 'strength' ? infoColor(T) : ins.type === 'weakness' ? T.accent.red : ins.type === 'alert' ? T.state.warn : ins.type === 'momentum' ? neutralRamp(T, 3)[1] : infoColor(T);
               return (
                 <div key={i} style={{
                   padding: 12, borderRadius: T.radius.md, background: `${c}10`,
@@ -586,8 +586,8 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
           <div style={{ padding: '0 16px 18px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
             {[
               { l: isRTL ? 'אחוז זכייה' : 'Win Rate', v: `${dayTrades.length > 0 ? ((wins / dayTrades.length) * 100).toFixed(0) : 0}%`, c: infoColor(T) },
-              { l: isRTL ? 'משמעת' : 'Discipline', v: allRulesFollowed ? '✓' : '⚠︎', c: allRulesFollowed ? T.accent.green : T.state.warn },
-              { l: isRTL ? 'סטיות' : 'Deviations', v: `${highDeviation.length}`, c: highDeviation.length > 0 ? T.state.warn : T.accent.green },
+              { l: isRTL ? 'משמעת' : 'Discipline', v: allRulesFollowed ? '✓' : '⚠︎', c: allRulesFollowed ? T.text.primary : T.state.warn },
+              { l: isRTL ? 'סטיות' : 'Deviations', v: `${highDeviation.length}`, c: highDeviation.length > 0 ? T.state.warn : T.text.primary },
             ].map((s, i) => (
               <div key={i} style={{ padding: 12, background: T.bg.card, border: `1px solid ${T.border.subtle}`, borderRadius: 12, textAlign: 'center' }}>
                 <div style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>{s.l}</div>
@@ -756,8 +756,8 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
             {[
               { l: isRTL ? 'אחוז זכייה' : 'Win Rate', v: `${dayTrades.length > 0 ? ((wins / dayTrades.length) * 100).toFixed(0) : 0}%`, c: infoColor(T) },
               { l: isRTL ? 'סה״כ R' : 'Total R', v: `${totalR >= 0 ? '+' : ''}${totalR.toFixed(2)}R`, c: totalR >= 0 ? T.accent.green : T.accent.red },
-              { l: isRTL ? 'משמעת' : 'Discipline', v: `${rulesFollowed}/${dayTrades.length}`, c: allRulesFollowed ? T.accent.green : T.state.warn },
-              { l: isRTL ? 'סטיות גבוהות' : 'High Deviation', v: `${highDeviation.length}`, c: highDeviation.length > 0 ? T.state.warn : T.accent.green },
+              { l: isRTL ? 'משמעת' : 'Discipline', v: `${rulesFollowed}/${dayTrades.length}`, c: allRulesFollowed ? T.text.primary : T.state.warn },
+              { l: isRTL ? 'סטיות גבוהות' : 'High Deviation', v: `${highDeviation.length}`, c: highDeviation.length > 0 ? T.state.warn : T.text.primary },
             ].map((s, i) => (
               <div key={i} style={{
                 padding: 16, background: T.bg.tertiary, border: `1px solid ${T.border.subtle}`,
