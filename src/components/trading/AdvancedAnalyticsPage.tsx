@@ -1034,8 +1034,8 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
               </AreaChart>
             </ResponsiveContainer>
           </GlassCard>}
-          {registryAllows('edgeDecay') && <GlassCard T={T} glow={`${T.accent.green}18`}>
-            <div style={{ fontSize: 11, color: T.accent.green, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>
+          {registryAllows('edgeDecay') && <GlassCard T={T} glow={`${infoColor(T)}18`}>
+            <div style={{ fontSize: 11, color: T.text.secondary, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>
               ● PRO · {t('אבולוציית Profit Factor','Profit Factor Evolution')}
               <span style={{ marginInlineStart: 8, color: T.text.muted, fontSize: 9.5, letterSpacing: '0.12em' }}>· {isMoney ? '$' : 'R'}</span>
             </div>
@@ -1051,8 +1051,8 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
                 <AreaChart data={pfEvolution} margin={{ top: 8, right: 8, bottom: 4, left: 0 }}>
                   <defs>
                     <linearGradient id="pfG" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={T.accent.green} stopOpacity={0.5} />
-                      <stop offset="100%" stopColor={T.accent.green} stopOpacity={0.04} />
+                      <stop offset="0%" stopColor={infoColor(T)} stopOpacity={0.5} />
+                      <stop offset="100%" stopColor={infoColor(T)} stopOpacity={0.04} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
@@ -1064,7 +1064,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
                     formatter={(v: any) => [`${Number(v).toFixed(2)}x`, t('פקטור רווח','Profit Factor')]}
                     labelFormatter={(l: any) => `${t('עסקה','Trade')} #${l}`}
                   />
-                  <Area type="monotone" dataKey="pf" stroke={T.accent.green} fill="url(#pfG)" strokeWidth={2.2} />
+                  <Area type="monotone" dataKey="pf" stroke={infoColor(T)} fill="url(#pfG)" strokeWidth={2.2} />
                 </AreaChart>
               </ResponsiveContainer>
             )}
@@ -1078,10 +1078,10 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
         <span style={{
           fontSize: 9.5, padding: '3px 10px', borderRadius: 10,
-          background: showMax ? `${T.accent.cyan}18` : showPro ? `${T.accent.purple}18` : `${T.bg.tertiary}`,
-          color: showMax ? T.accent.cyan : showPro ? T.accent.purple : T.text.muted,
+          background: showMax || showPro ? `${infoColor(T)}18` : `${T.bg.tertiary}`,
+          color: showMax || showPro ? infoColor(T) : T.text.muted,
           fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.12em', fontWeight: 700,
-          border: `1px solid ${showMax ? T.accent.cyan : showPro ? T.accent.purple : T.border.subtle}33`,
+          border: `1px solid ${showMax || showPro ? infoColor(T) : T.border.subtle}33`,
         }}>
           {t('רמה','Tier')}: {showMax ? t('ULTIMATE','ULTIMATE') : showPro ? t('ADVANCED','ADVANCED') : t('STANDARD','STANDARD')}
         </span>
