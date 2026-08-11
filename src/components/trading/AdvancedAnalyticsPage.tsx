@@ -296,8 +296,9 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
     const longs = trades.filter(t => t.direction === 'Long');
     const shorts = trades.filter(t => t.direction === 'Short');
     return [
-      { name: t('לונג','Long'), n: longs.length, wr: longs.length ? (longs.filter(t => t.winLoss === 'Win').length / longs.length) * 100 : 0, color: T.accent.green },
-      { name: t('שורט','Short'), n: shorts.length, wr: shorts.length ? (shorts.filter(t => t.winLoss === 'Win').length / shorts.length) * 100 : 0, color: T.accent.red },
+      // Direction is identity, not outcome — it takes the theme's neutral ladder.
+      { name: t('לונג','Long'), n: longs.length, wr: longs.length ? (longs.filter(t => t.winLoss === 'Win').length / longs.length) * 100 : 0, color: neutralRamp(T, 2)[0] },
+      { name: t('שורט','Short'), n: shorts.length, wr: shorts.length ? (shorts.filter(t => t.winLoss === 'Win').length / shorts.length) * 100 : 0, color: neutralRamp(T, 2)[1] },
     ];
   }, [trades, T, t]);
 
