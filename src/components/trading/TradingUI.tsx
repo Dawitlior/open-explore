@@ -115,9 +115,13 @@ interface ScoreGaugeProps {
   T: TradingTheme;
   description?: string;
   onInfoClick?: () => void;
+  /** Non-color redundancy for the state (▲ / ▬ / ▼). */
+  glyph?: string;
+  /** Only alerting gauges glow; healthy ones stay matte. */
+  alert?: boolean;
 }
 
-export const ScoreGauge = ({ score, label, color, T, description, onInfoClick }: ScoreGaugeProps) => {
+export const ScoreGauge = ({ score, label, color, T, description, onInfoClick, glyph, alert }: ScoreGaugeProps) => {
   const c = 2 * Math.PI * 40;
   const off = c - (score / 100) * c;
   return (
@@ -143,7 +147,7 @@ export const ScoreGauge = ({ score, label, color, T, description, onInfoClick }:
           cx="48" cy="48" r="40" fill="none" stroke={color} strokeWidth="6"
           strokeDasharray={c} strokeDashoffset={off} strokeLinecap="round"
           transform="rotate(-90 48 48)"
-          style={{ transition: 'stroke-dashoffset 1.4s cubic-bezier(0.16, 1, 0.3, 1)', filter: `drop-shadow(0 0 6px ${color})` }}
+          style={{ transition: 'stroke-dashoffset 1.4s cubic-bezier(0.16, 1, 0.3, 1)', filter: alert ? `drop-shadow(0 0 6px ${color})` : 'none' }}
         />
         <text
           x="48" y="48" textAnchor="middle" dominantBaseline="central"
@@ -153,6 +157,15 @@ export const ScoreGauge = ({ score, label, color, T, description, onInfoClick }:
         >
           {Math.round(score)}
         </text>
+        {glyph && (
+          <text
+            x="48" y="68" textAnchor="middle" dominantBaseline="central"
+            fill={color} fontSize="10" fontWeight="700"
+            fontFamily="'JetBrains Mono', monospace"
+          >
+            {glyph}
+          </text>
+        )}
       </svg>
     </GlassCard>
   );
