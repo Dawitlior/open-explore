@@ -2,6 +2,8 @@
 
 A precision pass on legibility, spatial rhythm, and card edge consistency in the light ("platinum") scheme. Nothing about the existing structure, layout, or the recently completed color-discipline language changes. The strategy is token-first: fix the source, not 300 call sites.
 
+**Desktop only.** Mobile is already correct and stays byte-identical in behavior. Every spacing, padding, gap, border-weight and shadow change is authored inside a `@media (min-width: 768px)` block (or an existing desktop container-query tier). The only changes that reach mobile are the text-contrast token retunes — those are an accessibility fix, they make mobile text darker/more legible and change no layout. If you'd rather mobile keep the exact current text colors too, say so and the token retune gets scoped behind the desktop media query as CSS variable overrides instead.
+
 ## Measured state of the platform
 
 Verified by scanning the codebase:
@@ -69,4 +71,4 @@ Each wave ends with a rendered light-mode check of those routes, not just a type
 
 ## Explicitly out of scope
 
-No changes to dark themes, no repositioning or resizing of charts, no changes to which metrics are colored, no component restructuring.
+No changes to dark themes, no repositioning or resizing of charts, no changes to which metrics are colored, no component restructuring, and no layout/spacing changes below the 768px breakpoint.
