@@ -245,15 +245,16 @@ const platinum: TradingTheme = {
     red: '#E11D48', redGlow: 'rgba(225,29,72,0.12)',
     green: '#0F9D8C', greenGlow: 'rgba(15,157,140,0.12)',
   },
-  text: { primary: '#111827', secondary: '#475569', muted: '#64748B', dim: '#94A3B8' },
-  border: { subtle: '#EEF1F7', medium: '#E9EDF5', active: 'rgba(99,102,241,0.45)' },
+  text: { primary: '#111827', secondary: '#475569', muted: '#566171', dim: '#64748B' },
+  border: { subtle: '#E4E9F2', medium: '#D8E0EC', active: 'rgba(99,102,241,0.45)' },
   radius: { sm: 6, md: 10, lg: 14, xl: 18 },
   shadow: {
-    card: '0 1px 2px rgba(15,23,42,0.04), 0 8px 24px rgba(15,23,42,0.06)',
-    elevated: '0 4px 12px rgba(15,23,42,0.08), 0 24px 48px rgba(15,23,42,0.10)',
+    card: '0 1px 2px rgba(15,23,42,0.05), 0 6px 18px rgba(15,23,42,0.05)',
+    elevated: '0 2px 6px rgba(15,23,42,0.07), 0 18px 40px rgba(15,23,42,0.09)',
     // No neon on white — "glow" degrades to a soft ambient lift
     glow: () => '0 2px 8px rgba(15,23,42,0.06), 0 12px 32px rgba(99,102,241,0.10)',
   },
+
   surface: {
     base: '#F7F8FC',
     raised: '#FFFFFF',
