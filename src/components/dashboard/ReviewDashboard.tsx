@@ -4,6 +4,7 @@ import { lazy, Suspense, useMemo, useState, type CSSProperties } from 'react';
 import type { TradingTheme } from '@/lib/trading-theme';
 import type { Trade } from '@/data/trades';
 import { MetricCard, ScoreGauge } from '@/components/trading/TradingUI';
+import { SCORE_THRESHOLDS, gaugeColor, scoreGlyph, isAlert, scoreColor, severityColor, moneyColor } from '@/lib/semantic-color';
 import { AdaptiveExpectancyCard, AdaptiveQuickStats } from '@/components/trading/AdaptiveKpiCards';
 import { ChartWrapper, EXPLANATIONS, type ChartExplanation } from '@/components/trading/ChartWrapper';
 import { FeatureHint } from '@/components/trading/FeatureHint';
@@ -165,8 +166,8 @@ export const ReviewDashboard = ({
           {isRTL ? 'בריאות מסחר' : 'TRADING HEALTH'}
         </div>
         <div className="dash-kpi-grid">
-          <MetricCard T={T} label={isMoney ? t.netPnl : (isRTL ? 'תוחלת נטו (R)' : 'Net R')} value={isMoney ? stats.totalPnl : `${stats.totalR >= 0 ? '+' : ''}${(stats.totalR ?? 0).toFixed(2)}R`} color={(isMoney ? stats.totalPnl : (stats.totalR ?? 0)) >= 0 ? T.accent.cyan : T.accent.red} onInfoClick={() => handleExplainClick(t.netPnl, EXPLANATIONS.netPnl)} description={isRTL ? 'סך רווח והפסד מצטבר' : 'Cumulative net profit/loss'} />
-          <MetricCard T={T} label={t.winRate} value={stats.winRate} suffix="%" color={T.accent.green} onInfoClick={() => handleExplainClick(t.winRate, EXPLANATIONS.winRate)} description={isRTL ? 'אחוז עסקאות מנצחות' : 'Percent of winning trades'} />
+          <MetricCard T={T} label={isMoney ? t.netPnl : (isRTL ? 'תוחלת נטו (R)' : 'Net R')} value={isMoney ? stats.totalPnl : `${stats.totalR >= 0 ? '+' : ''}${(stats.totalR ?? 0).toFixed(2)}R`} color={moneyColor(T, isMoney ? stats.totalPnl : (stats.totalR ?? 0))} onInfoClick={() => handleExplainClick(t.netPnl, EXPLANATIONS.netPnl)} description={isRTL ? 'סך רווח והפסד מצטבר' : 'Cumulative net profit/loss'} />
+          <MetricCard T={T} label={t.winRate} value={stats.winRate} suffix="%" color={scoreColor(T, stats.winRate, SCORE_THRESHOLDS.winRate)} onInfoClick={() => handleExplainClick(t.winRate, EXPLANATIONS.winRate)} description={isRTL ? 'אחוז עסקאות מנצחות' : 'Percent of winning trades'} />
           <AdaptiveExpectancyCard
             T={T}
             trades={trades}
@@ -182,7 +183,7 @@ export const ReviewDashboard = ({
               tooltipMoney: isRTL ? 'רווח/הפסד ממוצע לעסקה' : 'Average profit/loss per trade',
             }}
           />
-          <MetricCard T={T} label={t.maxDrawdown} value={`${stats.maxDrawdown.toFixed(1)}%`} color={T.accent.orange} onInfoClick={() => handleExplainClick(t.maxDrawdown, EXPLANATIONS.maxDrawdownMetric)} description={isRTL ? 'ירידה מקסימלית מהשיא' : 'Maximum drop from peak'} />
+          <MetricCard T={T} label={t.maxDrawdown} value={`${stats.maxDrawdown.toFixed(1)}%`} color={severityColor(T, stats.maxDrawdown, 10, 20)} onInfoClick={() => handleExplainClick(t.maxDrawdown, EXPLANATIONS.maxDrawdownMetric)} description={isRTL ? 'ירידה מקסימלית מהשיא' : 'Maximum drop from peak'} />
 
         </div>
       </div>
@@ -195,16 +196,28 @@ export const ReviewDashboard = ({
           {isRTL ? 'בריאות מערכת' : 'SYSTEM HEALTH'}
         </div>
         <div className="dash-score-grid">
-          <ScoreGauge T={T} score={stats.orcaScore} label={t.orcaScore} color={T.accent.cyan}
+          <ScoreGauge T={T} score={stats.orcaScore} label={t.orcaScore}
+            color={gaugeColor(T, stats.orcaScore, SCORE_THRESHOLDS.orcaScore)}
+            glyph={scoreGlyph(stats.orcaScore, SCORE_THRESHOLDS.orcaScore)}
+            alert={isAlert(stats.orcaScore, SCORE_THRESHOLDS.orcaScore)}
             description={isRTL ? 'ציון משולב של משמעת, סיכון ועקביות' : 'Combined discipline, risk & consistency score'}
             onInfoClick={() => handleExplainClick(t.orcaScore, EXPLANATIONS.orcaScore)} />
-          <ScoreGauge T={T} score={stats.regimeFit} label={t.regimeFit} color={T.accent.purple}
+          <ScoreGauge T={T} score={stats.regimeFit} label={t.regimeFit}
+            color={gaugeColor(T, stats.regimeFit, SCORE_THRESHOLDS.regimeFit)}
+            glyph={scoreGlyph(stats.regimeFit, SCORE_THRESHOLDS.regimeFit)}
+            alert={isAlert(stats.regimeFit, SCORE_THRESHOLDS.regimeFit)}
             description={isRTL ? 'מודד התאמת האסטרטגיה לתנאי השוק' : 'Strategy fit to current market conditions'}
             onInfoClick={() => handleExplainClick(t.regimeFit, EXPLANATIONS.regimeFit)} />
-          <ScoreGauge T={T} score={riskData.riskConsistencyScore} label={t.riskConsistency} color={T.accent.orange}
+          <ScoreGauge T={T} score={riskData.riskConsistencyScore} label={t.riskConsistency}
+            color={gaugeColor(T, riskData.riskConsistencyScore, SCORE_THRESHOLDS.riskConsistency)}
+            glyph={scoreGlyph(riskData.riskConsistencyScore, SCORE_THRESHOLDS.riskConsistency)}
+            alert={isAlert(riskData.riskConsistencyScore, SCORE_THRESHOLDS.riskConsistency)}
             description={isRTL ? 'מודד עקביות אחוז הסיכון בין עסקאות' : 'Measures consistent risk % across trades'}
             onInfoClick={() => handleExplainClick(t.riskConsistency, EXPLANATIONS.riskConsistencyMetric)} />
-          <ScoreGauge T={T} score={stats.rulesFollowed} label={t.disciplineScore} color={T.accent.green}
+          <ScoreGauge T={T} score={stats.rulesFollowed} label={t.disciplineScore}
+            color={gaugeColor(T, stats.rulesFollowed, SCORE_THRESHOLDS.discipline)}
+            glyph={scoreGlyph(stats.rulesFollowed, SCORE_THRESHOLDS.discipline)}
+            alert={isAlert(stats.rulesFollowed, SCORE_THRESHOLDS.discipline)}
             description={isRTL ? 'אחוז העסקאות שבוצעו לפי הכללים' : 'Percentage of trades following your rules'}
             onInfoClick={() => handleExplainClick(t.disciplineScore, EXPLANATIONS.disciplineMetric)} />
         </div>

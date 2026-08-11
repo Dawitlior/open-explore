@@ -98,3 +98,18 @@ export function infoColor(T: TradingTheme): string {
 
 /** Matte (no glow) shadow for historical/analytical surfaces. */
 export const MATTE_SHADOW = 'none';
+
+/**
+ * Ring color for a health gauge: calm theme hue while healthy, amber/red on
+ * breach. Pair with `scoreGlyph` so the state is readable without color.
+ */
+export function gaugeColor(T: TradingTheme, score: number, th: ScoreThresholds): string {
+  const c = scoreColor(T, score, th);
+  return c === T.text.primary ? infoColor(T) : c;
+}
+
+/** True when the score is in a caution/breach state (drives glow + weight). */
+export function isAlert(score: number, th: ScoreThresholds): boolean {
+  const v = Number.isFinite(score) ? score : 0;
+  return v < th.warn;
+}
