@@ -174,7 +174,17 @@ export function DateTimePicker({
             onSelect={setDatePart}
             disabled={minDate ? { before: new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate()) } : undefined}
             initialFocus
-            className={cn('p-3 pointer-events-auto', isMobile && 'w-full [&_.rdp-months]:w-full [&_table]:w-full')}
+            className={cn('p-3 pointer-events-auto', isMobile && 'w-full')}
+            classNames={isMobile ? {
+              months: 'flex flex-col w-full',
+              month: 'space-y-3 w-full',
+              table: 'w-full border-collapse',
+              head_row: 'flex w-full',
+              head_cell: 'text-muted-foreground flex-1 font-normal text-[0.72rem]',
+              row: 'flex w-full mt-1.5',
+              cell: 'flex-1 h-10 text-center text-sm p-0 relative focus-within:relative focus-within:z-20',
+              day: 'h-10 w-full p-0 font-normal rounded-md aria-selected:opacity-100 inline-flex items-center justify-center hover:bg-accent',
+            } : undefined}
           />
 
           <div style={{
