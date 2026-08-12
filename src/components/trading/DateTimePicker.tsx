@@ -137,7 +137,10 @@ export function DateTimePicker({
 
       <PopoverContent
         align="start"
-        className="w-auto p-0 pointer-events-auto"
+        sideOffset={8}
+        collisionPadding={12}
+        avoidCollisions
+        className="p-0 pointer-events-auto"
         style={{
           background: T.bg.secondary,
           border: `1px solid ${T.border.medium}`,
@@ -145,6 +148,10 @@ export function DateTimePicker({
           color: T.text.primary,
           boxShadow: '0 24px 60px -20px rgba(0,0,0,0.55)',
           zIndex: 9999,
+          width: isMobile ? 'calc(100vw - 24px)' : 'auto',
+          maxWidth: 'calc(100vw - 24px)',
+          maxHeight: 'calc(100vh - 120px)',
+          overflowY: 'auto',
         }}
       >
         <div style={{ padding: 10, borderBottom: `1px solid ${T.border.subtle}`, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -159,7 +166,7 @@ export function DateTimePicker({
           )}
         </div>
 
-        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row' }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: 'stretch' }}>
           <Calendar
             mode="single"
             selected={date ?? undefined}
@@ -167,25 +174,42 @@ export function DateTimePicker({
             onSelect={setDatePart}
             disabled={minDate ? { before: new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate()) } : undefined}
             initialFocus
-            className={cn('p-3 pointer-events-auto')}
+            className={cn('p-3 pointer-events-auto', isMobile && 'w-full [&_.rdp-months]:w-full [&_table]:w-full')}
           />
 
           <div style={{
             borderInlineStart: isMobile ? 'none' : `1px solid ${T.border.subtle}`,
             borderTop: isMobile ? `1px solid ${T.border.subtle}` : 'none',
             padding: 10, display: 'flex', gap: 8,
+            flexDirection: isMobile ? 'column' : 'row',
           }}>
             {[{ label: isRTL ? 'שעה' : 'HH', items: hours, sel: date?.getHours() ?? -1, on: (v: number) => setTimePart(v, date?.getMinutes() ?? 0) },
               { label: isRTL ? 'דקה' : 'mm', items: minutes, sel: date ? Math.floor(date.getMinutes() / 5) * 5 : -1, on: (v: number) => setTimePart(date?.getHours() ?? new Date().getHours(), v) },
             ].map(col => (
-              <div key={col.label} style={{ display: 'flex', flexDirection: 'column', minWidth: 54 }}>
-                <span style={{ fontSize: 9, letterSpacing: 0.6, fontWeight: 700, color: T.text.muted, textAlign: 'center', marginBottom: 6, textTransform: 'uppercase' }}>{col.label}</span>
-                <div style={{ maxHeight: 210, overflowY: 'auto', display: 'grid', gap: 2, paddingInlineEnd: 2 }}>
+              <div key={col.label} style={{
+                display: 'flex',
+                flexDirection: isMobile ? 'row' : 'column',
+                alignItems: isMobile ? 'center' : 'stretch',
+                gap: isMobile ? 8 : 0,
+                minWidth: isMobile ? 0 : 54,
+              }}>
+                <span style={{ fontSize: 9, letterSpacing: 0.6, fontWeight: 700, color: T.text.muted, textAlign: 'center', marginBottom: isMobile ? 0 : 6, textTransform: 'uppercase', flexShrink: 0, width: isMobile ? 24 : 'auto' }}>{col.label}</span>
+                <div style={{
+                  maxHeight: isMobile ? undefined : 210,
+                  overflowY: isMobile ? 'hidden' : 'auto',
+                  overflowX: isMobile ? 'auto' : 'hidden',
+                  display: isMobile ? 'flex' : 'grid',
+                  gap: isMobile ? 6 : 2,
+                  paddingInlineEnd: 2,
+                  paddingBottom: isMobile ? 4 : 0,
+                  flex: isMobile ? 1 : undefined,
+                  WebkitOverflowScrolling: 'touch',
+                }}>
                   {col.items.map(v => (
                     <div key={v} role="button" tabIndex={0}
                       onClick={() => col.on(v)}
                       onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); col.on(v); } }}
-                      style={numCell(col.sel === v)}>{pad(v)}</div>
+                      style={{ ...numCell(col.sel === v), ...(isMobile ? { flex: '0 0 auto', minWidth: 42, padding: '8px 0' } : null) }}>{pad(v)}</div>
                   ))}
                 </div>
               </div>
