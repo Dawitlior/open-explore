@@ -103,38 +103,164 @@ export function DateTimePicker({
   const hours = Array.from({ length: 24 }, (_, i) => i);
   const minutes = Array.from({ length: 12 }, (_, i) => i * 5);
 
+  const panel = (
+    <>
+      <div style={{ padding: 10, borderBottom: `1px solid ${T.border.subtle}`, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        <button type="button" style={{ ...quickBtn, borderColor: accent, color: accent }}
+          onClick={() => commit(new Date())}>{isRTL ? 'עכשיו' : 'Now'}</button>
+        <button type="button" style={quickBtn} onClick={() => offset(-5)}>-5m</button>
+        <button type="button" style={quickBtn} onClick={() => offset(-15)}>-15m</button>
+        <button type="button" style={quickBtn} onClick={() => offset(-60)}>-1h</button>
+        {clearable && (
+          <button type="button" style={{ ...quickBtn, marginInlineStart: 'auto' }}
+            onClick={() => { onChange(''); setOpen(false); }}>{isRTL ? 'נקה' : 'Clear'}</button>
+        )}
+        {isMobile && (
+          <button type="button" style={{ ...quickBtn, marginInlineStart: clearable ? 0 : 'auto', borderColor: accent, color: accent }}
+            onClick={() => setOpen(false)}>{isRTL ? 'סיום' : 'Done'}</button>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: 'stretch' }}>
+        <Calendar
+          mode="single"
+          selected={date ?? undefined}
+          defaultMonth={date ?? undefined}
+          onSelect={setDatePart}
+          disabled={minDate ? { before: new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate()) } : undefined}
+          initialFocus={!isMobile}
+          className={cn('pointer-events-auto', isMobile ? 'p-2 w-full' : 'p-3')}
+          classNames={isMobile ? {
+            months: 'flex flex-col w-full',
+            month: 'space-y-2 w-full',
+            caption: 'flex justify-center pt-1 relative items-center',
+            caption_label: 'text-sm font-medium',
+            nav_button: 'h-7 w-7 bg-transparent p-0 opacity-70 hover:opacity-100 inline-flex items-center justify-center rounded-md border',
+            table: 'w-full border-collapse table-fixed',
+            head_row: 'flex w-full',
+            head_cell: 'text-muted-foreground flex-1 min-w-0 font-normal text-[0.65rem]',
+            row: 'flex w-full mt-1',
+            cell: 'flex-1 min-w-0 h-8 text-center text-xs p-0 relative focus-within:relative focus-within:z-20',
+            day: 'h-8 w-full p-0 text-xs font-normal rounded-md aria-selected:opacity-100 inline-flex items-center justify-center hover:bg-accent',
+          } : undefined}
+        />
+
+        <div style={{
+          borderInlineStart: isMobile ? 'none' : `1px solid ${T.border.subtle}`,
+          borderTop: isMobile ? `1px solid ${T.border.subtle}` : 'none',
+          padding: 10, display: 'flex', gap: 8,
+          flexDirection: isMobile ? 'column' : 'row',
+          minWidth: 0,
+        }}>
+          {[{ label: isRTL ? 'שעה' : 'HH', items: hours, sel: date?.getHours() ?? -1, on: (v: number) => setTimePart(v, date?.getMinutes() ?? 0) },
+            { label: isRTL ? 'דקה' : 'mm', items: minutes, sel: date ? Math.floor(date.getMinutes() / 5) * 5 : -1, on: (v: number) => setTimePart(date?.getHours() ?? new Date().getHours(), v) },
+          ].map(col => (
+            <div key={col.label} style={{
+              display: 'flex',
+              flexDirection: isMobile ? 'row' : 'column',
+              alignItems: isMobile ? 'center' : 'stretch',
+              gap: isMobile ? 8 : 0,
+              minWidth: 0,
+              width: isMobile ? '100%' : 54,
+            }}>
+              <span style={{ fontSize: 9, letterSpacing: 0.6, fontWeight: 700, color: T.text.muted, textAlign: 'center', marginBottom: isMobile ? 0 : 6, textTransform: 'uppercase', flexShrink: 0, width: isMobile ? 24 : 'auto' }}>{col.label}</span>
+              <div style={{
+                maxHeight: isMobile ? undefined : 210,
+                overflowY: isMobile ? 'hidden' : 'auto',
+                overflowX: isMobile ? 'auto' : 'hidden',
+                display: isMobile ? 'flex' : 'grid',
+                gap: isMobile ? 6 : 2,
+                paddingInlineEnd: 2,
+                paddingBottom: isMobile ? 4 : 0,
+                flex: isMobile ? 1 : undefined,
+                minWidth: 0,
+                WebkitOverflowScrolling: 'touch',
+              }}>
+                {col.items.map(v => (
+                  <div key={v} role="button" tabIndex={0}
+                    onClick={() => col.on(v)}
+                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); col.on(v); } }}
+                    style={{ ...numCell(col.sel === v), ...(isMobile ? { flex: '0 0 auto', minWidth: 38, padding: '8px 0' } : null) }}>{pad(v)}</div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+
+  const trigger = (
+    <button
+      type="button"
+      aria-label={ariaLabel}
+      aria-invalid={invalid || undefined}
+      onClick={isMobile ? () => setOpen(true) : undefined}
+      style={{
+        width: '100%',
+        padding: isMobile ? '13px 14px' : '12px 14px',
+        borderRadius: 12,
+        border: `1.5px solid ${invalid ? T.accent.red : (open ? accent : T.border.medium)}`,
+        background: T.bg.tertiary,
+        color: date ? T.text.primary : T.text.muted,
+        fontSize: isMobile ? 14 : 14,
+        fontWeight: 600,
+        fontFamily: "'JetBrains Mono', monospace",
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 10,
+        cursor: 'pointer',
+        textAlign: isRTL ? 'right' : 'left',
+        boxShadow: open ? `0 0 0 3px ${accent}22` : 'none',
+        transition: 'all 0.18s',
+      }}
+    >
+      <span>{label}</span>
+      <span style={{ opacity: 0.7, fontSize: 15 }}>🗓</span>
+    </button>
+  );
+
+  /* Mobile: a real bottom sheet — no popover positioning games, never
+     overflows the viewport. */
+  if (isMobile) {
+    return (
+      <>
+        {trigger}
+        {open && createPortal(
+          <div
+            onClick={() => setOpen(false)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 100000,
+              background: 'rgba(2,6,15,0.6)', backdropFilter: 'blur(3px)',
+              display: 'flex', alignItems: 'flex-end',
+            }}
+          >
+            <div
+              onClick={e => e.stopPropagation()}
+              style={{
+                width: '100%',
+                background: T.bg.secondary,
+                borderTop: `1px solid ${T.border.medium}`,
+                borderTopLeftRadius: 18, borderTopRightRadius: 18,
+                color: T.text.primary,
+                maxHeight: '85vh', overflowY: 'auto',
+                paddingBottom: 'env(safe-area-inset-bottom)',
+                boxShadow: '0 -18px 50px rgba(0,0,0,0.5)',
+              }}
+            >
+              {panel}
+            </div>
+          </div>,
+          document.body,
+        )}
+      </>
+    );
+  }
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          aria-label={ariaLabel}
-          aria-invalid={invalid || undefined}
-          style={{
-            width: '100%',
-            padding: isMobile ? '14px 14px' : '12px 14px',
-            borderRadius: 12,
-            border: `1.5px solid ${invalid ? T.accent.red : (open ? accent : T.border.medium)}`,
-            background: T.bg.tertiary,
-            color: date ? T.text.primary : T.text.muted,
-            fontSize: isMobile ? 15 : 14,
-            fontWeight: 600,
-            fontFamily: "'JetBrains Mono', monospace",
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 10,
-            cursor: 'pointer',
-            textAlign: isRTL ? 'right' : 'left',
-            boxShadow: open ? `0 0 0 3px ${accent}22` : 'none',
-            transition: 'all 0.18s',
-          }}
-        >
-          <span>{label}</span>
-          <span style={{ opacity: 0.7, fontSize: 15 }}>🗓</span>
-        </button>
-      </PopoverTrigger>
-
+      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
       <PopoverContent
         align="start"
         sideOffset={8}
@@ -148,87 +274,17 @@ export function DateTimePicker({
           color: T.text.primary,
           boxShadow: '0 24px 60px -20px rgba(0,0,0,0.55)',
           zIndex: 9999,
-          width: isMobile ? 'calc(100vw - 24px)' : 'auto',
+          width: 'auto',
           maxWidth: 'calc(100vw - 24px)',
           maxHeight: 'calc(100vh - 120px)',
           overflowY: 'auto',
         }}
       >
-        <div style={{ padding: 10, borderBottom: `1px solid ${T.border.subtle}`, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          <button type="button" style={{ ...quickBtn, borderColor: accent, color: accent }}
-            onClick={() => commit(new Date())}>{isRTL ? 'עכשיו' : 'Now'}</button>
-          <button type="button" style={quickBtn} onClick={() => offset(-5)}>-5m</button>
-          <button type="button" style={quickBtn} onClick={() => offset(-15)}>-15m</button>
-          <button type="button" style={quickBtn} onClick={() => offset(-60)}>-1h</button>
-          {clearable && (
-            <button type="button" style={{ ...quickBtn, marginInlineStart: 'auto' }}
-              onClick={() => { onChange(''); setOpen(false); }}>{isRTL ? 'נקה' : 'Clear'}</button>
-          )}
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: 'stretch' }}>
-          <Calendar
-            mode="single"
-            selected={date ?? undefined}
-            defaultMonth={date ?? undefined}
-            onSelect={setDatePart}
-            disabled={minDate ? { before: new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate()) } : undefined}
-            initialFocus
-            className={cn('p-3 pointer-events-auto', isMobile && 'w-full')}
-            classNames={isMobile ? {
-              months: 'flex flex-col w-full',
-              month: 'space-y-3 w-full',
-              table: 'w-full border-collapse',
-              head_row: 'flex w-full',
-              head_cell: 'text-muted-foreground flex-1 font-normal text-[0.72rem]',
-              row: 'flex w-full mt-1.5',
-              cell: 'flex-1 h-10 text-center text-sm p-0 relative focus-within:relative focus-within:z-20',
-              day: 'h-10 w-full p-0 font-normal rounded-md aria-selected:opacity-100 inline-flex items-center justify-center hover:bg-accent',
-            } : undefined}
-          />
-
-          <div style={{
-            borderInlineStart: isMobile ? 'none' : `1px solid ${T.border.subtle}`,
-            borderTop: isMobile ? `1px solid ${T.border.subtle}` : 'none',
-            padding: 10, display: 'flex', gap: 8,
-            flexDirection: isMobile ? 'column' : 'row',
-          }}>
-            {[{ label: isRTL ? 'שעה' : 'HH', items: hours, sel: date?.getHours() ?? -1, on: (v: number) => setTimePart(v, date?.getMinutes() ?? 0) },
-              { label: isRTL ? 'דקה' : 'mm', items: minutes, sel: date ? Math.floor(date.getMinutes() / 5) * 5 : -1, on: (v: number) => setTimePart(date?.getHours() ?? new Date().getHours(), v) },
-            ].map(col => (
-              <div key={col.label} style={{
-                display: 'flex',
-                flexDirection: isMobile ? 'row' : 'column',
-                alignItems: isMobile ? 'center' : 'stretch',
-                gap: isMobile ? 8 : 0,
-                minWidth: isMobile ? 0 : 54,
-              }}>
-                <span style={{ fontSize: 9, letterSpacing: 0.6, fontWeight: 700, color: T.text.muted, textAlign: 'center', marginBottom: isMobile ? 0 : 6, textTransform: 'uppercase', flexShrink: 0, width: isMobile ? 24 : 'auto' }}>{col.label}</span>
-                <div style={{
-                  maxHeight: isMobile ? undefined : 210,
-                  overflowY: isMobile ? 'hidden' : 'auto',
-                  overflowX: isMobile ? 'auto' : 'hidden',
-                  display: isMobile ? 'flex' : 'grid',
-                  gap: isMobile ? 6 : 2,
-                  paddingInlineEnd: 2,
-                  paddingBottom: isMobile ? 4 : 0,
-                  flex: isMobile ? 1 : undefined,
-                  WebkitOverflowScrolling: 'touch',
-                }}>
-                  {col.items.map(v => (
-                    <div key={v} role="button" tabIndex={0}
-                      onClick={() => col.on(v)}
-                      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); col.on(v); } }}
-                      style={{ ...numCell(col.sel === v), ...(isMobile ? { flex: '0 0 auto', minWidth: 42, padding: '8px 0' } : null) }}>{pad(v)}</div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        {panel}
       </PopoverContent>
     </Popover>
   );
 }
+
 
 export default DateTimePicker;
