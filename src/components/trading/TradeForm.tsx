@@ -600,16 +600,24 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
 
               <div style={sectionCard}>
                 <label style={bigLabel}>{isRTL ? '3. מתי ביצעת את העסקה?' : '3. When did you make this trade?'}</label>
-                <input type="datetime-local" value={form.date} onChange={e => handleDateChange(e.target.value)} style={bigInput} />
+                <DateTimePicker
+                  T={T} isRTL={isRTL} isMobile={isMobile}
+                  value={form.date}
+                  onChange={handleDateChange}
+                  ariaLabel={isRTL ? 'תאריך ושעת כניסה' : 'Entry date & time'}
+                />
                 <label style={{ ...bigLabel, marginTop: 14 }}>{isRTL ? 'זמן יציאה (אופציונלי)' : 'Exit date & time (optional)'}</label>
-                <input
-                  type="datetime-local"
+                <DateTimePicker
+                  T={T} isRTL={isRTL} isMobile={isMobile}
                   value={form.exitDate}
                   min={form.date || undefined}
-                  onChange={e => { setForm(f => ({ ...f, exitDate: e.target.value })); setErrors([]); }}
-                  aria-invalid={Boolean(form.date && form.exitDate && new Date(form.exitDate).getTime() < new Date(form.date).getTime())}
-                  style={{ ...bigInput, borderColor: form.date && form.exitDate && new Date(form.exitDate).getTime() < new Date(form.date).getTime() ? T.accent.red : T.border.medium }}
+                  clearable
+                  placeholder={isRTL ? 'ללא זמן יציאה' : 'No exit time'}
+                  ariaLabel={isRTL ? 'תאריך ושעת יציאה' : 'Exit date & time'}
+                  invalid={Boolean(form.date && form.exitDate && new Date(form.exitDate).getTime() < new Date(form.date).getTime())}
+                  onChange={v => { setForm(f => ({ ...f, exitDate: v })); setErrors([]); }}
                 />
+
                 {form.date && form.exitDate && new Date(form.exitDate).getTime() < new Date(form.date).getTime() && (
                   <div role="alert" style={{ ...helpText, color: T.accent.red, fontWeight: 700 }}>
                     {isRTL ? 'זמן היציאה חייב להיות אחרי זמן הכניסה.' : 'Exit time must be after the entry time.'}
