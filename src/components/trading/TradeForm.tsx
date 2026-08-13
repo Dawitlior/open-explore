@@ -277,14 +277,20 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
     const autoPnl = isFutures
       ? contracts * actualMove * dollarPerPoint
       : autoReturnR * risk;
-    // Manual override wins if the user typed a value.
+    // Manual overrides win if the user typed a value.
     const manualPnlNum = parseFloat(manualPnlRaw);
     const useManual = manualPnlEnabled && Number.isFinite(manualPnlNum);
-    const pnl = useManual ? manualPnlNum : autoPnl;
-    const returnR = useManual && risk > 0 ? manualPnlNum / risk : autoReturnR;
-    const winLoss: Trade['winLoss'] = pnl > 0.05 ? 'Win' : pnl < -0.05 ? 'Loss' : 'Break Even';
+    const manualRNum = parseFloat(manualRRaw);
+    const useManualR = manualREnabled && Number.isFinite(manualRNum);
+    // P&L: manual $ first, then manual R × risk, then auto.
+    const pnl = useManual ? manualPnlNum : (useManualR && risk > 0 ? manualRNum * risk : autoPnl);
+    // R: manual R first, then derived from manual $, then auto.
+    const returnR = useManualR ? manualRNum : (useManual && risk > 0 ? manualPnlNum / risk : autoReturnR);
+    const autoWinLoss: Trade['winLoss'] = pnl > 0.05 ? 'Win' : pnl < -0.05 ? 'Loss' : 'Break Even';
+    const winLoss: Trade['winLoss'] = manualOutcome === 'auto' ? autoWinLoss : manualOutcome;
     const deviation = returnR < 0 ? Math.max(0, Math.abs(returnR) - 1) : 0;
     return { returnR, pnl, winLoss, expectedLoss, deviation };
+
   };
 
   const validateStep = (s: number): string[] => {
