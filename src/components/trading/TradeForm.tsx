@@ -988,8 +988,13 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
               )}
 
               {!isOpenPosition && (
-                <GlassCard T={T} style={{ marginBottom: 18, padding: isMobile ? 16 : 20, border: `1.5px dashed ${manualPnlEnabled ? infoColor(T) : T.border.medium}` }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: manualPnlEnabled ? 12 : 0 }}>
+                <GlassCard T={T} style={{ marginBottom: 18, padding: isMobile ? 16 : 20, border: `1.5px dashed ${(manualPnlEnabled || manualREnabled || manualOutcome !== 'auto') ? infoColor(T) : T.border.medium}` }}>
+                  <div style={{ fontSize: 12, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12, fontWeight: 700 }}>
+                    {isRTL ? '✍️ תיקון התוצאה (אופציונלי)' : '✍️ Fix the result (optional)'}
+                  </div>
+
+                  {/* Manual P&L */}
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: manualPnlEnabled ? 10 : 0 }}>
                     <input
                       type="checkbox"
                       checked={manualPnlEnabled}
@@ -998,7 +1003,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                     />
                     <div>
                       <div style={{ fontSize: 13, fontWeight: 700, color: T.text.primary }}>
-                        {isRTL ? '✍️ מלא ידנית את הרווח/הפסד בפועל' : '✍️ Enter actual P&L manually'}
+                        {isRTL ? 'מלא ידנית את הרווח/הפסד בפועל ($)' : 'Enter actual profit / loss ($)'}
                       </div>
                       <div style={{ fontSize: 11, color: T.text.muted, marginTop: 2 }}>
                         {isRTL
@@ -1008,7 +1013,7 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                     </div>
                   </label>
                   {manualPnlEnabled && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
                       <span style={{ fontSize: 18, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>$</span>
                       <input
                         type="text"
@@ -1024,8 +1029,86 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
                       />
                     </div>
                   )}
+
+                  {/* Manual R */}
+                  <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${T.border.subtle}` }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: manualREnabled ? 10 : 0 }}>
+                      <input
+                        type="checkbox"
+                        checked={manualREnabled}
+                        onChange={e => setManualREnabled(e.target.checked)}
+                        style={{ accentColor: infoColor(T), width: 18, height: 18 }}
+                      />
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: T.text.primary }}>
+                          {isRTL ? 'קבע ידנית את ה-R של העסקה' : 'Set the R-Multiple manually'}
+                        </div>
+                        <div style={{ fontSize: 11, color: T.text.muted, marginTop: 2 }}>
+                          {isRTL
+                            ? 'שימושי כשהסטופ הוזז או לא היה מוגדר וה-R האוטומטי יוצא מוגזם.'
+                            : 'Useful when the stop moved or was missing and the auto R looks absurd.'}
+                        </div>
+                      </div>
+                    </label>
+                    {manualREnabled && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={manualRRaw}
+                          onChange={e => {
+                            const v = e.target.value.replace(',', '.');
+                            if (v !== '' && v !== '-' && !/^-?\d*\.?\d*$/.test(v)) return;
+                            setManualRRaw(v);
+                          }}
+                          placeholder={isRTL ? 'לדוגמה 1.5 או -1' : 'e.g. 1.5 or -1'}
+                          style={{ ...bigInput, flex: 1, fontSize: 18, fontWeight: 700, textAlign: isRTL ? 'right' : 'left' }}
+                        />
+                        <span style={{ fontSize: 18, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>R</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Manual outcome */}
+                  <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${T.border.subtle}` }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: T.text.primary, marginBottom: 8 }}>
+                      {isRTL ? 'תוצאת העסקה' : 'Trade outcome'}
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      {([
+                        { k: 'auto', l: isRTL ? 'אוטומטי' : 'Auto' },
+                        { k: 'Win', l: isRTL ? 'רווח' : 'Win' },
+                        { k: 'Loss', l: isRTL ? 'הפסד' : 'Loss' },
+                        { k: 'Break Even', l: 'Break-even' },
+                      ] as const).map(o => {
+                        const active = manualOutcome === o.k;
+                        return (
+                          <button
+                            key={o.k}
+                            type="button"
+                            onClick={() => setManualOutcome(o.k)}
+                            style={{
+                              flex: '1 1 auto', minWidth: 84,
+                              padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                              fontSize: 13, fontWeight: 700,
+                              background: active ? `${infoColor(T)}20` : T.bg.tertiary,
+                              border: `1.5px solid ${active ? infoColor(T) : T.border.medium}`,
+                              color: active ? T.text.primary : T.text.secondary,
+                            }}>
+                            {o.l}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div style={{ fontSize: 11, color: T.text.muted, marginTop: 8, lineHeight: 1.6 }}>
+                      {isRTL
+                        ? `אוטומטי = נקבע לפי הרווח/הפסד. היתרה תמיד מחושבת בתוך ORCA מהעסקאות שלך (כרגע $${currentBalance.toFixed(2)} → $${(currentBalance + pnl).toFixed(2)}), גם אם התיק שלך מנוהל במקום אחר.`
+                        : `Auto = decided by the P&L. Your balance is always calculated inside ORCA from your own trades (now $${currentBalance.toFixed(2)} → $${(currentBalance + pnl).toFixed(2)}), even if your portfolio lives on another platform.`}
+                    </div>
+                  </div>
                 </GlassCard>
               )}
+
 
 
               {!isOpenPosition && limitProjection?.newlyBreached && (
