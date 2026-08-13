@@ -116,6 +116,15 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
     trade?.pnl != null && trade.pnl !== 0 ? String(trade.pnl) : ''
   );
   const [manualPnlEnabled, setManualPnlEnabled] = useState<boolean>(!!manualPnlRaw);
+  // Manual R override — beginners often get an absurd auto-R when the stop was
+  // moved / unknown. They can simply type the R they actually got.
+  const [manualRRaw, setManualRRaw] = useState<string>(
+    trade?.manual_r_multiple != null ? String(trade.manual_r_multiple) : ''
+  );
+  const [manualREnabled, setManualREnabled] = useState<boolean>(trade?.manual_r_multiple != null);
+  // Manual outcome override — 'auto' derives Win/Loss/BE from P&L.
+  const [manualOutcome, setManualOutcome] = useState<'auto' | 'Win' | 'Loss' | 'Break Even'>('auto');
+
 
   // ── Futures tick economics ────────────────────────────────────────
   const tickInfo = assetCategory === 'Futures' ? TICK_VALUES[form.coin] : undefined;
