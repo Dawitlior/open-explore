@@ -399,14 +399,20 @@ export const TradeForm = ({ T, t, isRTL, trade, currentBalance, trades = [], onS
     }
     const manualPnlNum = parseFloat(manualPnlRaw);
     const usingManual = manualPnlEnabled && Number.isFinite(manualPnlNum);
+    const manualRNum = parseFloat(manualRRaw);
+    const usingManualR = manualREnabled && Number.isFinite(manualRNum);
+    const savedManualR = usingManualR
+      ? +manualRNum.toFixed(4)
+      : (usingManual && form.risk > 0 ? +(manualPnlNum / form.risk).toFixed(4) : null);
     onSave({
       date: form.date, exitDate: form.exitDate || null, day: form.day, coin: form.coin, direction: form.direction, orderType: form.orderType,
       entry: form.entry, stopLoss: form.stopLoss, exit: form.exit, returnR, winLoss, risk: form.risk,
       expectedLoss, pnl, deviation, positionSize: isFutures ? contracts : (form.positionSize || autoCalcPositionSize), leverage: form.leverage,
       riskPct: form.riskPct, rules: form.rules, comments: form.comments,
-      manual_r_multiple: usingManual && form.risk > 0 ? +(manualPnlNum / form.risk).toFixed(4) : null,
-      manualR: usingManual && form.risk > 0 ? +(manualPnlNum / form.risk).toFixed(4) : null,
+      manual_r_multiple: savedManualR,
+      manualR: savedManualR,
     } as Omit<Trade, 'id' | 'balance'>);
+
   };
 
   const { returnR, pnl, winLoss } = calc();
