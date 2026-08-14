@@ -63,23 +63,34 @@ export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps
   }, [phase, onEnter, ready]);
 
   if (phase === 'idle') {
-    const light = isLightScheme();
-    const ink = SURF.text1;
     const reduced = typeof window !== 'undefined'
       && (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
         || document.body?.getAttribute('data-reduce-motion') === '1');
     const anim = (name: string, delay: number, dur = 900) =>
       reduced ? undefined : `${name} ${dur}ms cubic-bezier(0.22,1,0.36,1) ${delay}ms both`;
-    const accent = JC.green;
 
-    // Deterministic candlestick field (no randomness → no hydration jitter).
-    const candles = Array.from({ length: 26 }, (_, i) => {
-      const seed = (i * 9301 + 49297) % 233280 / 233280;
-      const seed2 = ((i + 7) * 4021 + 1721) % 99991 / 99991;
-      const mid = 40 + seed * 40;
-      const body = 6 + seed2 * 16;
-      const wick = body + 6 + seed * 14;
-      return { x: 2 + i * 3.85, mid, body, wick, up: seed2 > 0.45 };
+    /* Claymorphism palette — charcoal clay canvas, mint + deep teal accents */
+    const CLAY_BG = '#22282b';
+    const CLAY_BG_2 = '#1a1f22';
+    const CLAY_SURF = '#2b3236';
+    const MINT = '#8fe3c2';
+    const MINT_DEEP = '#57bd9a';
+    const TEAL = '#175f63';
+    const CLAY_TEXT = '#f2f6f5';
+    const CLAY_MUTED = '#9aa8a6';
+    const clayUp = (r: number) =>
+      `${r}px ${r}px ${r * 2}px rgba(0,0,0,0.55), -${r}px -${r}px ${r * 2}px rgba(255,255,255,0.045), inset 2px 2px 4px rgba(255,255,255,0.05), inset -3px -3px 6px rgba(0,0,0,0.35)`;
+
+    // Deterministic sculpted candle field (no randomness → no hydration jitter).
+    const candles = Array.from({ length: 22 }, (_, i) => {
+      const s = (i * 9301 + 49297) % 233280 / 233280;
+      const s2 = ((i + 7) * 4021 + 1721) % 99991 / 99991;
+      return {
+        h: 34 + s * 120,
+        lift: Math.sin(i * 0.7) * 26 + s2 * 20,
+        up: s2 > 0.45,
+        d: i * 70,
+      };
     });
 
     return (
@@ -88,140 +99,147 @@ export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps
         style={{
           position: 'fixed', inset: 0, zIndex: 2147483647,
           width: '100vw', height: '100dvh',
-          background: gateBg(),
+          background: `radial-gradient(120% 90% at 50% 115%, #2f4d4a 0%, ${CLAY_BG} 45%, ${CLAY_BG_2} 100%)`,
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          fontFamily: "'JetBrains Mono', 'Inter', monospace",
+          fontFamily: "'Poppins', 'Inter', system-ui, sans-serif",
           overflow: 'hidden',
         }}
       >
         <style>{`
-          @keyframes orca-gate-rise { from { opacity:0; transform: translateY(18px); } to { opacity:1; transform:none; } }
-          @keyframes orca-gate-line { from { transform: scaleX(0); opacity:0; } to { transform: scaleX(1); opacity:1; } }
-          @keyframes orca-gate-drift { 0% { transform: translate3d(-1.5%, 0, 0); } 50% { transform: translate3d(1.5%, -1.2%, 0); } 100% { transform: translate3d(-1.5%, 0, 0); } }
-          @keyframes orca-gate-draw { from { stroke-dashoffset: 1200; } to { stroke-dashoffset: 0; } }
-          @keyframes orca-gate-float { 0%,100% { transform: translateY(0) rotate(-.4deg); } 50% { transform: translateY(-12px) rotate(.6deg); } }
-          @keyframes orca-gate-glow { 0%,100% { opacity:.35; transform: scale(.92); } 50% { opacity:.75; transform: scale(1.06); } }
-          @keyframes orca-gate-halo { 0%,100% { box-shadow:0 0 0 0 ${accent}00, 0 0 34px ${accent}30; } 50% { box-shadow:0 0 0 6px ${accent}14, 0 0 60px ${accent}55; } }
-          @keyframes orca-gate-scan { 0% { transform: translateY(-20%); opacity:0; } 30% { opacity:.5; } 100% { transform: translateY(120%); opacity:0; } }
+          @keyframes orca-clay-rise { from { opacity:0; transform: translateY(26px) scale(.97); } to { opacity:1; transform:none; } }
+          @keyframes orca-clay-float { 0%,100% { transform: translateY(0) rotate(-1.2deg); } 50% { transform: translateY(-16px) rotate(1.4deg); } }
+          @keyframes orca-clay-grow { from { transform: scaleY(0.15); opacity:0; } to { transform: scaleY(1); opacity:1; } }
+          @keyframes orca-clay-breathe { 0%,100% { opacity:.5; transform: scale(.95); } 50% { opacity:.85; transform: scale(1.05); } }
+          .orca-clay-btn { transition: transform .22s cubic-bezier(0.22,1,0.36,1), box-shadow .22s ease; }
+          .orca-clay-btn:hover:not(:disabled) { transform: translateY(-3px); }
+          .orca-clay-btn:active:not(:disabled) { transform: translateY(2px); box-shadow: inset 6px 6px 14px rgba(0,0,0,0.45), inset -6px -6px 14px rgba(255,255,255,0.12) !important; }
         `}</style>
 
-        {/* Grid */}
+        {/* Soft-sculpted clay grid */}
         <div aria-hidden style={{
-          position: 'absolute', inset: 0, opacity: light ? 0.06 : 0.07,
-          backgroundImage: 'linear-gradient(currentColor 1px, transparent 1px), linear-gradient(90deg, currentColor 1px, transparent 1px)',
-          backgroundSize: '68px 68px',
-          color: accent,
-          maskImage: 'radial-gradient(80% 70% at 50% 45%, #000 25%, transparent 100%)',
-          WebkitMaskImage: 'radial-gradient(80% 70% at 50% 45%, #000 25%, transparent 100%)',
+          position: 'absolute', inset: 0, opacity: 0.5,
+          backgroundImage: `
+            linear-gradient(rgba(255,255,255,0.035) 2px, transparent 2px),
+            linear-gradient(90deg, rgba(255,255,255,0.035) 2px, transparent 2px),
+            linear-gradient(rgba(0,0,0,0.45) 4px, transparent 4px),
+            linear-gradient(90deg, rgba(0,0,0,0.45) 4px, transparent 4px)`,
+          backgroundSize: '82px 82px, 82px 82px, 82px 82px, 82px 82px',
+          backgroundPosition: '0 0, 0 0, 0 2px, 2px 0',
+          maskImage: 'radial-gradient(90% 80% at 50% 45%, #000 20%, transparent 100%)',
+          WebkitMaskImage: 'radial-gradient(90% 80% at 50% 45%, #000 20%, transparent 100%)',
         }} />
 
-        {/* Market backdrop: candles + drawn wave lines */}
-        <svg
-          aria-hidden viewBox="0 0 100 100" preserveAspectRatio="none"
-          style={{
-            position: 'absolute', inset: 0, width: '100%', height: '100%',
-            opacity: light ? 0.22 : 0.3,
-            animation: reduced ? undefined : 'orca-gate-drift 26s ease-in-out infinite',
-          }}
-        >
+        {/* Sculpted 3D candlestick wave across the lower half */}
+        <div aria-hidden style={{
+          position: 'absolute', left: 0, right: 0, bottom: 0, height: '46%',
+          display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+          gap: 'clamp(6px, 1.4vw, 18px)', padding: '0 3vw',
+          maskImage: 'linear-gradient(180deg, transparent, #000 45%, #000)',
+          WebkitMaskImage: 'linear-gradient(180deg, transparent, #000 45%, #000)',
+        }}>
           {candles.map((c, i) => (
-            <g key={i} stroke={c.up ? accent : JC.blue} strokeWidth={0.22} opacity={0.5}>
-              <line x1={c.x} x2={c.x} y1={c.mid - c.wick / 2} y2={c.mid + c.wick / 2} />
-              <rect
-                x={c.x - 0.9} y={c.mid - c.body / 2} width={1.8} height={c.body}
-                fill="none"
-              />
-            </g>
+            <div key={i} style={{
+              width: 'clamp(10px, 2.2vw, 26px)',
+              height: c.h,
+              marginBottom: c.lift,
+              borderRadius: 999,
+              background: c.up
+                ? `linear-gradient(160deg, ${MINT} 0%, ${MINT_DEEP} 100%)`
+                : `linear-gradient(160deg, #2b7c7f 0%, ${TEAL} 100%)`,
+              boxShadow: '10px 12px 22px rgba(0,0,0,0.5), inset 2px 2px 5px rgba(255,255,255,0.35), inset -3px -4px 8px rgba(0,0,0,0.3)',
+              opacity: 0.75,
+              transformOrigin: 'bottom',
+              animation: reduced ? undefined : `orca-clay-grow 900ms cubic-bezier(0.22,1,0.36,1) ${c.d}ms both`,
+            }} />
           ))}
-          {[0, 1, 2].map(k => (
-            <path
-              key={k}
-              d={`M0 ${58 + k * 7} C 18 ${40 + k * 6}, 32 ${74 - k * 4}, 50 ${56 + k * 5} S 82 ${34 + k * 8}, 100 ${52 + k * 6}`}
-              fill="none" stroke={k === 1 ? accent : SURF.text3}
-              strokeWidth={0.35} opacity={0.55}
-              strokeDasharray="1200" 
-              style={{ animation: reduced ? undefined : `orca-gate-draw ${2600 + k * 700}ms ease-out ${k * 220}ms both` }}
-            />
-          ))}
-        </svg>
+        </div>
 
-        {/* Soft scanline sweep */}
-        {!reduced && (
-          <div aria-hidden style={{
-            position: 'absolute', left: 0, right: 0, height: '38%',
-            background: `linear-gradient(180deg, transparent, ${accent}12, transparent)`,
-            animation: 'orca-gate-scan 7s ease-in-out infinite',
-          }} />
-        )}
+        {/* Perimeter clay chrome — top-left tactile chips */}
+        <div aria-hidden style={{
+          position: 'absolute', top: 20, insetInlineStart: 20, display: 'flex', gap: 10,
+          animation: anim('orca-clay-rise', 820),
+        }}>
+          {['⚙', '👤'].map(g => (
+            <div key={g} style={{
+              width: 42, height: 42, borderRadius: 16, display: 'grid', placeItems: 'center',
+              background: CLAY_SURF, color: CLAY_MUTED, fontSize: 16,
+              boxShadow: clayUp(6),
+            }}>{g}</div>
+          ))}
+        </div>
+
+        {/* Perimeter clay chrome — top-right sculpted bar */}
+        <div aria-hidden style={{
+          position: 'absolute', top: 20, insetInlineEnd: 20, maxWidth: 'min(60vw, 460px)',
+          padding: '11px 20px', borderRadius: 18, background: CLAY_SURF,
+          boxShadow: clayUp(6), color: CLAY_MUTED, fontSize: 11.5, lineHeight: 1.5,
+          textShadow: '0 1px 0 rgba(0,0,0,0.5)',
+          animation: anim('orca-clay-rise', 860),
+        }}>
+          {isRTL
+            ? 'פלטפורמת המסחר המקצועית לסוחרים הישראלים — Orca Investment'
+            : 'The professional trading terminal — Orca Investment'}
+        </div>
 
         <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '0 24px' }}>
-          {/* Orca wireframe mark */}
+          {/* Sculpted clay orca */}
           <div aria-hidden style={{
             position: 'relative', display: 'flex', justifyContent: 'center',
-            marginBottom: 18, animation: anim('orca-gate-rise', 0, 1100),
+            marginBottom: 10, animation: anim('orca-clay-rise', 0, 1100),
           }}>
             <div style={{
-              position: 'absolute', width: 220, height: 120, borderRadius: '50%',
-              background: `radial-gradient(circle, ${accent}33, transparent 70%)`,
-              filter: 'blur(18px)',
-              animation: reduced ? undefined : 'orca-gate-glow 5s ease-in-out infinite',
+              position: 'absolute', bottom: 6, width: '52%', height: 26, borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(0,0,0,0.55), transparent 70%)',
+              filter: 'blur(12px)',
+              animation: reduced ? undefined : 'orca-clay-breathe 7s ease-in-out infinite',
             }} />
             <img
-              src={orcaWire}
+              src={orcaClay}
               alt=""
               width={1024}
               height={768}
               style={{
-                position: 'relative', width: 'min(200px, 46vw)', height: 'auto',
-                filter: light
-                  ? 'grayscale(.2) brightness(.55)'
-                  : `drop-shadow(0 0 14px ${accent}55)`,
-                animation: reduced ? undefined : 'orca-gate-float 7s ease-in-out infinite',
+                position: 'relative', width: 'min(320px, 62vw)', height: 'auto',
+                filter: 'drop-shadow(0 24px 34px rgba(0,0,0,0.55))',
+                animation: reduced ? undefined : 'orca-clay-float 8s ease-in-out infinite',
               }}
             />
           </div>
 
           <h1 style={{
-            fontSize: 'clamp(30px, 6.4vw, 52px)', margin: 0, lineHeight: 1.05, letterSpacing: '-0.02em', color: ink,
-            animation: anim('orca-gate-rise', 200),
+            fontSize: 'clamp(32px, 6.6vw, 56px)', margin: 0, lineHeight: 1.05,
+            letterSpacing: '-0.02em', color: CLAY_TEXT, fontWeight: 700,
+            textShadow: '0 3px 0 rgba(0,0,0,0.35), 0 10px 22px rgba(0,0,0,0.45), 0 -1px 0 rgba(255,255,255,0.25)',
+            animation: anim('orca-clay-rise', 200),
           }}>
             <span style={{ fontWeight: 800 }}>Orca</span>
-            <span style={{ fontWeight: 200, marginInlineStart: 12, color: SURF.text2 }}>Investment</span>
+            <span style={{ fontWeight: 300, marginInlineStart: 12, color: '#cfe0dc' }}>Investment</span>
           </h1>
 
-          <div aria-hidden style={{
-            width: 'min(300px, 62vw)', height: 1, margin: '22px auto 0',
-            background: `linear-gradient(90deg, transparent, ${light ? 'rgba(55,48,163,0.35)' : `${accent}88`}, transparent)`,
-            transformOrigin: 'center',
-            animation: anim('orca-gate-line', 340, 1100),
-          }} />
-
           <p style={{
-            fontSize: 11.5, color: SURF.text3, letterSpacing: '0.3em', textTransform: 'uppercase',
-            marginTop: 18, marginBottom: 44,
-            animation: anim('orca-gate-rise', 430),
+            fontSize: 11.5, color: CLAY_MUTED, letterSpacing: '0.32em', textTransform: 'uppercase',
+            marginTop: 16, marginBottom: 40, textShadow: '0 1px 0 rgba(0,0,0,0.55)',
+            animation: anim('orca-clay-rise', 430),
           }}>
             {isRTL ? 'מסוף מודיעין מסחרי' : 'Trading Intelligence Terminal'}
           </p>
 
-          <div style={{ animation: anim('orca-gate-rise', 560) }}>
+          <div style={{ animation: anim('orca-clay-rise', 560) }}>
             <button
+              className="orca-clay-btn"
               onClick={handleAccess}
               disabled={requested && !ready}
-              onMouseEnter={e => { if (!reduced) e.currentTarget.style.transform = 'translateY(-2px)'; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'none'; }}
               style={{
-                padding: '15px 52px',
-                background: light ? JC.green : `linear-gradient(180deg, ${accent}22, ${accent}0d)`,
-                border: light ? 'none' : `1px solid ${accent}99`,
-                borderRadius: 999,
-                color: light ? JC.onAccent : accent,
-                fontSize: 13.5, fontWeight: 700,
-                fontFamily: "'JetBrains Mono', monospace",
-                cursor: requested && !ready ? 'wait' : 'pointer', letterSpacing: '0.12em',
-                transition: reduced ? 'none' : 'transform .25s cubic-bezier(0.22,1,0.36,1), box-shadow .25s ease',
-                animation: reduced || light ? undefined : 'orca-gate-halo 3.6s ease-in-out infinite',
-                boxShadow: light ? '0 12px 30px -12px rgba(79,70,229,0.55)' : undefined,
+                padding: '18px 56px',
+                background: `linear-gradient(160deg, ${MINT} 0%, ${MINT_DEEP} 100%)`,
+                border: 'none',
+                borderRadius: 26,
+                color: '#0f2b25',
+                fontSize: 15, fontWeight: 700,
+                fontFamily: "'Poppins', system-ui, sans-serif",
+                cursor: requested && !ready ? 'wait' : 'pointer', letterSpacing: '0.06em',
+                textShadow: '0 1px 0 rgba(255,255,255,0.45)',
+                boxShadow: '12px 14px 28px rgba(0,0,0,0.55), -6px -6px 18px rgba(255,255,255,0.06), inset 3px 3px 6px rgba(255,255,255,0.45), inset -4px -6px 12px rgba(0,0,0,0.22)',
               }}
             >
               {requested && !ready ? (isRTL ? 'מכין את המסוף…' : 'Preparing terminal…') : (isRTL ? 'כניסה למערכת' : 'Access Platform')}
@@ -229,16 +247,17 @@ export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps
           </div>
 
           <p style={{
-            marginTop: 30, marginBottom: 0, fontSize: 11.5, color: SURF.text3,
-            fontFamily: "'Inter', system-ui, sans-serif", letterSpacing: '0.01em',
-            animation: anim('orca-gate-rise', 700),
+            marginTop: 26, marginBottom: 0, fontSize: 11.5, color: CLAY_MUTED,
+            textShadow: '0 1px 0 rgba(0,0,0,0.5)',
+            animation: anim('orca-clay-rise', 700),
           }}>
-            {isRTL ? 'פלטפורמת ניתוח מסחר — לשימוש מקצועי בלבד.' : 'Professional trading analytics terminal.'}
+            {isRTL ? 'לשימוש מקצועי בלבד' : 'Professional use only'}
           </p>
         </div>
       </div>
     );
   }
+
 
 
   if (phase === 'done') return null;
