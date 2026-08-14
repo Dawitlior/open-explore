@@ -120,7 +120,7 @@ export function CookieConsentBanner() {
                     color: JC.onAccent, fontFamily: 'inherit',
                     fontSize: 12, fontWeight: 700, letterSpacing: '0.04em',
                     cursor: 'pointer',
-                    boxShadow: `0 8px 24px ${JC.blueGlow ?? 'rgba(0,0,0,0.35)'}`,
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
                   }}
                 >
                   {t('קבל הכל', 'Accept all')}
