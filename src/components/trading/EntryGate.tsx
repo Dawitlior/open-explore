@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { SURF } from '@/lib/neon-palette';
 import { OrcaBootLoader } from '@/components/OrcaBootLoader';
-import orcaClay from '@/assets/orca-clay.png';
+import orcaHud from '@/assets/orca-hud.png';
 
 
 interface EntryGateProps {
@@ -70,29 +70,39 @@ export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps
     const anim = (name: string, delay: number, dur = 900) =>
       reduced ? undefined : `${name} ${dur}ms cubic-bezier(0.22,1,0.36,1) ${delay}ms both`;
 
-    /* Claymorphism palette — charcoal clay canvas, mint + deep teal accents */
-    const CLAY_BG = '#22282b';
-    const CLAY_BG_2 = '#1a1f22';
-    const CLAY_SURF = '#2b3236';
-    const MINT = '#8fe3c2';
-    const MINT_DEEP = '#57bd9a';
-    const TEAL = '#175f63';
-    const CLAY_TEXT = '#f2f6f5';
-    const CLAY_MUTED = '#9aa8a6';
-    const clayUp = (r: number) =>
-      `${r}px ${r}px ${r * 2}px rgba(0,0,0,0.55), -${r}px -${r}px ${r * 2}px rgba(255,255,255,0.045), inset 2px 2px 4px rgba(255,255,255,0.05), inset -3px -3px 6px rgba(0,0,0,0.35)`;
+    /* Institutional dark-glass terminal palette — sharp, high contrast */
+    const BG_0 = '#04070C';
+    const BG_1 = '#070B12';
+    const GLASS = 'rgba(255,255,255,0.035)';
+    const HAIRLINE = 'rgba(148,180,255,0.14)';
+    const CYAN = '#22D3EE';
+    const TEXT = '#EAF2FF';
+    const MUTED = '#93A4BC';
+    const UP = '#2FBF87';
+    const DOWN = '#E0556B';
 
-    // Deterministic sculpted candle field (no randomness → no hydration jitter).
-    const candles = Array.from({ length: 22 }, (_, i) => {
-      const s = (i * 9301 + 49297) % 233280 / 233280;
-      const s2 = ((i + 7) * 4021 + 1721) % 99991 / 99991;
-      return {
-        h: 34 + s * 120,
-        lift: Math.sin(i * 0.7) * 26 + s2 * 20,
-        up: s2 > 0.45,
-        d: i * 70,
-      };
-    });
+    // Deterministic OHLC series (real candle geometry: wick + body, thin strokes).
+    const N = 54;
+    const series = (() => {
+      let px = 52;
+      return Array.from({ length: N }, (_, i) => {
+        const w1 = Math.sin(i * 0.62) * 5.2 + Math.sin(i * 0.17) * 8 + Math.cos(i * 1.31) * 2.6;
+        const o = px;
+        const c = px + w1;
+        px = c;
+        const amp = 2 + Math.abs(Math.sin(i * 2.1)) * 4;
+        return { o, c, h: Math.max(o, c) + amp, l: Math.min(o, c) - amp };
+      });
+    })();
+    const lo = Math.min(...series.map(s => s.l));
+    const hi = Math.max(...series.map(s => s.h));
+    const CW = 1000, CH = 200, PAD = 8;
+    const yOf = (v: number) => CH - PAD - ((v - lo) / (hi - lo || 1)) * (CH - PAD * 2);
+    const step = CW / N;
+    const bodyW = Math.max(3, step * 0.5);
+    const closePath = series
+      .map((s, i) => `${i ? 'L' : 'M'}${(i + 0.5) * step},${yOf(s.c)}`)
+      .join(' ');
 
     return (
       <div
@@ -100,7 +110,7 @@ export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps
         style={{
           position: 'fixed', inset: 0, zIndex: 2147483647,
           width: '100vw', height: '100dvh',
-          background: `radial-gradient(120% 90% at 50% 115%, #2f4d4a 0%, ${CLAY_BG} 45%, ${CLAY_BG_2} 100%)`,
+          background: `radial-gradient(90% 70% at 50% 30%, #0B1522 0%, ${BG_1} 45%, ${BG_0} 100%)`,
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           fontFamily: isRTL
             ? "'Heebo', 'Assistant', 'Poppins', system-ui, sans-serif"
@@ -109,154 +119,159 @@ export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps
         }}
       >
         <style>{`
-          @keyframes orca-clay-rise { from { opacity:0; transform: translateY(26px) scale(.97); } to { opacity:1; transform:none; } }
-          @keyframes orca-clay-float { 0%,100% { transform: translateY(0) rotate(-1.2deg); } 50% { transform: translateY(-16px) rotate(1.4deg); } }
-          @keyframes orca-clay-grow { from { transform: scaleY(0.15); opacity:0; } to { transform: scaleY(1); opacity:1; } }
-          @keyframes orca-clay-breathe { 0%,100% { opacity:.5; transform: scale(.95); } 50% { opacity:.85; transform: scale(1.05); } }
-          .orca-clay-btn { transition: transform .22s cubic-bezier(0.22,1,0.36,1), box-shadow .22s ease; }
-          .orca-clay-btn:hover:not(:disabled) { transform: translateY(-3px); }
-          .orca-clay-btn:active:not(:disabled) { transform: translateY(2px); box-shadow: inset 6px 6px 14px rgba(0,0,0,0.45), inset -6px -6px 14px rgba(255,255,255,0.12) !important; }
+          @keyframes orca-hud-rise { from { opacity:0; transform: translateY(14px); } to { opacity:1; transform:none; } }
+          @keyframes orca-hud-fade { from { opacity:0; } to { opacity:1; } }
+          @keyframes orca-hud-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+          @keyframes orca-hud-scan { 0% { transform: translateY(-100%); } 100% { transform: translateY(1200%); } }
+          @keyframes orca-hud-draw { from { stroke-dashoffset: 2400; } to { stroke-dashoffset: 0; } }
+          @keyframes orca-hud-pulse { 0%,100% { opacity:.35; } 50% { opacity:1; } }
+          .orca-hud-btn { transition: border-color .2s ease, background .2s ease, box-shadow .2s ease, transform .12s ease; }
+          .orca-hud-btn:hover:not(:disabled) { background: rgba(34,211,238,0.12); border-color: rgba(34,211,238,0.75); box-shadow: 0 0 0 1px rgba(34,211,238,0.25), 0 10px 40px rgba(34,211,238,0.18); }
+          .orca-hud-btn:active:not(:disabled) { transform: translateY(1px); }
         `}</style>
 
-        {/* Soft-sculpted clay grid */}
+        {/* Fine technical grid */}
         <div aria-hidden style={{
-          position: 'absolute', inset: 0, opacity: 0.5,
+          position: 'absolute', inset: 0, opacity: 0.55,
           backgroundImage: `
-            linear-gradient(rgba(255,255,255,0.035) 2px, transparent 2px),
-            linear-gradient(90deg, rgba(255,255,255,0.035) 2px, transparent 2px),
-            linear-gradient(rgba(0,0,0,0.45) 4px, transparent 4px),
-            linear-gradient(90deg, rgba(0,0,0,0.45) 4px, transparent 4px)`,
-          backgroundSize: '82px 82px, 82px 82px, 82px 82px, 82px 82px',
-          backgroundPosition: '0 0, 0 0, 0 2px, 2px 0',
-          maskImage: 'radial-gradient(90% 80% at 50% 45%, #000 20%, transparent 100%)',
-          WebkitMaskImage: 'radial-gradient(90% 80% at 50% 45%, #000 20%, transparent 100%)',
+            linear-gradient(rgba(148,180,255,0.055) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(148,180,255,0.055) 1px, transparent 1px)`,
+          backgroundSize: '44px 44px, 44px 44px',
+          maskImage: 'radial-gradient(85% 70% at 50% 42%, #000 10%, transparent 100%)',
+          WebkitMaskImage: 'radial-gradient(85% 70% at 50% 42%, #000 10%, transparent 100%)',
         }} />
 
-        {/* Sculpted 3D candlestick wave across the lower half */}
+        {/* Real candlestick tape across the lower band */}
         <div aria-hidden style={{
-          position: 'absolute', left: 0, right: 0, bottom: 0, height: '46%',
-          display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-          gap: 'clamp(6px, 1.4vw, 18px)', padding: '0 3vw',
-          maskImage: 'linear-gradient(180deg, transparent, #000 45%, #000)',
-          WebkitMaskImage: 'linear-gradient(180deg, transparent, #000 45%, #000)',
+          position: 'absolute', left: 0, right: 0, bottom: 0, height: 'min(30vh, 240px)',
+          opacity: 0.5,
+          maskImage: 'linear-gradient(180deg, transparent, #000 55%)',
+          WebkitMaskImage: 'linear-gradient(180deg, transparent, #000 55%)',
         }}>
-          {candles.map((c, i) => (
-            <div key={i} style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-              marginBottom: c.lift,
-              transformOrigin: 'bottom',
-              animation: reduced ? undefined : `orca-clay-grow 900ms cubic-bezier(0.22,1,0.36,1) ${c.d}ms both`,
-            }}>
-              {/* upper wick */}
-              <div style={{
-                width: 4, height: 12 + (c.h % 17), borderRadius: 999,
-                background: c.up ? MINT_DEEP : TEAL, opacity: 0.7,
-                boxShadow: 'inset 1px 1px 2px rgba(255,255,255,0.25), 2px 3px 6px rgba(0,0,0,0.45)',
-              }} />
-              {/* body */}
-              <div style={{
-                width: 'clamp(10px, 2.2vw, 26px)',
-                height: c.h,
-                borderRadius: 8,
-                background: c.up
-                  ? `linear-gradient(160deg, ${MINT} 0%, ${MINT_DEEP} 100%)`
-                  : `linear-gradient(160deg, #2b7c7f 0%, ${TEAL} 100%)`,
-                boxShadow: '10px 12px 22px rgba(0,0,0,0.5), inset 2px 2px 5px rgba(255,255,255,0.35), inset -3px -4px 8px rgba(0,0,0,0.3)',
-                opacity: 0.75,
-              }} />
-              {/* lower wick */}
-              <div style={{
-                width: 4, height: 9 + (c.h % 13), borderRadius: 999,
-                background: c.up ? MINT_DEEP : TEAL, opacity: 0.7,
-                boxShadow: 'inset 1px 1px 2px rgba(255,255,255,0.25), 2px 3px 6px rgba(0,0,0,0.45)',
-              }} />
-            </div>
-          ))}
+          <svg width="100%" height="100%" viewBox={`0 0 ${CW} ${CH}`} preserveAspectRatio="none">
+            {series.map((s, i) => {
+              const x = (i + 0.5) * step;
+              const up = s.c >= s.o;
+              const col = up ? UP : DOWN;
+              const yT = yOf(Math.max(s.o, s.c));
+              const yB = yOf(Math.min(s.o, s.c));
+              return (
+                <g key={i} style={{ animation: reduced ? undefined : `orca-hud-fade 500ms linear ${i * 22}ms both` }}>
+                  <line x1={x} x2={x} y1={yOf(s.h)} y2={yOf(s.l)} stroke={col} strokeWidth={1} />
+                  <rect
+                    x={x - bodyW / 2} y={yT} width={bodyW} height={Math.max(1.2, yB - yT)}
+                    fill={up ? 'none' : col} stroke={col} strokeWidth={1}
+                  />
+                </g>
+              );
+            })}
+            <path
+              d={closePath} fill="none" stroke={CYAN} strokeWidth={1} opacity={0.5}
+              strokeDasharray={2400}
+              style={{ animation: reduced ? undefined : 'orca-hud-draw 2400ms cubic-bezier(0.22,1,0.36,1) 200ms both' }}
+            />
+          </svg>
         </div>
 
-        {/* Perimeter clay chrome — top-left tactile chips */}
+        {/* Top hairline status bar */}
         <div aria-hidden style={{
-          position: 'absolute', top: 20, insetInlineStart: 20, display: 'flex', gap: 10,
-          animation: anim('orca-clay-rise', 820),
+          position: 'absolute', top: 0, left: 0, right: 0, height: 44,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '0 18px', borderBottom: `1px solid ${HAIRLINE}`,
+          background: 'rgba(6,10,17,0.6)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
+          fontSize: 10, letterSpacing: '0.22em', textTransform: 'uppercase', color: MUTED,
+          fontFamily: "'IBM Plex Mono', ui-monospace, monospace",
+          animation: anim('orca-hud-fade', 120, 700),
         }}>
-          {['⚙', '👤'].map(g => (
-            <div key={g} style={{
-              width: 42, height: 42, borderRadius: 16, display: 'grid', placeItems: 'center',
-              background: CLAY_SURF, color: CLAY_MUTED, fontSize: 16,
-              boxShadow: clayUp(6),
-            }}>{g}</div>
-          ))}
-        </div>
-
-        {/* Perimeter clay chrome — top-right minimal sculpted chip */}
-        <div aria-hidden style={{
-          position: 'absolute', top: 20, insetInlineEnd: 20,
-          width: 42, height: 42, borderRadius: 16, display: 'grid', placeItems: 'center',
-          background: CLAY_SURF, boxShadow: clayUp(6), color: CLAY_MUTED, fontSize: 16,
-          animation: anim('orca-clay-rise', 860),
-        }}>
-          ◎
+          <span>ORCA · TERMINAL</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{
+              width: 6, height: 6, borderRadius: 999, background: CYAN,
+              boxShadow: `0 0 8px ${CYAN}`,
+              animation: reduced ? undefined : 'orca-hud-pulse 2.4s ease-in-out infinite',
+            }} />
+            SECURE LINK
+          </span>
         </div>
 
         <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '0 24px' }}>
-          {/* Sculpted clay orca */}
-          <div aria-hidden style={{
-            position: 'relative', display: 'flex', justifyContent: 'center',
-            marginBottom: 10, animation: anim('orca-clay-rise', 0, 1100),
+          {/* HUD orca mark inside a glass plate with corner brackets */}
+          <div style={{
+            position: 'relative', width: 'min(300px, 62vw)', margin: '0 auto 26px',
+            padding: '18px 20px', borderRadius: 4,
+            border: `1px solid ${HAIRLINE}`, background: GLASS,
+            backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+            animation: anim('orca-hud-rise', 0, 900),
+            overflow: 'hidden',
           }}>
-            <div style={{
-              position: 'absolute', bottom: 6, width: '52%', height: 26, borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(0,0,0,0.55), transparent 70%)',
-              filter: 'blur(12px)',
-              animation: reduced ? undefined : 'orca-clay-breathe 7s ease-in-out infinite',
+            {[['top', 'left'], ['top', 'right'], ['bottom', 'left'], ['bottom', 'right']].map(([v, h]) => (
+              <span key={`${v}${h}`} aria-hidden style={{
+                position: 'absolute', [v]: -1, [h]: -1, width: 12, height: 12,
+                [`border${v === 'top' ? 'Top' : 'Bottom'}`]: `1px solid ${CYAN}`,
+                [`border${h === 'left' ? 'Left' : 'Right'}`]: `1px solid ${CYAN}`,
+                opacity: 0.75,
+              } as React.CSSProperties} />
+            ))}
+            <div aria-hidden style={{
+              position: 'absolute', left: 0, right: 0, top: 0, height: 2,
+              background: `linear-gradient(90deg, transparent, ${CYAN}, transparent)`,
+              opacity: 0.35,
+              animation: reduced ? undefined : 'orca-hud-scan 5.5s linear infinite',
             }} />
             <img
-              src={orcaClay}
+              src={orcaHud}
               alt=""
               width={1024}
               height={768}
               style={{
-                position: 'relative', width: 'min(262px, 50vw)', height: 'auto',
-                filter: 'drop-shadow(0 24px 34px rgba(0,0,0,0.55))',
-                animation: reduced ? undefined : 'orca-clay-float 8s ease-in-out infinite',
+                display: 'block', width: '100%', height: 'auto',
+                filter: `drop-shadow(0 0 18px rgba(34,211,238,0.35))`,
+                animation: reduced ? undefined : 'orca-hud-float 9s ease-in-out infinite',
               }}
             />
           </div>
 
           <h1 style={{
-            fontSize: 'clamp(32px, 6.6vw, 56px)', margin: 0, lineHeight: 1.05,
-            letterSpacing: '-0.02em', color: CLAY_TEXT, fontWeight: 700,
-            textShadow: '0 3px 0 rgba(0,0,0,0.35), 0 10px 22px rgba(0,0,0,0.45), 0 -1px 0 rgba(255,255,255,0.25)',
-            animation: anim('orca-clay-rise', 200),
+            fontSize: 'clamp(28px, 5.6vw, 46px)', margin: 0, lineHeight: 1.05,
+            letterSpacing: '-0.015em', color: TEXT, fontWeight: 600,
+            animation: anim('orca-hud-rise', 160),
           }}>
-            <span style={{ fontWeight: 800 }}>Orca</span>
-            <span style={{ fontWeight: 300, marginInlineStart: 12, color: '#cfe0dc' }}>Investment</span>
+            <span style={{ fontWeight: 700 }}>Orca</span>
+            <span style={{ fontWeight: 300, marginInlineStart: 10, color: '#AFC2DA' }}>Investment</span>
           </h1>
 
+          <div aria-hidden style={{
+            width: 'min(280px, 60vw)', height: 1, margin: '18px auto 0',
+            background: `linear-gradient(90deg, transparent, ${HAIRLINE}, transparent)`,
+            animation: anim('orca-hud-fade', 320, 700),
+          }} />
+
           <p style={{
-            fontSize: 12, color: '#d3e0dd', fontWeight: 500, letterSpacing: '0.3em', textTransform: 'uppercase',
-            marginTop: 16, marginBottom: 40, textShadow: '0 1px 2px rgba(0,0,0,0.65)',
-            animation: anim('orca-clay-rise', 430),
+            fontSize: 11, color: MUTED, fontWeight: 500, letterSpacing: '0.34em', textTransform: 'uppercase',
+            marginTop: 16, marginBottom: 38,
+            fontFamily: "'IBM Plex Mono', ui-monospace, monospace",
+            animation: anim('orca-hud-rise', 380),
           }}>
             {isRTL ? 'מסוף מודיעין מסחרי' : 'Trading Intelligence Terminal'}
           </p>
 
-          <div style={{ animation: anim('orca-clay-rise', 560) }}>
+          <div style={{ animation: anim('orca-hud-rise', 520) }}>
             <button
-              className="orca-clay-btn"
+              className="orca-hud-btn"
               onClick={handleAccess}
               disabled={requested && !ready}
               style={{
-                padding: '18px 56px',
-                background: `linear-gradient(160deg, ${MINT} 0%, ${MINT_DEEP} 100%)`,
-                border: 'none',
-                borderRadius: 26,
-                color: '#0f2b25',
-                fontSize: 15, fontWeight: 700,
+                padding: '15px 52px',
+                background: 'rgba(34,211,238,0.06)',
+                border: `1px solid rgba(34,211,238,0.45)`,
+                borderRadius: 3,
+                color: TEXT,
+                fontSize: 13, fontWeight: 600,
                 fontFamily: 'inherit',
-                cursor: requested && !ready ? 'wait' : 'pointer', letterSpacing: '0.06em',
-                textShadow: '0 1px 0 rgba(255,255,255,0.45)',
-                boxShadow: '12px 14px 28px rgba(0,0,0,0.55), -6px -6px 18px rgba(255,255,255,0.06), inset 3px 3px 6px rgba(255,255,255,0.45), inset -4px -6px 12px rgba(0,0,0,0.22)',
+                cursor: requested && !ready ? 'wait' : 'pointer',
+                letterSpacing: '0.16em', textTransform: 'uppercase',
+                backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+                boxShadow: '0 8px 30px rgba(0,0,0,0.55)',
               }}
             >
               {requested && !ready ? (isRTL ? 'מכין את המסוף…' : 'Preparing terminal…') : (isRTL ? 'כניסה למערכת' : 'Access Platform')}
@@ -264,9 +279,10 @@ export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps
           </div>
 
           <p style={{
-            marginTop: 26, marginBottom: 0, fontSize: 12, color: '#c8d6d3', fontWeight: 500,
-            textShadow: '0 1px 0 rgba(0,0,0,0.5)',
-            animation: anim('orca-clay-rise', 700),
+            marginTop: 24, marginBottom: 0, fontSize: 10, color: '#7E8FA8', fontWeight: 500,
+            letterSpacing: '0.2em', textTransform: 'uppercase',
+            fontFamily: "'IBM Plex Mono', ui-monospace, monospace",
+            animation: anim('orca-hud-fade', 680, 700),
           }}>
             {isRTL ? 'לשימוש מקצועי בלבד' : 'Professional use only'}
           </p>
