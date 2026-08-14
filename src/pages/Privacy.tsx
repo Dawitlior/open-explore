@@ -22,11 +22,6 @@ const Privacy = () => {
   }, [isRTL]);
 
   return (
-      <Seo
-        title={isRTL ? 'מדיניות פרטיות — Orca' : 'Privacy Policy — Orca'}
-        description={isRTL ? 'איך Orca אוספת, שומרת ומגנה על נתוני המסחר והחשבון שלך, ואילו זכויות פרטיות עומדות לרשותך.' : 'How Orca collects, stores and protects your trading and account data, and the privacy rights available to you.'}
-        path="/privacy"
-      />
     <main
       dir={isRTL ? 'rtl' : 'ltr'}
       lang={isRTL ? 'he' : 'en'}
@@ -38,6 +33,11 @@ const Privacy = () => {
         padding: '48px 20px',
       }}
     >
+      <Seo
+        title={isRTL ? 'מדיניות פרטיות — Orca' : 'Privacy Policy — Orca'}
+        description={isRTL ? 'איך Orca אוספת, שומרת ומגנה על נתוני המסחר והחשבון שלך, ואילו זכויות פרטיות עומדות לרשותך.' : 'How Orca collects, stores and protects your trading and account data, and the privacy rights available to you.'}
+        path="/privacy"
+      />
       <article
         style={{
           maxWidth: 880, margin: '0 auto',

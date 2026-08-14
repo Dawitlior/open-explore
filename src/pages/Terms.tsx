@@ -50,11 +50,6 @@ const Terms = () => {
   const footer = isRTL ? LEGAL_FOOTER_HE : LEGAL_FOOTER_EN;
 
   return (
-      <Seo
-        title={isRTL ? 'תנאי שימוש — Orca' : 'Terms of Service — Orca'}
-        description={isRTL ? 'תנאי השימוש בפלטפורמת Orca — הרשאות המנוי, אחריות המשתמש והגבלות השימוש בשירות.' : 'The terms governing use of the Orca platform — subscription rights, user responsibilities and service limitations.'}
-        path="/terms"
-      />
     <main
       dir={isRTL ? 'rtl' : 'ltr'}
       lang={isRTL ? 'he' : 'en'}
@@ -66,6 +61,11 @@ const Terms = () => {
         padding: '48px 20px',
       }}
     >
+      <Seo
+        title={isRTL ? 'תנאי שימוש — Orca' : 'Terms of Service — Orca'}
+        description={isRTL ? 'תנאי השימוש בפלטפורמת Orca — הרשאות המנוי, אחריות המשתמש והגבלות השימוש בשירות.' : 'The terms governing use of the Orca platform — subscription rights, user responsibilities and service limitations.'}
+        path="/terms"
+      />
       <article
         style={{
           maxWidth: 880, margin: '0 auto',

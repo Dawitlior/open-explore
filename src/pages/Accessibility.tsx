@@ -123,11 +123,6 @@ const Accessibility = () => {
   const updatedLabel = isRTL ? 'עדכון אחרון:' : 'Last updated:';
 
   return (
-      <Seo
-        title={isRTL ? 'הצהרת נגישות — Orca' : 'Accessibility Statement — Orca'}
-        description={isRTL ? 'הצהרת הנגישות של Orca — תקני הנגישות שאנו מיישמים בפלטפורמה ודרכי הפנייה לתמיכה בנגישות.' : 'Orca's accessibility statement — the standards we follow across the platform and how to reach our accessibility support.'}
-        path="/accessibility"
-      />
     <main
       dir={isRTL ? 'rtl' : 'ltr'}
       lang={isRTL ? 'he' : 'en'}
@@ -140,6 +135,11 @@ const Accessibility = () => {
         padding: '48px 20px',
       }}
     >
+      <Seo
+        title={isRTL ? 'הצהרת נגישות — Orca' : 'Accessibility Statement — Orca'}
+        description={isRTL ? 'הצהרת הנגישות של Orca — תקני הנגישות שאנו מיישמים בפלטפורמה ודרכי הפנייה לתמיכה בנגישות.' : 'Orca's accessibility statement — the standards we follow across the platform and how to reach our accessibility support.'}
+        path="/accessibility"
+      />
       <article
         style={{
           maxWidth: 880,
