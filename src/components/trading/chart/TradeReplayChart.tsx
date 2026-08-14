@@ -28,6 +28,7 @@ interface Props {
 interface Badge {
   key: string;
   y: number;
+  anchorY: number;
   title: string;
   price: string;
   fg: string;
@@ -72,6 +73,7 @@ export function TradeReplayChart({
   const [showZones, setShowZones] = useState(true);
   const [badges, setBadges] = useState<Badge[]>([]);
   const [bands, setBands] = useState<Band[]>([]);
+  const [tradeXs, setTradeXs] = useState<{ entry: number; exit: number } | null>(null);
   const rafRef = useRef<number | null>(null);
 
   const dec = decimalsFor(entry);
@@ -115,15 +117,17 @@ export function TradeReplayChart({
 
     points.sort((a, b) => a.y - b.y);
 
+    // Merge only truly identical prices. Nearby, different levels remain
+    // distinct and are laid out with a minimum vertical gap below.
     const groups: Array<typeof points> = [];
     for (const p of points) {
       const last = groups[groups.length - 1];
-      if (last && Math.abs(p.y - last[last.length - 1].y) < 16) last.push(p);
+      if (last && p.price.toFixed(dec) === last[0].price.toFixed(dec)) last.push(p);
       else groups.push([p]);
     }
 
     const severity = (k: string) => (k === 'stop' ? 3 : k === 'exit' ? 2 : k === 'target' ? 1 : 0);
-    const next: Badge[] = groups.map(gp => {
+    const rawBadges: Badge[] = groups.map(gp => {
       const lead = [...gp].sort((a, b) => severity(b.key) - severity(a.key))[0];
       const samePrice = gp.every(p => p.price.toFixed(dec) === gp[0].price.toFixed(dec));
       const price = samePrice
@@ -133,6 +137,7 @@ export function TradeReplayChart({
       return {
         key: gp.map(p => p.key).join('+'),
         y: gp.reduce((s, p) => s + p.y, 0) / gp.length,
+        anchorY: gp.reduce((s, p) => s + p.y, 0) / gp.length,
         title: gp.map(p => p.title).join(' · '),
         price,
         fg: isDarkFill ? '#fff' : T.bg.primary,
@@ -140,17 +145,37 @@ export function TradeReplayChart({
         border: lead.color,
       };
     });
+    const minY = 14;
+    const maxY = Math.max(minY, host.clientHeight - 14);
+    const minGap = 24;
+    rawBadges.forEach((badge, i) => {
+      badge.y = Math.max(minY, i === 0 ? badge.anchorY : Math.max(badge.anchorY, rawBadges[i - 1].y + minGap));
+    });
+    for (let i = rawBadges.length - 1; i >= 0; i--) {
+      const ceiling = i === rawBadges.length - 1 ? maxY : rawBadges[i + 1].y - minGap;
+      rawBadges[i].y = Math.min(rawBadges[i].y, ceiling);
+    }
+    const next = rawBadges;
     setBadges(next);
 
     // risk / reward zones, clipped to the trade window
     const ts = api.chart.timeScale();
-    const x1raw = entryTime != null ? ts.timeToCoordinate(entryTime as any) : null;
-    const x2raw = exitTime != null ? ts.timeToCoordinate(exitTime as any) : null;
+    const nearestCandleTime = (time?: number) => {
+      if (time == null || !candles.length) return null;
+      return candles.reduce((nearest, candle) => (
+        Math.abs(candle.time - time) < Math.abs(nearest - time) ? candle.time : nearest
+      ), candles[0].time);
+    };
+    const zoneEntryTime = nearestCandleTime(entryTime);
+    const zoneExitTime = nearestCandleTime(exitTime);
+    const x1raw = zoneEntryTime != null ? ts.timeToCoordinate(zoneEntryTime as any) : null;
+    const x2raw = zoneExitTime != null ? ts.timeToCoordinate(zoneExitTime as any) : null;
     const nb: Band[] = [];
     if (showZones && x1raw != null && x2raw != null) {
       const left = Math.max(0, Math.min(x1raw as number, x2raw as number));
       const right = Math.min(w, Math.max(x1raw as number, x2raw as number));
       const width = Math.max(0, right - left);
+      setTradeXs({ entry: x1raw as number, exit: x2raw as number });
       const yEntry = api.series.priceToCoordinate(entry);
       if (width > 1 && yEntry != null) {
         const push = (price: number, color: string, key: string) => {
@@ -166,9 +191,9 @@ export function TradeReplayChart({
         // Green = Entry ↔ Target, ONLY when the trade stored a target.
         if (hasTarget) push(target as number, T.accent.green, 'reward');
       }
-    }
+    } else setTradeXs(x1raw != null && x2raw != null ? { entry: x1raw as number, exit: x2raw as number } : null);
     setBands(nb);
-  }, [levelDefs, dec, entry, stop, target, hasStop, hasTarget, entryTime, exitTime, showZones, T]);
+  }, [levelDefs, dec, entry, stop, target, hasStop, hasTarget, entryTime, exitTime, showZones, candles, T]);
 
   const scheduleSync = useCallback(() => {
     if (rafRef.current != null) return;
@@ -215,6 +240,10 @@ export function TradeReplayChart({
         borderDownColor: colors.down,
         wickUpColor: colors.up,
         wickDownColor: colors.down,
+        // The library's last-price line looks like another trade level and
+        // creates an unexplained native badge. Trade levels own this canvas.
+        priceLineVisible: false,
+        lastValueVisible: false,
         autoscaleInfoProvider: (original: () => any) => {
           const res = original();
           const levels = levelsRef.current.filter(Number.isFinite);
@@ -304,13 +333,22 @@ export function TradeReplayChart({
 
       const lcMod = await import('lightweight-charts');
       const first = candles[0].time, last = candles[candles.length - 1].time;
-      const clampT = (t?: number) => (t == null ? null : Math.min(Math.max(t, first), last));
-      const et = clampT(entryTime), xt = clampT(exitTime);
+       const clampT = (t?: number) => (t == null ? null : Math.min(Math.max(t, first), last));
+       const nearestCandleTime = (t: number | null) => {
+         if (t == null) return null;
+         return candles.reduce((nearest, candle) => (
+           Math.abs(candle.time - t) < Math.abs(nearest - t) ? candle.time : nearest
+         ), candles[0].time);
+       };
+       // Markers and zones use the exact same snapped timestamps, so their
+       // horizontal boundaries cannot drift apart.
+       const et = nearestCandleTime(clampT(entryTime));
+       const xt = nearestCandleTime(clampT(exitTime));
 
       try {
         const markers: any[] = [];
         if (et) markers.push({ time: et, position: isLong ? 'belowBar' : 'aboveBar', color: colors.info, shape: isLong ? 'arrowUp' : 'arrowDown', text: L('כניסה', 'Entry') });
-        if (xt) markers.push({ time: xt, position: isLong ? 'aboveBar' : 'belowBar', color: won ? T.accent.green : T.accent.red, shape: 'circle', text: (exitInferred ? '~ ' : '') + L('יציאה', 'Exit') });
+        if (xt) markers.push({ time: xt, position: isLong ? 'aboveBar' : 'belowBar', color: won ? T.accent.green : T.accent.red, shape: 'circle', text: '' });
         if (markers.length && (lcMod as any).createSeriesMarkers) {
           (lcMod as any).createSeriesMarkers(api.series, markers.sort((a, b) => a.time - b.time));
         }
@@ -392,8 +430,8 @@ export function TradeReplayChart({
           style={{
             minWidth: 96,
             border: `1px solid ${showZones ? colors.info : T.border.subtle}`,
-            background: showZones ? `${colors.info}22` : T.bg.card,
-            color: showZones ? colors.info : T.text.secondary,
+            background: showZones ? colors.info : T.bg.card,
+            color: showZones ? T.bg.primary : T.text.secondary,
             borderRadius: T.radius.sm,
             padding: '5px 10px',
             fontSize: 10.5,
@@ -403,13 +441,28 @@ export function TradeReplayChart({
             cursor: !hasStop && !hasTarget ? 'not-allowed' : 'pointer',
           }}
         >
-          {L('אזורי סיכון', 'Zones')}
+          {showZones ? L('אזורים: פעיל', 'Zones: On') : L('אזורים: כבוי', 'Zones: Off')}
         </button>
       </div>
 
       {/* chart + overlay */}
       <div style={{ position: 'relative' }}>
         <div ref={hostRef} style={{ width: '100%', height }} />
+
+        {/* Always-visible chart key; not hidden below the canvas. */}
+        <div style={{
+          position: 'absolute', top: 9, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 4, display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 9,
+          maxWidth: '58%', padding: '4px 7px', borderRadius: T.radius.sm,
+          background: T.bg.card, border: `1px solid ${T.border.subtle}`,
+          boxShadow: `0 0 0 3px ${T.bg.tertiary}`,
+          color: T.text.muted, fontFamily: MONO, fontSize: 8.5,
+          pointerEvents: 'none',
+        }}>
+          <LegendItem color={colors.info} dashed label={L('זמן כניסה', 'Entry time')} />
+          {hasStop && <LegendItem color={T.accent.red} label={L('כניסה↔סטופ', 'Entry↔Stop')} />}
+          {hasTarget && <LegendItem color={T.accent.green} label={L('כניסה↔יעד', 'Entry↔Target')} />}
+        </div>
 
         {/* risk / reward bands */}
         {bands.map(b => (
@@ -426,12 +479,46 @@ export function TradeReplayChart({
           />
         ))}
 
+        {/* Entry-time guide restored; it shares the zone's exact x anchor. */}
+        {tradeXs && (
+          <div aria-hidden style={{
+            position: 'absolute', pointerEvents: 'none', zIndex: 2,
+            left: tradeXs.entry, top: 0, bottom: 0,
+            borderLeft: `1px dashed ${colors.info}`,
+            opacity: 0.72,
+          }} />
+        )}
+
+        {/* Exit label is offset from the candle and backed by an opaque halo. */}
+        {tradeXs && (() => {
+          const exitY = apiRef.current?.series?.priceToCoordinate(exit);
+          if (exitY == null) return null;
+          return (
+            <div style={{
+              position: 'absolute', pointerEvents: 'none', zIndex: 4,
+              left: tradeXs.exit, top: exitY,
+              transform: `translate(${tradeXs.exit > (hostRef.current?.clientWidth ?? 0) - 110 ? '-100%' : '8px'}, ${isLong ? '-30px' : '12px'})`,
+              padding: '3px 7px', borderRadius: T.radius.sm,
+              background: T.bg.card, border: `1px solid ${outcomeColor}`,
+              boxShadow: `0 0 0 3px ${T.bg.tertiary}`,
+              color: outcomeColor, fontFamily: MONO, fontSize: 9.5, fontWeight: 800,
+              whiteSpace: 'nowrap',
+            }}>
+              {(exitInferred ? '~ ' : '') + L('יציאה', 'Exit')}
+            </div>
+          );
+        })()}
+
         {/* merged price-scale badges (mask the native ticks underneath) */}
         {badges.map(b => (
-          <div
-            key={b.key}
-            style={{
-              position: 'absolute', right: 0, top: b.y - 9,
+          <div key={b.key}>
+            {Math.abs(b.y - b.anchorY) > 2 && <span aria-hidden style={{
+              position: 'absolute', right: 62, top: Math.min(b.y, b.anchorY),
+              height: Math.abs(b.y - b.anchorY), borderRight: `1px solid ${b.border}`,
+              pointerEvents: 'none', zIndex: 3,
+            }} />}
+            <div style={{
+              position: 'absolute', right: 62, top: b.y - 10,
               transform: 'translateZ(0)',
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '2px 6px',
@@ -450,6 +537,7 @@ export function TradeReplayChart({
           >
             <span style={{ opacity: 0.85 }}>{b.title}</span>
             <span>{b.price}</span>
+            </div>
           </div>
         ))}
 

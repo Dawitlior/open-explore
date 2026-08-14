@@ -84,6 +84,14 @@ function splitCrypto(sym: string): { base: string; quote: string } | null {
   return null;
 }
 
+/** Extract the crypto base from a full TradingView/Binance symbol. */
+export function cryptoBase(rawSymbol: string): string | null {
+  const flat = clean(rawSymbol).replace(/^BINANCE:/, '').replace(/[-_/:]/g, '');
+  const pair = splitCrypto(flat);
+  if (pair) return pair.base;
+  return CRYPTO.has(flat) ? flat : null;
+}
+
 export function classify(rawSymbol: string): AssetClass {
   const s = clean(rawSymbol);
   if (!s) return 'unknown';
@@ -109,7 +117,19 @@ export function resolveSymbol(rawSymbol: string): ResolvedSymbol {
   const klineSymbol = assetClass === 'crypto' ? `${base}USDT` : null;
 
   if (override) {
-    return { raw, assetClass, tvSymbol: override, klineSymbol, overridden: true };
+    // Never let a stale/corrupt crypto override make the label contradict the
+    // candles. An override may change venue/quote, but not the traded asset.
+    const overrideIsCompatible = assetClass !== 'crypto' || cryptoBase(override) === base;
+    if (overrideIsCompatible) {
+      const overrideBase = assetClass === 'crypto' ? cryptoBase(override) : null;
+      return {
+        raw,
+        assetClass,
+        tvSymbol: override,
+        klineSymbol: overrideBase ? `${overrideBase}USDT` : klineSymbol,
+        overridden: true,
+      };
+    }
   }
 
   let tvSymbol: string;
