@@ -25,8 +25,9 @@ Regardless of cause, add a **sanity guard**: if the trade's entry price is outsi
 
 Replace the straight Entry→Exit line with the desk-standard rendering:
 
-- A translucent red band between Entry and Stop across the trade window (risk zone).
-- A translucent green band between Entry and the exit/target across the same window (reward zone).
+- Red band = Entry ↔ Stop, always (risk zone). Drawn only when a stop exists.
+- Green band = Entry ↔ **Target**, and only when the trade has a stored target. No target = no green band. The exit price is never used to draw a reward zone (on this trade Exit equals Stop, so a green band there would duplicate the red one).
+- Both bands are clipped to the `entryTime → exitTime` window — they never stretch across the whole canvas.
 - Entry and Exit stay as arrow/dot markers on the actual candles.
 - The old diagonal becomes an optional toggle, off by default.
 
