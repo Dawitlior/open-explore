@@ -266,10 +266,10 @@ export function TradeDetailModal({
                   className="orca-focus"
                   style={{
                     width: isMobile ? 34 : 38, height: isMobile ? 34 : 38,
-                    borderRadius: 12,
-                    border: `1px solid ${T.border.subtle}`,
-                    background: T.bg.tertiary, color: T.text.muted,
-                    cursor: 'pointer', fontSize: 20, lineHeight: 1,
+                    borderRadius: T.radius.md,
+                    border: `1px solid ${T.border.medium}`,
+                    background: T.bg.card, color: T.text.primary,
+                    cursor: 'pointer', fontSize: 20, lineHeight: 1, fontWeight: 700,
                     transition: reducedMotion ? 'none' : 'all .18s ease',
                   }}
                 >×</button>
