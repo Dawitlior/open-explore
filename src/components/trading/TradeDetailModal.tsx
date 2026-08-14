@@ -5,6 +5,8 @@ import type { TradingTheme } from '@/lib/trading-theme';
 import { getEffectiveR } from '@/lib/r-multiple';
 import { useVisualPrefs, glowAlpha } from '@/lib/visual-prefs';
 import { infoColor, neutralRamp } from '@/lib/semantic-color';
+import { formatHeaderInZone, useDisplayTimeZone } from '@/lib/market/display-timezone';
+
 
 const TradeChartPanel = lazy(() => import('./chart/TradeChartPanel'));
 const TradeMiniChart = lazy(() => import('./chart/TradeMiniChart'));
@@ -49,7 +51,9 @@ export function TradeDetailModal({
   onNavigate, position, canPrev = false, canNext = false, onSaveNotes,
 }: Props) {
   const { glow, highContrast, reducedMotion } = useVisualPrefs();
+  const displayTz = useDisplayTimeZone();
   const [tab, setTab] = useState<DossierTab>('overview');
+
   const [noteDraft, setNoteDraft] = useState(trade.comments || '');
   const [noteEditing, setNoteEditing] = useState(false);
   const [noteSaving, setNoteSaving] = useState(false);
@@ -70,9 +74,10 @@ export function TradeDetailModal({
     ? T.bg.secondary
     : `radial-gradient(120% 160% at ${isRTL ? '100%' : '0%'} 0%, ${g(sideColor, 0.14)}, transparent 55%), radial-gradient(90% 140% at ${isRTL ? '0%' : '100%'} 0%, ${g(outcomeColor, 0.09)}, transparent 60%)`;
 
-  const dateLabel = new Date(trade.date).toLocaleDateString(isRTL ? 'he-IL' : 'en-US', {
-    weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
-  });
+  // One source of truth for time rendering across the dossier (header, chart
+  // axis, crosshair and marker labels all format through this helper).
+  const dateLabel = formatHeaderInZone(new Date(trade.date).getTime(), displayTz, isRTL ? 'he-IL' : 'en-GB');
+
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

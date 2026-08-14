@@ -37,6 +37,16 @@ import { i18n as i18nStrings } from '@/lib/trading-i18n';
 import { PortfolioSwitcher } from './PortfolioSwitcher';
 import { DisplayModeToggle } from './DisplayModeToggle';
 import { ModeSwitch } from './ModeSwitch';
+import { setDisplayTimeZone, useDisplayTimeZone, zoneOffsetLabel } from '@/lib/market/display-timezone';
+
+/** Common desks + the browser-detected zone, so the list is never empty. */
+const TZ_OPTIONS = Array.from(new Set([
+  (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return 'UTC'; } })(),
+  'UTC', 'Asia/Jerusalem', 'Europe/London', 'Europe/Berlin', 'America/New_York',
+  'America/Chicago', 'America/Los_Angeles', 'Asia/Dubai', 'Asia/Tokyo',
+  'Asia/Singapore', 'Asia/Hong_Kong', 'Australia/Sydney',
+].filter(Boolean)));
+
 
 interface SettingsHubProps {
   T: TradingTheme;
@@ -108,6 +118,8 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
   const goBack = () => { if (canGoBack) setHistoryIdx(historyIdx - 1); };
   const goFwd = () => { if (canGoFwd) setHistoryIdx(historyIdx + 1); };
   const isMobileHook = useIsMobile();
+  const displayTz = useDisplayTimeZone();
+
   // Settings uses a stricter breakpoint: macOS dual-column on ≥1024px, iOS layout below.
   const [isMobile, setIsMobile] = useState<boolean>(() => typeof window !== 'undefined' ? window.innerWidth < 1024 : false);
   useEffect(() => {
@@ -900,6 +912,33 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                     })}
                   </div>
                 </div>
+
+                <div style={card}>
+                  <h3 style={sectionTitle}><Globe size={14} /> {t('אזור זמן', 'Timezone')}</h3>
+                  <p style={sectionHint}>
+                    {t('כל הזמנים בפלטפורמה (גרפים, כניסות ויציאות) מוצגים באזור הזה. הנתונים עצמם נשמרים ב-UTC ואינם משתנים.',
+                      'Every time in the platform (charts, entries and exits) renders in this zone. Stored data stays UTC and is never mutated.')}
+                  </p>
+                  <select
+                    value={displayTz}
+                    onChange={e => setDisplayTimeZone(e.target.value)}
+                    style={{
+                      width: '100%', padding: '12px 14px', borderRadius: T.radius.md,
+                      background: T.bg.primary, border: `1px solid ${T.border.subtle}`,
+                      color: T.text.primary, fontSize: 13, fontWeight: 700, fontFamily: sans,
+                    }}
+                  >
+                    {TZ_OPTIONS.map(tz => (
+                      <option key={tz} value={tz}>{tz}</option>
+                    ))}
+                  </select>
+                  <div style={{ marginTop: 8, fontSize: 11, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>
+                    {t(`השעות מוצגות ב-${displayTz} (${zoneOffsetLabel(Date.now(), displayTz)})`,
+                      `Times shown in ${displayTz} (${zoneOffsetLabel(Date.now(), displayTz)})`)}
+                  </div>
+                </div>
+
+
 
                 <div style={card}>
                   <h3 style={sectionTitle}><Eye size={14} /> {t('מצב פרטיות', 'Privacy mode')}</h3>

@@ -9,8 +9,11 @@ import { infoColor, neutralRamp } from '@/lib/semantic-color';
 import {
   getExitTimeOverride, inferExitTime, setExitTimeOverride, toLocalInput, tradeExitMs,
 } from '@/lib/market/exit-time';
+import { formatHeaderInZone, useDisplayTimeZone } from '@/lib/market/display-timezone';
+import type { ExitState } from './TradeReplayChart';
 
 const TradeReplayChart = lazy(() => import('./TradeReplayChart'));
+
 
 interface Props {
   T: TradingTheme;
@@ -66,11 +69,18 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
     resolved.klineSymbol, interval, win, true,
   );
 
+  const timeZone = useDisplayTimeZone();
+
+  /** Exit time is exactly one of: exact | inferred | unknown. */
   const inferredExitSec = useMemo(
-    () => (exitMs ? Math.floor(exitMs / 1000) : inferExitTime(candles, trade.exit, entryMs)),
-    [candles, exitMs, trade.exit, entryMs],
+    () => (exitMs ? null : inferExitTime(candles, trade.exit, entryMs, trade.direction === 'Long', 500)),
+    [candles, exitMs, trade.exit, trade.direction, entryMs],
   );
-  const exitInferred = !exitMs && inferredExitSec != null;
+  const exitSec = exitMs ? Math.floor(exitMs / 1000) : inferredExitSec;
+  const exitState: ExitState = exitMs ? 'exact' : inferredExitSec != null ? 'inferred' : 'unknown';
+  const [noticeDismissed, setNoticeDismissed] = useState(false);
+  useEffect(() => { setNoticeDismissed(false); }, [trade.id]);
+
 
   /** Sanity guard: the entry price should live somewhere near the fetched candles. */
   const symbolMismatch = useMemo(() => {
@@ -235,15 +245,21 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
       ) : (
         <div style={{
           display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
-          fontSize: 10.5, lineHeight: 1.5, color: exitMs ? T.text.muted : T.state.warn,
+          fontSize: 10.5, lineHeight: 1.5,
+          color: exitState === 'exact' ? T.text.muted : exitState === 'inferred' ? T.state.warn : T.text.muted,
+          ...(exitState === 'inferred' && !noticeDismissed
+            ? { padding: '6px 9px', borderRadius: T.radius.sm, border: `1px solid ${T.state.warn}44`, background: `${T.state.warn}10` }
+            : null),
         }}>
           <span>
-            {exitMs
-              ? `${L('זמן יציאה', 'Exit time')}: ${new Date(exitMs).toLocaleString(isRTL ? 'he-IL' : 'en-US')}`
-              : exitInferred
-                ? L('זמן היציאה הוערך לפי הנר הראשון שנגע במחיר היציאה.',
-                    'Exit time inferred from the first candle touching the exit price.')
-                : L('זמן היציאה לא תועד.', 'No exit time recorded.')}
+            {exitState === 'exact'
+              ? `${L('זמן יציאה', 'Exit time')}: ${formatHeaderInZone(exitMs as number, timeZone, isRTL ? 'he-IL' : 'en-GB')}`
+              : exitState === 'inferred'
+                ? (noticeDismissed
+                    ? `~ ${L('זמן יציאה משוער', 'Exit time (approx.)')}: ${formatHeaderInZone((exitSec as number) * 1000, timeZone, isRTL ? 'he-IL' : 'en-GB')}`
+                    : L('זמן היציאה הוערך לפי הנר הראשון שנגע במחיר היציאה (תצוגה בלבד — לא נשמר).',
+                        'Exit time inferred from the first candle touching the exit price (display only — never saved).'))
+                : L('זמן היציאה אינו זמין', 'Exit time unavailable')}
           </span>
           <button
             onClick={() => setEditExit(true)}
@@ -253,8 +269,19 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
               color: infoColor(T), fontSize: 10.5, fontWeight: 700, textDecoration: 'underline',
             }}
           >
-            {exitMs ? L('ערוך', 'Edit') : L('הוסף', 'Add')}
+            {exitState === 'exact' ? L('ערוך', 'Edit') : L('הוסף', 'Add')}
           </button>
+          {exitState === 'inferred' && !noticeDismissed && (
+            <button
+              onClick={() => setNoticeDismissed(true)}
+              className="orca-focus"
+              aria-label={L('סגור הודעה', 'Dismiss notice')}
+              style={{
+                background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                color: T.text.muted, fontSize: 10.5, textDecoration: 'underline',
+              }}
+            >{L('הבנתי', 'Dismiss')}</button>
+          )}
           {localOverride && !recordedExitMs && (
             <button
               onClick={() => { setExitTimeOverride(trade.id, null); setLocalOverride(null); }}
@@ -267,6 +294,8 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
           )}
         </div>
       )}
+
+
 
 
       {/* chart */}
@@ -288,8 +317,10 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
               pnl={Number.isFinite(trade.pnl) ? trade.pnl : null}
               isLong={trade.direction === 'Long'}
               entryTime={Math.floor(entryMs / 1000)}
-              exitTime={inferredExitSec ?? undefined}
-              exitInferred={exitInferred}
+              exitTime={exitSec ?? undefined}
+              exitState={exitState}
+              timeZone={timeZone}
+
               height={height}
               reducedMotion={reducedMotion}
               isRTL={isRTL}
