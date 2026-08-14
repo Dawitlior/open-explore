@@ -10,10 +10,12 @@ import { createPortal } from 'react-dom';
 import { Switch } from '@/components/ui/switch';
 import { useCookieConsent, ConsentChoices, DEFAULT_CHOICES } from '@/hooks/use-cookie-consent';
 import { useLang } from '@/hooks/use-lang';
-import { Shield, BarChart3, Settings2, Megaphone, X } from 'lucide-react';
+import { Shield, BarChart3, Settings2, Megaphone, X, Lock } from 'lucide-react';
 import { SURF, JC } from '@/lib/neon-palette';
 
 type Props = { open: boolean; onClose: () => void };
+
+const MONO = "'IBM Plex Mono', ui-monospace, monospace";
 
 export default function CookiePreferencesModal({ open, onClose }: Props) {
   const { consent, save } = useCookieConsent();
@@ -51,7 +53,18 @@ export default function CookiePreferencesModal({ open, onClose }: Props) {
       desc: ['התאמת תוכן ומודעות (אם וכאשר נשתמש).', 'Content/ad personalization (if/when used).'] },
   ];
 
+  const enabledCount = cats.filter(c => (c.locked ? true : Boolean(choices[c.id]))).length;
   const handleSave = async () => { await save(choices); onClose(); };
+  const setAll = (v: boolean) =>
+    setChoices({ essential: true, analytics: v, functional: v, marketing: v });
+
+  const ghostBtn: React.CSSProperties = {
+    padding: '11px 20px', borderRadius: 8,
+    background: 'transparent', border: `1px solid ${SURF.border}`,
+    color: SURF.text2, fontFamily: 'inherit',
+    fontSize: 12, fontWeight: 600, letterSpacing: '0.04em', cursor: 'pointer',
+    transition: 'border-color .18s ease, color .18s ease, background .18s ease',
+  };
 
   return createPortal(
     <div
@@ -61,68 +74,152 @@ export default function CookiePreferencesModal({ open, onClose }: Props) {
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0, zIndex: 100060,
-        background: 'rgba(3,8,18,0.78)', backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
+        background: SURF.scrim,
+        backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
         display: 'grid', placeItems: 'center', padding: 16,
-        animation: 'fadeIn 180ms ease',
-        fontFamily: "'Poppins', system-ui, sans-serif",
+        animation: 'orca-cp-fade 200ms ease both',
+        fontFamily: "'Poppins', 'Heebo', system-ui, sans-serif",
       }}
     >
+      <style>{`
+        @keyframes orca-cp-fade { from { opacity:0; } to { opacity:1; } }
+        @keyframes orca-cp-pop { from { opacity:0; transform: translateY(14px) scale(.985); } to { opacity:1; transform:none; } }
+        .orca-cp-row { transition: border-color .18s ease, background .18s ease; }
+        .orca-cp-row:hover { border-color: ${SURF.borderStrong}; background: ${SURF.card2}; }
+        .orca-cp-ghost:hover { border-color: ${SURF.borderStrong} !important; color: ${SURF.text1} !important; background: ${SURF.card2} !important; }
+        .orca-cp-primary { transition: filter .18s ease, transform .12s ease; }
+        .orca-cp-primary:hover { filter: brightness(1.08); transform: translateY(-1px); }
+        .orca-cp-scroll::-webkit-scrollbar { width: 6px; }
+        .orca-cp-scroll::-webkit-scrollbar-thumb { background: ${SURF.border}; border-radius: 999px; }
+      `}</style>
+
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
           position: 'relative',
-          width: '100%', maxWidth: 540, maxHeight: '90vh', overflow: 'auto',
+          width: '100%', maxWidth: 560, maxHeight: '88vh',
+          display: 'flex', flexDirection: 'column',
           background: SURF.panelGradient,
-          border: '1px solid rgba(0,242,255,0.35)',
-          borderRadius: 18, padding: '24px 22px',
+          border: `1px solid ${SURF.border}`,
+          borderRadius: 16,
           boxShadow: SURF.shadow,
           color: SURF.text1,
+          overflow: 'hidden',
+          animation: 'orca-cp-pop 300ms cubic-bezier(0.22,1,0.36,1) both',
         }}
       >
-        <button
-          onClick={onClose}
-          aria-label={t('סגור', 'Close')}
-          style={{
-            position: 'absolute', top: 12, [isRTL ? 'left' : 'right']: 12,
-            width: 32, height: 32, borderRadius: 8,
-            background: 'transparent', border: `1px solid ${SURF.border}`,
-            color: SURF.text2, cursor: 'pointer',
-            display: 'grid', placeItems: 'center',
-          } as any}
-        >
-          <X size={16} />
-        </button>
+        <div aria-hidden style={{
+          position: 'absolute', top: 0, insetInline: 0, height: 1,
+          background: `linear-gradient(90deg, transparent, ${JC.blue}, transparent)`, opacity: 0.7,
+        }} />
 
-        <h2 style={{ margin: '0 0 4px', fontSize: 18, fontWeight: 700, color: SURF.text1 }}>
-          {t('העדפות עוגיות', 'Cookie preferences')}
-        </h2>
-        <p style={{ margin: '0 0 16px', fontSize: 13, color: SURF.text2 }}>
-          {t('בחר אילו קטגוריות לאפשר. ניתן לשנות בכל עת.', 'Choose which categories to allow. You can change this anytime.')}
-        </p>
+        {/* Header */}
+        <div style={{
+          padding: '20px 22px 16px',
+          borderBottom: `1px solid ${SURF.border}`,
+          display: 'flex', alignItems: 'flex-start', gap: 12,
+        }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{
+              fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.26em',
+              textTransform: 'uppercase', color: SURF.text3, marginBottom: 6,
+            }}>
+              {t('בקרת פרטיות', 'Privacy control')}
+            </div>
+            <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700, letterSpacing: '-0.01em', color: SURF.text1 }}>
+              {t('העדפות עוגיות', 'Cookie preferences')}
+            </h2>
+            <p style={{ margin: '6px 0 0', fontSize: 12.5, lineHeight: 1.55, color: SURF.text2 }}>
+              {t('בחר אילו קטגוריות לאפשר. ניתן לשנות בכל עת.', 'Choose which categories to allow. You can change this anytime.')}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            aria-label={t('סגור', 'Close')}
+            className="orca-cp-ghost"
+            style={{
+              width: 30, height: 30, borderRadius: 8, flexShrink: 0,
+              background: 'transparent', border: `1px solid ${SURF.border}`,
+              color: SURF.text3, cursor: 'pointer',
+              display: 'grid', placeItems: 'center',
+            }}
+          >
+            <X size={15} />
+          </button>
+        </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {/* Quick actions */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          gap: 10, padding: '10px 22px',
+          borderBottom: `1px solid ${SURF.border}`,
+          background: SURF.card2,
+        }}>
+          <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.16em', color: SURF.text3, textTransform: 'uppercase' }}>
+            {enabledCount}/{cats.length} {t('פעילות', 'enabled')}
+          </span>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="button" onClick={() => setAll(false)} className="orca-cp-ghost"
+              style={{ ...ghostBtn, padding: '6px 12px', fontSize: 11 }}>
+              {t('בטל הכל', 'Disable all')}
+            </button>
+            <button type="button" onClick={() => setAll(true)} className="orca-cp-ghost"
+              style={{ ...ghostBtn, padding: '6px 12px', fontSize: 11 }}>
+              {t('אפשר הכל', 'Enable all')}
+            </button>
+          </div>
+        </div>
+
+        {/* Categories */}
+        <div className="orca-cp-scroll" style={{
+          flex: 1, overflowY: 'auto', padding: 16,
+          display: 'flex', flexDirection: 'column', gap: 10,
+        }}>
           {cats.map(c => {
             const Icon = c.icon;
+            const on = c.locked ? true : Boolean(choices[c.id]);
             return (
-              <div key={c.id} style={{
+              <div key={c.id} className="orca-cp-row" style={{
                 display: 'flex', alignItems: 'flex-start', gap: 12,
-                padding: 12, borderRadius: 10,
-                border: `1px solid ${SURF.border}`,
-                background: SURF.card2,
+                padding: 14, borderRadius: 12,
+                border: `1px solid ${on && !c.locked ? SURF.borderStrong : SURF.border}`,
+                background: SURF.card,
               }}>
-                <Icon size={18} style={{ color: JC.blue, flexShrink: 0, marginTop: 2 }} aria-hidden="true" />
+                <div style={{
+                  width: 34, height: 34, borderRadius: 9, flexShrink: 0,
+                  display: 'grid', placeItems: 'center',
+                  background: SURF.card2, border: `1px solid ${SURF.border}`,
+                  color: on ? JC.blue : SURF.text3,
+                }}>
+                  <Icon size={16} aria-hidden="true" />
+                </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                    <h3 style={{ margin: 0, fontSize: 13.5, fontWeight: 600, color: SURF.text1 }}>{t(c.title[0], c.title[1])}</h3>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                    <h3 style={{
+                      margin: 0, fontSize: 13.5, fontWeight: 600, color: SURF.text1,
+                      display: 'flex', alignItems: 'center', gap: 7,
+                    }}>
+                      {t(c.title[0], c.title[1])}
+                      {c.locked && (
+                        <span style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 4,
+                          fontFamily: MONO, fontSize: 9, letterSpacing: '0.14em',
+                          textTransform: 'uppercase', color: SURF.text3,
+                          border: `1px solid ${SURF.border}`, borderRadius: 999,
+                          padding: '2px 7px',
+                        }}>
+                          <Lock size={9} /> {t('קבוע', 'Always on')}
+                        </span>
+                      )}
+                    </h3>
                     <Switch
-                      checked={c.locked ? true : Boolean(choices[c.id])}
+                      checked={on}
                       disabled={c.locked}
                       onCheckedChange={(v) => setChoices(prev => ({ ...prev, [c.id]: v }))}
                       aria-label={t(c.title[0], c.title[1])}
                     />
                   </div>
-                  <p style={{ margin: '4px 0 0', fontSize: 12, color: SURF.text2, lineHeight: 1.5 }}>
+                  <p style={{ margin: '5px 0 0', fontSize: 12, color: SURF.text2, lineHeight: 1.55 }}>
                     {t(c.desc[0], c.desc[1])}
                   </p>
                 </div>
@@ -131,29 +228,26 @@ export default function CookiePreferencesModal({ open, onClose }: Props) {
           })}
         </div>
 
-        <div style={{ marginTop: 18, display: 'flex', gap: 10, justifyContent: 'flex-end', flexDirection: isRTL ? 'row-reverse' : 'row' }}>
-          <button
-            type="button"
-            onClick={onClose}
-            style={{
-              padding: '10px 20px', borderRadius: 10,
-              background: 'transparent', border: `1px solid ${SURF.border}`,
-              color: SURF.text2, fontFamily: 'inherit',
-              fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
-            }}
-          >
+        {/* Footer */}
+        <div style={{
+          padding: '14px 20px',
+          borderTop: `1px solid ${SURF.border}`,
+          background: SURF.card2,
+          display: 'flex', gap: 10, justifyContent: 'flex-end', alignItems: 'center',
+        }}>
+          <button type="button" onClick={onClose} className="orca-cp-ghost" style={ghostBtn}>
             {t('ביטול', 'Cancel')}
           </button>
           <button
             type="button"
             onClick={handleSave}
+            className="orca-cp-primary"
             style={{
-              padding: '10px 22px', borderRadius: 10,
-              background: `linear-gradient(135deg, ${JC.blue}, ${JC.blue})`,
-              border: `1px solid ${JC.blue}`,
+              padding: '11px 24px', borderRadius: 8,
+              background: JC.blue, border: `1px solid ${JC.blue}`,
               color: JC.onAccent, fontFamily: 'inherit',
-              fontSize: 12.5, fontWeight: 800, cursor: 'pointer',
-              boxShadow: '0 6px 20px rgba(0,242,255,0.30)',
+              fontSize: 12, fontWeight: 700, letterSpacing: '0.04em', cursor: 'pointer',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
             }}
           >
             {t('שמור העדפות', 'Save preferences')}
