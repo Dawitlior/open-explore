@@ -72,8 +72,18 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
   );
   const exitInferred = !exitMs && inferredExitSec != null;
 
+  /** Sanity guard: the entry price should live somewhere near the fetched candles. */
+  const symbolMismatch = useMemo(() => {
+    if (!candles?.length || !Number.isFinite(trade.entry) || trade.entry <= 0) return false;
+    const lo = Math.min(...candles.map(c => c.low));
+    const hi = Math.max(...candles.map(c => c.high));
+    if (!Number.isFinite(lo) || !Number.isFinite(hi) || lo <= 0) return false;
+    return trade.entry < lo / 3 || trade.entry > hi * 3;
+  }, [candles, trade.entry]);
+
   const height = isMobile ? 300 : 420;
   const L = (he: string, en: string) => (isRTL ? he : en);
+
 
   const chip = (active: boolean): React.CSSProperties => ({
     padding: '5px 11px',
