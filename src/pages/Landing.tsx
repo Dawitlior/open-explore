@@ -1,3 +1,4 @@
+import Seo from '@/components/Seo';
 /**
  * ORCA INVESTMENT — Landing v2 (Master Plan rebuild)
  * Stage 1: Design System + Navbar + Hero.
@@ -606,6 +607,11 @@ const Landing: React.FC = () => {
   const Arrow = isRTL ? ArrowLeft : ArrowRight;
 
   return (
+      <Seo
+        title={isRTL ? 'Orca Investment — יומן מסחר חכם ואוטומטי' : 'Orca Investment — Smart, Automated Trading Journal'}
+        description={isRTL ? 'Orca Investment — יומן מסחר חכם שמרכז, מנתח ונותן סטטיסטיקות מדויקות לסוחר. חינם בתקופת ההשקה.' : 'Orca Investment — a smart trading journal that centralizes, analyzes and delivers precise statistics for traders. Free during launch.'}
+        path="/welcome"
+      />
     <>
       <style>{orcaCss}</style>
       <div className="orca-landing orca-bg-grid" dir={isRTL ? 'rtl' : 'ltr'}>

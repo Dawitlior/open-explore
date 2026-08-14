@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useLang } from '@/hooks/use-lang';
 import {
+import Seo from '@/components/Seo';
   LEGAL_TITLE_HE,
   LEGAL_TITLE_EN,
   LEGAL_SECTIONS_HE,
@@ -49,6 +50,11 @@ const Terms = () => {
   const footer = isRTL ? LEGAL_FOOTER_HE : LEGAL_FOOTER_EN;
 
   return (
+      <Seo
+        title={isRTL ? 'תנאי שימוש — Orca' : 'Terms of Service — Orca'}
+        description={isRTL ? 'תנאי השימוש בפלטפורמת Orca — הרשאות המנוי, אחריות המשתמש והגבלות השימוש בשירות.' : 'The terms governing use of the Orca platform — subscription rights, user responsibilities and service limitations.'}
+        path="/terms"
+      />
     <main
       dir={isRTL ? 'rtl' : 'ltr'}
       lang={isRTL ? 'he' : 'en'}

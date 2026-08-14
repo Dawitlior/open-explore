@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useLang } from '@/hooks/use-lang';
+import Seo from '@/components/Seo';
 
 type Section = { heading: string; body: string | string[] };
 
@@ -122,6 +123,11 @@ const Accessibility = () => {
   const updatedLabel = isRTL ? 'עדכון אחרון:' : 'Last updated:';
 
   return (
+      <Seo
+        title={isRTL ? 'הצהרת נגישות — Orca' : 'Accessibility Statement — Orca'}
+        description={isRTL ? 'הצהרת הנגישות של Orca — תקני הנגישות שאנו מיישמים בפלטפורמה ודרכי הפנייה לתמיכה בנגישות.' : 'Orca's accessibility statement — the standards we follow across the platform and how to reach our accessibility support.'}
+        path="/accessibility"
+      />
     <main
       dir={isRTL ? 'rtl' : 'ltr'}
       lang={isRTL ? 'he' : 'en'}

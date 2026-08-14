@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useLang } from '@/hooks/use-lang';
 import {
+import Seo from '@/components/Seo';
   PRIVACY_TITLE_HE,
   PRIVACY_TITLE_EN,
   PRIVACY_SECTIONS_HE,
@@ -21,6 +22,11 @@ const Privacy = () => {
   }, [isRTL]);
 
   return (
+      <Seo
+        title={isRTL ? 'מדיניות פרטיות — Orca' : 'Privacy Policy — Orca'}
+        description={isRTL ? 'איך Orca אוספת, שומרת ומגנה על נתוני המסחר והחשבון שלך, ואילו זכויות פרטיות עומדות לרשותך.' : 'How Orca collects, stores and protects your trading and account data, and the privacy rights available to you.'}
+        path="/privacy"
+      />
     <main
       dir={isRTL ? 'rtl' : 'ltr'}
       lang={isRTL ? 'he' : 'en'}
