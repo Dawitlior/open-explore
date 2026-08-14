@@ -38,16 +38,34 @@ export function setExitTimeOverride(tradeId: number | string, ms: number | null)
   } catch { /* storage disabled */ }
 }
 
-/** First candle at/after entry whose high–low range contains the exit price (unix seconds). */
-export function inferExitTime(candles: Candle[] | null, exit: number, entryMs: number): number | null {
-  if (!candles?.length || !Number.isFinite(exit)) return null;
+/**
+ * Direction-aware, forward-only, bounded inference (unix seconds).
+ *
+ * Long  → first candle at/after entry whose `low  <= exitPrice`.
+ * Short → first candle at/after entry whose `high >= exitPrice`.
+ *
+ * Display-only: the result is never written back to the trade record, and it is
+ * recomputed per interval (5m and 1h legitimately land on different bars).
+ * Returns `null` (→ `unknown`) when nothing is touched within `maxBars`.
+ */
+export function inferExitTime(
+  candles: Candle[] | null,
+  exit: number,
+  entryMs: number,
+  isLong = true,
+  maxBars = 500,
+): number | null {
+  if (!candles?.length || !Number.isFinite(exit) || exit <= 0) return null;
   const entrySec = Math.floor(entryMs / 1000);
+  let scanned = 0;
   for (const c of candles) {
     if (c.time < entrySec) continue;
-    if (exit >= Math.min(c.low, c.high) && exit <= Math.max(c.low, c.high)) return c.time;
+    if (++scanned > maxBars) return null;
+    if (isLong ? c.low <= exit : c.high >= exit) return c.time;
   }
   return null;
 }
+
 
 /** `2026-08-07T16:40` value for <input type="datetime-local"> in local time. */
 export function toLocalInput(ms: number): string {
