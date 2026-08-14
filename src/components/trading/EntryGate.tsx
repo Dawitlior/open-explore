@@ -248,7 +248,7 @@ export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps
           </div>
 
           <p style={{
-            marginTop: 26, marginBottom: 0, fontSize: 11.5, color: CLAY_MUTED,
+            marginTop: 26, marginBottom: 0, fontSize: 12, color: '#c8d6d3', fontWeight: 500,
             textShadow: '0 1px 0 rgba(0,0,0,0.5)',
             animation: anim('orca-clay-rise', 700),
           }}>
