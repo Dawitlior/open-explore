@@ -2139,7 +2139,7 @@ const Index = () => {
         )}
 
         <div className={isMobile ? 'orca-mobile-pad-bottom' : ''} style={{ padding: isMobile ? '12px 10px' : '20px 24px', maxWidth: 1400, width: '100%', minWidth: 0, boxSizing: 'border-box', overflowX: 'hidden', margin: '0 auto' }}>
-          {trades.length === 0 && page !== 'weekly-review' && (
+          {trades.length === 0 && page !== 'weekly-review' && page !== 'economic-radar' && (
             <EmptyStateImportCTA
               T={T}
               isRTL={isRTL}
