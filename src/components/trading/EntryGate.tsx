@@ -218,8 +218,8 @@ export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps
           </h1>
 
           <p style={{
-            fontSize: 11.5, color: CLAY_MUTED, letterSpacing: '0.32em', textTransform: 'uppercase',
-            marginTop: 16, marginBottom: 40, textShadow: '0 1px 0 rgba(0,0,0,0.55)',
+            fontSize: 12, color: '#d3e0dd', fontWeight: 500, letterSpacing: '0.3em', textTransform: 'uppercase',
+            marginTop: 16, marginBottom: 40, textShadow: '0 1px 2px rgba(0,0,0,0.65)',
             animation: anim('orca-clay-rise', 430),
           }}>
             {isRTL ? 'מסוף מודיעין מסחרי' : 'Trading Intelligence Terminal'}
