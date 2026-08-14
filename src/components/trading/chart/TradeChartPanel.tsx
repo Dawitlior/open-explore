@@ -66,11 +66,18 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
     resolved.klineSymbol, interval, win, true,
   );
 
+  const timeZone = useDisplayTimeZone();
+
+  /** Exit time is exactly one of: exact | inferred | unknown. */
   const inferredExitSec = useMemo(
-    () => (exitMs ? Math.floor(exitMs / 1000) : inferExitTime(candles, trade.exit, entryMs)),
-    [candles, exitMs, trade.exit, entryMs],
+    () => (exitMs ? null : inferExitTime(candles, trade.exit, entryMs, trade.direction === 'Long', 500)),
+    [candles, exitMs, trade.exit, trade.direction, entryMs],
   );
-  const exitInferred = !exitMs && inferredExitSec != null;
+  const exitSec = exitMs ? Math.floor(exitMs / 1000) : inferredExitSec;
+  const exitState: ExitState = exitMs ? 'exact' : inferredExitSec != null ? 'inferred' : 'unknown';
+  const [noticeDismissed, setNoticeDismissed] = useState(false);
+  useEffect(() => { setNoticeDismissed(false); }, [trade.id]);
+
 
   /** Sanity guard: the entry price should live somewhere near the fetched candles. */
   const symbolMismatch = useMemo(() => {
