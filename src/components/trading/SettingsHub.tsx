@@ -118,6 +118,8 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
   const goBack = () => { if (canGoBack) setHistoryIdx(historyIdx - 1); };
   const goFwd = () => { if (canGoFwd) setHistoryIdx(historyIdx + 1); };
   const isMobileHook = useIsMobile();
+  const displayTz = useDisplayTimeZone();
+
   // Settings uses a stricter breakpoint: macOS dual-column on ≥1024px, iOS layout below.
   const [isMobile, setIsMobile] = useState<boolean>(() => typeof window !== 'undefined' ? window.innerWidth < 1024 : false);
   useEffect(() => {
