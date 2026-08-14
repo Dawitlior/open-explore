@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { JC, SURF, isLightScheme } from '@/lib/neon-palette';
+import { SURF } from '@/lib/neon-palette';
 import { OrcaBootLoader } from '@/components/OrcaBootLoader';
-import orcaWire from '@/assets/orca-wire.png';
+import orcaClay from '@/assets/orca-clay.png';
+
 
 interface EntryGateProps {
   onEnter: () => void;
