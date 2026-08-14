@@ -2,7 +2,7 @@ import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
 import {
-  INTERVALS, type Interval, pickInterval, resolveSymbol, setSymbolOverride,
+  INTERVALS, type Interval, cryptoBase, pickInterval, resolveSymbol, setSymbolOverride,
 } from '@/lib/market/symbol-resolver';
 import { frameWindow, useTradeCandles } from '@/lib/market/use-trade-candles';
 import { infoColor, neutralRamp } from '@/lib/semantic-color';
@@ -74,12 +74,16 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
 
   /** Sanity guard: the entry price should live somewhere near the fetched candles. */
   const symbolMismatch = useMemo(() => {
+    const tradeBase = cryptoBase(trade.coin);
+    const labelBase = cryptoBase(resolved.tvSymbol);
+    const feedBase = cryptoBase(resolved.klineSymbol ?? '');
+    if (tradeBase && (labelBase !== tradeBase || feedBase !== tradeBase)) return true;
     if (!candles?.length || !Number.isFinite(trade.entry) || trade.entry <= 0) return false;
     const lo = Math.min(...candles.map(c => c.low));
     const hi = Math.max(...candles.map(c => c.high));
     if (!Number.isFinite(lo) || !Number.isFinite(hi) || lo <= 0) return false;
     return trade.entry < lo / 3 || trade.entry > hi * 3;
-  }, [candles, trade.entry]);
+  }, [candles, trade.coin, trade.entry, resolved.klineSymbol, resolved.tvSymbol]);
 
   const height = isMobile ? 300 : 420;
   const L = (he: string, en: string) => (isRTL ? he : en);
