@@ -169,17 +169,14 @@ export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps
           ))}
         </div>
 
-        {/* Perimeter clay chrome — top-right sculpted bar */}
+        {/* Perimeter clay chrome — top-right minimal sculpted chip */}
         <div aria-hidden style={{
-          position: 'absolute', top: 20, insetInlineEnd: 20, maxWidth: 'min(60vw, 460px)',
-          padding: '11px 20px', borderRadius: 18, background: CLAY_SURF,
-          boxShadow: clayUp(6), color: CLAY_MUTED, fontSize: 11.5, lineHeight: 1.5,
-          textShadow: '0 1px 0 rgba(0,0,0,0.5)',
+          position: 'absolute', top: 20, insetInlineEnd: 20,
+          width: 42, height: 42, borderRadius: 16, display: 'grid', placeItems: 'center',
+          background: CLAY_SURF, boxShadow: clayUp(6), color: CLAY_MUTED, fontSize: 16,
           animation: anim('orca-clay-rise', 860),
         }}>
-          {isRTL
-            ? 'פלטפורמת המסחר המקצועית לסוחרים הישראלים — Orca Investment'
-            : 'The professional trading terminal — Orca Investment'}
+          ◎
         </div>
 
         <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '0 24px' }}>
