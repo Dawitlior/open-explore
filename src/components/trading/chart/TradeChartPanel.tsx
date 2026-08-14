@@ -122,12 +122,30 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
         </span>
         <div style={{ flex: 1 }} />
         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-          {INTERVALS.map(iv => (
-            <button key={iv} onClick={() => setIntervalState(iv)} className="orca-focus" style={{ ...chip(interval === iv), padding: '4px 8px', fontSize: 10 }}>
-              {iv}
-            </button>
-          ))}
+          {INTERVALS.map(iv => {
+            const active = interval === iv;
+            return (
+              <button
+                key={iv}
+                onClick={() => setIntervalState(iv)}
+                aria-pressed={active}
+                className="orca-focus"
+                style={{
+                  ...chip(active),
+                  padding: '4px 8px',
+                  fontSize: 10,
+                  minWidth: 40,
+                  textAlign: 'center',
+                  background: active ? infoColor(T) : T.bg.tertiary,
+                  color: active ? T.bg.primary : T.text.muted,
+                }}
+              >
+                {iv}
+              </button>
+            );
+          })}
         </div>
+
       </div>
 
       {/* symbol line */}
