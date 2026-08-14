@@ -37,6 +37,16 @@ import { i18n as i18nStrings } from '@/lib/trading-i18n';
 import { PortfolioSwitcher } from './PortfolioSwitcher';
 import { DisplayModeToggle } from './DisplayModeToggle';
 import { ModeSwitch } from './ModeSwitch';
+import { setDisplayTimeZone, useDisplayTimeZone, zoneOffsetLabel } from '@/lib/market/display-timezone';
+
+/** Common desks + the browser-detected zone, so the list is never empty. */
+const TZ_OPTIONS = Array.from(new Set([
+  (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return 'UTC'; } })(),
+  'UTC', 'Asia/Jerusalem', 'Europe/London', 'Europe/Berlin', 'America/New_York',
+  'America/Chicago', 'America/Los_Angeles', 'Asia/Dubai', 'Asia/Tokyo',
+  'Asia/Singapore', 'Asia/Hong_Kong', 'Australia/Sydney',
+].filter(Boolean)));
+
 
 interface SettingsHubProps {
   T: TradingTheme;
