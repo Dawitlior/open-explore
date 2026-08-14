@@ -102,7 +102,9 @@ export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps
           width: '100vw', height: '100dvh',
           background: `radial-gradient(120% 90% at 50% 115%, #2f4d4a 0%, ${CLAY_BG} 45%, ${CLAY_BG_2} 100%)`,
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          fontFamily: "'Poppins', 'Inter', system-ui, sans-serif",
+          fontFamily: isRTL
+            ? "'Heebo', 'Assistant', 'Poppins', system-ui, sans-serif"
+            : "'Poppins', 'Heebo', system-ui, sans-serif",
           overflow: 'hidden',
         }}
       >
@@ -140,18 +142,35 @@ export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps
         }}>
           {candles.map((c, i) => (
             <div key={i} style={{
-              width: 'clamp(10px, 2.2vw, 26px)',
-              height: c.h,
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
               marginBottom: c.lift,
-              borderRadius: 999,
-              background: c.up
-                ? `linear-gradient(160deg, ${MINT} 0%, ${MINT_DEEP} 100%)`
-                : `linear-gradient(160deg, #2b7c7f 0%, ${TEAL} 100%)`,
-              boxShadow: '10px 12px 22px rgba(0,0,0,0.5), inset 2px 2px 5px rgba(255,255,255,0.35), inset -3px -4px 8px rgba(0,0,0,0.3)',
-              opacity: 0.75,
               transformOrigin: 'bottom',
               animation: reduced ? undefined : `orca-clay-grow 900ms cubic-bezier(0.22,1,0.36,1) ${c.d}ms both`,
-            }} />
+            }}>
+              {/* upper wick */}
+              <div style={{
+                width: 4, height: 12 + (c.h % 17), borderRadius: 999,
+                background: c.up ? MINT_DEEP : TEAL, opacity: 0.7,
+                boxShadow: 'inset 1px 1px 2px rgba(255,255,255,0.25), 2px 3px 6px rgba(0,0,0,0.45)',
+              }} />
+              {/* body */}
+              <div style={{
+                width: 'clamp(10px, 2.2vw, 26px)',
+                height: c.h,
+                borderRadius: 8,
+                background: c.up
+                  ? `linear-gradient(160deg, ${MINT} 0%, ${MINT_DEEP} 100%)`
+                  : `linear-gradient(160deg, #2b7c7f 0%, ${TEAL} 100%)`,
+                boxShadow: '10px 12px 22px rgba(0,0,0,0.5), inset 2px 2px 5px rgba(255,255,255,0.35), inset -3px -4px 8px rgba(0,0,0,0.3)',
+                opacity: 0.75,
+              }} />
+              {/* lower wick */}
+              <div style={{
+                width: 4, height: 9 + (c.h % 13), borderRadius: 999,
+                background: c.up ? MINT_DEEP : TEAL, opacity: 0.7,
+                boxShadow: 'inset 1px 1px 2px rgba(255,255,255,0.25), 2px 3px 6px rgba(0,0,0,0.45)',
+              }} />
+            </div>
           ))}
         </div>
 
@@ -169,17 +188,14 @@ export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps
           ))}
         </div>
 
-        {/* Perimeter clay chrome — top-right sculpted bar */}
+        {/* Perimeter clay chrome — top-right minimal sculpted chip */}
         <div aria-hidden style={{
-          position: 'absolute', top: 20, insetInlineEnd: 20, maxWidth: 'min(60vw, 460px)',
-          padding: '11px 20px', borderRadius: 18, background: CLAY_SURF,
-          boxShadow: clayUp(6), color: CLAY_MUTED, fontSize: 11.5, lineHeight: 1.5,
-          textShadow: '0 1px 0 rgba(0,0,0,0.5)',
+          position: 'absolute', top: 20, insetInlineEnd: 20,
+          width: 42, height: 42, borderRadius: 16, display: 'grid', placeItems: 'center',
+          background: CLAY_SURF, boxShadow: clayUp(6), color: CLAY_MUTED, fontSize: 16,
           animation: anim('orca-clay-rise', 860),
         }}>
-          {isRTL
-            ? 'פלטפורמת המסחר המקצועית לסוחרים הישראלים — Orca Investment'
-            : 'The professional trading terminal — Orca Investment'}
+          ◎
         </div>
 
         <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '0 24px' }}>
@@ -200,7 +216,7 @@ export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps
               width={1024}
               height={768}
               style={{
-                position: 'relative', width: 'min(320px, 62vw)', height: 'auto',
+                position: 'relative', width: 'min(262px, 50vw)', height: 'auto',
                 filter: 'drop-shadow(0 24px 34px rgba(0,0,0,0.55))',
                 animation: reduced ? undefined : 'orca-clay-float 8s ease-in-out infinite',
               }}
@@ -218,8 +234,8 @@ export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps
           </h1>
 
           <p style={{
-            fontSize: 11.5, color: CLAY_MUTED, letterSpacing: '0.32em', textTransform: 'uppercase',
-            marginTop: 16, marginBottom: 40, textShadow: '0 1px 0 rgba(0,0,0,0.55)',
+            fontSize: 12, color: '#d3e0dd', fontWeight: 500, letterSpacing: '0.3em', textTransform: 'uppercase',
+            marginTop: 16, marginBottom: 40, textShadow: '0 1px 2px rgba(0,0,0,0.65)',
             animation: anim('orca-clay-rise', 430),
           }}>
             {isRTL ? 'מסוף מודיעין מסחרי' : 'Trading Intelligence Terminal'}
@@ -237,7 +253,7 @@ export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps
                 borderRadius: 26,
                 color: '#0f2b25',
                 fontSize: 15, fontWeight: 700,
-                fontFamily: "'Poppins', system-ui, sans-serif",
+                fontFamily: 'inherit',
                 cursor: requested && !ready ? 'wait' : 'pointer', letterSpacing: '0.06em',
                 textShadow: '0 1px 0 rgba(255,255,255,0.45)',
                 boxShadow: '12px 14px 28px rgba(0,0,0,0.55), -6px -6px 18px rgba(255,255,255,0.06), inset 3px 3px 6px rgba(255,255,255,0.45), inset -4px -6px 12px rgba(0,0,0,0.22)',
@@ -248,7 +264,7 @@ export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps
           </div>
 
           <p style={{
-            marginTop: 26, marginBottom: 0, fontSize: 11.5, color: CLAY_MUTED,
+            marginTop: 26, marginBottom: 0, fontSize: 12, color: '#c8d6d3', fontWeight: 500,
             textShadow: '0 1px 0 rgba(0,0,0,0.5)',
             animation: anim('orca-clay-rise', 700),
           }}>
