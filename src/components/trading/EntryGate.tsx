@@ -140,18 +140,35 @@ export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps
         }}>
           {candles.map((c, i) => (
             <div key={i} style={{
-              width: 'clamp(10px, 2.2vw, 26px)',
-              height: c.h,
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
               marginBottom: c.lift,
-              borderRadius: 999,
-              background: c.up
-                ? `linear-gradient(160deg, ${MINT} 0%, ${MINT_DEEP} 100%)`
-                : `linear-gradient(160deg, #2b7c7f 0%, ${TEAL} 100%)`,
-              boxShadow: '10px 12px 22px rgba(0,0,0,0.5), inset 2px 2px 5px rgba(255,255,255,0.35), inset -3px -4px 8px rgba(0,0,0,0.3)',
-              opacity: 0.75,
               transformOrigin: 'bottom',
               animation: reduced ? undefined : `orca-clay-grow 900ms cubic-bezier(0.22,1,0.36,1) ${c.d}ms both`,
-            }} />
+            }}>
+              {/* upper wick */}
+              <div style={{
+                width: 4, height: 12 + (c.h % 17), borderRadius: 999,
+                background: c.up ? MINT_DEEP : TEAL, opacity: 0.7,
+                boxShadow: 'inset 1px 1px 2px rgba(255,255,255,0.25), 2px 3px 6px rgba(0,0,0,0.45)',
+              }} />
+              {/* body */}
+              <div style={{
+                width: 'clamp(10px, 2.2vw, 26px)',
+                height: c.h,
+                borderRadius: 8,
+                background: c.up
+                  ? `linear-gradient(160deg, ${MINT} 0%, ${MINT_DEEP} 100%)`
+                  : `linear-gradient(160deg, #2b7c7f 0%, ${TEAL} 100%)`,
+                boxShadow: '10px 12px 22px rgba(0,0,0,0.5), inset 2px 2px 5px rgba(255,255,255,0.35), inset -3px -4px 8px rgba(0,0,0,0.3)',
+                opacity: 0.75,
+              }} />
+              {/* lower wick */}
+              <div style={{
+                width: 4, height: 9 + (c.h % 13), borderRadius: 999,
+                background: c.up ? MINT_DEEP : TEAL, opacity: 0.7,
+                boxShadow: 'inset 1px 1px 2px rgba(255,255,255,0.25), 2px 3px 6px rgba(0,0,0,0.45)',
+              }} />
+            </div>
           ))}
         </div>
 
