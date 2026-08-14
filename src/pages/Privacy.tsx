@@ -2,8 +2,8 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useLang } from '@/hooks/use-lang';
-import {
 import Seo from '@/components/Seo';
+import {
   PRIVACY_TITLE_HE,
   PRIVACY_TITLE_EN,
   PRIVACY_SECTIONS_HE,

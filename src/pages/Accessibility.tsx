@@ -137,7 +137,7 @@ const Accessibility = () => {
     >
       <Seo
         title={isRTL ? 'הצהרת נגישות — Orca' : 'Accessibility Statement — Orca'}
-        description={isRTL ? 'הצהרת הנגישות של Orca — תקני הנגישות שאנו מיישמים בפלטפורמה ודרכי הפנייה לתמיכה בנגישות.' : 'Orca's accessibility statement — the standards we follow across the platform and how to reach our accessibility support.'}
+        description={isRTL ? 'הצהרת הנגישות של Orca — תקני הנגישות שאנו מיישמים בפלטפורמה ודרכי הפנייה לתמיכה בנגישות.'  : "Orca's accessibility statement — the standards we follow across the platform and how to reach our accessibility support."}
         path="/accessibility"
       />
       <article
