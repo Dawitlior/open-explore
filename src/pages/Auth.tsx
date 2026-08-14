@@ -6,6 +6,7 @@ import { lovable } from '@/integrations/lovable/index';
 import { useAuth } from '@/hooks/use-auth';
 import { translateAuthError } from '@/lib/auth-utils';
 import { toast } from 'sonner';
+import Seo from '@/components/Seo';
 
 const ORCA_LOGO_SRC = '/orca-logo.png';
 
@@ -254,6 +255,11 @@ export default function AuthPage() {
         overflow: 'hidden',
       }}
     >
+      <Seo
+        title={isRTL ? 'התחברות — Orca פלטפורמת המסחר לסוחרים מקצועיים' : 'Sign in — Orca trading platform for professional traders'}
+        description={isRTL ? 'התחברות לחשבון Orca עם Google — גישה ליומן המסחר, ניהול הסיכונים והאנליטיקה ההתנהגותית שלך.' : 'Sign in to your Orca account with Google to access your trading journal, risk management and behavioral analytics.'}
+        path="/auth"
+      />
       <style>{`
         @keyframes orca-idle-fadebg { from { opacity: 0; } to { opacity: 1; } }
         @keyframes orca-auth-rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }

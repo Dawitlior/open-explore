@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useLang } from '@/hooks/use-lang';
+import Seo from '@/components/Seo';
 import {
   PRIVACY_TITLE_HE,
   PRIVACY_TITLE_EN,
@@ -13,12 +14,8 @@ import {
 
 const Privacy = () => {
   const { isRTL, t } = useLang();
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    const prev = document.title;
-    document.title = isRTL ? `${PRIVACY_TITLE_HE} — ORCA Investment` : `${PRIVACY_TITLE_EN} — ORCA Investment`;
-    return () => { document.title = prev; };
-  }, [isRTL]);
+  // Head tags are owned by <Seo /> below.
+  useEffect(() => { window.scrollTo(0, 0); }, []);
 
   return (
     <main
@@ -32,6 +29,11 @@ const Privacy = () => {
         padding: '48px 20px',
       }}
     >
+      <Seo
+        title={isRTL ? 'מדיניות פרטיות — Orca' : 'Privacy Policy — Orca'}
+        description={isRTL ? 'איך Orca אוספת, שומרת ומגנה על נתוני המסחר והחשבון שלך, ואילו זכויות פרטיות עומדות לרשותך.' : 'How Orca collects, stores and protects your trading and account data, and the privacy rights available to you.'}
+        path="/privacy"
+      />
       <article
         style={{
           maxWidth: 880, margin: '0 auto',

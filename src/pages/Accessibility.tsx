@@ -2,20 +2,15 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useLang } from '@/hooks/use-lang';
+import Seo from '@/components/Seo';
 
 type Section = { heading: string; body: string | string[] };
 
 const Accessibility = () => {
   const { isRTL, t } = useLang();
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    const prevTitle = document.title;
-    document.title = isRTL
-      ? 'הצהרת נגישות — Orca'
-      : 'Accessibility Statement — Orca';
-    return () => { document.title = prevTitle; };
-  }, [isRTL]);
+  // Head tags are owned by <Seo /> below.
+  useEffect(() => { window.scrollTo(0, 0); }, []);
 
   const lastUpdated = isRTL ? '17 ביוני 2026' : 'June 17, 2026';
   const title = isRTL
@@ -134,6 +129,11 @@ const Accessibility = () => {
         padding: '48px 20px',
       }}
     >
+      <Seo
+        title={isRTL ? 'הצהרת נגישות — Orca' : 'Accessibility Statement — Orca'}
+        description={isRTL ? 'הצהרת הנגישות של Orca — תקני הנגישות שאנו מיישמים בפלטפורמה ודרכי הפנייה לתמיכה בנגישות.'  : "Orca's accessibility statement — the standards we follow across the platform and how to reach our accessibility support."}
+        path="/accessibility"
+      />
       <article
         style={{
           maxWidth: 880,

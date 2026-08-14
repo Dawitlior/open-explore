@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useLang } from '@/hooks/use-lang';
+import Seo from '@/components/Seo';
 import {
   LEGAL_TITLE_HE,
   LEGAL_TITLE_EN,
@@ -15,35 +16,8 @@ import {
 
 const Terms = () => {
   const { isRTL, t } = useLang();
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    const prevTitle = document.title;
-    document.title = isRTL ? `${LEGAL_TITLE_HE} — ORCA Investment` : `${LEGAL_TITLE_EN} — ORCA Investment`;
-    const upsertMeta = (selector: string, create: () => HTMLElement) => {
-      let el = document.head.querySelector(selector) as HTMLElement | null;
-      if (!el) { el = create(); document.head.appendChild(el); }
-      return el;
-    };
-    const desc = upsertMeta('meta[name="description"]', () => {
-      const m = document.createElement('meta'); m.setAttribute('name', 'description'); return m;
-    });
-    const prevDesc = desc.getAttribute('content');
-    desc.setAttribute('content', isRTL
-      ? 'תנאי השימוש של Orca — מדיניות, אחריות משפטית ושימוש בפלטפורמת המסחר.'
-      : 'Orca Terms of Service — policy, legal liability and use of the trading platform.');
-
-    const canonical = upsertMeta('link[rel="canonical"]', () => {
-      const l = document.createElement('link'); l.setAttribute('rel', 'canonical'); return l;
-    });
-    const prevCanonical = canonical.getAttribute('href');
-    canonical.setAttribute('href', '/terms');
-
-    return () => {
-      document.title = prevTitle;
-      if (prevDesc !== null) desc.setAttribute('content', prevDesc);
-      if (prevCanonical !== null) canonical.setAttribute('href', prevCanonical);
-    };
-  }, [isRTL]);
+  // Head tags (title/description/canonical) are owned by <Seo /> below.
+  useEffect(() => { window.scrollTo(0, 0); }, []);
 
   const sections = isRTL ? LEGAL_SECTIONS_HE : LEGAL_SECTIONS_EN;
   const footer = isRTL ? LEGAL_FOOTER_HE : LEGAL_FOOTER_EN;
@@ -60,6 +34,11 @@ const Terms = () => {
         padding: '48px 20px',
       }}
     >
+      <Seo
+        title={isRTL ? 'תנאי שימוש — Orca' : 'Terms of Service — Orca'}
+        description={isRTL ? 'תנאי השימוש בפלטפורמת Orca — הרשאות המנוי, אחריות המשתמש והגבלות השימוש בשירות.' : 'The terms governing use of the Orca platform — subscription rights, user responsibilities and service limitations.'}
+        path="/terms"
+      />
       <article
         style={{
           maxWidth: 880, margin: '0 auto',
