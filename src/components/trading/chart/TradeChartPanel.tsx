@@ -9,8 +9,11 @@ import { infoColor, neutralRamp } from '@/lib/semantic-color';
 import {
   getExitTimeOverride, inferExitTime, setExitTimeOverride, toLocalInput, tradeExitMs,
 } from '@/lib/market/exit-time';
+import { formatHeaderInZone, useDisplayTimeZone } from '@/lib/market/display-timezone';
+import type { ExitState } from './TradeReplayChart';
 
 const TradeReplayChart = lazy(() => import('./TradeReplayChart'));
+
 
 interface Props {
   T: TradingTheme;
