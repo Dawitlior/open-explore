@@ -266,10 +266,10 @@ export function TradeDetailModal({
                   className="orca-focus"
                   style={{
                     width: isMobile ? 34 : 38, height: isMobile ? 34 : 38,
-                    borderRadius: 12,
-                    border: `1px solid ${T.border.subtle}`,
-                    background: T.bg.tertiary, color: T.text.muted,
-                    cursor: 'pointer', fontSize: 20, lineHeight: 1,
+                    borderRadius: T.radius.md,
+                    border: `1px solid ${T.border.medium}`,
+                    background: T.bg.card, color: T.text.primary,
+                    cursor: 'pointer', fontSize: 20, lineHeight: 1, fontWeight: 700,
                     transition: reducedMotion ? 'none' : 'all .18s ease',
                   }}
                 >×</button>
@@ -576,21 +576,29 @@ export function TradeDetailModal({
             )}
 
             {/* actions */}
-            <div style={{ gridColumn: '1 / -1', display: 'flex', gap: 10, marginTop: 2, flexDirection: isMobile ? 'column-reverse' : 'row', justifyContent: 'flex-end' }}>
+            <div style={{ gridColumn: '1 / -1', display: 'flex', gap: 10, marginTop: 2, alignItems: 'center', justifyContent: 'space-between' }}>
               <button onClick={onDelete} className="orca-focus" style={{
-                flex: isMobile ? 1 : 0.25, padding: isMobile ? '13px 16px' : '12px 16px',
-                background: g(T.accent.red, 0.1), border: `1px solid ${T.accent.red}3D`, borderRadius: T.radius.md,
-                color: T.accent.red, cursor: 'pointer', fontSize: 12.5, fontWeight: 800,
-                transition: reducedMotion ? 'none' : 'all .18s ease',
-              }}>{t.deleteTrade}</button>
+                padding: '8px 6px',
+                background: 'none', border: 'none', borderRadius: T.radius.sm,
+                color: T.text.muted, cursor: 'pointer', fontSize: 11.5, fontWeight: 700,
+                textDecoration: 'underline', textUnderlineOffset: 3,
+                transition: reducedMotion ? 'none' : 'color .18s ease',
+              }}
+                onMouseEnter={e => { e.currentTarget.style.color = T.accent.red; }}
+                onMouseLeave={e => { e.currentTarget.style.color = T.text.muted; }}
+              >{t.deleteTrade}</button>
               <button onClick={onEdit} className="orca-focus" style={{
-                flex: isMobile ? 1.4 : 0.35, padding: isMobile ? '14px 16px' : '12px 18px',
-                background: `linear-gradient(135deg, ${infoColor(T)}, ${infoColor(T)})`, border: 'none', borderRadius: T.radius.md,
+                minWidth: isMobile ? 150 : 180, padding: isMobile ? '13px 18px' : '12px 20px',
+                background: infoColor(T), border: `1px solid ${infoColor(T)}`, borderRadius: T.radius.md,
                 color: T.bg.primary, cursor: 'pointer', fontSize: 12.5, fontWeight: 900,
-                boxShadow: highContrast ? 'none' : `0 8px 22px -10px ${g(infoColor(T), 0.9)}`,
-                transition: reducedMotion ? 'none' : 'all .18s ease',
-              }}>{t.editTrade}</button>
+                boxShadow: 'none',
+                transition: reducedMotion ? 'none' : 'box-shadow .18s ease, transform .18s ease',
+              }}
+                onMouseEnter={e => { if (!reducedMotion && !highContrast) { e.currentTarget.style.boxShadow = `0 8px 22px -10px ${g(infoColor(T), 0.9)}`; e.currentTarget.style.transform = 'translateY(-1px)'; } }}
+                onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none'; }}
+              >{t.editTrade}</button>
             </div>
+
 
           </motion.div>
         </motion.div>

@@ -72,8 +72,18 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
   );
   const exitInferred = !exitMs && inferredExitSec != null;
 
+  /** Sanity guard: the entry price should live somewhere near the fetched candles. */
+  const symbolMismatch = useMemo(() => {
+    if (!candles?.length || !Number.isFinite(trade.entry) || trade.entry <= 0) return false;
+    const lo = Math.min(...candles.map(c => c.low));
+    const hi = Math.max(...candles.map(c => c.high));
+    if (!Number.isFinite(lo) || !Number.isFinite(hi) || lo <= 0) return false;
+    return trade.entry < lo / 3 || trade.entry > hi * 3;
+  }, [candles, trade.entry]);
+
   const height = isMobile ? 300 : 420;
   const L = (he: string, en: string) => (isRTL ? he : en);
+
 
   const chip = (active: boolean): React.CSSProperties => ({
     padding: '5px 11px',
@@ -112,12 +122,30 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
         </span>
         <div style={{ flex: 1 }} />
         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-          {INTERVALS.map(iv => (
-            <button key={iv} onClick={() => setIntervalState(iv)} className="orca-focus" style={{ ...chip(interval === iv), padding: '4px 8px', fontSize: 10 }}>
-              {iv}
-            </button>
-          ))}
+          {INTERVALS.map(iv => {
+            const active = interval === iv;
+            return (
+              <button
+                key={iv}
+                onClick={() => setIntervalState(iv)}
+                aria-pressed={active}
+                className="orca-focus"
+                style={{
+                  ...chip(active),
+                  padding: '4px 8px',
+                  fontSize: 10,
+                  minWidth: 40,
+                  textAlign: 'center',
+                  background: active ? infoColor(T) : T.bg.tertiary,
+                  color: active ? T.bg.primary : T.text.muted,
+                }}
+              >
+                {iv}
+              </button>
+            );
+          })}
         </div>
+
       </div>
 
       {/* symbol line */}
@@ -157,62 +185,85 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
         )}
       </div>
 
-      {/* exit-time notice / editor */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
-        padding: '8px 10px', borderRadius: T.radius.sm,
-        border: `1px solid ${exitMs ? T.border.subtle : `${T.state.warn}44`}`,
-        background: exitMs ? T.bg.tertiary : `${T.state.warn}0F`,
-      }}>
-        <span style={{ fontSize: 10.5, color: exitMs ? T.text.muted : T.state.warn, lineHeight: 1.5 }}>
-          {exitMs
-            ? `${L('זמן יציאה', 'Exit time')}: ${new Date(exitMs).toLocaleString(isRTL ? 'he-IL' : 'en-US')}`
-            : exitInferred
-              ? L('זמן היציאה לא תועד — הוערך לפי הנר הראשון שנגע במחיר היציאה.',
-                  'No exit time recorded — inferred from the first candle that touched the exit price.')
-              : L('זמן היציאה לא תועד.', 'No exit time recorded for this trade.')}
-        </span>
-        <div style={{ flex: 1 }} />
-        {editExit ? (
-          <>
-            <input
-              type="datetime-local"
-              value={exitDraft}
-                min={toLocalInput(entryMs)}
-              onChange={e => setExitDraft(e.target.value)}
-              style={{
-                padding: '6px 9px', borderRadius: 8, border: `1px solid ${T.border.medium}`,
-                background: T.bg.card, color: T.text.primary, fontSize: 11.5,
-                fontFamily: "'JetBrains Mono', monospace",
-              }}
-            />
+      {/* symbol sanity guard */}
+      {symbolMismatch && !editSymbol && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
+          padding: '7px 10px', borderRadius: T.radius.sm,
+          border: `1px solid ${T.state.warn}55`, background: `${T.state.warn}12`,
+          fontSize: 10.5, color: T.state.warn, lineHeight: 1.5,
+        }}>
+          <span>{L('ייתכן שהסימבול אינו תואם לעסקה הזו — טווח המחירים בגרף רחוק ממחיר הכניסה.',
+            'Symbol may not match this trade — the chart price range is far from the entry price.')}</span>
+          <button onClick={() => setEditSymbol(true)} className="orca-focus" style={{ ...chip(false), fontSize: 10 }}>
+            {L('שנה סימבול', 'Change symbol')}
+          </button>
+        </div>
+      )}
+
+      {/* exit-time line */}
+      {editExit ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <input
+            type="datetime-local"
+            value={exitDraft}
+            min={toLocalInput(entryMs)}
+            onChange={e => setExitDraft(e.target.value)}
+            style={{
+              padding: '6px 9px', borderRadius: T.radius.sm, border: `1px solid ${T.border.medium}`,
+              background: T.bg.card, color: T.text.primary, fontSize: 11.5,
+              fontFamily: "'JetBrains Mono', monospace",
+            }}
+          />
+          <button
+            onClick={() => {
+              const ms = new Date(exitDraft).getTime();
+              if (Number.isFinite(ms) && ms >= entryMs) { setExitTimeOverride(trade.id, ms); setLocalOverride(ms); }
+              setEditExit(false);
+            }}
+            disabled={new Date(exitDraft).getTime() < entryMs}
+            className="orca-focus" style={{ ...chip(true), fontSize: 10 }}
+          >{L('שמור', 'Save')}</button>
+          <button onClick={() => setEditExit(false)} className="orca-focus" style={{ ...chip(false), fontSize: 10 }}>
+            {L('ביטול', 'Cancel')}
+          </button>
+        </div>
+      ) : (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
+          fontSize: 10.5, lineHeight: 1.5, color: exitMs ? T.text.muted : T.state.warn,
+        }}>
+          <span>
+            {exitMs
+              ? `${L('זמן יציאה', 'Exit time')}: ${new Date(exitMs).toLocaleString(isRTL ? 'he-IL' : 'en-US')}`
+              : exitInferred
+                ? L('זמן היציאה הוערך לפי הנר הראשון שנגע במחיר היציאה.',
+                    'Exit time inferred from the first candle touching the exit price.')
+                : L('זמן היציאה לא תועד.', 'No exit time recorded.')}
+          </span>
+          <button
+            onClick={() => setEditExit(true)}
+            className="orca-focus"
+            style={{
+              background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+              color: infoColor(T), fontSize: 10.5, fontWeight: 700, textDecoration: 'underline',
+            }}
+          >
+            {exitMs ? L('ערוך', 'Edit') : L('הוסף', 'Add')}
+          </button>
+          {localOverride && !recordedExitMs && (
             <button
-              onClick={() => {
-                const ms = new Date(exitDraft).getTime();
-                if (Number.isFinite(ms) && ms >= entryMs) { setExitTimeOverride(trade.id, ms); setLocalOverride(ms); }
-                setEditExit(false);
+              onClick={() => { setExitTimeOverride(trade.id, null); setLocalOverride(null); }}
+              className="orca-focus"
+              style={{
+                background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                color: T.text.muted, fontSize: 10.5, textDecoration: 'underline',
               }}
-              disabled={new Date(exitDraft).getTime() < entryMs}
-              className="orca-focus" style={{ ...chip(true), fontSize: 10 }}
-            >{L('שמור', 'Save')}</button>
-            <button onClick={() => setEditExit(false)} className="orca-focus" style={{ ...chip(false), fontSize: 10 }}>
-              {L('ביטול', 'Cancel')}
-            </button>
-          </>
-        ) : (
-          <>
-            <button onClick={() => setEditExit(true)} className="orca-focus" style={{ ...chip(false), fontSize: 10 }}>
-              {exitMs ? L('ערוך זמן יציאה', 'Edit exit time') : L('הוסף זמן יציאה', 'Add exit time')}
-            </button>
-            {localOverride && !recordedExitMs && (
-              <button
-                onClick={() => { setExitTimeOverride(trade.id, null); setLocalOverride(null); }}
-                className="orca-focus" style={{ ...chip(false), fontSize: 10 }}
-              >{L('נקה', 'Clear')}</button>
-            )}
-          </>
-        )}
-      </div>
+            >{L('נקה', 'Clear')}</button>
+          )}
+        </div>
+      )}
+
 
       {/* chart */}
       <Suspense fallback={<div style={shell}>{L('טוען גרף…', 'Loading chart…')}</div>}>
@@ -226,6 +277,11 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
               entry={trade.entry}
               stop={trade.stopLoss}
               exit={trade.exit}
+              target={Number.isFinite((trade as unknown as { target?: number }).target as number)
+                ? (trade as unknown as { target?: number }).target
+                : null}
+              rMultiple={Number.isFinite(trade.returnR) ? trade.returnR : null}
+              pnl={Number.isFinite(trade.pnl) ? trade.pnl : null}
               isLong={trade.direction === 'Long'}
               entryTime={Math.floor(entryMs / 1000)}
               exitTime={inferredExitSec ?? undefined}
