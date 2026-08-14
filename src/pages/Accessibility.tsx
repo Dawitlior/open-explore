@@ -9,14 +9,8 @@ type Section = { heading: string; body: string | string[] };
 const Accessibility = () => {
   const { isRTL, t } = useLang();
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    const prevTitle = document.title;
-    document.title = isRTL
-      ? 'הצהרת נגישות — Orca'
-      : 'Accessibility Statement — Orca';
-    return () => { document.title = prevTitle; };
-  }, [isRTL]);
+  // Head tags are owned by <Seo /> below.
+  useEffect(() => { window.scrollTo(0, 0); }, []);
 
   const lastUpdated = isRTL ? '17 ביוני 2026' : 'June 17, 2026';
   const title = isRTL

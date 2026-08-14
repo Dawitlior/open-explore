@@ -14,12 +14,8 @@ import {
 
 const Privacy = () => {
   const { isRTL, t } = useLang();
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    const prev = document.title;
-    document.title = isRTL ? `${PRIVACY_TITLE_HE} — ORCA Investment` : `${PRIVACY_TITLE_EN} — ORCA Investment`;
-    return () => { document.title = prev; };
-  }, [isRTL]);
+  // Head tags are owned by <Seo /> below.
+  useEffect(() => { window.scrollTo(0, 0); }, []);
 
   return (
     <main
