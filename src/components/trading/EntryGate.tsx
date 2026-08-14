@@ -253,7 +253,7 @@ export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps
                 borderRadius: 26,
                 color: '#0f2b25',
                 fontSize: 15, fontWeight: 700,
-                fontFamily: "'Poppins', system-ui, sans-serif",
+                fontFamily: 'inherit',
                 cursor: requested && !ready ? 'wait' : 'pointer', letterSpacing: '0.06em',
                 textShadow: '0 1px 0 rgba(255,255,255,0.45)',
                 boxShadow: '12px 14px 28px rgba(0,0,0,0.55), -6px -6px 18px rgba(255,255,255,0.06), inset 3px 3px 6px rgba(255,255,255,0.45), inset -4px -6px 12px rgba(0,0,0,0.22)',
