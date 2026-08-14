@@ -70,9 +70,10 @@ export function TradeDetailModal({
     ? T.bg.secondary
     : `radial-gradient(120% 160% at ${isRTL ? '100%' : '0%'} 0%, ${g(sideColor, 0.14)}, transparent 55%), radial-gradient(90% 140% at ${isRTL ? '0%' : '100%'} 0%, ${g(outcomeColor, 0.09)}, transparent 60%)`;
 
-  const dateLabel = new Date(trade.date).toLocaleDateString(isRTL ? 'he-IL' : 'en-US', {
-    weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
-  });
+  // One source of truth for time rendering across the dossier (header, chart
+  // axis, crosshair and marker labels all format through this helper).
+  const dateLabel = formatHeaderInZone(new Date(trade.date).getTime(), displayTz, isRTL ? 'he-IL' : 'en-GB');
+
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
