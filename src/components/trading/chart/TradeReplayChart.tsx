@@ -160,8 +160,16 @@ export function TradeReplayChart({
 
     // risk / reward zones, clipped to the trade window
     const ts = api.chart.timeScale();
-    const x1raw = entryTime != null ? ts.timeToCoordinate(entryTime as any) : null;
-    const x2raw = exitTime != null ? ts.timeToCoordinate(exitTime as any) : null;
+    const nearestCandleTime = (time?: number) => {
+      if (time == null || !candles.length) return null;
+      return candles.reduce((nearest, candle) => (
+        Math.abs(candle.time - time) < Math.abs(nearest - time) ? candle.time : nearest
+      ), candles[0].time);
+    };
+    const zoneEntryTime = nearestCandleTime(entryTime);
+    const zoneExitTime = nearestCandleTime(exitTime);
+    const x1raw = zoneEntryTime != null ? ts.timeToCoordinate(zoneEntryTime as any) : null;
+    const x2raw = zoneExitTime != null ? ts.timeToCoordinate(zoneExitTime as any) : null;
     const nb: Band[] = [];
     if (showZones && x1raw != null && x2raw != null) {
       const left = Math.max(0, Math.min(x1raw as number, x2raw as number));
@@ -185,7 +193,7 @@ export function TradeReplayChart({
       }
     } else setTradeXs(x1raw != null && x2raw != null ? { entry: x1raw as number, exit: x2raw as number } : null);
     setBands(nb);
-  }, [levelDefs, dec, entry, stop, target, hasStop, hasTarget, entryTime, exitTime, showZones, T]);
+  }, [levelDefs, dec, entry, stop, target, hasStop, hasTarget, entryTime, exitTime, showZones, candles, T]);
 
   const scheduleSync = useCallback(() => {
     if (rafRef.current != null) return;
@@ -232,6 +240,10 @@ export function TradeReplayChart({
         borderDownColor: colors.down,
         wickUpColor: colors.up,
         wickDownColor: colors.down,
+        // The library's last-price line looks like another trade level and
+        // creates an unexplained native badge. Trade levels own this canvas.
+        priceLineVisible: false,
+        lastValueVisible: false,
         autoscaleInfoProvider: (original: () => any) => {
           const res = original();
           const levels = levelsRef.current.filter(Number.isFinite);
@@ -436,6 +448,21 @@ export function TradeReplayChart({
       {/* chart + overlay */}
       <div style={{ position: 'relative' }}>
         <div ref={hostRef} style={{ width: '100%', height }} />
+
+        {/* Always-visible chart key; not hidden below the canvas. */}
+        <div style={{
+          position: 'absolute', top: 9, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 4, display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 9,
+          maxWidth: '58%', padding: '4px 7px', borderRadius: T.radius.sm,
+          background: T.bg.card, border: `1px solid ${T.border.subtle}`,
+          boxShadow: `0 0 0 3px ${T.bg.tertiary}`,
+          color: T.text.muted, fontFamily: MONO, fontSize: 8.5,
+          pointerEvents: 'none',
+        }}>
+          <LegendItem color={colors.info} dashed label={L('זמן כניסה', 'Entry time')} />
+          {hasStop && <LegendItem color={T.accent.red} label={L('כניסה↔סטופ', 'Entry↔Stop')} />}
+          {hasTarget && <LegendItem color={T.accent.green} label={L('כניסה↔יעד', 'Entry↔Target')} />}
+        </div>
 
         {/* risk / reward bands */}
         {bands.map(b => (
