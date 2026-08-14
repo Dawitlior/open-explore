@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { SURF } from '@/lib/neon-palette';
 import { OrcaBootLoader } from '@/components/OrcaBootLoader';
-import orcaClay from '@/assets/orca-clay.png';
+import orcaHud from '@/assets/orca-hud.png';
 
 
 interface EntryGateProps {
