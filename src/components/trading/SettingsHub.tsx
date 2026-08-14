@@ -902,6 +902,33 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                 </div>
 
                 <div style={card}>
+                  <h3 style={sectionTitle}><Globe size={14} /> {t('אזור זמן', 'Timezone')}</h3>
+                  <p style={sectionHint}>
+                    {t('כל הזמנים בפלטפורמה (גרפים, כניסות ויציאות) מוצגים באזור הזה. הנתונים עצמם נשמרים ב-UTC ואינם משתנים.',
+                      'Every time in the platform (charts, entries and exits) renders in this zone. Stored data stays UTC and is never mutated.')}
+                  </p>
+                  <select
+                    value={displayTz}
+                    onChange={e => setDisplayTimeZone(e.target.value)}
+                    style={{
+                      width: '100%', padding: '12px 14px', borderRadius: T.radius.md,
+                      background: T.bg.primary, border: `1px solid ${T.border.subtle}`,
+                      color: T.text.primary, fontSize: 13, fontWeight: 700, fontFamily: sans,
+                    }}
+                  >
+                    {TZ_OPTIONS.map(tz => (
+                      <option key={tz} value={tz}>{tz}</option>
+                    ))}
+                  </select>
+                  <div style={{ marginTop: 8, fontSize: 11, color: T.text.muted, fontFamily: "'JetBrains Mono', monospace" }}>
+                    {t(`השעות מוצגות ב-${displayTz} (${zoneOffsetLabel(Date.now(), displayTz)})`,
+                      `Times shown in ${displayTz} (${zoneOffsetLabel(Date.now(), displayTz)})`)}
+                  </div>
+                </div>
+
+
+
+                <div style={card}>
                   <h3 style={sectionTitle}><Eye size={14} /> {t('מצב פרטיות', 'Privacy mode')}</h3>
                   <p style={sectionHint}>{t('מסתיר ערכים כספיים ברחבי האפליקציה. שימושי בצילום מסך או בעבודה במרחב ציבורי.', 'Masks money values across the app. Useful for screenshots or working in public.')}</p>
                   <button onClick={() => setPrivacyMode(!privacyMode)} style={{
