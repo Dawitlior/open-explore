@@ -5,6 +5,8 @@ import type { TradingTheme } from '@/lib/trading-theme';
 import { getEffectiveR } from '@/lib/r-multiple';
 import { useVisualPrefs, glowAlpha } from '@/lib/visual-prefs';
 import { infoColor, neutralRamp } from '@/lib/semantic-color';
+import { formatHeaderInZone, useDisplayTimeZone } from '@/lib/market/display-timezone';
+
 
 const TradeChartPanel = lazy(() => import('./chart/TradeChartPanel'));
 const TradeMiniChart = lazy(() => import('./chart/TradeMiniChart'));
@@ -49,7 +51,9 @@ export function TradeDetailModal({
   onNavigate, position, canPrev = false, canNext = false, onSaveNotes,
 }: Props) {
   const { glow, highContrast, reducedMotion } = useVisualPrefs();
+  const displayTz = useDisplayTimeZone();
   const [tab, setTab] = useState<DossierTab>('overview');
+
   const [noteDraft, setNoteDraft] = useState(trade.comments || '');
   const [noteEditing, setNoteEditing] = useState(false);
   const [noteSaving, setNoteSaving] = useState(false);
