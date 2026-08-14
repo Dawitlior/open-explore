@@ -102,7 +102,9 @@ export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps
           width: '100vw', height: '100dvh',
           background: `radial-gradient(120% 90% at 50% 115%, #2f4d4a 0%, ${CLAY_BG} 45%, ${CLAY_BG_2} 100%)`,
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          fontFamily: "'Poppins', 'Inter', system-ui, sans-serif",
+          fontFamily: isRTL
+            ? "'Heebo', 'Assistant', 'Poppins', system-ui, sans-serif"
+            : "'Poppins', 'Heebo', system-ui, sans-serif",
           overflow: 'hidden',
         }}
       >
