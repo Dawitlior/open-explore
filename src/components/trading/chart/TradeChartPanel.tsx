@@ -277,6 +277,11 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
               entry={trade.entry}
               stop={trade.stopLoss}
               exit={trade.exit}
+              target={Number.isFinite((trade as unknown as { target?: number }).target as number)
+                ? (trade as unknown as { target?: number }).target
+                : null}
+              rMultiple={Number.isFinite(trade.returnR) ? trade.returnR : null}
+              pnl={Number.isFinite(trade.pnl) ? trade.pnl : null}
               isLong={trade.direction === 'Long'}
               entryTime={Math.floor(entryMs / 1000)}
               exitTime={inferredExitSec ?? undefined}
