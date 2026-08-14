@@ -25,6 +25,7 @@ const Accessibility = lazy(() => import("./pages/Accessibility"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 
+import DefaultSeo from "@/components/DefaultSeo";
 import { LegalGate } from "@/components/LegalGate";
 import { EconomicAlertBanner } from "@/components/economic/EconomicAlertBanner";
 import { UpgradeModal } from "@/components/billing/UpgradeModal";
@@ -153,6 +154,7 @@ const App = () => (
             </ErrorBoundary>
             <LiquidSweep />
 
+            <DefaultSeo />
             <LegalGate />
             <EconomicAlertBanner />
             <UpgradeModal />
