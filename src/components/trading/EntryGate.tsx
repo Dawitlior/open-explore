@@ -200,7 +200,7 @@ export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps
               width={1024}
               height={768}
               style={{
-                position: 'relative', width: 'min(320px, 62vw)', height: 'auto',
+                position: 'relative', width: 'min(262px, 50vw)', height: 'auto',
                 filter: 'drop-shadow(0 24px 34px rgba(0,0,0,0.55))',
                 animation: reduced ? undefined : 'orca-clay-float 8s ease-in-out infinite',
               }}
