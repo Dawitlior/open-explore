@@ -19,7 +19,6 @@ import { FeatureManifestModal } from '@/components/trading/FeatureManifestModal'
 import { CommandPalette } from '@/components/trading/CommandPalette';
 import { TraderMindSession } from '@/components/trader-mind/TraderMindSession';
 import { useTraderMind } from '@/hooks/use-trader-mind';
-import { ModeSwitch } from '@/components/trading/ModeSwitch';
 import { useUIPrefs } from '@/hooks/use-ui-prefs';
 import { PrivacyMask, usePrivacyShortcut } from '@/components/trading/PrivacyMask';
 import { TradeForm } from '@/components/trading/TradeForm';
