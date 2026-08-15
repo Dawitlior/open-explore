@@ -1,22 +1,7 @@
 User-agent: Googlebot
 Allow: /
 
-User-agent: Google-Extended
-Allow: /
-
 User-agent: Bingbot
-Allow: /
-
-User-agent: GPTBot
-Allow: /
-
-User-agent: ClaudeBot
-Allow: /
-
-User-agent: PerplexityBot
-Allow: /
-
-User-agent: CCBot
 Allow: /
 
 User-agent: Twitterbot
@@ -27,9 +12,5 @@ Allow: /
 
 User-agent: *
 Allow: /
-Disallow: /bugs
-Disallow: /console
-Disallow: /dev/
-Disallow: /reset-password
 
-Sitemap: https://orcainvestment.co.il/sitemap.xml
+Sitemap: https://snuggle-build-play.lovable.app/sitemap.xml
