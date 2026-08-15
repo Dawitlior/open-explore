@@ -24,6 +24,8 @@ import { YearView } from '@/components/calendar/views/YearView';
 import { SessionToggles, SessionMarker, ALL_SESSIONS_ON, type SessionFilter } from '@/components/calendar/SessionUI';
 import { buildMonthSessionMap } from '@/lib/market-sessions';
 import { infoColor, neutralRamp } from '@/lib/semantic-color';
+import { dayFill, reportDotColor } from '@/lib/calendar-fill';
+import { CalendarLegend } from '@/components/calendar/CalendarLegend';
 
 type Props = {
   T: any; isRTL: boolean; trades: Trade[];
@@ -210,11 +212,8 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
           <ZoomToggle T={T} />
         </div>
-        {zoomLevel === 'month' && (
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
-            <SessionToggles T={T} isRTL={isRTL} value={sessionFilter} onChange={setSessionFilter} compact />
-          </div>
-        )}
+        {/* Session markers are no longer drawn in mobile cells (one channel per
+            meaning), so the mobile session filter row is hidden. Desktop keeps it. */}
 
 
         <AnimatePresence mode="wait">
@@ -232,32 +231,48 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
                   {calDays.map((d, i) => {
                     const dd = d ? calDayPnl[d] : null;
                     const isToday = isCurrentMonth && d === todayN;
-                    const ddLead = dd ? (isR && dd.rValid > 0 ? dd.rTotal : dd.pnl) : 0;
-                    const dotColor = dd ? (ddLead > 0 ? T.accent.green : ddLead < 0 ? T.accent.red : T.state.warn) : null;
+                    // Fill magnitude: real R when available, otherwise a faint
+                    // sign-only tier so money-only days still read directionally.
+                    const fillValue = dd
+                      ? (dd.rValid > 0 ? dd.rTotal : (dd.pnl > 0 ? 0.2 : dd.pnl < 0 ? -0.2 : 0))
+                      : null;
+                    const bg = dayFill(T, fillValue);
                     const macros = d ? macroByDay.get(d) ?? [] : [];
-                    const dayPast = !!d && new Date(calYear, calMonth, d) < new Date(now.getFullYear(), now.getMonth(), now.getDate());
                     const hasContent = !!dd || macros.length > 0;
                     return (
                       <button key={i} disabled={!d} onClick={() => { if (hasContent && d) setCalModalDay(d); }}
-                        style={{ aspectRatio: '1', minHeight: 44, border: 'none', background: 'transparent', cursor: hasContent ? 'pointer' : 'default', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, padding: 2, position: 'relative', overflow: 'hidden' }}>
+                        style={{
+                          aspectRatio: '1', minHeight: 44, cursor: hasContent ? 'pointer' : 'default',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          padding: 0, position: 'relative', overflow: 'hidden',
+                          borderRadius: 10,
+                          background: bg ?? 'transparent',
+                          border: isToday ? `1.5px solid ${infoColor(T)}` : '1.5px solid transparent',
+                        }}>
                         {d && (<>
-                          {/* Number + macro dot live inside one bounded box so no marker
-                              can drift into the gap between rows. */}
-                          <span style={{ position: 'relative', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            <span style={{ width: 30, height: 30, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: isToday ? 700 : 500, color: isToday ? '#001023' : T.text.primary, background: isToday ? infoColor(T) : 'transparent' }}>{d}</span>
-                            <MacroDot events={macros} isPast={dayPast} />
-                          </span>
-                          {/* Marker row — always inside the cell, centred under the number. */}
-                          <span style={{ height: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, flexShrink: 0 }}>
-                            {dotColor && <span style={{ width: 5, height: 5, borderRadius: '50%', background: dotColor }} />}
-                            <SessionMarker stat={d ? sessionByDay.get(d) : undefined} filter={sessionFilter} size={3} />
-                          </span>
+                          <span style={{
+                            fontSize: 15,
+                            fontWeight: isToday ? 700 : 500,
+                            color: isToday ? infoColor(T) : T.text.primary,
+                            fontVariantNumeric: 'tabular-nums',
+                          }}>{d}</span>
+                          {/* Report presence — one neutral dot, always the same corner. */}
+                          {macros.length > 0 && (
+                            <span
+                              aria-label="report"
+                              style={{
+                                position: 'absolute', top: 4, insetInlineEnd: 4,
+                                width: 4, height: 4, borderRadius: '50%',
+                                background: reportDotColor(T),
+                              }}
+                            />
+                          )}
                         </>)}
-
                       </button>
                     );
                   })}
                 </div>
+                <CalendarLegend T={T} isRTL={isRTL} />
               </>
             )}
           </motion.div>
