@@ -29,6 +29,7 @@ import { SettingsHub } from '@/components/trading/SettingsHub';
 import { DesktopOnlyGate } from '@/components/trading/DesktopOnlyGate';
 import { NavAvatar } from '@/components/trading/NavAvatar';
 import { PortfolioSwitcher } from '@/components/trading/PortfolioSwitcher';
+import { MobilePortfolioPicker } from '@/components/trading/MobilePortfolioPicker';
 import { useActivePortfolio } from '@/hooks/use-active-portfolio';
 import { DeploymentToast } from '@/components/DeploymentToast';
 
