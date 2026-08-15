@@ -1,14 +1,19 @@
 /**
- * Market sessions (Asia / London / New York).
+ * Market sessions (Asia / London / New York) — read-time attribution.
  *
- * Trades are bucketed into the FX/crypto "big three" sessions by their
- * execution time (UTC). A day can carry several sessions; overlaps are
- * intentional (London/NY overlap 12:00–16:00 UTC).
+ * Rules (see the calendar spec):
+ *  • A trade belongs to the session(s) that were open at its ENTRY instant.
+ *  • Sessions are a property of the market, never of the viewer. Windows are
+ *    evaluated against each market's own IANA timezone (Asia/Tokyo,
+ *    Europe/London, America/New_York) so DST boundaries move correctly and a
+ *    trade shows the same label in Tel Aviv and in New York.
+ *  • Nothing here is persisted: attribution is derived on read.
  *
- * Windows are UTC hours, [start, end):
- *   Asia    23:00 → 08:00  (Tokyo/Sydney, wraps midnight)
- *   London  07:00 → 16:00
- *   NY      12:00 → 21:00
+ * Canonical windows, expressed in each market's LOCAL time (08:00–17:00 local):
+ *   Asia/Tokyo        08:00 → 17:00 JST  (no DST) → 23:00–08:00 UTC year-round
+ *   Europe/London     08:00 → 17:00      → 07:00–16:00 UTC (BST) / 08:00–17:00 UTC (GMT)
+ *   America/New_York  08:00 → 17:00      → 12:00–21:00 UTC (EDT) / 13:00–22:00 UTC (EST)
+ * London/NY overlap: 12:00–16:00 UTC (summer) / 13:00–17:00 UTC (winter).
  */
 import type { Trade } from '@/data/trades';
 
@@ -19,50 +24,65 @@ export interface SessionDef {
   short: string;
   labelEn: string;
   labelHe: string;
-  /** UTC hour range [start, end) — wraps midnight when start > end. */
-  startUtc: number;
-  endUtc: number;
-  /** Neutral marker color — sessions are identity, not status, so no hue. */
-  color: string;
-  /** Lightness weight (0..1) that separates sessions without spending a hue. */
-  weight: number;
+  /** IANA timezone the window is evaluated in. */
+  tz: string;
+  /** Market-local hour range [start, end) — wraps midnight when start > end. */
+  startLocal: number;
+  endLocal: number;
 }
 
 export const SESSIONS: SessionDef[] = [
-  { id: 'asia', short: 'AS', labelEn: 'Asia', labelHe: 'אסיה', startUtc: 23, endUtc: 8, color: '#94A3B8', weight: 0.42 },
-  { id: 'london', short: 'LDN', labelEn: 'London', labelHe: 'לונדון', startUtc: 7, endUtc: 16, color: '#94A3B8', weight: 0.7 },
-  { id: 'ny', short: 'NY', labelEn: 'New York', labelHe: 'ניו יורק', startUtc: 12, endUtc: 21, color: '#94A3B8', weight: 1 },
+  { id: 'asia', short: 'AS', labelEn: 'Asia', labelHe: 'אסיה', tz: 'Asia/Tokyo', startLocal: 8, endLocal: 17 },
+  { id: 'london', short: 'LDN', labelEn: 'London', labelHe: 'לונדון', tz: 'Europe/London', startLocal: 8, endLocal: 17 },
+  { id: 'ny', short: 'NY', labelEn: 'New York', labelHe: 'ניו יורק', tz: 'America/New_York', startLocal: 8, endLocal: 17 },
 ];
 
 export const SESSION_BY_ID: Record<SessionId, SessionDef> =
   SESSIONS.reduce((acc, s) => { acc[s.id] = s; return acc; }, {} as Record<SessionId, SessionDef>);
 
-function inWindow(hour: number, s: SessionDef): boolean {
-  return s.startUtc <= s.endUtc
-    ? hour >= s.startUtc && hour < s.endUtc
-    : hour >= s.startUtc || hour < s.endUtc;
+const fmtCache = new Map<string, Intl.DateTimeFormat>();
+function hourIn(tz: string, at: Date): number {
+  let f = fmtCache.get(tz);
+  if (!f) {
+    f = new Intl.DateTimeFormat('en-US', { timeZone: tz, hour: '2-digit', hour12: false });
+    fmtCache.set(tz, f);
+  }
+  return parseInt(f.format(at), 10) % 24;
 }
 
-/** Best-effort timestamp for a trade — prefers the entry/open time. */
-function tradeTime(tr: Trade): Date | null {
-  const raw =
-    (tr as any).entryTime || (tr as any).openTime || (tr as any).opened_at ||
-    (tr as any).exitTime || (tr as any).closed_at || tr.date;
+function inWindow(hour: number, s: SessionDef): boolean {
+  return s.startLocal <= s.endLocal
+    ? hour >= s.startLocal && hour < s.endLocal
+    : hour >= s.startLocal || hour < s.endLocal;
+}
+
+/**
+ * Entry instant of a trade, as an absolute UTC point.
+ * Naive strings (no offset) are read as UTC so every viewer resolves the same
+ * instant — local parsing would give each timezone a different session.
+ */
+export function tradeEntryInstant(tr: Trade): Date | null {
+  const raw = String(
+    (tr as any).entryTime || (tr as any).openTime || (tr as any).opened_at || tr.date || '',
+  ).trim();
   if (!raw) return null;
-  const d = new Date(String(raw).replace(' ', 'T'));
+  // Date-only values carry no session information.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return null;
+  const iso = raw.replace(' ', 'T');
+  const hasZone = /(Z|[+-]\d{2}:?\d{2})$/.test(iso);
+  const d = new Date(hasZone ? iso : `${iso}Z`);
   return isNaN(d.getTime()) ? null : d;
 }
 
-/** Sessions touched by a single trade (a trade can sit in an overlap). */
+/** Sessions open at a trade's entry instant (a trade can sit in an overlap). */
 export function sessionsForTrade(tr: Trade): SessionId[] {
-  const d = tradeTime(tr);
-  if (!d) return [];
-  // Skip date-only values (midnight UTC with no time component) — they carry
-  // no session information and would falsely light up Asia.
-  const raw = String((tr as any).entryTime || (tr as any).openTime || (tr as any).opened_at || tr.date || '');
-  if (/^\d{4}-\d{2}-\d{2}$/.test(raw.trim())) return [];
-  const h = d.getUTCHours();
-  return SESSIONS.filter(s => inWindow(h, s)).map(s => s.id);
+  const at = tradeEntryInstant(tr);
+  if (!at) return [];
+  return SESSIONS.filter(s => inWindow(hourIn(s.tz, at), s)).map(s => s.id);
+}
+
+export function sessionShorts(tr: Trade): string[] {
+  return sessionsForTrade(tr).map(id => SESSION_BY_ID[id].short);
 }
 
 export interface DaySessionStat {
@@ -72,7 +92,7 @@ export interface DaySessionStat {
 
 const emptyCounts = (): Record<SessionId, number> => ({ asia: 0, london: 0, ny: 0 });
 
-/** Aggregate the sessions active for a set of same-day trades. */
+/** Aggregate the sessions active for a set of same-day trades (each once). */
 export function sessionsForDay(dayTrades: Trade[]): DaySessionStat {
   const counts = emptyCounts();
   const sessions = new Set<SessionId>();
@@ -83,29 +103,4 @@ export function sessionsForDay(dayTrades: Trade[]): DaySessionStat {
     }
   }
   return { sessions, counts };
-}
-
-/**
- * Build a day-of-month → session stat map for one calendar month.
- * `getDate` lets callers reuse whichever date parser they already have.
- */
-export function buildMonthSessionMap(
-  trades: Trade[],
-  year: number,
-  month: number,
-  parse: (tr: Trade) => Date | null,
-): Map<number, DaySessionStat> {
-  const map = new Map<number, DaySessionStat>();
-  for (const tr of trades) {
-    const d = parse(tr);
-    if (!d || d.getFullYear() !== year || d.getMonth() !== month) continue;
-    const key = d.getDate();
-    let entry = map.get(key);
-    if (!entry) { entry = { sessions: new Set(), counts: emptyCounts() }; map.set(key, entry); }
-    for (const id of sessionsForTrade(tr)) {
-      entry.counts[id] += 1;
-      entry.sessions.add(id);
-    }
-  }
-  return map;
 }
