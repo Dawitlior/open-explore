@@ -212,11 +212,8 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
           <ZoomToggle T={T} />
         </div>
-        {zoomLevel === 'month' && (
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
-            <SessionToggles T={T} isRTL={isRTL} value={sessionFilter} onChange={setSessionFilter} compact />
-          </div>
-        )}
+        {/* Session markers are no longer drawn in mobile cells (one channel per
+            meaning), so the mobile session filter row is hidden. Desktop keeps it. */}
 
 
         <AnimatePresence mode="wait">
