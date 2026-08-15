@@ -143,7 +143,7 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
   const macroByDay = useMemo(() => {
     const m = new Map<number, any[]>();
     macroByDayRaw.forEach((list, day) => {
-      const filtered = list.filter((e: any) => ['USD','CNY'].includes((e.currency||'').toUpperCase()));
+      const filtered = list.filter((e: any) => ['USD','JPY'].includes((e.currency||'').toUpperCase()));
       if (filtered.length) m.set(day, filtered);
     });
     return m;
