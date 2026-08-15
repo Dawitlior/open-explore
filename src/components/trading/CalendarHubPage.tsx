@@ -24,6 +24,8 @@ import { YearView } from '@/components/calendar/views/YearView';
 import { SessionToggles, SessionMarker, ALL_SESSIONS_ON, type SessionFilter } from '@/components/calendar/SessionUI';
 import { buildMonthSessionMap } from '@/lib/market-sessions';
 import { infoColor, neutralRamp } from '@/lib/semantic-color';
+import { dayFill, reportDotColor } from '@/lib/calendar-fill';
+import { CalendarLegend } from '@/components/calendar/CalendarLegend';
 
 type Props = {
   T: any; isRTL: boolean; trades: Trade[];
