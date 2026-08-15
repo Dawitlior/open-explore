@@ -19,7 +19,6 @@ import { FeatureManifestModal } from '@/components/trading/FeatureManifestModal'
 import { CommandPalette } from '@/components/trading/CommandPalette';
 import { TraderMindSession } from '@/components/trader-mind/TraderMindSession';
 import { useTraderMind } from '@/hooks/use-trader-mind';
-import { ModeSwitch } from '@/components/trading/ModeSwitch';
 import { useUIPrefs } from '@/hooks/use-ui-prefs';
 import { PrivacyMask, usePrivacyShortcut } from '@/components/trading/PrivacyMask';
 import { TradeForm } from '@/components/trading/TradeForm';
@@ -29,6 +28,7 @@ import { SettingsHub } from '@/components/trading/SettingsHub';
 import { DesktopOnlyGate } from '@/components/trading/DesktopOnlyGate';
 import { NavAvatar } from '@/components/trading/NavAvatar';
 import { PortfolioSwitcher } from '@/components/trading/PortfolioSwitcher';
+import { MobilePortfolioPicker } from '@/components/trading/MobilePortfolioPicker';
 import { useActivePortfolio } from '@/hooks/use-active-portfolio';
 import { DeploymentToast } from '@/components/DeploymentToast';
 
@@ -1910,37 +1910,21 @@ const Index = () => {
                 <BacktestPortalButton onClick={() => { setSbOpen(false); setActiveDimension('backtest'); }} isRTL={isRTL} expanded={true} />
               </div>
 
-              {/* Package switcher — kept directly in the mobile menu so changing plan is not buried behind Settings. */}
-              <div className="mm-section-label">{isRTL ? 'חבילה' : 'Package'}</div>
+              {/* Portfolio switcher — Apple-style grouped inset list. */}
+              <div className="mm-section-label">{isRTL ? 'תיק' : 'Portfolio'}</div>
               <div style={{ padding: '0 4px 8px' }}>
-                <ModeSwitch T={T} isRTL={isRTL} />
+                <MobilePortfolioPicker T={T} isRTL={isRTL} onSwitched={() => setSbOpen(false)} />
               </div>
 
-              {/* Quick actions */}
-              <div className="mm-section-label">{isRTL ? 'פעולות' : 'Actions'}</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <button className="mm-row" onClick={() => { setSbOpen(false); setShowFeatureModal(true); }}>
-                  <span className="mm-icon">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                  </span>
-                  <span className="mm-label">{isRTL ? 'אודות המערכת' : 'About System'}</span>
-                  <svg className="mm-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                </button>
-                {bugBoardAllowed && (
-                <button className="mm-row" onClick={() => { setSbOpen(false); goBugBoard(); }}>
-                  <span className="mm-icon">📋</span>
-                  <span className="mm-label">{isRTL ? 'לוח באגים' : 'Bug Board'}</span>
-                  <svg className="mm-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                </button>
-                )}
-                {bugBoardAllowed && (
-                <button className="mm-row" onClick={() => { setSbOpen(false); openBugReport(); }}>
-                  <span className="mm-icon" style={{ color: GOLD, borderColor: GOLD_BORDER, background: GOLD_SOFT }}>🐛</span>
-                  <span className="mm-label" style={{ color: GOLD }}>{isRTL ? 'דווח על באג' : 'Report Bug'}</span>
-                  <svg className="mm-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                </button>
-                )}
-              </div>
+              {bugBoardAllowed && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2, paddingTop: 6 }}>
+                  <button className="mm-row" onClick={() => { setSbOpen(false); openBugReport(); }}>
+                    <span className="mm-icon" style={{ color: GOLD, borderColor: GOLD_BORDER, background: GOLD_SOFT }}>🐛</span>
+                    <span className="mm-label" style={{ color: GOLD }}>{isRTL ? 'דווח על באג' : 'Report Bug'}</span>
+                    <svg className="mm-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                  </button>
+                </div>
+              )}
 
               {/* Settings — primary CTA */}
               <div style={{ padding: '16px 4px 8px' }}>
