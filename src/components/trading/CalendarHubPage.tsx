@@ -143,7 +143,7 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
   const macroByDay = useMemo(() => {
     const m = new Map<number, any[]>();
     macroByDayRaw.forEach((list, day) => {
-      const filtered = list.filter((e: any) => ['USD','CNY'].includes((e.currency||'').toUpperCase()));
+      const filtered = list.filter((e: any) => ['USD','JPY'].includes((e.currency||'').toUpperCase()));
       if (filtered.length) m.set(day, filtered);
     });
     return m;
@@ -239,14 +239,19 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
                     const hasContent = !!dd || macros.length > 0;
                     return (
                       <button key={i} disabled={!d} onClick={() => { if (hasContent && d) setCalModalDay(d); }}
-                        style={{ aspectRatio: '1', border: 'none', background: 'transparent', cursor: hasContent ? 'pointer' : 'default', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, padding: 0, position: 'relative' }}>
+                        style={{ aspectRatio: '1', minHeight: 44, border: 'none', background: 'transparent', cursor: hasContent ? 'pointer' : 'default', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, padding: 2, position: 'relative', overflow: 'hidden' }}>
                         {d && (<>
-                          <span style={{ width: 30, height: 30, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: isToday ? 700 : 500, color: isToday ? '#001023' : T.text.primary, background: isToday ? infoColor(T) : 'transparent' }}>{d}</span>
-                          {dotColor && <span style={{ position: 'absolute', bottom: 9, width: 5, height: 5, borderRadius: '50%', background: dotColor }} />}
-                          <span style={{ position: 'absolute', bottom: 2, left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
+                          {/* Number + macro dot live inside one bounded box so no marker
+                              can drift into the gap between rows. */}
+                          <span style={{ position: 'relative', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <span style={{ width: 30, height: 30, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: isToday ? 700 : 500, color: isToday ? '#001023' : T.text.primary, background: isToday ? infoColor(T) : 'transparent' }}>{d}</span>
+                            <MacroDot events={macros} isPast={dayPast} />
+                          </span>
+                          {/* Marker row — always inside the cell, centred under the number. */}
+                          <span style={{ height: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, flexShrink: 0 }}>
+                            {dotColor && <span style={{ width: 5, height: 5, borderRadius: '50%', background: dotColor }} />}
                             <SessionMarker stat={d ? sessionByDay.get(d) : undefined} filter={sessionFilter} size={3} />
                           </span>
-                          <MacroDot events={macros} isPast={dayPast} />
                         </>)}
 
                       </button>
