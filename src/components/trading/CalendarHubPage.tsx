@@ -21,8 +21,6 @@ import {
   type ZoomLevel,
 } from '@/components/calendar/CalendarZoomProvider';
 import { YearView } from '@/components/calendar/views/YearView';
-import { SessionToggles, SessionMarker, ALL_SESSIONS_ON, type SessionFilter } from '@/components/calendar/SessionUI';
-import { buildMonthSessionMap } from '@/lib/market-sessions';
 import { infoColor, neutralRamp } from '@/lib/semantic-color';
 import { dayFill, reportDotColor } from '@/lib/calendar-fill';
 import { CalendarLegend } from '@/components/calendar/CalendarLegend';
@@ -151,15 +149,7 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
     return m;
   }, [macroByDayRaw]);
 
-  /* ── Trading sessions (Asia / London / NY) per day ── */
-  const [sessionFilter, setSessionFilter] = useState<SessionFilter>(ALL_SESSIONS_ON);
-  const sessionByDay = useMemo(
-    () => buildMonthSessionMap(monthTrades, calYear, calMonth, tr => {
-      const d = new Date(String(tr.date).replace(' ', 'T'));
-      return isNaN(d.getTime()) ? null : d;
-    }),
-    [monthTrades, calYear, calMonth],
-  );
+  /* Sessions are not a grid channel — they surface in the day detail only. */
 
 
 
@@ -358,10 +348,6 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
             for (let r = 0; r < calDays.length; r += 7) weeks.push(calDays.slice(r, r + 7));
             return (
               <GlassCard T={T} style={{ padding: 20 }}>
-                <div style={{ display: 'flex', justifyContent: isRTL ? 'flex-start' : 'flex-end', marginBottom: 12 }}>
-                  <SessionToggles T={T} isRTL={isRTL} value={sessionFilter} onChange={setSessionFilter} />
-                </div>
-
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(7, minmax(0, 1fr)) 1.1fr',
@@ -406,8 +392,6 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
                             isDarkRed={riskColor === 'darkred'}
                             dayPast={dayPast}
                             macros={macros}
-                            sessionStat={d ? sessionByDay.get(d) : undefined}
-                            sessionFilter={sessionFilter}
                             onSelect={setCalModalDay}
                           />
                         );

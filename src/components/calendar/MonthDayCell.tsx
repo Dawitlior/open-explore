@@ -10,8 +10,6 @@ import { memo } from 'react';
 import { motion } from 'framer-motion';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { MacroSideDots } from '@/components/economic/MacroEventStrip';
-import { SessionMarker, type SessionFilter } from '@/components/calendar/SessionUI';
-import type { DaySessionStat } from '@/lib/market-sessions';
 import { infoColor, neutralRamp } from '@/lib/semantic-color';
 
 export interface DayPnlStat {
@@ -31,13 +29,11 @@ interface Props {
   dayPast: boolean;
   /** Macro events for this day (stable reference from the parent's map). */
   macros: unknown[];
-  sessionStat?: DaySessionStat;
-  sessionFilter: SessionFilter;
   onSelect: (day: number) => void;
 }
 
 export const MonthDayCell = memo(function MonthDayCell({
-  T, day, stat: dd, isR, isToday, isDarkRed, dayPast, macros, sessionStat, sessionFilter, onSelect,
+  T, day, stat: dd, isR, isToday, isDarkRed, dayPast, macros, onSelect,
 }: Props) {
   const ddR = dd && dd.rValid > 0;
   const ddLead = dd ? (isR && ddR ? dd.rTotal : dd.pnl) : 0;
@@ -134,7 +130,6 @@ export const MonthDayCell = memo(function MonthDayCell({
               }}>
                 ({dd.trades})
               </div>
-              <SessionMarker stat={sessionStat} filter={sessionFilter} size={3} />
             </div>
           )}
 
