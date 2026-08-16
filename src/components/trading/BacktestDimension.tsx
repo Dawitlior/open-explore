@@ -735,7 +735,7 @@ function BacktestApp({ onReturn }: { onReturn: () => void }) {
     </>}
 
     {/* TradingView ⇄ Backtest Journal bridge — always mounted, chart state survives tab switches */}
-    <div style={{position:"relative",height:tab==="chart"?"calc(100vh - 60px)":0,overflow:"hidden",transition:"height .25s ease"}}>
+    <div style={{position:"relative",height:tab==="chart"?"clamp(420px, 70vh, 760px)":0,overflow:"hidden",transition:"height .25s ease"}}>
       <BacktestChartPanel visible={tab==="chart"} />
     </div>
     <CommitBacktestModal onCommit={commitDraft} />
