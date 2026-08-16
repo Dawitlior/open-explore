@@ -262,7 +262,32 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
                     );
                   })}
                 </div>
-                <CalendarLegend T={T} isRTL={isRTL} />
+                <div style={{ paddingBottom: 72 }}>
+                  <CalendarLegend T={T} isRTL={isRTL} />
+                  {bestDay && (
+                    <div style={{
+                      marginTop: 12,
+                      border: `1px solid ${T.border.subtle}`,
+                      borderRadius: 12,
+                      padding: '10px 12px',
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+                      background: T.bg.card,
+                    }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <span style={{ fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: T.text.muted }}>
+                          {isRTL ? 'היום הטוב ביותר' : 'Best day'}
+                        </span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: T.text.primary, fontFamily: "'JetBrains Mono', monospace" }}>
+                          {bestDay.day} {months[calMonth]}
+                        </span>
+                      </div>
+                      <span style={{ fontSize: 18, fontWeight: 800, color: T.state.profit, fontFamily: "'JetBrains Mono', monospace" }}>
+                        {bestDay.label}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
               </>
             )}
           </motion.div>

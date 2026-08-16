@@ -37,7 +37,7 @@ export function CalendarLegend({ T, isRTL }: { T: TradingTheme; isRTL: boolean }
   const label = isRTL ? 'מקרא' : 'Legend';
 
   return (
-    <div style={{ marginTop: 12, paddingBottom: 72, direction: isRTL ? 'rtl' : 'ltr' }}>
+    <div style={{ marginTop: 12, direction: isRTL ? 'rtl' : 'ltr' }}>
       <button
         type="button"
         onClick={toggle}
