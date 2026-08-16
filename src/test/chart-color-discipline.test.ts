@@ -84,14 +84,14 @@ describe('chart series ramp', () => {
 });
 
 describe('non-P&L widgets avoid the P&L palette', () => {
-  it('session markers are neutral (identity, not status)', () => {
+  it('sessions are identity metadata, not a grid color channel', () => {
+    // Sessions carry no color at all any more — they are attributed per trade
+    // and surfaced as text in the day detail, so they cannot leak P&L hues.
     for (const s of SESSIONS) {
-      const { s: sat } = hexToHsl(s.color);
-      expect(sat).toBeLessThanOrEqual(0.25);
+      expect(s).not.toHaveProperty('color');
+      expect(s.tz).toBeTruthy();
     }
-    // Sessions separate by weight, not hue.
-    const weights = SESSIONS.map(s => s.weight);
-    expect(new Set(weights).size).toBe(SESSIONS.length);
+    expect(new Set(SESSIONS.map(s => s.id)).size).toBe(SESSIONS.length);
   });
 
   it('direction split (Long/Short) uses the neutral ramp', () => {
@@ -100,9 +100,5 @@ describe('non-P&L widgets avoid the P&L palette', () => {
     expect(dirBlock).not.toMatch(/T\.accent\.(green|red)/);
     expect(dirBlock).toMatch(/neutralRamp/);
   });
-
-  it('session UI does not hardcode profit/loss colors', () => {
-    const src = read('src/components/calendar/SessionUI.tsx');
-    expect(src).not.toMatch(/T\.(accent|state)\.(green|red|profit|loss)/);
-  });
 });
+
