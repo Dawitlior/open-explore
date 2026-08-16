@@ -133,6 +133,28 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
   const highDeviation = dayTrades.filter(tr => tr.deviation > 0.1);
   const allRulesFollowed = rulesFollowed === dayTrades.length;
   const isPos = totalPnl >= 0;
+  /* Session attribution (read-time, from each trade's entry instant). */
+  const daySessions = sessionsForDay(dayTrades);
+  const sessionChips = (['asia', 'london', 'ny'] as SessionId[])
+    .filter(id => daySessions.counts[id] > 0)
+    .map(id => ({ id, def: SESSION_BY_ID[id], n: daySessions.counts[id] }));
+  const SessionChips = () => sessionChips.length === 0 ? null : (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
+      <span style={{ fontSize: 9, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>
+        {isRTL ? 'סשנים' : 'Sessions'}
+      </span>
+      {sessionChips.map(c => (
+        <span key={c.id} style={{
+          fontSize: 11, fontWeight: 600, color: T.text.secondary,
+          border: `1px solid ${T.border.subtle}`, borderRadius: 999,
+          padding: '3px 9px', fontFamily: "'JetBrains Mono', monospace",
+        }}>
+          {isRTL ? c.def.labelHe : c.def.labelEn} · {c.n}
+        </span>
+      ))}
+    </div>
+  );
+
   const accent = isPos ? T.accent.green : T.accent.red;
 
   const dateStr = new Date(year, month, day).toLocaleDateString(isRTL ? 'he-IL' : 'en-US', {
