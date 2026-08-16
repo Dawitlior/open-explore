@@ -620,6 +620,11 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
             ))}
           </div>
 
+          {sessionChips.length > 0 && (
+            <div style={{ padding: '0 16px 16px' }}><SessionChips /></div>
+          )}
+
+
           {/* Behavioral flags */}
           {(highDeviation.length > 0 || !allRulesFollowed || dayTrades.length >= 3) && (
             <div style={{ margin: '0 16px 18px', padding: 14, background: `${T.state.warn}10`, border: `1px solid ${T.state.warn}30`, borderRadius: 14 }}>
