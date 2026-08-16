@@ -26,11 +26,12 @@ export interface FillRamp {
  * light ramp is scaled up to keep perceived contrast equivalent.
  */
 const RAMPS: Record<string, FillRamp> = {
-  midnight: { strong: 0.18, medium: 0.13, light: 0.08, faint: 0.04, breakeven: 0.03 },
-  blue: { strong: 0.18, medium: 0.13, light: 0.08, faint: 0.04, breakeven: 0.03 },
-  graphite: { strong: 0.20, medium: 0.145, light: 0.09, faint: 0.045, breakeven: 0.035 },
-  platinum: { strong: 0.30, medium: 0.21, light: 0.13, faint: 0.065, breakeven: 0.05 },
+  midnight: { strong: 0.45, medium: 0.32, light: 0.20, faint: 0.10, breakeven: 0.08 },
+  blue: { strong: 0.45, medium: 0.32, light: 0.20, faint: 0.10, breakeven: 0.08 },
+  graphite: { strong: 0.48, medium: 0.34, light: 0.22, faint: 0.11, breakeven: 0.09 },
+  platinum: { strong: 0.34, medium: 0.24, light: 0.15, faint: 0.075, breakeven: 0.06 },
 };
+
 
 export function fillRamp(T: TradingTheme): FillRamp {
   return RAMPS[T.id] ?? (T.isLight ? RAMPS.platinum : RAMPS.midnight);
