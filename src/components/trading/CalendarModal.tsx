@@ -12,6 +12,8 @@ import { formatISTTime } from '@/lib/economic';
 import { supabase } from '@/integrations/supabase/client';
 import { useActivePortfolio } from '@/hooks/use-active-portfolio';
 import { infoColor, neutralRamp } from '@/lib/semantic-color';
+import { sessionsForDay, SESSION_BY_ID, type SessionId } from '@/lib/market-sessions';
+
 
 
 interface CalendarModalProps {
