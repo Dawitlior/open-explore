@@ -196,7 +196,9 @@ export function TradeDetailModal({
           position: 'fixed', inset: 0, zIndex: 100,
           background: 'rgba(2,6,16,0.62)',
           display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center',
-          padding: isMobile ? '12px 10px 0' : 28,
+          padding: isMobile
+            ? '12px 10px calc(84px + env(safe-area-inset-bottom))'
+            : 28,
           backdropFilter: highContrast ? 'none' : 'blur(16px) saturate(120%)',
         }}
       >
@@ -209,11 +211,12 @@ export function TradeDetailModal({
           style={{
             position: 'relative',
             width: '100%', maxWidth: isMobile ? '100%' : (tab === 'overview' ? 900 : 1120),
-            maxHeight: isMobile ? '90dvh' : '88vh', overflow: 'auto',
-            borderRadius: isMobile ? '26px 26px 0 0' : 28,
+            maxHeight: isMobile ? '80dvh' : '88vh', overflow: 'auto',
+            borderRadius: isMobile ? 26 : 28,
             border: `1px solid ${T.border.medium}`,
             background: highContrast ? T.bg.card : `linear-gradient(150deg, ${T.bg.card}, ${T.bg.secondary} 62%)`,
             boxShadow: isMobile ? '0 -30px 80px rgba(0,0,0,0.45)' : T.shadow.elevated,
+
           }}
         >
           {/* ── aurora header ─────────────────────────────────────────────── */}
