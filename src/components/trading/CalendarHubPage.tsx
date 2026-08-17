@@ -178,6 +178,15 @@ function CalendarInner({ T, isRTL, trades, t, isMobile, onGenerateInsight, onSet
     return { count: monthTrades.length, wins, losses, totalPnl, totalR: rAgg.total, rValid: rAgg.validCount, rMissing: rAgg.missingCount, winRate };
   }, [monthTrades]);
 
+  const bestDay = useMemo(() => {
+    const entries = Object.entries(calDayPnl)
+      .map(([d, v]) => ({ day: +d, value: v.rValid > 0 ? v.rTotal : v.pnl, useR: v.rValid > 0 }))
+      .filter(e => e.value > 0);
+    if (!entries.length) return null;
+    const top = entries.reduce((a, b) => (b.value > a.value ? b : a));
+    return { day: top.day, label: top.useR ? `+${top.value.toFixed(2)}R` : `+$${top.value.toFixed(2)}` };
+  }, [calDayPnl]);
+
   const calRiskStatus = checkRiskLimits(trades);
   const todayN = now.getDate();
   const isCurrentMonth = now.getMonth() === calMonth && now.getFullYear() === calYear;
