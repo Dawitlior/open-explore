@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useActivePortfolio } from '@/hooks/use-active-portfolio';
 import { infoColor, neutralRamp } from '@/lib/semantic-color';
 import { sessionsForDay, SESSION_BY_ID, type SessionId } from '@/lib/market-sessions';
+import { DayChartPreview } from './chart/DayChartPreview';
 
 
 
@@ -659,8 +660,15 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
           </div>
 
 
+          {/* Chart preview */}
+          {dayTrades.length > 0 && (
+            <div style={{ padding: '14px 16px 0' }}>
+              <DayChartPreview T={T} trades={dayTrades} isRTL={isRTL} isMobile />
+            </div>
+          )}
+
           {/* Day note */}
-          <div style={{ padding: '0 16px 14px' }}>
+          <div style={{ padding: '14px 16px 14px' }}>
             {noteSection}
           </div>
 
@@ -834,6 +842,10 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
               dayTrades.map(tr => <TradeRow key={tr.id} tr={tr} />)
             )}
           </div>
+
+          {dayTrades.length > 0 && (
+            <DayChartPreview T={T} trades={dayTrades} isRTL={isRTL} />
+          )}
 
           <div>
             {noteSection}

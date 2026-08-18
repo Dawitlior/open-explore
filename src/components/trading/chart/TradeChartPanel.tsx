@@ -4,7 +4,7 @@ import type { TradingTheme } from '@/lib/trading-theme';
 import {
   INTERVALS, type Interval, cryptoBase, pickInterval, resolveSymbol, setSymbolOverride,
 } from '@/lib/market/symbol-resolver';
-import { frameWindow, useTradeCandles } from '@/lib/market/use-trade-candles';
+import { frameWindow, intervalMs, useTradeCandles } from '@/lib/market/use-trade-candles';
 import { infoColor, neutralRamp } from '@/lib/semantic-color';
 import {
   getExitTimeOverride, inferExitTime, setExitTimeOverride, toLocalInput, tradeExitMs,
@@ -61,9 +61,14 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
   }, [trade.id, trade.exitDate, entryMs]);
 
   const win = useMemo(
-    () => frameWindow(entryMs, (exitMs && exitMs > entryMs ? exitMs : entryMs + 4 * 60 * 60 * 1000), interval),
+    () => frameWindow(
+      entryMs,
+      exitMs && exitMs > entryMs ? exitMs : entryMs + intervalMs(interval) * 60,
+      interval,
+    ),
     [entryMs, exitMs, interval],
   );
+
 
   const { candles, loading, error } = useTradeCandles(
     resolved.klineSymbol, interval, win, true,

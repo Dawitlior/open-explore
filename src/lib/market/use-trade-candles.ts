@@ -16,15 +16,19 @@ const MS: Record<Interval, number> = {
   '1m': 60_000, '5m': 300_000, '15m': 900_000, '1h': 3_600_000, '4h': 14_400_000, '1d': 86_400_000,
 };
 
+/** Milliseconds per bar for an interval. */
+export const intervalMs = (iv: Interval) => MS[iv];
+
 export interface CandleWindow { startTime: number; endTime: number }
 
-/** Frame the trade with ~35% padding on each side, minimum 60 bars. */
+/** Frame the trade with generous padding on each side, minimum ~50 bars. */
 export function frameWindow(tradeStart: number, tradeEnd: number, interval: Interval): CandleWindow {
   const step = MS[interval];
   const span = Math.max(tradeEnd - tradeStart, step * 10);
-  const pad = Math.max(span * 0.35, step * 25);
+  const pad = Math.max(span * 0.5, step * 50);
   return { startTime: tradeStart - pad, endTime: tradeEnd + pad };
 }
+
 
 export interface CandleState {
   candles: Candle[] | null;

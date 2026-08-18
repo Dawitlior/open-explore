@@ -62,7 +62,7 @@ interface LevelDef {
 }
 
 const MONO = "'JetBrains Mono', monospace";
-const BAR_PAD = 12; // K bars of horizontal padding on each side of the trade
+const BAR_PAD = 30; // K bars of horizontal padding on each side of the trade
 
 function decimalsFor(v: number): number {
   const a = Math.abs(v);
@@ -447,11 +447,16 @@ export function TradeReplayChart({
       // Framing measured in bars, not wall clock: K bars either side of the trade.
       try {
         const step = candles.length > 1 ? candles[1].time - candles[0].time : 60;
+        // No exit anchor → show every candle we fetched instead of leaving
+        // dead space on the right of the canvas.
+        const to = xt != null
+          ? Math.min(last, xt + step * BAR_PAD)
+          : last;
         const from = Math.max(first, (et ?? first) - step * BAR_PAD);
-        const to = Math.min(last, (xt ?? et ?? last) + step * BAR_PAD);
         if (to > from) api.chart.timeScale().setVisibleRange({ from: from as any, to: to as any });
         else api.chart.timeScale().fitContent();
       } catch { api.chart.timeScale().fitContent(); }
+
 
       scheduleSync();
     })();
