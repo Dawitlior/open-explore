@@ -61,9 +61,14 @@ export function TradeChartPanel({ T, trade, isRTL, isMobile, reducedMotion }: Pr
   }, [trade.id, trade.exitDate, entryMs]);
 
   const win = useMemo(
-    () => frameWindow(entryMs, (exitMs && exitMs > entryMs ? exitMs : entryMs + 4 * 60 * 60 * 1000), interval),
+    () => frameWindow(
+      entryMs,
+      exitMs && exitMs > entryMs ? exitMs : entryMs + intervalMs(interval) * 60,
+      interval,
+    ),
     [entryMs, exitMs, interval],
   );
+
 
   const { candles, loading, error } = useTradeCandles(
     resolved.klineSymbol, interval, win, true,
