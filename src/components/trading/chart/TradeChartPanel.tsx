@@ -4,7 +4,7 @@ import type { TradingTheme } from '@/lib/trading-theme';
 import {
   INTERVALS, type Interval, cryptoBase, pickInterval, resolveSymbol, setSymbolOverride,
 } from '@/lib/market/symbol-resolver';
-import { frameWindow, useTradeCandles } from '@/lib/market/use-trade-candles';
+import { frameWindow, intervalMs, useTradeCandles } from '@/lib/market/use-trade-candles';
 import { infoColor, neutralRamp } from '@/lib/semantic-color';
 import {
   getExitTimeOverride, inferExitTime, setExitTimeOverride, toLocalInput, tradeExitMs,
