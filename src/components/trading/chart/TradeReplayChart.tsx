@@ -62,7 +62,7 @@ interface LevelDef {
 }
 
 const MONO = "'JetBrains Mono', monospace";
-const BAR_PAD = 12; // K bars of horizontal padding on each side of the trade
+const BAR_PAD = 30; // K bars of horizontal padding on each side of the trade
 
 function decimalsFor(v: number): number {
   const a = Math.abs(v);
