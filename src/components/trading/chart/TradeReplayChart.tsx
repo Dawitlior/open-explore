@@ -473,7 +473,7 @@ export function TradeReplayChart({
       scheduleSync();
     })();
     return () => { cancelled = true; };
-  }, [candles, levelDefs, isLong, entryTime, exitTime, hasExit, won, colors.info, T, scheduleSync]);
+  }, [candles, levelDefs, isLong, entry, exit, entryTime, exitTime, hasExit, won, colors.info, T, scheduleSync]);
 
   useEffect(() => { scheduleSync(); }, [showZones, scheduleSync]);
 
