@@ -436,13 +436,25 @@ export function TradeReplayChart({
       const xt = hasExit ? nearestCandleTime(clampT(exitTime)) : null;
 
       try {
+        // Markers are anchored to the *price*, not to the bar body: a
+        // `belowBar` arrow sits under the candle's low, which drifts away from
+        // the entry line whenever the entry is not the bar's extreme. Using
+        // `atPriceMiddle` + an explicit price pins the arrow exactly on the
+        // Entry / Exit line.
         const markers: any[] = [];
-        if (et) markers.push({ time: et, position: isLong ? 'belowBar' : 'aboveBar', color: colors.info, shape: isLong ? 'arrowUp' : 'arrowDown', text: '' });
-        if (xt) markers.push({ time: xt, position: isLong ? 'aboveBar' : 'belowBar', color: won ? T.accent.green : T.accent.red, shape: 'circle', text: '' });
+        if (et) markers.push({
+          time: et, price: entry, position: 'atPriceMiddle',
+          color: colors.info, shape: isLong ? 'arrowUp' : 'arrowDown', text: '',
+        });
+        if (xt) markers.push({
+          time: xt, price: exit, position: 'atPriceMiddle',
+          color: won ? T.accent.green : T.accent.red, shape: 'circle', text: '',
+        });
         if (markers.length && (lcMod as any).createSeriesMarkers) {
           (lcMod as any).createSeriesMarkers(api.series, markers.sort((a, b) => a.time - b.time));
         }
       } catch { /* overlays are decorative */ }
+
 
       // Framing measured in bars, not wall clock: K bars either side of the trade.
       try {
@@ -461,7 +473,7 @@ export function TradeReplayChart({
       scheduleSync();
     })();
     return () => { cancelled = true; };
-  }, [candles, levelDefs, isLong, entryTime, exitTime, hasExit, won, colors.info, T, scheduleSync]);
+  }, [candles, levelDefs, isLong, entry, exit, entryTime, exitTime, hasExit, won, colors.info, T, scheduleSync]);
 
   useEffect(() => { scheduleSync(); }, [showZones, scheduleSync]);
 
