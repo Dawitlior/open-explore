@@ -430,10 +430,25 @@ export function TradeReplayChart({
           Math.abs(candle.time - t) < Math.abs(nearest - t) ? candle.time : nearest
         ), candles[0].time);
       };
+      // The bar that *contains* the user-recorded timestamp (open <= t < next open).
+      // This is the candle the trader actually entered on, so the arrow sits on it
+      // even when the entry happened late inside the bar. Falls back to the nearest
+      // bar when no timestamp is available / it lies outside the fetched window.
+      const containingCandleTime = (t: number | null) => {
+        if (t == null) return null;
+        const step = candles.length > 1 ? candles[1].time - candles[0].time : 0;
+        let found: number | null = null;
+        for (const c of candles) {
+          if (c.time <= t && (step === 0 || t < c.time + step)) { found = c.time; break; }
+          if (c.time <= t) found = c.time;
+        }
+        return found ?? nearestCandleTime(t);
+      };
       // Markers and zones use the exact same snapped timestamps, so their
       // horizontal boundaries cannot drift apart.
-      const et = nearestCandleTime(clampT(entryTime));
-      const xt = hasExit ? nearestCandleTime(clampT(exitTime)) : null;
+      const et = containingCandleTime(clampT(entryTime));
+      const xt = hasExit ? containingCandleTime(clampT(exitTime)) : null;
+
 
       try {
         // Markers are anchored to the *price*, not to the bar body: a
