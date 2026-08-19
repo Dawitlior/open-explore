@@ -47,7 +47,9 @@ export const CalendarModal = ({ T, isRTL, day, month, year, trades, isMobile, on
   // Strategic Calendar — HIGH impact (T1) only, across all major macro currencies.
   // Window: only events from up to 7 days ago and forward (focus on this week + next).
   // Anything older than a week is noise for forward-looking planning.
-  const MAJOR_CCY = new Set(['USD', 'CNY', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'NZD']);
+  // Day view shows USD + JPY macro only — everything else is noise here.
+  const MAJOR_CCY = new Set(['USD', 'JPY']);
+
   const { byDay: macroByDay } = useMonthEconomicEvents({ year, month, impacts: ['t1'] });
   const MACRO_WINDOW_START_MS = (() => { const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - 7); return d.getTime(); })();
   const dayMacros = (macroByDay.get(day) ?? [])
