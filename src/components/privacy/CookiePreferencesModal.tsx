@@ -23,9 +23,9 @@ const MONO = "'IBM Plex Mono', ui-monospace, monospace";
 export default function CookiePreferencesModal({ open, onClose }: Props) {
   const { consent, save } = useCookieConsent();
   const { t, isRTL } = useLang();
-  const [isMobile, setIsMobile] = useState(
-    typeof window !== 'undefined' ? window.innerWidth < 640 : false,
-  );
+  const [vw, setVw] = useState(typeof window !== 'undefined' ? window.innerWidth : 1280);
+  const isMobile = vw < 640;
+  const isTablet = vw >= 640 && vw < 1024;
   const [choices, setChoices] = useState<ConsentChoices>(() => ({
     essential: true,
     analytics: consent?.analytics ?? DEFAULT_CHOICES.analytics,
@@ -36,7 +36,7 @@ export default function CookiePreferencesModal({ open, onClose }: Props) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    const onResize = () => setIsMobile(window.innerWidth < 640);
+    const onResize = () => setVw(window.innerWidth);
     window.addEventListener('keydown', onKey);
     window.addEventListener('resize', onResize);
     return () => {
@@ -70,7 +70,8 @@ export default function CookiePreferencesModal({ open, onClose }: Props) {
     setChoices({ essential: true, analytics: v, functional: v, marketing: v });
 
   const ghostBtn: React.CSSProperties = {
-    padding: isMobile ? '13px 20px' : '11px 20px',
+    padding: isMobile || isTablet ? '13px 20px' : '11px 20px',
+    minHeight: isMobile || isTablet ? 44 : undefined,
     borderRadius: 12,
     background: SURF.card,
     border: `1px solid ${SURF.border}`,
@@ -97,7 +98,7 @@ export default function CookiePreferencesModal({ open, onClose }: Props) {
         display: 'flex',
         alignItems: isMobile ? 'flex-end' : 'center',
         justifyContent: 'center',
-        padding: isMobile ? 0 : 16,
+        padding: isMobile ? 0 : isTablet ? 24 : 16,
         animation: 'orca-cp-fade 220ms ease both',
         fontFamily: "'Poppins', 'Heebo', system-ui, sans-serif",
       }}
@@ -125,8 +126,8 @@ export default function CookiePreferencesModal({ open, onClose }: Props) {
         style={{
           position: 'relative',
           width: '100%',
-          maxWidth: isMobile ? '100%' : 580,
-          maxHeight: isMobile ? '92dvh' : '88vh',
+          maxWidth: isMobile ? '100%' : isTablet ? 640 : 580,
+          maxHeight: isMobile ? '92dvh' : isTablet ? '86dvh' : '88vh',
           display: 'flex', flexDirection: 'column',
           background: SURF.panelGradient,
           border: `1px solid ${SURF.border}`,

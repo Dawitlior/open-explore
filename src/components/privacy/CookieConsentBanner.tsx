@@ -22,9 +22,9 @@ export function CookieConsentBanner() {
   const { t, isRTL } = useLang();
   const [openPrefs, setOpenPrefs] = useState(false);
   const [idleReady, setIdleReady] = useState(false);
-  const [isMobile, setIsMobile] = useState(
-    typeof window !== 'undefined' ? window.innerWidth < 640 : false,
-  );
+  const [vw, setVw] = useState(typeof window !== 'undefined' ? window.innerWidth : 1280);
+  const isMobile = vw < 640;
+  const isTablet = vw >= 640 && vw < 1024;
 
   useEffect(() => {
     const ric = (window as any).requestIdleCallback as
@@ -35,15 +35,21 @@ export function CookieConsentBanner() {
   }, []);
 
   useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth < 640);
+    let raf = 0;
+    const onResize = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => setVw(window.innerWidth));
+    };
     window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', onResize); };
   }, []);
+
 
   if (!loaded || !idleReady || hasDecided) return null;
 
   const ghostBtn: React.CSSProperties = {
-    padding: isMobile ? '13px 18px' : '11px 18px',
+    padding: isMobile || isTablet ? '13px 18px' : '11px 18px',
+    minHeight: 44,
     borderRadius: 12,
     background: SURF.card,
     border: `1px solid ${SURF.border}`,
@@ -53,9 +59,11 @@ export function CookieConsentBanner() {
     fontWeight: 600,
     letterSpacing: '0.02em',
     cursor: 'pointer',
-    flex: isMobile ? 1 : undefined,
+    flex: isMobile || isTablet ? 1 : undefined,
+    whiteSpace: 'nowrap',
     transition: 'border-color .2s ease, color .2s ease, background .2s ease, transform .12s ease',
   };
+
 
   return (
     <>
@@ -167,7 +175,7 @@ export function CookieConsentBanner() {
           <div
             style={{
               position: 'relative',
-              padding: isMobile ? '16px 18px 18px' : 'clamp(20px, 2.4vw, 26px)',
+              padding: isMobile ? '16px 18px 18px' : isTablet ? '20px 20px 22px' : 'clamp(20px, 2.4vw, 26px)',
               display: 'flex',
               gap: 16,
               alignItems: 'flex-start',
@@ -245,6 +253,7 @@ export function CookieConsentBanner() {
                   flexWrap: 'wrap',
                   gap: 10,
                   flexDirection: isMobile ? 'column' : 'row',
+                  alignItems: 'stretch',
                 }}
               >
                 <button
@@ -252,7 +261,8 @@ export function CookieConsentBanner() {
                   className="orca-cc-primary"
                   onClick={acceptAll}
                   style={{
-                    padding: isMobile ? '14px 22px' : '12px 26px',
+                    padding: isMobile || isTablet ? '14px 22px' : '12px 26px',
+                    minHeight: 44,
                     borderRadius: 12,
                     background: `linear-gradient(135deg, ${JC.blue}, ${JC.purpleDeep})`,
                     border: 'none',
@@ -262,14 +272,23 @@ export function CookieConsentBanner() {
                     fontWeight: 700,
                     letterSpacing: '0.02em',
                     cursor: 'pointer',
+                    whiteSpace: 'nowrap',
                     width: isMobile ? '100%' : undefined,
+                    flex: isTablet ? '1 1 100%' : undefined,
                     boxShadow: `0 12px 30px -12px ${JC.blue}, 0 1px 0 rgba(255,255,255,0.18) inset`,
                   }}
                 >
                   {t('אשר הכל', 'Accept all')}
                 </button>
 
-                <div style={{ display: 'flex', gap: 10, width: isMobile ? '100%' : undefined }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: 10,
+                    width: isMobile ? '100%' : undefined,
+                    flex: isTablet ? '1 1 100%' : undefined,
+                  }}
+                >
                   <button type="button" className="orca-cc-ghost" onClick={rejectAll} style={ghostBtn}>
                     {t('רק חיוניות', 'Essential only')}
                   </button>
@@ -283,6 +302,7 @@ export function CookieConsentBanner() {
                   </button>
                 </div>
               </div>
+
             </div>
 
             {!isMobile && (
