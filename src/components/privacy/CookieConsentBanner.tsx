@@ -22,9 +22,9 @@ export function CookieConsentBanner() {
   const { t, isRTL } = useLang();
   const [openPrefs, setOpenPrefs] = useState(false);
   const [idleReady, setIdleReady] = useState(false);
-  const [isMobile, setIsMobile] = useState(
-    typeof window !== 'undefined' ? window.innerWidth < 640 : false,
-  );
+  const [vw, setVw] = useState(typeof window !== 'undefined' ? window.innerWidth : 1280);
+  const isMobile = vw < 640;
+  const isTablet = vw >= 640 && vw < 1024;
 
   useEffect(() => {
     const ric = (window as any).requestIdleCallback as
@@ -35,10 +35,15 @@ export function CookieConsentBanner() {
   }, []);
 
   useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth < 640);
+    let raf = 0;
+    const onResize = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => setVw(window.innerWidth));
+    };
     window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', onResize); };
   }, []);
+
 
   if (!loaded || !idleReady || hasDecided) return null;
 
