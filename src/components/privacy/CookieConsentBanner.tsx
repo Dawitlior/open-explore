@@ -175,7 +175,7 @@ export function CookieConsentBanner() {
           <div
             style={{
               position: 'relative',
-              padding: isMobile ? '16px 18px 18px' : 'clamp(20px, 2.4vw, 26px)',
+              padding: isMobile ? '16px 18px 18px' : isTablet ? '20px 20px 22px' : 'clamp(20px, 2.4vw, 26px)',
               display: 'flex',
               gap: 16,
               alignItems: 'flex-start',
