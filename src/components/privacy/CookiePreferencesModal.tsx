@@ -98,7 +98,7 @@ export default function CookiePreferencesModal({ open, onClose }: Props) {
         display: 'flex',
         alignItems: isMobile ? 'flex-end' : 'center',
         justifyContent: 'center',
-        padding: isMobile ? 0 : 16,
+        padding: isMobile ? 0 : isTablet ? 24 : 16,
         animation: 'orca-cp-fade 220ms ease both',
         fontFamily: "'Poppins', 'Heebo', system-ui, sans-serif",
       }}
