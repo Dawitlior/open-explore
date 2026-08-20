@@ -70,7 +70,8 @@ export default function CookiePreferencesModal({ open, onClose }: Props) {
     setChoices({ essential: true, analytics: v, functional: v, marketing: v });
 
   const ghostBtn: React.CSSProperties = {
-    padding: isMobile ? '13px 20px' : '11px 20px',
+    padding: isMobile || isTablet ? '13px 20px' : '11px 20px',
+    minHeight: isMobile || isTablet ? 44 : undefined,
     borderRadius: 12,
     background: SURF.card,
     border: `1px solid ${SURF.border}`,
