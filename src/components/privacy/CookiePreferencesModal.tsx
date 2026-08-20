@@ -36,7 +36,7 @@ export default function CookiePreferencesModal({ open, onClose }: Props) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    const onResize = () => setIsMobile(window.innerWidth < 640);
+    const onResize = () => setVw(window.innerWidth);
     window.addEventListener('keydown', onKey);
     window.addEventListener('resize', onResize);
     return () => {
