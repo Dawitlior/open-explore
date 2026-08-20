@@ -126,8 +126,8 @@ export default function CookiePreferencesModal({ open, onClose }: Props) {
         style={{
           position: 'relative',
           width: '100%',
-          maxWidth: isMobile ? '100%' : 580,
-          maxHeight: isMobile ? '92dvh' : '88vh',
+          maxWidth: isMobile ? '100%' : isTablet ? 640 : 580,
+          maxHeight: isMobile ? '92dvh' : isTablet ? '86dvh' : '88vh',
           display: 'flex', flexDirection: 'column',
           background: SURF.panelGradient,
           border: `1px solid ${SURF.border}`,
