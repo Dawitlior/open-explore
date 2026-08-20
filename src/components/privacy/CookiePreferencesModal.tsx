@@ -23,9 +23,9 @@ const MONO = "'IBM Plex Mono', ui-monospace, monospace";
 export default function CookiePreferencesModal({ open, onClose }: Props) {
   const { consent, save } = useCookieConsent();
   const { t, isRTL } = useLang();
-  const [isMobile, setIsMobile] = useState(
-    typeof window !== 'undefined' ? window.innerWidth < 640 : false,
-  );
+  const [vw, setVw] = useState(typeof window !== 'undefined' ? window.innerWidth : 1280);
+  const isMobile = vw < 640;
+  const isTablet = vw >= 640 && vw < 1024;
   const [choices, setChoices] = useState<ConsentChoices>(() => ({
     essential: true,
     analytics: consent?.analytics ?? DEFAULT_CHOICES.analytics,
