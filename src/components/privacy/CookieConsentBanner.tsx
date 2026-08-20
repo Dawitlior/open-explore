@@ -48,7 +48,8 @@ export function CookieConsentBanner() {
   if (!loaded || !idleReady || hasDecided) return null;
 
   const ghostBtn: React.CSSProperties = {
-    padding: isMobile ? '13px 18px' : '11px 18px',
+    padding: isMobile || isTablet ? '13px 18px' : '11px 18px',
+    minHeight: 44,
     borderRadius: 12,
     background: SURF.card,
     border: `1px solid ${SURF.border}`,
@@ -58,9 +59,11 @@ export function CookieConsentBanner() {
     fontWeight: 600,
     letterSpacing: '0.02em',
     cursor: 'pointer',
-    flex: isMobile ? 1 : undefined,
+    flex: isMobile || isTablet ? 1 : undefined,
+    whiteSpace: 'nowrap',
     transition: 'border-color .2s ease, color .2s ease, background .2s ease, transform .12s ease',
   };
+
 
   return (
     <>
