@@ -253,6 +253,7 @@ export function CookieConsentBanner() {
                   flexWrap: 'wrap',
                   gap: 10,
                   flexDirection: isMobile ? 'column' : 'row',
+                  alignItems: 'stretch',
                 }}
               >
                 <button
@@ -260,7 +261,8 @@ export function CookieConsentBanner() {
                   className="orca-cc-primary"
                   onClick={acceptAll}
                   style={{
-                    padding: isMobile ? '14px 22px' : '12px 26px',
+                    padding: isMobile || isTablet ? '14px 22px' : '12px 26px',
+                    minHeight: 44,
                     borderRadius: 12,
                     background: `linear-gradient(135deg, ${JC.blue}, ${JC.purpleDeep})`,
                     border: 'none',
@@ -270,14 +272,23 @@ export function CookieConsentBanner() {
                     fontWeight: 700,
                     letterSpacing: '0.02em',
                     cursor: 'pointer',
+                    whiteSpace: 'nowrap',
                     width: isMobile ? '100%' : undefined,
+                    flex: isTablet ? '1 1 100%' : undefined,
                     boxShadow: `0 12px 30px -12px ${JC.blue}, 0 1px 0 rgba(255,255,255,0.18) inset`,
                   }}
                 >
                   {t('אשר הכל', 'Accept all')}
                 </button>
 
-                <div style={{ display: 'flex', gap: 10, width: isMobile ? '100%' : undefined }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: 10,
+                    width: isMobile ? '100%' : undefined,
+                    flex: isTablet ? '1 1 100%' : undefined,
+                  }}
+                >
                   <button type="button" className="orca-cc-ghost" onClick={rejectAll} style={ghostBtn}>
                     {t('רק חיוניות', 'Essential only')}
                   </button>
@@ -291,6 +302,7 @@ export function CookieConsentBanner() {
                   </button>
                 </div>
               </div>
+
             </div>
 
             {!isMobile && (
