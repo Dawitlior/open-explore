@@ -302,15 +302,15 @@ export default function CookiePreferencesModal({ open, onClose }: Props) {
 
         {/* Footer */}
         <div style={{
-          padding: isMobile ? '14px 18px 18px' : '16px 22px',
+          padding: isMobile ? '14px 18px 18px' : isTablet ? '16px 24px' : '16px 22px',
           borderTop: `1px solid ${SURF.border}`,
           background: SURF.card2,
           display: 'flex', gap: 10, flexShrink: 0,
-          flexDirection: isMobile ? 'column-reverse' : 'row',
+          flexDirection: isMobile || isTablet ? 'column-reverse' : 'row',
           justifyContent: 'flex-end', alignItems: 'center',
         }}>
           <button type="button" onClick={onClose} className="orca-cp-ghost"
-            style={{ ...ghostBtn, width: isMobile ? '100%' : undefined }}>
+            style={{ ...ghostBtn, width: isMobile || isTablet ? '100%' : undefined }}>
             {t('ביטול', 'Cancel')}
           </button>
           <button
@@ -318,14 +318,15 @@ export default function CookiePreferencesModal({ open, onClose }: Props) {
             onClick={handleSave}
             className="orca-cp-primary"
             style={{
-              padding: isMobile ? '14px 24px' : '12px 26px',
+              padding: isMobile || isTablet ? '14px 24px' : '12px 26px',
+              minHeight: isMobile || isTablet ? 44 : undefined,
               borderRadius: 12,
               background: `linear-gradient(135deg, ${JC.blue}, ${JC.purpleDeep})`,
               border: 'none',
               color: '#FFFFFF',
               fontFamily: 'inherit',
               fontSize: 13, fontWeight: 700, letterSpacing: '0.02em', cursor: 'pointer',
-              width: isMobile ? '100%' : undefined,
+              width: isMobile || isTablet ? '100%' : undefined,
               boxShadow: `0 12px 30px -12px ${JC.blue}, 0 1px 0 rgba(255,255,255,0.18) inset`,
             }}
           >
