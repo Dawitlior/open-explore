@@ -161,7 +161,7 @@ function tokenizeFormula(src: string): Token[] | null {
       i += m[0].length;
       continue;
     }
-    if ('+-*/%(),'.includes(ch)) {
+    if ('+-*/%(),.'.includes(ch)) {
       tokens.push({ kind: 'op', op: ch });
       i++;
       continue;
