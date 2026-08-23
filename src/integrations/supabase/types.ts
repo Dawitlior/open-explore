@@ -707,6 +707,27 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limit_events: {
+        Row: {
+          bucket: string
+          created_at: string
+          id: number
+          subject: string
+        }
+        Insert: {
+          bucket: string
+          created_at?: string
+          id?: never
+          subject: string
+        }
+        Update: {
+          bucket?: string
+          created_at?: string
+          id?: never
+          subject?: string
+        }
+        Relationships: []
+      }
       risk_events: {
         Row: {
           context: Json

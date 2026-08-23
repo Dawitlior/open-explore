@@ -113,3 +113,17 @@ Verified live against the database catalog:
 3. Replace the `new Function` KPI evaluator with a real expression parser.
 4. Add rate limiting to `orca-coach` (AI cost abuse).
 5. Resolve the `xlsx` dependency (CDN build or alternative parser).
+
+---
+
+## Remediation Log — 2026-08-22
+
+| ID | Status | Action taken |
+|---|---|---|
+| F-01 | **Fixed** | `request-password-reset` now returns a uniform `{ ok: true }` for registered and unregistered emails alike (no enumeration), and `redirect_to` is sanitized (https-only, no embedded credentials) before forwarding. Deployed & verified live. |
+| F-06 | **Fixed** | Rate limiting added: password-reset capped at 5/email/hour and 20/IP/hour via new internal `rate_limit_events` table (deny-all client policy, service-role only) — verified live with a 429 on the 6th request. `orca-coach` capped at 30 calls/user/hour via `ai_runs` telemetry. |
+| F-03 | **Fixed** | `new Function` KPI evaluator replaced with a recursive-descent parser (arithmetic + whitelisted math functions only, zero code execution). Covered by `src/test/kpi-parser.test.ts` — injection attempts (`process.exit`, `constructor.constructor`, ternaries, unknown identifiers) all return null. |
+| F-02 | Open | CSP enforcement requires noncing the theme preboot script — scheduled as a separate change with telemetry review. |
+| F-04 | Open | `xlsx` upgrade path under evaluation (SheetJS CDN registry vs alternative parser). |
+| F-05 | Mitigated by design | localStorage tokens are inherent to the SPA model; risk drops sharply once F-02 lands. |
+| F-07–F-10 | Open (Low) | CORS origin restriction, print-window refactor, vault salt check, hardening headers. |
