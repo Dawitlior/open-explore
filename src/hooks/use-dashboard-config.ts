@@ -120,27 +120,140 @@ export function useDashboardConfig() {
   };
 }
 
-// Safe formula evaluator — only allows whitelisted variables and basic math.
+// Safe formula evaluator — recursive-descent parser, NO code execution.
+// Supports: numbers, whitelisted variables, + - * / % , parentheses, unary
+// minus, and the math functions abs/min/max/round/floor/ceil/sqrt/pow
+// (bare or Math.-prefixed). Anything else evaluates to null.
 // Returns null on any error.
-const ALLOWED_TOKENS = new Set([
-  'totalTrades', 'wins', 'losses', 'breakEven', 'winRate', 'totalPnl',
-  'avgWin', 'avgLoss', 'expectancy', 'profitFactor', 'maxDrawdown',
-  'totalR', 'avgR', 'bestTrade', 'worstTrade',
-  'Math', 'abs', 'min', 'max', 'round', 'floor', 'ceil', 'sqrt', 'pow',
-]);
+const KPI_FUNCTIONS: Record<string, (...args: number[]) => number> = {
+  abs: Math.abs,
+  min: Math.min,
+  max: Math.max,
+  round: Math.round,
+  floor: Math.floor,
+  ceil: Math.ceil,
+  sqrt: Math.sqrt,
+  pow: Math.pow,
+};
+
+type Token =
+  | { kind: 'num'; value: number }
+  | { kind: 'ident'; name: string }
+  | { kind: 'op'; op: string };
+
+function tokenizeFormula(src: string): Token[] | null {
+  const tokens: Token[] = [];
+  let i = 0;
+  while (i < src.length) {
+    const ch = src[i];
+    if (ch === ' ' || ch === '\t' || ch === '\n') { i++; continue; }
+    if (/[0-9.]/.test(ch)) {
+      const m = src.slice(i).match(/^\d*\.?\d+(?:[eE][+-]?\d+)?/);
+      if (!m) return null;
+      tokens.push({ kind: 'num', value: parseFloat(m[0]) });
+      i += m[0].length;
+      continue;
+    }
+    if (/[a-zA-Z_]/.test(ch)) {
+      const m = src.slice(i).match(/^[a-zA-Z_][a-zA-Z0-9_]*/);
+      if (!m) return null;
+      tokens.push({ kind: 'ident', name: m[0] });
+      i += m[0].length;
+      continue;
+    }
+    if ('+-*/%(),'.includes(ch)) {
+      tokens.push({ kind: 'op', op: ch });
+      i++;
+      continue;
+    }
+    return null; // any other character rejects the formula outright
+  }
+  return tokens;
+}
 
 export function evalCustomKPI(formula: string, ctx: Record<string, number>): number | null {
   try {
-    // Strip whitespace, validate identifiers
-    const ids = formula.match(/[a-zA-Z_][a-zA-Z0-9_]*/g) || [];
-    for (const id of ids) {
-      if (!ALLOWED_TOKENS.has(id) && !(id in ctx)) return null;
-    }
-    // Disallow assignment, semicolons, etc.
-    if (/[;={}]|=>|\bfunction\b|\breturn\b|\bnew\b/.test(formula)) return null;
-    // eslint-disable-next-line no-new-func
-    const fn = new Function(...Object.keys(ctx), `"use strict"; return (${formula});`);
-    const result = fn(...Object.values(ctx));
+    if (!formula || formula.length > 500) return null;
+    const tokens = tokenizeFormula(formula);
+    if (!tokens) return null;
+
+    let pos = 0;
+    const peek = () => tokens[pos];
+    const next = () => tokens[pos++];
+
+    const parseExpr = (): number => {
+      let v = parseTerm();
+      while (peek()?.kind === 'op' && ((peek() as { op: string }).op === '+' || (peek() as { op: string }).op === '-')) {
+        const op = (next() as { op: string }).op;
+        const rhs = parseTerm();
+        v = op === '+' ? v + rhs : v - rhs;
+      }
+      return v;
+    };
+
+    const parseTerm = (): number => {
+      let v = parseUnary();
+      while (peek()?.kind === 'op' && ['*', '/', '%'].includes((peek() as { op: string }).op)) {
+        const op = (next() as { op: string }).op;
+        const rhs = parseUnary();
+        v = op === '*' ? v * rhs : op === '/' ? v / rhs : v % rhs;
+      }
+      return v;
+    };
+
+    const parseUnary = (): number => {
+      const t = peek();
+      if (t?.kind === 'op' && t.op === '-') { next(); return -parseUnary(); }
+      if (t?.kind === 'op' && t.op === '+') { next(); return parseUnary(); }
+      return parsePrimary();
+    };
+
+    const parsePrimary = (): number => {
+      const t = next();
+      if (!t) throw new Error('unexpected end');
+      if (t.kind === 'num') return t.value;
+      if (t.kind === 'op' && t.op === '(') {
+        const v = parseExpr();
+        const close = next();
+        if (!close || close.kind !== 'op' || close.op !== ')') throw new Error('missing )');
+        return v;
+      }
+      if (t.kind === 'ident') {
+        // Math.foo( — consume the dot-qualified name
+        let name = t.name;
+        if (name === 'Math') {
+          const dot = next();
+          const member = next();
+          if (dot?.kind !== 'op' || dot.op !== '.' || member?.kind !== 'ident') throw new Error('bad Math ref');
+          name = member.name;
+        }
+        const paren = peek();
+        if (paren?.kind === 'op' && paren.op === '(') {
+          next();
+          const fn = KPI_FUNCTIONS[name];
+          if (!fn) throw new Error('unknown fn');
+          const args: number[] = [];
+          if (!(peek()?.kind === 'op' && (peek() as { op: string }).op === ')')) {
+            for (;;) {
+              args.push(parseExpr());
+              const sep = next();
+              if (sep?.kind === 'op' && sep.op === ',') continue;
+              if (sep?.kind === 'op' && sep.op === ')') break;
+              throw new Error('bad args');
+            }
+          } else {
+            next();
+          }
+          return fn(...args);
+        }
+        if (name in ctx) return ctx[name];
+        throw new Error('unknown ident');
+      }
+      throw new Error('unexpected token');
+    };
+
+    const result = parseExpr();
+    if (pos !== tokens.length) return null; // trailing garbage
     return typeof result === 'number' && isFinite(result) ? result : null;
   } catch {
     return null;
