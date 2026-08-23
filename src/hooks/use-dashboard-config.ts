@@ -147,7 +147,7 @@ function tokenizeFormula(src: string): Token[] | null {
   while (i < src.length) {
     const ch = src[i];
     if (ch === ' ' || ch === '\t' || ch === '\n') { i++; continue; }
-    if (/[0-9.]/.test(ch)) {
+    if (/[0-9]/.test(ch)) {
       const m = src.slice(i).match(/^\d*\.?\d+(?:[eE][+-]?\d+)?/);
       if (!m) return null;
       tokens.push({ kind: 'num', value: parseFloat(m[0]) });
