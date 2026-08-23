@@ -36,6 +36,27 @@ Deno.serve(async (req) => {
       throw new Error("messages required");
     }
 
+    // ── Per-user abuse throttle (audit F-06) ────────────────────────────
+    // Cap coach calls per user per hour using the ai_runs telemetry table.
+    // Fail-open: if the count query itself errors, let the request through.
+    const COACH_CAP_PER_HOUR = 30;
+    try {
+      const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      const { count } = await supabase
+        .from("ai_runs")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", u.user.id)
+        .eq("feature", "coach")
+        .gte("created_at", since);
+      if ((count ?? 0) >= COACH_CAP_PER_HOUR) {
+        return new Response(JSON.stringify({ error: "rate_limited" }), {
+          status: 429, headers: { ...cors, "Content-Type": "application/json" },
+        });
+      }
+    } catch (rlErr) {
+      console.warn("rate-limit check failed (fail-open)", rlErr);
+    }
+
     // Inject latest Trader Mind diagnostic (archetype + brief payload summary).
     const { data: tm } = await supabase
       .from("trader_mind_sessions")
