@@ -69,7 +69,7 @@ Verified live against the database catalog:
 
 ## Wave 5 — Frontend
 
-- **F-02 (High): CSP is `Content-Security-Policy-Report-Only`** and the policy itself contains `'unsafe-inline' 'unsafe-eval'`. Nothing is enforced; even in enforce mode the current policy would not stop injected scripts. Path: remove `unsafe-eval`, hash/nonces for the preboot inline script, then flip to enforcing.
+- **F-02 (High): CSP — REMEDIATED 2026-08-24.** Now enforcing: the `<meta>` policy flipped from `Content-Security-Policy-Report-Only` to `Content-Security-Policy`, extended with the TradingView widget origins (`s3.tradingview.com` script, `*.tradingview.com` frames) and `worker-src`/`manifest-src`. `frame-ancestors` moved to an HTTP header in `netlify.toml` (browsers ignore it in `<meta>`), alongside `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`. Verified live: authenticated boot, TradingView script + iframe load, zero CSP violations. Remaining hardening: drop `'unsafe-inline'`/`'unsafe-eval'` by hashing the static theme preboot script — requires preview-tooling compatibility review.
 - **F-03 (Medium): `new Function()` in `use-dashboard-config.ts:142`** evaluates user-authored KPI formulas. Token whitelist + assignment/keyword regex reduce the surface, but regex-based JS sandboxing is not a boundary — a crafted identifier/property chain is a known bypass class. Replace with a real expression parser (e.g. mathjs limited scope or a tiny recursive-descent evaluator).
 - **F-04 (Medium): `xlsx@0.18.5`** — CVE-2023-30533 (prototype pollution) & CVE-2024-22363 (ReDoS). Mitigations: it parses only user-selected local files (self-inflicted blast radius), but the import pipeline also feeds parsed cells into trade reconstruction — sanitize/validate cell values before use. Long-term: move to SheetJS CDN builds or an alternative parser.
 - **F-08 (Low):** `document.write` into a print window in `SettingsHub` (srcdoc of app-generated HTML only) and `innerHTML` reads (not writes) in TraderMind/console — no untrusted sinks found. `dangerouslySetInnerHTML` in `ui/chart.tsx` injects **theme-generated CSS only**, no user data. ✅
@@ -94,7 +94,7 @@ Verified live against the database catalog:
 | ID | Severity | Finding | Evidence | Remediation |
 |---|---|---|---|---|
 | F-01 | **High** | Password-reset enumeration + unvalidated `redirect_to` | `request-password-reset/index.ts` returns `not_registered`; passes caller `redirectTo` to `/auth/v1/recover` | Return identical response either way; validate `redirect_to` against an origin allowlist; add rate limit |
-| F-02 | **High** | CSP report-only + unsafe-inline/eval | `index.html:149` | Nonce the preboot script, drop `unsafe-eval`, enforce |
+| F-02 | ~~High~~ **Fixed** | CSP report-only → enforcing (meta + Netlify header, `frame-ancestors` via header) | `index.html:151`, `netlify.toml` | Remaining: hash preboot script, drop `unsafe-eval` |
 | F-03 | Medium | `new Function` KPI formula evaluator | `use-dashboard-config.ts:142` | Replace with parser-based evaluator |
 | F-04 | Medium | `xlsx@0.18.5` known CVEs, no npm fix | `package.json` | Upgrade via SheetJS CDN registry or replace; sanitize parsed cells |
 | F-05 | Medium | Session tokens in localStorage (XSS-reachable) | `client.ts` `persistSession` | Inherent to SPA+anon-key model; mitigate via F-02 enforcement + XSS hygiene |
