@@ -30,8 +30,8 @@ describe('YearView mobile grid', () => {
     );
 
     const grid = screen.getByText('ינואר').parentElement?.parentElement as HTMLElement;
-    expect(grid.style.gridTemplateColumns).toContain('160px');
-    expect(grid.style.gridTemplateColumns).toContain('auto-fit');
+    // Mobile is a fixed 2-up year overview (no auto-fit guessing) — see YearView.
+    expect(grid.style.gridTemplateColumns).toBe('repeat(2, minmax(0, 1fr))');
 
     const feb3 = screen.getByTitle(/3: \+\$100/);
     expect(feb3.style.overflow).toBe('hidden');
