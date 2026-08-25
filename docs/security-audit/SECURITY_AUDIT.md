@@ -102,7 +102,7 @@ Verified live against the database catalog:
 | F-07 | Low | Wildcard CORS on all edge functions | `*/index.ts` CORS blocks | Restrict `Access-Control-Allow-Origin` to app origin |
 | F-08 | Low | `document.write` print path | `SettingsHub.tsx:2799` | Self-generated markup only; replace with blob-url print iframe |
 | F-09 | Low | `trader_code` fallback salt | `trader_code()` | Ensure `trader_salt` vault secret is set; fail closed otherwise |
-| F-10 | Low | Missing hardening headers | hosting layer | Add nosniff / Referrer-Policy / Permissions-Policy |
+| F-10 | ~~Low~~ **Fixed** | Missing hardening headers | `netlify.toml` `[[headers]]` | nosniff, X-Frame-Options, Referrer-Policy, Permissions-Policy now shipped at the hosting layer |
 
 **Verified clean (40 checks):** RLS coverage & scoping, all SECURITY DEFINER guards, search_path pinning, vault credential lifecycle, role storage model, admin gating (client + server), grants, k-anonymity benchmarks, no secret logging, no untrusted HTML sinks, OAuth same-origin redirects, storage privacy, bug-board transition guards.
 
@@ -123,7 +123,15 @@ Verified live against the database catalog:
 | F-01 | **Fixed** | `request-password-reset` now returns a uniform `{ ok: true }` for registered and unregistered emails alike (no enumeration), and `redirect_to` is sanitized (https-only, no embedded credentials) before forwarding. Deployed & verified live. |
 | F-06 | **Fixed** | Rate limiting added: password-reset capped at 5/email/hour and 20/IP/hour via new internal `rate_limit_events` table (deny-all client policy, service-role only) — verified live with a 429 on the 6th request. `orca-coach` capped at 30 calls/user/hour via `ai_runs` telemetry. |
 | F-03 | **Fixed** | `new Function` KPI evaluator replaced with a recursive-descent parser (arithmetic + whitelisted math functions only, zero code execution). Covered by `src/test/kpi-parser.test.ts` — injection attempts (`process.exit`, `constructor.constructor`, ternaries, unknown identifiers) all return null. |
-| F-02 | Open | CSP enforcement requires noncing the theme preboot script — scheduled as a separate change with telemetry review. |
 | F-04 | Open | `xlsx` upgrade path under evaluation (SheetJS CDN registry vs alternative parser). |
-| F-05 | Mitigated by design | localStorage tokens are inherent to the SPA model; risk drops sharply once F-02 lands. |
-| F-07–F-10 | Open (Low) | CORS origin restriction, print-window refactor, vault salt check, hardening headers. |
+| F-05 | Mitigated by design | localStorage tokens are inherent to the SPA model; risk drops sharply now that F-02 is enforcing. |
+| F-07–F-09 | Open (Low) | CORS origin restriction, print-window refactor, vault salt check. |
+
+## Remediation Log — 2026-08-24
+
+| ID | Status | Action taken |
+|---|---|---|
+| F-02 | **Fixed** | CSP promoted from report-only to **enforcing**. Origin inventory performed first (TradingView `tv.js` + widget iframes, Lovable Cloud REST/realtime, Google Fonts, preview HMR sockets), then the policy was extended with `frame-src https://*.tradingview.com`, `script-src https://s3.tradingview.com`, `worker-src 'self'`, `manifest-src 'self'`. `frame-ancestors` moved out of `<meta>` (silently ignored there) into a real HTTP header. Verified in a live authenticated browser session: app boots, TradingView script and iframe both load, **zero CSP violations**. |
+| F-10 | **Fixed** | Hosting-layer hardening headers added in `netlify.toml`: `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` denying camera/mic/geolocation/payment/usb, plus the CSP mirrored as a header with `frame-ancestors 'self'`. |
+
+**Residual on F-02:** `'unsafe-inline'` and `'unsafe-eval'` remain in `script-src`. `'unsafe-inline'` is required by the pre-paint theme script (removable via a build-time hash) and `'unsafe-eval'` by the dev/preview toolchain. Both are follow-up hardening, not blockers — the enforcing policy already contains the network egress and framing surface.
