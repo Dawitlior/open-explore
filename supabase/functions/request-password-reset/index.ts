@@ -10,6 +10,7 @@
 //    forwarded; Supabase Auth additionally enforces its own redirect allowlist.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { withCors } from '../_shared/cors.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -34,7 +35,7 @@ function sanitizeRedirect(input: unknown): string | undefined {
   }
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withCors(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
 
   try {
@@ -107,7 +108,7 @@ Deno.serve(async (req) => {
   } catch {
     return json({ ok: false, error: 'unknown' }, 500);
   }
-});
+}));
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
