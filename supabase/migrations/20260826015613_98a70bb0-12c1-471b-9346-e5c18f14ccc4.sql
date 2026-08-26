@@ -1,0 +1,1 @@
+grant execute on function public.trader_code(uuid) to authenticated, service_role;
