@@ -94,9 +94,9 @@ Verified live against the database catalog:
 | ID | Severity | Finding | Evidence | Remediation |
 |---|---|---|---|---|
 | F-01 | **High** | Password-reset enumeration + unvalidated `redirect_to` | `request-password-reset/index.ts` returns `not_registered`; passes caller `redirectTo` to `/auth/v1/recover` | Return identical response either way; validate `redirect_to` against an origin allowlist; add rate limit |
-| F-02 | ~~High~~ **Fixed** | CSP report-only → enforcing (meta + Netlify header, `frame-ancestors` via header) | `index.html:151`, `netlify.toml` | Remaining: hash preboot script, drop `unsafe-eval` |
+| F-02 | ~~High~~ **Fixed** | CSP enforcing; production header is inline-free (preboot script allowlisted by SHA-256 hash) | `index.html:152`, `netlify.toml` | Closed 2026-08-27 |
 | F-03 | Medium | `new Function` KPI formula evaluator | `use-dashboard-config.ts:142` | Replace with parser-based evaluator |
-| F-04 | Medium | `xlsx@0.18.5` known CVEs, no npm fix | `package.json` | Upgrade via SheetJS CDN registry or replace; sanitize parsed cells |
+| F-04 | ~~Medium~~ **Fixed** | `xlsx` upgraded to patched `0.20.3` (SheetJS CDN tarball) | `package.json` | Closed 2026-08-27, verified with a production build |
 | F-05 | Medium | Session tokens in localStorage (XSS-reachable) | `client.ts` `persistSession` | Inherent to SPA+anon-key model; mitigate via F-02 enforcement + XSS hygiene |
 | F-06 | Medium | No rate limiting on public/AI functions | `request-password-reset`, `orca-coach` | Add per-IP/per-user throttling (edge-level or table-based) |
 | F-07 | Low | Wildcard CORS on all edge functions | `*/index.ts` CORS blocks | Restrict `Access-Control-Allow-Origin` to app origin |
@@ -123,7 +123,7 @@ Verified live against the database catalog:
 | F-01 | **Fixed** | `request-password-reset` now returns a uniform `{ ok: true }` for registered and unregistered emails alike (no enumeration), and `redirect_to` is sanitized (https-only, no embedded credentials) before forwarding. Deployed & verified live. |
 | F-06 | **Fixed** | Rate limiting added: password-reset capped at 5/email/hour and 20/IP/hour via new internal `rate_limit_events` table (deny-all client policy, service-role only) — verified live with a 429 on the 6th request. `orca-coach` capped at 30 calls/user/hour via `ai_runs` telemetry. |
 | F-03 | **Fixed** | `new Function` KPI evaluator replaced with a recursive-descent parser (arithmetic + whitelisted math functions only, zero code execution). Covered by `src/test/kpi-parser.test.ts` — injection attempts (`process.exit`, `constructor.constructor`, ternaries, unknown identifiers) all return null. |
-| F-04 | Open | `xlsx` upgrade path under evaluation (SheetJS CDN registry vs alternative parser). |
+| F-04 | Fixed | `xlsx` pinned to patched `0.20.3` from the SheetJS CDN; production build verified. |
 | F-05 | Mitigated by design | localStorage tokens are inherent to the SPA model; risk drops sharply now that F-02 is enforcing. |
 | F-07–F-09 | Open (Low) | CORS origin restriction, print-window refactor, vault salt check. |
 
