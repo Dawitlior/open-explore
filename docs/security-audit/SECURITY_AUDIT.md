@@ -144,4 +144,13 @@ Verified live against the database catalog:
 | F-08 | **Fixed** | The print/report window no longer uses `document.write`. `SettingsHub` now opens the generated report through a revocable `blob:` URL with `noopener,noreferrer` — no live-document injection sink. |
 | F-09 | **Fixed** | `trader_code()` rewritten to **fail closed**: it raises `42501` when the `trader_salt` vault secret is missing or shorter than 16 chars, instead of falling back to the literal `CHANGE-ME-SET-A-REAL-SALT`. Vault secret confirmed present in production. |
 
-**Remaining open:** F-04 (`xlsx` distribution moved to the SheetJS CDN registry — needs a production build verification), F-05 (localStorage tokens, inherent to the SPA model), and the F-02 residual (`'unsafe-inline'` / `'unsafe-eval'` in `script-src`).
+## Remediation Log — 2026-08-27 (final)
+
+| ID | Status | Action taken |
+|---|---|---|
+| F-04 | **Fixed** | `xlsx` now resolves from the patched SheetJS distribution `https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz` (CVE-2023-30533 and CVE-2024-22363 both addressed upstream). Verified with a full production `vite build`: install and bundling succeed, `vendor-xlsx` chunk emitted, import pipeline unchanged. |
+| F-02 residual | **Fixed** | Production CSP (`netlify.toml` header) no longer contains `'unsafe-inline'` or `'unsafe-eval'`. The single inline pre-paint theme script in `index.html` is now allowlisted by hash: `'sha256-u1bBwGA61epiPYgauAZFzTpJR1NNIQ2ljRSCnokrf5Y='`. Verified by serving the real `dist/` build behind the exact production header in a headless browser: app boots, `data-theme` applied by the preboot, root tree rendered, **zero CSP violations**. The `<meta>` policy in `index.html` intentionally keeps `'unsafe-inline'`/`'unsafe-eval'` because the Lovable dev/preview toolchain requires them; it is superseded by the stricter header in production. |
+
+> **Maintenance note:** editing the preboot `<script>` in `index.html` changes its hash. Recompute (`sha256` of the exact script body, base64) and update `netlify.toml`, or production will boot with the default theme.
+
+**Remaining open:** F-05 only (session tokens in `localStorage`) — inherent to the SPA + anon-key model and materially mitigated by the now-enforcing, inline-free production CSP.
