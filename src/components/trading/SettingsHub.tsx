@@ -2794,9 +2794,13 @@ function FullReportBlock({
     return () => window.clearInterval(id);
   }, [srcDoc, iframeH]);
 
+  // Audit F-08: open the report through a blob URL instead of document.write —
+  // no live document injection sink, and the new tab gets an opaque origin.
   const openInNewTab = () => {
-    const w = window.open('', '_blank');
-    if (w) { w.document.open(); w.document.write(srcDoc); w.document.close(); }
+    const url = URL.createObjectURL(new Blob([srcDoc], { type: 'text/html' }));
+    const w = window.open(url, '_blank', 'noopener,noreferrer');
+    if (!w) URL.revokeObjectURL(url);
+    else window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
   };
 
   return (

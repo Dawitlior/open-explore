@@ -1,4 +1,5 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { withCors } from '../_shared/cors.ts';
 
 const INTERVALS = new Set(['1m', '5m', '15m', '1h', '4h', '1d']);
 const HOSTS = [
@@ -6,7 +7,7 @@ const HOSTS = [
   'https://data-api.binance.vision/api/v3/klines',
 ];
 
-Deno.serve(async (req) => {
+Deno.serve(withCors(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
@@ -52,7 +53,7 @@ Deno.serve(async (req) => {
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : 'unknown error' }, 500);
   }
-});
+}));
 
 function json(body: unknown, status = 200, cache?: string) {
   const headers: Record<string, string> = { ...corsHeaders, 'Content-Type': 'application/json' };

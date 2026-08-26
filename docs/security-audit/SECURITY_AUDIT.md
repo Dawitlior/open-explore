@@ -135,3 +135,13 @@ Verified live against the database catalog:
 | F-10 | **Fixed** | Hosting-layer hardening headers added in `netlify.toml`: `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` denying camera/mic/geolocation/payment/usb, plus the CSP mirrored as a header with `frame-ancestors 'self'`. |
 
 **Residual on F-02:** `'unsafe-inline'` and `'unsafe-eval'` remain in `script-src`. `'unsafe-inline'` is required by the pre-paint theme script (removable via a build-time hash) and `'unsafe-eval'` by the dev/preview toolchain. Both are follow-up hardening, not blockers — the enforcing policy already contains the network egress and framing surface.
+
+## Remediation Log — 2026-08-26
+
+| ID | Status | Action taken |
+|---|---|---|
+| F-07 | **Fixed** | Wildcard CORS removed. New shared `supabase/functions/_shared/cors.ts` wraps every edge function (`withCors`): the response's `Access-Control-Allow-Origin` is echoed only for allowlisted origins (Lovable preview/published, `*.netlify.app`, localhost dev, plus anything in the optional `ALLOWED_ORIGINS` secret) and stripped otherwise, with `Vary: Origin`. Origin-less callers (cron, server-to-server) are unaffected. Verified live: allowed origin gets an ACAO header, `https://evil.example.com` gets none, no-origin requests still return 200. |
+| F-08 | **Fixed** | The print/report window no longer uses `document.write`. `SettingsHub` now opens the generated report through a revocable `blob:` URL with `noopener,noreferrer` — no live-document injection sink. |
+| F-09 | **Fixed** | `trader_code()` rewritten to **fail closed**: it raises `42501` when the `trader_salt` vault secret is missing or shorter than 16 chars, instead of falling back to the literal `CHANGE-ME-SET-A-REAL-SALT`. Vault secret confirmed present in production. |
+
+**Remaining open:** F-04 (`xlsx` distribution moved to the SheetJS CDN registry — needs a production build verification), F-05 (localStorage tokens, inherent to the SPA model), and the F-02 residual (`'unsafe-inline'` / `'unsafe-eval'` in `script-src`).

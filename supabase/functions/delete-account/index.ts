@@ -1,6 +1,7 @@
 // Delete the current user's account + all their data permanently.
 // Requires Authorization: Bearer <user_jwt>.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
+import { withCors } from '../_shared/cors.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,7 +9,7 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-Deno.serve(async (req) => {
+Deno.serve(withCors(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -56,4 +57,4 @@ Deno.serve(async (req) => {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
-});
+}));

@@ -4,6 +4,7 @@
 // Raw secrets never touch logs, the DB plaintext column, or the client state.
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { withCors } from '../_shared/cors.ts';
 
 export const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -586,7 +587,7 @@ export async function handler(req: Request, deps: HandlerDeps): Promise<Response
 }
 
 // ---------- Real wiring ----------
-Deno.serve((req) => {
+Deno.serve(withCors((req) => {
   const authHeader = req.headers.get('Authorization') ?? '';
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
@@ -642,4 +643,4 @@ Deno.serve((req) => {
       return { error: error ? { message: error.message } : null };
     },
   });
-});
+}));
