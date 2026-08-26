@@ -16,6 +16,7 @@
 
 import { createClient } from 'npm:@supabase/supabase-js@2.45.4';
 import {
+import { withCors } from '../_shared/cors.ts';
   parseFlexXml,
   reconstructClosedTrades,
   crosscheckPnl,
@@ -462,7 +463,7 @@ function timingSafeEqual(a: string, b: string): boolean {
 }
 
 // ------------ Handler ------------
-Deno.serve(async (req) => {
+Deno.serve(withCors(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
   if (req.method !== 'POST') return json({ ok: false, error: 'method_not_allowed' }, 405);
 
@@ -588,4 +589,4 @@ Deno.serve(async (req) => {
     console.error('[sync-ibkr-flex] unhandled', msg);
     return json({ ok: false, error: 'unhandled_exception', detail: msg }, 422);
   }
-});
+}));

@@ -7,6 +7,7 @@
 // strangers can't trigger it. Safe to call repeatedly; idempotent by design.
 
 import { createClient } from 'npm:@supabase/supabase-js@2.45.4';
+import { withCors } from '../_shared/cors.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -18,7 +19,7 @@ const json = (b: unknown, s = 200) =>
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
-Deno.serve(async (req) => {
+Deno.serve(withCors(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
   if (req.method !== 'POST') return json({ ok: false, error: 'method_not_allowed' }, 405);
 
@@ -78,4 +79,4 @@ Deno.serve(async (req) => {
   } catch (e) {
     return json({ ok: false, error: 'unhandled_exception', detail: (e as Error).message }, 422);
   }
-});
+}));

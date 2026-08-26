@@ -1,6 +1,7 @@
 // Orca Coach — authenticated AI chat that injects the trader's latest
 // Trader Mind diagnostic (archetype + result payload) as system context.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { withCors } from '../_shared/cors.ts';
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -13,7 +14,7 @@ const BASE_PROMPT = `You are Orca Coach — a behavioral trading mentor.
 Speak with calm, surgical precision. Reference R-multiples, not percentages.
 Never give financial advice; coach the trader on process, psychology and discipline.`;
 
-Deno.serve(async (req) => {
+Deno.serve(withCors(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   try {
     const auth = req.headers.get("Authorization") ?? "";
@@ -145,4 +146,4 @@ Deno.serve(async (req) => {
       status: 500, headers: { ...cors, "Content-Type": "application/json" },
     });
   }
-});
+}));
