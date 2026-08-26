@@ -15,8 +15,8 @@
 // token never appears in logs, responses, or error messages.
 
 import { createClient } from 'npm:@supabase/supabase-js@2.45.4';
-import {
 import { withCors } from '../_shared/cors.ts';
+import {
   parseFlexXml,
   reconstructClosedTrades,
   crosscheckPnl,
