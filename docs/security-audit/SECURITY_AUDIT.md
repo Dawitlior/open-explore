@@ -94,9 +94,9 @@ Verified live against the database catalog:
 | ID | Severity | Finding | Evidence | Remediation |
 |---|---|---|---|---|
 | F-01 | **High** | Password-reset enumeration + unvalidated `redirect_to` | `request-password-reset/index.ts` returns `not_registered`; passes caller `redirectTo` to `/auth/v1/recover` | Return identical response either way; validate `redirect_to` against an origin allowlist; add rate limit |
-| F-02 | ~~High~~ **Fixed** | CSP report-only → enforcing (meta + Netlify header, `frame-ancestors` via header) | `index.html:151`, `netlify.toml` | Remaining: hash preboot script, drop `unsafe-eval` |
+| F-02 | ~~High~~ **Fixed** | CSP enforcing; production header is inline-free (preboot script allowlisted by SHA-256 hash) | `index.html:152`, `netlify.toml` | Closed 2026-08-27 |
 | F-03 | Medium | `new Function` KPI formula evaluator | `use-dashboard-config.ts:142` | Replace with parser-based evaluator |
-| F-04 | Medium | `xlsx@0.18.5` known CVEs, no npm fix | `package.json` | Upgrade via SheetJS CDN registry or replace; sanitize parsed cells |
+| F-04 | ~~Medium~~ **Fixed** | `xlsx` upgraded to patched `0.20.3` (SheetJS CDN tarball) | `package.json` | Closed 2026-08-27, verified with a production build |
 | F-05 | Medium | Session tokens in localStorage (XSS-reachable) | `client.ts` `persistSession` | Inherent to SPA+anon-key model; mitigate via F-02 enforcement + XSS hygiene |
 | F-06 | Medium | No rate limiting on public/AI functions | `request-password-reset`, `orca-coach` | Add per-IP/per-user throttling (edge-level or table-based) |
 | F-07 | Low | Wildcard CORS on all edge functions | `*/index.ts` CORS blocks | Restrict `Access-Control-Allow-Origin` to app origin |
@@ -123,7 +123,7 @@ Verified live against the database catalog:
 | F-01 | **Fixed** | `request-password-reset` now returns a uniform `{ ok: true }` for registered and unregistered emails alike (no enumeration), and `redirect_to` is sanitized (https-only, no embedded credentials) before forwarding. Deployed & verified live. |
 | F-06 | **Fixed** | Rate limiting added: password-reset capped at 5/email/hour and 20/IP/hour via new internal `rate_limit_events` table (deny-all client policy, service-role only) — verified live with a 429 on the 6th request. `orca-coach` capped at 30 calls/user/hour via `ai_runs` telemetry. |
 | F-03 | **Fixed** | `new Function` KPI evaluator replaced with a recursive-descent parser (arithmetic + whitelisted math functions only, zero code execution). Covered by `src/test/kpi-parser.test.ts` — injection attempts (`process.exit`, `constructor.constructor`, ternaries, unknown identifiers) all return null. |
-| F-04 | Open | `xlsx` upgrade path under evaluation (SheetJS CDN registry vs alternative parser). |
+| F-04 | Fixed | `xlsx` pinned to patched `0.20.3` from the SheetJS CDN; production build verified. |
 | F-05 | Mitigated by design | localStorage tokens are inherent to the SPA model; risk drops sharply now that F-02 is enforcing. |
 | F-07–F-09 | Open (Low) | CORS origin restriction, print-window refactor, vault salt check. |
 
@@ -144,4 +144,13 @@ Verified live against the database catalog:
 | F-08 | **Fixed** | The print/report window no longer uses `document.write`. `SettingsHub` now opens the generated report through a revocable `blob:` URL with `noopener,noreferrer` — no live-document injection sink. |
 | F-09 | **Fixed** | `trader_code()` rewritten to **fail closed**: it raises `42501` when the `trader_salt` vault secret is missing or shorter than 16 chars, instead of falling back to the literal `CHANGE-ME-SET-A-REAL-SALT`. Vault secret confirmed present in production. |
 
-**Remaining open:** F-04 (`xlsx` distribution moved to the SheetJS CDN registry — needs a production build verification), F-05 (localStorage tokens, inherent to the SPA model), and the F-02 residual (`'unsafe-inline'` / `'unsafe-eval'` in `script-src`).
+## Remediation Log — 2026-08-27 (final)
+
+| ID | Status | Action taken |
+|---|---|---|
+| F-04 | **Fixed** | `xlsx` now resolves from the patched SheetJS distribution `https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz` (CVE-2023-30533 and CVE-2024-22363 both addressed upstream). Verified with a full production `vite build`: install and bundling succeed, `vendor-xlsx` chunk emitted, import pipeline unchanged. |
+| F-02 residual | **Fixed** | Production CSP (`netlify.toml` header) no longer contains `'unsafe-inline'` or `'unsafe-eval'`. The single inline pre-paint theme script in `index.html` is now allowlisted by hash: `'sha256-u1bBwGA61epiPYgauAZFzTpJR1NNIQ2ljRSCnokrf5Y='`. Verified by serving the real `dist/` build behind the exact production header in a headless browser: app boots, `data-theme` applied by the preboot, root tree rendered, **zero CSP violations**. The `<meta>` policy in `index.html` intentionally keeps `'unsafe-inline'`/`'unsafe-eval'` because the Lovable dev/preview toolchain requires them; it is superseded by the stricter header in production. |
+
+> **Maintenance note:** editing the preboot `<script>` in `index.html` changes its hash. Recompute (`sha256` of the exact script body, base64) and update `netlify.toml`, or production will boot with the default theme.
+
+**Remaining open:** F-05 only (session tokens in `localStorage`) — inherent to the SPA + anon-key model and materially mitigated by the now-enforcing, inline-free production CSP.
