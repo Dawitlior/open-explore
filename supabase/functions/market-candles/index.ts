@@ -1,5 +1,10 @@
-import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { withCors } from '../_shared/cors.ts';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+};
 
 const INTERVALS = new Set(['1m', '5m', '15m', '1h', '4h', '1d']);
 const HOSTS = [
