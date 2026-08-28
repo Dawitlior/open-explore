@@ -16,6 +16,9 @@ const STATIC_PATTERNS: RegExp[] = [
   /^https:\/\/([a-z0-9-]+\.)*netlify\.app$/i,
   /^http:\/\/localhost(:\d+)?$/i,
   /^http:\/\/127\.0\.0\.1(:\d+)?$/i,
+  // Production custom domain (Netlify-hosted).
+  /^https:\/\/([a-z0-9-]+\.)*orcainvestment\.co\.il$/i,
+
 ];
 
 function extraOrigins(): string[] {
