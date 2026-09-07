@@ -255,6 +255,8 @@ export function A11yPanel() {
     } as React.CSSProperties} />
   ) : null;
 
+  if (!isLanding) return null;
+
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
       {isTouch ? (
