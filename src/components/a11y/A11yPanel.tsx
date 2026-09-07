@@ -5,7 +5,7 @@
  */
 import { useEffect, useId, useRef, useState, useCallback } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { Accessibility, X, Type, Contrast, Eye, MousePointer2, Sparkles, Link as LinkIcon, ALargeSmall, RotateCcw } from 'lucide-react';
 import { useA11yPrefs, type A11yContrast } from '@/hooks/use-a11y-prefs';
 import { useLang } from '@/hooks/use-lang';
@@ -28,9 +28,13 @@ function isTouchDevice(): boolean {
 
 export function A11yPanel() {
   const { isRTL, t } = useLang();
+  const location = useLocation();
   const { prefs, update, reset, incScale, decScale } = useA11yPrefs();
   const [open, setOpen] = useState(false);
   const titleId = useId();
+
+  // Only show the accessibility trigger on the landing page
+  const isLanding = location.pathname === '/welcome';
 
   // Alt+A shortcut
   useEffect(() => {
@@ -250,6 +254,8 @@ export function A11yPanel() {
       [dock!.side === 'right' ? 'borderRight' : 'borderLeft']: `8px solid ${SURF.bg0}`,
     } as React.CSSProperties} />
   ) : null;
+
+  if (!isLanding) return null;
 
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
