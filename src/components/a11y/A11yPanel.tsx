@@ -5,7 +5,7 @@
  */
 import { useEffect, useId, useRef, useState, useCallback } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { Accessibility, X, Type, Contrast, Eye, MousePointer2, Sparkles, Link as LinkIcon, ALargeSmall, RotateCcw } from 'lucide-react';
 import { useA11yPrefs, type A11yContrast } from '@/hooks/use-a11y-prefs';
 import { useLang } from '@/hooks/use-lang';
