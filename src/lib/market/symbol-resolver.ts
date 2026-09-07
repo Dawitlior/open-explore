@@ -98,10 +98,12 @@ export function classify(rawSymbol: string): AssetClass {
   const flat = s.replace(/[-_/:]/g, '');
   if (FUTURES[s] || /^[A-Z]{2,3}\d?!$/.test(s)) return 'futures';
   if (INDICES[flat]) return 'index';
-  if (FOREX.has(flat) || (/^[A-Z]{3}\/[A-Z]{3}$/.test(s))) return 'forex';
   const pair = splitCrypto(flat);
   if (pair && (CRYPTO.has(pair.base) || pair.quote === 'USDT')) return 'crypto';
   if (CRYPTO.has(flat)) return 'crypto';
+  // A slash alone does not make a pair Forex: crypto trades are commonly
+  // stored as SOL/USD, BTC/USD, etc. Check known crypto bases first.
+  if (FOREX.has(flat) || (/^[A-Z]{3}\/[A-Z]{3}$/.test(s))) return 'forex';
   if (/^[A-Z.]{1,6}$/.test(flat)) return 'stock';
   return 'unknown';
 }
