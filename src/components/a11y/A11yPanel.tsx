@@ -35,7 +35,6 @@ export function A11yPanel() {
 
   // Only show the accessibility trigger on the landing page
   const isLanding = location.pathname === '/welcome';
-  if (!isLanding) return null;
 
   // Alt+A shortcut
   useEffect(() => {
