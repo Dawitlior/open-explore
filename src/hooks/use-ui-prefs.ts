@@ -119,6 +119,17 @@ export function useUIPrefs() {
   const [prefs, setPrefsState] = useState<UIPrefs>(() => readCachedPrefs());
   const [loaded, setLoaded] = useState(false);
 
+  // Live sync between hook instances (Settings panel ↔ app shell).
+  useEffect(() => {
+    const onChange = (e: Event) => {
+      const next = (e as CustomEvent<UIPrefs>).detail;
+      if (next) setPrefsState(normalizePrefs(next));
+    };
+    window.addEventListener(PREFS_EVENT, onChange);
+    return () => window.removeEventListener(PREFS_EVENT, onChange);
+  }, []);
+
+
   useEffect(() => {
     getSetting<Partial<UIPrefs>>(KEY).then(p => {
       const cachedRaw = readCachedPrefsRaw();
