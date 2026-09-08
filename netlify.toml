@@ -17,11 +17,24 @@
     # Production policy: no 'unsafe-inline'/'unsafe-eval'. The pre-paint theme
     # script in index.html is allowed by its SHA-256 hash — if that inline
     # script changes, recompute the hash or the app will boot unthemed.
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'sha256-u1bBwGA61epiPYgauAZFzTpJR1NNIQ2ljRSCnokrf5Y=' https://s3.tradingview.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com; frame-src https://*.tradingview.com; worker-src 'self'; manifest-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self';"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'sha256-u1bBwGA61epiPYgauAZFzTpJR1NNIQ2ljRSCnokrf5Y=' https://s3.tradingview.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com; frame-src 'self' https://*.tradingview.com; worker-src 'self'; manifest-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self';"
     X-Content-Type-Options = "nosniff"
     X-Frame-Options = "SAMEORIGIN"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+
+# Bundled self-contained diagnostics (Trader Mind, Weekly Review) are static
+# HTML documents with inline scripts/styles, loaded same-origin in an iframe.
+# They get a scoped policy so the strict app policy above stays intact.
+[[headers]]
+  for = "/trader-mind/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self';"
+
+[[headers]]
+  for = "/weekly-review/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self';"
 
 [build.environment]
   NODE_VERSION = "20"

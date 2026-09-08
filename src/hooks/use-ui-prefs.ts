@@ -95,9 +95,18 @@ function readCachedPrefsRaw(): string | null {
   catch { return null; }
 }
 
+const PREFS_EVENT = 'orca:ui-prefs-changed';
+
 function persistPrefs(next: UIPrefs) {
   try { writePrefsCaches(JSON.stringify(next)); } catch { /* noop */ }
   setSetting(KEY, next);
+  // Broadcast so every mounted useUIPrefs instance re-renders with the new
+  // palette immediately — no full page reload needed.
+  try {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(PREFS_EVENT, { detail: next }));
+    }
+  } catch { /* noop */ }
 }
 
 declare global {
@@ -109,6 +118,17 @@ declare global {
 export function useUIPrefs() {
   const [prefs, setPrefsState] = useState<UIPrefs>(() => readCachedPrefs());
   const [loaded, setLoaded] = useState(false);
+
+  // Live sync between hook instances (Settings panel ↔ app shell).
+  useEffect(() => {
+    const onChange = (e: Event) => {
+      const next = (e as CustomEvent<UIPrefs>).detail;
+      if (next) setPrefsState(normalizePrefs(next));
+    };
+    window.addEventListener(PREFS_EVENT, onChange);
+    return () => window.removeEventListener(PREFS_EVENT, onChange);
+  }, []);
+
 
   useEffect(() => {
     getSetting<Partial<UIPrefs>>(KEY).then(p => {

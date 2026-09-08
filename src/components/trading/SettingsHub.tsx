@@ -13,6 +13,7 @@ import { playMorningLock } from '@/lib/apex-sounds';
 import type { TradingTheme, CustomTheme, BaseMood } from '@/lib/trading-theme';
 import { deriveFullPalette, deriveFromCustomTheme, CUSTOM_THEME_DEFAULT } from '@/lib/trading-theme';
 import type { ThemeId, Lang } from '@/hooks/use-settings';
+import { ModeSwitchEvents } from '@/hooks/use-settings';
 import { useDashboardConfig, WIDGET_LABELS, evalCustomKPI, type CustomKPI } from '@/hooks/use-dashboard-config';
 import type { TradingStats } from '@/lib/trading-analytics';
 import { useDisplayMode } from '@/lib/display-mode';
@@ -861,9 +862,9 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                       return (
                         <button key={opt.id} onClick={() => {
                           if (theme === opt.id) return;
+                          // Applies live everywhere (setTheme repaints the DOM
+                          // tokens and fires the Liquid Sweep) — no reload.
                           setTheme(opt.id);
-                          // Apply everywhere immediately — reload instead of prompting.
-                          window.setTimeout(() => window.location.reload(), 220);
                         }} style={{
                           padding: 14, borderRadius: T.radius.md, cursor: 'pointer',
                           textAlign: isRTL ? 'right' : 'left' as const,
@@ -1463,7 +1464,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                 ui.commitCustomAccent(draft);
                 playMorningLock();
                 toast.success(t('הפלטה נשמרה ונעולה ליום', 'Palette committed and locked for 1 day'));
-                window.setTimeout(() => window.location.reload(), 220);
+                ModeSwitchEvents.emit({ kind: 'theme', from: 'palette', to: 'palette' });
               };
 
               return (
@@ -2400,7 +2401,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                   ui.commitCustomAccent(draftAccent);
                   playMorningLock();
                   toast.success(t('הפלטה נשמרה ונעולה ליום', 'Palette committed and locked for 1 day'));
-                  window.setTimeout(() => window.location.reload(), 220);
+                  ModeSwitchEvents.emit({ kind: 'theme', from: 'palette', to: 'palette' });
                 }}
                 style={{
                   flex: 1.4, padding: '12px 16px', borderRadius: T.radius.md,
