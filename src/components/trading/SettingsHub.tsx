@@ -861,9 +861,9 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                       return (
                         <button key={opt.id} onClick={() => {
                           if (theme === opt.id) return;
+                          // Applies live everywhere (setTheme repaints the DOM
+                          // tokens and fires the Liquid Sweep) — no reload.
                           setTheme(opt.id);
-                          // Apply everywhere immediately — reload instead of prompting.
-                          window.setTimeout(() => window.location.reload(), 220);
                         }} style={{
                           padding: 14, borderRadius: T.radius.md, cursor: 'pointer',
                           textAlign: isRTL ? 'right' : 'left' as const,
