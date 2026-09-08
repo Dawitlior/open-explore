@@ -96,6 +96,7 @@ export function TraderMindSession({ open, onClose, lang = 'he' }: Props) {
     window.addEventListener('message', onMessage);
     window.addEventListener('keydown', onKey);
     return () => {
+      window.clearTimeout(initTimer);
       window.removeEventListener('message', onMessage);
       window.removeEventListener('keydown', onKey);
     };
