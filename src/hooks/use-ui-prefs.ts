@@ -95,9 +95,18 @@ function readCachedPrefsRaw(): string | null {
   catch { return null; }
 }
 
+const PREFS_EVENT = 'orca:ui-prefs-changed';
+
 function persistPrefs(next: UIPrefs) {
   try { writePrefsCaches(JSON.stringify(next)); } catch { /* noop */ }
   setSetting(KEY, next);
+  // Broadcast so every mounted useUIPrefs instance re-renders with the new
+  // palette immediately — no full page reload needed.
+  try {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(PREFS_EVENT, { detail: next }));
+    }
+  } catch { /* noop */ }
 }
 
 declare global {
