@@ -88,6 +88,10 @@ export function TraderMindSession({ open, onClose, lang = 'he' }: Props) {
       }
     };
 
+    // Fallback: the bundled diagnostic does not always announce 'ready',
+    // so push the init payload shortly after mount as well.
+    const initTimer = window.setTimeout(() => { void sendInit(); }, 1200);
+
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('message', onMessage);
     window.addEventListener('keydown', onKey);
