@@ -9,7 +9,7 @@ import { useVisibleInterval } from '@/hooks/use-visible-interval';
 
 import { computeAnalytics, getCalDays } from '@/lib/trading-analytics';
 import { i18n } from '@/lib/trading-i18n';
-import { getTheme, tintTheme, ttStyle, modeColors, type TradingTheme } from '@/lib/trading-theme';
+import { applyCustomTheme, applyDerivedPalette, getTheme, themeFromCustom, tintTheme, ttStyle, modeColors, type TradingTheme } from '@/lib/trading-theme';
 import { GlassCard, MetricCard, ScoreGauge, TradingBadge, Ico } from '@/components/trading/TradingUI';
 import { AdaptiveExpectancyCard, AdaptiveQuickStats } from '@/components/trading/AdaptiveKpiCards';
 import { ChartWrapper, EXPLANATIONS, type ChartExplanation } from '@/components/trading/ChartWrapper';
@@ -163,9 +163,20 @@ const Index = () => {
   // All three registry chart lists are now consumed by their respective pages.
   const { prefs: uiPrefs } = useUIPrefs();
   const T = useMemo(
-    () => (uiPrefs.customAccentEnabled ? tintTheme(baseTheme, uiPrefs.customAccent) : baseTheme),
-    [baseTheme, uiPrefs.customAccentEnabled, uiPrefs.customAccent],
+    () => uiPrefs.customThemeEnabled
+      ? themeFromCustom(baseTheme, uiPrefs.customTheme)
+      : uiPrefs.customAccentEnabled
+        ? tintTheme(baseTheme, uiPrefs.customAccent)
+        : baseTheme,
+    [baseTheme, uiPrefs.customAccentEnabled, uiPrefs.customAccent, uiPrefs.customThemeEnabled, uiPrefs.customTheme],
   );
+  // Base-theme application and custom-palette application are separate hooks.
+  // Re-apply the overlay after either changes so a base switch can never leave
+  // cards/charts painted with stale semantic tokens until the next full load.
+  useEffect(() => {
+    if (uiPrefs.customThemeEnabled) applyCustomTheme(uiPrefs.customTheme);
+    else if (uiPrefs.customAccentEnabled) applyDerivedPalette(uiPrefs.customAccent);
+  }, [settings.theme, uiPrefs.customThemeEnabled, uiPrefs.customTheme, uiPrefs.customAccentEnabled, uiPrefs.customAccent]);
   /* Brand gold. The bright dark-mode gold is illegible on the light canvas,
      so it collapses to a deep amber that keeps the same semantic reading. */
   const GOLD = T.isLight ? '#B45309' : '#f5c542';

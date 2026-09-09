@@ -421,11 +421,33 @@ function rgba(hex: string, a: number): string {
 
 export function tintTheme(base: TradingTheme, hex: string): TradingTheme {
   if (!/^#[0-9a-f]{6}$/i.test(hex)) return base;
+  const palette = deriveFullPalette(hex, base.isLight ? 'light' : 'dark');
+  if (!palette) return base;
   const lighter = hexShift(hex, 8);
   const darker = hexShift(hex, -8);
   const teal = hexShift(hex, 0, -10);
+  const css = (value: string) => `hsl(${value})`;
   return {
     ...base,
+    bg: {
+      ...base.bg,
+      primary: css(palette.background),
+      secondary: css(palette.surface),
+      tertiary: css(palette.accentSoft),
+      card: css(palette.card),
+      surface: css(palette.surface),
+    },
+    surface: {
+      ...base.surface,
+      base: css(palette.background),
+      raised: css(palette.card),
+      sunken: css(palette.surface),
+      overlay: css(palette.card),
+    },
+    text: {
+      ...base.text,
+      primary: css(palette.foreground),
+    },
     accent: {
       ...base.accent,
       cyan: hex,
@@ -436,11 +458,82 @@ export function tintTheme(base: TradingTheme, hex: string): TradingTheme {
     },
     border: {
       ...base.border,
+      subtle: css(palette.border),
+      medium: css(palette.border),
       active: rgba(lighter, 0.4),
+    },
+    chart: {
+      ...base.chart,
+      grid: css(palette.border),
+      axisLine: css(palette.border),
+      tooltipBg: css(palette.card),
+      tooltipBorder: css(palette.border),
+      series: base.chart.series.map((_, index) => hexShift(hex, (index - 3) * 5, -Math.min(28, index * 4))),
     },
     shadow: {
       ...base.shadow,
       glow: (c: string) => `0 0 20px ${c || rgba(hex, 0.5)}, 0 0 40px ${c || rgba(hex, 0.3)}`,
+    },
+  };
+}
+
+/** JS-side companion to applyCustomTheme, for inline styles and SVG charts. */
+export function themeFromCustom(base: TradingTheme, custom: CustomTheme): TradingTheme {
+  const out = deriveFromCustomTheme(custom);
+  if (!out) return base;
+  const v = out.vars;
+  const css = (name: string, fallback: string) => v[name] ? `hsl(${v[name]})` : fallback;
+  const primary = custom.accentPrimary;
+  const secondary = custom.accentSecondary;
+  const border = css('--border', base.border.subtle);
+  const card = css('--card', base.bg.card);
+  const surface = out.preview.surface;
+  return {
+    ...base,
+    isLight: custom.mode === 'light',
+    bg: {
+      primary: css('--background', base.bg.primary),
+      secondary: surface,
+      tertiary: css('--muted', base.bg.tertiary),
+      card,
+      surface,
+    },
+    surface: {
+      ...base.surface,
+      base: css('--background', base.surface.base),
+      raised: card,
+      sunken: surface,
+      overlay: css('--popover', base.surface.overlay),
+    },
+    text: {
+      ...base.text,
+      primary: css('--foreground', base.text.primary),
+      muted: css('--muted-foreground', base.text.muted),
+    },
+    accent: {
+      ...base.accent,
+      cyan: primary,
+      cyanGlow: rgba(primary, 0.18),
+      teal: secondary,
+      blue: primary,
+      blueGlow: rgba(primary, 0.16),
+      purple: secondary,
+      purpleGlow: rgba(secondary, 0.16),
+    },
+    border: {
+      subtle: border,
+      medium: border,
+      active: rgba(primary, 0.45),
+    },
+    chart: {
+      ...base.chart,
+      grid: border,
+      axisLine: border,
+      tooltipBg: card,
+      tooltipBorder: border,
+      series: base.chart.series.map((_, index) => index % 2 === 0
+        ? hexShift(primary, (index - 2) * 4, -index * 3)
+        : hexShift(secondary, (index - 2) * 4, -index * 3)),
     },
   };
 }
@@ -835,6 +928,19 @@ export function applyDerivedPalette(hex: string) {
   set('--orca-aurora-b', p.auroraB);
   set('--orca-glow-spot', p.glow);
   set('--orca-primary-h', p.primary);
+  set('--orca-surface-base', `hsl(${p.background})`);
+  set('--orca-surface-raised', `hsl(${p.card})`);
+  set('--orca-surface-sunken', `hsl(${p.surface})`);
+  set('--orca-surface-overlay', `hsl(${p.card})`);
+  set('--orca-border-subtle', `hsl(${p.border})`);
+  set('--orca-border-medium', `hsl(${p.border})`);
+  set('--orca-border-active', hex);
+  set('--orca-text-primary', `hsl(${p.foreground})`);
+  set('--orca-chart-grid', `hsl(${p.border})`);
+  set('--orca-chart-axis-line', `hsl(${p.border})`);
+  set('--orca-tooltip-bg', `hsl(${p.card})`);
+  set('--orca-tooltip-border', `hsl(${p.border})`);
+  for (let i = 0; i < 8; i += 1) set(`--orca-series-${i + 1}`, hexShift(hex, (i - 3) * 5, -Math.min(28, i * 4)));
   r.setAttribute('data-derived-palette', hex);
 }
 
@@ -967,6 +1073,26 @@ export function applyCustomTheme(t: CustomTheme) {
   if (!out) return;
   const r = document.documentElement;
   Object.entries(out.vars).forEach(([k, v]) => r.style.setProperty(k, v));
+  const semantic: Record<string, string> = {
+    '--orca-surface-base': out.preview.bg,
+    '--orca-surface-raised': out.preview.card,
+    '--orca-surface-sunken': out.preview.surface,
+    '--orca-surface-overlay': out.preview.card,
+    '--orca-border-subtle': out.preview.border,
+    '--orca-border-medium': out.preview.border,
+    '--orca-border-active': t.accentPrimary,
+    '--orca-text-primary': `hsl(${out.vars['--foreground']})`,
+    '--orca-text-muted': `hsl(${out.vars['--muted-foreground']})`,
+    '--orca-chart-grid': out.preview.border,
+    '--orca-chart-axis-line': out.preview.border,
+    '--orca-tooltip-bg': out.preview.card,
+    '--orca-tooltip-border': out.preview.border,
+  };
+  Object.entries(semantic).forEach(([k, v]) => r.style.setProperty(k, v));
+  for (let i = 0; i < 8; i += 1) {
+    const seed = i % 2 === 0 ? t.accentPrimary : t.accentSecondary;
+    r.style.setProperty(`--orca-series-${i + 1}`, hexShift(seed, (i - 2) * 4, -i * 3));
+  }
   r.setAttribute('data-custom-theme', '1');
 }
 
